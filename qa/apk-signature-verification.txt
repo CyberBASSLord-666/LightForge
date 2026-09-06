@@ -1,0 +1,17 @@
+Verifies
+Verified using v1 scheme (JAR signing): false
+Verified using v2 scheme (APK Signature Scheme v2): true
+Verified using v3 scheme (APK Signature Scheme v3): true
+Verified using v3.1 scheme (APK Signature Scheme v3.1): false
+Verified using v4 scheme (APK Signature Scheme v4): false
+Verified for SourceStamp: false
+Number of signers: 1
+Signer #1 certificate DN: CN=LightForge Personal, OU=Private Android App, O=Personal Use, C=US
+Signer #1 certificate SHA-256 digest: 7187d6aa935d5b7d2d656cb87913af95fe1ca3a4b1653036d1d8d890e2016c6b
+Signer #1 certificate SHA-1 digest: b51dd079fce83ed9c95cb52a47a82ced48e40435
+Signer #1 certificate MD5 digest: 85db6f2478a2edfb1009517b9ca161d3
+Signer #1 key algorithm: RSA
+Signer #1 key size (bits): 3072
+Signer #1 public key SHA-256 digest: 25c1f08bd77edeed8d69dbf856c92af827b65584d2ede83f48865ee24daeb0ee
+Signer #1 public key SHA-1 digest: b9179a2df1682618678fcafc223e3467f0a94593
+Signer #1 public key MD5 digest: b79973c11eedafd00061467d55117c22

@@ -1,5 +1,3 @@
-> **Complete source and original release:** Required model weights, WASM, demo audio, 3D assets and retained QA records are now included. See [repository completion](REPOSITORY.md), [asset status](ASSETS.md), and the [original signed 1.6.0 release](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v1.6.0).
-
 # LightForge — personal Android light-show studio
 
 LightForge turns a music file on your phone into a complete Tesla light show.

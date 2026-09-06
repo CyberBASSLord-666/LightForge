@@ -1,3 +1,11 @@
+# Asset status after repository completion
+
+All required runtime assets and curated research/QA files from the verified 1.6.0 backup are now retained in this private repository. The completion workflow restores eight large assets to their normal root-relative paths; an initial-transfer checkout can run `python3 migration/restore.py --only source`. Run `python3 verify_snapshot.py` to verify all 900 preserved source files. No external private extract is needed for assets after restoration. Signing credentials remain external.
+
+The older restore instructions below are retained as historical context and fallback information; their statements that assets are absent from Git describe the repository before this completion. See [REPOSITORY.md](REPOSITORY.md) for current instructions.
+
+---
+
 # Assets not in git
 
 Large and private files live **on disk**, not in this repository. There is no Git LFS yet (escalate to Chief of Staff if wanted).
