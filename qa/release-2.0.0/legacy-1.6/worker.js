@@ -1,6 +1,6 @@
 /* Cancellable composition and durable frame snapshots, isolated from the UI. */
 'use strict';
-importScripts('vehicle-profile.js','movement-planner.js','light-planner.js','music-cues.js','sync-review.js','show-engine.js');
+importScripts('vehicle-profile.js','movement-planner.js','light-planner.js','show-engine.js');
 const MAX_FRAMES=960000, CHANNELS=200;
 const canonical=value=>JSON.stringify(value,(_,item)=>item&&typeof item==='object'&&!Array.isArray(item)?Object.fromEntries(Object.keys(item).sort().map(key=>[key,item[key]])):item);
 const progress=(value,detail)=>postMessage({type:'progress',value:{progress:value,stage:'generate',detail}});
@@ -27,24 +27,19 @@ async function restore(compiled,music,settings){
  if(!compiled||compiled.format!=='lightforge-gzip-frames-v1'||!Number.isInteger(compiled.frameCount)||compiled.frameCount<1||compiled.frameCount>MAX_FRAMES||compiled.channels!==CHANNELS||![15,20].includes(compiled.stepMs))throw Error('The saved compiled show has an unsupported format.');
  const currentInputDigest=await inputDigest(music,settings);let migration=null;
  if(compiled.inputDigest!==currentInputDigest){
-  // Default-only upgrades must reproduce a prior exact input checksum.
-  // Never replace frames or relax checksum validation to accept a changed edit.
+  // Only known, unedited new defaults may be removed to reproduce the exact
+  // old input checksum. An existing 1.4 frame snapshot may already have been
+  // rebound by 1.5, so first try preserving its vocal/bass emphasis settings.
   const priorSettings={...settings},addedDefaults=[];
-  const supported=['1.4.0','1.5.0','1.6.0'].includes(compiled.engineVersion);
+  const supported=['1.4.0','1.5.0'].includes(compiled.engineVersion);
+  const hasGuides=Object.prototype.hasOwnProperty.call(settings,'vocalRegions');
+  const emptyGuides=Array.isArray(settings.vocalRegions)&&settings.vocalRegions.length===0;
   let matched=false;
-  if(supported){
-   for(const [key,value] of [['musicCues',[]],['vocalOffsetMs',0],['bassOffsetMs',0]]){
-    if(Object.prototype.hasOwnProperty.call(priorSettings,key)&&canonical(priorSettings[key])===canonical(value)){
-     delete priorSettings[key];addedDefaults.push(key);
-    }
-   }
-   matched=compiled.inputDigest===await inputDigest(music,priorSettings);
-   if(!matched&&['1.4.0','1.5.0'].includes(compiled.engineVersion)&&Array.isArray(priorSettings.vocalRegions)&&priorSettings.vocalRegions.length===0){
-    delete priorSettings.vocalRegions;addedDefaults.push('vocalRegions');matched=compiled.inputDigest===await inputDigest(music,priorSettings);
-   }
-   if(!matched&&compiled.engineVersion==='1.4.0'&&priorSettings.vocalFocus===.85&&priorSettings.bassFocus===.9){
-    delete priorSettings.vocalFocus;delete priorSettings.bassFocus;addedDefaults.push('vocalFocus','bassFocus');
-    matched=compiled.inputDigest===await inputDigest(music,priorSettings);
+  if(supported&&(!hasGuides||emptyGuides)){
+   if(emptyGuides){delete priorSettings.vocalRegions;addedDefaults.push('vocalRegions');matched=compiled.inputDigest===await inputDigest(music,priorSettings);}
+   if(!matched&&compiled.engineVersion==='1.4.0'&&settings.vocalFocus===.85&&settings.bassFocus===.9){
+    delete priorSettings.vocalFocus;delete priorSettings.bassFocus;
+    if(compiled.inputDigest===await inputDigest(music,priorSettings)){matched=true;addedDefaults.push('vocalFocus','bassFocus');}
    }
   }
   if(!matched)throw Error('The saved show does not match its music and edits. Create again to rebuild it.');

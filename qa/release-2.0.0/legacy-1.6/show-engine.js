@@ -5,9 +5,7 @@
  */
 (function (root) {
   'use strict';
-  const VERSION = '2.0.0';
-  const CUES = root.MusicCues || (typeof require === 'function' ? require('./music-cues.js') : null);
-  const SYNC = root.SyncReview || (typeof require === 'function' ? require('./sync-review.js') : null);
+  const VERSION = '1.6.0';
   const PROFILE = root.VehicleProfile || (typeof require === 'function' ? require('./vehicle-profile.js') : null);
   const LIGHTS = root.LightPlanner || (typeof require === 'function' ? require('./light-planner.js') : null);
   const MOVEMENT = root.MovementPlanner || (typeof require === 'function' ? require('./movement-planner.js') : null);
@@ -119,7 +117,7 @@
     if(input.stepMs!==undefined&&![15,20].includes(Number(input.stepMs)))throw new Error('Choose a 20 ms recommended frame interval or 15 ms precision mode.');
     const number=(key,def,min,max)=>clamp(finite(input[key])?input[key]:def,min,max);
     return {stepMs:Number(input.stepMs)||20,sensitivity:number('sensitivity',.8,0,1),intensity:number('intensity',.85,0,1),
-      musicCues:CUES.normalize(input.musicCues),vocalOffsetMs:number('vocalOffsetMs',0,-2000,2000),bassOffsetMs:number('bassOffsetMs',0,-2000,2000),movementDensity:number('movementDensity',.7,0,1),vocalFocus:number('vocalFocus',.85,0,1),bassFocus:number('bassFocus',.9,0,1),vocalRegions:normalizeVocalRegions(input.vocalRegions),downbeatAnchor:finite(input.downbeatAnchor)&&input.downbeatAnchor>=0?input.downbeatAnchor:null,meterOverride:[3,4].includes(input.meterOverride)?input.meterOverride:null,tempoScale:[.5,1,2].includes(input.tempoScale)?input.tempoScale:1,
+      movementDensity:number('movementDensity',.7,0,1),vocalFocus:number('vocalFocus',.85,0,1),bassFocus:number('bassFocus',.9,0,1),vocalRegions:normalizeVocalRegions(input.vocalRegions),downbeatAnchor:finite(input.downbeatAnchor)&&input.downbeatAnchor>=0?input.downbeatAnchor:null,meterOverride:[3,4].includes(input.meterOverride)?input.meterOverride:null,tempoScale:[.5,1,2].includes(input.tempoScale)?input.tempoScale:1,
       dance:['expressive','balanced','off'].includes(input.dance)?input.dance:'expressive',style:['festival','cinematic','pulse'].includes(input.style)?input.style:'festival',
       seed:finite(input.seed)?input.seed>>>0:666,palette:PALETTES[input.palette]?input.palette:'aurora',
       beatDivision:['auto','quarter','eighth'].includes(input.beatDivision)?input.beatDivision:'auto',offsetMs:number('offsetMs',0,-2000,2000),
@@ -206,7 +204,7 @@
   }
   function generate(music, settings) {
     if(!LIGHTS||!MOVEMENT)throw new Error('The musical composition tools are unavailable. Restart the app.');
-    const warnings=[],s=normalizeSettings(settings),m=correctRhythm(CUES.overlay(correctVocalRegions(CUES.apply(normalizeMusic(music,warnings),s),s),s),s);
+    const warnings=[],s=normalizeSettings(settings),m=correctRhythm(correctVocalRegions(normalizeMusic(music,warnings),s),s);
     if(m.silent&&s.manualCues.length){const i=warnings.findIndex(w=>w.includes('This audio is silent.'));if(i>=0)warnings[i]='This audio is silent. Automatic choreography is disabled; your manual cues still play.';}
     const step=s.stepMs/1000,n=Math.ceil(m.duration/step-1e-9),duration=n*step;
     let frames;try{frames=new Uint8Array(n*CHANNELS);}catch(e){throw new Error('This track is too large for the available device memory. Choose a shorter track.');}
@@ -233,9 +231,7 @@
     show.choreography.vocalDetail={phrases:m.vocals.phrases,notes:m.vocals.notes,accents:m.vocals.accents,sourceSeparated:m.vocals.sourceSeparated,source:m.vocals.source,presence:m.vocals.presence,manualRegions:m.vocals.manualRegions||[],lyricsAligned:false};
     show.stats={lightCues:lighting.events.length,manualCueCount:s.manualCues.length,beatCount:m.beats.length,onsetCount:m.onsets.length,bpm:m.bpm,beatConfidence:m.beatConfidence,beatLengthMs:60000/m.bpm,recommendedBeatDivision:m.bpm<=150?'eighth':'quarter',silent:m.silent,
       vocalPhraseCount:lighting.diagnostics.roles.vocals.eligibleEvents,bassNoteCount:lighting.diagnostics.roles.bass.eligibleEvents,vocalCues:lighting.diagnostics.roles.vocals.acceptedEvents,bassNoteCues:lighting.diagnostics.roles.bass.acceptedEvents,phraseCount:m.phrases.length,musicalImpactCount:m.impacts.length,movementTargets:movement.targets.length,lightQuantizationMaxMs:lighting.diagnostics.quantizationMaxMs};
-    show.synchronization=SYNC.review(show,lighting.targets);
-    show.choreography.musicCues=m.musicCues;
-    show.validation=validate(show,m);show.validation.synchronization=show.synchronization;show.stats=Object.assign(show.stats,show.validation.stats);
+    show.validation=validate(show,m);show.stats=Object.assign(show.stats,show.validation.stats);
     if(!show.validation.valid)throw new Error('The generated show failed validation: '+show.validation.errors.join(' '));
     preparePreview(show);
     return show;
@@ -255,7 +251,7 @@
       // the original beat layer is retained in every scene.
       const sourceLed=voice?.evidenceMode==='separation-led',targetVoice=voice&&s.vocalFocus>0?ctx.roleEnvelope(m.vocals,time,voice.strength)*(sourceLed?.62:1):0,targetBass=bass&&s.bassFocus>0?ctx.roleEnvelope(m.bassAnalysis,time,bass.strength):0;
       voiceLevel+=(targetVoice-voiceLevel)*Math.min(1,step/(targetVoice>voiceLevel?(separatedVoice?.025:.10):(separatedVoice?.10:.22)));bassLevel+=(targetBass-bassLevel)*Math.min(1,step/(targetBass>bassLevel?.025:.10));
-      const vocalNote=separatedVoice&&voice&&!sourceLed?ctx.vocalNoteAt(time):null,contour=m.vocals.pitchContour,ci=contour?Math.floor((time-(m.vocals.pitchOffset||0))/contour.step):-1,measuredPitch=sourceLed?null:contour?.confidence[ci]>=.45?contour.midi[ci]:vocalNote?.midi;
+      const vocalNote=separatedVoice&&voice&&!sourceLed?ctx.vocalNoteAt(time):null,contour=m.vocals.pitchContour,ci=contour?Math.floor(time/contour.step):-1,measuredPitch=sourceLed?null:contour?.confidence[ci]>=.45?contour.midi[ci]:vocalNote?.midi;
       if(measuredPitch>0)pitchLevel+=(clamp((measuredPitch-45)/36)-pitchLevel)*Math.min(1,step/.09);
       for(let zone=0;zone<6;zone++){
         const localBar=Math.max(0,ctx.beatInfo(bi).bar-ctx.beatInfo(Math.min(m.beats.length-1,lowerBound(m.beats,sec.start))).bar),pi=(Math.floor(localBar/2)+Math.floor(zone/2)+scene.variant)%palette.length,color=palette[pi],next=palette[(pi+1)%palette.length];

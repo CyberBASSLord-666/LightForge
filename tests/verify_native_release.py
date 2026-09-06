@@ -7,6 +7,7 @@ import shutil
 import subprocess
 import datetime
 import argparse
+import os, sys, wave
 
 ROOT = Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser(description=__doc__)
@@ -15,9 +16,9 @@ args = parser.parse_args()
 if not all(part.isdigit() for part in args.release.split('.')) or len(args.release.split('.')) != 3:
     parser.error('--release must be a dotted numeric release version')
 OUT = ROOT / ('qa/release-' + args.release)
-TOOLS = ROOT.parent / 'toolchain'
-JAVA = TOOLS / 'jdk17/bin'
-ANDROID = TOOLS / 'android-sdk/platforms/android-35/android.jar'
+TOOLS = Path(os.environ.get('LIGHTFORGE_TOOLCHAIN_DIR', ROOT.parent / 'toolchain'))
+JAVA = Path(os.environ.get('LIGHTFORGE_JAVA_HOME', TOOLS / 'jdk17')) / 'bin'
+ANDROID = Path(os.environ.get('ANDROID_SDK_ROOT', TOOLS / 'android-sdk')) / 'platforms/android-35/android.jar'
 JSON = TOOLS / 'test-json.jar'
 CLASSES = OUT / 'native-classes'
 OUT.mkdir(parents=True, exist_ok=True)
@@ -36,6 +37,16 @@ def run(name, *args):
     return p.stdout
 
 try:
+    subprocess.run([sys.executable, str(ROOT/'tools/bootstrap_testdeps.py')],check=True)
+    hardware=OUT/'native-hardware-fixtures'
+    subprocess.run(['node','--test',str(ROOT/'tests/engine-manual.test.cjs')],cwd=ROOT,env={**os.environ,'LIGHTFORGE_NATIVE_FIXTURES':str(hardware)},check=True,capture_output=True)
+    for metadata in hardware.glob('*.json'):
+        duration=json.loads(metadata.read_text())['duration']
+        with wave.open(str(metadata.with_suffix('.wav')),'wb') as wav:
+            wav.setnchannels(2);wav.setsampwidth(2);wav.setframerate(44100)
+            remaining=round(duration*44100)
+            while remaining:
+                count=min(44100,remaining);wav.writeframesraw(bytes(count*4));remaining-=count
     result = subprocess.run([str(JAVA / 'javac'), '-encoding', 'UTF-8', '--release', '8', '-classpath', str(ANDROID),
                              '-d', str(CLASSES), *map(str, sources), str(ROOT / 'build/generated/com/cyberbasslord/lightforge/R.java'), *map(str, tests)],
                             cwd=ROOT, capture_output=True, text=True)
@@ -50,7 +61,7 @@ try:
     receipt['checks'].extend(recovery['checks'])
     assert 'PASS:' in run('ProjectStoreTest', OUT / 'native-project-fixtures')
     receipt['checks'].append('Existing duplicate/rename/backup restore/CRC/traversal/cancellation and legacy rename-journal regression suite passed.')
-    assert 'PASS: 16' in run('NativeHardwareTest', ROOT / 'qa/hardware-1.2.0/fixtures')
+    assert 'PASS: 16' in run('NativeHardwareTest', hardware)
     receipt['checks'].append('All 16 independent native FSEQ hardware/closure validation cases passed.')
     assert 'PASS:' in run('NativeAudioTest', OUT / 'native-audio-fixtures')
     receipt['checks'].append('Native PCM conversion/resampling, supported WAV variants and incomplete-audio rejection regression suite passed.')

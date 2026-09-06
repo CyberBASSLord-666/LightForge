@@ -42,33 +42,23 @@
     const phraseAt=t=>m.phrases?.length?Math.max(0,lower(m.phrases,t+1e-8,'start')-1):Math.floor(Math.max(0,lower(down,t+1e-8)-1)/4);
     const vocalPhrases=m.vocals?.available&&m.vocals.presence!=='not_detected'?(m.vocals.phrases||[]).filter(p=>p.confidence>=(sourceLed(m.vocals,p)?.38:m.vocals.sourceSeparated?.45:.55)):[],vocalNotes=(m.vocals?.notes||[]).filter(p=>p.confidence>=.45),bassNotes=(m.bassNotes||[]).filter(p=>p.confidence>=.5);
     const roleAt=(events,t)=>{const i=lower(events,t+1e-8,'start')-1;return i>=0&&events[i].end>t?events[i]:null;};
-    const roleEnvelope=(role,t,fallback)=>{if(!role.envelope?.length||!(role.envelopeStep>0))return clamp(fallback);const x=clamp((t-(role.envelopeOffset||0))/role.envelopeStep,0,role.envelope.length-1),i=Math.floor(x),f=x-i;return clamp(role.envelope[i]*(1-f)+(role.envelope[Math.min(i+1,role.envelope.length-1)]||0)*f);};
+    const roleEnvelope=(role,t,fallback)=>{if(!role.envelope?.length||!(role.envelopeStep>0))return clamp(fallback);const x=clamp(t/role.envelopeStep,0,role.envelope.length-1),i=Math.floor(x),f=x-i;return clamp(role.envelope[i]*(1-f)+(role.envelope[Math.min(i+1,role.envelope.length-1)]||0)*f);};
     return {active,energyAt,sectionAt,periodAt,beatInfo,phraseAt,meter,vocalAt:t=>roleAt(vocalPhrases,t),vocalNoteAt:t=>roleAt(vocalNotes,t),bassAt:t=>roleAt(bassNotes,t),roleEnvelope};
   }
   function compose(show,m,s,movement={accents:[]}){
     const ctx=context(m),step=s.stepMs/1000,shift=s.offsetMs/1000,end=show.frameCount*step-step;
     const outputs=PROFILE.outputs.filter(o=>o.available&&o.kind==='light'),byId=new Map(outputs.map(o=>[o.id,o]));
     const candidates=[],accepted=[],lanes=new Map(outputs.map(o=>[o.id,[]]));let serial=0;
-    const enabled=id=>byId.has(id)&&s.outputEnabled[id]!==false;
-    const route=(ids)=>ids.find(enabled);
-    const voicePair=[route(['left-signature','left-inner','left-combined']),route(['right-signature','right-inner','right-combined'])].filter(Boolean);
-    const voiceSide=side=>voicePair[side?voicePair.length-1:0];
-    const bassSide=left=>route(left?['left-outer','right-outer','left-tail','brakes']:['right-outer','left-outer','right-tail','brakes']);
-    const targets=[];
     const vocalFocus=clamp(s.vocalFocus??.85),bassFocus=clamp(s.bassFocus??.9);
-    const vocalPhrases=vocalFocus>0&&m.vocals?.available&&m.vocals.presence!=='not_detected'?(m.vocals.phrases||[]).filter(p=>!p.musicalCue&&p.confidence>=(sourceLed(m.vocals,p)?.38+(1-vocalFocus)*.10:(m.vocals.sourceSeparated?.42:.55)+(1-vocalFocus)*.15)&&p.end-p.start>=.12):[];
-    const bassNotes=bassFocus>0?(m.bassNotes||[]).filter(p=>!p.musicalCue&&p.confidence>=.5+(1-bassFocus)*.15&&p.end-p.start>=.10):[];
+    const vocalPhrases=vocalFocus>0&&m.vocals?.available&&m.vocals.presence!=='not_detected'?(m.vocals.phrases||[]).filter(p=>p.confidence>=(sourceLed(m.vocals,p)?.38+(1-vocalFocus)*.10:(m.vocals.sourceSeparated?.42:.55)+(1-vocalFocus)*.15)&&p.end-p.start>=.12):[];
+    const bassNotes=bassFocus>0?(m.bassNotes||[]).filter(p=>p.confidence>=.5+(1-bassFocus)*.15&&p.end-p.start>=.10):[];
     const reservations=new Map(),reserve=(id,start,end)=>{const spans=reservations.get(id)||[];spans.push({start:start+shift-.08,end:end+shift+.08});reservations.set(id,spans);};
     // Dedicated physical lanes preserve role timing even where a whole-car
     // structural flash would otherwise suppress an entire held vocal phrase.
     // Combined beams, tails and amber remain available to the arrangement.
     const separatedVoice=m.vocals?.sourceSeparated===true&&m.vocals?.source==='separated-vocals';
-    const voiceRoutes=separatedVoice?[]:vocalPhrases.filter(p=>!p.continuation).map((p,i)=>({p,ids:vocalFocus>=.55?voicePair:[voiceSide(i%2)].filter(Boolean),length:vocalFocus>=.55?p.end-p.start:Math.min(p.end-p.start,.18+vocalFocus*.3)}));
-    const bassRoutes=bassNotes.map((p,i)=>{const left=i%2===0,ids=[bassSide(left)].filter(Boolean);if(bassFocus>=.55&&p.strength>=.65)enabled('brakes')&&ids.push('brakes');if(bassFocus>=.8&&p.strength>=.88&&p.end-p.start>=.5)bassSide(!left)&&ids.push(bassSide(!left));return {p,ids,length:bassFocus>=.55?Math.min(p.end-p.start,2.2):Math.min(p.end-p.start,.12+bassFocus*.2)};});
-    // A sustained note must release before the next entrance on the same lamp.
-    // Resolve from the end so every note keeps its original time, never a delay.
-    const nextBass=new Map();
-    for(let i=bassRoutes.length-1;i>=0;i--){const cue=bassRoutes[i];for(const id of cue.ids){const next=nextBass.get(id);if(next!==undefined)cue.length=Math.min(cue.length,next-cue.p.start-.08);nextBass.set(id,cue.p.start);}}
+    const voiceRoutes=separatedVoice?[]:vocalPhrases.map((p,i)=>({p,ids:vocalFocus>=.55?['left-signature','right-signature']:[i%2?'right-signature':'left-signature'],length:vocalFocus>=.55?p.end-p.start:Math.min(p.end-p.start,.18+vocalFocus*.3)}));
+    const bassRoutes=bassNotes.map((p,i)=>{const left=i%2===0,ids=[left?'left-outer':'right-outer'];if(bassFocus>=.55&&p.strength>=.65)ids.push('brakes');if(bassFocus>=.8&&p.strength>=.88&&p.end-p.start>=.5)ids.push(left?'right-outer':'left-outer');return {p,ids,length:bassFocus>=.55?Math.min(p.end-p.start,2.2):Math.min(p.end-p.start,.12+bassFocus*.2)};});
     for(const {p,ids,length}of voiceRoutes.concat(bassRoutes))for(const id of ids)reserve(id,p.start,p.start+length);
     for(const [id,spans]of reservations){const merged=[];for(const span of spans.sort((a,b)=>a.start-b.start)){const last=merged[merged.length-1];if(last&&span.start<=last.end)last.end=Math.max(last.end,span.end);else merged.push({...span});}reservations.set(id,merged);}
     const reserved=(id,start,finish)=>{const spans=reservations.get(id);if(!spans)return false;const i=lower(spans,finish,'start')-1;return i>=0&&spans[i].end>start;};
@@ -78,7 +68,7 @@
       const p=vocalPhrases[pi],scene=sceneAt(p.start),section=ctx.sectionAt(p.start),localPhrase=pi-lower(vocalPhrases,section.start,'start'),uncertainSource=sourceLed(m.vocals,p);
       const notes=m.vocals.notes||[],noteStart=lower(notes,p.start-.10,'start'),localNotes=[];
       for(let ni=noteStart;ni<notes.length&&notes[ni].start<p.end;ni++)if(!uncertainSource&&notes[ni].confidence>=.45&&notes[ni].end>p.start)localNotes.push(notes[ni]);
-      const basePitch=median(localNotes.map(n=>n.midi)),pool=p.continuation?[]:[{time:p.start,strength:p.strength,confidence:p.confidence,kind:'entrance',priority:2}];
+      const basePitch=median(localNotes.map(n=>n.midi)),pool=[{time:p.start,strength:p.strength,confidence:p.confidence,kind:'entrance',priority:2}];
       const first=lower(m.vocals.accents||[],p.start+.16,'time'),localAccents=[];
       for(let ai=first;ai<(m.vocals.accents||[]).length&&m.vocals.accents[ai].time<p.end-.10;ai++){
         const a=m.vocals.accents[ai];if(a.source==='separated-vocals'&&a.confidence>=(uncertainSource?.26:.32)+(1-vocalFocus)*.12)localAccents.push(a);
@@ -105,17 +95,12 @@
         const side=note&&basePitch&&Math.abs(note.midi-basePitch)>=1.5?note.midi>basePitch:((scene.variant+localPhrase+i)%2===0);
         // Articulation moves between signature lamps; only deliberate phrase
         // entrances and rare peaks use both. The cabin carries continuous tone.
-        const ids=!uncertainSource&&point.confidence>=.62&&(point.kind==='entrance'||phrasePeak&&i%3===0)?voicePair:[voiceSide(side)].filter(Boolean);
+        const ids=!uncertainSource&&point.confidence>=.62&&(point.kind==='entrance'||phrasePeak&&i%3===0)?['left-signature','right-signature']:[side?'right-signature':'left-signature'];
         const length=Math.min(available,uncertainSource?.18+point.strength*.12:vocalFocus<.55?.18+vocalFocus*.3:held?Math.min(note.end-point.time,1.8):.14+point.strength*.19);
         const release=held&&length>=.75?.5:0;
         detailedVoice.push({p,ids,time:point.time,length,release,strength:point.strength,kind:point.kind,note,phraseIndex:pi,confidence:point.confidence,uncertainSource});
       }
     }
-    const userCues=(m.musicCues||[]).filter(c=>c.action!=='mute').map(c=>({...c,ids:c.role==='vocals'?voicePair:[bassSide(true),...(c.strength>=.8?[bassSide(false)]:[])].filter(Boolean)}));
-    for(const cue of detailedVoice)targets.push({role:'vocals',time:cue.time,end:cue.time+cue.length,kind:cue.kind});
-    for(const {p,length} of voiceRoutes)targets.push({role:'vocals',time:p.start,end:p.start+length,kind:'phrase'});
-    for(const {p,length} of bassRoutes)targets.push({role:'bass',time:p.start,end:p.start+length,kind:'note'});
-    for(const cue of userCues){targets.push({role:cue.role,time:cue.start,end:cue.end,kind:cue.action,cueId:cue.id});for(const id of cue.ids)reserve(id,cue.start,cue.end);}
     for(const cue of detailedVoice)for(const id of cue.ids)reserve(id,cue.time,cue.time+cue.length);
     // Merge the detailed reservations after constructing motifs as well. They
     // cover accepted musical gestures, never the full surrounding vocal region.
@@ -129,7 +114,7 @@
     }
     function add(ids,t,duration,priority,kind,strength=1,fade=0,absolute=false,details={}){
       const musicTime=absolute?t-shift:t;if(!ctx.active(musicTime))return;
-      const section=ctx.sectionAt(musicTime),start=(absolute?t:t+shift),stop=Math.min(end,start+duration,details.preserveSpan?end:section.end+shift);
+      const section=ctx.sectionAt(musicTime),start=(absolute?t:t+shift),stop=Math.min(end,start+duration,section.end+shift);
       if(start<0||stop-start<step)return;
       for(const id of new Set(ids)){
         const o=byId.get(id);if(!o||s.outputEnabled[id]===false||!details.role&&reserved(id,start,stop))continue;
@@ -143,9 +128,6 @@
       add(ids,t,length*2+.08,priority,'phrase fade',.6,length);
     }
     if(!m.silent){
-      for(const cue of userCues){const length=cue.action==='accent'?Math.min(cue.end-cue.start,.14+cue.strength*.18):cue.end-cue.start;
-        add(cue.ids,cue.start,length,100,'user '+cue.role+' '+cue.action,cue.strength,0,false,{role:cue.role,cueId:cue.id,manual:true,preserveSpan:true,sourceStart:cue.start,sourceEnd:cue.end,sourceEventTime:cue.start,sourceConfidence:1,release:cue.action==='hold'&&length>=.75?.5:0,midi:cue.midi});
-      }
       for(const cue of detailedVoice){
         for(const sec of m.sections){const start=Math.max(cue.time,sec.start),stop=Math.min(cue.time+cue.length,sec.end);if(stop-start<.10)continue;
           add(cue.ids,start,stop-start,69+cue.confidence*3,'vocal '+cue.kind,cue.strength,0,false,{role:'vocals',release:stop-start>=.75?cue.release:0,sourceStart:cue.p.start,sourceEnd:cue.p.end,sourceConfidence:cue.confidence,sourceEventTime:cue.time,articulation:cue.kind==='articulation',vocalNote:cue.kind==='note',sourceSeparated:true,evidenceMode:cue.uncertainSource?'separation-led':'classifier-supported',midi:cue.note?.midi,manual:cue.p.manual===true});
@@ -285,7 +267,7 @@
       }
     }
     const errors=accepted.map(c=>Math.abs(c.actualStart-c.start)*1000);
-    return {context:ctx,targets,events:accepted.sort((a,b)=>a.start-b.start||a.serial-b.serial),diagnostics:{
+    return {context:ctx,events:accepted.sort((a,b)=>a.start-b.start||a.serial-b.serial),diagnostics:{
       candidateCues:candidates.length,acceptedCues:accepted.length,suppressedCollisions:rejected,
       attackCues:accepted.filter(c=>c.kind.startsWith('detected')).length,fadeCues:accepted.filter(c=>c.fade>0||c.release>0).length,
       impactCues:accepted.filter(c=>c.kind==='musical impact').length,
@@ -294,5 +276,5 @@
       meter:ctx.meter,recurringMotifGroups:Array.from(new Set(show.sections.filter(x=>x.recurrenceGroup).map(x=>x.recurrenceGroup))).length,lockedSections:show.sections.filter(x=>x.locked).length,timingScope:'Command placement within half a frame of the selected musical target. Audio detection and vehicle response are separate estimates.'
     }};
   }
-  const api={compose,context,version:'2.0.0'};root.LightPlanner=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
+  const api={compose,context,version:'1.6.0'};root.LightPlanner=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);

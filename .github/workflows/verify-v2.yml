@@ -1,0 +1,43 @@
+name: LightForge 2.0 verification
+on:
+  push:
+    branches: [main, 'development/2.0']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: verify-v2-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npm test
+      - run: npx playwright install --with-deps chromium
+      - run: node qa/release-2.0.0/browser.cjs
+      - run: python3 tools/bootstrap_toolchain.py
+      - name: Build CI package with an ephemeral signing identity
+        run: env -u ANDROID_SDK_ROOT -u ANDROID_HOME LIGHTFORGE_SIGNING_DIR="$RUNNER_TEMP/ci-signing" bash build.sh
+      - name: Native storage and sequence validation
+        run: env -u ANDROID_SDK_ROOT -u ANDROID_HOME python3 tests/verify_native_release.py --release 2.0.0
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lightforge-2.0-verification
+          path: |
+            qa/release-2.0.0/*.json
+            qa/release-2.0.0/*.log
+            qa/release-2.0.0/*.txt
+            qa/release-2.0.0/*.png
+          retention-days: 30

@@ -1,0 +1,17 @@
+{
+  "name": "lightforge",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Offline Android Tesla light-show studio — development tests only",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "python3 tools/verify_v2.py",
+    "test:precision": "node --test tests/precision-2.0.test.cjs tests/migration-2.0.test.cjs tests/precision-ui-2.0.test.cjs"
+  },
+  "devDependencies": {
+    "jsdom": "26.1.0",
+    "playwright": "1.62.1"
+  }
+}
