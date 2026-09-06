@@ -1,11 +1,20 @@
+# CI: node verify + bootstrap/build.sh
+# No Gradle. No GH secrets. No CI APK publish (artifact or release).
 name: CI
+
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
+
 permissions:
   contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     name: test
@@ -23,9 +32,11 @@ jobs:
           node tests/composer-1.6.test.cjs
           node tests/role-composer-1.6.test.cjs
           node --test tests/bass-notes.test.cjs
+
   build-ci:
     name: build-ci
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -49,4 +60,6 @@ jobs:
         run: |
           set -euo pipefail
           unset ANDROID_SDK_ROOT ANDROID_HOME || true
+          mkdir -p "$LIGHTFORGE_SIGNING_DIR"
+          chmod 700 "$LIGHTFORGE_SIGNING_DIR"
           bash build.sh
