@@ -1,0 +1,75 @@
+# Green-main CI: node/python verify + bootstrap/build.sh
+# No Gradle. No GH secrets. CI APK is throwaway (never release/install-over).
+name: green-main
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: green-main-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify-node:
+    name: node unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Engine / planner / composer unit tests
+        run: |
+          set -euo pipefail
+          node --test tests/engine.test.cjs tests/engine-manual.test.cjs tests/preview-engine.test.cjs tests/light-planner.test.cjs
+          node tests/movement-planner.test.cjs
+          node tests/composer-1.6.test.cjs
+          node tests/role-composer-1.6.test.cjs
+          node --test tests/bass-notes.test.cjs
+
+  build-apk:
+    name: bootstrap + build.sh
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Cache pinned toolchain downloads
+        uses: actions/cache@v4
+        with:
+          path: ../toolchain/downloads
+          key: lightforge-toolchain-${{ hashFiles('tools/bootstrap_toolchain.py') }}
+      - name: Bootstrap pinned JDK17 + SDK35
+        run: |
+          set -euo pipefail
+          export LIGHTFORGE_TOOLCHAIN_DIR="${GITHUB_WORKSPACE}/../toolchain"
+          mkdir -p "$LIGHTFORGE_TOOLCHAIN_DIR"
+          python3 tools/bootstrap_toolchain.py
+      - name: Build APK (ephemeral signing; pinned toolchain)
+        run: |
+          set -euo pipefail
+          unset ANDROID_SDK_ROOT ANDROID_HOME || true
+          export LIGHTFORGE_TOOLCHAIN_DIR="${GITHUB_WORKSPACE}/../toolchain"
+          export LIGHTFORGE_SIGNING_DIR="${RUNNER_TEMP}/lf-ci-signing"
+          mkdir -p "$LIGHTFORGE_SIGNING_DIR"
+          chmod 700 "$LIGHTFORGE_SIGNING_DIR"
+          bash build.sh
+      - name: Host JVM native verify (post-build)
+        run: |
+          set -euo pipefail
+          unset ANDROID_SDK_ROOT ANDROID_HOME || true
+          export LIGHTFORGE_TOOLCHAIN_DIR="${GITHUB_WORKSPACE}/../toolchain"
+          python3 tests/verify_native_release.py --release 1.6.0
+      - name: Upload throwaway CI APK (artifact only — not a release)
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lightforge-ci-apk
+          path: dist/*.apk
+          retention-days: 7
+          if-no-files-found: error
