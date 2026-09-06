@@ -34,7 +34,7 @@ bash build.sh
 
 ## Build settings
 
-`version.json` is the version SSoT; table values match current `main`.
+`version.json` is the version SSoT (see [`VERSIONING.md`](VERSIONING.md)); table values match current `main`.
 
 
 | Setting | Value |
@@ -118,6 +118,8 @@ provenance and reports remain available.
 
 ## Primary documentation
 
+- [`VERSIONING.md`](VERSIONING.md) — `version.json` SSoT, tags, CI signing (no secrets) (lands with Release CI PR)
+
 - [`ARCHITECTURE.md`](ARCHITECTURE.md) — layer contracts
 - [`ASSETS.md`](ASSETS.md) — fat bins / neural path map
 - [`VALIDATION.md`](VALIDATION.md) — coverage and limits
@@ -139,7 +141,7 @@ See `VALIDATION.md` for coverage and remaining limits.
 
 ## Release identity and verification
 
-`version.json` is the build version source. Native UI and export metadata read the installed package version. To verify and package the signed release after running its tests, run `python3 tools/package_release.py`. The packager requires every current receipt to pass and its source hashes to match, verifies that the APK contains the current web assets, checks the update signing certificate and ZIP CRCs, and retains earlier release receipts explicitly as history. The included transformer graphs are ready to use; upstream references and conversion scripts are in `research/upstream/beat_this/`.
+`version.json` is the build version source (see [`VERSIONING.md`](VERSIONING.md)). Native UI and export metadata read the installed package version. To verify and package the signed release after running its tests, run `python3 tools/package_release.py`. The packager requires every current receipt to pass and its source hashes to match, verifies that the APK contains the current web assets, checks the update signing certificate and ZIP CRCs, and retains earlier release receipts explicitly as history. The included transformer graphs are ready to use; upstream references and conversion scripts are in `research/upstream/beat_this/`.
 
 Current verification entry points:
 
