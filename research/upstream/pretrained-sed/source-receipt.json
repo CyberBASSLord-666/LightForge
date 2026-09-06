@@ -1,0 +1,122 @@
+{
+  "repository": "https://github.com/fschmid56/PretrainedSED",
+  "commit": "1aa47e482f7e89904cba2338999345025d8b4e36",
+  "retrievedAt": "2026-09-06",
+  "sourceFiles": {
+    "ex_dcase2016task2.py": "3e5070e9593845e02d452463421022bd2ba008be1af4eb906a48c36c2ed28c5a",
+    "README.md": "b6f9101fcad76e50a6a5d564198fa52a1199bb6c803ee48743fd10c0d1897fe5",
+    "ex_audioset_strong.py": "6fd672ca86b09c6eb345f53876e4eef2cabdc3ee8c92452201b526af8efaf76f",
+    "evaluate_lightforge.py": "3a7d5fb24b36789309d8e2064941838513116c4417d49fcdc8ec342ce3e67b86",
+    "config.py": "10e4012076a9b884d1222c9b199b8bbd7a916775d46d1c2425c264d12cebe683",
+    "inference.py": "8c918e9aff94243d3c189b18dbb056044b52457274f1689fffc718c904c4502a",
+    "export_lightforge.py": "5cb7d48e6241e6c318dfee7677211a922fd6690efdcf16eba80ed4cccfde2b97",
+    "data_util/dcase2016task2.py": "fd448b235291fe122bcc23684bee75e79238c86100cccbd1e18894fbe8f9b284",
+    "data_util/audioset_strong.py": "5100b4c19053032ae0286afadf0fd30135f89e4afeaa325a60a914dfe5310a99",
+    "data_util/audioset_classes.py": "771adb63768b349171a1668b4b0c2f932f6db1b21e10450c7e9136c0397e076f",
+    "data_util/transforms.py": "8fdcd20797eee5ff9a5a8844a3275fac0fa9c63c7641c74f3a3f4fb4c841fe16",
+    "helpers/score.py": "acd3fbe4c16954a52ab39933d0597453ccd8da0d0cf88ef51865fa63d5ac5fe3",
+    "helpers/augment.py": "3fa355c7e53b9aaeef548dc6a5ad22cc3a7f9e161073adfc07beaff45a597931",
+    "helpers/decode.py": "efa229db161c68dfac38c23c0eda425c1014f68da3f2dae0053e198c879457bf",
+    "helpers/encode.py": "abc436cf1a85a65ae8459f6f666a5e559a271f54ed868727818f565e9a470513",
+    "helpers/utils.py": "d14f30a5aa6ad31ec8138201263b002f19757c34e28233f888552e4e53bea0d0",
+    "models/seq_models.py": "d7ac2ab967ce65e3dad7dd3cf717163a107e8cc0b57bdab0d775a72f075ca667",
+    "models/transformer_wrapper.py": "8ca7284475e47dc00a5f476bd8d937400e35c95ae3164b8fd9111505c4a4dee8",
+    "models/prediction_wrapper.py": "53f37f7870a85e64242d07dd087ffb4c72a8a8413d43a593ab46bba85b3983eb",
+    "resources/README.md": "edf88af19a5bd791c30df7894ee936879fa909c0c37b4cbe1b798b83132234fd",
+    "hf_dataset_gen/audioset_strong.py": "015ecafc66d6e610c590f41645bb61f092fb4d3bfb73db21f13254b800671318",
+    "models/m2d/M2D_wrapper.py": "ab9f5691847f99470c90e8b648dd9aedb9be9fe6132f551f9feebabea0053785",
+    "models/m2d/portable_m2d.py": "addb6cc3ee17dbc179dacaebf0baeea59989dd39e5219d2a2b0af85480448e88",
+    "models/atstframe/ATSTF_wrapper.py": "76e5d0d03460541fc713d9830c544c22f31b6d4393f81e752d47dc0802a6ead2",
+    "models/atstframe/transformer.py": "5470ea310ff28d3b592ff3f8e9a17c0119cbb1f6f4f28f05074eb1991162148f",
+    "models/atstframe/audio_transformer.py": "c63cf97ab58e9ad4095cf5ccb27fdd9bf630a7916a00a3253d7f81e0b1e3c54a",
+    "models/frame_passt/fpasst.py": "b34aed30db2ea1be27c18bbb6fd819786b04b9d14570d87e9fd160619e57ecb1",
+    "models/frame_passt/fpasst_wrapper.py": "49b3c50a5c6c7fad6c3f3954bd4a369841d42876c7de8f07c7217d5b8fc87ee3",
+    "models/frame_passt/vit_helpers.py": "b17f7f784537210604f34184f74b7e8f80c25e9690e4e44a92d39125d567a27c",
+    "models/frame_passt/preprocess.py": "1ac324f812566924ab52879077186dcaffdc8a4062ee186153be48e99b658db0",
+    "models/frame_mn/block_types.py": "1dfa5636aadb209eeaa7e412d5fc422bfefe230b4b30f49a14fe11776eab825c",
+    "models/frame_mn/Frame_MN_wrapper.py": "c9f9be29be6cb5dfb94b03a0cb95a22c35519aaefabf913fdebc0e3fc2f40d77",
+    "models/frame_mn/model.py": "6c316eab1744c3a6d45537532bd4dfc91718f7132f1de42e79a922c8c5b48077",
+    "models/frame_mn/utils.py": "b952d15279cf2fb21658e6916ce23e00e3338187564b4ad9c635a10dd261aac5",
+    "models/beats/BEATs_wrapper.py": "2b8b73b6752c58feb5f26432e659d3345a68ef10f5928c4af8c70eed23d6e04f",
+    "models/beats/BEATs.py": "c7dba46d9f83a09b0096337816795a2239cbab5f9e979c558c57f15953667765",
+    "models/beats/quantizer.py": "322f1f55f4d522ee927d036e70f93e5e15bf0ff36a6def5b4587de7c35053590",
+    "models/beats/backbone.py": "5df93ef883d2fea0f9a3763caa93690b706905094d6ec727f86f68a827b87c5d",
+    "models/beats/modules.py": "c4b4170b1c4286717b606788f617a0a768af076cdeaaa9b1d35bf70d6c3859fe",
+    "models/beats/Tokenizers.py": "fccb1fafc35cd7e9474593408b071ebe05dbbe7c877965edb77130552617e068",
+    "models/asit/data_transformations.py": "97850ef1391cca64e27f1a0ea56f87b417b676e36b8cb5cf13b1bc7522593156",
+    "models/asit/ASIT_wrapper.py": "12d6886284e9c4ab03e2909416b055e0c91d41667cba403845b12d91020c85a9",
+    "models/asit/vision_transformer.py": "008c8c58a38529bf05ce4043f51cd300cd80c5b114a690a123d9da005f89b20a",
+    "models/asit/utils.py": "c151f751c74d8fdd94f10856950f360ce256026b35c00ffbab11d19c047ee222"
+  },
+  "checkpoint": {
+    "url": "https://github.com/fschmid56/PretrainedSED/releases/download/v0.0.1/frame_mn10_strong_1.pt",
+    "sha256": "4a0fe320d5369987b772394c51881fb20a602967e6842f72f3e5c8181065ece7"
+  },
+  "license": "MIT",
+  "pinnedSourceVerification": [
+    {
+      "file": "LICENSE",
+      "url": "https://raw.githubusercontent.com/fschmid56/PretrainedSED/1aa47e482f7e89904cba2338999345025d8b4e36/LICENSE",
+      "sha256": "399acc6d903cfd65a6cd5baba6a99af3ee534d79161b07854c1a6ffeab3dc88b"
+    },
+    {
+      "file": "README.md",
+      "url": "https://raw.githubusercontent.com/fschmid56/PretrainedSED/1aa47e482f7e89904cba2338999345025d8b4e36/README.md",
+      "sha256": "b6f9101fcad76e50a6a5d564198fa52a1199bb6c803ee48743fd10c0d1897fe5"
+    },
+    {
+      "file": "config.py",
+      "url": "https://raw.githubusercontent.com/fschmid56/PretrainedSED/1aa47e482f7e89904cba2338999345025d8b4e36/config.py",
+      "sha256": "10e4012076a9b884d1222c9b199b8bbd7a916775d46d1c2425c264d12cebe683"
+    },
+    {
+      "file": "models/frame_mn/utils.py",
+      "url": "https://raw.githubusercontent.com/fschmid56/PretrainedSED/1aa47e482f7e89904cba2338999345025d8b4e36/models/frame_mn/utils.py",
+      "sha256": "b952d15279cf2fb21658e6916ce23e00e3338187564b4ad9c635a10dd261aac5"
+    },
+    {
+      "file": "models/frame_mn/model.py",
+      "url": "https://raw.githubusercontent.com/fschmid56/PretrainedSED/1aa47e482f7e89904cba2338999345025d8b4e36/models/frame_mn/model.py",
+      "sha256": "6c316eab1744c3a6d45537532bd4dfc91718f7132f1de42e79a922c8c5b48077"
+    },
+    {
+      "file": "models/frame_mn/Frame_MN_wrapper.py",
+      "url": "https://raw.githubusercontent.com/fschmid56/PretrainedSED/1aa47e482f7e89904cba2338999345025d8b4e36/models/frame_mn/Frame_MN_wrapper.py",
+      "sha256": "c9f9be29be6cb5dfb94b03a0cb95a22c35519aaefabf913fdebc0e3fc2f40d77"
+    },
+    {
+      "file": "models/frame_mn/block_types.py",
+      "url": "https://raw.githubusercontent.com/fschmid56/PretrainedSED/1aa47e482f7e89904cba2338999345025d8b4e36/models/frame_mn/block_types.py",
+      "sha256": "1dfa5636aadb209eeaa7e412d5fc422bfefe230b4b30f49a14fe11776eab825c"
+    },
+    {
+      "file": "models/frame_passt/preprocess.py",
+      "url": "https://raw.githubusercontent.com/fschmid56/PretrainedSED/1aa47e482f7e89904cba2338999345025d8b4e36/models/frame_passt/preprocess.py",
+      "sha256": "1ac324f812566924ab52879077186dcaffdc8a4062ee186153be48e99b658db0"
+    },
+    {
+      "file": "models/prediction_wrapper.py",
+      "url": "https://raw.githubusercontent.com/fschmid56/PretrainedSED/1aa47e482f7e89904cba2338999345025d8b4e36/models/prediction_wrapper.py",
+      "sha256": "53f37f7870a85e64242d07dd087ffb4c72a8a8413d43a593ab46bba85b3983eb"
+    },
+    {
+      "file": "models/transformer_wrapper.py",
+      "url": "https://raw.githubusercontent.com/fschmid56/PretrainedSED/1aa47e482f7e89904cba2338999345025d8b4e36/models/transformer_wrapper.py",
+      "sha256": "8ca7284475e47dc00a5f476bd8d937400e35c95ae3164b8fd9111505c4a4dee8"
+    },
+    {
+      "file": "models/seq_models.py",
+      "url": "https://raw.githubusercontent.com/fschmid56/PretrainedSED/1aa47e482f7e89904cba2338999345025d8b4e36/models/seq_models.py",
+      "sha256": "d7ac2ab967ce65e3dad7dd3cf717163a107e8cc0b57bdab0d775a72f075ca667"
+    },
+    {
+      "file": "data_util/audioset_classes.py",
+      "url": "https://raw.githubusercontent.com/fschmid56/PretrainedSED/1aa47e482f7e89904cba2338999345025d8b4e36/data_util/audioset_classes.py",
+      "sha256": "771adb63768b349171a1668b4b0c2f932f6db1b21e10450c7e9136c0397e076f"
+    }
+  ],
+  "localConversionFiles": [
+    "export_lightforge.py",
+    "evaluate_lightforge.py"
+  ]
+}

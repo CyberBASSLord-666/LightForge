@@ -1,0 +1,26 @@
+{
+  "release": "1.5.0",
+  "started": "2026-09-06T07:33:14.155Z",
+  "checks": [
+    "Known vocal/bass metadata renders separate estimated phrase/note counts and evidence labels; recommended emphasis controls are accessible and enabled.",
+    "Pointer/range and keyboard timeline seeking drive real preview media time; next phrase/note buttons land on annotation boundaries; playhead chips distinguish overlap, rests and pitched note names.",
+    "Composition gating disables focus edits and analysis-lane actions while a replacement show is being compiled.",
+    "Role diagnostics and emphasis cards have no horizontal overflow at 320, 393 and 768 CSS pixels; screenshots captured for visual inspection.",
+    "No-detection, uncertain, unavailable, silence and legacy analysis states use distinct honest wording; absent events never create timeline cues. Legacy focus controls remain disabled until re-analysis."
+  ],
+  "errors": [],
+  "externalRequests": [],
+  "limits": [
+    "Desktop Chromium with SwiftShader; no Android device or Tesla was tested.",
+    "Known vocal/bass annotations isolate UI behavior; this test does not measure inference accuracy."
+  ],
+  "sourceStable": true,
+  "sourceHashes": {
+    "web/music-insights.js": "525b23f2651bdc5ec53f97dbde7fbb764f97b550c0ade2acbd8298909957515b",
+    "web/studio-tools.js": "c045ef433dc08531537a873988fed369646bf6578a6a2c31c9065448cc9c7a36",
+    "web/styles.css": "47a85328f033049fa1e02ff6f151e8eace5f43a5b7dd87b012dfed5f54f789ca",
+    "web/index.html": "6985365ce0d53da3754363cc528bd02aaf0d248fdf5ef9b22c8d2e5a53424d89"
+  },
+  "passed": true,
+  "completed": "2026-09-06T07:33:27.057Z"
+}

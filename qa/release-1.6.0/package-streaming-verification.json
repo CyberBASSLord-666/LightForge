@@ -1,0 +1,26 @@
+{
+  "release": "1.6.0",
+  "passed": true,
+  "scope": "Five synthetic packaging-helper regressions; the final APK and source archive have not been packaged by this test.",
+  "checks": [
+    "Incremental hashing and exact byte comparisons reject unbounded source reads and detect differences across chunk boundaries.",
+    "The generated ZIP passes CRC; SHA256SUMS covers every exact relative archive path. Hidden files, node_modules, classes and Python caches remain excluded.",
+    "Private signing test material remains included with 0600 permissions; normal source entries retain 0644 permissions and deterministic timestamps.",
+    "An 8 MiB incompressible file packages with under 4 MiB measured peak Python heap while Path.read_bytes is disabled.",
+    "Source mutation or CRC failure removes the temporary ZIP and preserves the previous published file.",
+    "Atomic APK copying verifies its expected SHA256 before replacement, preserves the previous output on mismatch and cleans staging.",
+    "The required current-release receipt list includes separator-verification.json and build-integrity-verification.json; both must explicitly pass and declare the matching release.",
+    "QA .log files are included only beneath qa/release-1.6.0; historical logs, hidden paths, fixtures, generated files, node_modules and compiled classes remain excluded."
+  ],
+  "measurements": {
+    "streamedFixtureBytes": 8388608,
+    "archiveBytes": 8392276,
+    "peakPythonHeapBytes": 3801042,
+    "manifestEntries": 4
+  },
+  "source_hashes": {
+    "tools/package_release.py": "cee2ba5534691f56d15bcec7c9f4cdd84e785c9b8f3d07da9853d5aa453b239b",
+    "tests/test_package_release_streaming.py": "1d5f317840c035217ffc0374f8533399ee4ee8439e04b259ca0bd0949fc6049e"
+  },
+  "completed": "2026-09-06T10:20:57.645831+00:00"
+}

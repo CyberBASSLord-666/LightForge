@@ -1,0 +1,261 @@
+{
+  "passed": true,
+  "errors": [],
+  "regressions": {
+    "oldTrueRest": {
+      "exteriorOnFrames": 21,
+      "rgbOnFrames": 300,
+      "examinedSeconds": [
+        21,
+        27
+      ]
+    },
+    "oldLastBeat": {
+      "time": 9.5,
+      "innerLampCommand": 77
+    },
+    "newTrueRest": {
+      "exteriorOnFrames": 0,
+      "rgbOnFrames": 0,
+      "examinedSeconds": [
+        21,
+        27
+      ]
+    },
+    "newLastBeat": {
+      "time": 9.5,
+      "innerLampCommand": 255
+    }
+  },
+  "fullSong": {
+    "duration": 238.04,
+    "oldComposerOldAnalysis": {
+      "valid": true,
+      "duty": 0.3087,
+      "active": 0.842,
+      "movement": {
+        "35": {
+          "actuations": 19,
+          "danceSeconds": 0,
+          "danceStarts": [],
+          "meanNormalizedRmsWhileDancing": null
+        },
+        "36": {
+          "actuations": 19,
+          "danceSeconds": 0,
+          "danceStarts": [],
+          "meanNormalizedRmsWhileDancing": null
+        },
+        "37": {
+          "actuations": 6,
+          "danceSeconds": 27,
+          "danceStarts": [
+            67.7,
+            139.98,
+            211.56
+          ],
+          "meanNormalizedRmsWhileDancing": 0.8324
+        },
+        "38": {
+          "actuations": 6,
+          "danceSeconds": 27,
+          "danceStarts": [
+            68.98,
+            141.26,
+            211.56
+          ],
+          "meanNormalizedRmsWhileDancing": 0.8342
+        },
+        "39": {
+          "actuations": 6,
+          "danceSeconds": 27,
+          "danceStarts": [
+            68.34,
+            140.62,
+            211.56
+          ],
+          "meanNormalizedRmsWhileDancing": 0.8326
+        },
+        "40": {
+          "actuations": 6,
+          "danceSeconds": 27,
+          "danceStarts": [
+            69.64,
+            141.92,
+            211.56
+          ],
+          "meanNormalizedRmsWhileDancing": 0.8367
+        },
+        "41": {
+          "actuations": 6,
+          "danceSeconds": 28,
+          "danceStarts": [
+            163.2,
+            211.56
+          ],
+          "meanNormalizedRmsWhileDancing": 0.9099
+        },
+        "46": {
+          "actuations": 3,
+          "danceSeconds": 28,
+          "danceStarts": [
+            206.4
+          ],
+          "meanNormalizedRmsWhileDancing": 0.7289
+        }
+      }
+    },
+    "newComposerSameAnalysis": {
+      "valid": true,
+      "duty": 0.2357,
+      "active": 0.7963,
+      "movement": {
+        "35": {
+          "actuations": 14,
+          "danceSeconds": 0,
+          "danceStarts": [],
+          "meanNormalizedRmsWhileDancing": null
+        },
+        "36": {
+          "actuations": 14,
+          "danceSeconds": 0,
+          "danceStarts": [],
+          "meanNormalizedRmsWhileDancing": null
+        },
+        "37": {
+          "actuations": 6,
+          "danceSeconds": 26.96,
+          "danceStarts": [
+            67.7,
+            98.68,
+            163.2
+          ],
+          "meanNormalizedRmsWhileDancing": 0.8188
+        },
+        "38": {
+          "actuations": 6,
+          "danceSeconds": 27.48,
+          "danceStarts": [
+            68.98,
+            98.68,
+            164.46
+          ],
+          "meanNormalizedRmsWhileDancing": 0.8205
+        },
+        "39": {
+          "actuations": 6,
+          "danceSeconds": 27.42,
+          "danceStarts": [
+            68.36,
+            98.68,
+            163.82
+          ],
+          "meanNormalizedRmsWhileDancing": 0.8208
+        },
+        "40": {
+          "actuations": 6,
+          "danceSeconds": 27.42,
+          "danceStarts": [
+            69.64,
+            98.68,
+            165.12
+          ],
+          "meanNormalizedRmsWhileDancing": 0.822
+        },
+        "41": {
+          "actuations": 6,
+          "danceSeconds": 27.4,
+          "danceStarts": [
+            98.68,
+            163.2
+          ],
+          "meanNormalizedRmsWhileDancing": 0.8289
+        },
+        "46": {
+          "actuations": 3,
+          "danceSeconds": 23.86,
+          "danceStarts": [
+            98.68
+          ],
+          "meanNormalizedRmsWhileDancing": 0.7786
+        }
+      }
+    },
+    "newComposerNewAnalysis": {
+      "valid": true,
+      "duty": 0.2335,
+      "active": 0.7628,
+      "movement": {
+        "35": {
+          "actuations": 14,
+          "danceSeconds": 0,
+          "danceStarts": [],
+          "meanNormalizedRmsWhileDancing": null
+        },
+        "36": {
+          "actuations": 14,
+          "danceSeconds": 0,
+          "danceStarts": [],
+          "meanNormalizedRmsWhileDancing": null
+        },
+        "37": {
+          "actuations": 6,
+          "danceSeconds": 27.36,
+          "danceStarts": [
+            98.68,
+            170.94,
+            212.08
+          ],
+          "meanNormalizedRmsWhileDancing": 0.8666
+        },
+        "38": {
+          "actuations": 6,
+          "danceSeconds": 26.72,
+          "danceStarts": [
+            99.98,
+            172.08,
+            212.08
+          ],
+          "meanNormalizedRmsWhileDancing": 0.8647
+        },
+        "39": {
+          "actuations": 6,
+          "danceSeconds": 27.2,
+          "danceStarts": [
+            99.34,
+            171.6,
+            212.08
+          ],
+          "meanNormalizedRmsWhileDancing": 0.8636
+        },
+        "40": {
+          "actuations": 6,
+          "danceSeconds": 25.48,
+          "danceStarts": [
+            100.62,
+            172.68,
+            212.08
+          ],
+          "meanNormalizedRmsWhileDancing": 0.8644
+        },
+        "41": {
+          "actuations": 6,
+          "danceSeconds": 22.72,
+          "danceStarts": [
+            170.94,
+            212.08
+          ],
+          "meanNormalizedRmsWhileDancing": 0.9143
+        },
+        "46": {
+          "actuations": 3,
+          "danceSeconds": 13.04,
+          "danceStarts": [
+            212.08
+          ],
+          "meanNormalizedRmsWhileDancing": 0.9458
+        }
+      }
+    }
+  }
+}

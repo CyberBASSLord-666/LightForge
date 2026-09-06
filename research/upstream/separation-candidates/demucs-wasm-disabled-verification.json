@@ -1,0 +1,28 @@
+{
+  "scope": "Candidate research only: desktop Chromium, shipped ORT1.20.1 WASM, no Android-device evidence.",
+  "started": "2026-09-06T09:42:32.783Z",
+  "passed": true,
+  "optLevel": "disabled",
+  "result": {
+    "done": true,
+    "finite": true,
+    "dims": [
+      1,
+      4,
+      2,
+      343980
+    ],
+    "values": 2751840,
+    "maxDiff": 0.0011969208717346191,
+    "snr": 67.85454857313864,
+    "loadSeconds": 8.991214999996126,
+    "runSeconds": 13.073295000001789,
+    "wasmMemory": [
+      1297743872
+    ],
+    "jsHeap": null,
+    "isolated": true,
+    "threads": 2
+  },
+  "completed": "2026-09-06T09:42:55.183Z"
+}

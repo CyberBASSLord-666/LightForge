@@ -1,0 +1,19 @@
+{
+  "browser": "Chromium 131.0.6778.204",
+  "realWorker": "PASS",
+  "offlineAssets": "PASS",
+  "progress": "PASS",
+  "responsiveMainThreadTicks": 251,
+  "cancellation": "PASS",
+  "invalidAudio": "PASS",
+  "silence": "PASS",
+  "bpm": 93.08,
+  "beats": 368,
+  "downbeats": 92,
+  "sections": 12,
+  "rangeRequests": 31,
+  "largestRangeBytes": 442940,
+  "fullTrackSeconds": 238.04,
+  "allTestsElapsedSeconds": 20.683,
+  "errors": []
+}

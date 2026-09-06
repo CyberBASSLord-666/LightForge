@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "triangles": 179692,
+  "split_meshes": 684,
+  "all_triangle_positions_normals_uvs_other_attributes_bit_exact": true,
+  "triangle_winding_preserved": true,
+  "all_textures_bit_exact": true,
+  "materials_unchanged": true,
+  "original_source_unchanged": true
+}

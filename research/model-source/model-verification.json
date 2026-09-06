@@ -1,0 +1,24 @@
+{
+  "status": "PASS",
+  "sha256": "abf813f0013428409820121b7fd40ad70dda7cd00d1a0dca25cebd16b92035ba",
+  "bytes": 8796432,
+  "meshCount": 684,
+  "triangles": 179692,
+  "bounds": [
+    [
+      -1.0439380407333374,
+      0.0,
+      -2.359999895095825
+    ],
+    [
+      1.0439380407333374,
+      1.4112950563430786,
+      2.359999895095825
+    ]
+  ],
+  "embeddedResources": true,
+  "validIndices": true,
+  "uniqueComponentNames": true,
+  "lengthMeters": 4.71999979019165,
+  "sourceAssetLicense": "CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)"
+}

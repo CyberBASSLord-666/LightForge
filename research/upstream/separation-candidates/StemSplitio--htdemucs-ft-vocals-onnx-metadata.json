@@ -1,0 +1,118 @@
+{
+  "_id": "6a0e56c59a68441d88fc0182",
+  "id": "StemSplitio/htdemucs-ft-vocals-onnx",
+  "private": false,
+  "pipeline_tag": "audio-to-audio",
+  "library_name": "onnxruntime",
+  "tags": [
+    "onnxruntime",
+    "onnx",
+    "stem-separation",
+    "source-separation",
+    "demucs",
+    "htdemucs",
+    "music",
+    "audio-to-audio",
+    "mobile",
+    "ios",
+    "android",
+    "coreml",
+    "directml",
+    "production-ready",
+    "vocal-extraction",
+    "vocal-isolation",
+    "vocal-remover",
+    "karaoke",
+    "acapella",
+    "en",
+    "dataset:StemSplitio/stem-separation-benchmark-2026",
+    "license:mit",
+    "region:us"
+  ],
+  "downloads": 0,
+  "likes": 2,
+  "modelId": "StemSplitio/htdemucs-ft-vocals-onnx",
+  "author": "StemSplitio",
+  "sha": "2ef0d757d3e226d0da85fb8c71514f464fcabdd0",
+  "lastModified": "2026-05-21T14:55:19.000Z",
+  "gated": false,
+  "disabled": false,
+  "model-index": null,
+  "config": {},
+  "cardData": {
+    "language": "en",
+    "license": "mit",
+    "library_name": "onnxruntime",
+    "pipeline_tag": "audio-to-audio",
+    "tags": [
+      "onnx",
+      "onnxruntime",
+      "stem-separation",
+      "source-separation",
+      "demucs",
+      "htdemucs",
+      "music",
+      "audio-to-audio",
+      "mobile",
+      "ios",
+      "android",
+      "coreml",
+      "directml",
+      "production-ready",
+      "vocal-extraction",
+      "vocal-isolation",
+      "vocal-remover",
+      "karaoke",
+      "acapella"
+    ],
+    "datasets": [
+      "StemSplitio/stem-separation-benchmark-2026"
+    ],
+    "inference": false
+  },
+  "siblings": [
+    {
+      "rfilename": ".gitattributes",
+      "blobId": "a6344aac8c09253b3b630fb776ae94478aa0275b",
+      "size": 1519
+    },
+    {
+      "rfilename": "README.md",
+      "blobId": "214e0c93e7a2863dcb233672035d6894a1607ab1",
+      "size": 9174
+    },
+    {
+      "rfilename": "htdemucs_ft_vocals.onnx",
+      "blobId": "e1ad73b16b2c5f5a34e698869e107fa898e552f9",
+      "size": 316446953,
+      "lfs": {
+        "sha256": "8c5d5e2da1f27050240bb80236673307ee3b40d4b064066d9350f4d64bfd544d",
+        "size": 316446953,
+        "pointerSize": 134
+      }
+    },
+    {
+      "rfilename": "htdemucs_ft_vocals_fp16weights.onnx",
+      "blobId": "cd00fcb3371cbd7295156d2d8e09cbd6ff824c06",
+      "size": 165612636,
+      "lfs": {
+        "sha256": "0cbe651f535415c9d26a7bb614f7d322dd5a080fa0298f2e50f478030a994dce",
+        "size": 165612636,
+        "pointerSize": 134
+      }
+    },
+    {
+      "rfilename": "infer.py",
+      "blobId": "49b89598cd384694fd44ef31d9b0c85f1b6b5d16",
+      "size": 5428
+    },
+    {
+      "rfilename": "requirements.txt",
+      "blobId": "9e7f19923df2cb5d6898db807de1412d5592a86f",
+      "size": 46
+    }
+  ],
+  "spaces": [],
+  "createdAt": "2026-05-21T00:50:13.000Z",
+  "usedStorage": 482059589
+}

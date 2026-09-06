@@ -1,0 +1,50 @@
+{
+  "_id": "66b24b2a18f12294c8724b3f",
+  "id": "KimberleyJSN/melbandroformer",
+  "private": false,
+  "tags": [
+    "license:mit",
+    "region:us"
+  ],
+  "downloads": 0,
+  "likes": 34,
+  "modelId": "KimberleyJSN/melbandroformer",
+  "author": "KimberleyJSN",
+  "sha": "ac9b0614ab3cd7f77219e18ba494dfd93956c348",
+  "lastModified": "2026-04-22T12:30:27.000Z",
+  "gated": false,
+  "disabled": false,
+  "model-index": null,
+  "config": {},
+  "cardData": {
+    "license": "mit"
+  },
+  "siblings": [
+    {
+      "rfilename": ".gitattributes",
+      "blobId": "a6344aac8c09253b3b630fb776ae94478aa0275b",
+      "size": 1519
+    },
+    {
+      "rfilename": "MelBandRoformer.ckpt",
+      "blobId": "e9269937826d8cedf1855096bc9c1d49298bb4f8",
+      "size": 913106900,
+      "lfs": {
+        "sha256": "87201f4d31afb5bc79993230fc49446918425574db48c01c405e44f365c7559e",
+        "size": 913106900,
+        "pointerSize": 134
+      }
+    },
+    {
+      "rfilename": "README.md",
+      "blobId": "acb132c8f50ba394d4f63c298904c290319877a2",
+      "size": 20
+    }
+  ],
+  "spaces": [
+    "ASesYusuf1/SESA_Fast_Separation",
+    "NeoPy/SESA_Fast_Separation"
+  ],
+  "createdAt": "2024-08-06T16:11:22.000Z",
+  "usedStorage": 913106900
+}

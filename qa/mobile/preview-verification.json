@@ -1,0 +1,27 @@
+{
+  "checks": [
+    "front camera renders",
+    "rear camera renders",
+    "driver camera renders",
+    "cabin camera renders",
+    "orbit camera renders",
+    "drag orbit changes actual projected camera",
+    "expand and restore preserve preview",
+    "Highland trunk lamps move while rear fascia lamps stay fixed",
+    "fade midpoint matches exported ramp",
+    "license plate and paired reverse lamps use correct channels",
+    "rewind deterministic including closures",
+    "motor commands produce visible changing geometry",
+    "charge dance renders LED rainbow without oscillating door",
+    "pause freezes sequence and estimated motion",
+    "playback clock drives preview within one render interval",
+    "live monitor matches otherwise occluded lamp values",
+    "foldable layout has no horizontal overflow"
+  ],
+  "errors": [],
+  "audioSync": {
+    "audio": 1.887848,
+    "preview": 1.871713
+  },
+  "passed": true
+}

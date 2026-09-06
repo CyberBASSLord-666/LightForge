@@ -1,0 +1,20 @@
+✔ canonical profile covers every exported channel and explicitly excludes uninstalled fogs (1.518781ms)
+✔ every available exterior and RGB output can be independently authored and exported (206.891355ms)
+✔ all exterior ramp directions and durations reach preview with exact frame boundaries (69.857268ms)
+✔ outer beam fades require an explicit verified-hardware option and preserve exact bytes (42.87548ms)
+✔ linked physical outputs share manual cues; valid unequal aliases retain physical OR semantics (15.773465ms)
+✔ manual closures replace only their own automatic track and accept all supported commands (99.966154ms)
+✔ Stop interrupts a partial travel; Idle preserves the reached position and closing resumes there (2.215532ms)
+✔ Idle ends Dance but does not cancel an in-flight one-frame Open/Close request (5.045421ms)
+✔ per-output switch masks automatic and manual cues, with independent RGB zones and closures (12.630123ms)
+✔ invalid commands, timing, overlaps, unsupported outputs and damaged colors fail before export (1.164036ms)
+✔ movement budgets, preparation, automatic close and final settled position are enforced (39.643294ms)
+✔ project JSON round-trip preserves all manual cues, switches, colors and exact FSEQ (16.096823ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 580.337191

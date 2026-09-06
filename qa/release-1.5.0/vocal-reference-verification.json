@@ -1,0 +1,57 @@
+{
+  "passed": true,
+  "torch": "2.14.0+cpu",
+  "onnxruntime": "1.29.0",
+  "maxAbsScoreError": 1.0132789611816406e-06,
+  "model": {
+    "name": "PretrainedSED Frame-MN10",
+    "id": "frame-mn10-strong-1",
+    "file": "frame-mn10-singing.onnx",
+    "sha256": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+    "bytes": 13620408,
+    "license": "MIT",
+    "source": "https://github.com/fschmid56/PretrainedSED",
+    "weightsSource": "https://github.com/fschmid56/PretrainedSED/releases/download/v0.0.1/frame_mn10_strong_1.pt",
+    "weightsSHA256": "4a0fe320d5369987b772394c51881fb20a602967e6842f72f3e5c8181065ece7",
+    "sampleRate": 16000,
+    "inputShape": [
+      1,
+      1,
+      128,
+      1000
+    ],
+    "outputShape": [
+      1,
+      447,
+      250
+    ],
+    "contextSeconds": 10,
+    "frameSeconds": 0.04,
+    "singingClassIds": [
+      73,
+      77,
+      85,
+      156,
+      212,
+      237,
+      239,
+      292,
+      327,
+      373,
+      444
+    ],
+    "speechClassIds": [
+      78,
+      157,
+      238,
+      254,
+      353
+    ],
+    "capabilities": [
+      "Singing activity trained with strong frame-level AudioSet labels",
+      "Male/female/child singing, choir, humming, chant and rap",
+      "No source separation, lyrics or individual sung-note transcription"
+    ]
+  },
+  "meaning": "Numerical agreement to original pretrained Frame-MN10 strong model, not an accuracy benchmark"
+}

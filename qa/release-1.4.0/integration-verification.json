@@ -1,0 +1,145 @@
+{
+  "release": "1.4.0",
+  "started": "2026-09-06T05:34:22.549Z",
+  "checks": [
+    "Actual file-picker import converts the bundled 64-second music to project audio; a real offline Beat This! transformer ONNX worker returns analysisVersion 3 and generates a valid 1.4.0 show.",
+    "A stored version-1 analysis recalls and edits without a neural rerun. Re-analyze upgrades to version 3 while preserving project identity, exact audio, edited light/RGB/mirror cues and muted outputs.",
+    "New variation changes actual light-frame bytes without another analysis worker or audio analysis; custom cues and mutes persist. Undo restores the exact previous FSEQ and settings.",
+    "Music statistics match the actual generated plan. Tapping three planned moments seeks the audio clock and correct camera; preview RGB, closure command and estimated motor position match the same exported frame timeline.",
+    "Autosave/reload restores byte-identical show, music and edits without analysis. Actual Export produces a CRC-valid ZIP with 44.1 kHz stereo PCM16 WAV, terminal dark FSEQ and full editable project; fresh Node regeneration from that project is byte-identical.",
+    "New music intelligence controls and movement moment cards fit 320, 393 and 768 pixel viewports with no horizontal overflow.",
+    "Bundled WebGL model, audio, neural analysis and editing complete with no JavaScript errors or external network requests.",
+    "Freshly compiled production Android Java export validator accepts the actual neural-composed USB archive; all 16 valid/invalid native command regressions pass on the host JVM."
+  ],
+  "errors": [],
+  "externalRequests": [],
+  "limits": [
+    "Desktop Chromium WebGL2/SwiftShader, not a physical phone or Tesla test.",
+    "Native export validator executes on the host JVM with production Java sources; Android codec/device execution is not claimed."
+  ],
+  "analysis": {
+    "engine": {
+      "name": "Beat This! full transformer",
+      "neural": true,
+      "detail": "Bundled pretrained Beat This! transformer with exact exported log-mel frontend, overlapping 30-second context, measured PCM attack alignment and recurring-passage fingerprints. All audio stays on this device.",
+      "model": "Beat This! final0",
+      "modelId": "beat-this-final0",
+      "modelSha256": "5f810debe53459b559127fb55bbad40035bb47cc567b20e501670f968c770f02",
+      "frontendSha256": "fdd59e65c515331308e4c8841edf99972deca646bdf6197744c2a5b7755e3de9",
+      "quality": "precision",
+      "runtime": "ONNX Runtime Web 1.20.1",
+      "analysisSeconds": 25.8
+    },
+    "analysisVersion": 3,
+    "bpm": 94.42,
+    "meter": 4,
+    "beats": 101,
+    "downbeats": 26,
+    "onsets": 1668,
+    "phrases": 7,
+    "impacts": 24,
+    "timing": {
+      "neuralFrameMs": 20,
+      "pcmEnvelopeMs": 5,
+      "decoder": "Transformer direct peak decoding",
+      "alignment": "Neural pulse with local tempo and nearby measured PCM attacks",
+      "manualTempo": false,
+      "attackCount": 689,
+      "refinedBeatCount": 79,
+      "appliedGlobalOffsetMs": 0
+    }
+  },
+  "moments": [
+    {
+      "time": 10.5,
+      "label": "0:10.5Left front windowMusical arrival · dance entrance",
+      "camera": "driver",
+      "frame": 525
+    },
+    {
+      "time": 11.14,
+      "label": "0:11.1Right front window + Right mirrorMusical arrival · dance entrance",
+      "camera": "front",
+      "frame": 557
+    },
+    {
+      "time": 11.8,
+      "label": "0:11.8Left rear windowMusical arrival · dance entrance",
+      "camera": "driver",
+      "frame": 590
+    }
+  ],
+  "officialValidator": "Found 3200 frames, step time of 20 ms for a total duration of 0:01:04.\nPress Enter to exit...",
+  "export": {
+    "filename": "glass-castle_LightForge.zip",
+    "fseqSHA256": "44cd9ed72164f5668e064c6bb86e2e83e60e106df59bf482e2496cc9ac5f1687",
+    "audioSHA256": "d17d7ed2b3af21fd6f175f7880c3a9253cbbc9a1da7ea0e5c935ae1be9d61dc0",
+    "files": [
+      "LightShow/lightshow.fseq",
+      "LightShow/lightshow.wav",
+      "README.txt",
+      "Validation.json",
+      "Review/LightForge_Project.json"
+    ],
+    "frames": 3200,
+    "stepMs": 20
+  },
+  "mobile": [
+    {
+      "viewport": 320,
+      "scroll": 320,
+      "body": 320
+    },
+    {
+      "viewport": 393,
+      "scroll": 393,
+      "body": 393
+    },
+    {
+      "viewport": 768,
+      "scroll": 768,
+      "body": 768
+    }
+  ],
+  "native": {
+    "report": {
+      "duration": 64,
+      "frames": 3200,
+      "channels": 200,
+      "sha256": "44cd9ed72164f5668e064c6bb86e2e83e60e106df59bf482e2496cc9ac5f1687",
+      "stepMs": 20,
+      "audioSampleRate": 44100,
+      "status": "PASS"
+    },
+    "regressions": "PASS: 16 production native sequence checks; valid manual Stop/Idle, all closures, all lamps/RGB, and optional outer ramps; corrupt commands and impossible choreography rejected.",
+    "source_hashes": {
+      "android/src/com/cyberbasslord/lightforge/AudioImporter.java": "910ef3ec1d6f6ded54c91111d9ab34dbf4bbf4d4043f62f1978057183ca0b575",
+      "android/src/com/cyberbasslord/lightforge/MainActivity.java": "cdd867de3cbe97b2f859bbb28f97398e05dac97cc01de748de1067743d8bebbf",
+      "android/src/com/cyberbasslord/lightforge/PendingExportStore.java": "1697003aab5f842d0bb90122df46f2d1f60da30232eca9d6912c972e421c4163",
+      "android/src/com/cyberbasslord/lightforge/ProjectPreview.java": "459e586684b6cea8b0b5c0541de766c45301347341ff2acdc15e876028e7c551",
+      "android/src/com/cyberbasslord/lightforge/ProjectStore.java": "51492859a40490533286574a08893bf3f6da5063c69b806f7760b3d056269472",
+      "android/src/com/cyberbasslord/lightforge/WavConverter.java": "f34b9bf3c8960678b6116619941307ce01b75c672807ca85f6f81b6adc33b1b6",
+      "android/src/com/cyberbasslord/lightforge/WebViewFileTransport.java": "729b1e9145f385f2d7dc4d303ef71f81c6d9dac3121885b7d52e89241a39a97f"
+    }
+  },
+  "source_hashes": {
+    "web/app.js": "ecd9069eabce9ae96b4f5da0f3d809ec3b80167bb1adc5fafce60cc67f1a7369",
+    "web/engine/worker.js": "4e0198ba0f2eba17bc70b6c4b85ef607c27f8014713817559a0805a39e62e9d7",
+    "web/engine/client.js": "2735ef93c97589c2c56915d788500ba05926dc058f23d4e427982f38485b0c96",
+    "web/studio-tools.js": "45847675661eefdabc3aa23002c0f1df27be857aa4eaa04986ccbcf82e8b1f5e",
+    "web/music-insights.js": "474e6242fc54e5f6c835cc5ec54f53f403903ed0906582825551570d6637aeb7",
+    "web/index.html": "20e59e2b0bb2510babfd736e4433833b0da86dbef12875f6c06b0dbe0476c03c",
+    "web/styles.css": "966394c03ffb037fcb3aceb1b8fec88df7555342796a3b28a0f213be84e9fcab",
+    "web/engine/show-engine.js": "77e494a193fef1a5051a3d5bf632338b738073deb0fea3d316d06613e7d5c609",
+    "web/engine/movement-planner.js": "1d74e6e2a66a8390f0152198244c9c6853941ebc13c97bc8d54714ecd85eea11",
+    "web/engine/light-planner.js": "30324bba3e1b438a35ce7e4df0b1f3a8a821f105909ca2c77c007fcdad9f6cf5",
+    "web/analysis/analyzer.js": "b315608cacb102e1487edbdd4ebcf049adf3e99efa8c6612f1ccdbf7791240da",
+    "web/analysis/dsp.js": "32186b9268632cab85cadcb7e84fa1b4e3d8eb4bb9fbdf96a0873067cb9acd71",
+    "web/engine/vehicle-profile.js": "027bf87a827a900cda00505e2b539f84cbdb0d5a9800ea4eb1efdf85a0c10936",
+    "web/analysis/worker.js": "8b1fbb26788563cf0aeded85ef09e88e830065d3000ec9417656473f126a97d0",
+    "web/preview/vehicle-preview.js": "a27736b2f89f1597f56971ba1755303b8724a8a72da11b8b7f2ac044cedbcc44",
+    "android/src/com/cyberbasslord/lightforge/MainActivity.java": "cdd867de3cbe97b2f859bbb28f97398e05dac97cc01de748de1067743d8bebbf"
+  },
+  "passed": true,
+  "completed": "2026-09-06T05:35:34.421Z"
+}

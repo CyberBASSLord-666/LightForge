@@ -1,0 +1,97 @@
+{
+  "purpose": "Read-only candidate research for LightForge1.6; no production integration is performed by these experiments.",
+  "mdxCurrent": {
+    "model": "UVR-MDX-NET-Voc_FT",
+    "fileBytes": 66759286,
+    "status": "Separately integrated and benchmarked by production separator owner; see release QA receipts for actual winner metrics."
+  },
+  "melBandSYHFT": {
+    "source": "https://huggingface.co/musetric/vocal-separation-roformer-onnx/tree/98064f6e42af945316fd96261a18f1befe3a4536",
+    "graphBytes": 7041719,
+    "externalWeightBytes": 741190540,
+    "graphSHA256": "8b624200ac9bfc76c38fbcc9dcde3901f307acd6ee7e95b5b0a6cb3022585758",
+    "input": [
+      1,
+      2050,
+      1100,
+      2
+    ],
+    "output": [
+      1,
+      2050,
+      1100,
+      2
+    ],
+    "opset": 23,
+    "float16Initializers": 841,
+    "RMSNormalizationNodes": 96,
+    "status": "Actual graph downloaded and inspected; targets WebGPU, not directly compatible with shipped ORT1.20.1 WASM. Weights not downloaded and no performance/quality claim independently verified."
+  },
+  "melBandKimFP32": {
+    "source": "https://github.com/santiquiroz/port-bs-roformer-onnx/releases/tag/models-v1.0",
+    "fileBytes": 931054408,
+    "input": [
+      1,
+      2050,
+      801,
+      2
+    ],
+    "output": [
+      1,
+      1,
+      2050,
+      801,
+      2
+    ],
+    "opset": 17,
+    "contextSeconds": 8,
+    "license": "Original KimberleyJSN model card explicitly tags MIT; export author publishes MIT port.",
+    "status": "Release metadata and export methodology inspected, not downloaded or run. Full attention plus931MB weights makes mobile peak unqualified; reducing context would change the quality premise."
+  },
+  "mdx23c": {
+    "source": "https://github.com/ZFTurbo/MSS_ONNX_TensorRT",
+    "status": "Author provides STFT-free ONNX export tooling. No ready vocal ONNX candidate with verified provenance, parity and superior same-fixture quality was found in this bounded research. No inference result claimed."
+  },
+  "demucsFT": {
+    "source": "https://huggingface.co/StemSplitio/htdemucs-ft-vocals-onnx/tree/2ef0d757d3e226d0da85fb8c71514f464fcabdd0",
+    "fileBytes": 316446953,
+    "onnxSHA256": "8c5d5e2da1f27050240bb80236673307ee3b40d4b064066d9350f4d64bfd544d",
+    "inputName": "mix",
+    "input": [
+      1,
+      2,
+      343980
+    ],
+    "outputName": "stems",
+    "output": [
+      1,
+      4,
+      2,
+      343980
+    ],
+    "vocalIndex": 3,
+    "opset": 17,
+    "runtimeRequirement": "graphOptimizationLevel:'disabled' for the shipped ORT1.20.1 WASM; 'all' failed at4294901760B during initialization.",
+    "measuredWasmSingleRunBytes": 1297743872,
+    "measuredWasmOutputSNRvsNativeDb": 67.85454857313864,
+    "nativeReferenceRuntime": "ORT1.29.0 CPU,2threads",
+    "baselineQualityReceipt": "demucs-quality-results.json",
+    "fourShiftCaptures": "demucs4-fixture-captures.json",
+    "fixedBlendCaptures": "demucs-mdx-blend-captures.json",
+    "licenseEvidence": {
+      "exportCard": "MIT tag",
+      "primaryAuthor": "https://github.com/facebookresearch/demucs/issues/327#issuecomment-1134828611",
+      "actualIssueJSON": "demucs-weight-license-comments.json",
+      "authorStatementDate": "2022-05-23",
+      "conclusion": "The export model card tags MIT. The original model author stated on2022-05-23 that model weights were only for scientific purposes. The card and comment are recorded as distinct source statements; no legal interpretation is made."
+    },
+    "weightIdentity": "demucs-weight-identity.json",
+    "finalComparison": "final-candidate-comparison.json"
+  },
+  "scopeLimits": [
+    "These are desktop CPU/browser evaluations, not physical Android device runs.",
+    "Six short source-stem excerpts are not a representative held-out model ranking.",
+    "Neither acoustic separation scores nor a model family establish perfect singing interpretation or physical choreography accuracy."
+  ],
+  "selection": "Keep UVR-MDX-NET-Voc_FT for1.6: the six-excerpt comparison did not demonstrate a uniform quality improvement from the heavier candidate or fixed blend. Parent project selected MDX on measured separation quality and reliability, without treating this small set as a universal model ranking."
+}

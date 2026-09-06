@@ -1,0 +1,30 @@
+{
+  "description": "Four separate copies of the original Stella excerpt at non-grid offsets, with10ms fades and exactdigital-silence gaps. A chunk/clock regression fixture, not a natural fullsong or subjective choreography evaluation.",
+  "sourceFixture": "stella",
+  "duration": 41.53099773242631,
+  "sampleRate": 44100,
+  "sourceWindows": [
+    [
+      2.3170068027210884,
+      9.120453514739228
+    ],
+    [
+      11.839002267573695,
+      18.642448979591837
+    ],
+    [
+      22.130997732426305,
+      28.934444444444445
+    ],
+    [
+      33.370997732426304,
+      40.17444444444445
+    ]
+  ],
+  "knownNoVoiceOutsideWindows": true,
+  "derivedFiles": {
+    "seam-mix.wav": "41fbfc709c476106c32091611e10fa9a6f4a3b81734498373c24db0e19a72ce0",
+    "seam-vocals.wav": "15c5a679b846baf13533fcbdb5fdc7d5d21732778b53360dddc455978337a79b",
+    "seam-instrumental.wav": "23f19856a10bd465228944fcd70ed9c9dcee6b75da3a62c0f2f036057d77b87d"
+  }
+}

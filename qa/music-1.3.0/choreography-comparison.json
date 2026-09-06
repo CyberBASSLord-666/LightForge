@@ -1,0 +1,1911 @@
+{
+  "version": "1.3.0",
+  "passed": true,
+  "errors": [],
+  "scope": "Software A/B: identical baseline analysis isolates composer changes; fresh analysis uses same PCM through upgraded understanding. RMS is an independent audio energy proxy, not subjective quality or physical timing.",
+  "countsNote": "20 documented logical exterior groups, combined aliases counted once. Ramp commands use their on/off direction, not simulated perceived brightness.",
+  "tracks": {
+    "demo": {
+      "duration": 64,
+      "oldComposerOldAnalysis": {
+        "version": "1.2.0",
+        "valid": true,
+        "errors": [],
+        "commandOnGroupDutyFraction": 0.3177,
+        "commandOnExteriorFraction": 0.8472,
+        "physicalGroupOnCommandAttacks": 1755,
+        "movement": {
+          "35": {
+            "actuations": 19,
+            "danceSeconds": 0,
+            "danceStarts": [],
+            "meanNormalizedRmsWhileDancing": null
+          },
+          "36": {
+            "actuations": 19,
+            "danceSeconds": 0,
+            "danceStarts": [],
+            "meanNormalizedRmsWhileDancing": null
+          },
+          "37": {
+            "actuations": 5,
+            "danceSeconds": 18,
+            "danceStarts": [
+              23.4,
+              44.04
+            ],
+            "meanNormalizedRmsWhileDancing": 0.7457
+          },
+          "38": {
+            "actuations": 5,
+            "danceSeconds": 18,
+            "danceStarts": [
+              24.7,
+              44.04
+            ],
+            "meanNormalizedRmsWhileDancing": 0.7476
+          },
+          "39": {
+            "actuations": 5,
+            "danceSeconds": 18,
+            "danceStarts": [
+              24.04,
+              44.04
+            ],
+            "meanNormalizedRmsWhileDancing": 0.7447
+          },
+          "40": {
+            "actuations": 5,
+            "danceSeconds": 18,
+            "danceStarts": [
+              25.34,
+              44.04
+            ],
+            "meanNormalizedRmsWhileDancing": 0.7595
+          },
+          "41": {
+            "actuations": 3,
+            "danceSeconds": 14,
+            "danceStarts": [
+              44.04
+            ],
+            "meanNormalizedRmsWhileDancing": 0.7458
+          },
+          "46": {
+            "actuations": 3,
+            "danceSeconds": 22.42,
+            "danceStarts": [
+              38.88
+            ],
+            "meanNormalizedRmsWhileDancing": 0.7369
+          }
+        },
+        "selectedTargets": []
+      },
+      "newComposerSameAnalysis": {
+        "version": "1.3.0",
+        "valid": true,
+        "errors": [],
+        "commandOnGroupDutyFraction": 0.2379,
+        "commandOnExteriorFraction": 0.8284,
+        "physicalGroupOnCommandAttacks": 1798,
+        "movement": {
+          "35": {
+            "actuations": 8,
+            "danceSeconds": 0,
+            "danceStarts": [],
+            "meanNormalizedRmsWhileDancing": null
+          },
+          "36": {
+            "actuations": 8,
+            "danceSeconds": 0,
+            "danceStarts": [],
+            "meanNormalizedRmsWhileDancing": null
+          },
+          "37": {
+            "actuations": 5,
+            "danceSeconds": 27.08,
+            "danceStarts": [
+              13.06,
+              33.7,
+              49.2
+            ],
+            "meanNormalizedRmsWhileDancing": 0.7785
+          },
+          "38": {
+            "actuations": 5,
+            "danceSeconds": 26.5,
+            "danceStarts": [
+              14.36,
+              33.7,
+              50.46
+            ],
+            "meanNormalizedRmsWhileDancing": 0.7692
+          },
+          "39": {
+            "actuations": 5,
+            "danceSeconds": 27.14,
+            "danceStarts": [
+              13.7,
+              33.7,
+              49.82
+            ],
+            "meanNormalizedRmsWhileDancing": 0.7696
+          },
+          "40": {
+            "actuations": 5,
+            "danceSeconds": 25.86,
+            "danceStarts": [
+              15,
+              33.7,
+              51.1
+            ],
+            "meanNormalizedRmsWhileDancing": 0.7643
+          },
+          "41": {
+            "actuations": 3,
+            "danceSeconds": 13.56,
+            "danceStarts": [
+              33.7
+            ],
+            "meanNormalizedRmsWhileDancing": 0.8611
+          },
+          "46": {
+            "actuations": 3,
+            "danceSeconds": 23.88,
+            "danceStarts": [
+              33.7
+            ],
+            "meanNormalizedRmsWhileDancing": 0.801
+          }
+        },
+        "selectedTargets": [
+          {
+            "outputId": "windowFL",
+            "channels": [
+              37
+            ],
+            "time": 13.06,
+            "musicTime": 13.06,
+            "kind": "dance",
+            "source": "bar arrival",
+            "score": 0.6166,
+            "confidence": 0.9460754814703449,
+            "end": 22.080000000000002
+          },
+          {
+            "outputId": "mirrorL",
+            "channels": [
+              35
+            ],
+            "time": 13.06,
+            "musicTime": 13.06,
+            "kind": "mirror-arrival",
+            "source": "bar arrival",
+            "score": 0.6166,
+            "confidence": 0.9460754814703449,
+            "prepareStart": 10.76,
+            "estimatedOpenArrival": 12.76
+          },
+          {
+            "outputId": "windowFR",
+            "channels": [
+              39
+            ],
+            "time": 13.700000000000001,
+            "musicTime": 13.700000000000001,
+            "kind": "dance",
+            "source": "bar arrival",
+            "score": 0.6166,
+            "confidence": 0.9460754814703449,
+            "end": 22.740000000000002
+          },
+          {
+            "outputId": "mirrorR",
+            "channels": [
+              36
+            ],
+            "time": 13.700000000000001,
+            "musicTime": 13.700000000000001,
+            "kind": "mirror-arrival",
+            "source": "bar arrival",
+            "score": 0.6166,
+            "confidence": 0.9460754814703449,
+            "prepareStart": 11.4,
+            "estimatedOpenArrival": 13.4
+          },
+          {
+            "outputId": "windowRL",
+            "channels": [
+              38
+            ],
+            "time": 14.36,
+            "musicTime": 14.36,
+            "kind": "dance",
+            "source": "bar arrival",
+            "score": 0.6166,
+            "confidence": 0.9460754814703449,
+            "end": 23.400000000000002
+          },
+          {
+            "outputId": "windowRR",
+            "channels": [
+              40
+            ],
+            "time": 15,
+            "musicTime": 15,
+            "kind": "dance",
+            "source": "bar arrival",
+            "score": 0.6166,
+            "confidence": 0.9460754814703449,
+            "end": 24.04
+          },
+          {
+            "outputId": "windowFL",
+            "channels": [
+              37
+            ],
+            "time": 33.7,
+            "musicTime": 33.7,
+            "kind": "dance",
+            "source": "section arrival",
+            "score": 0.7568,
+            "confidence": 0.9460754814703449,
+            "end": 42.76
+          },
+          {
+            "outputId": "windowFR",
+            "channels": [
+              39
+            ],
+            "time": 33.7,
+            "musicTime": 33.7,
+            "kind": "dance",
+            "source": "section arrival",
+            "score": 0.7568,
+            "confidence": 0.9460754814703449,
+            "end": 42.76
+          },
+          {
+            "outputId": "windowRL",
+            "channels": [
+              38
+            ],
+            "time": 33.7,
+            "musicTime": 33.7,
+            "kind": "dance",
+            "source": "section arrival",
+            "score": 0.7568,
+            "confidence": 0.9460754814703449,
+            "end": 42.76
+          },
+          {
+            "outputId": "windowRR",
+            "channels": [
+              40
+            ],
+            "time": 33.7,
+            "musicTime": 33.7,
+            "kind": "dance",
+            "source": "section arrival",
+            "score": 0.7568,
+            "confidence": 0.9460754814703449,
+            "end": 42.76
+          },
+          {
+            "outputId": "trunk",
+            "channels": [
+              41
+            ],
+            "time": 33.7,
+            "musicTime": 33.7,
+            "kind": "dance",
+            "source": "section arrival",
+            "score": 0.7568,
+            "confidence": 0.9460754814703449,
+            "end": 47.26,
+            "prepareStart": 19.340000000000003,
+            "estimatedOpenArrival": 33.34
+          },
+          {
+            "outputId": "charge",
+            "channels": [
+              46
+            ],
+            "time": 33.7,
+            "musicTime": 33.7,
+            "kind": "rainbow",
+            "source": "section arrival",
+            "score": 0.7568,
+            "confidence": 0.9460754814703449,
+            "end": 57.58,
+            "prepareStart": 31.400000000000002
+          },
+          {
+            "outputId": "mirrorL",
+            "channels": [
+              35
+            ],
+            "time": 33.7,
+            "musicTime": 33.7,
+            "kind": "mirror-arrival",
+            "source": "section arrival",
+            "score": 0.7568,
+            "confidence": 0.9460754814703449,
+            "prepareStart": 31.400000000000002,
+            "estimatedOpenArrival": 33.400000000000006
+          },
+          {
+            "outputId": "mirrorR",
+            "channels": [
+              36
+            ],
+            "time": 34.36,
+            "musicTime": 34.36,
+            "kind": "mirror-arrival",
+            "source": "section arrival",
+            "score": 0.7568,
+            "confidence": 0.9460754814703449,
+            "prepareStart": 32.06,
+            "estimatedOpenArrival": 34.06
+          },
+          {
+            "outputId": "mirrorL",
+            "channels": [
+              35
+            ],
+            "time": 46.62,
+            "musicTime": 46.62,
+            "kind": "mirror-arrival",
+            "source": "bar arrival",
+            "score": 0.6391,
+            "confidence": 0.9460754814703449,
+            "prepareStart": 44.32,
+            "estimatedOpenArrival": 46.32
+          },
+          {
+            "outputId": "mirrorR",
+            "channels": [
+              36
+            ],
+            "time": 47.26,
+            "musicTime": 47.26,
+            "kind": "mirror-arrival",
+            "source": "bar arrival",
+            "score": 0.6391,
+            "confidence": 0.9460754814703449,
+            "prepareStart": 44.96,
+            "estimatedOpenArrival": 46.96
+          },
+          {
+            "outputId": "windowFL",
+            "channels": [
+              37
+            ],
+            "time": 49.2,
+            "musicTime": 49.2,
+            "kind": "dance",
+            "source": "bar arrival",
+            "score": 0.6372,
+            "confidence": 0.9460754814703449,
+            "end": 58.2
+          },
+          {
+            "outputId": "windowFR",
+            "channels": [
+              39
+            ],
+            "time": 49.82,
+            "musicTime": 49.82,
+            "kind": "dance",
+            "source": "bar arrival",
+            "score": 0.6372,
+            "confidence": 0.9460754814703449,
+            "end": 58.86
+          },
+          {
+            "outputId": "windowRL",
+            "channels": [
+              38
+            ],
+            "time": 50.46,
+            "musicTime": 50.46,
+            "kind": "dance",
+            "source": "bar arrival",
+            "score": 0.6372,
+            "confidence": 0.9460754814703449,
+            "end": 58.86
+          },
+          {
+            "outputId": "windowRR",
+            "channels": [
+              40
+            ],
+            "time": 51.1,
+            "musicTime": 51.1,
+            "kind": "dance",
+            "source": "bar arrival",
+            "score": 0.6372,
+            "confidence": 0.9460754814703449,
+            "end": 58.86
+          },
+          {
+            "outputId": "mirrorL",
+            "channels": [
+              35
+            ],
+            "time": 59.52,
+            "musicTime": 59.52,
+            "kind": "mirror-arrival",
+            "source": "bar arrival",
+            "score": 0.4486,
+            "confidence": 0.9460754814703449,
+            "prepareStart": 57.220000000000006,
+            "estimatedOpenArrival": 59.220000000000006
+          },
+          {
+            "outputId": "mirrorR",
+            "channels": [
+              36
+            ],
+            "time": 60.160000000000004,
+            "musicTime": 60.160000000000004,
+            "kind": "mirror-arrival",
+            "source": "bar arrival",
+            "score": 0.4486,
+            "confidence": 0.9460754814703449,
+            "prepareStart": 57.86000000000001,
+            "estimatedOpenArrival": 59.86000000000001
+          }
+        ]
+      },
+      "newComposerNewAnalysis": {
+        "version": "1.3.0",
+        "valid": true,
+        "errors": [],
+        "commandOnGroupDutyFraction": 0.2406,
+        "commandOnExteriorFraction": 0.7919,
+        "physicalGroupOnCommandAttacks": 1810,
+        "movement": {
+          "35": {
+            "actuations": 8,
+            "danceSeconds": 0,
+            "danceStarts": [],
+            "meanNormalizedRmsWhileDancing": null
+          },
+          "36": {
+            "actuations": 8,
+            "danceSeconds": 0,
+            "danceStarts": [],
+            "meanNormalizedRmsWhileDancing": null
+          },
+          "37": {
+            "actuations": 5,
+            "danceSeconds": 25.08,
+            "danceStarts": [
+              10.5,
+              33.72,
+              51.78
+            ],
+            "meanNormalizedRmsWhileDancing": 0.7684
+          },
+          "38": {
+            "actuations": 5,
+            "danceSeconds": 23.92,
+            "danceStarts": [
+              11.74,
+              33.72,
+              53.06
+            ],
+            "meanNormalizedRmsWhileDancing": 0.7657
+          },
+          "39": {
+            "actuations": 5,
+            "danceSeconds": 24.5,
+            "danceStarts": [
+              11.14,
+              33.72,
+              52.42
+            ],
+            "meanNormalizedRmsWhileDancing": 0.7673
+          },
+          "40": {
+            "actuations": 5,
+            "danceSeconds": 22.58,
+            "danceStarts": [
+              12.42,
+              33.72,
+              53.72
+            ],
+            "meanNormalizedRmsWhileDancing": 0.7629
+          },
+          "41": {
+            "actuations": 3,
+            "danceSeconds": 10.32,
+            "danceStarts": [
+              33.72
+            ],
+            "meanNormalizedRmsWhileDancing": 0.8639
+          },
+          "46": {
+            "actuations": 3,
+            "danceSeconds": 10.32,
+            "danceStarts": [
+              33.72
+            ],
+            "meanNormalizedRmsWhileDancing": 0.8639
+          }
+        },
+        "selectedTargets": [
+          {
+            "outputId": "windowFL",
+            "channels": [
+              37
+            ],
+            "time": 10.5,
+            "musicTime": 10.495000000000001,
+            "kind": "dance",
+            "source": "peak",
+            "score": 0.8173,
+            "confidence": 0.9571986218694374,
+            "end": 19.46
+          },
+          {
+            "outputId": "mirrorL",
+            "channels": [
+              35
+            ],
+            "time": 10.5,
+            "musicTime": 10.495000000000001,
+            "kind": "mirror-arrival",
+            "source": "peak",
+            "score": 0.8173,
+            "confidence": 0.9571986218694374,
+            "prepareStart": 8.2,
+            "estimatedOpenArrival": 10.2
+          },
+          {
+            "outputId": "windowFR",
+            "channels": [
+              39
+            ],
+            "time": 11.14,
+            "musicTime": 11.13,
+            "kind": "dance",
+            "source": "peak",
+            "score": 0.8173,
+            "confidence": 0.9571986218694374,
+            "end": 20.16
+          },
+          {
+            "outputId": "mirrorR",
+            "channels": [
+              36
+            ],
+            "time": 11.14,
+            "musicTime": 11.13,
+            "kind": "mirror-arrival",
+            "source": "peak",
+            "score": 0.8173,
+            "confidence": 0.9571986218694374,
+            "prepareStart": 8.84,
+            "estimatedOpenArrival": 10.84
+          },
+          {
+            "outputId": "windowRL",
+            "channels": [
+              38
+            ],
+            "time": 11.74,
+            "musicTime": 11.745000000000001,
+            "kind": "dance",
+            "source": "peak",
+            "score": 0.8173,
+            "confidence": 0.9571986218694374,
+            "end": 20.82
+          },
+          {
+            "outputId": "windowRR",
+            "channels": [
+              40
+            ],
+            "time": 12.42,
+            "musicTime": 12.425,
+            "kind": "dance",
+            "source": "peak",
+            "score": 0.8173,
+            "confidence": 0.9571986218694374,
+            "end": 20.82
+          },
+          {
+            "outputId": "windowFL",
+            "channels": [
+              37
+            ],
+            "time": 33.72,
+            "musicTime": 33.715,
+            "kind": "dance",
+            "source": "peak",
+            "score": 0.8488,
+            "confidence": 0.9571986218694374,
+            "end": 42.76
+          },
+          {
+            "outputId": "windowFR",
+            "channels": [
+              39
+            ],
+            "time": 33.72,
+            "musicTime": 33.715,
+            "kind": "dance",
+            "source": "peak",
+            "score": 0.8488,
+            "confidence": 0.9571986218694374,
+            "end": 42.76
+          },
+          {
+            "outputId": "windowRL",
+            "channels": [
+              38
+            ],
+            "time": 33.72,
+            "musicTime": 33.715,
+            "kind": "dance",
+            "source": "peak",
+            "score": 0.8488,
+            "confidence": 0.9571986218694374,
+            "end": 42.76
+          },
+          {
+            "outputId": "windowRR",
+            "channels": [
+              40
+            ],
+            "time": 33.72,
+            "musicTime": 33.715,
+            "kind": "dance",
+            "source": "peak",
+            "score": 0.8488,
+            "confidence": 0.9571986218694374,
+            "end": 42.76
+          },
+          {
+            "outputId": "trunk",
+            "channels": [
+              41
+            ],
+            "time": 33.72,
+            "musicTime": 33.715,
+            "kind": "dance",
+            "source": "peak",
+            "score": 0.8488,
+            "confidence": 0.9571986218694374,
+            "end": 44.04,
+            "prepareStart": 19.36,
+            "estimatedOpenArrival": 33.36
+          },
+          {
+            "outputId": "charge",
+            "channels": [
+              46
+            ],
+            "time": 33.72,
+            "musicTime": 33.715,
+            "kind": "rainbow",
+            "source": "peak",
+            "score": 0.8488,
+            "confidence": 0.9571986218694374,
+            "end": 44.04,
+            "prepareStart": 31.419999999999998
+          },
+          {
+            "outputId": "mirrorL",
+            "channels": [
+              35
+            ],
+            "time": 33.72,
+            "musicTime": 33.715,
+            "kind": "mirror-arrival",
+            "source": "peak",
+            "score": 0.8488,
+            "confidence": 0.9571986218694374,
+            "prepareStart": 31.419999999999998,
+            "estimatedOpenArrival": 33.42
+          },
+          {
+            "outputId": "mirrorR",
+            "channels": [
+              36
+            ],
+            "time": 34.36,
+            "musicTime": 34.36,
+            "kind": "mirror-arrival",
+            "source": "peak",
+            "score": 0.8488,
+            "confidence": 0.9571986218694374,
+            "prepareStart": 32.06,
+            "estimatedOpenArrival": 34.06
+          },
+          {
+            "outputId": "mirrorL",
+            "channels": [
+              35
+            ],
+            "time": 46.62,
+            "musicTime": 46.62,
+            "kind": "mirror-arrival",
+            "source": "accent",
+            "score": 0.7509,
+            "confidence": 0.9341517259529806,
+            "prepareStart": 44.32,
+            "estimatedOpenArrival": 46.32
+          },
+          {
+            "outputId": "mirrorR",
+            "channels": [
+              36
+            ],
+            "time": 47.26,
+            "musicTime": 47.26,
+            "kind": "mirror-arrival",
+            "source": "accent",
+            "score": 0.7509,
+            "confidence": 0.9341517259529806,
+            "prepareStart": 44.96,
+            "estimatedOpenArrival": 46.96
+          },
+          {
+            "outputId": "windowFL",
+            "channels": [
+              37
+            ],
+            "time": 51.78,
+            "musicTime": 51.78,
+            "kind": "dance",
+            "source": "accent",
+            "score": 0.7216,
+            "confidence": 0.9341517259529806,
+            "end": 58.86
+          },
+          {
+            "outputId": "windowFR",
+            "channels": [
+              39
+            ],
+            "time": 52.42,
+            "musicTime": 52.425000000000004,
+            "kind": "dance",
+            "source": "accent",
+            "score": 0.7216,
+            "confidence": 0.9341517259529806,
+            "end": 58.86
+          },
+          {
+            "outputId": "windowRL",
+            "channels": [
+              38
+            ],
+            "time": 53.06,
+            "musicTime": 53.050000000000004,
+            "kind": "dance",
+            "source": "accent",
+            "score": 0.7216,
+            "confidence": 0.9341517259529806,
+            "end": 58.86
+          },
+          {
+            "outputId": "windowRR",
+            "channels": [
+              40
+            ],
+            "time": 53.72,
+            "musicTime": 53.715,
+            "kind": "dance",
+            "source": "accent",
+            "score": 0.7216,
+            "confidence": 0.9341517259529806,
+            "end": 58.86
+          },
+          {
+            "outputId": "mirrorL",
+            "channels": [
+              35
+            ],
+            "time": 59.52,
+            "musicTime": 59.52,
+            "kind": "mirror-arrival",
+            "source": "accent",
+            "score": 0.5418,
+            "confidence": 0.9341517259529806,
+            "prepareStart": 57.220000000000006,
+            "estimatedOpenArrival": 59.220000000000006
+          },
+          {
+            "outputId": "mirrorR",
+            "channels": [
+              36
+            ],
+            "time": 60.160000000000004,
+            "musicTime": 60.15,
+            "kind": "mirror-arrival",
+            "source": "accent",
+            "score": 0.5418,
+            "confidence": 0.9341517259529806,
+            "prepareStart": 57.86000000000001,
+            "estimatedOpenArrival": 59.86000000000001
+          }
+        ]
+      }
+    },
+    "sample": {
+      "duration": 238.04,
+      "oldComposerOldAnalysis": {
+        "version": "1.2.0",
+        "valid": true,
+        "errors": [],
+        "commandOnGroupDutyFraction": 0.3087,
+        "commandOnExteriorFraction": 0.842,
+        "physicalGroupOnCommandAttacks": 6678,
+        "movement": {
+          "35": {
+            "actuations": 19,
+            "danceSeconds": 0,
+            "danceStarts": [],
+            "meanNormalizedRmsWhileDancing": null
+          },
+          "36": {
+            "actuations": 19,
+            "danceSeconds": 0,
+            "danceStarts": [],
+            "meanNormalizedRmsWhileDancing": null
+          },
+          "37": {
+            "actuations": 6,
+            "danceSeconds": 27,
+            "danceStarts": [
+              67.7,
+              139.98,
+              211.56
+            ],
+            "meanNormalizedRmsWhileDancing": 0.8324
+          },
+          "38": {
+            "actuations": 6,
+            "danceSeconds": 27,
+            "danceStarts": [
+              68.98,
+              141.26,
+              211.56
+            ],
+            "meanNormalizedRmsWhileDancing": 0.8342
+          },
+          "39": {
+            "actuations": 6,
+            "danceSeconds": 27,
+            "danceStarts": [
+              68.34,
+              140.62,
+              211.56
+            ],
+            "meanNormalizedRmsWhileDancing": 0.8326
+          },
+          "40": {
+            "actuations": 6,
+            "danceSeconds": 27,
+            "danceStarts": [
+              69.64,
+              141.92,
+              211.56
+            ],
+            "meanNormalizedRmsWhileDancing": 0.8367
+          },
+          "41": {
+            "actuations": 6,
+            "danceSeconds": 28,
+            "danceStarts": [
+              163.2,
+              211.56
+            ],
+            "meanNormalizedRmsWhileDancing": 0.9099
+          },
+          "46": {
+            "actuations": 3,
+            "danceSeconds": 28,
+            "danceStarts": [
+              206.4
+            ],
+            "meanNormalizedRmsWhileDancing": 0.7289
+          }
+        },
+        "selectedTargets": []
+      },
+      "newComposerSameAnalysis": {
+        "version": "1.3.0",
+        "valid": true,
+        "errors": [],
+        "commandOnGroupDutyFraction": 0.2357,
+        "commandOnExteriorFraction": 0.7963,
+        "physicalGroupOnCommandAttacks": 6572,
+        "movement": {
+          "35": {
+            "actuations": 14,
+            "danceSeconds": 0,
+            "danceStarts": [],
+            "meanNormalizedRmsWhileDancing": null
+          },
+          "36": {
+            "actuations": 14,
+            "danceSeconds": 0,
+            "danceStarts": [],
+            "meanNormalizedRmsWhileDancing": null
+          },
+          "37": {
+            "actuations": 6,
+            "danceSeconds": 26.96,
+            "danceStarts": [
+              67.7,
+              98.68,
+              163.2
+            ],
+            "meanNormalizedRmsWhileDancing": 0.8188
+          },
+          "38": {
+            "actuations": 6,
+            "danceSeconds": 27.48,
+            "danceStarts": [
+              68.98,
+              98.68,
+              164.46
+            ],
+            "meanNormalizedRmsWhileDancing": 0.8205
+          },
+          "39": {
+            "actuations": 6,
+            "danceSeconds": 27.42,
+            "danceStarts": [
+              68.36,
+              98.68,
+              163.82
+            ],
+            "meanNormalizedRmsWhileDancing": 0.8208
+          },
+          "40": {
+            "actuations": 6,
+            "danceSeconds": 27.42,
+            "danceStarts": [
+              69.64,
+              98.68,
+              165.12
+            ],
+            "meanNormalizedRmsWhileDancing": 0.822
+          },
+          "41": {
+            "actuations": 6,
+            "danceSeconds": 27.4,
+            "danceStarts": [
+              98.68,
+              163.2
+            ],
+            "meanNormalizedRmsWhileDancing": 0.8289
+          },
+          "46": {
+            "actuations": 3,
+            "danceSeconds": 23.86,
+            "danceStarts": [
+              98.68
+            ],
+            "meanNormalizedRmsWhileDancing": 0.7786
+          }
+        },
+        "selectedTargets": [
+          {
+            "outputId": "mirrorL",
+            "channels": [
+              35
+            ],
+            "time": 16.1,
+            "musicTime": 16.1,
+            "kind": "mirror-arrival",
+            "source": "section arrival",
+            "score": 0.6803,
+            "confidence": 0.9338843061212861,
+            "prepareStart": 13.8,
+            "estimatedOpenArrival": 15.8
+          },
+          {
+            "outputId": "mirrorR",
+            "channels": [
+              36
+            ],
+            "time": 16.740000000000002,
+            "musicTime": 16.740000000000002,
+            "kind": "mirror-arrival",
+            "source": "section arrival",
+            "score": 0.6803,
+            "confidence": 0.9338843061212861,
+            "prepareStart": 14.440000000000001,
+            "estimatedOpenArrival": 16.44
+          },
+          {
+            "outputId": "windowFL",
+            "channels": [
+              37
+            ],
+            "time": 67.7,
+            "musicTime": 67.7,
+            "kind": "dance",
+            "source": "section arrival",
+            "score": 0.6917,
+            "confidence": 0.9338843061212861,
+            "end": 76.76
+          },
+          {
+            "outputId": "mirrorL",
+            "channels": [
+              35
+            ],
+            "time": 67.7,
+            "musicTime": 67.7,
+            "kind": "mirror-arrival",
+            "source": "section arrival",
+            "score": 0.6917,
+            "confidence": 0.9338843061212861,
+            "prepareStart": 65.4,
+            "estimatedOpenArrival": 67.4
+          },
+          {
+            "outputId": "windowFR",
+            "channels": [
+              39
+            ],
+            "time": 68.36,
+            "musicTime": 68.36,
+            "kind": "dance",
+            "source": "section arrival",
+            "score": 0.6917,
+            "confidence": 0.9338843061212861,
+            "end": 77.36
+          },
+          {
+            "outputId": "mirrorR",
+            "channels": [
+              36
+            ],
+            "time": 68.36,
+            "musicTime": 68.36,
+            "kind": "mirror-arrival",
+            "source": "section arrival",
+            "score": 0.6917,
+            "confidence": 0.9338843061212861,
+            "prepareStart": 66.06,
+            "estimatedOpenArrival": 68.06
+          },
+          {
+            "outputId": "windowRL",
+            "channels": [
+              38
+            ],
+            "time": 68.98,
+            "musicTime": 68.98,
+            "kind": "dance",
+            "source": "section arrival",
+            "score": 0.6917,
+            "confidence": 0.9338843061212861,
+            "end": 78.04
+          },
+          {
+            "outputId": "windowRR",
+            "channels": [
+              40
+            ],
+            "time": 69.64,
+            "musicTime": 69.64,
+            "kind": "dance",
+            "source": "section arrival",
+            "score": 0.6917,
+            "confidence": 0.9338843061212861,
+            "end": 78.66
+          },
+          {
+            "outputId": "windowFL",
+            "channels": [
+              37
+            ],
+            "time": 98.68,
+            "musicTime": 98.68,
+            "kind": "dance",
+            "source": "section arrival",
+            "score": 0.7257,
+            "confidence": 0.9338843061212861,
+            "end": 107.7
+          },
+          {
+            "outputId": "windowFR",
+            "channels": [
+              39
+            ],
+            "time": 98.68,
+            "musicTime": 98.68,
+            "kind": "dance",
+            "source": "section arrival",
+            "score": 0.7257,
+            "confidence": 0.9338843061212861,
+            "end": 107.7
+          },
+          {
+            "outputId": "windowRL",
+            "channels": [
+              38
+            ],
+            "time": 98.68,
+            "musicTime": 98.68,
+            "kind": "dance",
+            "source": "section arrival",
+            "score": 0.7257,
+            "confidence": 0.9338843061212861,
+            "end": 107.7
+          },
+          {
+            "outputId": "windowRR",
+            "channels": [
+              40
+            ],
+            "time": 98.68,
+            "musicTime": 98.68,
+            "kind": "dance",
+            "source": "section arrival",
+            "score": 0.7257,
+            "confidence": 0.9338843061212861,
+            "end": 107.7
+          },
+          {
+            "outputId": "trunk",
+            "channels": [
+              41
+            ],
+            "time": 98.68,
+            "musicTime": 98.68,
+            "kind": "dance",
+            "source": "section arrival",
+            "score": 0.7257,
+            "confidence": 0.9338843061212861,
+            "end": 112.22,
+            "prepareStart": 84.32000000000001,
+            "estimatedOpenArrival": 98.32000000000001
+          },
+          {
+            "outputId": "charge",
+            "channels": [
+              46
+            ],
+            "time": 98.68,
+            "musicTime": 98.68,
+            "kind": "rainbow",
+            "source": "section arrival",
+            "score": 0.7257,
+            "confidence": 0.9338843061212861,
+            "end": 122.54,
+            "prepareStart": 96.38000000000001
+          },
+          {
+            "outputId": "mirrorL",
+            "channels": [
+              35
+            ],
+            "time": 98.68,
+            "musicTime": 98.68,
+            "kind": "mirror-arrival",
+            "source": "section arrival",
+            "score": 0.7257,
+            "confidence": 0.9338843061212861,
+            "prepareStart": 96.38000000000001,
+            "estimatedOpenArrival": 98.38000000000001
+          },
+          {
+            "outputId": "mirrorR",
+            "channels": [
+              36
+            ],
+            "time": 99.32000000000001,
+            "musicTime": 99.32000000000001,
+            "kind": "mirror-arrival",
+            "source": "section arrival",
+            "score": 0.7257,
+            "confidence": 0.9338843061212861,
+            "prepareStart": 97.02000000000001,
+            "estimatedOpenArrival": 99.02000000000001
+          },
+          {
+            "outputId": "mirrorL",
+            "channels": [
+              35
+            ],
+            "time": 139.98,
+            "musicTime": 139.98,
+            "kind": "mirror-arrival",
+            "source": "section arrival",
+            "score": 0.6712,
+            "confidence": 0.9338843061212861,
+            "prepareStart": 137.67999999999998,
+            "estimatedOpenArrival": 139.67999999999998
+          },
+          {
+            "outputId": "mirrorR",
+            "channels": [
+              36
+            ],
+            "time": 140.62,
+            "musicTime": 140.62,
+            "kind": "mirror-arrival",
+            "source": "section arrival",
+            "score": 0.6712,
+            "confidence": 0.9338843061212861,
+            "prepareStart": 138.32,
+            "estimatedOpenArrival": 140.32
+          },
+          {
+            "outputId": "windowFL",
+            "channels": [
+              37
+            ],
+            "time": 163.20000000000002,
+            "musicTime": 163.20000000000002,
+            "kind": "dance",
+            "source": "section arrival",
+            "score": 0.7077,
+            "confidence": 0.9338843061212861,
+            "end": 172.08
+          },
+          {
+            "outputId": "trunk",
+            "channels": [
+              41
+            ],
+            "time": 163.20000000000002,
+            "musicTime": 163.20000000000002,
+            "kind": "dance",
+            "source": "section arrival",
+            "score": 0.7077,
+            "confidence": 0.9338843061212861,
+            "end": 177.06,
+            "prepareStart": 148.84000000000003,
+            "estimatedOpenArrival": 162.84000000000003
+          },
+          {
+            "outputId": "mirrorL",
+            "channels": [
+              35
+            ],
+            "time": 163.20000000000002,
+            "musicTime": 163.20000000000002,
+            "kind": "mirror-arrival",
+            "source": "section arrival",
+            "score": 0.7077,
+            "confidence": 0.9338843061212861,
+            "prepareStart": 160.9,
+            "estimatedOpenArrival": 162.9
+          },
+          {
+            "outputId": "windowFR",
+            "channels": [
+              39
+            ],
+            "time": 163.82,
+            "musicTime": 163.82,
+            "kind": "dance",
+            "source": "section arrival",
+            "score": 0.7077,
+            "confidence": 0.9338843061212861,
+            "end": 173.22
+          },
+          {
+            "outputId": "mirrorR",
+            "channels": [
+              36
+            ],
+            "time": 163.82,
+            "musicTime": 163.82,
+            "kind": "mirror-arrival",
+            "source": "section arrival",
+            "score": 0.7077,
+            "confidence": 0.9338843061212861,
+            "prepareStart": 161.51999999999998,
+            "estimatedOpenArrival": 163.51999999999998
+          },
+          {
+            "outputId": "windowRL",
+            "channels": [
+              38
+            ],
+            "time": 164.46,
+            "musicTime": 164.46,
+            "kind": "dance",
+            "source": "section arrival",
+            "score": 0.7077,
+            "confidence": 0.9338843061212861,
+            "end": 173.86
+          },
+          {
+            "outputId": "windowRR",
+            "channels": [
+              40
+            ],
+            "time": 165.12,
+            "musicTime": 165.12,
+            "kind": "dance",
+            "source": "section arrival",
+            "score": 0.7077,
+            "confidence": 0.9338843061212861,
+            "end": 174.5
+          },
+          {
+            "outputId": "mirrorL",
+            "channels": [
+              35
+            ],
+            "time": 190.94,
+            "musicTime": 190.94,
+            "kind": "mirror-arrival",
+            "source": "section arrival",
+            "score": 0.6603,
+            "confidence": 0.9338843061212861,
+            "prepareStart": 188.64,
+            "estimatedOpenArrival": 190.64
+          },
+          {
+            "outputId": "mirrorR",
+            "channels": [
+              36
+            ],
+            "time": 191.56,
+            "musicTime": 191.56,
+            "kind": "mirror-arrival",
+            "source": "section arrival",
+            "score": 0.6603,
+            "confidence": 0.9338843061212861,
+            "prepareStart": 189.26,
+            "estimatedOpenArrival": 191.26
+          },
+          {
+            "outputId": "mirrorL",
+            "channels": [
+              35
+            ],
+            "time": 211.56,
+            "musicTime": 211.56,
+            "kind": "mirror-arrival",
+            "source": "bar arrival",
+            "score": 0.6429,
+            "confidence": 0.9338843061212861,
+            "prepareStart": 209.26,
+            "estimatedOpenArrival": 211.26
+          },
+          {
+            "outputId": "mirrorR",
+            "channels": [
+              36
+            ],
+            "time": 212.22,
+            "musicTime": 212.22,
+            "kind": "mirror-arrival",
+            "source": "bar arrival",
+            "score": 0.6429,
+            "confidence": 0.9338843061212861,
+            "prepareStart": 209.92,
+            "estimatedOpenArrival": 211.92
+          }
+        ]
+      },
+      "newComposerNewAnalysis": {
+        "version": "1.3.0",
+        "valid": true,
+        "errors": [],
+        "commandOnGroupDutyFraction": 0.2335,
+        "commandOnExteriorFraction": 0.7628,
+        "physicalGroupOnCommandAttacks": 6587,
+        "movement": {
+          "35": {
+            "actuations": 14,
+            "danceSeconds": 0,
+            "danceStarts": [],
+            "meanNormalizedRmsWhileDancing": null
+          },
+          "36": {
+            "actuations": 14,
+            "danceSeconds": 0,
+            "danceStarts": [],
+            "meanNormalizedRmsWhileDancing": null
+          },
+          "37": {
+            "actuations": 6,
+            "danceSeconds": 27.36,
+            "danceStarts": [
+              98.68,
+              170.94,
+              212.08
+            ],
+            "meanNormalizedRmsWhileDancing": 0.8666
+          },
+          "38": {
+            "actuations": 6,
+            "danceSeconds": 26.72,
+            "danceStarts": [
+              99.98,
+              172.08,
+              212.08
+            ],
+            "meanNormalizedRmsWhileDancing": 0.8647
+          },
+          "39": {
+            "actuations": 6,
+            "danceSeconds": 27.2,
+            "danceStarts": [
+              99.34,
+              171.6,
+              212.08
+            ],
+            "meanNormalizedRmsWhileDancing": 0.8636
+          },
+          "40": {
+            "actuations": 6,
+            "danceSeconds": 25.48,
+            "danceStarts": [
+              100.62,
+              172.68,
+              212.08
+            ],
+            "meanNormalizedRmsWhileDancing": 0.8644
+          },
+          "41": {
+            "actuations": 6,
+            "danceSeconds": 22.72,
+            "danceStarts": [
+              170.94,
+              212.08
+            ],
+            "meanNormalizedRmsWhileDancing": 0.9143
+          },
+          "46": {
+            "actuations": 3,
+            "danceSeconds": 13.04,
+            "danceStarts": [
+              212.08
+            ],
+            "meanNormalizedRmsWhileDancing": 0.9458
+          }
+        },
+        "selectedTargets": [
+          {
+            "outputId": "mirrorL",
+            "channels": [
+              35
+            ],
+            "time": 67.72,
+            "musicTime": 67.715,
+            "kind": "mirror-arrival",
+            "source": "peak",
+            "score": 0.7913,
+            "confidence": 0.8771035431309585,
+            "prepareStart": 65.42,
+            "estimatedOpenArrival": 67.42
+          },
+          {
+            "outputId": "mirrorR",
+            "channels": [
+              36
+            ],
+            "time": 68.36,
+            "musicTime": 68.36,
+            "kind": "mirror-arrival",
+            "source": "peak",
+            "score": 0.7913,
+            "confidence": 0.8771035431309585,
+            "prepareStart": 66.06,
+            "estimatedOpenArrival": 68.06
+          },
+          {
+            "outputId": "windowFL",
+            "channels": [
+              37
+            ],
+            "time": 98.68,
+            "musicTime": 98.685,
+            "kind": "dance",
+            "source": "peak",
+            "score": 0.8054,
+            "confidence": 0.8771035431309585,
+            "end": 107.7
+          },
+          {
+            "outputId": "mirrorL",
+            "channels": [
+              35
+            ],
+            "time": 98.68,
+            "musicTime": 98.685,
+            "kind": "mirror-arrival",
+            "source": "peak",
+            "score": 0.8054,
+            "confidence": 0.8771035431309585,
+            "prepareStart": 96.38000000000001,
+            "estimatedOpenArrival": 98.38000000000001
+          },
+          {
+            "outputId": "windowFR",
+            "channels": [
+              39
+            ],
+            "time": 99.34,
+            "musicTime": 99.33,
+            "kind": "dance",
+            "source": "peak",
+            "score": 0.8054,
+            "confidence": 0.8771035431309585,
+            "end": 108.36
+          },
+          {
+            "outputId": "mirrorR",
+            "channels": [
+              36
+            ],
+            "time": 99.34,
+            "musicTime": 99.33,
+            "kind": "mirror-arrival",
+            "source": "peak",
+            "score": 0.8054,
+            "confidence": 0.8771035431309585,
+            "prepareStart": 97.04,
+            "estimatedOpenArrival": 99.04
+          },
+          {
+            "outputId": "windowRL",
+            "channels": [
+              38
+            ],
+            "time": 99.98,
+            "musicTime": 99.97500000000001,
+            "kind": "dance",
+            "source": "peak",
+            "score": 0.8054,
+            "confidence": 0.8771035431309585,
+            "end": 109
+          },
+          {
+            "outputId": "windowRR",
+            "channels": [
+              40
+            ],
+            "time": 100.62,
+            "musicTime": 100.62,
+            "kind": "dance",
+            "source": "peak",
+            "score": 0.8054,
+            "confidence": 0.8771035431309585,
+            "end": 109
+          },
+          {
+            "outputId": "mirrorL",
+            "channels": [
+              35
+            ],
+            "time": 119.34,
+            "musicTime": 119.33,
+            "kind": "mirror-arrival",
+            "source": "peak",
+            "score": 0.7531,
+            "confidence": 0.8771035431309585,
+            "prepareStart": 117.04,
+            "estimatedOpenArrival": 119.04
+          },
+          {
+            "outputId": "mirrorR",
+            "channels": [
+              36
+            ],
+            "time": 119.98,
+            "musicTime": 119.97500000000001,
+            "kind": "mirror-arrival",
+            "source": "peak",
+            "score": 0.7531,
+            "confidence": 0.8771035431309585,
+            "prepareStart": 117.68,
+            "estimatedOpenArrival": 119.68
+          },
+          {
+            "outputId": "mirrorL",
+            "channels": [
+              35
+            ],
+            "time": 150.3,
+            "musicTime": 150.3,
+            "kind": "mirror-arrival",
+            "source": "peak",
+            "score": 0.7799,
+            "confidence": 0.8771035431309585,
+            "prepareStart": 148,
+            "estimatedOpenArrival": 150
+          },
+          {
+            "outputId": "mirrorR",
+            "channels": [
+              36
+            ],
+            "time": 150.94,
+            "musicTime": 150.945,
+            "kind": "mirror-arrival",
+            "source": "peak",
+            "score": 0.7799,
+            "confidence": 0.8771035431309585,
+            "prepareStart": 148.64,
+            "estimatedOpenArrival": 150.64
+          },
+          {
+            "outputId": "windowFL",
+            "channels": [
+              37
+            ],
+            "time": 170.94,
+            "musicTime": 170.945,
+            "kind": "dance",
+            "source": "peak",
+            "score": 0.8156,
+            "confidence": 0.8771035431309585,
+            "end": 180.12
+          },
+          {
+            "outputId": "trunk",
+            "channels": [
+              41
+            ],
+            "time": 170.94,
+            "musicTime": 170.945,
+            "kind": "dance",
+            "source": "peak",
+            "score": 0.8156,
+            "confidence": 0.8771035431309585,
+            "end": 180.62,
+            "prepareStart": 156.57999999999998,
+            "estimatedOpenArrival": 170.57999999999998
+          },
+          {
+            "outputId": "mirrorL",
+            "channels": [
+              35
+            ],
+            "time": 170.94,
+            "musicTime": 170.945,
+            "kind": "mirror-arrival",
+            "source": "peak",
+            "score": 0.8156,
+            "confidence": 0.8771035431309585,
+            "prepareStart": 168.64,
+            "estimatedOpenArrival": 170.64
+          },
+          {
+            "outputId": "windowFR",
+            "channels": [
+              39
+            ],
+            "time": 171.6,
+            "musicTime": 171.59,
+            "kind": "dance",
+            "source": "peak",
+            "score": 0.8156,
+            "confidence": 0.8771035431309585,
+            "end": 180.62
+          },
+          {
+            "outputId": "mirrorR",
+            "channels": [
+              36
+            ],
+            "time": 171.6,
+            "musicTime": 171.59,
+            "kind": "mirror-arrival",
+            "source": "peak",
+            "score": 0.8156,
+            "confidence": 0.8771035431309585,
+            "prepareStart": 169.29999999999998,
+            "estimatedOpenArrival": 171.29999999999998
+          },
+          {
+            "outputId": "windowRL",
+            "channels": [
+              38
+            ],
+            "time": 172.08,
+            "musicTime": 172.085,
+            "kind": "dance",
+            "source": "peak",
+            "score": 0.8156,
+            "confidence": 0.8771035431309585,
+            "end": 180.62
+          },
+          {
+            "outputId": "windowRR",
+            "channels": [
+              40
+            ],
+            "time": 172.68,
+            "musicTime": 172.68,
+            "kind": "dance",
+            "source": "peak",
+            "score": 0.8156,
+            "confidence": 0.8771035431309585,
+            "end": 180.62
+          },
+          {
+            "outputId": "mirrorL",
+            "channels": [
+              35
+            ],
+            "time": 194.16,
+            "musicTime": 194.165,
+            "kind": "mirror-arrival",
+            "source": "arrival",
+            "score": 0.7376,
+            "confidence": 0.9087891061893547,
+            "prepareStart": 191.85999999999999,
+            "estimatedOpenArrival": 193.85999999999999
+          },
+          {
+            "outputId": "mirrorR",
+            "channels": [
+              36
+            ],
+            "time": 194.82,
+            "musicTime": 194.815,
+            "kind": "mirror-arrival",
+            "source": "arrival",
+            "score": 0.7376,
+            "confidence": 0.9087891061893547,
+            "prepareStart": 192.51999999999998,
+            "estimatedOpenArrival": 194.51999999999998
+          },
+          {
+            "outputId": "windowFL",
+            "channels": [
+              37
+            ],
+            "time": 212.08,
+            "musicTime": 212.07,
+            "kind": "dance",
+            "source": "peak",
+            "score": 0.8259,
+            "confidence": 0.8771035431309585,
+            "end": 221.24
+          },
+          {
+            "outputId": "windowFR",
+            "channels": [
+              39
+            ],
+            "time": 212.08,
+            "musicTime": 212.07,
+            "kind": "dance",
+            "source": "peak",
+            "score": 0.8259,
+            "confidence": 0.8771035431309585,
+            "end": 221.24
+          },
+          {
+            "outputId": "windowRL",
+            "channels": [
+              38
+            ],
+            "time": 212.08,
+            "musicTime": 212.07,
+            "kind": "dance",
+            "source": "peak",
+            "score": 0.8259,
+            "confidence": 0.8771035431309585,
+            "end": 221.24
+          },
+          {
+            "outputId": "windowRR",
+            "channels": [
+              40
+            ],
+            "time": 212.08,
+            "musicTime": 212.07,
+            "kind": "dance",
+            "source": "peak",
+            "score": 0.8259,
+            "confidence": 0.8771035431309585,
+            "end": 221.24
+          },
+          {
+            "outputId": "trunk",
+            "channels": [
+              41
+            ],
+            "time": 212.08,
+            "musicTime": 212.07,
+            "kind": "dance",
+            "source": "peak",
+            "score": 0.8259,
+            "confidence": 0.8771035431309585,
+            "end": 225.12,
+            "prepareStart": 197.72000000000003,
+            "estimatedOpenArrival": 211.72000000000003
+          },
+          {
+            "outputId": "charge",
+            "channels": [
+              46
+            ],
+            "time": 212.08,
+            "musicTime": 212.07,
+            "kind": "rainbow",
+            "source": "peak",
+            "score": 0.8259,
+            "confidence": 0.8771035431309585,
+            "end": 225.12,
+            "prepareStart": 209.78
+          },
+          {
+            "outputId": "mirrorL",
+            "channels": [
+              35
+            ],
+            "time": 212.08,
+            "musicTime": 212.07,
+            "kind": "mirror-arrival",
+            "source": "peak",
+            "score": 0.8259,
+            "confidence": 0.8771035431309585,
+            "prepareStart": 209.78,
+            "estimatedOpenArrival": 211.78
+          },
+          {
+            "outputId": "mirrorR",
+            "channels": [
+              36
+            ],
+            "time": 212.88,
+            "musicTime": 212.88,
+            "kind": "mirror-arrival",
+            "source": "peak",
+            "score": 0.8259,
+            "confidence": 0.8771035431309585,
+            "prepareStart": 210.57999999999998,
+            "estimatedOpenArrival": 212.57999999999998
+          }
+        ]
+      }
+    }
+  },
+  "regressions": {
+    "oldTrueRest": {
+      "exteriorOnFrames": 21,
+      "rgbOnFrames": 300,
+      "examinedSeconds": [
+        21,
+        27
+      ]
+    },
+    "oldLastBeat": {
+      "time": 9.5,
+      "innerLampCommand": 77
+    },
+    "newTrueRest": {
+      "exteriorOnFrames": 0,
+      "rgbOnFrames": 0,
+      "examinedSeconds": [
+        21,
+        27
+      ]
+    },
+    "newLastBeat": {
+      "time": 9.5,
+      "innerLampCommand": 255
+    }
+  },
+  "source_hashes": {
+    "web/engine/show-engine.js": "75e91440221c4a276d0a40fb98ba5736c8cffea488dc34402ff777e779a88488",
+    "web/engine/light-planner.js": "6370a4a53e60babafb11ef9d1d252887a007addc118f067d5a66223e672fa2ce",
+    "web/engine/movement-planner.js": "c1c4f70c4a8fa0e82d7a1e33385f37eb22c935d899c71c1fbed60c7124738edf",
+    "web/analysis/dsp.js": "613a6c50275ce22e3ed69b268596c656851a80187a0d4de671cc440087409427",
+    "web/analysis/worker.js": "33762bf824a4b68c168df4e9bba2a8edd137a530c503f4f588a952cc5f44e8be"
+  }
+}

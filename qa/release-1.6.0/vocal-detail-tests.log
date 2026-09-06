@@ -1,0 +1,24 @@
+✔ isolated off-grid phrase edges and held pitches remain on the vocal clock (118.248482ms)
+✔ quiet verse remains voiced after a chorus forty decibels louder (157.812085ms)
+✔ local normalization recovers an immediately following quiet vocal phrase (97.410475ms)
+✔ vibrato sustains stay musical and source articulations do not follow accompaniment kicks (135.576254ms)
+✔ speech is represented as voice phrasing without invented sung notes (52.705241ms)
+✔ harmonic instrumental leakage without learned voice evidence is rejected (76.841037ms)
+✔ quiet instrumental leakage is not amplified into voice by uncertain contextual scores (104.03372ms)
+✔ an isolated aperiodic vocal source can retain uncertain phrasing with weak semantic evidence (107.906708ms)
+✔ a strong separated harmonic source without a semantic voice seed remains unclassified (71.315854ms)
+✔ silence and stochastic vocal-stem noise cannot invent periodic sung notes (49.72755ms)
+✔ streaming chunk boundaries preserve all musical results exactly (188.677537ms)
+✔ the 22.05 kHz source-cache path preserves vocal note pitches and timing (55.905629ms)
+✔ streaming rejects missing samples, overlaps, non-finite audio and rate mistakes (1.121502ms)
+✔ short and endpoint audio are finite without invented padding (5.412384ms)
+✔ minimum-length note eligibility does not depend on floating-point timestamp rounding (3.695925ms)
+✔ four-hour summaries retain bounded numeric arrays and avoid argument spreading (559.861206ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1879.200426

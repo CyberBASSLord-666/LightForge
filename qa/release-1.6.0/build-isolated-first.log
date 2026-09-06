@@ -1,0 +1,19 @@
+Compiling Android resources and bundling offline assets…
+Compiling Java and Android bytecode…
+Note: /workspace/scratch/9b34d7a394e6/app/lightforge/android/src/com/cyberbasslord/lightforge/MainActivity.java uses or overrides a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Aligning and signing APK…
+{
+  "apk": "LightForge-1.6.0.apk",
+  "bytes": 185631779,
+  "sha256": "578fc2d342dc208f9fdfbac3143a5fc000e3ed29780089374848e55f3e1cc114",
+  "zip_integrity": "passed",
+  "alignment": "passed",
+  "signature": "verified",
+  "min_sdk": 26,
+  "target_sdk": 35,
+  "compile_sdk": 35,
+  "version_name": "1.6.0",
+  "version_code": 10600
+}
+Ready: /workspace/scratch/9b34d7a394e6/app/lightforge/dist/LightForge-1.6.0.apk

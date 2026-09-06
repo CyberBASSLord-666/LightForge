@@ -1,0 +1,15 @@
+✔ off-grid harmonic bass entrances, pitch changes and releases keep their audio clock (297.690559ms)
+✔ louder kicks 50–150 ms around bass entrances do not become the note clock (744.874082ms)
+✔ brief sweeping kick transients, broadband noise and silence do not invent bass notes (83.997334ms)
+✔ pure sustained sub-bass remains eligible with estimated-source labels (52.247237ms)
+✔ different read chunk sizes preserve phase and note boundaries exactly (359.046886ms)
+✔ four-hour stationary pitch summaries use bounded columns without argument spreading (2068.931192ms)
+✔ cancelled analysis rejects without reading audio (1.63783ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3891.544802

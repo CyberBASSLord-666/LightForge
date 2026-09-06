@@ -1,0 +1,75 @@
+{
+  "music": {
+    "bpm": 92.99,
+    "engine": {
+      "name": "BeatNet CRNN",
+      "neural": true,
+      "detail": "Bundled pretrained BeatNet model 1 with ONNX Runtime WebAssembly. Neural beat/downbeat activations, adaptive local-tempo decoding, 5 ms PCM attack alignment, silence-aware bar/phrase landmarks and impact analysis. All audio stays on this device.",
+      "model": "BeatNet model_1_weights",
+      "runtime": "ONNX Runtime Web 1.20.1",
+      "analysisSeconds": 1.4
+    },
+    "sections": 4
+  },
+  "validation": {
+    "valid": true,
+    "errors": [],
+    "warnings": [],
+    "stats": {
+      "frameCount": 3200,
+      "stepMs": 20,
+      "duration": 64,
+      "sequenceBytes": 640000,
+      "commandCounts": {
+        "35": 8,
+        "36": 8,
+        "37": 5,
+        "38": 5,
+        "39": 5,
+        "40": 5,
+        "41": 3,
+        "46": 3
+      },
+      "danceSeconds": {
+        "35": 0,
+        "36": 0,
+        "37": 25.08,
+        "38": 23.92,
+        "39": 24.5,
+        "40": 22.58,
+        "41": 10.32,
+        "46": 10.32
+      },
+      "lightTransitions": 4196,
+      "activeExteriorPercent": 75.3,
+      "rampCommandFrames": 1372,
+      "interiorDisplayFrames": 3199
+    }
+  },
+  "toast": "Your show is ready. Press play and make it yours.",
+  "playback": {
+    "time": 38.495461,
+    "section": "Peak",
+    "labels": "WINDOWS 4 dancingMIRRORS UnfoldedTRUNK DancingCHARGE Rainbow"
+  },
+  "exportFilename": "Glass_Castle_demo_excerpt_LightForge.zip",
+  "sampleBoundaryRegression": [
+    {
+      "stepMs": 20,
+      "duration": 20.00002267573696,
+      "analyzedDuration": 20.00002267573696,
+      "lastSectionEnd": 20.00002267573696,
+      "frames": 1001,
+      "expected": 1001
+    },
+    {
+      "stepMs": 15,
+      "duration": 15.000022675736961,
+      "analyzedDuration": 15.000022675736961,
+      "lastSectionEnd": 15.000022675736961,
+      "frames": 1001,
+      "expected": 1001
+    }
+  ],
+  "errors": []
+}

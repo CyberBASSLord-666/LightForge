@@ -1,0 +1,934 @@
+{
+  "passed": true,
+  "createdAt": "2026-09-06T09:59:32.670Z",
+  "runtime": "ONNX Runtime Web1.20.1 / Chromium desktop4-thread WASM; Android timing not measured",
+  "results": [
+    {
+      "track": "nightowl-mix",
+      "metadata": {
+        "sourceSeparated": true,
+        "name": "UVR MDX-Net Voc FT",
+        "modelId": "uvr-mdx-net-voc-ft",
+        "modelSha256": "534b2070fcc7df514b13ef660dc8cbb328679c2374d04354a5c42bb14ecce111",
+        "sampleRate": 44100,
+        "sourceChannels": 2,
+        "stems": [
+          "vocals",
+          "accompaniment"
+        ],
+        "method": "Pretrained stereo complex-spectrum separation with polarity ensemble",
+        "vocalBandwidthHz": 17640,
+        "fftWindowSamples": 7680,
+        "fftHopSamples": 1024,
+        "contextSamples": 3840,
+        "overlapSamples": 126720,
+        "overlapFraction": 0.5,
+        "denoise": true,
+        "modelPasses": 4,
+        "alignment": "Original sample clock; normalized overlap-add and complementary chunk crossfades; no latency subtraction",
+        "estimated": true,
+        "analysisSeconds": 36.252414999999104,
+        "chunks": 2,
+        "limitations": [
+          "Separation can retain instrument bleed or soften quiet and heavily processed singing.",
+          "Lead and backing vocals are combined; this is not lyric transcription."
+        ]
+      },
+      "chunks": [
+        {
+          "start": 0,
+          "count": 126720
+        },
+        {
+          "start": 126720,
+          "count": 173312
+        }
+      ],
+      "samples": 300032,
+      "mixtureReconstructionMaxError": 5.960464477539063e-8,
+      "rms": 0.04677634012767875,
+      "peak": 0.31648311018943787
+    },
+    {
+      "track": "stella-mix",
+      "metadata": {
+        "sourceSeparated": true,
+        "name": "UVR MDX-Net Voc FT",
+        "modelId": "uvr-mdx-net-voc-ft",
+        "modelSha256": "534b2070fcc7df514b13ef660dc8cbb328679c2374d04354a5c42bb14ecce111",
+        "sampleRate": 44100,
+        "sourceChannels": 2,
+        "stems": [
+          "vocals",
+          "accompaniment"
+        ],
+        "method": "Pretrained stereo complex-spectrum separation with polarity ensemble",
+        "vocalBandwidthHz": 17640,
+        "fftWindowSamples": 7680,
+        "fftHopSamples": 1024,
+        "contextSamples": 3840,
+        "overlapSamples": 126720,
+        "overlapFraction": 0.5,
+        "denoise": true,
+        "modelPasses": 4,
+        "alignment": "Original sample clock; normalized overlap-add and complementary chunk crossfades; no latency subtraction",
+        "estimated": true,
+        "analysisSeconds": 37.645984999999406,
+        "chunks": 2,
+        "limitations": [
+          "Separation can retain instrument bleed or soften quiet and heavily processed singing.",
+          "Lead and backing vocals are combined; this is not lyric transcription."
+        ]
+      },
+      "chunks": [
+        {
+          "start": 0,
+          "count": 126720
+        },
+        {
+          "start": 126720,
+          "count": 173312
+        }
+      ],
+      "samples": 300032,
+      "mixtureReconstructionMaxError": 5.960464477539063e-8,
+      "rms": 0.09136714920798923,
+      "peak": 0.42832618951797485
+    },
+    {
+      "track": "meaxic-mix",
+      "metadata": {
+        "sourceSeparated": true,
+        "name": "UVR MDX-Net Voc FT",
+        "modelId": "uvr-mdx-net-voc-ft",
+        "modelSha256": "534b2070fcc7df514b13ef660dc8cbb328679c2374d04354a5c42bb14ecce111",
+        "sampleRate": 44100,
+        "sourceChannels": 2,
+        "stems": [
+          "vocals",
+          "accompaniment"
+        ],
+        "method": "Pretrained stereo complex-spectrum separation with polarity ensemble",
+        "vocalBandwidthHz": 17640,
+        "fftWindowSamples": 7680,
+        "fftHopSamples": 1024,
+        "contextSamples": 3840,
+        "overlapSamples": 126720,
+        "overlapFraction": 0.5,
+        "denoise": true,
+        "modelPasses": 4,
+        "alignment": "Original sample clock; normalized overlap-add and complementary chunk crossfades; no latency subtraction",
+        "estimated": true,
+        "analysisSeconds": 36.86437000000477,
+        "chunks": 2,
+        "limitations": [
+          "Separation can retain instrument bleed or soften quiet and heavily processed singing.",
+          "Lead and backing vocals are combined; this is not lyric transcription."
+        ]
+      },
+      "chunks": [
+        {
+          "start": 0,
+          "count": 126720
+        },
+        {
+          "start": 126720,
+          "count": 173312
+        }
+      ],
+      "samples": 300032,
+      "mixtureReconstructionMaxError": 5.960464477539063e-8,
+      "rms": 0.07529611952910592,
+      "peak": 0.35070863366127014
+    },
+    {
+      "track": "grunge-mix",
+      "metadata": {
+        "sourceSeparated": true,
+        "name": "UVR MDX-Net Voc FT",
+        "modelId": "uvr-mdx-net-voc-ft",
+        "modelSha256": "534b2070fcc7df514b13ef660dc8cbb328679c2374d04354a5c42bb14ecce111",
+        "sampleRate": 44100,
+        "sourceChannels": 2,
+        "stems": [
+          "vocals",
+          "accompaniment"
+        ],
+        "method": "Pretrained stereo complex-spectrum separation with polarity ensemble",
+        "vocalBandwidthHz": 17640,
+        "fftWindowSamples": 7680,
+        "fftHopSamples": 1024,
+        "contextSamples": 3840,
+        "overlapSamples": 126720,
+        "overlapFraction": 0.5,
+        "denoise": true,
+        "modelPasses": 4,
+        "alignment": "Original sample clock; normalized overlap-add and complementary chunk crossfades; no latency subtraction",
+        "estimated": true,
+        "analysisSeconds": 35.9052650000006,
+        "chunks": 2,
+        "limitations": [
+          "Separation can retain instrument bleed or soften quiet and heavily processed singing.",
+          "Lead and backing vocals are combined; this is not lyric transcription."
+        ]
+      },
+      "chunks": [
+        {
+          "start": 0,
+          "count": 126720
+        },
+        {
+          "start": 126720,
+          "count": 173312
+        }
+      ],
+      "samples": 300032,
+      "mixtureReconstructionMaxError": 5.960464477539063e-8,
+      "rms": 0.06401995584040412,
+      "peak": 0.3623102307319641
+    },
+    {
+      "track": "falcon-mix",
+      "metadata": {
+        "sourceSeparated": true,
+        "name": "UVR MDX-Net Voc FT",
+        "modelId": "uvr-mdx-net-voc-ft",
+        "modelSha256": "534b2070fcc7df514b13ef660dc8cbb328679c2374d04354a5c42bb14ecce111",
+        "sampleRate": 44100,
+        "sourceChannels": 2,
+        "stems": [
+          "vocals",
+          "accompaniment"
+        ],
+        "method": "Pretrained stereo complex-spectrum separation with polarity ensemble",
+        "vocalBandwidthHz": 17640,
+        "fftWindowSamples": 7680,
+        "fftHopSamples": 1024,
+        "contextSamples": 3840,
+        "overlapSamples": 126720,
+        "overlapFraction": 0.5,
+        "denoise": true,
+        "modelPasses": 4,
+        "alignment": "Original sample clock; normalized overlap-add and complementary chunk crossfades; no latency subtraction",
+        "estimated": true,
+        "analysisSeconds": 35.3714450000003,
+        "chunks": 2,
+        "limitations": [
+          "Separation can retain instrument bleed or soften quiet and heavily processed singing.",
+          "Lead and backing vocals are combined; this is not lyric transcription."
+        ]
+      },
+      "chunks": [
+        {
+          "start": 0,
+          "count": 126720
+        },
+        {
+          "start": 126720,
+          "count": 173312
+        }
+      ],
+      "samples": 300032,
+      "mixtureReconstructionMaxError": 5.960464477539063e-8,
+      "rms": 0.06660983264502363,
+      "peak": 0.2883239984512329
+    },
+    {
+      "track": "sdrnr-mix",
+      "metadata": {
+        "sourceSeparated": true,
+        "name": "UVR MDX-Net Voc FT",
+        "modelId": "uvr-mdx-net-voc-ft",
+        "modelSha256": "534b2070fcc7df514b13ef660dc8cbb328679c2374d04354a5c42bb14ecce111",
+        "sampleRate": 44100,
+        "sourceChannels": 2,
+        "stems": [
+          "vocals",
+          "accompaniment"
+        ],
+        "method": "Pretrained stereo complex-spectrum separation with polarity ensemble",
+        "vocalBandwidthHz": 17640,
+        "fftWindowSamples": 7680,
+        "fftHopSamples": 1024,
+        "contextSamples": 3840,
+        "overlapSamples": 126720,
+        "overlapFraction": 0.5,
+        "denoise": true,
+        "modelPasses": 4,
+        "alignment": "Original sample clock; normalized overlap-add and complementary chunk crossfades; no latency subtraction",
+        "estimated": true,
+        "analysisSeconds": 35.1844600000009,
+        "chunks": 2,
+        "limitations": [
+          "Separation can retain instrument bleed or soften quiet and heavily processed singing.",
+          "Lead and backing vocals are combined; this is not lyric transcription."
+        ]
+      },
+      "chunks": [
+        {
+          "start": 0,
+          "count": 126720
+        },
+        {
+          "start": 126720,
+          "count": 173312
+        }
+      ],
+      "samples": 300032,
+      "mixtureReconstructionMaxError": 5.960464477539063e-8,
+      "rms": 0.07935433252339608,
+      "peak": 0.37957876920700073
+    },
+    {
+      "track": "nightowl-instrumental",
+      "metadata": {
+        "sourceSeparated": true,
+        "name": "UVR MDX-Net Voc FT",
+        "modelId": "uvr-mdx-net-voc-ft",
+        "modelSha256": "534b2070fcc7df514b13ef660dc8cbb328679c2374d04354a5c42bb14ecce111",
+        "sampleRate": 44100,
+        "sourceChannels": 2,
+        "stems": [
+          "vocals",
+          "accompaniment"
+        ],
+        "method": "Pretrained stereo complex-spectrum separation with polarity ensemble",
+        "vocalBandwidthHz": 17640,
+        "fftWindowSamples": 7680,
+        "fftHopSamples": 1024,
+        "contextSamples": 3840,
+        "overlapSamples": 126720,
+        "overlapFraction": 0.5,
+        "denoise": true,
+        "modelPasses": 4,
+        "alignment": "Original sample clock; normalized overlap-add and complementary chunk crossfades; no latency subtraction",
+        "estimated": true,
+        "analysisSeconds": 34.59035000000149,
+        "chunks": 2,
+        "limitations": [
+          "Separation can retain instrument bleed or soften quiet and heavily processed singing.",
+          "Lead and backing vocals are combined; this is not lyric transcription."
+        ]
+      },
+      "chunks": [
+        {
+          "start": 0,
+          "count": 126720
+        },
+        {
+          "start": 126720,
+          "count": 173312
+        }
+      ],
+      "samples": 300032,
+      "mixtureReconstructionMaxError": 5.301626515574753e-8,
+      "rms": 0.003033772694323847,
+      "peak": 0.07624606788158417
+    },
+    {
+      "track": "stella-instrumental",
+      "metadata": {
+        "sourceSeparated": true,
+        "name": "UVR MDX-Net Voc FT",
+        "modelId": "uvr-mdx-net-voc-ft",
+        "modelSha256": "534b2070fcc7df514b13ef660dc8cbb328679c2374d04354a5c42bb14ecce111",
+        "sampleRate": 44100,
+        "sourceChannels": 2,
+        "stems": [
+          "vocals",
+          "accompaniment"
+        ],
+        "method": "Pretrained stereo complex-spectrum separation with polarity ensemble",
+        "vocalBandwidthHz": 17640,
+        "fftWindowSamples": 7680,
+        "fftHopSamples": 1024,
+        "contextSamples": 3840,
+        "overlapSamples": 126720,
+        "overlapFraction": 0.5,
+        "denoise": true,
+        "modelPasses": 4,
+        "alignment": "Original sample clock; normalized overlap-add and complementary chunk crossfades; no latency subtraction",
+        "estimated": true,
+        "analysisSeconds": 39.81225,
+        "chunks": 2,
+        "limitations": [
+          "Separation can retain instrument bleed or soften quiet and heavily processed singing.",
+          "Lead and backing vocals are combined; this is not lyric transcription."
+        ]
+      },
+      "chunks": [
+        {
+          "start": 0,
+          "count": 126720
+        },
+        {
+          "start": 126720,
+          "count": 173312
+        }
+      ],
+      "samples": 300032,
+      "mixtureReconstructionMaxError": 5.919719114899635e-8,
+      "rms": 0.00019328028104151942,
+      "peak": 0.003108820179477334
+    },
+    {
+      "track": "meaxic-instrumental",
+      "metadata": {
+        "sourceSeparated": true,
+        "name": "UVR MDX-Net Voc FT",
+        "modelId": "uvr-mdx-net-voc-ft",
+        "modelSha256": "534b2070fcc7df514b13ef660dc8cbb328679c2374d04354a5c42bb14ecce111",
+        "sampleRate": 44100,
+        "sourceChannels": 2,
+        "stems": [
+          "vocals",
+          "accompaniment"
+        ],
+        "method": "Pretrained stereo complex-spectrum separation with polarity ensemble",
+        "vocalBandwidthHz": 17640,
+        "fftWindowSamples": 7680,
+        "fftHopSamples": 1024,
+        "contextSamples": 3840,
+        "overlapSamples": 126720,
+        "overlapFraction": 0.5,
+        "denoise": true,
+        "modelPasses": 4,
+        "alignment": "Original sample clock; normalized overlap-add and complementary chunk crossfades; no latency subtraction",
+        "estimated": true,
+        "analysisSeconds": 37.8196950000003,
+        "chunks": 2,
+        "limitations": [
+          "Separation can retain instrument bleed or soften quiet and heavily processed singing.",
+          "Lead and backing vocals are combined; this is not lyric transcription."
+        ]
+      },
+      "chunks": [
+        {
+          "start": 0,
+          "count": 126720
+        },
+        {
+          "start": 126720,
+          "count": 173312
+        }
+      ],
+      "samples": 300032,
+      "mixtureReconstructionMaxError": 3.486093191895634e-8,
+      "rms": 0.00010994133814840765,
+      "peak": 0.0018215604359284043
+    },
+    {
+      "track": "grunge-instrumental",
+      "metadata": {
+        "sourceSeparated": true,
+        "name": "UVR MDX-Net Voc FT",
+        "modelId": "uvr-mdx-net-voc-ft",
+        "modelSha256": "534b2070fcc7df514b13ef660dc8cbb328679c2374d04354a5c42bb14ecce111",
+        "sampleRate": 44100,
+        "sourceChannels": 2,
+        "stems": [
+          "vocals",
+          "accompaniment"
+        ],
+        "method": "Pretrained stereo complex-spectrum separation with polarity ensemble",
+        "vocalBandwidthHz": 17640,
+        "fftWindowSamples": 7680,
+        "fftHopSamples": 1024,
+        "contextSamples": 3840,
+        "overlapSamples": 126720,
+        "overlapFraction": 0.5,
+        "denoise": true,
+        "modelPasses": 4,
+        "alignment": "Original sample clock; normalized overlap-add and complementary chunk crossfades; no latency subtraction",
+        "estimated": true,
+        "analysisSeconds": 35.648835000000894,
+        "chunks": 2,
+        "limitations": [
+          "Separation can retain instrument bleed or soften quiet and heavily processed singing.",
+          "Lead and backing vocals are combined; this is not lyric transcription."
+        ]
+      },
+      "chunks": [
+        {
+          "start": 0,
+          "count": 126720
+        },
+        {
+          "start": 126720,
+          "count": 173312
+        }
+      ],
+      "samples": 300032,
+      "mixtureReconstructionMaxError": 5.8709701988846064e-8,
+      "rms": 0.0005718708380579035,
+      "peak": 0.023004045709967613
+    },
+    {
+      "track": "falcon-instrumental",
+      "metadata": {
+        "sourceSeparated": true,
+        "name": "UVR MDX-Net Voc FT",
+        "modelId": "uvr-mdx-net-voc-ft",
+        "modelSha256": "534b2070fcc7df514b13ef660dc8cbb328679c2374d04354a5c42bb14ecce111",
+        "sampleRate": 44100,
+        "sourceChannels": 2,
+        "stems": [
+          "vocals",
+          "accompaniment"
+        ],
+        "method": "Pretrained stereo complex-spectrum separation with polarity ensemble",
+        "vocalBandwidthHz": 17640,
+        "fftWindowSamples": 7680,
+        "fftHopSamples": 1024,
+        "contextSamples": 3840,
+        "overlapSamples": 126720,
+        "overlapFraction": 0.5,
+        "denoise": true,
+        "modelPasses": 4,
+        "alignment": "Original sample clock; normalized overlap-add and complementary chunk crossfades; no latency subtraction",
+        "estimated": true,
+        "analysisSeconds": 35.85052000000328,
+        "chunks": 2,
+        "limitations": [
+          "Separation can retain instrument bleed or soften quiet and heavily processed singing.",
+          "Lead and backing vocals are combined; this is not lyric transcription."
+        ]
+      },
+      "chunks": [
+        {
+          "start": 0,
+          "count": 126720
+        },
+        {
+          "start": 126720,
+          "count": 173312
+        }
+      ],
+      "samples": 300032,
+      "mixtureReconstructionMaxError": 5.960464477539063e-8,
+      "rms": 0.00043999191548491746,
+      "peak": 0.009502320550382137
+    },
+    {
+      "track": "sdrnr-instrumental",
+      "metadata": {
+        "sourceSeparated": true,
+        "name": "UVR MDX-Net Voc FT",
+        "modelId": "uvr-mdx-net-voc-ft",
+        "modelSha256": "534b2070fcc7df514b13ef660dc8cbb328679c2374d04354a5c42bb14ecce111",
+        "sampleRate": 44100,
+        "sourceChannels": 2,
+        "stems": [
+          "vocals",
+          "accompaniment"
+        ],
+        "method": "Pretrained stereo complex-spectrum separation with polarity ensemble",
+        "vocalBandwidthHz": 17640,
+        "fftWindowSamples": 7680,
+        "fftHopSamples": 1024,
+        "contextSamples": 3840,
+        "overlapSamples": 126720,
+        "overlapFraction": 0.5,
+        "denoise": true,
+        "modelPasses": 4,
+        "alignment": "Original sample clock; normalized overlap-add and complementary chunk crossfades; no latency subtraction",
+        "estimated": true,
+        "analysisSeconds": 38.40540999999642,
+        "chunks": 2,
+        "limitations": [
+          "Separation can retain instrument bleed or soften quiet and heavily processed singing.",
+          "Lead and backing vocals are combined; this is not lyric transcription."
+        ]
+      },
+      "chunks": [
+        {
+          "start": 0,
+          "count": 126720
+        },
+        {
+          "start": 126720,
+          "count": 173312
+        }
+      ],
+      "samples": 300032,
+      "mixtureReconstructionMaxError": 5.844049155712128e-8,
+      "rms": 0.0015821930568085294,
+      "peak": 0.013721924275159836
+    },
+    {
+      "track": "nightowl-controlled",
+      "metadata": {
+        "sourceSeparated": true,
+        "name": "UVR MDX-Net Voc FT",
+        "modelId": "uvr-mdx-net-voc-ft",
+        "modelSha256": "534b2070fcc7df514b13ef660dc8cbb328679c2374d04354a5c42bb14ecce111",
+        "sampleRate": 44100,
+        "sourceChannels": 2,
+        "stems": [
+          "vocals",
+          "accompaniment"
+        ],
+        "method": "Pretrained stereo complex-spectrum separation with polarity ensemble",
+        "vocalBandwidthHz": 17640,
+        "fftWindowSamples": 7680,
+        "fftHopSamples": 1024,
+        "contextSamples": 3840,
+        "overlapSamples": 126720,
+        "overlapFraction": 0.5,
+        "denoise": true,
+        "modelPasses": 4,
+        "alignment": "Original sample clock; normalized overlap-add and complementary chunk crossfades; no latency subtraction",
+        "estimated": true,
+        "analysisSeconds": 38.92435000000149,
+        "chunks": 2,
+        "limitations": [
+          "Separation can retain instrument bleed or soften quiet and heavily processed singing.",
+          "Lead and backing vocals are combined; this is not lyric transcription."
+        ]
+      },
+      "chunks": [
+        {
+          "start": 0,
+          "count": 126720
+        },
+        {
+          "start": 126720,
+          "count": 173312
+        }
+      ],
+      "samples": 300032,
+      "mixtureReconstructionMaxError": 5.8862497098743916e-8,
+      "rms": 0.03998211676264348,
+      "peak": 0.3261714577674866
+    },
+    {
+      "track": "stella-controlled",
+      "metadata": {
+        "sourceSeparated": true,
+        "name": "UVR MDX-Net Voc FT",
+        "modelId": "uvr-mdx-net-voc-ft",
+        "modelSha256": "534b2070fcc7df514b13ef660dc8cbb328679c2374d04354a5c42bb14ecce111",
+        "sampleRate": 44100,
+        "sourceChannels": 2,
+        "stems": [
+          "vocals",
+          "accompaniment"
+        ],
+        "method": "Pretrained stereo complex-spectrum separation with polarity ensemble",
+        "vocalBandwidthHz": 17640,
+        "fftWindowSamples": 7680,
+        "fftHopSamples": 1024,
+        "contextSamples": 3840,
+        "overlapSamples": 126720,
+        "overlapFraction": 0.5,
+        "denoise": true,
+        "modelPasses": 4,
+        "alignment": "Original sample clock; normalized overlap-add and complementary chunk crossfades; no latency subtraction",
+        "estimated": true,
+        "analysisSeconds": 57.9080700000003,
+        "chunks": 2,
+        "limitations": [
+          "Separation can retain instrument bleed or soften quiet and heavily processed singing.",
+          "Lead and backing vocals are combined; this is not lyric transcription."
+        ]
+      },
+      "chunks": [
+        {
+          "start": 0,
+          "count": 126720
+        },
+        {
+          "start": 126720,
+          "count": 173312
+        }
+      ],
+      "samples": 300032,
+      "mixtureReconstructionMaxError": 5.960464477539063e-8,
+      "rms": 0.07010495917338475,
+      "peak": 0.4409198462963104
+    },
+    {
+      "track": "meaxic-controlled",
+      "metadata": {
+        "sourceSeparated": true,
+        "name": "UVR MDX-Net Voc FT",
+        "modelId": "uvr-mdx-net-voc-ft",
+        "modelSha256": "534b2070fcc7df514b13ef660dc8cbb328679c2374d04354a5c42bb14ecce111",
+        "sampleRate": 44100,
+        "sourceChannels": 2,
+        "stems": [
+          "vocals",
+          "accompaniment"
+        ],
+        "method": "Pretrained stereo complex-spectrum separation with polarity ensemble",
+        "vocalBandwidthHz": 17640,
+        "fftWindowSamples": 7680,
+        "fftHopSamples": 1024,
+        "contextSamples": 3840,
+        "overlapSamples": 126720,
+        "overlapFraction": 0.5,
+        "denoise": true,
+        "modelPasses": 4,
+        "alignment": "Original sample clock; normalized overlap-add and complementary chunk crossfades; no latency subtraction",
+        "estimated": true,
+        "analysisSeconds": 56.10535499999672,
+        "chunks": 2,
+        "limitations": [
+          "Separation can retain instrument bleed or soften quiet and heavily processed singing.",
+          "Lead and backing vocals are combined; this is not lyric transcription."
+        ]
+      },
+      "chunks": [
+        {
+          "start": 0,
+          "count": 126720
+        },
+        {
+          "start": 126720,
+          "count": 173312
+        }
+      ],
+      "samples": 300032,
+      "mixtureReconstructionMaxError": 4.470348358154297e-8,
+      "rms": 0.0573373059866143,
+      "peak": 0.3512571156024933
+    },
+    {
+      "track": "grunge-controlled",
+      "metadata": {
+        "sourceSeparated": true,
+        "name": "UVR MDX-Net Voc FT",
+        "modelId": "uvr-mdx-net-voc-ft",
+        "modelSha256": "534b2070fcc7df514b13ef660dc8cbb328679c2374d04354a5c42bb14ecce111",
+        "sampleRate": 44100,
+        "sourceChannels": 2,
+        "stems": [
+          "vocals",
+          "accompaniment"
+        ],
+        "method": "Pretrained stereo complex-spectrum separation with polarity ensemble",
+        "vocalBandwidthHz": 17640,
+        "fftWindowSamples": 7680,
+        "fftHopSamples": 1024,
+        "contextSamples": 3840,
+        "overlapSamples": 126720,
+        "overlapFraction": 0.5,
+        "denoise": true,
+        "modelPasses": 4,
+        "alignment": "Original sample clock; normalized overlap-add and complementary chunk crossfades; no latency subtraction",
+        "estimated": true,
+        "analysisSeconds": 61.28290500000119,
+        "chunks": 2,
+        "limitations": [
+          "Separation can retain instrument bleed or soften quiet and heavily processed singing.",
+          "Lead and backing vocals are combined; this is not lyric transcription."
+        ]
+      },
+      "chunks": [
+        {
+          "start": 0,
+          "count": 126720
+        },
+        {
+          "start": 126720,
+          "count": 173312
+        }
+      ],
+      "samples": 300032,
+      "mixtureReconstructionMaxError": 5.960464477539063e-8,
+      "rms": 0.05130792910105678,
+      "peak": 0.3545624911785126
+    },
+    {
+      "track": "falcon-controlled",
+      "metadata": {
+        "sourceSeparated": true,
+        "name": "UVR MDX-Net Voc FT",
+        "modelId": "uvr-mdx-net-voc-ft",
+        "modelSha256": "534b2070fcc7df514b13ef660dc8cbb328679c2374d04354a5c42bb14ecce111",
+        "sampleRate": 44100,
+        "sourceChannels": 2,
+        "stems": [
+          "vocals",
+          "accompaniment"
+        ],
+        "method": "Pretrained stereo complex-spectrum separation with polarity ensemble",
+        "vocalBandwidthHz": 17640,
+        "fftWindowSamples": 7680,
+        "fftHopSamples": 1024,
+        "contextSamples": 3840,
+        "overlapSamples": 126720,
+        "overlapFraction": 0.5,
+        "denoise": true,
+        "modelPasses": 4,
+        "alignment": "Original sample clock; normalized overlap-add and complementary chunk crossfades; no latency subtraction",
+        "estimated": true,
+        "analysisSeconds": 49.28992500000447,
+        "chunks": 2,
+        "limitations": [
+          "Separation can retain instrument bleed or soften quiet and heavily processed singing.",
+          "Lead and backing vocals are combined; this is not lyric transcription."
+        ]
+      },
+      "chunks": [
+        {
+          "start": 0,
+          "count": 126720
+        },
+        {
+          "start": 126720,
+          "count": 173312
+        }
+      ],
+      "samples": 300032,
+      "mixtureReconstructionMaxError": 5.960464477539063e-8,
+      "rms": 0.05833508818869889,
+      "peak": 0.28985705971717834
+    },
+    {
+      "track": "sdrnr-controlled",
+      "metadata": {
+        "sourceSeparated": true,
+        "name": "UVR MDX-Net Voc FT",
+        "modelId": "uvr-mdx-net-voc-ft",
+        "modelSha256": "534b2070fcc7df514b13ef660dc8cbb328679c2374d04354a5c42bb14ecce111",
+        "sampleRate": 44100,
+        "sourceChannels": 2,
+        "stems": [
+          "vocals",
+          "accompaniment"
+        ],
+        "method": "Pretrained stereo complex-spectrum separation with polarity ensemble",
+        "vocalBandwidthHz": 17640,
+        "fftWindowSamples": 7680,
+        "fftHopSamples": 1024,
+        "contextSamples": 3840,
+        "overlapSamples": 126720,
+        "overlapFraction": 0.5,
+        "denoise": true,
+        "modelPasses": 4,
+        "alignment": "Original sample clock; normalized overlap-add and complementary chunk crossfades; no latency subtraction",
+        "estimated": true,
+        "analysisSeconds": 58.878020000003275,
+        "chunks": 2,
+        "limitations": [
+          "Separation can retain instrument bleed or soften quiet and heavily processed singing.",
+          "Lead and backing vocals are combined; this is not lyric transcription."
+        ]
+      },
+      "chunks": [
+        {
+          "start": 0,
+          "count": 126720
+        },
+        {
+          "start": 126720,
+          "count": 173312
+        }
+      ],
+      "samples": 300032,
+      "mixtureReconstructionMaxError": 5.960464477539063e-8,
+      "rms": 0.0535220048856756,
+      "peak": 0.3529438078403473
+    },
+    {
+      "track": "seam-mix",
+      "metadata": {
+        "sourceSeparated": true,
+        "name": "UVR MDX-Net Voc FT",
+        "modelId": "uvr-mdx-net-voc-ft",
+        "modelSha256": "534b2070fcc7df514b13ef660dc8cbb328679c2374d04354a5c42bb14ecce111",
+        "sampleRate": 44100,
+        "sourceChannels": 2,
+        "stems": [
+          "vocals",
+          "accompaniment"
+        ],
+        "method": "Pretrained stereo complex-spectrum separation with polarity ensemble",
+        "vocalBandwidthHz": 17640,
+        "fftWindowSamples": 7680,
+        "fftHopSamples": 1024,
+        "contextSamples": 3840,
+        "overlapSamples": 126720,
+        "overlapFraction": 0.5,
+        "denoise": true,
+        "modelPasses": 28,
+        "alignment": "Original sample clock; normalized overlap-add and complementary chunk crossfades; no latency subtraction",
+        "estimated": true,
+        "analysisSeconds": 305.2878800000027,
+        "chunks": 14,
+        "limitations": [
+          "Separation can retain instrument bleed or soften quiet and heavily processed singing.",
+          "Lead and backing vocals are combined; this is not lyric transcription."
+        ]
+      },
+      "chunks": [
+        {
+          "start": 0,
+          "count": 126720
+        },
+        {
+          "start": 126720,
+          "count": 126720
+        },
+        {
+          "start": 253440,
+          "count": 126720
+        },
+        {
+          "start": 380160,
+          "count": 126720
+        },
+        {
+          "start": 506880,
+          "count": 126720
+        },
+        {
+          "start": 633600,
+          "count": 126720
+        },
+        {
+          "start": 760320,
+          "count": 126720
+        },
+        {
+          "start": 887040,
+          "count": 126720
+        },
+        {
+          "start": 1013760,
+          "count": 126720
+        },
+        {
+          "start": 1140480,
+          "count": 126720
+        },
+        {
+          "start": 1267200,
+          "count": 126720
+        },
+        {
+          "start": 1393920,
+          "count": 126720
+        },
+        {
+          "start": 1520640,
+          "count": 126720
+        },
+        {
+          "start": 1647360,
+          "count": 184157
+        }
+      ],
+      "samples": 1831517,
+      "mixtureReconstructionMaxError": 5.960464477539063e-8,
+      "rms": 0.07386491210725674,
+      "peak": 0.42964956164360046
+    }
+  ],
+  "source_hashes": {
+    "web/analysis/separator-mdx.js": "f0d42ecc6d5928f72120a5e40b33a291d28d550a59ec0f05c68e37ed87ed3a9d",
+    "web/analysis/models/separator-mdx-model.json": "0d7a6ff7c6a3a19fdd38b92a50cf39cfd91130bf2ed7dcbaca2f12890385e0c2",
+    "web/analysis/models/uvr-mdx-voc-ft.onnx": "534b2070fcc7df514b13ef660dc8cbb328679c2374d04354a5c42bb14ecce111"
+  }
+}

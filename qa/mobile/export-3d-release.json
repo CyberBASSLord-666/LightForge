@@ -1,0 +1,27 @@
+{
+  "release": "1.3.0",
+  "passed": true,
+  "checks": [
+    "ZIP CRC and matching Tesla LightShow filenames",
+    "PCM16 stereo 44.1 kHz audio byte-identical to imported demo",
+    "Tesla official FSEQ format validator",
+    "Full sequence payload and terminal dark frame",
+    "Music and sequence duration within one frame",
+    "Saved project regenerates byte-identical export"
+  ],
+  "files": [
+    "LightShow/lightshow.fseq",
+    "LightShow/lightshow.wav",
+    "README.txt",
+    "Validation.json",
+    "Review/LightForge_Project.json"
+  ],
+  "fseq_bytes": 640072,
+  "audio_sha256": "33f07d502ba19832b62b97d8fb4a11354e81310264bd885d7a06438228773650",
+  "official_validator": {
+    "frame_count": 3200,
+    "step_time": 20,
+    "duration_s": 64.0
+  },
+  "errors": []
+}

@@ -1,0 +1,13 @@
+{
+  "source": "User-provided Glass Castle.wav, physically present recovered prefix",
+  "originalSourceSHA256": "24dd69621d66a27c00dd7a90c723858232c58176753322201098669b8c94f960",
+  "preparedSource": "qa/release-1.5.0/fixtures/glass-castle.wav",
+  "preparedSourceSHA256": "7652ba19f8e4b9d76b38a2db6e19ff60252342f1e8f610399ac636cfcd72af82",
+  "preparedSourceDuration": 121.7491156462585,
+  "fixture": "qa/release-1.6.0/fixtures/user-glass-prefix64.wav",
+  "fixtureSHA256": "87c460ca1a5749d5a29555ff793161dda25cdb5b4293ed6c9bb1f2177857edbd",
+  "startSeconds": 0,
+  "durationSeconds": 64,
+  "format": "stereo44.1kHzPCM16",
+  "limitation": "This is a64second original-user-audio prefix, not the full declared238second truncated attachment."
+}

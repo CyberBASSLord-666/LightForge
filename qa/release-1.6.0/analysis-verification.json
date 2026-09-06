@@ -1,0 +1,570 @@
+{
+  "release": "1.6.0",
+  "analysisVersion": 5,
+  "passed": true,
+  "errors": [],
+  "createdAt": "2026-09-06T10:12:33.717564+00:00",
+  "models": {
+    "beat-this-large.onnx": {
+      "bytes": 83162650,
+      "sha256": "5f810debe53459b559127fb55bbad40035bb47cc567b20e501670f968c770f02",
+      "model": "Beat This! final0",
+      "id": "beat-this-final0",
+      "license": "MIT",
+      "source": "https://github.com/CPJKU/beat_this"
+    },
+    "beat-this-small.onnx": {
+      "bytes": 10555592,
+      "sha256": "a5f8d39d989f31859454ba27afe61c5317ca95e4d9373e6853e5361b8937172f",
+      "model": "Beat This! small1",
+      "id": "beat-this-small1",
+      "license": "MIT",
+      "source": "https://github.com/CPJKU/beat_this"
+    },
+    "beat-this-mel.onnx": {
+      "bytes": 270742,
+      "sha256": "fdd59e65c515331308e4c8841edf99972deca646bdf6197744c2a5b7755e3de9",
+      "model": "Beat This! log-mel",
+      "id": "beat-this-log-mel",
+      "license": "MIT",
+      "source": "https://github.com/CPJKU/beat_this"
+    },
+    "frame-mn10-singing.onnx": {
+      "bytes": 13620408,
+      "sha256": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+      "model": "PretrainedSED Frame-MN10",
+      "id": "frame-mn10-strong-1",
+      "license": "MIT",
+      "source": "https://github.com/fschmid56/PretrainedSED"
+    },
+    "uvr-mdx-voc-ft.onnx": {
+      "bytes": 66762490,
+      "sha256": "534b2070fcc7df514b13ef660dc8cbb328679c2374d04354a5c42bb14ecce111",
+      "model": "UVR MDX-Net Voc FT",
+      "id": "uvr-mdx-net-voc-ft",
+      "license": "MIT; credit UVR and its developers Anjok07 and aufr33; MDX-Net architecture by KUIELab",
+      "source": "https://github.com/Anjok07/ultimatevocalremovergui"
+    }
+  },
+  "source_hashes": {
+    "web/analysis/worker.js": "77c70eed09201a68c10a3cff6254e46171cfd0a49f09eb54534f0180608df367",
+    "web/analysis/analyzer.js": "7447840a63ec025d16ad368191261025f4d76ce171ddb54e1b38747ab8547a9a",
+    "web/analysis/stem-cache.js": "c7d3101a59a85d0c2ebfd30e1c6cd40dc9720f17072b5fc821bd0fd3bf7c6fb4",
+    "web/analysis/wav-reader.js": "0f0e5216dc1d2ca0bfb25eddacdaa21076990fa7638c22188023607e43d4005f",
+    "web/analysis/dsp.js": "32186b9268632cab85cadcb7e84fa1b4e3d8eb4bb9fbdf96a0873067cb9acd71",
+    "web/analysis/bass-notes.js": "5b81e2361295a1f8c02086d4668464ed1d7e93c923513c50a2c865a7aeb1531e",
+    "web/analysis/vocal.js": "94483ac6cf5db7532abfba98e7bab7cd826a82ad2adca0296d39fdebd827ac70",
+    "web/analysis/vocal-detail.js": "df7f86db061f4b64806539d82dfc7d4777379fdb506a75de8c2d3e689a82a621",
+    "web/analysis/separator-mdx.js": "f0d42ecc6d5928f72120a5e40b33a291d28d550a59ec0f05c68e37ed87ed3a9d",
+    "web/analysis/models/features.json": "8a9fb3bc88c3e2f35934dd0024f22458aa8d357e3e3946a6e2c6230d3886e278",
+    "web/analysis/models/model-manifest.json": "b65e74feda05a792d88cf76eb9eca82a2c0f08d63f294c14ba6eabdd67617983",
+    "web/analysis/models/vocal-model.json": "52093f26d0bfe3f04bbb1563b287fafe5e61aa57a61391ea643b04d97838ca7e",
+    "web/analysis/models/vocal-frontend.json": "72bdffced29bfdd6d1da77a4da2a2a4af1b2f839c71131d19dc9423db3d4732f",
+    "web/analysis/models/separator-mdx-model.json": "0d7a6ff7c6a3a19fdd38b92a50cf39cfd91130bf2ed7dcbaca2f12890385e0c2",
+    "web/analysis/models/beat-this-large.onnx": "5f810debe53459b559127fb55bbad40035bb47cc567b20e501670f968c770f02",
+    "web/analysis/models/beat-this-small.onnx": "a5f8d39d989f31859454ba27afe61c5317ca95e4d9373e6853e5361b8937172f",
+    "web/analysis/models/beat-this-mel.onnx": "fdd59e65c515331308e4c8841edf99972deca646bdf6197744c2a5b7755e3de9",
+    "web/analysis/models/frame-mn10-singing.onnx": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+    "web/analysis/models/uvr-mdx-voc-ft.onnx": "534b2070fcc7df514b13ef660dc8cbb328679c2374d04354a5c42bb14ecce111"
+  },
+  "evidence_hashes": {
+    "qa/release-1.6.0/public-analysis-cancel-verification.json": "32d4aba9abb090b022399fccf6e4f97ec319a608812df4b3495bf4e75e2af19b",
+    "qa/release-1.6.0/quality-final-capture.json": "1475104bb137449a313db4f35d46ede1e12df3ded5e4c9768de32518f5174431",
+    "qa/release-1.6.0/user-glass-fixture-provenance.json": "b72476d57b2b0663ac452333bf5171e2e8df8268ef4f877e7411acae2e387358",
+    "qa/release-1.6.0/musdb-fixture-provenance.json": "99852b852a3ef05a1fe06a7bbe17e40b68dcc0acfe9dccfb84c1ebf69c40f20a",
+    "qa/release-1.6.0/quality-final-nightowl-controlled.json": "bb0dd9f0577723f9324eda8c8bd43ccd2df2c60ad062b38ff3b3e54fef7858ec",
+    "qa/release-1.6.0/vocal-detail-candidate-verification.json": "d1966ef7fecf5103c0ea543f2013a0a4cfd6f3f81cd321b8f495a0844a4ecf75",
+    "qa/release-1.6.0/quality-studio-capture.json": "78a13254e1a48b43594e28892fe434c1bb215ba3d601031b7e58dd6b3efed633",
+    "qa/release-1.6.0/seam-fixture-provenance.json": "1f6f168f0683b4d5539b4fa96263843dda59258418ff14abb96c0c107466cae0",
+    "qa/release-1.6.0/separator-verification.json": "55f32d40e6467fefe04177b8968d5d0acef17a8bc962aa42c95a4221efa85a32",
+    "qa/release-1.6.0/separator-quality-comparison.json": "9242bd3fdde34373658cfc665ead4738332a3c329d441b5c3d66b96d44afe856",
+    "qa/release-1.6.0/musical-detail-comparison.json": "648b7961e367065332e005fd7648d4e28308b08695f4dfe613fba66c9be517f9"
+  },
+  "scope": {
+    "initialPublicWorkerPass": "18actual precision-model public MusicAnalyzer calls. Early cases precede the final weak-voice fallback; original outputs are retained unchanged as audit evidence.",
+    "finalDetailReplay": "All18 actual MDX-estimated sources replayed through the exact final production float downsampler, actual isolated-source Frame-MN10 inference, and final vocal-detail code. Original studio stems are used only by independent scoring, never substituted into production.",
+    "finalPublicWorkerRegression": "The previously missed NightOwl controlled vocal is rerun through the complete final public worker. Its phrase, accent, envelope, note, and contour arrays exactly match the final replay.",
+    "lifecycle": "Three public-worker cancellations after writable OPFS cache creation and loaded MDX separation; AbortError and eventual namespace removal verified on actual Chromium OPFS.",
+    "historicalRhythm": "Existing unchanged Beat This! model/frontend reference evidence is retained in prior releases. Current precision-model rhythm inference also ran as part of all18 public-worker cases.",
+    "integration": "The separate integration-verification.json binds actual file-picker import, current compiler, WebGL preview, saved-project restoration and exported ZIP on two real reference songs and a64second original-user-audio prefix."
+  },
+  "initialPublicWorkerCases": [
+    {
+      "track": "nightowl-mix",
+      "file": "quality-studio-nightowl-mix.json",
+      "seconds": 42.69196500000358,
+      "beats": 17,
+      "bassNotes": 6,
+      "articulations": 12
+    },
+    {
+      "track": "nightowl-instrumental",
+      "file": "quality-studio-nightowl-instrumental.json",
+      "seconds": 50.72204000000656,
+      "beats": 17,
+      "bassNotes": 5,
+      "articulations": 0
+    },
+    {
+      "track": "nightowl-controlled",
+      "file": "quality-studio-nightowl-controlled.json",
+      "seconds": 65.8701649999991,
+      "beats": 17,
+      "bassNotes": 5,
+      "articulations": 0
+    },
+    {
+      "track": "stella-mix",
+      "file": "quality-studio-stella-mix.json",
+      "seconds": 69.0005450000018,
+      "beats": 13,
+      "bassNotes": 9,
+      "articulations": 21
+    },
+    {
+      "track": "stella-instrumental",
+      "file": "quality-studio-stella-instrumental.json",
+      "seconds": 56.2390700000003,
+      "beats": 13,
+      "bassNotes": 11,
+      "articulations": 0
+    },
+    {
+      "track": "stella-controlled",
+      "file": "quality-studio-stella-controlled.json",
+      "seconds": 62.36708500000089,
+      "beats": 13,
+      "bassNotes": 11,
+      "articulations": 15
+    },
+    {
+      "track": "meaxic-mix",
+      "file": "quality-studio-meaxic-mix.json",
+      "seconds": 40.0067650000006,
+      "beats": 20,
+      "bassNotes": 6,
+      "articulations": 21
+    },
+    {
+      "track": "meaxic-instrumental",
+      "file": "quality-studio-meaxic-instrumental.json",
+      "seconds": 46.1343200000003,
+      "beats": 23,
+      "bassNotes": 6,
+      "articulations": 0
+    },
+    {
+      "track": "meaxic-controlled",
+      "file": "quality-studio-meaxic-controlled.json",
+      "seconds": 49.86712000000477,
+      "beats": 16,
+      "bassNotes": 6,
+      "articulations": 14
+    },
+    {
+      "track": "grunge-mix",
+      "file": "quality-studio-grunge-mix.json",
+      "seconds": 42.514019999995824,
+      "beats": 12,
+      "bassNotes": 4,
+      "articulations": 25
+    },
+    {
+      "track": "grunge-instrumental",
+      "file": "quality-studio-grunge-instrumental.json",
+      "seconds": 42.6010700000003,
+      "beats": 12,
+      "bassNotes": 3,
+      "articulations": 0
+    },
+    {
+      "track": "grunge-controlled",
+      "file": "quality-studio-grunge-controlled.json",
+      "seconds": 59.05431000000238,
+      "beats": 12,
+      "bassNotes": 3,
+      "articulations": 12
+    },
+    {
+      "track": "falcon-mix",
+      "file": "quality-studio-falcon-mix.json",
+      "seconds": 44.32406500000506,
+      "beats": 13,
+      "bassNotes": 9,
+      "articulations": 12
+    },
+    {
+      "track": "falcon-instrumental",
+      "file": "quality-studio-falcon-instrumental.json",
+      "seconds": 37.75818499999493,
+      "beats": 13,
+      "bassNotes": 10,
+      "articulations": 0
+    },
+    {
+      "track": "falcon-controlled",
+      "file": "quality-studio-falcon-controlled.json",
+      "seconds": 37.61249500000477,
+      "beats": 13,
+      "bassNotes": 9,
+      "articulations": 8
+    },
+    {
+      "track": "sdrnr-mix",
+      "file": "quality-studio-sdrnr-mix.json",
+      "seconds": 41.26325999999791,
+      "beats": 14,
+      "bassNotes": 7,
+      "articulations": 25
+    },
+    {
+      "track": "sdrnr-instrumental",
+      "file": "quality-studio-sdrnr-instrumental.json",
+      "seconds": 38.307505000002685,
+      "beats": 14,
+      "bassNotes": 9,
+      "articulations": 0
+    },
+    {
+      "track": "sdrnr-controlled",
+      "file": "quality-studio-sdrnr-controlled.json",
+      "seconds": 39.8374299999997,
+      "beats": 14,
+      "bassNotes": 8,
+      "articulations": 13
+    }
+  ],
+  "finalWeakVoiceRegression": {
+    "source": "quality-final-nightowl-controlled.json",
+    "phrases": [
+      {
+        "start": 1.4,
+        "end": 3.165,
+        "releaseTime": 3.165,
+        "confidence": 0.415,
+        "modelScore": 0.0706,
+        "speechScore": 0.0185,
+        "strength": 1,
+        "peakTime": 1.42,
+        "kind": "vocal",
+        "evidenceMode": "separation-led",
+        "estimated": true,
+        "source": "separated-vocals",
+        "voicedFraction": 0.25,
+        "stemEnergyRatio": 0.1346
+      },
+      {
+        "start": 4.195,
+        "end": 5.86,
+        "releaseTime": 5.86,
+        "confidence": 0.406,
+        "modelScore": 0.0438,
+        "speechScore": 0.0198,
+        "strength": 1,
+        "peakTime": 4.2,
+        "kind": "vocal",
+        "evidenceMode": "separation-led",
+        "estimated": true,
+        "source": "separated-vocals",
+        "voicedFraction": 0.269,
+        "stemEnergyRatio": 0.1187
+      }
+    ],
+    "articulations": 7,
+    "pitchNotes": 0,
+    "presence": "uncertain",
+    "finalReplayExact": true
+  },
+  "musicalDetail": {
+    "baseline-mix": {
+      "tracks": 6,
+      "singingDetectedTracks": 5,
+      "tracksWithVoiceCues": 5,
+      "accents": 9,
+      "notes": 0,
+      "meanEnvelopeStemRmsPearson": 0.4445,
+      "meanActiveStemF1": 0.8326,
+      "falseActiveSeconds": 0.02,
+      "outsideKnownVocalWindowsSeconds": 0
+    },
+    "baseline-instrumental": {
+      "tracks": 6,
+      "singingDetectedTracks": 0,
+      "tracksWithVoiceCues": 0,
+      "accents": 0,
+      "notes": 0,
+      "meanEnvelopeStemRmsPearson": 0.0,
+      "meanActiveStemF1": 0.0,
+      "falseActiveSeconds": 0.0,
+      "outsideKnownVocalWindowsSeconds": 0
+    },
+    "baseline-controlled": {
+      "tracks": 6,
+      "singingDetectedTracks": 5,
+      "tracksWithVoiceCues": 5,
+      "accents": 12,
+      "notes": 0,
+      "meanEnvelopeStemRmsPearson": 0.7202,
+      "meanActiveStemF1": 0.7721,
+      "falseActiveSeconds": 2.44,
+      "outsideKnownVocalWindowsSeconds": 1.92
+    },
+    "studio-mix": {
+      "tracks": 6,
+      "singingDetectedTracks": 5,
+      "tracksWithVoiceCues": 6,
+      "accents": 116,
+      "notes": 44,
+      "meanEnvelopeStemRmsPearson": 0.8331,
+      "meanActiveStemF1": 0.9597,
+      "falseActiveSeconds": 0.02,
+      "outsideKnownVocalWindowsSeconds": 0
+    },
+    "studio-instrumental": {
+      "tracks": 6,
+      "singingDetectedTracks": 0,
+      "tracksWithVoiceCues": 0,
+      "accents": 0,
+      "notes": 0,
+      "meanEnvelopeStemRmsPearson": 0.0,
+      "meanActiveStemF1": 0.0,
+      "falseActiveSeconds": 0.0,
+      "outsideKnownVocalWindowsSeconds": 0
+    },
+    "studio-controlled": {
+      "tracks": 6,
+      "singingDetectedTracks": 5,
+      "tracksWithVoiceCues": 5,
+      "accents": 62,
+      "notes": 23,
+      "meanEnvelopeStemRmsPearson": 0.8037,
+      "meanActiveStemF1": 0.826,
+      "falseActiveSeconds": 0.0,
+      "outsideKnownVocalWindowsSeconds": 0.0
+    },
+    "final_detail-mix": {
+      "tracks": 6,
+      "singingDetectedTracks": 5,
+      "tracksWithVoiceCues": 6,
+      "accents": 116,
+      "notes": 44,
+      "meanEnvelopeStemRmsPearson": 0.8331,
+      "meanActiveStemF1": 0.9597,
+      "falseActiveSeconds": 0.02,
+      "outsideKnownVocalWindowsSeconds": 0
+    },
+    "final_detail-instrumental": {
+      "tracks": 6,
+      "singingDetectedTracks": 0,
+      "tracksWithVoiceCues": 0,
+      "accents": 0,
+      "notes": 0,
+      "meanEnvelopeStemRmsPearson": 0.0,
+      "meanActiveStemF1": 0.0,
+      "falseActiveSeconds": 0.0,
+      "outsideKnownVocalWindowsSeconds": 0
+    },
+    "final_detail-controlled": {
+      "tracks": 6,
+      "singingDetectedTracks": 5,
+      "tracksWithVoiceCues": 6,
+      "accents": 69,
+      "notes": 23,
+      "meanEnvelopeStemRmsPearson": 0.9652,
+      "meanActiveStemF1": 0.9852,
+      "falseActiveSeconds": 0.02,
+      "outsideKnownVocalWindowsSeconds": 0.0
+    },
+    "final-controlled": {
+      "tracks": 1,
+      "singingDetectedTracks": 0,
+      "tracksWithVoiceCues": 1,
+      "accents": 7,
+      "notes": 0,
+      "meanEnvelopeStemRmsPearson": 0.9688,
+      "meanActiveStemF1": 0.9553,
+      "falseActiveSeconds": 0.02,
+      "outsideKnownVocalWindowsSeconds": 0.0
+    }
+  },
+  "separatorQuality": {
+    "Fixed equal MDX/Demucs4 ensemble": {
+      "mix": {
+        "tracks": 6,
+        "siSdrDb": 9.97572,
+        "plainSdrDb": 10.56225,
+        "siSdrImprovementDb": 14.60315,
+        "vocalEnvelopeRmsPearson": 0.93303,
+        "estimateToMixEnergyDb": -6.87226
+      },
+      "instrumental": {
+        "tracks": 6,
+        "vocalEnvelopeRmsPearson": 0.0,
+        "estimateToMixEnergyDb": -52.04693
+      }
+    },
+    "HTDemucs FT four deterministic shifts": {
+      "mix": {
+        "tracks": 6,
+        "siSdrDb": 8.68698,
+        "plainSdrDb": 9.47908,
+        "siSdrImprovementDb": 13.31441,
+        "vocalEnvelopeRmsPearson": 0.92268,
+        "estimateToMixEnergyDb": -6.90941
+      },
+      "instrumental": {
+        "tracks": 6,
+        "vocalEnvelopeRmsPearson": 0.0,
+        "estimateToMixEnergyDb": -60.92616
+      }
+    },
+    "HTDemucs FT vocals specialist": {
+      "mix": {
+        "tracks": 6,
+        "siSdrDb": 8.61556,
+        "plainSdrDb": 9.41985,
+        "siSdrImprovementDb": 13.24298,
+        "vocalEnvelopeRmsPearson": 0.92302,
+        "estimateToMixEnergyDb": -6.89531
+      }
+    },
+    "Spleeter 2 stems": {
+      "mix": {
+        "tracks": 6,
+        "siSdrDb": 5.92291,
+        "plainSdrDb": 7.16329,
+        "siSdrImprovementDb": 10.55034,
+        "vocalEnvelopeRmsPearson": 0.8669,
+        "estimateToMixEnergyDb": -7.72566
+      },
+      "instrumental": {
+        "tracks": 6,
+        "vocalEnvelopeRmsPearson": 0.0,
+        "estimateToMixEnergyDb": -67.98872
+      },
+      "controlled": {
+        "tracks": 6,
+        "siSdrDb": 6.66289,
+        "plainSdrDb": 7.75517,
+        "siSdrImprovementDb": 13.61178,
+        "vocalEnvelopeRmsPearson": 0.95135,
+        "estimateToMixEnergyDb": -9.08285,
+        "outsideVoiceWindowEnergyFraction": 0.00801
+      }
+    },
+    "UVR MDX-Net Voc FT polarity ensemble": {
+      "mix": {
+        "tracks": 6,
+        "siSdrDb": 10.0422,
+        "plainSdrDb": 10.68922,
+        "siSdrImprovementDb": 14.66963,
+        "vocalEnvelopeRmsPearson": 0.92043,
+        "estimateToMixEnergyDb": -6.64317
+      },
+      "instrumental": {
+        "tracks": 6,
+        "vocalEnvelopeRmsPearson": 0.0,
+        "estimateToMixEnergyDb": -47.36027
+      },
+      "controlled": {
+        "tracks": 6,
+        "siSdrDb": 10.94769,
+        "plainSdrDb": 11.42143,
+        "siSdrImprovementDb": 17.89658,
+        "vocalEnvelopeRmsPearson": 0.98977,
+        "estimateToMixEnergyDb": -8.21448,
+        "outsideVoiceWindowEnergyFraction": 0.00059
+      }
+    }
+  },
+  "sourceClockRegression": {
+    "model": "UVR MDX-Net Voc FT polarity ensemble",
+    "track": "seam-mix",
+    "samples": 1831517,
+    "sampleRate": 44100,
+    "lengthMatch": true,
+    "estimateSHA256": "264a3ea7b1f74df941ff534ce27b9aaf99b430c15d5affa55cd97a80faeb8348",
+    "siSdrDb": 16.83545,
+    "plainSdrDb": 16.92252,
+    "inputMixSiSdrDb": -2.90979,
+    "siSdrImprovementDb": 19.74523,
+    "vocalEnvelopeRmsPearson": 0.99694,
+    "estimateToMixEnergyDb": -4.77182,
+    "estimateToReferenceEnergyDb": -0.11544,
+    "nonFiniteSamples": 0,
+    "diagnosticEnvelopeLagMs": 0.0,
+    "knownSilenceEnergyFraction": 2.29e-08,
+    "knownSilencePeakAmplitude": 0.00081,
+    "sourceWindowEnvelopeLagMs": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "cancellationTrials": [
+    {
+      "aborted": true,
+      "message": "Analysis cancelled",
+      "before": [],
+      "cacheDuring": [
+        "stem-72987471-94b7-4aab-b22e-40945a2892b0"
+      ],
+      "after": [],
+      "seen": {
+        "progress": 0.42,
+        "stage": "Separating voice and instruments",
+        "detail": "Separating singing from the instruments \u2022 0 / 7 seconds"
+      },
+      "cleanupMs": 3461.689999997616,
+      "elapsedMs": 6853.004999995232
+    },
+    {
+      "aborted": true,
+      "message": "Analysis cancelled",
+      "before": [],
+      "cacheDuring": [
+        "stem-ffd14549-d859-42d4-bdf2-92ec0b8606ca"
+      ],
+      "after": [],
+      "seen": {
+        "progress": 0.42,
+        "stage": "Separating voice and instruments",
+        "detail": "Separating singing from the instruments \u2022 0 / 7 seconds"
+      },
+      "cleanupMs": 3431.494999997318,
+      "elapsedMs": 5421.115000002086
+    },
+    {
+      "aborted": true,
+      "message": "Analysis cancelled",
+      "before": [],
+      "cacheDuring": [
+        "stem-32fef08c-3af4-496b-a3ac-57d747ac8d0e"
+      ],
+      "after": [],
+      "seen": {
+        "progress": 0.42,
+        "stage": "Separating voice and instruments",
+        "detail": "Separating singing from the instruments \u2022 0 / 7 seconds"
+      },
+      "cleanupMs": 3422.625,
+      "elapsedMs": 5515.670000001788
+    }
+  ],
+  "selection": {
+    "model": "UVR MDX-Net Voc FT with two-pass polarity ensemble and50%overlap",
+    "basis": "Highest mean SI-SDR and plain SDR among the measured positive candidates. Beats Spleeter on each of six positive excerpts. Four-shift Demucs and a fixed equal blend were also measured.",
+    "tradeoff": "The fixed MDX/Demucs blend improves the hard Falcon excerpt and mean envelope correlation, but reduces four other positive SI-SDRs; no universal winner is claimed. Selection prioritizes measured separation quality, not speed.",
+    "physicalDeviceVerified": false
+  },
+  "limitations": [
+    "These are six short excerpts and controlled remixes, not a representative or verified held-out professional benchmark. Model training overlap may exist.",
+    "Original-stem RMS is an acoustic reference, not annotated lyrics, syllables, every pitch, or human-perceived choreography quality.",
+    "The new app responds to uncertain source-led voice conservatively; NightOwl remains uncertain singing, despite recovering actual source articulation.",
+    "Voice entry/release estimates can remain early or late. The40ms controlled-window scoring tolerance must not be described as universal40ms accuracy.",
+    "MDX remains imperfect on the hard Falcon excerpt. Estimated stem audio can contain instrument bleed, reverb and residual signal in silence.",
+    "Bass notes come from separated accompaniment, not a separately isolated bass instrument. Lead and backing singers share one vocal source.",
+    "The preview and music timing have no physical phone/vehicle validation. These tests cannot establish exact Tesla mechanical movement timing or photometric brightness."
+  ]
+}

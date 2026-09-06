@@ -1,0 +1,84 @@
+{
+  "opset": [
+    [
+      "",
+      17
+    ]
+  ],
+  "ir": 8,
+  "nodes": 24765,
+  "ops": {
+    "Constant": 11684,
+    "ConstantOfShape": 25,
+    "Concat": 784,
+    "Reshape": 927,
+    "Slice": 2090,
+    "Transpose": 116,
+    "Cast": 756,
+    "Pad": 7,
+    "Shape": 2968,
+    "Gather": 829,
+    "Unsqueeze": 945,
+    "Conv": 94,
+    "Mul": 357,
+    "ReduceMean": 6,
+    "ReduceProd": 2,
+    "Sub": 13,
+    "Div": 84,
+    "Sqrt": 2,
+    "Add": 605,
+    "Erf": 56,
+    "InstanceNormalization": 74,
+    "Split": 48,
+    "Sigmoid": 48,
+    "Range": 697,
+    "Expand": 701,
+    "Mod": 3,
+    "Sin": 3,
+    "Tile": 4,
+    "Equal": 12,
+    "Where": 12,
+    "ScatterND": 684,
+    "Cos": 3,
+    "LayerNormalization": 26,
+    "Pow": 11,
+    "MatMul": 68,
+    "Softmax": 10,
+    "ConvTranspose": 10,
+    "Clip": 1
+  },
+  "inputs": [
+    [
+      "mix",
+      [
+        1,
+        2,
+        343980
+      ]
+    ]
+  ],
+  "outputs": [
+    [
+      "stems",
+      [
+        "Addstems_dim_0",
+        "Addstems_dim_1",
+        "Addstems_dim_2",
+        "Addstems_dim_3"
+      ]
+    ]
+  ],
+  "initializerBytes": 167937824,
+  "loadSeconds": 16.435141296999063,
+  "runSeconds": 4.779888720004237,
+  "finite": true,
+  "shape": [
+    1,
+    4,
+    2,
+    343980
+  ],
+  "rms": 0.03774963691830635,
+  "maxRSSBytes": 6623203328,
+  "runtime": "1.29.0"
+}

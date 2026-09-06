@@ -1,0 +1,29 @@
+{
+  "release": "1.6.0",
+  "passed": true,
+  "groups": 16,
+  "method": "Separated-source waveform DSP fixtures; not trained model or physical-vehicle accuracy",
+  "checks": [
+    "Original clock phrase onset and release timing",
+    "Estimated held pitch and vibrato",
+    "Forty-decibel local dynamic range including adjacent quiet phrase",
+    "Independent vocal articulations with shifted backing kicks",
+    "Speech classification retains voice phrases without sung notes",
+    "Instrumental bleed without learned voice evidence rejected",
+    "Weak contextual classifier evidence cannot promote quiet instrumental leakage",
+    "Aperiodic separated voice retains uncertain source-led phrasing with weak semantic support",
+    "An isolated periodic source without semantic evidence is not called a singer",
+    "Noise and silence do not create pitched notes",
+    "Exact output across arbitrary streaming chunk boundaries",
+    "22.05 kHz analysis proxy support",
+    "Contiguous finite PCM and duration validation",
+    "Finite short-file and endpoint handling",
+    "Exact 140 ms note eligibility is invariant under floating-point timestamp position",
+    "Four-hour summaries with bounded arrays and small JSON"
+  ],
+  "source_hashes": {
+    "web/analysis/vocal-detail.js": "df7f86db061f4b64806539d82dfc7d4777379fdb506a75de8c2d3e689a82a621",
+    "tests/vocal-detail.test.cjs": "4dc06e8c9769ea06f864563924bd1a8553fed35dd11b6a60b94a32900516ddf9",
+    "qa/release-1.6.0/verify-vocal-detail.cjs": "e1c11b6dc9924657b80dd488afd01bde7addfb8ded6970cd2abd40a97fb69004"
+  }
+}

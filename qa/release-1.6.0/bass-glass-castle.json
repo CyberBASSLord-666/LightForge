@@ -1,0 +1,918 @@
+{
+  "method": "Harmonic low-register tracking",
+  "source": "mixture-estimate",
+  "confidence": 0.661,
+  "notes": [
+    {
+      "start": 9.505,
+      "end": 9.64,
+      "time": 9.505,
+      "midi": 50.61,
+      "frequency": 152.11,
+      "confidence": 0.701,
+      "strength": 0.756
+    },
+    {
+      "start": 13.71,
+      "end": 14.73,
+      "time": 13.71,
+      "midi": 40.96,
+      "frequency": 87.1,
+      "confidence": 0.63,
+      "strength": 0.541
+    },
+    {
+      "start": 14.73,
+      "end": 14.88,
+      "time": 14.73,
+      "midi": 52.75,
+      "frequency": 172.14,
+      "confidence": 0.667,
+      "strength": 0.721
+    },
+    {
+      "start": 16.33,
+      "end": 17.515,
+      "time": 16.33,
+      "midi": 25.09,
+      "frequency": 34.83,
+      "confidence": 0.602,
+      "strength": 0.684
+    },
+    {
+      "start": 18.68,
+      "end": 18.85,
+      "time": 18.68,
+      "midi": 26.84,
+      "frequency": 38.53,
+      "confidence": 0.627,
+      "strength": 0.523
+    },
+    {
+      "start": 18.85,
+      "end": 20.1,
+      "time": 18.85,
+      "midi": 26.98,
+      "frequency": 38.84,
+      "confidence": 0.689,
+      "strength": 0.739
+    },
+    {
+      "start": 21.77,
+      "end": 22.105,
+      "time": 21.77,
+      "midi": 29.09,
+      "frequency": 43.89,
+      "confidence": 0.626,
+      "strength": 0.825
+    },
+    {
+      "start": 22.105,
+      "end": 22.65,
+      "time": 22.105,
+      "midi": 29.05,
+      "frequency": 43.78,
+      "confidence": 0.629,
+      "strength": 0.526
+    },
+    {
+      "start": 24.05,
+      "end": 24.18,
+      "time": 24.05,
+      "midi": 28.93,
+      "frequency": 43.49,
+      "confidence": 0.704,
+      "strength": 0.675
+    },
+    {
+      "start": 26.63,
+      "end": 27.805,
+      "time": 26.63,
+      "midi": 25.03,
+      "frequency": 34.71,
+      "confidence": 0.655,
+      "strength": 0.875
+    },
+    {
+      "start": 29.19,
+      "end": 30.355,
+      "time": 29.19,
+      "midi": 26.96,
+      "frequency": 38.81,
+      "confidence": 0.645,
+      "strength": 0.659
+    },
+    {
+      "start": 33.845,
+      "end": 34.21,
+      "time": 33.845,
+      "midi": 56,
+      "frequency": 207.66,
+      "confidence": 0.736,
+      "strength": 0.529
+    },
+    {
+      "start": 37.07,
+      "end": 38.07,
+      "time": 37.07,
+      "midi": 25.09,
+      "frequency": 34.82,
+      "confidence": 0.618,
+      "strength": 0.919
+    },
+    {
+      "start": 38.27,
+      "end": 39.415,
+      "time": 38.27,
+      "midi": 25.03,
+      "frequency": 34.7,
+      "confidence": 0.611,
+      "strength": 0.742
+    },
+    {
+      "start": 40.325,
+      "end": 40.795,
+      "time": 40.325,
+      "midi": 27.12,
+      "frequency": 39.16,
+      "confidence": 0.633,
+      "strength": 0.64
+    },
+    {
+      "start": 42.11,
+      "end": 42.43,
+      "time": 42.11,
+      "midi": 29.07,
+      "frequency": 43.84,
+      "confidence": 0.624,
+      "strength": 0.745
+    },
+    {
+      "start": 42.43,
+      "end": 43.21,
+      "time": 42.43,
+      "midi": 29.19,
+      "frequency": 44.13,
+      "confidence": 0.607,
+      "strength": 0.943
+    },
+    {
+      "start": 43.45,
+      "end": 44.345,
+      "time": 43.45,
+      "midi": 29.12,
+      "frequency": 43.96,
+      "confidence": 0.649,
+      "strength": 0.767
+    },
+    {
+      "start": 45.37,
+      "end": 46.3,
+      "time": 45.37,
+      "midi": 29.06,
+      "frequency": 43.8,
+      "confidence": 0.633,
+      "strength": 1
+    },
+    {
+      "start": 48.105,
+      "end": 48.74,
+      "time": 48.105,
+      "midi": 25.32,
+      "frequency": 35.29,
+      "confidence": 0.638,
+      "strength": 0.655
+    },
+    {
+      "start": 49.17,
+      "end": 49.67,
+      "time": 49.17,
+      "midi": 55.94,
+      "frequency": 206.98,
+      "confidence": 0.698,
+      "strength": 0.672
+    },
+    {
+      "start": 49.67,
+      "end": 49.935,
+      "time": 49.67,
+      "midi": 50.96,
+      "frequency": 155.18,
+      "confidence": 0.681,
+      "strength": 0.655
+    },
+    {
+      "start": 49.99,
+      "end": 51.14,
+      "time": 49.99,
+      "midi": 27.05,
+      "frequency": 39,
+      "confidence": 0.685,
+      "strength": 0.758
+    },
+    {
+      "start": 51.91,
+      "end": 52.59,
+      "time": 51.91,
+      "midi": 29.05,
+      "frequency": 43.78,
+      "confidence": 0.61,
+      "strength": 0.565
+    },
+    {
+      "start": 52.59,
+      "end": 53.695,
+      "time": 52.59,
+      "midi": 29.08,
+      "frequency": 43.86,
+      "confidence": 0.621,
+      "strength": 0.645
+    },
+    {
+      "start": 54.19,
+      "end": 54.92,
+      "time": 54.19,
+      "midi": 29.22,
+      "frequency": 44.21,
+      "confidence": 0.623,
+      "strength": 0.659
+    },
+    {
+      "start": 55.07,
+      "end": 56.2,
+      "time": 55.07,
+      "midi": 29.09,
+      "frequency": 43.88,
+      "confidence": 0.622,
+      "strength": 0.556
+    },
+    {
+      "start": 57.395,
+      "end": 57.935,
+      "time": 57.395,
+      "midi": 44.02,
+      "frequency": 103.97,
+      "confidence": 0.66,
+      "strength": 0.583
+    },
+    {
+      "start": 57.935,
+      "end": 58.21,
+      "time": 57.935,
+      "midi": 25,
+      "frequency": 34.66,
+      "confidence": 0.658,
+      "strength": 0.362
+    },
+    {
+      "start": 58.21,
+      "end": 59.015,
+      "time": 58.21,
+      "midi": 25.04,
+      "frequency": 34.73,
+      "confidence": 0.642,
+      "strength": 0.395
+    },
+    {
+      "start": 59.015,
+      "end": 59.315,
+      "time": 59.015,
+      "midi": 44.01,
+      "frequency": 103.89,
+      "confidence": 0.708,
+      "strength": 0.504
+    },
+    {
+      "start": 59.315,
+      "end": 59.965,
+      "time": 59.315,
+      "midi": 44.02,
+      "frequency": 103.95,
+      "confidence": 0.647,
+      "strength": 0.463
+    },
+    {
+      "start": 59.965,
+      "end": 60.09,
+      "time": 59.965,
+      "midi": 26.98,
+      "frequency": 38.85,
+      "confidence": 0.665,
+      "strength": 0.34
+    },
+    {
+      "start": 60.09,
+      "end": 60.945,
+      "time": 60.09,
+      "midi": 27.01,
+      "frequency": 38.91,
+      "confidence": 0.635,
+      "strength": 0.322
+    },
+    {
+      "start": 60.945,
+      "end": 61.29,
+      "time": 60.945,
+      "midi": 56.02,
+      "frequency": 207.95,
+      "confidence": 0.686,
+      "strength": 0.508
+    },
+    {
+      "start": 62.555,
+      "end": 64.58,
+      "time": 62.555,
+      "midi": 28.94,
+      "frequency": 43.5,
+      "confidence": 0.784,
+      "strength": 0.737
+    },
+    {
+      "start": 64.815,
+      "end": 65.625,
+      "time": 64.815,
+      "midi": 28.9,
+      "frequency": 43.41,
+      "confidence": 0.619,
+      "strength": 0.348
+    },
+    {
+      "start": 65.625,
+      "end": 65.955,
+      "time": 65.625,
+      "midi": 56.01,
+      "frequency": 207.8,
+      "confidence": 0.67,
+      "strength": 0.592
+    },
+    {
+      "start": 65.955,
+      "end": 66.78,
+      "time": 65.955,
+      "midi": 40.97,
+      "frequency": 87.17,
+      "confidence": 0.659,
+      "strength": 0.352
+    },
+    {
+      "start": 70.445,
+      "end": 70.865,
+      "time": 70.445,
+      "midi": 27.41,
+      "frequency": 39.82,
+      "confidence": 0.574,
+      "strength": 0.625
+    },
+    {
+      "start": 72.76,
+      "end": 73.21,
+      "time": 72.76,
+      "midi": 29.07,
+      "frequency": 43.83,
+      "confidence": 0.642,
+      "strength": 0.55
+    },
+    {
+      "start": 73.255,
+      "end": 73.51,
+      "time": 73.255,
+      "midi": 28.94,
+      "frequency": 43.5,
+      "confidence": 0.687,
+      "strength": 0.582
+    },
+    {
+      "start": 73.51,
+      "end": 74.565,
+      "time": 73.51,
+      "midi": 28.97,
+      "frequency": 43.58,
+      "confidence": 0.734,
+      "strength": 0.668
+    },
+    {
+      "start": 74.855,
+      "end": 75.11,
+      "time": 74.855,
+      "midi": 28.95,
+      "frequency": 43.53,
+      "confidence": 0.643,
+      "strength": 0.615
+    },
+    {
+      "start": 75.11,
+      "end": 76.07,
+      "time": 75.11,
+      "midi": 28.9,
+      "frequency": 43.4,
+      "confidence": 0.665,
+      "strength": 0.55
+    },
+    {
+      "start": 78.87,
+      "end": 79.955,
+      "time": 78.87,
+      "midi": 24.72,
+      "frequency": 34.09,
+      "confidence": 0.698,
+      "strength": 0.544
+    },
+    {
+      "start": 83.18,
+      "end": 83.8,
+      "time": 83.18,
+      "midi": 29.08,
+      "frequency": 43.85,
+      "confidence": 0.679,
+      "strength": 0.661
+    },
+    {
+      "start": 83.8,
+      "end": 83.97,
+      "time": 83.8,
+      "midi": 28.97,
+      "frequency": 43.59,
+      "confidence": 0.676,
+      "strength": 0.573
+    },
+    {
+      "start": 83.97,
+      "end": 85.12,
+      "time": 83.97,
+      "midi": 28.93,
+      "frequency": 43.48,
+      "confidence": 0.712,
+      "strength": 0.559
+    },
+    {
+      "start": 85.18,
+      "end": 85.745,
+      "time": 85.18,
+      "midi": 29.01,
+      "frequency": 43.67,
+      "confidence": 0.673,
+      "strength": 0.59
+    },
+    {
+      "start": 88.91,
+      "end": 89.15,
+      "time": 88.91,
+      "midi": 55.97,
+      "frequency": 207.35,
+      "confidence": 0.72,
+      "strength": 0.1
+    },
+    {
+      "start": 89.15,
+      "end": 90.595,
+      "time": 89.15,
+      "midi": 56,
+      "frequency": 207.62,
+      "confidence": 0.713,
+      "strength": 0.13
+    },
+    {
+      "start": 95.3,
+      "end": 95.555,
+      "time": 95.3,
+      "midi": 52.98,
+      "frequency": 174.37,
+      "confidence": 0.75,
+      "strength": 0.046
+    },
+    {
+      "start": 97.4,
+      "end": 97.74,
+      "time": 97.4,
+      "midi": 52.95,
+      "frequency": 174.07,
+      "confidence": 0.651,
+      "strength": 0.238
+    },
+    {
+      "start": 99.415,
+      "end": 99.825,
+      "time": 99.415,
+      "midi": 36.89,
+      "frequency": 68.85,
+      "confidence": 0.619,
+      "strength": 1
+    },
+    {
+      "start": 101.45,
+      "end": 101.75,
+      "time": 101.45,
+      "midi": 27.07,
+      "frequency": 39.05,
+      "confidence": 0.66,
+      "strength": 0.931
+    },
+    {
+      "start": 101.75,
+      "end": 102.94,
+      "time": 101.75,
+      "midi": 26.83,
+      "frequency": 38.51,
+      "confidence": 0.657,
+      "strength": 0.999
+    },
+    {
+      "start": 104.05,
+      "end": 104.37,
+      "time": 104.05,
+      "midi": 28.85,
+      "frequency": 43.29,
+      "confidence": 0.692,
+      "strength": 0.838
+    },
+    {
+      "start": 105.31,
+      "end": 106.09,
+      "time": 105.31,
+      "midi": 28.94,
+      "frequency": 43.49,
+      "confidence": 0.688,
+      "strength": 0.873
+    },
+    {
+      "start": 106.09,
+      "end": 106.61,
+      "time": 106.09,
+      "midi": 28.95,
+      "frequency": 43.52,
+      "confidence": 0.67,
+      "strength": 0.939
+    },
+    {
+      "start": 106.61,
+      "end": 108.08,
+      "time": 106.61,
+      "midi": 28.97,
+      "frequency": 43.57,
+      "confidence": 0.691,
+      "strength": 0.958
+    },
+    {
+      "start": 108.21,
+      "end": 109.195,
+      "time": 108.21,
+      "midi": 28.9,
+      "frequency": 43.4,
+      "confidence": 0.63,
+      "strength": 0.792
+    },
+    {
+      "start": 109.685,
+      "end": 110.02,
+      "time": 109.685,
+      "midi": 25.1,
+      "frequency": 34.84,
+      "confidence": 0.688,
+      "strength": 0.888
+    },
+    {
+      "start": 110.02,
+      "end": 110.625,
+      "time": 110.02,
+      "midi": 36.95,
+      "frequency": 69.08,
+      "confidence": 0.616,
+      "strength": 0.931
+    },
+    {
+      "start": 111.75,
+      "end": 113.035,
+      "time": 111.75,
+      "midi": 27,
+      "frequency": 38.88,
+      "confidence": 0.623,
+      "strength": 1
+    },
+    {
+      "start": 114.855,
+      "end": 115.66,
+      "time": 114.855,
+      "midi": 28.94,
+      "frequency": 43.5,
+      "confidence": 0.684,
+      "strength": 1
+    },
+    {
+      "start": 116.155,
+      "end": 116.47,
+      "time": 116.155,
+      "midi": 29.06,
+      "frequency": 43.8,
+      "confidence": 0.698,
+      "strength": 1
+    },
+    {
+      "start": 116.47,
+      "end": 117.39,
+      "time": 116.47,
+      "midi": 29.08,
+      "frequency": 43.86,
+      "confidence": 0.624,
+      "strength": 0.626
+    },
+    {
+      "start": 117.575,
+      "end": 117.75,
+      "time": 117.575,
+      "midi": 41.04,
+      "frequency": 87.51,
+      "confidence": 0.705,
+      "strength": 0.967
+    },
+    {
+      "start": 117.75,
+      "end": 118.62,
+      "time": 117.75,
+      "midi": 28.97,
+      "frequency": 43.58,
+      "confidence": 0.638,
+      "strength": 1
+    },
+    {
+      "start": 119.855,
+      "end": 120.605,
+      "time": 119.855,
+      "midi": 36.8,
+      "frequency": 68.51,
+      "confidence": 0.626,
+      "strength": 0.786
+    }
+  ],
+  "phrases": [
+    {
+      "start": 9.505,
+      "end": 9.64,
+      "confidence": 0.701,
+      "strength": 0.756,
+      "accentTime": 9.505,
+      "notes": 1
+    },
+    {
+      "start": 13.71,
+      "end": 14.88,
+      "confidence": 0.649,
+      "strength": 0.721,
+      "accentTime": 14.73,
+      "notes": 2
+    },
+    {
+      "start": 16.33,
+      "end": 17.515,
+      "confidence": 0.602,
+      "strength": 0.684,
+      "accentTime": 16.33,
+      "notes": 1
+    },
+    {
+      "start": 18.68,
+      "end": 20.1,
+      "confidence": 0.658,
+      "strength": 0.739,
+      "accentTime": 18.85,
+      "notes": 2
+    },
+    {
+      "start": 21.77,
+      "end": 22.65,
+      "confidence": 0.628,
+      "strength": 0.825,
+      "accentTime": 21.77,
+      "notes": 2
+    },
+    {
+      "start": 24.05,
+      "end": 24.18,
+      "confidence": 0.704,
+      "strength": 0.675,
+      "accentTime": 24.05,
+      "notes": 1
+    },
+    {
+      "start": 26.63,
+      "end": 27.805,
+      "confidence": 0.655,
+      "strength": 0.875,
+      "accentTime": 26.63,
+      "notes": 1
+    },
+    {
+      "start": 29.19,
+      "end": 30.355,
+      "confidence": 0.645,
+      "strength": 0.659,
+      "accentTime": 29.19,
+      "notes": 1
+    },
+    {
+      "start": 33.845,
+      "end": 34.21,
+      "confidence": 0.736,
+      "strength": 0.529,
+      "accentTime": 33.845,
+      "notes": 1
+    },
+    {
+      "start": 37.07,
+      "end": 39.415,
+      "confidence": 0.615,
+      "strength": 0.919,
+      "accentTime": 37.07,
+      "notes": 2
+    },
+    {
+      "start": 40.325,
+      "end": 40.795,
+      "confidence": 0.633,
+      "strength": 0.64,
+      "accentTime": 40.325,
+      "notes": 1
+    },
+    {
+      "start": 42.11,
+      "end": 44.345,
+      "confidence": 0.626,
+      "strength": 0.943,
+      "accentTime": 42.43,
+      "notes": 3
+    },
+    {
+      "start": 45.37,
+      "end": 46.3,
+      "confidence": 0.633,
+      "strength": 1,
+      "accentTime": 45.37,
+      "notes": 1
+    },
+    {
+      "start": 48.105,
+      "end": 51.14,
+      "confidence": 0.675,
+      "strength": 0.758,
+      "accentTime": 49.99,
+      "notes": 4
+    },
+    {
+      "start": 51.91,
+      "end": 56.2,
+      "confidence": 0.619,
+      "strength": 0.659,
+      "accentTime": 54.19,
+      "notes": 4
+    },
+    {
+      "start": 57.395,
+      "end": 61.29,
+      "confidence": 0.662,
+      "strength": 0.583,
+      "accentTime": 57.395,
+      "notes": 8
+    },
+    {
+      "start": 62.555,
+      "end": 66.78,
+      "confidence": 0.683,
+      "strength": 0.737,
+      "accentTime": 62.555,
+      "notes": 4
+    },
+    {
+      "start": 70.445,
+      "end": 70.865,
+      "confidence": 0.574,
+      "strength": 0.625,
+      "accentTime": 70.445,
+      "notes": 1
+    },
+    {
+      "start": 72.76,
+      "end": 76.07,
+      "confidence": 0.675,
+      "strength": 0.668,
+      "accentTime": 73.51,
+      "notes": 5
+    },
+    {
+      "start": 78.87,
+      "end": 79.955,
+      "confidence": 0.698,
+      "strength": 0.544,
+      "accentTime": 78.87,
+      "notes": 1
+    },
+    {
+      "start": 83.18,
+      "end": 85.745,
+      "confidence": 0.685,
+      "strength": 0.661,
+      "accentTime": 83.18,
+      "notes": 4
+    },
+    {
+      "start": 88.91,
+      "end": 90.595,
+      "confidence": 0.716,
+      "strength": 0.13,
+      "accentTime": 89.15,
+      "notes": 2
+    },
+    {
+      "start": 95.3,
+      "end": 95.555,
+      "confidence": 0.75,
+      "strength": 0.046,
+      "accentTime": 95.3,
+      "notes": 1
+    },
+    {
+      "start": 97.4,
+      "end": 97.74,
+      "confidence": 0.651,
+      "strength": 0.238,
+      "accentTime": 97.4,
+      "notes": 1
+    },
+    {
+      "start": 99.415,
+      "end": 99.825,
+      "confidence": 0.619,
+      "strength": 1,
+      "accentTime": 99.415,
+      "notes": 1
+    },
+    {
+      "start": 101.45,
+      "end": 102.94,
+      "confidence": 0.659,
+      "strength": 0.999,
+      "accentTime": 101.75,
+      "notes": 2
+    },
+    {
+      "start": 104.05,
+      "end": 104.37,
+      "confidence": 0.692,
+      "strength": 0.838,
+      "accentTime": 104.05,
+      "notes": 1
+    },
+    {
+      "start": 105.31,
+      "end": 110.625,
+      "confidence": 0.664,
+      "strength": 0.958,
+      "accentTime": 106.61,
+      "notes": 6
+    },
+    {
+      "start": 111.75,
+      "end": 113.035,
+      "confidence": 0.623,
+      "strength": 1,
+      "accentTime": 111.75,
+      "notes": 1
+    },
+    {
+      "start": 114.855,
+      "end": 118.62,
+      "confidence": 0.67,
+      "strength": 1,
+      "accentTime": 114.855,
+      "notes": 5
+    },
+    {
+      "start": 119.855,
+      "end": 120.605,
+      "confidence": 0.626,
+      "strength": 0.786,
+      "accentTime": 119.855,
+      "notes": 1
+    }
+  ],
+  "envelopeStep": 0.02,
+  "diagnostics": {
+    "version": 1,
+    "sampleRate": 22050,
+    "pitchWindowMs": 372,
+    "frameMs": 20,
+    "frequencyRangeHz": [
+      30,
+      220
+    ],
+    "notes": 71,
+    "rejectedShort": 153,
+    "rejectedTransient": 4,
+    "sourceSeparated": false,
+    "pitchIsEstimated": true,
+    "confidenceIsProbability": false,
+    "limitations": "Low-register harmonic estimates can include piano, low voice or tuned sustained drums. Brief or sweeping kick transients are suppressed; overlapping instruments, glides and quiet bass can be missed. Kicks overlapping a low note can still move its estimated boundary; the 5 ms boundary grid is not an accuracy guarantee.",
+    "boundaryMethod": "Exact-frequency harmonic amplitudes in local PCM",
+    "boundaryGridMs": 5,
+    "boundaryWindowMs": 46,
+    "boundaryGridIsAccuracy": false
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "productionWorker": "PASS",
+  "neuralModel": "BeatNet model1",
+  "bpm": 93.08,
+  "beats": 368,
+  "downbeats": 92,
+  "meter": 4,
+  "confidence": 0.9404362511794722,
+  "onsets": 6250,
+  "sections": 12,
+  "duration": 238.04,
+  "rangeRequests": 26,
+  "maxAudioReadBytes": 442940,
+  "elapsedSeconds": 25.314010404,
+  "invalidAudio": "PASS",
+  "javascriptFeatureMaxAbsError": 8.195638656616211e-08,
+  "wasmProbabilityMaxAbsError": 1.4901161193847656e-07,
+  "silence": "PASS",
+  "browserVerification": "browser_verification.json"
+}

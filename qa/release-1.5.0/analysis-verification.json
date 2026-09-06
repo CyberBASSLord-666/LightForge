@@ -1,0 +1,1469 @@
+{
+  "release": "1.5.0",
+  "analysisVersion": 4,
+  "passed": true,
+  "errors": [],
+  "source_hashes": {
+    "web/analysis/worker.js": "c4d57a56cac61528da74a15ff596f0a5742e0e6f5edd238fa6a691318011b641",
+    "web/analysis/dsp.js": "32186b9268632cab85cadcb7e84fa1b4e3d8eb4bb9fbdf96a0873067cb9acd71",
+    "web/analysis/analyzer.js": "53c7f626ae24f4d9cbde69831a0c06f4afbd8292927ad51139777ee4314603e4",
+    "web/analysis/wav-reader.js": "c69842b391100059a3cd69fa08ba1ad0e1aef8d102abfde415bcdf7c6ee477be",
+    "web/analysis/bass-notes.js": "5b81e2361295a1f8c02086d4668464ed1d7e93c923513c50a2c865a7aeb1531e",
+    "web/analysis/vocal.js": "0c7c89a7de70e6a416a4a74ca4bd33a4bc2bb07c935bc0201aa6ad0b372e0bb2",
+    "web/analysis/models/frame-mn10-singing.onnx": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+    "web/analysis/models/vocal-model.json": "52093f26d0bfe3f04bbb1563b287fafe5e61aa57a61391ea643b04d97838ca7e",
+    "web/analysis/models/vocal-frontend.json": "72bdffced29bfdd6d1da77a4da2a2a4af1b2f839c71131d19dc9423db3d4732f",
+    "tests/bass-notes.test.cjs": "d8fd98d78334bbe73deb5a888f7a4c0d189f9b4e047ce3f9d6fb63bdcf0a1abe",
+    "qa/release-1.5.0/verify-bass-analysis.cjs": "f5eca0553448f6c95245872272239a6202109fad87de06d1ac30be2999107bcb",
+    "web/analysis/models/model-manifest.json": "b65e74feda05a792d88cf76eb9eca82a2c0f08d63f294c14ba6eabdd67617983"
+  },
+  "models": {
+    "beat-this-large.onnx": {
+      "bytes": 83162650,
+      "sha256": "5f810debe53459b559127fb55bbad40035bb47cc567b20e501670f968c770f02",
+      "model": "Beat This! final0",
+      "id": "beat-this-final0",
+      "license": "MIT",
+      "source": "https://github.com/CPJKU/beat_this"
+    },
+    "beat-this-small.onnx": {
+      "bytes": 10555592,
+      "sha256": "a5f8d39d989f31859454ba27afe61c5317ca95e4d9373e6853e5361b8937172f",
+      "model": "Beat This! small1",
+      "id": "beat-this-small1",
+      "license": "MIT",
+      "source": "https://github.com/CPJKU/beat_this"
+    },
+    "beat-this-mel.onnx": {
+      "bytes": 270742,
+      "sha256": "fdd59e65c515331308e4c8841edf99972deca646bdf6197744c2a5b7755e3de9",
+      "model": "Beat This! log-mel",
+      "id": "beat-this-log-mel",
+      "license": "MIT",
+      "source": "https://github.com/CPJKU/beat_this"
+    },
+    "frame-mn10-singing.onnx": {
+      "bytes": 13620408,
+      "sha256": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+      "model": "PretrainedSED Frame-MN10",
+      "id": "frame-mn10-strong-1",
+      "license": "MIT",
+      "source": "https://github.com/fschmid56/PretrainedSED"
+    }
+  },
+  "checks": [
+    "balanced retains all exact 1.4 beat, downbeat and three-band onset times on the existing annotated synthetic fixture.",
+    "precision retains all exact 1.4 beat, downbeat and three-band onset times on the existing annotated synthetic fixture.",
+    "Digital silence invents no beats, singing or bass notes and loads no neural graph.",
+    "Cancellation terminates the complete analysis Worker.",
+    "All graph, frontend, runtime and audio requests remain on the local origin."
+  ],
+  "tracks": [
+    {
+      "track": "synthetic",
+      "quality": "balanced",
+      "duration": 47.10616780045351,
+      "beats": 96,
+      "downbeats": 24,
+      "vocalPresence": "not_detected",
+      "vocalPhrases": 0,
+      "vocalCoverage": 0,
+      "bassNotes": 0,
+      "analysisSeconds": 13.7,
+      "engine": {
+        "name": "Beat This! compact transformer",
+        "neural": true,
+        "detail": "Bundled pretrained Beat This! transformer with exact exported log-mel frontend, overlapping 30-second context, measured PCM attack alignment and recurring-passage fingerprints, plus independent PretrainedSED Frame-MN10 singing evidence and harmonic bass-note estimates. All audio stays on this device.",
+        "model": "Beat This! small1",
+        "modelId": "beat-this-small1",
+        "modelSha256": "a5f8d39d989f31859454ba27afe61c5317ca95e4d9373e6853e5361b8937172f",
+        "frontendSha256": "fdd59e65c515331308e4c8841edf99972deca646bdf6197744c2a5b7755e3de9",
+        "vocalModel": {
+          "name": "PretrainedSED Frame-MN10",
+          "id": "frame-mn10-strong-1",
+          "sha256": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+          "license": "MIT"
+        },
+        "bassMethod": "Harmonic low-register tracking",
+        "quality": "balanced",
+        "runtime": "ONNX Runtime Web 1.20.1",
+        "analysisSeconds": 13.7
+      },
+      "annotation": "Synthetic fixture has beat annotations only; supplied songs have no independent vocal or bass timing labels."
+    },
+    {
+      "track": "synthetic",
+      "quality": "precision",
+      "duration": 47.10616780045351,
+      "beats": 96,
+      "downbeats": 24,
+      "vocalPresence": "not_detected",
+      "vocalPhrases": 0,
+      "vocalCoverage": 0,
+      "bassNotes": 0,
+      "analysisSeconds": 20.2,
+      "engine": {
+        "name": "Beat This! full transformer",
+        "neural": true,
+        "detail": "Bundled pretrained Beat This! transformer with exact exported log-mel frontend, overlapping 30-second context, measured PCM attack alignment and recurring-passage fingerprints, plus independent PretrainedSED Frame-MN10 singing evidence and harmonic bass-note estimates. All audio stays on this device.",
+        "model": "Beat This! final0",
+        "modelId": "beat-this-final0",
+        "modelSha256": "5f810debe53459b559127fb55bbad40035bb47cc567b20e501670f968c770f02",
+        "frontendSha256": "fdd59e65c515331308e4c8841edf99972deca646bdf6197744c2a5b7755e3de9",
+        "vocalModel": {
+          "name": "PretrainedSED Frame-MN10",
+          "id": "frame-mn10-strong-1",
+          "sha256": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+          "license": "MIT"
+        },
+        "bassMethod": "Harmonic low-register tracking",
+        "quality": "precision",
+        "runtime": "ONNX Runtime Web 1.20.1",
+        "analysisSeconds": 20.2
+      },
+      "annotation": "Synthetic fixture has beat annotations only; supplied songs have no independent vocal or bass timing labels."
+    },
+    {
+      "track": "glass-castle",
+      "quality": "precision",
+      "duration": 121.7491156462585,
+      "beats": 189,
+      "downbeats": 48,
+      "vocalPresence": "detected",
+      "vocalPhrases": 5,
+      "vocalCoverage": 0.8508,
+      "bassNotes": 71,
+      "analysisSeconds": 48,
+      "engine": {
+        "name": "Beat This! full transformer",
+        "neural": true,
+        "detail": "Bundled pretrained Beat This! transformer with exact exported log-mel frontend, overlapping 30-second context, measured PCM attack alignment and recurring-passage fingerprints, plus independent PretrainedSED Frame-MN10 singing evidence and harmonic bass-note estimates. All audio stays on this device.",
+        "model": "Beat This! final0",
+        "modelId": "beat-this-final0",
+        "modelSha256": "5f810debe53459b559127fb55bbad40035bb47cc567b20e501670f968c770f02",
+        "frontendSha256": "fdd59e65c515331308e4c8841edf99972deca646bdf6197744c2a5b7755e3de9",
+        "vocalModel": {
+          "name": "PretrainedSED Frame-MN10",
+          "id": "frame-mn10-strong-1",
+          "sha256": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+          "license": "MIT"
+        },
+        "bassMethod": "Harmonic low-register tracking",
+        "quality": "precision",
+        "runtime": "ONNX Runtime Web 1.20.1",
+        "analysisSeconds": 48
+      },
+      "annotation": "Synthetic fixture has beat annotations only; supplied songs have no independent vocal or bass timing labels."
+    },
+    {
+      "track": "sample",
+      "quality": "balanced",
+      "duration": 238.04,
+      "beats": 366,
+      "downbeats": 92,
+      "vocalPresence": "detected",
+      "vocalPhrases": 14,
+      "vocalCoverage": 0.7839,
+      "bassNotes": 159,
+      "analysisSeconds": 46.7,
+      "engine": {
+        "name": "Beat This! compact transformer",
+        "neural": true,
+        "detail": "Bundled pretrained Beat This! transformer with exact exported log-mel frontend, overlapping 30-second context, measured PCM attack alignment and recurring-passage fingerprints, plus independent PretrainedSED Frame-MN10 singing evidence and harmonic bass-note estimates. All audio stays on this device.",
+        "model": "Beat This! small1",
+        "modelId": "beat-this-small1",
+        "modelSha256": "a5f8d39d989f31859454ba27afe61c5317ca95e4d9373e6853e5361b8937172f",
+        "frontendSha256": "fdd59e65c515331308e4c8841edf99972deca646bdf6197744c2a5b7755e3de9",
+        "vocalModel": {
+          "name": "PretrainedSED Frame-MN10",
+          "id": "frame-mn10-strong-1",
+          "sha256": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+          "license": "MIT"
+        },
+        "bassMethod": "Harmonic low-register tracking",
+        "quality": "balanced",
+        "runtime": "ONNX Runtime Web 1.20.1",
+        "analysisSeconds": 46.7
+      },
+      "annotation": "Synthetic fixture has beat annotations only; supplied songs have no independent vocal or bass timing labels."
+    }
+  ],
+  "evidence": {
+    "worker": {
+      "release": "1.5.0",
+      "analysisVersion": 4,
+      "passed": true,
+      "checks": [
+        "balanced retains all exact 1.4 beat, downbeat and three-band onset times on the existing annotated synthetic fixture.",
+        "precision retains all exact 1.4 beat, downbeat and three-band onset times on the existing annotated synthetic fixture.",
+        "Digital silence invents no beats, singing or bass notes and loads no neural graph.",
+        "Cancellation terminates the complete analysis Worker.",
+        "All graph, frontend, runtime and audio requests remain on the local origin."
+      ],
+      "tracks": [
+        {
+          "track": "synthetic",
+          "quality": "balanced",
+          "duration": 47.10616780045351,
+          "beats": 96,
+          "downbeats": 24,
+          "vocalPresence": "not_detected",
+          "vocalPhrases": 0,
+          "vocalCoverage": 0,
+          "bassNotes": 0,
+          "analysisSeconds": 13.7,
+          "engine": {
+            "name": "Beat This! compact transformer",
+            "neural": true,
+            "detail": "Bundled pretrained Beat This! transformer with exact exported log-mel frontend, overlapping 30-second context, measured PCM attack alignment and recurring-passage fingerprints, plus independent PretrainedSED Frame-MN10 singing evidence and harmonic bass-note estimates. All audio stays on this device.",
+            "model": "Beat This! small1",
+            "modelId": "beat-this-small1",
+            "modelSha256": "a5f8d39d989f31859454ba27afe61c5317ca95e4d9373e6853e5361b8937172f",
+            "frontendSha256": "fdd59e65c515331308e4c8841edf99972deca646bdf6197744c2a5b7755e3de9",
+            "vocalModel": {
+              "name": "PretrainedSED Frame-MN10",
+              "id": "frame-mn10-strong-1",
+              "sha256": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+              "license": "MIT"
+            },
+            "bassMethod": "Harmonic low-register tracking",
+            "quality": "balanced",
+            "runtime": "ONNX Runtime Web 1.20.1",
+            "analysisSeconds": 13.7
+          },
+          "annotation": "Synthetic fixture has beat annotations only; supplied songs have no independent vocal or bass timing labels."
+        },
+        {
+          "track": "synthetic",
+          "quality": "precision",
+          "duration": 47.10616780045351,
+          "beats": 96,
+          "downbeats": 24,
+          "vocalPresence": "not_detected",
+          "vocalPhrases": 0,
+          "vocalCoverage": 0,
+          "bassNotes": 0,
+          "analysisSeconds": 20.2,
+          "engine": {
+            "name": "Beat This! full transformer",
+            "neural": true,
+            "detail": "Bundled pretrained Beat This! transformer with exact exported log-mel frontend, overlapping 30-second context, measured PCM attack alignment and recurring-passage fingerprints, plus independent PretrainedSED Frame-MN10 singing evidence and harmonic bass-note estimates. All audio stays on this device.",
+            "model": "Beat This! final0",
+            "modelId": "beat-this-final0",
+            "modelSha256": "5f810debe53459b559127fb55bbad40035bb47cc567b20e501670f968c770f02",
+            "frontendSha256": "fdd59e65c515331308e4c8841edf99972deca646bdf6197744c2a5b7755e3de9",
+            "vocalModel": {
+              "name": "PretrainedSED Frame-MN10",
+              "id": "frame-mn10-strong-1",
+              "sha256": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+              "license": "MIT"
+            },
+            "bassMethod": "Harmonic low-register tracking",
+            "quality": "precision",
+            "runtime": "ONNX Runtime Web 1.20.1",
+            "analysisSeconds": 20.2
+          },
+          "annotation": "Synthetic fixture has beat annotations only; supplied songs have no independent vocal or bass timing labels."
+        },
+        {
+          "track": "glass-castle",
+          "quality": "precision",
+          "duration": 121.7491156462585,
+          "beats": 189,
+          "downbeats": 48,
+          "vocalPresence": "detected",
+          "vocalPhrases": 5,
+          "vocalCoverage": 0.8508,
+          "bassNotes": 71,
+          "analysisSeconds": 48,
+          "engine": {
+            "name": "Beat This! full transformer",
+            "neural": true,
+            "detail": "Bundled pretrained Beat This! transformer with exact exported log-mel frontend, overlapping 30-second context, measured PCM attack alignment and recurring-passage fingerprints, plus independent PretrainedSED Frame-MN10 singing evidence and harmonic bass-note estimates. All audio stays on this device.",
+            "model": "Beat This! final0",
+            "modelId": "beat-this-final0",
+            "modelSha256": "5f810debe53459b559127fb55bbad40035bb47cc567b20e501670f968c770f02",
+            "frontendSha256": "fdd59e65c515331308e4c8841edf99972deca646bdf6197744c2a5b7755e3de9",
+            "vocalModel": {
+              "name": "PretrainedSED Frame-MN10",
+              "id": "frame-mn10-strong-1",
+              "sha256": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+              "license": "MIT"
+            },
+            "bassMethod": "Harmonic low-register tracking",
+            "quality": "precision",
+            "runtime": "ONNX Runtime Web 1.20.1",
+            "analysisSeconds": 48
+          },
+          "annotation": "Synthetic fixture has beat annotations only; supplied songs have no independent vocal or bass timing labels."
+        },
+        {
+          "track": "sample",
+          "quality": "balanced",
+          "duration": 238.04,
+          "beats": 366,
+          "downbeats": 92,
+          "vocalPresence": "detected",
+          "vocalPhrases": 14,
+          "vocalCoverage": 0.7839,
+          "bassNotes": 159,
+          "analysisSeconds": 46.7,
+          "engine": {
+            "name": "Beat This! compact transformer",
+            "neural": true,
+            "detail": "Bundled pretrained Beat This! transformer with exact exported log-mel frontend, overlapping 30-second context, measured PCM attack alignment and recurring-passage fingerprints, plus independent PretrainedSED Frame-MN10 singing evidence and harmonic bass-note estimates. All audio stays on this device.",
+            "model": "Beat This! small1",
+            "modelId": "beat-this-small1",
+            "modelSha256": "a5f8d39d989f31859454ba27afe61c5317ca95e4d9373e6853e5361b8937172f",
+            "frontendSha256": "fdd59e65c515331308e4c8841edf99972deca646bdf6197744c2a5b7755e3de9",
+            "vocalModel": {
+              "name": "PretrainedSED Frame-MN10",
+              "id": "frame-mn10-strong-1",
+              "sha256": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+              "license": "MIT"
+            },
+            "bassMethod": "Harmonic low-register tracking",
+            "quality": "balanced",
+            "runtime": "ONNX Runtime Web 1.20.1",
+            "analysisSeconds": 46.7
+          },
+          "annotation": "Synthetic fixture has beat annotations only; supplied songs have no independent vocal or bass timing labels."
+        }
+      ],
+      "errors": [],
+      "externalRequests": [],
+      "scope": "Production Chromium Worker and shipped ONNX Runtime WASM. Supplied 48 kHz audio converted to 44.1 kHz PCM with FFmpeg for this reader test; native converter tested separately. No Android device or Tesla test.",
+      "source_hashes": {
+        "web/analysis/worker.js": "c4d57a56cac61528da74a15ff596f0a5742e0e6f5edd238fa6a691318011b641",
+        "web/analysis/dsp.js": "32186b9268632cab85cadcb7e84fa1b4e3d8eb4bb9fbdf96a0873067cb9acd71",
+        "web/analysis/analyzer.js": "53c7f626ae24f4d9cbde69831a0c06f4afbd8292927ad51139777ee4314603e4",
+        "web/analysis/wav-reader.js": "c69842b391100059a3cd69fa08ba1ad0e1aef8d102abfde415bcdf7c6ee477be",
+        "web/analysis/bass-notes.js": "5b81e2361295a1f8c02086d4668464ed1d7e93c923513c50a2c865a7aeb1531e",
+        "web/analysis/vocal.js": "0c7c89a7de70e6a416a4a74ca4bd33a4bc2bb07c935bc0201aa6ad0b372e0bb2"
+      }
+    },
+    "vocal": {
+      "passed": true,
+      "createdAt": "2026-09-06T07:37:33.023Z",
+      "runtime": "ONNX Runtime Web 1.20.1 / Chromium desktop WASM; Android timing unmeasured",
+      "results": [
+        {
+          "track": "sung",
+          "available": true,
+          "presence": "detected",
+          "confidence": 0.873,
+          "modelScore": 0.8167,
+          "coverage": 0.5823,
+          "phrases": [
+            {
+              "start": 11.02,
+              "end": 17.1,
+              "confidence": 0.83,
+              "modelScore": 0.7546,
+              "strength": 0.869,
+              "peakTime": 16.62,
+              "estimated": true
+            },
+            {
+              "start": 21.68,
+              "end": 27.96,
+              "confidence": 0.835,
+              "modelScore": 0.7613,
+              "strength": 0.873,
+              "peakTime": 27.42,
+              "estimated": true
+            },
+            {
+              "start": 32.64,
+              "end": 34.92,
+              "confidence": 0.852,
+              "modelScore": 0.7863,
+              "strength": 0.883,
+              "peakTime": 33.86,
+              "estimated": true
+            },
+            {
+              "start": 35.24,
+              "end": 48.2,
+              "confidence": 0.861,
+              "modelScore": 0.7994,
+              "strength": 0.891,
+              "peakTime": 40.7,
+              "estimated": true
+            },
+            {
+              "start": 48.9,
+              "end": 51.82,
+              "confidence": 0.856,
+              "modelScore": 0.7925,
+              "strength": 0.884,
+              "peakTime": 50.48,
+              "estimated": true
+            },
+            {
+              "start": 52.38,
+              "end": 54.76,
+              "confidence": 0.873,
+              "modelScore": 0.8167,
+              "strength": 0.891,
+              "peakTime": 53.34,
+              "estimated": true
+            },
+            {
+              "start": 55.86,
+              "end": 56.34,
+              "confidence": 0.65,
+              "modelScore": 0.4942,
+              "strength": 0.447,
+              "peakTime": 56.16,
+              "estimated": true
+            },
+            {
+              "start": 58.44,
+              "end": 60,
+              "confidence": 0.796,
+              "modelScore": 0.7058,
+              "strength": 0.591,
+              "peakTime": 58.88,
+              "estimated": true
+            }
+          ],
+          "accents": [
+            {
+              "time": 11.14,
+              "strength": 0.768,
+              "confidence": 0.83,
+              "estimated": true
+            },
+            {
+              "time": 21.76,
+              "strength": 0.601,
+              "confidence": 0.835,
+              "estimated": true
+            },
+            {
+              "time": 32.8,
+              "strength": 0.545,
+              "confidence": 0.852,
+              "estimated": true
+            },
+            {
+              "time": 35.34,
+              "strength": 0.507,
+              "confidence": 0.861,
+              "estimated": true
+            },
+            {
+              "time": 45.7,
+              "strength": 0.775,
+              "confidence": 0.861,
+              "estimated": true
+            },
+            {
+              "time": 47.1,
+              "strength": 0.429,
+              "confidence": 0.861,
+              "estimated": true
+            },
+            {
+              "time": 49.08,
+              "strength": 0.383,
+              "confidence": 0.856,
+              "estimated": true
+            },
+            {
+              "time": 53.86,
+              "strength": 0.287,
+              "confidence": 0.873,
+              "estimated": true
+            },
+            {
+              "time": 55.92,
+              "strength": 0.364,
+              "confidence": 0.65,
+              "estimated": true
+            },
+            {
+              "time": 58.6,
+              "strength": 0.367,
+              "confidence": 0.796,
+              "estimated": true
+            },
+            {
+              "time": 59.26,
+              "strength": 0.358,
+              "confidence": 0.796,
+              "estimated": true
+            },
+            {
+              "time": 59.82,
+              "strength": 0.571,
+              "confidence": 0.796,
+              "estimated": true
+            }
+          ],
+          "envelopeStep": 0.02,
+          "method": "PretrainedSED Frame-MN10 strong singing events with confidence-gated phrasing",
+          "model": {
+            "name": "PretrainedSED Frame-MN10",
+            "id": "frame-mn10-strong-1",
+            "sha256": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+            "license": "MIT"
+          },
+          "timing": {
+            "contextSeconds": 10,
+            "classifierFrameMs": 40,
+            "envelopeMs": 20,
+            "overlapSeconds": 4,
+            "alignment": "40 ms sound-event evidence with estimated phrase edges and accents; no separated vocal stem or word alignment"
+          },
+          "warnings": [],
+          "diagnostics": {
+            "frames": 1500,
+            "strongFrames": 816,
+            "thresholds": {
+              "startModelScore": 0.3,
+              "strongModelScore": 0.35,
+              "continueModelScore": 0.16
+            },
+            "confidenceMeaning": "Relative evidence score; not a calibrated probability"
+          },
+          "duration": 60,
+          "analysisSeconds": 2.37629999999702
+        },
+        {
+          "track": "instrumental",
+          "available": true,
+          "presence": "not_detected",
+          "confidence": 0.002,
+          "modelScore": 0.0016,
+          "coverage": 0,
+          "phrases": [],
+          "accents": [],
+          "envelopeStep": 0.02,
+          "method": "PretrainedSED Frame-MN10 strong singing events with confidence-gated phrasing",
+          "model": {
+            "name": "PretrainedSED Frame-MN10",
+            "id": "frame-mn10-strong-1",
+            "sha256": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+            "license": "MIT"
+          },
+          "timing": {
+            "contextSeconds": 10,
+            "classifierFrameMs": 40,
+            "envelopeMs": 20,
+            "overlapSeconds": 4,
+            "alignment": "40 ms sound-event evidence with estimated phrase edges and accents; no separated vocal stem or word alignment"
+          },
+          "warnings": [],
+          "diagnostics": {
+            "frames": 1500,
+            "strongFrames": 0,
+            "thresholds": {
+              "startModelScore": 0.3,
+              "strongModelScore": 0.35,
+              "continueModelScore": 0.16
+            },
+            "confidenceMeaning": "Relative evidence score; not a calibrated probability"
+          },
+          "duration": 60,
+          "analysisSeconds": 1.7905999999977649
+        },
+        {
+          "track": "speech",
+          "available": true,
+          "presence": "not_detected",
+          "confidence": 0.001,
+          "modelScore": 0.0008,
+          "coverage": 0,
+          "phrases": [],
+          "accents": [],
+          "envelopeStep": 0.02,
+          "method": "PretrainedSED Frame-MN10 strong singing events with confidence-gated phrasing",
+          "model": {
+            "name": "PretrainedSED Frame-MN10",
+            "id": "frame-mn10-strong-1",
+            "sha256": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+            "license": "MIT"
+          },
+          "timing": {
+            "contextSeconds": 10,
+            "classifierFrameMs": 40,
+            "envelopeMs": 20,
+            "overlapSeconds": 4,
+            "alignment": "40 ms sound-event evidence with estimated phrase edges and accents; no separated vocal stem or word alignment"
+          },
+          "warnings": [],
+          "diagnostics": {
+            "frames": 371,
+            "strongFrames": 0,
+            "thresholds": {
+              "startModelScore": 0.3,
+              "strongModelScore": 0.35,
+              "continueModelScore": 0.16
+            },
+            "confidenceMeaning": "Relative evidence score; not a calibrated probability"
+          },
+          "duration": 14.84,
+          "analysisSeconds": 0.4606999999992549
+        },
+        {
+          "track": "percussion",
+          "available": true,
+          "presence": "not_detected",
+          "confidence": 0.005,
+          "modelScore": 0.0045,
+          "coverage": 0,
+          "phrases": [],
+          "accents": [],
+          "envelopeStep": 0.02,
+          "method": "PretrainedSED Frame-MN10 strong singing events with confidence-gated phrasing",
+          "model": {
+            "name": "PretrainedSED Frame-MN10",
+            "id": "frame-mn10-strong-1",
+            "sha256": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+            "license": "MIT"
+          },
+          "timing": {
+            "contextSeconds": 10,
+            "classifierFrameMs": 40,
+            "envelopeMs": 20,
+            "overlapSeconds": 4,
+            "alignment": "40 ms sound-event evidence with estimated phrase edges and accents; no separated vocal stem or word alignment"
+          },
+          "warnings": [],
+          "diagnostics": {
+            "frames": 750,
+            "strongFrames": 0,
+            "thresholds": {
+              "startModelScore": 0.3,
+              "strongModelScore": 0.35,
+              "continueModelScore": 0.16
+            },
+            "confidenceMeaning": "Relative evidence score; not a calibrated probability"
+          },
+          "duration": 30,
+          "analysisSeconds": 0.918199999999255
+        },
+        {
+          "track": "silence",
+          "available": true,
+          "presence": "not_detected",
+          "confidence": 0,
+          "modelScore": 0,
+          "coverage": 0,
+          "phrases": [],
+          "accents": [],
+          "envelopeStep": 0.02,
+          "method": "PretrainedSED Frame-MN10 strong singing events with confidence-gated phrasing",
+          "model": {
+            "name": "PretrainedSED Frame-MN10",
+            "id": "frame-mn10-strong-1",
+            "sha256": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+            "license": "MIT"
+          },
+          "timing": {
+            "contextSeconds": 10,
+            "classifierFrameMs": 40,
+            "envelopeMs": 20,
+            "overlapSeconds": 4,
+            "alignment": "40 ms sound-event evidence with estimated phrase edges and accents; no separated vocal stem or word alignment"
+          },
+          "warnings": [],
+          "diagnostics": {
+            "frames": 250,
+            "strongFrames": 0,
+            "thresholds": {
+              "startModelScore": 0.3,
+              "strongModelScore": 0.35,
+              "continueModelScore": 0.16
+            },
+            "confidenceMeaning": "Relative evidence score; not a calibrated probability"
+          },
+          "duration": 10,
+          "analysisSeconds": 0.023
+        },
+        {
+          "track": "glass",
+          "available": true,
+          "presence": "detected",
+          "confidence": 0.753,
+          "modelScore": 0.6426,
+          "coverage": 0.8508,
+          "phrases": [
+            {
+              "start": 12.2,
+              "end": 13.64,
+              "confidence": 0.552,
+              "modelScore": 0.3522,
+              "strength": 0.55,
+              "peakTime": 12.82,
+              "estimated": true
+            },
+            {
+              "start": 15.56,
+              "end": 19.3,
+              "confidence": 0.683,
+              "modelScore": 0.5423,
+              "strength": 0.707,
+              "peakTime": 17.24,
+              "estimated": true
+            },
+            {
+              "start": 20.76,
+              "end": 89.54,
+              "confidence": 0.711,
+              "modelScore": 0.5828,
+              "strength": 0.752,
+              "peakTime": 46.92,
+              "estimated": true
+            },
+            {
+              "start": 90.28,
+              "end": 95.92,
+              "confidence": 0.753,
+              "modelScore": 0.6426,
+              "strength": 0.655,
+              "peakTime": 93.2,
+              "estimated": true
+            },
+            {
+              "start": 97.76,
+              "end": 121.749,
+              "confidence": 0.651,
+              "modelScore": 0.4957,
+              "strength": 0.702,
+              "peakTime": 98.6,
+              "estimated": true
+            }
+          ],
+          "accents": [
+            {
+              "time": 20.8,
+              "strength": 0.37,
+              "confidence": 0.711,
+              "estimated": true
+            },
+            {
+              "time": 49.66,
+              "strength": 0.511,
+              "confidence": 0.711,
+              "estimated": true
+            },
+            {
+              "time": 73.84,
+              "strength": 0.511,
+              "confidence": 0.711,
+              "estimated": true
+            },
+            {
+              "time": 78.78,
+              "strength": 0.48,
+              "confidence": 0.711,
+              "estimated": true
+            },
+            {
+              "time": 90.34,
+              "strength": 0.362,
+              "confidence": 0.753,
+              "estimated": true
+            },
+            {
+              "time": 91.52,
+              "strength": 0.351,
+              "confidence": 0.753,
+              "estimated": true
+            },
+            {
+              "time": 98.32,
+              "strength": 0.365,
+              "confidence": 0.651,
+              "estimated": true
+            }
+          ],
+          "envelopeStep": 0.02,
+          "method": "PretrainedSED Frame-MN10 strong singing events with confidence-gated phrasing",
+          "model": {
+            "name": "PretrainedSED Frame-MN10",
+            "id": "frame-mn10-strong-1",
+            "sha256": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+            "license": "MIT"
+          },
+          "timing": {
+            "contextSeconds": 10,
+            "classifierFrameMs": 40,
+            "envelopeMs": 20,
+            "overlapSeconds": 4,
+            "alignment": "40 ms sound-event evidence with estimated phrase edges and accents; no separated vocal stem or word alignment"
+          },
+          "warnings": [],
+          "diagnostics": {
+            "frames": 3044,
+            "strongFrames": 1849,
+            "thresholds": {
+              "startModelScore": 0.3,
+              "strongModelScore": 0.35,
+              "continueModelScore": 0.16
+            },
+            "confidenceMeaning": "Relative evidence score; not a calibrated probability"
+          },
+          "duration": 121.7491156462585,
+          "analysisSeconds": 3.346800000000745
+        },
+        {
+          "track": "sample",
+          "available": true,
+          "presence": "detected",
+          "confidence": 0.755,
+          "modelScore": 0.6457,
+          "coverage": 0.7839,
+          "phrases": [
+            {
+              "start": 12.2,
+              "end": 13.64,
+              "confidence": 0.552,
+              "modelScore": 0.3522,
+              "strength": 0.549,
+              "peakTime": 12.82,
+              "estimated": true
+            },
+            {
+              "start": 15.56,
+              "end": 19.3,
+              "confidence": 0.683,
+              "modelScore": 0.5423,
+              "strength": 0.704,
+              "peakTime": 17.24,
+              "estimated": true
+            },
+            {
+              "start": 20.76,
+              "end": 89.54,
+              "confidence": 0.711,
+              "modelScore": 0.5828,
+              "strength": 0.752,
+              "peakTime": 46.92,
+              "estimated": true
+            },
+            {
+              "start": 90.28,
+              "end": 95.92,
+              "confidence": 0.753,
+              "modelScore": 0.6426,
+              "strength": 0.651,
+              "peakTime": 93.2,
+              "estimated": true
+            },
+            {
+              "start": 97.76,
+              "end": 130,
+              "confidence": 0.651,
+              "modelScore": 0.4958,
+              "strength": 0.702,
+              "peakTime": 98.6,
+              "estimated": true
+            },
+            {
+              "start": 130.66,
+              "end": 156.1,
+              "confidence": 0.695,
+              "modelScore": 0.5592,
+              "strength": 0.693,
+              "peakTime": 139.22,
+              "estimated": true
+            },
+            {
+              "start": 156.36,
+              "end": 160.84,
+              "confidence": 0.649,
+              "modelScore": 0.4924,
+              "strength": 0.697,
+              "peakTime": 158.04,
+              "estimated": true
+            },
+            {
+              "start": 162.74,
+              "end": 163.54,
+              "confidence": 0.594,
+              "modelScore": 0.413,
+              "strength": 0.635,
+              "peakTime": 163.2,
+              "estimated": true
+            },
+            {
+              "start": 164.04,
+              "end": 167.32,
+              "confidence": 0.642,
+              "modelScore": 0.483,
+              "strength": 0.688,
+              "peakTime": 165.54,
+              "estimated": true
+            },
+            {
+              "start": 170.68,
+              "end": 181.96,
+              "confidence": 0.727,
+              "modelScore": 0.6058,
+              "strength": 0.774,
+              "peakTime": 177.72,
+              "estimated": true
+            },
+            {
+              "start": 194.82,
+              "end": 215.28,
+              "confidence": 0.68,
+              "modelScore": 0.5381,
+              "strength": 0.729,
+              "peakTime": 197.12,
+              "estimated": true
+            },
+            {
+              "start": 216.9,
+              "end": 217.82,
+              "confidence": 0.61,
+              "modelScore": 0.4372,
+              "strength": 0.658,
+              "peakTime": 217.4,
+              "estimated": true
+            },
+            {
+              "start": 218.22,
+              "end": 221.5,
+              "confidence": 0.715,
+              "modelScore": 0.5877,
+              "strength": 0.764,
+              "peakTime": 218.92,
+              "estimated": true
+            },
+            {
+              "start": 226.74,
+              "end": 231.56,
+              "confidence": 0.755,
+              "modelScore": 0.6457,
+              "strength": 0.686,
+              "peakTime": 229.98,
+              "estimated": true
+            }
+          ],
+          "accents": [
+            {
+              "time": 20.8,
+              "strength": 0.367,
+              "confidence": 0.711,
+              "estimated": true
+            },
+            {
+              "time": 49.66,
+              "strength": 0.511,
+              "confidence": 0.711,
+              "estimated": true
+            },
+            {
+              "time": 61,
+              "strength": 0.318,
+              "confidence": 0.711,
+              "estimated": true
+            },
+            {
+              "time": 73.84,
+              "strength": 0.511,
+              "confidence": 0.711,
+              "estimated": true
+            },
+            {
+              "time": 78.78,
+              "strength": 0.48,
+              "confidence": 0.711,
+              "estimated": true
+            },
+            {
+              "time": 90.34,
+              "strength": 0.359,
+              "confidence": 0.753,
+              "estimated": true
+            },
+            {
+              "time": 91.52,
+              "strength": 0.348,
+              "confidence": 0.753,
+              "estimated": true
+            },
+            {
+              "time": 98.32,
+              "strength": 0.362,
+              "confidence": 0.651,
+              "estimated": true
+            },
+            {
+              "time": 133.2,
+              "strength": 0.443,
+              "confidence": 0.695,
+              "estimated": true
+            },
+            {
+              "time": 135.7,
+              "strength": 0.236,
+              "confidence": 0.695,
+              "estimated": true
+            },
+            {
+              "time": 136.14,
+              "strength": 0.379,
+              "confidence": 0.695,
+              "estimated": true
+            },
+            {
+              "time": 146.02,
+              "strength": 0.393,
+              "confidence": 0.695,
+              "estimated": true
+            },
+            {
+              "time": 147.26,
+              "strength": 0.427,
+              "confidence": 0.695,
+              "estimated": true
+            },
+            {
+              "time": 156.42,
+              "strength": 0.594,
+              "confidence": 0.649,
+              "estimated": true
+            },
+            {
+              "time": 164.1,
+              "strength": 0.373,
+              "confidence": 0.642,
+              "estimated": true
+            },
+            {
+              "time": 173.52,
+              "strength": 0.482,
+              "confidence": 0.727,
+              "estimated": true
+            },
+            {
+              "time": 210.62,
+              "strength": 0.548,
+              "confidence": 0.68,
+              "estimated": true
+            },
+            {
+              "time": 214.66,
+              "strength": 0.427,
+              "confidence": 0.68,
+              "estimated": true
+            },
+            {
+              "time": 216.98,
+              "strength": 0.591,
+              "confidence": 0.61,
+              "estimated": true
+            },
+            {
+              "time": 218.28,
+              "strength": 0.415,
+              "confidence": 0.715,
+              "estimated": true
+            },
+            {
+              "time": 220.86,
+              "strength": 0.581,
+              "confidence": 0.715,
+              "estimated": true
+            },
+            {
+              "time": 226.84,
+              "strength": 0.285,
+              "confidence": 0.755,
+              "estimated": true
+            },
+            {
+              "time": 228.62,
+              "strength": 0.329,
+              "confidence": 0.755,
+              "estimated": true
+            }
+          ],
+          "envelopeStep": 0.02,
+          "method": "PretrainedSED Frame-MN10 strong singing events with confidence-gated phrasing",
+          "model": {
+            "name": "PretrainedSED Frame-MN10",
+            "id": "frame-mn10-strong-1",
+            "sha256": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+            "license": "MIT"
+          },
+          "timing": {
+            "contextSeconds": 10,
+            "classifierFrameMs": 40,
+            "envelopeMs": 20,
+            "overlapSeconds": 4,
+            "alignment": "40 ms sound-event evidence with estimated phrase edges and accents; no separated vocal stem or word alignment"
+          },
+          "warnings": [],
+          "diagnostics": {
+            "frames": 5951,
+            "strongFrames": 3536,
+            "thresholds": {
+              "startModelScore": 0.3,
+              "strongModelScore": 0.35,
+              "continueModelScore": 0.16
+            },
+            "confidenceMeaning": "Relative evidence score; not a calibrated probability"
+          },
+          "duration": 238.04,
+          "analysisSeconds": 7.751800000000745
+        },
+        {
+          "track": "demo",
+          "available": true,
+          "presence": "detected",
+          "confidence": 0.761,
+          "modelScore": 0.655,
+          "coverage": 0.9591,
+          "phrases": [
+            {
+              "start": 0,
+              "end": 55.56,
+              "confidence": 0.723,
+              "modelScore": 0.5998,
+              "strength": 0.77,
+              "peakTime": 51.46,
+              "estimated": true
+            },
+            {
+              "start": 56.24,
+              "end": 62.06,
+              "confidence": 0.761,
+              "modelScore": 0.655,
+              "strength": 0.63,
+              "peakTime": 59.2,
+              "estimated": true
+            }
+          ],
+          "accents": [
+            {
+              "time": 15.66,
+              "strength": 0.512,
+              "confidence": 0.723,
+              "estimated": true
+            },
+            {
+              "time": 29.58,
+              "strength": 0.299,
+              "confidence": 0.723,
+              "estimated": true
+            },
+            {
+              "time": 37.06,
+              "strength": 0.503,
+              "confidence": 0.723,
+              "estimated": true
+            },
+            {
+              "time": 39.84,
+              "strength": 0.5,
+              "confidence": 0.723,
+              "estimated": true
+            },
+            {
+              "time": 50.16,
+              "strength": 0.56,
+              "confidence": 0.723,
+              "estimated": true
+            },
+            {
+              "time": 56.34,
+              "strength": 0.363,
+              "confidence": 0.761,
+              "estimated": true
+            },
+            {
+              "time": 57.52,
+              "strength": 0.334,
+              "confidence": 0.761,
+              "estimated": true
+            }
+          ],
+          "envelopeStep": 0.02,
+          "method": "PretrainedSED Frame-MN10 strong singing events with confidence-gated phrasing",
+          "model": {
+            "name": "PretrainedSED Frame-MN10",
+            "id": "frame-mn10-strong-1",
+            "sha256": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+            "license": "MIT"
+          },
+          "timing": {
+            "contextSeconds": 10,
+            "classifierFrameMs": 40,
+            "envelopeMs": 20,
+            "overlapSeconds": 4,
+            "alignment": "40 ms sound-event evidence with estimated phrase edges and accents; no separated vocal stem or word alignment"
+          },
+          "warnings": [],
+          "diagnostics": {
+            "frames": 1600,
+            "strongFrames": 1372,
+            "thresholds": {
+              "startModelScore": 0.3,
+              "strongModelScore": 0.35,
+              "continueModelScore": 0.16
+            },
+            "confidenceMeaning": "Relative evidence score; not a calibrated probability"
+          },
+          "duration": 64,
+          "analysisSeconds": 1.9276000000014901
+        }
+      ],
+      "frontend": {
+        "samples": 128000,
+        "maxAbsError": 0.00008988380432128906,
+        "rmsError": 0.0000011273943820608866
+      },
+      "source_hashes": {
+        "web/analysis/vocal.js": "0c7c89a7de70e6a416a4a74ca4bd33a4bc2bb07c935bc0201aa6ad0b372e0bb2",
+        "web/analysis/models/frame-mn10-singing.onnx": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+        "web/analysis/models/vocal-model.json": "52093f26d0bfe3f04bbb1563b287fafe5e61aa57a61391ea643b04d97838ca7e",
+        "web/analysis/models/vocal-frontend.json": "72bdffced29bfdd6d1da77a4da2a2a4af1b2f839c71131d19dc9423db3d4732f"
+      }
+    },
+    "vocalReference": {
+      "passed": true,
+      "torch": "2.14.0+cpu",
+      "onnxruntime": "1.29.0",
+      "maxAbsScoreError": 0.0000010132789611816406,
+      "model": {
+        "name": "PretrainedSED Frame-MN10",
+        "id": "frame-mn10-strong-1",
+        "file": "frame-mn10-singing.onnx",
+        "sha256": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+        "bytes": 13620408,
+        "license": "MIT",
+        "source": "https://github.com/fschmid56/PretrainedSED",
+        "weightsSource": "https://github.com/fschmid56/PretrainedSED/releases/download/v0.0.1/frame_mn10_strong_1.pt",
+        "weightsSHA256": "4a0fe320d5369987b772394c51881fb20a602967e6842f72f3e5c8181065ece7",
+        "sampleRate": 16000,
+        "inputShape": [
+          1,
+          1,
+          128,
+          1000
+        ],
+        "outputShape": [
+          1,
+          447,
+          250
+        ],
+        "contextSeconds": 10,
+        "frameSeconds": 0.04,
+        "singingClassIds": [
+          73,
+          77,
+          85,
+          156,
+          212,
+          237,
+          239,
+          292,
+          327,
+          373,
+          444
+        ],
+        "speechClassIds": [
+          78,
+          157,
+          238,
+          254,
+          353
+        ],
+        "capabilities": [
+          "Singing activity trained with strong frame-level AudioSet labels",
+          "Male/female/child singing, choir, humming, chant and rap",
+          "No source separation, lyrics or individual sung-note transcription"
+        ]
+      },
+      "meaning": "Numerical agreement to original pretrained Frame-MN10 strong model, not an accuracy benchmark"
+    },
+    "vocalResampling": {
+      "frontend": {
+        "values": 128000,
+        "maxAbsError": 0.00008988380432128906,
+        "rmsError": 0.0000011273943820608866
+      },
+      "gapFreeChunkSchedules": 15,
+      "passed": true,
+      "release": "1.5.0",
+      "scope": "Independent analytic resampling checks; not vocal classification accuracy",
+      "chunkMaxError": 0,
+      "impulse": {
+        "sourceSample": 8820,
+        "sourceRate": 22050,
+        "destinationSample": 6400,
+        "destinationRate": 16000,
+        "delayMs": 0
+      },
+      "passband6000HzDb": 0.0004890423254471375,
+      "stopband9000HzDb": -79.32401681130013,
+      "shortSilentTailFinite": true,
+      "source_hashes": {
+        "web/analysis/vocal.js": "0c7c89a7de70e6a416a4a74ca4bd33a4bc2bb07c935bc0201aa6ad0b372e0bb2"
+      }
+    },
+    "vocalEdges": {
+      "passed": true,
+      "createdAt": "2026-09-06T07:37:31.564Z",
+      "runtime": "ONNX Runtime Web 1.20.1 / Chromium desktop WASM; Android timing unmeasured",
+      "results": [
+        {
+          "track": "voice-edge-case",
+          "available": true,
+          "presence": "detected",
+          "confidence": 0.92,
+          "modelScore": 0.8847,
+          "coverage": 0.1068,
+          "phrases": [
+            {
+              "start": 3.12,
+              "end": 5.26,
+              "confidence": 0.92,
+              "modelScore": 0.8847,
+              "strength": 0.941,
+              "peakTime": 4.74,
+              "estimated": true
+            }
+          ],
+          "accents": [],
+          "envelopeStep": 0.02,
+          "method": "PretrainedSED Frame-MN10 strong singing events with confidence-gated phrasing",
+          "model": {
+            "name": "PretrainedSED Frame-MN10",
+            "id": "frame-mn10-strong-1",
+            "sha256": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+            "license": "MIT"
+          },
+          "timing": {
+            "contextSeconds": 10,
+            "classifierFrameMs": 40,
+            "envelopeMs": 20,
+            "overlapSeconds": 4,
+            "alignment": "40 ms sound-event evidence with estimated phrase edges and accents; no separated vocal stem or word alignment"
+          },
+          "warnings": [],
+          "diagnostics": {
+            "frames": 501,
+            "strongFrames": 50,
+            "thresholds": {
+              "startModelScore": 0.3,
+              "strongModelScore": 0.35,
+              "continueModelScore": 0.16
+            },
+            "confidenceMeaning": "Relative evidence score; not a calibrated probability"
+          },
+          "duration": 20.02997732426304,
+          "analysisSeconds": 0.9787000000029802,
+          "silenceAudit": {
+            "knownLeadingSilenceSeconds": 3.1299773242630384,
+            "knownTrailingSilenceStart": 8.329977324263039,
+            "toleranceSeconds": 0.04,
+            "outsideEnvelopeMaximum": 0
+          }
+        }
+      ],
+      "frontend": {
+        "samples": 128000,
+        "maxAbsError": 0.00008988380432128906,
+        "rmsError": 0.0000011273943820608866
+      },
+      "source_hashes": {
+        "web/analysis/vocal.js": "0c7c89a7de70e6a416a4a74ca4bd33a4bc2bb07c935bc0201aa6ad0b372e0bb2",
+        "web/analysis/models/frame-mn10-singing.onnx": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+        "web/analysis/models/vocal-model.json": "52093f26d0bfe3f04bbb1563b287fafe5e61aa57a61391ea643b04d97838ca7e",
+        "web/analysis/models/vocal-frontend.json": "72bdffced29bfdd6d1da77a4da2a2a4af1b2f839c71131d19dc9423db3d4732f"
+      }
+    },
+    "bass": {
+      "status": "passed",
+      "version": "1.5.0",
+      "release": "1.5.0",
+      "passed": true,
+      "errors": [],
+      "generatedAt": "2026-09-06T07:35:16.470Z",
+      "sourceHashes": {
+        "web/analysis/bass-notes.js": "5b81e2361295a1f8c02086d4668464ed1d7e93c923513c50a2c865a7aeb1531e",
+        "web/analysis/dsp.js": "32186b9268632cab85cadcb7e84fa1b4e3d8eb4bb9fbdf96a0873067cb9acd71",
+        "web/analysis/wav-reader.js": "c69842b391100059a3cd69fa08ba1ad0e1aef8d102abfde415bcdf7c6ee477be",
+        "tests/bass-notes.test.cjs": "d8fd98d78334bbe73deb5a888f7a4c0d189f9b4e047ce3f9d6fb63bdcf0a1abe",
+        "qa/release-1.5.0/verify-bass-analysis.cjs": "f5eca0553448f6c95245872272239a6202109fad87de06d1ac30be2999107bcb"
+      },
+      "tests": {
+        "groups": 7,
+        "result": "passed",
+        "syntheticTruth": "Off-grid 41/55/73/82 Hz harmonic notes, legato changes, louder sweeping kicks 50–150 ms before/after, pure 36.7 Hz sustain, kicks/noise/silence rejection, read chunk invariance, four-hour typed summary, cancellation",
+        "onsetToleranceMs": 40,
+        "closestOverlappingKickFixtureOnsetToleranceMs": 80,
+        "offsetToleranceMs": 50
+      },
+      "realAudio": [
+        {
+          "name": "Sample",
+          "duration": 238.04,
+          "preparedWavSha256": "19183de77d6c0ad7969d42c5a2741c2b1eec8ee319ea4597dea73f0188590e11",
+          "notes": 159,
+          "phrases": 56,
+          "confidence": 0.685,
+          "elapsedMs": 2776,
+          "annotation": "No ground-truth pitch or note timestamps; this verifies execution, finite bounded output and timing coverage, not musical accuracy."
+        },
+        {
+          "name": "Glass Castle available prefix",
+          "duration": 121.7491156462585,
+          "preparedWavSha256": "7652ba19f8e4b9d76b38a2db6e19ff60252342f1e8f610399ac636cfcd72af82",
+          "notes": 71,
+          "phrases": 31,
+          "confidence": 0.661,
+          "elapsedMs": 1302,
+          "annotation": "No ground-truth pitch or note timestamps; this verifies execution, finite bounded output and timing coverage, not musical accuracy."
+        }
+      ],
+      "limitations": [
+        "Synthetic timing tolerances do not establish real-track accuracy. The 50 ms adjacent kick fixture has an 80 ms onset limit because closely overlapping low harmonics remain ambiguous.",
+        "Low register estimates are not source-separated bass instrument identification.",
+        "Octave ambiguity, overlapping sources, quiet bass, glides and short notes can be missed.",
+        "Actual Android device and Tesla execution are not tested here."
+      ]
+    }
+  },
+  "fixtureProvenance": {
+    "files": [
+      {
+        "source": "Sample.wav",
+        "sourceSHA256": "1904d9697a1cb3640bcfdc5b1ede23f7512105976c7b662b08423a5e4cca99d8",
+        "declaredSeconds": 238.03997916666665,
+        "availableSeconds": 238.03997916666665,
+        "truncated": false,
+        "prepared": "sample.wav",
+        "preparedSHA256": "19183de77d6c0ad7969d42c5a2741c2b1eec8ee319ea4597dea73f0188590e11",
+        "preparedSeconds": 238.04
+      },
+      {
+        "source": "Glass Castle.wav",
+        "sourceSHA256": "24dd69621d66a27c00dd7a90c723858232c58176753322201098669b8c94f960",
+        "declaredSeconds": 238.03997916666665,
+        "availableSeconds": 121.74910416666667,
+        "truncated": true,
+        "prepared": "glass-castle.wav",
+        "preparedSHA256": "7652ba19f8e4b9d76b38a2db6e19ff60252342f1e8f610399ac636cfcd72af82",
+        "preparedSeconds": 121.7491156462585
+      }
+    ],
+    "note": "Glass Castle has a truncated data chunk; only physically available PCM is used as a recovered-prefix test, never represented as the full song."
+  },
+  "limits": [
+    "No physical Android device or Tesla test.",
+    "Model/frontend parity verifies implementation, not singing accuracy.",
+    "Mixed-song vocal positives and selected negatives are spot checks, not a broad genre benchmark or lyric/word alignment.",
+    "Supplied Sample is complete; Glass Castle is tested only as its physically available recovered prefix. Neither has independent vocal/bass annotations.",
+    "Synthetic bass onset bounds are 40 ms in tested ordinary/nearby-kick cases and 80 ms for the closest 50 ms overlap; these do not certify real-song or hardware timing.",
+    "Bass and singing are mixture estimates; low instruments, overlapping sources and quiet passages can remain ambiguous."
+  ]
+}

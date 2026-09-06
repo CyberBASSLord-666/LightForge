@@ -1,0 +1,1 @@
+PASS: chunk invariance, exact sample duration, passband RMSE=2.8231488140333152E-5, analysis alias RMS=2.288475753764008E-5, PCM byte preservation.

@@ -1,0 +1,262 @@
+[
+  {
+    "name": "Left Outer Main Beam",
+    "startChannel": 1,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Right Outer Main Beam",
+    "startChannel": 2,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Left Inner Main Beam",
+    "startChannel": 3,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Right Inner Main Beam",
+    "startChannel": 4,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Left Signature",
+    "startChannel": 5,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Right Signature",
+    "startChannel": 6,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Left Channel 4",
+    "startChannel": 7,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Right Channel 4",
+    "startChannel": 8,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Left Channel 5",
+    "startChannel": 9,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Right Channel 5",
+    "startChannel": 10,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Left Channel 6",
+    "startChannel": 11,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Right Channel 6",
+    "startChannel": 12,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Left Front Turn",
+    "startChannel": 13,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Right Front Turn",
+    "startChannel": 14,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Left Front Fog",
+    "startChannel": 15,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Right Front Fog",
+    "startChannel": 16,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Left Aux Park",
+    "startChannel": 17,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Right Aux Park",
+    "startChannel": 18,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Left Side Marker",
+    "startChannel": 19,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Right Side Marker",
+    "startChannel": 20,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Left Side Repeater",
+    "startChannel": 21,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Right Side Repeater",
+    "startChannel": 22,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Left Rear Turn",
+    "startChannel": 23,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Right Rear Turn",
+    "startChannel": 24,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Brake Lights",
+    "startChannel": 25,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Left Tail",
+    "startChannel": 26,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Right Tail",
+    "startChannel": 27,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Reverse Lights",
+    "startChannel": 28,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Rear Fog Lights",
+    "startChannel": 29,
+    "type": "Single Color White"
+  },
+  {
+    "name": "License Plate",
+    "startChannel": 30,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Left Falcon Door",
+    "startChannel": 31,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Right Falcon Door",
+    "startChannel": 32,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Left Front Door",
+    "startChannel": 33,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Right Front Door",
+    "startChannel": 34,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Left Mirror",
+    "startChannel": 35,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Right Mirror",
+    "startChannel": 36,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Left Front Window",
+    "startChannel": 37,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Left Rear Window",
+    "startChannel": 38,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Right Front Window",
+    "startChannel": 39,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Right Rear Window",
+    "startChannel": 40,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Liftgate",
+    "startChannel": 41,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Left Front Door Handle",
+    "startChannel": 42,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Left Rear Door Handle",
+    "startChannel": 43,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Right Front Door Handle",
+    "startChannel": 44,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Right Rear Door Handle",
+    "startChannel": 45,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Charge Port",
+    "startChannel": 46,
+    "type": "Single Color White"
+  },
+  {
+    "name": "Center Front Display",
+    "startChannel": 176,
+    "type": "RGB Nodes"
+  },
+  {
+    "name": "Right Rear RGB",
+    "startChannel": 179,
+    "type": "RGB Nodes"
+  },
+  {
+    "name": "Right Front RGB",
+    "startChannel": 182,
+    "type": "RGB Nodes"
+  },
+  {
+    "name": "Center Front RGB",
+    "startChannel": 185,
+    "type": "RGB Nodes"
+  },
+  {
+    "name": "Left Front RGB",
+    "startChannel": 188,
+    "type": "RGB Nodes"
+  },
+  {
+    "name": "Left Rear RGB",
+    "startChannel": 191,
+    "type": "RGB Nodes"
+  }
+]

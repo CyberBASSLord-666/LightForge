@@ -1,0 +1,43 @@
+/* Independent numerical audit: absolute audio time, chunk seams and anti-aliasing. */
+const fs=require('fs'),path=require('path'),assert=require('assert'),crypto=require('crypto');
+const ROOT=path.resolve(__dirname,'../..'),source=path.join(ROOT,'web/analysis/vocal.js');
+const vocal=require(source);
+const readerFor=signal=>({duration:signal.length/22050,async mono22050(first,count){return Float32Array.from({length:count},(_,i)=>signal[first+i]||0);}});
+const rms=a=>Math.sqrt(a.reduce((s,v)=>s+v*v,0)/Math.max(1,a.length));
+(async()=>{
+ const sine=(hz,length=22050)=>Float32Array.from({length},(_,i)=>.5*Math.sin(2*Math.PI*hz*i/22050));
+ const mixed=Float32Array.from({length:22050},(_,i)=>.3*Math.sin(2*Math.PI*211*i/22050)+.2*Math.cos(2*Math.PI*6111*i/22050));
+ const whole=await vocal.pcm16000(readerFor(mixed),0,16000,{}),parts=new Float32Array(16000);
+ for(const [start,count] of [[0,3341],[3341,6023],[9364,6636]])parts.set(await vocal.pcm16000(readerFor(mixed),start,count,{}),start);
+ const chunkMaxError=Math.max(...whole.map((v,i)=>Math.abs(v-parts[i])));assert.strictEqual(chunkMaxError,0,'Chunk boundaries changed rational audio coordinates');
+ const impulse=new Float32Array(22050);impulse[8820]=1;
+ const response=await vocal.pcm16000(readerFor(impulse),0,16000,{});
+ let peakIndex=0;for(let i=0;i<response.length;i++)if(Math.abs(response[i])>Math.abs(response[peakIndex]))peakIndex=i;
+ assert.strictEqual(peakIndex,6400,'Resampler introduced an audio-time offset');
+ const pass=await vocal.pcm16000(readerFor(sine(6000)),0,16000,{}),stop=await vocal.pcm16000(readerFor(sine(9000)),0,16000,{});
+ const passDb=20*Math.log10(rms(pass.slice(200,-200))/(.5/Math.sqrt(2))),stopDb=20*Math.log10(rms(stop.slice(200,-200))/(.5/Math.sqrt(2)));
+ assert(Math.abs(passDb)<.1,`6kHz passband attenuated ${passDb}dB`);assert(stopDb< -40,`9kHz input aliased at ${stopDb}dB`);
+ const quiet=await vocal.pcm16000(readerFor(new Float32Array(13)), -17,1000,{});assert(quiet.every(x=>x===0));
+ let frontend=null;const gp=path.join(ROOT,'qa/release-1.5.0/vocal-fixtures/sed-frontend-reference.json');if(fs.existsSync(gp)){const g=JSON.parse(fs.readFileSync(gp)),front=JSON.parse(fs.readFileSync(path.join(ROOT,'web/analysis/models/vocal-frontend.json'))),actual=vocal.logMel(Float32Array.from(g.pcm),front);let maximum=0,squared=0;assert.equal(actual.length,g.mel.length);for(let i=0;i<actual.length;i++){const d=actual[i]-g.mel[i];maximum=Math.max(maximum,Math.abs(d));squared+=d*d;}assert(maximum<.001);frontend={values:actual.length,maxAbsError:maximum,rmsError:Math.sqrt(squared/actual.length)};}
+ let chunkSchedules=0;for(const duration of [.001,.02,.04,.5,9.99,10,10.001,10.04,15.97,16,17,21.9,22,238.333,14400]){const n=Math.ceil(duration/.04),starts=vocal.chunkStarts(duration),coverage=new Uint16Array(n);for(const first of starts){assert(first>=0&&Number.isInteger(first));for(let i=first;i<Math.min(n,first+250);i++)coverage[i]++;}assert(coverage.every(x=>x>0));chunkSchedules++;}
+ const model=JSON.parse(fs.readFileSync(path.join(ROOT,'web/analysis/models/vocal-model.json'))),front=JSON.parse(fs.readFileSync(path.join(ROOT,'web/analysis/models/vocal-frontend.json'))),rawScoreChecks=[];
+ globalThis.location={href:'http://localhost/analysis/worker.js'};
+ // Known output scores enter through the actual analyze() frontend/chunk loop.
+ // This isolates class selection and weighted score transport from model quality.
+ async function scoresFixture(duration,options={}){
+  const signal=sine(331,Math.ceil(duration*22050)),reader=readerFor(options.silent?new Float32Array(signal.length):signal),starts=vocal.chunkStarts(reader.duration),state={sessions:0,runs:0,inputDisposals:0,outputDisposals:0,releases:0};
+  const fixtureModel=options.noSpeech?{...model,speechClassIds:[]}:model,unrelated=model.classNames.findIndex((_,i)=>!model.singingClassIds.includes(i)&&!model.speechClassIds.includes(i));
+  const runtime={Tensor:class{constructor(type,data,dims){assert.equal(type,'float32');assert.equal(data.length,128000);assert.deepStrictEqual(dims,[1,1,128,1000]);assert.ok(data.every(Number.isFinite));this.data=data;}dispose(){state.inputDisposals++;}},InferenceSession:{async create(){state.sessions++;return {async run(input){assert.ok(input.log_mel);const first=starts[state.runs++];if(options.fail)throw Error('Declared inference failure');const scores=new Float32Array(model.classNames.length*250);for(let f=0;f<250;f++){const absolute=first+f;for(const id of model.singingClassIds)scores[id*250+f]=.1;for(const id of model.speechClassIds)scores[id*250+f]=.05;scores[model.singingClassIds.at(-1)*250+f]=.55+absolute%9/40;scores[model.speechClassIds.at(-1)*250+f]=.24+absolute%7/20;scores[unrelated*250+f]=1;}return {scores:{data:scores,dispose(){state.outputDisposals++;}}};},async release(){state.releases++;}};}}};
+  if(options.fail){await assert.rejects(vocal.analyze(reader,{}, {ort:runtime,model:fixtureModel,frontend:front,includeClassifierScores:true}),/Declared inference failure/);assert.equal(state.releases,1);assert.equal(state.inputDisposals,1);return {duration,failedInferenceCleanup:true,...state};}
+  const out=await vocal.analyze(reader,{}, {ort:runtime,model:fixtureModel,frontend:front,includeDiagnostics:!options.omitScores,includeClassifierScores:!options.omitScores});
+  if(options.omitScores){assert.equal(out.classifier,undefined);assert.equal(out.classifierScores,undefined);}else{assert.ok(out.classifier.singingScores instanceof Float32Array);assert.ok(out.classifier.speechScores instanceof Float32Array);assert.equal(out.classifier.frameStep,.04);assert.equal(out.classifier.singingScores.length,Math.ceil(reader.duration/.04));assert.deepStrictEqual(out.classifierScores,Array.from(out.classifier.singingScores));let maxError=0;for(let i=0;i<out.classifier.singingScores.length;i++){const singing=options.silent?0:.55+i%9/40,speech=options.silent||options.noSpeech?0:.24+i%7/20;maxError=Math.max(maxError,Math.abs(out.classifier.singingScores[i]-singing),Math.abs(out.classifier.speechScores[i]-speech));}assert.ok(maxError<2e-7,'Class scores lost their absolute frame coordinates');state.maxScoreError=maxError;}
+  assert.equal(state.sessions,options.silent?0:1);assert.equal(state.releases,state.sessions);assert.equal(state.inputDisposals,state.runs);assert.equal(state.outputDisposals,state.runs);return {duration,overlappingWindows:starts.length,options,...state};
+ }
+ for(const duration of [.061,10.04,16.2])rawScoreChecks.push(await scoresFixture(duration));
+ rawScoreChecks.push(await scoresFixture(.42,{noSpeech:true}),await scoresFixture(.42,{omitScores:true}),await scoresFixture(.42,{silent:true}),await scoresFixture(.42,{fail:true}));
+ const historical=JSON.parse(fs.readFileSync(path.join(ROOT,'qa/release-1.5.0/vocal-verification.json'))),graph=path.join(ROOT,'web/analysis/models',model.file),graphHash=crypto.createHash('sha256').update(fs.readFileSync(graph)).digest('hex');assert.strictEqual(graphHash,model.sha256);assert.strictEqual(graphHash,historical.model.sha256);assert.strictEqual(fs.statSync(graph).size,model.bytes);
+ const historicalParity={source:'qa/release-1.5.0/vocal-verification.json',graphSHA256:graphHash,graphBytes:model.bytes,exactGraphUnchanged:true,originalReferenceCoreMaxAbsScoreError:historical.tests.originalReferenceCoreMaxAbsScoreError,scope:'Historical PyTorch/ONNX parity applies to the identical graph; this run validates current frontend and class-score transport without rerunning model conversion.'};
+ const sourceFiles=['web/analysis/vocal.js','web/analysis/models/vocal-model.json','web/analysis/models/vocal-frontend.json','web/analysis/models/'+model.file,'qa/release-1.6.0/test-vocal-resampling-audit.cjs','qa/release-1.5.0/vocal-verification.json','qa/release-1.5.0/vocal-fixtures/sed-frontend-reference.json'];
+ const results={frontend,gapFreeChunkSchedules:chunkSchedules,rawScoreChecks,historicalParity,passed:true,release:'1.6.0',scope:'Independent analytic resampling and actual analyze() frontend/class-routing checks with declared inference scores; not vocal classification accuracy',chunkMaxError,impulse:{sourceSample:8820,sourceRate:22050,destinationSample:peakIndex,destinationRate:16000,delayMs:0},passband6000HzDb:passDb,stopband9000HzDb:stopDb,shortSilentTailFinite:quiet.every(Number.isFinite),source_hashes:Object.fromEntries(sourceFiles.map(f=>[f,crypto.createHash('sha256').update(fs.readFileSync(path.join(ROOT,f))).digest('hex')]))};
+ fs.writeFileSync(path.join(__dirname,'vocal-resampling-audit.json'),JSON.stringify(results,null,2)+'\n');console.log(JSON.stringify(results,null,2));
+})().catch(e=>{console.error(e);process.exitCode=1;});

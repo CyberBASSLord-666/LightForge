@@ -1,0 +1,85 @@
+{
+  "passed": true,
+  "createdAt": "2026-09-06T09:32:01.202Z",
+  "runtime": "Packaged ONNX Runtime Web1.20.1/desktop Chromium WASM; not Android/vehicle execution",
+  "mode": "baseline",
+  "results": [
+    {
+      "file": "quality-baseline-falcon-controlled.json"
+    },
+    {
+      "file": "quality-baseline-falcon-instrumental.json"
+    },
+    {
+      "file": "quality-baseline-falcon-mix.json"
+    },
+    {
+      "file": "quality-baseline-falcon-vocals.json"
+    },
+    {
+      "file": "quality-baseline-grunge-controlled.json"
+    },
+    {
+      "file": "quality-baseline-grunge-instrumental.json"
+    },
+    {
+      "file": "quality-baseline-grunge-mix.json"
+    },
+    {
+      "file": "quality-baseline-grunge-vocals.json"
+    },
+    {
+      "file": "quality-baseline-meaxic-controlled.json"
+    },
+    {
+      "file": "quality-baseline-meaxic-instrumental.json"
+    },
+    {
+      "file": "quality-baseline-meaxic-mix.json"
+    },
+    {
+      "file": "quality-baseline-meaxic-vocals.json"
+    },
+    {
+      "file": "quality-baseline-nightowl-controlled.json"
+    },
+    {
+      "file": "quality-baseline-nightowl-instrumental.json"
+    },
+    {
+      "file": "quality-baseline-nightowl-mix.json"
+    },
+    {
+      "file": "quality-baseline-nightowl-vocals.json"
+    },
+    {
+      "file": "quality-baseline-sdrnr-controlled.json"
+    },
+    {
+      "file": "quality-baseline-sdrnr-instrumental.json"
+    },
+    {
+      "file": "quality-baseline-sdrnr-mix.json"
+    },
+    {
+      "file": "quality-baseline-sdrnr-vocals.json"
+    },
+    {
+      "file": "quality-baseline-stella-controlled.json"
+    },
+    {
+      "file": "quality-baseline-stella-instrumental.json"
+    },
+    {
+      "file": "quality-baseline-stella-mix.json"
+    },
+    {
+      "file": "quality-baseline-stella-vocals.json"
+    }
+  ],
+  "source_hashes": {
+    "qa/release-1.6.0/baseline-vocal-1.5.0.js": "0c7c89a7de70e6a416a4a74ca4bd33a4bc2bb07c935bc0201aa6ad0b372e0bb2",
+    "web/analysis/models/frame-mn10-singing.onnx": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+    "web/analysis/models/vocal-model.json": "52093f26d0bfe3f04bbb1563b287fafe5e61aa57a61391ea643b04d97838ca7e"
+  }
+}

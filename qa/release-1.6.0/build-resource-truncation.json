@@ -1,0 +1,38 @@
+{
+  "resources.apk": {
+    "bytes": 183070720,
+    "head": "504b0304000000000800000021009af91500750300003c09000013000000416e",
+    "tail32": "82e68bace9bc745c9222add9b79e36caab687f489af6c7f79aa14ce3af8e2e57",
+    "eocdInTail": -1,
+    "isZipFile": false
+  },
+  "unsigned.apk": {
+    "bytes": 183115610,
+    "head": "504b0304000000000800000021009af91500750300003c09000013000000416e",
+    "tail32": "6c61737365732e646578504b05060000000001000100390000000b1fea0a0000",
+    "eocdInTail": 65536,
+    "isZipFile": true,
+    "entries": 1,
+    "names": [
+      "classes.dex"
+    ]
+  },
+  "aligned.apk": {
+    "bytes": 44890,
+    "head": "504b03041400000008000b31265dba13994ee2ae0000705e01000b000000636c",
+    "tail32": "6c61737365732e646578504b05060000000001000100390000000baf00000000",
+    "eocdInTail": 44868,
+    "isZipFile": true,
+    "entries": 1,
+    "names": [
+      "classes.dex"
+    ]
+  },
+  "signed.apk": {
+    "bytes": 0,
+    "head": "",
+    "tail32": "",
+    "eocdInTail": -1,
+    "isZipFile": false
+  }
+}

@@ -1,0 +1,11 @@
+{"streamedFixtureBytes": 8388608, "archiveBytes": 8392276, "peakPythonHeapBytes": 3801042, "manifestEntries": 4}
+test_atomic_apk_copy_rejects_changed_bytes (__main__.PackagingStreamingTest.test_atomic_apk_copy_rejects_changed_bytes) ... ok
+test_bounded_hash_and_exact_comparison (__main__.PackagingStreamingTest.test_bounded_hash_and_exact_comparison) ... ok
+test_changed_source_aborts_and_cleans_staging (__main__.PackagingStreamingTest.test_changed_source_aborts_and_cleans_staging) ... ok
+test_crc_failure_never_publishes_source (__main__.PackagingStreamingTest.test_crc_failure_never_publishes_source) ... ok
+test_streamed_zip_preserves_manifest_permissions_and_exclusions (__main__.PackagingStreamingTest.test_streamed_zip_preserves_manifest_permissions_and_exclusions) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.294s
+
+OK

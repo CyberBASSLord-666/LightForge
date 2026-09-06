@@ -1,0 +1,61 @@
+{
+  "passed": true,
+  "createdAt": "2026-09-06T09:59:42.882Z",
+  "scope": "Actual public MusicAnalyzer + real Beat This!/MDX model loading, cancellation after writable OPFS cache creation during separation stage; desktop Chromium only.",
+  "results": [
+    {
+      "aborted": true,
+      "message": "Analysis cancelled",
+      "before": [],
+      "cacheDuring": [
+        "stem-72987471-94b7-4aab-b22e-40945a2892b0"
+      ],
+      "after": [],
+      "seen": {
+        "progress": 0.42,
+        "stage": "Separating voice and instruments",
+        "detail": "Separating singing from the instruments • 0 / 7 seconds"
+      },
+      "cleanupMs": 3461.689999997616,
+      "elapsedMs": 6853.004999995232
+    },
+    {
+      "aborted": true,
+      "message": "Analysis cancelled",
+      "before": [],
+      "cacheDuring": [
+        "stem-ffd14549-d859-42d4-bdf2-92ec0b8606ca"
+      ],
+      "after": [],
+      "seen": {
+        "progress": 0.42,
+        "stage": "Separating voice and instruments",
+        "detail": "Separating singing from the instruments • 0 / 7 seconds"
+      },
+      "cleanupMs": 3431.494999997318,
+      "elapsedMs": 5421.115000002086
+    },
+    {
+      "aborted": true,
+      "message": "Analysis cancelled",
+      "before": [],
+      "cacheDuring": [
+        "stem-32fef08c-3af4-496b-a3ac-57d747ac8d0e"
+      ],
+      "after": [],
+      "seen": {
+        "progress": 0.42,
+        "stage": "Separating voice and instruments",
+        "detail": "Separating singing from the instruments • 0 / 7 seconds"
+      },
+      "cleanupMs": 3422.625,
+      "elapsedMs": 5515.670000001788
+    }
+  ],
+  "source_hashes": {
+    "web/analysis/analyzer.js": "7447840a63ec025d16ad368191261025f4d76ce171ddb54e1b38747ab8547a9a",
+    "web/analysis/worker.js": "77c70eed09201a68c10a3cff6254e46171cfd0a49f09eb54534f0180608df367",
+    "web/analysis/stem-cache.js": "c7d3101a59a85d0c2ebfd30e1c6cd40dc9720f17072b5fc821bd0fd3bf7c6fb4",
+    "web/analysis/separator-mdx.js": "f0d42ecc6d5928f72120a5e40b33a291d28d550a59ec0f05c68e37ed87ed3a9d"
+  }
+}

@@ -1,0 +1,164 @@
+{
+  "release": "1.4.0",
+  "analysisVersion": 3,
+  "passed": true,
+  "errors": [],
+  "synthetic": [
+    {
+      "name": "off-grid 127.3 BPM",
+      "passed": true,
+      "beatCountBefore": 90,
+      "beatCountAfter": 90,
+      "expectedBeats": 90,
+      "bpmBefore": 127.29,
+      "bpmAfter": 127.29,
+      "meterAfter": 4,
+      "meterConfidence": 1,
+      "medianErrorBeforeMs": 2.56794972505503,
+      "medianErrorAfterMs": 2.56794972505503,
+      "p95ErrorBeforeMs": 4.775333857033104,
+      "p95ErrorAfterMs": 4.775333857033104,
+      "phrases": 6,
+      "impacts": 23
+    },
+    {
+      "name": "triple meter with pickup",
+      "passed": true,
+      "beatCountBefore": 90,
+      "beatCountAfter": 90,
+      "expectedBeats": 90,
+      "bpmBefore": 108,
+      "bpmAfter": 108,
+      "meterAfter": 3,
+      "meterConfidence": 1,
+      "medianErrorBeforeMs": 2.4444444444444713,
+      "medianErrorAfterMs": 2.4444444444444713,
+      "p95ErrorBeforeMs": 4.666666666668817,
+      "p95ErrorAfterMs": 4.666666666668817,
+      "phrases": 8,
+      "impacts": 30
+    },
+    {
+      "name": "quiet rest and return",
+      "passed": true,
+      "beatCountBefore": 80,
+      "beatCountAfter": 80,
+      "expectedBeats": 80,
+      "bpmBefore": 120,
+      "bpmAfter": 120,
+      "meterAfter": 4,
+      "meterConfidence": 1,
+      "medianErrorBeforeMs": 3.0000000000001137,
+      "medianErrorAfterMs": 3.0000000000001137,
+      "p95ErrorBeforeMs": 3.0000000000001137,
+      "p95ErrorAfterMs": 3.0000000000001137,
+      "phrases": 9,
+      "impacts": 21
+    },
+    {
+      "name": "120 to 90 BPM then accelerando",
+      "passed": true,
+      "beatCountBefore": 96,
+      "beatCountAfter": 96,
+      "expectedBeats": 96,
+      "bpmBefore": 107.14,
+      "bpmAfter": 107.14,
+      "meterAfter": 4,
+      "meterConfidence": 1,
+      "medianErrorBeforeMs": 3.0000000000000027,
+      "medianErrorAfterMs": 3.0000000000000027,
+      "p95ErrorBeforeMs": 4.666666666679475,
+      "p95ErrorAfterMs": 4.666666666679475,
+      "phrases": 6,
+      "impacts": 24,
+      "localTempos": [
+        {
+          "time": 5.12,
+          "bpm": 120
+        },
+        {
+          "time": 12.620000000000001,
+          "bpm": 120
+        },
+        {
+          "time": 24.285,
+          "bpm": 90.03
+        },
+        {
+          "time": 34.285000000000004,
+          "bpm": 90.03
+        },
+        {
+          "time": 49.68,
+          "bpm": 109.8
+        }
+      ]
+    },
+    {
+      "name": "digital silence",
+      "passed": true,
+      "beatCountBefore": 0,
+      "beatCountAfter": 0,
+      "expectedBeats": 0,
+      "bpmBefore": 0,
+      "bpmAfter": 0,
+      "meterAfter": 4,
+      "meterConfidence": 0,
+      "medianErrorBeforeMs": 0,
+      "medianErrorAfterMs": 0,
+      "p95ErrorBeforeMs": 0,
+      "p95ErrorAfterMs": 0,
+      "phrases": 1,
+      "impacts": 0
+    },
+    {
+      "name": "exact manual BPM preserves requested tempo",
+      "passed": true,
+      "bpm": 123.45,
+      "beatCount": 90,
+      "maxGridDeviationMs": 5.384581669432009e-12
+    },
+    {
+      "name": "feature envelope retains sample clock across chunk boundaries",
+      "passed": true,
+      "trueTime": 9.998,
+      "detectedTime": 9.995000000000001,
+      "errorMs": 2.9999999999983373
+    },
+    {
+      "name": "silent openings and endings retained with no made-up beats",
+      "passed": true,
+      "firstBeat": 4.11,
+      "lastBeat": 18.61,
+      "duration": 25
+    },
+    {
+      "name": "confidence falls when meter evidence is absent",
+      "passed": true,
+      "meterConfidence": 0
+    },
+    {
+      "name": "neural-only evidence never invents digital-silence beats",
+      "passed": true,
+      "beats": 0,
+      "activityRanges": 0
+    },
+    {
+      "name": "timing corrections are bounded and explicitly reported",
+      "passed": true,
+      "refined": 90,
+      "maximumCorrectionMs": 35
+    },
+    {
+      "name": "PCM peak replacement preserves the 40 ms attack spacing",
+      "passed": true,
+      "attacks": 4,
+      "minimumSpacingMs": 60
+    }
+  ],
+  "source_hashes": {
+    "web/analysis/dsp.js": "32186b9268632cab85cadcb7e84fa1b4e3d8eb4bb9fbdf96a0873067cb9acd71",
+    "web/analysis/worker.js": "8b1fbb26788563cf0aeded85ef09e88e830065d3000ec9417656473f126a97d0",
+    "web/analysis/analyzer.js": "b315608cacb102e1487edbdd4ebcf049adf3e99efa8c6612f1ccdbf7791240da"
+  }
+}

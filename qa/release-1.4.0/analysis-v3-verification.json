@@ -1,0 +1,66 @@
+{
+  "release": "1.4.0",
+  "passed": true,
+  "tests": [
+    {
+      "name": "recurring passage fingerprints distinguish equal-energy tonal changes",
+      "passed": true,
+      "groups": [
+        "section-0",
+        "section-1",
+        "section-0",
+        "section-1"
+      ],
+      "similarities": [
+        0,
+        0,
+        1,
+        1
+      ]
+    },
+    {
+      "name": "groove detector respects swung subdivisions without shifting the beats",
+      "passed": true,
+      "feel": "swing",
+      "subdivisionRatio": 0.667,
+      "confidence": 0.9999999999999795,
+      "observations": 64
+    },
+    {
+      "name": "neural phase confidence exposes half-bar ambiguity",
+      "passed": true,
+      "downbeatConfidence": 0,
+      "alternatives": [
+        {
+          "passage": 0,
+          "confidence": 0,
+          "candidates": [
+            {
+              "phase": 0,
+              "evidence": 0.800000011920929
+            },
+            {
+              "phase": 2,
+              "evidence": 0.800000011920929
+            },
+            {
+              "phase": 1,
+              "evidence": 0
+            },
+            {
+              "phase": 3,
+              "evidence": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "transformer decoder follows broad tempo changes without autocorrelation forcing",
+      "passed": true,
+      "beats": 70,
+      "minLocalBpm": 75,
+      "maxLocalBpm": 160.31
+    }
+  ]
+}

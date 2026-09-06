@@ -1,0 +1,96 @@
+{
+  "release": "1.5.0",
+  "passed": true,
+  "checkedAt": "2026-09-06T07:28:02.859Z",
+  "checks": [
+    {
+      "name": "legacy waveform bins use full song timescale for movement salience",
+      "passed": true
+    },
+    {
+      "name": "movement density independently controls physical command count while retaining hard budgets",
+      "passed": true
+    },
+    {
+      "name": "bar anchor and meter correction preserve measured beat times and original analysis",
+      "passed": true
+    },
+    {
+      "name": "half and double tempo preserve local tempo changes without re-running analysis",
+      "passed": true
+    },
+    {
+      "name": "confident swing places explicit eighth-note accents on the measured groove",
+      "passed": true
+    },
+    {
+      "name": "variation materially changes all three styles including quiet cinematic sections",
+      "passed": true
+    },
+    {
+      "name": "locking a section preserves its exact bytes while neighboring sections regenerate",
+      "passed": true
+    },
+    {
+      "name": "repeated analyzed sections share a local motif and color identity",
+      "passed": true
+    },
+    {
+      "name": "streamed FSEQ header plus existing frame buffer exactly equals contiguous export",
+      "passed": true
+    },
+    {
+      "name": "sparse preview matches independent frame integration through random fades and alias interruptions",
+      "passed": true
+    },
+    {
+      "name": "prepared preview supports repeated random seeks without rescanning frame payload",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "metrics": {
+    "legacySelectedChargeTime": 80,
+    "densityCommandCounts": [
+      {
+        "density": 0,
+        "commands": 0
+      },
+      {
+        "density": 0.2,
+        "commands": 30
+      },
+      {
+        "density": 0.7,
+        "commands": 61
+      },
+      {
+        "density": 1,
+        "commands": 73
+      }
+    ],
+    "distinctVariations": {
+      "festival-0.85": 4,
+      "festival-0.2": 4,
+      "pulse-0.85": 4,
+      "pulse-0.2": 4,
+      "cinematic-0.85": 4,
+      "cinematic-0.2": 4
+    },
+    "headerBytes": 76,
+    "sequencePayloadBytes": 960000,
+    "preview2000RandomSeeksMs": 19.449969999999894,
+    "previewLampSegments": 14493
+  },
+  "source_hashes": {
+    "web/engine/show-engine.js": "8043c854b11ba6343f0a7d0bdfcc2a05eb6261e13fe13f76a486d307d6ac1424",
+    "web/engine/light-planner.js": "8379f71a6b4ddea3330e4d930f7f7aab1bff8697139b477a929d912a2ae85af7",
+    "web/engine/movement-planner.js": "e008f55a0a82696d64142d674bfc95b85fe2fe18404f053bc6e2929b9994b6eb",
+    "web/engine/vehicle-profile.js": "027bf87a827a900cda00505e2b539f84cbdb0d5a9800ea4eb1efdf85a0c10936"
+  },
+  "limitations": [
+    "Timing tests validate exported command bytes and independently simulated fades, not measured physical Tesla timing.",
+    "Host Node seek timings are diagnostic measurements, not Android performance claims.",
+    "Repeated section labels are acoustic similarity estimates, not confirmed chorus semantics."
+  ]
+}

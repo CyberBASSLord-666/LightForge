@@ -1,0 +1,91 @@
+{
+  "model": "HTDemucs FT vocals ONNX research baseline",
+  "modelSHA256": "8c5d5e2da1f27050240bb80236673307ee3b40d4b064066d9350f4d64bfd544d",
+  "runtime": "1.29.0",
+  "graphOptimization": "disabled",
+  "threads": 2,
+  "normalization": "Per-track mono-reference mean/std with torch unbiased sample standard deviation; restore after inference",
+  "context": "343980 frames at44100Hz, centered zero-padding for this short fixture; no shifts, no reference-based adjustment",
+  "captures": [
+    {
+      "model": "HTDemucs FT vocals baseline",
+      "track": "nightowl-mix",
+      "path": "qa/release-1.6.0/fixtures/nightowl-mix-demucs-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1,
+      "samples": 300032,
+      "seconds": 5.943588991001889,
+      "mean": 4.755498957820237e-05,
+      "std": 0.16018587350845337,
+      "centerPadLeft": 21974,
+      "maxRSSBytes": 1369911296
+    },
+    {
+      "model": "HTDemucs FT vocals baseline",
+      "track": "stella-mix",
+      "path": "qa/release-1.6.0/fixtures/stella-mix-demucs-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1,
+      "samples": 300032,
+      "seconds": 5.1532656049967045,
+      "mean": -9.495435369899496e-05,
+      "std": 0.15815745294094086,
+      "centerPadLeft": 21974,
+      "maxRSSBytes": 2122919936
+    },
+    {
+      "model": "HTDemucs FT vocals baseline",
+      "track": "meaxic-mix",
+      "path": "qa/release-1.6.0/fixtures/meaxic-mix-demucs-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1,
+      "samples": 300032,
+      "seconds": 4.189665452999179,
+      "mean": -5.492380660143681e-05,
+      "std": 0.12639935314655304,
+      "centerPadLeft": 21974,
+      "maxRSSBytes": 2123313152
+    },
+    {
+      "model": "HTDemucs FT vocals baseline",
+      "track": "grunge-mix",
+      "path": "qa/release-1.6.0/fixtures/grunge-mix-demucs-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1,
+      "samples": 300032,
+      "seconds": 4.350872137001716,
+      "mean": -0.0005636272253468633,
+      "std": 0.13079024851322174,
+      "centerPadLeft": 21974,
+      "maxRSSBytes": 2123313152
+    },
+    {
+      "model": "HTDemucs FT vocals baseline",
+      "track": "falcon-mix",
+      "path": "qa/release-1.6.0/fixtures/falcon-mix-demucs-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1,
+      "samples": 300032,
+      "seconds": 4.276441325993801,
+      "mean": -9.980894537875429e-05,
+      "std": 0.1648566871881485,
+      "centerPadLeft": 21974,
+      "maxRSSBytes": 2123313152
+    },
+    {
+      "model": "HTDemucs FT vocals baseline",
+      "track": "sdrnr-mix",
+      "path": "qa/release-1.6.0/fixtures/sdrnr-mix-demucs-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1,
+      "samples": 300032,
+      "seconds": 4.113783916000102,
+      "mean": -4.5215430873213336e-05,
+      "std": 0.15517520904541016,
+      "centerPadLeft": 21974,
+      "maxRSSBytes": 2123313152
+    }
+  ],
+  "researchOnly": true,
+  "weightLicense": "HF export says MIT; upstream author issue327 says provided only for scientific purposes, so private personal-app redistribution is not established."
+}

@@ -1,0 +1,271 @@
+{
+  "release": "1.6.0",
+  "passed": true,
+  "checkedAt": "2026-09-06T10:07:12.576Z",
+  "checks": [
+    {
+      "name": "Actual1.5 output,1.4 previously migrated by actual1.5 worker, and direct1.4 upgrade preserve exact frames and reopen with stable migration trace",
+      "passed": true
+    },
+    {
+      "name": "All18 changed settings and nonempty or malformed guide migrations are rejected",
+      "passed": true
+    },
+    {
+      "name": "Eligible default-only migrations still reject metadata, payload hash, gzip and expansion corruption",
+      "passed": true
+    },
+    {
+      "name": "Exact-current input checksum with nonempty guides bypasses migration and preserves the complete compiled object",
+      "passed": true
+    }
+  ],
+  "metrics": {
+    "versions": [
+      {
+        "name": "1.5 custom focus",
+        "engine": "1.5.0",
+        "valid": true,
+        "framesPreserved": true,
+        "compressedPreserved": true,
+        "metadataPreserved": true,
+        "migration": {
+          "from": "1.5.0",
+          "to": "1.6.0",
+          "addedDefaults": [
+            "vocalRegions"
+          ],
+          "framesPreserved": true
+        },
+        "expectedDefaults": [
+          "vocalRegions"
+        ],
+        "reopenTraceStable": true,
+        "rebound": true,
+        "inputMatchesReopen": true,
+        "guides": [],
+        "focus": [
+          0.72,
+          0.93
+        ]
+      },
+      {
+        "name": "1.4 previously rebound by1.5",
+        "engine": "1.4.0",
+        "valid": true,
+        "framesPreserved": true,
+        "compressedPreserved": true,
+        "metadataPreserved": true,
+        "migration": {
+          "from": "1.4.0",
+          "to": "1.6.0",
+          "addedDefaults": [
+            "vocalRegions"
+          ],
+          "framesPreserved": true,
+          "previous": {
+            "from": "1.4.0",
+            "to": "1.5.0",
+            "addedDefaults": [
+              "vocalFocus",
+              "bassFocus"
+            ],
+            "framesPreserved": true
+          }
+        },
+        "expectedDefaults": [
+          "vocalRegions"
+        ],
+        "reopenTraceStable": true,
+        "rebound": true,
+        "inputMatchesReopen": true,
+        "guides": [],
+        "focus": [
+          0.85,
+          0.9
+        ]
+      },
+      {
+        "name": "1.4 direct skip upgrade",
+        "engine": "1.4.0",
+        "valid": true,
+        "framesPreserved": true,
+        "compressedPreserved": true,
+        "metadataPreserved": true,
+        "migration": {
+          "from": "1.4.0",
+          "to": "1.6.0",
+          "addedDefaults": [
+            "vocalRegions",
+            "vocalFocus",
+            "bassFocus"
+          ],
+          "framesPreserved": true
+        },
+        "expectedDefaults": [
+          "vocalRegions",
+          "vocalFocus",
+          "bassFocus"
+        ],
+        "reopenTraceStable": true,
+        "rebound": true,
+        "inputMatchesReopen": true,
+        "guides": [],
+        "focus": [
+          0.85,
+          0.9
+        ]
+      }
+    ],
+    "rejectedEdits": [
+      {
+        "fixture": "1.5 custom focus",
+        "name": "nonemptyGuides",
+        "rejected": true
+      },
+      {
+        "fixture": "1.5 custom focus",
+        "name": "invalidGuideObject",
+        "rejected": true
+      },
+      {
+        "fixture": "1.5 custom focus",
+        "name": "invalidGuideNull",
+        "rejected": true
+      },
+      {
+        "fixture": "1.5 custom focus",
+        "name": "changedIntensity",
+        "rejected": true
+      },
+      {
+        "fixture": "1.5 custom focus",
+        "name": "changedVoice",
+        "rejected": true
+      },
+      {
+        "fixture": "1.5 custom focus",
+        "name": "changedBass",
+        "rejected": true
+      },
+      {
+        "fixture": "1.4 previously rebound by1.5",
+        "name": "nonemptyGuides",
+        "rejected": true
+      },
+      {
+        "fixture": "1.4 previously rebound by1.5",
+        "name": "invalidGuideObject",
+        "rejected": true
+      },
+      {
+        "fixture": "1.4 previously rebound by1.5",
+        "name": "invalidGuideNull",
+        "rejected": true
+      },
+      {
+        "fixture": "1.4 previously rebound by1.5",
+        "name": "changedIntensity",
+        "rejected": true
+      },
+      {
+        "fixture": "1.4 previously rebound by1.5",
+        "name": "changedVoice",
+        "rejected": true
+      },
+      {
+        "fixture": "1.4 previously rebound by1.5",
+        "name": "changedBass",
+        "rejected": true
+      },
+      {
+        "fixture": "1.4 direct skip upgrade",
+        "name": "nonemptyGuides",
+        "rejected": true
+      },
+      {
+        "fixture": "1.4 direct skip upgrade",
+        "name": "invalidGuideObject",
+        "rejected": true
+      },
+      {
+        "fixture": "1.4 direct skip upgrade",
+        "name": "invalidGuideNull",
+        "rejected": true
+      },
+      {
+        "fixture": "1.4 direct skip upgrade",
+        "name": "changedIntensity",
+        "rejected": true
+      },
+      {
+        "fixture": "1.4 direct skip upgrade",
+        "name": "changedVoice",
+        "rejected": true
+      },
+      {
+        "fixture": "1.4 direct skip upgrade",
+        "name": "changedBass",
+        "rejected": true
+      }
+    ],
+    "integrity": [
+      {
+        "name": "metadata",
+        "rejected": true,
+        "message": "The saved show metadata checksum failed. Restore a previous project revision."
+      },
+      {
+        "name": "payloadHash",
+        "rejected": true,
+        "message": "The saved show checksum failed. Restore a previous project revision."
+      },
+      {
+        "name": "gzip",
+        "rejected": true,
+        "message": "The compressed data was not valid: incorrect header check."
+      },
+      {
+        "name": "shortExpanded",
+        "rejected": true,
+        "message": "The saved show expands beyond its declared size."
+      },
+      {
+        "name": "longExpanded",
+        "rejected": true,
+        "message": "The saved show data ended unexpectedly."
+      }
+    ],
+    "current": {
+      "unchanged": true,
+      "hash": "ce0f0fa533a9b38aa0e98da7b226eb611c17ceada0bb3cddc008747ba17b78b6",
+      "expected": "ce0f0fa533a9b38aa0e98da7b226eb611c17ceada0bb3cddc008747ba17b78b6",
+      "migration": null,
+      "guides": [
+        {
+          "start": 3,
+          "end": 4,
+          "kind": "instrumental"
+        }
+      ]
+    }
+  },
+  "errors": [],
+  "source_hashes": {
+    "web/engine/client.js": "35be761676b6d0827071d20786799dcde69da794098126a0a875f7724117c7f9",
+    "web/engine/worker.js": "0f05008d0b6501ced416b02efd5278ee58811c091a72ce2f989e60ea61609d29",
+    "web/engine/show-engine.js": "554ab7f0d9804d0c29c7f61e4c391f14e698aa3424a5d99bb2889dbf126290b7",
+    "web/engine/vehicle-profile.js": "027bf87a827a900cda00505e2b539f84cbdb0d5a9800ea4eb1efdf85a0c10936",
+    "qa/release-1.5.0/legacy-1.4-project.json": "feb91b2e01337d2449de5108b8c186c38fdde1822433f2242a7d62cf098468b1",
+    "qa/release-1.6.0/historical-engine-1.5.0/client.js": "db0cf74fcbc15f1a28b7da5bad54ec676e82c6220cbfeef27b8aeadc37417a09",
+    "qa/release-1.6.0/historical-engine-1.5.0/light-planner.js": "8379f71a6b4ddea3330e4d930f7f7aab1bff8697139b477a929d912a2ae85af7",
+    "qa/release-1.6.0/historical-engine-1.5.0/movement-planner.js": "e008f55a0a82696d64142d674bfc95b85fe2fe18404f053bc6e2929b9994b6eb",
+    "qa/release-1.6.0/historical-engine-1.5.0/show-engine.js": "8043c854b11ba6343f0a7d0bdfcc2a05eb6261e13fe13f76a486d307d6ac1424",
+    "qa/release-1.6.0/historical-engine-1.5.0/vehicle-profile.js": "027bf87a827a900cda00505e2b539f84cbdb0d5a9800ea4eb1efdf85a0c10936",
+    "qa/release-1.6.0/historical-engine-1.5.0/worker.js": "b30acd443f4550b3f3c330e461ab1dc36c51b5c546ef67e9884272de2c419c00"
+  },
+  "limitations": [
+    "Desktop Chromium dedicated workers, WebCrypto and browser gzip were executed. No Android lifecycle or physical Tesla was used.",
+    "Migration preserves exported channel payload exactly; the current FSEQ writer may update its producer-version metadata."
+  ]
+}

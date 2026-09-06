@@ -1,0 +1,51 @@
+{
+  "status": "passed",
+  "version": "1.5.0",
+  "release": "1.5.0",
+  "passed": true,
+  "errors": [],
+  "generatedAt": "2026-09-06T07:35:16.470Z",
+  "sourceHashes": {
+    "web/analysis/bass-notes.js": "5b81e2361295a1f8c02086d4668464ed1d7e93c923513c50a2c865a7aeb1531e",
+    "web/analysis/dsp.js": "32186b9268632cab85cadcb7e84fa1b4e3d8eb4bb9fbdf96a0873067cb9acd71",
+    "web/analysis/wav-reader.js": "c69842b391100059a3cd69fa08ba1ad0e1aef8d102abfde415bcdf7c6ee477be",
+    "tests/bass-notes.test.cjs": "d8fd98d78334bbe73deb5a888f7a4c0d189f9b4e047ce3f9d6fb63bdcf0a1abe",
+    "qa/release-1.5.0/verify-bass-analysis.cjs": "f5eca0553448f6c95245872272239a6202109fad87de06d1ac30be2999107bcb"
+  },
+  "tests": {
+    "groups": 7,
+    "result": "passed",
+    "syntheticTruth": "Off-grid 41/55/73/82 Hz harmonic notes, legato changes, louder sweeping kicks 50–150 ms before/after, pure 36.7 Hz sustain, kicks/noise/silence rejection, read chunk invariance, four-hour typed summary, cancellation",
+    "onsetToleranceMs": 40,
+    "closestOverlappingKickFixtureOnsetToleranceMs": 80,
+    "offsetToleranceMs": 50
+  },
+  "realAudio": [
+    {
+      "name": "Sample",
+      "duration": 238.04,
+      "preparedWavSha256": "19183de77d6c0ad7969d42c5a2741c2b1eec8ee319ea4597dea73f0188590e11",
+      "notes": 159,
+      "phrases": 56,
+      "confidence": 0.685,
+      "elapsedMs": 2776,
+      "annotation": "No ground-truth pitch or note timestamps; this verifies execution, finite bounded output and timing coverage, not musical accuracy."
+    },
+    {
+      "name": "Glass Castle available prefix",
+      "duration": 121.7491156462585,
+      "preparedWavSha256": "7652ba19f8e4b9d76b38a2db6e19ff60252342f1e8f610399ac636cfcd72af82",
+      "notes": 71,
+      "phrases": 31,
+      "confidence": 0.661,
+      "elapsedMs": 1302,
+      "annotation": "No ground-truth pitch or note timestamps; this verifies execution, finite bounded output and timing coverage, not musical accuracy."
+    }
+  ],
+  "limitations": [
+    "Synthetic timing tolerances do not establish real-track accuracy. The 50 ms adjacent kick fixture has an 80 ms onset limit because closely overlapping low harmonics remain ambiguous.",
+    "Low register estimates are not source-separated bass instrument identification.",
+    "Octave ambiguity, overlapping sources, quiet bass, glides and short notes can be missed.",
+    "Actual Android device and Tesla execution are not tested here."
+  ]
+}

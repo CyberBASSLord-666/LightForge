@@ -1,0 +1,153 @@
+{
+  "release": "1.5.0",
+  "analysisVersion": 4,
+  "passed": true,
+  "checks": [
+    "balanced retains all exact 1.4 beat, downbeat and three-band onset times on the existing annotated synthetic fixture.",
+    "precision retains all exact 1.4 beat, downbeat and three-band onset times on the existing annotated synthetic fixture.",
+    "Digital silence invents no beats, singing or bass notes and loads no neural graph.",
+    "Cancellation terminates the complete analysis Worker.",
+    "All graph, frontend, runtime and audio requests remain on the local origin."
+  ],
+  "tracks": [
+    {
+      "track": "synthetic",
+      "quality": "balanced",
+      "duration": 47.10616780045351,
+      "beats": 96,
+      "downbeats": 24,
+      "vocalPresence": "not_detected",
+      "vocalPhrases": 0,
+      "vocalCoverage": 0,
+      "bassNotes": 0,
+      "analysisSeconds": 13.7,
+      "engine": {
+        "name": "Beat This! compact transformer",
+        "neural": true,
+        "detail": "Bundled pretrained Beat This! transformer with exact exported log-mel frontend, overlapping 30-second context, measured PCM attack alignment and recurring-passage fingerprints, plus independent PretrainedSED Frame-MN10 singing evidence and harmonic bass-note estimates. All audio stays on this device.",
+        "model": "Beat This! small1",
+        "modelId": "beat-this-small1",
+        "modelSha256": "a5f8d39d989f31859454ba27afe61c5317ca95e4d9373e6853e5361b8937172f",
+        "frontendSha256": "fdd59e65c515331308e4c8841edf99972deca646bdf6197744c2a5b7755e3de9",
+        "vocalModel": {
+          "name": "PretrainedSED Frame-MN10",
+          "id": "frame-mn10-strong-1",
+          "sha256": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+          "license": "MIT"
+        },
+        "bassMethod": "Harmonic low-register tracking",
+        "quality": "balanced",
+        "runtime": "ONNX Runtime Web 1.20.1",
+        "analysisSeconds": 13.7
+      },
+      "annotation": "Synthetic fixture has beat annotations only; supplied songs have no independent vocal or bass timing labels."
+    },
+    {
+      "track": "synthetic",
+      "quality": "precision",
+      "duration": 47.10616780045351,
+      "beats": 96,
+      "downbeats": 24,
+      "vocalPresence": "not_detected",
+      "vocalPhrases": 0,
+      "vocalCoverage": 0,
+      "bassNotes": 0,
+      "analysisSeconds": 20.2,
+      "engine": {
+        "name": "Beat This! full transformer",
+        "neural": true,
+        "detail": "Bundled pretrained Beat This! transformer with exact exported log-mel frontend, overlapping 30-second context, measured PCM attack alignment and recurring-passage fingerprints, plus independent PretrainedSED Frame-MN10 singing evidence and harmonic bass-note estimates. All audio stays on this device.",
+        "model": "Beat This! final0",
+        "modelId": "beat-this-final0",
+        "modelSha256": "5f810debe53459b559127fb55bbad40035bb47cc567b20e501670f968c770f02",
+        "frontendSha256": "fdd59e65c515331308e4c8841edf99972deca646bdf6197744c2a5b7755e3de9",
+        "vocalModel": {
+          "name": "PretrainedSED Frame-MN10",
+          "id": "frame-mn10-strong-1",
+          "sha256": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+          "license": "MIT"
+        },
+        "bassMethod": "Harmonic low-register tracking",
+        "quality": "precision",
+        "runtime": "ONNX Runtime Web 1.20.1",
+        "analysisSeconds": 20.2
+      },
+      "annotation": "Synthetic fixture has beat annotations only; supplied songs have no independent vocal or bass timing labels."
+    },
+    {
+      "track": "glass-castle",
+      "quality": "precision",
+      "duration": 121.7491156462585,
+      "beats": 189,
+      "downbeats": 48,
+      "vocalPresence": "detected",
+      "vocalPhrases": 5,
+      "vocalCoverage": 0.8508,
+      "bassNotes": 71,
+      "analysisSeconds": 48,
+      "engine": {
+        "name": "Beat This! full transformer",
+        "neural": true,
+        "detail": "Bundled pretrained Beat This! transformer with exact exported log-mel frontend, overlapping 30-second context, measured PCM attack alignment and recurring-passage fingerprints, plus independent PretrainedSED Frame-MN10 singing evidence and harmonic bass-note estimates. All audio stays on this device.",
+        "model": "Beat This! final0",
+        "modelId": "beat-this-final0",
+        "modelSha256": "5f810debe53459b559127fb55bbad40035bb47cc567b20e501670f968c770f02",
+        "frontendSha256": "fdd59e65c515331308e4c8841edf99972deca646bdf6197744c2a5b7755e3de9",
+        "vocalModel": {
+          "name": "PretrainedSED Frame-MN10",
+          "id": "frame-mn10-strong-1",
+          "sha256": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+          "license": "MIT"
+        },
+        "bassMethod": "Harmonic low-register tracking",
+        "quality": "precision",
+        "runtime": "ONNX Runtime Web 1.20.1",
+        "analysisSeconds": 48
+      },
+      "annotation": "Synthetic fixture has beat annotations only; supplied songs have no independent vocal or bass timing labels."
+    },
+    {
+      "track": "sample",
+      "quality": "balanced",
+      "duration": 238.04,
+      "beats": 366,
+      "downbeats": 92,
+      "vocalPresence": "detected",
+      "vocalPhrases": 14,
+      "vocalCoverage": 0.7839,
+      "bassNotes": 159,
+      "analysisSeconds": 46.7,
+      "engine": {
+        "name": "Beat This! compact transformer",
+        "neural": true,
+        "detail": "Bundled pretrained Beat This! transformer with exact exported log-mel frontend, overlapping 30-second context, measured PCM attack alignment and recurring-passage fingerprints, plus independent PretrainedSED Frame-MN10 singing evidence and harmonic bass-note estimates. All audio stays on this device.",
+        "model": "Beat This! small1",
+        "modelId": "beat-this-small1",
+        "modelSha256": "a5f8d39d989f31859454ba27afe61c5317ca95e4d9373e6853e5361b8937172f",
+        "frontendSha256": "fdd59e65c515331308e4c8841edf99972deca646bdf6197744c2a5b7755e3de9",
+        "vocalModel": {
+          "name": "PretrainedSED Frame-MN10",
+          "id": "frame-mn10-strong-1",
+          "sha256": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+          "license": "MIT"
+        },
+        "bassMethod": "Harmonic low-register tracking",
+        "quality": "balanced",
+        "runtime": "ONNX Runtime Web 1.20.1",
+        "analysisSeconds": 46.7
+      },
+      "annotation": "Synthetic fixture has beat annotations only; supplied songs have no independent vocal or bass timing labels."
+    }
+  ],
+  "errors": [],
+  "externalRequests": [],
+  "scope": "Production Chromium Worker and shipped ONNX Runtime WASM. Supplied 48 kHz audio converted to 44.1 kHz PCM with FFmpeg for this reader test; native converter tested separately. No Android device or Tesla test.",
+  "source_hashes": {
+    "web/analysis/worker.js": "c4d57a56cac61528da74a15ff596f0a5742e0e6f5edd238fa6a691318011b641",
+    "web/analysis/dsp.js": "32186b9268632cab85cadcb7e84fa1b4e3d8eb4bb9fbdf96a0873067cb9acd71",
+    "web/analysis/analyzer.js": "53c7f626ae24f4d9cbde69831a0c06f4afbd8292927ad51139777ee4314603e4",
+    "web/analysis/wav-reader.js": "c69842b391100059a3cd69fa08ba1ad0e1aef8d102abfde415bcdf7c6ee477be",
+    "web/analysis/bass-notes.js": "5b81e2361295a1f8c02086d4668464ed1d7e93c923513c50a2c865a7aeb1531e",
+    "web/analysis/vocal.js": "0c7c89a7de70e6a416a4a74ca4bd33a4bc2bb07c935bc0201aa6ad0b372e0bb2"
+  }
+}

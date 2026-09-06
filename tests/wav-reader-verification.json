@@ -1,0 +1,45 @@
+{
+  "result": "PASS",
+  "tests": [
+    {
+      "name": "Exact ranges, first PCM offset44 and final clipped sample",
+      "status": "PASS"
+    },
+    {
+      "name": "Chromium double seek reproduction rejected as transport error",
+      "status": "PASS"
+    },
+    {
+      "name": "Range overread rejected without blaming source music",
+      "status": "PASS"
+    },
+    {
+      "name": "Wrong range start rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "Server without Range uses complete bounded cache",
+      "status": "PASS"
+    },
+    {
+      "name": "WAV metadata larger than64KiB and odd padding",
+      "status": "PASS"
+    },
+    {
+      "name": "Actual truncated WAV detected before model inference",
+      "status": "PASS"
+    },
+    {
+      "name": "PCM16/24/32 and IEEEfloat32 decoding with edge padding",
+      "status": "PASS"
+    },
+    {
+      "name": "Malformed PCM alignment and float encoding rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "Actual bundled music reads byte-exact at nonzero offsets",
+      "status": "PASS"
+    }
+  ]
+}

@@ -1,0 +1,90 @@
+{
+  "Fixed equal MDX/Demucs4 ensemble": {
+    "mix": {
+      "tracks": 6,
+      "siSdrDb": 9.97572,
+      "plainSdrDb": 10.56225,
+      "siSdrImprovementDb": 14.60315,
+      "vocalEnvelopeRmsPearson": 0.93303,
+      "estimateToMixEnergyDb": -6.87226
+    },
+    "instrumental": {
+      "tracks": 6,
+      "vocalEnvelopeRmsPearson": 0.0,
+      "estimateToMixEnergyDb": -52.04693
+    }
+  },
+  "HTDemucs FT four deterministic shifts": {
+    "mix": {
+      "tracks": 6,
+      "siSdrDb": 8.68698,
+      "plainSdrDb": 9.47908,
+      "siSdrImprovementDb": 13.31441,
+      "vocalEnvelopeRmsPearson": 0.92268,
+      "estimateToMixEnergyDb": -6.90941
+    },
+    "instrumental": {
+      "tracks": 6,
+      "vocalEnvelopeRmsPearson": 0.0,
+      "estimateToMixEnergyDb": -60.92616
+    }
+  },
+  "HTDemucs FT vocals specialist": {
+    "mix": {
+      "tracks": 6,
+      "siSdrDb": 8.61556,
+      "plainSdrDb": 9.41985,
+      "siSdrImprovementDb": 13.24298,
+      "vocalEnvelopeRmsPearson": 0.92302,
+      "estimateToMixEnergyDb": -6.89531
+    }
+  },
+  "Spleeter 2 stems": {
+    "mix": {
+      "tracks": 6,
+      "siSdrDb": 5.92291,
+      "plainSdrDb": 7.16329,
+      "siSdrImprovementDb": 10.55034,
+      "vocalEnvelopeRmsPearson": 0.8669,
+      "estimateToMixEnergyDb": -7.72566
+    },
+    "instrumental": {
+      "tracks": 6,
+      "vocalEnvelopeRmsPearson": 0.0,
+      "estimateToMixEnergyDb": -67.98872
+    },
+    "controlled": {
+      "tracks": 6,
+      "siSdrDb": 6.66289,
+      "plainSdrDb": 7.75517,
+      "siSdrImprovementDb": 13.61178,
+      "vocalEnvelopeRmsPearson": 0.95135,
+      "estimateToMixEnergyDb": -9.08285,
+      "outsideVoiceWindowEnergyFraction": 0.00801
+    }
+  },
+  "UVR MDX-Net Voc FT polarity ensemble": {
+    "mix": {
+      "tracks": 6,
+      "siSdrDb": 10.0422,
+      "plainSdrDb": 10.68922,
+      "siSdrImprovementDb": 14.66963,
+      "vocalEnvelopeRmsPearson": 0.92043,
+      "estimateToMixEnergyDb": -6.64317
+    },
+    "instrumental": {
+      "tracks": 6,
+      "vocalEnvelopeRmsPearson": 0.0,
+      "estimateToMixEnergyDb": -47.36027
+    },
+    "controlled": {
+      "tracks": 6,
+      "siSdrDb": 10.94769,
+      "plainSdrDb": 11.42143,
+      "siSdrImprovementDb": 17.89658,
+      "vocalEnvelopeRmsPearson": 0.98977,
+      "estimateToMixEnergyDb": -8.21448,
+      "outsideVoiceWindowEnergyFraction": 0.00059
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "files": [
+    {
+      "source": "Sample.wav",
+      "sourceSHA256": "1904d9697a1cb3640bcfdc5b1ede23f7512105976c7b662b08423a5e4cca99d8",
+      "declaredSeconds": 238.03997916666665,
+      "availableSeconds": 238.03997916666665,
+      "truncated": false,
+      "prepared": "sample.wav",
+      "preparedSHA256": "19183de77d6c0ad7969d42c5a2741c2b1eec8ee319ea4597dea73f0188590e11",
+      "preparedSeconds": 238.04
+    },
+    {
+      "source": "Glass Castle.wav",
+      "sourceSHA256": "24dd69621d66a27c00dd7a90c723858232c58176753322201098669b8c94f960",
+      "declaredSeconds": 238.03997916666665,
+      "availableSeconds": 121.74910416666667,
+      "truncated": true,
+      "prepared": "glass-castle.wav",
+      "preparedSHA256": "7652ba19f8e4b9d76b38a2db6e19ff60252342f1e8f610399ac636cfcd72af82",
+      "preparedSeconds": 121.7491156462585
+    }
+  ],
+  "note": "Glass Castle has a truncated data chunk; only physically available PCM is used as a recovered-prefix test, never represented as the full song."
+}

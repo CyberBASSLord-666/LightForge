@@ -1,0 +1,349 @@
+{
+  "release": "1.5.0",
+  "started": "2026-09-06T07:39:36.571Z",
+  "checks": [
+    "Actual file-picker import converts the bundled 64-second music to project audio; a real offline Beat This! transformer ONNX worker returns analysisVersion 4 and generates a valid 1.5.0 show.",
+    "The same real import runs the bundled trained singing classifier and harmonic bass tracker; singing status is explicit and bass notes retain mixture-estimate provenance, without synthetic analysis substitutions.",
+    "A stored version-1 analysis recalls and edits without a neural rerun. Re-analyze upgrades to version 4 while preserving project identity, exact audio, edited light/RGB/mirror cues and muted outputs.",
+    "Singing and bass emphasis edits survive legacy re-analysis. Changing bass emphasis changes actual frame bytes without a model rerun; Undo/Redo restore the exact selected focus and arrangement.",
+    "New variation changes actual light-frame bytes without another analysis worker or audio analysis; custom cues and mutes persist. Undo restores the exact previous FSEQ and settings.",
+    "Music statistics match the actual generated plan. Tapping three planned moments seeks the audio clock and correct camera; preview RGB, closure command and estimated motor position match the same exported frame timeline.",
+    "Autosave/reload restores byte-identical show, music and edits without analysis. Actual Export produces a CRC-valid ZIP with 44.1 kHz stereo PCM16 WAV, terminal dark FSEQ and full editable project; fresh Node regeneration from that project is byte-identical.",
+    "New music intelligence controls and movement moment cards fit 320, 393 and 768 pixel viewports with no horizontal overflow.",
+    "Bundled WebGL model, audio, neural analysis and editing complete with no JavaScript errors or external network requests.",
+    "Freshly compiled production Android Java export validator accepts the actual neural-composed USB archive; all 16 valid/invalid native command regressions pass on the host JVM.",
+    "A second actual sung-music import returns genuine positive singing-model evidence and accepted vocal cues while accompaniment remains active. Singing emphasis changes real frames without model rerun; Undo restores exact FSEQ, and the vocal timeline seeks the matching preview frame and live role indicator."
+  ],
+  "errors": [],
+  "externalRequests": [],
+  "limits": [
+    "Desktop Chromium WebGL2/SwiftShader, not a physical phone or Tesla test.",
+    "Native export validator executes on the host JVM with production Java sources; Android codec/device execution is not claimed."
+  ],
+  "analysis": {
+    "engine": {
+      "name": "Beat This! full transformer",
+      "neural": true,
+      "detail": "Bundled pretrained Beat This! transformer with exact exported log-mel frontend, overlapping 30-second context, measured PCM attack alignment and recurring-passage fingerprints, plus independent PretrainedSED Frame-MN10 singing evidence and harmonic bass-note estimates. All audio stays on this device.",
+      "model": "Beat This! final0",
+      "modelId": "beat-this-final0",
+      "modelSha256": "5f810debe53459b559127fb55bbad40035bb47cc567b20e501670f968c770f02",
+      "frontendSha256": "fdd59e65c515331308e4c8841edf99972deca646bdf6197744c2a5b7755e3de9",
+      "vocalModel": {
+        "name": "PretrainedSED Frame-MN10",
+        "id": "frame-mn10-strong-1",
+        "sha256": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+        "license": "MIT"
+      },
+      "bassMethod": "Harmonic low-register tracking",
+      "quality": "precision",
+      "runtime": "ONNX Runtime Web 1.20.1",
+      "analysisSeconds": 29.4
+    },
+    "analysisVersion": 4,
+    "bpm": 94.42,
+    "meter": 4,
+    "beats": 101,
+    "downbeats": 26,
+    "onsets": 1668,
+    "phrases": 7,
+    "impacts": 24,
+    "timing": {
+      "neuralFrameMs": 20,
+      "pcmEnvelopeMs": 5,
+      "decoder": "Transformer direct peak decoding",
+      "alignment": "Neural pulse with local tempo and nearby measured PCM attacks",
+      "manualTempo": false,
+      "attackCount": 689,
+      "refinedBeatCount": 79,
+      "appliedGlobalOffsetMs": 0
+    },
+    "vocals": {
+      "available": true,
+      "presence": "detected",
+      "confidence": 0.761,
+      "phrases": 2,
+      "method": "PretrainedSED Frame-MN10 strong singing events with confidence-gated phrasing",
+      "model": {
+        "name": "PretrainedSED Frame-MN10",
+        "id": "frame-mn10-strong-1",
+        "sha256": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+        "license": "MIT"
+      },
+      "diagnostics": {
+        "frames": 1600,
+        "strongFrames": 1372,
+        "thresholds": {
+          "startModelScore": 0.3,
+          "strongModelScore": 0.35,
+          "continueModelScore": 0.16
+        },
+        "confidenceMeaning": "Relative evidence score; not a calibrated probability"
+      }
+    },
+    "bass": {
+      "notes": 43,
+      "method": "Harmonic low-register tracking",
+      "source": "mixture-estimate",
+      "confidence": 0.661,
+      "diagnostics": {
+        "version": 1,
+        "sampleRate": 22050,
+        "pitchWindowMs": 372,
+        "frameMs": 20,
+        "frequencyRangeHz": [
+          30,
+          220
+        ],
+        "notes": 43,
+        "rejectedShort": 95,
+        "rejectedTransient": 3,
+        "sourceSeparated": false,
+        "pitchIsEstimated": true,
+        "confidenceIsProbability": false,
+        "limitations": "Low-register harmonic estimates can include piano, low voice or tuned sustained drums. Brief or sweeping kick transients are suppressed; overlapping instruments, glides and quiet bass can be missed. Kicks overlapping a low note can still move its estimated boundary; the 5 ms boundary grid is not an accuracy guarantee.",
+        "boundaryMethod": "Exact-frequency harmonic amplitudes in local PCM",
+        "boundaryGridMs": 5,
+        "boundaryWindowMs": 46,
+        "boundaryGridIsAccuracy": false
+      }
+    }
+  },
+  "moments": [
+    {
+      "time": 10.5,
+      "label": "0:10.5Left front windowMusical arrival · dance entrance",
+      "camera": "driver",
+      "frame": 525
+    },
+    {
+      "time": 11.14,
+      "label": "0:11.1Right front window + Right mirrorMusical arrival · dance entrance",
+      "camera": "front",
+      "frame": 557
+    },
+    {
+      "time": 11.8,
+      "label": "0:11.8Left rear windowMusical arrival · dance entrance",
+      "camera": "driver",
+      "frame": 590
+    }
+  ],
+  "officialValidator": "Found 3200 frames, step time of 20 ms for a total duration of 0:01:04.\nPress Enter to exit...",
+  "export": {
+    "filename": "glass-castle_LightForge.zip",
+    "fseqSHA256": "4d4a468355e40f7d41f40c9ee5fc0fe03b97c028938afdff26ddbc0fcea3f128",
+    "audioSHA256": "d17d7ed2b3af21fd6f175f7880c3a9253cbbc9a1da7ea0e5c935ae1be9d61dc0",
+    "files": [
+      "LightShow/lightshow.fseq",
+      "LightShow/lightshow.wav",
+      "README.txt",
+      "Validation.json",
+      "Review/LightForge_Project.json"
+    ],
+    "frames": 3200,
+    "stepMs": 20
+  },
+  "mobile": [
+    {
+      "viewport": 320,
+      "scroll": 320,
+      "body": 320
+    },
+    {
+      "viewport": 393,
+      "scroll": 393,
+      "body": 393
+    },
+    {
+      "viewport": 768,
+      "scroll": 768,
+      "body": 768
+    }
+  ],
+  "native": {
+    "report": {
+      "duration": 64,
+      "frames": 3200,
+      "channels": 200,
+      "sha256": "4d4a468355e40f7d41f40c9ee5fc0fe03b97c028938afdff26ddbc0fcea3f128",
+      "stepMs": 20,
+      "audioSampleRate": 44100,
+      "status": "PASS"
+    },
+    "regressions": "PASS: 16 production native sequence checks; valid manual Stop/Idle, all closures, all lamps/RGB, and optional outer ramps; corrupt commands and impossible choreography rejected.",
+    "source_hashes": {
+      "android/src/com/cyberbasslord/lightforge/AudioImporter.java": "910ef3ec1d6f6ded54c91111d9ab34dbf4bbf4d4043f62f1978057183ca0b575",
+      "android/src/com/cyberbasslord/lightforge/MainActivity.java": "cdd867de3cbe97b2f859bbb28f97398e05dac97cc01de748de1067743d8bebbf",
+      "android/src/com/cyberbasslord/lightforge/PendingExportStore.java": "1697003aab5f842d0bb90122df46f2d1f60da30232eca9d6912c972e421c4163",
+      "android/src/com/cyberbasslord/lightforge/ProjectPreview.java": "459e586684b6cea8b0b5c0541de766c45301347341ff2acdc15e876028e7c551",
+      "android/src/com/cyberbasslord/lightforge/ProjectStore.java": "51492859a40490533286574a08893bf3f6da5063c69b806f7760b3d056269472",
+      "android/src/com/cyberbasslord/lightforge/WavConverter.java": "f34b9bf3c8960678b6116619941307ce01b75c672807ca85f6f81b6adc33b1b6",
+      "android/src/com/cyberbasslord/lightforge/WebViewFileTransport.java": "729b1e9145f385f2d7dc4d303ef71f81c6d9dac3121885b7d52e89241a39a97f"
+    }
+  },
+  "singing": {
+    "duration": 60,
+    "analysisVersion": 4,
+    "engine": {
+      "name": "Beat This! full transformer",
+      "neural": true,
+      "detail": "Bundled pretrained Beat This! transformer with exact exported log-mel frontend, overlapping 30-second context, measured PCM attack alignment and recurring-passage fingerprints, plus independent PretrainedSED Frame-MN10 singing evidence and harmonic bass-note estimates. All audio stays on this device.",
+      "model": "Beat This! final0",
+      "modelId": "beat-this-final0",
+      "modelSha256": "5f810debe53459b559127fb55bbad40035bb47cc567b20e501670f968c770f02",
+      "frontendSha256": "fdd59e65c515331308e4c8841edf99972deca646bdf6197744c2a5b7755e3de9",
+      "vocalModel": {
+        "name": "PretrainedSED Frame-MN10",
+        "id": "frame-mn10-strong-1",
+        "sha256": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+        "license": "MIT"
+      },
+      "bassMethod": "Harmonic low-register tracking",
+      "quality": "precision",
+      "runtime": "ONNX Runtime Web 1.20.1",
+      "analysisSeconds": 28.5
+    },
+    "vocals": {
+      "available": true,
+      "presence": "detected",
+      "confidence": 0.873,
+      "coverage": 0.5823,
+      "model": {
+        "name": "PretrainedSED Frame-MN10",
+        "id": "frame-mn10-strong-1",
+        "sha256": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+        "license": "MIT"
+      },
+      "phrases": [
+        {
+          "start": 11.02,
+          "end": 17.1,
+          "confidence": 0.829,
+          "modelScore": 0.7537,
+          "strength": 0.868,
+          "peakTime": 16.62,
+          "estimated": true
+        },
+        {
+          "start": 21.68,
+          "end": 27.96,
+          "confidence": 0.835,
+          "modelScore": 0.7611,
+          "strength": 0.872,
+          "peakTime": 27.42,
+          "estimated": true
+        },
+        {
+          "start": 32.64,
+          "end": 34.92,
+          "confidence": 0.852,
+          "modelScore": 0.7862,
+          "strength": 0.883,
+          "peakTime": 33.86,
+          "estimated": true
+        },
+        {
+          "start": 35.24,
+          "end": 48.2,
+          "confidence": 0.861,
+          "modelScore": 0.7993,
+          "strength": 0.891,
+          "peakTime": 40.7,
+          "estimated": true
+        },
+        {
+          "start": 48.9,
+          "end": 51.82,
+          "confidence": 0.856,
+          "modelScore": 0.7924,
+          "strength": 0.884,
+          "peakTime": 50.48,
+          "estimated": true
+        },
+        {
+          "start": 52.38,
+          "end": 54.76,
+          "confidence": 0.873,
+          "modelScore": 0.8167,
+          "strength": 0.891,
+          "peakTime": 53.34,
+          "estimated": true
+        },
+        {
+          "start": 55.86,
+          "end": 56.34,
+          "confidence": 0.65,
+          "modelScore": 0.4945,
+          "strength": 0.447,
+          "peakTime": 56.16,
+          "estimated": true
+        },
+        {
+          "start": 58.44,
+          "end": 60,
+          "confidence": 0.796,
+          "modelScore": 0.7059,
+          "strength": 0.591,
+          "peakTime": 58.88,
+          "estimated": true
+        }
+      ],
+      "timing": {
+        "contextSeconds": 10,
+        "classifierFrameMs": 40,
+        "envelopeMs": 20,
+        "overlapSeconds": 4,
+        "alignment": "40 ms sound-event evidence with estimated phrase edges and accents; no separated vocal stem or word alignment"
+      }
+    },
+    "roles": {
+      "vocals": {
+        "available": true,
+        "presence": "detected",
+        "eligibleEvents": 8,
+        "acceptedEvents": 8,
+        "accentCues": 1,
+        "confidence": 0.873,
+        "focus": 0.65
+      },
+      "bass": {
+        "eligibleEvents": 55,
+        "acceptedEvents": 55,
+        "confidence": 0.778,
+        "focus": 0.75
+      },
+      "percussion": {
+        "acceptedCues": 497
+      },
+      "arrangement": {
+        "acceptedCues": 868
+      }
+    },
+    "valid": true,
+    "scope": "Real licensed sung music, actual app import and on-device model inference; positive estimated singing evidence and rendered/exported cue consistency, not an annotated word-alignment or vehicle accuracy score."
+  },
+  "source_hashes": {
+    "web/app.js": "8214cc43d80ba215bc1d31b65fa61355710130eaa537fe96b1545ac62d21d70f",
+    "web/engine/worker.js": "b30acd443f4550b3f3c330e461ab1dc36c51b5c546ef67e9884272de2c419c00",
+    "web/engine/client.js": "db0cf74fcbc15f1a28b7da5bad54ec676e82c6220cbfeef27b8aeadc37417a09",
+    "web/studio-tools.js": "c045ef433dc08531537a873988fed369646bf6578a6a2c31c9065448cc9c7a36",
+    "web/music-insights.js": "525b23f2651bdc5ec53f97dbde7fbb764f97b550c0ade2acbd8298909957515b",
+    "web/index.html": "6985365ce0d53da3754363cc528bd02aaf0d248fdf5ef9b22c8d2e5a53424d89",
+    "web/styles.css": "47a85328f033049fa1e02ff6f151e8eace5f43a5b7dd87b012dfed5f54f789ca",
+    "web/engine/show-engine.js": "8043c854b11ba6343f0a7d0bdfcc2a05eb6261e13fe13f76a486d307d6ac1424",
+    "web/engine/movement-planner.js": "e008f55a0a82696d64142d674bfc95b85fe2fe18404f053bc6e2929b9994b6eb",
+    "web/engine/light-planner.js": "8379f71a6b4ddea3330e4d930f7f7aab1bff8697139b477a929d912a2ae85af7",
+    "web/analysis/analyzer.js": "53c7f626ae24f4d9cbde69831a0c06f4afbd8292927ad51139777ee4314603e4",
+    "web/analysis/dsp.js": "32186b9268632cab85cadcb7e84fa1b4e3d8eb4bb9fbdf96a0873067cb9acd71",
+    "web/engine/vehicle-profile.js": "027bf87a827a900cda00505e2b539f84cbdb0d5a9800ea4eb1efdf85a0c10936",
+    "web/analysis/worker.js": "c4d57a56cac61528da74a15ff596f0a5742e0e6f5edd238fa6a691318011b641",
+    "web/analysis/vocal.js": "0c7c89a7de70e6a416a4a74ca4bd33a4bc2bb07c935bc0201aa6ad0b372e0bb2",
+    "web/analysis/bass-notes.js": "5b81e2361295a1f8c02086d4668464ed1d7e93c923513c50a2c865a7aeb1531e",
+    "web/analysis/models/vocal-model.json": "52093f26d0bfe3f04bbb1563b287fafe5e61aa57a61391ea643b04d97838ca7e",
+    "web/preview/vehicle-preview.js": "a27736b2f89f1597f56971ba1755303b8724a8a72da11b8b7f2ac044cedbcc44",
+    "android/src/com/cyberbasslord/lightforge/MainActivity.java": "cdd867de3cbe97b2f859bbb28f97398e05dac97cc01de748de1067743d8bebbf"
+  },
+  "passed": true,
+  "completed": "2026-09-06T07:41:29.837Z"
+}

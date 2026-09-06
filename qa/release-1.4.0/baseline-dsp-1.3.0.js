@@ -1,0 +1,169 @@
+/* LightForge music features. Exact BeatNet log-spectrum geometry; no network access. */
+(function(scope){'use strict';
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+function percentile(a,p){if(!a.length)return 0;const b=Float64Array.from(a);b.sort();return b[Math.min(b.length-1,Math.floor(p*(b.length-1)))];}
+class FFT {
+ constructor(n){this.n=n;this.rev=new Uint32Array(n);this.cos=new Float64Array(n/2);this.sin=new Float64Array(n/2);let bits=Math.log2(n);for(let i=0;i<n;i++){let a=i,r=0;for(let j=0;j<bits;j++){r=(r<<1)|(a&1);a>>=1;}this.rev[i]=r;}for(let i=0;i<n/2;i++){this.cos[i]=Math.cos(2*Math.PI*i/n);this.sin[i]=Math.sin(2*Math.PI*i/n);}}
+ run(r,im,inverse=false){const n=this.n;for(let i=0;i<n;i++){const j=this.rev[i];if(i<j){let t=r[i];r[i]=r[j];r[j]=t;t=im[i];im[i]=im[j];im[j]=t;}}for(let len=2;len<=n;len*=2){const half=len/2,step=n/len;for(let start=0;start<n;start+=len){for(let j=0;j<half;j++){let k=j*step,c=this.cos[k],s=this.sin[k]*(inverse?1:-1),a=start+j,b=a+half,tr=r[b]*c-im[b]*s,ti=r[b]*s+im[b]*c;r[b]=r[a]-tr;im[b]=im[a]-ti;r[a]+=tr;im[a]+=ti;}}}if(inverse){for(let i=0;i<n;i++){r[i]/=n;im[i]/=n;}}}
+}
+class Spectrum {
+ constructor(n){this.n=n;let m=1;while(m<n*2-1)m*=2;this.m=m;this.fft=new FFT(m);this.cr=new Float64Array(n);this.ci=new Float64Array(n);this.window=new Float64Array(n);this.br=new Float64Array(m);this.bi=new Float64Array(m);this.r=new Float64Array(m);this.im=new Float64Array(m);for(let i=0;i<n;i++){let p=Math.PI*((i*i)%(2*n))/n;this.cr[i]=Math.cos(p);this.ci[i]=Math.sin(p);this.window[i]=0.5-0.5*Math.cos(2*Math.PI*i/(n-1));this.br[i]=this.cr[i];this.bi[i]=this.ci[i];if(i){this.br[m-i]=this.cr[i];this.bi[m-i]=this.ci[i];}}this.fft.run(this.br,this.bi);this.mag=new Float64Array(Math.floor(n/2));}
+ run(samples,offset){const {r,im,n,m}=this;r.fill(0);im.fill(0);for(let i=0;i<n;i++){let a=(samples[offset+i]||0)*this.window[i];r[i]=a*this.cr[i];im[i]=-a*this.ci[i];}this.fft.run(r,im);for(let i=0;i<m;i++){let re=r[i]*this.br[i]-im[i]*this.bi[i];im[i]=r[i]*this.bi[i]+im[i]*this.br[i];r[i]=re;}this.fft.run(r,im,true);for(let i=0;i<this.mag.length;i++)this.mag[i]=Math.hypot(r[i],im[i]);return this.mag;}
+}
+class FeatureExtractor {
+ constructor(config){this.cfg=config;this.spectrum=new Spectrum(config.windowLength);this.previous=new Float32Array(136);this.hadFrame=false;}
+ extract(samples,firstOffset,frames){const features=new Float32Array(frames*272),bass=new Float32Array(frames),mid=new Float32Array(frames),high=new Float32Array(frames),rms=new Float32Array(frames),colour=new Float32Array(frames*3),fineRms=new Float32Array(frames*4);let maxSample=0;
+ for(let f=0;f<frames;f++){let offset=firstOffset+f*this.cfg.hop,mag=this.spectrum.run(samples,offset),energy=0;for(let j=0;j<1411;j++){let a=samples[offset+j]||0;energy+=a*a;maxSample=Math.max(maxSample,Math.abs(a));}rms[f]=Math.sqrt(energy/1411);for(let b=0;b<136;b++){let band=this.cfg.bands[b],sum=0;for(let k=0;k<band.weights.length;k++)sum+=mag[band.start+k]*band.weights[k];let v=Math.log10(1+sum),d=this.hadFrame?Math.max(0,v-this.previous[b]):0;features[f*272+b]=v;features[f*272+136+b]=d;this.previous[b]=v;let n=band.frequency<180?0:band.frequency<2400?1:2;colour[f*3+n]+=v;if(n===0)bass[f]+=d;else if(n===1)mid[f]+=d;else high[f]+=d;}this.hadFrame=true;
+ // Forward 5 ms PCM bins use the SAME audio clock as the centered neural frame.
+ // No assumed model latency or global timestamp subtraction is applied.
+ for(let q=0;q<4;q++){const a=offset+Math.floor(this.cfg.windowLength/2)+Math.round(q*this.cfg.hop/4),b=offset+Math.floor(this.cfg.windowLength/2)+Math.round((q+1)*this.cfg.hop/4);let e=0;for(let j=a;j<b;j++){const v=samples[j]||0;e+=v*v;}fineRms[f*4+q]=Math.sqrt(e/Math.max(1,b-a));}}
+ return {features,bass,mid,high,rms,colour,fineRms,maxSample};}
+}
+function rolling(a,radius){let out=new Float32Array(a.length),sum=0,left=0,right=-1;for(let i=0;i<a.length;i++){while(right<Math.min(a.length-1,i+radius))sum+=a[++right];while(left<Math.max(0,i-radius))sum-=a[left++];out[i]=sum/(right-left+1);}return out;}
+function pickOnsets(a,band,sensitivity){const baseline=rolling(a,25),scale=percentile(a,0.94)||1,out=[];let last=-10;for(let i=1;i<a.length-1;i++){if(a[i]>=a[i-1]&&a[i]>a[i+1]&&a[i]>Math.max(scale*(0.14-0.10*sensitivity),baseline[i]*(1.65-0.8*sensitivity))&&i-last>=3){out.push({time:i*0.02,strength:clamp(a[i]/scale),band});last=i;}}return out;}
+// Activity is measured independently of the neural output. Short inter-note gaps
+// remain inside a musical passage; a sustained quiet rest is an explicit boundary.
+function activityFromEnvelope(envelope,step,duration){
+ const floor=Math.max(0.00008,percentile(envelope,0.95)*0.004),raw=[];let first=-1,last=-1;
+ for(let i=0;i<envelope.length;i++)if(envelope[i]>floor){if(first<0)first=i;else if((i-last)*step>0.65){raw.push({start:Math.max(0,first*step-0.015),end:Math.min(duration,(last+1)*step+0.02)});first=i;}last=i;}
+ if(first>=0)raw.push({start:Math.max(0,first*step-0.015),end:Math.min(duration,(last+1)*step+0.02)});
+ return {ranges:raw.filter(r=>r.end-r.start>=0.015),floor};
+}
+function lowerBound(a,t,key=x=>x){let lo=0,hi=a.length;while(lo<hi){const m=(lo+hi)>>1;if(key(a[m])<t)lo=m+1;else hi=m;}return lo;}
+function insideRanges(t,ranges){const i=lowerBound(ranges,t,r=>r.end);return i<ranges.length&&t>=ranges[i].start;}
+function pcmAttacks(envelope,step=0.005){
+ const norm=percentile(envelope,0.96)||1,out=[];let last=-1e6;
+ for(let i=1;i<envelope.length-1;i++){
+  let before=0;for(let j=Math.max(0,i-5);j<i;j++)before+=envelope[j];before/=Math.min(i,5);
+  const rise=envelope[i]-before,next=envelope[i+1]-before;
+  if(rise<Math.max(0.00025,norm*0.035)||rise<before*0.18||next>rise*1.03)continue;
+  // Recover the beginning of this specific attack, rather than shifting all beats.
+  const threshold=before+rise*0.12;let start=i;while(start>Math.max(0,i-4)&&envelope[start-1]>threshold)start--;
+  const time=start*step,strength=clamp(rise/(norm*0.8)),candidate={time,strength};
+  if(time-last<0.04){if(out.length&&strength>out[out.length-1].strength){out[out.length-1]=candidate;last=time;}continue;}
+  out.push(candidate);last=time;
+ }
+ return out;
+}
+function alignToAttack(time,attacks,tolerance=0.045){
+ let best=null,score=-Infinity;for(let i=lowerBound(attacks,time-tolerance,x=>x.time);i<attacks.length&&attacks[i].time<=time+tolerance;i++){
+  const a=attacks[i],s=a.strength*(1-0.45*Math.abs(a.time-time)/tolerance);if(a.strength>=0.09&&s>score){best=a;score=s;}
+ }
+ return best?best.time:time;
+}
+function estimatePeriod(sm,start,end,anchor=26){
+ let best=0,period=anchor;for(let lag=13;lag<=75;lag++){
+  let cross=0,power=0;for(let i=start+lag;i<end;i++){cross+=sm[i]*sm[i-lag];power+=0.5*(sm[i]*sm[i]+sm[i-lag]*sm[i-lag]);}
+  // Prefer a supported metrical level without forcing a fixed tempo throughout.
+  const score=cross/(power+1e-9)*Math.exp(-0.5*Math.pow(Math.log(lag/anchor)/0.65,2));
+  if(score>best){best=score;period=lag;}
+ }
+ return {period,confidence:clamp(best)};
+}
+function phaseForMeter(entries,down,meter){
+ let best=-Infinity,phase=0,mean=0,count=0;const evidence=entries.map(e=>{let v=0;const frame=Math.round(e.neuralTime/0.02);for(let j=Math.max(0,frame-2);j<=Math.min(down.length-1,frame+2);j++)v=Math.max(v,down[j]);mean+=v;count++;return v;});mean/=Math.max(1,count);
+ for(let p=0;p<meter;p++){let on=0,n=0,off=0,k=0;for(let j=0;j<entries.length;j++){if(entries[j].sequenceIndex%meter===p){on+=evidence[j];n++;}else{off+=evidence[j];k++;}}
+  const score=(n?on/n:0)-(k?off/k:0);if(n>=2&&score>best){best=score;phase=p;}
+ }
+ return {phase,score:Number.isFinite(best)?best:0,mean};
+}
+function trackBeats(beat,down,rms,options={}){
+ const n=beat.length,duration=options.duration??n*0.02,envelope=options.fineRms||rms,envelopeStep=options.fineRms?0.005:0.02,activity=activityFromEnvelope(envelope,envelopeStep,duration),attacks=options.attacks||[];
+ const empty={beats:[],downbeats:[],beatDetails:[],bpm:0,meter:4,meterConfidence:0,beatConfidence:0,activityRanges:activity.ranges};
+ if(!activity.ranges.length||n<10)return empty;
+ const act=new Float32Array(n);for(let i=0;i<n;i++)act[i]=Math.min(1,Math.max(0,beat[i])+Math.max(0,down[i]));
+ const sm=rolling(act,1),manual=Number(options.bpmOverride||0),manualTempo=manual>=40&&manual<=240;
+ const global=estimatePeriod(sm,0,n),period=manualTempo?3000/manual:global.period,entries=[];
+ // Preserve a beat lattice through short breaks, but decode independent passages
+ // around sustained silence so a restart can establish its own phase and tempo.
+ const passages=[];for(const r of activity.ranges){const previous=passages[passages.length-1];if(previous&&r.start-previous.end<Math.max(1.2,period*0.06))previous.end=r.end;else passages.push({...r});}
+ if(manualTempo){
+  const seconds=60/manual,bins=Math.ceil(seconds/0.005),fold=new Float64Array(bins);
+  // Fold observations modulo the exact requested period; no rounded frame grid.
+  for(let i=0;i<n;i++){if(!insideRanges(i*0.02,activity.ranges))continue;const p=Math.round(((i*0.02)%seconds)/seconds*bins)%bins;for(let j=-3;j<=3;j++)fold[(p+j+bins)%bins]+=act[i]*Math.exp(-j*j/4);}
+  for(const a of attacks){const p=Math.round((a.time%seconds)/seconds*bins)%bins;for(let j=-2;j<=2;j++)fold[(p+j+bins)%bins]+=0.4*a.strength*Math.exp(-j*j/2);}
+  let phase=0;for(let i=1;i<bins;i++)if(fold[i]>fold[phase])phase=i;phase=phase/bins*seconds;
+  // Refine the grid phase only, never independently pull its individual beats.
+  let correction=0,weight=0;for(const a of attacks){const nearest=phase+Math.round((a.time-phase)/seconds)*seconds,delta=a.time-nearest;if(Math.abs(delta)<=0.035){correction+=delta*a.strength;weight+=a.strength;}}
+  if(weight)phase+=correction/weight;
+  for(let j=Math.ceil(-phase/seconds),t=phase+j*seconds;t<duration;j++,t=phase+j*seconds){if(insideRanges(t,activity.ranges))entries.push({time:Math.max(0,t),neuralTime:Math.max(0,t),sequenceIndex:j,passage:0,confidence:clamp(act[Math.min(n-1,Math.round(t*50))]||0)});}
+ }else{
+  passages.forEach((range,passage)=>{
+   const begin=Math.max(0,Math.floor(range.start*50)),end=Math.min(n,Math.ceil(range.end*50));if(end-begin<5)return;
+   const local=[];for(let i=begin;i<end;i+=200){const estimate=estimatePeriod(sm,Math.max(begin,i-300),Math.min(end,i+300),period);local.push(estimate.confidence>0.08?estimate.period:period);}
+   const count=end-begin,score=new Float64Array(count),back=new Int32Array(count),interval=new Float32Array(count);back.fill(-1);let terminal=-1,terminalScore=-Infinity;
+   for(let j=0;j<count;j++){
+    const i=begin+j,lp=(i-begin)/200,k=Math.floor(lp),p=(local[k]||period)*(1-(lp-k))+(local[Math.min(local.length-1,k+1)]||period)*(lp-k),reward=act[i]*5;
+    let value=reward,pred=-1,bestInterval=p;const low=Math.max(8,Math.floor(p*0.68)),high=Math.min(110,Math.ceil(p*1.48));
+    for(let lag=low;lag<=high&&lag<=j;lag++){const prior=j-lag,delta=Math.log(lag/p),change=interval[prior]?Math.log(lag/interval[prior]):0,s=score[prior]+reward-12*delta*delta-3*change*change-0.55;if(s>value){value=s;pred=prior;bestInterval=lag;}}
+    score[j]=value;back[j]=pred;interval[j]=bestInterval;
+    // End on a supported observation rather than fabricating a final weak beat.
+    if(act[i]>0.08&&value>terminalScore){terminal=j;terminalScore=value;}
+   }
+   if(terminal<0)return;const path=[];for(let j=terminal;j>=0;j=back[j]){path.push(begin+j);if(back[j]<0)break;}path.reverse();
+   path.forEach((frame,sequenceIndex)=>{
+    const neuralTime=frame*0.02,time=alignToAttack(neuralTime,attacks),e=envelope[Math.min(envelope.length-1,Math.round(time/envelopeStep))]||0;
+    if(time>=duration||!insideRanges(time,activity.ranges)||e<activity.floor*0.7||act[frame]<0.055)return;
+    if(entries.length&&time-entries[entries.length-1].time<0.15)return;
+    entries.push({time,neuralTime,sequenceIndex,passage,confidence:clamp(act[frame])});
+   });
+  });
+ }
+ if(!entries.length)return empty;
+ let meter=4,bestMeter=-Infinity;const meterScores={};for(const m of [3,4]){let total=0,weight=0;for(let p=0;p<(manualTempo?1:passages.length);p++){const group=entries.filter(e=>e.passage===p),fit=phaseForMeter(group,down,m);total+=fit.score*group.length;weight+=group.length;}const s=total/Math.max(1,weight);meterScores[m]=s;if(s>bestMeter+0.012||(Math.abs(s-bestMeter)<0.012&&m===4)){bestMeter=s;meter=m;}}
+ const meterConfidence=clamp(bestMeter*1.6)*clamp((bestMeter-Math.min(meterScores[3],meterScores[4]))/0.15);
+ const phases=[];for(let p=0;p<(manualTempo?1:passages.length);p++)phases[p]=phaseForMeter(entries.filter(e=>e.passage===p),down,meter).phase;
+ const intervals=[];for(let i=1;i<entries.length;i++){const dt=entries[i].time-entries[i-1].time;if(entries[i].passage===entries[i-1].passage&&dt>=0.24&&dt<=1.55&&entries[i].sequenceIndex-entries[i-1].sequenceIndex===1)intervals.push(dt);}
+ const medianPeriod=percentile(intervals,0.5)||period*0.02,nearIntervals=intervals.filter(dt=>Math.abs(dt-medianPeriod)<medianPeriod*0.08),typical=nearIntervals.length>intervals.length*0.85?intervals.reduce((s,x)=>s+x,0)/intervals.length:medianPeriod,bpm=manualTempo?manual:60/typical;
+ const beatDetails=entries.map((e,i)=>{const nearby=[];for(let j=Math.max(1,i-3);j<=Math.min(entries.length-1,i+3);j++){const a=entries[j-1],b=entries[j],dt=b.time-a.time;if(a.passage===e.passage&&b.passage===e.passage&&b.sequenceIndex-a.sequenceIndex===1&&dt>=0.24&&dt<=1.55)nearby.push(dt);}return {time:e.time,confidence:e.confidence,alignmentOffsetMs:manualTempo?0:Math.round((e.time-e.neuralTime)*1000),localBpm:manualTempo?manual:Math.round(6000/(nearby.length?nearby.reduce((s,x)=>s+x,0)/nearby.length:typical))/100,barPosition:((e.sequenceIndex-phases[e.passage])%meter+meter)%meter+1};});
+ const strength=entries.reduce((s,e)=>s+e.confidence,0)/entries.length,consistency=intervals.length?intervals.filter((dt,i)=>!i||Math.abs(Math.log(dt/intervals[i-1]))<0.15).length/intervals.length:0;
+ return {beats:entries.map(e=>e.time),downbeats:beatDetails.filter(e=>e.barPosition===1).map(e=>e.time),beatDetails,bpm:Math.round(bpm*100)/100,meter,meterConfidence,beatConfidence:clamp(strength*0.7+consistency*0.3),activityRanges:activity.ranges};
+}
+function sectionsFromFeatures(rms,colour,rhythm,duration){
+ const fast=rolling(rms,6),slow=rolling(rms,40),norm=percentile(fast,0.94)||1,energy=Array.from(fast,x=>clamp(x/norm)),novelty=new Float32Array(rms.length),r=100;
+ const sum=(array,a,b,stride=1,offset=0)=>{let value=0,n=0;for(let j=Math.max(0,a);j<Math.min(rms.length,b);j+=stride){value+=array[j*(array===colour?3:1)+offset];n++;}return value/Math.max(1,n);};
+ for(let i=r;i<rms.length-r;i+=5){const before=sum(slow,i-r,i,5),after=sum(slow,i,i+r,5);novelty[i]=Math.abs(after-before)/Math.max(norm*0.12,after+before)*0.7;for(let b=0;b<3;b++){const a=sum(colour,i-r,i,5,b),c=sum(colour,i,i+r,5,b);novelty[i]+=Math.abs(a-c)/Math.max(0.1,a+c)*0.1;}}
+ const candidates=[];for(let i=r;i<rms.length-r;i+=5){const v=novelty[i];if(v<0.11)continue;let peak=true;for(let k=Math.max(r,i-75);k<=Math.min(rms.length-r-1,i+75);k+=5)if(novelty[k]>v){peak=false;break;}if(peak)candidates.push({time:i*0.02,strength:clamp(v)});}
+ const beatLength=rhythm.bpm?60/rhythm.bpm:0.5,barLength=beatLength*rhythm.meter,boundaries=[{time:0,strength:1},{time:duration,strength:1}],minimum=Math.max(3.5,barLength*2);
+ for(const c of candidates.sort((a,b)=>b.strength-a.strength)){
+  let t=c.time;const near=rhythm.meterConfidence>0.12?rhythm.downbeats:rhythm.beats;let delta=Math.min(0.7,beatLength*0.8);for(let j=lowerBound(near,t-delta);j<near.length&&near[j]<=t+delta;j++)if(Math.abs(near[j]-t)<delta){delta=Math.abs(near[j]-t);c.snap=near[j];}if(c.snap!==undefined)t=c.snap;
+  if(boundaries.every(b=>Math.abs(b.time-t)>=minimum))boundaries.push({time:t,strength:c.strength});
+ }
+ // Silence boundaries are musical events and must survive minimum-section spacing.
+ for(let i=0;i<rhythm.activityRanges.length;i++){const a=rhythm.activityRanges[i],next=rhythm.activityRanges[i+1];if(i===0&&a.start>0.7)boundaries.push({time:a.start,strength:1});if(next&&next.start-a.end>0.7){boundaries.push({time:a.end,strength:1},{time:next.start,strength:1});}if(i===rhythm.activityRanges.length-1&&duration-a.end>0.7)boundaries.push({time:a.end,strength:1});}
+ boundaries.sort((a,b)=>a.time-b.time);const unique=boundaries.filter((b,i)=>!i||b.time-boundaries[i-1].time>0.15),sections=[];
+ for(let i=0;i<unique.length-1;i++){const start=unique[i].time,end=unique[i+1].time,e=sum(fast,Math.floor(start*50),Math.ceil(end*50))/norm,prev=sections.length?sections[sections.length-1].energy:e,active=rhythm.activityRanges.some(a=>a.start<end&&a.end>start+0.04);const label=!active?'Silence':i===0?'Opening':i===unique.length-2?'Finale':e>0.79?'Peak':e>prev+0.13?'Build':e<0.35?'Breakdown':'Groove';sections.push({start,end,energy:clamp(e),label,confidence:clamp(unique[i].strength)});}
+ return {sections,energy,transitions:candidates};
+}
+function phrasesAndImpacts(rhythm,structure,onsets,duration){
+ const phrases=[],impacts=[],beatLength=rhythm.bpm?60/rhythm.bpm:0.5,meter=rhythm.meter,energy=structure.energy;
+ const mean=(a,b)=>{let s=0,n=0;for(let i=Math.max(0,Math.floor(a*50));i<Math.min(energy.length,Math.ceil(b*50));i++){s+=energy[i];n++;}return s/Math.max(1,n);};
+ for(const section of structure.sections){
+  const points=[section.start];let bars=0;for(let j=lowerBound(rhythm.downbeats,section.start+beatLength*0.5);j<rhythm.downbeats.length&&rhythm.downbeats[j]<section.end-beatLength;j++){
+   if(++bars===4){const t=rhythm.downbeats[j];if(t-points[points.length-1]>=beatLength*meter*2&&section.end-t>=beatLength*meter*2){points.push(t);bars=0;}}
+  }points.push(section.end);
+  for(let i=0;i<points.length-1;i++){const start=points[i],end=points[i+1],e=mean(start,end),mid=(start+end)/2,change=mean(mid,end)-mean(start,mid),kind=section.label==='Silence'?'silence':e<0.3?'quiet':change>0.16?'build':change< -0.16?'release':e>0.78?'peak':'groove';let accentTime=start,best=0;for(let j=lowerBound(onsets,start,x=>x.time);j<onsets.length&&onsets[j].time<Math.min(end,start+beatLength*meter);j++){const o=onsets[j],score=o.strength*(o.band==='bass'?1:0.7);if(score>best){best=score;accentTime=o.time;}}
+   phrases.push({start,end,energy:e,kind,confidence:clamp(rhythm.beatConfidence*0.65+rhythm.meterConfidence*0.35),accentTime});
+  }
+ }
+ const norm=percentile(onsets.map(o=>o.strength),0.8)||1;
+ for(const o of onsets){if(o.strength<Math.max(0.58,norm*0.8)||o.band==='high')continue;const pre=mean(Math.max(0,o.time-0.7),o.time-0.08),post=mean(o.time,Math.min(duration,o.time+0.6)),b=lowerBound(rhythm.downbeats,o.time-0.07),downbeat=b<rhythm.downbeats.length&&Math.abs(rhythm.downbeats[b]-o.time)<=0.07;
+  const arrival=post-pre>0.22&&post>0.4&&post>pre*1.7&&o.strength>0.75;if(arrival||(downbeat&&o.band==='bass'))impacts.push({time:o.time,strength:clamp(o.strength*0.65+Math.max(0,post-pre)*0.7),kind:arrival?'arrival':'accent'});
+ }
+ for(let i=1;i<rhythm.activityRanges.length;i++){const r=rhythm.activityRanges[i],prev=rhythm.activityRanges[i-1];if(r.start-prev.end>0.7){let time=r.start;const onset=onsets[lowerBound(onsets,r.start,x=>x.time)];if(onset&&onset.time-r.start<0.2)time=onset.time;impacts.push({time,strength:clamp(0.6+mean(time,time+0.5)*0.4),kind:'return'});}}
+ impacts.sort((a,b)=>a.time-b.time);const merged=[];for(const i of impacts){const last=merged[merged.length-1];if(last&&i.time-last.time<Math.max(0.15,beatLength*0.4)){if(i.strength>last.strength)merged[merged.length-1]=i;}else merged.push(i);}
+ return {phrases,impacts:merged};
+}
+function summarize(data,options={}){
+ const sensitivity=clamp(Number(options.sensitivity??0.82)),attacks=data.fineRms?pcmAttacks(data.fineRms):[],rhythm=trackBeats(data.beat,data.down,data.rms,{...options,duration:data.duration,fineRms:data.fineRms,attacks});
+ const onsets=[...pickOnsets(data.bass,'bass',sensitivity),...pickOnsets(data.mid,'mid',sensitivity),...pickOnsets(data.high,'high',sensitivity)].map(o=>({...o,time:alignToAttack(o.time,attacks)})).filter(o=>o.time<data.duration&&insideRanges(o.time,rhythm.activityRanges)).sort((a,b)=>a.time-b.time);
+ // Re-alignment can bring adjacent spectral peaks onto the same physical attack.
+ for(let i=onsets.length-1;i>0;i--)if(onsets.slice(Math.max(0,i-4),i).some(o=>o.band===onsets[i].band&&Math.abs(o.time-onsets[i].time)<0.025))onsets.splice(i,1);
+ const structure=sectionsFromFeatures(data.rms,data.colour,rhythm,data.duration),landmarks=phrasesAndImpacts(rhythm,structure,onsets,data.duration),waveform=[],bins=Math.min(1800,data.rms.length),max=percentile(data.rms,0.98)||1;
+ for(let i=0;i<bins;i++){let a=Math.floor(i*data.rms.length/bins),b=Math.ceil((i+1)*data.rms.length/bins),v=0;for(let j=a;j<b;j++)v=Math.max(v,data.rms[j]);waveform.push(clamp(v/max));}
+ const warnings=[];if(!rhythm.bpm)warnings.push('No reliable musical pulse was detected. Choose audible music or enter a tempo.');else if(rhythm.beatConfidence<0.48)warnings.push('The beat estimate has low confidence. Preview the rhythm and adjust BPM if needed.');if(rhythm.meterConfidence<0.18&&rhythm.beats.length)warnings.push('Bar accents are uncertain; phrase boundaries use measured energy and pulse evidence.');
+ const shifts=rhythm.beatDetails.map(b=>Math.abs(b.alignmentOffsetMs||0)/1000),manual=Number(options.bpmOverride)>=40&&Number(options.bpmOverride)<=240;
+ return {duration:data.duration,...rhythm,onsets,sections:structure.sections,energy:structure.energy,...landmarks,waveform,energyStep:0.02,recommendedBeatLength:rhythm.bpm?60/rhythm.bpm:0,recommendedStepTime:20,analysisVersion:2,timing:{neuralFrameMs:20,pcmEnvelopeMs:data.fineRms?5:null,alignment:manual?'Exact manual-tempo grid with evidence-based phase':'Neural pulse with local tempo and nearby measured PCM attacks',manualTempo:manual,attackCount:attacks.length,refinedBeatCount:manual?0:shifts.filter(s=>s>0.001).length,appliedGlobalOffsetMs:0},warnings};
+}
+scope.LightForgeDSP={FFT,Spectrum,FeatureExtractor,rolling,percentile,activityFromEnvelope,pcmAttacks,alignToAttack,trackBeats,summarize};
+})(typeof self!=='undefined'?self:globalThis);

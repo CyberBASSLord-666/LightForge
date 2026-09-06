@@ -1,0 +1,204 @@
+{
+  "release": "1.4.0",
+  "scope": "Desktop Chromium actual dedicated Web Workers, gzip/WebCrypto and IndexedDB; native export bridge is a mock, no Android runtime or vehicle test.",
+  "checks": [
+    "Actual worker gzip roundtrip preserves every frame, validates the show and returns its checked FSEQ header.",
+    "Reordering every JSON object across project metadata, analysis and settings preserves the verified arrangement; array order remains intact.",
+    "Input/frame/metadata/gzip corruption and over/under expansion are rejected; imported preview caches are discarded even if their metadata hash is recomputed.",
+    "Canceling an active worker after its first progress event rejects with AbortError and terminates that job.",
+    "One-hour synthetic composition completes in a worker while the interface heartbeat continues.",
+    "Long-project history omits its 36 MB dense frame buffer and restores exact checked bytes from the retained gzip snapshot.",
+    "Concurrent independent edit requests serialize without dropping the first requested change.",
+    "Undo of a snapshot captured between rapid direct settings changes rebuilds matching frames before enabling export.",
+    "Native transport mock receives checked header and exact frame bytes without calling the main-thread FSEQ validator.",
+    "Autosave/reload restores the exact compiled arrangement, original analysis and imported audio bytes through actual IndexedDB.",
+    "Opening a failed-checksum arrangement and then autosaving preserves the damaged saved copy for recovery and blocks export."
+  ],
+  "errors": [],
+  "roundtrip": {
+    "original": "1089fea95263be418405441dd4871ad14bf1037abafefb9abedfb51a9c34c8e6",
+    "restored": "1089fea95263be418405441dd4871ad14bf1037abafefb9abedfb51a9c34c8e6",
+    "valid": true,
+    "header": [
+      80,
+      83,
+      69,
+      81,
+      72,
+      0,
+      0,
+      2,
+      32,
+      0,
+      200,
+      0,
+      0,
+      0,
+      128,
+      12,
+      0,
+      0,
+      20,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      18,
+      0,
+      109,
+      102,
+      108,
+      105,
+      103,
+      104,
+      116,
+      115,
+      104,
+      111,
+      119,
+      46,
+      119,
+      97,
+      118,
+      0,
+      21,
+      0,
+      115,
+      112,
+      76,
+      105,
+      103,
+      104,
+      116,
+      70,
+      111,
+      114,
+      103,
+      101,
+      32,
+      49,
+      46,
+      52,
+      46,
+      48,
+      0,
+      0
+    ],
+    "compressedCharacters": 29540,
+    "rawBytes": 640000,
+    "previewIndex": "1.4.0"
+  },
+  "jsonKeyOrder": {
+    "valid": true,
+    "frameHash": "1089fea95263be418405441dd4871ad14bf1037abafefb9abedfb51a9c34c8e6",
+    "expectedHash": "1089fea95263be418405441dd4871ad14bf1037abafefb9abedfb51a9c34c8e6"
+  },
+  "integrity": {
+    "inputMismatch": {
+      "rejected": true,
+      "message": "The saved show does not match its music and edits. Create again to rebuild it."
+    },
+    "frameChecksum": {
+      "rejected": true,
+      "message": "The saved show checksum failed. Restore a previous project revision."
+    },
+    "metadataChecksum": {
+      "rejected": true,
+      "message": "The saved show metadata checksum failed. Restore a previous project revision."
+    },
+    "gzipCorruption": {
+      "rejected": true,
+      "message": "The compressed data was not valid: incorrect header check."
+    },
+    "expandedOversize": {
+      "rejected": true,
+      "message": "The saved show expands beyond its declared size."
+    },
+    "expandedUndersize": {
+      "rejected": true,
+      "message": "The saved show data ended unexpectedly."
+    },
+    "forgedIndex": {
+      "rebuilt": true,
+      "lightValuesMatch": true,
+      "closureValuesMatch": true
+    }
+  },
+  "workerCancellation": {
+    "rejected": true,
+    "progressSeen": true,
+    "elapsedMs": 31
+  },
+  "workerResponsiveness": {
+    "durationSeconds": 3600,
+    "frames": 180000,
+    "frameBytes": 36000000,
+    "valid": true,
+    "elapsedMs": 1672.0999999977648,
+    "heartbeatTicks": 101,
+    "maxHeartbeatGapMs": 25,
+    "scope": "Desktop scheduler under concurrent build load; not Android timing."
+  },
+  "compressedHistory": {
+    "denseFramesOmitted": true,
+    "compiledRetained": true,
+    "bytes": 36000000,
+    "framesRestored": true,
+    "ready": true
+  },
+  "serializedEdits": {
+    "statuses": [
+      "fulfilled",
+      "fulfilled"
+    ],
+    "tempoScale": 2,
+    "meterOverride": 3,
+    "matching": true
+  },
+  "pendingUndo": {
+    "pendingSnapshotExisted": true,
+    "style": "cinematic",
+    "shownStyle": "cinematic",
+    "matching": true,
+    "exportEnabled": true
+  },
+  "nativeTransport": {
+    "headerCalled": false,
+    "headerMatches": true,
+    "framesMatch": true,
+    "bytes": 640072,
+    "expectedBytes": 640072,
+    "projectId": "runtime-fixture",
+    "busy": false
+  },
+  "persistence": {
+    "frameHash": "43c3149ce598166ba8b1af8c3f4567203e9e147775daa90b8838a08c7070225b",
+    "audioHash": "33f07d502ba19832b62b97d8fb4a11354e81310264bd885d7a06438228773650",
+    "compiledHash": "43c3149ce598166ba8b1af8c3f4567203e9e147775daa90b8838a08c7070225b"
+  },
+  "failedRestore": {
+    "compiledRetained": true,
+    "sha": "0000000000000000000000000000000000000000000000000000000000000000",
+    "showAdopted": false,
+    "exportDisabled": true
+  },
+  "sourceHashes": {
+    "web/app.js": "ecd9069eabce9ae96b4f5da0f3d809ec3b80167bb1adc5fafce60cc67f1a7369",
+    "web/engine/client.js": "2735ef93c97589c2c56915d788500ba05926dc058f23d4e427982f38485b0c96",
+    "web/engine/worker.js": "4e0198ba0f2eba17bc70b6c4b85ef607c27f8014713817559a0805a39e62e9d7",
+    "web/engine/show-engine.js": "77e494a193fef1a5051a3d5bf632338b738073deb0fea3d316d06613e7d5c609",
+    "web/engine/light-planner.js": "30324bba3e1b438a35ce7e4df0b1f3a8a821f105909ca2c77c007fcdad9f6cf5",
+    "web/engine/movement-planner.js": "1d74e6e2a66a8390f0152198244c9c6853941ebc13c97bc8d54714ecd85eea11",
+    "web/engine/vehicle-profile.js": "027bf87a827a900cda00505e2b539f84cbdb0d5a9800ea4eb1efdf85a0c10936"
+  },
+  "passed": true
+}

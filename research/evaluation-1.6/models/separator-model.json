@@ -1,0 +1,31 @@
+{
+  "id": "spleeter-2stems-sherpa-fp32",
+  "name": "Spleeter 2-stem",
+  "sampleRate": 44100,
+  "channels": 2,
+  "nFFT": 4096,
+  "hop": 1024,
+  "frames": 512,
+  "frequencyBins": 1024,
+  "maskPower": 2,
+  "maskEpsilon": 1e-10,
+  "license": "MIT (original Spleeter weights); Apache-2.0 (sherpa-onnx conversion)",
+  "source": "https://github.com/deezer/spleeter",
+  "conversion": "https://github.com/k2-fsa/sherpa-onnx/tree/master/scripts/spleeter",
+  "revision": "7001ba316a615cacddb3f9ef3ec416661a277e26",
+  "metadataCorrection": "The conversion exporter writes sample_rate=41000 metadata. Both original Spleeter configuration and sherpa inference use 44100 Hz; LightForge follows 44100 Hz.",
+  "models": {
+    "vocals": {
+      "file": "spleeter-vocals.onnx",
+      "bytes": 39318336,
+      "sha256": "bdc16ab6bf6117ddd4842c19e80e40e2be188fc555295064d424616b0224ac97",
+      "url": "https://huggingface.co/csukuangfj/sherpa-onnx-spleeter-2stems/resolve/7001ba316a615cacddb3f9ef3ec416661a277e26/vocals.onnx"
+    },
+    "accompaniment": {
+      "file": "spleeter-accompaniment.onnx",
+      "bytes": 39318343,
+      "sha256": "671ace17acd3720674a2bc14de32ac6292453dec20d9eb0ba4255d4ad8e3d8c0",
+      "url": "https://huggingface.co/csukuangfj/sherpa-onnx-spleeter-2stems/resolve/7001ba316a615cacddb3f9ef3ec416661a277e26/accompaniment.onnx"
+    }
+  }
+}

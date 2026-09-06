@@ -1,0 +1,2235 @@
+{
+  "version": "1.2.0",
+  "sourceSha256": {
+    "engine/show-engine.js": "9539d828a6cb1692344d03b2b8f11fc6a13d926b9afaa65538190cd33fce461e",
+    "analysis/dsp.js": "54f99576904fd7630c302961438e2ff6821e8f349f55b952626ae95da486bf8a",
+    "analysis/worker.js": "1772d081defdd5d93ac580cc9086732446382e4b4b3d67405528b0cbae9bd254"
+  },
+  "tracks": {
+    "demo": {
+      "duration": 64,
+      "bpm": 93.01,
+      "meter": 4,
+      "beatCount": 99,
+      "beatConfidence": 0.9460754814703449,
+      "onsetCount": 1728,
+      "onsetsPerSecond": 27,
+      "booleanAttackEvents": 1106,
+      "distinctBooleanAttackTimes": 328,
+      "physicalGroupDutyFraction": 0.3177,
+      "exteriorActiveFraction": 0.8472,
+      "silentFrameCount": 0,
+      "exteriorLitDuringSilentFrames": 0,
+      "timingProxyNote": "Distance to inferred beats/eighths or inferred strong onsets; this is not independent audio or physical timing ground truth.",
+      "timingProxyP50Ms": 0,
+      "timingProxyP95Ms": 10,
+      "movements": [
+        {
+          "channels": [
+            35,
+            36
+          ],
+          "start": 0.4,
+          "end": 2.6,
+          "command": "Open",
+          "value": 63,
+          "label": "Establish open mirrors",
+          "nearestBeatMs": 240,
+          "nearestDownbeatMs": 240,
+          "section": "Opening",
+          "localRms": 0.1331554651260376
+        },
+        {
+          "channels": [
+            37
+          ],
+          "start": 0.6,
+          "end": 4.8,
+          "command": "Open",
+          "value": 63,
+          "label": "Open windows for cabin audio",
+          "nearestBeatMs": 200,
+          "nearestDownbeatMs": 440,
+          "section": "Opening",
+          "localRms": 0.09704381972551346
+        },
+        {
+          "channels": [
+            38
+          ],
+          "start": 0.6,
+          "end": 4.8,
+          "command": "Open",
+          "value": 63,
+          "label": "Open windows for cabin audio",
+          "nearestBeatMs": 200,
+          "nearestDownbeatMs": 440,
+          "section": "Opening",
+          "localRms": 0.09704381972551346
+        },
+        {
+          "channels": [
+            39
+          ],
+          "start": 0.6,
+          "end": 4.8,
+          "command": "Open",
+          "value": 63,
+          "label": "Open windows for cabin audio",
+          "nearestBeatMs": 200,
+          "nearestDownbeatMs": 440,
+          "section": "Opening",
+          "localRms": 0.09704381972551346
+        },
+        {
+          "channels": [
+            40
+          ],
+          "start": 0.6,
+          "end": 4.8,
+          "command": "Open",
+          "value": 63,
+          "label": "Open windows for cabin audio",
+          "nearestBeatMs": 200,
+          "nearestDownbeatMs": 440,
+          "section": "Opening",
+          "localRms": 0.09704381972551346
+        },
+        {
+          "channels": [
+            35
+          ],
+          "start": 3,
+          "end": 5.2,
+          "command": "Close",
+          "value": 191,
+          "label": "Left mirror fold",
+          "nearestBeatMs": 260,
+          "nearestDownbeatMs": 260,
+          "section": "Opening",
+          "localRms": 0.13707686960697174
+        },
+        {
+          "channels": [
+            36
+          ],
+          "start": 3,
+          "end": 5.2,
+          "command": "Close",
+          "value": 191,
+          "label": "Right mirror fold",
+          "nearestBeatMs": 260,
+          "nearestDownbeatMs": 260,
+          "section": "Opening",
+          "localRms": 0.13707686960697174
+        },
+        {
+          "channels": [
+            35
+          ],
+          "start": 5.58,
+          "end": 7.78,
+          "command": "Open",
+          "value": 63,
+          "label": "Left mirror unfold",
+          "nearestBeatMs": 260,
+          "nearestDownbeatMs": 260,
+          "section": "Opening",
+          "localRms": 0.14828068017959595
+        },
+        {
+          "channels": [
+            36
+          ],
+          "start": 5.58,
+          "end": 7.78,
+          "command": "Open",
+          "value": 63,
+          "label": "Right mirror unfold",
+          "nearestBeatMs": 260,
+          "nearestDownbeatMs": 260,
+          "section": "Opening",
+          "localRms": 0.14828068017959595
+        },
+        {
+          "channels": [
+            35
+          ],
+          "start": 9.620000000000001,
+          "end": 11.82,
+          "command": "Close",
+          "value": 191,
+          "label": "Left mirror fold",
+          "nearestBeatMs": 220,
+          "nearestDownbeatMs": 860,
+          "section": "Opening",
+          "localRms": 0.13807713985443115
+        },
+        {
+          "channels": [
+            36
+          ],
+          "start": 10.28,
+          "end": 12.48,
+          "command": "Close",
+          "value": 191,
+          "label": "Right mirror fold",
+          "nearestBeatMs": 200,
+          "nearestDownbeatMs": 200,
+          "section": "Opening",
+          "localRms": 0.14520837366580963
+        },
+        {
+          "channels": [
+            35
+          ],
+          "start": 12.200000000000001,
+          "end": 14.4,
+          "command": "Open",
+          "value": 63,
+          "label": "Left mirror unfold",
+          "nearestBeatMs": 220,
+          "nearestDownbeatMs": 860,
+          "section": "Opening",
+          "localRms": 0.12759748101234436
+        },
+        {
+          "channels": [
+            36
+          ],
+          "start": 12.86,
+          "end": 15.06,
+          "command": "Open",
+          "value": 63,
+          "label": "Right mirror unfold",
+          "nearestBeatMs": 200,
+          "nearestDownbeatMs": 200,
+          "section": "Opening",
+          "localRms": 0.12866835296154022
+        },
+        {
+          "channels": [
+            35
+          ],
+          "start": 15.64,
+          "end": 17.84,
+          "command": "Close",
+          "value": 191,
+          "label": "Left mirror fold",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 0,
+          "section": "Opening",
+          "localRms": 0.18628041446208954
+        },
+        {
+          "channels": [
+            36
+          ],
+          "start": 16.28,
+          "end": 18.48,
+          "command": "Close",
+          "value": 191,
+          "label": "Right mirror fold",
+          "nearestBeatMs": 20,
+          "nearestDownbeatMs": 640,
+          "section": "Opening",
+          "localRms": 0.14490769803524017
+        },
+        {
+          "channels": [
+            35
+          ],
+          "start": 18.22,
+          "end": 20.42,
+          "command": "Open",
+          "value": 63,
+          "label": "Left mirror unfold",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 0,
+          "section": "Opening",
+          "localRms": 0.1636066436767578
+        },
+        {
+          "channels": [
+            36
+          ],
+          "start": 18.86,
+          "end": 21.06,
+          "command": "Open",
+          "value": 63,
+          "label": "Right mirror unfold",
+          "nearestBeatMs": 20,
+          "nearestDownbeatMs": 640,
+          "section": "Opening",
+          "localRms": 0.13857463002204895
+        },
+        {
+          "channels": [
+            35
+          ],
+          "start": 23.400000000000002,
+          "end": 25.6,
+          "command": "Close",
+          "value": 191,
+          "label": "Left mirror fold",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 0,
+          "section": "Groove",
+          "localRms": 0.13493525981903076
+        },
+        {
+          "channels": [
+            36
+          ],
+          "start": 23.400000000000002,
+          "end": 25.6,
+          "command": "Close",
+          "value": 191,
+          "label": "Right mirror fold",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 0,
+          "section": "Groove",
+          "localRms": 0.13493525981903076
+        },
+        {
+          "channels": [
+            37
+          ],
+          "start": 23.400000000000002,
+          "end": 32.4,
+          "command": "Dance",
+          "value": 127,
+          "label": "Staggered dance entrance",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 0,
+          "section": "Groove",
+          "localRms": 0.13493525981903076
+        },
+        {
+          "channels": [
+            39
+          ],
+          "start": 24.04,
+          "end": 33.04,
+          "command": "Dance",
+          "value": 127,
+          "label": "Staggered dance entrance",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 640,
+          "section": "Groove",
+          "localRms": 0.09260053932666779
+        },
+        {
+          "channels": [
+            38
+          ],
+          "start": 24.7,
+          "end": 33.7,
+          "command": "Dance",
+          "value": 127,
+          "label": "Staggered dance entrance",
+          "nearestBeatMs": 20,
+          "nearestDownbeatMs": 1260,
+          "section": "Groove",
+          "localRms": 0.10915224254131317
+        },
+        {
+          "channels": [
+            40
+          ],
+          "start": 25.34,
+          "end": 34.34,
+          "command": "Dance",
+          "value": 127,
+          "label": "Staggered dance entrance",
+          "nearestBeatMs": 20,
+          "nearestDownbeatMs": 620,
+          "section": "Groove",
+          "localRms": 0.10854318737983704
+        },
+        {
+          "channels": [
+            35
+          ],
+          "start": 25.98,
+          "end": 28.18,
+          "command": "Open",
+          "value": 63,
+          "label": "Left mirror unfold",
+          "nearestBeatMs": 20,
+          "nearestDownbeatMs": 20,
+          "section": "Groove",
+          "localRms": 0.10756880044937134
+        },
+        {
+          "channels": [
+            36
+          ],
+          "start": 25.98,
+          "end": 28.18,
+          "command": "Open",
+          "value": 63,
+          "label": "Right mirror unfold",
+          "nearestBeatMs": 20,
+          "nearestDownbeatMs": 20,
+          "section": "Groove",
+          "localRms": 0.10756880044937134
+        },
+        {
+          "channels": [
+            41
+          ],
+          "start": 29.44,
+          "end": 44.04,
+          "command": "Open",
+          "value": 63,
+          "label": "Raise trunk before musical entrance",
+          "nearestBeatMs": 260,
+          "nearestDownbeatMs": 880,
+          "section": "Groove",
+          "localRms": 0.158472940325737
+        },
+        {
+          "channels": [
+            35
+          ],
+          "start": 29.52,
+          "end": 31.720000000000002,
+          "command": "Close",
+          "value": 191,
+          "label": "Left mirror fold",
+          "nearestBeatMs": 300,
+          "nearestDownbeatMs": 960,
+          "section": "Groove",
+          "localRms": 0.17900167405605316
+        },
+        {
+          "channels": [
+            36
+          ],
+          "start": 30.16,
+          "end": 32.36,
+          "command": "Close",
+          "value": 191,
+          "label": "Right mirror fold",
+          "nearestBeatMs": 300,
+          "nearestDownbeatMs": 860,
+          "section": "Groove",
+          "localRms": 0.09329447150230408
+        },
+        {
+          "channels": [
+            35
+          ],
+          "start": 32.1,
+          "end": 34.300000000000004,
+          "command": "Open",
+          "value": 63,
+          "label": "Left mirror unfold",
+          "nearestBeatMs": 220,
+          "nearestDownbeatMs": 1080,
+          "section": "Groove",
+          "localRms": 0.10561387240886688
+        },
+        {
+          "channels": [
+            37
+          ],
+          "start": 32.4,
+          "end": 36.6,
+          "command": "Open",
+          "value": 63,
+          "label": "Restore open windows before finale",
+          "nearestBeatMs": 80,
+          "nearestDownbeatMs": 1300,
+          "section": "Groove",
+          "localRms": 0.11885900050401688
+        },
+        {
+          "channels": [
+            36
+          ],
+          "start": 32.74,
+          "end": 34.94,
+          "command": "Open",
+          "value": 63,
+          "label": "Right mirror unfold",
+          "nearestBeatMs": 260,
+          "nearestDownbeatMs": 960,
+          "section": "Groove",
+          "localRms": 0.11551080644130707
+        },
+        {
+          "channels": [
+            39
+          ],
+          "start": 33.04,
+          "end": 37.24,
+          "command": "Open",
+          "value": 63,
+          "label": "Restore open windows before finale",
+          "nearestBeatMs": 40,
+          "nearestDownbeatMs": 660,
+          "section": "Groove",
+          "localRms": 0.10598094761371613
+        },
+        {
+          "channels": [
+            38
+          ],
+          "start": 33.7,
+          "end": 37.9,
+          "command": "Open",
+          "value": 63,
+          "label": "Restore open windows before finale",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 0,
+          "section": "Peak",
+          "localRms": 0.18527622520923615
+        },
+        {
+          "channels": [
+            40
+          ],
+          "start": 34.34,
+          "end": 38.54,
+          "command": "Open",
+          "value": 63,
+          "label": "Restore open windows before finale",
+          "nearestBeatMs": 20,
+          "nearestDownbeatMs": 640,
+          "section": "Peak",
+          "localRms": 0.14280563592910767
+        },
+        {
+          "channels": [
+            35
+          ],
+          "start": 36.28,
+          "end": 38.480000000000004,
+          "command": "Close",
+          "value": 191,
+          "label": "Left mirror fold",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 0,
+          "section": "Peak",
+          "localRms": 0.17928218841552734
+        },
+        {
+          "channels": [
+            46
+          ],
+          "start": 36.480000000000004,
+          "end": 38.88,
+          "command": "Open",
+          "value": 63,
+          "label": "Open charge port",
+          "nearestBeatMs": 200,
+          "nearestDownbeatMs": 200,
+          "section": "Peak",
+          "localRms": 0.13873249292373657
+        },
+        {
+          "channels": [
+            36
+          ],
+          "start": 36.92,
+          "end": 39.12,
+          "command": "Close",
+          "value": 191,
+          "label": "Right mirror fold",
+          "nearestBeatMs": 20,
+          "nearestDownbeatMs": 640,
+          "section": "Peak",
+          "localRms": 0.14391160011291504
+        },
+        {
+          "channels": [
+            35
+          ],
+          "start": 38.86,
+          "end": 41.06,
+          "command": "Open",
+          "value": 63,
+          "label": "Left mirror unfold",
+          "nearestBeatMs": 20,
+          "nearestDownbeatMs": 20,
+          "section": "Peak",
+          "localRms": 0.17890889942646027
+        },
+        {
+          "channels": [
+            46
+          ],
+          "start": 38.88,
+          "end": 61.300000000000004,
+          "command": "Dance",
+          "value": 127,
+          "label": "Rainbow charge-port LEDs",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 0,
+          "section": "Peak",
+          "localRms": 0.1938483864068985
+        },
+        {
+          "channels": [
+            36
+          ],
+          "start": 39.5,
+          "end": 41.7,
+          "command": "Open",
+          "value": 63,
+          "label": "Right mirror unfold",
+          "nearestBeatMs": 20,
+          "nearestDownbeatMs": 620,
+          "section": "Peak",
+          "localRms": 0.1391506791114807
+        },
+        {
+          "channels": [
+            35
+          ],
+          "start": 42.76,
+          "end": 44.96,
+          "command": "Close",
+          "value": 191,
+          "label": "Left mirror fold",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 1280,
+          "section": "Peak",
+          "localRms": 0.15262965857982635
+        },
+        {
+          "channels": [
+            36
+          ],
+          "start": 42.76,
+          "end": 44.96,
+          "command": "Close",
+          "value": 191,
+          "label": "Right mirror fold",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 1280,
+          "section": "Peak",
+          "localRms": 0.15262965857982635
+        },
+        {
+          "channels": [
+            37
+          ],
+          "start": 44.04,
+          "end": 53.04,
+          "command": "Dance",
+          "value": 127,
+          "label": "Ensemble finale",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 0,
+          "section": "Peak",
+          "localRms": 0.19954322278499603
+        },
+        {
+          "channels": [
+            38
+          ],
+          "start": 44.04,
+          "end": 53.04,
+          "command": "Dance",
+          "value": 127,
+          "label": "Ensemble finale",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 0,
+          "section": "Peak",
+          "localRms": 0.19954322278499603
+        },
+        {
+          "channels": [
+            39
+          ],
+          "start": 44.04,
+          "end": 53.04,
+          "command": "Dance",
+          "value": 127,
+          "label": "Ensemble finale",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 0,
+          "section": "Peak",
+          "localRms": 0.19954322278499603
+        },
+        {
+          "channels": [
+            40
+          ],
+          "start": 44.04,
+          "end": 53.04,
+          "command": "Dance",
+          "value": 127,
+          "label": "Ensemble finale",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 0,
+          "section": "Peak",
+          "localRms": 0.19954322278499603
+        },
+        {
+          "channels": [
+            41
+          ],
+          "start": 44.04,
+          "end": 58.04,
+          "command": "Dance",
+          "value": 127,
+          "label": "Trunk ensemble finale",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 0,
+          "section": "Peak",
+          "localRms": 0.19954322278499603
+        },
+        {
+          "channels": [
+            35
+          ],
+          "start": 45.34,
+          "end": 47.54,
+          "command": "Open",
+          "value": 63,
+          "label": "Left mirror unfold",
+          "nearestBeatMs": 20,
+          "nearestDownbeatMs": 1280,
+          "section": "Peak",
+          "localRms": 0.16145643591880798
+        },
+        {
+          "channels": [
+            36
+          ],
+          "start": 45.34,
+          "end": 47.54,
+          "command": "Open",
+          "value": 63,
+          "label": "Right mirror unfold",
+          "nearestBeatMs": 20,
+          "nearestDownbeatMs": 1280,
+          "section": "Peak",
+          "localRms": 0.16145643591880798
+        },
+        {
+          "channels": [
+            35
+          ],
+          "start": 49.2,
+          "end": 51.4,
+          "command": "Close",
+          "value": 191,
+          "label": "Left mirror fold",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 0,
+          "section": "Peak",
+          "localRms": 0.1776633858680725
+        },
+        {
+          "channels": [
+            36
+          ],
+          "start": 49.84,
+          "end": 52.04,
+          "command": "Close",
+          "value": 191,
+          "label": "Right mirror fold",
+          "nearestBeatMs": 20,
+          "nearestDownbeatMs": 640,
+          "section": "Peak",
+          "localRms": 0.1616431474685669
+        },
+        {
+          "channels": [
+            35
+          ],
+          "start": 51.78,
+          "end": 53.980000000000004,
+          "command": "Open",
+          "value": 63,
+          "label": "Left mirror unfold",
+          "nearestBeatMs": 20,
+          "nearestDownbeatMs": 20,
+          "section": "Peak",
+          "localRms": 0.19074061512947083
+        },
+        {
+          "channels": [
+            36
+          ],
+          "start": 52.42,
+          "end": 54.620000000000005,
+          "command": "Open",
+          "value": 63,
+          "label": "Right mirror unfold",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 660,
+          "section": "Peak",
+          "localRms": 0.16141623258590698
+        },
+        {
+          "channels": [
+            35
+          ],
+          "start": 56.02,
+          "end": 58.22,
+          "command": "Close",
+          "value": 191,
+          "label": "Left mirror fold",
+          "nearestBeatMs": 280,
+          "nearestDownbeatMs": 920,
+          "section": "Finale",
+          "localRms": 0.07609819620847702
+        },
+        {
+          "channels": [
+            36
+          ],
+          "start": 56.660000000000004,
+          "end": 58.86,
+          "command": "Close",
+          "value": 191,
+          "label": "Right mirror fold",
+          "nearestBeatMs": 280,
+          "nearestDownbeatMs": 280,
+          "section": "Finale",
+          "localRms": 0.07307325303554535
+        },
+        {
+          "channels": [
+            41
+          ],
+          "start": 58.04,
+          "end": 62.34,
+          "command": "Close",
+          "value": 191,
+          "label": "Close trunk",
+          "nearestBeatMs": 160,
+          "nearestDownbeatMs": 1100,
+          "section": "Finale",
+          "localRms": 0.11373167484998703
+        },
+        {
+          "channels": [
+            35
+          ],
+          "start": 58.6,
+          "end": 60.800000000000004,
+          "command": "Open",
+          "value": 63,
+          "label": "Left mirror unfold",
+          "nearestBeatMs": 260,
+          "nearestDownbeatMs": 920,
+          "section": "Finale",
+          "localRms": 0.10651113837957382
+        },
+        {
+          "channels": [
+            36
+          ],
+          "start": 59.26,
+          "end": 61.46,
+          "command": "Open",
+          "value": 63,
+          "label": "Right mirror unfold",
+          "nearestBeatMs": 260,
+          "nearestDownbeatMs": 260,
+          "section": "Finale",
+          "localRms": 0.1258968859910965
+        },
+        {
+          "channels": [
+            37
+          ],
+          "start": 59.46,
+          "end": 63.660000000000004,
+          "command": "Close",
+          "value": 191,
+          "label": "Close windows at finish",
+          "nearestBeatMs": 60,
+          "nearestDownbeatMs": 60,
+          "section": "Finale",
+          "localRms": 0.10781695693731308
+        },
+        {
+          "channels": [
+            38
+          ],
+          "start": 59.46,
+          "end": 63.660000000000004,
+          "command": "Close",
+          "value": 191,
+          "label": "Close windows at finish",
+          "nearestBeatMs": 60,
+          "nearestDownbeatMs": 60,
+          "section": "Finale",
+          "localRms": 0.10781695693731308
+        },
+        {
+          "channels": [
+            39
+          ],
+          "start": 59.46,
+          "end": 63.660000000000004,
+          "command": "Close",
+          "value": 191,
+          "label": "Close windows at finish",
+          "nearestBeatMs": 60,
+          "nearestDownbeatMs": 60,
+          "section": "Finale",
+          "localRms": 0.10781695693731308
+        },
+        {
+          "channels": [
+            40
+          ],
+          "start": 59.46,
+          "end": 63.660000000000004,
+          "command": "Close",
+          "value": 191,
+          "label": "Close windows at finish",
+          "nearestBeatMs": 60,
+          "nearestDownbeatMs": 60,
+          "section": "Finale",
+          "localRms": 0.10781695693731308
+        },
+        {
+          "channels": [
+            46
+          ],
+          "start": 61.300000000000004,
+          "end": 63.5,
+          "command": "Close",
+          "value": 191,
+          "label": "Close charge port",
+          "nearestBeatMs": 160,
+          "nearestDownbeatMs": 800,
+          "section": "Finale",
+          "localRms": 0.057638123631477356
+        }
+      ],
+      "validation": {
+        "valid": true,
+        "errors": [],
+        "warnings": [],
+        "stats": {
+          "frameCount": 3200,
+          "stepMs": 20,
+          "duration": 64,
+          "sequenceBytes": 640000,
+          "commandCounts": {
+            "35": 19,
+            "36": 19,
+            "37": 5,
+            "38": 5,
+            "39": 5,
+            "40": 5,
+            "41": 3,
+            "46": 3
+          },
+          "danceSeconds": {
+            "35": 0,
+            "36": 0,
+            "37": 18,
+            "38": 18,
+            "39": 18,
+            "40": 18,
+            "41": 14,
+            "46": 22.42
+          },
+          "lightTransitions": 4268,
+          "activeExteriorPercent": 84.7,
+          "rampCommandFrames": 6320,
+          "interiorDisplayFrames": 3183
+        }
+      },
+      "stats": {
+        "lightCues": 464,
+        "manualCueCount": 0,
+        "beatCount": 99,
+        "onsetCount": 1728,
+        "bpm": 93.01,
+        "beatConfidence": 0.9460754814703449,
+        "beatLengthMs": 645.0919255993979,
+        "recommendedBeatDivision": "eighth",
+        "silent": false,
+        "frameCount": 3200,
+        "stepMs": 20,
+        "duration": 64,
+        "sequenceBytes": 640000,
+        "commandCounts": {
+          "35": 19,
+          "36": 19,
+          "37": 5,
+          "38": 5,
+          "39": 5,
+          "40": 5,
+          "41": 3,
+          "46": 3
+        },
+        "danceSeconds": {
+          "35": 0,
+          "36": 0,
+          "37": 18,
+          "38": 18,
+          "39": 18,
+          "40": 18,
+          "41": 14,
+          "46": 22.42
+        },
+        "lightTransitions": 4268,
+        "activeExteriorPercent": 84.7,
+        "rampCommandFrames": 6320,
+        "interiorDisplayFrames": 3183
+      },
+      "booleanCleanup": {
+        "beforeAttacks": 1298,
+        "afterAttacks": 1181,
+        "lostAttacks": 117,
+        "addedOnFrames": 364,
+        "removedOnFrames": 0,
+        "examples": [
+          {
+            "channel": 1,
+            "time": 2.74
+          },
+          {
+            "channel": 1,
+            "time": 3.38
+          },
+          {
+            "channel": 1,
+            "time": 4.02
+          },
+          {
+            "channel": 1,
+            "time": 5.34
+          },
+          {
+            "channel": 1,
+            "time": 9.18
+          },
+          {
+            "channel": 1,
+            "time": 15
+          },
+          {
+            "channel": 1,
+            "time": 16.92
+          },
+          {
+            "channel": 1,
+            "time": 19.52
+          },
+          {
+            "channel": 1,
+            "time": 20.16
+          },
+          {
+            "channel": 1,
+            "time": 21.46
+          },
+          {
+            "channel": 1,
+            "time": 23.4
+          },
+          {
+            "channel": 1,
+            "time": 31.02
+          }
+        ]
+      }
+    },
+    "sample": {
+      "duration": 238.04,
+      "bpm": 93.07,
+      "meter": 4,
+      "beatCount": 369,
+      "beatConfidence": 0.9338843061212861,
+      "onsetCount": 6260,
+      "onsetsPerSecond": 26.2981,
+      "booleanAttackEvents": 4067,
+      "distinctBooleanAttackTimes": 1215,
+      "physicalGroupDutyFraction": 0.3087,
+      "exteriorActiveFraction": 0.842,
+      "silentFrameCount": 62,
+      "exteriorLitDuringSilentFrames": 17,
+      "timingProxyNote": "Distance to inferred beats/eighths or inferred strong onsets; this is not independent audio or physical timing ground truth.",
+      "timingProxyP50Ms": 0,
+      "timingProxyP95Ms": 20,
+      "movements": [
+        {
+          "channels": [
+            35,
+            36
+          ],
+          "start": 0.4,
+          "end": 2.6,
+          "command": "Open",
+          "value": 63,
+          "label": "Establish open mirrors",
+          "nearestBeatMs": 220,
+          "nearestDownbeatMs": 220,
+          "section": "Opening",
+          "localRms": 0
+        },
+        {
+          "channels": [
+            37
+          ],
+          "start": 0.6,
+          "end": 4.8,
+          "command": "Open",
+          "value": 63,
+          "label": "Open windows for cabin audio",
+          "nearestBeatMs": 20,
+          "nearestDownbeatMs": 20,
+          "section": "Opening",
+          "localRms": 0.00045547011541202664
+        },
+        {
+          "channels": [
+            38
+          ],
+          "start": 0.6,
+          "end": 4.8,
+          "command": "Open",
+          "value": 63,
+          "label": "Open windows for cabin audio",
+          "nearestBeatMs": 20,
+          "nearestDownbeatMs": 20,
+          "section": "Opening",
+          "localRms": 0.00045547011541202664
+        },
+        {
+          "channels": [
+            39
+          ],
+          "start": 0.6,
+          "end": 4.8,
+          "command": "Open",
+          "value": 63,
+          "label": "Open windows for cabin audio",
+          "nearestBeatMs": 20,
+          "nearestDownbeatMs": 20,
+          "section": "Opening",
+          "localRms": 0.00045547011541202664
+        },
+        {
+          "channels": [
+            40
+          ],
+          "start": 0.6,
+          "end": 4.8,
+          "command": "Open",
+          "value": 63,
+          "label": "Open windows for cabin audio",
+          "nearestBeatMs": 20,
+          "nearestDownbeatMs": 20,
+          "section": "Opening",
+          "localRms": 0.00045547011541202664
+        },
+        {
+          "channels": [
+            35
+          ],
+          "start": 3.2,
+          "end": 5.4,
+          "command": "Close",
+          "value": 191,
+          "label": "Left mirror fold",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 0,
+          "section": "Opening",
+          "localRms": 0.029792869463562965
+        },
+        {
+          "channels": [
+            36
+          ],
+          "start": 3.2,
+          "end": 5.4,
+          "command": "Close",
+          "value": 191,
+          "label": "Right mirror fold",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 0,
+          "section": "Opening",
+          "localRms": 0.029792869463562965
+        },
+        {
+          "channels": [
+            35
+          ],
+          "start": 5.78,
+          "end": 7.98,
+          "command": "Open",
+          "value": 63,
+          "label": "Left mirror unfold",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 0,
+          "section": "Opening",
+          "localRms": 0.0761106014251709
+        },
+        {
+          "channels": [
+            36
+          ],
+          "start": 5.78,
+          "end": 7.98,
+          "command": "Open",
+          "value": 63,
+          "label": "Right mirror unfold",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 0,
+          "section": "Opening",
+          "localRms": 0.0761106014251709
+        },
+        {
+          "channels": [
+            35
+          ],
+          "start": 31.580000000000002,
+          "end": 33.78,
+          "command": "Close",
+          "value": 191,
+          "label": "Left mirror fold",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 0,
+          "section": "Build",
+          "localRms": 0.17374564707279205
+        },
+        {
+          "channels": [
+            36
+          ],
+          "start": 32.22,
+          "end": 34.42,
+          "command": "Close",
+          "value": 191,
+          "label": "Right mirror fold",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 640,
+          "section": "Build",
+          "localRms": 0.13566993176937103
+        },
+        {
+          "channels": [
+            35
+          ],
+          "start": 34.160000000000004,
+          "end": 36.36,
+          "command": "Open",
+          "value": 63,
+          "label": "Left mirror unfold",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 0,
+          "section": "Build",
+          "localRms": 0.1957111805677414
+        },
+        {
+          "channels": [
+            36
+          ],
+          "start": 34.800000000000004,
+          "end": 37,
+          "command": "Open",
+          "value": 63,
+          "label": "Right mirror unfold",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 640,
+          "section": "Build",
+          "localRms": 0.15611226856708527
+        },
+        {
+          "channels": [
+            35
+          ],
+          "start": 59.96,
+          "end": 62.160000000000004,
+          "command": "Close",
+          "value": 191,
+          "label": "Left mirror fold",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 0,
+          "section": "Groove",
+          "localRms": 0.10912243276834488
+        },
+        {
+          "channels": [
+            36
+          ],
+          "start": 60.6,
+          "end": 62.800000000000004,
+          "command": "Close",
+          "value": 191,
+          "label": "Right mirror fold",
+          "nearestBeatMs": 40,
+          "nearestDownbeatMs": 640,
+          "section": "Groove",
+          "localRms": 0.09622233361005783
+        },
+        {
+          "channels": [
+            35
+          ],
+          "start": 62.54,
+          "end": 64.74,
+          "command": "Open",
+          "value": 63,
+          "label": "Left mirror unfold",
+          "nearestBeatMs": 20,
+          "nearestDownbeatMs": 20,
+          "section": "Groove",
+          "localRms": 0.12796421349048615
+        },
+        {
+          "channels": [
+            36
+          ],
+          "start": 63.18,
+          "end": 65.38,
+          "command": "Open",
+          "value": 63,
+          "label": "Right mirror unfold",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 620,
+          "section": "Groove",
+          "localRms": 0.17684417963027954
+        },
+        {
+          "channels": [
+            37
+          ],
+          "start": 67.7,
+          "end": 76.7,
+          "command": "Dance",
+          "value": 127,
+          "label": "Staggered dance entrance",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 0,
+          "section": "Peak",
+          "localRms": 0.18527594208717346
+        },
+        {
+          "channels": [
+            39
+          ],
+          "start": 68.34,
+          "end": 77.34,
+          "command": "Dance",
+          "value": 127,
+          "label": "Staggered dance entrance",
+          "nearestBeatMs": 20,
+          "nearestDownbeatMs": 640,
+          "section": "Peak",
+          "localRms": 0.14280594885349274
+        },
+        {
+          "channels": [
+            38
+          ],
+          "start": 68.98,
+          "end": 77.98,
+          "command": "Dance",
+          "value": 127,
+          "label": "Staggered dance entrance",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 1280,
+          "section": "Peak",
+          "localRms": 0.15932448208332062
+        },
+        {
+          "channels": [
+            40
+          ],
+          "start": 69.64,
+          "end": 78.64,
+          "command": "Dance",
+          "value": 127,
+          "label": "Staggered dance entrance",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 640,
+          "section": "Peak",
+          "localRms": 0.18632474541664124
+        },
+        {
+          "channels": [
+            35
+          ],
+          "start": 88.36,
+          "end": 90.56,
+          "command": "Close",
+          "value": 191,
+          "label": "Left mirror fold",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 0,
+          "section": "Groove",
+          "localRms": 0.13555903732776642
+        },
+        {
+          "channels": [
+            36
+          ],
+          "start": 88.36,
+          "end": 90.56,
+          "command": "Close",
+          "value": 191,
+          "label": "Right mirror fold",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 0,
+          "section": "Groove",
+          "localRms": 0.13555903732776642
+        },
+        {
+          "channels": [
+            35
+          ],
+          "start": 90.94,
+          "end": 93.14,
+          "command": "Open",
+          "value": 63,
+          "label": "Left mirror unfold",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 0,
+          "section": "Groove",
+          "localRms": 0.05683597922325134
+        },
+        {
+          "channels": [
+            36
+          ],
+          "start": 90.94,
+          "end": 93.14,
+          "command": "Open",
+          "value": 63,
+          "label": "Right mirror unfold",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 0,
+          "section": "Groove",
+          "localRms": 0.05683597922325134
+        },
+        {
+          "channels": [
+            35
+          ],
+          "start": 116.74000000000001,
+          "end": 118.94,
+          "command": "Close",
+          "value": 191,
+          "label": "Left mirror fold",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 0,
+          "section": "Peak",
+          "localRms": 0.18686555325984955
+        },
+        {
+          "channels": [
+            36
+          ],
+          "start": 117.38,
+          "end": 119.58,
+          "command": "Close",
+          "value": 191,
+          "label": "Right mirror fold",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 640,
+          "section": "Peak",
+          "localRms": 0.18366292119026184
+        },
+        {
+          "channels": [
+            35
+          ],
+          "start": 119.32000000000001,
+          "end": 121.52,
+          "command": "Open",
+          "value": 63,
+          "label": "Left mirror unfold",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 0,
+          "section": "Peak",
+          "localRms": 0.17327064275741577
+        },
+        {
+          "channels": [
+            36
+          ],
+          "start": 119.96000000000001,
+          "end": 122.16,
+          "command": "Open",
+          "value": 63,
+          "label": "Right mirror unfold",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 640,
+          "section": "Peak",
+          "localRms": 0.1794198900461197
+        },
+        {
+          "channels": [
+            37
+          ],
+          "start": 139.98,
+          "end": 148.98,
+          "command": "Dance",
+          "value": 127,
+          "label": "Peak dance",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 0,
+          "section": "Peak",
+          "localRms": 0.2076541781425476
+        },
+        {
+          "channels": [
+            39
+          ],
+          "start": 140.62,
+          "end": 149.62,
+          "command": "Dance",
+          "value": 127,
+          "label": "Peak dance",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 640,
+          "section": "Peak",
+          "localRms": 0.1756429523229599
+        },
+        {
+          "channels": [
+            38
+          ],
+          "start": 141.26,
+          "end": 150.26,
+          "command": "Dance",
+          "value": 127,
+          "label": "Peak dance",
+          "nearestBeatMs": 20,
+          "nearestDownbeatMs": 1280,
+          "section": "Peak",
+          "localRms": 0.1252560168504715
+        },
+        {
+          "channels": [
+            40
+          ],
+          "start": 141.92000000000002,
+          "end": 150.92000000000002,
+          "command": "Dance",
+          "value": 127,
+          "label": "Peak dance",
+          "nearestBeatMs": 20,
+          "nearestDownbeatMs": 620,
+          "section": "Peak",
+          "localRms": 0.17740227282047272
+        },
+        {
+          "channels": [
+            35
+          ],
+          "start": 145.14000000000001,
+          "end": 147.34,
+          "command": "Close",
+          "value": 191,
+          "label": "Left mirror fold",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 0,
+          "section": "Peak",
+          "localRms": 0.19412192702293396
+        },
+        {
+          "channels": [
+            36
+          ],
+          "start": 145.78,
+          "end": 147.98,
+          "command": "Close",
+          "value": 191,
+          "label": "Right mirror fold",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 640,
+          "section": "Peak",
+          "localRms": 0.17325009405612946
+        },
+        {
+          "channels": [
+            35
+          ],
+          "start": 147.72,
+          "end": 149.92000000000002,
+          "command": "Open",
+          "value": 63,
+          "label": "Left mirror unfold",
+          "nearestBeatMs": 20,
+          "nearestDownbeatMs": 20,
+          "section": "Peak",
+          "localRms": 0.2013414353132248
+        },
+        {
+          "channels": [
+            36
+          ],
+          "start": 148.36,
+          "end": 150.56,
+          "command": "Open",
+          "value": 63,
+          "label": "Right mirror unfold",
+          "nearestBeatMs": 20,
+          "nearestDownbeatMs": 660,
+          "section": "Peak",
+          "localRms": 0.17193853855133057
+        },
+        {
+          "channels": [
+            41
+          ],
+          "start": 148.6,
+          "end": 163.20000000000002,
+          "command": "Open",
+          "value": 63,
+          "label": "Raise trunk before musical entrance",
+          "nearestBeatMs": 260,
+          "nearestDownbeatMs": 900,
+          "section": "Peak",
+          "localRms": 0.12534184753894806
+        },
+        {
+          "channels": [
+            37
+          ],
+          "start": 148.98,
+          "end": 153.18,
+          "command": "Open",
+          "value": 63,
+          "label": "Restore open windows before finale",
+          "nearestBeatMs": 20,
+          "nearestDownbeatMs": 1280,
+          "section": "Peak",
+          "localRms": 0.13925771415233612
+        },
+        {
+          "channels": [
+            39
+          ],
+          "start": 149.62,
+          "end": 153.82,
+          "command": "Open",
+          "value": 63,
+          "label": "Restore open windows before finale",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 680,
+          "section": "Peak",
+          "localRms": 0.1489618420600891
+        },
+        {
+          "channels": [
+            38
+          ],
+          "start": 150.26,
+          "end": 154.46,
+          "command": "Open",
+          "value": 63,
+          "label": "Restore open windows before finale",
+          "nearestBeatMs": 40,
+          "nearestDownbeatMs": 40,
+          "section": "Peak",
+          "localRms": 0.1453402191400528
+        },
+        {
+          "channels": [
+            40
+          ],
+          "start": 150.92000000000002,
+          "end": 155.12,
+          "command": "Open",
+          "value": 63,
+          "label": "Restore open windows before finale",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 620,
+          "section": "Peak",
+          "localRms": 0.16352134943008423
+        },
+        {
+          "channels": [
+            41
+          ],
+          "start": 163.20000000000002,
+          "end": 177.20000000000002,
+          "command": "Dance",
+          "value": 127,
+          "label": "Trunk peak dance",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 0,
+          "section": "Peak",
+          "localRms": 0.20048916339874268
+        },
+        {
+          "channels": [
+            35
+          ],
+          "start": 173.22,
+          "end": 175.42000000000002,
+          "command": "Close",
+          "value": 191,
+          "label": "Left mirror fold",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 0,
+          "section": "Peak",
+          "localRms": 0.16061025857925415
+        },
+        {
+          "channels": [
+            36
+          ],
+          "start": 173.22,
+          "end": 175.42000000000002,
+          "command": "Close",
+          "value": 191,
+          "label": "Right mirror fold",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 0,
+          "section": "Peak",
+          "localRms": 0.16061025857925415
+        },
+        {
+          "channels": [
+            35
+          ],
+          "start": 175.8,
+          "end": 178,
+          "command": "Open",
+          "value": 63,
+          "label": "Left mirror unfold",
+          "nearestBeatMs": 20,
+          "nearestDownbeatMs": 20,
+          "section": "Peak",
+          "localRms": 0.18264345824718475
+        },
+        {
+          "channels": [
+            36
+          ],
+          "start": 175.8,
+          "end": 178,
+          "command": "Open",
+          "value": 63,
+          "label": "Right mirror unfold",
+          "nearestBeatMs": 20,
+          "nearestDownbeatMs": 20,
+          "section": "Peak",
+          "localRms": 0.18264345824718475
+        },
+        {
+          "channels": [
+            41
+          ],
+          "start": 177.20000000000002,
+          "end": 181.5,
+          "command": "Close",
+          "value": 191,
+          "label": "Close trunk",
+          "nearestBeatMs": 140,
+          "nearestDownbeatMs": 1160,
+          "section": "Peak",
+          "localRms": 0.14661452174186707
+        },
+        {
+          "channels": [
+            41
+          ],
+          "start": 196.96,
+          "end": 211.56,
+          "command": "Open",
+          "value": 63,
+          "label": "Raise trunk before musical entrance",
+          "nearestBeatMs": 220,
+          "nearestDownbeatMs": 860,
+          "section": "Peak",
+          "localRms": 0.15687155723571777
+        },
+        {
+          "channels": [
+            35
+          ],
+          "start": 201.26,
+          "end": 203.46,
+          "command": "Close",
+          "value": 191,
+          "label": "Left mirror fold",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 0,
+          "section": "Peak",
+          "localRms": 0.18363474309444427
+        },
+        {
+          "channels": [
+            36
+          ],
+          "start": 201.9,
+          "end": 204.1,
+          "command": "Close",
+          "value": 191,
+          "label": "Right mirror fold",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 640,
+          "section": "Peak",
+          "localRms": 0.20568157732486725
+        },
+        {
+          "channels": [
+            35
+          ],
+          "start": 203.84,
+          "end": 206.04,
+          "command": "Open",
+          "value": 63,
+          "label": "Left mirror unfold",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 0,
+          "section": "Peak",
+          "localRms": 0.17592878639698029
+        },
+        {
+          "channels": [
+            46
+          ],
+          "start": 204,
+          "end": 206.4,
+          "command": "Open",
+          "value": 63,
+          "label": "Open charge port",
+          "nearestBeatMs": 160,
+          "nearestDownbeatMs": 160,
+          "section": "Peak",
+          "localRms": 0.20044967532157898
+        },
+        {
+          "channels": [
+            36
+          ],
+          "start": 204.48000000000002,
+          "end": 206.68,
+          "command": "Open",
+          "value": 63,
+          "label": "Right mirror unfold",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 640,
+          "section": "Peak",
+          "localRms": 0.1901039481163025
+        },
+        {
+          "channels": [
+            46
+          ],
+          "start": 206.4,
+          "end": 234.4,
+          "command": "Dance",
+          "value": 127,
+          "label": "Rainbow charge-port LEDs",
+          "nearestBeatMs": 20,
+          "nearestDownbeatMs": 20,
+          "section": "Peak",
+          "localRms": 0.1290113627910614
+        },
+        {
+          "channels": [
+            37
+          ],
+          "start": 211.56,
+          "end": 220.56,
+          "command": "Dance",
+          "value": 127,
+          "label": "Ensemble finale",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 0,
+          "section": "Peak",
+          "localRms": 0.1878523975610733
+        },
+        {
+          "channels": [
+            38
+          ],
+          "start": 211.56,
+          "end": 220.56,
+          "command": "Dance",
+          "value": 127,
+          "label": "Ensemble finale",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 0,
+          "section": "Peak",
+          "localRms": 0.1878523975610733
+        },
+        {
+          "channels": [
+            39
+          ],
+          "start": 211.56,
+          "end": 220.56,
+          "command": "Dance",
+          "value": 127,
+          "label": "Ensemble finale",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 0,
+          "section": "Peak",
+          "localRms": 0.1878523975610733
+        },
+        {
+          "channels": [
+            40
+          ],
+          "start": 211.56,
+          "end": 220.56,
+          "command": "Dance",
+          "value": 127,
+          "label": "Ensemble finale",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 0,
+          "section": "Peak",
+          "localRms": 0.1878523975610733
+        },
+        {
+          "channels": [
+            41
+          ],
+          "start": 211.56,
+          "end": 225.56,
+          "command": "Dance",
+          "value": 127,
+          "label": "Trunk ensemble finale",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 0,
+          "section": "Peak",
+          "localRms": 0.1878523975610733
+        },
+        {
+          "channels": [
+            41
+          ],
+          "start": 225.56,
+          "end": 229.86,
+          "command": "Close",
+          "value": 191,
+          "label": "Close trunk",
+          "nearestBeatMs": 220,
+          "nearestDownbeatMs": 1080,
+          "section": "Finale",
+          "localRms": 0.13814732432365417
+        },
+        {
+          "channels": [
+            35
+          ],
+          "start": 229.64000000000001,
+          "end": 231.84,
+          "command": "Close",
+          "value": 191,
+          "label": "Left mirror fold",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 0,
+          "section": "Finale",
+          "localRms": 0.075712651014328
+        },
+        {
+          "channels": [
+            36
+          ],
+          "start": 230.28,
+          "end": 232.48000000000002,
+          "command": "Close",
+          "value": 191,
+          "label": "Right mirror fold",
+          "nearestBeatMs": 20,
+          "nearestDownbeatMs": 640,
+          "section": "Finale",
+          "localRms": 0.07758628576993942
+        },
+        {
+          "channels": [
+            35
+          ],
+          "start": 232.22,
+          "end": 234.42000000000002,
+          "command": "Open",
+          "value": 63,
+          "label": "Left mirror unfold",
+          "nearestBeatMs": 0,
+          "nearestDownbeatMs": 0,
+          "section": "Finale",
+          "localRms": 0.031526945531368256
+        },
+        {
+          "channels": [
+            36
+          ],
+          "start": 232.86,
+          "end": 235.06,
+          "command": "Open",
+          "value": 63,
+          "label": "Right mirror unfold",
+          "nearestBeatMs": 20,
+          "nearestDownbeatMs": 640,
+          "section": "Finale",
+          "localRms": 0.036104656755924225
+        },
+        {
+          "channels": [
+            37
+          ],
+          "start": 233.5,
+          "end": 237.70000000000002,
+          "command": "Close",
+          "value": 191,
+          "label": "Close windows at finish",
+          "nearestBeatMs": 20,
+          "nearestDownbeatMs": 1280,
+          "section": "Finale",
+          "localRms": 0.025702882558107376
+        },
+        {
+          "channels": [
+            38
+          ],
+          "start": 233.5,
+          "end": 237.70000000000002,
+          "command": "Close",
+          "value": 191,
+          "label": "Close windows at finish",
+          "nearestBeatMs": 20,
+          "nearestDownbeatMs": 1280,
+          "section": "Finale",
+          "localRms": 0.025702882558107376
+        },
+        {
+          "channels": [
+            39
+          ],
+          "start": 233.5,
+          "end": 237.70000000000002,
+          "command": "Close",
+          "value": 191,
+          "label": "Close windows at finish",
+          "nearestBeatMs": 20,
+          "nearestDownbeatMs": 1280,
+          "section": "Finale",
+          "localRms": 0.025702882558107376
+        },
+        {
+          "channels": [
+            40
+          ],
+          "start": 233.5,
+          "end": 237.70000000000002,
+          "command": "Close",
+          "value": 191,
+          "label": "Close windows at finish",
+          "nearestBeatMs": 20,
+          "nearestDownbeatMs": 1280,
+          "section": "Finale",
+          "localRms": 0.025702882558107376
+        },
+        {
+          "channels": [
+            46
+          ],
+          "start": 234.4,
+          "end": 236.6,
+          "command": "Close",
+          "value": 191,
+          "label": "Close charge port",
+          "nearestBeatMs": 240,
+          "nearestDownbeatMs": 400,
+          "section": "Finale",
+          "localRms": 0.02392488531768322
+        }
+      ],
+      "validation": {
+        "valid": true,
+        "errors": [],
+        "warnings": [],
+        "stats": {
+          "frameCount": 11902,
+          "stepMs": 20,
+          "duration": 238.04,
+          "sequenceBytes": 2380400,
+          "commandCounts": {
+            "35": 19,
+            "36": 19,
+            "37": 6,
+            "38": 6,
+            "39": 6,
+            "40": 6,
+            "41": 6,
+            "46": 3
+          },
+          "danceSeconds": {
+            "35": 0,
+            "36": 0,
+            "37": 27,
+            "38": 27,
+            "39": 27,
+            "40": 27,
+            "41": 28,
+            "46": 28
+          },
+          "lightTransitions": 16174,
+          "activeExteriorPercent": 84.2,
+          "rampCommandFrames": 13378,
+          "interiorDisplayFrames": 11884
+        }
+      },
+      "stats": {
+        "lightCues": 1659,
+        "manualCueCount": 0,
+        "beatCount": 369,
+        "onsetCount": 6260,
+        "bpm": 93.07,
+        "beatConfidence": 0.9338843061212861,
+        "beatLengthMs": 644.676050284732,
+        "recommendedBeatDivision": "eighth",
+        "silent": false,
+        "frameCount": 11902,
+        "stepMs": 20,
+        "duration": 238.04,
+        "sequenceBytes": 2380400,
+        "commandCounts": {
+          "35": 19,
+          "36": 19,
+          "37": 6,
+          "38": 6,
+          "39": 6,
+          "40": 6,
+          "41": 6,
+          "46": 3
+        },
+        "danceSeconds": {
+          "35": 0,
+          "36": 0,
+          "37": 27,
+          "38": 27,
+          "39": 27,
+          "40": 27,
+          "41": 28,
+          "46": 28
+        },
+        "lightTransitions": 16174,
+        "activeExteriorPercent": 84.2,
+        "rampCommandFrames": 13378,
+        "interiorDisplayFrames": 11884
+      },
+      "booleanCleanup": {
+        "beforeAttacks": 4751,
+        "afterAttacks": 4337,
+        "lostAttacks": 414,
+        "addedOnFrames": 1336,
+        "removedOnFrames": 1,
+        "examples": [
+          {
+            "channel": 1,
+            "time": 6.4
+          },
+          {
+            "channel": 1,
+            "time": 7.02
+          },
+          {
+            "channel": 1,
+            "time": 9
+          },
+          {
+            "channel": 1,
+            "time": 13.9
+          },
+          {
+            "channel": 1,
+            "time": 14.4
+          },
+          {
+            "channel": 1,
+            "time": 14.98
+          },
+          {
+            "channel": 1,
+            "time": 16.52
+          },
+          {
+            "channel": 1,
+            "time": 16.74
+          },
+          {
+            "channel": 1,
+            "time": 17.38
+          },
+          {
+            "channel": 1,
+            "time": 18.04
+          },
+          {
+            "channel": 1,
+            "time": 20.38
+          },
+          {
+            "channel": 1,
+            "time": 21.26
+          }
+        ]
+      }
+    }
+  },
+  "synthetic": {
+    "trueSilenceWithinLoudSection": {
+      "silence": [
+        20,
+        28
+      ],
+      "examined": [
+        21,
+        27
+      ],
+      "litFrameCount": 21,
+      "firstLitSeconds": [
+        23.76,
+        23.78,
+        23.8,
+        23.82,
+        23.84,
+        23.86,
+        23.88,
+        23.9,
+        23.92,
+        23.94,
+        23.96,
+        23.98
+      ],
+      "reason": "One invented midpoint pulse bridges the omitted beat gap; section-average energy overrides local silence. Interior base gain also stays lit."
+    },
+    "endingAttack": {
+      "beatSeconds": 9,
+      "rawInnerCommandAtBeat": 77,
+      "expectedAccent": 255,
+      "actualCommandMeaning": "77 =2-second ramp off",
+      "reason": "Unconditional ending ramp overwrites supported lamp accents across final2.15s."
+    }
+  },
+  "source": "https://github.com/teslamotors/light-show",
+  "limits": {
+    "liftgateOpenSeconds": 14,
+    "liftgateCloseSeconds": 4,
+    "windowTravelSeconds": 4,
+    "mirrorAndChargeTravelSeconds": 2,
+    "windowActuations": 6,
+    "trunkActuations": 6,
+    "mirrorActuations": 20,
+    "chargeActuations": 3,
+    "recommendedDanceSeconds": 30,
+    "booleanMinimumOnMs": 15,
+    "booleanPleasingOnOffMs": 100,
+    "rampCodes": [
+      0,
+      26,
+      51,
+      77,
+      178,
+      204,
+      230,
+      255
+    ]
+  }
+}

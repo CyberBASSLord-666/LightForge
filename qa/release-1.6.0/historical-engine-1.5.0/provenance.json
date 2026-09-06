@@ -1,0 +1,12 @@
+{
+  "source": "Delivered LightForge-1.5.0-Private-Source.zip",
+  "sourceArchiveSHA256": "48d81d6acbdcf7e24a0d454a286a8869d764c93e0ee767a713cc08ef5818e0d7",
+  "files": {
+    "vehicle-profile.js": "027bf87a827a900cda00505e2b539f84cbdb0d5a9800ea4eb1efdf85a0c10936",
+    "movement-planner.js": "e008f55a0a82696d64142d674bfc95b85fe2fe18404f053bc6e2929b9994b6eb",
+    "light-planner.js": "8379f71a6b4ddea3330e4d930f7f7aab1bff8697139b477a929d912a2ae85af7",
+    "show-engine.js": "8043c854b11ba6343f0a7d0bdfcc2a05eb6261e13fe13f76a486d307d6ac1424",
+    "worker.js": "b30acd443f4550b3f3c330e461ab1dc36c51b5c546ef67e9884272de2c419c00",
+    "client.js": "db0cf74fcbc15f1a28b7da5bad54ec676e82c6220cbfeef27b8aeadc37417a09"
+  }
+}

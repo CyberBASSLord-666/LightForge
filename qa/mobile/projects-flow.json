@@ -1,0 +1,32 @@
+{
+  "original": {
+    "style": "festival",
+    "overrides": {},
+    "music": true
+  },
+  "copy": {
+    "style": "cinematic",
+    "overrides": {
+      "1": {
+        "intensity": 0.95,
+        "style": "pulse"
+      }
+    },
+    "music": true
+  },
+  "remaining": [
+    "Alpha"
+  ],
+  "race": {
+    "id": "race-B",
+    "bpm": 140,
+    "style": "pulse",
+    "audio": "http://127.0.0.1:8771/demo/glass-castle.wav#b",
+    "loading": false
+  },
+  "eventGuard": {
+    "cancelled": true,
+    "error": true
+  },
+  "errors": []
+}

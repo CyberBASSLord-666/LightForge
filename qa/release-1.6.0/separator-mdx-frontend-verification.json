@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "reference": "PyTorch torch.stft/torch.istft float64, exact trained7680-point FFT geometry",
+  "spectrumMaxAbsError": 4.656612873077393e-10,
+  "spectrumRMSE": 3.735016853093076e-13,
+  "decodedMaxAbsError": 6.996316240237554e-08,
+  "decodedRMSE": 9.061310822528933e-09,
+  "samples": 261120,
+  "source_hashes": {
+    "web/analysis/separator-mdx.js": "f0d42ecc6d5928f72120a5e40b33a291d28d550a59ec0f05c68e37ed87ed3a9d"
+  }
+}

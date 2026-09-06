@@ -1,0 +1,121 @@
+{
+  "frontend": {
+    "values": 128000,
+    "maxAbsError": 0.00008988380432128906,
+    "rmsError": 0.0000011273943820608866
+  },
+  "gapFreeChunkSchedules": 15,
+  "rawScoreChecks": [
+    {
+      "duration": 0.061,
+      "overlappingWindows": 1,
+      "options": {},
+      "sessions": 1,
+      "runs": 1,
+      "inputDisposals": 1,
+      "outputDisposals": 1,
+      "releases": 1,
+      "maxScoreError": 1.1920929021691506e-8
+    },
+    {
+      "duration": 10.04,
+      "overlappingWindows": 2,
+      "options": {},
+      "sessions": 1,
+      "runs": 2,
+      "inputDisposals": 2,
+      "outputDisposals": 2,
+      "releases": 1,
+      "maxScoreError": 8.344650270775134e-8
+    },
+    {
+      "duration": 16.2,
+      "overlappingWindows": 3,
+      "options": {},
+      "sessions": 1,
+      "runs": 3,
+      "inputDisposals": 3,
+      "outputDisposals": 3,
+      "releases": 1,
+      "maxScoreError": 8.344650270775134e-8
+    },
+    {
+      "duration": 0.42,
+      "overlappingWindows": 1,
+      "options": {
+        "noSpeech": true
+      },
+      "sessions": 1,
+      "runs": 1,
+      "inputDisposals": 1,
+      "outputDisposals": 1,
+      "releases": 1,
+      "maxScoreError": 5.960464477539063e-8
+    },
+    {
+      "duration": 0.42,
+      "overlappingWindows": 1,
+      "options": {
+        "omitScores": true
+      },
+      "sessions": 1,
+      "runs": 1,
+      "inputDisposals": 1,
+      "outputDisposals": 1,
+      "releases": 1
+    },
+    {
+      "duration": 0.42,
+      "overlappingWindows": 1,
+      "options": {
+        "silent": true
+      },
+      "sessions": 0,
+      "runs": 0,
+      "inputDisposals": 0,
+      "outputDisposals": 0,
+      "releases": 0,
+      "maxScoreError": 0
+    },
+    {
+      "duration": 0.42,
+      "failedInferenceCleanup": true,
+      "sessions": 1,
+      "runs": 1,
+      "inputDisposals": 1,
+      "outputDisposals": 0,
+      "releases": 1
+    }
+  ],
+  "historicalParity": {
+    "source": "qa/release-1.5.0/vocal-verification.json",
+    "graphSHA256": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+    "graphBytes": 13620408,
+    "exactGraphUnchanged": true,
+    "originalReferenceCoreMaxAbsScoreError": 0.0000010132789611816406,
+    "scope": "Historical PyTorch/ONNX parity applies to the identical graph; this run validates current frontend and class-score transport without rerunning model conversion."
+  },
+  "passed": true,
+  "release": "1.6.0",
+  "scope": "Independent analytic resampling and actual analyze() frontend/class-routing checks with declared inference scores; not vocal classification accuracy",
+  "chunkMaxError": 0,
+  "impulse": {
+    "sourceSample": 8820,
+    "sourceRate": 22050,
+    "destinationSample": 6400,
+    "destinationRate": 16000,
+    "delayMs": 0
+  },
+  "passband6000HzDb": 0.0004890423254471375,
+  "stopband9000HzDb": -79.32401681130013,
+  "shortSilentTailFinite": true,
+  "source_hashes": {
+    "web/analysis/vocal.js": "94483ac6cf5db7532abfba98e7bab7cd826a82ad2adca0296d39fdebd827ac70",
+    "web/analysis/models/vocal-model.json": "52093f26d0bfe3f04bbb1563b287fafe5e61aa57a61391ea643b04d97838ca7e",
+    "web/analysis/models/vocal-frontend.json": "72bdffced29bfdd6d1da77a4da2a2a4af1b2f839c71131d19dc9423db3d4732f",
+    "web/analysis/models/frame-mn10-singing.onnx": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+    "qa/release-1.6.0/test-vocal-resampling-audit.cjs": "da7f6d96d358806da49e03efc768277fed6fafc9762d2d44eea11af11650cd12",
+    "qa/release-1.5.0/vocal-verification.json": "25edde8a8484482e8b7cc9db739fa5c01446d2adcded158fdd39b263c213e7ad",
+    "qa/release-1.5.0/vocal-fixtures/sed-frontend-reference.json": "490f1f93cd1b0d52521c2837f1e4b0008fdcea165d4cf9f1f221644149c141b0"
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "HTDemucs FT vocals4shift": {
+    "mix": {
+      "tracks": 6,
+      "siSdrDb": 8.68698,
+      "plainSdrDb": 9.479076666666666,
+      "vocalEnvelopeRmsPearson": 0.9226766666666667,
+      "estimateToMixEnergyDb": -6.9094083333333325
+    },
+    "instrumental": {
+      "tracks": 6,
+      "vocalEnvelopeRmsPearson": 0.0,
+      "estimateToMixEnergyDb": -60.926155
+    }
+  },
+  "MDX FT + HTDemucs FT4shift fixed50/50": {
+    "mix": {
+      "tracks": 6,
+      "siSdrDb": 9.975716666666665,
+      "plainSdrDb": 10.562251666666667,
+      "vocalEnvelopeRmsPearson": 0.9330333333333334,
+      "estimateToMixEnergyDb": -6.872263333333333
+    },
+    "instrumental": {
+      "tracks": 6,
+      "vocalEnvelopeRmsPearson": 0.0,
+      "estimateToMixEnergyDb": -52.046933333333335
+    }
+  },
+  "MDX FT production": {
+    "mix": {
+      "tracks": 6,
+      "siSdrDb": 10.042196666666667,
+      "plainSdrDb": 10.689216666666667,
+      "vocalEnvelopeRmsPearson": 0.9204283333333333,
+      "estimateToMixEnergyDb": -6.643166666666667
+    },
+    "instrumental": {
+      "tracks": 6,
+      "vocalEnvelopeRmsPearson": 0.0,
+      "estimateToMixEnergyDb": -47.36027333333334
+    }
+  }
+}

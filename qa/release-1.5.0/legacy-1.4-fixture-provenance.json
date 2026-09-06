@@ -1,0 +1,14 @@
+{
+  "release": "1.4.0",
+  "method": "Compiled by the actual archived 1.4.0 worker using its original settings and real demo analysis.",
+  "archive": "LightForge-1.4.0-Private-Source.zip",
+  "archiveSHA256": "4ad25f047649832b11e71e4290bf63cf0e6e3f28c4940abc73104f1c0bf63190",
+  "source_hashes": {
+    "web/engine/vehicle-profile.js": "027bf87a827a900cda00505e2b539f84cbdb0d5a9800ea4eb1efdf85a0c10936",
+    "web/engine/movement-planner.js": "1d74e6e2a66a8390f0152198244c9c6853941ebc13c97bc8d54714ecd85eea11",
+    "web/engine/light-planner.js": "30324bba3e1b438a35ce7e4df0b1f3a8a821f105909ca2c77c007fcdad9f6cf5",
+    "web/engine/show-engine.js": "77e494a193fef1a5051a3d5bf632338b738073deb0fea3d316d06613e7d5c609",
+    "web/engine/client.js": "2735ef93c97589c2c56915d788500ba05926dc058f23d4e427982f38485b0c96",
+    "web/engine/worker.js": "4e0198ba0f2eba17bc70b6c4b85ef607c27f8014713817559a0805a39e62e9d7"
+  }
+}

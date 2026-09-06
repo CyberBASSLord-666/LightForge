@@ -1,0 +1,29 @@
+{
+  "release": "1.6.0",
+  "started": "2026-09-06T09:58:28.161Z",
+  "checks": [
+    "Separated-source metadata drives honest status, counts and pitch ribbon; next phrase/note seeks and phrase looping use annotated times.",
+    "Full song, Voice first and Bass first presets persist through the real asynchronous compiler, retain other roles, and expose selected state.",
+    "Instrumental guides suppress effective notes/phrases; overlapping Voice guides split ranges without overlap, Undo/Redo round-trip, Restore recovers raw analysis, and exported project state retains guides.",
+    "Range replacement splits both boundaries and merges adjacent equal guides; clearing a subsection restores analysis only inside its selected range.",
+    "Audition controls expose availability, invoke mix/vocals/accompaniment mode contracts, display selected mode, and explain export uses the full song. No fake stem is played.",
+    "A real IndexedDB save and page reload recover the compiled show, measured notes, editable Voice guide and its selected range.",
+    "Voice detail, corrections, emphasis presets and audio layers render without page overflow at 320, 393 and 768 px; review screenshots captured."
+  ],
+  "errors": [],
+  "externalRequests": [],
+  "limits": [
+    "Desktop Chromium, not physical Android or Tesla.",
+    "Synthetic voice annotations isolate controls and correction behavior; recognition quality is tested separately.",
+    "Audio-layer selection checks the UI contract; real separation/cache playback is tested by the release integration suite."
+  ],
+  "sourceStable": true,
+  "sourceHashes": {
+    "web/studio-tools.js": "1ecd3574c7c26b1602bfafd36c4cb3983ad1b6a0e1baefb7650380a075422a2e",
+    "web/music-insights.js": "5fd372e92564172af8bc4d1797e25f8f629dd7cccf7326daf0ebc170475084ab",
+    "web/index.html": "a5f555b34f73ecbe083a29bb4f90ca237a8fb5b0ee2d839fa9b5e8fd44fbf782",
+    "web/styles.css": "e2d838cf4d73febfdc25ea0a60717a6dd78fa410d49a746e9b5e0518b88add9e"
+  },
+  "passed": true,
+  "completed": "2026-09-06T09:59:08.732Z"
+}

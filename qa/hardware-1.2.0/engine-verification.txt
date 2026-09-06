@@ -1,0 +1,44 @@
+✔ canonical profile covers every exported channel and explicitly excludes uninstalled fogs (1.527835ms)
+✔ every available exterior and RGB output can be independently authored and exported (272.267143ms)
+✔ all exterior ramp directions and durations reach preview with exact frame boundaries (80.658864ms)
+✔ outer beam fades require an explicit verified-hardware option and preserve exact bytes (61.100215ms)
+✔ linked physical outputs share manual cues; valid unequal aliases retain physical OR semantics (22.893488ms)
+✔ manual closures replace only their own automatic track and accept all supported commands (103.022983ms)
+✔ Stop interrupts a partial travel; Idle preserves the reached position and closing resumes there (2.164435ms)
+✔ Idle ends Dance but does not cancel an in-flight one-frame Open/Close request (4.614892ms)
+✔ per-output switch masks automatic and manual cues, with independent RGB zones and closures (22.356253ms)
+✔ invalid commands, timing, overlaps, unsupported outputs and damaged colors fail before export (1.103725ms)
+✔ movement budgets, preparation, automatic close and final settled position are enforced (37.219464ms)
+✔ project JSON round-trip preserves all manual cues, switches, colors and exact FSEQ (15.8571ms)
+✔ FSEQ binary header, variable metadata, payload and duration agree with audio (300.845702ms)
+✔ broad tempo and duration matrix retains physical closure timing and budgets (3695.154215ms)
+✔ expressive full-track choreography uses three window dances, trunk ensembles and real mirror moves (55.496808ms)
+✔ shared physical outputs and unsupported channels are correct in every binary frame (30.00898ms)
+✔ all supported fade durations are real Tesla commands, and preview evaluates their brightness (15.698612ms)
+✔ RGB segments and display are independently addressable and optional (11.755924ms)
+✔ disabled closures are absent, including in an expressive show (33.498164ms)
+✔ timing offset moves musical light and closure entrances while preserving preparation (65.568663ms)
+✔ quiet input is intentionally dark; malformed and overlong tracks are rejected (6.04543ms)
+✔ degraded analysis data is normalized with explicit warnings (4.052043ms)
+✔ seed reproducibility, pattern variation and section overrides are functional (40.738275ms)
+✔ validator catches corrupted payload, unsupported dimming, absent lamps and illegal movement (26.017799ms)
+✔ the exact four-hour limit is accepted without timing overflow (1466.313352ms)
+✔ the actual Glass Castle music analysis exports a complete validated show (61.950494ms)
+✔ all ramp durations begin at zero at the exact frame boundary and advance continuously (18.763624ms)
+✔ interrupted and reversed ramps continue from their actual brightness without jumping (1.420082ms)
+✔ Model 3 merged light outputs obey Channel 4 ramp duration and side/aux OR (4.467129ms)
+✔ physical outputs suppress absent lights and never invent unsupported closures (1.303406ms)
+✔ open/close commands persist through Idle and move from the current partial position (3.697057ms)
+✔ Stop holds the reached position and later movement resumes without jumping (1.804852ms)
+✔ mirrors start unfolded and use real open/close commands, with no invented dance (1.667776ms)
+✔ estimated Dance moves, stops at Idle, and seeks reproduce identical poses (8.108541ms)
+✔ charge Dance is an LED rainbow, never door oscillation, and auto-close occurs at two minutes (6.874891ms)
+✔ preview raw commands and all RGB zones exactly match independently decoded exported bytes (192.091854ms)
+ℹ tests 36
+ℹ suites 0
+ℹ pass 36
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5901.277104

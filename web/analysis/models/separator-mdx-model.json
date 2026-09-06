@@ -1,0 +1,23 @@
+{
+  "id": "uvr-mdx-net-voc-ft",
+  "name": "UVR MDX-Net Voc FT",
+  "file": "uvr-mdx-voc-ft.onnx",
+  "bytes": 66762490,
+  "sha256": "534b2070fcc7df514b13ef660dc8cbb328679c2374d04354a5c42bb14ecce111",
+  "sampleRate": 44100,
+  "channels": 2,
+  "nFFT": 7680,
+  "hop": 1024,
+  "frames": 256,
+  "frequencyBins": 3072,
+  "compensate": 1.021,
+  "zeroInputBins": 3,
+  "defaultDenoise": true,
+  "overlapFraction": 0.5,
+  "license": "MIT; credit UVR and its developers Anjok07 and aufr33; MDX-Net architecture by KUIELab",
+  "licenseSource": "https://github.com/Anjok07/ultimatevocalremovergui#license",
+  "source": "https://github.com/Anjok07/ultimatevocalremovergui",
+  "url": "https://github.com/TRvlvr/model_repo/releases/download/all_public_uvr_models/UVR-MDX-NET-Voc_FT.onnx",
+  "parametersSource": "https://github.com/TRvlvr/application_data/blob/main/mdx_model_data/model_data.json",
+  "uvrTailMD5": "77d07b2667ddf05b9e3175941b4454a0"
+}

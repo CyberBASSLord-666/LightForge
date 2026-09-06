@@ -1,0 +1,42 @@
+{
+  "release": "1.5.0",
+  "started": "2026-09-06T07:33:17.502Z",
+  "checks": [
+    "Actual 64-second WAV import and production asynchronous show compiler produce a valid show with the new studio module loaded.",
+    "Half-time, 3-beat meter and playhead bar anchor update the compiled rhythm; reset restores detected rhythm while source analysis remains unchanged.",
+    "A/B comparison restores byte-exact compiled frames in both directions; a retained section motif keeps its resolved seed across global variation.",
+    "Movement frequency edits compile asynchronously; Undo/Redo restore exact frames, and A/B retains edits made within each branch.",
+    "A/B passage loop repeats real audio; ±beat seeks use the corrected beat grid; selected sections become exact preview loop ranges.",
+    "Preview quality selection reaches the production renderer while preserving light bloom.",
+    "Saved-show search filters names/styles, empty results explain recovery, and alphabetical sorting retains working card controls.",
+    "Vehicle observations persist locally with explicit simulation/uncertified wording; no vehicle or telemetry connection is made.",
+    "Pending-export recovery card renders native bootstrap state and explains save/discard actions. Native recovery itself is validated separately.",
+    "No horizontal overflow at 320px; screenshot captured with rhythm tools open.",
+    "No horizontal overflow at 393px; screenshot captured with rhythm tools open.",
+    "No horizontal overflow at 768px; screenshot captured with rhythm tools open."
+  ],
+  "errors": [],
+  "externalRequests": [],
+  "limits": [
+    "Desktop Chromium with SwiftShader; not an Android device or Tesla test.",
+    "Real demo audio import and production show compiler; precomputed music annotations isolate editing behavior.",
+    "Loop playback measures browser media time, not physical vehicle timing."
+  ],
+  "sourceStable": true,
+  "sourceHashes": {
+    "web/studio-tools.js": "c045ef433dc08531537a873988fed369646bf6578a6a2c31c9065448cc9c7a36",
+    "web/channel-studio.js": "3248cadd49b2faf0856c887c84a5a31d12d22a4d79c733bb1b9fc84a85ad21e9",
+    "web/music-insights.js": "525b23f2651bdc5ec53f97dbde7fbb764f97b550c0ade2acbd8298909957515b",
+    "web/index.html": "6985365ce0d53da3754363cc528bd02aaf0d248fdf5ef9b22c8d2e5a53424d89",
+    "web/styles.css": "47a85328f033049fa1e02ff6f151e8eace5f43a5b7dd87b012dfed5f54f789ca",
+    "web/app.js": "8214cc43d80ba215bc1d31b65fa61355710130eaa537fe96b1545ac62d21d70f",
+    "web/engine/client.js": "db0cf74fcbc15f1a28b7da5bad54ec676e82c6220cbfeef27b8aeadc37417a09",
+    "web/engine/worker.js": "b30acd443f4550b3f3c330e461ab1dc36c51b5c546ef67e9884272de2c419c00",
+    "web/engine/show-engine.js": "8043c854b11ba6343f0a7d0bdfcc2a05eb6261e13fe13f76a486d307d6ac1424",
+    "web/engine/movement-planner.js": "e008f55a0a82696d64142d674bfc95b85fe2fe18404f053bc6e2929b9994b6eb",
+    "web/engine/light-planner.js": "8379f71a6b4ddea3330e4d930f7f7aab1bff8697139b477a929d912a2ae85af7",
+    "web/engine/vehicle-profile.js": "027bf87a827a900cda00505e2b539f84cbdb0d5a9800ea4eb1efdf85a0c10936"
+  },
+  "passed": true,
+  "completed": "2026-09-06T07:33:40.276Z"
+}

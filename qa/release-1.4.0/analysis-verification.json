@@ -1,0 +1,320 @@
+{
+  "release": "1.4.0",
+  "analysisVersion": 3,
+  "passed": true,
+  "source_hashes": {
+    "web/analysis/dsp.js": "32186b9268632cab85cadcb7e84fa1b4e3d8eb4bb9fbdf96a0873067cb9acd71",
+    "web/analysis/worker.js": "8b1fbb26788563cf0aeded85ef09e88e830065d3000ec9417656473f126a97d0",
+    "web/analysis/analyzer.js": "b315608cacb102e1487edbdd4ebcf049adf3e99efa8c6612f1ccdbf7791240da",
+    "web/analysis/wav-reader.js": "c69842b391100059a3cd69fa08ba1ad0e1aef8d102abfde415bcdf7c6ee477be"
+  },
+  "models": {
+    "beat-this-small.onnx": {
+      "gitBlobSha1": "4f43223f38751cdb40ed1d7cff44acccaf7e3794",
+      "expectedGitBlobSha1": "4f43223f38751cdb40ed1d7cff44acccaf7e3794",
+      "sha256": "a5f8d39d989f31859454ba27afe61c5317ca95e4d9373e6853e5361b8937172f",
+      "bytes": 10555592,
+      "source": "https://raw.githubusercontent.com/danigb/beat-this-rs/089b509247e6fdcec666511c0dcf0d5f39c21e73/models/beat_this_small.onnx"
+    },
+    "beat-this-mel.onnx": {
+      "gitBlobSha1": "d54915ce662785df07343af176cb61be61283448",
+      "expectedGitBlobSha1": "d54915ce662785df07343af176cb61be61283448",
+      "sha256": "fdd59e65c515331308e4c8841edf99972deca646bdf6197744c2a5b7755e3de9",
+      "bytes": 270742,
+      "source": "https://raw.githubusercontent.com/danigb/beat-this-rs/089b509247e6fdcec666511c0dcf0d5f39c21e73/models/mel_spectrogram.onnx"
+    },
+    "beat-this-large.onnx": {
+      "sha256": "5f810debe53459b559127fb55bbad40035bb47cc567b20e501670f968c770f02",
+      "publisherSha256": "5f810debe53459b559127fb55bbad40035bb47cc567b20e501670f968c770f02",
+      "bytes": 83162650,
+      "source": "https://github.com/danigb/beat-this-rs/releases/download/model-large/beat_this.onnx"
+    }
+  },
+  "runtimeChecks": [
+    {
+      "name": "Whole-track versus chunked mel parity at opening, seam and ending",
+      "checks": [
+        {
+          "first": 0,
+          "frames": 500,
+          "maxAbsError": 0
+        },
+        {
+          "first": 490,
+          "frames": 1500,
+          "maxAbsError": 0
+        },
+        {
+          "first": 1856,
+          "frames": 500,
+          "maxAbsError": 0
+        }
+      ],
+      "passed": true
+    },
+    {
+      "name": "Balanced uses real compact transformer",
+      "passed": true,
+      "engine": {
+        "name": "Beat This! compact transformer",
+        "neural": true,
+        "detail": "Bundled pretrained Beat This! transformer with exact exported log-mel frontend, overlapping 30-second context, measured PCM attack alignment and recurring-passage fingerprints. All audio stays on this device.",
+        "model": "Beat This! small1",
+        "modelId": "beat-this-small1",
+        "modelSha256": "a5f8d39d989f31859454ba27afe61c5317ca95e4d9373e6853e5361b8937172f",
+        "frontendSha256": "fdd59e65c515331308e4c8841edf99972deca646bdf6197744c2a5b7755e3de9",
+        "quality": "balanced",
+        "runtime": "ONNX Runtime Web 1.20.1",
+        "analysisSeconds": 11.4
+      },
+      "beats": 96,
+      "downbeats": 24
+    },
+    {
+      "name": "Default uses real full transformer",
+      "passed": true,
+      "engine": {
+        "name": "Beat This! full transformer",
+        "neural": true,
+        "detail": "Bundled pretrained Beat This! transformer with exact exported log-mel frontend, overlapping 30-second context, measured PCM attack alignment and recurring-passage fingerprints. All audio stays on this device.",
+        "model": "Beat This! final0",
+        "modelId": "beat-this-final0",
+        "modelSha256": "5f810debe53459b559127fb55bbad40035bb47cc567b20e501670f968c770f02",
+        "frontendSha256": "fdd59e65c515331308e4c8841edf99972deca646bdf6197744c2a5b7755e3de9",
+        "quality": "precision",
+        "runtime": "ONNX Runtime Web 1.20.1",
+        "analysisSeconds": 20.5
+      },
+      "beats": 96,
+      "downbeats": 24
+    },
+    {
+      "name": "Digital silence skips neural inference and invents no beats",
+      "passed": true,
+      "duration": 2,
+      "onnxRequests": 0
+    },
+    {
+      "name": "Cancellation terminates analysis worker cleanly",
+      "passed": true
+    }
+  ],
+  "decoderFixtures": 12,
+  "structureAndGrooveTests": [
+    {
+      "name": "recurring passage fingerprints distinguish equal-energy tonal changes",
+      "passed": true,
+      "groups": [
+        "section-0",
+        "section-1",
+        "section-0",
+        "section-1"
+      ],
+      "similarities": [
+        0,
+        0,
+        1,
+        1
+      ]
+    },
+    {
+      "name": "groove detector respects swung subdivisions without shifting the beats",
+      "passed": true,
+      "feel": "swing",
+      "subdivisionRatio": 0.667,
+      "confidence": 0.9999999999999795,
+      "observations": 64
+    },
+    {
+      "name": "neural phase confidence exposes half-bar ambiguity",
+      "passed": true,
+      "downbeatConfidence": 0,
+      "alternatives": [
+        {
+          "passage": 0,
+          "confidence": 0,
+          "candidates": [
+            {
+              "phase": 0,
+              "evidence": 0.800000011920929
+            },
+            {
+              "phase": 2,
+              "evidence": 0.800000011920929
+            },
+            {
+              "phase": 1,
+              "evidence": 0
+            },
+            {
+              "phase": 3,
+              "evidence": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "transformer decoder follows broad tempo changes without autocorrelation forcing",
+      "passed": true,
+      "beats": 70,
+      "minLocalBpm": 75,
+      "maxLocalBpm": 160.31
+    }
+  ],
+  "synthetic": {
+    "scope": "One deterministic annotated percussion/chord track, not a genre benchmark",
+    "baseline": {
+      "beats": {
+        "predicted": 96,
+        "reference": 96,
+        "matched": 96,
+        "f1": 1,
+        "medianNearestErrorMs": 1.9759036144577635,
+        "p95NearestErrorMs": 4.204819277108918
+      },
+      "downbeats": {
+        "predicted": 24,
+        "reference": 24,
+        "matched": 0,
+        "f1": 0,
+        "medianNearestErrorMs": 962,
+        "p95NearestErrorMs": 963.6265060240952
+      }
+    },
+    "upgraded": {
+      "balanced": {
+        "beats": {
+          "predicted": 96,
+          "reference": 96,
+          "matched": 96,
+          "f1": 1,
+          "medianNearestErrorMs": 1.9759036144577635,
+          "p95NearestErrorMs": 4.204819277108918
+        },
+        "downbeats": {
+          "predicted": 24,
+          "reference": 24,
+          "matched": 24,
+          "f1": 1,
+          "medianNearestErrorMs": 1.9759036144577635,
+          "p95NearestErrorMs": 4.08433734939706
+        },
+        "modelId": "beat-this-small1"
+      },
+      "precision": {
+        "beats": {
+          "predicted": 96,
+          "reference": 96,
+          "matched": 96,
+          "f1": 1,
+          "medianNearestErrorMs": 1.9759036144577635,
+          "p95NearestErrorMs": 4.204819277108918
+        },
+        "downbeats": {
+          "predicted": 24,
+          "reference": 24,
+          "matched": 24,
+          "f1": 1,
+          "medianNearestErrorMs": 1.9759036144577635,
+          "p95NearestErrorMs": 4.08433734939706
+        },
+        "modelId": "beat-this-final0"
+      }
+    }
+  },
+  "realMusic": [
+    {
+      "track": "demo-balanced",
+      "duration": 64,
+      "modelId": "beat-this-small1",
+      "analysisSeconds": 17.6,
+      "beats": 99,
+      "downbeats": 25,
+      "bpm": 92.99,
+      "recurringGroups": [
+        "section-0"
+      ],
+      "scope": "Actual supplied audio through shipped worker and model; no expert timing annotations available"
+    },
+    {
+      "track": "demo",
+      "duration": 64,
+      "modelId": "beat-this-final0",
+      "analysisSeconds": 27.9,
+      "beats": 101,
+      "downbeats": 26,
+      "bpm": 94.42,
+      "recurringGroups": [
+        "section-0"
+      ],
+      "scope": "Actual supplied audio through shipped worker and model; no expert timing annotations available"
+    },
+    {
+      "track": "sample-balanced",
+      "duration": 238.04,
+      "modelId": "beat-this-small1",
+      "analysisSeconds": 37.9,
+      "beats": 366,
+      "downbeats": 92,
+      "bpm": 93.32,
+      "recurringGroups": [
+        "section-2",
+        "section-3"
+      ],
+      "scope": "Actual supplied audio through shipped worker and model; no expert timing annotations available"
+    },
+    {
+      "track": "sample",
+      "duration": 238.04,
+      "modelId": "beat-this-final0",
+      "analysisSeconds": 67.8,
+      "beats": 366,
+      "downbeats": 92,
+      "bpm": 93.25,
+      "recurringGroups": [
+        "section-1",
+        "section-4",
+        "section-3",
+        "section-2"
+      ],
+      "scope": "Actual supplied audio through shipped worker and model; no expert timing annotations available"
+    }
+  ],
+  "referenceAgreement": {
+    "scope": "Agreement with upstream Python small1 output, not independently annotated musical ground truth",
+    "source": "https://github.com/danigb/beat-this-rs/blob/089b509247e6fdcec666511c0dcf0d5f39c21e73/tests/fixtures/golden_small.json",
+    "provenance": {
+      "checkpoint": "models/small1.ckpt",
+      "audio": "It Don't Mean A Thing - Kings of Swing.mp3",
+      "beat_this_version": "1.1.0",
+      "beat_this_commit": "b95c8ab0c58c2d9fcfd40508ae8dffbc05ac4f5c",
+      "postprocessing": "minimal",
+      "fps": 50,
+      "command": "uv run scripts/gen_golden.py models/small1.ckpt tests/fixtures/golden_small.json"
+    },
+    "beats": {
+      "predicted": 575,
+      "reference": 579,
+      "matched": 574,
+      "f1": 0.9948006932409013,
+      "medianNearestErrorMs": 14.999999999986358,
+      "p95NearestErrorMs": 35.00000000000014
+    },
+    "downbeats": {
+      "predicted": 144,
+      "reference": 145,
+      "matched": 144,
+      "f1": 0.9965397923875432,
+      "medianNearestErrorMs": 10.000000000019327,
+      "p95NearestErrorMs": 34.99999999999659
+    }
+  },
+  "limitations": [
+    "No physical Android device or Tesla tested by this receipt.",
+    "Synthetic fixture is not a broad musical benchmark; model agreement is not ground truth.",
+    "Timing and recurrence confidence are heuristics, not calibrated probabilities.",
+    "Section labels do not claim semantic verse/chorus or lyric understanding.",
+    "Full four-hour full-transformer runtime has not been timed on a phone."
+  ]
+}

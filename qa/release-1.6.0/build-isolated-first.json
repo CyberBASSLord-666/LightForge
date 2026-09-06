@@ -1,0 +1,24 @@
+{
+  "release": "1.6.0",
+  "passed": true,
+  "returncode": 0,
+  "elapsed_seconds": 19.267,
+  "source_hashes": {
+    "build.sh": "cf7ddd282fbc1005c3d63769be9098541721add122e9b3ce3fb0ac5953d06684",
+    "tools/apk_archive.py": "532e0a29c3120a6fa6e0653d9f66701cc8594718b710672c41b89a89d4adfd64",
+    "tests/test_apk_archive.py": "f0b73f9adb20e525f9c5ac3d59e0869fbe259b83420ffbb941541f8f199e2864"
+  },
+  "apk": {
+    "apk": "LightForge-1.6.0.apk",
+    "bytes": 185631779,
+    "sha256": "578fc2d342dc208f9fdfbac3143a5fc000e3ed29780089374848e55f3e1cc114",
+    "zip_integrity": "passed",
+    "alignment": "passed",
+    "signature": "verified",
+    "min_sdk": 26,
+    "target_sdk": 35,
+    "compile_sdk": 35,
+    "version_name": "1.6.0",
+    "version_code": 10600
+  }
+}

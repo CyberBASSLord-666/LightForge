@@ -1,0 +1,24 @@
+{"progress":"Loading model","memory":[]}
+{
+  "scope": "Candidate research only: desktop Chromium, shipped ORT1.20.1 WASM, no Android-device evidence.",
+  "started": "2026-09-06T09:41:38.822Z",
+  "passed": false,
+  "result": {
+    "done": true,
+    "error": "417894960",
+    "memory": [
+      4294901760
+    ]
+  },
+  "failure": "AssertionError [ERR_ASSERTION]: {\"done\":true,\"error\":\"417894960\",\"memory\":[4294901760]}\n    at /workspace/scratch/9b34d7a394e6/app/lightforge/research/upstream/separation-candidates/test-demucs-wasm.cjs:10:9",
+  "completed": "2026-09-06T09:41:53.826Z"
+}
+AssertionError [ERR_ASSERTION]: {"done":true,"error":"417894960","memory":[4294901760]}
+    at /workspace/scratch/9b34d7a394e6/app/lightforge/research/upstream/separation-candidates/test-demucs-wasm.cjs:10:9 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}

@@ -1,0 +1,36 @@
+START studio nightowl-mix
+{"track":"nightowl-mix","duration":6.8034467120181406,"seconds":42.69196500000358,"vocals":{"presence":"uncertain","phrases":3,"accents":12,"coverage":0.8523}}
+START studio nightowl-instrumental
+{"track":"nightowl-instrumental","duration":6.8034467120181406,"seconds":50.72204000000656,"vocals":{"presence":"uncertain","phrases":0,"accents":0,"coverage":0}}
+START studio nightowl-controlled
+{"track":"nightowl-controlled","duration":6.8034467120181406,"seconds":65.8701649999991,"vocals":{"presence":"not_detected","phrases":0,"accents":0,"coverage":0}}
+START studio stella-mix
+{"track":"stella-mix","duration":6.8034467120181406,"seconds":69.0005450000018,"vocals":{"presence":"detected","phrases":1,"accents":21,"coverage":0.9988}}
+START studio stella-instrumental
+{"track":"stella-instrumental","duration":6.8034467120181406,"seconds":56.2390700000003,"vocals":{"presence":"not_detected","phrases":0,"accents":0,"coverage":0}}
+START studio stella-controlled
+{"track":"stella-controlled","duration":6.8034467120181406,"seconds":62.36708500000089,"vocals":{"presence":"detected","phrases":2,"accents":15,"coverage":0.5453}}
+START studio meaxic-mix
+{"track":"meaxic-mix","duration":6.8034467120181406,"seconds":40.0067650000006,"vocals":{"presence":"detected","phrases":1,"accents":21,"coverage":1}}
+START studio meaxic-instrumental
+{"track":"meaxic-instrumental","duration":6.8034467120181406,"seconds":46.1343200000003,"vocals":{"presence":"not_detected","phrases":0,"accents":0,"coverage":0}}
+START studio meaxic-controlled
+{"track":"meaxic-controlled","duration":6.8034467120181406,"seconds":49.86712000000477,"vocals":{"presence":"detected","phrases":2,"accents":14,"coverage":0.5336}}
+START studio grunge-mix
+{"track":"grunge-mix","duration":6.8034467120181406,"seconds":42.514019999995824,"vocals":{"presence":"detected","phrases":1,"accents":25,"coverage":0.9464}}
+START studio grunge-instrumental
+{"track":"grunge-instrumental","duration":6.8034467120181406,"seconds":42.6010700000003,"vocals":{"presence":"not_detected","phrases":0,"accents":0,"coverage":0}}
+START studio grunge-controlled
+{"track":"grunge-controlled","duration":6.8034467120181406,"seconds":59.05431000000238,"vocals":{"presence":"detected","phrases":2,"accents":12,"coverage":0.5483}}
+START studio falcon-mix
+{"track":"falcon-mix","duration":6.8034467120181406,"seconds":44.32406500000506,"vocals":{"presence":"detected","phrases":1,"accents":12,"coverage":0.7761}}
+START studio falcon-instrumental
+{"track":"falcon-instrumental","duration":6.8034467120181406,"seconds":37.75818499999493,"vocals":{"presence":"not_detected","phrases":0,"accents":0,"coverage":0}}
+START studio falcon-controlled
+{"track":"falcon-controlled","duration":6.8034467120181406,"seconds":37.61249500000477,"vocals":{"presence":"detected","phrases":2,"accents":8,"coverage":0.5189}}
+START studio sdrnr-mix
+{"track":"sdrnr-mix","duration":6.8034467120181406,"seconds":41.26325999999791,"vocals":{"presence":"detected","phrases":1,"accents":25,"coverage":1}}
+START studio sdrnr-instrumental
+{"track":"sdrnr-instrumental","duration":6.8034467120181406,"seconds":38.307505000002685,"vocals":{"presence":"not_detected","phrases":0,"accents":0,"coverage":0}}
+START studio sdrnr-controlled
+{"track":"sdrnr-controlled","duration":6.8034467120181406,"seconds":39.8374299999997,"vocals":{"presence":"detected","phrases":2,"accents":13,"coverage":0.5431}}

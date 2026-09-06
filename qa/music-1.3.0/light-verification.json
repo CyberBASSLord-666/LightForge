@@ -1,0 +1,74 @@
+{
+  "release": "1.3.0",
+  "passed": true,
+  "errors": [],
+  "checks": [
+    {
+      "name": "known eight-second musical rest is dark in exterior and every RGB zone",
+      "passed": true
+    },
+    {
+      "name": "legacy saved analysis without activityRanges still respects waveform silence",
+      "passed": true
+    },
+    {
+      "name": "last genuine beat survives instead of being replaced by unconditional ending fade",
+      "passed": true
+    },
+    {
+      "name": "three-quarter bars honor supplied downbeat phase and do not treat pickup as downbeat",
+      "passed": true
+    },
+    {
+      "name": "three-quarter fallback bars use three beats when explicit downbeats are absent",
+      "passed": true
+    },
+    {
+      "name": "changing tempo follows actual local beat intervals instead of average BPM",
+      "passed": true
+    },
+    {
+      "name": "known non-grid impact attacks and offsets reach FSEQ within half an export frame",
+      "passed": true
+    },
+    {
+      "name": "rounding at activity onset retains the accepted binary attack within half a frame",
+      "passed": true
+    },
+    {
+      "name": "higher-salience collision preserves the strong known attack without moving it later",
+      "passed": true
+    },
+    {
+      "name": "deterministic variation and per-section style edits preserve independent unaffected sections",
+      "passed": true
+    },
+    {
+      "name": "disabled output masks still win over composed beats, impacts and movement tracks",
+      "passed": true
+    },
+    {
+      "name": "actual recorded analysis exports settled, budget-valid choreography: baseline-demo-music.json",
+      "passed": true
+    },
+    {
+      "name": "actual recorded analysis exports settled, budget-valid choreography: baseline-sample-music.json",
+      "passed": true
+    },
+    {
+      "name": "actual recorded analysis exports settled, budget-valid choreography: current-demo-music.json",
+      "passed": true
+    },
+    {
+      "name": "actual recorded analysis exports settled, budget-valid choreography: current-sample-music.json",
+      "passed": true
+    }
+  ],
+  "source_hashes": {
+    "web/engine/show-engine.js": "75e91440221c4a276d0a40fb98ba5736c8cffea488dc34402ff777e779a88488",
+    "web/engine/light-planner.js": "6370a4a53e60babafb11ef9d1d252887a007addc118f067d5a66223e672fa2ce",
+    "web/engine/movement-planner.js": "c1c4f70c4a8fa0e82d7a1e33385f37eb22c935d899c71c1fbed60c7124738edf",
+    "web/engine/vehicle-profile.js": "b2201f74f42092a435a82ec41b43c842925e15d78f42dc96dcedc96b20b86138"
+  },
+  "scope": "Independent known-event fixtures and FSEQ byte inspection; no physical vehicle timing measurement."
+}

@@ -1,0 +1,205 @@
+{
+  "passed": true,
+  "release": "1.6.0",
+  "createdAt": "2026-09-06T10:06:28.453462+00:00",
+  "model": "UVR MDX-Net Voc FT",
+  "actualWasmTracks": 19,
+  "frontendReference": {
+    "passed": true,
+    "reference": "PyTorch torch.stft/torch.istft float64, exact trained7680-point FFT geometry",
+    "spectrumMaxAbsError": 4.656612873077393e-10,
+    "spectrumRMSE": 3.735016853093076e-13,
+    "decodedMaxAbsError": 6.996316240237554e-08,
+    "decodedRMSE": 9.061310822528933e-09,
+    "samples": 261120,
+    "source_hashes": {
+      "web/analysis/separator-mdx.js": "f0d42ecc6d5928f72120a5e40b33a291d28d550a59ec0f05c68e37ed87ed3a9d"
+    }
+  },
+  "streamClock": {
+    "samples": 508657,
+    "chunks": 4,
+    "passes": 8,
+    "maxExtraSeamJump": 1.3455748558044434e-05
+  },
+  "longSeam": {
+    "track": "seam-mix",
+    "metadata": {
+      "sourceSeparated": true,
+      "name": "UVR MDX-Net Voc FT",
+      "modelId": "uvr-mdx-net-voc-ft",
+      "modelSha256": "534b2070fcc7df514b13ef660dc8cbb328679c2374d04354a5c42bb14ecce111",
+      "sampleRate": 44100,
+      "sourceChannels": 2,
+      "stems": [
+        "vocals",
+        "accompaniment"
+      ],
+      "method": "Pretrained stereo complex-spectrum separation with polarity ensemble",
+      "vocalBandwidthHz": 17640,
+      "fftWindowSamples": 7680,
+      "fftHopSamples": 1024,
+      "contextSamples": 3840,
+      "overlapSamples": 126720,
+      "overlapFraction": 0.5,
+      "denoise": true,
+      "modelPasses": 28,
+      "alignment": "Original sample clock; normalized overlap-add and complementary chunk crossfades; no latency subtraction",
+      "estimated": true,
+      "analysisSeconds": 305.2878800000027,
+      "chunks": 14,
+      "limitations": [
+        "Separation can retain instrument bleed or soften quiet and heavily processed singing.",
+        "Lead and backing vocals are combined; this is not lyric transcription."
+      ]
+    },
+    "chunks": [
+      {
+        "start": 0,
+        "count": 126720
+      },
+      {
+        "start": 126720,
+        "count": 126720
+      },
+      {
+        "start": 253440,
+        "count": 126720
+      },
+      {
+        "start": 380160,
+        "count": 126720
+      },
+      {
+        "start": 506880,
+        "count": 126720
+      },
+      {
+        "start": 633600,
+        "count": 126720
+      },
+      {
+        "start": 760320,
+        "count": 126720
+      },
+      {
+        "start": 887040,
+        "count": 126720
+      },
+      {
+        "start": 1013760,
+        "count": 126720
+      },
+      {
+        "start": 1140480,
+        "count": 126720
+      },
+      {
+        "start": 1267200,
+        "count": 126720
+      },
+      {
+        "start": 1393920,
+        "count": 126720
+      },
+      {
+        "start": 1520640,
+        "count": 126720
+      },
+      {
+        "start": 1647360,
+        "count": 184157
+      }
+    ],
+    "samples": 1831517,
+    "mixtureReconstructionMaxError": 5.960464477539063e-08,
+    "rms": 0.07386491210725674,
+    "peak": 0.42964956164360046
+  },
+  "quality": {
+    "Spleeter 2 stems": {
+      "mix": {
+        "tracks": 6,
+        "siSdrDb": 5.92291,
+        "plainSdrDb": 7.16329,
+        "siSdrImprovementDb": 10.55034,
+        "vocalEnvelopeRmsPearson": 0.8669,
+        "estimateToMixEnergyDb": -7.72566
+      },
+      "instrumental": {
+        "tracks": 6,
+        "vocalEnvelopeRmsPearson": 0.0,
+        "estimateToMixEnergyDb": -67.98872
+      },
+      "controlled": {
+        "tracks": 6,
+        "siSdrDb": 6.66289,
+        "plainSdrDb": 7.75517,
+        "siSdrImprovementDb": 13.61178,
+        "vocalEnvelopeRmsPearson": 0.95135,
+        "estimateToMixEnergyDb": -9.08285,
+        "outsideVoiceWindowEnergyFraction": 0.00801
+      }
+    },
+    "UVR MDX-Net Voc FT polarity ensemble": {
+      "mix": {
+        "tracks": 6,
+        "siSdrDb": 10.0422,
+        "plainSdrDb": 10.68922,
+        "siSdrImprovementDb": 14.66963,
+        "vocalEnvelopeRmsPearson": 0.92043,
+        "estimateToMixEnergyDb": -6.64317
+      },
+      "instrumental": {
+        "tracks": 6,
+        "vocalEnvelopeRmsPearson": 0.0,
+        "estimateToMixEnergyDb": -47.36027
+      },
+      "controlled": {
+        "tracks": 6,
+        "siSdrDb": 10.94769,
+        "plainSdrDb": 11.42143,
+        "siSdrImprovementDb": 17.89658,
+        "vocalEnvelopeRmsPearson": 0.98977,
+        "estimateToMixEnergyDb": -8.21448,
+        "outsideVoiceWindowEnergyFraction": 0.00059
+      }
+    }
+  },
+  "qualityScope": [
+    "SI-SDR and envelope agreement are objective acoustic metrics, not subjective perceived sound or choreography quality.",
+    "Six short CC-licensed excerpts are not a statistically representative or verified held-out benchmark.",
+    "Original stems contain production effects and AAC artifacts. Their RMS is not a word/phrase annotation.",
+    "Low output on a no-vocal mixture is desirable, but aggressive silencing alone cannot prove good positive separation.",
+    "Diagnostic envelope lag is measured and reported without correcting output before any metric."
+  ],
+  "physicalPhoneOrTeslaTested": false,
+  "reproductionHarness": {
+    "path": "qa/release-1.6.0/test-separator.cjs",
+    "sha256": "fb374530b86d63c27c1e267be7d0490cacedc306a98ef393437ccec6d2f60edd",
+    "note": "The Spleeter-only comparison route was relocated out of web during raw capture; all MDX inference, streaming, model and clock code remained unchanged."
+  },
+  "models": {
+    "uvr-mdx-voc-ft.onnx": {
+      "sha256": "534b2070fcc7df514b13ef660dc8cbb328679c2374d04354a5c42bb14ecce111",
+      "bytes": 66762490
+    }
+  },
+  "source_hashes": {
+    "web/analysis/separator-mdx.js": "f0d42ecc6d5928f72120a5e40b33a291d28d550a59ec0f05c68e37ed87ed3a9d",
+    "web/analysis/models/separator-mdx-model.json": "0d7a6ff7c6a3a19fdd38b92a50cf39cfd91130bf2ed7dcbaca2f12890385e0c2",
+    "web/analysis/models/uvr-mdx-voc-ft.onnx": "534b2070fcc7df514b13ef660dc8cbb328679c2374d04354a5c42bb14ecce111",
+    "web/analysis/models/MDX-NET-LICENSE.txt": "2b60d95083e4339de80ef81c029149bf9ce4535ac55312b569392bcfef22782d",
+    "web/analysis/models/UVR-MDX-NOTICE.md": "fb51c7d4ae16036a9802c373e96989aee2945dba6c66842419f1d77ca85bf771",
+    "qa/release-1.6.0/test-separator-mdx-frontend.cjs": "280c06336a3c96c27fb898d58ba466e50b1fdacf2a74517222a745474bf87082",
+    "qa/release-1.6.0/verify-separator-mdx-frontend.py": "b95bfc4a8715dd613e7756a8b97369852b2eee50dec8c2ce1f23b4f7d92c4c91",
+    "qa/release-1.6.0/test-separator-stream.cjs": "11c631b0e3492749039e19fea08501297f09c9f644975be857fd967e234e18cb",
+    "qa/release-1.6.0/verify-separator.py": "ca383c8761b9f62b95a4863eb45d487d6b031979c22edf5d27eff10673424594"
+  },
+  "evidence_hashes": {
+    "separator-mdx-frontend-verification.json": "e78ada2a81c1ecc23594ad6d7a7fe3bcda011a2a7c051f35b0a101f8580539d8",
+    "separator-stream-verification.json": "fabe4e2ffe8167898f6052bf55389f1b2c55cfccc4c1c9449b4694de555ddc6d",
+    "separator-mdx-inference-verification.json": "aa30dee1cda64a9e3dc6be1b6a22a9f99095656480d497e5012cd81e63b85c69",
+    "separator-quality-comparison.json": "9242bd3fdde34373658cfc665ead4738332a3c329d441b5c3d66b96d44afe856"
+  }
+}

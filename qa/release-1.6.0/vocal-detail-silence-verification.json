@@ -1,0 +1,40 @@
+{
+  "release": "1.6.0",
+  "passed": true,
+  "method": "Previously captured actual MDX output over a 41.531 second mixture with proven digital-silence gaps; production centered float downsampling, real isolated-source Frame-MN10 inference, and final detail extractor. MDX inference was reused rather than repeated.",
+  "metrics": {
+    "duration": 41.53099773242631,
+    "digitalSilenceSamples": 631389,
+    "digitalSilenceSeconds": 14.317210884353742,
+    "maxActualMdxVocalResidualInDigitalSilence": 0.0057784863747656345,
+    "maxCancelledVocalAccompanimentSumInDigitalSilence": 0,
+    "phrases": 4,
+    "accents": 82,
+    "notes": 43,
+    "falsePhrasesInDigitalSilence": 0,
+    "falseAccentsInDigitalSilence": 0,
+    "falseNotesInDigitalSilence": 0,
+    "nonzeroVocalEnvelopeFramesInDigitalSilence": 0
+  },
+  "limits": [
+    "A targeted model-artifact regression, not proof that every recording or separator output is free from false vocal recognition.",
+    "No physical phone or Tesla execution is asserted."
+  ],
+  "source_hashes": {
+    "web/analysis/vocal-detail.js": "df7f86db061f4b64806539d82dfc7d4777379fdb506a75de8c2d3e689a82a621",
+    "web/analysis/vocal.js": "94483ac6cf5db7532abfba98e7bab7cd826a82ad2adca0296d39fdebd827ac70",
+    "web/analysis/stem-cache.js": "c7d3101a59a85d0c2ebfd30e1c6cd40dc9720f17072b5fc821bd0fd3bf7c6fb4",
+    "web/analysis/wav-reader.js": "0f0e5216dc1d2ca0bfb25eddacdaa21076990fa7638c22188023607e43d4005f",
+    "web/analysis/models/features.json": "8a9fb3bc88c3e2f35934dd0024f22458aa8d357e3e3946a6e2c6230d3886e278",
+    "web/analysis/models/frame-mn10-singing.onnx": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+    "qa/release-1.6.0/capture-vocal-detail-candidates.cjs": "4e28c360e118a042d55019b6c8358e7c6df7fa5f315ed0d54d239a8d0fdb9212",
+    "qa/release-1.6.0/verify-vocal-detail-silence.cjs": "d08aecf5047b40dcbd0f980a34abf5123523d670885adc12ae99850240abb568",
+    "qa/release-1.6.0/seam-fixture-provenance.json": "1f6f168f0683b4d5539b4fa96263843dda59258418ff14abb96c0c107466cae0"
+  },
+  "fixture_hashes": {
+    "qa/release-1.6.0/fixtures/seam-mix.wav": "41fbfc709c476106c32091611e10fa9a6f4a3b81734498373c24db0e19a72ce0",
+    "qa/release-1.6.0/fixtures/seam-mix-mdx-separated-vocals.f32": "264a3ea7b1f74df941ff534ce27b9aaf99b430c15d5affa55cd97a80faeb8348",
+    "qa/release-1.6.0/fixtures/seam-mix-mdx-separated-accompaniment.f32": "d4533a3622d2e4c75e269c3fc8d97263de6f28bc4d53d41387ae40b8fe0ac6e0",
+    "qa/release-1.6.0/detail-candidate-seam-mix.json": "98b8218f4703c03d8598d7f2923a63a955176f8d59a84cc987180c5209b1084d"
+  }
+}

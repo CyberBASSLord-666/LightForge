@@ -1,0 +1,1202 @@
+{
+  "date": "2026-09-06T03:00:30.225Z",
+  "renderer": "production bundled Three.js WebGL2 under Chromium SwiftShader",
+  "checks": 38,
+  "channels": [
+    {
+      "channel": 1,
+      "on": [
+        {
+          "name": "mat10_mesh10_component020",
+          "intensity": 7,
+          "part": "body"
+        },
+        {
+          "name": "mat15_mesh16_component003",
+          "intensity": 7,
+          "part": "body"
+        }
+      ],
+      "lamps": [
+        {
+          "id": 1,
+          "channels": [
+            1
+          ],
+          "value": 1,
+          "physicalValue": 1,
+          "estimatedMapping": true,
+          "surfaces": [
+            {
+              "name": "mat15_mesh16_component003",
+              "sourceMesh": 16,
+              "sourceComponent": 3,
+              "rigPart": "body"
+            },
+            {
+              "name": "mat10_mesh10_component020",
+              "sourceMesh": 10,
+              "sourceComponent": 20,
+              "rigPart": "body"
+            }
+          ],
+          "visible": true,
+          "x": 332.517732825518,
+          "y": 442.24511444555424
+        }
+      ]
+    },
+    {
+      "channel": 2,
+      "on": [
+        {
+          "name": "mat10_mesh10_component022",
+          "intensity": 7,
+          "part": "body"
+        },
+        {
+          "name": "mat15_mesh16_component001",
+          "intensity": 7,
+          "part": "body"
+        }
+      ],
+      "lamps": [
+        {
+          "id": 2,
+          "channels": [
+            2
+          ],
+          "value": 1,
+          "physicalValue": 1,
+          "estimatedMapping": true,
+          "surfaces": [
+            {
+              "name": "mat15_mesh16_component001",
+              "sourceMesh": 16,
+              "sourceComponent": 1,
+              "rigPart": "body"
+            },
+            {
+              "name": "mat10_mesh10_component022",
+              "sourceMesh": 10,
+              "sourceComponent": 22,
+              "rigPart": "body"
+            }
+          ],
+          "visible": true,
+          "x": 123.02679411741173,
+          "y": 374.0795414697333
+        }
+      ]
+    },
+    {
+      "channel": 3,
+      "on": [
+        {
+          "name": "Inner_optics_L",
+          "intensity": 7,
+          "part": "body"
+        }
+      ],
+      "lamps": [
+        {
+          "id": 3,
+          "channels": [
+            3,
+            7,
+            9,
+            11
+          ],
+          "value": 1,
+          "physicalValue": 1,
+          "estimatedMapping": true,
+          "surfaces": [
+            {
+              "name": "Inner_optics_L",
+              "sourceMesh": null,
+              "sourceComponent": null,
+              "rigPart": "body"
+            }
+          ],
+          "visible": true,
+          "x": 279.72088546947526,
+          "y": 448.09730832862584
+        }
+      ]
+    },
+    {
+      "channel": 4,
+      "on": [
+        {
+          "name": "Inner_optics_R",
+          "intensity": 7,
+          "part": "body"
+        }
+      ],
+      "lamps": [
+        {
+          "id": 4,
+          "channels": [
+            4,
+            8,
+            10,
+            12
+          ],
+          "value": 1,
+          "physicalValue": 1,
+          "estimatedMapping": true,
+          "surfaces": [
+            {
+              "name": "Inner_optics_R",
+              "sourceMesh": null,
+              "sourceComponent": null,
+              "rigPart": "body"
+            }
+          ],
+          "visible": true,
+          "x": 111.67089341149897,
+          "y": 390.1630815848153
+        }
+      ]
+    },
+    {
+      "channel": 5,
+      "on": [
+        {
+          "name": "mat10_mesh10_component008",
+          "intensity": 7,
+          "part": "body"
+        },
+        {
+          "name": "mat10_mesh10_component011",
+          "intensity": 7,
+          "part": "body"
+        }
+      ],
+      "lamps": [
+        {
+          "id": 5,
+          "channels": [
+            5
+          ],
+          "value": 1,
+          "physicalValue": 1,
+          "estimatedMapping": true,
+          "surfaces": [
+            {
+              "name": "mat10_mesh10_component008",
+              "sourceMesh": 10,
+              "sourceComponent": 8,
+              "rigPart": "body"
+            },
+            {
+              "name": "mat10_mesh10_component011",
+              "sourceMesh": 10,
+              "sourceComponent": 11,
+              "rigPart": "body"
+            }
+          ],
+          "visible": true,
+          "x": 289.28659987005034,
+          "y": 449.0379714345712
+        }
+      ]
+    },
+    {
+      "channel": 6,
+      "on": [
+        {
+          "name": "mat10_mesh10_component007",
+          "intensity": 7,
+          "part": "body"
+        },
+        {
+          "name": "mat10_mesh10_component029",
+          "intensity": 7,
+          "part": "body"
+        }
+      ],
+      "lamps": [
+        {
+          "id": 6,
+          "channels": [
+            6
+          ],
+          "value": 1,
+          "physicalValue": 1,
+          "estimatedMapping": true,
+          "surfaces": [
+            {
+              "name": "mat10_mesh10_component007",
+              "sourceMesh": 10,
+              "sourceComponent": 7,
+              "rigPart": "body"
+            },
+            {
+              "name": "mat10_mesh10_component029",
+              "sourceMesh": 10,
+              "sourceComponent": 29,
+              "rigPart": "body"
+            }
+          ],
+          "visible": true,
+          "x": 108.80311168886541,
+          "y": 387.1802047296949
+        }
+      ]
+    },
+    {
+      "channel": 7,
+      "on": [
+        {
+          "name": "Inner_optics_L",
+          "intensity": 7,
+          "part": "body"
+        }
+      ],
+      "lamps": [
+        {
+          "id": 7,
+          "channels": [
+            3,
+            7,
+            9,
+            11
+          ],
+          "value": 1,
+          "physicalValue": 1,
+          "estimatedMapping": true,
+          "surfaces": [
+            {
+              "name": "Inner_optics_L",
+              "sourceMesh": null,
+              "sourceComponent": null,
+              "rigPart": "body"
+            }
+          ],
+          "visible": true,
+          "x": 279.72088546947526,
+          "y": 448.09730832862584
+        }
+      ]
+    },
+    {
+      "channel": 8,
+      "on": [
+        {
+          "name": "Inner_optics_R",
+          "intensity": 7,
+          "part": "body"
+        }
+      ],
+      "lamps": [
+        {
+          "id": 8,
+          "channels": [
+            4,
+            8,
+            10,
+            12
+          ],
+          "value": 1,
+          "physicalValue": 1,
+          "estimatedMapping": true,
+          "surfaces": [
+            {
+              "name": "Inner_optics_R",
+              "sourceMesh": null,
+              "sourceComponent": null,
+              "rigPart": "body"
+            }
+          ],
+          "visible": true,
+          "x": 111.67089341149897,
+          "y": 390.1630815848153
+        }
+      ]
+    },
+    {
+      "channel": 9,
+      "on": [
+        {
+          "name": "Inner_optics_L",
+          "intensity": 7,
+          "part": "body"
+        }
+      ],
+      "lamps": [
+        {
+          "id": 9,
+          "channels": [
+            3,
+            7,
+            9,
+            11
+          ],
+          "value": 1,
+          "physicalValue": 1,
+          "estimatedMapping": true,
+          "surfaces": [
+            {
+              "name": "Inner_optics_L",
+              "sourceMesh": null,
+              "sourceComponent": null,
+              "rigPart": "body"
+            }
+          ],
+          "visible": true,
+          "x": 279.72088546947526,
+          "y": 448.09730832862584
+        }
+      ]
+    },
+    {
+      "channel": 10,
+      "on": [
+        {
+          "name": "Inner_optics_R",
+          "intensity": 7,
+          "part": "body"
+        }
+      ],
+      "lamps": [
+        {
+          "id": 10,
+          "channels": [
+            4,
+            8,
+            10,
+            12
+          ],
+          "value": 1,
+          "physicalValue": 1,
+          "estimatedMapping": true,
+          "surfaces": [
+            {
+              "name": "Inner_optics_R",
+              "sourceMesh": null,
+              "sourceComponent": null,
+              "rigPart": "body"
+            }
+          ],
+          "visible": true,
+          "x": 111.67089341149897,
+          "y": 390.1630815848153
+        }
+      ]
+    },
+    {
+      "channel": 11,
+      "on": [
+        {
+          "name": "Inner_optics_L",
+          "intensity": 7,
+          "part": "body"
+        }
+      ],
+      "lamps": [
+        {
+          "id": 11,
+          "channels": [
+            3,
+            7,
+            9,
+            11
+          ],
+          "value": 1,
+          "physicalValue": 1,
+          "estimatedMapping": true,
+          "surfaces": [
+            {
+              "name": "Inner_optics_L",
+              "sourceMesh": null,
+              "sourceComponent": null,
+              "rigPart": "body"
+            }
+          ],
+          "visible": true,
+          "x": 279.72088546947526,
+          "y": 448.09730832862584
+        }
+      ]
+    },
+    {
+      "channel": 12,
+      "on": [
+        {
+          "name": "Inner_optics_R",
+          "intensity": 7,
+          "part": "body"
+        }
+      ],
+      "lamps": [
+        {
+          "id": 12,
+          "channels": [
+            4,
+            8,
+            10,
+            12
+          ],
+          "value": 1,
+          "physicalValue": 1,
+          "estimatedMapping": true,
+          "surfaces": [
+            {
+              "name": "Inner_optics_R",
+              "sourceMesh": null,
+              "sourceComponent": null,
+              "rigPart": "body"
+            }
+          ],
+          "visible": true,
+          "x": 111.67089341149897,
+          "y": 390.1630815848153
+        }
+      ]
+    },
+    {
+      "channel": 13,
+      "on": [
+        {
+          "name": "mat10_mesh10_component010",
+          "intensity": 7,
+          "part": "body"
+        },
+        {
+          "name": "mat14_mesh15_component000",
+          "intensity": 7,
+          "part": "body"
+        }
+      ],
+      "lamps": [
+        {
+          "id": 13,
+          "channels": [
+            13
+          ],
+          "value": 1,
+          "physicalValue": 1,
+          "estimatedMapping": false,
+          "surfaces": [
+            {
+              "name": "mat14_mesh15_component000",
+              "sourceMesh": 15,
+              "sourceComponent": 0,
+              "rigPart": "body"
+            },
+            {
+              "name": "mat10_mesh10_component010",
+              "sourceMesh": 10,
+              "sourceComponent": 10,
+              "rigPart": "body"
+            }
+          ],
+          "visible": true,
+          "x": 248.18800822464712,
+          "y": 466.54138290119295
+        }
+      ]
+    },
+    {
+      "channel": 14,
+      "on": [
+        {
+          "name": "mat10_mesh10_component023",
+          "intensity": 7,
+          "part": "body"
+        },
+        {
+          "name": "mat14_mesh15_component003",
+          "intensity": 7,
+          "part": "body"
+        }
+      ],
+      "lamps": [
+        {
+          "id": 14,
+          "channels": [
+            14
+          ],
+          "value": 1,
+          "physicalValue": 1,
+          "estimatedMapping": false,
+          "surfaces": [
+            {
+              "name": "mat14_mesh15_component003",
+              "sourceMesh": 15,
+              "sourceComponent": 3,
+              "rigPart": "body"
+            },
+            {
+              "name": "mat10_mesh10_component023",
+              "sourceMesh": 10,
+              "sourceComponent": 23,
+              "rigPart": "body"
+            }
+          ],
+          "visible": true,
+          "x": 89.35684798466536,
+          "y": 407.67289522592426
+        }
+      ]
+    },
+    {
+      "channel": 15,
+      "on": [],
+      "lamps": []
+    },
+    {
+      "channel": 16,
+      "on": [],
+      "lamps": []
+    },
+    {
+      "channel": 17,
+      "on": [
+        {
+          "name": "Headlamp_side_marker_-1",
+          "intensity": 7,
+          "part": "body"
+        },
+        {
+          "name": "Headlamp_side_marker_1",
+          "intensity": 7,
+          "part": "body"
+        }
+      ],
+      "lamps": [
+        {
+          "id": 17,
+          "channels": [
+            17,
+            19
+          ],
+          "value": 1,
+          "physicalValue": 1,
+          "estimatedMapping": true,
+          "surfaces": [
+            {
+              "name": "Headlamp_side_marker_-1",
+              "sourceMesh": null,
+              "sourceComponent": null,
+              "rigPart": "body"
+            }
+          ],
+          "visible": true,
+          "x": 344.2798930728262,
+          "y": 444.6479244270374
+        }
+      ]
+    },
+    {
+      "channel": 18,
+      "on": [
+        {
+          "name": "Headlamp_side_marker_-1",
+          "intensity": 7,
+          "part": "body"
+        },
+        {
+          "name": "Headlamp_side_marker_1",
+          "intensity": 7,
+          "part": "body"
+        }
+      ],
+      "lamps": [
+        {
+          "id": 18,
+          "channels": [
+            18,
+            20
+          ],
+          "value": 1,
+          "physicalValue": 1,
+          "estimatedMapping": true,
+          "surfaces": [
+            {
+              "name": "Headlamp_side_marker_1",
+              "sourceMesh": null,
+              "sourceComponent": null,
+              "rigPart": "body"
+            }
+          ],
+          "visible": false,
+          "x": 116.42733514775814,
+          "y": 370.8655733248653
+        }
+      ]
+    },
+    {
+      "channel": 19,
+      "on": [
+        {
+          "name": "Headlamp_side_marker_-1",
+          "intensity": 7,
+          "part": "body"
+        },
+        {
+          "name": "Headlamp_side_marker_1",
+          "intensity": 7,
+          "part": "body"
+        }
+      ],
+      "lamps": [
+        {
+          "id": 19,
+          "channels": [
+            17,
+            19
+          ],
+          "value": 1,
+          "physicalValue": 1,
+          "estimatedMapping": true,
+          "surfaces": [
+            {
+              "name": "Headlamp_side_marker_-1",
+              "sourceMesh": null,
+              "sourceComponent": null,
+              "rigPart": "body"
+            }
+          ],
+          "visible": true,
+          "x": 344.2798930728262,
+          "y": 444.6479244270374
+        }
+      ]
+    },
+    {
+      "channel": 20,
+      "on": [
+        {
+          "name": "Headlamp_side_marker_-1",
+          "intensity": 7,
+          "part": "body"
+        },
+        {
+          "name": "Headlamp_side_marker_1",
+          "intensity": 7,
+          "part": "body"
+        }
+      ],
+      "lamps": [
+        {
+          "id": 20,
+          "channels": [
+            18,
+            20
+          ],
+          "value": 1,
+          "physicalValue": 1,
+          "estimatedMapping": true,
+          "surfaces": [
+            {
+              "name": "Headlamp_side_marker_1",
+              "sourceMesh": null,
+              "sourceComponent": null,
+              "rigPart": "body"
+            }
+          ],
+          "visible": false,
+          "x": 116.42733514775814,
+          "y": 370.8655733248653
+        }
+      ]
+    },
+    {
+      "channel": 21,
+      "on": [
+        {
+          "name": "mat10_mesh10_component013",
+          "intensity": 7,
+          "part": "body"
+        },
+        {
+          "name": "mat14_mesh15_component001",
+          "intensity": 7,
+          "part": "body"
+        }
+      ],
+      "lamps": [
+        {
+          "id": 21,
+          "channels": [
+            21
+          ],
+          "value": 1,
+          "physicalValue": 1,
+          "estimatedMapping": false,
+          "surfaces": [
+            {
+              "name": "mat14_mesh15_component001",
+              "sourceMesh": 15,
+              "sourceComponent": 1,
+              "rigPart": "body"
+            },
+            {
+              "name": "mat10_mesh10_component013",
+              "sourceMesh": 10,
+              "sourceComponent": 13,
+              "rigPart": "body"
+            }
+          ],
+          "visible": true,
+          "x": 481.3519921384094,
+          "y": 394.95632085033856
+        }
+      ]
+    },
+    {
+      "channel": 22,
+      "on": [
+        {
+          "name": "mat10_mesh10_component014",
+          "intensity": 7,
+          "part": "body"
+        },
+        {
+          "name": "mat14_mesh15_component004",
+          "intensity": 7,
+          "part": "body"
+        }
+      ],
+      "lamps": [
+        {
+          "id": 22,
+          "channels": [
+            22
+          ],
+          "value": 1,
+          "physicalValue": 1,
+          "estimatedMapping": false,
+          "surfaces": [
+            {
+              "name": "mat14_mesh15_component004",
+              "sourceMesh": 15,
+              "sourceComponent": 4,
+              "rigPart": "body"
+            },
+            {
+              "name": "mat10_mesh10_component014",
+              "sourceMesh": 10,
+              "sourceComponent": 14,
+              "rigPart": "body"
+            }
+          ],
+          "visible": false,
+          "x": 233.24786252185413,
+          "y": 331.7113870704951
+        }
+      ]
+    },
+    {
+      "channel": 23,
+      "on": [
+        {
+          "name": "mat14_mesh15_component002",
+          "intensity": 7,
+          "part": "trunk"
+        }
+      ],
+      "lamps": [
+        {
+          "id": 23,
+          "channels": [
+            23
+          ],
+          "value": 1,
+          "physicalValue": 1,
+          "estimatedMapping": false,
+          "surfaces": [
+            {
+              "name": "mat14_mesh15_component002",
+              "sourceMesh": 15,
+              "sourceComponent": 2,
+              "rigPart": "trunk"
+            }
+          ],
+          "visible": false,
+          "x": 746.0027565006827,
+          "y": 255.70792159359013
+        }
+      ]
+    },
+    {
+      "channel": 24,
+      "on": [
+        {
+          "name": "mat14_mesh15_component005",
+          "intensity": 7,
+          "part": "trunk"
+        }
+      ],
+      "lamps": [
+        {
+          "id": 24,
+          "channels": [
+            24
+          ],
+          "value": 1,
+          "physicalValue": 1,
+          "estimatedMapping": false,
+          "surfaces": [
+            {
+              "name": "mat14_mesh15_component005",
+              "sourceMesh": 15,
+              "sourceComponent": 5,
+              "rigPart": "trunk"
+            }
+          ],
+          "visible": false,
+          "x": 607.4918092167197,
+          "y": 237.96352707063036
+        }
+      ]
+    },
+    {
+      "channel": 25,
+      "on": [
+        {
+          "name": "mat10_mesh10_component009",
+          "intensity": 7,
+          "part": "body"
+        },
+        {
+          "name": "mat10_mesh10_component012",
+          "intensity": 7,
+          "part": "body"
+        },
+        {
+          "name": "mat13_mesh14_component000",
+          "intensity": 7,
+          "part": "trunk"
+        },
+        {
+          "name": "mat13_mesh14_component001",
+          "intensity": 7,
+          "part": "trunk"
+        },
+        {
+          "name": "mat13_mesh14_component002",
+          "intensity": 7,
+          "part": "trunk"
+        },
+        {
+          "name": "mat13_mesh14_component003",
+          "intensity": 7,
+          "part": "trunk"
+        },
+        {
+          "name": "mat13_mesh14_component006",
+          "intensity": 7,
+          "part": "trunk"
+        },
+        {
+          "name": "mat13_mesh14_component007",
+          "intensity": 7,
+          "part": "trunk"
+        },
+        {
+          "name": "mat13_mesh14_component008",
+          "intensity": 7,
+          "part": "trunk"
+        }
+      ],
+      "lamps": [
+        {
+          "id": 25,
+          "channels": [
+            25
+          ],
+          "value": 1,
+          "physicalValue": 1,
+          "estimatedMapping": true,
+          "surfaces": [
+            {
+              "name": "mat10_mesh10_component009",
+              "sourceMesh": 10,
+              "sourceComponent": 9,
+              "rigPart": "body"
+            },
+            {
+              "name": "mat10_mesh10_component012",
+              "sourceMesh": 10,
+              "sourceComponent": 12,
+              "rigPart": "body"
+            },
+            {
+              "name": "mat13_mesh14_component000",
+              "sourceMesh": 14,
+              "sourceComponent": 0,
+              "rigPart": "trunk"
+            },
+            {
+              "name": "mat13_mesh14_component003",
+              "sourceMesh": 14,
+              "sourceComponent": 3,
+              "rigPart": "trunk"
+            },
+            {
+              "name": "mat13_mesh14_component007",
+              "sourceMesh": 14,
+              "sourceComponent": 7,
+              "rigPart": "trunk"
+            },
+            {
+              "name": "mat13_mesh14_component008",
+              "sourceMesh": 14,
+              "sourceComponent": 8,
+              "rigPart": "trunk"
+            },
+            {
+              "name": "mat13_mesh14_component001",
+              "sourceMesh": 14,
+              "sourceComponent": 1,
+              "rigPart": "trunk"
+            },
+            {
+              "name": "mat13_mesh14_component002",
+              "sourceMesh": 14,
+              "sourceComponent": 2,
+              "rigPart": "trunk"
+            },
+            {
+              "name": "mat13_mesh14_component006",
+              "sourceMesh": 14,
+              "sourceComponent": 6,
+              "rigPart": "trunk"
+            }
+          ],
+          "visible": false,
+          "x": 658.5275132496613,
+          "y": 215.1557119564511
+        }
+      ]
+    },
+    {
+      "channel": 26,
+      "on": [
+        {
+          "name": "mat13_mesh14_component000",
+          "intensity": 7,
+          "part": "trunk"
+        },
+        {
+          "name": "mat13_mesh14_component003",
+          "intensity": 7,
+          "part": "trunk"
+        },
+        {
+          "name": "mat13_mesh14_component007",
+          "intensity": 7,
+          "part": "trunk"
+        },
+        {
+          "name": "mat13_mesh14_component008",
+          "intensity": 7,
+          "part": "trunk"
+        }
+      ],
+      "lamps": [
+        {
+          "id": 26,
+          "channels": [
+            26
+          ],
+          "value": 1,
+          "physicalValue": 1,
+          "estimatedMapping": true,
+          "surfaces": [
+            {
+              "name": "mat13_mesh14_component000",
+              "sourceMesh": 14,
+              "sourceComponent": 0,
+              "rigPart": "trunk"
+            },
+            {
+              "name": "mat13_mesh14_component003",
+              "sourceMesh": 14,
+              "sourceComponent": 3,
+              "rigPart": "trunk"
+            },
+            {
+              "name": "mat13_mesh14_component007",
+              "sourceMesh": 14,
+              "sourceComponent": 7,
+              "rigPart": "trunk"
+            },
+            {
+              "name": "mat13_mesh14_component008",
+              "sourceMesh": 14,
+              "sourceComponent": 8,
+              "rigPart": "trunk"
+            }
+          ],
+          "visible": false,
+          "x": 747.8964367715018,
+          "y": 256.9171454402829
+        }
+      ]
+    },
+    {
+      "channel": 27,
+      "on": [
+        {
+          "name": "mat13_mesh14_component001",
+          "intensity": 7,
+          "part": "trunk"
+        },
+        {
+          "name": "mat13_mesh14_component002",
+          "intensity": 7,
+          "part": "trunk"
+        },
+        {
+          "name": "mat13_mesh14_component006",
+          "intensity": 7,
+          "part": "trunk"
+        }
+      ],
+      "lamps": [
+        {
+          "id": 27,
+          "channels": [
+            27
+          ],
+          "value": 1,
+          "physicalValue": 1,
+          "estimatedMapping": true,
+          "surfaces": [
+            {
+              "name": "mat13_mesh14_component001",
+              "sourceMesh": 14,
+              "sourceComponent": 1,
+              "rigPart": "trunk"
+            },
+            {
+              "name": "mat13_mesh14_component002",
+              "sourceMesh": 14,
+              "sourceComponent": 2,
+              "rigPart": "trunk"
+            },
+            {
+              "name": "mat13_mesh14_component006",
+              "sourceMesh": 14,
+              "sourceComponent": 6,
+              "rigPart": "trunk"
+            }
+          ],
+          "visible": false,
+          "x": 602.7945809036524,
+          "y": 238.2444957594621
+        }
+      ]
+    },
+    {
+      "channel": 28,
+      "on": [
+        {
+          "name": "mat10_mesh10_component004",
+          "intensity": 7,
+          "part": "body"
+        },
+        {
+          "name": "mat10_mesh10_component005",
+          "intensity": 7,
+          "part": "body"
+        },
+        {
+          "name": "mat10_mesh10_component006",
+          "intensity": 7,
+          "part": "body"
+        }
+      ],
+      "lamps": [
+        {
+          "id": 28,
+          "channels": [
+            28
+          ],
+          "value": 1,
+          "physicalValue": 1,
+          "estimatedMapping": false,
+          "surfaces": [
+            {
+              "name": "mat10_mesh10_component004",
+              "sourceMesh": 10,
+              "sourceComponent": 4,
+              "rigPart": "body"
+            },
+            {
+              "name": "mat10_mesh10_component005",
+              "sourceMesh": 10,
+              "sourceComponent": 5,
+              "rigPart": "body"
+            },
+            {
+              "name": "mat10_mesh10_component006",
+              "sourceMesh": 10,
+              "sourceComponent": 6,
+              "rigPart": "body"
+            }
+          ],
+          "visible": false,
+          "x": 626.2366756769923,
+          "y": 304.54326662379566
+        }
+      ]
+    },
+    {
+      "channel": 29,
+      "on": [],
+      "lamps": []
+    },
+    {
+      "channel": 30,
+      "on": [
+        {
+          "name": "License_plate_lamp_L",
+          "intensity": 7,
+          "part": "trunk"
+        },
+        {
+          "name": "License_plate_lamp_R",
+          "intensity": 7,
+          "part": "trunk"
+        }
+      ],
+      "lamps": [
+        {
+          "id": 30,
+          "channels": [
+            30
+          ],
+          "value": 1,
+          "physicalValue": 1,
+          "estimatedMapping": false,
+          "surfaces": [
+            {
+              "name": "License_plate_lamp_L",
+              "sourceMesh": null,
+              "sourceComponent": null,
+              "rigPart": "trunk"
+            },
+            {
+              "name": "License_plate_lamp_R",
+              "sourceMesh": null,
+              "sourceComponent": null,
+              "rigPart": "trunk"
+            }
+          ],
+          "visible": false,
+          "x": 698.1292510897854,
+          "y": 255.16216472760053
+        }
+      ]
+    }
+  ],
+  "displayOnlyFront": [
+    "mat01_mesh01_component000"
+  ],
+  "errors": []
+}

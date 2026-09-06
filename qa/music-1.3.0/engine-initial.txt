@@ -1,0 +1,88 @@
+✔ canonical profile covers every exported channel and explicitly excludes uninstalled fogs (1.405199ms)
+✔ every available exterior and RGB output can be independently authored and exported (298.320667ms)
+✔ all exterior ramp directions and durations reach preview with exact frame boundaries (59.742065ms)
+✖ outer beam fades require an explicit verified-hardware option and preserve exact bytes (40.624685ms)
+✔ linked physical outputs share manual cues; valid unequal aliases retain physical OR semantics (28.342176ms)
+✔ manual closures replace only their own automatic track and accept all supported commands (128.248766ms)
+✔ Stop interrupts a partial travel; Idle preserves the reached position and closing resumes there (2.25346ms)
+✔ Idle ends Dance but does not cancel an in-flight one-frame Open/Close request (5.2499ms)
+✔ per-output switch masks automatic and manual cues, with independent RGB zones and closures (14.106571ms)
+✔ invalid commands, timing, overlaps, unsupported outputs and damaged colors fail before export (1.072739ms)
+✔ movement budgets, preparation, automatic close and final settled position are enforced (37.132967ms)
+✔ project JSON round-trip preserves all manual cues, switches, colors and exact FSEQ (16.167429ms)
+✔ FSEQ binary header, variable metadata, payload and duration agree with audio (225.136592ms)
+✔ broad tempo and duration matrix retains physical closure timing and budgets (3872.196286ms)
+✖ expressive full-track choreography uses three window dances, trunk ensembles and real mirror moves (71.765963ms)
+✔ shared physical outputs and unsupported channels are correct in every binary frame (40.998529ms)
+✔ all supported fade durations are real Tesla commands, and preview evaluates their brightness (17.261059ms)
+✔ RGB segments and display are independently addressable and optional (12.486366ms)
+✔ disabled closures are absent, including in an expressive show (33.580499ms)
+✔ timing offset moves musical light and closure entrances while preserving preparation (67.055578ms)
+✔ quiet input is intentionally dark; malformed and overlong tracks are rejected (6.605085ms)
+✔ degraded analysis data is normalized with explicit warnings (4.950148ms)
+✔ seed reproducibility, pattern variation and section overrides are functional (63.283807ms)
+✔ validator catches corrupted payload, unsupported dimming, absent lamps and illegal movement (28.758955ms)
+✔ the exact four-hour limit is accepted without timing overflow (1479.162216ms)
+✔ the actual Glass Castle music analysis exports a complete validated show (69.195366ms)
+✔ all ramp durations begin at zero at the exact frame boundary and advance continuously (9.052887ms)
+✔ interrupted and reversed ramps continue from their actual brightness without jumping (1.06066ms)
+✔ Model 3 merged light outputs obey Channel 4 ramp duration and side/aux OR (9.002481ms)
+✔ physical outputs suppress absent lights and never invent unsupported closures (1.003654ms)
+✔ open/close commands persist through Idle and move from the current partial position (2.201921ms)
+✔ Stop holds the reached position and later movement resumes without jumping (1.026478ms)
+✔ mirrors start unfolded and use real open/close commands, with no invented dance (0.959207ms)
+✔ estimated Dance moves, stops at Idle, and seeks reproduce identical poses (5.16348ms)
+✔ charge Dance is an LED rainbow, never door oscillation, and auto-close occurs at two minutes (3.795776ms)
+✔ preview raw commands and all RGB zones exactly match independently decoded exported bytes (192.689665ms)
+ℹ tests 36
+ℹ suites 0
+ℹ pass 34
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6090.938677
+
+✖ failing tests:
+
+test at app/lightforge/tests/engine-manual.test.cjs:36:1
+✖ outer beam fades require an explicit verified-hardware option and preserve exact bytes (40.624685ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert.ok(automatic.frames.some((v,i)=>i%200<2&&[26,51,77,178,204,230].includes(v)))
+  
+      at TestContext.<anonymous> (/workspace/scratch/9b34d7a394e6/app/lightforge/tests/engine-manual.test.cjs:40:70)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at app/lightforge/tests/engine.test.cjs:67:1
+✖ expressive full-track choreography uses three window dances, trunk ensembles and real mirror moves (71.765963ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  7 !== 9
+  
+      at TestContext.<anonymous> (/workspace/scratch/9b34d7a394e6/app/lightforge/tests/engine.test.cjs:70:33)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 7,
+    expected: 9,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

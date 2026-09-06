@@ -1,0 +1,110 @@
+{
+  "checks": [
+    "Real WebGL2 context loads the bundled detailed Highland mesh",
+    "front camera renders the loaded 3D model",
+    "rear camera renders the loaded 3D model",
+    "driver camera renders the loaded 3D model",
+    "cabin camera renders the loaded 3D model",
+    "orbit camera renders the loaded 3D model",
+    "Dragging orbits the actual Three.js camera",
+    "Two-finger pinch changes real camera distance",
+    "Expanded preview resizes the WebGL drawing buffer and restores",
+    "Studio and Night controls change rendered lighting and selection state",
+    "Fade onset and midpoint follow exact exported frame and supported ramp",
+    "Trunk tail lamps and license plate move while paired reverse lamps remain fixed",
+    "Windows, mirrors, trunk and charge port change actual 3D transforms",
+    "Charge dance changes rendered LED color while holding the flap open",
+    "Rewind restores exact lamp values, RGB colors and articulated geometry",
+    "Pause freezes sequence values and physical geometry estimates",
+    "Actual audio clock drives WebGL frames within the measured render interval",
+    "Output monitor and hidden lamps agree with rendered fade values",
+    "Foldable layout resizes the model without horizontal overflow",
+    "Model, renderer and preview load with every external HTTP origin blocked",
+    "Graphics context loss pauses drawing, reports recovery, then resumes",
+    "Missing WebGL reports an error while leaving project navigation and import available"
+  ],
+  "errors": [],
+  "externalRequests": [],
+  "assets": [
+    {
+      "url": "/preview/models/highland.glb",
+      "status": 200
+    }
+  ],
+  "skipped": [],
+  "graphics": {
+    "webgl2": true,
+    "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+    "meshes": 105,
+    "triangles": 180081,
+    "ready": true,
+    "renderer": "WebGL2"
+  },
+  "pinch": {
+    "before": 8.503185554714484,
+    "after": 4.6989184356457105
+  },
+  "audioSync": {
+    "maxGapMs": 233.40000000000146,
+    "maxLagMs": 2.0799999999998597,
+    "samples": [
+      {
+        "gapMs": 16.700000000000728,
+        "audio": 1.509531,
+        "preview": 1.509531,
+        "frame": 75,
+        "paused": false
+      },
+      {
+        "gapMs": 200,
+        "audio": 1.662256,
+        "preview": 1.660176,
+        "frame": 83,
+        "paused": false
+      },
+      {
+        "gapMs": 16.599999999998545,
+        "audio": 1.673285,
+        "preview": 1.672092,
+        "frame": 83,
+        "paused": false
+      },
+      {
+        "gapMs": 199.90000000000146,
+        "audio": 1.888018,
+        "preview": 1.886049,
+        "frame": 94,
+        "paused": false
+      },
+      {
+        "gapMs": 233.40000000000146,
+        "audio": 2.120008,
+        "preview": 2.118545,
+        "frame": 105,
+        "paused": false
+      },
+      {
+        "gapMs": 200,
+        "audio": 2.320303,
+        "preview": 2.318879,
+        "frame": 115,
+        "paused": false
+      },
+      {
+        "gapMs": 216.6999999999971,
+        "audio": 2.534952,
+        "preview": 2.533326,
+        "frame": 126,
+        "paused": false
+      },
+      {
+        "gapMs": 216.60000000000218,
+        "audio": 2.739577,
+        "preview": 2.737901,
+        "frame": 136,
+        "paused": false
+      }
+    ]
+  },
+  "passed": true
+}

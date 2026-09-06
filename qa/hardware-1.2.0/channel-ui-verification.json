@@ -1,0 +1,51 @@
+{
+  "checks": [
+    "All 34 independently exposed control groups are selectable; unavailable fog channels are absent.",
+    "Both mirror tracks expose Idle, Unfold, Fold and Stop; other six movement tracks also expose Dance; charge Dance is labeled rainbow LED.",
+    "Before generation, real model inspection accepts movement commands and RGB colors without changing the project. Timed cue saving stays disabled.",
+    "Light cues add, edit, remove and restore automatic; combined aliases share all bytes; muting zeros all group aliases. Overlapping edits preserve settings, show bytes and undo history.",
+    "First window Open and mirror Fold can be added directly with visible automatic return cues. First trunk Dance inserts a visible preparatory Open and final Close.",
+    "RGB cues write exact selected color bytes and support edit/delete; closure cues replace only their own automatic track with Idle gaps and support edit/delete/restore.",
+    "An over-budget window track is rejected atomically; prior settings, exported bytes and undo history remain intact.",
+    "Outer-beam ramps are opt-in; the UI exposes all six documented fade commands when enabled and reverts to on/off by default.",
+    "Solo inspection leaves generated and exported FSEQ bytes unchanged; Stop, Play and natural completion restore the show.",
+    "Reload restores project metadata, IndexedDB audio, all three cue kinds and byte-identical regenerated export.",
+    "The actual browser Export action produces a CRC-valid USB ZIP containing the same FSEQ bytes and project cue edits.",
+    "Individual output editor fits 320 px, 393 px and 768 px without document overflow.",
+    "Production bundled model and new editor operate without external network requests or JavaScript errors."
+  ],
+  "errors": [],
+  "externalRequests": [],
+  "limits": [
+    "Synthetic beat analysis isolates editing; bundled demo WAV is real audio.",
+    "Desktop Chromium WebGL2 uses SwiftShader; this is not a physical phone or vehicle test."
+  ],
+  "export": {
+    "fseqSHA256": "92dab34bc293e376053869674219e5392dbb9f6e4ed220f51dd8f3da64c23577",
+    "files": [
+      "LightShow/lightshow.fseq",
+      "LightShow/lightshow.wav",
+      "README.txt",
+      "Validation.json",
+      "Review/LightForge_Project.json"
+    ]
+  },
+  "mobile": [
+    {
+      "viewport": 320,
+      "scroll": 320,
+      "body": 320
+    },
+    {
+      "viewport": 393,
+      "scroll": 393,
+      "body": 393
+    },
+    {
+      "viewport": 768,
+      "scroll": 768,
+      "body": 768
+    }
+  ],
+  "passed": true
+}

@@ -1,0 +1,263 @@
+{
+  "release": "1.3.0",
+  "analysisVersion": 2,
+  "passed": true,
+  "errors": [],
+  "synthetic": [
+    {
+      "name": "off-grid 127.3 BPM",
+      "passed": true,
+      "beatCountBefore": 92,
+      "beatCountAfter": 90,
+      "expectedBeats": 90,
+      "bpmBefore": 126.98,
+      "bpmAfter": 127.29,
+      "meterAfter": 4,
+      "meterConfidence": 1,
+      "medianErrorBeforeMs": 24.06991358994759,
+      "medianErrorAfterMs": 2.56794972505503,
+      "p95ErrorBeforeMs": 33.276512175962836,
+      "p95ErrorAfterMs": 4.775333857033104,
+      "phrases": 6,
+      "impacts": 23
+    },
+    {
+      "name": "triple meter with pickup",
+      "passed": true,
+      "beatCountBefore": 92,
+      "beatCountAfter": 90,
+      "expectedBeats": 90,
+      "bpmBefore": 107.95,
+      "bpmAfter": 108,
+      "meterAfter": 3,
+      "meterConfidence": 1,
+      "medianErrorBeforeMs": 23.666666666663616,
+      "medianErrorAfterMs": 2.4444444444444713,
+      "p95ErrorBeforeMs": 32.555555555553894,
+      "p95ErrorAfterMs": 4.666666666668817,
+      "phrases": 8,
+      "impacts": 30
+    },
+    {
+      "name": "quiet rest and return",
+      "passed": true,
+      "beatCountBefore": 82,
+      "beatCountAfter": 80,
+      "expectedBeats": 80,
+      "bpmBefore": 120,
+      "bpmAfter": 120,
+      "meterAfter": 4,
+      "meterConfidence": 1,
+      "medianErrorBeforeMs": 27.000000000001023,
+      "medianErrorAfterMs": 3.0000000000001137,
+      "p95ErrorBeforeMs": 27.000000000001023,
+      "p95ErrorAfterMs": 3.0000000000001137,
+      "phrases": 9,
+      "impacts": 21
+    },
+    {
+      "name": "120 to 90 BPM then accelerando",
+      "passed": true,
+      "beatCountBefore": 98,
+      "beatCountAfter": 96,
+      "expectedBeats": 96,
+      "bpmBefore": 114.67,
+      "bpmAfter": 107.14,
+      "meterAfter": 4,
+      "meterConfidence": 1,
+      "medianErrorBeforeMs": 17.000000000001236,
+      "medianErrorAfterMs": 3.0000000000000027,
+      "p95ErrorBeforeMs": 32.999999999979934,
+      "p95ErrorAfterMs": 4.666666666679475,
+      "phrases": 6,
+      "impacts": 24,
+      "localTempos": [
+        {
+          "time": 5.12,
+          "bpm": 120
+        },
+        {
+          "time": 12.620000000000001,
+          "bpm": 120
+        },
+        {
+          "time": 24.285,
+          "bpm": 90.03
+        },
+        {
+          "time": 34.285000000000004,
+          "bpm": 90.03
+        },
+        {
+          "time": 49.68,
+          "bpm": 109.8
+        }
+      ]
+    },
+    {
+      "name": "digital silence",
+      "passed": true,
+      "beatCountBefore": 0,
+      "beatCountAfter": 0,
+      "expectedBeats": 0,
+      "bpmBefore": 0,
+      "bpmAfter": 0,
+      "meterAfter": 4,
+      "meterConfidence": 0,
+      "medianErrorBeforeMs": 0,
+      "medianErrorAfterMs": 0,
+      "p95ErrorBeforeMs": 0,
+      "p95ErrorAfterMs": 0,
+      "phrases": 1,
+      "impacts": 0
+    },
+    {
+      "name": "exact manual BPM preserves requested tempo",
+      "passed": true,
+      "bpm": 123.45,
+      "beatCount": 90,
+      "maxGridDeviationMs": 5.384581669432009e-12
+    },
+    {
+      "name": "feature envelope retains sample clock across chunk boundaries",
+      "passed": true,
+      "trueTime": 9.998,
+      "detectedTime": 9.995000000000001,
+      "errorMs": 2.9999999999983373
+    },
+    {
+      "name": "silent openings and endings retained with no made-up beats",
+      "passed": true,
+      "firstBeat": 4.11,
+      "lastBeat": 18.61,
+      "duration": 25
+    },
+    {
+      "name": "confidence falls when meter evidence is absent",
+      "passed": true,
+      "meterConfidence": 0
+    },
+    {
+      "name": "neural-only evidence never invents digital-silence beats",
+      "passed": true,
+      "beats": 0,
+      "activityRanges": 0
+    },
+    {
+      "name": "timing corrections are bounded and explicitly reported",
+      "passed": true,
+      "refined": 90,
+      "maximumCorrectionMs": 35
+    },
+    {
+      "name": "PCM peak replacement preserves the 40 ms attack spacing",
+      "passed": true,
+      "attacks": 4,
+      "minimumSpacingMs": 60
+    }
+  ],
+  "source_hashes": {
+    "web/analysis/dsp.js": "fe703f00a6afdee68d690381bd90ddc9e8d037b1f3256d1f95ebb42172396fa5",
+    "web/analysis/worker.js": "33762bf824a4b68c168df4e9bba2a8edd137a530c503f4f588a952cc5f44e8be",
+    "web/analysis/analyzer.js": "3206b33dd1b5a3fe7ddabfd8216156f22baf04ff8debed7495043602b467ebb1",
+    "web/analysis/wav-reader.js": "c69842b391100059a3cd69fa08ba1ad0e1aef8d102abfde415bcdf7c6ee477be",
+    "web/analysis/models/features.json": "8a9fb3bc88c3e2f35934dd0024f22458aa8d357e3e3946a6e2c6230d3886e278",
+    "web/analysis/models/beatnet-v1.onnx": "c4462552994a2c5048dbc511dda01bbae8549829b1adfc58292be88bbdfc1eef"
+  },
+  "actualMusic": [
+    {
+      "track": "demo",
+      "passed": true,
+      "duration": 64,
+      "bpmBefore": 93.01,
+      "bpmAfter": 92.99,
+      "beatsBefore": 99,
+      "beatsAfter": 99,
+      "onsetsBefore": 1728,
+      "onsetsAfter": 1668,
+      "meter": 4,
+      "meterConfidence": 1,
+      "phrases": 7,
+      "impacts": 24,
+      "activityRanges": [
+        {
+          "start": 0,
+          "end": 64
+        }
+      ],
+      "refinedBeatCount": 82,
+      "maximumRefinementMs": 45,
+      "exactNeuralAndSpectralParity": {
+        "beat": 0,
+        "down": 0,
+        "rms": 0,
+        "bass": 0,
+        "mid": 0,
+        "high": 0,
+        "colour": 0
+      },
+      "groundTruth": "No expert-labelled beat annotations; this verifies pipeline parity, schema, activity boundaries and supported interpretation, not perceptual timing accuracy."
+    },
+    {
+      "track": "sample",
+      "passed": true,
+      "duration": 238.04,
+      "bpmBefore": 93.07,
+      "bpmAfter": 93.67,
+      "beatsBefore": 369,
+      "beatsAfter": 369,
+      "onsetsBefore": 6260,
+      "onsetsAfter": 6064,
+      "meter": 4,
+      "meterConfidence": 0.8182589260225086,
+      "phrases": 27,
+      "impacts": 75,
+      "activityRanges": [
+        {
+          "start": 0.605,
+          "end": 237.06
+        }
+      ],
+      "refinedBeatCount": 285,
+      "maximumRefinementMs": 45,
+      "exactNeuralAndSpectralParity": {
+        "beat": 0,
+        "down": 0,
+        "rms": 0,
+        "bass": 0,
+        "mid": 0,
+        "high": 0,
+        "colour": 0
+      },
+      "groundTruth": "No expert-labelled beat annotations; this verifies pipeline parity, schema, activity boundaries and supported interpretation, not perceptual timing accuracy."
+    }
+  ],
+  "endToEnd": [
+    {
+      "name": "Annotated percussion/chord fixture through actual bundled BeatNet",
+      "passed": true,
+      "duration": 47.10616780045351,
+      "expectedBpm": 124.5,
+      "estimatedBpm": 124.49,
+      "expectedBeats": 96,
+      "beatsBefore": 96,
+      "beatsAfter": 96,
+      "recallWithin35ms": 1,
+      "medianErrorBeforeMs": 10.71084337349415,
+      "medianErrorAfterMs": 1.9759036144577635,
+      "p95ErrorBeforeMs": 19.867469879514488,
+      "p95ErrorAfterMs": 4.204819277108918,
+      "meterEstimate": 4,
+      "downbeatPhaseMatchFraction": 0,
+      "limitation": "The unchanged neural model chose a half-bar-shifted downbeat interpretation on this fixture. A correct time signature does not guarantee correct bar phase."
+    }
+  ],
+  "scope": {
+    "release": "1.3.0",
+    "modelWeights": "Unchanged BeatNet model 1; no retraining or new cloud model.",
+    "controlledDecoderFixtures": "Known transient envelopes with explicitly constructed neural activations; isolates decoder/meter/tempo/silence behavior.",
+    "endToEndFixture": "Actual ONNX inference on deterministic, sample-annotated percussion/chord PCM.",
+    "realMusic": "Actual ONNX inference on 64-second Glass Castle demo and valid 238.04-second resampled Sample.wav.",
+    "physicalVehicle": "No physical lamp or motor timing measurement. No exact hardware synchronization guarantee."
+  }
+}

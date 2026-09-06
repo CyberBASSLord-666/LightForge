@@ -1,0 +1,435 @@
+{
+  "passed": true,
+  "createdAt": "2026-09-06T10:10:38.524Z",
+  "method": "Actual production browser import/analyzer/compiler/preview/export path on real musical mixtures; no original isolated stem supplied to production.",
+  "limitations": [
+    "Desktop Chromium/SwiftShader is not a phone or physical Tesla execution.",
+    "Two6.8second reference-song excerpts and a64second original-user-audio prefix are tested; no full-song or universal accuracy claim is made.",
+    "The browser ZIP is validated independently; Android codec/UI paths have separate native tests."
+  ],
+  "tracks": [
+    {
+      "track": "nightowl-mix",
+      "projectId": "show-1788689439243",
+      "engineVersion": "1.6.0",
+      "analysisVersion": 5,
+      "phrases": 3,
+      "articulations": 12,
+      "notes": 3,
+      "beats": 17,
+      "movementTargets": 1,
+      "previews": [
+        {
+          "time": 0.07,
+          "frame": 3,
+          "lamps": 34,
+          "closures": 8
+        },
+        {
+          "time": 1.385,
+          "frame": 69,
+          "lamps": 34,
+          "closures": 8
+        },
+        {
+          "time": 1.65,
+          "frame": 82,
+          "lamps": 34,
+          "closures": 8
+        },
+        {
+          "time": 3.4017233560090703,
+          "frame": 170,
+          "lamps": 34,
+          "closures": 8
+        },
+        {
+          "time": 6.703446712018141,
+          "frame": 335,
+          "lamps": 34,
+          "closures": 8
+        }
+      ],
+      "export": {
+        "crcError": null,
+        "fseqSHA256": "6810ca60e23ebc1f0dac3734236e863ca2679c1a7753a5e6a56807be709dc80f",
+        "audioSHA256": "3d152ccd8034a8ac5fb79cad2a50f441add7511e0252ee8cdcd8191276e29ef5",
+        "files": [
+          "LightShow/lightshow.fseq",
+          "LightShow/lightshow.wav",
+          "README.txt",
+          "Validation.json",
+          "Review/LightForge_Project.json"
+        ],
+        "wav": [
+          2,
+          2,
+          44100,
+          300032
+        ],
+        "frames": 341,
+        "step": 20,
+        "terminalDark": true
+      },
+      "officialValidator": "Found 341 frames, step time of 20 ms for a total duration of 0:00:06.820000.\nPress Enter to exit...",
+      "vocalClassifier": {
+        "name": "PretrainedSED Frame-MN10",
+        "id": "frame-mn10-strong-1",
+        "sha256": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+        "license": "MIT"
+      },
+      "separationModel": {
+        "sourceSeparated": true,
+        "name": "UVR MDX-Net Voc FT",
+        "modelId": "uvr-mdx-net-voc-ft",
+        "modelSha256": "534b2070fcc7df514b13ef660dc8cbb328679c2374d04354a5c42bb14ecce111",
+        "sampleRate": 44100,
+        "sourceChannels": 2,
+        "stems": [
+          "vocals",
+          "accompaniment"
+        ],
+        "method": "Pretrained stereo complex-spectrum separation with polarity ensemble",
+        "vocalBandwidthHz": 17640,
+        "fftWindowSamples": 7680,
+        "fftHopSamples": 1024,
+        "contextSamples": 3840,
+        "overlapSamples": 126720,
+        "overlapFraction": 0.5,
+        "denoise": true,
+        "modelPasses": 4,
+        "alignment": "Original sample clock; normalized overlap-add and complementary chunk crossfades; no latency subtraction",
+        "estimated": true,
+        "analysisSeconds": 36.373709999993444,
+        "chunks": 2,
+        "limitations": [
+          "Separation can retain instrument bleed or soften quiet and heavily processed singing.",
+          "Lead and backing vocals are combined; this is not lyric transcription."
+        ]
+      }
+    },
+    {
+      "track": "falcon-mix",
+      "projectId": "show-1788689499841",
+      "engineVersion": "1.6.0",
+      "analysisVersion": 5,
+      "phrases": 1,
+      "articulations": 12,
+      "notes": 5,
+      "beats": 13,
+      "movementTargets": 0,
+      "previews": [
+        {
+          "time": 1.365,
+          "frame": 68,
+          "lamps": 34,
+          "closures": 8
+        },
+        {
+          "time": 1.48,
+          "frame": 74,
+          "lamps": 34,
+          "closures": 8
+        },
+        {
+          "time": 3.225,
+          "frame": 161,
+          "lamps": 34,
+          "closures": 8
+        },
+        {
+          "time": 3.4017233560090703,
+          "frame": 170,
+          "lamps": 34,
+          "closures": 8
+        },
+        {
+          "time": 6.703446712018141,
+          "frame": 335,
+          "lamps": 34,
+          "closures": 8
+        }
+      ],
+      "export": {
+        "crcError": null,
+        "fseqSHA256": "c7caf99c433d8d56c21c655b81fe199a7dbd33cdfa705bbb9a8d9f13da03ff0f",
+        "audioSHA256": "c2c0a981707ee874440824c0a60e37bf8385c16d98d50e3bac2bb949bfb9d5bd",
+        "files": [
+          "LightShow/lightshow.fseq",
+          "LightShow/lightshow.wav",
+          "README.txt",
+          "Validation.json",
+          "Review/LightForge_Project.json"
+        ],
+        "wav": [
+          2,
+          2,
+          44100,
+          300032
+        ],
+        "frames": 341,
+        "step": 20,
+        "terminalDark": true
+      },
+      "officialValidator": "Found 341 frames, step time of 20 ms for a total duration of 0:00:06.820000.\nPress Enter to exit...",
+      "vocalClassifier": {
+        "name": "PretrainedSED Frame-MN10",
+        "id": "frame-mn10-strong-1",
+        "sha256": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+        "license": "MIT"
+      },
+      "separationModel": {
+        "sourceSeparated": true,
+        "name": "UVR MDX-Net Voc FT",
+        "modelId": "uvr-mdx-net-voc-ft",
+        "modelSha256": "534b2070fcc7df514b13ef660dc8cbb328679c2374d04354a5c42bb14ecce111",
+        "sampleRate": 44100,
+        "sourceChannels": 2,
+        "stems": [
+          "vocals",
+          "accompaniment"
+        ],
+        "method": "Pretrained stereo complex-spectrum separation with polarity ensemble",
+        "vocalBandwidthHz": 17640,
+        "fftWindowSamples": 7680,
+        "fftHopSamples": 1024,
+        "contextSamples": 3840,
+        "overlapSamples": 126720,
+        "overlapFraction": 0.5,
+        "denoise": true,
+        "modelPasses": 4,
+        "alignment": "Original sample clock; normalized overlap-add and complementary chunk crossfades; no latency subtraction",
+        "estimated": true,
+        "analysisSeconds": 37.29629999999702,
+        "chunks": 2,
+        "limitations": [
+          "Separation can retain instrument bleed or soften quiet and heavily processed singing.",
+          "Lead and backing vocals are combined; this is not lyric transcription."
+        ]
+      }
+    },
+    {
+      "track": "user-glass-prefix64",
+      "projectId": "show-1788689544778",
+      "engineVersion": "1.6.0",
+      "analysisVersion": 5,
+      "phrases": 3,
+      "articulations": 192,
+      "notes": 77,
+      "beats": 99,
+      "movementTargets": 22,
+      "previews": [
+        {
+          "time": 8.01,
+          "frame": 400,
+          "lamps": 34,
+          "closures": 8
+        },
+        {
+          "time": 11.49,
+          "frame": 574,
+          "lamps": 34,
+          "closures": 8
+        },
+        {
+          "time": 11.615,
+          "frame": 580,
+          "lamps": 34,
+          "closures": 8
+        },
+        {
+          "time": 32,
+          "frame": 1600,
+          "lamps": 34,
+          "closures": 8
+        },
+        {
+          "time": 63.9,
+          "frame": 3195,
+          "lamps": 34,
+          "closures": 8
+        }
+      ],
+      "export": {
+        "crcError": null,
+        "fseqSHA256": "e97a6a0729429297d7f50c61cde1d1a18114f03f4999e233d2f228b80cbe7317",
+        "audioSHA256": "8f542ae8d3c1498e7f21997d07ce3e6c1fedf83402cf4b604151d2d4d0f2dd87",
+        "files": [
+          "LightShow/lightshow.fseq",
+          "LightShow/lightshow.wav",
+          "README.txt",
+          "Validation.json",
+          "Review/LightForge_Project.json"
+        ],
+        "wav": [
+          2,
+          2,
+          44100,
+          2822400
+        ],
+        "frames": 3200,
+        "step": 20,
+        "terminalDark": true
+      },
+      "officialValidator": "Found 3200 frames, step time of 20 ms for a total duration of 0:01:04.\nPress Enter to exit...",
+      "vocalClassifier": {
+        "name": "PretrainedSED Frame-MN10",
+        "id": "frame-mn10-strong-1",
+        "sha256": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+        "license": "MIT"
+      },
+      "separationModel": {
+        "sourceSeparated": true,
+        "name": "UVR MDX-Net Voc FT",
+        "modelId": "uvr-mdx-net-voc-ft",
+        "modelSha256": "534b2070fcc7df514b13ef660dc8cbb328679c2374d04354a5c42bb14ecce111",
+        "sampleRate": 44100,
+        "sourceChannels": 2,
+        "stems": [
+          "vocals",
+          "accompaniment"
+        ],
+        "method": "Pretrained stereo complex-spectrum separation with polarity ensemble",
+        "vocalBandwidthHz": 17640,
+        "fftWindowSamples": 7680,
+        "fftHopSamples": 1024,
+        "contextSamples": 3840,
+        "overlapSamples": 126720,
+        "overlapFraction": 0.5,
+        "denoise": true,
+        "modelPasses": 44,
+        "alignment": "Original sample clock; normalized overlap-add and complementary chunk crossfades; no latency subtraction",
+        "estimated": true,
+        "analysisSeconds": 402.2177849999964,
+        "chunks": 22,
+        "limitations": [
+          "Separation can retain instrument bleed or soften quiet and heavily processed singing.",
+          "Lead and backing vocals are combined; this is not lyric transcription."
+        ]
+      }
+    }
+  ],
+  "errors": [],
+  "externalRequests": [],
+  "regenerationRecovery": {
+    "canceledDuringActualMdxStage": true,
+    "failedModelReadFaultInjected": true,
+    "originalFrameSHA256": "1c5d1d77e78e8632b5469b45c6da97dc46ca67fe4334a83c5631da7769cb430d",
+    "originalAudioSHA256": "3d152ccd8034a8ac5fb79cad2a50f441add7511e0252ee8cdcd8191276e29ef5",
+    "priorShowExportableAfterBoth": true,
+    "noAutomaticModelRetry": true
+  },
+  "source_hashes": {
+    "web/app.js": "8c23c5a925b49b35b8cda46a6c66d2c6f833f9431f7a4c037e97a9b0e769fbe0",
+    "web/analysis/analyzer.js": "7447840a63ec025d16ad368191261025f4d76ce171ddb54e1b38747ab8547a9a",
+    "web/analysis/worker.js": "77c70eed09201a68c10a3cff6254e46171cfd0a49f09eb54534f0180608df367",
+    "web/analysis/wav-reader.js": "0f0e5216dc1d2ca0bfb25eddacdaa21076990fa7638c22188023607e43d4005f",
+    "web/analysis/vocal.js": "94483ac6cf5db7532abfba98e7bab7cd826a82ad2adca0296d39fdebd827ac70",
+    "web/analysis/vocal-detail.js": "df7f86db061f4b64806539d82dfc7d4777379fdb506a75de8c2d3e689a82a621",
+    "web/analysis/separator-mdx.js": "f0d42ecc6d5928f72120a5e40b33a291d28d550a59ec0f05c68e37ed87ed3a9d",
+    "web/analysis/dsp.js": "32186b9268632cab85cadcb7e84fa1b4e3d8eb4bb9fbdf96a0873067cb9acd71",
+    "web/analysis/bass-notes.js": "5b81e2361295a1f8c02086d4668464ed1d7e93c923513c50a2c865a7aeb1531e",
+    "web/engine/worker.js": "0f05008d0b6501ced416b02efd5278ee58811c091a72ce2f989e60ea61609d29",
+    "web/engine/client.js": "35be761676b6d0827071d20786799dcde69da794098126a0a875f7724117c7f9",
+    "web/engine/show-engine.js": "554ab7f0d9804d0c29c7f61e4c391f14e698aa3424a5d99bb2889dbf126290b7",
+    "web/engine/light-planner.js": "993943ece641c94f967235096e2a9cd5e013a0f95473cec014075046cf2c6916",
+    "web/engine/movement-planner.js": "d22998c270c01af72f4fa1467ea5f5c9a3cc3ddda9f2264395fd8bba870305ec",
+    "web/engine/vehicle-profile.js": "027bf87a827a900cda00505e2b539f84cbdb0d5a9800ea4eb1efdf85a0c10936",
+    "web/preview/vehicle-preview.js": "a27736b2f89f1597f56971ba1755303b8724a8a72da11b8b7f2ac044cedbcc44",
+    "web/index.html": "a5f555b34f73ecbe083a29bb4f90ca237a8fb5b0ee2d839fa9b5e8fd44fbf782",
+    "web/styles.css": "e2d838cf4d73febfdc25ea0a60717a6dd78fa410d49a746e9b5e0518b88add9e",
+    "web/music-insights.js": "5fd372e92564172af8bc4d1797e25f8f629dd7cccf7326daf0ebc170475084ab",
+    "web/studio-tools.js": "1ecd3574c7c26b1602bfafd36c4cb3983ad1b6a0e1baefb7650380a075422a2e"
+  },
+  "styledVerification": {
+    "passed": true,
+    "scope": "Actual styled app import/compilation/preview/export using identical normalized audio and saved real analyzer output from the preceding full inference run. No model substitute or invented vocals.",
+    "cases": [
+      {
+        "track": "nightowl-mix",
+        "audioSHA256": "3d152ccd8034a8ac5fb79cad2a50f441add7511e0252ee8cdcd8191276e29ef5",
+        "frameSHA256": "1c5d1d77e78e8632b5469b45c6da97dc46ca67fe4334a83c5631da7769cb430d",
+        "valid": true,
+        "sourceSeparated": true,
+        "projectId": "show-1788689982187",
+        "frame": 82,
+        "exportIdentical": true
+      },
+      {
+        "track": "falcon-mix",
+        "audioSHA256": "c2c0a981707ee874440824c0a60e37bf8385c16d98d50e3bac2bb949bfb9d5bd",
+        "frameSHA256": "36a5caedff27703fab3d6c6c4769f94e9aceb3aee530720580fe3a090e8a04b8",
+        "valid": true,
+        "sourceSeparated": true,
+        "projectId": "show-1788689986063",
+        "frame": 161,
+        "exportIdentical": true
+      },
+      {
+        "track": "user-glass-prefix64",
+        "audioSHA256": "8f542ae8d3c1498e7f21997d07ce3e6c1fedf83402cf4b604151d2d4d0f2dd87",
+        "frameSHA256": "88f6fc52b5f5b831a91b5d1aea639865de9e09a3df9fd04c3a4520c689232408",
+        "valid": true,
+        "sourceSeparated": true,
+        "projectId": "show-1788689988441",
+        "frame": 580,
+        "exportIdentical": true
+      }
+    ],
+    "errors": [],
+    "styles": {
+      "loaded": true,
+      "font": "Inter, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+      "body": 393,
+      "viewport": 393
+    },
+    "source_hashes": {
+      "web/index.html": "a5f555b34f73ecbe083a29bb4f90ca237a8fb5b0ee2d839fa9b5e8fd44fbf782",
+      "web/styles.css": "e2d838cf4d73febfdc25ea0a60717a6dd78fa410d49a746e9b5e0518b88add9e",
+      "web/app.js": "8c23c5a925b49b35b8cda46a6c66d2c6f833f9431f7a4c037e97a9b0e769fbe0",
+      "web/preview/vehicle-preview.js": "a27736b2f89f1597f56971ba1755303b8724a8a72da11b8b7f2ac044cedbcc44",
+      "web/music-insights.js": "5fd372e92564172af8bc4d1797e25f8f629dd7cccf7326daf0ebc170475084ab",
+      "web/studio-tools.js": "1ecd3574c7c26b1602bfafd36c4cb3983ad1b6a0e1baefb7650380a075422a2e"
+    }
+  },
+  "testHarnessNote": "The first functional server had an incorrect CSS MIME type. It was corrected in the harness; this additional styled pass imports identical audio, reuses the actual saved model output, and reproduces identical final frame/audio/export hashes with the production stylesheet applied.",
+  "release": "1.6.0",
+  "analysisVersion": 5,
+  "metadataAudit": {
+    "passed": true,
+    "createdAt": "2026-09-06T10:26:26.126570+00:00",
+    "method": "Metadata-only release aggregation of preserved actual functional and styled runs. Current production and nested styled hashes, three saved actual analyses, both sets of audio/FSEQ ZIP hashes, WAV/FSEQ structure, and unchanged official validator results were rechecked. No model inference was repeated.",
+    "tracks": [
+      {
+        "track": "nightowl-mix",
+        "engineVersion": "1.6.0",
+        "analysisVersion": 5,
+        "audioSHA256": "3d152ccd8034a8ac5fb79cad2a50f441add7511e0252ee8cdcd8191276e29ef5",
+        "fseqSHA256": "6810ca60e23ebc1f0dac3734236e863ca2679c1a7753a5e6a56807be709dc80f",
+        "officialValidatorUnchanged": true
+      },
+      {
+        "track": "falcon-mix",
+        "engineVersion": "1.6.0",
+        "analysisVersion": 5,
+        "audioSHA256": "c2c0a981707ee874440824c0a60e37bf8385c16d98d50e3bac2bb949bfb9d5bd",
+        "fseqSHA256": "c7caf99c433d8d56c21c655b81fe199a7dbd33cdfa705bbb9a8d9f13da03ff0f",
+        "officialValidatorUnchanged": true
+      },
+      {
+        "track": "user-glass-prefix64",
+        "engineVersion": "1.6.0",
+        "analysisVersion": 5,
+        "audioSHA256": "8f542ae8d3c1498e7f21997d07ce3e6c1fedf83402cf4b604151d2d4d0f2dd87",
+        "fseqSHA256": "e97a6a0729429297d7f50c61cde1d1a18114f03f4999e233d2f228b80cbe7317",
+        "officialValidatorUnchanged": true
+      }
+    ],
+    "evidence_hashes": {
+      "qa/release-1.6.0/real-music-export-verification.json": "9d3154f74f2dd0cc007d9ab54ce83c216daf4a66f57cf707ff202ea5d2c0659d",
+      "qa/release-1.6.0/styled-real-projects-verification.json": "d6a6e3f5fdd31440ba01ea97e3e8109f0526961d5bbf4b8ac231e684abd2f2cf",
+      "qa/release-1.6.0/build-integration-verification.py": "a2c30e06d5e53653fc794c09cf48432827ce8c9d2128f526bed78e690ec89f8c"
+    },
+    "errors": []
+  }
+}

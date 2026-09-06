@@ -1,0 +1,16 @@
+{
+  "aborted": true,
+  "message": "Analysis cancelled",
+  "before": [],
+  "cacheDuring": [
+    "stem-32fef08c-3af4-496b-a3ac-57d747ac8d0e"
+  ],
+  "after": [],
+  "seen": {
+    "progress": 0.42,
+    "stage": "Separating voice and instruments",
+    "detail": "Separating singing from the instruments • 0 / 7 seconds"
+  },
+  "cleanupMs": 3422.625,
+  "elapsedMs": 5515.670000001788
+}

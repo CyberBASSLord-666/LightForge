@@ -1,0 +1,32 @@
+{
+  "precision": {
+    "file": "beat-this-large.onnx",
+    "model": "Beat This! final0",
+    "id": "beat-this-final0",
+    "sha256": "5f810debe53459b559127fb55bbad40035bb47cc567b20e501670f968c770f02",
+    "bytes": 83162650,
+    "license": "MIT",
+    "origin": "https://github.com/CPJKU/beat_this",
+    "conversion": "https://github.com/danigb/beat-this-rs"
+  },
+  "balanced": {
+    "file": "beat-this-small.onnx",
+    "model": "Beat This! small1",
+    "id": "beat-this-small1",
+    "sha256": "a5f8d39d989f31859454ba27afe61c5317ca95e4d9373e6853e5361b8937172f",
+    "bytes": 10555592,
+    "license": "MIT",
+    "origin": "https://github.com/CPJKU/beat_this",
+    "conversion": "https://github.com/danigb/beat-this-rs"
+  },
+  "frontend": {
+    "file": "beat-this-mel.onnx",
+    "model": "Beat This! log-mel",
+    "id": "beat-this-log-mel",
+    "sha256": "fdd59e65c515331308e4c8841edf99972deca646bdf6197744c2a5b7755e3de9",
+    "bytes": 270742,
+    "license": "MIT",
+    "origin": "https://github.com/CPJKU/beat_this",
+    "conversion": "https://github.com/danigb/beat-this-rs"
+  }
+}

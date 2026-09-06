@@ -1,0 +1,90 @@
+{
+  "release": "1.5.0",
+  "passed": true,
+  "checkedAt": "2026-09-06T07:27:07.567Z",
+  "checks": [
+    {
+      "name": "singing and pitched bass entrances retain source time plus exactly one user offset",
+      "passed": true
+    },
+    {
+      "name": "held singing phrases use actual legal release codes with an independently expected fade slope",
+      "passed": true
+    },
+    {
+      "name": "separated lane allocation retains every percussion, melody and arrangement byte outside the focused lanes",
+      "passed": true
+    },
+    {
+      "name": "focus switches change emphasis independently without changing analysis or beat times",
+      "passed": true
+    },
+    {
+      "name": "legacy instrumental and generic spectral attacks never become fabricated vocal or pitched-bass events",
+      "passed": true
+    },
+    {
+      "name": "uncertain role evidence and unavailable singing detection fall back to the intact full arrangement",
+      "passed": true
+    },
+    {
+      "name": "long sung regions use sparse confidence-gated contours without creating a syllable clock",
+      "passed": true
+    },
+    {
+      "name": "vocal and bass phrase movement targets preserve non-grid timing while respecting travel, recovery and budgets",
+      "passed": true
+    },
+    {
+      "name": "high note density never creates rapid motor commands or breaks output masks and manual ownership",
+      "passed": true
+    },
+    {
+      "name": "role-aware composition remains deterministic and all lights obey actual silent regions",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "metrics": {
+    "roleCoverage": {
+      "vocals": {
+        "available": true,
+        "presence": "detected",
+        "eligibleEvents": 3,
+        "acceptedEvents": 3,
+        "accentCues": 0,
+        "confidence": 0.95,
+        "focus": 0.85
+      },
+      "bass": {
+        "eligibleEvents": 5,
+        "acceptedEvents": 5,
+        "confidence": 0.93,
+        "focus": 0.9
+      },
+      "percussion": {
+        "acceptedCues": 707
+      },
+      "arrangement": {
+        "acceptedCues": 1326
+      }
+    },
+    "sparseVocalContourCount": 13,
+    "movementRoleTargets": {
+      "vocals": 25,
+      "bass": 4
+    },
+    "denseBassAccepted": 360
+  },
+  "source_hashes": {
+    "web/engine/show-engine.js": "8043c854b11ba6343f0a7d0bdfcc2a05eb6261e13fe13f76a486d307d6ac1424",
+    "web/engine/light-planner.js": "8379f71a6b4ddea3330e4d930f7f7aab1bff8697139b477a929d912a2ae85af7",
+    "web/engine/movement-planner.js": "e008f55a0a82696d64142d674bfc95b85fe2fe18404f053bc6e2929b9994b6eb",
+    "web/engine/vehicle-profile.js": "027bf87a827a900cda00505e2b539f84cbdb0d5a9800ea4eb1efdf85a0c10936"
+  },
+  "limitations": [
+    "Fixtures validate scheduling and exported commands for declared event times; source-classification and bass-estimation accuracy need separate audio evaluation.",
+    "Singing contours are sparse mixture estimates within classified singing, not lyrics or isolated vocal-note transcription.",
+    "Actuator travel and Dance trajectories are vehicle estimates, not measurements from a connected car."
+  ]
+}

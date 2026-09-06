@@ -1,0 +1,12 @@
+keys ['klass', 'args', 'kwargs', 'state', 'training_args', 'metrics']
+statekeys ['encoder.0.conv.weight', 'encoder.0.conv.bias', 'encoder.0.rewrite.weight', 'encoder.0.rewrite.bias', 'encoder.0.dconv.layers.0.0.weight', 'encoder.0.dconv.layers.0.0.bias', 'encoder.0.dconv.layers.0.1.weight', 'encoder.0.dconv.layers.0.1.bias', 'encoder.0.dconv.layers.0.3.weight', 'encoder.0.dconv.layers.0.3.bias']
+onnxkeys ['encoder.0.conv.weight', 'encoder.0.conv.bias', 'encoder.0.rewrite.weight', 'encoder.0.rewrite.bias', 'encoder.0.dconv.layers.0.0.weight', 'encoder.0.dconv.layers.0.0.bias', 'encoder.0.dconv.layers.0.3.weight', 'encoder.0.dconv.layers.0.3.bias', 'encoder.0.dconv.layers.1.0.weight', 'encoder.0.dconv.layers.1.0.bias']
+{
+  "checkpointURL": "https://dl.fbaipublicfiles.com/demucs/hybrid_transformer/04573f0d-f3cf25b2.th",
+  "checkpointSHA256": "f3cf25b222c4eed7cd49dd8b2c9597d50c18bd154090f7b919cfa5f93cf22c49",
+  "onnxSHA256": "8c5d5e2da1f27050240bb80236673307ee3b40d4b064066d9350f4d64bfd544d",
+  "stateTensors": 533,
+  "matchedTensors": 309,
+  "mismatches": [],
+  "method": "Match direct tensor names with optionalmodelprefix; exact float32 values. Export folding/transposedweights may remainunmatched."
+}

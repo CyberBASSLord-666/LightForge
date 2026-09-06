@@ -1,0 +1,85 @@
+{
+  "_id": "6a439c5fa70c24900b905036",
+  "id": "silverdaw/mel-band-roformer-vocals-onnx",
+  "private": false,
+  "pipeline_tag": "audio-to-audio",
+  "library_name": "onnxruntime",
+  "tags": [
+    "onnxruntime",
+    "onnx",
+    "audio",
+    "music",
+    "source-separation",
+    "stem-separation",
+    "mel-band-roformer",
+    "roformer",
+    "vocals",
+    "instrumental",
+    "audio-to-audio",
+    "arxiv:2310.01809",
+    "license:mit",
+    "region:us"
+  ],
+  "downloads": 0,
+  "likes": 1,
+  "modelId": "silverdaw/mel-band-roformer-vocals-onnx",
+  "author": "silverdaw",
+  "sha": "6baa633eadde3c111041a81a28ed6245f19858ae",
+  "lastModified": "2026-06-30T10:40:18.000Z",
+  "gated": false,
+  "disabled": false,
+  "model-index": null,
+  "config": {},
+  "cardData": {
+    "license": "mit",
+    "library_name": "onnxruntime",
+    "pipeline_tag": "audio-to-audio",
+    "tags": [
+      "onnx",
+      "onnxruntime",
+      "audio",
+      "music",
+      "source-separation",
+      "stem-separation",
+      "mel-band-roformer",
+      "roformer",
+      "vocals",
+      "instrumental"
+    ]
+  },
+  "siblings": [
+    {
+      "rfilename": ".gitattributes",
+      "blobId": "bad9c58bfa02059233906e9a903a3b25f6dc00a3",
+      "size": 1595
+    },
+    {
+      "rfilename": "README.md",
+      "blobId": "fcbe83650821c73343ee2255355114e9da3d102f",
+      "size": 3118
+    },
+    {
+      "rfilename": "syhft_core_folded_fp16_webgpu.onnx",
+      "blobId": "312c6727eeb0339cb227d21bcaf023f4001661b5",
+      "size": 5308300,
+      "lfs": {
+        "sha256": "dde2bfe8f85d2c12efa24ce4d45cc13e8709b8a72e277a93f130d496d948e918",
+        "size": 5308300,
+        "pointerSize": 132
+      }
+    },
+    {
+      "rfilename": "syhft_core_folded_fp16_webgpu.onnx.data",
+      "blobId": "ea21a17ec73ee7bd78ab6b2b266b0574ee424c8b",
+      "size": 741190540,
+      "lfs": {
+        "sha256": "b08cfc80905e3560a4dd5d30f641299a47dd96d309ebbe9524d9d6c9d2a0356f",
+        "size": 741190540,
+        "pointerSize": 134
+      }
+    }
+  ],
+  "spaces": [],
+  "createdAt": "2026-06-30T10:37:19.000Z",
+  "usedStorage": 746498840
+}

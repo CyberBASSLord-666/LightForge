@@ -1,0 +1,32 @@
+{
+  "_id": "682ec21a5fa8c5df85c2238b",
+  "id": "csukuangfj/sherpa-onnx-spleeter-2stems",
+  "private": false,
+  "tags": [
+    "onnx",
+    "region:us"
+  ],
+  "downloads": 0,
+  "likes": 1,
+  "modelId": "csukuangfj/sherpa-onnx-spleeter-2stems",
+  "author": "csukuangfj",
+  "sha": "7001ba316a615cacddb3f9ef3ec416661a277e26",
+  "lastModified": "2025-05-23T07:28:25.000Z",
+  "gated": false,
+  "disabled": false,
+  "config": {},
+  "siblings": [
+    {
+      "rfilename": ".gitattributes"
+    },
+    {
+      "rfilename": "accompaniment.onnx"
+    },
+    {
+      "rfilename": "vocals.onnx"
+    }
+  ],
+  "spaces": [],
+  "createdAt": "2025-05-22T06:20:10.000Z",
+  "usedStorage": 157272950
+}

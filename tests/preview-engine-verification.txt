@@ -1,0 +1,32 @@
+✔ FSEQ binary header, variable metadata, payload and duration agree with audio (561.119987ms)
+✔ broad tempo and duration matrix retains physical closure timing and budgets (7613.982557ms)
+✔ expressive full-track choreography uses three window dances, trunk ensembles and real mirror moves (94.272398ms)
+✔ shared physical outputs and unsupported channels are correct in every binary frame (52.689833ms)
+✔ all supported fade durations are real Tesla commands, and preview evaluates their brightness (34.816183ms)
+✔ RGB segments and display are independently addressable and optional (19.964279ms)
+✔ disabled closures are absent, including in an expressive show (58.991743ms)
+✔ timing offset moves musical light and closure entrances while preserving preparation (112.561258ms)
+✔ quiet input is intentionally dark; malformed and overlong tracks are rejected (10.228744ms)
+✔ degraded analysis data is normalized with explicit warnings (7.532821ms)
+✔ seed reproducibility, pattern variation and section overrides are functional (73.297346ms)
+✔ validator catches corrupted payload, unsupported dimming, broken groups and illegal movement (49.945639ms)
+✔ the exact four-hour limit is accepted without timing overflow (3535.532638ms)
+✔ the actual Glass Castle music analysis exports a complete validated show (176.254327ms)
+✔ all ramp durations begin at zero at the exact frame boundary and advance continuously (37.394538ms)
+✔ interrupted and reversed ramps continue from their actual brightness without jumping (3.113033ms)
+✔ Model 3 merged light outputs obey Channel 4 ramp duration and side/aux OR (5.296692ms)
+✔ physical outputs suppress absent lights and never invent unsupported closures (3.798777ms)
+✔ open/close commands persist through Idle and move from the current partial position (12.059973ms)
+✔ Stop holds the reached position and later movement resumes without jumping (3.659172ms)
+✔ mirrors start unfolded and use real open/close commands, with no invented dance (3.276735ms)
+✔ estimated Dance moves, stops at Idle, and seeks reproduce identical poses (15.117795ms)
+✔ charge Dance is an LED rainbow, never door oscillation, and auto-close occurs at two minutes (16.322643ms)
+✔ preview raw commands and all RGB zones exactly match independently decoded exported bytes (341.062674ms)
+ℹ tests 24
+ℹ suites 0
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 12806.849213

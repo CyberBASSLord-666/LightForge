@@ -1,0 +1,80 @@
+{
+  "_id": "6a1bc31dd0911ea40007c613",
+  "id": "musetric/vocal-separation-roformer-onnx",
+  "private": false,
+  "pipeline_tag": "audio-to-audio",
+  "library_name": "onnxruntime",
+  "tags": [
+    "onnxruntime",
+    "onnx",
+    "audio",
+    "source-separation",
+    "vocals",
+    "music",
+    "mel-band-roformer",
+    "webgpu",
+    "audio-to-audio",
+    "arxiv:2310.01809",
+    "license:mit",
+    "region:us"
+  ],
+  "downloads": 0,
+  "likes": 0,
+  "modelId": "musetric/vocal-separation-roformer-onnx",
+  "author": "musetric",
+  "sha": "98064f6e42af945316fd96261a18f1befe3a4536",
+  "lastModified": "2026-08-29T09:23:07.000Z",
+  "gated": false,
+  "disabled": false,
+  "model-index": null,
+  "config": {},
+  "cardData": {
+    "license": "mit",
+    "library_name": "onnxruntime",
+    "pipeline_tag": "audio-to-audio",
+    "tags": [
+      "audio",
+      "source-separation",
+      "vocals",
+      "music",
+      "mel-band-roformer",
+      "onnx",
+      "webgpu"
+    ]
+  },
+  "siblings": [
+    {
+      "rfilename": ".gitattributes",
+      "blobId": "7e971af47b1c01a8a18d62a3c55a4e20c71aabfc",
+      "size": 1567
+    },
+    {
+      "rfilename": "README.md",
+      "blobId": "a06b07015a603af49f3e8cf8ffc20672c1f19265",
+      "size": 8540
+    },
+    {
+      "rfilename": "syhft_core_t1100.onnx",
+      "blobId": "ab4f7c2fa57e377a2ff1193be22ee08550001d3e",
+      "size": 7041719,
+      "lfs": {
+        "sha256": "8b624200ac9bfc76c38fbcc9dcde3901f307acd6ee7e95b5b0a6cb3022585758",
+        "size": 7041719,
+        "pointerSize": 132
+      }
+    },
+    {
+      "rfilename": "syhft_core_t1100.onnx.data",
+      "blobId": "2b05eac18c9b7ef014e038504ba27c46248e598f",
+      "size": 741190540,
+      "lfs": {
+        "sha256": "06b41c5798b3c44d514e74feca715a002031c26fa390fcea913ad01844fb7221",
+        "size": 741190540,
+        "pointerSize": 134
+      }
+    }
+  ],
+  "spaces": [],
+  "createdAt": "2026-05-31T05:11:57.000Z",
+  "usedStorage": 2258694792
+}

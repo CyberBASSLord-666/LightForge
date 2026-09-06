@@ -1,0 +1,473 @@
+{
+  "captures": [
+    {
+      "model": "UVR MDX-Net Voc FT polarity ensemble",
+      "track": "falcon-controlled",
+      "path": "qa/release-1.6.0/fixtures/falcon-controlled-mdx-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "Spleeter 2 stems",
+      "track": "falcon-controlled",
+      "path": "qa/release-1.6.0/fixtures/falcon-controlled-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "HTDemucs FT four deterministic shifts",
+      "track": "falcon-instrumental",
+      "path": "qa/release-1.6.0/fixtures/falcon-instrumental-demucs4-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "Fixed equal MDX/Demucs4 ensemble",
+      "track": "falcon-instrumental",
+      "path": "qa/release-1.6.0/fixtures/falcon-instrumental-mdx-demucs4-blend50-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "UVR MDX-Net Voc FT polarity ensemble",
+      "track": "falcon-instrumental",
+      "path": "qa/release-1.6.0/fixtures/falcon-instrumental-mdx-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "Spleeter 2 stems",
+      "track": "falcon-instrumental",
+      "path": "qa/release-1.6.0/fixtures/falcon-instrumental-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "HTDemucs FT vocals specialist",
+      "track": "falcon-mix",
+      "path": "qa/release-1.6.0/fixtures/falcon-mix-demucs-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "HTDemucs FT four deterministic shifts",
+      "track": "falcon-mix",
+      "path": "qa/release-1.6.0/fixtures/falcon-mix-demucs4-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "Fixed equal MDX/Demucs4 ensemble",
+      "track": "falcon-mix",
+      "path": "qa/release-1.6.0/fixtures/falcon-mix-mdx-demucs4-blend50-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "UVR MDX-Net Voc FT polarity ensemble",
+      "track": "falcon-mix",
+      "path": "qa/release-1.6.0/fixtures/falcon-mix-mdx-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "Spleeter 2 stems",
+      "track": "falcon-mix",
+      "path": "qa/release-1.6.0/fixtures/falcon-mix-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "UVR MDX-Net Voc FT polarity ensemble",
+      "track": "grunge-controlled",
+      "path": "qa/release-1.6.0/fixtures/grunge-controlled-mdx-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "Spleeter 2 stems",
+      "track": "grunge-controlled",
+      "path": "qa/release-1.6.0/fixtures/grunge-controlled-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "HTDemucs FT four deterministic shifts",
+      "track": "grunge-instrumental",
+      "path": "qa/release-1.6.0/fixtures/grunge-instrumental-demucs4-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "Fixed equal MDX/Demucs4 ensemble",
+      "track": "grunge-instrumental",
+      "path": "qa/release-1.6.0/fixtures/grunge-instrumental-mdx-demucs4-blend50-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "UVR MDX-Net Voc FT polarity ensemble",
+      "track": "grunge-instrumental",
+      "path": "qa/release-1.6.0/fixtures/grunge-instrumental-mdx-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "Spleeter 2 stems",
+      "track": "grunge-instrumental",
+      "path": "qa/release-1.6.0/fixtures/grunge-instrumental-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "HTDemucs FT vocals specialist",
+      "track": "grunge-mix",
+      "path": "qa/release-1.6.0/fixtures/grunge-mix-demucs-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "HTDemucs FT four deterministic shifts",
+      "track": "grunge-mix",
+      "path": "qa/release-1.6.0/fixtures/grunge-mix-demucs4-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "Fixed equal MDX/Demucs4 ensemble",
+      "track": "grunge-mix",
+      "path": "qa/release-1.6.0/fixtures/grunge-mix-mdx-demucs4-blend50-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "UVR MDX-Net Voc FT polarity ensemble",
+      "track": "grunge-mix",
+      "path": "qa/release-1.6.0/fixtures/grunge-mix-mdx-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "Spleeter 2 stems",
+      "track": "grunge-mix",
+      "path": "qa/release-1.6.0/fixtures/grunge-mix-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "UVR MDX-Net Voc FT polarity ensemble",
+      "track": "meaxic-controlled",
+      "path": "qa/release-1.6.0/fixtures/meaxic-controlled-mdx-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "Spleeter 2 stems",
+      "track": "meaxic-controlled",
+      "path": "qa/release-1.6.0/fixtures/meaxic-controlled-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "HTDemucs FT four deterministic shifts",
+      "track": "meaxic-instrumental",
+      "path": "qa/release-1.6.0/fixtures/meaxic-instrumental-demucs4-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "Fixed equal MDX/Demucs4 ensemble",
+      "track": "meaxic-instrumental",
+      "path": "qa/release-1.6.0/fixtures/meaxic-instrumental-mdx-demucs4-blend50-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "UVR MDX-Net Voc FT polarity ensemble",
+      "track": "meaxic-instrumental",
+      "path": "qa/release-1.6.0/fixtures/meaxic-instrumental-mdx-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "Spleeter 2 stems",
+      "track": "meaxic-instrumental",
+      "path": "qa/release-1.6.0/fixtures/meaxic-instrumental-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "HTDemucs FT vocals specialist",
+      "track": "meaxic-mix",
+      "path": "qa/release-1.6.0/fixtures/meaxic-mix-demucs-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "HTDemucs FT four deterministic shifts",
+      "track": "meaxic-mix",
+      "path": "qa/release-1.6.0/fixtures/meaxic-mix-demucs4-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "Fixed equal MDX/Demucs4 ensemble",
+      "track": "meaxic-mix",
+      "path": "qa/release-1.6.0/fixtures/meaxic-mix-mdx-demucs4-blend50-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "UVR MDX-Net Voc FT polarity ensemble",
+      "track": "meaxic-mix",
+      "path": "qa/release-1.6.0/fixtures/meaxic-mix-mdx-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "Spleeter 2 stems",
+      "track": "meaxic-mix",
+      "path": "qa/release-1.6.0/fixtures/meaxic-mix-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "UVR MDX-Net Voc FT polarity ensemble",
+      "track": "nightowl-controlled",
+      "path": "qa/release-1.6.0/fixtures/nightowl-controlled-mdx-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "Spleeter 2 stems",
+      "track": "nightowl-controlled",
+      "path": "qa/release-1.6.0/fixtures/nightowl-controlled-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "HTDemucs FT four deterministic shifts",
+      "track": "nightowl-instrumental",
+      "path": "qa/release-1.6.0/fixtures/nightowl-instrumental-demucs4-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "Fixed equal MDX/Demucs4 ensemble",
+      "track": "nightowl-instrumental",
+      "path": "qa/release-1.6.0/fixtures/nightowl-instrumental-mdx-demucs4-blend50-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "UVR MDX-Net Voc FT polarity ensemble",
+      "track": "nightowl-instrumental",
+      "path": "qa/release-1.6.0/fixtures/nightowl-instrumental-mdx-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "Spleeter 2 stems",
+      "track": "nightowl-instrumental",
+      "path": "qa/release-1.6.0/fixtures/nightowl-instrumental-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "HTDemucs FT vocals specialist",
+      "track": "nightowl-mix",
+      "path": "qa/release-1.6.0/fixtures/nightowl-mix-demucs-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "HTDemucs FT four deterministic shifts",
+      "track": "nightowl-mix",
+      "path": "qa/release-1.6.0/fixtures/nightowl-mix-demucs4-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "Fixed equal MDX/Demucs4 ensemble",
+      "track": "nightowl-mix",
+      "path": "qa/release-1.6.0/fixtures/nightowl-mix-mdx-demucs4-blend50-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "UVR MDX-Net Voc FT polarity ensemble",
+      "track": "nightowl-mix",
+      "path": "qa/release-1.6.0/fixtures/nightowl-mix-mdx-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "Spleeter 2 stems",
+      "track": "nightowl-mix",
+      "path": "qa/release-1.6.0/fixtures/nightowl-mix-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "UVR MDX-Net Voc FT polarity ensemble",
+      "track": "sdrnr-controlled",
+      "path": "qa/release-1.6.0/fixtures/sdrnr-controlled-mdx-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "Spleeter 2 stems",
+      "track": "sdrnr-controlled",
+      "path": "qa/release-1.6.0/fixtures/sdrnr-controlled-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "HTDemucs FT four deterministic shifts",
+      "track": "sdrnr-instrumental",
+      "path": "qa/release-1.6.0/fixtures/sdrnr-instrumental-demucs4-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "Fixed equal MDX/Demucs4 ensemble",
+      "track": "sdrnr-instrumental",
+      "path": "qa/release-1.6.0/fixtures/sdrnr-instrumental-mdx-demucs4-blend50-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "UVR MDX-Net Voc FT polarity ensemble",
+      "track": "sdrnr-instrumental",
+      "path": "qa/release-1.6.0/fixtures/sdrnr-instrumental-mdx-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "Spleeter 2 stems",
+      "track": "sdrnr-instrumental",
+      "path": "qa/release-1.6.0/fixtures/sdrnr-instrumental-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "HTDemucs FT vocals specialist",
+      "track": "sdrnr-mix",
+      "path": "qa/release-1.6.0/fixtures/sdrnr-mix-demucs-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "HTDemucs FT four deterministic shifts",
+      "track": "sdrnr-mix",
+      "path": "qa/release-1.6.0/fixtures/sdrnr-mix-demucs4-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "Fixed equal MDX/Demucs4 ensemble",
+      "track": "sdrnr-mix",
+      "path": "qa/release-1.6.0/fixtures/sdrnr-mix-mdx-demucs4-blend50-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "UVR MDX-Net Voc FT polarity ensemble",
+      "track": "sdrnr-mix",
+      "path": "qa/release-1.6.0/fixtures/sdrnr-mix-mdx-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "Spleeter 2 stems",
+      "track": "sdrnr-mix",
+      "path": "qa/release-1.6.0/fixtures/sdrnr-mix-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "UVR MDX-Net Voc FT polarity ensemble",
+      "track": "seam-mix",
+      "path": "qa/release-1.6.0/fixtures/seam-mix-mdx-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "UVR MDX-Net Voc FT polarity ensemble",
+      "track": "stella-controlled",
+      "path": "qa/release-1.6.0/fixtures/stella-controlled-mdx-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "Spleeter 2 stems",
+      "track": "stella-controlled",
+      "path": "qa/release-1.6.0/fixtures/stella-controlled-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "HTDemucs FT four deterministic shifts",
+      "track": "stella-instrumental",
+      "path": "qa/release-1.6.0/fixtures/stella-instrumental-demucs4-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "Fixed equal MDX/Demucs4 ensemble",
+      "track": "stella-instrumental",
+      "path": "qa/release-1.6.0/fixtures/stella-instrumental-mdx-demucs4-blend50-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "UVR MDX-Net Voc FT polarity ensemble",
+      "track": "stella-instrumental",
+      "path": "qa/release-1.6.0/fixtures/stella-instrumental-mdx-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "Spleeter 2 stems",
+      "track": "stella-instrumental",
+      "path": "qa/release-1.6.0/fixtures/stella-instrumental-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "HTDemucs FT vocals specialist",
+      "track": "stella-mix",
+      "path": "qa/release-1.6.0/fixtures/stella-mix-demucs-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "HTDemucs FT four deterministic shifts",
+      "track": "stella-mix",
+      "path": "qa/release-1.6.0/fixtures/stella-mix-demucs4-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "Fixed equal MDX/Demucs4 ensemble",
+      "track": "stella-mix",
+      "path": "qa/release-1.6.0/fixtures/stella-mix-mdx-demucs4-blend50-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "UVR MDX-Net Voc FT polarity ensemble",
+      "track": "stella-mix",
+      "path": "qa/release-1.6.0/fixtures/stella-mix-mdx-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    },
+    {
+      "model": "Spleeter 2 stems",
+      "track": "stella-mix",
+      "path": "qa/release-1.6.0/fixtures/stella-mix-separated-vocals.f32",
+      "sampleRate": 44100,
+      "channels": 1
+    }
+  ]
+}

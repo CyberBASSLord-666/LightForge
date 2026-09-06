@@ -1,0 +1,37 @@
+✔ FSEQ binary header, variable metadata, payload and duration agree with audio (214.247662ms)
+✔ broad tempo and duration matrix retains physical closure timing and budgets (3863.656987ms)
+✔ expressive choreography places visible gestures at musical beats within per-closure budgets (72.306827ms)
+✔ shared physical outputs and unsupported channels are correct in every binary frame (31.305445ms)
+✔ all supported fade durations are real Tesla commands, and preview evaluates their brightness (18.66727ms)
+✔ RGB segments and display are independently addressable and optional (13.639566ms)
+✔ disabled closures are absent, including in an expressive show (36.016412ms)
+✔ timing offset moves musical light and closure entrances while preserving preparation (65.892371ms)
+✔ quiet input is intentionally dark; malformed and overlong tracks are rejected (5.93959ms)
+✔ degraded analysis data is normalized with explicit warnings (4.09692ms)
+✔ seed reproducibility, pattern variation and section overrides are functional (46.042247ms)
+✔ validator catches corrupted payload, unsupported dimming, absent lamps and illegal movement (26.94678ms)
+✔ the exact four-hour limit is accepted without timing overflow (1447.67147ms)
+✔ the actual Glass Castle music analysis exports a complete validated show (67.33004ms)
+✔ known eight-second musical rest is dark in exterior and every RGB zone (83.75669ms)
+✔ legacy saved analysis without activityRanges still respects waveform silence (11.089639ms)
+✔ last genuine beat survives instead of being replaced by unconditional ending fade (4.969917ms)
+✔ three-quarter bars honor supplied downbeat phase and do not treat pickup as downbeat (4.115909ms)
+✔ three-quarter fallback bars use three beats when explicit downbeats are absent (4.641261ms)
+✔ changing tempo follows actual local beat intervals instead of average BPM (9.88358ms)
+✔ known non-grid impact attacks and offsets reach FSEQ within half an export frame (71.939513ms)
+✔ rounding at activity onset retains the accepted binary attack within half a frame (18.032673ms)
+✔ higher-salience collision preserves the strong known attack without moving it later (9.116823ms)
+✔ deterministic variation and per-section style edits preserve independent unaffected sections (38.617095ms)
+✔ disabled output masks still win over composed beats, impacts and movement tracks (45.173686ms)
+✔ actual recorded analysis exports settled, budget-valid choreography: baseline-demo-music.json (89.068914ms)
+✔ actual recorded analysis exports settled, budget-valid choreography: baseline-sample-music.json (327.123433ms)
+✔ actual recorded analysis exports settled, budget-valid choreography: current-demo-music.json (111.048536ms)
+✔ actual recorded analysis exports settled, budget-valid choreography: current-sample-music.json (285.330733ms)
+ℹ tests 29
+ℹ suites 0
+ℹ pass 29
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6020.229591

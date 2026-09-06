@@ -1,0 +1,20 @@
+{
+  "report": {
+    "duration": 64,
+    "frames": 3200,
+    "channels": 200,
+    "sha256": "3062a0a4630a41298f4d7c495f3c28054d7e012286c0cd905a0252edb4640c19",
+    "stepMs": 20,
+    "audioSampleRate": 44100,
+    "status": "PASS"
+  },
+  "regressions": "PASS: 16 production native sequence checks; valid manual Stop/Idle, all closures, all lamps/RGB, and optional outer ramps; corrupt commands and impossible choreography rejected.",
+  "source_hashes": {
+    "android/src/com/cyberbasslord/lightforge/AudioImporter.java": "910ef3ec1d6f6ded54c91111d9ab34dbf4bbf4d4043f62f1978057183ca0b575",
+    "android/src/com/cyberbasslord/lightforge/MainActivity.java": "2c3387b4f2395887177607a14df75e974bb7bd74b0c63fe342b1ff79dffc1efd",
+    "android/src/com/cyberbasslord/lightforge/ProjectPreview.java": "459e586684b6cea8b0b5c0541de766c45301347341ff2acdc15e876028e7c551",
+    "android/src/com/cyberbasslord/lightforge/ProjectStore.java": "8f44a2d3dd5b0e0b534da15361bf1613f5c784e4165c3ebf67772dd0fd1aa90f",
+    "android/src/com/cyberbasslord/lightforge/WavConverter.java": "f34b9bf3c8960678b6116619941307ce01b75c672807ca85f6f81b6adc33b1b6",
+    "android/src/com/cyberbasslord/lightforge/WebViewFileTransport.java": "729b1e9145f385f2d7dc4d303ef71f81c6d9dac3121885b7d52e89241a39a97f"
+  }
+}

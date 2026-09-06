@@ -1,0 +1,25 @@
+{
+  "frontend": {
+    "values": 128000,
+    "maxAbsError": 0.00008988380432128906,
+    "rmsError": 0.0000011273943820608866
+  },
+  "gapFreeChunkSchedules": 15,
+  "passed": true,
+  "release": "1.5.0",
+  "scope": "Independent analytic resampling checks; not vocal classification accuracy",
+  "chunkMaxError": 0,
+  "impulse": {
+    "sourceSample": 8820,
+    "sourceRate": 22050,
+    "destinationSample": 6400,
+    "destinationRate": 16000,
+    "delayMs": 0
+  },
+  "passband6000HzDb": 0.0004890423254471375,
+  "stopband9000HzDb": -79.32401681130013,
+  "shortSilentTailFinite": true,
+  "source_hashes": {
+    "web/analysis/vocal.js": "0c7c89a7de70e6a416a4a74ca4bd33a4bc2bb07c935bc0201aa6ad0b372e0bb2"
+  }
+}

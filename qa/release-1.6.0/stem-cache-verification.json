@@ -1,0 +1,36 @@
+{
+  "release": "1.6.0",
+  "checks": [
+    "Real OPFS float WAV commit has exact metadata, headers, sample count and independently convolved PCM",
+    "Cached readers zero-pad outside the song without moving actual samples",
+    "Unfinished cache cannot be recalled; abort removes its actual OPFS directory",
+    "Failed append can be aborted without leaving a partially published stem pair",
+    "A damaged float WAV header rejects despite the correct file length",
+    "A truncated stem rejects before any preview or analysis read",
+    "Non-finite cached float samples are sanitized by the WAV reader",
+    "Stored metadata must match project source identity and reject corrupted JSON",
+    "Caller metadata requires a finite numeric duration",
+    "Stored metadata requires matching version, key and physically consistent duration",
+    "Explicit discard removes a completed cache and makes stale recall unavailable",
+    "Actual OPFS cache survives page reload and returns the identical float sample and count.",
+    "A genuine browser worker creates, commits and reads separated float PCM through OPFS."
+  ],
+  "errors": [],
+  "externalRequests": [],
+  "limits": [
+    "Real desktop Chromium OPFS and workers; not Android filesystem or physical phone execution.",
+    "Analytical FIR and synthetic PCM validate transport clocks and fidelity, not musical recognition."
+  ],
+  "unitGroups": 14,
+  "failures": [],
+  "source_hashes": {
+    "web/analysis/stem-cache.js": "c7d3101a59a85d0c2ebfd30e1c6cd40dc9720f17072b5fc821bd0fd3bf7c6fb4",
+    "web/analysis/wav-reader.js": "0f0e5216dc1d2ca0bfb25eddacdaa21076990fa7638c22188023607e43d4005f",
+    "web/analysis/models/features.json": "8a9fb3bc88c3e2f35934dd0024f22458aa8d357e3e3946a6e2c6230d3886e278",
+    "tests/stem-cache.test.cjs": "1d267830858f49de8971f04f13a218d53ebac58646fd993c5aa83e2159c2cd15",
+    "qa/release-1.6.0/test-stem-cache-browser.cjs": "e47ced50bec4a53552a121ad5615d48f6cfc766f5fec4ad51f4445364cb7d046"
+  },
+  "sourceStable": true,
+  "passed": true,
+  "completed": "2026-09-06T10:00:22.170Z"
+}

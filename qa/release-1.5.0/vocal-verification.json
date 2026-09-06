@@ -1,0 +1,167 @@
+{
+  "release": "1.5.0",
+  "passed": true,
+  "errors": [],
+  "createdAt": "2026-09-06T07:37:33.023Z",
+  "source_hashes": {
+    "web/analysis/vocal.js": "0c7c89a7de70e6a416a4a74ca4bd33a4bc2bb07c935bc0201aa6ad0b372e0bb2",
+    "web/analysis/models/frame-mn10-singing.onnx": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+    "web/analysis/models/vocal-model.json": "52093f26d0bfe3f04bbb1563b287fafe5e61aa57a61391ea643b04d97838ca7e",
+    "web/analysis/models/vocal-frontend.json": "72bdffced29bfdd6d1da77a4da2a2a4af1b2f839c71131d19dc9423db3d4732f"
+  },
+  "model": {
+    "name": "PretrainedSED Frame-MN10",
+    "id": "frame-mn10-strong-1",
+    "file": "frame-mn10-singing.onnx",
+    "sha256": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+    "bytes": 13620408,
+    "license": "MIT",
+    "source": "https://github.com/fschmid56/PretrainedSED",
+    "weightsSource": "https://github.com/fschmid56/PretrainedSED/releases/download/v0.0.1/frame_mn10_strong_1.pt",
+    "weightsSHA256": "4a0fe320d5369987b772394c51881fb20a602967e6842f72f3e5c8181065ece7",
+    "sampleRate": 16000,
+    "inputShape": [
+      1,
+      1,
+      128,
+      1000
+    ],
+    "outputShape": [
+      1,
+      447,
+      250
+    ],
+    "contextSeconds": 10,
+    "frameSeconds": 0.04,
+    "singingClassIds": [
+      73,
+      77,
+      85,
+      156,
+      212,
+      237,
+      239,
+      292,
+      327,
+      373,
+      444
+    ],
+    "speechClassIds": [
+      78,
+      157,
+      238,
+      254,
+      353
+    ],
+    "capabilities": [
+      "Singing activity trained with strong frame-level AudioSet labels",
+      "Male/female/child singing, choir, humming, chant and rap",
+      "No source separation, lyrics or individual sung-note transcription"
+    ]
+  },
+  "tests": {
+    "realWasmInference": 8,
+    "phrasingRegressionGroups": 4,
+    "originalReferenceCoreMaxAbsScoreError": 1.0132789611816406e-06,
+    "frontend": {
+      "samples": 128000,
+      "maxAbsError": 8.988380432128906e-05,
+      "rmsError": 1.1273943820608866e-06
+    }
+  },
+  "fixtures": [
+    {
+      "track": "sung",
+      "duration": 60,
+      "presence": "detected",
+      "regions": 8,
+      "accents": 12,
+      "coverage": 0.5823,
+      "modelScore": 0.8167,
+      "desktopAnalysisSeconds": 2.37629999999702
+    },
+    {
+      "track": "instrumental",
+      "duration": 60,
+      "presence": "not_detected",
+      "regions": 0,
+      "accents": 0,
+      "coverage": 0,
+      "modelScore": 0.0016,
+      "desktopAnalysisSeconds": 1.7905999999977649
+    },
+    {
+      "track": "speech",
+      "duration": 14.84,
+      "presence": "not_detected",
+      "regions": 0,
+      "accents": 0,
+      "coverage": 0,
+      "modelScore": 0.0008,
+      "desktopAnalysisSeconds": 0.4606999999992549
+    },
+    {
+      "track": "percussion",
+      "duration": 30,
+      "presence": "not_detected",
+      "regions": 0,
+      "accents": 0,
+      "coverage": 0,
+      "modelScore": 0.0045,
+      "desktopAnalysisSeconds": 0.918199999999255
+    },
+    {
+      "track": "silence",
+      "duration": 10,
+      "presence": "not_detected",
+      "regions": 0,
+      "accents": 0,
+      "coverage": 0,
+      "modelScore": 0,
+      "desktopAnalysisSeconds": 0.023
+    },
+    {
+      "track": "glass",
+      "duration": 121.7491156462585,
+      "presence": "detected",
+      "regions": 5,
+      "accents": 7,
+      "coverage": 0.8508,
+      "modelScore": 0.6426,
+      "desktopAnalysisSeconds": 3.346800000000745
+    },
+    {
+      "track": "sample",
+      "duration": 238.04,
+      "presence": "detected",
+      "regions": 14,
+      "accents": 23,
+      "coverage": 0.7839,
+      "modelScore": 0.6457,
+      "desktopAnalysisSeconds": 7.751800000000745
+    },
+    {
+      "track": "demo",
+      "duration": 64,
+      "presence": "detected",
+      "regions": 2,
+      "accents": 7,
+      "coverage": 0.9591,
+      "modelScore": 0.655,
+      "desktopAnalysisSeconds": 1.9276000000014901
+    }
+  ],
+  "limitations": [
+    "Targeted examples, not a broad annotated singing benchmark",
+    "Frame-level sound-event classification, not separated vocal stems or lyric/sung-note transcription",
+    "40 ms model bins do not imply 40 ms boundary accuracy",
+    "Desktop WASM timing only; Android and physical Tesla not tested",
+    "Glass Castle fixture is the recovered121.749-second prefix of the truncated upload"
+  ],
+  "supportingReceipts": [
+    "vocal-inference-verification.json",
+    "vocal-reference-verification.json",
+    "vocal-independent-edge-verification.json",
+    "vocal-resampling-audit.json"
+  ]
+}

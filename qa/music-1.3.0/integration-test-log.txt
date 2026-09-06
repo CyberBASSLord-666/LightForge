@@ -1,0 +1,135 @@
+{
+  "release": "1.3.0",
+  "started": "2026-09-06T03:36:18.325Z",
+  "checks": [
+    "Actual file-picker import converts the bundled 64-second music to project audio; a real offline BeatNet ONNX worker returns analysisVersion 2 and generates a valid 1.3.0 show.",
+    "A stored version-1 analysis recalls and edits without a neural rerun. Re-analyze upgrades to version 2 while preserving project identity, exact audio, edited light/RGB/mirror cues and muted outputs.",
+    "New variation changes actual light-frame bytes without another Worker or audio analysis; custom cues and mutes persist. Undo restores the exact previous FSEQ and settings.",
+    "Music statistics match the actual generated plan. Tapping three planned moments seeks the audio clock and correct camera; preview RGB, closure command and estimated motor position match the same exported frame timeline.",
+    "Autosave/reload restores byte-identical show, music and edits without analysis. Actual Export produces a CRC-valid ZIP with 44.1 kHz stereo PCM16 WAV, terminal dark FSEQ and full editable project; fresh Node regeneration from that project is byte-identical.",
+    "New music intelligence controls and movement moment cards fit 320, 393 and 768 pixel viewports with no horizontal overflow.",
+    "Bundled WebGL model, audio, neural analysis and editing complete with no JavaScript errors or external network requests.",
+    "Freshly compiled production Android Java export validator accepts the actual neural-composed USB archive; all 16 valid/invalid native command regressions pass on the host JVM."
+  ],
+  "errors": [],
+  "externalRequests": [],
+  "limits": [
+    "Desktop Chromium WebGL2/SwiftShader, not a physical phone or Tesla test.",
+    "Native export validator executes on the host JVM with production Java sources; Android codec/device execution is not claimed."
+  ],
+  "analysis": {
+    "engine": {
+      "name": "BeatNet CRNN",
+      "neural": true,
+      "detail": "Bundled pretrained BeatNet model 1 with ONNX Runtime WebAssembly. Neural beat/downbeat activations, adaptive local-tempo decoding, 5 ms PCM attack alignment, silence-aware bar/phrase landmarks and impact analysis. All audio stays on this device.",
+      "model": "BeatNet model_1_weights",
+      "runtime": "ONNX Runtime Web 1.20.1",
+      "analysisSeconds": 1.2
+    },
+    "analysisVersion": 2,
+    "bpm": 92.99,
+    "meter": 4,
+    "beats": 99,
+    "downbeats": 25,
+    "onsets": 1668,
+    "phrases": 7,
+    "impacts": 24,
+    "timing": {
+      "neuralFrameMs": 20,
+      "pcmEnvelopeMs": 5,
+      "alignment": "Neural pulse with local tempo and nearby measured PCM attacks",
+      "manualTempo": false,
+      "attackCount": 689,
+      "refinedBeatCount": 82,
+      "appliedGlobalOffsetMs": 0
+    }
+  },
+  "moments": [
+    {
+      "time": 10.5,
+      "label": "0:10.5Left front windowMusical arrival · dance entrance",
+      "camera": "driver",
+      "frame": 525
+    },
+    {
+      "time": 11.14,
+      "label": "0:11.1Right front window + Right mirrorMusical arrival · dance entrance",
+      "camera": "front",
+      "frame": 557
+    },
+    {
+      "time": 11.74,
+      "label": "0:11.7Left rear windowMusical arrival · dance entrance",
+      "camera": "driver",
+      "frame": 587
+    }
+  ],
+  "export": {
+    "filename": "glass-castle_LightForge.zip",
+    "fseqSHA256": "3062a0a4630a41298f4d7c495f3c28054d7e012286c0cd905a0252edb4640c19",
+    "audioSHA256": "d17d7ed2b3af21fd6f175f7880c3a9253cbbc9a1da7ea0e5c935ae1be9d61dc0",
+    "files": [
+      "LightShow/lightshow.fseq",
+      "LightShow/lightshow.wav",
+      "README.txt",
+      "Validation.json",
+      "Review/LightForge_Project.json"
+    ],
+    "frames": 3200,
+    "stepMs": 20
+  },
+  "mobile": [
+    {
+      "viewport": 320,
+      "scroll": 320,
+      "body": 320
+    },
+    {
+      "viewport": 393,
+      "scroll": 393,
+      "body": 393
+    },
+    {
+      "viewport": 768,
+      "scroll": 768,
+      "body": 768
+    }
+  ],
+  "native": {
+    "report": {
+      "duration": 64,
+      "frames": 3200,
+      "channels": 200,
+      "sha256": "3062a0a4630a41298f4d7c495f3c28054d7e012286c0cd905a0252edb4640c19",
+      "stepMs": 20,
+      "audioSampleRate": 44100,
+      "status": "PASS"
+    },
+    "regressions": "PASS: 16 production native sequence checks; valid manual Stop/Idle, all closures, all lamps/RGB, and optional outer ramps; corrupt commands and impossible choreography rejected.",
+    "source_hashes": {
+      "android/src/com/cyberbasslord/lightforge/AudioImporter.java": "910ef3ec1d6f6ded54c91111d9ab34dbf4bbf4d4043f62f1978057183ca0b575",
+      "android/src/com/cyberbasslord/lightforge/MainActivity.java": "2c3387b4f2395887177607a14df75e974bb7bd74b0c63fe342b1ff79dffc1efd",
+      "android/src/com/cyberbasslord/lightforge/ProjectPreview.java": "459e586684b6cea8b0b5c0541de766c45301347341ff2acdc15e876028e7c551",
+      "android/src/com/cyberbasslord/lightforge/ProjectStore.java": "8f44a2d3dd5b0e0b534da15361bf1613f5c784e4165c3ebf67772dd0fd1aa90f",
+      "android/src/com/cyberbasslord/lightforge/WavConverter.java": "f34b9bf3c8960678b6116619941307ce01b75c672807ca85f6f81b6adc33b1b6",
+      "android/src/com/cyberbasslord/lightforge/WebViewFileTransport.java": "729b1e9145f385f2d7dc4d303ef71f81c6d9dac3121885b7d52e89241a39a97f"
+    }
+  },
+  "source_hashes": {
+    "web/app.js": "77c28f8f13d1f394934fba6e1c2ade20967409384863727dd13cf406dec8c5f0",
+    "web/music-insights.js": "555480f56e1896dc3c712f0c763996a3e36760f105bea5e3d8643344215d9279",
+    "web/index.html": "68f39d4b0662ea90a7d3a4a06b2bf285b5588280f7ae338bc69104e668848171",
+    "web/styles.css": "62382a7ba80220b49f75e9fcbdbf5ff086d816f5a3549584b579132d88ca92e4",
+    "web/engine/show-engine.js": "75e91440221c4a276d0a40fb98ba5736c8cffea488dc34402ff777e779a88488",
+    "web/engine/movement-planner.js": "c1c4f70c4a8fa0e82d7a1e33385f37eb22c935d899c71c1fbed60c7124738edf",
+    "web/engine/light-planner.js": "6370a4a53e60babafb11ef9d1d252887a007addc118f067d5a66223e672fa2ce",
+    "web/analysis/analyzer.js": "3206b33dd1b5a3fe7ddabfd8216156f22baf04ff8debed7495043602b467ebb1",
+    "web/analysis/dsp.js": "fe703f00a6afdee68d690381bd90ddc9e8d037b1f3256d1f95ebb42172396fa5",
+    "web/engine/vehicle-profile.js": "b2201f74f42092a435a82ec41b43c842925e15d78f42dc96dcedc96b20b86138",
+    "web/analysis/worker.js": "33762bf824a4b68c168df4e9bba2a8edd137a530c503f4f588a952cc5f44e8be",
+    "web/preview/vehicle-preview.js": "d60dea308475f1673e3dab76c131a8d171fd375405ef09888f8da534709d8bb9",
+    "android/src/com/cyberbasslord/lightforge/MainActivity.java": "2c3387b4f2395887177607a14df75e974bb7bd74b0c63fe342b1ff79dffc1efd"
+  },
+  "passed": true,
+  "completed": "2026-09-06T03:36:47.281Z"
+}

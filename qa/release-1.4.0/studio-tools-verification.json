@@ -1,0 +1,39 @@
+{
+  "release": "1.4.0",
+  "started": "2026-09-06T05:36:40.896Z",
+  "checks": [
+    "Actual 64-second WAV import and production asynchronous show compiler produce a valid show with the new studio module loaded.",
+    "Half-time, 3-beat meter and playhead bar anchor update the compiled rhythm; reset restores detected rhythm while source analysis remains unchanged.",
+    "A/B comparison restores byte-exact compiled frames in both directions; a retained section motif keeps its resolved seed across global variation.",
+    "Movement frequency edits compile asynchronously; Undo/Redo restore exact frames, and A/B retains edits made within each branch.",
+    "A/B passage loop repeats real audio; ±beat seeks use the corrected beat grid; selected sections become exact preview loop ranges.",
+    "Preview quality selection reaches the production renderer while preserving light bloom.",
+    "Saved-show search filters names/styles, empty results explain recovery, and alphabetical sorting retains working card controls.",
+    "Vehicle observations persist locally with explicit simulation/uncertified wording; no vehicle or telemetry connection is made.",
+    "Pending-export recovery card renders native bootstrap state and explains save/discard actions. Native recovery itself is validated separately.",
+    "No horizontal overflow at 320px; screenshot captured with rhythm tools open.",
+    "No horizontal overflow at 393px; screenshot captured with rhythm tools open.",
+    "No horizontal overflow at 768px; screenshot captured with rhythm tools open."
+  ],
+  "errors": [],
+  "externalRequests": [],
+  "limits": [
+    "Desktop Chromium with SwiftShader; not an Android device or Tesla test.",
+    "Real demo audio import and production show compiler; precomputed music annotations isolate editing behavior.",
+    "Loop playback measures browser media time, not physical vehicle timing."
+  ],
+  "sourceStable": true,
+  "sourceHashes": {
+    "web/studio-tools.js": "45847675661eefdabc3aa23002c0f1df27be857aa4eaa04986ccbcf82e8b1f5e",
+    "web/channel-studio.js": "3248cadd49b2faf0856c887c84a5a31d12d22a4d79c733bb1b9fc84a85ad21e9",
+    "web/music-insights.js": "474e6242fc54e5f6c835cc5ec54f53f403903ed0906582825551570d6637aeb7",
+    "web/index.html": "20e59e2b0bb2510babfd736e4433833b0da86dbef12875f6c06b0dbe0476c03c",
+    "web/styles.css": "966394c03ffb037fcb3aceb1b8fec88df7555342796a3b28a0f213be84e9fcab",
+    "web/app.js": "ecd9069eabce9ae96b4f5da0f3d809ec3b80167bb1adc5fafce60cc67f1a7369",
+    "web/engine/client.js": "2735ef93c97589c2c56915d788500ba05926dc058f23d4e427982f38485b0c96",
+    "web/engine/worker.js": "4e0198ba0f2eba17bc70b6c4b85ef607c27f8014713817559a0805a39e62e9d7",
+    "web/engine/show-engine.js": "77e494a193fef1a5051a3d5bf632338b738073deb0fea3d316d06613e7d5c609"
+  },
+  "passed": true,
+  "completed": "2026-09-06T05:37:01.104Z"
+}

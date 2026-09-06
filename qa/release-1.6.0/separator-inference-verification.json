@@ -1,0 +1,751 @@
+{
+  "passed": true,
+  "createdAt": "2026-09-06T09:36:22.579Z",
+  "runtime": "ONNX Runtime Web1.20.1 / Chromium desktop single-thread WASM; Android timing not measured",
+  "results": [
+    {
+      "track": "nightowl-mix",
+      "metadata": {
+        "sourceSeparated": true,
+        "method": "Pretrained stereo source separation with normalized Wiener masks",
+        "name": "Spleeter 2-stem",
+        "modelId": "spleeter-2stems-sherpa-fp32",
+        "modelSha256": "bdc16ab6bf6117ddd4842c19e80e40e2be188fc555295064d424616b0224ac97",
+        "accompanimentModelSha256": "671ace17acd3720674a2bc14de32ac6292453dec20d9eb0ba4255d4ad8e3d8c0",
+        "sampleRate": 44100,
+        "sourceChannels": 2,
+        "stems": [
+          "vocals",
+          "accompaniment"
+        ],
+        "vocalBandwidthHz": 11025,
+        "fftWindowSamples": 4096,
+        "fftHopSamples": 1024,
+        "contextSamples": 32768,
+        "overlapSamples": 16384,
+        "alignment": "Original sample clock; normalized overlap-add and complementary chunk crossfades; no latency subtraction",
+        "estimated": true,
+        "analysisSeconds": 1.4311000000014902,
+        "chunks": 1,
+        "peakSegmentBytes": 27299840,
+        "limitations": [
+          "Separation can leave instrument bleed or soften quiet and heavily processed vocals.",
+          "Lead and backing vocals are combined; separated vocal audio is not a lyric transcription."
+        ]
+      },
+      "chunks": [
+        {
+          "start": 0,
+          "count": 300032
+        }
+      ],
+      "samples": 300032,
+      "mixtureReconstructionMaxError": 5.960464477539063e-8,
+      "rms": 0.03115312266294197,
+      "peak": 0.23117023706436157
+    },
+    {
+      "track": "nightowl-instrumental",
+      "metadata": {
+        "sourceSeparated": true,
+        "method": "Pretrained stereo source separation with normalized Wiener masks",
+        "name": "Spleeter 2-stem",
+        "modelId": "spleeter-2stems-sherpa-fp32",
+        "modelSha256": "bdc16ab6bf6117ddd4842c19e80e40e2be188fc555295064d424616b0224ac97",
+        "accompanimentModelSha256": "671ace17acd3720674a2bc14de32ac6292453dec20d9eb0ba4255d4ad8e3d8c0",
+        "sampleRate": 44100,
+        "sourceChannels": 2,
+        "stems": [
+          "vocals",
+          "accompaniment"
+        ],
+        "vocalBandwidthHz": 11025,
+        "fftWindowSamples": 4096,
+        "fftHopSamples": 1024,
+        "contextSamples": 32768,
+        "overlapSamples": 16384,
+        "alignment": "Original sample clock; normalized overlap-add and complementary chunk crossfades; no latency subtraction",
+        "estimated": true,
+        "analysisSeconds": 1.363,
+        "chunks": 1,
+        "peakSegmentBytes": 27299840,
+        "limitations": [
+          "Separation can leave instrument bleed or soften quiet and heavily processed vocals.",
+          "Lead and backing vocals are combined; separated vocal audio is not a lyric transcription."
+        ]
+      },
+      "chunks": [
+        {
+          "start": 0,
+          "count": 300032
+        }
+      ],
+      "samples": 300032,
+      "mixtureReconstructionMaxError": 5.8420027926331386e-8,
+      "rms": 0.0004064795539535711,
+      "peak": 0.009569860994815826
+    },
+    {
+      "track": "nightowl-controlled",
+      "metadata": {
+        "sourceSeparated": true,
+        "method": "Pretrained stereo source separation with normalized Wiener masks",
+        "name": "Spleeter 2-stem",
+        "modelId": "spleeter-2stems-sherpa-fp32",
+        "modelSha256": "bdc16ab6bf6117ddd4842c19e80e40e2be188fc555295064d424616b0224ac97",
+        "accompanimentModelSha256": "671ace17acd3720674a2bc14de32ac6292453dec20d9eb0ba4255d4ad8e3d8c0",
+        "sampleRate": 44100,
+        "sourceChannels": 2,
+        "stems": [
+          "vocals",
+          "accompaniment"
+        ],
+        "vocalBandwidthHz": 11025,
+        "fftWindowSamples": 4096,
+        "fftHopSamples": 1024,
+        "contextSamples": 32768,
+        "overlapSamples": 16384,
+        "alignment": "Original sample clock; normalized overlap-add and complementary chunk crossfades; no latency subtraction",
+        "estimated": true,
+        "analysisSeconds": 1.3456999999955297,
+        "chunks": 1,
+        "peakSegmentBytes": 27299840,
+        "limitations": [
+          "Separation can leave instrument bleed or soften quiet and heavily processed vocals.",
+          "Lead and backing vocals are combined; separated vocal audio is not a lyric transcription."
+        ]
+      },
+      "chunks": [
+        {
+          "start": 0,
+          "count": 300032
+        }
+      ],
+      "samples": 300032,
+      "mixtureReconstructionMaxError": 5.8120349422097206e-8,
+      "rms": 0.03000593352189372,
+      "peak": 0.28584781289100647
+    },
+    {
+      "track": "stella-mix",
+      "metadata": {
+        "sourceSeparated": true,
+        "method": "Pretrained stereo source separation with normalized Wiener masks",
+        "name": "Spleeter 2-stem",
+        "modelId": "spleeter-2stems-sherpa-fp32",
+        "modelSha256": "bdc16ab6bf6117ddd4842c19e80e40e2be188fc555295064d424616b0224ac97",
+        "accompanimentModelSha256": "671ace17acd3720674a2bc14de32ac6292453dec20d9eb0ba4255d4ad8e3d8c0",
+        "sampleRate": 44100,
+        "sourceChannels": 2,
+        "stems": [
+          "vocals",
+          "accompaniment"
+        ],
+        "vocalBandwidthHz": 11025,
+        "fftWindowSamples": 4096,
+        "fftHopSamples": 1024,
+        "contextSamples": 32768,
+        "overlapSamples": 16384,
+        "alignment": "Original sample clock; normalized overlap-add and complementary chunk crossfades; no latency subtraction",
+        "estimated": true,
+        "analysisSeconds": 1.412,
+        "chunks": 1,
+        "peakSegmentBytes": 27299840,
+        "limitations": [
+          "Separation can leave instrument bleed or soften quiet and heavily processed vocals.",
+          "Lead and backing vocals are combined; separated vocal audio is not a lyric transcription."
+        ]
+      },
+      "chunks": [
+        {
+          "start": 0,
+          "count": 300032
+        }
+      ],
+      "samples": 300032,
+      "mixtureReconstructionMaxError": 5.960464477539063e-8,
+      "rms": 0.08892666707936703,
+      "peak": 0.4325091540813446
+    },
+    {
+      "track": "stella-instrumental",
+      "metadata": {
+        "sourceSeparated": true,
+        "method": "Pretrained stereo source separation with normalized Wiener masks",
+        "name": "Spleeter 2-stem",
+        "modelId": "spleeter-2stems-sherpa-fp32",
+        "modelSha256": "bdc16ab6bf6117ddd4842c19e80e40e2be188fc555295064d424616b0224ac97",
+        "accompanimentModelSha256": "671ace17acd3720674a2bc14de32ac6292453dec20d9eb0ba4255d4ad8e3d8c0",
+        "sampleRate": 44100,
+        "sourceChannels": 2,
+        "stems": [
+          "vocals",
+          "accompaniment"
+        ],
+        "vocalBandwidthHz": 11025,
+        "fftWindowSamples": 4096,
+        "fftHopSamples": 1024,
+        "contextSamples": 32768,
+        "overlapSamples": 16384,
+        "alignment": "Original sample clock; normalized overlap-add and complementary chunk crossfades; no latency subtraction",
+        "estimated": true,
+        "analysisSeconds": 1.2922999999970197,
+        "chunks": 1,
+        "peakSegmentBytes": 27299840,
+        "limitations": [
+          "Separation can leave instrument bleed or soften quiet and heavily processed vocals.",
+          "Lead and backing vocals are combined; separated vocal audio is not a lyric transcription."
+        ]
+      },
+      "chunks": [
+        {
+          "start": 0,
+          "count": 300032
+        }
+      ],
+      "samples": 300032,
+      "mixtureReconstructionMaxError": 5.9216290537733585e-8,
+      "rms": 0.000001235603956609768,
+      "peak": 0.00005904979843762703
+    },
+    {
+      "track": "stella-controlled",
+      "metadata": {
+        "sourceSeparated": true,
+        "method": "Pretrained stereo source separation with normalized Wiener masks",
+        "name": "Spleeter 2-stem",
+        "modelId": "spleeter-2stems-sherpa-fp32",
+        "modelSha256": "bdc16ab6bf6117ddd4842c19e80e40e2be188fc555295064d424616b0224ac97",
+        "accompanimentModelSha256": "671ace17acd3720674a2bc14de32ac6292453dec20d9eb0ba4255d4ad8e3d8c0",
+        "sampleRate": 44100,
+        "sourceChannels": 2,
+        "stems": [
+          "vocals",
+          "accompaniment"
+        ],
+        "vocalBandwidthHz": 11025,
+        "fftWindowSamples": 4096,
+        "fftHopSamples": 1024,
+        "contextSamples": 32768,
+        "overlapSamples": 16384,
+        "alignment": "Original sample clock; normalized overlap-add and complementary chunk crossfades; no latency subtraction",
+        "estimated": true,
+        "analysisSeconds": 1.3362000000029803,
+        "chunks": 1,
+        "peakSegmentBytes": 27299840,
+        "limitations": [
+          "Separation can leave instrument bleed or soften quiet and heavily processed vocals.",
+          "Lead and backing vocals are combined; separated vocal audio is not a lyric transcription."
+        ]
+      },
+      "chunks": [
+        {
+          "start": 0,
+          "count": 300032
+        }
+      ],
+      "samples": 300032,
+      "mixtureReconstructionMaxError": 5.960464477539063e-8,
+      "rms": 0.06850914160287108,
+      "peak": 0.4338350296020508
+    },
+    {
+      "track": "meaxic-mix",
+      "metadata": {
+        "sourceSeparated": true,
+        "method": "Pretrained stereo source separation with normalized Wiener masks",
+        "name": "Spleeter 2-stem",
+        "modelId": "spleeter-2stems-sherpa-fp32",
+        "modelSha256": "bdc16ab6bf6117ddd4842c19e80e40e2be188fc555295064d424616b0224ac97",
+        "accompanimentModelSha256": "671ace17acd3720674a2bc14de32ac6292453dec20d9eb0ba4255d4ad8e3d8c0",
+        "sampleRate": 44100,
+        "sourceChannels": 2,
+        "stems": [
+          "vocals",
+          "accompaniment"
+        ],
+        "vocalBandwidthHz": 11025,
+        "fftWindowSamples": 4096,
+        "fftHopSamples": 1024,
+        "contextSamples": 32768,
+        "overlapSamples": 16384,
+        "alignment": "Original sample clock; normalized overlap-add and complementary chunk crossfades; no latency subtraction",
+        "estimated": true,
+        "analysisSeconds": 1.3032999999970198,
+        "chunks": 1,
+        "peakSegmentBytes": 27299840,
+        "limitations": [
+          "Separation can leave instrument bleed or soften quiet and heavily processed vocals.",
+          "Lead and backing vocals are combined; separated vocal audio is not a lyric transcription."
+        ]
+      },
+      "chunks": [
+        {
+          "start": 0,
+          "count": 300032
+        }
+      ],
+      "samples": 300032,
+      "mixtureReconstructionMaxError": 5.774199962615967e-8,
+      "rms": 0.07269186014888142,
+      "peak": 0.3407150208950043
+    },
+    {
+      "track": "meaxic-instrumental",
+      "metadata": {
+        "sourceSeparated": true,
+        "method": "Pretrained stereo source separation with normalized Wiener masks",
+        "name": "Spleeter 2-stem",
+        "modelId": "spleeter-2stems-sherpa-fp32",
+        "modelSha256": "bdc16ab6bf6117ddd4842c19e80e40e2be188fc555295064d424616b0224ac97",
+        "accompanimentModelSha256": "671ace17acd3720674a2bc14de32ac6292453dec20d9eb0ba4255d4ad8e3d8c0",
+        "sampleRate": 44100,
+        "sourceChannels": 2,
+        "stems": [
+          "vocals",
+          "accompaniment"
+        ],
+        "vocalBandwidthHz": 11025,
+        "fftWindowSamples": 4096,
+        "fftHopSamples": 1024,
+        "contextSamples": 32768,
+        "overlapSamples": 16384,
+        "alignment": "Original sample clock; normalized overlap-add and complementary chunk crossfades; no latency subtraction",
+        "estimated": true,
+        "analysisSeconds": 1.4291000000014902,
+        "chunks": 1,
+        "peakSegmentBytes": 27299840,
+        "limitations": [
+          "Separation can leave instrument bleed or soften quiet and heavily processed vocals.",
+          "Lead and backing vocals are combined; separated vocal audio is not a lyric transcription."
+        ]
+      },
+      "chunks": [
+        {
+          "start": 0,
+          "count": 300032
+        }
+      ],
+      "samples": 300032,
+      "mixtureReconstructionMaxError": 5.518995749298483e-8,
+      "rms": 0.000002741741127080039,
+      "peak": 0.00003160697451676242
+    },
+    {
+      "track": "meaxic-controlled",
+      "metadata": {
+        "sourceSeparated": true,
+        "method": "Pretrained stereo source separation with normalized Wiener masks",
+        "name": "Spleeter 2-stem",
+        "modelId": "spleeter-2stems-sherpa-fp32",
+        "modelSha256": "bdc16ab6bf6117ddd4842c19e80e40e2be188fc555295064d424616b0224ac97",
+        "accompanimentModelSha256": "671ace17acd3720674a2bc14de32ac6292453dec20d9eb0ba4255d4ad8e3d8c0",
+        "sampleRate": 44100,
+        "sourceChannels": 2,
+        "stems": [
+          "vocals",
+          "accompaniment"
+        ],
+        "vocalBandwidthHz": 11025,
+        "fftWindowSamples": 4096,
+        "fftHopSamples": 1024,
+        "contextSamples": 32768,
+        "overlapSamples": 16384,
+        "alignment": "Original sample clock; normalized overlap-add and complementary chunk crossfades; no latency subtraction",
+        "estimated": true,
+        "analysisSeconds": 1.2782999999970197,
+        "chunks": 1,
+        "peakSegmentBytes": 27299840,
+        "limitations": [
+          "Separation can leave instrument bleed or soften quiet and heavily processed vocals.",
+          "Lead and backing vocals are combined; separated vocal audio is not a lyric transcription."
+        ]
+      },
+      "chunks": [
+        {
+          "start": 0,
+          "count": 300032
+        }
+      ],
+      "samples": 300032,
+      "mixtureReconstructionMaxError": 5.6352291721850634e-8,
+      "rms": 0.055714681373770135,
+      "peak": 0.3418468236923218
+    },
+    {
+      "track": "grunge-mix",
+      "metadata": {
+        "sourceSeparated": true,
+        "method": "Pretrained stereo source separation with normalized Wiener masks",
+        "name": "Spleeter 2-stem",
+        "modelId": "spleeter-2stems-sherpa-fp32",
+        "modelSha256": "bdc16ab6bf6117ddd4842c19e80e40e2be188fc555295064d424616b0224ac97",
+        "accompanimentModelSha256": "671ace17acd3720674a2bc14de32ac6292453dec20d9eb0ba4255d4ad8e3d8c0",
+        "sampleRate": 44100,
+        "sourceChannels": 2,
+        "stems": [
+          "vocals",
+          "accompaniment"
+        ],
+        "vocalBandwidthHz": 11025,
+        "fftWindowSamples": 4096,
+        "fftHopSamples": 1024,
+        "contextSamples": 32768,
+        "overlapSamples": 16384,
+        "alignment": "Original sample clock; normalized overlap-add and complementary chunk crossfades; no latency subtraction",
+        "estimated": true,
+        "analysisSeconds": 1.3032999999970198,
+        "chunks": 1,
+        "peakSegmentBytes": 27299840,
+        "limitations": [
+          "Separation can leave instrument bleed or soften quiet and heavily processed vocals.",
+          "Lead and backing vocals are combined; separated vocal audio is not a lyric transcription."
+        ]
+      },
+      "chunks": [
+        {
+          "start": 0,
+          "count": 300032
+        }
+      ],
+      "samples": 300032,
+      "mixtureReconstructionMaxError": 5.8731529861688614e-8,
+      "rms": 0.06120088816289899,
+      "peak": 0.3655700385570526
+    },
+    {
+      "track": "grunge-instrumental",
+      "metadata": {
+        "sourceSeparated": true,
+        "method": "Pretrained stereo source separation with normalized Wiener masks",
+        "name": "Spleeter 2-stem",
+        "modelId": "spleeter-2stems-sherpa-fp32",
+        "modelSha256": "bdc16ab6bf6117ddd4842c19e80e40e2be188fc555295064d424616b0224ac97",
+        "accompanimentModelSha256": "671ace17acd3720674a2bc14de32ac6292453dec20d9eb0ba4255d4ad8e3d8c0",
+        "sampleRate": 44100,
+        "sourceChannels": 2,
+        "stems": [
+          "vocals",
+          "accompaniment"
+        ],
+        "vocalBandwidthHz": 11025,
+        "fftWindowSamples": 4096,
+        "fftHopSamples": 1024,
+        "contextSamples": 32768,
+        "overlapSamples": 16384,
+        "alignment": "Original sample clock; normalized overlap-add and complementary chunk crossfades; no latency subtraction",
+        "estimated": true,
+        "analysisSeconds": 1.366,
+        "chunks": 1,
+        "peakSegmentBytes": 27299840,
+        "limitations": [
+          "Separation can leave instrument bleed or soften quiet and heavily processed vocals.",
+          "Lead and backing vocals are combined; separated vocal audio is not a lyric transcription."
+        ]
+      },
+      "chunks": [
+        {
+          "start": 0,
+          "count": 300032
+        }
+      ],
+      "samples": 300032,
+      "mixtureReconstructionMaxError": 5.888443865842419e-8,
+      "rms": 0.000003946931564148149,
+      "peak": 0.00005814756514155306
+    },
+    {
+      "track": "grunge-controlled",
+      "metadata": {
+        "sourceSeparated": true,
+        "method": "Pretrained stereo source separation with normalized Wiener masks",
+        "name": "Spleeter 2-stem",
+        "modelId": "spleeter-2stems-sherpa-fp32",
+        "modelSha256": "bdc16ab6bf6117ddd4842c19e80e40e2be188fc555295064d424616b0224ac97",
+        "accompanimentModelSha256": "671ace17acd3720674a2bc14de32ac6292453dec20d9eb0ba4255d4ad8e3d8c0",
+        "sampleRate": 44100,
+        "sourceChannels": 2,
+        "stems": [
+          "vocals",
+          "accompaniment"
+        ],
+        "vocalBandwidthHz": 11025,
+        "fftWindowSamples": 4096,
+        "fftHopSamples": 1024,
+        "contextSamples": 32768,
+        "overlapSamples": 16384,
+        "alignment": "Original sample clock; normalized overlap-add and complementary chunk crossfades; no latency subtraction",
+        "estimated": true,
+        "analysisSeconds": 1.32589999999851,
+        "chunks": 1,
+        "peakSegmentBytes": 27299840,
+        "limitations": [
+          "Separation can leave instrument bleed or soften quiet and heavily processed vocals.",
+          "Lead and backing vocals are combined; separated vocal audio is not a lyric transcription."
+        ]
+      },
+      "chunks": [
+        {
+          "start": 0,
+          "count": 300032
+        }
+      ],
+      "samples": 300032,
+      "mixtureReconstructionMaxError": 5.960464477539063e-8,
+      "rms": 0.05007266293392947,
+      "peak": 0.35843178629875183
+    },
+    {
+      "track": "falcon-mix",
+      "metadata": {
+        "sourceSeparated": true,
+        "method": "Pretrained stereo source separation with normalized Wiener masks",
+        "name": "Spleeter 2-stem",
+        "modelId": "spleeter-2stems-sherpa-fp32",
+        "modelSha256": "bdc16ab6bf6117ddd4842c19e80e40e2be188fc555295064d424616b0224ac97",
+        "accompanimentModelSha256": "671ace17acd3720674a2bc14de32ac6292453dec20d9eb0ba4255d4ad8e3d8c0",
+        "sampleRate": 44100,
+        "sourceChannels": 2,
+        "stems": [
+          "vocals",
+          "accompaniment"
+        ],
+        "vocalBandwidthHz": 11025,
+        "fftWindowSamples": 4096,
+        "fftHopSamples": 1024,
+        "contextSamples": 32768,
+        "overlapSamples": 16384,
+        "alignment": "Original sample clock; normalized overlap-add and complementary chunk crossfades; no latency subtraction",
+        "estimated": true,
+        "analysisSeconds": 1.3185,
+        "chunks": 1,
+        "peakSegmentBytes": 27299840,
+        "limitations": [
+          "Separation can leave instrument bleed or soften quiet and heavily processed vocals.",
+          "Lead and backing vocals are combined; separated vocal audio is not a lyric transcription."
+        ]
+      },
+      "chunks": [
+        {
+          "start": 0,
+          "count": 300032
+        }
+      ],
+      "samples": 300032,
+      "mixtureReconstructionMaxError": 5.960464477539063e-8,
+      "rms": 0.05803891429864791,
+      "peak": 0.25594884157180786
+    },
+    {
+      "track": "falcon-instrumental",
+      "metadata": {
+        "sourceSeparated": true,
+        "method": "Pretrained stereo source separation with normalized Wiener masks",
+        "name": "Spleeter 2-stem",
+        "modelId": "spleeter-2stems-sherpa-fp32",
+        "modelSha256": "bdc16ab6bf6117ddd4842c19e80e40e2be188fc555295064d424616b0224ac97",
+        "accompanimentModelSha256": "671ace17acd3720674a2bc14de32ac6292453dec20d9eb0ba4255d4ad8e3d8c0",
+        "sampleRate": 44100,
+        "sourceChannels": 2,
+        "stems": [
+          "vocals",
+          "accompaniment"
+        ],
+        "vocalBandwidthHz": 11025,
+        "fftWindowSamples": 4096,
+        "fftHopSamples": 1024,
+        "contextSamples": 32768,
+        "overlapSamples": 16384,
+        "alignment": "Original sample clock; normalized overlap-add and complementary chunk crossfades; no latency subtraction",
+        "estimated": true,
+        "analysisSeconds": 1.31589999999851,
+        "chunks": 1,
+        "peakSegmentBytes": 27299840,
+        "limitations": [
+          "Separation can leave instrument bleed or soften quiet and heavily processed vocals.",
+          "Lead and backing vocals are combined; separated vocal audio is not a lyric transcription."
+        ]
+      },
+      "chunks": [
+        {
+          "start": 0,
+          "count": 300032
+        }
+      ],
+      "samples": 300032,
+      "mixtureReconstructionMaxError": 5.934816726949066e-8,
+      "rms": 0.00044188980559821845,
+      "peak": 0.007020877208560705
+    },
+    {
+      "track": "falcon-controlled",
+      "metadata": {
+        "sourceSeparated": true,
+        "method": "Pretrained stereo source separation with normalized Wiener masks",
+        "name": "Spleeter 2-stem",
+        "modelId": "spleeter-2stems-sherpa-fp32",
+        "modelSha256": "bdc16ab6bf6117ddd4842c19e80e40e2be188fc555295064d424616b0224ac97",
+        "accompanimentModelSha256": "671ace17acd3720674a2bc14de32ac6292453dec20d9eb0ba4255d4ad8e3d8c0",
+        "sampleRate": 44100,
+        "sourceChannels": 2,
+        "stems": [
+          "vocals",
+          "accompaniment"
+        ],
+        "vocalBandwidthHz": 11025,
+        "fftWindowSamples": 4096,
+        "fftHopSamples": 1024,
+        "contextSamples": 32768,
+        "overlapSamples": 16384,
+        "alignment": "Original sample clock; normalized overlap-add and complementary chunk crossfades; no latency subtraction",
+        "estimated": true,
+        "analysisSeconds": 1.2863999999985098,
+        "chunks": 1,
+        "peakSegmentBytes": 27299840,
+        "limitations": [
+          "Separation can leave instrument bleed or soften quiet and heavily processed vocals.",
+          "Lead and backing vocals are combined; separated vocal audio is not a lyric transcription."
+        ]
+      },
+      "chunks": [
+        {
+          "start": 0,
+          "count": 300032
+        }
+      ],
+      "samples": 300032,
+      "mixtureReconstructionMaxError": 5.960464477539063e-8,
+      "rms": 0.05458162518715497,
+      "peak": 0.2689068019390106
+    },
+    {
+      "track": "sdrnr-mix",
+      "metadata": {
+        "sourceSeparated": true,
+        "method": "Pretrained stereo source separation with normalized Wiener masks",
+        "name": "Spleeter 2-stem",
+        "modelId": "spleeter-2stems-sherpa-fp32",
+        "modelSha256": "bdc16ab6bf6117ddd4842c19e80e40e2be188fc555295064d424616b0224ac97",
+        "accompanimentModelSha256": "671ace17acd3720674a2bc14de32ac6292453dec20d9eb0ba4255d4ad8e3d8c0",
+        "sampleRate": 44100,
+        "sourceChannels": 2,
+        "stems": [
+          "vocals",
+          "accompaniment"
+        ],
+        "vocalBandwidthHz": 11025,
+        "fftWindowSamples": 4096,
+        "fftHopSamples": 1024,
+        "contextSamples": 32768,
+        "overlapSamples": 16384,
+        "alignment": "Original sample clock; normalized overlap-add and complementary chunk crossfades; no latency subtraction",
+        "estimated": true,
+        "analysisSeconds": 1.3688999999985099,
+        "chunks": 1,
+        "peakSegmentBytes": 27299840,
+        "limitations": [
+          "Separation can leave instrument bleed or soften quiet and heavily processed vocals.",
+          "Lead and backing vocals are combined; separated vocal audio is not a lyric transcription."
+        ]
+      },
+      "chunks": [
+        {
+          "start": 0,
+          "count": 300032
+        }
+      ],
+      "samples": 300032,
+      "mixtureReconstructionMaxError": 5.3085386753082275e-8,
+      "rms": 0.07207249018997751,
+      "peak": 0.394633024930954
+    },
+    {
+      "track": "sdrnr-instrumental",
+      "metadata": {
+        "sourceSeparated": true,
+        "method": "Pretrained stereo source separation with normalized Wiener masks",
+        "name": "Spleeter 2-stem",
+        "modelId": "spleeter-2stems-sherpa-fp32",
+        "modelSha256": "bdc16ab6bf6117ddd4842c19e80e40e2be188fc555295064d424616b0224ac97",
+        "accompanimentModelSha256": "671ace17acd3720674a2bc14de32ac6292453dec20d9eb0ba4255d4ad8e3d8c0",
+        "sampleRate": 44100,
+        "sourceChannels": 2,
+        "stems": [
+          "vocals",
+          "accompaniment"
+        ],
+        "vocalBandwidthHz": 11025,
+        "fftWindowSamples": 4096,
+        "fftHopSamples": 1024,
+        "contextSamples": 32768,
+        "overlapSamples": 16384,
+        "alignment": "Original sample clock; normalized overlap-add and complementary chunk crossfades; no latency subtraction",
+        "estimated": true,
+        "analysisSeconds": 1.3727999999970197,
+        "chunks": 1,
+        "peakSegmentBytes": 27299840,
+        "limitations": [
+          "Separation can leave instrument bleed or soften quiet and heavily processed vocals.",
+          "Lead and backing vocals are combined; separated vocal audio is not a lyric transcription."
+        ]
+      },
+      "chunks": [
+        {
+          "start": 0,
+          "count": 300032
+        }
+      ],
+      "samples": 300032,
+      "mixtureReconstructionMaxError": 5.730038310503005e-8,
+      "rms": 0.0069228236148097195,
+      "peak": 0.08945006877183914
+    },
+    {
+      "track": "sdrnr-controlled",
+      "metadata": {
+        "sourceSeparated": true,
+        "method": "Pretrained stereo source separation with normalized Wiener masks",
+        "name": "Spleeter 2-stem",
+        "modelId": "spleeter-2stems-sherpa-fp32",
+        "modelSha256": "bdc16ab6bf6117ddd4842c19e80e40e2be188fc555295064d424616b0224ac97",
+        "accompanimentModelSha256": "671ace17acd3720674a2bc14de32ac6292453dec20d9eb0ba4255d4ad8e3d8c0",
+        "sampleRate": 44100,
+        "sourceChannels": 2,
+        "stems": [
+          "vocals",
+          "accompaniment"
+        ],
+        "vocalBandwidthHz": 11025,
+        "fftWindowSamples": 4096,
+        "fftHopSamples": 1024,
+        "contextSamples": 32768,
+        "overlapSamples": 16384,
+        "alignment": "Original sample clock; normalized overlap-add and complementary chunk crossfades; no latency subtraction",
+        "estimated": true,
+        "analysisSeconds": 1.52539999999851,
+        "chunks": 1,
+        "peakSegmentBytes": 27299840,
+        "limitations": [
+          "Separation can leave instrument bleed or soften quiet and heavily processed vocals.",
+          "Lead and backing vocals are combined; separated vocal audio is not a lyric transcription."
+        ]
+      },
+      "chunks": [
+        {
+          "start": 0,
+          "count": 300032
+        }
+      ],
+      "samples": 300032,
+      "mixtureReconstructionMaxError": 5.587935447692871e-8,
+      "rms": 0.045145534753985875,
+      "peak": 0.3459440767765045
+    }
+  ],
+  "source_hashes": {
+    "web/analysis/separator.js": "a7bf1cc67aa026148aa96536d7bfc68d4ad3ea03071056bf3d6456585a154448",
+    "web/analysis/models/separator-model.json": "a8d4216e59483390dec3916fe963a795c5bc6d668bd26d1c28401ebc973f3ee3",
+    "web/analysis/models/spleeter-vocals.onnx": "bdc16ab6bf6117ddd4842c19e80e40e2be188fc555295064d424616b0224ac97",
+    "web/analysis/models/spleeter-accompaniment.onnx": "671ace17acd3720674a2bc14de32ac6292453dec20d9eb0ba4255d4ad8e3d8c0"
+  }
+}

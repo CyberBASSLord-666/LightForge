@@ -1,0 +1,7 @@
+{
+  "leadingSilentUntil": 3.1299773242630384,
+  "nonzeroAudioUntil": 8.329977324263039,
+  "duration": 20.02997732426304,
+  "source": "sung.wav,15s..20.2s",
+  "meaning": "Known exact digital-silence bounds; interior singing labels not manually annotated"
+}

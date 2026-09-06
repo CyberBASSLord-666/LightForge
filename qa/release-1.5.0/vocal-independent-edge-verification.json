@@ -1,0 +1,72 @@
+{
+  "passed": true,
+  "createdAt": "2026-09-06T07:37:31.564Z",
+  "runtime": "ONNX Runtime Web 1.20.1 / Chromium desktop WASM; Android timing unmeasured",
+  "results": [
+    {
+      "track": "voice-edge-case",
+      "available": true,
+      "presence": "detected",
+      "confidence": 0.92,
+      "modelScore": 0.8847,
+      "coverage": 0.1068,
+      "phrases": [
+        {
+          "start": 3.12,
+          "end": 5.26,
+          "confidence": 0.92,
+          "modelScore": 0.8847,
+          "strength": 0.941,
+          "peakTime": 4.74,
+          "estimated": true
+        }
+      ],
+      "accents": [],
+      "envelopeStep": 0.02,
+      "method": "PretrainedSED Frame-MN10 strong singing events with confidence-gated phrasing",
+      "model": {
+        "name": "PretrainedSED Frame-MN10",
+        "id": "frame-mn10-strong-1",
+        "sha256": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+        "license": "MIT"
+      },
+      "timing": {
+        "contextSeconds": 10,
+        "classifierFrameMs": 40,
+        "envelopeMs": 20,
+        "overlapSeconds": 4,
+        "alignment": "40 ms sound-event evidence with estimated phrase edges and accents; no separated vocal stem or word alignment"
+      },
+      "warnings": [],
+      "diagnostics": {
+        "frames": 501,
+        "strongFrames": 50,
+        "thresholds": {
+          "startModelScore": 0.3,
+          "strongModelScore": 0.35,
+          "continueModelScore": 0.16
+        },
+        "confidenceMeaning": "Relative evidence score; not a calibrated probability"
+      },
+      "duration": 20.02997732426304,
+      "analysisSeconds": 0.9787000000029802,
+      "silenceAudit": {
+        "knownLeadingSilenceSeconds": 3.1299773242630384,
+        "knownTrailingSilenceStart": 8.329977324263039,
+        "toleranceSeconds": 0.04,
+        "outsideEnvelopeMaximum": 0
+      }
+    }
+  ],
+  "frontend": {
+    "samples": 128000,
+    "maxAbsError": 0.00008988380432128906,
+    "rmsError": 0.0000011273943820608866
+  },
+  "source_hashes": {
+    "web/analysis/vocal.js": "0c7c89a7de70e6a416a4a74ca4bd33a4bc2bb07c935bc0201aa6ad0b372e0bb2",
+    "web/analysis/models/frame-mn10-singing.onnx": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+    "web/analysis/models/vocal-model.json": "52093f26d0bfe3f04bbb1563b287fafe5e61aa57a61391ea643b04d97838ca7e",
+    "web/analysis/models/vocal-frontend.json": "72bdffced29bfdd6d1da77a4da2a2a4af1b2f839c71131d19dc9423db3d4732f"
+  }
+}

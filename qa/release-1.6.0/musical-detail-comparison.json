@@ -1,0 +1,1498 @@
+{
+  "complete": true,
+  "createdBy": "evaluate-musical-detail.py",
+  "runScopes": {
+    "baseline": "Frozen1.5 classifier on original mixture.",
+    "studio": "Initial full public-worker pass; early cases predate final vocal fallback and remain as audit evidence.",
+    "final_detail": "Final production downsampler/classifier/detail replay from actual recorded MDX estimates; no original reference stem is given to production.",
+    "final": "Final public-worker regression on originally missed controlled NightOwl voice."
+  },
+  "referenceMethod": "20ms centered RMS of original MUSDB18 vocal stem, no timing optimization against app output",
+  "limitations": [
+    "Original stems are acoustic references; RMS agreement is not word, syllable, pitch or human-listener accuracy.",
+    "Active-stem threshold is relative -30dB from each reference stem95th-percentile RMS with an absolute1e-5floor; reverb/unvoiced consonants/bleed may affect it.",
+    "Controlled remixes preserve real voice and backing audio but deliberately edit vocal entry/exit windows; results are not full natural-song segmentation accuracy.",
+    "Six7second excerpts plus the separate genre negatives are too small for broad professional/music-understanding claims.",
+    "Dataset split does not guarantee model-held-out evaluation; source separator and classifier training overlap may exist.",
+    "No perceptual listening panel, phone or physical Tesla was used for these measurements."
+  ],
+  "aggregates": {
+    "baseline-mix": {
+      "tracks": 6,
+      "singingDetectedTracks": 5,
+      "tracksWithVoiceCues": 5,
+      "accents": 9,
+      "notes": 0,
+      "meanEnvelopeStemRmsPearson": 0.4445,
+      "meanActiveStemF1": 0.8326,
+      "falseActiveSeconds": 0.02,
+      "outsideKnownVocalWindowsSeconds": 0
+    },
+    "baseline-instrumental": {
+      "tracks": 6,
+      "singingDetectedTracks": 0,
+      "tracksWithVoiceCues": 0,
+      "accents": 0,
+      "notes": 0,
+      "meanEnvelopeStemRmsPearson": 0.0,
+      "meanActiveStemF1": 0.0,
+      "falseActiveSeconds": 0.0,
+      "outsideKnownVocalWindowsSeconds": 0
+    },
+    "baseline-controlled": {
+      "tracks": 6,
+      "singingDetectedTracks": 5,
+      "tracksWithVoiceCues": 5,
+      "accents": 12,
+      "notes": 0,
+      "meanEnvelopeStemRmsPearson": 0.7202,
+      "meanActiveStemF1": 0.7721,
+      "falseActiveSeconds": 2.44,
+      "outsideKnownVocalWindowsSeconds": 1.92
+    },
+    "studio-mix": {
+      "tracks": 6,
+      "singingDetectedTracks": 5,
+      "tracksWithVoiceCues": 6,
+      "accents": 116,
+      "notes": 44,
+      "meanEnvelopeStemRmsPearson": 0.8331,
+      "meanActiveStemF1": 0.9597,
+      "falseActiveSeconds": 0.02,
+      "outsideKnownVocalWindowsSeconds": 0
+    },
+    "studio-instrumental": {
+      "tracks": 6,
+      "singingDetectedTracks": 0,
+      "tracksWithVoiceCues": 0,
+      "accents": 0,
+      "notes": 0,
+      "meanEnvelopeStemRmsPearson": 0.0,
+      "meanActiveStemF1": 0.0,
+      "falseActiveSeconds": 0.0,
+      "outsideKnownVocalWindowsSeconds": 0
+    },
+    "studio-controlled": {
+      "tracks": 6,
+      "singingDetectedTracks": 5,
+      "tracksWithVoiceCues": 5,
+      "accents": 62,
+      "notes": 23,
+      "meanEnvelopeStemRmsPearson": 0.8037,
+      "meanActiveStemF1": 0.826,
+      "falseActiveSeconds": 0.0,
+      "outsideKnownVocalWindowsSeconds": 0.0
+    },
+    "final_detail-mix": {
+      "tracks": 6,
+      "singingDetectedTracks": 5,
+      "tracksWithVoiceCues": 6,
+      "accents": 116,
+      "notes": 44,
+      "meanEnvelopeStemRmsPearson": 0.8331,
+      "meanActiveStemF1": 0.9597,
+      "falseActiveSeconds": 0.02,
+      "outsideKnownVocalWindowsSeconds": 0
+    },
+    "final_detail-instrumental": {
+      "tracks": 6,
+      "singingDetectedTracks": 0,
+      "tracksWithVoiceCues": 0,
+      "accents": 0,
+      "notes": 0,
+      "meanEnvelopeStemRmsPearson": 0.0,
+      "meanActiveStemF1": 0.0,
+      "falseActiveSeconds": 0.0,
+      "outsideKnownVocalWindowsSeconds": 0
+    },
+    "final_detail-controlled": {
+      "tracks": 6,
+      "singingDetectedTracks": 5,
+      "tracksWithVoiceCues": 6,
+      "accents": 69,
+      "notes": 23,
+      "meanEnvelopeStemRmsPearson": 0.9652,
+      "meanActiveStemF1": 0.9852,
+      "falseActiveSeconds": 0.02,
+      "outsideKnownVocalWindowsSeconds": 0.0
+    },
+    "final-controlled": {
+      "tracks": 1,
+      "singingDetectedTracks": 0,
+      "tracksWithVoiceCues": 1,
+      "accents": 7,
+      "notes": 0,
+      "meanEnvelopeStemRmsPearson": 0.9688,
+      "meanActiveStemF1": 0.9553,
+      "falseActiveSeconds": 0.02,
+      "outsideKnownVocalWindowsSeconds": 0.0
+    }
+  },
+  "results": {
+    "baseline": [
+      {
+        "track": "nightowl",
+        "variant": "mix",
+        "duration": 6.8034467120181406,
+        "detected": false,
+        "phraseCount": 0,
+        "accentCount": 0,
+        "noteCount": 0,
+        "envelopeStemRmsPearson": 0.0,
+        "normalizedEnvelopeRMSE": 0.6372,
+        "activeStemPrecision": 0.0,
+        "activeStemRecall": 0.0,
+        "activeStemF1": 0.0,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 6.82,
+        "analysisSeconds": 0.902
+      },
+      {
+        "track": "nightowl",
+        "variant": "instrumental",
+        "duration": 6.8034467120181406,
+        "detected": false,
+        "phraseCount": 0,
+        "accentCount": 0,
+        "noteCount": 0,
+        "envelopeStemRmsPearson": 0.0,
+        "normalizedEnvelopeRMSE": 0.0,
+        "activeStemPrecision": 0.0,
+        "activeStemRecall": 0.0,
+        "activeStemF1": 0.0,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 0.0,
+        "analysisSeconds": 0.326
+      },
+      {
+        "track": "nightowl",
+        "variant": "controlled",
+        "duration": 6.8034467120181406,
+        "detected": false,
+        "phraseCount": 0,
+        "accentCount": 0,
+        "noteCount": 0,
+        "envelopeStemRmsPearson": 0.0,
+        "normalizedEnvelopeRMSE": 0.5235,
+        "activeStemPrecision": 0.0,
+        "activeStemRecall": 0.0,
+        "activeStemF1": 0.0,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 3.72,
+        "analysisSeconds": 0.318,
+        "outsideKnownVocalWindowsSeconds": 0.0,
+        "outsideKnownVocalWindowsEnvelopeMass": 0.0,
+        "controlledWindowEdges": [
+          {
+            "knownWindow": [
+              1.25,
+              3.15
+            ],
+            "detected": false,
+            "entryOffsetMs": null,
+            "releaseOffsetMs": null
+          },
+          {
+            "knownWindow": [
+              4.2,
+              6.0
+            ],
+            "detected": false,
+            "entryOffsetMs": null,
+            "releaseOffsetMs": null
+          }
+        ]
+      },
+      {
+        "track": "stella",
+        "variant": "mix",
+        "duration": 6.8034467120181406,
+        "detected": true,
+        "phraseCount": 1,
+        "accentCount": 0,
+        "noteCount": 0,
+        "envelopeStemRmsPearson": 0.7049,
+        "normalizedEnvelopeRMSE": 0.2916,
+        "activeStemPrecision": 1.0,
+        "activeStemRecall": 1.0,
+        "activeStemF1": 1.0,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 0.0,
+        "analysisSeconds": 0.354
+      },
+      {
+        "track": "stella",
+        "variant": "instrumental",
+        "duration": 6.8034467120181406,
+        "detected": false,
+        "phraseCount": 0,
+        "accentCount": 0,
+        "noteCount": 0,
+        "envelopeStemRmsPearson": 0.0,
+        "normalizedEnvelopeRMSE": 0.0,
+        "activeStemPrecision": 0.0,
+        "activeStemRecall": 0.0,
+        "activeStemF1": 0.0,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 0.0,
+        "analysisSeconds": 0.387
+      },
+      {
+        "track": "stella",
+        "variant": "controlled",
+        "duration": 6.8034467120181406,
+        "detected": true,
+        "phraseCount": 2,
+        "accentCount": 2,
+        "noteCount": 0,
+        "envelopeStemRmsPearson": 0.856,
+        "normalizedEnvelopeRMSE": 0.2016,
+        "activeStemPrecision": 0.9672,
+        "activeStemRecall": 0.9516,
+        "activeStemF1": 0.9593,
+        "falseActiveSeconds": 0.12,
+        "missedActiveSeconds": 0.18,
+        "analysisSeconds": 0.278,
+        "outsideKnownVocalWindowsSeconds": 0.06,
+        "outsideKnownVocalWindowsEnvelopeMass": 0.0062,
+        "controlledWindowEdges": [
+          {
+            "knownWindow": [
+              1.25,
+              3.15
+            ],
+            "detected": true,
+            "entryOffsetMs": 170.0,
+            "releaseOffsetMs": 110.0
+          },
+          {
+            "knownWindow": [
+              4.2,
+              6.0
+            ],
+            "detected": true,
+            "entryOffsetMs": 20.0,
+            "releaseOffsetMs": 40.0
+          }
+        ]
+      },
+      {
+        "track": "meaxic",
+        "variant": "mix",
+        "duration": 6.8034467120181406,
+        "detected": true,
+        "phraseCount": 1,
+        "accentCount": 1,
+        "noteCount": 0,
+        "envelopeStemRmsPearson": 0.8327,
+        "normalizedEnvelopeRMSE": 0.2843,
+        "activeStemPrecision": 0.9971,
+        "activeStemRecall": 1.0,
+        "activeStemF1": 0.9985,
+        "falseActiveSeconds": 0.02,
+        "missedActiveSeconds": 0.0,
+        "analysisSeconds": 0.278
+      },
+      {
+        "track": "meaxic",
+        "variant": "instrumental",
+        "duration": 6.8034467120181406,
+        "detected": false,
+        "phraseCount": 0,
+        "accentCount": 0,
+        "noteCount": 0,
+        "envelopeStemRmsPearson": 0.0,
+        "normalizedEnvelopeRMSE": 0.0,
+        "activeStemPrecision": 0.0,
+        "activeStemRecall": 0.0,
+        "activeStemF1": 0.0,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 0.0,
+        "analysisSeconds": 0.298
+      },
+      {
+        "track": "meaxic",
+        "variant": "controlled",
+        "duration": 6.8034467120181406,
+        "detected": true,
+        "phraseCount": 2,
+        "accentCount": 1,
+        "noteCount": 0,
+        "envelopeStemRmsPearson": 0.9114,
+        "normalizedEnvelopeRMSE": 0.224,
+        "activeStemPrecision": 0.8732,
+        "activeStemRecall": 1.0,
+        "activeStemF1": 0.9323,
+        "falseActiveSeconds": 0.54,
+        "missedActiveSeconds": 0.0,
+        "analysisSeconds": 0.306,
+        "outsideKnownVocalWindowsSeconds": 0.38,
+        "outsideKnownVocalWindowsEnvelopeMass": 0.0307,
+        "controlledWindowEdges": [
+          {
+            "knownWindow": [
+              1.25,
+              3.15
+            ],
+            "detected": true,
+            "entryOffsetMs": -130.0,
+            "releaseOffsetMs": 190.0
+          },
+          {
+            "knownWindow": [
+              4.2,
+              6.0
+            ],
+            "detected": true,
+            "entryOffsetMs": -60.0,
+            "releaseOffsetMs": 180.0
+          }
+        ]
+      },
+      {
+        "track": "grunge",
+        "variant": "mix",
+        "duration": 6.8034467120181406,
+        "detected": true,
+        "phraseCount": 1,
+        "accentCount": 0,
+        "noteCount": 0,
+        "envelopeStemRmsPearson": 0.766,
+        "normalizedEnvelopeRMSE": 0.2673,
+        "activeStemPrecision": 1.0,
+        "activeStemRecall": 1.0,
+        "activeStemF1": 1.0,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 0.0,
+        "analysisSeconds": 0.267
+      },
+      {
+        "track": "grunge",
+        "variant": "instrumental",
+        "duration": 6.8034467120181406,
+        "detected": false,
+        "phraseCount": 0,
+        "accentCount": 0,
+        "noteCount": 0,
+        "envelopeStemRmsPearson": 0.0,
+        "normalizedEnvelopeRMSE": 0.0,
+        "activeStemPrecision": 0.0,
+        "activeStemRecall": 0.0,
+        "activeStemF1": 0.0,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 0.0,
+        "analysisSeconds": 0.271
+      },
+      {
+        "track": "grunge",
+        "variant": "controlled",
+        "duration": 6.8034467120181406,
+        "detected": true,
+        "phraseCount": 2,
+        "accentCount": 2,
+        "noteCount": 0,
+        "envelopeStemRmsPearson": 0.872,
+        "normalizedEnvelopeRMSE": 0.2183,
+        "activeStemPrecision": 0.8532,
+        "activeStemRecall": 1.0,
+        "activeStemF1": 0.9208,
+        "falseActiveSeconds": 0.64,
+        "missedActiveSeconds": 0.0,
+        "analysisSeconds": 0.292,
+        "outsideKnownVocalWindowsSeconds": 0.48,
+        "outsideKnownVocalWindowsEnvelopeMass": 0.0528,
+        "controlledWindowEdges": [
+          {
+            "knownWindow": [
+              1.25,
+              3.15
+            ],
+            "detected": true,
+            "entryOffsetMs": -70.0,
+            "releaseOffsetMs": 210.0
+          },
+          {
+            "knownWindow": [
+              4.2,
+              6.0
+            ],
+            "detected": true,
+            "entryOffsetMs": -120.0,
+            "releaseOffsetMs": 260.0
+          }
+        ]
+      },
+      {
+        "track": "falcon",
+        "variant": "mix",
+        "duration": 6.8034467120181406,
+        "detected": true,
+        "phraseCount": 1,
+        "accentCount": 7,
+        "noteCount": 0,
+        "envelopeStemRmsPearson": 0.0937,
+        "normalizedEnvelopeRMSE": 0.3127,
+        "activeStemPrecision": 1.0,
+        "activeStemRecall": 0.9941,
+        "activeStemF1": 0.9971,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 0.04,
+        "analysisSeconds": 0.309
+      },
+      {
+        "track": "falcon",
+        "variant": "instrumental",
+        "duration": 6.8034467120181406,
+        "detected": false,
+        "phraseCount": 0,
+        "accentCount": 0,
+        "noteCount": 0,
+        "envelopeStemRmsPearson": 0.0,
+        "normalizedEnvelopeRMSE": 0.0,
+        "activeStemPrecision": 0.0,
+        "activeStemRecall": 0.0,
+        "activeStemF1": 0.0,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 0.0,
+        "analysisSeconds": 0.281
+      },
+      {
+        "track": "falcon",
+        "variant": "controlled",
+        "duration": 6.8034467120181406,
+        "detected": true,
+        "phraseCount": 2,
+        "accentCount": 5,
+        "noteCount": 0,
+        "envelopeStemRmsPearson": 0.8046,
+        "normalizedEnvelopeRMSE": 0.2396,
+        "activeStemPrecision": 0.8945,
+        "activeStemRecall": 0.957,
+        "activeStemF1": 0.9247,
+        "falseActiveSeconds": 0.42,
+        "missedActiveSeconds": 0.16,
+        "analysisSeconds": 0.266,
+        "outsideKnownVocalWindowsSeconds": 0.36,
+        "outsideKnownVocalWindowsEnvelopeMass": 0.0527,
+        "controlledWindowEdges": [
+          {
+            "knownWindow": [
+              1.25,
+              3.15
+            ],
+            "detected": true,
+            "entryOffsetMs": 110.0,
+            "releaseOffsetMs": 410.0
+          },
+          {
+            "knownWindow": [
+              4.2,
+              6.0
+            ],
+            "detected": true,
+            "entryOffsetMs": 60.0,
+            "releaseOffsetMs": 40.0
+          }
+        ]
+      },
+      {
+        "track": "sdrnr",
+        "variant": "mix",
+        "duration": 6.8034467120181406,
+        "detected": true,
+        "phraseCount": 1,
+        "accentCount": 1,
+        "noteCount": 0,
+        "envelopeStemRmsPearson": 0.2697,
+        "normalizedEnvelopeRMSE": 0.2057,
+        "activeStemPrecision": 1.0,
+        "activeStemRecall": 1.0,
+        "activeStemF1": 1.0,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 0.0,
+        "analysisSeconds": 0.264
+      },
+      {
+        "track": "sdrnr",
+        "variant": "instrumental",
+        "duration": 6.8034467120181406,
+        "detected": false,
+        "phraseCount": 0,
+        "accentCount": 0,
+        "noteCount": 0,
+        "envelopeStemRmsPearson": 0.0,
+        "normalizedEnvelopeRMSE": 0.0,
+        "activeStemPrecision": 0.0,
+        "activeStemRecall": 0.0,
+        "activeStemF1": 0.0,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 0.0,
+        "analysisSeconds": 0.268
+      },
+      {
+        "track": "sdrnr",
+        "variant": "controlled",
+        "duration": 6.8034467120181406,
+        "detected": true,
+        "phraseCount": 2,
+        "accentCount": 2,
+        "noteCount": 0,
+        "envelopeStemRmsPearson": 0.8771,
+        "normalizedEnvelopeRMSE": 0.1876,
+        "activeStemPrecision": 0.8333,
+        "activeStemRecall": 0.9677,
+        "activeStemF1": 0.8955,
+        "falseActiveSeconds": 0.72,
+        "missedActiveSeconds": 0.12,
+        "analysisSeconds": 0.288,
+        "outsideKnownVocalWindowsSeconds": 0.64,
+        "outsideKnownVocalWindowsEnvelopeMass": 0.0468,
+        "controlledWindowEdges": [
+          {
+            "knownWindow": [
+              1.25,
+              3.15
+            ],
+            "detected": true,
+            "entryOffsetMs": 70.0,
+            "releaseOffsetMs": 130.0
+          },
+          {
+            "knownWindow": [
+              4.2,
+              6.0
+            ],
+            "detected": true,
+            "entryOffsetMs": 60.0,
+            "releaseOffsetMs": 620.0
+          }
+        ]
+      }
+    ],
+    "studio": [
+      {
+        "track": "nightowl",
+        "variant": "mix",
+        "duration": 6.8034467120181406,
+        "detected": false,
+        "phraseCount": 3,
+        "accentCount": 12,
+        "noteCount": 3,
+        "envelopeStemRmsPearson": 0.9141,
+        "normalizedEnvelopeRMSE": 0.1607,
+        "activeStemPrecision": 1.0,
+        "activeStemRecall": 0.8475,
+        "activeStemF1": 0.9175,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 1.04,
+        "analysisSeconds": 42.692
+      },
+      {
+        "track": "nightowl",
+        "variant": "instrumental",
+        "duration": 6.8034467120181406,
+        "detected": false,
+        "phraseCount": 0,
+        "accentCount": 0,
+        "noteCount": 0,
+        "envelopeStemRmsPearson": 0.0,
+        "normalizedEnvelopeRMSE": 0.0,
+        "activeStemPrecision": 0.0,
+        "activeStemRecall": 0.0,
+        "activeStemF1": 0.0,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 0.0,
+        "analysisSeconds": 50.722
+      },
+      {
+        "track": "nightowl",
+        "variant": "controlled",
+        "duration": 6.8034467120181406,
+        "detected": false,
+        "phraseCount": 0,
+        "accentCount": 0,
+        "noteCount": 0,
+        "envelopeStemRmsPearson": 0.0,
+        "normalizedEnvelopeRMSE": 0.5235,
+        "activeStemPrecision": 0.0,
+        "activeStemRecall": 0.0,
+        "activeStemF1": 0.0,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 3.72,
+        "analysisSeconds": 65.87,
+        "outsideKnownVocalWindowsSeconds": 0.0,
+        "outsideKnownVocalWindowsEnvelopeMass": 0.0,
+        "controlledWindowEdges": [
+          {
+            "knownWindow": [
+              1.25,
+              3.15
+            ],
+            "detected": false,
+            "entryOffsetMs": null,
+            "releaseOffsetMs": null
+          },
+          {
+            "knownWindow": [
+              4.2,
+              6.0
+            ],
+            "detected": false,
+            "entryOffsetMs": null,
+            "releaseOffsetMs": null
+          }
+        ]
+      },
+      {
+        "track": "stella",
+        "variant": "mix",
+        "duration": 6.8034467120181406,
+        "detected": true,
+        "phraseCount": 1,
+        "accentCount": 21,
+        "noteCount": 11,
+        "envelopeStemRmsPearson": 0.8997,
+        "normalizedEnvelopeRMSE": 0.1982,
+        "activeStemPrecision": 1.0,
+        "activeStemRecall": 0.9971,
+        "activeStemF1": 0.9985,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 0.02,
+        "analysisSeconds": 69.001
+      },
+      {
+        "track": "stella",
+        "variant": "instrumental",
+        "duration": 6.8034467120181406,
+        "detected": false,
+        "phraseCount": 0,
+        "accentCount": 0,
+        "noteCount": 0,
+        "envelopeStemRmsPearson": 0.0,
+        "normalizedEnvelopeRMSE": 0.0,
+        "activeStemPrecision": 0.0,
+        "activeStemRecall": 0.0,
+        "activeStemF1": 0.0,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 0.0,
+        "analysisSeconds": 56.239
+      },
+      {
+        "track": "stella",
+        "variant": "controlled",
+        "duration": 6.8034467120181406,
+        "detected": true,
+        "phraseCount": 2,
+        "accentCount": 15,
+        "noteCount": 7,
+        "envelopeStemRmsPearson": 0.9562,
+        "normalizedEnvelopeRMSE": 0.1344,
+        "activeStemPrecision": 1.0,
+        "activeStemRecall": 1.0,
+        "activeStemF1": 1.0,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 0.0,
+        "analysisSeconds": 62.367,
+        "outsideKnownVocalWindowsSeconds": 0.0,
+        "outsideKnownVocalWindowsEnvelopeMass": 0.0,
+        "controlledWindowEdges": [
+          {
+            "knownWindow": [
+              1.25,
+              3.15
+            ],
+            "detected": true,
+            "entryOffsetMs": 0.0,
+            "releaseOffsetMs": 5.0
+          },
+          {
+            "knownWindow": [
+              4.2,
+              6.0
+            ],
+            "detected": true,
+            "entryOffsetMs": 0.0,
+            "releaseOffsetMs": 5.0
+          }
+        ]
+      },
+      {
+        "track": "meaxic",
+        "variant": "mix",
+        "duration": 6.8034467120181406,
+        "detected": true,
+        "phraseCount": 1,
+        "accentCount": 21,
+        "noteCount": 10,
+        "envelopeStemRmsPearson": 0.8959,
+        "normalizedEnvelopeRMSE": 0.1993,
+        "activeStemPrecision": 0.9971,
+        "activeStemRecall": 1.0,
+        "activeStemF1": 0.9985,
+        "falseActiveSeconds": 0.02,
+        "missedActiveSeconds": 0.0,
+        "analysisSeconds": 40.007
+      },
+      {
+        "track": "meaxic",
+        "variant": "instrumental",
+        "duration": 6.8034467120181406,
+        "detected": false,
+        "phraseCount": 0,
+        "accentCount": 0,
+        "noteCount": 0,
+        "envelopeStemRmsPearson": 0.0,
+        "normalizedEnvelopeRMSE": 0.0,
+        "activeStemPrecision": 0.0,
+        "activeStemRecall": 0.0,
+        "activeStemF1": 0.0,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 0.0,
+        "analysisSeconds": 46.134
+      },
+      {
+        "track": "meaxic",
+        "variant": "controlled",
+        "duration": 6.8034467120181406,
+        "detected": true,
+        "phraseCount": 2,
+        "accentCount": 14,
+        "noteCount": 4,
+        "envelopeStemRmsPearson": 0.9719,
+        "normalizedEnvelopeRMSE": 0.1208,
+        "activeStemPrecision": 1.0,
+        "activeStemRecall": 0.9785,
+        "activeStemF1": 0.9891,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 0.08,
+        "analysisSeconds": 49.867,
+        "outsideKnownVocalWindowsSeconds": 0.0,
+        "outsideKnownVocalWindowsEnvelopeMass": 0.0,
+        "controlledWindowEdges": [
+          {
+            "knownWindow": [
+              1.25,
+              3.15
+            ],
+            "detected": true,
+            "entryOffsetMs": 0.0,
+            "releaseOffsetMs": 5.0
+          },
+          {
+            "knownWindow": [
+              4.2,
+              6.0
+            ],
+            "detected": true,
+            "entryOffsetMs": 80.0,
+            "releaseOffsetMs": 5.0
+          }
+        ]
+      },
+      {
+        "track": "grunge",
+        "variant": "mix",
+        "duration": 6.8034467120181406,
+        "detected": true,
+        "phraseCount": 1,
+        "accentCount": 25,
+        "noteCount": 8,
+        "envelopeStemRmsPearson": 0.9126,
+        "normalizedEnvelopeRMSE": 0.1744,
+        "activeStemPrecision": 1.0,
+        "activeStemRecall": 0.9443,
+        "activeStemF1": 0.9713,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 0.38,
+        "analysisSeconds": 42.514
+      },
+      {
+        "track": "grunge",
+        "variant": "instrumental",
+        "duration": 6.8034467120181406,
+        "detected": false,
+        "phraseCount": 0,
+        "accentCount": 0,
+        "noteCount": 0,
+        "envelopeStemRmsPearson": 0.0,
+        "normalizedEnvelopeRMSE": 0.0,
+        "activeStemPrecision": 0.0,
+        "activeStemRecall": 0.0,
+        "activeStemF1": 0.0,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 0.0,
+        "analysisSeconds": 42.601
+      },
+      {
+        "track": "grunge",
+        "variant": "controlled",
+        "duration": 6.8034467120181406,
+        "detected": true,
+        "phraseCount": 2,
+        "accentCount": 12,
+        "noteCount": 4,
+        "envelopeStemRmsPearson": 0.9634,
+        "normalizedEnvelopeRMSE": 0.1131,
+        "activeStemPrecision": 1.0,
+        "activeStemRecall": 1.0,
+        "activeStemF1": 1.0,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 0.0,
+        "analysisSeconds": 59.054,
+        "outsideKnownVocalWindowsSeconds": 0.0,
+        "outsideKnownVocalWindowsEnvelopeMass": 0.0,
+        "controlledWindowEdges": [
+          {
+            "knownWindow": [
+              1.25,
+              3.15
+            ],
+            "detected": true,
+            "entryOffsetMs": -5.0,
+            "releaseOffsetMs": 10.0
+          },
+          {
+            "knownWindow": [
+              4.2,
+              6.0
+            ],
+            "detected": true,
+            "entryOffsetMs": -10.0,
+            "releaseOffsetMs": 5.0
+          }
+        ]
+      },
+      {
+        "track": "falcon",
+        "variant": "mix",
+        "duration": 6.8034467120181406,
+        "detected": true,
+        "phraseCount": 1,
+        "accentCount": 12,
+        "noteCount": 5,
+        "envelopeStemRmsPearson": 0.5402,
+        "normalizedEnvelopeRMSE": 0.3367,
+        "activeStemPrecision": 1.0,
+        "activeStemRecall": 0.7742,
+        "activeStemF1": 0.8727,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 1.54,
+        "analysisSeconds": 44.324
+      },
+      {
+        "track": "falcon",
+        "variant": "instrumental",
+        "duration": 6.8034467120181406,
+        "detected": false,
+        "phraseCount": 0,
+        "accentCount": 0,
+        "noteCount": 0,
+        "envelopeStemRmsPearson": 0.0,
+        "normalizedEnvelopeRMSE": 0.0,
+        "activeStemPrecision": 0.0,
+        "activeStemRecall": 0.0,
+        "activeStemF1": 0.0,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 0.0,
+        "analysisSeconds": 37.758
+      },
+      {
+        "track": "falcon",
+        "variant": "controlled",
+        "duration": 6.8034467120181406,
+        "detected": true,
+        "phraseCount": 2,
+        "accentCount": 8,
+        "noteCount": 4,
+        "envelopeStemRmsPearson": 0.9601,
+        "normalizedEnvelopeRMSE": 0.1359,
+        "activeStemPrecision": 1.0,
+        "activeStemRecall": 0.9462,
+        "activeStemF1": 0.9724,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 0.2,
+        "analysisSeconds": 37.612,
+        "outsideKnownVocalWindowsSeconds": 0.0,
+        "outsideKnownVocalWindowsEnvelopeMass": 0.0,
+        "controlledWindowEdges": [
+          {
+            "knownWindow": [
+              1.25,
+              3.15
+            ],
+            "detected": true,
+            "entryOffsetMs": 95.0,
+            "releaseOffsetMs": 5.0
+          },
+          {
+            "knownWindow": [
+              4.2,
+              6.0
+            ],
+            "detected": true,
+            "entryOffsetMs": 85.0,
+            "releaseOffsetMs": 5.0
+          }
+        ]
+      },
+      {
+        "track": "sdrnr",
+        "variant": "mix",
+        "duration": 6.8034467120181406,
+        "detected": true,
+        "phraseCount": 1,
+        "accentCount": 25,
+        "noteCount": 7,
+        "envelopeStemRmsPearson": 0.8359,
+        "normalizedEnvelopeRMSE": 0.1517,
+        "activeStemPrecision": 1.0,
+        "activeStemRecall": 1.0,
+        "activeStemF1": 1.0,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 0.0,
+        "analysisSeconds": 41.263
+      },
+      {
+        "track": "sdrnr",
+        "variant": "instrumental",
+        "duration": 6.8034467120181406,
+        "detected": false,
+        "phraseCount": 0,
+        "accentCount": 0,
+        "noteCount": 0,
+        "envelopeStemRmsPearson": 0.0,
+        "normalizedEnvelopeRMSE": 0.0,
+        "activeStemPrecision": 0.0,
+        "activeStemRecall": 0.0,
+        "activeStemF1": 0.0,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 0.0,
+        "analysisSeconds": 38.308
+      },
+      {
+        "track": "sdrnr",
+        "variant": "controlled",
+        "duration": 6.8034467120181406,
+        "detected": true,
+        "phraseCount": 2,
+        "accentCount": 13,
+        "noteCount": 4,
+        "envelopeStemRmsPearson": 0.9707,
+        "normalizedEnvelopeRMSE": 0.1211,
+        "activeStemPrecision": 1.0,
+        "activeStemRecall": 0.9892,
+        "activeStemF1": 0.9946,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 0.04,
+        "analysisSeconds": 39.837,
+        "outsideKnownVocalWindowsSeconds": 0.0,
+        "outsideKnownVocalWindowsEnvelopeMass": 0.0,
+        "controlledWindowEdges": [
+          {
+            "knownWindow": [
+              1.25,
+              3.15
+            ],
+            "detected": true,
+            "entryOffsetMs": 0.0,
+            "releaseOffsetMs": 5.0
+          },
+          {
+            "knownWindow": [
+              4.2,
+              6.0
+            ],
+            "detected": true,
+            "entryOffsetMs": 30.0,
+            "releaseOffsetMs": 20.0
+          }
+        ]
+      }
+    ],
+    "final_detail": [
+      {
+        "track": "nightowl",
+        "variant": "mix",
+        "duration": 6.8034467120181406,
+        "detected": false,
+        "phraseCount": 3,
+        "accentCount": 12,
+        "noteCount": 3,
+        "envelopeStemRmsPearson": 0.9141,
+        "normalizedEnvelopeRMSE": 0.1607,
+        "activeStemPrecision": 1.0,
+        "activeStemRecall": 0.8475,
+        "activeStemF1": 0.9175,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 1.04,
+        "analysisSeconds": null
+      },
+      {
+        "track": "nightowl",
+        "variant": "instrumental",
+        "duration": 6.8034467120181406,
+        "detected": false,
+        "phraseCount": 0,
+        "accentCount": 0,
+        "noteCount": 0,
+        "envelopeStemRmsPearson": 0.0,
+        "normalizedEnvelopeRMSE": 0.0,
+        "activeStemPrecision": 0.0,
+        "activeStemRecall": 0.0,
+        "activeStemF1": 0.0,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 0.0,
+        "analysisSeconds": null
+      },
+      {
+        "track": "nightowl",
+        "variant": "controlled",
+        "duration": 6.8034467120181406,
+        "detected": false,
+        "phraseCount": 2,
+        "accentCount": 7,
+        "noteCount": 0,
+        "envelopeStemRmsPearson": 0.9688,
+        "normalizedEnvelopeRMSE": 0.1216,
+        "activeStemPrecision": 0.9942,
+        "activeStemRecall": 0.9194,
+        "activeStemF1": 0.9553,
+        "falseActiveSeconds": 0.02,
+        "missedActiveSeconds": 0.3,
+        "analysisSeconds": null,
+        "outsideKnownVocalWindowsSeconds": 0.0,
+        "outsideKnownVocalWindowsEnvelopeMass": 0.0,
+        "controlledWindowEdges": [
+          {
+            "knownWindow": [
+              1.25,
+              3.15
+            ],
+            "detected": true,
+            "entryOffsetMs": 150.0,
+            "releaseOffsetMs": 15.0
+          },
+          {
+            "knownWindow": [
+              4.2,
+              6.0
+            ],
+            "detected": true,
+            "entryOffsetMs": -5.0,
+            "releaseOffsetMs": -140.0
+          }
+        ]
+      },
+      {
+        "track": "stella",
+        "variant": "mix",
+        "duration": 6.8034467120181406,
+        "detected": true,
+        "phraseCount": 1,
+        "accentCount": 21,
+        "noteCount": 11,
+        "envelopeStemRmsPearson": 0.8997,
+        "normalizedEnvelopeRMSE": 0.1982,
+        "activeStemPrecision": 1.0,
+        "activeStemRecall": 0.9971,
+        "activeStemF1": 0.9985,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 0.02,
+        "analysisSeconds": null
+      },
+      {
+        "track": "stella",
+        "variant": "instrumental",
+        "duration": 6.8034467120181406,
+        "detected": false,
+        "phraseCount": 0,
+        "accentCount": 0,
+        "noteCount": 0,
+        "envelopeStemRmsPearson": 0.0,
+        "normalizedEnvelopeRMSE": 0.0,
+        "activeStemPrecision": 0.0,
+        "activeStemRecall": 0.0,
+        "activeStemF1": 0.0,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 0.0,
+        "analysisSeconds": null
+      },
+      {
+        "track": "stella",
+        "variant": "controlled",
+        "duration": 6.8034467120181406,
+        "detected": true,
+        "phraseCount": 2,
+        "accentCount": 15,
+        "noteCount": 7,
+        "envelopeStemRmsPearson": 0.9562,
+        "normalizedEnvelopeRMSE": 0.1344,
+        "activeStemPrecision": 1.0,
+        "activeStemRecall": 1.0,
+        "activeStemF1": 1.0,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 0.0,
+        "analysisSeconds": null,
+        "outsideKnownVocalWindowsSeconds": 0.0,
+        "outsideKnownVocalWindowsEnvelopeMass": 0.0,
+        "controlledWindowEdges": [
+          {
+            "knownWindow": [
+              1.25,
+              3.15
+            ],
+            "detected": true,
+            "entryOffsetMs": 0.0,
+            "releaseOffsetMs": 5.0
+          },
+          {
+            "knownWindow": [
+              4.2,
+              6.0
+            ],
+            "detected": true,
+            "entryOffsetMs": 0.0,
+            "releaseOffsetMs": 5.0
+          }
+        ]
+      },
+      {
+        "track": "meaxic",
+        "variant": "mix",
+        "duration": 6.8034467120181406,
+        "detected": true,
+        "phraseCount": 1,
+        "accentCount": 21,
+        "noteCount": 10,
+        "envelopeStemRmsPearson": 0.8959,
+        "normalizedEnvelopeRMSE": 0.1993,
+        "activeStemPrecision": 0.9971,
+        "activeStemRecall": 1.0,
+        "activeStemF1": 0.9985,
+        "falseActiveSeconds": 0.02,
+        "missedActiveSeconds": 0.0,
+        "analysisSeconds": null
+      },
+      {
+        "track": "meaxic",
+        "variant": "instrumental",
+        "duration": 6.8034467120181406,
+        "detected": false,
+        "phraseCount": 0,
+        "accentCount": 0,
+        "noteCount": 0,
+        "envelopeStemRmsPearson": 0.0,
+        "normalizedEnvelopeRMSE": 0.0,
+        "activeStemPrecision": 0.0,
+        "activeStemRecall": 0.0,
+        "activeStemF1": 0.0,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 0.0,
+        "analysisSeconds": null
+      },
+      {
+        "track": "meaxic",
+        "variant": "controlled",
+        "duration": 6.8034467120181406,
+        "detected": true,
+        "phraseCount": 2,
+        "accentCount": 14,
+        "noteCount": 4,
+        "envelopeStemRmsPearson": 0.9719,
+        "normalizedEnvelopeRMSE": 0.1208,
+        "activeStemPrecision": 1.0,
+        "activeStemRecall": 0.9785,
+        "activeStemF1": 0.9891,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 0.08,
+        "analysisSeconds": null,
+        "outsideKnownVocalWindowsSeconds": 0.0,
+        "outsideKnownVocalWindowsEnvelopeMass": 0.0,
+        "controlledWindowEdges": [
+          {
+            "knownWindow": [
+              1.25,
+              3.15
+            ],
+            "detected": true,
+            "entryOffsetMs": 0.0,
+            "releaseOffsetMs": 5.0
+          },
+          {
+            "knownWindow": [
+              4.2,
+              6.0
+            ],
+            "detected": true,
+            "entryOffsetMs": 80.0,
+            "releaseOffsetMs": 5.0
+          }
+        ]
+      },
+      {
+        "track": "grunge",
+        "variant": "mix",
+        "duration": 6.8034467120181406,
+        "detected": true,
+        "phraseCount": 1,
+        "accentCount": 25,
+        "noteCount": 8,
+        "envelopeStemRmsPearson": 0.9126,
+        "normalizedEnvelopeRMSE": 0.1744,
+        "activeStemPrecision": 1.0,
+        "activeStemRecall": 0.9443,
+        "activeStemF1": 0.9713,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 0.38,
+        "analysisSeconds": null
+      },
+      {
+        "track": "grunge",
+        "variant": "instrumental",
+        "duration": 6.8034467120181406,
+        "detected": false,
+        "phraseCount": 0,
+        "accentCount": 0,
+        "noteCount": 0,
+        "envelopeStemRmsPearson": 0.0,
+        "normalizedEnvelopeRMSE": 0.0,
+        "activeStemPrecision": 0.0,
+        "activeStemRecall": 0.0,
+        "activeStemF1": 0.0,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 0.0,
+        "analysisSeconds": null
+      },
+      {
+        "track": "grunge",
+        "variant": "controlled",
+        "duration": 6.8034467120181406,
+        "detected": true,
+        "phraseCount": 2,
+        "accentCount": 12,
+        "noteCount": 4,
+        "envelopeStemRmsPearson": 0.9634,
+        "normalizedEnvelopeRMSE": 0.1131,
+        "activeStemPrecision": 1.0,
+        "activeStemRecall": 1.0,
+        "activeStemF1": 1.0,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 0.0,
+        "analysisSeconds": null,
+        "outsideKnownVocalWindowsSeconds": 0.0,
+        "outsideKnownVocalWindowsEnvelopeMass": 0.0,
+        "controlledWindowEdges": [
+          {
+            "knownWindow": [
+              1.25,
+              3.15
+            ],
+            "detected": true,
+            "entryOffsetMs": -5.0,
+            "releaseOffsetMs": 10.0
+          },
+          {
+            "knownWindow": [
+              4.2,
+              6.0
+            ],
+            "detected": true,
+            "entryOffsetMs": -10.0,
+            "releaseOffsetMs": 5.0
+          }
+        ]
+      },
+      {
+        "track": "falcon",
+        "variant": "mix",
+        "duration": 6.8034467120181406,
+        "detected": true,
+        "phraseCount": 1,
+        "accentCount": 12,
+        "noteCount": 5,
+        "envelopeStemRmsPearson": 0.5402,
+        "normalizedEnvelopeRMSE": 0.3367,
+        "activeStemPrecision": 1.0,
+        "activeStemRecall": 0.7742,
+        "activeStemF1": 0.8727,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 1.54,
+        "analysisSeconds": null
+      },
+      {
+        "track": "falcon",
+        "variant": "instrumental",
+        "duration": 6.8034467120181406,
+        "detected": false,
+        "phraseCount": 0,
+        "accentCount": 0,
+        "noteCount": 0,
+        "envelopeStemRmsPearson": 0.0,
+        "normalizedEnvelopeRMSE": 0.0,
+        "activeStemPrecision": 0.0,
+        "activeStemRecall": 0.0,
+        "activeStemF1": 0.0,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 0.0,
+        "analysisSeconds": null
+      },
+      {
+        "track": "falcon",
+        "variant": "controlled",
+        "duration": 6.8034467120181406,
+        "detected": true,
+        "phraseCount": 2,
+        "accentCount": 8,
+        "noteCount": 4,
+        "envelopeStemRmsPearson": 0.9601,
+        "normalizedEnvelopeRMSE": 0.1359,
+        "activeStemPrecision": 1.0,
+        "activeStemRecall": 0.9462,
+        "activeStemF1": 0.9724,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 0.2,
+        "analysisSeconds": null,
+        "outsideKnownVocalWindowsSeconds": 0.0,
+        "outsideKnownVocalWindowsEnvelopeMass": 0.0,
+        "controlledWindowEdges": [
+          {
+            "knownWindow": [
+              1.25,
+              3.15
+            ],
+            "detected": true,
+            "entryOffsetMs": 95.0,
+            "releaseOffsetMs": 5.0
+          },
+          {
+            "knownWindow": [
+              4.2,
+              6.0
+            ],
+            "detected": true,
+            "entryOffsetMs": 85.0,
+            "releaseOffsetMs": 5.0
+          }
+        ]
+      },
+      {
+        "track": "sdrnr",
+        "variant": "mix",
+        "duration": 6.8034467120181406,
+        "detected": true,
+        "phraseCount": 1,
+        "accentCount": 25,
+        "noteCount": 7,
+        "envelopeStemRmsPearson": 0.8359,
+        "normalizedEnvelopeRMSE": 0.1517,
+        "activeStemPrecision": 1.0,
+        "activeStemRecall": 1.0,
+        "activeStemF1": 1.0,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 0.0,
+        "analysisSeconds": null
+      },
+      {
+        "track": "sdrnr",
+        "variant": "instrumental",
+        "duration": 6.8034467120181406,
+        "detected": false,
+        "phraseCount": 0,
+        "accentCount": 0,
+        "noteCount": 0,
+        "envelopeStemRmsPearson": 0.0,
+        "normalizedEnvelopeRMSE": 0.0,
+        "activeStemPrecision": 0.0,
+        "activeStemRecall": 0.0,
+        "activeStemF1": 0.0,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 0.0,
+        "analysisSeconds": null
+      },
+      {
+        "track": "sdrnr",
+        "variant": "controlled",
+        "duration": 6.8034467120181406,
+        "detected": true,
+        "phraseCount": 2,
+        "accentCount": 13,
+        "noteCount": 4,
+        "envelopeStemRmsPearson": 0.9707,
+        "normalizedEnvelopeRMSE": 0.1211,
+        "activeStemPrecision": 1.0,
+        "activeStemRecall": 0.9892,
+        "activeStemF1": 0.9946,
+        "falseActiveSeconds": 0.0,
+        "missedActiveSeconds": 0.04,
+        "analysisSeconds": null,
+        "outsideKnownVocalWindowsSeconds": 0.0,
+        "outsideKnownVocalWindowsEnvelopeMass": 0.0,
+        "controlledWindowEdges": [
+          {
+            "knownWindow": [
+              1.25,
+              3.15
+            ],
+            "detected": true,
+            "entryOffsetMs": 0.0,
+            "releaseOffsetMs": 5.0
+          },
+          {
+            "knownWindow": [
+              4.2,
+              6.0
+            ],
+            "detected": true,
+            "entryOffsetMs": 30.0,
+            "releaseOffsetMs": 20.0
+          }
+        ]
+      }
+    ],
+    "final": [
+      {
+        "track": "nightowl",
+        "variant": "controlled",
+        "duration": 6.8034467120181406,
+        "detected": false,
+        "phraseCount": 2,
+        "accentCount": 7,
+        "noteCount": 0,
+        "envelopeStemRmsPearson": 0.9688,
+        "normalizedEnvelopeRMSE": 0.1216,
+        "activeStemPrecision": 0.9942,
+        "activeStemRecall": 0.9194,
+        "activeStemF1": 0.9553,
+        "falseActiveSeconds": 0.02,
+        "missedActiveSeconds": 0.3,
+        "analysisSeconds": 38.596,
+        "outsideKnownVocalWindowsSeconds": 0.0,
+        "outsideKnownVocalWindowsEnvelopeMass": 0.0,
+        "controlledWindowEdges": [
+          {
+            "knownWindow": [
+              1.25,
+              3.15
+            ],
+            "detected": true,
+            "entryOffsetMs": 150.0,
+            "releaseOffsetMs": 15.0
+          },
+          {
+            "knownWindow": [
+              4.2,
+              6.0
+            ],
+            "detected": true,
+            "entryOffsetMs": -5.0,
+            "releaseOffsetMs": -140.0
+          }
+        ]
+      }
+    ]
+  },
+  "source_hashes": {
+    "qa/release-1.6.0/evaluate-musical-detail.py": "f38d5f1ca899c7709a39fe54b4e8229aacacc6971d3ab545c3a6b80f389dcacb",
+    "qa/release-1.6.0/musdb-fixture-provenance.json": "99852b852a3ef05a1fe06a7bbe17e40b68dcc0acfe9dccfb84c1ebf69c40f20a"
+  }
+}

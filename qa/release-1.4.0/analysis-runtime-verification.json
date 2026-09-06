@@ -1,0 +1,80 @@
+{
+  "release": "1.4.0",
+  "scope": "Actual Chromium Worker + shipped ONNX Runtime WASM; no Android device or vehicle",
+  "passed": true,
+  "checks": [
+    {
+      "name": "Whole-track versus chunked mel parity at opening, seam and ending",
+      "checks": [
+        {
+          "first": 0,
+          "frames": 500,
+          "maxAbsError": 0
+        },
+        {
+          "first": 490,
+          "frames": 1500,
+          "maxAbsError": 0
+        },
+        {
+          "first": 1856,
+          "frames": 500,
+          "maxAbsError": 0
+        }
+      ],
+      "passed": true
+    },
+    {
+      "name": "Balanced uses real compact transformer",
+      "passed": true,
+      "engine": {
+        "name": "Beat This! compact transformer",
+        "neural": true,
+        "detail": "Bundled pretrained Beat This! transformer with exact exported log-mel frontend, overlapping 30-second context, measured PCM attack alignment and recurring-passage fingerprints. All audio stays on this device.",
+        "model": "Beat This! small1",
+        "modelId": "beat-this-small1",
+        "modelSha256": "a5f8d39d989f31859454ba27afe61c5317ca95e4d9373e6853e5361b8937172f",
+        "frontendSha256": "fdd59e65c515331308e4c8841edf99972deca646bdf6197744c2a5b7755e3de9",
+        "quality": "balanced",
+        "runtime": "ONNX Runtime Web 1.20.1",
+        "analysisSeconds": 11.4
+      },
+      "beats": 96,
+      "downbeats": 24
+    },
+    {
+      "name": "Default uses real full transformer",
+      "passed": true,
+      "engine": {
+        "name": "Beat This! full transformer",
+        "neural": true,
+        "detail": "Bundled pretrained Beat This! transformer with exact exported log-mel frontend, overlapping 30-second context, measured PCM attack alignment and recurring-passage fingerprints. All audio stays on this device.",
+        "model": "Beat This! final0",
+        "modelId": "beat-this-final0",
+        "modelSha256": "5f810debe53459b559127fb55bbad40035bb47cc567b20e501670f968c770f02",
+        "frontendSha256": "fdd59e65c515331308e4c8841edf99972deca646bdf6197744c2a5b7755e3de9",
+        "quality": "precision",
+        "runtime": "ONNX Runtime Web 1.20.1",
+        "analysisSeconds": 20.5
+      },
+      "beats": 96,
+      "downbeats": 24
+    },
+    {
+      "name": "Digital silence skips neural inference and invents no beats",
+      "passed": true,
+      "duration": 2,
+      "onnxRequests": 0
+    },
+    {
+      "name": "Cancellation terminates analysis worker cleanly",
+      "passed": true
+    }
+  ],
+  "source_hashes": {
+    "web/analysis/worker.js": "8b1fbb26788563cf0aeded85ef09e88e830065d3000ec9417656473f126a97d0",
+    "web/analysis/dsp.js": "32186b9268632cab85cadcb7e84fa1b4e3d8eb4bb9fbdf96a0873067cb9acd71",
+    "web/analysis/analyzer.js": "b315608cacb102e1487edbdd4ebcf049adf3e99efa8c6612f1ccdbf7791240da",
+    "web/analysis/wav-reader.js": "c69842b391100059a3cd69fa08ba1ad0e1aef8d102abfde415bcdf7c6ee477be"
+  }
+}

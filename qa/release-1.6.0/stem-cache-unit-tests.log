@@ -1,0 +1,22 @@
+✔ odd contiguous input chunks equal the independent centered 63-tap convolution exactly (82.936752ms)
+✔ an impulse remains on its original sample clock without FIR group-delay shift (12.122837ms)
+✔ floating-point stems retain very quiet audio below PCM16 resolution (19.869781ms)
+✔ one-sample and odd tails are flushed once with exact ceil(N/2) output (66.523415ms)
+✔ out-of-order, oversized and incomplete writer input rejects without closing incomplete audio (1.038016ms)
+✔ stream write failures propagate to cache transaction cleanup (0.438521ms)
+✔ cache WAV header is mono 22.05 kHz IEEE float with exact byte counts (0.401635ms)
+✔ stereo44100 decodes signed PCM16 independently for left and right (0.780898ms)
+✔ stereo44100 decodes signed PCM24 independently for left and right (0.342616ms)
+✔ stereo44100 decodes signed PCM32 independently for left and right (0.336919ms)
+✔ stereo44100 preserves float channels and silences non-finite samples (0.434505ms)
+✔ stereo44100 duplicates mono and uses the first two channels of multichannel PCM (0.380233ms)
+✔ negative and out-of-track stereo reads zero-pad exactly without moving audible samples (0.379121ms)
+✔ stereo input validates limits, rejects wrong sample rates and detects truncated transfers (0.734298ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 279.26144

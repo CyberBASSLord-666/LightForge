@@ -1,0 +1,29 @@
+{
+  "result": "PASS",
+  "verifiedAt": "2026-09-05T03:08:35.858501+00:00",
+  "sourceSHA256": {
+    "android/src/com/cyberbasslord/lightforge/AudioImporter.java": "910ef3ec1d6f6ded54c91111d9ab34dbf4bbf4d4043f62f1978057183ca0b575",
+    "android/src/com/cyberbasslord/lightforge/ProjectStore.java": "8f44a2d3dd5b0e0b534da15361bf1613f5c784e4165c3ebf67772dd0fd1aa90f",
+    "android/src/com/cyberbasslord/lightforge/WavConverter.java": "f34b9bf3c8960678b6116619941307ce01b75c672807ca85f6f81b6adc33b1b6"
+  },
+  "nativeWavImport": {
+    "pcmCases": 60,
+    "validHeadersAndExactSampleCounts": true,
+    "maxPlaybackAnalysisDurationDifference": 2.2675736961463855e-05,
+    "partialSourceFrameRejected": true,
+    "compressedAndroidCodecExecution": "Unavailable in host JVM; Android framework stubs"
+  },
+  "repairAndDecoderBuffers": {
+    "derivedRepairCasesPassed": 10,
+    "validFilesUnchanged": true,
+    "playbackAndSettingsPreserved": true,
+    "cancelCleanupAndRetry": true,
+    "decoderFragmentCasesPassed": 15,
+    "surroundSoloCasesPassed": 33,
+    "explicitChannelMasksPassed": 2,
+    "incompleteDecoderFrameRejected": true
+  },
+  "projectStoreRegression": "PASS; actual tests/ProjectStoreTest.java on updated source",
+  "resamplerRegression": "PASS; exact duration, PCM preservation, chunk invariance, passband and anti-alias checks",
+  "compressedCodecRuntime": "Not executed: requires Android MediaExtractor/MediaCodec runtime. Format coverage derives from platform documentation and real codec pipeline implementation; no host claims of MP3/AAC/FLAC/Opus decoding."
+}

@@ -1,0 +1,34 @@
+{
+  "retrieved_utc": "2026-09-05T23:57:56.910800+00:00",
+  "source_repository": "https://github.com/erictfree/Carbon-Footprint-AI-Visualizer",
+  "source_commit": "af4bef33ca371b24c1f043486f09a13571f4919b",
+  "source_path": "models/tesla-model-3-2024/source/2024_tesla_model_3.glb",
+  "source_url": "https://raw.githubusercontent.com/erictfree/Carbon-Footprint-AI-Visualizer/af4bef33ca371b24c1f043486f09a13571f4919b/models/tesla-model-3-2024/source/2024_tesla_model_3.glb",
+  "bytes": 8706568,
+  "sha256": "6ef6933d93ee0812d4049446a38e9b46273cab03b21be1e2ef1d502eccdb684b",
+  "asset": {
+    "extras": {
+      "author": "RBLXSupercars (https://sketchfab.com/RBLXSupercars)",
+      "license": "CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "source": "https://sketchfab.com/3d-models/2024-tesla-model-3-fd22be415215453693d67e33aa7812d0",
+      "title": "2024 Tesla Model 3"
+    },
+    "generator": "Sketchfab-16.31.0",
+    "version": "2.0"
+  },
+  "chunks": [
+    {
+      "type": "JSON",
+      "size": 20412
+    },
+    {
+      "type": "BIN\u0000",
+      "size": 8686128
+    }
+  ],
+  "external_resources": false,
+  "mesh_count": 18,
+  "material_count": 17,
+  "node_count": 20,
+  "triangles": 179692
+}

@@ -1,0 +1,12 @@
+START baseline nightowl-vocals
+{"track":"nightowl-vocals","duration":6.8034467120181406,"seconds":0.7807999999970198,"vocals":{"presence":"uncertain","phrases":0,"accents":0,"coverage":0}}
+START baseline stella-vocals
+{"track":"stella-vocals","duration":6.8034467120181406,"seconds":0.3547999999970198,"vocals":{"presence":"detected","phrases":1,"accents":0,"coverage":0.9999}}
+START baseline meaxic-vocals
+{"track":"meaxic-vocals","duration":6.8034467120181406,"seconds":0.3336000000014901,"vocals":{"presence":"detected","phrases":1,"accents":1,"coverage":0.9999}}
+START baseline grunge-vocals
+{"track":"grunge-vocals","duration":6.8034467120181406,"seconds":0.3175,"vocals":{"presence":"detected","phrases":1,"accents":2,"coverage":0.9411}}
+START baseline falcon-vocals
+{"track":"falcon-vocals","duration":6.8034467120181406,"seconds":0.3615999999940395,"vocals":{"presence":"detected","phrases":1,"accents":1,"coverage":0.9999}}
+START baseline sdrnr-vocals
+{"track":"sdrnr-vocals","duration":6.8034467120181406,"seconds":0.28679999999701977,"vocals":{"presence":"detected","phrases":1,"accents":2,"coverage":0.9999}}

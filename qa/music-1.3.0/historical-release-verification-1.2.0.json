@@ -1,0 +1,2338 @@
+{
+  "release": {
+    "apk": "LightForge-1.2.0.apk",
+    "bytes": 21740568,
+    "sha256": "af5d95fe6372e605a2b826e9dad36f875db6c2d1150b55a4a9af10aa4479b770",
+    "zip_integrity": "passed",
+    "alignment": "passed",
+    "signature": "verified",
+    "min_sdk": 26,
+    "target_sdk": 35,
+    "compile_sdk": 35,
+    "version_name": "1.2.0",
+    "version_code": 10200
+  },
+  "apk_source_assets_matched": 34,
+  "signing_certificate_sha256": "7187d6aa935d5b7d2d656cb87913af95fe1ca3a4b1653036d1d8d890e2016c6b",
+  "native_device_install_and_launch": "UNVERIFIED: prior emulator operating system failed to finish startup; no new device test performed",
+  "vehicle_test": "NOT PERFORMED; Highland sub-lens, rear-stop and marker mapping still require physical comparison",
+  "current_release_receipts": {
+    "qa/hardware-1.2.0/commands-verification.json": {
+      "date": "2026-09-06",
+      "engine_suites": 36,
+      "engine_status": "PASS",
+      "native_production_checks": 16,
+      "native_status": "PASS",
+      "official_format_checks": [
+        {
+          "fixture": "stop-and-close",
+          "frame_count": 800,
+          "step_time_ms": 20,
+          "duration": 16.0,
+          "sha256": "cf93103fa2f18dfe24d81b48a69f7fafc72cbe41dac281847c5276e6d2cb613a",
+          "official_validator": "PASS"
+        },
+        {
+          "fixture": "all-closures",
+          "frame_count": 2000,
+          "step_time_ms": 20,
+          "duration": 40.0,
+          "sha256": "e6f9494144d65e5b7a3f4cb8faba1b5ad1ac1ed0b055b691eb63e194c3fcb858",
+          "official_validator": "PASS"
+        },
+        {
+          "fixture": "all-lamps",
+          "frame_count": 2000,
+          "step_time_ms": 20,
+          "duration": 40.0,
+          "sha256": "2ca9836069436a0ef32e2278f4ad194067b70822bafa164b4c2fd72a2ef5b768",
+          "official_validator": "PASS"
+        },
+        {
+          "fixture": "outer-ramp",
+          "frame_count": 2000,
+          "step_time_ms": 20,
+          "duration": 40.0,
+          "sha256": "5e87cd2d54302956e4d932afe4c8172e82452f8031e6efe1dc938d0d3f736114",
+          "official_validator": "PASS"
+        }
+      ],
+      "source_hashes": {
+        "web/engine/show-engine.js": "9539d828a6cb1692344d03b2b8f11fc6a13d926b9afaa65538190cd33fce461e",
+        "web/engine/vehicle-profile.js": "b2201f74f42092a435a82ec41b43c842925e15d78f42dc96dcedc96b20b86138",
+        "android/src/com/cyberbasslord/lightforge/MainActivity.java": "2c3387b4f2395887177607a14df75e974bb7bd74b0c63fe342b1ff79dffc1efd",
+        "tests/engine-manual.test.cjs": "f0d5c7436e961d163abcd6694031bd6bd1980d1f08496f81d7293ae1a3febb08",
+        "tests/NativeHardwareTest.java": "2726f33f235539c4685e87b9f5365bf1c76cc3170bab52c0d4f5e2115dc07e25"
+      },
+      "limits": "Host Node/JVM checks; no Android runtime or vehicle connected."
+    },
+    "qa/hardware-1.2.0/channel-ui-verification.json": {
+      "checks": [
+        "All 34 independently exposed control groups are selectable; unavailable fog channels are absent.",
+        "Both mirror tracks expose Idle, Unfold, Fold and Stop; other six movement tracks also expose Dance; charge Dance is labeled rainbow LED.",
+        "Before generation, real model inspection accepts movement commands and RGB colors without changing the project. Timed cue saving stays disabled.",
+        "Light cues add, edit, remove and restore automatic; combined aliases share all bytes; muting zeros all group aliases. Overlapping edits preserve settings, show bytes and undo history.",
+        "First window Open and mirror Fold can be added directly with visible automatic return cues. First trunk Dance inserts a visible preparatory Open and final Close.",
+        "RGB cues write exact selected color bytes and support edit/delete; closure cues replace only their own automatic track with Idle gaps and support edit/delete/restore.",
+        "An over-budget window track is rejected atomically; prior settings, exported bytes and undo history remain intact.",
+        "Outer-beam ramps are opt-in; the UI exposes all six documented fade commands when enabled and reverts to on/off by default.",
+        "Solo inspection leaves generated and exported FSEQ bytes unchanged; Stop, Play and natural completion restore the show.",
+        "Reload restores project metadata, IndexedDB audio, all three cue kinds and byte-identical regenerated export.",
+        "The actual browser Export action produces a CRC-valid USB ZIP containing the same FSEQ bytes and project cue edits.",
+        "Individual output editor fits 320 px, 393 px and 768 px without document overflow.",
+        "Production bundled model and new editor operate without external network requests or JavaScript errors."
+      ],
+      "errors": [],
+      "externalRequests": [],
+      "limits": [
+        "Synthetic beat analysis isolates editing; bundled demo WAV is real audio.",
+        "Desktop Chromium WebGL2 uses SwiftShader; this is not a physical phone or vehicle test."
+      ],
+      "export": {
+        "fseqSHA256": "b1b002b4a48b20dce171d197a0afda718abfb805d16d36e3314ca7402a3f57dc",
+        "files": [
+          "LightShow/lightshow.fseq",
+          "LightShow/lightshow.wav",
+          "README.txt",
+          "Validation.json",
+          "Review/LightForge_Project.json"
+        ]
+      },
+      "mobile": [
+        {
+          "viewport": 320,
+          "scroll": 320,
+          "body": 320
+        },
+        {
+          "viewport": 393,
+          "scroll": 393,
+          "body": 393
+        },
+        {
+          "viewport": 768,
+          "scroll": 768,
+          "body": 768
+        }
+      ],
+      "passed": true
+    },
+    "research/hardware-1.2.0/profile-address-verification.json": {
+      "checked": "2026-09-06",
+      "officialAddressChecks": 56,
+      "allModel3CandidateAddressesCovered": true,
+      "uniqueOutputs": 37,
+      "available": 34,
+      "duplicateAddresses": false,
+      "physicalSubLensVerification": false
+    },
+    "qa/rig-audit/verification.json": {
+      "date": "2026-09-06T03:00:30.225Z",
+      "renderer": "production bundled Three.js WebGL2 under Chromium SwiftShader",
+      "checks": 38,
+      "channels": [
+        {
+          "channel": 1,
+          "on": [
+            {
+              "name": "mat10_mesh10_component020",
+              "intensity": 7,
+              "part": "body"
+            },
+            {
+              "name": "mat15_mesh16_component003",
+              "intensity": 7,
+              "part": "body"
+            }
+          ],
+          "lamps": [
+            {
+              "id": 1,
+              "channels": [
+                1
+              ],
+              "value": 1,
+              "physicalValue": 1,
+              "estimatedMapping": true,
+              "surfaces": [
+                {
+                  "name": "mat15_mesh16_component003",
+                  "sourceMesh": 16,
+                  "sourceComponent": 3,
+                  "rigPart": "body"
+                },
+                {
+                  "name": "mat10_mesh10_component020",
+                  "sourceMesh": 10,
+                  "sourceComponent": 20,
+                  "rigPart": "body"
+                }
+              ],
+              "visible": true,
+              "x": 332.517732825518,
+              "y": 442.24511444555424
+            }
+          ]
+        },
+        {
+          "channel": 2,
+          "on": [
+            {
+              "name": "mat10_mesh10_component022",
+              "intensity": 7,
+              "part": "body"
+            },
+            {
+              "name": "mat15_mesh16_component001",
+              "intensity": 7,
+              "part": "body"
+            }
+          ],
+          "lamps": [
+            {
+              "id": 2,
+              "channels": [
+                2
+              ],
+              "value": 1,
+              "physicalValue": 1,
+              "estimatedMapping": true,
+              "surfaces": [
+                {
+                  "name": "mat15_mesh16_component001",
+                  "sourceMesh": 16,
+                  "sourceComponent": 1,
+                  "rigPart": "body"
+                },
+                {
+                  "name": "mat10_mesh10_component022",
+                  "sourceMesh": 10,
+                  "sourceComponent": 22,
+                  "rigPart": "body"
+                }
+              ],
+              "visible": true,
+              "x": 123.02679411741173,
+              "y": 374.0795414697333
+            }
+          ]
+        },
+        {
+          "channel": 3,
+          "on": [
+            {
+              "name": "Inner_optics_L",
+              "intensity": 7,
+              "part": "body"
+            }
+          ],
+          "lamps": [
+            {
+              "id": 3,
+              "channels": [
+                3,
+                7,
+                9,
+                11
+              ],
+              "value": 1,
+              "physicalValue": 1,
+              "estimatedMapping": true,
+              "surfaces": [
+                {
+                  "name": "Inner_optics_L",
+                  "sourceMesh": null,
+                  "sourceComponent": null,
+                  "rigPart": "body"
+                }
+              ],
+              "visible": true,
+              "x": 279.72088546947526,
+              "y": 448.09730832862584
+            }
+          ]
+        },
+        {
+          "channel": 4,
+          "on": [
+            {
+              "name": "Inner_optics_R",
+              "intensity": 7,
+              "part": "body"
+            }
+          ],
+          "lamps": [
+            {
+              "id": 4,
+              "channels": [
+                4,
+                8,
+                10,
+                12
+              ],
+              "value": 1,
+              "physicalValue": 1,
+              "estimatedMapping": true,
+              "surfaces": [
+                {
+                  "name": "Inner_optics_R",
+                  "sourceMesh": null,
+                  "sourceComponent": null,
+                  "rigPart": "body"
+                }
+              ],
+              "visible": true,
+              "x": 111.67089341149897,
+              "y": 390.1630815848153
+            }
+          ]
+        },
+        {
+          "channel": 5,
+          "on": [
+            {
+              "name": "mat10_mesh10_component008",
+              "intensity": 7,
+              "part": "body"
+            },
+            {
+              "name": "mat10_mesh10_component011",
+              "intensity": 7,
+              "part": "body"
+            }
+          ],
+          "lamps": [
+            {
+              "id": 5,
+              "channels": [
+                5
+              ],
+              "value": 1,
+              "physicalValue": 1,
+              "estimatedMapping": true,
+              "surfaces": [
+                {
+                  "name": "mat10_mesh10_component008",
+                  "sourceMesh": 10,
+                  "sourceComponent": 8,
+                  "rigPart": "body"
+                },
+                {
+                  "name": "mat10_mesh10_component011",
+                  "sourceMesh": 10,
+                  "sourceComponent": 11,
+                  "rigPart": "body"
+                }
+              ],
+              "visible": true,
+              "x": 289.28659987005034,
+              "y": 449.0379714345712
+            }
+          ]
+        },
+        {
+          "channel": 6,
+          "on": [
+            {
+              "name": "mat10_mesh10_component007",
+              "intensity": 7,
+              "part": "body"
+            },
+            {
+              "name": "mat10_mesh10_component029",
+              "intensity": 7,
+              "part": "body"
+            }
+          ],
+          "lamps": [
+            {
+              "id": 6,
+              "channels": [
+                6
+              ],
+              "value": 1,
+              "physicalValue": 1,
+              "estimatedMapping": true,
+              "surfaces": [
+                {
+                  "name": "mat10_mesh10_component007",
+                  "sourceMesh": 10,
+                  "sourceComponent": 7,
+                  "rigPart": "body"
+                },
+                {
+                  "name": "mat10_mesh10_component029",
+                  "sourceMesh": 10,
+                  "sourceComponent": 29,
+                  "rigPart": "body"
+                }
+              ],
+              "visible": true,
+              "x": 108.80311168886541,
+              "y": 387.1802047296949
+            }
+          ]
+        },
+        {
+          "channel": 7,
+          "on": [
+            {
+              "name": "Inner_optics_L",
+              "intensity": 7,
+              "part": "body"
+            }
+          ],
+          "lamps": [
+            {
+              "id": 7,
+              "channels": [
+                3,
+                7,
+                9,
+                11
+              ],
+              "value": 1,
+              "physicalValue": 1,
+              "estimatedMapping": true,
+              "surfaces": [
+                {
+                  "name": "Inner_optics_L",
+                  "sourceMesh": null,
+                  "sourceComponent": null,
+                  "rigPart": "body"
+                }
+              ],
+              "visible": true,
+              "x": 279.72088546947526,
+              "y": 448.09730832862584
+            }
+          ]
+        },
+        {
+          "channel": 8,
+          "on": [
+            {
+              "name": "Inner_optics_R",
+              "intensity": 7,
+              "part": "body"
+            }
+          ],
+          "lamps": [
+            {
+              "id": 8,
+              "channels": [
+                4,
+                8,
+                10,
+                12
+              ],
+              "value": 1,
+              "physicalValue": 1,
+              "estimatedMapping": true,
+              "surfaces": [
+                {
+                  "name": "Inner_optics_R",
+                  "sourceMesh": null,
+                  "sourceComponent": null,
+                  "rigPart": "body"
+                }
+              ],
+              "visible": true,
+              "x": 111.67089341149897,
+              "y": 390.1630815848153
+            }
+          ]
+        },
+        {
+          "channel": 9,
+          "on": [
+            {
+              "name": "Inner_optics_L",
+              "intensity": 7,
+              "part": "body"
+            }
+          ],
+          "lamps": [
+            {
+              "id": 9,
+              "channels": [
+                3,
+                7,
+                9,
+                11
+              ],
+              "value": 1,
+              "physicalValue": 1,
+              "estimatedMapping": true,
+              "surfaces": [
+                {
+                  "name": "Inner_optics_L",
+                  "sourceMesh": null,
+                  "sourceComponent": null,
+                  "rigPart": "body"
+                }
+              ],
+              "visible": true,
+              "x": 279.72088546947526,
+              "y": 448.09730832862584
+            }
+          ]
+        },
+        {
+          "channel": 10,
+          "on": [
+            {
+              "name": "Inner_optics_R",
+              "intensity": 7,
+              "part": "body"
+            }
+          ],
+          "lamps": [
+            {
+              "id": 10,
+              "channels": [
+                4,
+                8,
+                10,
+                12
+              ],
+              "value": 1,
+              "physicalValue": 1,
+              "estimatedMapping": true,
+              "surfaces": [
+                {
+                  "name": "Inner_optics_R",
+                  "sourceMesh": null,
+                  "sourceComponent": null,
+                  "rigPart": "body"
+                }
+              ],
+              "visible": true,
+              "x": 111.67089341149897,
+              "y": 390.1630815848153
+            }
+          ]
+        },
+        {
+          "channel": 11,
+          "on": [
+            {
+              "name": "Inner_optics_L",
+              "intensity": 7,
+              "part": "body"
+            }
+          ],
+          "lamps": [
+            {
+              "id": 11,
+              "channels": [
+                3,
+                7,
+                9,
+                11
+              ],
+              "value": 1,
+              "physicalValue": 1,
+              "estimatedMapping": true,
+              "surfaces": [
+                {
+                  "name": "Inner_optics_L",
+                  "sourceMesh": null,
+                  "sourceComponent": null,
+                  "rigPart": "body"
+                }
+              ],
+              "visible": true,
+              "x": 279.72088546947526,
+              "y": 448.09730832862584
+            }
+          ]
+        },
+        {
+          "channel": 12,
+          "on": [
+            {
+              "name": "Inner_optics_R",
+              "intensity": 7,
+              "part": "body"
+            }
+          ],
+          "lamps": [
+            {
+              "id": 12,
+              "channels": [
+                4,
+                8,
+                10,
+                12
+              ],
+              "value": 1,
+              "physicalValue": 1,
+              "estimatedMapping": true,
+              "surfaces": [
+                {
+                  "name": "Inner_optics_R",
+                  "sourceMesh": null,
+                  "sourceComponent": null,
+                  "rigPart": "body"
+                }
+              ],
+              "visible": true,
+              "x": 111.67089341149897,
+              "y": 390.1630815848153
+            }
+          ]
+        },
+        {
+          "channel": 13,
+          "on": [
+            {
+              "name": "mat10_mesh10_component010",
+              "intensity": 7,
+              "part": "body"
+            },
+            {
+              "name": "mat14_mesh15_component000",
+              "intensity": 7,
+              "part": "body"
+            }
+          ],
+          "lamps": [
+            {
+              "id": 13,
+              "channels": [
+                13
+              ],
+              "value": 1,
+              "physicalValue": 1,
+              "estimatedMapping": false,
+              "surfaces": [
+                {
+                  "name": "mat14_mesh15_component000",
+                  "sourceMesh": 15,
+                  "sourceComponent": 0,
+                  "rigPart": "body"
+                },
+                {
+                  "name": "mat10_mesh10_component010",
+                  "sourceMesh": 10,
+                  "sourceComponent": 10,
+                  "rigPart": "body"
+                }
+              ],
+              "visible": true,
+              "x": 248.18800822464712,
+              "y": 466.54138290119295
+            }
+          ]
+        },
+        {
+          "channel": 14,
+          "on": [
+            {
+              "name": "mat10_mesh10_component023",
+              "intensity": 7,
+              "part": "body"
+            },
+            {
+              "name": "mat14_mesh15_component003",
+              "intensity": 7,
+              "part": "body"
+            }
+          ],
+          "lamps": [
+            {
+              "id": 14,
+              "channels": [
+                14
+              ],
+              "value": 1,
+              "physicalValue": 1,
+              "estimatedMapping": false,
+              "surfaces": [
+                {
+                  "name": "mat14_mesh15_component003",
+                  "sourceMesh": 15,
+                  "sourceComponent": 3,
+                  "rigPart": "body"
+                },
+                {
+                  "name": "mat10_mesh10_component023",
+                  "sourceMesh": 10,
+                  "sourceComponent": 23,
+                  "rigPart": "body"
+                }
+              ],
+              "visible": true,
+              "x": 89.35684798466536,
+              "y": 407.67289522592426
+            }
+          ]
+        },
+        {
+          "channel": 15,
+          "on": [],
+          "lamps": []
+        },
+        {
+          "channel": 16,
+          "on": [],
+          "lamps": []
+        },
+        {
+          "channel": 17,
+          "on": [
+            {
+              "name": "Headlamp_side_marker_-1",
+              "intensity": 7,
+              "part": "body"
+            },
+            {
+              "name": "Headlamp_side_marker_1",
+              "intensity": 7,
+              "part": "body"
+            }
+          ],
+          "lamps": [
+            {
+              "id": 17,
+              "channels": [
+                17,
+                19
+              ],
+              "value": 1,
+              "physicalValue": 1,
+              "estimatedMapping": true,
+              "surfaces": [
+                {
+                  "name": "Headlamp_side_marker_-1",
+                  "sourceMesh": null,
+                  "sourceComponent": null,
+                  "rigPart": "body"
+                }
+              ],
+              "visible": true,
+              "x": 344.2798930728262,
+              "y": 444.6479244270374
+            }
+          ]
+        },
+        {
+          "channel": 18,
+          "on": [
+            {
+              "name": "Headlamp_side_marker_-1",
+              "intensity": 7,
+              "part": "body"
+            },
+            {
+              "name": "Headlamp_side_marker_1",
+              "intensity": 7,
+              "part": "body"
+            }
+          ],
+          "lamps": [
+            {
+              "id": 18,
+              "channels": [
+                18,
+                20
+              ],
+              "value": 1,
+              "physicalValue": 1,
+              "estimatedMapping": true,
+              "surfaces": [
+                {
+                  "name": "Headlamp_side_marker_1",
+                  "sourceMesh": null,
+                  "sourceComponent": null,
+                  "rigPart": "body"
+                }
+              ],
+              "visible": false,
+              "x": 116.42733514775814,
+              "y": 370.8655733248653
+            }
+          ]
+        },
+        {
+          "channel": 19,
+          "on": [
+            {
+              "name": "Headlamp_side_marker_-1",
+              "intensity": 7,
+              "part": "body"
+            },
+            {
+              "name": "Headlamp_side_marker_1",
+              "intensity": 7,
+              "part": "body"
+            }
+          ],
+          "lamps": [
+            {
+              "id": 19,
+              "channels": [
+                17,
+                19
+              ],
+              "value": 1,
+              "physicalValue": 1,
+              "estimatedMapping": true,
+              "surfaces": [
+                {
+                  "name": "Headlamp_side_marker_-1",
+                  "sourceMesh": null,
+                  "sourceComponent": null,
+                  "rigPart": "body"
+                }
+              ],
+              "visible": true,
+              "x": 344.2798930728262,
+              "y": 444.6479244270374
+            }
+          ]
+        },
+        {
+          "channel": 20,
+          "on": [
+            {
+              "name": "Headlamp_side_marker_-1",
+              "intensity": 7,
+              "part": "body"
+            },
+            {
+              "name": "Headlamp_side_marker_1",
+              "intensity": 7,
+              "part": "body"
+            }
+          ],
+          "lamps": [
+            {
+              "id": 20,
+              "channels": [
+                18,
+                20
+              ],
+              "value": 1,
+              "physicalValue": 1,
+              "estimatedMapping": true,
+              "surfaces": [
+                {
+                  "name": "Headlamp_side_marker_1",
+                  "sourceMesh": null,
+                  "sourceComponent": null,
+                  "rigPart": "body"
+                }
+              ],
+              "visible": false,
+              "x": 116.42733514775814,
+              "y": 370.8655733248653
+            }
+          ]
+        },
+        {
+          "channel": 21,
+          "on": [
+            {
+              "name": "mat10_mesh10_component013",
+              "intensity": 7,
+              "part": "body"
+            },
+            {
+              "name": "mat14_mesh15_component001",
+              "intensity": 7,
+              "part": "body"
+            }
+          ],
+          "lamps": [
+            {
+              "id": 21,
+              "channels": [
+                21
+              ],
+              "value": 1,
+              "physicalValue": 1,
+              "estimatedMapping": false,
+              "surfaces": [
+                {
+                  "name": "mat14_mesh15_component001",
+                  "sourceMesh": 15,
+                  "sourceComponent": 1,
+                  "rigPart": "body"
+                },
+                {
+                  "name": "mat10_mesh10_component013",
+                  "sourceMesh": 10,
+                  "sourceComponent": 13,
+                  "rigPart": "body"
+                }
+              ],
+              "visible": true,
+              "x": 481.3519921384094,
+              "y": 394.95632085033856
+            }
+          ]
+        },
+        {
+          "channel": 22,
+          "on": [
+            {
+              "name": "mat10_mesh10_component014",
+              "intensity": 7,
+              "part": "body"
+            },
+            {
+              "name": "mat14_mesh15_component004",
+              "intensity": 7,
+              "part": "body"
+            }
+          ],
+          "lamps": [
+            {
+              "id": 22,
+              "channels": [
+                22
+              ],
+              "value": 1,
+              "physicalValue": 1,
+              "estimatedMapping": false,
+              "surfaces": [
+                {
+                  "name": "mat14_mesh15_component004",
+                  "sourceMesh": 15,
+                  "sourceComponent": 4,
+                  "rigPart": "body"
+                },
+                {
+                  "name": "mat10_mesh10_component014",
+                  "sourceMesh": 10,
+                  "sourceComponent": 14,
+                  "rigPart": "body"
+                }
+              ],
+              "visible": false,
+              "x": 233.24786252185413,
+              "y": 331.7113870704951
+            }
+          ]
+        },
+        {
+          "channel": 23,
+          "on": [
+            {
+              "name": "mat14_mesh15_component002",
+              "intensity": 7,
+              "part": "trunk"
+            }
+          ],
+          "lamps": [
+            {
+              "id": 23,
+              "channels": [
+                23
+              ],
+              "value": 1,
+              "physicalValue": 1,
+              "estimatedMapping": false,
+              "surfaces": [
+                {
+                  "name": "mat14_mesh15_component002",
+                  "sourceMesh": 15,
+                  "sourceComponent": 2,
+                  "rigPart": "trunk"
+                }
+              ],
+              "visible": false,
+              "x": 746.0027565006827,
+              "y": 255.70792159359013
+            }
+          ]
+        },
+        {
+          "channel": 24,
+          "on": [
+            {
+              "name": "mat14_mesh15_component005",
+              "intensity": 7,
+              "part": "trunk"
+            }
+          ],
+          "lamps": [
+            {
+              "id": 24,
+              "channels": [
+                24
+              ],
+              "value": 1,
+              "physicalValue": 1,
+              "estimatedMapping": false,
+              "surfaces": [
+                {
+                  "name": "mat14_mesh15_component005",
+                  "sourceMesh": 15,
+                  "sourceComponent": 5,
+                  "rigPart": "trunk"
+                }
+              ],
+              "visible": false,
+              "x": 607.4918092167197,
+              "y": 237.96352707063036
+            }
+          ]
+        },
+        {
+          "channel": 25,
+          "on": [
+            {
+              "name": "mat10_mesh10_component009",
+              "intensity": 7,
+              "part": "body"
+            },
+            {
+              "name": "mat10_mesh10_component012",
+              "intensity": 7,
+              "part": "body"
+            },
+            {
+              "name": "mat13_mesh14_component000",
+              "intensity": 7,
+              "part": "trunk"
+            },
+            {
+              "name": "mat13_mesh14_component001",
+              "intensity": 7,
+              "part": "trunk"
+            },
+            {
+              "name": "mat13_mesh14_component002",
+              "intensity": 7,
+              "part": "trunk"
+            },
+            {
+              "name": "mat13_mesh14_component003",
+              "intensity": 7,
+              "part": "trunk"
+            },
+            {
+              "name": "mat13_mesh14_component006",
+              "intensity": 7,
+              "part": "trunk"
+            },
+            {
+              "name": "mat13_mesh14_component007",
+              "intensity": 7,
+              "part": "trunk"
+            },
+            {
+              "name": "mat13_mesh14_component008",
+              "intensity": 7,
+              "part": "trunk"
+            }
+          ],
+          "lamps": [
+            {
+              "id": 25,
+              "channels": [
+                25
+              ],
+              "value": 1,
+              "physicalValue": 1,
+              "estimatedMapping": true,
+              "surfaces": [
+                {
+                  "name": "mat10_mesh10_component009",
+                  "sourceMesh": 10,
+                  "sourceComponent": 9,
+                  "rigPart": "body"
+                },
+                {
+                  "name": "mat10_mesh10_component012",
+                  "sourceMesh": 10,
+                  "sourceComponent": 12,
+                  "rigPart": "body"
+                },
+                {
+                  "name": "mat13_mesh14_component000",
+                  "sourceMesh": 14,
+                  "sourceComponent": 0,
+                  "rigPart": "trunk"
+                },
+                {
+                  "name": "mat13_mesh14_component003",
+                  "sourceMesh": 14,
+                  "sourceComponent": 3,
+                  "rigPart": "trunk"
+                },
+                {
+                  "name": "mat13_mesh14_component007",
+                  "sourceMesh": 14,
+                  "sourceComponent": 7,
+                  "rigPart": "trunk"
+                },
+                {
+                  "name": "mat13_mesh14_component008",
+                  "sourceMesh": 14,
+                  "sourceComponent": 8,
+                  "rigPart": "trunk"
+                },
+                {
+                  "name": "mat13_mesh14_component001",
+                  "sourceMesh": 14,
+                  "sourceComponent": 1,
+                  "rigPart": "trunk"
+                },
+                {
+                  "name": "mat13_mesh14_component002",
+                  "sourceMesh": 14,
+                  "sourceComponent": 2,
+                  "rigPart": "trunk"
+                },
+                {
+                  "name": "mat13_mesh14_component006",
+                  "sourceMesh": 14,
+                  "sourceComponent": 6,
+                  "rigPart": "trunk"
+                }
+              ],
+              "visible": false,
+              "x": 658.5275132496613,
+              "y": 215.1557119564511
+            }
+          ]
+        },
+        {
+          "channel": 26,
+          "on": [
+            {
+              "name": "mat13_mesh14_component000",
+              "intensity": 7,
+              "part": "trunk"
+            },
+            {
+              "name": "mat13_mesh14_component003",
+              "intensity": 7,
+              "part": "trunk"
+            },
+            {
+              "name": "mat13_mesh14_component007",
+              "intensity": 7,
+              "part": "trunk"
+            },
+            {
+              "name": "mat13_mesh14_component008",
+              "intensity": 7,
+              "part": "trunk"
+            }
+          ],
+          "lamps": [
+            {
+              "id": 26,
+              "channels": [
+                26
+              ],
+              "value": 1,
+              "physicalValue": 1,
+              "estimatedMapping": true,
+              "surfaces": [
+                {
+                  "name": "mat13_mesh14_component000",
+                  "sourceMesh": 14,
+                  "sourceComponent": 0,
+                  "rigPart": "trunk"
+                },
+                {
+                  "name": "mat13_mesh14_component003",
+                  "sourceMesh": 14,
+                  "sourceComponent": 3,
+                  "rigPart": "trunk"
+                },
+                {
+                  "name": "mat13_mesh14_component007",
+                  "sourceMesh": 14,
+                  "sourceComponent": 7,
+                  "rigPart": "trunk"
+                },
+                {
+                  "name": "mat13_mesh14_component008",
+                  "sourceMesh": 14,
+                  "sourceComponent": 8,
+                  "rigPart": "trunk"
+                }
+              ],
+              "visible": false,
+              "x": 747.8964367715018,
+              "y": 256.9171454402829
+            }
+          ]
+        },
+        {
+          "channel": 27,
+          "on": [
+            {
+              "name": "mat13_mesh14_component001",
+              "intensity": 7,
+              "part": "trunk"
+            },
+            {
+              "name": "mat13_mesh14_component002",
+              "intensity": 7,
+              "part": "trunk"
+            },
+            {
+              "name": "mat13_mesh14_component006",
+              "intensity": 7,
+              "part": "trunk"
+            }
+          ],
+          "lamps": [
+            {
+              "id": 27,
+              "channels": [
+                27
+              ],
+              "value": 1,
+              "physicalValue": 1,
+              "estimatedMapping": true,
+              "surfaces": [
+                {
+                  "name": "mat13_mesh14_component001",
+                  "sourceMesh": 14,
+                  "sourceComponent": 1,
+                  "rigPart": "trunk"
+                },
+                {
+                  "name": "mat13_mesh14_component002",
+                  "sourceMesh": 14,
+                  "sourceComponent": 2,
+                  "rigPart": "trunk"
+                },
+                {
+                  "name": "mat13_mesh14_component006",
+                  "sourceMesh": 14,
+                  "sourceComponent": 6,
+                  "rigPart": "trunk"
+                }
+              ],
+              "visible": false,
+              "x": 602.7945809036524,
+              "y": 238.2444957594621
+            }
+          ]
+        },
+        {
+          "channel": 28,
+          "on": [
+            {
+              "name": "mat10_mesh10_component004",
+              "intensity": 7,
+              "part": "body"
+            },
+            {
+              "name": "mat10_mesh10_component005",
+              "intensity": 7,
+              "part": "body"
+            },
+            {
+              "name": "mat10_mesh10_component006",
+              "intensity": 7,
+              "part": "body"
+            }
+          ],
+          "lamps": [
+            {
+              "id": 28,
+              "channels": [
+                28
+              ],
+              "value": 1,
+              "physicalValue": 1,
+              "estimatedMapping": false,
+              "surfaces": [
+                {
+                  "name": "mat10_mesh10_component004",
+                  "sourceMesh": 10,
+                  "sourceComponent": 4,
+                  "rigPart": "body"
+                },
+                {
+                  "name": "mat10_mesh10_component005",
+                  "sourceMesh": 10,
+                  "sourceComponent": 5,
+                  "rigPart": "body"
+                },
+                {
+                  "name": "mat10_mesh10_component006",
+                  "sourceMesh": 10,
+                  "sourceComponent": 6,
+                  "rigPart": "body"
+                }
+              ],
+              "visible": false,
+              "x": 626.2366756769923,
+              "y": 304.54326662379566
+            }
+          ]
+        },
+        {
+          "channel": 29,
+          "on": [],
+          "lamps": []
+        },
+        {
+          "channel": 30,
+          "on": [
+            {
+              "name": "License_plate_lamp_L",
+              "intensity": 7,
+              "part": "trunk"
+            },
+            {
+              "name": "License_plate_lamp_R",
+              "intensity": 7,
+              "part": "trunk"
+            }
+          ],
+          "lamps": [
+            {
+              "id": 30,
+              "channels": [
+                30
+              ],
+              "value": 1,
+              "physicalValue": 1,
+              "estimatedMapping": false,
+              "surfaces": [
+                {
+                  "name": "License_plate_lamp_L",
+                  "sourceMesh": null,
+                  "sourceComponent": null,
+                  "rigPart": "trunk"
+                },
+                {
+                  "name": "License_plate_lamp_R",
+                  "sourceMesh": null,
+                  "sourceComponent": null,
+                  "rigPart": "trunk"
+                }
+              ],
+              "visible": false,
+              "x": 698.1292510897854,
+              "y": 255.16216472760053
+            }
+          ]
+        }
+      ],
+      "displayOnlyFront": [
+        "mat01_mesh01_component000"
+      ],
+      "errors": []
+    },
+    "qa/mobile/real-flow.json": {
+      "music": {
+        "bpm": 93.01,
+        "engine": {
+          "name": "BeatNet CRNN",
+          "neural": true,
+          "detail": "Bundled pretrained BeatNet model 1 with ONNX Runtime WebAssembly. Neural beat/downbeat activations, dynamic-programming beat decoding, adaptive spectral onset and section analysis. All audio stays on this device.",
+          "model": "BeatNet model_1_weights",
+          "runtime": "ONNX Runtime Web 1.20.1",
+          "analysisSeconds": 1.4
+        },
+        "sections": 4
+      },
+      "validation": {
+        "valid": true,
+        "errors": [],
+        "warnings": [],
+        "stats": {
+          "frameCount": 3200,
+          "stepMs": 20,
+          "duration": 64,
+          "sequenceBytes": 640000,
+          "commandCounts": {
+            "35": 19,
+            "36": 19,
+            "37": 5,
+            "38": 5,
+            "39": 5,
+            "40": 5,
+            "41": 3,
+            "46": 3
+          },
+          "danceSeconds": {
+            "35": 0,
+            "36": 0,
+            "37": 18,
+            "38": 18,
+            "39": 18,
+            "40": 18,
+            "41": 14,
+            "46": 22.42
+          },
+          "lightTransitions": 4307,
+          "activeExteriorPercent": 85.6,
+          "rampCommandFrames": 6176,
+          "interiorDisplayFrames": 3183
+        }
+      },
+      "toast": "Your show is ready. Press play and make it yours.",
+      "playback": {
+        "time": 38.944621,
+        "section": "Peak",
+        "labels": "WINDOWS OpenMIRRORS UnfoldingTRUNK OpeningCHARGE Rainbow"
+      },
+      "exportFilename": "Glass_Castle_demo_excerpt_LightForge.zip",
+      "sampleBoundaryRegression": [
+        {
+          "stepMs": 20,
+          "duration": 20.00002267573696,
+          "analyzedDuration": 20.00002267573696,
+          "lastSectionEnd": 20.00002267573696,
+          "frames": 1001,
+          "expected": 1001
+        },
+        {
+          "stepMs": 15,
+          "duration": 15.000022675736961,
+          "analyzedDuration": 15.000022675736961,
+          "lastSectionEnd": 15.000022675736961,
+          "frames": 1001,
+          "expected": 1001
+        }
+      ],
+      "errors": []
+    },
+    "qa/mobile/export-3d-release.json": {
+      "release": "1.2.0",
+      "passed": true,
+      "checks": [
+        "ZIP CRC and matching Tesla LightShow filenames",
+        "PCM16 stereo 44.1 kHz audio byte-identical to imported demo",
+        "Tesla official FSEQ format validator",
+        "Full sequence payload and terminal dark frame",
+        "Music and sequence duration within one frame",
+        "Saved project regenerates byte-identical export"
+      ],
+      "files": [
+        "LightShow/lightshow.fseq",
+        "LightShow/lightshow.wav",
+        "README.txt",
+        "Validation.json",
+        "Review/LightForge_Project.json"
+      ],
+      "fseq_bytes": 640072,
+      "audio_sha256": "33f07d502ba19832b62b97d8fb4a11354e81310264bd885d7a06438228773650",
+      "official_validator": {
+        "frame_count": 3200,
+        "step_time": 20,
+        "duration_s": 64.0
+      },
+      "errors": []
+    },
+    "qa/mobile/3d-preview-verification.json": {
+      "checks": [
+        "Real WebGL2 context loads the bundled detailed Highland mesh",
+        "front camera renders the loaded 3D model",
+        "rear camera renders the loaded 3D model",
+        "driver camera renders the loaded 3D model",
+        "cabin camera renders the loaded 3D model",
+        "orbit camera renders the loaded 3D model",
+        "Dragging orbits the actual Three.js camera",
+        "Two-finger pinch changes real camera distance",
+        "Expanded preview resizes the WebGL drawing buffer and restores",
+        "Studio and Night controls change rendered lighting and selection state",
+        "Fade onset and midpoint follow exact exported frame and supported ramp",
+        "Trunk tail lamps and license plate move while paired reverse lamps remain fixed",
+        "Windows, mirrors, trunk and charge port change actual 3D transforms",
+        "Charge dance changes rendered LED color while holding the flap open",
+        "Rewind restores exact lamp values, RGB colors and articulated geometry",
+        "Pause freezes sequence values and physical geometry estimates",
+        "Actual audio clock drives WebGL frames within the measured render interval",
+        "Output monitor and hidden lamps agree with rendered fade values",
+        "Foldable layout resizes the model without horizontal overflow",
+        "Model, renderer and preview load with every external HTTP origin blocked",
+        "Graphics context loss pauses drawing, reports recovery, then resumes",
+        "Missing WebGL reports an error while leaving project navigation and import available"
+      ],
+      "errors": [],
+      "externalRequests": [],
+      "assets": [
+        {
+          "url": "/preview/models/highland.glb",
+          "status": 200
+        }
+      ],
+      "skipped": [],
+      "graphics": {
+        "webgl2": true,
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "meshes": 105,
+        "triangles": 180081,
+        "ready": true,
+        "renderer": "WebGL2"
+      },
+      "pinch": {
+        "before": 8.503185554714484,
+        "after": 4.6989184356457105
+      },
+      "audioSync": {
+        "maxGapMs": 216.70000000000073,
+        "maxLagMs": 4.766000000000048,
+        "samples": [
+          {
+            "gapMs": 16.600000000002183,
+            "audio": 1.513491,
+            "preview": 1.512374,
+            "frame": 75,
+            "paused": false
+          },
+          {
+            "gapMs": 200,
+            "audio": 1.651473,
+            "preview": 1.648709,
+            "frame": 82,
+            "paused": false
+          },
+          {
+            "gapMs": 16.69999999999709,
+            "audio": 1.662585,
+            "preview": 1.657819,
+            "frame": 82,
+            "paused": false
+          },
+          {
+            "gapMs": 200,
+            "audio": 1.872821,
+            "preview": 1.871357,
+            "frame": 93,
+            "paused": false
+          },
+          {
+            "gapMs": 216.70000000000073,
+            "audio": 2.090402,
+            "preview": 2.08884,
+            "frame": 104,
+            "paused": false
+          },
+          {
+            "gapMs": 199.90000000000146,
+            "audio": 2.293541,
+            "preview": 2.292189,
+            "frame": 114,
+            "paused": false
+          },
+          {
+            "gapMs": 200,
+            "audio": 2.493172,
+            "preview": 2.491692,
+            "frame": 124,
+            "paused": false
+          },
+          {
+            "gapMs": 216.70000000000073,
+            "audio": 2.709004,
+            "preview": 2.707573,
+            "frame": 135,
+            "paused": false
+          }
+        ]
+      },
+      "passed": true
+    },
+    "qa/mobile/ui-polish-verification.json": {
+      "passed": true,
+      "checks": [
+        "No horizontal overflow at 320, 360, 393, 768, 1024 and 1440 px",
+        "Arrow-key style selection updates the real arrangement settings",
+        "Arrow-key camera selection updates the real preview view",
+        "Playback microanimation follows actual play and pause events",
+        "Accessible seeking announces elapsed time and duration",
+        "Progress reports percentage and focus stays inside the active overlay",
+        "Reduced-motion preference disables decorative animations"
+      ],
+      "errors": []
+    }
+  },
+  "model_provenance_receipts": {
+    "research/model-source/download-receipt.json": {
+      "retrieved_utc": "2026-09-05T23:57:56.910800+00:00",
+      "source_repository": "https://github.com/erictfree/Carbon-Footprint-AI-Visualizer",
+      "source_commit": "af4bef33ca371b24c1f043486f09a13571f4919b",
+      "source_path": "models/tesla-model-3-2024/source/2024_tesla_model_3.glb",
+      "source_url": "https://raw.githubusercontent.com/erictfree/Carbon-Footprint-AI-Visualizer/af4bef33ca371b24c1f043486f09a13571f4919b/models/tesla-model-3-2024/source/2024_tesla_model_3.glb",
+      "bytes": 8706568,
+      "sha256": "6ef6933d93ee0812d4049446a38e9b46273cab03b21be1e2ef1d502eccdb684b",
+      "asset": {
+        "extras": {
+          "author": "RBLXSupercars (https://sketchfab.com/RBLXSupercars)",
+          "license": "CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+          "source": "https://sketchfab.com/3d-models/2024-tesla-model-3-fd22be415215453693d67e33aa7812d0",
+          "title": "2024 Tesla Model 3"
+        },
+        "generator": "Sketchfab-16.31.0",
+        "version": "2.0"
+      },
+      "chunks": [
+        {
+          "type": "JSON",
+          "size": 20412
+        },
+        {
+          "type": "BIN\u0000",
+          "size": 8686128
+        }
+      ],
+      "external_resources": false,
+      "mesh_count": 18,
+      "material_count": 17,
+      "node_count": 20,
+      "triangles": 179692
+    },
+    "research/model-source/split-verification.json": {
+      "passed": true,
+      "triangles": 179692,
+      "split_meshes": 684,
+      "all_triangle_positions_normals_uvs_other_attributes_bit_exact": true,
+      "triangle_winding_preserved": true,
+      "all_textures_bit_exact": true,
+      "materials_unchanged": true,
+      "original_source_unchanged": true
+    },
+    "research/model-source/model-verification.json": {
+      "status": "PASS",
+      "sha256": "abf813f0013428409820121b7fd40ad70dda7cd00d1a0dca25cebd16b92035ba",
+      "bytes": 8796432,
+      "meshCount": 684,
+      "triangles": 179692,
+      "bounds": [
+        [
+          -1.0439380407333374,
+          0.0,
+          -2.359999895095825
+        ],
+        [
+          1.0439380407333374,
+          1.4112950563430786,
+          2.359999895095825
+        ]
+      ],
+      "embeddedResources": true,
+      "validIndices": true,
+      "uniqueComponentNames": true,
+      "lengthMeters": 4.71999979019165,
+      "sourceAssetLicense": "CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)"
+    }
+  },
+  "prior_release_receipts": {
+    "release": "1.1.0 and earlier",
+    "status": "Historical evidence retained separately; not represented as rerun against 1.2.0",
+    "snapshot": "qa/hardware-1.2.0/historical-release-verification-1.1.0.json",
+    "results": {
+      "release": {
+        "apk": "LightForge-1.1.0.apk",
+        "bytes": 21719940,
+        "sha256": "2dee3f16a6297d847444e6d54ad3424fd57a4ab563e31adc13ac160f2c54c361",
+        "zip_integrity": "passed",
+        "alignment": "passed",
+        "signature": "verified",
+        "min_sdk": 26,
+        "target_sdk": 35,
+        "compile_sdk": 35,
+        "version_name": "1.1.0",
+        "version_code": 10100
+      },
+      "apk_source_assets_matched": 32,
+      "native_device_install_and_launch": "UNVERIFIED: prior emulator operating system failed to finish startup; no new device test performed",
+      "vehicle_test": "NOT PERFORMED",
+      "current_release_receipts": {
+        "qa/mobile/real-flow.json": {
+          "music": {
+            "bpm": 93.01,
+            "engine": {
+              "name": "BeatNet CRNN",
+              "neural": true,
+              "detail": "Bundled pretrained BeatNet model 1 with ONNX Runtime WebAssembly. Neural beat/downbeat activations, dynamic-programming beat decoding, adaptive spectral onset and section analysis. All audio stays on this device.",
+              "model": "BeatNet model_1_weights",
+              "runtime": "ONNX Runtime Web 1.20.1",
+              "analysisSeconds": 1.2
+            },
+            "sections": 4
+          },
+          "validation": {
+            "valid": true,
+            "errors": [],
+            "warnings": [],
+            "stats": {
+              "frameCount": 3200,
+              "stepMs": 20,
+              "duration": 64,
+              "sequenceBytes": 640000,
+              "commandCounts": {
+                "35": 19,
+                "36": 19,
+                "37": 5,
+                "38": 5,
+                "39": 5,
+                "40": 5,
+                "41": 3,
+                "46": 3
+              },
+              "danceSeconds": {
+                "35": 0,
+                "36": 0,
+                "37": 18,
+                "38": 18,
+                "39": 18,
+                "40": 18,
+                "41": 14,
+                "46": 22.42
+              },
+              "lightTransitions": 4307,
+              "activeExteriorPercent": 85.6,
+              "rampCommandFrames": 6176,
+              "interiorDisplayFrames": 3183
+            }
+          },
+          "toast": "Your show is ready. Press play and make it yours.",
+          "playback": {
+            "time": 37.90973,
+            "section": "Peak",
+            "labels": "WINDOWS OpenMIRRORS FoldingTRUNK OpeningCHARGE Opening"
+          },
+          "exportFilename": "Glass_Castle_demo_excerpt_LightForge.zip",
+          "sampleBoundaryRegression": [
+            {
+              "stepMs": 20,
+              "duration": 20.00002267573696,
+              "analyzedDuration": 20.00002267573696,
+              "lastSectionEnd": 20.00002267573696,
+              "frames": 1001,
+              "expected": 1001
+            },
+            {
+              "stepMs": 15,
+              "duration": 15.000022675736961,
+              "analyzedDuration": 15.000022675736961,
+              "lastSectionEnd": 15.000022675736961,
+              "frames": 1001,
+              "expected": 1001
+            }
+          ],
+          "errors": []
+        },
+        "qa/mobile/export-3d-release.json": {
+          "release": "1.1.0",
+          "checks": [
+            "Matching Tesla LightShow filenames and directory",
+            "Exported WAV byte-identical to PCM16 stereo 44.1 kHz demo input",
+            "FSEQ signature and ZIP CRC valid",
+            "Editable project backup included"
+          ],
+          "files": [
+            "LightShow/lightshow.fseq",
+            "LightShow/lightshow.wav",
+            "README.txt",
+            "Validation.json",
+            "Review/LightForge_Project.json"
+          ],
+          "fseq_bytes": 640072,
+          "audio_sha256": "33f07d502ba19832b62b97d8fb4a11354e81310264bd885d7a06438228773650",
+          "passed": true
+        },
+        "qa/mobile/3d-preview-verification.json": {
+          "checks": [
+            "Real WebGL2 context loads the bundled detailed Highland mesh",
+            "front camera renders the loaded 3D model",
+            "rear camera renders the loaded 3D model",
+            "driver camera renders the loaded 3D model",
+            "cabin camera renders the loaded 3D model",
+            "orbit camera renders the loaded 3D model",
+            "Dragging orbits the actual Three.js camera",
+            "Two-finger pinch changes real camera distance",
+            "Expanded preview resizes the WebGL drawing buffer and restores",
+            "Studio and Night controls change rendered lighting and selection state",
+            "Fade onset and midpoint follow exact exported frame and supported ramp",
+            "Trunk tail lamps and license plate move while paired reverse lamps remain fixed",
+            "Windows, mirrors, trunk and charge port change actual 3D transforms",
+            "Charge dance changes rendered LED color while holding the flap open",
+            "Rewind restores exact lamp values, RGB colors and articulated geometry",
+            "Pause freezes sequence values and physical geometry estimates",
+            "Actual audio clock drives WebGL frames within the measured render interval",
+            "Output monitor and hidden lamps agree with rendered fade values",
+            "Foldable layout resizes the model without horizontal overflow",
+            "Model, renderer and preview load with every external HTTP origin blocked",
+            "Graphics context loss pauses drawing, reports recovery, then resumes",
+            "Missing WebGL reports an error while leaving project navigation and import available"
+          ],
+          "errors": [],
+          "externalRequests": [],
+          "assets": [
+            {
+              "url": "/preview/models/highland.glb",
+              "status": 200
+            }
+          ],
+          "skipped": [],
+          "graphics": {
+            "webgl2": true,
+            "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+            "meshes": 99,
+            "triangles": 181746,
+            "ready": true,
+            "renderer": "WebGL2"
+          },
+          "pinch": {
+            "before": 8.821883995140835,
+            "after": 4.8750333713359755
+          },
+          "audioSync": {
+            "maxGapMs": 233.40000000000146,
+            "maxLagMs": 1.699000000000117,
+            "samples": [
+              {
+                "gapMs": 16.599999999998545,
+                "audio": 1.511349,
+                "preview": 1.511349,
+                "frame": 75,
+                "paused": false
+              },
+              {
+                "gapMs": 216.70000000000073,
+                "audio": 1.687777,
+                "preview": 1.686078,
+                "frame": 84,
+                "paused": false
+              },
+              {
+                "gapMs": 16.599999999998545,
+                "audio": 1.693439,
+                "preview": 1.692041,
+                "frame": 84,
+                "paused": false
+              },
+              {
+                "gapMs": 216.70000000000073,
+                "audio": 1.924981,
+                "preview": 1.923558,
+                "frame": 96,
+                "paused": false
+              },
+              {
+                "gapMs": 233.40000000000146,
+                "audio": 2.148498,
+                "preview": 2.146977,
+                "frame": 107,
+                "paused": false
+              },
+              {
+                "gapMs": 233.1999999999971,
+                "audio": 2.39017,
+                "preview": 2.388764,
+                "frame": 119,
+                "paused": false
+              },
+              {
+                "gapMs": 233.40000000000146,
+                "audio": 2.614642,
+                "preview": 2.613225,
+                "frame": 130,
+                "paused": false
+              },
+              {
+                "gapMs": 216.70000000000073,
+                "audio": 2.839904,
+                "preview": 2.838484,
+                "frame": 141,
+                "paused": false
+              }
+            ]
+          },
+          "passed": true
+        },
+        "qa/mobile/ui-polish-verification.json": {
+          "passed": true,
+          "checks": [
+            "No horizontal overflow at 320, 360, 393, 768, 1024 and 1440 px",
+            "Arrow-key style selection updates the real arrangement settings",
+            "Arrow-key camera selection updates the real preview view",
+            "Playback microanimation follows actual play and pause events",
+            "Accessible seeking announces elapsed time and duration",
+            "Progress reports percentage and focus stays inside the active overlay",
+            "Reduced-motion preference disables decorative animations"
+          ],
+          "errors": []
+        },
+        "research/model-source/download-receipt.json": {
+          "retrieved_utc": "2026-09-05T23:57:56.910800+00:00",
+          "source_repository": "https://github.com/erictfree/Carbon-Footprint-AI-Visualizer",
+          "source_commit": "af4bef33ca371b24c1f043486f09a13571f4919b",
+          "source_path": "models/tesla-model-3-2024/source/2024_tesla_model_3.glb",
+          "source_url": "https://raw.githubusercontent.com/erictfree/Carbon-Footprint-AI-Visualizer/af4bef33ca371b24c1f043486f09a13571f4919b/models/tesla-model-3-2024/source/2024_tesla_model_3.glb",
+          "bytes": 8706568,
+          "sha256": "6ef6933d93ee0812d4049446a38e9b46273cab03b21be1e2ef1d502eccdb684b",
+          "asset": {
+            "extras": {
+              "author": "RBLXSupercars (https://sketchfab.com/RBLXSupercars)",
+              "license": "CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+              "source": "https://sketchfab.com/3d-models/2024-tesla-model-3-fd22be415215453693d67e33aa7812d0",
+              "title": "2024 Tesla Model 3"
+            },
+            "generator": "Sketchfab-16.31.0",
+            "version": "2.0"
+          },
+          "chunks": [
+            {
+              "type": "JSON",
+              "size": 20412
+            },
+            {
+              "type": "BIN\u0000",
+              "size": 8686128
+            }
+          ],
+          "external_resources": false,
+          "mesh_count": 18,
+          "material_count": 17,
+          "node_count": 20,
+          "triangles": 179692
+        },
+        "research/model-source/split-verification.json": {
+          "passed": true,
+          "triangles": 179692,
+          "split_meshes": 684,
+          "all_triangle_positions_normals_uvs_other_attributes_bit_exact": true,
+          "triangle_winding_preserved": true,
+          "all_textures_bit_exact": true,
+          "materials_unchanged": true,
+          "original_source_unchanged": true
+        },
+        "research/model-source/model-verification.json": {
+          "status": "PASS",
+          "sha256": "abf813f0013428409820121b7fd40ad70dda7cd00d1a0dca25cebd16b92035ba",
+          "bytes": 8796432,
+          "meshCount": 684,
+          "triangles": 179692,
+          "bounds": [
+            [
+              -1.0439380407333374,
+              0.0,
+              -2.359999895095825
+            ],
+            [
+              1.0439380407333374,
+              1.4112950563430786,
+              2.359999895095825
+            ]
+          ],
+          "embeddedResources": true,
+          "validIndices": true,
+          "uniqueComponentNames": true,
+          "lengthMeters": 4.71999979019165,
+          "sourceAssetLicense": "CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)"
+        }
+      },
+      "prior_release_receipts": {
+        "release": "1.0.1",
+        "status": "Historical receipts retained for reference; not represented as rerun against 1.1.0",
+        "results": {
+          "research/analysis_verification.json": {
+            "productionWorker": "PASS",
+            "neuralModel": "BeatNet model1",
+            "bpm": 93.08,
+            "beats": 368,
+            "downbeats": 92,
+            "meter": 4,
+            "confidence": 0.9404362511794722,
+            "onsets": 6250,
+            "sections": 12,
+            "duration": 238.04,
+            "rangeRequests": 26,
+            "maxAudioReadBytes": 442940,
+            "elapsedSeconds": 25.314010404,
+            "invalidAudio": "PASS",
+            "javascriptFeatureMaxAbsError": 8.195638656616211e-08,
+            "wasmProbabilityMaxAbsError": 1.4901161193847656e-07,
+            "silence": "PASS",
+            "browserVerification": "browser_verification.json"
+          },
+          "research/browser_verification.json": {
+            "browser": "Chromium 131.0.6778.204",
+            "realWorker": "PASS",
+            "offlineAssets": "PASS",
+            "progress": "PASS",
+            "responsiveMainThreadTicks": 251,
+            "cancellation": "PASS",
+            "invalidAudio": "PASS",
+            "silence": "PASS",
+            "bpm": 93.08,
+            "beats": 368,
+            "downbeats": 92,
+            "sections": 12,
+            "rangeRequests": 31,
+            "largestRangeBytes": 442940,
+            "fullTrackSeconds": 238.04,
+            "allTestsElapsedSeconds": 20.683,
+            "errors": []
+          },
+          "tests/projectstore-verification.json": {
+            "implementation": "android/src/com/cyberbasslord/lightforge/ProjectStore.java",
+            "sha256": "8f44a2d3dd5b0e0b534da15361bf1613f5c784e4165c3ebf67772dd0fd1aa90f",
+            "result": "PASS",
+            "checks": [
+              "duplicate creates new UUID and rewrites URLs",
+              "byte-exact playback and analysis copies",
+              "editable settings and neural analysis preserved",
+              "Unicode rename updates project and metadata",
+              "name length and identifier validation",
+              "restore regenerates native analysis WAV",
+              "playback sample duration overrides saved duration and last section end",
+              "stored FSEQ ignored",
+              "unexpected ZIP paths never extracted",
+              "CRC corruption rejected",
+              "truncated central directory rejected",
+              "missing project JSON rejected",
+              "duplicate and restore cancellation remove staging",
+              "interrupted rename journal recovered",
+              "abandoned staging removed without following symlinks",
+              "missing analysis WAV regenerated"
+            ],
+            "verifiedAt": "2026-09-05T03:08:35.858117+00:00",
+            "updatedSourceRegression": "qa/audio-audit/projectstore-audit.txt",
+            "derivedAnalysisRepair": "qa/audio-audit/repair-audit.json"
+          },
+          "tests/export-restore-verification.json": {
+            "result": "PASS",
+            "duration": 64,
+            "backupRestored": true,
+            "analysisPreserved": true,
+            "audioByteExact": true,
+            "settingsPreserved": true,
+            "realUiExportNativeValidation": true
+          },
+          "qa/mobile/projects-flow.json": {
+            "original": {
+              "style": "festival",
+              "overrides": {},
+              "music": true
+            },
+            "copy": {
+              "style": "cinematic",
+              "overrides": {
+                "1": {
+                  "intensity": 0.95,
+                  "style": "pulse"
+                }
+              },
+              "music": true
+            },
+            "remaining": [
+              "Alpha"
+            ],
+            "race": {
+              "id": "race-B",
+              "bpm": 140,
+              "style": "pulse",
+              "audio": "http://127.0.0.1:8771/demo/glass-castle.wav#b",
+              "loading": false
+            },
+            "eventGuard": {
+              "cancelled": true,
+              "error": true
+            },
+            "errors": []
+          },
+          "qa/mobile/save-failure.json": {
+            "saveCalls": 1,
+            "exportCalls": 0,
+            "busy": false,
+            "validationValid": true,
+            "toast": "This project could not be saved: The device could not save this project. Free some storage and try again.",
+            "errors": []
+          },
+          "qa/mobile/preview-verification.json": {
+            "checks": [
+              "front camera renders",
+              "rear camera renders",
+              "driver camera renders",
+              "cabin camera renders",
+              "orbit camera renders",
+              "drag orbit changes actual projected camera",
+              "expand and restore preserve preview",
+              "Highland trunk lamps move while rear fascia lamps stay fixed",
+              "fade midpoint matches exported ramp",
+              "license plate and paired reverse lamps use correct channels",
+              "rewind deterministic including closures",
+              "motor commands produce visible changing geometry",
+              "charge dance renders LED rainbow without oscillating door",
+              "pause freezes sequence and estimated motion",
+              "playback clock drives preview within one render interval",
+              "live monitor matches otherwise occluded lamp values",
+              "foldable layout has no horizontal overflow"
+            ],
+            "errors": [],
+            "audioSync": {
+              "audio": 1.887848,
+              "preview": 1.871713
+            },
+            "passed": true
+          },
+          "qa/mobile/native-transport-flow.json": {
+            "result": "PASS",
+            "music": {
+              "bpm": 93.07,
+              "beats": 369,
+              "duration": 238.03997732426305,
+              "engine": {
+                "name": "BeatNet CRNN",
+                "neural": true,
+                "detail": "Bundled pretrained BeatNet model 1 with ONNX Runtime WebAssembly. Neural beat/downbeat activations, dynamic-programming beat decoding, adaptive spectral onset and section analysis. All audio stays on this device.",
+                "model": "BeatNet model_1_weights",
+                "runtime": "ONNX Runtime Web 1.20.1",
+                "analysisSeconds": 11.3
+              }
+            },
+            "validation": {
+              "valid": true,
+              "errors": [],
+              "warnings": [],
+              "stats": {
+                "frameCount": 11902,
+                "stepMs": 20,
+                "duration": 238.04,
+                "sequenceBytes": 2380400,
+                "commandCounts": {
+                  "35": 19,
+                  "36": 19,
+                  "37": 6,
+                  "38": 6,
+                  "39": 6,
+                  "40": 6,
+                  "41": 6,
+                  "46": 3
+                },
+                "danceSeconds": {
+                  "35": 0,
+                  "36": 0,
+                  "37": 27,
+                  "38": 27,
+                  "39": 27,
+                  "40": 27,
+                  "41": 28,
+                  "46": 28
+                },
+                "lightTransitions": 15901,
+                "activeExteriorPercent": 83.9,
+                "rampCommandFrames": 13642,
+                "interiorDisplayFrames": 11884
+              }
+            },
+            "toast": "Your show is ready. Press play and make it yours.",
+            "positions": [
+              {
+                "audioTime": 90.096016,
+                "frame": 4504,
+                "label": "1:30"
+              },
+              {
+                "audioTime": 210.085588,
+                "frame": 10504,
+                "label": "3:30"
+              },
+              {
+                "audioTime": 35.089218,
+                "frame": 1754,
+                "label": "0:35"
+              }
+            ],
+            "pauseStable": true,
+            "transport": {
+              "productionTransport": true,
+              "chromiumSeekAdapter": true,
+              "rangeRequests": 26
+            },
+            "errors": [],
+            "coverage": "Production Java response stream with source-based Chromium seek adapter and real browser neural worker/player; not an Android device test"
+          },
+          "qa/audio-audit/verification.json": {
+            "result": "PASS",
+            "verifiedAt": "2026-09-05T03:08:35.858501+00:00",
+            "sourceSHA256": {
+              "android/src/com/cyberbasslord/lightforge/AudioImporter.java": "910ef3ec1d6f6ded54c91111d9ab34dbf4bbf4d4043f62f1978057183ca0b575",
+              "android/src/com/cyberbasslord/lightforge/ProjectStore.java": "8f44a2d3dd5b0e0b534da15361bf1613f5c784e4165c3ebf67772dd0fd1aa90f",
+              "android/src/com/cyberbasslord/lightforge/WavConverter.java": "f34b9bf3c8960678b6116619941307ce01b75c672807ca85f6f81b6adc33b1b6"
+            },
+            "nativeWavImport": {
+              "pcmCases": 60,
+              "validHeadersAndExactSampleCounts": true,
+              "maxPlaybackAnalysisDurationDifference": 2.2675736961463855e-05,
+              "partialSourceFrameRejected": true,
+              "compressedAndroidCodecExecution": "Unavailable in host JVM; Android framework stubs"
+            },
+            "repairAndDecoderBuffers": {
+              "derivedRepairCasesPassed": 10,
+              "validFilesUnchanged": true,
+              "playbackAndSettingsPreserved": true,
+              "cancelCleanupAndRetry": true,
+              "decoderFragmentCasesPassed": 15,
+              "surroundSoloCasesPassed": 33,
+              "explicitChannelMasksPassed": 2,
+              "incompleteDecoderFrameRejected": true
+            },
+            "projectStoreRegression": "PASS; actual tests/ProjectStoreTest.java on updated source",
+            "resamplerRegression": "PASS; exact duration, PCM preservation, chunk invariance, passband and anti-alias checks",
+            "compressedCodecRuntime": "Not executed: requires Android MediaExtractor/MediaCodec runtime. Format coverage derives from platform documentation and real codec pipeline implementation; no host claims of MP3/AAC/FLAC/Opus decoding."
+          },
+          "tests/transport-verification.json": {
+            "status": "PASS",
+            "checks": 841,
+            "byteExactResponses": 135,
+            "comparedBytes": 107921458,
+            "legacyFirstChunkShortBy": 44,
+            "largeFileBoundary": "PASS: oversized original protected; separate mono preview retains full-quality export",
+            "hostChromiumSemantics": true,
+            "androidDeviceTest": false,
+            "fullAudioSha256": [
+              "33f07d502ba19832b62b97d8fb4a11354e81310264bd885d7a06438228773650",
+              "9a3cc579aa4c090300a61f07d1d77d827670db940fa166c88934bd74f7733d9f"
+            ]
+          },
+          "tests/project-preview-verification.json": {
+            "result": "PASS",
+            "checks": 16,
+            "threshold": 2147483647,
+            "longTrackPreview": "22050 Hz mono",
+            "export": "44100 Hz stereo unchanged"
+          },
+          "tests/wav-reader-verification.json": {
+            "result": "PASS",
+            "tests": [
+              {
+                "name": "Exact ranges, first PCM offset44 and final clipped sample",
+                "status": "PASS"
+              },
+              {
+                "name": "Chromium double seek reproduction rejected as transport error",
+                "status": "PASS"
+              },
+              {
+                "name": "Range overread rejected without blaming source music",
+                "status": "PASS"
+              },
+              {
+                "name": "Wrong range start rejected",
+                "status": "PASS"
+              },
+              {
+                "name": "Server without Range uses complete bounded cache",
+                "status": "PASS"
+              },
+              {
+                "name": "WAV metadata larger than64KiB and odd padding",
+                "status": "PASS"
+              },
+              {
+                "name": "Actual truncated WAV detected before model inference",
+                "status": "PASS"
+              },
+              {
+                "name": "PCM16/24/32 and IEEEfloat32 decoding with edge padding",
+                "status": "PASS"
+              },
+              {
+                "name": "Malformed PCM alignment and float encoding rejected",
+                "status": "PASS"
+              },
+              {
+                "name": "Actual bundled music reads byte-exact at nonzero offsets",
+                "status": "PASS"
+              }
+            ]
+          }
+        }
+      },
+      "source_sha256": {
+        "android/src/com/cyberbasslord/lightforge/WebViewFileTransport.java": "729b1e9145f385f2d7dc4d303ef71f81c6d9dac3121885b7d52e89241a39a97f",
+        "android/src/com/cyberbasslord/lightforge/WavConverter.java": "f34b9bf3c8960678b6116619941307ce01b75c672807ca85f6f81b6adc33b1b6",
+        "android/src/com/cyberbasslord/lightforge/MainActivity.java": "6b5a4131308f1ad65c903ab3f358fd23b1cbe556138b8d0703985e443c715345",
+        "android/src/com/cyberbasslord/lightforge/ProjectPreview.java": "459e586684b6cea8b0b5c0541de766c45301347341ff2acdc15e876028e7c551",
+        "android/src/com/cyberbasslord/lightforge/AudioImporter.java": "910ef3ec1d6f6ded54c91111d9ab34dbf4bbf4d4043f62f1978057183ca0b575",
+        "android/src/com/cyberbasslord/lightforge/ProjectStore.java": "8f44a2d3dd5b0e0b534da15361bf1613f5c784e4165c3ebf67772dd0fd1aa90f",
+        "web/app.js": "33c27c6884c47068ea461cdebe0c9d31e8739c0c4ddffa496c1c1827b06db6e4",
+        "web/index.html": "13665760d9a0b747b392cb6710ae06d57387650fb5549b2d80ae65a78efff61f",
+        "web/ui-polish.js": "2cec7ca975ed6d1945f0bcb987a694d49782479b07d29e71e21306c26be39716",
+        "web/styles.css": "4141278aa98567aee5d82ffb0dec7f1355cc31ae6ce1112fbf2e3808716b1d6b",
+        "web/preview/vehicle-preview.js": "de6e1fe566ae5f2b44a2711e03af0bda8c312eea701f8fea3fcd81c24d86006b",
+        "web/analysis/worker.js": "9ea0642c4326c383b934d10e107d917531ab00c254059429357af1763450c1b8",
+        "web/analysis/wav-reader.js": "c69842b391100059a3cd69fa08ba1ad0e1aef8d102abfde415bcdf7c6ee477be",
+        "web/analysis/README.md": "fd91b274d841b7263916c75b4ed580e6329d54ee5c0890ac0434a4a117f20ba2",
+        "web/analysis/analyzer.js": "85075f06d685e2dec5042662a36b001753ea97dd7e6b7b517ea08ceded330d81",
+        "web/analysis/dsp.js": "54f99576904fd7630c302961438e2ff6821e8f349f55b952626ae95da486bf8a",
+        "web/analysis/ASSET_MANIFEST.json": "4f39d2d090ca381fe368aeca2f6077aa02d181e23d4f6af0fae6424f6e2a3ba6",
+        "web/demo/glass-castle.wav": "33f07d502ba19832b62b97d8fb4a11354e81310264bd885d7a06438228773650",
+        "web/engine/show-engine.js": "bee205a3b926bc448548f583b0ba707a05fdd8d8452e0d7e97319a3db7aef82f",
+        "web/engine/README.md": "17a34a2d99310b1a1f15082588ad9c292de0568140fa52b93acc704fe8430eb1",
+        "web/fonts/OFL.txt": "262481e844521b326f5ecd053e59b98c8b2da78c8ee1bdbb6e8174305e54935a",
+        "web/fonts/InterVariable.woff2": "693b77d4f32ee9b8bfc995589b5fad5e99adf2832738661f5402f9978429a8e3",
+        "web/fonts/fonts.css": "7bb92eb5f9af3afb96cc510077d29d901d91eeb6252f8a99af6b3ed142bef5e5",
+        "web/preview/src/highland-rig.js": "c03eed0c126b02d542cd48ebeb6614fbca8838f03362d53273003e9f15c832e1",
+        "web/preview/src/vehicle-preview.js": "a4cb703a5ab68f3b821cc59640addbb86367bbed84db8ec6190bdf607a885a70",
+        "web/preview/src/package.json": "7224e6f4ddd260424cc948cf5d97f149f53f0d9b7a76258b33039de47a8e502b",
+        "web/preview/src/package-lock.json": "97d8caf3d1bb0ab75fa5a0da4ae3483f0191e6c484d6a1ed03fe2e710b5b525b",
+        "web/preview/models/highland.glb": "abf813f0013428409820121b7fd40ad70dda7cd00d1a0dca25cebd16b92035ba",
+        "web/preview/models/CREDITS.md": "e0add8610490a0a867429db750952284aa43c2055aab36c1584174a8930f9b00",
+        "web/preview/vendor/THREE-LICENSE.txt": "bfe119ea4fd413f5f7ca3fcd63adb0c4a073ed39daa2fe7d3e6b769e21272601",
+        "web/analysis/models/beatnet-v1.onnx": "c4462552994a2c5048dbc511dda01bbae8549829b1adfc58292be88bbdfc1eef",
+        "web/analysis/models/features.json": "8a9fb3bc88c3e2f35934dd0024f22458aa8d357e3e3946a6e2c6230d3886e278",
+        "web/analysis/models/Madmom-LICENSE.txt": "dbcc5a4d6c0dbc5ecb3d41ef98a5432b356073ee11d97c9c4eef507238ffb56a",
+        "web/analysis/models/BeatNet-LICENSE.txt": "7e7170e3cebf88a9f60c7b8421418323c09304da1af4d5e90f4da1dc1c8a2661",
+        "web/analysis/vendor/ort-wasm-simd-threaded.wasm": "207d02be4591c156b0a98f024f3d58005b5b04c92274d759fb390338c63559ea",
+        "web/analysis/vendor/ONNX-Runtime-LICENSE.txt": "2f07c72751aed99790b8a4869cf2311df85a860b22ded05fa22803587a48922c",
+        "web/analysis/vendor/ort.wasm.min.js": "e66568724f8848e57cc2a56e4bea3a5b86ce3ff81b2da11eac8ed7ab02b27bd4",
+        "web/analysis/vendor/ort-wasm-simd-threaded.mjs": "745eb7c0ce6f18a6aa521971b2877babc7ffb27eecb58ab3bc6e5ef4692672e8"
+      }
+    }
+  },
+  "source_sha256": {
+    "android/src/com/cyberbasslord/lightforge/WebViewFileTransport.java": "729b1e9145f385f2d7dc4d303ef71f81c6d9dac3121885b7d52e89241a39a97f",
+    "android/src/com/cyberbasslord/lightforge/WavConverter.java": "f34b9bf3c8960678b6116619941307ce01b75c672807ca85f6f81b6adc33b1b6",
+    "android/src/com/cyberbasslord/lightforge/MainActivity.java": "2c3387b4f2395887177607a14df75e974bb7bd74b0c63fe342b1ff79dffc1efd",
+    "android/src/com/cyberbasslord/lightforge/ProjectPreview.java": "459e586684b6cea8b0b5c0541de766c45301347341ff2acdc15e876028e7c551",
+    "android/src/com/cyberbasslord/lightforge/AudioImporter.java": "910ef3ec1d6f6ded54c91111d9ab34dbf4bbf4d4043f62f1978057183ca0b575",
+    "android/src/com/cyberbasslord/lightforge/ProjectStore.java": "8f44a2d3dd5b0e0b534da15361bf1613f5c784e4165c3ebf67772dd0fd1aa90f",
+    "web/app.js": "639b2d53e8f1f221beaba9fa8deb131874248a927a08fe2b2e1aec1c5703bec2",
+    "web/index.html": "3711eabccbc3b2122c05373927d1191a1f10c04998d069bc0f476d191687fa67",
+    "web/channel-studio.js": "019b9df369cae97da1f7aa8480552b0e3be592f1b3428978a063a419ecc5118d",
+    "web/ui-polish.js": "2cec7ca975ed6d1945f0bcb987a694d49782479b07d29e71e21306c26be39716",
+    "web/styles.css": "6b5aa995a3ed89ab17d21fae7a59da76cd89f785feaca6fc85c3b441e525ae72",
+    "web/preview/vehicle-preview.js": "d60dea308475f1673e3dab76c131a8d171fd375405ef09888f8da534709d8bb9",
+    "web/analysis/worker.js": "9ea0642c4326c383b934d10e107d917531ab00c254059429357af1763450c1b8",
+    "web/analysis/wav-reader.js": "c69842b391100059a3cd69fa08ba1ad0e1aef8d102abfde415bcdf7c6ee477be",
+    "web/analysis/README.md": "fd91b274d841b7263916c75b4ed580e6329d54ee5c0890ac0434a4a117f20ba2",
+    "web/analysis/analyzer.js": "85075f06d685e2dec5042662a36b001753ea97dd7e6b7b517ea08ceded330d81",
+    "web/analysis/dsp.js": "54f99576904fd7630c302961438e2ff6821e8f349f55b952626ae95da486bf8a",
+    "web/analysis/ASSET_MANIFEST.json": "4f39d2d090ca381fe368aeca2f6077aa02d181e23d4f6af0fae6424f6e2a3ba6",
+    "web/demo/glass-castle.wav": "33f07d502ba19832b62b97d8fb4a11354e81310264bd885d7a06438228773650",
+    "web/engine/show-engine.js": "9539d828a6cb1692344d03b2b8f11fc6a13d926b9afaa65538190cd33fce461e",
+    "web/engine/README.md": "b0d6febbb65c1e638fcec82d8911bd5a619598edb4b7b18686480037ee30cfbd",
+    "web/engine/vehicle-profile.js": "b2201f74f42092a435a82ec41b43c842925e15d78f42dc96dcedc96b20b86138",
+    "web/fonts/OFL.txt": "262481e844521b326f5ecd053e59b98c8b2da78c8ee1bdbb6e8174305e54935a",
+    "web/fonts/InterVariable.woff2": "693b77d4f32ee9b8bfc995589b5fad5e99adf2832738661f5402f9978429a8e3",
+    "web/fonts/fonts.css": "7bb92eb5f9af3afb96cc510077d29d901d91eeb6252f8a99af6b3ed142bef5e5",
+    "web/preview/src/highland-rig.js": "906f5feff3214e1ab30bffec6ba32e101b02783eb677ae16c436649ac285880b",
+    "web/preview/src/vehicle-preview.js": "4e2a419509d8607b8cc15fc3ea9da7856cc09594792a5d082ab82766472ddd03",
+    "web/preview/src/package.json": "7224e6f4ddd260424cc948cf5d97f149f53f0d9b7a76258b33039de47a8e502b",
+    "web/preview/src/package-lock.json": "97d8caf3d1bb0ab75fa5a0da4ae3483f0191e6c484d6a1ed03fe2e710b5b525b",
+    "web/preview/models/highland.glb": "abf813f0013428409820121b7fd40ad70dda7cd00d1a0dca25cebd16b92035ba",
+    "web/preview/models/CREDITS.md": "e0add8610490a0a867429db750952284aa43c2055aab36c1584174a8930f9b00",
+    "web/preview/vendor/THREE-LICENSE.txt": "bfe119ea4fd413f5f7ca3fcd63adb0c4a073ed39daa2fe7d3e6b769e21272601",
+    "web/analysis/models/beatnet-v1.onnx": "c4462552994a2c5048dbc511dda01bbae8549829b1adfc58292be88bbdfc1eef",
+    "web/analysis/models/features.json": "8a9fb3bc88c3e2f35934dd0024f22458aa8d357e3e3946a6e2c6230d3886e278",
+    "web/analysis/models/Madmom-LICENSE.txt": "dbcc5a4d6c0dbc5ecb3d41ef98a5432b356073ee11d97c9c4eef507238ffb56a",
+    "web/analysis/models/BeatNet-LICENSE.txt": "7e7170e3cebf88a9f60c7b8421418323c09304da1af4d5e90f4da1dc1c8a2661",
+    "web/analysis/vendor/ort-wasm-simd-threaded.wasm": "207d02be4591c156b0a98f024f3d58005b5b04c92274d759fb390338c63559ea",
+    "web/analysis/vendor/ONNX-Runtime-LICENSE.txt": "2f07c72751aed99790b8a4869cf2311df85a860b22ded05fa22803587a48922c",
+    "web/analysis/vendor/ort.wasm.min.js": "e66568724f8848e57cc2a56e4bea3a5b86ce3ff81b2da11eac8ed7ab02b27bd4",
+    "web/analysis/vendor/ort-wasm-simd-threaded.mjs": "745eb7c0ce6f18a6aa521971b2877babc7ffb27eecb58ab3bc6e5ef4692672e8"
+  }
+}

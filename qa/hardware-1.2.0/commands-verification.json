@@ -1,0 +1,49 @@
+{
+  "date": "2026-09-06",
+  "engine_suites": 36,
+  "engine_status": "PASS",
+  "native_production_checks": 16,
+  "native_status": "PASS",
+  "official_format_checks": [
+    {
+      "fixture": "stop-and-close",
+      "frame_count": 800,
+      "step_time_ms": 20,
+      "duration": 16.0,
+      "sha256": "cf93103fa2f18dfe24d81b48a69f7fafc72cbe41dac281847c5276e6d2cb613a",
+      "official_validator": "PASS"
+    },
+    {
+      "fixture": "all-closures",
+      "frame_count": 2000,
+      "step_time_ms": 20,
+      "duration": 40.0,
+      "sha256": "e6f9494144d65e5b7a3f4cb8faba1b5ad1ac1ed0b055b691eb63e194c3fcb858",
+      "official_validator": "PASS"
+    },
+    {
+      "fixture": "all-lamps",
+      "frame_count": 2000,
+      "step_time_ms": 20,
+      "duration": 40.0,
+      "sha256": "2ca9836069436a0ef32e2278f4ad194067b70822bafa164b4c2fd72a2ef5b768",
+      "official_validator": "PASS"
+    },
+    {
+      "fixture": "outer-ramp",
+      "frame_count": 2000,
+      "step_time_ms": 20,
+      "duration": 40.0,
+      "sha256": "5e87cd2d54302956e4d932afe4c8172e82452f8031e6efe1dc938d0d3f736114",
+      "official_validator": "PASS"
+    }
+  ],
+  "source_hashes": {
+    "web/engine/show-engine.js": "9539d828a6cb1692344d03b2b8f11fc6a13d926b9afaa65538190cd33fce461e",
+    "web/engine/vehicle-profile.js": "b2201f74f42092a435a82ec41b43c842925e15d78f42dc96dcedc96b20b86138",
+    "android/src/com/cyberbasslord/lightforge/MainActivity.java": "2c3387b4f2395887177607a14df75e974bb7bd74b0c63fe342b1ff79dffc1efd",
+    "tests/engine-manual.test.cjs": "f0d5c7436e961d163abcd6694031bd6bd1980d1f08496f81d7293ae1a3febb08",
+    "tests/NativeHardwareTest.java": "2726f33f235539c4685e87b9f5365bf1c76cc3170bab52c0d4f5e2115dc07e25"
+  },
+  "limits": "Host Node/JVM checks; no Android runtime or vehicle connected."
+}

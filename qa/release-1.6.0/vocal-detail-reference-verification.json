@@ -1,0 +1,94 @@
+{
+  "passed": true,
+  "method": "Original separated-stem musical detail against licensed source audio and frozen trained classifier scores; not lyric ground truth or phone/car verification",
+  "rows": [
+    {
+      "name": "nightowl",
+      "source": "Official MUSDB original vocal stem",
+      "duration": 6.8034467120181406,
+      "baselinePhrases": 0,
+      "baselineAccents": 0,
+      "phrases": 1,
+      "accents": 19,
+      "notes": 0,
+      "heldNotes": 0,
+      "coverage": 1,
+      "presence": "uncertain",
+      "seconds": 0.118
+    },
+    {
+      "name": "stella",
+      "source": "Official MUSDB original vocal stem",
+      "duration": 6.8034467120181406,
+      "baselinePhrases": 1,
+      "baselineAccents": 0,
+      "phrases": 1,
+      "accents": 21,
+      "notes": 10,
+      "heldNotes": 8,
+      "coverage": 1,
+      "presence": "detected",
+      "seconds": 0.103
+    },
+    {
+      "name": "meaxic",
+      "source": "Official MUSDB original vocal stem",
+      "duration": 6.8034467120181406,
+      "baselinePhrases": 1,
+      "baselineAccents": 1,
+      "phrases": 1,
+      "accents": 19,
+      "notes": 10,
+      "heldNotes": 4,
+      "coverage": 1,
+      "presence": "detected",
+      "seconds": 0.099
+    },
+    {
+      "name": "grunge",
+      "source": "Official MUSDB original vocal stem",
+      "duration": 6.8034467120181406,
+      "baselinePhrases": 1,
+      "baselineAccents": 2,
+      "phrases": 1,
+      "accents": 23,
+      "notes": 7,
+      "heldNotes": 1,
+      "coverage": 0.9971,
+      "presence": "detected",
+      "seconds": 0.073
+    },
+    {
+      "name": "falcon",
+      "source": "Official MUSDB original vocal stem",
+      "duration": 6.8034467120181406,
+      "baselinePhrases": 1,
+      "baselineAccents": 1,
+      "phrases": 1,
+      "accents": 13,
+      "notes": 12,
+      "heldNotes": 4,
+      "coverage": 1,
+      "presence": "detected",
+      "seconds": 0.071
+    },
+    {
+      "name": "sdrnr",
+      "source": "Official MUSDB original vocal stem",
+      "duration": 6.8034467120181406,
+      "baselinePhrases": 1,
+      "baselineAccents": 2,
+      "phrases": 1,
+      "accents": 23,
+      "notes": 5,
+      "heldNotes": 0,
+      "coverage": 1,
+      "presence": "detected",
+      "seconds": 0.072
+    }
+  ],
+  "source_hashes": {
+    "web/analysis/vocal-detail.js": "df7f86db061f4b64806539d82dfc7d4777379fdb506a75de8c2d3e689a82a621",
+    "tests/vocal-detail.test.cjs": "4dc06e8c9769ea06f864563924bd1a8553fed35dd11b6a60b94a32900516ddf9"
+  }
+}

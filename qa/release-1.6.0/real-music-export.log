@@ -1,0 +1,133 @@
+START import/analyze nightowl-mix
+PASS nightowl-mix {
+  track: 'nightowl-mix',
+  projectId: 'show-1788689439243',
+  engineVersion: '1.6.0',
+  analysisVersion: 5,
+  sourceModel: {
+    name: 'PretrainedSED Frame-MN10',
+    id: 'frame-mn10-strong-1',
+    sha256: 'edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a',
+    license: 'MIT'
+  },
+  phrases: 3,
+  articulations: 12,
+  notes: 3,
+  beats: 17,
+  movementTargets: 1,
+  previews: [
+    { time: 0.07, frame: 3, lamps: 34, closures: 8 },
+    { time: 1.385, frame: 69, lamps: 34, closures: 8 },
+    { time: 1.65, frame: 82, lamps: 34, closures: 8 },
+    { time: 3.4017233560090703, frame: 170, lamps: 34, closures: 8 },
+    { time: 6.703446712018141, frame: 335, lamps: 34, closures: 8 }
+  ],
+  export: {
+    crcError: null,
+    fseqSHA256: '6810ca60e23ebc1f0dac3734236e863ca2679c1a7753a5e6a56807be709dc80f',
+    audioSHA256: '3d152ccd8034a8ac5fb79cad2a50f441add7511e0252ee8cdcd8191276e29ef5',
+    files: [
+      'LightShow/lightshow.fseq',
+      'LightShow/lightshow.wav',
+      'README.txt',
+      'Validation.json',
+      'Review/LightForge_Project.json'
+    ],
+    wav: [ 2, 2, 44100, 300032 ],
+    frames: 341,
+    step: 20,
+    terminalDark: true,
+    project: undefined
+  },
+  officialValidator: 'Found 341 frames, step time of 20 ms for a total duration of 0:00:06.820000.\n' +
+    'Press Enter to exit...'
+}
+START import/analyze falcon-mix
+PASS falcon-mix {
+  track: 'falcon-mix',
+  projectId: 'show-1788689499841',
+  engineVersion: '1.6.0',
+  analysisVersion: 5,
+  sourceModel: {
+    name: 'PretrainedSED Frame-MN10',
+    id: 'frame-mn10-strong-1',
+    sha256: 'edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a',
+    license: 'MIT'
+  },
+  phrases: 1,
+  articulations: 12,
+  notes: 5,
+  beats: 13,
+  movementTargets: 0,
+  previews: [
+    { time: 1.365, frame: 68, lamps: 34, closures: 8 },
+    { time: 1.48, frame: 74, lamps: 34, closures: 8 },
+    { time: 3.225, frame: 161, lamps: 34, closures: 8 },
+    { time: 3.4017233560090703, frame: 170, lamps: 34, closures: 8 },
+    { time: 6.703446712018141, frame: 335, lamps: 34, closures: 8 }
+  ],
+  export: {
+    crcError: null,
+    fseqSHA256: 'c7caf99c433d8d56c21c655b81fe199a7dbd33cdfa705bbb9a8d9f13da03ff0f',
+    audioSHA256: 'c2c0a981707ee874440824c0a60e37bf8385c16d98d50e3bac2bb949bfb9d5bd',
+    files: [
+      'LightShow/lightshow.fseq',
+      'LightShow/lightshow.wav',
+      'README.txt',
+      'Validation.json',
+      'Review/LightForge_Project.json'
+    ],
+    wav: [ 2, 2, 44100, 300032 ],
+    frames: 341,
+    step: 20,
+    terminalDark: true,
+    project: undefined
+  },
+  officialValidator: 'Found 341 frames, step time of 20 ms for a total duration of 0:00:06.820000.\n' +
+    'Press Enter to exit...'
+}
+START import/analyze user-glass-prefix64
+PASS user-glass-prefix64 {
+  track: 'user-glass-prefix64',
+  projectId: 'show-1788689544778',
+  engineVersion: '1.6.0',
+  analysisVersion: 5,
+  sourceModel: {
+    name: 'PretrainedSED Frame-MN10',
+    id: 'frame-mn10-strong-1',
+    sha256: 'edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a',
+    license: 'MIT'
+  },
+  phrases: 3,
+  articulations: 192,
+  notes: 77,
+  beats: 99,
+  movementTargets: 22,
+  previews: [
+    { time: 8.01, frame: 400, lamps: 34, closures: 8 },
+    { time: 11.49, frame: 574, lamps: 34, closures: 8 },
+    { time: 11.615, frame: 580, lamps: 34, closures: 8 },
+    { time: 32, frame: 1600, lamps: 34, closures: 8 },
+    { time: 63.9, frame: 3195, lamps: 34, closures: 8 }
+  ],
+  export: {
+    crcError: null,
+    fseqSHA256: 'e97a6a0729429297d7f50c61cde1d1a18114f03f4999e233d2f228b80cbe7317',
+    audioSHA256: '8f542ae8d3c1498e7f21997d07ce3e6c1fedf83402cf4b604151d2d4d0f2dd87',
+    files: [
+      'LightShow/lightshow.fseq',
+      'LightShow/lightshow.wav',
+      'README.txt',
+      'Validation.json',
+      'Review/LightForge_Project.json'
+    ],
+    wav: [ 2, 2, 44100, 2822400 ],
+    frames: 3200,
+    step: 20,
+    terminalDark: true,
+    project: undefined
+  },
+  officialValidator: 'Found 3200 frames, step time of 20 ms for a total duration of 0:01:04.\n' +
+    'Press Enter to exit...'
+}
+PASS actual three-music production flow

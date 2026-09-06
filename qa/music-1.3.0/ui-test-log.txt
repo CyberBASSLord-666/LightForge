@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "checks": [
+    "No horizontal overflow at 320, 360, 393, 768, 1024 and 1440 px",
+    "Arrow-key style selection updates the real arrangement settings",
+    "Arrow-key camera selection updates the real preview view",
+    "Playback microanimation follows actual play and pause events",
+    "Accessible seeking announces elapsed time and duration",
+    "Progress reports percentage and focus stays inside the active overlay",
+    "Reduced-motion preference disables decorative animations"
+  ],
+  "errors": []
+}

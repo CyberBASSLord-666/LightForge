@@ -1,0 +1,26 @@
+{
+  "implementation": "android/src/com/cyberbasslord/lightforge/ProjectStore.java",
+  "sha256": "8f44a2d3dd5b0e0b534da15361bf1613f5c784e4165c3ebf67772dd0fd1aa90f",
+  "result": "PASS",
+  "checks": [
+    "duplicate creates new UUID and rewrites URLs",
+    "byte-exact playback and analysis copies",
+    "editable settings and neural analysis preserved",
+    "Unicode rename updates project and metadata",
+    "name length and identifier validation",
+    "restore regenerates native analysis WAV",
+    "playback sample duration overrides saved duration and last section end",
+    "stored FSEQ ignored",
+    "unexpected ZIP paths never extracted",
+    "CRC corruption rejected",
+    "truncated central directory rejected",
+    "missing project JSON rejected",
+    "duplicate and restore cancellation remove staging",
+    "interrupted rename journal recovered",
+    "abandoned staging removed without following symlinks",
+    "missing analysis WAV regenerated"
+  ],
+  "verifiedAt": "2026-09-05T03:08:35.858117+00:00",
+  "updatedSourceRegression": "qa/audio-audit/projectstore-audit.txt",
+  "derivedAnalysisRepair": "qa/audio-audit/repair-audit.json"
+}

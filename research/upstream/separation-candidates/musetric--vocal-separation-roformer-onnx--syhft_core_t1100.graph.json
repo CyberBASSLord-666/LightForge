@@ -1,0 +1,44 @@
+{
+  "opset": [
+    {
+      "domain": "",
+      "version": 23
+    }
+  ],
+  "ir": 10,
+  "nodes": 2580,
+  "ops": {
+    "Slice": 254,
+    "Cos": 2,
+    "Sin": 2,
+    "Cast": 2,
+    "GatherND": 1,
+    "Transpose": 62,
+    "Reshape": 111,
+    "Split": 69,
+    "RMSNormalization": 96,
+    "MatMul": 588,
+    "Add": 397,
+    "Unsqueeze": 109,
+    "Concat": 66,
+    "Squeeze": 144,
+    "Mul": 260,
+    "Neg": 24,
+    "Softmax": 114,
+    "Sigmoid": 72,
+    "Div": 13,
+    "Erf": 12,
+    "Tanh": 180,
+    "Gather": 2
+  },
+  "inputs": [
+    "name: \"stft_repr\"\ntype {\n  tensor_type {\n    elem_type: 1\n    shape {\n      dim {\n        dim_value: 1\n      }\n      dim {\n        dim_value: 2050\n      }\n      dim {\n        dim_value: 1100\n      }\n      dim {\n        dim_value: 2\n      }\n    }\n  }\n}\nmetadata_props {\n  key: \"pkg.torch.export.graph_signature.InputSpec.kind\"\n  value: \"USER_INPUT\"\n}\nmetadata_props {\n  key: \"pkg.torch.export.graph_signature.InputSpec.persistent\"\n  value: \"None\"\n}\nmetadata_props {\n  key: \"pkg.torch.onnx.original_node_name\"\n  value: \"stft_repr\"\n}\n"
+  ],
+  "outputs": [
+    "name: \"masks\"\ntype {\n  tensor_type {\n    elem_type: 1\n    shape {\n      dim {\n        dim_value: 1\n      }\n      dim {\n        dim_value: 2050\n      }\n      dim {\n        dim_value: 1100\n      }\n      dim {\n        dim_value: 2\n      }\n    }\n  }\n}\nmetadata_props {\n  key: \"pkg.torch.export.graph_signature.OutputSpec.kind\"\n  value: \"USER_OUTPUT\"\n}\nmetadata_props {\n  key: \"pkg.torch.onnx.original_node_name\"\n  value: \"div_120\"\n}\n"
+  ],
+  "initializerTypes": {
+    "FLOAT16": 841,
+    "INT64": 150
+  }
+}

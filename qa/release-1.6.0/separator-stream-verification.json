@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "scope": "Identity-inference fixture verifies exact sample count, continuous emission, normalized STFT reconstruction and complementary overlapping chunks; not model quality",
+  "samples": 508657,
+  "chunks": 4,
+  "passes": 8,
+  "maxExtraSeamJump": 0.000013455748558044434,
+  "source_hashes": {
+    "web/analysis/separator-mdx.js": "f0d42ecc6d5928f72120a5e40b33a291d28d550a59ec0f05c68e37ed87ed3a9d",
+    "qa/release-1.6.0/test-separator-stream.cjs": "11c631b0e3492749039e19fea08501297f09c9f644975be857fd967e234e18cb"
+  }
+}

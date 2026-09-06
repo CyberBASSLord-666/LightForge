@@ -1,0 +1,50 @@
+/* LightForge music features. Exact BeatNet log-spectrum geometry; no network access. */
+(function(scope){'use strict';
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+function percentile(a,p){if(!a.length)return 0;const b=Array.from(a).sort((x,y)=>x-y);return b[Math.min(b.length-1,Math.floor(p*(b.length-1)))];}
+class FFT {
+ constructor(n){this.n=n;this.rev=new Uint32Array(n);this.cos=new Float64Array(n/2);this.sin=new Float64Array(n/2);let bits=Math.log2(n);for(let i=0;i<n;i++){let a=i,r=0;for(let j=0;j<bits;j++){r=(r<<1)|(a&1);a>>=1;}this.rev[i]=r;}for(let i=0;i<n/2;i++){this.cos[i]=Math.cos(2*Math.PI*i/n);this.sin[i]=Math.sin(2*Math.PI*i/n);}}
+ run(r,im,inverse=false){const n=this.n;for(let i=0;i<n;i++){const j=this.rev[i];if(i<j){let t=r[i];r[i]=r[j];r[j]=t;t=im[i];im[i]=im[j];im[j]=t;}}for(let len=2;len<=n;len*=2){const half=len/2,step=n/len;for(let start=0;start<n;start+=len){for(let j=0;j<half;j++){let k=j*step,c=this.cos[k],s=this.sin[k]*(inverse?1:-1),a=start+j,b=a+half,tr=r[b]*c-im[b]*s,ti=r[b]*s+im[b]*c;r[b]=r[a]-tr;im[b]=im[a]-ti;r[a]+=tr;im[a]+=ti;}}}if(inverse){for(let i=0;i<n;i++){r[i]/=n;im[i]/=n;}}}
+}
+class Spectrum {
+ constructor(n){this.n=n;let m=1;while(m<n*2-1)m*=2;this.m=m;this.fft=new FFT(m);this.cr=new Float64Array(n);this.ci=new Float64Array(n);this.window=new Float64Array(n);this.br=new Float64Array(m);this.bi=new Float64Array(m);this.r=new Float64Array(m);this.im=new Float64Array(m);for(let i=0;i<n;i++){let p=Math.PI*((i*i)%(2*n))/n;this.cr[i]=Math.cos(p);this.ci[i]=Math.sin(p);this.window[i]=0.5-0.5*Math.cos(2*Math.PI*i/(n-1));this.br[i]=this.cr[i];this.bi[i]=this.ci[i];if(i){this.br[m-i]=this.cr[i];this.bi[m-i]=this.ci[i];}}this.fft.run(this.br,this.bi);this.mag=new Float64Array(Math.floor(n/2));}
+ run(samples,offset){const {r,im,n,m}=this;r.fill(0);im.fill(0);for(let i=0;i<n;i++){let a=(samples[offset+i]||0)*this.window[i];r[i]=a*this.cr[i];im[i]=-a*this.ci[i];}this.fft.run(r,im);for(let i=0;i<m;i++){let re=r[i]*this.br[i]-im[i]*this.bi[i];im[i]=r[i]*this.bi[i]+im[i]*this.br[i];r[i]=re;}this.fft.run(r,im,true);for(let i=0;i<this.mag.length;i++)this.mag[i]=Math.hypot(r[i],im[i]);return this.mag;}
+}
+class FeatureExtractor {
+ constructor(config){this.cfg=config;this.spectrum=new Spectrum(config.windowLength);this.previous=new Float32Array(136);this.hadFrame=false;}
+ extract(samples,firstOffset,frames){const features=new Float32Array(frames*272),bass=new Float32Array(frames),mid=new Float32Array(frames),high=new Float32Array(frames),rms=new Float32Array(frames),colour=new Float32Array(frames*3);let maxSample=0;
+ for(let f=0;f<frames;f++){let offset=firstOffset+f*this.cfg.hop,mag=this.spectrum.run(samples,offset),energy=0;for(let j=0;j<1411;j++){let a=samples[offset+j]||0;energy+=a*a;maxSample=Math.max(maxSample,Math.abs(a));}rms[f]=Math.sqrt(energy/1411);for(let b=0;b<136;b++){let band=this.cfg.bands[b],sum=0;for(let k=0;k<band.weights.length;k++)sum+=mag[band.start+k]*band.weights[k];let v=Math.log10(1+sum),d=this.hadFrame?Math.max(0,v-this.previous[b]):0;features[f*272+b]=v;features[f*272+136+b]=d;this.previous[b]=v;let n=band.frequency<180?0:band.frequency<2400?1:2;colour[f*3+n]+=v;if(n===0)bass[f]+=d;else if(n===1)mid[f]+=d;else high[f]+=d;}this.hadFrame=true;}
+ return {features,bass,mid,high,rms,colour,maxSample};}
+}
+function rolling(a,radius){let out=new Float32Array(a.length),sum=0,left=0,right=-1;for(let i=0;i<a.length;i++){while(right<Math.min(a.length-1,i+radius))sum+=a[++right];while(left<Math.max(0,i-radius))sum-=a[left++];out[i]=sum/(right-left+1);}return out;}
+function pickOnsets(a,band,sensitivity){const baseline=rolling(a,25),scale=percentile(a,0.94)||1,out=[];let last=-10;for(let i=1;i<a.length-1;i++){if(a[i]>=a[i-1]&&a[i]>a[i+1]&&a[i]>Math.max(scale*(0.14-0.10*sensitivity),baseline[i]*(1.65-0.8*sensitivity))&&i-last>=3){out.push({time:i*0.02,strength:clamp(a[i]/scale),band});last=i;}}return out;}
+function trackBeats(beat,down,rms,options={}){
+ const n=beat.length,active=rms.some(x=>x>0.0002);if(!active||n<10)return {beats:[],downbeats:[],bpm:0,meter:4,beatConfidence:0};
+ const act=new Float32Array(n);for(let i=0;i<n;i++)act[i]=Math.min(1,beat[i]+down[i]);const sm=rolling(act,1);let lag=0,best=-Infinity;
+ let manual=Number(options.bpmOverride||0);if(manual>=40&&manual<=240)lag=3000/manual;
+ else{const candidates=[];for(let l=14;l<=75;l++){let sum=0,norm=0;for(let i=l;i<n;i++){sum+=sm[i]*sm[i-l];norm+=sm[i]*sm[i];}let score=sum/(norm+1e-9);score*=Math.exp(-0.5*Math.pow(Math.log((3000/l)/115)/0.8,2));candidates.push({l,score});if(score>best){best=score;lag=l;}}}
+ if(!lag)lag=30;
+ // Dynamic programming rewards neural beat likelihood and smooth intervals.
+ // It can skip weak observations and follow expressive local tempo changes.
+ const score=new Float64Array(n),back=new Int32Array(n);back.fill(-1);let low=Math.max(8,Math.floor(lag*0.66)),high=Math.ceil(lag*1.48);let last=-1,lastScore=-Infinity;
+ for(let i=0;i<n;i++){let reward=act[i]*5;let value=reward,pred=-1;for(let l=low;l<=high&&l<=i;l++){let prev=i-l,delta=Math.log(l/lag),s=score[prev]+reward-18*delta*delta-0.55;if(s>value){value=s;pred=prev;}}score[i]=value;back[i]=pred;if(i>n-lag*2&&value>lastScore){lastScore=value;last=i;}}
+ const frames=[];for(let i=last;i>=0;i=back[i]){frames.push(i);if(back[i]<0)break;}frames.reverse();
+ // Remove paths through true silence; no invented dance beats in empty audio.
+ const picked=frames.filter(i=>rms[i]>0.00018);let intervals=[];for(let i=1;i<picked.length;i++){let dt=(picked[i]-picked[i-1])*0.02;if(dt<2)intervals.push(dt);}let bpm=intervals.length?60/percentile(intervals,0.5):3000/lag;
+ // Parabolic period estimate reduces integer-frame BPM quantization.
+ if(intervals.length>8){let total=0,count=0,med=percentile(intervals,0.5);for(let i=0;i<intervals.length;i++){if(Math.abs(intervals[i]-med)<med*0.15){total+=intervals[i];count++;}}if(count)bpm=60*count/total;}
+ let meter=4,phase=0,phaseScore=-Infinity;for(const m of [3,4]){for(let p=0;p<m;p++){let s=0,c=0;for(let j=p;j<picked.length;j+=m){let i=picked[j],peak=0;for(let k=Math.max(0,i-2);k<=Math.min(n-1,i+2);k++)peak=Math.max(peak,down[k]);s+=peak;c++;}let val=c?s/c:0;if(m===4)val*=1.025;if(val>phaseScore){phaseScore=val;meter=m;phase=p;}}}
+ let beats=picked.map(i=>i*0.02),downbeats=picked.filter((_,i)=>i%meter===phase).map(i=>i*0.02);let strength=picked.reduce((s,i)=>s+act[i],0)/Math.max(1,picked.length),consistency=intervals.length?intervals.filter(x=>Math.abs(x-60/bpm)<(60/bpm)*0.13).length/intervals.length:0;return {beats,downbeats,bpm:Math.round(bpm*100)/100,meter,beatConfidence:clamp(strength*0.55+consistency*0.45)};
+}
+function sectionsFromFeatures(rms,colour,beats,downbeats,duration){
+ const smooth=rolling(rms,75),norm=percentile(smooth,0.9)||1;const novelty=new Float32Array(rms.length);let energy=Array.from(smooth,x=>clamp(x/norm));const r=150;
+ for(let i=r;i<rms.length-r;i+=5){let before=0,after=0;for(let k=i-r;k<i;k+=5)before+=smooth[k];for(let k=i;k<i+r;k+=5)after+=smooth[k];novelty[i]=Math.abs(after-before)/Math.max(0.003,(after+before))*0.7;for(let b=0;b<3;b++){let a=0,c=0;for(let k=i-r;k<i;k+=10)a+=colour[k*3+b];for(let k=i;k<i+r;k+=10)c+=colour[k*3+b];novelty[i]+=Math.abs(a-c)/Math.max(0.1,a+c)*0.1;}}
+ const candidates=[];for(let i=r;i<rms.length-r;i+=5){let v=novelty[i];if(v<0.07)continue;let peak=true;for(let k=Math.max(r,i-100);k<=Math.min(rms.length-r-1,i+100);k+=5)if(novelty[k]>v){peak=false;break;}if(peak)candidates.push({t:i*0.02,s:v});}candidates.sort((a,b)=>b.s-a.s);const boundaries=[0,duration];const minimum=8;
+ for(const c of candidates){let t=c.t;let near=downbeats.length?downbeats:beats;let delta=1.8;for(const b of near){if(Math.abs(b-t)<delta){delta=Math.abs(b-t);c.snap=b;}}if(c.snap!==undefined)t=c.snap;if(boundaries.every(x=>Math.abs(x-t)>=minimum))boundaries.push(t);}
+ // Long unchanging passages remain useful musical phrases, not one giant section.
+ boundaries.sort((a,b)=>a-b);let extra=[];for(let i=0;i<boundaries.length-1;i++){let a=boundaries[i],end=boundaries[i+1];while(end-a>36){let target=a+24,t=target;for(const d of downbeats)if(Math.abs(d-target)<Math.abs(t-target)||t===target){if(Math.abs(d-target)<3)t=d;}if(end-t>=8){extra.push(t);a=t;}else break;}}
+ boundaries.push(...extra);boundaries.sort((a,b)=>a-b);let sections=[];for(let i=0;i<boundaries.length-1;i++){let start=boundaries[i],end=boundaries[i+1],sum=0,count=0;for(let j=Math.floor(start*50);j<Math.min(energy.length,Math.ceil(end*50));j++){sum+=energy[j];count++;}let e=count?sum/count:0,prev=sections.length?sections[sections.length-1].energy:e,label=i===0?'Opening':i===boundaries.length-2?'Finale':e>0.77?'Peak':e>prev+0.12?'Build':e<0.38?'Breakdown':'Groove';sections.push({start,end,energy:clamp(e),label});}return {sections,energy};
+}
+function summarize(data,options={}){const sensitivity=clamp(Number(options.sensitivity??0.82)),rhythm=trackBeats(data.beat,data.down,data.rms,options),onsets=[...pickOnsets(data.bass,'bass',sensitivity),...pickOnsets(data.mid,'mid',sensitivity),...pickOnsets(data.high,'high',sensitivity)].sort((a,b)=>a.time-b.time),sections=sectionsFromFeatures(data.rms,data.colour,rhythm.beats,rhythm.downbeats,data.duration);const waveform=[],bins=Math.min(1800,data.rms.length);let max=percentile(data.rms,0.98)||1;for(let i=0;i<bins;i++){let a=Math.floor(i*data.rms.length/bins),b=Math.ceil((i+1)*data.rms.length/bins),v=0;for(let j=a;j<b;j++)v=Math.max(v,data.rms[j]);waveform.push(clamp(v/max));}let warnings=[];if(rhythm.bpm===0)warnings.push('No reliable musical pulse was detected. Choose audible music or enter a tempo.');else if(rhythm.beatConfidence<0.48)warnings.push('The beat estimate has low confidence. Preview the rhythm and adjust BPM if needed.');return {duration:data.duration,...rhythm,onsets,...sections,waveform,energyStep:0.02,recommendedBeatLength:rhythm.bpm?60/rhythm.bpm:0,recommendedStepTime:20,analysisVersion:1,warnings};}
+scope.LightForgeDSP={FFT,Spectrum,FeatureExtractor,rolling,percentile,trackBeats,summarize};
+})(typeof self!=='undefined'?self:globalThis);

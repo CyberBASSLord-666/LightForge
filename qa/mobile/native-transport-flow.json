@@ -1,0 +1,77 @@
+{
+  "result": "PASS",
+  "music": {
+    "bpm": 93.07,
+    "beats": 369,
+    "duration": 238.03997732426305,
+    "engine": {
+      "name": "BeatNet CRNN",
+      "neural": true,
+      "detail": "Bundled pretrained BeatNet model 1 with ONNX Runtime WebAssembly. Neural beat/downbeat activations, dynamic-programming beat decoding, adaptive spectral onset and section analysis. All audio stays on this device.",
+      "model": "BeatNet model_1_weights",
+      "runtime": "ONNX Runtime Web 1.20.1",
+      "analysisSeconds": 11.3
+    }
+  },
+  "validation": {
+    "valid": true,
+    "errors": [],
+    "warnings": [],
+    "stats": {
+      "frameCount": 11902,
+      "stepMs": 20,
+      "duration": 238.04,
+      "sequenceBytes": 2380400,
+      "commandCounts": {
+        "35": 19,
+        "36": 19,
+        "37": 6,
+        "38": 6,
+        "39": 6,
+        "40": 6,
+        "41": 6,
+        "46": 3
+      },
+      "danceSeconds": {
+        "35": 0,
+        "36": 0,
+        "37": 27,
+        "38": 27,
+        "39": 27,
+        "40": 27,
+        "41": 28,
+        "46": 28
+      },
+      "lightTransitions": 15901,
+      "activeExteriorPercent": 83.9,
+      "rampCommandFrames": 13642,
+      "interiorDisplayFrames": 11884
+    }
+  },
+  "toast": "Your show is ready. Press play and make it yours.",
+  "positions": [
+    {
+      "audioTime": 90.096016,
+      "frame": 4504,
+      "label": "1:30"
+    },
+    {
+      "audioTime": 210.085588,
+      "frame": 10504,
+      "label": "3:30"
+    },
+    {
+      "audioTime": 35.089218,
+      "frame": 1754,
+      "label": "0:35"
+    }
+  ],
+  "pauseStable": true,
+  "transport": {
+    "productionTransport": true,
+    "chromiumSeekAdapter": true,
+    "rangeRequests": 26
+  },
+  "errors": [],
+  "coverage": "Production Java response stream with source-based Chromium seek adapter and real browser neural worker/player; not an Android device test"
+}

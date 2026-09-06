@@ -1,0 +1,23 @@
+✔ known eight-second musical rest is dark in exterior and every RGB zone (62.036918ms)
+✔ legacy saved analysis without activityRanges still respects waveform silence (11.008457ms)
+✔ last genuine beat survives instead of being replaced by unconditional ending fade (4.981896ms)
+✔ three-quarter bars honor supplied downbeat phase and do not treat pickup as downbeat (4.755594ms)
+✔ three-quarter fallback bars use three beats when explicit downbeats are absent (5.693478ms)
+✔ changing tempo follows actual local beat intervals instead of average BPM (9.406751ms)
+✔ known non-grid impact attacks and offsets reach FSEQ within half an export frame (80.578514ms)
+✔ rounding at activity onset retains the accepted binary attack within half a frame (23.678145ms)
+✔ higher-salience collision preserves the strong known attack without moving it later (9.631931ms)
+✔ deterministic variation and per-section style edits preserve independent unaffected sections (42.33766ms)
+✔ disabled output masks still win over composed beats, impacts and movement tracks (47.262038ms)
+✔ actual recorded analysis exports settled, budget-valid choreography: baseline-demo-music.json (90.816373ms)
+✔ actual recorded analysis exports settled, budget-valid choreography: baseline-sample-music.json (318.672356ms)
+✔ actual recorded analysis exports settled, budget-valid choreography: current-demo-music.json (105.07273ms)
+✔ actual recorded analysis exports settled, budget-valid choreography: current-sample-music.json (302.047911ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1216.301582

@@ -1,0 +1,210 @@
+{
+  "release": "1.6.0",
+  "passed": true,
+  "method": "Previously captured actual trained MDX separator outputs, production float downsampler, actual isolated-source Frame-MN10 inference, and current detail summary. Separator outputs were not substituted with original stems. This is a component integration check; the public-worker test separately binds complete end-to-end execution.",
+  "cases": [
+    {
+      "track": "nightowl-mix",
+      "phraseCount": 3,
+      "accentCount": 12,
+      "noteCount": 3,
+      "presence": "uncertain",
+      "coverage": 0.8523,
+      "outsideControlledWindowsSeconds": 0,
+      "modelScore": 0.1726
+    },
+    {
+      "track": "nightowl-controlled",
+      "phraseCount": 2,
+      "accentCount": 7,
+      "noteCount": 0,
+      "presence": "uncertain",
+      "coverage": 0.5042,
+      "outsideControlledWindowsSeconds": 0.02,
+      "modelScore": 0.0706
+    },
+    {
+      "track": "nightowl-instrumental",
+      "phraseCount": 0,
+      "accentCount": 0,
+      "noteCount": 0,
+      "presence": "uncertain",
+      "coverage": 0,
+      "outsideControlledWindowsSeconds": 0,
+      "modelScore": 0.1171
+    },
+    {
+      "track": "stella-mix",
+      "phraseCount": 1,
+      "accentCount": 21,
+      "noteCount": 11,
+      "presence": "detected",
+      "coverage": 0.9988,
+      "outsideControlledWindowsSeconds": 0,
+      "modelScore": 0.7289
+    },
+    {
+      "track": "stella-controlled",
+      "phraseCount": 2,
+      "accentCount": 15,
+      "noteCount": 7,
+      "presence": "detected",
+      "coverage": 0.5453,
+      "outsideControlledWindowsSeconds": 0.01,
+      "modelScore": 0.4556
+    },
+    {
+      "track": "stella-instrumental",
+      "phraseCount": 0,
+      "accentCount": 0,
+      "noteCount": 0,
+      "presence": "not_detected",
+      "coverage": 0,
+      "outsideControlledWindowsSeconds": 0,
+      "modelScore": 0.007
+    },
+    {
+      "track": "meaxic-mix",
+      "phraseCount": 1,
+      "accentCount": 21,
+      "noteCount": 10,
+      "presence": "detected",
+      "coverage": 1,
+      "outsideControlledWindowsSeconds": 0,
+      "modelScore": 0.8411
+    },
+    {
+      "track": "meaxic-controlled",
+      "phraseCount": 2,
+      "accentCount": 14,
+      "noteCount": 4,
+      "presence": "detected",
+      "coverage": 0.5336,
+      "outsideControlledWindowsSeconds": 0.01,
+      "modelScore": 0.8621
+    },
+    {
+      "track": "meaxic-instrumental",
+      "phraseCount": 0,
+      "accentCount": 0,
+      "noteCount": 0,
+      "presence": "not_detected",
+      "coverage": 0,
+      "outsideControlledWindowsSeconds": 0,
+      "modelScore": 0.0038
+    },
+    {
+      "track": "grunge-mix",
+      "phraseCount": 1,
+      "accentCount": 25,
+      "noteCount": 8,
+      "presence": "detected",
+      "coverage": 0.9464,
+      "outsideControlledWindowsSeconds": 0,
+      "modelScore": 0.6808
+    },
+    {
+      "track": "grunge-controlled",
+      "phraseCount": 2,
+      "accentCount": 12,
+      "noteCount": 4,
+      "presence": "detected",
+      "coverage": 0.5483,
+      "outsideControlledWindowsSeconds": 0.03,
+      "modelScore": 0.6756
+    },
+    {
+      "track": "grunge-instrumental",
+      "phraseCount": 0,
+      "accentCount": 0,
+      "noteCount": 0,
+      "presence": "not_detected",
+      "coverage": 0,
+      "outsideControlledWindowsSeconds": 0,
+      "modelScore": 0.0073
+    },
+    {
+      "track": "falcon-mix",
+      "phraseCount": 1,
+      "accentCount": 12,
+      "noteCount": 5,
+      "presence": "detected",
+      "coverage": 0.7761,
+      "outsideControlledWindowsSeconds": 0,
+      "modelScore": 0.7404
+    },
+    {
+      "track": "falcon-controlled",
+      "phraseCount": 2,
+      "accentCount": 8,
+      "noteCount": 4,
+      "presence": "detected",
+      "coverage": 0.5189,
+      "outsideControlledWindowsSeconds": 0.01,
+      "modelScore": 0.7596
+    },
+    {
+      "track": "falcon-instrumental",
+      "phraseCount": 0,
+      "accentCount": 0,
+      "noteCount": 0,
+      "presence": "not_detected",
+      "coverage": 0,
+      "outsideControlledWindowsSeconds": 0,
+      "modelScore": 0.0292
+    },
+    {
+      "track": "sdrnr-mix",
+      "phraseCount": 1,
+      "accentCount": 25,
+      "noteCount": 7,
+      "presence": "detected",
+      "coverage": 1,
+      "outsideControlledWindowsSeconds": 0,
+      "modelScore": 0.6879
+    },
+    {
+      "track": "sdrnr-controlled",
+      "phraseCount": 2,
+      "accentCount": 13,
+      "noteCount": 4,
+      "presence": "detected",
+      "coverage": 0.5431,
+      "outsideControlledWindowsSeconds": 0.025,
+      "modelScore": 0.6695
+    },
+    {
+      "track": "sdrnr-instrumental",
+      "phraseCount": 0,
+      "accentCount": 0,
+      "noteCount": 0,
+      "presence": "not_detected",
+      "coverage": 0,
+      "outsideControlledWindowsSeconds": 0,
+      "modelScore": 0.0035
+    }
+  ],
+  "summary": {
+    "positiveClips": 12,
+    "positiveWithVoice": 12,
+    "instrumentalClips": 6,
+    "instrumentalsWithInventedVoice": 0,
+    "controlledClips": 6,
+    "maxPhraseTimeOutsideControlledWindowsSeconds": 0.03
+  },
+  "limits": [
+    "Six musical sources are a regression set, not a general recognition benchmark.",
+    "Controlled removal windows identify periods guaranteed to contain no original vocal stem; they do not annotate every word or every audible voice edge.",
+    "Separation, classification and acoustic timing remain estimates; no physical phone or car was tested."
+  ],
+  "source_hashes": {
+    "web/analysis/vocal-detail.js": "df7f86db061f4b64806539d82dfc7d4777379fdb506a75de8c2d3e689a82a621",
+    "web/analysis/vocal.js": "94483ac6cf5db7532abfba98e7bab7cd826a82ad2adca0296d39fdebd827ac70",
+    "web/analysis/stem-cache.js": "c7d3101a59a85d0c2ebfd30e1c6cd40dc9720f17072b5fc821bd0fd3bf7c6fb4",
+    "web/analysis/wav-reader.js": "0f0e5216dc1d2ca0bfb25eddacdaa21076990fa7638c22188023607e43d4005f",
+    "web/analysis/models/features.json": "8a9fb3bc88c3e2f35934dd0024f22458aa8d357e3e3946a6e2c6230d3886e278",
+    "web/analysis/models/vocal-model.json": "52093f26d0bfe3f04bbb1563b287fafe5e61aa57a61391ea643b04d97838ca7e",
+    "web/analysis/models/frame-mn10-singing.onnx": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+    "qa/release-1.6.0/capture-vocal-detail-candidates.cjs": "4e28c360e118a042d55019b6c8358e7c6df7fa5f315ed0d54d239a8d0fdb9212"
+  }
+}

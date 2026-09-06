@@ -1,0 +1,77 @@
+[
+  {
+    "path": "upload/Sample.wav",
+    "channels": 2,
+    "sampleRate": 48000,
+    "sampleWidth": 2,
+    "frames": 11425919,
+    "duration": 238.03997916666665,
+    "bytes": 45703720,
+    "sha256": "1904d9697a1cb3640bcfdc5b1ede23f7512105976c7b662b08423a5e4cca99d8",
+    "chunks": [
+      {
+        "tag": "fmt ",
+        "declaredBytes": 16,
+        "availableBytes": 16,
+        "offset": 20
+      },
+      {
+        "tag": "data",
+        "declaredBytes": 45703676,
+        "availableBytes": 45703676,
+        "offset": 44
+      }
+    ],
+    "payloadComplete": true
+  },
+  {
+    "path": "upload/Glass Castle.wav",
+    "channels": 2,
+    "sampleRate": 48000,
+    "sampleWidth": 2,
+    "frames": 11425919,
+    "duration": 238.03997916666665,
+    "bytes": 23375872,
+    "sha256": "24dd69621d66a27c00dd7a90c723858232c58176753322201098669b8c94f960",
+    "chunks": [
+      {
+        "tag": "fmt ",
+        "declaredBytes": 16,
+        "availableBytes": 16,
+        "offset": 20
+      },
+      {
+        "tag": "data",
+        "declaredBytes": 45703676,
+        "availableBytes": 23375828,
+        "offset": 44
+      }
+    ],
+    "payloadComplete": false
+  },
+  {
+    "path": "app/lightforge/web/demo/glass-castle.wav",
+    "channels": 2,
+    "sampleRate": 44100,
+    "sampleWidth": 2,
+    "frames": 2822400,
+    "duration": 64.0,
+    "bytes": 11289644,
+    "sha256": "33f07d502ba19832b62b97d8fb4a11354e81310264bd885d7a06438228773650",
+    "chunks": [
+      {
+        "tag": "fmt ",
+        "declaredBytes": 16,
+        "availableBytes": 16,
+        "offset": 20
+      },
+      {
+        "tag": "data",
+        "declaredBytes": 11289600,
+        "availableBytes": 11289600,
+        "offset": 44
+      }
+    ],
+    "payloadComplete": true
+  }
+]

@@ -1,0 +1,31 @@
+{
+  "release": "1.6.0",
+  "started": "2026-09-06T10:03:36.664Z",
+  "checks": [
+    "Production cache writer streams known 44.1 kHz stems through its FIR downsampler into validated mono 22.05 kHz Float32 WAV files in real OPFS.",
+    "The same production audio element plays real cached samples. Paused position is preserved to 2 ms; active playback resumes at its switch point. Music, settings, compiled frames and digest remain unchanged.",
+    "Rapid overlapping layer requests obey the last selection and retain the original playhead; superseded cache reads cannot replace the current source. An exact-zero loop return is retained during cache reads. Every created layer URL is revoked after returning to the full song.",
+    "Saved analysis and compiled show reopen without mutation. Persisted OPFS stems become available after a real page reload, while initial playback resets to the full song.",
+    "A same-size corrupted WAV header is rejected; active audition returns to the original song, cache controls disable, and saved music/show data remains untouched.",
+    "Analysis occupies 0–96% and the actual compiler occupies 96–100%; observed progress stays monotonic and reaches 100% without changing show results.",
+    "Re-analysis resets audition to the original track and forwards project identity. A controlled analysis failure preserves the previous verified show and restores its export eligibility.",
+    "Cancel during analysis retains the prior verified project and frames, clears transient work state, and keeps the original song selected.",
+    "An in-flight cache read is invalidated by project selection. The new project retains its own full-song source, unavailable stem state, and independent guides."
+  ],
+  "errors": [],
+  "externalRequests": [],
+  "limits": [
+    "Desktop Chromium with real OPFS and media playback; not physical Android/Tesla.",
+    "Known tone stems exercise cache and playback accuracy, not separation model quality."
+  ],
+  "sourceStable": true,
+  "sourceHashes": {
+    "web/app.js": "8c23c5a925b49b35b8cda46a6c66d2c6f833f9431f7a4c037e97a9b0e769fbe0",
+    "web/analysis/stem-cache.js": "c7d3101a59a85d0c2ebfd30e1c6cd40dc9720f17072b5fc821bd0fd3bf7c6fb4",
+    "web/studio-tools.js": "1ecd3574c7c26b1602bfafd36c4cb3983ad1b6a0e1baefb7650380a075422a2e",
+    "web/music-insights.js": "5fd372e92564172af8bc4d1797e25f8f629dd7cccf7326daf0ebc170475084ab",
+    "web/index.html": "a5f555b34f73ecbe083a29bb4f90ca237a8fb5b0ee2d839fa9b5e8fd44fbf782"
+  },
+  "passed": true,
+  "completed": "2026-09-06T10:04:00.257Z"
+}
