@@ -1,6 +1,11 @@
 # Building LightForge
 
-The project builds a private, release-signed Android APK without Gradle or an external backend. The native shell uses Android SDK APIs and packages the local web application, analysis code and model as APK assets.
+Private, release-signed Android APK without Gradle or an external backend. The native shell uses Android SDK APIs and packages the local web application, analysis code and models as APK assets (no ABI `.so`).
+
+Related: [`ARCHITECTURE.md`](ARCHITECTURE.md) · [`ASSETS.md`](ASSETS.md) · [`VALIDATION.md`](VALIDATION.md) · [`VERSIONING.md`](VERSIONING.md) · [`INSTALL_OVER_1.5_to_1.6_CHECKLIST.md`](INSTALL_OVER_1.5_to_1.6_CHECKLIST.md)
+
+**Checkout note:** On GitHub `main`, run from the **repo root** (`android/`, `web/`, `tools/` live here). A private extract may nest the same tree under `…/app/lightforge/`.
+
 
 ## Prerequisites
 
@@ -29,6 +34,9 @@ bash build.sh
 
 ## Build settings
 
+`version.json` is the version SSoT (see [`VERSIONING.md`](VERSIONING.md)); table values match current `main`.
+
+
 | Setting | Value |
 | --- | --- |
 | Application ID | `com.cyberbasslord.lightforge` |
@@ -47,7 +55,7 @@ The build stages web assets while excluding development dependency/cache folders
 
 The checked-in `web/preview/vehicle-preview.js` is already bundled. A normal
 Android APK rebuild needs no npm installation. To edit the renderer source and
-regenerate that file, install Node.js with npm, then run from `app/lightforge`:
+regenerate that file, install Node.js with npm, then run from the app-tree root (repo root on `main`):
 
 ```bash
 mkdir -p ../toolchain/graphics
@@ -71,7 +79,7 @@ optional when using the supplied bundled model.
 
 ## Keep the signing identity
 
-The first build creates `signing/lightforge-release.jks` and `signing/keystore-password.txt`. Preserve both in the private source backup. Subsequent builds reuse them so Android can install updates over the existing app. Do not recreate the key for an app already installed on the phone. The build deliberately stops if only one half of the existing signing identity is present.
+The first build creates local files under `signing/` (keystore + password file). Preserve that identity in the **private** source backup — never commit `signing/` or put secret values in docs/CI. Subsequent builds reuse them so Android can install updates over the existing app. Do not recreate the key for an app already installed on the phone. The build deliberately stops if only one half of the existing signing identity is present.
 
 These are private personal signing credentials. This project has no public publishing workflow. If the source is ever shared, exclude `signing/` and have the recipient generate their own identity; their APK will then require a separate installation or removal of the original.
 
@@ -111,6 +119,11 @@ provenance and reports remain available.
 ## Primary documentation
 
 - [`VERSIONING.md`](VERSIONING.md) — `version.json` SSoT, tags, CI signing (no secrets)
+
+- [`ARCHITECTURE.md`](ARCHITECTURE.md) — layer contracts
+- [`ASSETS.md`](ASSETS.md) — fat bins / neural path map
+- [`VALIDATION.md`](VALIDATION.md) — coverage and limits
+- [`INSTALL_OVER_1.5_to_1.6_CHECKLIST.md`](INSTALL_OVER_1.5_to_1.6_CHECKLIST.md) — Platform install-over 1.5→1.6
 
 - [Android AAPT2](https://developer.android.com/tools/aapt2)
 - [Android D8](https://developer.android.com/tools/d8)
