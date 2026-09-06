@@ -1,8 +1,12 @@
 # LightForge 1.6.0 validation
 
+Related: [`BUILD.md`](BUILD.md) · [`ASSETS.md`](ASSETS.md) · [`ARCHITECTURE.md`](ARCHITECTURE.md) · [`INSTALL_OVER_1.5_to_1.6_CHECKLIST.md`](INSTALL_OVER_1.5_to_1.6_CHECKLIST.md)
+
 Version 1.6.0 / code 10600 uses the existing private update certificate for the North American 2025 Model 3 Long Range RWD. `release-verification.json` binds the built APK, packaged sources and current tests to exact hashes. Historical releases remain separate evidence.
 
-## Current verification
+## 1. Current verification (what was verified)
+
+**How to re-run** the current verification entry points (desktop/JVM — details and full command list in [`BUILD.md`](BUILD.md)): `tests/engine*.cjs`, composer/bass suites, `tests/verify_native_release.py --release 1.6.0`, and `qa/release-1.6.0/test-*.cjs`. Package with `python3 tools/package_release.py` only when receipts pass. Analysis must not invent lyrics; guides are overlays ([`ARCHITECTURE.md`](ARCHITECTURE.md)).
 
 Current scripts, receipts, fixture provenance and screenshots are under `qa/release-1.6.0/`. `tools/package_release.py` refuses missing or failed required receipts, source changes after verification, mismatched model hashes/sizes, incorrect APK signing identity, invalid ZIP CRCs or differing packaged web assets.
 
@@ -21,7 +25,7 @@ Current scripts, receipts, fixture provenance and screenshots are under `qa/rele
 | Detailed 3D preview | `preview-verification.json` |
 | Complete app / checked show export | `integration-verification.json` |
 
-## Model choice and measured quality
+## 2. Model choice and measured quality
 
 The selected UVR MDX-Net Voc FT model was compared with Spleeter, HTDemucs FT's vocal specialist, four deterministic Demucs shifts, and a fixed equal MDX/Demucs waveform blend. The official MUSDB18 short excerpts provide six original reference mixtures and vocal stems, six accompaniment-only negatives, and six controlled voice-window remixes. There was no reference-derived mask, gain fitting, latency correction or per-song ensemble selection.
 
@@ -40,7 +44,7 @@ The final application envelope tracked original vocal dynamics more closely: mea
 
 The complete production pipeline is tested separately from those raw separator outputs. It includes Float32 cache conversion, trained singing/speech evidence, measured vocal detail, bass tracking, composition and export. Component tests using original reference vocals demonstrate detail extraction and command translation only; they are not represented as separator accuracy.
 
-## Timing and uncertainty
+## 3. Timing and uncertainty
 
 The separator uses the exact trained 7,680-point FFT geometry. JavaScript spectra and reconstructed waveform are checked against PyTorch reference transforms. Centered filtering and overlap-add remain on the original audio clock. The cache's 63-tap resampler has zero added impulse delay in the independent test; chunked and whole-buffer outputs match. Odd source sample counts produce only the required final half-rate sample, without cumulative drift.
 
@@ -50,7 +54,7 @@ Bass is estimated from combined accompaniment, not an isolated bass stem. Synthe
 
 The original supplied Sample WAV is complete at 238.04 seconds. Glass Castle declares that duration but physically contains only about 121.749 seconds; only its available prefix is recoverable. Original uploads are unchanged. Neither supplied song has independent vocal or bass-note annotations.
 
-## Reliability and compatibility
+## 4. Reliability and compatibility / limits
 
 Original 1.4, 1.5 and previously migrated 1.4 compiled arrangements are checked against their original settings before only the new empty voice-guide default is bound. Changes to music, previous settings, nondefault new settings or nonempty guides cannot bypass the check. Accepted upgrades preserve exact original frame and compressed payload bytes; the export header identifies the current producer. Current projects with actual guides follow ordinary full-input integrity checks.
 
@@ -61,3 +65,10 @@ Neural sessions are released between stages so their allocations can be reused. 
 The preview gate loads 105 meshes and 180,081 triangles in actual WebGL2, and checks command/pose parity across quality modes, seeking, hidden views and graphics-context recovery. Visual lamp optics, lens subdivisions, motor travel and Tesla-controlled Dance cadence remain estimates requiring physical comparison.
 
 No physical Android phone or Tesla was tested in this workspace. APK alignment, signature and ZIP checks establish package integrity; desktop Chromium and host JVM checks do not establish phone memory/performance, Android codec-provider behavior or physical lamp/motor timing. Full four-hour neural analysis has not been timed on a phone.
+
+## Related docs
+
+- [`BUILD.md`](BUILD.md)
+- [`ASSETS.md`](ASSETS.md)
+- [`ARCHITECTURE.md`](ARCHITECTURE.md)
+- [`INSTALL_OVER_1.5_to_1.6_CHECKLIST.md`](INSTALL_OVER_1.5_to_1.6_CHECKLIST.md)
