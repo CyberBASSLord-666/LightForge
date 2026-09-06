@@ -110,6 +110,9 @@ provenance and reports remain available.
 
 ## Primary documentation
 
+- [`INSTALL_OVER_1.5_to_1.6_CHECKLIST.md`](INSTALL_OVER_1.5_to_1.6_CHECKLIST.md) — Platform install-over 1.5→1.6 (API/WebView/OEM)
+
+
 - [Android AAPT2](https://developer.android.com/tools/aapt2)
 - [Android D8](https://developer.android.com/tools/d8)
 - [APK alignment](https://developer.android.com/tools/zipalign)
