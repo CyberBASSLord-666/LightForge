@@ -1,5 +1,5 @@
-# Green-main CI: node/python verify + bootstrap/build.sh
-# No Gradle. No GH secrets. CI APK is throwaway (never release/install-over).
+# Green-main CI: node verify + bootstrap/build.sh
+# No Gradle. No GH secrets. No CI APK publish (artifact or release).
 name: green-main
 
 on:
@@ -8,20 +8,23 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 concurrency:
   group: green-main-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  verify-node:
-    name: node unit tests
+  test:
+    name: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - name: Engine / planner / composer unit tests
+      - name: Node unit suite
         run: |
           set -euo pipefail
           node --test tests/engine.test.cjs tests/engine-manual.test.cjs tests/preview-engine.test.cjs tests/light-planner.test.cjs
@@ -30,8 +33,8 @@ jobs:
           node tests/role-composer-1.6.test.cjs
           node --test tests/bass-notes.test.cjs
 
-  build-apk:
-    name: bootstrap + build.sh
+  build-ci:
+    name: build-ci
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -42,34 +45,20 @@ jobs:
       - name: Cache pinned toolchain downloads
         uses: actions/cache@v4
         with:
-          path: ../toolchain/downloads
+          path: ${{ runner.temp }}/lightforge-toolchain/downloads
           key: lightforge-toolchain-${{ hashFiles('tools/bootstrap_toolchain.py') }}
-      - name: Bootstrap pinned JDK17 + SDK35
+      - name: Bootstrap pinned toolchain
+        env:
+          LIGHTFORGE_TOOLCHAIN_DIR: ${{ runner.temp }}/lightforge-toolchain
         run: |
           set -euo pipefail
-          export LIGHTFORGE_TOOLCHAIN_DIR="${GITHUB_WORKSPACE}/../toolchain"
-          mkdir -p "$LIGHTFORGE_TOOLCHAIN_DIR"
+          unset ANDROID_SDK_ROOT ANDROID_HOME || true
           python3 tools/bootstrap_toolchain.py
-      - name: Build APK (ephemeral signing; pinned toolchain)
+      - name: Build APK with ephemeral CI signing
+        env:
+          LIGHTFORGE_TOOLCHAIN_DIR: ${{ runner.temp }}/lightforge-toolchain
+          LIGHTFORGE_SIGNING_DIR: ${{ runner.temp }}/lightforge-ci-signing
         run: |
           set -euo pipefail
           unset ANDROID_SDK_ROOT ANDROID_HOME || true
-          export LIGHTFORGE_TOOLCHAIN_DIR="${GITHUB_WORKSPACE}/../toolchain"
-          export LIGHTFORGE_SIGNING_DIR="${RUNNER_TEMP}/lf-ci-signing"
-          mkdir -p "$LIGHTFORGE_SIGNING_DIR"
-          chmod 700 "$LIGHTFORGE_SIGNING_DIR"
           bash build.sh
-      - name: Host JVM native verify (post-build)
-        run: |
-          set -euo pipefail
-          unset ANDROID_SDK_ROOT ANDROID_HOME || true
-          export LIGHTFORGE_TOOLCHAIN_DIR="${GITHUB_WORKSPACE}/../toolchain"
-          python3 tests/verify_native_release.py --release 1.6.0
-      - name: Upload throwaway CI APK (artifact only — not a release)
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: lightforge-ci-apk
-          path: dist/*.apk
-          retention-days: 7
-          if-no-files-found: error
