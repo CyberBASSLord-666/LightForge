@@ -118,7 +118,7 @@ provenance and reports remain available.
 
 ## Primary documentation
 
-- [`VERSIONING.md`](VERSIONING.md) — `version.json` SSoT, tags, CI signing (no secrets) (lands with Release CI PR)
+- [`VERSIONING.md`](VERSIONING.md) — `version.json` SSoT, tags, CI signing (no secrets)
 
 - [`ARCHITECTURE.md`](ARCHITECTURE.md) — layer contracts
 - [`ASSETS.md`](ASSETS.md) — fat bins / neural path map
