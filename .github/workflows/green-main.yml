@@ -1,5 +1,6 @@
 # Green-main CI: node verify + bootstrap/build.sh
 # No Gradle. No GH secrets. No CI APK publish (artifact or release).
+# Second-pass: test/build-ci jobs, contents:read, no upload-artifact, no verify_native_release.
 name: green-main
 
 on:
@@ -61,4 +62,6 @@ jobs:
         run: |
           set -euo pipefail
           unset ANDROID_SDK_ROOT ANDROID_HOME || true
+          mkdir -p "$LIGHTFORGE_SIGNING_DIR"
+          chmod 700 "$LIGHTFORGE_SIGNING_DIR"
           bash build.sh
