@@ -2,7 +2,7 @@
 
 Private, release-signed Android APK without Gradle or an external backend. The native shell uses Android SDK APIs and packages the local web application, analysis code and models as APK assets (no ABI `.so`).
 
-Related: [`ARCHITECTURE.md`](ARCHITECTURE.md) · [`ASSETS.md`](ASSETS.md) · [`VALIDATION.md`](VALIDATION.md) · [`VERSIONING.md`](VERSIONING.md) · [`INSTALL_OVER_1.5_to_1.6_CHECKLIST.md`](INSTALL_OVER_1.5_to_1.6_CHECKLIST.md)
+Related: [`ARCHITECTURE.md`](ARCHITECTURE.md) · [`ASSETS.md`](ASSETS.md) · [`VALIDATION.md`](VALIDATION.md) · [`INSTALL_OVER_1.5_to_1.6_CHECKLIST.md`](INSTALL_OVER_1.5_to_1.6_CHECKLIST.md)
 
 **Checkout note:** On GitHub `main`, run from the **repo root** (`android/`, `web/`, `tools/` live here). A private extract may nest the same tree under `…/app/lightforge/`.
 
@@ -118,7 +118,7 @@ provenance and reports remain available.
 
 ## Primary documentation
 
-- [`VERSIONING.md`](VERSIONING.md) — `version.json` SSoT, tags, CI signing (no secrets)
+- [`VERSIONING.md`](VERSIONING.md) — `version.json` SSoT, tags, CI signing (no secrets) (lands with Release CI PR)
 
 - [`ARCHITECTURE.md`](ARCHITECTURE.md) — layer contracts
 - [`ASSETS.md`](ASSETS.md) — fat bins / neural path map

@@ -1,6 +1,6 @@
 # LightForge 1.6.0 — Architecture
 
-Quality bars for modularity and API boundaries. Repo: private `CyberBASSLord-666/LightForge` (workspace path `app/lightforge/`). Docs only — no code moves in this landing.
+Quality bars for modularity and API boundaries. Repo: private `CyberBASSLord-666/LightForge` — on GitHub `main`, `android/` and `web/` live at **repo root**; some local/private trees nest the same layout under `app/lightforge/`. Docs only — no code moves in this landing.
 
 ## Shape
 
