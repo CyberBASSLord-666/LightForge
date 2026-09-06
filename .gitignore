@@ -48,3 +48,7 @@ qa/**/*activations*.json
 *.ap_
 *.dex
 *.class
+
+# QA demo / synthetic activation dumps (keep on disk under /workspace/lightforge-assets/)
+qa/**/*demo*
+qa/**/*synthetic*activations*.json

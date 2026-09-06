@@ -37,7 +37,9 @@ Same tree as 1.5.0 assets, plus 1.6.0 stem-sep additions:
 | `preview/models/highland.glb` | 8.4M |
 | `analysis/models/beatnet-v1.onnx` | 1.6M |
 
-Also gitignored (research-only): `research/model-source/2024_tesla_model_3.glb`, research wav samples.
+Also gitignored (research/QA — restore via [`ASSETS.md`](ASSETS.md)):
+- Weights/CSVs/zip from `/workspace/lightforge-assets/research/` (+ QA JSONs there)
+- Media still in private extract: `research/model-source/2024_tesla_model_3.glb`, research wav samples
 
 ## vs 1.5.0 APK assets
 
