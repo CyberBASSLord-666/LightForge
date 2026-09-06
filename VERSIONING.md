@@ -1,55 +1,57 @@
 # Versioning
 
-LightForge uses a single source of truth for release identity and a tag scheme that separates device QA from ship.
+How LightForge versions the app, tags builds, and keeps CI free of secrets.
 
 ## Source of truth
 
-`version.json` at the repo root:
+[`version.json`](version.json) at the repo root is the **only** version source of truth (SSoT).
+
+| Field | Meaning | Example (`1.6.0`) |
+| --- | --- | --- |
+| `name` | Semver string `MAJOR.MINOR.PATCH` | `"1.6.0"` |
+| `code` | Integer `MAJOR*10000 + MINOR*100 + PATCH` | `10600` |
+
+`build.sh` and packaging read these fields. Native UI and export metadata use the **installed package** version (derived from the same values at build time). Do not hardcode a second version in docs or scripts without updating `version.json` first.
+
+Current on `main`:
 
 ```json
 {"name":"1.6.0","code":10600}
 ```
 
-| Field | Meaning |
+## Bumping a version
+
+1. Edit `version.json` (`name` and matching `code`).
+2. Rebuild (`bash build.sh`) so the APK and receipts pick up the new values.
+3. Refresh validation / package receipts as required by [`VALIDATION.md`](VALIDATION.md) and [`BUILD.md`](BUILD.md) before calling a ship build done.
+4. Update user-facing notes (`CHANGELOG.md`, `RELEASE_NOTES.md`) in the same change set when shipping.
+
+Do not invent a parallel version in `BUILD.md` tables or QA folder names without matching `version.json`. Doc tables that show version are **current values**, not a second SSoT.
+
+## Git tags
+
+| Tag | Meaning |
 | --- | --- |
-| `name` | Semver `MAJOR.MINOR.PATCH` (APK `versionName`) |
-| `code` | Integer APK `versionCode`: `MAJOR*10000 + MINOR*100 + PATCH` |
+| `vX.Y.Z-qa` | QA / candidate build for the matching `version.json` |
+| `vX.Y.Z` | Ship tag for the matching `version.json` |
 
-Examples: `1.6.0` → `10600`, `1.6.1` → `10601`, `2.0.0` → `20000`.
+Tag only after the intended APK (and required receipts for ship) exist for that version. Do not move or reuse a ship tag.
 
-`build.sh` reads `version.json` and injects both values with aapt2 `--replace-version`. Bump `version.json` before building a candidate APK.
+## CI (no secrets)
 
-## Tags and releases
+Minimal CI for green `main`:
 
-| Tag | Purpose |
-| --- | --- |
-| `vX.Y.Z-qa` | Private prerelease for device QA / install-over (e.g. `v1.6.0-qa`) |
-| `vX.Y.Z` | Validated ship release after QA sign-off |
+- Run the in-tree unit / verification entry points (see [`BUILD.md`](BUILD.md) / [`VALIDATION.md`](VALIDATION.md)).
+- Build with `tools/bootstrap_toolchain.py` + `bash build.sh`.
+- For signing in CI, use an **ephemeral** `LIGHTFORGE_SIGNING_DIR` (throwaway keystore for package integrity only).
 
-Do not publish shipping APKs from CI. CI may compile and verify with a throwaway keystore only.
+**Never** commit keystores, passwords, private keys, or tokens. **Never** put secret values in this doc, CI YAML, or the repo. Personal install-over identity stays local under private `signing/` only — see [`ASSETS.md`](ASSETS.md) and [`BUILD.md`](BUILD.md).
 
-## Bump and ship order
+When CI uses the bootstrap toolchain, unset `ANDROID_SDK_ROOT` / `ANDROID_HOME` so `build.sh` picks the pinned SDK (build-tools 35.0.0, `android-35`, Temurin JDK 17) rather than a host install.
 
-1. Bump `version.json` (`name` and `code` together).
-2. Build locally with the preserved personal keystore (`bash build.sh`).
-3. Validate (see `BUILD.md` / `VALIDATION.md`); run device smoke outside CI.
-4. Tag `vX.Y.Z-qa` and attach the APK for install-over QA when needed.
-5. After sign-off, tag `vX.Y.Z` for the ship record.
+## Related docs
 
-Optional local packaging after receipts pass: `python3 tools/package_release.py` (not run in CI).
-
-## Signing and install-over
-
-- Release signing lives under `signing/` (gitignored). Preserve `lightforge-release.jks` and `keystore-password.txt` for update installs.
-- Never commit keystores or passwords. Never put them in GitHub Actions secrets for green-main CI.
-- CI uses an ephemeral `LIGHTFORGE_SIGNING_DIR`; that APK is not install-over compatible and must not be published as a release asset.
-- Do not rotate the shipping key for an already-installed package.
-
-## CI
-
-Pull requests and pushes to `main` run:
-
-1. **test** — Node unit suite (see `.github/workflows/ci.yml`).
-2. **build-ci** — pinned `bootstrap_toolchain.py` then `build.sh` with ephemeral signing.
-
-Out of CI: device/adb smoke, Playwright browser QA, `package_release.py`, and shipping keystore use.
+- [`BUILD.md`](BUILD.md) — how to build and package
+- [`VALIDATION.md`](VALIDATION.md) — what was verified and known limits
+- [`ASSETS.md`](ASSETS.md) — fat bins and private signing paths (local only)
+- [`ARCHITECTURE.md`](ARCHITECTURE.md) — layer contracts (not version policy)
