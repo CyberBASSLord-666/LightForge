@@ -1,0 +1,52 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Node unit suite
+        run: |
+          set -euo pipefail
+          node --test tests/engine.test.cjs tests/engine-manual.test.cjs tests/preview-engine.test.cjs tests/light-planner.test.cjs
+          node tests/movement-planner.test.cjs
+          node tests/composer-1.6.test.cjs
+          node tests/role-composer-1.6.test.cjs
+          node --test tests/bass-notes.test.cjs
+  build-ci:
+    name: build-ci
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/lightforge-toolchain/downloads
+          key: lightforge-toolchain-${{ hashFiles('tools/bootstrap_toolchain.py') }}
+      - name: Bootstrap pinned toolchain
+        env:
+          LIGHTFORGE_TOOLCHAIN_DIR: ${{ runner.temp }}/lightforge-toolchain
+        run: |
+          set -euo pipefail
+          unset ANDROID_SDK_ROOT ANDROID_HOME || true
+          python3 tools/bootstrap_toolchain.py
+      - name: Build APK with ephemeral CI signing
+        env:
+          LIGHTFORGE_TOOLCHAIN_DIR: ${{ runner.temp }}/lightforge-toolchain
+          LIGHTFORGE_SIGNING_DIR: ${{ runner.temp }}/lightforge-ci-signing
+        run: |
+          set -euo pipefail
+          unset ANDROID_SDK_ROOT ANDROID_HOME || true
+          bash build.sh
