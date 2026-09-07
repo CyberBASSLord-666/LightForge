@@ -18,6 +18,7 @@ public final class BackgroundInstrumentation extends Instrumentation {
     private final long testStarted=SystemClock.elapsedRealtime();
     private long phaseStarted=testStarted,lastSnapshot;
     private String currentPhase="starting";
+    private JSONObject lastPowerTransition;
     private void phase(String name)throws Exception{currentPhase=name;phaseStarted=SystemClock.elapsedRealtime();snapshot(true);}
     private void snapshot(boolean force)throws Exception{
         long now=SystemClock.elapsedRealtime();
@@ -27,6 +28,7 @@ public final class BackgroundInstrumentation extends Instrumentation {
             .put("elapsedSeconds",(now-testStarted)/1000.0)
             .put("phaseElapsedSeconds",(now-phaseStarted)/1000.0)
             .put("checks",new JSONArray(checks.toString()));
+        if(lastPowerTransition!=null)value.put("powerTransition",lastPowerTransition);
         if(files!=null){
             JSONObject job=AnalysisJobStore.status(files);
             value.put("job",job==null?JSONObject.NULL:job);
@@ -36,10 +38,24 @@ public final class BackgroundInstrumentation extends Instrumentation {
     }
     private void check(boolean value,String label){if(!value)throw new AssertionError(label);}
     private void pass(String label)throws Exception{checks.put(label);snapshot(true);Bundle event=new Bundle();event.putString("stream",label+"\n");sendStatus(0,event);}
-    private void shell(String command)throws Exception{
+    private String shell(String command)throws Exception{
         try(ParcelFileDescriptor descriptor=getUiAutomation().executeShellCommand(command);InputStream in=new ParcelFileDescriptor.AutoCloseInputStream(descriptor)){
-            byte[] bytes=new byte[4096];while(in.read(bytes)!=-1){}
+            ByteArrayOutputStream output=new ByteArrayOutputStream();byte[] bytes=new byte[4096];int count;
+            while((count=in.read(bytes))!=-1){int keep=Math.min(count,65536-output.size());if(keep>0)output.write(bytes,0,keep);}
+            return output.toString("UTF-8").trim();
         }
+    }
+    private void awaitPower(java.util.function.BooleanSupplier expected,String failure)throws Exception{
+        long until=SystemClock.elapsedRealtime()+15000;
+        while(!expected.getAsBoolean()&&SystemClock.elapsedRealtime()<until){snapshot(false);SystemClock.sleep(100);}
+        if(!expected.getAsBoolean())throw new AssertionError(failure+"; deviceidle: "+shell("dumpsys deviceidle")+"; power: "+shell("dumpsys power"));
+    }
+    private void recordPowerTransition(PowerManager power,String commandOutput)throws Exception{
+        lastPowerTransition=new JSONObject().put("phase",currentPhase)
+            .put("interactive",power.isInteractive()).put("deepIdle",power.isDeviceIdleMode())
+            .put("batteryExempt",power.isIgnoringBatteryOptimizations(getTargetContext().getPackageName()))
+            .put("controllerDeepState",shell("dumpsys deviceidle get deep")).put("commandOutput",commandOutput);
+        snapshot(true);
     }
     private Object field(Object object,String name)throws Exception{
         Field field=(object instanceof Class?(Class<?>)object:object.getClass()).getDeclaredField(name);field.setAccessible(true);
@@ -82,17 +98,23 @@ public final class BackgroundInstrumentation extends Instrumentation {
     }
     private void backgroundAndDoze()throws Exception{
         runOnMainSync(()->activity.finishAndRemoveTask());waitForIdleSync();
-        shell("dumpsys battery unplug");shell("input keyevent KEYCODE_SLEEP");SystemClock.sleep(500);
-        shell("dumpsys deviceidle force-idle");
         PowerManager power=(PowerManager)getTargetContext().getSystemService(Context.POWER_SERVICE);
-        check(!power.isInteractive(),"Screen did not turn off");
+        shell("dumpsys battery unplug");shell("input keyevent KEYCODE_SLEEP");
+        awaitPower(()->!power.isInteractive(),"Screen did not turn off");
         check(power.isIgnoringBatteryOptimizations(getTargetContext().getPackageName()),"User-equivalent battery exemption missing");
-        check(power.isDeviceIdleMode(),"Android did not enter forced Doze");
-        snapshot(true);
+        String forced=shell("dumpsys deviceidle force-idle deep");
+        // DeviceIdleController posts MSG_REPORT_IDLE_ON after advancing its own
+        // state. Shell completion does not mean PowerManager has handled it yet.
+        awaitPower(()->power.isDeviceIdleMode(),"Android did not enter forced Doze; force-idle output: "+forced);
+        check(!power.isInteractive(),"Screen woke during the Doze transition");
+        recordPowerTransition(power,forced);
     }
     private void foreground()throws Exception{
-        shell("dumpsys deviceidle unforce");shell("dumpsys battery reset");
-        shell("input keyevent KEYCODE_WAKEUP");shell("wm dismiss-keyguard");launch();snapshot(true);
+        PowerManager power=(PowerManager)getTargetContext().getSystemService(Context.POWER_SERVICE);
+        String unforced=shell("dumpsys deviceidle unforce");shell("dumpsys battery reset");
+        shell("input keyevent KEYCODE_WAKEUP");shell("wm dismiss-keyguard");
+        awaitPower(()->power.isInteractive()&&!power.isDeviceIdleMode(),"Android did not leave Doze and wake for reopening");
+        launch();recordPowerTransition(power,unforced);
     }
     private JSONObject start(String projectId)throws Exception{
         JSONObject job=new JSONObject(activity.new Bridge().startAnalysis(projectId));check(!job.has("error"),job.toString());waitService(true);

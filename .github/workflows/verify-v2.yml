@@ -112,7 +112,7 @@ jobs:
   android-background:
     needs: verify
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 65
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
