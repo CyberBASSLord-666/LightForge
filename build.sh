@@ -48,7 +48,7 @@ cleanup_build() {
     return "$status"
 }
 trap cleanup_build EXIT
-mkdir -p "$BUILD/classes" "$BUILD/dex" "$BUILD/generated" "$BUILD/assets"
+mkdir -p "$BUILD/classes" "$BUILD/dex" "$BUILD/generated"
 python3 "$ROOT/tools/bootstrap_native_runtime.py" --check --stage "$BUILD/native"
 if [[ ! -f "$KEY_DIR/lightforge-release.jks" ]]; then
     if [[ "${LIGHTFORGE_ALLOW_NEW_SIGNING:-0}" != "1" ]]; then
@@ -73,16 +73,9 @@ PY
     chmod 600 "$KEY_DIR/lightforge-release.jks"
 fi
 [[ -f "$KEY_DIR/keystore-password.txt" ]] || { printf 'The release keystore password is missing.\n' >&2; exit 1; }
-# Stage only distributable web assets; development dependencies never enter the APK.
-python3 - "$ROOT/web" "$BUILD/assets" <<'PYASSETS'
-from pathlib import Path
-import shutil,sys
-src,dst=map(Path,sys.argv[1:])
-for f in src.rglob('*'):
-    rel=f.relative_to(src)
-    if not f.is_file() or any(v.startswith('.') or v in {'node_modules','__pycache__'} for v in rel.parts):continue
-    target=dst/rel;target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(f,target)
-PYASSETS
+# Stage only distributable assets, checking complete bytes and unchanged source
+# before the isolated staging directory becomes available to aapt2.
+python3 "$ROOT/tools/apk_archive.py" stage-assets "$ROOT/web" "$BUILD/assets"
 printf 'Compiling Android resources and bundling offline assets…\n'
 "$BUILD_TOOLS/aapt2" compile --dir "$ROOT/android/res" -o "$BUILD/compiled-res.zip"
 "$BUILD_TOOLS/aapt2" link -o "$BUILD/resources.apk" \
@@ -120,6 +113,8 @@ rm -- "$BUILD/aligned.apk"
 "$BUILD_TOOLS/zipalign" -c -P 16 4 "$BUILD/signed.apk"
 "$BUILD_TOOLS/aapt2" dump badging "$BUILD/signed.apk" > "$BUILD/apk-badging.txt"
 python3 "$ROOT/tools/apk_archive.py" validate "$BUILD/signed.apk" "$BUILD/assets" --require-dex --native-manifest "$NATIVE_MANIFEST"
+# Staging is not the source of truth: the signed result must also match web/.
+python3 "$ROOT/tools/apk_archive.py" validate "$BUILD/signed.apk" "$ROOT/web" --require-dex --native-manifest "$NATIVE_MANIFEST"
 python3 - "$BUILD/signed.apk" "$DIST/$APK_NAME" "$BUILD/apk-badging.txt" "$ROOT/version.json" "$BUILD/signature-verification.txt" <<'PY'
 from pathlib import Path
 import hashlib,json,os,re,shutil,sys,zipfile

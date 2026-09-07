@@ -7,6 +7,7 @@ import struct
 from pathlib import Path
 import tempfile
 import unittest
+from unittest import mock
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -77,6 +78,89 @@ class ArchiveTests(unittest.TestCase):
         with self.assertRaises(FileExistsError):
             apk_archive.assemble_apk(self.resources, self.dex, self.output, self.assets)
         self.assertEqual(self.output.read_bytes(), b'previous artifact')
+
+    def test_staging_verifies_complete_nested_assets_and_excludes_development_files(self):
+        model = self.assets / 'models' / 'head.onnx'
+        model.parent.mkdir()
+        model.write_bytes(b'complete model payload crossing several chunks')
+        ignored = self.assets / 'node_modules' / 'dependency.js'
+        ignored.parent.mkdir()
+        ignored.write_bytes(b'development only')
+        (self.assets / '.temporary').write_bytes(b'incomplete scratch')
+        destination = self.root / 'staged'
+        with mock.patch.object(apk_archive, 'CHUNK_BYTES', 7):
+            receipt = apk_archive.stage_assets(self.assets, destination)
+        self.assertEqual(receipt, {'files': 2, 'bytes': sum(
+            p.stat().st_size for p in (self.assets / 'index.html', model))})
+        self.assertEqual((destination / 'models/head.onnx').read_bytes(), model.read_bytes())
+        self.assertEqual(set(apk_archive.distributable_assets(destination)),
+                         {'index.html', 'models/head.onnx'})
+
+    def test_short_or_stale_staging_is_rejected_before_destination_exists(self):
+        original_copy = apk_archive.copy_asset
+        destination = self.root / 'staged'
+        for corruption in ('short', 'stale'):
+            with self.subTest(corruption=corruption):
+                def damaged_copy(source, target):
+                    receipt = original_copy(source, target)
+                    payload = target.read_bytes()
+                    target.write_bytes(payload[:-1] if corruption == 'short'
+                                       else bytes([payload[0] ^ 1]) + payload[1:])
+                    return receipt  # A successful copy result cannot be trusted.
+                with mock.patch.object(apk_archive, 'copy_asset', side_effect=damaged_copy):
+                    with self.assertRaisesRegex(ValueError, 'Staged asset bytes differ'):
+                        apk_archive.stage_assets(self.assets, destination)
+                self.assertFalse(destination.exists())
+                self.assertFalse(list(self.root.glob('.staged-*')))
+
+    def test_source_modified_after_an_earlier_file_was_staged_is_rejected(self):
+        (self.assets / 'z-model.onnx').write_bytes(b'large model placeholder')
+        original_copy = apk_archive.copy_asset
+        destination = self.root / 'staged'
+
+        def changing_source(source, target):
+            receipt = original_copy(source, target)
+            if source.name == 'z-model.onnx':
+                index = self.assets / 'index.html'
+                payload = index.read_bytes()
+                index.write_bytes(b'!' + payload[1:])  # Same length, different source generation.
+            return receipt
+
+        with mock.patch.object(apk_archive, 'copy_asset', side_effect=changing_source):
+            with self.assertRaisesRegex(ValueError, 'Asset source changed'):
+                apk_archive.stage_assets(self.assets, destination)
+        self.assertFalse(destination.exists())
+        self.assertFalse(list(self.root.glob('.staged-*')))
+
+    def test_existing_staging_directory_and_contents_are_never_replaced(self):
+        destination = self.root / 'staged'
+        destination.mkdir()
+        previous = destination / 'index.html'
+        previous.write_bytes(b'previous verified build')
+        with mock.patch.object(apk_archive, 'copy_asset') as copy:
+            with self.assertRaises(FileExistsError):
+                apk_archive.stage_assets(self.assets, destination)
+            copy.assert_not_called()
+        self.assertEqual(previous.read_bytes(), b'previous verified build')
+
+    def test_staging_inside_source_is_rejected_without_source_changes(self):
+        with self.assertRaisesRegex(ValueError, 'outside the source'):
+            apk_archive.stage_assets(self.assets, self.assets / 'staged')
+        self.assertEqual(set(apk_archive.distributable_assets(self.assets)), {'index.html'})
+
+    def test_valid_zip_of_truncated_staging_still_fails_against_original_source(self):
+        model = self.assets / 'head.onnx'
+        model.write_bytes(b'complete original model weights')
+        staged = self.root / 'staged'
+        apk_archive.stage_assets(self.assets, staged)
+        (staged / 'head.onnx').write_bytes(b'complete original')
+        with zipfile.ZipFile(self.resources, 'a') as archive:
+            archive.write(staged / 'head.onnx', 'assets/head.onnx')
+        # Reproduce the original failure: the archive has valid CRCs and even
+        # matches staging, but contains only a prefix of the actual model.
+        apk_archive.validate_apk(self.resources, staged)
+        with self.assertRaisesRegex(ValueError, 'asset bytes differ'):
+            apk_archive.validate_apk(self.resources, self.assets)
 
     def native_fixture(self):
         native = self.root / 'jni'

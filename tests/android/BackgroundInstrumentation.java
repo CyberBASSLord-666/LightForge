@@ -17,8 +17,51 @@ public final class BackgroundInstrumentation extends Instrumentation {
     private boolean checkedNativeStageRelease;
     private final long testStarted=SystemClock.elapsedRealtime();
     private long phaseStarted=testStarted,lastSnapshot;
-    private String currentPhase="starting";
+    private volatile String currentPhase="starting";
     private JSONObject lastPowerTransition;
+    private final Handler watchdogMain=new Handler(Looper.getMainLooper());
+    private volatile boolean watchdogStopped;
+    private Thread mainWatchdog;
+    private void startMainWatchdog(){
+        mainWatchdog=new Thread(()->{
+            while(!watchdogStopped){
+                java.util.concurrent.atomic.AtomicBoolean acknowledged=new java.util.concurrent.atomic.AtomicBoolean();
+                long queuedAt=SystemClock.uptimeMillis(),lastDump=0;
+                watchdogMain.post(()->acknowledged.set(true));
+                while(!watchdogStopped&&!acknowledged.get()){
+                    try{Thread.sleep(250);}catch(InterruptedException stopped){return;}
+                    long now=SystemClock.uptimeMillis();
+                    if(!acknowledged.get()&&now-queuedAt>=2000&&now-lastDump>=1000){
+                        lastDump=now;dumpMainDelay(now-queuedAt);
+                    }
+                }
+                try{Thread.sleep(500);}catch(InterruptedException stopped){return;}
+            }
+        },"LightForge-main-watchdog");
+        mainWatchdog.setDaemon(true);mainWatchdog.start();
+    }
+    private void dumpMainDelay(long delayMs){
+        try{
+            JSONArray threads=new JSONArray();Thread mainThread=Looper.getMainLooper().getThread();
+            for(java.util.Map.Entry<Thread,StackTraceElement[]> entry:Thread.getAllStackTraces().entrySet()){
+                Thread thread=entry.getKey();String name=thread.getName();
+                if(thread!=mainThread&&!name.contains("RenderThread")&&!name.contains("JavaBridge")
+                    &&!name.startsWith("pool-")&&!name.startsWith("Thread-")&&!name.contains("Native"))continue;
+                JSONArray stack=new JSONArray();int count=0;
+                for(StackTraceElement frame:entry.getValue()){if(count++==64)break;stack.put(frame.toString());}
+                threads.put(new JSONObject().put("name",name).put("id",thread.getId()).put("state",thread.getState().toString()).put("stack",stack));
+            }
+            JSONObject diagnostic=new JSONObject().put("phase",currentPhase).put("mainHeartbeatDelayMs",delayMs)
+                .put("elapsedSeconds",(SystemClock.elapsedRealtime()-testStarted)/1000.0).put("threads",threads);
+            Bundle event=new Bundle();event.putString("stream","LIGHTFORGE_MAIN_THREAD_DELAY "+diagnostic+"\n");sendStatus(0,event);
+        }catch(Throwable error){
+            android.util.Log.e("LightForgeTest","Could not capture delayed main-thread stacks",error);
+        }
+    }
+    private void stopMainWatchdog(){
+        watchdogStopped=true;watchdogMain.removeCallbacksAndMessages(null);
+        if(mainWatchdog!=null)mainWatchdog.interrupt();
+    }
     private void phase(String name)throws Exception{currentPhase=name;phaseStarted=SystemClock.elapsedRealtime();snapshot(true);}
     private void snapshot(boolean force)throws Exception{
         long now=SystemClock.elapsedRealtime();
@@ -97,7 +140,15 @@ public final class BackgroundInstrumentation extends Instrumentation {
         waitForIdleSync();activity.new Bridge().getBootstrap();
     }
     private void backgroundAndDoze()throws Exception{
-        runOnMainSync(()->activity.finishAndRemoveTask());waitForIdleSync();
+        WebView closingView=(WebView)field(activity,"web");android.view.ViewGroup[] closingParent=new android.view.ViewGroup[1];
+        runOnMainSync(()->{
+            if(closingView!=null&&closingView.getParent() instanceof android.view.ViewGroup)closingParent[0]=(android.view.ViewGroup)closingView.getParent();
+            activity.finishAndRemoveTask();
+        });waitForIdleSync();
+        long destroyedBy=SystemClock.elapsedRealtime()+15000;
+        while(!activity.isDestroyed()&&SystemClock.elapsedRealtime()<destroyedBy)SystemClock.sleep(100);
+        check(activity.isDestroyed()&&field(activity,"web")==null,"Activity teardown did not release its preview WebView");
+        runOnMainSync(()->check(closingParent[0]==null||closingParent[0].indexOfChild(closingView)<0,"Destroyed preview WebView remains attached to its parent"));
         PowerManager power=(PowerManager)getTargetContext().getSystemService(Context.POWER_SERVICE);
         shell("dumpsys battery unplug");shell("input keyevent KEYCODE_SLEEP");
         awaitPower(()->!power.isInteractive(),"Screen did not turn off");
@@ -157,7 +208,7 @@ public final class BackgroundInstrumentation extends Instrumentation {
     @Override public void onStart(){
         JSONObject receipt=new JSONObject();Bundle output=new Bundle();
         try{
-            files=getTargetContext().getFilesDir();phase("first-screen-off-analysis");launch();String id=fixture("Background audio");JSONObject job=start(id);
+            files=getTargetContext().getFilesDir();startMainWatchdog();phase("first-screen-off-analysis");launch();String id=fixture("Background audio");JSONObject job=start(id);
             long backgroundAt=System.currentTimeMillis();backgroundAndDoze();
             JSONObject completed=waitTerminal(15*60*1000L);
             check("completed".equals(completed.optString("state")),"Screen-off analysis failed: "+completed);
@@ -219,6 +270,6 @@ public final class BackgroundInstrumentation extends Instrumentation {
             try{snapshot(true);}catch(Exception ignored){}
             try{receipt.put("passed",false).put("checks",checks).put("phase",currentPhase).put("error",error.toString());}catch(Exception ignored){}
             StringWriter trace=new StringWriter();error.printStackTrace(new PrintWriter(trace));output.putString("stream","BACKGROUND_ANDROID_FAIL\n"+receipt+"\n"+trace);finish(Activity.RESULT_CANCELED,output);
-        }
+        }finally{stopMainWatchdog();}
     }
 }

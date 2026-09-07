@@ -106,5 +106,13 @@ except Exception as error:
 finally:
     try:(out/'android-logcat.txt').write_text(run('logcat','-d','-v','threadtime',timeout=20))
     except Exception:pass
+    if not receipt['passed']:
+        for name,command in [
+            ('android-last-anr.txt',('shell','dumpsys','activity','lastanr')),
+            ('android-memory.txt',('shell','dumpsys','meminfo','com.cyberbasslord.lightforge')),
+            ('android-power.txt',('shell','dumpsys','power')),
+        ]:
+            try:(out/name).write_text(run(*command,timeout=15))
+            except Exception as diagnostic_error:(out/name).write_text(str(diagnostic_error)+'\n')
     receipt['completedAt']=datetime.datetime.now(datetime.timezone.utc).isoformat()
     (out/'android-background-verification.json').write_text(json.dumps(receipt,indent=2)+'\n');print(json.dumps(receipt,indent=2))

@@ -7,9 +7,94 @@ import json
 import os
 import shutil
 import struct
+import tempfile
 import zipfile
 
 CHUNK_BYTES = 1024 * 1024
+
+
+def distributable_assets(directory):
+    """Use the same source inventory for staging and APK verification."""
+    directory = Path(directory)
+    return {p.relative_to(directory).as_posix(): p
+            for p in sorted(directory.rglob('*')) if p.is_file()
+            and not any(part.startswith('.') or part in {'node_modules', '__pycache__'}
+                        for part in p.relative_to(directory).parts)}
+
+
+def file_identity(path):
+    stat = Path(path).stat()
+    return (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns)
+
+
+def copy_asset(source, destination):
+    """Avoid platform fast-copy paths and hash the exact bounded input stream."""
+    digest, count = hashlib.sha256(), 0
+    with source.open('rb') as stream, destination.open('xb') as output:
+        while chunk := stream.read(CHUNK_BYTES):
+            if output.write(chunk) != len(chunk):
+                raise OSError('Short asset staging write: ' + str(destination))
+            digest.update(chunk)
+            count += len(chunk)
+        output.flush()
+        os.fsync(output.fileno())
+    return count, digest.hexdigest()
+
+
+def stage_assets(source, destination):
+    """Publish a fresh asset directory only after both copies match their source.
+
+    Staging into an existing directory is deliberately unsupported: isolated
+    build directories make a failed attempt unable to damage a prior build.
+    """
+    source, destination = Path(source).resolve(), Path(destination).absolute()
+    if not source.is_dir():
+        raise ValueError('Asset source directory does not exist')
+    if destination.exists() or destination.is_symlink():
+        raise FileExistsError('Asset staging destination already exists: ' + str(destination))
+    if source == destination or source in destination.parents:
+        raise ValueError('Asset staging destination must be outside the source directory')
+    assets = distributable_assets(source)
+    if 'index.html' not in assets:
+        raise ValueError('Asset source is missing index.html')
+    identities = {name: file_identity(path) for name, path in assets.items()}
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    temporary = Path(tempfile.mkdtemp(prefix='.' + destination.name + '-', dir=destination.parent))
+    try:
+        receipts = {}
+        for name, path in assets.items():
+            target = temporary / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            receipts[name] = copy_asset(path, target)
+            if receipts[name][0] != identities[name][2] or file_identity(path) != identities[name]:
+                raise ValueError('Asset source changed during staging: ' + name)
+        if distributable_assets(source).keys() != assets.keys():
+            raise ValueError('Asset source inventory changed during staging')
+        if distributable_assets(temporary).keys() != assets.keys():
+            raise ValueError('Staged asset inventory differs from source')
+        # Re-read both files independently. A successful copy call, or a ZIP
+        # with valid CRCs, does not prove that every source byte was staged.
+        for name, path in assets.items():
+            size, digest = receipts[name]
+            with path.open('rb') as stream:
+                source_digest = hashlib.file_digest(stream, 'sha256').hexdigest()
+            if file_identity(path) != identities[name] or source_digest != digest:
+                raise ValueError('Asset source changed during staging: ' + name)
+            target = temporary / name
+            with target.open('rb') as stream:
+                staged_digest = hashlib.file_digest(stream, 'sha256').hexdigest()
+            if target.stat().st_size != size or staged_digest != digest:
+                raise ValueError('Staged asset bytes differ from source: ' + name)
+        # Check all identities again in case an earlier source changed while a
+        # later large model was being verified.
+        if (distributable_assets(source).keys() != assets.keys()
+                or any(file_identity(path) != identities[name] for name, path in assets.items())):
+            raise ValueError('Asset source changed during staging')
+        os.rename(temporary, destination)
+    finally:
+        if temporary.exists():
+            shutil.rmtree(temporary)
+    return {'files': len(receipts), 'bytes': sum(size for size, _ in receipts.values())}
 
 
 def streams_equal(first, second):
@@ -93,10 +178,7 @@ def validate_apk(path, assets, require_dex=False, native_manifest=None):
         # Match build.sh's distributable inventory. aapt2 can leave hidden
         # compression scratch files beside very large staged model assets;
         # those are neither source assets nor entries in the linked APK.
-        expected_assets = {'assets/' + p.relative_to(assets).as_posix(): p
-                           for p in assets.rglob('*') if p.is_file()
-                           and not any(part.startswith('.') or part in {'node_modules', '__pycache__'}
-                                       for part in p.relative_to(assets).parts)}
+        expected_assets = {'assets/' + name: path for name, path in distributable_assets(assets).items()}
         actual_assets = {name for name in names
                          if name.startswith('assets/') and not name.endswith('/')}
         if actual_assets != set(expected_assets):
@@ -162,6 +244,9 @@ def assemble_apk(resources, dex_directory, destination, assets, native_directory
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     subparsers = parser.add_subparsers(dest='command', required=True)
+    stage = subparsers.add_parser('stage-assets')
+    stage.add_argument('source', type=Path)
+    stage.add_argument('destination', type=Path)
     validate = subparsers.add_parser('validate')
     validate.add_argument('apk', type=Path)
     validate.add_argument('assets', type=Path)
@@ -173,7 +258,9 @@ if __name__ == '__main__':
     assemble.add_argument('--native-directory', type=Path)
     assemble.add_argument('--native-manifest', type=Path)
     args = parser.parse_args()
-    if args.command == 'validate':
+    if args.command == 'stage-assets':
+        print(json.dumps(stage_assets(args.source, args.destination)))
+    elif args.command == 'validate':
         validate_apk(args.apk, args.assets, args.require_dex, args.native_manifest)
     else:
         assemble_apk(args.resources, args.dex_directory, args.destination, args.assets, args.native_directory, args.native_manifest)

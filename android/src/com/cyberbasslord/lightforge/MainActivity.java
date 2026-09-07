@@ -133,7 +133,13 @@ public final class MainActivity extends Activity {
         if(analysisReceiverRegistered){unregisterReceiver(analysisReceiver);analysisReceiverRegistered=false;}
         cancelled.set(true);worker.shutdownNow();
         synchronized(exportLock) {if(activeExport!=null) activeExport.abort();}
-        if(web!=null) {web.removeJavascriptInterface("Android");web.destroy();web=null;}
+        WebView previous=web;web=null;
+        if(previous!=null) {
+            // WebView must leave the view hierarchy before its renderer is destroyed.
+            ViewParent parent=previous.getParent();
+            if(parent instanceof ViewGroup)((ViewGroup)parent).removeView(previous);
+            previous.removeJavascriptInterface("Android");previous.destroy();
+        }
         super.onDestroy();
     }
     private void event(String type,JSONObject payload) {
