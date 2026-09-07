@@ -40,6 +40,23 @@ def lookup_release(repo, tag, release_id=None):
     return release
 
 
+def update_metadata(repo, release, tag, target, notes, publish=False):
+    require(release['draft'], 'Published release metadata cannot be changed')
+    # Always include identity: an omitted tag can become an untagged draft.
+    metadata = {'tag_name': tag, 'target_commitish': target,
+                'name': 'LightForge ' + tag.removeprefix('v'), 'body': notes,
+                'draft': not publish, 'prerelease': False}
+    if publish:
+        metadata['make_latest'] = 'true'
+    result = json.loads(run('gh', 'api', '--method', 'PATCH',
+                            f'repos/{repo}/releases/{release["id"]}', '--input', '-',
+                            input=json.dumps(metadata)))
+    require(result['id'] == release['id'] and result['tag_name'] == tag,
+            'Updated release identity mismatch')
+    require(result['draft'] is (not publish), 'Unexpected publication state')
+    return result
+
+
 def asset_plan(release, expected, allow_metadata_update=False):
     require(release['draft'], 'Published release assets cannot be changed')
     assets = {a['name']: a for a in release['assets']}
@@ -141,28 +158,31 @@ def main():
     resume = request.get('resume_release_id')
     if resume is not None:
         require(type(resume) is int and resume > 0, 'Invalid draft release ID')
-        release = lookup_release(repo, tag, resume)
+        resume_tag = request.get('resume_tag_name', tag)
+        require(resume_tag == tag or re.fullmatch(r'untagged-[0-9a-f]+', resume_tag), 'Invalid recovery tag')
+        release = lookup_release(repo, resume_tag, resume)
         require(release['draft'] and release['target_commitish'] in {request.get('resume_target_commit'), os.environ['GITHUB_SHA']}, 'Unexpected draft target')
     else:
         run('gh', 'release', 'create', tag, '--draft', '--target', os.environ['GITHUB_SHA'], '--title', 'LightForge ' + version['name'], '--notes-file', 'RELEASE_NOTES.md')
         release = lookup_release(repo, tag)
     files = {p.name: p for p in [apk, sums, ROOT / 'RELEASE_NOTES.md', ROOT / 'release-verification.json']}
     expected = {name: {'bytes': path.stat().st_size, 'sha256': digest(path)} for name, path in files.items()}
-    for name, replace in asset_plan(release, expected, allow_metadata_update=resume is not None):
+    uploads = asset_plan(release, expected, allow_metadata_update=resume is not None)
+    # Validate the existing APK before repairing any explicitly identified draft.
+    notes = (ROOT / 'RELEASE_NOTES.md').read_text()
+    release = update_metadata(repo, release, tag, os.environ['GITHUB_SHA'], notes)
+    for name, replace in uploads:
         args = ['gh', 'release', 'upload', tag, str(files[name])]
         if replace:args.append('--clobber')
         run(*args)
-    # A draft has no published tag yet. Pin its target to the reviewed main
-    # commit after recovery; published tags are never moved by this workflow.
-    metadata = ROOT / 'build/release-metadata.json'
-    metadata.write_text(json.dumps({'target_commitish': os.environ['GITHUB_SHA'], 'body': (ROOT / 'RELEASE_NOTES.md').read_text()}))
-    run('gh', 'api', '--method', 'PATCH', f'repos/{repo}/releases/{release["id"]}', '--input', str(metadata))
     uploaded = lookup_release(repo, tag, release['id'])
     verify_uploaded(uploaded, expected)
-    asset = next(a for a in uploaded['assets'] if a['name'] == apk_name)
-    run('gh', 'release', 'edit', tag, '--draft=false', '--latest')
-    require(not lookup_release(repo, tag, release['id'])['draft'], 'Release did not publish')
-    print(json.dumps({'release': uploaded['html_url'], 'apk': asset['browser_download_url'], 'sha256': digest(apk)}))
+    update_metadata(repo, uploaded, tag, os.environ['GITHUB_SHA'], notes, publish=True)
+    published = lookup_release(repo, tag, release['id'])
+    require(not published['draft'], 'Release did not publish')
+    verify_uploaded(published, expected)
+    asset = next(a for a in published['assets'] if a['name'] == apk_name)
+    print(json.dumps({'release': published['html_url'], 'apk': asset['browser_download_url'], 'sha256': digest(apk)}))
 
 
 if __name__ == '__main__':

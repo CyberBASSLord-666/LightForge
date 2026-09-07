@@ -1,4 +1,5 @@
 import copy
+import json
 from pathlib import Path
 import sys
 import unittest
@@ -28,6 +29,28 @@ class PublicationTest(unittest.TestCase):
         self.release['assets'][1]['digest'] = 'sha256:' + 'c' * 64
         with self.assertRaises(ValueError):publication.asset_plan(self.release, self.expected)
         self.assertEqual(publication.asset_plan(self.release, self.expected, True), [('release-verification.json', True)])
+
+    def test_metadata_and_publication_preserve_explicit_tag_identity(self):
+        for publish in [False, True]:
+            updated = dict(self.release, draft=not publish)
+            with patch.object(publication, 'run', return_value=json.dumps(updated)) as run:
+                publication.update_metadata('owner/repo', self.release, 'v2.1.0', 'a' * 40, 'Notes', publish)
+                payload = json.loads(run.call_args.kwargs['input'])
+                self.assertEqual(payload['tag_name'], 'v2.1.0')
+                self.assertEqual(payload['target_commitish'], 'a' * 40)
+                self.assertEqual(payload['draft'], not publish)
+                self.assertEqual(payload.get('make_latest'), 'true' if publish else None)
+        untagged = dict(self.release, tag_name='untagged-123abc')
+        with patch.object(publication, 'run', return_value=json.dumps(self.release)):
+            publication.update_metadata('owner/repo', untagged, 'v2.1.0', 'a' * 40, 'Notes')
+
+    def test_metadata_rejects_published_releases_and_identity_changes(self):
+        with self.assertRaises(ValueError):
+            publication.update_metadata('owner/repo', dict(self.release, draft=False), 'v2.1.0', 'a' * 40, 'Notes')
+        for field, value in [('id', 24), ('tag_name', 'untagged-123abc'), ('draft', False)]:
+            with patch.object(publication, 'run', return_value=json.dumps(dict(self.release, **{field: value}))):
+                with self.assertRaises(ValueError):
+                    publication.update_metadata('owner/repo', self.release, 'v2.1.0', 'a' * 40, 'Notes')
 
     def test_never_replaces_an_apk_or_modifies_a_published_release(self):
         changed = copy.deepcopy(self.release)

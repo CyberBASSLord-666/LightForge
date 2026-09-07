@@ -1,7 +1,7 @@
 {
   "release": "2.1.0",
   "passed": true,
-  "checkedAt": "2026-09-07T09:56:06.980Z",
+  "checkedAt": "2026-09-07T10:19:15.671Z",
   "checks": [
     {
       "name": "legacy waveform bins use full song timescale for movement salience",
@@ -79,7 +79,7 @@
     },
     "headerBytes": 76,
     "sequencePayloadBytes": 960000,
-    "preview2000RandomSeeksMs": 25.69294099999979,
+    "preview2000RandomSeeksMs": 31.648947999999564,
     "previewLampSegments": 14493
   },
   "source_hashes": {

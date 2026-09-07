@@ -1,6 +1,6 @@
-{"streamedFixtureBytes": 8388608, "archiveBytes": 8392275, "peakPythonHeapBytes": 3800844, "manifestEntries": 4}
-.....................
+{"streamedFixtureBytes": 8388608, "archiveBytes": 8392275, "peakPythonHeapBytes": 3800816, "manifestEntries": 4}
+.......................
 ----------------------------------------------------------------------
-Ran 21 tests in 0.335s
+Ran 23 tests in 0.336s
 
 OK
