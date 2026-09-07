@@ -1,31 +1,47 @@
-# LightForge 2.2.0 validation
+# LightForge 2.2.1 validation
 
-Version 2.2.0 / code 20200 adds Activity-independent Android analysis and choreography while retaining the original signing identity and saved-arrangement integrity. Current receipts are in `qa/release-2.2.0/`. Historical measurements below keep their original release scope.
+Version 2.2.1 / code 20201 changes Studio execution and recovery while retaining analysis v6, learned model weights, original soundtrack timing, existing musical semantics and saved-arrangement integrity. Current evidence is under `qa/release-2.2.1/`. Release CI, Android emulator execution and signed publication are still pending; historical measurements below retain their original scope.
 
-| Current gate | What it establishes |
+| Current check | Status and scope |
 | --- | --- |
-| Node and Python regressions | Musical boundaries, voice/bass offsets, final FSEQ attacks, hardware routing, silence, deterministic composition, stem/WAV components, neural-note fusion, backup handling, legacy frame migration and real app DOM editing |
-| Actual Chromium UI | WebGL, workers, cue form, Undo/Redo, exact-byte streamed export, save/reload, four keyboard-accessible workspaces and 320/393/768/1440 px layouts |
-| Actual Chromium analysis | Public MusicAnalyzer with real Deux, GAME, Beat This and Frame-MN10; OPFS full-resolution voice retrieval and incomplete-cache cleanup after cancellation |
-| Source separation | Six original mixtures, six instrument-only negatives and six controlled voice-window remixes, scored against original reference stems; references are never separator inputs |
-| Model conversion/runtime | Staged Float32 graphs reproduce the original model within measured floating-point error; the production JS adapter executes on the unchanged ONNX Runtime Web 1.20.1 WASM backend |
-| Native JVM | Production Java compiles; storage recovery, WAV conversion, bridge ranges, previews and 16 independent FSEQ/hardware cases |
-| Android lifecycle | Actual Balanced inference and compilation with the Activity destroyed and display off; notification cancellation, reopening and timeout recovery on API 35 |
-| Signed APK | Version, alignment, original certificate, ZIP CRCs and exact packaged-asset hashes; all current gate receipts must match the source |
+| Node/Python regressions | **Passed: 145 Node checks and 33 Python checks.** Engine/role boundaries, deterministic FSEQ, migration, actual-app DOM editing, checkpoint corruption/reuse, native transport, resource sequencing and APK transfer/package contracts. This is not browser rendering or Android execution. |
+| Native host compilation/storage | **Passed.** Production Java compilation, storage/audio/format checks, stronger final-checkpoint validation and compatibility with three real 1.6 music-analysis fixtures. |
+| Deux runtime equivalence | **Passed on the development host.** Bounded WASM matches the declared original Float32 output; production Java native CPU matches the separate, identical PCM16 WASM input within measured Float32 error. |
+| Vocal/bass role regression | **Passed: 18 cases.** Fresh downstream neural inference on fixed original-model source estimates retains voice in 12 positive cases and produces zero vocal events in six instrumental cases. These are not 18 newly separated native-runtime mixtures. |
+| Source-clock reconstruction | **Passed.** Production transform/scheduler tests exercise overlapping joins and an odd final sample count with neutral masks; model timing and perceptual accuracy are separate questions. |
+| Chromium UI and complete public analysis | **Pending current CI.** Must exercise real UI/WebGL, responsive layouts, workers, OPFS, cancellation, persistence and export, including elapsed/passage/reuse progress. |
+| Android native Studio lifecycle | **Pending current emulator run.** Must execute native Studio with the Activity destroyed, screen off and Doze active; cancel a later native passage, immediately resume saved work, and verify model/worker/CPU-lock cleanup. |
+| Signed update APK and publication | **Pending final release gates.** Version, alignment, original certificate, ZIP CRCs and exact web/model/native-library inventories must match current source-bound receipts. |
+| Physical phone and Tesla | **Unverified.** No sustained-phone, thermal, manufacturer battery-policy or physical lamp/motor timing certification. |
 
-`tools/package_v2.py` refuses missing, failed or stale regression/UI/native/analysis/background receipts. The build checks all 60 bundled analysis files before packaging. CI reproduces GAME and Deux from pinned official checkpoints and verifies the resulting hashes; no large new checkpoint is silently omitted from a fresh checkout.
+`tools/package_v2.py` refuses missing, failed or stale required receipts. Build and package verification check every declared model and native-runtime asset against pinned hashes. Native libraries do not enter the APK merely because a host test passes; dependency, ABI, ZIP and signing checks remain separate gates.
 
-The final review regressions include 115 Node checks and 23 Python checks. Dense/simultaneous bass notes on a shared fallback lamp retain valid target intervals, and full-resolution PCM writes preserve exact little-endian samples using one 64 KiB backing buffer. APK transfer tests cover exact reconstruction, wrong candidates, invalid copy bounds and atomic retention of an existing output after a corrupt patch.
+## Measured native execution on one development excerpt
 
-## Background lifecycle scope
+The exact comparison uses the same **300,032-sample, approximately 6.803-second stereo PCM16 Falcon excerpt**, the same learned model weights and four inference threads on a Linux x86_64 development machine. See [`DEUX_RUNTIME.md`](qa/release-2.2.1/DEUX_RUNTIME.md), [`deux-native-java.json`](qa/release-2.2.1/deux-native-java.json) and its pinned [`PCM16 WASM reference`](qa/release-2.2.1/deux-bounded-pcm16-wasm.json).
 
-The new host JVM test covers exclusive job ownership, monotonic progress, exact-input checkpoint reuse, stale-callback rejection, cancellation, conflicting newer edits, durable completion and recovery after a result commit. The real DOM test verifies native delegation, blocked stale UI saves and completed-show reload. A service-runner test checkpoints analysis and generates/restores actual compiled frames without a Studio document.
+| Measure | Bounded WASM | Production Java native CPU |
+| --- | ---: | ---: |
+| Processing time | 127.25 s | 61.11 s |
+| Peak process resident memory | 1,920.96 MiB | 720.56 MiB |
 
-A separate Android 15 emulator gate exercises the production foreground service and real bundled Balanced models with the Activity destroyed, display off and Doze forced under a user-equivalent battery exemption. It also checks notification Cancel and the media-processing timeout callback. Its current receipt is required for release packaging. This is not a physical-phone performance or OEM battery-management certification.
+Native execution was **2.08× faster** in this comparison, with approximately **62.49% less peak process RSS**. These are whole-process host measurements on one short excerpt, not an isolated tensor-allocation budget, full-song result or phone prediction. Even the faster result takes much longer than this excerpt's playback duration. Sustained performance, thermals and successful completion on the user's phone remain unverified.
 
-The model comparison below is retained 2.1 evidence. Every measured model/analysis source hash must match exactly before `verify_retained_analysis.py` produces the 2.2 reference-quality gate. This release does not claim a new numeric quality benchmark. Actual model inference is rerun separately.
+Native output retains both 300,032-sample crops with no non-finite values. Maximum absolute error against the identical PCM16 WASM reference is approximately **3.21 × 10⁻⁷** for vocals and **2.99 × 10⁻⁷** for accompaniment; RMS error is below **4.51 × 10⁻⁸**. The full model input remains 13 seconds, including source context. Context crop offsets are not a measured output delay.
 
-## Current separator comparison
+A separate Float32-input WASM comparison to the historical combined-graph output is bit-identical for both stems. Its input differs from the PCM16 native comparison and must not be substituted for that oracle. The current [`analysis-verification.json`](qa/release-2.2.1/analysis-verification.json) binds these results to exact sources and states their limits. Preserving learned weights does not by itself prove execution equivalence; native transforms, graph partitioning and source-clock handling require the fresh numerical checks above.
+
+## Recovery, cancellation and lifecycle scope
+
+Host transactions now reject incomplete overall music checkpoints, wrong source duration, unsupported versions, malformed arrays, missing role/model fields and changed checkpoint bytes. Repeated attempts after damaged checkpoints return to analysis rather than reusing the same invalid result. Complete legacy v5 analysis remains eligible; existing compiled projects still reopen through their unchanged checksum/migration path. Changing audio, analysis settings, app version or execution namespace prevents stale work reuse; rename and choreography-only edits preserve matching work.
+
+Checkpoint/component tests cover committed passage reuse, failed writes, corrupted or swapped records, stage invalidation when stems are missing, cancellation and exact source sample counts. A fresh worker per rhythm/separation/voice/bass stage frees its prior WASM heap. Native resources are released after separation before voice/GAME; cancellation reaches the active native run, and a process-wide gate serializes heavy native allocations across rapid cancel/resume. Host/DOM tests verify these contracts; the Android lifecycle test must independently confirm runtime behavior.
+
+The implemented Android 15 test runs Studio native CPU separation and full neural choreography after destroying the Activity and turning the display off under forced Doze and a user-equivalent battery exemption. It then cancels during the second passage of a 12-second fixture, immediately starts Resume, checks old native-executor cleanup, and requires at least one restored passage, two final source passages and a compiled show on the same clock. It also observes native-model release during voice/GAME and exercises the media-processing timeout callback. **Its current emulator result is pending.** The retained 2.2.0 Balanced emulator pass does not prove this new path.
+
+The 18 current role cases use fixed original-PyTorch separation estimates followed by fresh production resampling, singing/speech evidence, vocal detail, GAME and bass processing. They demonstrate the declared positive/negative behavior on that small set, not fresh native separation quality across 18 songs or human-annotated note/word timing. Historical 2.1 separation scores follow below; they remain historical and are not relabeled as a new native benchmark.
+
+## Historical 2.1 separator comparison
 
 | Mixture | Previous MDX vocal SI-SDR | Deux vocal SI-SDR |
 | --- | ---: | ---: |
@@ -49,7 +65,7 @@ The role component evaluation uses estimated vocals/accompaniment and the produc
 
 Synchronization review compares selected voice/bass targets with final exported lamp commands after manual output edits. A matching command proves frame placement, not whether an automatic musical target was detected correctly. Bass remains a harmonic estimate from combined accompaniment. There are no lyrics, word timestamps or individually synchronized Tesla Dance strokes.
 
-Desktop WASM, Chromium and host JVM checks do not execute Android Activities, document providers, phone codecs or a physical Tesla. The larger models need several GB of working memory; WASM can retain peak allocation until the disposable worker terminates. Actual phone installation, sustained analysis, thermals and vehicle timing remain physical validation work.
+Those historical desktop WASM, Chromium and host JVM checks do not execute Android Activities, document providers, phone codecs or a physical Tesla. Their original WASM memory needs are not a measurement of the new native execution path. Current host memory/runtime results and pending device scope are recorded above.
 
 ## Historical 1.6.0 model choice and measured quality
 
@@ -86,7 +102,7 @@ Original 1.4, 1.5, 1.6 and previously migrated compiled arrangements are checked
 
 Audio decoding, project revisions, transactional imports, backup/recovery and native FSEQ/ZIP validation execute against production Java on the host JVM. Actual browser workers exercise compression, checksums, corruption rejection, Undo/Redo and IndexedDB reopening. Separate real OPFS tests cover streaming writes, corruption, metadata, cancellation, stored samples and browser audio playback. Missing audition caches do not rewrite saved analysis or prevent original-audio export.
 
-Neural sessions are released between stages so their allocations can be reused. WebAssembly linear memory can retain its peak size until the disposable analysis worker terminates; release does not promise an immediate resident-memory drop. PCM reads and cache writes are bounded, and the original full-quality soundtrack remains the export audio. Processing time depends on track and device and can substantially exceed song duration.
+In 2.2.1, a separate worker is terminated after each major model stage so its WebAssembly heap is not carried into the next stage; releasing an individual session alone still does not promise an immediate resident-memory drop. Native separation buffers are separately released before voice/GAME. PCM reads and checkpoint writes are bounded, and the original full-quality soundtrack remains the export audio. Runtime and remaining storage/memory requirements depend on the track and device and can substantially exceed song duration.
 
 The retained 1.6.0 preview gate loaded 105 meshes and 180,081 triangles in actual WebGL2, and checks command/pose parity across quality modes, seeking, hidden views and graphics-context recovery. Visual lamp optics, lens subdivisions, motor travel and Tesla-controlled Dance cadence remain estimates requiring physical comparison.
 

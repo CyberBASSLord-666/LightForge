@@ -1,6 +1,7 @@
 import copy
 import json
 from pathlib import Path
+import subprocess
 import sys
 import unittest
 from unittest.mock import patch
@@ -23,6 +24,49 @@ class PublicationTest(unittest.TestCase):
         with patch.object(publication, 'api', return_value=self.release) as api:
             publication.lookup_release('owner/repo', 'v2.1.0', 23)
             api.assert_called_once_with('repos/owner/repo/releases/23')
+
+    def test_creation_uses_returned_id_without_listing_drafts(self):
+        target = 'a' * 40
+        created = dict(self.release, assets=[], target_commitish=target)
+        notes = 'Signed update\n\nExact notes with `code` and $literal text.\n'
+        with patch.object(publication, 'run', return_value=json.dumps(created)) as run, \
+                patch.object(publication, 'lookup_release') as lookup, \
+                patch.object(publication, 'api') as api:
+            self.assertEqual(publication.create_draft('owner/repo', 'v2.1.0', target, notes), created)
+            run.assert_called_once()
+            self.assertEqual(run.call_args.args,
+                             ('gh', 'api', '--method', 'POST', 'repos/owner/repo/releases', '--input', '-'))
+            self.assertEqual(json.loads(run.call_args.kwargs['input']), {
+                'tag_name': 'v2.1.0', 'target_commitish': target,
+                'name': 'LightForge 2.1.0', 'body': notes, 'draft': True, 'prerelease': False})
+            lookup.assert_not_called()
+            api.assert_not_called()
+
+    def test_creation_rejects_invalid_or_mismatched_identity(self):
+        target = 'a' * 40
+        created = dict(self.release, assets=[], target_commitish=target)
+        responses = [None, [], {k: v for k, v in created.items() if k != 'id'}]
+        for field, value in [('id', 0), ('id', -1), ('id', True), ('id', '23'),
+                             ('tag_name', 'untagged-123abc'), ('target_commitish', 'b' * 40),
+                             ('draft', False), ('draft', 'true'), ('assets', [{'name': 'unexpected.apk'}])]:
+            responses.append(dict(created, **{field: value}))
+        for response in responses:
+            with self.subTest(response=response), \
+                    patch.object(publication, 'run', return_value=json.dumps(response)) as run, \
+                    patch.object(publication, 'lookup_release') as lookup:
+                with self.assertRaises(ValueError):
+                    publication.create_draft('owner/repo', 'v2.1.0', target, 'Notes')
+                run.assert_called_once()
+                lookup.assert_not_called()
+
+    def test_creation_request_failure_does_not_repeat_mutation_or_lookup(self):
+        failure = subprocess.CalledProcessError(1, ['gh', 'api'])
+        with patch.object(publication, 'run', side_effect=failure) as run, \
+                patch.object(publication, 'lookup_release') as lookup:
+            with self.assertRaises(subprocess.CalledProcessError):
+                publication.create_draft('owner/repo', 'v2.1.0', 'a' * 40, 'Notes')
+            run.assert_called_once()
+            lookup.assert_not_called()
 
     def test_resumption_skips_exact_assets_and_only_replaces_draft_metadata(self):
         self.assertEqual(publication.asset_plan(self.release, self.expected), [])

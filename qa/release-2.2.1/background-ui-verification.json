@@ -1,10 +1,12 @@
 {
   "release": "2.2.1",
-  "passed": false,
-  "checks": [],
-  "errors": [
-    "browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝\n    at /workspace/scratch/b924cfebd992/LightForge/qa/release-2.2.1/background-ui.cjs:16:26"
+  "passed": true,
+  "checks": [
+    "Elapsed time, passage completion/reuse, delayed progress, cancellation recovery and device settings fit 320px; background/power controls dispatch correctly and active inputs remain frozen.",
+    "Elapsed time, passage completion/reuse, delayed progress, cancellation recovery and device settings fit 393px; background/power controls dispatch correctly and active inputs remain frozen.",
+    "Elapsed time, passage completion/reuse, delayed progress, cancellation recovery and device settings fit 768px; background/power controls dispatch correctly and active inputs remain frozen."
   ],
+  "errors": [],
   "source_hashes": {
     "qa/release-2.2.1/background-ui.cjs": "280b64fc06acd6039f266c25ca5dfd4d29bedbeeb9d6cfc1306876e717244af6",
     "version.json": "c2bb2ac7b87451cfb09a2cc087581ef8217cd7395ec87fdea0dc2e248f83f9df",
@@ -16,5 +18,5 @@
     "web/cockpit.js": "cba1d693ee592ac9ea0bf028ba362d8247981c1678c25d81737db7a633163afe"
   },
   "scope": "Real Chromium UI with a simulated Android job/status bridge; native background lifetime is tested separately on Android.",
-  "completedAt": "2026-09-07T20:47:04.385Z"
+  "completedAt": "2026-09-07T21:18:47.114Z"
 }

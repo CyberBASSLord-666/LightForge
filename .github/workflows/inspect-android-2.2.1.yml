@@ -1,0 +1,35 @@
+name: Inspect Android 2.2.1 diagnostic
+on:
+  push:
+    branches: ['diagnostics/2.2.1-recovery']
+    paths: ['.github/workflows/inspect-android-2.2.1.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: CyberBASSLord-666/LightForge
+    steps:
+      - name: Read the retained failed Android diagnostic
+        run: |
+          gh run download 34162369481 --name lightforge-2.2.1-android-background --dir diagnostic
+          python3 - <<'PY'
+          from pathlib import Path
+          import json,re
+          for p in sorted(Path('diagnostic').rglob('*')):
+              if not p.is_file():continue
+              print('DIAGNOSTIC FILE',p.name,p.stat().st_size)
+              s=p.read_text(errors='replace')
+              if p.suffix=='.json':
+                  d=json.loads(s)
+                  print(json.dumps({k:v for k,v in d.items() if k!='source_hashes'},indent=2))
+              else:
+                  lines=s.splitlines()
+                  matches=[l for l in lines if re.search(r'lightforge|chromium|onnx|FATAL|Fatal signal|ANR|Out of memory|lmkd|timed out|instrumentation',l,re.I)]
+                  print('\n'.join(matches[-400:] if matches else lines[-50:]))
+          PY

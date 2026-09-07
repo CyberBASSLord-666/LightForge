@@ -41,6 +41,25 @@ def lookup_release(repo, tag, release_id=None):
     return release
 
 
+def create_draft(repo, tag, target, notes):
+    # The creation response identifies the new draft even before release lists
+    # reflect it. Do not rediscover it by tag or retry a successful mutation.
+    metadata = {'tag_name': tag, 'target_commitish': target,
+                'name': 'LightForge ' + tag.removeprefix('v'), 'body': notes,
+                'draft': True, 'prerelease': False}
+    release = json.loads(run('gh', 'api', '--method', 'POST',
+                             f'repos/{repo}/releases', '--input', '-',
+                             input=json.dumps(metadata)))
+    require(isinstance(release, dict), 'Invalid draft creation response')
+    require(type(release.get('id')) is int and release['id'] > 0,
+            'Invalid created draft ID')
+    require(release.get('tag_name') == tag and release.get('target_commitish') == target,
+            'Created draft identity mismatch')
+    require(release.get('draft') is True and release.get('assets') == [],
+            'Created release is not an empty draft')
+    return release
+
+
 def update_metadata(repo, release, tag, target, notes, publish=False):
     require(release['draft'], 'Published release metadata cannot be changed')
     # Always include identity: an omitted tag can become an untagged draft.
@@ -158,6 +177,7 @@ def main():
     sums = release_dir / 'SHA256SUMS.txt'
     sums.write_text(digest(apk) + '  ' + apk_name + '\n')
     tag = 'v' + version['name']
+    notes = (ROOT / 'RELEASE_NOTES.md').read_text()
     # Resume only a specifically identified draft; never overwrite its APK.
     resume = request.get('resume_release_id')
     if resume is not None:
@@ -167,13 +187,11 @@ def main():
         release = lookup_release(repo, resume_tag, resume)
         require(release['draft'] and release['target_commitish'] in {request.get('resume_target_commit'), os.environ['GITHUB_SHA']}, 'Unexpected draft target')
     else:
-        run('gh', 'release', 'create', tag, '--draft', '--target', os.environ['GITHUB_SHA'], '--title', 'LightForge ' + version['name'], '--notes-file', 'RELEASE_NOTES.md')
-        release = lookup_release(repo, tag)
+        release = create_draft(repo, tag, os.environ['GITHUB_SHA'], notes)
     files = {p.name: p for p in [apk, sums, ROOT / 'RELEASE_NOTES.md', ROOT / 'release-verification.json']}
     expected = {name: {'bytes': path.stat().st_size, 'sha256': digest(path)} for name, path in files.items()}
     uploads = asset_plan(release, expected, allow_metadata_update=resume is not None)
     # Validate the existing APK before repairing any explicitly identified draft.
-    notes = (ROOT / 'RELEASE_NOTES.md').read_text()
     release = update_metadata(repo, release, tag, os.environ['GITHUB_SHA'], notes)
     for name, replace in uploads:
         args = ['gh', 'release', 'upload', tag, str(files[name])]

@@ -1,0 +1,2 @@
+Note: /home/runner/work/LightForge/LightForge/android/src/com/cyberbasslord/lightforge/MainActivity.java uses or overrides a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.

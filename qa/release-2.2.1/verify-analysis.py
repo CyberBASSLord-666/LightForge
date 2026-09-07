@@ -84,7 +84,7 @@ try:
     verify_assets()
     for relative in ['version.json', 'web/analysis/ASSET_MANIFEST.json',
                      'web/analysis/models/deux/manifest.json', 'android/native-runtime.json',
-                     'qa/release-2.2.1/verify-analysis.py', 'tools/verify_analysis_assets.py']:
+                     'qa/release-2.2.1/verify-analysis.py', 'tools/verify_analysis_assets.py', 'tools/prepare_deux_fixture.py', 'qa/release-2.2.1/deux-fixture-provenance.json']:
         bind(relative)
     manifest = json.loads((ROOT / 'web/analysis/models/deux/manifest.json').read_text())
     for relative, expected in manifest['files'].items():
@@ -104,6 +104,8 @@ try:
         validate_model(value, manifest)
     validate_pcm(wasm, 300032, comparison=True)
     validate_pcm(reference, 300032)
+    provenance=json.loads((OUT/'deux-fixture-provenance.json').read_text())
+    require(provenance['fixtureSHA256']==reference['fixtureSHA256'] and provenance['sourceSHA256']==wasm['fixtureSHA256'] and provenance['samples']==300032 and provenance['sampleRate']==44100, 'Native PCM16 fixture provenance changed')
     validate_pcm(native, 300032, comparison=True, max_tolerance=.00002, rms_tolerance=.000001)
     require(native['fullPassageSamplesPerStem'] == 573300 and native['sourceStartSample'] == -66150 and native['cropOffsetSamples'] == 66150, 'Native full-context/source-clock relationship changed')
     require(native['referenceReceiptSHA256'] == digest(OUT/'deux-bounded-pcm16-wasm.json'), 'Native reference receipt changed')
