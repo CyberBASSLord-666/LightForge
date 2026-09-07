@@ -23,5 +23,5 @@ test('1.4 direct and 1.5 rebound snapshots still migrate without replacing their
 test('2.0 cue metadata and final synchronization report survive an exact backup round trip',async()=>{
  const next={...settings,...defaults,musicCues:[{id:'manual',role:'vocals',action:'hold',start:3.137,end:4.719,strength:.8}]};
  const a=await run(current,{action:'generate',music,settings:next}),b=await run(current,{action:'restore',music,settings:next,compiled:JSON.parse(JSON.stringify(a.compiled))});
- assert.deepEqual(a.show.frames,b.show.frames);assert.equal(JSON.stringify(a.show.synchronization),JSON.stringify(b.show.synchronization));assert.equal(a.show.synchronization.manual[0].status,'matched');
+ assert.deepEqual(a.show.frames,b.show.frames);assert.equal(JSON.stringify(a.show.synchronization),JSON.stringify(b.show.synchronization));assert.equal(a.show.synchronization.manual[0].status,'matched');assert.equal(JSON.stringify(b.show.validation.synchronization),JSON.stringify(a.show.validation.synchronization));
 });

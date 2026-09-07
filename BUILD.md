@@ -1,161 +1,68 @@
-# Building LightForge
+# Build and verify LightForge 2.0
 
-Private, release-signed Android APK without Gradle or an external backend. The native shell uses Android SDK APIs and packages the local web application, analysis code and models as APK assets (no ABI `.so`).
+The repository root contains the complete Android/WebView application, bundled models, graphics, audio and tests. No Gradle, backend, account or runtime model download is needed.
 
-Related: [`ARCHITECTURE.md`](ARCHITECTURE.md) · [`ASSETS.md`](ASSETS.md) · [`VALIDATION.md`](VALIDATION.md) · [`INSTALL_OVER_1.5_to_1.6_CHECKLIST.md`](INSTALL_OVER_1.5_to_1.6_CHECKLIST.md)
+## Reproduce the Android update
 
-**Checkout note:** On GitHub `main`, run from the **repo root** (`android/`, `web/`, `tools/` live here). A private extract may nest the same tree under `…/app/lightforge/`.
-
-
-## Prerequisites
-
-- Linux x86_64 with Bash and Python 3.12 or newer for the supplied bootstrap.
-- Approximately 1 GB of free disk space for the pinned JDK and Android SDK tools, plus the project and generated APK.
-- Network access to Google Android SDK downloads and Eclipse Adoptium's GitHub release during the first bootstrap. Building afterward uses the locally installed dependencies.
-
-From this directory:
+Requirements: Linux x86_64, Python 3.12+, Node 22+, Bash, and space for roughly 1 GB of toolchain plus source and build outputs.
 
 ```bash
+npm ci --ignore-scripts --no-audit --no-fund
 python3 tools/bootstrap_toolchain.py
-bash build.sh
+npm test
+LIGHTFORGE_SIGNING_DIR=/absolute/path/to/original-private-signing bash build.sh
+python3 tests/verify_native_release.py --release 2.0.0
 ```
 
-The output is `dist/LightForge-1.6.0.apk`. Its SHA-256 checksum and build validation receipt are alongside it. The bootstrap pins and verifies SHA-256 checksums for Android build-tools 35.0.0, the Android 35 platform revision 2 and Eclipse Temurin JDK 17.0.20.1+1. They are stored in `../toolchain` by default. The downloaded SDK and JDK contain their applicable license notices.
-
-To use an existing installation, supply the correct locations:
+The signing directory must contain the original `lightforge-release.jks` and `keystore-password.txt` from the private source backup. Never commit them. The build rejects missing or incompatible update signing material. For an intentionally separate development installation only:
 
 ```bash
-ANDROID_SDK_ROOT=/path/to/android-sdk \
-LIGHTFORGE_JAVA_HOME=/path/to/jdk17 \
-bash build.sh
+LIGHTFORGE_ALLOW_NEW_SIGNING=1 LIGHTFORGE_SIGNING_DIR=/tmp/lightforge-dev-signing bash build.sh
 ```
 
-`build.sh` expects SDK `build-tools/35.0.0` and `platforms/android-35/android.jar`. `LIGHTFORGE_TOOLCHAIN_DIR` changes the bootstrap/default toolchain directory. `LIGHTFORGE_SIGNING_DIR` changes the signing directory.
+That APK cannot update the original installation. Do not uninstall the original app to work around a signing error; recover the correct signing identity.
 
-## Build settings
+The build verifies resource and asset ZIP integrity, compiles Java/DEX, aligns the APK, signs it, verifies the certificate and manifest, and atomically publishes:
 
-`version.json` is the version SSoT (see [`VERSIONING.md`](VERSIONING.md)); table values match current `main`.
+- `dist/LightForge-2.0.0.apk`
+- `dist/LightForge-2.0.0.apk.json`
+- `dist/LightForge-2.0.0.apk.sha256`
 
+`update_compatible` in the JSON receipt must be `true` for the original installation.
 
-| Setting | Value |
-| --- | --- |
-| Application ID | `com.cyberbasslord.lightforge` |
-| Display name | LightForge |
-| Version name | 1.6.0 |
-| Version code | 10600 |
-| Minimum Android version | Android 8.0 / API 26 |
-| Target and compile SDK | Android 15 / API 35 |
-| Java language target | Java 8, compiled with JDK 17 |
-| Native ABIs | None; Java and bundled browser assets |
-| APK signature schemes | v2 and v3 verified for API 26+ |
+## Browser and release gates
 
-The build stages web assets while excluding development dependency/cache folders, compiles resources with AAPT2, compiles Java with `javac`, produces DEX with D8, packages assets, aligns the APK, then signs it. After signing it verifies the APK signature and alignment, checks every ZIP entry's CRC, and confirms the required manifest, resources, DEX and application entry page exist. It then publishes the final APK in one atomic replacement to avoid incomplete downloadable files.
+```bash
+npx playwright install --with-deps chromium
+node qa/release-2.0.0/browser.cjs
+python3 tools/package_release.py
+```
 
-## Rebuild the graphics bundle after editing it
+The browser test uses the real UI, WebGL, browser workers, music fixture, persistence and streamed export, with a simulated Android bridge. It retains screenshots at 320, 393, 768 and 1440 pixels. The `.github/workflows/verify-v2.yml` workflow runs Node/Python, browser, APK build and native tests and keeps receipts/screenshots as an Actions artifact. Its signing identity is temporary and its APK is not uploaded as a release.
 
-The checked-in `web/preview/vehicle-preview.js` is already bundled. A normal
-Android APK rebuild needs no npm installation. To edit the renderer source and
-regenerate that file, install Node.js with npm, then run from the app-tree root (repo root on `main`):
+The packager requires passing, source-bound regression, browser and native receipts. It compares every bundled web asset against the current source, checks APK CRCs and the original certificate, then creates `output/LightForge-2.0.0.apk` and `release-verification.json`. It does not substitute historical model tests for current UI/engine tests. Repository sources are the development handoff; the separate original private backup retains signing credentials.
+
+## Dependencies and overrides
+
+The bootstrap pins SHA-256 checksums for Android build-tools 35.0.0, Android platform 35 revision 2, and Temurin JDK 17.0.20.1+1. `tools/bootstrap_testdeps.py` supplies the pinned host-JVM `org.json` implementation. Development npm dependencies are lockfile-pinned and never enter the APK.
+
+Supported environment variables: `LIGHTFORGE_TOOLCHAIN_DIR`, `LIGHTFORGE_JAVA_HOME`, `ANDROID_SDK_ROOT`, and `LIGHTFORGE_SIGNING_DIR`. Android SDK paths are `build-tools/35.0.0` and `platforms/android-35/android.jar`. Unset runner-injected `ANDROID_SDK_ROOT`/`ANDROID_HOME` when using the supplied toolchain on CI.
+
+Application ID: `com.cyberbasslord.lightforge`; minimum API 26; compile/target API 35; Java language level 8; version code 20000. No native `.so` libraries or Internet permission are included.
+
+## Renderer source
+
+Edit `web/preview/src/`, not only the generated `web/preview/vehicle-preview.js`. To rebuild:
 
 ```bash
 mkdir -p ../toolchain/graphics
 cp web/preview/src/package.json web/preview/src/package-lock.json ../toolchain/graphics/
 npm ci --prefix ../toolchain/graphics
 node tools/build_preview.mjs
-bash build.sh
 ```
 
-The npm lock pins Three.js 0.180.0 and the build dependencies. `npm ci` downloads
-them during this development step; the installed app still runs offline.
-The full renderer source is in `web/preview/src/`, and the pinned manifests are
-kept there so an extracted private backup can reproduce the bundle. Do not
-edit only the generated minified file.
+Three.js remains pinned at 0.180.0. Model conversion provenance and scripts are under `research/model-source/`; model and library notices remain bundled.
 
-The original licensed Highland GLB, geometry scripts and provenance are in
-`research/model-source/`. See its `REBUILD.md` to regenerate the normalized
-model. The original model and all derived build inputs are included in the
-private source archive. Geometry preparation uses Python and NumPy; it is
-optional when using the supplied bundled model.
+## Physical validation
 
-## Keep the signing identity
-
-The first build creates local files under `signing/` (keystore + password file). Preserve that identity in the **private** source backup — never commit `signing/` or put secret values in docs/CI. Subsequent builds reuse them so Android can install updates over the existing app. Do not recreate the key for an app already installed on the phone. The build deliberately stops if only one half of the existing signing identity is present.
-
-These are private personal signing credentials. This project has no public publishing workflow. If the source is ever shared, exclude `signing/` and have the recipient generate their own identity; their APK will then require a separate installation or removal of the original.
-
-## Validation and runtime limits
-
-The build produces `build/signature-verification.txt` and `build/apk-badging.txt` for inspection. These checks establish package integrity, declared compatibility and a valid Android signature; they do not replace an on-device runtime test. This workspace has no `/dev/kvm`, so accelerated Android emulator testing is unavailable. Browser-level application tests and export validation are separate from native device testing.
-
-With a local Android SDK and a personally connected device, an optional local test is:
-
-```bash
-adb install -r dist/LightForge-1.6.0.apk
-adb shell am start -n com.cyberbasslord.lightforge/.MainActivity
-```
-
-No remote device access is required for the build.
-
-## Package a verified private release
-
-After completing the current validation recorded in `VALIDATION.md`, run:
-
-```bash
-python3 tools/package_release.py
-```
-
-The packager requires the current source-bound receipts listed in
-`tools/package_release.py`, all with explicit passing results and no errors.
-Every recorded source hash must still match the implementation. Refresh a
-receipt by rerunning its checks; changing only its version or hashes is invalid.
-
-Historical release evidence is retained separately. The packager verifies the
-APK update signature and exact bundled source bytes, then atomically writes
-`LightForge-1.6.0.apk` and `LightForge-1.6.0-Private-Source.zip` to `output/`.
-Generated music/FSEQ fixtures, discarded candidate model weights, JVM classes
-and npm dependencies are excluded; their reproducible generators, primary
-provenance and reports remain available.
-
-## Primary documentation
-
-- [`VERSIONING.md`](VERSIONING.md) — `version.json` SSoT, tags, CI signing (no secrets) (lands with Release CI PR)
-
-- [`ARCHITECTURE.md`](ARCHITECTURE.md) — layer contracts
-- [`ASSETS.md`](ASSETS.md) — fat bins / neural path map
-- [`VALIDATION.md`](VALIDATION.md) — coverage and limits
-- [`INSTALL_OVER_1.5_to_1.6_CHECKLIST.md`](INSTALL_OVER_1.5_to_1.6_CHECKLIST.md) — Platform install-over 1.5→1.6
-
-- [Android AAPT2](https://developer.android.com/tools/aapt2)
-- [Android D8](https://developer.android.com/tools/d8)
-- [APK alignment](https://developer.android.com/tools/zipalign)
-- [APK signing and verification](https://developer.android.com/tools/apksigner)
-- [Eclipse Temurin releases](https://adoptium.net/temurin/releases/)
-
-## Device-test status
-
-The current release receipt records APK integrity, channel coverage, command
-validation and browser checks separately from historical regression evidence. Native Android
-installation and launch were not confirmed because the earlier emulator did not
-finish booting. The app has not been tested here on the user's phone or car.
-See `VALIDATION.md` for coverage and remaining limits.
-
-## Release identity and verification
-
-`version.json` is the build version source (see [`VERSIONING.md`](VERSIONING.md)). Native UI and export metadata read the installed package version. To verify and package the signed release after running its tests, run `python3 tools/package_release.py`. The packager requires every current receipt to pass and its source hashes to match, verifies that the APK contains the current web assets, checks the update signing certificate and ZIP CRCs, and retains earlier release receipts explicitly as history. The included transformer graphs are ready to use; upstream references and conversion scripts are in `research/upstream/beat_this/`.
-
-Current verification entry points:
-
-```bash
-node --test tests/engine.test.cjs tests/engine-manual.test.cjs tests/preview-engine.test.cjs tests/light-planner.test.cjs
-node tests/movement-planner.test.cjs
-node tests/composer-1.6.test.cjs
-node tests/role-composer-1.6.test.cjs
-node --test tests/bass-notes.test.cjs
-python3 tests/verify_native_release.py --release 1.6.0
-node qa/release-1.6.0/test-runtime.cjs
-node qa/release-1.6.0/test-studio16.cjs
-node qa/release-1.6.0/test-preview.cjs
-node qa/release-1.6.0/test-real-music-export.cjs
-```
-
-Browser QA scripts use Playwright and a Chromium executable path from the build workspace; adjust those paths when reproducing on another machine. Analysis evaluation scripts and fixture provenance are included under `qa/release-1.6.0/`. These are desktop/JVM tests, not Android instrumentation tests.
+Host tests do not execute an Android Activity, document provider or media codec, and do not measure vehicle behavior. A device with current Android System WebView is required for final install, playback, long-analysis and USB/car checks. Keep the app open while analyzing or exporting.

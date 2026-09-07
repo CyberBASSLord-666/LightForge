@@ -5,7 +5,7 @@
  */
 (function (root) {
   'use strict';
-  const VERSION = '2.0.0';
+  const VERSION = (root.LightForgeVersion || require('../version.js')).name;
   const CUES = root.MusicCues || (typeof require === 'function' ? require('./music-cues.js') : null);
   const SYNC = root.SyncReview || (typeof require === 'function' ? require('./sync-review.js') : null);
   const PROFILE = root.VehicleProfile || (typeof require === 'function' ? require('./vehicle-profile.js') : null);

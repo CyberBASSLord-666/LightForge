@@ -1,4 +1,4 @@
-# LightForge 1.6.0 — Architecture
+# LightForge 2.0.0 — Architecture
 
 Quality bars for modularity and API boundaries. Repo: private `CyberBASSLord-666/LightForge` — on GitHub `main`, `android/` and `web/` live at **repo root**; some local/private trees nest the same layout under `app/lightforge/`. Docs only — no code moves in this landing.
 
@@ -107,3 +107,14 @@ Bundled `preview/vehicle-preview.js` is generated; edit `preview/src/` + rebuild
 ## Related docs
 
 Coordinate wording with LF Docs if touching `BUILD.md` / `VALIDATION.md`. Engine and analysis contracts remain detailed in `web/engine/README.md` and `web/analysis/README.md`.
+
+
+## 2.0 additions
+
+`engine/music-cues.js` validates additive settings (`musicCues`, `vocalOffsetMs`, `bassOffsetMs`) and creates a corrected working interpretation without changing saved model evidence. The analysis schema remains version 5 because the raw analysis products and model code are unchanged.
+
+`engine/sync-review.js` inspects the final frame payload after output-level overrides. Its coverage denominator is selected role targets, not all detected notes, and it makes no inference-accuracy or vehicle-latency claim. The review is frozen inside compiled metadata and export validation.
+
+`precision-studio.js` owns its UI and commits edits through the existing serialized `commitChannelSettings` transaction. Failed edits leave the previous show intact. Fresh imports reset musical cues and part corrections.
+
+`web/version.js` is generated from `version.json`. Known zero/empty 2.0 defaults can be stripped only to reproduce a legacy input checksum; payload and metadata checks remain mandatory.

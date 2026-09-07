@@ -1,6 +1,6 @@
 /* Cancellable composition and durable frame snapshots, isolated from the UI. */
 'use strict';
-importScripts('vehicle-profile.js','movement-planner.js','light-planner.js','music-cues.js','sync-review.js','show-engine.js');
+importScripts('../version.js','vehicle-profile.js','movement-planner.js','light-planner.js','music-cues.js','sync-review.js','show-engine.js');
 const MAX_FRAMES=960000, CHANNELS=200;
 const canonical=value=>JSON.stringify(value,(_,item)=>item&&typeof item==='object'&&!Array.isArray(item)?Object.fromEntries(Object.keys(item).sort().map(key=>[key,item[key]])):item);
 const progress=(value,detail)=>postMessage({type:'progress',value:{progress:value,stage:'generate',detail}});
@@ -55,7 +55,7 @@ async function restore(compiled,music,settings){
  const frames=await expand(unbase64(compiled.frameData),compiled.frameCount*CHANNELS);
  if(await digest(frames)!==compiled.sha256)throw Error('The saved show checksum failed. Restore a previous project revision.');
  const show={...compiled.meta,frames,frameCount:compiled.frameCount,channels:CHANNELS,channelCount:CHANNELS,stepMs:compiled.stepMs,duration:compiled.frameCount*compiled.stepMs/1000,audioDuration:music.duration,settings:ShowEngine.normalizeSettings(settings)};delete show.previewIndex;
- show.validation=ShowEngine.validate(show,music);if(!show.validation.valid)throw Error('The saved show failed current format checks: '+show.validation.errors.join(' '));
+ show.validation=ShowEngine.validate(show,music);if(show.synchronization)show.validation.synchronization=show.synchronization;if(!show.validation.valid)throw Error('The saved show failed current format checks: '+show.validation.errors.join(' '));
  if(ShowEngine.preparePreview)ShowEngine.preparePreview(show);
  // Rebind only after metadata, decompression, payload hash, physical format and
  // preview preparation have all succeeded. Failed restores leave recovery data

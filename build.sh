@@ -15,6 +15,7 @@ KEY_DIR="${LIGHTFORGE_SIGNING_DIR:-$ROOT/signing}"
 VERSION="$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["name"])' "$ROOT/version.json")"
 VERSION_CODE="$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["code"])' "$ROOT/version.json")"
 APK_NAME="LightForge-$VERSION.apk"
+python3 "$ROOT/tools/sync_version.py" --check
 for tool in "$JAVA_HOME/bin/javac" "$JAVA_HOME/bin/keytool" "$BUILD_TOOLS/aapt2" "$BUILD_TOOLS/d8" "$BUILD_TOOLS/zipalign" "$BUILD_TOOLS/apksigner"; do
     if [[ ! -x "$tool" ]]; then
         printf 'Missing build tool: %s\nRun python3 tools/bootstrap_toolchain.py first.\n' "$tool" >&2
@@ -41,6 +42,10 @@ cleanup_build() {
 trap cleanup_build EXIT
 mkdir -p "$BUILD/classes" "$BUILD/dex" "$BUILD/generated" "$BUILD/assets"
 if [[ ! -f "$KEY_DIR/lightforge-release.jks" ]]; then
+    if [[ "${LIGHTFORGE_ALLOW_NEW_SIGNING:-0}" != "1" ]]; then
+        printf 'The original update signing identity is required. Restore it and set LIGHTFORGE_SIGNING_DIR. For an isolated development install only, set LIGHTFORGE_ALLOW_NEW_SIGNING=1.\n' >&2
+        exit 1
+    fi
     if [[ -e "$KEY_DIR/keystore-password.txt" ]]; then
         printf 'Signing password exists but keystore is missing; restore the original keystore before rebuilding.\n' >&2
         exit 1
@@ -103,10 +108,13 @@ printf 'Aligning and signing APK…\n'
 "$BUILD_TOOLS/zipalign" -c -P 16 4 "$BUILD/signed.apk"
 "$BUILD_TOOLS/aapt2" dump badging "$BUILD/signed.apk" > "$BUILD/apk-badging.txt"
 python3 "$ROOT/tools/apk_archive.py" validate "$BUILD/signed.apk" "$BUILD/assets" --require-dex
-python3 - "$BUILD/signed.apk" "$DIST/$APK_NAME" "$BUILD/apk-badging.txt" "$ROOT/version.json" <<'PY'
+python3 - "$BUILD/signed.apk" "$DIST/$APK_NAME" "$BUILD/apk-badging.txt" "$ROOT/version.json" "$BUILD/signature-verification.txt" <<'PY'
 from pathlib import Path
 import hashlib,json,os,re,shutil,sys,zipfile
-src,dst,badging_path,version_path=map(Path,sys.argv[1:])
+src,dst,badging_path,version_path,signature_path=map(Path,sys.argv[1:])
+certificate=re.search(r"certificate SHA-256 digest: ([0-9a-f]+)",signature_path.read_text()).group(1)
+compatible=certificate=="7187d6aa935d5b7d2d656cb87913af95fe1ca3a4b1653036d1d8d890e2016c6b"
+if not compatible and os.environ.get("LIGHTFORGE_ALLOW_NEW_SIGNING")!="1":raise SystemExit("Signing identity cannot update the original LightForge installation.")
 version=json.loads(version_path.read_text())
 badging=badging_path.read_text()
 expected={"package: name='com.cyberbasslord.lightforge'", "versionCode='%s'"%version['code'], "versionName='%s'"%version['name'], "minSdkVersion:'26'", "targetSdkVersion:'35'", "launchable-activity: name='com.cyberbasslord.lightforge.MainActivity'"}
@@ -129,7 +137,7 @@ with src.open('rb') as source,tmp.open('wb') as f:
     while chunk:=source.read(1024*1024):f.write(chunk);sha.update(chunk)
     f.flush();os.fsync(f.fileno())
 os.replace(tmp,dst)
-receipt={'apk':dst.name,'bytes':dst.stat().st_size,'sha256':sha.hexdigest(),'zip_integrity':'passed','alignment':'passed','signature':'verified','min_sdk':26,'target_sdk':35,'compile_sdk':35,'version_name':version['name'],'version_code':version['code']}
+receipt={'apk':dst.name,'update_compatible':compatible,'signing_certificate_sha256':certificate,'bytes':dst.stat().st_size,'sha256':sha.hexdigest(),'zip_integrity':'passed','alignment':'passed','signature':'verified','min_sdk':26,'target_sdk':35,'compile_sdk':35,'version_name':version['name'],'version_code':version['code']}
 dst.with_suffix('.apk.sha256').write_text(receipt['sha256']+'  '+dst.name+'\n')
 dst.with_suffix('.apk.json').write_text(json.dumps(receipt,indent=2)+'\n')
 print(json.dumps(receipt,indent=2))

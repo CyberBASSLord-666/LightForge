@@ -1,3 +1,12 @@
+# LightForge 2.0.0 — Precision Studio
+
+- Editable voice/bass musical cues, isolated part timing and same-clock passage looping.
+- Collision-aware bass holds and enabled-lamp fallback routing for musical roles.
+- Final-frame synchronization review, retained in export validation.
+- Exact 1.4–1.6 snapshot upgrades, project-isolated corrections and Undo/Redo.
+- Runtime version source, compatible-signing guard, portable test dependencies and full CI.
+- Original bundled models retained; no unmeasured detection-accuracy claim.
+
 # 1.6.0 — separated voice and musical expression
 
 - Added offline stereo vocal separation with quality-first polarity refinement and overlapping reconstruction.

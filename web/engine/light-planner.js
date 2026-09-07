@@ -114,7 +114,7 @@
     const userCues=(m.musicCues||[]).filter(c=>c.action!=='mute').map(c=>({...c,ids:c.role==='vocals'?voicePair:[bassSide(true),...(c.strength>=.8?[bassSide(false)]:[])].filter(Boolean)}));
     for(const cue of detailedVoice)targets.push({role:'vocals',time:cue.time,end:cue.time+cue.length,kind:cue.kind});
     for(const {p,length} of voiceRoutes)targets.push({role:'vocals',time:p.start,end:p.start+length,kind:'phrase'});
-    for(const {p,length} of bassRoutes)targets.push({role:'bass',time:p.start,end:p.start+length,kind:'note'});
+    for(const {p,length} of bassRoutes)if(!p.continuation)targets.push({role:'bass',time:p.start,end:p.start+length,kind:'note'});
     for(const cue of userCues){targets.push({role:cue.role,time:cue.start,end:cue.end,kind:cue.action,cueId:cue.id});for(const id of cue.ids)reserve(id,cue.start,cue.end);}
     for(const cue of detailedVoice)for(const id of cue.ids)reserve(id,cue.time,cue.time+cue.length);
     // Merge the detailed reservations after constructing motifs as well. They
@@ -171,7 +171,7 @@
       }
       for(const {p,ids,length}of bassRoutes){
         for(const sec of m.sections){const start=Math.max(p.start,sec.start),stop=Math.min(p.start+length,sec.end);if(stop-start<.1)continue;
-          add(ids,start,stop-start,62+bassFocus*5+p.strength*2,'pitched bass note',p.strength,0,false,{role:'bass',sourceStart:p.start,sourceEnd:p.end,sourceConfidence:p.confidence,midi:p.midi,frequency:p.frequency});
+          add(ids,start,stop-start,62+bassFocus*5+p.strength*2,'pitched bass note',p.strength,0,false,{role:'bass',sourceStart:p.originalStart??p.start,sourceEnd:p.end,sourceConfidence:p.confidence,midi:p.midi,frequency:p.frequency});
         }
       }
       // Motifs repeat over phrases. Meter, phase and beat spacing come from the

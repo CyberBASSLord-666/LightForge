@@ -1,0 +1,40 @@
+#!/usr/bin/env python3
+"""Publish an update-compatible APK only after current source-bound release gates."""
+from pathlib import Path
+import json, os, re, zipfile
+from package_release import sha_file, sha_stream, require, atomic, atomic_copy, SIGNING_SHA256
+
+ROOT=Path(__file__).resolve().parents[1]
+
+def main():
+    version=json.loads((ROOT/'version.json').read_text());name=version['name'];qa=ROOT/('qa/release-'+name)
+    evidence={}
+    for filename in ['regression-verification.json','browser-verification.json','native-verification.json']:
+        p=qa/filename;require(p.is_file(),'Missing current release gate: '+str(p))
+        data=json.loads(p.read_text());require(data.get('passed') is True and not data.get('errors') and data.get('release')==name,'Release gate did not pass: '+filename)
+        require(bool(data.get('source_hashes')),'Release gate has no source binding: '+filename)
+        for rel,digest in data['source_hashes'].items():
+            require((ROOT/rel).is_file() and sha_file(ROOT/rel)==digest,'Source changed since '+filename+': '+rel)
+        evidence[filename]={'sha256':sha_file(p),'result':data}
+    apk=ROOT/'dist'/('LightForge-'+name+'.apk');receipt=json.loads(apk.with_suffix('.apk.json').read_text())
+    require(sha_file(apk)==receipt['sha256'],'APK checksum changed since its build.')
+    require(receipt.get('version_name')==name and receipt.get('version_code')==version['code'],'APK version does not match source.')
+    require(receipt.get('update_compatible') is True and receipt.get('signing_certificate_sha256')==SIGNING_SHA256,'This APK cannot update the original LightForge installation.')
+    signature=(ROOT/'build/signature-verification.txt').read_text();require('certificate SHA-256 digest: '+SIGNING_SHA256 in signature,'Original signing certificate was not verified.')
+    web=[p for p in (ROOT/'web').rglob('*') if p.is_file() and not any(x.startswith('.') or x in {'node_modules','__pycache__'} for x in p.relative_to(ROOT/'web').parts)]
+    with zipfile.ZipFile(apk) as z:
+        require(z.testzip() is None,'APK has a ZIP CRC failure.')
+        packaged={n for n in z.namelist() if n.startswith('assets/') and not n.endswith('/')}
+        expected={'assets/'+p.relative_to(ROOT/'web').as_posix() for p in web}
+        require(packaged==expected,'APK asset inventory differs from current web source.')
+        for p in web:
+            with z.open('assets/'+p.relative_to(ROOT/'web').as_posix()) as stream:require(sha_stream(stream)==sha_file(p),'APK contains stale source: '+str(p))
+    record={'release':receipt,'signing_certificate_sha256':SIGNING_SHA256,'apk_source_assets_matched':len(web),'current_release_receipts':evidence,
+            'model_analysis_evidence':{'status':'Unchanged 1.6.0 implementation and model assets, byte-verified by the current regression gate. Historical runtime/accuracy evidence was not relabeled as a fresh measurement.','path':'qa/release-1.6.0/analysis-verification.json','sha256':sha_file(ROOT/'qa/release-1.6.0/analysis-verification.json')},
+            'native_device_install_and_launch':'NOT PERFORMED','vehicle_test':'NOT PERFORMED','browser_scope':'Chromium with actual workers/WebGL and a simulated Android bridge.'}
+    atomic(ROOT/'release-verification.json',(json.dumps(record,indent=2)+'\n').encode())
+    out=ROOT/'output';out.mkdir(exist_ok=True);result=atomic_copy(apk,out/apk.name,receipt['sha256'])
+    atomic(out/(apk.name+'.sha256'),(receipt['sha256']+'  '+apk.name+'\n').encode())
+    print(json.dumps({'apk':result,'update_compatible':True,'gates':list(evidence)},indent=2))
+
+if __name__=='__main__':main()

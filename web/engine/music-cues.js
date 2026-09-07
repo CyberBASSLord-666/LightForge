@@ -37,12 +37,12 @@
     // new vocal attack at the end of a mute/hold region.
     function subtract(items, edits) {
       let result=items.map(p=>({...p}));
-      for(const c of edits) result=result.flatMap(p=>!overlaps(p,c)?[p]:[...(p.start<c.start?[{...p,end:c.start}]:[]),...(p.end>c.end?[{...p,start:c.end,continuation:true}]:[])]);
+      for(const c of edits) result=result.flatMap(p=>!overlaps(p,c)?[p]:[...(p.start<c.start?[{...p,end:c.start}]:[]),...(p.end>c.end?[{...p,start:c.end,continuation:true,originalStart:p.originalStart??p.start}]:[])]);
       return result.filter(p=>p.end-p.start>=.1-1e-8);
     }
     const manualPhrase=c=>({start:c.start,end:c.end,confidence:1,strength:c.strength,kind:'vocal',manual:true,musicalCue:true,midi:c.midi});
     const phrases=subtract(m.vocals.phrases,voice).concat(voice.filter(c=>c.action!=='mute').map(manualPhrase)).sort((a,b)=>a.start-b.start);
-    return {...m,musicCues:cues,vocals:{...m.vocals,phrases,available:m.vocals.available||phrases.length>0,presence:phrases.length?'detected':'not_detected',notes:subtract(m.vocals.notes,voice).concat(voice.filter(c=>c.action!=='mute'&&c.midi!==null).map(c=>({...manualPhrase(c),midi:c.midi}))).sort((a,b)=>a.start-b.start),accents:m.vocals.accents.filter(a=>!voice.some(c=>a.time>=c.start && a.time<c.end))},bassNotes:m.bassNotes.filter(p=>!bass.some(c=>overlaps(p,c))).concat(bass.filter(c=>c.action!=='mute').map(c=>({...manualPhrase(c),midi:c.midi}))).sort((a,b)=>a.start-b.start)};
+    return {...m,musicCues:cues,bassAnalysis:{...m.bassAnalysis,phrases:subtract(m.bassAnalysis.phrases,bass)},vocals:{...m.vocals,phrases,available:m.vocals.available||phrases.length>0,presence:phrases.length?'detected':'not_detected',notes:subtract(m.vocals.notes,voice).concat(voice.filter(c=>c.action!=='mute'&&c.midi!==null).map(c=>({...manualPhrase(c),midi:c.midi}))).sort((a,b)=>a.start-b.start),accents:m.vocals.accents.filter(a=>!voice.some(c=>a.time>=c.start && a.time<c.end))},bassNotes:subtract(m.bassNotes,bass).concat(bass.filter(c=>c.action!=='mute').map(c=>({...manualPhrase(c),midi:c.midi}))).sort((a,b)=>a.start-b.start)};
   }
   const api={normalize,apply,overlay};root.MusicCues=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);

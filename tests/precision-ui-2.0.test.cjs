@@ -8,7 +8,7 @@ test('real app facade commits, undoes, redoes, saves, and isolates musical edits
  w.scrollTo=()=>{};w.requestAnimationFrame=()=>0;w.cancelAnimationFrame=()=>{};w.matchMedia=()=>({matches:true,addEventListener(){}});
  w.HTMLMediaElement.prototype.pause=function(){};w.HTMLMediaElement.prototype.load=function(){};
  w.VehiclePreview=class{render(){}setCamera(){}setStage(){}setQuality(){}resize(){}};
- w.ShowEngine=require('../web/engine/show-engine.js');w.VehicleProfile=require('../web/engine/vehicle-profile.js');w.MusicCues=require('../web/engine/music-cues.js');
+ w.LightForgeVersion=require('../web/version.js');w.ShowEngine=require('../web/engine/show-engine.js');w.VehicleProfile=require('../web/engine/vehicle-profile.js');w.MusicCues=require('../web/engine/music-cues.js');
  w.ShowCompiler={generate:(music,settings)=>run(path.join(root,'web/engine'),{action:'generate',music,settings}),restore:(compiled,music,settings)=>run(path.join(root,'web/engine'),{action:'restore',compiled,music,settings})};
  w.Android={pickAudio(){},getBootstrap:()=>JSON.stringify({projects:[],version:'2.0.0'}),saveProject:(id,body)=>{writes.push(JSON.parse(body));return true;}};
  w.fetch=async()=>({ok:true,json:async()=>structuredClone(saved)});
@@ -16,6 +16,7 @@ test('real app facade commits, undoes, redoes, saves, and isolates musical edits
  try{
   w.eval(fs.readFileSync(path.join(root,'web/app.js'),'utf8'));w.eval(fs.readFileSync(path.join(root,'web/precision-studio.js'),'utf8'));
   const app=w.LightForgeApp;await app.selectProject({id:'a',name:'Cue fixture',duration:12,audioUrl:'song.wav',projectUrl:'project.json'});
+  const audio=d.querySelector('audio');Object.defineProperty(audio,'duration',{value:Infinity,configurable:true});audio.onloadedmetadata();assert.equal(d.getElementById('totalTime').textContent,'0:12');assert.equal(d.getElementById('seek').max,'12');
   assert.equal(app.state.show.version,'2.0.0');assert.equal(d.getElementById('precisionStudio').hidden,false);
   const val=(id,x)=>d.getElementById(id).value=String(x);
   val('musicCueStart',3.137);val('musicCueEnd',4.719);val('musicCueAction','hold');val('musicCueLabel','Final note');

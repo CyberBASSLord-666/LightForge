@@ -28,7 +28,8 @@ test('explicit holds cross section boundaries, mutes remove role gestures, and a
  const musicCues=[{id:'v',role:'vocals',action:'hold',start:5.137,end:7.271,strength:.8},{id:'b',role:'bass',action:'mute',start:1,end:4,strength:.8}];
  const show=engine.generate(fixture(),{...settings,musicCues});
  const v=show.lightEvents.filter(e=>e.cueId==='v');assert.ok(v.length);assert.ok(v.every(e=>e.actualEnd>7.2));
- assert.equal(show.lightEvents.filter(e=>e.role==='bass').length,0);
+ assert.equal(show.lightEvents.filter(e=>e.role==='bass'&&e.actualStart<4&&e.actualEnd>1).length,0);
+ assert.ok(show.lightEvents.some(e=>e.role==='bass'&&e.actualStart>=4),'held notes may resume outside the ignored region');
  assert.ok(show.lightEvents.some(e=>!e.role));assert.ok(show.validation.valid);
 });
 test('final byte review detects output overrides, missing attacks, and disabled routes',()=>{

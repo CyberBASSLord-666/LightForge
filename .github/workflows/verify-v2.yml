@@ -28,7 +28,7 @@ jobs:
       - run: node qa/release-2.0.0/browser.cjs
       - run: python3 tools/bootstrap_toolchain.py
       - name: Build CI package with an ephemeral signing identity
-        run: env -u ANDROID_SDK_ROOT -u ANDROID_HOME LIGHTFORGE_SIGNING_DIR="$RUNNER_TEMP/ci-signing" bash build.sh
+        run: env -u ANDROID_SDK_ROOT -u ANDROID_HOME LIGHTFORGE_ALLOW_NEW_SIGNING=1 LIGHTFORGE_SIGNING_DIR="$RUNNER_TEMP/ci-signing" bash build.sh
       - name: Native storage and sequence validation
         run: env -u ANDROID_SDK_ROOT -u ANDROID_HOME python3 tests/verify_native_release.py --release 2.0.0
       - uses: actions/upload-artifact@v4

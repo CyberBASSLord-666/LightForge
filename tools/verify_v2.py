@@ -25,6 +25,7 @@ def main():
     receipt={'release':VERSION,'passed':False,'checks':[],'errors':[], 'source_hashes':hashes(),
              'scope':'Node engine/worker/WebCrypto/gzip, real app DOM integration with simulated native and graphics, Python archive tests. Not a visual browser or physical Android/Tesla test.'}
     try:
+        subprocess.run([sys.executable,str(ROOT/'tools/sync_version.py'),'--check'],check=True)
         result=subprocess.run(['node','--test',*[str(ROOT/'tests'/t) for t in TESTS]],cwd=ROOT,capture_output=True,text=True)
         (OUT/'regression-tests.log').write_text(result.stdout+result.stderr)
         result.check_returncode();receipt['checks'].append('All selected engine, model-component, migration and DOM integration suites passed.')
