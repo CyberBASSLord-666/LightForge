@@ -1,0 +1,33 @@
+{
+  "release": "2.2.0",
+  "passed": true,
+  "checks": [
+    "Visible cue form generated a matching final FSEQ attack using actual browser workers.",
+    "Undo/Redo restored identical frame checksum.",
+    "Streamed export payload matches the saved frame SHA-256 and contains synchronization review.",
+    "Reload preserved exact compiled frames and musical edits.",
+    "Export after reopening retained the verified synchronization report.",
+    "Workspace tabs support keyboard navigation; musical score zoom is operational.",
+    "320, 393, 768 and 1440 px layouts have no horizontal overflow or duplicate IDs; screenshots retained.",
+    "The source-time score stops drawing when its workspace is offscreen during audio playback.",
+    "First launch, saved-show collection and vehicle guide render without overflow or page errors at phone and desktop sizes."
+  ],
+  "errors": [],
+  "source_hashes": {
+    "web/cockpit.js": "cba1d693ee592ac9ea0bf028ba362d8247981c1678c25d81737db7a633163afe",
+    "web/cockpit.css": "2a99230afa1a99645e4ea10e5f6d2bf7b2ee06b9f47de8aeb23fc3332feb5139",
+    "web/version.js": "6a419b932e432154e9220026d5415a9b9ba5d009e82684cfbadc80cfbfe2da24",
+    "web/app.js": "57c02e9a552d4adc6489e2bdf7966adb3f2c6036ba07a74597c03a44092871b1",
+    "web/index.html": "a649ca31474390c000fe061c1efa0f69d47988d94128e9b6b5fa8a0d74f9cd4d",
+    "web/styles.css": "e89ff197b174f00361c7b694d9a8b9f1ed8ef797c055e0a20176a195faff64f5",
+    "web/precision-studio.js": "9ff16fd7313fffff441905236cd93dbcb50b33d6593f5e381fffc3ae537aa222",
+    "web/engine/worker.js": "924e901876530dc45df99ab856ec2c7c48ae223ce76103d4c9d84047086a5121",
+    "web/engine/client.js": "56380a3901c45b3409e94bf568a2f600dce471f1a8b289e71a081b91a04c355d",
+    "web/engine/show-engine.js": "d09cfcdf1e1eebf36d3e03bfd40a3939dcc0fd18a4437047217511a258674548",
+    "web/engine/light-planner.js": "970c7a2a736560bf01e318b8180b431863e09e6e28daad4525ec583a70a73aeb",
+    "web/engine/music-cues.js": "1a87eea0502da2e1f19d2361a5646c127121211e91128017ce747b7f0d2f61d6",
+    "web/engine/sync-review.js": "eb9591060fffa20e2b12de97c6d344b61e06fc276af75817610d4e17095c61d9"
+  },
+  "scope": "Desktop Chromium with actual WebGL and web workers; simulated Android bridge. No Android device or Tesla.",
+  "completedAt": "2026-09-07T12:51:26.090Z"
+}

@@ -1,0 +1,47 @@
+{
+  "release": "2.2.0",
+  "passed": true,
+  "checks": [
+    "Actual balanced neural analysis and choreography completed with the Activity destroyed, screen off and Doze forced with user-equivalent battery exemption; result was durably saved.",
+    "Reopened Activity reports the completed job and its saved project.",
+    "Notification cancellation stops the worker and service, releases execution resources and preserves the saved project.",
+    "Android media-processing timeout callback stops promptly and leaves a retryable job with the previous show intact."
+  ],
+  "errors": [],
+  "source_hashes": {
+    "android/src/com/cyberbasslord/lightforge/AnalysisJobStore.java": "82e95f27ae4f08414de9027a35b355feba378a8a78e7193715481cb503614875",
+    "android/src/com/cyberbasslord/lightforge/AnalysisService.java": "8ea36158956a02d7a369eeb68be8be860bd2b88ccae3fe87677007dea44a5c48",
+    "android/src/com/cyberbasslord/lightforge/AppResources.java": "f95a5d02007b40a0e2488b82298776be0fb9d171de8336380fec3dd553712430",
+    "android/src/com/cyberbasslord/lightforge/AudioImporter.java": "910ef3ec1d6f6ded54c91111d9ab34dbf4bbf4d4043f62f1978057183ca0b575",
+    "android/src/com/cyberbasslord/lightforge/MainActivity.java": "04aee3ffc1d2e7e896eef2a60f0901056b13c7c89803bb1f2fbb2c89f5c50cc0",
+    "android/src/com/cyberbasslord/lightforge/PendingExportStore.java": "1697003aab5f842d0bb90122df46f2d1f60da30232eca9d6912c972e421c4163",
+    "android/src/com/cyberbasslord/lightforge/ProjectPreview.java": "459e586684b6cea8b0b5c0541de766c45301347341ff2acdc15e876028e7c551",
+    "android/src/com/cyberbasslord/lightforge/ProjectStore.java": "51492859a40490533286574a08893bf3f6da5063c69b806f7760b3d056269472",
+    "android/src/com/cyberbasslord/lightforge/WavConverter.java": "f34b9bf3c8960678b6116619941307ce01b75c672807ca85f6f81b6adc33b1b6",
+    "android/src/com/cyberbasslord/lightforge/WebViewFileTransport.java": "2deff6c473928a08a7e63172c3fa6798df1273d1907fc163f292aa43d5c39b6e",
+    "android/AndroidManifest.xml": "7329675ebc8c9ace4e5a0a607fe8c4753924e89d168c266993c612084b7e4e19",
+    "android/res/drawable/ic_analysis.xml": "6e698464885ef96f0b11af9c5a05c4947affc0126e2994a331ef9cffec3732c8",
+    "android/res/drawable/ic_launcher.xml": "3c411f5d88166510435daeb1702d155849cc0f8208bcfde9b9d61eed24d57b8e",
+    "android/res/values/styles.xml": "24448bfe96b034f7bfadcd0d469d46da30538c3acfa67e2ded464869ad9a9859",
+    "web/background/runner.html": "d69e68a2a189d9aeab582aacb2d6b9f2d4fc4f2ac21a348575b748d6b576823e",
+    "web/background/runner.js": "d8e14ac46f75ecf7a0f184845e07207038208e096a6ba5c96e75b0b4537f69f6",
+    "web/app.js": "57c02e9a552d4adc6489e2bdf7966adb3f2c6036ba07a74597c03a44092871b1",
+    "web/index.html": "a649ca31474390c000fe061c1efa0f69d47988d94128e9b6b5fa8a0d74f9cd4d",
+    "tests/android/BackgroundInstrumentation.java": "27413d911dde8e9e82a899c131f3bd081adc5dc539680bc92612549741fb6b8d",
+    "tools/run_android_background_tests.py": "8ee39a8f5c9ca386fd9d25710419c697ef9d4b4541d3fbc56c09aad7c4ebd606",
+    "tools/build_android_tests.py": "36ad916b6e3b4bd94be2cb912bbb9b2fc44a12eb4cd2ad7ecc735fc6f5e598f5"
+  },
+  "scope": "Android API 35 emulator lifecycle test using real production service, actual balanced WASM analysis and compilation. Not a physical phone or Tesla test.",
+  "device": {
+    "passed": true,
+    "checks": [
+      "Actual balanced neural analysis and choreography completed with the Activity destroyed, screen off and Doze forced with user-equivalent battery exemption; result was durably saved.",
+      "Reopened Activity reports the completed job and its saved project.",
+      "Notification cancellation stops the worker and service, releases execution resources and preserves the saved project.",
+      "Android media-processing timeout callback stops promptly and leaves a retryable job with the previous show intact."
+    ],
+    "sdk": 35,
+    "scope": "Android emulator with actual foreground service, WebView/WASM models, screen-off execution, notification cancellation and timeout callback; not a physical phone or Tesla."
+  },
+  "completedAt": "2026-09-07T13:34:12.860572+00:00"
+}

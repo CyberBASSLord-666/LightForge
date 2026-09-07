@@ -10,6 +10,7 @@ Version 2.2.0 / code 20200 adds Activity-independent Android analysis and choreo
 | Source separation | Six original mixtures, six instrument-only negatives and six controlled voice-window remixes, scored against original reference stems; references are never separator inputs |
 | Model conversion/runtime | Staged Float32 graphs reproduce the original model within measured floating-point error; the production JS adapter executes on the unchanged ONNX Runtime Web 1.20.1 WASM backend |
 | Native JVM | Production Java compiles; storage recovery, WAV conversion, bridge ranges, previews and 16 independent FSEQ/hardware cases |
+| Android lifecycle | Actual Balanced inference and compilation with the Activity destroyed and display off; notification cancellation, reopening and timeout recovery on API 35 |
 | Signed APK | Version, alignment, original certificate, ZIP CRCs and exact packaged-asset hashes; all current gate receipts must match the source |
 
 `tools/package_v2.py` refuses missing, failed or stale regression/UI/native/analysis/background receipts. The build checks all 60 bundled analysis files before packaging. CI reproduces GAME and Deux from pinned official checkpoints and verifies the resulting hashes; no large new checkpoint is silently omitted from a fresh checkout.

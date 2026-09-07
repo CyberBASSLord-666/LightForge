@@ -1,0 +1,7 @@
+Actual balanced neural analysis and choreography completed with the Activity destroyed, screen off and Doze forced with user-equivalent battery exemption; result was durably saved.
+Reopened Activity reports the completed job and its saved project.
+Notification cancellation stops the worker and service, releases execution resources and preserves the saved project.
+Android media-processing timeout callback stops promptly and leaves a retryable job with the previous show intact.
+BACKGROUND_ANDROID_PASS
+{"passed":true,"checks":["Actual balanced neural analysis and choreography completed with the Activity destroyed, screen off and Doze forced with user-equivalent battery exemption; result was durably saved.","Reopened Activity reports the completed job and its saved project.","Notification cancellation stops the worker and service, releases execution resources and preserves the saved project.","Android media-processing timeout callback stops promptly and leaves a retryable job with the previous show intact."],"sdk":35,"scope":"Android emulator with actual foreground service, WebView\/WASM models, screen-off execution, notification cancellation and timeout callback; not a physical phone or Tesla."}
+

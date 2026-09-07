@@ -66,7 +66,10 @@ public final class BackgroundInstrumentation extends Instrumentation {
             long backgroundAt=System.currentTimeMillis();runOnMainSync(()->activity.finishAndRemoveTask());waitForIdleSync();
             shell("dumpsys battery unplug");shell("input keyevent KEYCODE_SLEEP");SystemClock.sleep(500);
             shell("dumpsys deviceidle force-idle");
-            check(!((PowerManager)getTargetContext().getSystemService(Context.POWER_SERVICE)).isInteractive(),"Screen did not turn off");
+            PowerManager power=(PowerManager)getTargetContext().getSystemService(Context.POWER_SERVICE);
+            check(!power.isInteractive(),"Screen did not turn off");
+            check(power.isIgnoringBatteryOptimizations(getTargetContext().getPackageName()),"User-equivalent battery exemption missing");
+            check(power.isDeviceIdleMode(),"Android did not enter forced Doze");
             JSONObject completed=waitTerminal(15*60*1000L);
             check("completed".equals(completed.optString("state")),"Screen-off analysis failed: "+completed);
             check(completed.getLong("updatedAt")>backgroundAt,"No progress after Activity destruction");waitService(false);
@@ -80,12 +83,14 @@ public final class BackgroundInstrumentation extends Instrumentation {
             check("completed".equals(bootstrap.getJSONObject("backgroundJob").getString("state")),"Reopened Activity did not reconnect");
             pass("Reopened Activity reports the completed job and its saved project.");
             String cancelId=fixture("Cancel fixture");File cancelProject=new File(AnalysisJobStore.project(files,cancelId),"project.json");String original=AnalysisJobStore.hash(cancelProject);
-            start(cancelId);NotificationManager notifications=(NotificationManager)getTargetContext().getSystemService(Context.NOTIFICATION_SERVICE);boolean sent=false;
+            start(cancelId);AnalysisService cancelledService=service();PowerManager.WakeLock cancelledLock=(PowerManager.WakeLock)field(cancelledService,"wakeLock");
+            NotificationManager notifications=(NotificationManager)getTargetContext().getSystemService(Context.NOTIFICATION_SERVICE);boolean sent=false;
             for(StatusBarNotification notification:notifications.getActiveNotifications()){
                 Notification.Action[] actions=notification.getNotification().actions;
                 if(actions!=null)for(Notification.Action action:actions)if("Cancel".contentEquals(action.title)){action.actionIntent.send();sent=true;break;}
             }
             check(sent,"Notification Cancel action missing");check("cancelled".equals(waitTerminal(15000).getString("state")),"Notification cancellation failed");waitService(false);
+            waitForIdleSync();check(!cancelledLock.isHeld()&&field(cancelledService,"engine")==null,"Cancellation retained the CPU lock or analysis WebView");
             check(original.equals(AnalysisJobStore.hash(cancelProject)),"Cancellation replaced the saved project");
             pass("Notification cancellation stops the worker and service, releases execution resources and preserves the saved project.");
             start(cancelId);AnalysisService timeoutService=service();

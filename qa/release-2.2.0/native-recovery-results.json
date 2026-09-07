@@ -1,0 +1,18 @@
+{
+  "checks": [
+    "Normal PCM import stays staged until audio, analysis and both JSON files are complete.",
+    "Interrupted document-provider reads and explicit import cancellation clean all staging.",
+    "Autosave commits matching state/metadata, preserves extensible version-1 provenance and retains one prior revision.",
+    "Restoring the previous saved revision swaps both files and can itself be undone.",
+    "Corrupted and missing current project files recover the matching last-good revision and record recovery time.",
+    "Durable journal rolls forward at marker-only, state-replaced and both-replaced interruption boundaries.",
+    "Uncommitted stages and legacy temporary writes are cleaned without replacing the approved state.",
+    "An actual filesystem failure replacing a staged file leaves current state and metadata unchanged.",
+    "Startup removes abandoned new and pre-1.4 imports without following symbolic links.",
+    "A separate JVM halts without cleanup; the next process recovers exact prepared ZIP, filename and partial destination.",
+    "Prepared export recovery retains only one ZIP, cleans interrupted work, rejects non-document destinations and clears retry state.",
+    "Explicit discard and truncated-export recovery release the prepared slot without touching unrelated files."
+  ],
+  "scope": "Host JVM executing production Java storage classes; Android document provider, Activity callbacks, device lifecycle and vehicle playback require physical-device verification.",
+  "passed": true
+}

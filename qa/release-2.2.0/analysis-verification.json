@@ -1,0 +1,35 @@
+{
+  "release": "2.2.0",
+  "passed": true,
+  "errors": [],
+  "checks": [
+    "Every source bound to the prior numeric model evaluation is byte-identical. The verified numeric evidence is retained without claiming a new evaluation.",
+    "Actual public model runtime and Android background execution require separate current release gates."
+  ],
+  "source_hashes": {
+    "web/analysis/ASSET_MANIFEST.json": "eca6c2c418c75969916093290afc9bd5f9cd858495b68a615c5a20ad7f6315e6",
+    "web/analysis/worker.js": "725e6767647f70021d8ba38ec68f40f0059ca3af1afbdd282446cf7c7b54f75f",
+    "web/analysis/separator-deux.js": "06900caecc898f7a6cf1689c6a11fcb3bafdf8b21a177b83b6c5610386b9a74d",
+    "web/analysis/game.js": "f4a24e8417223bb4d9e52c9102054dc29a9c7c77cc59cf49f0c82d31802817c2",
+    "web/analysis/vocal-detail.js": "cd760d7a766d9a4ab0ac3a252a10f17a16a797b38e50b2d6712bc6adcd42713f",
+    "web/analysis/vocal.js": "94483ac6cf5db7532abfba98e7bab7cd826a82ad2adca0296d39fdebd827ac70",
+    "web/analysis/stem-cache.js": "83257fededb12328891494994e166eed47b81adf3147f4789e4694ce4a239749",
+    "web/analysis/wav-reader.js": "0f0e5216dc1d2ca0bfb25eddacdaa21076990fa7638c22188023607e43d4005f",
+    "web/analysis/models/deux/manifest.json": "724ba38ba42617f3f867fc39dd044f9b1ff1284abeabffbaeadbf3ea67cf2389",
+    "web/analysis/models/game/manifest.json": "51e172cfaa967d9e2518f01f508a64d49cd283d23ae8e8456af9c6e76eeb4f97",
+    "tools/prepare_deux.py": "892d00db0b46291ca5b2d600c2b314f5cdbdd84cd12a3859f97503de53ca62da",
+    "tools/prepare_game.py": "7f1fb983ab1888b7ecc0731bdd22538f73820a33f88775fc7f63dd8b9b43e800",
+    "qa/release-2.1.0/evaluate-roles.cjs": "f7dfbed9bc8dcb92f861bfd2cc9a56f87b84791a22886bd990802e03ea4d80fb",
+    "qa/release-2.1.0/verify-analysis.py": "a831c763badbc6f6cf61c683c2a07df300b8282c8f7b68948d097e49f47777d2",
+    "qa/release-2.1.0/test-source-clock.cjs": "8e5fe87cfdf15b871ff10f050e03159eb50c62d7d496523430e02d2d79beb624",
+    "qa/release-2.1.0/analysis-verification.json": "15bb204ce6fddfdbed7fe673c6bbf899b5598ea887b48945a3edf02d533b86ea",
+    "tools/verify_retained_analysis.py": "6fbfa961244be566ac4048dd9304ee49efb521f26e3efe2c2d3780abef84b582"
+  },
+  "retained_evidence": {
+    "release": "2.1.0",
+    "path": "qa/release-2.1.0/analysis-verification.json",
+    "sha256": "15bb204ce6fddfdbed7fe673c6bbf899b5598ea887b48945a3edf02d533b86ea"
+  },
+  "scope": "Strict unchanged-source reuse of prior numeric model evidence; not a fresh quality benchmark. Current browser/model and Android lifecycle checks are separate mandatory gates.",
+  "completedAt": "2026-09-07T12:30:31.656942+00:00"
+}

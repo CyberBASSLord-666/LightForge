@@ -2,6 +2,16 @@ name: LightForge production verification
 on:
   push:
     branches: [main, 'development/2.0', 'development/2.1', 'development/2.2']
+    paths-ignore:
+      - '**/*.md'
+      - 'qa/**/*-verification.json'
+      - 'qa/**/*.png'
+      - 'qa/**/*.txt'
+      - 'qa/**/*.log'
+      - 'release-verification.json'
+      - 'releases/v*/prepare.json'
+      - 'releases/v*/request.json'
+      - 'releases/v*/signed-apk.delta.json'
   pull_request:
   workflow_dispatch:
 permissions:
@@ -107,12 +117,25 @@ jobs:
             qa
       - name: Download the same-signed CI app and instrumentation
         run: gh run download "${{ github.run_id }}" --name lightforge-2.2-ci-candidate --dir candidate
+      - name: Configure Android virtual-device paths
+        run: |
+          printf 'ANDROID_USER_HOME=%s\nANDROID_EMULATOR_HOME=%s\nANDROID_AVD_HOME=%s\n' "$RUNNER_TEMP/lightforge-android" "$RUNNER_TEMP/lightforge-android" "$RUNNER_TEMP/lightforge-android/avd" >> "$GITHUB_ENV"
+      - name: Reclaim unused preinstalled toolchains on the disposable runner
+        run: |
+          # This Java/WebView app needs neither the NDK nor the .NET SDK.
+          sudo rm -rf -- "$ANDROID_HOME/ndk" /usr/share/dotnet
+          df -h .
       - name: Prepare Android 15 emulator
         run: |
           sudo chmod a+rw /dev/kvm
+          mkdir -p "$ANDROID_AVD_HOME"
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "system-images;android-35;google_apis;x86_64" "emulator"
-          echo no | "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" create avd --force --name LightForge --package "system-images;android-35;google_apis;x86_64" --device pixel_6
-          "$ANDROID_HOME/emulator/emulator" -avd LightForge -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect -memory 4096 -cores 2 -camera-back none -camera-front none > emulator.log 2>&1 &
+          echo no | "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" create avd --force --name LightForge --package "system-images;android-35;google_apis;x86_64" --device pixel_6 --path "$ANDROID_AVD_HOME/LightForge.avd"
+          test -f "$ANDROID_AVD_HOME/LightForge.ini"
+          sed -i 's/^disk.dataPartition.size=.*/disk.dataPartition.size=6G/' "$ANDROID_AVD_HOME/LightForge.avd/config.ini"
+          df -h "$ANDROID_AVD_HOME"
+          "$ANDROID_HOME/emulator/emulator" -list-avds
+          nohup "$ANDROID_HOME/emulator/emulator" -avd LightForge -no-window -no-audio -no-metrics -partition-size 6144 -no-boot-anim -no-snapshot -gpu swiftshader_indirect -memory 4096 -cores 4 -camera-back none -camera-front none > emulator.log 2>&1 < /dev/null &
       - name: Verify screen-off analysis and Activity-independent completion
         run: python3 tools/run_android_background_tests.py
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
