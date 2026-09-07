@@ -1,0 +1,23 @@
+{
+  "apk": "LightForge-2.2.1.apk",
+  "update_compatible": true,
+  "signing_certificate_sha256": "7187d6aa935d5b7d2d656cb87913af95fe1ca3a4b1653036d1d8d890e2016c6b",
+  "bytes": 1171728522,
+  "sha256": "6f051c65f42f57cc3abc16200c56243e1c54eec495b47311e6783326ca6852e6",
+  "zip_integrity": "passed",
+  "alignment": "passed",
+  "signature": "verified",
+  "min_sdk": 26,
+  "target_sdk": 35,
+  "compile_sdk": 35,
+  "version_name": "2.2.1",
+  "version_code": 20201,
+  "build_provenance": {
+    "candidate_run_id": 34162369481,
+    "candidate_source_commit": "0527d778e1456ff607373a4c9ec546500b0153e5",
+    "candidate_sha256": "ae1f591ef709cf6507155d0d6e9d28cf62ec49870bbf86eecd4b4ba0b6ee8129",
+    "original_signing_applied_locally": true,
+    "source_assets_compared": 111,
+    "native_code_identical_to_fresh_local_compilation": true
+  }
+}
