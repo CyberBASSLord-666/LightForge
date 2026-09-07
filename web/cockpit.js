@@ -34,11 +34,11 @@ function draw(){pending=false;const music=app.state.music;timeline.hidden=!music
  const duration=app.state.project?.duration||music.duration||1,time=Math.min(duration,audio.currentTime||0),width=Math.max(1,canvas.clientWidth),height=154,dpr=Math.min(2,devicePixelRatio||1);
  if(canvas.width!==Math.round(width*dpr)){canvas.width=Math.round(width*dpr);canvas.height=height*dpr;}
  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,width,height);span=Math.max(2,duration/zoom);from=zoom===1?0:Math.max(0,Math.min(duration-span,time-span*.35));
- const x=t=>(t-from)/span*width,visible=(a,b)=>b>=from&&a<=from+span;
+ const x=t=>(t-from)/span*width,intersects=(a,b)=>b>=from&&a<=from+span;
  ctx.fillStyle='#8e9299';ctx.font='10px Inter, sans-serif';ctx.textBaseline='middle';
  const tick=span>90?30:span>30?10:span>10?5:1;
  for(let t=Math.ceil(from/tick)*tick;t<from+span;t+=tick){ctx.fillStyle='#292b30';ctx.fillRect(x(t),22,1,126);ctx.fillStyle='#8e9299';ctx.fillText(Math.floor(t/60)+':'+String(Math.floor(t%60)).padStart(2,'0'),Math.max(2,x(t)+4),10);}
- const band=(a,b,y,h,color)=>{if(!visible(a,b))return;const l=Math.max(0,x(a)),r=Math.min(width,x(b));ctx.fillStyle=color;ctx.fillRect(l,y,Math.max(1,r-l),h);};
+ const band=(a,b,y,h,color)=>{if(!intersects(a,b))return;const l=Math.max(0,x(a)),r=Math.min(width,x(b));ctx.fillStyle=color;ctx.fillRect(l,y,Math.max(1,r-l),h);};
  for(const p of music.vocals?.phrases||[])band(p.start+(app.state.settings.vocalOffsetMs||0)/1000,p.end+(app.state.settings.vocalOffsetMs||0)/1000,39,28,'#33373e');
  for(const n of music.vocals?.notes||[])band(n.start+(app.state.settings.vocalOffsetMs||0)/1000,n.end+(app.state.settings.vocalOffsetMs||0)/1000,60-Math.max(0,Math.min(24,(n.midi-45)*.55)),5,'#eceef1');
  for(const n of music.bassNotes||[])band(n.start+(app.state.settings.bassOffsetMs||0)/1000,n.end+(app.state.settings.bassOffsetMs||0)/1000,91-Math.max(0,Math.min(15,(n.midi-28)*.45)),8,'#b89b74');
@@ -48,11 +48,12 @@ function draw(){pending=false;const music=app.state.music;timeline.hidden=!music
  $('scoreSeek').min=from;$('scoreSeek').max=Math.min(duration,from+span);$('scoreSeek').value=time;$('scorePosition').textContent=Math.floor(time/60)+':'+(time%60).toFixed(3).padStart(6,'0');$('scoreScale').textContent=zoom===1?'Full track':Math.round(span)+' seconds';$('scoreZoomOut').disabled=zoom===1;$('scoreZoomIn').disabled=span<=2;
  lastMusic=music;lastSettings=app.state.settings;lastWidth=width;if(!audio.paused&&visible&&!document.hidden)setTimeout(schedule,32);
 }
-function schedule(){if(!pending){pending=true;requestAnimationFrame(draw);}}
+function schedule(){if(!visible||document.hidden)return;if(!pending){pending=true;requestAnimationFrame(draw);}}
 $('scoreSeek').oninput=e=>{if(app.state.busy||app.state.loadingProject)return;app.stopInspection();audio.currentTime=Number(e.target.value);app.renderFrame(audio.currentTime);app.drawWave();schedule();};
 $('scoreZoomIn').onclick=()=>{zoom=Math.min(256,zoom*2);schedule();};$('scoreZoomOut').onclick=()=>{zoom=Math.max(1,zoom/2);schedule();};
 if(typeof IntersectionObserver==='function')new IntersectionObserver(entries=>{visible=entries[0].isIntersecting;if(visible)schedule();}).observe(timeline);
  audio.addEventListener('play',schedule);audio.addEventListener('timeupdate',schedule);audio.addEventListener('seeked',schedule);window.addEventListener('resize',schedule);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule();});
 document.addEventListener('lightforge:changed',()=>{unavailable.hidden=!!app.state.music;sections.hidden=!app.state.show;document.body.classList.toggle('has-project',!!app.state.project);if(lastMusic!==app.state.music||lastSettings!==app.state.settings||lastWidth!==canvas.clientWidth)schedule();});
 window.LightForgeCockpit={select,draw};schedule();
 })();

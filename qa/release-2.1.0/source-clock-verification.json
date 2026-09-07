@@ -1,0 +1,16 @@
+{
+  "release": "2.1.0",
+  "passed": true,
+  "source_hashes": {
+    "web/analysis/separator-deux.js": "06900caecc898f7a6cf1689c6a11fcb3bafdf8b21a177b83b6c5610386b9a74d",
+    "web/analysis/dsp.js": "32186b9268632cab85cadcb7e84fa1b4e3d8eb4bb9fbdf96a0873067cb9acd71",
+    "web/analysis/models/deux/manifest.json": "724ba38ba42617f3f867fc39dd044f9b1ff1284abeabffbaeadbf3ea67cf2389",
+    "qa/release-2.1.0/test-source-clock.cjs": "8e5fe87cfdf15b871ff10f050e03159eb50c62d7d496523430e02d2d79beb624"
+  },
+  "scope": "Neutral masks and fake graph sessions; actual production STFT/scatter/ISTFT and overlapping chunk scheduler. No neural inference.",
+  "samples": 932143,
+  "chunks": 4,
+  "maxAbsError": 2.2351741790771484e-8,
+  "contiguousSourceSamples": true,
+  "monotonicProgress": true
+}

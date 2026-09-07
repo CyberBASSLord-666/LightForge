@@ -1,0 +1,1 @@
+PASS: real duplicate, Unicode rename, exact audio copies, editable backup restoration, authoritative duration, regenerated analysis, CRC corruption, truncated ZIP, missing data, cancellation cleanup, traversal rejection and interrupted rename recovery.

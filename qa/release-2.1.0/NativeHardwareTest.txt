@@ -1,0 +1,1 @@
+PASS: 16 production native sequence checks; valid manual Stop/Idle, all closures, all lamps/RGB, and optional outer ramps; corrupt commands and impossible choreography rejected.

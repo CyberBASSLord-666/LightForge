@@ -34,8 +34,13 @@ def validate_apk(path, assets, require_dex=False):
         bad = archive.testzip()
         if bad:
             raise ValueError('APK ZIP integrity failure: ' + bad)
+        # Match build.sh's distributable inventory. aapt2 can leave hidden
+        # compression scratch files beside very large staged model assets;
+        # those are neither source assets nor entries in the linked APK.
         expected_assets = {'assets/' + p.relative_to(assets).as_posix(): p
-                           for p in assets.rglob('*') if p.is_file()}
+                           for p in assets.rglob('*') if p.is_file()
+                           and not any(part.startswith('.') or part in {'node_modules', '__pycache__'}
+                                       for part in p.relative_to(assets).parts)}
         actual_assets = {name for name in names
                          if name.startswith('assets/') and not name.endswith('/')}
         if actual_assets != set(expected_assets):

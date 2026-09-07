@@ -41,12 +41,13 @@ The build verifies resource and asset ZIP integrity, compiles Java/DEX, aligns t
 npx playwright install --with-deps chromium
 node qa/release-2.1.0/browser.cjs
 node qa/release-2.1.0/analysis-browser.cjs
+node qa/release-2.1.0/test-source-clock.cjs
 python3 tools/package_release.py
 ```
 
 The browser test uses the real UI, WebGL, browser workers, music fixture, persistence and streamed export, with a simulated Android bridge. It retains screenshots at 320, 393, 768 and 1440 pixels. The `.github/workflows/verify-v2.yml` workflow runs Node/Python, browser, APK build and native tests and keeps receipts/screenshots as an Actions artifact. Its signing identity is temporary and its APK is not uploaded as a release.
 
-Prepare the licensed MUSDB reference excerpts as shown in `.github/workflows/verify-v2.yml` before running the actual model browser test. The packager requires passing, source-bound regression, browser, native, actual model runtime and reference-quality receipts. It compares every bundled web asset against the current source, checks APK CRCs and the original certificate, then creates `output/LightForge-2.1.0.apk` and `release-verification.json`. It does not substitute historical model tests for current UI/engine tests. Repository sources are the development handoff; the separate original private backup retains signing credentials.
+Prepare the licensed MUSDB reference excerpts as shown in `.github/workflows/verify-v2.yml` before running the actual model browser test. The packager requires passing, source-bound regression, browser, native, actual model runtime and reference-quality receipts. `qa/release-2.1.0/evaluate-separation.py` reproduces the 18 reference estimates; `evaluate-roles.cjs` runs their role components. The conversion/runtime probes and `verify-analysis.py` bind numeric evidence to exact model/adapter hashes; the complete commands and retained execution captures are documented in `qa/release-2.1.0/README.md`. Fresh model changes require fresh evidence; checked-in receipts are not a bypass. It compares every bundled web asset against the current source, checks APK CRCs and the original certificate, then creates `output/LightForge-2.1.0.apk` and `release-verification.json`. It does not substitute historical model tests for current UI/engine tests. Repository sources are the development handoff; the separate original private backup retains signing credentials.
 
 ## Dependencies and overrides
 
