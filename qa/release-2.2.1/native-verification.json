@@ -7,7 +7,7 @@
     "android/src/com/cyberbasslord/lightforge/AnalysisService.java": "4be3ecab058daf7410c95389dd634430e183bd4ffd5c1beec6e327222a8ec745",
     "android/src/com/cyberbasslord/lightforge/AppResources.java": "f95a5d02007b40a0e2488b82298776be0fb9d171de8336380fec3dd553712430",
     "android/src/com/cyberbasslord/lightforge/AudioImporter.java": "910ef3ec1d6f6ded54c91111d9ab34dbf4bbf4d4043f62f1978057183ca0b575",
-    "android/src/com/cyberbasslord/lightforge/MainActivity.java": "67398d860b50320f1a310eb0fc9c216249aa45839974a13e223b31cd7c8a8552",
+    "android/src/com/cyberbasslord/lightforge/MainActivity.java": "310d4e49addd684be92bf262da133f66369a60d6915b822af046f81f26d18267",
     "android/src/com/cyberbasslord/lightforge/NativeDeux.java": "4320a91ceb7f1d49ab1bb839dead4c85bee417863ea37d5c4a1cd31fbe708558",
     "android/src/com/cyberbasslord/lightforge/NativeDeuxTransform.java": "991b06501cfb88b904d0b714a525c389f169f00c231248b0e961b70f257e90b5",
     "android/src/com/cyberbasslord/lightforge/NativePassageTask.java": "e15832e772b608cb57312c138fdb582a05973620a0c318e9212e37f0cedb7697",
@@ -51,5 +51,5 @@
     "Playback proxy boundaries through the four-hour maximum passed.",
     "Source wiring checks: package-derived version, frozen export projectState, native pause/save hook and background startup recovery are present (not device runtime tests)."
   ],
-  "completed": "2026-09-07T21:34:55.378047+00:00"
+  "completed": "2026-09-07T23:16:40.214717+00:00"
 }

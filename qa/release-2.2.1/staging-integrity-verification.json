@@ -1,0 +1,9 @@
+{
+  "passed": true,
+  "staged_files": 111,
+  "staged_bytes": 1524917198,
+  "manifest_verified_analysis_assets": 73,
+  "helper_sha256": "cfa16b0f87f689e96e74cf97e1640b0eff6c2b9afe23ce8e22ff147527985c25",
+  "tests": 17,
+  "note": "Fresh bounded staging of actual bundled web assets; all 73 pinned analysis assets verified with production inventory and SHA-256 checks."
+}

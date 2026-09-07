@@ -1,0 +1,85 @@
+{
+  "release": "2.2.1",
+  "passed": false,
+  "checks": [
+    "Actual Studio native CPU separation, neural analysis and choreography completed with the Activity destroyed, screen off and Doze forced with user-equivalent battery exemption; result was durably saved.",
+    "Reopened Activity reports the completed job and its saved project."
+  ],
+  "errors": [
+    "Android lifecycle instrumentation failed; see android-background.log"
+  ],
+  "source_hashes": {
+    "android/src/com/cyberbasslord/lightforge/AnalysisJobStore.java": "7d834eb8f9eedf2381b9c68b81d7ba17ae1e7dff7c595f10cf89e47efe67fe94",
+    "android/src/com/cyberbasslord/lightforge/AnalysisService.java": "4be3ecab058daf7410c95389dd634430e183bd4ffd5c1beec6e327222a8ec745",
+    "android/src/com/cyberbasslord/lightforge/AppResources.java": "f95a5d02007b40a0e2488b82298776be0fb9d171de8336380fec3dd553712430",
+    "android/src/com/cyberbasslord/lightforge/AudioImporter.java": "910ef3ec1d6f6ded54c91111d9ab34dbf4bbf4d4043f62f1978057183ca0b575",
+    "android/src/com/cyberbasslord/lightforge/MainActivity.java": "67398d860b50320f1a310eb0fc9c216249aa45839974a13e223b31cd7c8a8552",
+    "android/src/com/cyberbasslord/lightforge/NativeDeux.java": "4320a91ceb7f1d49ab1bb839dead4c85bee417863ea37d5c4a1cd31fbe708558",
+    "android/src/com/cyberbasslord/lightforge/NativeDeuxTransform.java": "991b06501cfb88b904d0b714a525c389f169f00c231248b0e961b70f257e90b5",
+    "android/src/com/cyberbasslord/lightforge/NativePassageTask.java": "e15832e772b608cb57312c138fdb582a05973620a0c318e9212e37f0cedb7697",
+    "android/src/com/cyberbasslord/lightforge/PendingExportStore.java": "1697003aab5f842d0bb90122df46f2d1f60da30232eca9d6912c972e421c4163",
+    "android/src/com/cyberbasslord/lightforge/ProjectPreview.java": "459e586684b6cea8b0b5c0541de766c45301347341ff2acdc15e876028e7c551",
+    "android/src/com/cyberbasslord/lightforge/ProjectStore.java": "51492859a40490533286574a08893bf3f6da5063c69b806f7760b3d056269472",
+    "android/src/com/cyberbasslord/lightforge/WavConverter.java": "f34b9bf3c8960678b6116619941307ce01b75c672807ca85f6f81b6adc33b1b6",
+    "android/src/com/cyberbasslord/lightforge/WebViewFileTransport.java": "2deff6c473928a08a7e63172c3fa6798df1273d1907fc163f292aa43d5c39b6e",
+    "android/AndroidManifest.xml": "7329675ebc8c9ace4e5a0a607fe8c4753924e89d168c266993c612084b7e4e19",
+    "android/res/drawable/ic_analysis.xml": "6e698464885ef96f0b11af9c5a05c4947affc0126e2994a331ef9cffec3732c8",
+    "android/res/drawable/ic_launcher.xml": "3c411f5d88166510435daeb1702d155849cc0f8208bcfde9b9d61eed24d57b8e",
+    "android/res/values/styles.xml": "24448bfe96b034f7bfadcd0d469d46da30538c3acfa67e2ded464869ad9a9859",
+    "web/background/native-deux.js": "1125d5ee8dd0633133fb68f315d627d43e768410151c19029874054c1d60dde3",
+    "web/background/runner.html": "cf882b294a3d8c5dcf3ff362f4f6f9544580b7e4ca81cbc512e19f8166331fdc",
+    "web/background/runner.js": "b88e97d4ee80c67e9d22217dc5560581fe755373f330dc0979d795cbcc7893fd",
+    "web/app.js": "85f3143c205740032bc4ef025103bc88b50c9a9be1ea93eb248c3754a4beff36",
+    "web/index.html": "cff24363353016cdf8c96c0d65c8b1f8fd375de78c62147872398e2ad086843e",
+    "tests/android/BackgroundInstrumentation.java": "ef1e93a44f96a4fcc439f44c6eea9ea5e73cc63c0a9dcf7b6c87b3009311f214",
+    "tools/run_android_background_tests.py": "5493a355480bf4587841f20f383d7f58e8a7b8c36bd58e5672f8bf8eed4ff0b1",
+    "tools/build_android_tests.py": "bce8e74c266469ee5cfca515472d18c5a73756a804f5d0371b282bb2aa24e1b5",
+    "android/native-runtime.json": "679f377a99019fbd20db96e3d35881e5d7d05ca761dc62a265a411d219dc8198",
+    "web/analysis/ASSET_MANIFEST.json": "8c33fa5a7b7bafd871b8caf0c476245ff40ede8fe70ee9703f50230c55a3ed71"
+  },
+  "scope": "Android API 35 emulator lifecycle test using the production service, native CPU Studio separation plus actual WebView/WASM rhythm and voice models, live inference cancellation, verified passage resume and compilation. Not a physical phone or Tesla test.",
+  "lastProgress": {
+    "phase": "resume-screen-off-analysis",
+    "elapsedSeconds": 634.213,
+    "phaseElapsedSeconds": 0,
+    "checks": [
+      "Actual Studio native CPU separation, neural analysis and choreography completed with the Activity destroyed, screen off and Doze forced with user-equivalent battery exemption; result was durably saved.",
+      "Reopened Activity reports the completed job and its saved project."
+    ],
+    "powerTransition": {
+      "phase": "reopen-for-notification-cancel",
+      "interactive": true,
+      "deepIdle": false,
+      "batteryExempt": true,
+      "controllerDeepState": "ACTIVE",
+      "commandOutput": "Light state: OVERRIDE, deep state: IDLE\nmForceModeManagerQuickDozeRequest: false\nmForceModeManagerOffBodyState: false"
+    },
+    "job": {
+      "id": "7495c1c6-e4e0-426c-9dfa-87a0c9dc707f",
+      "projectId": "9c330241-364a-49b4-824a-6d08b1aa62a2",
+      "name": "Resume fixture",
+      "sourceSHA256": "2647d4729de10c9140be6cb0424cf42eb8e12729a81ff4283aacd233640033ff",
+      "analysisIdentity": "8cd7e914df9b03969925398c7f595d2b1a287daddbd9bfaef4cc37f06b5cc266",
+      "state": "cancelled",
+      "stage": "Analysis cancelled. Your saved show is intact.",
+      "progress": 0.5632,
+      "createdAt": 1788822241185,
+      "updatedAt": 1788822524342,
+      "hasCheckpoint": false,
+      "resumeAvailable": true,
+      "progressAt": 1788822518898,
+      "elapsedMs": 283157,
+      "completedStages": 1,
+      "restoredStages": 0,
+      "analysisStage": "Separating voice and instruments",
+      "passageIndex": 1,
+      "passageCount": 2,
+      "passagesCompleted": 1,
+      "restoredPassages": 0,
+      "checkpointAt": 1788822518898,
+      "lastStage": "Studio \u00b7 passage 1 of 2 complete \u2022 5 / 12 seconds",
+      "stoppedAt": 1788822524342
+    }
+  },
+  "completedAt": "2026-09-07T23:08:55.122937+00:00"
+}
