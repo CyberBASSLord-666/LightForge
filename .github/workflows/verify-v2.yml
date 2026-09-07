@@ -62,7 +62,7 @@ jobs:
           env -u ANDROID_SDK_ROOT -u ANDROID_HOME LIGHTFORGE_ALLOW_NEW_SIGNING=1 LIGHTFORGE_SIGNING_DIR="$RUNNER_TEMP/ci-signing" bash build.sh 2>&1 | tee qa/release-2.2.0/ci-build.log
           df -h .
       - name: Native storage and sequence validation
-        run: env -u ANDROID_SDK_ROOT -u ANDROID_HOME python3 tests/verify_native_release.py --release 2.1.0
+        run: env -u ANDROID_SDK_ROOT -u ANDROID_HOME python3 tests/verify_native_release.py --release 2.2.0
       - name: Build same-signed Android lifecycle instrumentation
         run: LIGHTFORGE_SIGNING_DIR="$RUNNER_TEMP/ci-signing" python3 tools/build_android_tests.py
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4

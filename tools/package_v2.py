@@ -35,7 +35,7 @@ def main():
             with z.open('assets/'+p.relative_to(ROOT/'web').as_posix()) as stream:require(sha_stream(stream)==sha_file(p),'APK contains stale source: '+str(p))
     record={'release':receipt,'signing_certificate_sha256':SIGNING_SHA256,'apk_source_assets_matched':len(web),'current_release_receipts':evidence,
             'model_analysis_evidence':{'status':'Current model runtime and reference scoring are separate, source-bound gates. Quality scores are from six short reference excerpts, not a general accuracy guarantee.','path':'qa/release-'+name+'/analysis-verification.json'} if version['code']>=20100 else {'status':'Historical 1.6.0 model evidence; not a fresh accuracy measurement.','path':'qa/release-1.6.0/analysis-verification.json'},
-            'native_device_install_and_launch':'NOT PERFORMED','vehicle_test':'NOT PERFORMED','browser_scope':'Chromium with actual workers/WebGL and a simulated Android bridge.'}
+            'physical_android_device_install_and_launch':'NOT PERFORMED','android_emulator_install_and_lifecycle':'PASSED with CI signing identity; original release signature verified separately' if version['code']>=20200 else 'NOT PERFORMED','vehicle_test':'NOT PERFORMED','browser_scope':'Chromium with actual workers/WebGL and a simulated Android bridge.'}
     atomic(ROOT/'release-verification.json',(json.dumps(record,indent=2)+'\n').encode())
     out=ROOT/'output';out.mkdir(exist_ok=True);result=atomic_copy(apk,out/apk.name,receipt['sha256'])
     atomic(out/(apk.name+'.sha256'),(receipt['sha256']+'  '+apk.name+'\n').encode())
