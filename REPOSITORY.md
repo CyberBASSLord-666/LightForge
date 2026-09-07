@@ -13,7 +13,7 @@ The backup contained 904 entries. All 900 non-secret source files are preserved:
 
 ## Verify and build
 
-The initial transfer carries eight large source assets as 8 MiB pieces. The release workflow restores them to their normal paths, verifies the preserved snapshot, and commits only those restored paths to `main` without force-pushing. If working from the initial transfer before restoration completes:
+The initial transfer carried eight large source assets as 8 MiB pieces. The completed migration restored them to their normal paths, verified the preserved snapshot, and committed only those restored paths to `main` without force-pushing. Its one-time publishing workflow is retained at `archive/v1.6.0/publish-workflow.yml`; the active release pipeline is now `publish-release.yml`. If working from the initial transfer before restoration completes:
 
 ```bash
 python3 migration/restore.py --only source

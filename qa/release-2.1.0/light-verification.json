@@ -66,7 +66,7 @@
   ],
   "source_hashes": {
     "web/engine/show-engine.js": "d09cfcdf1e1eebf36d3e03bfd40a3939dcc0fd18a4437047217511a258674548",
-    "web/engine/light-planner.js": "285f6e1c37160eeee117b98227b20ed044b020c1e0b0cc2e62505980ec5b00e6",
+    "web/engine/light-planner.js": "970c7a2a736560bf01e318b8180b431863e09e6e28daad4525ec583a70a73aeb",
     "web/engine/movement-planner.js": "d22998c270c01af72f4fa1467ea5f5c9a3cc3ddda9f2264395fd8bba870305ec",
     "web/engine/vehicle-profile.js": "027bf87a827a900cda00505e2b539f84cbdb0d5a9800ea4eb1efdf85a0c10936"
   },

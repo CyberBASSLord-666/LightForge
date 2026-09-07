@@ -1,6 +1,6 @@
 # Build and verify LightForge 2.1
 
-The repository root contains the complete Android/WebView application, bundled models, graphics, audio and tests. No Gradle, backend, account or runtime model download is needed.
+The repository root contains the complete Android/WebView source, retained assets, model-reproduction tools and tests. No Gradle, backend, account or runtime model download is needed.
 
 ## Reproduce the Android update
 
@@ -81,3 +81,5 @@ The production verification workflow retains `lightforge-2.1-ci-candidate` after
 `tools/apk_delta.py make candidate.apk signed.apk signed-apk.delta.json` produces a small public-byte transfer against the exact candidate hash. `apply` reconstructs the locally signed APK byte-for-byte and rejects a wrong base, corrupt patch or invalid range. It contains no key/password and cannot sign another APK.
 
 Commit the delta and `releases/vX.Y.Z/request.json` with the exact successful CI run, source commit, version and delta SHA-256, plus current release receipts. The publication workflow runs on `main`, verifies all five gates and unchanged app sources, reconstructs the full APK, validates the original certificate/manifest/alignment/assets, then uploads the APK, checksum, notes and verification report. It publishes only after GitHub's stored APK digest matches. Existing release tags/assets are never overwritten.
+
+When the connector cannot download the large candidate artifact, `prepare-release.yml` reads a successful pinned run and publishes `verified-candidate-index`. Its ZIP entry offsets, sizes and compressed hashes allow `tools/apk_delta.py make --from-catalog candidate-index.json signed.apk signed-apk.delta.json` without transferring the model payloads locally. Applying the delta still verifies the entire candidate hash and exact final signed-APK hash. The catalog test proves it produces the same delta as indexing the candidate directly.

@@ -24,10 +24,10 @@
     "web/engine/worker.js": "924e901876530dc45df99ab856ec2c7c48ae223ce76103d4c9d84047086a5121",
     "web/engine/client.js": "56380a3901c45b3409e94bf568a2f600dce471f1a8b289e71a081b91a04c355d",
     "web/engine/show-engine.js": "d09cfcdf1e1eebf36d3e03bfd40a3939dcc0fd18a4437047217511a258674548",
-    "web/engine/light-planner.js": "285f6e1c37160eeee117b98227b20ed044b020c1e0b0cc2e62505980ec5b00e6",
+    "web/engine/light-planner.js": "970c7a2a736560bf01e318b8180b431863e09e6e28daad4525ec583a70a73aeb",
     "web/engine/music-cues.js": "1a87eea0502da2e1f19d2361a5646c127121211e91128017ce747b7f0d2f61d6",
     "web/engine/sync-review.js": "eb9591060fffa20e2b12de97c6d344b61e06fc276af75817610d4e17095c61d9"
   },
   "scope": "Desktop Chromium with actual WebGL and web workers; simulated Android bridge. No Android device or Tesla.",
-  "completedAt": "2026-09-07T06:51:47.882Z"
+  "completedAt": "2026-09-07T09:32:15.569Z"
 }

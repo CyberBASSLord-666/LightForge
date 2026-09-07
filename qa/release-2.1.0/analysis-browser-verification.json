@@ -9,17 +9,17 @@
   ],
   "source_hashes": {
     "web/analysis/worker.js": "725e6767647f70021d8ba38ec68f40f0059ca3af1afbdd282446cf7c7b54f75f",
-    "web/analysis/analyzer.js": "981572c75f8b29eb165753ac069933ece52e12dffaf4ef4aa31b18af2c689db0",
+    "web/analysis/analyzer.js": "0a5f01457e7b538a4e2ecec222756a240e5b3532fd304cd21b640f5905eb9bee",
     "web/analysis/game.js": "f4a24e8417223bb4d9e52c9102054dc29a9c7c77cc59cf49f0c82d31802817c2",
     "web/analysis/separator-deux.js": "06900caecc898f7a6cf1689c6a11fcb3bafdf8b21a177b83b6c5610386b9a74d",
-    "web/analysis/stem-cache.js": "53d4ed79b3f107c145998b7b2fe94be02f81d244f3c05594643542b2da84a3fa",
+    "web/analysis/stem-cache.js": "83257fededb12328891494994e166eed47b81adf3147f4789e4694ce4a239749",
     "web/analysis/vocal.js": "94483ac6cf5db7532abfba98e7bab7cd826a82ad2adca0296d39fdebd827ac70",
     "web/analysis/vocal-detail.js": "cd760d7a766d9a4ab0ac3a252a10f17a16a797b38e50b2d6712bc6adcd42713f",
     "web/analysis/bass-notes.js": "5b81e2361295a1f8c02086d4668464ed1d7e93c923513c50a2c865a7aeb1531e",
     "web/analysis/models/game/manifest.json": "51e172cfaa967d9e2518f01f508a64d49cd283d23ae8e8456af9c6e76eeb4f97",
     "web/analysis/models/deux/manifest.json": "724ba38ba42617f3f867fc39dd044f9b1ff1284abeabffbaeadbf3ea67cf2389",
     "web/engine/show-engine.js": "d09cfcdf1e1eebf36d3e03bfd40a3939dcc0fd18a4437047217511a258674548",
-    "web/engine/light-planner.js": "285f6e1c37160eeee117b98227b20ed044b020c1e0b0cc2e62505980ec5b00e6",
+    "web/engine/light-planner.js": "970c7a2a736560bf01e318b8180b431863e09e6e28daad4525ec583a70a73aeb",
     "web/engine/music-cues.js": "1a87eea0502da2e1f19d2361a5646c127121211e91128017ce747b7f0d2f61d6",
     "web/engine/sync-review.js": "eb9591060fffa20e2b12de97c6d344b61e06fc276af75817610d4e17095c61d9",
     "web/engine/worker.js": "924e901876530dc45df99ab856ec2c7c48ae223ce76103d4c9d84047086a5121"
@@ -58,7 +58,7 @@
         "overlapSeconds": 5,
         "chunks": 1,
         "estimated": true,
-        "analysisSeconds": 352.15984499999996,
+        "analysisSeconds": 387.60311499999995,
         "alignment": "Original PCM clock; centered STFT and normalized overlap-add with complementary chunk crossfades",
         "limitations": [
           "Vocal and instrumental estimates can contain bleed; neither is an isolated bass instrument.",
@@ -68,7 +68,7 @@
       "bassMethod": "Harmonic low-register tracking",
       "quality": "precision",
       "runtime": "ONNX Runtime Web 1.20.1",
-      "analysisSeconds": 392.9
+      "analysisSeconds": 430.7
     },
     "separation": {
       "name": "Mel-Band RoFormer Deux",
@@ -87,7 +87,7 @@
       "overlapSeconds": 5,
       "chunks": 1,
       "estimated": true,
-      "analysisSeconds": 352.15984499999996,
+      "analysisSeconds": 387.60311499999995,
       "alignment": "Original PCM clock; centered STFT and normalized overlap-add with complementary chunk crossfades",
       "limitations": [
         "Vocal and instrumental estimates can contain bleed; neither is an isolated bass instrument.",
@@ -138,5 +138,5 @@
     "stage": "Separating voice and instruments",
     "remainingNamespaces": 0
   },
-  "completedAt": "2026-09-07T06:45:02.083Z"
+  "completedAt": "2026-09-07T09:44:45.062Z"
 }

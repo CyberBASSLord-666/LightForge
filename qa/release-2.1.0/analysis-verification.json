@@ -9,13 +9,13 @@
     "Actual production JS/WASM output agrees with the original model within declared numeric tolerance; every graph matches the released model manifest."
   ],
   "source_hashes": {
-    "web/analysis/ASSET_MANIFEST.json": "4affe5b82439c873dee51a236a91e8e8aae5036e83da942250e30a0bbc8c903d",
+    "web/analysis/ASSET_MANIFEST.json": "eca6c2c418c75969916093290afc9bd5f9cd858495b68a615c5a20ad7f6315e6",
     "web/analysis/worker.js": "725e6767647f70021d8ba38ec68f40f0059ca3af1afbdd282446cf7c7b54f75f",
     "web/analysis/separator-deux.js": "06900caecc898f7a6cf1689c6a11fcb3bafdf8b21a177b83b6c5610386b9a74d",
     "web/analysis/game.js": "f4a24e8417223bb4d9e52c9102054dc29a9c7c77cc59cf49f0c82d31802817c2",
     "web/analysis/vocal-detail.js": "cd760d7a766d9a4ab0ac3a252a10f17a16a797b38e50b2d6712bc6adcd42713f",
     "web/analysis/vocal.js": "94483ac6cf5db7532abfba98e7bab7cd826a82ad2adca0296d39fdebd827ac70",
-    "web/analysis/stem-cache.js": "53d4ed79b3f107c145998b7b2fe94be02f81d244f3c05594643542b2da84a3fa",
+    "web/analysis/stem-cache.js": "83257fededb12328891494994e166eed47b81adf3147f4789e4694ce4a239749",
     "web/analysis/wav-reader.js": "0f0e5216dc1d2ca0bfb25eddacdaa21076990fa7638c22188023607e43d4005f",
     "web/analysis/models/deux/manifest.json": "724ba38ba42617f3f867fc39dd044f9b1ff1284abeabffbaeadbf3ea67cf2389",
     "web/analysis/models/game/manifest.json": "51e172cfaa967d9e2518f01f508a64d49cd283d23ae8e8456af9c6e76eeb4f97",
@@ -69,5 +69,5 @@
     "musdb-fixture-provenance.json": "319552573a28c8637124f47bda7ba6dc31f15c7882a3ffa35fc33aa5cd3d1043",
     "source-clock-verification.json": "f02130a749790e5dcd527dcf19c13c97848eb8ad929504b07abfa417e173bfd6"
   },
-  "completedAt": "2026-09-07T06:43:13.619232+00:00"
+  "completedAt": "2026-09-07T09:28:01.884370+00:00"
 }
