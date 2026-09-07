@@ -1,11 +1,12 @@
 name: LightForge production verification
 on:
   push:
-    branches: [main, 'development/2.0', 'development/2.1']
+    branches: [main, 'development/2.0', 'development/2.1', 'development/2.2']
   pull_request:
   workflow_dispatch:
 permissions:
   contents: read
+  actions: read
 concurrency:
   group: verify-v2-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
@@ -42,7 +43,7 @@ jobs:
           python3 tools/prepare_deux.py
       - run: npm test
       - run: npx playwright install --with-deps chromium
-      - run: node qa/release-2.1.0/browser.cjs
+      - run: node qa/release-2.2.0/browser.cjs
       - name: Prepare licensed reference excerpts
         run: |
           sudo apt-get update -qq
@@ -52,34 +53,73 @@ jobs:
           echo '365f66acffc57282e474a4c24b32afec3678258c50b8d45646ac849b0a287df3  qa/release-1.6.0/fixtures/MUSDB18-7-STEMS.zip' | sha256sum -c
           python3 qa/release-1.6.0/prepare-musdb-fixtures.py
       - name: Actual offline model pipeline and cancellation
-        run: node qa/release-2.1.0/analysis-browser.cjs
+        run: node qa/release-2.2.0/analysis-browser.cjs
       - run: python3 tools/bootstrap_toolchain.py
       - name: Build CI package with an ephemeral signing identity
         run: |
           set -o pipefail
           df -h .
-          env -u ANDROID_SDK_ROOT -u ANDROID_HOME LIGHTFORGE_ALLOW_NEW_SIGNING=1 LIGHTFORGE_SIGNING_DIR="$RUNNER_TEMP/ci-signing" bash build.sh 2>&1 | tee qa/release-2.1.0/ci-build.log
+          env -u ANDROID_SDK_ROOT -u ANDROID_HOME LIGHTFORGE_ALLOW_NEW_SIGNING=1 LIGHTFORGE_SIGNING_DIR="$RUNNER_TEMP/ci-signing" bash build.sh 2>&1 | tee qa/release-2.2.0/ci-build.log
           df -h .
       - name: Native storage and sequence validation
         run: env -u ANDROID_SDK_ROOT -u ANDROID_HOME python3 tests/verify_native_release.py --release 2.1.0
+      - name: Build same-signed Android lifecycle instrumentation
+        run: LIGHTFORGE_SIGNING_DIR="$RUNNER_TEMP/ci-signing" python3 tools/build_android_tests.py
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
-          name: lightforge-2.1-verification
+          name: lightforge-2.2-verification
           path: |
-            qa/release-2.1.0/*.json
-            qa/release-2.1.0/*.log
-            qa/release-2.1.0/*.txt
-            qa/release-2.1.0/*.png
+            qa/release-2.2.0/*.json
+            qa/release-2.2.0/*.log
+            qa/release-2.2.0/*.txt
+            qa/release-2.2.0/*.png
           retention-days: 30
       - name: Retain verified candidate for local release signing
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: lightforge-2.1-ci-candidate
+          name: lightforge-2.2-ci-candidate
           path: |
-            dist/LightForge-2.1.0.apk
-            dist/LightForge-2.1.0.apk.json
-            dist/LightForge-2.1.0.apk.sha256
+            dist/LightForge-2.2.0.apk
+            dist/background-tests.apk
+            dist/LightForge-2.2.0.apk.json
+            dist/LightForge-2.2.0.apk.sha256
           compression-level: 0
           retention-days: 30
           if-no-files-found: error
+
+  android-background:
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          sparse-checkout: |
+            android
+            web
+            tools
+            tests
+            qa
+      - name: Download the same-signed CI app and instrumentation
+        run: gh run download "${{ github.run_id }}" --name lightforge-2.2-ci-candidate --dir candidate
+      - name: Prepare Android 15 emulator
+        run: |
+          sudo chmod a+rw /dev/kvm
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "system-images;android-35;google_apis;x86_64" "emulator"
+          echo no | "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" create avd --force --name LightForge --package "system-images;android-35;google_apis;x86_64" --device pixel_6
+          "$ANDROID_HOME/emulator/emulator" -avd LightForge -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect -memory 4096 -cores 2 -camera-back none -camera-front none > emulator.log 2>&1 &
+      - name: Verify screen-off analysis and Activity-independent completion
+        run: python3 tools/run_android_background_tests.py
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: lightforge-2.2-android-background
+          path: |
+            qa/release-2.2.0/android-*
+            emulator.log
+          if-no-files-found: error
+          retention-days: 30

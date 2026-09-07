@@ -1,8 +1,8 @@
 {
   "name": "lightforge",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "private": true,
-  "description": "Offline Android Tesla light-show studio — development tests only",
+  "description": "Offline Android Tesla light-show studio \u2014 development tests only",
   "engines": {
     "node": ">=22"
   },

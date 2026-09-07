@@ -36,7 +36,7 @@ jobs:
           assert run['head_sha']==request['source_commit'] and run['head_repository']['full_name']=='CyberBASSLord-666/LightForge'
           assert run['path']=='.github/workflows/verify-v2.yml'
           out=pathlib.Path('build/candidate');out.mkdir(parents=True)
-          subprocess.run(['gh','run','download',str(request['run_id']),'--name','lightforge-2.1-ci-candidate','--dir',str(out)],check=True)
+          subprocess.run(['gh','run','download',str(request['run_id']),'--name','lightforge-2.2-ci-candidate','--dir',str(out)],check=True)
           files=list(out.rglob('LightForge-'+version['name']+'.apk'));assert len(files)==1
           result=catalog(files[0]);result.update(run_id=request['run_id'],source_commit=request['source_commit'])
           pathlib.Path('build/candidate-index.json').write_text(json.dumps(result,separators=(',',':'))+'\n')

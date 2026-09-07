@@ -24,7 +24,7 @@ CLASSES = OUT / 'native-classes'
 OUT.mkdir(parents=True, exist_ok=True)
 CLASSES.mkdir(exist_ok=True)
 sources = sorted((ROOT / 'android/src').rglob('*.java'))
-names = ['NativeRecoveryTest', 'ProjectStoreTest', 'NativeHardwareTest', 'NativeAudioTest', 'WebViewTransportTest', 'ProjectPreviewTest']
+names = ['NativeRecoveryTest', 'ProjectStoreTest', 'NativeHardwareTest', 'NativeAudioTest', 'WebViewTransportTest', 'ProjectPreviewTest', 'AnalysisJobStoreTest']
 tests = [ROOT / f'tests/{name}.java' for name in names + ['WebViewTransportServer']]
 receipt = dict(release=args.release, passed=False, scope='Fresh production Java compilation and host JVM tests; no Android Activity/device/document-provider or physical Tesla execution.',
                source_hashes={str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in sources}, checks=[])
@@ -52,7 +52,7 @@ try:
                             cwd=ROOT, capture_output=True, text=True)
     (OUT / 'native-compilation.txt').write_text(result.stdout + result.stderr)
     result.check_returncode()
-    for folder in ['native-recovery-fixtures', 'native-project-fixtures', 'native-audio-fixtures', 'native-transport-fixtures']:
+    for folder in ['native-recovery-fixtures', 'native-project-fixtures', 'native-audio-fixtures', 'native-transport-fixtures', 'native-background-fixtures']:
         where = OUT / folder
         if where.exists(): shutil.rmtree(where)
     recovery = json.loads(run('NativeRecoveryTest', OUT / 'native-recovery-fixtures'))
@@ -68,6 +68,8 @@ try:
     assert 'PASS:' in run('WebViewTransportTest', ROOT / 'web/demo/glass-castle.wav', OUT / 'native-transport-fixtures')
     receipt['checks'].append('WebView byte-range transport regression suite passed on the actual demo audio.')
     receipt['checks'].append('Production COOP/COEP/CORP response policy is same-origin and independently instantiated across unknown, empty, partial and large responses; ranges and MIME protection remain intact without cross-origin grants.')
+    assert 'PASS:' in run('AnalysisJobStoreTest', OUT / 'native-background-fixtures')
+    receipt['checks'].append('Durable background job ownership, checkpoint reuse, cancellation, conflicting edits, result commit and interrupted-process recovery passed on the host JVM.')
     run('ProjectPreviewTest')
     receipt['checks'].append('Playback proxy boundaries through the four-hour maximum passed.')
     main = (ROOT / 'android/src/com/cyberbasslord/lightforge/MainActivity.java').read_text()
@@ -76,7 +78,7 @@ try:
     assert 'session.projectState' in main and 'meta.optJSONObject("projectState")' in main
     assert 'window.pausePreview && window.pausePreview()' in main
     assert 'startupRecovery=worker.submit' in main
-    assert 'WebViewFileTransport.responseHeaders(length,range)' in main
+    assert 'WebViewFileTransport.responseHeaders(length,range)' in (ROOT/'android/src/com/cyberbasslord/lightforge/AppResources.java').read_text()
     receipt['checks'].append('Source wiring checks: package-derived version, frozen export projectState, native pause/save hook and background startup recovery are present (not device runtime tests).')
     assert receipt['source_hashes'] == {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in sources}, 'Native sources changed during validation; rerun.'
     receipt['passed'] = True

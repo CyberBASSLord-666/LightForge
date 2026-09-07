@@ -84,11 +84,22 @@ function toast(message,error=false){clearTimeout(toastTimer);text($('toast'),mes
 function mergeSettings(s){return {...clone(defaults),...s,enabled:{...defaults.enabled,...(s?.enabled||{})},sectionOverrides:s?.sectionOverrides||{}};}
 function bridge(method,...args){try{return window.Android?.[method]?.(...args);}catch(e){toast(e.message||'The device action could not be completed.',true);throw e;}}
 function nav(view){if(view!=='studio')stopInspection();if(!['studio','shows','guide'].includes(view))view='studio';state.view=view;document.querySelectorAll('.view').forEach(el=>el.classList.toggle('active',el.id===view));document.querySelectorAll('.nav-item').forEach(el=>{el.classList.toggle('active',el.dataset.navigate===view);if(el.dataset.navigate===view)el.setAttribute('aria-current','page');else el.removeAttribute('aria-current');});if(view==='shows'){if(native()&&!state.busy)applyBootstrap(parse(bridge('getBootstrap'),{}));else renderProjects();}window.scrollTo({top:0,behavior:'instant'});resizeCanvases();}
-function readBootstrap(){if(native()){const data=parse(bridge('getBootstrap'),{});applyBootstrap(data);state.lastProjectId=data.lastProjectId;}else{state.projects=parse(localStorage.getItem('lightforge-projects'),[]);state.lastProjectId=localStorage.getItem('lightforge-last-project');renderProjects();}try{state.settings=mergeSettings(parse(localStorage.getItem('lightforge-settings'),defaults));}catch{}syncControls();if(!state.project&&state.lastProjectId){const p=state.projects.find(p=>p.id===state.lastProjectId);if(p)selectProject(p);}}
+async function readBootstrap(){
+ let background=null;
+ if(native()){
+  const data=parse(bridge('getBootstrap'),{});background=data.backgroundJob||null;state.backgroundJob=background;
+  state.backgroundSyncPending=background?.state==='completed'&&localStorage.getItem('lightforge-background-ack')!==background.id;
+  applyBootstrap(data);state.lastProjectId=(backgroundActive(background)||state.backgroundSyncPending)?background.projectId:data.lastProjectId;
+  renderDeviceCapabilities(data.deviceCapabilities);
+ }else{state.projects=parse(localStorage.getItem('lightforge-projects'),[]);state.lastProjectId=localStorage.getItem('lightforge-last-project');renderProjects();}
+ try{state.settings=mergeSettings(parse(localStorage.getItem('lightforge-settings'),defaults));}catch{}
+ syncControls();if(!state.project&&state.lastProjectId){const p=state.projects.find(p=>p.id===state.lastProjectId);if(p)await selectProject(p);}
+ if(background)await handleBackgroundJob(background);
+}
 function applyBootstrap(data){if(Array.isArray(data.projects))state.projects=data.projects;if(data.version)text($('appVersion'),data.version);if('pendingExport'in data)state.pendingExport=data.pendingExport;if(state.project){const p=state.projects.find(p=>p.id===state.project.id);if(p){Object.assign(state.project,p);text($('trackTitle'),p.name);}}if(state.pendingProjectAction?.kind==='rename'){state.pendingProjectAction=null;endBusy();toast('Show renamed.');}renderProjects();document.dispatchEvent(new CustomEvent('lightforge:changed'));}
 function setProgress({progress=0,stage='Working',detail,message}){if(!state.busy)return;const p=Math.max(0,Math.min(1,progress>1?progress/100:progress));$('progressBar').style.width=(p*100)+'%';text($('progressPercent'),Math.round(p*100)+'%');text($('progressStage'),stage);text($('progressDetail'),detail||message||'Preparing your show…');const titles={separat:'Separating voice and accompaniment',vocal:'Reading the voice phrasing',voice:'Reading the voice phrasing',pitch:'Following notes and holds',restore:'Restoring your show',duplicate:'Creating your new version',import:'Bringing your music in',decode:'Preparing the audio',model:'Warming up the neural engine',neural:'Listening to the rhythm',beats:'Finding the groove',structure:'Reading the arrangement',generate:'Choreographing your show',export:'Packing your light show'};const key=Object.keys(titles).find(k=>String(stage).toLowerCase().includes(k));if(key)text($('progressTitle'),titles[key]);}
-function beginBusy(title,detail){state.busy=true;state.job++;$('processing').hidden=false;text($('progressTitle'),title);text($('progressDetail'),detail);text($('progressStage'),'Preparing');text($('progressPercent'),'0%');$('progressBar').style.width='0%';$('cancelWork').disabled=false;audio.pause();updateButtons();return state.job;}
-function endBusy(){state.busy=false;$('processing').hidden=true;state.abort=null;updateButtons();}
+function beginBusy(title,detail){state.busy=true;state.job++;$('processing').hidden=false;text($('progressTitle'),title);text($('progressDetail'),detail);text($('progressStage'),'Preparing');text($('progressPercent'),'0%');$('progressBar').style.width='0%';$('cancelWork').disabled=false;renderBackgroundNote();audio.pause();updateButtons();return state.job;}
+function endBusy(){state.busy=false;if($('backgroundContinue'))$('backgroundContinue').hidden=true;if($('backgroundPower'))$('backgroundPower').hidden=true;$('processing').hidden=true;state.abort=null;updateButtons();}
 function openAudioPicker(){if(state.busy)return;if(native()){state.acceptProgress=true;bridge('pickAudio');}else $('browserFile').click();}
 async function db(){if(!dbPromise)dbPromise=new Promise((resolve,reject)=>{const r=indexedDB.open('lightforge',1);r.onupgradeneeded=()=>{r.result.createObjectStore('audio');r.result.createObjectStore('projects');};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});return dbPromise;}
 async function dbGet(store,key){const d=await db();return new Promise((resolve,reject)=>{const r=d.transaction(store).objectStore(store).get(key);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}
@@ -118,7 +129,7 @@ async function selectProject(project,isNew=false){
 function currentShowMatches(){return !!state.show&&!state.needAnalysis&&state.showMusic===state.music&&state.renderedSettingsKey===JSON.stringify(state.settings);}
 function projectJson(){return {version:1,name:state.project?.name,projectId:state.project?.id,updatedAt:Date.now(),settings:state.settings,music:state.music,needAnalysis:state.needAnalysis,compiled:currentShowMatches()?state.compiled:null,provenance:{app:LightForgeVersion.name,planner:state.show?.version||null,profile:VehicleProfile.version,analysis:state.music?.analysisVersion||null,model:state.music?.engine||null,frameSHA256:currentShowMatches()?state.compiled?.sha256:null}};}
 function scheduleSave(){clearTimeout(saveTimer);saveTimer=setTimeout(saveProject,450);try{localStorage.setItem('lightforge-settings',JSON.stringify(state.settings));}catch{}}
-async function saveProject(){if(!state.project||state.loadingProject)return false;if(state.saveBlocked)return true;const project=state.project,body=projectJson(),marker={id:state.project.id,name:state.project.name,settings:JSON.stringify(state.settings),music:state.music,compiled:body.compiled,needAnalysis:state.needAnalysis};if(state.lastSaved&&Object.keys(marker).every(k=>state.lastSaved[k]===marker[k]))return true;try{localStorage.setItem('lightforge-last-project',project.id);if(native()){const saved=bridge('saveProject',project.id,JSON.stringify(body));if(saved!==true&&saved!=='true')throw new Error('The device could not save this project. Free some storage and try again.');}else await dbPut('projects',project.id,body);const p=state.projects.find(p=>p.id===project.id);if(p){p.hasShow=!!body.music;p.style=body.settings.style;p.updatedAt=body.updatedAt;}if(!native())localStorage.setItem('lightforge-projects',JSON.stringify(state.projects));state.lastSaved=marker;state.lastSave=Date.now();document.dispatchEvent(new CustomEvent('lightforge:saved'));return true;}catch(e){toast('This project could not be saved: '+e.message,true);return false;}}
+async function saveProject(){if(backgroundActive(state.backgroundJob)||state.backgroundSyncPending)return true;if(!state.project||state.loadingProject)return false;if(state.saveBlocked)return true;const project=state.project,body=projectJson(),marker={id:state.project.id,name:state.project.name,settings:JSON.stringify(state.settings),music:state.music,compiled:body.compiled,needAnalysis:state.needAnalysis};if(state.lastSaved&&Object.keys(marker).every(k=>state.lastSaved[k]===marker[k]))return true;try{localStorage.setItem('lightforge-last-project',project.id);if(native()){const saved=bridge('saveProject',project.id,JSON.stringify(body));if(saved!==true&&saved!=='true')throw new Error('The device could not save this project. Free some storage and try again.');}else await dbPut('projects',project.id,body);const p=state.projects.find(p=>p.id===project.id);if(p){p.hasShow=!!body.music;p.style=body.settings.style;p.updatedAt=body.updatedAt;}if(!native())localStorage.setItem('lightforge-projects',JSON.stringify(state.projects));state.lastSaved=marker;state.lastSave=Date.now();document.dispatchEvent(new CustomEvent('lightforge:saved'));return true;}catch(e){toast('This project could not be saved: '+e.message,true);return false;}}
 
 function captureSnapshot(){const retainFrames=!state.show||state.show.frames.byteLength<=16*1024*1024;return {projectId:state.project?.id,settings:clone(state.settings),music:state.music,show:retainFrames?state.show:null,compiled:currentShowMatches()?state.compiled:null,exportHeader:state.exportHeader,needAnalysis:state.needAnalysis,renderedSettingsKey:state.renderedSettingsKey,showMusic:state.showMusic};}
 function trimHistory(list){let bytes=0;const seen=new Set();for(let i=list.length-1;i>=0;i--){const show=list[i].show;if(show&&!seen.has(show)){seen.add(show);bytes+=show.frames.byteLength;}if(i<list.length-2&&(bytes>64*1024*1024||list.length-i>20)){list.splice(0,i+1);break;}}}
@@ -150,10 +161,71 @@ function updateButtons(){
  if(!state.needAnalysis)text($('generationHint'),state.composing?'Updating the arrangement in the background…':state.music&&(state.music.analysisVersion||1)<6?'Your saved arrangement is preserved. Re-analyze for GAME Large singing transcription and studio source separation.':has?'Tweak a setting to update the preview. Your show saves automatically.':'On-device music analysis. No subscription. No uploads.');
  document.dispatchEvent(new CustomEvent('lightforge:changed'));
 }
+function backgroundActive(job){return !!job&&['queued','running','cancelling'].includes(job.state);}
+function backgroundSupported(){return native()&&typeof window.Android.startAnalysis==='function';}
+function renderBackgroundNote(){
+ const active=backgroundActive(state.backgroundJob),note=$('processingNote');
+ if(note)text(note,active?(state.deviceCapabilities?.notifications===false?'You can switch apps or lock the screen. Notifications are off; reopen LightForge for progress.':'You can switch apps or lock the screen. Follow progress in your notification.'):'Keep LightForge open for this operation.');
+ if($('backgroundContinue'))$('backgroundContinue').hidden=!active;
+ if($('backgroundPower'))$('backgroundPower').hidden=!(active&&state.deviceCapabilities?.batteryOptimized);
+}
+function renderDeviceCapabilities(data){
+ if(!data)return;state.deviceCapabilities=data;
+ const panel=$('backgroundDevice');if(panel)panel.hidden=false;
+ const gb=Number(data.memoryBytes)/(1024**3);
+ text($('backgroundDeviceSummary'),`${data.cpuCores||'—'} CPU cores · ${Number.isFinite(gb)?gb.toFixed(1):'—'} GB memory · Android API ${data.androidSdk||'—'}`);
+ text($('backgroundDeviceStatus'),data.batteryRestricted?'Android is restricting background work. Open Battery settings and allow unrestricted use for LightForge.':data.notifications===false?'Background analysis is available. Enable notifications to see progress and completion outside the app.':data.batteryOptimized?'Background analysis is ready. Allow background battery use for long jobs with the screen off.':'Background analysis is ready. Progress and Cancel stay available in your notification.');
+ renderBackgroundNote();
+}
+async function handleBackgroundJob(job){
+ if(!job?.id)return;state.backgroundJob=job;
+ if(job.state==='completed'&&localStorage.getItem('lightforge-background-ack')!==job.id)state.backgroundSyncPending=true;
+ if(state.loadingProject||state.backgroundApplying)return;
+ if(backgroundActive(job)){
+  if(!state.busy)beginBusy('Creating your show in the background','You can switch apps while LightForge works.');
+  renderBackgroundNote();setProgress({progress:job.progress,stage:job.progress>=.96?'generate':'analysis',detail:job.stage});
+  $('cancelWork').disabled=job.state==='cancelling';return;
+ }
+ if(state.backgroundSeen===job.id+':'+job.state)return;
+ state.backgroundSeen=job.id+':'+job.state;
+ if(state.busy&&!state.abort)endBusy();
+ const banner=$('backgroundRecovery');if(banner)banner.hidden=true;
+ if(job.state==='completed'){
+  if(!state.backgroundSyncPending)return;
+  state.backgroundApplying=true;
+  try{
+   clearTimeout(saveTimer);applyBootstrap(parse(bridge('getBootstrap'),{}));
+   const project=state.projects.find(p=>p.id===job.projectId);if(!project)throw Error('The completed project could not be found.');
+   state.lastSaved=null;await selectProject(project,false);
+   if(state.saveBlocked)throw Error('The saved show could not be opened.');
+   state.backgroundSyncPending=false;localStorage.setItem('lightforge-background-ack',job.id);
+   toast('Your background show is ready. Press play to review it.');
+  }catch(error){state.backgroundSeen=null;toast(error.message,true);}
+  finally{state.backgroundApplying=false;}
+ }else if(['failed','interrupted','cancelled'].includes(job.state)){
+  state.backgroundSyncPending=false;
+  if(banner){banner.hidden=false;text($('backgroundRecoveryMessage'),job.stage||'Your saved show is intact. Retry when ready.');}
+ }
+ updateButtons();
+}
+async function pollBackgroundJob(){
+ if(!backgroundSupported()||document.hidden)return;
+ const job=parse(bridge('getAnalysisStatus'),null);if(job)await handleBackgroundJob(job);
+}
+async function startBackgroundGeneration(){
+ if(!(await saveProject()))return;
+ clearTimeout(saveTimer);abandonAudition();audio.pause();audio.src=mixAudioUrl();
+ const job=parse(bridge('startAnalysis',state.project.id),{});
+ if(job.error||!job.id){toast(job.error||'Background analysis could not start.',true);return;}
+ state.backgroundSeen=null;state.backgroundSyncPending=false;
+ if($('backgroundRecovery'))$('backgroundRecovery').hidden=true;
+ await handleBackgroundJob(job);
+}
 async function generate(){
  stopInspection();if(!state.project||state.busy||state.loadingProject)return;
  if(!window.MusicAnalyzer||!window.ShowCompiler){toast('The show tools are still loading. Try again in a moment.',true);return;}
  clearTimeout(regenTimer);state.compileAbort?.abort();state.compileId++;state.composing=false;
+ if(backgroundSupported()){await startBackgroundGeneration();return;}
  const previous=captureSnapshot(),job=beginBusy('Listening to the music','Separating the voice and reading the musical detail on this device.');state.abort=new AbortController();
  analysisFallback=previous.show&&previous.showMusic===previous.music&&previous.renderedSettingsKey===JSON.stringify(previous.settings)?{music:previous.music,settingsKey:previous.renderedSettingsKey}:null;
  try{
@@ -221,7 +293,7 @@ function drawWave(){const can=canvasSize($('waveCanvas'));if(!can)return;const {
 function tick(ts){if(ts-lastDraw>=15&&state.view==='studio'&&state.project){const time=audio.currentTime||0;if(state.soloPreview||time!==renderedTime||state.show!==renderedShow){lastDraw=ts;renderFrame(time);drawWave();}}frameRequest=requestAnimationFrame(tick);}
 function togglePlay(){stopInspection();if(!state.project)return;if(audio.paused)audio.play().catch(e=>toast('Audio playback could not start: '+e.message,true));else audio.pause();}
 function updatePlay(){const playing=!audio.paused;$('play').innerHTML=playing?'<svg viewBox="0 0 24 24"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>':'<svg viewBox="0 0 24 24"><path d="m8 5 11 7-11 7z"/></svg>';$('play').setAttribute('aria-label',playing?'Pause preview':'Play preview');}
-window.onNativeEvent=(type,payload)=>{const data=parse(payload,{});if(type==='progress'){if(state.abort)return;if(!state.busy&&!state.acceptProgress)return;if(!state.busy)beginBusy('Bringing your music in','Preparing the audio file.');setProgress(data);}else if(type==='imported'){state.acceptProgress=false;endBusy();const p=data.project||data;const existing=state.projects.findIndex(x=>x.id===p.id);if(existing>=0)state.projects[existing]=p;else state.projects.unshift(p);selectProject(p,true);toast('Music imported. Choose your style and create.');}else if(type==='error'){if(state.abort){toast(data.message||'A device action could not be completed.',true);return;}state.pendingProjectAction=null;state.acceptProgress=false;endBusy();toast(data.message||'The device action could not be completed.',true);}else if(type==='exportRecovery'){state.pendingExport=data.pendingExport??data;state.acceptProgress=false;endBusy();updateButtons();}else if(type==='exported')exported(data);else if(type==='projects')applyBootstrap(data);else if(type==='projectReady'){state.pendingProjectAction=null;state.acceptProgress=false;endBusy();const p=data.project||data;const i=state.projects.findIndex(x=>x.id===p.id);if(i>=0)state.projects[i]=p;else state.projects.unshift(p);selectProject(p,false);toast('Project ready. Your music and edits are restored.');}else if(type==='cancelled'||type==='canceled'){if(state.abort)return;state.acceptProgress=false;endBusy();toast('Canceled. Your saved work is still here.');}};
+window.onNativeEvent=(type,payload)=>{const data=parse(payload,{});if(type==='analysisJob'){handleBackgroundJob(data);return;}if(type==='deviceCapabilities'){renderDeviceCapabilities(data);return;}if(type==='progress'){if(state.abort)return;if(!state.busy&&!state.acceptProgress)return;if(!state.busy)beginBusy('Bringing your music in','Preparing the audio file.');setProgress(data);}else if(type==='imported'){state.acceptProgress=false;endBusy();const p=data.project||data;const existing=state.projects.findIndex(x=>x.id===p.id);if(existing>=0)state.projects[existing]=p;else state.projects.unshift(p);selectProject(p,true);toast('Music imported. Choose your style and create.');}else if(type==='error'){if(state.abort){toast(data.message||'A device action could not be completed.',true);return;}state.pendingProjectAction=null;state.acceptProgress=false;endBusy();toast(data.message||'The device action could not be completed.',true);}else if(type==='exportRecovery'){state.pendingExport=data.pendingExport??data;state.acceptProgress=false;endBusy();updateButtons();}else if(type==='exported')exported(data);else if(type==='projects')applyBootstrap(data);else if(type==='projectReady'){state.pendingProjectAction=null;state.acceptProgress=false;endBusy();const p=data.project||data;const i=state.projects.findIndex(x=>x.id===p.id);if(i>=0)state.projects[i]=p;else state.projects.unshift(p);selectProject(p,false);toast('Project ready. Your music and edits are restored.');}else if(type==='cancelled'||type==='canceled'){if(state.abort)return;state.acceptProgress=false;endBusy();toast('Canceled. Your saved work is still here.');}};
 
 let editQueue=Promise.resolve();
 function commitChannelSettings(patch){const copied=clone(patch),projectId=state.project?.id;const apply=()=>{if(projectId!==state.project?.id)throw Error('The project changed before this edit was applied.');return applyChannelSettings(copied);};const task=editQueue.then(apply,apply);editQueue=task.catch(()=>{});return task;}
@@ -254,7 +326,7 @@ function startInspection(output,value,rgb){
 }
 $('pickAudio').onclick=$('changeAudio').onclick=openAudioPicker;$('browserFile').onchange=e=>{importBrowser(e.target.files[0]);e.target.value='';};$('loadDemo').onclick=async()=>{if(native()){state.acceptProgress=true;bridge('loadDemo');return;}try{const response=await fetch('demo/glass-castle.wav');if(!response.ok)throw new Error('The demo file is unavailable.');await importBrowser(new File([await response.blob()],'Glass Castle — demo excerpt.wav',{type:'audio/wav'}));}catch(e){toast(e.message,true);}};
 $('quickAction').onclick=()=>currentShowMatches()?exportShow():generate();$('quickTune').onclick=()=>document.querySelector('.controls-column').scrollIntoView({behavior:'smooth',block:'start'});$('generate').onclick=generate;$('play').onclick=togglePlay;$('backBeat').onclick=()=>audio.currentTime=Math.max(0,audio.currentTime-10);$('forwardBeat').onclick=()=>audio.currentTime=Math.min(audio.duration||0,audio.currentTime+10);$('mute').onclick=()=>{audio.muted=!audio.muted;$('mute').style.opacity=audio.muted?'.4':'1';$('mute').setAttribute('aria-label',audio.muted?'Unmute audio':'Mute audio');};$('seek').oninput=e=>{stopInspection();audio.currentTime=Number(e.target.value);renderFrame(audio.currentTime);drawWave();};audio.onplay=audio.onpause=audio.onended=()=>{updatePlay();renderFrame(audio.currentTime||0);};audio.onseeked=()=>{renderFrame(audio.currentTime||0);drawWave();};audio.onloadedmetadata=()=>{if(state.project){const duration=Number.isFinite(audio.duration)&&audio.duration>0?audio.duration:state.project.duration;$('seek').max=duration||1;text($('totalTime'),formatTime(duration));}};audio.onerror=()=>{if(!state.auditionLoading&&state.project&&audio.src)toast('This project’s audio could not be opened. Try selecting the song again.',true);};
-$('cancelWork').onclick=()=>{restoreAnalysisFallback();state.acceptProgress=false;state.job++;state.abort?.abort();state.compileAbort?.abort();state.compileId++;state.composing=false;clearTimeout(regenTimer);if(native())bridge('cancelWork');endBusy();updateButtons();toast('Canceled. Your saved work is still here.');};$('previewMode').onclick=()=>{state.previewMode=1-state.previewMode;document.querySelector('.preview-card').classList.toggle('expanded',!!state.previewMode);$('previewMode').setAttribute('aria-pressed',String(!!state.previewMode));text($('previewMode'),state.previewMode?'Reduce ↙':'Expand ↗');renderFrame(audio.currentTime);};document.querySelectorAll('[data-camera]').forEach(el=>el.onclick=()=>{vehiclePreview.setView(el.dataset.camera);renderFrame(audio.currentTime||0);});
+$('cancelWork').onclick=()=>{if(backgroundActive(state.backgroundJob)){bridge('cancelAnalysis',state.backgroundJob.id);$('cancelWork').disabled=true;text($('progressDetail'),'Cancelling background analysis…');return;}restoreAnalysisFallback();state.acceptProgress=false;state.job++;state.abort?.abort();state.compileAbort?.abort();state.compileId++;state.composing=false;clearTimeout(regenTimer);if(native())bridge('cancelWork');endBusy();updateButtons();toast('Canceled. Your saved work is still here.');};$('previewMode').onclick=()=>{state.previewMode=1-state.previewMode;document.querySelector('.preview-card').classList.toggle('expanded',!!state.previewMode);$('previewMode').setAttribute('aria-pressed',String(!!state.previewMode));text($('previewMode'),state.previewMode?'Reduce ↙':'Expand ↗');renderFrame(audio.currentTime);};document.querySelectorAll('[data-camera]').forEach(el=>el.onclick=()=>{vehiclePreview.setView(el.dataset.camera);renderFrame(audio.currentTime||0);});
 document.querySelectorAll('[data-navigate]').forEach(el=>el.onclick=()=>nav(el.dataset.navigate));document.querySelector('.wordmark').onclick=e=>{e.preventDefault();nav('studio');};document.querySelectorAll('[data-style]').forEach(el=>el.onclick=()=>{if(state.settings.style===el.dataset.style)return;snapshot();state.settings.style=el.dataset.style;settingsChanged();});document.querySelectorAll('[data-dance]').forEach(el=>el.onclick=()=>{if(state.settings.dance===el.dataset.dance)return;snapshot();state.settings.dance=el.dataset.dance;settingsChanged();});
 for(const id of ['intensity','sensitivity']){$(id).addEventListener('pointerdown',snapshot);$(id).addEventListener('keydown',e=>{if(['ArrowRight','ArrowLeft','ArrowUp','ArrowDown'].includes(e.key))snapshot();});$(id).oninput=()=>{state.settings[id]=Number($(id).value);settingsChanged(id==='sensitivity');};}
 for(const id of ['stepMs','beatDivision','palette','bpmOverride','offsetMs'])$(id).onchange=()=>{snapshot();const val=$(id).value;state.settings[id]=['stepMs','bpmOverride','offsetMs'].includes(id)?(val===''?null:Number(val)):val;if(id==='bpmOverride'&&state.settings[id]!==null)state.settings[id]=Math.max(40,Math.min(240,state.settings[id]));if(id==='offsetMs')state.settings[id]=Math.max(-2000,Math.min(2000,state.settings[id]||0));settingsChanged(id==='bpmOverride');};
@@ -262,9 +334,18 @@ document.querySelectorAll('[data-feature]').forEach(el=>el.onchange=()=>{snapsho
 $('sectionEnergy').oninput=()=>{text($('sectionEnergyValue'),Math.round($('sectionEnergy').value*100)+'%');updateRangeFill($('sectionEnergy'));};$('applySection').onclick=async()=>{if(state.editing===null)return;snapshot();const override={...state.settings.sectionOverrides[state.editing],intensity:Number($('sectionEnergy').value)};delete override.style;if($('sectionStyle').value)override.style=$('sectionStyle').value;state.settings.sectionOverrides[state.editing]=override;await regenerate();toast('Section updated. Play it back to hear the change in context.');};$('closeSection').onclick=()=>{$('sectionEditor').hidden=true;document.querySelectorAll('.section-item').forEach(b=>b.classList.remove('selecting'));};$('resetSections').onclick=()=>{if(!Object.keys(state.settings.sectionOverrides).length)return;snapshot();state.settings.sectionOverrides={};regenerate();$('sectionEditor').hidden=true;toast('Section overrides cleared.');};
 $('export').onclick=exportShow;$('shareExport').onclick=()=>bridge('shareExport',String(state.exportId||''));$('exportDone').onclick=()=>$('exportSuccess').hidden=true;$('officialGuide').onclick=()=>{const url='https://github.com/teslamotors/light-show';if(native())bridge('openExternal',url);else window.open(url,'_blank','noopener');};
 window.pausePreview=()=>{stopInspection();audio.pause();clearTimeout(saveTimer);saveProject();};
-window.addEventListener('resize',resizeCanvases);document.addEventListener('visibilitychange',()=>{if(document.hidden){window.pausePreview();cancelAnimationFrame(frameRequest);}else{lastDraw=0;frameRequest=requestAnimationFrame(tick);resizeCanvases();}});window.addEventListener('pagehide',window.pausePreview);
+window.addEventListener('resize',resizeCanvases);document.addEventListener('visibilitychange',()=>{if(document.hidden){window.pausePreview();cancelAnimationFrame(frameRequest);}else{pollBackgroundJob();if(backgroundSupported())renderDeviceCapabilities(parse(bridge('getDeviceCapabilities'),null));lastDraw=0;frameRequest=requestAnimationFrame(tick);resizeCanvases();}});window.addEventListener('pagehide',window.pausePreview);
 async function resumePendingExport(){if(state.busy)return;state.acceptProgress=true;beginBusy('Saving your prepared show','Choose where to save your recovered ZIP.');bridge('resumePendingExport');}
 async function restorePreviousProject(id=state.project?.id){if(!native()||state.busy)return;state.acceptProgress=true;beginBusy('Restoring the previous save','Recovering your last saved arrangement.');bridge('restorePreviousProject',id);}
 async function discardPendingExport(){bridge('discardPendingExport');state.pendingExport=null;updateButtons();}
 $('restoreBackup').hidden=!native();readBootstrap();updatePlay();requestAnimationFrame(tick);window.LightForgeApp={state,setAudition,refreshAuditionAvailability,selectProject,generate,regenerate,nav,exportShow,zipStored,renderFrame,drawWave,readBootstrap,vehiclePreview,commitChannelSettings,startInspection,stopInspection,toast,captureSnapshot,restoreSnapshot,undo,redo,editSection,saveProject,projectJson,renderProjects,resumePendingExport,discardPendingExport,restorePreviousProject};
+
+if($('backgroundContinue'))$('backgroundContinue').onclick=()=>bridge('continueInBackground');
+if($('backgroundNotifications'))$('backgroundNotifications').onclick=()=>bridge('openBackgroundSettings','notifications');
+if($('backgroundBattery'))$('backgroundBattery').onclick=()=>bridge('openBackgroundSettings','power');
+if($('backgroundPower'))$('backgroundPower').onclick=()=>bridge('openBackgroundSettings','power');
+if($('backgroundRetry'))$('backgroundRetry').onclick=async()=>{const job=state.backgroundJob;const project=state.projects.find(p=>p.id===job?.projectId);if(project){await selectProject(project,false);await generate();}};
+if($('backgroundDismiss'))$('backgroundDismiss').onclick=()=>{$('backgroundRecovery').hidden=true;};
+if(backgroundSupported())setInterval(pollBackgroundJob,2000);
+
 })();

@@ -129,7 +129,9 @@ def main():
     run('git', 'fetch', '--no-tags', '--depth=1', 'origin', source_commit)
     run('git', 'diff', '--exit-code', source_commit, 'HEAD', '--', 'web', 'android', 'version.json')
     gates = ROOT / ('qa/release-' + version['name'])
-    for name in ['regression-verification.json', 'browser-verification.json', 'native-verification.json', 'analysis-browser-verification.json', 'analysis-verification.json']:
+    required_gates=['regression-verification.json', 'browser-verification.json', 'native-verification.json', 'analysis-browser-verification.json', 'analysis-verification.json']
+    if version['code']>=20200:required_gates.append('android-background-verification.json')
+    for name in required_gates:
         evidence = json.loads((gates / name).read_text())
         require(evidence.get('passed') is True and not evidence.get('errors') and evidence['release'] == version['name'], 'Failed gate: ' + name)
         require(bool(evidence.get('source_hashes')), 'Missing source binding: ' + name)
@@ -138,7 +140,7 @@ def main():
             require(path.is_relative_to(ROOT) and path.is_file() and digest(path) == checksum, 'Stale evidence: ' + relative)
     transfer = ROOT / 'build/release-candidate'
     transfer.mkdir(parents=True, exist_ok=False)
-    run('gh', 'run', 'download', str(request['run_id']), '--name', 'lightforge-2.1-ci-candidate', '--dir', str(transfer))
+    run('gh', 'run', 'download', str(request['run_id']), '--name', 'lightforge-2.2-ci-candidate', '--dir', str(transfer))
     apk_name = 'LightForge-' + version['name'] + '.apk'
     candidates = list(transfer.rglob(apk_name))
     require(len(candidates) == 1, 'CI artifact must contain exactly one APK')

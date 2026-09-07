@@ -12,6 +12,7 @@ def main():
     gates=['regression-verification.json','browser-verification.json','native-verification.json']
     if version['code']>=20100:
         gates+=['analysis-browser-verification.json','analysis-verification.json']
+    if version['code']>=20200:gates+=['android-background-verification.json']
     for filename in gates:
         p=qa/filename;require(p.is_file(),'Missing current release gate: '+str(p))
         data=json.loads(p.read_text());require(data.get('passed') is True and not data.get('errors') and data.get('release')==name,'Release gate did not pass: '+filename)

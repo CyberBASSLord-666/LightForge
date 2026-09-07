@@ -112,3 +112,5 @@ web/analysis/models/game/*.onnx
 qa/release-1.6.0/fixtures/
 qa/release-2.1.0/native-*-fixtures/
 web/analysis/models/deux/*.onnx
+
+qa/release-2.2.0/native-*-fixtures/

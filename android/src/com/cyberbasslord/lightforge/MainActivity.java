@@ -24,6 +24,31 @@ public final class MainActivity extends Activity {
     private static final String ORIGIN="https://appassets.androidplatform.net";
     private static final int PICK_AUDIO=101,SAVE_ZIP=102,PICK_BACKUP=103;
     private WebView web;
+    private volatile boolean foreground;
+    private boolean analysisReceiverRegistered;
+    private final BroadcastReceiver analysisReceiver=new BroadcastReceiver(){
+        @Override public void onReceive(Context context,Intent intent){sendAnalysisStatus();}
+    };
+    private void sendAnalysisStatus(){
+        try{JSONObject job=AnalysisJobStore.status(getFilesDir());event("analysisJob",job);}
+        catch(Exception e){error(e);}
+    }
+    private JSONObject deviceCapabilities(){
+        PowerManager power=(PowerManager)getSystemService(POWER_SERVICE);
+        ActivityManager manager=(ActivityManager)getSystemService(ACTIVITY_SERVICE);
+        ActivityManager.MemoryInfo memory=new ActivityManager.MemoryInfo();manager.getMemoryInfo(memory);
+        return json("backgroundAnalysis",true,"androidSdk",Build.VERSION.SDK_INT,
+            "notifications",((NotificationManager)getSystemService(NOTIFICATION_SERVICE)).areNotificationsEnabled(),
+            "batteryRestricted",Build.VERSION.SDK_INT>=28&&manager.isBackgroundRestricted(),
+            "batteryOptimized",!power.isIgnoringBatteryOptimizations(getPackageName()),
+            "memoryBytes",memory.totalMem,"availableMemoryBytes",memory.availMem,
+            "lowMemory",memory.lowMemory,"cpuCores",Runtime.getRuntime().availableProcessors());
+    }
+    @Override protected void onResume(){super.onResume();foreground=true;sendAnalysisStatus();event("deviceCapabilities",deviceCapabilities());}
+    @Override public void onRequestPermissionsResult(int request,String[] permissions,int[] results){
+        super.onRequestPermissionsResult(request,permissions,results);event("deviceCapabilities",deviceCapabilities());
+    }
+
     private final ExecutorService worker=Executors.newSingleThreadExecutor();
     private Future<?> startupRecovery;
     private final AtomicBoolean cancelled=new AtomicBoolean();
@@ -42,7 +67,7 @@ public final class MainActivity extends Activity {
         projects=new File(getFilesDir(),"projects");exports=new File(getFilesDir(),"prepared-exports");
         projects.mkdirs();exports.mkdirs();
         startupRecovery=worker.submit(()-> {
-            try{ProjectStore.recover(projects);}catch(Exception e){runOnUiThread(()->Toast.makeText(this,"Project recovery: "+e.getMessage(),Toast.LENGTH_LONG).show());}
+            try{ProjectStore.recover(projects);AnalysisService.recoverIfStopped(this);}catch(Exception e){runOnUiThread(()->Toast.makeText(this,"Project recovery: "+e.getMessage(),Toast.LENGTH_LONG).show());}
         });
         try {
             JSONObject prepared=PendingExportStore.recover(exports);
@@ -51,7 +76,10 @@ public final class MainActivity extends Activity {
         cleanupAbandonedCache();
         savePickerOpen=state!=null&&state.getBoolean("savePickerOpen",false)&&pendingZip!=null;
         getWindow().setStatusBarColor(Color.rgb(8,13,24));getWindow().setNavigationBarColor(Color.rgb(8,13,24));
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        IntentFilter updates=new IntentFilter(AnalysisService.UPDATE);
+        if(Build.VERSION.SDK_INT>=33)registerReceiver(analysisReceiver,updates,Context.RECEIVER_NOT_EXPORTED);
+        else registerReceiver(analysisReceiver,updates);
+        analysisReceiverRegistered=true;
         FrameLayout root=new FrameLayout(this);root.setBackgroundColor(Color.rgb(8,13,24));
         web=new WebView(this);web.setBackgroundColor(Color.rgb(8,13,24));
         root.addView(web,new FrameLayout.LayoutParams(-1,-1));setContentView(root);
@@ -95,13 +123,14 @@ public final class MainActivity extends Activity {
             if(!"true".equals(result)) MainActivity.super.onBackPressed();
         });
     }
-    @Override protected void onPause() {super.onPause();if(web!=null) web.evaluateJavascript("window.pausePreview && window.pausePreview()",null);}
+    @Override protected void onPause() {foreground=false;super.onPause();if(web!=null) web.evaluateJavascript("window.pausePreview && window.pausePreview()",null);}
     @Override protected void onSaveInstanceState(Bundle state) {
         state.putBoolean("savePickerOpen",savePickerOpen);
         if(web!=null)web.evaluateJavascript("window.pausePreview && window.pausePreview()",null);
         super.onSaveInstanceState(state);
     }
     @Override protected void onDestroy() {
+        if(analysisReceiverRegistered){unregisterReceiver(analysisReceiver);analysisReceiverRegistered=false;}
         cancelled.set(true);worker.shutdownNow();
         synchronized(exportLock) {if(activeExport!=null) activeExport.abort();}
         if(web!=null) {web.removeJavascriptInterface("Android");web.destroy();web=null;}
@@ -156,12 +185,49 @@ public final class MainActivity extends Activity {
             File meta=new File(folder,"meta.json");if(meta.isFile()&&new File(folder,"audio.wav").isFile())list.add(ProjectPreview.metadata(ProjectStore.describe(projects,folder.getName()),new File(folder,"audio.wav")));
         }catch(Exception ignored){}
         Collections.sort(list,(a,b)->Long.compare(b.optLong("createdAt"),a.optLong("createdAt")));
-        return json("version",appVersion(),"versionCode",appVersionCode(),"projects",new JSONArray(list),"lastProjectId",getPreferences(0).getString("lastProjectId",""),"pendingExport",preparedExportInfo());
+        return json("version",appVersion(),"versionCode",appVersionCode(),"projects",new JSONArray(list),"lastProjectId",getPreferences(0).getString("lastProjectId",""),"pendingExport",preparedExportInfo(),"backgroundJob",analysisStatus(),"deviceCapabilities",deviceCapabilities());
     }
+    private JSONObject analysisStatus(){try{return AnalysisJobStore.status(getFilesDir());}catch(Exception e){return null;}}
     public final class Bridge {
+        @JavascriptInterface public String getAnalysisStatus(){JSONObject job=analysisStatus();return job==null?"null":job.toString();}
+        @JavascriptInterface public String getDeviceCapabilities(){return deviceCapabilities().toString();}
+        @JavascriptInterface public String startAnalysis(String projectId){
+            try{
+                if(!foreground||importing||exporting)throw new IOException("Open LightForge and finish the current file operation before starting analysis.");
+                final JSONObject job=AnalysisJobStore.prepare(getFilesDir(),projectId);
+                getPreferences(0).edit().putString("lastProjectId",projectId).apply();
+                runOnUiThread(()->{
+                    try{
+                        startForegroundService(new Intent(MainActivity.this,AnalysisService.class).setAction(AnalysisService.ACTION_START).putExtra("jobId",job.optString("id")));
+                        if(Build.VERSION.SDK_INT>=33&&checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)!=android.content.pm.PackageManager.PERMISSION_GRANTED)
+                            requestPermissions(new String[]{android.Manifest.permission.POST_NOTIFICATIONS},2200);
+                    }catch(Exception e){
+                        try{AnalysisJobStore.finish(getFilesDir(),job.optString("id"),"failed",e.getMessage());}catch(Exception ignored){}
+                        sendAnalysisStatus();
+                    }
+                });
+                return job.toString();
+            }catch(Exception e){return json("error",e.getMessage()).toString();}
+        }
+        @JavascriptInterface public void cancelAnalysis(String jobId){runOnUiThread(()->{
+            try{startService(new Intent(MainActivity.this,AnalysisService.class).setAction(AnalysisService.ACTION_CANCEL).putExtra("jobId",jobId));}
+            catch(Exception e){error(e);}
+        });}
+        @JavascriptInterface public void continueInBackground(){runOnUiThread(()->{if(AnalysisService.alive())moveTaskToBack(true);});}
+        @JavascriptInterface public void openBackgroundSettings(String kind){runOnUiThread(()->{
+            try{
+                Intent intent;
+                if("notifications".equals(kind))intent=new Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(android.provider.Settings.EXTRA_APP_PACKAGE,getPackageName());
+                else if("power".equals(kind)&&!((PowerManager)getSystemService(POWER_SERVICE)).isIgnoringBatteryOptimizations(getPackageName()))
+                    intent=new Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,Uri.parse("package:"+getPackageName()));
+                else intent=new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:"+getPackageName()));
+                startActivity(intent);
+            }catch(Exception e){error(e);}
+        });}
+
         @JavascriptInterface public String getBootstrap() {return bootstrap().toString();}
         @JavascriptInterface public void pickAudio() {runOnUiThread(()-> {
-            if(importing||exporting) {error(new IOException("The previous operation is still finishing. Try again in a moment."));return;}
+            if(importing||exporting||AnalysisJobStore.active(analysisStatus())) {error(new IOException("The previous operation is still finishing. Try again in a moment."));return;}
             Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*");
             // Some document providers label FLAC, Opus or M4A as generic binary
             // or MP4. Let the importer inspect the actual selected container.
@@ -169,7 +235,7 @@ public final class MainActivity extends Activity {
             try{startActivityForResult(intent,PICK_AUDIO);}catch(Exception e){error(e);}
         });}
         @JavascriptInterface public void loadDemo() {
-            if(importing) return;
+            if(importing||AnalysisJobStore.active(analysisStatus())) return;
             startImport(null,"Glass Castle • demo excerpt",true);
         }
         @JavascriptInterface public void cancelWork() {
@@ -181,14 +247,14 @@ public final class MainActivity extends Activity {
         @JavascriptInterface public boolean saveProject(String id,String contents) {
             try {
                 if(contents.length()>64*1024*1024) throw new IOException("This project's analysis metadata is too large to save.");
-                ProjectStore.save(projects,id,new JSONObject(contents));
+                synchronized(AnalysisJobStore.class){AnalysisJobStore.requireIdle(getFilesDir());ProjectStore.save(projects,id,new JSONObject(contents));}
                 getPreferences(0).edit().putString("lastProjectId",id).apply();
                 return true;
             }catch(Exception e){error(e);return false;}
         }
         @JavascriptInterface public void restorePreviousProject(String id) {
             try {
-                if(importing||exporting)throw new IOException("Finish the current operation first.");
+                if(importing||exporting||AnalysisJobStore.active(analysisStatus()))throw new IOException("Finish the current operation first.");
                 JSONObject meta=ProjectStore.restorePrevious(projects,id);
                 event("projectReady",ProjectPreview.metadata(meta,new File(project(id),"audio.wav")));
             }catch(Exception e){error(e);}
@@ -206,7 +272,7 @@ public final class MainActivity extends Activity {
         }
         @JavascriptInterface public void deleteProject(String id) {
             try {
-                if(importing||exporting) throw new IOException("Finish or cancel the current operation first.");
+                if(importing||exporting||AnalysisJobStore.active(analysisStatus())) throw new IOException("Finish or cancel the current operation first.");
                 synchronized(exportLock) {if(activeExport!=null)throw new IOException("Finish the export before removing a project.");}
                 remove(project(id));event("projects",bootstrap());
             }catch(Exception e){error(e);}
@@ -214,7 +280,7 @@ public final class MainActivity extends Activity {
         @JavascriptInterface public String beginExport(String metadata) {
             synchronized(exportLock) {
                 try {
-                    if(importing||exporting||activeExport!=null || pendingZip!=null) throw new IOException("The previous operation is still finishing. Try again in a moment.");
+                    if(importing||exporting||AnalysisJobStore.active(analysisStatus())||activeExport!=null || pendingZip!=null) throw new IOException("The previous operation is still finishing. Try again in a moment.");
                     if(metadata.length()>ProjectStore.MAX_PROJECT_BYTES+1024*1024)throw new IOException("This export's editable project data is too large.");
                     JSONObject meta=new JSONObject(metadata);String id=UUID.randomUUID().toString();
                     File dir=project(meta.getString("projectId"));if(!new File(dir,"audio.wav").isFile()) throw new IOException("The project's audio file is missing.");
@@ -282,7 +348,7 @@ public final class MainActivity extends Activity {
         @JavascriptInterface public void openExternal(String url) {MainActivity.this.openExternal(url);}
         @JavascriptInterface public void renameProject(String id,String name) {
             try {
-                if(importing||exporting)throw new IOException("Finish the current operation first.");
+                if(importing||exporting||AnalysisJobStore.active(analysisStatus()))throw new IOException("Finish the current operation first.");
                 ProjectStore.rename(projects,id,name);event("projects",bootstrap());
             }catch(Exception e){error(e);}
         }
@@ -298,7 +364,7 @@ public final class MainActivity extends Activity {
             });
         }
         @JavascriptInterface public void pickProjectBackup() {runOnUiThread(()-> {
-            if(importing||exporting){error(new IOException("Finish the current operation first."));return;}
+            if(importing||exporting||AnalysisJobStore.active(analysisStatus())){error(new IOException("Finish the current operation first."));return;}
             Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("application/zip");
             intent.putExtra(Intent.EXTRA_MIME_TYPES,new String[]{"application/zip","application/x-zip-compressed","application/octet-stream"});
             try{startActivityForResult(intent,PICK_BACKUP);}catch(Exception e){error(e);}
@@ -412,7 +478,7 @@ public final class MainActivity extends Activity {
     private void checkCancelled() throws IOException {if(cancelled.get()||Thread.currentThread().isInterrupted())throw new IOException("Cancelled.");}
     private boolean claimImport() {
         synchronized(exportLock) {
-            if(importing||exporting){error(new IOException("The previous operation is still finishing. Try again in a moment."));return false;}
+            if(importing||exporting||AnalysisJobStore.active(analysisStatus())){error(new IOException("The previous operation is still finishing. Try again in a moment."));return false;}
             importing=true;cancelled.set(false);return true;
         }
     }
@@ -576,37 +642,7 @@ public final class MainActivity extends Activity {
         StringBuilder s=new StringBuilder();for(byte x:d.digest())s.append(String.format(Locale.US,"%02x",x&255));return s.toString();
     }
 
-    private WebResourceResponse resource(Uri uri,Map<String,String> requestHeaders) {
-        try {
-            if(!"https".equals(uri.getScheme())||!"appassets.androidplatform.net".equals(uri.getHost()))return response(403,"Forbidden","text/plain",new ByteArrayInputStream(new byte[0]),0,null);
-            String path=uri.getPath();if(path==null||path.contains("..")||path.contains("\\"))throw new FileNotFoundException();
-            if(path.startsWith("/project/")) {
-                String[] pieces=path.split("/");if(pieces.length!=4)throw new FileNotFoundException();
-                if(!Arrays.asList("audio.wav","analysis.wav","project.json","meta.json").contains(pieces[3]))throw new FileNotFoundException();
-                File projectDir=project(pieces[2]);
-                if("analysis.wav".equals(pieces[3]))ProjectStore.ensureAnalysis(projectDir,null);
-                File file=new File(projectDir,pieces[3]);if(!file.isFile())throw new FileNotFoundException();
-                String range=null;
-                if(requestHeaders!=null)for(Map.Entry<String,String> e:requestHeaders.entrySet())if("Range".equalsIgnoreCase(e.getKey()))range=e.getValue();
-                WebViewFileTransport.Response result=WebViewFileTransport.open(file,range);
-                if(result.status==413)error(new IOException("This long track uses a lighter preview. Reopen it from My shows; full-quality stereo audio is preserved for export."));
-                return response(result.status,result.reason,mime(path),result.body,result.length,result.contentRange);
-            }
-            String asset=path.equals("/")?"index.html":path.substring(1);
-            InputStream in=getAssets().open(asset);
-            return response(200,"OK",mime(path),in,-1,null);
-        }catch(Exception e){return response(404,"Not Found","text/plain",new ByteArrayInputStream("Not found".getBytes(StandardCharsets.UTF_8)),9,null);}
-    }
-    private static String mime(String path) {
-        if(path.endsWith(".html"))return "text/html";if(path.endsWith(".js")||path.endsWith(".mjs"))return "application/javascript";
-        if(path.endsWith(".css"))return "text/css";if(path.endsWith(".json"))return "application/json";if(path.endsWith(".wasm"))return "application/wasm";
-        if(path.endsWith(".wav"))return "audio/wav";if(path.endsWith(".svg"))return "image/svg+xml";if(path.endsWith(".png"))return "image/png";
-        if(path.endsWith(".jpg")||path.endsWith(".jpeg"))return "image/jpeg";if(path.endsWith(".webp"))return "image/webp";
-        if(path.endsWith(".glb"))return "model/gltf-binary";if(path.endsWith(".gltf"))return "model/gltf+json";
-        if(path.endsWith(".woff2"))return "font/woff2";return "application/octet-stream";
-    }
-    private static WebResourceResponse response(int status,String reason,String mime,InputStream in,long length,String range) {
-        Map<String,String> headers=WebViewFileTransport.responseHeaders(length,range);
-        return new WebResourceResponse(mime,mime.startsWith("text/")||mime.contains("javascript")||mime.contains("json")?"UTF-8":null,status,reason,headers,in);
+    private WebResourceResponse resource(Uri uri,Map<String,String> headers) {
+        return new AppResources(this,null).resource(uri,headers);
     }
 }
