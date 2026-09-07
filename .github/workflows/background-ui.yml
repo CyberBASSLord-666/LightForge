@@ -22,6 +22,7 @@ jobs:
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - run: npx playwright install --with-deps chromium
       - run: node qa/release-2.2.0/background-ui.cjs
+      - run: node qa/release-2.2.0/browser.cjs
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
@@ -29,4 +30,6 @@ jobs:
           path: |
             qa/release-2.2.0/background-*.png
             qa/release-2.2.0/background-ui-verification.json
+            qa/release-2.2.0/browser-verification.json
+            qa/release-2.2.0/*cockpit*.png
           retention-days: 30

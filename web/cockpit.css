@@ -43,3 +43,7 @@ input[type=number],input[type=text],select,.precision-form input,.precision-form
 #panel-compose input#bassFocus::-webkit-slider-thumb{background:#c7ae88;box-shadow:none}
 #panel-compose input#vocalFocus::-webkit-slider-runnable-track{background:linear-gradient(to right,#d3d7de var(--fill,85%),#414750 var(--fill,85%))}
 #panel-compose input#bassFocus::-webkit-slider-runnable-track{background:linear-gradient(to right,#c7ae88 var(--fill,90%),#414750 var(--fill,90%))}
+
+/* Keep background actions distinct and reachable on narrow or short displays. */
+.processing-dialog{max-height:calc(100dvh - 48px);overflow-y:auto;overscroll-behavior:contain}
+.processing-dialog>button{display:block;width:100%;min-height:44px;margin-top:8px;padding-left:8px;padding-right:8px;white-space:normal}

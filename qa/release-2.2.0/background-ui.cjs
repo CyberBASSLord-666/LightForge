@@ -29,6 +29,12 @@ const receipt={release:'2.2.0',passed:false,checks:[],errors:[],source_hashes:Ob
    await page.waitForFunction(()=>document.getElementById('progressPercent').textContent==='37%');
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'Viewport overflow at '+width);
    const box=await page.locator('.processing-dialog').boundingBox();assert.ok(box.x>=0&&box.x+box.width<=width+1);
+   let previousBottom=0;
+   for(const selector of ['#backgroundContinue','#backgroundPower','#cancelWork']){
+    const action=await page.locator(selector).boundingBox();
+    assert.ok(action.height>=44&&action.y>=previousBottom+7,'Background actions need separate, accessible touch targets at '+width);
+    previousBottom=action.y+action.height;
+   }
    await page.screenshot({path:path.join(out,'background-progress-'+width+'.png')});
    await page.locator('#backgroundPower').click();await page.locator('#backgroundContinue').click();
    assert.deepEqual(await page.evaluate(()=>({continued:qaBackground.continued,settings:qaBackground.settings,saves:qaBackground.saves})),{continued:true,settings:['power'],saves:0});
