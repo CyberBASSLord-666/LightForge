@@ -1,0 +1,50 @@
+name: Background Android lifecycle probe
+on:
+  push:
+    branches: ['verification/background-emulator']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          sparse-checkout: |
+            android
+            web
+            tools
+            tests
+            qa
+      - name: Retrieve verified transport base
+        run: gh run download 34106398996 --name lightforge-2.1-ci-candidate --dir base
+      - run: python3 tools/bootstrap_toolchain.py
+      - name: Reconstruct exact local app with an isolated test identity
+        run: python3 qa/release-2.2.0/emulator-probe/prepare.py
+      - run: env -u ANDROID_SDK_ROOT -u ANDROID_HOME python3 tests/verify_native_release.py --release 2.2.0
+      - name: Build matching instrumentation
+        run: |
+          LIGHTFORGE_SIGNING_DIR="$RUNNER_TEMP/probe-signing" python3 tools/build_android_tests.py
+          cp dist/background-tests.apk candidate/background-tests.apk
+      - name: Prepare Android 15 emulator
+        run: |
+          sudo chmod a+rw /dev/kvm
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "system-images;android-35;google_apis;x86_64" "emulator"
+          echo no | "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" create avd --force --name LightForge --package "system-images;android-35;google_apis;x86_64" --device pixel_6
+          "$ANDROID_HOME/emulator/emulator" -avd LightForge -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect -memory 4096 -cores 2 -camera-back none -camera-front none > emulator.log 2>&1 &
+      - name: Run real background lifecycle test
+        run: python3 tools/run_android_background_tests.py
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: background-emulator-probe
+          path: |
+            qa/release-2.2.0/android-*
+            emulator.log
+          retention-days: 30
