@@ -12,5 +12,5 @@ function analyze(audioUrl,options={},onProgress=()=>{},signal){return new Promis
  worker.onerror=e=>{if(finished)return;finished=true;cleanup();discard();reject(new Error(e.message||'The music worker could not start. Restart the app and try again.'));};
  worker.postMessage({audioUrl:String(audioUrl),options:{...options,cacheKey}});
  });}
-scope.MusicAnalyzer={analyze,version:'2.1.0',engine:'Beat This! transformer · offline'};
+scope.MusicAnalyzer={analyze,version:scope.LightForgeVersion.name,engine:'Beat This! transformer · offline'};
 })(window);

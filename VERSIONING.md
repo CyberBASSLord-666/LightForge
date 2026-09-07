@@ -1,6 +1,6 @@
 # Version and signing identity
 
-`version.json` is authoritative: `2.0.0`, Android version code `20000`.
+`version.json` is authoritative for the release name and Android version code. Read the current values there; this document intentionally does not duplicate them.
 
 After intentionally changing a release version, update `package.json` and its lockfile, then run `python3 tools/sync_version.py`. This generates `web/version.js`, which the application, compiler and engine read. Builds and tests use `--check` to reject stale generated metadata.
 

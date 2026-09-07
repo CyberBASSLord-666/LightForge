@@ -99,12 +99,15 @@ PY
 "$JAVA_HOME/bin/jar" --create --file "$BUILD/classes.jar" -C "$BUILD/classes" .
 "$BUILD_TOOLS/d8" --release --min-api 26 --lib "$PLATFORM" --output "$BUILD/dex" "$BUILD/classes.jar"
 python3 "$ROOT/tools/apk_archive.py" assemble "$BUILD/resources.apk" "$BUILD/dex" "$BUILD/unsigned.apk" "$BUILD/assets"
+rm -- "$BUILD/resources.apk"
 printf 'Aligning and signing APK…\n'
 "$BUILD_TOOLS/zipalign" -P 16 -f 4 "$BUILD/unsigned.apk" "$BUILD/aligned.apk"
+rm -- "$BUILD/unsigned.apk"
 "$BUILD_TOOLS/apksigner" sign --ks "$KEY_DIR/lightforge-release.jks" --ks-key-alias lightforge \
     --ks-pass "file:$KEY_DIR/keystore-password.txt" \
     --v1-signing-enabled true --v2-signing-enabled true --v3-signing-enabled true \
     --v4-signing-enabled false --out "$BUILD/signed.apk" "$BUILD/aligned.apk"
+rm -- "$BUILD/aligned.apk"
 "$BUILD_TOOLS/apksigner" verify --verbose --print-certs "$BUILD/signed.apk" > "$BUILD/signature-verification.txt"
 "$BUILD_TOOLS/zipalign" -c -P 16 4 "$BUILD/signed.apk"
 "$BUILD_TOOLS/aapt2" dump badging "$BUILD/signed.apk" > "$BUILD/apk-badging.txt"

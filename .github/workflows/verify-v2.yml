@@ -15,6 +15,16 @@ jobs:
     timeout-minutes: 55
     steps:
       - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .github
+            android
+            web
+            tools
+            tests
+            qa
+            research/model-source
+            research/upstream/deux
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -25,8 +35,8 @@ jobs:
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Reproduce bundled production models
         run: |
-          python3 -m pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu
-          python3 -m pip install -r tools/model-requirements.txt
+          python3 -m pip install --no-cache-dir torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu
+          python3 -m pip install --no-cache-dir -r tools/model-requirements.txt
           python3 tools/prepare_game.py
           python3 tools/prepare_deux.py
       - run: npm test
@@ -44,7 +54,11 @@ jobs:
         run: node qa/release-2.1.0/analysis-browser.cjs
       - run: python3 tools/bootstrap_toolchain.py
       - name: Build CI package with an ephemeral signing identity
-        run: env -u ANDROID_SDK_ROOT -u ANDROID_HOME LIGHTFORGE_ALLOW_NEW_SIGNING=1 LIGHTFORGE_SIGNING_DIR="$RUNNER_TEMP/ci-signing" bash build.sh
+        run: |
+          set -o pipefail
+          df -h .
+          env -u ANDROID_SDK_ROOT -u ANDROID_HOME LIGHTFORGE_ALLOW_NEW_SIGNING=1 LIGHTFORGE_SIGNING_DIR="$RUNNER_TEMP/ci-signing" bash build.sh 2>&1 | tee qa/release-2.1.0/ci-build.log
+          df -h .
       - name: Native storage and sequence validation
         run: env -u ANDROID_SDK_ROOT -u ANDROID_HOME python3 tests/verify_native_release.py --release 2.1.0
       - uses: actions/upload-artifact@v4
@@ -57,3 +71,14 @@ jobs:
             qa/release-2.1.0/*.txt
             qa/release-2.1.0/*.png
           retention-days: 30
+      - name: Retain verified candidate for local release signing
+        uses: actions/upload-artifact@v4
+        with:
+          name: lightforge-2.1-ci-candidate
+          path: |
+            dist/LightForge-2.1.0.apk
+            dist/LightForge-2.1.0.apk.json
+            dist/LightForge-2.1.0.apk.sha256
+          compression-level: 0
+          retention-days: 30
+          if-no-files-found: error

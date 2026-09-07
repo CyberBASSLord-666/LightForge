@@ -39,6 +39,17 @@ class DownsampleWriter{
  }
  async finish(){if(this.received!==this.total)throw Error('Separated audio ended before the music did.');await this.push(new Float32Array(0),this.received,true);await this.stream.close();}
 }
+// Bounded reusable encoding storage; writes complete before the next refill.
+class FloatWriter{
+ constructor(stream){this.stream=stream;this.bytes=new Uint8Array(65536);this.view=new DataView(this.bytes.buffer);}
+ async push(pcm){
+  for(let start=0;start<pcm.length;start+=this.bytes.length/4){
+   const count=Math.min(this.bytes.length/4,pcm.length-start);
+   for(let i=0;i<count;i++){const value=pcm[start+i];if(!Number.isFinite(value))throw Error('Invalid full-resolution vocal sample.');this.view.setFloat32(i*4,value,true);}
+   await this.stream.write(this.bytes.subarray(0,count*4));
+  }
+ }
+}
 async function create(key,sampleCount,config,sourceId=''){
  if(!validKey(key)||!Number.isSafeInteger(sampleCount)||sampleCount<44100||sampleCount>44100*14400+3)throw Error('Invalid separated-audio cache request.');
  const expected=Math.ceil(sampleCount/2),needed=132+expected*8+sampleCount*4;
@@ -47,8 +58,8 @@ async function create(key,sampleCount,config,sourceId=''){
  const writers={};let full;
  try{for(const name of ['vocals','accompaniment']){const stream=await(await dir.getFileHandle(name+'.wav',{create:true})).createWritable();await stream.write(header(expected));writers[name]=new DownsampleWriter(stream,config.resampleHalfFIR,sampleCount);}full=await(await dir.getFileHandle('voice-full.wav',{create:true})).createWritable();await full.write(header(sampleCount,44100));}
  catch(e){for(const writer of Object.values(writers))await writer.stream.abort().catch(()=>{});if(full)await full.abort().catch(()=>{});await discard(key);throw e;}
- let finished=false;
- return{key,async append(chunk){if(finished)throw Error('Analysis audio is already complete.');if(chunk.sampleRate!==44100)throw Error('Separated audio has an unsupported sample rate.');if(!(chunk.vocals instanceof Float32Array)||!(chunk.accompaniment instanceof Float32Array)||chunk.vocals.length!==chunk.accompaniment.length)throw Error('Separated audio layers must have matching sample counts.');await writers.vocals.push(chunk.vocals,chunk.startSample);await writers.accompaniment.push(chunk.accompaniment,chunk.startSample);const bytes=new ArrayBuffer(chunk.vocals.length*4),view=new DataView(bytes);for(let i=0;i<chunk.vocals.length;i++){if(!Number.isFinite(chunk.vocals[i]))throw Error('Invalid full-resolution vocal sample.');view.setFloat32(i*4,chunk.vocals[i],true);}await full.write(bytes);},async finish(){for(const writer of Object.values(writers))await writer.finish();await full.close();const meta={version:1,key,createdAt:Date.now(),sampleRate:RATE,samples:expected,duration:sampleCount/44100,sourceId,fullSamples:sampleCount};const stream=await(await dir.getFileHandle('complete.json',{create:true})).createWritable();await stream.write(JSON.stringify(meta));await stream.close();finished=true;return meta;},async abort(){if(full)await full.abort().catch(()=>{});for(const writer of Object.values(writers))await writer.stream.abort().catch(()=>{});await discard(key);}};
+ const fullWriter=new FloatWriter(full);let finished=false;
+ return{key,async append(chunk){if(finished)throw Error('Analysis audio is already complete.');if(chunk.sampleRate!==44100)throw Error('Separated audio has an unsupported sample rate.');if(!(chunk.vocals instanceof Float32Array)||!(chunk.accompaniment instanceof Float32Array)||chunk.vocals.length!==chunk.accompaniment.length)throw Error('Separated audio layers must have matching sample counts.');await writers.vocals.push(chunk.vocals,chunk.startSample);await writers.accompaniment.push(chunk.accompaniment,chunk.startSample);await fullWriter.push(chunk.vocals);},async finish(){for(const writer of Object.values(writers))await writer.finish();await full.close();const meta={version:1,key,createdAt:Date.now(),sampleRate:RATE,samples:expected,duration:sampleCount/44100,sourceId,fullSamples:sampleCount};const stream=await(await dir.getFileHandle('complete.json',{create:true})).createWritable();await stream.write(JSON.stringify(meta));await stream.close();finished=true;return meta;},async abort(){if(full)await full.abort().catch(()=>{});for(const writer of Object.values(writers))await writer.stream.abort().catch(()=>{});await discard(key);}};
 }
 async function files(meta){
  if(!meta||meta.version!==1||!validKey(meta.key)||meta.sampleRate!==RATE||!Number.isSafeInteger(meta.samples)||!Number.isFinite(meta.duration)||Math.abs(meta.samples/RATE-meta.duration)>1/RATE)throw Error('Analyze this song again to listen to its separated parts.');
@@ -65,5 +76,5 @@ async function fullVoice(meta){
  const actual=new Uint8Array(await file.slice(0,44).arrayBuffer()),expected=header(meta.fullSamples,44100);if(actual.some((v,i)=>v!==expected[i]))throw Error('Full-resolution voice header is invalid.');
  return async(start,count)=>{if(!Number.isSafeInteger(start)||!Number.isSafeInteger(count)||start<0||count<0||start+count>meta.fullSamples)throw Error('Invalid full-resolution voice bounds.');const buffer=await file.slice(44+start*4,44+(start+count)*4).arrayBuffer(),view=new DataView(buffer),out=new Float32Array(count);for(let i=0;i<count;i++)out[i]=view.getFloat32(i*4,true);return out;};
 }
-root.LightForgeStemCache={create,files,readers,fullVoice,discard,prune,validKey,header,DownsampleWriter};
+root.LightForgeStemCache={create,files,readers,fullVoice,discard,prune,validKey,header,DownsampleWriter,FloatWriter};
 })(typeof self!=='undefined'?self:globalThis);

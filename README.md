@@ -316,7 +316,7 @@ The app has not been tested here on the user's phone or car.
 ## Update from an earlier release
 
 Install `LightForge-2.1.0.apk` over the existing LightForge app. The package ID
-and signing identity are unchanged, and version code 20000 is newer than the
+and signing identity are unchanged, and version code 20100 is newer than the
 previous releases. **Do not uninstall first**, because uninstalling removes
 private projects. Saved music and projects remain compatible; sequences are
 regenerated with the current vehicle profile when edited or restored.
