@@ -79,10 +79,6 @@
     "bytes": 6449891,
     "sha256": "99929d0603a18bc1aff6994d2c60780ffb37da0a7b326f5b34618bbb1af41feb"
   },
-  "models/deux/block-00.onnx": {
-    "bytes": 12718871,
-    "sha256": "f3c4612db52b6ff10f53ef758cc93ac57fd65118d168b046aafacc11a6d478ab"
-  },
   "models/deux/block-01-frequency.onnx": {
     "bytes": 6351204,
     "sha256": "17fbd2962bfcadecca2b08eae3ab79e3ccf92f7b35da0dade1b83d003ac5345e"
@@ -90,10 +86,6 @@
   "models/deux/block-01-time.onnx": {
     "bytes": 6378168,
     "sha256": "340aa6e8297f3b7085918cfec93d353b1d8649d12e0e17c83b87226f2688d45f"
-  },
-  "models/deux/block-01.onnx": {
-    "bytes": 9194979,
-    "sha256": "b6e5b84338a7d898c1a0934ab35d352d92fd8bbb1c2e623faf8ec4a00c51dade"
   },
   "models/deux/block-02-frequency.onnx": {
     "bytes": 6351204,
@@ -103,10 +95,6 @@
     "bytes": 6378168,
     "sha256": "fb7369fe1eeb340bbe1701e9706e60388785856d8642d9660b5018e505491660"
   },
-  "models/deux/block-02.onnx": {
-    "bytes": 9194979,
-    "sha256": "f3c51b92e62e3d09a716b88447f58cae685405ba0a19fd766000f2423dbe6c99"
-  },
   "models/deux/block-03-frequency.onnx": {
     "bytes": 6351204,
     "sha256": "284fdaeb343dc5c742503f4beb9a253faf7e7dc14184844c63091241c262d5f8"
@@ -114,10 +102,6 @@
   "models/deux/block-03-time.onnx": {
     "bytes": 6378168,
     "sha256": "5554b5723c995cd5ee5c72e7676ba4659ab56ca3d75b72681c6df5c56f14d298"
-  },
-  "models/deux/block-03.onnx": {
-    "bytes": 9194979,
-    "sha256": "6f368dc1cfb2cabca91235db8620fd8d4937634c3c37a2753f4937c6bc7f6c84"
   },
   "models/deux/block-04-frequency.onnx": {
     "bytes": 6351204,
@@ -127,10 +111,6 @@
     "bytes": 6378168,
     "sha256": "02138dae6b824d3a809d42b5f719d66b58a13595f29dc0df241cfd2c9635a377"
   },
-  "models/deux/block-04.onnx": {
-    "bytes": 9194979,
-    "sha256": "7b527d9d125a59042f84420d8b88ddea515ee0fc7da72972b77f3875849211a1"
-  },
   "models/deux/block-05-frequency.onnx": {
     "bytes": 6351204,
     "sha256": "2811d5f251810bd27af5e14674ac166a64753ccf24a23bf521daeb7a63cea62d"
@@ -138,10 +118,6 @@
   "models/deux/block-05-time.onnx": {
     "bytes": 6378168,
     "sha256": "166edd8406f525a1deb7e5eca9e383619b27a0d82adc80cf0636e473455e762a"
-  },
-  "models/deux/block-05.onnx": {
-    "bytes": 9194979,
-    "sha256": "d98e4472845c5ad40a4df42d24c1a80f920f4f3a6d062eb5ef30f2149e5bf2bb"
   },
   "models/deux/block-06-frequency.onnx": {
     "bytes": 6351204,
@@ -151,10 +127,6 @@
     "bytes": 6378168,
     "sha256": "a83645af6e2e3b1107ed6e5a41e1e095da265dff985560a533c3a4774f1eb0fb"
   },
-  "models/deux/block-06.onnx": {
-    "bytes": 9194979,
-    "sha256": "bd6a03322f3ab0e972110d58611dd15b2ad5a39103409a1bde851ef63cc44911"
-  },
   "models/deux/block-07-frequency.onnx": {
     "bytes": 6351204,
     "sha256": "fc9a8b69d369f76f153373df180c94d437c9e3db8850a9a9ee2b63d9b1df0cf2"
@@ -162,10 +134,6 @@
   "models/deux/block-07-time.onnx": {
     "bytes": 6378168,
     "sha256": "eb1c4c6a84dca306da78a7524b004240916aca5fc704e9b64df6cde540a6a20c"
-  },
-  "models/deux/block-07.onnx": {
-    "bytes": 9194979,
-    "sha256": "74e8372a206eee0b2e6c12a25cca2ee1bbfb5798fcb002f895e561e52928e606"
   },
   "models/deux/block-08-frequency.onnx": {
     "bytes": 6351204,
@@ -175,10 +143,6 @@
     "bytes": 6378168,
     "sha256": "c24ef8f8a6224176dfc53d27c817a8e03ea8a7408fc6219c55237023cc848f8c"
   },
-  "models/deux/block-08.onnx": {
-    "bytes": 9194979,
-    "sha256": "0ca9087aee5e04087f9229465cd7599760271fee652c086560810a70a6807e58"
-  },
   "models/deux/block-09-frequency.onnx": {
     "bytes": 6351204,
     "sha256": "536070d2aca4324dda1efb4b78968033061d676abae7cb8e83ccd31640396d4f"
@@ -186,10 +150,6 @@
   "models/deux/block-09-time.onnx": {
     "bytes": 6378168,
     "sha256": "d6e53f8be9e91b6733b8452e752487655c986fa3ac116e40aa3154dd9e7ca00f"
-  },
-  "models/deux/block-09.onnx": {
-    "bytes": 9194979,
-    "sha256": "ea39ee1ad4e9b2bd89429acfef0022a5bed1dc92054ce70114424aaba9e90777"
   },
   "models/deux/block-10-frequency.onnx": {
     "bytes": 6351204,
@@ -199,10 +159,6 @@
     "bytes": 6378168,
     "sha256": "8011e6cf59865a74548d1a894e1355c314c750e8bc5dfdd5c008ab253b240791"
   },
-  "models/deux/block-10.onnx": {
-    "bytes": 9194979,
-    "sha256": "1e45fa3ee4d3eadc4d5b3c5c3a78caac692fbc86e221e28600ac206621c50c20"
-  },
   "models/deux/block-11-frequency.onnx": {
     "bytes": 6351204,
     "sha256": "97c548efaf34d46ab3b6172954f394d3ae7cf75657295e2bc9ccab05a5c737a1"
@@ -210,10 +166,6 @@
   "models/deux/block-11-time.onnx": {
     "bytes": 6378168,
     "sha256": "7421c8c818240f76759b3534b6abb6a6bc84b07e16347c0f56a1d0478de9940d"
-  },
-  "models/deux/block-11.onnx": {
-    "bytes": 9194979,
-    "sha256": "4cd5872d58af7faa072b8706f5885b0722bd92262475fef3853746e76ccd497b"
   },
   "models/deux/front.onnx": {
     "bytes": 8377492,
