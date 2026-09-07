@@ -1,0 +1,15 @@
+GAME Large 1.0.3
+Authors: openvpi and GAME contributors
+Source: https://github.com/openvpi/GAME
+Official models: https://github.com/openvpi/GAME/releases/tag/v1.0.3
+Model weights: Creative Commons Attribution-NonCommercial-ShareAlike 4.0.
+https://creativecommons.org/licenses/by-nc-sa/4.0/
+
+LightForge modification: the segmenter's RandomUniformLike node is replaced
+with a supplied uniform-noise input for reproducible diffusion sampling.
+All original float32 weights are preserved. This modified model is distributed
+under the same CC BY-NC-SA 4.0 license. It does not imply author endorsement.
+The integration uses eight diffusion steps and the author's 0.2 thresholds.
+
+Training-label acknowledgements: Zhibin Club, YQ, Xiao Lang and Youji.
+See the upstream release for datasets and full acknowledgements.

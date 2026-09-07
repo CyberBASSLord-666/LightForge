@@ -1,0 +1,27 @@
+{
+  "apk": "LightForge-2.1.0.apk",
+  "update_compatible": true,
+  "signing_certificate_sha256": "7187d6aa935d5b7d2d656cb87913af95fe1ca3a4b1653036d1d8d890e2016c6b",
+  "bytes": 1093320495,
+  "sha256": "e992f009838d955075c7deaa2ac357295978a9a789da096208d81065e92ca6ac",
+  "zip_integrity": "passed",
+  "alignment": "passed",
+  "signature": "verified",
+  "min_sdk": 26,
+  "target_sdk": 35,
+  "compile_sdk": 35,
+  "version_name": "2.1.0",
+  "version_code": 20100,
+  "web_asset_refresh": {
+    "assets": [
+      "assets/cockpit.js"
+    ],
+    "reason": "Final offscreen-rendering correction after a verified full build.",
+    "native_entries_unchanged": {
+      "AndroidManifest.xml": "bc4aaf1b39d52b54227d70431034c6c34de0da8a24bcfc7e707750b0082b158d",
+      "resources.arsc": "33a20a45da810d055b2b1c07dc490962dca55562b36126d2ea4763748ef53cf6",
+      "classes.dex": "329b685264fc32897f3e6e2babe3095beed14c621a71717614fe830fa3b15814"
+    },
+    "all_current_web_assets_verified": true
+  }
+}

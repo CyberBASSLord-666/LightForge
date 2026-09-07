@@ -1,21 +1,32 @@
-> **Complete source and original release:** Required model weights, WASM, demo audio, 3D assets and retained QA records are now included. See [repository completion](REPOSITORY.md), [asset status](ASSETS.md), and the [original signed 1.6.0 release](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v1.6.0).
+# LightForge 2.1 — personal Android light-show studio
 
-# LightForge — personal Android light-show studio
+Install the complete update from the [LightForge 2.1.0 GitHub release](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.1.0). Use the APK asset, keep the existing installation, and verify its checksum when transferring. All models are bundled; no first-run download is required.
 
-LightForge turns a music file on your phone into a complete Tesla light show.
-It is configured for a **2025 Tesla Model 3 Long Range Rear Wheel Drive, North America** and
-runs its music analysis entirely on the device. Version **1.6.0** adds stereo vocal separation, isolated-voice analysis, articulation and held-note choreography alongside the full and compact **Beat This! transformer** models. See `RELEASE_NOTES.md` for the upgrade guide.
+LightForge turns music on your phone into an editable Tesla light show for a **2025 Model 3 Long Range RWD, North America**. It bundles its neural models, graphics and audio tools and works entirely offline.
 
-## Install
+**2.1 adds the Studio cockpit:** a Tesla-inspired monochrome interface, source-time score, keyboard-accessible Compose/Music/Outputs/Review workspaces, Deux source separation and GAME Large singing-note transcription. Precision Studio retains editable voice/bass gestures, independent timing offsets and review against final exported lamp commands. See [release notes](RELEASE_NOTES.md), [build instructions](BUILD.md) and [validation scope](VALIDATION.md).
 
-1. Download `LightForge-1.6.0.apk` to your phone and open it.
-2. If Android asks, allow your browser or file manager to install this APK.
-3. Open **LightForge**. No account, API key, subscription, model download or
-   server configuration is required.
+## Install the update
 
-The app targets Android 15 and supports Android 8 or later with a sufficiently
-current Android System WebView. It contains no native ABI-specific libraries.
-A current WebView is needed for WebAssembly, private file storage (OPFS), and WebGL 2 graphics. Studio analysis prioritizes quality and can take substantially longer than the song; actual phone processing time has not been measured. Temporary separated-audio storage is about 10.6 MB per minute of music. Keep the app open while it analyzes; cancellation preserves the previously saved show. Install updates over the existing app to retain saved projects.
+Install the update-compatible `LightForge-2.1.0.apk` over your existing app. **Do not uninstall first.** The release uses the original signing identity; private projects are preserved. CI builds use a temporary identity and are not the update APK.
+
+Android 8+ and a current Android System WebView are required. The app targets Android 15. No account, API key, subscription, server or model download is needed. Keep the app open while analyzing; Studio requires several GB of working memory and processing can substantially exceed song duration. Choose Balanced if Studio exceeds your device resources. Separated listening audio needs about 21.2 MB per minute of music.
+
+## Precision Studio
+
+After creating a show, open the **Review** workspace to refine synchronization.
+
+1. Listen with Full song, Voice or Instruments and pause near the moment you want.
+2. Open **Edit musical cues**, choose Voice or Bass, and add at the playhead or start from a detected event.
+3. Set start/end times. Use **Accent** for a short gesture, **Hold** for a sustained gesture, or **Ignore this part** to remove automatic role cues in that range. Optional pitch and labels remain user-authored information.
+4. Loop the passage, save the cue and inspect the resulting lights. Undo/Redo includes these edits.
+5. Use **Correct timing for a musical part** if automatic vocal or bass estimates consistently arrive early or late. Negative corrections move estimates earlier; your entered cue times do not move.
+
+The original model analysis is preserved. Edits on different parts may overlap; same-part overlaps are rejected with an actionable message. New songs start without another project's cues or part corrections. Output switches and individual lamp cues retain final ownership.
+
+**Review synchronization** compares selected targets with final exported lamp commands, including the effects of individual output edits. It reports matched targets, frame error and seekable exceptions. It does not measure vocal-detection accuracy, lyric alignment, perceptual quality or physical vehicle latency. The report is included in the show ZIP.
+
+Saved 1.4–1.6 arrangements reopen with their exact frame payloads. Recreate to use the new routing/review; a complete 1.6 analysis can be reused without rerunning its models.
 
 ## Make a show
 
@@ -39,7 +50,7 @@ disable individual moving parts. Fine tune adds:
 - Individual section style/intensity edits, retained motifs, Undo/Redo and reset.
 - First-downbeat correction, 3/4 or 4/4 meter and half/double-tempo interpretation.
 - Independent movement frequency, passage looping, beat seeking and A/B arrangements.
-- Precision (full transformer, default) or Balanced (compact transformer) rhythm analysis.
+- Studio (Deux separation, full rhythm transformer) or Balanced (MDX separation, compact rhythm transformer); both include GAME Large.
 - Full song, Voice first, and Bass first emphasis presets.
 - Full song / Voice / Instruments listening, detected phrase and held-note inspection.
 - Editable Voice and Instrumental passage guides, with looping, Restore and Undo/Redo.
@@ -112,8 +123,7 @@ default. All processing remains on the device, with bundled trained music models
 
 **Singing emphasis** and **Bass-note emphasis** control how strongly these parts
 shape the arrangement. The recommended starting values are 85% and 90%.
-Singing uses a stereo separator followed by a trained singing/speech classifier
-and acoustic articulation/pitch analysis. Bass uses sustained low-register
+Singing uses a stereo separator, trained singing/speech evidence, GAME Large neural note transcription and measured waveform expression. Bass uses sustained low-register
 harmonics in the separated accompaniment. General low-frequency transients
 continue to inform the drum rhythm. Lead and backing singers remain combined;
 this does not produce lyrics or exact word timings.
@@ -187,8 +197,7 @@ song. Saving is automatic.
 An exported native show ZIP is also a project backup: it includes the matched
 audio and `Review/LightForge_Project.json`. Use **Restore backup** in My shows
 to bring it back into LightForge. Restoring creates a new project, rebuilds the
-analysis audio, preserves the saved creative settings, and regenerates the show
-with the installed engine. Only LightForge exports that contain its project
+analysis audio, preserves the saved creative settings, and reopens a matching checked frame snapshot. Backups without a usable compiled snapshot require recreation with the installed engine. Only LightForge exports that contain its project
 JSON can restore all editing information.
 
 Uninstalling the app removes its private projects. Export ZIP backups of work
@@ -308,8 +317,8 @@ The app has not been tested here on the user's phone or car.
 
 ## Update from an earlier release
 
-Install `LightForge-1.6.0.apk` over the existing LightForge app. The package ID
-and signing identity are unchanged, and version code 10300 is newer than the
+Install `LightForge-2.1.0.apk` over the existing LightForge app. The package ID
+and signing identity are unchanged, and version code 20100 is newer than the
 previous releases. **Do not uninstall first**, because uninstalling removes
 private projects. Saved music and projects remain compatible; sequences are
 regenerated with the current vehicle profile when edited or restored.

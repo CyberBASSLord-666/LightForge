@@ -1,0 +1,225 @@
+{
+  "archive": {
+    "url": "https://github.com/sigsep/sigsep-mus-db/releases/download/v0.4.0/MUSDB18-7-STEMS.zip",
+    "sha256": "365f66acffc57282e474a4c24b32afec3678258c50b8d45646ac849b0a287df3",
+    "bytes": 147209385
+  },
+  "limitations": [
+    "Seven-second excerpts cannot establish full-song/genre accuracy.",
+    "Model training overlap is possible: train/test below refers to the dataset split, not a held-out app evaluation.",
+    "Decoded original vocal/bass tracks contain production effects; amplitude is not a human singing or word annotation.",
+    "Audio fixtures are QA-only and excluded from APK/private source package."
+  ],
+  "tracks": [
+    {
+      "id": "nightowl",
+      "title": "A Classic Education - NightOwl",
+      "datasetSplit": "train",
+      "license": "CC BY-NC-SA",
+      "source": "MedleyDB",
+      "duration": 6.8034467120181406,
+      "sampleRate": 44100,
+      "channels": 2,
+      "archiveMember": "train/A Classic Education - NightOwl.stem.mp4",
+      "pcmSHA256": {
+        "nightowl-other.wav": "a28c66440619f372fde1c017325e5022331ec80b5f53c04edf55430315bed5c8",
+        "nightowl-drums.wav": "05807ff7836e8c5ce3d62c25b9ec52fe84f48049529987bdfacabc346c85836d",
+        "nightowl-instrumental.wav": "fa5d7a4f102293a3385198488e3b436446466654cb63fa4841c2d5ab1db03cf4",
+        "nightowl-controlled-vocals.wav": "830eeabfbd7d8f88ab0e1af0f76f98865a233325fe175416cf0e814cb26a7675",
+        "nightowl-bass.wav": "90821b6ac05faeb61804efe6226702701de1516b7360d6e46b0b0be61c250a41",
+        "nightowl-vocals.wav": "dab8bfc4b31c7a34129f48ffff70c81540b620e2962fa803b75d95a1d1363c5d",
+        "nightowl-controlled.wav": "6a8fc6b58dd2b7678aa917bf3601085595f62ddc3a9bc6f92d4b06951c8d62eb",
+        "nightowl-mix.wav": "feb8e3e5000eee08a63c98687885be4a4d0c76aebd26c2a00892ad924e07707e"
+      },
+      "controlledEdit": {
+        "vocalWindows": [
+          [
+            1.25,
+            3.15
+          ],
+          [
+            4.2,
+            6.0
+          ]
+        ],
+        "edgeRampSeconds": 0.01,
+        "definition": "Original vocals gated in time and summed with original drums, bass and other stems; this does not assert continuous singing throughout either window."
+      }
+    },
+    {
+      "id": "stella",
+      "title": "Clara Berry And Wooldog - Stella",
+      "datasetSplit": "train",
+      "license": "CC BY-NC-SA",
+      "source": "MedleyDB",
+      "duration": 6.8034467120181406,
+      "sampleRate": 44100,
+      "channels": 2,
+      "archiveMember": "train/Clara Berry And Wooldog - Stella.stem.mp4",
+      "pcmSHA256": {
+        "stella-controlled.wav": "279e30947e27c33fe54e431ae3c15da2dffbd4336c01ff0298e384cbcc71f4bb",
+        "stella-controlled-vocals.wav": "9f76eb871e01d7a046858ef0f87b220023a603ca72cf3697aa0aa78a5939ec5c",
+        "stella-instrumental.wav": "bafc0fea24303526455995645b2bf8d7ba0de1ddae560e9f86b859ea0ae049ee",
+        "stella-vocals.wav": "5af2b0f9ba35fe7cfd9af70b4463a7743998be531151182fd4b9a57289b5a4e9",
+        "stella-other.wav": "5058479c94c0c22d136132189063c41f51cd4183b5ee0689d8f57735a7878100",
+        "stella-mix.wav": "e00acb12b494667eb9512056de6888912aea4e12db7451fa66c25d57304b8aae",
+        "stella-bass.wav": "0c2bbc852925e660c00d8c069f88bc34a036ba73edbff9fb6510d8d2bd14fdab",
+        "stella-drums.wav": "a9dc9cea13befb8cd380f7592ee8beb11d9510cfbfde762da02eb94572618703"
+      },
+      "controlledEdit": {
+        "vocalWindows": [
+          [
+            1.25,
+            3.15
+          ],
+          [
+            4.2,
+            6.0
+          ]
+        ],
+        "edgeRampSeconds": 0.01,
+        "definition": "Original vocals gated in time and summed with original drums, bass and other stems; this does not assert continuous singing throughout either window."
+      }
+    },
+    {
+      "id": "meaxic",
+      "title": "Meaxic - You Listen",
+      "datasetSplit": "train",
+      "license": "CC BY-NC-SA",
+      "source": "MedleyDB",
+      "duration": 6.8034467120181406,
+      "sampleRate": 44100,
+      "channels": 2,
+      "archiveMember": "train/Meaxic - You Listen.stem.mp4",
+      "pcmSHA256": {
+        "meaxic-instrumental.wav": "52d1536193d8c90207dd0174779caff18f03f4ede32f8a67d28a018ffc606e1d",
+        "meaxic-drums.wav": "c71f5983fbc82f8fbd001afc2ed9226f8eab23ef6bf6326d2d37d3e8891ea024",
+        "meaxic-other.wav": "f28041fd9315249cb86fb17332d71341c80e87497199e3ead1b64d0d745c36db",
+        "meaxic-mix.wav": "305195be9ea99830ca2d1b708e2c82252c6a167b835a035df55532b62c3bbc11",
+        "meaxic-vocals.wav": "7ac5887bf10391e2f8a180c46e2c679be8f6ef2a6e95b42332f7c37adc292694",
+        "meaxic-bass.wav": "84df93016d4011c40a626107a606579cec13d065fb89d64002138bda53318cbb",
+        "meaxic-controlled-vocals.wav": "a5d86a9dfe8715bebc1b93c16afbd21e120c714479d5c594c4f8307b1b5fc7d2",
+        "meaxic-controlled.wav": "9b483e44df90f19f2cbb380889194c1d8c2aab210bd174084e9b850e5f210809"
+      },
+      "controlledEdit": {
+        "vocalWindows": [
+          [
+            1.25,
+            3.15
+          ],
+          [
+            4.2,
+            6.0
+          ]
+        ],
+        "edgeRampSeconds": 0.01,
+        "definition": "Original vocals gated in time and summed with original drums, bass and other stems; this does not assert continuous singing throughout either window."
+      }
+    },
+    {
+      "id": "grunge",
+      "title": "Music Delta - Grunge",
+      "datasetSplit": "train",
+      "license": "CC BY-NC-SA",
+      "source": "MedleyDB",
+      "duration": 6.8034467120181406,
+      "sampleRate": 44100,
+      "channels": 2,
+      "archiveMember": "train/Music Delta - Grunge.stem.mp4",
+      "pcmSHA256": {
+        "grunge-vocals.wav": "17d2faf2221bace998a55be3b3d51f79397f0c7c3477edb3dabe25986d5d2de4",
+        "grunge-other.wav": "58891d4881d7d0ae183fd348bac356d1c3d7b6f7a24d4a58f9fd8bb9552e927b",
+        "grunge-bass.wav": "badbb263f0e56b3105756d45bdda03b2f2d79a011f746667bdbe7c3af8d9c1ae",
+        "grunge-controlled-vocals.wav": "80823e1c96b25042a17bc2edec39bc52aaa62c88e1b14f3ffea76af6baccb463",
+        "grunge-instrumental.wav": "3e88e790eb89189c114576a12f497aecd77518a35ed76afe29d5b75c84515448",
+        "grunge-controlled.wav": "7c1243b116511754972ac4143b2b25744c67877f893ac9dd53c0dfb418d03b78",
+        "grunge-drums.wav": "350ee3c25f7768074e77998a2a774c05ede4eca1ebf75da0ca08ca065f0565dc",
+        "grunge-mix.wav": "3a211028c1e985de911bbb205b73b472149c65ed27d39bf35bca75ddc13e2019"
+      },
+      "controlledEdit": {
+        "vocalWindows": [
+          [
+            1.25,
+            3.15
+          ],
+          [
+            4.2,
+            6.0
+          ]
+        ],
+        "edgeRampSeconds": 0.01,
+        "definition": "Original vocals gated in time and summed with original drums, bass and other stems; this does not assert continuous singing throughout either window."
+      }
+    },
+    {
+      "id": "falcon",
+      "title": "The Easton Ellises - Falcon 69",
+      "datasetSplit": "test",
+      "license": "CC BY-NC-SA 3.0",
+      "source": "C't Remix Comp.",
+      "duration": 6.8034467120181406,
+      "sampleRate": 44100,
+      "channels": 2,
+      "archiveMember": "test/The Easton Ellises - Falcon 69.stem.mp4",
+      "pcmSHA256": {
+        "falcon-instrumental.wav": "ce2947a674a2be2a4305dd45ab273773973b80e355fd9bb8fe9395323e89bffe",
+        "falcon-controlled.wav": "751da6209ec77e97253746786069690f3d89e7e8eccbf666cfa23a17847037b1",
+        "falcon-controlled-vocals.wav": "94f01ba9d57cb8139e88cc0214123031cb95ef124870bbaeb227543a1aa84053",
+        "falcon-drums.wav": "4f06f5ca5e4a2aeb20d4a9bf5431fecad9e977bc280f04fe38082f4f4582955a",
+        "falcon-vocals.wav": "b6f5116b626152669096edb4baeaa1e6ef5374c4f6b8f0d7ee7dc10df32f76f3",
+        "falcon-bass.wav": "582bab04bcaeecd840d453e1eeeda781550c80fab79535a7ac11c512c8baff48",
+        "falcon-mix.wav": "effbbe3e3c0df821bf3cfa6535360b18339ded8041992373b41f8344998dba99",
+        "falcon-other.wav": "dc69b9846ef4c75815cbd55f7159d6c533e913b1f95d67f9d2f256fc97ea9584"
+      },
+      "controlledEdit": {
+        "vocalWindows": [
+          [
+            1.25,
+            3.15
+          ],
+          [
+            4.2,
+            6.0
+          ]
+        ],
+        "edgeRampSeconds": 0.01,
+        "definition": "Original vocals gated in time and summed with original drums, bass and other stems; this does not assert continuous singing throughout either window."
+      }
+    },
+    {
+      "id": "sdrnr",
+      "title": "The Easton Ellises (Baumi) - SDRNR",
+      "datasetSplit": "test",
+      "license": "CC BY-NC-SA 3.0",
+      "source": "C't Remix Comp.",
+      "duration": 6.8034467120181406,
+      "sampleRate": 44100,
+      "channels": 2,
+      "archiveMember": "test/The Easton Ellises (Baumi) - SDRNR.stem.mp4",
+      "pcmSHA256": {
+        "sdrnr-drums.wav": "f5e8929a11092b93c0a8c9929d7115ddf615fdc1255f13c9f419c070f240c9bf",
+        "sdrnr-controlled.wav": "55dea900f298bae8860fe8568c0f4bccc1b57d47b65766b519a6785c481bdde3",
+        "sdrnr-instrumental.wav": "cd001cdcebb7649de1ea716b1850fb821e847f8c8ab65ff659f6d30a65683b4f",
+        "sdrnr-bass.wav": "4766b5340f12deeb13fc873101062da8dc873a3224451c733787a07666a3fbd2",
+        "sdrnr-controlled-vocals.wav": "43810db355b2b3ffe6e7d5eded2e5ae0c4f08992fe476c3aee483ebf90bc27aa",
+        "sdrnr-other.wav": "7ff50febd0414ca2fb41a7079f0b72767e4deeb45b526e24a20c589b36bea439",
+        "sdrnr-mix.wav": "2de126de655e85a550c38b050d7d378a3de2199b7d0ad86a4e03a75b972df3c6",
+        "sdrnr-vocals.wav": "44cb12a90961822a787605fd4609b2ecdc05656de5ec5fe54458f125f98da1e4"
+      },
+      "controlledEdit": {
+        "vocalWindows": [
+          [
+            1.25,
+            3.15
+          ],
+          [
+            4.2,
+            6.0
+          ]
+        ],
+        "edgeRampSeconds": 0.01,
+        "definition": "Original vocals gated in time and summed with original drums, bass and other stems; this does not assert continuous singing throughout either window."
+      }
+    }
+  ]
+}

@@ -1,4 +1,11 @@
-# Repository completion and maintenance
+# Repository maintenance
+
+The current app is LightForge 2.1.0, Android version code 20100. Use [BUILD.md](BUILD.md) for the current model/build pipeline, [VALIDATION.md](VALIDATION.md) for evidence, and the [GitHub releases](https://github.com/CyberBASSLord-666/LightForge/releases) for complete installable updates.
+
+Current sources, model converters, manifests, tests, workflow definitions and maintenance documents are integrated at the repository root. Historical source and QA folders retain their original version identities. `verify_snapshot.py` checks the historical preserved snapshot; changes in current application files are expected and must instead pass the current release gates.
+
+## Historical 1.6 restoration
+
 
 This completion preserves the existing `main` branch and repository-root app layout. Compared with the verified LightForge 1.6.0 backup, the repository already had 859 identical files and two updated maintenance documents; 39 source assets and evidence files were missing. Those missing files are restored here. Current development history and documentation are retained.
 
@@ -13,7 +20,7 @@ python3 migration/restore.py --only source
 python3 verify_snapshot.py
 ```
 
-Once restored, all model weights, WebAssembly, demo audio, geometry and retained QA data are present. Follow [BUILD.md](BUILD.md) from the repository root. Installed toolchains and reproducible build caches are not included. Some historical test harnesses reference the original development workspace; adapt those environment paths when reproducing them. Historical QA is not evidence of new tests against future code changes.
+Once restored, all original 1.6 model weights, WebAssembly, demo audio, geometry and retained QA data are present. The newer GAME/Deux graphs are reproduced as described in BUILD.md. Follow [BUILD.md](BUILD.md) from the repository root. Installed toolchains and reproducible build caches are not included. Some historical test harnesses reference the original development workspace; adapt those environment paths when reproducing them. Historical QA is not evidence of new tests against future code changes.
 
 `SOURCE_MANIFEST.json` records the 900 preserved original source files and their hashes. It intentionally does not claim that newer maintenance documents are identical to the original archive. After future source edits, rerun affected checks; never change evidence hashes merely to pass release packaging.
 

@@ -1,0 +1,1 @@
+{"status":"PASS","checks":270,"byteExactResponses":33,"comparedBytes":23161377,"legacyFirstChunkShortBy":44,"largeFileBoundary":"PASS: oversized original protected; separate mono preview retains full-quality export","hostChromiumSemantics":true,"androidDeviceTest":false,"fullAudioSha256":["33f07d502ba19832b62b97d8fb4a11354e81310264bd885d7a06438228773650"]}

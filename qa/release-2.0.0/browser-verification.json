@@ -1,0 +1,28 @@
+{
+  "release": "2.0.0",
+  "passed": true,
+  "checks": [
+    "Visible cue form generated a matching final FSEQ attack using actual browser workers.",
+    "Undo/Redo restored identical frame checksum.",
+    "Streamed export payload matches the saved frame SHA-256 and contains synchronization review.",
+    "Reload preserved exact compiled frames and musical edits.",
+    "Export after reopening retained the verified synchronization report.",
+    "320, 393, 768 and 1440 px layouts have no horizontal overflow or duplicate IDs; screenshots retained."
+  ],
+  "errors": [],
+  "source_hashes": {
+    "web/version.js": "ec0756464079ae53c72cf6fcba4a7e0299700b169bd80e46d093d720b4ecf4a2",
+    "web/app.js": "a393f4377670bba86e2ea165e0bde7cfe76a677c7d4b99f2056ee3145c4066bd",
+    "web/index.html": "50875c4026608dcc976519e600d853d898aec64b36f8e7b52dc31ae3d5459aa5",
+    "web/styles.css": "e89ff197b174f00361c7b694d9a8b9f1ed8ef797c055e0a20176a195faff64f5",
+    "web/precision-studio.js": "5fb338ca3799807203df6776f9f25cc34d84b86551467069599c74073b766376",
+    "web/engine/worker.js": "924e901876530dc45df99ab856ec2c7c48ae223ce76103d4c9d84047086a5121",
+    "web/engine/client.js": "56380a3901c45b3409e94bf568a2f600dce471f1a8b289e71a081b91a04c355d",
+    "web/engine/show-engine.js": "d09cfcdf1e1eebf36d3e03bfd40a3939dcc0fd18a4437047217511a258674548",
+    "web/engine/light-planner.js": "285f6e1c37160eeee117b98227b20ed044b020c1e0b0cc2e62505980ec5b00e6",
+    "web/engine/music-cues.js": "1a87eea0502da2e1f19d2361a5646c127121211e91128017ce747b7f0d2f61d6",
+    "web/engine/sync-review.js": "eb9591060fffa20e2b12de97c6d344b61e06fc276af75817610d4e17095c61d9"
+  },
+  "scope": "Desktop Chromium with actual WebGL and web workers; simulated Android bridge. No Android device or Tesla.",
+  "completedAt": "2026-09-07T00:09:05.260Z"
+}

@@ -1,0 +1,23 @@
+{
+  "name": "Mel-Band RoFormer Deux",
+  "sourceSeparated": true,
+  "sampleRate": 44100,
+  "sourceChannels": 2,
+  "stems": [
+    "vocals",
+    "accompaniment"
+  ],
+  "method": "Dual trained stereo source separation; Float32 staged transformer with complete attention",
+  "contextSeconds": 13,
+  "coreSeconds": 10,
+  "overlapSeconds": 5,
+  "chunks": 1,
+  "estimated": true,
+  "analysisSeconds": 351.89246510799995,
+  "alignment": "Original PCM clock; centered STFT and normalized overlap-add with complementary chunk crossfades",
+  "limitations": [
+    "Vocal and instrumental estimates can contain bleed; neither is an isolated bass instrument.",
+    "Lead and backing singers share one vocal source; no lyrics or word alignment."
+  ],
+  "elapsedMs": 351893
+}

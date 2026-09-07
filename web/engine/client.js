@@ -11,5 +11,5 @@
   worker.onerror=e=>finish(new Error(e.message||'The composition worker could not start.'));
   worker.postMessage(payload);
  });}
- root.ShowCompiler={generate:(music,settings,onProgress,signal)=>run({action:'generate',music,settings},onProgress,signal),restore:(compiled,music,settings,onProgress,signal)=>run({action:'restore',compiled,music,settings},onProgress,signal),version:'1.6.0'};
+ root.ShowCompiler={generate:(music,settings,onProgress,signal)=>run({action:'generate',music,settings},onProgress,signal),restore:(compiled,music,settings,onProgress,signal)=>run({action:'restore',compiled,music,settings},onProgress,signal),version:root.LightForgeVersion.name};
 })(window);

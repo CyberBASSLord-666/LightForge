@@ -1,6 +1,6 @@
 /* Cancellable composition and durable frame snapshots, isolated from the UI. */
 'use strict';
-importScripts('vehicle-profile.js','movement-planner.js','light-planner.js','show-engine.js');
+importScripts('../version.js','vehicle-profile.js','movement-planner.js','light-planner.js','music-cues.js','sync-review.js','show-engine.js');
 const MAX_FRAMES=960000, CHANNELS=200;
 const canonical=value=>JSON.stringify(value,(_,item)=>item&&typeof item==='object'&&!Array.isArray(item)?Object.fromEntries(Object.keys(item).sort().map(key=>[key,item[key]])):item);
 const progress=(value,detail)=>postMessage({type:'progress',value:{progress:value,stage:'generate',detail}});
@@ -27,19 +27,24 @@ async function restore(compiled,music,settings){
  if(!compiled||compiled.format!=='lightforge-gzip-frames-v1'||!Number.isInteger(compiled.frameCount)||compiled.frameCount<1||compiled.frameCount>MAX_FRAMES||compiled.channels!==CHANNELS||![15,20].includes(compiled.stepMs))throw Error('The saved compiled show has an unsupported format.');
  const currentInputDigest=await inputDigest(music,settings);let migration=null;
  if(compiled.inputDigest!==currentInputDigest){
-  // Only known, unedited new defaults may be removed to reproduce the exact
-  // old input checksum. An existing 1.4 frame snapshot may already have been
-  // rebound by 1.5, so first try preserving its vocal/bass emphasis settings.
+  // Default-only upgrades must reproduce a prior exact input checksum.
+  // Never replace frames or relax checksum validation to accept a changed edit.
   const priorSettings={...settings},addedDefaults=[];
-  const supported=['1.4.0','1.5.0'].includes(compiled.engineVersion);
-  const hasGuides=Object.prototype.hasOwnProperty.call(settings,'vocalRegions');
-  const emptyGuides=Array.isArray(settings.vocalRegions)&&settings.vocalRegions.length===0;
+  const supported=['1.4.0','1.5.0','1.6.0'].includes(compiled.engineVersion);
   let matched=false;
-  if(supported&&(!hasGuides||emptyGuides)){
-   if(emptyGuides){delete priorSettings.vocalRegions;addedDefaults.push('vocalRegions');matched=compiled.inputDigest===await inputDigest(music,priorSettings);}
-   if(!matched&&compiled.engineVersion==='1.4.0'&&settings.vocalFocus===.85&&settings.bassFocus===.9){
-    delete priorSettings.vocalFocus;delete priorSettings.bassFocus;
-    if(compiled.inputDigest===await inputDigest(music,priorSettings)){matched=true;addedDefaults.push('vocalFocus','bassFocus');}
+  if(supported){
+   for(const [key,value] of [['musicCues',[]],['vocalOffsetMs',0],['bassOffsetMs',0]]){
+    if(Object.prototype.hasOwnProperty.call(priorSettings,key)&&canonical(priorSettings[key])===canonical(value)){
+     delete priorSettings[key];addedDefaults.push(key);
+    }
+   }
+   matched=compiled.inputDigest===await inputDigest(music,priorSettings);
+   if(!matched&&['1.4.0','1.5.0'].includes(compiled.engineVersion)&&Array.isArray(priorSettings.vocalRegions)&&priorSettings.vocalRegions.length===0){
+    delete priorSettings.vocalRegions;addedDefaults.push('vocalRegions');matched=compiled.inputDigest===await inputDigest(music,priorSettings);
+   }
+   if(!matched&&compiled.engineVersion==='1.4.0'&&priorSettings.vocalFocus===.85&&priorSettings.bassFocus===.9){
+    delete priorSettings.vocalFocus;delete priorSettings.bassFocus;addedDefaults.push('vocalFocus','bassFocus');
+    matched=compiled.inputDigest===await inputDigest(music,priorSettings);
    }
   }
   if(!matched)throw Error('The saved show does not match its music and edits. Create again to rebuild it.');
@@ -50,7 +55,7 @@ async function restore(compiled,music,settings){
  const frames=await expand(unbase64(compiled.frameData),compiled.frameCount*CHANNELS);
  if(await digest(frames)!==compiled.sha256)throw Error('The saved show checksum failed. Restore a previous project revision.');
  const show={...compiled.meta,frames,frameCount:compiled.frameCount,channels:CHANNELS,channelCount:CHANNELS,stepMs:compiled.stepMs,duration:compiled.frameCount*compiled.stepMs/1000,audioDuration:music.duration,settings:ShowEngine.normalizeSettings(settings)};delete show.previewIndex;
- show.validation=ShowEngine.validate(show,music);if(!show.validation.valid)throw Error('The saved show failed current format checks: '+show.validation.errors.join(' '));
+ show.validation=ShowEngine.validate(show,music);if(show.synchronization)show.validation.synchronization=show.synchronization;if(!show.validation.valid)throw Error('The saved show failed current format checks: '+show.validation.errors.join(' '));
  if(ShowEngine.preparePreview)ShowEngine.preparePreview(show);
  // Rebind only after metadata, decompression, payload hash, physical format and
  // preview preparation have all succeeded. Failed restores leave recovery data

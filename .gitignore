@@ -99,3 +99,16 @@ qa/**/*synthetic*activations*.json
 *Private-Source*.zip
 __pycache__/
 *.py[cod]
+
+# Generated 2.0 development dependencies and native fixtures.
+node_modules/
+/output/
+qa/hardware-1.2.0/fixtures/
+qa/release-2.0.0/native-*-fixtures/
+qa/release-2.0.0/browser-export.fseq
+
+# Reproduced at build time from pinned official GAME release.
+web/analysis/models/game/*.onnx
+qa/release-1.6.0/fixtures/
+qa/release-2.1.0/native-*-fixtures/
+web/analysis/models/deux/*.onnx

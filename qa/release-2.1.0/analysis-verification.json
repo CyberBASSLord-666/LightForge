@@ -1,0 +1,73 @@
+{
+  "release": "2.1.0",
+  "passed": true,
+  "errors": [],
+  "checks": [
+    "All six natural-mixture vocal SI-SDR values improve over the declared MDX baseline.",
+    "All 18 reference outputs preserve source sample counts and finite audio.",
+    "All 12 positive role cases retain phrases and notes; all six instrument-only cases produce zero voice phrases, notes and accents.",
+    "Actual production JS/WASM output agrees with the original model within declared numeric tolerance; every graph matches the released model manifest."
+  ],
+  "source_hashes": {
+    "web/analysis/ASSET_MANIFEST.json": "4affe5b82439c873dee51a236a91e8e8aae5036e83da942250e30a0bbc8c903d",
+    "web/analysis/worker.js": "725e6767647f70021d8ba38ec68f40f0059ca3af1afbdd282446cf7c7b54f75f",
+    "web/analysis/separator-deux.js": "06900caecc898f7a6cf1689c6a11fcb3bafdf8b21a177b83b6c5610386b9a74d",
+    "web/analysis/game.js": "f4a24e8417223bb4d9e52c9102054dc29a9c7c77cc59cf49f0c82d31802817c2",
+    "web/analysis/vocal-detail.js": "cd760d7a766d9a4ab0ac3a252a10f17a16a797b38e50b2d6712bc6adcd42713f",
+    "web/analysis/vocal.js": "94483ac6cf5db7532abfba98e7bab7cd826a82ad2adca0296d39fdebd827ac70",
+    "web/analysis/stem-cache.js": "53d4ed79b3f107c145998b7b2fe94be02f81d244f3c05594643542b2da84a3fa",
+    "web/analysis/wav-reader.js": "0f0e5216dc1d2ca0bfb25eddacdaa21076990fa7638c22188023607e43d4005f",
+    "web/analysis/models/deux/manifest.json": "724ba38ba42617f3f867fc39dd044f9b1ff1284abeabffbaeadbf3ea67cf2389",
+    "web/analysis/models/game/manifest.json": "51e172cfaa967d9e2518f01f508a64d49cd283d23ae8e8456af9c6e76eeb4f97",
+    "tools/prepare_deux.py": "892d00db0b46291ca5b2d600c2b314f5cdbdd84cd12a3859f97503de53ca62da",
+    "tools/prepare_game.py": "7f1fb983ab1888b7ecc0731bdd22538f73820a33f88775fc7f63dd8b9b43e800",
+    "qa/release-2.1.0/evaluate-roles.cjs": "f7dfbed9bc8dcb92f861bfd2cc9a56f87b84791a22886bd990802e03ea4d80fb",
+    "qa/release-2.1.0/verify-analysis.py": "a831c763badbc6f6cf61c683c2a07df300b8282c8f7b68948d097e49f47777d2",
+    "qa/release-2.1.0/test-source-clock.cjs": "8e5fe87cfdf15b871ff10f050e03159eb50c62d7d496523430e02d2d79beb624"
+  },
+  "scope": "Original-weight PyTorch separation on 18 source-reference cases with exact production context; actual JS/WASM Falcon separator parity; production role components on estimated sources. Public worker/OPFS integration is a separate gate. Not human note annotations, device performance or vehicle timing.",
+  "summary": {
+    "naturalMix": {
+      "oldMdxMeanSiSdrDb": 10.042196666666666,
+      "deuxMeanSiSdrDb": 11.474913333333333,
+      "deuxMeanEnvelopeCorrelation": 0.97403
+    },
+    "controlledMix": {
+      "deuxMeanSiSdrDb": 11.990556666666667,
+      "deuxMeanEnvelopeCorrelation": 0.9935216666666666,
+      "deuxMeanOutsideVoiceEnergyFraction": 0.0023702555500000003,
+      "oldMdxMeanOutsideVoiceEnergyFraction": 0.00059
+    },
+    "tradeoff": "Deux improves separation SI-SDR on all six natural mixtures but has more residual estimated-voice energy outside the controlled voice windows than MDX. No universal superiority or human note accuracy is claimed."
+  },
+  "wasm": {
+    "samples": 300032,
+    "vocalPcmSHA256": "3d649aa498905f156372db1455e67ffc825e428d45d506709476dfc25950f73c",
+    "maxAbsErrorVsOriginalModel": 0.00046738237142562866,
+    "rmsErrorVsOriginalModel": 2.431483517284505e-05,
+    "allGraphBytesMatchPublishedManifest": true,
+    "singleThreadSeconds": 351.893
+  },
+  "roles": {
+    "positiveCases": 12,
+    "instrumentalCasesWithZeroVoiceEvents": 6,
+    "transcriptionReuse": "The unchanged GAME adapter/graphs were run once on each source estimate. Classifier, source detail and fusion were rerun after the admission fix, using source-hash-validated cached neural predictions."
+  },
+  "limitations": [
+    "Six short excerpts; possible training overlap; not statistically representative or verified held-out data.",
+    "Source stems are scoring references, never separator inputs. Reference estimates use the original PyTorch model with production context, not the public worker.",
+    "No human note/pitch annotations, phone installation, thermal/memory endurance or physical Tesla validation.",
+    "Bass remains a combined-accompaniment harmonic estimate."
+  ],
+  "evidence_hashes": {
+    "deux-context-results.json": "f6197c126063078512af798b1902486cd4462215b46133f88c664d10a9ed0b50",
+    "deux-parity.json": "e065d7c4989a0f9e6166ace32a55847abae95f4e3871a4c94771abc60ac706b4",
+    "deux-wasm-result.json": "282bb731e2bb47c7da95a7528e1648ec3f6616face1c131ae64c250159c34b6c",
+    "role-component-results.json": "9cd037785fe38772d5ea1df41f41cf8c07f830d015ad002ceb7b473d121f0cd6",
+    "reference-evaluation-capture.txt": "6bdac0f0d9677c831438266a2b03383c5ce184a4eb8c26e863e515ca9d2d4bf1",
+    "wasm-evaluation-capture.txt": "3713d1cd57153c52233a9227f7618155464028e14a769d752d2f89b38568d87e",
+    "musdb-fixture-provenance.json": "319552573a28c8637124f47bda7ba6dc31f15c7882a3ffa35fc33aa5cd3d1043",
+    "source-clock-verification.json": "f02130a749790e5dcd527dcf19c13c97848eb8ad929504b07abfa417e173bfd6"
+  },
+  "completedAt": "2026-09-07T06:43:13.619232+00:00"
+}

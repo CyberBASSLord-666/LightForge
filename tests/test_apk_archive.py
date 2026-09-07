@@ -64,6 +64,11 @@ class ArchiveTests(unittest.TestCase):
             apk_archive.assemble_apk(self.resources, self.dex, self.output, self.assets)
         self.assertFalse(self.output.exists())
 
+    def test_aapt_compression_scratch_is_not_a_distributable_asset(self):
+        (self.assets / '.model.onnx.part').write_bytes(b'incomplete compression scratch')
+        apk_archive.assemble_apk(self.resources, self.dex, self.output, self.assets)
+        self.assertNotIn('assets/.model.onnx.part', zipfile.ZipFile(self.output).namelist())
+
     def test_existing_output_is_not_replaced(self):
         self.output.write_bytes(b'previous artifact')
         with self.assertRaises(FileExistsError):

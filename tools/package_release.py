@@ -100,6 +100,9 @@ def stage_source_archive(destination,root,entries):
 def main():
  p=Path(__file__).resolve().parents[1]
  version=json.loads((p/'version.json').read_text());VERSION=version['name'];VERSION_CODE=version['code']
+ if int(VERSION.split('.')[0])>=2:
+  from package_v2 import main as package_current
+  return package_current()
  workspace=p.parents[1]
  out=workspace/'output';out.mkdir(exist_ok=True)
  apk=p/f'dist/LightForge-{VERSION}.apk'
