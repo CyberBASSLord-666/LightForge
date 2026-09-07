@@ -321,15 +321,15 @@ The renderer source and pinned npm dependency lock are in `web/preview/src/`.
 
 ## Verification and device status
 
-`VALIDATION.md` separates current evidence from earlier releases. Version 2.2.0 has a retained Android emulator background-lifecycle pass; it does not validate the new native Studio path in 2.2.1. Current 2.2.1 evidence is source-bound. Final release-candidate CI, the complete Android recovery test and publication remain pending:
+`VALIDATION.md` separates current evidence from earlier releases. Version 2.2.0 has a retained Android emulator background-lifecycle pass; it does not validate the new native Studio path in 2.2.1. Current 2.2.1 evidence is source-bound. The complete Android recovery probe passes on the current source. Final production CI and publication remain pending:
 
 | Check | Current 2.2.1 release status |
 |---|---|
 | Host model equivalence and memory/runtime | Passed on the declared development excerpt; see the measurements below |
 | Node/Python regression evidence | Passed: 145 Node and 39 Python checks against the current sources |
-| Browser UI, complete model pipeline and cancellation | Passed against unchanged web sources; final release-candidate run pending |
-| Android emulator native Studio, screen-off/Doze, cancellation and partial resume | Initial completion/reopen passed; later resume attempt hit an Android focus ANR; lifecycle fix awaits a complete rerun |
-| Signed update package and release publication | Pending final release gates |
+| Browser UI, complete model pipeline and cancellation | Passed in the current production verification job |
+| Android emulator native Studio, screen-off/Doze, cancellation and partial resume | Passed on Android 15 in the current-source probe, including immediate Resume and verified saved-passage reuse |
+| Signed update package and release publication | Original-signed APK built; final production CI and publication pending |
 | Physical phone performance, long songs, thermals and battery management | Unverified |
 | Physical Tesla timing and movement | Unverified |
 

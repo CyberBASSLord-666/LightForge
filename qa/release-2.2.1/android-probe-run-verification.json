@@ -1,0 +1,121 @@
+{
+  "release": "2.2.1",
+  "passed": true,
+  "scope": "Independent native Android recovery probe; final production CI status is recorded separately.",
+  "workflow_run": 34169529496,
+  "workflow_source_commit": "f80de0d7fd075cf22506c60910e41ea9f625e922",
+  "job_id": 101887033168,
+  "artifact": {
+    "id": 10035699527,
+    "name": "lightforge-2.2.1-native-recovery-probe",
+    "zip_sha256": "dd92a40dc03db8acc7f16f5ebcf229ecd3d69925a32215f9adfde03fef0017dd"
+  },
+  "android_gate": {
+    "release": "2.2.1",
+    "passed": true,
+    "checks": [
+      "Actual Studio native CPU separation, neural analysis and choreography completed with the Activity destroyed, screen off and Doze forced with user-equivalent battery exemption; result was durably saved.",
+      "Reopened Activity reports the completed job and its saved project.",
+      "Notification cancellation interrupts live native Studio work; immediate Resume can start while old native resources quiesce, with the previous project, CPU lock and WebView safely released.",
+      "Resume reuses at least one verified native passage after notification cancellation, preserves the 12-second source clock and saves a complete two-passage Studio show.",
+      "Android media-processing timeout callback stops promptly and leaves a retryable job with the previous show intact."
+    ],
+    "errors": [],
+    "source_hashes": {
+      "android/src/com/cyberbasslord/lightforge/AnalysisJobStore.java": "7d834eb8f9eedf2381b9c68b81d7ba17ae1e7dff7c595f10cf89e47efe67fe94",
+      "android/src/com/cyberbasslord/lightforge/AnalysisService.java": "4be3ecab058daf7410c95389dd634430e183bd4ffd5c1beec6e327222a8ec745",
+      "android/src/com/cyberbasslord/lightforge/AppResources.java": "f95a5d02007b40a0e2488b82298776be0fb9d171de8336380fec3dd553712430",
+      "android/src/com/cyberbasslord/lightforge/AudioImporter.java": "910ef3ec1d6f6ded54c91111d9ab34dbf4bbf4d4043f62f1978057183ca0b575",
+      "android/src/com/cyberbasslord/lightforge/MainActivity.java": "310d4e49addd684be92bf262da133f66369a60d6915b822af046f81f26d18267",
+      "android/src/com/cyberbasslord/lightforge/NativeDeux.java": "4320a91ceb7f1d49ab1bb839dead4c85bee417863ea37d5c4a1cd31fbe708558",
+      "android/src/com/cyberbasslord/lightforge/NativeDeuxTransform.java": "991b06501cfb88b904d0b714a525c389f169f00c231248b0e961b70f257e90b5",
+      "android/src/com/cyberbasslord/lightforge/NativePassageTask.java": "e15832e772b608cb57312c138fdb582a05973620a0c318e9212e37f0cedb7697",
+      "android/src/com/cyberbasslord/lightforge/PendingExportStore.java": "1697003aab5f842d0bb90122df46f2d1f60da30232eca9d6912c972e421c4163",
+      "android/src/com/cyberbasslord/lightforge/ProjectPreview.java": "459e586684b6cea8b0b5c0541de766c45301347341ff2acdc15e876028e7c551",
+      "android/src/com/cyberbasslord/lightforge/ProjectStore.java": "51492859a40490533286574a08893bf3f6da5063c69b806f7760b3d056269472",
+      "android/src/com/cyberbasslord/lightforge/WavConverter.java": "f34b9bf3c8960678b6116619941307ce01b75c672807ca85f6f81b6adc33b1b6",
+      "android/src/com/cyberbasslord/lightforge/WebViewFileTransport.java": "2deff6c473928a08a7e63172c3fa6798df1273d1907fc163f292aa43d5c39b6e",
+      "android/AndroidManifest.xml": "7329675ebc8c9ace4e5a0a607fe8c4753924e89d168c266993c612084b7e4e19",
+      "android/res/drawable/ic_analysis.xml": "6e698464885ef96f0b11af9c5a05c4947affc0126e2994a331ef9cffec3732c8",
+      "android/res/drawable/ic_launcher.xml": "3c411f5d88166510435daeb1702d155849cc0f8208bcfde9b9d61eed24d57b8e",
+      "android/res/values/styles.xml": "24448bfe96b034f7bfadcd0d469d46da30538c3acfa67e2ded464869ad9a9859",
+      "web/background/native-deux.js": "1125d5ee8dd0633133fb68f315d627d43e768410151c19029874054c1d60dde3",
+      "web/background/runner.html": "cf882b294a3d8c5dcf3ff362f4f6f9544580b7e4ca81cbc512e19f8166331fdc",
+      "web/background/runner.js": "b88e97d4ee80c67e9d22217dc5560581fe755373f330dc0979d795cbcc7893fd",
+      "web/app.js": "85f3143c205740032bc4ef025103bc88b50c9a9be1ea93eb248c3754a4beff36",
+      "web/index.html": "cff24363353016cdf8c96c0d65c8b1f8fd375de78c62147872398e2ad086843e",
+      "tests/android/BackgroundInstrumentation.java": "0f250569f95a118501ca74b3de00948dbd04e2614f5d954efb5251a216a15a5a",
+      "tools/run_android_background_tests.py": "fee2d57232420019afa9191452f46cf33fc1301a1d92fe6f038fbcb40aa933d8",
+      "tools/build_android_tests.py": "bce8e74c266469ee5cfca515472d18c5a73756a804f5d0371b282bb2aa24e1b5",
+      "android/native-runtime.json": "679f377a99019fbd20db96e3d35881e5d7d05ca761dc62a265a411d219dc8198",
+      "web/analysis/ASSET_MANIFEST.json": "8c33fa5a7b7bafd871b8caf0c476245ff40ede8fe70ee9703f50230c55a3ed71"
+    },
+    "scope": "Android API 35 emulator lifecycle test using the production service, native CPU Studio separation plus actual WebView/WASM rhythm and voice models, live inference cancellation, verified passage resume and compilation. Not a physical phone or Tesla test.",
+    "lastProgress": {
+      "phase": "completed",
+      "elapsedSeconds": 818.107,
+      "phaseElapsedSeconds": 0,
+      "checks": [
+        "Actual Studio native CPU separation, neural analysis and choreography completed with the Activity destroyed, screen off and Doze forced with user-equivalent battery exemption; result was durably saved.",
+        "Reopened Activity reports the completed job and its saved project.",
+        "Notification cancellation interrupts live native Studio work; immediate Resume can start while old native resources quiesce, with the previous project, CPU lock and WebView safely released.",
+        "Resume reuses at least one verified native passage after notification cancellation, preserves the 12-second source clock and saves a complete two-passage Studio show.",
+        "Android media-processing timeout callback stops promptly and leaves a retryable job with the previous show intact."
+      ],
+      "powerTransition": {
+        "phase": "reopen-for-timeout-callback",
+        "interactive": true,
+        "deepIdle": false,
+        "batteryExempt": true,
+        "controllerDeepState": "ACTIVE",
+        "commandOutput": "Light state: OVERRIDE, deep state: IDLE\nmForceModeManagerQuickDozeRequest: false\nmForceModeManagerOffBodyState: false"
+      },
+      "job": {
+        "id": "ef12f94f-f947-4a50-8fb5-5e39d44ed2d3",
+        "projectId": "da062f6e-9162-4712-86b8-ab192c66b4b7",
+        "name": "Timeout fixture",
+        "sourceSHA256": "570fdf164283fe998104af73f9037beabdc90c6f347365e92e2bd6b591139448",
+        "analysisIdentity": "3135ebeec539243c1d9febde20c6fae81cc750795a41c825bc2e5bd68f3b07b4",
+        "state": "interrupted",
+        "stage": "Android paused background media processing after its time allowance. Open LightForge and resume from saved passages.",
+        "progress": 0,
+        "createdAt": 1788824648498,
+        "updatedAt": 1788824648700,
+        "hasCheckpoint": false,
+        "resumeAvailable": false,
+        "lastStage": "Preparing background analysis",
+        "elapsedMs": 202,
+        "stoppedAt": 1788824648700
+      }
+    },
+    "device": {
+      "passed": true,
+      "checks": [
+        "Actual Studio native CPU separation, neural analysis and choreography completed with the Activity destroyed, screen off and Doze forced with user-equivalent battery exemption; result was durably saved.",
+        "Reopened Activity reports the completed job and its saved project.",
+        "Notification cancellation interrupts live native Studio work; immediate Resume can start while old native resources quiesce, with the previous project, CPU lock and WebView safely released.",
+        "Resume reuses at least one verified native passage after notification cancellation, preserves the 12-second source clock and saves a complete two-passage Studio show.",
+        "Android media-processing timeout callback stops promptly and leaves a retryable job with the previous show intact."
+      ],
+      "sdk": 35,
+      "scope": "Android emulator with actual foreground service, native CPU Studio separation plus WebView/WASM rhythm/voice models, screen-off/Doze execution, live native cancellation, partial-passage resume and timeout callback; not a physical phone or Tesla."
+    },
+    "completedAt": "2026-09-07T23:44:12.636689+00:00"
+  },
+  "signed_apk": {
+    "apk": "LightForge-2.2.1.apk",
+    "update_compatible": true,
+    "signing_certificate_sha256": "7187d6aa935d5b7d2d656cb87913af95fe1ca3a4b1653036d1d8d890e2016c6b",
+    "bytes": 1171728522,
+    "sha256": "9fdbc60afecb6ce278d890f36ad58cb67623a485fd800d9e6c4215c6a7b3dd9f",
+    "zip_integrity": "passed",
+    "alignment": "passed",
+    "signature": "verified",
+    "min_sdk": 26,
+    "target_sdk": 35,
+    "compile_sdk": 35,
+    "version_name": "2.2.1",
+    "version_code": 20201
+  },
+  "release_gate_count": 6
+}

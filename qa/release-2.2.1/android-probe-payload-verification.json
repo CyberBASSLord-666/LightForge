@@ -1,0 +1,20 @@
+{
+  "scope": "Current production Android source compiled and signed ephemerally; pinned web/model bytes restored from a verified prior CI build, then checked before packaging",
+  "test_commit": "f80de0d7fd075cf22506c60910e41ea9f625e922",
+  "model_candidate_run": 34162369481,
+  "build": {
+    "apk": "LightForge-2.2.1.apk",
+    "update_compatible": false,
+    "signing_certificate_sha256": "7e3ce40ab6e57c87b7ddc74919590548a8c9860ed09036932f049b57211b7d81",
+    "bytes": 1171728522,
+    "sha256": "98eaf40959a7ec4ecd61db173118350657fdd2d4fbf78a3b1475d2a784cdec31",
+    "zip_integrity": "passed",
+    "alignment": "passed",
+    "signature": "verified",
+    "min_sdk": 26,
+    "target_sdk": 35,
+    "compile_sdk": 35,
+    "version_name": "2.2.1",
+    "version_code": 20201
+  }
+}

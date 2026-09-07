@@ -1,6 +1,6 @@
 # LightForge 2.2.1 — Native Studio processing and recoverable progress
 
-Version code **20201**. Release validation and publication are pending. The final update APK must retain the original LightForge signing identity; install over the existing app without uninstalling once it is published.
+Version code **20201**. The original-signed APK is built and the complete Android recovery probe passes. Final production CI and publication are pending; install over the existing app without uninstalling once it is published.
 
 ## Analysis execution
 
@@ -31,7 +31,7 @@ Native execution was **2.08× faster**, with **62.49% lower peak process RSS** i
 
 Source-bound native/WASM numerical equivalence and source-clock checks pass. Fresh downstream inference on 18 fixed original-model estimates retains singing in 12 positive cases and produces zero vocal events in six instrumental cases; this is not 18 newly separated native-runtime songs. Browser editing, responsive layout, full model inference and cancellation have passed against unchanged web sources. The refreshed local regression run passed 145 Node and 39 Python checks against the current sources.
 
-The first native Studio emulator fixture completed and reopened a saved show with the Activity destroyed, screen off and forced Doze active. A later probe saved one completed passage and cancelled native work, then hit an Android focus-event ANR during the resume sequence. The Activity now detaches its preview WebView before destruction; this fix requires a complete new runtime test. **The complete Android cancellation/resume test, final release-candidate CI and signed publication remain pending.** The full Android gate additionally requires cancellation during a later passage, immediate resume of completed work, resource cleanup and the Android timeout callback. An initial fixture pass does not establish the complete gate.
+The [current-source Android 15 probe](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34169529496) passed real native Studio completion with the Activity destroyed, display off and Doze active, then reopened the saved show. It also passed cancellation during a later passage, immediate Resume with verified saved-passage reuse, resource cleanup and the Android timeout callback. The Activity detaches its preview WebView before destruction, addressing a focus-event ANR found during earlier testing. **Final production CI and signed publication remain pending.**
 
 This update targets the slow execution and repeated-work failure mode reported in 2.2.0. It does not promise a fixed completion time or claim resolution on an untested phone. Sustained runtime, memory, storage, thermals and long-song completion remain device/workload dependent. Physical phone and Tesla testing remain unverified. Model licenses retain their noncommercial restrictions.
 

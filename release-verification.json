@@ -1,26 +1,26 @@
 {
   "release": {
-    "apk": "LightForge-2.2.0.apk",
+    "apk": "LightForge-2.2.1.apk",
     "update_compatible": true,
     "signing_certificate_sha256": "7187d6aa935d5b7d2d656cb87913af95fe1ca3a4b1653036d1d8d890e2016c6b",
-    "bytes": 1093337077,
-    "sha256": "9abd761232159c4974bf4d8278ff0b656cb0ca299d4898a7d5fd93b2543a7bfb",
+    "bytes": 1171728522,
+    "sha256": "9fdbc60afecb6ce278d890f36ad58cb67623a485fd800d9e6c4215c6a7b3dd9f",
     "zip_integrity": "passed",
     "alignment": "passed",
     "signature": "verified",
     "min_sdk": 26,
     "target_sdk": 35,
     "compile_sdk": 35,
-    "version_name": "2.2.0",
-    "version_code": 20200
+    "version_name": "2.2.1",
+    "version_code": 20201
   },
   "signing_certificate_sha256": "7187d6aa935d5b7d2d656cb87913af95fe1ca3a4b1653036d1d8d890e2016c6b",
-  "apk_source_assets_matched": 95,
+  "apk_source_assets_matched": 111,
   "current_release_receipts": {
     "regression-verification.json": {
-      "sha256": "6285c733620ad2437a8ffbc62293ba396f90a0b4a628aff4fe214bd6094bff38",
+      "sha256": "7de18e813202a60c50c14513428eed8ac1f930ce99c5a1b1f6c758398a8cd583",
       "result": {
-        "release": "2.2.0",
+        "release": "2.2.1",
         "passed": true,
         "checks": [
           "All selected engine, model-component, migration and DOM integration suites passed.",
@@ -30,38 +30,45 @@
         "errors": [],
         "source_hashes": {
           "android/AndroidManifest.xml": "7329675ebc8c9ace4e5a0a607fe8c4753924e89d168c266993c612084b7e4e19",
+          "android/native-runtime.json": "679f377a99019fbd20db96e3d35881e5d7d05ca761dc62a265a411d219dc8198",
           "android/res/drawable/ic_analysis.xml": "6e698464885ef96f0b11af9c5a05c4947affc0126e2994a331ef9cffec3732c8",
           "android/res/drawable/ic_launcher.xml": "3c411f5d88166510435daeb1702d155849cc0f8208bcfde9b9d61eed24d57b8e",
           "android/res/values/styles.xml": "24448bfe96b034f7bfadcd0d469d46da30538c3acfa67e2ded464869ad9a9859",
-          "android/src/com/cyberbasslord/lightforge/AnalysisJobStore.java": "82e95f27ae4f08414de9027a35b355feba378a8a78e7193715481cb503614875",
-          "android/src/com/cyberbasslord/lightforge/AnalysisService.java": "8ea36158956a02d7a369eeb68be8be860bd2b88ccae3fe87677007dea44a5c48",
+          "android/src/com/cyberbasslord/lightforge/AnalysisJobStore.java": "7d834eb8f9eedf2381b9c68b81d7ba17ae1e7dff7c595f10cf89e47efe67fe94",
+          "android/src/com/cyberbasslord/lightforge/AnalysisService.java": "4be3ecab058daf7410c95389dd634430e183bd4ffd5c1beec6e327222a8ec745",
           "android/src/com/cyberbasslord/lightforge/AppResources.java": "f95a5d02007b40a0e2488b82298776be0fb9d171de8336380fec3dd553712430",
           "android/src/com/cyberbasslord/lightforge/AudioImporter.java": "910ef3ec1d6f6ded54c91111d9ab34dbf4bbf4d4043f62f1978057183ca0b575",
-          "android/src/com/cyberbasslord/lightforge/MainActivity.java": "04aee3ffc1d2e7e896eef2a60f0901056b13c7c89803bb1f2fbb2c89f5c50cc0",
+          "android/src/com/cyberbasslord/lightforge/MainActivity.java": "310d4e49addd684be92bf262da133f66369a60d6915b822af046f81f26d18267",
+          "android/src/com/cyberbasslord/lightforge/NativeDeux.java": "4320a91ceb7f1d49ab1bb839dead4c85bee417863ea37d5c4a1cd31fbe708558",
+          "android/src/com/cyberbasslord/lightforge/NativeDeuxTransform.java": "991b06501cfb88b904d0b714a525c389f169f00c231248b0e961b70f257e90b5",
+          "android/src/com/cyberbasslord/lightforge/NativePassageTask.java": "e15832e772b608cb57312c138fdb582a05973620a0c318e9212e37f0cedb7697",
           "android/src/com/cyberbasslord/lightforge/PendingExportStore.java": "1697003aab5f842d0bb90122df46f2d1f60da30232eca9d6912c972e421c4163",
           "android/src/com/cyberbasslord/lightforge/ProjectPreview.java": "459e586684b6cea8b0b5c0541de766c45301347341ff2acdc15e876028e7c551",
           "android/src/com/cyberbasslord/lightforge/ProjectStore.java": "51492859a40490533286574a08893bf3f6da5063c69b806f7760b3d056269472",
           "android/src/com/cyberbasslord/lightforge/WavConverter.java": "f34b9bf3c8960678b6116619941307ce01b75c672807ca85f6f81b6adc33b1b6",
           "android/src/com/cyberbasslord/lightforge/WebViewFileTransport.java": "2deff6c473928a08a7e63172c3fa6798df1273d1907fc163f292aa43d5c39b6e",
-          "build.sh": "078a8e2e8521639d865253b81add58814a0beb375a6cdb5f44ace0c224cf8507",
-          "package-lock.json": "e9da3120e4a50424974c1cdb4d0692368876174e66cc55d1604126c2e49307e3",
-          "package.json": "d30e4f44ab8e373396592616b765883b8717d731a59d050d3abc5868f28e9d01",
-          "tests/AnalysisJobStoreTest.java": "83e7216c079fc06cd3c9d14ec8170219fd1f4c6d19fd5d6e732de83ea8562639",
+          "build.sh": "856404ed40bd9b381a917bfc2b38012c96155bfde81535d9443d6b6f294be3f7",
+          "package-lock.json": "37efe81ece6d800275a6e0a0860e23b91480d89abd86746c837b2561301eade2",
+          "package.json": "80cc07f40f8a3c2ce6946c414a44a71eac9562d27cd98c2e8f414017282e7515",
+          "tests/AnalysisJobStoreTest.java": "863d7490ecb2e277fb94ceed051cd7ff7f75e8bcd71613650aafc2a17b2a570e",
           "tests/ExportRestoreTest.java": "18da0906b4b0bdd923c195325ba296e7aacb316a812d83d3a2de5bee0a72e21b",
           "tests/NativeAudioTest.java": "7672dd051513d789f7cb4db32f7bcc6a9be5a952a28f7f7ca4a3ec1ec4cd10a8",
+          "tests/NativeDeuxTest.java": "f552fdbd93f01dc6051cdf6c8ca7ba4048b4391451e924e544741771e82ac2d4",
           "tests/NativeHardwareTest.java": "2726f33f235539c4685e87b9f5365bf1c76cc3170bab52c0d4f5e2115dc07e25",
           "tests/NativeRecoveryTest.java": "1e5afd72ceb998676def5d38a96d4d30ce91cc8e49575a687efef45b9ab2b012",
           "tests/ProjectPreviewTest.java": "53185ca74b884f5f6cd242cf6d9f9e9a204da36d8675dfec70f3fe4920a88d1d",
           "tests/ProjectStoreTest.java": "bfd236d1bf8c1cae4a4a95e469d0c72aaeed85075b8cc81f819704b0634a79b1",
           "tests/WebViewTransportServer.java": "e38b873a0ca64a8689bdef36d9ad5b68f2ee82754cdc0373d886b61ea419fbbb",
           "tests/WebViewTransportTest.java": "0fc201d751fba8589e87f6cab2c501331ef4388b9a012f639491c6ceacb24200",
-          "tests/android/BackgroundInstrumentation.java": "27413d911dde8e9e82a899c131f3bd081adc5dc539680bc92612549741fb6b8d",
-          "tests/background-2.2.test.cjs": "ac4ce1fc6b735a33468304b71115a674652e7b000557f870fa62bac652fa5583",
+          "tests/analysis-recovery-2.2.1.test.cjs": "d2b0177caf799146ac6a0ccedb86640e1d7b3981c5ca0498611851d3397aab06",
+          "tests/android/BackgroundInstrumentation.java": "0f250569f95a118501ca74b3de00948dbd04e2614f5d954efb5251a216a15a5a",
+          "tests/background-2.2.test.cjs": "2ee2c56e7fa900729d128a353660d018819e92d9e245d8cd858aeafa58a836f3",
           "tests/bass-notes.test.cjs": "d8fd98d78334bbe73deb5a888f7a4c0d189f9b4e047ce3f9d6fb63bdcf0a1abe",
           "tests/cockpit-2.1.test.cjs": "b032cc49e2e8d309de381cee966b429a67d31822a82f264af1f72d0eefc47118",
           "tests/composer-1.4.test.cjs": "b51bc3f6783a309deb5306b92d9d28be79a085d3ba79d90584b856cc7b03e565",
           "tests/composer-1.5.test.cjs": "f2a25eaf2adb0bcca08bf339480214f7e86cb276e4e4a24e3cbaa431c9b523f3",
           "tests/composer-1.6.test.cjs": "c2d79d47cb1d03a8d73debbeff6eaeccdfefffebfcd108917befe86e0db108ce",
+          "tests/deux-2.2.1.test.cjs": "eb75a977e6d0546f951d56b9746d1dea40f3c434e6ad54abae3a81d402d9465f",
           "tests/engine-manual.test.cjs": "f0d5c7436e961d163abcd6694031bd6bd1980d1f08496f81d7293ae1a3febb08",
           "tests/engine.test.cjs": "90a1cc79cb02b3dc74e75ce78e708290341f0e82858a9d9bdc1b57a037ec2fca",
           "tests/game-2.1.test.cjs": "f55389768a3aaab8750ccd0515a611462b9e3efbd2176f7a55765a3aef199573",
@@ -69,6 +76,7 @@
           "tests/migration-1.6.test.cjs": "d408fc5debee1cb096fc0d5c177d82fd2bb086af4dac3202930d098ed3907058",
           "tests/migration-2.0.test.cjs": "dd8cd75404a17a23382b3a20d5bbe744a85111447c73ba3951566fcfb7038515",
           "tests/movement-planner.test.cjs": "36a7b4e5ba4bf054ca5c6bd82a0957a47d0d85eefde420c01457262a63615fda",
+          "tests/native-deux-bridge.test.cjs": "9bd5bdb7d412cd8b780ba9626eb9c3d9d9d97cdf3fd7bb3357adcc837aa93cc0",
           "tests/precision-2.0.test.cjs": "1c57ecd98eef348275d860656fbb84c7774da78c5855b74e1aa80124a027d2cf",
           "tests/precision-ui-2.0.test.cjs": "352727cb21d949ac7fd5bb411600211bbef2dab8f841988f0ee09d037b218c5a",
           "tests/preview-engine.test.cjs": "74c2788b400d785809a4992ba17e3c4d84ca877383f3cf72c99d43b6a096669a",
@@ -76,49 +84,56 @@
           "tests/role-composer-1.6.test.cjs": "c162b1d6448bb1c2ba6829ceab65f5856805a22f9f85aceb56dfb42d6afc5175",
           "tests/role-reference-composer-1.6.test.cjs": "4b0c5bb26303791c1c183254a30706cd9166320292c4cb43bf253f3c0145a329",
           "tests/stem-cache.test.cjs": "e3e117b261d0920e8a159f9f602b15dc4d423c579f0708f4c31ca7dbe7f1e85c",
-          "tests/test_apk_archive.py": "90c86e731e0a700b2c673d74dd681c0fd51cda20a19b54358aed89942d2dd8d2",
+          "tests/test_analysis_assets.py": "1ea4f1ba3bd8415611caebb31c076b39898e55f62084cf5def1d9f3c7f5e9738",
+          "tests/test_apk_archive.py": "d3fadfab94a443567fe5e7ef20bccb9bd31097273ac7561b8426630bef1f4357",
           "tests/test_apk_delta.py": "3aa647504323d02086f218ff6ee53a2a4a682eaab8f93b2b50304445db4d7fe1",
           "tests/test_package_release_streaming.py": "1d5f317840c035217ffc0374f8533399ee4ee8439e04b259ca0bd0949fc6049e",
-          "tests/test_release_publication.py": "cf0a5ef58c73573177a46b44561a7a7f8b276f85356584a84d09ccb87c043fac",
-          "tests/verify_native_release.py": "9455000f482a42454a55eaa98c2de54a609276725ca06e1155f11416dfe9b13b",
+          "tests/test_release_publication.py": "82d03296f2d01d41ecc6e79f29500567decac0d911d7de92283a685eddac4505",
+          "tests/verify_native_release.py": "b4d4eb638b3f2423ec03be9acc6dce3017b7f496b080c6231a06b5a25c525833",
           "tests/vocal-detail.test.cjs": "ac151e505e78de8b5cf2783df2138d15f68f35dfe7d1f56db8126554f6b70409",
           "tests/wav-reader.test.cjs": "25a63a1eecce4d6ec389522c7212ecf0a356a13af98c57e82adb202a33009c7a",
           "tests/worker-harness.cjs": "94352a9231fd142c0ecaf3dd91f628d52eaaae3b65f559ce70e9784ca499fb51",
-          "tools/apk_archive.py": "6df2aedcbc324ddbf506c6b0c2d62922508e3692588c6399635bb2b02259e901",
+          "tools/apk_archive.py": "cfa16b0f87f689e96e74cf97e1640b0eff6c2b9afe23ce8e22ff147527985c25",
           "tools/apk_delta.py": "466fc5f64f0a94579c73734ecf129acef2afa031e196e45ac00d20e535ec4ef0",
+          "tools/benchmark_deux_native.py": "ff74914fc141ee3e3419080998b2b1a6500a1f1c46f83a83d0c28cb379c6f09f",
+          "tools/benchmark_deux_runtime.cjs": "12375c9c14f18799416fe65ecc1bb7c2a339fc31352db7c71e31b0bc1d232fab",
+          "tools/bootstrap_native_runtime.py": "ac5fa4fdef647e639313166bcba2f581715bc08187ab06f39b7d03ccfcbb87aa",
           "tools/bootstrap_testdeps.py": "0f39e37e6d4affd06c306a23f52cbade331c45b5cbb0debfc67a7e6c45fd4a3a",
-          "tools/bootstrap_toolchain.py": "0c46a84bee5e94843408ac8593a5b821ae8534a0f05a0f9b0f880f3208152750",
-          "tools/build_android_tests.py": "36ad916b6e3b4bd94be2cb912bbb9b2fc44a12eb4cd2ad7ecc735fc6f5e598f5",
+          "tools/bootstrap_toolchain.py": "0ba3ee2448b6bae82b827a2431500f411235b4eecc1a485086a830707ce93655",
+          "tools/build_android_tests.py": "bce8e74c266469ee5cfca515472d18c5a73756a804f5d0371b282bb2aa24e1b5",
           "tools/build_preview.mjs": "173659066ea0b9d16f0d7ca1985876d481b289f4f3371305b425a33529ebd969",
           "tools/package_release.py": "fb268c7235b540fd603e2795212aede7100ab4e9ddd92f40b935b1171a4efbe0",
-          "tools/package_v2.py": "24dbb4d8dc2b6dec29180a512d885734d46e6a9a0b490d9cd3563fc884d6de7a",
-          "tools/prepare_deux.py": "892d00db0b46291ca5b2d600c2b314f5cdbdd84cd12a3859f97503de53ca62da",
+          "tools/package_v2.py": "765ddd3716b2acad4dd1a2578674a594b299e41e16512415f4aa748428f1477b",
+          "tools/prepare_deux.py": "80b71795c6de65f1c068523565e1c44700bbc99f45e9dc0da83124bcf8a00db8",
+          "tools/prepare_deux_fixture.py": "a31e94bd7ffa23d917516dcac1746c30856e298cc2a0a337e92b5d5593c45251",
           "tools/prepare_game.py": "7f1fb983ab1888b7ecc0731bdd22538f73820a33f88775fc7f63dd8b9b43e800",
-          "tools/publish_github_release.py": "807202c6c420939b1c6f4884a03b035e7868de89b2ccdd2435e626d40dfaec0e",
-          "tools/run_android_background_tests.py": "8ee39a8f5c9ca386fd9d25710419c697ef9d4b4541d3fbc56c09aad7c4ebd606",
-          "tools/sync_version.py": "d09155da8961e1ff2f110b0705ba241c12f35a82db5635c2b3bc2645ecaec9a2",
-          "tools/verify_analysis_assets.py": "682ac40a5c3af4ae811713de1ec01bd30b37c75fbe466b28fb6ccd860f58d2d5",
+          "tools/publish_github_release.py": "7db3e173e4157dec3ce36b86bdccedde920f78d644116a533b48de62142358f3",
+          "tools/run_android_background_tests.py": "fee2d57232420019afa9191452f46cf33fc1301a1d92fe6f038fbcb40aa933d8",
+          "tools/sync_version.py": "d931b766042fbfa19d8c4b842400fecf4eb2fd58aebbc820e1afa1822387a21b",
+          "tools/verify_analysis_assets.py": "a71ab7ef9329da3b5429ca596978065efbb4afa009c925db7a552eddd1677224",
           "tools/verify_retained_analysis.py": "6fbfa961244be566ac4048dd9304ee49efb521f26e3efe2c2d3780abef84b582",
-          "tools/verify_v2.py": "f0568162c33571b9e6cbdfae9b21e9bd074ae568435c87009adb0c161bfd4322",
-          "version.json": "cbbc524d542c7bb61f60eb67956f731033e033b5552e36ec426b2094cf5a14b9",
-          "web/analysis/analyzer.js": "0a5f01457e7b538a4e2ecec222756a240e5b3532fd304cd21b640f5905eb9bee",
+          "tools/verify_v2.py": "2d10a4c93d4d37a1633c952bd695bfed994950ff8115be620330dedd98eae571",
+          "version.json": "c2bb2ac7b87451cfb09a2cc087581ef8217cd7395ec87fdea0dc2e248f83f9df",
+          "web/analysis/analyzer.js": "f9dcbf65960f6b4ca7164f0202354ad4c4e8e9b58efc8d024fa32eacf74a2162",
           "web/analysis/bass-notes.js": "5b81e2361295a1f8c02086d4668464ed1d7e93c923513c50a2c865a7aeb1531e",
           "web/analysis/dsp.js": "32186b9268632cab85cadcb7e84fa1b4e3d8eb4bb9fbdf96a0873067cb9acd71",
-          "web/analysis/game.js": "f4a24e8417223bb4d9e52c9102054dc29a9c7c77cc59cf49f0c82d31802817c2",
-          "web/analysis/separator-deux.js": "06900caecc898f7a6cf1689c6a11fcb3bafdf8b21a177b83b6c5610386b9a74d",
-          "web/analysis/separator-mdx.js": "f0d42ecc6d5928f72120a5e40b33a291d28d550a59ec0f05c68e37ed87ed3a9d",
-          "web/analysis/stem-cache.js": "83257fededb12328891494994e166eed47b81adf3147f4789e4694ce4a239749",
+          "web/analysis/game.js": "f8ffe28801c81df19e09d883626ecd4fe5870c50d299f362367ba88dbecb6b48",
+          "web/analysis/separator-deux.js": "95508ddb8cffc7dff6e47b849f7722efd1c901fbacb2c059be392444f872aebe",
+          "web/analysis/separator-mdx.js": "b291f141626f0c205f40eb03d007168863642c9e3bcbf535372b3b4eee5c0a99",
+          "web/analysis/stem-cache.js": "21633cd9e217ecca6e55b9fa04983512e651ddc9a7b9027af13580845ff4fe82",
           "web/analysis/vendor/ort-wasm-simd-threaded.mjs": "745eb7c0ce6f18a6aa521971b2877babc7ffb27eecb58ab3bc6e5ef4692672e8",
           "web/analysis/vendor/ort.wasm.min.js": "e66568724f8848e57cc2a56e4bea3a5b86ce3ff81b2da11eac8ed7ab02b27bd4",
           "web/analysis/vocal-detail.js": "cd760d7a766d9a4ab0ac3a252a10f17a16a797b38e50b2d6712bc6adcd42713f",
           "web/analysis/vocal.js": "94483ac6cf5db7532abfba98e7bab7cd826a82ad2adca0296d39fdebd827ac70",
           "web/analysis/wav-reader.js": "0f0e5216dc1d2ca0bfb25eddacdaa21076990fa7638c22188023607e43d4005f",
-          "web/analysis/worker.js": "725e6767647f70021d8ba38ec68f40f0059ca3af1afbdd282446cf7c7b54f75f",
-          "web/app.js": "57c02e9a552d4adc6489e2bdf7966adb3f2c6036ba07a74597c03a44092871b1",
-          "web/background/runner.html": "d69e68a2a189d9aeab582aacb2d6b9f2d4fc4f2ac21a348575b748d6b576823e",
-          "web/background/runner.js": "d8e14ac46f75ecf7a0f184845e07207038208e096a6ba5c96e75b0b4537f69f6",
+          "web/analysis/work-store.js": "b6e6a251478ed727cee145418a61b1b7f1755076e0797f0a5a29ecedc4ce8f41",
+          "web/analysis/worker.js": "237fc9f20f5947610cf65c307be62792438bc6752cdf76d0dfc65d9def50dfce",
+          "web/app.js": "85f3143c205740032bc4ef025103bc88b50c9a9be1ea93eb248c3754a4beff36",
+          "web/background/native-deux.js": "1125d5ee8dd0633133fb68f315d627d43e768410151c19029874054c1d60dde3",
+          "web/background/runner.html": "cf882b294a3d8c5dcf3ff362f4f6f9544580b7e4ca81cbc512e19f8166331fdc",
+          "web/background/runner.js": "b88e97d4ee80c67e9d22217dc5560581fe755373f330dc0979d795cbcc7893fd",
           "web/channel-studio.js": "3248cadd49b2faf0856c887c84a5a31d12d22a4d79c733bb1b9fc84a85ad21e9",
-          "web/cockpit.css": "2a99230afa1a99645e4ea10e5f6d2bf7b2ee06b9f47de8aeb23fc3332feb5139",
+          "web/cockpit.css": "cb776661c5278d6d14302f442005db1a6b26e9baf553e776eab2ca642c0dafdc",
           "web/cockpit.js": "cba1d693ee592ac9ea0bf028ba362d8247981c1678c25d81737db7a633163afe",
           "web/engine/client.js": "56380a3901c45b3409e94bf568a2f600dce471f1a8b289e71a081b91a04c355d",
           "web/engine/light-planner.js": "970c7a2a736560bf01e318b8180b431863e09e6e28daad4525ec583a70a73aeb",
@@ -129,7 +144,7 @@
           "web/engine/vehicle-profile.js": "027bf87a827a900cda00505e2b539f84cbdb0d5a9800ea4eb1efdf85a0c10936",
           "web/engine/worker.js": "924e901876530dc45df99ab856ec2c7c48ae223ce76103d4c9d84047086a5121",
           "web/fonts/fonts.css": "7bb92eb5f9af3afb96cc510077d29d901d91eeb6252f8a99af6b3ed142bef5e5",
-          "web/index.html": "a649ca31474390c000fe061c1efa0f69d47988d94128e9b6b5fa8a0d74f9cd4d",
+          "web/index.html": "cff24363353016cdf8c96c0d65c8b1f8fd375de78c62147872398e2ad086843e",
           "web/music-insights.js": "5fd372e92564172af8bc4d1797e25f8f629dd7cccf7326daf0ebc170475084ab",
           "web/precision-studio.js": "9ff16fd7313fffff441905236cd93dbcb50b33d6593f5e381fffc3ae537aa222",
           "web/preview/src/highland-rig.js": "7e09e586f3b018a5912e6060c5d0787aae253bdfa4198d067edd79690d0e916d",
@@ -138,17 +153,17 @@
           "web/studio-tools.js": "ee1239ce8a344d13ccaeb053470ff2ed1f455063e2293e22d0dc5f9e38013934",
           "web/styles.css": "e89ff197b174f00361c7b694d9a8b9f1ed8ef797c055e0a20176a195faff64f5",
           "web/ui-polish.js": "2cec7ca975ed6d1945f0bcb987a694d49782479b07d29e71e21306c26be39716",
-          "web/version.js": "6a419b932e432154e9220026d5415a9b9ba5d009e82684cfbadc80cfbfe2da24"
+          "web/version.js": "5cb6b69cc108abc4758d121a66e8c56939c51574fbe7c67b1febf0803a671159"
         },
         "scope": "Node engine/worker/WebCrypto/gzip, real app DOM integration with simulated native and graphics, Python archive tests. Not a visual browser or physical Android/Tesla test.",
-        "analysis_manifest_sha256": "eca6c2c418c75969916093290afc9bd5f9cd858495b68a615c5a20ad7f6315e6",
-        "completedAt": "2026-09-07T13:43:22.187298+00:00"
+        "analysis_manifest_sha256": "8c33fa5a7b7bafd871b8caf0c476245ff40ede8fe70ee9703f50230c55a3ed71",
+        "completedAt": "2026-09-07T23:20:18.425603+00:00"
       }
     },
     "browser-verification.json": {
-      "sha256": "bbea2eb0934b719c6f5af8fe72f4ee6c67a1f4f327bd8af181fbb1b93501f0c5",
+      "sha256": "5aa350f15f435befb3b7f115d035d84712c1d1c4dfcf823568545ee116423d00",
       "result": {
-        "release": "2.2.0",
+        "release": "2.2.1",
         "passed": true,
         "checks": [
           "Visible cue form generated a matching final FSEQ attack using actual browser workers.",
@@ -163,11 +178,13 @@
         ],
         "errors": [],
         "source_hashes": {
+          "qa/release-2.2.1/browser.cjs": "0fd19b1a4ea71015dc59d80077f293ecd2d3bd4140f9c6466fd23f7cf85aed39",
+          "version.json": "c2bb2ac7b87451cfb09a2cc087581ef8217cd7395ec87fdea0dc2e248f83f9df",
           "web/cockpit.js": "cba1d693ee592ac9ea0bf028ba362d8247981c1678c25d81737db7a633163afe",
-          "web/cockpit.css": "2a99230afa1a99645e4ea10e5f6d2bf7b2ee06b9f47de8aeb23fc3332feb5139",
-          "web/version.js": "6a419b932e432154e9220026d5415a9b9ba5d009e82684cfbadc80cfbfe2da24",
-          "web/app.js": "57c02e9a552d4adc6489e2bdf7966adb3f2c6036ba07a74597c03a44092871b1",
-          "web/index.html": "a649ca31474390c000fe061c1efa0f69d47988d94128e9b6b5fa8a0d74f9cd4d",
+          "web/cockpit.css": "cb776661c5278d6d14302f442005db1a6b26e9baf553e776eab2ca642c0dafdc",
+          "web/version.js": "5cb6b69cc108abc4758d121a66e8c56939c51574fbe7c67b1febf0803a671159",
+          "web/app.js": "85f3143c205740032bc4ef025103bc88b50c9a9be1ea93eb248c3754a4beff36",
+          "web/index.html": "cff24363353016cdf8c96c0d65c8b1f8fd375de78c62147872398e2ad086843e",
           "web/styles.css": "e89ff197b174f00361c7b694d9a8b9f1ed8ef797c055e0a20176a195faff64f5",
           "web/precision-studio.js": "9ff16fd7313fffff441905236cd93dbcb50b33d6593f5e381fffc3ae537aa222",
           "web/engine/worker.js": "924e901876530dc45df99ab856ec2c7c48ae223ce76103d4c9d84047086a5121",
@@ -178,26 +195,40 @@
           "web/engine/sync-review.js": "eb9591060fffa20e2b12de97c6d344b61e06fc276af75817610d4e17095c61d9"
         },
         "scope": "Desktop Chromium with actual WebGL and web workers; simulated Android bridge. No Android device or Tesla.",
-        "completedAt": "2026-09-07T13:44:34.872Z"
+        "completedAt": "2026-09-07T23:21:30.709Z"
       }
     },
     "native-verification.json": {
-      "sha256": "04684e7c338f4a504b9bd967f11744805517597c75591ffce9c1ae0e25985686",
+      "sha256": "77534aef710e1ad0d2da82056ae93a542047fefd9393fb9534fc12a7a38cba84",
       "result": {
-        "release": "2.2.0",
+        "release": "2.2.1",
         "passed": true,
         "scope": "Fresh production Java compilation and host JVM tests; no Android Activity/device/document-provider or physical Tesla execution.",
         "source_hashes": {
-          "android/src/com/cyberbasslord/lightforge/AnalysisJobStore.java": "82e95f27ae4f08414de9027a35b355feba378a8a78e7193715481cb503614875",
-          "android/src/com/cyberbasslord/lightforge/AnalysisService.java": "8ea36158956a02d7a369eeb68be8be860bd2b88ccae3fe87677007dea44a5c48",
+          "android/src/com/cyberbasslord/lightforge/AnalysisJobStore.java": "7d834eb8f9eedf2381b9c68b81d7ba17ae1e7dff7c595f10cf89e47efe67fe94",
+          "android/src/com/cyberbasslord/lightforge/AnalysisService.java": "4be3ecab058daf7410c95389dd634430e183bd4ffd5c1beec6e327222a8ec745",
           "android/src/com/cyberbasslord/lightforge/AppResources.java": "f95a5d02007b40a0e2488b82298776be0fb9d171de8336380fec3dd553712430",
           "android/src/com/cyberbasslord/lightforge/AudioImporter.java": "910ef3ec1d6f6ded54c91111d9ab34dbf4bbf4d4043f62f1978057183ca0b575",
-          "android/src/com/cyberbasslord/lightforge/MainActivity.java": "04aee3ffc1d2e7e896eef2a60f0901056b13c7c89803bb1f2fbb2c89f5c50cc0",
+          "android/src/com/cyberbasslord/lightforge/MainActivity.java": "310d4e49addd684be92bf262da133f66369a60d6915b822af046f81f26d18267",
+          "android/src/com/cyberbasslord/lightforge/NativeDeux.java": "4320a91ceb7f1d49ab1bb839dead4c85bee417863ea37d5c4a1cd31fbe708558",
+          "android/src/com/cyberbasslord/lightforge/NativeDeuxTransform.java": "991b06501cfb88b904d0b714a525c389f169f00c231248b0e961b70f257e90b5",
+          "android/src/com/cyberbasslord/lightforge/NativePassageTask.java": "e15832e772b608cb57312c138fdb582a05973620a0c318e9212e37f0cedb7697",
           "android/src/com/cyberbasslord/lightforge/PendingExportStore.java": "1697003aab5f842d0bb90122df46f2d1f60da30232eca9d6912c972e421c4163",
           "android/src/com/cyberbasslord/lightforge/ProjectPreview.java": "459e586684b6cea8b0b5c0541de766c45301347341ff2acdc15e876028e7c551",
           "android/src/com/cyberbasslord/lightforge/ProjectStore.java": "51492859a40490533286574a08893bf3f6da5063c69b806f7760b3d056269472",
           "android/src/com/cyberbasslord/lightforge/WavConverter.java": "f34b9bf3c8960678b6116619941307ce01b75c672807ca85f6f81b6adc33b1b6",
-          "android/src/com/cyberbasslord/lightforge/WebViewFileTransport.java": "2deff6c473928a08a7e63172c3fa6798df1273d1907fc163f292aa43d5c39b6e"
+          "android/src/com/cyberbasslord/lightforge/WebViewFileTransport.java": "2deff6c473928a08a7e63172c3fa6798df1273d1907fc163f292aa43d5c39b6e",
+          "tests/NativeRecoveryTest.java": "1e5afd72ceb998676def5d38a96d4d30ce91cc8e49575a687efef45b9ab2b012",
+          "tests/ProjectStoreTest.java": "bfd236d1bf8c1cae4a4a95e469d0c72aaeed85075b8cc81f819704b0634a79b1",
+          "tests/NativeHardwareTest.java": "2726f33f235539c4685e87b9f5365bf1c76cc3170bab52c0d4f5e2115dc07e25",
+          "tests/NativeAudioTest.java": "7672dd051513d789f7cb4db32f7bcc6a9be5a952a28f7f7ca4a3ec1ec4cd10a8",
+          "tests/WebViewTransportTest.java": "0fc201d751fba8589e87f6cab2c501331ef4388b9a012f639491c6ceacb24200",
+          "tests/ProjectPreviewTest.java": "53185ca74b884f5f6cd242cf6d9f9e9a204da36d8675dfec70f3fe4920a88d1d",
+          "tests/AnalysisJobStoreTest.java": "863d7490ecb2e277fb94ceed051cd7ff7f75e8bcd71613650aafc2a17b2a570e",
+          "tests/NativeDeuxTest.java": "f552fdbd93f01dc6051cdf6c8ca7ba4048b4391451e924e544741771e82ac2d4",
+          "tests/WebViewTransportServer.java": "e38b873a0ca64a8689bdef36d9ad5b68f2ee82754cdc0373d886b61ea419fbbb",
+          "android/native-runtime.json": "679f377a99019fbd20db96e3d35881e5d7d05ca761dc62a265a411d219dc8198",
+          "tests/verify_native_release.py": "b4d4eb638b3f2423ec03be9acc6dce3017b7f496b080c6231a06b5a25c525833"
         },
         "checks": [
           "Normal PCM import stays staged until audio, analysis and both JSON files are complete.",
@@ -218,16 +249,17 @@
           "WebView byte-range transport regression suite passed on the actual demo audio.",
           "Production COOP/COEP/CORP response policy is same-origin and independently instantiated across unknown, empty, partial and large responses; ranges and MIME protection remain intact without cross-origin grants.",
           "Durable background job ownership, checkpoint reuse, cancellation, conflicting edits, result commit and interrupted-process recovery passed on the host JVM.",
+          "Native Studio transform retains exact source-clock samples and stereo averaging; WAVE padding, malformed input and cancellation regressions passed without neural-model inference.",
           "Playback proxy boundaries through the four-hour maximum passed.",
           "Source wiring checks: package-derived version, frozen export projectState, native pause/save hook and background startup recovery are present (not device runtime tests)."
         ],
-        "completed": "2026-09-07T14:00:40.773407+00:00"
+        "completed": "2026-09-07T23:38:17.585595+00:00"
       }
     },
     "analysis-browser-verification.json": {
-      "sha256": "2685e4e45039dd1c5ca1e3fef8e7834ad6cf989b7cbfba11e4bb92c054ac49c4",
+      "sha256": "ddbcaeca98175da771d6ca307362f66a6174b095e858b395111b7b5f9d907ebc",
       "result": {
-        "release": "2.2.0",
+        "release": "2.2.1",
         "passed": true,
         "errors": [],
         "checks": [
@@ -236,16 +268,20 @@
           "Public analyzer cancellation during source separation removed its incomplete OPFS namespace."
         ],
         "source_hashes": {
-          "web/analysis/worker.js": "725e6767647f70021d8ba38ec68f40f0059ca3af1afbdd282446cf7c7b54f75f",
-          "web/analysis/analyzer.js": "0a5f01457e7b538a4e2ecec222756a240e5b3532fd304cd21b640f5905eb9bee",
-          "web/analysis/game.js": "f4a24e8417223bb4d9e52c9102054dc29a9c7c77cc59cf49f0c82d31802817c2",
-          "web/analysis/separator-deux.js": "06900caecc898f7a6cf1689c6a11fcb3bafdf8b21a177b83b6c5610386b9a74d",
-          "web/analysis/stem-cache.js": "83257fededb12328891494994e166eed47b81adf3147f4789e4694ce4a239749",
+          "qa/release-2.2.1/analysis-browser.cjs": "07861eb8b7fbbb128ac45fbb1d8f1a88adc27a0dadf0a2076e8921e783cd1b34",
+          "version.json": "c2bb2ac7b87451cfb09a2cc087581ef8217cd7395ec87fdea0dc2e248f83f9df",
+          "web/analysis/ASSET_MANIFEST.json": "8c33fa5a7b7bafd871b8caf0c476245ff40ede8fe70ee9703f50230c55a3ed71",
+          "web/analysis/worker.js": "237fc9f20f5947610cf65c307be62792438bc6752cdf76d0dfc65d9def50dfce",
+          "web/analysis/analyzer.js": "f9dcbf65960f6b4ca7164f0202354ad4c4e8e9b58efc8d024fa32eacf74a2162",
+          "web/analysis/game.js": "f8ffe28801c81df19e09d883626ecd4fe5870c50d299f362367ba88dbecb6b48",
+          "web/analysis/separator-deux.js": "95508ddb8cffc7dff6e47b849f7722efd1c901fbacb2c059be392444f872aebe",
+          "web/analysis/stem-cache.js": "21633cd9e217ecca6e55b9fa04983512e651ddc9a7b9027af13580845ff4fe82",
+          "web/analysis/work-store.js": "b6e6a251478ed727cee145418a61b1b7f1755076e0797f0a5a29ecedc4ce8f41",
           "web/analysis/vocal.js": "94483ac6cf5db7532abfba98e7bab7cd826a82ad2adca0296d39fdebd827ac70",
           "web/analysis/vocal-detail.js": "cd760d7a766d9a4ab0ac3a252a10f17a16a797b38e50b2d6712bc6adcd42713f",
           "web/analysis/bass-notes.js": "5b81e2361295a1f8c02086d4668464ed1d7e93c923513c50a2c865a7aeb1531e",
           "web/analysis/models/game/manifest.json": "51e172cfaa967d9e2518f01f508a64d49cd283d23ae8e8456af9c6e76eeb4f97",
-          "web/analysis/models/deux/manifest.json": "724ba38ba42617f3f867fc39dd044f9b1ff1284abeabffbaeadbf3ea67cf2389",
+          "web/analysis/models/deux/manifest.json": "c1cb548d8d02a8b947d66fd8ac672559ea175ac4462109acccba13220b788245",
           "web/engine/show-engine.js": "d09cfcdf1e1eebf36d3e03bfd40a3939dcc0fd18a4437047217511a258674548",
           "web/engine/light-planner.js": "970c7a2a736560bf01e318b8180b431863e09e6e28daad4525ec583a70a73aeb",
           "web/engine/music-cues.js": "1a87eea0502da2e1f19d2361a5646c127121211e91128017ce747b7f0d2f61d6",
@@ -271,8 +307,9 @@
             "noteModel": "game-large-1.0.3-lightforge-1",
             "separationModel": {
               "name": "Mel-Band RoFormer Deux",
-              "modelId": "mel-band-roformer-deux-lightforge-1",
+              "modelId": "mel-band-roformer-deux-lightforge-2",
               "modelSha256": "10255c02295bf3e3865d4ee50ff752d7b19b124ed5fd93b147babc4333eda3aa",
+              "runtime": "onnxruntime-web-wasm",
               "sourceSeparated": true,
               "sampleRate": 44100,
               "sourceChannels": 2,
@@ -280,13 +317,14 @@
                 "vocals",
                 "accompaniment"
               ],
-              "method": "Dual trained stereo source separation; Float32 staged transformer with complete attention",
+              "method": "Dual trained stereo source separation; Float32 bounded transformer with complete attention",
               "contextSeconds": 13,
               "coreSeconds": 10,
               "overlapSeconds": 5,
               "chunks": 1,
+              "restoredPassages": 0,
               "estimated": true,
-              "analysisSeconds": 386.99437000000006,
+              "analysisSeconds": 393.18194,
               "alignment": "Original PCM clock; centered STFT and normalized overlap-add with complementary chunk crossfades",
               "limitations": [
                 "Vocal and instrumental estimates can contain bleed; neither is an isolated bass instrument.",
@@ -296,12 +334,32 @@
             "bassMethod": "Harmonic low-register tracking",
             "quality": "precision",
             "runtime": "ONNX Runtime Web 1.20.1",
-            "analysisSeconds": 429.9
+            "analysisSeconds": 441,
+            "stages": {
+              "rhythm": {
+                "seconds": 6.592774999999965,
+                "restored": false
+              },
+              "separation": {
+                "seconds": 393.229155,
+                "restored": false
+              },
+              "voice": {
+                "seconds": 40.46723499999999,
+                "restored": false
+              },
+              "bass": {
+                "seconds": 0.14729499999992549,
+                "restored": false
+              }
+            },
+            "recoverable": false
           },
           "separation": {
             "name": "Mel-Band RoFormer Deux",
-            "modelId": "mel-band-roformer-deux-lightforge-1",
+            "modelId": "mel-band-roformer-deux-lightforge-2",
             "modelSha256": "10255c02295bf3e3865d4ee50ff752d7b19b124ed5fd93b147babc4333eda3aa",
+            "runtime": "onnxruntime-web-wasm",
             "sourceSeparated": true,
             "sampleRate": 44100,
             "sourceChannels": 2,
@@ -309,13 +367,14 @@
               "vocals",
               "accompaniment"
             ],
-            "method": "Dual trained stereo source separation; Float32 staged transformer with complete attention",
+            "method": "Dual trained stereo source separation; Float32 bounded transformer with complete attention",
             "contextSeconds": 13,
             "coreSeconds": 10,
             "overlapSeconds": 5,
             "chunks": 1,
+            "restoredPassages": 0,
             "estimated": true,
-            "analysisSeconds": 386.99437000000006,
+            "analysisSeconds": 393.18194,
             "alignment": "Original PCM clock; centered STFT and normalized overlap-add with complementary chunk crossfades",
             "limitations": [
               "Vocal and instrumental estimates can contain bleed; neither is an isolated bass instrument.",
@@ -366,65 +425,157 @@
           "stage": "Separating voice and instruments",
           "remainingNamespaces": 0
         },
-        "completedAt": "2026-09-07T13:52:44.404Z"
+        "completedAt": "2026-09-07T23:29:52.103Z"
       }
     },
     "analysis-verification.json": {
-      "sha256": "9af13eaaa5315254816771c9766c6f22b116a038aa50a0127193d5698e7a53d7",
+      "sha256": "e029c404496eb141288e506dd496a64eea4db6dab7f4a9a8d4514a83d2617e88",
       "result": {
-        "release": "2.2.0",
+        "release": "2.2.1",
         "passed": true,
         "errors": [],
         "checks": [
-          "Every source bound to the prior numeric model evaluation is byte-identical. The verified numeric evidence is retained without claiming a new evaluation.",
-          "Actual public model runtime and Android background execution require separate current release gates."
+          "Four overlapping passages preserve every source sample, including seam impulses and an odd final count.",
+          "Fresh bounded WASM output matches the declared original full-context runtime reference within the unchanged numeric tolerance.",
+          "Actual native Java CPU output matches current WASM on identical PCM16 input with pinned native binaries and model graphs.",
+          "All 12 positive fixed-estimate cases retain singing; all six instrumental cases create zero vocal events, using freshly recomputed neural predictions."
         ],
         "source_hashes": {
-          "web/analysis/ASSET_MANIFEST.json": "eca6c2c418c75969916093290afc9bd5f9cd858495b68a615c5a20ad7f6315e6",
-          "web/analysis/worker.js": "725e6767647f70021d8ba38ec68f40f0059ca3af1afbdd282446cf7c7b54f75f",
-          "web/analysis/separator-deux.js": "06900caecc898f7a6cf1689c6a11fcb3bafdf8b21a177b83b6c5610386b9a74d",
-          "web/analysis/game.js": "f4a24e8417223bb4d9e52c9102054dc29a9c7c77cc59cf49f0c82d31802817c2",
-          "web/analysis/vocal-detail.js": "cd760d7a766d9a4ab0ac3a252a10f17a16a797b38e50b2d6712bc6adcd42713f",
-          "web/analysis/vocal.js": "94483ac6cf5db7532abfba98e7bab7cd826a82ad2adca0296d39fdebd827ac70",
-          "web/analysis/stem-cache.js": "83257fededb12328891494994e166eed47b81adf3147f4789e4694ce4a239749",
-          "web/analysis/wav-reader.js": "0f0e5216dc1d2ca0bfb25eddacdaa21076990fa7638c22188023607e43d4005f",
-          "web/analysis/models/deux/manifest.json": "724ba38ba42617f3f867fc39dd044f9b1ff1284abeabffbaeadbf3ea67cf2389",
-          "web/analysis/models/game/manifest.json": "51e172cfaa967d9e2518f01f508a64d49cd283d23ae8e8456af9c6e76eeb4f97",
-          "tools/prepare_deux.py": "892d00db0b46291ca5b2d600c2b314f5cdbdd84cd12a3859f97503de53ca62da",
-          "tools/prepare_game.py": "7f1fb983ab1888b7ecc0731bdd22538f73820a33f88775fc7f63dd8b9b43e800",
-          "qa/release-2.1.0/evaluate-roles.cjs": "f7dfbed9bc8dcb92f861bfd2cc9a56f87b84791a22886bd990802e03ea4d80fb",
-          "qa/release-2.1.0/verify-analysis.py": "a831c763badbc6f6cf61c683c2a07df300b8282c8f7b68948d097e49f47777d2",
-          "qa/release-2.1.0/test-source-clock.cjs": "8e5fe87cfdf15b871ff10f050e03159eb50c62d7d496523430e02d2d79beb624",
+          "version.json": "c2bb2ac7b87451cfb09a2cc087581ef8217cd7395ec87fdea0dc2e248f83f9df",
+          "web/analysis/ASSET_MANIFEST.json": "8c33fa5a7b7bafd871b8caf0c476245ff40ede8fe70ee9703f50230c55a3ed71",
+          "web/analysis/models/deux/manifest.json": "c1cb548d8d02a8b947d66fd8ac672559ea175ac4462109acccba13220b788245",
+          "android/native-runtime.json": "679f377a99019fbd20db96e3d35881e5d7d05ca761dc62a265a411d219dc8198",
+          "qa/release-2.2.1/verify-analysis.py": "05447f186f4d1eee8916ce39dc721b0817a2f4a4015ac1714aee45358b37e868",
+          "tools/verify_analysis_assets.py": "a71ab7ef9329da3b5429ca596978065efbb4afa009c925db7a552eddd1677224",
+          "tools/prepare_deux_fixture.py": "a31e94bd7ffa23d917516dcac1746c30856e298cc2a0a337e92b5d5593c45251",
+          "qa/release-2.2.1/deux-fixture-provenance.json": "4609bc607ffef3757f680574015f10918993dc142c4453a662dcb556ca19154d",
+          "web/analysis/separator-deux.js": "95508ddb8cffc7dff6e47b849f7722efd1c901fbacb2c059be392444f872aebe",
+          "web/analysis/dsp.js": "32186b9268632cab85cadcb7e84fa1b4e3d8eb4bb9fbdf96a0873067cb9acd71",
+          "qa/release-2.2.1/test-source-clock.cjs": "a6fc4f2a170ce3c0e00c95d40605e3af6ae2bd15becd0ac753d75f988ef3caea",
+          "qa/release-2.2.1/source-clock-verification.json": "95b8ad5f29b984eb963048a0daafff8da5453867e431d60d6dbdd5eec4a7513f",
+          "tools/benchmark_deux_runtime.cjs": "12375c9c14f18799416fe65ecc1bb7c2a339fc31352db7c71e31b0bc1d232fab",
+          "qa/release-2.2.1/deux-bounded-wasm.json": "a580d7eb18084378862ea49ad37320c5bf9040a0d985d053d17ae1a8444402b0",
+          "qa/release-2.2.1/deux-bounded-pcm16-wasm.json": "dbbf1802898d6e09997517eeb773ad3e2d29ae2c7e8098232d8f81627b83d4e1",
+          "android/src/com/cyberbasslord/lightforge/NativeDeux.java": "4320a91ceb7f1d49ab1bb839dead4c85bee417863ea37d5c4a1cd31fbe708558",
+          "android/src/com/cyberbasslord/lightforge/NativeDeuxTransform.java": "991b06501cfb88b904d0b714a525c389f169f00c231248b0e961b70f257e90b5",
+          "tests/NativeDeuxTest.java": "f552fdbd93f01dc6051cdf6c8ca7ba4048b4391451e924e544741771e82ac2d4",
+          "qa/release-2.2.1/deux-native-java.json": "71d2f85db92292929e3c715dc8b1ff365aae10b6a96b9c1e5b15ab33c8f080c6",
           "qa/release-2.1.0/analysis-verification.json": "15bb204ce6fddfdbed7fe673c6bbf899b5598ea887b48945a3edf02d533b86ea",
-          "tools/verify_retained_analysis.py": "6fbfa961244be566ac4048dd9304ee49efb521f26e3efe2c2d3780abef84b582"
+          "qa/release-2.2.1/evaluate-roles.cjs": "9c75797a3c48d50613fc8d981f40c0a1ee97fe559c92073d89bb20a3be88bf6a",
+          "qa/release-2.1.0/role-component-results.json": "9cd037785fe38772d5ea1df41f41cf8c07f830d015ad002ceb7b473d121f0cd6",
+          "web/analysis/wav-reader.js": "0f0e5216dc1d2ca0bfb25eddacdaa21076990fa7638c22188023607e43d4005f",
+          "web/analysis/stem-cache.js": "21633cd9e217ecca6e55b9fa04983512e651ddc9a7b9027af13580845ff4fe82",
+          "web/analysis/vocal.js": "94483ac6cf5db7532abfba98e7bab7cd826a82ad2adca0296d39fdebd827ac70",
+          "web/analysis/vocal-detail.js": "cd760d7a766d9a4ab0ac3a252a10f17a16a797b38e50b2d6712bc6adcd42713f",
+          "web/analysis/game.js": "f8ffe28801c81df19e09d883626ecd4fe5870c50d299f362367ba88dbecb6b48",
+          "web/analysis/models/features.json": "8a9fb3bc88c3e2f35934dd0024f22458aa8d357e3e3946a6e2c6230d3886e278",
+          "web/analysis/models/game/manifest.json": "51e172cfaa967d9e2518f01f508a64d49cd283d23ae8e8456af9c6e76eeb4f97",
+          "web/analysis/models/vocal-model.json": "52093f26d0bfe3f04bbb1563b287fafe5e61aa57a61391ea643b04d97838ca7e",
+          "web/analysis/models/vocal-frontend.json": "72bdffced29bfdd6d1da77a4da2a2a4af1b2f839c71131d19dc9423db3d4732f",
+          "web/analysis/models/game/config.json": "4d62b6d058a820e981184ea6f04605d37659c4331ee01979eb14a14be08af890",
+          "web/analysis/models/frame-mn10-singing.onnx": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+          "web/analysis/vendor/ort-wasm-simd-threaded.mjs": "745eb7c0ce6f18a6aa521971b2877babc7ffb27eecb58ab3bc6e5ef4692672e8",
+          "web/analysis/vendor/ort-wasm-simd-threaded.wasm": "207d02be4591c156b0a98f024f3d58005b5b04c92274d759fb390338c63559ea",
+          "web/analysis/vendor/ort.wasm.min.js": "e66568724f8848e57cc2a56e4bea3a5b86ce3ff81b2da11eac8ed7ab02b27bd4",
+          "qa/release-2.2.1/role-verification.json": "ed8580aa090cd823d96b5b958c4daf374fa679106b564788cbf6b1a0038901f5"
         },
-        "retained_evidence": {
-          "release": "2.1.0",
+        "scope": "Fresh bounded WASM equivalence to the declared original full-context output; actual native Java CPU equivalence on the identical PCM16 fixture; source-clock seams and fresh role inference on 18 fixed original-model estimates. Public browser and Android lifecycle checks are separate mandatory release gates. This is not a fresh full-dataset separation benchmark, human note-accuracy evaluation or physical-device test.",
+        "wasm": {
+          "runtime": {
+            "elapsedMs": 115625.752384,
+            "peakRssBytes": 2010071040,
+            "threads": 4
+          },
+          "pcm": {
+            "vocals": {
+              "samples": 300032,
+              "sha256": "3d649aa498905f156372db1455e67ffc825e428d45d506709476dfc25950f73c",
+              "nonFiniteSamples": 0,
+              "referenceSHA256": "3d649aa498905f156372db1455e67ffc825e428d45d506709476dfc25950f73c",
+              "maxAbsError": 0,
+              "rmsError": 0,
+              "snrDb": 332.5053453283297
+            },
+            "accompaniment": {
+              "samples": 300032,
+              "sha256": "5813b3b35d013ca2ad61be32c3a74b9a66cb1e91bb866954c0b17db74ed51b30",
+              "nonFiniteSamples": 0,
+              "referenceSHA256": "5813b3b35d013ca2ad61be32c3a74b9a66cb1e91bb866954c0b17db74ed51b30",
+              "maxAbsError": 0,
+              "rmsError": 0,
+              "snrDb": 337.8616931662132
+            }
+          }
+        },
+        "native": {
+          "runtime": {
+            "backend": "onnxruntime-java-cpu",
+            "version": "1.23.2",
+            "threads": 4,
+            "elapsedMs": 61113.941557,
+            "peakRssBytes": 755560448,
+            "javaMaxHeapBytes": 536870912
+          },
+          "pcm": {
+            "vocals": {
+              "samples": 300032,
+              "sha256": "64f9c3d697d1f2289619eed7749962ffd98e0333b3ee3f16acd7638ab3ec7a34",
+              "fullPassageSHA256": "cc2d0573e7de02d7dc24075473a3dfdc56b60788ed619f86fa4d57201dcee875",
+              "referenceSHA256": "882ddd963e76ef7960fbf3a1c3687f074f2b0377b13cce0de72a6e6bcea2ec98",
+              "maxAbsError": 3.203749656677246e-07,
+              "rmsError": 4.4018932192914934e-08,
+              "nonFiniteSamples": 0
+            },
+            "accompaniment": {
+              "samples": 300032,
+              "sha256": "c22400b6aeb330ea5adc7cd65f52cabf1baa11407cfef83af456c1dd53858974",
+              "fullPassageSHA256": "30dc7cdfd99439fd0bab8c9c9dda6adc4c80945a435066649bf19cab166e9ad2",
+              "referenceSHA256": "8cbf4aecd681f44977e6601f21ff84b99cdd8730f4f9b2c165dc2fb4e69ba1d4",
+              "maxAbsError": 2.980232238769531e-07,
+              "rmsError": 4.506609952701901e-08,
+              "nonFiniteSamples": 0
+            }
+          }
+        },
+        "roles": {
+          "positiveCases": 12,
+          "instrumentalCasesWithZeroVoiceEvents": 6,
+          "freshNeuralInference": true
+        },
+        "historicalQuality": {
           "path": "qa/release-2.1.0/analysis-verification.json",
-          "sha256": "15bb204ce6fddfdbed7fe673c6bbf899b5598ea887b48945a3edf02d533b86ea"
+          "status": "Historical separation scores remain historical; current gates measure runtime equivalence and role regressions."
         },
-        "scope": "Strict unchanged-source reuse of prior numeric model evidence; not a fresh quality benchmark. Current browser/model and Android lifecycle checks are separate mandatory gates.",
-        "completedAt": "2026-09-07T12:30:31.656942+00:00"
+        "limitations": [
+          "Short development excerpts are not a representative held-out evaluation.",
+          "Role estimates are fixed original-PyTorch outputs, not 18 newly separated current-runtime mixtures.",
+          "Desktop CPU and WASM timing/memory do not establish sustained phone performance or physical Tesla timing."
+        ],
+        "completedAt": "2026-09-07T21:17:56.712752+00:00"
       }
     },
     "android-background-verification.json": {
-      "sha256": "96540bd1164f1767a19f46a87108f797df3fc94b8911994843dbcb8dc7e1e5ad",
+      "sha256": "eb7810e6ce858c268865f9d2096aca3e283485442b94f65d0e756e734990f8f4",
       "result": {
-        "release": "2.2.0",
+        "release": "2.2.1",
         "passed": true,
         "checks": [
-          "Actual balanced neural analysis and choreography completed with the Activity destroyed, screen off and Doze forced with user-equivalent battery exemption; result was durably saved.",
+          "Actual Studio native CPU separation, neural analysis and choreography completed with the Activity destroyed, screen off and Doze forced with user-equivalent battery exemption; result was durably saved.",
           "Reopened Activity reports the completed job and its saved project.",
-          "Notification cancellation stops the worker and service, releases execution resources and preserves the saved project.",
+          "Notification cancellation interrupts live native Studio work; immediate Resume can start while old native resources quiesce, with the previous project, CPU lock and WebView safely released.",
+          "Resume reuses at least one verified native passage after notification cancellation, preserves the 12-second source clock and saves a complete two-passage Studio show.",
           "Android media-processing timeout callback stops promptly and leaves a retryable job with the previous show intact."
         ],
         "errors": [],
         "source_hashes": {
-          "android/src/com/cyberbasslord/lightforge/AnalysisJobStore.java": "82e95f27ae4f08414de9027a35b355feba378a8a78e7193715481cb503614875",
-          "android/src/com/cyberbasslord/lightforge/AnalysisService.java": "8ea36158956a02d7a369eeb68be8be860bd2b88ccae3fe87677007dea44a5c48",
+          "android/src/com/cyberbasslord/lightforge/AnalysisJobStore.java": "7d834eb8f9eedf2381b9c68b81d7ba17ae1e7dff7c595f10cf89e47efe67fe94",
+          "android/src/com/cyberbasslord/lightforge/AnalysisService.java": "4be3ecab058daf7410c95389dd634430e183bd4ffd5c1beec6e327222a8ec745",
           "android/src/com/cyberbasslord/lightforge/AppResources.java": "f95a5d02007b40a0e2488b82298776be0fb9d171de8336380fec3dd553712430",
           "android/src/com/cyberbasslord/lightforge/AudioImporter.java": "910ef3ec1d6f6ded54c91111d9ab34dbf4bbf4d4043f62f1978057183ca0b575",
-          "android/src/com/cyberbasslord/lightforge/MainActivity.java": "04aee3ffc1d2e7e896eef2a60f0901056b13c7c89803bb1f2fbb2c89f5c50cc0",
+          "android/src/com/cyberbasslord/lightforge/MainActivity.java": "310d4e49addd684be92bf262da133f66369a60d6915b822af046f81f26d18267",
+          "android/src/com/cyberbasslord/lightforge/NativeDeux.java": "4320a91ceb7f1d49ab1bb839dead4c85bee417863ea37d5c4a1cd31fbe708558",
+          "android/src/com/cyberbasslord/lightforge/NativeDeuxTransform.java": "991b06501cfb88b904d0b714a525c389f169f00c231248b0e961b70f257e90b5",
+          "android/src/com/cyberbasslord/lightforge/NativePassageTask.java": "e15832e772b608cb57312c138fdb582a05973620a0c318e9212e37f0cedb7697",
           "android/src/com/cyberbasslord/lightforge/PendingExportStore.java": "1697003aab5f842d0bb90122df46f2d1f60da30232eca9d6912c972e421c4163",
           "android/src/com/cyberbasslord/lightforge/ProjectPreview.java": "459e586684b6cea8b0b5c0541de766c45301347341ff2acdc15e876028e7c551",
           "android/src/com/cyberbasslord/lightforge/ProjectStore.java": "51492859a40490533286574a08893bf3f6da5063c69b806f7760b3d056269472",
@@ -434,33 +585,74 @@
           "android/res/drawable/ic_analysis.xml": "6e698464885ef96f0b11af9c5a05c4947affc0126e2994a331ef9cffec3732c8",
           "android/res/drawable/ic_launcher.xml": "3c411f5d88166510435daeb1702d155849cc0f8208bcfde9b9d61eed24d57b8e",
           "android/res/values/styles.xml": "24448bfe96b034f7bfadcd0d469d46da30538c3acfa67e2ded464869ad9a9859",
-          "web/background/runner.html": "d69e68a2a189d9aeab582aacb2d6b9f2d4fc4f2ac21a348575b748d6b576823e",
-          "web/background/runner.js": "d8e14ac46f75ecf7a0f184845e07207038208e096a6ba5c96e75b0b4537f69f6",
-          "web/app.js": "57c02e9a552d4adc6489e2bdf7966adb3f2c6036ba07a74597c03a44092871b1",
-          "web/index.html": "a649ca31474390c000fe061c1efa0f69d47988d94128e9b6b5fa8a0d74f9cd4d",
-          "tests/android/BackgroundInstrumentation.java": "27413d911dde8e9e82a899c131f3bd081adc5dc539680bc92612549741fb6b8d",
-          "tools/run_android_background_tests.py": "8ee39a8f5c9ca386fd9d25710419c697ef9d4b4541d3fbc56c09aad7c4ebd606",
-          "tools/build_android_tests.py": "36ad916b6e3b4bd94be2cb912bbb9b2fc44a12eb4cd2ad7ecc735fc6f5e598f5"
+          "web/background/native-deux.js": "1125d5ee8dd0633133fb68f315d627d43e768410151c19029874054c1d60dde3",
+          "web/background/runner.html": "cf882b294a3d8c5dcf3ff362f4f6f9544580b7e4ca81cbc512e19f8166331fdc",
+          "web/background/runner.js": "b88e97d4ee80c67e9d22217dc5560581fe755373f330dc0979d795cbcc7893fd",
+          "web/app.js": "85f3143c205740032bc4ef025103bc88b50c9a9be1ea93eb248c3754a4beff36",
+          "web/index.html": "cff24363353016cdf8c96c0d65c8b1f8fd375de78c62147872398e2ad086843e",
+          "tests/android/BackgroundInstrumentation.java": "0f250569f95a118501ca74b3de00948dbd04e2614f5d954efb5251a216a15a5a",
+          "tools/run_android_background_tests.py": "fee2d57232420019afa9191452f46cf33fc1301a1d92fe6f038fbcb40aa933d8",
+          "tools/build_android_tests.py": "bce8e74c266469ee5cfca515472d18c5a73756a804f5d0371b282bb2aa24e1b5",
+          "android/native-runtime.json": "679f377a99019fbd20db96e3d35881e5d7d05ca761dc62a265a411d219dc8198",
+          "web/analysis/ASSET_MANIFEST.json": "8c33fa5a7b7bafd871b8caf0c476245ff40ede8fe70ee9703f50230c55a3ed71"
         },
-        "scope": "Android API 35 emulator lifecycle test using real production service, actual balanced WASM analysis and compilation. Not a physical phone or Tesla test.",
+        "scope": "Android API 35 emulator lifecycle test using the production service, native CPU Studio separation plus actual WebView/WASM rhythm and voice models, live inference cancellation, verified passage resume and compilation. Not a physical phone or Tesla test.",
+        "lastProgress": {
+          "phase": "completed",
+          "elapsedSeconds": 818.107,
+          "phaseElapsedSeconds": 0,
+          "checks": [
+            "Actual Studio native CPU separation, neural analysis and choreography completed with the Activity destroyed, screen off and Doze forced with user-equivalent battery exemption; result was durably saved.",
+            "Reopened Activity reports the completed job and its saved project.",
+            "Notification cancellation interrupts live native Studio work; immediate Resume can start while old native resources quiesce, with the previous project, CPU lock and WebView safely released.",
+            "Resume reuses at least one verified native passage after notification cancellation, preserves the 12-second source clock and saves a complete two-passage Studio show.",
+            "Android media-processing timeout callback stops promptly and leaves a retryable job with the previous show intact."
+          ],
+          "powerTransition": {
+            "phase": "reopen-for-timeout-callback",
+            "interactive": true,
+            "deepIdle": false,
+            "batteryExempt": true,
+            "controllerDeepState": "ACTIVE",
+            "commandOutput": "Light state: OVERRIDE, deep state: IDLE\nmForceModeManagerQuickDozeRequest: false\nmForceModeManagerOffBodyState: false"
+          },
+          "job": {
+            "id": "ef12f94f-f947-4a50-8fb5-5e39d44ed2d3",
+            "projectId": "da062f6e-9162-4712-86b8-ab192c66b4b7",
+            "name": "Timeout fixture",
+            "sourceSHA256": "570fdf164283fe998104af73f9037beabdc90c6f347365e92e2bd6b591139448",
+            "analysisIdentity": "3135ebeec539243c1d9febde20c6fae81cc750795a41c825bc2e5bd68f3b07b4",
+            "state": "interrupted",
+            "stage": "Android paused background media processing after its time allowance. Open LightForge and resume from saved passages.",
+            "progress": 0,
+            "createdAt": 1788824648498,
+            "updatedAt": 1788824648700,
+            "hasCheckpoint": false,
+            "resumeAvailable": false,
+            "lastStage": "Preparing background analysis",
+            "elapsedMs": 202,
+            "stoppedAt": 1788824648700
+          }
+        },
         "device": {
           "passed": true,
           "checks": [
-            "Actual balanced neural analysis and choreography completed with the Activity destroyed, screen off and Doze forced with user-equivalent battery exemption; result was durably saved.",
+            "Actual Studio native CPU separation, neural analysis and choreography completed with the Activity destroyed, screen off and Doze forced with user-equivalent battery exemption; result was durably saved.",
             "Reopened Activity reports the completed job and its saved project.",
-            "Notification cancellation stops the worker and service, releases execution resources and preserves the saved project.",
+            "Notification cancellation interrupts live native Studio work; immediate Resume can start while old native resources quiesce, with the previous project, CPU lock and WebView safely released.",
+            "Resume reuses at least one verified native passage after notification cancellation, preserves the 12-second source clock and saves a complete two-passage Studio show.",
             "Android media-processing timeout callback stops promptly and leaves a retryable job with the previous show intact."
           ],
           "sdk": 35,
-          "scope": "Android emulator with actual foreground service, WebView/WASM models, screen-off execution, notification cancellation and timeout callback; not a physical phone or Tesla."
+          "scope": "Android emulator with actual foreground service, native CPU Studio separation plus WebView/WASM rhythm/voice models, screen-off/Doze execution, live native cancellation, partial-passage resume and timeout callback; not a physical phone or Tesla."
         },
-        "completedAt": "2026-09-07T14:08:40.295700+00:00"
+        "completedAt": "2026-09-07T23:44:12.636689+00:00"
       }
     }
   },
   "model_analysis_evidence": {
     "status": "Current model runtime and reference scoring are separate, source-bound gates. Quality scores are from six short reference excerpts, not a general accuracy guarantee.",
-    "path": "qa/release-2.2.0/analysis-verification.json"
+    "path": "qa/release-2.2.1/analysis-verification.json"
   },
   "physical_android_device_install_and_launch": "NOT PERFORMED",
   "android_emulator_install_and_lifecycle": "PASSED with CI signing identity; original release signature verified separately",
