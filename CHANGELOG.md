@@ -1,6 +1,6 @@
 # LightForge 2.2.1 — Native Studio and resumable analysis
 
-Release candidate; final runtime and release verification are pending.
+Release candidate; complete Android cancellation/resume validation, final CI and signed publication are pending. Host numerical checks pass against the declared reference inputs.
 
 - Move Android Studio separation to pinned native ONNX Runtime CPU inference with bounded independent batches and reusable buffers. Preserve original weights, Float32 computation, full context and both source heads; no silent quality downgrade.
 - Separate analysis-worker lifetimes and save verified passage/stage checkpoints so an interruption need not repeat the whole song.
@@ -8,6 +8,8 @@ Release candidate; final runtime and release verification are pending.
 - Add elapsed time, passage/completed-work/reuse counters, delayed-progress feedback and a notification chronometer; clarify Resume behavior.
 - Extend Android instrumentation for native Studio screen-off/Doze completion, cancellation during a native passage, resource release and partial-passage resume.
 - Add checksum-pinned Android native libraries to reproducible build/package checks. Models remain offline; phone performance and physical Tesla behavior remain unverified.
+- Measure 61.11 s native Java CPU separation versus 127.25 s bounded WASM, with 720.56 MiB versus 1,920.96 MiB peak process RSS, on one 6.803-second development excerpt. This is a 2.08× host speedup and 62.49% lower peak RSS, not a phone or full-song forecast.
+- Use the GitHub draft-creation response directly when publishing, retain explicit draft identity, and verify uploaded asset hashes before publication.
 
 # LightForge 2.2.0 — Background analysis
 

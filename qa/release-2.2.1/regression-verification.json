@@ -40,7 +40,7 @@
     "tests/WebViewTransportServer.java": "e38b873a0ca64a8689bdef36d9ad5b68f2ee82754cdc0373d886b61ea419fbbb",
     "tests/WebViewTransportTest.java": "0fc201d751fba8589e87f6cab2c501331ef4388b9a012f639491c6ceacb24200",
     "tests/analysis-recovery-2.2.1.test.cjs": "d2b0177caf799146ac6a0ccedb86640e1d7b3981c5ca0498611851d3397aab06",
-    "tests/android/BackgroundInstrumentation.java": "1facbf513c8d4ab1f22f23b7b8c92e715d86644e0dbfa94f61960a56a745d6d5",
+    "tests/android/BackgroundInstrumentation.java": "ef1e93a44f96a4fcc439f44c6eea9ea5e73cc63c0a9dcf7b6c87b3009311f214",
     "tests/background-2.2.test.cjs": "2ee2c56e7fa900729d128a353660d018819e92d9e245d8cd858aeafa58a836f3",
     "tests/bass-notes.test.cjs": "d8fd98d78334bbe73deb5a888f7a4c0d189f9b4e047ce3f9d6fb63bdcf0a1abe",
     "tests/cockpit-2.1.test.cjs": "b032cc49e2e8d309de381cee966b429a67d31822a82f264af1f72d0eefc47118",
@@ -87,7 +87,7 @@
     "tools/prepare_deux_fixture.py": "a31e94bd7ffa23d917516dcac1746c30856e298cc2a0a337e92b5d5593c45251",
     "tools/prepare_game.py": "7f1fb983ab1888b7ecc0731bdd22538f73820a33f88775fc7f63dd8b9b43e800",
     "tools/publish_github_release.py": "7db3e173e4157dec3ce36b86bdccedde920f78d644116a533b48de62142358f3",
-    "tools/run_android_background_tests.py": "90c28e890abec510fbd23e197ce11f268fd3d0cc1e83e78e61a3a33bd909cfc7",
+    "tools/run_android_background_tests.py": "5493a355480bf4587841f20f383d7f58e8a7b8c36bd58e5672f8bf8eed4ff0b1",
     "tools/sync_version.py": "d931b766042fbfa19d8c4b842400fecf4eb2fd58aebbc820e1afa1822387a21b",
     "tools/verify_analysis_assets.py": "a71ab7ef9329da3b5429ca596978065efbb4afa009c925db7a552eddd1677224",
     "tools/verify_retained_analysis.py": "6fbfa961244be566ac4048dd9304ee49efb521f26e3efe2c2d3780abef84b582",
@@ -136,5 +136,5 @@
   },
   "scope": "Node engine/worker/WebCrypto/gzip, real app DOM integration with simulated native and graphics, Python archive tests. Not a visual browser or physical Android/Tesla test.",
   "analysis_manifest_sha256": "8c33fa5a7b7bafd871b8caf0c476245ff40ede8fe70ee9703f50230c55a3ed71",
-  "completedAt": "2026-09-07T21:23:08.463988+00:00"
+  "completedAt": "2026-09-07T22:58:22.643301+00:00"
 }

@@ -321,18 +321,21 @@ The renderer source and pinned npm dependency lock are in `web/preview/src/`.
 
 ## Verification and device status
 
-`VALIDATION.md` separates current evidence from earlier releases. Version 2.2.0 has a retained Android emulator background-lifecycle pass; it does not validate the new native Studio path in 2.2.1. Current 2.2.1 release gates and physical-device validation are pending:
+`VALIDATION.md` separates current evidence from earlier releases. Version 2.2.0 has a retained Android emulator background-lifecycle pass; it does not validate the new native Studio path in 2.2.1. Current 2.2.1 evidence is source-bound. Final release-candidate CI, the complete Android recovery test and publication remain pending:
 
 | Check | Current 2.2.1 release status |
 |---|---|
-| Host model equivalence, memory/runtime and regression evidence | Pending final source-bound results |
-| Browser UI, complete model pipeline and cancellation | Pending final current-source run |
-| Android emulator native Studio, screen-off/Doze, cancellation and partial resume | Pending runtime execution |
+| Host model equivalence and memory/runtime | Passed on the declared development excerpt; see the measurements below |
+| Node/Python regression evidence | Passed: 145 Node and 33 Python checks against the current sources |
+| Browser UI, complete model pipeline and cancellation | Passed against unchanged app sources; final release-candidate run pending |
+| Android emulator native Studio, screen-off/Doze, cancellation and partial resume | Initial completion/reopen passed; complete cancellation/resume run pending |
 | Signed update package and release publication | Pending final release gates |
 | Physical phone performance, long songs, thermals and battery management | Unverified |
 | Physical Tesla timing and movement | Unverified |
 
-Host speed measurements do not predict Samsung phone speed. Browser tests exercise the browser path; Android must separately exercise native inference. A small emulator fixture does not establish that every full song will complete on every phone.
+On one 6.803-second PCM16 excerpt with four threads on a Linux development machine, native Java CPU separation took **61.11 seconds**, compared with **127.25 seconds** for bounded WASM. Peak process RSS was **720.56 MiB** versus **1,920.96 MiB**: 2.08× faster and 62.49% lower measured peak memory. Both paths retained the original model, source sample count and measured Float32 equivalence. These are short-excerpt host measurements, not a phone or full-song guarantee. See [the runtime evidence](qa/release-2.2.1/DEUX_RUNTIME.md).
+
+Browser tests exercise the browser path; Android must separately exercise native inference. A small emulator fixture does not establish that every full song will complete on every phone.
 
 ## Update from an earlier release
 

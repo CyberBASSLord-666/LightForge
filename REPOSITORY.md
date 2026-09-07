@@ -1,8 +1,8 @@
 # Repository maintenance
 
-The current app is LightForge 2.1.0, Android version code 20100. Use [BUILD.md](BUILD.md) for the current model/build pipeline, [VALIDATION.md](VALIDATION.md) for evidence, and the [GitHub releases](https://github.com/CyberBASSLord-666/LightForge/releases) for complete installable updates.
+The current source targets LightForge 2.2.1, Android version code 20201. Final release-candidate validation and publication are pending; 2.2.0 remains the latest published update. Use [BUILD.md](BUILD.md) for the current model/build pipeline, [VALIDATION.md](VALIDATION.md) for evidence, and the [GitHub releases](https://github.com/CyberBASSLord-666/LightForge/releases) for complete installable updates.
 
-Current sources, model converters, manifests, tests, workflow definitions and maintenance documents are integrated at the repository root. Historical source and QA folders retain their original version identities. `verify_snapshot.py` checks the historical preserved snapshot; changes in current application files are expected and must instead pass the current release gates.
+Current sources, model converters, manifests, tests, workflow definitions and maintenance documents are integrated at the repository root. Version 2.2.1 adds bounded native CPU Studio separation and durable passage/stage recovery while preserving model weights and soundtrack timing. Native dependencies are pinned in `android/native-runtime.json`; numerical, browser and Android lifecycle evidence is kept in `qa/release-2.2.1/`. Historical source and QA folders retain their original version identities. `verify_snapshot.py` checks the historical preserved snapshot; changes in current application files are expected and must instead pass the current release gates.
 
 ## Historical 1.6 restoration
 
