@@ -1,0 +1,47 @@
+import copy
+from pathlib import Path
+import sys
+import unittest
+from unittest.mock import patch
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
+import publish_github_release as publication
+
+
+class PublicationTest(unittest.TestCase):
+    def setUp(self):
+        self.expected = {'app.apk': {'bytes': 50, 'sha256': 'a' * 64}, 'release-verification.json': {'bytes': 20, 'sha256': 'b' * 64}}
+        self.release = {'id': 23, 'tag_name': 'v2.1.0', 'draft': True, 'assets': [
+            {'name': name, 'size': info['bytes'], 'digest': 'sha256:' + info['sha256'], 'state': 'uploaded'}
+            for name, info in self.expected.items()]}
+
+    def test_draft_lookup_does_not_require_a_published_tag(self):
+        with patch.object(publication, 'api', return_value=[self.release]) as api:
+            self.assertEqual(publication.lookup_release('owner/repo', 'v2.1.0')['id'], 23)
+            api.assert_called_once_with('repos/owner/repo/releases?per_page=100')
+        with patch.object(publication, 'api', return_value=self.release) as api:
+            publication.lookup_release('owner/repo', 'v2.1.0', 23)
+            api.assert_called_once_with('repos/owner/repo/releases/23')
+
+    def test_resumption_skips_exact_assets_and_only_replaces_draft_metadata(self):
+        self.assertEqual(publication.asset_plan(self.release, self.expected), [])
+        self.release['assets'][1]['digest'] = 'sha256:' + 'c' * 64
+        with self.assertRaises(ValueError):publication.asset_plan(self.release, self.expected)
+        self.assertEqual(publication.asset_plan(self.release, self.expected, True), [('release-verification.json', True)])
+
+    def test_never_replaces_an_apk_or_modifies_a_published_release(self):
+        changed = copy.deepcopy(self.release)
+        changed['assets'][0]['size'] += 1
+        with self.assertRaises(ValueError):publication.asset_plan(changed, self.expected, True)
+        self.release['draft'] = False
+        with self.assertRaises(ValueError):publication.asset_plan(self.release, self.expected, True)
+
+    def test_publication_requires_all_uploaded_digests_and_no_unreviewed_assets(self):
+        publication.verify_uploaded(self.release, self.expected)
+        for change in ['digest', 'missing', 'extra', 'state']:
+            bad = copy.deepcopy(self.release)
+            if change == 'digest':bad['assets'][0]['digest'] = None
+            elif change == 'missing':bad['assets'].pop()
+            elif change == 'extra':bad['assets'].append({'name': 'unreviewed.txt'})
+            else:bad['assets'][0]['state'] = 'new'
+            with self.assertRaises(ValueError):publication.verify_uploaded(bad, self.expected)

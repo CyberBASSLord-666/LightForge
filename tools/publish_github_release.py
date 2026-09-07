@@ -28,6 +28,41 @@ def require(value, message):
         raise ValueError(message)
 
 
+def lookup_release(repo, tag, release_id=None):
+    # The /releases/tags endpoint deliberately returns published releases only.
+    if release_id is not None:
+        release = api(f'repos/{repo}/releases/{release_id}')
+    else:
+        matches = [r for r in api(f'repos/{repo}/releases?per_page=100') if r['tag_name'] == tag]
+        require(len(matches) == 1, 'New draft release was not found uniquely')
+        release = matches[0]
+    require(release['tag_name'] == tag, 'Release identity mismatch')
+    return release
+
+
+def asset_plan(release, expected, allow_metadata_update=False):
+    require(release['draft'], 'Published release assets cannot be changed')
+    assets = {a['name']: a for a in release['assets']}
+    require(len(assets) == len(release['assets']) and set(assets) <= set(expected), 'Unexpected release assets')
+    result = []
+    for name, info in expected.items():
+        asset = assets.get(name)
+        if asset and asset.get('state') == 'uploaded' and asset['size'] == info['bytes'] and asset.get('digest') == 'sha256:' + info['sha256']:
+            continue
+        if asset:
+            require(allow_metadata_update and not name.endswith('.apk'), 'Existing release APK or metadata identity mismatch')
+        result.append((name, asset is not None))
+    return result
+
+
+def verify_uploaded(release, expected):
+    assets = {a['name']: a for a in release['assets']}
+    require(len(assets) == len(release['assets']) and set(assets) == set(expected), 'Incomplete or unexpected release assets')
+    for name, info in expected.items():
+        asset = assets[name]
+        require(asset.get('state') == 'uploaded' and asset['size'] == info['bytes'] and asset.get('digest') == 'sha256:' + info['sha256'], 'GitHub uploaded asset identity mismatch: ' + name)
+
+
 def verify_apk(apk, version):
     toolchain = Path(os.environ.get('LIGHTFORGE_TOOLCHAIN_DIR', ROOT.parent / 'toolchain'))
     sdk = toolchain / 'android-sdk/build-tools/35.0.0'
@@ -102,13 +137,31 @@ def main():
     sums = release_dir / 'SHA256SUMS.txt'
     sums.write_text(digest(apk) + '  ' + apk_name + '\n')
     tag = 'v' + version['name']
-    # Draft first; no clobber or tag movement. A failed upload stays reviewable.
-    run('gh', 'release', 'create', tag, '--draft', '--target', os.environ['GITHUB_SHA'], '--title', 'LightForge ' + version['name'], '--notes-file', 'RELEASE_NOTES.md')
-    run('gh', 'release', 'upload', tag, str(apk), str(sums), 'RELEASE_NOTES.md', 'release-verification.json')
-    uploaded = api(f'repos/{repo}/releases/tags/{tag}')
+    # Resume only a specifically identified draft; never overwrite its APK.
+    resume = request.get('resume_release_id')
+    if resume is not None:
+        require(type(resume) is int and resume > 0, 'Invalid draft release ID')
+        release = lookup_release(repo, tag, resume)
+        require(release['draft'] and release['target_commitish'] in {request.get('resume_target_commit'), os.environ['GITHUB_SHA']}, 'Unexpected draft target')
+    else:
+        run('gh', 'release', 'create', tag, '--draft', '--target', os.environ['GITHUB_SHA'], '--title', 'LightForge ' + version['name'], '--notes-file', 'RELEASE_NOTES.md')
+        release = lookup_release(repo, tag)
+    files = {p.name: p for p in [apk, sums, ROOT / 'RELEASE_NOTES.md', ROOT / 'release-verification.json']}
+    expected = {name: {'bytes': path.stat().st_size, 'sha256': digest(path)} for name, path in files.items()}
+    for name, replace in asset_plan(release, expected, allow_metadata_update=resume is not None):
+        args = ['gh', 'release', 'upload', tag, str(files[name])]
+        if replace:args.append('--clobber')
+        run(*args)
+    # A draft has no published tag yet. Pin its target to the reviewed main
+    # commit after recovery; published tags are never moved by this workflow.
+    metadata = ROOT / 'build/release-metadata.json'
+    metadata.write_text(json.dumps({'target_commitish': os.environ['GITHUB_SHA'], 'body': (ROOT / 'RELEASE_NOTES.md').read_text()}))
+    run('gh', 'api', '--method', 'PATCH', f'repos/{repo}/releases/{release["id"]}', '--input', str(metadata))
+    uploaded = lookup_release(repo, tag, release['id'])
+    verify_uploaded(uploaded, expected)
     asset = next(a for a in uploaded['assets'] if a['name'] == apk_name)
-    require(asset['state'] == 'uploaded' and asset['size'] == apk.stat().st_size and asset.get('digest') == 'sha256:' + digest(apk), 'GitHub uploaded APK identity mismatch')
     run('gh', 'release', 'edit', tag, '--draft=false', '--latest')
+    require(not lookup_release(repo, tag, release['id'])['draft'], 'Release did not publish')
     print(json.dumps({'release': uploaded['html_url'], 'apk': asset['browser_download_url'], 'sha256': digest(apk)}))
 
 

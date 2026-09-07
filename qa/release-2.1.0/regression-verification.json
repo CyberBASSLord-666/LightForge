@@ -51,6 +51,7 @@
     "tests/test_apk_archive.py": "90c86e731e0a700b2c673d74dd681c0fd51cda20a19b54358aed89942d2dd8d2",
     "tests/test_apk_delta.py": "3aa647504323d02086f218ff6ee53a2a4a682eaab8f93b2b50304445db4d7fe1",
     "tests/test_package_release_streaming.py": "1d5f317840c035217ffc0374f8533399ee4ee8439e04b259ca0bd0949fc6049e",
+    "tests/test_release_publication.py": "fd56bfff201ee522acab03a554b85fbdc4679510ea5422f3961393892914b27f",
     "tests/verify_native_release.py": "288099063d17dad5b14755ce74f3afd2db84602965f198118b74f480837fb189",
     "tests/vocal-detail.test.cjs": "ac151e505e78de8b5cf2783df2138d15f68f35dfe7d1f56db8126554f6b70409",
     "tests/wav-reader.test.cjs": "25a63a1eecce4d6ec389522c7212ecf0a356a13af98c57e82adb202a33009c7a",
@@ -64,7 +65,7 @@
     "tools/package_v2.py": "b9daf3bbda819853b7a91a1234112e4db8471c38dd0ccd28e9d2940604055ed5",
     "tools/prepare_deux.py": "892d00db0b46291ca5b2d600c2b314f5cdbdd84cd12a3859f97503de53ca62da",
     "tools/prepare_game.py": "7f1fb983ab1888b7ecc0731bdd22538f73820a33f88775fc7f63dd8b9b43e800",
-    "tools/publish_github_release.py": "0b3f137fcd51a672a5f55ddf971b17eb66965f7292a328a563f38da544468bf2",
+    "tools/publish_github_release.py": "d948c8f157709cf6d677cda42f430fceb6fbcd7084653ef0905315230c8ca75d",
     "tools/sync_version.py": "d09155da8961e1ff2f110b0705ba241c12f35a82db5635c2b3bc2645ecaec9a2",
     "tools/verify_analysis_assets.py": "682ac40a5c3af4ae811713de1ec01bd30b37c75fbe466b28fb6ccd860f58d2d5",
     "tools/verify_v2.py": "59691a96c845b36445a31206a7bf387a84245e937a60d18010c9709c5cb6085d",
@@ -108,5 +109,5 @@
   },
   "scope": "Node engine/worker/WebCrypto/gzip, real app DOM integration with simulated native and graphics, Python archive tests. Not a visual browser or physical Android/Tesla test.",
   "analysis_manifest_sha256": "eca6c2c418c75969916093290afc9bd5f9cd858495b68a615c5a20ad7f6315e6",
-  "completedAt": "2026-09-07T09:56:15.349713+00:00"
+  "completedAt": "2026-09-07T10:09:25.614547+00:00"
 }

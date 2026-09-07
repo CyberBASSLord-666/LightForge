@@ -14,7 +14,7 @@ Version 2.1.0 / code 20100 upgrades the models and studio interface while retain
 
 `tools/package_v2.py` refuses missing, failed or stale regression/UI/native/analysis receipts. The build checks all 60 bundled analysis files before packaging. CI reproduces GAME and Deux from pinned official checkpoints and verifies the resulting hashes; no large new checkpoint is silently omitted from a fresh checkout.
 
-The final review regressions include 112 Node checks and 17 Python checks. Dense/simultaneous bass notes on a shared fallback lamp retain valid target intervals, and full-resolution PCM writes preserve exact little-endian samples using one 64 KiB backing buffer. APK transfer tests cover exact reconstruction, wrong candidates, invalid copy bounds and atomic retention of an existing output after a corrupt patch.
+The final review regressions include 112 Node checks and 21 Python checks. Dense/simultaneous bass notes on a shared fallback lamp retain valid target intervals, and full-resolution PCM writes preserve exact little-endian samples using one 64 KiB backing buffer. APK transfer tests cover exact reconstruction, wrong candidates, invalid copy bounds and atomic retention of an existing output after a corrupt patch.
 
 ## Current separator comparison
 

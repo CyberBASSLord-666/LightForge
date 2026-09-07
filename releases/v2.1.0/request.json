@@ -5,5 +5,7 @@
   },
   "run_id": 34106398996,
   "source_commit": "d9071aa9319448a34461c75d683124348b1ea639",
-  "delta_sha256": "ee63a6aa223ccf4d2b3b17f02cf7f9e7b557638b7bc8e4db26482a702d725830"
+  "delta_sha256": "ee63a6aa223ccf4d2b3b17f02cf7f9e7b557638b7bc8e4db26482a702d725830",
+  "resume_release_id": 383991070,
+  "resume_target_commit": "766c1a1de4a7a873892a62b93faa88d290ba5d32"
 }
