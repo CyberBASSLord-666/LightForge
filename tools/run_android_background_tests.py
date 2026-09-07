@@ -32,7 +32,7 @@ try:
 except Exception as error:
     receipt['errors'].append(str(error));raise
 finally:
-    try:(out/'android-logcat.txt').write_text(run('logcat','-d','-v','threadtime'))
+    try:(out/'android-logcat.txt').write_text(run('logcat','-d','-v','threadtime',timeout=20))
     except Exception:pass
     receipt['completedAt']=datetime.datetime.now(datetime.timezone.utc).isoformat()
     (out/'android-background-verification.json').write_text(json.dumps(receipt,indent=2)+'\n');print(json.dumps(receipt,indent=2))

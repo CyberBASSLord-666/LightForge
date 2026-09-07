@@ -13,6 +13,9 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
+      ANDROID_USER_HOME: ${{ runner.temp }}/lightforge-android
+      ANDROID_EMULATOR_HOME: ${{ runner.temp }}/lightforge-android
+      ANDROID_AVD_HOME: ${{ runner.temp }}/lightforge-android/avd
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -35,9 +38,12 @@ jobs:
       - name: Prepare Android 15 emulator
         run: |
           sudo chmod a+rw /dev/kvm
+          mkdir -p "$ANDROID_AVD_HOME"
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "system-images;android-35;google_apis;x86_64" "emulator"
-          echo no | "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" create avd --force --name LightForge --package "system-images;android-35;google_apis;x86_64" --device pixel_6
-          "$ANDROID_HOME/emulator/emulator" -avd LightForge -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect -memory 4096 -cores 2 -camera-back none -camera-front none > emulator.log 2>&1 &
+          echo no | "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" create avd --force --name LightForge --package "system-images;android-35;google_apis;x86_64" --device pixel_6 --path "$ANDROID_AVD_HOME/LightForge.avd"
+          test -f "$ANDROID_AVD_HOME/LightForge.ini"
+          "$ANDROID_HOME/emulator/emulator" -list-avds
+          nohup "$ANDROID_HOME/emulator/emulator" -avd LightForge -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect -memory 4096 -cores 2 -camera-back none -camera-front none > emulator.log 2>&1 < /dev/null &
       - name: Run real background lifecycle test
         run: python3 tools/run_android_background_tests.py
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
