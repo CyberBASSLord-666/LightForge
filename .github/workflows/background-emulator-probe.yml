@@ -13,9 +13,6 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
-      ANDROID_USER_HOME: ${{ runner.temp }}/lightforge-android
-      ANDROID_EMULATOR_HOME: ${{ runner.temp }}/lightforge-android
-      ANDROID_AVD_HOME: ${{ runner.temp }}/lightforge-android/avd
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -35,6 +32,9 @@ jobs:
         run: |
           LIGHTFORGE_SIGNING_DIR="$RUNNER_TEMP/probe-signing" python3 tools/build_android_tests.py
           cp dist/background-tests.apk candidate/background-tests.apk
+      - name: Configure Android virtual-device paths
+        run: |
+          printf 'ANDROID_USER_HOME=%s\nANDROID_EMULATOR_HOME=%s\nANDROID_AVD_HOME=%s\n' "$RUNNER_TEMP/lightforge-android" "$RUNNER_TEMP/lightforge-android" "$RUNNER_TEMP/lightforge-android/avd" >> "$GITHUB_ENV"
       - name: Prepare Android 15 emulator
         run: |
           sudo chmod a+rw /dev/kvm
