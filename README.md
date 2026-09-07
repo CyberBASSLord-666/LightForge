@@ -1,6 +1,6 @@
 # LightForge 2.2.1 — recoverable native Studio analysis
 
-**The current source targets 2.2.1; release validation and publication are pending.** The latest published update is [LightForge 2.2.0](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.2.0). Use the complete APK asset and keep the existing installation. All models are bundled; no first-run download is required.
+**LightForge 2.2.1 is built and verified; GitHub publication is being prepared.** The latest published update is [LightForge 2.2.0](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.2.0). Use the complete APK asset and keep the existing installation. All models are bundled; no first-run download is required.
 
 LightForge turns music on your phone into an editable Tesla light show for a **2025 Model 3 Long Range RWD, North America**. It bundles its neural models, graphics and audio tools and works entirely offline.
 
@@ -321,15 +321,15 @@ The renderer source and pinned npm dependency lock are in `web/preview/src/`.
 
 ## Verification and device status
 
-`VALIDATION.md` separates current evidence from earlier releases. Version 2.2.0 has a retained Android emulator background-lifecycle pass; it does not validate the new native Studio path in 2.2.1. Current 2.2.1 evidence is source-bound. The complete Android recovery probe passes on the current source. Final production CI and publication remain pending:
+`VALIDATION.md` separates current evidence from earlier releases. Version 2.2.0 has a retained Android emulator background-lifecycle pass; it does not validate the new native Studio path in 2.2.1. Current 2.2.1 evidence is source-bound. All six source-bound release gates and the [complete production CI run](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34169530104) pass on the current source:
 
 | Check | Current 2.2.1 release status |
 |---|---|
 | Host model equivalence and memory/runtime | Passed on the declared development excerpt; see the measurements below |
 | Node/Python regression evidence | Passed: 145 Node and 39 Python checks against the current sources |
 | Browser UI, complete model pipeline and cancellation | Passed in the current production verification job |
-| Android emulator native Studio, screen-off/Doze, cancellation and partial resume | Passed on Android 15 in the current-source probe, including immediate Resume and verified saved-passage reuse |
-| Signed update package and release publication | Original-signed APK built; final production CI and publication pending |
+| Android emulator native Studio, screen-off/Doze, cancellation and partial resume | Passed on Android 15 in both the current-source probe and production CI, including immediate Resume and verified saved-passage reuse |
+| Signed update package | Passed: original signing identity, exact asset inventory, alignment and checksum; publication being prepared |
 | Physical phone performance, long songs, thermals and battery management | Unverified |
 | Physical Tesla timing and movement | Unverified |
 

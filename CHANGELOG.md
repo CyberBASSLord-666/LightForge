@@ -1,6 +1,6 @@
 # LightForge 2.2.1 — Native Studio and resumable analysis
 
-Release candidate; the complete current-source Android cancellation/resume probe and host numerical checks pass. Final production CI and signed publication are pending.
+All six source-bound release gates pass, including full production CI, native Studio background completion, immediate Resume with saved-passage reuse and original-signature package verification.
 
 - Move Android Studio separation to pinned native ONNX Runtime CPU inference with bounded independent batches and reusable buffers. Preserve original weights, Float32 computation, full context and both source heads; no silent quality downgrade.
 - Separate analysis-worker lifetimes and save verified passage/stage checkpoints so an interruption need not repeat the whole song.

@@ -1,6 +1,6 @@
 # 2.2.1 recovery status
 
-The release is **not published**. The complete Android recovery probe passes on current source `f80de0d7fd075cf22506c60910e41ea9f625e922`, and the original-signed APK is built. Final production CI and publication remain pending.
+The release is **not yet published**. All six source-bound release gates, complete production CI and the Android recovery probe pass on current source `f80de0d7fd075cf22506c60910e41ea9f625e922`. The original-signed APK is verified; publication is being prepared.
 
 ## Current completed evidence
 
@@ -8,7 +8,7 @@ The release is **not published**. The complete Android recovery probe passes on 
 - Current local regressions pass **145 Node and 39 Python checks**, including six bounded asset-staging tests. Native host compilation and all **21 storage/audio/format checks** pass.
 - The staging check streamed **111 files / 1,524,917,198 bytes** and verified exact hashes, including **73 declared analysis assets**. This is staging evidence, separate from APK signing and runtime behavior.
 - Android probe [34169529496](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34169529496), job `101887033168`, **passed** native Studio completion with the Activity destroyed, display off and Doze active; saved-show reopening; cancellation during a later passage; immediate Resume with verified saved-passage reuse; resource cleanup; and the Android timeout callback. Artifact `10035699527` preserves the results. This uses a temporary CI certificate on the verified application payload, not the original private key.
-- Production CI [34169530104](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34169530104) passed its verification job. Its dependent Android job is still pending.
+- Production CI [34169530104](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34169530104) **passed both jobs**: verification `101887086863` and Android background lifecycle `101890350207`. All six current local package gates pass for the original-signed APK.
 
 ## Current signed APK
 
@@ -24,4 +24,4 @@ Probe [34168136295](https://github.com/CyberBASSLord-666/LightForge/actions/runs
 
 ## Remaining work
 
-Obtain the successful final production Android result; collect and verify all current source-bound receipts; finish original-signed package verification and candidate-index transfer; publish and verify GitHub's uploaded assets. Keep publication marked pending until those steps succeed. Physical phone/full-song, thermal/manufacturer battery behavior and Tesla timing remain unverified. Studio remains computationally expensive; the short-excerpt host speed/memory measurements are not phone forecasts.
+Retain the final production Android receipt, complete the verified candidate-index transfer, then publish and verify GitHub's uploaded assets. Keep publication marked pending until those steps succeed. Physical phone/full-song, thermal/manufacturer battery behavior and Tesla timing remain unverified. Studio remains computationally expensive; the short-excerpt host speed/memory measurements are not phone forecasts.

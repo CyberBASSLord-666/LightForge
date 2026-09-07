@@ -1,0 +1,46 @@
+{
+  "release": "2.2.1",
+  "passed": true,
+  "workflow": "https://github.com/CyberBASSLord-666/LightForge/actions/runs/34169530104",
+  "run_id": 34169530104,
+  "source_commit": "f80de0d7fd075cf22506c60910e41ea9f625e922",
+  "conclusion": "success",
+  "jobs": [
+    {
+      "id": 101887086863,
+      "name": "verify",
+      "conclusion": "success"
+    },
+    {
+      "id": 101890350207,
+      "name": "android-background",
+      "conclusion": "success"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 10035600670,
+      "name": "lightforge-2.2.1-verification",
+      "zip_sha256": "2c103fab27a6745bf500a22e75f9e83c4cce7a45f21f663fdb18a16f2e61621b"
+    },
+    {
+      "id": 10035602899,
+      "name": "lightforge-2.2.1-ci-candidate",
+      "zip_sha256": "3829354885ed0820f0cb236b2acc72ed71680ed01faa51d653bceb4462aa89cf"
+    },
+    {
+      "id": 10035912253,
+      "name": "lightforge-2.2.1-android-background",
+      "zip_sha256": "1b0805a2150665050f1b1745a5c5c9b7f129d96aecdac8709e1b24630d83db8a"
+    }
+  ],
+  "current_gate_sha256": {
+    "regression-verification.json": "7de18e813202a60c50c14513428eed8ac1f930ce99c5a1b1f6c758398a8cd583",
+    "browser-verification.json": "5aa350f15f435befb3b7f115d035d84712c1d1c4dfcf823568545ee116423d00",
+    "native-verification.json": "77534aef710e1ad0d2da82056ae93a542047fefd9393fb9534fc12a7a38cba84",
+    "analysis-browser-verification.json": "ddbcaeca98175da771d6ca307362f66a6174b095e858b395111b7b5f9d907ebc",
+    "analysis-verification.json": "e029c404496eb141288e506dd496a64eea4db6dab7f4a9a8d4514a83d2617e88",
+    "android-background-verification.json": "fab92700bd40fb3aefd08ed89185d277b0bf49b21e22e53329ca2e062a000c29"
+  },
+  "scope": "Successful production workflow, actual offline-model and Android API35 emulator lifecycle checks. Numeric model equivalence and reference scoring are separately reproduced local evidence; no physical-phone or full-song performance claim."
+}

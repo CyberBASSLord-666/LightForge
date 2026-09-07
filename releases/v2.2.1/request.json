@@ -1,0 +1,9 @@
+{
+  "version": {
+    "name": "2.2.1",
+    "code": 20201
+  },
+  "run_id": 34169530104,
+  "source_commit": "f80de0d7fd075cf22506c60910e41ea9f625e922",
+  "delta_sha256": "8e3041fd8f86195e71e3bcb43e8adb764c1de923e219bb0441eadf88c5302446"
+}

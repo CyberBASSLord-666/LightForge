@@ -555,7 +555,7 @@
       }
     },
     "android-background-verification.json": {
-      "sha256": "eb7810e6ce858c268865f9d2096aca3e283485442b94f65d0e756e734990f8f4",
+      "sha256": "fab92700bd40fb3aefd08ed89185d277b0bf49b21e22e53329ca2e062a000c29",
       "result": {
         "release": "2.2.1",
         "passed": true,
@@ -599,7 +599,7 @@
         "scope": "Android API 35 emulator lifecycle test using the production service, native CPU Studio separation plus actual WebView/WASM rhythm and voice models, live inference cancellation, verified passage resume and compilation. Not a physical phone or Tesla test.",
         "lastProgress": {
           "phase": "completed",
-          "elapsedSeconds": 818.107,
+          "elapsedSeconds": 742.672,
           "phaseElapsedSeconds": 0,
           "checks": [
             "Actual Studio native CPU separation, neural analysis and choreography completed with the Activity destroyed, screen off and Doze forced with user-equivalent battery exemption; result was durably saved.",
@@ -617,21 +617,21 @@
             "commandOutput": "Light state: OVERRIDE, deep state: IDLE\nmForceModeManagerQuickDozeRequest: false\nmForceModeManagerOffBodyState: false"
           },
           "job": {
-            "id": "ef12f94f-f947-4a50-8fb5-5e39d44ed2d3",
-            "projectId": "da062f6e-9162-4712-86b8-ab192c66b4b7",
+            "id": "5e2ceadc-b77b-4e85-b756-617adaa692b0",
+            "projectId": "df65b771-4c5a-44d2-9eb3-93fd163569d7",
             "name": "Timeout fixture",
-            "sourceSHA256": "570fdf164283fe998104af73f9037beabdc90c6f347365e92e2bd6b591139448",
-            "analysisIdentity": "3135ebeec539243c1d9febde20c6fae81cc750795a41c825bc2e5bd68f3b07b4",
+            "sourceSHA256": "d85134c8eb9262a12f2961cb4a1109812a430359619204cba10bb481a72d8c8a",
+            "analysisIdentity": "fa43176e689717b94b31422b3def387487a6b67dfe929667a3cf3c0c8bfd863b",
             "state": "interrupted",
             "stage": "Android paused background media processing after its time allowance. Open LightForge and resume from saved passages.",
             "progress": 0,
-            "createdAt": 1788824648498,
-            "updatedAt": 1788824648700,
+            "createdAt": 1788825429411,
+            "updatedAt": 1788825429625,
             "hasCheckpoint": false,
             "resumeAvailable": false,
             "lastStage": "Preparing background analysis",
-            "elapsedMs": 202,
-            "stoppedAt": 1788824648700
+            "elapsedMs": 214,
+            "stoppedAt": 1788825429625
           }
         },
         "device": {
@@ -646,7 +646,7 @@
           "sdk": 35,
           "scope": "Android emulator with actual foreground service, native CPU Studio separation plus WebView/WASM rhythm/voice models, screen-off/Doze execution, live native cancellation, partial-passage resume and timeout callback; not a physical phone or Tesla."
         },
-        "completedAt": "2026-09-07T23:44:12.636689+00:00"
+        "completedAt": "2026-09-07T23:57:12.517066+00:00"
       }
     }
   },
