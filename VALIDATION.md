@@ -1,30 +1,42 @@
-# LightForge 2.0.0 validation
+# LightForge 2.1.0 validation
 
-Related: [`BUILD.md`](BUILD.md) · [`ASSETS.md`](ASSETS.md) · [`ARCHITECTURE.md`](ARCHITECTURE.md) · [`INSTALL_OVER_1.5_to_1.6_CHECKLIST.md`](INSTALL_OVER_1.5_to_1.6_CHECKLIST.md)
+Version 2.1.0 / code 20100 upgrades the models and studio interface while retaining the original signing identity and saved-arrangement integrity. Current receipts are in `qa/release-2.1.0/`. Historical measurements below keep their original release scope.
 
-Version 2.0.0 / code 20000 retains the original update certificate and the offline analysis pipeline. New evidence lives in `qa/release-2.0.0/`. The 1.6.0 model measurements below are historical; the current regression gate verifies that every analysis asset remains byte-identical.
-
-## 1. Current release verification
-
-Run `npm ci --ignore-scripts`, `npm test`, `node qa/release-2.0.0/browser.cjs` with Chromium installed, and `python3 tests/verify_native_release.py --release 2.0.0`. See [`BUILD.md`](BUILD.md) for toolchain, signing and packaging commands. The GitHub Actions workflow runs these gates on the actual development source.
-
-| Gate | What it establishes |
+| Current gate | What it establishes |
 | --- | --- |
-| 103 Node checks | Musical cue boundaries, independent part offsets, final FSEQ attacks, lamp fallback, bass retriggers, disabled outputs, section crossings, silence, deterministic composition, engine format and preview contracts, audio/model components, backup integrity, and actual app DOM Undo/Redo/save/new-song isolation |
-| 11 Python checks | Bounded-memory archive operations, checksum and file inventory checks, source/signature validation, and package failure handling |
-| Legacy worker migration | Real archived 1.6 worker output plus 1.4 and rebound 1.5 snapshots reopen without changing frame bytes; altered inputs and corrupt payloads fail |
-| Actual Chromium app | Production workers, WebCrypto, gzip, cue form, final-byte export hash, Undo/Redo, saved-project reload and export of its timing report; four responsive layouts at 320, 393, 768 and 1440 px |
-| Native JVM | Production Android Java compiles; project storage, recovery, streaming bridge, WAV handling, FSEQ/hardware limits and preview transport tests pass against host Android stubs |
-| Analysis asset manifest | All 32 files under the existing analysis manifest retain their exact 1.6.0 sizes and SHA-256 values; this is an integrity check, not a new model-quality measurement |
-| Signed package | APK version, alignment, original certificate, ZIP CRC and every packaged web asset match the current source; release receipts are bound to exact source hashes |
+| Node and Python regressions | Musical boundaries, voice/bass offsets, final FSEQ attacks, hardware routing, silence, deterministic composition, stem/WAV components, neural-note fusion, backup handling, legacy frame migration and real app DOM editing |
+| Actual Chromium UI | WebGL, workers, cue form, Undo/Redo, exact-byte streamed export, save/reload, four keyboard-accessible workspaces and 320/393/768/1440 px layouts |
+| Actual Chromium analysis | Public MusicAnalyzer with real Deux, GAME, Beat This and Frame-MN10; OPFS full-resolution voice retrieval and incomplete-cache cleanup after cancellation |
+| Source separation | Six original mixtures, six instrument-only negatives and six controlled voice-window remixes, scored against original reference stems; references are never separator inputs |
+| Model conversion/runtime | Staged Float32 graphs reproduce the original model within measured floating-point error; the production JS adapter executes on the unchanged ONNX Runtime Web 1.20.1 WASM backend |
+| Native JVM | Production Java compiles; storage recovery, WAV conversion, bridge ranges, previews and 16 independent FSEQ/hardware cases |
+| Signed APK | Version, alignment, original certificate, ZIP CRCs and exact packaged-asset hashes; all current gate receipts must match the source |
 
-`tools/package_v2.py` refuses missing, failed or stale regression/browser/native receipts, a changed APK, an incompatible signing identity, or differing packaged web assets. CI deliberately uses an ephemeral key for build verification. The distributable is built separately with the original private signing identity; it never enters Git or CI.
+`tools/package_v2.py` refuses missing, failed or stale regression/UI/native/analysis receipts. The build checks all 60 bundled analysis files before packaging. CI reproduces GAME and Deux from pinned official checkpoints and verifies the resulting hashes; no large new checkpoint is silently omitted from a fresh checkout.
 
-Synchronization review compares selected voice/bass targets against commands in the final FSEQ after output edits. A matching attack proves command placement at the exported frame interval. It does not prove that an automatic musical target was detected correctly, that a human hears the same onset, or that the vehicle responded at that instant. Suppressed targets and holds without distinct attacks remain visible for review. Explicit user cues, timing corrections and original detections are kept separate.
+## Current separator comparison
 
-The browser bridge is simulated. Desktop Chromium, host JVM tests and APK integrity checks do not establish physical Android installation, codec-provider behavior, memory/performance, or Tesla lamp/motor timing. Neither a phone nor a vehicle was tested for this release.
+| Mixture | Previous MDX vocal SI-SDR | Deux vocal SI-SDR |
+| --- | ---: | ---: |
+| Night Owl | 6.878 | 7.504 |
+| Stella | 17.054 | 18.791 |
+| Meaxic | 16.060 | 16.558 |
+| Grunge | 9.887 | 10.790 |
+| Falcon | 3.058 | 7.044 |
+| SDRNR | 7.315 | 8.162 |
+| Mean | 10.042 | 11.475 |
 
-## 2. Retained 1.6.0 model choice and measured quality
+Units are dB. Deux uses the exact production 13-second context and 1.5-second left halo in the original PyTorch reference. The historical MDX scores use the same declared mixtures and scorer. The six short excerpts are neither representative nor verified held-out data; training overlap is possible. SI-SDR includes its conventional scale projection; plain SDR, envelope correlation, sample counts and instrumental/control leakage are also retained. No reference-derived timing shift, separator mask or per-song tuning is used.
+
+Actual production JS/WASM on Falcon returns exactly 300,032 samples. Compared with the original model's vocal waveform at the same context/crop, maximum absolute error is 0.000468 and RMS error is 0.0000244 (rounded upward). Zero envelope lag was measured on the excerpt's 5 ms diagnostic grid. This does not establish sub-frame perceptual precision or vehicle latency. Both source heads are checked separately in the original ONNX parity probe.
+
+The role component evaluation uses estimated vocals/accompaniment and the production Float32 resampler, classifier, detail extractor and GAME adapter. Original vocal stems are reserved for scoring. Its event counts establish the declared positive/negative behavior, not note-boundary or pitch accuracy against human annotations. The full public browser pipeline is an independent integration gate.
+
+Synchronization review compares selected voice/bass targets with final exported lamp commands after manual output edits. A matching command proves frame placement, not whether an automatic musical target was detected correctly. Bass remains a harmonic estimate from combined accompaniment. There are no lyrics, word timestamps or individually synchronized Tesla Dance strokes.
+
+Desktop WASM, Chromium and host JVM checks do not execute Android Activities, document providers, phone codecs or a physical Tesla. The larger models need several GB of working memory; WASM can retain peak allocation until the disposable worker terminates. Actual phone installation, sustained analysis, thermals and vehicle timing remain physical validation work.
+
+## Historical 1.6.0 model choice and measured quality
 
 The selected UVR MDX-Net Voc FT model was compared with Spleeter, HTDemucs FT's vocal specialist, four deterministic Demucs shifts, and a fixed equal MDX/Demucs waveform blend. The official MUSDB18 short excerpts provide six original reference mixtures and vocal stems, six accompaniment-only negatives, and six controlled voice-window remixes. There was no reference-derived mask, gain fitting, latency correction or per-song ensemble selection.
 
@@ -35,7 +47,7 @@ The selected UVR MDX-Net Voc FT model was compared with Spleeter, HTDemucs FT's 
 | HTDemucs FT, four shifts | 8.687 dB | 0.9227 |
 | Fixed equal MDX/Demucs blend | 9.976 dB | **0.9330** |
 
-MDX improved separation fidelity over Spleeter on every tested mixture. The blend helped the most difficult Falcon excerpt but reduced four other SI-SDR results; it was not a consistent overall winner. Its additional working memory and upstream weight-use uncertainty are recorded in the candidate evidence. MDX is the selected quality-first model; this does not establish superiority on every song or over every available model.
+MDX improved separation fidelity over Spleeter on every tested mixture. The blend helped the most difficult Falcon excerpt but reduced four other SI-SDR results; it was not a consistent overall winner. Its additional working memory and upstream weight-use uncertainty are recorded in the candidate evidence. MDX was the selected 1.6.0 quality-first model; this does not establish superiority on every song or over every available model.
 
 On the six controlled remixes, MDX's mean estimated voice energy outside the exact voice windows was 0.059%, versus 0.801% for Spleeter; envelope correlation was approximately 0.9898 versus 0.9514. No envelope timing lag was measured in the six natural mixture excerpts. These are acoustic source-estimate metrics, not word-boundary annotations or a subjective choreography score. Original stems contain production effects and codec artifacts; the small set is neither statistically representative nor a verified held-out benchmark.
 

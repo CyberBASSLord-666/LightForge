@@ -1,3 +1,15 @@
+# Current 2.1 model additions
+
+The existing binary assets below remain in the repository. New GAME Large and Deux graphs are reproduced from pinned official releases/checkpoints using `tools/prepare_game.py` and `tools/prepare_deux.py`; they are not stored as oversized Git blobs. Their manifests contain exact sizes, SHA-256 values, authors, source revisions and model-weight licenses. Builds reject incomplete or changed assets.
+
+- GAME Large 1.0.3: original/modified model weights CC BY-NC-SA 4.0; five graphs, approximately 376 MiB.
+- Mel-Band RoFormer Deux: model weights CC BY-NC 4.0; 15 staged graphs, approximately 842 MiB. Architecture MIT does not replace the weight license.
+- All runtime models are included in the APK. Only a source build downloads checkpoints; the installed app does not access the network.
+
+See `BUILD.md`, `web/analysis/README.md` and each model's `NOTICE.txt`. This is a personal, noncommercial app. The following inventory describes retained historical assets and restoration procedures.
+
+---
+
 # Asset status after repository completion
 
 All required runtime assets and curated research/QA files from the verified 1.6.0 backup are now retained in this private repository. The completion workflow restores eight large assets to their normal root-relative paths; an initial-transfer checkout can run `python3 migration/restore.py --only source`. Run `python3 verify_snapshot.py` to verify all 900 preserved source files. No external private extract is needed for assets after restoration. Signing credentials remain external.

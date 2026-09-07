@@ -34,6 +34,8 @@ jobs:
       - run: node qa/release-2.1.0/browser.cjs
       - name: Prepare licensed reference excerpts
         run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
           mkdir -p qa/release-1.6.0/fixtures
           curl -fL --retry 3 https://github.com/sigsep/sigsep-mus-db/releases/download/v0.4.0/MUSDB18-7-STEMS.zip -o qa/release-1.6.0/fixtures/MUSDB18-7-STEMS.zip
           echo '365f66acffc57282e474a4c24b32afec3678258c50b8d45646ac849b0a287df3  qa/release-1.6.0/fixtures/MUSDB18-7-STEMS.zip' | sha256sum -c

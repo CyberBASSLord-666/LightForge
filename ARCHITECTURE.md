@@ -1,4 +1,4 @@
-# LightForge 2.0.0 — Architecture
+# LightForge 2.1.0 — Architecture
 
 Quality bars for modularity and API boundaries. Repo: private `CyberBASSLord-666/LightForge` — on GitHub `main`, `android/` and `web/` live at **repo root**; some local/private trees nest the same layout under `app/lightforge/`. Docs only — no code moves in this landing.
 
@@ -111,10 +111,18 @@ Coordinate wording with LF Docs if touching `BUILD.md` / `VALIDATION.md`. Engine
 
 ## 2.0 additions
 
-`engine/music-cues.js` validates additive settings (`musicCues`, `vocalOffsetMs`, `bassOffsetMs`) and creates a corrected working interpretation without changing saved model evidence. The analysis schema remains version 5 because the raw analysis products and model code are unchanged.
+`engine/music-cues.js` validates additive settings (`musicCues`, `vocalOffsetMs`, `bassOffsetMs`) and creates a corrected working interpretation without changing saved model evidence. The 2.0 release retained analysis version 5. Version 2.1 introduces analysis version 6 for Deux/GAME while preserving compiled legacy arrangements.
 
 `engine/sync-review.js` inspects the final frame payload after output-level overrides. Its coverage denominator is selected role targets, not all detected notes, and it makes no inference-accuracy or vehicle-latency claim. The review is frozen inside compiled metadata and export validation.
 
 `precision-studio.js` owns its UI and commits edits through the existing serialized `commitChannelSettings` transaction. Failed edits leave the previous show intact. Fresh imports reset musical cues and part corrections.
 
 `web/version.js` is generated from `version.json`. Known zero/empty 2.0 defaults can be stripped only to reproduce a legacy input checksum; payload and metadata checks remain mandatory.
+
+## 2.1 analysis and cockpit
+
+`analysis/worker.js` selects Deux for Studio or MDX for Balanced, then releases separation sessions before Frame-MN10. `stem-cache.js` retains both half-rate listening stems and the original-clock 44.1 kHz mono Float32 voice. `game.js` runs the five GAME Large graphs, deterministic diffusion, context ownership and continuation-aware stitching. Its fusion preserves measured vocal expression, requires supported singing phrases, and replaces acoustic pitch-note estimates with neural notes. Bass remains independent harmonic tracking in accompaniment.
+
+`separator-deux.js` implements source-clock STFT/ISTFT, sequential full-context transformer stages, dual source-head scattering and normalized chunk overlap-add. `tools/prepare_deux.py` and `tools/prepare_game.py` reproduce licensed, pinned models; `verify_analysis_assets.py` rejects stale or incomplete runtime inventories at build time.
+
+`cockpit.js` moves existing live controls into four accessible workspaces without changing their IDs or handlers. It renders the source-time note/edit score using the actual audio playhead and declared part offsets. `cockpit.css` supplies the monochrome/red responsive design. Project state, native bridge, original audio exports, hardware routing and legacy frame integrity remain managed by their existing production owners.
