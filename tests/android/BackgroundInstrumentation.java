@@ -15,8 +15,27 @@ public final class BackgroundInstrumentation extends Instrumentation {
     private File files;
     private MainActivity activity;
     private boolean checkedNativeStageRelease;
+    private final long testStarted=SystemClock.elapsedRealtime();
+    private long phaseStarted=testStarted,lastSnapshot;
+    private String currentPhase="starting";
+    private void phase(String name)throws Exception{currentPhase=name;phaseStarted=SystemClock.elapsedRealtime();snapshot(true);}
+    private void snapshot(boolean force)throws Exception{
+        long now=SystemClock.elapsedRealtime();
+        if(!force&&now-lastSnapshot<15000)return;
+        lastSnapshot=now;
+        JSONObject value=new JSONObject().put("phase",currentPhase)
+            .put("elapsedSeconds",(now-testStarted)/1000.0)
+            .put("phaseElapsedSeconds",(now-phaseStarted)/1000.0)
+            .put("checks",new JSONArray(checks.toString()));
+        if(files!=null){
+            JSONObject job=AnalysisJobStore.status(files);
+            value.put("job",job==null?JSONObject.NULL:job);
+            AnalysisJobStore.write(new File(files,"background-test-progress.json"),value,65536);
+        }
+        Bundle event=new Bundle();event.putString("stream","LIGHTFORGE_PROGRESS "+value+"\n");sendStatus(0,event);
+    }
     private void check(boolean value,String label){if(!value)throw new AssertionError(label);}
-    private void pass(String label){checks.put(label);Bundle event=new Bundle();event.putString("stream",label+"\n");sendStatus(0,event);}
+    private void pass(String label)throws Exception{checks.put(label);snapshot(true);Bundle event=new Bundle();event.putString("stream",label+"\n");sendStatus(0,event);}
     private void shell(String command)throws Exception{
         try(ParcelFileDescriptor descriptor=getUiAutomation().executeShellCommand(command);InputStream in=new ParcelFileDescriptor.AutoCloseInputStream(descriptor)){
             byte[] bytes=new byte[4096];while(in.read(bytes)!=-1){}
@@ -29,12 +48,13 @@ public final class BackgroundInstrumentation extends Instrumentation {
     private AnalysisService service()throws Exception{return (AnalysisService)field(AnalysisService.class,"instance");}
     private void waitService(boolean expected)throws Exception{
         long until=SystemClock.elapsedRealtime()+15000;
-        while(SystemClock.elapsedRealtime()<until){if(AnalysisService.alive()==expected)return;SystemClock.sleep(100);}
+        while(SystemClock.elapsedRealtime()<until){snapshot(false);if(AnalysisService.alive()==expected)return;SystemClock.sleep(100);}
         throw new AssertionError("Service lifetime did not reach "+expected);
     }
     private JSONObject waitTerminal(long timeout)throws Exception{
         long until=SystemClock.elapsedRealtime()+timeout;
         while(SystemClock.elapsedRealtime()<until){
+            snapshot(false);
             JSONObject job=AnalysisJobStore.status(files);if(job!=null&&!AnalysisJobStore.active(job))return job;
             if(job!=null&&job.optDouble("progress")>=.83){
                 AnalysisService owner=service();NativePassageTask task=owner==null?null:(NativePassageTask)field(owner,"nativePassage");
@@ -60,6 +80,20 @@ public final class BackgroundInstrumentation extends Instrumentation {
         activity=(MainActivity)startActivitySync(new Intent(getTargetContext(),MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
         waitForIdleSync();activity.new Bridge().getBootstrap();
     }
+    private void backgroundAndDoze()throws Exception{
+        runOnMainSync(()->activity.finishAndRemoveTask());waitForIdleSync();
+        shell("dumpsys battery unplug");shell("input keyevent KEYCODE_SLEEP");SystemClock.sleep(500);
+        shell("dumpsys deviceidle force-idle");
+        PowerManager power=(PowerManager)getTargetContext().getSystemService(Context.POWER_SERVICE);
+        check(!power.isInteractive(),"Screen did not turn off");
+        check(power.isIgnoringBatteryOptimizations(getTargetContext().getPackageName()),"User-equivalent battery exemption missing");
+        check(power.isDeviceIdleMode(),"Android did not enter forced Doze");
+        snapshot(true);
+    }
+    private void foreground()throws Exception{
+        shell("dumpsys deviceidle unforce");shell("dumpsys battery reset");
+        shell("input keyevent KEYCODE_WAKEUP");shell("wm dismiss-keyguard");launch();snapshot(true);
+    }
     private JSONObject start(String projectId)throws Exception{
         JSONObject job=new JSONObject(activity.new Bridge().startAnalysis(projectId));check(!job.has("error"),job.toString());waitService(true);
         long until=SystemClock.elapsedRealtime()+15000;
@@ -70,6 +104,7 @@ public final class BackgroundInstrumentation extends Instrumentation {
     private NativePassageTask waitNativePassage(AnalysisService owner,int completedPassages,long timeout)throws Exception{
         long until=SystemClock.elapsedRealtime()+timeout;
         while(SystemClock.elapsedRealtime()<until){
+            snapshot(false);
             JSONObject job=AnalysisJobStore.status(files);
             check(AnalysisJobStore.active(job),"Analysis ended before the required native passage: "+job);
             NativePassageTask task=(NativePassageTask)field(owner,"nativePassage");
@@ -100,14 +135,8 @@ public final class BackgroundInstrumentation extends Instrumentation {
     @Override public void onStart(){
         JSONObject receipt=new JSONObject();Bundle output=new Bundle();
         try{
-            files=getTargetContext().getFilesDir();launch();String id=fixture("Background audio");JSONObject job=start(id);
-            long backgroundAt=System.currentTimeMillis();runOnMainSync(()->activity.finishAndRemoveTask());waitForIdleSync();
-            shell("dumpsys battery unplug");shell("input keyevent KEYCODE_SLEEP");SystemClock.sleep(500);
-            shell("dumpsys deviceidle force-idle");
-            PowerManager power=(PowerManager)getTargetContext().getSystemService(Context.POWER_SERVICE);
-            check(!power.isInteractive(),"Screen did not turn off");
-            check(power.isIgnoringBatteryOptimizations(getTargetContext().getPackageName()),"User-equivalent battery exemption missing");
-            check(power.isDeviceIdleMode(),"Android did not enter forced Doze");
+            files=getTargetContext().getFilesDir();phase("first-screen-off-analysis");launch();String id=fixture("Background audio");JSONObject job=start(id);
+            long backgroundAt=System.currentTimeMillis();backgroundAndDoze();
             JSONObject completed=waitTerminal(15*60*1000L);
             check("completed".equals(completed.optString("state")),"Screen-off analysis failed: "+completed);
             check(completed.getLong("updatedAt")>backgroundAt,"No progress after Activity destruction");waitService(false);
@@ -118,13 +147,20 @@ public final class BackgroundInstrumentation extends Instrumentation {
             check(separation(saved).optInt("chunks")==1,"Short Studio fixture did not execute exactly one native passage");
             check(checkedNativeStageRelease,"No live voice/GAME-stage native-buffer release observation was recorded");
             pass("Actual Studio native CPU separation, neural analysis and choreography completed with the Activity destroyed, screen off and Doze forced with user-equivalent battery exemption; result was durably saved.");
-            shell("dumpsys deviceidle unforce");shell("dumpsys battery reset");shell("input keyevent KEYCODE_WAKEUP");shell("wm dismiss-keyguard");launch();
+            phase("reconnect-completed-project");foreground();
             JSONObject bootstrap=new JSONObject(activity.new Bridge().getBootstrap());
             check("completed".equals(bootstrap.getJSONObject("backgroundJob").getString("state")),"Reopened Activity did not reconnect");
             pass("Reopened Activity reports the completed job and its saved project.");
             String cancelId=fixture("Resume fixture",12);File cancelProject=new File(AnalysisJobStore.project(files,cancelId),"project.json");String original=AnalysisJobStore.hash(cancelProject);
+            phase("wait-for-second-native-passage");
             JSONObject interruptedJob=start(cancelId);AnalysisService cancelledService=service();PowerManager.WakeLock cancelledLock=(PowerManager.WakeLock)field(cancelledService,"wakeLock");
+            backgroundAndDoze();
             NativePassageTask cancelledNative=waitNativePassage(cancelledService,1,15*60*1000L);
+            // Reopen only for the real foreground Cancel/Resume interaction.
+            // Keep the long native inference phases free of software-rendered 3D work.
+            phase("reopen-for-notification-cancel");foreground();
+            cancelledNative=waitNativePassage(cancelledService,1,15000L);
+            phase("notification-cancel");
             check(AnalysisJobStore.status(files).optBoolean("resumeAvailable"),"Completed passage was not reported as durable");
             NotificationManager notifications=(NotificationManager)getTargetContext().getSystemService(Context.NOTIFICATION_SERVICE);boolean sent=false;
             for(StatusBarNotification notification:notifications.getActiveNotifications()){
@@ -137,7 +173,7 @@ public final class BackgroundInstrumentation extends Instrumentation {
             check(field(cancelledService,"nativePassage")==null,"Service retained cancelled native task");
             // Start the next job without waiting for the old native executor. The
             // process-wide inference gate must prevent overlapping heavy allocations.
-            JSONObject resumedJob=start(cancelId);waitNativeReleased(cancelledNative);
+            phase("resume-screen-off-analysis");JSONObject resumedJob=start(cancelId);backgroundAndDoze();waitNativeReleased(cancelledNative);
             pass("Notification cancellation interrupts live native Studio work; immediate Resume can start while old native resources quiesce, with the previous project, CPU lock and WebView safely released.");
             check(interruptedJob.getString("analysisIdentity").equals(resumedJob.getString("analysisIdentity")),"Retry discarded the stable source/settings identity");
             JSONObject resumed=waitTerminal(15*60*1000L);check("completed".equals(resumed.optString("state")),"Partial Studio resume failed: "+resumed);waitService(false);
@@ -147,16 +183,19 @@ public final class BackgroundInstrumentation extends Instrumentation {
             check(Math.abs(resumedProject.getJSONObject("music").getDouble("duration")-12)<.001,"Resumed source duration changed");
             check(resumedProject.getJSONObject("compiled").getString("sha256").matches("[a-f0-9]{64}"),"Resumed show did not compile");
             pass("Resume reuses at least one verified native passage after notification cancellation, preserves the 12-second source clock and saves a complete two-passage Studio show.");
+            phase("reopen-for-timeout-callback");foreground();
             String timeoutId=fixture("Timeout fixture");File timeoutProject=new File(AnalysisJobStore.project(files,timeoutId),"project.json");String beforeTimeout=AnalysisJobStore.hash(timeoutProject);
-            start(timeoutId);AnalysisService timeoutService=service();
+            phase("timeout-callback");start(timeoutId);AnalysisService timeoutService=service();
             runOnMainSync(()->timeoutService.onTimeout(1,android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROCESSING));
             check("interrupted".equals(waitTerminal(5000).getString("state")),"Timeout callback did not preserve retry state");waitService(false);
             check(beforeTimeout.equals(AnalysisJobStore.hash(timeoutProject)),"Timeout replaced saved project");
             pass("Android media-processing timeout callback stops promptly and leaves a retryable job with the previous show intact.");
+            phase("completed");
             receipt.put("passed",true).put("checks",checks).put("sdk",Build.VERSION.SDK_INT).put("scope","Android emulator with actual foreground service, native CPU Studio separation plus WebView/WASM rhythm/voice models, screen-off/Doze execution, live native cancellation, partial-passage resume and timeout callback; not a physical phone or Tesla.");
             output.putString("stream","BACKGROUND_ANDROID_PASS\n"+receipt.toString()+"\n");finish(Activity.RESULT_OK,output);
         }catch(Throwable error){
-            try{receipt.put("passed",false).put("checks",checks).put("error",error.toString());}catch(Exception ignored){}
+            try{snapshot(true);}catch(Exception ignored){}
+            try{receipt.put("passed",false).put("checks",checks).put("phase",currentPhase).put("error",error.toString());}catch(Exception ignored){}
             StringWriter trace=new StringWriter();error.printStackTrace(new PrintWriter(trace));output.putString("stream","BACKGROUND_ANDROID_FAIL\n"+receipt+"\n"+trace);finish(Activity.RESULT_CANCELED,output);
         }
     }

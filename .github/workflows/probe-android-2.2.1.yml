@@ -1,0 +1,137 @@
+name: Android native recovery probe 2.2.1
+on:
+  push:
+    branches: ['diagnostics/2.2.1-recovery']
+    paths:
+      - '.github/workflows/probe-android-2.2.1.yml'
+      - 'tests/android/BackgroundInstrumentation.java'
+      - 'tools/run_android_background_tests.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  lifecycle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: CyberBASSLord-666/LightForge
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          sparse-checkout: |
+            android
+            web
+            tools
+            tests
+            qa
+      - name: Verify the candidate build provenance
+        run: |
+          python3 - <<'PY'
+          import json,subprocess
+          def api(path):return json.loads(subprocess.check_output(['gh','api',path],text=True))
+          run=api('repos/CyberBASSLord-666/LightForge/actions/runs/34162369481')
+          assert run['head_sha']=='0527d778e1456ff607373a4c9ec546500b0153e5'
+          assert run['head_repository']['full_name']=='CyberBASSLord-666/LightForge'
+          assert run['path']=='.github/workflows/verify-v2.yml'
+          jobs=api('repos/CyberBASSLord-666/LightForge/actions/runs/34162369481/jobs')['jobs']
+          assert any(j['id']==101866643329 and j['name']=='verify' and j['conclusion']=='success' for j in jobs)
+          print('Candidate build passed; the original full workflow failed its Android wrapper. This run is an independent diagnostic.')
+          PY
+          git fetch --no-tags --depth=1 origin 0527d778e1456ff607373a4c9ec546500b0153e5
+          git diff --exit-code 0527d778e1456ff607373a4c9ec546500b0153e5 HEAD -- android web version.json
+          gh run download 34162369481 --name lightforge-2.2.1-ci-candidate --dir candidate-input
+      - name: Compile the updated tests and re-sign the unchanged app for this probe
+        run: |
+          set -euo pipefail
+          export LIGHTFORGE_TOOLCHAIN_DIR="$RUNNER_TEMP/lightforge-toolchain"
+          export LIGHTFORGE_SIGNING_DIR="$RUNNER_TEMP/probe-signing"
+          python3 tools/bootstrap_toolchain.py
+          export JAVA_HOME="$LIGHTFORGE_TOOLCHAIN_DIR/jdk17"
+          export PATH="$JAVA_HOME/bin:$PATH"
+          PROBE_BUILD_TOOLS="$LIGHTFORGE_TOOLCHAIN_DIR/android-sdk/build-tools/35.0.0"
+          PROBE_ANDROID_JAR="$LIGHTFORGE_TOOLCHAIN_DIR/android-sdk/platforms/android-35/android.jar"
+          mkdir -p build/generated qa/release-2.2.1/native-classes dist candidate "$LIGHTFORGE_SIGNING_DIR"
+          "$PROBE_BUILD_TOOLS/aapt2" compile --dir android/res -o build/probe-res.zip
+          "$PROBE_BUILD_TOOLS/aapt2" link -o build/probe-res.apk -I "$PROBE_ANDROID_JAR" --manifest android/AndroidManifest.xml --java build/generated --min-sdk-version 26 --target-sdk-version 35 --version-code 20201 --version-name 2.2.1 --replace-version build/probe-res.zip
+          python3 - <<'PY'
+          from pathlib import Path
+          import os,subprocess,secrets
+          root=Path.cwd();tc=Path(os.environ['LIGHTFORGE_TOOLCHAIN_DIR'])
+          files=sorted((root/'android/src').rglob('*.java'))+[root/'build/generated/com/cyberbasslord/lightforge/R.java']
+          subprocess.run([str(tc/'jdk17/bin/javac'),'-encoding','UTF-8','--release','8','-classpath',str(tc/'android-sdk/platforms/android-35/android.jar')+':'+str(tc/'onnx/classes.jar'),'-d',str(root/'qa/release-2.2.1/native-classes'),*map(str,files)],check=True)
+          password=Path(os.environ['LIGHTFORGE_SIGNING_DIR'])/'keystore-password.txt'
+          fd=os.open(password,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)
+          with os.fdopen(fd,'w') as out:out.write(secrets.token_urlsafe(36)+'\n')
+          PY
+          "$JAVA_HOME/bin/keytool" -genkeypair -keystore "$LIGHTFORGE_SIGNING_DIR/lightforge-release.jks" -storetype JKS -alias lightforge -keyalg RSA -keysize 3072 -validity 7 -storepass:file "$LIGHTFORGE_SIGNING_DIR/keystore-password.txt" -keypass:file "$LIGHTFORGE_SIGNING_DIR/keystore-password.txt" -dname 'CN=LightForge ephemeral lifecycle probe' -noprompt
+          python3 -m py_compile tools/run_android_background_tests.py
+          python3 tools/build_android_tests.py
+          cp dist/background-tests.apk candidate/background-tests.apk
+          "$PROBE_BUILD_TOOLS/apksigner" verify --verbose --print-certs candidate-input/LightForge-2.2.1.apk > qa/release-2.2.1/probe-input-signature.txt
+          "$PROBE_BUILD_TOOLS/zipalign" -c -P 16 4 candidate-input/LightForge-2.2.1.apk
+          "$PROBE_BUILD_TOOLS/apksigner" sign --ks "$LIGHTFORGE_SIGNING_DIR/lightforge-release.jks" --ks-key-alias lightforge --ks-pass "file:$LIGHTFORGE_SIGNING_DIR/keystore-password.txt" --v1-signing-enabled true --v2-signing-enabled true --v3-signing-enabled true --v4-signing-enabled false --v1-signer-name LIGHTFOR --alignment-preserved true --lib-page-alignment 16384 --out candidate/LightForge-2.2.1.apk candidate-input/LightForge-2.2.1.apk
+          "$PROBE_BUILD_TOOLS/apksigner" verify --verbose --print-certs candidate/LightForge-2.2.1.apk > qa/release-2.2.1/probe-app-signature.txt
+          "$PROBE_BUILD_TOOLS/apksigner" verify --verbose --print-certs candidate/background-tests.apk > qa/release-2.2.1/probe-test-signature.txt
+          "$PROBE_BUILD_TOOLS/zipalign" -c -P 16 4 candidate/LightForge-2.2.1.apk
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,json,re,sys,zipfile,os
+          sys.path.insert(0,'tools')
+          from apk_delta import entries,digest
+          qa=Path('qa/release-2.2.1');src=Path('candidate-input/LightForge-2.2.1.apk');dst=Path('candidate/LightForge-2.2.1.apk')
+          original=json.loads(src.with_suffix('.apk.json').read_text())
+          assert src.stat().st_size==original['bytes'] and digest(src)==original['sha256']
+          assert original['version_name']=='2.2.1' and original['version_code']==20201
+          signature={'META-INF/MANIFEST.MF','META-INF/LIGHTFOR.SF','META-INF/LIGHTFOR.RSA'}
+          def payload(path):
+              raw=entries(path);result={}
+              with zipfile.ZipFile(path) as archive:
+                  assert len(archive.namelist())==len(set(archive.namelist()))
+                  assert signature<=set(archive.namelist())
+                  for entry in archive.infolist():
+                      with archive.open(entry) as stream:checksum=hashlib.file_digest(stream,'sha256').hexdigest()
+                      if entry.filename not in signature:
+                          result[entry.filename]={'bytes':entry.file_size,'sha256':checksum,'compression':entry.compress_type,'compressed_bytes':raw[entry.filename][1],'compressed_sha256':raw[entry.filename][2]}
+              return result
+          before=payload(src);after=payload(dst)
+          assert before==after,'Re-sign changed application payload'
+          def cert(name):
+              values=re.findall(r'^Signer #[0-9]+ certificate SHA-256 digest: ([0-9a-f]{64})$',(qa/name).read_text(),re.M)
+              assert len(values)==1
+              return values[0]
+          assert cert('probe-input-signature.txt')==original['signing_certificate_sha256']
+          appcert=cert('probe-app-signature.txt')
+          assert appcert==cert('probe-test-signature.txt')
+          assert appcert!='7187d6aa935d5b7d2d656cb87913af95fe1ca3a4b1653036d1d8d890e2016c6b'
+          record={'scope':'Diagnostic same-payload re-sign only; original release key not used','candidate_run':34162369481,'candidate_head':'0527d778e1456ff607373a4c9ec546500b0153e5','test_commit':os.environ['GITHUB_SHA'],'source_apk_sha256':digest(src),'probe_apk_sha256':digest(dst),'probe_signing_certificate_sha256':appcert,'application_payload_unchanged':True,'payload_entries':before}
+          (qa/'android-probe-payload-verification.json').write_text(json.dumps(record,indent=2)+'\n')
+          print('Verified identical application payload and matching ephemeral app/test certificates.')
+          PY
+      - name: Prepare Android with bounded resources
+        run: |
+          printf 'ANDROID_USER_HOME=%s\nANDROID_EMULATOR_HOME=%s\nANDROID_AVD_HOME=%s\n' "$RUNNER_TEMP/lightforge-android" "$RUNNER_TEMP/lightforge-android" "$RUNNER_TEMP/lightforge-android/avd" >> "$GITHUB_ENV"
+          sudo rm -rf -- "$ANDROID_HOME/ndk" /usr/share/dotnet
+          sudo chmod a+rw /dev/kvm
+      - name: Start Android 15 emulator
+        run: |
+          mkdir -p "$ANDROID_AVD_HOME"
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "system-images;android-35;google_apis;x86_64" "emulator"
+          echo no | "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" create avd --force --name LightForge --package "system-images;android-35;google_apis;x86_64" --device pixel_6 --path "$ANDROID_AVD_HOME/LightForge.avd"
+          test -f "$ANDROID_AVD_HOME/LightForge.ini"
+          sed -i 's/^disk.dataPartition.size=.*/disk.dataPartition.size=6G/' "$ANDROID_AVD_HOME/LightForge.avd/config.ini"
+          "$ANDROID_HOME/emulator/emulator" -list-avds
+          nohup "$ANDROID_HOME/emulator/emulator" -avd LightForge -no-window -no-audio -no-metrics -partition-size 6144 -no-boot-anim -no-snapshot -gpu swiftshader_indirect -memory 4096 -cores 2 -camera-back none -camera-front none > emulator.log 2>&1 < /dev/null &
+      - name: Verify native completion, cancellation and passage resume
+        run: python3 tools/run_android_background_tests.py
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: lightforge-2.2.1-native-recovery-probe
+          path: |
+            qa/release-2.2.1/android-*
+            qa/release-2.2.1/probe-*.txt
+            emulator.log
+          if-no-files-found: error
+          retention-days: 30
