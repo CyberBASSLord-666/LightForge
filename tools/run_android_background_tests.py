@@ -10,7 +10,18 @@ receipt={'release':version,'passed':False,'checks':[],'errors':[],'source_hashes
 def run(*args,timeout=120):
     return subprocess.run([str(adb),*args],text=True,capture_output=True,timeout=timeout,check=True).stdout
 try:
-    run('wait-for-device');until=time.monotonic()+300
+    until=time.monotonic()+180
+    while time.monotonic()<until:
+        log=ROOT/'emulator.log'
+        if log.is_file():
+            fatal=[line for line in log.read_text(errors='replace').splitlines() if 'FATAL' in line]
+            if fatal:raise RuntimeError('Android emulator failed to start: '+fatal[-1])
+        try:
+            if run('get-state',timeout=10).strip()=='device':break
+        except (subprocess.CalledProcessError,subprocess.TimeoutExpired):pass
+        time.sleep(2)
+    else:raise RuntimeError('Android emulator did not connect to adb; see emulator.log')
+    until=time.monotonic()+300
     while time.monotonic()<until:
         if run('shell','getprop','sys.boot_completed').strip()=='1':break
         time.sleep(2)

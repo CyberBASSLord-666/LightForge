@@ -19,4 +19,6 @@ run(java/'keytool','-genkeypair','-keystore',key/'lightforge-release.jks','-stor
 candidate=root/'candidate';candidate.mkdir(exist_ok=True)
 run(build/'apksigner','sign','--ks',key/'lightforge-release.jks','--ks-key-alias','lightforge','--ks-pass','file:'+str(password),'--out',candidate/target.name,target)
 run(build/'apksigner','verify',candidate/target.name)
+# The emulator needs disk space more than it needs duplicate transfer APKs.
+shutil.rmtree(root/'base');target.unlink()
 print('Exact local APK reconstructed by hash and re-signed solely for isolated instrumentation. No release key is present.')
