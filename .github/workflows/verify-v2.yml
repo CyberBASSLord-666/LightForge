@@ -44,6 +44,7 @@ jobs:
       - run: npm test
       - run: npx playwright install --with-deps chromium
       - run: node qa/release-2.2.0/browser.cjs
+      - run: node qa/release-2.2.0/background-ui.cjs
       - name: Prepare licensed reference excerpts
         run: |
           sudo apt-get update -qq

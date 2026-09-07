@@ -1,6 +1,6 @@
-# LightForge 2.1 — personal Android light-show studio
+# LightForge 2.2 — personal Android light-show studio
 
-Install the complete update from the [LightForge 2.1.0 GitHub release](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.1.0). Use the APK asset, keep the existing installation, and verify its checksum when transferring. All models are bundled; no first-run download is required.
+Install the complete update from the [LightForge 2.2.0 GitHub release](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.2.0). Use the APK asset, keep the existing installation, and verify its checksum when transferring. All models are bundled; no first-run download is required.
 
 LightForge turns music on your phone into an editable Tesla light show for a **2025 Model 3 Long Range RWD, North America**. It bundles its neural models, graphics and audio tools and works entirely offline.
 
@@ -8,9 +8,19 @@ LightForge turns music on your phone into an editable Tesla light show for a **2
 
 ## Install the update
 
-Install the update-compatible `LightForge-2.1.0.apk` over your existing app. **Do not uninstall first.** The release uses the original signing identity; private projects are preserved. CI builds use a temporary identity and are not the update APK.
+Install the update-compatible `LightForge-2.2.0.apk` over your existing app. **Do not uninstall first.** The release uses the original signing identity; private projects are preserved. CI builds use a temporary identity and are not the update APK.
 
-Android 8+ and a current Android System WebView are required. The app targets Android 15. No account, API key, subscription, server or model download is needed. Keep the app open while analyzing; Studio requires several GB of working memory and processing can substantially exceed song duration. Choose Balanced if Studio exceeds your device resources. Separated listening audio needs about 21.2 MB per minute of music.
+Android 8+ and a current Android System WebView are required. The app targets Android 15. No account, API key, subscription, server or model download is needed. Create runs in an Android foreground service, so you can switch apps or turn off the display. Studio requires several GB of working memory and processing can substantially exceed song duration. Choose Balanced if Studio exceeds your device resources. Separated listening audio needs about 21.2 MB per minute of music.
+
+## Background analysis
+
+**Create my light show** now runs both analysis and choreography independently of the Studio screen. Use **Continue in background**, switch to another app, lock the screen, or dismiss Studio from Recents. A notification shows progress and offers **Cancel**; completed shows are saved before the service stops. Reopening LightForge reconnects to the current job or opens the completed show.
+
+Allow notifications when Android asks. For long screen-off jobs, choose **Allow screen-off processing** or **Guide → Allow background battery use** and approve Android's battery exemption. Manufacturer-specific sleeping-app restrictions may also need unrestricted battery use in the app's Android settings. These are system-controlled choices; the app does not grant itself permissions.
+
+Your last saved show is preserved on cancellation, low-memory renderer loss, process interruption or failure. Completed analysis is checkpointed before choreography and reused on Retry only if every saved input still matches. An interrupted model pass restarts that pass; it does not claim sample-level resumability. Android's Stop/Force stop, reboot and media-processing time limits still apply (normally six background hours per 24-hour allowance on Android 15+). No automatic reboot launch or endless restart loop is used.
+
+Import and export document pickers still require returning to the app. Background analysis does not grant root, unrestricted access to other apps, hidden recording, vehicle API access or unverified GPU acceleration. All model quality settings and the offline privacy boundary are preserved.
 
 ## Precision Studio
 
@@ -317,7 +327,7 @@ The app has not been tested here on the user's phone or car.
 
 ## Update from an earlier release
 
-Install `LightForge-2.1.0.apk` over the existing LightForge app. The package ID
+Install `LightForge-2.2.0.apk` over the existing LightForge app. The package ID
 and signing identity are unchanged, and version code 20100 is newer than the
 previous releases. **Do not uninstall first**, because uninstalling removes
 private projects. Saved music and projects remain compatible; sequences are

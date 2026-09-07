@@ -1,6 +1,6 @@
-# LightForge 2.1.0 validation
+# LightForge 2.2.0 validation
 
-Version 2.1.0 / code 20100 upgrades the models and studio interface while retaining the original signing identity and saved-arrangement integrity. Current receipts are in `qa/release-2.1.0/`. Historical measurements below keep their original release scope.
+Version 2.2.0 / code 20200 adds Activity-independent Android analysis and choreography while retaining the original signing identity and saved-arrangement integrity. Current receipts are in `qa/release-2.2.0/`. Historical measurements below keep their original release scope.
 
 | Current gate | What it establishes |
 | --- | --- |
@@ -12,9 +12,17 @@ Version 2.1.0 / code 20100 upgrades the models and studio interface while retain
 | Native JVM | Production Java compiles; storage recovery, WAV conversion, bridge ranges, previews and 16 independent FSEQ/hardware cases |
 | Signed APK | Version, alignment, original certificate, ZIP CRCs and exact packaged-asset hashes; all current gate receipts must match the source |
 
-`tools/package_v2.py` refuses missing, failed or stale regression/UI/native/analysis receipts. The build checks all 60 bundled analysis files before packaging. CI reproduces GAME and Deux from pinned official checkpoints and verifies the resulting hashes; no large new checkpoint is silently omitted from a fresh checkout.
+`tools/package_v2.py` refuses missing, failed or stale regression/UI/native/analysis/background receipts. The build checks all 60 bundled analysis files before packaging. CI reproduces GAME and Deux from pinned official checkpoints and verifies the resulting hashes; no large new checkpoint is silently omitted from a fresh checkout.
 
-The final review regressions include 112 Node checks and 23 Python checks. Dense/simultaneous bass notes on a shared fallback lamp retain valid target intervals, and full-resolution PCM writes preserve exact little-endian samples using one 64 KiB backing buffer. APK transfer tests cover exact reconstruction, wrong candidates, invalid copy bounds and atomic retention of an existing output after a corrupt patch.
+The final review regressions include 115 Node checks and 23 Python checks. Dense/simultaneous bass notes on a shared fallback lamp retain valid target intervals, and full-resolution PCM writes preserve exact little-endian samples using one 64 KiB backing buffer. APK transfer tests cover exact reconstruction, wrong candidates, invalid copy bounds and atomic retention of an existing output after a corrupt patch.
+
+## Background lifecycle scope
+
+The new host JVM test covers exclusive job ownership, monotonic progress, exact-input checkpoint reuse, stale-callback rejection, cancellation, conflicting newer edits, durable completion and recovery after a result commit. The real DOM test verifies native delegation, blocked stale UI saves and completed-show reload. A service-runner test checkpoints analysis and generates/restores actual compiled frames without a Studio document.
+
+A separate Android 15 emulator gate exercises the production foreground service and real bundled Balanced models with the Activity destroyed, display off and Doze forced under a user-equivalent battery exemption. It also checks notification Cancel and the media-processing timeout callback. Its current receipt is required for release packaging. This is not a physical-phone performance or OEM battery-management certification.
+
+The model comparison below is retained 2.1 evidence. Every measured model/analysis source hash must match exactly before `verify_retained_analysis.py` produces the 2.2 reference-quality gate. This release does not claim a new numeric quality benchmark. Actual model inference is rerun separately.
 
 ## Current separator comparison
 

@@ -1,4 +1,4 @@
-# LightForge 2.1.0 — Architecture
+# LightForge 2.2.0 — Architecture
 
 Quality bars for modularity and API boundaries. Repo: private `CyberBASSLord-666/LightForge` — on GitHub `main`, `android/` and `web/` live at **repo root**; some local/private trees nest the same layout under `app/lightforge/`. Current application and release contracts are described below.
 
@@ -130,3 +130,15 @@ Coordinate wording with LF Docs if touching `BUILD.md` / `VALIDATION.md`. Engine
 ## Release publication
 
 The CI candidate uses an ephemeral certificate. A trusted local signing step preserves the original installation identity. `tools/apk_delta.py` transfers only public signature/ZIP bytes and references SHA-256-pinned candidate regions; no signing secrets enter Actions. `publish_github_release.py` requires successful CI, unchanged Android/WebView sources, all five current source-bound gates, exact asset bytes, package version, alignment and the original certificate before creating a draft release. It verifies GitHub's uploaded APK digest before publishing.
+
+## Background execution (2.2)
+
+`AnalysisService` owns a dedicated application-context WebView. Its minimal `web/background/runner.html` runs the production MusicAnalyzer and ShowCompiler workers; it contains no preview, animation loop or playback element. `AppResources` supplies the same isolated asset and bounded WAV transport used by MainActivity, restricted to the current project for the service.
+
+`AnalysisJobStore` serializes a single job and its frozen saved inputs using fsynced temporary files and atomic replacement. Active job ownership rejects stale callbacks, concurrent starts and UI saves. Analysis is checkpointed before composition. Final publication compares the original project SHA-256, commits through ProjectStore's recoverable save transaction and records the job ID in the project. Recovery recognizes the narrow crash window between project commit and terminal job-state persistence.
+
+The UI polls persisted status while visible and also receives package-private broadcasts. It never owns the native generation promise. Completion reloads the saved result without first autosaving stale UI state. Progress is monotonic; native progress persistence/notifications are limited to roughly one update per second during model inference. Cancellation is acknowledged before the UI offers another job.
+
+Android 15+ uses the mediaProcessing foreground-service type. Older supported versions use dataSync for local file processing. An ongoing notification, bounded PARTIAL_WAKE_LOCK and explicit IMPORTANT renderer policy protect active work without keeping the display lit. On completion, cancellation, failure, renderer loss and timeout, the WebView and wake lock are released and the service stops. START_NOT_STICKY prevents reboot/kill retry loops. Android/OEM execution policy remains authoritative.
+
+The notification and battery-exemption settings are user-controlled. No Internet, overlay, accessibility, root, storage-wide or microphone permission is introduced. The test instrumentation APK is separately built and must use the ephemeral CI certificate; it is never signed with the private update key or shipped as a release asset.

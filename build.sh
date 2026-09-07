@@ -35,10 +35,14 @@ BUILD="$(mktemp -d "$BUILD_ROOT/.run-XXXXXXXX")"
 cleanup_build() {
     local status=$?
     if [[ "$status" -eq 0 ]]; then
-        rm -rf -- "$BUILD"
+        # Cleanup must not turn a fully verified, published APK into a failed
+        # build if the filesystem briefly retains an SDK temporary file.
+        rm -rf -- "$BUILD" 2>/dev/null || rm -rf -- "$BUILD" 2>/dev/null ||
+            printf 'Verified APK is ready; some temporary build files remain at %s\n' "$BUILD" >&2
     else
         printf 'Build failed; isolated intermediates retained at %s\n' "$BUILD" >&2
     fi
+    return "$status"
 }
 trap cleanup_build EXIT
 mkdir -p "$BUILD/classes" "$BUILD/dex" "$BUILD/generated" "$BUILD/assets"

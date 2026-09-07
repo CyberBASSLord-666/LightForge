@@ -1,3 +1,12 @@
+# LightForge 2.2.0 — Background analysis
+
+- Dedicated Android foreground service owns analysis and choreography across app switching, screen-off periods and Activity destruction.
+- Persistent notification progress, Cancel, completion notification and a Continue in background action.
+- Durable single-job ownership, frozen inputs, conflict protection, completed-analysis checkpoints and explicit interrupted-job recovery.
+- User-controlled notification/battery settings, device memory/core status, bounded CPU wake lock and protected WebView renderer priority.
+- Android media-processing timeout handling and service/resource cleanup; no boot restart loop or permanent screen-on flag.
+- New host transaction/UI/worker tests and a mandatory Android emulator lifecycle gate using real bundled models.
+
 # LightForge 2.1.0 — Studio cockpit and neural singing
 
 - Full-context Deux source separation and GAME Large singing transcription, bundled offline with pinned conversion provenance and licenses.

@@ -30,5 +30,7 @@ with zipfile.ZipFile(unsigned,'a') as archive:
     for path in dex.glob('*.dex'):archive.write(path,path.name,compress_type=zipfile.ZIP_STORED)
 aligned=out/'aligned.apk';run(build/'zipalign','-f','4',unsigned,aligned)
 target=ROOT/'dist/background-tests.apk'
-run(build/'apksigner','sign','--ks',key/'lightforge-release.jks','--ks-key-alias','lightforge','--ks-pass','file:'+str(key/'keystore-password.txt'),'--key-pass','file:'+str(key/'keystore-password.txt'),'--out',target,aligned)
+# The generated key uses the store password. apksigner consumes password-file
+# lines, so specifying that same single-line file twice incorrectly reaches EOF.
+run(build/'apksigner','sign','--ks',key/'lightforge-release.jks','--ks-key-alias','lightforge','--ks-pass','file:'+str(key/'keystore-password.txt'),'--out',target,aligned)
 run(build/'apksigner','verify',target);print('Built ephemeral, same-signed background-tests.apk')

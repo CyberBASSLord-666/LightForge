@@ -1,6 +1,24 @@
-# LightForge 2.1.0 — Studio cockpit and neural singing
+# LightForge 2.2.0 — Work beyond the screen
 
-Version code **20100**, signed with the original LightForge identity. Install over the existing app; do not uninstall first.
+Version code **20200**, using the original LightForge signing identity. Install the complete APK over your existing app without uninstalling.
+
+## Background creation
+
+- Create runs in its own Android foreground service, including the neural analysis and full choreography/compiled-frame save. Switching apps, locking the screen or dismissing the Studio Activity does not cancel the job.
+- The ongoing notification reports progress and offers Cancel. Completion is durably saved before the service stops, and reopening the app restores the current job or completed show.
+- **Continue in background** leaves the Studio while work continues. **Allow screen-off processing** opens Android's user-controlled battery exemption for long jobs. Notification settings, battery settings and memory/core information are available in Guide.
+- Cancellation and failure preserve the previous saved show. Finished analysis is checkpointed before choreography and can be reused on Retry when the original saved inputs match exactly. Mid-analysis interruption restarts that pass.
+- Android 15 media-processing time limits, Force stop, reboot and OEM memory/battery policy remain effective. The app handles timeout/interruption and releases its worker, service and wake lock instead of claiming unlimited execution.
+
+## Verification and scope
+
+The release requires Node/Python regressions, browser UI, real public model inference, unchanged-source numeric model evidence, native project/format tests and an Android emulator lifecycle check. The emulator check exercises real background inference with the Activity destroyed, screen off and a user-equivalent battery exemption, plus notification cancellation and the timeout callback. Emulator results do not certify physical Samsung battery management, thermals or Tesla timing.
+
+Models, precision settings and the offline boundary are unchanged from 2.1. Model licenses retain their noncommercial restrictions. No root access, microphone, overlay, accessibility or Internet permission is added. File-picking dialogs still require the app's UI.
+
+# Included from 2.1 — Studio cockpit and neural singing
+
+
 
 ## Music intelligence
 
