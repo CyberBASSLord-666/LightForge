@@ -1,31 +1,43 @@
 {
   "release": {
-    "apk": "LightForge-2.0.0.apk",
+    "apk": "LightForge-2.1.0.apk",
     "update_compatible": true,
     "signing_certificate_sha256": "7187d6aa935d5b7d2d656cb87913af95fe1ca3a4b1653036d1d8d890e2016c6b",
-    "bytes": 185644349,
-    "sha256": "d440033c3fd3f540dbefc300d6ca77d717f5019e5abc8178201cc5f78fa72e16",
+    "bytes": 1093320495,
+    "sha256": "e992f009838d955075c7deaa2ac357295978a9a789da096208d81065e92ca6ac",
     "zip_integrity": "passed",
     "alignment": "passed",
     "signature": "verified",
     "min_sdk": 26,
     "target_sdk": 35,
     "compile_sdk": 35,
-    "version_name": "2.0.0",
-    "version_code": 20000
+    "version_name": "2.1.0",
+    "version_code": 20100,
+    "web_asset_refresh": {
+      "assets": [
+        "assets/cockpit.js"
+      ],
+      "reason": "Final offscreen-rendering correction after a verified full build.",
+      "native_entries_unchanged": {
+        "AndroidManifest.xml": "bc4aaf1b39d52b54227d70431034c6c34de0da8a24bcfc7e707750b0082b158d",
+        "resources.arsc": "33a20a45da810d055b2b1c07dc490962dca55562b36126d2ea4763748ef53cf6",
+        "classes.dex": "329b685264fc32897f3e6e2babe3095beed14c621a71717614fe830fa3b15814"
+      },
+      "all_current_web_assets_verified": true
+    }
   },
   "signing_certificate_sha256": "7187d6aa935d5b7d2d656cb87913af95fe1ca3a4b1653036d1d8d890e2016c6b",
-  "apk_source_assets_matched": 63,
+  "apk_source_assets_matched": 93,
   "current_release_receipts": {
     "regression-verification.json": {
-      "sha256": "3c5c57113534d0a11e6d017b68053617be28bd21833506816482ef63a2d742bd",
+      "sha256": "e571eef585182a665f284d75896d7d5c27cd2793576935d47711691323f3fdc5",
       "result": {
-        "release": "2.0.0",
+        "release": "2.1.0",
         "passed": true,
         "checks": [
           "All selected engine, model-component, migration and DOM integration suites passed.",
           "Python APK archive and bounded release packaging regression suites passed.",
-          "All 32 analysis files match the preserved 1.6.0 asset manifest byte for byte; model accuracy evidence is retained, not claimed as newly measured."
+          "Every bundled analysis asset matches the current manifest; actual model quality and runtime are checked separately."
         ],
         "errors": [],
         "source_hashes": {
@@ -39,9 +51,9 @@
           "android/src/com/cyberbasslord/lightforge/ProjectStore.java": "51492859a40490533286574a08893bf3f6da5063c69b806f7760b3d056269472",
           "android/src/com/cyberbasslord/lightforge/WavConverter.java": "f34b9bf3c8960678b6116619941307ce01b75c672807ca85f6f81b6adc33b1b6",
           "android/src/com/cyberbasslord/lightforge/WebViewFileTransport.java": "2deff6c473928a08a7e63172c3fa6798df1273d1907fc163f292aa43d5c39b6e",
-          "build.sh": "dc6d967c60ffb1436fe4ae688802b4c2726753f78506af4ab4b858ca331c6301",
-          "package-lock.json": "53e8e775ac9ad3837366b0cd9841df0318f5e75856fd8b96664b4b80827fb5a5",
-          "package.json": "4f7baefb262e3a323eba5be5c850db687cbe10689f57590ac9ae3db230334210",
+          "build.sh": "abbe52e500326d70c3bd7ae6dd66b99c03f4ff2262a4d6aa385fd7e5cd5705ac",
+          "package-lock.json": "ddd53fb110ae21f2f60238724b2272be11cc6f801a4e7ad4ef28595e1036a6b2",
+          "package.json": "eea74affc655f35c7aac442a583f5588da28973eeb0b2fde557d58a3b520857f",
           "tests/ExportRestoreTest.java": "18da0906b4b0bdd923c195325ba296e7aacb316a812d83d3a2de5bee0a72e21b",
           "tests/NativeAudioTest.java": "7672dd051513d789f7cb4db32f7bcc6a9be5a952a28f7f7ca4a3ec1ec4cd10a8",
           "tests/NativeHardwareTest.java": "2726f33f235539c4685e87b9f5365bf1c76cc3170bab52c0d4f5e2115dc07e25",
@@ -51,50 +63,59 @@
           "tests/WebViewTransportServer.java": "e38b873a0ca64a8689bdef36d9ad5b68f2ee82754cdc0373d886b61ea419fbbb",
           "tests/WebViewTransportTest.java": "0fc201d751fba8589e87f6cab2c501331ef4388b9a012f639491c6ceacb24200",
           "tests/bass-notes.test.cjs": "d8fd98d78334bbe73deb5a888f7a4c0d189f9b4e047ce3f9d6fb63bdcf0a1abe",
+          "tests/cockpit-2.1.test.cjs": "b032cc49e2e8d309de381cee966b429a67d31822a82f264af1f72d0eefc47118",
           "tests/composer-1.4.test.cjs": "b51bc3f6783a309deb5306b92d9d28be79a085d3ba79d90584b856cc7b03e565",
           "tests/composer-1.5.test.cjs": "f2a25eaf2adb0bcca08bf339480214f7e86cb276e4e4a24e3cbaa431c9b523f3",
           "tests/composer-1.6.test.cjs": "c2d79d47cb1d03a8d73debbeff6eaeccdfefffebfcd108917befe86e0db108ce",
           "tests/engine-manual.test.cjs": "f0d5c7436e961d163abcd6694031bd6bd1980d1f08496f81d7293ae1a3febb08",
           "tests/engine.test.cjs": "90a1cc79cb02b3dc74e75ce78e708290341f0e82858a9d9bdc1b57a037ec2fca",
+          "tests/game-2.1.test.cjs": "f55389768a3aaab8750ccd0515a611462b9e3efbd2176f7a55765a3aef199573",
           "tests/light-planner.test.cjs": "40d96d54eadc7eb1eab9ccedb906a6c2b32c65c43509df66b33a76924b3df2f4",
           "tests/migration-1.6.test.cjs": "d408fc5debee1cb096fc0d5c177d82fd2bb086af4dac3202930d098ed3907058",
-          "tests/migration-2.0.test.cjs": "f7768939fd6fa3106882d69918a8a239086427c4acb3fedbfa865001f889d9a2",
+          "tests/migration-2.0.test.cjs": "dd8cd75404a17a23382b3a20d5bbe744a85111447c73ba3951566fcfb7038515",
           "tests/movement-planner.test.cjs": "36a7b4e5ba4bf054ca5c6bd82a0957a47d0d85eefde420c01457262a63615fda",
           "tests/precision-2.0.test.cjs": "2cc52539fbb5fae505cdcbb87cdbfcaccf6040ff13057419d4c2d45e620cae73",
-          "tests/precision-ui-2.0.test.cjs": "5e4d17f11f3e27be111c284f5092fa0963833e2e3e0efeca4b5efdc439d0b1d2",
+          "tests/precision-ui-2.0.test.cjs": "352727cb21d949ac7fd5bb411600211bbef2dab8f841988f0ee09d037b218c5a",
           "tests/preview-engine.test.cjs": "74c2788b400d785809a4992ba17e3c4d84ca877383f3cf72c99d43b6a096669a",
           "tests/role-composer-1.5.test.cjs": "a396ee903ea6cf9aaa46a1ae2b7b577f52b8633653ce3c8dbf6a505999348113",
           "tests/role-composer-1.6.test.cjs": "c162b1d6448bb1c2ba6829ceab65f5856805a22f9f85aceb56dfb42d6afc5175",
           "tests/role-reference-composer-1.6.test.cjs": "4b0c5bb26303791c1c183254a30706cd9166320292c4cb43bf253f3c0145a329",
           "tests/stem-cache.test.cjs": "1d267830858f49de8971f04f13a218d53ebac58646fd993c5aa83e2159c2cd15",
-          "tests/test_apk_archive.py": "f0b73f9adb20e525f9c5ac3d59e0869fbe259b83420ffbb941541f8f199e2864",
+          "tests/test_apk_archive.py": "90c86e731e0a700b2c673d74dd681c0fd51cda20a19b54358aed89942d2dd8d2",
           "tests/test_package_release_streaming.py": "1d5f317840c035217ffc0374f8533399ee4ee8439e04b259ca0bd0949fc6049e",
           "tests/verify_native_release.py": "288099063d17dad5b14755ce74f3afd2db84602965f198118b74f480837fb189",
-          "tests/vocal-detail.test.cjs": "4dc06e8c9769ea06f864563924bd1a8553fed35dd11b6a60b94a32900516ddf9",
+          "tests/vocal-detail.test.cjs": "ac151e505e78de8b5cf2783df2138d15f68f35dfe7d1f56db8126554f6b70409",
           "tests/wav-reader.test.cjs": "25a63a1eecce4d6ec389522c7212ecf0a356a13af98c57e82adb202a33009c7a",
           "tests/worker-harness.cjs": "94352a9231fd142c0ecaf3dd91f628d52eaaae3b65f559ce70e9784ca499fb51",
-          "tools/apk_archive.py": "532e0a29c3120a6fa6e0653d9f66701cc8594718b710672c41b89a89d4adfd64",
+          "tools/apk_archive.py": "6df2aedcbc324ddbf506c6b0c2d62922508e3692588c6399635bb2b02259e901",
           "tools/bootstrap_testdeps.py": "0f39e37e6d4affd06c306a23f52cbade331c45b5cbb0debfc67a7e6c45fd4a3a",
           "tools/bootstrap_toolchain.py": "0c46a84bee5e94843408ac8593a5b821ae8534a0f05a0f9b0f880f3208152750",
           "tools/build_preview.mjs": "173659066ea0b9d16f0d7ca1985876d481b289f4f3371305b425a33529ebd969",
           "tools/package_release.py": "fb268c7235b540fd603e2795212aede7100ab4e9ddd92f40b935b1171a4efbe0",
-          "tools/package_v2.py": "22af97dfa2621c999d654d028bb5db844e85f67bfb144f66107ee85a7f0bfd92",
+          "tools/package_v2.py": "b9daf3bbda819853b7a91a1234112e4db8471c38dd0ccd28e9d2940604055ed5",
+          "tools/prepare_deux.py": "892d00db0b46291ca5b2d600c2b314f5cdbdd84cd12a3859f97503de53ca62da",
+          "tools/prepare_game.py": "7f1fb983ab1888b7ecc0731bdd22538f73820a33f88775fc7f63dd8b9b43e800",
           "tools/sync_version.py": "d09155da8961e1ff2f110b0705ba241c12f35a82db5635c2b3bc2645ecaec9a2",
-          "tools/verify_v2.py": "2bfa0da52be434a69510638badb7f935508303853957b0fd80cf8ba36b2ee203",
-          "version.json": "f7713fbc5a62c55db2bd783a212a8af142e80c3e2897f4d6d908d9fbff1de568",
-          "web/analysis/analyzer.js": "7447840a63ec025d16ad368191261025f4d76ce171ddb54e1b38747ab8547a9a",
+          "tools/verify_analysis_assets.py": "682ac40a5c3af4ae811713de1ec01bd30b37c75fbe466b28fb6ccd860f58d2d5",
+          "tools/verify_v2.py": "59691a96c845b36445a31206a7bf387a84245e937a60d18010c9709c5cb6085d",
+          "version.json": "dc51fe7e12980bdf6d9ea27682502eb7b6f27fc42d5f574db5717502ccb82f58",
+          "web/analysis/analyzer.js": "981572c75f8b29eb165753ac069933ece52e12dffaf4ef4aa31b18af2c689db0",
           "web/analysis/bass-notes.js": "5b81e2361295a1f8c02086d4668464ed1d7e93c923513c50a2c865a7aeb1531e",
           "web/analysis/dsp.js": "32186b9268632cab85cadcb7e84fa1b4e3d8eb4bb9fbdf96a0873067cb9acd71",
+          "web/analysis/game.js": "f4a24e8417223bb4d9e52c9102054dc29a9c7c77cc59cf49f0c82d31802817c2",
+          "web/analysis/separator-deux.js": "06900caecc898f7a6cf1689c6a11fcb3bafdf8b21a177b83b6c5610386b9a74d",
           "web/analysis/separator-mdx.js": "f0d42ecc6d5928f72120a5e40b33a291d28d550a59ec0f05c68e37ed87ed3a9d",
-          "web/analysis/stem-cache.js": "c7d3101a59a85d0c2ebfd30e1c6cd40dc9720f17072b5fc821bd0fd3bf7c6fb4",
+          "web/analysis/stem-cache.js": "53d4ed79b3f107c145998b7b2fe94be02f81d244f3c05594643542b2da84a3fa",
           "web/analysis/vendor/ort-wasm-simd-threaded.mjs": "745eb7c0ce6f18a6aa521971b2877babc7ffb27eecb58ab3bc6e5ef4692672e8",
           "web/analysis/vendor/ort.wasm.min.js": "e66568724f8848e57cc2a56e4bea3a5b86ce3ff81b2da11eac8ed7ab02b27bd4",
-          "web/analysis/vocal-detail.js": "df7f86db061f4b64806539d82dfc7d4777379fdb506a75de8c2d3e689a82a621",
+          "web/analysis/vocal-detail.js": "cd760d7a766d9a4ab0ac3a252a10f17a16a797b38e50b2d6712bc6adcd42713f",
           "web/analysis/vocal.js": "94483ac6cf5db7532abfba98e7bab7cd826a82ad2adca0296d39fdebd827ac70",
           "web/analysis/wav-reader.js": "0f0e5216dc1d2ca0bfb25eddacdaa21076990fa7638c22188023607e43d4005f",
-          "web/analysis/worker.js": "77c70eed09201a68c10a3cff6254e46171cfd0a49f09eb54534f0180608df367",
-          "web/app.js": "a393f4377670bba86e2ea165e0bde7cfe76a677c7d4b99f2056ee3145c4066bd",
+          "web/analysis/worker.js": "725e6767647f70021d8ba38ec68f40f0059ca3af1afbdd282446cf7c7b54f75f",
+          "web/app.js": "bf45118c775dc4da7b85ab8f72fea5bc9f9dd282f950f39dc9a4db8d8b98e2ce",
           "web/channel-studio.js": "3248cadd49b2faf0856c887c84a5a31d12d22a4d79c733bb1b9fc84a85ad21e9",
+          "web/cockpit.css": "7a8a9270e101d0e0cdf21f8eeb57fac967fea8467ff0545dec9d1a9791df4ee6",
+          "web/cockpit.js": "cba1d693ee592ac9ea0bf028ba362d8247981c1678c25d81737db7a633163afe",
           "web/engine/client.js": "56380a3901c45b3409e94bf568a2f600dce471f1a8b289e71a081b91a04c355d",
           "web/engine/light-planner.js": "285f6e1c37160eeee117b98227b20ed044b020c1e0b0cc2e62505980ec5b00e6",
           "web/engine/movement-planner.js": "d22998c270c01af72f4fa1467ea5f5c9a3cc3ddda9f2264395fd8bba870305ec",
@@ -104,26 +125,26 @@
           "web/engine/vehicle-profile.js": "027bf87a827a900cda00505e2b539f84cbdb0d5a9800ea4eb1efdf85a0c10936",
           "web/engine/worker.js": "924e901876530dc45df99ab856ec2c7c48ae223ce76103d4c9d84047086a5121",
           "web/fonts/fonts.css": "7bb92eb5f9af3afb96cc510077d29d901d91eeb6252f8a99af6b3ed142bef5e5",
-          "web/index.html": "50875c4026608dcc976519e600d853d898aec64b36f8e7b52dc31ae3d5459aa5",
+          "web/index.html": "7ec1e1bea43fc0202aec6373672129c996ac33dbd8bc8208fad632f5edc5bd3d",
           "web/music-insights.js": "5fd372e92564172af8bc4d1797e25f8f629dd7cccf7326daf0ebc170475084ab",
-          "web/precision-studio.js": "5fb338ca3799807203df6776f9f25cc34d84b86551467069599c74073b766376",
+          "web/precision-studio.js": "9ff16fd7313fffff441905236cd93dbcb50b33d6593f5e381fffc3ae537aa222",
           "web/preview/src/highland-rig.js": "7e09e586f3b018a5912e6060c5d0787aae253bdfa4198d067edd79690d0e916d",
           "web/preview/src/vehicle-preview.js": "07f1ef5d3193ee29eec1ed9bbfc1350bf127860038ca21839fec077e11e35021",
           "web/preview/vehicle-preview.js": "a27736b2f89f1597f56971ba1755303b8724a8a72da11b8b7f2ac044cedbcc44",
-          "web/studio-tools.js": "1ecd3574c7c26b1602bfafd36c4cb3983ad1b6a0e1baefb7650380a075422a2e",
+          "web/studio-tools.js": "ee1239ce8a344d13ccaeb053470ff2ed1f455063e2293e22d0dc5f9e38013934",
           "web/styles.css": "e89ff197b174f00361c7b694d9a8b9f1ed8ef797c055e0a20176a195faff64f5",
           "web/ui-polish.js": "2cec7ca975ed6d1945f0bcb987a694d49782479b07d29e71e21306c26be39716",
-          "web/version.js": "ec0756464079ae53c72cf6fcba4a7e0299700b169bd80e46d093d720b4ecf4a2"
+          "web/version.js": "1566c2a91e6dc0235d586ed82149078074d5fa925f44f35d51db64d03c5155e8"
         },
         "scope": "Node engine/worker/WebCrypto/gzip, real app DOM integration with simulated native and graphics, Python archive tests. Not a visual browser or physical Android/Tesla test.",
-        "analysis_manifest_sha256": "53e9b9321885575c5972144aca0a881c80386d32cb9617e62671b934d77ea2ae",
-        "completedAt": "2026-09-07T00:06:22.568209+00:00"
+        "analysis_manifest_sha256": "4affe5b82439c873dee51a236a91e8e8aae5036e83da942250e30a0bbc8c903d",
+        "completedAt": "2026-09-07T06:47:09.300376+00:00"
       }
     },
     "browser-verification.json": {
-      "sha256": "ecad668f14d76c7f2c96cbe06a764f05f80e14a5527776120ca741258a260570",
+      "sha256": "7a43a9637e56cc64360b515ded51a513d3cf982ae0e1f508fe18441afa59b504",
       "result": {
-        "release": "2.0.0",
+        "release": "2.1.0",
         "passed": true,
         "checks": [
           "Visible cue form generated a matching final FSEQ attack using actual browser workers.",
@@ -131,15 +152,20 @@
           "Streamed export payload matches the saved frame SHA-256 and contains synchronization review.",
           "Reload preserved exact compiled frames and musical edits.",
           "Export after reopening retained the verified synchronization report.",
-          "320, 393, 768 and 1440 px layouts have no horizontal overflow or duplicate IDs; screenshots retained."
+          "Workspace tabs support keyboard navigation; musical score zoom is operational.",
+          "320, 393, 768 and 1440 px layouts have no horizontal overflow or duplicate IDs; screenshots retained.",
+          "The source-time score stops drawing when its workspace is offscreen during audio playback.",
+          "First launch, saved-show collection and vehicle guide render without overflow or page errors at phone and desktop sizes."
         ],
         "errors": [],
         "source_hashes": {
-          "web/version.js": "ec0756464079ae53c72cf6fcba4a7e0299700b169bd80e46d093d720b4ecf4a2",
-          "web/app.js": "a393f4377670bba86e2ea165e0bde7cfe76a677c7d4b99f2056ee3145c4066bd",
-          "web/index.html": "50875c4026608dcc976519e600d853d898aec64b36f8e7b52dc31ae3d5459aa5",
+          "web/cockpit.js": "cba1d693ee592ac9ea0bf028ba362d8247981c1678c25d81737db7a633163afe",
+          "web/cockpit.css": "7a8a9270e101d0e0cdf21f8eeb57fac967fea8467ff0545dec9d1a9791df4ee6",
+          "web/version.js": "1566c2a91e6dc0235d586ed82149078074d5fa925f44f35d51db64d03c5155e8",
+          "web/app.js": "bf45118c775dc4da7b85ab8f72fea5bc9f9dd282f950f39dc9a4db8d8b98e2ce",
+          "web/index.html": "7ec1e1bea43fc0202aec6373672129c996ac33dbd8bc8208fad632f5edc5bd3d",
           "web/styles.css": "e89ff197b174f00361c7b694d9a8b9f1ed8ef797c055e0a20176a195faff64f5",
-          "web/precision-studio.js": "5fb338ca3799807203df6776f9f25cc34d84b86551467069599c74073b766376",
+          "web/precision-studio.js": "9ff16fd7313fffff441905236cd93dbcb50b33d6593f5e381fffc3ae537aa222",
           "web/engine/worker.js": "924e901876530dc45df99ab856ec2c7c48ae223ce76103d4c9d84047086a5121",
           "web/engine/client.js": "56380a3901c45b3409e94bf568a2f600dce471f1a8b289e71a081b91a04c355d",
           "web/engine/show-engine.js": "d09cfcdf1e1eebf36d3e03bfd40a3939dcc0fd18a4437047217511a258674548",
@@ -148,13 +174,13 @@
           "web/engine/sync-review.js": "eb9591060fffa20e2b12de97c6d344b61e06fc276af75817610d4e17095c61d9"
         },
         "scope": "Desktop Chromium with actual WebGL and web workers; simulated Android bridge. No Android device or Tesla.",
-        "completedAt": "2026-09-07T00:09:05.260Z"
+        "completedAt": "2026-09-07T06:51:47.882Z"
       }
     },
     "native-verification.json": {
-      "sha256": "2dff1e388431998ed820914938e3fe5ca99fded15c02ec77d7717381bd6870da",
+      "sha256": "5bfff46cce31bdb08410ca95f23e0f2963c2d003ed51ae292d12bafc46ebdc2e",
       "result": {
-        "release": "2.0.0",
+        "release": "2.1.0",
         "passed": true,
         "scope": "Fresh production Java compilation and host JVM tests; no Android Activity/device/document-provider or physical Tesla execution.",
         "source_hashes": {
@@ -187,14 +213,234 @@
           "Playback proxy boundaries through the four-hour maximum passed.",
           "Source wiring checks: package-derived version, frozen export projectState, native pause/save hook and background startup recovery are present (not device runtime tests)."
         ],
-        "completed": "2026-09-07T00:08:24.872209+00:00"
+        "completed": "2026-09-07T06:25:12.685793+00:00"
+      }
+    },
+    "analysis-browser-verification.json": {
+      "sha256": "d1842bdc4005ffeebfab6e7c0f822edbc0b841377c1321ac103bf90abdbe5032",
+      "result": {
+        "release": "2.1.0",
+        "passed": true,
+        "errors": [],
+        "checks": [
+          "Full production analyzer completed actual precision-model inference, retained full-resolution source-clock vocals, and returned learned sung notes.",
+          "Actual newly analyzed music composes into legal FSEQ frames and restores with an identical frame hash.",
+          "Public analyzer cancellation during source separation removed its incomplete OPFS namespace."
+        ],
+        "source_hashes": {
+          "web/analysis/worker.js": "725e6767647f70021d8ba38ec68f40f0059ca3af1afbdd282446cf7c7b54f75f",
+          "web/analysis/analyzer.js": "981572c75f8b29eb165753ac069933ece52e12dffaf4ef4aa31b18af2c689db0",
+          "web/analysis/game.js": "f4a24e8417223bb4d9e52c9102054dc29a9c7c77cc59cf49f0c82d31802817c2",
+          "web/analysis/separator-deux.js": "06900caecc898f7a6cf1689c6a11fcb3bafdf8b21a177b83b6c5610386b9a74d",
+          "web/analysis/stem-cache.js": "53d4ed79b3f107c145998b7b2fe94be02f81d244f3c05594643542b2da84a3fa",
+          "web/analysis/vocal.js": "94483ac6cf5db7532abfba98e7bab7cd826a82ad2adca0296d39fdebd827ac70",
+          "web/analysis/vocal-detail.js": "cd760d7a766d9a4ab0ac3a252a10f17a16a797b38e50b2d6712bc6adcd42713f",
+          "web/analysis/bass-notes.js": "5b81e2361295a1f8c02086d4668464ed1d7e93c923513c50a2c865a7aeb1531e",
+          "web/analysis/models/game/manifest.json": "51e172cfaa967d9e2518f01f508a64d49cd283d23ae8e8456af9c6e76eeb4f97",
+          "web/analysis/models/deux/manifest.json": "724ba38ba42617f3f867fc39dd044f9b1ff1284abeabffbaeadbf3ea67cf2389",
+          "web/engine/show-engine.js": "d09cfcdf1e1eebf36d3e03bfd40a3939dcc0fd18a4437047217511a258674548",
+          "web/engine/light-planner.js": "285f6e1c37160eeee117b98227b20ed044b020c1e0b0cc2e62505980ec5b00e6",
+          "web/engine/music-cues.js": "1a87eea0502da2e1f19d2361a5646c127121211e91128017ce747b7f0d2f61d6",
+          "web/engine/sync-review.js": "eb9591060fffa20e2b12de97c6d344b61e06fc276af75817610d4e17095c61d9",
+          "web/engine/worker.js": "924e901876530dc45df99ab856ec2c7c48ae223ce76103d4c9d84047086a5121"
+        },
+        "scope": "Actual Chromium public MusicAnalyzer with production Deux, GAME Large, Beat This and Frame-MN10. Test controls and original-stem reference scoring are independent of model inputs. No physical Android or Tesla.",
+        "analysis": {
+          "engine": {
+            "name": "Beat This! full + Deux + GAME Large",
+            "neural": true,
+            "detail": "Bundled pretrained rhythm transformer, stereo vocal separation, isolated-voice singing and speech classification, GAME Large neural sung-note transcription, measured source expression, and independent accompaniment bass tracking. All audio stays on this device.",
+            "model": "Beat This! final0",
+            "modelId": "beat-this-final0",
+            "modelSha256": "5f810debe53459b559127fb55bbad40035bb47cc567b20e501670f968c770f02",
+            "frontendSha256": "fdd59e65c515331308e4c8841edf99972deca646bdf6197744c2a5b7755e3de9",
+            "vocalModel": {
+              "name": "PretrainedSED Frame-MN10",
+              "id": "frame-mn10-strong-1",
+              "sha256": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+              "license": "MIT"
+            },
+            "noteModel": "game-large-1.0.3-lightforge-1",
+            "separationModel": {
+              "name": "Mel-Band RoFormer Deux",
+              "modelId": "mel-band-roformer-deux-lightforge-1",
+              "modelSha256": "10255c02295bf3e3865d4ee50ff752d7b19b124ed5fd93b147babc4333eda3aa",
+              "sourceSeparated": true,
+              "sampleRate": 44100,
+              "sourceChannels": 2,
+              "stems": [
+                "vocals",
+                "accompaniment"
+              ],
+              "method": "Dual trained stereo source separation; Float32 staged transformer with complete attention",
+              "contextSeconds": 13,
+              "coreSeconds": 10,
+              "overlapSeconds": 5,
+              "chunks": 1,
+              "estimated": true,
+              "analysisSeconds": 352.15984499999996,
+              "alignment": "Original PCM clock; centered STFT and normalized overlap-add with complementary chunk crossfades",
+              "limitations": [
+                "Vocal and instrumental estimates can contain bleed; neither is an isolated bass instrument.",
+                "Lead and backing singers share one vocal source; no lyrics or word alignment."
+              ]
+            },
+            "bassMethod": "Harmonic low-register tracking",
+            "quality": "precision",
+            "runtime": "ONNX Runtime Web 1.20.1",
+            "analysisSeconds": 392.9
+          },
+          "separation": {
+            "name": "Mel-Band RoFormer Deux",
+            "modelId": "mel-band-roformer-deux-lightforge-1",
+            "modelSha256": "10255c02295bf3e3865d4ee50ff752d7b19b124ed5fd93b147babc4333eda3aa",
+            "sourceSeparated": true,
+            "sampleRate": 44100,
+            "sourceChannels": 2,
+            "stems": [
+              "vocals",
+              "accompaniment"
+            ],
+            "method": "Dual trained stereo source separation; Float32 staged transformer with complete attention",
+            "contextSeconds": 13,
+            "coreSeconds": 10,
+            "overlapSeconds": 5,
+            "chunks": 1,
+            "estimated": true,
+            "analysisSeconds": 352.15984499999996,
+            "alignment": "Original PCM clock; centered STFT and normalized overlap-add with complementary chunk crossfades",
+            "limitations": [
+              "Vocal and instrumental estimates can contain bleed; neither is an isolated bass instrument.",
+              "Lead and backing singers share one vocal source; no lyrics or word alignment."
+            ]
+          },
+          "noteCount": 11,
+          "bassNoteCount": 9,
+          "cacheHash": "8cc789f93ea4f6d1fbc94b60823077b03f406da89c6cf3e863fbd5cf6ebae82f",
+          "progressMonotonic": true
+        },
+        "composition": {
+          "valid": true,
+          "hash": "33161958e7822fa3f4534760a90babc2e4c201bae308f2465d03e825a1bbb333",
+          "savedHash": "33161958e7822fa3f4534760a90babc2e4c201bae308f2465d03e825a1bbb333",
+          "restoredHash": "33161958e7822fa3f4534760a90babc2e4c201bae308f2465d03e825a1bbb333",
+          "frameCount": 341,
+          "synchronization": {
+            "version": 1,
+            "scope": "Selected musical targets compared with final FSEQ commands; not detection accuracy or measured vehicle latency.",
+            "frameStepMs": 20,
+            "roles": {
+              "vocals": {
+                "selected": 5,
+                "matched": 5,
+                "suppressed": 0,
+                "heldWithoutAttack": 0
+              },
+              "bass": {
+                "selected": 9,
+                "matched": 9,
+                "suppressed": 0,
+                "heldWithoutAttack": 0
+              }
+            },
+            "selected": 14,
+            "matched": 14,
+            "coverage": 1,
+            "maxErrorMs": 10.000000000000009,
+            "medianErrorMs": 9.999999999999787,
+            "issues": [],
+            "omittedIssues": 0,
+            "manual": []
+          }
+        },
+        "cancellation": {
+          "aborted": true,
+          "stage": "Separating voice and instruments",
+          "remainingNamespaces": 0
+        },
+        "completedAt": "2026-09-07T06:45:02.083Z"
+      }
+    },
+    "analysis-verification.json": {
+      "sha256": "b0c4c2de006ffbc8b27b0fd72f8e6431cf122ba8c07c6b9c468eb70eba45a704",
+      "result": {
+        "release": "2.1.0",
+        "passed": true,
+        "errors": [],
+        "checks": [
+          "All six natural-mixture vocal SI-SDR values improve over the declared MDX baseline.",
+          "All 18 reference outputs preserve source sample counts and finite audio.",
+          "All 12 positive role cases retain phrases and notes; all six instrument-only cases produce zero voice phrases, notes and accents.",
+          "Actual production JS/WASM output agrees with the original model within declared numeric tolerance; every graph matches the released model manifest."
+        ],
+        "source_hashes": {
+          "web/analysis/ASSET_MANIFEST.json": "4affe5b82439c873dee51a236a91e8e8aae5036e83da942250e30a0bbc8c903d",
+          "web/analysis/worker.js": "725e6767647f70021d8ba38ec68f40f0059ca3af1afbdd282446cf7c7b54f75f",
+          "web/analysis/separator-deux.js": "06900caecc898f7a6cf1689c6a11fcb3bafdf8b21a177b83b6c5610386b9a74d",
+          "web/analysis/game.js": "f4a24e8417223bb4d9e52c9102054dc29a9c7c77cc59cf49f0c82d31802817c2",
+          "web/analysis/vocal-detail.js": "cd760d7a766d9a4ab0ac3a252a10f17a16a797b38e50b2d6712bc6adcd42713f",
+          "web/analysis/vocal.js": "94483ac6cf5db7532abfba98e7bab7cd826a82ad2adca0296d39fdebd827ac70",
+          "web/analysis/stem-cache.js": "53d4ed79b3f107c145998b7b2fe94be02f81d244f3c05594643542b2da84a3fa",
+          "web/analysis/wav-reader.js": "0f0e5216dc1d2ca0bfb25eddacdaa21076990fa7638c22188023607e43d4005f",
+          "web/analysis/models/deux/manifest.json": "724ba38ba42617f3f867fc39dd044f9b1ff1284abeabffbaeadbf3ea67cf2389",
+          "web/analysis/models/game/manifest.json": "51e172cfaa967d9e2518f01f508a64d49cd283d23ae8e8456af9c6e76eeb4f97",
+          "tools/prepare_deux.py": "892d00db0b46291ca5b2d600c2b314f5cdbdd84cd12a3859f97503de53ca62da",
+          "tools/prepare_game.py": "7f1fb983ab1888b7ecc0731bdd22538f73820a33f88775fc7f63dd8b9b43e800",
+          "qa/release-2.1.0/evaluate-roles.cjs": "f7dfbed9bc8dcb92f861bfd2cc9a56f87b84791a22886bd990802e03ea4d80fb",
+          "qa/release-2.1.0/verify-analysis.py": "a831c763badbc6f6cf61c683c2a07df300b8282c8f7b68948d097e49f47777d2",
+          "qa/release-2.1.0/test-source-clock.cjs": "8e5fe87cfdf15b871ff10f050e03159eb50c62d7d496523430e02d2d79beb624"
+        },
+        "scope": "Original-weight PyTorch separation on 18 source-reference cases with exact production context; actual JS/WASM Falcon separator parity; production role components on estimated sources. Public worker/OPFS integration is a separate gate. Not human note annotations, device performance or vehicle timing.",
+        "summary": {
+          "naturalMix": {
+            "oldMdxMeanSiSdrDb": 10.042196666666666,
+            "deuxMeanSiSdrDb": 11.474913333333333,
+            "deuxMeanEnvelopeCorrelation": 0.97403
+          },
+          "controlledMix": {
+            "deuxMeanSiSdrDb": 11.990556666666667,
+            "deuxMeanEnvelopeCorrelation": 0.9935216666666666,
+            "deuxMeanOutsideVoiceEnergyFraction": 0.0023702555500000003,
+            "oldMdxMeanOutsideVoiceEnergyFraction": 0.00059
+          },
+          "tradeoff": "Deux improves separation SI-SDR on all six natural mixtures but has more residual estimated-voice energy outside the controlled voice windows than MDX. No universal superiority or human note accuracy is claimed."
+        },
+        "wasm": {
+          "samples": 300032,
+          "vocalPcmSHA256": "3d649aa498905f156372db1455e67ffc825e428d45d506709476dfc25950f73c",
+          "maxAbsErrorVsOriginalModel": 0.00046738237142562866,
+          "rmsErrorVsOriginalModel": 2.431483517284505e-05,
+          "allGraphBytesMatchPublishedManifest": true,
+          "singleThreadSeconds": 351.893
+        },
+        "roles": {
+          "positiveCases": 12,
+          "instrumentalCasesWithZeroVoiceEvents": 6,
+          "transcriptionReuse": "The unchanged GAME adapter/graphs were run once on each source estimate. Classifier, source detail and fusion were rerun after the admission fix, using source-hash-validated cached neural predictions."
+        },
+        "limitations": [
+          "Six short excerpts; possible training overlap; not statistically representative or verified held-out data.",
+          "Source stems are scoring references, never separator inputs. Reference estimates use the original PyTorch model with production context, not the public worker.",
+          "No human note/pitch annotations, phone installation, thermal/memory endurance or physical Tesla validation.",
+          "Bass remains a combined-accompaniment harmonic estimate."
+        ],
+        "evidence_hashes": {
+          "deux-context-results.json": "f6197c126063078512af798b1902486cd4462215b46133f88c664d10a9ed0b50",
+          "deux-parity.json": "e065d7c4989a0f9e6166ace32a55847abae95f4e3871a4c94771abc60ac706b4",
+          "deux-wasm-result.json": "282bb731e2bb47c7da95a7528e1648ec3f6616face1c131ae64c250159c34b6c",
+          "role-component-results.json": "9cd037785fe38772d5ea1df41f41cf8c07f830d015ad002ceb7b473d121f0cd6",
+          "reference-evaluation-capture.txt": "6bdac0f0d9677c831438266a2b03383c5ce184a4eb8c26e863e515ca9d2d4bf1",
+          "wasm-evaluation-capture.txt": "3713d1cd57153c52233a9227f7618155464028e14a769d752d2f89b38568d87e",
+          "musdb-fixture-provenance.json": "319552573a28c8637124f47bda7ba6dc31f15c7882a3ffa35fc33aa5cd3d1043",
+          "source-clock-verification.json": "f02130a749790e5dcd527dcf19c13c97848eb8ad929504b07abfa417e173bfd6"
+        },
+        "completedAt": "2026-09-07T06:43:13.619232+00:00"
       }
     }
   },
   "model_analysis_evidence": {
-    "status": "Unchanged 1.6.0 implementation and model assets, byte-verified by the current regression gate. Historical runtime/accuracy evidence was not relabeled as a fresh measurement.",
-    "path": "qa/release-1.6.0/analysis-verification.json",
-    "sha256": "c52ab6e6220782f4e101f61b0ca1fdb5ecdc933382225f2732cc475a97d2a89c"
+    "status": "Current model runtime and reference scoring are separate, source-bound gates. Quality scores are from six short reference excerpts, not a general accuracy guarantee.",
+    "path": "qa/release-2.1.0/analysis-verification.json"
   },
   "native_device_install_and_launch": "NOT PERFORMED",
   "vehicle_test": "NOT PERFORMED",
