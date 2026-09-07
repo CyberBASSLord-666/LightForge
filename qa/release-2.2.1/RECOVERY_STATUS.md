@@ -10,3 +10,9 @@ The release is **not published**. Application source is unchanged from `0527d778
 - The local executor disconnected with `409 environment_offline`. The APK, signing identity and remaining local build work cannot currently be accessed. No private key was uploaded. This branch preserves the completed source and evidence.
 
 Next steps: inspect the native recovery probe; fix any actual failure; update the main workflow's Android job budget to cover the corrected runner; obtain a successful complete release-candidate run; reconnect the local workspace, refresh the current six gates, package and transfer the original-signed APK using the verified candidate index; publish and verify the release assets. Physical phone/full-song and Tesla testing remain unverified.
+
+## Latest remote checkpoint
+
+Probe [34166156881](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34166156881), test commit `d5558c7f1eaee20b7dcd9a50805dc9b1462d8539`, passed provenance, Java/instrumentation compilation, direct re-sign, exact application payload comparison, matching ephemeral app/test certificates and 16 KiB alignment. Emulator startup was underway at the last check; this is not yet a lifecycle pass.
+
+The workspace was retried after those checks and still returned `409 environment_offline`. Reconnection is required to retrieve the original-signed APK and complete its release transfer. Current original application source, all prior successful evidence, publisher fix and revised test infrastructure are preserved on this branch. Do not apply the prepared final-release documentation or claim publication until the remaining gates and signed transfer succeed.
