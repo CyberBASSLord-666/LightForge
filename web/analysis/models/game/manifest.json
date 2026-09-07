@@ -1,0 +1,43 @@
+{
+  "id": "game-large-1.0.3-lightforge-1",
+  "name": "GAME Large",
+  "parameters": "approximately 100 million",
+  "origin": "https://github.com/openvpi/GAME/releases/download/v1.0.3/GAME-1.0.3-large-onnx.zip",
+  "archiveSHA256": "8a5480539fe7d995800dc0efe149b83a1cd4f4e4a36aa2a1f7665f1765dcac08",
+  "license": "CC-BY-NC-SA-4.0",
+  "licenseURL": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+  "author": "openvpi and GAME contributors",
+  "modification": "Uniform diffusion noise supplied as an explicit deterministic input; original float32 weights unchanged.",
+  "sampleRate": 44100,
+  "frameSeconds": 0.01,
+  "steps": 8,
+  "boundaryThreshold": 0.2,
+  "presenceThreshold": 0.2,
+  "radius": 2,
+  "files": {
+    "bd2dur.onnx": {
+      "bytes": 4569,
+      "sha256": "6672d56b00f27a20e9bfaa92801c15e394bb520e49031d3ed2515b0a6cf27402"
+    },
+    "config.json": {
+      "bytes": 198,
+      "sha256": "4d62b6d058a820e981184ea6f04605d37659c4331ee01979eb14a14be08af890"
+    },
+    "dur2bd.onnx": {
+      "bytes": 2632,
+      "sha256": "49d10d1ea186e43c51fd2c51cedb01a3852d363f1c7056ae77df50f7e8dd0996"
+    },
+    "encoder.onnx": {
+      "bytes": 80398908,
+      "sha256": "fbda7df8791d5cafd02ed33c65f9926c5514c750278c27fb8a59259b4c1d7464"
+    },
+    "estimator.onnx": {
+      "bytes": 153459702,
+      "sha256": "0d4a6e13bf475f79967e252b401bb5f317aa6b96bbe6665d5f8b14b42b179926"
+    },
+    "segmenter.onnx": {
+      "bytes": 159935846,
+      "sha256": "9db605a2ad3c179e9c4e4ae5b970727006020c65936773c26b2cbc27d8ef892f"
+    }
+  }
+}

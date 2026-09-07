@@ -4,7 +4,7 @@
   const app=window.LightForgeApp, $=id=>document.getElementById(id), audio=$('audio');
   if(!app)return;
   const panel=document.createElement('section');panel.id='precisionStudio';panel.className='precision-studio';panel.setAttribute('aria-labelledby','precisionTitle');
-  panel.innerHTML=`<div class="section-heading"><div><div class="eyebrow">PRECISION STUDIO · 2.0</div><h3 id="precisionTitle">Give every cue a purpose</h3></div><span class="precision-chip">Voice + bass</span></div>
+  panel.innerHTML=`<div class="section-heading"><div><div class="eyebrow">SYNCHRONIZATION</div><h3 id="precisionTitle">Refine the performance</h3></div><span class="precision-chip">Voice + bass</span></div>
   <p class="muted small-copy">Listen, correct a musical moment, then review the lights it actually produces. Your original analysis is kept.</p>
   <div id="syncSummary" class="sync-summary" role="status"></div>
   <details id="syncDetails"><summary>Review synchronization</summary><p class="field-note">This checks selected musical targets against exported lamp commands. Detection timing and vehicle response still need listening and an in-car check.</p><div id="syncRoles" class="sync-role-grid"></div><div id="syncIssues" class="precision-list"></div></details>

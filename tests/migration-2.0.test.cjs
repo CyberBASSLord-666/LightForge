@@ -7,7 +7,7 @@ const settings={dance:'off',seed:2025,vocalFocus:.85,bassFocus:.9,vocalRegions:[
 test('actual 1.6 worker snapshot migrates to 2.0 with exact frames and stable repeated reopen',async()=>{
  const old=await run(legacy,{action:'generate',music,settings});
  const restored=await run(current,{action:'restore',music,settings:{...settings,...defaults},compiled:old.compiled});
- assert.deepEqual(restored.show.frames,old.show.frames);assert.equal(restored.compiled.frameData,old.compiled.frameData);assert.equal(restored.compiled.metaSHA256,old.compiled.metaSHA256);assert.equal(restored.compiled.settingsMigration.to,'2.0.0');
+ assert.deepEqual(restored.show.frames,old.show.frames);assert.equal(restored.compiled.frameData,old.compiled.frameData);assert.equal(restored.compiled.metaSHA256,old.compiled.metaSHA256);assert.equal(restored.compiled.settingsMigration.to,require('../web/version.js').name);
  const again=await run(current,{action:'restore',music,settings:{...settings,...defaults},compiled:restored.compiled});assert.equal(JSON.stringify(again.compiled),JSON.stringify(restored.compiled));
  for(const patch of [{vocalOffsetMs:1},{bassOffsetMs:-1},{musicCues:[{id:'x',role:'vocals',action:'hold',start:1,end:2}]},{intensity:.3}])await assert.rejects(run(current,{action:'restore',music,settings:{...settings,...defaults,...patch},compiled:old.compiled}),/does not match/);
  for(const mutate of [c=>c.sha256='0'.repeat(64),c=>c.meta.vehicle='changed',c=>c.frameData='invalid',c=>c.frameCount++]){const compiled=structuredClone(old.compiled);mutate(compiled);await assert.rejects(run(current,{action:'restore',music,settings:{...settings,...defaults},compiled}));}

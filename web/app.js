@@ -147,7 +147,7 @@ function updateButtons(){
  text($('generate').querySelector('span'),state.needAnalysis?'Analyze & recreate':has?'Recreate light show':'Create my light show');$('play').disabled=!state.project||state.loadingProject||state.auditionLoading;$('seek').disabled=state.auditionLoading;$('backBeat').disabled=state.auditionLoading;$('forwardBeat').disabled=state.auditionLoading;
  $('undo').disabled=!state.history.length||state.busy||state.loadingProject;if($('redo'))$('redo').disabled=!state.future.length||state.busy||state.loadingProject;
  $('export').disabled=waiting||!ready;$('noShowOverlay').hidden=has;
- if(!state.needAnalysis)text($('generationHint'),state.composing?'Updating the arrangement in the background…':state.music&&(state.music.analysisVersion||1)<5?'Your saved arrangement is preserved. Re-analyze to separate the voice and recover finer musical phrasing.':has?'Tweak a setting to update the preview. Your show saves automatically.':'On-device music analysis. No subscription. No uploads.');
+ if(!state.needAnalysis)text($('generationHint'),state.composing?'Updating the arrangement in the background…':state.music&&(state.music.analysisVersion||1)<6?'Your saved arrangement is preserved. Re-analyze for GAME Large singing transcription and studio source separation.':has?'Tweak a setting to update the preview. Your show saves automatically.':'On-device music analysis. No subscription. No uploads.');
  document.dispatchEvent(new CustomEvent('lightforge:changed'));
 }
 async function generate(){

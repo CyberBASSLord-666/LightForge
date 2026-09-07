@@ -1,6 +1,6 @@
 /* Private worker: bounded PCM chunks -> exact log-mel -> pretrained Beat This! transformer. */
 'use strict';
-importScripts('wav-reader.js','dsp.js','bass-notes.js','vocal.js','vocal-detail.js','stem-cache.js','separator-mdx.js','vendor/ort.wasm.min.js');
+importScripts('wav-reader.js','dsp.js','bass-notes.js','vocal.js','vocal-detail.js','stem-cache.js','separator-mdx.js','game.js','vendor/ort.wasm.min.js');
 const report=(progress,stage,detail='')=>postMessage({type:'progress',value:{progress,stage,detail}});
 const dispose=outputs=>{for(const value of Object.values(outputs))if(value.dispose)value.dispose();};
 const sigmoid=x=>1/(1+Math.exp(-Math.max(-50,Math.min(50,x))));
@@ -13,7 +13,7 @@ async function melForFrames(reader,session,first,frames,config){
  const tensor=new ort.Tensor('float32',pcm,[1,pcm.length]);let output;
  try{output=await session.run({audio_pcm:tensor});const mel=output.mel_spectrogram;return new Float32Array(mel.data.subarray(halo*128,(halo+frames)*128));}finally{if(output)dispose(output);tensor.dispose();}
 }
-self.onmessage=async e=>{let session,melSession,separator,cacheWriter,cacheKey;try{
+self.onmessage=async e=>{let session,melSession,separator,game,cacheWriter,cacheKey;try{
  const {audioUrl,options={}}=e.data;cacheKey=options.cacheKey;const quality=options.analysisQuality==='balanced'?'balanced':'precision';
  report(.01,'Opening music','Reading your music locally');const reader=new LightForgeWavReader(options.analysisUrl||audioUrl);await reader.open();
  const config=await(await fetch('models/features.json')).json(),models=await(await fetch('models/model-manifest.json')).json(),selected=models[quality];
@@ -59,12 +59,16 @@ self.onmessage=async e=>{let session,melSession,separator,cacheWriter,cacheKey;t
  for(let start=0;start<detailCount;start+=detailChunk){const count=Math.min(detailChunk,detailCount-start),voice=await stems.vocals.mono22050(start,count,config),backing=await stems.accompaniment.mono22050(start,count,config);detailExtractor.push(voice,start,backing);report(.905+.035*(start+count)/detailCount,'Following vocal expression','Measuring entrances, syllabic attacks, held notes and pauses');}
  result.vocals=detailExtractor.finish({classifier:classified.classifier,model:classified.model});
  classified.classifier=null;
- report(.94,'Following bass notes','Listening beneath the separated singing');
- const bass=await LightForgeBass.analyze(stems.accompaniment,config,{onProgress:p=>report(.94+.055*p,'Following bass notes','Distinguishing sustained low notes from brief drum attacks')});
+ report(.942,'Transcribing sung notes','GAME Large • identifying entrances, pitch changes and held notes');
+ game=await LightForgeGAME.create({ort,baseUrl:new URL('models/game/',self.location.href).href,onProgress:detail=>report(.942,'Loading singing transcription',detail)});
+ const transcription=await game.process(await LightForgeStemCache.fullVoice(result.stemCache),sourceReader.samples,{onProgress:p=>report(.945+.04*p,'Transcribing sung notes','GAME Large • '+Math.round(p*100)+'%')});
+ result.vocals=LightForgeGAME.fuse(result.vocals,transcription);await game.release();game=null;
+ report(.985,'Following bass notes','Listening beneath the separated singing');
+ const bass=await LightForgeBass.analyze(stems.accompaniment,config,{onProgress:p=>report(.985+.014*p,'Following bass notes','Distinguishing sustained low notes from brief drum attacks')});
  const {notes,...bassAnalysis}=bass;result.bassNotes=notes;result.bassAnalysis={...bassAnalysis,source:'separated-accompaniment',sourceSeparated:true,limitations:[...(bassAnalysis.limitations||[]),'Bass notes are estimated from combined accompaniment, not an isolated bass instrument.']};
- result.analysisVersion=5;
- result.roleAnalysis={version:2,clock:'Original decoded audio',vocalSource:'Separated vocal waveform with singing and speech evidence',bassSource:'Low-register harmonics in separated accompaniment',sourceSeparated:true,lyricsAligned:false};
+ result.analysisVersion=6;
+ result.roleAnalysis={version:3,clock:'Original decoded audio',vocalSource:'Separated vocal waveform with singing and speech evidence',bassSource:'Low-register harmonics in separated accompaniment',sourceSeparated:true,lyricsAligned:false};
  for(const warning of [...(result.vocals.warnings||[]),...(result.separation.limitations||[])])if(!result.warnings.includes(warning))result.warnings.push(warning);
- result.engine={name:'Beat This! '+(quality==='precision'?'full transformer':'compact transformer')+' + studio vocal separation',neural:true,detail:'Bundled pretrained rhythm transformer, stereo vocal separation with polarity refinement, isolated-voice singing and speech classification, measured articulation and held notes, and independent accompaniment bass tracking. All audio stays on this device.',model:selected.model,modelId:selected.id,modelSha256:selected.sha256,frontendSha256:models.frontend.sha256,vocalModel:result.vocals.model,separationModel:result.separation,bassMethod:result.bassAnalysis.method,quality,runtime:'ONNX Runtime Web 1.20.1',analysisSeconds:Math.round((performance.now()-started)/100)/10};
+ result.engine={name:'Beat This! '+(quality==='precision'?'full transformer':'compact transformer')+' + studio vocal separation',neural:true,detail:'Bundled pretrained rhythm transformer, stereo vocal separation with polarity refinement, isolated-voice singing and speech classification, GAME Large neural sung-note transcription, measured source expression, and independent accompaniment bass tracking. All audio stays on this device.',model:selected.model,modelId:selected.id,modelSha256:selected.sha256,frontendSha256:models.frontend.sha256,vocalModel:result.vocals.model,noteModel:result.vocals.transcription.model,separationModel:result.separation,bassMethod:result.bassAnalysis.method,quality,runtime:'ONNX Runtime Web 1.20.1',analysisSeconds:Math.round((performance.now()-started)/100)/10};
  result.recommendedAudio={sampleRate:44100,channels:2,format:'PCM16 WAV'};report(1,'Music understood',`${result.bpm?result.bpm+' BPM':'No pulse detected'} • ${result.sections.length} sections`);postMessage({type:'result',value:result});
- }catch(error){if(separator)try{await separator.release();}catch(_){}if(cacheWriter)try{await cacheWriter.abort();}catch(_){}else if(cacheKey)await LightForgeStemCache.discard(cacheKey);if(session)try{await session.release();}catch(_){}if(melSession)try{await melSession.release();}catch(_){}postMessage({type:'error',message:error.message||String(error)});}};
+ }catch(error){if(game)try{await game.release();}catch(_){}if(separator)try{await separator.release();}catch(_){}if(cacheWriter)try{await cacheWriter.abort();}catch(_){}else if(cacheKey)await LightForgeStemCache.discard(cacheKey);if(session)try{await session.release();}catch(_){}if(melSession)try{await melSession.release();}catch(_){}postMessage({type:'error',message:error.message||String(error)});}};

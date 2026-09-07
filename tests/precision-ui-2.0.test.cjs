@@ -17,7 +17,7 @@ test('real app facade commits, undoes, redoes, saves, and isolates musical edits
   w.eval(fs.readFileSync(path.join(root,'web/app.js'),'utf8'));w.eval(fs.readFileSync(path.join(root,'web/precision-studio.js'),'utf8'));
   const app=w.LightForgeApp;await app.selectProject({id:'a',name:'Cue fixture',duration:12,audioUrl:'song.wav',projectUrl:'project.json'});
   const audio=d.querySelector('audio');Object.defineProperty(audio,'duration',{value:Infinity,configurable:true});audio.onloadedmetadata();assert.equal(d.getElementById('totalTime').textContent,'0:12');assert.equal(d.getElementById('seek').max,'12');
-  assert.equal(app.state.show.version,'2.0.0');assert.equal(d.getElementById('precisionStudio').hidden,false);
+  assert.equal(app.state.show.version,require('../web/version.js').name);assert.equal(d.getElementById('precisionStudio').hidden,false);
   const val=(id,x)=>d.getElementById(id).value=String(x);
   val('musicCueStart',3.137);val('musicCueEnd',4.719);val('musicCueAction','hold');val('musicCueLabel','Final note');
   await d.getElementById('musicCueForm').onsubmit({preventDefault(){}});
@@ -26,7 +26,7 @@ test('real app facade commits, undoes, redoes, saves, and isolates musical edits
   const frames=app.state.show.frames.slice();await app.undo();assert.equal(app.state.settings.musicCues.length,0);await app.redo();assert.deepEqual(app.state.show.frames,frames);
   val('musicCueStart',3.2);val('musicCueEnd',3.8);await d.getElementById('musicCueForm').onsubmit({preventDefault(){}});assert.match(d.getElementById('precisionMessage').textContent,/overlap/);assert.deepEqual(app.state.show.frames,frames);
   val('vocalOffset',-125);val('bassOffset',210);await d.getElementById('roleTimingForm').onsubmit({preventDefault(){}});assert.equal(app.state.settings.vocalOffsetMs,-125);assert.equal(app.state.settings.musicCues[0].start,3.137);
-  await app.saveProject();assert.equal(writes.at(-1).provenance.app,'2.0.0');assert.equal(writes.at(-1).settings.musicCues[0].label,'Final note');assert.ok(writes.at(-1).compiled.sha256);
+  await app.saveProject();assert.equal(writes.at(-1).provenance.app,require('../web/version.js').name);assert.equal(writes.at(-1).settings.musicCues[0].label,'Final note');assert.ok(writes.at(-1).compiled.sha256);
   d.getElementById('listenMusicCue').onclick();assert.equal(loops.length,1);
   await app.selectProject({id:'b',name:'New song',duration:12,audioUrl:'new.wav'},true);assert.equal(app.state.settings.musicCues.length,0);assert.equal(app.state.settings.vocalOffsetMs,0);assert.equal(app.state.settings.bassOffsetMs,0);
  }finally{w.close();}
