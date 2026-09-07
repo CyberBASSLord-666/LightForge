@@ -17,10 +17,10 @@ const hashes=()=>Object.fromEntries(['web/cockpit.js','web/cockpit.css','web/ver
   res.setHeader('Cross-Origin-Opener-Policy','same-origin');res.setHeader('Cross-Origin-Embedder-Policy','require-corp');
   res.setHeader('Content-Length',fs.statSync(p).size);fs.createReadStream(p).pipe(res);
  });
- await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser,page;
  try{
-  browser=await chromium.launch({headless:true,args:['--no-sandbox','--enable-unsafe-swiftshader']});const page=await browser.newPage({viewport:{width:393,height:852}});
-  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  browser=await chromium.launch({headless:true,args:['--no-sandbox','--enable-unsafe-swiftshader']});page=await browser.newPage({viewport:{width:393,height:852}});
+  const errors=[];page.on('pageerror',e=>{errors.push(e.message);console.error('PAGE ERROR',e.stack);});page.on('console',m=>{if(m.type()==='error')console.error('CONSOLE',m.text());});
   await page.addInitScript(()=>{
    const project={id:'qa-project',name:'Glass Castle · Precision QA',duration:64,audioUrl:'/demo/glass-castle.wav',projectUrl:'/fixture.json'};
    const fetchOriginal=window.fetch.bind(window);window.fetch=(input,options)=>String(input).endsWith('/fixture.json')&&localStorage.getItem('qa-saved')?Promise.resolve(new Response(localStorage.getItem('qa-saved'),{headers:{'Content-Type':'application/json'}})):fetchOriginal(input,options);
@@ -48,6 +48,6 @@ const hashes=()=>Object.fromEntries(['web/cockpit.js','web/cockpit.css','web/ver
   }
   for(const id of ['compose','music','outputs','review']){await page.locator('#workspace-'+id).click();assert.equal(await page.locator('#panel-'+id).isVisible(),true);await page.locator('#panel-'+id).screenshot({path:path.join(out,'workspace-'+id+'.png')});}await page.locator('#workspace-compose').focus();await page.keyboard.press('ArrowRight');assert.equal(await page.locator('#workspace-music').getAttribute('aria-selected'),'true');await page.locator('#scoreZoomIn').click();assert.doesNotMatch(await page.locator('#scoreScale').innerText(),/Full track/);receipt.checks.push('Workspace tabs support keyboard navigation; musical score zoom is operational.');
   receipt.checks.push('320, 393, 768 and 1440 px layouts have no horizontal overflow or duplicate IDs; screenshots retained.');assert.deepEqual(errors,[]);assert.deepEqual(hashes(),receipt.source_hashes);receipt.passed=true;
- }catch(e){receipt.errors.push(e.stack);console.error(e.stack);}finally{await browser?.close();await new Promise(r=>server.close(r));}
+ }catch(e){if(page){await page.screenshot({path:path.join(out,'failure.png'),fullPage:true}).catch(()=>{});receipt.failure=await page.evaluate(()=>({text:document.body.innerText,state:window.LightForgeApp?{project:LightForgeApp.state.project,loading:LightForgeApp.state.loadingProject,music:!!LightForgeApp.state.music,show:!!LightForgeApp.state.show,saveBlocked:LightForgeApp.state.saveBlocked,composing:LightForgeApp.state.composing}:null})).catch(()=>null);}receipt.errors.push(e.stack);console.error(e.stack);}finally{await browser?.close();await new Promise(r=>server.close(r));}
  receipt.completedAt=new Date().toISOString();fs.writeFileSync(path.join(out,'browser-verification.json'),JSON.stringify(receipt,null,2)+'\n');console.log(JSON.stringify(receipt,null,2));if(!receipt.passed)process.exitCode=1;
 })().catch(e=>{console.error(e);process.exitCode=1;});
