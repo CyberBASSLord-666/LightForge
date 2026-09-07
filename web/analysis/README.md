@@ -1,111 +1,96 @@
-# Offline music intelligence, LightForge 1.6.0
+# LightForge 2.1 offline music intelligence
 
-`MusicAnalyzer.analyze(audioUrl, options, onProgress, signal)` returns analysis version 5.
-All models, frontend coefficients and ONNX Runtime WebAssembly are bundled in the APK.
-No account, API key, remote inference, runtime model downloads or subscriptions are used.
+`MusicAnalyzer.analyze(audioUrl, options, onProgress, signal)` returns analysis version 6.
+Every runtime graph is bundled in the APK. Audio never leaves the device, and
+there are no runtime downloads, keys, subscriptions or remote services.
 
-## Actual neural models
+| Stage | Studio (`precision`, default) | Balanced |
+| --- | --- | --- |
+| Rhythm and bar accents | Beat This! full | Beat This! compact |
+| Stereo source separation | Mel-Band RoFormer Deux | UVR MDX-Net Voc FT |
+| Singing/speech evidence | PretrainedSED Frame-MN10 | Same |
+| Sung-note transcription | GAME Large 1.0.3 | Same |
+| Bass notes | Harmonic tracking in separated accompaniment | Same |
 
-The rhythm pipeline uses **Beat This!**, the
-transformer beat/downbeat tracker by Francesco Foscarin, Jan Schlüter and Gerhard
-Widmer, published at ISMIR 2024. Its full and compact pretrained models are available
-without configuration:
+## Separation and original audio clock
 
-| Setting | Checkpoint | ONNX bytes | Behavior |
-| --- | --- | ---: | --- |
-| `precision` (default) | `final0` | 83,162,650 | Full transformer, more processing and memory |
-| `balanced` | `small1` | 10,555,592 | Compact transformer, less processing and memory |
-| Shared frontend | Log-mel graph | 270,742 | 128 Slaney mel bands; 22050 Hz; 1024 FFT; 441 hop; magnitude/32; log1p(1000*x) |
+Deux runs the author's full 13-second context, original checkpoint values as
+Float32, 2,048-point centered STFT, 441-sample hop and both trained source heads.
+The model is split into sequential ONNX sessions to bound working memory.
+Attention query tiles retain the complete key/value context; there is no reduced
+context, discarded layer or weight quantization. Ten-second owned regions retain
+1.5 seconds of context on each side and overlap by five seconds with complementary
+crossfades. Output sample counts equal the original 44.1 kHz source exactly.
 
-Both are real pretrained networks; they are not names for DSP presets. The APK includes
-both. The browser uses one model at a time, up to four isolated WASM threads and bounded overlapping
-30-second context windows. Six frames at each prediction edge are discarded, following
-the upstream inference layout. Earlier overlap predictions are retained. PCM is read
-with an additional STFT halo, so chunks do not introduce false spectrogram boundaries.
-The two-second digital-silence regression skips model loading and produces no beats.
+Balanced mode retains the verified MDX pipeline: original stereo spectra,
+7,680-point FFT, 1,024-sample hop, two polarity predictions, compensation 1.021,
+normalized inverse STFT and complementary crossfades. Its accompaniment is the
+original mix minus estimated voice. Neither mode applies reference-derived
+latency correction, gain fitting, time stretching or beat snapping.
 
-- Original implementation and model license: https://github.com/CPJKU/beat_this (MIT).
-- Paper: https://arxiv.org/abs/2407.21658 . Its published benchmark is research evidence,
-  not a benchmark of LightForge or a guarantee for every piece of music.
-- ONNX conversion distribution: https://github.com/danigb/beat-this-rs . Small model
-  and frontend pinned to commit `089b509247e6fdcec666511c0dcf0d5f39c21e73`.
-- Full model: `model-large` release, SHA256 verified against the publisher's sidecar.
-- All three packaged hashes and model IDs: `models/model-manifest.json`.
-- Original and conversion copyright notices are retained in `models/BeatThis-LICENSE.txt`
-  and `models/BeatThis-ONNX-Port-LICENSE.txt`.
-- ONNX Runtime Web 1.20.1: MIT, unchanged bundled WASM/runtime/glue.
-- Older BeatNet assets and sources remain for historical regression/conversion evidence;
-  the production worker does not run BeatNet.
+Both modes stream mono Float32 voice and accompaniment into private OPFS WAVs
+at 22.05 kHz through the existing centered anti-aliasing filter. A separate
+44.1 kHz Float32 voice WAV preserves the original source clock for GAME. This
+cache needs approximately 21.2 MB per minute, is replaceable, and is omitted from
+backups. Original stereo PCM16 audio remains the exported soundtrack. Aborted
+jobs remove incomplete caches; missing caches do not invalidate saved shows.
 
-## Separated voice and accompaniment, analysis version 5
+## Neural singing and measured expression
 
-The full/compact rhythm choice stays independent. After rhythm/structure extraction,
-release its two sessions and read the **original stereo 44.1 kHz** soundtrack.
-The mono analysis proxy must never be fed to the stereo separator.
+Frame-MN10 supplies singing/speech evidence. The detail extractor measures
+energy, source contrast and articulation on the actual estimated vocal waveform.
+GAME Large predicts sung-note boundaries and pitch from that full-resolution
+voice, with the author's eight diffusion steps and 0.2 thresholds. A supplied
+seeded uniform-noise input replaces the graph's internal random operation;
+original weights are unchanged. Twelve-second owned regions retain two seconds
+of neighboring context. Carry-in notes are joined without inventing seam attacks.
 
-**UVR MDX-Net Voc FT** is an unchanged 66,762,490-byte pretrained ONNX model,
-SHA-256 `534b2070fcc7df514b13ef660dc8cbb328679c2374d04354a5c42bb14ecce111`.
-It receives complex spectra from the exact trained 7,680-point FFT, 1,024-sample
-hop, 3,072 frequency bins and 256 time frames. A mixed-radix transform is checked
-against the original PyTorch geometry. Both polarity predictions are combined,
-then inverse STFT, compensation 1.021 and complementary 50% segment crossfades
-produce a continuous voice estimate. Accompaniment is the input minus voice.
-No latency shift, time stretch or beat snapping is applied.
+GAME notes must overlap a supported singing phrase. Speech and unsupported
+regions cannot acquire sung-note gestures. Neural pitch and boundaries replace
+acoustic note estimates; measured expressive energy and independent unvoiced
+articulations remain. Confidence describes relative singing evidence, not a
+calibrated GAME probability. Lead and backing singers remain combined. This is
+singing-note transcription, not lyrics, exact word alignment or singer separation.
 
-- Primary implementation/license: https://github.com/Anjok07/ultimatevocalremovergui
-- Weights: https://github.com/TRvlvr/model_repo/releases/tag/all_public_uvr_models
-- Parameters: https://github.com/TRvlvr/application_data/blob/main/mdx_model_data/model_data.json
-- Credit UVR developers Anjok07 and aufr33; MDX-Net architecture by KUIELab.
-- Exact weights, configuration, references and notices: `models/separator-mdx-model.json`.
+Bass tracking still uses low-register harmonics in combined accompaniment.
+This is not a dedicated bass separator. Drums and other instruments remain,
+and real-song onset estimates can be ambiguous.
 
-Stereo estimates are averaged for vocal detail and audition and streamed through
-a centered 63-tap low-pass filter into mono 22.05 kHz Float32 WAV caches in OPFS.
-This preserves quiet detail without quantizing stems to PCM16. The private cache
-uses contiguous validated writes, exact sample counts and atomic completion
-metadata. It is replaceable and excluded from project backups. The original
-stereo PCM16 soundtrack always remains the export audio. Evicted caches do not
-invalidate saved frames or prevent exports; only isolated-layer audition needs
-re-analysis.
+## Rhythm, memory and cancellation
 
-Release the separator session before the singing/speech classifier.
-**PretrainedSED Frame-MN10** supplies 40 ms singing and speech evidence over
-10-second overlapping contexts on the isolated voice. Its original checkpoint,
-MIT notice, class selection and exact frontend remain bundled. Primary source:
-https://github.com/fschmid56/PretrainedSED . Raw singing and speech timelines are
-transient; projects retain only compact musical detail and provenance.
+Beat This! retains the full/compact author models, exact log-mel frontend,
+overlapping 30-second contexts and original-clock feature extraction. Frame
+edges follow the upstream context policy. Earlier BeatNet assets remain only
+for historical reproducibility. ONNX Runtime Web 1.20.1 is unchanged.
 
-`vocal-detail.js` consumes contiguous bounded voice/accompaniment chunks. It
-measures local energy, source contrast, periodicity, articulation and estimated
-pitch, using learned evidence to distinguish voice from remaining instrument
-bleed. It returns phrases, articulation accents, estimated notes/holds, a 20 ms
-envelope and a 40 ms pitch contour. Speech does not create sung pitch notes.
-Quiet passages use local scaling with source/evidence guards, not whole-song
-normalization alone. Confidence remains relative evidence, not a calibrated
-probability. Lead/backing voices remain combined, and no lyric or word
-transcription is claimed.
+Sessions are released between stages. WASM may retain its peak allocation until
+the disposable worker terminates. Studio processing can take much longer than
+the soundtrack and needs several GB of working memory. Balanced is explicitly
+selected by the user; failures do not silently switch models or fabricate results.
+Keep the app open while analyzing. Abort terminates the worker and retries cache
+cleanup while WebView releases its writable handles.
 
-`bass-notes.js` follows low harmonic notes in the separated accompaniment.
-Drums and other instruments remain present, so this is not isolated bass-source
-identification. Its documented synthetic 40 ms ordinary onset / 50 ms offset
-bounds and looser 80 ms closest overlapping-kick case are test-fixture results,
-not guarantees for real songs.
+## Reproduction, licenses and evidence
 
-`roleAnalysis.sourceSeparated` and `vocals.sourceSeparated` describe the actual
-pipeline. `separation` records graph hash, overlap, polarity setting, source
-clock and limitations. The 1.6 composer applies manual Voice/Instrumental guides
-as an editing overlay without rewriting the model output or inventing pitch.
+`tools/prepare_deux.py` and `tools/prepare_game.py` verify pinned official source
+archives/checkpoints and reproduce the graphs. `ASSET_MANIFEST.json` binds every
+runtime file, graph, model manifest and notice. Builds reject missing, unexpected
+or modified analysis assets. See `BUILD.md` at the repository root.
 
-## Verification and scope
+- Deux: [becruily](https://huggingface.co/becruily/mel-band-roformer-deux), weights
+  CC BY-NC 4.0; architecture code from ZFTurbo/lucidrains and contributors, MIT.
+- GAME: [openvpi](https://github.com/openvpi/GAME), original and modified models
+  CC BY-NC-SA 4.0. Attribution and modification notice accompany the graphs.
+- Beat This!: [CPJKU](https://github.com/CPJKU/beat_this), MIT; ONNX distribution
+  [danigb/beat-this-rs](https://github.com/danigb/beat-this-rs), MIT.
+- Frame-MN10: [PretrainedSED](https://github.com/fschmid56/PretrainedSED), MIT.
+- MDX: [Ultimate Vocal Remover](https://github.com/Anjok07/ultimatevocalremovergui),
+  notices, model parameters and checkpoint provenance remain bundled.
+- ONNX Runtime: Microsoft and contributors, MIT.
 
-Current receipts, reference-fixture provenance and reproducible evaluation code
-are in `qa/release-1.6.0/`. The selected separator is compared with official
-MUSDB18 short multitrack excerpts, original vocal stems and known instrumental
-or voice-window remixes. Timing, silence, nearby percussion, chunk boundaries,
-cache playback, save/reload, migration and legal exported commands have separate
-tests. Original source-stem component tests are clearly distinguished from
-estimated-stem end-to-end tests.
-
-The APK bundles all runtime assets and models and has no internet permission.
-Model/frontend parity verifies implementation; it cannot establish universal
-vocal or lyric accuracy. Dense/processed singing can remain ambiguous. Desktop
-WASM and host JVM tests do not measure a physical phone or Tesla.
+Current runtime, parity and small reference-set results are in
+`qa/release-2.1.0/`. Original vocal stems are scoring references, not production
+separator inputs. Component tests using an original stem are labeled separately.
+The six short MUSDB excerpts are not representative or verified held-out data;
+training overlap is possible. Desktop WASM, parity and source-clock sample counts
+do not establish human note accuracy or physical Android/Tesla performance.

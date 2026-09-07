@@ -1,6 +1,6 @@
 /* Private worker: bounded PCM chunks -> exact log-mel -> pretrained Beat This! transformer. */
 'use strict';
-importScripts('wav-reader.js','dsp.js','bass-notes.js','vocal.js','vocal-detail.js','stem-cache.js','separator-mdx.js','game.js','vendor/ort.wasm.min.js');
+importScripts('wav-reader.js','dsp.js','bass-notes.js','vocal.js','vocal-detail.js','stem-cache.js','separator-mdx.js','separator-deux.js','game.js','vendor/ort.wasm.min.js');
 const report=(progress,stage,detail='')=>postMessage({type:'progress',value:{progress,stage,detail}});
 const dispose=outputs=>{for(const value of Object.values(outputs))if(value.dispose)value.dispose();};
 const sigmoid=x=>1/(1+Math.exp(-Math.max(-50,Math.min(50,x))));
@@ -48,7 +48,7 @@ self.onmessage=async e=>{let session,melSession,separator,game,cacheWriter,cache
  report(.41,'Separating voice and instruments','Studio quality • your music stays on this device');
  const sourceReader=new LightForgeWavReader(audioUrl);await sourceReader.open();
  cacheWriter=await LightForgeStemCache.create(cacheKey,sourceReader.samples,config,options.projectId||'');
- separator=await LightForgeMdxSeparator.create({ort,baseUrl:new URL('models/',self.location.href).href,onProgress:p=>report(.41,'Loading studio vocal separation',p.message)});
+ separator=await (quality==='precision'?LightForgeDeux:LightForgeMdxSeparator).create({ort,baseUrl:new URL(quality==='precision'?'models/deux/':'models/',self.location.href).href,onProgress:p=>report(.41,'Loading studio vocal separation',p.message)});
  result.separation=await separator.process((start,count)=>sourceReader.stereo44100(start,count),sourceReader.samples,chunk=>cacheWriter.append(chunk),p=>report(.42+.40*p.progress,'Separating voice and instruments',`${p.message} • ${Math.min(sourceReader.duration,p.processedSeconds||0).toFixed(0)} / ${sourceReader.duration.toFixed(0)} seconds`));
  await separator.release();separator=null;
  result.stemCache=await cacheWriter.finish();cacheWriter=null;
@@ -69,6 +69,6 @@ self.onmessage=async e=>{let session,melSession,separator,game,cacheWriter,cache
  result.analysisVersion=6;
  result.roleAnalysis={version:3,clock:'Original decoded audio',vocalSource:'Separated vocal waveform with singing and speech evidence',bassSource:'Low-register harmonics in separated accompaniment',sourceSeparated:true,lyricsAligned:false};
  for(const warning of [...(result.vocals.warnings||[]),...(result.separation.limitations||[])])if(!result.warnings.includes(warning))result.warnings.push(warning);
- result.engine={name:'Beat This! '+(quality==='precision'?'full transformer':'compact transformer')+' + studio vocal separation',neural:true,detail:'Bundled pretrained rhythm transformer, stereo vocal separation with polarity refinement, isolated-voice singing and speech classification, GAME Large neural sung-note transcription, measured source expression, and independent accompaniment bass tracking. All audio stays on this device.',model:selected.model,modelId:selected.id,modelSha256:selected.sha256,frontendSha256:models.frontend.sha256,vocalModel:result.vocals.model,noteModel:result.vocals.transcription.model,separationModel:result.separation,bassMethod:result.bassAnalysis.method,quality,runtime:'ONNX Runtime Web 1.20.1',analysisSeconds:Math.round((performance.now()-started)/100)/10};
+ result.engine={name:'Beat This! '+(quality==='precision'?'full + Deux':'compact + MDX')+' + GAME Large',neural:true,detail:'Bundled pretrained rhythm transformer, stereo vocal separation, isolated-voice singing and speech classification, GAME Large neural sung-note transcription, measured source expression, and independent accompaniment bass tracking. All audio stays on this device.',model:selected.model,modelId:selected.id,modelSha256:selected.sha256,frontendSha256:models.frontend.sha256,vocalModel:result.vocals.model,noteModel:result.vocals.transcription.model,separationModel:result.separation,bassMethod:result.bassAnalysis.method,quality,runtime:'ONNX Runtime Web 1.20.1',analysisSeconds:Math.round((performance.now()-started)/100)/10};
  result.recommendedAudio={sampleRate:44100,channels:2,format:'PCM16 WAV'};report(1,'Music understood',`${result.bpm?result.bpm+' BPM':'No pulse detected'} • ${result.sections.length} sections`);postMessage({type:'result',value:result});
  }catch(error){if(game)try{await game.release();}catch(_){}if(separator)try{await separator.release();}catch(_){}if(cacheWriter)try{await cacheWriter.abort();}catch(_){}else if(cacheKey)await LightForgeStemCache.discard(cacheKey);if(session)try{await session.release();}catch(_){}if(melSession)try{await melSession.release();}catch(_){}postMessage({type:'error',message:error.message||String(error)});}};

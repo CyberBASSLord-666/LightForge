@@ -1,0 +1,17 @@
+Mel-Band RoFormer Deux
+Model author: becruily
+Source: https://huggingface.co/becruily/mel-band-roformer-deux
+Checkpoint revision: 2da74427d682a3df47a774378fc24d7a1a0cdaad
+Model weights: Creative Commons Attribution-NonCommercial 4.0.
+https://creativecommons.org/licenses/by-nc/4.0/
+
+LightForge conversion: the original FP16 author weights are evaluated as
+float32. The model is split into sequential ONNX stages. Attention queries
+are tiled while retaining the full key/value context. STFT and inverse STFT
+are performed separately on the original sample clock. No weight quantization.
+Converted model weights retain the original CC BY-NC 4.0 license.
+
+Architecture implementation: Music Source Separation Training by Roman
+Solovyev (ZFTurbo) and contributors, MIT, based on lucidrains' Mel-Band RoFormer.
+Pinned code: 0e5f1159fc5ea87fc13b957584e178b4977e5dd3.
+These conversions do not imply endorsement by the model or code authors.

@@ -111,3 +111,4 @@ qa/release-2.0.0/browser-export.fseq
 web/analysis/models/game/*.onnx
 qa/release-1.6.0/fixtures/
 qa/release-2.1.0/native-*-fixtures/
+web/analysis/models/deux/*.onnx

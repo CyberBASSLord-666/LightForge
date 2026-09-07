@@ -1,7 +1,7 @@
-name: LightForge 2.0 verification
+name: LightForge production verification
 on:
   push:
-    branches: [main, 'development/2.0']
+    branches: [main, 'development/2.0', 'development/2.1']
   pull_request:
   workflow_dispatch:
 permissions:
@@ -12,7 +12,7 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 55
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -23,21 +23,35 @@ jobs:
         with:
           python-version: '3.12'
       - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Reproduce bundled production models
+        run: |
+          python3 -m pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu
+          python3 -m pip install -r tools/model-requirements.txt
+          python3 tools/prepare_game.py
+          python3 tools/prepare_deux.py
       - run: npm test
       - run: npx playwright install --with-deps chromium
-      - run: node qa/release-2.0.0/browser.cjs
+      - run: node qa/release-2.1.0/browser.cjs
+      - name: Prepare licensed reference excerpts
+        run: |
+          mkdir -p qa/release-1.6.0/fixtures
+          curl -fL --retry 3 https://github.com/sigsep/sigsep-mus-db/releases/download/v0.4.0/MUSDB18-7-STEMS.zip -o qa/release-1.6.0/fixtures/MUSDB18-7-STEMS.zip
+          echo '365f66acffc57282e474a4c24b32afec3678258c50b8d45646ac849b0a287df3  qa/release-1.6.0/fixtures/MUSDB18-7-STEMS.zip' | sha256sum -c
+          python3 qa/release-1.6.0/prepare-musdb-fixtures.py
+      - name: Actual offline model pipeline and cancellation
+        run: node qa/release-2.1.0/analysis-browser.cjs
       - run: python3 tools/bootstrap_toolchain.py
       - name: Build CI package with an ephemeral signing identity
         run: env -u ANDROID_SDK_ROOT -u ANDROID_HOME LIGHTFORGE_ALLOW_NEW_SIGNING=1 LIGHTFORGE_SIGNING_DIR="$RUNNER_TEMP/ci-signing" bash build.sh
       - name: Native storage and sequence validation
-        run: env -u ANDROID_SDK_ROOT -u ANDROID_HOME python3 tests/verify_native_release.py --release 2.0.0
+        run: env -u ANDROID_SDK_ROOT -u ANDROID_HOME python3 tests/verify_native_release.py --release 2.1.0
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: lightforge-2.0-verification
+          name: lightforge-2.1-verification
           path: |
-            qa/release-2.0.0/*.json
-            qa/release-2.0.0/*.log
-            qa/release-2.0.0/*.txt
-            qa/release-2.0.0/*.png
+            qa/release-2.1.0/*.json
+            qa/release-2.1.0/*.log
+            qa/release-2.1.0/*.txt
+            qa/release-2.1.0/*.png
           retention-days: 30

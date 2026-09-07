@@ -1,18 +1,18 @@
-# LightForge 2.0 — personal Android light-show studio
+# LightForge 2.1 — personal Android light-show studio
 
 LightForge turns music on your phone into an editable Tesla light show for a **2025 Model 3 Long Range RWD, North America**. It bundles its neural models, graphics and audio tools and works entirely offline.
 
-**2.0 adds Precision Studio:** editable voice and bass gestures, separate part-timing correction, and a review of which selected musical targets actually reach the exported lamp commands. See [release notes](RELEASE_NOTES.md), [build instructions](BUILD.md) and [validation scope](VALIDATION.md).
+**2.1 adds the Studio cockpit:** a Tesla-inspired monochrome interface, source-time score, keyboard-accessible Compose/Music/Outputs/Review workspaces, Deux source separation and GAME Large singing-note transcription. Precision Studio retains editable voice/bass gestures, independent timing offsets and review against final exported lamp commands. See [release notes](RELEASE_NOTES.md), [build instructions](BUILD.md) and [validation scope](VALIDATION.md).
 
 ## Install the update
 
-Install the update-compatible `LightForge-2.0.0.apk` over your existing app. **Do not uninstall first.** The release uses the original signing identity; private projects are preserved. CI builds use a temporary identity and are not the update APK.
+Install the update-compatible `LightForge-2.1.0.apk` over your existing app. **Do not uninstall first.** The release uses the original signing identity; private projects are preserved. CI builds use a temporary identity and are not the update APK.
 
-Android 8+ and a current Android System WebView are required. The app targets Android 15. No account, API key, subscription, server or model download is needed. Keep the app open while analyzing; quality takes priority over processing time. Separated listening audio needs about 10.6 MB per minute of music.
+Android 8+ and a current Android System WebView are required. The app targets Android 15. No account, API key, subscription, server or model download is needed. Keep the app open while analyzing; Studio requires several GB of working memory and processing can substantially exceed song duration. Choose Balanced if Studio exceeds your device resources. Separated listening audio needs about 21.2 MB per minute of music.
 
 ## Precision Studio
 
-After creating a show, open **Give every cue a purpose** beneath Music intelligence.
+After creating a show, open the **Review** workspace to refine synchronization.
 
 1. Listen with Full song, Voice or Instruments and pause near the moment you want.
 2. Open **Edit musical cues**, choose Voice or Bass, and add at the playhead or start from a detected event.
@@ -48,7 +48,7 @@ disable individual moving parts. Fine tune adds:
 - Individual section style/intensity edits, retained motifs, Undo/Redo and reset.
 - First-downbeat correction, 3/4 or 4/4 meter and half/double-tempo interpretation.
 - Independent movement frequency, passage looping, beat seeking and A/B arrangements.
-- Precision (full transformer, default) or Balanced (compact transformer) rhythm analysis.
+- Studio (Deux separation, full rhythm transformer) or Balanced (MDX separation, compact rhythm transformer); both include GAME Large.
 - Full song, Voice first, and Bass first emphasis presets.
 - Full song / Voice / Instruments listening, detected phrase and held-note inspection.
 - Editable Voice and Instrumental passage guides, with looping, Restore and Undo/Redo.
@@ -121,8 +121,7 @@ default. All processing remains on the device, with bundled trained music models
 
 **Singing emphasis** and **Bass-note emphasis** control how strongly these parts
 shape the arrangement. The recommended starting values are 85% and 90%.
-Singing uses a stereo separator followed by a trained singing/speech classifier
-and acoustic articulation/pitch analysis. Bass uses sustained low-register
+Singing uses a stereo separator, trained singing/speech evidence, GAME Large neural note transcription and measured waveform expression. Bass uses sustained low-register
 harmonics in the separated accompaniment. General low-frequency transients
 continue to inform the drum rhythm. Lead and backing singers remain combined;
 this does not produce lyrics or exact word timings.
@@ -316,7 +315,7 @@ The app has not been tested here on the user's phone or car.
 
 ## Update from an earlier release
 
-Install `LightForge-2.0.0.apk` over the existing LightForge app. The package ID
+Install `LightForge-2.1.0.apk` over the existing LightForge app. The package ID
 and signing identity are unchanged, and version code 20000 is newer than the
 previous releases. **Do not uninstall first**, because uninstalling removes
 private projects. Saved music and projects remain compatible; sequences are

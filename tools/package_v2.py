@@ -9,7 +9,10 @@ ROOT=Path(__file__).resolve().parents[1]
 def main():
     version=json.loads((ROOT/'version.json').read_text());name=version['name'];qa=ROOT/('qa/release-'+name)
     evidence={}
-    for filename in ['regression-verification.json','browser-verification.json','native-verification.json']:
+    gates=['regression-verification.json','browser-verification.json','native-verification.json']
+    if version['code']>=20100:
+        gates+=['analysis-browser-verification.json','analysis-verification.json']
+    for filename in gates:
         p=qa/filename;require(p.is_file(),'Missing current release gate: '+str(p))
         data=json.loads(p.read_text());require(data.get('passed') is True and not data.get('errors') and data.get('release')==name,'Release gate did not pass: '+filename)
         require(bool(data.get('source_hashes')),'Release gate has no source binding: '+filename)
@@ -30,7 +33,7 @@ def main():
         for p in web:
             with z.open('assets/'+p.relative_to(ROOT/'web').as_posix()) as stream:require(sha_stream(stream)==sha_file(p),'APK contains stale source: '+str(p))
     record={'release':receipt,'signing_certificate_sha256':SIGNING_SHA256,'apk_source_assets_matched':len(web),'current_release_receipts':evidence,
-            'model_analysis_evidence':{'status':'Unchanged 1.6.0 implementation and model assets, byte-verified by the current regression gate. Historical runtime/accuracy evidence was not relabeled as a fresh measurement.','path':'qa/release-1.6.0/analysis-verification.json','sha256':sha_file(ROOT/'qa/release-1.6.0/analysis-verification.json')},
+            'model_analysis_evidence':{'status':'Current model runtime and reference scoring are separate, source-bound gates. Quality scores are from six short reference excerpts, not a general accuracy guarantee.','path':'qa/release-'+name+'/analysis-verification.json'} if version['code']>=20100 else {'status':'Historical 1.6.0 model evidence; not a fresh accuracy measurement.','path':'qa/release-1.6.0/analysis-verification.json'},
             'native_device_install_and_launch':'NOT PERFORMED','vehicle_test':'NOT PERFORMED','browser_scope':'Chromium with actual workers/WebGL and a simulated Android bridge.'}
     atomic(ROOT/'release-verification.json',(json.dumps(record,indent=2)+'\n').encode())
     out=ROOT/'output';out.mkdir(exist_ok=True);result=atomic_copy(apk,out/apk.name,receipt['sha256'])

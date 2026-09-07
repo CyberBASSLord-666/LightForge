@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Portable 2.0 regression gate. Historical model evidence stays historical."""
+"""Portable production regression gate. Historical model evidence stays historical."""
 from pathlib import Path
 import datetime, hashlib, json, subprocess, sys
+from verify_analysis_assets import verify as verify_assets
 
 ROOT=Path(__file__).resolve().parents[1]
 VERSION=json.loads((ROOT/'version.json').read_text())['name']
@@ -10,7 +11,7 @@ OUT.mkdir(parents=True,exist_ok=True)
 TESTS=['engine.test.cjs','engine-manual.test.cjs','preview-engine.test.cjs','light-planner.test.cjs',
        'movement-planner.test.cjs','composer-1.6.test.cjs','role-composer-1.6.test.cjs',
        'role-reference-composer-1.6.test.cjs','bass-notes.test.cjs','vocal-detail.test.cjs',
-       'stem-cache.test.cjs','wav-reader.test.cjs','precision-2.0.test.cjs','migration-2.0.test.cjs','precision-ui-2.0.test.cjs']
+       'stem-cache.test.cjs','wav-reader.test.cjs','precision-2.0.test.cjs','migration-2.0.test.cjs','precision-ui-2.0.test.cjs','cockpit-2.1.test.cjs','game-2.1.test.cjs']
 
 def digest(p):
     with p.open('rb') as f:return hashlib.file_digest(f,'sha256').hexdigest()
@@ -32,11 +33,8 @@ def main():
         result=subprocess.run([sys.executable,'-m','unittest','discover','-s','tests','-p','test_*.py'],cwd=ROOT,capture_output=True,text=True)
         (OUT/'archive-tests.log').write_text(result.stdout+result.stderr)
         result.check_returncode();receipt['checks'].append('Python APK archive and bounded release packaging regression suites passed.')
-        manifest=json.loads((ROOT/'web/analysis/ASSET_MANIFEST.json').read_text())
-        for name,expected in manifest.items():
-            p=ROOT/'web/analysis'/name
-            assert p.stat().st_size==expected['bytes'] and digest(p)==expected['sha256'], 'Changed analysis asset: '+name
-        receipt['checks'].append('All 32 analysis files match the preserved 1.6.0 asset manifest byte for byte; model accuracy evidence is retained, not claimed as newly measured.')
+        verify_assets()
+        receipt['checks'].append('Every bundled analysis asset matches the current manifest; actual model quality and runtime are checked separately.')
         receipt['analysis_manifest_sha256']=digest(ROOT/'web/analysis/ASSET_MANIFEST.json')
         assert receipt['source_hashes']==hashes(),'Sources changed during verification.'
         receipt['passed']=True

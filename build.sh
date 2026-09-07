@@ -16,6 +16,7 @@ VERSION="$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["name"
 VERSION_CODE="$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["code"])' "$ROOT/version.json")"
 APK_NAME="LightForge-$VERSION.apk"
 python3 "$ROOT/tools/sync_version.py" --check
+python3 "$ROOT/tools/verify_analysis_assets.py"
 for tool in "$JAVA_HOME/bin/javac" "$JAVA_HOME/bin/keytool" "$BUILD_TOOLS/aapt2" "$BUILD_TOOLS/d8" "$BUILD_TOOLS/zipalign" "$BUILD_TOOLS/apksigner"; do
     if [[ ! -x "$tool" ]]; then
         printf 'Missing build tool: %s\nRun python3 tools/bootstrap_toolchain.py first.\n' "$tool" >&2
