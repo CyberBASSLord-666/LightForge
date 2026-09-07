@@ -1,5 +1,7 @@
 # LightForge 2.1 — personal Android light-show studio
 
+Install the complete update from the [LightForge 2.1.0 GitHub release](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.1.0). Use the APK asset, keep the existing installation, and verify its checksum when transferring. All models are bundled; no first-run download is required.
+
 LightForge turns music on your phone into an editable Tesla light show for a **2025 Model 3 Long Range RWD, North America**. It bundles its neural models, graphics and audio tools and works entirely offline.
 
 **2.1 adds the Studio cockpit:** a Tesla-inspired monochrome interface, source-time score, keyboard-accessible Compose/Music/Outputs/Review workspaces, Deux source separation and GAME Large singing-note transcription. Precision Studio retains editable voice/bass gestures, independent timing offsets and review against final exported lamp commands. See [release notes](RELEASE_NOTES.md), [build instructions](BUILD.md) and [validation scope](VALIDATION.md).

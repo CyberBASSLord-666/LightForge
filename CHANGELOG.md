@@ -1,3 +1,12 @@
+# LightForge 2.1.0 — Studio cockpit and neural singing
+
+- Full-context Deux source separation and GAME Large singing transcription, bundled offline with pinned conversion provenance and licenses.
+- Source-clock Float32 voice caches, independent pitch evidence and explicit speech/bleed guards.
+- Tesla-inspired Compose, Music, Outputs and Review workspaces with accessible tabs and a zoomable musical score.
+- Bounded 64 KiB full-resolution cache writes; dense bass collisions cannot create negative holds or duplicate fallback routes.
+- Original-key GitHub APK publication from a verified CI candidate, with source-bound gates, checksum verification and no signing secrets in Actions.
+- Six natural-reference mixtures improve mean vocal SI-SDR from 10.042 to 11.475 dB; controlled-window residual energy is higher. Phone/vehicle validation remains outstanding.
+
 # LightForge 2.0.0 — Precision Studio
 
 - Editable voice/bass musical cues, isolated part timing and same-clock passage looping.

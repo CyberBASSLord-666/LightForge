@@ -11,6 +11,9 @@ Version code **20100**, signed with the original LightForge identity. Install ov
 - Balanced mode retains the lighter MDX separator and compact Beat This rhythm model. Both modes include GAME. Model failures are visible; the app never silently substitutes a weaker analysis.
 - Bass notes continue to follow low-register harmonics in separated accompaniment. This is not isolated bass-source recognition, lyrics or word alignment.
 
+- Closely spaced bass notes cannot create negative hold lengths. Shared fallback lamps are deduplicated; unschedulable entrances remain visible in synchronization review.
+- Full-resolution cache encoding reuses one 64 KiB scratch buffer while preserving exact Float32 sample bytes.
+
 ## Studio interface
 
 - Tesla-inspired monochrome surfaces, restrained red actions, tracked typography and a Model 3 vehicle header.

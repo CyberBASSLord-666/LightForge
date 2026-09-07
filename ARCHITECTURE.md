@@ -1,6 +1,6 @@
 # LightForge 2.1.0 — Architecture
 
-Quality bars for modularity and API boundaries. Repo: private `CyberBASSLord-666/LightForge` — on GitHub `main`, `android/` and `web/` live at **repo root**; some local/private trees nest the same layout under `app/lightforge/`. Docs only — no code moves in this landing.
+Quality bars for modularity and API boundaries. Repo: private `CyberBASSLord-666/LightForge` — on GitHub `main`, `android/` and `web/` live at **repo root**; some local/private trees nest the same layout under `app/lightforge/`. Current application and release contracts are described below.
 
 ## Shape
 
@@ -8,13 +8,13 @@ Offline Android shell + bundled WebView studio. No network permission, no remote
 
 ```
 android/          native host: I/O, projects, decode, export ZIP, WebView bridge
-web/analysis/     on-device music intelligence (WASM/ONNX) → analysis v5
+web/analysis/     on-device music intelligence (WASM/ONNX) → analysis v6
 web/engine/       pure choreography → validated FSEQ frames (CommonJS-testable)
 web/preview/      Highland WebGL preview (consumes stateAt only)
 web/app.js + UI   studio orchestration, bridge adapter, editing UX
 ```
 
-Script load order is the dependency graph: analysis → vehicle-profile → planners → show-engine → ShowCompiler client → preview → app → UI plugins.
+Script load order is the dependency graph: generated version → analysis → vehicle-profile → planners → show-engine → ShowCompiler client → preview → app → UI plugins.
 
 ## Layer contracts (quality bars)
 
@@ -50,7 +50,7 @@ Native → Web: `window.onNativeEvent(type, payload)` plus a few lifecycle hooks
 
 ### 3. Analysis → engine music object (schema bar)
 
-`MusicAnalyzer.analyze` (v1.6.0 / analysis **version 5**) owns rhythm + structure + separated voice/bass detail. `ShowEngine.generate(music, settings)` consumes that object.
+`MusicAnalyzer.analyze` (analysis **version 6**) owns rhythm + structure + separated voice/bass detail. `ShowEngine.generate(music, settings)` consumes that object.
 
 **Bars:**
 
@@ -126,3 +126,7 @@ Coordinate wording with LF Docs if touching `BUILD.md` / `VALIDATION.md`. Engine
 `separator-deux.js` implements source-clock STFT/ISTFT, sequential full-context transformer stages, dual source-head scattering and normalized chunk overlap-add. `tools/prepare_deux.py` and `tools/prepare_game.py` reproduce licensed, pinned models; `verify_analysis_assets.py` rejects stale or incomplete runtime inventories at build time.
 
 `cockpit.js` moves existing live controls into four accessible workspaces without changing their IDs or handlers. It renders the source-time note/edit score using the actual audio playhead and declared part offsets. `cockpit.css` supplies the monochrome/red responsive design. Project state, native bridge, original audio exports, hardware routing and legacy frame integrity remain managed by their existing production owners.
+
+## Release publication
+
+The CI candidate uses an ephemeral certificate. A trusted local signing step preserves the original installation identity. `tools/apk_delta.py` transfers only public signature/ZIP bytes and references SHA-256-pinned candidate regions; no signing secrets enter Actions. `publish_github_release.py` requires successful CI, unchanged Android/WebView sources, all five current source-bound gates, exact asset bytes, package version, alignment and the original certificate before creating a draft release. It verifies GitHub's uploaded APK digest before publishing.

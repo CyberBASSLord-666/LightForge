@@ -4,7 +4,7 @@ The repository root contains the complete Android/WebView application, bundled m
 
 ## Reproduce the Android update
 
-Requirements: Linux x86_64, Python 3.12+, Node 22+, Bash, and at least 12 GB of free build space and 8 GB of RAM. The offline models add approximately 1.2 GiB before APK compression.
+Requirements: Linux x86_64, Python 3.12+, Node 22+, Bash, and at least 16 GB of free build space and 8 GB of RAM. The offline models add approximately 1.2 GiB before APK compression.
 
 ```bash
 npm ci --ignore-scripts --no-audit --no-fund
@@ -45,7 +45,7 @@ node qa/release-2.1.0/test-source-clock.cjs
 python3 tools/package_release.py
 ```
 
-The browser test uses the real UI, WebGL, browser workers, music fixture, persistence and streamed export, with a simulated Android bridge. It retains screenshots at 320, 393, 768 and 1440 pixels. The `.github/workflows/verify-v2.yml` workflow runs Node/Python, browser, APK build and native tests and keeps receipts/screenshots as an Actions artifact. Its signing identity is temporary and its APK is not uploaded as a release.
+The browser test uses the real UI, WebGL, browser workers, music fixture, persistence and streamed export, with a simulated Android bridge. It retains screenshots at 320, 393, 768 and 1440 pixels. The `.github/workflows/verify-v2.yml` workflow runs Node/Python, browser, APK build and native tests and keeps receipts/screenshots as an Actions artifact. Its signing identity is temporary. The candidate APK is retained as a private Actions artifact for local signing; it cannot update the original app.
 
 Prepare the licensed MUSDB reference excerpts as shown in `.github/workflows/verify-v2.yml` before running the actual model browser test. The packager requires passing, source-bound regression, browser, native, actual model runtime and reference-quality receipts. `qa/release-2.1.0/evaluate-separation.py` reproduces the 18 reference estimates; `evaluate-roles.cjs` runs their role components. The conversion/runtime probes and `verify-analysis.py` bind numeric evidence to exact model/adapter hashes; the complete commands and retained execution captures are documented in `qa/release-2.1.0/README.md`. Fresh model changes require fresh evidence; checked-in receipts are not a bypass. It compares every bundled web asset against the current source, checks APK CRCs and the original certificate, then creates `output/LightForge-2.1.0.apk` and `release-verification.json`. It does not substitute historical model tests for current UI/engine tests. Repository sources are the development handoff; the separate original private backup retains signing credentials.
 
@@ -73,3 +73,11 @@ Three.js remains pinned at 0.180.0. Model conversion provenance and scripts are 
 ## Physical validation
 
 Host tests do not execute an Android Activity, document provider or media codec, and do not measure vehicle behavior. A device with current Android System WebView is required for final install, playback, long-analysis and USB/car checks. Keep the app open while analyzing or exporting.
+
+## Publish a compatible GitHub release
+
+The production verification workflow retains `lightforge-2.1-ci-candidate` after its build and native gates pass. Download that exact artifact, verify all candidate assets against the checkout, and sign it locally using the original private identity. Refresh native and package receipts after signing.
+
+`tools/apk_delta.py make candidate.apk signed.apk signed-apk.delta.json` produces a small public-byte transfer against the exact candidate hash. `apply` reconstructs the locally signed APK byte-for-byte and rejects a wrong base, corrupt patch or invalid range. It contains no key/password and cannot sign another APK.
+
+Commit the delta and `releases/vX.Y.Z/request.json` with the exact successful CI run, source commit, version and delta SHA-256, plus current release receipts. The publication workflow runs on `main`, verifies all five gates and unchanged app sources, reconstructs the full APK, validates the original certificate/manifest/alignment/assets, then uploads the APK, checksum, notes and verification report. It publishes only after GitHub's stored APK digest matches. Existing release tags/assets are never overwritten.
