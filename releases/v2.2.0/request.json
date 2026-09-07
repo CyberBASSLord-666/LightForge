@@ -1,9 +1,12 @@
 {
-  "version": {
-    "name": "2.2.0",
-    "code": 20200
-  },
+  "delta_sha256": "62281453dbe996fb2b2bdf059b842df98692aed9207509bac9621c00c568f838",
+  "resume_release_id": 384138741,
+  "resume_tag_name": "v2.2.0",
+  "resume_target_commit": "b823de973c8d43f1f89c1e3e0c062253f516e154",
   "run_id": 34128499048,
   "source_commit": "56895804aa62b458c225308ea1e1310333b8d22a",
-  "delta_sha256": "62281453dbe996fb2b2bdf059b842df98692aed9207509bac9621c00c568f838"
+  "version": {
+    "code": 20200,
+    "name": "2.2.0"
+  }
 }
