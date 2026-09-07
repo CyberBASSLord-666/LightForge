@@ -18,16 +18,16 @@ const config=JSON.parse(fs.readFileSync(analysis+'/models/features.json'));
 async function source(file){const r=await reader(fs.readFileSync(file)),parts=await r.stereo44100(0,r.samples);return parts[0].map((x,i)=>(x+parts[1][i])/2);}
 async function half(pcm){const chunks=[Buffer.from(LightForgeStemCache.header(Math.ceil(pcm.length/2)))],stream={write:async b=>chunks.push(Buffer.from(b)),close:async()=>{}};const w=new LightForgeStemCache.DownsampleWriter(stream,config.resampleHalfFIR,pcm.length);for(let i=0;i<pcm.length;i+=8191)await w.push(pcm.subarray(i,i+8191),i);await w.finish();return reader(Buffer.concat(chunks));}
 (async()=>{
- const results=[];
+ const results=[],cached=process.env.LIGHTFORGE_TRANSCRIPTION_CACHE?JSON.parse(fs.readFileSync(process.env.LIGHTFORGE_TRANSCRIPTION_CACHE)):null;
+ if(cached)for(const [p,h]of Object.entries(cached.source_hashes))assert.equal(sha(path.join(root,p)),h,'Cached transcription source changed: '+p);
  for(const track of tracks){
   const voiceFile=path.join(input,track+'-deux-vocals.wav'),backFile=path.join(input,track+'-deux-accompaniment.wav');
   const pcm=await source(voiceFile),voice=await half(pcm),back=await half(await source(backFile)),start=Date.now();
   const classified=await Vocals.analyze(voice,config,{ort:runtime,includeClassifierScores:true});
   const ex=new Detail.Extractor({sampleRate:22050,duration:pcm.length/44100});
   for(let i=0;i<voice.samples;i+=22050*8){const n=Math.min(22050*8,voice.samples-i);ex.push(await voice.mono22050(i,n,config),i,await back.mono22050(i,n,config));}
-  let detail=ex.finish({classifier:classified.classifier,model:classified.model});
-  const game=await GAME.create({ort:runtime,baseUrl:'https://models.invalid/models/game/'});const notes=await game.process(async(a,n)=>pcm.slice(a,a+n),pcm.length);detail=GAME.fuse(detail,notes);await game.release();
-  const result={track,inputVoiceSHA256:sha(voiceFile),inputAccompanimentSHA256:sha(backFile),seconds:(Date.now()-start)/1000,phraseCount:detail.phrases.length,noteCount:detail.notes.length,accentCount:detail.accents.length,neuralCandidates:notes.notes.length,detail};results.push(result);
+  let notes;const prior=cached?.results.find(r=>r.track===track);if(prior){assert.equal(prior.inputVoiceSHA256,sha(voiceFile));notes=prior.detail.transcription;}else{const game=await GAME.create({ort:runtime,baseUrl:'https://models.invalid/models/game/'});notes=await game.process(async(a,n)=>pcm.slice(a,a+n),pcm.length);await game.release();}const detail=GAME.fuse(ex.finish({classifier:classified.classifier,model:classified.model,transcription:notes}),notes);
+  const result={track,transcriptionReused:!!prior,inputVoiceSHA256:sha(voiceFile),inputAccompanimentSHA256:sha(backFile),seconds:(Date.now()-start)/1000,phraseCount:detail.phrases.length,noteCount:detail.notes.length,accentCount:detail.accents.length,neuralCandidates:notes.notes.length,detail};results.push(result);
   console.log(track,result.phraseCount,result.noteCount,result.accentCount,result.seconds);fs.writeFileSync(path.join(input,'role-results.json'),JSON.stringify(results));
  }
  const negatives=results.filter(r=>r.track.endsWith('-instrumental')),positives=results.filter(r=>!r.track.endsWith('-instrumental'));

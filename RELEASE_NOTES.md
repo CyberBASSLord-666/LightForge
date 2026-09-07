@@ -6,6 +6,7 @@ Version code **20100**, signed with the original LightForge identity. Install ov
 
 - Studio mode upgrades vocal/instrumental separation to **Mel-Band RoFormer Deux**. The complete model runs offline with its full 13-second attention context, both trained source heads and original checkpoint values evaluated as Float32. Sequential stages and bounded reads control memory without dropping layers or quantizing weights.
 - **GAME Large 1.0.3** supplies learned sung-note boundaries and pitch. Its eight-step diffusion uses reproducible noise. Singing/speech evidence and actual separated-waveform expression gate the notes; speech and unsupported regions cannot become confident sung gestures.
+- A short, quiet singing passage can use agreement between GAME and independently measured source pitch when the general singing classifier is weak. This remains explicitly uncertain evidence and cannot bypass speech, source-energy or minimum-duration guards.
 - A full-resolution 44.1 kHz Float32 voice cache retains the original soundtrack clock for transcription. Context overlap and note continuation handling avoid inserting attacks merely at chunk seams. Playback, manual edits and export remain on the original audio clock.
 - Balanced mode retains the lighter MDX separator and compact Beat This rhythm model. Both modes include GAME. Model failures are visible; the app never silently substitutes a weaker analysis.
 - Bass notes continue to follow low-register harmonics in separated accompaniment. This is not isolated bass-source recognition, lyrics or word alignment.

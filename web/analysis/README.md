@@ -45,7 +45,7 @@ seeded uniform-noise input replaces the graph's internal random operation;
 original weights are unchanged. Twelve-second owned regions retain two seconds
 of neighboring context. Carry-in notes are joined without inventing seam attacks.
 
-GAME notes must overlap a supported singing phrase. Speech and unsupported
+GAME notes must overlap a supported non-speech phrase. A prominent separated source with weak general event-classifier scores can retain uncertain phrasing when GAME notes agree with independently measured periodic pitch; existing source-energy, duration and speech guards still apply. Classifier scores are never inflated. Speech and unsupported
 regions cannot acquire sung-note gestures. Neural pitch and boundaries replace
 acoustic note estimates; measured expressive energy and independent unvoiced
 articulations remain. Confidence describes relative singing evidence, not a

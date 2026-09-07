@@ -57,12 +57,10 @@ self.onmessage=async e=>{let session,melSession,separator,game,cacheWriter,cache
  const classified=await LightForgeVocals.analyze(stems.vocals,config,{ort,includeClassifierScores:true,report:(p,stage,detail)=>report(.83+.075*p,'Recognizing the isolated voice',detail)});
  const detailExtractor=new LightForgeVocalDetail.Extractor({sampleRate:22050,duration:sourceReader.duration}),detailCount=result.stemCache.samples,detailChunk=22050*8;
  for(let start=0;start<detailCount;start+=detailChunk){const count=Math.min(detailChunk,detailCount-start),voice=await stems.vocals.mono22050(start,count,config),backing=await stems.accompaniment.mono22050(start,count,config);detailExtractor.push(voice,start,backing);report(.905+.035*(start+count)/detailCount,'Following vocal expression','Measuring entrances, syllabic attacks, held notes and pauses');}
- result.vocals=detailExtractor.finish({classifier:classified.classifier,model:classified.model});
- classified.classifier=null;
  report(.942,'Transcribing sung notes','GAME Large • identifying entrances, pitch changes and held notes');
  game=await LightForgeGAME.create({ort,baseUrl:new URL('models/game/',self.location.href).href,onProgress:detail=>report(.942,'Loading singing transcription',detail)});
  const transcription=await game.process(await LightForgeStemCache.fullVoice(result.stemCache),sourceReader.samples,{onProgress:p=>report(.945+.04*p,'Transcribing sung notes','GAME Large • '+Math.round(p*100)+'%')});
- result.vocals=LightForgeGAME.fuse(result.vocals,transcription);await game.release();game=null;
+ result.vocals=LightForgeGAME.fuse(detailExtractor.finish({classifier:classified.classifier,model:classified.model,transcription}),transcription);classified.classifier=null;await game.release();game=null;
  report(.985,'Following bass notes','Listening beneath the separated singing');
  const bass=await LightForgeBass.analyze(stems.accompaniment,config,{onProgress:p=>report(.985+.014*p,'Following bass notes','Distinguishing sustained low notes from brief drum attacks')});
  const {notes,...bassAnalysis}=bass;result.bassNotes=notes;result.bassAnalysis={...bassAnalysis,source:'separated-accompaniment',sourceSeparated:true,limitations:[...(bassAnalysis.limitations||[]),'Bass notes are estimated from combined accompaniment, not an isolated bass instrument.']};

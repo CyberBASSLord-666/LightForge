@@ -1,7 +1,7 @@
 {
   "README.md": {
-    "bytes": 5757,
-    "sha256": "dbe8963ab070768624e5c0938f3f6d48d29647d5a03b76cb7ef24d9d2ae5d0e2"
+    "bytes": 6029,
+    "sha256": "a85c96a436aeae58bfce714cdadf315583de5c0261d3fba5018238915eca85a6"
   },
   "analyzer.js": {
     "bytes": 1431,
@@ -224,8 +224,8 @@
     "sha256": "e66568724f8848e57cc2a56e4bea3a5b86ce3ff81b2da11eac8ed7ab02b27bd4"
   },
   "vocal-detail.js": {
-    "bytes": 21265,
-    "sha256": "df7f86db061f4b64806539d82dfc7d4777379fdb506a75de8c2d3e689a82a621"
+    "bytes": 22476,
+    "sha256": "cd760d7a766d9a4ab0ac3a252a10f17a16a797b38e50b2d6712bc6adcd42713f"
   },
   "vocal.js": {
     "bytes": 9662,
@@ -236,7 +236,7 @@
     "sha256": "0f0e5216dc1d2ca0bfb25eddacdaa21076990fa7638c22188023607e43d4005f"
   },
   "worker.js": {
-    "bytes": 11143,
-    "sha256": "66364835be95004d32377a187539a1d7e76c88db8dde12589964ac8206bbfe95"
+    "bytes": 11125,
+    "sha256": "725e6767647f70021d8ba38ec68f40f0059ca3af1afbdd282446cf7c7b54f75f"
   }
 }
