@@ -2,6 +2,7 @@
 """Publish an update-compatible APK only after current source-bound release gates."""
 from pathlib import Path
 import json, os, re, zipfile
+from apk_archive import verify_native_libraries
 from package_release import sha_file, sha_stream, require, atomic, atomic_copy, SIGNING_SHA256
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -27,6 +28,7 @@ def main():
     signature=(ROOT/'build/signature-verification.txt').read_text();require('certificate SHA-256 digest: '+SIGNING_SHA256 in signature,'Original signing certificate was not verified.')
     web=[p for p in (ROOT/'web').rglob('*') if p.is_file() and not any(x.startswith('.') or x in {'node_modules','__pycache__'} for x in p.relative_to(ROOT/'web').parts)]
     with zipfile.ZipFile(apk) as z:
+        verify_native_libraries(z, ROOT/'android/native-runtime.json')
         require(z.testzip() is None,'APK has a ZIP CRC failure.')
         packaged={n for n in z.namelist() if n.startswith('assets/') and not n.endswith('/')}
         expected={'assets/'+p.relative_to(ROOT/'web').as_posix() for p in web}

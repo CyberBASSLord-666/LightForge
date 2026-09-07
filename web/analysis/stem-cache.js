@@ -55,6 +55,9 @@ async function create(key,sampleCount,config,sourceId=''){
  const expected=Math.ceil(sampleCount/2),needed=132+expected*8+sampleCount*4;
  await prune(key,needed);const space=await navigator.storage.estimate().catch(()=>({}));if(space.quota&&space.quota-(space.usage||0)<needed+16*1024*1024)throw Error('Free some device storage before analyzing this song. Its separated audio needs temporary space.');
  const dir=await(await directory()).getDirectoryHandle(key,{create:true}),marker=await(await dir.getFileHandle('started.json',{create:true})).createWritable();await marker.write(JSON.stringify({createdAt:Date.now(),sourceId}));await marker.close();
+ // Remove the commit marker before replacing any stem file. A worker killed
+ // between independent stream closes must never expose a mixed old/new set.
+ try{await dir.removeEntry('complete.json');}catch(e){if(e.name!=='NotFoundError')throw e;}
  const writers={};let full;
  try{for(const name of ['vocals','accompaniment']){const stream=await(await dir.getFileHandle(name+'.wav',{create:true})).createWritable();await stream.write(header(expected));writers[name]=new DownsampleWriter(stream,config.resampleHalfFIR,sampleCount);}full=await(await dir.getFileHandle('voice-full.wav',{create:true})).createWritable();await full.write(header(sampleCount,44100));}
  catch(e){for(const writer of Object.values(writers))await writer.stream.abort().catch(()=>{});if(full)await full.abort().catch(()=>{});await discard(key);throw e;}

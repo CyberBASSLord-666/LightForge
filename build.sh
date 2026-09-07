@@ -17,6 +17,9 @@ VERSION_CODE="$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["
 APK_NAME="LightForge-$VERSION.apk"
 python3 "$ROOT/tools/sync_version.py" --check
 python3 "$ROOT/tools/verify_analysis_assets.py"
+python3 "$ROOT/tools/bootstrap_native_runtime.py" --check
+ORT_JAR="$TOOLCHAIN/onnx/classes.jar"
+NATIVE_MANIFEST="$ROOT/android/native-runtime.json"
 for tool in "$JAVA_HOME/bin/javac" "$JAVA_HOME/bin/keytool" "$BUILD_TOOLS/aapt2" "$BUILD_TOOLS/d8" "$BUILD_TOOLS/zipalign" "$BUILD_TOOLS/apksigner"; do
     if [[ ! -x "$tool" ]]; then
         printf 'Missing build tool: %s\nRun python3 tools/bootstrap_toolchain.py first.\n' "$tool" >&2
@@ -46,6 +49,7 @@ cleanup_build() {
 }
 trap cleanup_build EXIT
 mkdir -p "$BUILD/classes" "$BUILD/dex" "$BUILD/generated" "$BUILD/assets"
+python3 "$ROOT/tools/bootstrap_native_runtime.py" --check --stage "$BUILD/native"
 if [[ ! -f "$KEY_DIR/lightforge-release.jks" ]]; then
     if [[ "${LIGHTFORGE_ALLOW_NEW_SIGNING:-0}" != "1" ]]; then
         printf 'The original update signing identity is required. Restore it and set LIGHTFORGE_SIGNING_DIR. For an isolated development install only, set LIGHTFORGE_ALLOW_NEW_SIGNING=1.\n' >&2
@@ -98,11 +102,11 @@ if not files:raise SystemExit('No Java sources were found.')
 Path(sys.argv[3]).write_text('\n'.join('"'+str(p).replace('\\','\\\\').replace('"','\\"')+'"' for p in files)+'\n')
 PY
 "$JAVA_HOME/bin/javac" -encoding UTF-8 --release 8 \
-    -classpath "$PLATFORM" \
+    -classpath "$PLATFORM:$ORT_JAR" \
     -d "$BUILD/classes" "@$BUILD/java-sources.txt"
 "$JAVA_HOME/bin/jar" --create --file "$BUILD/classes.jar" -C "$BUILD/classes" .
-"$BUILD_TOOLS/d8" --release --min-api 26 --lib "$PLATFORM" --output "$BUILD/dex" "$BUILD/classes.jar"
-python3 "$ROOT/tools/apk_archive.py" assemble "$BUILD/resources.apk" "$BUILD/dex" "$BUILD/unsigned.apk" "$BUILD/assets"
+"$BUILD_TOOLS/d8" --release --min-api 26 --lib "$PLATFORM" --output "$BUILD/dex" "$BUILD/classes.jar" "$ORT_JAR"
+python3 "$ROOT/tools/apk_archive.py" assemble "$BUILD/resources.apk" "$BUILD/dex" "$BUILD/unsigned.apk" "$BUILD/assets" --native-directory "$BUILD/native" --native-manifest "$NATIVE_MANIFEST"
 rm -- "$BUILD/resources.apk"
 printf 'Aligning and signing APK…\n'
 "$BUILD_TOOLS/zipalign" -P 16 -f 4 "$BUILD/unsigned.apk" "$BUILD/aligned.apk"
@@ -115,7 +119,7 @@ rm -- "$BUILD/aligned.apk"
 "$BUILD_TOOLS/apksigner" verify --verbose --print-certs "$BUILD/signed.apk" > "$BUILD/signature-verification.txt"
 "$BUILD_TOOLS/zipalign" -c -P 16 4 "$BUILD/signed.apk"
 "$BUILD_TOOLS/aapt2" dump badging "$BUILD/signed.apk" > "$BUILD/apk-badging.txt"
-python3 "$ROOT/tools/apk_archive.py" validate "$BUILD/signed.apk" "$BUILD/assets" --require-dex
+python3 "$ROOT/tools/apk_archive.py" validate "$BUILD/signed.apk" "$BUILD/assets" --require-dex --native-manifest "$NATIVE_MANIFEST"
 python3 - "$BUILD/signed.apk" "$DIST/$APK_NAME" "$BUILD/apk-badging.txt" "$ROOT/version.json" "$BUILD/signature-verification.txt" <<'PY'
 from pathlib import Path
 import hashlib,json,os,re,shutil,sys,zipfile

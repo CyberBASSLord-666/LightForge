@@ -1,24 +1,26 @@
-# LightForge 2.2 — personal Android light-show studio
+# LightForge 2.2.1 — recoverable native Studio analysis
 
-Install the complete update from the [LightForge 2.2.0 GitHub release](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.2.0). Use the APK asset, keep the existing installation, and verify its checksum when transferring. All models are bundled; no first-run download is required.
+**The current source targets 2.2.1; release validation and publication are pending.** The latest published update is [LightForge 2.2.0](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.2.0). Use the complete APK asset and keep the existing installation. All models are bundled; no first-run download is required.
 
 LightForge turns music on your phone into an editable Tesla light show for a **2025 Model 3 Long Range RWD, North America**. It bundles its neural models, graphics and audio tools and works entirely offline.
 
-**2.1 adds the Studio cockpit:** a Tesla-inspired monochrome interface, source-time score, keyboard-accessible Compose/Music/Outputs/Review workspaces, Deux source separation and GAME Large singing-note transcription. Precision Studio retains editable voice/bass gestures, independent timing offsets and review against final exported lamp commands. See [release notes](RELEASE_NOTES.md), [build instructions](BUILD.md) and [validation scope](VALIDATION.md).
+**2.2.1 addresses expensive, interrupted analysis:** Studio separation uses native CPU inference on Android, while completed passages and analysis stages can be reused after interruption. Elapsed time, passage progress and resumed-work counts make long operations visible. The learned weights, full 13-second separation context, both source heads and Studio quality remain intact; failures do not silently switch to Balanced. Processing time and memory still depend on the song and device.
+
+**The Studio cockpit includes:** a Tesla-inspired monochrome interface, source-time score, keyboard-accessible Compose/Music/Outputs/Review workspaces, Deux source separation and GAME Large singing-note transcription. Precision Studio retains editable voice/bass gestures, independent timing offsets and review against final exported lamp commands. See [release notes](RELEASE_NOTES.md), [build instructions](BUILD.md) and [validation scope](VALIDATION.md).
 
 ## Install the update
 
-Install the update-compatible `LightForge-2.2.0.apk` over your existing app. **Do not uninstall first.** The release uses the original signing identity; private projects are preserved. CI builds use a temporary identity and are not the update APK.
+When the signed 2.2.1 release is published, install `LightForge-2.2.1.apk` over your existing app. **Do not uninstall first.** The release gate requires the original signing identity so the update preserves private projects. CI builds use a temporary identity and are not the update APK.
 
-Android 8+ and a current Android System WebView are required. The app targets Android 15. No account, API key, subscription, server or model download is needed. Create runs in an Android foreground service, so you can switch apps or turn off the display. Studio requires several GB of working memory and processing can substantially exceed song duration. Choose Balanced if Studio exceeds your device resources. Separated listening audio needs about 21.2 MB per minute of music.
+Android 8+ and a current Android System WebView are required. The app targets Android 15. No account, API key, subscription, server or model download is needed. Create runs in an Android foreground service, so you can switch apps or turn off the display. Studio uses native ONNX Runtime CPU inference with bounded batches and model buffers; it can still take longer than the song and needs substantial free memory and temporary storage. Balanced remains an explicit lighter choice. Separated listening audio needs about 21.2 MB per minute of music; recoverable passage checkpoints need additional temporary space.
 
 ## Background analysis
 
-**Create my light show** now runs both analysis and choreography independently of the Studio screen. Use **Continue in background**, switch to another app, lock the screen, or dismiss Studio from Recents. A notification shows progress and offers **Cancel**; completed shows are saved before the service stops. Reopening LightForge reconnects to the current job or opens the completed show.
+**Create my light show** now runs both analysis and choreography independently of the Studio screen. Use **Continue in background**, switch to another app, lock the screen, or dismiss Studio from Recents. The progress panel shows elapsed time, current passage, completed/reused work and when a model step has stopped reporting updates. Elapsed time is not a completion estimate. A notification shows progress, an elapsed-time chronometer and **Cancel**; completed shows are saved before the service stops. Reopening LightForge reconnects to the current job or opens the completed show.
 
 Allow notifications when Android asks. For long screen-off jobs, choose **Allow screen-off processing** or **Guide → Allow background battery use** and approve Android's battery exemption. Manufacturer-specific sleeping-app restrictions may also need unrestricted battery use in the app's Android settings. These are system-controlled choices; the app does not grant itself permissions.
 
-Your last saved show is preserved on cancellation, low-memory renderer loss, process interruption or failure. Completed analysis is checkpointed before choreography and reused on Retry only if every saved input still matches. An interrupted model pass restarts that pass; it does not claim sample-level resumability. Android's Stop/Force stop, reboot and media-processing time limits still apply (normally six background hours per 24-hour allowance on Android 15+). No automatic reboot launch or endless restart loop is used.
+Your last saved show is preserved on cancellation, low-memory renderer loss, process interruption or failure. **Resume analysis** checks completed separation passages, transcription work and analysis stages before continuing. The interrupted passage may run again; completed matching work is reused. Source audio, analysis settings, execution path and app version identify checkpoints. Renaming a show or changing choreography alone does not discard matching analysis. Damaged checkpoints are rejected and recomputed. A completed overall analysis checkpoint skips directly to choreography. Android's Stop/Force stop, reboot and media-processing time limits still apply (normally six background hours per 24-hour allowance on Android 15+). No automatic reboot launch or endless restart loop is used.
 
 Import and export document pickers still require returning to the app. Background analysis does not grant root, unrestricted access to other apps, hidden recording, vehicle API access or unverified GPU acceleration. All model quality settings and the offline privacy boundary are preserved.
 
@@ -319,17 +321,22 @@ The renderer source and pinned npm dependency lock are in `web/preview/src/`.
 
 ## Verification and device status
 
-`VALIDATION.md` separates current music, planner and integration checks
-from retained evidence for earlier releases. The release receipt records the
-packaged APK checks and exact source assets. This workspace has not confirmed
-Android installation or launch: the earlier emulator did not finish booting.
-The app has not been tested here on the user's phone or car.
+`VALIDATION.md` separates current evidence from earlier releases. Version 2.2.0 has a retained Android emulator background-lifecycle pass; it does not validate the new native Studio path in 2.2.1. Current 2.2.1 release gates and physical-device validation are pending:
+
+| Check | Current 2.2.1 release status |
+|---|---|
+| Host model equivalence, memory/runtime and regression evidence | Pending final source-bound results |
+| Browser UI, complete model pipeline and cancellation | Pending final current-source run |
+| Android emulator native Studio, screen-off/Doze, cancellation and partial resume | Pending runtime execution |
+| Signed update package and release publication | Pending final release gates |
+| Physical phone performance, long songs, thermals and battery management | Unverified |
+| Physical Tesla timing and movement | Unverified |
+
+Host speed measurements do not predict Samsung phone speed. Browser tests exercise the browser path; Android must separately exercise native inference. A small emulator fixture does not establish that every full song will complete on every phone.
 
 ## Update from an earlier release
 
-Install `LightForge-2.2.0.apk` over the existing LightForge app. The package ID
-and signing identity are unchanged, and version code 20100 is newer than the
-previous releases. **Do not uninstall first**, because uninstalling removes
+The intended signed update is `LightForge-2.2.1.apk`, version code 20201. Install it over the existing LightForge app after release publication; the release gate requires the original package ID and signing identity. **Do not uninstall first**, because uninstalling removes
 private projects. Saved music and projects remain compatible; sequences are
 regenerated with the current vehicle profile when edited or restored.
 

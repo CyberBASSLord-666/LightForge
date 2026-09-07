@@ -6,7 +6,7 @@ const native = () => window.Android && typeof window.Android.pickAudio === 'func
 const clone = x => JSON.parse(JSON.stringify(x));
 const defaults = {style:'festival',intensity:.85,dance:'expressive',stepMs:20,sensitivity:.82,beatDivision:'auto',bpmOverride:null,offsetMs:0,palette:'aurora',enabled:{windows:true,mirrors:true,trunk:true,charge:true,interior:true},optionalFog:false,outerBeamRamping:false,outputEnabled:{},manualCues:[],sectionOverrides:{},seed:2025,analysisQuality:'precision',movementDensity:.7,downbeatAnchor:null,meterOverride:null,tempoScale:1,vocalFocus:.85,bassFocus:.9,vocalRegions:[],musicCues:[],vocalOffsetMs:0,bassOffsetMs:0};
 const state = {audition:'mix',auditionAvailable:false,auditionLoading:false,project:null,music:null,show:null,settings:clone(defaults),projects:[],history:[],future:[],compiled:null,exportHeader:null,saveBlocked:false,composing:false,compileId:0,compileAbort:null,renderedSettingsKey:null,showMusic:null,pendingExport:null,busy:false,job:0,abort:null,view:'studio',editing:null,needAnalysis:false,previewMode:0,exportId:null,lastSave:0,acceptProgress:false,selection:0,loadingProject:false,pendingProjectAction:null,soloPreview:null};
-const audio=$('audio');let auditionEpoch=0,availabilityEpoch=0,auditionAbort=null,auditionURL=null,auditionIntent=null,auditionSignature=null,analysisFallback=null;let toastTimer,saveTimer,regenTimer,lastDraw=0,lastSection=-1,frameRequest=0,dbPromise;
+const audio=$('audio');let auditionEpoch=0,availabilityEpoch=0,auditionAbort=null,auditionURL=null,auditionIntent=null,auditionSignature=null,analysisFallback=null;let progressClock,toastTimer,saveTimer,regenTimer,lastDraw=0,lastSection=-1,frameRequest=0,dbPromise;
 function auditionChanged(){document.dispatchEvent(new CustomEvent('lightforge:changed'));}
 function mixAudioUrl(){return state.project?.previewUrl||state.project?.audioUrl||'';}
 function stemSignature(meta){return meta&&typeof meta==='object'?JSON.stringify([meta.version,meta.key,meta.samples,meta.duration,meta.sourceId]):'';}
@@ -97,9 +97,9 @@ async function readBootstrap(){
  if(background)await handleBackgroundJob(background);
 }
 function applyBootstrap(data){if(Array.isArray(data.projects))state.projects=data.projects;if(data.version)text($('appVersion'),data.version);if('pendingExport'in data)state.pendingExport=data.pendingExport;if(state.project){const p=state.projects.find(p=>p.id===state.project.id);if(p){Object.assign(state.project,p);text($('trackTitle'),p.name);}}if(state.pendingProjectAction?.kind==='rename'){state.pendingProjectAction=null;endBusy();toast('Show renamed.');}renderProjects();document.dispatchEvent(new CustomEvent('lightforge:changed'));}
-function setProgress({progress=0,stage='Working',detail,message}){if(!state.busy)return;const p=Math.max(0,Math.min(1,progress>1?progress/100:progress));$('progressBar').style.width=(p*100)+'%';text($('progressPercent'),Math.round(p*100)+'%');text($('progressStage'),stage);text($('progressDetail'),detail||message||'Preparing your show…');const titles={separat:'Separating voice and accompaniment',vocal:'Reading the voice phrasing',voice:'Reading the voice phrasing',pitch:'Following notes and holds',restore:'Restoring your show',duplicate:'Creating your new version',import:'Bringing your music in',decode:'Preparing the audio',model:'Warming up the neural engine',neural:'Listening to the rhythm',beats:'Finding the groove',structure:'Reading the arrangement',generate:'Choreographing your show',export:'Packing your light show'};const key=Object.keys(titles).find(k=>String(stage).toLowerCase().includes(k));if(key)text($('progressTitle'),titles[key]);}
-function beginBusy(title,detail){state.busy=true;state.job++;$('processing').hidden=false;text($('progressTitle'),title);text($('progressDetail'),detail);text($('progressStage'),'Preparing');text($('progressPercent'),'0%');$('progressBar').style.width='0%';$('cancelWork').disabled=false;renderBackgroundNote();audio.pause();updateButtons();return state.job;}
-function endBusy(){state.busy=false;if($('backgroundContinue'))$('backgroundContinue').hidden=true;if($('backgroundPower'))$('backgroundPower').hidden=true;$('processing').hidden=true;state.abort=null;updateButtons();}
+function setProgress(info){const {progress=0,stage='Working',detail,message}=info;if(!state.busy)return;state.progressFacts={...info};state.progressLastAt=Date.now();renderProgressFacts();const p=Math.max(0,Math.min(1,progress>1?progress/100:progress));$('progressBar').style.width=(p*100)+'%';$('progressBar').parentElement.setAttribute('aria-valuenow',String(Math.round(p*100)));text($('progressPercent'),Math.round(p*100)+'%');text($('progressStage'),stage);text($('progressDetail'),detail||message||'Preparing your show…');const titles={separat:'Separating voice and accompaniment',vocal:'Reading the voice phrasing',voice:'Reading the voice phrasing',pitch:'Following notes and holds',restore:'Restoring your show',duplicate:'Creating your new version',import:'Bringing your music in',decode:'Preparing the audio',model:'Warming up the neural engine',neural:'Listening to the rhythm',beats:'Finding the groove',structure:'Reading the arrangement',generate:'Choreographing your show',export:'Packing your light show'};const key=Object.keys(titles).find(k=>String(stage).toLowerCase().includes(k));if(key)text($('progressTitle'),titles[key]);}
+function beginBusy(title,detail){state.busy=true;state.job++;state.busyStartedAt=Date.now();state.progressLastAt=state.busyStartedAt;state.progressFacts={};clearInterval(progressClock);progressClock=setInterval(renderProgressFacts,1000);$('processing').hidden=false;text($('progressTitle'),title);text($('progressDetail'),detail);text($('progressStage'),'Preparing');text($('progressPercent'),'0%');$('progressBar').style.width='0%';$('progressBar').parentElement.setAttribute('aria-valuenow','0');$('cancelWork').disabled=false;renderProgressFacts();renderBackgroundNote();audio.pause();updateButtons();return state.job;}
+function endBusy(){state.busy=false;clearInterval(progressClock);if($('backgroundContinue'))$('backgroundContinue').hidden=true;if($('backgroundPower'))$('backgroundPower').hidden=true;$('processing').hidden=true;state.abort=null;updateButtons();}
 function openAudioPicker(){if(state.busy)return;if(native()){state.acceptProgress=true;bridge('pickAudio');}else $('browserFile').click();}
 async function db(){if(!dbPromise)dbPromise=new Promise((resolve,reject)=>{const r=indexedDB.open('lightforge',1);r.onupgradeneeded=()=>{r.result.createObjectStore('audio');r.result.createObjectStore('projects');};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});return dbPromise;}
 async function dbGet(store,key){const d=await db();return new Promise((resolve,reject)=>{const r=d.transaction(store).objectStore(store).get(key);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}
@@ -161,6 +161,26 @@ function updateButtons(){
  if(!state.needAnalysis)text($('generationHint'),state.composing?'Updating the arrangement in the background…':state.music&&(state.music.analysisVersion||1)<6?'Your saved arrangement is preserved. Re-analyze for GAME Large singing transcription and studio source separation.':has?'Tweak a setting to update the preview. Your show saves automatically.':'On-device music analysis. No subscription. No uploads.');
  document.dispatchEvent(new CustomEvent('lightforge:changed'));
 }
+function elapsedLabel(milliseconds){
+ const seconds=Math.max(0,Math.floor(milliseconds/1000)),minutes=Math.floor(seconds/60),hours=Math.floor(minutes/60);
+ return hours?`${hours}h ${minutes%60}m ${seconds%60}s`:minutes?`${minutes}m ${seconds%60}s`:`${seconds}s`;
+}
+function renderProgressFacts(){
+ const panel=$('progressMetrics');if(!panel)return;panel.hidden=!state.busy;if(!state.busy)return;
+ const facts=state.progressFacts||{},job=backgroundActive(state.backgroundJob)?state.backgroundJob:null,now=Date.now();
+ const created=Number(job?.createdAt)||state.busyStartedAt||now;
+ text($('progressElapsed'),'Elapsed '+elapsedLabel(now-created));
+ const count=Number(facts.passageCount)||0,index=Number(facts.passageIndex)||0;
+ text($('progressPassage'),count>0&&index>0?`Passage ${Math.min(index,count)} of ${count}`:'');
+ const saved=[];if(facts.passagesCompleted>0)saved.push(`${facts.passagesCompleted} passage${facts.passagesCompleted===1?'':'s'} completed`);
+ if(facts.restoredPassages>0)saved.push(`${facts.restoredPassages} reused`);
+ if(!saved.length&&facts.completedStages>0)saved.push(`${facts.completedStages} analysis stage${facts.completedStages===1?'':'s'} complete`);
+ if(facts.restoredStages>0)saved.push(`${facts.restoredStages} stage${facts.restoredStages===1?'':'s'} reused`);
+ $('progressSaved').hidden=!saved.length;text($('progressSaved'),saved.join(' · '));
+ const lastUpdate=Number(job?.progressAt)||Number(job?.updatedAt)||state.progressLastAt||now,quiet=now-lastUpdate;
+ const waiting=quiet>=90000&&(job||facts.elapsedSeconds!==undefined)&&job?.state!=='cancelling';$('progressActivity').hidden=!waiting;
+ if(waiting)text($('progressActivity'),`This model step has not reported progress for ${elapsedLabel(quiet)}. LightForge is checking for a response.${job?' Completed work stays saved.':''}`);
+}
 function backgroundActive(job){return !!job&&['queued','running','cancelling'].includes(job.state);}
 function backgroundSupported(){return native()&&typeof window.Android.startAnalysis==='function';}
 function renderBackgroundNote(){
@@ -183,7 +203,7 @@ async function handleBackgroundJob(job){
  if(state.loadingProject||state.backgroundApplying)return;
  if(backgroundActive(job)){
   if(!state.busy)beginBusy('Creating your show in the background','You can switch apps while LightForge works.');
-  renderBackgroundNote();setProgress({progress:job.progress,stage:job.progress>=.96?'generate':'analysis',detail:job.stage});
+  renderBackgroundNote();setProgress({...job,stage:job.analysisStage||(job.progress>=.96?'generate':'analysis'),detail:job.stage});
   $('cancelWork').disabled=job.state==='cancelling';return;
  }
  if(state.backgroundSeen===job.id+':'+job.state)return;
@@ -204,7 +224,7 @@ async function handleBackgroundJob(job){
   finally{state.backgroundApplying=false;}
  }else if(['failed','interrupted','cancelled'].includes(job.state)){
   state.backgroundSyncPending=false;
-  if(banner){banner.hidden=false;text($('backgroundRecoveryMessage'),job.stage||'Your saved show is intact. Retry when ready.');}
+  if(banner){banner.hidden=false;const saved=job.hasCheckpoint?' Completed music analysis is saved; resume skips straight to choreography.':job.resumeAvailable?' Verified progress is saved and will be reused.':' Resume checks for saved progress before continuing.';text($('backgroundRecoveryMessage'),(job.stage||'Your saved show is intact.')+saved);text($('backgroundRetry'),'Resume analysis');}
  }
  updateButtons();
 }

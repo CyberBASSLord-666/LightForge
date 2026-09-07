@@ -15,7 +15,7 @@ env=dict(os.environ,JAVA_HOME=str(java.parent))
 def run(*command):return subprocess.check_output([str(p) for p in command],env=env,text=True)
 manifest=out/'AndroidManifest.xml'
 manifest.write_text('''<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.cyberbasslord.lightforge.tests"><uses-sdk android:minSdkVersion="26" android:targetSdkVersion="35"/><application android:label="LightForge lifecycle tests"/><instrumentation android:name="com.cyberbasslord.lightforge.BackgroundInstrumentation" android:targetPackage="com.cyberbasslord.lightforge" android:functionalTest="true"/></manifest>''')
-run(java/'javac','--release','8','-classpath',str(android)+':'+str(native),'-d',classes,ROOT/'tests/android/BackgroundInstrumentation.java')
+run(java/'javac','--release','8','-classpath',str(android)+':'+str(native)+':'+str(tool/'onnx/classes.jar'),'-d',classes,ROOT/'tests/android/BackgroundInstrumentation.java')
 if args.compile_only:
     print('Instrumentation compiled against the production Android classes.');raise SystemExit(0)
 key=Path(os.environ['LIGHTFORGE_SIGNING_DIR'])
@@ -24,7 +24,7 @@ if SIGNING_SHA256 in certificate.lower().replace(':',''):
     raise SystemExit('Instrumentation must never use the private release signing identity. Use the ephemeral CI identity.')
 classpath=out/'target-classes.jar';run(java/'jar','cf',classpath,'-C',native,'.')
 dex=out/'dex';dex.mkdir(exist_ok=True)
-run(build/'d8','--lib',android,'--classpath',classpath,'--min-api','26','--output',dex,*classes.rglob('*.class'))
+run(build/'d8','--lib',android,'--classpath',classpath,'--classpath',tool/'onnx/classes.jar','--min-api','26','--output',dex,*classes.rglob('*.class'))
 unsigned=out/'unsigned.apk';run(build/'aapt2','link','-o',unsigned,'-I',android,'--manifest',manifest)
 with zipfile.ZipFile(unsigned,'a') as archive:
     for path in dex.glob('*.dex'):archive.write(path,path.name,compress_type=zipfile.ZIP_STORED)

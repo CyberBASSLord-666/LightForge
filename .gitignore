@@ -114,3 +114,9 @@ qa/release-2.1.0/native-*-fixtures/
 web/analysis/models/deux/*.onnx
 
 qa/release-2.2.0/native-*-fixtures/
+
+# Reproducible native/current-release fixtures and raw numeric comparison output.
+qa/release-*/native-*-fixtures/
+qa/release-*/native-classes/
+qa/release-2.2.1/fixtures/
+qa/release-2.2.1/*.f32

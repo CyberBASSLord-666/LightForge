@@ -90,6 +90,7 @@ def main():
     (DEST / 'toolchain-lock.json').write_text(json.dumps(PACKAGES, indent=2)+'\n')
     subprocess.run([str(DEST/'jdk17/bin/javac'), '-version'], check=True)
     subprocess.run([str(DEST/'android-sdk/build-tools/35.0.0/aapt2'), 'version'], check=True)
+    subprocess.run([__import__('sys').executable, str(PROJECT/'tools/bootstrap_native_runtime.py')], check=True)
     print('Build toolchain ready. Run bash build.sh from ' + str(PROJECT))
 
 if __name__ == '__main__':

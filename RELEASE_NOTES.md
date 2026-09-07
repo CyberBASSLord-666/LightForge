@@ -1,3 +1,29 @@
+# LightForge 2.2.1 — Native Studio processing and recoverable progress
+
+Version code **20201**. Release validation and publication are pending. The final update APK must retain the original LightForge signing identity; install over the existing app without uninstalling once it is published.
+
+## Analysis execution
+
+- Android Studio separation uses **ONNX Runtime 1.23.2 native CPU inference** instead of placing its transformer workload in the WebView's WebAssembly runtime. The browser retains its own bounded WebAssembly implementation.
+- The original learned Deux weights, full 13-second context, complete attention, both source heads and Float32 computation are retained. Independent bands and frames are processed in bounded batches, with reusable buffers. No layers or quality setting are silently dropped.
+- Rhythm, separation, voice and bass analysis use separate worker lifetimes so one stage's WebAssembly heap does not remain resident throughout the next stage. GAME Large and the existing rhythm models remain bundled.
+- Native separation can be cancelled through the foreground service. Its output remains on the original soundtrack sample clock. No network service, model download or new device permission is required.
+
+## Resume and progress
+
+- Completed separation passages, transcription work and analysis stages are saved locally with integrity checks. **Resume analysis** reuses matching completed work; the passage interrupted before its checkpoint finished may run again.
+- Checkpoint identities include source audio, analysis settings, execution path and app version. Rename and choreography-only changes preserve matching audio analysis; changed or damaged work is not accepted as a finished result.
+- Finished overall analysis can resume directly into choreography. Cancellation, Android interruption and storage errors leave the previous saved show intact. Android background-time limits and manufacturer battery/memory controls still apply.
+- The progress panel shows elapsed time, current passage, completed work and reuse counts. A delayed-update message distinguishes a quiet model step from newly reported progress without inventing an ETA. The background notification includes an elapsed-time chronometer.
+
+## Verification and limits
+
+Final source-bound host model-equivalence/runtime results, browser checks, the Android native Studio lifecycle run, and signed-package verification are **pending**. The new Android test covers native Studio with the Activity destroyed, screen off and Doze active, then cancellation during a later passage and resume from completed work. An implemented test is not a passing runtime result.
+
+This change targets the slow execution and repeated-work failure mode reported in 2.2.0. It does not promise a fixed completion time or claim the problem is resolved on an untested phone. Runtime, memory, storage, thermals and long-song completion remain device/workload dependent. Physical phone and Tesla testing remain unverified. Historical 2.1 separation scores below are not new native-runtime measurements. Bundled model licenses retain their noncommercial restrictions.
+
+---
+
 # LightForge 2.2.0 — Work beyond the screen
 
 Version code **20200**, using the original LightForge signing identity. Install the complete APK over your existing app without uninstalling.

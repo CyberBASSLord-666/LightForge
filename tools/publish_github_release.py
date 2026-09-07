@@ -9,6 +9,7 @@ import subprocess
 import sys
 import zipfile
 
+from apk_archive import verify_native_libraries
 from apk_delta import apply_delta, digest
 from package_release import SIGNING_SHA256
 
@@ -93,6 +94,7 @@ def verify_apk(apk, version):
         require(marker in badging, 'Manifest mismatch: ' + marker)
     require('android.permission.INTERNET' not in badging, 'Unexpected Internet permission')
     with zipfile.ZipFile(apk) as archive:
+        verify_native_libraries(archive, ROOT/'android/native-runtime.json')
         require(archive.testzip() is None, 'APK CRC failure')
         names = archive.namelist()
         require(len(set(names)) == len(names), 'Duplicate APK paths')
@@ -140,7 +142,7 @@ def main():
             require(path.is_relative_to(ROOT) and path.is_file() and digest(path) == checksum, 'Stale evidence: ' + relative)
     transfer = ROOT / 'build/release-candidate'
     transfer.mkdir(parents=True, exist_ok=False)
-    run('gh', 'run', 'download', str(request['run_id']), '--name', 'lightforge-2.2-ci-candidate', '--dir', str(transfer))
+    run('gh', 'run', 'download', str(request['run_id']), '--name', 'lightforge-' + version['name'] + '-ci-candidate', '--dir', str(transfer))
     apk_name = 'LightForge-' + version['name'] + '.apk'
     candidates = list(transfer.rglob(apk_name))
     require(len(candidates) == 1, 'CI artifact must contain exactly one APK')

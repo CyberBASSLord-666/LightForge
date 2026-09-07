@@ -4,6 +4,10 @@
  let started=false;
  root.BackgroundAnalysis={cancel(){controller.abort();}};
  const check=()=>{if(controller.signal.aborted)throw new DOMException('Analysis cancelled','AbortError');};
+ const report=(progress,detail,info={})=>{
+  if(typeof BackgroundJob.progressInfo==='function')BackgroundJob.progressInfo(id,progress,detail,JSON.stringify(info));
+  else BackgroundJob.progress(id,progress,detail);
+ };
  async function run(){
   if(started)return;started=true;
   try{
@@ -25,9 +29,10 @@
    let music=request.music;
    if(!music||request.needAnalysis||(music.analysisVersion||1)<5){
     music=await MusicAnalyzer.analyze(new URL(base+'audio.wav',location.href).href,{
-     projectId,analysisUrl:new URL(base+'analysis.wav',location.href).href,sensitivity:settings.sensitivity,
-     bpmOverride:settings.bpmOverride||undefined,analysisQuality:settings.analysisQuality
-    },p=>BackgroundJob.progress(id,.96*Math.max(0,Math.min(1,Number(p.progress)||0)),p.detail||p.message||p.stage||'Analyzing music'),controller.signal);
+     projectId,analysisIdentity:request.analysisIdentity,analysisUrl:new URL(base+'analysis.wav',location.href).href,sensitivity:settings.sensitivity,
+     bpmOverride:settings.bpmOverride||undefined,analysisQuality:settings.analysisQuality,
+     nativePredict:root.LightForgeNativeDeux?.create(BackgroundJob,id)
+    },p=>report(.96*Math.max(0,Math.min(1,Number(p.progress)||0)),p.detail||p.message||p.stage||'Analyzing music',p),controller.signal);
    }
    check();const duration=Number(request.duration);
    if(Number.isFinite(duration)&&duration>0&&music.duration!==duration){
@@ -36,8 +41,8 @@
    }
    if(!BackgroundJob.checkpoint(id,JSON.stringify(music)))throw Error('The analysis checkpoint could not be saved.');
    check();
-   const result=await ShowCompiler.generate(music,settings,p=>BackgroundJob.progress(id,.96+.035*Math.max(0,Math.min(1,Number(p.progress)||0)),p.detail||'Choreographing your show'),controller.signal);
-   check();BackgroundJob.progress(id,.999,'Saving your complete show');
+   const result=await ShowCompiler.generate(music,settings,p=>report(.96+.035*Math.max(0,Math.min(1,Number(p.progress)||0)),p.detail||'Choreographing your show',{stage:'generate'}),controller.signal);
+   check();report(.999,'Saving your complete show',{stage:'save'});
    const saved={version:1,projectId,name:request.name,updatedAt:Date.now(),settings,music,needAnalysis:false,compiled:result.compiled,
     provenance:{app:LightForgeVersion.name,planner:result.show.version,profile:VehicleProfile.version,analysis:music.analysisVersion,model:music.engine,frameSHA256:result.compiled.sha256}};
    if(!BackgroundJob.complete(id,JSON.stringify(saved)))throw Error('Your completed show could not be saved.');

@@ -1,0 +1,20 @@
+{
+  "fixture": "qa/release-2.2.1/fixtures/falcon-mix-pcm16.wav",
+  "fixtureSHA256": "0d0bf21401ad0dbb8a49aae581a16f9a00cadca41e116b5a4dc27eaaa3625648",
+  "source": "qa/release-1.6.0/fixtures/falcon-mix.wav",
+  "sourceSHA256": "effbbe3e3c0df821bf3cfa6535360b18339ded8041992373b41f8344998dba99",
+  "title": "The Easton Ellises - Falcon 69",
+  "license": "CC BY-NC-SA 3.0",
+  "datasetSource": "C't Remix Comp.",
+  "archive": {
+    "url": "https://github.com/sigsep/sigsep-mus-db/releases/download/v0.4.0/MUSDB18-7-STEMS.zip",
+    "sha256": "365f66acffc57282e474a4c24b32afec3678258c50b8d45646ac849b0a287df3",
+    "bytes": 147209385
+  },
+  "archiveMember": "test/The Easton Ellises - Falcon 69.stem.mp4",
+  "conversion": "Float32 to signed PCM16: round to nearest (ties to even), clip [-32768,32767], interleaved little-endian stereo.",
+  "samples": 300032,
+  "sampleRate": 44100,
+  "channels": 2,
+  "scope": "QA only; excluded from the installed app. A 6.8-second excerpt cannot establish full-song or physical-phone performance."
+}

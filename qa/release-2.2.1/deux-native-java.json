@@ -1,0 +1,82 @@
+{
+  "schema": 1,
+  "release": "2.2.1",
+  "passed": true,
+  "errors": [],
+  "fixture": "qa/release-2.2.1/fixtures/falcon-mix-pcm16.wav",
+  "fixtureSHA256": "0d0bf21401ad0dbb8a49aae581a16f9a00cadca41e116b5a4dc27eaaa3625648",
+  "model": {
+    "id": "mel-band-roformer-deux-lightforge-2",
+    "checkpointSHA256": "10255c02295bf3e3865d4ee50ff752d7b19b124ed5fd93b147babc4333eda3aa",
+    "manifestSHA256": "c1cb548d8d02a8b947d66fd8ac672559ea175ac4462109acccba13220b788245"
+  },
+  "nativeManifestSHA256": "679f377a99019fbd20db96e3d35881e5d7d05ca761dc62a265a411d219dc8198",
+  "runtimeVersion": "1.23.2",
+  "source_hashes": {
+    "android/src/com/cyberbasslord/lightforge/NativeDeux.java": "4320a91ceb7f1d49ab1bb839dead4c85bee417863ea37d5c4a1cd31fbe708558",
+    "android/src/com/cyberbasslord/lightforge/NativeDeuxTransform.java": "991b06501cfb88b904d0b714a525c389f169f00c231248b0e961b70f257e90b5",
+    "tests/NativeDeuxTest.java": "f552fdbd93f01dc6051cdf6c8ca7ba4048b4391451e924e544741771e82ac2d4",
+    "android/native-runtime.json": "679f377a99019fbd20db96e3d35881e5d7d05ca761dc62a265a411d219dc8198"
+  },
+  "runtime": {
+    "backend": "onnxruntime-java-cpu",
+    "version": "1.23.2",
+    "threads": 4,
+    "elapsedMs": 61113.941557,
+    "peakRssBytes": 755560448,
+    "javaMaxHeapBytes": 536870912
+  },
+  "seconds": 61.113941557,
+  "peakRssMiB": 720.55859375,
+  "fullPassageSamplesPerStem": 573300,
+  "sourceStartSample": -66150,
+  "cropOffsetSamples": 66150,
+  "samples": 300032,
+  "outputFormat": "Two planar float32 little-endian arrays, vocals then accompaniment",
+  "fullOutputSHA256": "e376591b6b588fc10a9661a6fb298d6acd020be7a3cb12528891908083ded835",
+  "referenceReceipt": "qa/release-2.2.1/deux-bounded-pcm16-wasm.json",
+  "referenceReceiptSHA256": "dbbf1802898d6e09997517eeb773ad3e2d29ae2c7e8098232d8f81627b83d4e1",
+  "pcm": {
+    "vocals": {
+      "samples": 300032,
+      "sha256": "64f9c3d697d1f2289619eed7749962ffd98e0333b3ee3f16acd7638ab3ec7a34",
+      "fullPassageSHA256": "cc2d0573e7de02d7dc24075473a3dfdc56b60788ed619f86fa4d57201dcee875",
+      "referenceSHA256": "882ddd963e76ef7960fbf3a1c3687f074f2b0377b13cce0de72a6e6bcea2ec98",
+      "maxAbsError": 3.203749656677246e-07,
+      "rmsError": 4.4018932192914934e-08,
+      "nonFiniteSamples": 0
+    },
+    "accompaniment": {
+      "samples": 300032,
+      "sha256": "c22400b6aeb330ea5adc7cd65f52cabf1baa11407cfef83af456c1dd53858974",
+      "fullPassageSHA256": "30dc7cdfd99439fd0bab8c9c9dda6adc4c80945a435066649bf19cab166e9ad2",
+      "referenceSHA256": "8cbf4aecd681f44977e6601f21ff84b99cdd8730f4f9b2c165dc2fb4e69ba1d4",
+      "maxAbsError": 2.980232238769531e-07,
+      "rmsError": 4.506609952701901e-08,
+      "nonFiniteSamples": 0
+    }
+  },
+  "checks": {
+    "modelInventorySHA256Verified": true,
+    "fullContextSeconds": 13,
+    "sourceRate": 44100,
+    "headBatchFrames": 128,
+    "timeBatchBands": 4,
+    "frequencyBatchFrames": 128,
+    "threads": 4,
+    "sameSourceClock": true,
+    "referenceMaximumAbsoluteTolerance": 2e-05,
+    "referenceRmsTolerance": 1e-06
+  },
+  "limitations": [
+    "Measured on Linux x86_64 host; Android phone timing and resident memory require device measurement.",
+    "The baseline uses the same pinned model after Android-compatible PCM16 source conversion.",
+    "One 6.803-second development excerpt; this is numerical implementation parity, not a general model-quality benchmark."
+  ],
+  "comparison": {
+    "wasmSeconds": 127.251086008,
+    "speedRatio": 2.082194058606332,
+    "wasmPeakRssBytes": 2014277632,
+    "peakRssReductionFraction": 0.6248975632769177
+  }
+}

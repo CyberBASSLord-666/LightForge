@@ -47,3 +47,8 @@ input[type=number],input[type=text],select,.precision-form input,.precision-form
 /* Keep background actions distinct and reachable on narrow or short displays. */
 .processing-dialog{max-height:calc(100dvh - 48px);overflow-y:auto;overscroll-behavior:contain}
 .processing-dialog>button{display:block;width:100%;min-height:44px;margin-top:8px;padding-left:8px;padding-right:8px;white-space:normal}
+
+/* Separate elapsed time from the completed-work counter; inference time is not an ETA. */
+.processing-metrics{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 14px;margin-top:14px;font-size:11px;color:#d6deea;font-variant-numeric:tabular-nums}
+.processing-dialog .processing-saved{font-size:11px;line-height:1.55;color:#aab9cc;margin:8px 0 0}
+.processing-dialog .processing-activity{font-size:11px;line-height:1.55;color:#d9c5aa;margin:12px 0 0;padding:10px 12px;border:1px solid #625442;border-radius:4px;background:#302b24}

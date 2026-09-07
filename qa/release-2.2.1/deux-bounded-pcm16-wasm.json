@@ -1,0 +1,68 @@
+{
+  "schema": 1,
+  "passed": true,
+  "errors": [],
+  "fixture": "qa/release-2.2.1/fixtures/falcon-mix-pcm16.wav",
+  "fixtureSHA256": "0d0bf21401ad0dbb8a49aae581a16f9a00cadca41e116b5a4dc27eaaa3625648",
+  "sourceSHA256": "95508ddb8cffc7dff6e47b849f7722efd1c901fbacb2c059be392444f872aebe",
+  "manifestSHA256": "c1cb548d8d02a8b947d66fd8ac672559ea175ac4462109acccba13220b788245",
+  "modelId": "mel-band-roformer-deux-lightforge-2",
+  "model": {
+    "id": "mel-band-roformer-deux-lightforge-2",
+    "checkpointSHA256": "10255c02295bf3e3865d4ee50ff752d7b19b124ed5fd93b147babc4333eda3aa",
+    "manifestSHA256": "c1cb548d8d02a8b947d66fd8ac672559ea175ac4462109acccba13220b788245"
+  },
+  "source_hashes": {
+    "web/analysis/separator-deux.js": "95508ddb8cffc7dff6e47b849f7722efd1c901fbacb2c059be392444f872aebe",
+    "tools/benchmark_deux_runtime.cjs": "12375c9c14f18799416fe65ecc1bb7c2a339fc31352db7c71e31b0bc1d232fab"
+  },
+  "threads": 4,
+  "seconds": 127.251086008,
+  "peakRssMiB": 1920.96484375,
+  "sessionLoads": 27,
+  "inferenceRuns": 335,
+  "samples": 300032,
+  "result": {
+    "name": "Mel-Band RoFormer Deux",
+    "modelId": "mel-band-roformer-deux-lightforge-2",
+    "modelSha256": "10255c02295bf3e3865d4ee50ff752d7b19b124ed5fd93b147babc4333eda3aa",
+    "runtime": "onnxruntime-web-wasm",
+    "sourceSeparated": true,
+    "sampleRate": 44100,
+    "sourceChannels": 2,
+    "stems": [
+      "vocals",
+      "accompaniment"
+    ],
+    "method": "Dual trained stereo source separation; Float32 bounded transformer with complete attention",
+    "contextSeconds": 13,
+    "coreSeconds": 10,
+    "overlapSeconds": 5,
+    "chunks": 1,
+    "restoredPassages": 0,
+    "estimated": true,
+    "analysisSeconds": 127.249128736,
+    "alignment": "Original PCM clock; centered STFT and normalized overlap-add with complementary chunk crossfades",
+    "limitations": [
+      "Vocal and instrumental estimates can contain bleed; neither is an isolated bass instrument.",
+      "Lead and backing singers share one vocal source; no lyrics or word alignment."
+    ]
+  },
+  "pcm": {
+    "vocals": {
+      "samples": 300032,
+      "sha256": "882ddd963e76ef7960fbf3a1c3687f074f2b0377b13cce0de72a6e6bcea2ec98",
+      "nonFiniteSamples": 0
+    },
+    "accompaniment": {
+      "samples": 300032,
+      "sha256": "8cbf4aecd681f44977e6601f21ff84b99cdd8730f4f9b2c165dc2fb4e69ba1d4",
+      "nonFiniteSamples": 0
+    }
+  },
+  "runtime": {
+    "elapsedMs": 127251.086008,
+    "peakRssBytes": 2014277632,
+    "threads": 4
+  }
+}

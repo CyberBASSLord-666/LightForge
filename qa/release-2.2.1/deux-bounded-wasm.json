@@ -1,0 +1,77 @@
+{
+  "schema": 1,
+  "passed": true,
+  "errors": [],
+  "fixture": "qa/release-1.6.0/fixtures/falcon-mix.wav",
+  "fixtureSHA256": "effbbe3e3c0df821bf3cfa6535360b18339ded8041992373b41f8344998dba99",
+  "sourceSHA256": "95508ddb8cffc7dff6e47b849f7722efd1c901fbacb2c059be392444f872aebe",
+  "manifestSHA256": "c1cb548d8d02a8b947d66fd8ac672559ea175ac4462109acccba13220b788245",
+  "modelId": "mel-band-roformer-deux-lightforge-2",
+  "model": {
+    "id": "mel-band-roformer-deux-lightforge-2",
+    "checkpointSHA256": "10255c02295bf3e3865d4ee50ff752d7b19b124ed5fd93b147babc4333eda3aa",
+    "manifestSHA256": "c1cb548d8d02a8b947d66fd8ac672559ea175ac4462109acccba13220b788245"
+  },
+  "source_hashes": {
+    "web/analysis/separator-deux.js": "95508ddb8cffc7dff6e47b849f7722efd1c901fbacb2c059be392444f872aebe",
+    "tools/benchmark_deux_runtime.cjs": "12375c9c14f18799416fe65ecc1bb7c2a339fc31352db7c71e31b0bc1d232fab"
+  },
+  "threads": 4,
+  "seconds": 115.62575238400001,
+  "peakRssMiB": 1916.953125,
+  "sessionLoads": 27,
+  "inferenceRuns": 335,
+  "samples": 300032,
+  "result": {
+    "name": "Mel-Band RoFormer Deux",
+    "modelId": "mel-band-roformer-deux-lightforge-2",
+    "modelSha256": "10255c02295bf3e3865d4ee50ff752d7b19b124ed5fd93b147babc4333eda3aa",
+    "runtime": "onnxruntime-web-wasm",
+    "sourceSeparated": true,
+    "sampleRate": 44100,
+    "sourceChannels": 2,
+    "stems": [
+      "vocals",
+      "accompaniment"
+    ],
+    "method": "Dual trained stereo source separation; Float32 bounded transformer with complete attention",
+    "contextSeconds": 13,
+    "coreSeconds": 10,
+    "overlapSeconds": 5,
+    "chunks": 1,
+    "restoredPassages": 0,
+    "estimated": true,
+    "analysisSeconds": 115.623707624,
+    "alignment": "Original PCM clock; centered STFT and normalized overlap-add with complementary chunk crossfades",
+    "limitations": [
+      "Vocal and instrumental estimates can contain bleed; neither is an isolated bass instrument.",
+      "Lead and backing singers share one vocal source; no lyrics or word alignment."
+    ]
+  },
+  "pcm": {
+    "vocals": {
+      "samples": 300032,
+      "sha256": "3d649aa498905f156372db1455e67ffc825e428d45d506709476dfc25950f73c",
+      "nonFiniteSamples": 0,
+      "referenceSHA256": "3d649aa498905f156372db1455e67ffc825e428d45d506709476dfc25950f73c",
+      "maxAbsError": 0,
+      "rmsError": 0,
+      "snrDb": 332.5053453283297
+    },
+    "accompaniment": {
+      "samples": 300032,
+      "sha256": "5813b3b35d013ca2ad61be32c3a74b9a66cb1e91bb866954c0b17db74ed51b30",
+      "nonFiniteSamples": 0,
+      "referenceSHA256": "5813b3b35d013ca2ad61be32c3a74b9a66cb1e91bb866954c0b17db74ed51b30",
+      "maxAbsError": 0,
+      "rmsError": 0,
+      "snrDb": 337.8616931662132
+    }
+  },
+  "runtime": {
+    "elapsedMs": 115625.752384,
+    "peakRssBytes": 2010071040,
+    "threads": 4
+  },
+  "referenceProvenance": "Historical full-context combined Deux ONNX1.20.1 WASM output; Float32 stems from LightForge2.1 validation, unmodified hashes retained."
+}

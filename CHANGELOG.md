@@ -1,3 +1,14 @@
+# LightForge 2.2.1 — Native Studio and resumable analysis
+
+Release candidate; final runtime and release verification are pending.
+
+- Move Android Studio separation to pinned native ONNX Runtime CPU inference with bounded independent batches and reusable buffers. Preserve original weights, Float32 computation, full context and both source heads; no silent quality downgrade.
+- Separate analysis-worker lifetimes and save verified passage/stage checkpoints so an interruption need not repeat the whole song.
+- Bind reusable work to audio, analysis settings, app version and execution path; preserve it across cosmetic/choreography edits and recover from damaged checkpoints.
+- Add elapsed time, passage/completed-work/reuse counters, delayed-progress feedback and a notification chronometer; clarify Resume behavior.
+- Extend Android instrumentation for native Studio screen-off/Doze completion, cancellation during a native passage, resource release and partial-passage resume.
+- Add checksum-pinned Android native libraries to reproducible build/package checks. Models remain offline; phone performance and physical Tesla behavior remain unverified.
+
 # LightForge 2.2.0 — Background analysis
 
 - Dedicated Android foreground service owns analysis and choreography across app switching, screen-off periods and Activity destruction.

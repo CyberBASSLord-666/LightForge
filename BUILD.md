@@ -1,4 +1,4 @@
-# Build and verify LightForge 2.2
+# Build and verify LightForge 2.2.1
 
 The repository root contains the complete Android/WebView source, retained assets, model-reproduction tools and tests. No Gradle, backend, account or runtime model download is needed.
 
@@ -9,6 +9,7 @@ Requirements: Linux x86_64, Python 3.12+, Node 22+, Bash, and at least 16 GB of 
 ```bash
 npm ci --ignore-scripts --no-audit --no-fund
 python3 tools/bootstrap_toolchain.py
+python3 tools/bootstrap_native_runtime.py
 python3 -m venv ../model-build
 ../model-build/bin/pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu
 ../model-build/bin/pip install -r tools/model-requirements.txt
@@ -16,7 +17,7 @@ python3 -m venv ../model-build
 ../model-build/bin/python tools/prepare_deux.py
 npm test
 LIGHTFORGE_SIGNING_DIR=/absolute/path/to/original-private-signing bash build.sh
-python3 tests/verify_native_release.py --release 2.2.0
+python3 tests/verify_native_release.py --release 2.2.1
 ```
 
 The signing directory must contain the original `lightforge-release.jks` and `keystore-password.txt` from the private source backup. Never commit them. The build rejects missing or incompatible update signing material. For an intentionally separate development installation only:
@@ -29,9 +30,9 @@ That APK cannot update the original installation. Do not uninstall the original 
 
 The build verifies resource and asset ZIP integrity, compiles Java/DEX, aligns the APK, signs it, verifies the certificate and manifest, and atomically publishes:
 
-- `dist/LightForge-2.2.0.apk`
-- `dist/LightForge-2.2.0.apk.json`
-- `dist/LightForge-2.2.0.apk.sha256`
+- `dist/LightForge-2.2.1.apk`
+- `dist/LightForge-2.2.1.apk.json`
+- `dist/LightForge-2.2.1.apk.sha256`
 
 `update_compatible` in the JSON receipt must be `true` for the original installation.
 
@@ -39,23 +40,24 @@ The build verifies resource and asset ZIP integrity, compiles Java/DEX, aligns t
 
 ```bash
 npx playwright install --with-deps chromium
-node qa/release-2.2.0/browser.cjs
-node qa/release-2.2.0/analysis-browser.cjs
-node qa/release-2.1.0/test-source-clock.cjs
+node qa/release-2.2.1/browser.cjs
+node qa/release-2.2.1/background-ui.cjs
+node qa/release-2.2.1/analysis-browser.cjs
+node qa/release-2.2.1/test-source-clock.cjs
 python3 tools/package_release.py
 ```
 
 The browser test uses the real UI, WebGL, browser workers, music fixture, persistence and streamed export, with a simulated Android bridge. It retains screenshots at 320, 393, 768 and 1440 pixels. The `.github/workflows/verify-v2.yml` workflow runs Node/Python, browser, APK build and native tests and keeps receipts/screenshots as an Actions artifact. Its signing identity is temporary. The candidate APK is retained as a private Actions artifact for local signing; it cannot update the original app.
 
-Prepare the licensed MUSDB reference excerpts as shown in `.github/workflows/verify-v2.yml` before running the actual model browser test. The packager requires passing, source-bound regression, browser, native, actual model runtime and reference-quality receipts. `qa/release-2.1.0/evaluate-separation.py` reproduces the 18 reference estimates; `evaluate-roles.cjs` runs their role components. The conversion/runtime probes and `verify-analysis.py` bind numeric evidence to exact model/adapter hashes; the complete commands and retained execution captures are documented in `qa/release-2.1.0/README.md`. Fresh model changes require fresh evidence; checked-in receipts are not a bypass. It compares every bundled web asset against the current source, checks APK CRCs and the original certificate, then creates `output/LightForge-2.2.0.apk` and `release-verification.json`. It does not substitute historical model tests for current UI/engine tests. Repository sources are the development handoff; the separate original private backup retains signing credentials.
+Prepare the licensed MUSDB reference excerpts as shown in `.github/workflows/verify-v2.yml` before running the actual model browser test. The packager requires passing, source-bound regression, browser, native, actual model runtime and reference-quality receipts. `qa/release-2.1.0/evaluate-separation.py` reproduces the 18 reference estimates; `evaluate-roles.cjs` runs their role components. The conversion/runtime probes and `verify-analysis.py` bind numeric evidence to exact model/adapter hashes; the complete commands and retained execution captures are documented in `qa/release-2.1.0/README.md`. Fresh model changes require fresh evidence; checked-in receipts are not a bypass. It compares every bundled web asset against the current source, checks APK CRCs and the original certificate, then creates `output/LightForge-2.2.1.apk` and `release-verification.json`. It does not substitute historical model tests for current UI/engine tests. Repository sources are the development handoff; the separate original private backup retains signing credentials.
 
 ## Dependencies and overrides
 
-The bootstrap pins SHA-256 checksums for Android build-tools 35.0.0, Android platform 35 revision 2, and Temurin JDK 17.0.20.1+1. `tools/bootstrap_testdeps.py` supplies the pinned host-JVM `org.json` implementation. Development npm dependencies are lockfile-pinned and never enter the APK.
+The toolchain bootstrap pins SHA-256 checksums for Android build-tools 35.0.0, Android platform 35 revision 2, and Temurin JDK 17.0.20.1+1. `android/native-runtime.json` separately pins the official ONNX Runtime 1.23.2 Android AAR, extracted JNI libraries/classes and host verification JAR. `tools/bootstrap_native_runtime.py` downloads and verifies them; `--check` verifies an existing installation without downloading. `build.sh` requires those verified files and packages the declared native libraries. `tools/bootstrap_testdeps.py` supplies the pinned host-JVM `org.json` implementation. Development npm dependencies are lockfile-pinned and never enter the APK.
 
 Supported environment variables: `LIGHTFORGE_TOOLCHAIN_DIR`, `LIGHTFORGE_JAVA_HOME`, `ANDROID_SDK_ROOT`, and `LIGHTFORGE_SIGNING_DIR`. Android SDK paths are `build-tools/35.0.0` and `platforms/android-35/android.jar`. Unset runner-injected `ANDROID_SDK_ROOT`/`ANDROID_HOME` when using the supplied toolchain on CI.
 
-Application ID: `com.cyberbasslord.lightforge`; minimum API 26; compile/target API 35; Java language level 8; version code 20100. No native `.so` libraries or Internet permission are included.
+Application ID: `com.cyberbasslord.lightforge`; minimum API 26; compile/target API 35; Java language level 8; version code 20201. The APK includes ONNX Runtime/JNI `.so` libraries for the ABIs listed in `android/native-runtime.json` (arm64-v8a, armeabi-v7a, x86 and x86_64). It has no Internet permission. All models and runtimes are bundled.
 
 ## Renderer source
 
@@ -72,11 +74,13 @@ Three.js remains pinned at 0.180.0. Model conversion provenance and scripts are 
 
 ## Physical validation
 
-Host tests do not execute an Android Activity, document provider or media codec, and do not measure vehicle behavior. A device with current Android System WebView is required for final install, playback, long-analysis and USB/car checks. Keep the app open while analyzing or exporting.
+Host tests do not execute an Android Activity, document provider or media codec, and do not measure vehicle behavior. Native host inference establishes numerical/runtime evidence on that host; browser inference establishes the browser path. Neither replaces the Android native Studio lifecycle test or physical-phone measurements. A phone with current Android System WebView is required for final install, playback, long-song performance, thermal/battery and USB/car checks.
+
+Analysis and choreography run in a foreground service and can continue when switching apps or locking the screen. Allow notifications and, for long screen-off jobs, the user-controlled battery exemption. Import/export document pickers require returning to the app. Android time allowances, Force stop and manufacturer restrictions still apply; completed verified work can be resumed after interruption. Current 2.2.1 host/browser/emulator release results and the signed update gate remain pending final source-bound verification; physical phone/Tesla checks remain unverified.
 
 ## Publish a compatible GitHub release
 
-The production verification workflow retains `lightforge-2.2-ci-candidate` after its build and native gates pass. Download that exact artifact, verify all candidate assets against the checkout, and sign it locally using the original private identity. Refresh native and package receipts after signing.
+The production verification workflow retains `lightforge-2.2.1-ci-candidate` after its build and native gates pass. Download that exact artifact, verify all candidate assets against the checkout, and sign it locally using the original private identity. Refresh native and package receipts after signing.
 
 `tools/apk_delta.py make candidate.apk signed.apk signed-apk.delta.json` produces a small public-byte transfer against the exact candidate hash. `apply` reconstructs the locally signed APK byte-for-byte and rejects a wrong base, corrupt patch or invalid range. It contains no key/password and cannot sign another APK.
 
@@ -86,8 +90,8 @@ When the connector cannot download the large candidate artifact, `prepare-releas
 
 ## Background lifecycle release gate
 
-The `android-background` job in `.github/workflows/verify-v2.yml` installs the CI app and a separate same-signed instrumentation APK on an Android 15 emulator. It runs real Balanced inference/choreography after destroying the Activity and turning the display off, then tests notification cancellation and the media-processing timeout callback. The test uses the same battery exemption the user can choose in Android. The source-bound `android-background-verification.json` is mandatory for 2.2 packaging/publication.
+The `android-background` job in `.github/workflows/verify-v2.yml` installs the CI app and a separate same-signed instrumentation APK on an Android 15 emulator. For 2.2.1 it runs real Studio native CPU separation plus neural analysis/choreography after destroying the Activity and turning the display off under forced Doze. A second, two-passage fixture cancels an active native inference after an earlier passage was saved, verifies prompt native-model/executor/resource release, then resumes and checks that completed passage reuse preserves source duration and yields a compiled show. A separate fixture tests the media-processing timeout callback. The test uses the same battery exemption the user can choose in Android. The source-bound `android-background-verification.json` is mandatory for 2.2.1 packaging/publication.
 
 `tools/build_android_tests.py` refuses the original release certificate. It signs instrumentation only with the ephemeral CI identity, which never leaves the runner. Do not distribute the instrumentation APK as the update app. For compiler-only checking, run `python3 tools/build_android_tests.py --compile-only` after the native gate.
 
-For model-preserving releases, `python3 tools/verify_retained_analysis.py --from-release 2.1.0` verifies every hash in the prior numeric evidence before retaining it. Changed model/analysis sources require a fresh numeric evaluation. The current public-browser inference gate still runs independently.
+For a release whose complete analysis implementation is unchanged, `python3 tools/verify_retained_analysis.py --from-release 2.1.0` verifies every hash in prior numeric evidence before retaining it. **2.2.1 changes execution graphs, transforms and analysis control flow:** unchanged learned weights alone do not qualify it for that shortcut. Fresh native/browser numerical equivalence, source-clock and reference evidence must be tied to the changed sources. The public-browser inference and Android native Studio gates run independently.

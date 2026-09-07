@@ -194,7 +194,7 @@ public final class MainActivity extends Activity {
         @JavascriptInterface public String startAnalysis(String projectId){
             try{
                 if(!foreground||importing||exporting)throw new IOException("Open LightForge and finish the current file operation before starting analysis.");
-                final JSONObject job=AnalysisJobStore.prepare(getFilesDir(),projectId);
+                final JSONObject job=AnalysisJobStore.prepare(getFilesDir(),projectId,appVersion());
                 getPreferences(0).edit().putString("lastProjectId",projectId).apply();
                 runOnUiThread(()->{
                     try{

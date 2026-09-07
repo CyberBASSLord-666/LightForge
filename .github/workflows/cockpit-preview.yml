@@ -11,17 +11,25 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Read current release version
+        run: |
+          python3 - <<'PYVERSION'
+          import json,os
+          version=json.load(open('version.json'))['name']
+          assert len(version.split('.'))==3 and all(p.isdigit() for p in version.split('.'))
+          with open(os.environ['GITHUB_ENV'],'a') as out:out.write('LIGHTFORGE_RELEASE='+version+'\n')
+          PYVERSION
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '22'
           cache: npm
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - run: npx playwright install --with-deps chromium
-      - run: node qa/release-2.1.0/browser.cjs
+      - run: node qa/release-${{ env.LIGHTFORGE_RELEASE }}/browser.cjs
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
           name: cockpit-visual-review
           path: |
-            qa/release-2.1.0/*.png
-            qa/release-2.1.0/browser-*.json
+            qa/release-${{ env.LIGHTFORGE_RELEASE }}/*.png
+            qa/release-${{ env.LIGHTFORGE_RELEASE }}/browser-*.json

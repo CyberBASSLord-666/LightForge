@@ -1,7 +1,7 @@
 name: LightForge production verification
 on:
   push:
-    branches: [main, 'development/2.0', 'development/2.1', 'development/2.2']
+    branches: [main, 'development/2.0', 'development/2.1', 'development/2.2', 'development/2.2.1']
     paths-ignore:
       - '**/*.md'
       - 'qa/**/*-verification.json'
@@ -37,6 +37,14 @@ jobs:
             research/model-source
             research/evaluation-1.6
             research/upstream/deux
+      - name: Read current release version
+        run: |
+          python3 - <<'PYVERSION'
+          import json,os
+          version=json.load(open('version.json'))['name']
+          assert len(version.split('.'))==3 and all(p.isdigit() for p in version.split('.'))
+          with open(os.environ['GITHUB_ENV'],'a') as out:out.write('LIGHTFORGE_RELEASE='+version+'\n')
+          PYVERSION
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '22'
@@ -52,9 +60,11 @@ jobs:
           python3 tools/prepare_game.py
           python3 tools/prepare_deux.py
       - run: npm test
+      - name: Source-clock seams and complete final samples
+        run: node qa/release-${{ env.LIGHTFORGE_RELEASE }}/test-source-clock.cjs
       - run: npx playwright install --with-deps chromium
-      - run: node qa/release-2.2.0/browser.cjs
-      - run: node qa/release-2.2.0/background-ui.cjs
+      - run: node qa/release-${{ env.LIGHTFORGE_RELEASE }}/browser.cjs
+      - run: node qa/release-${{ env.LIGHTFORGE_RELEASE }}/background-ui.cjs
       - name: Prepare licensed reference excerpts
         run: |
           sudo apt-get update -qq
@@ -64,37 +74,37 @@ jobs:
           echo '365f66acffc57282e474a4c24b32afec3678258c50b8d45646ac849b0a287df3  qa/release-1.6.0/fixtures/MUSDB18-7-STEMS.zip' | sha256sum -c
           python3 qa/release-1.6.0/prepare-musdb-fixtures.py
       - name: Actual offline model pipeline and cancellation
-        run: node qa/release-2.2.0/analysis-browser.cjs
+        run: node qa/release-${{ env.LIGHTFORGE_RELEASE }}/analysis-browser.cjs
       - run: python3 tools/bootstrap_toolchain.py
       - name: Build CI package with an ephemeral signing identity
         run: |
           set -o pipefail
           df -h .
-          env -u ANDROID_SDK_ROOT -u ANDROID_HOME LIGHTFORGE_ALLOW_NEW_SIGNING=1 LIGHTFORGE_SIGNING_DIR="$RUNNER_TEMP/ci-signing" bash build.sh 2>&1 | tee qa/release-2.2.0/ci-build.log
+          env -u ANDROID_SDK_ROOT -u ANDROID_HOME LIGHTFORGE_ALLOW_NEW_SIGNING=1 LIGHTFORGE_SIGNING_DIR="$RUNNER_TEMP/ci-signing" bash build.sh 2>&1 | tee qa/release-${{ env.LIGHTFORGE_RELEASE }}/ci-build.log
           df -h .
       - name: Native storage and sequence validation
-        run: env -u ANDROID_SDK_ROOT -u ANDROID_HOME python3 tests/verify_native_release.py --release 2.2.0
+        run: env -u ANDROID_SDK_ROOT -u ANDROID_HOME python3 tests/verify_native_release.py --release ${{ env.LIGHTFORGE_RELEASE }}
       - name: Build same-signed Android lifecycle instrumentation
         run: LIGHTFORGE_SIGNING_DIR="$RUNNER_TEMP/ci-signing" python3 tools/build_android_tests.py
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
-          name: lightforge-2.2-verification
+          name: lightforge-${{ env.LIGHTFORGE_RELEASE }}-verification
           path: |
-            qa/release-2.2.0/*.json
-            qa/release-2.2.0/*.log
-            qa/release-2.2.0/*.txt
-            qa/release-2.2.0/*.png
+            qa/release-${{ env.LIGHTFORGE_RELEASE }}/*.json
+            qa/release-${{ env.LIGHTFORGE_RELEASE }}/*.log
+            qa/release-${{ env.LIGHTFORGE_RELEASE }}/*.txt
+            qa/release-${{ env.LIGHTFORGE_RELEASE }}/*.png
           retention-days: 30
       - name: Retain verified candidate for local release signing
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: lightforge-2.2-ci-candidate
+          name: lightforge-${{ env.LIGHTFORGE_RELEASE }}-ci-candidate
           path: |
-            dist/LightForge-2.2.0.apk
+            dist/LightForge-${{ env.LIGHTFORGE_RELEASE }}.apk
             dist/background-tests.apk
-            dist/LightForge-2.2.0.apk.json
-            dist/LightForge-2.2.0.apk.sha256
+            dist/LightForge-${{ env.LIGHTFORGE_RELEASE }}.apk.json
+            dist/LightForge-${{ env.LIGHTFORGE_RELEASE }}.apk.sha256
           compression-level: 0
           retention-days: 30
           if-no-files-found: error
@@ -115,8 +125,16 @@ jobs:
             tools
             tests
             qa
+      - name: Read current release version
+        run: |
+          python3 - <<'PYVERSION'
+          import json,os
+          version=json.load(open('version.json'))['name']
+          assert len(version.split('.'))==3 and all(p.isdigit() for p in version.split('.'))
+          with open(os.environ['GITHUB_ENV'],'a') as out:out.write('LIGHTFORGE_RELEASE='+version+'\n')
+          PYVERSION
       - name: Download the same-signed CI app and instrumentation
-        run: gh run download "${{ github.run_id }}" --name lightforge-2.2-ci-candidate --dir candidate
+        run: gh run download "${{ github.run_id }}" --name lightforge-${{ env.LIGHTFORGE_RELEASE }}-ci-candidate --dir candidate
       - name: Configure Android virtual-device paths
         run: |
           printf 'ANDROID_USER_HOME=%s\nANDROID_EMULATOR_HOME=%s\nANDROID_AVD_HOME=%s\n' "$RUNNER_TEMP/lightforge-android" "$RUNNER_TEMP/lightforge-android" "$RUNNER_TEMP/lightforge-android/avd" >> "$GITHUB_ENV"
@@ -141,9 +159,9 @@ jobs:
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
-          name: lightforge-2.2-android-background
+          name: lightforge-${{ env.LIGHTFORGE_RELEASE }}-android-background
           path: |
-            qa/release-2.2.0/android-*
+            qa/release-${{ env.LIGHTFORGE_RELEASE }}/android-*
             emulator.log
           if-no-files-found: error
           retention-days: 30

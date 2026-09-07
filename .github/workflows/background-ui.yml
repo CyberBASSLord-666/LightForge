@@ -15,21 +15,29 @@ jobs:
           sparse-checkout: |
             web
             qa
+      - name: Read current release version
+        run: |
+          python3 - <<'PYVERSION'
+          import json,os
+          version=json.load(open('version.json'))['name']
+          assert len(version.split('.'))==3 and all(p.isdigit() for p in version.split('.'))
+          with open(os.environ['GITHUB_ENV'],'a') as out:out.write('LIGHTFORGE_RELEASE='+version+'\n')
+          PYVERSION
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '22'
           cache: npm
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - run: npx playwright install --with-deps chromium
-      - run: node qa/release-2.2.0/background-ui.cjs
-      - run: node qa/release-2.2.0/browser.cjs
+      - run: node qa/release-${{ env.LIGHTFORGE_RELEASE }}/background-ui.cjs
+      - run: node qa/release-${{ env.LIGHTFORGE_RELEASE }}/browser.cjs
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
-          name: background-controls-2.2
+          name: background-controls-${{ env.LIGHTFORGE_RELEASE }}
           path: |
-            qa/release-2.2.0/background-*.png
-            qa/release-2.2.0/background-ui-verification.json
-            qa/release-2.2.0/browser-verification.json
-            qa/release-2.2.0/*cockpit*.png
+            qa/release-${{ env.LIGHTFORGE_RELEASE }}/background-*.png
+            qa/release-${{ env.LIGHTFORGE_RELEASE }}/background-ui-verification.json
+            qa/release-${{ env.LIGHTFORGE_RELEASE }}/browser-verification.json
+            qa/release-${{ env.LIGHTFORGE_RELEASE }}/*cockpit*.png
           retention-days: 30

@@ -10,4 +10,6 @@ target=root/'web/version.js'
 if '--check' in sys.argv:
     if not target.exists() or target.read_text()!=source:raise SystemExit('Runtime version is stale. Run python3 tools/sync_version.py.')
     if json.loads((root/'package.json').read_text())['version']!=v['name']:raise SystemExit('package.json version does not match version.json.')
+    lock=json.loads((root/'package-lock.json').read_text())
+    if lock.get('version')!=v['name'] or lock.get('packages',{}).get('',{}).get('version')!=v['name']:raise SystemExit('package-lock.json version does not match version.json.')
 else:target.write_text(source)

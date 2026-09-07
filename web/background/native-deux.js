@@ -1,0 +1,35 @@
+/* The service performs native CPU inference; audio remains in private app storage. */
+(function(root){'use strict';
+ const abortError=()=>new DOMException('Analysis cancelled','AbortError');
+ function create(bridge,jobId){
+  if(!bridge||typeof bridge.nativeDeuxStart!=='function')return undefined;
+  const predict=async function(startSample,signal,onProgress=()=>{}){
+   if(signal?.aborted)throw abortError();
+   if(!Number.isSafeInteger(startSample)||startSample< -66150||startSample>44100*14400)throw Error('Invalid native passage position.');
+   const decode=raw=>{const value=JSON.parse(raw);if(value.error)throw Error(value.error);return value;};
+   let value=decode(bridge.nativeDeuxStart(jobId,startSample));const token=value.token;
+   if(typeof token!=='string'||!/^[a-f0-9-]{36}$/.test(token))throw Error('Invalid native passage response.');
+   const cancel=()=>{try{bridge.nativeDeuxCancel(jobId,token);}catch{}};
+   signal?.addEventListener('abort',cancel,{once:true});
+   try{
+    while(true){
+     if(signal?.aborted)throw abortError();
+     if(value.token!==token)throw Error('Native passage identity changed.');
+     if(value.state==='completed'){
+      const expected='https://appassets.androidplatform.net/background/native/'+token+'.bin';
+      if(value.url!==expected)throw Error('Invalid native audio response.');
+      onProgress({progress:1,message:value.message});return {url:value.url};
+     }
+     if(value.state!=='running')throw Error(value.message||'Native Studio analysis stopped. Completed passages remain saved.');
+     onProgress({progress:Math.max(0,Math.min(1,Number(value.progress)||0)),message:value.message||'Native Studio analysis'});
+     await new Promise(resolve=>setTimeout(resolve,500));
+     if(signal?.aborted)throw abortError();
+     value=decode(bridge.nativeDeuxStatus(jobId,token));
+    }
+   }catch(error){cancel();throw error;}finally{signal?.removeEventListener('abort',cancel);}
+  };
+  predict.release=()=>{if(typeof bridge.nativeDeuxRelease==='function'){const result=JSON.parse(bridge.nativeDeuxRelease(jobId));if(result.error)throw Error(result.error);}};
+  return predict;
+ }
+ root.LightForgeNativeDeux={create};
+})(window);

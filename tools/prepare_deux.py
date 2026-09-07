@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Reproduce staged Deux graphs. Author weights CC BY-NC 4.0 (becruily).
-Original float32 weights, full 13s context, exact query-tiled attention.
+"""Reproduce bounded Deux graphs. Author weights CC BY-NC 4.0 (becruily).
+Original float32 weights, full 13s context, independent band/frame batches.
 Install tools/model-requirements.txt and CPU torch==2.6.0 first.
 """
 import sys,pathlib,time,types,json,hashlib,argparse,urllib.request,tempfile,os
@@ -33,10 +33,6 @@ class Front(nn.Module):
  def __init__(self,m):super().__init__();self.bands=m.band_split;self.register_buffer('indices',m.freq_indices)
  def forward(self,spectrum):
   x=spectrum[:,self.indices].permute(0,2,1,3).flatten(2);return self.bands(x)
-class Block(nn.Module):
- def __init__(self,block):super().__init__();self.time,self.freq=block
- def forward(self,x):
-  b,t,f,d=x.shape;y=x.permute(0,2,1,3).reshape(b*f,t,d);y=self.time(y).reshape(b,f,t,d).permute(0,2,1,3);return self.freq(y.reshape(b*t,f,d)).reshape(b,t,f,d)
 class Head(nn.Module):
  def __init__(self,m,i):super().__init__();self.head=m.mask_estimators[i]
  def forward(self,x):return self.head(x).reshape(1,x.shape[1],-1,2).permute(0,2,1,3)
@@ -44,12 +40,18 @@ converter_sha=hashlib.sha256(pathlib.Path(__file__).read_bytes()).hexdigest()
 try:previous=json.loads((out/'manifest.json').read_text())
 except (FileNotFoundError,json.JSONDecodeError):previous={}
 frames=1301;x=torch.zeros(1,frames,60,256)
-modules=[('front',Front(model),torch.zeros(1,2050,frames,2))]+[(f'block-{i:02}',Block(b),x) for i,b in enumerate(model.layers)]+[(f'head-{i}',Head(model,i),x) for i in range(2)]
+modules=[('front',Front(model),torch.zeros(1,2050,frames,2))]
+for i,(time_block,frequency_block) in enumerate(model.layers):
+ modules.extend([(f'block-{i:02}-time',time_block,torch.zeros(4,frames,256)),(f'block-{i:02}-frequency',frequency_block,torch.zeros(128,60,256))])
+modules.extend((f'head-{i}',Head(model,i),x[:,:128]) for i in range(2))
 for name,m,example in modules:
  dest=out/(name+'.onnx');t=time.time()
  entry=previous.get('files',{}).get(dest.name,{})
  cached=dest.exists() and previous.get('converterSHA256')==converter_sha and entry.get('bytes')==dest.stat().st_size and entry.get('sha256')==hashlib.sha256(dest.read_bytes()).hexdigest()
  if not cached:
-  with torch.inference_mode():torch.onnx.export(m.eval(),example,str(dest),input_names=['input'],output_names=['output'],opset_version=17,do_constant_folding=True)
+  dynamic={'input':{0:'batch'},'output':{0:'batch'}} if name.startswith('block-') else {'input':{1:'frames'},'output':{2:'frames'}} if name.startswith('head-') else None
+  with torch.inference_mode():torch.onnx.export(m.eval(),example,str(dest),input_names=['input'],output_names=['output'],dynamic_axes=dynamic,opset_version=17,do_constant_folding=True)
  print(name,dest.stat().st_size,round(time.time()-t,2),flush=True)
-meta={'converterSHA256':converter_sha,'id':'mel-band-roformer-deux-lightforge-1','name':'Mel-Band RoFormer Deux','author':'becruily','origin':URL,'checkpointSHA256':SHA,'license':'CC-BY-NC-4.0','licenseURL':'https://creativecommons.org/licenses/by-nc/4.0/','sourceCommit':'0e5f1159fc5ea87fc13b957584e178b4977e5dd3','conversion':'Float32; staged transformer; query tiles of 64 with complete key/value context; no weight quantization.','frames':frames,'samples':573300,'fftSize':2048,'hop':441,'indices':model.freq_indices.tolist(),'bandsPerFrequency':model.num_bands_per_freq.tolist(),'files':{f.name:{'bytes':f.stat().st_size,'sha256':hashlib.sha256(f.read_bytes()).hexdigest()} for f in sorted(out.glob('*.onnx'))}};(out/'manifest.json').write_text(json.dumps(meta,indent=2))
+# Remove only the superseded combined blocks; no other model family is touched.
+for i in range(12):(out/f'block-{i:02}.onnx').unlink(missing_ok=True)
+meta={'converterSHA256':converter_sha,'id':'mel-band-roformer-deux-lightforge-2','name':'Mel-Band RoFormer Deux','author':'becruily','origin':URL,'checkpointSHA256':SHA,'license':'CC-BY-NC-4.0','licenseURL':'https://creativecommons.org/licenses/by-nc/4.0/','sourceCommit':'0e5f1159fc5ea87fc13b957584e178b4977e5dd3','conversion':'Float32; independent time-band batches of 4, frequency-frame and mask-head batches of 128; query tiles of 64 with complete key/value context; no weight quantization.','execution':'bounded-independent-batches-v1','headFrames':128,'frames':frames,'samples':573300,'fftSize':2048,'hop':441,'indices':model.freq_indices.tolist(),'bandsPerFrequency':model.num_bands_per_freq.tolist(),'files':{f.name:{'bytes':f.stat().st_size,'sha256':hashlib.sha256(f.read_bytes()).hexdigest()} for f in sorted(out.glob('*.onnx'))}};(out/'manifest.json').write_text(json.dumps(meta,indent=2))
