@@ -1,4 +1,5 @@
 import copy
+import json
 import importlib.util
 from pathlib import Path
 import tempfile
@@ -32,6 +33,14 @@ class APKDeltaTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'candidate identity'):
             delta.apply_delta(self.signed, self.document, self.output)
         self.assertFalse(self.output.exists())
+
+    def test_ci_catalog_produces_the_identical_verified_delta(self):
+        index = self.root / 'candidate-index.json'
+        index.write_text(json.dumps(delta.catalog(self.base)))
+        portable = delta.make_delta(index, self.signed, from_catalog=True)
+        self.assertEqual(portable, self.document)
+        delta.apply_delta(self.base, portable, self.output)
+        self.assertEqual(self.output.read_bytes(), self.signed.read_bytes())
 
     def test_corrupt_patch_preserves_previous_output(self):
         self.output.write_bytes(b'previous verified release')

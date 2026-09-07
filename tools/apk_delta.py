@@ -55,11 +55,21 @@ def entries(path):
         return result
 
 
-def make_delta(base, target):
+def catalog(path):
+    path = Path(path)
+    return {'schema': 1, 'base_bytes': path.stat().st_size,
+            'base_sha256': digest(path), 'entries': entries(path)}
+
+
+def make_delta(base, target, from_catalog=False):
     base, target = Path(base), Path(target)
     if not 0 < target.stat().st_size < MAX_APK:
         raise ValueError('APK exceeds release size bounds')
-    before, after = entries(base), entries(target)
+    source = json.loads(base.read_text()) if from_catalog else catalog(base)
+    if source.get('schema') != 1:
+        raise ValueError('Invalid candidate catalog')
+    before = {name: tuple(value) for name, value in source['entries'].items()}
+    after = entries(target)
     operations, position, literal_bytes = [], 0, 0
     with target.open('rb') as stream:
         def literal(start, size):
@@ -78,7 +88,7 @@ def make_delta(base, target):
                 operations.append({'offset': match[0], 'bytes': size})
                 position = start + size
         literal(position, target.stat().st_size - position)
-    return {'schema': 1, 'base_bytes': base.stat().st_size, 'base_sha256': digest(base),
+    return {'schema': 1, 'base_bytes': source['base_bytes'], 'base_sha256': source['base_sha256'],
             'target_bytes': target.stat().st_size, 'target_sha256': digest(target),
             'literal_bytes': literal_bytes, 'operations': operations}
 
@@ -139,15 +149,20 @@ def apply_delta(base, document, destination):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=['make', 'apply'])
+    parser.add_argument('command', choices=['make', 'apply', 'catalog'])
+    parser.add_argument('--from-catalog', action='store_true', help='Make from the verified CI ZIP index instead of downloading its complete APK')
     parser.add_argument('base', type=Path)
     parser.add_argument('input', type=Path, help='Signed APK for make; delta JSON for apply')
-    parser.add_argument('output', type=Path)
+    parser.add_argument('output', type=Path, nargs='?')
     args = parser.parse_args()
-    if args.command == 'make':
-        value = make_delta(args.base, args.input)
+    if args.command == 'catalog':
+        args.input.write_text(json.dumps(catalog(args.base), separators=(',', ':')) + '\n')
+    elif args.command == 'make':
+        if args.output is None:parser.error('make requires an output path')
+        value = make_delta(args.base, args.input, from_catalog=args.from_catalog)
         args.output.write_text(json.dumps(value, separators=(',', ':')) + '\n')
         print(json.dumps({key: value[key] for key in ['target_bytes', 'target_sha256', 'literal_bytes']}))
     else:
+        if args.output is None:parser.error('apply requires an output path')
         apply_delta(args.base, json.loads(args.input.read_text()), args.output)
         print(json.dumps({'apk': str(args.output), 'sha256': digest(args.output)}))
