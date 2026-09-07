@@ -121,5 +121,5 @@
   },
   "scope": "Node engine/worker/WebCrypto/gzip, real app DOM integration with simulated native and graphics, Python archive tests. Not a visual browser or physical Android/Tesla test.",
   "analysis_manifest_sha256": "eca6c2c418c75969916093290afc9bd5f9cd858495b68a615c5a20ad7f6315e6",
-  "completedAt": "2026-09-07T13:26:43.949879+00:00"
+  "completedAt": "2026-09-07T13:43:22.187298+00:00"
 }

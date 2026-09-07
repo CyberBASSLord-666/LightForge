@@ -58,7 +58,7 @@
         "overlapSeconds": 5,
         "chunks": 1,
         "estimated": true,
-        "analysisSeconds": 356.52161,
+        "analysisSeconds": 386.99437000000006,
         "alignment": "Original PCM clock; centered STFT and normalized overlap-add with complementary chunk crossfades",
         "limitations": [
           "Vocal and instrumental estimates can contain bleed; neither is an isolated bass instrument.",
@@ -68,7 +68,7 @@
       "bassMethod": "Harmonic low-register tracking",
       "quality": "precision",
       "runtime": "ONNX Runtime Web 1.20.1",
-      "analysisSeconds": 397.2
+      "analysisSeconds": 429.9
     },
     "separation": {
       "name": "Mel-Band RoFormer Deux",
@@ -87,7 +87,7 @@
       "overlapSeconds": 5,
       "chunks": 1,
       "estimated": true,
-      "analysisSeconds": 356.52161,
+      "analysisSeconds": 386.99437000000006,
       "alignment": "Original PCM clock; centered STFT and normalized overlap-add with complementary chunk crossfades",
       "limitations": [
         "Vocal and instrumental estimates can contain bleed; neither is an isolated bass instrument.",
@@ -138,5 +138,5 @@
     "stage": "Separating voice and instruments",
     "remainingNamespaces": 0
   },
-  "completedAt": "2026-09-07T12:46:37.810Z"
+  "completedAt": "2026-09-07T13:52:44.404Z"
 }

@@ -18,7 +18,7 @@
   "apk_source_assets_matched": 95,
   "current_release_receipts": {
     "regression-verification.json": {
-      "sha256": "7d2625e0af72421bfb2a1a01b1b38a33e768745bb59b279b0dff970ec98f86b5",
+      "sha256": "6285c733620ad2437a8ffbc62293ba396f90a0b4a628aff4fe214bd6094bff38",
       "result": {
         "release": "2.2.0",
         "passed": true,
@@ -142,11 +142,11 @@
         },
         "scope": "Node engine/worker/WebCrypto/gzip, real app DOM integration with simulated native and graphics, Python archive tests. Not a visual browser or physical Android/Tesla test.",
         "analysis_manifest_sha256": "eca6c2c418c75969916093290afc9bd5f9cd858495b68a615c5a20ad7f6315e6",
-        "completedAt": "2026-09-07T13:26:43.949879+00:00"
+        "completedAt": "2026-09-07T13:43:22.187298+00:00"
       }
     },
     "browser-verification.json": {
-      "sha256": "ab3cd1608b36508ed7fc492b2de8e1b9354c8014f5a880039634b5ce71424118",
+      "sha256": "bbea2eb0934b719c6f5af8fe72f4ee6c67a1f4f327bd8af181fbb1b93501f0c5",
       "result": {
         "release": "2.2.0",
         "passed": true,
@@ -178,11 +178,11 @@
           "web/engine/sync-review.js": "eb9591060fffa20e2b12de97c6d344b61e06fc276af75817610d4e17095c61d9"
         },
         "scope": "Desktop Chromium with actual WebGL and web workers; simulated Android bridge. No Android device or Tesla.",
-        "completedAt": "2026-09-07T12:51:26.090Z"
+        "completedAt": "2026-09-07T13:44:34.872Z"
       }
     },
     "native-verification.json": {
-      "sha256": "7d2ea9476f3405a0ce2ea33268857c8577f4a923e2dc7bebafdbd20266f4cdd8",
+      "sha256": "04684e7c338f4a504b9bd967f11744805517597c75591ffce9c1ae0e25985686",
       "result": {
         "release": "2.2.0",
         "passed": true,
@@ -221,11 +221,11 @@
           "Playback proxy boundaries through the four-hour maximum passed.",
           "Source wiring checks: package-derived version, frozen export projectState, native pause/save hook and background startup recovery are present (not device runtime tests)."
         ],
-        "completed": "2026-09-07T12:27:31.453778+00:00"
+        "completed": "2026-09-07T14:00:40.773407+00:00"
       }
     },
     "analysis-browser-verification.json": {
-      "sha256": "562283567fe357537101b65b43d7522da5593f2a6acaf3cb5474c99d78c57385",
+      "sha256": "2685e4e45039dd1c5ca1e3fef8e7834ad6cf989b7cbfba11e4bb92c054ac49c4",
       "result": {
         "release": "2.2.0",
         "passed": true,
@@ -286,7 +286,7 @@
               "overlapSeconds": 5,
               "chunks": 1,
               "estimated": true,
-              "analysisSeconds": 356.52161,
+              "analysisSeconds": 386.99437000000006,
               "alignment": "Original PCM clock; centered STFT and normalized overlap-add with complementary chunk crossfades",
               "limitations": [
                 "Vocal and instrumental estimates can contain bleed; neither is an isolated bass instrument.",
@@ -296,7 +296,7 @@
             "bassMethod": "Harmonic low-register tracking",
             "quality": "precision",
             "runtime": "ONNX Runtime Web 1.20.1",
-            "analysisSeconds": 397.2
+            "analysisSeconds": 429.9
           },
           "separation": {
             "name": "Mel-Band RoFormer Deux",
@@ -315,7 +315,7 @@
             "overlapSeconds": 5,
             "chunks": 1,
             "estimated": true,
-            "analysisSeconds": 356.52161,
+            "analysisSeconds": 386.99437000000006,
             "alignment": "Original PCM clock; centered STFT and normalized overlap-add with complementary chunk crossfades",
             "limitations": [
               "Vocal and instrumental estimates can contain bleed; neither is an isolated bass instrument.",
@@ -366,7 +366,7 @@
           "stage": "Separating voice and instruments",
           "remainingNamespaces": 0
         },
-        "completedAt": "2026-09-07T12:46:37.810Z"
+        "completedAt": "2026-09-07T13:52:44.404Z"
       }
     },
     "analysis-verification.json": {
@@ -408,7 +408,7 @@
       }
     },
     "android-background-verification.json": {
-      "sha256": "97ce615e2b8b48260ec5c4b3279676583ab01748f41dd6e9959310d657caaef3",
+      "sha256": "96540bd1164f1767a19f46a87108f797df3fc94b8911994843dbcb8dc7e1e5ad",
       "result": {
         "release": "2.2.0",
         "passed": true,
@@ -454,7 +454,7 @@
           "sdk": 35,
           "scope": "Android emulator with actual foreground service, WebView/WASM models, screen-off execution, notification cancellation and timeout callback; not a physical phone or Tesla."
         },
-        "completedAt": "2026-09-07T13:34:12.860572+00:00"
+        "completedAt": "2026-09-07T14:08:40.295700+00:00"
       }
     }
   },

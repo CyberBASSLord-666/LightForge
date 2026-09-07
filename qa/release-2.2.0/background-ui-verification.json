@@ -15,5 +15,5 @@
     "web/cockpit.js": "cba1d693ee592ac9ea0bf028ba362d8247981c1678c25d81737db7a633163afe"
   },
   "scope": "Real Chromium UI with a simulated Android job/status bridge; native background lifetime is tested separately on Android.",
-  "completedAt": "2026-09-07T12:50:53.701Z"
+  "completedAt": "2026-09-07T13:45:09.941Z"
 }
