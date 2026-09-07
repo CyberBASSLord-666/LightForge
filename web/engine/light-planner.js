@@ -64,12 +64,12 @@
     // Combined beams, tails and amber remain available to the arrangement.
     const separatedVoice=m.vocals?.sourceSeparated===true&&m.vocals?.source==='separated-vocals';
     const voiceRoutes=separatedVoice?[]:vocalPhrases.filter(p=>!p.continuation).map((p,i)=>({p,ids:vocalFocus>=.55?voicePair:[voiceSide(i%2)].filter(Boolean),length:vocalFocus>=.55?p.end-p.start:Math.min(p.end-p.start,.18+vocalFocus*.3)}));
-    const bassRoutes=bassNotes.map((p,i)=>{const left=i%2===0,ids=[bassSide(left)].filter(Boolean);if(bassFocus>=.55&&p.strength>=.65)enabled('brakes')&&ids.push('brakes');if(bassFocus>=.8&&p.strength>=.88&&p.end-p.start>=.5)bassSide(!left)&&ids.push(bassSide(!left));return {p,ids,length:bassFocus>=.55?Math.min(p.end-p.start,2.2):Math.min(p.end-p.start,.12+bassFocus*.2)};});
+    const bassRoutes=bassNotes.map((p,i)=>{const left=i%2===0,ids=[bassSide(left)].filter(Boolean);if(bassFocus>=.55&&p.strength>=.65)enabled('brakes')&&ids.push('brakes');if(bassFocus>=.8&&p.strength>=.88&&p.end-p.start>=.5)bassSide(!left)&&ids.push(bassSide(!left));return {p,ids:[...new Set(ids)],length:bassFocus>=.55?Math.min(p.end-p.start,2.2):Math.min(p.end-p.start,.12+bassFocus*.2)};});
     // A sustained note must release before the next entrance on the same lamp.
     // Resolve from the end so every note keeps its original time, never a delay.
     const nextBass=new Map();
-    for(let i=bassRoutes.length-1;i>=0;i--){const cue=bassRoutes[i];for(const id of cue.ids){const next=nextBass.get(id);if(next!==undefined)cue.length=Math.min(cue.length,next-cue.p.start-.08);nextBass.set(id,cue.p.start);}}
-    for(const {p,ids,length}of voiceRoutes.concat(bassRoutes))for(const id of ids)reserve(id,p.start,p.start+length);
+    for(let i=bassRoutes.length-1;i>=0;i--){const cue=bassRoutes[i];for(const id of cue.ids){const next=nextBass.get(id);if(next!==undefined)cue.length=Math.max(0,Math.min(cue.length,next-cue.p.start-.08));nextBass.set(id,cue.p.start);}}
+    for(const {p,ids,length}of voiceRoutes.concat(bassRoutes))if(length>0)for(const id of ids)reserve(id,p.start,p.start+length);
     for(const [id,spans]of reservations){const merged=[];for(const span of spans.sort((a,b)=>a.start-b.start)){const last=merged[merged.length-1];if(last&&span.start<=last.end)last.end=Math.max(last.end,span.end);else merged.push({...span});}reservations.set(id,merged);}
     const reserved=(id,start,finish)=>{const spans=reservations.get(id);if(!spans)return false;const i=lower(spans,finish,'start')-1;return i>=0&&spans[i].end>start;};
     const sceneAt=t=>{const section=ctx.sectionAt(t);return show.sections[section.index]||{style:s.style,intensity:s.intensity};};
@@ -114,7 +114,7 @@
     const userCues=(m.musicCues||[]).filter(c=>c.action!=='mute').map(c=>({...c,ids:c.role==='vocals'?voicePair:[bassSide(true),...(c.strength>=.8?[bassSide(false)]:[])].filter(Boolean)}));
     for(const cue of detailedVoice)targets.push({role:'vocals',time:cue.time,end:cue.time+cue.length,kind:cue.kind});
     for(const {p,length} of voiceRoutes)targets.push({role:'vocals',time:p.start,end:p.start+length,kind:'phrase'});
-    for(const {p,length} of bassRoutes)if(!p.continuation)targets.push({role:'bass',time:p.start,end:p.start+length,kind:'note'});
+    for(const {p,length} of bassRoutes)if(!p.continuation)targets.push({role:'bass',time:p.start,end:length>0?p.start+length:p.end,kind:'note'});
     for(const cue of userCues){targets.push({role:cue.role,time:cue.start,end:cue.end,kind:cue.action,cueId:cue.id});for(const id of cue.ids)reserve(id,cue.start,cue.end);}
     for(const cue of detailedVoice)for(const id of cue.ids)reserve(id,cue.time,cue.time+cue.length);
     // Merge the detailed reservations after constructing motifs as well. They

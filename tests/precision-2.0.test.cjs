@@ -54,3 +54,14 @@ test('musical edits validate limits and remain deterministic through serializati
  const silent=fixture();silent.waveform.fill(0);silent.activityRanges=[];const result=engine.generate(silent,s);assert.equal(result.synchronization.matched,0);assert.ok(result.frames.every(v=>v===0));
 });
 module.exports={fixture};
+
+test('dense and simultaneous bass notes retain valid target ranges on a shared fallback lamp',()=>{
+ for(const starts of [[1,1.01,1.04,1.06],[1,1,1.02,1.04]])for(const stepMs of [15,20]){
+  const m=fixture();m.bassNotes=starts.map(start=>({start,end:start+1,confidence:.95,strength:.99,midi:36}));
+  const show=engine.generate(m,{...settings,stepMs,outputEnabled:{'left-outer':false,'right-outer':false,'left-tail':false,'right-tail':false}});
+  assert.ok(show.validation.valid);assert.ok(show.synchronization.roles.bass.suppressed>0);
+  for(const row of show.synchronization.issues)assert.ok(Number.isFinite(row.end)&&row.end>=row.time);
+  for(const event of show.lightEvents)assert.ok(event.actualEnd>event.actualStart);
+  assert.ok(show.lightEvents.some(e=>e.role==='bass'&&Math.abs(e.sourceStart-starts.at(-1))<1e-8),'latest entrance must survive without a duplicate route shortening itself');
+ }
+});
