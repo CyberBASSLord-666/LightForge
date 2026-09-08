@@ -14,16 +14,18 @@ async function analyze(audioUrl,options={},onProgress=()=>{},signal){
  const runOptions={...serializableOptions,cacheKey,workId,supportsNativeDeux:hasNative},timings={},started=performance.now();let value={},progress=0;
  function runStage(stage){return new Promise((resolve,reject)=>{
   if(signal?.aborted){reject(aborted());return;}
+  scope.LightForgeDiagnostics?.log('info','analysis-worker','Stage started: '+stage);
   const worker=new Worker(new URL('worker.js',base)),controller=new AbortController();let finished=false,lastActivity=performance.now(),nativeActive=false;
   const watchdog=setInterval(()=>{if(performance.now()-lastActivity>12*60*1000)end(new Error('Analysis stopped making progress during '+stage+'. Completed passages are saved; resume to continue.'));},15000);
   function cleanup(){clearInterval(watchdog);worker.terminate();controller.abort();signal?.removeEventListener('abort',abort);}
-  function end(error,result){if(finished)return;finished=true;cleanup();error?reject(error):resolve(result);}
+  function end(error,result){if(finished)return;finished=true;scope.LightForgeDiagnostics?.log(error&&error.name!=='AbortError'?'error':'info','analysis-worker',error||'Stage completed: '+stage);cleanup();error?reject(error):resolve(result);}
   function abort(){end(aborted());}
   signal?.addEventListener('abort',abort,{once:true});
   worker.onmessage=e=>{
    if(finished)return;const m=e.data;lastActivity=performance.now();
    if(m.type==='progress'){
     progress=Math.max(progress,Math.min(1,Number(m.value.progress)||0));
+    scope.LightForgeDiagnostics?.progress('analysis-worker',{...m.value,stage,progress});
     try{onProgress({...m.value,progress,elapsedSeconds:(performance.now()-started)/1000,completedStages:Object.keys(timings).length,restoredStages:Object.values(timings).filter(t=>t.restored).length});}catch(error){end(error);}return;
    }
    if(m.type==='native-deux'){
@@ -38,12 +40,13 @@ async function analyze(audioUrl,options={},onProgress=()=>{},signal){
     Promise.resolve().then(()=>nativePredict(m.startSample,controller.signal,reportNative)).then(result=>{
      if(finished)return;if(typeof result?.url!=='string')throw Error('Native studio output is unavailable.');
      nativeActive=false;lastActivity=performance.now();worker.postMessage({type:'native-deux-result',requestId:m.requestId,url:result.url});
-    }).catch(error=>{if(!finished){nativeActive=false;worker.postMessage({type:'native-deux-result',requestId:m.requestId,error:error.message||String(error)});}});return;
+    }).catch(error=>{if(!finished){scope.LightForgeDiagnostics?.log(error.name==='AbortError'?'info':'error','analysis',error);nativeActive=false;worker.postMessage({type:'native-deux-result',requestId:m.requestId,error:error.message||String(error)});}});return;
    }
    if(m.type==='result'){timings[stage]={seconds:Number.isFinite(m.seconds)?m.seconds:0,restored:!!m.restored};end(null,m.value);}
-   else end(new Error(m.message||'Music analysis failed during '+stage+'.'));
+   else{const error=new Error(m.message||'Music analysis failed during '+stage+'.');if(typeof m.stack==='string')error.stack=m.stack.slice(0,8192);end(error);}
   };
   worker.onerror=e=>end(new Error(e.message||'The '+stage+' engine stopped. Completed passages are saved; reopen and resume.'));
+  worker.onmessageerror=()=>end(new Error('The '+stage+' engine returned an unreadable response.'));
   try{worker.postMessage({audioUrl:String(audioUrl),options:runOptions,stage,value});}catch(error){end(error);}
  });}
  try{

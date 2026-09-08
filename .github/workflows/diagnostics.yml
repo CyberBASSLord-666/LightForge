@@ -1,0 +1,128 @@
+name: Android diagnostic export verification
+on:
+  push:
+    branches: [main, 'development/2.2.2', 'diagnostics/2.2.2']
+    paths:
+      - '.github/workflows/diagnostics.yml'
+      - 'android/**'
+      - 'web/**'
+      - 'tests/android/DiagnosticsInstrumentation.java'
+      - 'tools/build_diagnostics_tests.py'
+      - 'tools/run_android_diagnostics_tests.py'
+      - 'tools/apk_archive.py'
+      - 'build.sh'
+      - 'version.json'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: android-diagnostics-${{ github.ref_name }}
+  cancel-in-progress: true
+jobs:
+  diagnostics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          sparse-checkout: |
+            android
+            web
+            tools
+            tests
+            qa
+      - name: Configure test version and temporary paths
+        run: |
+          python3 - <<'PY'
+          import json,os
+          version=json.load(open('version.json'))['name']
+          assert len(version.split('.'))==3 and all(p.isdigit() for p in version.split('.'))
+          with open(os.environ['GITHUB_ENV'],'a') as out:
+              out.write('LIGHTFORGE_RELEASE='+version+'\n')
+              for key,value in {'LIGHTFORGE_TOOLCHAIN_DIR':'diagnostic-toolchain','LIGHTFORGE_SIGNING_DIR':'diagnostic-ci-key','ANDROID_USER_HOME':'diagnostic-android','ANDROID_EMULATOR_HOME':'diagnostic-android','ANDROID_AVD_HOME':'diagnostic-android/avd'}.items():
+                  out.write(key+'='+os.environ['RUNNER_TEMP']+'/'+value+'\n')
+          PY
+          sudo rm -rf -- "$ANDROID_HOME/ndk" /usr/share/dotnet
+      - name: Restore missing pinned model assets from the immutable published package
+        run: |
+          gh release download v2.2.1 --pattern LightForge-2.2.1.apk --dir model-source
+          python3 - <<'PY'
+          import hashlib,json,os,pathlib,zipfile
+          source=pathlib.Path('model-source/LightForge-2.2.1.apk')
+          with source.open('rb') as stream:
+              assert hashlib.file_digest(stream,'sha256').hexdigest()=='9fdbc60afecb6ce278d890f36ad58cb67623a485fd800d9e6c4215c6a7b3dd9f'
+          assert source.stat().st_size==1171728522
+          base=pathlib.Path('web/analysis')
+          manifest=json.loads((base/'ASSET_MANIFEST.json').read_text())
+          with zipfile.ZipFile(source) as archive:
+              assert len(archive.namelist())==len(set(archive.namelist()))
+              for relative,expected in manifest.items():
+                  path=pathlib.PurePosixPath(relative)
+                  assert not path.is_absolute() and '..' not in path.parts
+                  target=base/path
+                  if target.exists():continue
+                  entry=archive.getinfo('assets/analysis/'+relative)
+                  assert not entry.is_dir() and entry.file_size==expected['bytes']
+                  target.parent.mkdir(parents=True,exist_ok=True)
+                  with archive.open(entry) as inp,target.open('xb') as out:
+                      while chunk:=inp.read(1024*1024):
+                          assert out.write(chunk)==len(chunk)
+                      out.flush();os.fsync(out.fileno())
+                  with target.open('rb') as stream:
+                      assert hashlib.file_digest(stream,'sha256').hexdigest()==expected['sha256'],relative
+                  assert target.stat().st_size==expected['bytes'],relative
+          source.unlink()
+          print('Only missing manifest-listed analysis assets restored; all current web and Android sources retained.')
+          PY
+          python3 tools/verify_analysis_assets.py
+      - name: Build current app source and dedicated instrumentation
+        run: |
+          set -euo pipefail
+          python3 tools/bootstrap_toolchain.py
+          env -u ANDROID_SDK_ROOT -u ANDROID_HOME LIGHTFORGE_ALLOW_NEW_SIGNING=1 bash build.sh
+          env -u ANDROID_SDK_ROOT -u ANDROID_HOME python3 tests/verify_native_release.py --release "$LIGHTFORGE_RELEASE"
+          python3 tools/build_diagnostics_tests.py
+          python3 -m py_compile tools/run_android_diagnostics_tests.py
+          mkdir -p candidate
+          mv "dist/LightForge-$LIGHTFORGE_RELEASE.apk" "candidate/LightForge-$LIGHTFORGE_RELEASE.apk"
+          cp "dist/LightForge-$LIGHTFORGE_RELEASE.apk.json" candidate/
+          mv dist/diagnostics-tests.apk candidate/
+          python3 - <<'PY'
+          import json,os,pathlib
+          version=os.environ['LIGHTFORGE_RELEASE']
+          record=json.loads(pathlib.Path('candidate/LightForge-'+version+'.apk.json').read_text())
+          assert record['signing_certificate_sha256']!='7187d6aa935d5b7d2d656cb87913af95fe1ca3a4b1653036d1d8d890e2016c6b'
+          evidence={'test_commit':os.environ['GITHUB_SHA'],'model_source_release':'v2.2.1','build':record,
+              'scope':'Current production app sources and web UI, all bundled analysis assets matched current ASSET_MANIFEST; ephemeral CI signing. Focused diagnostics check, independent of neural lifecycle gate.'}
+          pathlib.Path('qa/release-'+version+'/android-diagnostics-payload-verification.json').write_text(json.dumps(evidence,indent=2)+'\n')
+          # The complete packaged copies have already been verified. Free model and
+          # compilation duplicates so Android can allocate its required data image.
+          for path in pathlib.Path('web/analysis/models').rglob('*.onnx'):path.unlink()
+          PY
+          rm -rf -- "$LIGHTFORGE_TOOLCHAIN_DIR" "$LIGHTFORGE_SIGNING_DIR"
+          df -h .
+      - name: Start Android 15 emulator
+        run: |
+          sudo chmod a+rw /dev/kvm
+          mkdir -p "$ANDROID_AVD_HOME"
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "system-images;android-35;google_apis;x86_64" "emulator"
+          echo no | "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" create avd --force --name LightForge --package "system-images;android-35;google_apis;x86_64" --device pixel_6 --path "$ANDROID_AVD_HOME/LightForge.avd"
+          test -f "$ANDROID_AVD_HOME/LightForge.ini"
+          sed -i 's/^disk.dataPartition.size=.*/disk.dataPartition.size=6G/' "$ANDROID_AVD_HOME/LightForge.avd/config.ini"
+          "$ANDROID_HOME/emulator/emulator" -list-avds
+          nohup "$ANDROID_HOME/emulator/emulator" -avd LightForge -no-window -no-audio -no-metrics -partition-size 6144 -no-boot-anim -no-snapshot -gpu swiftshader_indirect -memory 3072 -cores 2 -camera-back none -camera-front none > emulator.log 2>&1 < /dev/null &
+      - name: Verify persistent crash trace, Downloads export and renderer recovery
+        run: python3 tools/run_android_diagnostics_tests.py
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: lightforge-${{ env.LIGHTFORGE_RELEASE }}-android-diagnostics
+          path: |
+            qa/release-${{ env.LIGHTFORGE_RELEASE }}/android-diagnostics-*
+            emulator.log
+          retention-days: 30
+          if-no-files-found: error

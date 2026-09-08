@@ -1,0 +1,8 @@
+.diagnostics-card,.diagnostic-recovery{margin-bottom:20px}
+.diagnostic-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.diagnostic-actions .button{flex:1;min-width:180px}
+.diagnostic-status{overflow-wrap:anywhere;font-size:12px!important;line-height:1.6!important;margin-top:12px!important}
+.diagnostic-status.diagnostic-error{color:#f2c1bb!important}
+[data-export-diagnostics]{min-height:44px;white-space:normal}
+.background-recovery .dialog-actions{flex-wrap:wrap}
+.background-recovery .dialog-actions .button{flex:1;min-width:130px}

@@ -152,6 +152,7 @@ def main():
     gates = ROOT / ('qa/release-' + version['name'])
     required_gates=['regression-verification.json', 'browser-verification.json', 'native-verification.json', 'analysis-browser-verification.json', 'analysis-verification.json']
     if version['code']>=20200:required_gates.append('android-background-verification.json')
+    if version['code']>=20202:required_gates.append('android-diagnostics-verification.json')
     for name in required_gates:
         evidence = json.loads((gates / name).read_text())
         require(evidence.get('passed') is True and not evidence.get('errors') and evidence['release'] == version['name'], 'Failed gate: ' + name)

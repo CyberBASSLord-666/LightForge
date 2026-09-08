@@ -1,10 +1,10 @@
-# LightForge 2.2.1 — recoverable native Studio analysis
+# LightForge 2.2.2 — troubleshooting logs and renderer recovery
 
-**LightForge 2.2.1 is published.** [Download the complete signed APK](https://github.com/CyberBASSLord-666/LightForge/releases/download/v2.2.1/LightForge-2.2.1.apk) · [Release details](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.2.1). Install over the existing app without uninstalling. All models are bundled; no first-run download is required.
+**2.2.2 is in verification; its signed update is not published yet.** The latest published update is [LightForge 2.2.1](https://github.com/CyberBASSLord-666/LightForge/releases/download/v2.2.1/LightForge-2.2.1.apk). Install release updates over the existing app without uninstalling. All models are bundled; no first-run download is required.
 
 LightForge turns music on your phone into an editable Tesla light show for a **2025 Model 3 Long Range RWD, North America**. It bundles its neural models, graphics and audio tools and works entirely offline.
 
-**2.2.1 addresses expensive, interrupted analysis:** Studio separation uses native CPU inference on Android, while completed passages and analysis stages can be reused after interruption. Elapsed time, passage progress and resumed-work counts make long operations visible. The learned weights, full 13-second separation context, both source heads and Studio quality remain intact; failures do not silently switch to Balanced. Processing time and memory still depend on the song and device.
+**Native Studio analysis remains recoverable:** Studio separation uses native CPU inference on Android, while completed passages and analysis stages can be reused after interruption. Elapsed time, passage progress and resumed-work counts make long operations visible. The learned weights, full 13-second separation context, both source heads and Studio quality remain intact; failures do not silently switch to Balanced. Processing time and memory still depend on the song and device.
 
 **The Studio cockpit includes:** a Tesla-inspired monochrome interface, source-time score, keyboard-accessible Compose/Music/Outputs/Review workspaces, Deux source separation and GAME Large singing-note transcription. Precision Studio retains editable voice/bass gestures, independent timing offsets and review against final exported lamp commands. See [release notes](RELEASE_NOTES.md), [build instructions](BUILD.md) and [validation scope](VALIDATION.md).
 
@@ -23,6 +23,14 @@ Allow notifications when Android asks. For long screen-off jobs, choose **Allow 
 Your last saved show is preserved on cancellation, low-memory renderer loss, process interruption or failure. **Resume analysis** checks completed separation passages, transcription work and analysis stages before continuing. The interrupted passage may run again; completed matching work is reused. Source audio, analysis settings, execution path and app version identify checkpoints. Renaming a show or changing choreography alone does not discard matching analysis. Damaged checkpoints are rejected and recomputed. A completed overall analysis checkpoint skips directly to choreography. Android's Stop/Force stop, reboot and media-processing time limits still apply (normally six background hours per 24-hour allowance on Android 15+). No automatic reboot launch or endless restart loop is used.
 
 Import and export document pickers still require returning to the app. Background analysis does not grant root, unrestricted access to other apps, hidden recording, vehicle API access or unverified GPU acceleration. All model quality settings and the offline privacy boundary are preserved.
+
+## Troubleshooting logs
+
+Version 2.2.2 adds **Guide → Export diagnostic log**. Reproduce the problem, reopen LightForge if it closed, and export the report to Downloads. Send that file with a short description of what you were doing and approximately when the failure happened. A native recovery action also makes reporting available when the preview engine cannot render the normal interface.
+
+The report gathers recent app events, Java/JavaScript error stacks, analysis stages and interruptions, renderer failures, device/WebView versions, memory/storage context, and available Android process-exit information. Logs stay on the device until you choose to export them; there is no automatic upload. Reports exclude audio, model data and saved-show contents and redact common sensitive values. Diagnostic text can still contain details useful for troubleshooting, so review a report before sharing it publicly.
+
+Logs are bounded and rotated. A killed process cannot reliably write its own final event; available Android exit information and the last saved trace help reconstruct that case. Exported reports remain in Downloads even if app cache is later cleared. Clearing Android app storage or uninstalling removes private projects, so export show backups before doing either.
 
 ## Precision Studio
 
@@ -321,15 +329,16 @@ The renderer source and pinned npm dependency lock are in `web/preview/src/`.
 
 ## Verification and device status
 
-`VALIDATION.md` separates current evidence from earlier releases. Version 2.2.0 has a retained Android emulator background-lifecycle pass; it does not validate the new native Studio path in 2.2.1. Current 2.2.1 evidence is source-bound. All six source-bound release gates and the [complete production CI run](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34169530104) pass on the current source:
+[VALIDATION.md](VALIDATION.md) records the current 2.2.2 gate status separately from earlier releases. Diagnostic-export, renderer recovery, browser, Android and signed-package checks are pending against final 2.2.2 sources. The earlier [2.2.1 production CI run](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34169530104) passed its own source-bound gates; those results do not automatically validate this update.
 
-| Check | Current 2.2.1 release status |
+| Check | Current 2.2.2 status |
 |---|---|
-| Host model equivalence and memory/runtime | Passed on the declared development excerpt; see the measurements below |
-| Node/Python regression evidence | Passed: 145 Node and 39 Python checks against the current sources |
-| Browser UI, complete model pipeline and cancellation | Passed in the current production verification job |
-| Android emulator native Studio, screen-off/Doze, cancellation and partial resume | Passed on Android 15 in both the current-source probe and production CI, including immediate Resume and verified saved-passage reuse |
-| Signed update package | Passed: original signing identity, exact asset inventory, alignment and checksum; published GitHub asset digests verified |
+| Version synchronization | 2.2.2 / 20202 synchronized |
+| Diagnostic retention, redaction and Downloads export | Pending |
+| Node/Python regressions and native compilation | Pending |
+| Browser UI, complete model pipeline and cancellation | Pending |
+| Android renderer recovery, screen-off analysis and partial Resume | Pending |
+| Original-signed update package and publication | Pending |
 | Physical phone performance, long songs, thermals and battery management | Unverified |
 | Physical Tesla timing and movement | Unverified |
 

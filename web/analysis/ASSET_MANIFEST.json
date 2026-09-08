@@ -4,8 +4,8 @@
     "sha256": "a85c96a436aeae58bfce714cdadf315583de5c0261d3fba5018238915eca85a6"
   },
   "analyzer.js": {
-    "bytes": 6016,
-    "sha256": "f9dcbf65960f6b4ca7164f0202354ad4c4e8e9b58efc8d024fa32eacf74a2162"
+    "bytes": 6600,
+    "sha256": "4cc766458c07ef33e3d6bd1185f18e946ca5a173c7c59edb175c01f3db03a234"
   },
   "bass-notes.js": {
     "bytes": 14748,
@@ -288,7 +288,7 @@
     "sha256": "b6e6a251478ed727cee145418a61b1b7f1755076e0797f0a5a29ecedc4ce8f41"
   },
   "worker.js": {
-    "bytes": 14846,
-    "sha256": "237fc9f20f5947610cf65c307be62792438bc6752cdf76d0dfc65d9def50dfce"
+    "bytes": 14932,
+    "sha256": "ec0b42a5cb80da756a9a6492dffc6d6d787c6d8ff10079c8808a031abb0bf591"
   }
 }

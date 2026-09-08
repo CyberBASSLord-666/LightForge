@@ -22,9 +22,15 @@ import java.util.zip.*;
 
 public final class MainActivity extends Activity {
     private static final String ORIGIN="https://appassets.androidplatform.net";
-    private static final int PICK_AUDIO=101,SAVE_ZIP=102,PICK_BACKUP=103;
+    private static final int PICK_AUDIO=101,SAVE_ZIP=102,PICK_BACKUP=103,SAVE_DIAGNOSTICS=104;
+    private static final ExecutorService diagnosticWorker=Executors.newSingleThreadExecutor();
+    private static final AtomicBoolean diagnosticExporting=new AtomicBoolean();
+    private String diagnosticName;
     private WebView web;
     private volatile boolean foreground;
+    private final Set<WebView> retiredWebViews=Collections.newSetFromMap(new WeakHashMap<WebView,Boolean>());
+    private boolean previewRecoveryPending;
+    private AlertDialog previewRecoveryDialog;
     private boolean analysisReceiverRegistered;
     private final BroadcastReceiver analysisReceiver=new BroadcastReceiver(){
         @Override public void onReceive(Context context,Intent intent){sendAnalysisStatus();}
@@ -44,7 +50,7 @@ public final class MainActivity extends Activity {
             "memoryBytes",memory.totalMem,"availableMemoryBytes",memory.availMem,
             "lowMemory",memory.lowMemory,"cpuCores",Runtime.getRuntime().availableProcessors());
     }
-    @Override protected void onResume(){super.onResume();foreground=true;sendAnalysisStatus();event("deviceCapabilities",deviceCapabilities());}
+    @Override protected void onResume(){super.onResume();foreground=true;AppDiagnostics.log(this,"INFO","activity","resumed");sendAnalysisStatus();event("deviceCapabilities",deviceCapabilities());showPreviewRecovery();}
     @Override public void onRequestPermissionsResult(int request,String[] permissions,int[] results){
         super.onRequestPermissionsResult(request,permissions,results);event("deviceCapabilities",deviceCapabilities());
     }
@@ -64,10 +70,13 @@ public final class MainActivity extends Activity {
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
+        AppDiagnostics.initialize(this);
+        AppDiagnostics.log(this,"INFO","activity","created; restored="+(state!=null));
+        diagnosticName=state==null?null:state.getString("diagnosticName");
         projects=new File(getFilesDir(),"projects");exports=new File(getFilesDir(),"prepared-exports");
         projects.mkdirs();exports.mkdirs();
         startupRecovery=worker.submit(()-> {
-            try{ProjectStore.recover(projects);AnalysisService.recoverIfStopped(this);}catch(Exception e){runOnUiThread(()->Toast.makeText(this,"Project recovery: "+e.getMessage(),Toast.LENGTH_LONG).show());}
+            try{ProjectStore.recover(projects);AnalysisService.recoverIfStopped(this);}catch(Exception e){AppDiagnostics.record(this,"startup-recovery",e);runOnUiThread(()->Toast.makeText(this,"Project recovery: "+e.getMessage(),Toast.LENGTH_LONG).show());}
         });
         try {
             JSONObject prepared=PendingExportStore.recover(exports);
@@ -95,7 +104,13 @@ public final class MainActivity extends Activity {
         s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);s.setSupportMultipleWindows(false);
         s.setBuiltInZoomControls(false);s.setTextZoom(100);s.setDatabaseEnabled(false);
         web.addJavascriptInterface(new Bridge(),"Android");
-        web.setWebChromeClient(new WebChromeClient());
+        web.setWebChromeClient(new WebChromeClient(){
+            @Override public boolean onConsoleMessage(ConsoleMessage message){
+                if(message.messageLevel()==ConsoleMessage.MessageLevel.ERROR||message.messageLevel()==ConsoleMessage.MessageLevel.WARNING)
+                    AppDiagnostics.log(MainActivity.this,message.messageLevel()==ConsoleMessage.MessageLevel.ERROR?"ERROR":"WARN","preview-console",message.message()+" at "+message.sourceId()+":"+message.lineNumber());
+                return true;
+            }
+        });
         web.setWebViewClient(new WebViewClient() {
             @Override public WebResourceResponse shouldInterceptRequest(WebView view,WebResourceRequest request) {
                 return resource(request.getUrl(),request.getRequestHeaders());
@@ -107,11 +122,19 @@ public final class MainActivity extends Activity {
                 return true;
             }
             @Override public boolean onRenderProcessGone(WebView view,RenderProcessGoneDetail detail) {
-                ((android.view.ViewGroup)view.getParent()).removeView(view);view.destroy();web=null;
-                new AlertDialog.Builder(MainActivity.this).setTitle("Reload the studio")
-                    .setMessage("Android restarted the preview engine. Your imported music and saved projects are still on this device.")
-                    .setPositiveButton("Reload",(dialog,which)->recreate()).setCancelable(false).show();
+                boolean current=view==web;
+                AppDiagnostics.record(MainActivity.this,"preview-renderer",new IOException(detail.didCrash()?"Preview renderer crashed.":"Android reclaimed the preview renderer."));
+                if(current)web=null;
+                releasePreview(view);
+                // Renderer loss can be delivered for an already detached old
+                // view while the Activity is closing or another view owns UI.
+                if(current&&!isFinishing()&&!isDestroyed()){
+                    previewRecoveryPending=true;showPreviewRecovery();
+                }
                 return true;
+            }
+            @Override public void onReceivedError(WebView view,WebResourceRequest request,WebResourceError error){
+                AppDiagnostics.log(MainActivity.this,"ERROR","preview-resource","code="+error.getErrorCode()+"; mainFrame="+request.isForMainFrame()+"; "+error.getDescription());
             }
         });
         web.loadUrl(ORIGIN+"/index.html");
@@ -123,24 +146,42 @@ public final class MainActivity extends Activity {
             if(!"true".equals(result)) MainActivity.super.onBackPressed();
         });
     }
-    @Override protected void onPause() {foreground=false;super.onPause();if(web!=null) web.evaluateJavascript("window.pausePreview && window.pausePreview()",null);}
+    @Override protected void onPause() {foreground=false;AppDiagnostics.log(this,"INFO","activity","paused");super.onPause();if(web!=null) web.evaluateJavascript("window.pausePreview && window.pausePreview()",null);}
     @Override protected void onSaveInstanceState(Bundle state) {
         state.putBoolean("savePickerOpen",savePickerOpen);
+        state.putString("diagnosticName",diagnosticName);
         if(web!=null)web.evaluateJavascript("window.pausePreview && window.pausePreview()",null);
         super.onSaveInstanceState(state);
     }
     @Override protected void onDestroy() {
+        AppDiagnostics.log(this,"INFO","activity","destroyed; finishing="+isFinishing());
+        foreground=false;previewRecoveryPending=false;
+        if(previewRecoveryDialog!=null){previewRecoveryDialog.dismiss();previewRecoveryDialog=null;}
         if(analysisReceiverRegistered){unregisterReceiver(analysisReceiver);analysisReceiverRegistered=false;}
         cancelled.set(true);worker.shutdownNow();
         synchronized(exportLock) {if(activeExport!=null) activeExport.abort();}
         WebView previous=web;web=null;
-        if(previous!=null) {
-            // WebView must leave the view hierarchy before its renderer is destroyed.
-            ViewParent parent=previous.getParent();
-            if(parent instanceof ViewGroup)((ViewGroup)parent).removeView(previous);
-            previous.removeJavascriptInterface("Android");previous.destroy();
-        }
+        releasePreview(previous);
         super.onDestroy();
+    }
+    private void releasePreview(WebView previous){
+        if(previous==null||!retiredWebViews.add(previous))return;
+        try{ViewParent parent=previous.getParent();if(parent instanceof ViewGroup)((ViewGroup)parent).removeView(previous);}
+        catch(RuntimeException error){AppDiagnostics.record(this,"preview-detach",error);}
+        try{previous.removeJavascriptInterface("Android");}catch(RuntimeException error){AppDiagnostics.record(this,"preview-bridge-cleanup",error);}
+        try{previous.destroy();}catch(RuntimeException error){AppDiagnostics.record(this,"preview-destroy",error);}
+    }
+    private void showPreviewRecovery(){
+        if(!previewRecoveryPending||!foreground||isFinishing()||isDestroyed()||previewRecoveryDialog!=null)return;
+        previewRecoveryDialog=new AlertDialog.Builder(this).setTitle("Reload the studio")
+            .setMessage("Android restarted the preview engine. Your imported music and saved projects are still on this device.")
+            .setPositiveButton("Reload",(dialog,which)->{
+                previewRecoveryPending=false;
+                if(!isFinishing()&&!isDestroyed())recreate();
+            }).setNeutralButton("Export diagnostic log",null).setCancelable(false).create();
+        previewRecoveryDialog.setOnDismissListener(dialog->previewRecoveryDialog=null);
+        previewRecoveryDialog.show();
+        previewRecoveryDialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(view->exportDiagnostics());
     }
     private void event(String type,JSONObject payload) {
         final JSONObject data=payload==null?new JSONObject():payload;
@@ -150,6 +191,7 @@ public final class MainActivity extends Activity {
         JSONObject o=new JSONObject();try {for(int i=0;i<values.length;i+=2)o.put(String.valueOf(values[i]),values[i+1]);}catch(Exception ignored){}return o;
     }
     private void error(Throwable e) {
+        AppDiagnostics.record(this,"device-operation",e);
         String message=e.getMessage();if(message==null||message.trim().isEmpty()) message="That operation could not finish. Please try again.";
         event("error",json("message",message));
     }
@@ -194,7 +236,44 @@ public final class MainActivity extends Activity {
         return json("version",appVersion(),"versionCode",appVersionCode(),"projects",new JSONArray(list),"lastProjectId",getPreferences(0).getString("lastProjectId",""),"pendingExport",preparedExportInfo(),"backgroundJob",analysisStatus(),"deviceCapabilities",deviceCapabilities());
     }
     private JSONObject analysisStatus(){try{return AnalysisJobStore.status(getFilesDir());}catch(Exception e){return null;}}
+    @Override public void onTrimMemory(int level){super.onTrimMemory(level);AppDiagnostics.log(this,"WARN","activity-memory","trimMemory level="+level);}
+    @Override public void onLowMemory(){super.onLowMemory();AppDiagnostics.log(this,"WARN","activity-memory","lowMemory");}
+    private void diagnosticResult(JSONObject result){
+        event("diagnosticExported",result);
+        runOnUiThread(()->{if(!isDestroyed())Toast.makeText(this,"Diagnostic log saved to "+result.optString("location","your selected location"),Toast.LENGTH_LONG).show();});
+    }
+    private void diagnosticFailure(Throwable failure){
+        AppDiagnostics.record(this,"diagnostic-export",failure);
+        String message="The diagnostic log could not be saved. Check available storage and try again.";
+        event("diagnosticExportFailed",json("message",message));
+        runOnUiThread(()->{if(!isDestroyed())Toast.makeText(this,message,Toast.LENGTH_LONG).show();});
+    }
+    private void exportDiagnostics(){
+        if(!diagnosticExporting.compareAndSet(false,true)){event("diagnosticExportFailed",json("message","A diagnostic export is already in progress."));return;}
+        // Separate from import/export and neural workers so reporting remains usable during work.
+        diagnosticWorker.execute(()->{
+            boolean picker=false;
+            try{
+                JSONObject result=AppDiagnostics.export(getApplicationContext());
+                if(result.optBoolean("requiresPicker")){
+                    picker=true;
+                    runOnUiThread(()->{
+                        try{
+                            if(isFinishing()||isDestroyed())throw new IOException("Reopen LightForge to save the diagnostic log.");
+                            diagnosticName=result.optString("name");
+                            Intent intent=new Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("text/plain").putExtra(Intent.EXTRA_TITLE,diagnosticName);
+                            intent.putExtra(android.provider.DocumentsContract.EXTRA_INITIAL_URI,Uri.parse("content://com.android.externalstorage.documents/document/primary%3ADownload"));
+                            startActivityForResult(intent,SAVE_DIAGNOSTICS);
+                        }catch(Exception failure){diagnosticName=null;diagnosticExporting.set(false);diagnosticFailure(failure);}
+                    });
+                }else diagnosticResult(result);
+            }catch(Exception failure){diagnosticFailure(failure);}
+            finally{if(!picker)diagnosticExporting.set(false);}
+        });
+    }
     public final class Bridge {
+        @JavascriptInterface public void logDiagnostic(String level,String source,String message){AppDiagnostics.log(MainActivity.this,level,source,message);}
+        @JavascriptInterface public void exportDiagnostics(){MainActivity.this.exportDiagnostics();}
         @JavascriptInterface public String getAnalysisStatus(){JSONObject job=analysisStatus();return job==null?"null":job.toString();}
         @JavascriptInterface public String getDeviceCapabilities(){return deviceCapabilities().toString();}
         @JavascriptInterface public String startAnalysis(String projectId){
@@ -208,12 +287,13 @@ public final class MainActivity extends Activity {
                         if(Build.VERSION.SDK_INT>=33&&checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)!=android.content.pm.PackageManager.PERMISSION_GRANTED)
                             requestPermissions(new String[]{android.Manifest.permission.POST_NOTIFICATIONS},2200);
                     }catch(Exception e){
+                        AppDiagnostics.record(MainActivity.this,"analysis-start",e);
                         try{AnalysisJobStore.finish(getFilesDir(),job.optString("id"),"failed",e.getMessage());}catch(Exception ignored){}
                         sendAnalysisStatus();
                     }
                 });
                 return job.toString();
-            }catch(Exception e){return json("error",e.getMessage()).toString();}
+            }catch(Exception e){AppDiagnostics.record(MainActivity.this,"analysis-prepare",e);return json("error",e.getMessage()).toString();}
         }
         @JavascriptInterface public void cancelAnalysis(String jobId){runOnUiThread(()->{
             try{startService(new Intent(MainActivity.this,AnalysisService.class).setAction(AnalysisService.ACTION_CANCEL).putExtra("jobId",jobId));}
@@ -410,7 +490,16 @@ public final class MainActivity extends Activity {
     }
     @Override protected void onActivityResult(int request,int result,Intent intent) {
         super.onActivityResult(request,result,intent);
-        if(request==PICK_AUDIO) {
+        if(request==SAVE_DIAGNOSTICS){
+            final String name=diagnosticName;diagnosticName=null;
+            if(result!=RESULT_OK||intent==null||intent.getData()==null){diagnosticExporting.set(false);event("diagnosticExportFailed",json("cancelled",true,"message","Diagnostic export cancelled. The log remains on this device."));return;}
+            final Uri uri=intent.getData();
+            diagnosticWorker.execute(()->{
+                try{diagnosticResult(AppDiagnostics.exportTo(getApplicationContext(),uri,name));}
+                catch(Exception failure){diagnosticFailure(failure);}
+                finally{diagnosticExporting.set(false);}
+            });
+        } else if(request==PICK_AUDIO) {
             if(result!=RESULT_OK||intent==null||intent.getData()==null){event("cancelled",json("stage","import"));return;}
             Uri uri=intent.getData();String name="My track";
             try(Cursor c=getContentResolver().query(uri,new String[]{OpenableColumns.DISPLAY_NAME},null,null,null)){if(c!=null&&c.moveToFirst())name=c.getString(0);}catch(Exception ignored){}

@@ -86,6 +86,8 @@ jobs:
         run: env -u ANDROID_SDK_ROOT -u ANDROID_HOME python3 tests/verify_native_release.py --release ${{ env.LIGHTFORGE_RELEASE }}
       - name: Build same-signed Android lifecycle instrumentation
         run: LIGHTFORGE_SIGNING_DIR="$RUNNER_TEMP/ci-signing" python3 tools/build_android_tests.py
+      - name: Build same-signed diagnostic export instrumentation
+        run: LIGHTFORGE_SIGNING_DIR="$RUNNER_TEMP/ci-signing" python3 tools/build_diagnostics_tests.py
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
@@ -103,6 +105,7 @@ jobs:
           path: |
             dist/LightForge-${{ env.LIGHTFORGE_RELEASE }}.apk
             dist/background-tests.apk
+            dist/diagnostics-tests.apk
             dist/LightForge-${{ env.LIGHTFORGE_RELEASE }}.apk.json
             dist/LightForge-${{ env.LIGHTFORGE_RELEASE }}.apk.sha256
           compression-level: 0
@@ -156,6 +159,8 @@ jobs:
           nohup "$ANDROID_HOME/emulator/emulator" -avd LightForge -no-window -no-audio -no-metrics -partition-size 6144 -no-boot-anim -no-snapshot -gpu swiftshader_indirect -memory 4096 -cores 4 -camera-back none -camera-front none > emulator.log 2>&1 < /dev/null &
       - name: Verify screen-off analysis and Activity-independent completion
         run: python3 tools/run_android_background_tests.py
+      - name: Verify crash trace recovery and diagnostic export to Downloads
+        run: python3 tools/run_android_diagnostics_tests.py
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:

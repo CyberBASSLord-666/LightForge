@@ -2,18 +2,19 @@
 (function(root){'use strict';
  const controller=new AbortController(),id=new URL(location.href).searchParams.get('job');
  let started=false;
- root.BackgroundAnalysis={cancel(){controller.abort();}};
+ root.BackgroundAnalysis={cancel(){root.LightForgeDiagnostics?.log('info','background','Cancel received');controller.abort();}};
  const check=()=>{if(controller.signal.aborted)throw new DOMException('Analysis cancelled','AbortError');};
  const report=(progress,detail,info={})=>{
+  root.LightForgeDiagnostics?.progress('background',{...info,progress});
   if(typeof BackgroundJob.progressInfo==='function')BackgroundJob.progressInfo(id,progress,detail,JSON.stringify(info));
   else BackgroundJob.progress(id,progress,detail);
  };
  async function run(){
-  if(started)return;started=true;
+  if(started)return;started=true;root.LightForgeDiagnostics?.log('info','background','Runner started');
   try{
    const response=await fetch('/background/request.json',{cache:'no-store',signal:controller.signal});
    if(!response.ok)throw Error('The saved analysis request could not be opened.');
-   const request=await response.json(),settings=request.settings||{},projectId=request.projectId;
+   const request=await response.json();root.LightForgeDiagnostics?.protectText(request.name);const settings=request.settings||{},projectId=request.projectId;
    if(!/^[A-Za-z0-9_-]{1,80}$/.test(projectId))throw Error('Invalid analysis project.');
    // A killed renderer can leave an incomplete OPFS namespace. Native job
    // ownership guarantees no other analysis is writing when a new runner starts.
@@ -46,7 +47,8 @@
    const saved={version:1,projectId,name:request.name,updatedAt:Date.now(),settings,music,needAnalysis:false,compiled:result.compiled,
     provenance:{app:LightForgeVersion.name,planner:result.show.version,profile:VehicleProfile.version,analysis:music.analysisVersion,model:music.engine,frameSHA256:result.compiled.sha256}};
    if(!BackgroundJob.complete(id,JSON.stringify(saved)))throw Error('Your completed show could not be saved.');
-  }catch(error){BackgroundJob.failed(id,error.message||'Analysis could not finish.',error.name==='AbortError');}
+   root.LightForgeDiagnostics?.log('info','background','Completed show committed');
+  }catch(error){root.LightForgeDiagnostics?.log(error.name==='AbortError'?'info':'error','background',error);BackgroundJob.failed(id,error.message||'Analysis could not finish.',error.name==='AbortError');}
  }
  run();
 })(window);

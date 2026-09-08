@@ -1,3 +1,12 @@
+# LightForge 2.2.2 — Troubleshooting logs and renderer recovery (in verification)
+
+- Add a local, bounded diagnostic trace across the Android app, background analysis and JavaScript workers, with error stacks and progress context.
+- Export a timestamped troubleshooting report to Downloads from the app; capture app/device/WebView information, memory/storage state and available Android exit reasons. No automatic upload or audio/project-content attachment.
+- Keep recent logs in private app files across restarts, redact common sensitive values, and provide reporting from the native preview-recovery flow.
+- Make renderer cleanup tolerate detached or already retired WebViews; defer the reload dialog until the Activity is foregrounded and avoid stale callbacks resetting the current preview.
+- Retain native Studio quality, background execution and completed-passage Resume. Phone crash causes still need the exported device evidence; this release does not claim to resolve every crash or manufacturer cache warning.
+- Verification, the original-signed APK and publication are pending. The 2.2.1 results below remain historical and are not passing evidence for 2.2.2.
+
 # LightForge 2.2.1 — Native Studio and resumable analysis
 
 All six source-bound release gates pass, including full production CI, native Studio background completion, immediate Resume with saved-passage reuse and original-signature package verification.

@@ -26,7 +26,7 @@ CLASSES = OUT / 'native-classes'
 OUT.mkdir(parents=True, exist_ok=True)
 CLASSES.mkdir(exist_ok=True)
 sources = sorted((ROOT / 'android/src').rglob('*.java'))
-names = ['NativeRecoveryTest', 'ProjectStoreTest', 'NativeHardwareTest', 'NativeAudioTest', 'WebViewTransportTest', 'ProjectPreviewTest', 'AnalysisJobStoreTest', 'NativeDeuxTest']
+names = ['NativeRecoveryTest', 'ProjectStoreTest', 'NativeHardwareTest', 'NativeAudioTest', 'WebViewTransportTest', 'ProjectPreviewTest', 'AnalysisJobStoreTest', 'NativeDeuxTest', 'DiagnosticLogTest']
 tests = [ROOT / f'tests/{name}.java' for name in names + ['WebViewTransportServer']]
 bound_sources = sources + tests + [ROOT/'android/native-runtime.json', ROOT/'tests/verify_native_release.py']
 receipt = dict(release=args.release, passed=False, scope='Fresh production Java compilation and host JVM tests; no Android Activity/device/document-provider or physical Tesla execution.',
@@ -77,6 +77,8 @@ try:
     assert 'cancellation checks passed.' in run('NativeDeuxTest')
     receipt['checks'].append('Native Studio transform retains exact source-clock samples and stereo averaging; WAVE padding, malformed input and cancellation regressions passed without neural-model inference.')
     run('ProjectPreviewTest')
+    assert 'PASS:' in run('DiagnosticLogTest', OUT / 'native-diagnostic-fixtures')
+    receipt['checks'].append('Persistent diagnostic rotation, bounded messages, concurrency and redaction passed on the host JVM.')
     receipt['checks'].append('Playback proxy boundaries through the four-hour maximum passed.')
     main = (ROOT / 'android/src/com/cyberbasslord/lightforge/MainActivity.java').read_text()
     assert 'LightForge 1.0.1' not in main and '"version","1.0.1"' not in main

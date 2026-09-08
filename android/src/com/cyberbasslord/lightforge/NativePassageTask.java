@@ -18,6 +18,7 @@ final class NativePassageTask implements AutoCloseable {
     private volatile boolean closed,cancelled;
     private String token,state="idle",message="";
     private double progress;
+    private long startedAt,lastDiagnosticAt;
     private File output;
 
     NativePassageTask(Context context,File audio,String jobId)throws IOException {
@@ -32,6 +33,9 @@ final class NativePassageTask implements AutoCloseable {
         if(startSample < -66150L||startSample>44100L*14400)throw new IOException("Invalid native passage position.");
         if(output!=null&&output.exists()&&!output.delete())throw new IOException("Previous native passage could not be released.");
         token=UUID.randomUUID().toString();state="running";progress=0;message="Preparing native Studio analysis";cancelled=false;
+        startedAt=android.os.SystemClock.elapsedRealtime();lastDiagnosticAt=startedAt;
+        AppDiagnostics.log(context,"INFO","native-passage","started; passage="+token.substring(0,8)+"; startSample="+startSample+"; cacheFreeBytes="+directory.getUsableSpace());
+        AppDiagnostics.sample(context,"native-start-memory");
         final String current=token;output=new File(directory,current+".bin");final File result=output;
         executor.execute(()->{
             try {
@@ -43,8 +47,11 @@ final class NativePassageTask implements AutoCloseable {
                     if(closed||cancelled)throw new IOException("Native analysis cancelled.");
                     if(result.length()!=OUTPUT_BYTES)throw new IOException("Native separation returned incomplete audio.");
                     state="completed";progress=1;message="Native passage complete";
+                    AppDiagnostics.log(context,"INFO","native-passage","completed; passage="+current.substring(0,8)+"; elapsedMs="+(android.os.SystemClock.elapsedRealtime()-startedAt));
+                    AppDiagnostics.sample(context,"native-complete-memory");
                 }
             }catch(Throwable error){
+                AppDiagnostics.record(context,"native-passage",error);
                 synchronized(this){state=closed||cancelled?"cancelled":"failed";message=AnalysisJobStore.limited(error.getMessage()==null?"Native Studio analysis could not finish.":error.getMessage(),500);}
                 result.delete();
             }finally{
@@ -57,6 +64,8 @@ final class NativePassageTask implements AutoCloseable {
         if(closed||cancelled||!current.equals(token))return;
         progress=Math.max(progress,Math.max(0,Math.min(1,Double.isFinite(value)?value:0)));
         message=AnalysisJobStore.limited(detail,200);
+        long now=android.os.SystemClock.elapsedRealtime();
+        if(now-lastDiagnosticAt>=15000){lastDiagnosticAt=now;AppDiagnostics.log(context,"INFO","native-progress","passage="+current.substring(0,8)+"; progress="+progress+"; elapsedMs="+(now-startedAt)+"; "+message);}
     }
     synchronized String status(String current)throws Exception {
         if(current==null||!current.equals(token))throw new IOException("This native passage is no longer active.");

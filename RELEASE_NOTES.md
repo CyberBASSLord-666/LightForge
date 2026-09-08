@@ -1,38 +1,25 @@
-# LightForge 2.2.1 — Native Studio processing and recoverable progress
+# LightForge 2.2.2 — Troubleshooting logs and renderer recovery
 
-Version code **20201**. This signed update retains the original LightForge signing identity. Install `LightForge-2.2.1.apk` over the existing app **without uninstalling**.
+Version code **20202**. **In verification; the signed update is not published yet.** The latest published release remains [2.2.1](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.2.1). The 2.2.2 release must pass current-source checks and retain the original signing identity before publication.
 
-## Analysis execution
+## Export a report
 
-- Android Studio separation uses **ONNX Runtime 1.23.2 native CPU inference** instead of placing its transformer workload in the WebView's WebAssembly runtime. The browser retains its own bounded WebAssembly implementation.
-- The original learned Deux weights, full 13-second context, complete attention, both source heads and Float32 computation are retained. Independent bands and frames are processed in bounded batches, with reusable buffers. No layers or quality setting are silently dropped.
-- Rhythm, separation, voice and bass analysis use separate worker lifetimes so one stage's WebAssembly heap does not remain resident throughout the next stage. GAME Large and the existing rhythm models remain bundled.
-- Native separation can be cancelled through the foreground service. Its output remains on the original soundtrack sample clock. No network service, model download or new device permission is required.
+Open **Guide → Export diagnostic log** after reproducing a problem. LightForge writes a timestamped `.log` text file to Downloads. If the preview engine has failed, use the reporting action in its native recovery dialog. Reopen the app after a crash before exporting so available Android process-exit information can be included.
 
-## Resume and progress
+The report combines recent app and analysis events, error stacks, worker/renderer failures, timing, app and WebView versions, and memory/storage context. Recent traces are bounded, rotated and retained in private app files across launches. Reports contain no audio, model data or saved-show contents, redact common sensitive values, and are never uploaded automatically. Review the text before posting it publicly.
 
-- Completed separation passages, transcription work and analysis stages are saved locally with integrity checks. **Resume analysis** reuses matching completed work; the passage interrupted before its checkpoint finished may run again.
-- Checkpoint identities include source audio, analysis settings, execution path and app version. Rename and choreography-only changes preserve matching audio analysis; changed or damaged work is not accepted as a finished result.
-- Finished overall analysis can resume directly into choreography. Cancellation, Android interruption and storage errors leave the previous saved show intact. Android background-time limits and manufacturer battery/memory controls still apply.
-- The progress panel shows elapsed time, current passage, completed work and reuse counts. A delayed-update message distinguishes a quiet model step from newly reported progress without inventing an ETA. The background notification includes an elapsed-time chronometer.
+Android may kill a process without allowing a final log write. The report therefore includes available system exit information and the events saved beforehand; it cannot promise a full stack for every native crash, out-of-memory kill or system failure.
 
-## Measured execution improvement
+## Renderer recovery
 
-On the same **6.803-second stereo PCM16 excerpt**, with four threads on one Linux development machine:
+The preview's renderer-loss handler previously assumed its WebView still had a parent. A late callback for a detached view could crash the recovery path itself. Cleanup now checks the parent, handles each WebView once and keeps stale callbacks from clearing a newer preview. The reload dialog waits until the Activity is foregrounded. The service applies corresponding guarded cleanup to its analysis WebView.
 
-| Measurement | Bounded WASM | Native Java CPU |
-| --- | ---: | ---: |
-| Separation time | 127.25 s | 61.11 s |
-| Peak process resident memory | 1,920.96 MiB | 720.56 MiB |
+Native Studio model quality, background processing and verified completed-passage Resume remain supported. This update does not establish the cause of every phone crash or the manufacturer “clear cache” message; the exported report supplies the device evidence needed for the next diagnosis.
 
-Native execution was **2.08× faster**, with **62.49% lower peak process RSS** in this comparison. The native output retained exact source sample counts and agreed with the same-input WASM reference within measured Float32 error. These are host measurements on one short excerpt, not physical-phone measurements or a full-song forecast. Studio remains computationally expensive and can take much longer than the music's playback duration. See [runtime evidence](qa/release-2.2.1/DEUX_RUNTIME.md) and [validation scope](VALIDATION.md).
+## Validation and update compatibility
 
-## Verification
+Current 2.2.2 regression, diagnostic-export, browser, Android and package verification are pending. Historical 2.2.1 performance and lifecycle evidence is preserved separately and is not represented as a new 2.2.2 measurement. See [VALIDATION.md](VALIDATION.md) for current status and scope.
 
-Source-bound native/WASM numerical equivalence and source-clock checks pass. Fresh downstream inference on 18 fixed original-model estimates retains singing in 12 positive cases and produces zero vocal events in six instrumental cases; this is not 18 newly separated native-runtime songs. Browser editing, responsive layout, full model inference and cancellation have passed against unchanged web sources. The refreshed local regression run passed 145 Node and 39 Python checks against the current sources.
-
-The [current-source Android 15 probe](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34169529496) passed real native Studio completion with the Activity destroyed, display off and Doze active, then reopened the saved show. It also passed cancellation during a later passage, immediate Resume with verified saved-passage reuse, resource cleanup and the Android timeout callback. The Activity detaches its preview WebView before destruction, addressing a focus-event ANR found during earlier testing. **All six source-bound release gates pass**, including the [complete production CI run](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34169530104) and its independent Android lifecycle job. The signed package passes exact asset inventory, version, alignment, checksum and original-certificate verification.
-
-This update targets the slow execution and repeated-work failure mode reported in 2.2.0. It does not promise a fixed completion time or claim resolution on an untested phone. Sustained runtime, memory, storage, thermals and long-song completion remain device/workload dependent. Physical phone and Tesla testing remain unverified. Model licenses retain their noncommercial restrictions.
+Once published, install the complete **LightForge-2.2.2.apk** over the existing app **without uninstalling**. The release gate must verify the original signing certificate, current version, all bundled assets and checksum. Physical-phone and Tesla validation remain outstanding. Existing model-license restrictions remain in effect.
 
 Earlier features and release history are retained in [CHANGELOG.md](CHANGELOG.md).

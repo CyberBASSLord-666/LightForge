@@ -69,4 +69,4 @@ self.onmessage=async({data})=>{try{
  if(data.action==='restore'){compiled=data.compiled;show=await restore(compiled,data.music,data.settings);}
  else{show=ShowEngine.generate(data.music,data.settings);progress(.78,'Saving an exact, checked copy of your arrangement…');compiled=await encode(show,data.music,data.settings);}
  const header=ShowEngine.fseqHeader(show,'lightshow.wav');progress(1,'Arrangement ready');postMessage({type:'result',value:{show,compiled,header}},[show.frames.buffer,header.buffer]);
-}catch(error){postMessage({type:'error',message:error.message||String(error)});}};
+}catch(error){postMessage({type:'error',message:String(error.message||error).slice(0,3072),stack:typeof error.stack==='string'?error.stack.slice(0,8192):undefined});}};

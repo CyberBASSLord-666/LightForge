@@ -117,7 +117,7 @@ self.onmessage=async e=>{
  postMessage({type:'result',value:result,restored:false,seconds:(performance.now()-started)/1000});
  }catch(error){
   if(cacheWriter)try{await cacheWriter.abort();}catch(_){}
-  postMessage({type:'error',message:error.message||String(error)});
+  postMessage({type:'error',message:String(error.message||error).slice(0,3072),stack:typeof error.stack==='string'?error.stack.slice(0,8192):undefined});
  }finally{
   if(game)try{await game.release();}catch(_){}if(separator)try{await separator.release();}catch(_){}
   if(session)try{await session.release();}catch(_){}if(melSession)try{await melSession.release();}catch(_){}
