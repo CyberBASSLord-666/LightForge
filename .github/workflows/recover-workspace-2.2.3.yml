@@ -1,0 +1,68 @@
+name: Recover current source and signed assets
+on:
+  push:
+    branches: ['diagnostics/2.2.3-recovery']
+    paths: ['.github/workflows/recover-workspace-2.2.3.yml']
+permissions:
+  contents: read
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: CyberBASSLord-666/LightForge
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Prepare source and checksum-verified asset backup
+        run: |
+          set -euo pipefail
+          mkdir -p recovery/source recovery/parts candidate
+          gh release download v2.2.2 --pattern LightForge-2.2.2.apk --dir candidate
+          python3 - <<'PY'
+          import hashlib,json,pathlib,subprocess,tarfile
+          root=pathlib.Path('.')
+          with tarfile.open('recovery/source/LightForge-source.tar.gz','w:gz') as out:
+              for name in subprocess.check_output(['git','ls-files','-z']).decode().split('\0'):
+                  if name:
+                      p=root/name
+                      if p.stat().st_size<5*1024*1024 and not name.startswith(('migration/parts/','releases/','archive/','qa/')):
+                          out.add(p,arcname=name,recursive=False)
+          p=pathlib.Path('candidate/LightForge-2.2.2.apk')
+          assert p.stat().st_size==1171745041
+          assert hashlib.file_digest(p.open('rb'),'sha256').hexdigest()=='4327295e32b369861d1689686cc877c88f5131402c3ad958e0f93bf5d0a10ebf'
+          manifest={'source_commit':subprocess.check_output(['git','rev-parse','HEAD']).decode().strip(),'apk_sha256':'4327295e32b369861d1689686cc877c88f5131402c3ad958e0f93bf5d0a10ebf','parts':[]}
+          with p.open('rb') as stream:
+              i=0
+              while data:=stream.read(400*1024*1024):
+                  i+=1
+                  dest=pathlib.Path(f'recovery/parts/{i}/release.part')
+                  dest.parent.mkdir(parents=True)
+                  dest.write_bytes(data)
+                  manifest['parts'].append({'index':i,'bytes':len(data),'sha256':hashlib.sha256(data).hexdigest()})
+          pathlib.Path('recovery/source/manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: recovered-source-2.2.3
+          path: recovery/source/
+          compression-level: 0
+          retention-days: 7
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: recovered-apk-1
+          path: recovery/parts/1/
+          compression-level: 0
+          retention-days: 7
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: recovered-apk-2
+          path: recovery/parts/2/
+          compression-level: 0
+          retention-days: 7
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: recovered-apk-3
+          path: recovery/parts/3/
+          compression-level: 0
+          retention-days: 7
