@@ -1,0 +1,50 @@
+{
+  "release": "2.2.1",
+  "passed": true,
+  "release_id": 384367308,
+  "release_url": "https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.2.1",
+  "tag": "v2.2.1",
+  "tag_commit": "dc9d638be7fa76642f5be55d250f91fd132a5a64",
+  "source_commit": "f80de0d7fd075cf22506c60910e41ea9f625e922",
+  "verification_workflow": {
+    "run_id": 34169530104,
+    "conclusion": "success"
+  },
+  "publication_workflow": {
+    "run_id": 34171857834,
+    "conclusion": "success"
+  },
+  "draft": false,
+  "latest_release": true,
+  "assets": [
+    {
+      "name": "LightForge-2.2.1.apk",
+      "bytes": 1171728522,
+      "sha256": "9fdbc60afecb6ce278d890f36ad58cb67623a485fd800d9e6c4215c6a7b3dd9f",
+      "download_url": "https://github.com/CyberBASSLord-666/LightForge/releases/download/v2.2.1/LightForge-2.2.1.apk"
+    },
+    {
+      "name": "release-verification.json",
+      "bytes": 51188,
+      "sha256": "cd5b8b8803f0693d381e500802efb9fbf3b0363d074e9ae29e64b1d5b0aa4cc7",
+      "download_url": "https://github.com/CyberBASSLord-666/LightForge/releases/download/v2.2.1/release-verification.json"
+    },
+    {
+      "name": "RELEASE_NOTES.md",
+      "bytes": 4874,
+      "sha256": "928b71cb0e81b4294267542481c6a97e381da59c6c418d64420abe7bfdc67ff4",
+      "download_url": "https://github.com/CyberBASSLord-666/LightForge/releases/download/v2.2.1/RELEASE_NOTES.md"
+    },
+    {
+      "name": "SHA256SUMS.txt",
+      "bytes": 87,
+      "sha256": "c7c0c44a5db77c45d043858784efeb0fda9bb49b53f59456d0bccd230131205b",
+      "download_url": "https://github.com/CyberBASSLord-666/LightForge/releases/download/v2.2.1/SHA256SUMS.txt"
+    }
+  ],
+  "original_signing_certificate_sha256": "7187d6aa935d5b7d2d656cb87913af95fe1ca3a4b1653036d1d8d890e2016c6b",
+  "local_asset_bytes_and_hashes_match": true,
+  "open_pull_requests": 0,
+  "open_issues": 0,
+  "scope": "Published full original-signed APK; CI model/browser/native and Android15 emulator cancellation/resume/screen-off checks passed. Physical phone/full-song performance and Tesla validation remain unverified."
+}

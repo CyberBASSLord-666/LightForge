@@ -1,6 +1,6 @@
 # 2.2.1 recovery status
 
-The release is **not yet published**. All six source-bound release gates, complete production CI and the Android recovery probe pass on current source `f80de0d7fd075cf22506c60910e41ea9f625e922`. The original-signed APK is verified; publication is being prepared.
+**[LightForge 2.2.1 is published](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.2.1)** with the [complete signed APK](https://github.com/CyberBASSLord-666/LightForge/releases/download/v2.2.1/LightForge-2.2.1.apk). All six source-bound release gates, complete production CI and the Android recovery probe pass on application source `f80de0d7fd075cf22506c60910e41ea9f625e922`. The original-signed APK and all four uploaded release-asset digests are verified.
 
 ## Current completed evidence
 
@@ -22,6 +22,6 @@ The first production attempt hit an insufficient outer instrumentation budget. P
 
 Probe [34168136295](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34168136295) saved one passage and cancelled native work, then hit an Android focus-event ANR during Resume. `MainActivity` now detaches the preview WebView before destruction; instrumentation verifies actual destruction/detachment. A two-second watchdog records diagnostic stacks without extending Android's ANR threshold. The complete passing probe above validates the corrected path on its Android 15 emulator.
 
-## Remaining work
+## Publication and remaining validation scope
 
-Retain the final production Android receipt, complete the verified candidate-index transfer, then publish and verify GitHub's uploaded assets. Keep publication marked pending until those steps succeed. Physical phone/full-song, thermal/manufacturer battery behavior and Tesla timing remain unverified. Studio remains computationally expensive; the short-excerpt host speed/memory measurements are not phone forecasts.
+Publication workflow [34171857834](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34171857834) passed. Release `384367308`, tag `v2.2.1`, targets commit `dc9d638be7fa76642f5be55d250f91fd132a5a64`; its APK, checksum, release notes and verification report all match GitHub's stored digests. The full APK is available as one release asset. Physical phone/full-song, thermal/manufacturer battery behavior and Tesla timing remain unverified. Studio remains computationally expensive; the short-excerpt host speed/memory measurements are not phone forecasts.
