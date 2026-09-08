@@ -1,0 +1,36 @@
+{
+  "release": "2.2.2",
+  "passed": true,
+  "release_id": 384429885,
+  "release_url": "https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.2.2",
+  "tag": "v2.2.2",
+  "tag_commit": "e7cd906257eff2860fe774fab5aef344d495f047",
+  "source_commit": "b0657fabbfec2a0c6482c2d6581179f604c4c010",
+  "production_run_id": 34179649874,
+  "publication_run_id": 34183955111,
+  "publication_run_conclusion": "success",
+  "assets": {
+    "LightForge-2.2.2.apk": {
+      "sha256": "4327295e32b369861d1689686cc877c88f5131402c3ad958e0f93bf5d0a10ebf",
+      "bytes": 1171745041
+    },
+    "RELEASE_NOTES.md": {
+      "sha256": "d7bca770537f56e9acdf8b403865d0d07ba0e200e74abb2e5be249f3f0a00ed2",
+      "bytes": 3953
+    },
+    "release-verification.json": {
+      "sha256": "9e27156324d32cdb795863c31f9ee3f2dbfd476a8194293d89d582017d579aad",
+      "bytes": 81608
+    },
+    "SHA256SUMS.txt": {
+      "sha256": "bca3d3c8f2eec36830e92102d64b7f06483a8d6cc6d277bfa605d43844b7b77d",
+      "bytes": 87
+    }
+  },
+  "apk_url": "https://github.com/CyberBASSLord-666/LightForge/releases/download/v2.2.2/LightForge-2.2.2.apk",
+  "checks": [
+    "Published non-draft release tag points to the publication commit.",
+    "All four uploaded asset sizes and GitHub SHA-256 digests match the verified local files.",
+    "Full production workflow and publication workflow completed successfully."
+  ]
+}

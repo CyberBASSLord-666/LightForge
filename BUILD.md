@@ -88,6 +88,8 @@ Version 2.2.2 passes all seven source-bound release gates. The complete [product
 
 ## Publish a compatible GitHub release
 
+[LightForge 2.2.2 is published](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.2.2). The [successful publication workflow](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34183955111) verified the uploaded APK against SHA-256 `4327295e32b369861d1689686cc877c88f5131402c3ad958e0f93bf5d0a10ebf` and the original signing identity. The following steps describe the verified publication process.
+
 The production verification workflow retains `lightforge-2.2.2-ci-candidate` after its build and native gates pass. Download that exact artifact, verify all candidate assets against the checkout, and sign it locally using the original private identity. Refresh native and package receipts after signing. A local build from the same reviewed application sources is also eligible if its exact bytes can be reconstructed from the candidate and pass every publication check.
 
 `tools/apk_delta.py make candidate.apk signed.apk signed-apk.delta.json` produces a small public-byte transfer against the exact candidate hash. `apply` reconstructs the locally signed APK byte-for-byte and rejects a wrong base, corrupt patch or invalid range. It contains no key/password and cannot sign another APK.
