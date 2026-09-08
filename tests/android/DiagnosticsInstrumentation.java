@@ -249,15 +249,25 @@ public final class DiagnosticsInstrumentation extends Instrumentation {
                 + "window.addEventListener('error',function(event){if(String(event.message).includes(" + JSONObject.quote(marker + "-javascript-error") + "))window.__diagnosticProbeError=true;});"
                 + "window.addEventListener('unhandledrejection',function(event){if(String(event.reason && event.reason.message).includes(" + JSONObject.quote(marker + "-unhandled-rejection") + "))window.__diagnosticProbeRejection=true;});"
                 + "window.LightForgeApp.nav('guide');true");
-        javascript("setTimeout(function(){throw new Error(" + JSONObject.quote(marker + "-javascript-error content://private.music/private-performance.wav") + ");},0);"
-                + "Promise.reject(new Error(" + JSONObject.quote(marker + "-unhandled-rejection hidden-relative-project.wav") + "));true");
+        // WebView.evaluateJavascript executes an unspecified Chromium script with
+        // muted errors. Failures created by that host evaluation can be sanitized
+        // or omitted from unhandledrejection. A real document script exercises
+        // the same error delivery as the app's own scripts without changing them.
+        String failures = "setTimeout(function(){throw new Error("
+                + JSONObject.quote(marker + "-javascript-error content://private.music/private-performance.wav") + ");},0);"
+                + "Promise.reject(new Error(" + JSONObject.quote(marker + "-unhandled-rejection hidden-relative-project.wav") + "));";
+        javascript("(function(){var fixture=document.createElement('script');fixture.textContent="
+                + JSONObject.quote(failures) + ";document.head.appendChild(fixture);fixture.remove();return true;})()");
         long captureDeadline = SystemClock.elapsedRealtime() + 10000;
         boolean captured = false;
         while (SystemClock.elapsedRealtime() < captureDeadline) {
             if (Boolean.TRUE.equals(javascript("window.__diagnosticProbeError && window.__diagnosticProbeRejection && !document.getElementById('diagnosticRecovery').hidden"))) { captured = true; break; }
             SystemClock.sleep(100);
         }
-        check(captured, "Both JavaScript failures were not delivered or diagnostic recovery was not offered");
+        if (!captured) {
+            status("DIAGNOSTICS_BROWSER_STATE " + javascript("JSON.stringify({errorDelivered:window.__diagnosticProbeError,rejectionDelivered:window.__diagnosticProbeRejection,recoveryHidden:document.getElementById('diagnosticRecovery').hidden,report:window.LightForgeDiagnostics.report().slice(-65536)})"));
+            throw new AssertionError("Both JavaScript failures were not delivered or diagnostic recovery was not offered; see DIAGNOSTICS_BROWSER_STATE");
+        }
         javascript("document.querySelector('#guide [data-export-diagnostics]').click();true");
         long deadline = SystemClock.elapsedRealtime() + 30000;
         JSONObject event = null;
