@@ -1,0 +1,169 @@
+{
+  "release": "2.2.2",
+  "passed": true,
+  "errors": [],
+  "checks": [
+    "Full production analyzer completed actual precision-model inference, retained full-resolution source-clock vocals, and returned learned sung notes.",
+    "Actual newly analyzed music composes into legal FSEQ frames and restores with an identical frame hash.",
+    "Public analyzer cancellation during source separation removed its incomplete OPFS namespace."
+  ],
+  "source_hashes": {
+    "qa/release-2.2.2/analysis-browser.cjs": "5a0e0bdd425591996f50ae5fa947f959c593e8440fa38c63b7b97ccc05cb826b",
+    "version.json": "260929b89e63c8465eeeebe1f458fefe7b58bda709b546870174abbe1c0e1687",
+    "web/analysis/ASSET_MANIFEST.json": "3757b3406d2e78f5c787a76d76320dc86d7124484468f891e7477eb16e883431",
+    "web/analysis/worker.js": "ec0b42a5cb80da756a9a6492dffc6d6d787c6d8ff10079c8808a031abb0bf591",
+    "web/analysis/analyzer.js": "4cc766458c07ef33e3d6bd1185f18e946ca5a173c7c59edb175c01f3db03a234",
+    "web/analysis/game.js": "f8ffe28801c81df19e09d883626ecd4fe5870c50d299f362367ba88dbecb6b48",
+    "web/analysis/separator-deux.js": "95508ddb8cffc7dff6e47b849f7722efd1c901fbacb2c059be392444f872aebe",
+    "web/analysis/stem-cache.js": "21633cd9e217ecca6e55b9fa04983512e651ddc9a7b9027af13580845ff4fe82",
+    "web/analysis/work-store.js": "b6e6a251478ed727cee145418a61b1b7f1755076e0797f0a5a29ecedc4ce8f41",
+    "web/analysis/vocal.js": "94483ac6cf5db7532abfba98e7bab7cd826a82ad2adca0296d39fdebd827ac70",
+    "web/analysis/vocal-detail.js": "cd760d7a766d9a4ab0ac3a252a10f17a16a797b38e50b2d6712bc6adcd42713f",
+    "web/analysis/bass-notes.js": "5b81e2361295a1f8c02086d4668464ed1d7e93c923513c50a2c865a7aeb1531e",
+    "web/analysis/models/game/manifest.json": "51e172cfaa967d9e2518f01f508a64d49cd283d23ae8e8456af9c6e76eeb4f97",
+    "web/analysis/models/deux/manifest.json": "c1cb548d8d02a8b947d66fd8ac672559ea175ac4462109acccba13220b788245",
+    "web/engine/show-engine.js": "d09cfcdf1e1eebf36d3e03bfd40a3939dcc0fd18a4437047217511a258674548",
+    "web/engine/light-planner.js": "970c7a2a736560bf01e318b8180b431863e09e6e28daad4525ec583a70a73aeb",
+    "web/engine/music-cues.js": "1a87eea0502da2e1f19d2361a5646c127121211e91128017ce747b7f0d2f61d6",
+    "web/engine/sync-review.js": "eb9591060fffa20e2b12de97c6d344b61e06fc276af75817610d4e17095c61d9",
+    "web/engine/worker.js": "2be432291b31721734ae69e715c05ba11270c3a8a91fe89b049ee9fe51e55726"
+  },
+  "scope": "Actual Chromium public MusicAnalyzer with production Deux, GAME Large, Beat This and Frame-MN10. Test controls and original-stem reference scoring are independent of model inputs. No physical Android or Tesla.",
+  "analysis": {
+    "engine": {
+      "name": "Beat This! full + Deux + GAME Large",
+      "neural": true,
+      "detail": "Bundled pretrained rhythm transformer, stereo vocal separation, isolated-voice singing and speech classification, GAME Large neural sung-note transcription, measured source expression, and independent accompaniment bass tracking. All audio stays on this device.",
+      "model": "Beat This! final0",
+      "modelId": "beat-this-final0",
+      "modelSha256": "5f810debe53459b559127fb55bbad40035bb47cc567b20e501670f968c770f02",
+      "frontendSha256": "fdd59e65c515331308e4c8841edf99972deca646bdf6197744c2a5b7755e3de9",
+      "vocalModel": {
+        "name": "PretrainedSED Frame-MN10",
+        "id": "frame-mn10-strong-1",
+        "sha256": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+        "license": "MIT"
+      },
+      "noteModel": "game-large-1.0.3-lightforge-1",
+      "separationModel": {
+        "name": "Mel-Band RoFormer Deux",
+        "modelId": "mel-band-roformer-deux-lightforge-2",
+        "modelSha256": "10255c02295bf3e3865d4ee50ff752d7b19b124ed5fd93b147babc4333eda3aa",
+        "runtime": "onnxruntime-web-wasm",
+        "sourceSeparated": true,
+        "sampleRate": 44100,
+        "sourceChannels": 2,
+        "stems": [
+          "vocals",
+          "accompaniment"
+        ],
+        "method": "Dual trained stereo source separation; Float32 bounded transformer with complete attention",
+        "contextSeconds": 13,
+        "coreSeconds": 10,
+        "overlapSeconds": 5,
+        "chunks": 1,
+        "restoredPassages": 0,
+        "estimated": true,
+        "analysisSeconds": 364.43225500000005,
+        "alignment": "Original PCM clock; centered STFT and normalized overlap-add with complementary chunk crossfades",
+        "limitations": [
+          "Vocal and instrumental estimates can contain bleed; neither is an isolated bass instrument.",
+          "Lead and backing singers share one vocal source; no lyrics or word alignment."
+        ]
+      },
+      "bassMethod": "Harmonic low-register tracking",
+      "quality": "precision",
+      "runtime": "ONNX Runtime Web 1.20.1",
+      "analysisSeconds": 410.1,
+      "stages": {
+        "rhythm": {
+          "seconds": 7.782905000000028,
+          "restored": false
+        },
+        "separation": {
+          "seconds": 364.48547999999994,
+          "restored": false
+        },
+        "voice": {
+          "seconds": 37.14127500000002,
+          "restored": false
+        },
+        "bass": {
+          "seconds": 0.16804000000003724,
+          "restored": false
+        }
+      },
+      "recoverable": false
+    },
+    "separation": {
+      "name": "Mel-Band RoFormer Deux",
+      "modelId": "mel-band-roformer-deux-lightforge-2",
+      "modelSha256": "10255c02295bf3e3865d4ee50ff752d7b19b124ed5fd93b147babc4333eda3aa",
+      "runtime": "onnxruntime-web-wasm",
+      "sourceSeparated": true,
+      "sampleRate": 44100,
+      "sourceChannels": 2,
+      "stems": [
+        "vocals",
+        "accompaniment"
+      ],
+      "method": "Dual trained stereo source separation; Float32 bounded transformer with complete attention",
+      "contextSeconds": 13,
+      "coreSeconds": 10,
+      "overlapSeconds": 5,
+      "chunks": 1,
+      "restoredPassages": 0,
+      "estimated": true,
+      "analysisSeconds": 364.43225500000005,
+      "alignment": "Original PCM clock; centered STFT and normalized overlap-add with complementary chunk crossfades",
+      "limitations": [
+        "Vocal and instrumental estimates can contain bleed; neither is an isolated bass instrument.",
+        "Lead and backing singers share one vocal source; no lyrics or word alignment."
+      ]
+    },
+    "noteCount": 11,
+    "bassNoteCount": 9,
+    "cacheHash": "8cc789f93ea4f6d1fbc94b60823077b03f406da89c6cf3e863fbd5cf6ebae82f",
+    "progressMonotonic": true
+  },
+  "composition": {
+    "valid": true,
+    "hash": "33161958e7822fa3f4534760a90babc2e4c201bae308f2465d03e825a1bbb333",
+    "savedHash": "33161958e7822fa3f4534760a90babc2e4c201bae308f2465d03e825a1bbb333",
+    "restoredHash": "33161958e7822fa3f4534760a90babc2e4c201bae308f2465d03e825a1bbb333",
+    "frameCount": 341,
+    "synchronization": {
+      "version": 1,
+      "scope": "Selected musical targets compared with final FSEQ commands; not detection accuracy or measured vehicle latency.",
+      "frameStepMs": 20,
+      "roles": {
+        "vocals": {
+          "selected": 5,
+          "matched": 5,
+          "suppressed": 0,
+          "heldWithoutAttack": 0
+        },
+        "bass": {
+          "selected": 9,
+          "matched": 9,
+          "suppressed": 0,
+          "heldWithoutAttack": 0
+        }
+      },
+      "selected": 14,
+      "matched": 14,
+      "coverage": 1,
+      "maxErrorMs": 10.000000000000009,
+      "medianErrorMs": 9.999999999999787,
+      "issues": [],
+      "omittedIssues": 0,
+      "manual": []
+    }
+  },
+  "cancellation": {
+    "aborted": true,
+    "stage": "Separating voice and instruments",
+    "remainingNamespaces": 0
+  },
+  "completedAt": "2026-09-08T02:13:32.636Z"
+}

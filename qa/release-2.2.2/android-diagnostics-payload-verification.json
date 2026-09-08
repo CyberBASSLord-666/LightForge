@@ -1,0 +1,20 @@
+{
+  "test_commit": "b0657fabbfec2a0c6482c2d6581179f604c4c010",
+  "model_source_release": "v2.2.1",
+  "build": {
+    "apk": "LightForge-2.2.2.apk",
+    "update_compatible": false,
+    "signing_certificate_sha256": "e80b1cf11f5e2e04805ab659d414965cf8493a9e9bf83ad9be1f02058389465d",
+    "bytes": 1171745041,
+    "sha256": "024aa128205c68810540557be844323bd1b23453de75aa76ff6e20c230d953b6",
+    "zip_integrity": "passed",
+    "alignment": "passed",
+    "signature": "verified",
+    "min_sdk": 26,
+    "target_sdk": 35,
+    "compile_sdk": 35,
+    "version_name": "2.2.2",
+    "version_code": 20202
+  },
+  "scope": "Current production app sources and web UI, all bundled analysis assets matched current ASSET_MANIFEST; ephemeral CI signing. Focused diagnostics check, independent of neural lifecycle gate."
+}
