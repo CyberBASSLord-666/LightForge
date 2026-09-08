@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.app.Instrumentation;
 import android.content.ContentResolver;
 import android.content.ContentUris;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
@@ -118,19 +119,27 @@ public final class DiagnosticsInstrumentation extends Instrumentation {
         check("content".equals(uri.getScheme()) && "media".equals(uri.getAuthority()),
                 "Export was not saved through Android MediaStore");
         String name = result.getString("name");
-        check(name.startsWith("LightForge-diagnostics-") && name.endsWith(".log"), "Unexpected export filename");
+        check(name.startsWith("LightForge-diagnostics-") && name.endsWith(".txt"), "Unexpected export filename: " + name);
+        check("Downloads/LightForge".equals(result.getString("location")),
+                "Modern diagnostic export must identify its containing folder: " + result.optString("location"));
         ContentResolver resolver = getTargetContext().getContentResolver();
         try (Cursor cursor = resolver.query(uri, new String[]{MediaStore.Downloads.DISPLAY_NAME,
                 MediaStore.Downloads.RELATIVE_PATH, MediaStore.Downloads.MIME_TYPE,
                 MediaStore.Downloads.IS_PENDING, MediaStore.Downloads.SIZE}, null, null, null)) {
             check(cursor != null && cursor.moveToFirst(), "Export missing from Downloads provider");
-            check(name.equals(cursor.getString(0)), "Export metadata filename does not match its file");
-            check("Download/LightForge/".equals(cursor.getString(1)), "Log is not in Downloads/LightForge");
+            check(name.equals(cursor.getString(0)), "Export metadata filename does not match its file: expected="
+                    + name + "; actual=" + cursor.getString(0));
+            check("Download/LightForge/".equals(cursor.getString(1)), "Log is not in Downloads/LightForge: " + cursor.getString(1));
             check("text/plain".equals(cursor.getString(2)), "Diagnostic log is not readable plain text");
             check(cursor.getInt(3) == 0, "Diagnostic export left an unfinished pending file");
             check(cursor.getLong(4) == result.getLong("bytes"), "Export byte count does not match Downloads");
         }
-        try (InputStream in = resolver.openInputStream(uri); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+        return readReport(uri, result.getLong("bytes"));
+    }
+
+    private String readReport(Uri uri, long expectedBytes) throws Exception {
+        try (InputStream in = getTargetContext().getContentResolver().openInputStream(uri);
+             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             check(in != null, "Export cannot be reopened");
             byte[] bytes = new byte[8192];
             int count;
@@ -138,7 +147,7 @@ public final class DiagnosticsInstrumentation extends Instrumentation {
                 check(out.size() + count <= 2 * 1024 * 1024, "Export exceeds its bounded report size");
                 out.write(bytes, 0, count);
             }
-            check(out.size() == result.getLong("bytes"), "Written report is incomplete");
+            check(out.size() == expectedBytes, "Written report is incomplete: expected=" + expectedBytes + "; actual=" + out.size());
             return new String(out.toByteArray(), StandardCharsets.UTF_8);
         }
     }
@@ -156,7 +165,7 @@ public final class DiagnosticsInstrumentation extends Instrumentation {
         try (Cursor cursor = getTargetContext().getContentResolver().query(collection,
                 new String[]{MediaStore.Downloads._ID}, MediaStore.Downloads.RELATIVE_PATH + "=? AND "
                         + MediaStore.Downloads.DISPLAY_NAME + " LIKE ?",
-                new String[]{"Download/LightForge/", "LightForge-diagnostics-%.log"}, null)) {
+                new String[]{"Download/LightForge/", "LightForge-diagnostics-%.txt"}, null)) {
             check(cursor != null, "Cannot query the app's Downloads exports");
             while (cursor.moveToNext()) result.add(ContentUris.withAppendedId(collection, cursor.getLong(0)));
         }
@@ -199,23 +208,56 @@ public final class DiagnosticsInstrumentation extends Instrumentation {
                 .openAssetFileDescriptor(Uri.parse(first.getString("uri")), "r")) {
             check(earlier != null, "Earlier export disappeared after a second export");
         }
-        pass("Two unique complete UTF-8 .log files are visible in Downloads/LightForge and can be read back through MediaStore.");
+        pass("Two unique complete UTF-8 .txt logs are visible in Downloads/LightForge and can be read back through MediaStore.");
+    }
+
+    private void verifySelectedDocumentExport() throws Exception {
+        ContentResolver resolver = getTargetContext().getContentResolver();
+        ContentValues values = new ContentValues();
+        values.put(MediaStore.Downloads.DISPLAY_NAME, "Custom diagnostic report " + marker + ".txt");
+        values.put(MediaStore.Downloads.MIME_TYPE, "text/plain");
+        values.put(MediaStore.Downloads.RELATIVE_PATH, "Download/LightForge-test/");
+        Uri selected = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+        check(selected != null, "Could not create the selected-document fixture");
+        created.add(selected);
+        String actualName;
+        try (Cursor cursor = resolver.query(selected, new String[]{MediaStore.Downloads.DISPLAY_NAME}, null, null, null)) {
+            check(cursor != null && cursor.moveToFirst(), "Selected document metadata is unavailable");
+            actualName = cursor.getString(0);
+        }
+        // The user/provider can choose a name different from ACTION_CREATE_DOCUMENT's suggestion.
+        String suggested = "LightForge-diagnostics-20000101-000000-000-1234abcd.txt";
+        JSONObject exported = AppDiagnostics.exportTo(getTargetContext(), selected, suggested);
+        check(selected.toString().equals(exported.getString("uri")), "Selected-document export changed the destination URI");
+        check(actualName.equals(exported.getString("name")),
+                "Selected-document export reported its suggestion instead of provider filename: expected="
+                        + actualName + "; actual=" + exported.optString("name"));
+        check(!suggested.equals(exported.getString("name")), "Custom filename was replaced with the suggested filename");
+        check("Selected document location".equals(exported.getString("location")),
+                "Selected-document export invented a destination folder: " + exported.optString("location"));
+        String saved = readReport(selected, exported.getLong("bytes"));
+        check(saved.contains(marker + "-uncaught-worker-crash"), "Selected document is missing the saved crash trace");
+        verifyPrivateDataAbsent(saved);
+        pass("Selected-URI export helper writes a readable report and returns the provider's custom filename without inventing a destination folder (API 35 helper coverage; no legacy picker UI claim).");
     }
 
     private void verifyJavascriptExport() throws Exception {
         launch();
         javascript("window.__diagnosticProbeEvents=[];window.__diagnosticProbeOriginal=window.onNativeEvent;"
                 + "window.onNativeEvent=function(type,payload){if(type==='diagnosticExported'||type==='diagnosticExportFailed')window.__diagnosticProbeEvents.push({type,payload});return window.__diagnosticProbeOriginal(type,payload);};"
+                + "window.__diagnosticProbeError=false;window.__diagnosticProbeRejection=false;"
+                + "window.addEventListener('error',function(event){if(String(event.message).includes(" + JSONObject.quote(marker + "-javascript-error") + "))window.__diagnosticProbeError=true;});"
+                + "window.addEventListener('unhandledrejection',function(event){if(String(event.reason && event.reason.message).includes(" + JSONObject.quote(marker + "-unhandled-rejection") + "))window.__diagnosticProbeRejection=true;});"
                 + "window.LightForgeApp.nav('guide');true");
         javascript("setTimeout(function(){throw new Error(" + JSONObject.quote(marker + "-javascript-error content://private.music/private-performance.wav") + ");},0);"
                 + "Promise.reject(new Error(" + JSONObject.quote(marker + "-unhandled-rejection hidden-relative-project.wav") + "));true");
         long captureDeadline = SystemClock.elapsedRealtime() + 10000;
         boolean captured = false;
         while (SystemClock.elapsedRealtime() < captureDeadline) {
-            if (Boolean.TRUE.equals(javascript("!document.getElementById('diagnosticRecovery').hidden"))) { captured = true; break; }
+            if (Boolean.TRUE.equals(javascript("window.__diagnosticProbeError && window.__diagnosticProbeRejection && !document.getElementById('diagnosticRecovery').hidden"))) { captured = true; break; }
             SystemClock.sleep(100);
         }
-        check(captured, "Captured JavaScript error did not offer diagnostic recovery");
+        check(captured, "Both JavaScript failures were not delivered or diagnostic recovery was not offered");
         javascript("document.querySelector('#guide [data-export-diagnostics]').click();true");
         long deadline = SystemClock.elapsedRealtime() + 30000;
         JSONObject event = null;
@@ -314,6 +356,7 @@ public final class DiagnosticsInstrumentation extends Instrumentation {
             check("verify".equals(mode), "Unsupported diagnostic test mode");
             verifyNoStoragePermission();
             verifyNativeExport();
+            verifySelectedDocumentExport();
             verifyJavascriptExport();
             verifyDetachedRendererRecovery();
             receipt.put("passed", true).put("checks", checks).put("androidSdk", Build.VERSION.SDK_INT)

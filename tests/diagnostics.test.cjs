@@ -59,9 +59,9 @@ test('native export stays pending until actual save acknowledgement and is avail
   assert.match(t.w.document.querySelector('#processing [data-diagnostic-status]').textContent,/Preparing your log/);
   assert.doesNotMatch(t.w.document.querySelector('#processing [data-diagnostic-status]').textContent,/Saved/);
   const result=t.api.exportLog();let resolved=false;result.then(()=>resolved=true);await Promise.resolve();assert.equal(resolved,false);
-  t.w.onNativeEvent('diagnosticExported',JSON.stringify({name:'LightForge-diagnostics.log',location:'Downloads/LightForge',uri:'content://media/external/downloads/1',bytes:1000}));
+  t.w.onNativeEvent('diagnosticExported',JSON.stringify({name:'LightForge-diagnostics.txt',location:'Downloads/LightForge',uri:'content://media/external/downloads/1',bytes:1000}));
   const file=await result;assert.equal(file.bytes,1000);assert.equal(button.disabled,false);assert.equal(t.w.document.getElementById('processing').hidden,false);
-  assert.match(t.w.document.querySelector('#processing [data-diagnostic-status]').textContent,/Saved LightForge-diagnostics.log to Downloads\/LightForge/);
+  assert.match(t.w.document.querySelector('#processing [data-diagnostic-status]').textContent,/Saved LightForge-diagnostics.txt to Downloads\/LightForge/);
   assert.equal(t.calls.filter(x=>x[0]==='export').length,1);
  }finally{t.close();}
 });
@@ -91,7 +91,7 @@ test('browser export creates an actual text log download without claiming a veri
   t.w.HTMLAnchorElement.prototype.click=function(){download={name:this.download,href:this.href,attached:this.isConnected};};
   t.api.log('error','analysis',new t.w.Error('Failed to resume'));const result=await t.api.exportLog();
   assert.ok(blob instanceof t.w.Blob);assert.match(blob.type,/text\/plain/);assert.ok(blob.size>100);
-  assert.match(download.name,/^LightForge-diagnostics-.*\.log$/);assert.equal(download.attached,true);assert.equal(result.requested,true);
+  assert.match(download.name,/^LightForge-diagnostics-.*\.txt$/);assert.equal(download.attached,true);assert.equal(result.requested,true);
   assert.match(t.w.document.querySelector('[data-diagnostic-status]').textContent,/Your browser chooses the download location/);
   assert.doesNotMatch(t.w.document.querySelector('[data-diagnostic-status]').textContent,/Saved/);
  }finally{t.close();}
@@ -101,7 +101,7 @@ test('diagnostics initialize before application scripts and export controls work
   const scripts=[...t.w.document.querySelectorAll('script')];assert.equal(scripts[0].getAttribute('src'),'diagnostics.js');assert.equal(scripts[0].hasAttribute('defer'),false);
   assert.equal(t.w.LightForgeApp,undefined);t.w.dispatchEvent(new t.w.ErrorEvent('error',{error:new t.w.Error('Startup failed')}));
   t.w.document.querySelector('#diagnosticRecovery [data-export-diagnostics]').click();assert.equal(t.calls.filter(x=>x[0]==='export').length,1);
-  t.api.handleNativeEvent('diagnosticExported',{name:'test.log',location:'Downloads/LightForge'});
+  t.api.handleNativeEvent('diagnosticExported',{name:'test.txt',location:'Downloads/LightForge'});
   t.w.document.getElementById('dismissDiagnosticRecovery').click();assert.equal(t.w.document.getElementById('diagnosticRecovery').hidden,true);
  }finally{t.close();}
 });

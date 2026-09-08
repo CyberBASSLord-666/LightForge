@@ -1,26 +1,39 @@
 #!/usr/bin/env python3
-"""Bind fresh runtime equivalence and role checks to the current release.
+"""Retain 2.2.1 numerical-kernel evidence for the exact reviewed 2.2.2 adapters.
 
-This gate preserves the declared original-reference lineage. It does not turn
-the archived six-song separation benchmark into a new full-dataset benchmark.
+This release-specific protocol is intentionally ineligible for other source
+changes. It verifies immutable predecessor evidence, identical kernels/models,
+and the exact reviewed diagnostics-only adapter transition. Current complete
+browser and Android execution remain separate mandatory release gates.
 """
 from pathlib import Path
 import datetime
 import hashlib
 import json
-import math
-import sys
+import os
+import re
+import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
-OUT = Path(__file__).resolve().parent
-VERSION = json.loads((ROOT / 'version.json').read_text())['name']
-sys.path.insert(0, str(ROOT / 'tools'))
-from verify_analysis_assets import verify as verify_assets
-
-
-def digest(path):
-    with path.open('rb') as stream:
-        return hashlib.file_digest(stream, 'sha256').hexdigest()
+OUT = 'qa/release-2.2.2/'
+PRIOR_COMMIT = 'f80de0d7fd075cf22506c60910e41ea9f625e922'
+PRIOR_RECEIPT_SHA256 = 'e029c404496eb141288e506dd496a64eea4db6dab7f4a9a8d4514a83d2617e88'
+PRIOR_MANIFEST_SHA256 = '8c33fa5a7b7bafd871b8caf0c476245ff40ede8fe70ee9703f50230c55a3ed71'
+CURRENT_MANIFEST_SHA256 = '3757b3406d2e78f5c787a76d76320dc86d7124484468f891e7477eb16e883431'
+PRIOR_VERSION_SHA256 = 'c2bb2ac7b87451cfb09a2cc087581ef8217cd7395ec87fdea0dc2e248f83f9df'
+CURRENT_VERSION_SHA256 = '260929b89e63c8465eeeebe1f458fefe7b58bda709b546870174abbe1c0e1687'
+ADAPTERS = {
+    'analyzer.js': {
+        'before': 'f9dcbf65960f6b4ca7164f0202354ad4c4e8e9b58efc8d024fa32eacf74a2162',
+        'after': '4cc766458c07ef33e3d6bd1185f18e946ca5a173c7c59edb175c01f3db03a234',
+        'review': 'Adds stage/progress/error diagnostic calls, preserves bounded worker error stacks and reports structured-clone message errors. Stage order, options, source requests, success values and numeric algorithms are unchanged.'
+    },
+    'worker.js': {
+        'before': '237fc9f20f5947610cf65c307be62792438bc6752cdf76d0dfc65d9def50dfce',
+        'after': 'ec0b42a5cb80da756a9a6492dffc6d6d787c6d8ff10079c8808a031abb0bf591',
+        'review': 'Only the failure message is bounded to 3072 characters and its optional error stack to 8192 characters. The model inputs, transforms, inference, success results and cleanup are unchanged.'
+    }
+}
 
 
 def require(condition, message):
@@ -28,138 +41,164 @@ def require(condition, message):
         raise ValueError(message)
 
 
-receipt = {
-    'release': VERSION, 'passed': False, 'errors': [], 'checks': [], 'source_hashes': {},
-    'scope': 'Fresh bounded WASM equivalence to the declared original full-context output; '
-             'actual native Java CPU equivalence on the identical PCM16 fixture; '
-             'source-clock seams and fresh role inference on 18 fixed original-model estimates. '
-             'Public browser and Android lifecycle checks are separate mandatory release gates. '
-             'This is not a fresh full-dataset separation benchmark, human note-accuracy evaluation or physical-device test.'
-}
+def digest(path):
+    with path.open('rb') as stream:
+        return hashlib.file_digest(stream, 'sha256').hexdigest()
 
 
-def bind(relative, expected=None):
-    path = (ROOT / relative).resolve()
-    require(path.is_relative_to(ROOT) and path.is_file(), 'Missing bound source: ' + relative)
+def file(root, relative):
+    require(isinstance(relative, str) and relative and not Path(relative).is_absolute(), 'Invalid source path')
+    path = (root / relative).resolve()
+    require(path.is_relative_to(root) and path.is_file() and path.relative_to(root).as_posix() == relative,
+            'Missing, noncanonical or external source: ' + relative)
+    return path
+
+
+def verify_bound(root, relative, expected, hashes):
+    require(isinstance(expected, str) and re.fullmatch(r'[0-9a-f]{64}', expected), 'Invalid source hash: ' + relative)
+    path = file(root, relative)
     actual = digest(path)
-    require(expected is None or actual == expected, 'Evidence is stale: ' + relative)
-    receipt['source_hashes'][relative] = actual
+    require(actual == expected, 'Source differs from reviewed evidence: ' + relative)
+    hashes[relative] = actual
+    return path
 
 
-def evidence(name):
-    path = OUT / name
-    value = json.loads(path.read_text())
-    require(value.get('passed') is True and not value.get('errors'), 'Failed evidence: ' + name)
-    if 'release' in value:
-        require(value['release'] == VERSION, 'Wrong evidence release: ' + name)
-    require(bool(value.get('source_hashes')), 'Missing source binding: ' + name)
-    for relative, expected in value['source_hashes'].items():
-        bind(relative, expected)
-    bind(path.relative_to(ROOT).as_posix())
-    return value
+def verify_asset(root, relative, entry, hashes):
+    require(isinstance(entry, dict) and set(entry) == {'bytes', 'sha256'} and type(entry['bytes']) is int and entry['bytes'] > 0,
+            'Invalid asset metadata: ' + relative)
+    path = verify_bound(root, 'web/analysis/' + relative, entry['sha256'], hashes)
+    require(path.stat().st_size == entry['bytes'], 'Asset byte count changed: ' + relative)
 
 
-def validate_model(value, manifest):
-    model = value['model']
-    require(model['id'] == manifest['id'], 'Runtime used another model ID')
-    require(model['checkpointSHA256'] == manifest['checkpointSHA256'], 'Runtime used another model checkpoint')
-    require(model['manifestSHA256'] == digest(ROOT / 'web/analysis/models/deux/manifest.json'),
-            'Runtime used another graph manifest')
+def verify_transition(root, hashes):
+    archived_manifest = verify_bound(root, OUT + 'prior-source/ASSET_MANIFEST.json', PRIOR_MANIFEST_SHA256, hashes)
+    current_manifest = verify_bound(root, 'web/analysis/ASSET_MANIFEST.json', CURRENT_MANIFEST_SHA256, hashes)
+    old, current = json.loads(archived_manifest.read_text()), json.loads(current_manifest.read_text())
+    require(set(old) == set(current), 'The reviewed analysis inventory changed')
+    differences = {name for name in old if old[name] != current[name]}
+    require(differences == set(ADAPTERS), 'Unexpected analysis manifest changes')
+    for name, reviewed in ADAPTERS.items():
+        require(old[name]['sha256'] == reviewed['before'] and current[name]['sha256'] == reviewed['after'],
+                'Unreviewed adapter transition: ' + name)
+        previous = verify_bound(root, OUT + 'prior-source/' + name, reviewed['before'], hashes)
+        require(previous.stat().st_size == old[name]['bytes'], 'Predecessor adapter byte count changed')
+        verify_asset(root, name, current[name], hashes)
+    return current
 
 
-def validate_pcm(value, samples, comparison=False, max_tolerance=.00003, rms_tolerance=.000003):
-    for role in ['vocals', 'accompaniment']:
-        result = value['pcm'][role]
-        require(result['samples'] == samples, role + ' sample count changed')
-        require(result.get('nonFiniteSamples', 0) == 0, role + ' contains invalid audio')
-        require(len(result['sha256']) == 64, role + ' PCM hash missing')
-        if comparison:
-            maximum, rms = result['maxAbsError'], result['rmsError']
-            require(math.isfinite(maximum) and 0 <= maximum <= max_tolerance, role + ' sample error exceeds the runtime tolerance')
-            require(math.isfinite(rms) and 0 <= rms <= rms_tolerance, role + ' RMS error exceeds the runtime tolerance')
+def verify_release(root=ROOT):
+    root = Path(root).resolve()
+    hashes = {}
+    old_version = verify_bound(root, OUT + 'prior-version-2.2.1.json', PRIOR_VERSION_SHA256, hashes)
+    current_version = verify_bound(root, 'version.json', CURRENT_VERSION_SHA256, hashes)
+    require(json.loads(old_version.read_text()) == {'name': '2.2.1', 'code': 20201}, 'Wrong predecessor version')
+    require(json.loads(current_version.read_text()) == {'name': '2.2.2', 'code': 20202}, 'This protocol belongs only to 2.2.2 / 20202')
+    original_path = verify_bound(root, OUT + 'prior-source/analysis-verification.json', PRIOR_RECEIPT_SHA256, hashes)
+    verify_bound(root, 'qa/release-2.2.1/analysis-verification.json', PRIOR_RECEIPT_SHA256, hashes)
+    original = json.loads(original_path.read_text())
+    require(original.get('release') == '2.2.1' and original.get('passed') is True and not original.get('errors'), 'Original numerical evidence did not pass')
+    require(isinstance(original.get('source_hashes'), dict) and original['source_hashes'], 'Missing original source bindings')
+    require(original['source_hashes']['version.json'] == PRIOR_VERSION_SHA256 and
+            original['source_hashes']['web/analysis/ASSET_MANIFEST.json'] == PRIOR_MANIFEST_SHA256,
+            'Original metadata binding changed')
+    require(not any('web/analysis/' + name in original['source_hashes'] for name in ADAPTERS),
+            'An adapter was directly measured by the original numeric gate; fresh measurement required')
 
+    current = verify_transition(root, hashes)
+    # Every source directly exercised by the old numeric gates stays exact. The
+    # metadata cases above are explicit, immutable and version-specific.
+    measured = {}
+    for relative, expected in original['source_hashes'].items():
+        if relative in {'version.json', 'web/analysis/ASSET_MANIFEST.json'}:
+            continue
+        verify_bound(root, relative, expected, hashes)
+        measured[relative] = expected
+    base = root / 'web/analysis'
+    inventory = {p.relative_to(base).as_posix() for p in base.rglob('*') if p.is_file()
+                 and p.name != 'ASSET_MANIFEST.json' and
+                 not any(part.startswith('.') or part == '__pycache__' for part in p.relative_to(base).parts)}
+    require(inventory == set(current), 'Installed analysis inventory differs from the reviewed manifest')
+    # Generated model graphs are verified here in full, but publication's source
+    # checkout does not contain them. Preserve all original direct bindings above;
+    # record the complete asset inventory separately, anchored to the exact
+    # current outer/model manifests. The publisher checks those packaged bytes.
+    asset_hashes = {}
+    for relative, expected in current.items():
+        verify_asset(root, relative, expected, asset_hashes)
 
-try:
-    require(VERSION == '2.2.2', 'This numeric protocol belongs to release 2.2.2')
-    verify_assets()
-    for relative in ['version.json', 'web/analysis/ASSET_MANIFEST.json',
-                     'web/analysis/models/deux/manifest.json', 'android/native-runtime.json',
-                     'qa/release-2.2.2/verify-analysis.py', 'tools/verify_analysis_assets.py', 'tools/prepare_deux_fixture.py', 'qa/release-2.2.2/deux-fixture-provenance.json']:
-        bind(relative)
-    manifest = json.loads((ROOT / 'web/analysis/models/deux/manifest.json').read_text())
-    for relative, expected in manifest['files'].items():
-        model_file=ROOT/'web/analysis/models/deux'/relative
-        require(model_file.stat().st_size==expected['bytes'] and digest(model_file)==expected['sha256'], 'Bundled separator graph changed: '+relative)
-    require(manifest['execution'] == 'bounded-independent-batches-v1' and manifest['headFrames'] == 128,
-            'Unexpected bounded inference configuration')
-    clock = evidence('source-clock-verification.json')
-    require(clock['contiguousSourceSamples'] and clock['monotonicProgress'] and clock['chunks'] >= 4,
-            'Source-clock seams or progress failed')
-    require(clock['samples'] == 932143 and clock['maxAbsError'] < .000002, 'Source-clock reconstruction changed')
-
-    wasm = evidence('deux-bounded-wasm.json')
-    reference = evidence('deux-bounded-pcm16-wasm.json')
-    native = evidence('deux-native-java.json')
-    for value in [wasm, reference, native]:
-        validate_model(value, manifest)
-    validate_pcm(wasm, 300032, comparison=True)
-    validate_pcm(reference, 300032)
-    provenance=json.loads((OUT/'deux-fixture-provenance.json').read_text())
-    require(provenance['fixtureSHA256']==reference['fixtureSHA256'] and provenance['sourceSHA256']==wasm['fixtureSHA256'] and provenance['samples']==300032 and provenance['sampleRate']==44100, 'Native PCM16 fixture provenance changed')
-    validate_pcm(native, 300032, comparison=True, max_tolerance=.00002, rms_tolerance=.000001)
-    require(native['fullPassageSamplesPerStem'] == 573300 and native['sourceStartSample'] == -66150 and native['cropOffsetSamples'] == 66150, 'Native full-context/source-clock relationship changed')
-    require(native['referenceReceiptSHA256'] == digest(OUT/'deux-bounded-pcm16-wasm.json'), 'Native reference receipt changed')
-
-    historical_path = ROOT / 'qa/release-2.1.0/analysis-verification.json'
-    historical = json.loads(historical_path.read_text())
-    require(historical['passed'] and not historical['errors'], 'Original reference lineage did not pass')
-    bind(historical_path.relative_to(ROOT).as_posix())
-    require(wasm['pcm']['vocals']['referenceSHA256'] == historical['wasm']['vocalPcmSHA256'],
-            'WASM comparator is not the declared archived vocal reference')
-    require(native['fixtureSHA256'] == reference['fixtureSHA256'], 'Native and WASM used different PCM16 inputs')
-    for role in ['vocals', 'accompaniment']:
-        require(native['pcm'][role]['referenceSHA256'] == reference['pcm'][role]['sha256'],
-                'Native comparator is not the current same-input WASM ' + role)
-    runtime_pin = json.loads((ROOT / 'android/native-runtime.json').read_text())
-    require(native['runtimeVersion'] == runtime_pin['version'], 'Native runtime version changed')
-    require(native['nativeManifestSHA256'] == digest(ROOT / 'android/native-runtime.json'), 'Native dependency pin changed')
-
-    roles = evidence('role-verification.json')
-    require(bool(roles.get('model_hashes')), 'Role model hashes are missing')
-    for relative, expected in roles['model_hashes'].items():
-        model_file=(ROOT/relative).resolve()
-        require(model_file.is_relative_to(ROOT/'web/analysis/models/game') and digest(model_file)==expected, 'Role model changed: '+relative)
-    positives = [r for r in roles['results'] if not r['track'].endswith('-instrumental')]
-    negatives = [r for r in roles['results'] if r['track'].endswith('-instrumental')]
-    require(len(positives) == 12 and len(negatives) == 6 and len({r['track'] for r in roles['results']}) == 18,
-            'Role coverage is incomplete')
-    require(all(r['phraseCount'] > 0 and r['noteCount'] > 0 for r in positives), 'Singing disappeared')
-    require(all(r['phraseCount'] == r['noteCount'] == r['accentCount'] == 0 for r in negatives),
-            'Instrument-only reference created vocal events')
-    require(all(r['transcriptionReused'] is False for r in roles['results']), 'Role inference was reused')
-
-    receipt.update(
-        checks=[
-            'Four overlapping passages preserve every source sample, including seam impulses and an odd final count.',
-            'Fresh bounded WASM output matches the declared original full-context runtime reference within the unchanged numeric tolerance.',
-            'Actual native Java CPU output matches current WASM on identical PCM16 input with pinned native binaries and model graphs.',
-            'All 12 positive fixed-estimate cases retain singing; all six instrumental cases create zero vocal events, using freshly recomputed neural predictions.'
+    clock_path = file(root, OUT + 'source-clock-verification.json')
+    clock_digest = digest(clock_path)
+    clock = json.loads(clock_path.read_text())
+    require(clock.get('release') == '2.2.2' and clock.get('passed') is True and not clock.get('errors'), 'Current source-clock check did not pass')
+    require(clock.get('samples') == 932143 and clock.get('chunks', 0) >= 4 and
+            clock.get('contiguousSourceSamples') is True and clock.get('monotonicProgress') is True and
+            0 <= clock.get('maxAbsError', float('inf')) < .000002, 'Current source-clock boundaries failed')
+    require(isinstance(clock.get('source_hashes'), dict) and clock['source_hashes'], 'Current source-clock binding missing')
+    for relative, expected in clock['source_hashes'].items():
+        verify_bound(root, relative, expected, hashes)
+    hashes[OUT + 'source-clock-verification.json'] = clock_digest
+    for relative in [OUT + 'verify-analysis.py', OUT + 'ADAPTER_EVIDENCE_REVIEW.md']:
+        hashes[relative] = digest(file(root, relative))
+    for relative, expected in {**hashes, **asset_hashes}.items():
+        require(digest(file(root, relative)) == expected, 'Source changed during verification: ' + relative)
+    return {
+        'release': '2.2.2', 'passed': True, 'errors': [], 'source_hashes': hashes,
+        'analysis_asset_hashes': asset_hashes,
+        'analysis_asset_binding': {
+            'manifest_path': 'web/analysis/ASSET_MANIFEST.json',
+            'manifest_sha256': CURRENT_MANIFEST_SHA256, 'verified_asset_count': len(asset_hashes),
+            'scope': 'Every listed asset was hashed and size-checked during this gate. Generated graphs remain asset bindings rather than new checkout source bindings; all original directly measured source bindings are preserved. Publication independently verifies the complete APK against this exact manifest.'
+        },
+        'scope': 'Retained numerical kernel/model evidence from immutable 2.2.1 sources, plus a fresh source-clock regression. This is not a fresh neural benchmark, phone-performance measurement or validation of changed adapter execution. The exact reviewed diagnostics/error-adapter bytes and their outer manifest are bound separately; current full-browser pipeline and Android lifecycle gates remain mandatory.',
+        'checks': [
+            'Immutable 2.2.1 numerical receipt, outer asset manifest and predecessor adapters match the fetched release-candidate commit.',
+            'Every directly measured kernel/runtime/source and every model graph retains its exact measured bytes.',
+            'The outer asset manifest changes exactly analyzer.js and worker.js to the reviewed diagnostics/error-handling hashes; all other entries and the complete inventory are unchanged.',
+            'Fresh 2.2.2 source-clock regression preserves every sample across four overlapping windows including the final odd sample.',
+            'Current actual browser pipeline and Android lifecycle execution are separate mandatory release gates; no historical execution result is relabeled as current.'
         ],
-        wasm={'runtime': wasm['runtime'], 'pcm': wasm['pcm']},
-        native={'runtime': native.get('runtime', {}), 'pcm': native['pcm']},
-        roles={'positiveCases': 12, 'instrumentalCasesWithZeroVoiceEvents': 6, 'freshNeuralInference': True},
-        historicalQuality={'path': historical_path.relative_to(ROOT).as_posix(),
-                           'status': 'Historical separation scores remain historical; current gates measure runtime equivalence and role regressions.'},
-        limitations=['Short development excerpts are not a representative held-out evaluation.',
-                     'Role estimates are fixed original-PyTorch outputs, not 18 newly separated current-runtime mixtures.',
-                     'Desktop CPU and WASM timing/memory do not establish sustained phone performance or physical Tesla timing.'])
-    for relative, expected in receipt['source_hashes'].items():
-        require(digest(ROOT / relative) == expected, 'Source changed during evidence aggregation: ' + relative)
-    receipt['passed'] = True
-except Exception as error:
-    receipt['errors'].append(str(error))
+        'retained_evidence': {
+            'release': '2.2.1', 'source_commit': PRIOR_COMMIT,
+            'path': OUT + 'prior-source/analysis-verification.json', 'sha256': PRIOR_RECEIPT_SHA256,
+            'original_manifest_sha256': PRIOR_MANIFEST_SHA256,
+            'measured_source_hashes': measured,
+            'numerical_results': {'wasm': original.get('wasm'), 'native': original.get('native'), 'roles': original.get('roles')}
+        },
+        'reviewed_adapter_transition': {
+            'source_commit': PRIOR_COMMIT, 'prior_manifest_sha256': PRIOR_MANIFEST_SHA256,
+            'current_manifest_sha256': CURRENT_MANIFEST_SHA256, 'adapters': ADAPTERS,
+            'review': OUT + 'ADAPTER_EVIDENCE_REVIEW.md',
+            'required_current_gates': ['analysis-browser-verification.json', 'android-background-verification.json']
+        },
+        'metadata_migration': {'prior': {'name': '2.2.1', 'code': 20201}, 'current': {'name': '2.2.2', 'code': 20202},
+                               'prior_sha256': PRIOR_VERSION_SHA256, 'current_sha256': CURRENT_VERSION_SHA256},
+        'fresh_source_clock': {'path': OUT + 'source-clock-verification.json', 'sha256': clock_digest,
+                               'samples': clock['samples'], 'maxAbsError': clock['maxAbsError']},
+        'limitations': ['Historical neural inference is retained, not rerun.',
+                       'Diagnostics and failure handling can affect runtime/lifecycle behavior; separate current browser and Android execution is required.',
+                       'No physical phone, full-song performance or Tesla timing result is implied.'],
+        'completedAt': datetime.datetime.now(datetime.timezone.utc).isoformat()
+    }
 
-receipt['completedAt'] = datetime.datetime.now(datetime.timezone.utc).isoformat()
-(OUT / 'analysis-verification.json').write_text(json.dumps(receipt, indent=2) + '\n')
-print(json.dumps({key: value for key, value in receipt.items() if key != 'source_hashes'}, indent=2))
-raise SystemExit(0 if receipt['passed'] else 1)
+
+def main():
+    receipt = verify_release()
+    output = ROOT / OUT / 'analysis-verification.json'
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(mode='w', dir=output.parent, prefix='.numeric-kernel-retention-', suffix='.tmp', delete=False) as stream:
+            temporary = Path(stream.name)
+            json.dump(receipt, stream, indent=2)
+            stream.write('\n')
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, output)
+        temporary = None
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
+    print(json.dumps({key: value for key, value in receipt.items() if key not in {'source_hashes', 'analysis_asset_hashes', 'retained_evidence'}}, indent=2))
+
+
+if __name__ == '__main__':
+    main()

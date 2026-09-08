@@ -4,7 +4,7 @@ Version code **20202**. **In verification; the signed update is not published ye
 
 ## Export a report
 
-Open **Guide → Export diagnostic log** after reproducing a problem. LightForge writes a timestamped `.log` text file to Downloads. If the preview engine has failed, use the reporting action in its native recovery dialog. Reopen the app after a crash before exporting so available Android process-exit information can be included.
+Open **Guide → Export diagnostic log** after reproducing a problem. LightForge writes a timestamped `.txt` log file to Downloads. If the preview engine has failed, use the reporting action in its native recovery dialog. Reopen the app after a crash before exporting so available Android process-exit information can be included.
 
 The report combines recent app and analysis events, error stacks, worker/renderer failures, timing, app and WebView versions, and memory/storage context. Recent traces are bounded, rotated and retained in private app files across launches. Reports contain no audio, model data or saved-show contents, redact common sensitive values, and are never uploaded automatically. Review the text before posting it publicly.
 

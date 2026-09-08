@@ -1,0 +1,123 @@
+{
+  "release": "2.2.1",
+  "passed": true,
+  "errors": [],
+  "checks": [
+    "Four overlapping passages preserve every source sample, including seam impulses and an odd final count.",
+    "Fresh bounded WASM output matches the declared original full-context runtime reference within the unchanged numeric tolerance.",
+    "Actual native Java CPU output matches current WASM on identical PCM16 input with pinned native binaries and model graphs.",
+    "All 12 positive fixed-estimate cases retain singing; all six instrumental cases create zero vocal events, using freshly recomputed neural predictions."
+  ],
+  "source_hashes": {
+    "version.json": "c2bb2ac7b87451cfb09a2cc087581ef8217cd7395ec87fdea0dc2e248f83f9df",
+    "web/analysis/ASSET_MANIFEST.json": "8c33fa5a7b7bafd871b8caf0c476245ff40ede8fe70ee9703f50230c55a3ed71",
+    "web/analysis/models/deux/manifest.json": "c1cb548d8d02a8b947d66fd8ac672559ea175ac4462109acccba13220b788245",
+    "android/native-runtime.json": "679f377a99019fbd20db96e3d35881e5d7d05ca761dc62a265a411d219dc8198",
+    "qa/release-2.2.1/verify-analysis.py": "05447f186f4d1eee8916ce39dc721b0817a2f4a4015ac1714aee45358b37e868",
+    "tools/verify_analysis_assets.py": "a71ab7ef9329da3b5429ca596978065efbb4afa009c925db7a552eddd1677224",
+    "tools/prepare_deux_fixture.py": "a31e94bd7ffa23d917516dcac1746c30856e298cc2a0a337e92b5d5593c45251",
+    "qa/release-2.2.1/deux-fixture-provenance.json": "4609bc607ffef3757f680574015f10918993dc142c4453a662dcb556ca19154d",
+    "web/analysis/separator-deux.js": "95508ddb8cffc7dff6e47b849f7722efd1c901fbacb2c059be392444f872aebe",
+    "web/analysis/dsp.js": "32186b9268632cab85cadcb7e84fa1b4e3d8eb4bb9fbdf96a0873067cb9acd71",
+    "qa/release-2.2.1/test-source-clock.cjs": "a6fc4f2a170ce3c0e00c95d40605e3af6ae2bd15becd0ac753d75f988ef3caea",
+    "qa/release-2.2.1/source-clock-verification.json": "95b8ad5f29b984eb963048a0daafff8da5453867e431d60d6dbdd5eec4a7513f",
+    "tools/benchmark_deux_runtime.cjs": "12375c9c14f18799416fe65ecc1bb7c2a339fc31352db7c71e31b0bc1d232fab",
+    "qa/release-2.2.1/deux-bounded-wasm.json": "a580d7eb18084378862ea49ad37320c5bf9040a0d985d053d17ae1a8444402b0",
+    "qa/release-2.2.1/deux-bounded-pcm16-wasm.json": "dbbf1802898d6e09997517eeb773ad3e2d29ae2c7e8098232d8f81627b83d4e1",
+    "android/src/com/cyberbasslord/lightforge/NativeDeux.java": "4320a91ceb7f1d49ab1bb839dead4c85bee417863ea37d5c4a1cd31fbe708558",
+    "android/src/com/cyberbasslord/lightforge/NativeDeuxTransform.java": "991b06501cfb88b904d0b714a525c389f169f00c231248b0e961b70f257e90b5",
+    "tests/NativeDeuxTest.java": "f552fdbd93f01dc6051cdf6c8ca7ba4048b4391451e924e544741771e82ac2d4",
+    "qa/release-2.2.1/deux-native-java.json": "71d2f85db92292929e3c715dc8b1ff365aae10b6a96b9c1e5b15ab33c8f080c6",
+    "qa/release-2.1.0/analysis-verification.json": "15bb204ce6fddfdbed7fe673c6bbf899b5598ea887b48945a3edf02d533b86ea",
+    "qa/release-2.2.1/evaluate-roles.cjs": "9c75797a3c48d50613fc8d981f40c0a1ee97fe559c92073d89bb20a3be88bf6a",
+    "qa/release-2.1.0/role-component-results.json": "9cd037785fe38772d5ea1df41f41cf8c07f830d015ad002ceb7b473d121f0cd6",
+    "web/analysis/wav-reader.js": "0f0e5216dc1d2ca0bfb25eddacdaa21076990fa7638c22188023607e43d4005f",
+    "web/analysis/stem-cache.js": "21633cd9e217ecca6e55b9fa04983512e651ddc9a7b9027af13580845ff4fe82",
+    "web/analysis/vocal.js": "94483ac6cf5db7532abfba98e7bab7cd826a82ad2adca0296d39fdebd827ac70",
+    "web/analysis/vocal-detail.js": "cd760d7a766d9a4ab0ac3a252a10f17a16a797b38e50b2d6712bc6adcd42713f",
+    "web/analysis/game.js": "f8ffe28801c81df19e09d883626ecd4fe5870c50d299f362367ba88dbecb6b48",
+    "web/analysis/models/features.json": "8a9fb3bc88c3e2f35934dd0024f22458aa8d357e3e3946a6e2c6230d3886e278",
+    "web/analysis/models/game/manifest.json": "51e172cfaa967d9e2518f01f508a64d49cd283d23ae8e8456af9c6e76eeb4f97",
+    "web/analysis/models/vocal-model.json": "52093f26d0bfe3f04bbb1563b287fafe5e61aa57a61391ea643b04d97838ca7e",
+    "web/analysis/models/vocal-frontend.json": "72bdffced29bfdd6d1da77a4da2a2a4af1b2f839c71131d19dc9423db3d4732f",
+    "web/analysis/models/game/config.json": "4d62b6d058a820e981184ea6f04605d37659c4331ee01979eb14a14be08af890",
+    "web/analysis/models/frame-mn10-singing.onnx": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+    "web/analysis/vendor/ort-wasm-simd-threaded.mjs": "745eb7c0ce6f18a6aa521971b2877babc7ffb27eecb58ab3bc6e5ef4692672e8",
+    "web/analysis/vendor/ort-wasm-simd-threaded.wasm": "207d02be4591c156b0a98f024f3d58005b5b04c92274d759fb390338c63559ea",
+    "web/analysis/vendor/ort.wasm.min.js": "e66568724f8848e57cc2a56e4bea3a5b86ce3ff81b2da11eac8ed7ab02b27bd4",
+    "qa/release-2.2.1/role-verification.json": "ed8580aa090cd823d96b5b958c4daf374fa679106b564788cbf6b1a0038901f5"
+  },
+  "scope": "Fresh bounded WASM equivalence to the declared original full-context output; actual native Java CPU equivalence on the identical PCM16 fixture; source-clock seams and fresh role inference on 18 fixed original-model estimates. Public browser and Android lifecycle checks are separate mandatory release gates. This is not a fresh full-dataset separation benchmark, human note-accuracy evaluation or physical-device test.",
+  "wasm": {
+    "runtime": {
+      "elapsedMs": 115625.752384,
+      "peakRssBytes": 2010071040,
+      "threads": 4
+    },
+    "pcm": {
+      "vocals": {
+        "samples": 300032,
+        "sha256": "3d649aa498905f156372db1455e67ffc825e428d45d506709476dfc25950f73c",
+        "nonFiniteSamples": 0,
+        "referenceSHA256": "3d649aa498905f156372db1455e67ffc825e428d45d506709476dfc25950f73c",
+        "maxAbsError": 0,
+        "rmsError": 0,
+        "snrDb": 332.5053453283297
+      },
+      "accompaniment": {
+        "samples": 300032,
+        "sha256": "5813b3b35d013ca2ad61be32c3a74b9a66cb1e91bb866954c0b17db74ed51b30",
+        "nonFiniteSamples": 0,
+        "referenceSHA256": "5813b3b35d013ca2ad61be32c3a74b9a66cb1e91bb866954c0b17db74ed51b30",
+        "maxAbsError": 0,
+        "rmsError": 0,
+        "snrDb": 337.8616931662132
+      }
+    }
+  },
+  "native": {
+    "runtime": {
+      "backend": "onnxruntime-java-cpu",
+      "version": "1.23.2",
+      "threads": 4,
+      "elapsedMs": 61113.941557,
+      "peakRssBytes": 755560448,
+      "javaMaxHeapBytes": 536870912
+    },
+    "pcm": {
+      "vocals": {
+        "samples": 300032,
+        "sha256": "64f9c3d697d1f2289619eed7749962ffd98e0333b3ee3f16acd7638ab3ec7a34",
+        "fullPassageSHA256": "cc2d0573e7de02d7dc24075473a3dfdc56b60788ed619f86fa4d57201dcee875",
+        "referenceSHA256": "882ddd963e76ef7960fbf3a1c3687f074f2b0377b13cce0de72a6e6bcea2ec98",
+        "maxAbsError": 3.203749656677246e-07,
+        "rmsError": 4.4018932192914934e-08,
+        "nonFiniteSamples": 0
+      },
+      "accompaniment": {
+        "samples": 300032,
+        "sha256": "c22400b6aeb330ea5adc7cd65f52cabf1baa11407cfef83af456c1dd53858974",
+        "fullPassageSHA256": "30dc7cdfd99439fd0bab8c9c9dda6adc4c80945a435066649bf19cab166e9ad2",
+        "referenceSHA256": "8cbf4aecd681f44977e6601f21ff84b99cdd8730f4f9b2c165dc2fb4e69ba1d4",
+        "maxAbsError": 2.980232238769531e-07,
+        "rmsError": 4.506609952701901e-08,
+        "nonFiniteSamples": 0
+      }
+    }
+  },
+  "roles": {
+    "positiveCases": 12,
+    "instrumentalCasesWithZeroVoiceEvents": 6,
+    "freshNeuralInference": true
+  },
+  "historicalQuality": {
+    "path": "qa/release-2.1.0/analysis-verification.json",
+    "status": "Historical separation scores remain historical; current gates measure runtime equivalence and role regressions."
+  },
+  "limitations": [
+    "Short development excerpts are not a representative held-out evaluation.",
+    "Role estimates are fixed original-PyTorch outputs, not 18 newly separated current-runtime mixtures.",
+    "Desktop CPU and WASM timing/memory do not establish sustained phone performance or physical Tesla timing."
+  ],
+  "completedAt": "2026-09-07T21:17:56.712752+00:00"
+}

@@ -131,7 +131,7 @@
   }
   let url,link;
   try{
-   persist();const name='LightForge-diagnostics-'+new Date().toISOString().replace(/[:.]/g,'-')+'.log';
+   persist();const name='LightForge-diagnostics-'+new Date().toISOString().replace(/[:.]/g,'-')+'.txt';
    const blob=new Blob([report()],{type:'text/plain;charset=utf-8'});url=URL.createObjectURL(blob);
    link=root.document.createElement('a');link.href=url;link.download=name;root.document.body.appendChild(link);link.click();link.remove();
    const downloadURL=url;root.setTimeout(()=>URL.revokeObjectURL(downloadURL),60000);

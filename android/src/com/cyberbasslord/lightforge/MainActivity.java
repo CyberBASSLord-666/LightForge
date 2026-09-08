@@ -240,7 +240,7 @@ public final class MainActivity extends Activity {
     @Override public void onLowMemory(){super.onLowMemory();AppDiagnostics.log(this,"WARN","activity-memory","lowMemory");}
     private void diagnosticResult(JSONObject result){
         event("diagnosticExported",result);
-        runOnUiThread(()->{if(!isDestroyed())Toast.makeText(this,"Diagnostic log saved to "+result.optString("location","your selected location"),Toast.LENGTH_LONG).show();});
+        runOnUiThread(()->{if(!isDestroyed())Toast.makeText(this,"Saved "+result.optString("name","diagnostic log")+"\n"+result.optString("location","Your selected location"),Toast.LENGTH_LONG).show();});
     }
     private void diagnosticFailure(Throwable failure){
         AppDiagnostics.record(this,"diagnostic-export",failure);

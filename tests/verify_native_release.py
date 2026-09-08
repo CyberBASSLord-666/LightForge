@@ -56,7 +56,7 @@ try:
                             cwd=ROOT, capture_output=True, text=True)
     (OUT / 'native-compilation.txt').write_text(result.stdout + result.stderr)
     result.check_returncode()
-    for folder in ['native-recovery-fixtures', 'native-project-fixtures', 'native-audio-fixtures', 'native-transport-fixtures', 'native-background-fixtures']:
+    for folder in ['native-recovery-fixtures', 'native-project-fixtures', 'native-audio-fixtures', 'native-transport-fixtures', 'native-background-fixtures', 'native-diagnostic-fixtures']:
         where = OUT / folder
         if where.exists(): shutil.rmtree(where)
     recovery = json.loads(run('NativeRecoveryTest', OUT / 'native-recovery-fixtures'))

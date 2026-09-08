@@ -6,6 +6,7 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.pm.PackageInfo;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Debug;
@@ -15,6 +16,7 @@ import android.os.PowerManager;
 import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.provider.DocumentsContract;
+import android.provider.OpenableColumns;
 import android.util.JsonReader;
 import android.util.JsonToken;
 import android.webkit.WebView;
@@ -150,7 +152,18 @@ public final class AppDiagnostics {
 
     private static String fileName() {
         SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd-HHmmss-SSS", Locale.US); format.setTimeZone(TimeZone.getTimeZone("UTC"));
-        return "LightForge-diagnostics-" + format.format(new Date()) + "-" + UUID.randomUUID().toString().substring(0, 8) + ".log";
+        return "LightForge-diagnostics-" + format.format(new Date()) + "-" + UUID.randomUUID().toString().substring(0, 8) + ".txt";
+    }
+
+    /** Providers may adjust extensions, resolve collisions, or accept a user-edited name. */
+    private static String savedName(ContentResolver resolver, Uri uri) throws IOException {
+        try (Cursor cursor = resolver.query(uri, new String[]{OpenableColumns.DISPLAY_NAME}, null, null, null)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                String actual = cursor.getString(0);
+                if (actual != null && !actual.trim().isEmpty()) return actual;
+            }
+        }
+        throw new IOException("Android could not confirm the saved diagnostic filename.");
     }
 
     /** API 29+: direct public Downloads export. API 26–28: launch ACTION_CREATE_DOCUMENT using returned name. */
@@ -175,7 +188,7 @@ public final class AppDiagnostics {
             }
             ContentValues ready = new ContentValues(); ready.put(MediaStore.MediaColumns.IS_PENDING, 0);
             if (resolver.update(uri, ready, null, null) != 1) throw new IOException("Android could not finish saving the diagnostic log.");
-            JSONObject result = new JSONObject().put("name", name).put("location", "Downloads/LightForge/" + name).put("uri", uri.toString()).put("bytes", bytes.length);
+            JSONObject result = new JSONObject().put("name", savedName(resolver, uri)).put("location", "Downloads/LightForge").put("uri", uri.toString()).put("bytes", bytes.length);
             committed = true;
             log(context, "INFO", "diagnostics-export", "Diagnostic report saved; bytes=" + bytes.length);
             return result;
@@ -188,7 +201,6 @@ public final class AppDiagnostics {
     public static JSONObject exportTo(Context context, Uri uri, String suggestedName) throws Exception {
         requireWorker(); initialize(context);
         if (uri == null || !"content".equals(uri.getScheme())) throw new IOException("Choose a document destination for the diagnostic log.");
-        String name = suggestedName != null && suggestedName.matches("LightForge-diagnostics-[0-9-]+-[a-f0-9]{8}\\.log") ? suggestedName : fileName();
         byte[] bytes = report();
         boolean committed = false;
         try {
@@ -196,7 +208,7 @@ public final class AppDiagnostics {
                 if (out == null) throw new IOException("Android could not open the chosen diagnostic log.");
                 out.write(bytes); out.flush();
             }
-            JSONObject result = new JSONObject().put("name", name).put("location", "Chosen Downloads destination").put("uri", uri.toString()).put("bytes", bytes.length);
+            JSONObject result = new JSONObject().put("name", savedName(context.getContentResolver(), uri)).put("location", "Selected document location").put("uri", uri.toString()).put("bytes", bytes.length);
             committed = true; return result;
         } finally {
             if (!committed) try { DocumentsContract.deleteDocument(context.getContentResolver(), uri); } catch (Exception ignored) {}

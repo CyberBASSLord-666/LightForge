@@ -13,6 +13,8 @@ receipt. The retention helper requires this match before classifying the
 name/code transition as release metadata. Every other measured source and
 model still requires an exact byte match; old evidence is never rewritten.
 
-```bash
-python3 tools/verify_retained_analysis.py --from-release 2.2.1 --prior-version-file qa/release-2.2.2/prior-version-2.2.1.json
-```
+The current release also changes diagnostic adapter entries in the outer analysis
+manifest. Its numeric gate therefore uses the fixed
+[2.2.2 adapter evidence protocol](ADAPTER_EVIDENCE_REVIEW.md), which verifies this
+version file as one explicit metadata input. The generic retention helper must
+continue rejecting that manifest change.

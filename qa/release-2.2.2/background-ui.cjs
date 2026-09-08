@@ -53,8 +53,8 @@ const receipt={release:'2.2.2',passed:false,checks:[],errors:[],source_hashes:Ob
    assert.match(await page.locator('#processing [data-diagnostic-status]').textContent(),/Not enough storage/);
    assert.equal(await page.evaluate(()=>LightForgeApp.state.busy),true);
    await page.locator('#processing [data-export-diagnostics]').click();
-   await page.evaluate(()=>window.onNativeEvent('diagnosticExported',{name:'LightForge-diagnostics-test.log',location:'Downloads/LightForge',uri:'content://media/external/downloads/1',bytes:2048}));
-   assert.match(await page.locator('#processing [data-diagnostic-status]').textContent(),/Saved LightForge-diagnostics-test.log to Downloads\/LightForge/);
+   await page.evaluate(()=>window.onNativeEvent('diagnosticExported',{name:'LightForge-diagnostics-test.txt',location:'Downloads/LightForge',uri:'content://media/external/downloads/1',bytes:2048}));
+   assert.match(await page.locator('#processing [data-diagnostic-status]').textContent(),/Saved LightForge-diagnostics-test.txt to Downloads\/LightForge/);
    assert.equal(await page.evaluate(()=>LightForgeApp.state.busy),true);
    assert.equal(await page.evaluate(()=>qaBackground.saves),0);
    assert.ok(await page.evaluate(()=>qaBackground.logs.some(row=>row[1]==='progress'&&row[2].includes('passageIndex=3'))));
