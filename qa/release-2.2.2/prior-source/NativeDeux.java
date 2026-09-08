@@ -19,8 +19,6 @@ import java.util.concurrent.TimeUnit;
  * Call predict on the job's worker thread, and cancel/close from any thread.
  */
 public final class NativeDeux implements AutoCloseable {
-    public static final String RUNTIME_VERSION="1.25.1";
-    public interface ExecutionScope { void begin() throws Exception; void end(); }
     public interface Listener { void update(double progress,String message); }
     public interface Cancellation { boolean cancelled(); }
     private static final int FRAMES=NativeDeuxTransform.FRAMES, SAMPLES=NativeDeuxTransform.SAMPLES;
@@ -43,8 +41,6 @@ public final class NativeDeux implements AutoCloseable {
     // Avoid getValue()/getFloatBuffer(), which allocate another full output copy.
     private FloatBuffer spectrum,values,mask,summed,batchInput,batchOutput;
     private NativeDeuxTransform transform;
-    private String activeGraph;
-    private boolean firstGraphRun;
 
     public NativeDeux(Context context) throws Exception {
         this(context.getApplicationContext(),null);
@@ -77,32 +73,23 @@ public final class NativeDeux implements AutoCloseable {
     }
 
     /** Output contains vocals then accompaniment, each exactly 573300 float32 LE samples. */
-    public void predict(File audio,long startSample,File output,Listener listener,Cancellation cancellation) throws Exception {
-        predict(audio,startSample,output,listener,cancellation,null);
-    }
-
-    public synchronized void predict(File audio,long startSample,File output,Listener listener,Cancellation cancellation,ExecutionScope scope) throws Exception {
+    public synchronized void predict(File audio,long startSample,File output,Listener listener,Cancellation cancellation) throws Exception {
         synchronized(lifecycle) {
             if(closed || cancelled)throw new InterruptedIOException("Studio analysis was cancelled.");
             running=true;
         }
         NativeDeuxTransform.Check check=()->check(cancellation);
-        File partial=null;boolean acquired=false,entered=false;
+        File partial=null;boolean acquired=false;
         try {
             check.check();
             while(!INFERENCE_GATE.tryAcquire(250,TimeUnit.MILLISECONDS))check.check();
             acquired=true;check.check();
-            if(scope!=null){scope.begin();entered=true;}
-            phase("cache-check-start");
             if(audio.getCanonicalFile().equals(output.getCanonicalFile()))throw new IOException("The studio result cannot replace source audio.");
             preflightCache(check);
             ensureBuffers();
-            phase("runtime-load-start; version="+RUNTIME_VERSION);
             synchronized(lifecycle){activeRun=new OrtSession.RunOptions();if(cancelled||closed)activeRun.setTerminate(true);}
-            phase("runtime-load-complete");
             progress(listener,0,"Reading the studio passage");
             transform.encode(NativeDeuxTransform.readStereo(audio,startSample,check),spectrum,check);
-            phase("passage-encoded");
             OrtEnvironment environment=OrtEnvironment.getEnvironment();
             try(OrtSession session=open(environment,"front",check)) {
                 run(session,spectrum,new long[]{1,2050,FRAMES,2},values,new long[]{1,FRAMES,BANDS,FEATURES},check);
@@ -165,7 +152,7 @@ public final class NativeDeux implements AutoCloseable {
                     if(activeRun!=null){activeRun.close();activeRun=null;}
                     running=false;if(closed)clearBuffers();
                 }
-            }finally{try{if(entered)scope.end();}finally{if(acquired)INFERENCE_GATE.release();}}
+            }finally{if(acquired)INFERENCE_GATE.release();}
         }
     }
 
@@ -199,7 +186,6 @@ public final class NativeDeux implements AutoCloseable {
 
     private OrtSession open(OrtEnvironment environment,String name,NativeDeuxTransform.Check check) throws Exception {
         check.check();File model=model(name,check);check.check();
-        phase("session-create-start; graph="+name);
         try(OrtSession.SessionOptions options=new OrtSession.SessionOptions()) {
             options.setIntraOpNumThreads(Math.max(1,Math.min(4,Runtime.getRuntime().availableProcessors())));
             options.setInterOpNumThreads(1);
@@ -208,25 +194,17 @@ public final class NativeDeux implements AutoCloseable {
             options.setCPUArenaAllocator(false);options.setMemoryPatternOptimization(false);
             options.addConfigEntry("session.intra_op.allow_spinning","0");
             OrtSession session=environment.createSession(model.getAbsolutePath(),options);
-            activeGraph=name;firstGraphRun=true;phase("session-create-complete; graph="+name);
             try{check.check();return session;}catch(Exception e){session.close();throw e;}
         }
     }
 
     private void run(OrtSession session,FloatBuffer input,long[] inputShape,FloatBuffer output,long[] outputShape,NativeDeuxTransform.Check check) throws Exception {
         check.check();
-        boolean first=firstGraphRun;if(first)phase("session-run-start; graph="+activeGraph);
         try(OnnxTensor x=OnnxTensor.createTensor(OrtEnvironment.getEnvironment(),input,inputShape);
             OnnxTensor y=OnnxTensor.createTensor(OrtEnvironment.getEnvironment(),output,outputShape);
             OrtSession.Result result=session.run(Collections.singletonMap("input",x),Collections.emptySet(),Collections.singletonMap("output",y),activeRun)) {
-            if(first){firstGraphRun=false;phase("session-run-complete; graph="+activeGraph);}
             check.check();
         }
-    }
-
-    /** Flush only at graph boundaries so a native process death retains its last phase. */
-    private void phase(String detail) {
-        if(context!=null){AppDiagnostics.log(context,"INFO","native-phase",detail);AppDiagnostics.flush(1000);}
     }
 
     private File model(String name,NativeDeuxTransform.Check check) throws Exception {
@@ -313,4 +291,3 @@ public final class NativeDeux implements AutoCloseable {
         }
     }
 }
-

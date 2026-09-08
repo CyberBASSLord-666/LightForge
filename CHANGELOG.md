@@ -1,5 +1,13 @@
 # LightForge 2.2.2 — Troubleshooting logs and renderer recovery
 
+## 2.2.3 — native CPU compatibility and crash recovery
+
+- Update native ONNX Runtime from 1.23.2 to 1.25.1, which includes corrected ARM SME2 instruction detection. All Studio model weights and batching geometry remain unchanged.
+- Persist native execution markers. After Android confirms a native crash in the same app/runtime execution, Resume uses the existing WASM engine with the same models and a visible compatibility notice. Completed analysis remains reusable.
+- Decode Android 12+ binary native tombstones in exported diagnostics, retaining only bounded signal and crashing-thread frame details. Add flushed library/session/run phase markers.
+- Add real Android SIGILL, diagnostic export and compatibility-recovery instrumentation alongside existing background completion, cancellation and Resume gates.
+- Release validation is in progress; 2.2.2 remains the published update until 2.2.3 is signed and verified.
+
 - Add a local, bounded diagnostic trace across the Android app, background analysis and JavaScript workers, with error stacks and progress context.
 - Export a timestamped `.txt` troubleshooting report to Downloads/LightForge on Android 10+ or the selected system-document destination on Android 8–9; capture app/device/WebView information, memory/storage state and available Android exit reasons. No automatic upload or audio/project-content attachment.
 - Keep recent logs in private app files across restarts, redact common sensitive values, and provide reporting from the native preview-recovery flow.

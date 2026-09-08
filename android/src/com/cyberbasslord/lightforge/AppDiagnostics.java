@@ -349,9 +349,14 @@ public final class AppDiagnostics {
                 out.append(" process=").append(context.getPackageName().equals(exit.getProcessName()) ? "main" : "app-related");
                 out.append(" description=").append(DiagnosticLog.sanitize(exit.getDescription())).append('\n');
                 if (includeTrace && traces < 2 && (exit.getReason() == ApplicationExitInfo.REASON_ANR || exit.getReason() == ApplicationExitInfo.REASON_CRASH_NATIVE)) {
-                    traces++;
                     try (InputStream input = exit.getTraceInputStream()) {
                         if (input == null) { out.append("  No retained stack trace.\n"); continue; }
+                        traces++;
+                        if (Build.VERSION.SDK_INT >= 31 && exit.getReason() == ApplicationExitInfo.REASON_CRASH_NATIVE) {
+                            // Android exposes native tombstones as protobuf, not UTF-8 stack dumps.
+                            out.append(NativeCrashTrace.read(input));
+                            continue;
+                        }
                         // ANR traces can include user data; retain only frame lines, never headers or dumps.
                         byte[] raw = new byte[64 * 1024]; int count = 0, read;
                         while (count < raw.length && (read = input.read(raw, count, raw.length - count)) > 0) count += read;
@@ -360,7 +365,7 @@ public final class AppDiagnostics {
                             String trimmed = line.trim();
                             if ((trimmed.startsWith("at ") || trimmed.startsWith("native: #") || trimmed.matches("#[0-9]+ .*")) && kept++ < 80) out.append("  ").append(DiagnosticLog.sanitize(trimmed)).append('\n');
                         }
-                        if (kept == 0) out.append("  No readable stack frames retained (native trace may be binary).\n");
+                        if (kept == 0) out.append("  No readable stack frames retained.\n");
                         out.append("  Trace limited to 64 KiB input / 80 sanitized frames.\n");
                     } catch (Throwable unavailable) { out.append("  Stack trace unavailable: ").append(unavailable.getClass().getSimpleName()).append('\n'); }
                 }

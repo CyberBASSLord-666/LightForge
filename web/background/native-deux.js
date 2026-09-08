@@ -1,8 +1,18 @@
 /* The service performs native CPU inference; audio remains in private app storage. */
 (function(root){'use strict';
  const abortError=()=>new DOMException('Analysis cancelled','AbortError');
- function create(bridge,jobId){
+ function create(bridge,jobId,onCompatibility=()=>{}){
   if(!bridge||typeof bridge.nativeDeuxStart!=='function')return undefined;
+  if(typeof bridge.nativeDeuxAvailability==='function'){
+   const availability=JSON.parse(bridge.nativeDeuxAvailability(jobId));
+   if(availability.error)throw Error(availability.error);
+   if(typeof availability.available!=='boolean')throw Error('Invalid native compatibility response.');
+   if(!availability.available){
+    const message='Compatibility processing enabled after a native crash. The same Studio models are used; analysis may take longer.';
+    root.LightForgeDiagnostics?.log('warn','native-compatibility',message);
+    onCompatibility(message);return undefined;
+   }
+  }
   const predict=async function(startSample,signal,onProgress=()=>{}){
    if(signal?.aborted)throw abortError();
    if(!Number.isSafeInteger(startSample)||startSample< -66150||startSample>44100*14400)throw Error('Invalid native passage position.');

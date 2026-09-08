@@ -81,7 +81,12 @@ class ReviewedAdapterEvidenceTest(unittest.TestCase):
         kernel = 'android/src/com/cyberbasslord/lightforge/NativeDeux.java'
         original = json.loads((ROOT / 'qa/release-2.2.1/analysis-verification.json').read_text())
         expected = original['source_hashes'][kernel]
+        # This historical protocol must keep rejecting the changed 2.2.3 predictor.
         path = self.copy(kernel)
+        with self.assertRaisesRegex(ValueError, 'NativeDeux.java'):
+            protocol.verify_bound(self.root, kernel, expected, {})
+        archived = ROOT / 'qa/release-2.2.2/prior-source/NativeDeux.java'
+        path.write_bytes(archived.read_bytes())
         protocol.verify_bound(self.root, kernel, expected, {})
         self.change_first_byte(path)
         with self.assertRaisesRegex(ValueError, 'NativeDeux.java'):

@@ -1,5 +1,7 @@
 # LightForge 2.2.2 — troubleshooting logs and renderer recovery
 
+Current source: **2.2.3 release candidate**, with ARM native-runtime compatibility and richer native crash traces. The published installable version remains [2.2.2](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.2.2) while update validation and signing finish. See [release notes](RELEASE_NOTES.md).
+
 **LightForge 2.2.2 is published with the complete signed APK and seven passing release gates.** [Download the complete APK](https://github.com/CyberBASSLord-666/LightForge/releases/download/v2.2.2/LightForge-2.2.2.apk) · [Release details](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.2.2). Install over the existing app without uninstalling. All models are bundled; no first-run download is required.
 
 LightForge turns music on your phone into an editable Tesla light show for a **2025 Model 3 Long Range RWD, North America**. It bundles its neural models, graphics and audio tools and works entirely offline.

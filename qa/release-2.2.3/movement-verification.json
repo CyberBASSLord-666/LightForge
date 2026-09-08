@@ -1,0 +1,617 @@
+{
+  "release": "2.2.3",
+  "passed": true,
+  "errors": [],
+  "checkedAt": "2026-09-08T15:29:46.821Z",
+  "checks": [
+    {
+      "name": "strongest musical arrivals replace percent-of-duration selection",
+      "passed": true
+    },
+    {
+      "name": "14-second trunk and four-second windows prepare before exact Dance onset",
+      "passed": true
+    },
+    {
+      "name": "final windows close and mirrors unfold with completed home travel",
+      "passed": true
+    },
+    {
+      "name": "mirror cycles reserve physical travel, begin folded, and never request Dance",
+      "passed": true
+    },
+    {
+      "name": "expressive choreography is denser and spatially staggered; balanced remains restrained",
+      "passed": true
+    },
+    {
+      "name": "positive and negative audio offsets apply once at musical arrivals",
+      "passed": true
+    },
+    {
+      "name": "manual tracks, disabled outputs and global movement switches are respected",
+      "passed": true
+    },
+    {
+      "name": "actual tempo changes determine stagger and all offsets retain frame precision",
+      "passed": true
+    },
+    {
+      "name": "Dance ends before actual musical stops; unsupported short phrases do not consume budgets",
+      "passed": true
+    },
+    {
+      "name": "long-track budgets focus on strongest remote peaks rather than evenly distributed gestures",
+      "passed": true
+    },
+    {
+      "name": "short tracks, sparse beats and phase-shifted boundaries retain legal complete choreography",
+      "passed": true
+    },
+    {
+      "name": "seeded adversarial phrase timing remains validated by the real exported-byte simulator",
+      "passed": true
+    },
+    {
+      "name": "integrated show generation preserves analysis targets, offset and exact exported movement bytes",
+      "passed": true
+    }
+  ],
+  "fixtures": [
+    {
+      "name": "known-drops",
+      "targets": [
+        {
+          "outputId": "windowFL",
+          "channels": [
+            37
+          ],
+          "time": 32,
+          "musicTime": 32,
+          "kind": "dance",
+          "source": "drop",
+          "role": "arrangement",
+          "score": 0.9415,
+          "confidence": 0.97,
+          "end": 41
+        },
+        {
+          "outputId": "windowFR",
+          "channels": [
+            39
+          ],
+          "time": 32,
+          "musicTime": 32,
+          "kind": "dance",
+          "source": "drop",
+          "role": "arrangement",
+          "score": 0.9415,
+          "confidence": 0.97,
+          "end": 41
+        },
+        {
+          "outputId": "windowRL",
+          "channels": [
+            38
+          ],
+          "time": 32,
+          "musicTime": 32,
+          "kind": "dance",
+          "source": "drop",
+          "role": "arrangement",
+          "score": 0.9415,
+          "confidence": 0.97,
+          "end": 41
+        },
+        {
+          "outputId": "windowRR",
+          "channels": [
+            40
+          ],
+          "time": 32,
+          "musicTime": 32,
+          "kind": "dance",
+          "source": "drop",
+          "role": "arrangement",
+          "score": 0.9415,
+          "confidence": 0.97,
+          "end": 41
+        },
+        {
+          "outputId": "trunk",
+          "channels": [
+            41
+          ],
+          "time": 32,
+          "musicTime": 32,
+          "kind": "dance",
+          "source": "drop",
+          "role": "arrangement",
+          "score": 0.9415,
+          "confidence": 0.97,
+          "end": 46,
+          "prepareStart": 17.64,
+          "estimatedOpenArrival": 31.64
+        },
+        {
+          "outputId": "charge",
+          "channels": [
+            46
+          ],
+          "time": 32,
+          "musicTime": 32,
+          "kind": "rainbow",
+          "source": "drop",
+          "role": "arrangement",
+          "score": 0.9415,
+          "confidence": 0.97,
+          "end": 56,
+          "prepareStart": 29.7
+        },
+        {
+          "outputId": "mirrorL",
+          "channels": [
+            35
+          ],
+          "time": 32,
+          "musicTime": 32,
+          "kind": "mirror-arrival",
+          "source": "drop",
+          "role": "arrangement",
+          "score": 0.9415,
+          "confidence": 0.97,
+          "prepareStart": 29.7,
+          "estimatedOpenArrival": 31.7
+        },
+        {
+          "outputId": "mirrorR",
+          "channels": [
+            36
+          ],
+          "time": 32.5,
+          "musicTime": 32.5,
+          "kind": "mirror-arrival",
+          "source": "drop",
+          "role": "arrangement",
+          "score": 0.9415,
+          "confidence": 0.97,
+          "prepareStart": 30.2,
+          "estimatedOpenArrival": 32.2
+        },
+        {
+          "outputId": "mirrorL",
+          "channels": [
+            35
+          ],
+          "time": 54,
+          "musicTime": 54,
+          "kind": "mirror-arrival",
+          "source": "bar arrival",
+          "role": "arrangement",
+          "score": 0.6279,
+          "confidence": 0.97,
+          "prepareStart": 51.7,
+          "estimatedOpenArrival": 53.7
+        },
+        {
+          "outputId": "mirrorR",
+          "channels": [
+            36
+          ],
+          "time": 54.5,
+          "musicTime": 54.5,
+          "kind": "mirror-arrival",
+          "source": "bar arrival",
+          "role": "arrangement",
+          "score": 0.6279,
+          "confidence": 0.97,
+          "prepareStart": 52.2,
+          "estimatedOpenArrival": 54.2
+        },
+        {
+          "outputId": "windowFL",
+          "channels": [
+            37
+          ],
+          "time": 96,
+          "musicTime": 96,
+          "kind": "dance",
+          "source": "chorus",
+          "role": "arrangement",
+          "score": 0.8839,
+          "confidence": 0.97,
+          "end": 105
+        },
+        {
+          "outputId": "trunk",
+          "channels": [
+            41
+          ],
+          "time": 96,
+          "musicTime": 96,
+          "kind": "dance",
+          "source": "chorus",
+          "role": "arrangement",
+          "score": 0.8839,
+          "confidence": 0.97,
+          "end": 110,
+          "prepareStart": 81.64,
+          "estimatedOpenArrival": 95.64
+        },
+        {
+          "outputId": "mirrorL",
+          "channels": [
+            35
+          ],
+          "time": 96,
+          "musicTime": 96,
+          "kind": "mirror-arrival",
+          "source": "chorus",
+          "role": "arrangement",
+          "score": 0.8839,
+          "confidence": 0.97,
+          "prepareStart": 93.7,
+          "estimatedOpenArrival": 95.7
+        },
+        {
+          "outputId": "windowFR",
+          "channels": [
+            39
+          ],
+          "time": 96.5,
+          "musicTime": 96.5,
+          "kind": "dance",
+          "source": "chorus",
+          "role": "arrangement",
+          "score": 0.8839,
+          "confidence": 0.97,
+          "end": 105.5
+        },
+        {
+          "outputId": "mirrorR",
+          "channels": [
+            36
+          ],
+          "time": 96.5,
+          "musicTime": 96.5,
+          "kind": "mirror-arrival",
+          "source": "chorus",
+          "role": "arrangement",
+          "score": 0.8839,
+          "confidence": 0.97,
+          "prepareStart": 94.2,
+          "estimatedOpenArrival": 96.2
+        },
+        {
+          "outputId": "windowRL",
+          "channels": [
+            38
+          ],
+          "time": 97,
+          "musicTime": 97,
+          "kind": "dance",
+          "source": "chorus",
+          "role": "arrangement",
+          "score": 0.8839,
+          "confidence": 0.97,
+          "end": 106
+        },
+        {
+          "outputId": "windowRR",
+          "channels": [
+            40
+          ],
+          "time": 97.5,
+          "musicTime": 97.5,
+          "kind": "dance",
+          "source": "chorus",
+          "role": "arrangement",
+          "score": 0.8839,
+          "confidence": 0.97,
+          "end": 106.5
+        },
+        {
+          "outputId": "mirrorL",
+          "channels": [
+            35
+          ],
+          "time": 108,
+          "musicTime": 108,
+          "kind": "mirror-arrival",
+          "source": "bar arrival",
+          "role": "arrangement",
+          "score": 0.5879,
+          "confidence": 0.97,
+          "prepareStart": 105.7,
+          "estimatedOpenArrival": 107.7
+        },
+        {
+          "outputId": "mirrorR",
+          "channels": [
+            36
+          ],
+          "time": 108.5,
+          "musicTime": 108.5,
+          "kind": "mirror-arrival",
+          "source": "bar arrival",
+          "role": "arrangement",
+          "score": 0.5879,
+          "confidence": 0.97,
+          "prepareStart": 106.2,
+          "estimatedOpenArrival": 108.2
+        },
+        {
+          "outputId": "mirrorL",
+          "channels": [
+            35
+          ],
+          "time": 122,
+          "musicTime": 122,
+          "kind": "mirror-arrival",
+          "source": "bar arrival",
+          "role": "arrangement",
+          "score": 0.5879,
+          "confidence": 0.97,
+          "prepareStart": 119.7,
+          "estimatedOpenArrival": 121.7
+        },
+        {
+          "outputId": "mirrorR",
+          "channels": [
+            36
+          ],
+          "time": 122.5,
+          "musicTime": 122.5,
+          "kind": "mirror-arrival",
+          "source": "bar arrival",
+          "role": "arrangement",
+          "score": 0.5879,
+          "confidence": 0.97,
+          "prepareStart": 120.2,
+          "estimatedOpenArrival": 122.2
+        },
+        {
+          "outputId": "windowFL",
+          "channels": [
+            37
+          ],
+          "time": 160,
+          "musicTime": 160,
+          "kind": "dance",
+          "source": "chorus",
+          "role": "arrangement",
+          "score": 0.8081,
+          "confidence": 0.97,
+          "end": 169
+        },
+        {
+          "outputId": "mirrorL",
+          "channels": [
+            35
+          ],
+          "time": 160,
+          "musicTime": 160,
+          "kind": "mirror-arrival",
+          "source": "chorus",
+          "role": "arrangement",
+          "score": 0.8081,
+          "confidence": 0.97,
+          "prepareStart": 157.7,
+          "estimatedOpenArrival": 159.7
+        },
+        {
+          "outputId": "windowFR",
+          "channels": [
+            39
+          ],
+          "time": 160.5,
+          "musicTime": 160.5,
+          "kind": "dance",
+          "source": "chorus",
+          "role": "arrangement",
+          "score": 0.8081,
+          "confidence": 0.97,
+          "end": 169.5
+        },
+        {
+          "outputId": "mirrorR",
+          "channels": [
+            36
+          ],
+          "time": 160.5,
+          "musicTime": 160.5,
+          "kind": "mirror-arrival",
+          "source": "chorus",
+          "role": "arrangement",
+          "score": 0.8081,
+          "confidence": 0.97,
+          "prepareStart": 158.2,
+          "estimatedOpenArrival": 160.2
+        },
+        {
+          "outputId": "windowRL",
+          "channels": [
+            38
+          ],
+          "time": 161,
+          "musicTime": 161,
+          "kind": "dance",
+          "source": "chorus",
+          "role": "arrangement",
+          "score": 0.8081,
+          "confidence": 0.97,
+          "end": 170
+        },
+        {
+          "outputId": "windowRR",
+          "channels": [
+            40
+          ],
+          "time": 161.5,
+          "musicTime": 161.5,
+          "kind": "dance",
+          "source": "chorus",
+          "role": "arrangement",
+          "score": 0.8081,
+          "confidence": 0.97,
+          "end": 170.5
+        },
+        {
+          "outputId": "mirrorL",
+          "channels": [
+            35
+          ],
+          "time": 178,
+          "musicTime": 178,
+          "kind": "mirror-arrival",
+          "source": "bar arrival",
+          "role": "arrangement",
+          "score": 0.5329,
+          "confidence": 0.97,
+          "prepareStart": 175.7,
+          "estimatedOpenArrival": 177.7
+        },
+        {
+          "outputId": "mirrorR",
+          "channels": [
+            36
+          ],
+          "time": 178.5,
+          "musicTime": 178.5,
+          "kind": "mirror-arrival",
+          "source": "bar arrival",
+          "role": "arrangement",
+          "score": 0.5329,
+          "confidence": 0.97,
+          "prepareStart": 176.2,
+          "estimatedOpenArrival": 178.2
+        }
+      ],
+      "diagnostics": {
+        "version": "1.6.0",
+        "movementDensity": 0.7,
+        "style": "expressive",
+        "timingBasis": "Music arrival targets with actuator lead time; vehicle travel and Dance oscillation remain estimates.",
+        "offsetAppliedMs": 0,
+        "commandCounts": {
+          "mirrorL": 14,
+          "mirrorR": 14,
+          "windowFL": 5,
+          "windowRL": 5,
+          "windowFR": 5,
+          "windowRR": 5,
+          "trunk": 6,
+          "charge": 3
+        },
+        "danceSeconds": {
+          "mirrorL": 0,
+          "mirrorR": 0,
+          "windowFL": 27,
+          "windowRL": 27,
+          "windowFR": 27,
+          "windowRR": 27,
+          "trunk": 28,
+          "charge": 24
+        },
+        "selectedTargets": 29,
+        "consideredTargets": 90,
+        "skipped": [],
+        "travelSeconds": {
+          "windows": 4,
+          "mirrors": 2,
+          "trunkOpen": 14,
+          "trunkClose": 4,
+          "charge": 2
+        },
+        "settlingMarginSeconds": 0.3,
+        "recoverySeconds": 5
+      }
+    },
+    {
+      "name": "two-hour-track",
+      "targets": [
+        {
+          "outputId": "trunk",
+          "channels": [
+            41
+          ],
+          "time": 1832,
+          "musicTime": 1832,
+          "kind": "dance",
+          "source": "drop",
+          "role": "arrangement",
+          "score": 0.96,
+          "confidence": 0.98,
+          "end": 1846,
+          "prepareStart": 1817.64,
+          "estimatedOpenArrival": 1831.64
+        },
+        {
+          "outputId": "trunk",
+          "channels": [
+            41
+          ],
+          "time": 5300,
+          "musicTime": 5300,
+          "kind": "dance",
+          "source": "drop",
+          "role": "arrangement",
+          "score": 0.9732,
+          "confidence": 0.98,
+          "end": 5314,
+          "prepareStart": 5285.64,
+          "estimatedOpenArrival": 5299.64
+        }
+      ],
+      "diagnostics": {
+        "version": "1.6.0",
+        "movementDensity": 0.7,
+        "style": "expressive",
+        "timingBasis": "Music arrival targets with actuator lead time; vehicle travel and Dance oscillation remain estimates.",
+        "offsetAppliedMs": 0,
+        "commandCounts": {
+          "mirrorL": 14,
+          "mirrorR": 14,
+          "windowFL": 6,
+          "windowRL": 6,
+          "windowFR": 6,
+          "windowRR": 6,
+          "trunk": 6,
+          "charge": 3
+        },
+        "danceSeconds": {
+          "mirrorL": 0,
+          "mirrorR": 0,
+          "windowFL": 27,
+          "windowRL": 27,
+          "windowFR": 27,
+          "windowRR": 27,
+          "trunk": 28,
+          "charge": 24
+        },
+        "selectedTargets": 29,
+        "consideredTargets": 3600,
+        "skipped": [],
+        "travelSeconds": {
+          "windows": 4,
+          "mirrors": 2,
+          "trunkOpen": 14,
+          "trunkClose": 4,
+          "charge": 2
+        },
+        "settlingMarginSeconds": 0.3,
+        "recoverySeconds": 5
+      }
+    }
+  ],
+  "source_hashes": {
+    "web/engine/movement-planner.js": "d22998c270c01af72f4fa1467ea5f5c9a3cc3ddda9f2264395fd8bba870305ec",
+    "web/engine/show-engine.js": "d09cfcdf1e1eebf36d3e03bfd40a3939dcc0fd18a4437047217511a258674548",
+    "web/engine/vehicle-profile.js": "027bf87a827a900cda00505e2b539f84cbdb0d5a9800ea4eb1efdf85a0c10936"
+  },
+  "limitations": [
+    "Motor travel is estimated from Tesla documented approximate durations. No physical car or Android device was used.",
+    "Dance oscillation cadence and endpoints are controlled by the car; only command start/end and prepared arrivals are scheduled."
+  ],
+  "source": "https://github.com/teslamotors/light-show#closures-channels"
+}

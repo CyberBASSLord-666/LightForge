@@ -11,7 +11,7 @@ OUT.mkdir(parents=True,exist_ok=True)
 TESTS=['engine.test.cjs','engine-manual.test.cjs','preview-engine.test.cjs','light-planner.test.cjs',
        'movement-planner.test.cjs','composer-1.6.test.cjs','role-composer-1.6.test.cjs',
        'role-reference-composer-1.6.test.cjs','bass-notes.test.cjs','vocal-detail.test.cjs',
-       'stem-cache.test.cjs','wav-reader.test.cjs','precision-2.0.test.cjs','migration-2.0.test.cjs','precision-ui-2.0.test.cjs','cockpit-2.1.test.cjs','game-2.1.test.cjs','background-2.2.test.cjs','deux-2.2.1.test.cjs','analysis-recovery-2.2.1.test.cjs','native-deux-bridge.test.cjs','diagnostics.test.cjs']
+       'stem-cache.test.cjs','wav-reader.test.cjs','precision-2.0.test.cjs','migration-2.0.test.cjs','precision-ui-2.0.test.cjs','cockpit-2.1.test.cjs','game-2.1.test.cjs','background-2.2.test.cjs','deux-2.2.1.test.cjs','analysis-recovery-2.2.1.test.cjs','native-deux-bridge.test.cjs','native-runtime-guard.test.cjs','diagnostics.test.cjs']
 
 def digest(p):
     with p.open('rb') as f:return hashlib.file_digest(f,'sha256').hexdigest()

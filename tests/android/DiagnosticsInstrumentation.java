@@ -1,6 +1,8 @@
 package com.cyberbasslord.lightforge;
 
 import android.app.AlertDialog;
+import android.app.ActivityManager;
+import android.app.ApplicationExitInfo;
 import android.app.Instrumentation;
 import android.content.ContentResolver;
 import android.content.ContentUris;
@@ -16,6 +18,8 @@ import android.os.Bundle;
 import android.os.Process;
 import android.os.SystemClock;
 import android.provider.MediaStore;
+import android.system.Os;
+import android.system.OsConstants;
 import android.view.ViewGroup;
 import android.webkit.RenderProcessGoneDetail;
 import android.webkit.WebView;
@@ -28,12 +32,16 @@ import org.json.JSONTokener;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileInputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -44,6 +52,7 @@ public final class DiagnosticsInstrumentation extends Instrumentation {
     private final Set<Uri> created = new HashSet<>();
     private MainActivity activity;
     private String mode, marker;
+    private int nativeCrashPid;
 
     private void check(boolean value, String message) {
         if (!value) throw new AssertionError(message);
@@ -187,6 +196,140 @@ public final class DiagnosticsInstrumentation extends Instrumentation {
                 "LightForge-diagnostic-crash-probe").start();
         SystemClock.sleep(15000);
         throw new AssertionError("The intentionally uncaught exception did not terminate the process");
+    }
+
+    private File nativeGuardFile() {
+        return new File(getTargetContext().getFilesDir(), "diagnostics/native-runtime-guard.bin");
+    }
+
+    private File nativeProbeBackup() {
+        return new File(getTargetContext().getFilesDir(), "diagnostics/.native-probe-" + marker + ".bin");
+    }
+
+    private NativeRuntimeGuard nativeGuard() throws Exception {
+        Context context = getTargetContext();
+        return new NativeRuntimeGuard(new File(context.getFilesDir(), "diagnostics"),
+                context.getPackageManager().getPackageInfo(context.getPackageName(), 0).versionCode
+                        + "-" + NativeDeux.RUNTIME_VERSION);
+    }
+
+    /** The same-signed test temporarily owns the production marker; restore prior state afterwards. */
+    private void prepareNativeProbe() throws Exception {
+        File guard = nativeGuardFile(), backup = nativeProbeBackup();
+        long beganAt = System.currentTimeMillis();
+        check(!backup.exists(), "Native probe backup already exists for this marker");
+        byte[] prior = null;
+        if (guard.exists()) {
+            check(guard.isFile() && guard.length() <= 1024, "Prior guard fixture exceeds its bound");
+            prior = new byte[(int)guard.length()];
+            try (DataInputStream input = new DataInputStream(new FileInputStream(guard))) { input.readFully(prior); }
+        }
+        check(guard.getParentFile().isDirectory() || guard.getParentFile().mkdirs(), "Could not prepare native probe directory");
+        try (FileOutputStream file = new FileOutputStream(backup); DataOutputStream output = new DataOutputStream(file)) {
+            output.writeInt(Process.myPid());
+            output.writeLong(beganAt);
+            output.writeInt(prior == null ? -1 : prior.length);
+            if (prior != null) output.write(prior);
+            output.flush(); file.getFD().sync();
+        }
+        check(!guard.exists() || guard.delete(), "Could not isolate the native probe marker");
+        nativeGuard().begin(Process.myPid(), beganAt);
+    }
+
+    private void restoreNativeProbe() throws Exception {
+        File backup = nativeProbeBackup();
+        if (!backup.exists()) return;
+        check(backup.length() >= 16 && backup.length() <= 1040, "Native probe backup exceeds its bound");
+        int owner, size;
+        long beganAt;
+        byte[] prior;
+        try (DataInputStream input = new DataInputStream(new FileInputStream(backup))) {
+            owner = input.readInt(); beganAt = input.readLong(); size = input.readInt();
+            check(owner > 0 && beganAt > 0 && size >= -1 && size <= 1024, "Native probe backup is invalid");
+            prior = size < 0 ? null : new byte[size];
+            if (prior != null) input.readFully(prior);
+            check(input.read() == -1, "Native probe backup has trailing data");
+        }
+        NativeRuntimeGuard.State current = nativeGuard().state();
+        check(current == null || (current.pid == owner && current.beganAt == beganAt),
+                "Another native execution owns the guard; refusing to replace it");
+        File guard = nativeGuardFile();
+        if (prior == null) check(!guard.exists() || guard.delete(), "Native probe guard could not be removed");
+        else {
+            File temporary = new File(guard.getParentFile(), ".native-probe-restore-" + marker);
+            try {
+                try (FileOutputStream output = new FileOutputStream(temporary)) {
+                    output.write(prior); output.flush(); output.getFD().sync();
+                }
+                java.nio.file.Files.move(temporary.toPath(), guard.toPath(),
+                        java.nio.file.StandardCopyOption.ATOMIC_MOVE, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            } finally { temporary.delete(); }
+        }
+        check(backup.delete(), "Native probe backup could not be removed");
+    }
+
+    private void seedAndNativeCrash() throws Exception {
+        AppDiagnostics.initialize(getTargetContext());
+        AppDiagnostics.log(getTargetContext(), "INFO", "diagnostic-native-probe", marker + "-durable-before-native-crash");
+        check(AppDiagnostics.flush(10000), "Could not flush the native pre-crash journal");
+        prepareNativeProbe();
+        status("DIAGNOSTICS_EXPECTED_NATIVE_CRASH " + marker + " pid=" + Process.myPid());
+        // Deliberate signal in the disposable CI target process; no unsafe JNI or user device calls.
+        Os.kill(Process.myPid(), OsConstants.SIGILL);
+        SystemClock.sleep(15000);
+        throw new AssertionError("The intentional SIGILL did not terminate the process");
+    }
+
+    private void verifyNativeTombstoneAndRecovery() throws Exception {
+        check(Build.VERSION.SDK_INT >= 31, "Native tombstone export requires Android API 31+");
+        check(nativeCrashPid > 0 && nativeCrashPid != Process.myPid(), "Native crash PID is not from a previous process");
+        NativeRuntimeGuard.State before = nativeGuard().state();
+        check(before != null && before.pid == nativeCrashPid && !before.disabled,
+                "The native execution lease did not survive the intentional crash");
+        ActivityManager manager = (ActivityManager)getTargetContext().getSystemService(Context.ACTIVITY_SERVICE);
+        check(manager != null, "Android process-exit service is unavailable");
+        ApplicationExitInfo retained = null;
+        long deadline = SystemClock.elapsedRealtime() + 45000;
+        while (retained == null && SystemClock.elapsedRealtime() < deadline) {
+            for (ApplicationExitInfo exit : manager.getHistoricalProcessExitReasons(
+                    getTargetContext().getPackageName(), nativeCrashPid, 32)) {
+                if (exit.getPid() != nativeCrashPid || exit.getReason() != ApplicationExitInfo.REASON_CRASH_NATIVE) continue;
+                try (InputStream trace = exit.getTraceInputStream()) {
+                    if (trace != null && trace.read() >= 0) { retained = exit; break; }
+                } catch (IOException pending) { /* debuggerd may still be publishing the tombstone */ }
+            }
+            if (retained == null) SystemClock.sleep(200);
+        }
+        check(retained != null, "Android did not retain the exact SIGILL process's native tombstone");
+        String saved = report(AppDiagnostics.export(getTargetContext()));
+        check(saved.contains(marker + "-durable-before-native-crash"), "Native pre-crash history was lost");
+        String exitHeader = "timestampMs=" + retained.getTimestamp() + " reason=CRASH_NATIVE(5)";
+        int start = saved.indexOf(exitHeader);
+        check(start >= 0, "Export lacks the exact native crash's exit record");
+        int end = saved.indexOf("\ntimestampMs=", start);
+        if (end < 0) end = saved.indexOf("\n\nPERSISTENT EVENT TRACE", start);
+        check(end > start, "Native exit export boundary is missing");
+        String nativeTrace = saved.substring(start, end);
+        check(nativeTrace.contains("signal=4 (SIGILL)"), "Real binary tombstone signal was not decoded");
+        check(java.util.regex.Pattern.compile("(?m)^  #00 rel_pc=0x[0-9a-f]+ (?:[A-Za-z0-9_.+-]+\\.so|app_process(?:32|64)?|linker(?:64)?)")
+                        .matcher(nativeTrace).find(), "Real native tombstone has no decoded first frame and native module");
+        verifyPrivateDataAbsent(saved);
+        pass("An intentional SIGILL in a previous target process exports its actual Android native tombstone as decoded signal 4 and crashing-thread module/relative-PC frames.");
+        try (NativePassageTask task = new NativePassageTask(getTargetContext(),
+                new File(getTargetContext().getCacheDir(), "unused-native-probe.wav"), UUID.randomUUID().toString())) {
+            JSONObject availability = new JSONObject(task.availability());
+            check(!availability.getBoolean("available") && "previous-native-crash".equals(availability.optString("reason")),
+                    "Production native availability did not select compatibility after the real crash");
+        }
+        NativeRuntimeGuard.State disabled = nativeGuard().state();
+        check(disabled != null && disabled.disabled && disabled.pid == nativeCrashPid,
+                "Compatibility selection was not saved for the crashed native runtime");
+        try (NativePassageTask task = new NativePassageTask(getTargetContext(),
+                new File(getTargetContext().getCacheDir(), "unused-native-probe.wav"), UUID.randomUUID().toString())) {
+            check(!new JSONObject(task.availability()).getBoolean("available"), "A new task repeated the known-crashing native runtime");
+        }
+        restoreNativeProbe();
+        pass("Production native availability reconciles the real crash with the durable execution lease and persists compatibility selection across new task instances, without loading JNI; prior guard state is restored after the test.");
     }
 
     private void verifyNativeExport() throws Exception {
@@ -352,6 +495,7 @@ public final class DiagnosticsInstrumentation extends Instrumentation {
         super.onCreate(arguments);
         mode = arguments == null ? "verify" : arguments.getString("mode", "verify");
         marker = arguments == null ? "missing" : arguments.getString("marker", "missing");
+        nativeCrashPid = arguments == null ? 0 : Integer.parseInt(arguments.getString("nativePid", "0"));
         start();
     }
 
@@ -363,14 +507,22 @@ public final class DiagnosticsInstrumentation extends Instrumentation {
             check(Build.VERSION.SDK_INT >= 29, "This diagnostic Downloads test requires Android API 29+");
             check(marker.matches("probe[0-9]{10,20}"), "Invalid unique test marker");
             if ("crash".equals(mode)) { seedAndCrash(); return; }
-            check("verify".equals(mode), "Unsupported diagnostic test mode");
-            verifyNoStoragePermission();
-            verifyNativeExport();
-            verifySelectedDocumentExport();
-            verifyJavascriptExport();
-            verifyDetachedRendererRecovery();
+            if ("native-crash".equals(mode)) { seedAndNativeCrash(); return; }
+            check("verify".equals(mode) || "cleanup".equals(mode), "Unsupported diagnostic test mode");
+            if ("cleanup".equals(mode)) {
+                restoreNativeProbe();
+                pass("Native diagnostic probe cleanup completed.");
+            } else {
+                verifyNoStoragePermission();
+                verifyNativeTombstoneAndRecovery();
+                verifyNativeExport();
+                verifySelectedDocumentExport();
+                verifyJavascriptExport();
+                verifyDetachedRendererRecovery();
+            }
             receipt.put("passed", true).put("checks", checks).put("androidSdk", Build.VERSION.SDK_INT)
-                    .put("device", Build.MODEL).put("pid", Process.myPid()).put("marker", marker);
+                    .put("device", Build.MODEL).put("pid", Process.myPid()).put("marker", marker)
+                    .put("mode", mode).put("nativeCrashPid", nativeCrashPid);
             passed = true;
         } catch (Throwable error) {
             try { receipt.put("passed", false).put("checks", checks).put("error", error.toString()); } catch (Exception ignored) { }
@@ -378,6 +530,15 @@ public final class DiagnosticsInstrumentation extends Instrumentation {
             error.printStackTrace(new java.io.PrintWriter(trace));
             status(trace.toString());
         } finally {
+            // Also runs after ordinary test failures. SIGILL itself bypasses finally; the Python
+            // driver always invokes the cleanup mode in a fresh process for that case.
+            if (marker != null && marker.matches("probe[0-9]{10,20}")) {
+                try { restoreNativeProbe(); }
+                catch (Exception error) {
+                    passed = false;
+                    try { receipt.put("passed", false).put("cleanupError", error.toString()); } catch (Exception ignored) { }
+                }
+            }
             // Remove only files this instrumentation created; leave app projects and history intact.
             for (Uri uri : created) {
                 try { getTargetContext().getContentResolver().delete(uri, null, null); } catch (Exception ignored) { }

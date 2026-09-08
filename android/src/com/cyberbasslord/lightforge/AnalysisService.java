@@ -118,6 +118,10 @@ public final class AnalysisService extends Service {
         JobBridge(String ownerJobId,NativePassageTask ownerTask){this.ownerJobId=ownerJobId;this.ownerTask=ownerTask;}
         private boolean owns(String id){return !stopped&&ownerJobId.equals(id)&&ownerJobId.equals(jobId);}
         @JavascriptInterface public void logDiagnostic(String level,String source,String message){if(owns(ownerJobId))AppDiagnostics.log(AnalysisService.this,level,source,message);}
+        @JavascriptInterface public String nativeDeuxAvailability(String id){
+            try{if(!owns(id))throw new IOException("Native analysis job is no longer active.");return ownerTask.availability();}
+            catch(Exception error){AppDiagnostics.record(AnalysisService.this,"native-compatibility",error);return bridgeError(error);}
+        }
         @JavascriptInterface public String nativeDeuxStart(String id,long startSample){
             try{if(!owns(id))throw new IOException("Native analysis job is no longer active.");return ownerTask.start(startSample);}
             catch(Exception error){AppDiagnostics.record(AnalysisService.this,"native-start",error);return bridgeError(error);}

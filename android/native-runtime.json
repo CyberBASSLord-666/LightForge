@@ -1,56 +1,56 @@
 {
   "name": "ONNX Runtime",
-  "version": "1.23.2",
+  "version": "1.25.1",
   "license": "MIT",
-  "source": "https://github.com/microsoft/onnxruntime/tree/v1.23.2",
+  "source": "https://github.com/microsoft/onnxruntime/tree/v1.25.1",
   "android": {
-    "name": "onnxruntime-android-1.23.2.aar",
-    "url": "https://repo.maven.apache.org/maven2/com/microsoft/onnxruntime/onnxruntime-android/1.23.2/onnxruntime-android-1.23.2.aar",
-    "bytes": 30241654,
-    "sha256": "82048d1f462218adae4ba76477089ab0ba76093d84f733540066db1a8ba6b827"
+    "name": "onnxruntime-android-1.25.1.aar",
+    "url": "https://repo.maven.apache.org/maven2/com/microsoft/onnxruntime/onnxruntime-android/1.25.1/onnxruntime-android-1.25.1.aar",
+    "bytes": 43116617,
+    "sha256": "08ccb60c93bd027843e8227743ddcb0275a00ee706cb0df4bae91cc1a21a55f5"
   },
   "host": {
-    "name": "onnxruntime-1.23.2.jar",
-    "url": "https://repo.maven.apache.org/maven2/com/microsoft/onnxruntime/onnxruntime/1.23.2/onnxruntime-1.23.2.jar",
-    "bytes": 75255976,
-    "sha256": "e0ab4a1af57d2da09097202f2dfd691e390c82e81183314788ccde4cf7c3cc38"
+    "name": "onnxruntime-1.25.1.jar",
+    "url": "https://repo.maven.apache.org/maven2/com/microsoft/onnxruntime/onnxruntime/1.25.1/onnxruntime-1.25.1.jar",
+    "bytes": 41804437,
+    "sha256": "749793ebed63743fec853d093da7987a86ea5cd592d54fba898cd3233100c381"
   },
   "files": {
     "classes.jar": {
-      "bytes": 111127,
-      "sha256": "c21c4b520c66dda4c8d6e17e7a64f2b38314a83f8a29ecfa60900f876b758752"
+      "bytes": 121358,
+      "sha256": "3755d307aaa566daa1ebd4e9e792303fac78ea8517f29bfa49da5eb9a7a6051b"
     },
     "jni/arm64-v8a/libonnxruntime.so": {
-      "bytes": 19347616,
-      "sha256": "e40f09d07dc53726b8bfbf48a7907673b8f86718a057655a62790a39874a7302"
+      "bytes": 27072384,
+      "sha256": "b87030d6d0876af371e00a99368f01a05ceb8ed36f88859e30ee8c3649811acd"
     },
     "jni/arm64-v8a/libonnxruntime4j_jni.so": {
-      "bytes": 100648,
-      "sha256": "2cc3f16ab527959a81b572adebcfb71a25ea4b8547c9b92d705b423e9c822d39"
+      "bytes": 111648,
+      "sha256": "cd11ea73f2e9b1d799b936d1dfc8a13719832a8244cd1b12d6f58bda1f2d1ddf"
     },
     "jni/armeabi-v7a/libonnxruntime.so": {
-      "bytes": 13992328,
-      "sha256": "57048b8d54896d16355ee367bfc129c5925468ae503b681b8d0cd49ceefa468e"
+      "bytes": 19255048,
+      "sha256": "570c8297cb166efec11f104351db2485a1405347ff22cc450d5979d1a9621357"
     },
     "jni/armeabi-v7a/libonnxruntime4j_jni.so": {
-      "bytes": 73680,
-      "sha256": "d977cebd40e780d1ece419c182e27610e74e04ad3f0244e9acef887f0ffb0247"
+      "bytes": 81536,
+      "sha256": "b1fc6e2246d56910a1630083bde01da386a07b581a5090a890ae31347dd0b357"
     },
     "jni/x86/libonnxruntime.so": {
-      "bytes": 22761828,
-      "sha256": "213d91ebb0cfd511c18c0057c69145de0abc6bdc9c63429bf04dcdeaf3fd861a"
+      "bytes": 32674464,
+      "sha256": "4328648196cbd9ac2fba41c67bea7f59e86f32a801bdbac8c60bcfa962e5509f"
     },
     "jni/x86/libonnxruntime4j_jni.so": {
-      "bytes": 84700,
-      "sha256": "375c7e60e5f11ac35f38b24682baa8e82d63d104c9bb3868db388118901dc45f"
+      "bytes": 93620,
+      "sha256": "9f0493e53ad77be7eef678971d62c1c053450cbe7d766869d66359e3f398ca96"
     },
     "jni/x86_64/libonnxruntime.so": {
-      "bytes": 23181616,
-      "sha256": "972c17c056eaae946a415d9efdd8018b729639974df075e495f0092441478fb7"
+      "bytes": 32864824,
+      "sha256": "ef6c81cafbea375423b8b0ffb757288fdc6170901bb8d02999c758930d4d9306"
     },
     "jni/x86_64/libonnxruntime4j_jni.so": {
-      "bytes": 90728,
-      "sha256": "b8d1b251b7d5606cf5caa7db9738353c08efc4090ac90ca2aaab449bc263a10b"
+      "bytes": 100016,
+      "sha256": "8fe536b92668ae3fca4719dce98bbbcf987c30264270d0268997df17d2a4a8ec"
     }
   }
 }

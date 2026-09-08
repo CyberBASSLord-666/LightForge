@@ -30,6 +30,7 @@ def main():
                           *ROOT.joinpath('web').rglob('*.html'),
                           ROOT / 'tests/android/DiagnosticsInstrumentation.java',
                           ROOT / 'tools/build_diagnostics_tests.py', Path(__file__).resolve(),
+                          ROOT / 'android/native-runtime.json',
                           ROOT / 'version.json']))
 
     def source_hashes():
@@ -38,8 +39,10 @@ def main():
 
     hashes = source_hashes()
     receipt = dict(release=version, passed=False, checks=[], errors=[], source_hashes=hashes,
-                   scope='Android API 35 emulator: real uncaught worker crash and process restart, '
-                         'persistent sanitized traces, production Guide export through its JavaScript '
+                   scope='Android API 35 emulator: real uncaught worker and intentional native SIGILL '
+                         'crashes followed by process restart, binary tombstone extraction and production '
+                         'native compatibility selection from a durable execution lease; persistent '
+                         'sanitized traces, production Guide export through its JavaScript '
                          'bridge to MediaStore Downloads, repeated files and detached renderer recovery. '
                          'No neural inference or physical-device performance claim.')
 
@@ -48,10 +51,10 @@ def main():
                                 timeout=timeout, check=check)
         return result.stdout + result.stderr
 
-    def instrument(mode, marker):
+    def instrument(mode, marker, native_pid=0):
         path = out / ('android-diagnostics-' + mode + '.log')
         command = [str(adb), 'shell', 'am', 'instrument', '-w', '-e', 'mode', mode,
-                   '-e', 'marker', marker, RUNNER]
+                   '-e', 'marker', marker, '-e', 'nativePid', str(native_pid), RUNNER]
         # A hard four-minute bound catches an unresponsive main thread; the test does no inference.
         with path.open('w', encoding='utf-8') as output:
             process = subprocess.Popen(command, stdout=output, stderr=subprocess.STDOUT)
@@ -63,10 +66,12 @@ def main():
                 raise RuntimeError('Diagnostic instrumentation timed out in ' + mode)
         result = path.read_text()
         print(result, flush=True)
-        if mode != 'crash' and code:
+        if mode not in ('crash', 'native-crash') and code:
             raise RuntimeError('Diagnostic instrumentation adb exited with code ' + str(code))
         return result
 
+    native_probe_started = False
+    marker = None
     try:
         deadline = time.monotonic() + 360
         while time.monotonic() < deadline:
@@ -103,14 +108,26 @@ def main():
         assert expected, 'Crash fixture did not reach the intentional uncaught exception'
         assert 'Process crashed' in crashed, 'Android did not report the intentionally crashed process'
         run('shell', 'am', 'force-stop', PACKAGE)
-        result = instrument('verify', marker)
+        native_probe_started = True
+        native_crashed = instrument('native-crash', marker)
+        native_expected = re.search(r'DIAGNOSTICS_EXPECTED_NATIVE_CRASH ' + marker + r' pid=(\d+)', native_crashed)
+        assert native_expected, 'Native crash fixture did not durably mark its intentional SIGILL'
+        assert 'Process crashed' in native_crashed, 'Android did not report the intentional native crash'
+        assert native_expected.group(1) != expected.group(1), 'Native crash fixture did not restart after the Java crash'
+        run('shell', 'am', 'force-stop', PACKAGE)
+        result = instrument('verify', marker, int(native_expected.group(1)))
         assert 'DIAGNOSTICS_ANDROID_PASS' in result, 'Android diagnostic checks failed; see android-diagnostics-verify.log'
         details = [json.loads(line.split('DIAGNOSTICS_ANDROID_RESULT ', 1)[1])
                    for line in result.splitlines() if 'DIAGNOSTICS_ANDROID_RESULT ' in line]
         assert len(details) == 1 and details[0]['passed'], 'Diagnostic report missing or invalid'
         assert details[0]['pid'] != int(expected.group(1)), 'Persistence was not verified across different app processes'
+        assert details[0]['pid'] != int(native_expected.group(1)), 'Native recovery was not verified in a fresh process'
+        assert details[0]['nativeCrashPid'] == int(native_expected.group(1)), 'Native recovery is not bound to the exact crashed process'
+        assert details[0]['mode'] == 'verify', 'Unexpected diagnostic verification mode'
         assert details[0]['marker'] == marker and details[0]['checks'], 'Diagnostic report is not bound to this run'
         receipt['device'] = details[0]
+        receipt['crashProcesses'] = dict(javaPid=int(expected.group(1)), nativePid=int(native_expected.group(1)),
+                                         restartedPid=details[0]['pid'])
         receipt['checks'] = details[0]['checks']
         assert hashes == source_hashes(), 'Diagnostic sources changed during verification'
         receipt['passed'] = True
@@ -118,6 +135,16 @@ def main():
         receipt['errors'].append(str(error))
         raise
     finally:
+        if native_probe_started:
+            try:
+                # A timed-out UI verification may still own an unresponsive target process.
+                # Cleanup must run in a new process and touch only this marker's saved fixture.
+                run('shell', 'am', 'force-stop', PACKAGE)
+                cleanup = instrument('cleanup', marker)
+                assert 'DIAGNOSTICS_ANDROID_PASS' in cleanup, 'Native diagnostic fixture cleanup failed'
+            except Exception as error:
+                receipt['errors'].append('Native probe cleanup: ' + str(error))
+                receipt['passed'] = False
         try:
             (out / 'android-diagnostics-logcat.txt').write_text(run('logcat', '-d', '-v', 'threadtime', timeout=20))
         except Exception:
@@ -132,6 +159,11 @@ def main():
         receipt['completedAt'] = datetime.datetime.now(datetime.timezone.utc).isoformat()
         (out / 'android-diagnostics-verification.json').write_text(json.dumps(receipt, indent=2) + '\n')
         print(json.dumps(receipt, indent=2))
+        if not receipt['passed'] and not receipt['errors']:
+            raise RuntimeError('Android diagnostic verification failed')
+        if not receipt['passed'] and native_probe_started and any(
+                error.startswith('Native probe cleanup:') for error in receipt['errors']):
+            raise RuntimeError('Native diagnostic fixture cleanup failed; see verification receipt')
 
 
 if __name__ == '__main__':
