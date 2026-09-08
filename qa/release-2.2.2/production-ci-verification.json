@@ -1,0 +1,16 @@
+{
+  "release": "2.2.2",
+  "passed": true,
+  "run_id": 34179649874,
+  "run_attempt": 2,
+  "source_commit": "b0657fabbfec2a0c6482c2d6581179f604c4c010",
+  "status": "completed",
+  "conclusion": "success",
+  "url": "https://github.com/CyberBASSLord-666/LightForge/actions/runs/34179649874",
+  "verification_artifact": 10038812982,
+  "candidate_artifact": 10038815454,
+  "android_artifact": 10039747863,
+  "previous_android_artifact": 10039258068,
+  "scope": "Complete production workflow, including successful Android background recovery and diagnostic export in the same job. First combined attempt had a JavaScript callback timeout with recorded emulator graphics stalls; unchanged failed-job retry passed.",
+  "signed_apk_sha256": "4327295e32b369861d1689686cc877c88f5131402c3ad958e0f93bf5d0a10ebf"
+}

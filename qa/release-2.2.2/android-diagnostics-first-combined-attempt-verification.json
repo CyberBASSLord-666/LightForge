@@ -1,15 +1,10 @@
 {
   "release": "2.2.2",
-  "passed": true,
-  "checks": [
-    "Production app requests no broad storage permission and exports without a storage grant.",
-    "Real uncaught worker crash, exception cause/stack, and prior-session history survive process restart and removal of a cache fixture.",
-    "Two unique complete UTF-8 .txt logs are visible in Downloads/LightForge and can be read back through MediaStore.",
-    "Selected-URI export helper writes a readable report and returns the provider's custom filename without inventing a destination folder (API 35 helper coverage; no legacy picker UI claim).",
-    "Production Guide button exports captured JavaScript errors and unhandled rejections through the bridge and reports successful saving.",
-    "Already-detached and repeated stale renderer callbacks do not crash; the native recovery dialog exports the crash log with no live WebView."
+  "passed": false,
+  "checks": [],
+  "errors": [
+    "Android diagnostic checks failed; see android-diagnostics-verify.log"
   ],
-  "errors": [],
   "source_hashes": {
     "android/AndroidManifest.xml": "7329675ebc8c9ace4e5a0a607fe8c4753924e89d168c266993c612084b7e4e19",
     "android/res/drawable/ic_analysis.xml": "6e698464885ef96f0b11af9c5a05c4947affc0126e2994a331ef9cffec3732c8",
@@ -88,20 +83,5 @@
     "version_name": "2.2.2",
     "version_code": 20202
   },
-  "device": {
-    "passed": true,
-    "checks": [
-      "Production app requests no broad storage permission and exports without a storage grant.",
-      "Real uncaught worker crash, exception cause/stack, and prior-session history survive process restart and removal of a cache fixture.",
-      "Two unique complete UTF-8 .txt logs are visible in Downloads/LightForge and can be read back through MediaStore.",
-      "Selected-URI export helper writes a readable report and returns the provider's custom filename without inventing a destination folder (API 35 helper coverage; no legacy picker UI claim).",
-      "Production Guide button exports captured JavaScript errors and unhandled rejections through the bridge and reports successful saving.",
-      "Already-detached and repeated stale renderer callbacks do not crash; the native recovery dialog exports the crash log with no live WebView."
-    ],
-    "androidSdk": 35,
-    "device": "sdk_gphone64_x86_64",
-    "pid": 5891,
-    "marker": "probe1788838073990"
-  },
-  "completedAt": "2026-09-08T03:28:29.858796+00:00"
+  "completedAt": "2026-09-08T03:02:42.727094+00:00"
 }

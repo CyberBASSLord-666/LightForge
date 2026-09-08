@@ -81,7 +81,6 @@
     "tests/worker-harness.cjs": "94352a9231fd142c0ecaf3dd91f628d52eaaae3b65f559ce70e9784ca499fb51",
     "tools/apk_archive.py": "cfa16b0f87f689e96e74cf97e1640b0eff6c2b9afe23ce8e22ff147527985c25",
     "tools/apk_delta.py": "466fc5f64f0a94579c73734ecf129acef2afa031e196e45ac00d20e535ec4ef0",
-    "tools/benchmark_deux_java.py": "814133cdf7d44c8c64602e2ba5454c5936e1f26e461ebe74b0cbdd4b5eff9244",
     "tools/benchmark_deux_native.py": "ff74914fc141ee3e3419080998b2b1a6500a1f1c46f83a83d0c28cb379c6f09f",
     "tools/benchmark_deux_runtime.cjs": "12375c9c14f18799416fe65ecc1bb7c2a339fc31352db7c71e31b0bc1d232fab",
     "tools/bootstrap_native_runtime.py": "ac5fa4fdef647e639313166bcba2f581715bc08187ab06f39b7d03ccfcbb87aa",
@@ -148,5 +147,5 @@
   },
   "scope": "Node engine/worker/WebCrypto/gzip, real app DOM integration with simulated native and graphics, Python archive tests. Not a visual browser or physical Android/Tesla test.",
   "analysis_manifest_sha256": "3757b3406d2e78f5c787a76d76320dc86d7124484468f891e7477eb16e883431",
-  "completedAt": "2026-09-08T02:19:41.285231+00:00"
+  "completedAt": "2026-09-08T02:22:10.949269+00:00"
 }

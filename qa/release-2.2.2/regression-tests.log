@@ -1,0 +1,1024 @@
+TAP version 13
+# Subtest: analysis checkpoints round-trip precise floats and reject changed, swapped and truncated records
+ok 1 - analysis checkpoints round-trip precise floats and reject changed, swapped and truncated records
+  ---
+  duration_ms: 17.977082
+  type: 'test'
+  ...
+# Subtest: failed atomic replacement keeps the last committed passage and a damaged identity invalidates every saved stage
+ok 2 - failed atomic replacement keeps the last committed passage and a damaged identity invalidates every saved stage
+  ---
+  duration_ms: 5.271854
+  type: 'test'
+  ...
+# Subtest: invalidating downstream voice work preserves expensive separation passages and unrelated rhythm
+ok 3 - invalidating downstream voice work preserves expensive separation passages and unrelated rhythm
+  ---
+  duration_ms: 5.705134
+  type: 'test'
+  ...
+# Subtest: rebuilding an audition cache removes its commit marker before independent stem writes
+ok 4 - rebuilding an audition cache removes its commit marker before independent stem writes
+  ---
+  duration_ms: 55.98282
+  type: 'test'
+  ...
+# Subtest: public analyzer destroys each model heap before the next stage and clears only transient work after success
+ok 5 - public analyzer destroys each model heap before the next stage and clears only transient work after success
+  ---
+  duration_ms: 5.9913
+  type: 'test'
+  ...
+# Subtest: retry uses identical checkpoint identity while changed analysis settings get a new namespace
+ok 6 - retry uses identical checkpoint identity while changed analysis settings get a new namespace
+  ---
+  duration_ms: 4.593576
+  type: 'test'
+  ...
+# Subtest: cancellation and stage failures preserve durable work and never start a downstream model
+ok 7 - cancellation and stage failures preserve durable work and never start a downstream model
+  ---
+  duration_ms: 4.761704
+  type: 'test'
+  ...
+# Subtest: native acceleration callback stays outside structured clone and its result returns to the requesting worker
+ok 8 - native acceleration callback stays outside structured clone and its result returns to the requesting worker
+  ---
+  duration_ms: 2.443027
+  type: 'test'
+  ...
+# Subtest: aborting native acceleration cancels its operation and retains all completed passages
+ok 9 - aborting native acceleration cancels its operation and retains all completed passages
+  ---
+  duration_ms: 2.241129
+  type: 'test'
+  ...
+# Subtest: GAME resumes completed passages with identical note boundaries and without rereading or reloading cached inference
+ok 10 - GAME resumes completed passages with identical note boundaries and without rereading or reloading cached inference
+  ---
+  duration_ms: 1358.373107
+  type: 'test'
+  ...
+# Subtest: worker restores completed separation without creating a model or replacing audition audio
+ok 11 - worker restores completed separation without creating a model or replacing audition audio
+  ---
+  duration_ms: 4.233634
+  type: 'test'
+  ...
+# Subtest: worker invalidates derived stages when committed stems are missing and keeps passage checkpoint storage available
+ok 12 - worker invalidates derived stages when committed stems are missing and keeps passage checkpoint storage available
+  ---
+  duration_ms: 2.118199
+  type: 'test'
+  ...
+# Subtest: worker native transport preserves raw source floats and rejects truncated and non-finite output transactionally
+ok 13 - worker native transport preserves raw source floats and rejects truncated and non-finite output transactionally
+  ---
+  duration_ms: 260.793196
+  type: 'test'
+  ...
+# Subtest: native resources release after the worker consumes output and before the voice model starts
+ok 14 - native resources release after the worker consumes output and before the voice model starts
+  ---
+  duration_ms: 5.015445
+  type: 'test'
+  ...
+# Subtest: restored separation still releases idle native resources before voice analysis
+ok 15 - restored separation still releases idle native resources before voice analysis
+  ---
+  duration_ms: 3.030725
+  type: 'test'
+  ...
+# Subtest: native cancellation precedes best-effort release and retains the original interruption error
+ok 16 - native cancellation precedes best-effort release and retains the original interruption error
+  ---
+  duration_ms: 3.250005
+  type: 'test'
+  ...
+# Subtest: native release failure blocks the next model heap after successful separation
+ok 17 - native release failure blocks the next model heap after successful separation
+  ---
+  duration_ms: 1.77062
+  type: 'test'
+  ...
+# Subtest: storage admission includes remaining passages and final stems while crediting valid completed work on retry
+ok 18 - storage admission includes remaining passages and final stems while crediting valid completed work on retry
+  ---
+  duration_ms: 37.774709
+  type: 'test'
+  ...
+# Subtest: storage admission skips redundant checkpoint validation when quota already covers worst-case work
+ok 19 - storage admission skips redundant checkpoint validation when quota already covers worst-case work
+  ---
+  duration_ms: 3.761762
+  type: 'test'
+  ...
+# Subtest: worker reserves passage storage before opening model output writers and skips reservation for committed separation
+ok 20 - worker reserves passage storage before opening model output writers and skips reservation for committed separation
+  ---
+  duration_ms: 2.772683
+  type: 'test'
+  ...
+# Subtest: background runner checkpoints analysis and commits an actual compiled show without a studio document
+ok 21 - background runner checkpoints analysis and commits an actual compiled show without a studio document
+  ---
+  duration_ms: 104.639142
+  type: 'test'
+  ...
+# Subtest: background runner cancellation never submits a completed project
+ok 22 - background runner cancellation never submits a completed project
+  ---
+  duration_ms: 23.521567
+  type: 'test'
+  ...
+# Subtest: native studio delegates work, blocks stale saves, reconnects, and loads the background result
+ok 23 - native studio delegates work, blocks stale saves, reconnects, and loads the background result
+  ---
+  duration_ms: 648.16108
+  type: 'test'
+  ...
+# Subtest: off-grid harmonic bass entrances, pitch changes and releases keep their audio clock
+ok 24 - off-grid harmonic bass entrances, pitch changes and releases keep their audio clock
+  ---
+  duration_ms: 279.718052
+  type: 'test'
+  ...
+# Subtest: louder kicks 50–150 ms around bass entrances do not become the note clock
+ok 25 - louder kicks 50–150 ms around bass entrances do not become the note clock
+  ---
+  duration_ms: 650.164036
+  type: 'test'
+  ...
+# Subtest: brief sweeping kick transients, broadband noise and silence do not invent bass notes
+ok 26 - brief sweeping kick transients, broadband noise and silence do not invent bass notes
+  ---
+  duration_ms: 126.477484
+  type: 'test'
+  ...
+# Subtest: pure sustained sub-bass remains eligible with estimated-source labels
+ok 27 - pure sustained sub-bass remains eligible with estimated-source labels
+  ---
+  duration_ms: 54.493666
+  type: 'test'
+  ...
+# Subtest: different read chunk sizes preserve phase and note boundaries exactly
+ok 28 - different read chunk sizes preserve phase and note boundaries exactly
+  ---
+  duration_ms: 327.460067
+  type: 'test'
+  ...
+# Subtest: four-hour stationary pitch summaries use bounded columns without argument spreading
+ok 29 - four-hour stationary pitch summaries use bounded columns without argument spreading
+  ---
+  duration_ms: 2571.317122
+  type: 'test'
+  ...
+# Subtest: cancelled analysis rejects without reading audio
+ok 30 - cancelled analysis rejects without reading audio
+  ---
+  duration_ms: 1.597987
+  type: 'test'
+  ...
+# Subtest: cockpit navigation preserves real transactional cue editing and project changes
+ok 31 - cockpit navigation preserves real transactional cue editing and project changes
+  ---
+  duration_ms: 839.246446
+  type: 'test'
+  ...
+# PASS legacy waveform bins use full song timescale for movement salience
+# PASS movement density independently controls physical command count while retaining hard budgets
+# PASS bar anchor and meter correction preserve measured beat times and original analysis
+# PASS half and double tempo preserve local tempo changes without re-running analysis
+# PASS confident swing places explicit eighth-note accents on the measured groove
+# PASS variation materially changes all three styles including quiet cinematic sections
+# PASS locking a section preserves its exact bytes while neighboring sections regenerate
+# PASS repeated analyzed sections share a local motif and color identity
+# PASS streamed FSEQ header plus existing frame buffer exactly equals contiguous export
+# PASS sparse preview matches independent frame integration through random fades and alias interruptions
+# PASS prepared preview supports repeated random seeks without rescanning frame payload
+# Subtest: /home/runner/work/LightForge/LightForge/tests/composer-1.6.test.cjs
+ok 5 - /home/runner/work/LightForge/LightForge/tests/composer-1.6.test.cjs
+  ---
+  duration_ms: 2486.663704
+  type: 'test'
+  ...
+# Subtest: native passages retain source clock, reuse completed work and report durable progress
+ok 33 - native passages retain source clock, reuse completed work and report durable progress
+  ---
+  duration_ms: 597.19001
+  type: 'test'
+  ...
+# Subtest: a failed passage leaves prior checkpoints reusable without committing partial output
+ok 34 - a failed passage leaves prior checkpoints reusable without committing partial output
+  ---
+  duration_ms: 242.528218
+  type: 'test'
+  ...
+# Subtest: malformed native or cached audio is never exported or accepted as completed
+ok 35 - malformed native or cached audio is never exported or accepted as completed
+  ---
+  duration_ms: 74.428026
+  type: 'test'
+  ...
+# Subtest: checkpoint commit failure preserves retry semantics and does not emit its passage
+ok 36 - checkpoint commit failure preserves retry semantics and does not emit its passage
+  ---
+  duration_ms: 30.643618
+  type: 'test'
+  ...
+# Subtest: silence and released separators never start expensive model inference
+ok 37 - silence and released separators never start expensive model inference
+  ---
+  duration_ms: 33.433502
+  type: 'test'
+  ...
+# Subtest: captures actual script errors, promise rejections and resource failures with bounded original stack context
+ok 38 - captures actual script errors, promise rejections and resource failures with bounded original stack context
+  ---
+  duration_ms: 227.675928
+  type: 'test'
+  ...
+# Subtest: sanitization excludes credentials, private paths, known names, and raw object or audio payloads
+ok 39 - sanitization excludes credentials, private paths, known names, and raw object or audio payloads
+  ---
+  duration_ms: 147.742263
+  type: 'test'
+  ...
+# Subtest: retention and event throttles bound memory, messages and progress even when storage is full
+ok 40 - retention and event throttles bound memory, messages and progress even when storage is full
+  ---
+  duration_ms: 210.726965
+  type: 'test'
+  ...
+# Subtest: browser history survives reload and rejects corrupt or oversized persisted history
+ok 41 - browser history survives reload and rejects corrupt or oversized persisted history
+  ---
+  duration_ms: 277.955739
+  type: 'test'
+  ...
+# Subtest: native export stays pending until actual save acknowledgement and is available during processing
+ok 42 - native export stays pending until actual save acknowledgement and is available during processing
+  ---
+  duration_ms: 97.087305
+  type: 'test'
+  ...
+# Subtest: native save failure and picker cancellation restore export controls and allow retry
+ok 43 - native save failure and picker cancellation restore export controls and allow retry
+  ---
+  duration_ms: 88.845386
+  type: 'test'
+  ...
+# Subtest: native bridge invocation failure never claims a saved log or leaves buttons disabled
+ok 44 - native bridge invocation failure never claims a saved log or leaves buttons disabled
+  ---
+  duration_ms: 75.701008
+  type: 'test'
+  ...
+# Subtest: browser export creates an actual text log download without claiming a verified filesystem save
+ok 45 - browser export creates an actual text log download without claiming a verified filesystem save
+  ---
+  duration_ms: 52.571393
+  type: 'test'
+  ...
+# Subtest: diagnostics initialize before application scripts and export controls work if app startup fails
+ok 46 - diagnostics initialize before application scripts and export controls work if app startup fails
+  ---
+  duration_ms: 52.940431
+  type: 'test'
+  ...
+# Subtest: composition worker failures retain the originating stack and release the worker
+ok 47 - composition worker failures retain the originating stack and release the worker
+  ---
+  duration_ms: 6.509237
+  type: 'test'
+  ...
+# Subtest: canonical profile covers every exported channel and explicitly excludes uninstalled fogs
+ok 48 - canonical profile covers every exported channel and explicitly excludes uninstalled fogs
+  ---
+  duration_ms: 1.63197
+  type: 'test'
+  ...
+# Subtest: every available exterior and RGB output can be independently authored and exported
+ok 49 - every available exterior and RGB output can be independently authored and exported
+  ---
+  duration_ms: 464.515051
+  type: 'test'
+  ...
+# Subtest: all exterior ramp directions and durations reach preview with exact frame boundaries
+ok 50 - all exterior ramp directions and durations reach preview with exact frame boundaries
+  ---
+  duration_ms: 115.080293
+  type: 'test'
+  ...
+# Subtest: outer beam fades require an explicit verified-hardware option and preserve exact bytes
+ok 51 - outer beam fades require an explicit verified-hardware option and preserve exact bytes
+  ---
+  duration_ms: 172.645688
+  type: 'test'
+  ...
+# Subtest: linked physical outputs share manual cues; valid unequal aliases retain physical OR semantics
+ok 52 - linked physical outputs share manual cues; valid unequal aliases retain physical OR semantics
+  ---
+  duration_ms: 78.131951
+  type: 'test'
+  ...
+# Subtest: manual closures replace only their own automatic track and accept all supported commands
+ok 53 - manual closures replace only their own automatic track and accept all supported commands
+  ---
+  duration_ms: 342.850714
+  type: 'test'
+  ...
+# Subtest: Stop interrupts a partial travel; Idle preserves the reached position and closing resumes there
+ok 54 - Stop interrupts a partial travel; Idle preserves the reached position and closing resumes there
+  ---
+  duration_ms: 5.189379
+  type: 'test'
+  ...
+# Subtest: Idle ends Dance but does not cancel an in-flight one-frame Open/Close request
+ok 55 - Idle ends Dance but does not cancel an in-flight one-frame Open/Close request
+  ---
+  duration_ms: 11.739643
+  type: 'test'
+  ...
+# Subtest: per-output switch masks automatic and manual cues, with independent RGB zones and closures
+ok 56 - per-output switch masks automatic and manual cues, with independent RGB zones and closures
+  ---
+  duration_ms: 48.530802
+  type: 'test'
+  ...
+# Subtest: invalid commands, timing, overlaps, unsupported outputs and damaged colors fail before export
+ok 57 - invalid commands, timing, overlaps, unsupported outputs and damaged colors fail before export
+  ---
+  duration_ms: 2.091529
+  type: 'test'
+  ...
+# Subtest: movement budgets, preparation, automatic close and final settled position are enforced
+ok 58 - movement budgets, preparation, automatic close and final settled position are enforced
+  ---
+  duration_ms: 75.873029
+  type: 'test'
+  ...
+# Subtest: project JSON round-trip preserves all manual cues, switches, colors and exact FSEQ
+ok 59 - project JSON round-trip preserves all manual cues, switches, colors and exact FSEQ
+  ---
+  duration_ms: 57.960007
+  type: 'test'
+  ...
+# Subtest: FSEQ binary header, variable metadata, payload and duration agree with audio
+ok 60 - FSEQ binary header, variable metadata, payload and duration agree with audio
+  ---
+  duration_ms: 487.037589
+  type: 'test'
+  ...
+# Subtest: broad tempo and duration matrix retains physical closure timing and budgets
+ok 61 - broad tempo and duration matrix retains physical closure timing and budgets
+  ---
+  duration_ms: 7041.911666
+  type: 'test'
+  ...
+# Subtest: expressive choreography places visible gestures at musical beats within per-closure budgets
+ok 62 - expressive choreography places visible gestures at musical beats within per-closure budgets
+  ---
+  duration_ms: 91.953434
+  type: 'test'
+  ...
+# Subtest: shared physical outputs and unsupported channels are correct in every binary frame
+ok 63 - shared physical outputs and unsupported channels are correct in every binary frame
+  ---
+  duration_ms: 58.561277
+  type: 'test'
+  ...
+# Subtest: all supported fade durations are real Tesla commands, and preview evaluates their brightness
+ok 64 - all supported fade durations are real Tesla commands, and preview evaluates their brightness
+  ---
+  duration_ms: 42.612169
+  type: 'test'
+  ...
+# Subtest: RGB segments and display are independently addressable and optional
+ok 65 - RGB segments and display are independently addressable and optional
+  ---
+  duration_ms: 25.184898
+  type: 'test'
+  ...
+# Subtest: disabled closures are absent, including in an expressive show
+ok 66 - disabled closures are absent, including in an expressive show
+  ---
+  duration_ms: 65.593104
+  type: 'test'
+  ...
+# Subtest: timing offset moves musical light and closure entrances while preserving preparation
+ok 67 - timing offset moves musical light and closure entrances while preserving preparation
+  ---
+  duration_ms: 152.109552
+  type: 'test'
+  ...
+# Subtest: quiet input is intentionally dark; malformed and overlong tracks are rejected
+ok 68 - quiet input is intentionally dark; malformed and overlong tracks are rejected
+  ---
+  duration_ms: 26.281659
+  type: 'test'
+  ...
+# Subtest: degraded analysis data is normalized with explicit warnings
+ok 69 - degraded analysis data is normalized with explicit warnings
+  ---
+  duration_ms: 24.17968
+  type: 'test'
+  ...
+# Subtest: seed reproducibility, pattern variation and section overrides are functional
+ok 70 - seed reproducibility, pattern variation and section overrides are functional
+  ---
+  duration_ms: 164.235827
+  type: 'test'
+  ...
+# Subtest: validator catches corrupted payload, unsupported dimming, absent lamps and illegal movement
+ok 71 - validator catches corrupted payload, unsupported dimming, absent lamps and illegal movement
+  ---
+  duration_ms: 57.879626
+  type: 'test'
+  ...
+# Subtest: the exact four-hour limit is accepted without timing overflow
+ok 72 - the exact four-hour limit is accepted without timing overflow
+  ---
+  duration_ms: 2029.17773
+  type: 'test'
+  ...
+# Subtest: the actual Glass Castle music analysis exports a complete validated show
+ok 73 - the actual Glass Castle music analysis exports a complete validated show
+  ---
+  duration_ms: 178.67227
+  type: 'test'
+  ...
+# Subtest: learned notes keep their own off-grid boundaries, pitch and unvoiced source articulations
+ok 74 - learned notes keep their own off-grid boundaries, pitch and unvoiced source articulations
+  ---
+  duration_ms: 2.006661
+  type: 'test'
+  ...
+# Subtest: speech and unsupported isolated notes cannot become sung-note cues
+ok 75 - speech and unsupported isolated notes cannot become sung-note cues
+  ---
+  duration_ms: 0.29944
+  type: 'test'
+  ...
+# Subtest: context continuation extends pitch without inventing a new entrance
+ok 76 - context continuation extends pitch without inventing a new entrance
+  ---
+  duration_ms: 0.243566
+  type: 'test'
+  ...
+# Subtest: diffusion sampling is reproducible and uses a different sequence for each declared seed
+ok 77 - diffusion sampling is reproducible and uses a different sequence for each declared seed
+  ---
+  duration_ms: 5.067001
+  type: 'test'
+  ...
+# Subtest: known eight-second musical rest is dark in exterior and every RGB zone
+ok 78 - known eight-second musical rest is dark in exterior and every RGB zone
+  ---
+  duration_ms: 237.449671
+  type: 'test'
+  ...
+# Subtest: legacy saved analysis without activityRanges still respects waveform silence
+ok 79 - legacy saved analysis without activityRanges still respects waveform silence
+  ---
+  duration_ms: 30.589061
+  type: 'test'
+  ...
+# Subtest: last genuine beat survives instead of being replaced by unconditional ending fade
+ok 80 - last genuine beat survives instead of being replaced by unconditional ending fade
+  ---
+  duration_ms: 13.630259
+  type: 'test'
+  ...
+# Subtest: three-quarter bars honor supplied downbeat phase and do not treat pickup as downbeat
+ok 81 - three-quarter bars honor supplied downbeat phase and do not treat pickup as downbeat
+  ---
+  duration_ms: 13.6946
+  type: 'test'
+  ...
+# Subtest: three-quarter fallback bars use three beats when explicit downbeats are absent
+ok 82 - three-quarter fallback bars use three beats when explicit downbeats are absent
+  ---
+  duration_ms: 16.241982
+  type: 'test'
+  ...
+# Subtest: changing tempo follows actual local beat intervals instead of average BPM
+ok 83 - changing tempo follows actual local beat intervals instead of average BPM
+  ---
+  duration_ms: 34.526251
+  type: 'test'
+  ...
+# Subtest: known non-grid impact attacks and offsets reach FSEQ within half an export frame
+ok 84 - known non-grid impact attacks and offsets reach FSEQ within half an export frame
+  ---
+  duration_ms: 143.44744
+  type: 'test'
+  ...
+# Subtest: rounding at activity onset retains the accepted binary attack within half a frame
+ok 85 - rounding at activity onset retains the accepted binary attack within half a frame
+  ---
+  duration_ms: 26.118013
+  type: 'test'
+  ...
+# Subtest: higher-salience collision preserves the strong known attack without moving it later
+ok 86 - higher-salience collision preserves the strong known attack without moving it later
+  ---
+  duration_ms: 45.895654
+  type: 'test'
+  ...
+# Subtest: deterministic variation and per-section style edits preserve independent unaffected sections
+ok 87 - deterministic variation and per-section style edits preserve independent unaffected sections
+  ---
+  duration_ms: 150.174094
+  type: 'test'
+  ...
+# Subtest: disabled output masks still win over composed beats, impacts and movement tracks
+ok 88 - disabled output masks still win over composed beats, impacts and movement tracks
+  ---
+  duration_ms: 123.362992
+  type: 'test'
+  ...
+# Subtest: actual recorded analysis exports settled, budget-valid choreography: baseline-demo-music.json
+ok 89 - actual recorded analysis exports settled, budget-valid choreography: baseline-demo-music.json
+  ---
+  duration_ms: 165.519169
+  type: 'test'
+  ...
+# Subtest: actual recorded analysis exports settled, budget-valid choreography: baseline-sample-music.json
+ok 90 - actual recorded analysis exports settled, budget-valid choreography: baseline-sample-music.json
+  ---
+  duration_ms: 563.182711
+  type: 'test'
+  ...
+# Subtest: actual recorded analysis exports settled, budget-valid choreography: current-demo-music.json
+ok 91 - actual recorded analysis exports settled, budget-valid choreography: current-demo-music.json
+  ---
+  duration_ms: 271.615738
+  type: 'test'
+  ...
+# Subtest: actual recorded analysis exports settled, budget-valid choreography: current-sample-music.json
+ok 92 - actual recorded analysis exports settled, budget-valid choreography: current-sample-music.json
+  ---
+  duration_ms: 504.484561
+  type: 'test'
+  ...
+# Subtest: actual 1.6 worker snapshot migrates to 2.0 with exact frames and stable repeated reopen
+ok 93 - actual 1.6 worker snapshot migrates to 2.0 with exact frames and stable repeated reopen
+  ---
+  duration_ms: 330.63659
+  type: 'test'
+  ...
+# Subtest: 1.4 direct and 1.5 rebound snapshots still migrate without replacing their frames
+ok 94 - 1.4 direct and 1.5 rebound snapshots still migrate without replacing their frames
+  ---
+  duration_ms: 429.479423
+  type: 'test'
+  ...
+# Subtest: 2.0 cue metadata and final synchronization report survive an exact backup round trip
+ok 95 - 2.0 cue metadata and final synchronization report survive an exact backup round trip
+  ---
+  duration_ms: 111.209537
+  type: 'test'
+  ...
+# PASS strongest musical arrivals replace percent-of-duration selection
+# PASS 14-second trunk and four-second windows prepare before exact Dance onset
+# PASS final windows close and mirrors unfold with completed home travel
+# PASS mirror cycles reserve physical travel, begin folded, and never request Dance
+# PASS expressive choreography is denser and spatially staggered; balanced remains restrained
+# PASS positive and negative audio offsets apply once at musical arrivals
+# PASS manual tracks, disabled outputs and global movement switches are respected
+# PASS actual tempo changes determine stagger and all offsets retain frame precision
+# PASS Dance ends before actual musical stops; unsupported short phrases do not consume budgets
+# PASS long-track budgets focus on strongest remote peaks rather than evenly distributed gestures
+# PASS short tracks, sparse beats and phase-shifted boundaries retain legal complete choreography
+# PASS seeded adversarial phrase timing remains validated by the real exported-byte simulator
+# PASS integrated show generation preserves analysis targets, offset and exact exported movement bytes
+# Subtest: /home/runner/work/LightForge/LightForge/tests/movement-planner.test.cjs
+ok 13 - /home/runner/work/LightForge/LightForge/tests/movement-planner.test.cjs
+  ---
+  duration_ms: 1908.772935
+  type: 'test'
+  ...
+# Subtest: native bridge exposes only complete audio from the matching private passage
+ok 97 - native bridge exposes only complete audio from the matching private passage
+  ---
+  duration_ms: 7.037694
+  type: 'test'
+  ...
+# Subtest: abort cancels the native operation and never reports a result
+ok 98 - abort cancels the native operation and never reports a result
+  ---
+  duration_ms: 2.520421
+  type: 'test'
+  ...
+# Subtest: a stale token or external result URL cannot become source audio
+ok 99 - a stale token or external result URL cannot become source audio
+  ---
+  duration_ms: 3.688344
+  type: 'test'
+  ...
+# Subtest: native failures remain actionable and do not silently switch the model
+ok 100 - native failures remain actionable and do not silently switch the model
+  ---
+  duration_ms: 3.360612
+  type: 'test'
+  ...
+# Subtest: invalid source position is rejected before starting native work
+ok 101 - invalid source position is rejected before starting native work
+  ---
+  duration_ms: 3.212054
+  type: 'test'
+  ...
+# Subtest: legato bass entrances survive held-note competition and preserve the off-grid clock
+ok 102 - legato bass entrances survive held-note competition and preserve the off-grid clock
+  ---
+  duration_ms: 86.226864
+  type: 'test'
+  ...
+# Subtest: enabled alternative lamps carry voice and bass when preferred outputs are muted
+ok 103 - enabled alternative lamps carry voice and bass when preferred outputs are muted
+  ---
+  duration_ms: 48.112369
+  type: 'test'
+  ...
+# Subtest: part timing corrects automatic events while user cues keep their own soundtrack times
+ok 104 - part timing corrects automatic events while user cues keep their own soundtrack times
+  ---
+  duration_ms: 131.614715
+  type: 'test'
+  ...
+# Subtest: explicit holds cross section boundaries, mutes remove role gestures, and accompaniment survives
+ok 105 - explicit holds cross section boundaries, mutes remove role gestures, and accompaniment survives
+  ---
+  duration_ms: 13.268731
+  type: 'test'
+  ...
+# Subtest: final byte review detects output overrides, missing attacks, and disabled routes
+ok 106 - final byte review detects output overrides, missing attacks, and disabled routes
+  ---
+  duration_ms: 41.370401
+  type: 'test'
+  ...
+# Subtest: musical edits validate limits and remain deterministic through serialization
+ok 107 - musical edits validate limits and remain deterministic through serialization
+  ---
+  duration_ms: 22.659154
+  type: 'test'
+  ...
+# Subtest: dense and simultaneous bass notes retain valid target ranges on a shared fallback lamp
+ok 108 - dense and simultaneous bass notes retain valid target ranges on a shared fallback lamp
+  ---
+  duration_ms: 38.929512
+  type: 'test'
+  ...
+# Subtest: real app facade commits, undoes, redoes, saves, and isolates musical edits through the DOM
+ok 109 - real app facade commits, undoes, redoes, saves, and isolates musical edits through the DOM
+  ---
+  duration_ms: 801.335345
+  type: 'test'
+  ...
+# Subtest: all ramp durations begin at zero at the exact frame boundary and advance continuously
+ok 110 - all ramp durations begin at zero at the exact frame boundary and advance continuously
+  ---
+  duration_ms: 33.28729
+  type: 'test'
+  ...
+# Subtest: interrupted and reversed ramps continue from their actual brightness without jumping
+ok 111 - interrupted and reversed ramps continue from their actual brightness without jumping
+  ---
+  duration_ms: 9.518883
+  type: 'test'
+  ...
+# Subtest: Model 3 merged light outputs obey Channel 4 ramp duration and side/aux OR
+ok 112 - Model 3 merged light outputs obey Channel 4 ramp duration and side/aux OR
+  ---
+  duration_ms: 14.151467
+  type: 'test'
+  ...
+# Subtest: physical outputs suppress absent lights and never invent unsupported closures
+ok 113 - physical outputs suppress absent lights and never invent unsupported closures
+  ---
+  duration_ms: 4.048086
+  type: 'test'
+  ...
+# Subtest: open/close commands persist through Idle and move from the current partial position
+ok 114 - open/close commands persist through Idle and move from the current partial position
+  ---
+  duration_ms: 12.717621
+  type: 'test'
+  ...
+# Subtest: Stop holds the reached position and later movement resumes without jumping
+ok 115 - Stop holds the reached position and later movement resumes without jumping
+  ---
+  duration_ms: 7.943949
+  type: 'test'
+  ...
+# Subtest: mirrors start unfolded and use real open/close commands, with no invented dance
+ok 116 - mirrors start unfolded and use real open/close commands, with no invented dance
+  ---
+  duration_ms: 5.454846
+  type: 'test'
+  ...
+# Subtest: estimated Dance moves, stops at Idle, and seeks reproduce identical poses
+ok 117 - estimated Dance moves, stops at Idle, and seeks reproduce identical poses
+  ---
+  duration_ms: 32.682659
+  type: 'test'
+  ...
+# Subtest: charge Dance is an LED rainbow, never door oscillation, and auto-close occurs at two minutes
+ok 118 - charge Dance is an LED rainbow, never door oscillation, and auto-close occurs at two minutes
+  ---
+  duration_ms: 11.744061
+  type: 'test'
+  ...
+# Subtest: preview raw commands and all RGB zones exactly match independently decoded exported bytes
+ok 119 - preview raw commands and all RGB zones exactly match independently decoded exported bytes
+  ---
+  duration_ms: 282.587119
+  type: 'test'
+  ...
+# PASS separated articulations keep the original off-grid source clock through both frame modes and signed offsets
+# PASS lead singing has articulation contrast and keeps bass, percussion and accompaniment active
+# PASS stable sung pitch and isolated envelope shape real RGB bytes while the exact exterior rhythm stays fixed
+# PASS instrumental corrections remove measured voice evidence locally and never mutate original analysis
+# PASS explicit voice guides add a labeled phrase without inventing measured notes or syllables
+# PASS short articulated phrases and cadences never nominate multi-second motor Dance outside their region
+# PASS long sustained vocal and bass phrases compete for expressive gestures with full mechanical lead and return
+# PASS saved and corrected detail is deterministic, masks apply and manual lights keep ownership
+# Subtest: /home/runner/work/LightForge/LightForge/tests/role-composer-1.6.test.cjs
+ok 18 - /home/runner/work/LightForge/LightForge/tests/role-composer-1.6.test.cjs
+  ---
+  duration_ms: 1571.000988
+  type: 'test'
+  ...
+# PASS meaxic
+# PASS nightowl
+# PASS falcon
+# PASS stella
+# PASS grunge
+# PASS sdrnr
+# PASS source-led controlled NightOwl
+# Subtest: /home/runner/work/LightForge/LightForge/tests/role-reference-composer-1.6.test.cjs
+ok 19 - /home/runner/work/LightForge/LightForge/tests/role-reference-composer-1.6.test.cjs
+  ---
+  duration_ms: 237.834642
+  type: 'test'
+  ...
+# Subtest: full-resolution writes preserve exact little-endian samples across bounded async buffer reuse
+ok 122 - full-resolution writes preserve exact little-endian samples across bounded async buffer reuse
+  ---
+  duration_ms: 28.646488
+  type: 'test'
+  ...
+# Subtest: odd contiguous input chunks equal the independent centered 63-tap convolution exactly
+ok 123 - odd contiguous input chunks equal the independent centered 63-tap convolution exactly
+  ---
+  duration_ms: 97.504291
+  type: 'test'
+  ...
+# Subtest: an impulse remains on its original sample clock without FIR group-delay shift
+ok 124 - an impulse remains on its original sample clock without FIR group-delay shift
+  ---
+  duration_ms: 8.290316
+  type: 'test'
+  ...
+# Subtest: floating-point stems retain very quiet audio below PCM16 resolution
+ok 125 - floating-point stems retain very quiet audio below PCM16 resolution
+  ---
+  duration_ms: 28.568088
+  type: 'test'
+  ...
+# Subtest: one-sample and odd tails are flushed once with exact ceil(N/2) output
+ok 126 - one-sample and odd tails are flushed once with exact ceil(N/2) output
+  ---
+  duration_ms: 87.27665
+  type: 'test'
+  ...
+# Subtest: out-of-order, oversized and incomplete writer input rejects without closing incomplete audio
+ok 127 - out-of-order, oversized and incomplete writer input rejects without closing incomplete audio
+  ---
+  duration_ms: 0.314188
+  type: 'test'
+  ...
+# Subtest: stream write failures propagate to cache transaction cleanup
+ok 128 - stream write failures propagate to cache transaction cleanup
+  ---
+  duration_ms: 0.33171
+  type: 'test'
+  ...
+# Subtest: cache WAV header is mono 22.05 kHz IEEE float with exact byte counts
+ok 129 - cache WAV header is mono 22.05 kHz IEEE float with exact byte counts
+  ---
+  duration_ms: 0.386333
+  type: 'test'
+  ...
+# Subtest: stereo44100 decodes signed PCM16 independently for left and right
+ok 130 - stereo44100 decodes signed PCM16 independently for left and right
+  ---
+  duration_ms: 0.903209
+  type: 'test'
+  ...
+# Subtest: stereo44100 decodes signed PCM24 independently for left and right
+ok 131 - stereo44100 decodes signed PCM24 independently for left and right
+  ---
+  duration_ms: 0.503491
+  type: 'test'
+  ...
+# Subtest: stereo44100 decodes signed PCM32 independently for left and right
+ok 132 - stereo44100 decodes signed PCM32 independently for left and right
+  ---
+  duration_ms: 0.318916
+  type: 'test'
+  ...
+# Subtest: stereo44100 preserves float channels and silences non-finite samples
+ok 133 - stereo44100 preserves float channels and silences non-finite samples
+  ---
+  duration_ms: 0.339875
+  type: 'test'
+  ...
+# Subtest: stereo44100 duplicates mono and uses the first two channels of multichannel PCM
+ok 134 - stereo44100 duplicates mono and uses the first two channels of multichannel PCM
+  ---
+  duration_ms: 0.431336
+  type: 'test'
+  ...
+# Subtest: negative and out-of-track stereo reads zero-pad exactly without moving audible samples
+ok 135 - negative and out-of-track stereo reads zero-pad exactly without moving audible samples
+  ---
+  duration_ms: 0.398735
+  type: 'test'
+  ...
+# Subtest: stereo input validates limits, rejects wrong sample rates and detects truncated transfers
+ok 136 - stereo input validates limits, rejects wrong sample rates and detects truncated transfers
+  ---
+  duration_ms: 0.612956
+  type: 'test'
+  ...
+# Subtest: isolated off-grid phrase edges and held pitches remain on the vocal clock
+ok 137 - isolated off-grid phrase edges and held pitches remain on the vocal clock
+  ---
+  duration_ms: 176.704107
+  type: 'test'
+  ...
+# Subtest: quiet verse remains voiced after a chorus forty decibels louder
+ok 138 - quiet verse remains voiced after a chorus forty decibels louder
+  ---
+  duration_ms: 168.162431
+  type: 'test'
+  ...
+# Subtest: local normalization recovers an immediately following quiet vocal phrase
+ok 139 - local normalization recovers an immediately following quiet vocal phrase
+  ---
+  duration_ms: 118.370112
+  type: 'test'
+  ...
+# Subtest: vibrato sustains stay musical and source articulations do not follow accompaniment kicks
+ok 140 - vibrato sustains stay musical and source articulations do not follow accompaniment kicks
+  ---
+  duration_ms: 157.886804
+  type: 'test'
+  ...
+# Subtest: speech is represented as voice phrasing without invented sung notes
+ok 141 - speech is represented as voice phrasing without invented sung notes
+  ---
+  duration_ms: 62.312631
+  type: 'test'
+  ...
+# Subtest: harmonic instrumental leakage without learned voice evidence is rejected
+ok 142 - harmonic instrumental leakage without learned voice evidence is rejected
+  ---
+  duration_ms: 85.843463
+  type: 'test'
+  ...
+# Subtest: quiet instrumental leakage is not amplified into voice by uncertain contextual scores
+ok 143 - quiet instrumental leakage is not amplified into voice by uncertain contextual scores
+  ---
+  duration_ms: 110.075889
+  type: 'test'
+  ...
+# Subtest: an isolated aperiodic vocal source can retain uncertain phrasing with weak semantic evidence
+ok 144 - an isolated aperiodic vocal source can retain uncertain phrasing with weak semantic evidence
+  ---
+  duration_ms: 135.562518
+  type: 'test'
+  ...
+# Subtest: a strong separated harmonic source without a semantic voice seed remains unclassified
+ok 145 - a strong separated harmonic source without a semantic voice seed remains unclassified
+  ---
+  duration_ms: 80.999363
+  type: 'test'
+  ...
+# Subtest: silence and stochastic vocal-stem noise cannot invent periodic sung notes
+ok 146 - silence and stochastic vocal-stem noise cannot invent periodic sung notes
+  ---
+  duration_ms: 61.788642
+  type: 'test'
+  ...
+# Subtest: streaming chunk boundaries preserve all musical results exactly
+ok 147 - streaming chunk boundaries preserve all musical results exactly
+  ---
+  duration_ms: 216.562092
+  type: 'test'
+  ...
+# Subtest: the 22.05 kHz source-cache path preserves vocal note pitches and timing
+ok 148 - the 22.05 kHz source-cache path preserves vocal note pitches and timing
+  ---
+  duration_ms: 60.33218
+  type: 'test'
+  ...
+# Subtest: streaming rejects missing samples, overlaps, non-finite audio and rate mistakes
+ok 149 - streaming rejects missing samples, overlaps, non-finite audio and rate mistakes
+  ---
+  duration_ms: 0.839188
+  type: 'test'
+  ...
+# Subtest: short and endpoint audio are finite without invented padding
+ok 150 - short and endpoint audio are finite without invented padding
+  ---
+  duration_ms: 11.212229
+  type: 'test'
+  ...
+# Subtest: minimum-length note eligibility does not depend on floating-point timestamp rounding
+ok 151 - minimum-length note eligibility does not depend on floating-point timestamp rounding
+  ---
+  duration_ms: 7.812253
+  type: 'test'
+  ...
+# Subtest: four-hour summaries retain bounded numeric arrays and avoid argument spreading
+ok 152 - four-hour summaries retain bounded numeric arrays and avoid argument spreading
+  ---
+  duration_ms: 606.975803
+  type: 'test'
+  ...
+# Subtest: neural sung-note evidence recovers a prominent pitch-agreeing source without inflating classifier scores
+ok 153 - neural sung-note evidence recovers a prominent pitch-agreeing source without inflating classifier scores
+  ---
+  duration_ms: 80.033871
+  type: 'test'
+  ...
+# Subtest: neural candidates cannot bypass speech, pitch disagreement or weak separated-source energy
+ok 154 - neural candidates cannot bypass speech, pitch disagreement or weak separated-source energy
+  ---
+  duration_ms: 226.179477
+  type: 'test'
+  ...
+# {
+#   "result": "PASS",
+#   "tests": [
+#     {
+#       "name": "Exact ranges, first PCM offset44 and final clipped sample",
+#       "status": "PASS"
+#     },
+#     {
+#       "name": "Chromium double seek reproduction rejected as transport error",
+#       "status": "PASS"
+#     },
+#     {
+#       "name": "Range overread rejected without blaming source music",
+#       "status": "PASS"
+#     },
+#     {
+#       "name": "Wrong range start rejected",
+#       "status": "PASS"
+#     },
+#     {
+#       "name": "Server without Range uses complete bounded cache",
+#       "status": "PASS"
+#     },
+#     {
+#       "name": "WAV metadata larger than64KiB and odd padding",
+#       "status": "PASS"
+#     },
+#     {
+#       "name": "Actual truncated WAV detected before model inference",
+#       "status": "PASS"
+#     },
+#     {
+#       "name": "PCM16/24/32 and IEEEfloat32 decoding with edge padding",
+#       "status": "PASS"
+#     },
+#     {
+#       "name": "Malformed PCM alignment and float encoding rejected",
+#       "status": "PASS"
+#     },
+#     {
+#       "name": "Actual bundled music reads byte-exact at nonzero offsets",
+#       "status": "PASS"
+#     }
+#   ]
+# }
+# Subtest: /home/runner/work/LightForge/LightForge/tests/wav-reader.test.cjs
+ok 22 - /home/runner/work/LightForge/LightForge/tests/wav-reader.test.cjs
+  ---
+  duration_ms: 138.535356
+  type: 'test'
+  ...
+1..155
+# tests 155
+# suites 0
+# pass 155
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 37824.829875

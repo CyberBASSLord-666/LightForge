@@ -84,7 +84,7 @@ Host tests do not execute an Android Activity, document provider or media codec,
 
 Analysis and choreography run in a foreground service and can continue when switching apps or locking the screen. Allow notifications and, for long screen-off jobs, the user-controlled battery exemption. Import/export document pickers require returning to the app. Android time allowances, Force stop and manufacturer restrictions still apply; completed verified work can be resumed after interruption.
 
-Version 2.2.2 adds diagnostic collection/export and renderer-loss cleanup. Its regression, browser, Android and package gates remain pending until rerun against final sources. The earlier [2.2.1 production run](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34169530104) is historical evidence, not a substitute. Physical phone/Tesla checks remain unverified.
+Version 2.2.2 passes all seven source-bound release gates. The complete [production verification run, attempt 2](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34179649874/attempts/2) passed both verification and Android jobs, including diagnostic export/crash recovery. Current regressions pass 155 Node tests, 54 Python tests and 22 native host checks. The numerical gate retains exact kernel/model evidence under the fixed 2.2.2 adapter review and reruns source-clock verification; it does not relabel historical neural benchmarks. The original-signed update passes package integrity, asset/ABI, version, alignment and certificate checks. Physical phone/Tesla checks remain unverified.
 
 ## Publish a compatible GitHub release
 

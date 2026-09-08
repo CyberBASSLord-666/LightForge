@@ -1,6 +1,6 @@
 # LightForge 2.2.2 — troubleshooting logs and renderer recovery
 
-**2.2.2 is in verification; its signed update is not published yet.** The latest published update is [LightForge 2.2.1](https://github.com/CyberBASSLord-666/LightForge/releases/download/v2.2.1/LightForge-2.2.1.apk). Install release updates over the existing app without uninstalling. All models are bundled; no first-run download is required.
+**LightForge 2.2.2 is a signed update with seven passing release gates.** [Download the complete APK](https://github.com/CyberBASSLord-666/LightForge/releases/download/v2.2.2/LightForge-2.2.2.apk) · [Release details](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.2.2). Install over the existing app without uninstalling. All models are bundled; no first-run download is required.
 
 LightForge turns music on your phone into an editable Tesla light show for a **2025 Model 3 Long Range RWD, North America**. It bundles its neural models, graphics and audio tools and works entirely offline.
 
@@ -10,7 +10,7 @@ LightForge turns music on your phone into an editable Tesla light show for a **2
 
 ## Install the update
 
-Install [LightForge-2.2.1.apk](https://github.com/CyberBASSLord-666/LightForge/releases/download/v2.2.1/LightForge-2.2.1.apk) over your existing app. **Do not uninstall first.** The release gate requires the original signing identity so the update preserves private projects. CI builds use a temporary identity and are not the update APK.
+Install [LightForge-2.2.2.apk](https://github.com/CyberBASSLord-666/LightForge/releases/download/v2.2.2/LightForge-2.2.2.apk) over your existing app. **Do not uninstall first.** The release gate requires the original signing identity so the update preserves private projects. CI builds use a temporary identity and are not the update APK.
 
 Android 8+ and a current Android System WebView are required. The app targets Android 15. No account, API key, subscription, server or model download is needed. Create runs in an Android foreground service, so you can switch apps or turn off the display. Studio uses native ONNX Runtime CPU inference with bounded batches and model buffers; it can still take longer than the song and needs substantial free memory and temporary storage. Balanced remains an explicit lighter choice. Separated listening audio needs about 21.2 MB per minute of music; recoverable passage checkpoints need additional temporary space.
 
@@ -26,7 +26,7 @@ Import and export document pickers still require returning to the app. Backgroun
 
 ## Troubleshooting logs
 
-Version 2.2.2 adds **Guide → Export diagnostic log**. Reproduce the problem, reopen LightForge if it closed, and export the report to Downloads. Send that file with a short description of what you were doing and approximately when the failure happened. A native recovery action also makes reporting available when the preview engine cannot render the normal interface.
+Version 2.2.2 adds **Guide → Export diagnostic log**. Reproduce the problem, reopen LightForge if it closed, and export the `.txt` report to **Downloads/LightForge**. On Android 8–9, choose Downloads in the system save dialog. Send that file with a short description of what you were doing and approximately when the failure happened. A native recovery action also makes reporting available when the preview engine cannot render the normal interface.
 
 The report gathers recent app events, Java/JavaScript error stacks, analysis stages and interruptions, renderer failures, device/WebView versions, memory/storage context, and available Android process-exit information. Logs stay on the device until you choose to export them; there is no automatic upload. Reports exclude audio, model data and saved-show contents and redact common sensitive values. Diagnostic text can still contain details useful for troubleshooting, so review a report before sharing it publicly.
 
@@ -329,16 +329,17 @@ The renderer source and pinned npm dependency lock are in `web/preview/src/`.
 
 ## Verification and device status
 
-[VALIDATION.md](VALIDATION.md) records the current 2.2.2 gate status separately from earlier releases. Diagnostic-export, renderer recovery, browser, Android and signed-package checks are pending against final 2.2.2 sources. The earlier [2.2.1 production CI run](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34169530104) passed its own source-bound gates; those results do not automatically validate this update.
+[VALIDATION.md](VALIDATION.md) separates the seven current 2.2.2 release gates from historical numerical measurements. The complete [production verification run, attempt 2](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34179649874/attempts/2) passed the actual offline pipeline, APK build, Android screen-off/Resume and diagnostic export checks. The [focused Android diagnostics run](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34179649940) also passed crash persistence, the Guide export action and renderer recovery on the same source.
 
 | Check | Current 2.2.2 status |
 |---|---|
 | Version synchronization | 2.2.2 / 20202 synchronized |
-| Diagnostic retention, redaction and Downloads export | Pending |
-| Node/Python regressions and native compilation | Pending |
-| Browser UI, complete model pipeline and cancellation | Pending |
-| Android renderer recovery, screen-off analysis and partial Resume | Pending |
-| Original-signed update package and publication | Pending |
+| Diagnostic retention, redaction and Downloads export | Passed: host regressions and Android 15 crash/restart, readable unique `.txt` files, Guide export and native recovery export |
+| Node/Python regressions and native compilation | Passed: 155 Node tests, 54 Python tests and 22 native host checks |
+| Browser UI, complete model pipeline and cancellation | Passed: responsive Chromium UI, actual bundled models, persistence, export and cancellation |
+| Android renderer recovery, screen-off analysis and partial Resume | Passed on Android 15; saved-passage reuse, cancellation and timeout cleanup verified |
+| Numerical kernel evidence | Retained with exact kernel/model hashes and a fixed review of diagnostic adapter changes; source-clock regression rerun |
+| Original-signed update package | Passed: original update certificate, exact asset inventory, native ABIs, alignment and checksum |
 | Physical phone performance, long songs, thermals and battery management | Unverified |
 | Physical Tesla timing and movement | Unverified |
 
@@ -348,7 +349,7 @@ Browser tests exercise the browser path; Android must separately exercise native
 
 ## Update from an earlier release
 
-The published signed update is `LightForge-2.2.1.apk`, version code 20201. Install it over the existing LightForge app; the release gate requires the original package ID and signing identity. **Do not uninstall first**, because uninstalling removes
+The signed update is `LightForge-2.2.2.apk`, version code 20202. Install it over the existing LightForge app; the release gate requires the original package ID and signing identity. **Do not uninstall first**, because uninstalling removes
 private projects. Saved music and projects remain compatible; sequences are
 regenerated with the current vehicle profile when edited or restored.
 

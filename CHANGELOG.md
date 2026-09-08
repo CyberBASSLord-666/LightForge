@@ -1,11 +1,13 @@
-# LightForge 2.2.2 — Troubleshooting logs and renderer recovery (in verification)
+# LightForge 2.2.2 — Troubleshooting logs and renderer recovery
 
 - Add a local, bounded diagnostic trace across the Android app, background analysis and JavaScript workers, with error stacks and progress context.
-- Export a timestamped troubleshooting report to Downloads from the app; capture app/device/WebView information, memory/storage state and available Android exit reasons. No automatic upload or audio/project-content attachment.
+- Export a timestamped `.txt` troubleshooting report to Downloads/LightForge on Android 10+ or the selected system-document destination on Android 8–9; capture app/device/WebView information, memory/storage state and available Android exit reasons. No automatic upload or audio/project-content attachment.
 - Keep recent logs in private app files across restarts, redact common sensitive values, and provide reporting from the native preview-recovery flow.
 - Make renderer cleanup tolerate detached or already retired WebViews; defer the reload dialog until the Activity is foregrounded and avoid stale callbacks resetting the current preview.
 - Retain native Studio quality, background execution and completed-passage Resume. Phone crash causes still need the exported device evidence; this release does not claim to resolve every crash or manufacturer cache warning.
-- Verification, the original-signed APK and publication are pending. The 2.2.1 results below remain historical and are not passing evidence for 2.2.2.
+- Pass seven source-bound release gates and the complete production CI run, including actual Android crash/restart trace recovery, readable repeated Downloads exports, the production Guide action, detached renderer recovery and screen-off Studio Cancel/Resume. Current regressions pass 155 Node tests, 54 Python tests and 22 native host checks; VALIDATION.md records the unchanged Android retry and preserves the first failed combined diagnostics attempt.
+- Retain numerical kernel evidence only with exact immutable source/model hashes and the fixed diagnostic-adapter review; rerun source-clock checks. Historical 2.2.1 neural measurements remain explicitly historical.
+- Verify the complete update APK with the original signing identity, current asset inventory, native ABIs, alignment and checksum.
 
 # LightForge 2.2.1 — Native Studio and resumable analysis
 
