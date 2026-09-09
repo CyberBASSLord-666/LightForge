@@ -1,7 +1,7 @@
 {
   "release": "2.2.4",
   "passed": true,
-  "checkedAt": "2026-09-09T22:08:17.301Z",
+  "checkedAt": "2026-09-09T22:34:34.871Z",
   "checks": [
     {
       "name": "separated articulations keep the original off-grid source clock through both frame modes and signed offsets",

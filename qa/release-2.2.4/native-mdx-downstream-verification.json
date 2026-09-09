@@ -1,0 +1,2162 @@
+{
+  "release": "2.2.4",
+  "passed": true,
+  "errors": [],
+  "source_hashes": {
+    "version.json": "8e8f3a2a335f12fc1090f15074dbe5c6544d75d4b488b83a73b6bbe31b0ea159",
+    "qa/release-2.2.4/verify-mdx-downstream.cjs": "14b304b521c82631305a3d03a9a31f4bd2216993c44533675a8ab2319616376c",
+    "qa/release-2.2.4/mdx-downstream-compare.cjs": "c17e44bcc89ca3f2e257abb1c065369a1747d8bef2541d0cd00f36bc5c284605",
+    "tests/mdx-downstream-compare.test.cjs": "985b2a4ec4b9ec89fb45b15505f9da6be0fc3b4a3c2210a96fa6e0e6de25bb1c",
+    "web/analysis/vocal.js": "94483ac6cf5db7532abfba98e7bab7cd826a82ad2adca0296d39fdebd827ac70",
+    "web/analysis/vocal-detail.js": "cd760d7a766d9a4ab0ac3a252a10f17a16a797b38e50b2d6712bc6adcd42713f",
+    "web/analysis/game.js": "28c3e824be79c6e5cab3a2522a2b75c769741b69ad6778b45033b292cbdf05e3",
+    "web/analysis/dsp.js": "32186b9268632cab85cadcb7e84fa1b4e3d8eb4bb9fbdf96a0873067cb9acd71",
+    "web/analysis/stem-cache.js": "21633cd9e217ecca6e55b9fa04983512e651ddc9a7b9027af13580845ff4fe82",
+    "web/analysis/wav-reader.js": "0f0e5216dc1d2ca0bfb25eddacdaa21076990fa7638c22188023607e43d4005f",
+    "web/analysis/separator-mdx.js": "accc7aead92f045da9faf7a08019af757c73042850dd2fccc0e923f7d20043a1",
+    "web/analysis/worker.js": "9759877dc65a969927f2dbfcddc1b44dc16a0ff747cc5fa8f7ff97cd1624d062",
+    "web/analysis/models/features.json": "8a9fb3bc88c3e2f35934dd0024f22458aa8d357e3e3946a6e2c6230d3886e278",
+    "web/analysis/models/vocal-model.json": "52093f26d0bfe3f04bbb1563b287fafe5e61aa57a61391ea643b04d97838ca7e",
+    "web/analysis/models/vocal-frontend.json": "72bdffced29bfdd6d1da77a4da2a2a4af1b2f839c71131d19dc9423db3d4732f",
+    "web/analysis/models/game/manifest.json": "51e172cfaa967d9e2518f01f508a64d49cd283d23ae8e8456af9c6e76eeb4f97",
+    "web/analysis/models/separator-mdx-model.json": "0d7a6ff7c6a3a19fdd38b92a50cf39cfd91130bf2ed7dcbaca2f12890385e0c2",
+    "web/demo/glass-castle.wav": "33f07d502ba19832b62b97d8fb4a11354e81310264bd885d7a06438228773650"
+  },
+  "analysis_asset_hashes": {
+    "web/analysis/models/game/bd2dur.onnx": "6672d56b00f27a20e9bfaa92801c15e394bb520e49031d3ed2515b0a6cf27402",
+    "web/analysis/models/game/config.json": "4d62b6d058a820e981184ea6f04605d37659c4331ee01979eb14a14be08af890",
+    "web/analysis/models/game/dur2bd.onnx": "49d10d1ea186e43c51fd2c51cedb01a3852d363f1c7056ae77df50f7e8dd0996",
+    "web/analysis/models/game/encoder.onnx": "fbda7df8791d5cafd02ed33c65f9926c5514c750278c27fb8a59259b4c1d7464",
+    "web/analysis/models/game/estimator.onnx": "0d4a6e13bf475f79967e252b401bb5f317aa6b96bbe6665d5f8b14b42b179926",
+    "web/analysis/models/game/segmenter.onnx": "9db605a2ad3c179e9c4e4ae5b970727006020c65936773c26b2cbc27d8ef892f",
+    "web/analysis/models/frame-mn10-singing.onnx": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+    "web/analysis/vendor/ONNX-Runtime-LICENSE.txt": "2f07c72751aed99790b8a4869cf2311df85a860b22ded05fa22803587a48922c",
+    "web/analysis/vendor/ort-wasm-simd-threaded.mjs": "745eb7c0ce6f18a6aa521971b2877babc7ffb27eecb58ab3bc6e5ef4692672e8",
+    "web/analysis/vendor/ort-wasm-simd-threaded.wasm": "207d02be4591c156b0a98f024f3d58005b5b04c92274d759fb390338c63559ea",
+    "web/analysis/vendor/ort.wasm.min.js": "e66568724f8848e57cc2a56e4bea3a5b86ce3ff81b2da11eac8ed7ab02b27bd4"
+  },
+  "scope": "Paired actual production centered resampling, Frame-MN10, vocal expression, GAME Large eight-step transcription and fusion on a measured native-ALL/4 versus WASM MDX kept-core excerpt. Node filesystem adapters supply bytes; original model graphs and numeric code execute. Nonempty voice coverage is mandatory. Not full-song OLA, corpus accuracy, Android execution, or physical-car validation.",
+  "fixture": {
+    "id": "demo-20s",
+    "source": "web/demo/glass-castle.wav",
+    "sourceSha256": "33f07d502ba19832b62b97d8fb4a11354e81310264bd885d7a06438228773650",
+    "contextReadStart": 878160,
+    "contextReadSamples": 261120,
+    "coreStart": 882000,
+    "coreSamples": 253440,
+    "sampleRate": 44100
+  },
+  "inputs": {
+    "native": {
+      "file": "native-waveform.float32le",
+      "bytes": 1044480,
+      "sha256": "6625fb8970d93a4cda6483dc0b9bb5d30f04e602ac900f7dc53729fa7ca07975"
+    },
+    "wasm": {
+      "file": "wasm-waveform.float32le",
+      "bytes": 1044480,
+      "sha256": "b0f2d064ed48e82b2e0fb3f059ef2d5aa81ada8a3d85fddc245ef430d8d72a62"
+    }
+  },
+  "comparison": {
+    "passed": true,
+    "errors": [],
+    "metrics": {
+      "arrays": {
+        "classified.envelope": {
+          "samples": 288,
+          "maxAbsoluteError": 0,
+          "rmse": 0,
+          "violations": 0,
+          "nonfinite": 0,
+          "passed": true
+        },
+        "classified.classifier.singingScores": {
+          "samples": 144,
+          "maxAbsoluteError": 4.172325134277344e-7,
+          "rmse": 1.8498524476623606e-7,
+          "violations": 0,
+          "nonfinite": 0,
+          "passed": true
+        },
+        "classified.classifier.speechScores": {
+          "samples": 144,
+          "maxAbsoluteError": 1.471489667892456e-7,
+          "rmse": 4.194062026229327e-8,
+          "violations": 0,
+          "nonfinite": 0,
+          "passed": true
+        },
+        "features.fineEnergy": {
+          "samples": 1150,
+          "maxAbsoluteError": 2.2351741790771484e-8,
+          "rmse": 4.6143189505136576e-9,
+          "violations": 0,
+          "nonfinite": 0,
+          "passed": true
+        },
+        "features.residualEnergy": {
+          "samples": 1150,
+          "maxAbsoluteError": 2.9802322387695312e-8,
+          "rmse": 3.7220495059403e-9,
+          "violations": 0,
+          "nonfinite": 0,
+          "passed": true
+        },
+        "features.frequency": {
+          "samples": 288,
+          "maxAbsoluteError": 0.0000152587890625,
+          "rmse": 8.99132768232406e-7,
+          "violations": 0,
+          "nonfinite": 0,
+          "passed": true
+        },
+        "features.periodicity": {
+          "samples": 288,
+          "maxAbsoluteError": 4.172325134277344e-7,
+          "rmse": 3.879392979496049e-8,
+          "violations": 0,
+          "nonfinite": 0,
+          "passed": true
+        },
+        "vocals.envelope": {
+          "samples": 288,
+          "maxAbsoluteError": 0,
+          "rmse": 0,
+          "violations": 0,
+          "nonfinite": 0,
+          "passed": true
+        },
+        "vocals.pitchContour.midi": {
+          "samples": 144,
+          "maxAbsoluteError": 0,
+          "rmse": 0,
+          "violations": 0,
+          "nonfinite": 0,
+          "passed": true
+        },
+        "vocals.pitchContour.confidence": {
+          "samples": 144,
+          "maxAbsoluteError": 0,
+          "rmse": 0,
+          "violations": 0,
+          "nonfinite": 0,
+          "passed": true
+        }
+      },
+      "scalars": {
+        "samples44100": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "samples22050": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "transcription.notes[0].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "transcription.notes[0].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "transcription.notes[0].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "transcription.notes[1].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "transcription.notes[1].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "transcription.notes[1].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "transcription.notes[2].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "transcription.notes[2].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "transcription.notes[2].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "transcription.notes[3].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "transcription.notes[3].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "transcription.notes[3].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "transcription.notes[4].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "transcription.notes[4].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "transcription.notes[4].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "transcription.notes[5].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "transcription.notes[5].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "transcription.notes[5].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "transcription.notes[6].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "transcription.notes[6].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "transcription.notes[6].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "transcription.notes[7].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "transcription.notes[7].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "transcription.notes[7].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "transcription.notes[8].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "transcription.notes[8].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "transcription.notes[8].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "transcription.notes[9].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "transcription.notes[9].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "transcription.notes[9].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "transcription.notes[10].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "transcription.notes[10].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "transcription.notes[10].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "transcription.notes[11].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "transcription.notes[11].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "transcription.notes[11].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "transcription.notes[12].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "transcription.notes[12].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "transcription.notes[12].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "transcription.notes[13].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "transcription.notes[13].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "transcription.notes[13].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "transcription.notes[14].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "transcription.notes[14].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "transcription.notes[14].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "transcription.notes[15].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "transcription.notes[15].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "transcription.notes[15].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "transcription.frameSeconds": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "transcription.steps": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "transcription.language": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "classified.confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "classified.modelScore": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "classified.coverage": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "classified.phrases[0].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "classified.phrases[0].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "classified.phrases[0].confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "classified.phrases[0].modelScore": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "classified.phrases[0].strength": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "classified.phrases[0].peakTime": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "classified.accents[0].time": {
+          "absoluteError": 0,
+          "limit": 0.005,
+          "passed": true
+        },
+        "classified.accents[0].strength": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "classified.accents[0].confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "classified.envelopeStep": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "classified.timing.contextSeconds": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "classified.timing.classifierFrameMs": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "classified.timing.envelopeMs": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "classified.timing.overlapSeconds": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "classified.diagnostics.frames": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "classified.diagnostics.strongFrames": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "classified.diagnostics.thresholds.startModelScore": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "classified.diagnostics.thresholds.strongModelScore": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "classified.diagnostics.thresholds.continueModelScore": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "classified.classifier.frameStep": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "vocals.confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.modelScore": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.coverage": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.phrases[0].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.phrases[0].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.phrases[0].releaseTime": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.phrases[0].confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.phrases[0].modelScore": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.phrases[0].speechScore": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.phrases[0].strength": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.phrases[0].peakTime": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.phrases[0].voicedFraction": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.phrases[0].stemEnergyRatio": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[0].time": {
+          "absoluteError": 0,
+          "limit": 0.005,
+          "passed": true
+        },
+        "vocals.accents[0].strength": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[0].confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[1].time": {
+          "absoluteError": 0,
+          "limit": 0.005,
+          "passed": true
+        },
+        "vocals.accents[1].strength": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[1].confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[2].time": {
+          "absoluteError": 0,
+          "limit": 0.005,
+          "passed": true
+        },
+        "vocals.accents[2].strength": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[2].confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[3].time": {
+          "absoluteError": 0,
+          "limit": 0.005,
+          "passed": true
+        },
+        "vocals.accents[3].strength": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[3].confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[4].time": {
+          "absoluteError": 0,
+          "limit": 0.005,
+          "passed": true
+        },
+        "vocals.accents[4].strength": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[4].confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[5].time": {
+          "absoluteError": 0,
+          "limit": 0.005,
+          "passed": true
+        },
+        "vocals.accents[5].strength": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[5].confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[6].time": {
+          "absoluteError": 0,
+          "limit": 0.005,
+          "passed": true
+        },
+        "vocals.accents[6].strength": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[6].confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[7].time": {
+          "absoluteError": 0,
+          "limit": 0.005,
+          "passed": true
+        },
+        "vocals.accents[7].strength": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[7].confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[8].time": {
+          "absoluteError": 0,
+          "limit": 0.005,
+          "passed": true
+        },
+        "vocals.accents[8].strength": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[8].confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[9].time": {
+          "absoluteError": 0,
+          "limit": 0.005,
+          "passed": true
+        },
+        "vocals.accents[9].strength": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[9].confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[10].time": {
+          "absoluteError": 0,
+          "limit": 0.005,
+          "passed": true
+        },
+        "vocals.accents[10].strength": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[10].confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[11].time": {
+          "absoluteError": 0,
+          "limit": 0.005,
+          "passed": true
+        },
+        "vocals.accents[11].strength": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[11].confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[12].time": {
+          "absoluteError": 0,
+          "limit": 0.005,
+          "passed": true
+        },
+        "vocals.accents[12].strength": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[12].confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[13].time": {
+          "absoluteError": 0,
+          "limit": 0.005,
+          "passed": true
+        },
+        "vocals.accents[13].strength": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[13].confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[14].time": {
+          "absoluteError": 0,
+          "limit": 0.005,
+          "passed": true
+        },
+        "vocals.accents[14].strength": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[14].confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[15].time": {
+          "absoluteError": 0,
+          "limit": 0.005,
+          "passed": true
+        },
+        "vocals.accents[15].strength": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[15].confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[16].time": {
+          "absoluteError": 0,
+          "limit": 0.005,
+          "passed": true
+        },
+        "vocals.accents[16].strength": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[16].confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[17].time": {
+          "absoluteError": 0,
+          "limit": 0.005,
+          "passed": true
+        },
+        "vocals.accents[17].strength": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[17].confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[18].time": {
+          "absoluteError": 0,
+          "limit": 0.005,
+          "passed": true
+        },
+        "vocals.accents[18].strength": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[18].confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[19].time": {
+          "absoluteError": 0,
+          "limit": 0.005,
+          "passed": true
+        },
+        "vocals.accents[19].strength": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[19].confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[20].time": {
+          "absoluteError": 0,
+          "limit": 0.005,
+          "passed": true
+        },
+        "vocals.accents[20].strength": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[20].confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[21].time": {
+          "absoluteError": 0,
+          "limit": 0.005,
+          "passed": true
+        },
+        "vocals.accents[21].strength": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[21].confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[22].time": {
+          "absoluteError": 0,
+          "limit": 0.005,
+          "passed": true
+        },
+        "vocals.accents[22].strength": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[22].confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[23].time": {
+          "absoluteError": 0,
+          "limit": 0.005,
+          "passed": true
+        },
+        "vocals.accents[23].strength": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.accents[23].confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[0].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[0].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[0].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "vocals.notes[0].frequency": {
+          "absoluteError": 0,
+          "limit": 0.13567233376681728,
+          "passed": true
+        },
+        "vocals.notes[0].confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[0].strength": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[0].peakTime": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[1].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[1].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[1].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "vocals.notes[1].frequency": {
+          "absoluteError": 0,
+          "limit": 0.12111781609670064,
+          "passed": true
+        },
+        "vocals.notes[1].confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[1].strength": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[1].peakTime": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[2].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[2].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[2].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "vocals.notes[2].frequency": {
+          "absoluteError": 0,
+          "limit": 0.13567233376681728,
+          "passed": true
+        },
+        "vocals.notes[2].confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[2].strength": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[2].peakTime": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[3].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[3].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[3].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "vocals.notes[3].frequency": {
+          "absoluteError": 0,
+          "limit": 0.13582775914408055,
+          "passed": true
+        },
+        "vocals.notes[3].confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[3].strength": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[3].peakTime": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[4].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[4].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[4].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "vocals.notes[4].frequency": {
+          "absoluteError": 0,
+          "limit": 0.13551690838955402,
+          "passed": true
+        },
+        "vocals.notes[4].confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[4].strength": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[4].peakTime": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[5].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[5].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[5].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "vocals.notes[5].frequency": {
+          "absoluteError": 0,
+          "limit": 0.12063305070070111,
+          "passed": true
+        },
+        "vocals.notes[5].confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[5].strength": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[5].peakTime": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[6].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[6].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[6].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "vocals.notes[6].frequency": {
+          "absoluteError": 0,
+          "limit": 0.1357503353502022,
+          "passed": true
+        },
+        "vocals.notes[6].confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[6].strength": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[6].peakTime": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[7].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[7].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[7].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "vocals.notes[7].frequency": {
+          "absoluteError": 0,
+          "limit": 0.13598376231085035,
+          "passed": true
+        },
+        "vocals.notes[7].confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[7].strength": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[7].peakTime": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[8].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[8].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[8].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "vocals.notes[8].frequency": {
+          "absoluteError": 0,
+          "limit": 0.13536148301229078,
+          "passed": true
+        },
+        "vocals.notes[8].confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[8].strength": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[8].peakTime": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[9].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[9].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[9].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "vocals.notes[9].frequency": {
+          "absoluteError": 0,
+          "limit": 0.12111781609670064,
+          "passed": true
+        },
+        "vocals.notes[9].confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[9].strength": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[9].peakTime": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[10].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[10].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[10].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "vocals.notes[10].frequency": {
+          "absoluteError": 0,
+          "limit": 0.12049495900863451,
+          "passed": true
+        },
+        "vocals.notes[10].confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[10].strength": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[10].peakTime": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[11].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[11].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[11].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "vocals.notes[11].frequency": {
+          "absoluteError": 0,
+          "limit": 0.06009573294092339,
+          "passed": true
+        },
+        "vocals.notes[11].confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[11].strength": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[11].peakTime": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[12].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[12].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[12].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "vocals.notes[12].frequency": {
+          "absoluteError": 0,
+          "limit": 0.15181577257995976,
+          "passed": true
+        },
+        "vocals.notes[12].confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[12].strength": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[12].peakTime": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[13].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[13].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[13].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "vocals.notes[13].frequency": {
+          "absoluteError": 0,
+          "limit": 0.12139573284935351,
+          "passed": true
+        },
+        "vocals.notes[13].confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[13].strength": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[13].peakTime": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[14].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[14].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[14].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "vocals.notes[14].frequency": {
+          "absoluteError": 0,
+          "limit": 0.12125706336778036,
+          "passed": true
+        },
+        "vocals.notes[14].confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[14].strength": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[14].peakTime": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[15].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[15].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[15].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "vocals.notes[15].frequency": {
+          "absoluteError": 0,
+          "limit": 0.12118715083748721,
+          "passed": true
+        },
+        "vocals.notes[15].confidence": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[15].strength": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.notes[15].peakTime": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.envelopeStep": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "vocals.pitchContour.step": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "vocals.timing.energyFrameMs": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "vocals.timing.envelopeMs": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "vocals.timing.pitchFrameMs": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "vocals.timing.pitchWindowMs": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "vocals.timing.classifierFrameMs": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "vocals.diagnostics.version": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "vocals.diagnostics.pitchRangeHz[0]": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "vocals.diagnostics.pitchRangeHz[1]": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "vocals.diagnostics.localNormalizationSeconds": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "vocals.diagnostics.quietRecoveryContextSeconds": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "vocals.diagnostics.sourceLedThresholds.combinedPowerFraction": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "vocals.diagnostics.sourceLedThresholds.normalizedLocalLevel": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "vocals.diagnostics.sourceLedThresholds.semanticSeed": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "vocals.diagnostics.sourceLedThresholds.contextRadiusSeconds": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "vocals.diagnostics.sourceLedThresholds.minimumSupportSeconds": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "vocals.diagnostics.sourceLedThresholds.neuralNotePitchAgreementSemitones": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "vocals.diagnostics.sourceLedThresholds.neuralNoteMinimumFraction": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "vocals.diagnostics.phrases": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "vocals.diagnostics.singingPhrases": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "vocals.diagnostics.speechPhrases": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "vocals.diagnostics.notes": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "vocals.diagnostics.heldNotes": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "vocals.diagnostics.rejectedLeakage": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "vocals.diagnostics.rejectedAmbiguous": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "vocals.diagnostics.sampleRate": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "vocals.diagnostics.maxBufferedPcmSamples": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "vocals.diagnostics.neuralCandidates": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "vocals.diagnostics.neuralRejected": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "vocals.transcription.notes[0].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.transcription.notes[0].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.transcription.notes[0].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "vocals.transcription.notes[1].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.transcription.notes[1].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.transcription.notes[1].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "vocals.transcription.notes[2].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.transcription.notes[2].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.transcription.notes[2].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "vocals.transcription.notes[3].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.transcription.notes[3].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.transcription.notes[3].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "vocals.transcription.notes[4].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.transcription.notes[4].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.transcription.notes[4].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "vocals.transcription.notes[5].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.transcription.notes[5].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.transcription.notes[5].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "vocals.transcription.notes[6].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.transcription.notes[6].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.transcription.notes[6].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "vocals.transcription.notes[7].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.transcription.notes[7].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.transcription.notes[7].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "vocals.transcription.notes[8].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.transcription.notes[8].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.transcription.notes[8].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "vocals.transcription.notes[9].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.transcription.notes[9].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.transcription.notes[9].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "vocals.transcription.notes[10].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.transcription.notes[10].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.transcription.notes[10].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "vocals.transcription.notes[11].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.transcription.notes[11].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.transcription.notes[11].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "vocals.transcription.notes[12].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.transcription.notes[12].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.transcription.notes[12].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "vocals.transcription.notes[13].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.transcription.notes[13].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.transcription.notes[13].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "vocals.transcription.notes[14].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.transcription.notes[14].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.transcription.notes[14].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "vocals.transcription.notes[15].start": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.transcription.notes[15].end": {
+          "absoluteError": 0,
+          "limit": 0.001,
+          "passed": true
+        },
+        "vocals.transcription.notes[15].midi": {
+          "absoluteError": 0,
+          "limit": 0.01,
+          "passed": true
+        },
+        "vocals.transcription.frameSeconds": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "vocals.transcription.steps": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "vocals.transcription.language": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "executions.frameMn10": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "executions.encoder": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "executions.dur2bd": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "executions.segmenter": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "executions.bd2dur": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "executions.estimator": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "sourceClock.coreStartSample": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "sourceClock.coreSamples": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "sourceClock.sampleRate": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "sourceClock.contextReadStart": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        },
+        "sourceClock.contextReadSamples": {
+          "absoluteError": 0,
+          "limit": 0,
+          "passed": true
+        }
+      },
+      "exactComparisons": 287
+    },
+    "coverage": {
+      "native": {
+        "rawGameNotes": 16,
+        "fusedNotes": 16,
+        "fusedNoteSeconds": 5.0200000000000005,
+        "nonspeechPhrases": 1,
+        "maximumSingingScore": 0.832101047039032,
+        "passed": true
+      },
+      "reference": {
+        "rawGameNotes": 16,
+        "fusedNotes": 16,
+        "fusedNoteSeconds": 5.0200000000000005,
+        "nonspeechPhrases": 1,
+        "maximumSingingScore": 0.8321008682250977,
+        "passed": true
+      }
+    },
+    "thresholds": {
+      "sampleCounts": "exact positive integers",
+      "transcriptionSteps": 8,
+      "executions": {
+        "segmenter": 8,
+        "encoder": 1,
+        "dur2bd": 1,
+        "bd2dur": 1,
+        "estimator": 1,
+        "frameMn10": 1
+      },
+      "eventTimingSeconds": 0.001,
+      "noteMidiSemitones": 0.01,
+      "accentTimingSeconds": 0.005,
+      "serializedEventScalar": 0.001,
+      "classifierScores": {
+        "absolute": 0.00001,
+        "rmse": 0.000001
+      },
+      "sourceEnergy": {
+        "absolute": 0.000001,
+        "rmse": 1e-7
+      },
+      "periodicity": {
+        "absolute": 0.00001,
+        "rmse": 0.000001
+      },
+      "measuredFrequencyHz": {
+        "absolute": 0.001,
+        "relative": 0.00001
+      },
+      "derivedNoteFrequencyHz": {
+        "absolute": 0.001,
+        "relative": 0.0005777895065548488
+      },
+      "serializedEnvelopeAndConfidence": {
+        "absolute": 0.001
+      },
+      "contourMidi": {
+        "absolute": 0.01
+      },
+      "coverage": {
+        "rawGameNotes": 3,
+        "fusedNotes": 1,
+        "fusedNoteSeconds": 1,
+        "nonspeechPhrases": 1,
+        "maximumSingingScore": 0.11
+      },
+      "categoricalAndUnspecifiedFields": "exact; matching keys and array lengths required"
+    }
+  },
+  "thresholds": {
+    "sampleCounts": "exact positive integers",
+    "transcriptionSteps": 8,
+    "executions": {
+      "segmenter": 8,
+      "encoder": 1,
+      "dur2bd": 1,
+      "bd2dur": 1,
+      "estimator": 1,
+      "frameMn10": 1
+    },
+    "eventTimingSeconds": 0.001,
+    "noteMidiSemitones": 0.01,
+    "accentTimingSeconds": 0.005,
+    "serializedEventScalar": 0.001,
+    "classifierScores": {
+      "absolute": 0.00001,
+      "rmse": 0.000001
+    },
+    "sourceEnergy": {
+      "absolute": 0.000001,
+      "rmse": 1e-7
+    },
+    "periodicity": {
+      "absolute": 0.00001,
+      "rmse": 0.000001
+    },
+    "measuredFrequencyHz": {
+      "absolute": 0.001,
+      "relative": 0.00001
+    },
+    "derivedNoteFrequencyHz": {
+      "absolute": 0.001,
+      "relative": 0.0005777895065548488
+    },
+    "serializedEnvelopeAndConfidence": {
+      "absolute": 0.001
+    },
+    "contourMidi": {
+      "absolute": 0.01
+    },
+    "coverage": {
+      "rawGameNotes": 3,
+      "fusedNotes": 1,
+      "fusedNoteSeconds": 1,
+      "nonspeechPhrases": 1,
+      "maximumSingingScore": 0.11
+    },
+    "categoricalAndUnspecifiedFields": "exact; matching keys and array lengths required"
+  },
+  "runs": {
+    "native": {
+      "executions": {
+        "frameMn10": 1,
+        "encoder": 1,
+        "dur2bd": 1,
+        "segmenter": 8,
+        "bd2dur": 1,
+        "estimator": 1
+      },
+      "runtime": "1.20.1",
+      "loadedModels": {
+        "web/analysis/models/frame-mn10-singing.onnx": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+        "web/analysis/models/game/encoder.onnx": "fbda7df8791d5cafd02ed33c65f9926c5514c750278c27fb8a59259b4c1d7464",
+        "web/analysis/models/game/dur2bd.onnx": "49d10d1ea186e43c51fd2c51cedb01a3852d363f1c7056ae77df50f7e8dd0996",
+        "web/analysis/models/game/segmenter.onnx": "9db605a2ad3c179e9c4e4ae5b970727006020c65936773c26b2cbc27d8ef892f",
+        "web/analysis/models/game/bd2dur.onnx": "6672d56b00f27a20e9bfaa92801c15e394bb520e49031d3ed2515b0a6cf27402",
+        "web/analysis/models/game/estimator.onnx": "0d4a6e13bf475f79967e252b401bb5f317aa6b96bbe6665d5f8b14b42b179926"
+      },
+      "sourceClock": {
+        "fixture": "demo-20s",
+        "source": "web/demo/glass-castle.wav",
+        "coreStartSample": 882000,
+        "coreSamples": 253440,
+        "sampleRate": 44100,
+        "contextReadStart": 878160,
+        "contextReadSamples": 261120
+      },
+      "output": {
+        "bytes": 115965,
+        "sha256": "a07ecfe190073e57663eddfaefc17bc9d04c257e1bb9947707b4ca39738bade0"
+      }
+    },
+    "wasm": {
+      "executions": {
+        "frameMn10": 1,
+        "encoder": 1,
+        "dur2bd": 1,
+        "segmenter": 8,
+        "bd2dur": 1,
+        "estimator": 1
+      },
+      "runtime": "1.20.1",
+      "loadedModels": {
+        "web/analysis/models/frame-mn10-singing.onnx": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+        "web/analysis/models/game/encoder.onnx": "fbda7df8791d5cafd02ed33c65f9926c5514c750278c27fb8a59259b4c1d7464",
+        "web/analysis/models/game/dur2bd.onnx": "49d10d1ea186e43c51fd2c51cedb01a3852d363f1c7056ae77df50f7e8dd0996",
+        "web/analysis/models/game/segmenter.onnx": "9db605a2ad3c179e9c4e4ae5b970727006020c65936773c26b2cbc27d8ef892f",
+        "web/analysis/models/game/bd2dur.onnx": "6672d56b00f27a20e9bfaa92801c15e394bb520e49031d3ed2515b0a6cf27402",
+        "web/analysis/models/game/estimator.onnx": "0d4a6e13bf475f79967e252b401bb5f317aa6b96bbe6665d5f8b14b42b179926"
+      },
+      "sourceClock": {
+        "fixture": "demo-20s",
+        "source": "web/demo/glass-castle.wav",
+        "coreStartSample": 882000,
+        "coreSamples": 253440,
+        "sampleRate": 44100,
+        "contextReadStart": 878160,
+        "contextReadSamples": 261120
+      },
+      "output": {
+        "bytes": 115957,
+        "sha256": "12864073b3a6679b4a85d9e0532a0444783dc07a5acf7e95da6e75a655c1e15f"
+      }
+    }
+  },
+  "completedAt": "2026-09-09T22:33:22.164Z"
+}

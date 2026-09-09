@@ -1,13 +1,17 @@
 # LightForge 2.2.4 validation
 
-The 2.2.4 implementation addresses renderer memory growth and resumability observed in the supplied diagnostics while preserving the pinned models and sample clock. Source-level checks available in this workspace pass: 73 analysis assets match their manifest, all web JavaScript files parse, the targeted native MDX/separator tests pass, and 58 portable Python tests pass when the intentionally historical 2.2.2 adapter-retention test is excluded. Android SDK/ONNX runtime artifacts and a physical phone are unavailable here; APK compilation/signing, long-song timing, thermals and confirmation on the supplied Samsung remain mandatory release gates.
+The 2.2.4 candidate preserves the pinned models, denoise/transcription settings and sample clock while addressing long-run memory growth, native startup cancellation and recoverability. Its original-signed APK is built; publication is still pending the current Android lifecycle and package gates.
 
-| 2.2.4 source check | Scope |
+| 2.2.4 check | Current result and scope |
 | --- | --- |
-| Asset and syntax integrity | `tools/verify_analysis_assets.py`, `node --check` over the web tree |
-| Native/renderer behavior | Targeted bridge, separator-runtime, NativeDeux, recovery, GAME and transport suites; no Android device execution |
-| Portable archive regressions | 58 Python tests; historical 2.2.2 retention evidence is not relabeled as a current test |
-| Android and physical validation | Pending: SDK/ORT AAR compilation, signed APK/package gates, screen-off/resume run, long-song memory/thermal timing and device confirmation |
+| Assets and host regression | 73 bundled analysis assets verified; 338 Node tests and 64 Python tests passed in the latest complete run. Source-bound receipts must be refreshed after any further test changes. |
+| Native lifecycle | Production MDX class tested with controlled JNI boundaries: responsive cancellation during graph creation, durable crash lease, shared execution gate, failed-session retirement and exact ownership. |
+| Android compilation and APK | Production Java, background instrumentation and diagnostic instrumentation compile against Android 35 and ORT 1.25.1. APK signature, original certificate, version, ZIP and alignment pass. |
+| Chromium UI and full pipeline | Current UI/worker/WebGL and background recovery/export checks pass at mobile and larger widths. Actual Precision model analysis, saved voice audio, cancellation and FSEQ restore pass. |
+| Studio numeric comparison | Fresh two-runtime comparison returns identical vocal/accompaniment samples for the complete 13-second reference context. This is host evidence, not an ARM crash reproduction. |
+| Balanced output qualification | Three fixed decoded-audio comparisons and paired actual vocal/GAME comparison passed. Both downstream runs produced 16 sung notes; peak waveform error across the three inputs was at most 2.5332e-7. Strict internal-spectrum diagnostics failed and are retained. See [numerical protocol](qa/release-2.2.4/NUMERICAL_QUALIFICATION.md). |
+| Android runtime lifecycle | Current screen-off, Cancel/Resume and diagnostic-export emulator execution pending. |
+| Physical phone and Tesla | Unperformed: long-song timing, thermals, manufacturer power behavior, supplied Samsung crash reproduction and vehicle timing. |
 
 The retained 2.2.2 and 2.2.1 sections below describe their original evidence and are not promoted to 2.2.4 results.
 

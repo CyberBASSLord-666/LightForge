@@ -1,10 +1,12 @@
 {
   "release": "2.2.4",
-  "passed": false,
-  "errors": [
-    "browserType.launch: Failed to launch: Error: spawn /workspace/scratch/9a5ec23b7f4b/toolchain/chromium/chrome-headless-shell-linux64/chrome-headless-shell EACCES\nCall log:\n\u001b[2m  - <launching> /workspace/scratch/9a5ec23b7f4b/toolchain/chromium/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --no-sandbox --enable-unsafe-swiftshader --user-data-dir=/tmp/playwright_chromiumdev_profile-oLk5cR --remote-debugging-pipe --no-startup-window\u001b[22m\n\u001b[2m  - [pid=N/A] starting temporary directories cleanup\u001b[22m\n\u001b[2m  - [pid=N/A] finished temporary directories cleanup\u001b[22m\n\n    at /workspace/scratch/9a5ec23b7f4b/LightForge/qa/release-2.2.4/analysis-browser.cjs:19:26"
+  "passed": true,
+  "errors": [],
+  "checks": [
+    "Full production analyzer completed actual precision-model inference, retained full-resolution source-clock vocals, and returned learned sung notes.",
+    "Actual newly analyzed music composes into legal FSEQ frames and restores with an identical frame hash.",
+    "Public analyzer cancellation during source separation removed its incomplete OPFS namespace."
   ],
-  "checks": [],
   "source_hashes": {
     "qa/release-2.2.4/analysis-browser.cjs": "a034fba11871871178c793f7ee40c34283e13edb888a1643c18ff4b76a2d398a",
     "version.json": "8e8f3a2a335f12fc1090f15074dbe5c6544d75d4b488b83a73b6bbe31b0ea159",
@@ -27,5 +29,141 @@
     "web/engine/worker.js": "2be432291b31721734ae69e715c05ba11270c3a8a91fe89b049ee9fe51e55726"
   },
   "scope": "Actual Chromium public MusicAnalyzer with production Deux, GAME Large, Beat This and Frame-MN10. Test controls and original-stem reference scoring are independent of model inputs. No physical Android or Tesla.",
-  "completedAt": "2026-09-09T22:20:25.304Z"
+  "analysis": {
+    "engine": {
+      "name": "Beat This! full + Deux + GAME Large",
+      "neural": true,
+      "detail": "Bundled pretrained rhythm transformer, stereo vocal separation, isolated-voice singing and speech classification, GAME Large neural sung-note transcription, measured source expression, and independent accompaniment bass tracking. All audio stays on this device.",
+      "model": "Beat This! final0",
+      "modelId": "beat-this-final0",
+      "modelSha256": "5f810debe53459b559127fb55bbad40035bb47cc567b20e501670f968c770f02",
+      "frontendSha256": "fdd59e65c515331308e4c8841edf99972deca646bdf6197744c2a5b7755e3de9",
+      "vocalModel": {
+        "name": "PretrainedSED Frame-MN10",
+        "id": "frame-mn10-strong-1",
+        "sha256": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a",
+        "license": "MIT"
+      },
+      "noteModel": "game-large-1.0.3-lightforge-1",
+      "separationModel": {
+        "name": "Mel-Band RoFormer Deux",
+        "modelId": "mel-band-roformer-deux-lightforge-2",
+        "modelSha256": "10255c02295bf3e3865d4ee50ff752d7b19b124ed5fd93b147babc4333eda3aa",
+        "runtime": "onnxruntime-web-wasm",
+        "sourceSeparated": true,
+        "sampleRate": 44100,
+        "sourceChannels": 2,
+        "stems": [
+          "vocals",
+          "accompaniment"
+        ],
+        "method": "Dual trained stereo source separation; Float32 bounded transformer with complete attention",
+        "contextSeconds": 13,
+        "coreSeconds": 10,
+        "overlapSeconds": 5,
+        "chunks": 1,
+        "restoredPassages": 0,
+        "estimated": true,
+        "analysisSeconds": 144.78633000000008,
+        "alignment": "Original PCM clock; centered STFT and normalized overlap-add with complementary chunk crossfades",
+        "limitations": [
+          "Vocal and instrumental estimates can contain bleed; neither is an isolated bass instrument.",
+          "Lead and backing singers share one vocal source; no lyrics or word alignment."
+        ]
+      },
+      "bassMethod": "Harmonic low-register tracking",
+      "quality": "precision",
+      "runtime": "ONNX Runtime Web 1.20.1",
+      "analysisSeconds": 166.1,
+      "stages": {
+        "rhythm": {
+          "seconds": 4.230070000000298,
+          "restored": false
+        },
+        "separation": {
+          "seconds": 144.85596499999986,
+          "restored": false
+        },
+        "voice": {
+          "seconds": 15.642375,
+          "restored": false
+        },
+        "bass": {
+          "seconds": 0.2579599999999628,
+          "restored": false
+        }
+      },
+      "recoverable": false
+    },
+    "separation": {
+      "name": "Mel-Band RoFormer Deux",
+      "modelId": "mel-band-roformer-deux-lightforge-2",
+      "modelSha256": "10255c02295bf3e3865d4ee50ff752d7b19b124ed5fd93b147babc4333eda3aa",
+      "runtime": "onnxruntime-web-wasm",
+      "sourceSeparated": true,
+      "sampleRate": 44100,
+      "sourceChannels": 2,
+      "stems": [
+        "vocals",
+        "accompaniment"
+      ],
+      "method": "Dual trained stereo source separation; Float32 bounded transformer with complete attention",
+      "contextSeconds": 13,
+      "coreSeconds": 10,
+      "overlapSeconds": 5,
+      "chunks": 1,
+      "restoredPassages": 0,
+      "estimated": true,
+      "analysisSeconds": 144.78633000000008,
+      "alignment": "Original PCM clock; centered STFT and normalized overlap-add with complementary chunk crossfades",
+      "limitations": [
+        "Vocal and instrumental estimates can contain bleed; neither is an isolated bass instrument.",
+        "Lead and backing singers share one vocal source; no lyrics or word alignment."
+      ]
+    },
+    "noteCount": 11,
+    "bassNoteCount": 9,
+    "cacheHash": "8cc789f93ea4f6d1fbc94b60823077b03f406da89c6cf3e863fbd5cf6ebae82f",
+    "progressMonotonic": true
+  },
+  "composition": {
+    "valid": true,
+    "hash": "33161958e7822fa3f4534760a90babc2e4c201bae308f2465d03e825a1bbb333",
+    "savedHash": "33161958e7822fa3f4534760a90babc2e4c201bae308f2465d03e825a1bbb333",
+    "restoredHash": "33161958e7822fa3f4534760a90babc2e4c201bae308f2465d03e825a1bbb333",
+    "frameCount": 341,
+    "synchronization": {
+      "version": 1,
+      "scope": "Selected musical targets compared with final FSEQ commands; not detection accuracy or measured vehicle latency.",
+      "frameStepMs": 20,
+      "roles": {
+        "vocals": {
+          "selected": 5,
+          "matched": 5,
+          "suppressed": 0,
+          "heldWithoutAttack": 0
+        },
+        "bass": {
+          "selected": 9,
+          "matched": 9,
+          "suppressed": 0,
+          "heldWithoutAttack": 0
+        }
+      },
+      "selected": 14,
+      "matched": 14,
+      "coverage": 1,
+      "maxErrorMs": 10.000000000000009,
+      "medianErrorMs": 9.999999999999787,
+      "issues": [],
+      "omittedIssues": 0,
+      "manual": []
+    }
+  },
+  "cancellation": {
+    "aborted": true,
+    "stage": "Separating voice and instruments",
+    "remainingNamespaces": 0
+  },
+  "completedAt": "2026-09-09T22:24:15.981Z"
 }

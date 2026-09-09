@@ -1,10 +1,18 @@
 {
   "release": "2.2.4",
-  "passed": false,
-  "checks": [],
-  "errors": [
-    "browserType.launch: Failed to launch: Error: spawn /workspace/scratch/9a5ec23b7f4b/toolchain/chromium/chrome-headless-shell-linux64/chrome-headless-shell EACCES\nCall log:\n\u001b[2m  - <launching> /workspace/scratch/9a5ec23b7f4b/toolchain/chromium/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --no-sandbox --enable-unsafe-swiftshader --user-data-dir=/tmp/playwright_chromiumdev_profile-4ybpBW --remote-debugging-pipe --no-startup-window\u001b[22m\n\u001b[2m  - [pid=N/A] starting temporary directories cleanup\u001b[22m\n\u001b[2m  - [pid=N/A] finished temporary directories cleanup\u001b[22m\n\n    at /workspace/scratch/9a5ec23b7f4b/LightForge/qa/release-2.2.4/browser.cjs:22:26"
+  "passed": true,
+  "checks": [
+    "Visible cue form generated a matching final FSEQ attack using actual browser workers.",
+    "Undo/Redo restored identical frame checksum.",
+    "Streamed export payload matches the saved frame SHA-256 and contains synchronization review.",
+    "Reload preserved exact compiled frames and musical edits.",
+    "Export after reopening retained the verified synchronization report.",
+    "Workspace tabs support keyboard navigation; musical score zoom is operational.",
+    "320, 393, 768 and 1440 px layouts have no horizontal overflow or duplicate IDs; screenshots retained.",
+    "The source-time score stops drawing when its workspace is offscreen during audio playback.",
+    "First launch, saved-show collection and vehicle guide render without overflow or page errors at phone and desktop sizes."
   ],
+  "errors": [],
   "source_hashes": {
     "qa/release-2.2.4/browser.cjs": "35a30b43a872f308ff3e68f26d4e1d0072165cb654164ecd97f87dee38436550",
     "version.json": "8e8f3a2a335f12fc1090f15074dbe5c6544d75d4b488b83a73b6bbe31b0ea159",
@@ -25,5 +33,5 @@
     "web/engine/sync-review.js": "eb9591060fffa20e2b12de97c6d344b61e06fc276af75817610d4e17095c61d9"
   },
   "scope": "Desktop Chromium with actual WebGL and web workers; simulated Android bridge. No Android device or Tesla.",
-  "completedAt": "2026-09-09T22:20:25.326Z"
+  "completedAt": "2026-09-09T22:21:55.729Z"
 }

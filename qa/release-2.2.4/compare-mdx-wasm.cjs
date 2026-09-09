@@ -10,8 +10,8 @@ const read=name=>{const b=fs.readFileSync(path.join(work,name+'.float32le'));ass
 (async()=>{
  assert.equal(require('os').endianness(),'LE');
  if(phase==='prepare'){
-  const b=fs.readFileSync(root+'/web/demo/glass-castle.wav'),wav=new Wav('host://source');wav.cached=b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength);wav.totalBytes=b.length;await wav.open();
-  const frontend=new M.Frontend(),input=frontend.encode(await wav.stereo44100(-M.constants.TRIM,M.constants.INPUT_LENGTH));write('input-positive',input);
+  const b=fs.readFileSync(path.join(root,process.argv[5])),wav=new Wav('host://source');wav.cached=b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength);wav.totalBytes=b.length;await wav.open();
+  assert.ok(['web/demo/glass-castle.wav','qa/release-1.6.0/fixtures/falcon-mix.wav'].includes(process.argv[5]));assert.ok(Number.isSafeInteger(Number(process.argv[4])));const frontend=new M.Frontend(),input=frontend.encode(await wav.stereo44100(Number(process.argv[4]),M.constants.INPUT_LENGTH));write('input-positive',input);
   const negative=input.map(x=>-x);write('input-negative',negative);return;
  }
  if(phase==='wasm'){

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Bind 2.2.4's fresh native runtime comparison and source-clock evidence.
 
-The old 2.2.2 retention protocol is intentionally not reused: native ORT has
-changed. This gate proves the newly measured host prediction comparison,
-unchanged bundled analysis assets, and a fresh source-clock regression. It
+The native predictor source and Balanced execution path changed, so these
+comparisons are newly executed. This gate binds the measured host predictions,
+the complete current analysis inventory, and a fresh source-clock regression. It
 does not claim a new corpus accuracy benchmark or an ARM64 crash reproduction.
 """
 from pathlib import Path
@@ -13,6 +13,7 @@ import json
 import math
 import os
 import re
+import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -159,7 +160,7 @@ def verify_clock(root, hashes):
     return result
 
 
-MDX_COMPARISON_SHA256 = '6bea12b1fab2ae5589e1338e1c220b04ef4318cb5d8b01b713ac39e4b4c5b843'
+MDX_COMPARISON_SHA256 = '3e8dc72c4f2659ff6404294c92bb77eb773e7bdf8e7043ca5ca5e916e64fa9ef'
 MDX_SOURCES = {
     'version.json', 'android/native-runtime.json',
     'android/src/com/cyberbasslord/lightforge/NativeMdxTask.java',
@@ -167,11 +168,16 @@ MDX_SOURCES = {
     'android/src/com/cyberbasslord/lightforge/NativeDeux.java',
     'web/analysis/dsp.js', 'web/analysis/wav-reader.js',
     'web/analysis/separator-mdx.js', 'web/analysis/models/separator-mdx-model.json',
-    'web/demo/glass-castle.wav', OUT + 'NativeMdxComparisonMain.java',
+    'web/demo/glass-castle.wav', 'qa/release-1.6.0/fixtures/falcon-mix.wav',
+    'qa/release-1.6.0/musdb-fixture-provenance.json', OUT + 'NativeMdxComparisonMain.java',
     OUT + 'compare-mdx-wasm.cjs', OUT + 'compare-native-mdx.py', OUT + 'mdx_numeric.py',
     OUT + 'initial-mdx-absolute-only/compare-native-mdx.py',
     OUT + 'initial-mdx-absolute-only/native-mdx-comparison-verification.json',
     OUT + 'initial-mdx-absolute-only/native-mdx-comparison.log',
+    OUT + 'revised-mdx-first-run/compare-native-mdx.py',
+    OUT + 'revised-mdx-first-run/mdx_numeric.py',
+    OUT + 'revised-mdx-first-run/native-mdx-comparison-verification.json',
+    OUT + 'revised-mdx-first-run/native-mdx-comparison.log',
 }
 
 
@@ -191,7 +197,10 @@ def verify_mdx(root, hashes):
     require(set(result.get('analysis_asset_hashes', {})) == assets, 'MDX comparison asset coverage changed')
     for source, expected in result['analysis_asset_hashes'].items():
         bind(root, source, expected, hashes)
-    require(result.get('start_sample') == -3840 and result.get('sample_rate') == 44100 and
+    inputs = [{'id': 'demo-start', 'source': 'web/demo/glass-castle.wav', 'start_sample': -3840},
+              {'id': 'demo-20s', 'source': 'web/demo/glass-castle.wav', 'start_sample': 878160},
+              {'id': 'falcon-start', 'source': 'qa/release-1.6.0/fixtures/falcon-mix.wav', 'start_sample': -3840}]
+    require(result.get('inputs') == inputs and result.get('sample_rate') == 44100 and
             result.get('spectrum_floats') == 3145728 and result.get('waveform_samples') == 261120,
             'MDX comparison used a different source boundary or geometry')
     require(result.get('native_runtime') == '1.25.1' and result.get('native_runtime_sha256') == NEW_RUNTIME_SHA256 and
@@ -199,32 +208,52 @@ def verify_mdx(root, hashes):
     spectral = {'absolute_tolerance': 1e-4, 'relative_tolerance': 1e-5, 'rmse': 1e-5, 'relative_rmse': 1e-3}
     waveform = {'max_absolute_error': 1e-6, 'rmse': 1e-7, 'relative_rmse': 1e-4}
     require(result.get('thresholds') == {'spectrum': spectral, 'waveform': waveform}, 'MDX comparison thresholds changed')
-    comparisons = result.get('comparisons', [])
-    require(len(comparisons) == 3 and [c.get('output') for c in comparisons] == ['positive', 'negative', 'waveform'],
-            'MDX comparison output coverage changed')
-    for item, count in zip(comparisons, [3145728, 3145728, 261120]):
-        require(item.get('samples') == count and item.get('finite') is True, 'MDX output incomplete or nonfinite')
-        limits = waveform if item['output'] == 'waveform' else {'rmse': spectral['rmse'], 'relative_rmse': spectral['relative_rmse']}
-        require(item.get('within_thresholds') is True and finite_number(item.get('max_absolute_error')) and item['max_absolute_error'] >= 0, 'MDX output comparison failed')
-        if item['output'] != 'waveform':
-            require(item.get('coefficient_violations') == 0 and finite_number(item.get('maximum_scaled_error')) and 0 <= item['maximum_scaled_error'] <= 1, 'MDX coefficient comparison failed')
-        for metric, limit in limits.items():
-            value = item.get(metric)
-            require(finite_number(value) and 0 <= value <= limit, 'MDX numerical threshold failed: ' + metric)
-    runs = result.get('runs', {})
-    require(set(runs) == {'native', 'wasm'}, 'MDX runtime run coverage changed')
-    for runtime, version in [('native', '1.25.1'), ('wasm', '1.20.1')]:
-        require([r.get('polarity') for r in runs[runtime]] == ['positive', 'negative'], 'MDX polarity coverage changed')
-        for run in runs[runtime]:
-            require(run.get('runtime') == version and finite_number(run.get('seconds')) and run['seconds'] > 0,
-                    'MDX runtime metrics are invalid')
-    outputs = result.get('output_hashes', {})
-    expected_outputs = {runtime + '-' + kind + '.float32le': count * 4
-        for runtime in ['native', 'wasm'] for kind, count in [('positive', 3145728), ('negative', 3145728), ('waveform', 261120)]}
-    require(set(outputs) == set(expected_outputs), 'MDX output digest coverage changed')
-    for name, count in expected_outputs.items():
-        require(outputs[name].get('bytes') == count and re.fullmatch(r'[0-9a-f]{64}', outputs[name].get('sha256', '')),
-                'MDX output digest metadata invalid')
+    passages = result.get('passages', [])
+    require(len(passages) == 3, 'MDX comparison passage coverage changed')
+    for passage, expected_input in zip(passages, inputs):
+        require(all(passage.get(k) == v for k, v in expected_input.items()) and passage.get('source_sha256') == hashes[expected_input['source']], 'MDX comparison input binding changed')
+        comparisons = passage.get('comparisons', [])
+        require(len(comparisons) == 3 and [c.get('output') for c in comparisons] == ['positive', 'negative', 'waveform'],
+                'MDX comparison output coverage changed')
+        for item, count in zip(comparisons, [3145728, 3145728, 261120]):
+            require(item.get('samples') == count and item.get('finite') is True, 'MDX output incomplete or nonfinite')
+            for metric in ['max_absolute_error', 'rmse', 'reference_rms', 'relative_rmse']:
+                require(finite_number(item.get(metric)) and item[metric] >= 0, 'MDX numerical metric invalid: ' + metric)
+            if item['output'] == 'waveform':
+                require(item.get('within_thresholds') is True, 'MDX decoded waveform comparison failed')
+                for metric, limit in waveform.items():
+                    require(item[metric] <= limit, 'MDX decoded waveform threshold failed: ' + metric)
+            else:
+                violations = item.get('coefficient_violations')
+                scaled = item.get('maximum_scaled_error')
+                require(type(violations) is int and 0 <= violations <= count and finite_number(scaled) and scaled >= 0, 'MDX coefficient diagnostic invalid')
+                require((violations == 0) == (scaled <= 1), 'MDX coefficient diagnostic conflicts with its count')
+                diagnostic_pass = violations == 0 and item['rmse'] <= spectral['rmse'] and item['relative_rmse'] <= spectral['relative_rmse']
+                require(item.get('within_thresholds') is diagnostic_pass, 'MDX spectral diagnostic was relabeled')
+        runs = passage.get('runs', {})
+        require(set(runs) == {'native', 'wasm'}, 'MDX runtime run coverage changed')
+        for runtime, version in [('native', '1.25.1'), ('wasm', '1.20.1')]:
+            require([r.get('polarity') for r in runs[runtime]] == ['positive', 'negative'], 'MDX polarity coverage changed')
+            for run in runs[runtime]:
+                require(run.get('runtime') == version and finite_number(run.get('seconds')) and run['seconds'] > 0,
+                        'MDX runtime metrics are invalid')
+        outputs = passage.get('output_hashes', {})
+        expected_outputs = {runtime + '-' + kind + '.float32le': count * 4
+            for runtime in ['native', 'wasm'] for kind, count in [('positive', 3145728), ('negative', 3145728), ('waveform', 261120)]}
+        require(set(outputs) == set(expected_outputs), 'MDX output digest coverage changed')
+        for name, count in expected_outputs.items():
+            require(outputs[name].get('bytes') == count and re.fullmatch(r'[0-9a-f]{64}', outputs[name].get('sha256', '')),
+                    'MDX output digest metadata invalid')
+    require(result.get('decoded_waveform_passed') is True, 'MDX decoded waveform qualification missing')
+    spectral_pass = all(c['within_thresholds'] for p in passages for c in p['comparisons'] if c['output'] != 'waveform')
+    require(result.get('spectral_diagnostic_passed') is spectral_pass, 'MDX aggregate spectral diagnostic was relabeled')
+    revision = result.get('protocol_revision', {})
+    require(revision.get('revision') == 3 and revision.get('after_prior_failures') is True, 'MDX protocol revision disclosure missing')
+    require(revision.get('prior_revised_failure_path') == OUT + 'revised-mdx-first-run/native-mdx-comparison-verification.json', 'Revised MDX failure provenance missing')
+    previous_path = bind(root, revision['prior_revised_failure_path'], revision.get('prior_revised_failure_sha256'), hashes)
+    previous = json.loads(previous_path.read_text())
+    require(previous.get('passed') is False and previous['thresholds'] == result['thresholds'], 'Earlier MDX diagnostic failure was relabeled or tolerances changed')
+    require(digest(file(root, OUT + 'revised-mdx-first-run/compare-native-mdx.py')) == previous['source_hashes'][OUT + 'compare-native-mdx.py'], 'Earlier MDX comparator differs from its measured source')
     review = result.get('criterion_review', {})
     require(review.get('initial_failure_path') == OUT + 'initial-mdx-absolute-only/native-mdx-comparison-verification.json', 'Initial MDX criterion failure provenance missing')
     initial_path = bind(root, review['initial_failure_path'], review.get('initial_failure_sha256'), hashes)
@@ -233,6 +262,85 @@ def verify_mdx(root, hashes):
     require(review.get('initial_comparator_path') == OUT + 'initial-mdx-absolute-only/compare-native-mdx.py', 'Initial MDX comparator provenance missing')
     require(review.get('initial_comparator_sha256') == initial['source_hashes'][OUT + 'compare-native-mdx.py'], 'Initial MDX comparator differs from the failed measurement')
     bind(root, review['initial_comparator_path'], review.get('initial_comparator_sha256'), hashes)
+    return result
+
+
+
+DOWNSTREAM_SHA256 = '8742d94afae00533041e8bac86ce53bfb05c7df695eb5a864b5f32169a221468'
+DOWNSTREAM_SOURCES = {
+    'version.json', OUT + 'verify-mdx-downstream.cjs', OUT + 'mdx-downstream-compare.cjs',
+    'tests/mdx-downstream-compare.test.cjs', 'web/analysis/vocal.js',
+    'web/analysis/vocal-detail.js', 'web/analysis/game.js', 'web/analysis/dsp.js',
+    'web/analysis/stem-cache.js', 'web/analysis/wav-reader.js', 'web/analysis/separator-mdx.js',
+    'web/analysis/worker.js', 'web/analysis/models/features.json',
+    'web/analysis/models/vocal-model.json', 'web/analysis/models/vocal-frontend.json',
+    'web/analysis/models/game/manifest.json', 'web/analysis/models/separator-mdx-model.json',
+    'web/demo/glass-castle.wav',
+}
+
+
+def verify_downstream(root, hashes, mdx):
+    relative = OUT + 'native-mdx-downstream-verification.json'
+    path = bind(root, relative, DOWNSTREAM_SHA256, hashes)
+    result = json.loads(path.read_text())
+    require(result.get('release') == '2.2.4' and result.get('passed') is True and not result.get('errors'),
+            'Mandatory paired downstream GAME and vocal-feature verification did not pass')
+    require(set(result.get('source_hashes', {})) == DOWNSTREAM_SOURCES,
+            'Downstream verification source coverage changed')
+    for source, expected in result['source_hashes'].items():
+        bind(root, source, expected, hashes)
+    game = json.loads(file(root, 'web/analysis/models/game/manifest.json').read_text())
+    vocal = json.loads(file(root, 'web/analysis/models/vocal-model.json').read_text())
+    assets = {'web/analysis/models/game/' + name for name in game['files']} | {
+        'web/analysis/models/' + vocal['file']} | {
+        p.relative_to(root).as_posix() for p in (root / 'web/analysis/vendor').glob('*') if p.is_file()}
+    require(set(result.get('analysis_asset_hashes', {})) == assets, 'Downstream model/runtime asset coverage changed')
+    for source, expected in result['analysis_asset_hashes'].items():
+        bind(root, source, expected, hashes)
+    fixture = {'id': 'demo-20s', 'source': 'web/demo/glass-castle.wav',
+        'sourceSha256': hashes['web/demo/glass-castle.wav'], 'contextReadStart': 878160,
+        'contextReadSamples': 261120, 'coreStart': 882000, 'coreSamples': 253440, 'sampleRate': 44100}
+    require(result.get('fixture') == fixture, 'Downstream fixture/source-clock coverage changed')
+    measured = next(p for p in mdx['passages'] if p['id'] == fixture['id'])
+    require(set(result.get('inputs', {})) == {'native', 'wasm'} and set(result.get('runs', {})) == {'native', 'wasm'},
+            'Downstream paired-runtime coverage changed')
+    outputs = []
+    for runtime in ['native', 'wasm']:
+        name = runtime + '-waveform.float32le'
+        require(result['inputs'][runtime] == {'file': name, **measured['output_hashes'][name]},
+                'Downstream input is not the measured production MDX waveform')
+        run = result['runs'][runtime]
+        require(run.get('runtime') == '1.20.1', 'Downstream runtime identity changed')
+        expected_clock = {'fixture': 'demo-20s', 'source': fixture['source'], 'coreStartSample': 882000,
+            'coreSamples': 253440, 'sampleRate': 44100, 'contextReadStart': 878160, 'contextReadSamples': 261120}
+        require(run.get('sourceClock') == expected_clock, 'Downstream retained output changed source clock')
+        expected_executions = {'segmenter': 8, 'encoder': 1, 'dur2bd': 1, 'bd2dur': 1, 'estimator': 1, 'frameMn10': 1}
+        require(run.get('executions') == expected_executions, 'Downstream did not execute every required graph step')
+        require(bool(run.get('loadedModels')), 'Downstream model execution inventory missing')
+        for source, expected in run['loadedModels'].items():
+            require(source in assets and result['analysis_asset_hashes'][source] == expected,
+                    'Downstream executed an unbound model')
+        output = run.get('output', {})
+        filename = OUT + 'native-mdx-downstream-' + runtime + '.json'
+        measured_output = bind(root, filename, output.get('sha256'), hashes)
+        require(type(output.get('bytes')) is int and output['bytes'] > 0 and measured_output.stat().st_size == output['bytes'],
+                'Downstream measured output byte count changed')
+        details = json.loads(measured_output.read_text())
+        require(details.get('waveformSha256') == result['inputs'][runtime]['sha256'] and
+                details.get('executions') == run['executions'] and details.get('loadedModels') == run['loadedModels'] and
+                details.get('samples44100') == 253440 and details.get('samples22050') == 126720,
+                'Downstream output provenance or sample geometry changed')
+        outputs.append(measured_output)
+    # Recompute the full fixed comparison from exact retained model outputs.
+    # This validates all categorical decisions, notes, arrays, tolerances,
+    # nonempty singing coverage and eight-step execution without rerunning ORT.
+    script = "const fs=require('fs');const {compare,thresholds}=require(process.argv[1]);const read=p=>{const {waveformSha256,...value}=JSON.parse(fs.readFileSync(p));return value;};process.stdout.write(JSON.stringify({comparison:compare(read(process.argv[2]),read(process.argv[3])),thresholds}));"
+    verification = json.loads(subprocess.check_output(['node', '-e', script,
+        str(file(root, OUT + 'mdx-downstream-compare.cjs')), *map(str, outputs)], cwd=root, text=True))
+    require(verification['comparison'].get('passed') is True and not verification['comparison'].get('errors'),
+            'Retained downstream outputs fail the full fixed comparison')
+    require(result.get('comparison') == verification['comparison'] and result.get('thresholds') == verification['thresholds'],
+            'Downstream receipt differs from recomputed output metrics, coverage or fixed thresholds')
     return result
 
 
@@ -246,6 +354,7 @@ def verify_release(root=ROOT):
     assets = verify_assets(root, hashes)
     clock = verify_clock(root, hashes)
     mdx = verify_mdx(root, hashes)
+    downstream = verify_downstream(root, hashes, mdx)
     hashes[OUT + 'verify-analysis.py'] = digest(file(root, OUT + 'verify-analysis.py'))
     for relative, expected in {**hashes, **assets}.items():
         require(digest(file(root, relative)) == expected, 'Source changed during analysis verification: ' + relative)
@@ -260,15 +369,17 @@ def verify_release(root=ROOT):
             'Pinned fresh host evidence compares actually loaded ONNX Runtime 1.23.2 and 1.25.1 using identical production predictor code, original unquantized models, source audio, and startSample=-66150.',
             'Both runtime runs completed two finite 573300-sample stems and satisfy the predeclared absolute and relative numerical thresholds; exact differences are recorded in the bound comparison.',
             'Every source bound by the fresh host comparison remains byte-identical; the current native runtime manifest matches the measured 1.25.1 dependency.',
-            'All 73 analysis assets match the unchanged reviewed inventory, including all 27 Deux graphs and every GAME graph.',
+            'All 73 analysis assets match the current reviewed inventory, including all 27 Deux graphs and every GAME graph.',
             'Fresh 2.2.4 source-clock execution preserves all 932143 samples across four overlapping windows, including the final odd sample.',
-            'Fresh production NativeMdxTask and the bundled CPU WASM runtime use the same MDX graph, full input spectrum and both polarity passes; native transfer and output bytes are checked before waveform comparison.',
+            'Fresh production NativeMdxTask and bundled CPU WASM compare three fixed inputs with unchanged graph weights and both polarity passes. Strict decoded waveform equivalence is mandatory; internal spectral diagnostics retain any failed coefficient comparisons, with protocol revision history preserved.',
+            'The same measured demo-20s waveforms pass separately executed production resampling, voice classification, vocal features and all eight GAME transcription steps; the complete retained downstream outputs are re-compared, including nonempty singing coverage and categorical decisions.',
             'Current full-browser inference, Android background lifecycle and native-crash fallback tests are separate mandatory release gates.'
         ],
         'fresh_native_runtime_comparison': {'path': OUT + 'native-runtime-comparison-verification.json',
             'sha256': COMPARISON_SHA256, 'runs': comparison['runs'], 'comparison': comparison['comparison'],
             'scope': comparison['scope']},
-        'fresh_native_mdx_comparison': {'path': OUT + 'native-mdx-comparison-verification.json', 'sha256': hashes[OUT + 'native-mdx-comparison-verification.json'], 'comparisons': mdx['comparisons'], 'scope': mdx['scope']},
+        'fresh_native_mdx_comparison': {'path': OUT + 'native-mdx-comparison-verification.json', 'sha256': hashes[OUT + 'native-mdx-comparison-verification.json'], 'passages': mdx['passages'], 'scope': mdx['scope'], 'decoded_waveform_passed': mdx['decoded_waveform_passed'], 'spectral_diagnostic_passed': mdx['spectral_diagnostic_passed'], 'protocol_revision': mdx['protocol_revision']},
+        'fresh_native_mdx_downstream': {'path': OUT + 'native-mdx-downstream-verification.json', 'sha256': hashes[OUT + 'native-mdx-downstream-verification.json'], 'scope': downstream.get('scope'), 'fixture': downstream['fixture'], 'coverage': downstream['comparison']['coverage'], 'thresholds': downstream['thresholds']},
         'fresh_source_clock': {'path': OUT + 'source-clock-verification.json',
             'sha256': hashes[OUT + 'source-clock-verification.json'], 'samples': clock['samples'],
             'chunks': clock['chunks'], 'maxAbsError': clock['maxAbsError'], 'scope': clock.get('scope')},

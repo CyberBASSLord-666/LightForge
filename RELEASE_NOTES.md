@@ -1,6 +1,6 @@
 # LightForge 2.2.4
 
-Release candidate: Android build, original-certificate signing and physical-device confirmation must finish before publication.
+Release candidate: original-certificate APK build and host/browser checks pass. Current Android lifecycle and final package gates must finish before publication. Physical-phone and Tesla validation remain unperformed.
 
 This update targets the two long-run failure modes in the supplied diagnostics: renderer memory growth during Balanced MDX/GAME work and a native Studio crash that can leave a partial job. It keeps the learned weights, sample clock, model geometry and quality settings unchanged.
 
@@ -14,7 +14,9 @@ This update targets the two long-run failure modes in the supplied diagnostics: 
 
 ## Validation scope
 
-The current source passes the asset manifest check, JavaScript syntax checks, targeted native-bridge/separator runtime tests and the portable Python regression suites available in this workspace. The Android SDK/ONNX AAR and a physical phone are not available here, so Android compilation, APK signing, long-song timing, thermals and the supplied Samsung crash remain release gates rather than unverified claims.
+The original-signed APK passes version, certificate, ZIP, asset and alignment checks. Production Android Java and both instrumentation suites compile. Current host regressions, cancellation/crash-lease tests, responsive Chromium UI and the real browser analysis pipeline pass. Fresh Studio outputs are bit-identical across the two compared native runtime versions on the reference passage.
+
+Balanced native MDX passed three decoded-audio comparisons and an actual paired singing-note comparison with 16 sung notes. The initial absolute-only and revised relative spectral checks failed on a few coefficients; those records are retained and are not relabeled as passing spectral parity. See `qa/release-2.2.4/NUMERICAL_QUALIFICATION.md` for the revised output-domain contract and its scope. Android screen-off execution, sustained-phone memory/thermals and the supplied Samsung crash require their separate checks.
 
 ---
 
