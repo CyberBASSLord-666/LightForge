@@ -1,0 +1,7 @@
+{
+  "release": "2.2.4",
+  "passed": false,
+  "errors": [
+    "Fresh production MDX numerical comparison did not pass"
+  ]
+}

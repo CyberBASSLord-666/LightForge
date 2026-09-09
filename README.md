@@ -1,4 +1,8 @@
-# LightForge 2.2.2 — troubleshooting logs and renderer recovery
+# LightForge 2.2.4 — bounded long-run analysis
+
+Current source is the 2.2.4 release candidate. It bounds long Balanced runs, adds an optional guarded native MDX path, saves stage checkpoints promptly and keeps renderer recovery resumable. The original signed 2.2.2 update remains the last published install until 2.2.4's Android build, signing and device gates finish.
+
+Balanced native acceleration is optional: it validates the exact bundled MDX graph and streams bounded Float32 chunks to Android. Any unavailable runtime, native failure or malformed output returns to the quality-checked WebAssembly separator; no model, sample-clock or decoder downgrade is hidden from the result.
 
 Current source: **2.2.3 release candidate**, with ARM native-runtime compatibility and richer native crash traces. The published installable version remains [2.2.2](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.2.2) while update validation and signing finish. See [release notes](RELEASE_NOTES.md).
 

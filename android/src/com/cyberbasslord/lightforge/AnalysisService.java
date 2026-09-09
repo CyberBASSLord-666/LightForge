@@ -26,6 +26,7 @@ public final class AnalysisService extends Service {
     private long lastProgress;
     private long lastDiagnosticProgress;
     private volatile NativePassageTask nativePassage;
+    private volatile NativeMdxTask nativeMdx;
 
     static boolean alive(){return instance!=null&&!instance.stopped;}
     static void recoverIfStopped(Context context) throws Exception {
@@ -60,6 +61,22 @@ public final class AnalysisService extends Service {
     private void startEngine(JSONObject job) throws Exception {
         nativePassage=new NativePassageTask(this,new File(AnalysisJobStore.project(getFilesDir(),job.getString("projectId")),"audio.wav"),jobId);
         final NativePassageTask ownedPassage=nativePassage;
+        NativeMdxTask mdx=null;
+        // The status record intentionally contains only bounded notification
+        // fields. Read the frozen request to select the accelerator; never
+        // infer quality from a mutable UI object.
+        JSONObject request=AnalysisJobStore.request(getFilesDir(),job.getString("id"));
+        JSONObject requestSettings=request.optJSONObject("settings");
+        boolean balanced=requestSettings!=null&&"balanced".equals(requestSettings.optString("analysisQuality"));
+        if(balanced)try{mdx=new NativeMdxTask(this,jobId);}catch(Exception error){
+            // Balanced analysis remains fully functional on devices where the
+            // optional native MDX graph cannot be prepared; the worker falls
+            // back to its quality-checked WebAssembly path. Precision Studio
+            // never pays the setup cost for an accelerator it cannot use.
+            AppDiagnostics.record(this,"native-mdx-compatibility",error);
+        }
+        nativeMdx=mdx;
+        final NativeMdxTask ownedMdx=mdx;
         final String ownedJobId=jobId;
         engine=new WebView(getApplicationContext());
         WebSettings settings=engine.getSettings();settings.setJavaScriptEnabled(true);settings.setDomStorageEnabled(true);
@@ -68,7 +85,7 @@ public final class AnalysisService extends Service {
         // Keep the out-of-process WASM renderer protected while the service runs,
         // including when no Activity is visible. No screen-on flag or fake media.
         engine.setRendererPriorityPolicy(WebView.RENDERER_PRIORITY_IMPORTANT,false);
-        engine.addJavascriptInterface(new JobBridge(ownedJobId,ownedPassage),"BackgroundJob");
+        engine.addJavascriptInterface(new JobBridge(ownedJobId,ownedPassage,ownedMdx),"BackgroundJob");
         engine.setWebChromeClient(new WebChromeClient(){
             @Override public boolean onConsoleMessage(ConsoleMessage message){
                 if(message.messageLevel()==ConsoleMessage.MessageLevel.ERROR||message.messageLevel()==ConsoleMessage.MessageLevel.WARNING)
@@ -86,6 +103,16 @@ public final class AnalysisService extends Service {
                         if(stopped||!ownedJobId.equals(jobId))throw new IOException("Native analysis stopped.");
                         String token=nativePath.substring("/background/native/".length(),nativePath.length()-4);
                         File result=ownedPassage.result(token);
+                        String range=null;for(java.util.Map.Entry<String,String> entry:request.getRequestHeaders().entrySet())if("Range".equalsIgnoreCase(entry.getKey()))range=entry.getValue();
+                        WebViewFileTransport.Response data=WebViewFileTransport.open(result,range);
+                        return AppResources.response(data.status,data.reason,"application/octet-stream",data.body,data.length,data.contentRange);
+                    }catch(Exception error){return AppResources.response(404,"Not Found","text/plain",new ByteArrayInputStream(new byte[0]),0,null);}
+                }
+                if("https".equals(uri.getScheme())&&"appassets.androidplatform.net".equals(uri.getHost())&&nativePath!=null&&nativePath.matches("/background/native-mdx/[a-f0-9-]{36}\\.bin")){
+                    try{
+                        if(ownedMdx==null||stopped||!ownedJobId.equals(jobId))throw new IOException("Native analysis stopped.");
+                        String token=nativePath.substring("/background/native-mdx/".length(),nativePath.length()-4);
+                        File result=ownedMdx.result(ownedJobId,token);
                         String range=null;for(java.util.Map.Entry<String,String> entry:request.getRequestHeaders().entrySet())if("Range".equalsIgnoreCase(entry.getKey()))range=entry.getValue();
                         WebViewFileTransport.Response data=WebViewFileTransport.open(result,range);
                         return AppResources.response(data.status,data.reason,"application/octet-stream",data.body,data.length,data.contentRange);
@@ -115,7 +142,8 @@ public final class AnalysisService extends Service {
     public final class JobBridge {
         private final String ownerJobId;
         private final NativePassageTask ownerTask;
-        JobBridge(String ownerJobId,NativePassageTask ownerTask){this.ownerJobId=ownerJobId;this.ownerTask=ownerTask;}
+        private final NativeMdxTask ownerMdx;
+        JobBridge(String ownerJobId,NativePassageTask ownerTask,NativeMdxTask ownerMdx){this.ownerJobId=ownerJobId;this.ownerTask=ownerTask;this.ownerMdx=ownerMdx;}
         private boolean owns(String id){return !stopped&&ownerJobId.equals(id)&&ownerJobId.equals(jobId);}
         @JavascriptInterface public void logDiagnostic(String level,String source,String message){if(owns(ownerJobId))AppDiagnostics.log(AnalysisService.this,level,source,message);}
         @JavascriptInterface public String nativeDeuxAvailability(String id){
@@ -133,6 +161,31 @@ public final class AnalysisService extends Service {
         @JavascriptInterface public void nativeDeuxCancel(String id,String token){if(owns(id))ownerTask.cancel(token);}
         @JavascriptInterface public String nativeDeuxRelease(String id){
             try{if(!owns(id))throw new IOException("Native analysis job is no longer active.");ownerTask.releaseIdle();return "{}";}
+            catch(Exception error){return bridgeError(error);}
+        }
+        @JavascriptInterface public String nativeMdxAvailability(String id){
+            try{if(ownerMdx==null||!owns(id))throw new IOException("Native balanced analysis is unavailable.");return ownerMdx.availability(id);}
+            catch(Exception error){AppDiagnostics.record(AnalysisService.this,"native-mdx-compatibility",error);return bridgeError(error);}
+        }
+        @JavascriptInterface public String nativeMdxBegin(String id,long bytes){
+            try{if(ownerMdx==null||!owns(id))throw new IOException("Native balanced analysis is unavailable.");return ownerMdx.begin(id,bytes);}
+            catch(Exception error){AppDiagnostics.record(AnalysisService.this,"native-mdx-begin",error);return bridgeError(error);}
+        }
+        @JavascriptInterface public String nativeMdxAppend(String id,String token,String chunk){
+            try{if(ownerMdx==null||!owns(id))throw new IOException("Native balanced analysis is unavailable.");return ownerMdx.append(id,token,chunk);}
+            catch(Exception error){AppDiagnostics.record(AnalysisService.this,"native-mdx-append",error);return bridgeError(error);}
+        }
+        @JavascriptInterface public String nativeMdxRun(String id,String token){
+            try{if(ownerMdx==null||!owns(id))throw new IOException("Native balanced analysis is unavailable.");return ownerMdx.run(id,token);}
+            catch(Exception error){AppDiagnostics.record(AnalysisService.this,"native-mdx-run",error);return bridgeError(error);}
+        }
+        @JavascriptInterface public String nativeMdxStatus(String id,String token){
+            try{if(ownerMdx==null||!owns(id))throw new IOException("Native balanced analysis is unavailable.");return ownerMdx.status(id,token);}
+            catch(Exception error){return bridgeError(error);}
+        }
+        @JavascriptInterface public void nativeMdxCancel(String id,String token){if(ownerMdx!=null&&owns(id))ownerMdx.cancel(id,token);}
+        @JavascriptInterface public String nativeMdxRelease(String id){
+            try{if(ownerMdx==null||!owns(id))throw new IOException("Native balanced analysis is unavailable.");return ownerMdx.releaseIdle(id);}
             catch(Exception error){return bridgeError(error);}
         }
         @JavascriptInterface public void progress(String id,double value,String stage){
@@ -194,6 +247,8 @@ public final class AnalysisService extends Service {
         AppDiagnostics.log(this,"INFO","analysis-shutdown","job="+jobId+"; state="+(job==null?"unknown":job.optString("state")));
         NativePassageTask previousTask=nativePassage;nativePassage=null;
         try{if(previousTask!=null)previousTask.close();}catch(RuntimeException error){AppDiagnostics.record(this,"native-shutdown",error);}
+        NativeMdxTask previousMdx=nativeMdx;nativeMdx=null;
+        try{if(previousMdx!=null)previousMdx.close();}catch(RuntimeException error){AppDiagnostics.record(this,"native-mdx-shutdown",error);}
         WebView previous=engine;engine=null;releaseEngine(previous);
         try{if(wakeLock!=null&&wakeLock.isHeld())wakeLock.release();}catch(RuntimeException error){AppDiagnostics.record(this,"wake-lock-release",error);}finally{wakeLock=null;}
         stopForeground(STOP_FOREGROUND_REMOVE);signal();

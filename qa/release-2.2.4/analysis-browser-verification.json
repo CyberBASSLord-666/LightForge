@@ -1,0 +1,31 @@
+{
+  "release": "2.2.4",
+  "passed": false,
+  "errors": [
+    "browserType.launch: Failed to launch: Error: spawn /workspace/scratch/9a5ec23b7f4b/toolchain/chromium/chrome-headless-shell-linux64/chrome-headless-shell EACCES\nCall log:\n\u001b[2m  - <launching> /workspace/scratch/9a5ec23b7f4b/toolchain/chromium/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --no-sandbox --enable-unsafe-swiftshader --user-data-dir=/tmp/playwright_chromiumdev_profile-oLk5cR --remote-debugging-pipe --no-startup-window\u001b[22m\n\u001b[2m  - [pid=N/A] starting temporary directories cleanup\u001b[22m\n\u001b[2m  - [pid=N/A] finished temporary directories cleanup\u001b[22m\n\n    at /workspace/scratch/9a5ec23b7f4b/LightForge/qa/release-2.2.4/analysis-browser.cjs:19:26"
+  ],
+  "checks": [],
+  "source_hashes": {
+    "qa/release-2.2.4/analysis-browser.cjs": "a034fba11871871178c793f7ee40c34283e13edb888a1643c18ff4b76a2d398a",
+    "version.json": "8e8f3a2a335f12fc1090f15074dbe5c6544d75d4b488b83a73b6bbe31b0ea159",
+    "web/analysis/ASSET_MANIFEST.json": "f47b2bf093ca3f7f41f385f4bae6f6789f442ab99c5da3ad5eb87742d211e412",
+    "web/analysis/worker.js": "9759877dc65a969927f2dbfcddc1b44dc16a0ff747cc5fa8f7ff97cd1624d062",
+    "web/analysis/analyzer.js": "5f1354c290d5b2b3bc152b80b66fa315f70504019ee3294370901e28d2eaf19a",
+    "web/analysis/game.js": "28c3e824be79c6e5cab3a2522a2b75c769741b69ad6778b45033b292cbdf05e3",
+    "web/analysis/separator-deux.js": "95508ddb8cffc7dff6e47b849f7722efd1c901fbacb2c059be392444f872aebe",
+    "web/analysis/stem-cache.js": "21633cd9e217ecca6e55b9fa04983512e651ddc9a7b9027af13580845ff4fe82",
+    "web/analysis/work-store.js": "b6e6a251478ed727cee145418a61b1b7f1755076e0797f0a5a29ecedc4ce8f41",
+    "web/analysis/vocal.js": "94483ac6cf5db7532abfba98e7bab7cd826a82ad2adca0296d39fdebd827ac70",
+    "web/analysis/vocal-detail.js": "cd760d7a766d9a4ab0ac3a252a10f17a16a797b38e50b2d6712bc6adcd42713f",
+    "web/analysis/bass-notes.js": "5b81e2361295a1f8c02086d4668464ed1d7e93c923513c50a2c865a7aeb1531e",
+    "web/analysis/models/game/manifest.json": "51e172cfaa967d9e2518f01f508a64d49cd283d23ae8e8456af9c6e76eeb4f97",
+    "web/analysis/models/deux/manifest.json": "c1cb548d8d02a8b947d66fd8ac672559ea175ac4462109acccba13220b788245",
+    "web/engine/show-engine.js": "d09cfcdf1e1eebf36d3e03bfd40a3939dcc0fd18a4437047217511a258674548",
+    "web/engine/light-planner.js": "970c7a2a736560bf01e318b8180b431863e09e6e28daad4525ec583a70a73aeb",
+    "web/engine/music-cues.js": "1a87eea0502da2e1f19d2361a5646c127121211e91128017ce747b7f0d2f61d6",
+    "web/engine/sync-review.js": "eb9591060fffa20e2b12de97c6d344b61e06fc276af75817610d4e17095c61d9",
+    "web/engine/worker.js": "2be432291b31721734ae69e715c05ba11270c3a8a91fe89b049ee9fe51e55726"
+  },
+  "scope": "Actual Chromium public MusicAnalyzer with production Deux, GAME Large, Beat This and Frame-MN10. Test controls and original-stem reference scoring are independent of model inputs. No physical Android or Tesla.",
+  "completedAt": "2026-09-09T22:20:25.304Z"
+}

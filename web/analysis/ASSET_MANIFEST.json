@@ -4,8 +4,8 @@
     "sha256": "a85c96a436aeae58bfce714cdadf315583de5c0261d3fba5018238915eca85a6"
   },
   "analyzer.js": {
-    "bytes": 6600,
-    "sha256": "4cc766458c07ef33e3d6bd1185f18e946ca5a173c7c59edb175c01f3db03a234"
+    "bytes": 8455,
+    "sha256": "5f1354c290d5b2b3bc152b80b66fa315f70504019ee3294370901e28d2eaf19a"
   },
   "bass-notes.js": {
     "bytes": 14748,
@@ -16,8 +16,8 @@
     "sha256": "32186b9268632cab85cadcb7e84fa1b4e3d8eb4bb9fbdf96a0873067cb9acd71"
   },
   "game.js": {
-    "bytes": 9553,
-    "sha256": "f8ffe28801c81df19e09d883626ecd4fe5870c50d299f362367ba88dbecb6b48"
+    "bytes": 10103,
+    "sha256": "28c3e824be79c6e5cab3a2522a2b75c769741b69ad6778b45033b292cbdf05e3"
   },
   "models/BeatNet-LICENSE.txt": {
     "bytes": 18650,
@@ -248,8 +248,8 @@
     "sha256": "95508ddb8cffc7dff6e47b849f7722efd1c901fbacb2c059be392444f872aebe"
   },
   "separator-mdx.js": {
-    "bytes": 8852,
-    "sha256": "b291f141626f0c205f40eb03d007168863642c9e3bcbf535372b3b4eee5c0a99"
+    "bytes": 11173,
+    "sha256": "accc7aead92f045da9faf7a08019af757c73042850dd2fccc0e923f7d20043a1"
   },
   "stem-cache.js": {
     "bytes": 10946,
@@ -288,7 +288,7 @@
     "sha256": "b6e6a251478ed727cee145418a61b1b7f1755076e0797f0a5a29ecedc4ce8f41"
   },
   "worker.js": {
-    "bytes": 14932,
-    "sha256": "ec0b42a5cb80da756a9a6492dffc6d6d787c6d8ff10079c8808a031abb0bf591"
+    "bytes": 16624,
+    "sha256": "9759877dc65a969927f2dbfcddc1b44dc16a0ff747cc5fa8f7ff97cd1624d062"
   }
 }

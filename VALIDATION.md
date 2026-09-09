@@ -1,4 +1,19 @@
-# LightForge 2.2.2 validation
+# LightForge 2.2.4 validation
+
+The 2.2.4 implementation addresses renderer memory growth and resumability observed in the supplied diagnostics while preserving the pinned models and sample clock. Source-level checks available in this workspace pass: 73 analysis assets match their manifest, all web JavaScript files parse, the targeted native MDX/separator tests pass, and 58 portable Python tests pass when the intentionally historical 2.2.2 adapter-retention test is excluded. Android SDK/ONNX runtime artifacts and a physical phone are unavailable here; APK compilation/signing, long-song timing, thermals and confirmation on the supplied Samsung remain mandatory release gates.
+
+| 2.2.4 source check | Scope |
+| --- | --- |
+| Asset and syntax integrity | `tools/verify_analysis_assets.py`, `node --check` over the web tree |
+| Native/renderer behavior | Targeted bridge, separator-runtime, NativeDeux, recovery, GAME and transport suites; no Android device execution |
+| Portable archive regressions | 58 Python tests; historical 2.2.2 retention evidence is not relabeled as a current test |
+| Android and physical validation | Pending: SDK/ORT AAR compilation, signed APK/package gates, screen-off/resume run, long-song memory/thermal timing and device confirmation |
+
+The retained 2.2.2 and 2.2.1 sections below describe their original evidence and are not promoted to 2.2.4 results.
+
+---
+
+# Historical LightForge 2.2.2 validation
 
 Version 2.2.2 / code 20202 adds local diagnostic collection, Downloads export and guarded renderer recovery. All seven release gates pass against source `b0657fabbfec2a0c6482c2d6581179f604c4c010`. Evidence is in `qa/release-2.2.2/`. The complete [production verification run, attempt 2](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34179649874/attempts/2) passed both the verification and Android jobs, including background lifecycle and diagnostic export. The [focused Android diagnostics run](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34179649940) also passed on the same source. Historical numerical kernel evidence is explicitly retained below; it is not promoted to a fresh neural benchmark.
 

@@ -15,6 +15,10 @@ public final class BackgroundInstrumentation extends Instrumentation {
     private File files;
     private MainActivity activity;
     private boolean checkedNativeStageRelease;
+    private volatile boolean balancedObserverStopped,checkedBalancedStageRelease,observedBalancedNativeRun;
+    private volatile Throwable balancedObservationFailure;
+    private volatile int balancedPassesAtRelease;
+    private Thread balancedObserver;
     private final long testStarted=SystemClock.elapsedRealtime();
     private long phaseStarted=testStarted,lastSnapshot;
     private volatile String currentPhase="starting";
@@ -114,6 +118,7 @@ public final class BackgroundInstrumentation extends Instrumentation {
         long until=SystemClock.elapsedRealtime()+timeout;
         while(SystemClock.elapsedRealtime()<until){
             snapshot(false);
+            if(balancedObservationFailure!=null)throw new AssertionError("Balanced live lifecycle observation failed",balancedObservationFailure);
             JSONObject job=AnalysisJobStore.status(files);if(job!=null&&!AnalysisJobStore.active(job))return job;
             if(job!=null&&job.optDouble("progress")>=.83){
                 AnalysisService owner=service();NativePassageTask task=owner==null?null:(NativePassageTask)field(owner,"nativePassage");
@@ -124,7 +129,8 @@ public final class BackgroundInstrumentation extends Instrumentation {
         throw new AssertionError("Background job timed out: "+AnalysisJobStore.status(files));
     }
     private String fixture(String name)throws Exception{return fixture(name,3);}
-    private String fixture(String name,int seconds)throws Exception{
+    private String fixture(String name,int seconds)throws Exception{return fixture(name,seconds,"precision");}
+    private String fixture(String name,int seconds,String quality)throws Exception{
         File source=new File(getTargetContext().getCacheDir(),name+".wav"),mono=new File(getTargetContext().getCacheDir(),name+"-mono.wav");
         float[] pcm=new float[seconds*44100*2];for(int i=0;i<pcm.length;i++)pcm[i]=(float)(.18*Math.sin(2*Math.PI*220*(i/2)/44100));
         try(WavConverter writer=new WavConverter(source,mono,44100)){writer.accept(pcm,pcm.length/2);writer.finish();}
@@ -132,7 +138,7 @@ public final class BackgroundInstrumentation extends Instrumentation {
         try(InputStream in=new FileInputStream(source)){meta=ProjectStore.importAudio(new File(files,"projects"),in,name,new AudioImporter.Progress(){public void update(double p,String s){}public void check(){}});}
         String id=meta.getString("id");File project=new File(AnalysisJobStore.project(files,id),"project.json");
         JSONObject state=AnalysisJobStore.read(project,ProjectStore.MAX_PROJECT_BYTES);
-        state.put("settings",new JSONObject().put("analysisQuality","precision").put("dance","off").put("style","festival").put("stepMs",20).put("seed",2025));
+        state.put("settings",new JSONObject().put("analysisQuality",quality).put("dance","off").put("style","festival").put("stepMs",20).put("seed",2025));
         ProjectStore.save(new File(files,"projects"),id,state);return id;
     }
     private void launch(){
@@ -204,11 +210,88 @@ public final class BackgroundInstrumentation extends Instrumentation {
         check("onnxruntime-android-cpu".equals(separation.optString("runtime")),"Studio did not run native CPU inference: "+separation);
         return separation;
     }
+    private void observeBalanced(NativeMdxTask task){
+        // Start before Activity teardown/Doze: those transitions may span an
+        // entire short inference. Successful-pass counters survive idle
+        // release, so completion evidence does not depend on catching a
+        // transient output file or native RunOptions pointer between polls.
+        balancedObserverStopped=false;checkedBalancedStageRelease=false;observedBalancedNativeRun=false;
+        balancedObservationFailure=null;balancedPassesAtRelease=0;
+        balancedObserver=new Thread(()->{
+            try{
+                while(!balancedObserverStopped){
+                    JSONObject job=AnalysisJobStore.status(files);
+                    if(job!=null&&!AnalysisJobStore.active(job))return;
+                    synchronized(task){
+                        if(field(task,"session")!=null&&field(task,"activeRun")!=null)observedBalancedNativeRun=true;
+                        double progress=job==null?0:job.optDouble("progress");
+                        if(job!=null&&AnalysisJobStore.active(job)&&progress>=.96*.83&&progress<.96){
+                            check(field(task,"session")==null&&field(task,"inputBuffer")==null&&field(task,"outputBuffer")==null
+                                &&field(task,"activeRun")==null&&!(Boolean)field(task,"workerActive"),
+                                "Balanced MDX retained its model or tensor buffers during voice/GAME analysis");
+                            balancedPassesAtRelease=(Integer)field(task,"completedPasses");
+                            check(balancedPassesAtRelease==2,"Balanced polarity ensemble did not complete exactly two native inferences before voice/GAME: "+balancedPassesAtRelease);
+                            checkedBalancedStageRelease=true;
+                        }
+                    }
+                    Thread.sleep(25);
+                }
+            }catch(InterruptedException stopped){Thread.currentThread().interrupt();}
+            catch(Throwable error){balancedObservationFailure=error;}
+        },"LightForge-balanced-observer");
+        balancedObserver.setDaemon(true);balancedObserver.start();
+    }
+    private void stopBalancedObserver()throws Exception{
+        balancedObserverStopped=true;
+        if(balancedObserver!=null){balancedObserver.interrupt();balancedObserver.join(5000);check(!balancedObserver.isAlive(),"Balanced observation thread did not stop");}
+        if(balancedObservationFailure!=null)throw new AssertionError("Balanced live lifecycle observation failed",balancedObservationFailure);
+    }
+    private JSONObject balancedScreenOff()throws Exception{
+        phase("balanced-screen-off-analysis");String id=fixture("Balanced background audio",3,"balanced");JSONObject job=start(id);
+        AnalysisService owner=service();NativeMdxTask task=(NativeMdxTask)field(owner,"nativeMdx");
+        JSONObject frozen=AnalysisJobStore.request(files,job.getString("id"));
+        check("balanced".equals(frozen.getJSONObject("settings").getString("analysisQuality")),"Balanced fixture was not frozen into the analysis request");
+        check(!AnalysisJobStore.status(files).has("settings"),"Routing fixture unexpectedly exposes settings in its notification-only status");
+        check(task!=null,"Frozen Balanced request did not allocate the native MDX accelerator");
+        observeBalanced(task);long backgroundAt=System.currentTimeMillis();backgroundAndDoze();
+        JSONObject completed=waitTerminal(10*60*1000L);
+        check("completed".equals(completed.optString("state")),"Balanced screen-off analysis failed: "+completed);
+        check(completed.getLong("updatedAt")>backgroundAt,"Balanced analysis made no progress after Activity destruction");
+        waitService(false);stopBalancedObserver();
+        java.util.concurrent.ExecutorService executor=(java.util.concurrent.ExecutorService)field(task,"executor");
+        check(executor.awaitTermination(15,java.util.concurrent.TimeUnit.SECONDS),"Completed Balanced executor did not retire promptly");
+        check(field(owner,"nativeMdx")==null&&(Boolean)field(task,"closed"),"Completed service retained its native Balanced task");
+        check(checkedBalancedStageRelease,"No live voice/GAME-stage Balanced model and tensor release observation was recorded");
+        check((Integer)field(task,"completedPasses")==2,"Balanced fixture did not complete both model passes on Android");
+        JSONObject saved=AnalysisJobStore.read(new File(AnalysisJobStore.project(files,id),"project.json"),ProjectStore.MAX_PROJECT_BYTES);
+        JSONObject music=saved.getJSONObject("music"),engine=music.getJSONObject("engine"),separation=engine.getJSONObject("separationModel");
+        check(music.getInt("analysisVersion")==6&&engine.optBoolean("neural"),"Balanced fixture did not complete the actual neural pipeline");
+        check("balanced".equals(engine.optString("quality")),"Balanced quality was silently changed");
+        check("uvr-mdx-net-voc-ft".equals(separation.optString("modelId")),"Balanced fixture used the wrong separator");
+        check(separation.optBoolean("denoise")&&separation.optInt("modelPasses")==2&&separation.optInt("chunks")==1,
+            "Balanced fixture lost the two-pass polarity ensemble or recomputed through fallback: "+separation);
+        JSONObject stems=music.getJSONObject("stemCache");
+        check(stems.getInt("fullSamples")==3*44100&&stems.getInt("samples")==3*22050&&stems.getInt("sampleRate")==22050,
+            "Balanced separation truncated or extended the source/stem sample clock");
+        check(Math.abs(stems.getDouble("duration")-3)<1e-9&&Math.abs(music.getDouble("duration")-3)<1e-9,"Balanced source duration changed");
+        check(music.getJSONObject("vocals").getJSONObject("transcription").getInt("steps")==8,"Balanced transcription reduced its eight-step estimator");
+        JSONObject compiled=saved.getJSONObject("compiled");
+        check(compiled.getString("sha256").matches("[a-f0-9]{64}"),"Balanced show did not compile and save");
+        check(compiled.getInt("frameCount")==150&&compiled.getInt("stepMs")==20&&Math.abs(compiled.getJSONObject("meta").getDouble("audioDuration")-3)<1e-9,
+            "Balanced compiled choreography lost the three-second source clock");
+        JSONObject observation=new JSONObject().put("completedNativePasses",(Integer)field(task,"completedPasses"))
+            .put("nativePassesBeforeVoice",balancedPassesAtRelease).put("liveNativeRunObserved",observedBalancedNativeRun)
+            .put("modelReleasedDuringVoice",checkedBalancedStageRelease).put("sourceSamples",stems.getInt("fullSamples"))
+            .put("stemSamples",stems.getInt("samples")).put("separation",separation);
+        pass("Frozen Balanced request allocated native MDX and completed both polarity-ensemble passes on Android. The complete show finished with the Activity destroyed and screen off under Doze; model/tensor buffers were released before voice/GAME, preserving 132300 source samples, 66150 stem samples, the eight-step transcription setting and 150 saved choreography frames.");
+        return observation;
+    }
     @Override public void onCreate(Bundle arguments){super.onCreate(arguments);start();}
     @Override public void onStart(){
         JSONObject receipt=new JSONObject();Bundle output=new Bundle();
         try{
             files=getTargetContext().getFilesDir();startMainWatchdog();phase("first-screen-off-analysis");launch();String id=fixture("Background audio");JSONObject job=start(id);
+            check(field(service(),"nativeMdx")==null,"Precision Studio allocated the Balanced-only accelerator");
             long backgroundAt=System.currentTimeMillis();backgroundAndDoze();
             JSONObject completed=waitTerminal(15*60*1000L);
             check("completed".equals(completed.optString("state")),"Screen-off analysis failed: "+completed);
@@ -224,6 +307,7 @@ public final class BackgroundInstrumentation extends Instrumentation {
             JSONObject bootstrap=new JSONObject(activity.new Bridge().getBootstrap());
             check("completed".equals(bootstrap.getJSONObject("backgroundJob").getString("state")),"Reopened Activity did not reconnect");
             pass("Reopened Activity reports the completed job and its saved project.");
+            receipt.put("balanced",balancedScreenOff());phase("reopen-after-balanced");foreground();
             String cancelId=fixture("Resume fixture",12);File cancelProject=new File(AnalysisJobStore.project(files,cancelId),"project.json");String original=AnalysisJobStore.hash(cancelProject);
             phase("wait-for-second-native-passage");
             JSONObject interruptedJob=start(cancelId);AnalysisService cancelledService=service();PowerManager.WakeLock cancelledLock=(PowerManager.WakeLock)field(cancelledService,"wakeLock");
@@ -264,12 +348,12 @@ public final class BackgroundInstrumentation extends Instrumentation {
             check(beforeTimeout.equals(AnalysisJobStore.hash(timeoutProject)),"Timeout replaced saved project");
             pass("Android media-processing timeout callback stops promptly and leaves a retryable job with the previous show intact.");
             phase("completed");
-            receipt.put("passed",true).put("checks",checks).put("sdk",Build.VERSION.SDK_INT).put("scope","Android emulator with actual foreground service, native CPU Studio separation plus WebView/WASM rhythm/voice models, screen-off/Doze execution, live native cancellation, partial-passage resume and timeout callback; not a physical phone or Tesla.");
+            receipt.put("passed",true).put("checks",checks).put("sdk",Build.VERSION.SDK_INT).put("scope","Android emulator with actual foreground service, native CPU Studio separation and two-pass Balanced MDX, frozen-request routing and live model/tensor release before WebView/WASM voice/GAME, screen-off/Doze execution, live native cancellation, partial-passage resume and timeout callback; not a physical phone or Tesla.");
             output.putString("stream","BACKGROUND_ANDROID_PASS\n"+receipt.toString()+"\n");finish(Activity.RESULT_OK,output);
         }catch(Throwable error){
             try{snapshot(true);}catch(Exception ignored){}
             try{receipt.put("passed",false).put("checks",checks).put("phase",currentPhase).put("error",error.toString());}catch(Exception ignored){}
             StringWriter trace=new StringWriter();error.printStackTrace(new PrintWriter(trace));output.putString("stream","BACKGROUND_ANDROID_FAIL\n"+receipt+"\n"+trace);finish(Activity.RESULT_CANCELED,output);
-        }finally{stopMainWatchdog();}
+        }finally{balancedObserverStopped=true;if(balancedObserver!=null)balancedObserver.interrupt();stopMainWatchdog();}
     }
 }

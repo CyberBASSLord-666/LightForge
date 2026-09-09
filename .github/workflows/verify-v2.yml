@@ -78,6 +78,10 @@ jobs:
       - name: Actual offline model pipeline and cancellation
         run: node qa/release-${{ env.LIGHTFORGE_RELEASE }}/analysis-browser.cjs
       - run: python3 tools/bootstrap_toolchain.py
+      - name: Verify native Balanced startup, cancellation and crash-lease lifecycle
+        run: |
+          python3 tools/bootstrap_testdeps.py
+          python3 tests/test_native_mdx_lifecycle.py
       - name: Build CI package with an ephemeral signing identity
         run: |
           set -o pipefail

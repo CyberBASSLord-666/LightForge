@@ -28,7 +28,9 @@ public final class NativeDeux implements AutoCloseable {
     private static final String ASSET_ROOT="analysis/models/deux/";
     // Android can stop an old service while its JNI model constructor is still returning.
     // A replacement job must wait before allocating another heavy model/buffer set.
-    private static final Semaphore INFERENCE_GATE=new Semaphore(1,true);
+    // All native separators share the same process and crash lease. Serialize
+    // their graph execution when a cancelled service is still retiring.
+    static final Semaphore INFERENCE_GATE=new Semaphore(1,true);
     private final Context context;
     private final File modelDirectory;
     private final JSONObject files;
@@ -313,4 +315,3 @@ public final class NativeDeux implements AutoCloseable {
         }
     }
 }
-

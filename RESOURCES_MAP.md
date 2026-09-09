@@ -11,6 +11,7 @@ The app lives at the repository root. `version.json` defines the release; builds
 | `web/app.js`, `web/*studio*.js` | Project orchestration, transactional edits, output control and musical corrections |
 | `web/analysis/separator-deux.js`, `models/deux/` | Full-context Studio voice/instrument separation |
 | `web/analysis/separator-mdx.js` | Balanced separation with the retained MDX model |
+| `web/background/native-mdx.js`, `android/src/.../NativeMdxTask.java` | Optional guarded native Balanced MDX bridge with bounded spectrum transport and WASM fallback |
 | `web/analysis/game.js`, `models/game/` | Learned singing-note timing and pitch |
 | `web/analysis/stem-cache.js` | Replaceable, bounded Float32 audio caches on the source clock |
 | `web/analysis/worker.js` | Offline rhythm, source separation, singing evidence and bass orchestration |

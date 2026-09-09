@@ -30,13 +30,17 @@
    let music=request.music;
    if(!music||request.needAnalysis||(music.analysisVersion||1)<5){
     let compatibility=false;
-    const nativePredict=root.LightForgeNativeDeux?.create(BackgroundJob,id,message=>{
+    const quality=settings.analysisQuality==='balanced'?'balanced':'precision';
+    const nativePredict=quality==='precision'?root.LightForgeNativeDeux?.create(BackgroundJob,id,message=>{
      compatibility=true;report(0,message,{stage:'compatibility'});
-    });
+    }):undefined;
+    const nativeMdx=quality==='balanced'?root.LightForgeNativeMdx?.create(BackgroundJob,id,message=>{
+     compatibility=true;report(0,message,{stage:'compatibility'});
+    }):undefined;
     music=await MusicAnalyzer.analyze(new URL(base+'audio.wav',location.href).href,{
      projectId,analysisIdentity:request.analysisIdentity,analysisUrl:new URL(base+'analysis.wav',location.href).href,sensitivity:settings.sensitivity,
      bpmOverride:settings.bpmOverride||undefined,analysisQuality:settings.analysisQuality,
-     nativePredict
+     nativePredict,nativeMdx
     },p=>report(.96*Math.max(0,Math.min(1,Number(p.progress)||0)),(compatibility?'Compatibility · ':'')+(p.detail||p.message||p.stage||'Analyzing music'),p),controller.signal);
    }
    check();const duration=Number(request.duration);

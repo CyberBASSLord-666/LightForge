@@ -4,9 +4,9 @@ import datetime,hashlib,json,os,selectors,subprocess,time
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1];version=json.loads((ROOT/'version.json').read_text())['name'];out=ROOT/('qa/release-'+version);out.mkdir(exist_ok=True)
 sdk=Path(os.environ['ANDROID_HOME']);adb=sdk/'platform-tools/adb'
-sources=[*sorted((ROOT/'android').rglob('*.java')),*sorted((ROOT/'android').rglob('*.xml')),*sorted((ROOT/'web/background').rglob('*')),ROOT/'web/app.js',ROOT/'web/index.html',ROOT/'tests/android/BackgroundInstrumentation.java',ROOT/'tools/run_android_background_tests.py',ROOT/'tools/build_android_tests.py',ROOT/'android/native-runtime.json',ROOT/'web/analysis/ASSET_MANIFEST.json']
+sources=[*sorted((ROOT/'android').rglob('*.java')),*sorted((ROOT/'android').rglob('*.xml')),*sorted((ROOT/'web/background').rglob('*')),*sorted((ROOT/'web/analysis').glob('*.js')),*sorted((ROOT/'web/engine').glob('*.js')),ROOT/'web/app.js',ROOT/'web/index.html',ROOT/'tests/android/BackgroundInstrumentation.java',ROOT/'tools/run_android_background_tests.py',ROOT/'tools/build_android_tests.py',ROOT/'android/native-runtime.json',ROOT/'web/analysis/ASSET_MANIFEST.json']
 hashes={str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sources if p.is_file()}
-receipt={'release':version,'passed':False,'checks':[],'errors':[],'source_hashes':hashes,'scope':'Android API 35 emulator lifecycle test using the production service, native CPU Studio separation plus actual WebView/WASM rhythm and voice models, live inference cancellation, verified passage resume and compilation. Not a physical phone or Tesla test.'}
+receipt={'release':version,'passed':False,'checks':[],'errors':[],'source_hashes':hashes,'scope':'Android API 35 emulator lifecycle test using the production service, native CPU Studio and two-pass Balanced MDX separation, frozen-request routing, live model/tensor release before WebView/WASM voice/GAME, screen-off completion, live inference cancellation, verified passage resume and compilation. Not a physical phone or Tesla test.'}
 def run(*args,timeout=120):
     return subprocess.run([str(adb),*args],text=True,capture_output=True,timeout=timeout,check=True).stdout
 INSTRUMENT_TIMEOUT_SECONDS=3000
@@ -99,6 +99,12 @@ try:
         if line.startswith('{"passed":true') or ('"passed":true' in line and line.startswith('{')):
             detail=json.loads(line);receipt['checks']=detail['checks'];receipt['device']=detail;final_report=True
     if not final_report or not receipt['checks']:raise RuntimeError('Android lifecycle report missing')
+    balanced=receipt['device'].get('balanced',{})
+    if not (balanced.get('completedNativePasses')==2 and balanced.get('nativePassesBeforeVoice')==2
+            and balanced.get('modelReleasedDuringVoice') is True and balanced.get('sourceSamples')==132300
+            and balanced.get('stemSamples')==66150 and balanced.get('separation',{}).get('denoise') is True
+            and balanced.get('separation',{}).get('modelPasses')==2 and balanced.get('separation',{}).get('chunks')==1):
+        raise RuntimeError('Android Balanced native lifecycle evidence is incomplete')
     assert hashes=={str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sources if p.is_file()}, 'Android source changed during lifecycle verification.'
     receipt['passed']=True
 except Exception as error:

@@ -1,0 +1,112 @@
+{
+  "release": "2.2.4",
+  "passed": true,
+  "scope": "Fresh matched Linux/JVM full-passage inference comparison; no Android, ARM64, phone, background-service, or SIGILL-reproduction execution.",
+  "created_utc": "2026-09-09T22:12:45.274347+00:00",
+  "host": {
+    "system": "Linux",
+    "machine": "x86_64"
+  },
+  "source_hashes": {
+    "android/src/com/cyberbasslord/lightforge/NativeDeux.java": "1cd0931e9740de978c44fbb3c77e0dcbe969eae151752cc70c8f792da5409cdc",
+    "android/src/com/cyberbasslord/lightforge/NativeDeuxTransform.java": "991b06501cfb88b904d0b714a525c389f169f00c231248b0e961b70f257e90b5",
+    "tests/NativeDeuxTest.java": "f552fdbd93f01dc6051cdf6c8ca7ba4048b4391451e924e544741771e82ac2d4",
+    "android/native-runtime.json": "e3ea568b3a8485235f23a59cd787466cdcbbfcaa54ac56df3ce040d29fcb2a94",
+    "web/analysis/models/deux/manifest.json": "c1cb548d8d02a8b947d66fd8ac672559ea175ac4462109acccba13220b788245",
+    "web/demo/glass-castle.wav": "33f07d502ba19832b62b97d8fb4a11354e81310264bd885d7a06438228773650",
+    "qa/release-2.2.4/compare-native-runtime.py": "36aeac6881655a2cac2a939831bcbe9cb7f8daf5378ee447c8e5edb40987c78d"
+  },
+  "start_sample": -66150,
+  "sample_rate": 44100,
+  "samples_per_stem": 573300,
+  "model_quality": "Original unquantized Deux weights and complete 13-second context, identical production batching in both runtimes.",
+  "host_diagnostics_note": "Only AppDiagnostics has a no-op host compile shim. Context is null, so the production predictor never calls it. Production transforms, inference, model verification, PCM I/O and session options run unchanged.",
+  "thresholds": {
+    "max_absolute_error": 0.0001,
+    "rmse": 1e-05,
+    "relative_rmse": 0.001
+  },
+  "runs": [
+    {
+      "version": "1.23.2",
+      "runtime_jar_sha256": "e0ab4a1af57d2da09097202f2dfd691e390c82e81183314788ccde4cf7c3cc38",
+      "runtime_jar_bytes": 75255976,
+      "seconds": 51.187298336,
+      "peakRssBytes": 812355584,
+      "samplesPerStem": 573300,
+      "sha256": "b5db5b5f8bcc576e1af22b0a9fca837dc9e809195ada006af1581458283578b7",
+      "output_bytes": 4586400,
+      "log_sha256": "2c360aeb6a8bf52065446f37348b072723cc07e76abe46e005d12fb4c37b87a0"
+    },
+    {
+      "version": "1.25.1",
+      "runtime_jar_sha256": "749793ebed63743fec853d093da7987a86ea5cd592d54fba898cd3233100c381",
+      "runtime_jar_bytes": 41804437,
+      "seconds": 53.376933324,
+      "peakRssBytes": 823103488,
+      "samplesPerStem": 573300,
+      "sha256": "b5db5b5f8bcc576e1af22b0a9fca837dc9e809195ada006af1581458283578b7",
+      "output_bytes": 4586400,
+      "log_sha256": "421ebcefe9aaf11a63a78490b5882bc83e69468074f1392985a3bb6b93b7a380"
+    }
+  ],
+  "checks": [
+    "Every full-passage model matches the unchanged pinned Deux manifest.",
+    "Both runtimes completed the same full passage at startSample=-66150 and produced two finite 573300-sample stems.",
+    "Both stems satisfy predeclared absolute and relative floating-point comparison thresholds.",
+    "Source bindings remained unchanged throughout both runs."
+  ],
+  "model_asset_hashes": {
+    "web/analysis/models/deux/block-00-frequency.onnx": "d9ff162f881b26376ab77fa6f5bc277e8525f35fe02a02c53fcbf512ae84b3ad",
+    "web/analysis/models/deux/block-00-time.onnx": "99929d0603a18bc1aff6994d2c60780ffb37da0a7b326f5b34618bbb1af41feb",
+    "web/analysis/models/deux/block-01-frequency.onnx": "17fbd2962bfcadecca2b08eae3ab79e3ccf92f7b35da0dade1b83d003ac5345e",
+    "web/analysis/models/deux/block-01-time.onnx": "340aa6e8297f3b7085918cfec93d353b1d8649d12e0e17c83b87226f2688d45f",
+    "web/analysis/models/deux/block-02-frequency.onnx": "2861f5265cfb3920c00c65533a88f1da919f1cc99306b9477c0d2dc155c4fb69",
+    "web/analysis/models/deux/block-02-time.onnx": "fb7369fe1eeb340bbe1701e9706e60388785856d8642d9660b5018e505491660",
+    "web/analysis/models/deux/block-03-frequency.onnx": "284fdaeb343dc5c742503f4beb9a253faf7e7dc14184844c63091241c262d5f8",
+    "web/analysis/models/deux/block-03-time.onnx": "5554b5723c995cd5ee5c72e7676ba4659ab56ca3d75b72681c6df5c56f14d298",
+    "web/analysis/models/deux/block-04-frequency.onnx": "442837a608d31c5efc7d481b222e49be046fc6ab02adc22cb2832aa7d26db0d1",
+    "web/analysis/models/deux/block-04-time.onnx": "02138dae6b824d3a809d42b5f719d66b58a13595f29dc0df241cfd2c9635a377",
+    "web/analysis/models/deux/block-05-frequency.onnx": "2811d5f251810bd27af5e14674ac166a64753ccf24a23bf521daeb7a63cea62d",
+    "web/analysis/models/deux/block-05-time.onnx": "166edd8406f525a1deb7e5eca9e383619b27a0d82adc80cf0636e473455e762a",
+    "web/analysis/models/deux/block-06-frequency.onnx": "31ef31ffc1507abf3af75dadef52a01131390c4a9916137d3e9d775106c44e45",
+    "web/analysis/models/deux/block-06-time.onnx": "a83645af6e2e3b1107ed6e5a41e1e095da265dff985560a533c3a4774f1eb0fb",
+    "web/analysis/models/deux/block-07-frequency.onnx": "fc9a8b69d369f76f153373df180c94d437c9e3db8850a9a9ee2b63d9b1df0cf2",
+    "web/analysis/models/deux/block-07-time.onnx": "eb1c4c6a84dca306da78a7524b004240916aca5fc704e9b64df6cde540a6a20c",
+    "web/analysis/models/deux/block-08-frequency.onnx": "090c7696c7edf37a30abecc12cfeb7c4cea740fb0065969fc5598598df2cfd07",
+    "web/analysis/models/deux/block-08-time.onnx": "c24ef8f8a6224176dfc53d27c817a8e03ea8a7408fc6219c55237023cc848f8c",
+    "web/analysis/models/deux/block-09-frequency.onnx": "536070d2aca4324dda1efb4b78968033061d676abae7cb8e83ccd31640396d4f",
+    "web/analysis/models/deux/block-09-time.onnx": "d6e53f8be9e91b6733b8452e752487655c986fa3ac116e40aa3154dd9e7ca00f",
+    "web/analysis/models/deux/block-10-frequency.onnx": "fe90ed9051b54cde3e3dd6c342930b882af334abc845dfc7d032bb867aca8b55",
+    "web/analysis/models/deux/block-10-time.onnx": "8011e6cf59865a74548d1a894e1355c314c750e8bc5dfdd5c008ab253b240791",
+    "web/analysis/models/deux/block-11-frequency.onnx": "97c548efaf34d46ab3b6172954f394d3ae7cf75657295e2bc9ccab05a5c737a1",
+    "web/analysis/models/deux/block-11-time.onnx": "7421c8c818240f76759b3534b6abb6a6bc84b07e16347c0f56a1d0478de9940d",
+    "web/analysis/models/deux/front.onnx": "3f29ee37960f009c08653345aef7d558df7dc1b66247e5b4f5a3a80901306752",
+    "web/analysis/models/deux/head-0.onnx": "bf0036486e15774a1ec8289f530a00282cfc89b2921e2f82bf17144fc162bae2",
+    "web/analysis/models/deux/head-1.onnx": "a307d5bac63bf8547f163ca55cd829fee89ff6b5e27569d8407a8cc11db2c108"
+  },
+  "comparison": [
+    {
+      "stem": "vocals",
+      "finite": true,
+      "samples": 573300,
+      "max_absolute_error": 0.0,
+      "rmse": 0.0,
+      "reference_rms": 0.07641659860922792,
+      "relative_rmse": 0.0,
+      "snr_db": null,
+      "identical": true
+    },
+    {
+      "stem": "accompaniment",
+      "finite": true,
+      "samples": 573300,
+      "max_absolute_error": 0.0,
+      "rmse": 0.0,
+      "reference_rms": 0.109381627092868,
+      "relative_rmse": 0.0,
+      "snr_db": null,
+      "identical": true
+    }
+  ]
+}

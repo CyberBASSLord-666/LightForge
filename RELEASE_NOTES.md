@@ -1,3 +1,23 @@
+# LightForge 2.2.4
+
+Release candidate: Android build, original-certificate signing and physical-device confirmation must finish before publication.
+
+This update targets the two long-run failure modes in the supplied diagnostics: renderer memory growth during Balanced MDX/GAME work and a native Studio crash that can leave a partial job. It keeps the learned weights, sample clock, model geometry and quality settings unchanged.
+
+## Changes
+
+- Bound the Balanced separator's WebAssembly lifetime to one passage, reuse its frontend spectrum buffer, and retry a complete polarity pair in one runtime so a renderer cannot retain every long-song model allocation.
+- Add an optional native Android path for Balanced MDX. It streams only the exact 12.6 MiB Float32 spectrum in bounded bridge chunks, validates the pinned model geometry/checksum, uses the same ONNX graph and decoder, and falls back to the verified WebAssembly path on any compatibility or output error.
+- Apply the native retry guard to both native separators. A confirmed Android native crash disables that runtime identity for the next Resume instead of retrying the same instruction path; the compatibility path remains quality-preserving and uses the same models.
+- Reset GAME model sessions periodically, release preview WebViews before renderer teardown, and expose durable checkpoint commits immediately after each rhythm, passage and stage write.
+- Treat prior passage progress as resumable even when a renderer disappears between a browser checkpoint and its Java-side status update. Completed work is still checked against audio, settings, release and execution identity before reuse.
+
+## Validation scope
+
+The current source passes the asset manifest check, JavaScript syntax checks, targeted native-bridge/separator runtime tests and the portable Python regression suites available in this workspace. The Android SDK/ONNX AAR and a physical phone are not available here, so Android compilation, APK signing, long-song timing, thermals and the supplied Samsung crash remain release gates rather than unverified claims.
+
+---
+
 # LightForge 2.2.3
 
 Release candidate: validation and original-certificate signing must finish before publication.

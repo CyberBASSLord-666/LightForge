@@ -1,3 +1,13 @@
+# LightForge changelog
+
+## 2.2.4 — bounded long-run analysis and balanced acceleration
+
+- Bound MDX WebAssembly sessions and reuse the frontend spectrum so long Balanced runs release model heaps at passage boundaries instead of accumulating renderer memory.
+- Add an optional, checksum-pinned native Android MDX bridge with 64 KiB transport limits, exact Float32 shape/finite checks and deterministic WebAssembly fallback.
+- Guard the optional native MDX path with the same app/runtime crash lease as Precision Studio; Resume enters compatibility processing after an Android-confirmed native crash.
+- Reset GAME sessions every four chunks, detach preview WebViews before teardown, and surface each durable rhythm/separation/voice/bass checkpoint immediately.
+- Version 2.2.4 is a release candidate until Android compilation, original-signature packaging and physical-device confirmation complete.
+
 # LightForge 2.2.2 — Troubleshooting logs and renderer recovery
 
 ## 2.2.3 — native CPU compatibility and crash recovery
