@@ -23,6 +23,8 @@ public final class BackgroundInstrumentation extends Instrumentation {
     private long phaseStarted=testStarted,lastSnapshot;
     private volatile String currentPhase="starting";
     private JSONObject lastPowerTransition;
+    private JSONObject lastUiReadiness;
+    private final JSONArray uiReadinessChecks=new JSONArray();
     private final Handler watchdogMain=new Handler(Looper.getMainLooper());
     private volatile boolean watchdogStopped;
     private Thread mainWatchdog;
@@ -76,6 +78,7 @@ public final class BackgroundInstrumentation extends Instrumentation {
             .put("phaseElapsedSeconds",(now-phaseStarted)/1000.0)
             .put("checks",new JSONArray(checks.toString()));
         if(lastPowerTransition!=null)value.put("powerTransition",lastPowerTransition);
+        if(lastUiReadiness!=null)value.put("uiReadiness",lastUiReadiness);
         if(files!=null){
             JSONObject job=AnalysisJobStore.status(files);
             value.put("job",job==null?JSONObject.NULL:job);
@@ -141,9 +144,98 @@ public final class BackgroundInstrumentation extends Instrumentation {
         state.put("settings",new JSONObject().put("analysisQuality",quality).put("dance","off").put("style","festival").put("stepMs",20).put("seed",2025));
         ProjectStore.save(new File(files,"projects"),id,state);return id;
     }
-    private void launch(){
+    private void launch()throws Exception{
         activity=(MainActivity)startActivitySync(new Intent(getTargetContext(),MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-        waitForIdleSync();activity.new Bridge().getBootstrap();
+        waitForIdleSync();awaitUiReady();activity.new Bridge().getBootstrap();
+    }
+    private final class UiReadiness implements Runnable {
+        final MainActivity owner=activity;
+        final WebView view;
+        final long began=SystemClock.elapsedRealtime(),deadline=began+45000;
+        final java.util.concurrent.CountDownLatch completed=new java.util.concurrent.CountDownLatch(1);
+        final java.util.concurrent.atomic.AtomicBoolean finished=new java.util.concurrent.atomic.AtomicBoolean();
+        volatile Throwable failure;
+        volatile JSONObject evidence;
+        android.view.ViewTreeObserver tree;
+        Runnable commitCallback;
+        android.view.ViewTreeObserver.OnDrawListener drawListener;
+        UiReadiness()throws Exception{view=(WebView)field(owner,"web");check(view!=null,"Preview WebView missing on launch");}
+        boolean current()throws Exception{return activity==owner&&!owner.isFinishing()&&!owner.isDestroyed()&&field(owner,"web")==view;}
+        boolean visible(){return view.isAttachedToWindow()&&view.isShown()&&view.getWindowVisibility()==android.view.View.VISIBLE&&view.getWidth()>0&&view.getHeight()>0&&view.hasWindowFocus();}
+        void cleanup(){
+            view.removeCallbacks(this);
+            if(tree!=null&&tree.isAlive()){
+                if(Build.VERSION.SDK_INT>=29&&commitCallback!=null)tree.unregisterFrameCommitCallback(commitCallback);
+                if(drawListener!=null)tree.removeOnDrawListener(drawListener);
+            }
+        }
+        void finish(Throwable error,JSONObject value){
+            if(!finished.compareAndSet(false,true))return;
+            failure=error;evidence=value;cleanup();completed.countDown();
+        }
+        @Override public void run(){
+            if(finished.get())return;
+            try{
+                check(SystemClock.elapsedRealtime()<deadline,"Preview JavaScript initialization exceeded 45 seconds");
+                check(current(),"Preview changed while awaiting its first frame");
+                if(!visible()){view.postOnAnimation(this);return;}
+                // Export follows readBootstrap's synchronous native inventory
+                // load, but its project restoration is asynchronous. Await the
+                // existing restore-state flags as well as the actual 3D model
+                // and a submitted canvas frame when that canvas is visible.
+                view.evaluateJavascript("(()=>{const a=window.LightForgeApp,s=a&&a.state,p=a&&a.vehiclePreview,c=document.getElementById('carCanvas'),r=c&&c.getBoundingClientRect();const visible=!!(r&&r.width>0&&r.height>0&&!document.hidden);const boot=!!(s&&Array.isArray(s.projects)&&typeof window.onNativeEvent==='function');const restored=!!(boot&&!s.loadingProject&&!s.composing&&!s.backgroundApplying&&!s.backgroundSyncPending);return {ready:document.readyState==='complete'&&restored&&!!p&&p.loaded&&!p.lost&&(!visible||p.renderCount>0),documentState:document.readyState,bootstrapInventoryReady:boot,projectRestoreIdle:restored,previewModelReady:!!(p&&p.loaded),previewVisible:visible,previewFrames:p?p.renderCount:0,contextLost:!!(p&&p.lost)};})()",value->{
+                    if(finished.get())return;
+                    try{
+                        JSONObject state=new JSONObject(value);
+                        if(!state.optBoolean("ready")){view.postOnAnimation(this);return;}
+                        check(current()&&visible(),"Preview lost visibility before visual-state synchronization");
+                        view.postVisualStateCallback(began,new WebView.VisualStateCallback(){
+                            @Override public void onComplete(long requestId){
+                                if(finished.get())return;
+                                try{
+                                    check(current()&&visible(),"Preview lost visibility before its first committed frame");
+                                    check(view.isHardwareAccelerated(),"Lifecycle readiness requires the real hardware-accelerated WebView");
+                                    tree=view.getViewTreeObserver();
+                                    check(tree.isAlive(),"Preview view tree was detached before frame commit");
+                                    Runnable recorded=()->watchdogMain.post(()->{
+                                        if(finished.get())return;
+                                        try{
+                                            check(current()&&visible(),"Preview detached before frame-commit acknowledgement");
+                                            finish(null,new JSONObject(state.toString()).put("phase",currentPhase)
+                                                .put("visualStateReady",true).put("firstFrameCommitted",true)
+                                                .put("frameCommitMethod",Build.VERSION.SDK_INT>=29?"hardware-frame-commit":"on-draw-then-main")
+                                                .put("hardwareAccelerated",true).put("viewWidth",view.getWidth()).put("viewHeight",view.getHeight())
+                                                .put("waitSeconds",(SystemClock.elapsedRealtime()-began)/1000.0));
+                                        }catch(Throwable error){finish(error,null);}
+                                    });
+                                    // postVisualStateCallback promises the
+                                    // next draw is ready. It does not prove
+                                    // that HWUI has completed that draw.
+                                    if(Build.VERSION.SDK_INT>=29){commitCallback=recorded;tree.registerFrameCommitCallback(commitCallback);}
+                                    else{
+                                        java.util.concurrent.atomic.AtomicBoolean drawn=new java.util.concurrent.atomic.AtomicBoolean();
+                                        drawListener=()->{if(drawn.compareAndSet(false,true))recorded.run();};
+                                        tree.addOnDrawListener(drawListener);
+                                    }
+                                    view.invalidate();
+                                }catch(Throwable error){finish(error,null);}
+                            }
+                        });
+                    }catch(Throwable error){finish(error,null);}
+                });
+            }catch(Throwable error){finish(error,null);}
+        }
+    }
+    private void awaitUiReady()throws Exception{
+        UiReadiness probe=new UiReadiness();
+        lastUiReadiness=new JSONObject().put("phase",currentPhase).put("state","waiting-for-bootstrap-and-frame");snapshot(true);
+        watchdogMain.post(probe);
+        try{
+            check(probe.completed.await(45,java.util.concurrent.TimeUnit.SECONDS),"Preview bootstrap/first-frame readiness timed out; see main-thread and rendering diagnostics");
+            if(probe.failure!=null)throw new AssertionError("Preview readiness failed",probe.failure);
+            check(probe.evidence!=null&&probe.evidence.optBoolean("firstFrameCommitted"),"Preview frame-commit evidence missing");
+            lastUiReadiness=probe.evidence;uiReadinessChecks.put(probe.evidence);snapshot(true);
+        }finally{probe.finished.set(true);watchdogMain.post(probe::cleanup);}
     }
     private void backgroundAndDoze()throws Exception{
         WebView closingView=(WebView)field(activity,"web");android.view.ViewGroup[] closingParent=new android.view.ViewGroup[1];
@@ -348,7 +440,7 @@ public final class BackgroundInstrumentation extends Instrumentation {
             check(beforeTimeout.equals(AnalysisJobStore.hash(timeoutProject)),"Timeout replaced saved project");
             pass("Android media-processing timeout callback stops promptly and leaves a retryable job with the previous show intact.");
             phase("completed");
-            receipt.put("passed",true).put("checks",checks).put("sdk",Build.VERSION.SDK_INT).put("scope","Android emulator with actual foreground service, native CPU Studio separation and two-pass Balanced MDX, frozen-request routing and live model/tensor release before WebView/WASM voice/GAME, screen-off/Doze execution, live native cancellation, partial-passage resume and timeout callback; not a physical phone or Tesla.");
+            receipt.put("passed",true).put("checks",checks).put("uiReadiness",uiReadinessChecks).put("sdk",Build.VERSION.SDK_INT).put("scope","Android emulator with initialized hardware-accelerated WebView and committed visible frames before lifecycle actions, actual foreground service, native CPU Studio separation and two-pass Balanced MDX, frozen-request routing and live model/tensor release before WebView/WASM voice/GAME, screen-off/Doze execution, live native cancellation, partial-passage resume and timeout callback; not a physical phone or Tesla.");
             output.putString("stream","BACKGROUND_ANDROID_PASS\n"+receipt.toString()+"\n");finish(Activity.RESULT_OK,output);
         }catch(Throwable error){
             try{snapshot(true);}catch(Exception ignored){}

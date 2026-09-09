@@ -86,7 +86,10 @@ try:
         if run('shell','getprop','sys.boot_completed').strip()=='1':break
         time.sleep(2)
     else:raise RuntimeError('Android emulator did not boot')
-    run('shell','settings','put','global','window_animation_scale','0');run('shell','settings','put','global','transition_animation_scale','0')
+    for setting in ['window_animation_scale','transition_animation_scale','animator_duration_scale']:
+        run('shell','settings','put','global',setting,'0')
+        if run('shell','settings','get','global',setting).strip() not in {'0','0.0'}:
+            raise RuntimeError('Android animation setting was not applied: '+setting)
     run('shell','input','keyevent','KEYCODE_WAKEUP');run('shell','wm','dismiss-keyguard')
     run('install','-r',str(ROOT/'candidate'/('LightForge-'+version+'.apk')),timeout=300)
     run('install','-r',str(ROOT/'candidate/background-tests.apk'))
@@ -99,6 +102,16 @@ try:
         if line.startswith('{"passed":true') or ('"passed":true' in line and line.startswith('{')):
             detail=json.loads(line);receipt['checks']=detail['checks'];receipt['device']=detail;final_report=True
     if not final_report or not receipt['checks']:raise RuntimeError('Android lifecycle report missing')
+    ui_readiness=receipt['device'].get('uiReadiness',[])
+    if len(ui_readiness)<2 or not all(
+            item.get('bootstrapInventoryReady') is True and item.get('projectRestoreIdle') is True
+            and item.get('previewModelReady') is True
+            and item.get('visualStateReady') is True and item.get('firstFrameCommitted') is True
+            and item.get('hardwareAccelerated') is True and item.get('frameCommitMethod')=='hardware-frame-commit'
+            and item.get('viewWidth',0)>0 and item.get('viewHeight',0)>0
+            and (item.get('previewVisible') is not True or item.get('previewFrames',0)>0)
+            for item in ui_readiness):
+        raise RuntimeError('Android preview initialization and committed-frame evidence is incomplete')
     balanced=receipt['device'].get('balanced',{})
     if not (balanced.get('completedNativePasses')==2 and balanced.get('nativePassesBeforeVoice')==2
             and balanced.get('modelReleasedDuringVoice') is True and balanced.get('sourceSamples')==132300

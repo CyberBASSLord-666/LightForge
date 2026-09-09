@@ -1,16 +1,16 @@
 # LightForge 2.2.4 validation
 
-The 2.2.4 candidate preserves the pinned models, denoise/transcription settings and sample clock while addressing long-run memory growth, native startup cancellation and recoverability. Its original-signed APK is built; publication is still pending the current Android lifecycle and package gates.
+The 2.2.4 candidate preserves the pinned models, denoise/transcription settings and sample clock. An Android emulator ANR during preview teardown blocked publication after Studio completed successfully. The follow-up explicitly suspends preview rendering, synchronizes the test with a committed first frame and removes emulator CPU oversubscription. Fresh browser, Android and signed-package checks remain required.
 
 | 2.2.4 check | Current result and scope |
 | --- | --- |
-| Assets and host regression | 73 bundled analysis assets verified; 338 Node tests and 64 Python tests passed in the latest complete run. Source-bound receipts must be refreshed after any further test changes. |
+| Assets and host regression | 73 bundled analysis assets verified; 343 Node tests and 69 Python tests passed in the latest complete run. Source-bound receipts must be refreshed after any further test changes. |
 | Native lifecycle | Production MDX class tested with controlled JNI boundaries: responsive cancellation during graph creation, durable crash lease, shared execution gate, failed-session retirement and exact ownership. |
 | Android compilation and APK | Production Java, background instrumentation and diagnostic instrumentation compile against Android 35 and ORT 1.25.1. APK signature, original certificate, version, ZIP and alignment pass. |
 | Chromium UI and full pipeline | Current UI/worker/WebGL and background recovery/export checks pass at mobile and larger widths. Actual Precision model analysis, saved voice audio, cancellation and FSEQ restore pass. |
 | Studio numeric comparison | Fresh two-runtime comparison returns identical vocal/accompaniment samples for the complete 13-second reference context. This is host evidence, not an ARM crash reproduction. |
 | Balanced output qualification | Three fixed decoded-audio comparisons and paired actual vocal/GAME comparison passed. Both downstream runs produced 16 sung notes; peak waveform error across the three inputs was at most 2.5332e-7. Strict internal-spectrum diagnostics failed and are retained. See [numerical protocol](qa/release-2.2.4/NUMERICAL_QUALIFICATION.md). |
-| Android runtime lifecycle | Current screen-off, Cancel/Resume and diagnostic-export emulator execution pending. |
+| Android runtime lifecycle | Prior run completed screen-off Studio and reconnection, then failed with an HWUI teardown ANR. Follow-up screen-off, Balanced, Cancel/Resume and diagnostic-export execution pending. |
 | Physical phone and Tesla | Unperformed: long-song timing, thermals, manufacturer power behavior, supplied Samsung crash reproduction and vehicle timing. |
 
 The retained 2.2.2 and 2.2.1 sections below describe their original evidence and are not promoted to 2.2.4 results.

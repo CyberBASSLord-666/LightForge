@@ -1,11 +1,12 @@
 # LightForge 2.2.4
 
-Release candidate: original-certificate APK build and host/browser checks pass. Current Android lifecycle and final package gates must finish before publication. Physical-phone and Tesla validation remain unperformed.
+Release candidate: an Android emulator ANR during preview teardown requires a fresh run after the preview suspension and harness synchronization fixes. Current Android and signed-package gates must pass before publication. Physical-phone and Tesla validation remain unperformed.
 
 This update targets the two long-run failure modes in the supplied diagnostics: renderer memory growth during Balanced MDX/GAME work and a native Studio crash that can leave a partial job. It keeps the learned weights, sample clock, model geometry and quality settings unchanged.
 
 ## Changes
 
+- Explicitly suspend preview animation and GPU redraw work while the native Activity or page is paused; resume once without duplicating animation loops or changing graphical quality.
 - Bound the Balanced separator's WebAssembly lifetime to one passage, reuse its frontend spectrum buffer, and retry a complete polarity pair in one runtime so a renderer cannot retain every long-song model allocation.
 - Add an optional native Android path for Balanced MDX. It streams only the exact 12.6 MiB Float32 spectrum in bounded bridge chunks, validates the pinned model geometry/checksum, uses the same ONNX graph and decoder, and falls back to the verified WebAssembly path on any compatibility or output error.
 - Apply the native retry guard to both native separators. A confirmed Android native crash disables that runtime identity for the next Resume instead of retrying the same instruction path; the compatibility path remains quality-preserving and uses the same models.
@@ -14,7 +15,7 @@ This update targets the two long-run failure modes in the supplied diagnostics: 
 
 ## Validation scope
 
-The original-signed APK passes version, certificate, ZIP, asset and alignment checks. Production Android Java and both instrumentation suites compile. Current host regressions, cancellation/crash-lease tests, responsive Chromium UI and the real browser analysis pipeline pass. Fresh Studio outputs are bit-identical across the two compared native runtime versions on the reference passage.
+The preceding candidate passed host, Chromium pipeline and package checks. Android Studio completed under screen-off/Doze and reconnected, but closing the reopened Activity triggered a graphics-thread ANR before Balanced inference. The current preview follow-up has focused lifecycle regressions and requires fresh full CI, Android execution and signed-package receipts. Fresh Studio outputs are bit-identical across the two compared native runtime versions on the reference passage.
 
 Balanced native MDX passed three decoded-audio comparisons and an actual paired singing-note comparison with 16 sung notes. The initial absolute-only and revised relative spectral checks failed on a few coefficients; those records are retained and are not relabeled as passing spectral parity. See `qa/release-2.2.4/NUMERICAL_QUALIFICATION.md` for the revised output-domain contract and its scope. Android screen-off execution, sustained-phone memory/thermals and the supplied Samsung crash require their separate checks.
 

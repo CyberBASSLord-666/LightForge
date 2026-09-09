@@ -50,7 +50,7 @@ public final class MainActivity extends Activity {
             "memoryBytes",memory.totalMem,"availableMemoryBytes",memory.availMem,
             "lowMemory",memory.lowMemory,"cpuCores",Runtime.getRuntime().availableProcessors());
     }
-    @Override protected void onResume(){super.onResume();foreground=true;AppDiagnostics.log(this,"INFO","activity","resumed");sendAnalysisStatus();event("deviceCapabilities",deviceCapabilities());showPreviewRecovery();}
+    @Override protected void onResume(){super.onResume();foreground=true;AppDiagnostics.log(this,"INFO","activity","resumed");if(web!=null)web.evaluateJavascript("window.resumePreview && window.resumePreview()",null);sendAnalysisStatus();event("deviceCapabilities",deviceCapabilities());showPreviewRecovery();}
     @Override public void onRequestPermissionsResult(int request,String[] permissions,int[] results){
         super.onRequestPermissionsResult(request,permissions,results);event("deviceCapabilities",deviceCapabilities());
     }
