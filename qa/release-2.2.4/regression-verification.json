@@ -34,6 +34,7 @@
     "build.sh": "856404ed40bd9b381a917bfc2b38012c96155bfde81535d9443d6b6f294be3f7",
     "package-lock.json": "ae415e3b1891a88a9e3d9f681fa18775cd6ad48bc0a72709efbd178162bae9fd",
     "package.json": "096a0d547c87e099be7421db3830ab6808383d270116659d490acd1fbdd6a037",
+    "qa/release-1.6.0/prepare-musdb-fixtures.py": "001252ba45a905b859d41da5c99dd084549cf0ac7d252dc9684c76f76291a343",
     "tests/AnalysisJobStoreTest.java": "863d7490ecb2e277fb94ceed051cd7ff7f75e8bcd71613650aafc2a17b2a570e",
     "tests/DiagnosticLogTest.java": "38c5b369fcd4d08dfb646abca2810e3f6f3c8248335dceb5a2ccb5e1d2b36e2e",
     "tests/ExportRestoreTest.java": "18da0906b4b0bdd923c195325ba296e7aacb316a812d83d3a2de5bee0a72e21b",
@@ -100,6 +101,7 @@
     "tests/test_analysis_evidence_2_2_3.py": "e88e017e9803ca2ead158df0c72f5e6458e3a95fd39ac216ffdb57c32b5f06ed",
     "tests/test_apk_archive.py": "d3fadfab94a443567fe5e7ef20bccb9bd31097273ac7561b8426630bef1f4357",
     "tests/test_apk_delta.py": "3aa647504323d02086f218ff6ee53a2a4a682eaab8f93b2b50304445db4d7fe1",
+    "tests/test_fixture_provenance.py": "1628f6d2f0087769c70b729d2ccae8efd049c08c63560409b56fc9618e749bf4",
     "tests/test_mdx_numeric_2_2_4.py": "e63dddbea121f2465757ce71295d687170568b8b08a1939353aff08d61de190f",
     "tests/test_native_mdx_lifecycle.py": "dcdf3efa016d4dab7b7e8e48d06bb4e401a39adc5a6e99cee17454dae111d4a0",
     "tests/test_package_release_streaming.py": "1d5f317840c035217ffc0374f8533399ee4ee8439e04b259ca0bd0949fc6049e",
@@ -130,7 +132,7 @@
     "tools/sync_version.py": "d931b766042fbfa19d8c4b842400fecf4eb2fd58aebbc820e1afa1822387a21b",
     "tools/verify_analysis_assets.py": "a71ab7ef9329da3b5429ca596978065efbb4afa009c925db7a552eddd1677224",
     "tools/verify_retained_analysis.py": "95b5b871715b93ec42eb0f5a2846f32c762b016cb63a8969d7f1cfbee9454f26",
-    "tools/verify_v2.py": "ea9b076c3bc1da1a7fe4ed502985d56fe32f95c0e5e928572f66541de6abb230",
+    "tools/verify_v2.py": "e7818f12a50bbb328c142fa23a483b934cf773d8d779fdb444831e50b7132a0c",
     "version.json": "8e8f3a2a335f12fc1090f15074dbe5c6544d75d4b488b83a73b6bbe31b0ea159",
     "web/analysis/analyzer.js": "5f1354c290d5b2b3bc152b80b66fa315f70504019ee3294370901e28d2eaf19a",
     "web/analysis/bass-notes.js": "5b81e2361295a1f8c02086d4668464ed1d7e93c923513c50a2c865a7aeb1531e",
@@ -178,5 +180,5 @@
   },
   "scope": "Node engine/worker/WebCrypto/gzip, real app DOM integration with simulated native and graphics, Python archive tests. Not a visual browser or physical Android/Tesla test.",
   "analysis_manifest_sha256": "f47b2bf093ca3f7f41f385f4bae6f6789f442ab99c5da3ad5eb87742d211e412",
-  "completedAt": "2026-09-09T22:34:43.522315+00:00"
+  "completedAt": "2026-09-09T22:48:12.556794+00:00"
 }

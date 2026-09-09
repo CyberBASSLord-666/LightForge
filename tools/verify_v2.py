@@ -21,7 +21,7 @@ def digest(p):
     with p.open('rb') as f:return hashlib.file_digest(f,'sha256').hexdigest()
 
 def hashes():
-    paths=[ROOT/'version.json',ROOT/'package.json',ROOT/'package-lock.json',ROOT/'build.sh',ROOT/'android/native-runtime.json']
+    paths=[ROOT/'version.json',ROOT/'package.json',ROOT/'package-lock.json',ROOT/'build.sh',ROOT/'android/native-runtime.json',ROOT/'qa/release-1.6.0/prepare-musdb-fixtures.py']
     for folder in ['web','android','tools','tests']:
         paths.extend(p for p in (ROOT/folder).rglob('*') if p.is_file() and p.suffix in {'.js','.cjs','.mjs','.java','.css','.html','.py','.xml'} and '__pycache__' not in p.parts)
     return {str(p.relative_to(ROOT)):digest(p) for p in sorted(set(paths))}
