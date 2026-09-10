@@ -55,6 +55,16 @@
     // would permit a removed or remapped event to slip through.
     return canonical(recomputed)===canonical(links)?recomputed:null;
   }
+  function validTimeline(timeline,sidecar){
+    if(!timeline||!Number.isInteger(timeline.schemaVersion)||timeline.schemaVersion<2||timeline.clock!=='original-decoded-audio'||!finite(timeline.duration)||!near(timeline.duration,sidecar.duration,1e-6)||!Array.isArray(timeline.events))return false;
+    let prior=-1;const ids=new Set();
+    for(const event of timeline.events){
+      if(!event||typeof event.id!=='string'||!event.id||ids.has(event.id)||!finite(event.time)||event.time<0||event.time>timeline.duration||event.time<prior||!finite(event.duration)||event.duration<0||event.time+event.duration>timeline.duration+1e-6||!finite(event.salience)||event.salience<0||event.salience>1)return false;
+      if(Object.prototype.hasOwnProperty.call(event,'salienceCap')&&(!finite(event.salienceCap)||event.salienceCap<0||event.salienceCap>1||event.salience>event.salienceCap+1e-9))return false;
+      ids.add(event.id);prior=event.time;
+    }
+    return true;
+  }
   function indexed(records,sidecarRecords){
     if(!Array.isArray(records)||!Array.isArray(sidecarRecords)||records.length!==sidecarRecords.length)return null;
     const source=new Map(sidecarRecords.map(value=>[value&&value.id,value]));
@@ -89,6 +99,7 @@
     const sidecar=music.vocalSemantics,links=music.vocalSemanticLinks,api=resolveApi(options.api);
     if(!api||typeof api.validate!=='function'||typeof api.linkTimeline!=='function')return inactive(true,'vocal-semantics-module-unavailable');
     if(!sidecar||sidecar.schemaVersion!==1||sidecar.clock!=='original-decoded-audio'||sidecar.source!=='separated-vocals'||sidecar.sourceSeparated!==true||sidecar.linguisticAlignment!==false||!finite(sidecar.duration)||sidecar.duration<=0||typeof sidecar.sourceFingerprint!=='string'||containsLinguisticField(sidecar))return inactive(true,'invalid-vocal-semantics');
+    if(!validTimeline(music.semanticTimeline,sidecar))return inactive(true,'invalid-semantic-timeline');
     let validation;
     try{validation=api.validate(sidecar,{duration:music.duration,vocals:music.vocals});}catch(_){return inactive(true,'invalid-vocal-semantics');}
     if(!validation||validation.valid!==true)return inactive(true,'invalid-vocal-semantics');

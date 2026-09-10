@@ -14,9 +14,9 @@ function sidecar(){return {
   regions:[],summary:{linguisticContent:false}
 };}
 function timeline(changed=false){return {schemaVersion:2,clock:'original-decoded-audio',duration:12,events:[
-  {id:'event-phrase',type:'vocal_phrase',source:'vocals',time:1,duration:2,kind:'singing',confidence:.94,intensity:.90},
-  {id:'event-articulation',type:'vocal_accent',source:'vocals',time:changed?1.21:1.2,duration:0,kind:'syllabic-accent',confidence:.95,intensity:.97},
-  {id:'event-note',type:'vocal_note',source:'vocals',time:1.5,duration:1,kind:'held-note',confidence:.92,intensity:.88}
+  {id:'event-phrase',type:'vocal_phrase',source:'vocals',time:1,duration:2,kind:'singing',confidence:.94,intensity:.90,salience:.70},
+  {id:'event-articulation',type:'vocal_accent',source:'vocals',time:changed?1.21:1.2,duration:0,kind:'syllabic-accent',confidence:.95,intensity:.97,salience:.82},
+  {id:'event-note',type:'vocal_note',source:'vocals',time:1.5,duration:1,kind:'held-note',confidence:.92,intensity:.88,salience:.68}
 ]};}
 function linked(t){return {schemaVersion:1,clock:'original-decoded-audio',duration:12,sidecarFingerprint:'vs1-1234567890abcdef',timelineFingerprint:'vt1-'+t.events.map(event=>event.id+':'+event.time).join('|'),phrases:[{semanticId:'vp0000',eventId:'event-phrase'}],articulations:[{semanticId:'va0000',eventId:'event-articulation'}],notes:[{semanticId:'vn0000',eventId:'event-note'}]};}
 function semanticsApi(){return {
@@ -57,6 +57,8 @@ test('stale links, missing evidence, forbidden language fields, and manual vocal
   assert.equal(VocalChoreography.create({music:stale,normalizedMusic:{...stale,musicCues:[]},settings:{}},{enabled:true,api}).diagnostics().reason,'vocal-semantic-links-mismatch');
   const forbidden=music();forbidden.vocalSemantics.phrases[0].word='not allowed';
   assert.equal(VocalChoreography.create({music:forbidden,normalizedMusic:{...forbidden,musicCues:[]},settings:{}},{enabled:true,api}).diagnostics().reason,'invalid-vocal-semantics');
+  const invalidCap=music();invalidCap.semanticTimeline.events[1].salienceCap=.50;
+  assert.equal(VocalChoreography.create({music:invalidCap,normalizedMusic:{...invalidCap,musicCues:[]},settings:{}},{enabled:true,api}).diagnostics().reason,'invalid-semantic-timeline');
   const edited=music();
   assert.equal(VocalChoreography.create({music:edited,normalizedMusic:{...edited,musicCues:[]},settings:{vocalRegions:[{start:1,end:2,kind:'voice'}]}},{enabled:true,api}).diagnostics().reason,'vocal-evidence-edited');
   assert.equal(VocalChoreography.create({music:music(false),normalizedMusic:{...music(false),musicCues:[]},settings:{}},{enabled:true,api}).active,false);
