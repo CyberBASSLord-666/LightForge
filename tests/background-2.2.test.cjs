@@ -1,6 +1,6 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
-const {JSDOM}=require('jsdom'),runWorker=require('./worker-harness.cjs'),root=path.resolve(__dirname,'..');
+const {JSDOM}=require('jsdom'),runWorker=require('./worker-harness.cjs'),root=path.resolve(__dirname,'..'),{webcrypto}=require('node:crypto');
 const music={duration:2,bpm:120,beats:[0,.5,1,1.5],waveform:[.4],beatConfidence:.9,sections:[{start:0,end:2,energy:.7}],analysisVersion:6};
 const waitFor=async fn=>{for(let i=0;i<200;i++){if(fn())return;await new Promise(r=>setTimeout(r,10));}throw Error('Timed out');};
 test('background runner checkpoints analysis and commits an actual compiled show without a studio document',async()=>{
@@ -60,9 +60,9 @@ test('native studio delegates work, blocks stale saves, reconnects, and loads th
  }finally{dom.window.close();}
 });
 
-async function completedReconnect({acknowledged=false,hold=false}={}){
+async function completedReconnect({acknowledged=false,hold=false,restoreError=null}={}){
  const dom=new JSDOM(fs.readFileSync(path.join(root,'web/index.html'),'utf8'),{url:'https://appassets.androidplatform.net/',runScripts:'outside-only'}),w=dom.window;
- const polls=[];let restores=0,fetches=0,saved,bootstrap={projects:[],version:'2.2.4'};
+ const polls=[];let restores=0,fetches=0,saved,bootstrap={projects:[],version:'2.2.4'},restoreOptions=[];
  const completed={id:'completed-project',name:'Completed',duration:2,projectUrl:'/project/completed/project.json',audioUrl:'/project/completed/audio.wav'};
  const lastSelected={...completed,id:'last-selected-project',name:'Last selected',projectUrl:'/project/last/project.json'};
  const job={id:'completed-job',projectId:completed.id,state:'completed',progress:1};
@@ -75,8 +75,9 @@ async function completedReconnect({acknowledged=false,hold=false}={}){
  w.LightForgeVersion=require('../web/version.js');w.ShowEngine=require('../web/engine/show-engine.js');w.VehicleProfile=require('../web/engine/vehicle-profile.js');w.MusicCues=require('../web/engine/music-cues.js');
  w.Android={pickAudio(){},getBootstrap:()=>JSON.stringify(bootstrap),saveProject:()=>true,startAnalysis(){throw Error('Reconnection must not restart analysis');},getAnalysisStatus:()=>JSON.stringify(job)};
  w.fetch=async()=>{fetches++;return{ok:true,json:async()=>structuredClone(saved)};};
- w.ShowCompiler={restore:async(compiled,m,s,_progress,signal)=>{
-  restores++;enteredResolve();
+ w.ShowCompiler={restore:async(compiled,m,s,_progress,signal,options)=>{
+  restoreOptions.push(options);restores++;enteredResolve();
+  if(restoreError)throw restoreError;
   if(hold)await new Promise((resolve,reject)=>{
    const abort=()=>reject(new w.DOMException('Restore superseded','AbortError'));
    if(signal.aborted){abort();return;}signal.addEventListener('abort',abort,{once:true});
@@ -90,7 +91,7 @@ async function completedReconnect({acknowledged=false,hold=false}={}){
   const result=await runWorker(path.join(root,'web/engine'),{action:'generate',music,settings});saved={settings,music,compiled:result.compiled,needAnalysis:false};
   if(acknowledged)w.localStorage.setItem('lightforge-background-ack',job.id);
   bootstrap={projects:[completed,lastSelected],lastProjectId:lastSelected.id,version:'2.2.4',backgroundJob:job};
-  return{w,app,job,entered,release,polls,completed,lastSelected,get restores(){return restores;},get fetches(){return fetches;},close:()=>{release();w.close();}};
+  return{w,app,job,entered,release,polls,completed,lastSelected,get restores(){return restores;},get fetches(){return fetches;},get restoreOptions(){return restoreOptions;},close:()=>{release();w.close();}};
  }catch(error){release();w.close();throw error;}
 }
 
@@ -139,4 +140,79 @@ test('a completed job arriving while Guide is open restores without taking over 
   for(const key of ['loadingProject','composing','backgroundApplying','backgroundSyncPending'])assert.equal(t.app.state[key],false,key+' remained latched');
   assert.equal(t.app.state.view,'guide','Completion delivery must not navigate after its asynchronous restore');
  }finally{t.close();}
+});
+
+function workerClientHarness(){
+ const workers=[],timers=[];let timerId=0;
+ class Worker{
+  constructor(url){this.url=url;workers.push(this);}
+  postMessage(payload){this.payload=structuredClone(payload);}
+  terminate(){this.terminated=true;}
+  emit(data){this.onmessage?.({data});}
+ }
+ const context={URL,Worker,DOMException,console,document:{currentScript:{src:'https://appassets.androidplatform.net/engine/client.js'}},LightForgeVersion:{name:'test'},
+  setTimeout(callback,delay){const timer={id:++timerId,callback,delay,active:true};timers.push(timer);return timer;},
+  clearTimeout(timer){if(timer)timer.active=false;}};
+ context.window=context;vm.runInNewContext(fs.readFileSync(path.join(root,'web/engine/client.js'),'utf8'),context);
+ const activeTimers=()=>timers.filter(timer=>timer.active);
+ const fireStartup=()=>{const [timer]=activeTimers();assert.ok(timer,'Expected a startup timer');timer.active=false;timer.callback();};
+ return {compiler:context.ShowCompiler,workers,activeTimers,fireStartup};
+}
+function workerStartupMessages(){
+ const directory=path.join(root,'web/engine'),messages=[];
+ const context=vm.createContext({console,crypto:webcrypto,TextEncoder,TextDecoder,Uint8Array,Float32Array,ArrayBuffer,DataView,Blob,Response,ReadableStream,CompressionStream,DecompressionStream,atob,btoa,performance,setTimeout,clearTimeout});
+ context.self=context;context.postMessage=data=>messages.push(data);
+ context.importScripts=(...files)=>{for(const file of files)vm.runInContext(fs.readFileSync(path.join(directory,file),'utf8'),context,{filename:file});};
+ context.importScripts('worker.js');return messages;
+}
+test('completed reconnect opts only its restore into startup recovery',async()=>{
+ const completed=await completedReconnect({hold:true});
+ try{
+  const bootstrap=completed.app.readBootstrap();await completed.entered;
+  assert.deepEqual(completed.restoreOptions.map(options=>options?.retryStartup),[true]);
+  completed.release();await bootstrap;
+ }finally{completed.close();}
+ const ordinary=await completedReconnect({acknowledged:true});
+ try{
+  await ordinary.app.readBootstrap();
+  assert.deepEqual(ordinary.restoreOptions.map(options=>options?.retryStartup),[false]);
+ }finally{ordinary.close();}
+});
+test('a completed restore startup failure clears transient state without acknowledging the saved job',async()=>{
+ const failed=await completedReconnect({restoreError:Error('The saved arrangement verification worker did not become ready. Please reopen the project and try again.')});
+ try{
+  await failed.app.readBootstrap();
+  assert.equal(failed.restores,1);assert.equal(failed.app.state.composing,false);assert.equal(failed.app.state.backgroundApplying,false);
+  assert.equal(failed.app.state.backgroundSyncPending,true,'A failed validation must remain pending for a safe later retry');
+  assert.equal(failed.app.state.saveBlocked,true);assert.equal(failed.w.localStorage.getItem('lightforge-background-ack'),null,'Only a verified restored show may be acknowledged');
+ }finally{failed.close();}
+});
+test('restore worker sends a readiness handshake and the client retries only a missing startup response',async()=>{
+ assert.equal(workerStartupMessages()[0]?.type,'ready');
+ const first=workerClientHarness(),payload={compiled:{id:'saved'},music:{duration:2},settings:{dance:'off'}},progress=[];
+ const restored=first.compiler.restore(payload.compiled,payload.music,payload.settings,value=>progress.push(value),undefined,{retryStartup:true});
+ assert.equal(first.workers.length,1);assert.deepEqual(first.workers[0].payload,{action:'restore',...payload});
+ assert.equal(first.activeTimers().length,1);assert.equal(first.activeTimers()[0].delay,7500);
+ first.fireStartup();
+ assert.equal(first.workers.length,2,'Exactly one fresh worker is created after the first missing handshake');
+ const stale=first.workers[0];assert.equal(stale.terminated,true);assert.deepEqual(first.workers[1].payload,stale.payload);
+ let settled=false;restored.then(()=>{settled=true;},()=>{settled=true;});stale.emit({type:'result',value:{show:{id:'stale'}}});await Promise.resolve();
+ assert.equal(settled,false,'A terminated first worker must not settle its retry');
+ assert.equal(first.activeTimers().length,1);
+ first.workers[1].emit({type:'ready'});
+ assert.equal(first.activeTimers().length,0,'A ready worker has no result or progress timeout');
+ first.workers[1].emit({type:'progress',value:{progress:.04,detail:'Verifying'}});
+ const result={show:{id:'verified'},compiled:{id:'saved'},header:new Uint8Array([1,2])};
+ assert.equal(first.workers.length,2,'A ready worker may finish later without another recreation');
+ first.workers[1].emit({type:'result',value:result});
+ assert.equal(await restored,result);assert.deepEqual(progress,[{progress:.04,detail:'Verifying'}]);assert.equal(first.workers[1].terminated,true);
+ const missed=workerClientHarness(),failed=missed.compiler.restore(payload.compiled,payload.music,payload.settings,undefined,undefined,{retryStartup:true});
+ missed.fireStartup();assert.equal(missed.workers.length,2);missed.fireStartup();
+ await assert.rejects(failed,/did not become ready/);assert.equal(missed.workers[1].terminated,true);assert.equal(missed.activeTimers().length,0);
+ const aborted=workerClientHarness(),controller=new AbortController(),abandoned=aborted.compiler.restore(payload.compiled,payload.music,payload.settings,undefined,controller.signal,{retryStartup:true}),abandonedWorker=aborted.workers[0];
+ controller.abort();await assert.rejects(abandoned,error=>error.name==='AbortError');assert.equal(abandonedWorker.terminated,true);assert.equal(aborted.activeTimers().length,0);
+ abandonedWorker.emit({type:'ready'});assert.equal(aborted.workers.length,1,'Abort must not recreate a worker');
+ const ordinary=workerClientHarness(),normal=ordinary.compiler.restore(payload.compiled,payload.music,payload.settings);
+ assert.equal(ordinary.activeTimers().length,0,'Non-background restores retain their existing no-timeout behavior');
+ ordinary.workers[0].emit({type:'result',value:result});assert.equal(await normal,result);
 });

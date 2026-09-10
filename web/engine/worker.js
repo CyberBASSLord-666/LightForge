@@ -1,6 +1,7 @@
 /* Cancellable composition and durable frame snapshots, isolated from the UI. */
 'use strict';
 importScripts('../version.js','vehicle-profile.js','movement-planner.js','light-planner.js','music-cues.js','sync-review.js','show-engine.js');
+postMessage({type:'ready'});
 const MAX_FRAMES=960000, CHANNELS=200;
 const canonical=value=>JSON.stringify(value,(_,item)=>item&&typeof item==='object'&&!Array.isArray(item)?Object.fromEntries(Object.keys(item).sort().map(key=>[key,item[key]])):item);
 const progress=(value,detail)=>postMessage({type:'progress',value:{progress:value,stage:'generate',detail}});
