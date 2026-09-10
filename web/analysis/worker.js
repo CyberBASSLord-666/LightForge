@@ -2,6 +2,16 @@
 'use strict';
 importScripts('telemetry.js','wav-reader.js','dsp.js','bass-notes.js','vocal.js','vocal-detail.js','stem-cache.js','work-store.js','separator-mdx.js','separator-deux.js','game.js','vendor/ort.wasm.min.js');
 const report=(progress,stage,detail='',extra={})=>postMessage({type:'progress',value:{...extra,progress,stage,detail}});
+function createTelemetry(stage,metadata){
+ const factory=self.LightForgeAnalysisTelemetry;
+ if(factory&&typeof factory.create==='function')try{
+  const telemetry=factory.create(stage,metadata);
+  if(telemetry&&typeof telemetry.begin==='function'&&typeof telemetry.end==='function'&&typeof telemetry.cache==='function'&&typeof telemetry.snapshot==='function')return telemetry;
+ }catch(_){}
+ // Profiling must never make a resumable analysis fail when a test harness,
+ // older WebView cache, or constrained worker cannot load its optional module.
+ return {begin:()=>null,end:()=>{},cache:()=>{},snapshot:()=>null};
+}
 let nativeSequence=0;const nativeRequests=new Map();
 let nativeMdxSequence=0;const nativeMdxRequests=new Map();
 function nativePredict(startSample,onProgress=()=>{}){return new Promise((resolve,reject)=>{const requestId=++nativeSequence;nativeRequests.set(requestId,{resolve,reject,onProgress});postMessage({type:'native-deux',requestId,startSample});}).then(async url=>{
@@ -51,7 +61,7 @@ self.onmessage=async e=>{
  const {audioUrl,options={},stage}=e.data;
  if(!['rhythm','separation','voice','bass'].includes(stage))throw Error('Invalid music analysis stage.');
  const cacheKey=options.cacheKey,quality=options.analysisQuality==='balanced'?'balanced':'precision';
- const telemetry=LightForgeAnalysisTelemetry.create(stage,{quality});
+ const telemetry=createTelemetry(stage,{quality});
  const storeOpen=telemetry.begin('store.open');
  const store=await LightForgeAnalysisStore.open(options.workId,{sourceId:options.projectId||''});
  telemetry.end(storeOpen);
