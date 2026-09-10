@@ -74,7 +74,11 @@ function tempoSegments(intervals){
  for(let index=2;index<intervals.length;index++){
   const candidate=intervals[index],previous=intervals[index-1],prefix=intervals.slice(start,index),reference=median(prefix.map(value=>value.bpm));
   if(relative(candidate.bpm,reference)>.12&&close(candidate,previous)){
-   if(index-start>=2){runs.push(intervals.slice(start,index));start=index;}
+   // The first of the two agreeing intervals belongs to the new tempo.  Keep
+   // it with its supporting neighbour rather than contaminating the previous
+   // segment with one beat of a confirmed transition.
+   const boundary=index-1;
+   if(boundary-start>=2){runs.push(intervals.slice(start,boundary));start=boundary;}
   }
  }
  runs.push(intervals.slice(start));
@@ -112,6 +116,21 @@ function barsFromEvidence(beats,evidence){
  }
  return bars;
 }
+function meterEvidence(evidence,bars){
+ const counts=bars.filter(bar=>bar.end!==null&&bar.beatCount>=2&&bar.beatCount<=12).map(bar=>bar.beatCount),details=evidence.details;
+ const values=[2,3,4,5,6,7,8];if(evidence.meter!==null&&!values.includes(evidence.meter))values.push(evidence.meter);
+ const candidates=values.map(value=>{
+  const measured=counts.length?counts.filter(count=>count===value).length/counts.length:0;
+  const positions=details.filter(detail=>Number.isInteger(detail?.barPosition));
+  const positional=positions.length?positions.filter((detail,index)=>detail.barPosition===((index%value)+1)).length/positions.length:0;
+  // Downbeat spacing is stronger evidence than the decoder's existing bar
+  // labels, but neither is enough to replace the legacy meter on its own.
+  const confidence=clamp((measured*.75+positional*.25)*Math.max(evidence.downbeatConfidence,evidence.meterConfidence*.5));
+  return {value,confidence:round(confidence),measuredBarMatches:counts.filter(count=>count===value).length,observedBars:counts.length};
+ }).sort((left,right)=>right.confidence-left.confidence||left.value-right.value);
+ const best=candidates[0]||null,legacy=candidates.find(candidate=>candidate.value===evidence.meter)||null;
+ return {value:evidence.meter,confidence:round(evidence.meterConfidence),candidates,legacyAgreement:legacy&&best?round(1-Math.abs(legacy.confidence-best.confidence)):null,safeguard:'Legacy meter remains authoritative; alternative evidence is exposed without changing the beat grid.'};
+}
 function validSpan(value,duration){return value&&typeof value==='object'&&finite(value.start)&&finite(value.end)&&value.start>=0&&value.end>value.start&&value.end<=duration+EPSILON;}
 function structures(analysis,duration){
  const copy=(values,kind)=>Array.isArray(values)?values.filter(value=>validSpan(value,duration)).map((value,index)=>({index,start:round(value.start),end:round(value.end),duration:round(value.end-value.start),kind:value.kind||value.label||kind,confidence:round(clamp(finite(value.confidence)?value.confidence:0)),estimated:value.estimated!==false,recurrenceGroup:typeof value.recurrenceGroup==='string'?value.recurrenceGroup:null,repetitionIndex:Number.isInteger(value.repetitionIndex)?value.repetitionIndex:null})):[];
@@ -138,7 +157,7 @@ function subdivisions(analysis,beats,duration){
 }
 function build(analysis){
  const evidence=legacyEvidence(analysis);if(!evidence.valid)return null;
- const intervals=intervalEvidence(evidence),beats=hierarchyBeats(evidence,intervals),bars=barsFromEvidence(beats,evidence),levels=subdivisions(analysis,beats,evidence.duration),structure=structures(analysis,evidence.duration);
+ const intervals=intervalEvidence(evidence),beats=hierarchyBeats(evidence,intervals),bars=barsFromEvidence(beats,evidence),levels=subdivisions(analysis,beats,evidence.duration),structure=structures(analysis,evidence.duration),meter=meterEvidence(evidence,bars);
  const limitations=[];
  if(!beats.length)limitations.push('No approved beat evidence was available; no rhythm grid was synthesized.');
  if(!evidence.downbeats.length)limitations.push('No approved downbeats were available; bars remain unverified.');
@@ -146,7 +165,7 @@ function build(analysis){
  if(!intervals.length&&beats.length>1)limitations.push('Beat intervals were outside the bounded tempo range; tempo changes were not inferred.');
  const tempo=tempoSummary(evidence,intervals);
  if(tempo.halfDouble.ambiguous)limitations.push('Half/double-time ambiguity is reported without replacing the approved beat grid.');
- return {schemaVersion:VERSION,kind:'evidence-aware-rhythm-hierarchy',source:'approved-rhythm-summary',inputSignature:evidenceSignature(analysis),duration:round(evidence.duration),status:beats.length?'partial-evidence':'no-pulse',confidence:{beat:round(evidence.baseConfidence),downbeat:round(evidence.downbeatConfidence),meter:round(evidence.meterConfidence),tempo:tempo.confidence},tempo,meter:{value:evidence.meter,confidence:round(evidence.meterConfidence),candidates:evidence.meter===null?[]:[{value:evidence.meter,confidence:round(evidence.meterConfidence)}],safeguard:'Only legacy meter evidence is represented; unsupported meters are not guessed.'},microOnsets:levels.microOnsets,subdivisions:levels.subdivisions,beats,downbeats:beats.filter(beat=>beat.downbeat).map(beat=>({time:beat.time,beatIndex:beat.index,confidence:round(clamp(Math.min(beat.confidence,evidence.downbeatConfidence)))})),bars,phrases:structure.phrases,sections:structure.sections,limitations};
+ return {schemaVersion:VERSION,kind:'evidence-aware-rhythm-hierarchy',source:'approved-rhythm-summary',inputSignature:evidenceSignature(analysis),duration:round(evidence.duration),status:beats.length?'partial-evidence':'no-pulse',confidence:{beat:round(evidence.baseConfidence),downbeat:round(evidence.downbeatConfidence),meter:round(evidence.meterConfidence),tempo:tempo.confidence},tempo,meter,microOnsets:levels.microOnsets,subdivisions:levels.subdivisions,beats,downbeats:beats.filter(beat=>beat.downbeat).map(beat=>({time:beat.time,beatIndex:beat.index,confidence:round(clamp(Math.min(beat.confidence,evidence.downbeatConfidence)))})),bars,phrases:structure.phrases,sections:structure.sections,limitations};
 }
 function validate(hierarchy,analysis){
  const evidence=legacyEvidence(analysis);if(!evidence.valid)return {valid:false,reason:'legacy-'+evidence.reason};

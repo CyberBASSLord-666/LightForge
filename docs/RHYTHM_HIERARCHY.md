@@ -24,14 +24,17 @@ The sidecar contains confidence-carrying views of the existing evidence:
 - approved beats and downbeats, with local BPM and bar-position context;
 - observed bars derived only from approved downbeats;
 - bounded tempo segments and tempo-change uncertainty;
-- existing meter evidence and meter confidence;
+- legacy meter evidence plus confidence-ranked alternatives from approved
+  downbeat spacing and existing bar-position evidence;
 - existing phrase and section spans.
 
-It handles a local half/double-time signal conservatively.  A gap or an
+It handles local half/double-time and meter disagreement conservatively.  A gap or an
 unexpectedly short interval becomes an ambiguity record with candidate tempo
 interpretations; it never changes, inserts, deletes, or re-times the approved
 beat grid.  Likewise, unsupported meters, missing downbeats, and weak bar
-evidence remain uncertain rather than being guessed.
+evidence remain uncertain rather than being guessed.  An alternative meter is
+only an uncertainty record: the legacy meter and approved beat grid remain
+authoritative.
 
 ## Cache and validation contract
 

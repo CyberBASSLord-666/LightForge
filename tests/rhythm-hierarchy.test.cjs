@@ -63,6 +63,15 @@ function rhythm(overrides={}){
 }
 
 {
+ const beats=[0,.5,1,1.5,2,2.5,3,3.5,4,4.5];
+ const input=rhythm({beats,downbeats:[0,1.5,3,4.5],meter:4,beatDetails:beats.map((time,index)=>({time,confidence:.9,localBpm:120,barPosition:(index%3)+1}))});
+ const result=api.build(input);
+ assert.equal(result.meter.value,4,'the hierarchy must retain legacy meter authority');
+ assert.equal(result.meter.candidates[0].value,3,'measured downbeat spacing should expose an alternate meter hypothesis');
+ assert.ok(result.meter.safeguard.includes('without changing the beat grid'));
+}
+
+{
  const input=rhythm();
  const result=api.build(input);
  input.beats=input.beats.map(value=>value+.01);
