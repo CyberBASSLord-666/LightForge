@@ -272,12 +272,12 @@
     "sha256": "1928c13321c87e0cc1d4deb4b7e140027f9a4f502d14c36db45abd124dfc1c06"
   },
   "separator-deux.js": {
-    "bytes": 10079,
-    "sha256": "95508ddb8cffc7dff6e47b849f7722efd1c901fbacb2c059be392444f872aebe"
+    "bytes": 11581,
+    "sha256": "a2884767a4ac017e0ed7dbe075b59cdbb6b0f2b202360e04b126bb1fc1c444a5"
   },
   "separator-mdx.js": {
-    "bytes": 11173,
-    "sha256": "accc7aead92f045da9faf7a08019af757c73042850dd2fccc0e923f7d20043a1"
+    "bytes": 12679,
+    "sha256": "2e0e4087da4e897e3212f7c5c98fc1cb60fcab7fee47f116b7c41443b564192a"
   },
   "stem-cache.js": {
     "bytes": 17361,
