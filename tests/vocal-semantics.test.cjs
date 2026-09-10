@@ -64,8 +64,16 @@ test('links only exact existing vocal timeline events and fails closed on a chan
  assert.match(link.timelineFingerprint,/^vt1-[0-9a-f]{16}$/);
  const retuned=structuredClone(timeline);retuned.events.find(value=>value.type==='vocal_note').midi=67;
  assert.notEqual(VocalSemantics.linkTimeline(sidecar,retuned).timelineFingerprint,link.timelineFingerprint,'a semantically changed but time-identical timeline must not retain the old link binding');
- const recapped=structuredClone(timeline);recapped.events.find(value=>value.type==='vocal_accent').salienceCap=.42;
+ const recapped=structuredClone(timeline);recapped.events.find(value=>value.type==='vocal_accent').salienceCap=.75;
+ assert.equal(Timeline.validate(recapped).valid,true,'the cap-only binding fixture must remain a valid semantic timeline');
  assert.notEqual(VocalSemantics.linkTimeline(sidecar,recapped).timelineFingerprint,link.timelineFingerprint,'a cap-only timeline mutation must invalidate the vocal link binding');
+ const invalid=structuredClone(timeline);invalid.events[0].salience=1.01;
+ assert.throws(()=>VocalSemantics.linkTimeline(sidecar,invalid),/invalid timeline/,'links must reject a timeline that the canonical validator rejects');
+ const invalidCap=structuredClone(timeline),capEvent=invalidCap.events.find(value=>value.type==='vocal_accent'),canonical=globalThis.LightForgeSemanticTimeline;
+ capEvent.salienceCap=Math.max(0,capEvent.salience-.01);
+ globalThis.LightForgeSemanticTimeline={...canonical,validate(value){const checked=canonical.validate(value);if(!checked.valid)return checked;return value.events.some(event=>event.salienceCap!==undefined&&event.salienceCap<event.salience)?{valid:false,errors:['Invalid event salience cap.']}:checked;}};
+ try{assert.throws(()=>VocalSemantics.linkTimeline(sidecar,invalidCap),/Invalid event salience cap/,'cap-aware canonical validation must block an invalid timeline before linking');}
+ finally{globalThis.LightForgeSemanticTimeline=canonical;}
  const shifted=structuredClone(timeline);shifted.events.find(value=>value.type==='vocal_accent'&&value.kind==='syllabic-accent').time+=.01;
  assert.throws(()=>VocalSemantics.linkTimeline(sidecar,shifted),/cannot be linked/);
 });

@@ -196,9 +196,16 @@
   // planner cannot reuse a link after a cap-aware timeline mutation.
   const values=[];canonicalTimelineTokens(timeline,values);return 'vt1-'+hash(values);
  }
+ function validateTimeline(timeline){
+  const api=root.LightForgeSemanticTimeline;
+  if(!api||typeof api.validate!=='function')throw Error('Vocal semantic timeline link requires the canonical semantic timeline validator.');
+  const check=api.validate(timeline);
+  if(!check||check.valid!==true)throw Error('Vocal semantic timeline link received an invalid timeline: '+(check?.errors||[]).join('; ').slice(0,512));
+ }
  function linkTimeline(sidecar,timeline){
   const sidecarCheck=validate(sidecar);if(!sidecarCheck.valid)throw Error('Cannot link invalid vocal semantic sidecar: '+sidecarCheck.errors.join('; '));
   if(!timeline||!finite(timeline.duration)||!near(timeline.duration,sidecar.duration)||!Array.isArray(timeline.events))throw Error('Vocal semantic timeline link requires a matching semantic timeline.');
+  validateTimeline(timeline);
   let prior=-1;const ids=new Set();for(const event of timeline.events){if(!event||typeof event.id!=='string'||ids.has(event.id)||!finite(event.time)||event.time<prior||event.time>timeline.duration)throw Error('Vocal semantic timeline link received an invalid timeline.');ids.add(event.id);prior=event.time;}
   const used=new Set(),match=(type,time,duration,kind)=>{const value=timeline.events.find(event=>!used.has(event.id)&&event.type===type&&event.source==='vocals'&&near(event.time,time)&&near(event.duration,duration)&&(!kind||event.kind===kind));if(!value)throw Error('Vocal semantic sidecar cannot be linked to the current semantic timeline.');used.add(value.id);return value.id;};
   const phrases=sidecar.phrases.map(phrase=>({semanticId:phrase.id,eventId:match('vocal_phrase',phrase.start,phrase.duration,phrase.kind)}));
