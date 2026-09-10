@@ -30,7 +30,9 @@ function wasmThreadCount(){
  // backend, not abort analysis before a recoverable checkpoint can run.
  try{
   if(!self.crossOriginIsolated||typeof SharedArrayBuffer!=='function')return 1;
-  return Math.min(4,Math.max(1,Math.floor((navigator.hardwareConcurrency||2)/2)));
+  const cores=self.navigator?.hardwareConcurrency;
+  if(!Number.isFinite(cores)||cores<1)return 1;
+  return Math.min(4,Math.max(1,Math.floor(cores/2)));
  }catch(_){return 1;}
 }
 function safeValidation(api,value,context){
