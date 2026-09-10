@@ -156,8 +156,11 @@
       resolved[output.id]=Object.freeze({
         outputId:output.id,kind:output.kind,calibrationConfigured:!!entry,leadAdjusted,
         commandLatencyMs,activationLatencyMs,deactivationLatencyMs,
-        minimumUsefulDurationMs:entry&&entry.minimumUsefulDurationMs||null,
-        minimumRepeatIntervalMs:entry&&entry.minimumRepeatIntervalMs||null,
+        // A calibrated zero is meaningful: it says that this output has no
+        // additional minimum-duration/repeat constraint.  Do not collapse it
+        // into null, which means "not calibrated" to feasibility diagnostics.
+        minimumUsefulDurationMs:entry&&entry.minimumUsefulDurationMs!==undefined?entry.minimumUsefulDurationMs:null,
+        minimumRepeatIntervalMs:entry&&entry.minimumRepeatIntervalMs!==undefined?entry.minimumRepeatIntervalMs:null,
         openTravelMs,closeTravelMs,
         travelEvidence:spec?(entry&&(entry.openTravelMs!==undefined||entry.closeTravelMs!==undefined)?'explicit-calibration':'unverified-planning-envelope'):null
       });
