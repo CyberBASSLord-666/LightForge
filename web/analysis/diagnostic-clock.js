@@ -5,27 +5,29 @@
 (function(root){'use strict';
  const number=value=>typeof value==='number'&&Number.isFinite(value)?value:null;
  const read=(object,key)=>{try{return {ok:true,value:object==null?undefined:object[key]};}catch(_){return {ok:false,reason:String(key)+'-observed-error'};}};
- const invoke=(object,key,label)=>{
-  const ref=read(object,key);if(!ref.ok)return {ok:false,reason:label+'-observed-error'};
-  if(typeof ref.value!=='function')return {ok:false,reason:label+'-unavailable'};
-  try{const value=number(ref.value.call(object));return value===null?{ok:false,reason:label+'-invalid'}:{ok:true,value};}catch(_){return {ok:false,reason:label+'-observed-error'};}
+ const select=(target,key,label)=>{
+  const object=read(target,key);
+  if(!object.ok)return {ok:false,reason:label+'-clock-observed-error'};
+  if(object.value==null)return {ok:false,reason:label+'-clock-unavailable'};
+  const now=read(object.value,'now');
+  if(!now.ok)return {ok:false,reason:label+'-now-observed-error'};
+  if(typeof now.value!=='function')return {ok:false,reason:label+'-now-unavailable'};
+  try{const value=number(now.value.call(object.value));return value===null?{ok:false,reason:label+'-now-invalid'}:{ok:true,value,object:object.value,now:now.value,label:label+'-now'};}catch(_){return {ok:false,reason:label+'-now-observed-error'};}
  };
+ const sample=clock=>{try{const value=number(clock.now.call(clock.object));return value===null?{ok:false,reason:clock.label+'-invalid'}:{ok:true,value};}catch(_){return {ok:false,reason:clock.label+'-observed-error'};}};
  function create(target=root){
-  const samplePerformance=()=>{
-   const ref=read(target,'performance');return ref.ok&&ref.value!=null?invoke(ref.value,'now','performance-now'):{ok:false,reason:'performance-clock-'+(ref.ok?'unavailable':'observed-error')};
-  };
-  const sampleDate=()=>{
-   const ref=read(target,'Date');return ref.ok&&ref.value!=null?invoke(ref.value,'now','date-now'):{ok:false,reason:'date-clock-'+(ref.ok?'unavailable':'observed-error')};
-  };
-  const firstPerformance=samplePerformance();
-  const initial=firstPerformance.ok?firstPerformance:sampleDate();
+  const firstPerformance=select(target,'performance','performance');
+  const initial=firstPerformance.ok?firstPerformance:select(target,'Date','date');
   const source=firstPerformance.ok?'performance.now':initial.ok?'date.now':'unavailable';
-  const sample=source==='performance.now'?samplePerformance:source==='date.now'?sampleDate:()=>({ok:false,reason:'clock-unavailable'});
+  // The source label alone is insufficient: a host getter can replace its
+  // object later with an epoch-backed clock. Retain both original receiver and
+  // callable so timing either remains on one origin or fails closed.
+  const selected=initial.ok?initial:null;
   const fallbackReason=firstPerformance.ok?null:firstPerformance.reason;
   let unavailable=!initial.ok,failureReason=initial.ok?null:initial.reason,last=initial.ok?initial.value:0;
   const now=()=>{
    if(unavailable)return null;
-   const next=sample();
+   const next=selected?sample(selected):{ok:false,reason:'clock-unavailable'};
    if(!next.ok){unavailable=true;failureReason=next.reason;return null;}
    if(next.value<last){unavailable=true;failureReason=source+'-nonmonotonic';return null;}
    last=next.value;return next.value;
