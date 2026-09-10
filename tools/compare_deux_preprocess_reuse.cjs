@@ -72,7 +72,7 @@ function main(){
   // Both runs use separate Node processes. Kernel file-cache and thermal state
   // remain uncontrolled; one pair never constitutes performance acceptance.
   receipt.observedWallClockReductionPercent=baseline.report.seconds?100*(baseline.report.seconds-candidate.report.seconds)/baseline.report.seconds:null;
-  receipt.performanceAcceptance={accepted:false,reason:'One cold-process pair is diagnostic evidence only; repeat under the locked corpus, equivalent thermal state and quality gate before enabling the candidate.'};
+  receipt.performanceAcceptance={accepted:false,reason:'One fresh-process pair with uncontrolled filesystem-cache and thermal state is diagnostic evidence only; repeat under the locked corpus, equivalent controlled conditions and quality gate before enabling the candidate.'};
   if(verifyRecovery){
    const recovered=invoke('warm-recovery','on',1);
    validateReport(recovered.report,{enabled:true,minPassages,recovery:true});
