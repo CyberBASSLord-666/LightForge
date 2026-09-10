@@ -1,6 +1,6 @@
 # LightForge 2.2.4 — bounded long-run analysis
 
-The **2.2.4 update has passed all seven source-bound release verification gates**, including the complete [Android and offline-pipeline run](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34424617050). The original-signed update has been built and verified. Publication is being prepared; [2.2.2](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.2.2) remains the latest published update until the new release is available.
+The **2.2.4 update passes all seven source-bound release verification gates**, including the complete [Android and offline-pipeline run](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34424617050). Install the original-signed update over your existing app to preserve private projects.
 
 This update adds guarded native Balanced separation, bounds model memory between passages and stages, reports saved progress promptly, and improves completed-project and preview recovery. Models, both denoise passes, all eight GAME transcription steps and the original sample clock remain intact. Android emulator checks passed screen-off Studio and Balanced processing, cancellation and saved-passage Resume. Preview startup can still vary; sustained phone speed and the supplied Samsung crash have not been independently confirmed.
 
@@ -12,7 +12,7 @@ LightForge turns music on your phone into an editable Tesla light show for a **2
 
 ## Install the update
 
-Install [LightForge-2.2.2.apk](https://github.com/CyberBASSLord-666/LightForge/releases/download/v2.2.2/LightForge-2.2.2.apk) over your existing app. **Do not uninstall first.** The release gate requires the original signing identity so the update preserves private projects. CI builds use a temporary identity and are not the update APK.
+Install [LightForge-2.2.4.apk](https://github.com/CyberBASSLord-666/LightForge/releases/download/v2.2.4/LightForge-2.2.4.apk) over your existing app. **Do not uninstall first.** The release gate requires the original signing identity so the update preserves private projects. CI builds use a temporary identity and are not the update APK.
 
 Android 8+ and a current Android System WebView are required. The app targets Android 15. No account, API key, subscription, server or model download is needed. Create runs in an Android foreground service, so you can switch apps or turn off the display. Studio uses native ONNX Runtime CPU inference with bounded batches and model buffers; it can still take longer than the song and needs substantial free memory and temporary storage. Balanced remains an explicit lighter choice. Separated listening audio needs about 21.2 MB per minute of music; recoverable passage checkpoints need additional temporary space.
 
@@ -337,7 +337,7 @@ The full release run met the unchanged 45-second preview-readiness deadline at e
 
 ## Update from an earlier release
 
-The 2.2.4 signed update is `LightForge-2.2.4.apk`, version code 20204. Its download becomes available when publication finishes. Install it over the existing LightForge app; the release gate requires the original package ID and signing identity. **Do not uninstall first**, because uninstalling removes
+The 2.2.4 signed update is `LightForge-2.2.4.apk`, version code 20204. Install it over the existing LightForge app; the release gate requires the original package ID and signing identity. **Do not uninstall first**, because uninstalling removes
 private projects. Saved music and projects remain compatible; matching checked arrangements reopen with their saved frames. Recreate to apply current analysis and composition.
 
 Version 1.3.0 improves musical analysis, structure-aware lighting and movement

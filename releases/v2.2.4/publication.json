@@ -1,0 +1,45 @@
+{
+  "release": "2.2.4",
+  "published": true,
+  "release_id": 385960526,
+  "release_url": "https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.2.4",
+  "published_at": "2026-09-10T02:15:51Z",
+  "tag": "v2.2.4",
+  "source_commit": "57e6ee996bd8f9d135e89334585efe90d8667b68",
+  "verified_full_ci_run": 34424617050,
+  "publication_commit": "a8c6fd8abf76c413913c3aed85cba2ad6bae17bd",
+  "publication_run": 34428456862,
+  "publication_job": 102718616651,
+  "publication_conclusion": "success",
+  "all_uploaded_digests_matched": true,
+  "original_signing_certificate_sha256": "7187d6aa935d5b7d2d656cb87913af95fe1ca3a4b1653036d1d8d890e2016c6b",
+  "assets": [
+    {
+      "name": "LightForge-2.2.4.apk",
+      "bytes": 1204357470,
+      "sha256": "fc7eef58ed63d28ddb9de6dc3b16396db48fcd9281fc731d152768fcc0c863ad",
+      "download_url": "https://github.com/CyberBASSLord-666/LightForge/releases/download/v2.2.4/LightForge-2.2.4.apk"
+    },
+    {
+      "name": "release-verification.json",
+      "bytes": 120048,
+      "sha256": "6a19d34bff0b794fb9097b6ab52a70199da124de38000db73e73900b795cf505",
+      "download_url": "https://github.com/CyberBASSLord-666/LightForge/releases/download/v2.2.4/release-verification.json"
+    },
+    {
+      "name": "RELEASE_NOTES.md",
+      "bytes": 5889,
+      "sha256": "542c239084c28838249cbaadbf960bae963cfab0afb42938f6ff2158debe0e4c",
+      "download_url": "https://github.com/CyberBASSLord-666/LightForge/releases/download/v2.2.4/RELEASE_NOTES.md"
+    },
+    {
+      "name": "SHA256SUMS.txt",
+      "bytes": 87,
+      "sha256": "0b56a71db908bddb735cc73670bc3c7bcc8615bae162735823298b93a5ea7c66",
+      "download_url": "https://github.com/CyberBASSLord-666/LightForge/releases/download/v2.2.4/SHA256SUMS.txt"
+    }
+  ],
+  "open_issues": 0,
+  "open_pull_requests": 0,
+  "limits": "Physical-phone sustained performance and Tesla timing remain unverified. The separate cold software-rendered Android observation retained its failed 45-second result and reached complete readiness 6.225 seconds later."
+}
