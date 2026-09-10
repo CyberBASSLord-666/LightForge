@@ -59,7 +59,7 @@
     const confidence=clamp(finite(music.beatConfidence)?music.beatConfidence:.5,0,1),recovery=expressive?5:8;
     const enabled=Object.assign({windows:true,mirrors:true,trunk:true,charge:true},settings.enabled||{}),manual=new Set((settings.manualCues||[]).map(c=>c.outputId));
     for(const [id,spec]of Object.entries(specifications)){
-      const output=profile&&profile.outputs&&profile.outputs.find(o=>o.id===id);
+      const output=activeProfile&&activeProfile.outputs&&activeProfile.outputs.find(o=>o.id===id);
       if(enabled[spec.group]===false||settings.outputEnabled&&settings.outputEnabled[id]===false||manual.has(id)||output&&output.available===false)continue;
       tracks.set(id,[]);
     }
