@@ -4,18 +4,18 @@
  // Browser privacy/runtime probes may be accessor-backed and throw. Diagnostics
  // are observational only, so an unavailable probe must never fail analysis.
  const read=(object,key)=>{try{return object==null?undefined:object[key];}catch(_){return undefined;}};
- function dateNow(){try{const value=Date.now();return number(value)!==null?value:null;}catch(_){return null;}}
- function performanceNow(){
-  const performanceRef=read(root,'performance'),clock=read(performanceRef,'now');
-  if(typeof clock!=='function')return null;
-  try{const value=clock.call(performanceRef);return number(value)!==null?value:null;}catch(_){return null;}
+ function selectClock(key){
+  const receiver=read(root,key),callable=read(receiver,'now');
+  if(typeof callable!=='function')return null;
+  try{const value=number(callable.call(receiver));return value===null?null:{receiver,callable,value};}catch(_){return null;}
  }
+ function sampleClock(clock){try{const value=number(clock.callable.call(clock.receiver));return value===null?null:value;}catch(_){return null;}}
  function createClock(){
-  const first=performanceNow();
-  if(first!==null){
-   let unavailable=false;return {source:'performance.now',start:first,now(){if(unavailable)return null;const value=performanceNow();if(value===null)unavailable=true;return value;},elapsed(start){const end=this.now();return end===null||number(start)===null?0:Math.max(0,end-start);},diagnostics(){return {source:'performance.now',state:unavailable?'observed-error':'available'};}};
+  const performanceClock=selectClock('performance');
+  if(performanceClock){
+   let unavailable=false,last=performanceClock.value;return {source:'performance.now',start:last,now(){if(unavailable)return null;const value=sampleClock(performanceClock);if(value===null||value<last){unavailable=true;return null;}last=value;return value;},elapsed(start){const end=this.now();return end===null||number(start)===null?0:Math.max(0,end-start);},diagnostics(){return {source:'performance.now',state:unavailable?'observed-error':'available'};}};
   }
-  const firstDate=dateNow();let unavailable=firstDate===null;return {source:firstDate===null?'unavailable':'date.now',start:firstDate??0,now(){if(unavailable)return null;const value=dateNow();if(value===null)unavailable=true;return value;},elapsed(start){const end=this.now();return end===null||number(start)===null?0:Math.max(0,end-start);},diagnostics(){return {source:firstDate===null?'unavailable':'date.now',state:unavailable?'observed-error':'available'};}};
+  const dateClock=selectClock('Date');let unavailable=!dateClock,last=dateClock?.value??0;return {source:dateClock?'date.now':'unavailable',start:last,now(){if(unavailable)return null;const value=sampleClock(dateClock);if(value===null||value<last){unavailable=true;return null;}last=value;return value;},elapsed(start){const end=this.now();return end===null||number(start)===null?0:Math.max(0,end-start);},diagnostics(){return {source:dateClock?'date.now':'unavailable',state:unavailable?'observed-error':'available'};}};
  }
  const clampText=x=>String(x||'').replace(/[^a-zA-Z0-9_.:-]/g,'_').slice(0,96);
  function runtime(){
