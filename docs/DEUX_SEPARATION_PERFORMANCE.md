@@ -82,7 +82,7 @@ node tools/benchmark_deux_runtime.cjs \
 
 node tools/benchmark_deux_runtime.cjs \
   --fixture path/to/licensed-long.wav --total-samples 661501 \
-  --threads 4 --spectrum-reuse on --output build/deux-warm-candidate.json
+  --threads 4 --spectrum-reuse on --output build/deux-cold-candidate.json
 ```
 
 `661501` is intentionally odd and requires a fixture at least that long.
