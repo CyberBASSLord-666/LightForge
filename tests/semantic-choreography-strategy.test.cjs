@@ -141,6 +141,11 @@ test('semantic consumers reject invalid canonical timelines even with a forged m
   const cappedEvent=invalidCap.events.find(event=>event.salience>.01);
   cappedEvent.salienceCap=cappedEvent.salience-.001;
   assertRejected(invalidCap);
+  const invalidSalience=structuredClone(timeline);
+  const invalidSalienceEvent=invalidSalience.events.find(event=>event.salience>.01);
+  delete invalidSalienceEvent.salienceCap;
+  invalidSalienceEvent.salience=1.01;
+  assertRejected(invalidSalience);
 });
 
 test('browser and composition-worker contexts load the canonical timeline before semantic strategy and ShowEngine',()=>{

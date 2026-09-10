@@ -70,6 +70,7 @@
    if(!finite(event?.time)||event.time<0||event.time>timeline.duration||event.time<prior)errors.push('Invalid semantic event order or time.');
    prior=event?.time;
    if(!finite(event?.duration)||event.duration<0||event.time+event.duration>timeline.duration+1e-6)errors.push('Invalid semantic event duration.');
+   if(!finite(event?.salience)||event.salience<0||event.salience>1)errors.push('Invalid semantic event salience.');
    if(Object.prototype.hasOwnProperty.call(event||{},'salienceCap')&&(!finite(event.salienceCap)||event.salienceCap<0||event.salienceCap>1||event.salience>event.salienceCap+1e-9))errors.push('Invalid semantic event salience cap.');
   }
   return {valid:errors.length===0,errors};
