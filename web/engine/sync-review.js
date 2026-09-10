@@ -188,7 +188,7 @@
           // an explicitly calibrated planner intent may contribute an
           // estimated perceptual timestamp; in particular, a Dance command
           // must never be relabelled as its own perceptual arrival.
-          const calibrated=plainObject(intent.perceptualTiming)&&typeof intent.perceptualTiming.calibrationId==='string'&&intent.perceptualTiming.calibrationId.length>0;
+          const calibrated=plainObject(intent.perceptualTiming)&&intent.perceptualTiming.responseTimingEvidence===true&&typeof intent.perceptualTiming.calibrationId==='string'&&intent.perceptualTiming.calibrationId.length>0;
           if(calibrated)predictedPerceptualTime=finite(intent.estimatedArrival)?intent.estimatedArrival:finite(event.perceptualStart)?event.perceptualStart:null;
           if(predictedPerceptualTime!==null){predictedPerceptualErrorMs=(predictedPerceptualTime-target.time)*1000;perceptualErrors.push(predictedPerceptualErrorMs);}
           commandErrors.push(commandErrorMs);
