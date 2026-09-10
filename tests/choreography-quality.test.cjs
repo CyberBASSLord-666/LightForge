@@ -5,6 +5,8 @@ const fs=require('node:fs');
 const path=require('node:path');
 const Quality=require('../web/engine/choreography-quality.js');
 const Engine=require('../web/engine/show-engine.js');
+const Timeline=require('../web/analysis/semantic-timeline.js');
+const Salience=require('../web/analysis/salience.js');
 
 function fixture(){
   const frames=new Uint8Array(12*4),set=(frame,channel,value)=>{frames[frame*4+channel-1]=value;};
@@ -117,4 +119,29 @@ test('interactive and composition-worker engine contexts load quality diagnostic
   const worker=fs.readFileSync(path.join(__dirname,'../web/engine/worker.js'),'utf8');
   const workerQuality=worker.indexOf("'choreography-quality.js'"),workerEngine=worker.indexOf("'show-engine.js'");
   assert.ok(workerQuality>=0&&workerEngine>workerQuality);
+});
+
+test('matching semantic salience annotates existing targets without changing planner output',()=>{
+  const duration=80,beats=Array.from({length:duration*2},(_,index)=>index*.5);
+  const music={
+    duration,bpm:120,beatConfidence:.96,beats,downbeats:beats.filter((_,index)=>index%4===0),
+    sections:[{start:0,end:20,energy:.2,label:'Intro'},{start:20,end:48,energy:.96,label:'Drop'},{start:48,end:duration,energy:.45,label:'Outro'}],
+    phrases:[{start:20,end:42,energy:.96,kind:'drop',confidence:.95}],activityRanges:[{start:0,end:duration}],
+    waveform:Array(400).fill(.72),onsets:[{time:20,strength:1,band:'bass'}],impacts:[{time:20,strength:1,kind:'drop'}],
+    vocals:{available:true,presence:'detected',sourceSeparated:true,confidence:.96,phrases:[{start:20,end:24,confidence:.96,strength:.95,kind:'singing'}],accents:[{time:20,confidence:.96,strength:1,kind:'syllabic-accent'}],notes:[]},
+    bassNotes:[{start:20,end:22,confidence:.95,strength:.95,midi:40}],bassAnalysis:{confidence:.95,phrases:[{start:20,end:22,confidence:.95,strength:.95}]}
+  };
+  const timeline=Timeline.build(music),salience=Salience.build(timeline),settings={stepMs:20,dance:'expressive',seed:88};
+  const baseline=Engine.generate(music,settings);
+  const annotated=Engine.generate({...music,semanticTimeline:timeline,musicSalience:salience},settings);
+  assert.deepEqual(annotated.frames,baseline.frames);
+  assert.deepEqual(Engine.fseq(annotated,'salience.wav'),Engine.fseq(baseline,'salience.wav'));
+  assert.equal(annotated.choreography.salienceTargets.schemaVersion,1);
+  assert.ok(annotated.choreography.salienceTargets.light.length>0);
+  assert.ok(annotated.choreography.salienceTargets.movement.length>0);
+  assert.equal(annotated.choreography.quality.hierarchy.assessed,true);
+  const stale=Engine.generate({...music,semanticTimeline:timeline,musicSalience:{...salience,duration:duration-1}},settings);
+  assert.equal(Object.hasOwn(stale.choreography,'salienceTargets'),false);
+  assert.deepEqual(stale.frames,baseline.frames);
+  assert.deepEqual(stale.synchronization,baseline.synchronization,'invalid salience leaves legacy synchronization inputs untouched');
 });

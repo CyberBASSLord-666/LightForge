@@ -11,6 +11,15 @@ behavior.
 interactive page and the composition Web Worker load the sidecar before
 `show-engine.js`; CommonJS callers receive it through the engine dependency.
 
+When an input includes a structurally matching `semanticTimeline` and
+`musicSalience`, the engine also writes
+`show.choreography.salienceTargets`. It contains only target indices/times plus
+matched semantic event IDs, timing deltas, score, and tier—never lyric text or
+new musical events. The existing light and movement targets are copied with
+those score/tier annotations for final synchronization and tier coverage. This
+does not alter planner selection, frames, or FSEQ bytes. Missing, stale, or
+malformed semantic/salience input takes the exact legacy synchronization path.
+
 ```js
 const Quality=require('./web/engine/choreography-quality.js');
 const report=Quality.evaluate(show, {

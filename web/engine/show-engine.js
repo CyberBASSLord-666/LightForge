@@ -91,6 +91,52 @@
     const bassNotes=roleEvents(music.bassNotes).filter(x=>finite(x.midi)||finite(x.frequency)&&x.frequency>0),bassAnalysis={method:String(bass.method||'unavailable').slice(0,200),source:String(bass.source||'mixture-estimate').slice(0,100),confidence:clamp(finite(bass.confidence)?bass.confidence:0,0,1),phrases:roleEvents(bass.phrases),envelope:envelope(bass.envelope,bassStep),envelopeStep:bassStep};
     return {duration,bpm,beats,downbeats,groove,vocals,bassNotes,bassAnalysis,onsets,waveform,sections,silent,beatConfidence:confidence,meter,meterConfidence:clamp(music.meterConfidence||0,0,1),phrases,impacts,activityRanges:ranges,energy,energyStep,beatDetails,analysisVersion:Number(music.analysisVersion)||1,timing:music.timing||{}};
   }
+  const SALIENCE_TIERS=new Set(['micro','secondary','primary','phrase','structural','climax']);
+  function matchingSemanticSalience(music){
+    const timeline=music&&music.semanticTimeline,salience=music&&music.musicSalience;
+    if(!timeline||!salience||!Number.isInteger(timeline.schemaVersion)||!finite(timeline.duration)||timeline.duration<=0||typeof timeline.clock!=='string'||!Array.isArray(timeline.events)||salience.schemaVersion!==1||salience.timelineSchemaVersion!==timeline.schemaVersion||salience.clock!==timeline.clock||!finite(salience.duration)||Math.abs(salience.duration-timeline.duration)>1e-6||typeof salience.timelineFingerprint!=='string'||!/^[0-9a-f]{8}$/.test(salience.timelineFingerprint)||!Array.isArray(salience.events)||salience.events.length!==timeline.events.length)return null;
+    const ids=new Set(),events=[];
+    for(let index=0;index<timeline.events.length;index++){
+      const event=timeline.events[index],ranked=salience.events[index];
+      if(!event||typeof event.id!=='string'||!event.id||ids.has(event.id)||!finite(event.time)||event.time<0||event.time>timeline.duration||!ranked||ranked.id!==event.id||!finite(ranked.score)||ranked.score<0||ranked.score>1||!SALIENCE_TIERS.has(ranked.tier)||!Number.isInteger(ranked.rank)||ranked.rank<1)return null;
+      ids.add(event.id);events.push({id:event.id,time:event.time,source:typeof event.source==='string'?event.source:'',score:ranked.score,tier:ranked.tier});
+    }
+    return {clock:timeline.clock,timelineSchemaVersion:timeline.schemaVersion,musicSalienceSchemaVersion:salience.schemaVersion,timelineFingerprint:salience.timelineFingerprint,events};
+  }
+  function nearestSalienceEvent(events,time,role,windowSeconds){
+    if(!finite(time))return null;
+    const preferred=role==='vocals'?'vocals':role==='bass'?'bass':null;let best=null;
+    for(const event of events){
+      const distance=Math.abs(event.time-time);if(distance>windowSeconds+1e-9)continue;
+      const candidate={event,distance,preferred:preferred&&event.source===preferred?0:1};
+      if(!best||candidate.distance<best.distance-1e-9||Math.abs(candidate.distance-best.distance)<=1e-9&&(candidate.preferred<best.preferred||candidate.preferred===best.preferred&&(candidate.event.score>best.event.score+1e-9||Math.abs(candidate.event.score-best.event.score)<=1e-9&&(candidate.event.time<best.event.time-1e-9||Math.abs(candidate.event.time-best.event.time)<=1e-9&&candidate.event.id<best.event.id))))best=candidate;
+    }
+    return best;
+  }
+  function annotateSalienceTargets(music,lightTargets,movementTargets,settings){
+    const semantic=matchingSemanticSalience(music);if(!semantic)return null;
+    const offset=finite(settings&&settings.offsetMs)?settings.offsetMs/1000:0,windowSeconds=Math.max(.08,(finite(settings&&settings.stepMs)?settings.stepMs:20)/1000*4);
+    const annotate=(targets,kind)=>{
+      const copied=[],records=[],qualityTargets=[];
+      for(let index=0;index<(targets||[]).length;index++){
+        const target=targets[index];
+        if(!target||!finite(target.time)){copied.push(target);continue;}
+        const musicTime=kind==='movement'?(finite(target.musicTime)?target.musicTime:target.time-offset):target.time;
+        const match=nearestSalienceEvent(semantic.events,musicTime,target.role,windowSeconds);
+        if(!match){copied.push(target);continue;}
+        const deltaMs=Math.round((musicTime-match.event.time)*1000000)/1000;
+        const record={targetIndex:index,targetTime:target.time,musicTime,semanticEventId:match.event.id,semanticEventTime:match.event.time,deltaMs,score:match.event.score,tier:match.event.tier};
+        const annotated=Object.assign({},target,{salience:match.event.score,tier:match.event.tier,semanticEventId:match.event.id,semanticEventTime:match.event.time,semanticDeltaMs:deltaMs});
+        copied.push(annotated);records.push(record);
+        const qualityTarget=Object.assign({},annotated,{time:kind==='lighting'?target.time+offset:target.time});
+        if(finite(target.end))qualityTarget.end=kind==='lighting'?target.end+offset:target.end;
+        qualityTargets.push(qualityTarget);
+      }
+      return {copied,records,qualityTargets};
+    };
+    const light=annotate(lightTargets,'lighting'),movement=annotate(movementTargets,'movement');
+    return {syncLightTargets:light.copied,syncMovementTargets:movement.copied,qualityTargets:light.qualityTargets.concat(movement.qualityTargets),public:{schemaVersion:1,clock:semantic.clock,timelineSchemaVersion:semantic.timelineSchemaVersion,musicSalienceSchemaVersion:semantic.musicSalienceSchemaVersion,timelineFingerprint:semantic.timelineFingerprint,matchWindowMs:windowSeconds*1000,light:light.records,movement:movement.records}};
+  }
   function sceneSeed(seed,key){let value=seed>>>0;for(let i=0;i<key.length;i++)value=Math.imul(value^key.charCodeAt(i),16777619)>>>0;return value;}
   function correctVocalRegions(m,s){
     if(!s.vocalRegions.length)return m;
@@ -227,16 +273,18 @@
       for(let f=a;f<b;f++)for(const ch of event.channels)frames[f*200+ch-1]=event.value;
     }
     const lighting=LIGHTS.compose(show,m,s,movement);
+    const targetSalience=annotateSalienceTargets(music,lighting.targets,movement.targets,s),syncLightTargets=targetSalience?targetSalience.syncLightTargets:lighting.targets,syncMovementTargets=targetSalience?targetSalience.syncMovementTargets:movement.targets;
     if(!m.silent&&s.enabled.interior)paintInterior(show,m,s,lighting.context);
     applyManualCues(show);
     show.movements.sort((a,b)=>a.start-b.start||a.channels[0]-b.channels[0]);
     show.lightEvents=lighting.events;
     show.choreography={version:VERSION,analysisVersion:m.analysisVersion,meter:m.meter,meterConfidence:m.meterConfidence,phrases:m.phrases,impacts:m.impacts,targets:movement.targets,lighting:lighting.diagnostics,movement:movement.diagnostics,timing:m.timing,roles:{vocals:{available:m.vocals.available,presence:m.vocals.presence,confidence:m.vocals.confidence,method:m.vocals.method,phrases:m.vocals.phrases,accents:m.vocals.accents},bassNotes:m.bassNotes,bassAnalysis:{method:m.bassAnalysis.method,source:m.bassAnalysis.source,confidence:m.bassAnalysis.confidence,phrases:m.bassAnalysis.phrases}},rhythm:{beats:m.beats,downbeats:m.downbeats,meter:m.meter,bpm:m.bpm,groove:m.groove,correction:m.rhythmCorrection}};
+    if(targetSalience)show.choreography.salienceTargets=targetSalience.public;
     show.choreography.vocalDetail={phrases:m.vocals.phrases,notes:m.vocals.notes,accents:m.vocals.accents,sourceSeparated:m.vocals.sourceSeparated,source:m.vocals.source,presence:m.vocals.presence,manualRegions:m.vocals.manualRegions||[],lyricsAligned:false};
     show.stats={lightCues:lighting.events.length,manualCueCount:s.manualCues.length,beatCount:m.beats.length,onsetCount:m.onsets.length,bpm:m.bpm,beatConfidence:m.beatConfidence,beatLengthMs:60000/m.bpm,recommendedBeatDivision:m.bpm<=150?'eighth':'quarter',silent:m.silent,
       vocalPhraseCount:lighting.diagnostics.roles.vocals.eligibleEvents,bassNoteCount:lighting.diagnostics.roles.bass.eligibleEvents,vocalCues:lighting.diagnostics.roles.vocals.acceptedEvents,bassNoteCues:lighting.diagnostics.roles.bass.acceptedEvents,phraseCount:m.phrases.length,musicalImpactCount:m.impacts.length,movementTargets:movement.targets.length,lightQuantizationMaxMs:lighting.diagnostics.quantizationMaxMs};
-    show.synchronization=SYNC.review(show,lighting.targets,movement.targets);
-    if(QUALITY&&typeof QUALITY.evaluate==='function')show.choreography.quality=QUALITY.evaluate(show);
+    show.synchronization=SYNC.review(show,syncLightTargets,syncMovementTargets);
+    if(QUALITY&&typeof QUALITY.evaluate==='function')show.choreography.quality=QUALITY.evaluate(show,targetSalience&&targetSalience.qualityTargets.length?{tierTargets:targetSalience.qualityTargets}:undefined);
     show.choreography.musicCues=m.musicCues;
     show.validation=validate(show,m);show.validation.synchronization=show.synchronization;show.stats=Object.assign(show.stats,show.validation.stats);
     if(!show.validation.valid)throw new Error('The generated show failed validation: '+show.validation.errors.join(' '));
