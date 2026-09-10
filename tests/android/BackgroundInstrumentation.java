@@ -134,6 +134,17 @@ public final class BackgroundInstrumentation extends Instrumentation {
     }
     private String fixture(String name)throws Exception{return fixture(name,3);}
     private String fixture(String name,int seconds)throws Exception{return fixture(name,seconds,"precision");}
+    private JSONObject studioSettings()throws Exception{
+        final WebView view=(WebView)field(activity,"web");
+        check(view!=null,"The initialized studio is required to freeze fixture settings");
+        final java.util.concurrent.CountDownLatch completed=new java.util.concurrent.CountDownLatch(1);
+        final java.util.concurrent.atomic.AtomicReference<String> result=new java.util.concurrent.atomic.AtomicReference<>();
+        runOnMainSync(()->view.evaluateJavascript("(()=>{const a=window.LightForgeApp;return a&&a.state&&a.state.settings;})()",value->{result.set(value);completed.countDown();}));
+        check(completed.await(15,java.util.concurrent.TimeUnit.SECONDS),"The studio did not return its complete settings");
+        JSONObject settings=new JSONObject(result.get());
+        check(settings.has("enabled")&&settings.has("vocalRegions")&&settings.has("outputEnabled"),"The studio settings snapshot is incomplete");
+        return settings;
+    }
     private String fixture(String name,int seconds,String quality)throws Exception{
         File source=new File(getTargetContext().getCacheDir(),name+".wav"),mono=new File(getTargetContext().getCacheDir(),name+"-mono.wav");
         float[] pcm=new float[seconds*44100*2];for(int i=0;i<pcm.length;i++)pcm[i]=(float)(.18*Math.sin(2*Math.PI*220*(i/2)/44100));
@@ -142,7 +153,11 @@ public final class BackgroundInstrumentation extends Instrumentation {
         try(InputStream in=new FileInputStream(source)){meta=ProjectStore.importAudio(new File(files,"projects"),in,name,new AudioImporter.Progress(){public void update(double p,String s){}public void check(){}});}
         String id=meta.getString("id");File project=new File(AnalysisJobStore.project(files,id),"project.json");
         JSONObject state=AnalysisJobStore.read(project,ProjectStore.MAX_PROJECT_BYTES);
-        state.put("settings",new JSONObject().put("analysisQuality",quality).put("dance","off").put("style","festival").put("stepMs",20).put("seed",2025));
+        // Real UI generation saves all studio settings before the native job
+        // freezes them. A five-field synthetic object produces an input hash
+        // that cannot survive the UI's later default merge on restoration.
+        // Read the actual initialized studio, then apply the same test choices.
+        state.put("settings",studioSettings().put("analysisQuality",quality).put("dance","off").put("style","festival").put("stepMs",20).put("seed",2025));
         ProjectStore.save(new File(files,"projects"),id,state);return id;
     }
     private void launch()throws Exception{

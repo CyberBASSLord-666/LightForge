@@ -50,7 +50,7 @@
     "tests/WebViewTransportServer.java": "e38b873a0ca64a8689bdef36d9ad5b68f2ee82754cdc0373d886b61ea419fbbb",
     "tests/WebViewTransportTest.java": "0fc201d751fba8589e87f6cab2c501331ef4388b9a012f639491c6ceacb24200",
     "tests/analysis-recovery-2.2.1.test.cjs": "d2b0177caf799146ac6a0ccedb86640e1d7b3981c5ca0498611851d3397aab06",
-    "tests/android/BackgroundInstrumentation.java": "dc3b86e0ff8560f5ab369b729ba733c16e3dfb191b9ae31d3f5c7cbb0ee50076",
+    "tests/android/BackgroundInstrumentation.java": "d7dc1ee85de1077f43f259943ebcba7d57314abb66e11820082248e4076689f4",
     "tests/android/DiagnosticsInstrumentation.java": "1016db637115d016e8310b1f50c9aa6951d5b3079abcf185e34bdc5f2217c93b",
     "tests/background-2.2.test.cjs": "63b254c569033d24cd44a283aed44bc2b2bfa4c35996b3ef36d09b5d9f41bed5",
     "tests/bass-notes.test.cjs": "d8fd98d78334bbe73deb5a888f7a4c0d189f9b4e047ce3f9d6fb63bdcf0a1abe",
@@ -182,5 +182,5 @@
   },
   "scope": "Node engine/worker/WebCrypto/gzip, real app DOM integration with simulated native and graphics, Python archive tests. Not a visual browser or physical Android/Tesla test.",
   "analysis_manifest_sha256": "f47b2bf093ca3f7f41f385f4bae6f6789f442ab99c5da3ad5eb87742d211e412",
-  "completedAt": "2026-09-10T00:44:24.086434+00:00"
+  "completedAt": "2026-09-10T01:11:04.665397+00:00"
 }

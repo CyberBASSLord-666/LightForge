@@ -1,0 +1,4 @@
+Native diagnostic probe cleanup completed.
+DIAGNOSTICS_ANDROID_RESULT {"passed":true,"checks":["Native diagnostic probe cleanup completed."],"androidSdk":35,"device":"sdk_gphone64_x86_64","pid":5329,"marker":"probe1789002123263","mode":"cleanup","nativeCrashPid":0}
+DIAGNOSTICS_ANDROID_PASS
+
