@@ -56,6 +56,26 @@ test('rejects stale, invalid, unseparated and linguistic sidecars',()=>{
  assert.equal(VocalSemantics.validate(invalidRelease,input).valid,false);
 });
 
+test('rejects malformed cached semantic lists without throwing',()=>{
+ const input=fixture(),sidecar=VocalSemantics.build(input);
+ for(const [field,value] of [
+  ['regions',null],
+  ['phrases','not-an-array'],
+  ['phrases',[null]],
+  ['articulations',{corrupt:true}],
+  ['notes',[null]]
+ ]){
+  const corrupt=structuredClone(sidecar);corrupt[field]=value;
+  let check;
+  assert.doesNotThrow(()=>{check=VocalSemantics.validate(corrupt,input);},`${field} cache corruption must not escape validation`);
+ assert.equal(check.valid,false,`${field} cache corruption must fail closed`);
+ }
+ const nested=structuredClone(sidecar);nested.regions[0].phraseIds={corrupt:true};
+ let nestedCheck;
+ assert.doesNotThrow(()=>{nestedCheck=VocalSemantics.validate(nested,input);},'a malformed nested region list must not escape validation');
+ assert.equal(nestedCheck.valid,false,'a malformed nested region list must fail closed');
+});
+
 test('links only exact existing vocal timeline events and fails closed on a changed clock',()=>{
  const input=fixture(),sidecar=VocalSemantics.build(input),timeline=Timeline.build(input),link=VocalSemantics.linkTimeline(sidecar,timeline);
  assert.equal(link.phrases.length,sidecar.phrases.length);
@@ -72,6 +92,8 @@ test('links only exact existing vocal timeline events and fails closed on a chan
  assert.notEqual(VocalSemantics.linkTimeline(sidecar,finelyRecapped).timelineFingerprint,VocalSemantics.linkTimeline(sidecar,recapped).timelineFingerprint,'valid sub-micro semantic changes must not reuse a timeline receipt');
  const invalid=structuredClone(timeline);invalid.events[0].salience=1.01;
  assert.throws(()=>VocalSemantics.linkTimeline(sidecar,invalid),/invalid timeline/,'links must reject a timeline that the canonical validator rejects');
+ const malformed=structuredClone(timeline);malformed.events=[null];
+ assert.throws(()=>VocalSemantics.linkTimeline(sidecar,malformed),/invalid timeline/,'a malformed timeline cache must fail closed with a controlled link error');
  const invalidCap=structuredClone(timeline),capEvent=invalidCap.events.find(value=>value.type==='vocal_accent');
  capEvent.salienceCap=Math.max(0,capEvent.salience-.01);
  assert.equal(Timeline.validate(invalidCap).valid,false,'the integrated canonical timeline validator must reject caps below realized salience');
@@ -109,4 +131,25 @@ test('worker keeps opt-in sidecars out of the base cache and removes them for de
  assert.equal('vocalSemantics' in persisted,false);assert.equal('vocalSemanticLinks' in persisted,false);
  await ensureVocalSemantics(input,{},store,telemetry);
  assert.equal('vocalSemantics' in input,false);assert.equal('vocalSemanticLinks' in input,false);
+});
+
+test('worker invalidates and rebuilds a malformed cached vocal sidecar without fabricating language',async()=>{
+ const throwingApi={...VocalSemantics,validate(sidecar,input){if(sidecar?.__throwOnValidate===true)throw Error('simulated corrupt-cache validator fault');return VocalSemantics.validate(sidecar,input);}};
+ const workerSelf={LightForgeVocalSemantics:throwingApi};
+ const context={self:workerSelf,importScripts(){},postMessage(){},performance:{now:()=>0},URL,fetch:async()=>{throw Error('Unexpected worker fetch.');},navigator:{hardwareConcurrency:1},SharedArrayBuffer};
+ vm.createContext(context);
+ vm.runInContext(fs.readFileSync(require.resolve('../web/analysis/worker.js'),'utf8')+'\nself.__vocalSemanticRecoveryTest={persistableAnalysis,ensureVocalSemantics};',context);
+ const {persistableAnalysis,ensureVocalSemantics}=workerSelf.__vocalSemanticRecoveryTest,input=fixture(),events=[];
+ const corrupt=VocalSemantics.build(input);corrupt.phrases=[null];corrupt.__throwOnValidate=true;
+ const values=new Map([['vocal-semantics',corrupt]]),store={read:async key=>values.get(key)||null,write:async(key,value)=>values.set(key,value),invalidate:async keys=>{events.push(...keys);keys.forEach(key=>values.delete(key));}},telemetry={begin:()=>({}),end:()=>{},cache:(stage,state)=>events.push(`${stage}:${state}`)};
+ await assert.doesNotReject(async()=>ensureVocalSemantics(input,{vocalSemanticEnrichment:true},store,telemetry));
+ const rebuilt=values.get('vocal-semantics');
+ assert.notEqual(rebuilt,corrupt,'the malformed checkpoint must not be restored');
+ assert.equal(VocalSemantics.validate(rebuilt,input).valid,true,'the replacement checkpoint must be valid');
+ assert.ok(events.includes('vocal-semantics'),'the malformed checkpoint must be invalidated before rebuild');
+ assert.ok(events.includes('vocal-semantics:corrupt'),'a validator fault must be treated as corrupt cache evidence rather than a worker crash');
+ assert.equal(rebuilt.summary.linguisticContent,false);
+ assert.equal(JSON.stringify(rebuilt).includes('never-copy-this'),false,'recovery must not copy rejected word/text fields into acoustic metadata');
+ const persisted=persistableAnalysis(input);
+ assert.equal('vocalSemantics' in persisted,false,'recovered opt-in cache data must remain absent from the default persisted result');
 });

@@ -39,6 +39,11 @@ explicitly strips `vocalSemantics` and `vocalSemanticLinks`, preventing an
 opt-in cache entry from changing a later default analysis result. The sidecar is
 rebuilt or restored only after vocal analysis is complete.
 
+Malformed list fields or a validator fault in a persisted `vocal-semantics`
+checkpoint fail closed: the worker invalidates that checkpoint and rebuilds it
+from the accepted vocal evidence. Cache corruption must not terminate resumed
+analysis or introduce words, lyrics, phonemes, or other linguistic content.
+
 `linkTimeline(sidecar, timeline)` returns mappings only when every sidecar
 phrase, accepted note, and articulation exactly matches an already-existing
 `vocal_phrase`, `vocal_note`, or `vocal_accent` semantic-timeline event on the
