@@ -16,19 +16,49 @@ TESTS=['engine.test.cjs','engine-manual.test.cjs','preview-engine.test.cjs','pre
 # rejects any later analysis-manifest transition. Keep it runnable directly,
 # but do not let a new release fail the current regression gate by design.
 PYTHON_TESTS=sorted(p.stem for p in (ROOT/'tests').glob('test_*.py') if p.stem!='test_analysis_evidence_2_2_2')
+# These tools use descriptive hyphenated filenames, so unittest discovery cannot
+# import them as modules. Keep their direct execution explicit in the production
+# gate: a green quality-gate workflow alone is not release verification.
+QUALITY_TOOL_TESTS=[
+    'performance-quality-gate.test.py',
+    'analysis-benchmark-contract.test.py',
+    'locked-benchmark-runner.test.py',
+    'differential-analysis.test.py',
+]
 
 def digest(p):
     with p.open('rb') as f:return hashlib.file_digest(f,'sha256').hexdigest()
 
 def hashes():
     paths=[ROOT/'version.json',ROOT/'package.json',ROOT/'package-lock.json',ROOT/'build.sh',ROOT/'android/native-runtime.json',ROOT/'qa/release-1.6.0/prepare-musdb-fixtures.py']
-    for folder in ['web','android','tools','tests']:
-        paths.extend(p for p in (ROOT/folder).rglob('*') if p.is_file() and p.suffix in {'.js','.cjs','.mjs','.java','.css','.html','.py','.xml'} and '__pycache__' not in p.parts)
+    for folder, suffixes in {
+        'web': {'.js','.cjs','.mjs','.java','.css','.html','.py','.xml'},
+        'android': {'.js','.cjs','.mjs','.java','.css','.html','.py','.xml'},
+        'tools': {'.js','.cjs','.mjs','.java','.css','.html','.py','.xml'},
+        'tests': {'.js','.cjs','.mjs','.java','.css','.html','.py','.xml'},
+        'qa': {'.json','.py'},
+        '.github/workflows': {'.yml','.yaml'},
+    }.items():
+        paths.extend(p for p in (ROOT/folder).rglob('*') if p.is_file() and p.suffix in suffixes and '__pycache__' not in p.parts)
     return {str(p.relative_to(ROOT)):digest(p) for p in sorted(set(paths))}
+
+def run_python_scripts(scripts, log_path):
+    output=[]
+    for script in scripts:
+        path=ROOT/'tests'/script
+        if not path.is_file():
+            raise FileNotFoundError(f'production verification suite is missing: {path}')
+        result=subprocess.run([sys.executable,str(path)],cwd=ROOT,capture_output=True,text=True)
+        output.append(f'$ {sys.executable} {path.relative_to(ROOT)}\\n{result.stdout}{result.stderr}')
+        if result.returncode:
+            log_path.write_text('\\n'.join(output))
+            result.check_returncode()
+    log_path.write_text('\\n'.join(output))
 
 def main():
     receipt={'release':VERSION,'passed':False,'checks':[],'errors':[], 'source_hashes':hashes(),
-             'scope':'Node engine/worker/WebCrypto/gzip, real app DOM integration with simulated native and graphics, Python archive tests. Not a visual browser or physical Android/Tesla test.'}
+             'selected_test_suites':{'node':TESTS,'python_archive':PYTHON_TESTS,'python_quality_tools':QUALITY_TOOL_TESTS},
+             'scope':'Node engine/worker/WebCrypto/gzip, real app DOM integration with simulated native and graphics, Python archive and quality-tool tests. Not a visual browser or physical Android/Tesla test.'}
     try:
         subprocess.run([sys.executable,str(ROOT/'tools/sync_version.py'),'--check'],check=True)
         result=subprocess.run(['node','--test',*[str(ROOT/'tests'/t) for t in TESTS]],cwd=ROOT,capture_output=True,text=True)
@@ -37,6 +67,8 @@ def main():
         result=subprocess.run([sys.executable,'-m','unittest',*[f'tests.{name}' for name in PYTHON_TESTS]],cwd=ROOT,capture_output=True,text=True)
         (OUT/'archive-tests.log').write_text(result.stdout+result.stderr)
         result.check_returncode();receipt['checks'].append('Python APK archive and bounded release packaging regression suites passed.')
+        run_python_scripts(QUALITY_TOOL_TESTS,OUT/'quality-tool-tests.log')
+        receipt['checks'].append('Performance-quality gate, benchmark contract, locked-runner and differential-analysis suites passed.')
         verify_assets()
         receipt['checks'].append('Every bundled analysis asset matches the current manifest; actual model quality and runtime are checked separately.')
         receipt['analysis_manifest_sha256']=digest(ROOT/'web/analysis/ASSET_MANIFEST.json')

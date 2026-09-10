@@ -78,3 +78,22 @@ means quality evidence passed but the speed target was not proven; it is not
 production-ready. `FAIL` means evidence or quality is invalid. The committed
 policy begins with `__configure_locked_corpus__`, so it fails until the licensed
 reference corpus is configured in a reviewed commit.
+
+## Release verification coverage
+
+The production verification workflow runs `npm test`, which invokes
+`tools/verify_v2.py`. In addition to the engine, worker, telemetry, and
+semantic-timeline Node suites, that runner explicitly executes the four
+hyphenated Python suites that normal `unittest` discovery cannot import:
+
+- `tests/performance-quality-gate.test.py`
+- `tests/analysis-benchmark-contract.test.py`
+- `tests/locked-benchmark-runner.test.py`
+- `tests/differential-analysis.test.py`
+
+Their combined output is retained as
+`qa/release-<version>/quality-tool-tests.log`, and the verification receipt
+lists the exact selected suites. This is a contract/self-test check only; it
+does not turn the redacted corpus template into release evidence or claim a
+runtime improvement. A real production performance claim still requires the
+locked corpus, paired reports, and the fail-closed gate above.

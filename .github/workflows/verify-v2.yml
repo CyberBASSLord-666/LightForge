@@ -59,7 +59,8 @@ jobs:
           python3 -m pip install --no-cache-dir -r tools/model-requirements.txt
           python3 tools/prepare_game.py
           python3 tools/prepare_deux.py
-      - run: npm test
+      - name: Production regression, diagnostics, and quality-tool suites
+        run: npm test
       - name: Source-clock seams and complete final samples
         run: node qa/release-${{ env.LIGHTFORGE_RELEASE }}/test-source-clock.cjs
       - name: Prepare licensed reference excerpts
