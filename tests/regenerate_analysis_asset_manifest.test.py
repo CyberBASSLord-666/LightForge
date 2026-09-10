@@ -40,13 +40,16 @@ class AnalysisAssetManifestTest(unittest.TestCase):
         })
         checked = manifest_tool.execute(self.root, write=False)
         self.assertEqual(checked["mode"], "check")
-        self.assertEqual(checked["manifestSha256"], first["manifestSha256"])
+        self.assertEqual(checked["generatedManifestSha256"], first["generatedManifestSha256"])
+        self.assertTrue(checked["upToDate"])
 
     def test_check_rejects_an_unbound_asset_change(self):
         manifest_tool.execute(self.root, write=True)
         (self.analysis / "separator-deux.js").write_bytes(b"export const enabled = true;\n")
         with self.assertRaisesRegex(ValueError, "manifest is stale"):
             manifest_tool.execute(self.root, write=False)
+        _, _, report = manifest_tool.inspect(self.root)
+        self.assertEqual(report["differences"]["changed"], ["separator-deux.js"])
 
     def test_check_rejects_noncanonical_manifest_serialization(self):
         manifest_tool.execute(self.root, write=True)
