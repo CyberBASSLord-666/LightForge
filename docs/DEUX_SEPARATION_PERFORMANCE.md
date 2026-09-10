@@ -118,7 +118,11 @@ licensed fixture, and builds an exact odd-length multi-passage WAV by copying
 verified float32 stereo PCM from three distinct licensed MUSDB mix excerpts. It
 does not resample, mix, add silence, or use generated audio. The job runs both
 arms and a controlled recovery in one Ubuntu job, then uploads comparator,
-source-provenance and runner-conditions receipts. It proves only actual-model
-PCM/recovery equivalence for this experiment. It does not turn an uncontrolled
-filesystem-cache state, one pair, or a single fixture into a target-speed or
-locked-corpus quality-gate pass.
+source-provenance and runner-conditions receipts. It also records the exact CI
+checkout commit/tree/blob identities and validates the explicit Deux runtime
+subset: separator/DSP/WAV/ORT assets and every `models/deux/**` file, including
+the exact 27 graph inventory. The receipt names the omitted GAME assets rather
+than claiming a global asset attestation; the production gate still verifies all
+73 assets. It proves only actual-model PCM/recovery equivalence for this
+experiment. It does not turn an uncontrolled filesystem-cache state, one pair,
+or a single fixture into a target-speed or locked-corpus quality-gate pass.
