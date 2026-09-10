@@ -19,7 +19,7 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[2]
 OUT = 'qa/release-2.2.4/'
 COMPARISON_SHA256 = 'e74c12ca08132182f7cb971a98a6280401fcbfb5220a403e690e276c21c91712'
-ASSET_MANIFEST_SHA256 = 'f47b2bf093ca3f7f41f385f4bae6f6789f442ab99c5da3ad5eb87742d211e412'
+ASSET_MANIFEST_SHA256 = '7fb91cb9f80b9663ef0c5297a7f2610816791517d9db4010db93fbb1dabff21b'
 OLD_RUNTIME_SHA256 = 'e0ab4a1af57d2da09097202f2dfd691e390c82e81183314788ccde4cf7c3cc38'
 NEW_RUNTIME_SHA256 = '749793ebed63743fec853d093da7987a86ea5cd592d54fba898cd3233100c381'
 SAMPLES = 573300
@@ -195,7 +195,7 @@ def verify_asset(root, relative, metadata, hashes):
 def verify_assets(root, hashes):
     manifest_path = bind(root, 'web/analysis/ASSET_MANIFEST.json', ASSET_MANIFEST_SHA256, hashes)
     manifest = json.loads(manifest_path.read_text())
-    require(len(manifest) == 73, 'Analysis asset inventory changed')
+    require(len(manifest) == 78, 'Analysis asset inventory changed')
     base = root / 'web/analysis'
     actual = {path.relative_to(base).as_posix() for path in base.rglob('*') if path.is_file()
               and path.name != 'ASSET_MANIFEST.json' and
