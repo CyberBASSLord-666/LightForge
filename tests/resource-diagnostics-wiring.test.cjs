@@ -14,6 +14,10 @@ test('resource diagnostics is loaded before telemetry and forwarded only as an o
  assert.match(store,/resourceDiagnostics=null/);
  assert.match(store,/resourceDiagnostics\.io\('read'|resourceDiagnostics\.io\(direction/);
  assert.match(features,/open\(identity,\{resourceDiagnostics=null\}=\{\}\)/);
+ // Resource evidence is observational: timing hardening must never become a
+ // choreography or sequence-generation input, preserving default FSEQ bytes.
+ const executableWorker=worker.replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g,'');
+ assert.doesNotMatch(executableWorker,/FSEQ|ShowEngine|SequenceCompiler/);
 });
 
 test('main-thread aggregation and public page load order preserve the measurement-only boundary',()=>{
