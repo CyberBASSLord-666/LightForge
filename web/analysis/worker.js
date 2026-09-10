@@ -1,6 +1,6 @@
 /* Private worker: bounded PCM chunks -> exact log-mel -> pretrained Beat This! transformer. */
 'use strict';
-importScripts('telemetry.js','semantic-timeline.js','salience.js','wav-reader.js','dsp.js','bass-notes.js','vocal.js','vocal-detail.js','stem-cache.js','work-store.js','separator-mdx.js','separator-deux.js','game.js','vendor/ort.wasm.min.js');
+importScripts('telemetry.js','semantic-timeline.js','salience.js','wav-reader.js','dsp.js','bass-notes.js','vocal.js','vocal-detail.js','vocal-semantics.js','stem-cache.js','work-store.js','separator-mdx.js','separator-deux.js','game.js','vendor/ort.wasm.min.js');
 const report=(progress,stage,detail='',extra={})=>postMessage({type:'progress',value:{...extra,progress,stage,detail}});
 function createTelemetry(stage,metadata){
  const factory=self.LightForgeAnalysisTelemetry;
@@ -36,6 +36,44 @@ function ensureMusicSalience(result,timeline){
  if(!check||!check.valid)throw Error('Music salience validation failed: '+(check?.errors||[]).join('; ').slice(0,512));
  result.musicSalience=musicSalience;
  return musicSalience;
+}
+function vocalSemanticsEnabled(options){return options?.vocalSemanticEnrichment===true;}
+function persistableAnalysis(result){
+ const {vocalSemantics,vocalSemanticLinks,...persisted}=result||{};
+ return persisted;
+}
+async function ensureVocalSemantics(result,options,store,telemetry){
+ if(!vocalSemanticsEnabled(options)){
+  if(result){delete result.vocalSemantics;delete result.vocalSemanticLinks;}
+  return null;
+ }
+ const api=self.LightForgeVocalSemantics;
+ if(!api||typeof api.build!=='function'||typeof api.validate!=='function'||typeof api.linkTimeline!=='function')throw Error('Vocal semantic enrichment module is unavailable.');
+ if(!result?.vocals||!Number.isFinite(result.duration)||result.duration<=0)throw Error('Vocal semantic enrichment requires completed vocal analysis on the original audio clock.');
+ const input={duration:result.duration,vocals:result.vocals},phase=telemetry.begin('vocal.semantics');
+ let cached=null;
+ try{cached=await store.read('vocal-semantics');}catch(_){telemetry.cache('vocal-semantics','corrupt');}
+ if(cached){
+  const check=api.validate(cached,input);
+  if(check?.valid){result.vocalSemantics=cached;telemetry.cache('vocal-semantics','restore');telemetry.end(phase,{restored:true,phraseCount:cached.summary.phraseCount,articulationCount:cached.summary.articulationCount});return cached;}
+  telemetry.cache('vocal-semantics','invalidate');
+  try{await store.invalidate(['vocal-semantics']);}catch(_){}
+ }
+ telemetry.cache('vocal-semantics','miss');
+ const sidecar=api.build(input),check=api.validate(sidecar,input);
+ if(!check?.valid)throw Error('Vocal semantic enrichment validation failed: '+(check?.errors||[]).join('; ').slice(0,512));
+ await store.write('vocal-semantics',sidecar);
+ result.vocalSemantics=sidecar;
+ telemetry.end(phase,{restored:false,phraseCount:sidecar.summary.phraseCount,articulationCount:sidecar.summary.articulationCount});
+ return sidecar;
+}
+function linkVocalSemantics(result){
+ if(!result?.vocalSemantics){if(result)delete result.vocalSemanticLinks;return null;}
+ const api=self.LightForgeVocalSemantics,input={duration:result.duration,vocals:result.vocals},check=api?.validate?.(result.vocalSemantics,input);
+ if(!check?.valid)throw Error('Vocal semantic enrichment no longer matches vocal analysis.');
+ const link=api.linkTimeline(result.vocalSemantics,result.semanticTimeline);
+ result.vocalSemanticLinks=link;
+ return link;
 }
 function normalizeBassProvenance(result){
  const analysis=result?.bassAnalysis;
@@ -122,19 +160,21 @@ self.onmessage=async e=>{
  let result=e.data.value||{},cached=await store.read(stage);
  telemetry.end(cacheRead,{hit:!!cached});
  if(cached&&stage==='separation')try{await LightForgeStemCache.files(cached.stemCache);await LightForgeStemCache.fullVoice(cached.stemCache);}catch{cached=null;telemetry.cache(stage,'corrupt');}
- if(stage==='separation'&&!cached){telemetry.cache(stage,'invalidate');await store.invalidate(['separation','voice','game','bass']);}
+ if(stage==='separation'&&!cached){telemetry.cache(stage,'invalidate');await store.invalidate(['separation','voice','voice-classifier','vocal-semantics','game','bass']);}
  if(cached){
   telemetry.cache(stage,'restore');
   const restored={...result,...cached};
+  if(stage==='voice')await ensureVocalSemantics(restored,options,store,telemetry);
   if(stage==='bass'){
-   const provenanceChanged=normalizeBassProvenance(restored),cachedTimeline=restored.semanticTimeline;
+   const provenanceChanged=normalizeBassProvenance(restored),vocalSemantics=await ensureVocalSemantics(restored,options,store,telemetry),cachedTimeline=restored.semanticTimeline;
    const timelinePhase=telemetry.begin('semantic.timeline');
    const timeline=ensureSemanticTimeline(restored),timelineWasCurrent=cachedTimeline===timeline;
    telemetry.end(timelinePhase,{restored:true,eventCount:timeline.events.length,provenanceMigrated:provenanceChanged,cacheReused:timelineWasCurrent});
    const cachedSalience=restored.musicSalience,saliencePhase=telemetry.begin('semantic.salience');
    const musicSalience=ensureMusicSalience(restored,timeline),salienceWasCurrent=cachedSalience===musicSalience;
    telemetry.end(saliencePhase,{restored:true,eventCount:musicSalience.events.length,profile:musicSalience.summary.context.profile,cacheReused:salienceWasCurrent});
-   if(!timelineWasCurrent||!salienceWasCurrent||provenanceChanged)await store.write(stage,restored);
+   if(vocalSemantics)linkVocalSemantics(restored);
+   if(!timelineWasCurrent||!salienceWasCurrent||provenanceChanged)await store.write(stage,persistableAnalysis(restored));
   }
   report(({rhythm:.4,separation:.82,voice:.985,bass:1})[stage],'Restoring saved progress','Completed '+stage+' work restored',{checkpointSaved:true,restoredStage:stage});
   postMessage({type:'result',value:restored,restored:true,seconds:0,profile:telemetry.snapshot({restored:true})});
@@ -202,6 +242,7 @@ self.onmessage=async e=>{
  game=await LightForgeGAME.create({ort,baseUrl:new URL('models/game/',self.location.href).href,onProgress:detail=>report(.942,'Loading singing transcription',detail),checkpoint:store});
  const transcription=await game.process(await LightForgeStemCache.fullVoice(result.stemCache),sourceReader.samples,{onProgress:(p,info)=>report(.945+.04*p,'Transcribing sung notes','GAME Large • '+Math.round(p*100)+'%',info)});
  result.vocals=LightForgeGAME.fuse(detailExtractor.finish({classifier:classified.classifier,model:classified.model,transcription}),transcription);classified.classifier=null;await game.release();game=null;
+ await ensureVocalSemantics(result,options,store,telemetry);
 
    await store.write(stage,{vocals:result.vocals});
    report(.985,'Recognizing the isolated voice','Progress saved',{checkpointSaved:true,analysisStage:stage});
@@ -215,15 +256,17 @@ self.onmessage=async e=>{
  result.roleAnalysis={version:5,clock:'Original decoded audio',vocalSource:'Separated vocal waveform with singing and speech evidence',bassSource:'Low-register harmonics in a vocal-separated accompaniment mixture; not an isolated bass stem',bassInputStem:'accompaniment',accompanimentStemSeparated:true,bassInstrumentSeparated:false,sourceSeparated:true,lyricsAligned:false};
  for(const warning of [...(result.vocals.warnings||[]),...(result.separation.limitations||[])])if(!result.warnings.includes(warning))result.warnings.push(warning);
  result.engine={name:'Beat This! '+(quality==='precision'?'full + Deux':'compact + MDX')+' + GAME Large',neural:true,detail:'Bundled pretrained rhythm transformer, stereo vocal separation, isolated-voice singing and speech classification, GAME Large neural sung-note transcription, measured source expression, and independent accompaniment bass tracking. All audio stays on this device.',model:selected.model,modelId:selected.id,modelSha256:selected.sha256,frontendSha256:models.frontend.sha256,vocalModel:result.vocals.model,noteModel:result.vocals.transcription.model,separationModel:result.separation,bassMethod:result.bassAnalysis.method,quality,runtime:(result.separation.nativeModelPasses>0||result.separation.runtime==='onnxruntime-android-cpu')?'ONNX Runtime Android CPU + ONNX Runtime Web 1.20.1':'ONNX Runtime Web 1.20.1',analysisSeconds:Math.round((performance.now()-started)/100)/10};
+ await ensureVocalSemantics(result,options,store,telemetry);
  const timelinePhase=telemetry.begin('semantic.timeline');
  const semanticTimeline=ensureSemanticTimeline(result);
  telemetry.end(timelinePhase,{eventCount:semanticTimeline.events.length,tiers:semanticTimeline.summary.countByTier});
  const saliencePhase=telemetry.begin('semantic.salience');
  const musicSalience=ensureMusicSalience(result,semanticTimeline);
  telemetry.end(saliencePhase,{eventCount:musicSalience.events.length,tiers:musicSalience.summary.countByTier,profile:musicSalience.summary.context.profile});
+ if(result.vocalSemantics)linkVocalSemantics(result);
  result.recommendedAudio={sampleRate:44100,channels:2,format:'PCM16 WAV'};report(1,'Music understood',(result.bpm?result.bpm+' BPM':'No pulse detected')+' • '+result.sections.length+' sections');
 
-   await store.write(stage,result);
+   await store.write(stage,persistableAnalysis(result));
    report(1,'Music understood','Progress saved',{checkpointSaved:true,analysisStage:stage});
   }
  }
@@ -235,3 +278,4 @@ self.onmessage=async e=>{
   if(game)try{await game.release();}catch(_){}if(separator)try{await separator.release();}catch(_){}
   if(session)try{await session.release();}catch(_){}if(melSession)try{await melSession.release();}catch(_){}
  }};
+

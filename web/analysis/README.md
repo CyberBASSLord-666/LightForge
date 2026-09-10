@@ -58,6 +58,28 @@ drums and other instruments remain, and real-song onset estimates can be ambiguo
 The semantic timeline records this as separated accompaniment context, never as
 an isolated bass source.
 
+## Opt-in acoustic vocal semantic sidecar
+
+`vocalSemanticEnrichment: true` enables a validated sidecar after the
+existing separated-vocal detail and GAME passes. It does **not** run another
+model or inspect audio again. The sidecar normalizes already accepted vocal
+regions/phrases, phrase onsets/releases, existing acoustic articulation markers,
+existing notes, pitch trajectory, intensity, and stress confidence.
+
+An articulation marked `syllableLike` is only a timed acoustic attack from
+`vocalDetail.accents`; it is not a recognised syllable, phoneme, word, or
+lyric. The sidecar deliberately contains no linguistic content. It has an
+exact fingerprint of its source vocal evidence and is discarded/rebuilt when
+that evidence or its schema changes. It is stored under the independent
+`vocal-semantics` checkpoint, so changing this opt-in feature does not
+invalidate separation, transcription, rhythm, or bass work.
+
+The default analysis result, cached base semantic timeline, salience map and
+FSEQ path remain unchanged. When enabled, `vocalSemanticLinks` maps the
+sidecar only to exact existing vocal events in the semantic timeline; a stale
+or mismatched sidecar fails closed and is never converted into vehicle commands.
+See `docs/VOCAL_SEMANTIC_ENRICHMENT.md` for the contract.
+
 ## Optional dedicated-percussion semantic input
 
 The shipped worker does not currently include a dedicated drum/percussion model.
@@ -134,3 +156,4 @@ separator inputs. Component tests using an original stem are labeled separately.
 The six short MUSDB excerpts are not representative or verified held-out data;
 training overlap is possible. Desktop WASM, parity and source-clock sample counts
 do not establish human note accuracy or physical Android/Tesla performance.
+
