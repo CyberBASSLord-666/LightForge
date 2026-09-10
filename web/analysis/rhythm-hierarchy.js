@@ -16,6 +16,7 @@ const ordered=(values,low,high)=>Array.isArray(values)&&values.every((value,inde
 const median=values=>{if(!values.length)return 0;const copy=values.slice().sort((a,b)=>a-b),middle=Math.floor(copy.length/2);return copy.length%2?copy[middle]:(copy[middle-1]+copy[middle])/2;};
 const mean=values=>values.length?values.reduce((sum,value)=>sum+value,0)/values.length:0;
 const relative=(left,right)=>Math.abs(left-right)/Math.max(EPSILON,Math.abs(left),Math.abs(right));
+const fingerprint=text=>{let hash=0x811c9dc5;for(let index=0;index<text.length;index++)hash=Math.imul(hash^text.charCodeAt(index),0x01000193)>>>0;return hash.toString(16).padStart(8,'0');};
 function nearestIndex(values,time,tolerance){
  let lo=0,hi=values.length;while(lo<hi){const middle=(lo+hi)>>1;if(values[middle]<time)lo=middle+1;else hi=middle;}
  const candidates=[lo-1,lo].filter(index=>index>=0&&index<values.length);let best=-1,bestDelta=Infinity;
@@ -52,7 +53,9 @@ function evidenceSignature(analysis){
  // identity; this catches a sidecar copied onto a different beat map.
  const detail=analysis.beatDetails||[];
  const encode=values=>values.map(value=>round(value)).join(',');
- return ['rhythm-hierarchy',VERSION,round(evidence.duration),evidence.meter||'unknown',evidence.bpm===null?'unknown':round(evidence.bpm),round(evidence.baseConfidence),round(evidence.downbeatConfidence),round(evidence.meterConfidence),encode(evidence.beats),encode(evidence.downbeats),detail.map(value=>[round(value.time),value.localBpm===undefined?'':round(value.localBpm),value.barPosition===undefined?'':value.barPosition,value.confidence===undefined?'':round(value.confidence)].join(':')).join(',')].join('|');
+ const onsets=(Array.isArray(analysis.onsets)?analysis.onsets:[]).filter(value=>value&&typeof value==='object'&&finite(value.time)&&value.time>=0&&value.time<=evidence.duration&&finite(value.strength)&&value.strength>=0).slice(0,MAX_ONSETS).sort((left,right)=>left.time-right.time).map(value=>[round(value.time),round(clamp(value.strength)),typeof value.band==='string'?value.band:'unknown'].join(':')).join(',');
+ const spans=values=>(Array.isArray(values)?values:[]).filter(value=>validSpan(value,evidence.duration)).map(value=>[round(value.start),round(value.end),value.kind||value.label||'',round(clamp(finite(value.confidence)?value.confidence:0)),value.estimated!==false,typeof value.recurrenceGroup==='string'?value.recurrenceGroup:'',Number.isInteger(value.repetitionIndex)?value.repetitionIndex:''].join(':')).join(',');
+ return ['rhythm-hierarchy',VERSION,round(evidence.duration),evidence.meter||'unknown',evidence.bpm===null?'unknown':round(evidence.bpm),round(evidence.baseConfidence),round(evidence.downbeatConfidence),round(evidence.meterConfidence),encode(evidence.beats),encode(evidence.downbeats),detail.map(value=>[round(value.time),value.localBpm===undefined?'':round(value.localBpm),value.barPosition===undefined?'':value.barPosition,value.confidence===undefined?'':round(value.confidence)].join(':')).join(','),fingerprint(onsets),fingerprint(spans(analysis.phrases)),fingerprint(spans(analysis.sections))].join('|');
 }
 function intervalEvidence(evidence){
  const intervals=[];
@@ -121,8 +124,9 @@ function meterEvidence(evidence,bars){
  const values=[2,3,4,5,6,7,8];if(evidence.meter!==null&&!values.includes(evidence.meter))values.push(evidence.meter);
  const candidates=values.map(value=>{
   const measured=counts.length?counts.filter(count=>count===value).length/counts.length:0;
-  const positions=details.filter(detail=>Number.isInteger(detail?.barPosition));
-  const positional=positions.length?positions.filter((detail,index)=>detail.barPosition===((index%value)+1)).length/positions.length:0;
+  let positionCount=0,positionMatches=0;
+  details.forEach((detail,index)=>{if(Number.isInteger(detail?.barPosition)){positionCount++;if(detail.barPosition===((index%value)+1))positionMatches++;}});
+  const positional=positionCount?positionMatches/positionCount:0;
   // Downbeat spacing is stronger evidence than the decoder's existing bar
   // labels, but neither is enough to replace the legacy meter on its own.
   const confidence=clamp((measured*.75+positional*.25)*Math.max(evidence.downbeatConfidence,evidence.meterConfidence*.5));

@@ -39,9 +39,10 @@ authoritative.
 ## Cache and validation contract
 
 The hierarchy has `schemaVersion: 1` and a deterministic `inputSignature`
-formed from the validated legacy rhythm evidence.  `validate(hierarchy,
-analysis)` rejects a sidecar whose beat map, downbeats, meter, confidence, or
-duration changed.  `attach(analysis)` then rebuilds it from the already cached
+formed from the validated legacy rhythm evidence plus the consumed onset,
+phrase, and section maps.  `validate(hierarchy, analysis)` rejects a sidecar
+whose beat map, downbeats, meter, confidence, duration, or consumed structural
+evidence changed.  `attach(analysis)` then rebuilds it from the already cached
 approved summary; it does not rerun model inference and does not accept
 non-finite, unsorted, off-grid, or mismatched beat-detail data.
 

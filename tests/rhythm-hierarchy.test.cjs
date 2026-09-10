@@ -81,6 +81,13 @@ function rhythm(overrides={}){
 }
 
 {
+ const input=rhythm();
+ const result=api.build(input);
+ input.onsets=[...input.onsets,{time:2.25,strength:.7,band:'bass'}];
+ assert.deepEqual(api.validate(result,input),{valid:false,reason:'stale'},'a changed micro-onset map must not reuse a stale hierarchy checkpoint');
+}
+
+{
  const input=rhythm({beats:[0,.5,.5,1],downbeats:[0],beatDetails:[]});
  assert.equal(api.build(input),null,'non-monotonic model output is rejected rather than interpreted');
  const invalidDownbeat=rhythm({downbeats:[.2],beatDetails:rhythm().beatDetails});
