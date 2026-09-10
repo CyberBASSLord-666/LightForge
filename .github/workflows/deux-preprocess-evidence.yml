@@ -46,6 +46,9 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
+          # The manually dispatched resume must see the same immutable head
+          # commit as the PR run, not GitHub's synthetic PR merge commit.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           sparse-checkout: |
             .github
             package.json
