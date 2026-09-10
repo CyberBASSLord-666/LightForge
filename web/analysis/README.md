@@ -96,6 +96,54 @@ onset/end tolerance). It records the source event IDs and timing delta. Generic
 onsets, impacts, bass phrases and energy bands cannot create this relationship.
 The result remains deterministic for identical inputs.
 
+## Typed stem-routing contract
+
+The current bundled pipeline has two actual separated cache layers: a combined
+vocal layer and an accompaniment layer. The vocal layer is not labelled as a
+lead-only stem, and the accompaniment layer is not promoted to drums, bass, or
+harmonic isolation. The standalone `stem-routing.js` contract records that
+distinction without changing the existing worker or its legacy output.
+
+A future importer or analyzer can provide optional semantic stems on the same
+original decoded-audio clock:
+
+```js
+LightForgeStemRouting.build({
+  legacyStems: {
+    vocals: {audioRef: 'stem-cache:.../vocals.wav'},
+    accompaniment: {audioRef: 'stem-cache:.../accompaniment.wav'}
+  },
+  semanticStems: [{
+    id: 'drum-pass-1',
+    role: 'drums',
+    audioRef: 'external://opaque-drum-reference',
+    clock: 'original-decoded-audio',
+    confidence: 0.91,
+    provenance: {
+      source: 'supplied-drum-analyzer',
+      model: 'optional-model-version',
+      isolationEvidence: 'declared'
+    }
+  }]
+});
+```
+
+The permitted external roles are `lead-vocals`, `backing-vocals`, `drums`,
+`bass`, and `harmonic`. Each requires an opaque audio reference, an
+original-clock declaration, a confidence in [0, 1] when supplied, and
+provenance. `isolationEvidence` is one of `verified`, `declared`, or
+`unknown`; the router preserves that statement rather than upgrading it to a
+physical separation claim. Legacy cache records carry the distinct
+`pipeline-separated` evidence label.
+
+`LightForgeStemRouting.route(contract, task)` selects only eligible existing
+records. It prefers a lead-vocal stem for vocal transcription, an external
+drum/bass/harmonic stem for the matching task, and may use legacy accompaniment
+only as an explicitly named mixture fallback for bass or harmonic analysis.
+There is deliberately no drum fallback from onset, impact, accompaniment, or
+energy data. Missing, duplicate, unsupported, unclocked, or unprovenanced
+descriptors are reported as rejected and do not create a route.
+
 ## Rhythm, memory and cancellation
 
 Beat This! retains the full/compact author models, exact log-mel frontend,
