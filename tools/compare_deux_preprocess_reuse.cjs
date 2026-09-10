@@ -38,22 +38,24 @@ function validateReport(report,{enabled,minPassages,recovery=false}){
 }
 function stable(value){return JSON.stringify(value,Object.keys(value||{}).sort());}
 function sameBinding(left,right){
- return left.sourceSHA256===right.sourceSHA256&&left.fixtureSHA256===right.fixtureSHA256&&left.manifestSHA256===right.manifestSHA256&&left.model?.checkpointSHA256===right.model?.checkpointSHA256&&left.threads===right.threads&&left.samples===right.samples&&stable(left.source_hashes)===stable(right.source_hashes)&&left.runtime?.ortWebVersion===right.runtime?.ortWebVersion&&stable(left.runtime?.sessionConfiguration)===stable(right.runtime?.sessionConfiguration);
+ return left.sourceSHA256===right.sourceSHA256&&left.fixtureSHA256===right.fixtureSHA256&&stable(left.fixtureProvenance)===stable(right.fixtureProvenance)&&left.manifestSHA256===right.manifestSHA256&&left.model?.checkpointSHA256===right.model?.checkpointSHA256&&left.threads===right.threads&&left.samples===right.samples&&stable(left.source_hashes)===stable(right.source_hashes)&&left.runtime?.ortWebVersion===right.runtime?.ortWebVersion&&stable(left.runtime?.sessionConfiguration)===stable(right.runtime?.sessionConfiguration);
 }
 function main(){
  const benchmark=resolve(options.benchmark,root+'/tools/benchmark_deux_runtime.cjs');
  const implementation=resolve(options.implementation,root+'/web/analysis/separator-deux.js');
  const models=resolve(options.models,root+'/web/analysis/models/deux');
  const fixture=resolve(options.fixture,root+'/qa/release-1.6.0/fixtures/falcon-mix.wav');
+ const fixtureProvenance=options['fixture-provenance']?resolve(options['fixture-provenance']):null;
  const output=resolve(options.output,root+'/build/deux-preprocess-comparison.json');
  const threads=Number(options.threads||4),total=Number(options['total-samples']),verifyRecovery=parseOnOff('verify-recovery'),minPassages=Number(options['min-passages']||(verifyRecovery?3:2));
  if(!Number.isInteger(threads)||threads<1||threads>8)throw Error('Invalid --threads');
  if(!Number.isSafeInteger(total)||total<1||total%2!==1)throw Error('--total-samples must be an odd positive integer so the final passage is not an even-length special case');
  if(!Number.isSafeInteger(minPassages)||minPassages<(verifyRecovery?3:2))throw Error('--min-passages must be at least '+(verifyRecovery?'three for recovery':'two'));
  const keepTemp=parseOnOff('keep-temp'),temp=fs.mkdtempSync(path.join(os.tmpdir(),'lightforge-deux-preprocess-'));
- const receipt={schema:1,passed:false,errors:[],criterion:{fullPrecisionModels:true,unchangedContextOverlapAndGraphs:true,requiredByteIdentity:true,requiredFiniteOutputs:true,requiredOddLength:true,minimumPassages:minPassages,recoveryRequested:verifyRecovery},measurement:{scope:'One parent process launches a fresh Node process per arm. Kernel file-cache and thermal state remain uncontrolled.',freshProcessPerArm:true,strictColdIo:false,filesystemCacheState:'uncontrolled',thermalState:'unavailable'},bindings:{implementationSHA256:sha(fs.readFileSync(implementation)),fixtureSHA256:sha(fs.readFileSync(fixture)),modelsPath:path.relative(root,models)},runs:{},comparison:{}};
+ const receipt={schema:1,passed:false,errors:[],criterion:{fullPrecisionModels:true,unchangedContextOverlapAndGraphs:true,requiredByteIdentity:true,requiredFiniteOutputs:true,requiredOddLength:true,minimumPassages:minPassages,recoveryRequested:verifyRecovery},measurement:{scope:'One parent process launches a fresh Node process per arm. Kernel file-cache and thermal state remain uncontrolled.',freshProcessPerArm:true,strictColdIo:false,filesystemCacheState:'uncontrolled',thermalState:'unavailable'},bindings:{implementationSHA256:sha(fs.readFileSync(implementation)),fixtureSHA256:sha(fs.readFileSync(fixture)),fixtureProvenanceSHA256:fixtureProvenance?sha(fs.readFileSync(fixtureProvenance)):null,modelsPath:path.relative(root,models)},runs:{},comparison:{}};
  const invoke=(name,reuse,recoveryAfter=0)=>{
   const reportPath=path.join(temp,name+'.json'),pcmPrefix=path.join(temp,name),argv=[benchmark,'--implementation',implementation,'--models',models,'--fixture',fixture,'--threads',String(threads),'--total-samples',String(total),'--spectrum-reuse',reuse,'--output',reportPath,'--pcm',pcmPrefix];
+  if(fixtureProvenance)argv.push('--fixture-provenance',fixtureProvenance);
   if(recoveryAfter)argv.push('--recover-after-chunks',String(recoveryAfter));
   const child=spawnSync(process.execPath,argv,{cwd:root,encoding:'utf8',maxBuffer:32*1024*1024});
   if(child.error)throw child.error;

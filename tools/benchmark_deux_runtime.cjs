@@ -11,6 +11,7 @@ const resolve=(value,fallback)=>path.resolve(value||fallback),sha=bytes=>crypto.
 const implementation=resolve(options.implementation,root+'/web/analysis/separator-deux.js');
 const models=resolve(options.models,root+'/web/analysis/models/deux');
 const fixture=resolve(options.fixture,root+'/qa/release-1.6.0/fixtures/falcon-mix.wav');
+const fixtureProvenance=options['fixture-provenance']?resolve(options['fixture-provenance']):null;
 const output=resolve(options.output,root+'/build/deux-runtime.json');
 const implementationSHA256=sha(fs.readFileSync(implementation));
 const benchmarkSHA256=sha(fs.readFileSync(__filename));
@@ -40,6 +41,13 @@ const runtime={Tensor:ort.Tensor,InferenceSession:{create:async(url,opts)=>{
   }
   const total=options['total-samples']===undefined?reader.samples:Number(options['total-samples']);
   if(!Number.isSafeInteger(total)||total<1||total>reader.samples)throw Error('--total-samples must be a positive integer no greater than the fixture length');
+  let provenanceReceipt=null;
+  if(fixtureProvenance){
+   const provenanceBytes=fs.readFileSync(fixtureProvenance),provenance=JSON.parse(provenanceBytes);
+   const outputInfo=provenance?.output||{};
+   if(provenance?.schema!=='lightforge.deux-benchmark-fixture.v1'||outputInfo.file!==path.basename(fixture)||outputInfo.sha256!==sha(bytes)||outputInfo.samples!==reader.samples||outputInfo.sample_rate!==reader.rate||outputInfo.channels!==reader.channels||outputInfo.dtype!=='float32')throw Error('Fixture provenance does not bind the exact benchmark WAV.');
+   provenanceReceipt={path:path.relative(root,fixtureProvenance),sha256:sha(provenanceBytes),schema:provenance.schema};
+  }
   const recoveryAfter=options['recover-after-chunks']===undefined?0:Number(options['recover-after-chunks']);
   if(!Number.isSafeInteger(recoveryAfter)||recoveryAfter<0)throw Error('--recover-after-chunks must be a non-negative integer');
   const profile=Deux.createPerformanceProfile();let chunks=[],recovery;
@@ -63,7 +71,7 @@ const runtime={Tensor:ort.Tensor,InferenceSession:{create:async(url,opts)=>{
    if(result.restoredPassages<1)throw Error('Controlled recovery did not restore its completed passage.');
   }
   const sessionConfiguration={executionProviders:['wasm'],graphOptimizationLevel:'all',enableCpuMemArena:false,enableMemPattern:false};
-  const report={schema:2,passed:true,errors:[],fixture:path.relative(root,fixture),fixtureSHA256:sha(bytes),sourceSHA256:implementationSHA256,manifestSHA256:sha(manifestBytes),modelId:manifest.id,model:{id:manifest.id,checkpointSHA256:manifest.checkpointSHA256,manifestSHA256:sha(manifestBytes)},source_hashes:{[path.relative(root,implementation)]:implementationSHA256,'tools/benchmark_deux_runtime.cjs':benchmarkSHA256},threads,mode:{spectrumReuse:{requested:spectrumReuse,enabled:spectrumReuse==='on',experimental:true,defaultEnabled:false},coldProcess:true,filesystemCache:{state:'uncontrolled',strictColdIo:false},thermalState:{available:false}},seconds:(performance.now()-start)/1000,peakRssMiB:process.resourceUsage().maxRSS/1024,sessionLoads:loads,inferenceRuns:runs,samples:total,fixtureSamples:reader.samples,result,recovery,pcm:{}};
+  const report={schema:2,passed:true,errors:[],fixture:path.relative(root,fixture),fixtureSHA256:sha(bytes),fixtureProvenance:provenanceReceipt,sourceSHA256:implementationSHA256,manifestSHA256:sha(manifestBytes),modelId:manifest.id,model:{id:manifest.id,checkpointSHA256:manifest.checkpointSHA256,manifestSHA256:sha(manifestBytes)},source_hashes:{[path.relative(root,implementation)]:implementationSHA256,'tools/benchmark_deux_runtime.cjs':benchmarkSHA256},threads,mode:{spectrumReuse:{requested:spectrumReuse,enabled:spectrumReuse==='on',experimental:true,defaultEnabled:false},coldProcess:true,filesystemCache:{state:'uncontrolled',strictColdIo:false},thermalState:{available:false}},seconds:(performance.now()-start)/1000,peakRssMiB:process.resourceUsage().maxRSS/1024,sessionLoads:loads,inferenceRuns:runs,samples:total,fixtureSamples:reader.samples,result,recovery,pcm:{}};
   report.runtime={elapsedMs:report.seconds*1000,peakRssBytes:report.peakRssMiB*1048576,threads,ortWebVersion:ort.env?.versions?.web||null,sessionConfiguration};
   if(options.reference)report.referenceProvenance=options.provenance||'Float32 PCM oracle at '+path.resolve(options.reference)+'-{vocals,accompaniment}.f32; exact hashes below.';
   for(const role of ['vocals','accompaniment']){

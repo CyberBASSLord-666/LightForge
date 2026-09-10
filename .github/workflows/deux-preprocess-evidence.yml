@@ -12,12 +12,14 @@ on:
       - 'tools/benchmark_deux_runtime.cjs'
       - 'tools/compare_deux_preprocess_reuse.cjs'
       - 'tools/prepare_deux.py'
+      - 'tools/prepare_deux_benchmark_fixture.py'
       - 'tools/model-requirements.txt'
       - 'research/upstream/deux/**'
       - 'qa/release-1.6.0/prepare-musdb-fixtures.py'
       - 'tests/deux-preprocess-comparison.test.cjs'
       - 'tests/deux-preprocess-reuse.test.cjs'
       - 'tests/deux-2.2.1.test.cjs'
+      - 'tests/prepare-deux-benchmark-fixture.test.py'
       - 'docs/DEUX_SEPARATION_PERFORMANCE.md'
   workflow_dispatch:
 
@@ -70,6 +72,14 @@ jobs:
           curl -fL --retry 3 https://github.com/sigsep/sigsep-mus-db/releases/download/v0.4.0/MUSDB18-7-STEMS.zip -o qa/release-1.6.0/fixtures/MUSDB18-7-STEMS.zip
           echo '365f66acffc57282e474a4c24b32afec3678258c50b8d45646ac849b0a287df3  qa/release-1.6.0/fixtures/MUSDB18-7-STEMS.zip' | sha256sum -c
           python3 qa/release-1.6.0/prepare-musdb-fixtures.py
+          python3 tests/prepare-deux-benchmark-fixture.test.py
+          python3 tools/prepare_deux_benchmark_fixture.py \
+            --source qa/release-1.6.0/fixtures/falcon-mix.wav \
+            --source qa/release-1.6.0/fixtures/sdrnr-mix.wav \
+            --source qa/release-1.6.0/fixtures/grunge-mix.wav \
+            --samples 661501 \
+            --output benchmark/deux-multipassage-mix.wav \
+            --provenance benchmark/deux-multipassage-provenance.json
       - name: Record runner conditions without asserting unavailable telemetry
         run: |
           mkdir -p benchmark
@@ -101,7 +111,8 @@ jobs:
       - name: Pair actual model arms and verify exact PCM plus recovery
         run: >-
           node tools/compare_deux_preprocess_reuse.cjs
-          --fixture qa/release-1.6.0/fixtures/falcon-mix.wav
+          --fixture benchmark/deux-multipassage-mix.wav
+          --fixture-provenance benchmark/deux-multipassage-provenance.json
           --total-samples 661501
           --threads 4
           --verify-recovery on

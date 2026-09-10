@@ -114,8 +114,11 @@ diagnostic only; it is not sufficient to declare a quality-preserving speedup.
 
 `Deux preprocessing actual-model evidence` is the CI entry point for this
 receipt. It reproduces the 27 shipped float32 graphs, prepares the checksummed
-licensed fixture, runs both arms and a controlled recovery in one Ubuntu job,
-and uploads the comparator receipt plus a runner-conditions receipt. It proves
-only actual-model PCM/recovery equivalence for this experiment. It does not
-turn an uncontrolled filesystem-cache state, one pair, or a single fixture into
-a target-speed or locked-corpus quality-gate pass.
+licensed fixture, and builds an exact odd-length multi-passage WAV by copying
+verified float32 stereo PCM from three distinct licensed MUSDB mix excerpts. It
+does not resample, mix, add silence, or use generated audio. The job runs both
+arms and a controlled recovery in one Ubuntu job, then uploads comparator,
+source-provenance and runner-conditions receipts. It proves only actual-model
+PCM/recovery equivalence for this experiment. It does not turn an uncontrolled
+filesystem-cache state, one pair, or a single fixture into a target-speed or
+locked-corpus quality-gate pass.
