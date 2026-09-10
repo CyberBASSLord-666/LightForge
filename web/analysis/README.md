@@ -80,6 +80,39 @@ sidecar only to exact existing vocal events in the semantic timeline; a stale
 or mismatched sidecar fails closed and is never converted into vehicle commands.
 See `docs/VOCAL_SEMANTIC_ENRICHMENT.md` for the contract.
 
+## Opt-in acoustic vocal choreography
+
+`vocalChoreography: true` is a separate composition setting. It uses no PCM,
+model, lyric, word, phoneme, or text input. When both the acoustic vocal
+sidecar and its exact current semantic-timeline link validate, it can only
+adjust existing vocal candidates: bounded articulation priority/strength,
+legal held-note release, measured phrase release, and left/right direction
+from an accepted pitch trajectory. It never creates a musical event or a
+vehicle command. The canonical schema-v2 original-clock timeline validator
+must pass before the link is used; malformed, stale, resampled, or edited
+evidence leaves the bridge inactive. With the setting off (the default), or
+when any proof fails, legacy frames and FSEQ bytes are unchanged.
+
+See `docs/VOCAL_CHOREOGRAPHY.md` for the activation and output contract.
+
+## Opt-in recurrence sidecar
+
+`recurrenceAnalysis: true` adds a final, cache-isolated recurrence stage only
+after the base rhythm, separation, voice, and bass stages complete. It reuses
+the canonical semantic timeline plus existing validated energy/chroma features;
+it does not decode audio again, invoke another model, alter the beat grid, or
+invent musical labels. The stage emits a deterministic
+`recurrenceAnalysis.enabled` provenance marker together with exact
+`recurrenceEvidence` and `recurrenceSidecar` bindings. The base checkpoint
+strips those opt-in fields, so default callers retain identical analysis and
+FSEQ behavior.
+
+A sidecar is still analysis data, not choreography. Motif evolution additionally
+requires a current valid marker, valid evidence/sidecar binding, and both
+`semanticChoreography: true` and `motifEvolution: true`. If any proof is
+missing, stale, malformed, or inactive, planning fails closed to the
+non-motif path. See `docs/RECURRENCE_MOTIF_SIDECAR.md`.
+
 ## Optional dedicated-percussion semantic input
 
 The shipped worker does not currently include a dedicated drum/percussion model.

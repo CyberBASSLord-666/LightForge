@@ -146,6 +146,14 @@
     const calibration=normalizePerceptualCalibration(input),resolved={};
     for(const output of outputs){
       const spec=closureSpecifications[output.id],entry=calibration.enabled?calibration.outputs[output.id]:null;
+      // Feasibility limits answer whether a command can safely be emitted;
+      // they are not evidence of actuator response timing. Keep that boundary
+      // explicit so diagnostics never promote a duration/repeat constraint to
+      // a perceived-arrival estimate.
+      const responseTimingEvidence=Object.freeze({
+        open:!!entry&&(entry.commandLatencyMs!==undefined||entry.activationLatencyMs!==undefined||entry.openTravelMs!==undefined),
+        close:!!entry&&(entry.commandLatencyMs!==undefined||entry.deactivationLatencyMs!==undefined||entry.closeTravelMs!==undefined)
+      });
       const commandLatencyMs=entry&&entry.commandLatencyMs||0,activationLatencyMs=entry&&entry.activationLatencyMs||0,deactivationLatencyMs=entry&&entry.deactivationLatencyMs||0;
       const openTravelMs=spec?(entry&&entry.openTravelMs!==undefined?entry.openTravelMs:spec.travel*1000):null;
       const closeTravelMs=spec?(entry&&entry.closeTravelMs!==undefined?entry.closeTravelMs:spec.closeTravel*1000):null;
@@ -156,8 +164,12 @@
       resolved[output.id]=Object.freeze({
         outputId:output.id,kind:output.kind,calibrationConfigured:!!entry,leadAdjusted,
         commandLatencyMs,activationLatencyMs,deactivationLatencyMs,
-        minimumUsefulDurationMs:entry&&entry.minimumUsefulDurationMs||null,
-        minimumRepeatIntervalMs:entry&&entry.minimumRepeatIntervalMs||null,
+        responseTimingEvidence,
+        // A calibrated zero is meaningful: it says that this output has no
+        // additional minimum-duration/repeat constraint.  Do not collapse it
+        // into null, which means "not calibrated" to feasibility diagnostics.
+        minimumUsefulDurationMs:entry&&entry.minimumUsefulDurationMs!==undefined?entry.minimumUsefulDurationMs:null,
+        minimumRepeatIntervalMs:entry&&entry.minimumRepeatIntervalMs!==undefined?entry.minimumRepeatIntervalMs:null,
         openTravelMs,closeTravelMs,
         travelEvidence:spec?(entry&&(entry.openTravelMs!==undefined||entry.closeTravelMs!==undefined)?'explicit-calibration':'unverified-planning-envelope'):null
       });

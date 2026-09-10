@@ -358,7 +358,7 @@
     const actuators=outputs.filter(output=>output.kind==='closure');
     return {
       actuatorOveruse:{assessed:actuators.length>0,outputCount:actuators.length,overusedOutputCount:limitViolations,outputs:actuators},
-      minimumDurations:{assessed:assessedMinimums>0,assessedOutputCount:assessedMinimums,violationCount:assessedMinimums?minViolations:null,repeatIntervalViolationCount:outputs.some(output=>output.minimumRepeatIntervalMs!==null)?repeatViolations:null,outputs}
+      minimumDurations:{assessed:assessedMinimums>0,assessedOutputCount:assessedMinimums,violationCount:assessedMinimums?minViolations:null,repeatIntervalsAssessed:outputs.some(output=>output.minimumRepeatIntervalMs!==null),repeatIntervalViolationCount:outputs.some(output=>output.minimumRepeatIntervalMs!==null)?repeatViolations:null,outputs}
     };
   }
   function reportError(errors){

@@ -1,3 +1,5 @@
+import base64
+import hashlib
 import importlib.util
 import json
 import tempfile
@@ -14,6 +16,32 @@ contract = runner.contract
 
 def sha(char):
     return char * 64
+
+
+def review_attestation_profile():
+    public_key = bytes(range(32))
+    return {
+        "protocol": runner.quality_gate.REVIEW_ATTESTATION_PROTOCOL,
+        "verifier_id": "blind-review-service",
+        "algorithm": runner.quality_gate.REVIEW_ATTESTATION_ALGORITHM,
+        "verification_key_base64": base64.b64encode(public_key).decode("ascii"),
+        "verification_key_sha256": hashlib.sha256(public_key).hexdigest(),
+    }
+
+
+def policy_authority_profile():
+    """Syntactically pinned authority reference for release preflight tests.
+
+    These runner tests intentionally exercise corpus/preflight failures before
+    a gate comparison occurs; the public authority itself remains source-owned
+    and is therefore not configured by this fixture.
+    """
+    return {
+        "authority_id": "runner-test-policy-authority",
+        "protocol": runner.quality_gate.RELEASE_POLICY_AUTHORITY_PROTOCOL,
+        "algorithm": runner.quality_gate.RELEASE_POLICY_AUTHORITY_ALGORITHM,
+        "verification_key_sha256": hashlib.sha256(b"runner-test-policy-authority").hexdigest(),
+    }
 
 
 def manifest():
@@ -292,6 +320,139 @@ class LockedBenchmarkRunnerTest(unittest.TestCase):
             loaded = runner.load_manifest(path, allow_template=True)
             self.assertTrue(loaded["template"])
             self.assertEqual(0, runner.main(["validate-manifest", "--manifest", str(path), "--allow-template"]))
+
+    def test_candidate_change_and_blinded_review_are_preserved_for_the_gate(self):
+        corpus = manifest()
+        review = {
+            "schema_version": 1,
+            "protocol": "blinded-ab-v1",
+            "status": "pass",
+            "review_id": "review-001",
+            "reviewers": [],
+        }
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            manifest_path, reports = self.write_fixture_set(root, corpus)
+            loaded = runner.load_manifest(manifest_path)
+            aggregate = runner.aggregate_diagnostics(
+                loaded,
+                [reports],
+                policy=gate_policy(),
+                protocol_id="locked-benchmark-test-v1",
+                cache_mode="cold",
+                change={"classification": "major", "change_id": "semantic-pipeline-rework"},
+                human_perceptual_review=review,
+            )
+            self.assertEqual(
+                {"classification": "major", "change_id": "semantic-pipeline-rework"},
+                aggregate["change"],
+            )
+            self.assertEqual(review, aggregate["human_perceptual_review"])
+            with self.assertRaisesRegex(runner.LockedBenchmarkError, "requires an explicit candidate"):
+                runner.aggregate_diagnostics(
+                    loaded,
+                    [reports],
+                    policy=gate_policy(),
+                    protocol_id="locked-benchmark-test-v1",
+                    cache_mode="cold",
+                    human_perceptual_review=review,
+                )
+
+    def test_release_profile_must_pin_the_same_manifest_before_aggregation(self):
+        corpus = manifest()
+        release_policy = {
+            "schema_version": 3,
+            "required_tracks": ["electronic-drop", "vocal-rock"],
+            "minimum_pairs_per_track": 5,
+            "bootstrap": {"method": "paired-percentile-v1", "seed": "release", "confidence": 0.99, "resamples": 20000},
+            "runtime_target": {"metric": "performance.total_wall_clock_seconds", "target_reduction_percent": 75, "scope": "each_required_track"},
+            "release_profile": {
+                "mode": "release",
+                "metric_contract": runner.quality_gate.RELEASE_METRIC_CONTRACT_VERSION,
+                "locked_corpus": {"corpus_id": "wrong-corpus", "manifest_sha256": "0123456789abcdef" * 4},
+                "locked_runtime_profile": {
+                    "runtime_profile_id": "release-host",
+                    "hardware_fingerprint": "locked-pixel-test-device",
+                    "runtime_backend": "onnxruntime-android-cpu",
+                    "runtime_version": "1.20.1",
+                    "thermal_profile": "controlled-cold",
+                    "random_seed": 42,
+                    "accelerator": {
+                        "available": True,
+                        "fingerprint_sha256": runner.quality_gate._accelerator_fingerprint({"provider": "cpu", "threads": 4}),
+                    },
+                },
+                "policy_authority": policy_authority_profile(),
+                "human_perceptual_review": {
+                    "required_for_every_release_candidate": True,
+                    "minimum_reviewers": 3,
+                    "required_attributes": list(runner.quality_gate.HUMAN_REVIEW_ATTRIBUTES),
+                    "attestation": review_attestation_profile(),
+                },
+            },
+        }
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            manifest_path, reports = self.write_fixture_set(root, corpus)
+            loaded = runner.load_manifest(manifest_path)
+            with self.assertRaisesRegex(runner.LockedBenchmarkError, "locked_corpus does not exactly match"):
+                runner.aggregate_diagnostics(
+                    loaded,
+                    [reports],
+                    policy=release_policy,
+                    protocol_id="locked-benchmark-test-v1",
+                    cache_mode="cold",
+                )
+
+    def test_release_aggregate_revalidates_coverage_and_requires_an_explicit_side(self):
+        corpus = manifest()
+        policy = {
+            "schema_version": 3,
+            "required_tracks": ["electronic-drop", "vocal-rock"],
+            "minimum_pairs_per_track": 5,
+            "bootstrap": {"method": "paired-percentile-v1", "seed": "release", "confidence": 0.99, "resamples": 20000},
+            "runtime_target": {"metric": "performance.total_wall_clock_seconds", "target_reduction_percent": 75, "scope": "each_required_track"},
+            "release_profile": {
+                "mode": "release",
+                "metric_contract": runner.quality_gate.RELEASE_METRIC_CONTRACT_VERSION,
+                "locked_corpus": {
+                    "corpus_id": corpus["corpus_id"],
+                    "manifest_sha256": contract.corpus_manifest_sha256(corpus),
+                },
+                "locked_runtime_profile": {
+                    "runtime_profile_id": "release-host",
+                    "hardware_fingerprint": "locked-pixel-test-device",
+                    "runtime_backend": "onnxruntime-android-cpu",
+                    "runtime_version": "1.20.1",
+                    "thermal_profile": "controlled-cold",
+                    "random_seed": 42,
+                    "accelerator": {
+                        "available": True,
+                        "fingerprint_sha256": runner.quality_gate._accelerator_fingerprint({"provider": "cpu", "threads": 4}),
+                    },
+                },
+                "policy_authority": policy_authority_profile(),
+                "human_perceptual_review": {
+                    "required_for_every_release_candidate": True,
+                    "minimum_reviewers": 3,
+                    "required_attributes": list(runner.quality_gate.HUMAN_REVIEW_ATTRIBUTES),
+                    "attestation": review_attestation_profile(),
+                },
+            },
+        }
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            manifest_path, reports = self.write_fixture_set(root, corpus)
+            loaded = runner.load_manifest(manifest_path)
+            with self.assertRaisesRegex(runner.LockedBenchmarkError, "release corpus contract is invalid"):
+                runner.aggregate_diagnostics(
+                    loaded,
+                    [reports],
+                    policy=policy,
+                    protocol_id="locked-benchmark-test-v1",
+                    cache_mode="cold",
+                    report_side="baseline",
+                )
 
     def test_cli_writes_atomic_gate_input(self):
         corpus = manifest()

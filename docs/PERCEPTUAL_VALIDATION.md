@@ -4,8 +4,11 @@
 the gap between an intended perceptual musical event and an explicitly recorded
 output realization.  It does not modify a show, planner, frame buffer, or FSEQ.
 
-It is loaded in the browser and composition worker, but is not enabled by the
-default show-generation path.  Call it explicitly after final realization:
+It is loaded in the browser and composition worker. `ShowEngine.generate()`
+now stores its report at `show.perceptualValidation` after final realization,
+using the bounded explicit evidence at `show.synchronization.eventEvidence`.
+This diagnostic path is read-only and leaves the FSEQ bytes unchanged. It can
+also be called explicitly after an external measured-response capture:
 
 ```js
 const report = PerceptualValidation.evaluate(show, {

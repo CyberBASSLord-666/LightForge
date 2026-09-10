@@ -52,9 +52,10 @@ test('rebuilding an audition cache removes its commit marker before independent 
  const first=await stems.create(cacheKey,samples,config,'song');await first.append({sampleRate:44100,startSample:0,vocals:new Float32Array(samples),accompaniment:new Float32Array(samples)});const meta=await first.finish();await stems.files(meta);
  const interrupted=await stems.create(cacheKey,samples,config,'song');await assert.rejects(stems.files(meta),e=>e.name==='NotFoundError');await interrupted.abort();
 });
-function analyzerHarness({behavior,native=false}={}){
+function analyzerHarness({behavior,native=false,configureClock}={}){
  const workers=[],discarded=[],stageStarts=[];let active=0,maxActive=0;
  const context=vm.createContext({URL,crypto:webcrypto,TextEncoder,DOMException,AbortController,performance,setInterval,clearInterval,console,LightForgeVersion:{name:'2.2.1'},document:{currentScript:{src:'https://app.test/analysis/analyzer.js'}},LightForgeAnalysisStore:{hash:async bytes=>Buffer.from(await webcrypto.subtle.digest('SHA-256',bytes)).toString('hex'),discard:async id=>discarded.push(['work',id])},LightForgeStemCache:{discard:async id=>discarded.push(['stem',id])}});context.window=context;
+ configureClock?.(context);
  context.Worker=class{
   constructor(){this.closed=false;workers.push(this);active++;maxActive=Math.max(maxActive,active);}
   terminate(){if(!this.closed){this.closed=true;active--;}}
@@ -62,15 +63,58 @@ function analyzerHarness({behavior,native=false}={}){
   emit(data){if(!this.closed)this.onmessage({data});}
   finish(m=this.request){this.emit({type:'progress',value:{progress:{rhythm:.4,separation:.82,voice:.985,bass:1}[m.stage],stage:m.stage}});if(!this.closed)this.emit({type:'result',value:{...m.value,engine:{name:'test'},[m.stage]:true},seconds:1,restored:m.stage==='rhythm'});}
  };
- vm.runInContext(source('analyzer.js'),context);return {analyze:context.MusicAnalyzer.analyze,workers,discarded,stageStarts,context,get maxActive(){return maxActive;}};
+ vm.runInContext(source('diagnostic-clock.js'),context);vm.runInContext(source('analyzer.js'),context);return {analyze:context.MusicAnalyzer.analyze,workers,discarded,stageStarts,context,get maxActive(){return maxActive;}};
+}
+function workerClockHarness(configureClock){
+ const messages=[],context=vm.createContext({
+  console,URL,Float32Array,ArrayBuffer,DataView,Map,Number,setTimeout,clearTimeout,performance,
+  fetch:async url=>String(url).endsWith('features.json')?{json:async()=>({})}:{json:async()=>({precision:{},balanced:{}})},
+  LightForgeAnalysisStore:{open:async()=>({read:async()=>({}),write:async()=>{},invalidate:async()=>{}})},
+  LightForgeAnalysisTelemetry:{create:()=>({begin:()=>null,end:()=>{},cache:()=>{},snapshot:attributes=>attributes})}
+ });
+ configureClock(context);context.self=context;context.location={href:'https://app.test/analysis/worker.js'};
+ context.importScripts=(...names)=>{if(names.includes('diagnostic-clock.js'))vm.runInContext(source('diagnostic-clock.js'),context);};context.postMessage=message=>messages.push(message);
+ vm.runInContext(source('worker.js'),context);
+ return {messages,run:()=>context.onmessage({data:{stage:'rhythm',audioUrl:'/song.wav',value:{duration:1},options:{workId:key,cacheKey:'test'}}})};
 }
 test('public analyzer destroys each model heap before the next stage and clears only transient work after success',async()=>{
  const h=analyzerHarness(),progress=[],music=await h.analyze('/song.wav',{},p=>progress.push(p));assert.equal(h.maxActive,1);assert.deepEqual(h.stageStarts,['rhythm','separation','voice','bass']);assert.ok(h.workers.every(w=>w.closed));assert.equal(music.engine.stages.rhythm.restored,true);assert.equal(music.engine.recoverable,false);assert.deepEqual(h.discarded.map(x=>x[0]),['work']);assert.equal(progress.at(-1).completedStages,3);assert.equal(progress.at(-1).restoredStages,1);assert.ok(progress.every((p,i)=>i===0||p.progress>=progress[i-1].progress));
 });
-test('retry uses identical checkpoint identity while changed analysis settings get a new namespace',async()=>{
+test('analyzer survives unavailable and late hostile diagnostic clocks without changing stage recovery',async()=>{
+ const epoch=1789000000000,scenarios=[
+  context=>{context.performance={};context.Date={};},
+  context=>{context.Date={now:()=>epoch};context.performance={};Object.defineProperty(context.performance,'now',{get(){throw Error('blocked performance getter');}});},
+  context=>{let calls=0;context.Date={now:()=>epoch};context.performance={};Object.defineProperty(context.performance,'now',{get(){calls++;if(calls===1)return ()=>100;throw Error('late performance getter');}});},
+  context=>{let calls=0;context.Date={now:()=>epoch};context.performance={now(){calls++;if(calls===1)return 100;throw Error('late performance call');}};}
+ ];
+ for(const configureClock of scenarios){
+  const h=analyzerHarness({configureClock}),music=await h.analyze('/song.wav',{analysisIdentity:key});
+  assert.deepEqual(h.stageStarts,['rhythm','separation','voice','bass']);assert.equal(music.engine.analysisSeconds,0);assert.equal(music.engine.recoverable,true);
+ }
+});
+test('worker restores checkpoints through unavailable and late hostile diagnostic clocks',async()=>{
+ const epoch=1789000000000,scenarios=[
+  [context=>{context.performance={};context.Date={};},'unavailable'],
+  [context=>{context.Date={now:()=>epoch};context.performance={};Object.defineProperty(context.performance,'now',{get(){throw Error('blocked performance getter');}});},'fallback'],
+  [context=>{let calls=0;context.Date={now:()=>epoch};context.performance={};Object.defineProperty(context.performance,'now',{get(){calls++;if(calls===1)return ()=>100;throw Error('late performance getter');}});},'available'],
+  [context=>{let calls=0;context.Date={now:()=>epoch};context.performance={now(){calls++;if(calls===1)return 100;throw Error('late performance call');}};},'observed-error']
+ ];
+ for(const [configureClock,status] of scenarios){
+  const h=workerClockHarness(configureClock);await h.run();const result=h.messages.at(-1);
+  assert.equal(result.type,'result');assert.equal(result.restored,true);assert.equal(result.seconds,0);assert.equal(result.profile.workerClockStatus,status);assert.equal(result.value.duration,1);
+ }
+});
+test('analysis cache identity separates analysis evidence while choreography and vehicle choices reuse heavy work',async()=>{
  const h=analyzerHarness(),options={analysisIdentity:key,analysisQuality:'precision',projectId:'song'};
- await h.analyze('/song.wav',options);await h.analyze('/song.wav',options);await h.analyze('/song.wav',{...options,analysisQuality:'balanced'});await h.analyze('/song.wav',{...options,sensitivity:.7});
- assert.equal(h.workers[0].request.options.workId,h.workers[4].request.options.workId);assert.notEqual(h.workers[0].request.options.workId,h.workers[8].request.options.workId);assert.notEqual(h.workers[0].request.options.workId,h.workers[12].request.options.workId);assert.deepEqual(h.discarded,[]);
+ await h.analyze('/song.wav',options);await h.analyze('/song.wav',options);await h.analyze('/song.wav',{...options,enableEstimatedPercussionEvidence:false});await h.analyze('/song.wav',{...options,analysisQuality:'balanced'});await h.analyze('/song.wav',{...options,sensitivity:.7});
+ await h.analyze('/song.wav',{...options,enableEstimatedPercussionEvidence:true});
+ await h.analyze('/song.wav',{...options,semanticChoreography:true,motifEvolution:true,vehicleProfile:{revision:'calibrated-v2'}});
+ assert.equal(h.workers[0].request.options.workId,h.workers[4].request.options.workId);assert.equal(h.workers[0].request.options.workId,h.workers[8].request.options.workId,'explicit false must share the default analysis namespace');
+ assert.notEqual(h.workers[0].request.options.workId,h.workers[12].request.options.workId);assert.notEqual(h.workers[0].request.options.workId,h.workers[16].request.options.workId);
+ assert.notEqual(h.workers[0].request.options.workId,h.workers[20].request.options.workId,'estimated percussion must not reuse a default rhythm cache');
+ assert.equal(h.workers[20].request.options.enableEstimatedPercussionEvidence,true);
+ assert.equal(h.workers[0].request.options.workId,h.workers[24].request.options.workId,'choreography/vehicle changes must not invalidate completed music analysis');
+ assert.deepEqual(h.discarded,[]);
 });
 test('cancellation and stage failures preserve durable work and never start a downstream model',async()=>{
  const h=analyzerHarness(),controller=new AbortController();await assert.rejects(h.analyze('/song.wav',{analysisIdentity:key},p=>{if(p.stage==='separation')controller.abort();},controller.signal),e=>e.name==='AbortError');assert.deepEqual(h.stageStarts,['rhythm','separation']);assert.deepEqual(h.discarded,[]);assert.ok(h.workers.every(w=>w.closed));
@@ -107,7 +151,7 @@ test('GAME resumes completed passages with identical note boundaries and without
  const before=h.runs.loaded;game=await h.create();const restored=await game.process(()=>{throw Error('Cached audio reread');},total);await game.release();assert.equal(h.runs.loaded,before,'Cached work loaded GAME model graphs');assert.deepEqual(restored,result);
  h.records.get('game-0-0').notes[0].midi=999;game=await h.create();await game.process(read,total);await game.release();assert.equal(h.runs.encoder,4,'Invalid checkpoint pitch was accepted');
 });
-function workerHarness({cached=null,brokenStems=false,nativeBytes=null,quotaFailure=false}={}){
+function workerHarness({cached=null,brokenStems=false,nativeBytes=null,quotaFailure=false,configureCapabilities=null}={}){
  const messages=[],invalidations=[],writes=[],received=[],progress=[],reservations=[];let created=0,aborted=0,released=0;
  const context=vm.createContext({console,URL,Float32Array,ArrayBuffer,DataView,performance,Map,Number,setTimeout,crypto:webcrypto,navigator:{hardwareConcurrency:2},importScripts(){},ort:{env:{wasm:{}}},LightForgeAnalysisStore:{open:async()=>({read:async()=>cached,write:async(name,value)=>writes.push([name,value]),invalidate:async prefixes=>invalidations.push(Array.from(prefixes)),reserve:async plan=>{reservations.push(plan);if(quotaFailure)throw Error('Free at least 500 MB of device storage, then resume this song.');}})},LightForgeStemCache:{prune:async()=>{},files:async()=>{if(brokenStems)throw Error('Missing stems');},fullVoice:async()=>{},create:async()=>{created++;return {append:async chunk=>received.push(chunk),finish:async()=>({key:'rebuilt'}),abort:async()=>{aborted++;}};}},LightForgeWavReader:class{constructor(){this.samples=44100;this.duration=1;}async open(){}async stereo44100(){throw Error('Unexpected source read');}},fetch:async url=>{
   if(String(url).endsWith('features.json'))return {json:async()=>({})};if(String(url).endsWith('model-manifest.json'))return {json:async()=>({precision:{},balanced:{}})};
@@ -115,16 +159,27 @@ function workerHarness({cached=null,brokenStems=false,nativeBytes=null,quotaFail
  },LightForgeMdxSeparator:{constants:require('../web/analysis/separator-mdx.js').constants},LightForgeDeux:{create:async options=>({release:async()=>{released++;},process:async(read,total,onChunk,onProgress)=>{
   const result=options.nativePredict?await options.nativePredict(-66150,(p,message)=>progress.push([p,message])):{vocals:new Float32Array(1),accompaniment:new Float32Array(1)};
   await onChunk({sampleRate:44100,startSample:0,...result});onProgress({progress:1,processedSeconds:1,message:'Done',passagesCompleted:1,passageCount:1,checkpointSaved:true});return {modelId:'same-model'};
- }})}});context.self=context;context.location={href:'https://app.test/analysis/worker.js'};
+ }})}});context.self=context;configureCapabilities?.(context);context.location={href:'https://app.test/analysis/worker.js'};
  context.postMessage=m=>{messages.push(m);if(m.type==='native-deux')setImmediate(async()=>{await context.onmessage({data:{type:'native-deux-progress',requestId:m.requestId,value:{progress:.5,message:'Block'}}});await context.onmessage({data:{type:'native-deux-result',requestId:m.requestId,url:'https://app.test/native.bin'}});});};
  vm.runInContext(source('worker.js'),context);
- return {messages,invalidations,writes,received,progress,reservations,storagePlan:context.separationStoragePlan,get created(){return created;},get aborted(){return aborted;},get released(){return released;},run:()=>context.onmessage({data:{stage:'separation',audioUrl:'/song.wav',value:{duration:1},options:{workId:key,cacheKey:'test',supportsNativeDeux:nativeBytes!==null}}})};
+ return {messages,invalidations,writes,received,progress,reservations,storagePlan:context.separationStoragePlan,get created(){return created;},get aborted(){return aborted;},get released(){return released;},get wasmThreads(){return context.ort.env.wasm.numThreads;},run:()=>context.onmessage({data:{stage:'separation',audioUrl:'/song.wav',value:{duration:1},options:{workId:key,cacheKey:'test',supportsNativeDeux:nativeBytes!==null}}})};
 }
+test('worker capability getters fall back to one WASM thread without aborting recovery',async()=>{
+ const hostile=[
+  context=>{context.SharedArrayBuffer=SharedArrayBuffer;Object.defineProperty(context,'crossOriginIsolated',{configurable:true,get(){throw Error('hostile isolation getter');}});},
+  context=>{context.SharedArrayBuffer=SharedArrayBuffer;context.crossOriginIsolated=true;Object.defineProperty(context,'navigator',{configurable:true,get(){throw Error('hostile navigator getter');}});},
+  context=>{context.SharedArrayBuffer=SharedArrayBuffer;context.crossOriginIsolated=true;context.navigator={};Object.defineProperty(context.navigator,'hardwareConcurrency',{configurable:true,get(){throw Error('hostile core getter');}});},
+  context=>{context.SharedArrayBuffer=SharedArrayBuffer;context.crossOriginIsolated=true;context.navigator=undefined;},
+  context=>{context.SharedArrayBuffer=SharedArrayBuffer;context.crossOriginIsolated=true;context.navigator={hardwareConcurrency:Infinity};}
+ ];
+ for(const configureCapabilities of hostile){const h=workerHarness({configureCapabilities});await h.run();assert.equal(h.messages.at(-1).type,'result');assert.equal(h.wasmThreads,1);}
+ const available=workerHarness({configureCapabilities:context=>{context.SharedArrayBuffer=SharedArrayBuffer;context.crossOriginIsolated=true;context.navigator={hardwareConcurrency:8};}});await available.run();assert.equal(available.messages.at(-1).type,'result');assert.equal(available.wasmThreads,4);
+});
 test('worker restores completed separation without creating a model or replacing audition audio',async()=>{
  const h=workerHarness({cached:{separation:{modelId:'same-model'},stemCache:{key:'saved'}}});await h.run();assert.equal(h.created,0);assert.equal(h.invalidations.length,0);assert.equal(h.messages.at(-1).restored,true);assert.equal(h.messages.at(-1).value.duration,1);assert.equal(h.messages.at(-1).value.stemCache.key,'saved');
 });
 test('worker invalidates derived stages when committed stems are missing and keeps passage checkpoint storage available',async()=>{
- const h=workerHarness({cached:{separation:{modelId:'same-model'},stemCache:{key:'missing'}},brokenStems:true});await h.run();assert.deepEqual(h.invalidations,[['separation','voice','game','bass']]);assert.equal(h.created,1);assert.equal(h.writes[0][0],'separation');assert.equal(h.messages.at(-1).value.stemCache.key,'rebuilt');assert.equal(h.released,1);assert.ok(h.messages.some(m=>m.type==='progress'&&m.value.checkpointSaved));
+ const h=workerHarness({cached:{separation:{modelId:'same-model'},stemCache:{key:'missing'}},brokenStems:true});await h.run();assert.deepEqual(h.invalidations,[['separation','voice','vocal-semantics','game','bass','recurrence']]);assert.equal(h.created,1);assert.equal(h.writes[0][0],'separation');assert.equal(h.messages.at(-1).value.stemCache.key,'rebuilt');assert.equal(h.released,1);assert.ok(h.messages.some(m=>m.type==='progress'&&m.value.checkpointSaved));
 });
 test('worker native transport preserves raw source floats and rejects truncated and non-finite output transactionally',async()=>{
  const bytes=new ArrayBuffer(573300*8),view=new DataView(bytes);view.setFloat32(0,1e-8,true);view.setFloat32(573300*4,-.25,true);const valid=workerHarness({nativeBytes:bytes});await valid.run();assert.equal(valid.received[0].vocals[0],Math.fround(1e-8));assert.equal(valid.received[0].accompaniment[0],-.25);assert.deepEqual(valid.progress,[[.5,'Block']]);assert.equal(valid.messages.at(-1).type,'result');
@@ -188,7 +243,7 @@ test('worker reserves passage storage before opening model output writers and sk
 
 test('cached bass provenance migrates accompaniment mixtures without rereading stems',async()=>{
  const cached={duration:8,analysisVersion:7,beats:[0,.5,1,1.5],downbeats:[0],sections:[{start:0,end:8,energy:.5,label:'Groove'}],phrases:[],bassNotes:[{start:1.1,end:2.2,confidence:.8,strength:.7,midi:40}],bassAnalysis:{source:'separated-accompaniment',sourceSeparated:true,phrases:[{start:1.1,end:2.2,confidence:.8,strength:.7}]},vocals:{phrases:[],notes:[],accents:[]},roleAnalysis:{version:4,bassSource:'Low-register harmonics in separated accompaniment',sourceSeparated:true},warnings:[]};
- const messages=[],writes=[],context=vm.createContext({console,URL,Float32Array,ArrayBuffer,DataView,performance,Map,Number,setTimeout,crypto:webcrypto,navigator:{hardwareConcurrency:2},importScripts(){},ort:{env:{wasm:{}}},LightForgeSemanticTimeline:require('../web/analysis/semantic-timeline.js'),LightForgeMusicSalience:require('../web/analysis/salience.js'),LightForgeAnalysisStore:{open:async()=>({read:async()=>structuredClone(cached),write:async(name,value)=>writes.push([name,structuredClone(value)]),invalidate:async()=>{},reserve:async()=>{}})},fetch:async()=>({json:async()=>({precision:{},balanced:{},frontend:{}})}),postMessage:m=>messages.push(m)});
+ const messages=[],writes=[],context=vm.createContext({console,URL,Float32Array,ArrayBuffer,DataView,performance,Map,Number,setTimeout,crypto:webcrypto,navigator:{hardwareConcurrency:2},importScripts(){},ort:{env:{wasm:{}}},LightForgeSemanticTimeline:require('../web/analysis/semantic-timeline.js'),LightForgeMusicSalience:require('../web/analysis/salience.js'),LightForgeStemRouting:require('../web/analysis/stem-routing.js'),LightForgeAnalysisStore:{open:async()=>({read:async()=>structuredClone(cached),write:async(name,value)=>writes.push([name,structuredClone(value)]),invalidate:async()=>{},reserve:async()=>{}})},fetch:async()=>({json:async()=>({precision:{},balanced:{},frontend:{}})}),postMessage:m=>messages.push(m)});
  context.self=context;context.location={href:'https://app.test/analysis/worker.js'};vm.runInContext(source('worker.js'),context);
  await context.onmessage({data:{stage:'bass',audioUrl:'/song.wav',value:{},options:{workId:key,projectId:'song'}}});
  const result=messages.at(-1);assert.equal(result.type,'result');assert.equal(result.restored,true);assert.equal(result.value.analysisVersion,8);assert.equal(result.value.bassAnalysis.source,'accompaniment-mixture-estimate');assert.equal(result.value.bassAnalysis.sourceSeparated,false);assert.equal(result.value.bassAnalysis.instrumentSeparated,false);assert.equal(result.value.bassNotes[0].sourceSeparated,false);assert.equal(result.value.roleAnalysis.version,5);assert.equal(result.value.roleAnalysis.bassInstrumentSeparated,false);assert.equal(result.value.semanticTimeline.schemaVersion,2);assert.equal(result.value.semanticTimeline.summary.hasSeparatedBass,false);assert.equal(result.value.semanticTimeline.summary.hasSeparatedAccompaniment,true);assert.equal(result.value.musicSalience.schemaVersion,1);assert.equal(require('../web/analysis/salience.js').validate(result.value.musicSalience,result.value.semanticTimeline).valid,true);assert.equal(writes[0][1].musicSalience.schemaVersion,1);assert.equal(writes.length,1);

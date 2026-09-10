@@ -12,29 +12,56 @@
  */
 (function(root){'use strict';
  const LOCK_NAME='lightforge-analysis-heavy-v1',KEY=/^[a-f0-9]{64}$/;
- const now=()=>typeof performance!=='undefined'&&typeof performance.now==='function'?performance.now():Date.now();
+ const read=(object,key)=>{try{return object==null?undefined:object[key];}catch(_){return undefined;}};
+ const number=value=>typeof value==='number'&&Number.isFinite(value)?value:null;
+ const selectClock=key=>{
+  const receiver=read(root,key),callable=read(receiver,'now');
+  if(typeof callable!=='function')return null;
+  try{const value=number(callable.call(receiver));return value===null?null:{receiver,callable,value};}catch(_){return null;}
+ };
+ const sampleClock=clock=>{try{return number(clock.callable.call(clock.receiver));}catch(_){return null;}};
+ // Select a clock once. Falling from a monotonic performance clock to epoch
+ // time after a late hostile getter/call failure would fabricate wait times.
+ // Retain both receiver and callable: a later host getter may point at a
+ // different clock origin even when it still looks like performance.now.
+ const createClock=()=>{
+  const performanceClock=selectClock('performance');
+  if(performanceClock){let unavailable=false,last=performanceClock.value;return {now(){if(unavailable)return null;const value=sampleClock(performanceClock);if(value===null||value<last){unavailable=true;return null;}last=value;return value;}};}
+  const dateClock=selectClock('Date');let unavailable=!dateClock,last=dateClock?.value??0;
+  return {now(){if(unavailable)return null;const value=sampleClock(dateClock);if(value===null||value<last){unavailable=true;return null;}last=value;return value;}};
+ };
+ const clock=createClock(),now=()=>clock.now(),elapsed=(start,end)=>{
+  const first=number(start),last=number(end);return first===null||last===null?0:Math.max(0,last-first);
+ };
  const abortError=()=>typeof DOMException==='function'?new DOMException('Analysis cancelled','AbortError'):Object.assign(new Error('Analysis cancelled'),{name:'AbortError'});
  const supportedLocks=()=>{
-  const locks=root.navigator?.locks;
-  return locks&&typeof locks.request==='function'?locks:null;
+  const navigatorRef=read(root,'navigator'),locks=read(navigatorRef,'locks'),request=read(locks,'request');
+  return typeof request==='function'?{locks,request}:null;
  };
  const state={active:null,queue:[],sequence:0};
  const mode=()=>supportedLocks()?'web-locks':'single-context';
  function snapshot(){return {schemaVersion:1,resourceClass:'analysis-heavy',capacity:1,active:state.active?1:0,queued:state.queue.length,crossContextMode:mode()};}
  function remove(entry){const index=state.queue.indexOf(entry);if(index>=0)state.queue.splice(index,1);}
  async function originLease(entry){
-  const locks=supportedLocks();
-  if(!locks)return {mode:'single-context',release:async()=>{}};
+  const lockApi=supportedLocks();
+  if(!lockApi)return {mode:'single-context',release:async()=>{}};
   let releaseHeld,resolveAcquired,rejectAcquired,acquired=false;
   const held=new Promise(resolve=>{releaseHeld=resolve;});
   const acquiredPromise=new Promise((resolve,reject)=>{resolveAcquired=resolve;rejectAcquired=reject;});
-  const request=locks.request(LOCK_NAME,{mode:'exclusive',signal:entry.controller.signal},async()=>{
-   if(entry.cancelled)throw abortError();
-   acquired=true;
-   resolveAcquired();
-   await held;
-  });
-  request.catch(error=>{if(!acquired)rejectAcquired(error);});
+  let request;
+  try{
+   request=lockApi.request.call(lockApi.locks,LOCK_NAME,{mode:'exclusive',signal:entry.controller.signal},async()=>{
+    if(entry.cancelled)throw abortError();
+    acquired=true;
+    resolveAcquired();
+    await held;
+   });
+   if(!request||typeof request.then!=='function')throw Error('Web Locks returned an invalid request.');
+   request.catch(error=>{if(!acquired)rejectAcquired(error);});
+  }catch(error){
+   if(entry.cancelled||error?.name==='AbortError')throw abortError();
+   return {mode:'single-context-fallback',release:async()=>{}};
+  }
   try{await acquiredPromise;}
   catch(error){
    // Web Locks is an optional coordination enhancement.  If an otherwise
@@ -57,7 +84,7 @@
    if(entry.abortListener)entry.signal?.removeEventListener?.('abort',entry.abortListener);
    let released=false;
    entry.resolve({
-    diagnostics:()=>({schemaVersion:1,resourceClass:'analysis-heavy',capacity:1,crossContextMode:origin.mode,waitMs:Math.max(0,entry.started-entry.submitted),admissionTicket:entry.position}),
+    diagnostics:()=>({schemaVersion:1,resourceClass:'analysis-heavy',capacity:1,crossContextMode:origin.mode,waitMs:elapsed(entry.submitted,entry.started),admissionTicket:entry.position}),
     async release(){
      if(released)return false;
      released=true;entry.status='released';

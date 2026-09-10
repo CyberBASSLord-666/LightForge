@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "kind": "committed-recorded-analysis-exports",
+  "fixtureDirectory": "qa/music-1.3.0",
+  "provenance": {
+    "baselineCapture": {
+      "file": "qa/music-1.3.0/capture-baseline.cjs",
+      "bytes": 1536,
+      "sha256": "99c8c3f2063be3d8af19153a55c53528f946fe88f6ec3d8c9dccb86cbe2f3d2a"
+    },
+    "currentCapture": {
+      "file": "qa/music-1.3.0/capture-analysis.cjs",
+      "bytes": 3319,
+      "sha256": "084c5f15222e0f6e7dec2dddfb43ad9fc9fbd343531d130282d6fcc41efc1562"
+    },
+    "sampleSourceAudio": {
+      "availability": "external-not-shipped",
+      "requiredFor": "recapture-only",
+      "requiredByPlannerRegression": false,
+      "metadata": {
+        "file": "qa/music-1.3.0/audio-metadata.json",
+        "bytes": 1743,
+        "sha256": "74295316510fb392870ad73a565c2e82a967d775b35ba3fa73cdea117623779a",
+        "sample": {
+          "path": "upload/Sample.wav",
+          "channels": 2,
+          "sampleRate": 48000,
+          "sampleWidth": 2,
+          "frames": 11425919,
+          "duration": 238.03997916666665,
+          "bytes": 45703720,
+          "sha256": "1904d9697a1cb3640bcfdc5b1ede23f7512105976c7b662b08423a5e4cca99d8",
+          "chunks": [
+            {"tag": "fmt ", "declaredBytes": 16, "availableBytes": 16, "offset": 20},
+            {"tag": "data", "declaredBytes": 45703676, "availableBytes": 45703676, "offset": 44}
+          ],
+          "payloadComplete": true
+        }
+      }
+    }
+  },
+  "fixtures": [
+    {
+      "file": "baseline-demo-music.json",
+      "lineage": "baseline",
+      "track": "demo",
+      "analysisVersion": 1,
+      "bytes": 186709,
+      "sha256": "18b5ecdc10ba976de474d580e174106d292ffe88c2544dd5023459e2cb864319"
+    },
+    {
+      "file": "baseline-sample-music.json",
+      "lineage": "baseline",
+      "track": "sample",
+      "analysisVersion": 1,
+      "bytes": 594175,
+      "sha256": "33a2aed406a0842c24e6895882e27b0c17d6c8da81136066e1f792c69959c39b"
+    },
+    {
+      "file": "current-demo-music.json",
+      "lineage": "current",
+      "track": "demo",
+      "analysisVersion": 2,
+      "bytes": 199911,
+      "sha256": "b5c925d1f3eb4d1c36b043587849c161186a99039f88537660b0f58bd5958533"
+    },
+    {
+      "file": "current-sample-music.json",
+      "lineage": "current",
+      "track": "sample",
+      "analysisVersion": 2,
+      "bytes": 641621,
+      "sha256": "74764bd55772fcd54769423c5931f906fb1eb1a1706e541df2cad2a716dc7ad1"
+    }
+  ]
+}

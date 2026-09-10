@@ -1,6 +1,10 @@
 {
   "schema_version": 3,
   "required_tracks": ["__configure_locked_corpus__"],
+  "release_profile": {
+    "mode": "template",
+    "notice": "Unconfigured template only. Replace with a v2 pinned release profile, locked runtime profile, source-pinned Ed25519 policy-authority reference and detached policy/corpus receipt, Ed25519 public-key-verifiable blind-review attestation verifier, and private locked-corpus identity before making any release-quality or runtime claim. Release mode enforces at least five pairs, 99% confidence, 20,000 resamples, and exactly a 75% total-wall-clock target."
+  },
   "minimum_pairs_per_track": 5,
   "bootstrap": {
     "method": "paired-percentile-v1",

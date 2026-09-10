@@ -10,6 +10,7 @@ on:
       - 'qa/performance-gate-policy.json'
       - 'qa/locked-corpus-manifest.template.json'
       - 'tests/performance-quality-gate.test.py'
+      - 'tests/performance-quality-gate-workflow.test.py'
       - 'tests/analysis-benchmark-contract.test.py'
       - 'tests/locked-benchmark-runner.test.py'
       - 'tests/differential-analysis.test.py'
@@ -22,19 +23,20 @@ on:
     inputs:
       baseline_artifact:
         description: Baseline benchmark artifact name
-        required: false
+        required: true
       baseline_run_id:
-        description: GitHub Actions run ID that produced the baseline artifact
-        required: false
+        description: Successful approved LightForge Actions run ID that produced the baseline artifact
+        required: true
       candidate_artifact:
         description: Candidate benchmark artifact name
-        required: false
+        required: true
       candidate_run_id:
-        description: GitHub Actions run ID that produced the candidate artifact
-        required: false
+        description: Successful approved LightForge Actions run ID that produced the candidate artifact
+        required: true
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   unit:
@@ -45,6 +47,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: python3 tests/performance-quality-gate.test.py
+      - run: python3 tests/performance-quality-gate-workflow.test.py
       - run: python3 tests/analysis-benchmark-contract.test.py
       - run: python3 tests/locked-benchmark-runner.test.py
       - run: python3 tests/differential-analysis.test.py
@@ -56,30 +59,59 @@ jobs:
           tools/differential_analysis.py
 
   compare:
-    if: inputs.baseline_artifact != '' && inputs.candidate_artifact != '' && inputs.baseline_run_id != '' && inputs.candidate_run_id != ''
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    environment: lightforge-release-quality
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Require protected default-branch release authority
+        env:
+          LIGHTFORGE_REF_PROTECTED: ${{ github.ref_protected }}
+        run: >-
+          test "$GITHUB_REF" = "refs/heads/main" &&
+          test "$LIGHTFORGE_REF_PROTECTED" = "true"
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: ${{ inputs.baseline_artifact }}
           path: gate/baseline
+          repository: ${{ github.repository }}
           run-id: ${{ inputs.baseline_run_id }}
           github-token: ${{ github.token }}
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: ${{ inputs.candidate_artifact }}
           path: gate/candidate
+          repository: ${{ github.repository }}
           run-id: ${{ inputs.candidate_run_id }}
           github-token: ${{ github.token }}
-      - run: >-
-          python3 tools/performance_quality_gate.py
-          --baseline gate/baseline/benchmark.json
-          --candidate gate/candidate/benchmark.json
-          --policy qa/performance-gate-policy.json
-          --output gate/quality-gate-report.json
+      - name: Compare with protected release policy and corpus
+        env:
+          LIGHTFORGE_RELEASE_POLICY_JSON: ${{ secrets.LIGHTFORGE_RELEASE_POLICY_JSON }}
+          LIGHTFORGE_RELEASE_CORPUS_MANIFEST_JSON: ${{ secrets.LIGHTFORGE_RELEASE_CORPUS_MANIFEST_JSON }}
+          LIGHTFORGE_RELEASE_POLICY_ATTESTATION_JSON: ${{ secrets.LIGHTFORGE_RELEASE_POLICY_ATTESTATION_JSON }}
+        run: |
+          test -n "$LIGHTFORGE_RELEASE_POLICY_JSON"
+          test -n "$LIGHTFORGE_RELEASE_CORPUS_MANIFEST_JSON"
+          test -n "$LIGHTFORGE_RELEASE_POLICY_ATTESTATION_JSON"
+          test -f gate/baseline/benchmark.json
+          test -f gate/candidate/benchmark.json
+          mkdir -p gate/trusted
+          printf '%s' "$LIGHTFORGE_RELEASE_POLICY_JSON" > gate/trusted/performance-gate-policy.json
+          printf '%s' "$LIGHTFORGE_RELEASE_CORPUS_MANIFEST_JSON" > gate/trusted/locked-corpus-manifest.json
+          printf '%s' "$LIGHTFORGE_RELEASE_POLICY_ATTESTATION_JSON" > gate/trusted/release-policy-attestation.json
+          python3 -m json.tool gate/trusted/performance-gate-policy.json > /dev/null
+          python3 -m json.tool gate/trusted/locked-corpus-manifest.json > /dev/null
+          python3 -m json.tool gate/trusted/release-policy-attestation.json > /dev/null
+          python3 tools/performance_quality_gate.py \
+            --baseline gate/baseline/benchmark.json \
+            --candidate gate/candidate/benchmark.json \
+            --locked-corpus-manifest gate/trusted/locked-corpus-manifest.json \
+            --policy gate/trusted/performance-gate-policy.json \
+            --release-policy-attestation gate/trusted/release-policy-attestation.json \
+            --output gate/quality-gate-report.json
       - if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: performance-quality-gate-report
           path: gate/quality-gate-report.json
+          if-no-files-found: warn

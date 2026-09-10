@@ -22,12 +22,17 @@ function opfs(){
  const directory=new Directory();
  return {directory,control,async file(...names){let entry=directory;for(const name of names.slice(0,-1))entry=await entry.getDirectoryHandle(name);return entry.getFileHandle(names.at(-1));},storage:{getDirectory:async()=>directory,estimate:async()=>({quota:8*1024**3,usage:0})}};
 }
-function load(disk=opfs()){
- const context=vm.createContext({crypto:webcrypto,TextEncoder,TextDecoder,ArrayBuffer,DataView,Uint8Array,Uint32Array,Float32Array,Blob,DOMException,setTimeout,clearTimeout,navigator:{storage:disk.storage}});context.self=context;
+function load(disk=opfs(),wallClock=Date){
+ const context=vm.createContext({crypto:webcrypto,TextEncoder,TextDecoder,ArrayBuffer,DataView,Uint8Array,Uint32Array,Float32Array,Blob,DOMException,setTimeout,clearTimeout,Date:wallClock,navigator:{storage:disk.storage}});context.self=context;
  vm.runInContext(source('work-store.js'),context);vm.runInContext(source('stem-cache.js'),context);
  return {disk,context,store:context.LightForgeAnalysisStore,stems:context.LightForgeStemCache};
 }
 const key='c'.repeat(64),stemKey='stem-11111111-1111-1111-1111-111111111111';
+function hostileDate(mode){
+ const wallClock={};
+ Object.defineProperty(wallClock,'now',{get(){if(mode==='getter')throw Error('hostile Date.now getter');return ()=>{if(mode==='call')throw Error('hostile Date.now call');return 1700000000000;};}});
+ return wallClock;
+}
 test('content addresses canonicalize cache domains without carrying source paths',async()=>{
  const {store}=load();
  const left=await store.contentAddress('stems',{audio:'a'.repeat(64),model:{b:2,a:1},settings:{quality:'precision'}});
@@ -67,6 +72,22 @@ test('a corrupt invalidation control record discards all stages before resume',a
  (await disk.file('lightforge-analysis-v1',key,'cache-control.json')).data=Buffer.from('{corrupt');
  const resumed=await store.open(key,{sourceId:'track'});
  assert.equal(await resumed.read('rhythm'),null);assert.equal(await resumed.readFloats('deux-0'),null);assert.equal(resumed.diagnostics().corruptControlDiscarded,true);
+});
+test('hostile Date.now cannot block checkpoint open, recovery, or invalidation fences',async()=>{
+ for(const mode of ['getter','call']){
+  const disk=opfs(),{store}=load(disk,hostileDate(mode)),work=await store.open(key,{sourceId:'track'});
+  await work.write('voice',{revision:1});await work.invalidate(['voice']);assert.equal(await work.read('voice'),null);
+  const resumed=await load(disk,hostileDate(mode)).store.open(key,{sourceId:'track'});assert.equal(await resumed.read('voice'),null,'fence remains durable after '+mode+' failure');
+  const identity=JSON.parse((await disk.file('lightforge-analysis-v1',key,'identity.json')).data);const control=JSON.parse((await disk.file('lightforge-analysis-v1',key,'cache-control.json')).data);
+  assert.equal(identity.payload.includes('"updatedAt":0'),true);assert.equal(control.payload.includes('"updatedAt":0'),true);
+ }
+});
+test('hostile Date.now cannot prevent atomic stem-cache completion or later recovery',async()=>{
+ for(const mode of ['getter','call']){
+  const disk=opfs(),{stems}=load(disk,hostileDate(mode)),samples=44100,config={resampleHalfFIR:Float32Array.of(1)},values=new Float32Array(samples);
+  const writer=await stems.create(stemKey,samples,config,'track');await writer.append({sampleRate:44100,startSample:0,vocals:values,accompaniment:values});const meta=await writer.finish();
+  assert.equal(meta.createdAt,0);await load(disk,hostileDate(mode)).stems.files(meta);await load(disk,hostileDate(mode)).stems.fullVoice(meta);
+ }
 });
 test('new completed stem caches reject interior PCM corruption while legacy completion markers remain structurally compatible',async()=>{
  const {disk,stems}=load(),samples=44100,config={resampleHalfFIR:Float32Array.of(1)},values=new Float32Array(samples);

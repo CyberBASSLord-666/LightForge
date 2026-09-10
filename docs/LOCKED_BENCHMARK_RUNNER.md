@@ -19,10 +19,13 @@ synthetic audio identity, duration, tag set, and golden-artifact digest. Then:
 1. Remove `"template": true`.
 2. Set `"release_ready": true` only once the manifest and goldens are frozen.
 3. Version the manifest and record its canonical SHA-256 in release evidence.
-4. Configure `qa/performance-gate-policy.json` with exactly its `track_id`s in
-   `required_tracks`; do not leave the fail-closed placeholder in place.
+4. Create a reviewed `release_profile` in the gate policy with exactly its
+   `track_id`s in `required_tracks`, the manifest's exact corpus ID/SHA-256,
+   and `lightforge-release-metrics-v2`; do not leave the fail-closed template
+   placeholder in place.
 
-The production manifest should include approved golden hashes for semantic
+The production manifest must contain at least 16 distinct audio identities,
+every immutable coverage tag family, and approved golden hashes for semantic
 timeline, rhythm, vocals, bass, drums, sections, salience, choreography, FSEQ
 characteristics, and perceptual validation. The template lists those required
 artifact categories, but is intentionally not a substitute for them.
@@ -121,6 +124,7 @@ python3 tools/locked_benchmark_runner.py aggregate \
   --policy qa/performance-gate-policy.json \
   --protocol-id locked-corpus-cold-v1 \
   --cache-mode cold \
+  --report-side baseline \
   --output artifacts/benchmark-baseline.json
 
 python3 tools/locked_benchmark_runner.py aggregate \
@@ -129,21 +133,77 @@ python3 tools/locked_benchmark_runner.py aggregate \
   --policy qa/performance-gate-policy.json \
   --protocol-id locked-corpus-cold-v1 \
   --cache-mode cold \
+  --report-side candidate \
   --output artifacts/benchmark-candidate.json
 
 python3 tools/performance_quality_gate.py \
   --baseline artifacts/benchmark-baseline.json \
   --candidate artifacts/benchmark-candidate.json \
+  --locked-corpus-manifest /secure/locked-corpus-manifest.json \
   --policy qa/performance-gate-policy.json \
   --output artifacts/performance-quality-report.json
 ```
+
+That checked-in `qa/performance-gate-policy.json` is template-only. A release
+comparison instead uses the protected release policy, manifest, and detached
+policy-authority receipt through `--release-policy-attestation`; see
+`PERFORMANCE_QUALITY_GATE.md` for the protected-environment invocation. The
+receipt is verified against a source-pinned authority public key, not a key in
+candidate data. Passing a policy or manifest from the candidate artifact cannot
+produce a production-ready result.
+
+For every release candidate, make the candidate declaration and externally
+attested blinded review part of the aggregate itself. The baseline aggregate
+must use `--report-side baseline` and cannot carry candidate review fields.
+
+```bash
+python3 tools/locked_benchmark_runner.py aggregate \
+  --manifest /secure/locked-corpus-manifest.json \
+  --reports /secure/candidate-diagnostics \
+  --policy /secure/performance-gate-release-policy.json \
+  --protocol-id locked-corpus-cold-v1 \
+  --cache-mode cold \
+  --report-side candidate \
+  --change-classification major \
+  --change-id semantic-pipeline-rework \
+  --human-perceptual-review /secure/blinded-review.json \
+  --output artifacts/benchmark-candidate.json
+```
+
+The runner preserves this JSON without inventing reviewer results; the quality
+gate validates it. Candidate diagnostics must share a pinned `source_sha256`
+and pipeline version; the runner emits that as `candidate_identity`. The review
+file must contain the gate's structured ratings plus an
+`external-review-attestation-v2` Ed25519 detached signature bound to that
+identity, the policy, the corpus, and canonical baseline/candidate benchmark
+evidence projections. The projection excludes only the review signature to
+avoid a circular hash, so post-review changes to metrics, provenance, or
+diagnostic/output hashes invalidate the release. Policy pins the verifier's
+public key and its SHA-256; a bare `blinded: true` boolean or arbitrary receipt
+hash is not sufficient. Do not include private signing material, names,
+comments, lyrics, screenshots, or other private material.
+
+For the manually dispatched GitHub quality-gate workflow, package only the
+candidate `benchmark.json` evidence. The workflow downloads it by its exact run
+ID from this LightForge repository only, but it obtains the release policy,
+locked manifest, and independent detached policy-authority receipt from the
+protected `lightforge-release-quality` environment on protected `main`. The
+gate resolves the receipt's public verifier key only from reviewed source. A
+candidate artifact must never supply the policy, corpus manifest, authority
+key, or authority receipt because it could then create a self-signed release
+claim.
 
 `aggregate` writes atomically and sorts reports by track, run ID, and
 diagnostic digest, so a reordered directory traversal produces byte-equivalent
 JSON. It refuses to aggregate when `policy.required_tracks` does not exactly
 match the locked manifest or when its local minimum is lower than
-`policy.minimum_pairs_per_track`. The suite embeds the canonical hash of the
-committed policy before a candidate result is compared.
+`policy.minimum_pairs_per_track`. In release mode it also refuses a policy
+whose pinned corpus ID/SHA-256 does not exactly match the manifest, a manifest
+without full coverage/golden/annotation evidence, an ambiguous report side, or
+a candidate without source identity and review evidence. The aggregate carries
+the validated redacted release-corpus diagnostic projection and the suite embeds
+the canonical hash of the committed policy before a candidate result is
+compared.
 
 The authoritative gate comparability fields come from each run's provenance
 and condition:

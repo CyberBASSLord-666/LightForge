@@ -28,6 +28,33 @@ if (!LightForgeRecurrence.validate(motifs, timeline, evidence).valid) {
 
 The sidecar has both a semantic-timeline fingerprint (using the same FNV-style field pattern as the salience sidecar) and an evidence fingerprint. A timeline, section span, energy value, or chroma value change invalidates it. This is a cache-coherency binding, not a cryptographic authenticity claim.
 
+## Analysis-worker opt-in and cache boundary
+
+MusicAnalyzer schedules a final recurrence worker stage only when its caller
+explicitly supplies `{ recurrenceAnalysis: true }`.
+
+That stage runs after completed rhythm, separation, voice, and bass work. It
+does not decode audio, invoke a model, create a stem, or modify the approved
+rhythm map. It validates the current canonical semantic timeline, captures the
+whitelisted structural evidence, then validates both the evidence and sidecar
+before exposing an explicit provenance marker plus the evidence and sidecar:
+
+```js
+analysis.recurrenceAnalysis
+analysis.recurrenceEvidence
+analysis.recurrenceSidecar
+```
+
+The recurrence marker contains `enabled: true`, the `recurrence` cache
+domain, version fields, and exact timeline/evidence fingerprints. The distinct
+cache record is accepted only when both validators bind it to the current
+timeline. A changed section, energy/chroma feature, salience cap, or
+audio-clock validation failure invalidates it and rebuilds from canonical
+evidence. The normal bass checkpoint strips all three recurrence fields, so
+this choreography-only opt-in never reruns source separation, voice analysis,
+or bass tracking. Default callers schedule no recurrence stage and receive no
+recurrence fields.
+
 ## Conservative repeat gates
 
 Fresh chroma-and-energy matching requires all of the following:
@@ -50,11 +77,11 @@ The state is calculated from repeat order and bounded energy change. It is not a
 
 ## Compatibility and limits
 
-No analysis worker automatically builds this sidecar. The composition worker loads
-the validator only so it can reject an explicitly supplied sidecar before the
-opt-in motif bridge runs. Existing analysis and FSEQ output therefore remain
-byte-equivalent until a caller deliberately supplies a valid sidecar and enables
-the full choreography contract.
+The normal pipeline neither schedules the recurrence stage nor returns a
+sidecar unless `recurrenceAnalysis: true` is explicit. A valid sidecar still
+has no effect on the planner, vehicle model, or sequence compiler unless the
+three-part choreography dependency below is also explicit. Existing default
+analysis and FSEQ output therefore remain byte-equivalent.
 
 Inputs are bounded to 512 sections, 360,000 energy frames, and 72,000 chroma frames. Incomplete, malformed, or stale evidence fails closed instead of being truncated or inferred. The module operates on the decoded-audio clock already established by the semantic timeline.
 
@@ -75,9 +102,13 @@ The sidecar remains data unless every one of these independent proofs holds:
 \`web/engine/motif-evolution.js\` is the narrow bridge used by the show engine.
 It never calls \`captureEvidence\` or \`build\`; missing, corrupt, stale,
 oversized, span-incompatible, or semantically inactive input is inactive and
-leaves the corresponding non-motif composition unchanged. For a validated
-assignment it carries the generic motif identity into the section scene and
-maps bounded \`phase\`, \`repetitionIndex\`, \`variation\`, and energy context
-to a deterministic per-instance seed/variant plus at most a 0.12 intensity
-change. It does not apply command-timing offsets, add musical events, overwrite
-a user-supplied section seed, or relax vehicle/collision checks.
+leaves the corresponding non-motif composition unchanged. A real base semantic
+composition must become active before motif scenes are considered. If a later
+motif composition becomes inactive or faults, the validated base semantic plan
+is retained; if the base semantic plan cannot activate, legacy planning is
+retained. For a validated assignment it carries the generic motif identity into
+the section scene and maps bounded \`phase\`, \`repetitionIndex\`,
+\`variation\`, and energy context to a deterministic per-instance seed/variant
+plus at most a 0.12 intensity change. It does not apply command-timing offsets,
+add musical events, overwrite a user-supplied section seed, or relax
+vehicle/collision checks.

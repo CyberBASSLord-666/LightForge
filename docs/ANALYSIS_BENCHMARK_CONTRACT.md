@@ -168,3 +168,18 @@ The temporary cache is disposable. Saved project analysis, curated goldens, and
 exported FSEQ remain separate durable products. Diagnostic data must never
 include a private file path, audio payload, access token, API key, password,
 authorization value, or raw exception string that could expose one.
+
+## Browser resource diagnostics
+
+The WebView analyzer additionally emits a bounded, source-validated
+measurement projection described in
+[`RESOURCE_DIAGNOSTICS.md`](RESOURCE_DIAGNOSTICS.md). It is intentionally not
+an automatic quality-gate metric: browser CPU utilisation, GPU utilisation and
+many allocator values are unavailable or only partially instrumented. The
+adapter may carry exact finite values such as measured stage wall time,
+scheduler wait and observed OPFS bytes into a benchmark record, but must retain
+the contract's explicit availability state and must not replace unavailable
+values with zero. This supplementary evidence cannot establish equivalence,
+the 75% reduction target, or production readiness without paired locked-corpus
+results.
+

@@ -3,7 +3,7 @@
   "corpus_id": "lightforge-locked-corpus-template",
   "template": true,
   "release_ready": false,
-  "template_notice": "This redacted template contains no audio, paths, URLs, lyrics, artists, or song titles. Replace every synthetic identity, remove template, and set release_ready true only after the private corpus and approved golden artifacts are locked.",
+  "template_notice": "This redacted template contains no audio, paths, URLs, lyrics, artists, or song titles. Replace every synthetic identity and digest, remove template, and set release_ready true only after the private corpus, annotations, runtime profile, source-pinned policy authority, review verifier, and approved golden artifacts are locked.",
   "coverage_requirements": [
     "strong-lead-vocals",
     "layered-backing-vocals",
@@ -20,6 +20,43 @@
     "repeated-and-structurally-irregular-sections",
     "long-short-and-difficult-source-material"
   ],
+  "release_evidence_requirements": {
+    "metric_contract": "lightforge-release-metrics-v2",
+    "minimum_paired_runs_per_track": 5,
+    "bootstrap": {
+      "minimum_confidence": 0.99,
+      "minimum_resamples": 20000
+    },
+    "runtime_target": {
+      "metric": "performance.total_wall_clock_seconds",
+      "target_reduction_percent": 75,
+      "scope": "each_required_track"
+    },
+    "policy_authority": {
+      "protocol": "lightforge-release-policy-authority-v1",
+      "algorithm": "ed25519"
+    },
+    "human_perceptual_review": {
+      "protocol": "blinded-ab-v1",
+      "minimum_reviewers": 3,
+      "required_attributes": [
+        "musical_synchronization",
+        "vocal_synchronization",
+        "bass_synchronization",
+        "beat_precision",
+        "visual_coherence",
+        "phrase_coherence",
+        "contrast",
+        "anticipation",
+        "payoff",
+        "repetitiveness",
+        "climax_quality",
+        "overall_musicality"
+      ],
+      "attestation_protocol": "external-review-attestation-v2",
+      "attestation_algorithm": "ed25519"
+    }
+  },
   "golden_artifact_requirements": [
     "semantic_timeline_sha256",
     "rhythm_map_sha256",
@@ -35,99 +72,406 @@
   "tracks": [
     {
       "track_id": "reference-lead-vocal-pop",
-      "audio": {"content_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "duration_seconds": 185.0},
-      "tags": ["lead-vocal", "pop", "phrase-boundaries", "dynamic-master"],
-      "golden_artifacts": {"semantic_timeline_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "validation_report_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}
+      "audio": {
+        "content_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "duration_seconds": 185
+      },
+      "tags": [
+        "lead-vocal",
+        "pop",
+        "phrase-boundaries",
+        "dynamic-master"
+      ],
+      "golden_artifacts": {
+        "semantic_timeline_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "rhythm_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "vocal_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "bass_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "drum_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "section_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "salience_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "choreography_plan_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "fseq_characteristics_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "validation_report_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+      }
     },
     {
       "track_id": "reference-layered-vocals",
-      "audio": {"content_sha256": "1111111111111111111111111111111111111111111111111111111111111111", "duration_seconds": 212.0},
-      "tags": ["lead-vocal", "backing-vocal", "harmony", "dense-mix"],
-      "golden_artifacts": {"semantic_timeline_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "validation_report_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}
+      "audio": {
+        "content_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+        "duration_seconds": 212
+      },
+      "tags": [
+        "lead-vocal",
+        "backing-vocal",
+        "harmony",
+        "dense-mix"
+      ],
+      "golden_artifacts": {
+        "semantic_timeline_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "rhythm_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "vocal_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "bass_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "drum_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "section_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "salience_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "choreography_plan_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "fseq_characteristics_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "validation_report_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+      }
     },
     {
       "track_id": "reference-rap-spoken",
-      "audio": {"content_sha256": "2222222222222222222222222222222222222222222222222222222222222222", "duration_seconds": 164.0},
-      "tags": ["rap", "spoken-vocal", "rapid-articulation", "hip-hop"],
-      "golden_artifacts": {"semantic_timeline_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "validation_report_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}
+      "audio": {
+        "content_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+        "duration_seconds": 164
+      },
+      "tags": [
+        "rap",
+        "spoken-vocal",
+        "rapid-articulation",
+        "hip-hop"
+      ],
+      "golden_artifacts": {
+        "semantic_timeline_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "rhythm_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "vocal_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "bass_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "drum_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "section_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "salience_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "choreography_plan_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "fseq_characteristics_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "validation_report_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+      }
     },
     {
       "track_id": "reference-vocal-chops",
-      "audio": {"content_sha256": "3333333333333333333333333333333333333333333333333333333333333333", "duration_seconds": 143.0},
-      "tags": ["vocal-chops", "processed-vocal", "electronic", "drop"],
-      "golden_artifacts": {"semantic_timeline_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "validation_report_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}
+      "audio": {
+        "content_sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+        "duration_seconds": 143
+      },
+      "tags": [
+        "vocal-chops",
+        "processed-vocal",
+        "electronic",
+        "drop"
+      ],
+      "golden_artifacts": {
+        "semantic_timeline_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "rhythm_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "vocal_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "bass_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "drum_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "section_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "salience_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "choreography_plan_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "fseq_characteristics_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "validation_report_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+      }
     },
     {
       "track_id": "reference-acoustic-instrumental",
-      "audio": {"content_sha256": "4444444444444444444444444444444444444444444444444444444444444444", "duration_seconds": 201.0},
-      "tags": ["instrumental", "acoustic", "sparse-mix", "negative-space"],
-      "golden_artifacts": {"semantic_timeline_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "validation_report_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}
+      "audio": {
+        "content_sha256": "4444444444444444444444444444444444444444444444444444444444444444",
+        "duration_seconds": 201
+      },
+      "tags": [
+        "instrumental",
+        "acoustic",
+        "sparse-mix",
+        "negative-space"
+      ],
+      "golden_artifacts": {
+        "semantic_timeline_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "rhythm_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "vocal_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "bass_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "drum_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "section_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "salience_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "choreography_plan_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "fseq_characteristics_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "validation_report_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+      }
     },
     {
       "track_id": "reference-rock-vocal",
-      "audio": {"content_sha256": "5555555555555555555555555555555555555555555555555555555555555555", "duration_seconds": 197.0},
-      "tags": ["rock", "lead-vocal", "drums", "repeated-chorus"],
-      "golden_artifacts": {"semantic_timeline_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "validation_report_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}
+      "audio": {
+        "content_sha256": "5555555555555555555555555555555555555555555555555555555555555555",
+        "duration_seconds": 197
+      },
+      "tags": [
+        "rock",
+        "lead-vocal",
+        "drums",
+        "repeated-chorus"
+      ],
+      "golden_artifacts": {
+        "semantic_timeline_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "rhythm_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "vocal_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "bass_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "drum_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "section_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "salience_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "choreography_plan_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "fseq_characteristics_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "validation_report_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+      }
     },
     {
       "track_id": "reference-metal-punk",
-      "audio": {"content_sha256": "6666666666666666666666666666666666666666666666666666666666666666", "duration_seconds": 154.0},
-      "tags": ["metal", "punk", "dense-mix", "complex-percussion", "shouts"],
-      "golden_artifacts": {"semantic_timeline_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "validation_report_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}
+      "audio": {
+        "content_sha256": "6666666666666666666666666666666666666666666666666666666666666666",
+        "duration_seconds": 154
+      },
+      "tags": [
+        "metal",
+        "punk",
+        "dense-mix",
+        "complex-percussion",
+        "shouts"
+      ],
+      "golden_artifacts": {
+        "semantic_timeline_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "rhythm_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "vocal_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "bass_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "drum_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "section_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "salience_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "choreography_plan_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "fseq_characteristics_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "validation_report_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+      }
     },
     {
       "track_id": "reference-edm-drop",
-      "audio": {"content_sha256": "7777777777777777777777777777777777777777777777777777777777777777", "duration_seconds": 227.0},
-      "tags": ["edm", "build", "drop", "sub-bass", "repeated-motif"],
-      "golden_artifacts": {"semantic_timeline_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "validation_report_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}
+      "audio": {
+        "content_sha256": "7777777777777777777777777777777777777777777777777777777777777777",
+        "duration_seconds": 227
+      },
+      "tags": [
+        "edm",
+        "build",
+        "drop",
+        "sub-bass",
+        "repeated-motif"
+      ],
+      "golden_artifacts": {
+        "semantic_timeline_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "rhythm_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "vocal_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "bass_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "drum_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "section_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "salience_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "choreography_plan_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "fseq_characteristics_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "validation_report_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+      }
     },
     {
       "track_id": "reference-trance-house-techno",
-      "audio": {"content_sha256": "8888888888888888888888888888888888888888888888888888888888888888", "duration_seconds": 418.0},
-      "tags": ["trance", "house", "techno", "long-track", "steady-tempo"],
-      "golden_artifacts": {"semantic_timeline_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "validation_report_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}
+      "audio": {
+        "content_sha256": "8888888888888888888888888888888888888888888888888888888888888888",
+        "duration_seconds": 418
+      },
+      "tags": [
+        "trance",
+        "house",
+        "techno",
+        "long-track",
+        "steady-tempo"
+      ],
+      "golden_artifacts": {
+        "semantic_timeline_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "rhythm_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "vocal_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "bass_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "drum_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "section_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "salience_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "choreography_plan_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "fseq_characteristics_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "validation_report_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+      }
     },
     {
       "track_id": "reference-hiphop-subbass",
-      "audio": {"content_sha256": "9999999999999999999999999999999999999999999999999999999999999999", "duration_seconds": 178.0},
-      "tags": ["hip-hop", "heavy-sub-bass", "kick-bass-coincidence", "rap"],
-      "golden_artifacts": {"semantic_timeline_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "validation_report_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}
+      "audio": {
+        "content_sha256": "9999999999999999999999999999999999999999999999999999999999999999",
+        "duration_seconds": 178
+      },
+      "tags": [
+        "hip-hop",
+        "heavy-sub-bass",
+        "kick-bass-coincidence",
+        "rap"
+      ],
+      "golden_artifacts": {
+        "semantic_timeline_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "rhythm_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "vocal_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "bass_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "drum_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "section_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "salience_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "choreography_plan_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "fseq_characteristics_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "validation_report_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+      }
     },
     {
       "track_id": "reference-country",
-      "audio": {"content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "duration_seconds": 192.0},
-      "tags": ["country", "lead-vocal", "acoustic", "narrative-phrase"],
-      "golden_artifacts": {"semantic_timeline_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "validation_report_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}
+      "audio": {
+        "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "duration_seconds": 192
+      },
+      "tags": [
+        "country",
+        "lead-vocal",
+        "acoustic",
+        "narrative-phrase"
+      ],
+      "golden_artifacts": {
+        "semantic_timeline_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "rhythm_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "vocal_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "bass_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "drum_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "section_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "salience_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "choreography_plan_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "fseq_characteristics_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "validation_report_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+      }
     },
     {
       "track_id": "reference-cinematic-orchestral",
-      "audio": {"content_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "duration_seconds": 303.0},
-      "tags": ["cinematic", "orchestral", "climax", "tempo-change"],
-      "golden_artifacts": {"semantic_timeline_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "validation_report_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}
+      "audio": {
+        "content_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "duration_seconds": 303
+      },
+      "tags": [
+        "cinematic",
+        "orchestral",
+        "climax",
+        "tempo-change"
+      ],
+      "golden_artifacts": {
+        "semantic_timeline_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "rhythm_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "vocal_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "bass_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "drum_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "section_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "salience_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "choreography_plan_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "fseq_characteristics_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "validation_report_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+      }
     },
     {
       "track_id": "reference-complex-percussion",
-      "audio": {"content_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "duration_seconds": 206.0},
-      "tags": ["drums", "fills", "syncopation", "transient-detection"],
-      "golden_artifacts": {"semantic_timeline_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "validation_report_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}
+      "audio": {
+        "content_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "duration_seconds": 206
+      },
+      "tags": [
+        "drums",
+        "fills",
+        "syncopation",
+        "transient-detection"
+      ],
+      "golden_artifacts": {
+        "semantic_timeline_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "rhythm_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "vocal_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "bass_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "drum_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "section_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "salience_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "choreography_plan_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "fseq_characteristics_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "validation_report_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+      }
     },
     {
       "track_id": "reference-tempo-half-double",
-      "audio": {"content_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "duration_seconds": 238.0},
-      "tags": ["tempo-change", "half-time", "double-time", "downbeat-ambiguity"],
-      "golden_artifacts": {"semantic_timeline_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "validation_report_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}
+      "audio": {
+        "content_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "duration_seconds": 238
+      },
+      "tags": [
+        "tempo-change",
+        "half-time",
+        "double-time",
+        "downbeat-ambiguity"
+      ],
+      "golden_artifacts": {
+        "semantic_timeline_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "rhythm_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "vocal_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "bass_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "drum_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "section_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "salience_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "choreography_plan_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "fseq_characteristics_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "validation_report_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+      }
     },
     {
       "track_id": "reference-irregular-meter",
-      "audio": {"content_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "duration_seconds": 171.0},
-      "tags": ["irregular-meter", "pickup", "structurally-irregular", "instrumental"],
-      "golden_artifacts": {"semantic_timeline_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "validation_report_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}
+      "audio": {
+        "content_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "duration_seconds": 171
+      },
+      "tags": [
+        "irregular-meter",
+        "pickup",
+        "structurally-irregular",
+        "instrumental"
+      ],
+      "golden_artifacts": {
+        "semantic_timeline_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "rhythm_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "vocal_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "bass_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "drum_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "section_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "salience_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "choreography_plan_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "fseq_characteristics_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "validation_report_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+      }
     },
     {
       "track_id": "reference-difficult-source",
-      "audio": {"content_sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", "duration_seconds": 96.0},
-      "tags": ["short-track", "noisy-source", "compressed-master", "adversarial"],
-      "golden_artifacts": {"semantic_timeline_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "validation_report_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}
+      "audio": {
+        "content_sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "duration_seconds": 96
+      },
+      "tags": [
+        "short-track",
+        "noisy-source",
+        "compressed-master",
+        "adversarial"
+      ],
+      "golden_artifacts": {
+        "semantic_timeline_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "rhythm_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "vocal_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "bass_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "drum_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "section_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "salience_map_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "choreography_plan_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "fseq_characteristics_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "validation_report_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+      }
     }
   ]
 }

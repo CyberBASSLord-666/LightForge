@@ -2,6 +2,7 @@
 /* Canonical, bounded measurement projection for the real browser analyzer.
  * It carries observed timings and cache/profile provenance only; it contains no
  * threshold, baseline comparison, or claim that one run is performant. */
+const ResourceDiagnostics=require('../../web/analysis/resource-diagnostics.js');
 const finite=value=>typeof value==='number'&&Number.isFinite(value);
 const plain=value=>value&&Object.getPrototypeOf(value)===Object.prototype;
 const text=(value,label)=>{
@@ -20,6 +21,13 @@ const exact=(value,keys,label)=>{
   if(!plain(value)||Object.keys(value).sort().join(',')!==keys.slice().sort().join(','))throw Error('Invalid '+label+' shape.');
   return value;
 };
+function resources(engine){
+ const source=engine.resourceDiagnostics;
+ if(source===undefined)return {status:'unavailable',reason:'resource-diagnostics-not-emitted',pipeline:null};
+ if(!ResourceDiagnostics||typeof ResourceDiagnostics.validatePipeline!=='function')throw Error('Resource diagnostics contract is unavailable.');
+ ResourceDiagnostics.validatePipeline(source);
+ return {status:'available',reason:null,pipeline:JSON.parse(JSON.stringify(source))};
+}
 function build(engine,totalWallClockSeconds){
   if(!plain(engine))throw Error('Invalid analyzer engine.');
   const stagesSource=engine.stages;
@@ -49,12 +57,12 @@ function build(engine,totalWallClockSeconds){
   const result={schemaVersion:1,totalWallClockSeconds:nonnegative(totalWallClockSeconds,'total wall-clock seconds'),
     analyzerReportedSeconds:nonnegative(engine.analysisSeconds,'analyzer reported seconds'),stages,
     cache:{restoredStageCount:restoredStages.length,restoredStageNames:restoredStages,separationRestoredPassages:profile.separation.restoredPassages},
-    profile};
+    profile,resources:resources(engine)};
   validate(result);
   return result;
 }
 function validate(value){
-  exact(value,['analyzerReportedSeconds','cache','profile','schemaVersion','stages','totalWallClockSeconds'],'analysis performance projection');
+  exact(value,['analyzerReportedSeconds','cache','profile','resources','schemaVersion','stages','totalWallClockSeconds'],'analysis performance projection');
   if(value.schemaVersion!==1)throw Error('Unsupported analysis performance schema.');
   nonnegative(value.totalWallClockSeconds,'total wall-clock seconds');
   nonnegative(value.analyzerReportedSeconds,'analyzer reported seconds');
@@ -79,6 +87,13 @@ function validate(value){
   text(value.profile.separation.modelId,'projected separation model id');text(value.profile.separation.runtime,'projected separation runtime');
   integer(value.profile.separation.chunks,'projected chunk count');integer(value.profile.separation.restoredPassages,'projected restored passages');
   if(value.cache.separationRestoredPassages!==value.profile.separation.restoredPassages)throw Error('Cache and separation restoration summaries differ.');
+  exact(value.resources,['pipeline','reason','status'],'resource diagnostics projection');
+  if(value.resources.status==='unavailable'){
+    if(value.resources.pipeline!==null||value.resources.reason!=='resource-diagnostics-not-emitted')throw Error('Invalid unavailable resource diagnostics projection.');
+  }else if(value.resources.status==='available'){
+    if(value.resources.reason!==null||!ResourceDiagnostics||typeof ResourceDiagnostics.validatePipeline!=='function')throw Error('Invalid resource diagnostics projection.');
+    ResourceDiagnostics.validatePipeline(value.resources.pipeline);
+  }else throw Error('Invalid resource diagnostics availability.');
   return true;
 }
 module.exports={build,validate};

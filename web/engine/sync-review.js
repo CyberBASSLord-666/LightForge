@@ -4,7 +4,7 @@
 (function(root){
   'use strict';
   const PROFILE=root.VehicleProfile||(typeof require==='function'?require('./vehicle-profile.js'):null);
-  const ATTACK_CODES=new Set([255,178,204,230]);
+  const ATTACK_CODES=new Set([255,178,204,230]),MAX_EVENT_EVIDENCE=10000;
   const finite=value=>typeof value==='number'&&Number.isFinite(value);
   const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
   const key=target=>[target.role,target.cueId||'',Math.round((finite(target.time)?target.time:0)*1e6)].join(':');
@@ -126,6 +126,14 @@
     const metadataOnlyOutputIds=outputs.filter(row=>!row.leadAdjusted).map(row=>row.outputId);
     return Object.assign({},base,{status:'explicit-user-configuration',configured:true,calibrationId,configuredOutputIds,closureLeadAdjustedOutputIds,metadataOnlyOutputIds,outputs,source:'show.settings.vehicleTimingCalibration',note:'Configured timing is user-supplied provenance, not independently verified vehicle latency.'});
   }
+  function realizationEvidence(eventClass,target,desiredPerceptualTime,realizationStatus,commandTime,predictedPerceptualTime,source){
+    const row={eventClass,desiredPerceptualTime,realizationStatus,collisionLoss:realizationStatus==='suppressed',source};
+    if(finite(commandTime))row.commandTime=commandTime;
+    if(finite(predictedPerceptualTime))row.predictedPerceptualTime=predictedPerceptualTime;
+    if(finite(target&&target.salience))row.salience=clamp(target.salience,0,1);
+    else if(target&&typeof target.tier==='string')row.tier=target.tier.slice(0,80);
+    return row;
+  }
   function review(show,targets,movementTargets=[]){
     const step=(show&&finite(show.stepMs)?show.stepMs:20)/1000,byId=outputMap();
     const events=new Map();
@@ -135,17 +143,18 @@
     }
     const roles={vocals:{selected:0,matched:0,suppressed:0,heldWithoutAttack:0},bass:{selected:0,matched:0,suppressed:0,heldWithoutAttack:0}};
     const targetAggregate={selected:0,matched:0,suppressed:0,heldWithoutAttack:0,manualOverride:0,disabled:0,unrouted:0,outsideExport:0,collisionLoss:0,highSalienceSelected:0,highSalienceCollisionLoss:0};
-    const issues=[],manual=[],lightErrors=[],seen=new Set();
+    const issues=[],manual=[],lightErrors=[],seen=new Set(),eventEvidence=[];let omittedEventEvidence=0;
+    const recordEvidence=row=>{if(eventEvidence.length<MAX_EVENT_EVIDENCE)eventEvidence.push(row);else omittedEventEvidence++;};
     for(const target of targets||[]){
       if(!target||!roles[target.role]||!finite(target.time))continue;
       const targetKey=key(target);if(seen.has(targetKey))continue;seen.add(targetKey);
       const role=roles[target.role],expected=target.time+(finite(show.settings&&show.settings.offsetMs)?show.settings.offsetMs:0)/1000,frame=Math.round(expected/step);
-      let status='suppressed',errorMs=null,output=null;
+      let status='suppressed',errorMs=null,output=null,actualCommandTime=null;
       for(const event of events.get(targetKey)||[]){
         const actual=Math.round(event.actualStart/step),candidate=byId.get(event.id);
         if(!candidate||Math.abs(actual*step-expected)>step/2+1e-7)continue;
         const state=frameState(show,candidate,actual);
-        if(state.attack){status='matched';errorMs=(actual*step-expected)*1000;output=event.id;break;}
+        if(state.attack){status='matched';actualCommandTime=actual*step;errorMs=(actualCommandTime-expected)*1000;output=event.id;break;}
         if(state.active)status='heldWithoutAttack';
       }
       const realizationStatus=status==='suppressed'?(frame<0||frame>=show.frameCount-1?'outsideExport':targetLoss(show,byId,target,expected)):status;
@@ -157,6 +166,7 @@
       updateAggregate(targetAggregate,realizationStatus,target);
       if(errorMs!==null)lightErrors.push(errorMs);
       const row={role:target.role,time:target.time,end:number(target.end),kind:target.kind,cueId:target.cueId||null,status,realizationStatus,output,errorMs,desiredPerceptualTime:expected};
+      recordEvidence(realizationEvidence(target.role,target,expected,realizationStatus,actualCommandTime,null,'sync-review-lighting'));
       if(target.cueId)manual.push(row);
       if(status!=='matched'&&issues.length<200)issues.push({...row,reason:realizationStatus==='outsideExport'?'Outside exportable frames':realizationStatus==='heldWithoutAttack'?'Output was already active':realizationStatus==='manualOverride'?'Manual output override':realizationStatus==='disabled'?'All eligible outputs are disabled':realizationStatus==='unrouted'?'No eligible output route was recorded':'No eligible final output attack'});
     }
@@ -173,9 +183,15 @@
         if(state.attack){
           status='matched';commandErrorMs=(actualCommandTime-target.time)*1000;
           const intent=event.intent||{};
-          predictedPerceptualTime=finite(intent.estimatedArrival)?intent.estimatedArrival:finite(event.perceptualStart)?event.perceptualStart:actualCommandTime;
-          predictedPerceptualErrorMs=(predictedPerceptualTime-target.time)*1000;
-          commandErrors.push(commandErrorMs);perceptualErrors.push(predictedPerceptualErrorMs);
+          // A command transition is observed in the final FSEQ, but it is not
+          // evidence of when the physical actuator will be perceived.  Only
+          // an explicitly calibrated planner intent may contribute an
+          // estimated perceptual timestamp; in particular, a Dance command
+          // must never be relabelled as its own perceptual arrival.
+          const calibrated=plainObject(intent.perceptualTiming)&&intent.perceptualTiming.responseTimingEvidence===true&&typeof intent.perceptualTiming.calibrationId==='string'&&intent.perceptualTiming.calibrationId.length>0;
+          if(calibrated)predictedPerceptualTime=finite(intent.estimatedArrival)?intent.estimatedArrival:finite(event.perceptualStart)?event.perceptualStart:null;
+          if(predictedPerceptualTime!==null){predictedPerceptualErrorMs=(predictedPerceptualTime-target.time)*1000;perceptualErrors.push(predictedPerceptualErrorMs);}
+          commandErrors.push(commandErrorMs);
         }else if(state.active)status='heldWithoutAttack';
       }
       if(status==='suppressed'){
@@ -185,6 +201,7 @@
       }
       if(isHighSalience(target))mechanical.highSalienceSelected++;
       updateAggregate(mechanical,status,target);
+      recordEvidence(realizationEvidence('mechanical',target,target.time,status,actualCommandTime,predictedPerceptualTime,'sync-review-mechanical'));
       if(status!=='matched'&&mechanicalIssues.length<200)mechanicalIssues.push({outputId:target.outputId,time:target.time,kind:target.kind||null,status,reason:status==='manualOverride'?'Manual output override':status==='disabled'?'Output disabled':status==='unrouted'?'Unknown output':'No final mechanical command transition'});
     }
     const sortedLight=lightErrors.map(Math.abs).sort((a,b)=>a-b),selected=roles.vocals.selected+roles.bass.selected,matched=roles.vocals.matched+roles.bass.matched;
@@ -202,6 +219,8 @@
       timing:{command:{lighting:distribution(lightErrors),mechanical:distribution(commandErrors)},predictedPerceptual:{lighting:null,mechanical:distribution(perceptualErrors)}},
       collision:{targetLoss:lossRates(targetAggregate),mechanicalLoss:lossRates(mechanical),candidateSuppressedCollisions:lightingCandidateCollisions,highSalienceResolution:highSalienceResolution(show)},
       calibrationProvenance:calibrationProvenance(show,byId),
+      eventEvidence,
+      omittedEventEvidence,
       targets:targetAggregate,
       mechanical,
       issues,

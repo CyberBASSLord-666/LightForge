@@ -1,6 +1,8 @@
 # LightForge architecture and production-readiness boundary
 
-**Integration base:** `8406acb89faa10ea486e1ec822379d2e177eccbd`  
+**Historical foundation:** `8406acb89faa10ea486e1ec822379d2e177eccbd`  
+**Current assembly parent:** `15120e566c2bfe0f838841dc6e31dede911e3a24`,
+rooted in approved core `ef19fb03f98de3f2121eb8e5257f8afdcc8bdc0f`  
 **Purpose:** describe what this revision implements, what its outputs mean, and
 what evidence is still required before a production-release claim. This is an
 implementation map, not a claim that every requirement in the long-term music
@@ -172,7 +174,8 @@ of the following have evidence in the release record.
 
 ## Current release statement
 
-This integration candidate extends the `8406acb` base with bounded,
+This integration candidate carries forward the historical `8406acb` foundation
+through the approved `ef19` core and current assembly parent with bounded,
 opt-in sidecars, deterministic sequence safeguards, cache contracts, and
 fail-closed evidence plumbing. It is **not yet supported by a configured
 locked corpus and measured baseline/candidate release result**, and therefore
