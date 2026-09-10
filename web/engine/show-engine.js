@@ -194,15 +194,24 @@
   }
   function resolveMotifEvolution(music,sections,scenes,settings){
     const fallback=(reason,extra={})=>({scenes:scenes.slice(),diagnostics:{schemaVersion:1,requested:settings.motifEvolution===true,active:false,reason,...extra,
-      scope:'Motif evolution is disabled unless its explicit setting and a validated recurrence sidecar are both present.'}});
+      scope:'Motif evolution is disabled unless recurrence analysis, semantic choreography, motif evolution, and a validated recurrence sidecar are all explicit.'}});
     if(!settings.motifEvolution)return fallback('disabled');
     if(!settings.semanticChoreography)return fallback('semantic-choreography-disabled');
+    const provenance=recurrenceAnalysisProvenance(music);
+    if(provenance)return fallback(provenance);
     if(!MOTIF_EVOLUTION||typeof MOTIF_EVOLUTION.resolve!=='function')return fallback('motif-evolution-module-unavailable');
     try{
       const result=MOTIF_EVOLUTION.resolve({requested:true,music,sections,scenes,seed:settings.seed,sectionOverrides:settings.sectionOverrides});
       if(!result||!Array.isArray(result.scenes)||result.scenes.length!==scenes.length||!result.scenes.every(scene=>scene&&typeof scene==='object')||!result.diagnostics||typeof result.diagnostics!=='object')return fallback('motif-evolution-result-invalid');
       return result;
     }catch(_){return fallback('motif-evolution-resolution-error');}
+  }
+  function recurrenceAnalysisProvenance(music){
+    const marker=music&&music.recurrenceAnalysis,sidecar=music&&music.recurrenceSidecar;
+    if(!marker||marker.enabled!==true)return 'recurrence-analysis-disabled';
+    if(marker.schemaVersion!==1||marker.cacheDomain!=='recurrence'||typeof marker.engineVersion!=='string'||!marker.engineVersion||!Number.isInteger(marker.sidecarSchemaVersion)||typeof marker.clock!=='string'||!finite(marker.duration)||marker.duration<=0||typeof marker.timelineFingerprint!=='string'||!/^[0-9a-f]{8}$/.test(marker.timelineFingerprint)||typeof marker.evidenceFingerprint!=='string'||!/^[0-9a-f]{8}$/.test(marker.evidenceFingerprint))return 'recurrence-analysis-provenance-invalid';
+    if(!sidecar||marker.engineVersion!==sidecar.engineVersion||marker.sidecarSchemaVersion!==sidecar.schemaVersion||marker.clock!==sidecar.clock||marker.duration!==sidecar.duration||marker.timelineFingerprint!==sidecar.timelineFingerprint||marker.evidenceFingerprint!==sidecar.evidenceFingerprint)return 'recurrence-analysis-provenance-invalid';
+    return null;
   }
   function normalizeCollisionAllocation(input) {
     if(!input||typeof input!=='object'||Array.isArray(input))throw new Error('Collision allocation must be an object.');

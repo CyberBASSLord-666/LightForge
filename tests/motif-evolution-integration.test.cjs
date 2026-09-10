@@ -39,10 +39,14 @@ function buildBoundRecurrence(music){
   assert.equal(Recurrence.validate(sidecar,timeline,evidence).valid,true);
   return {timeline,salience,evidence,sidecar};
 }
+function recurrenceAnalysisMarker(sidecar){
+  return {schemaVersion:1,enabled:true,cacheDomain:'recurrence',engineVersion:sidecar.engineVersion,sidecarSchemaVersion:sidecar.schemaVersion,
+    clock:sidecar.clock,duration:sidecar.duration,timelineFingerprint:sidecar.timelineFingerprint,evidenceFingerprint:sidecar.evidenceFingerprint};
+}
 
 test('motif evolution requires a valid cap-aware recurrence binding and keeps default FSEQ bytes identical',()=>{
   const music=musicFixture(),{timeline,salience,evidence,sidecar}=buildBoundRecurrence(music);
-  const analysis={...music,semanticTimeline:timeline,musicSalience:salience,recurrenceEvidence:evidence,recurrenceSidecar:sidecar};
+  const analysis={...music,semanticTimeline:timeline,musicSalience:salience,recurrenceEvidence:evidence,recurrenceSidecar:sidecar,recurrenceAnalysis:recurrenceAnalysisMarker(sidecar)};
   const originalAnalysis=structuredClone(analysis);
   const settings={stepMs:20,dance:'off',seed:777};
 
@@ -57,7 +61,18 @@ test('motif evolution requires a valid cap-aware recurrence binding and keeps de
     'motif evolution cannot affect FSEQ output without the semantic opt-in');
 
   const semanticOnly=Engine.generate(analysis,{...settings,semanticChoreography:true});
-  const stale=Engine.generate({...analysis,recurrenceSidecar:{...sidecar,timelineFingerprint:'00000000'}},
+  const {recurrenceAnalysis,...withoutMarker}=analysis;
+  const missingProvenance=Engine.generate(withoutMarker,{...settings,semanticChoreography:true,motifEvolution:true});
+  assert.equal(missingProvenance.choreography.motifEvolution.active,false);
+  assert.equal(missingProvenance.choreography.motifEvolution.reason,'recurrence-analysis-disabled');
+  assert.deepEqual(Engine.fseq(missingProvenance,'motif.wav'),Engine.fseq(semanticOnly,'motif.wav'),
+    'a sidecar without explicit recurrence-analysis provenance must retain the semantic-only output');
+  const invalidProvenance=Engine.generate({...analysis,recurrenceAnalysis:{...analysis.recurrenceAnalysis,evidenceFingerprint:'00000000'}},
+    {...settings,semanticChoreography:true,motifEvolution:true});
+  assert.equal(invalidProvenance.choreography.motifEvolution.active,false);
+  assert.equal(invalidProvenance.choreography.motifEvolution.reason,'recurrence-analysis-provenance-invalid');
+  assert.deepEqual(Engine.fseq(invalidProvenance,'motif.wav'),Engine.fseq(semanticOnly,'motif.wav'));
+  const stale=Engine.generate({...analysis,recurrenceSidecar:{...sidecar,timelineFingerprint:'00000000'},recurrenceAnalysis:{...analysis.recurrenceAnalysis,timelineFingerprint:'00000000'}},
     {...settings,semanticChoreography:true,motifEvolution:true});
   assert.equal(stale.choreography.motifEvolution.active,false);
   assert.equal(stale.choreography.motifEvolution.reason,'recurrence-sidecar-binding-invalid');
