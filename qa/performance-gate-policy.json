@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "target_reduction_percent": 75,
+  "runtime_metric": "performance.total_wall_clock_seconds",
+  "required_tracks": [],
+  "metrics": {
+    "performance.total_wall_clock_seconds": {"direction":"lower","stat":"median","critical":false,"relative_tolerance":0.01},
+    "quality.vocal_alignment_f1": {"direction":"higher","stat":"median","critical":true,"absolute_tolerance":0.002},
+    "quality.beat_f1": {"direction":"higher","stat":"median","critical":true,"absolute_tolerance":0.002},
+    "quality.downbeat_f1": {"direction":"higher","stat":"median","critical":true,"absolute_tolerance":0.002},
+    "quality.bass_event_f1": {"direction":"higher","stat":"median","critical":true,"absolute_tolerance":0.002},
+    "quality.structural_event_recall": {"direction":"higher","stat":"median","critical":true,"absolute_tolerance":0.002},
+    "quality.high_salience_coverage": {"direction":"higher","stat":"median","critical":true,"absolute_tolerance":0.002},
+    "quality.perceptual_sync_p95_ms": {"direction":"lower","stat":"median","critical":true,"absolute_tolerance":1.0},
+    "quality.actuator_feasibility": {"direction":"higher","stat":"median","critical":true,"absolute_tolerance":0.0},
+    "quality.high_salience_collision_loss": {"direction":"lower","stat":"median","critical":true,"absolute_tolerance":0.0}
+  }
+}
