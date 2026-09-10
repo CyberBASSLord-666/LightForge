@@ -9,7 +9,7 @@ async function analyze(audioUrl,options={},onProgress=()=>{},signal){
  const persistent=/^[a-f0-9]{64}$/.test(options.analysisIdentity||''),identity=persistent?options.analysisIdentity:crypto.randomUUID();
  const {nativePredict,nativeMdx,...serializableOptions}=options,hasNative=typeof nativePredict==='function'&&options.analysisQuality!=='balanced',hasMdx=typeof nativeMdx==='function'&&options.analysisQuality==='balanced';
  const execution=[hasNative?'native-deux-v1':null,hasMdx?'native-mdx-v1':null].filter(Boolean).join('+')||'wasm-v1';
- const binding={pipeline:'bounded-analysis-v2',release:scope.LightForgeVersion.name,identity,quality:options.analysisQuality==='balanced'?'balanced':'precision',sensitivity:options.sensitivity??.82,bpmOverride:options.bpmOverride??null,execution};
+ const binding={pipeline:'bounded-analysis-v2',release:scope.LightForgeVersion.name,identity,quality:options.analysisQuality==='balanced'?'balanced':'precision',sensitivity:options.sensitivity??.82,bpmOverride:options.bpmOverride??null,estimatedPercussionEvidence:options.enableEstimatedPercussionEvidence===true,execution};
  const workId=await scope.LightForgeAnalysisStore.hash(new TextEncoder().encode(JSON.stringify(binding)));
  const id=workId.slice(0,32),cacheKey='stem-'+[id.slice(0,8),id.slice(8,12),id.slice(12,16),id.slice(16,20),id.slice(20)].join('-');
  const runOptions={...serializableOptions,cacheKey,workId,supportsNativeDeux:hasNative,supportsNativeMdx:hasMdx},timings={},started=performance.now();let value={},progress=0;
