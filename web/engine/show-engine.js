@@ -9,6 +9,7 @@
   const CUES = root.MusicCues || (typeof require === 'function' ? require('./music-cues.js') : null);
   const SYNC = root.SyncReview || (typeof require === 'function' ? require('./sync-review.js') : null);
   const QUALITY = root.ChoreographyQuality || (typeof require === 'function' ? require('./choreography-quality.js') : null);
+  const SEMANTIC_CHOREOGRAPHY = root.SemanticChoreography || (typeof require === 'function' ? require('./semantic-choreography.js') : null);
   const PROFILE = root.VehicleProfile || (typeof require === 'function' ? require('./vehicle-profile.js') : null);
   const LIGHTS = root.LightPlanner || (typeof require === 'function' ? require('./light-planner.js') : null);
   const MOVEMENT = root.MovementPlanner || (typeof require === 'function' ? require('./movement-planner.js') : null);
@@ -180,7 +181,7 @@
       musicCues:CUES.normalize(input.musicCues),vocalOffsetMs:number('vocalOffsetMs',0,-2000,2000),bassOffsetMs:number('bassOffsetMs',0,-2000,2000),movementDensity:number('movementDensity',.7,0,1),vocalFocus:number('vocalFocus',.85,0,1),bassFocus:number('bassFocus',.9,0,1),vocalRegions:normalizeVocalRegions(input.vocalRegions),downbeatAnchor:finite(input.downbeatAnchor)&&input.downbeatAnchor>=0?input.downbeatAnchor:null,meterOverride:[3,4].includes(input.meterOverride)?input.meterOverride:null,tempoScale:[.5,1,2].includes(input.tempoScale)?input.tempoScale:1,
       dance:['expressive','balanced','off'].includes(input.dance)?input.dance:'expressive',style:['festival','cinematic','pulse'].includes(input.style)?input.style:'festival',
       seed:finite(input.seed)?input.seed>>>0:666,palette:PALETTES[input.palette]?input.palette:'aurora',
-      beatDivision:['auto','quarter','eighth'].includes(input.beatDivision)?input.beatDivision:'auto',offsetMs:number('offsetMs',0,-2000,2000),
+      beatDivision:['auto','quarter','eighth'].includes(input.beatDivision)?input.beatDivision:'auto',offsetMs:number('offsetMs',0,-2000,2000),semanticChoreography:input.semanticChoreography===true,
       enabled:Object.assign({windows:true,mirrors:true,trunk:true,charge:true,interior:true},input.enabled||{}),optionalFog:false,
       outerBeamRamping:input.outerBeamRamping===true,outputEnabled:normalizeOutputEnabled(input.outputEnabled),manualCues:normalizeManualCues(input.manualCues,input.outerBeamRamping===true),
       sectionOverrides:input.sectionOverrides&&typeof input.sectionOverrides==='object'?input.sectionOverrides:{},
@@ -276,6 +277,9 @@
     });
     const show={version:VERSION,vehicle:'2025 Tesla Model 3 Long Range RWD',channels:CHANNELS,channelCount:CHANNELS,frameCount:n,stepMs:s.stepMs,duration,audioDuration:m.duration,frames,
       movements:[],sections:m.sections.map((section,i)=>Object.assign({},section,scenes[i])),settings:s,stats:{},warnings};
+    const semantic=matchingSemanticSalience(music);
+    const semanticStrategy=s.semanticChoreography&&semantic&&SEMANTIC_CHOREOGRAPHY&&typeof SEMANTIC_CHOREOGRAPHY.create==='function'
+      ?SEMANTIC_CHOREOGRAPHY.create(semantic,{stepMs:s.stepMs}):null;
     const movement=m.silent?{events:[],accents:[],targets:[],diagnostics:{selectedTargets:0}}:MOVEMENT.plan(m,s,PROFILE);
     for(const event of movement.events){
       const a=clamp(quant(event.start,step),0,n-1),b=clamp(quant(event.end,step),0,n-1);
@@ -283,7 +287,7 @@
       show.movements.push({...event,start:a*step,end:b*step});
       for(let f=a;f<b;f++)for(const ch of event.channels)frames[f*200+ch-1]=event.value;
     }
-    const lighting=LIGHTS.compose(show,m,s,movement);
+    const lighting=LIGHTS.compose(show,m,s,movement,semanticStrategy);
     const targetSalience=annotateSalienceTargets(music,lighting.targets,movement.targets,s),syncLightTargets=targetSalience?targetSalience.syncLightTargets:lighting.targets,syncMovementTargets=targetSalience?targetSalience.syncMovementTargets:movement.targets;
     if(!m.silent&&s.enabled.interior)paintInterior(show,m,s,lighting.context);
     applyManualCues(show);
@@ -291,6 +295,7 @@
     show.lightEvents=lighting.events;
     show.choreography={version:VERSION,analysisVersion:m.analysisVersion,meter:m.meter,meterConfidence:m.meterConfidence,phrases:m.phrases,impacts:m.impacts,targets:movement.targets,lighting:lighting.diagnostics,movement:movement.diagnostics,timing:m.timing,roles:{vocals:{available:m.vocals.available,presence:m.vocals.presence,confidence:m.vocals.confidence,method:m.vocals.method,phrases:m.vocals.phrases,accents:m.vocals.accents},bassNotes:m.bassNotes,bassAnalysis:{method:m.bassAnalysis.method,source:m.bassAnalysis.source,confidence:m.bassAnalysis.confidence,phrases:m.bassAnalysis.phrases}},rhythm:{beats:m.beats,downbeats:m.downbeats,meter:m.meter,bpm:m.bpm,groove:m.groove,correction:m.rhythmCorrection}};
     if(targetSalience)show.choreography.salienceTargets=targetSalience.public;
+    if(s.semanticChoreography)show.choreography.semanticStrategy=lighting.diagnostics.semanticStrategy||{schemaVersion:1,requested:true,active:false,reason:semantic?'no-linkable-semantic-targets':'semantic-linkage-invalid'};
     show.choreography.vocalDetail={phrases:m.vocals.phrases,notes:m.vocals.notes,accents:m.vocals.accents,sourceSeparated:m.vocals.sourceSeparated,source:m.vocals.source,presence:m.vocals.presence,manualRegions:m.vocals.manualRegions||[],lyricsAligned:false};
     show.stats={lightCues:lighting.events.length,manualCueCount:s.manualCues.length,beatCount:m.beats.length,onsetCount:m.onsets.length,bpm:m.bpm,beatConfidence:m.beatConfidence,beatLengthMs:60000/m.bpm,recommendedBeatDivision:m.bpm<=150?'eighth':'quarter',silent:m.silent,
       vocalPhraseCount:lighting.diagnostics.roles.vocals.eligibleEvents,bassNoteCount:lighting.diagnostics.roles.bass.eligibleEvents,vocalCues:lighting.diagnostics.roles.vocals.acceptedEvents,bassNoteCues:lighting.diagnostics.roles.bass.acceptedEvents,phraseCount:m.phrases.length,musicalImpactCount:m.impacts.length,movementTargets:movement.targets.length,lightQuantizationMaxMs:lighting.diagnostics.quantizationMaxMs};
