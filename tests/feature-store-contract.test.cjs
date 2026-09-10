@@ -21,6 +21,10 @@ function load(disk=opfs()){
  const context=vm.createContext({crypto:webcrypto,TextEncoder,TextDecoder,ArrayBuffer,DataView,Uint8Array,Uint32Array,Float32Array,Blob,DOMException,navigator:{storage:disk.storage}});context.self=context;
  vm.runInContext(source('work-store.js'),context);vm.runInContext(source('feature-store.js'),context);return {disk,context,features:context.LightForgeFeatureStore};
 }
+function workerContext(){const context=vm.createContext({Float32Array,ArrayBuffer,DataView,Math,Promise,URL,importScripts:()=>{},postMessage:()=>{},self:null});context.self=context;vm.runInContext(source('worker.js'),context);return context;}
+const bytes=value=>Buffer.from(value.buffer,value.byteOffset,value.byteLength);
+function deterministicFloats(length,seed){const values=new Float32Array(length);for(let i=0;i<length;i++)values[i]=Math.fround(Math.sin((i+1)*seed)*.73+Math.cos((i+3)*seed)*.19);return values;}
+function freshRhythmFeatures(n,duration){return {duration,beat:new Float32Array(n),down:new Float32Array(n),rms:deterministicFloats(n,.13),bass:deterministicFloats(n,.17),mid:deterministicFloats(n,.23),high:deterministicFloats(n,.29),colour:deterministicFloats(n*3,.31),fineRms:deterministicFloats(n*4,.37),chroma:deterministicFloats(Math.ceil(n/10)*12,.41),chromaStep:.2};}
 const audio='a'.repeat(64),identity={audioIdentity:audio,preprocessingVersion:'pcm-44100-v2',modelVersions:{beat:'1.0.0',frontend:'1.0.0'},analysisConfiguration:{sampleRate:44100,mono:true}};
 test('feature identity is content-addressed and independent of property insertion order',async()=>{
  const {features}=load(),left=await features.open(identity),right=await features.open({analysisConfiguration:{mono:true,sampleRate:44100},modelVersions:{frontend:'1.0.0',beat:'1.0.0'},preprocessingVersion:'pcm-44100-v2',audioIdentity:audio});
@@ -51,9 +55,17 @@ test('malformed feature descriptors are invalidated rather than accepted as comp
  const file=await h.disk.file('lightforge-analysis-v1',store.identityKey,'feature-chroma-json.json'),envelope=JSON.parse(file.data);const payload=JSON.parse(envelope.payload);payload.identityKey='b'.repeat(64);envelope.payload=JSON.stringify(payload);envelope.sha256=Buffer.from(await webcrypto.subtle.digest('SHA-256',Buffer.from(envelope.payload))).toString('hex');file.data=Buffer.from(JSON.stringify(envelope));
  assert.equal(await store.read('chroma'),null);
 });
+test('cached rhythm payload restores byte-identical downstream feature buffers',async()=>{
+ const worker=workerContext(),n=23,duration=.46,fresh=freshRhythmFeatures(n,duration),payload=worker.rhythmFeaturePayload(fresh,n);
+ assert.equal(worker.validRhythmFeature(payload,n,duration),true);
+ const h=load(),store=await h.features.open(identity);await store.write('rhythm-dsp-v1',payload,{producer:'dsp-feature-extractor-v1',frameCount:n});
+ const hit=await (await load(h.disk).features.open(identity)).read('rhythm-dsp-v1');assert.ok(hit);assert.equal(worker.validRhythmFeature(hit.value,n,duration),true);
+ const restored=worker.rhythmDataFromFeature(hit.value,n);
+ assert.deepEqual(Object.keys(restored).sort(),Object.keys(fresh).sort());assert.equal(restored.duration,fresh.duration);assert.equal(restored.chromaStep,fresh.chromaStep);
+ for(const field of ['beat','down','rms','bass','mid','high','colour','fineRms','chroma'])assert.deepEqual(bytes(restored[field]),bytes(fresh[field]),field+' cache hit differs from fresh downstream input');
+});
 test('rhythm worker reuses only shape-validated source features and keeps anonymous analysis fresh',async()=>{
- const context=vm.createContext({Float32Array,ArrayBuffer,DataView,Math,Promise,URL,importScripts:()=>{},postMessage:()=>{},self:null});context.self=context;
- vm.runInContext(source('worker.js'),context);
+ const context=workerContext();
  const n=2,feature={version:1,frameCount:n,duration:1.5,chromaStep:.2,rms:Float32Array.of(.1,.2),bass:Float32Array.of(.3,.4),mid:Float32Array.of(.5,.6),high:Float32Array.of(.7,.8),colour:Float32Array.of(1,2,3,4,5,6),fineRms:Float32Array.of(1,2,3,4,5,6,7,8),chroma:new Float32Array(12)};
  assert.equal(context.validRhythmFeature(feature,n,1.5),true);assert.equal(context.validRhythmFeature({...feature,high:Float32Array.of(.7)},n,1.5),false);
  const data=context.rhythmDataFromFeature(feature,n);assert.deepEqual(Array.from(data.rms),Array.from(feature.rms));assert.deepEqual(Array.from(data.beat),[0,0]);assert.deepEqual(Array.from(data.down),[0,0]);
