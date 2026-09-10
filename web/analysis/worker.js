@@ -24,6 +24,15 @@ function workerTimingAttributes(timing){
  return {workerClockStatus:timing.status,workerClockSource:timing.source,workerClockMeasured:timing.measured,workerClockReason:timing.reason||'none'};
 }
 function workerTimingSeconds(timing){return timing.measured?timing.milliseconds/1000:0;}
+function wasmThreadCount(){
+ // Capability properties are exposed by the host WebView and may be guarded
+ // bridge getters. An unavailable hint must select the deterministic safe
+ // backend, not abort analysis before a recoverable checkpoint can run.
+ try{
+  if(!self.crossOriginIsolated||typeof SharedArrayBuffer!=='function')return 1;
+  return Math.min(4,Math.max(1,Math.floor((navigator.hardwareConcurrency||2)/2)));
+ }catch(_){return 1;}
+}
 function safeValidation(api,value,context){
  // Checkpoints are persisted independently from the worker script. Treat a
  // validator exception as corrupt/stale evidence so analysis can rebuild.
@@ -243,7 +252,7 @@ self.onmessage=async e=>{
   return;
  }
  telemetry.cache(stage,'miss');
- ort.env.wasm.wasmPaths=new URL('vendor/',self.location.href).href;ort.env.wasm.numThreads=self.crossOriginIsolated&&typeof SharedArrayBuffer==='function'?Math.min(4,Math.max(1,Math.floor((navigator.hardwareConcurrency||2)/2))):1;ort.env.wasm.proxy=false;
+ ort.env.wasm.wasmPaths=new URL('vendor/',self.location.href).href;ort.env.wasm.numThreads=wasmThreadCount();ort.env.wasm.proxy=false;
  const sessionOptions={executionProviders:['wasm'],graphOptimizationLevel:'all',enableCpuMemArena:false,enableMemPattern:false};
  if(stage==='rhythm'){
   report(.01,'Opening music','Reading your music locally');const reader=new LightForgeWavReader(options.analysisUrl||audioUrl);await reader.open();
@@ -268,7 +277,7 @@ self.onmessage=async e=>{
    telemetry.end(featureWrite);
   }
  }
- report(.22,'Loading music AI',quality==='precision'?'Beat This! full transformer • entirely on this device':'Beat This! compact transformer • entirely on this device');
+ report(.22,'Loading music AI',quality==='precision'?'Beat This! full transformer â¢ entirely on this device':'Beat This! compact transformer â¢ entirely on this device');
 
  const chunk=1500,border=6,stride=chunk-border*2,starts=[];for(let s=-border;s<n-border;s+=stride)starts.push(s);if(n>stride)starts[starts.length-1]=n-(chunk-border);
  let copiedUntil=0;
@@ -279,7 +288,7 @@ self.onmessage=async e=>{
   const features=new Float32Array(length*128),mel=await melForFrames(reader,melSession,lo,hi-lo,config);features.set(mel,(lo-first)*128);
   const input=new ort.Tensor('float32',features,[1,length,128]);let out;
   try{out=await session.run({spectrogram:input});const beats=out.beat.data,down=out.downbeat.data;const begin=Math.max(copiedUntil,0,first+border),end=Math.min(n,first+length-border);for(let i=begin;i<end;i++){const b=sigmoid(beats[i-first]),d=sigmoid(down[i-first]);data.beat[i]=Math.max(0,b-d);data.down[i]=d;}copiedUntil=Math.max(copiedUntil,end);}finally{if(out)dispose(out);input.dispose();}
-  report(.24+.15*(k+1)/starts.length,'Understanding beats and bar accents',`${Math.min(reader.duration,copiedUntil*.02).toFixed(0)} / ${reader.duration.toFixed(0)} seconds • ${quality==='precision'?'Precision':'Balanced'}`);
+  report(.24+.15*(k+1)/starts.length,'Understanding beats and bar accents',`${Math.min(reader.duration,copiedUntil*.02).toFixed(0)} / ${reader.duration.toFixed(0)} seconds â¢ ${quality==='precision'?'Precision':'Balanced'}`);
  }
  if(copiedUntil!==n)throw new Error('The music analysis did not cover the full track. Please try again.');
  if(session)await session.release();session=null;if(melSession)await melSession.release();melSession=null;
@@ -306,10 +315,10 @@ self.onmessage=async e=>{
  report(.405,'Checking analysis storage','Protecting enough space for this song and its saved progress');
  await LightForgeStemCache.prune(cacheKey,storagePlan.stemBytes);
  await store.reserve({...storagePlan,onProgress:(done,total)=>report(.405,'Checking saved analysis storage','Verified '+done+' / '+total+' passage checkpoints')});
- report(.41,'Separating voice and instruments','Recoverable passages • your music stays on this device');
+ report(.41,'Separating voice and instruments','Recoverable passages â¢ your music stays on this device');
  cacheWriter=await LightForgeStemCache.create(cacheKey,sourceReader.samples,config,options.projectId||'');
  separator=await (quality==='precision'?LightForgeDeux:LightForgeMdxSeparator).create({ort,baseUrl:new URL(quality==='precision'?'models/deux/':'models/',self.location.href).href,onProgress:p=>report(.41,'Loading studio vocal separation',p.message),checkpoint:store,nativePredict:quality==='precision'&&options.supportsNativeDeux?nativePredict:quality==='balanced'&&options.supportsNativeMdx?nativeMdxPredict:undefined});
- result.separation=await separator.process((start,count)=>sourceReader.stereo44100(start,count),sourceReader.samples,chunk=>cacheWriter.append(chunk),p=>report(.42+.40*p.progress,'Separating voice and instruments',`${p.message} • ${Math.min(sourceReader.duration,p.processedSeconds||0).toFixed(0)} / ${sourceReader.duration.toFixed(0)} seconds`,p));
+ result.separation=await separator.process((start,count)=>sourceReader.stereo44100(start,count),sourceReader.samples,chunk=>cacheWriter.append(chunk),p=>report(.42+.40*p.progress,'Separating voice and instruments',`${p.message} â¢ ${Math.min(sourceReader.duration,p.processedSeconds||0).toFixed(0)} / ${sourceReader.duration.toFixed(0)} seconds`,p));
  await separator.release();separator=null;
  result.stemCache=await cacheWriter.finish();cacheWriter=null;
 
@@ -322,9 +331,9 @@ self.onmessage=async e=>{
  await store.write('voice-classifier',classified);
  const detailExtractor=new LightForgeVocalDetail.Extractor({sampleRate:22050,duration:sourceReader.duration}),detailCount=result.stemCache.samples,detailChunk=22050*8;
  for(let start=0;start<detailCount;start+=detailChunk){const count=Math.min(detailChunk,detailCount-start),voice=await stems.vocals.mono22050(start,count,config),backing=await stems.accompaniment.mono22050(start,count,config);detailExtractor.push(voice,start,backing);report(.905+.035*(start+count)/detailCount,'Following vocal expression','Measuring entrances, syllabic attacks, held notes and pauses');}
- report(.942,'Transcribing sung notes','GAME Large • identifying entrances, pitch changes and held notes');
+ report(.942,'Transcribing sung notes','GAME Large â¢ identifying entrances, pitch changes and held notes');
  game=await LightForgeGAME.create({ort,baseUrl:new URL('models/game/',self.location.href).href,onProgress:detail=>report(.942,'Loading singing transcription',detail),checkpoint:store});
- const transcription=await game.process(await LightForgeStemCache.fullVoice(result.stemCache),sourceReader.samples,{onProgress:(p,info)=>report(.945+.04*p,'Transcribing sung notes','GAME Large • '+Math.round(p*100)+'%',info)});
+ const transcription=await game.process(await LightForgeStemCache.fullVoice(result.stemCache),sourceReader.samples,{onProgress:(p,info)=>report(.945+.04*p,'Transcribing sung notes','GAME Large â¢ '+Math.round(p*100)+'%',info)});
  result.vocals=LightForgeGAME.fuse(detailExtractor.finish({classifier:classified.classifier,model:classified.model,transcription}),transcription);classified.classifier=null;await game.release();game=null;
  await ensureVocalSemantics(result,options,store,telemetry);
 
@@ -352,7 +361,7 @@ self.onmessage=async e=>{
  const musicSalience=ensureMusicSalience(result,semanticTimeline);
  telemetry.end(saliencePhase,{eventCount:musicSalience.events.length,tiers:musicSalience.summary.countByTier,profile:musicSalience.summary.context.profile});
  if(vocalSemantics)linkVocalSemantics(result);
- result.recommendedAudio={sampleRate:44100,channels:2,format:'PCM16 WAV'};report(1,'Music understood',(result.bpm?result.bpm+' BPM':'No pulse detected')+' • '+result.sections.length+' sections');
+ result.recommendedAudio={sampleRate:44100,channels:2,format:'PCM16 WAV'};report(1,'Music understood',(result.bpm?result.bpm+' BPM':'No pulse detected')+' â¢ '+result.sections.length+' sections');
 
    await store.write(stage,persistableAnalysis(result));
    report(1,'Music understood','Progress saved',{checkpointSaved:true,analysisStage:stage});
@@ -367,4 +376,3 @@ self.onmessage=async e=>{
   if(game)try{await game.release();}catch(_){}if(separator)try{await separator.release();}catch(_){}
   if(session)try{await session.release();}catch(_){}if(melSession)try{await melSession.release();}catch(_){}
  }};
-
