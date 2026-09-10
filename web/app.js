@@ -280,7 +280,7 @@ async function regenerate({save=true,preparedShow=null,restoreCompiled=null}={})
  try{
   const music=alignedMusic(state.music),settings=clone(state.settings);let result;
   if(preparedShow)result={show:preparedShow,compiled:null};
-  else if(restoreCompiled)result=await ShowCompiler.restore(restoreCompiled,music,settings,()=>{},controller.signal,{retryStartup:state.backgroundApplying});
+  else if(restoreCompiled)result=await ShowCompiler.restore(restoreCompiled,music,settings,()=>{},controller.signal,{retryStartup:state.backgroundApplying===true});
   else result=await ShowCompiler.generate(music,settings,()=>{},controller.signal);
   if(ticket!==state.compileId||projectId!==state.project?.id)return null;
   state.music=music;adoptShow(result,music,settings);if(save)scheduleSave();return state.show;
