@@ -92,9 +92,20 @@
     return {duration,bpm,beats,downbeats,groove,vocals,bassNotes,bassAnalysis,onsets,waveform,sections,silent,beatConfidence:confidence,meter,meterConfidence:clamp(music.meterConfidence||0,0,1),phrases,impacts,activityRanges:ranges,energy,energyStep,beatDetails,analysisVersion:Number(music.analysisVersion)||1,timing:music.timing||{}};
   }
   const SALIENCE_TIERS=new Set(['micro','secondary','primary','phrase','structural','climax']);
+  function semanticTimelineFingerprint(timeline){
+    let hash=2166136261;
+    const append=value=>{const text=value===undefined?'':value===null?'~':(finite(value)?String(Math.round(value*1000000)/1000000):String(value));for(let index=0;index<text.length;index++)hash=Math.imul(hash^text.charCodeAt(index),16777619);hash=Math.imul(hash^255,16777619);};
+    append(timeline.schemaVersion);append(timeline.duration);append(timeline.clock);
+    for(const event of timeline.events){
+      append(event.id);append(event.type);append(event.time);append(event.duration);append(event.source);append(event.confidence);append(event.intensity);append(event.salience);
+      append(event.rhythm?.barPosition);append(event.rhythm?.beatTime);append(event.structure?.sectionIndex);append(event.structure?.phraseIndex);
+      append(event.relationships?.crossStemAgreement);append(event.recurrenceGroup);append(event.repetitionIndex);
+    }
+    return ('00000000'+(hash>>>0).toString(16)).slice(-8);
+  }
   function matchingSemanticSalience(music){
     const timeline=music&&music.semanticTimeline,salience=music&&music.musicSalience;
-    if(!timeline||!salience||!Number.isInteger(timeline.schemaVersion)||!finite(timeline.duration)||timeline.duration<=0||typeof timeline.clock!=='string'||!Array.isArray(timeline.events)||salience.schemaVersion!==1||salience.timelineSchemaVersion!==timeline.schemaVersion||salience.clock!==timeline.clock||!finite(salience.duration)||Math.abs(salience.duration-timeline.duration)>1e-6||typeof salience.timelineFingerprint!=='string'||!/^[0-9a-f]{8}$/.test(salience.timelineFingerprint)||!Array.isArray(salience.events)||salience.events.length!==timeline.events.length)return null;
+    if(!timeline||!salience||!Number.isInteger(timeline.schemaVersion)||!finite(timeline.duration)||timeline.duration<=0||typeof timeline.clock!=='string'||!Array.isArray(timeline.events)||salience.schemaVersion!==1||salience.timelineSchemaVersion!==timeline.schemaVersion||salience.clock!==timeline.clock||!finite(salience.duration)||Math.abs(salience.duration-timeline.duration)>1e-6||typeof salience.timelineFingerprint!=='string'||!/^[0-9a-f]{8}$/.test(salience.timelineFingerprint)||salience.timelineFingerprint!==semanticTimelineFingerprint(timeline)||!Array.isArray(salience.events)||salience.events.length!==timeline.events.length)return null;
     const ids=new Set(),events=[];
     for(let index=0;index<timeline.events.length;index++){
       const event=timeline.events[index],ranked=salience.events[index];

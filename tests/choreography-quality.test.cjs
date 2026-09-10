@@ -144,4 +144,8 @@ test('matching semantic salience annotates existing targets without changing pla
   assert.equal(Object.hasOwn(stale.choreography,'salienceTargets'),false);
   assert.deepEqual(stale.frames,baseline.frames);
   assert.deepEqual(stale.synchronization,baseline.synchronization,'invalid salience leaves legacy synchronization inputs untouched');
+  const changedTimeline=structuredClone(timeline);changedTimeline.events[0].time=.01;
+  const mismatched=Engine.generate({...music,semanticTimeline:changedTimeline,musicSalience:salience},settings);
+  assert.equal(Object.hasOwn(mismatched.choreography,'salienceTargets'),false,'salience fingerprint must bind annotations to the exact semantic timeline');
+  assert.deepEqual(mismatched.frames,baseline.frames);
 });
