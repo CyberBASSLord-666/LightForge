@@ -53,3 +53,14 @@ The state is calculated from repeat order and bounded energy change. It is not a
 No worker, planner, vehicle model, or sequence compiler imports this module automatically. Existing analysis and FSEQ output therefore remain byte-equivalent until a caller deliberately wires a valid sidecar into an opt-in strategy.
 
 Inputs are bounded to 512 sections, 360,000 energy frames, and 72,000 chroma frames. Incomplete, malformed, or stale evidence fails closed instead of being truncated or inferred. The module operates on the decoded-audio clock already established by the semantic timeline.
+
+
+## Opt-in choreography consumption
+
+The sidecar remains data until all of the following are true:
+
+- the caller supplies the exact `semanticTimeline`, `recurrenceEvidence`, and `recurrenceSidecar` together;
+- `LightForgeRecurrence.validate(recurrenceSidecar, semanticTimeline, recurrenceEvidence)` succeeds;
+- choreography explicitly sets both `semanticChoreography: true` and `motifEvolution: true`.
+
+`web/engine/motif-evolution.js` is the narrow bridge used by the show engine. It never calls `captureEvidence` or `build`; missing, corrupt, stale, oversized, or span-incompatible input is inactive and leaves legacy section scenes unchanged. For a validated assignment it carries the generic motif identity into the section scene and maps the sidecar's bounded `phase`, `repetitionIndex`, `variation`, and energy context to a deterministic per-instance seed/variant plus at most a 0.12 intensity change. This preserves related visual language while avoiding copy-paste repeats. It does not apply command-timing offsets, add musical events, overwrite a user-supplied section seed, or relax vehicle/collision checks.

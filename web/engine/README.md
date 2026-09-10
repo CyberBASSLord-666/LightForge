@@ -78,6 +78,8 @@ Physical positions are **estimates**. The default 4-second window, 14/4-second t
 | `outerBeamRamping` | False by default; allow documented outer-beam ramp codes only after vehicle confirmation |
 | `vehicleTimingCalibration` | Optional explicit, local timing-calibration record; absent by default and never assumes Tesla latency |
 | `sectionOverrides` | Section index → `{style, intensity, seed}` |
+| `semanticChoreography` | `true` enables the separately validated semantic scheduling strategy; false by default |
+| `motifEvolution` | `true` only with `semanticChoreography:true` and a valid recurrence sidecar; false by default |
 
 Automatic beat division uses the detected local beat spacing when available;
 manual quarter/eighth choices remain available. Lamp effects retain meaningful
@@ -159,6 +161,8 @@ recomposition cannot overwrite individual edits.
 Rhythm corrections derive a new grid from the saved analysis without another neural inference run. The source music object remains unchanged. Half/double tempo preserves local tempo changes; subdivision groove is reset when the beat scale changes because its original estimate referred to the original grid. `show.choreography.rhythm` exposes the resulting beats, downbeats, meter, BPM, groove and correction provenance for the UI.
 
 Each generated section exposes a resolved `seed`, `variant`, `locked` flag and `motifGroup`. Repeated analyzed sections share motif and palette identity. To preserve a section during New variation, store its **resolved** `show.sections[i].seed` in `settings.sectionOverrides[i].seed`. This locks motif variation, not timings against later analysis or rhythm corrections. All three styles, including quiet cinematic passages, respond to variation. Manual cues and output masks still take precedence.
+
+A recurrence sidecar remains inert by default. Set both `semanticChoreography:true` and `motifEvolution:true`, then supply `semanticTimeline`, `recurrenceEvidence`, and `recurrenceSidecar` built by `LightForgeRecurrence`. The bridge first validates the exact timeline/evidence bindings and applies only mapped repeated-section metadata: a shared motif identity plus deterministic per-instance seed/variant and a bounded intensity adjustment. It does not create motifs, change event timestamps, move accepted cues, or bypass collision and vehicle validation. A user-supplied per-section seed keeps that section unchanged; a supplied per-section intensity remains authoritative.
 
 ## Manual output cues
 
