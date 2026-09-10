@@ -45,6 +45,13 @@ jobs:
           assert len(version.split('.'))==3 and all(p.isdigit() for p in version.split('.'))
           with open(os.environ['GITHUB_ENV'],'a') as out:out.write('LIGHTFORGE_RELEASE='+version+'\n')
           PYVERSION
+      - name: Create per-run evidence session
+        run: |
+          python3 - <<'PYSESSION'
+          import os, secrets
+          with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as out:
+              out.write('LIGHTFORGE_EVIDENCE_SESSION=' + secrets.token_hex(32) + '\n')
+          PYSESSION
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '22'
@@ -78,8 +85,11 @@ jobs:
         run: node qa/release-${{ env.LIGHTFORGE_RELEASE }}/analysis-browser.cjs
       - name: Bootstrap pinned native host toolchain
         run: python3 tools/bootstrap_toolchain.py
-      - name: Verify profile-enabled native equivalence and comparison bindings
+      - name: Regenerate and verify same-session native evidence
         run: |
+          test -n "$LIGHTFORGE_EVIDENCE_SESSION"
+          python3 qa/release-${{ env.LIGHTFORGE_RELEASE }}/compare-native-mdx.py
+          node qa/release-${{ env.LIGHTFORGE_RELEASE }}/verify-mdx-downstream.cjs
           python3 tools/bootstrap_testdeps.py
           python3 qa/release-${{ env.LIGHTFORGE_RELEASE }}/verify-native-inference-profile.py
           python3 qa/release-${{ env.LIGHTFORGE_RELEASE }}/verify-analysis.py

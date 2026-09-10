@@ -53,6 +53,14 @@ def report(runtime, vocal=0.95, count=5, pipeline="baseline", selected_policy=No
     }
 
 
+def comparison(result, metric, track="vocal-rock"):
+    return next(row for row in result["comparisons"] if row["track"] == track and row["metric"] == metric)
+
+
+def runtime_row(result, track="vocal-rock"):
+    return next(row for row in result["runtime"] if row["track"] == track)
+
+
 class GateTest(unittest.TestCase):
     def setUp(self):
         self.policy = policy()
@@ -62,6 +70,9 @@ class GateTest(unittest.TestCase):
         self.assertEqual("PASS_TARGET", result["status"])
         self.assertTrue(result["production_ready"])
         self.assertFalse(result["quality_regressions_detected"])
+        self.assertEqual("complete", result["corpus_status"])
+        self.assertEqual("statistically_equivalent", comparison(result, "quality.vocal_alignment_f1")["status"])
+        self.assertEqual("improved", comparison(result, "performance.total_wall_clock_seconds")["status"])
 
     def test_partial_is_honest_when_speed_target_is_not_confidently_met(self):
         result = gate.compare(report(100, selected_policy=self.policy), report(60, pipeline="candidate", selected_policy=self.policy), self.policy)
@@ -75,6 +86,7 @@ class GateTest(unittest.TestCase):
         result = gate.compare(baseline, candidate, self.policy)
         self.assertEqual("FAIL", result["status"])
         self.assertTrue(result["quality_regressions_detected"])
+        self.assertEqual("regressed", comparison(result, "quality.vocal_alignment_f1")["status"])
 
     def test_missing_pair_and_too_few_pairs_block_release(self):
         baseline = report(100, count=3, selected_policy=self.policy)
@@ -96,6 +108,50 @@ class GateTest(unittest.TestCase):
         self.assertEqual("FAIL", result["status"])
         self.assertIn("missing_metric", reasons)
         self.assertIn("duplicate_run_id", reasons)
+        self.assertEqual("unmeasured", comparison(result, "quality.beat_f1")["status"])
+        self.assertEqual("metric_not_reported_for_every_paired_run", comparison(result, "quality.beat_f1")["reason"])
+
+    def test_insufficient_pairs_have_an_explicit_state_and_no_reduction_claim(self):
+        baseline = report(100, count=3, selected_policy=self.policy)
+        candidate = report(20, count=3, pipeline="candidate", selected_policy=self.policy)
+        result = gate.compare(baseline, candidate, self.policy)
+        self.assertEqual("FAIL", result["status"])
+        self.assertEqual("complete", result["corpus_status"])
+        metric = comparison(result, "quality.beat_f1")
+        self.assertEqual("insufficient_corpus", metric["status"])
+        self.assertEqual("insufficient_paired_runs", metric["reason"])
+        runtime = runtime_row(result)
+        self.assertEqual("insufficient_corpus", runtime["status"])
+        self.assertIsNone(runtime["paired_reduction_percent"])
+        self.assertIsNone(runtime["paired_mean_reduction_ci"])
+        self.assertFalse(runtime["target_met"])
+
+    def test_placeholder_or_incomplete_corpus_never_emits_a_reduction_claim(self):
+        placeholder_policy = policy()
+        placeholder_policy["required_tracks"] = ["__configure_locked_corpus__"]
+        placeholder = gate.compare(
+            report(100, selected_policy=placeholder_policy),
+            report(20, pipeline="candidate", selected_policy=placeholder_policy),
+            placeholder_policy,
+        )
+        self.assertEqual("FAIL", placeholder["status"])
+        self.assertFalse(placeholder["production_ready"])
+        self.assertEqual("placeholder", placeholder["corpus_status"])
+        self.assertEqual("unmeasured", placeholder["runtime"][0]["status"])
+        self.assertIsNone(placeholder["runtime"][0]["paired_reduction_percent"])
+
+        incomplete_policy = policy()
+        incomplete_policy["required_tracks"] = ["vocal-rock", "instrumental-only"]
+        incomplete = gate.compare(
+            report(100, selected_policy=incomplete_policy),
+            report(20, pipeline="candidate", selected_policy=incomplete_policy),
+            incomplete_policy,
+        )
+        self.assertEqual("FAIL", incomplete["status"])
+        self.assertFalse(incomplete["production_ready"])
+        self.assertEqual("incomplete", incomplete["corpus_status"])
+        self.assertTrue(all(row["status"] == "unmeasured" for row in incomplete["runtime"]))
+        self.assertTrue(all(row["paired_reduction_percent"] is None for row in incomplete["runtime"]))
 
     def test_incomparable_audio_or_hardware_blocks_but_pipeline_change_is_allowed(self):
         baseline = report(100, selected_policy=self.policy)

@@ -13,6 +13,7 @@ import json
 import math
 import statistics
 import sys
+from collections import Counter
 from pathlib import Path
 
 
@@ -241,6 +242,48 @@ def _compare_pair_provenance(baseline, candidate):
     return differences
 
 
+def _locked_corpus_status(required_tracks, baseline_tracks, candidate_tracks):
+    """Classify corpus coverage before interpreting any performance percentage.
+
+    A performance percentage from a placeholder policy or a subset of the
+    locked corpus is useful only as raw debugging data.  It must never appear
+    as a release-facing reduction claim, even when the available track happens
+    to be faster.
+    """
+    placeholder = "__configure_locked_corpus__" in required_tracks
+    present_in_both = baseline_tracks & candidate_tracks
+    missing = sorted(required_tracks - present_in_both)
+    unexpected = sorted((baseline_tracks | candidate_tracks) - required_tracks)
+    if placeholder:
+        return "placeholder", missing, unexpected
+    if missing or unexpected or baseline_tracks != required_tracks or candidate_tracks != required_tracks:
+        return "incomplete", missing, unexpected
+    return "complete", missing, unexpected
+
+
+def _measurement_state(corpus_status, keys, observed_values, minimum_pairs):
+    """Return a release-facing state before statistical classification.
+
+    ``unmeasured`` means that a required value was not present for every
+    matched pair (or no matched pair exists).  ``insufficient_corpus`` means
+    the metric is present but the locked corpus did not supply enough repeated
+    pairs.  These are deliberately different from a measured regression.
+    """
+    pair_count = len(keys)
+    value_count = len(observed_values)
+    if corpus_status == "placeholder":
+        return "unmeasured", "locked_corpus_placeholder"
+    if corpus_status != "complete":
+        return "unmeasured", "locked_corpus_incomplete"
+    if not pair_count:
+        return "unmeasured", "no_paired_measurements"
+    if value_count != pair_count:
+        return "unmeasured", "metric_not_reported_for_every_paired_run"
+    if pair_count < minimum_pairs:
+        return "insufficient_corpus", "insufficient_paired_runs"
+    return "measured", None
+
+
 def _classify_effect(deltas, tolerance, hard_floor, bootstrap, seed):
     lower, upper = _stable_bootstrap(
         deltas,
@@ -267,12 +310,14 @@ def compare(baseline, candidate, policy):
     blockers = [*baseline_issues, *candidate_issues]
     if canonical_json(baseline_suite) != canonical_json(candidate_suite):
         blockers.append({"reason": "incomparable_suite", "baseline": baseline_suite, "candidate": candidate_suite})
-    if "__configure_locked_corpus__" in required_tracks:
-        blockers.append({"reason": "unconfigured_locked_corpus"})
     baseline_tracks = {track for track, _ in baseline_runs}
     candidate_tracks = {track for track, _ in candidate_runs}
-    missing_tracks = sorted(required_tracks - (baseline_tracks & candidate_tracks))
-    for track in sorted((baseline_tracks | candidate_tracks) - required_tracks):
+    corpus_status, missing_tracks, unexpected_tracks = _locked_corpus_status(
+        required_tracks, baseline_tracks, candidate_tracks
+    )
+    if corpus_status == "placeholder":
+        blockers.append({"reason": "unconfigured_locked_corpus"})
+    for track in unexpected_tracks:
         blockers.append({"track": track, "reason": "unexpected_track"})
     for track in sorted(baseline_tracks ^ candidate_tracks):
         blockers.append({"track": track, "reason": "track_not_present_in_both_reports"})
@@ -289,8 +334,8 @@ def compare(baseline, candidate, policy):
         actual = len(pairs_by_track.get(track, []))
         if actual < minimum_pairs:
             blockers.append({"track": track, "reason": "insufficient_paired_runs", "actual": actual, "minimum": minimum_pairs})
-    comparisons, runtime = [], []
-    for track in sorted(required_tracks & baseline_tracks & candidate_tracks):
+    comparisons, comparison_index = [], {}
+    for track in sorted(required_tracks):
         keys = pairs_by_track.get(track, [])
         for metric, rule in sorted(policy_metrics.items()):
             deltas, rows = [], []
@@ -303,47 +348,141 @@ def compare(baseline, candidate, policy):
                 delta = after - before if rule.get("direction", "higher") == "higher" else before - after
                 deltas.append(delta)
                 rows.append({"pair_id": key[1], "baseline": before, "candidate": after, "effect": delta})
-            if len(deltas) != len(keys):
-                continue  # Missing metrics already produced a release blocker.
             tolerance = float(rule.get("equivalence_tolerance", 0))
             hard_floor = float(rule.get("pair_hard_regression", tolerance))
-            classification, lower, upper = _classify_effect(deltas, tolerance, hard_floor, bootstrap, f"{bootstrap.get('seed')}|{track}|{metric}")
+            measurement_status, reason = _measurement_state(
+                corpus_status, keys, deltas, minimum_pairs
+            )
             row = {
                 "track": track,
                 "metric": metric,
+                "required": bool(rule.get("required", True)),
                 "critical": bool(rule.get("critical", False)),
-                "classification": classification,
+                "status": measurement_status,
+                "measurement_status": measurement_status,
+                "classification": None,
+                "reason": reason,
+                "observed_pair_count": len(keys),
+                "measured_pair_count": len(deltas),
+                "required_pair_count": minimum_pairs,
                 "equivalence_tolerance": tolerance,
                 "pair_hard_regression": hard_floor,
-                "paired_effect": summary(deltas),
-                "paired_mean_effect_ci": [lower, upper],
+                "paired_effect": None,
+                "paired_mean_effect_ci": None,
                 "pairs": rows,
             }
+            if measurement_status == "measured":
+                classification, lower, upper = _classify_effect(
+                    deltas,
+                    tolerance,
+                    hard_floor,
+                    bootstrap,
+                    f"{bootstrap.get('seed')}|{track}|{metric}",
+                )
+                row.update(
+                    {
+                        "status": classification,
+                        "classification": classification,
+                        "reason": None,
+                        "paired_effect": summary(deltas),
+                        "paired_mean_effect_ci": [lower, upper],
+                    }
+                )
+                if row["critical"] and classification in {"regressed", "inconclusive"}:
+                    blockers.append(
+                        {
+                            "reason": f"critical_{classification}",
+                            "track": track,
+                            "metric": metric,
+                            "paired_mean_effect_ci": [lower, upper],
+                        }
+                    )
             comparisons.append(row)
-            if row["critical"] and classification in {"regressed", "inconclusive"}:
-                blockers.append({"reason": f"critical_{classification}", "track": track, "metric": metric, "paired_mean_effect_ci": [lower, upper]})
-        runtime_metric = runtime_target["metric"]
-        reductions = []
-        for key in keys:
-            before = baseline_runs[key]["metrics"].get(runtime_metric)
-            after = candidate_runs[key]["metrics"].get(runtime_metric)
-            if before is None or after is None:
-                continue
-            if before <= 0:
-                blockers.append({"track": track, "pair_id": key[1], "metric": runtime_metric, "reason": "non_positive_baseline_runtime"})
+            comparison_index[(track, metric)] = row
+
+    runtime = []
+    runtime_metric = runtime_target["metric"]
+    for track in sorted(required_tracks):
+        keys = pairs_by_track.get(track, [])
+        comparison = comparison_index[(track, runtime_metric)]
+        runtime_row = {
+            "track": track,
+            "metric": runtime_metric,
+            "status": comparison["status"],
+            "measurement_status": comparison["measurement_status"],
+            "reason": comparison["reason"],
+            "observed_pair_count": comparison["observed_pair_count"],
+            "measured_pair_count": comparison["measured_pair_count"],
+            "required_pair_count": minimum_pairs,
+            "paired_reduction_percent": None,
+            "paired_mean_reduction_ci": None,
+            "target_reduction_percent": float(runtime_target["target_reduction_percent"]),
+            "target_met": False,
+        }
+        if comparison["measurement_status"] == "measured" and corpus_status == "complete":
+            reductions = []
+            non_positive = False
+            for key in keys:
+                before = baseline_runs[key]["metrics"][runtime_metric]
+                after = candidate_runs[key]["metrics"][runtime_metric]
+                if before <= 0:
+                    non_positive = True
+                    blockers.append(
+                        {
+                            "track": track,
+                            "pair_id": key[1],
+                            "metric": runtime_metric,
+                            "reason": "non_positive_baseline_runtime",
+                        }
+                    )
+                else:
+                    reductions.append(100.0 * (before - after) / before)
+            if non_positive:
+                runtime_row.update(
+                    {
+                        "status": "unmeasured",
+                        "measurement_status": "unmeasured",
+                        "reason": "non_positive_baseline_runtime",
+                    }
+                )
             else:
-                reductions.append(100.0 * (before - after) / before)
-        if len(reductions) == len(keys) and reductions:
-            lower, upper = _stable_bootstrap(reductions, seed=f"{bootstrap.get('seed')}|{track}|runtime", confidence=float(bootstrap.get("confidence", 0.99)), resamples=int(bootstrap.get("resamples", 20000)))
-            runtime.append({"track": track, "paired_reduction_percent": summary(reductions), "paired_mean_reduction_ci": [lower, upper], "target_reduction_percent": float(runtime_target["target_reduction_percent"]), "target_met": lower >= float(runtime_target["target_reduction_percent"])})
-    target_met = bool(runtime) and len(runtime) == len(required_tracks) and all(row["target_met"] for row in runtime)
+                lower, upper = _stable_bootstrap(
+                    reductions,
+                    seed=f"{bootstrap.get('seed')}|{track}|runtime",
+                    confidence=float(bootstrap.get("confidence", 0.99)),
+                    resamples=int(bootstrap.get("resamples", 20000)),
+                )
+                runtime_row.update(
+                    {
+                        "paired_reduction_percent": summary(reductions),
+                        "paired_mean_reduction_ci": [lower, upper],
+                        "target_met": lower >= float(runtime_target["target_reduction_percent"]),
+                    }
+                )
+        runtime.append(runtime_row)
+
+    required_measurements_complete = all(
+        row["measurement_status"] == "measured" for row in comparisons if row["required"]
+    )
+    target_met = (
+        corpus_status == "complete"
+        and required_measurements_complete
+        and bool(runtime)
+        and len(runtime) == len(required_tracks)
+        and all(row["target_met"] for row in runtime)
+    )
     status = "FAIL" if missing_tracks or blockers else ("PASS_TARGET" if target_met else "PASS_PARTIAL")
+    production_ready = status == "PASS_TARGET" and corpus_status == "complete" and required_measurements_complete
     return {
         "schema_version": SCHEMA_VERSION,
         "status": status,
-        "production_ready": status == "PASS_TARGET",
-        "quality_regressions_detected": any(row["classification"] == "regressed" for row in comparisons),
+        "production_ready": production_ready,
+        "corpus_status": corpus_status,
+        "required_measurements_complete": required_measurements_complete,
+        "metric_status_counts": dict(sorted(Counter(row["status"] for row in comparisons).items())),
+        "quality_regressions_detected": any(row["status"] == "regressed" for row in comparisons),
         "missing_required_tracks": missing_tracks,
+        "unexpected_tracks": unexpected_tracks,
         "blockers": blockers,
         "comparisons": comparisons,
         "runtime": runtime,
@@ -370,7 +509,10 @@ def main(argv=None):
     result = compare(baseline, candidate, policy)
     Path(args.output).parent.mkdir(parents=True, exist_ok=True)
     Path(args.output).write_text(json.dumps(result, indent=2, sort_keys=True, allow_nan=False) + "\n", encoding="utf-8")
-    print(f"quality-gate={result['status']} target-tracks={sum(row['target_met'] for row in result['runtime'])}/{len(result['runtime'])}")
+    print(
+        f"quality-gate={result['status']} corpus={result['corpus_status']} "
+        f"target-tracks={sum(row['target_met'] for row in result['runtime'])}/{len(result['runtime'])}"
+    )
     return 0 if result["status"] == "PASS_TARGET" or (args.allow_partial and result["status"] == "PASS_PARTIAL") else 1
 
 

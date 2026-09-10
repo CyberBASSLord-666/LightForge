@@ -7,8 +7,15 @@ const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypt
 const ROOT=path.resolve(__dirname,'../..'),QA=__dirname,WORK=path.resolve(process.env.LIGHTFORGE_MDX_DOWNSTREAM_DIR||path.join(ROOT,'../native-mdx-downstream-2.2.4'));
 const PAIR=path.resolve(process.env.LIGHTFORGE_MDX_DOWNSTREAM_PAIR||path.join(ROOT,'../native-mdx-comparison-2.2.4/demo-20s'));
 const SOURCE='web/demo/glass-castle.wav',CORE_START=882000,FIXTURE='demo-20s';
+const EVIDENCE_SESSION_SCHEMA='lightforge.evidence-session.v1',EVIDENCE_SESSION=process.env.LIGHTFORGE_EVIDENCE_SESSION;
+if(EVIDENCE_SESSION!==undefined)assert.match(EVIDENCE_SESSION,/^[0-9a-f]{32,128}$/,'Invalid LIGHTFORGE_EVIDENCE_SESSION');
 const sha=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
 const json=(value)=>JSON.stringify(value,(_,v)=>ArrayBuffer.isView(v)?Array.from(v):v,2)+'\n';
+function writeJsonAtomic(file,value){
+ const temporary=file+'.tmp-'+process.pid+'-'+crypto.randomBytes(12).toString('hex');
+ try{fs.writeFileSync(temporary,json(value));fs.renameSync(temporary,file);}
+ finally{try{fs.unlinkSync(temporary);}catch(_){}}
+}
 const buffer=b=>b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength);
 function readFloats(p){const b=fs.readFileSync(p);assert.equal(b.length,261120*4);const out=new Float32Array(buffer(b));assert.ok(out.every(Number.isFinite));return out;}
 class MemoryStream{
@@ -62,7 +69,7 @@ async function child(kind){
   vocals:fused,executions,loadedModels,runtime:raw.env.versions.web,
   sourceClock:{fixture:FIXTURE,source:SOURCE,coreStartSample:CORE_START,coreSamples:count,sampleRate:44100,contextReadStart:CORE_START-M.constants.TRIM,contextReadSamples:M.constants.INPUT_LENGTH},
   waveformSha256:sha(path.join(PAIR,kind+'-waveform.float32le'))};
- fs.writeFileSync(path.join(WORK,kind+'-downstream.json'),json(result));
+ writeJsonAtomic(path.join(WORK,kind+'-downstream.json'),result);
  console.log(JSON.stringify({runtime:kind,gameNotes:transcription.notes.length,fusedNotes:fused.notes.length,phrases:fused.phrases.length,executions}));
 }
 async function main(){
@@ -77,7 +84,14 @@ async function main(){
   scope:'Paired actual production centered resampling, Frame-MN10, vocal expression, GAME Large eight-step transcription and fusion on a measured native-ALL/4 versus WASM MDX kept-core excerpt. Node filesystem adapters supply bytes; original model graphs and numeric code execute. Nonempty voice coverage is mandatory. Not full-song OLA, corpus accuracy, Android execution, or physical-car validation.',
   fixture:{id:FIXTURE,source:SOURCE,sourceSha256:sources[SOURCE],contextReadStart:CORE_START-3840,contextReadSamples:261120,coreStart:CORE_START,coreSamples:253440,sampleRate:44100},
   inputs:Object.fromEntries(['native','wasm'].map(k=>[k,{file:k+'-waveform.float32le',bytes:fs.statSync(path.join(PAIR,k+'-waveform.float32le')).size,sha256:sha(path.join(PAIR,k+'-waveform.float32le'))}]))};
- const output=path.join(QA,'native-mdx-downstream-verification.json');fs.writeFileSync(output,json(receipt));
+ if(EVIDENCE_SESSION!==undefined){
+  const upstreamPath=path.join(QA,'native-mdx-comparison-verification.json'),upstream=JSON.parse(fs.readFileSync(upstreamPath,'utf8'));
+  assert.equal(upstream.evidenceSessionSchema,EVIDENCE_SESSION_SCHEMA,'Upstream MDX receipt does not declare the evidence-session schema');
+  assert.equal(upstream.evidenceSession,EVIDENCE_SESSION,'Upstream MDX receipt belongs to a different evidence session');
+  receipt.evidenceSessionSchema=EVIDENCE_SESSION_SCHEMA;receipt.evidenceSession=EVIDENCE_SESSION;
+  receipt.upstreamMdx={path:path.relative(ROOT,upstreamPath).split(path.sep).join('/'),sha256:sha(upstreamPath),evidenceSession:EVIDENCE_SESSION};
+ }
+ const output=path.join(QA,'native-mdx-downstream-verification.json');writeJsonAtomic(output,receipt);
  try{
   for(const kind of ['native','wasm']){
    const log=fs.openSync(path.join(WORK,kind+'.log'),'w');let p;
@@ -103,7 +117,7 @@ async function main(){
   for(const [kind,item]of Object.entries(receipt.inputs))assert.equal(sha(path.join(PAIR,kind+'-waveform.float32le')),item.sha256,'Measured MDX output changed during downstream run');
   receipt.passed=true;
  }catch(error){receipt.errors.push(error.stack||String(error));throw error;}
- finally{receipt.completedAt=new Date().toISOString();fs.writeFileSync(output,json(receipt));}
+ finally{receipt.completedAt=new Date().toISOString();writeJsonAtomic(output,receipt);}
  console.log(JSON.stringify({passed:receipt.passed,coverage:receipt.comparison.coverage,errors:receipt.errors}));
 }
 (process.argv[2]==='--child'?child(process.argv[3]):main()).catch(error=>{console.error(error);process.exitCode=1;});

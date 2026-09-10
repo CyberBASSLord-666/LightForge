@@ -8,10 +8,10 @@ ROOT=Path(__file__).resolve().parents[1]
 VERSION=json.loads((ROOT/'version.json').read_text())['name']
 OUT=ROOT/('qa/release-'+VERSION)
 OUT.mkdir(parents=True,exist_ok=True)
-TESTS=['engine.test.cjs','engine-manual.test.cjs','preview-engine.test.cjs','preview-lifecycle.test.cjs','light-planner.test.cjs','collision-resolver.test.cjs',
+TESTS=['engine.test.cjs','engine-manual.test.cjs','preview-engine.test.cjs','preview-lifecycle.test.cjs','light-planner.test.cjs','collision-resolver.test.cjs','semantic-collision-allocation.test.cjs','semantic-allocation-integration.test.cjs','analysis-performance-projection.test.cjs',
        'movement-planner.test.cjs','composer-1.6.test.cjs','role-composer-1.6.test.cjs',
        'role-reference-composer-1.6.test.cjs','bass-notes.test.cjs','vocal-detail.test.cjs',
-       'stem-cache.test.cjs','wav-reader.test.cjs','precision-2.0.test.cjs','migration-2.0.test.cjs','precision-ui-2.0.test.cjs','cockpit-2.1.test.cjs','game-2.1.test.cjs','background-2.2.test.cjs','deux-2.2.1.test.cjs','analysis-recovery-2.2.1.test.cjs','native-deux-bridge.test.cjs','native-mdx-bridge.test.cjs','mdx-downstream-compare.test.cjs','separator-mdx-runtime.test.cjs','native-runtime-guard.test.cjs','diagnostics.test.cjs','analysis-telemetry.test.cjs','analysis-scheduler.test.cjs','semantic-timeline.test.cjs','music-salience.test.cjs','choreography-quality.test.cjs','analysis-cache-recovery-v3.test.cjs']
+       'stem-cache.test.cjs','stem-routing.test.cjs','stem-routing-worker.test.cjs','rhythm-hierarchy.test.cjs','recurrence-motif.test.cjs','wav-reader.test.cjs','precision-2.0.test.cjs','migration-2.0.test.cjs','precision-ui-2.0.test.cjs','cockpit-2.1.test.cjs','game-2.1.test.cjs','background-2.2.test.cjs','deux-2.2.1.test.cjs','analysis-recovery-2.2.1.test.cjs','native-deux-bridge.test.cjs','native-mdx-bridge.test.cjs','mdx-downstream-compare.test.cjs','separator-mdx-runtime.test.cjs','native-runtime-guard.test.cjs','diagnostics.test.cjs','analysis-telemetry.test.cjs','analysis-scheduler.test.cjs','semantic-timeline.test.cjs','vocal-semantics.test.cjs','percussion-evidence.test.cjs','music-salience.test.cjs','choreography-quality.test.cjs','perceptual-validation.test.cjs','semantic-choreography-strategy.test.cjs','analysis-cache-recovery-v3.test.cjs','feature-store-contract.test.cjs']
 # The 2.2.2 adapter-retention test is intentionally historical: its contract
 # rejects any later analysis-manifest transition. Keep it runnable directly,
 # but do not let a new release fail the current regression gate by design.
