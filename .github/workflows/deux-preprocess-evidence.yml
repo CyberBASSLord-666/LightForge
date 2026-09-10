@@ -67,7 +67,8 @@ jobs:
           python3 -m pip install --no-cache-dir torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu
           python3 -m pip install --no-cache-dir -r tools/model-requirements.txt
           python3 tools/prepare_deux.py
-          python3 tools/regenerate_analysis_asset_manifest.py --check
+          python3 tools/regenerate_analysis_asset_manifest.py --check \
+            --receipt benchmark/deux-asset-manifest.json
       - name: Prepare the licensed multi-passage reference fixture
         run: |
           sudo apt-get update -qq
