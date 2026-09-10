@@ -83,3 +83,29 @@ test('movement targets are already on the offset FSEQ clock and are never shifte
  const report=sync.review(show,[],[{outputId:'mirrorL',channels:[35],time:4,kind:'unfold-arrival'}]);
  assert.equal(report.mechanical.matched,1);assert.equal(report.timing.command.mechanical.medianMs,0);
 });
+
+test('collision diagnostics separate raw candidate rejection from high-salience rescue outcomes',()=>{
+ const show={stepMs:20,frameCount:101,frames:new Uint8Array(101*200),settings:{offsetMs:0,manualCues:[],outputEnabled:{}},lightEvents:[],movements:[],choreography:{lighting:{
+  suppressedCollisions:7,rescuedCollisions:2,unresolvedHighSalienceCollisions:1,collisionResolutionTruncated:3,
+  collisionResolutions:[
+   {groupId:'impact-1000',eventType:'musical impact',preferredOutput:'left-signature',chosenOutput:'left-repeater',chosenOutputs:['left-repeater','right-repeater'],time:1,salience:.92,tier:'climax',outcome:'rescued',reason:'safe-symmetric-secondary-group'},
+   {groupId:'impact-2000',eventType:'musical impact',preferredOutput:'left-signature',chosenOutput:null,chosenOutputs:[],time:2,salience:.86,tier:'structural',outcome:'suppressed',reason:'all-preferred-outputs-collided'}
+  ]
+ }}};
+ const report=sync.review(show,[],[]),rescue=report.collision.highSalienceResolution;
+ assert.equal(report.collision.candidateSuppressedCollisions,7);
+ assert.equal(rescue.available,true);assert.equal(rescue.rescuedHighSalienceCount,2);assert.equal(rescue.unresolvedHighSalienceCount,1);
+ assert.equal(rescue.rescuedCollisions,2);assert.equal(rescue.unresolvedHighSalienceCollisions,1);
+ assert.equal(rescue.attemptedHighSalienceCount,3);assert.equal(rescue.rescueRate,2/3);assert.equal(rescue.omittedResolutionRecords,3);
+ assert.equal(rescue.resolutionRecords[0].outcome,'rescued');assert.equal(rescue.resolutionRecords[1].outcome,'suppressed');
+});
+test('validation report retains explicit calibration provenance without assuming default latency',()=>{
+ const plain=engine.generate(fixture(),settings).validation.synchronization.calibrationProvenance;
+ assert.equal(plain.status,'unconfigured');assert.equal(plain.configured,false);assert.equal(plain.calibrationId,null);
+ const calibration={version:1,enabled:true,calibrationId:'local-rig-01',outputs:{mirrorL:{commandLatencyMs:150}}};
+ const show=engine.generate(fixture(),{...settings,vehicleTimingCalibration:calibration});
+ const report=show.validation.synchronization.calibrationProvenance;
+ assert.equal(report.status,'explicit-user-configuration');assert.equal(report.configured,true);assert.equal(report.calibrationId,'local-rig-01');
+ assert.deepEqual(report.configuredOutputIds,['mirrorL']);assert.deepEqual(report.closureLeadAdjustedOutputIds,['mirrorL']);assert.deepEqual(report.metadataOnlyOutputIds,[]);
+ assert.equal(report.outputs[0].travelEvidence,'unverified-planning-envelope');
+});

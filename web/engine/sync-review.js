@@ -78,6 +78,54 @@
   function lossRates(aggregate){
     return {count:aggregate.collisionLoss,rate:aggregate.selected?aggregate.collisionLoss/aggregate.selected:null,highSalienceCount:aggregate.highSalienceCollisionLoss,highSalienceRate:aggregate.highSalienceSelected?aggregate.highSalienceCollisionLoss/aggregate.highSalienceSelected:null};
   }
+  const nonNegativeInteger=value=>Number.isInteger(value)&&value>=0?value:0;
+  const safeText=(value,max=160)=>typeof value==='string'?value.slice(0,max):null;
+  const plainObject=value=>!!value&&typeof value==='object'&&!Array.isArray(value);
+  function rescueRecord(value){
+    if(!plainObject(value))return null;
+    const outcome=value.outcome==='rescued'||value.outcome==='suppressed'?value.outcome:'unknown';
+    return {
+      groupId:safeText(value.groupId),eventType:safeText(value.eventType),
+      preferredOutput:safeText(value.preferredOutput),chosenOutput:safeText(value.chosenOutput),
+      chosenOutputs:uniqueIds(value.chosenOutputs).slice(0,16),
+      time:finite(value.time)?value.time:null,salience:finite(value.salience)?clamp(value.salience,0,1):null,
+      tier:['structural','climax'].includes(value.tier)?value.tier:'unknown',outcome,reason:safeText(value.reason,240)
+    };
+  }
+  function highSalienceResolution(show){
+    const lighting=show&&show.choreography&&show.choreography.lighting;
+    const available=plainObject(lighting)&&(Object.prototype.hasOwnProperty.call(lighting,'rescuedCollisions')||Object.prototype.hasOwnProperty.call(lighting,'unresolvedHighSalienceCollisions'));
+    const rescued=available?nonNegativeInteger(lighting.rescuedCollisions):0,unresolved=available?nonNegativeInteger(lighting.unresolvedHighSalienceCollisions):0;
+    const records=[];
+    if(available&&Array.isArray(lighting.collisionResolutions))for(const value of lighting.collisionResolutions.slice(0,128)){const record=rescueRecord(value);if(record)records.push(record);}
+    const attempts=rescued+unresolved;
+    return {
+      available,source:available?'lighting-planner-high-salience-logical-groups':'not-available-in-this-show',
+      attemptedHighSalienceCount:attempts,rescuedHighSalienceCount:rescued,unresolvedHighSalienceCount:unresolved,
+      rescuedCollisions:rescued,unresolvedHighSalienceCollisions:unresolved,
+      rescueRate:attempts?rescued/attempts:null,resolutionRecords:records,
+      omittedResolutionRecords:available?nonNegativeInteger(lighting.collisionResolutionTruncated):0
+    };
+  }
+  function calibrationProvenance(show,byId){
+    const calibration=show&&show.settings&&show.settings.vehicleTimingCalibration;
+    const base={schemaVersion:1,profileId:PROFILE&&PROFILE.id||null,profileVersion:PROFILE&&PROFILE.version||null,configured:false,calibrationId:null,configuredOutputIds:[],closureLeadAdjustedOutputIds:[],metadataOnlyOutputIds:[],outputs:[],source:'none',note:'No vehicle-response latency is inferred without an explicit calibration.'};
+    if(calibration===undefined||calibration===null)return Object.assign({},base,{status:'unconfigured'});
+    if(!plainObject(calibration)||typeof calibration.enabled!=='boolean')return Object.assign({},base,{status:'invalid-configuration',source:'show.settings.vehicleTimingCalibration'});
+    if(!calibration.enabled)return Object.assign({},base,{status:'disabled',source:'show.settings.vehicleTimingCalibration'});
+    const calibrationId=typeof calibration.calibrationId==='string'&&/^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$/.test(calibration.calibrationId)?calibration.calibrationId:null;
+    const configuredOutputIds=plainObject(calibration.outputs)?Object.keys(calibration.outputs).filter(id=>byId.has(id)).sort():[];
+    if(!calibrationId||!configuredOutputIds.length)return Object.assign({},base,{status:'invalid-configuration',source:'show.settings.vehicleTimingCalibration'});
+    const movement=show&&show.choreography&&show.choreography.movement&&show.choreography.movement.perceptualTiming;
+    const movementOutputs=movement&&plainObject(movement.outputs)?movement.outputs:{};
+    const outputs=configuredOutputIds.map(outputId=>{
+      const output=byId.get(outputId),row=plainObject(movementOutputs[outputId])?movementOutputs[outputId]:null,leadAdjusted=!!(row&&row.leadAdjusted===true);
+      return {outputId,kind:output&&output.kind||null,leadAdjusted,travelEvidence:safeText(row&&row.travelEvidence,80)};
+    });
+    const closureLeadAdjustedOutputIds=outputs.filter(row=>row.kind==='closure'&&row.leadAdjusted).map(row=>row.outputId);
+    const metadataOnlyOutputIds=outputs.filter(row=>!row.leadAdjusted).map(row=>row.outputId);
+    return Object.assign({},base,{status:'explicit-user-configuration',configured:true,calibrationId,configuredOutputIds,closureLeadAdjustedOutputIds,metadataOnlyOutputIds,outputs,source:'show.settings.vehicleTimingCalibration',note:'Configured timing is user-supplied provenance, not independently verified vehicle latency.'});
+  }
   function review(show,targets,movementTargets=[]){
     const step=(show&&finite(show.stepMs)?show.stepMs:20)/1000,byId=outputMap();
     const events=new Map();
@@ -152,7 +200,8 @@
       maxErrorMs:sortedLight.length?sortedLight[sortedLight.length-1]:null,
       medianErrorMs:sortedLight.length?percentile(sortedLight,.5):null,
       timing:{command:{lighting:distribution(lightErrors),mechanical:distribution(commandErrors)},predictedPerceptual:{lighting:null,mechanical:distribution(perceptualErrors)}},
-      collision:{targetLoss:lossRates(targetAggregate),mechanicalLoss:lossRates(mechanical),candidateSuppressedCollisions:lightingCandidateCollisions},
+      collision:{targetLoss:lossRates(targetAggregate),mechanicalLoss:lossRates(mechanical),candidateSuppressedCollisions:lightingCandidateCollisions,highSalienceResolution:highSalienceResolution(show)},
+      calibrationProvenance:calibrationProvenance(show,byId),
       targets:targetAggregate,
       mechanical,
       issues,

@@ -42,7 +42,7 @@ Analysis version 3 adds section and phrase `recurrenceGroup`, `similarity`, and 
 
 The show contains flat `Uint8Array frames`, `frameCount`, `channels: 200`, `channelCount: 200`, `stepMs`, `duration`, `audioDuration`, `sections`, `movements`, `settings`, `stats`, and `validation`. `generate()` throws actionable errors for unrepresentable audio durations, unsupported frame intervals, memory allocation failure, or an invalid generated result.
 
-`validate(show, music?)` returns `{valid, errors, warnings, stats}` and independently reads frame values to check closure use, channel validity, physical timing, and the end state. Supply `music` when checking audio duration alignment.
+`validate(show, music?)` returns `{valid, errors, warnings, stats}` and independently reads frame values to check closure use, channel validity, physical timing, and the end state. Supply `music` when checking audio duration alignment. Generated shows also attach `validation.synchronization`: its collision report keeps raw candidate rejections separate from logical high-salience rescue/unresolved counts, and `calibrationProvenance` records only an explicit user timing configuration (or that none was assumed).
 
 `fseq(show, audioFilename)` validates again and emits FSEQ v2.0, uncompressed, with 200 channels and the media filename metadata. Its duration rounds audio up by less than one frame. Audio conversion and ZIP creation belong to the native/export integration: use 44.1 kHz PCM WAV and put a matching basename pair inside the top-level case-sensitive `LightShow` directory.
 
