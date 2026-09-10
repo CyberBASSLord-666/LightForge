@@ -112,20 +112,71 @@ three passages, so one post-restore local passage can establish the cache and a
 later passage can exercise it. Its one-pair timing value is diagnostic only; it
 is not sufficient to declare a quality-preserving speedup.
 
+### Resumable exactness evidence (default off)
+
+The optional resumable mode is deliberately an **exactness-only** receipt for a
+full, otherwise unmodified comparison that cannot fit in a short-lived worker.
+It is not a shortcut for timing the experimental path. Enable it explicitly
+with a durable state directory and the two CI-produced immutable source
+receipts:
+
+```sh
+node tools/compare_deux_preprocess_reuse.cjs \
+  --fixture path/to/licensed-long.wav --fixture-provenance path/to/provenance.json \
+  --total-samples 661501 --threads 4 --verify-recovery on \
+  --evidence-mode resumable-exactness --state-dir build/deux-exactness-state \
+  --checkout-identities build/deux-checkout-identities.json \
+  --asset-inventory build/deux-asset-manifest.json \
+  --output build/deux-exactness-paired.json
+```
+
+Each arm writes its report and both raw Float32 PCM files to a uniquely named
+staging directory. Only after all three are complete does an atomic rename make
+the arm visible, followed by an atomic `complete.json` record containing the
+report and PCM hashes. A later invocation rejects an incomplete arm, any
+changed report/PCM byte, and any change to the comparator, benchmark runner,
+separator, shipped-model/analysis manifests, fixture/provenance, checkout
+commit/tree/blob identities, full Deux 27-graph inventory, passage geometry,
+thread count, or recovery point. It then rereads raw PCM from every resumed and
+new arm before checking baseline/candidate and candidate/recovery byte parity.
+
+The receipt always records `performanceAcceptance.accepted: false` and
+`observedWallClockReductionPercent: null` in this mode, including when no arm
+happened to be resumed. It is therefore valid only as a durable quality/recovery
+proof. The CI workflow uploads the state artifact on every terminal path; a
+manual dispatch may supply the exact earlier `resume_run_id` to restore it.
+Automatic PR runs always start a fresh state, and cross-tree state is rejected.
+
+### Governed uninterrupted timing mode
+
+Timing acceptance is a separate procedure, not a resumed exactness run. It
+must run baseline, candidate, and recovery as three fresh full-model arms in
+one uninterrupted parent process on a governed runner, with no `--state-dir`
+and no restored arm. Before use, calibrate the worker budget from a completed
+full arm and reserve setup time plus three P95 arms and margin. The runner must
+record exact hardware/runtime/CPU policy, cache state, and measurable thermal
+or energy conditions; otherwise those fields remain unavailable and cannot
+support acceptance.
+
+Only repeated, order-balanced baseline/candidate measurements on the locked
+corpus under those equivalent conditions can contribute to the release quality
+gate. Every timing candidate still requires fresh full-resolution PCM and
+recovery parity, differential review, and the existing no-regression rules.
+The short-lived GitHub-hosted exactness workflow is intentionally not a
+75-percent-speedup or locked-corpus performance claim.
+
 `Deux preprocessing actual-model evidence` is the CI entry point for this
 receipt. It reproduces the 27 shipped float32 graphs, prepares the checksummed
 licensed fixture, and builds an exact odd-length multi-passage WAV by copying
 verified float32 stereo PCM from three distinct licensed MUSDB mix excerpts. It
-does not resample, mix, add silence, or use generated audio. The job runs both
-arms and a controlled recovery in one Ubuntu job, then uploads comparator,
-source-provenance and runner-conditions receipts. It also records the exact CI
-checkout commit/tree/blob identities and validates the explicit Deux runtime
-subset: separator/DSP/WAV/ORT assets and every `models/deux/**` file, including
-the exact 27 graph inventory. The receipt names the omitted GAME assets rather
-than claiming a global asset attestation; the production gate still verifies all
-73 assets. It proves only actual-model PCM/recovery equivalence for this
-experiment. It does not turn an uncontrolled filesystem-cache state, one pair,
-or a single fixture into a target-speed or locked-corpus quality-gate pass.
-The receipts bind only the exact checkout commit/tree/blob identities recorded
-by that run. They are not reusable evidence for a later cache-combined tree;
-that candidate must rebuild every source-bound receipt from its own checkout.
+does not resample, mix, add silence, or use generated audio. The job records
+only full actual-model PCM/recovery exactness, then uploads the comparator,
+source-provenance, runner-conditions, and resumable state artifacts. It also
+records the exact CI checkout commit/tree/blob identities and validates the
+explicit Deux runtime subset: separator/DSP/WAV/ORT assets and every
+`models/deux/**` file, including the exact 27 graph inventory. The receipt
+names the omitted GAME assets rather than claiming a global asset attestation;
+the production gate still verifies all 73 assets. The receipts bind only the
+exact checkout commit/tree/blob identities recorded by that run. They are not
+reusable evidence for a later cache-combined tree; that candidate must rebuild
+every source-bound receipt from its own checkout.
