@@ -24,6 +24,31 @@ function ensureSemanticTimeline(result){
  result.semanticTimeline=timeline;
  return timeline;
 }
+function normalizeBassProvenance(result){
+ const analysis=result?.bassAnalysis;
+ if(!analysis||typeof analysis!=='object')return false;
+ // Earlier releases conflated a vocal-separated accompaniment mixture with an
+ // isolated bass stem. Keep that context, but never promote it to bass isolation.
+ const legacy=analysis.source==='separated-accompaniment'&&analysis.sourceSeparated===true&&analysis.instrumentSeparated===undefined;
+ const inputStem=analysis.inputStem==='bass'?'bass':analysis.inputStem==='accompaniment'||legacy?'accompaniment':(analysis.inputStem||'mixture');
+ const inputStemSeparated=analysis.inputStemSeparated===true||legacy;
+ const instrumentSeparated=analysis.instrumentSeparated===true;
+ const source=instrumentSeparated?'isolated-bass-stem':inputStem==='accompaniment'?'accompaniment-mixture-estimate':(analysis.source||'mixture-estimate');
+ const limitation=inputStem==='accompaniment'?'Bass notes are estimated from a vocal-separated accompaniment mixture, not an isolated bass stem.':null;
+ const oldLimitations=Array.isArray(analysis.limitations)?analysis.limitations:[];
+ const limitations=limitation&&!oldLimitations.includes(limitation)?[...oldLimitations,limitation]:oldLimitations;
+ const tag=value=>value&&typeof value==='object'?{...value,source,inputStem,inputStemSeparated,instrumentSeparated,sourceSeparated:instrumentSeparated,estimated:value.estimated!==false}:value;
+ const noteChanged=Array.isArray(result.bassNotes)&&result.bassNotes.some(value=>value&&typeof value==='object'&&(value.source!==source||value.inputStem!==inputStem||value.inputStemSeparated!==inputStemSeparated||value.instrumentSeparated!==instrumentSeparated||value.sourceSeparated!==instrumentSeparated||value.estimated===undefined));
+ const phraseChanged=Array.isArray(analysis.phrases)&&analysis.phrases.some(value=>value&&typeof value==='object'&&(value.source!==source||value.inputStem!==inputStem||value.inputStemSeparated!==inputStemSeparated||value.instrumentSeparated!==instrumentSeparated||value.sourceSeparated!==instrumentSeparated||value.estimated===undefined));
+ const role=result?.roleAnalysis,roleBassSource=inputStem==='accompaniment'?'Low-register harmonics in a vocal-separated accompaniment mixture; not an isolated bass stem.':role?.bassSource;
+ const roleChanged=!!role&&(Number(role.version||0)<5||role.bassSource!==roleBassSource||role.bassInputStem!==inputStem||role.accompanimentStemSeparated!==(inputStem==='accompaniment'&&inputStemSeparated)||role.bassInstrumentSeparated!==instrumentSeparated);
+ const changed=legacy||analysis.source!==source||analysis.inputStem!==inputStem||analysis.inputStemSeparated!==inputStemSeparated||analysis.instrumentSeparated!==instrumentSeparated||analysis.sourceSeparated!==instrumentSeparated||analysis.estimated===undefined||limitations!==oldLimitations||noteChanged||phraseChanged||roleChanged;
+ result.bassAnalysis={...analysis,source,inputStem,inputStemSeparated,instrumentSeparated,sourceSeparated:instrumentSeparated,estimated:analysis.estimated!==false,limitations,phrases:Array.isArray(analysis.phrases)?analysis.phrases.map(tag):analysis.phrases};
+ if(Array.isArray(result.bassNotes))result.bassNotes=result.bassNotes.map(tag);
+ if(roleChanged)result.roleAnalysis={...role,version:Math.max(5,Number(role.version||0)),bassSource:roleBassSource,bassInputStem:inputStem,accompanimentStemSeparated:inputStem==='accompaniment'&&inputStemSeparated,bassInstrumentSeparated:instrumentSeparated};
+ if(changed&&Number(result.analysisVersion||0)<8)result.analysisVersion=8;
+ return changed;
+}
 let nativeSequence=0;const nativeRequests=new Map();
 let nativeMdxSequence=0;const nativeMdxRequests=new Map();
 function nativePredict(startSample,onProgress=()=>{}){return new Promise((resolve,reject)=>{const requestId=++nativeSequence;nativeRequests.set(requestId,{resolve,reject,onProgress});postMessage({type:'native-deux',requestId,startSample});}).then(async url=>{
@@ -89,10 +114,11 @@ self.onmessage=async e=>{
   telemetry.cache(stage,'restore');
   const restored={...result,...cached};
   if(stage==='bass'){
+   const provenanceChanged=normalizeBassProvenance(restored);
    const timelinePhase=telemetry.begin('semantic.timeline');
-   const timeline=ensureSemanticTimeline(restored);
-   telemetry.end(timelinePhase,{restored:true,eventCount:timeline.events.length});
-   if(!cached.semanticTimeline)await store.write(stage,restored);
+   const timeline=ensureSemanticTimeline(restored),timelineWasCurrent=cached.semanticTimeline?.schemaVersion===timeline.schemaVersion;
+   telemetry.end(timelinePhase,{restored:true,eventCount:timeline.events.length,provenanceMigrated:provenanceChanged});
+   if(!timelineWasCurrent||provenanceChanged)await store.write(stage,restored);
   }
   report(({rhythm:.4,separation:.82,voice:.985,bass:1})[stage],'Restoring saved progress','Completed '+stage+' work restored',{checkpointSaved:true,restoredStage:stage});
   postMessage({type:'result',value:restored,restored:true,seconds:0,profile:telemetry.snapshot({restored:true})});
@@ -167,9 +193,10 @@ self.onmessage=async e=>{
    const stems=await LightForgeStemCache.readers(result.stemCache);
  report(.985,'Following bass notes','Listening beneath the separated singing');
  const bass=await LightForgeBass.analyze(stems.accompaniment,config,{onProgress:p=>report(.985+.014*p,'Following bass notes','Distinguishing sustained low notes from brief drum attacks')});
- const {notes,...bassAnalysis}=bass;result.bassNotes=notes;result.bassAnalysis={...bassAnalysis,source:'separated-accompaniment',sourceSeparated:true,limitations:[...(bassAnalysis.limitations||[]),'Bass notes are estimated from combined accompaniment, not an isolated bass instrument.']};
- result.analysisVersion=7;
- result.roleAnalysis={version:4,clock:'Original decoded audio',vocalSource:'Separated vocal waveform with singing and speech evidence',bassSource:'Low-register harmonics in separated accompaniment',sourceSeparated:true,lyricsAligned:false};
+ const {notes,...bassAnalysis}=bass;result.bassNotes=notes;result.bassAnalysis={...bassAnalysis,source:'accompaniment-mixture-estimate',inputStem:'accompaniment',inputStemSeparated:true,instrumentSeparated:false,sourceSeparated:false,limitations:[...(bassAnalysis.limitations||[]),'Bass notes are estimated from a vocal-separated accompaniment mixture, not an isolated bass stem.']};
+ normalizeBassProvenance(result);
+ result.analysisVersion=8;
+ result.roleAnalysis={version:5,clock:'Original decoded audio',vocalSource:'Separated vocal waveform with singing and speech evidence',bassSource:'Low-register harmonics in a vocal-separated accompaniment mixture; not an isolated bass stem',bassInputStem:'accompaniment',accompanimentStemSeparated:true,bassInstrumentSeparated:false,sourceSeparated:true,lyricsAligned:false};
  for(const warning of [...(result.vocals.warnings||[]),...(result.separation.limitations||[])])if(!result.warnings.includes(warning))result.warnings.push(warning);
  result.engine={name:'Beat This! '+(quality==='precision'?'full + Deux':'compact + MDX')+' + GAME Large',neural:true,detail:'Bundled pretrained rhythm transformer, stereo vocal separation, isolated-voice singing and speech classification, GAME Large neural sung-note transcription, measured source expression, and independent accompaniment bass tracking. All audio stays on this device.',model:selected.model,modelId:selected.id,modelSha256:selected.sha256,frontendSha256:models.frontend.sha256,vocalModel:result.vocals.model,noteModel:result.vocals.transcription.model,separationModel:result.separation,bassMethod:result.bassAnalysis.method,quality,runtime:(result.separation.nativeModelPasses>0||result.separation.runtime==='onnxruntime-android-cpu')?'ONNX Runtime Android CPU + ONNX Runtime Web 1.20.1':'ONNX Runtime Web 1.20.1',analysisSeconds:Math.round((performance.now()-started)/100)/10};
  const timelinePhase=telemetry.begin('semantic.timeline');

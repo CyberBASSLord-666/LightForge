@@ -1,6 +1,6 @@
 # LightForge 2.1 offline music intelligence
 
-`MusicAnalyzer.analyze(audioUrl, options, onProgress, signal)` returns analysis version 6.
+`MusicAnalyzer.analyze(audioUrl, options, onProgress, signal)` returns analysis version 8.
 Every runtime graph is bundled in the APK. Audio never leaves the device, and
 there are no runtime downloads, keys, subscriptions or remote services.
 
@@ -10,7 +10,7 @@ there are no runtime downloads, keys, subscriptions or remote services.
 | Stereo source separation | Mel-Band RoFormer Deux | UVR MDX-Net Voc FT |
 | Singing/speech evidence | PretrainedSED Frame-MN10 | Same |
 | Sung-note transcription | GAME Large 1.0.3 | Same |
-| Bass notes | Harmonic tracking in separated accompaniment | Same |
+| Bass notes | Harmonic tracking in vocal-separated accompaniment mixture (not a bass stem) | Same |
 
 ## Separation and original audio clock
 
@@ -52,9 +52,11 @@ articulations remain. Confidence describes relative singing evidence, not a
 calibrated GAME probability. Lead and backing singers remain combined. This is
 singing-note transcription, not lyrics, exact word alignment or singer separation.
 
-Bass tracking still uses low-register harmonics in combined accompaniment.
-This is not a dedicated bass separator. Drums and other instruments remain,
-and real-song onset estimates can be ambiguous.
+Bass tracking uses low-register harmonics in a vocal-separated accompaniment mixture.
+The input has been separated from lead vocals, but it is not an isolated bass stem:
+drums and other instruments remain, and real-song onset estimates can be ambiguous.
+The semantic timeline records this as separated accompaniment context, never as
+an isolated bass source.
 
 ## Rhythm, memory and cancellation
 
