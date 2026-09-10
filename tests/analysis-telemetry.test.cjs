@@ -2,9 +2,14 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const telemetry=require('../web/analysis/telemetry.js');
 const source=fs.readFileSync(path.join(__dirname,'..','web','analysis','telemetry.js'),'utf8');
+const clockSource=fs.readFileSync(path.join(__dirname,'..','web','analysis','diagnostic-clock.js'),'utf8');
 function virtualProfile(configure){
  const context=vm.createContext({});configure(context);context.self=context;
  vm.runInContext(source,context);return context.LightForgeAnalysisTelemetry.create('hostile-runtime');
+}
+function virtualClock(configure){
+ const context=vm.createContext({});configure(context);context.self=context;
+ vm.runInContext(clockSource,context);return context.LightForgeDiagnosticClock.create(context);
 }
 
 async function main(){
@@ -39,6 +44,14 @@ async function main(){
  let functionCalls=0;const lateFunction=virtualProfile(context=>{context.performance={now(){functionCalls++;if(functionCalls<=2)return functionCalls*100;throw Error('late clock function failure');}};context.navigator={};});
  const functionToken=lateFunction.begin('late-clock-function');lateFunction.end(functionToken);const functionSnapshot=lateFunction.snapshot();
  assert.equal(functionSnapshot.totalWallClockMs,0,'a late performance function failure must not be mixed with Date.now');assert.equal(functionSnapshot.spans[0].durationMs,0);assert.deepEqual({...functionSnapshot.timing},{source:'performance.now',state:'observed-error'});
+ const unavailable=virtualClock(context=>{context.performance={};context.Date={};});
+ assert.equal(unavailable.source,'unavailable');assert.equal(unavailable.elapsed(unavailable.start),0);assert.deepEqual({...unavailable.diagnostics()},{source:'unavailable',state:'unavailable',reason:'date-now-unavailable'});
+ const fallback=virtualClock(context=>{context.performance={};context.Date={now:()=>50};});
+ assert.equal(fallback.source,'date.now');assert.equal(fallback.elapsed(fallback.start),0);assert.deepEqual({...fallback.diagnostics()},{source:'date.now',state:'fallback',reason:'performance-now-unavailable'});
+ let clockGetterCalls=0;const clockGetter=virtualClock(context=>{context.Date={now:()=>1789000000000};context.performance={};Object.defineProperty(context.performance,'now',{get(){clockGetterCalls++;if(clockGetterCalls===1)return ()=>100;throw Error('late clock getter');}});});
+ assert.equal(clockGetter.elapsed(clockGetter.start),0);assert.deepEqual({...clockGetter.diagnostics()},{source:'performance.now',state:'observed-error',reason:'performance-now-observed-error'});
+ let clockFunctionCalls=0;const clockFunction=virtualClock(context=>{context.Date={now:()=>1789000000000};context.performance={now(){clockFunctionCalls++;if(clockFunctionCalls===1)return 100;throw Error('late clock function');}};});
+ assert.equal(clockFunction.elapsed(clockFunction.start),0);assert.deepEqual({...clockFunction.diagnostics()},{source:'performance.now',state:'observed-error',reason:'performance-now-observed-error'});
  console.log('Analysis telemetry contract passed.');
 }
 main().catch(error=>{console.error(error);process.exitCode=1;});
