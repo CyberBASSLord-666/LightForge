@@ -9,6 +9,7 @@
   const CUES = root.MusicCues || (typeof require === 'function' ? require('./music-cues.js') : null);
   const SYNC = root.SyncReview || (typeof require === 'function' ? require('./sync-review.js') : null);
   const QUALITY = root.ChoreographyQuality || (typeof require === 'function' ? require('./choreography-quality.js') : null);
+  const SEMANTIC_CHOREOGRAPHY = root.SemanticChoreography || (typeof require === 'function' ? require('./semantic-choreography.js') : null);
   const PROFILE = root.VehicleProfile || (typeof require === 'function' ? require('./vehicle-profile.js') : null);
   const LIGHTS = root.LightPlanner || (typeof require === 'function' ? require('./light-planner.js') : null);
   const MOVEMENT = root.MovementPlanner || (typeof require === 'function' ? require('./movement-planner.js') : null);
@@ -100,6 +101,9 @@
       append(event.id);append(event.type);append(event.time);append(event.duration);append(event.source);append(event.confidence);append(event.intensity);append(event.salience);
       append(event.rhythm?.barPosition);append(event.rhythm?.beatTime);append(event.structure?.sectionIndex);append(event.structure?.phraseIndex);
       append(event.relationships?.crossStemAgreement);append(event.recurrenceGroup);append(event.repetitionIndex);
+      // This exactly matches the analysis salience sidecar: an explicit
+      // low-trust cap must not reuse an uncapped semantic ranking binding.
+      if(event.salienceCap!==undefined){append('salience-cap-v1');append(event.salienceCap);}
     }
     return ('00000000'+(hash>>>0).toString(16)).slice(-8);
   }
@@ -180,11 +184,84 @@
       musicCues:CUES.normalize(input.musicCues),vocalOffsetMs:number('vocalOffsetMs',0,-2000,2000),bassOffsetMs:number('bassOffsetMs',0,-2000,2000),movementDensity:number('movementDensity',.7,0,1),vocalFocus:number('vocalFocus',.85,0,1),bassFocus:number('bassFocus',.9,0,1),vocalRegions:normalizeVocalRegions(input.vocalRegions),downbeatAnchor:finite(input.downbeatAnchor)&&input.downbeatAnchor>=0?input.downbeatAnchor:null,meterOverride:[3,4].includes(input.meterOverride)?input.meterOverride:null,tempoScale:[.5,1,2].includes(input.tempoScale)?input.tempoScale:1,
       dance:['expressive','balanced','off'].includes(input.dance)?input.dance:'expressive',style:['festival','cinematic','pulse'].includes(input.style)?input.style:'festival',
       seed:finite(input.seed)?input.seed>>>0:666,palette:PALETTES[input.palette]?input.palette:'aurora',
-      beatDivision:['auto','quarter','eighth'].includes(input.beatDivision)?input.beatDivision:'auto',offsetMs:number('offsetMs',0,-2000,2000),
+      beatDivision:['auto','quarter','eighth'].includes(input.beatDivision)?input.beatDivision:'auto',offsetMs:number('offsetMs',0,-2000,2000),semanticChoreography:input.semanticChoreography===true,
       enabled:Object.assign({windows:true,mirrors:true,trunk:true,charge:true,interior:true},input.enabled||{}),optionalFog:false,
       outerBeamRamping:input.outerBeamRamping===true,outputEnabled:normalizeOutputEnabled(input.outputEnabled),manualCues:normalizeManualCues(input.manualCues,input.outerBeamRamping===true),
       sectionOverrides:input.sectionOverrides&&typeof input.sectionOverrides==='object'?input.sectionOverrides:{},
-      ...(input.vehicleTimingCalibration===undefined?{}:{vehicleTimingCalibration:PROFILE.normalizePerceptualCalibration(input.vehicleTimingCalibration)})};
+      ...(input.vehicleTimingCalibration===undefined?{}:{vehicleTimingCalibration:PROFILE.normalizePerceptualCalibration(input.vehicleTimingCalibration)}),
+      ...(input.collisionAllocation===undefined?{}:{collisionAllocation:normalizeCollisionAllocation(input.collisionAllocation)})};
+  }
+  function normalizeCollisionAllocation(input) {
+    if(!input||typeof input!=='object'||Array.isArray(input))throw new Error('Collision allocation must be an object.');
+    const allowedTop=new Set(['version','enabled','minimumSalience','maxAllocations','tiers','fallbacks','targets']);
+    for(const key of Object.keys(input))if(!allowedTop.has(key))throw new Error('Collision allocation contains an unknown field: '+key+'.');
+    if(input.version!==undefined&&input.version!==1)throw new Error('Collision allocation version 1 is required.');
+    if(typeof input.enabled!=='boolean')throw new Error('Collision allocation must explicitly set enabled to true or false.');
+    if(!input.enabled){
+      if(Object.keys(input).some(key=>key!=='version'&&key!=='enabled'))throw new Error('Disabled collision allocation cannot contain targets or fallback data.');
+      return {version:1,enabled:false};
+    }
+    const outputIds=(value,label)=>{
+      if(!Array.isArray(value)||!value.length||value.length>16)throw new Error(label+' needs between 1 and 16 light outputs.');
+      const ids=[],channels=new Set();
+      for(const id of value){
+        if(typeof id!=='string'||!id||id.length>128)throw new Error(label+' contains an invalid output id.');
+        if(ids.includes(id))throw new Error(label+' cannot repeat an output.');
+        const output=outputById(id);
+        if(!output)throw new Error(label+' references an unknown vehicle output: '+id+'.');
+        if(output.kind!=='light'||output.available===false)throw new Error(label+' must use an available vehicle light output: '+id+'.');
+        if(output.channels.some(channel=>channels.has(channel)))throw new Error(label+' contains outputs with overlapping vehicle channels.');
+        for(const channel of output.channels)channels.add(channel);
+        ids.push(id);
+      }
+      return ids;
+    };
+    const groups=(value,label)=>{
+      if(!Array.isArray(value)||!value.length||value.length>16)throw new Error(label+' needs between 1 and 16 fallback groups.');
+      return value.map((group,index)=>outputIds(group,label+' group '+(index+1)));
+    };
+    const tierList=value=>{
+      const tiers=value===undefined?['structural','climax']:value;
+      if(!Array.isArray(tiers)||!tiers.length||tiers.length>6)throw new Error('Collision allocation tiers must contain one or more known salience tiers.');
+      const unique=Array.from(new Set(tiers));
+      if(unique.length!==tiers.length||unique.some(tier=>typeof tier!=='string'||!SALIENCE_TIERS.has(tier)))throw new Error('Collision allocation tiers must contain unique known salience tiers.');
+      return unique.sort();
+    };
+    const minimumSalience=input.minimumSalience===undefined?.78:input.minimumSalience;
+    if(!finite(minimumSalience)||minimumSalience<0||minimumSalience>1)throw new Error('Collision allocation minimumSalience must be between 0 and 1.');
+    const maxAllocations=input.maxAllocations===undefined?128:input.maxAllocations;
+    if(!Number.isInteger(maxAllocations)||maxAllocations<1||maxAllocations>128)throw new Error('Collision allocation maxAllocations must be an integer between 1 and 128.');
+    let fallbacks;
+    if(input.fallbacks!==undefined){
+      if(!input.fallbacks||typeof input.fallbacks!=='object'||Array.isArray(input.fallbacks))throw new Error('Collision allocation fallbacks must be an object.');
+      fallbacks={};
+      for(const key of Object.keys(input.fallbacks).sort()){
+        if(key!=='default'&&!SALIENCE_TIERS.has(key))throw new Error('Collision allocation fallback tier is not recognized: '+key+'.');
+        fallbacks[key]=groups(input.fallbacks[key],'Collision allocation fallback '+key);
+      }
+    }
+    if(!Array.isArray(input.targets)||input.targets.length>128)throw new Error('Collision allocation targets must be an array of at most 128 semantic targets.');
+    const semanticIds=new Set(),targets=input.targets.map((raw,index)=>{
+      if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new Error('Collision allocation target '+(index+1)+' must be an object.');
+      const allowedTarget=new Set(['semanticEventId','time','end','tier','salience','role','candidateOutputIds','preferredOutputIds','fallbackOutputGroups']);
+      for(const key of Object.keys(raw))if(!allowedTarget.has(key))throw new Error('Collision allocation target '+(index+1)+' contains an unknown field: '+key+'.');
+      if(typeof raw.semanticEventId!=='string'||!/^[A-Za-z0-9._:-]{1,128}$/.test(raw.semanticEventId))throw new Error('Collision allocation target '+(index+1)+' needs a safe semanticEventId.');
+      if(semanticIds.has(raw.semanticEventId))throw new Error('Collision allocation semanticEventIds must be unique.');
+      semanticIds.add(raw.semanticEventId);
+      if(!finite(raw.time)||!finite(raw.end)||raw.time<0||raw.end<=raw.time)throw new Error('Collision allocation target '+(index+1)+' needs a valid original-clock time span.');
+      if(typeof raw.tier!=='string'||!SALIENCE_TIERS.has(raw.tier))throw new Error('Collision allocation target '+(index+1)+' needs a known salience tier.');
+      if(!finite(raw.salience)||raw.salience<0||raw.salience>1)throw new Error('Collision allocation target '+(index+1)+' salience must be between 0 and 1.');
+      if(raw.role!==undefined&&(typeof raw.role!=='string'||!/^[A-Za-z0-9._:-]{1,64}$/.test(raw.role)))throw new Error('Collision allocation target '+(index+1)+' role must be a safe identifier.');
+      if(raw.candidateOutputIds!==undefined&&raw.preferredOutputIds!==undefined)throw new Error('Collision allocation target '+(index+1)+' must use candidateOutputIds or preferredOutputIds, not both.');
+      const candidateOutputIds=outputIds(raw.candidateOutputIds===undefined?raw.preferredOutputIds:raw.candidateOutputIds,'Collision allocation target '+(index+1)+' preferred outputs');
+      const fallbackOutputGroups=raw.fallbackOutputGroups===undefined?null:groups(raw.fallbackOutputGroups,'Collision allocation target '+(index+1)+' fallback');
+      const configuredFallbacks=fallbackOutputGroups||(fallbacks&&(fallbacks[raw.tier]||fallbacks.default));
+      if(!configuredFallbacks)throw new Error('Collision allocation target '+(index+1)+' needs configured fallback outputs.');
+      if(configuredFallbacks.some(group=>group.some(id=>candidateOutputIds.includes(id))))throw new Error('Collision allocation target '+(index+1)+' fallback outputs must differ from its preferred outputs.');
+      return {semanticEventId:raw.semanticEventId,time:raw.time,end:raw.end,tier:raw.tier,salience:raw.salience,role:raw.role||null,candidateOutputIds,
+        ...(fallbackOutputGroups?{fallbackOutputGroups}:{})};
+    });
+    return {version:1,enabled:true,minimumSalience,maxAllocations,tiers:tierList(input.tiers),...(fallbacks?{fallbacks}:{}),targets};
   }
   function outputById(id) {return PROFILE && PROFILE.outputs.find(output=>output.id===id);}
   function normalizeVocalRegions(input){
@@ -276,6 +353,9 @@
     });
     const show={version:VERSION,vehicle:'2025 Tesla Model 3 Long Range RWD',channels:CHANNELS,channelCount:CHANNELS,frameCount:n,stepMs:s.stepMs,duration,audioDuration:m.duration,frames,
       movements:[],sections:m.sections.map((section,i)=>Object.assign({},section,scenes[i])),settings:s,stats:{},warnings};
+    const semantic=matchingSemanticSalience(music);
+    const semanticStrategy=s.semanticChoreography&&semantic&&SEMANTIC_CHOREOGRAPHY&&typeof SEMANTIC_CHOREOGRAPHY.create==='function'
+      ?SEMANTIC_CHOREOGRAPHY.create(semantic,{stepMs:s.stepMs}):null;
     const movement=m.silent?{events:[],accents:[],targets:[],diagnostics:{selectedTargets:0}}:MOVEMENT.plan(m,s,PROFILE);
     for(const event of movement.events){
       const a=clamp(quant(event.start,step),0,n-1),b=clamp(quant(event.end,step),0,n-1);
@@ -283,7 +363,7 @@
       show.movements.push({...event,start:a*step,end:b*step});
       for(let f=a;f<b;f++)for(const ch of event.channels)frames[f*200+ch-1]=event.value;
     }
-    const lighting=LIGHTS.compose(show,m,s,movement);
+    const lighting=LIGHTS.compose(show,m,s,movement,semanticStrategy);
     const targetSalience=annotateSalienceTargets(music,lighting.targets,movement.targets,s),syncLightTargets=targetSalience?targetSalience.syncLightTargets:lighting.targets,syncMovementTargets=targetSalience?targetSalience.syncMovementTargets:movement.targets;
     if(!m.silent&&s.enabled.interior)paintInterior(show,m,s,lighting.context);
     applyManualCues(show);
@@ -291,6 +371,7 @@
     show.lightEvents=lighting.events;
     show.choreography={version:VERSION,analysisVersion:m.analysisVersion,meter:m.meter,meterConfidence:m.meterConfidence,phrases:m.phrases,impacts:m.impacts,targets:movement.targets,lighting:lighting.diagnostics,movement:movement.diagnostics,timing:m.timing,roles:{vocals:{available:m.vocals.available,presence:m.vocals.presence,confidence:m.vocals.confidence,method:m.vocals.method,phrases:m.vocals.phrases,accents:m.vocals.accents},bassNotes:m.bassNotes,bassAnalysis:{method:m.bassAnalysis.method,source:m.bassAnalysis.source,confidence:m.bassAnalysis.confidence,phrases:m.bassAnalysis.phrases}},rhythm:{beats:m.beats,downbeats:m.downbeats,meter:m.meter,bpm:m.bpm,groove:m.groove,correction:m.rhythmCorrection}};
     if(targetSalience)show.choreography.salienceTargets=targetSalience.public;
+    if(s.semanticChoreography)show.choreography.semanticStrategy=lighting.diagnostics.semanticStrategy||{schemaVersion:1,requested:true,active:false,reason:semantic?'no-linkable-semantic-targets':'semantic-linkage-invalid'};
     show.choreography.vocalDetail={phrases:m.vocals.phrases,notes:m.vocals.notes,accents:m.vocals.accents,sourceSeparated:m.vocals.sourceSeparated,source:m.vocals.source,presence:m.vocals.presence,manualRegions:m.vocals.manualRegions||[],lyricsAligned:false};
     show.stats={lightCues:lighting.events.length,manualCueCount:s.manualCues.length,beatCount:m.beats.length,onsetCount:m.onsets.length,bpm:m.bpm,beatConfidence:m.beatConfidence,beatLengthMs:60000/m.bpm,recommendedBeatDivision:m.bpm<=150?'eighth':'quarter',silent:m.silent,
       vocalPhraseCount:lighting.diagnostics.roles.vocals.eligibleEvents,bassNoteCount:lighting.diagnostics.roles.bass.eligibleEvents,vocalCues:lighting.diagnostics.roles.vocals.acceptedEvents,bassNoteCues:lighting.diagnostics.roles.bass.acceptedEvents,phraseCount:m.phrases.length,musicalImpactCount:m.impacts.length,movementTargets:movement.targets.length,lightQuantizationMaxMs:lighting.diagnostics.quantizationMaxMs};
@@ -520,3 +601,4 @@
   const api={version:VERSION,getCapabilities:()=>PROFILE,normalizeSettings,generate,validate,fseq,fseqHeader,preparePreview,stateAt,frameAt:(show,time)=>show.frames.subarray(clamp(Math.floor(time*1000/show.stepMs),0,show.frameCount-1)*200,clamp(Math.floor(time*1000/show.stepMs),0,show.frameCount-1)*200+200),channelMap,groups,COMMAND,palettes:Object.keys(PALETTES),invalidatePreview:show=>{delete show.previewIndex;return previewCache.delete(show);}};
   root.ShowEngine=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
+
