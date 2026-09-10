@@ -148,11 +148,26 @@ test('semantic consumers reject invalid canonical timelines even with a forged m
   assertRejected(invalidSalience);
 });
 
+test('semantic choreography rejects a forged but fingerprint-matching salience ranking',()=>{
+  const music=musicFixture(),settings={stepMs:20,dance:'expressive',seed:88};
+  const timeline=Timeline.build(music),salience=Salience.build(timeline);
+  const forged=structuredClone(salience);
+  const ranked=forged.events.find(event=>event.tier!=='climax')||forged.events[0];
+  ranked.tier=ranked.tier==='climax'?'micro':'climax';
+  assert.equal(forged.timelineFingerprint,engineTimelineFingerprint(timeline),'the attack must retain a matching timeline fingerprint');
+  assert.equal(Salience.validate(forged,timeline).valid,false,'canonical salience validation must reject a malformed rank/tier record');
+  const baseline=Engine.generate(music,settings);
+  const show=Engine.generate({...music,semanticTimeline:timeline,musicSalience:forged},{...settings,semanticChoreography:true});
+  assert.equal(show.choreography.semanticStrategy.active,false);
+  assert.deepEqual(show.frames,baseline.frames,'a malformed semantic ranking must fall back exactly to the legacy planner');
+  assert.deepEqual(Engine.fseq(show,'invalid-salience.wav'),Engine.fseq(baseline,'invalid-salience.wav'));
+});
+
 test('browser and composition-worker contexts load the canonical timeline before semantic strategy and ShowEngine',()=>{
   const html=fs.readFileSync(path.join(__dirname,'../web/index.html'),'utf8');
-  const timeline=html.indexOf('analysis/semantic-timeline.js'),quality=html.indexOf('engine/choreography-quality.js'),semantic=html.indexOf('engine/semantic-choreography.js'),engine=html.indexOf('engine/show-engine.js');
-  assert.ok(timeline>=0&&quality>timeline&&semantic>quality&&engine>semantic);
+  const timeline=html.indexOf('analysis/semantic-timeline.js'),salience=html.indexOf('analysis/salience.js'),quality=html.indexOf('engine/choreography-quality.js'),semantic=html.indexOf('engine/semantic-choreography.js'),engine=html.indexOf('engine/show-engine.js');
+  assert.ok(timeline>=0&&salience>timeline&&quality>salience&&semantic>quality&&engine>semantic);
   const worker=fs.readFileSync(path.join(__dirname,'../web/engine/worker.js'),'utf8');
-  const workerTimeline=worker.indexOf("'../analysis/semantic-timeline.js'"),workerSemantic=worker.indexOf("'semantic-choreography.js'"),workerEngine=worker.indexOf("'show-engine.js'");
-  assert.ok(workerTimeline>=0&&workerSemantic>workerTimeline&&workerEngine>workerSemantic);
+  const workerTimeline=worker.indexOf("'../analysis/semantic-timeline.js'"),workerSalience=worker.indexOf("'../analysis/salience.js'"),workerSemantic=worker.indexOf("'semantic-choreography.js'"),workerEngine=worker.indexOf("'show-engine.js'");
+  assert.ok(workerTimeline>=0&&workerSalience>workerTimeline&&workerSemantic>workerSalience&&workerEngine>workerSemantic);
 });
