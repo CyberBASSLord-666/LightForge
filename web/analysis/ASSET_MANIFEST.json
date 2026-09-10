@@ -280,8 +280,8 @@
     "sha256": "accc7aead92f045da9faf7a08019af757c73042850dd2fccc0e923f7d20043a1"
   },
   "stem-cache.js": {
-    "bytes": 17020,
-    "sha256": "14bbcb8fd0c431491818cd466450d54fd6674ed9ff0cbd0f275c45a85f615b1d"
+    "bytes": 17361,
+    "sha256": "776f6c274d929fff2da7d2bd12a6c26e94d39b2302d85fffd1962bb6cc766c45"
   },
   "stem-routing.js": {
     "bytes": 8980,
@@ -324,12 +324,11 @@
     "sha256": "0f0e5216dc1d2ca0bfb25eddacdaa21076990fa7638c22188023607e43d4005f"
   },
   "work-store.js": {
-    "bytes": 14564,
-    "sha256": "94cc60efb59146e1a12546d51871e8c45c6fcbec67d1090972deb0f313d001d2"
+    "bytes": 14973,
+    "sha256": "5d8216027a3f4831b6b970f0b4a88380ca5daa10980bc3d8122270360ec3e5e3"
   },
   "worker.js": {
-    "bytes": 34630,
-    "sha256": "3cd476aeb13c76ea781d32885eb9b715bf0b0d25df40a174f221d126c70cc8c2"
+    "bytes": 34954,
+    "sha256": "f9223343280d183ab598584fa193a1063f38e269d4e012a583c1f68c1c52ffe0"
   }
 }
-
