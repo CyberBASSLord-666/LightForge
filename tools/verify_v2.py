@@ -26,6 +26,38 @@ QUALITY_TOOL_TESTS=[
     'differential-analysis.test.py',
 ]
 
+# Node and native regression suites deliberately emit these current-release
+# receipts while they run. They are diagnostics uploaded by CI, not source
+# inputs or golden references. Keep this small explicit allowlist: any other
+# source mutation still fails closed and reports the exact paths.
+GENERATED_RUNTIME_REPORTS=frozenset({
+    'analysis-browser-verification.json',
+    'analysis-verification.json',
+    'background-ui-verification.json',
+    'browser-verification.json',
+    'composer-verification.json',
+    'light-verification.json',
+    'movement-verification.json',
+    'native-mdx-comparison-verification.json',
+    'native-mdx-downstream-native.json',
+    'native-mdx-downstream-verification.json',
+    'native-mdx-downstream-wasm.json',
+    'native-recovery-results.json',
+    'native-runtime-comparison-verification.json',
+    'native-verification.json',
+    'regression-verification.json',
+    'role-composer-verification.json',
+    'role-reference-composer-verification.json',
+    'source-clock-verification.json',
+})
+
+def is_generated_runtime_report(path):
+    try:
+        relative=path.relative_to(OUT)
+    except ValueError:
+        return False
+    return len(relative.parts)==1 and relative.name in GENERATED_RUNTIME_REPORTS
+
 def digest(p):
     with p.open('rb') as f:return hashlib.file_digest(f,'sha256').hexdigest()
 
@@ -39,7 +71,11 @@ def hashes():
         'qa': {'.json','.py'},
         '.github/workflows': {'.yml','.yaml'},
     }.items():
-        paths.extend(p for p in (ROOT/folder).rglob('*') if p.is_file() and p.suffix in suffixes and '__pycache__' not in p.parts)
+        paths.extend(
+            p for p in (ROOT/folder).rglob('*')
+            if p.is_file() and p.suffix in suffixes and '__pycache__' not in p.parts
+            and not is_generated_runtime_report(p)
+        )
     return {str(p.relative_to(ROOT)):digest(p) for p in sorted(set(paths))}
 
 def run_python_scripts(scripts, log_path):
@@ -72,7 +108,9 @@ def main():
         verify_assets()
         receipt['checks'].append('Every bundled analysis asset matches the current manifest; actual model quality and runtime are checked separately.')
         receipt['analysis_manifest_sha256']=digest(ROOT/'web/analysis/ASSET_MANIFEST.json')
-        assert receipt['source_hashes']==hashes(),'Sources changed during verification.'
+        source_after=hashes()
+        changed=sorted(path for path in set(receipt['source_hashes'])|set(source_after) if receipt['source_hashes'].get(path)!=source_after.get(path))
+        assert not changed,'Sources changed during verification: '+', '.join(changed)
         receipt['passed']=True
     except Exception as error:receipt['errors'].append(str(error))
     receipt['completedAt']=datetime.datetime.now(datetime.timezone.utc).isoformat()
