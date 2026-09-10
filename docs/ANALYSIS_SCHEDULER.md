@@ -14,3 +14,5 @@ Each granted lease exposes a bounded, privacy-safe diagnostics object:
 - `admissionTicket`
 
 No audio path, project ID, cache key, lyric, or model payload is placed in scheduler diagnostics. A queued job can be cancelled before admission without touching its existing checkpoint. The caller must always release a granted lease in `finally`; release is idempotent and waits for the cross-tab lock to be relinquished before the next local job starts.
+
+The interactive studio (`web/index.html`) and service-owned background runner (`web/background/runner.html`) both load this module before `analysis/analyzer.js`. If a background WebView does not expose Web Locks, the scheduler records `single-context` for that run and preserves the established one-job service ownership.

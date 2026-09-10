@@ -3,6 +3,11 @@ const test=require('node:test'),assert=require('node:assert/strict'),fs=require(
 const {JSDOM}=require('jsdom'),runWorker=require('./worker-harness.cjs'),root=path.resolve(__dirname,'..');
 const music={duration:2,bpm:120,beats:[0,.5,1,1.5],waveform:[.4],beatConfidence:.9,sections:[{start:0,end:2,energy:.7}],analysisVersion:6};
 const waitFor=async fn=>{for(let i=0;i<200;i++){if(fn())return;await new Promise(r=>setTimeout(r,10));}throw Error('Timed out');};
+
+test('background runner loads the same analysis scheduler before MusicAnalyzer',()=>{
+ const html=fs.readFileSync(path.join(root,'web/background/runner.html'),'utf8'),store=html.indexOf('../analysis/work-store.js'),scheduler=html.indexOf('../analysis/scheduler.js'),analyzer=html.indexOf('../analysis/analyzer.js');
+ assert.ok(store>=0&&scheduler>store&&analyzer>scheduler,'Background runner must load checkpoint storage, scheduler, then analyzer in order.');
+});
 test('background runner checkpoints analysis and commits an actual compiled show without a studio document',async()=>{
  const progressEvents=[],events=[],request={analysisIdentity:'a'.repeat(64),version:1,projectId:'show-test',name:'Background',duration:2,settings:{dance:'off'},music:null,needAnalysis:true};let done=false,saved;
  const context={URL,AbortController,DOMException,console,location:{href:'https://appassets.androidplatform.net/background/runner.html?job=job-one'},navigator:{},
