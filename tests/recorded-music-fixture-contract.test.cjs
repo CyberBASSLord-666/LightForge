@@ -71,7 +71,7 @@ function verify(){
     add(errors,isObject(analysis),`${expected.file} must decode to an analysis object`);
     if(!isObject(analysis))continue;
     add(errors,analysis.analysisVersion===expected.analysisVersion,`${expected.file} analysisVersion changed`);
-    add(errors,Math.abs(analysis.duration-expected.duration)<1e-9,`${expected.file} duration changed`);
+    add(errors,Number.isFinite(analysis.duration)&&Math.abs(analysis.duration-expected.duration)<1e-9,`${expected.file} duration schema/value changed`);
     for(const [key,count] of Object.entries({beats:expected.beats,downbeats:expected.downbeats,sections:expected.sections}))add(errors,Array.isArray(analysis[key])&&analysis[key].length===count,`${expected.file} ${key} schema/count changed`);
     for(const key of ['onsets','waveform','energy','warnings'])add(errors,Array.isArray(analysis[key]),`${expected.file} ${key} must remain an array`);
     add(errors,isObject(analysis.engine)&&analysis.engine.neural===true,`${expected.file} must retain recorded neural-engine provenance`);
