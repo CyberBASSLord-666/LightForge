@@ -1,9 +1,11 @@
 'use strict';
 const assert=require('assert');
 const fs=require('fs');
+const path=require('path');
 const vm=require('vm');
+const {test:nodeTest}=require('node:test');
 const context={console};context.self=context;vm.createContext(context);
-vm.runInContext(fs.readFileSync(require('path').join(__dirname,'../web/analysis/rhythm-hierarchy.js'),'utf8'),context,{filename:'rhythm-hierarchy.js'});
+vm.runInContext(fs.readFileSync(path.join(__dirname,'../web/analysis/rhythm-hierarchy.js'),'utf8'),context,{filename:'rhythm-hierarchy.js'});
 const api=context.LightForgeRhythmHierarchy;
 const close=(actual,expected,message)=>assert.ok(Math.abs(actual-expected)<1e-3,message||`${actual} !== ${expected}`);
 
@@ -102,5 +104,28 @@ function rhythm(overrides={}){
  assert.equal(second.attached,false);
  assert.equal(second.reused,true);
 }
+
+nodeTest('cached rhythm sidecar is opt-in and never leaks into the legacy restore',async()=>{
+ const workerSource=fs.readFileSync(path.join(__dirname,'../web/analysis/worker.js'),'utf8');
+ const moduleSource=fs.readFileSync(path.join(__dirname,'../web/analysis/rhythm-hierarchy.js'),'utf8');
+ async function run(options,cached){
+  const messages=[],writes=[],workerContext={console,performance:{now:()=>10},postMessage:value=>messages.push(value),fetch:async()=>({json:async()=>({})})};
+  workerContext.self=workerContext;
+  workerContext.importScripts=(...names)=>{for(const name of names)if(name==='rhythm-hierarchy.js')vm.runInContext(moduleSource,workerContext,{filename:name});};
+  workerContext.LightForgeAnalysisStore={open:async()=>({read:async()=>cached,write:async(...args)=>writes.push(args)})};
+  vm.createContext(workerContext);
+  vm.runInContext(workerSource,workerContext,{filename:'worker.js'});
+  await workerContext.onmessage({data:{stage:'rhythm',audioUrl:'memory://audio',options,value:{}}});
+  return {messages,writes};
+ }
+ const enabled=await run({rhythmHierarchy:true},rhythm());
+ const enabledResult=enabled.messages.find(value=>value.type==='result');
+ assert.ok(enabledResult?.value?.rhythmHierarchy);
+ assert.equal(enabled.writes.length,1,'a validated opt-in hierarchy is checkpointed for reuse');
+ const legacy=await run({},({...rhythm(),rhythmHierarchy:enabledResult.value.rhythmHierarchy}));
+ const legacyResult=legacy.messages.find(value=>value.type==='result');
+ assert.equal(legacyResult?.value?.rhythmHierarchy,undefined,'a default restore remains byte-compatible at the public legacy boundary');
+ assert.equal(legacy.writes.length,0,'default restore must not churn the rhythm checkpoint');
+});
 
 console.log('rhythm hierarchy tests passed');
