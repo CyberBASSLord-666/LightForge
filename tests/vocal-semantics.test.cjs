@@ -62,6 +62,10 @@ test('links only exact existing vocal timeline events and fails closed on a chan
  assert.equal(link.notes.length,sidecar.notes.length);
  assert.equal(link.articulations.length,sidecar.articulations.length);
  assert.match(link.timelineFingerprint,/^vt1-[0-9a-f]{16}$/);
+ const retuned=structuredClone(timeline);retuned.events.find(value=>value.type==='vocal_note').midi=67;
+ assert.notEqual(VocalSemantics.linkTimeline(sidecar,retuned).timelineFingerprint,link.timelineFingerprint,'a semantically changed but time-identical timeline must not retain the old link binding');
+ const recapped=structuredClone(timeline);recapped.events.find(value=>value.type==='vocal_accent').salienceCap=.42;
+ assert.notEqual(VocalSemantics.linkTimeline(sidecar,recapped).timelineFingerprint,link.timelineFingerprint,'a cap-only timeline mutation must invalidate the vocal link binding');
  const shifted=structuredClone(timeline);shifted.events.find(value=>value.type==='vocal_accent'&&value.kind==='syllabic-accent').time+=.01;
  assert.throws(()=>VocalSemantics.linkTimeline(sidecar,shifted),/cannot be linked/);
 });

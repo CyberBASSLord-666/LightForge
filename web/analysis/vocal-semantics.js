@@ -169,8 +169,32 @@
   if(input!==undefined)try{const expected=inputEnvelope(input);if(!near(sidecar?.duration,expected.duration)||sidecar?.sourceFingerprint!==sourceFingerprint(expected))errors.push('Vocal semantic sidecar does not match current vocal evidence.');}catch(error){errors.push(String(error.message||error));}
   return {valid:errors.length===0,errors};
  }
+ function canonicalTimelineTokens(value,tokens,seen=new Set()){
+  if(value===null){tokens.push('null');return;}
+  const type=typeof value;
+  if(type==='string'){tokens.push('string',value);return;}
+  if(type==='boolean'){tokens.push('boolean',value?1:0);return;}
+  if(type==='number'){tokens.push('number',finite(value)?round(value):String(value));return;}
+  if(type==='undefined'){tokens.push('undefined');return;}
+  if(type==='bigint'){tokens.push('bigint',String(value));return;}
+  if(type==='symbol'||type==='function')throw Error('Vocal semantic timeline link received a non-data timeline value.');
+  if(seen.has(value))throw Error('Vocal semantic timeline link received a cyclic timeline.');
+  seen.add(value);
+  if(Array.isArray(value)){
+   tokens.push('array',value.length);
+   for(const item of value)canonicalTimelineTokens(item,tokens,seen);
+  }else{
+   const keys=Object.keys(value).sort(compare);
+   tokens.push('object',keys.length);
+   for(const key of keys){tokens.push('key',key);canonicalTimelineTokens(value[key],tokens,seen);}
+  }
+  seen.delete(value);
+ }
  function timelineFingerprint(timeline){
-  const values=[timeline?.schemaVersion,timeline?.duration,timeline?.clock];for(const event of timeline?.events||[])values.push(event.id,event.type,event.time,event.duration,event.source,event.confidence,event.intensity);return 'vt1-'+hash(values);
+  // Links bind the complete canonical timeline, not just their matching vocal
+  // events. This includes salience caps and any future semantic fields so a
+  // planner cannot reuse a link after a cap-aware timeline mutation.
+  const values=[];canonicalTimelineTokens(timeline,values);return 'vt1-'+hash(values);
  }
  function linkTimeline(sidecar,timeline){
   const sidecarCheck=validate(sidecar);if(!sidecarCheck.valid)throw Error('Cannot link invalid vocal semantic sidecar: '+sidecarCheck.errors.join('; '));

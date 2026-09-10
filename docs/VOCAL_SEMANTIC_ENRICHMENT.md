@@ -42,9 +42,11 @@ rebuilt or restored only after vocal analysis is complete.
 `linkTimeline(sidecar, timeline)` returns mappings only when every sidecar
 phrase, accepted note, and articulation exactly matches an already-existing
 `vocal_phrase`, `vocal_note`, or `vocal_accent` semantic-timeline event on the
-same clock. It throws on a mismatch. The link does not mutate the timeline or
-emit vehicle commands; any future choreography consumer must opt in separately
-and preserve its own collision, density, and vehicle-feasibility gates.
+same clock. It throws on a mismatch and binds a canonical serialization of the
+entire timeline, including salience caps, so any semantic or cap-aware timeline
+mutation requires a fresh link. The link does not mutate the timeline or emit
+vehicle commands; any future choreography consumer must opt in separately and
+preserve its own collision, density, and vehicle-feasibility gates.
 
 ## Limits
 
