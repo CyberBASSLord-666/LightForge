@@ -50,6 +50,34 @@ The state is calculated from repeat order and bounded energy change. It is not a
 
 ## Compatibility and limits
 
-No worker, planner, vehicle model, or sequence compiler imports this module automatically. Existing analysis and FSEQ output therefore remain byte-equivalent until a caller deliberately wires a valid sidecar into an opt-in strategy.
+No analysis worker automatically builds this sidecar. The composition worker loads
+the validator only so it can reject an explicitly supplied sidecar before the
+opt-in motif bridge runs. Existing analysis and FSEQ output therefore remain
+byte-equivalent until a caller deliberately supplies a valid sidecar and enables
+the full choreography contract.
 
 Inputs are bounded to 512 sections, 360,000 energy frames, and 72,000 chroma frames. Incomplete, malformed, or stale evidence fails closed instead of being truncated or inferred. The module operates on the decoded-audio clock already established by the semantic timeline.
+
+## Opt-in choreography consumption
+
+The sidecar remains data unless every one of these independent proofs holds:
+
+- the caller supplies the exact \`semanticTimeline\`, \`musicSalience\`,
+  \`recurrenceEvidence\`, and \`recurrenceSidecar\`;
+- the semantic timeline and salience sidecar activate a real linkable semantic
+  strategy for the current planner targets;
+- \`LightForgeRecurrence.validate(recurrenceSidecar, semanticTimeline,
+  recurrenceEvidence)\` succeeds; and
+- the analysis result contains an exact \`recurrenceAnalysis\` provenance marker
+  with \`enabled: true\`, while settings explicitly set both
+  \`semanticChoreography: true\` and \`motifEvolution: true\`.
+
+\`web/engine/motif-evolution.js\` is the narrow bridge used by the show engine.
+It never calls \`captureEvidence\` or \`build\`; missing, corrupt, stale,
+oversized, span-incompatible, or semantically inactive input is inactive and
+leaves the corresponding non-motif composition unchanged. For a validated
+assignment it carries the generic motif identity into the section scene and
+maps bounded \`phase\`, \`repetitionIndex\`, \`variation\`, and energy context
+to a deterministic per-instance seed/variant plus at most a 0.12 intensity
+change. It does not apply command-timing offsets, add musical events, overwrite
+a user-supplied section seed, or relax vehicle/collision checks.

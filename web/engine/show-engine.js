@@ -10,6 +10,7 @@
   const SYNC = root.SyncReview || (typeof require === 'function' ? require('./sync-review.js') : null);
   const QUALITY = root.ChoreographyQuality || (typeof require === 'function' ? require('./choreography-quality.js') : null);
   const SEMANTIC_CHOREOGRAPHY = root.SemanticChoreography || (typeof require === 'function' ? require('./semantic-choreography.js') : null);
+  const MOTIF_EVOLUTION = root.MotifEvolution || (typeof require === 'function' ? require('./motif-evolution.js') : null);
   // Keep semantic planning tied to the canonical decoded-audio timeline. This
   // shared validator makes future timeline invariants fail closed here too.
   const SEMANTIC_TIMELINE = root.LightForgeSemanticTimeline || (typeof require === 'function' ? require('../analysis/semantic-timeline.js') : null);
@@ -194,12 +195,35 @@
       musicCues:CUES.normalize(input.musicCues),vocalOffsetMs:number('vocalOffsetMs',0,-2000,2000),bassOffsetMs:number('bassOffsetMs',0,-2000,2000),movementDensity:number('movementDensity',.7,0,1),vocalFocus:number('vocalFocus',.85,0,1),bassFocus:number('bassFocus',.9,0,1),vocalRegions:normalizeVocalRegions(input.vocalRegions),downbeatAnchor:finite(input.downbeatAnchor)&&input.downbeatAnchor>=0?input.downbeatAnchor:null,meterOverride:[3,4].includes(input.meterOverride)?input.meterOverride:null,tempoScale:[.5,1,2].includes(input.tempoScale)?input.tempoScale:1,
       dance:['expressive','balanced','off'].includes(input.dance)?input.dance:'expressive',style:['festival','cinematic','pulse'].includes(input.style)?input.style:'festival',
       seed:finite(input.seed)?input.seed>>>0:666,palette:PALETTES[input.palette]?input.palette:'aurora',
-      beatDivision:['auto','quarter','eighth'].includes(input.beatDivision)?input.beatDivision:'auto',offsetMs:number('offsetMs',0,-2000,2000),semanticChoreography:input.semanticChoreography===true,
+      beatDivision:['auto','quarter','eighth'].includes(input.beatDivision)?input.beatDivision:'auto',offsetMs:number('offsetMs',0,-2000,2000),semanticChoreography:input.semanticChoreography===true,motifEvolution:input.motifEvolution===true,
       enabled:Object.assign({windows:true,mirrors:true,trunk:true,charge:true,interior:true},input.enabled||{}),optionalFog:false,
       outerBeamRamping:input.outerBeamRamping===true,outputEnabled:normalizeOutputEnabled(input.outputEnabled),manualCues:normalizeManualCues(input.manualCues,input.outerBeamRamping===true),
       sectionOverrides:input.sectionOverrides&&typeof input.sectionOverrides==='object'?input.sectionOverrides:{},
       ...(input.vehicleTimingCalibration===undefined?{}:{vehicleTimingCalibration:PROFILE.normalizePerceptualCalibration(input.vehicleTimingCalibration)}),
       ...(input.collisionAllocation===undefined?{}:{collisionAllocation:normalizeCollisionAllocation(input.collisionAllocation)})};
+  }
+  function recurrenceAnalysisProvenance(music){
+    const marker=music&&music.recurrenceAnalysis,sidecar=music&&music.recurrenceSidecar;
+    if(!marker||marker.enabled!==true)return 'recurrence-analysis-disabled';
+    if(marker.schemaVersion!==1||marker.cacheDomain!=='recurrence'||typeof marker.engineVersion!=='string'||!marker.engineVersion||!Number.isInteger(marker.sidecarSchemaVersion)||typeof marker.clock!=='string'||!finite(marker.duration)||marker.duration<=0||typeof marker.timelineFingerprint!=='string'||!/^[0-9a-f]{8}$/.test(marker.timelineFingerprint)||typeof marker.evidenceFingerprint!=='string'||!/^[0-9a-f]{8}$/.test(marker.evidenceFingerprint))return 'recurrence-analysis-provenance-invalid';
+    if(!sidecar||marker.engineVersion!==sidecar.engineVersion||marker.sidecarSchemaVersion!==sidecar.schemaVersion||marker.clock!==sidecar.clock||marker.duration!==sidecar.duration||marker.timelineFingerprint!==sidecar.timelineFingerprint||marker.evidenceFingerprint!==sidecar.evidenceFingerprint)return 'recurrence-analysis-provenance-invalid';
+    return null;
+  }
+  function resolveMotifEvolution(music,sections,scenes,settings,semanticStrategyActive){
+    const fallback=(reason,extra={})=>({scenes:scenes.slice(),diagnostics:{schemaVersion:1,requested:settings.motifEvolution===true,active:false,reason,...extra,
+      scope:'Motif evolution is disabled unless recurrence analysis, an active validated semantic strategy, motif evolution, and a validated recurrence sidecar are all explicit.'}});
+    if(!settings.motifEvolution)return fallback('disabled');
+    if(!settings.semanticChoreography)return fallback('semantic-choreography-disabled');
+    if(semanticStrategyActive!==true)return fallback('semantic-strategy-inactive');
+    let provenance;
+    try{provenance=recurrenceAnalysisProvenance(music);}catch(_){return fallback('recurrence-analysis-provenance-invalid');}
+    if(provenance)return fallback(provenance);
+    if(!MOTIF_EVOLUTION||typeof MOTIF_EVOLUTION.resolve!=='function')return fallback('motif-evolution-module-unavailable');
+    try{
+      const result=MOTIF_EVOLUTION.resolve({requested:true,music,sections,scenes,seed:settings.seed,sectionOverrides:settings.sectionOverrides});
+      if(!result||!Array.isArray(result.scenes)||result.scenes.length!==scenes.length||!result.scenes.every(scene=>scene&&typeof scene==='object')||!result.diagnostics||typeof result.diagnostics!=='object')return fallback('motif-evolution-result-invalid');
+      return result;
+    }catch(_){return fallback('motif-evolution-resolution-error');}
   }
   function normalizeCollisionAllocation(input) {
     if(!input||typeof input!=='object'||Array.isArray(input))throw new Error('Collision allocation must be an object.');
@@ -356,17 +380,28 @@
     if(m.silent&&s.manualCues.length){const i=warnings.findIndex(w=>w.includes('This audio is silent.'));if(i>=0)warnings[i]='This audio is silent. Automatic choreography is disabled; your manual cues still play.';}
     const step=s.stepMs/1000,n=Math.ceil(m.duration/step-1e-9),duration=n*step;
     let frames;try{frames=new Uint8Array(n*CHANNELS);}catch(e){throw new Error('This track is too large for the available device memory. Choose a shorter track.');}
-    const scenes=m.sections.map(section=>{
+    const baseScenes=m.sections.map(section=>{
       const o=s.sectionOverrides[section.index]||{},key=section.recurrenceGroup||'section-'+section.index;
       const seed=finite(o.seed)?o.seed>>>0:sceneSeed(s.seed,key),variant=Math.floor(random(seed)()*6);
       return {style:['festival','cinematic','pulse'].includes(o.style)?o.style:s.style,intensity:finite(o.intensity)?clamp(o.intensity,0,1):s.intensity,variant,seed,locked:finite(o.seed),motifGroup:key};
     });
-    const show={version:VERSION,vehicle:'2025 Tesla Model 3 Long Range RWD',channels:CHANNELS,channelCount:CHANNELS,frameCount:n,stepMs:s.stepMs,duration,audioDuration:m.duration,frames,
-      movements:[],sections:m.sections.map((section,i)=>Object.assign({},section,scenes[i])),settings:s,stats:{},warnings};
     const semantic=matchingSemanticSalience(music);
     const semanticStrategy=s.semanticChoreography&&semantic&&SEMANTIC_CHOREOGRAPHY&&typeof SEMANTIC_CHOREOGRAPHY.create==='function'
       ?SEMANTIC_CHOREOGRAPHY.create(semantic,{stepMs:s.stepMs}):null;
     const movement=m.silent?{events:[],accents:[],targets:[],diagnostics:{selectedTargets:0}}:MOVEMENT.plan(m,s,PROFILE);
+    // Motifs are a scene-level variation, so establish whether the semantic
+    // strategy has a real, linkable planning target before scenes can change.
+    // The probe constructs only targets; it never allocates or paints frames.
+    let semanticStrategyActive=false;
+    if(semanticStrategy){
+      try{
+        const probe=LIGHTS.compose({frameCount:n,stepMs:s.stepMs,sections:baseScenes},m,s,movement,semanticStrategy,{semanticProbe:true});
+        semanticStrategyActive=probe?.diagnostics?.semanticStrategy?.active===true;
+      }catch(_){}
+    }
+    const motifResolution=resolveMotifEvolution(music,m.sections,baseScenes,s,semanticStrategyActive),scenes=motifResolution.scenes;
+    const show={version:VERSION,vehicle:'2025 Tesla Model 3 Long Range RWD',channels:CHANNELS,channelCount:CHANNELS,frameCount:n,stepMs:s.stepMs,duration,audioDuration:m.duration,frames,
+      movements:[],sections:m.sections.map((section,i)=>Object.assign({},section,scenes[i])),settings:s,stats:{},warnings};
     for(const event of movement.events){
       const a=clamp(quant(event.start,step),0,n-1),b=clamp(quant(event.end,step),0,n-1);
       if(b<=a)continue;
@@ -382,6 +417,7 @@
     show.choreography={version:VERSION,analysisVersion:m.analysisVersion,meter:m.meter,meterConfidence:m.meterConfidence,phrases:m.phrases,impacts:m.impacts,targets:movement.targets,lighting:lighting.diagnostics,movement:movement.diagnostics,timing:m.timing,roles:{vocals:{available:m.vocals.available,presence:m.vocals.presence,confidence:m.vocals.confidence,method:m.vocals.method,phrases:m.vocals.phrases,accents:m.vocals.accents},bassNotes:m.bassNotes,bassAnalysis:{method:m.bassAnalysis.method,source:m.bassAnalysis.source,confidence:m.bassAnalysis.confidence,phrases:m.bassAnalysis.phrases}},rhythm:{beats:m.beats,downbeats:m.downbeats,meter:m.meter,bpm:m.bpm,groove:m.groove,correction:m.rhythmCorrection}};
     if(targetSalience)show.choreography.salienceTargets=targetSalience.public;
     if(s.semanticChoreography)show.choreography.semanticStrategy=lighting.diagnostics.semanticStrategy||{schemaVersion:1,requested:true,active:false,reason:semantic?'no-linkable-semantic-targets':'semantic-linkage-invalid'};
+    if(s.motifEvolution)show.choreography.motifEvolution=motifResolution.diagnostics;
     show.choreography.vocalDetail={phrases:m.vocals.phrases,notes:m.vocals.notes,accents:m.vocals.accents,sourceSeparated:m.vocals.sourceSeparated,source:m.vocals.source,presence:m.vocals.presence,manualRegions:m.vocals.manualRegions||[],lyricsAligned:false};
     show.stats={lightCues:lighting.events.length,manualCueCount:s.manualCues.length,beatCount:m.beats.length,onsetCount:m.onsets.length,bpm:m.bpm,beatConfidence:m.beatConfidence,beatLengthMs:60000/m.bpm,recommendedBeatDivision:m.bpm<=150?'eighth':'quarter',silent:m.silent,
       vocalPhraseCount:lighting.diagnostics.roles.vocals.eligibleEvents,bassNoteCount:lighting.diagnostics.roles.bass.eligibleEvents,vocalCues:lighting.diagnostics.roles.vocals.acceptedEvents,bassNoteCues:lighting.diagnostics.roles.bass.acceptedEvents,phraseCount:m.phrases.length,musicalImpactCount:m.impacts.length,movementTargets:movement.targets.length,lightQuantizationMaxMs:lighting.diagnostics.quantizationMaxMs};

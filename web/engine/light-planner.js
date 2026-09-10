@@ -45,7 +45,7 @@
     const roleEnvelope=(role,t,fallback)=>{if(!role.envelope?.length||!(role.envelopeStep>0))return clamp(fallback);const x=clamp((t-(role.envelopeOffset||0))/role.envelopeStep,0,role.envelope.length-1),i=Math.floor(x),f=x-i;return clamp(role.envelope[i]*(1-f)+(role.envelope[Math.min(i+1,role.envelope.length-1)]||0)*f);};
     return {active,energyAt,sectionAt,periodAt,beatInfo,phraseAt,meter,vocalAt:t=>roleAt(vocalPhrases,t),vocalNoteAt:t=>roleAt(vocalNotes,t),bassAt:t=>roleAt(bassNotes,t),roleEnvelope};
   }
-  function compose(show,m,s,movement={accents:[]},semanticStrategy=null){
+  function compose(show,m,s,movement={accents:[]},semanticStrategy=null,options={}){
     const ctx=context(m),step=s.stepMs/1000,shift=s.offsetMs/1000,end=show.frameCount*step-step;
     const outputs=PROFILE.outputs.filter(o=>o.available&&o.kind==='light'),byId=new Map(outputs.map(o=>[o.id,o]));
     const candidates=[],accepted=[],lanes=new Map(outputs.map(o=>[o.id,[]]));let serial=0;
@@ -117,6 +117,16 @@
     for(const {p,ids,length} of bassRoutes)if(!p.continuation){const salience=clamp((Number(p.confidence)||0)*(Number(p.strength)||0));targets.push({role:'bass',time:p.start,end:length>0?p.start+length:p.end,kind:'note',confidence:p.confidence,strength:p.strength,salience,candidateOutputIds:Array.from(new Set(ids||[]))});}
     for(const cue of userCues){const salience=clamp(Number(cue.strength)||0);targets.push({role:cue.role,time:cue.start,end:cue.end,kind:cue.action,cueId:cue.id,confidence:1,strength:cue.strength,salience,candidateOutputIds:Array.from(new Set(cue.ids||[]))});for(const id of cue.ids)reserve(id,cue.start,cue.end);}
     const semanticState=semanticStrategy&&typeof semanticStrategy.prepareTargets==='function'?semanticStrategy.prepareTargets(targets):null;
+    // Motif evolution must not change a scene merely because semantic mode was
+    // requested. This bounded probe proves that the current strategy has at
+    // least one real target link without allocating, painting, or scheduling
+    // a sequence. Normal composition never takes this branch.
+    if(options?.semanticProbe===true){
+      const probeDecision=semanticState&&typeof semanticStrategy.filterCandidates==='function'?semanticStrategy.filterCandidates([],semanticState):null;
+      return {context:ctx,targets,events:[],diagnostics:{
+        ...(probeDecision&&probeDecision.diagnostics?{semanticStrategy:probeDecision.diagnostics}:{})
+      }};
+    }
     for(const cue of detailedVoice)for(const id of cue.ids)reserve(id,cue.time,cue.time+cue.length);
     // Merge the detailed reservations after constructing motifs as well. They
     // cover accepted musical gestures, never the full surrounding vocal region.
@@ -456,4 +466,3 @@
   }
   const api={compose,context,version:'2.0.0'};root.LightPlanner=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
-
