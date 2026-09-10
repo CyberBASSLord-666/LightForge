@@ -12,14 +12,19 @@ function createTelemetry(stage,metadata){
  // older WebView cache, or constrained worker cannot load its optional module.
  return {begin:()=>null,end:()=>{},cache:()=>{},snapshot:()=>null};
 }
+function safeValidation(api,value,context){
+ // Checkpoints are persisted independently from the worker script. Treat a
+ // validator exception as corrupt/stale evidence so analysis can rebuild.
+ try{return api&&typeof api.validate==='function'?api.validate(value,context):null;}catch(_){return null;}
+}
 function ensureSemanticTimeline(result){
  const api=self.LightForgeSemanticTimeline;
  if(!api||typeof api.build!=='function'||typeof api.validate!=='function')throw Error('Semantic timeline module is unavailable.');
  if(result&&result.semanticTimeline){
-  const existing=api.validate(result.semanticTimeline);
+  const existing=safeValidation(api,result.semanticTimeline);
   if(existing&&existing.valid)return result.semanticTimeline;
  }
- const timeline=api.build(result),check=api.validate(timeline);
+ const timeline=api.build(result),check=safeValidation(api,timeline);
  if(!check||!check.valid)throw Error('Semantic timeline validation failed: '+(check?.errors||[]).join('; ').slice(0,512));
  result.semanticTimeline=timeline;
  return timeline;
@@ -36,10 +41,10 @@ function ensureMusicSalience(result,timeline){
  if(!api||typeof api.build!=='function'||typeof api.validate!=='function')throw Error('Music salience module is unavailable.');
  const semanticTimeline=timeline||ensureSemanticTimeline(result);
  if(result&&result.musicSalience){
-  const existing=api.validate(result.musicSalience,semanticTimeline);
+  const existing=safeValidation(api,result.musicSalience,semanticTimeline);
   if(existing&&existing.valid)return result.musicSalience;
  }
- const musicSalience=api.build(semanticTimeline),check=api.validate(musicSalience,semanticTimeline);
+ const musicSalience=api.build(semanticTimeline),check=safeValidation(api,musicSalience,semanticTimeline);
  if(!check||!check.valid)throw Error('Music salience validation failed: '+(check?.errors||[]).join('; ').slice(0,512));
  result.musicSalience=musicSalience;
  return musicSalience;
@@ -62,13 +67,14 @@ async function ensureVocalSemantics(result,options,store,telemetry){
  let cached=null;
  try{cached=await store.read('vocal-semantics');}catch(_){telemetry.cache('vocal-semantics','corrupt');}
  if(cached){
-  const check=api.validate(cached,input);
+  const check=safeValidation(api,cached,input);
   if(check?.valid){result.vocalSemantics=cached;telemetry.cache('vocal-semantics','restore');telemetry.end(phase,{restored:true,phraseCount:cached.summary.phraseCount,articulationCount:cached.summary.articulationCount});return cached;}
+  if(!check)telemetry.cache('vocal-semantics','corrupt');
   telemetry.cache('vocal-semantics','invalidate');
   try{await store.invalidate(['vocal-semantics']);}catch(_){}
  }
  telemetry.cache('vocal-semantics','miss');
- const sidecar=api.build(input),check=api.validate(sidecar,input);
+ const sidecar=api.build(input),check=safeValidation(api,sidecar,input);
  if(!check?.valid)throw Error('Vocal semantic enrichment validation failed: '+(check?.errors||[]).join('; ').slice(0,512));
  await store.write('vocal-semantics',sidecar);
  result.vocalSemantics=sidecar;
@@ -77,7 +83,7 @@ async function ensureVocalSemantics(result,options,store,telemetry){
 }
 function linkVocalSemantics(result){
  if(!result?.vocalSemantics){if(result)delete result.vocalSemanticLinks;return null;}
- const api=self.LightForgeVocalSemantics,input={duration:result.duration,vocals:result.vocals},check=api?.validate?.(result.vocalSemantics,input);
+ const api=self.LightForgeVocalSemantics,input={duration:result.duration,vocals:result.vocals},check=safeValidation(api,result.vocalSemantics,input);
  if(!check?.valid)throw Error('Vocal semantic enrichment no longer matches vocal analysis.');
  const link=api.linkTimeline(result.vocalSemantics,result.semanticTimeline);
  result.vocalSemanticLinks=link;

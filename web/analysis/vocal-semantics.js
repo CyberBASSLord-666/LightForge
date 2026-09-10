@@ -19,6 +19,11 @@
  const accentKinds=new Set(['entrance','syllabic-accent']);
  const noteKinds=new Set(['note','held-note']);
  const forbidden=/^(?:word|words|text|lyric|lyrics|phoneme|phonemes)$/i;
+ const object=value=>value!==null&&typeof value==='object';
+ // Cache records are untrusted at this boundary.  Keep the validation loops
+ // total over malformed JSON instead of letting one bad list abort a resumed
+ // analysis before the worker can invalidate and rebuild it.
+ const list=value=>Array.isArray(value)?value:[];
  const safeKind=value=>phraseKinds.has(value)?value:'vocal';
  const id=(prefix,index)=>prefix+String(index).padStart(4,'0');
  const compare=(left,right)=>left===right?0:(left<right?-1:1);
@@ -147,25 +152,34 @@
   return false;
  }
  function validate(sidecar,input){
+  try{return validateUnchecked(sidecar,input);}catch(_){
+   // Validation is also used for cache recovery.  A malformed persisted value
+   // must be reported as invalid, never become a process-level exception.
+   return {valid:false,errors:['Invalid vocal semantic sidecar.']};
+  }
+ }
+ function validateUnchecked(sidecar,input){
   const errors=[];
+  const regions=list(sidecar?.regions),phrases=list(sidecar?.phrases),articulations=list(sidecar?.articulations),notes=list(sidecar?.notes);
   if(!sidecar||sidecar.schemaVersion!==SCHEMA_VERSION||sidecar.engineVersion!==ENGINE_VERSION||sidecar.clock!=='original-decoded-audio'||sidecar.source!==SOURCE||sidecar.sourceSeparated!==true||sidecar.linguisticAlignment!==false||!finite(sidecar.duration)||sidecar.duration<=0||typeof sidecar.sourceFingerprint!=='string'||!/^vs1-[0-9a-f]{16}$/.test(sidecar.sourceFingerprint)||!sidecar.cacheIdentity||sidecar.cacheIdentity.stage!=='vocal-semantics'||sidecar.cacheIdentity.schemaVersion!==SCHEMA_VERSION||sidecar.cacheIdentity.engineVersion!==ENGINE_VERSION||sidecar.cacheIdentity.sourceFingerprint!==sidecar.sourceFingerprint||!Array.isArray(sidecar.regions)||!Array.isArray(sidecar.phrases)||!Array.isArray(sidecar.articulations)||!Array.isArray(sidecar.notes)||!sidecar.summary)errors.push('Invalid vocal semantic sidecar envelope.');
   if(hasForbidden(sidecar))errors.push('Vocal semantic sidecar contains prohibited linguistic content.');
   const phraseIds=new Set(),regionIds=new Set(),noteIds=new Set(),articulationIds=new Set(),regionsById=new Map();
-  for(const region of sidecar?.regions||[]){
+  for(const region of regions){
    if(!region||typeof region.id!=='string'||regionIds.has(region.id)||!span(region,sidecar.duration)||!near(region.onset,region.start)||!finite(region.release)||region.release<region.onset||region.release>region.end||!near(region.duration,region.end-region.start)||!phraseKinds.has(region.kind)||!finite(region.confidence)||region.confidence<0||region.confidence>1||!finite(region.intensity)||region.intensity<0||region.intensity>1||region.source!==SOURCE||region.linguistic!==false||!Array.isArray(region.phraseIds))errors.push('Invalid vocal region.');
    regionIds.add(region?.id);regionsById.set(region?.id,region);
   }
-  for(const phrase of sidecar?.phrases||[]){
+  for(const phrase of phrases){
    if(!phrase||typeof phrase.id!=='string'||phraseIds.has(phrase.id)||!span(phrase,sidecar.duration)||!near(phrase.onset,phrase.start)||!finite(phrase.release)||phrase.release<phrase.onset||phrase.release>phrase.end||!near(phrase.duration,phrase.end-phrase.start)||!phraseKinds.has(phrase.kind)||!finite(phrase.confidence)||phrase.confidence<0||phrase.confidence>1||!finite(phrase.intensity)||phrase.intensity<0||phrase.intensity>1||phrase.source!==SOURCE||phrase.linguistic!==false||!regionsById.has(phrase.regionId))errors.push('Invalid vocal phrase.');
-   if(phrase.pitchTrajectory!==undefined){const value=phrase.pitchTrajectory;if(!value||!['existing-note-output','acoustic-pitch-contour'].includes(value.source)||!Number.isInteger(value.observations)||value.observations<1||!finite(value.startMidi)||!finite(value.endMidi)||!finite(value.medianMidi)||!['rising','falling','stable'].includes(value.movement)||!finite(value.confidence)||value.confidence<0||value.confidence>1)errors.push('Invalid vocal pitch trajectory.');}
+   const trajectory=object(phrase)?phrase.pitchTrajectory:undefined;
+   if(trajectory!==undefined){if(!trajectory||!['existing-note-output','acoustic-pitch-contour'].includes(trajectory.source)||!Number.isInteger(trajectory.observations)||trajectory.observations<1||!finite(trajectory.startMidi)||!finite(trajectory.endMidi)||!finite(trajectory.medianMidi)||!['rising','falling','stable'].includes(trajectory.movement)||!finite(trajectory.confidence)||trajectory.confidence<0||trajectory.confidence>1)errors.push('Invalid vocal pitch trajectory.');}
    phraseIds.add(phrase?.id);
   }
-  const regionPhraseIds=[];for(const region of sidecar?.regions||[])for(const phraseId of region?.phraseIds||[]){regionPhraseIds.push(phraseId);if(!phraseIds.has(phraseId))errors.push('Vocal region links an unknown phrase.');}
+  const regionPhraseIds=[];for(const region of regions)for(const phraseId of list(region?.phraseIds)){regionPhraseIds.push(phraseId);if(!phraseIds.has(phraseId))errors.push('Vocal region links an unknown phrase.');}
   if(new Set(regionPhraseIds).size!==regionPhraseIds.length||regionPhraseIds.length!==phraseIds.size)errors.push('Vocal region links must partition phrases.');
-  const phrasesById=new Map((sidecar?.phrases||[]).map(value=>[value.id,value]));
-  for(const note of sidecar?.notes||[]){if(!note||typeof note.id!=='string'||noteIds.has(note.id)||!span(note,sidecar.duration)||!near(note.duration,note.end-note.start)||!phrasesById.has(note.phraseId)||!finite(note.midi)||note.midi<0||note.midi>127||note.frequency!==undefined&&(!finite(note.frequency)||note.frequency<=0)||!finite(note.confidence)||note.confidence<0||note.confidence>1||!finite(note.intensity)||note.intensity<0||note.intensity>1||!noteKinds.has(note.kind)||note.source!==SOURCE||note.pitchSource!=='existing-note-output'||note.linguistic!==false)errors.push('Invalid vocal note semantic.');noteIds.add(note?.id);}
-  for(const articulation of sidecar?.articulations||[]){const phrase=phrasesById.get(articulation?.phraseId);if(!articulation||typeof articulation.id!=='string'||articulationIds.has(articulation.id)||!phrase||articulation.regionId!==phrase.regionId||!finite(articulation.time)||articulation.time<phrase.onset-1e-6||articulation.time>phrase.release+1e-6||!['onset','acoustic-articulation'].includes(articulation.role)||articulation.syllableLike!==(articulation.role==='acoustic-articulation')||!['primary','secondary','light'].includes(articulation.stress)||!finite(articulation.stressConfidence)||articulation.stressConfidence<0||articulation.stressConfidence>1||!finite(articulation.confidence)||articulation.confidence<0||articulation.confidence>1||!finite(articulation.intensity)||articulation.intensity<0||articulation.intensity>1||articulation.source!==SOURCE||articulation.linguistic!==false)errors.push('Invalid vocal articulation semantic.');articulationIds.add(articulation?.id);}
-  const summary=sidecar?.summary;if(!summary||summary.regionCount!==(sidecar?.regions||[]).length||summary.phraseCount!==(sidecar?.phrases||[]).length||summary.articulationCount!==(sidecar?.articulations||[]).length||summary.syllableLikeCount!==(sidecar?.articulations||[]).filter(value=>value.syllableLike).length||summary.noteCount!==(sidecar?.notes||[]).length||summary.pitchedPhraseCount!==(sidecar?.phrases||[]).filter(value=>value.pitchTrajectory).length||summary.spokenPhraseCount!==(sidecar?.phrases||[]).filter(value=>value.kind==='speech').length||summary.linguisticContent!==false)errors.push('Invalid vocal semantic summary.');
+  const phrasesById=new Map(phrases.map(value=>[object(value)?value.id:undefined,value]));
+  for(const note of notes){if(!note||typeof note.id!=='string'||noteIds.has(note.id)||!span(note,sidecar.duration)||!near(note.duration,note.end-note.start)||!phrasesById.has(note.phraseId)||!finite(note.midi)||note.midi<0||note.midi>127||note.frequency!==undefined&&(!finite(note.frequency)||note.frequency<=0)||!finite(note.confidence)||note.confidence<0||note.confidence>1||!finite(note.intensity)||note.intensity<0||note.intensity>1||!noteKinds.has(note.kind)||note.source!==SOURCE||note.pitchSource!=='existing-note-output'||note.linguistic!==false)errors.push('Invalid vocal note semantic.');noteIds.add(note?.id);}
+  for(const articulation of articulations){const phrase=phrasesById.get(articulation?.phraseId);if(!articulation||typeof articulation.id!=='string'||articulationIds.has(articulation.id)||!phrase||articulation.regionId!==phrase.regionId||!finite(articulation.time)||articulation.time<phrase.onset-1e-6||articulation.time>phrase.release+1e-6||!['onset','acoustic-articulation'].includes(articulation.role)||articulation.syllableLike!==(articulation.role==='acoustic-articulation')||!['primary','secondary','light'].includes(articulation.stress)||!finite(articulation.stressConfidence)||articulation.stressConfidence<0||articulation.stressConfidence>1||!finite(articulation.confidence)||articulation.confidence<0||articulation.confidence>1||!finite(articulation.intensity)||articulation.intensity<0||articulation.intensity>1||articulation.source!==SOURCE||articulation.linguistic!==false)errors.push('Invalid vocal articulation semantic.');articulationIds.add(articulation?.id);}
+  const summary=sidecar?.summary;if(!summary||summary.regionCount!==regions.length||summary.phraseCount!==phrases.length||summary.articulationCount!==articulations.length||summary.syllableLikeCount!==articulations.filter(value=>object(value)&&value.syllableLike).length||summary.noteCount!==notes.length||summary.pitchedPhraseCount!==phrases.filter(value=>object(value)&&value.pitchTrajectory).length||summary.spokenPhraseCount!==phrases.filter(value=>object(value)&&value.kind==='speech').length||summary.linguisticContent!==false)errors.push('Invalid vocal semantic summary.');
   if(input!==undefined)try{const expected=inputEnvelope(input);if(!near(sidecar?.duration,expected.duration)||sidecar?.sourceFingerprint!==sourceFingerprint(expected))errors.push('Vocal semantic sidecar does not match current vocal evidence.');}catch(error){errors.push(String(error.message||error));}
   return {valid:errors.length===0,errors};
  }
@@ -199,21 +213,21 @@
   // planner cannot reuse a link after a cap-aware timeline mutation.
   const values=[];canonicalTimelineTokens(timeline,values);return 'vt1-'+hash(values);
  }
- function validateTimeline(timeline){
-  const api=root.LightForgeSemanticTimeline;
-  if(!api||typeof api.validate!=='function')throw Error('Vocal semantic timeline link requires the canonical semantic timeline validator.');
-  const check=api.validate(timeline);
-  if(!check||check.valid!==true)throw Error('Vocal semantic timeline link received an invalid timeline: '+(check?.errors||[]).join('; ').slice(0,512));
- }
+function validateTimeline(timeline){
+ const api=root.LightForgeSemanticTimeline;
+ if(!api||typeof api.validate!=='function')throw Error('Vocal semantic timeline link requires the canonical semantic timeline validator.');
+ let check;try{check=api.validate(timeline);}catch(_){throw Error('Vocal semantic timeline link received an invalid timeline.');}
+ if(!check||check.valid!==true)throw Error('Vocal semantic timeline link received an invalid timeline: '+(check?.errors||[]).join('; ').slice(0,512));
+}
  function linkTimeline(sidecar,timeline){
   const sidecarCheck=validate(sidecar);if(!sidecarCheck.valid)throw Error('Cannot link invalid vocal semantic sidecar: '+sidecarCheck.errors.join('; '));
   if(!timeline||timeline.clock!=='original-decoded-audio'||!finite(timeline.duration)||!near(timeline.duration,sidecar.duration)||!Array.isArray(timeline.events))throw Error('Vocal semantic timeline link requires a matching semantic timeline.');
   validateTimeline(timeline);
   let prior=-1;const ids=new Set();for(const event of timeline.events){if(!event||typeof event.id!=='string'||ids.has(event.id)||!finite(event.time)||event.time<prior||event.time>timeline.duration)throw Error('Vocal semantic timeline link received an invalid timeline.');ids.add(event.id);prior=event.time;}
   const used=new Set(),match=(type,time,duration,kind)=>{const value=timeline.events.find(event=>!used.has(event.id)&&event.type===type&&event.source==='vocals'&&near(event.time,time)&&near(event.duration,duration)&&(!kind||event.kind===kind));if(!value)throw Error('Vocal semantic sidecar cannot be linked to the current semantic timeline.');used.add(value.id);return value.id;};
-  const phrases=sidecar.phrases.map(phrase=>({semanticId:phrase.id,eventId:match('vocal_phrase',phrase.start,phrase.duration,phrase.kind)}));
-  const notes=sidecar.notes.map(note=>({semanticId:note.id,eventId:match('vocal_note',note.start,note.duration)}));
-  const articulations=sidecar.articulations.map(articulation=>({semanticId:articulation.id,eventId:match('vocal_accent',articulation.time,0,articulation.role==='onset'?'entrance':'syllabic-accent')}));
+  const phrases=list(sidecar.phrases).map(phrase=>({semanticId:phrase.id,eventId:match('vocal_phrase',phrase.start,phrase.duration,phrase.kind)}));
+  const notes=list(sidecar.notes).map(note=>({semanticId:note.id,eventId:match('vocal_note',note.start,note.duration)}));
+  const articulations=list(sidecar.articulations).map(articulation=>({semanticId:articulation.id,eventId:match('vocal_accent',articulation.time,0,articulation.role==='onset'?'entrance':'syllabic-accent')}));
   return {schemaVersion:1,clock:'original-decoded-audio',duration:sidecar.duration,sidecarFingerprint:sidecar.sourceFingerprint,timelineFingerprint:timelineFingerprint(timeline),phrases,notes,articulations};
  }
  const api={build,validate,sourceFingerprint,linkTimeline,version:ENGINE_VERSION};root.LightForgeVocalSemantics=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;

@@ -308,8 +308,8 @@
     "sha256": "cd760d7a766d9a4ab0ac3a252a10f17a16a797b38e50b2d6712bc6adcd42713f"
   },
   "vocal-semantics.js": {
-    "bytes": 23357,
-    "sha256": "f148f05075a3843640611c828c1de99a600fdd7609f8ee71ca0655cb18d0e32f"
+    "bytes": 24223,
+    "sha256": "e169e7deb15be7c4a778ef8623decb7a46800fc7633acbab8c6caa51e3ee059c"
   },
   "vocal.js": {
     "bytes": 9662,
@@ -324,7 +324,7 @@
     "sha256": "94cc60efb59146e1a12546d51871e8c45c6fcbec67d1090972deb0f313d001d2"
   },
   "worker.js": {
-    "bytes": 33147,
-    "sha256": "bed7584638788e630eae9521fef39b45fd6e29746bc0dc3eb3d5c344e98fc336"
+    "bytes": 33548,
+    "sha256": "ccf372febacab80c0ab65cf60ac43c16aa3b7669b1893a956cf921f9722c0c96"
   }
 }
