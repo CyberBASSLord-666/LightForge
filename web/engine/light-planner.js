@@ -346,6 +346,82 @@
     }
     collisionResolutions.sort((a,b)=>a.time-b.time||a.groupId.localeCompare(b.groupId)||a.outcome.localeCompare(b.outcome));
     const reportedCollisionResolutions=collisionResolutions.slice(0,RESOLUTION_LIMIT);
+    // Explicit semantic target allocation is deliberately opt-in. It consumes
+    // caller-supplied high-salience semantic targets and configured fallback
+    // groups; it never invents a target, moves an accepted cue, or shifts time.
+    let semanticTargetAllocation=null;
+    const allocation=s.collisionAllocation;
+    if(allocation&&allocation.enabled===true){
+      const maxTargets=Math.max(1,Math.min(128,Math.floor(Number(allocation.maxAllocations)||128)));
+      const rawTargets=Array.isArray(allocation.targets)?allocation.targets:[];
+      const allowedTiers=new Set(Array.isArray(allocation.tiers)?allocation.tiers.filter(t=>typeof t==='string'):['structural','climax']);
+      const minimumSalience=Number.isFinite(allocation.minimumSalience)?clamp(allocation.minimumSalience):.78;
+      const rows=[],summary={requested:rawTargets.length,eligible:0,allocated:0,suppressed:0,skipped:0};
+      const canonicalIds=value=>Array.isArray(value)?Array.from(new Set(value.filter(id=>typeof id==='string'&&id.length>0&&id.length<=128))):[];
+      const validOutputGroup=ids=>{
+        const channels=new Set();
+        for(const id of ids){
+          const output=byId.get(id);
+          if(!output||output.channels.some(channel=>channels.has(channel)))return false;
+          for(const channel of output.channels)channels.add(channel);
+        }
+        return true;
+      };
+      const safeRole=value=>typeof value==='string'&&/^[A-Za-z0-9._:-]{1,64}$/.test(value)?value:null;
+      const routeGroups=target=>{
+        const direct=Array.isArray(target?.fallbackOutputGroups)&&target.fallbackOutputGroups.length?target.fallbackOutputGroups:null;
+        const shared=allocation.fallbacks&&typeof allocation.fallbacks==='object'?(allocation.fallbacks[target?.tier]||allocation.fallbacks.default):null;
+        return direct || (Array.isArray(shared)?shared:[]);
+      };
+      const ordered=rawTargets.slice(0,maxTargets).map((target,index)=>({target,index})).sort((left,right)=>{
+        const lt=Number.isFinite(left.target?.time)?left.target.time:Infinity,rt=Number.isFinite(right.target?.time)?right.target.time:Infinity;
+        const li=typeof left.target?.semanticEventId==='string'?left.target.semanticEventId:'',ri=typeof right.target?.semanticEventId==='string'?right.target.semanticEventId:'';
+        return lt-rt||li.localeCompare(ri)||left.index-right.index;
+      });
+      const rowFor=(target,index,outcome,reason,chosenOutputs=[])=>{
+        const semanticEventId=typeof target?.semanticEventId==='string'&&/^[A-Za-z0-9._:-]{1,128}$/.test(target.semanticEventId)?target.semanticEventId:null;
+        const time=Number.isFinite(target?.time)?Number(target.time.toFixed(6)):null,endTime=Number.isFinite(target?.end)?Number(target.end.toFixed(6)):null;
+        const tier=typeof target?.tier==='string'?target.tier:null,salience=Number.isFinite(target?.salience)?Number(clamp(target.salience).toFixed(6)):null;
+        return {targetId:semanticEventId?'semantic-'+semanticEventId+'-'+index:'semantic-invalid-'+index,semanticEventId,time,end:endTime,tier,salience,
+          preferredOutputIds:canonicalIds(target?.candidateOutputIds||target?.preferredOutputIds),chosenOutput:chosenOutputs[0]||null,chosenOutputs,outcome,reason};
+      };
+      for(const {target,index} of ordered){
+        const semanticEventId=typeof target?.semanticEventId==='string'&&/^[A-Za-z0-9._:-]{1,128}$/.test(target.semanticEventId)?target.semanticEventId:null;
+        const time=Number(target?.time),requestedEnd=Number(target?.end),tier=typeof target?.tier==='string'?target.tier:null,salience=Number.isFinite(target?.salience)?clamp(target.salience):NaN;
+        if(!semanticEventId||!Number.isFinite(time)||!Number.isFinite(requestedEnd)||!Number.isFinite(salience)||time<0||requestedEnd<=time||time>=m.duration){rows.push(rowFor(target,index,'skipped','invalid-semantic-target'));summary.skipped++;continue;}
+        if(!allowedTiers.has(tier)||salience<minimumSalience){rows.push(rowFor(target,index,'skipped','below-high-salience-threshold'));summary.skipped++;continue;}
+        const targetEnd=Math.min(m.duration,requestedEnd),start=time+shift,stop=Math.min(end,targetEnd+shift);
+        if(!ctx.active(time)||start<0||stop-start<step){rows.push(rowFor(target,index,'skipped','inactive-or-unusable-target-span'));summary.skipped++;continue;}
+        summary.eligible++;
+        const preferredIds=new Set(canonicalIds(target.candidateOutputIds||target.preferredOutputIds)),section=ctx.sectionAt(time);
+        if(!preferredIds.size){rows.push(rowFor(target,index,'skipped','missing-preferred-output'));summary.skipped++;continue;}
+        if(!validOutputGroup(Array.from(preferredIds))){rows.push(rowFor(target,index,'skipped','invalid-preferred-output'));summary.skipped++;continue;}
+        const preferredProbe={start,end:stop,sectionIndex:section.index};
+        const blockedPreferred=Array.from(preferredIds).filter(id=>!placement({...preferredProbe,id}).ok);
+        if(blockedPreferred.length!==preferredIds.size){rows.push(rowFor(target,index,'skipped','preferred-output-still-available'));summary.skipped++;continue;}
+        let allocated=false,reason='no-configured-fallback';
+        for(const rawGroup of routeGroups(target)){
+          const sourceIds=Array.isArray(rawGroup)?rawGroup:[rawGroup],ids=Array.from(new Set(sourceIds.filter(id=>typeof id==='string')));
+          if(!ids.length||ids.length!==sourceIds.length){reason='malformed-configured-fallback';continue;}
+          if(!validOutputGroup(ids)){reason='malformed-configured-fallback';continue;}
+          if(ids.some(id=>preferredIds.has(id)||!enabled(id))){reason='configured-fallback-unavailable';continue;}
+          const staged=[];
+          for(let routeIndex=0;routeIndex<ids.length;routeIndex++){
+            const cue={id:ids[routeIndex],start,end:stop,sectionIndex:section.index,priority:96,kind:'semantic fallback allocation',strength:salience,fade:0,release:0,serial:serial+routeIndex,target:start,
+              semanticTargetId:'semantic-'+semanticEventId+'-'+index,semanticEventId,semanticTier:tier,semanticSalience:salience,semanticRole:safeRole(target.role),semanticFallbackAllocation:true,
+              sourceEventTime:time,sourceStart:time,sourceEnd:targetEnd,sourceConfidence:salience};
+            const slot=placement(cue);
+            if(!slot.ok){reason=slot.reason==='collision'?'configured-fallback-collided':'configured-fallback-unavailable';staged.length=0;break;}
+            staged.push({cue,slot});
+          }
+          if(!staged.length)continue;
+          for(const entry of staged)accept(entry.cue,entry.slot);
+          serial+=staged.length;rows.push(rowFor(target,index,'allocated','configured-fallback-after-preferred-loss',ids));summary.allocated++;allocated=true;break;
+        }
+        if(!allocated){rows.push(rowFor(target,index,'suppressed',reason));summary.suppressed++;}
+      }
+      semanticTargetAllocation={enabled:true,maxAllocations:maxTargets,minimumSalience,tiers:Array.from(allowedTiers).sort(),...summary,rows,omittedTargets:Math.max(0,rawTargets.length-maxTargets)};
+    }
     const frames=show.frames;
     for(const cue of accepted){
       const o=byId.get(cue.id),up=cue.fade===2?230:cue.fade===1?204:178,down=cue.fade===2?77:cue.fade===1?51:26;
@@ -363,7 +439,8 @@
       impactCues:accepted.filter(c=>c.kind==='musical impact').length,
       quantizationMaxMs:errors.reduce((a,b)=>Math.max(a,b),0),quantizationMedianMs:median(errors),
       roles:{vocals:{available:m.vocals?.available===true,presence:m.vocals?.presence||'uncertain',sourceSeparated:separatedVoice,eligibleEvents:vocalPhrases.length,acceptedEvents:new Set(accepted.filter(c=>c.role==='vocals').map(c=>c.sourceStart)).size,accentCues:new Set(accepted.filter(c=>c.estimatedAccent||c.articulation).map(c=>c.sourceEventTime)).size,noteCues:new Set(accepted.filter(c=>c.vocalNote).map(c=>c.sourceEventTime)).size,confidence:m.vocals?.confidence||0,focus:vocalFocus},bass:{eligibleEvents:bassNotes.length,acceptedEvents:new Set(accepted.filter(c=>c.role==='bass').map(c=>c.sourceStart)).size,confidence:m.bassAnalysis?.confidence||0,focus:bassFocus},percussion:{acceptedCues:accepted.filter(c=>c.kind==='offbeat detail'||c.kind==='detected high attack'||c.kind==='detected bass attack').length},arrangement:{acceptedCues:accepted.filter(c=>!c.role&&!['offbeat detail','detected high attack','detected bass attack'].includes(c.kind)).length}},
-      meter:ctx.meter,recurringMotifGroups:Array.from(new Set(show.sections.filter(x=>x.recurrenceGroup).map(x=>x.recurrenceGroup))).length,lockedSections:show.sections.filter(x=>x.locked).length,timingScope:'Command placement within half a frame of the selected musical target. Audio detection and vehicle response are separate estimates.'
+      meter:ctx.meter,recurringMotifGroups:Array.from(new Set(show.sections.filter(x=>x.recurrenceGroup).map(x=>x.recurrenceGroup))).length,lockedSections:show.sections.filter(x=>x.locked).length,timingScope:'Command placement within half a frame of the selected musical target. Audio detection and vehicle response are separate estimates.',
+      ...(semanticTargetAllocation?{semanticTargetAllocation}:{})
     }};
   }
   const api={compose,context,version:'2.0.0'};root.LightPlanner=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;

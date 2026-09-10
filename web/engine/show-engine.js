@@ -184,7 +184,80 @@
       enabled:Object.assign({windows:true,mirrors:true,trunk:true,charge:true,interior:true},input.enabled||{}),optionalFog:false,
       outerBeamRamping:input.outerBeamRamping===true,outputEnabled:normalizeOutputEnabled(input.outputEnabled),manualCues:normalizeManualCues(input.manualCues,input.outerBeamRamping===true),
       sectionOverrides:input.sectionOverrides&&typeof input.sectionOverrides==='object'?input.sectionOverrides:{},
-      ...(input.vehicleTimingCalibration===undefined?{}:{vehicleTimingCalibration:PROFILE.normalizePerceptualCalibration(input.vehicleTimingCalibration)})};
+      ...(input.vehicleTimingCalibration===undefined?{}:{vehicleTimingCalibration:PROFILE.normalizePerceptualCalibration(input.vehicleTimingCalibration)}),
+      ...(input.collisionAllocation===undefined?{}:{collisionAllocation:normalizeCollisionAllocation(input.collisionAllocation)})};
+  }
+  function normalizeCollisionAllocation(input) {
+    if(!input||typeof input!=='object'||Array.isArray(input))throw new Error('Collision allocation must be an object.');
+    const allowedTop=new Set(['version','enabled','minimumSalience','maxAllocations','tiers','fallbacks','targets']);
+    for(const key of Object.keys(input))if(!allowedTop.has(key))throw new Error('Collision allocation contains an unknown field: '+key+'.');
+    if(input.version!==undefined&&input.version!==1)throw new Error('Collision allocation version 1 is required.');
+    if(typeof input.enabled!=='boolean')throw new Error('Collision allocation must explicitly set enabled to true or false.');
+    if(!input.enabled){
+      if(Object.keys(input).some(key=>key!=='version'&&key!=='enabled'))throw new Error('Disabled collision allocation cannot contain targets or fallback data.');
+      return {version:1,enabled:false};
+    }
+    const outputIds=(value,label)=>{
+      if(!Array.isArray(value)||!value.length||value.length>16)throw new Error(label+' needs between 1 and 16 light outputs.');
+      const ids=[],channels=new Set();
+      for(const id of value){
+        if(typeof id!=='string'||!id||id.length>128)throw new Error(label+' contains an invalid output id.');
+        if(ids.includes(id))throw new Error(label+' cannot repeat an output.');
+        const output=outputById(id);
+        if(!output)throw new Error(label+' references an unknown vehicle output: '+id+'.');
+        if(output.kind!=='light'||output.available===false)throw new Error(label+' must use an available vehicle light output: '+id+'.');
+        if(output.channels.some(channel=>channels.has(channel)))throw new Error(label+' contains outputs with overlapping vehicle channels.');
+        for(const channel of output.channels)channels.add(channel);
+        ids.push(id);
+      }
+      return ids;
+    };
+    const groups=(value,label)=>{
+      if(!Array.isArray(value)||!value.length||value.length>16)throw new Error(label+' needs between 1 and 16 fallback groups.');
+      return value.map((group,index)=>outputIds(group,label+' group '+(index+1)));
+    };
+    const tierList=value=>{
+      const tiers=value===undefined?['structural','climax']:value;
+      if(!Array.isArray(tiers)||!tiers.length||tiers.length>6)throw new Error('Collision allocation tiers must contain one or more known salience tiers.');
+      const unique=Array.from(new Set(tiers));
+      if(unique.length!==tiers.length||unique.some(tier=>typeof tier!=='string'||!SALIENCE_TIERS.has(tier)))throw new Error('Collision allocation tiers must contain unique known salience tiers.');
+      return unique.sort();
+    };
+    const minimumSalience=input.minimumSalience===undefined?.78:input.minimumSalience;
+    if(!finite(minimumSalience)||minimumSalience<0||minimumSalience>1)throw new Error('Collision allocation minimumSalience must be between 0 and 1.');
+    const maxAllocations=input.maxAllocations===undefined?128:input.maxAllocations;
+    if(!Number.isInteger(maxAllocations)||maxAllocations<1||maxAllocations>128)throw new Error('Collision allocation maxAllocations must be an integer between 1 and 128.');
+    let fallbacks;
+    if(input.fallbacks!==undefined){
+      if(!input.fallbacks||typeof input.fallbacks!=='object'||Array.isArray(input.fallbacks))throw new Error('Collision allocation fallbacks must be an object.');
+      fallbacks={};
+      for(const key of Object.keys(input.fallbacks).sort()){
+        if(key!=='default'&&!SALIENCE_TIERS.has(key))throw new Error('Collision allocation fallback tier is not recognized: '+key+'.');
+        fallbacks[key]=groups(input.fallbacks[key],'Collision allocation fallback '+key);
+      }
+    }
+    if(!Array.isArray(input.targets)||input.targets.length>128)throw new Error('Collision allocation targets must be an array of at most 128 semantic targets.');
+    const semanticIds=new Set(),targets=input.targets.map((raw,index)=>{
+      if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new Error('Collision allocation target '+(index+1)+' must be an object.');
+      const allowedTarget=new Set(['semanticEventId','time','end','tier','salience','role','candidateOutputIds','preferredOutputIds','fallbackOutputGroups']);
+      for(const key of Object.keys(raw))if(!allowedTarget.has(key))throw new Error('Collision allocation target '+(index+1)+' contains an unknown field: '+key+'.');
+      if(typeof raw.semanticEventId!=='string'||!/^[A-Za-z0-9._:-]{1,128}$/.test(raw.semanticEventId))throw new Error('Collision allocation target '+(index+1)+' needs a safe semanticEventId.');
+      if(semanticIds.has(raw.semanticEventId))throw new Error('Collision allocation semanticEventIds must be unique.');
+      semanticIds.add(raw.semanticEventId);
+      if(!finite(raw.time)||!finite(raw.end)||raw.time<0||raw.end<=raw.time)throw new Error('Collision allocation target '+(index+1)+' needs a valid original-clock time span.');
+      if(typeof raw.tier!=='string'||!SALIENCE_TIERS.has(raw.tier))throw new Error('Collision allocation target '+(index+1)+' needs a known salience tier.');
+      if(!finite(raw.salience)||raw.salience<0||raw.salience>1)throw new Error('Collision allocation target '+(index+1)+' salience must be between 0 and 1.');
+      if(raw.role!==undefined&&(typeof raw.role!=='string'||!/^[A-Za-z0-9._:-]{1,64}$/.test(raw.role)))throw new Error('Collision allocation target '+(index+1)+' role must be a safe identifier.');
+      if(raw.candidateOutputIds!==undefined&&raw.preferredOutputIds!==undefined)throw new Error('Collision allocation target '+(index+1)+' must use candidateOutputIds or preferredOutputIds, not both.');
+      const candidateOutputIds=outputIds(raw.candidateOutputIds===undefined?raw.preferredOutputIds:raw.candidateOutputIds,'Collision allocation target '+(index+1)+' preferred outputs');
+      const fallbackOutputGroups=raw.fallbackOutputGroups===undefined?null:groups(raw.fallbackOutputGroups,'Collision allocation target '+(index+1)+' fallback');
+      const configuredFallbacks=fallbackOutputGroups||(fallbacks&&(fallbacks[raw.tier]||fallbacks.default));
+      if(!configuredFallbacks)throw new Error('Collision allocation target '+(index+1)+' needs configured fallback outputs.');
+      if(configuredFallbacks.some(group=>group.some(id=>candidateOutputIds.includes(id))))throw new Error('Collision allocation target '+(index+1)+' fallback outputs must differ from its preferred outputs.');
+      return {semanticEventId:raw.semanticEventId,time:raw.time,end:raw.end,tier:raw.tier,salience:raw.salience,role:raw.role||null,candidateOutputIds,
+        ...(fallbackOutputGroups?{fallbackOutputGroups}:{})};
+    });
+    return {version:1,enabled:true,minimumSalience,maxAllocations,tiers:tierList(input.tiers),...(fallbacks?{fallbacks}:{}),targets};
   }
   function outputById(id) {return PROFILE && PROFILE.outputs.find(output=>output.id===id);}
   function normalizeVocalRegions(input){
