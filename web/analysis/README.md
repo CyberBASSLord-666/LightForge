@@ -61,11 +61,24 @@ an isolated bass source.
 ## Optional dedicated-percussion semantic input
 
 The shipped worker does not currently include a dedicated drum/percussion model.
-It therefore never promotes mix onsets, impacts, beat estimates, accompaniment
-energy, or a low-frequency band into instrument-labelled drum events. This is an
-additive integration contract for a future dedicated analyzer or a legitimate
-manual/annotation importer; it is not a claim that those detections already
-exist.
+With its default settings it never promotes mix onsets, impacts, beat estimates,
+accompaniment energy, or a low-frequency band into instrument-labelled drum
+events. This remains an additive integration contract for a future dedicated
+analyzer or a legitimate manual/annotation importer; it is not a claim that
+those detections already exist.
+
+For controlled experiments only, a caller may set
+`enableEstimatedPercussionEvidence: true` on a fresh rhythm analysis. That
+opt-in adds low-trust `mix-feature-estimate` evidence only when a localized
+20 ms low/mid/high spectral-flux peak agrees with an independent 5 ms PCM
+attack. It can emit only `kick`, `snare`, or `hat`; every event is marked
+`estimated: true`, states that its input is the unseparated original mixture,
+and has a confidence/salience cap. The cap keeps it below primary salience and
+excludes it from automatic song-priority profiling. It does not claim a drum
+stem or a drum model, is disabled by default, and therefore cannot change
+default choreography or FSEQ output. Include this explicit setting in any
+analysis cache identity so a cached default rhythm result is not reused for an
+opt-in experiment.
 
 A caller that has actual classed evidence may supply it with the analysis result:
 
@@ -94,7 +107,10 @@ A `kick_bass_coincidence` relationship/event is produced only when a valid
 supplied kick falls within a valid `bassNotes` span (with a bounded 60 ms
 onset/end tolerance). It records the source event IDs and timing delta. Generic
 onsets, impacts, bass phrases and energy bands cannot create this relationship.
-The result remains deterministic for identical inputs.
+An opt-in `mix-feature-estimate` kick carries the same low-trust salience cap
+through any derived coincidence; only separately supplied evidence can receive
+normal percussion authority. The result remains deterministic for identical
+inputs.
 
 ## Rhythm, memory and cancellation
 

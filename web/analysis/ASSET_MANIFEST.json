@@ -1,7 +1,7 @@
 {
   "README.md": {
-    "bytes": 7914,
-    "sha256": "52d1a61a8db9943f11e70f915364b51c0afc0f8d4dc5553416c2d39815378efa"
+    "bytes": 8952,
+    "sha256": "77539880e7a2d2bcbb8e00773ec4b6877f24f654b8976ffb8a5c477bd7978359"
   },
   "analyzer.js": {
     "bytes": 9729,
@@ -12,8 +12,8 @@
     "sha256": "5b81e2361295a1f8c02086d4668464ed1d7e93c923513c50a2c865a7aeb1531e"
   },
   "dsp.js": {
-    "bytes": 27384,
-    "sha256": "32186b9268632cab85cadcb7e84fa1b4e3d8eb4bb9fbdf96a0873067cb9acd71"
+    "bytes": 31845,
+    "sha256": "e0f67458dd39cc27c369251ec9c6d5973c604d3d22a6b5e2c54d87d6ba00c027"
   },
   "game.js": {
     "bytes": 10103,
@@ -244,16 +244,16 @@
     "sha256": "52093f26d0bfe3f04bbb1563b287fafe5e61aa57a61391ea643b04d97838ca7e"
   },
   "salience.js": {
-    "bytes": 12886,
-    "sha256": "2594dcc2b5428828e321ab4f4ecf0fcc66091f3464e2bcfdebdac130919dbf1f"
+    "bytes": 13550,
+    "sha256": "b5b19ed8380c4ab9a33c4a6cfb7bb04f845d745fd41681de7ff93e419f976fa2"
   },
   "scheduler.js": {
     "bytes": 5331,
     "sha256": "7a9b97fd59c18b236090104ffe074945e802a99a239294c566a99148ef6e364e"
   },
   "semantic-timeline.js": {
-    "bytes": 15123,
-    "sha256": "a9c68bcb56a0784d12ca8a7eeb09c987f031dafb64ea12cb116e5dfe65811b70"
+    "bytes": 16044,
+    "sha256": "1db01b4d32473d36ae9c6310269236e779c3b4854326c514dcd3c917543e4f1f"
   },
   "separator-deux.js": {
     "bytes": 10079,
