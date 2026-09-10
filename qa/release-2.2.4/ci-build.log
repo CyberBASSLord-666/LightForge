@@ -1,0 +1,30 @@
+Verified 73 bundled analysis assets.
+Verified native ONNX Runtime 1.25.1 with 8 JNI libraries.
+Verified native ONNX Runtime 1.25.1 with 8 JNI libraries.
+Generating 3,072 bit RSA key pair and self-signed certificate (SHA256withRSA) with a validity of 10,001 days
+	for: CN=LightForge Personal, OU=Private Android App, O=Personal Use, C=US
+
+Warning:
+The JKS keystore uses a proprietary format. It is recommended to migrate to PKCS12 which is an industry standard format using "keytool -importkeystore -srckeystore /home/runner/work/_temp/ci-signing/lightforge-release.jks -destkeystore /home/runner/work/_temp/ci-signing/lightforge-release.jks -deststoretype pkcs12".
+{"files": 114, "bytes": 1524949777}
+Compiling Android resources and bundling offline assets…
+Compiling Java and Android bytecode…
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Aligning and signing APK…
+{
+  "apk": "LightForge-2.2.4.apk",
+  "update_compatible": false,
+  "signing_certificate_sha256": "578bc5ba4969e3a4003811572085ebbfe45480abe659463ae2c3b3f993cc73d6",
+  "bytes": 1204357470,
+  "sha256": "5620e784909b8fd14a4fb0e86c097f4acfe146f1b0a32681b1611015ef2c03d7",
+  "zip_integrity": "passed",
+  "alignment": "passed",
+  "signature": "verified",
+  "min_sdk": 26,
+  "target_sdk": 35,
+  "compile_sdk": 35,
+  "version_name": "2.2.4",
+  "version_code": 20204
+}
+Ready: /home/runner/work/LightForge/LightForge/dist/LightForge-2.2.4.apk

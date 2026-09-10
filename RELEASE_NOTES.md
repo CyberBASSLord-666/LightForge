@@ -1,30 +1,30 @@
 # LightForge 2.2.4
 
-Release candidate: publication remains blocked on complete Android lifecycle and final package gates. The current app passes local regression, the production verification/build job and a new original-signed build. Focused Android diagnostics pass eight checks on a temporary APK. The remaining reopened-project timeout was reproduced as a test-fixture settings mismatch; the corrected fixture compiles and awaits Android verification. Physical-phone and Tesla validation remain unperformed.
-
-This update targets the two long-run failure modes in the supplied diagnostics: renderer memory growth during Balanced MDX/GAME work and a native Studio crash that can leave a partial job. It keeps the learned weights, sample clock, model geometry and quality settings unchanged.
+LightForge 2.2.4 improves long-running analysis and recovery while preserving the bundled models, source timing and quality settings. The signed update uses the original LightForge certificate: install it over the existing app without uninstalling to retain private projects.
 
 ## Changes
 
-- Restore a completed background project once across startup, polling and native notifications, preserving navigation made while restoration is pending. Defer empty-scene rendering and environment-map GPU work until the vehicle model is loaded and the preview is visible.
-- Explicitly suspend preview animation and GPU redraw work while the native Activity or page is paused; resume once without duplicating animation loops or changing graphical quality.
-- Bound the Balanced separator's WebAssembly lifetime to one passage, reuse its frontend spectrum buffer, and retry a complete polarity pair in one runtime so a renderer cannot retain every long-song model allocation.
-- Add an optional native Android path for Balanced MDX. It streams only the exact 12.6 MiB Float32 spectrum in bounded bridge chunks, validates the pinned model geometry/checksum, uses the same ONNX graph and decoder, and falls back to the verified WebAssembly path on any compatibility or output error.
-- Apply the native retry guard to both native separators. A confirmed Android native crash disables that runtime identity for the next Resume instead of retrying the same instruction path; the compatibility path remains quality-preserving and uses the same models.
-- Reset GAME model sessions periodically, release preview WebViews before renderer teardown, and expose durable checkpoint commits immediately after each rhythm, passage and stage write.
-- Treat prior passage progress as resumable even when a renderer disappears between a browser checkpoint and its Java-side status update. Completed work is still checked against audio, settings, release and execution identity before reuse.
+- Run Balanced MDX separation through a guarded native Android CPU path, retaining both polarity passes and the existing waveform decoder. Compatibility fallback uses the same model and retries a complete pair in one runtime.
+- Bound WebAssembly model lifetimes between passages and stages, reuse large transform buffers, and release native resources before voice/GAME processing. GAME retains all eight transcription steps.
+- Update native ONNX Runtime to pinned 1.25.1. A confirmed native crash selects compatibility processing on the next Resume; completed matching work remains reusable.
+- Save passage/stage checkpoints promptly and report partial progress accurately. Cancellation retires native work through a shared execution gate before another separator allocates its models.
+- Restore completed projects once across competing startup events. Suspend paused preview animation and defer empty-scene rendering until the model and view are ready, preserving the tested final graphics.
+- Improve native crash reports and renderer recovery while retaining local-only diagnostics and user-controlled export.
 
-## Validation scope
+## Verification and limits
 
-The verification/build job in [run 34422875327](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34422875327) passed host, browser and build checks for the current app. [Focused Android run 34422870517](qa/release-2.2.4/android-startup-followup-run/README.md) passed all eight diagnostics checks, including Guide JavaScript export and renderer recovery, but its background reconnection check timed out. A deterministic run of the unchanged production worker reproduced the cause: the fixture compiled five settings, while reopening merged 27 UI settings; the input digest correctly rejected that mismatch, and the next polling retry reproduced the observed loading state. Only the fixture was corrected to read the complete actual UI settings before applying the same five overrides. Its compilation passes; Android execution with that correction remains pending. Earlier failed runs retain their original evidence, and the temporary diagnostic APK remains ineligible for release.
+All seven release verification gates passed in the complete [production run](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34424617050). Android 15 emulator checks completed Studio and two-pass native Balanced analysis with the Activity destroyed and screen off under Doze, reopened completed shows, cancelled live work, resumed a saved passage and verified timeout cleanup. All eight diagnostic/export/recovery checks also passed. The original 45-second readiness deadline was retained.
 
-Balanced native MDX passed three decoded-audio comparisons and an actual paired singing-note comparison with 16 sung notes. The initial absolute-only and revised relative spectral checks failed on a few coefficients; those records are retained and are not relabeled as passing spectral parity. See `qa/release-2.2.4/NUMERICAL_QUALIFICATION.md` for the revised output-domain contract and its scope. Android screen-off execution, sustained-phone memory/thermals and the supplied Samsung crash require their separate checks.
+Three fixed native/WASM decoded-audio comparisons and a separate actual vocal/GAME comparison passed; the latter preserved 16 sung notes. Internal spectral comparisons failed on a small number of coefficients and remain disclosed in the [numerical protocol](https://github.com/CyberBASSLord-666/LightForge/blob/57e6ee996bd8f9d135e89334585efe90d8667b68/qa/release-2.2.4/NUMERICAL_QUALIFICATION.md). These results do not establish exact spectral parity or general accuracy across songs.
+
+Cold preview startup remains variable: a separate diagnostic run missed the 45-second deadline and reached the same readiness conditions about six seconds later. The original failed records are retained. No physical Samsung crash reproduction, sustained-phone speed/thermal result or Tesla timing validation is claimed. Long songs and compatibility processing can still take substantial time and memory.
 
 ---
 
-# LightForge 2.2.3
+# Historical LightForge 2.2.3 development notes
 
-Release candidate: validation and original-certificate signing must finish before publication.
+
+Unpublished development precursor. The following notes retain its original scope; its runtime and diagnostic changes are included in 2.2.4.
 
 This update addresses a native crash during Studio separation startup. A device diagnostic report records a native illegal-instruction exit immediately after the first passage starts. ONNX Runtime 1.23.2 has upstream reports of ARM CPU instruction-detection errors matching this class of failure. The report does not identify the exact failing function, so physical-device confirmation remains necessary.
 

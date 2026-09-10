@@ -1,0 +1,21 @@
+{
+  "diagnosticOnly": true,
+  "releaseEligible": false,
+  "complete": true,
+  "chunksReceived": 2,
+  "bytesReceived": 33485,
+  "exportReceipt": {
+    "event": "complete",
+    "id": "readiness-failure",
+    "bytes": 33485,
+    "sha256": "14ad97775ea5e57d455cd16c32165febac39102efb146df90b3d0719c3dc5d5b",
+    "chunks": 2,
+    "export": {
+      "name": "LightForge-diagnostics-20260910-015810-087-13fbbfba.txt",
+      "location": "Downloads/LightForge",
+      "uri": "content://media/external/downloads/1000000019",
+      "bytes": 33485
+    }
+  },
+  "errors": []
+}

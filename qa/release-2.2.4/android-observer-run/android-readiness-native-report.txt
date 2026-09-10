@@ -1,0 +1,311 @@
+LIGHTFORGE DIAGNOSTIC REPORT
+Format: 1 (UTF-8)
+Created UTC: 2026-09-10T01:58:10.096Z
+Contains technical events, sanitized stack traces and Android exit evidence.
+Excludes audio, transcripts, project names, credentials and private paths.
+Logs survive app restarts and cache clearing; clear app data/uninstall removes history.
+History bound: 1048576 bytes; oldest entries rotate.
+Queue drained: true; dropped events: 0; write failures: 0
+
+CURRENT ENVIRONMENT
+app=com.cyberbasslord.lightforge version=2.2.4 code=20204
+manufacturer=Google model=sdk_gphone64_x86_64 sdk=35 android=15
+abi=[x86_64, arm64-v8a] cpuCores=2
+webview=com.google.android.webview 124.0.6367.219
+screenInteractive=true deviceIdle=false batteryExempt=true backgroundRestricted=false
+heapUsedBytes=208544896 heapLimitBytes=603979776 nativeHeapBytes=40085504 processPssKiB=300636 deviceAvailableBytes=2458800128 deviceTotalBytes=4110737408 lowMemory=false lowMemoryThresholdBytes=226492416 appStorageFreeBytes=2867036160
+
+CURRENT ANALYSIS JOB
+jobRef=91dc4173
+state=completed
+stage=Your show is ready
+analysisStage=save
+progress=1.0
+completedStages=3.0
+restoredStages=0.0
+elapsedMs=370700.0
+createdAt=1.789005069221E12
+updatedAt=1.789005439961E12
+progressAt=1.789005439921E12
+checkpointAt=1.789005439141E12
+hasCheckpoint=true
+resumeAvailable=true
+analysisQuality=precision
+durationSeconds=3.0
+
+
+ANDROID PREVIOUS PROCESS EXITS
+timestampMs=1789005441840 reason=EXIT_SELF(1) status=0 importance=300 pssKiB=0 rssKiB=0 process=app-related description=[ISOLATED NOT NEEDED] isolated not needed
+
+
+PERSISTENT EVENT TRACE (oldest to newest)
+2026-09-10T01:50:55.223Z INFO session Session started; uptimeMs=189804
+2026-09-10T01:50:56.652Z INFO environment app=com.cyberbasslord.lightforge version=2.2.4 code=20204\nmanufacturer=Google model=sdk_gphone64_x86_64 sdk=35 android=15\nabi=[x86_64, arm64-v8a] cpuCores=2\nwebview=com.google.android.webview 124.0.6367.219\nscreenInteractive=true deviceIdle=false batteryExempt=true backgroundRestricted=false\nheapUsedBytes=3796816 heapLimitBytes=603979776 nativeHeapBytes=6454480 processPssKiB=12573 deviceAvailableBytes=2561966080 deviceTotalBytes=4110737408 lowMemory=false lowMemoryThresholdBytes=226492416 appStorageFreeBytes=3789676544
+2026-09-10T01:50:56.672Z INFO previous-exit Android has no retained process-exit records for this app.
+2026-09-10T01:50:56.672Z INFO activity created; restored=false
+2026-09-10T01:50:57.791Z INFO activity resumed
+2026-09-10T01:51:00.703Z INFO lifecycle Diagnostic capture started
+2026-09-10T01:51:09.246Z INFO analysis-service created
+2026-09-10T01:51:09.246Z INFO analysis-service starting job=[identifier redacted]
+2026-09-10T01:51:09.329Z INFO background Analysis state=queued
+2026-09-10T01:51:09.335Z INFO operation Creating your show in the background
+2026-09-10T01:51:09.344Z INFO progress stage=working progress=0%
+2026-09-10T01:51:09.352Z INFO activity paused
+2026-09-10T01:51:09.426Z INFO analysis-service task removed; continuing=true
+2026-09-10T01:51:13.986Z INFO lifecycle Diagnostic capture started
+2026-09-10T01:51:13.987Z INFO background Runner started
+2026-09-10T01:51:13.987Z INFO activity destroyed; finishing=true
+2026-09-10T01:51:19.216Z INFO analysis-worker Stage started: rhythm
+2026-09-10T01:51:19.506Z INFO analysis-worker stage=rhythm progress=1%
+2026-09-10T01:51:19.513Z INFO background stage=working progress=1% completedStages=0 restoredStages=0
+2026-09-10T01:51:19.942Z INFO analysis-progress job=[identifier redacted]; progress=0.0096; stage=Reading your music locally; checkpoint=false; passage=-1; completed=-1
+2026-09-10T01:51:31.098Z INFO background stage=beats progress=37% completedStages=0 restoredStages=0
+2026-09-10T01:51:31.099Z INFO background stage=structure progress=38% completedStages=0 restoredStages=0
+2026-09-10T01:51:31.099Z INFO analysis-progress job=[identifier redacted]; progress=0.384; stage=Progress saved; checkpoint=true; passage=-1; completed=-1
+2026-09-10T01:51:31.099Z INFO analysis-worker Stage completed: rhythm
+2026-09-10T01:51:31.099Z INFO analysis-worker Stage started: separation
+2026-09-10T01:51:31.533Z INFO analysis-worker stage=separation progress=41%
+2026-09-10T01:51:31.534Z INFO background stage=working progress=39% completedStages=1 restoredStages=0
+2026-09-10T01:51:31.535Z INFO background stage=voice progress=39% completedStages=1 restoredStages=0
+2026-09-10T01:51:31.680Z INFO analysis-worker stage=separation progress=42% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0 checkpointSaved=false
+2026-09-10T01:51:31.680Z INFO background stage=voice progress=40% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0 completedStages=1 restoredStages=0 checkpointSaved=false
+2026-09-10T01:51:31.681Z INFO native-passage started; passage=f09e8e84; startSample=-66150; cacheFreeBytes=3799539712
+2026-09-10T01:51:32.062Z INFO native-start-memory heapUsedBytes=5723824 heapLimitBytes=603979776 nativeHeapBytes=22491392 processPssKiB=57486 deviceAvailableBytes=2490712064 deviceTotalBytes=4110737408 lowMemory=false lowMemoryThresholdBytes=226492416 appStorageFreeBytes=3799162880
+2026-09-10T01:51:32.062Z INFO native-phase cache-check-start
+2026-09-10T01:51:32.113Z INFO native-phase runtime-load-start; version=1.25.1
+2026-09-10T01:51:32.418Z INFO native-phase runtime-load-complete
+2026-09-10T01:51:33.045Z INFO native-phase passage-encoded
+2026-09-10T01:51:33.259Z INFO native-phase session-create-start; graph=front
+2026-09-10T01:51:33.712Z INFO native-phase session-create-complete; graph=front
+2026-09-10T01:51:33.713Z INFO native-phase session-run-start; graph=front
+2026-09-10T01:51:34.897Z INFO native-phase session-run-complete; graph=front
+2026-09-10T01:51:35.096Z INFO native-phase session-create-start; graph=block-00-time
+2026-09-10T01:51:35.330Z INFO native-phase session-create-complete; graph=block-00-time
+2026-09-10T01:51:35.380Z INFO native-phase session-run-start; graph=block-00-time
+2026-09-10T01:51:37.358Z INFO native-phase session-run-complete; graph=block-00-time
+2026-09-10T01:51:46.899Z INFO analysis-worker stage=separation progress=46% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0 checkpointSaved=false
+2026-09-10T01:51:46.900Z INFO background stage=voice progress=44% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0 completedStages=1 restoredStages=0 checkpointSaved=false
+2026-09-10T01:51:46.900Z INFO analysis-progress job=[identifier redacted]; progress=0.4377599999999999; stage=Studio · passage 1 of 1 · 9% • 0 / 3 seconds; checkpoint=false; passage=1; completed=0
+2026-09-10T01:51:47.604Z INFO native-progress passage=f09e8e84; progress=0.09333333333333332; elapsedMs=15931; Studio temporal detail · layer 1/12
+2026-09-10T01:51:55.422Z INFO native-phase session-create-start; graph=block-00-frequency
+2026-09-10T01:51:55.498Z INFO native-phase session-create-complete; graph=block-00-frequency
+2026-09-10T01:51:55.499Z INFO native-phase session-run-start; graph=block-00-frequency
+2026-09-10T01:51:56.276Z INFO native-phase session-run-complete; graph=block-00-frequency
+2026-09-10T01:52:02.495Z INFO analysis-worker stage=separation progress=47% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0 checkpointSaved=false
+2026-09-10T01:52:02.496Z INFO background stage=voice progress=45% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0 completedStages=1 restoredStages=0 checkpointSaved=false
+2026-09-10T01:52:02.519Z INFO analysis-progress job=[identifier redacted]; progress=0.4536670253651037; stage=Studio · passage 1 of 1 · 13% • 0 / 3 seconds; checkpoint=false; passage=1; completed=0
+2026-09-10T01:52:02.961Z INFO native-progress passage=f09e8e84; progress=0.13306430950550857; elapsedMs=31272; Studio harmonic detail · layer 1/12
+2026-09-10T01:52:03.195Z INFO native-phase session-create-start; graph=block-01-time
+2026-09-10T01:52:03.271Z INFO native-phase session-create-complete; graph=block-01-time
+2026-09-10T01:52:03.285Z INFO native-phase session-run-start; graph=block-01-time
+2026-09-10T01:52:04.392Z INFO native-phase session-run-complete; graph=block-01-time
+2026-09-10T01:52:17.953Z INFO native-progress passage=f09e8e84; progress=0.18000000000000002; elapsedMs=46279; Studio temporal detail · layer 2/12
+2026-09-10T01:52:18.118Z INFO analysis-worker stage=separation progress=49% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0 checkpointSaved=false
+2026-09-10T01:52:18.119Z INFO background stage=voice progress=47% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0 completedStages=1 restoredStages=0 checkpointSaved=false
+2026-09-10T01:52:18.119Z INFO analysis-progress job=[identifier redacted]; progress=0.47231999999999996; stage=Studio · passage 1 of 1 · 18% • 0 / 3 seconds; checkpoint=false; passage=1; completed=0
+2026-09-10T01:52:19.300Z INFO native-phase session-create-start; graph=block-01-frequency
+2026-09-10T01:52:19.349Z INFO native-phase session-create-complete; graph=block-01-frequency
+2026-09-10T01:52:19.349Z INFO native-phase session-run-start; graph=block-01-frequency
+2026-09-10T01:52:20.060Z INFO native-phase session-run-complete; graph=block-01-frequency
+2026-09-10T01:52:26.624Z INFO native-phase session-create-start; graph=block-02-time
+2026-09-10T01:52:26.688Z INFO native-phase session-create-complete; graph=block-02-time
+2026-09-10T01:52:26.697Z INFO native-phase session-run-start; graph=block-02-time
+2026-09-10T01:52:27.699Z INFO native-phase session-run-complete; graph=block-02-time
+2026-09-10T01:52:33.182Z INFO native-progress passage=f09e8e84; progress=0.22; elapsedMs=61509; Studio temporal detail · layer 3/12
+2026-09-10T01:52:33.228Z INFO analysis-worker stage=separation progress=51% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0 checkpointSaved=false
+2026-09-10T01:52:33.269Z INFO background stage=voice progress=49% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0 completedStages=1 restoredStages=0 checkpointSaved=false
+2026-09-10T01:52:33.273Z INFO analysis-progress job=[identifier redacted]; progress=0.48768; stage=Studio · passage 1 of 1 · 22% • 0 / 3 seconds; checkpoint=false; passage=1; completed=0
+2026-09-10T01:52:43.252Z INFO native-phase session-create-start; graph=block-02-frequency
+2026-09-10T01:52:43.310Z INFO native-phase session-create-complete; graph=block-02-frequency
+2026-09-10T01:52:43.314Z INFO native-phase session-run-start; graph=block-02-frequency
+2026-09-10T01:52:44.085Z INFO native-phase session-run-complete; graph=block-02-frequency
+2026-09-10T01:52:48.318Z INFO native-progress passage=f09e8e84; progress=0.26147834998718933; elapsedMs=76641; Studio harmonic detail · layer 3/12
+2026-09-10T01:52:48.878Z INFO analysis-worker stage=separation progress=52% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0 checkpointSaved=false
+2026-09-10T01:52:48.879Z INFO background stage=voice progress=50% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0 completedStages=1 restoredStages=0 checkpointSaved=false
+2026-09-10T01:52:48.880Z INFO analysis-progress job=[identifier redacted]; progress=0.5036076863950807; stage=Studio · passage 1 of 1 · 26% • 0 / 3 seconds; checkpoint=false; passage=1; completed=0
+2026-09-10T01:52:50.882Z INFO native-phase session-create-start; graph=block-03-time
+2026-09-10T01:52:50.947Z INFO native-phase session-create-complete; graph=block-03-time
+2026-09-10T01:52:50.956Z INFO native-phase session-run-start; graph=block-03-time
+2026-09-10T01:52:52.104Z INFO native-phase session-run-complete; graph=block-03-time
+2026-09-10T01:53:04.023Z INFO native-progress passage=f09e8e84; progress=0.31; elapsedMs=92350; Studio temporal detail · layer 4/12
+2026-09-10T01:53:04.427Z INFO analysis-worker stage=separation progress=54% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0 checkpointSaved=false
+2026-09-10T01:53:04.428Z INFO background stage=voice progress=52% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0 completedStages=1 restoredStages=0 checkpointSaved=false
+2026-09-10T01:53:04.428Z INFO analysis-progress job=[identifier redacted]; progress=0.52224; stage=Studio · passage 1 of 1 · 31% • 0 / 3 seconds; checkpoint=false; passage=1; completed=0
+2026-09-10T01:53:06.103Z INFO native-phase session-create-start; graph=block-03-frequency
+2026-09-10T01:53:06.140Z INFO native-phase session-create-complete; graph=block-03-frequency
+2026-09-10T01:53:06.141Z INFO native-phase session-run-start; graph=block-03-frequency
+2026-09-10T01:53:06.827Z INFO native-phase session-run-complete; graph=block-03-frequency
+2026-09-10T01:53:13.190Z INFO native-phase session-create-start; graph=block-04-time
+2026-09-10T01:53:13.254Z INFO native-phase session-create-complete; graph=block-04-time
+2026-09-10T01:53:13.261Z INFO native-phase session-run-start; graph=block-04-time
+2026-09-10T01:53:14.259Z INFO native-phase session-run-complete; graph=block-04-time
+2026-09-10T01:53:19.400Z INFO native-progress passage=f09e8e84; progress=0.35333333333333333; elapsedMs=107727; Studio temporal detail · layer 5/12
+2026-09-10T01:53:19.494Z INFO analysis-worker stage=separation progress=56% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0 checkpointSaved=false
+2026-09-10T01:53:19.495Z INFO background stage=voice progress=54% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0 completedStages=1 restoredStages=0 checkpointSaved=false
+2026-09-10T01:53:19.495Z INFO analysis-progress job=[identifier redacted]; progress=0.53888; stage=Studio · passage 1 of 1 · 35% • 0 / 3 seconds; checkpoint=false; passage=1; completed=0
+2026-09-10T01:53:28.431Z INFO native-phase session-create-start; graph=block-04-frequency
+2026-09-10T01:53:28.470Z INFO native-phase session-create-complete; graph=block-04-frequency
+2026-09-10T01:53:28.470Z INFO native-phase session-run-start; graph=block-04-frequency
+2026-09-10T01:53:29.198Z INFO native-phase session-run-complete; graph=block-04-frequency
+2026-09-10T01:53:34.529Z INFO native-progress passage=f09e8e84; progress=0.39809121188829105; elapsedMs=122856; Studio harmonic detail · layer 5/12
+2026-09-10T01:53:34.534Z INFO analysis-worker stage=separation progress=58% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0 checkpointSaved=false
+2026-09-10T01:53:34.534Z INFO background stage=voice progress=56% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0 completedStages=1 restoredStages=0 checkpointSaved=false
+2026-09-10T01:53:35.398Z INFO native-phase session-create-start; graph=block-05-time
+2026-09-10T01:53:35.455Z INFO native-phase session-create-complete; graph=block-05-time
+2026-09-10T01:53:35.462Z INFO native-phase session-run-start; graph=block-05-time
+2026-09-10T01:53:35.552Z INFO analysis-progress job=[identifier redacted]; progress=0.5568000000000001; stage=Studio · passage 1 of 1 · 40% • 0 / 3 seconds; checkpoint=false; passage=1; completed=0
+2026-09-10T01:53:36.450Z INFO native-phase session-run-complete; graph=block-05-time
+2026-09-10T01:53:49.612Z INFO analysis-worker stage=separation progress=60% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0 checkpointSaved=false
+2026-09-10T01:53:49.613Z INFO background stage=voice progress=57% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0 completedStages=1 restoredStages=0 checkpointSaved=false
+2026-09-10T01:53:50.535Z INFO native-progress passage=f09e8e84; progress=0.45; elapsedMs=138862; Studio temporal detail · layer 6/12
+2026-09-10T01:53:50.625Z INFO analysis-progress job=[identifier redacted]; progress=0.576; stage=Studio · passage 1 of 1 · 45% • 0 / 3 seconds; checkpoint=false; passage=1; completed=0
+2026-09-10T01:53:50.665Z INFO native-phase session-create-start; graph=block-05-frequency
+2026-09-10T01:53:50.706Z INFO native-phase session-create-complete; graph=block-05-frequency
+2026-09-10T01:53:50.706Z INFO native-phase session-run-start; graph=block-05-frequency
+2026-09-10T01:53:51.375Z INFO native-phase session-run-complete; graph=block-05-frequency
+2026-09-10T01:53:57.599Z INFO native-phase session-create-start; graph=block-06-time
+2026-09-10T01:53:57.665Z INFO native-phase session-create-complete; graph=block-06-time
+2026-09-10T01:53:57.676Z INFO native-phase session-run-start; graph=block-06-time
+2026-09-10T01:53:58.715Z INFO native-phase session-run-complete; graph=block-06-time
+2026-09-10T01:54:05.180Z INFO analysis-worker stage=separation progress=62% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0 checkpointSaved=false
+2026-09-10T01:54:05.180Z INFO background stage=voice progress=59% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0 completedStages=1 restoredStages=0 checkpointSaved=false
+2026-09-10T01:54:05.865Z INFO native-progress passage=f09e8e84; progress=0.49333333333333335; elapsedMs=154192; Studio temporal detail · layer 7/12
+2026-09-10T01:54:07.192Z INFO analysis-progress job=[identifier redacted]; progress=0.59392; stage=Studio · passage 1 of 1 · 50% • 0 / 3 seconds; checkpoint=false; passage=1; completed=0
+2026-09-10T01:54:13.165Z INFO native-phase session-create-start; graph=block-06-frequency
+2026-09-10T01:54:13.211Z INFO native-phase session-create-complete; graph=block-06-frequency
+2026-09-10T01:54:13.211Z INFO native-phase session-run-start; graph=block-06-frequency
+2026-09-10T01:54:13.900Z INFO native-phase session-run-complete; graph=block-06-frequency
+2026-09-10T01:54:20.115Z INFO native-phase session-create-start; graph=block-07-time
+2026-09-10T01:54:20.175Z INFO native-phase session-create-complete; graph=block-07-time
+2026-09-10T01:54:20.182Z INFO native-phase session-run-start; graph=block-07-time
+2026-09-10T01:54:20.238Z INFO analysis-worker stage=separation progress=63% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0 checkpointSaved=false
+2026-09-10T01:54:20.239Z INFO background stage=voice progress=61% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0 completedStages=1 restoredStages=0 checkpointSaved=false
+2026-09-10T01:54:21.231Z INFO native-phase session-run-complete; graph=block-07-time
+2026-09-10T01:54:21.238Z INFO native-progress passage=f09e8e84; progress=0.5366666666666667; elapsedMs=169563; Studio temporal detail · layer 8/12
+2026-09-10T01:54:22.761Z INFO analysis-progress job=[identifier redacted]; progress=0.6105599999999999; stage=Studio · passage 1 of 1 · 54% • 0 / 3 seconds; checkpoint=false; passage=1; completed=0
+2026-09-10T01:54:35.653Z INFO native-phase session-create-start; graph=block-07-frequency
+2026-09-10T01:54:35.698Z INFO native-phase session-create-complete; graph=block-07-frequency
+2026-09-10T01:54:35.699Z INFO native-phase session-run-start; graph=block-07-frequency
+2026-09-10T01:54:35.810Z INFO analysis-worker stage=separation progress=65% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0 checkpointSaved=false
+2026-09-10T01:54:35.811Z INFO background stage=voice progress=63% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0 completedStages=1 restoredStages=0 checkpointSaved=false
+2026-09-10T01:54:36.387Z INFO native-phase session-run-complete; graph=block-07-frequency
+2026-09-10T01:54:36.389Z INFO native-progress passage=f09e8e84; progress=0.5849730976172175; elapsedMs=184717; Studio harmonic detail · layer 8/12
+2026-09-10T01:54:37.862Z INFO analysis-progress job=[identifier redacted]; progress=0.6290890084550346; stage=Studio · passage 1 of 1 · 59% • 0 / 3 seconds; checkpoint=false; passage=1; completed=0
+2026-09-10T01:54:42.698Z INFO native-phase session-create-start; graph=block-08-time
+2026-09-10T01:54:42.766Z INFO native-phase session-create-complete; graph=block-08-time
+2026-09-10T01:54:42.774Z INFO native-phase session-run-start; graph=block-08-time
+2026-09-10T01:54:43.844Z INFO native-phase session-run-complete; graph=block-08-time
+2026-09-10T01:54:51.384Z INFO analysis-worker stage=separation progress=67% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0 checkpointSaved=false
+2026-09-10T01:54:51.385Z INFO background stage=voice progress=64% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0 completedStages=1 restoredStages=0 checkpointSaved=false
+2026-09-10T01:54:52.158Z INFO native-progress passage=f09e8e84; progress=0.63; elapsedMs=200485; Studio temporal detail · layer 9/12
+2026-09-10T01:54:53.398Z INFO analysis-progress job=[identifier redacted]; progress=0.6464; stage=Studio · passage 1 of 1 · 63% • 0 / 3 seconds; checkpoint=false; passage=1; completed=0
+2026-09-10T01:54:58.530Z INFO native-phase session-create-start; graph=block-08-frequency
+2026-09-10T01:54:58.570Z INFO native-phase session-create-complete; graph=block-08-frequency
+2026-09-10T01:54:58.570Z INFO native-phase session-run-start; graph=block-08-frequency
+2026-09-10T01:54:59.301Z INFO native-phase session-run-complete; graph=block-08-frequency
+2026-09-10T01:55:05.612Z INFO native-phase session-create-start; graph=block-09-time
+2026-09-10T01:55:05.677Z INFO native-phase session-create-complete; graph=block-09-time
+2026-09-10T01:55:05.684Z INFO native-phase session-run-start; graph=block-09-time
+2026-09-10T01:55:06.720Z INFO native-phase session-run-complete; graph=block-09-time
+2026-09-10T01:55:06.950Z INFO analysis-worker stage=separation progress=69% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0 checkpointSaved=false
+2026-09-10T01:55:06.969Z INFO background stage=voice progress=66% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0 completedStages=1 restoredStages=0 checkpointSaved=false
+2026-09-10T01:55:07.762Z INFO native-progress passage=f09e8e84; progress=0.6733333333333333; elapsedMs=216089; Studio temporal detail · layer 10/12
+2026-09-10T01:55:08.960Z INFO analysis-progress job=[identifier redacted]; progress=0.66304; stage=Studio · passage 1 of 1 · 68% • 0 / 3 seconds; checkpoint=false; passage=1; completed=0
+2026-09-10T01:55:21.297Z INFO native-phase session-create-start; graph=block-09-frequency
+2026-09-10T01:55:21.340Z INFO native-phase session-create-complete; graph=block-09-frequency
+2026-09-10T01:55:21.340Z INFO native-phase session-run-start; graph=block-09-frequency
+2026-09-10T01:55:22.035Z INFO native-phase session-run-complete; graph=block-09-frequency
+2026-09-10T01:55:22.518Z INFO analysis-worker stage=separation progress=71% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0 checkpointSaved=false
+2026-09-10T01:55:22.519Z INFO background stage=voice progress=68% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0 completedStages=1 restoredStages=0 checkpointSaved=false
+2026-09-10T01:55:23.369Z INFO native-progress passage=f09e8e84; progress=0.7215859595183193; elapsedMs=231696; Studio harmonic detail · layer 10/12
+2026-09-10T01:55:24.586Z INFO analysis-progress job=[identifier redacted]; progress=0.6809186779400461; stage=Studio · passage 1 of 1 · 72% • 0 / 3 seconds; checkpoint=false; passage=1; completed=0
+2026-09-10T01:55:28.483Z INFO native-phase session-create-start; graph=block-10-time
+2026-09-10T01:55:28.557Z INFO native-phase session-create-complete; graph=block-10-time
+2026-09-10T01:55:28.565Z INFO native-phase session-run-start; graph=block-10-time
+2026-09-10T01:55:29.601Z INFO native-phase session-run-complete; graph=block-10-time
+2026-09-10T01:55:38.082Z INFO analysis-worker stage=separation progress=73% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0 checkpointSaved=false
+2026-09-10T01:55:38.085Z INFO background stage=voice progress=70% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0 completedStages=1 restoredStages=0 checkpointSaved=false
+2026-09-10T01:55:38.966Z INFO native-progress passage=f09e8e84; progress=0.7666666666666667; elapsedMs=247293; Studio temporal detail · layer 11/12
+2026-09-10T01:55:40.118Z INFO analysis-progress job=[identifier redacted]; progress=0.69888; stage=Studio · passage 1 of 1 · 77% • 0 / 3 seconds; checkpoint=false; passage=1; completed=0
+2026-09-10T01:55:44.423Z INFO native-phase session-create-start; graph=block-10-frequency
+2026-09-10T01:55:44.468Z INFO native-phase session-create-complete; graph=block-10-frequency
+2026-09-10T01:55:44.469Z INFO native-phase session-run-start; graph=block-10-frequency
+2026-09-10T01:55:45.187Z INFO native-phase session-run-complete; graph=block-10-frequency
+2026-09-10T01:55:51.817Z INFO native-phase session-create-start; graph=block-11-time
+2026-09-10T01:55:51.875Z INFO native-phase session-create-complete; graph=block-11-time
+2026-09-10T01:55:51.886Z INFO native-phase session-run-start; graph=block-11-time
+2026-09-10T01:55:52.908Z INFO native-phase session-run-complete; graph=block-11-time
+2026-09-10T01:55:53.212Z INFO analysis-worker stage=separation progress=74% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0 checkpointSaved=false
+2026-09-10T01:55:53.213Z INFO background stage=voice progress=71% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0 completedStages=1 restoredStages=0 checkpointSaved=false
+2026-09-10T01:55:54.905Z INFO native-progress passage=f09e8e84; progress=0.81; elapsedMs=263231; Studio temporal detail · layer 12/12
+2026-09-10T01:55:55.210Z INFO analysis-progress job=[identifier redacted]; progress=0.71424; stage=Studio · passage 1 of 1 · 81% • 0 / 3 seconds; checkpoint=false; passage=1; completed=0
+2026-09-10T01:56:06.831Z INFO native-phase session-create-start; graph=block-11-frequency
+2026-09-10T01:56:06.870Z INFO native-phase session-create-complete; graph=block-11-frequency
+2026-09-10T01:56:06.871Z INFO native-phase session-run-start; graph=block-11-frequency
+2026-09-10T01:56:07.548Z INFO native-phase session-run-complete; graph=block-11-frequency
+2026-09-10T01:56:08.250Z INFO analysis-worker stage=separation progress=76% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0 checkpointSaved=false
+2026-09-10T01:56:08.306Z INFO background stage=voice progress=73% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0 completedStages=1 restoredStages=0 checkpointSaved=false
+2026-09-10T01:56:10.201Z INFO native-progress passage=f09e8e84; progress=0.8581988214194209; elapsedMs=278529; Studio harmonic detail · layer 12/12
+2026-09-10T01:56:10.327Z INFO analysis-progress job=[identifier redacted]; progress=0.7327483474250576; stage=Studio · passage 1 of 1 · 86% • 0 / 3 seconds; checkpoint=false; passage=1; completed=0
+2026-09-10T01:56:21.334Z INFO native-phase session-create-start; graph=head-0
+2026-09-10T01:56:22.564Z INFO native-phase session-create-complete; graph=head-0
+2026-09-10T01:56:22.565Z INFO native-phase session-run-start; graph=head-0
+2026-09-10T01:56:23.222Z INFO native-phase session-run-complete; graph=head-0
+2026-09-10T01:56:23.331Z INFO analysis-worker stage=separation progress=77% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0 checkpointSaved=false
+2026-09-10T01:56:23.332Z INFO background stage=voice progress=74% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0 completedStages=1 restoredStages=0 checkpointSaved=false
+2026-09-10T01:56:25.298Z INFO native-progress passage=f09e8e84; progress=0.8994619523443504; elapsedMs=293624; Studio vocal reconstruction
+2026-09-10T01:56:25.344Z INFO analysis-progress job=[identifier redacted]; progress=0.7485933897002306; stage=Studio · passage 1 of 1 · 90% • 0 / 3 seconds; checkpoint=false; passage=1; completed=0
+2026-09-10T01:56:38.874Z INFO native-phase session-create-start; graph=head-1
+2026-09-10T01:56:39.980Z INFO native-phase session-create-complete; graph=head-1
+2026-09-10T01:56:39.981Z INFO native-phase session-run-start; graph=head-1
+2026-09-10T01:56:40.477Z INFO native-phase session-run-complete; graph=head-1
+2026-09-10T01:56:40.481Z INFO native-progress passage=f09e8e84; progress=0.9398923904688701; elapsedMs=308808; Studio accompaniment reconstruction
+2026-09-10T01:56:40.950Z INFO analysis-worker stage=separation progress=80% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0 checkpointSaved=false
+2026-09-10T01:56:40.986Z INFO background stage=voice progress=76% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0 completedStages=1 restoredStages=0 checkpointSaved=false
+2026-09-10T01:56:40.987Z INFO analysis-progress job=[identifier redacted]; progress=0.7641186779400461; stage=Studio · passage 1 of 1 · 94% • 0 / 3 seconds; checkpoint=false; passage=1; completed=0
+2026-09-10T01:56:46.013Z INFO native-passage completed; passage=f09e8e84; elapsedMs=314340
+2026-09-10T01:56:46.041Z INFO native-complete-memory heapUsedBytes=196233968 heapLimitBytes=603979776 nativeHeapBytes=24118000 processPssKiB=277295 deviceAvailableBytes=2542587904 deviceTotalBytes=4110737408 lowMemory=false lowMemoryThresholdBytes=226492416 appStorageFreeBytes=2872037376
+2026-09-10T01:56:46.728Z INFO analysis-progress job=[identifier redacted]; progress=0.7872; stage=Studio · passage 1 of 1 complete • 3 / 3 seconds; checkpoint=true; passage=1; completed=1
+2026-09-10T01:56:46.744Z INFO analysis-worker stage=separation progress=82% checkpointSaved=true
+2026-09-10T01:56:46.745Z INFO background stage=voice progress=79% completedStages=1 restoredStages=0 checkpointSaved=true
+2026-09-10T01:56:46.751Z INFO analysis-progress job=[identifier redacted]; progress=0.7872; stage=Progress saved; checkpoint=true; passage=-1; completed=-1
+2026-09-10T01:56:46.752Z INFO analysis-worker Stage completed: separation
+2026-09-10T01:56:46.762Z INFO analysis-worker Stage started: voice
+2026-09-10T01:56:47.051Z INFO analysis-worker stage=voice progress=83%
+2026-09-10T01:56:49.363Z INFO background stage=vocal progress=90% completedStages=2 restoredStages=0
+2026-09-10T01:56:49.365Z INFO background stage=working progress=90% completedStages=2 restoredStages=0
+2026-09-10T01:56:49.384Z INFO analysis-worker stage=voice progress=95% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0
+2026-09-10T01:56:49.385Z INFO background stage=working progress=91% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0 completedStages=2 restoredStages=0
+2026-09-10T01:56:49.402Z INFO analysis-worker stage=voice progress=95%
+2026-09-10T01:56:49.403Z INFO background stage=working progress=91% completedStages=2 restoredStages=0
+2026-09-10T01:57:03.681Z INFO analysis-worker stage=voice progress=95% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0
+2026-09-10T01:57:03.726Z INFO background stage=working progress=91% passageIndex=1 passageCount=1 passagesCompleted=0 restoredPassages=0 completedStages=2 restoredStages=0
+2026-09-10T01:57:03.727Z INFO analysis-progress job=[identifier redacted]; progress=0.91104; stage=GAME Large • 10%; checkpoint=false; passage=1; completed=0
+2026-09-10T01:57:18.517Z INFO analysis-progress job=[identifier redacted]; progress=0.9456; stage=GAME Large • 100%; checkpoint=true; passage=1; completed=1
+2026-09-10T01:57:18.554Z INFO analysis-worker stage=voice progress=99% checkpointSaved=true
+2026-09-10T01:57:18.555Z INFO background stage=voice progress=95% completedStages=2 restoredStages=0 checkpointSaved=true
+2026-09-10T01:57:18.560Z INFO analysis-progress job=[identifier redacted]; progress=0.9456; stage=Progress saved; checkpoint=true; passage=-1; completed=-1
+2026-09-10T01:57:18.562Z INFO analysis-worker Stage completed: voice
+2026-09-10T01:57:18.570Z INFO analysis-worker Stage started: bass
+2026-09-10T01:57:18.909Z INFO analysis-worker stage=bass progress=99%
+2026-09-10T01:57:18.910Z INFO background stage=bass progress=95% completedStages=3 restoredStages=0
+2026-09-10T01:57:19.097Z INFO background stage=working progress=96% completedStages=3 restoredStages=0
+2026-09-10T01:57:19.126Z INFO analysis-progress job=[identifier redacted]; progress=0.96; stage=Progress saved; checkpoint=true; passage=-1; completed=-1
+2026-09-10T01:57:19.126Z INFO analysis-worker Stage completed: bass
+2026-09-10T01:57:19.144Z INFO analysis-checkpoint saved; job=[identifier redacted]
+2026-09-10T01:57:19.146Z INFO composition-worker Composition started
+2026-09-10T01:57:19.326Z INFO composition-worker stage=generate progress=4%
+2026-09-10T01:57:19.327Z INFO background stage=generate progress=96%
+2026-09-10T01:57:19.920Z INFO composition-worker Composition completed
+2026-09-10T01:57:19.922Z INFO background stage=save progress=100%
+2026-09-10T01:57:19.965Z INFO analysis-shutdown job=[identifier redacted]; state=completed
+2026-09-10T01:57:21.912Z INFO analysis-service destroyed; stopped=true
+2026-09-10T01:57:22.579Z INFO activity created; restored=false
+2026-09-10T01:57:23.599Z INFO activity resumed
+2026-09-10T01:57:29.652Z INFO lifecycle Diagnostic capture started
+2026-09-10T01:57:35.060Z INFO background Analysis state=completed
+2026-09-10T01:57:35.788Z INFO composition-worker Verifying saved arrangement
+2026-09-10T01:57:43.180Z WARN preview-console sigmaRadians, 0.055, is too large and will clip, as it requested 27 samples when the maximum is set to 20 at [URI redacted]
+2026-09-10T01:57:43.340Z WARN preview-console sigmaRadians, 0.055, is too large and will clip, as it requested 27 samples when the maximum is set to 20 at [URI redacted]
+
+END OF DIAGNOSTIC REPORT

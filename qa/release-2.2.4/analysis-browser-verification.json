@@ -64,7 +64,7 @@
         "chunks": 1,
         "restoredPassages": 0,
         "estimated": true,
-        "analysisSeconds": 355.43516000000005,
+        "analysisSeconds": 364.19444500000003,
         "alignment": "Original PCM clock; centered STFT and normalized overlap-add with complementary chunk crossfades",
         "limitations": [
           "Vocal and instrumental estimates can contain bleed; neither is an isolated bass instrument.",
@@ -74,22 +74,22 @@
       "bassMethod": "Harmonic low-register tracking",
       "quality": "precision",
       "runtime": "ONNX Runtime Web 1.20.1",
-      "analysisSeconds": 399.8,
+      "analysisSeconds": 405.7,
       "stages": {
         "rhythm": {
-          "seconds": 7.306809999999939,
+          "seconds": 3.921335000000021,
           "restored": false
         },
         "separation": {
-          "seconds": 355.4879199999999,
+          "seconds": 364.24520499999994,
           "restored": false
         },
         "voice": {
-          "seconds": 36.27167000000004,
+          "seconds": 36.853959999999965,
           "restored": false
         },
         "bass": {
-          "seconds": 0.1532249999999767,
+          "seconds": 0.16201500000001398,
           "restored": false
         }
       },
@@ -114,7 +114,7 @@
       "chunks": 1,
       "restoredPassages": 0,
       "estimated": true,
-      "analysisSeconds": 355.43516000000005,
+      "analysisSeconds": 364.19444500000003,
       "alignment": "Original PCM clock; centered STFT and normalized overlap-add with complementary chunk crossfades",
       "limitations": [
         "Vocal and instrumental estimates can contain bleed; neither is an isolated bass instrument.",
@@ -165,5 +165,5 @@
     "stage": "Separating voice and instruments",
     "remainingNamespaces": 0
   },
-  "completedAt": "2026-09-09T23:47:51.191Z"
+  "completedAt": "2026-09-10T01:26:20.642Z"
 }

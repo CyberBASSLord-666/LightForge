@@ -1,8 +1,8 @@
 # LightForge 2.2.4 — bounded long-run analysis
 
-Current source is the **2.2.4 release candidate**. The verification/build job and new original-signed build pass; focused Android diagnostics pass all eight checks on a temporary test APK. A deterministic production-worker reproduction traced the remaining reopened-project timeout to an incomplete Android test fixture: its five saved settings differed from the 27 settings restored by the UI, so checksum validation correctly rejected it. The fixture now starts from the complete UI settings, retaining its same five overrides; compilation passes, and fresh Android verification is pending. Publication remains blocked on the complete lifecycle and final package gates. [2.2.2](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.2.2) remains the latest published update.
+The **2.2.4 update has passed all seven source-bound release verification gates**, including the complete [Android and offline-pipeline run](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34424617050). The original-signed update has been built and verified. Publication is being prepared; [2.2.2](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.2.2) remains the latest published update until the new release is available.
 
-This candidate bounds long Balanced runs, adds guarded native MDX execution, saves stage checkpoints promptly and preserves renderer recovery. Native initialization and inference share a cancellation-safe execution gate with Studio; failures retire native memory before the same-model WebAssembly fallback. Models, both denoise passes, GAME transcription steps and the original sample clock remain intact. No measured phone speedup is claimed before device testing.
+This update adds guarded native Balanced separation, bounds model memory between passages and stages, reports saved progress promptly, and improves completed-project and preview recovery. Models, both denoise passes, all eight GAME transcription steps and the original sample clock remain intact. Android emulator checks passed screen-off Studio and Balanced processing, cancellation and saved-passage Resume. Preview startup can still vary; sustained phone speed and the supplied Samsung crash have not been independently confirmed.
 
 LightForge turns music on your phone into an editable Tesla light show for a **2025 Model 3 Long Range RWD, North America**. It bundles its neural models, graphics and audio tools and works entirely offline.
 
@@ -28,7 +28,7 @@ Import and export document pickers still require returning to the app. Backgroun
 
 ## Troubleshooting logs
 
-Version 2.2.2 adds **Guide → Export diagnostic log**. Reproduce the problem, reopen LightForge if it closed, and export the `.txt` report to **Downloads/LightForge**. On Android 8–9, choose Downloads in the system save dialog. Send that file with a short description of what you were doing and approximately when the failure happened. A native recovery action also makes reporting available when the preview engine cannot render the normal interface.
+Use **Guide → Export diagnostic log**. Reproduce the problem, reopen LightForge if it closed, and export the `.txt` report to **Downloads/LightForge**. On Android 8–9, choose Downloads in the system save dialog. Send that file with a short description of what you were doing and approximately when the failure happened. A native recovery action also makes reporting available when the preview engine cannot render the normal interface.
 
 The report gathers recent app events, Java/JavaScript error stacks, analysis stages and interruptions, renderer failures, device/WebView versions, memory/storage context, and available Android process-exit information. Logs stay on the device until you choose to export them; there is no automatic upload. Reports exclude audio, model data and saved-show contents and redact common sensitive values. Diagnostic text can still contain details useful for troubleshooting, so review a report before sharing it publicly.
 
@@ -270,25 +270,11 @@ physically tested on the user's car.
 
 ## Free neural analysis, accurately described
 
-The app bundles a real pretrained **BeatNet** convolutional/recurrent network
-and **ONNX Runtime WebAssembly**. It detects beat and downbeat activations, then
-uses a local dynamic-programming decoder. The upgraded analysis adds local
-tempo and meter interpretation, finer PCM attack timing, energy transitions,
-phrases, prominent impacts and active audio ranges. The light and movement
-planners use this information to choose and schedule their cues. These signal
-analysis and choreography steps are not additional trained AI models; the
-bundled BeatNet weights are unchanged.
+The current pipeline bundles pretrained **Beat This!** rhythm models, **Deux** Studio or **MDX-Net** Balanced source separation, **Frame-MN10** singing/speech evidence and **GAME Large** sung-note transcription. Native Android CPU separation and ONNX Runtime WebAssembly run locally. The retained BeatNet assets belong to the historical analysis implementation.
 
-BeatNet was selected as a compact, free, practical phone model. This app does
-not claim it universally outperforms every larger or newer research system.
-Tempo interpretation can be ambiguous for half-time/double-time, sparse music,
-rubato or changing meter; the preview and override controls let you inspect
-and adjust it. Confidence is an app heuristic, not a calibrated probability.
-Silence is detected rather than assigned fabricated musical beats.
+Local signal processing adds tempo and meter interpretation, PCM attack timing, energy transitions, phrases and prominent impacts. The planners use those results to schedule lights and movements; these processing and choreography steps are not additional trained models. Tempo can be ambiguous in half-time/double-time, sparse music, rubato or changing meter. Preview and override controls let you inspect and adjust it. Confidence is an app heuristic, not a calibrated probability; silence is not assigned fabricated beats.
 
-Analysis streams audio in small chunks and is cancellable. Files can extend
-to Tesla's four-hour limit, although long recordings naturally require more
-storage and processing time. Keep the app open during analysis and export.
+Analysis streams audio in bounded chunks and is cancellable. Files can extend to Tesla's four-hour limit, although storage and processing time increase with duration. Create runs in the foreground service while you switch apps or turn off the display; return to the app for import and export document dialogs. No full four-hour phone benchmark is claimed.
 
 ## Privacy and source
 
@@ -331,29 +317,28 @@ The renderer source and pinned npm dependency lock are in `web/preview/src/`.
 
 ## Verification and device status
 
-[VALIDATION.md](VALIDATION.md) separates the seven current 2.2.2 release gates from historical numerical measurements. The complete [production verification run, attempt 2](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34179649874/attempts/2) passed the actual offline pipeline, APK build, Android screen-off/Resume and diagnostic export checks. The [focused Android diagnostics run](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34179649940) also passed crash persistence, the Guide export action and renderer recovery on the same source.
+[VALIDATION.md](VALIDATION.md) separates the seven current 2.2.4 release gates from historical measurements. The complete [production run](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34424617050) passed both verification and Android jobs against source `57e6ee996bd8f9d135e89334585efe90d8667b68`. The Android API 35 x86_64 emulator exercised production services and native models; it is separate from physical-phone testing.
 
-| Check | Current 2.2.2 status |
-|---|---|
-| Version synchronization | 2.2.2 / 20202 synchronized |
-| Diagnostic retention, redaction and Downloads export | Passed: host regressions and Android 15 crash/restart, readable unique `.txt` files, Guide export and native recovery export |
-| Node/Python regressions and native compilation | Passed: 155 Node tests, 54 Python tests and 22 native host checks |
-| Browser UI, complete model pipeline and cancellation | Passed: responsive Chromium UI, actual bundled models, persistence, export and cancellation |
-| Android renderer recovery, screen-off analysis and partial Resume | Passed on Android 15; saved-passage reuse, cancellation and timeout cleanup verified |
-| Numerical kernel evidence | Retained with exact kernel/model hashes and a fixed review of diagnostic adapter changes; source-clock regression rerun |
-| Original-signed update package | Passed: original update certificate, exact asset inventory, native ABIs, alignment and checksum |
-| Physical phone performance, long songs, thermals and battery management | Unverified |
-| Physical Tesla timing and movement | Unverified |
+| Check | Current 2.2.4 status |
+| --- | --- |
+| Version synchronization | 2.2.4 / 20204 |
+| Source and native regression | Passed: 347 Node tests, Python suite and separately required native lifecycle test; 24 host Java check groups |
+| Browser UI and complete analysis | Passed: responsive Chromium/WebGL, actual models, saved audio, cancellation and compiled-show restore |
+| Android background lifecycle | Passed: Studio and native Balanced under screen-off/Doze, reconnection, live cancellation, saved-passage Resume and timeout cleanup |
+| Android diagnostics | Passed: 8 checks covering crash persistence, native tombstones/compatibility selection, Guide/Downloads export and renderer recovery |
+| Numerical output | Three fixed Balanced decoded-waveform comparisons and paired vocal/GAME output passed; internal-spectrum diagnostics remain failed and disclosed |
+| Original-signed update build | Verified original certificate, asset inventory, native libraries, alignment and checksum; publication is a separate step |
+| Physical phone performance, long songs, thermals and battery management | Unmeasured |
+| Supplied Samsung crash reproduction and physical Tesla timing | Unverified |
 
-On one 6.803-second PCM16 excerpt with four threads on a Linux development machine, native Java CPU separation took **61.11 seconds**, compared with **127.25 seconds** for bounded WASM. Peak process RSS was **720.56 MiB** versus **1,920.96 MiB**: 2.08× faster and 62.49% lower measured peak memory. Both paths retained the original model, source sample count and measured Float32 equivalence. These are short-excerpt host measurements, not a phone or full-song guarantee. See [the runtime evidence](qa/release-2.2.1/DEUX_RUNTIME.md).
+**Historical 2.2.1 measurement:** on one 6.803-second PCM16 excerpt with four threads on a Linux development machine, native Java CPU separation took **61.11 seconds**, compared with **127.25 seconds** for bounded WASM. Peak process RSS was **720.56 MiB** versus **1,920.96 MiB**: 2.08× faster and 62.49% lower measured peak memory. Both paths retained the original model, source sample count and measured Float32 equivalence. These original short-excerpt host measurements are not a new 2.2.4 benchmark or a phone/full-song guarantee. See [the historical runtime evidence](qa/release-2.2.1/DEUX_RUNTIME.md).
 
-Browser tests exercise the browser path; Android must separately exercise native inference. A small emulator fixture does not establish that every full song will complete on every phone.
+The full release run met the unchanged 45-second preview-readiness deadline at every lifecycle transition. A separate diagnostic run missed that deadline and became ready about six seconds later with the same conditions. Cold preview startup remains variable; earlier failed records are retained in [the validation history](VALIDATION.md). A small emulator fixture does not establish that every full song will complete on every phone.
 
 ## Update from an earlier release
 
-The signed update is `LightForge-2.2.2.apk`, version code 20202. Install it over the existing LightForge app; the release gate requires the original package ID and signing identity. **Do not uninstall first**, because uninstalling removes
-private projects. Saved music and projects remain compatible; sequences are
-regenerated with the current vehicle profile when edited or restored.
+The 2.2.4 signed update is `LightForge-2.2.4.apk`, version code 20204. Its download becomes available when publication finishes. Install it over the existing LightForge app; the release gate requires the original package ID and signing identity. **Do not uninstall first**, because uninstalling removes
+private projects. Saved music and projects remain compatible; matching checked arrangements reopen with their saved frames. Recreate to apply current analysis and composition.
 
 Version 1.3.0 improves musical analysis, structure-aware lighting and movement
 arrival planning. It preserves the 1.2.0 individual output and movement editor,

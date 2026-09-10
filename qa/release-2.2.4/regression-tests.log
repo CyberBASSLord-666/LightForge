@@ -1,439 +1,2176 @@
-✔ analysis checkpoints round-trip precise floats and reject changed, swapped and truncated records (22.902323ms)
-✔ failed atomic replacement keeps the last committed passage and a damaged identity invalidates every saved stage (6.699766ms)
-✔ invalidating downstream voice work preserves expensive separation passages and unrelated rhythm (5.500929ms)
-✔ rebuilding an audition cache removes its commit marker before independent stem writes (72.14971ms)
-✔ public analyzer destroys each model heap before the next stage and clears only transient work after success (4.965296ms)
-✔ retry uses identical checkpoint identity while changed analysis settings get a new namespace (5.649311ms)
-✔ cancellation and stage failures preserve durable work and never start a downstream model (3.449442ms)
-✔ native acceleration callback stays outside structured clone and its result returns to the requesting worker (2.507931ms)
-✔ aborting native acceleration cancels its operation and retains all completed passages (1.985588ms)
-✔ GAME resumes completed passages with identical note boundaries and without rereading or reloading cached inference (1146.966463ms)
-✔ worker restores completed separation without creating a model or replacing audition audio (2.842672ms)
-✔ worker invalidates derived stages when committed stems are missing and keeps passage checkpoint storage available (1.181752ms)
-✔ worker native transport preserves raw source floats and rejects truncated and non-finite output transactionally (124.031497ms)
-✔ native resources release after the worker consumes output and before the voice model starts (2.262773ms)
-✔ restored separation still releases idle native resources before voice analysis (3.261871ms)
-✔ native cancellation precedes best-effort release and retains the original interruption error (1.326649ms)
-✔ native release failure blocks the next model heap after successful separation (1.352098ms)
-✔ storage admission includes remaining passages and final stems while crediting valid completed work on retry (40.397186ms)
-✔ storage admission skips redundant checkpoint validation when quota already covers worst-case work (1.916844ms)
-✔ worker reserves passage storage before opening model output writers and skips reservation for committed separation (2.352818ms)
-✔ background runner checkpoints analysis and commits an actual compiled show without a studio document (58.892255ms)
-✔ background runner cancellation never submits a completed project (22.742854ms)
-✔ native studio delegates work, blocks stale saves, reconnects, and loads the background result (463.078413ms)
-✔ completed bootstrap restores once across poll/native races and preserves later Guide navigation (255.481167ms)
-✔ acknowledged completion restores the last selected project once (293.60484ms)
-✔ a completed job arriving while Guide is open restores without taking over navigation (217.755827ms)
-✔ off-grid harmonic bass entrances, pitch changes and releases keep their audio clock (136.894136ms)
-✔ louder kicks 50–150 ms around bass entrances do not become the note clock (415.262964ms)
-✔ brief sweeping kick transients, broadband noise and silence do not invent bass notes (86.109722ms)
-✔ pure sustained sub-bass remains eligible with estimated-source labels (27.796351ms)
-✔ different read chunk sizes preserve phase and note boundaries exactly (162.875243ms)
-✔ four-hour stationary pitch summaries use bounded columns without argument spreading (1766.832323ms)
-✔ cancelled analysis rejects without reading audio (1.497936ms)
-✔ cockpit navigation preserves real transactional cue editing and project changes (737.815994ms)
-PASS legacy waveform bins use full song timescale for movement salience
-PASS movement density independently controls physical command count while retaining hard budgets
-PASS bar anchor and meter correction preserve measured beat times and original analysis
-PASS half and double tempo preserve local tempo changes without re-running analysis
-PASS confident swing places explicit eighth-note accents on the measured groove
-PASS variation materially changes all three styles including quiet cinematic sections
-PASS locking a section preserves its exact bytes while neighboring sections regenerate
-PASS repeated analyzed sections share a local motif and color identity
-PASS streamed FSEQ header plus existing frame buffer exactly equals contiguous export
-PASS sparse preview matches independent frame integration through random fades and alias interruptions
-PASS prepared preview supports repeated random seeks without rescanning frame payload
-✔ /workspace/scratch/9a5ec23b7f4b/LightForge/tests/composer-1.6.test.cjs (1841.835746ms)
-✔ native passages retain source clock, reuse completed work and report durable progress (512.953944ms)
-✔ a failed passage leaves prior checkpoints reusable without committing partial output (190.1948ms)
-✔ malformed native or cached audio is never exported or accepted as completed (72.773996ms)
-✔ checkpoint commit failure preserves retry semantics and does not emit its passage (35.132873ms)
-✔ silence and released separators never start expensive model inference (42.32684ms)
-✔ captures actual script errors, promise rejections and resource failures with bounded original stack context (269.478662ms)
-✔ sanitization excludes credentials, private paths, known names, and raw object or audio payloads (70.702009ms)
-✔ retention and event throttles bound memory, messages and progress even when storage is full (204.964498ms)
-✔ browser history survives reload and rejects corrupt or oversized persisted history (225.210371ms)
-✔ native export stays pending until actual save acknowledgement and is available during processing (55.830057ms)
-✔ native save failure and picker cancellation restore export controls and allow retry (72.5298ms)
-✔ native bridge invocation failure never claims a saved log or leaves buttons disabled (50.327857ms)
-✔ browser export creates an actual text log download without claiming a verified filesystem save (67.585065ms)
-✔ diagnostics initialize before application scripts and export controls work if app startup fails (74.418521ms)
-✔ composition worker failures retain the originating stack and release the worker (12.413254ms)
-✔ canonical profile covers every exported channel and explicitly excludes uninstalled fogs (1.966339ms)
-✔ every available exterior and RGB output can be independently authored and exported (436.823182ms)
-✔ all exterior ramp directions and durations reach preview with exact frame boundaries (94.504797ms)
-✔ outer beam fades require an explicit verified-hardware option and preserve exact bytes (119.104278ms)
-✔ linked physical outputs share manual cues; valid unequal aliases retain physical OR semantics (37.953352ms)
-✔ manual closures replace only their own automatic track and accept all supported commands (275.492785ms)
-✔ Stop interrupts a partial travel; Idle preserves the reached position and closing resumes there (2.519758ms)
-✔ Idle ends Dance but does not cancel an in-flight one-frame Open/Close request (11.176378ms)
-✔ per-output switch masks automatic and manual cues, with independent RGB zones and closures (31.844161ms)
-✔ invalid commands, timing, overlaps, unsupported outputs and damaged colors fail before export (1.385498ms)
-✔ movement budgets, preparation, automatic close and final settled position are enforced (79.703376ms)
-✔ project JSON round-trip preserves all manual cues, switches, colors and exact FSEQ (33.55781ms)
-✔ FSEQ binary header, variable metadata, payload and duration agree with audio (400.841352ms)
-✔ broad tempo and duration matrix retains physical closure timing and budgets (5690.58755ms)
-✔ expressive choreography places visible gestures at musical beats within per-closure budgets (69.410142ms)
-✔ shared physical outputs and unsupported channels are correct in every binary frame (41.603535ms)
-✔ all supported fade durations are real Tesla commands, and preview evaluates their brightness (18.950477ms)
-✔ RGB segments and display are independently addressable and optional (15.497062ms)
-✔ disabled closures are absent, including in an expressive show (47.281199ms)
-✔ timing offset moves musical light and closure entrances while preserving preparation (96.314316ms)
-✔ quiet input is intentionally dark; malformed and overlong tracks are rejected (7.442851ms)
-✔ degraded analysis data is normalized with explicit warnings (10.147857ms)
-✔ seed reproducibility, pattern variation and section overrides are functional (83.112445ms)
-✔ validator catches corrupted payload, unsupported dimming, absent lamps and illegal movement (31.027256ms)
-✔ the exact four-hour limit is accepted without timing overflow (1749.963504ms)
-✔ the actual Glass Castle music analysis exports a complete validated show (89.829202ms)
-✔ learned notes keep their own off-grid boundaries, pitch and unvoiced source articulations (2.0405ms)
-✔ speech and unsupported isolated notes cannot become sung-note cues (0.199529ms)
-✔ context continuation extends pitch without inventing a new entrance (0.18025ms)
-✔ diffusion sampling is reproducible and uses a different sequence for each declared seed (2.475422ms)
-✔ known eight-second musical rest is dark in exterior and every RGB zone (158.020674ms)
-✔ legacy saved analysis without activityRanges still respects waveform silence (20.129765ms)
-✔ last genuine beat survives instead of being replaced by unconditional ending fade (16.347493ms)
-✔ three-quarter bars honor supplied downbeat phase and do not treat pickup as downbeat (17.558219ms)
-✔ three-quarter fallback bars use three beats when explicit downbeats are absent (15.654634ms)
-✔ changing tempo follows actual local beat intervals instead of average BPM (32.787446ms)
-✔ known non-grid impact attacks and offsets reach FSEQ within half an export frame (202.568643ms)
-✔ rounding at activity onset retains the accepted binary attack within half a frame (41.856685ms)
-✔ higher-salience collision preserves the strong known attack without moving it later (10.367046ms)
-✔ deterministic variation and per-section style edits preserve independent unaffected sections (86.027169ms)
-✔ disabled output masks still win over composed beats, impacts and movement tracks (85.673198ms)
-✔ actual recorded analysis exports settled, budget-valid choreography: baseline-demo-music.json (182.604037ms)
-✔ actual recorded analysis exports settled, budget-valid choreography: baseline-sample-music.json (392.590404ms)
-✔ actual recorded analysis exports settled, budget-valid choreography: current-demo-music.json (131.082871ms)
-✔ actual recorded analysis exports settled, budget-valid choreography: current-sample-music.json (350.042683ms)
-✔ identical rich results pass and expose their comparison contract (20.825308ms)
-✔ small independent differences inside all documented tolerances pass (7.351253ms)
-✔ transcription note count is exact (1.084767ms)
-✔ transcription note start exceeding its tolerance fails (1.878747ms)
-✔ transcription note end exceeding its tolerance fails (1.129043ms)
-✔ transcription note peakTime exceeding its tolerance fails (4.077404ms)
-✔ transcription note midi exceeding its tolerance fails (1.946849ms)
-✔ transcription note frequency exceeding its tolerance fails (0.698637ms)
-✔ transcription note confidence exceeding its tolerance fails (2.649093ms)
-✔ transcription note strength exceeding its tolerance fails (0.594231ms)
-✔ transcription note source category is exact (0.686289ms)
-✔ transcription note continuation category is exact (0.508232ms)
-✔ transcription note type category is exact (0.497306ms)
-✔ transcription note estimated category is exact (0.50049ms)
-✔ vocals note count is exact (1.095242ms)
-✔ vocals note start exceeding its tolerance fails (0.602884ms)
-✔ vocals note end exceeding its tolerance fails (0.522894ms)
-✔ vocals note peakTime exceeding its tolerance fails (1.004936ms)
-✔ vocals note midi exceeding its tolerance fails (0.565688ms)
-✔ vocals note frequency exceeding its tolerance fails (0.734742ms)
-✔ vocals note confidence exceeding its tolerance fails (0.385969ms)
-✔ vocals note strength exceeding its tolerance fails (1.379098ms)
-✔ vocals note source category is exact (6.423012ms)
-✔ vocals note continuation category is exact (0.534421ms)
-✔ vocals note type category is exact (0.355553ms)
-✔ vocals note estimated category is exact (0.346479ms)
-✔ phrase start cannot silently drift (0.46666ms)
-✔ phrase end cannot silently drift (0.42722ms)
-✔ phrase peakTime cannot silently drift (0.463174ms)
-✔ phrase releaseTime cannot silently drift (0.378097ms)
-✔ phrase confidence cannot silently drift (0.341232ms)
-✔ phrase strength cannot silently drift (0.327411ms)
-✔ phrase modelScore cannot silently drift (0.357065ms)
-✔ phrase speechScore cannot silently drift (0.55353ms)
-✔ phrase voicedFraction cannot silently drift (5.545675ms)
-✔ phrase stemEnergyRatio cannot silently drift (0.436074ms)
-✔ accent time regression fails (0.888643ms)
-✔ accent category regression fails (0.567802ms)
-✔ phrase category regression fails (2.454731ms)
-✔ classified presence regression fails (0.440881ms)
-✔ fused presence regression fails (0.537416ms)
-✔ envelope regression fails (0.902873ms)
-✔ contour pitch regression fails (0.508693ms)
-✔ contour confidence regression fails (1.393119ms)
-✔ measured frequency relative limit regression fails (3.273328ms)
-✔ zero-frequency absolute limit regression fails (0.425778ms)
-✔ classifier frame step regression fails (0.415574ms)
-✔ envelope frame step regression fails (0.904837ms)
-✔ contour frame step regression fails (0.38691ms)
-✔ singingScores maximum absolute error gate catches an isolated outlier (4.007129ms)
-✔ singingScores RMSE gate catches distributed errors below maximum tolerance (0.930095ms)
-✔ speechScores maximum absolute error gate catches an isolated outlier (3.259588ms)
-✔ speechScores RMSE gate catches distributed errors below maximum tolerance (0.895492ms)
-✔ fineEnergy maximum absolute error gate catches an isolated outlier (1.439458ms)
-✔ fineEnergy RMSE gate catches distributed errors below maximum tolerance (0.639489ms)
-✔ residualEnergy maximum absolute error gate catches an isolated outlier (0.543695ms)
-✔ residualEnergy RMSE gate catches distributed errors below maximum tolerance (0.44674ms)
-✔ periodicity maximum absolute error gate catches an isolated outlier (0.344446ms)
-✔ periodicity RMSE gate catches distributed errors below maximum tolerance (0.542524ms)
-✔ classifier singing rejects NaN numeric array elements (2.066028ms)
-✔ classifier singing rejects Infinity numeric array elements (0.970195ms)
-✔ classifier singing rejects -Infinity numeric array elements (4.443413ms)
-✔ classifier singing rejects 0.5 numeric array elements (3.095411ms)
-✔ classifier singing rejects null numeric array elements (1.025298ms)
-✔ classifier singing rejects true numeric array elements (0.930456ms)
-✔ classifier singing rejects identical nonfinite values on both sides (0.691998ms)
-✔ classifier singing array length is exact (4.029864ms)
-✔ classifier speech rejects NaN numeric array elements (7.280598ms)
-✔ classifier speech rejects Infinity numeric array elements (1.138076ms)
-✔ classifier speech rejects -Infinity numeric array elements (0.93352ms)
-✔ classifier speech rejects 0.5 numeric array elements (0.943505ms)
-✔ classifier speech rejects null numeric array elements (1.028863ms)
-✔ classifier speech rejects true numeric array elements (0.721963ms)
-✔ classifier speech rejects identical nonfinite values on both sides (0.62722ms)
-✔ classifier speech array length is exact (0.802493ms)
-✔ energy rejects NaN numeric array elements (4.682332ms)
-✔ energy rejects Infinity numeric array elements (0.902644ms)
-✔ energy rejects -Infinity numeric array elements (1.225588ms)
-✔ energy rejects 0.5 numeric array elements (0.819599ms)
-✔ energy rejects null numeric array elements (0.575023ms)
-✔ energy rejects true numeric array elements (0.657636ms)
-✔ energy rejects identical nonfinite values on both sides (0.616334ms)
-✔ energy array length is exact (0.582323ms)
-✔ residual energy rejects NaN numeric array elements (0.639439ms)
-✔ residual energy rejects Infinity numeric array elements (0.62008ms)
-✔ residual energy rejects -Infinity numeric array elements (1.261802ms)
-✔ residual energy rejects 0.5 numeric array elements (1.741351ms)
-✔ residual energy rejects null numeric array elements (0.583575ms)
-✔ residual energy rejects true numeric array elements (0.606149ms)
-✔ residual energy rejects identical nonfinite values on both sides (0.583445ms)
-✔ residual energy array length is exact (1.844316ms)
-✔ frequency rejects NaN numeric array elements (0.609043ms)
-✔ frequency rejects Infinity numeric array elements (0.619899ms)
-✔ frequency rejects -Infinity numeric array elements (0.594692ms)
-✔ frequency rejects 0.5 numeric array elements (0.577105ms)
-✔ frequency rejects null numeric array elements (1.197626ms)
-✔ frequency rejects true numeric array elements (0.581642ms)
-✔ frequency rejects identical nonfinite values on both sides (0.611497ms)
-✔ frequency array length is exact (0.60698ms)
-✔ periodicity rejects NaN numeric array elements (0.641622ms)
-✔ periodicity rejects Infinity numeric array elements (0.656604ms)
-✔ periodicity rejects -Infinity numeric array elements (0.61972ms)
-✔ periodicity rejects 0.5 numeric array elements (0.604727ms)
-✔ periodicity rejects null numeric array elements (0.679779ms)
-✔ periodicity rejects true numeric array elements (0.339679ms)
-✔ periodicity rejects identical nonfinite values on both sides (1.457826ms)
-✔ periodicity array length is exact (0.596264ms)
-✔ envelope rejects NaN numeric array elements (0.609223ms)
-✔ envelope rejects Infinity numeric array elements (0.550626ms)
-✔ envelope rejects -Infinity numeric array elements (0.568762ms)
-✔ envelope rejects 0.5 numeric array elements (1.068522ms)
-✔ envelope rejects null numeric array elements (0.361953ms)
-✔ envelope rejects true numeric array elements (0.488783ms)
-✔ envelope rejects identical nonfinite values on both sides (0.405267ms)
-✔ envelope array length is exact (0.368202ms)
-✔ contour midi rejects NaN numeric array elements (0.409565ms)
-✔ contour midi rejects Infinity numeric array elements (5.561229ms)
-✔ contour midi rejects -Infinity numeric array elements (0.414222ms)
-✔ contour midi rejects 0.5 numeric array elements (0.392889ms)
-✔ contour midi rejects null numeric array elements (0.332849ms)
-✔ contour midi rejects true numeric array elements (0.311337ms)
-✔ contour midi rejects identical nonfinite values on both sides (0.370666ms)
-✔ contour midi array length is exact (0.31993ms)
-✔ contour confidence rejects NaN numeric array elements (0.382494ms)
-✔ contour confidence rejects Infinity numeric array elements (0.31956ms)
-✔ contour confidence rejects -Infinity numeric array elements (0.31343ms)
-✔ contour confidence rejects 0.5 numeric array elements (0.330645ms)
-✔ contour confidence rejects null numeric array elements (0.662344ms)
-✔ contour confidence rejects true numeric array elements (0.376585ms)
-✔ contour confidence rejects identical nonfinite values on both sides (1.956023ms)
-✔ contour confidence array length is exact (0.342644ms)
-✔ numeric array replaced with an array-like object is rejected (2.210935ms)
-✔ samples44100 sample count is exact (0.538437ms)
-✔ samples44100 rejects numeric text (7.017833ms)
-✔ samples22050 sample count is exact (0.601662ms)
-✔ samples22050 rejects numeric text (0.556034ms)
-✔ transcription keeps all eight diffusion steps (0.630927ms)
-✔ segmenter execution count must match the complete pipeline (0.414942ms)
-✔ identically missing segmenter execution coverage cannot pass (2.148702ms)
-✔ encoder execution count must match the complete pipeline (0.430866ms)
-✔ identically missing encoder execution coverage cannot pass (3.390845ms)
-✔ dur2bd execution count must match the complete pipeline (0.415794ms)
-✔ identically missing dur2bd execution coverage cannot pass (0.377145ms)
-✔ bd2dur execution count must match the complete pipeline (0.352519ms)
-✔ identically missing bd2dur execution coverage cannot pass (0.415152ms)
-✔ estimator execution count must match the complete pipeline (4.9087ms)
-✔ identically missing estimator execution coverage cannot pass (0.362554ms)
-✔ frameMn10 execution count must match the complete pipeline (0.330606ms)
-✔ identically missing frameMn10 execution coverage cannot pass (0.385648ms)
-✔ identical zero transcription notes is a vacuous baseline and fails (1.283534ms)
-✔ identical too few transcription notes is a vacuous baseline and fails (0.657766ms)
-✔ identical zero fused notes is a vacuous baseline and fails (0.560841ms)
-✔ identical subsecond fused note coverage is a vacuous baseline and fails (0.605377ms)
-✔ identical zero phrases is a vacuous baseline and fails (0.615443ms)
-✔ identical speech-only phrases is a vacuous baseline and fails (0.696835ms)
-✔ identical missing classifier is a vacuous baseline and fails (0.62677ms)
-✔ identical empty singing scores is a vacuous baseline and fails (0.817495ms)
-✔ identical empty speech scores is a vacuous baseline and fails (0.732508ms)
-✔ identical insufficient singing evidence is a vacuous baseline and fails (1.057096ms)
-✔ identical seven transcription steps is a vacuous baseline and fails (1.219448ms)
-✔ optional event releaseTime present on only one side fails (1.376554ms)
-✔ optional event modelScore present on only one side fails (2.277806ms)
-✔ optional event speechScore present on only one side fails (0.729564ms)
-✔ optional event voicedFraction present on only one side fails (0.609014ms)
-✔ optional event stemEnergyRatio present on only one side fails (1.164967ms)
-✔ unknown added event field cannot silently pass (0.849684ms)
-✔ unknown scalar event field is compared exactly (1.137655ms)
-✔ identical optional metadata is preserved without invalidating real comparisons (0.66001ms)
-✔ optional nested field present on the reference alone fails (1.238978ms)
-✔ optional numeric scalar with nonfinite values on both sides fails (0.816524ms)
-✔ exact decimal timing, strength, and MIDI boundaries tolerate binary roundoff (1.73371ms)
-✔ identical numeric-text optional confidence scalars are rejected (0.843295ms)
-✔ optional classified summary envelopes honor the same 0.001 limit (2.62074ms)
-✔ actual 1.6 worker snapshot migrates to 2.0 with exact frames and stable repeated reopen (261.252742ms)
-✔ 1.4 direct and 1.5 rebound snapshots still migrate without replacing their frames (464.13766ms)
-✔ 2.0 cue metadata and final synchronization report survive an exact backup round trip (95.026529ms)
-PASS strongest musical arrivals replace percent-of-duration selection
-PASS 14-second trunk and four-second windows prepare before exact Dance onset
-PASS final windows close and mirrors unfold with completed home travel
-PASS mirror cycles reserve physical travel, begin folded, and never request Dance
-PASS expressive choreography is denser and spatially staggered; balanced remains restrained
-PASS positive and negative audio offsets apply once at musical arrivals
-PASS manual tracks, disabled outputs and global movement switches are respected
-PASS actual tempo changes determine stagger and all offsets retain frame precision
-PASS Dance ends before actual musical stops; unsupported short phrases do not consume budgets
-PASS long-track budgets focus on strongest remote peaks rather than evenly distributed gestures
-PASS short tracks, sparse beats and phase-shifted boundaries retain legal complete choreography
-PASS seeded adversarial phrase timing remains validated by the real exported-byte simulator
-PASS integrated show generation preserves analysis targets, offset and exact exported movement bytes
-✔ /workspace/scratch/9a5ec23b7f4b/LightForge/tests/movement-planner.test.cjs (1756.524124ms)
-✔ native bridge exposes only complete audio from the matching private passage (8.780406ms)
-✔ abort cancels the native operation and never reports a result (6.510343ms)
-✔ a stale token or external result URL cannot become source audio (11.610491ms)
-✔ native failures remain actionable and do not silently switch the model (3.856408ms)
-✔ invalid source position is rejected before starting native work (4.102031ms)
-✔ balanced native bridge uploads bounded chunks and returns exact little-endian output (1128.18637ms)
-✔ balanced native bridge falls back cleanly when Android reports no compatible runtime (1.082624ms)
-✔ native MDX output validation disables only the optional accelerator (400.693134ms)
-✔ guard identity follows the pinned native runtime version (1.000941ms)
-✔ confirmed native unavailability selects the existing same-model path before any native work (1.427531ms)
-✔ native compatibility query failures are surfaced instead of silently changing runtimes (2.496975ms)
-✔ available runtimes and older bridges retain native prediction and release (1.357345ms)
-✔ service runner completes the checkpoint transaction with compatibility routing and unchanged analysis identity (2.324175ms)
-✔ legato bass entrances survive held-note competition and preserve the off-grid clock (63.556354ms)
-✔ enabled alternative lamps carry voice and bass when preferred outputs are muted (10.207757ms)
-✔ part timing corrects automatic events while user cues keep their own soundtrack times (66.707009ms)
-✔ explicit holds cross section boundaries, mutes remove role gestures, and accompaniment survives (13.263669ms)
-✔ final byte review detects output overrides, missing attacks, and disabled routes (31.195117ms)
-✔ musical edits validate limits and remain deterministic through serialization (24.932723ms)
-✔ dense and simultaneous bass notes retain valid target ranges on a shared fallback lamp (25.342421ms)
-✔ real app facade commits, undoes, redoes, saves, and isolates musical edits through the DOM (693.994694ms)
-✔ all ramp durations begin at zero at the exact frame boundary and advance continuously (19.716149ms)
-✔ interrupted and reversed ramps continue from their actual brightness without jumping (3.401621ms)
-✔ Model 3 merged light outputs obey Channel 4 ramp duration and side/aux OR (2.42121ms)
-✔ physical outputs suppress absent lights and never invent unsupported closures (1.240621ms)
-✔ open/close commands persist through Idle and move from the current partial position (5.876341ms)
-✔ Stop holds the reached position and later movement resumes without jumping (2.242273ms)
-✔ mirrors start unfolded and use real open/close commands, with no invented dance (1.252017ms)
-✔ estimated Dance moves, stops at Idle, and seeks reproduce identical poses (8.126035ms)
-✔ charge Dance is an LED rainbow, never door oscillation, and auto-close occurs at two minutes (11.589258ms)
-✔ preview raw commands and all RGB zones exactly match independently decoded exported bytes (239.985121ms)
-✔ hiding before the first studio frame cancels it and resumes exactly one RAF chain (313.973522ms)
-✔ native preview pause stays effective while the document is visible until explicit resume (150.980096ms)
-✔ page lifecycle suspension is independent of native and document visibility state (123.833775ms)
-✔ renderer explicit pause cancels pending submission and blocks draws and resize allocations (2.063875ms)
-✔ renderer resume never submits or reallocates while the document remains hidden (2.704436ms)
-✔ renderer defers lighting generation and frame submission until the model is loaded and visible (2.568171ms)
-PASS separated articulations keep the original off-grid source clock through both frame modes and signed offsets
-PASS lead singing has articulation contrast and keeps bass, percussion and accompaniment active
-PASS stable sung pitch and isolated envelope shape real RGB bytes while the exact exterior rhythm stays fixed
-PASS instrumental corrections remove measured voice evidence locally and never mutate original analysis
-PASS explicit voice guides add a labeled phrase without inventing measured notes or syllables
-PASS short articulated phrases and cadences never nominate multi-second motor Dance outside their region
-PASS long sustained vocal and bass phrases compete for expressive gestures with full mechanical lead and return
-PASS saved and corrected detail is deterministic, masks apply and manual lights keep ownership
-✔ /workspace/scratch/9a5ec23b7f4b/LightForge/tests/role-composer-1.6.test.cjs (924.769429ms)
-PASS meaxic
-PASS nightowl
-PASS falcon
-PASS stella
-PASS grunge
-PASS sdrnr
-PASS source-led controlled NightOwl
-✔ /workspace/scratch/9a5ec23b7f4b/LightForge/tests/role-reference-composer-1.6.test.cjs (267.687456ms)
-✔ balanced separator can use native MDX without creating a WASM session (1939.029465ms)
-✔ balanced separator falls back to WASM as a complete polarity pair (1372.750027ms)
-✔ full-resolution writes preserve exact little-endian samples across bounded async buffer reuse (26.48202ms)
-✔ odd contiguous input chunks equal the independent centered 63-tap convolution exactly (85.66769ms)
-✔ an impulse remains on its original sample clock without FIR group-delay shift (6.48231ms)
-✔ floating-point stems retain very quiet audio below PCM16 resolution (21.451957ms)
-✔ one-sample and odd tails are flushed once with exact ceil(N/2) output (69.447407ms)
-✔ out-of-order, oversized and incomplete writer input rejects without closing incomplete audio (0.51368ms)
-✔ stream write failures propagate to cache transaction cleanup (0.456144ms)
-✔ cache WAV header is mono 22.05 kHz IEEE float with exact byte counts (0.493039ms)
-✔ stereo44100 decodes signed PCM16 independently for left and right (0.907611ms)
-✔ stereo44100 decodes signed PCM24 independently for left and right (0.376305ms)
-✔ stereo44100 decodes signed PCM32 independently for left and right (0.247491ms)
-✔ stereo44100 preserves float channels and silences non-finite samples (0.442353ms)
-✔ stereo44100 duplicates mono and uses the first two channels of multichannel PCM (0.415543ms)
-✔ negative and out-of-track stereo reads zero-pad exactly without moving audible samples (0.338768ms)
-✔ stereo input validates limits, rejects wrong sample rates and detects truncated transfers (0.670616ms)
-✔ isolated off-grid phrase edges and held pitches remain on the vocal clock (167.274186ms)
-✔ quiet verse remains voiced after a chorus forty decibels louder (258.066233ms)
-✔ local normalization recovers an immediately following quiet vocal phrase (97.107184ms)
-✔ vibrato sustains stay musical and source articulations do not follow accompaniment kicks (110.361879ms)
-✔ speech is represented as voice phrasing without invented sung notes (45.824895ms)
-✔ harmonic instrumental leakage without learned voice evidence is rejected (72.014487ms)
-✔ quiet instrumental leakage is not amplified into voice by uncertain contextual scores (98.862226ms)
-✔ an isolated aperiodic vocal source can retain uncertain phrasing with weak semantic evidence (109.077042ms)
-✔ a strong separated harmonic source without a semantic voice seed remains unclassified (78.816221ms)
-✔ silence and stochastic vocal-stem noise cannot invent periodic sung notes (76.751975ms)
-✔ streaming chunk boundaries preserve all musical results exactly (181.481484ms)
-✔ the 22.05 kHz source-cache path preserves vocal note pitches and timing (63.469388ms)
-✔ streaming rejects missing samples, overlaps, non-finite audio and rate mistakes (1.080931ms)
-✔ short and endpoint audio are finite without invented padding (6.120959ms)
-✔ minimum-length note eligibility does not depend on floating-point timestamp rounding (3.463193ms)
-✔ four-hour summaries retain bounded numeric arrays and avoid argument spreading (450.599935ms)
-✔ neural sung-note evidence recovers a prominent pitch-agreeing source without inflating classifier scores (102.097776ms)
-✔ neural candidates cannot bypass speech, pitch disagreement or weak separated-source energy (215.445885ms)
-{
-  "result": "PASS",
-  "tests": [
-    {
-      "name": "Exact ranges, first PCM offset44 and final clipped sample",
-      "status": "PASS"
-    },
-    {
-      "name": "Chromium double seek reproduction rejected as transport error",
-      "status": "PASS"
-    },
-    {
-      "name": "Range overread rejected without blaming source music",
-      "status": "PASS"
-    },
-    {
-      "name": "Wrong range start rejected",
-      "status": "PASS"
-    },
-    {
-      "name": "Server without Range uses complete bounded cache",
-      "status": "PASS"
-    },
-    {
-      "name": "WAV metadata larger than64KiB and odd padding",
-      "status": "PASS"
-    },
-    {
-      "name": "Actual truncated WAV detected before model inference",
-      "status": "PASS"
-    },
-    {
-      "name": "PCM16/24/32 and IEEEfloat32 decoding with edge padding",
-      "status": "PASS"
-    },
-    {
-      "name": "Malformed PCM alignment and float encoding rejected",
-      "status": "PASS"
-    },
-    {
-      "name": "Actual bundled music reads byte-exact at nonzero offsets",
-      "status": "PASS"
-    }
-  ]
-}
-✔ /workspace/scratch/9a5ec23b7f4b/LightForge/tests/wav-reader.test.cjs (148.435421ms)
-ℹ tests 347
-ℹ suites 0
-ℹ pass 347
-ℹ fail 0
-ℹ cancelled 0
-ℹ skipped 0
-ℹ todo 0
-ℹ duration_ms 9647.299201
+TAP version 13
+# Subtest: analysis checkpoints round-trip precise floats and reject changed, swapped and truncated records
+ok 1 - analysis checkpoints round-trip precise floats and reject changed, swapped and truncated records
+  ---
+  duration_ms: 18.640289
+  type: 'test'
+  ...
+# Subtest: failed atomic replacement keeps the last committed passage and a damaged identity invalidates every saved stage
+ok 2 - failed atomic replacement keeps the last committed passage and a damaged identity invalidates every saved stage
+  ---
+  duration_ms: 5.778223
+  type: 'test'
+  ...
+# Subtest: invalidating downstream voice work preserves expensive separation passages and unrelated rhythm
+ok 3 - invalidating downstream voice work preserves expensive separation passages and unrelated rhythm
+  ---
+  duration_ms: 4.811812
+  type: 'test'
+  ...
+# Subtest: rebuilding an audition cache removes its commit marker before independent stem writes
+ok 4 - rebuilding an audition cache removes its commit marker before independent stem writes
+  ---
+  duration_ms: 60.272372
+  type: 'test'
+  ...
+# Subtest: public analyzer destroys each model heap before the next stage and clears only transient work after success
+ok 5 - public analyzer destroys each model heap before the next stage and clears only transient work after success
+  ---
+  duration_ms: 7.989077
+  type: 'test'
+  ...
+# Subtest: retry uses identical checkpoint identity while changed analysis settings get a new namespace
+ok 6 - retry uses identical checkpoint identity while changed analysis settings get a new namespace
+  ---
+  duration_ms: 5.127205
+  type: 'test'
+  ...
+# Subtest: cancellation and stage failures preserve durable work and never start a downstream model
+ok 7 - cancellation and stage failures preserve durable work and never start a downstream model
+  ---
+  duration_ms: 5.082635
+  type: 'test'
+  ...
+# Subtest: native acceleration callback stays outside structured clone and its result returns to the requesting worker
+ok 8 - native acceleration callback stays outside structured clone and its result returns to the requesting worker
+  ---
+  duration_ms: 2.437842
+  type: 'test'
+  ...
+# Subtest: aborting native acceleration cancels its operation and retains all completed passages
+ok 9 - aborting native acceleration cancels its operation and retains all completed passages
+  ---
+  duration_ms: 2.335699
+  type: 'test'
+  ...
+# Subtest: GAME resumes completed passages with identical note boundaries and without rereading or reloading cached inference
+ok 10 - GAME resumes completed passages with identical note boundaries and without rereading or reloading cached inference
+  ---
+  duration_ms: 1215.76073
+  type: 'test'
+  ...
+# Subtest: worker restores completed separation without creating a model or replacing audition audio
+ok 11 - worker restores completed separation without creating a model or replacing audition audio
+  ---
+  duration_ms: 3.248959
+  type: 'test'
+  ...
+# Subtest: worker invalidates derived stages when committed stems are missing and keeps passage checkpoint storage available
+ok 12 - worker invalidates derived stages when committed stems are missing and keeps passage checkpoint storage available
+  ---
+  duration_ms: 1.527277
+  type: 'test'
+  ...
+# Subtest: worker native transport preserves raw source floats and rejects truncated and non-finite output transactionally
+ok 13 - worker native transport preserves raw source floats and rejects truncated and non-finite output transactionally
+  ---
+  duration_ms: 221.739957
+  type: 'test'
+  ...
+# Subtest: native resources release after the worker consumes output and before the voice model starts
+ok 14 - native resources release after the worker consumes output and before the voice model starts
+  ---
+  duration_ms: 4.041452
+  type: 'test'
+  ...
+# Subtest: restored separation still releases idle native resources before voice analysis
+ok 15 - restored separation still releases idle native resources before voice analysis
+  ---
+  duration_ms: 2.446689
+  type: 'test'
+  ...
+# Subtest: native cancellation precedes best-effort release and retains the original interruption error
+ok 16 - native cancellation precedes best-effort release and retains the original interruption error
+  ---
+  duration_ms: 2.401212
+  type: 'test'
+  ...
+# Subtest: native release failure blocks the next model heap after successful separation
+ok 17 - native release failure blocks the next model heap after successful separation
+  ---
+  duration_ms: 1.874911
+  type: 'test'
+  ...
+# Subtest: storage admission includes remaining passages and final stems while crediting valid completed work on retry
+ok 18 - storage admission includes remaining passages and final stems while crediting valid completed work on retry
+  ---
+  duration_ms: 39.984661
+  type: 'test'
+  ...
+# Subtest: storage admission skips redundant checkpoint validation when quota already covers worst-case work
+ok 19 - storage admission skips redundant checkpoint validation when quota already covers worst-case work
+  ---
+  duration_ms: 2.811485
+  type: 'test'
+  ...
+# Subtest: worker reserves passage storage before opening model output writers and skips reservation for committed separation
+ok 20 - worker reserves passage storage before opening model output writers and skips reservation for committed separation
+  ---
+  duration_ms: 3.171143
+  type: 'test'
+  ...
+# Subtest: background runner checkpoints analysis and commits an actual compiled show without a studio document
+ok 21 - background runner checkpoints analysis and commits an actual compiled show without a studio document
+  ---
+  duration_ms: 92.577029
+  type: 'test'
+  ...
+# Subtest: background runner cancellation never submits a completed project
+ok 22 - background runner cancellation never submits a completed project
+  ---
+  duration_ms: 22.037867
+  type: 'test'
+  ...
+# Subtest: native studio delegates work, blocks stale saves, reconnects, and loads the background result
+ok 23 - native studio delegates work, blocks stale saves, reconnects, and loads the background result
+  ---
+  duration_ms: 684.72073
+  type: 'test'
+  ...
+# Subtest: completed bootstrap restores once across poll/native races and preserves later Guide navigation
+ok 24 - completed bootstrap restores once across poll/native races and preserves later Guide navigation
+  ---
+  duration_ms: 411.775137
+  type: 'test'
+  ...
+# Subtest: acknowledged completion restores the last selected project once
+ok 25 - acknowledged completion restores the last selected project once
+  ---
+  duration_ms: 328.594636
+  type: 'test'
+  ...
+# Subtest: a completed job arriving while Guide is open restores without taking over navigation
+ok 26 - a completed job arriving while Guide is open restores without taking over navigation
+  ---
+  duration_ms: 272.732851
+  type: 'test'
+  ...
+# Subtest: off-grid harmonic bass entrances, pitch changes and releases keep their audio clock
+ok 27 - off-grid harmonic bass entrances, pitch changes and releases keep their audio clock
+  ---
+  duration_ms: 289.193054
+  type: 'test'
+  ...
+# Subtest: louder kicks 50–150 ms around bass entrances do not become the note clock
+ok 28 - louder kicks 50–150 ms around bass entrances do not become the note clock
+  ---
+  duration_ms: 640.449469
+  type: 'test'
+  ...
+# Subtest: brief sweeping kick transients, broadband noise and silence do not invent bass notes
+ok 29 - brief sweeping kick transients, broadband noise and silence do not invent bass notes
+  ---
+  duration_ms: 127.950163
+  type: 'test'
+  ...
+# Subtest: pure sustained sub-bass remains eligible with estimated-source labels
+ok 30 - pure sustained sub-bass remains eligible with estimated-source labels
+  ---
+  duration_ms: 54.880132
+  type: 'test'
+  ...
+# Subtest: different read chunk sizes preserve phase and note boundaries exactly
+ok 31 - different read chunk sizes preserve phase and note boundaries exactly
+  ---
+  duration_ms: 332.966208
+  type: 'test'
+  ...
+# Subtest: four-hour stationary pitch summaries use bounded columns without argument spreading
+ok 32 - four-hour stationary pitch summaries use bounded columns without argument spreading
+  ---
+  duration_ms: 2420.547254
+  type: 'test'
+  ...
+# Subtest: cancelled analysis rejects without reading audio
+ok 33 - cancelled analysis rejects without reading audio
+  ---
+  duration_ms: 1.160145
+  type: 'test'
+  ...
+# Subtest: cockpit navigation preserves real transactional cue editing and project changes
+ok 34 - cockpit navigation preserves real transactional cue editing and project changes
+  ---
+  duration_ms: 864.03807
+  type: 'test'
+  ...
+# PASS legacy waveform bins use full song timescale for movement salience
+# PASS movement density independently controls physical command count while retaining hard budgets
+# PASS bar anchor and meter correction preserve measured beat times and original analysis
+# PASS half and double tempo preserve local tempo changes without re-running analysis
+# PASS confident swing places explicit eighth-note accents on the measured groove
+# PASS variation materially changes all three styles including quiet cinematic sections
+# PASS locking a section preserves its exact bytes while neighboring sections regenerate
+# PASS repeated analyzed sections share a local motif and color identity
+# PASS streamed FSEQ header plus existing frame buffer exactly equals contiguous export
+# PASS sparse preview matches independent frame integration through random fades and alias interruptions
+# PASS prepared preview supports repeated random seeks without rescanning frame payload
+# Subtest: /home/runner/work/LightForge/LightForge/tests/composer-1.6.test.cjs
+ok 5 - /home/runner/work/LightForge/LightForge/tests/composer-1.6.test.cjs
+  ---
+  duration_ms: 2578.507517
+  type: 'test'
+  ...
+# Subtest: native passages retain source clock, reuse completed work and report durable progress
+ok 36 - native passages retain source clock, reuse completed work and report durable progress
+  ---
+  duration_ms: 617.315528
+  type: 'test'
+  ...
+# Subtest: a failed passage leaves prior checkpoints reusable without committing partial output
+ok 37 - a failed passage leaves prior checkpoints reusable without committing partial output
+  ---
+  duration_ms: 267.194804
+  type: 'test'
+  ...
+# Subtest: malformed native or cached audio is never exported or accepted as completed
+ok 38 - malformed native or cached audio is never exported or accepted as completed
+  ---
+  duration_ms: 115.122156
+  type: 'test'
+  ...
+# Subtest: checkpoint commit failure preserves retry semantics and does not emit its passage
+ok 39 - checkpoint commit failure preserves retry semantics and does not emit its passage
+  ---
+  duration_ms: 35.405476
+  type: 'test'
+  ...
+# Subtest: silence and released separators never start expensive model inference
+ok 40 - silence and released separators never start expensive model inference
+  ---
+  duration_ms: 32.116937
+  type: 'test'
+  ...
+# Subtest: captures actual script errors, promise rejections and resource failures with bounded original stack context
+ok 41 - captures actual script errors, promise rejections and resource failures with bounded original stack context
+  ---
+  duration_ms: 248.354176
+  type: 'test'
+  ...
+# Subtest: sanitization excludes credentials, private paths, known names, and raw object or audio payloads
+ok 42 - sanitization excludes credentials, private paths, known names, and raw object or audio payloads
+  ---
+  duration_ms: 157.39342
+  type: 'test'
+  ...
+# Subtest: retention and event throttles bound memory, messages and progress even when storage is full
+ok 43 - retention and event throttles bound memory, messages and progress even when storage is full
+  ---
+  duration_ms: 251.33373
+  type: 'test'
+  ...
+# Subtest: browser history survives reload and rejects corrupt or oversized persisted history
+ok 44 - browser history survives reload and rejects corrupt or oversized persisted history
+  ---
+  duration_ms: 290.902006
+  type: 'test'
+  ...
+# Subtest: native export stays pending until actual save acknowledgement and is available during processing
+ok 45 - native export stays pending until actual save acknowledgement and is available during processing
+  ---
+  duration_ms: 86.906673
+  type: 'test'
+  ...
+# Subtest: native save failure and picker cancellation restore export controls and allow retry
+ok 46 - native save failure and picker cancellation restore export controls and allow retry
+  ---
+  duration_ms: 111.645735
+  type: 'test'
+  ...
+# Subtest: native bridge invocation failure never claims a saved log or leaves buttons disabled
+ok 47 - native bridge invocation failure never claims a saved log or leaves buttons disabled
+  ---
+  duration_ms: 79.262562
+  type: 'test'
+  ...
+# Subtest: browser export creates an actual text log download without claiming a verified filesystem save
+ok 48 - browser export creates an actual text log download without claiming a verified filesystem save
+  ---
+  duration_ms: 57.020635
+  type: 'test'
+  ...
+# Subtest: diagnostics initialize before application scripts and export controls work if app startup fails
+ok 49 - diagnostics initialize before application scripts and export controls work if app startup fails
+  ---
+  duration_ms: 60.561452
+  type: 'test'
+  ...
+# Subtest: composition worker failures retain the originating stack and release the worker
+ok 50 - composition worker failures retain the originating stack and release the worker
+  ---
+  duration_ms: 6.620467
+  type: 'test'
+  ...
+# Subtest: canonical profile covers every exported channel and explicitly excludes uninstalled fogs
+ok 51 - canonical profile covers every exported channel and explicitly excludes uninstalled fogs
+  ---
+  duration_ms: 1.894712
+  type: 'test'
+  ...
+# Subtest: every available exterior and RGB output can be independently authored and exported
+ok 52 - every available exterior and RGB output can be independently authored and exported
+  ---
+  duration_ms: 455.474878
+  type: 'test'
+  ...
+# Subtest: all exterior ramp directions and durations reach preview with exact frame boundaries
+ok 53 - all exterior ramp directions and durations reach preview with exact frame boundaries
+  ---
+  duration_ms: 121.450079
+  type: 'test'
+  ...
+# Subtest: outer beam fades require an explicit verified-hardware option and preserve exact bytes
+ok 54 - outer beam fades require an explicit verified-hardware option and preserve exact bytes
+  ---
+  duration_ms: 182.201439
+  type: 'test'
+  ...
+# Subtest: linked physical outputs share manual cues; valid unequal aliases retain physical OR semantics
+ok 55 - linked physical outputs share manual cues; valid unequal aliases retain physical OR semantics
+  ---
+  duration_ms: 82.125585
+  type: 'test'
+  ...
+# Subtest: manual closures replace only their own automatic track and accept all supported commands
+ok 56 - manual closures replace only their own automatic track and accept all supported commands
+  ---
+  duration_ms: 388.949645
+  type: 'test'
+  ...
+# Subtest: Stop interrupts a partial travel; Idle preserves the reached position and closing resumes there
+ok 57 - Stop interrupts a partial travel; Idle preserves the reached position and closing resumes there
+  ---
+  duration_ms: 10.442273
+  type: 'test'
+  ...
+# Subtest: Idle ends Dance but does not cancel an in-flight one-frame Open/Close request
+ok 58 - Idle ends Dance but does not cancel an in-flight one-frame Open/Close request
+  ---
+  duration_ms: 12.274447
+  type: 'test'
+  ...
+# Subtest: per-output switch masks automatic and manual cues, with independent RGB zones and closures
+ok 59 - per-output switch masks automatic and manual cues, with independent RGB zones and closures
+  ---
+  duration_ms: 41.871612
+  type: 'test'
+  ...
+# Subtest: invalid commands, timing, overlaps, unsupported outputs and damaged colors fail before export
+ok 60 - invalid commands, timing, overlaps, unsupported outputs and damaged colors fail before export
+  ---
+  duration_ms: 1.892167
+  type: 'test'
+  ...
+# Subtest: movement budgets, preparation, automatic close and final settled position are enforced
+ok 61 - movement budgets, preparation, automatic close and final settled position are enforced
+  ---
+  duration_ms: 53.248103
+  type: 'test'
+  ...
+# Subtest: project JSON round-trip preserves all manual cues, switches, colors and exact FSEQ
+ok 62 - project JSON round-trip preserves all manual cues, switches, colors and exact FSEQ
+  ---
+  duration_ms: 68.598262
+  type: 'test'
+  ...
+# Subtest: FSEQ binary header, variable metadata, payload and duration agree with audio
+ok 63 - FSEQ binary header, variable metadata, payload and duration agree with audio
+  ---
+  duration_ms: 509.013828
+  type: 'test'
+  ...
+# Subtest: broad tempo and duration matrix retains physical closure timing and budgets
+ok 64 - broad tempo and duration matrix retains physical closure timing and budgets
+  ---
+  duration_ms: 7172.043178
+  type: 'test'
+  ...
+# Subtest: expressive choreography places visible gestures at musical beats within per-closure budgets
+ok 65 - expressive choreography places visible gestures at musical beats within per-closure budgets
+  ---
+  duration_ms: 95.412257
+  type: 'test'
+  ...
+# Subtest: shared physical outputs and unsupported channels are correct in every binary frame
+ok 66 - shared physical outputs and unsupported channels are correct in every binary frame
+  ---
+  duration_ms: 53.598649
+  type: 'test'
+  ...
+# Subtest: all supported fade durations are real Tesla commands, and preview evaluates their brightness
+ok 67 - all supported fade durations are real Tesla commands, and preview evaluates their brightness
+  ---
+  duration_ms: 41.423624
+  type: 'test'
+  ...
+# Subtest: RGB segments and display are independently addressable and optional
+ok 68 - RGB segments and display are independently addressable and optional
+  ---
+  duration_ms: 30.510324
+  type: 'test'
+  ...
+# Subtest: disabled closures are absent, including in an expressive show
+ok 69 - disabled closures are absent, including in an expressive show
+  ---
+  duration_ms: 66.187973
+  type: 'test'
+  ...
+# Subtest: timing offset moves musical light and closure entrances while preserving preparation
+ok 70 - timing offset moves musical light and closure entrances while preserving preparation
+  ---
+  duration_ms: 160.015067
+  type: 'test'
+  ...
+# Subtest: quiet input is intentionally dark; malformed and overlong tracks are rejected
+ok 71 - quiet input is intentionally dark; malformed and overlong tracks are rejected
+  ---
+  duration_ms: 25.596925
+  type: 'test'
+  ...
+# Subtest: degraded analysis data is normalized with explicit warnings
+ok 72 - degraded analysis data is normalized with explicit warnings
+  ---
+  duration_ms: 28.574761
+  type: 'test'
+  ...
+# Subtest: seed reproducibility, pattern variation and section overrides are functional
+ok 73 - seed reproducibility, pattern variation and section overrides are functional
+  ---
+  duration_ms: 165.002755
+  type: 'test'
+  ...
+# Subtest: validator catches corrupted payload, unsupported dimming, absent lamps and illegal movement
+ok 74 - validator catches corrupted payload, unsupported dimming, absent lamps and illegal movement
+  ---
+  duration_ms: 59.287265
+  type: 'test'
+  ...
+# Subtest: the exact four-hour limit is accepted without timing overflow
+ok 75 - the exact four-hour limit is accepted without timing overflow
+  ---
+  duration_ms: 2074.45747
+  type: 'test'
+  ...
+# Subtest: the actual Glass Castle music analysis exports a complete validated show
+ok 76 - the actual Glass Castle music analysis exports a complete validated show
+  ---
+  duration_ms: 185.286478
+  type: 'test'
+  ...
+# Subtest: learned notes keep their own off-grid boundaries, pitch and unvoiced source articulations
+ok 77 - learned notes keep their own off-grid boundaries, pitch and unvoiced source articulations
+  ---
+  duration_ms: 2.041947
+  type: 'test'
+  ...
+# Subtest: speech and unsupported isolated notes cannot become sung-note cues
+ok 78 - speech and unsupported isolated notes cannot become sung-note cues
+  ---
+  duration_ms: 0.309062
+  type: 'test'
+  ...
+# Subtest: context continuation extends pitch without inventing a new entrance
+ok 79 - context continuation extends pitch without inventing a new entrance
+  ---
+  duration_ms: 0.273736
+  type: 'test'
+  ...
+# Subtest: diffusion sampling is reproducible and uses a different sequence for each declared seed
+ok 80 - diffusion sampling is reproducible and uses a different sequence for each declared seed
+  ---
+  duration_ms: 5.508798
+  type: 'test'
+  ...
+# Subtest: known eight-second musical rest is dark in exterior and every RGB zone
+ok 81 - known eight-second musical rest is dark in exterior and every RGB zone
+  ---
+  duration_ms: 245.740988
+  type: 'test'
+  ...
+# Subtest: legacy saved analysis without activityRanges still respects waveform silence
+ok 82 - legacy saved analysis without activityRanges still respects waveform silence
+  ---
+  duration_ms: 31.771814
+  type: 'test'
+  ...
+# Subtest: last genuine beat survives instead of being replaced by unconditional ending fade
+ok 83 - last genuine beat survives instead of being replaced by unconditional ending fade
+  ---
+  duration_ms: 13.852557
+  type: 'test'
+  ...
+# Subtest: three-quarter bars honor supplied downbeat phase and do not treat pickup as downbeat
+ok 84 - three-quarter bars honor supplied downbeat phase and do not treat pickup as downbeat
+  ---
+  duration_ms: 13.162005
+  type: 'test'
+  ...
+# Subtest: three-quarter fallback bars use three beats when explicit downbeats are absent
+ok 85 - three-quarter fallback bars use three beats when explicit downbeats are absent
+  ---
+  duration_ms: 22.518683
+  type: 'test'
+  ...
+# Subtest: changing tempo follows actual local beat intervals instead of average BPM
+ok 86 - changing tempo follows actual local beat intervals instead of average BPM
+  ---
+  duration_ms: 21.299204
+  type: 'test'
+  ...
+# Subtest: known non-grid impact attacks and offsets reach FSEQ within half an export frame
+ok 87 - known non-grid impact attacks and offsets reach FSEQ within half an export frame
+  ---
+  duration_ms: 144.623754
+  type: 'test'
+  ...
+# Subtest: rounding at activity onset retains the accepted binary attack within half a frame
+ok 88 - rounding at activity onset retains the accepted binary attack within half a frame
+  ---
+  duration_ms: 23.033913
+  type: 'test'
+  ...
+# Subtest: higher-salience collision preserves the strong known attack without moving it later
+ok 89 - higher-salience collision preserves the strong known attack without moving it later
+  ---
+  duration_ms: 14.309047
+  type: 'test'
+  ...
+# Subtest: deterministic variation and per-section style edits preserve independent unaffected sections
+ok 90 - deterministic variation and per-section style edits preserve independent unaffected sections
+  ---
+  duration_ms: 190.750963
+  type: 'test'
+  ...
+# Subtest: disabled output masks still win over composed beats, impacts and movement tracks
+ok 91 - disabled output masks still win over composed beats, impacts and movement tracks
+  ---
+  duration_ms: 151.665991
+  type: 'test'
+  ...
+# Subtest: actual recorded analysis exports settled, budget-valid choreography: baseline-demo-music.json
+ok 92 - actual recorded analysis exports settled, budget-valid choreography: baseline-demo-music.json
+  ---
+  duration_ms: 162.878454
+  type: 'test'
+  ...
+# Subtest: actual recorded analysis exports settled, budget-valid choreography: baseline-sample-music.json
+ok 93 - actual recorded analysis exports settled, budget-valid choreography: baseline-sample-music.json
+  ---
+  duration_ms: 571.789435
+  type: 'test'
+  ...
+# Subtest: actual recorded analysis exports settled, budget-valid choreography: current-demo-music.json
+ok 94 - actual recorded analysis exports settled, budget-valid choreography: current-demo-music.json
+  ---
+  duration_ms: 275.595562
+  type: 'test'
+  ...
+# Subtest: actual recorded analysis exports settled, budget-valid choreography: current-sample-music.json
+ok 95 - actual recorded analysis exports settled, budget-valid choreography: current-sample-music.json
+  ---
+  duration_ms: 523.004398
+  type: 'test'
+  ...
+# Subtest: identical rich results pass and expose their comparison contract
+ok 96 - identical rich results pass and expose their comparison contract
+  ---
+  duration_ms: 7.163976
+  type: 'test'
+  ...
+# Subtest: small independent differences inside all documented tolerances pass
+ok 97 - small independent differences inside all documented tolerances pass
+  ---
+  duration_ms: 2.167133
+  type: 'test'
+  ...
+# Subtest: transcription note count is exact
+ok 98 - transcription note count is exact
+  ---
+  duration_ms: 2.16028
+  type: 'test'
+  ...
+# Subtest: transcription note start exceeding its tolerance fails
+ok 99 - transcription note start exceeding its tolerance fails
+  ---
+  duration_ms: 1.066679
+  type: 'test'
+  ...
+# Subtest: transcription note end exceeding its tolerance fails
+ok 100 - transcription note end exceeding its tolerance fails
+  ---
+  duration_ms: 1.229766
+  type: 'test'
+  ...
+# Subtest: transcription note peakTime exceeding its tolerance fails
+ok 101 - transcription note peakTime exceeding its tolerance fails
+  ---
+  duration_ms: 1.588302
+  type: 'test'
+  ...
+# Subtest: transcription note midi exceeding its tolerance fails
+ok 102 - transcription note midi exceeding its tolerance fails
+  ---
+  duration_ms: 2.09681
+  type: 'test'
+  ...
+# Subtest: transcription note frequency exceeding its tolerance fails
+ok 103 - transcription note frequency exceeding its tolerance fails
+  ---
+  duration_ms: 4.303127
+  type: 'test'
+  ...
+# Subtest: transcription note confidence exceeding its tolerance fails
+ok 104 - transcription note confidence exceeding its tolerance fails
+  ---
+  duration_ms: 2.461667
+  type: 'test'
+  ...
+# Subtest: transcription note strength exceeding its tolerance fails
+ok 105 - transcription note strength exceeding its tolerance fails
+  ---
+  duration_ms: 2.474111
+  type: 'test'
+  ...
+# Subtest: transcription note source category is exact
+ok 106 - transcription note source category is exact
+  ---
+  duration_ms: 1.725251
+  type: 'test'
+  ...
+# Subtest: transcription note continuation category is exact
+ok 107 - transcription note continuation category is exact
+  ---
+  duration_ms: 1.477364
+  type: 'test'
+  ...
+# Subtest: transcription note type category is exact
+ok 108 - transcription note type category is exact
+  ---
+  duration_ms: 1.168701
+  type: 'test'
+  ...
+# Subtest: transcription note estimated category is exact
+ok 109 - transcription note estimated category is exact
+  ---
+  duration_ms: 1.095223
+  type: 'test'
+  ...
+# Subtest: vocals note count is exact
+ok 110 - vocals note count is exact
+  ---
+  duration_ms: 0.859299
+  type: 'test'
+  ...
+# Subtest: vocals note start exceeding its tolerance fails
+ok 111 - vocals note start exceeding its tolerance fails
+  ---
+  duration_ms: 1.177188
+  type: 'test'
+  ...
+# Subtest: vocals note end exceeding its tolerance fails
+ok 112 - vocals note end exceeding its tolerance fails
+  ---
+  duration_ms: 0.609098
+  type: 'test'
+  ...
+# Subtest: vocals note peakTime exceeding its tolerance fails
+ok 113 - vocals note peakTime exceeding its tolerance fails
+  ---
+  duration_ms: 0.617644
+  type: 'test'
+  ...
+# Subtest: vocals note midi exceeding its tolerance fails
+ok 114 - vocals note midi exceeding its tolerance fails
+  ---
+  duration_ms: 0.922007
+  type: 'test'
+  ...
+# Subtest: vocals note frequency exceeding its tolerance fails
+ok 115 - vocals note frequency exceeding its tolerance fails
+  ---
+  duration_ms: 0.601133
+  type: 'test'
+  ...
+# Subtest: vocals note confidence exceeding its tolerance fails
+ok 116 - vocals note confidence exceeding its tolerance fails
+  ---
+  duration_ms: 0.606713
+  type: 'test'
+  ...
+# Subtest: vocals note strength exceeding its tolerance fails
+ok 117 - vocals note strength exceeding its tolerance fails
+  ---
+  duration_ms: 0.602715
+  type: 'test'
+  ...
+# Subtest: vocals note source category is exact
+ok 118 - vocals note source category is exact
+  ---
+  duration_ms: 0.579863
+  type: 'test'
+  ...
+# Subtest: vocals note continuation category is exact
+ok 119 - vocals note continuation category is exact
+  ---
+  duration_ms: 0.829153
+  type: 'test'
+  ...
+# Subtest: vocals note type category is exact
+ok 120 - vocals note type category is exact
+  ---
+  duration_ms: 0.610089
+  type: 'test'
+  ...
+# Subtest: vocals note estimated category is exact
+ok 121 - vocals note estimated category is exact
+  ---
+  duration_ms: 0.573891
+  type: 'test'
+  ...
+# Subtest: phrase start cannot silently drift
+ok 122 - phrase start cannot silently drift
+  ---
+  duration_ms: 0.684079
+  type: 'test'
+  ...
+# Subtest: phrase end cannot silently drift
+ok 123 - phrase end cannot silently drift
+  ---
+  duration_ms: 0.746487
+  type: 'test'
+  ...
+# Subtest: phrase peakTime cannot silently drift
+ok 124 - phrase peakTime cannot silently drift
+  ---
+  duration_ms: 1.354732
+  type: 'test'
+  ...
+# Subtest: phrase releaseTime cannot silently drift
+ok 125 - phrase releaseTime cannot silently drift
+  ---
+  duration_ms: 1.084412
+  type: 'test'
+  ...
+# Subtest: phrase confidence cannot silently drift
+ok 126 - phrase confidence cannot silently drift
+  ---
+  duration_ms: 0.812661
+  type: 'test'
+  ...
+# Subtest: phrase strength cannot silently drift
+ok 127 - phrase strength cannot silently drift
+  ---
+  duration_ms: 0.837718
+  type: 'test'
+  ...
+# Subtest: phrase modelScore cannot silently drift
+ok 128 - phrase modelScore cannot silently drift
+  ---
+  duration_ms: 1.07173
+  type: 'test'
+  ...
+# Subtest: phrase speechScore cannot silently drift
+ok 129 - phrase speechScore cannot silently drift
+  ---
+  duration_ms: 1.423301
+  type: 'test'
+  ...
+# Subtest: phrase voicedFraction cannot silently drift
+ok 130 - phrase voicedFraction cannot silently drift
+  ---
+  duration_ms: 1.113428
+  type: 'test'
+  ...
+# Subtest: phrase stemEnergyRatio cannot silently drift
+ok 131 - phrase stemEnergyRatio cannot silently drift
+  ---
+  duration_ms: 1.105944
+  type: 'test'
+  ...
+# Subtest: accent time regression fails
+ok 132 - accent time regression fails
+  ---
+  duration_ms: 1.096726
+  type: 'test'
+  ...
+# Subtest: accent category regression fails
+ok 133 - accent category regression fails
+  ---
+  duration_ms: 1.005023
+  type: 'test'
+  ...
+# Subtest: phrase category regression fails
+ok 134 - phrase category regression fails
+  ---
+  duration_ms: 1.301572
+  type: 'test'
+  ...
+# Subtest: classified presence regression fails
+ok 135 - classified presence regression fails
+  ---
+  duration_ms: 1.071077
+  type: 'test'
+  ...
+# Subtest: fused presence regression fails
+ok 136 - fused presence regression fails
+  ---
+  duration_ms: 1.039819
+  type: 'test'
+  ...
+# Subtest: envelope regression fails
+ok 137 - envelope regression fails
+  ---
+  duration_ms: 1.123106
+  type: 'test'
+  ...
+# Subtest: contour pitch regression fails
+ok 138 - contour pitch regression fails
+  ---
+  duration_ms: 1.783961
+  type: 'test'
+  ...
+# Subtest: contour confidence regression fails
+ok 139 - contour confidence regression fails
+  ---
+  duration_ms: 1.426998
+  type: 'test'
+  ...
+# Subtest: measured frequency relative limit regression fails
+ok 140 - measured frequency relative limit regression fails
+  ---
+  duration_ms: 1.42295
+  type: 'test'
+  ...
+# Subtest: zero-frequency absolute limit regression fails
+ok 141 - zero-frequency absolute limit regression fails
+  ---
+  duration_ms: 1.38486
+  type: 'test'
+  ...
+# Subtest: classifier frame step regression fails
+ok 142 - classifier frame step regression fails
+  ---
+  duration_ms: 1.646832
+  type: 'test'
+  ...
+# Subtest: envelope frame step regression fails
+ok 143 - envelope frame step regression fails
+  ---
+  duration_ms: 0.722831
+  type: 'test'
+  ...
+# Subtest: contour frame step regression fails
+ok 144 - contour frame step regression fails
+  ---
+  duration_ms: 0.73766
+  type: 'test'
+  ...
+# Subtest: singingScores maximum absolute error gate catches an isolated outlier
+ok 145 - singingScores maximum absolute error gate catches an isolated outlier
+  ---
+  duration_ms: 0.891129
+  type: 'test'
+  ...
+# Subtest: singingScores RMSE gate catches distributed errors below maximum tolerance
+ok 146 - singingScores RMSE gate catches distributed errors below maximum tolerance
+  ---
+  duration_ms: 1.754084
+  type: 'test'
+  ...
+# Subtest: speechScores maximum absolute error gate catches an isolated outlier
+ok 147 - speechScores maximum absolute error gate catches an isolated outlier
+  ---
+  duration_ms: 1.317662
+  type: 'test'
+  ...
+# Subtest: speechScores RMSE gate catches distributed errors below maximum tolerance
+ok 148 - speechScores RMSE gate catches distributed errors below maximum tolerance
+  ---
+  duration_ms: 1.362837
+  type: 'test'
+  ...
+# Subtest: fineEnergy maximum absolute error gate catches an isolated outlier
+ok 149 - fineEnergy maximum absolute error gate catches an isolated outlier
+  ---
+  duration_ms: 1.316259
+  type: 'test'
+  ...
+# Subtest: fineEnergy RMSE gate catches distributed errors below maximum tolerance
+ok 150 - fineEnergy RMSE gate catches distributed errors below maximum tolerance
+  ---
+  duration_ms: 1.629249
+  type: 'test'
+  ...
+# Subtest: residualEnergy maximum absolute error gate catches an isolated outlier
+ok 151 - residualEnergy maximum absolute error gate catches an isolated outlier
+  ---
+  duration_ms: 1.316981
+  type: 'test'
+  ...
+# Subtest: residualEnergy RMSE gate catches distributed errors below maximum tolerance
+ok 152 - residualEnergy RMSE gate catches distributed errors below maximum tolerance
+  ---
+  duration_ms: 1.351155
+  type: 'test'
+  ...
+# Subtest: periodicity maximum absolute error gate catches an isolated outlier
+ok 153 - periodicity maximum absolute error gate catches an isolated outlier
+  ---
+  duration_ms: 0.8757
+  type: 'test'
+  ...
+# Subtest: periodicity RMSE gate catches distributed errors below maximum tolerance
+ok 154 - periodicity RMSE gate catches distributed errors below maximum tolerance
+  ---
+  duration_ms: 0.76434
+  type: 'test'
+  ...
+# Subtest: classifier singing rejects NaN numeric array elements
+ok 155 - classifier singing rejects NaN numeric array elements
+  ---
+  duration_ms: 0.892882
+  type: 'test'
+  ...
+# Subtest: classifier singing rejects Infinity numeric array elements
+ok 156 - classifier singing rejects Infinity numeric array elements
+  ---
+  duration_ms: 0.751014
+  type: 'test'
+  ...
+# Subtest: classifier singing rejects -Infinity numeric array elements
+ok 157 - classifier singing rejects -Infinity numeric array elements
+  ---
+  duration_ms: 0.971611
+  type: 'test'
+  ...
+# Subtest: classifier singing rejects 0.5 numeric array elements
+ok 158 - classifier singing rejects 0.5 numeric array elements
+  ---
+  duration_ms: 0.756535
+  type: 'test'
+  ...
+# Subtest: classifier singing rejects null numeric array elements
+ok 159 - classifier singing rejects null numeric array elements
+  ---
+  duration_ms: 0.724245
+  type: 'test'
+  ...
+# Subtest: classifier singing rejects true numeric array elements
+ok 160 - classifier singing rejects true numeric array elements
+  ---
+  duration_ms: 0.755844
+  type: 'test'
+  ...
+# Subtest: classifier singing rejects identical nonfinite values on both sides
+ok 161 - classifier singing rejects identical nonfinite values on both sides
+  ---
+  duration_ms: 1.876315
+  type: 'test'
+  ...
+# Subtest: classifier singing array length is exact
+ok 162 - classifier singing array length is exact
+  ---
+  duration_ms: 1.402172
+  type: 'test'
+  ...
+# Subtest: classifier speech rejects NaN numeric array elements
+ok 163 - classifier speech rejects NaN numeric array elements
+  ---
+  duration_ms: 1.441876
+  type: 'test'
+  ...
+# Subtest: classifier speech rejects Infinity numeric array elements
+ok 164 - classifier speech rejects Infinity numeric array elements
+  ---
+  duration_ms: 1.554128
+  type: 'test'
+  ...
+# Subtest: classifier speech rejects -Infinity numeric array elements
+ok 165 - classifier speech rejects -Infinity numeric array elements
+  ---
+  duration_ms: 1.782769
+  type: 'test'
+  ...
+# Subtest: classifier speech rejects 0.5 numeric array elements
+ok 166 - classifier speech rejects 0.5 numeric array elements
+  ---
+  duration_ms: 1.840026
+  type: 'test'
+  ...
+# Subtest: classifier speech rejects null numeric array elements
+ok 167 - classifier speech rejects null numeric array elements
+  ---
+  duration_ms: 1.804018
+  type: 'test'
+  ...
+# Subtest: classifier speech rejects true numeric array elements
+ok 168 - classifier speech rejects true numeric array elements
+  ---
+  duration_ms: 2.761943
+  type: 'test'
+  ...
+# Subtest: classifier speech rejects identical nonfinite values on both sides
+ok 169 - classifier speech rejects identical nonfinite values on both sides
+  ---
+  duration_ms: 3.166706
+  type: 'test'
+  ...
+# Subtest: classifier speech array length is exact
+ok 170 - classifier speech array length is exact
+  ---
+  duration_ms: 0.965499
+  type: 'test'
+  ...
+# Subtest: energy rejects NaN numeric array elements
+ok 171 - energy rejects NaN numeric array elements
+  ---
+  duration_ms: 1.288788
+  type: 'test'
+  ...
+# Subtest: energy rejects Infinity numeric array elements
+ok 172 - energy rejects Infinity numeric array elements
+  ---
+  duration_ms: 1.335536
+  type: 'test'
+  ...
+# Subtest: energy rejects -Infinity numeric array elements
+ok 173 - energy rejects -Infinity numeric array elements
+  ---
+  duration_ms: 0.805507
+  type: 'test'
+  ...
+# Subtest: energy rejects 0.5 numeric array elements
+ok 174 - energy rejects 0.5 numeric array elements
+  ---
+  duration_ms: 1.156248
+  type: 'test'
+  ...
+# Subtest: energy rejects null numeric array elements
+ok 175 - energy rejects null numeric array elements
+  ---
+  duration_ms: 1.129718
+  type: 'test'
+  ...
+# Subtest: energy rejects true numeric array elements
+ok 176 - energy rejects true numeric array elements
+  ---
+  duration_ms: 1.123267
+  type: 'test'
+  ...
+# Subtest: energy rejects identical nonfinite values on both sides
+ok 177 - energy rejects identical nonfinite values on both sides
+  ---
+  duration_ms: 1.33772
+  type: 'test'
+  ...
+# Subtest: energy array length is exact
+ok 178 - energy array length is exact
+  ---
+  duration_ms: 1.097307
+  type: 'test'
+  ...
+# Subtest: residual energy rejects NaN numeric array elements
+ok 179 - residual energy rejects NaN numeric array elements
+  ---
+  duration_ms: 1.230508
+  type: 'test'
+  ...
+# Subtest: residual energy rejects Infinity numeric array elements
+ok 180 - residual energy rejects Infinity numeric array elements
+  ---
+  duration_ms: 1.170595
+  type: 'test'
+  ...
+# Subtest: residual energy rejects -Infinity numeric array elements
+ok 181 - residual energy rejects -Infinity numeric array elements
+  ---
+  duration_ms: 1.224436
+  type: 'test'
+  ...
+# Subtest: residual energy rejects 0.5 numeric array elements
+ok 182 - residual energy rejects 0.5 numeric array elements
+  ---
+  duration_ms: 1.267187
+  type: 'test'
+  ...
+# Subtest: residual energy rejects null numeric array elements
+ok 183 - residual energy rejects null numeric array elements
+  ---
+  duration_ms: 1.2631
+  type: 'test'
+  ...
+# Subtest: residual energy rejects true numeric array elements
+ok 184 - residual energy rejects true numeric array elements
+  ---
+  duration_ms: 1.278949
+  type: 'test'
+  ...
+# Subtest: residual energy rejects identical nonfinite values on both sides
+ok 185 - residual energy rejects identical nonfinite values on both sides
+  ---
+  duration_ms: 1.693661
+  type: 'test'
+  ...
+# Subtest: residual energy array length is exact
+ok 186 - residual energy array length is exact
+  ---
+  duration_ms: 1.24228
+  type: 'test'
+  ...
+# Subtest: frequency rejects NaN numeric array elements
+ok 187 - frequency rejects NaN numeric array elements
+  ---
+  duration_ms: 1.318584
+  type: 'test'
+  ...
+# Subtest: frequency rejects Infinity numeric array elements
+ok 188 - frequency rejects Infinity numeric array elements
+  ---
+  duration_ms: 1.398474
+  type: 'test'
+  ...
+# Subtest: frequency rejects -Infinity numeric array elements
+ok 189 - frequency rejects -Infinity numeric array elements
+  ---
+  duration_ms: 1.611536
+  type: 'test'
+  ...
+# Subtest: frequency rejects 0.5 numeric array elements
+ok 190 - frequency rejects 0.5 numeric array elements
+  ---
+  duration_ms: 1.235097
+  type: 'test'
+  ...
+# Subtest: frequency rejects null numeric array elements
+ok 191 - frequency rejects null numeric array elements
+  ---
+  duration_ms: 1.248042
+  type: 'test'
+  ...
+# Subtest: frequency rejects true numeric array elements
+ok 192 - frequency rejects true numeric array elements
+  ---
+  duration_ms: 1.277387
+  type: 'test'
+  ...
+# Subtest: frequency rejects identical nonfinite values on both sides
+ok 193 - frequency rejects identical nonfinite values on both sides
+  ---
+  duration_ms: 1.631804
+  type: 'test'
+  ...
+# Subtest: frequency array length is exact
+ok 194 - frequency array length is exact
+  ---
+  duration_ms: 1.258661
+  type: 'test'
+  ...
+# Subtest: periodicity rejects NaN numeric array elements
+ok 195 - periodicity rejects NaN numeric array elements
+  ---
+  duration_ms: 0.820226
+  type: 'test'
+  ...
+# Subtest: periodicity rejects Infinity numeric array elements
+ok 196 - periodicity rejects Infinity numeric array elements
+  ---
+  duration_ms: 0.546189
+  type: 'test'
+  ...
+# Subtest: periodicity rejects -Infinity numeric array elements
+ok 197 - periodicity rejects -Infinity numeric array elements
+  ---
+  duration_ms: 0.513477
+  type: 'test'
+  ...
+# Subtest: periodicity rejects 0.5 numeric array elements
+ok 198 - periodicity rejects 0.5 numeric array elements
+  ---
+  duration_ms: 0.48283
+  type: 'test'
+  ...
+# Subtest: periodicity rejects null numeric array elements
+ok 199 - periodicity rejects null numeric array elements
+  ---
+  duration_ms: 0.890337
+  type: 'test'
+  ...
+# Subtest: periodicity rejects true numeric array elements
+ok 200 - periodicity rejects true numeric array elements
+  ---
+  duration_ms: 0.874377
+  type: 'test'
+  ...
+# Subtest: periodicity rejects identical nonfinite values on both sides
+ok 201 - periodicity rejects identical nonfinite values on both sides
+  ---
+  duration_ms: 0.890578
+  type: 'test'
+  ...
+# Subtest: periodicity array length is exact
+ok 202 - periodicity array length is exact
+  ---
+  duration_ms: 0.875038
+  type: 'test'
+  ...
+# Subtest: envelope rejects NaN numeric array elements
+ok 203 - envelope rejects NaN numeric array elements
+  ---
+  duration_ms: 0.920394
+  type: 'test'
+  ...
+# Subtest: envelope rejects Infinity numeric array elements
+ok 204 - envelope rejects Infinity numeric array elements
+  ---
+  duration_ms: 0.490143
+  type: 'test'
+  ...
+# Subtest: envelope rejects -Infinity numeric array elements
+ok 205 - envelope rejects -Infinity numeric array elements
+  ---
+  duration_ms: 0.511594
+  type: 'test'
+  ...
+# Subtest: envelope rejects 0.5 numeric array elements
+ok 206 - envelope rejects 0.5 numeric array elements
+  ---
+  duration_ms: 0.475395
+  type: 'test'
+  ...
+# Subtest: envelope rejects null numeric array elements
+ok 207 - envelope rejects null numeric array elements
+  ---
+  duration_ms: 0.516132
+  type: 'test'
+  ...
+# Subtest: envelope rejects true numeric array elements
+ok 208 - envelope rejects true numeric array elements
+  ---
+  duration_ms: 0.579772
+  type: 'test'
+  ...
+# Subtest: envelope rejects identical nonfinite values on both sides
+ok 209 - envelope rejects identical nonfinite values on both sides
+  ---
+  duration_ms: 0.975056
+  type: 'test'
+  ...
+# Subtest: envelope array length is exact
+ok 210 - envelope array length is exact
+  ---
+  duration_ms: 0.916286
+  type: 'test'
+  ...
+# Subtest: contour midi rejects NaN numeric array elements
+ok 211 - contour midi rejects NaN numeric array elements
+  ---
+  duration_ms: 0.910886
+  type: 'test'
+  ...
+# Subtest: contour midi rejects Infinity numeric array elements
+ok 212 - contour midi rejects Infinity numeric array elements
+  ---
+  duration_ms: 0.875369
+  type: 'test'
+  ...
+# Subtest: contour midi rejects -Infinity numeric array elements
+ok 213 - contour midi rejects -Infinity numeric array elements
+  ---
+  duration_ms: 1.256046
+  type: 'test'
+  ...
+# Subtest: contour midi rejects 0.5 numeric array elements
+ok 214 - contour midi rejects 0.5 numeric array elements
+  ---
+  duration_ms: 0.84411
+  type: 'test'
+  ...
+# Subtest: contour midi rejects null numeric array elements
+ok 215 - contour midi rejects null numeric array elements
+  ---
+  duration_ms: 0.885288
+  type: 'test'
+  ...
+# Subtest: contour midi rejects true numeric array elements
+ok 216 - contour midi rejects true numeric array elements
+  ---
+  duration_ms: 0.93432
+  type: 'test'
+  ...
+# Subtest: contour midi rejects identical nonfinite values on both sides
+ok 217 - contour midi rejects identical nonfinite values on both sides
+  ---
+  duration_ms: 0.872895
+  type: 'test'
+  ...
+# Subtest: contour midi array length is exact
+ok 218 - contour midi array length is exact
+  ---
+  duration_ms: 0.889346
+  type: 'test'
+  ...
+# Subtest: contour confidence rejects NaN numeric array elements
+ok 219 - contour confidence rejects NaN numeric array elements
+  ---
+  duration_ms: 0.923079
+  type: 'test'
+  ...
+# Subtest: contour confidence rejects Infinity numeric array elements
+ok 220 - contour confidence rejects Infinity numeric array elements
+  ---
+  duration_ms: 0.946172
+  type: 'test'
+  ...
+# Subtest: contour confidence rejects -Infinity numeric array elements
+ok 221 - contour confidence rejects -Infinity numeric array elements
+  ---
+  duration_ms: 0.899245
+  type: 'test'
+  ...
+# Subtest: contour confidence rejects 0.5 numeric array elements
+ok 222 - contour confidence rejects 0.5 numeric array elements
+  ---
+  duration_ms: 0.87065
+  type: 'test'
+  ...
+# Subtest: contour confidence rejects null numeric array elements
+ok 223 - contour confidence rejects null numeric array elements
+  ---
+  duration_ms: 0.887282
+  type: 'test'
+  ...
+# Subtest: contour confidence rejects true numeric array elements
+ok 224 - contour confidence rejects true numeric array elements
+  ---
+  duration_ms: 1.302784
+  type: 'test'
+  ...
+# Subtest: contour confidence rejects identical nonfinite values on both sides
+ok 225 - contour confidence rejects identical nonfinite values on both sides
+  ---
+  duration_ms: 0.907519
+  type: 'test'
+  ...
+# Subtest: contour confidence array length is exact
+ok 226 - contour confidence array length is exact
+  ---
+  duration_ms: 0.868687
+  type: 'test'
+  ...
+# Subtest: numeric array replaced with an array-like object is rejected
+ok 227 - numeric array replaced with an array-like object is rejected
+  ---
+  duration_ms: 1.07222
+  type: 'test'
+  ...
+# Subtest: samples44100 sample count is exact
+ok 228 - samples44100 sample count is exact
+  ---
+  duration_ms: 1.304417
+  type: 'test'
+  ...
+# Subtest: samples44100 rejects numeric text
+ok 229 - samples44100 rejects numeric text
+  ---
+  duration_ms: 1.478575
+  type: 'test'
+  ...
+# Subtest: samples22050 sample count is exact
+ok 230 - samples22050 sample count is exact
+  ---
+  duration_ms: 1.379529
+  type: 'test'
+  ...
+# Subtest: samples22050 rejects numeric text
+ok 231 - samples22050 rejects numeric text
+  ---
+  duration_ms: 1.369289
+  type: 'test'
+  ...
+# Subtest: transcription keeps all eight diffusion steps
+ok 232 - transcription keeps all eight diffusion steps
+  ---
+  duration_ms: 2.133499
+  type: 'test'
+  ...
+# Subtest: segmenter execution count must match the complete pipeline
+ok 233 - segmenter execution count must match the complete pipeline
+  ---
+  duration_ms: 1.412561
+  type: 'test'
+  ...
+# Subtest: identically missing segmenter execution coverage cannot pass
+ok 234 - identically missing segmenter execution coverage cannot pass
+  ---
+  duration_ms: 1.409145
+  type: 'test'
+  ...
+# Subtest: encoder execution count must match the complete pipeline
+ok 235 - encoder execution count must match the complete pipeline
+  ---
+  duration_ms: 1.181235
+  type: 'test'
+  ...
+# Subtest: identically missing encoder execution coverage cannot pass
+ok 236 - identically missing encoder execution coverage cannot pass
+  ---
+  duration_ms: 1.327481
+  type: 'test'
+  ...
+# Subtest: dur2bd execution count must match the complete pipeline
+ok 237 - dur2bd execution count must match the complete pipeline
+  ---
+  duration_ms: 1.335095
+  type: 'test'
+  ...
+# Subtest: identically missing dur2bd execution coverage cannot pass
+ok 238 - identically missing dur2bd execution coverage cannot pass
+  ---
+  duration_ms: 1.294218
+  type: 'test'
+  ...
+# Subtest: bd2dur execution count must match the complete pipeline
+ok 239 - bd2dur execution count must match the complete pipeline
+  ---
+  duration_ms: 1.342209
+  type: 'test'
+  ...
+# Subtest: identically missing bd2dur execution coverage cannot pass
+ok 240 - identically missing bd2dur execution coverage cannot pass
+  ---
+  duration_ms: 1.807755
+  type: 'test'
+  ...
+# Subtest: estimator execution count must match the complete pipeline
+ok 241 - estimator execution count must match the complete pipeline
+  ---
+  duration_ms: 1.339033
+  type: 'test'
+  ...
+# Subtest: identically missing estimator execution coverage cannot pass
+ok 242 - identically missing estimator execution coverage cannot pass
+  ---
+  duration_ms: 1.39597
+  type: 'test'
+  ...
+# Subtest: frameMn10 execution count must match the complete pipeline
+ok 243 - frameMn10 execution count must match the complete pipeline
+  ---
+  duration_ms: 0.585874
+  type: 'test'
+  ...
+# Subtest: identically missing frameMn10 execution coverage cannot pass
+ok 244 - identically missing frameMn10 execution coverage cannot pass
+  ---
+  duration_ms: 0.526672
+  type: 'test'
+  ...
+# Subtest: identical zero transcription notes is a vacuous baseline and fails
+ok 245 - identical zero transcription notes is a vacuous baseline and fails
+  ---
+  duration_ms: 0.654603
+  type: 'test'
+  ...
+# Subtest: identical too few transcription notes is a vacuous baseline and fails
+ok 246 - identical too few transcription notes is a vacuous baseline and fails
+  ---
+  duration_ms: 0.587307
+  type: 'test'
+  ...
+# Subtest: identical zero fused notes is a vacuous baseline and fails
+ok 247 - identical zero fused notes is a vacuous baseline and fails
+  ---
+  duration_ms: 0.529317
+  type: 'test'
+  ...
+# Subtest: identical subsecond fused note coverage is a vacuous baseline and fails
+ok 248 - identical subsecond fused note coverage is a vacuous baseline and fails
+  ---
+  duration_ms: 0.682596
+  type: 'test'
+  ...
+# Subtest: identical zero phrases is a vacuous baseline and fails
+ok 249 - identical zero phrases is a vacuous baseline and fails
+  ---
+  duration_ms: 0.652589
+  type: 'test'
+  ...
+# Subtest: identical speech-only phrases is a vacuous baseline and fails
+ok 250 - identical speech-only phrases is a vacuous baseline and fails
+  ---
+  duration_ms: 0.889746
+  type: 'test'
+  ...
+# Subtest: identical missing classifier is a vacuous baseline and fails
+ok 251 - identical missing classifier is a vacuous baseline and fails
+  ---
+  duration_ms: 0.58397
+  type: 'test'
+  ...
+# Subtest: identical empty singing scores is a vacuous baseline and fails
+ok 252 - identical empty singing scores is a vacuous baseline and fails
+  ---
+  duration_ms: 0.801109
+  type: 'test'
+  ...
+# Subtest: identical empty speech scores is a vacuous baseline and fails
+ok 253 - identical empty speech scores is a vacuous baseline and fails
+  ---
+  duration_ms: 0.858568
+  type: 'test'
+  ...
+# Subtest: identical insufficient singing evidence is a vacuous baseline and fails
+ok 254 - identical insufficient singing evidence is a vacuous baseline and fails
+  ---
+  duration_ms: 0.726749
+  type: 'test'
+  ...
+# Subtest: identical seven transcription steps is a vacuous baseline and fails
+ok 255 - identical seven transcription steps is a vacuous baseline and fails
+  ---
+  duration_ms: 0.735436
+  type: 'test'
+  ...
+# Subtest: optional event releaseTime present on only one side fails
+ok 256 - optional event releaseTime present on only one side fails
+  ---
+  duration_ms: 0.808012
+  type: 'test'
+  ...
+# Subtest: optional event modelScore present on only one side fails
+ok 257 - optional event modelScore present on only one side fails
+  ---
+  duration_ms: 0.746567
+  type: 'test'
+  ...
+# Subtest: optional event speechScore present on only one side fails
+ok 258 - optional event speechScore present on only one side fails
+  ---
+  duration_ms: 0.73224
+  type: 'test'
+  ...
+# Subtest: optional event voicedFraction present on only one side fails
+ok 259 - optional event voicedFraction present on only one side fails
+  ---
+  duration_ms: 1.127504
+  type: 'test'
+  ...
+# Subtest: optional event stemEnergyRatio present on only one side fails
+ok 260 - optional event stemEnergyRatio present on only one side fails
+  ---
+  duration_ms: 1.103158
+  type: 'test'
+  ...
+# Subtest: unknown added event field cannot silently pass
+ok 261 - unknown added event field cannot silently pass
+  ---
+  duration_ms: 1.480108
+  type: 'test'
+  ...
+# Subtest: unknown scalar event field is compared exactly
+ok 262 - unknown scalar event field is compared exactly
+  ---
+  duration_ms: 1.50244
+  type: 'test'
+  ...
+# Subtest: identical optional metadata is preserved without invalidating real comparisons
+ok 263 - identical optional metadata is preserved without invalidating real comparisons
+  ---
+  duration_ms: 1.358159
+  type: 'test'
+  ...
+# Subtest: optional nested field present on the reference alone fails
+ok 264 - optional nested field present on the reference alone fails
+  ---
+  duration_ms: 1.490107
+  type: 'test'
+  ...
+# Subtest: optional numeric scalar with nonfinite values on both sides fails
+ok 265 - optional numeric scalar with nonfinite values on both sides fails
+  ---
+  duration_ms: 1.59237
+  type: 'test'
+  ...
+# Subtest: exact decimal timing, strength, and MIDI boundaries tolerate binary roundoff
+ok 266 - exact decimal timing, strength, and MIDI boundaries tolerate binary roundoff
+  ---
+  duration_ms: 4.13577
+  type: 'test'
+  ...
+# Subtest: identical numeric-text optional confidence scalars are rejected
+ok 267 - identical numeric-text optional confidence scalars are rejected
+  ---
+  duration_ms: 1.597329
+  type: 'test'
+  ...
+# Subtest: optional classified summary envelopes honor the same 0.001 limit
+ok 268 - optional classified summary envelopes honor the same 0.001 limit
+  ---
+  duration_ms: 7.407124
+  type: 'test'
+  ...
+# Subtest: actual 1.6 worker snapshot migrates to 2.0 with exact frames and stable repeated reopen
+ok 269 - actual 1.6 worker snapshot migrates to 2.0 with exact frames and stable repeated reopen
+  ---
+  duration_ms: 353.517511
+  type: 'test'
+  ...
+# Subtest: 1.4 direct and 1.5 rebound snapshots still migrate without replacing their frames
+ok 270 - 1.4 direct and 1.5 rebound snapshots still migrate without replacing their frames
+  ---
+  duration_ms: 443.864687
+  type: 'test'
+  ...
+# Subtest: 2.0 cue metadata and final synchronization report survive an exact backup round trip
+ok 271 - 2.0 cue metadata and final synchronization report survive an exact backup round trip
+  ---
+  duration_ms: 117.040823
+  type: 'test'
+  ...
+# PASS strongest musical arrivals replace percent-of-duration selection
+# PASS 14-second trunk and four-second windows prepare before exact Dance onset
+# PASS final windows close and mirrors unfold with completed home travel
+# PASS mirror cycles reserve physical travel, begin folded, and never request Dance
+# PASS expressive choreography is denser and spatially staggered; balanced remains restrained
+# PASS positive and negative audio offsets apply once at musical arrivals
+# PASS manual tracks, disabled outputs and global movement switches are respected
+# PASS actual tempo changes determine stagger and all offsets retain frame precision
+# PASS Dance ends before actual musical stops; unsupported short phrases do not consume budgets
+# PASS long-track budgets focus on strongest remote peaks rather than evenly distributed gestures
+# PASS short tracks, sparse beats and phase-shifted boundaries retain legal complete choreography
+# PASS seeded adversarial phrase timing remains validated by the real exported-byte simulator
+# PASS integrated show generation preserves analysis targets, offset and exact exported movement bytes
+# Subtest: /home/runner/work/LightForge/LightForge/tests/movement-planner.test.cjs
+ok 14 - /home/runner/work/LightForge/LightForge/tests/movement-planner.test.cjs
+  ---
+  duration_ms: 1976.886684
+  type: 'test'
+  ...
+# Subtest: native bridge exposes only complete audio from the matching private passage
+ok 273 - native bridge exposes only complete audio from the matching private passage
+  ---
+  duration_ms: 7.688833
+  type: 'test'
+  ...
+# Subtest: abort cancels the native operation and never reports a result
+ok 274 - abort cancels the native operation and never reports a result
+  ---
+  duration_ms: 2.589354
+  type: 'test'
+  ...
+# Subtest: a stale token or external result URL cannot become source audio
+ok 275 - a stale token or external result URL cannot become source audio
+  ---
+  duration_ms: 4.7219
+  type: 'test'
+  ...
+# Subtest: native failures remain actionable and do not silently switch the model
+ok 276 - native failures remain actionable and do not silently switch the model
+  ---
+  duration_ms: 3.024661
+  type: 'test'
+  ...
+# Subtest: invalid source position is rejected before starting native work
+ok 277 - invalid source position is rejected before starting native work
+  ---
+  duration_ms: 3.253603
+  type: 'test'
+  ...
+# Subtest: balanced native bridge uploads bounded chunks and returns exact little-endian output
+ok 278 - balanced native bridge uploads bounded chunks and returns exact little-endian output
+  ---
+  duration_ms: 1011.738568
+  type: 'test'
+  ...
+# Subtest: balanced native bridge falls back cleanly when Android reports no compatible runtime
+ok 279 - balanced native bridge falls back cleanly when Android reports no compatible runtime
+  ---
+  duration_ms: 1.424614
+  type: 'test'
+  ...
+# Subtest: native MDX output validation disables only the optional accelerator
+ok 280 - native MDX output validation disables only the optional accelerator
+  ---
+  duration_ms: 367.643511
+  type: 'test'
+  ...
+# Subtest: guard identity follows the pinned native runtime version
+ok 281 - guard identity follows the pinned native runtime version
+  ---
+  duration_ms: 1.166177
+  type: 'test'
+  ...
+# Subtest: confirmed native unavailability selects the existing same-model path before any native work
+ok 282 - confirmed native unavailability selects the existing same-model path before any native work
+  ---
+  duration_ms: 1.423161
+  type: 'test'
+  ...
+# Subtest: native compatibility query failures are surfaced instead of silently changing runtimes
+ok 283 - native compatibility query failures are surfaced instead of silently changing runtimes
+  ---
+  duration_ms: 3.707373
+  type: 'test'
+  ...
+# Subtest: available runtimes and older bridges retain native prediction and release
+ok 284 - available runtimes and older bridges retain native prediction and release
+  ---
+  duration_ms: 1.694743
+  type: 'test'
+  ...
+# Subtest: service runner completes the checkpoint transaction with compatibility routing and unchanged analysis identity
+ok 285 - service runner completes the checkpoint transaction with compatibility routing and unchanged analysis identity
+  ---
+  duration_ms: 2.829279
+  type: 'test'
+  ...
+# Subtest: legato bass entrances survive held-note competition and preserve the off-grid clock
+ok 286 - legato bass entrances survive held-note competition and preserve the off-grid clock
+  ---
+  duration_ms: 93.517626
+  type: 'test'
+  ...
+# Subtest: enabled alternative lamps carry voice and bass when preferred outputs are muted
+ok 287 - enabled alternative lamps carry voice and bass when preferred outputs are muted
+  ---
+  duration_ms: 32.964584
+  type: 'test'
+  ...
+# Subtest: part timing corrects automatic events while user cues keep their own soundtrack times
+ok 288 - part timing corrects automatic events while user cues keep their own soundtrack times
+  ---
+  duration_ms: 137.355914
+  type: 'test'
+  ...
+# Subtest: explicit holds cross section boundaries, mutes remove role gestures, and accompaniment survives
+ok 289 - explicit holds cross section boundaries, mutes remove role gestures, and accompaniment survives
+  ---
+  duration_ms: 43.647197
+  type: 'test'
+  ...
+# Subtest: final byte review detects output overrides, missing attacks, and disabled routes
+ok 290 - final byte review detects output overrides, missing attacks, and disabled routes
+  ---
+  duration_ms: 52.842118
+  type: 'test'
+  ...
+# Subtest: musical edits validate limits and remain deterministic through serialization
+ok 291 - musical edits validate limits and remain deterministic through serialization
+  ---
+  duration_ms: 20.505746
+  type: 'test'
+  ...
+# Subtest: dense and simultaneous bass notes retain valid target ranges on a shared fallback lamp
+ok 292 - dense and simultaneous bass notes retain valid target ranges on a shared fallback lamp
+  ---
+  duration_ms: 59.032516
+  type: 'test'
+  ...
+# Subtest: real app facade commits, undoes, redoes, saves, and isolates musical edits through the DOM
+ok 293 - real app facade commits, undoes, redoes, saves, and isolates musical edits through the DOM
+  ---
+  duration_ms: 840.252222
+  type: 'test'
+  ...
+# Subtest: all ramp durations begin at zero at the exact frame boundary and advance continuously
+ok 294 - all ramp durations begin at zero at the exact frame boundary and advance continuously
+  ---
+  duration_ms: 28.060647
+  type: 'test'
+  ...
+# Subtest: interrupted and reversed ramps continue from their actual brightness without jumping
+ok 295 - interrupted and reversed ramps continue from their actual brightness without jumping
+  ---
+  duration_ms: 5.713392
+  type: 'test'
+  ...
+# Subtest: Model 3 merged light outputs obey Channel 4 ramp duration and side/aux OR
+ok 296 - Model 3 merged light outputs obey Channel 4 ramp duration and side/aux OR
+  ---
+  duration_ms: 11.364186
+  type: 'test'
+  ...
+# Subtest: physical outputs suppress absent lights and never invent unsupported closures
+ok 297 - physical outputs suppress absent lights and never invent unsupported closures
+  ---
+  duration_ms: 7.263422
+  type: 'test'
+  ...
+# Subtest: open/close commands persist through Idle and move from the current partial position
+ok 298 - open/close commands persist through Idle and move from the current partial position
+  ---
+  duration_ms: 9.72452
+  type: 'test'
+  ...
+# Subtest: Stop holds the reached position and later movement resumes without jumping
+ok 299 - Stop holds the reached position and later movement resumes without jumping
+  ---
+  duration_ms: 1.837982
+  type: 'test'
+  ...
+# Subtest: mirrors start unfolded and use real open/close commands, with no invented dance
+ok 300 - mirrors start unfolded and use real open/close commands, with no invented dance
+  ---
+  duration_ms: 0.758038
+  type: 'test'
+  ...
+# Subtest: estimated Dance moves, stops at Idle, and seeks reproduce identical poses
+ok 301 - estimated Dance moves, stops at Idle, and seeks reproduce identical poses
+  ---
+  duration_ms: 5.379383
+  type: 'test'
+  ...
+# Subtest: charge Dance is an LED rainbow, never door oscillation, and auto-close occurs at two minutes
+ok 302 - charge Dance is an LED rainbow, never door oscillation, and auto-close occurs at two minutes
+  ---
+  duration_ms: 4.214188
+  type: 'test'
+  ...
+# Subtest: preview raw commands and all RGB zones exactly match independently decoded exported bytes
+ok 303 - preview raw commands and all RGB zones exactly match independently decoded exported bytes
+  ---
+  duration_ms: 292.312902
+  type: 'test'
+  ...
+# Subtest: hiding before the first studio frame cancels it and resumes exactly one RAF chain
+ok 304 - hiding before the first studio frame cancels it and resumes exactly one RAF chain
+  ---
+  duration_ms: 299.184778
+  type: 'test'
+  ...
+# Subtest: native preview pause stays effective while the document is visible until explicit resume
+ok 305 - native preview pause stays effective while the document is visible until explicit resume
+  ---
+  duration_ms: 236.07174
+  type: 'test'
+  ...
+# Subtest: page lifecycle suspension is independent of native and document visibility state
+ok 306 - page lifecycle suspension is independent of native and document visibility state
+  ---
+  duration_ms: 158.670043
+  type: 'test'
+  ...
+# Subtest: renderer explicit pause cancels pending submission and blocks draws and resize allocations
+ok 307 - renderer explicit pause cancels pending submission and blocks draws and resize allocations
+  ---
+  duration_ms: 5.957011
+  type: 'test'
+  ...
+# Subtest: renderer resume never submits or reallocates while the document remains hidden
+ok 308 - renderer resume never submits or reallocates while the document remains hidden
+  ---
+  duration_ms: 0.903081
+  type: 'test'
+  ...
+# Subtest: renderer defers lighting generation and frame submission until the model is loaded and visible
+ok 309 - renderer defers lighting generation and frame submission until the model is loaded and visible
+  ---
+  duration_ms: 1.445954
+  type: 'test'
+  ...
+# PASS separated articulations keep the original off-grid source clock through both frame modes and signed offsets
+# PASS lead singing has articulation contrast and keeps bass, percussion and accompaniment active
+# PASS stable sung pitch and isolated envelope shape real RGB bytes while the exact exterior rhythm stays fixed
+# PASS instrumental corrections remove measured voice evidence locally and never mutate original analysis
+# PASS explicit voice guides add a labeled phrase without inventing measured notes or syllables
+# PASS short articulated phrases and cadences never nominate multi-second motor Dance outside their region
+# PASS long sustained vocal and bass phrases compete for expressive gestures with full mechanical lead and return
+# PASS saved and corrected detail is deterministic, masks apply and manual lights keep ownership
+# Subtest: /home/runner/work/LightForge/LightForge/tests/role-composer-1.6.test.cjs
+ok 22 - /home/runner/work/LightForge/LightForge/tests/role-composer-1.6.test.cjs
+  ---
+  duration_ms: 1662.746353
+  type: 'test'
+  ...
+# PASS meaxic
+# PASS nightowl
+# PASS falcon
+# PASS stella
+# PASS grunge
+# PASS sdrnr
+# PASS source-led controlled NightOwl
+# Subtest: /home/runner/work/LightForge/LightForge/tests/role-reference-composer-1.6.test.cjs
+ok 23 - /home/runner/work/LightForge/LightForge/tests/role-reference-composer-1.6.test.cjs
+  ---
+  duration_ms: 258.380163
+  type: 'test'
+  ...
+# Subtest: balanced separator can use native MDX without creating a WASM session
+ok 312 - balanced separator can use native MDX without creating a WASM session
+  ---
+  duration_ms: 1779.063747
+  type: 'test'
+  ...
+# Subtest: balanced separator falls back to WASM as a complete polarity pair
+ok 313 - balanced separator falls back to WASM as a complete polarity pair
+  ---
+  duration_ms: 1636.563497
+  type: 'test'
+  ...
+# Subtest: full-resolution writes preserve exact little-endian samples across bounded async buffer reuse
+ok 314 - full-resolution writes preserve exact little-endian samples across bounded async buffer reuse
+  ---
+  duration_ms: 28.849272
+  type: 'test'
+  ...
+# Subtest: odd contiguous input chunks equal the independent centered 63-tap convolution exactly
+ok 315 - odd contiguous input chunks equal the independent centered 63-tap convolution exactly
+  ---
+  duration_ms: 98.882693
+  type: 'test'
+  ...
+# Subtest: an impulse remains on its original sample clock without FIR group-delay shift
+ok 316 - an impulse remains on its original sample clock without FIR group-delay shift
+  ---
+  duration_ms: 8.617906
+  type: 'test'
+  ...
+# Subtest: floating-point stems retain very quiet audio below PCM16 resolution
+ok 317 - floating-point stems retain very quiet audio below PCM16 resolution
+  ---
+  duration_ms: 28.783306
+  type: 'test'
+  ...
+# Subtest: one-sample and odd tails are flushed once with exact ceil(N/2) output
+ok 318 - one-sample and odd tails are flushed once with exact ceil(N/2) output
+  ---
+  duration_ms: 85.934676
+  type: 'test'
+  ...
+# Subtest: out-of-order, oversized and incomplete writer input rejects without closing incomplete audio
+ok 319 - out-of-order, oversized and incomplete writer input rejects without closing incomplete audio
+  ---
+  duration_ms: 0.374996
+  type: 'test'
+  ...
+# Subtest: stream write failures propagate to cache transaction cleanup
+ok 320 - stream write failures propagate to cache transaction cleanup
+  ---
+  duration_ms: 0.409561
+  type: 'test'
+  ...
+# Subtest: cache WAV header is mono 22.05 kHz IEEE float with exact byte counts
+ok 321 - cache WAV header is mono 22.05 kHz IEEE float with exact byte counts
+  ---
+  duration_ms: 0.411345
+  type: 'test'
+  ...
+# Subtest: stereo44100 decodes signed PCM16 independently for left and right
+ok 322 - stereo44100 decodes signed PCM16 independently for left and right
+  ---
+  duration_ms: 0.938507
+  type: 'test'
+  ...
+# Subtest: stereo44100 decodes signed PCM24 independently for left and right
+ok 323 - stereo44100 decodes signed PCM24 independently for left and right
+  ---
+  duration_ms: 0.888743
+  type: 'test'
+  ...
+# Subtest: stereo44100 decodes signed PCM32 independently for left and right
+ok 324 - stereo44100 decodes signed PCM32 independently for left and right
+  ---
+  duration_ms: 0.37193
+  type: 'test'
+  ...
+# Subtest: stereo44100 preserves float channels and silences non-finite samples
+ok 325 - stereo44100 preserves float channels and silences non-finite samples
+  ---
+  duration_ms: 0.348656
+  type: 'test'
+  ...
+# Subtest: stereo44100 duplicates mono and uses the first two channels of multichannel PCM
+ok 326 - stereo44100 duplicates mono and uses the first two channels of multichannel PCM
+  ---
+  duration_ms: 0.404852
+  type: 'test'
+  ...
+# Subtest: negative and out-of-track stereo reads zero-pad exactly without moving audible samples
+ok 327 - negative and out-of-track stereo reads zero-pad exactly without moving audible samples
+  ---
+  duration_ms: 0.419499
+  type: 'test'
+  ...
+# Subtest: stereo input validates limits, rejects wrong sample rates and detects truncated transfers
+ok 328 - stereo input validates limits, rejects wrong sample rates and detects truncated transfers
+  ---
+  duration_ms: 0.572318
+  type: 'test'
+  ...
+# Subtest: isolated off-grid phrase edges and held pitches remain on the vocal clock
+ok 329 - isolated off-grid phrase edges and held pitches remain on the vocal clock
+  ---
+  duration_ms: 171.242409
+  type: 'test'
+  ...
+# Subtest: quiet verse remains voiced after a chorus forty decibels louder
+ok 330 - quiet verse remains voiced after a chorus forty decibels louder
+  ---
+  duration_ms: 169.322104
+  type: 'test'
+  ...
+# Subtest: local normalization recovers an immediately following quiet vocal phrase
+ok 331 - local normalization recovers an immediately following quiet vocal phrase
+  ---
+  duration_ms: 119.39171
+  type: 'test'
+  ...
+# Subtest: vibrato sustains stay musical and source articulations do not follow accompaniment kicks
+ok 332 - vibrato sustains stay musical and source articulations do not follow accompaniment kicks
+  ---
+  duration_ms: 160.421696
+  type: 'test'
+  ...
+# Subtest: speech is represented as voice phrasing without invented sung notes
+ok 333 - speech is represented as voice phrasing without invented sung notes
+  ---
+  duration_ms: 61.065049
+  type: 'test'
+  ...
+# Subtest: harmonic instrumental leakage without learned voice evidence is rejected
+ok 334 - harmonic instrumental leakage without learned voice evidence is rejected
+  ---
+  duration_ms: 87.345251
+  type: 'test'
+  ...
+# Subtest: quiet instrumental leakage is not amplified into voice by uncertain contextual scores
+ok 335 - quiet instrumental leakage is not amplified into voice by uncertain contextual scores
+  ---
+  duration_ms: 112.050358
+  type: 'test'
+  ...
+# Subtest: an isolated aperiodic vocal source can retain uncertain phrasing with weak semantic evidence
+ok 336 - an isolated aperiodic vocal source can retain uncertain phrasing with weak semantic evidence
+  ---
+  duration_ms: 137.370913
+  type: 'test'
+  ...
+# Subtest: a strong separated harmonic source without a semantic voice seed remains unclassified
+ok 337 - a strong separated harmonic source without a semantic voice seed remains unclassified
+  ---
+  duration_ms: 82.494918
+  type: 'test'
+  ...
+# Subtest: silence and stochastic vocal-stem noise cannot invent periodic sung notes
+ok 338 - silence and stochastic vocal-stem noise cannot invent periodic sung notes
+  ---
+  duration_ms: 62.195587
+  type: 'test'
+  ...
+# Subtest: streaming chunk boundaries preserve all musical results exactly
+ok 339 - streaming chunk boundaries preserve all musical results exactly
+  ---
+  duration_ms: 217.528641
+  type: 'test'
+  ...
+# Subtest: the 22.05 kHz source-cache path preserves vocal note pitches and timing
+ok 340 - the 22.05 kHz source-cache path preserves vocal note pitches and timing
+  ---
+  duration_ms: 59.882031
+  type: 'test'
+  ...
+# Subtest: streaming rejects missing samples, overlaps, non-finite audio and rate mistakes
+ok 341 - streaming rejects missing samples, overlaps, non-finite audio and rate mistakes
+  ---
+  duration_ms: 0.868615
+  type: 'test'
+  ...
+# Subtest: short and endpoint audio are finite without invented padding
+ok 342 - short and endpoint audio are finite without invented padding
+  ---
+  duration_ms: 11.435302
+  type: 'test'
+  ...
+# Subtest: minimum-length note eligibility does not depend on floating-point timestamp rounding
+ok 343 - minimum-length note eligibility does not depend on floating-point timestamp rounding
+  ---
+  duration_ms: 7.51009
+  type: 'test'
+  ...
+# Subtest: four-hour summaries retain bounded numeric arrays and avoid argument spreading
+ok 344 - four-hour summaries retain bounded numeric arrays and avoid argument spreading
+  ---
+  duration_ms: 611.544987
+  type: 'test'
+  ...
+# Subtest: neural sung-note evidence recovers a prominent pitch-agreeing source without inflating classifier scores
+ok 345 - neural sung-note evidence recovers a prominent pitch-agreeing source without inflating classifier scores
+  ---
+  duration_ms: 80.004219
+  type: 'test'
+  ...
+# Subtest: neural candidates cannot bypass speech, pitch disagreement or weak separated-source energy
+ok 346 - neural candidates cannot bypass speech, pitch disagreement or weak separated-source energy
+  ---
+  duration_ms: 232.735053
+  type: 'test'
+  ...
+# {
+#   "result": "PASS",
+#   "tests": [
+#     {
+#       "name": "Exact ranges, first PCM offset44 and final clipped sample",
+#       "status": "PASS"
+#     },
+#     {
+#       "name": "Chromium double seek reproduction rejected as transport error",
+#       "status": "PASS"
+#     },
+#     {
+#       "name": "Range overread rejected without blaming source music",
+#       "status": "PASS"
+#     },
+#     {
+#       "name": "Wrong range start rejected",
+#       "status": "PASS"
+#     },
+#     {
+#       "name": "Server without Range uses complete bounded cache",
+#       "status": "PASS"
+#     },
+#     {
+#       "name": "WAV metadata larger than64KiB and odd padding",
+#       "status": "PASS"
+#     },
+#     {
+#       "name": "Actual truncated WAV detected before model inference",
+#       "status": "PASS"
+#     },
+#     {
+#       "name": "PCM16/24/32 and IEEEfloat32 decoding with edge padding",
+#       "status": "PASS"
+#     },
+#     {
+#       "name": "Malformed PCM alignment and float encoding rejected",
+#       "status": "PASS"
+#     },
+#     {
+#       "name": "Actual bundled music reads byte-exact at nonzero offsets",
+#       "status": "PASS"
+#     }
+#   ]
+# }
+# Subtest: /home/runner/work/LightForge/LightForge/tests/wav-reader.test.cjs
+ok 27 - /home/runner/work/LightForge/LightForge/tests/wav-reader.test.cjs
+  ---
+  duration_ms: 149.818485
+  type: 'test'
+  ...
+1..347
+# tests 347
+# suites 0
+# pass 347
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 46106.291801

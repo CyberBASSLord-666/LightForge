@@ -1,0 +1,9 @@
+{
+  "version": {
+    "name": "2.2.4",
+    "code": 20204
+  },
+  "run_id": 34424617050,
+  "source_commit": "57e6ee996bd8f9d135e89334585efe90d8667b68",
+  "delta_sha256": "d1757e5fa9eabd9c31b4efcafd324aa163f52373ee1f3b4940370ff9f266532b"
+}

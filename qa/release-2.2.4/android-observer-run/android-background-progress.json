@@ -1,0 +1,80 @@
+{
+  "phase": "reconnect-completed-project",
+  "elapsedSeconds": 436.046,
+  "phaseElapsedSeconds": 49.992,
+  "checks": [
+    "Actual Studio native CPU separation, neural analysis and choreography completed with the Activity destroyed, screen off and Doze forced with user-equivalent battery exemption; result was durably saved."
+  ],
+  "powerTransition": {
+    "phase": "reconnect-completed-project",
+    "interactive": true,
+    "deepIdle": false,
+    "batteryExempt": true,
+    "controllerDeepState": "ACTIVE",
+    "commandOutput": "Light state: OVERRIDE, deep state: IDLE\nmForceModeManagerQuickDozeRequest: false\nmForceModeManagerOffBodyState: false"
+  },
+  "uiReadiness": {
+    "backgroundApplying": true,
+    "backgroundSyncPending": true,
+    "bootstrapInventoryReady": true,
+    "canvasRect": {
+      "bottom": 905.27978515625,
+      "height": 330,
+      "left": 16.761905670166016,
+      "right": 395.42859268188477,
+      "top": 575.27978515625,
+      "width": 378.66668701171875
+    },
+    "composing": true,
+    "contextLost": false,
+    "documentHidden": false,
+    "documentState": "complete",
+    "loadingProject": false,
+    "previewFrames": 0,
+    "previewHasSize": true,
+    "previewIntersecting": true,
+    "previewModelReady": false,
+    "previewPaused": false,
+    "previewRendererVisible": true,
+    "previewVisible": true,
+    "projectRestoreIdle": false,
+    "ready": false,
+    "saveBlocked": false,
+    "viewport": {
+      "height": 842,
+      "scrollX": 0,
+      "scrollY": 0,
+      "width": 412
+    },
+    "phase": "reconnect-completed-project",
+    "probeStage": "waiting-for-javascript-response",
+    "waitSeconds": 17.642,
+    "nativeAttached": true,
+    "nativeShown": true,
+    "nativeWindowVisibility": 0,
+    "nativeWindowFocus": true,
+    "viewWidth": 1080,
+    "viewHeight": 2209
+  },
+  "job": {
+    "id": "91dc4173-a4e8-47dc-9f79-e8a6533aea6d",
+    "projectId": "267c0faa-7ca3-4b98-82a5-aa4c3eb4a373",
+    "name": "Background audio",
+    "sourceSHA256": "987f96f3feef507a7aaf6dc4d859a8f06a7c9e84aa4dda788a19215e507f5934",
+    "analysisIdentity": "e54d460bf471f914a474c5e847a953ffa4d8595643a1aad08d21db1527de51a7",
+    "state": "completed",
+    "stage": "Your show is ready",
+    "progress": 1,
+    "createdAt": 1789005069221,
+    "updatedAt": 1789005439961,
+    "hasCheckpoint": true,
+    "resumeAvailable": true,
+    "progressAt": 1789005439921,
+    "elapsedMs": 370700,
+    "completedStages": 3,
+    "restoredStages": 0,
+    "analysisStage": "save",
+    "checkpointAt": 1789005439141,
+    "checkpointSHA256": "60805111243bf869998c6f7befb6e3c7416621c585fae450d7517161e9e62bc9"
+  }
+}

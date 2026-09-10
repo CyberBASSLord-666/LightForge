@@ -1,0 +1,171 @@
+{
+  "run_id": 34426586708,
+  "source_commit": "92d8392140e8cfa3fd2980df10695a66629f11ef",
+  "diagnostic_only": true,
+  "release_eligible": false,
+  "original_artifact_id": 10133270877,
+  "original_artifact_zip_sha256": "4d00d50718d6bace0c685503600d0b4a22b6890a22bbfac95b748d96b9b7ba1c",
+  "original_files": {
+    "android-background-progress.json": {
+      "artifact_path": "qa/release-2.2.4/android-background-progress.json",
+      "bytes": 2622,
+      "sha256": "69fc863794bb541708b43874fa1b877e146ea478abdafc77d5af79d24bb21e75",
+      "copied_byte_for_byte": true
+    },
+    "android-background-verification.json": {
+      "artifact_path": "qa/release-2.2.4/android-background-verification.json",
+      "bytes": 30262,
+      "sha256": "5527ec30370b8ee9f7eca5125534d1a9cc651a3e7cc2206368fb74dcea67bfc2",
+      "copied_byte_for_byte": true
+    },
+    "android-background.log": {
+      "artifact_path": "qa/release-2.2.4/android-background.log",
+      "bytes": 156740,
+      "sha256": "e819246e201ca518b9125357964e808d76242999745d508abb9ffcdcedfa94f6",
+      "copied_byte_for_byte": true
+    },
+    "android-diagnostics-cleanup.log": {
+      "artifact_path": "qa/release-2.2.4/android-diagnostics-cleanup.log",
+      "bytes": 292,
+      "sha256": "5c84fba17bdb661b49165414bfbe4b18420caf260adebad3ed258614ed054441",
+      "copied_byte_for_byte": true
+    },
+    "android-diagnostics-crash.log": {
+      "artifact_path": "qa/release-2.2.4/android-diagnostics-crash.log",
+      "bytes": 138,
+      "sha256": "0a837c7879b51d3171c0844e96b93f61dff01187afafff6eb92420a338630c30",
+      "copied_byte_for_byte": true
+    },
+    "android-diagnostics-native-crash.log": {
+      "artifact_path": "qa/release-2.2.4/android-diagnostics-native-crash.log",
+      "bytes": 136,
+      "sha256": "2f7a268a511f07fae21cfff9fc91a6ef2c2eaf211a315763bba890b31bc4c6ff",
+      "copied_byte_for_byte": true
+    },
+    "android-diagnostics-verification.json": {
+      "artifact_path": "qa/release-2.2.4/android-diagnostics-verification.json",
+      "bytes": 11689,
+      "sha256": "982ca3690de3fe11adf426f2b16a5a036ad0c7b437e95e278b111cbe258e3042",
+      "copied_byte_for_byte": true
+    },
+    "android-diagnostics-verify.log": {
+      "artifact_path": "qa/release-2.2.4/android-diagnostics-verify.log",
+      "bytes": 2583,
+      "sha256": "fea5834cb80d52fc51d79a1fef371c34dc8dce3b0aed54bc992aadc6645c3eb8",
+      "copied_byte_for_byte": true
+    },
+    "android-last-anr.txt": {
+      "artifact_path": "qa/release-2.2.4/android-last-anr.txt",
+      "bytes": 88,
+      "sha256": "42cf4931006fd0ff42d3522af31f9346431b409aa22a793ecc16b5aedeed28a1",
+      "copied_byte_for_byte": true
+    },
+    "android-memory.txt": {
+      "artifact_path": "qa/release-2.2.4/android-memory.txt",
+      "bytes": 51,
+      "sha256": "49005072af1f51d3d049f6fa1c7df0a53947b42b1e760606f8fb6b8882e8c402",
+      "copied_byte_for_byte": true
+    },
+    "android-power.txt": {
+      "artifact_path": "qa/release-2.2.4/android-power.txt",
+      "bytes": 319895,
+      "sha256": "712c2794b02249b63354f23e7aca01cada3dbf8752eb96c23ebefa931b11de43",
+      "copied_byte_for_byte": true
+    },
+    "android-readiness-native-report.json": {
+      "artifact_path": "qa/release-2.2.4/android-readiness-native-report.json",
+      "bytes": 563,
+      "sha256": "8315f07f6e18cc411dbcb225d82c5407a9fb75f8f258dffcae9127786cb3eeec",
+      "copied_byte_for_byte": true
+    },
+    "android-readiness-native-report.txt": {
+      "artifact_path": "qa/release-2.2.4/android-readiness-native-report.txt",
+      "bytes": 33485,
+      "sha256": "14ad97775ea5e57d455cd16c32165febac39102efb146df90b3d0719c3dc5d5b",
+      "copied_byte_for_byte": true
+    },
+    "android-readiness-observation-harness.json": {
+      "artifact_path": "qa/release-2.2.4/android-readiness-observation-harness.json",
+      "bytes": 1433,
+      "sha256": "8641203f4551fc4625bf9c655fd86a74ab1a5dd4d4dda3314c47faa6544e9134",
+      "copied_byte_for_byte": true
+    },
+    "android-readiness-observation.json": {
+      "artifact_path": "qa/release-2.2.4/android-readiness-observation.json",
+      "bytes": 15584,
+      "sha256": "56940b63fd4c87ab6de009a8975e413a095234db6fed6588d25c9444fc6e5515",
+      "copied_byte_for_byte": true
+    },
+    "diagnostic-input/LightForge-2.2.4.apk.json": {
+      "artifact_path": "diagnostic-input/LightForge-2.2.4.apk.json",
+      "bytes": 460,
+      "sha256": "61bf5b3cf057e70282f5b9fae0278c18597844b3ad8da69eb3c48b3ab299d8d4",
+      "copied_byte_for_byte": true
+    },
+    "diagnostic-input/LightForge-2.2.4.apk.sha256": {
+      "artifact_path": "diagnostic-input/LightForge-2.2.4.apk.sha256",
+      "bytes": 87,
+      "sha256": "7aebd70ac973a0f20f598983af37f3d93866ea5248b22af7a40413acdabb3722",
+      "copied_byte_for_byte": true
+    },
+    "diagnostic-input/input-payloads.json": {
+      "artifact_path": "diagnostic-input/input-payloads.json",
+      "bytes": 75039,
+      "sha256": "c8b7c28d5a48eb3d956d6b8a19e121cf2e7e33d1c2af037a2b0f6e6ceaf5317f",
+      "copied_byte_for_byte": true
+    },
+    "diagnostic-input/patched-payloads.json": {
+      "artifact_path": "diagnostic-input/patched-payloads.json",
+      "bytes": 75081,
+      "sha256": "d7c3c376a5e36a005202a535559971ce73b68631dff2026aa2e883fa57377f9f",
+      "copied_byte_for_byte": true
+    },
+    "diagnostic-input/provenance.json": {
+      "artifact_path": "diagnostic-input/provenance.json",
+      "bytes": 2828,
+      "sha256": "4d750d0bf421d97593b92c64f06223932463bfd7b5bc2d8b3c69328d7389d346",
+      "copied_byte_for_byte": true
+    },
+    "diagnostic-input/reviewed-web-patch.json": {
+      "artifact_path": "diagnostic-input/reviewed-web-patch.json",
+      "bytes": 515,
+      "sha256": "edf75f5e2be8f70f82dfa1eb9f7e2574f308788480d73298a6be607ca9cee701",
+      "copied_byte_for_byte": true
+    },
+    "emulator.log": {
+      "artifact_path": "emulator.log",
+      "bytes": 9007,
+      "sha256": "86da20e5d7891ee95bba35616f85f116afb21336e16b17341719a675437bff72",
+      "copied_byte_for_byte": true
+    }
+  },
+  "locally_generated_metadata": {
+    "artifact-metadata.json": {
+      "source": "GitHub API artifact and job metadata, verified extraction result",
+      "sha256": "f5d4fb37edc75e710c89a841d5af8de75d3deacbcc8522e54589c58be2a78445"
+    }
+  },
+  "full_platform_logs_in_verified_artifact": {
+    "android-diagnostics-logcat.txt": {
+      "artifact_path": "qa/release-2.2.4/android-diagnostics-logcat.txt",
+      "bytes": 12292498,
+      "sha256": "a837cba5f2a1d77f3e3b03c2b870dcb71640b55a87a1f7942e516ba57c4fd8e9"
+    },
+    "android-logcat.txt": {
+      "artifact_path": "qa/release-2.2.4/android-logcat.txt",
+      "bytes": 11365384,
+      "sha256": "fbf1cf6830dd91788b9abad0f89d80bc8edd07753b2cd0ee98e2c0adc76f7ee0"
+    }
+  },
+  "independent_audit": {
+    "unchanged_apk_entries": 124,
+    "exact_pinned_web_replacements": 3,
+    "all_127_payload_contents_equal_corrected_fixture_run_34424613238": true,
+    "all_nonreplacement_entry_metadata_and_compressed_hashes_unchanged": true,
+    "native_report_bytes": 33485,
+    "native_report_sha256": "14ad97775ea5e57d455cd16c32165febac39102efb146df90b3d0719c3dc5d5b",
+    "native_report_reconstructed_from_32768_and_717_byte_chunks": true,
+    "original_failure_matches_all_observations": true,
+    "exact_observer_commit_harness_hashes_verified": true
+  }
+}

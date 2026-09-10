@@ -19,7 +19,7 @@
     "web/cockpit.js": "cba1d693ee592ac9ea0bf028ba362d8247981c1678c25d81737db7a633163afe",
     "web/cockpit.css": "cb776661c5278d6d14302f442005db1a6b26e9baf553e776eab2ca642c0dafdc",
     "web/version.js": "f6a9ac349a4dd7556ae3ef05ebf6e9e410dc4436025bccbd9db164652d4f8d95",
-    "web/app.js": "58e9fa628594ee306ad7a76259294036b9e738f5b6e7506047a241f88c83b7c1",
+    "web/app.js": "2a26794d2203a30a38180696ab6e62619ecac9b14d548aa57e6c53ebe73278b5",
     "web/diagnostics.js": "da1dc3919d2bb7b987af6fe06527b3ff9034ce778a3339a8d4e5c5c903aea8eb",
     "web/diagnostics.css": "c3c91ac9fe69cb15611e68f2ffd61f8b0ee7c2f167837e20cde60b1951577cae",
     "web/index.html": "4a938310c87f1b0fa27f99b452ab01cc1997c6f5c68debaa35882f7448256905",
@@ -33,5 +33,5 @@
     "web/engine/sync-review.js": "eb9591060fffa20e2b12de97c6d344b61e06fc276af75817610d4e17095c61d9"
   },
   "scope": "Desktop Chromium with actual WebGL and web workers; simulated Android bridge. No Android device or Tesla.",
-  "completedAt": "2026-09-09T23:40:26.503Z"
+  "completedAt": "2026-09-10T01:18:46.248Z"
 }
