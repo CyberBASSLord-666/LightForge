@@ -22,6 +22,10 @@
     const commandLead=(id,phase)=>milliseconds(id,'commandLatencyMs',0)+milliseconds(id,phase==='close'?'deactivationLatencyMs':'activationLatencyMs',0);
     const openTravel=id=>milliseconds(id,'openTravelMs',specifications[id].travel);
     const closeTravel=id=>milliseconds(id,'closeTravelMs',specifications[id].closeTravel);
+    const responseTimingEvidence=(id,phase)=>{
+      const evidence=timingFor(id).responseTimingEvidence;
+      return phase==='open'?evidence&&evidence.open===true:phase==='close'?evidence&&evidence.close===true:false;
+    };
     // Preserve each legacy envelope exactly when no calibration is configured.
     // These margins are conservative planner allowances, not measured latencies.
     const openMargin=id=>id==='trunk'?.35:.30;
@@ -31,13 +35,14 @@
     const predictedArrival=(id,phase,start,legacy)=>{
       const row=timingFor(id);
       if(!perceptualTiming.enabled||!row.calibrationConfigured)return legacy;
+      if(!responseTimingEvidence(id,phase))return null;
       const travel=phase==='close'?closeTravel(id):openTravel(id);
       return Number((start+commandLead(id,phase)+travel).toFixed(6));
     };
     const calibratedIntent=(id,phase,intent)=>{
       const row=timingFor(id);
       if(!perceptualTiming.enabled||!row.calibrationConfigured)return intent;
-      return Object.assign({},intent,{perceptualTiming:{schemaVersion:1,calibrationId:perceptualTiming.calibrationId,phase,commandLatencyMs:row.commandLatencyMs,activationLatencyMs:row.activationLatencyMs,deactivationLatencyMs:row.deactivationLatencyMs,openTravelMs:row.openTravelMs,closeTravelMs:row.closeTravelMs,travelEvidence:row.travelEvidence}});
+      return Object.assign({},intent,{perceptualTiming:{schemaVersion:1,calibrationId:perceptualTiming.calibrationId,phase,commandLatencyMs:row.commandLatencyMs,activationLatencyMs:row.activationLatencyMs,deactivationLatencyMs:row.deactivationLatencyMs,openTravelMs:row.openTravelMs,closeTravelMs:row.closeTravelMs,responseTimingEvidence:responseTimingEvidence(id,phase),travelEvidence:row.travelEvidence}});
     };
     const duration=finite(music.duration)?music.duration:0,step=([15,20].includes(settings.stepMs)?settings.stepMs:20)/1000;
     const shift=clamp(finite(settings.offsetMs)?settings.offsetMs:0,-2000,2000)/1000;
@@ -45,7 +50,7 @@
     const end=Math.max(0,Math.floor((duration-.30)/step)*step),expressive=settings.dance!=='balanced',density=clamp(finite(settings.movementDensity)?settings.movementDensity:.7,0,1);
     const events=[],accents=[],targets=[],skipped=[],tracks=new Map();
     const diagnostics={version:VERSION,movementDensity:density,style:expressive?'expressive':'balanced',timingBasis:'Music arrival targets with conservative planning lead time; no command correction is applied without an explicit calibration.',offsetAppliedMs:shift*1000,commandCounts:{},danceSeconds:{},selectedTargets:0,consideredTargets:0,skipped,travelSeconds:{windows:4,mirrors:2,trunkOpen:14,trunkClose:4,charge:2},settlingMarginSeconds:.30,recoverySeconds:expressive?5:8};
-    if(perceptualTiming.enabled)diagnostics.perceptualTiming={schemaVersion:1,calibrationId:perceptualTiming.calibrationId,status:'explicit-user-configuration',outputs:Object.fromEntries(Object.entries(perceptualTiming.outputs).filter(([,row])=>row.calibrationConfigured).map(([id,row])=>[id,{leadAdjusted:row.leadAdjusted,commandLatencyMs:row.commandLatencyMs,activationLatencyMs:row.activationLatencyMs,deactivationLatencyMs:row.deactivationLatencyMs,openTravelMs:row.openTravelMs,closeTravelMs:row.closeTravelMs,travelEvidence:row.travelEvidence}]))};
+    if(perceptualTiming.enabled)diagnostics.perceptualTiming={schemaVersion:1,calibrationId:perceptualTiming.calibrationId,status:'explicit-user-configuration',outputs:Object.fromEntries(Object.entries(perceptualTiming.outputs).filter(([,row])=>row.calibrationConfigured).map(([id,row])=>[id,{leadAdjusted:row.leadAdjusted,responseTimingEvidence:row.responseTimingEvidence,commandLatencyMs:row.commandLatencyMs,activationLatencyMs:row.activationLatencyMs,deactivationLatencyMs:row.deactivationLatencyMs,openTravelMs:row.openTravelMs,closeTravelMs:row.closeTravelMs,travelEvidence:row.travelEvidence}]))};
     // Calibration limits are physical output constraints, not advisory quality
     // warnings.  If a complete automatic gesture cannot meet one, omit that
     // output's automatic gesture rather than export an infeasible partial
