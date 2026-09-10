@@ -46,7 +46,39 @@
     const events=[],accents=[],targets=[],skipped=[],tracks=new Map();
     const diagnostics={version:VERSION,movementDensity:density,style:expressive?'expressive':'balanced',timingBasis:'Music arrival targets with conservative planning lead time; no command correction is applied without an explicit calibration.',offsetAppliedMs:shift*1000,commandCounts:{},danceSeconds:{},selectedTargets:0,consideredTargets:0,skipped,travelSeconds:{windows:4,mirrors:2,trunkOpen:14,trunkClose:4,charge:2},settlingMarginSeconds:.30,recoverySeconds:expressive?5:8};
     if(perceptualTiming.enabled)diagnostics.perceptualTiming={schemaVersion:1,calibrationId:perceptualTiming.calibrationId,status:'explicit-user-configuration',outputs:Object.fromEntries(Object.entries(perceptualTiming.outputs).filter(([,row])=>row.calibrationConfigured).map(([id,row])=>[id,{leadAdjusted:row.leadAdjusted,commandLatencyMs:row.commandLatencyMs,activationLatencyMs:row.activationLatencyMs,deactivationLatencyMs:row.deactivationLatencyMs,openTravelMs:row.openTravelMs,closeTravelMs:row.closeTravelMs,travelEvidence:row.travelEvidence}]))};
-    const result=()=>{events.sort((a,b)=>a.start-b.start||a.channels[0]-b.channels[0]);accents.sort((a,b)=>a.time-b.time);targets.sort((a,b)=>a.time-b.time);for(const [id,track]of tracks){diagnostics.commandCounts[id]=track.length;diagnostics.danceSeconds[id]=Math.round(track.filter(e=>e.command==='Dance').reduce((n,e)=>n+e.end-e.start,0)*1000)/1000;}diagnostics.selectedTargets=targets.length;return{events,accents,targets,diagnostics};};
+    // Calibration limits are physical output constraints, not advisory quality
+    // warnings.  If a complete automatic gesture cannot meet one, omit that
+    // output's automatic gesture rather than export an infeasible partial
+    // command sequence (which could leave a closure in the wrong state).
+    let timingLimitsApplied=false;
+    function enforceTimingLimits(){
+      if(timingLimitsApplied)return;
+      timingLimitsApplied=true;
+      for(const [id,track]of tracks){
+        const row=timingFor(id);
+        if(!row||!row.calibrationConfigured||!track.length)continue;
+        const minimumMs=finite(row.minimumUsefulDurationMs)?row.minimumUsefulDurationMs:null;
+        const repeatMs=finite(row.minimumRepeatIntervalMs)?row.minimumRepeatIntervalMs:null;
+        if(minimumMs===null&&repeatMs===null)continue;
+        const ordered=track.slice().sort((left,right)=>left.start-right.start||left.end-right.end||left.command.localeCompare(right.command));
+        let reason=null;
+        if(minimumMs!==null){
+          const short=ordered.find(event=>(event.end-event.start)*1000+1e-7<minimumMs);
+          if(short)reason='minimum useful duration '+minimumMs+' ms exceeds '+short.command+' run '+Math.round((short.end-short.start)*1000*1000)/1000+' ms';
+        }
+        if(!reason&&repeatMs!==null)for(let index=1;index<ordered.length;index++){
+          const intervalMs=(ordered[index].start-ordered[index-1].start)*1000;
+          if(intervalMs+1e-7<repeatMs){reason='minimum repeat interval '+repeatMs+' ms exceeds available '+Math.round(intervalMs*1000)/1000+' ms';break;}
+        }
+        if(!reason)continue;
+        for(let index=events.length-1;index>=0;index--)if(events[index].outputId===id)events.splice(index,1);
+        for(let index=accents.length-1;index>=0;index--)if(accents[index].outputId===id)accents.splice(index,1);
+        for(let index=targets.length-1;index>=0;index--)if(targets[index].outputId===id)targets.splice(index,1);
+        track.length=0;
+        skipped.push(id+': automatic movement omitted because '+reason+'.');
+      }
+    }
+    const result=()=>{enforceTimingLimits();events.sort((a,b)=>a.start-b.start||a.channels[0]-b.channels[0]);accents.sort((a,b)=>a.time-b.time);targets.sort((a,b)=>a.time-b.time);for(const [id,track]of tracks){diagnostics.commandCounts[id]=track.length;diagnostics.danceSeconds[id]=Math.round(track.filter(e=>e.command==='Dance').reduce((n,e)=>n+e.end-e.start,0)*1000)/1000;}diagnostics.selectedTargets=targets.length;return{events,accents,targets,diagnostics};};
     if(settings.dance==='off'||density===0||music.silent||duration<6){skipped.push(settings.dance==='off'||density===0?'Movement is switched off.':music.silent?'Silent audio has no automatic movement.':'Track is too short for a complete movement and return.');return result();}
     const safeTimes=list=>Array.from(new Set(Array.from(list||[]).filter(t=>finite(t)&&t>=0&&t<duration))).sort((a,b)=>a-b);
     const beats=safeTimes(music.beats),downbeats=safeTimes(music.downbeats);
