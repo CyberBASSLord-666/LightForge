@@ -298,5 +298,9 @@
   "telemetry.js": {
     "bytes": 3053,
     "sha256": "3a957c338803380ddad6a3ebca3a9c8d7f9fb4fe11c5f9d1be907516bf373b98"
+  },
+  "scheduler.js": {
+    "bytes": 5331,
+    "sha256": "7a9b97fd59c18b236090104ffe074945e802a99a239294c566a99148ef6e364e"
   }
 }

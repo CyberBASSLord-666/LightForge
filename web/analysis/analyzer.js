@@ -65,7 +65,20 @@ async function analyze(audioUrl,options={},onProgress=()=>{},signal){
   worker.onmessageerror=()=>end(new Error('The '+stage+' engine returned an unreadable response.'));
   try{worker.postMessage({audioUrl:String(audioUrl),options:runOptions,stage,value});}catch(error){end(error);}
  });}
+ let schedulerLease=null,schedulerDiagnostics=null;
  try{
+  // This admission gate owns no audio/model state. It only prevents two
+  // complete model pipelines from contending for bounded heap/checkpoint IO.
+  const scheduler=scope.LightForgeAnalysisScheduler;
+  if(scheduler&&typeof scheduler.acquire==='function')try{
+   schedulerLease=await scheduler.acquire({key:workId,signal});
+   if(schedulerLease&&typeof schedulerLease.diagnostics==='function')schedulerDiagnostics=schedulerLease.diagnostics();
+  }catch(error){
+   if(error?.name==='AbortError')throw error;
+   // Coordination is optional. A buggy/unsupported Web Locks implementation
+   // must not turn an otherwise valid offline analysis into a failed show.
+   scope.LightForgeDiagnostics?.log('error','analysis-scheduler',error);
+  }
   for(const stage of STAGES){
    try{value=await runStage(stage);}
    catch(error){
@@ -89,7 +102,7 @@ async function analyze(audioUrl,options={},onProgress=()=>{},signal){
   if(signal?.aborted)throw aborted();
   if(!value?.engine)throw Error('Music analysis ended without a complete result.');
   value.engine.analysisSeconds=Math.round((performance.now()-started)/100)/10;
-  value.engine.stages=timings;value.engine.recoverable=persistent;
+  value.engine.stages=timings;value.engine.recoverable=persistent;if(schedulerDiagnostics)value.engine.scheduler=schedulerDiagnostics;
   // Browsers lack a durable source fingerprint. Keep their audition stems, but
   // do not retain an unreachable checkpoint namespace after successful work.
   if(!persistent)await scope.LightForgeAnalysisStore.discard(workId);
@@ -97,6 +110,10 @@ async function analyze(audioUrl,options={},onProgress=()=>{},signal){
  }catch(error){
   if(!persistent)await Promise.allSettled([scope.LightForgeStemCache.discard(cacheKey),scope.LightForgeAnalysisStore.discard(workId)]);
   throw error;
+ }finally{
+  // release waits for the origin-wide Web Lock before admitting a queued job.
+  // Never replace a completed analysis with an optional diagnostics failure.
+  if(schedulerLease&&typeof schedulerLease.release==='function')try{await schedulerLease.release();}catch(error){scope.LightForgeDiagnostics?.log('error','analysis-scheduler',error);}
  }
 }
 scope.MusicAnalyzer={analyze,version:scope.LightForgeVersion.name,engine:'Beat This! transformer · offline'};
