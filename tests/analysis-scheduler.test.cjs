@@ -1,8 +1,9 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const source=fs.readFileSync(path.join(__dirname,'..','web','analysis','scheduler.js'),'utf8'),key=n=>n.toString(16).padStart(64,'0');
-function load({locks}={}){
+function load({locks,configure}={}){
  const context=vm.createContext({AbortController,DOMException,performance,navigator:locks?{locks}:{},setTimeout,clearTimeout});context.self=context;
+ configure?.(context);
  vm.runInContext(source,context);return context.LightForgeAnalysisScheduler;
 }
 test('single-context admission is FIFO and reports bounded, privacy-safe diagnostics',async()=>{
@@ -44,4 +45,21 @@ test('hostile navigator locks probes fall back to the local scheduler',async()=>
  const context=vm.createContext({AbortController,DOMException,performance,navigator,setTimeout,clearTimeout});context.self=context;vm.runInContext(source,context);
  const scheduler=context.LightForgeAnalysisScheduler,lease=await scheduler.acquire({key:key(9)});
  assert.equal(scheduler.snapshot().crossContextMode,'single-context');assert.equal(lease.diagnostics().crossContextMode,'single-context');await lease.release();
+});
+test('hostile scheduler clocks retain admission and never mix a failed performance clock with epoch time',async()=>{
+ const epoch=1789000000000;
+ let getterCalls=0;
+ const lateGetter=load({configure(context){
+  context.Date={now:()=>epoch};context.performance={};Object.defineProperty(context.performance,'now',{get(){getterCalls++;if(getterCalls<=2)return ()=>100;throw Error('late performance getter failure');}});
+ }});
+ const getterLease=await lateGetter.acquire({key:key(10)});assert.equal(getterLease.diagnostics().waitMs,0);await getterLease.release();
+ let functionCalls=0;
+ const lateFunction=load({configure(context){
+  context.Date={now:()=>epoch};context.performance={now(){functionCalls++;if(functionCalls<=2)return 100;throw Error('late performance call failure');}};
+ }});
+ const functionLease=await lateFunction.acquire({key:key(11)});assert.equal(functionLease.diagnostics().waitMs,0);await functionLease.release();
+ const blockedGetter=load({configure(context){
+  context.Date={now:()=>40};context.performance={};Object.defineProperty(context.performance,'now',{get(){throw Error('blocked performance getter');}});
+ }});
+ const fallbackLease=await blockedGetter.acquire({key:key(12)});assert.ok(Number.isFinite(fallbackLease.diagnostics().waitMs));await fallbackLease.release();
 });
