@@ -174,7 +174,10 @@
   const type=typeof value;
   if(type==='string'){tokens.push('string',value);return;}
   if(type==='boolean'){tokens.push('boolean',value?1:0);return;}
-  if(type==='number'){tokens.push('number',finite(value)?round(value):String(value));return;}
+  // Link fingerprints are an exact binding, not a timing quantization layer.
+  // The timeline compiler owns timing precision; a valid sub-microsecond cap
+  // or semantic-value change must still invalidate this receipt.
+  if(type==='number'){tokens.push('number',String(value));return;}
   if(type==='undefined'){tokens.push('undefined');return;}
   if(type==='bigint'){tokens.push('bigint',String(value));return;}
   if(type==='symbol'||type==='function')throw Error('Vocal semantic timeline link received a non-data timeline value.');

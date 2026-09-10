@@ -67,13 +67,15 @@ test('links only exact existing vocal timeline events and fails closed on a chan
  const recapped=structuredClone(timeline);recapped.events.find(value=>value.type==='vocal_accent').salienceCap=.75;
  assert.equal(Timeline.validate(recapped).valid,true,'the cap-only binding fixture must remain a valid semantic timeline');
  assert.notEqual(VocalSemantics.linkTimeline(sidecar,recapped).timelineFingerprint,link.timelineFingerprint,'a cap-only timeline mutation must invalidate the vocal link binding');
+ const finelyRecapped=structuredClone(recapped);finelyRecapped.events.find(value=>value.type==='vocal_accent').salienceCap=.7500004;
+ assert.equal(Timeline.validate(finelyRecapped).valid,true);
+ assert.notEqual(VocalSemantics.linkTimeline(sidecar,finelyRecapped).timelineFingerprint,VocalSemantics.linkTimeline(sidecar,recapped).timelineFingerprint,'valid sub-micro semantic changes must not reuse a timeline receipt');
  const invalid=structuredClone(timeline);invalid.events[0].salience=1.01;
  assert.throws(()=>VocalSemantics.linkTimeline(sidecar,invalid),/invalid timeline/,'links must reject a timeline that the canonical validator rejects');
- const invalidCap=structuredClone(timeline),capEvent=invalidCap.events.find(value=>value.type==='vocal_accent'),canonical=globalThis.LightForgeSemanticTimeline;
+ const invalidCap=structuredClone(timeline),capEvent=invalidCap.events.find(value=>value.type==='vocal_accent');
  capEvent.salienceCap=Math.max(0,capEvent.salience-.01);
- globalThis.LightForgeSemanticTimeline={...canonical,validate(value){const checked=canonical.validate(value);if(!checked.valid)return checked;return value.events.some(event=>event.salienceCap!==undefined&&event.salienceCap<event.salience)?{valid:false,errors:['Invalid event salience cap.']}:checked;}};
- try{assert.throws(()=>VocalSemantics.linkTimeline(sidecar,invalidCap),/Invalid event salience cap/,'cap-aware canonical validation must block an invalid timeline before linking');}
- finally{globalThis.LightForgeSemanticTimeline=canonical;}
+ assert.equal(Timeline.validate(invalidCap).valid,false,'the integrated canonical timeline validator must reject caps below realized salience');
+ assert.throws(()=>VocalSemantics.linkTimeline(sidecar,invalidCap),/Invalid event salience cap/,'cap-aware canonical validation must block an invalid timeline before linking');
  const shifted=structuredClone(timeline);shifted.events.find(value=>value.type==='vocal_accent'&&value.kind==='syllabic-accent').time+=.01;
  assert.throws(()=>VocalSemantics.linkTimeline(sidecar,shifted),/cannot be linked/);
 });
