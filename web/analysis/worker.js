@@ -1,6 +1,6 @@
 /* Private worker: bounded PCM chunks -> exact log-mel -> pretrained Beat This! transformer. */
 'use strict';
-importScripts('telemetry.js','wav-reader.js','dsp.js','bass-notes.js','vocal.js','vocal-detail.js','stem-cache.js','work-store.js','separator-mdx.js','separator-deux.js','game.js','vendor/ort.wasm.min.js');
+importScripts('telemetry.js','semantic-timeline.js','wav-reader.js','dsp.js','bass-notes.js','vocal.js','vocal-detail.js','stem-cache.js','work-store.js','separator-mdx.js','separator-deux.js','game.js','vendor/ort.wasm.min.js');
 const report=(progress,stage,detail='',extra={})=>postMessage({type:'progress',value:{...extra,progress,stage,detail}});
 function createTelemetry(stage,metadata){
  const factory=self.LightForgeAnalysisTelemetry;
@@ -11,6 +11,18 @@ function createTelemetry(stage,metadata){
  // Profiling must never make a resumable analysis fail when a test harness,
  // older WebView cache, or constrained worker cannot load its optional module.
  return {begin:()=>null,end:()=>{},cache:()=>{},snapshot:()=>null};
+}
+function ensureSemanticTimeline(result){
+ const api=self.LightForgeSemanticTimeline;
+ if(!api||typeof api.build!=='function'||typeof api.validate!=='function')throw Error('Semantic timeline module is unavailable.');
+ if(result&&result.semanticTimeline){
+  const existing=api.validate(result.semanticTimeline);
+  if(existing&&existing.valid)return result.semanticTimeline;
+ }
+ const timeline=api.build(result),check=api.validate(timeline);
+ if(!check||!check.valid)throw Error('Semantic timeline validation failed: '+(check?.errors||[]).join('; ').slice(0,512));
+ result.semanticTimeline=timeline;
+ return timeline;
 }
 let nativeSequence=0;const nativeRequests=new Map();
 let nativeMdxSequence=0;const nativeMdxRequests=new Map();
@@ -73,7 +85,19 @@ self.onmessage=async e=>{
  telemetry.end(cacheRead,{hit:!!cached});
  if(cached&&stage==='separation')try{await LightForgeStemCache.files(cached.stemCache);await LightForgeStemCache.fullVoice(cached.stemCache);}catch{cached=null;telemetry.cache(stage,'corrupt');}
  if(stage==='separation'&&!cached){telemetry.cache(stage,'invalidate');await store.invalidate(['separation','voice','game','bass']);}
- if(cached){telemetry.cache(stage,'restore');report(({rhythm:.4,separation:.82,voice:.985,bass:1})[stage],'Restoring saved progress','Completed '+stage+' work restored',{checkpointSaved:true,restoredStage:stage});postMessage({type:'result',value:{...result,...cached},restored:true,seconds:0,profile:telemetry.snapshot({restored:true})});return;}
+ if(cached){
+  telemetry.cache(stage,'restore');
+  const restored={...result,...cached};
+  if(stage==='bass'){
+   const timelinePhase=telemetry.begin('semantic.timeline');
+   const timeline=ensureSemanticTimeline(restored);
+   telemetry.end(timelinePhase,{restored:true,eventCount:timeline.events.length});
+   if(!cached.semanticTimeline)await store.write(stage,restored);
+  }
+  report(({rhythm:.4,separation:.82,voice:.985,bass:1})[stage],'Restoring saved progress','Completed '+stage+' work restored',{checkpointSaved:true,restoredStage:stage});
+  postMessage({type:'result',value:restored,restored:true,seconds:0,profile:telemetry.snapshot({restored:true})});
+  return;
+ }
  telemetry.cache(stage,'miss');
  ort.env.wasm.wasmPaths=new URL('vendor/',self.location.href).href;ort.env.wasm.numThreads=self.crossOriginIsolated&&typeof SharedArrayBuffer==='function'?Math.min(4,Math.max(1,Math.floor((navigator.hardwareConcurrency||2)/2))):1;ort.env.wasm.proxy=false;
  const sessionOptions={executionProviders:['wasm'],graphOptimizationLevel:'all',enableCpuMemArena:false,enableMemPattern:false};
@@ -144,11 +168,14 @@ self.onmessage=async e=>{
  report(.985,'Following bass notes','Listening beneath the separated singing');
  const bass=await LightForgeBass.analyze(stems.accompaniment,config,{onProgress:p=>report(.985+.014*p,'Following bass notes','Distinguishing sustained low notes from brief drum attacks')});
  const {notes,...bassAnalysis}=bass;result.bassNotes=notes;result.bassAnalysis={...bassAnalysis,source:'separated-accompaniment',sourceSeparated:true,limitations:[...(bassAnalysis.limitations||[]),'Bass notes are estimated from combined accompaniment, not an isolated bass instrument.']};
- result.analysisVersion=6;
- result.roleAnalysis={version:3,clock:'Original decoded audio',vocalSource:'Separated vocal waveform with singing and speech evidence',bassSource:'Low-register harmonics in separated accompaniment',sourceSeparated:true,lyricsAligned:false};
+ result.analysisVersion=7;
+ result.roleAnalysis={version:4,clock:'Original decoded audio',vocalSource:'Separated vocal waveform with singing and speech evidence',bassSource:'Low-register harmonics in separated accompaniment',sourceSeparated:true,lyricsAligned:false};
  for(const warning of [...(result.vocals.warnings||[]),...(result.separation.limitations||[])])if(!result.warnings.includes(warning))result.warnings.push(warning);
  result.engine={name:'Beat This! '+(quality==='precision'?'full + Deux':'compact + MDX')+' + GAME Large',neural:true,detail:'Bundled pretrained rhythm transformer, stereo vocal separation, isolated-voice singing and speech classification, GAME Large neural sung-note transcription, measured source expression, and independent accompaniment bass tracking. All audio stays on this device.',model:selected.model,modelId:selected.id,modelSha256:selected.sha256,frontendSha256:models.frontend.sha256,vocalModel:result.vocals.model,noteModel:result.vocals.transcription.model,separationModel:result.separation,bassMethod:result.bassAnalysis.method,quality,runtime:(result.separation.nativeModelPasses>0||result.separation.runtime==='onnxruntime-android-cpu')?'ONNX Runtime Android CPU + ONNX Runtime Web 1.20.1':'ONNX Runtime Web 1.20.1',analysisSeconds:Math.round((performance.now()-started)/100)/10};
- result.recommendedAudio={sampleRate:44100,channels:2,format:'PCM16 WAV'};report(1,'Music understood',`${result.bpm?result.bpm+' BPM':'No pulse detected'} • ${result.sections.length} sections`);
+ const timelinePhase=telemetry.begin('semantic.timeline');
+ const semanticTimeline=ensureSemanticTimeline(result);
+ telemetry.end(timelinePhase,{eventCount:semanticTimeline.events.length,tiers:semanticTimeline.summary.countByTier});
+ result.recommendedAudio={sampleRate:44100,channels:2,format:'PCM16 WAV'};report(1,'Music understood',(result.bpm?result.bpm+' BPM':'No pulse detected')+' • '+result.sections.length+' sections');
 
    await store.write(stage,result);
    report(1,'Music understood','Progress saved',{checkpointSaved:true,analysisStage:stage});
