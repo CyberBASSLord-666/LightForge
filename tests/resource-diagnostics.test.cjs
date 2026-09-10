@@ -29,6 +29,24 @@ function hostileWorkerThreadCount(){
  vm.runInContext(fs.readFileSync(path.join(analysisRoot,'worker.js'),'utf8'),context,{filename:'worker.js'});
  return vm.runInContext('wasmThreadCount()',context);
 }
+async function restoredWorkerMessages({hostilePerformance=false,hostileNow=false,throwingNow=false}={}){
+ const messages=[],cached={duration:1.25,bpm:120,beats:[0,.5,1],sections:[],warnings:[]};
+ const sandbox={
+  importScripts:()=>{},
+  postMessage:value=>messages.push(value),
+  fetch:async()=>({json:async()=>({precision:{},balanced:{}})}),
+  LightForgeAnalysisStore:{open:async()=>({read:async stage=>stage==='rhythm'?cached:null,write:async()=>{},invalidate:async()=>{}})}
+ };
+ sandbox.self=sandbox;
+ const context=vm.createContext(sandbox);
+ if(hostilePerformance)vm.runInContext("Object.defineProperty(self,'performance',{configurable:true,get(){throw Error('hostile-performance-getter')}})",context);
+ else if(hostileNow)vm.runInContext("Object.defineProperty(self,'performance',{configurable:true,value:{}});Object.defineProperty(self.performance,'now',{get(){throw Error('hostile-performance-now-getter')}})",context);
+ else if(throwingNow)vm.runInContext("Object.defineProperty(self,'performance',{configurable:true,value:{now(){throw Error('hostile-performance-now-call')}}})",context);
+ for(const file of ['resource-diagnostics.js','telemetry.js'])vm.runInContext(fs.readFileSync(path.join(analysisRoot,file),'utf8'),context,{filename:file});
+ vm.runInContext(fs.readFileSync(path.join(analysisRoot,'worker.js'),'utf8'),context,{filename:'worker.js'});
+ await vm.runInContext("self.onmessage({data:{audioUrl:'memory://restored.wav',options:{workId:'restored-worker-test',projectId:'test-project'},stage:'rhythm',value:{}}})",context);
+ return {messages,cached};
+}
 
 test('resource diagnostics distinguish unavailable browser metrics from zero observations',()=>{
  const snapshot=Resource.create('rhythm').snapshot();
@@ -88,6 +106,32 @@ test('hostile privacy getters become explicit observed-error evidence without ab
  assert.equal(profile.resources.cpu.reason,'navigator-hardware-concurrency-observed-error');
  let threads;assert.doesNotThrow(()=>{threads=hostileWorkerThreadCount();});
  assert.equal(threads,1);
+});
+
+test('a hostile performance clock cannot abort a restored worker stage or alter its default result path',async()=>{
+ for(const hostile of [{},{hostilePerformance:true},{hostileNow:true},{throwingNow:true}]){
+  const {messages,cached}=await restoredWorkerMessages(hostile),result=messages.find(message=>message.type==='result');
+  assert.ok(result,'worker must return a restored-stage result instead of an error');
+  assert.equal(messages.some(message=>message.type==='error'),false);
+  assert.equal(result.restored,true);
+  assert.equal(result.seconds,0,'restored-stage accounting remains byte-for-byte/default compatible');
+  assert.equal(JSON.stringify(result.value),JSON.stringify(cached),'the worker returns cached analysis fields without choreography/FSEQ mutation');
+  assert.equal(result.profile.attributes.restored,true);
+  assert.equal(result.profile.attributes.workerClockStatus,'fallback');
+  assert.equal(result.profile.attributes.workerClockSource,'date');
+  assert.equal(result.profile.attributes.workerClockMeasured,true);
+  assert.match(result.profile.attributes.workerClockReason,/performance-(clock-unavailable|clock-observed-error|now-observed-error)/);
+  assert.equal(result.profile.resources.jsHeap.status,'unavailable');
+  if(hostile.hostilePerformance){
+   assert.equal(result.profile.resources.jsHeap.reason,'performance-memory-api-observed-error');
+   assert.equal(result.profile.runtime.observations.jsHeap.status,'observed-error');
+  }else{
+   assert.equal(result.profile.resources.jsHeap.reason,'performance-memory-api-unavailable');
+   assert.equal(result.profile.runtime.observations.jsHeap.status,'unavailable');
+  }
+  assert.equal(result.profile.resources.cpu.utilization.status,'unavailable');
+  assert.equal(result.profile.resources.accelerator.utilization.percent,null);
+ }
 });
 
 test('unavailable browser APIs remain explicitly unavailable and cross-realm diagnostics validate safely',()=>{

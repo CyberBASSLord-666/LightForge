@@ -171,6 +171,64 @@ function wasmThreadCount(){
   return Math.min(4,Math.max(1,Math.floor(cores/2)));
  }catch(_){return 1;}
 }
+// Worker startup and restoration must not depend on a privacy wrapper exposing
+// a usable Performance API. Keep this clock local: it is diagnostic evidence,
+// never an input to musical analysis or sequence compilation. A Date fallback
+// is only used when it is selected before the first mark; clocks with different
+// origins are never mixed. If neither clock can sustain a measurement, callers
+// receive a finite zero plus explicit unavailable/observed-error telemetry
+// instead of a fabricated duration.
+function createWorkerClock(){
+ const finite=value=>typeof value==='number'&&Number.isFinite(value);
+ const read=(object,key)=>{try{return {error:false,value:object==null?undefined:object[key]};}catch(_){return {error:true,value:undefined};}};
+ let source=null,last=0,failed=false,performanceIssue=null,failureReason=null;
+ const performanceNow=()=>{
+  const performanceRef=read(self,'performance');
+  if(performanceRef.error)return {ok:false,reason:'performance-clock-observed-error'};
+  if(performanceRef.value===null||performanceRef.value===undefined)return {ok:false,reason:'performance-clock-unavailable'};
+  const nowRef=read(performanceRef.value,'now');
+  if(nowRef.error)return {ok:false,reason:'performance-now-observed-error'};
+  if(typeof nowRef.value!=='function')return {ok:false,reason:'performance-now-unavailable'};
+  try{const value=nowRef.value.call(performanceRef.value);return finite(value)?{ok:true,value}:{ok:false,reason:'performance-now-invalid'};}catch(_){return {ok:false,reason:'performance-now-observed-error'};}
+ };
+ const dateNow=()=>{
+  const dateRef=read(self,'Date');
+  if(dateRef.error)return {ok:false,reason:'date-clock-observed-error'};
+  const nowRef=read(dateRef.value,'now');
+  if(nowRef.error)return {ok:false,reason:'date-clock-observed-error'};
+  if(typeof nowRef.value!=='function')return {ok:false,reason:'date-clock-unavailable'};
+  try{const value=nowRef.value.call(dateRef.value);return finite(value)?{ok:true,value}:{ok:false,reason:'date-clock-invalid'};}catch(_){return {ok:false,reason:'date-clock-observed-error'};}
+ };
+ const observe=(sample,kind)=>{
+  if(!sample.ok){failed=true;failureReason=sample.reason;return last;}
+  if(sample.value<last){failed=true;failureReason=kind+'-clock-nonmonotonic';return last;}
+  last=sample.value;return last;
+ };
+ function now(){
+  if(failed)return last;
+  if(source==='performance')return observe(performanceNow(),'performance');
+  if(source==='date')return observe(dateNow(),'date');
+  const preferred=performanceNow();
+  if(preferred.ok){source='performance';return observe(preferred,'performance');}
+  performanceIssue=preferred.reason;
+  const fallback=dateNow();
+  if(fallback.ok){source='date';return observe(fallback,'date');}
+  failed=true;failureReason=fallback.reason||performanceIssue||'clock-unavailable';return last;
+ }
+ function mark(){return {milliseconds:now(),source};}
+ function elapsed(marked){
+  const end=now(),sameSource=!!marked&&marked.source===source&&source!==null;
+  const measured=!failed&&sameSource;
+  const status=measured?(source==='performance'?'available':'fallback'):(String(failureReason||performanceIssue||'').includes('observed-error')?'observed-error':'unavailable');
+  const reason=measured?(source==='date'?performanceIssue:null):(failureReason||performanceIssue||'clock-unavailable');
+  return {milliseconds:measured?Math.max(0,end-Math.max(0,Number(marked.milliseconds)||0)):0,measured,status,reason,source:source||'synthetic'};
+ }
+ return {mark,elapsed};
+}
+function workerTimingAttributes(timing){
+ return {workerClockStatus:timing.status,workerClockSource:timing.source,workerClockMeasured:timing.measured,workerClockReason:timing.reason||'none'};
+}
+function workerTimingSeconds(timing){return timing.measured?timing.milliseconds/1000:0;}
 self.onmessage=async e=>{
  if(e.data?.type==='native-deux-result'||e.data?.type==='native-deux-progress'){
   const pending=nativeRequests.get(e.data.requestId);if(!pending)return;
@@ -187,7 +245,7 @@ self.onmessage=async e=>{
   else pending.resolve(new Float32Array(e.data.buffer));
   return;
  }
- let session,melSession,separator,game,cacheWriter;const started=performance.now();try{
+ let session,melSession,separator,game,cacheWriter;const workerClock=createWorkerClock(),started=workerClock.mark();try{
  const {audioUrl,options={},stage}=e.data;
  if(!['rhythm','separation','voice','bass'].includes(stage))throw Error('Invalid music analysis stage.');
  const cacheKey=options.cacheKey,quality=options.analysisQuality==='balanced'?'balanced':'precision';
@@ -231,7 +289,11 @@ self.onmessage=async e=>{
    if(vocalSemantics)linkVocalSemantics(restored);
   }
   report(({rhythm:.4,separation:.82,voice:.985,bass:1})[stage],'Restoring saved progress','Completed '+stage+' work restored',{checkpointSaved:true,restoredStage:stage});
-  postMessage({type:'result',value:restored,restored:true,seconds:0,profile:telemetry.snapshot({restored:true})});
+  const restoredTiming=workerClock.elapsed(started);
+  // Restored work remains zero-cost in analyzer stage accounting. The clock
+  // evidence is attached only to diagnostics, so a hostile runtime cannot
+  // alter cache semantics or any downstream FSEQ/default behavior.
+  postMessage({type:'result',value:restored,restored:true,seconds:0,profile:telemetry.snapshot({restored:true,...workerTimingAttributes(restoredTiming)})});
   return;
  }
  telemetry.cache(stage,'miss');
@@ -333,7 +395,8 @@ self.onmessage=async e=>{
  result.analysisVersion=8;
  result.roleAnalysis={version:5,clock:'Original decoded audio',vocalSource:'Separated vocal waveform with singing and speech evidence',bassSource:'Low-register harmonics in a vocal-separated accompaniment mixture; not an isolated bass stem',bassInputStem:'accompaniment',accompanimentStemSeparated:true,bassInstrumentSeparated:false,sourceSeparated:true,lyricsAligned:false};
  for(const warning of [...(result.vocals.warnings||[]),...(result.separation.limitations||[])])if(!result.warnings.includes(warning))result.warnings.push(warning);
- result.engine={name:'Beat This! '+(quality==='precision'?'full + Deux':'compact + MDX')+' + GAME Large',neural:true,detail:'Bundled pretrained rhythm transformer, stereo vocal separation, isolated-voice singing and speech classification, GAME Large neural sung-note transcription, measured source expression, and independent accompaniment bass tracking. All audio stays on this device.',model:selected.model,modelId:selected.id,modelSha256:selected.sha256,frontendSha256:models.frontend.sha256,vocalModel:result.vocals.model,noteModel:result.vocals.transcription.model,separationModel:result.separation,bassMethod:result.bassAnalysis.method,quality,runtime:(result.separation.nativeModelPasses>0||result.separation.runtime==='onnxruntime-android-cpu')?'ONNX Runtime Android CPU + ONNX Runtime Web 1.20.1':'ONNX Runtime Web 1.20.1',analysisSeconds:Math.round((performance.now()-started)/100)/10};
+ const engineTiming=workerClock.elapsed(started);
+ result.engine={name:'Beat This! '+(quality==='precision'?'full + Deux':'compact + MDX')+' + GAME Large',neural:true,detail:'Bundled pretrained rhythm transformer, stereo vocal separation, isolated-voice singing and speech classification, GAME Large neural sung-note transcription, measured source expression, and independent accompaniment bass tracking. All audio stays on this device.',model:selected.model,modelId:selected.id,modelSha256:selected.sha256,frontendSha256:models.frontend.sha256,vocalModel:result.vocals.model,noteModel:result.vocals.transcription.model,separationModel:result.separation,bassMethod:result.bassAnalysis.method,quality,runtime:(result.separation.nativeModelPasses>0||result.separation.runtime==='onnxruntime-android-cpu')?'ONNX Runtime Android CPU + ONNX Runtime Web 1.20.1':'ONNX Runtime Web 1.20.1',analysisSeconds:Math.round(workerTimingSeconds(engineTiming)*10)/10};
  const vocalSemantics=await ensureVocalSemantics(result,options,store,telemetry);
  const stemRoutingPhase=telemetry.begin('stem.routing');
  const stemRouting=ensureStemRouting(result);
@@ -351,7 +414,8 @@ self.onmessage=async e=>{
    report(1,'Music understood','Progress saved',{checkpointSaved:true,analysisStage:stage});
   }
  }
- postMessage({type:'result',value:result,restored:false,seconds:(performance.now()-started)/1000,profile:telemetry.snapshot({restored:false})});
+ const completionTiming=workerClock.elapsed(started);
+ postMessage({type:'result',value:result,restored:false,seconds:workerTimingSeconds(completionTiming),profile:telemetry.snapshot({restored:false,...workerTimingAttributes(completionTiming)})});
  }catch(error){
   if(cacheWriter)try{await cacheWriter.abort();}catch(_){}
   postMessage({type:'error',message:String(error.message||error).slice(0,3072),stack:typeof error.stack==='string'?error.stack.slice(0,8192):undefined});
