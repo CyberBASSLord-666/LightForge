@@ -19,7 +19,8 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[2]
 OUT = 'qa/release-2.2.4/'
 COMPARISON_SHA256 = 'e74c12ca08132182f7cb971a98a6280401fcbfb5220a403e690e276c21c91712'
-ASSET_MANIFEST_SHA256 = 'f47b2bf093ca3f7f41f385f4bae6f6789f442ab99c5da3ad5eb87742d211e412'
+# Reviewed asset inventory pin; tests/test_verify_analysis_asset_binding.py fails early if it drifts.
+ASSET_MANIFEST_SHA256 = 'ae279dfa94f51599dadeb414b5c5e6ba9f9c7bf16250f17215c9ca122a0f1e5d'
 OLD_RUNTIME_SHA256 = 'e0ab4a1af57d2da09097202f2dfd691e390c82e81183314788ccde4cf7c3cc38'
 NEW_RUNTIME_SHA256 = '749793ebed63743fec853d093da7987a86ea5cd592d54fba898cd3233100c381'
 SAMPLES = 573300
