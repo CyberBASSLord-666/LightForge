@@ -29,7 +29,7 @@ function hostileWorkerThreadCount(){
  vm.runInContext(fs.readFileSync(path.join(analysisRoot,'worker.js'),'utf8'),context,{filename:'worker.js'});
  return vm.runInContext('wasmThreadCount()',context);
 }
-async function restoredWorkerMessages({hostilePerformance=false,hostileNow=false,throwingNow=false}={}){
+async function restoredWorkerMessages({hostilePerformance=false,hostileNow=false,throwingNow=false,lateHostileNow=false}={}){
  const messages=[],cached={duration:1.25,bpm:120,beats:[0,.5,1],sections:[],warnings:[]};
  const sandbox={
   importScripts:()=>{},
@@ -42,6 +42,7 @@ async function restoredWorkerMessages({hostilePerformance=false,hostileNow=false
  if(hostilePerformance)vm.runInContext("Object.defineProperty(self,'performance',{configurable:true,get(){throw Error('hostile-performance-getter')}})",context);
  else if(hostileNow)vm.runInContext("Object.defineProperty(self,'performance',{configurable:true,value:{}});Object.defineProperty(self.performance,'now',{get(){throw Error('hostile-performance-now-getter')}})",context);
  else if(throwingNow)vm.runInContext("Object.defineProperty(self,'performance',{configurable:true,value:{now(){throw Error('hostile-performance-now-call')}}})",context);
+ else if(lateHostileNow)vm.runInContext("let clockCalls=0;Object.defineProperty(self,'performance',{configurable:true,value:{now(){if(clockCalls++===0)return 100;throw Error('hostile-performance-now-after-mark')}}})",context);
  for(const file of ['resource-diagnostics.js','telemetry.js'])vm.runInContext(fs.readFileSync(path.join(analysisRoot,file),'utf8'),context,{filename:file});
  vm.runInContext(fs.readFileSync(path.join(analysisRoot,'worker.js'),'utf8'),context,{filename:'worker.js'});
  await vm.runInContext("self.onmessage({data:{audioUrl:'memory://restored.wav',options:{workId:'restored-worker-test',projectId:'test-project'},stage:'rhythm',value:{}}})",context);
@@ -109,7 +110,7 @@ test('hostile privacy getters become explicit observed-error evidence without ab
 });
 
 test('a hostile performance clock cannot abort a restored worker stage or alter its default result path',async()=>{
- for(const hostile of [{},{hostilePerformance:true},{hostileNow:true},{throwingNow:true}]){
+ for(const hostile of [{},{hostilePerformance:true},{hostileNow:true},{throwingNow:true},{lateHostileNow:true}]){
   const {messages,cached}=await restoredWorkerMessages(hostile),result=messages.find(message=>message.type==='result');
   assert.ok(result,'worker must return a restored-stage result instead of an error');
   assert.equal(messages.some(message=>message.type==='error'),false);
@@ -117,10 +118,17 @@ test('a hostile performance clock cannot abort a restored worker stage or alter 
   assert.equal(result.seconds,0,'restored-stage accounting remains byte-for-byte/default compatible');
   assert.equal(JSON.stringify(result.value),JSON.stringify(cached),'the worker returns cached analysis fields without choreography/FSEQ mutation');
   assert.equal(result.profile.attributes.restored,true);
-  assert.equal(result.profile.attributes.workerClockStatus,'fallback');
-  assert.equal(result.profile.attributes.workerClockSource,'date');
-  assert.equal(result.profile.attributes.workerClockMeasured,true);
-  assert.match(result.profile.attributes.workerClockReason,/performance-(clock-unavailable|clock-observed-error|now-observed-error)/);
+  if(hostile.lateHostileNow){
+   assert.equal(result.profile.attributes.workerClockStatus,'observed-error');
+   assert.equal(result.profile.attributes.workerClockSource,'performance');
+   assert.equal(result.profile.attributes.workerClockMeasured,false);
+   assert.equal(result.profile.attributes.workerClockReason,'performance-now-observed-error');
+  }else{
+   assert.equal(result.profile.attributes.workerClockStatus,'fallback');
+   assert.equal(result.profile.attributes.workerClockSource,'date');
+   assert.equal(result.profile.attributes.workerClockMeasured,true);
+   assert.match(result.profile.attributes.workerClockReason,/performance-(clock-unavailable|clock-observed-error|now-observed-error)/);
+  }
   assert.equal(result.profile.resources.jsHeap.status,'unavailable');
   if(hostile.hostilePerformance){
    assert.equal(result.profile.resources.jsHeap.reason,'performance-memory-api-observed-error');
