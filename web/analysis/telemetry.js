@@ -1,13 +1,19 @@
 /* Bounded, privacy-safe timing evidence for offline music analysis. */
 (function(root){'use strict';
- const now=()=>typeof performance!=='undefined'&&typeof performance.now==='function'?performance.now():Date.now();
  const number=x=>typeof x==='number'&&Number.isFinite(x)?x:null;
+ // Browser privacy/runtime probes may be accessor-backed and throw. Diagnostics
+ // are observational only, so an unavailable probe must never fail analysis.
+ const read=(object,key)=>{try{return object==null?undefined:object[key];}catch(_){return undefined;}};
+ function now(){
+  const performanceRef=read(root,'performance'),clock=read(performanceRef,'now');
+  if(typeof clock==='function')try{const value=clock.call(performanceRef);if(number(value)!==null)return value;}catch(_){}
+  try{return Date.now();}catch(_){return 0;}
+ }
  const clampText=x=>String(x||'').replace(/[^a-zA-Z0-9_.:-]/g,'_').slice(0,96);
  function runtime(){
-  const nav=typeof navigator==='undefined'?{}:navigator;
-  const memory=typeof performance!=='undefined'?performance.memory:undefined;
-  return {hardwareConcurrency:number(nav.hardwareConcurrency),deviceMemoryGiB:number(nav.deviceMemory),crossOriginIsolated:!!root.crossOriginIsolated,
-   jsHeapUsedBytes:number(memory?.usedJSHeapSize),jsHeapLimitBytes:number(memory?.jsHeapSizeLimit)};
+  const nav=read(root,'navigator'),performanceRef=read(root,'performance'),memory=read(performanceRef,'memory');
+  return {hardwareConcurrency:number(read(nav,'hardwareConcurrency')),deviceMemoryGiB:number(read(nav,'deviceMemory')),crossOriginIsolated:read(root,'crossOriginIsolated')===true,
+   jsHeapUsedBytes:number(read(memory,'usedJSHeapSize')),jsHeapLimitBytes:number(read(memory,'jsHeapSizeLimit'))};
  }
  function create(stage,extra={}){
   const begun=now(),open=new Map(),spans=[],caches=[],counters={};
