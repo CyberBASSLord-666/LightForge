@@ -1,0 +1,130 @@
+name: Deux preprocessing actual-model evidence
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/deux-preprocess-evidence.yml'
+      - 'web/analysis/separator-deux.js'
+      - 'web/analysis/ASSET_MANIFEST.json'
+      - 'web/analysis/dsp.js'
+      - 'web/analysis/wav-reader.js'
+      - 'web/analysis/vendor/**'
+      - 'web/analysis/models/deux/manifest.json'
+      - 'tools/benchmark_deux_runtime.cjs'
+      - 'tools/compare_deux_preprocess_reuse.cjs'
+      - 'tools/prepare_deux.py'
+      - 'tools/prepare_deux_benchmark_fixture.py'
+      - 'tools/regenerate_analysis_asset_manifest.py'
+      - 'tools/model-requirements.txt'
+      - 'research/upstream/deux/**'
+      - 'qa/release-1.6.0/prepare-musdb-fixtures.py'
+      - 'tests/deux-preprocess-comparison.test.cjs'
+      - 'tests/deux-preprocess-reuse.test.cjs'
+      - 'tests/deux-2.2.1.test.cjs'
+      - 'tests/prepare-deux-benchmark-fixture.test.py'
+      - 'tests/regenerate_analysis_asset_manifest.test.py'
+      - 'docs/DEUX_SEPARATION_PERFORMANCE.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deux-preprocess-evidence-${{ github.event.pull_request.number || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  paired-actual-model:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          sparse-checkout: |
+            .github
+            package.json
+            package-lock.json
+            web/analysis
+            tools
+            tests
+            qa/release-1.6.0
+            research/evaluation-1.6
+            research/upstream/deux
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - name: Verify deterministic preprocessing geometry before model work
+        run: >-
+          node --test
+          tests/deux-preprocess-reuse.test.cjs
+          tests/deux-preprocess-comparison.test.cjs
+          tests/deux-2.2.1.test.cjs
+      - name: Reproduce the exact shipped Deux graph inventory
+        run: |
+          python3 -m pip install --no-cache-dir torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu
+          python3 -m pip install --no-cache-dir -r tools/model-requirements.txt
+          python3 tools/prepare_deux.py
+          python3 tools/regenerate_analysis_asset_manifest.py --check
+      - name: Prepare the licensed multi-passage reference fixture
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
+          mkdir -p qa/release-1.6.0/fixtures
+          curl -fL --retry 3 https://github.com/sigsep/sigsep-mus-db/releases/download/v0.4.0/MUSDB18-7-STEMS.zip -o qa/release-1.6.0/fixtures/MUSDB18-7-STEMS.zip
+          echo '365f66acffc57282e474a4c24b32afec3678258c50b8d45646ac849b0a287df3  qa/release-1.6.0/fixtures/MUSDB18-7-STEMS.zip' | sha256sum -c
+          python3 qa/release-1.6.0/prepare-musdb-fixtures.py
+          python3 tests/prepare-deux-benchmark-fixture.test.py
+          python3 tools/prepare_deux_benchmark_fixture.py \
+            --source qa/release-1.6.0/fixtures/falcon-mix.wav \
+            --source qa/release-1.6.0/fixtures/sdrnr-mix.wav \
+            --source qa/release-1.6.0/fixtures/grunge-mix.wav \
+            --samples 661501 \
+            --output benchmark/deux-multipassage-mix.wav \
+            --provenance benchmark/deux-multipassage-provenance.json
+      - name: Record runner conditions without asserting unavailable telemetry
+        run: |
+          mkdir -p benchmark
+          python3 - <<'PY'
+          import json, os, platform, subprocess
+          def command(*args):
+              return subprocess.check_output(args, text=True).strip()
+          evidence = {
+              'schema': 1,
+              'scope': 'One Ubuntu runner hosts both fresh-process arms. Kernel file-cache, CPU time, accelerator utilization and thermal state are not controlled or inferred by this receipt.',
+              'runner': {
+                  'platform': platform.platform(),
+                  'machine': platform.machine(),
+                  'logical_cpu_count': os.cpu_count(),
+                  'node_version': command('node', '--version'),
+                  'python_version': command('python3', '--version'),
+              },
+              'comparison': {
+                  'same_job': True,
+                  'fresh_process_per_arm': True,
+                  'filesystem_cache_state': 'uncontrolled',
+                  'thermal_state': 'unavailable',
+              },
+          }
+          with open('benchmark/deux-preprocess-runner.json', 'w') as stream:
+              json.dump(evidence, stream, indent=2)
+              stream.write('\n')
+          PY
+      - name: Pair actual model arms and verify exact PCM plus recovery
+        run: >-
+          node tools/compare_deux_preprocess_reuse.cjs
+          --fixture benchmark/deux-multipassage-mix.wav
+          --fixture-provenance benchmark/deux-multipassage-provenance.json
+          --total-samples 661501
+          --threads 4
+          --verify-recovery on
+          --output benchmark/deux-preprocess-paired.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: deux-preprocess-actual-model-${{ github.run_id }}
+          path: benchmark/*.json
+          if-no-files-found: warn
+          retention-days: 30
