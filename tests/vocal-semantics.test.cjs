@@ -6,7 +6,7 @@ const Timeline=require('../web/analysis/semantic-timeline.js');
 
 function fixture(){return {duration:8,vocals:{source:'separated-vocals',sourceSeparated:true,phrases:[
  {start:1,end:2.4,releaseTime:2.4,confidence:.92,strength:.8,peakTime:1.7,kind:'singing',word:'never-copy-this',estimated:true},
- {start:2.55,end:3.4,releaseTime:3.4,confidence:.76,strength:.55,peakTime:2.8,kind:'singing',text:'never-copy-this',estimated:true},
+ {start:2.55,end:3.4,releaseTime:3.25,confidence:.76,strength:.55,peakTime:2.8,kind:'singing',text:'never-copy-this',estimated:true},
  {start:5,end:5.8,releaseTime:5.8,confidence:.81,strength:.7,peakTime:5.3,kind:'speech',estimated:true}
  ],notes:[
  {start:1.05,end:1.65,midi:60,frequency:261.63,confidence:.86,strength:.74,type:'held-note',estimated:true},
@@ -34,6 +34,7 @@ test('builds deterministic non-linguistic region, phrase, pitch and articulation
  assert.equal(first.summary.syllableLikeCount,3);
  const phrase=first.phrases[0];
  assert.equal(phrase.onset,1);assert.equal(phrase.release,2.4);
+ assert.equal(first.phrases[1].release,3.25,'the accepted acoustic release is preserved independently of the analysis span');
  assert.deepEqual({...phrase.pitchTrajectory,confidence:undefined},{source:'existing-note-output',observations:2,startMidi:60,endMidi:64,medianMidi:62,movement:'rising',confidence:undefined});
  assert.ok(phrase.pitchTrajectory.confidence>.85&&phrase.pitchTrajectory.confidence<.851);
  const strong=first.articulations.find(value=>value.time===1.28);
@@ -51,6 +52,8 @@ test('rejects stale, invalid, unseparated and linguistic sidecars',()=>{
  assert.equal(VocalSemantics.validate(invalid,input).valid,false);
  const invalidArticulation=structuredClone(sidecar);invalidArticulation.articulations[0].syllableLike=true;
  assert.equal(VocalSemantics.validate(invalidArticulation,input).valid,false);
+ const invalidRelease=structuredClone(sidecar);invalidRelease.phrases[0].release=3;
+ assert.equal(VocalSemantics.validate(invalidRelease,input).valid,false);
 });
 
 test('links only exact existing vocal timeline events and fails closed on a changed clock',()=>{

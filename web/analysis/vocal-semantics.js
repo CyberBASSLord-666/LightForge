@@ -50,7 +50,8 @@
   const values=[];
   for(const [index,value] of (Array.isArray(vocals.phrases)?vocals.phrases:[]).entries()){
    if(!span(value,duration)||!finite(value.confidence)||!finite(value.strength))continue;
-   values.push({index,start:round(value.start),end:round(value.end),kind:safeKind(value.kind),confidence:round(clamp(value.confidence)),intensity:round(clamp(value.strength)),peakTime:finite(value.peakTime)&&value.peakTime>=value.start&&value.peakTime<=value.end?round(value.peakTime):undefined,estimated:value.estimated!==false});
+   const start=round(value.start),end=round(value.end),release=finite(value.releaseTime)&&value.releaseTime>=value.start&&value.releaseTime<=value.end?round(value.releaseTime):end;
+   values.push({index,start,end,release,kind:safeKind(value.kind),confidence:round(clamp(value.confidence)),intensity:round(clamp(value.strength)),peakTime:finite(value.peakTime)&&value.peakTime>=value.start&&value.peakTime<=value.end?round(value.peakTime):undefined,estimated:value.estimated!==false});
   }
   return sortSpans(values);
  }
@@ -72,7 +73,7 @@
  }
  function sourceFingerprint(input){
   const {duration,vocals}=inputEnvelope(input),values=['vocal-semantics',SCHEMA_VERSION,round(duration),vocals.source===SOURCE?1:0,vocals.sourceSeparated===true?1:0];
-  for(const phrase of sourcePhrases(vocals,duration))values.push('p',phrase.start,phrase.end,phrase.kind,phrase.confidence,phrase.intensity,phrase.peakTime??'',phrase.estimated?1:0);
+  for(const phrase of sourcePhrases(vocals,duration))values.push('p',phrase.start,phrase.end,phrase.release,phrase.kind,phrase.confidence,phrase.intensity,phrase.peakTime??'',phrase.estimated?1:0);
   for(const note of sourceNotes(vocals,duration))values.push('n',note.start,note.end,note.midi,note.frequency??'',note.confidence,note.intensity,note.kind,note.estimated?1:0);
   for(const accent of sourceAccents(vocals,duration))values.push('a',accent.time,accent.kind,accent.confidence,accent.intensity,accent.estimated?1:0);
   const contour=vocals.pitchContour;
@@ -110,17 +111,17 @@
  }
  function build(input){
   const {duration,vocals}=inputEnvelope(input),fingerprint=sourceFingerprint({duration,vocals}),phrases=[];
-  for(const source of sourcePhrases(vocals,duration))phrases.push({id:id('vp',phrases.length),start:source.start,end:source.end,duration:round(source.end-source.start),onset:source.start,release:source.end,kind:source.kind,confidence:source.confidence,intensity:source.intensity,peakTime:source.peakTime,estimated:source.estimated,source:SOURCE,linguistic:false});
+  for(const source of sourcePhrases(vocals,duration))phrases.push({id:id('vp',phrases.length),start:source.start,end:source.end,duration:round(source.end-source.start),onset:source.start,release:source.release,kind:source.kind,confidence:source.confidence,intensity:source.intensity,peakTime:source.peakTime,estimated:source.estimated,source:SOURCE,linguistic:false});
   const regions=[];let region;
   for(const phrase of phrases){
-   if(!region||region.kind!==phrase.kind||phrase.onset-region.release>.28){region={id:id('vr',regions.length),start:phrase.onset,end:phrase.release,onset:phrase.onset,release:phrase.release,kind:phrase.kind,confidence:phrase.confidence,intensity:phrase.intensity,phraseIds:[],estimated:phrase.estimated,source:SOURCE,linguistic:false};regions.push(region);}
-   region.end=phrase.release;region.release=phrase.release;region.confidence=Math.max(region.confidence,phrase.confidence);region.intensity=Math.max(region.intensity,phrase.intensity);region.estimated=region.estimated&&phrase.estimated;region.phraseIds.push(phrase.id);phrase.regionId=region.id;
+   if(!region||region.kind!==phrase.kind||phrase.onset-region.release>.28){region={id:id('vr',regions.length),start:phrase.onset,end:phrase.end,onset:phrase.onset,release:phrase.release,kind:phrase.kind,confidence:phrase.confidence,intensity:phrase.intensity,phraseIds:[],estimated:phrase.estimated,source:SOURCE,linguistic:false};regions.push(region);}
+   region.end=Math.max(region.end,phrase.end);region.release=Math.max(region.release,phrase.release);region.confidence=Math.max(region.confidence,phrase.confidence);region.intensity=Math.max(region.intensity,phrase.intensity);region.estimated=region.estimated&&phrase.estimated;region.phraseIds.push(phrase.id);phrase.regionId=region.id;
   }
   for(const region of regions)region.duration=round(region.end-region.start);
   const notes=[];
   for(const source of sourceNotes(vocals,duration)){
    let selected=null,best=0;
-   for(const phrase of phrases){if(phrase.kind==='speech')continue;const amount=overlap(source,phrase);if(amount>best+1e-9||near(amount,best)&&selected&&phrase.start<selected.start){best=amount;selected=phrase;}}
+   for(const phrase of phrases){if(phrase.kind==='speech')continue;const amount=overlap(source,{start:phrase.onset,end:phrase.release});if(amount>best+1e-9||near(amount,best)&&selected&&phrase.start<selected.start){best=amount;selected=phrase;}}
    if(!selected||best<=0)continue;
    notes.push({id:id('vn',notes.length),phraseId:selected.id,start:source.start,end:source.end,duration:round(source.end-source.start),midi:source.midi,frequency:source.frequency,confidence:source.confidence,intensity:source.intensity,kind:source.kind,estimated:source.estimated,source:SOURCE,pitchSource:'existing-note-output',linguistic:false});
   }
@@ -151,11 +152,11 @@
   if(hasForbidden(sidecar))errors.push('Vocal semantic sidecar contains prohibited linguistic content.');
   const phraseIds=new Set(),regionIds=new Set(),noteIds=new Set(),articulationIds=new Set(),regionsById=new Map();
   for(const region of sidecar?.regions||[]){
-   if(!region||typeof region.id!=='string'||regionIds.has(region.id)||!span(region,sidecar.duration)||!near(region.onset,region.start)||!near(region.release,region.end)||!near(region.duration,region.end-region.start)||!phraseKinds.has(region.kind)||!finite(region.confidence)||region.confidence<0||region.confidence>1||!finite(region.intensity)||region.intensity<0||region.intensity>1||region.source!==SOURCE||region.linguistic!==false||!Array.isArray(region.phraseIds))errors.push('Invalid vocal region.');
+   if(!region||typeof region.id!=='string'||regionIds.has(region.id)||!span(region,sidecar.duration)||!near(region.onset,region.start)||!finite(region.release)||region.release<region.onset||region.release>region.end||!near(region.duration,region.end-region.start)||!phraseKinds.has(region.kind)||!finite(region.confidence)||region.confidence<0||region.confidence>1||!finite(region.intensity)||region.intensity<0||region.intensity>1||region.source!==SOURCE||region.linguistic!==false||!Array.isArray(region.phraseIds))errors.push('Invalid vocal region.');
    regionIds.add(region?.id);regionsById.set(region?.id,region);
   }
   for(const phrase of sidecar?.phrases||[]){
-   if(!phrase||typeof phrase.id!=='string'||phraseIds.has(phrase.id)||!span(phrase,sidecar.duration)||!near(phrase.onset,phrase.start)||!near(phrase.release,phrase.end)||!near(phrase.duration,phrase.end-phrase.start)||!phraseKinds.has(phrase.kind)||!finite(phrase.confidence)||phrase.confidence<0||phrase.confidence>1||!finite(phrase.intensity)||phrase.intensity<0||phrase.intensity>1||phrase.source!==SOURCE||phrase.linguistic!==false||!regionsById.has(phrase.regionId))errors.push('Invalid vocal phrase.');
+   if(!phrase||typeof phrase.id!=='string'||phraseIds.has(phrase.id)||!span(phrase,sidecar.duration)||!near(phrase.onset,phrase.start)||!finite(phrase.release)||phrase.release<phrase.onset||phrase.release>phrase.end||!near(phrase.duration,phrase.end-phrase.start)||!phraseKinds.has(phrase.kind)||!finite(phrase.confidence)||phrase.confidence<0||phrase.confidence>1||!finite(phrase.intensity)||phrase.intensity<0||phrase.intensity>1||phrase.source!==SOURCE||phrase.linguistic!==false||!regionsById.has(phrase.regionId))errors.push('Invalid vocal phrase.');
    if(phrase.pitchTrajectory!==undefined){const value=phrase.pitchTrajectory;if(!value||!['existing-note-output','acoustic-pitch-contour'].includes(value.source)||!Number.isInteger(value.observations)||value.observations<1||!finite(value.startMidi)||!finite(value.endMidi)||!finite(value.medianMidi)||!['rising','falling','stable'].includes(value.movement)||!finite(value.confidence)||value.confidence<0||value.confidence>1)errors.push('Invalid vocal pitch trajectory.');}
    phraseIds.add(phrase?.id);
   }
