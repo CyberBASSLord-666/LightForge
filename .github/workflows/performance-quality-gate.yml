@@ -1,0 +1,56 @@
+name: Performance quality gate
+
+on:
+  pull_request:
+    paths:
+      - 'tools/performance_quality_gate.py'
+      - 'qa/performance-gate-policy.json'
+      - 'tests/performance-quality-gate.test.py'
+      - '.github/workflows/performance-quality-gate.yml'
+  workflow_dispatch:
+    inputs:
+      baseline_artifact:
+        description: Baseline benchmark artifact name
+        required: false
+      candidate_artifact:
+        description: Candidate benchmark artifact name
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python3 tests/performance-quality-gate.test.py
+      - run: python3 -m py_compile tools/performance_quality_gate.py
+
+  compare:
+    if: inputs.baseline_artifact != '' && inputs.candidate_artifact != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.baseline_artifact }}
+          path: gate/baseline
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.candidate_artifact }}
+          path: gate/candidate
+      - run: >-
+          python3 tools/performance_quality_gate.py
+          --baseline gate/baseline/benchmark.json
+          --candidate gate/candidate/benchmark.json
+          --policy qa/performance-gate-policy.json
+          --output gate/quality-gate-report.json
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-quality-gate-report
+          path: gate/quality-gate-report.json
