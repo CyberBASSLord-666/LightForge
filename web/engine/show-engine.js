@@ -225,6 +225,25 @@
       return result;
     }catch(_){return fallback('motif-evolution-resolution-error');}
   }
+  function guardedSemanticStrategy(strategy){
+    // Semantic choreography is optional. Keep its three planner callbacks
+    // behind a small boundary so a malformed extension cannot abort a show or
+    // leave a motif-mutated scene behind after a later callback fault.
+    const guard={faulted:false};
+    if(!strategy||(typeof strategy!=='object'&&typeof strategy!=='function'))return {strategy:null,guard};
+    const wrapped={};
+    try{
+      for(const name of ['prepareTargets','classifyCandidate','filterCandidates']){
+        const method=strategy[name];
+        if(typeof method!=='function')continue;
+        wrapped[name]=function(...args){
+          try{return method.apply(strategy,args);}
+          catch(error){guard.faulted=true;throw error;}
+        };
+      }
+    }catch(_){guard.faulted=true;return {strategy:null,guard};}
+    return {strategy:Object.freeze(wrapped),guard};
+  }
   function normalizeCollisionAllocation(input) {
     if(!input||typeof input!=='object'||Array.isArray(input))throw new Error('Collision allocation must be an object.');
     const allowedTop=new Set(['version','enabled','minimumSalience','maxAllocations','tiers','fallbacks','targets']);
@@ -386,11 +405,14 @@
       return {style:['festival','cinematic','pulse'].includes(o.style)?o.style:s.style,intensity:finite(o.intensity)?clamp(o.intensity,0,1):s.intensity,variant,seed,locked:finite(o.seed),motifGroup:key};
     });
     const semantic=matchingSemanticSalience(music);
-    let semanticStrategy=null;
+    let semanticStrategy=null,semanticGuard=null;
     if(s.semanticChoreography&&semantic&&SEMANTIC_CHOREOGRAPHY&&typeof SEMANTIC_CHOREOGRAPHY.create==='function'){
       // A module defect must not turn optional semantic planning into a
       // compilation failure. The legacy planner remains the safe fallback.
-      try{semanticStrategy=SEMANTIC_CHOREOGRAPHY.create(semantic,{stepMs:s.stepMs});}catch(_){}
+      try{
+        const guarded=guardedSemanticStrategy(SEMANTIC_CHOREOGRAPHY.create(semantic,{stepMs:s.stepMs}));
+        semanticStrategy=guarded.strategy;semanticGuard=guarded.guard;
+      }catch(_){}
     }
     const movement=m.silent?{events:[],accents:[],targets:[],diagnostics:{selectedTargets:0}}:MOVEMENT.plan(m,s,PROFILE);
     // Motifs are a scene-level variation, so establish whether the semantic
@@ -401,18 +423,37 @@
       try{
         const probe=LIGHTS.compose({frameCount:n,stepMs:s.stepMs,sections:baseScenes},m,s,movement,semanticStrategy,{semanticProbe:true});
         semanticStrategyActive=probe?.diagnostics?.semanticStrategy?.active===true;
-      }catch(_){}
+      }catch(_){semanticStrategy=null;}
+      // A strategy without a verified target link has no authority to run
+      // during the actual composition. This also prevents a later callback
+      // from turning an inactive probe into a compilation failure.
+      if(!semanticStrategyActive)semanticStrategy=null;
     }
-    const motifResolution=resolveMotifEvolution(music,m.sections,baseScenes,s,semanticStrategyActive),scenes=motifResolution.scenes;
-    const show={version:VERSION,vehicle:'2025 Tesla Model 3 Long Range RWD',channels:CHANNELS,channelCount:CHANNELS,frameCount:n,stepMs:s.stepMs,duration,audioDuration:m.duration,frames,
-      movements:[],sections:m.sections.map((section,i)=>Object.assign({},section,scenes[i])),settings:s,stats:{},warnings};
-    for(const event of movement.events){
-      const a=clamp(quant(event.start,step),0,n-1),b=clamp(quant(event.end,step),0,n-1);
-      if(b<=a)continue;
-      show.movements.push({...event,start:a*step,end:b*step});
-      for(let f=a;f<b;f++)for(const ch of event.channels)frames[f*200+ch-1]=event.value;
+    let motifResolution=resolveMotifEvolution(music,m.sections,baseScenes,s,semanticStrategyActive),scenes=motifResolution.scenes;
+    const prepareShow=scenePlan=>{
+      frames.fill(0);
+      const value={version:VERSION,vehicle:'2025 Tesla Model 3 Long Range RWD',channels:CHANNELS,channelCount:CHANNELS,frameCount:n,stepMs:s.stepMs,duration,audioDuration:m.duration,frames,
+        movements:[],sections:m.sections.map((section,i)=>Object.assign({},section,scenePlan[i])),settings:s,stats:{},warnings};
+      for(const event of movement.events){
+        const a=clamp(quant(event.start,step),0,n-1),b=clamp(quant(event.end,step),0,n-1);
+        if(b<=a)continue;
+        value.movements.push({...event,start:a*step,end:b*step});
+        for(let f=a;f<b;f++)for(const ch of event.channels)frames[f*200+ch-1]=event.value;
+      }
+      return value;
+    };
+    let show=prepareShow(scenes),lighting;
+    try{lighting=LIGHTS.compose(show,m,s,movement,semanticStrategy);}
+    catch(error){
+      // A callback can still fail after a successful target-only probe (for
+      // example while classifying real candidates). Only a fault that crossed
+      // the semantic guard is retried; unrelated planner errors still surface.
+      if(!semanticStrategy||!semanticGuard?.faulted)throw error;
+      semanticStrategy=null;semanticStrategyActive=false;
+      motifResolution=resolveMotifEvolution(music,m.sections,baseScenes,s,false);scenes=motifResolution.scenes;
+      show=prepareShow(scenes);
+      lighting=LIGHTS.compose(show,m,s,movement,null);
     }
-    const lighting=LIGHTS.compose(show,m,s,movement,semanticStrategy);
     const targetSalience=annotateSalienceTargets(music,lighting.targets,movement.targets,s),syncLightTargets=targetSalience?targetSalience.syncLightTargets:lighting.targets,syncMovementTargets=targetSalience?targetSalience.syncMovementTargets:movement.targets;
     if(!m.silent&&s.enabled.interior)paintInterior(show,m,s,lighting.context);
     applyManualCues(show);

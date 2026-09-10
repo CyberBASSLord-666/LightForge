@@ -46,9 +46,9 @@ function recurrenceAnalysisMarker(sidecar){
   return {schemaVersion:1,enabled:true,cacheDomain:'recurrence',engineVersion:sidecar.engineVersion,sidecarSchemaVersion:sidecar.schemaVersion,
     clock:sidecar.clock,duration:sidecar.duration,timelineFingerprint:sidecar.timelineFingerprint,evidenceFingerprint:sidecar.evidenceFingerprint};
 }
-function withThrowingSemanticStrategy(run){
+function withSemanticStrategy(factory,run){
   const moduleId=require.resolve('../web/engine/show-engine.js'),cached=require.cache[moduleId],prior=globalThis.SemanticChoreography;
-  globalThis.SemanticChoreography={create(){throw Error('simulated semantic strategy module fault');}};
+  globalThis.SemanticChoreography={create:factory};
   delete require.cache[moduleId];
   try{return run(require('../web/engine/show-engine.js'));}
   finally{
@@ -56,6 +56,17 @@ function withThrowingSemanticStrategy(run){
     if(cached)require.cache[moduleId]=cached;
     if(prior===undefined)delete globalThis.SemanticChoreography;else globalThis.SemanticChoreography=prior;
   }
+}
+function withThrowingSemanticStrategy(run){
+  return withSemanticStrategy(()=>{throw Error('simulated semantic strategy module fault');},run);
+}
+function activeStrategy(overrides={}){
+  return {
+    prepareTargets(){return {links:[{id:'test-link'}]};},
+    classifyCandidate(candidate){return candidate;},
+    filterCandidates(candidates){return {candidates:Array.isArray(candidates)?candidates:[],diagnostics:{schemaVersion:1,requested:true,active:true}};},
+    ...overrides
+  };
 }
 
 test('motif evolution requires a valid cap-aware recurrence binding and keeps default FSEQ bytes identical',()=>{
@@ -182,6 +193,43 @@ test('a semantic strategy module fault fails closed to the exact legacy sequence
   assert.equal(faulted.choreography.motifEvolution.reason,'semantic-strategy-inactive');
   assert.deepEqual(faulted.frames,baseline.frames);
   assert.deepEqual(Engine.fseq(faulted,'semantic-fault.wav'),Engine.fseq(baseline,'semantic-fault.wav'));
+});
+
+test('semantic strategy callback faults fail closed and revert motif scenes to the exact legacy sequence',()=>{
+  const music=musicFixture(),{timeline,salience,evidence,sidecar}=buildBoundRecurrence(music);
+  const analysis={...music,semanticTimeline:timeline,musicSalience:salience,recurrenceEvidence:evidence,recurrenceSidecar:sidecar,recurrenceAnalysis:recurrenceAnalysisMarker(sidecar)};
+  const settings={stepMs:20,dance:'off',seed:780,semanticChoreography:true,motifEvolution:true};
+  const baseline=Engine.generate(analysis,{stepMs:20,dance:'off',seed:780});
+  const assertLegacyFallback=(label,factory)=>{
+    const faulted=withSemanticStrategy(factory,FaultedEngine=>FaultedEngine.generate(analysis,settings));
+    assert.equal(faulted.choreography.semanticStrategy.active,false,label+' must deactivate semantic scheduling');
+    assert.equal(faulted.choreography.motifEvolution.active,false,label+' must deactivate motif evolution');
+    assert.equal(faulted.choreography.motifEvolution.reason,'semantic-strategy-inactive',label+' must restore the base scene plan');
+    assert.deepEqual(faulted.frames,baseline.frames,label+' must restore exact legacy frames');
+    assert.deepEqual(Engine.fseq(faulted,'semantic-callback-fault.wav'),Engine.fseq(baseline,'semantic-callback-fault.wav'),
+      label+' must restore exact legacy FSEQ bytes');
+  };
+
+  assertLegacyFallback('prepareTargets fault',()=>activeStrategy({
+    prepareTargets(){throw Error('simulated prepareTargets fault');}
+  }));
+  assertLegacyFallback('late prepareTargets fault',()=>{
+    let calls=0;
+    return activeStrategy({prepareTargets(){
+      if(calls++===0)return {links:[{id:'test-link'}]};
+      throw Error('simulated late prepareTargets fault');
+    }});
+  });
+  assertLegacyFallback('classifyCandidate fault',()=>activeStrategy({
+    classifyCandidate(){throw Error('simulated classifyCandidate fault');}
+  }));
+  assertLegacyFallback('filterCandidates fault',()=>{
+    let calls=0;
+    return activeStrategy({filterCandidates(candidates){
+      if(calls++===0)return {candidates:Array.isArray(candidates)?candidates:[],diagnostics:{schemaVersion:1,requested:true,active:true}};
+      throw Error('simulated filterCandidates fault');
+    }});
+  });
 });
 
 test('cap-aware recurrence fingerprints invalidate stale evidence and sidecars',()=>{
