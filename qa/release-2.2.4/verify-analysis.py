@@ -172,7 +172,7 @@ def verify_profile_equivalence(root, hashes, comparison, mutable):
     }
     require(result.get('baseline') == baseline, 'Profile equivalence baseline differs from approved runtime output')
     require(result.get('result') == {'outputSha256': expected_run['sha256'], 'outputBytes': 2 * SAMPLES * 4,
-                                     'profileRecords': 28, 'graphRecords': 27},
+                                     'profileRecords': 43, 'stageRecords': 15, 'graphRecords': 27},
             'Profiled native output or bounded receipt differs from approved baseline')
     models = json.loads(file(root, 'web/analysis/models/deux/manifest.json').read_text())['files']
     expected_models = {'web/analysis/models/deux/' + name: item['sha256'] for name, item in models.items()}
@@ -446,7 +446,7 @@ def verify_release(root=ROOT):
         'checks': [
             'Pinned host evidence compares actually loaded ONNX Runtime 1.23.2 and 1.25.1 using the originally measured production predictor code, original unquantized models, source audio, and startSample=-66150.',
             'Both runtime runs completed two finite 573300-sample stems and satisfy the predeclared absolute and relative numerical thresholds; exact differences are recorded in the bound comparison.',
-            'When native profile collector sources differ from that immutable comparison, a fresh profile-enabled 13-second run must exactly match the approved 1.25.1 output SHA-256 and emit one summary plus all 27 graph records; otherwise every historical source remains byte-identical.',
+            'When native profile collector sources differ from that immutable comparison, a fresh profile-enabled 13-second run must exactly match the approved 1.25.1 output SHA-256 and emit its bounded host-stage and all 27 graph records; otherwise every historical source remains byte-identical.',
             'All 73 analysis assets match the current reviewed inventory, including all 27 Deux graphs and every GAME graph.',
             'Fresh 2.2.4 source-clock execution preserves all 932143 samples across four overlapping windows, including the final odd sample.',
             'Fresh production NativeMdxTask and bundled CPU WASM compare three fixed inputs with unchanged graph weights and both polarity passes. Strict decoded waveform equivalence is mandatory; internal spectral diagnostics retain any failed coefficient comparisons, with protocol revision history preserved.',

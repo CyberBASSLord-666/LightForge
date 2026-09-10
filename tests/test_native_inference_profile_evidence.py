@@ -28,6 +28,31 @@ class NativeInferenceProfileEvidenceTest(unittest.TestCase):
         self.assertIn('AppDiagnostics.profile(context,snapshot)', passage)
         self.assertIn('public static void profile(Context context, NativeInferenceProfile.Snapshot profile)', diagnostics)
 
+    def test_stage_telemetry_contract_is_bounded_and_marks_missing_metrics(self):
+        profile = (ROOT / 'android/src/com/cyberbasslord/lightforge/NativeInferenceProfile.java').read_text()
+        deux = (ROOT / 'android/src/com/cyberbasslord/lightforge/NativeDeux.java').read_text()
+        diagnostics = (ROOT / 'android/src/com/cyberbasslord/lightforge/AppDiagnostics.java').read_text()
+        for token in [
+            'MAX_STAGE_RECORDS = 16', 'MAX_RECORDS = 1 + MAX_STAGE_RECORDS + MAX_GRAPH_RECORDS',
+            'schema=native-inference-profile-v2', 'schema=native-inference-stage-v1',
+            'cpuTelemetry=', 'memoryTelemetry=', 'acceleratorTelemetry=unavailable',
+            'modelInitWallMs=', 'inferenceWallMs=', 'preprocessWallMs=', 'postprocessWallMs=',
+            'waitWallMs=', 'cacheTelemetry=', 'cacheModelHits=', 'cacheModelMisses=',
+            'directBufferTelemetry=', 'valueOrUnavailable', 'bytesOrUnavailable', 'countOrUnavailable',
+            'noteCacheModelHit', 'noteCacheModelMiss',
+        ]:
+            self.assertIn(token, profile)
+        self.assertIn('if (!Boolean.TRUE.equals(enabled.invoke(bean))) return unavailableCpuClock()', profile)
+        self.assertNotIn('setThreadCpuTimeEnabled', profile)
+        self.assertIn('preflightCache(check,profile)', deux)
+        self.assertIn('profile.noteCacheModelHit(bytes)', deux)
+        self.assertIn('profile.noteCacheModelMiss(bytes)', deux)
+        for stage in ['addGateWait', 'addPreflight', 'addBufferInit', 'addRuntimeInit', 'addRead',
+                      'addEncode', 'addPack', 'addScatter', 'addDecode', 'addWrite', 'addFlush',
+                      'addOutputCommit']:
+            self.assertIn('finally { if(profile!=null)profile.' + stage, deux)
+        self.assertIn('NativeInferenceProfile.MAX_RECORDS', diagnostics)
+
     def fixture(self, root):
         paths = {
             'android/src/com/cyberbasslord/lightforge/NativeDeux.java': 'profile observer only',
@@ -60,7 +85,7 @@ class NativeInferenceProfileEvidenceTest(unittest.TestCase):
             },
             'model_asset_hashes': expected_models,
             'result': {'outputSha256': approved, 'outputBytes': 2 * VERIFY.SAMPLES * 4,
-                       'profileRecords': 28, 'graphRecords': 27},
+                       'profileRecords': 43, 'stageRecords': 15, 'graphRecords': 27},
             'checks': ['models', 'compile', 'exact output', 'bounded receipt'],
             'scope': 'host proof',
         }
@@ -80,7 +105,7 @@ class NativeInferenceProfileEvidenceTest(unittest.TestCase):
             )
             self.assertTrue(result['passed'])
             report = json.loads(report_path.read_text())
-            report['result']['profileRecords'] = 27
+            report['result']['stageRecords'] = 14
             report_path.write_text(json.dumps(report))
             with self.assertRaises(ValueError):
                 VERIFY.verify_profile_equivalence(

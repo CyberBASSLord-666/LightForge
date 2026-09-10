@@ -97,32 +97,34 @@ public final class NativeDeux implements AutoCloseable {
         File partial=null;boolean acquired=false,entered=false;
         try {
             check.check();
-            long gateStarted=profile==null?0L:NativeInferenceProfile.started();
-            while(!INFERENCE_GATE.tryAcquire(250,TimeUnit.MILLISECONDS))check.check();
-            acquired=true;check.check();
-            if(profile!=null)profile.addGateWait(NativeInferenceProfile.elapsed(gateStarted));
+            NativeInferenceProfile.Timing gateStarted=profile==null?null:NativeInferenceProfile.started();
+            try {
+                while(!INFERENCE_GATE.tryAcquire(250,TimeUnit.MILLISECONDS))check.check();
+                acquired=true;check.check();
+            } finally { if(profile!=null)profile.addGateWait(NativeInferenceProfile.elapsed(gateStarted)); }
             if(scope!=null){scope.begin();entered=true;}
             phase("cache-check-start");
             if(audio.getCanonicalFile().equals(output.getCanonicalFile()))throw new IOException("The studio result cannot replace source audio.");
-            long preflightStarted=profile==null?0L:NativeInferenceProfile.started();
-            preflightCache(check);
-            if(profile!=null)profile.addPreflight(NativeInferenceProfile.elapsed(preflightStarted));
-            long buffersStarted=profile==null?0L:NativeInferenceProfile.started();
-            ensureBuffers(profile);
-            if(profile!=null)profile.addBufferInit(NativeInferenceProfile.elapsed(buffersStarted));
+            NativeInferenceProfile.Timing preflightStarted=profile==null?null:NativeInferenceProfile.started();
+            try { preflightCache(check,profile); }
+            finally { if(profile!=null)profile.addPreflight(NativeInferenceProfile.elapsed(preflightStarted)); }
+            NativeInferenceProfile.Timing buffersStarted=profile==null?null:NativeInferenceProfile.started();
+            try { ensureBuffers(profile); }
+            finally { if(profile!=null)profile.addBufferInit(NativeInferenceProfile.elapsed(buffersStarted)); }
             phase("runtime-load-start; version="+RUNTIME_VERSION);
-            long runtimeStarted=profile==null?0L:NativeInferenceProfile.started();
-            synchronized(lifecycle){activeRun=new OrtSession.RunOptions();if(cancelled||closed)activeRun.setTerminate(true);}
-            if(profile!=null)profile.addRuntimeInit(NativeInferenceProfile.elapsed(runtimeStarted));
+            NativeInferenceProfile.Timing runtimeStarted=profile==null?null:NativeInferenceProfile.started();
+            try { synchronized(lifecycle){activeRun=new OrtSession.RunOptions();if(cancelled||closed)activeRun.setTerminate(true);} }
+            finally { if(profile!=null)profile.addRuntimeInit(NativeInferenceProfile.elapsed(runtimeStarted)); }
             phase("runtime-load-complete");
             progress(listener,0,"Reading the studio passage");
-            long readStarted=profile==null?0L:NativeInferenceProfile.started();
-            float[][] passage=NativeDeuxTransform.readStereo(audio,startSample,check);
-            if(profile!=null)profile.addRead(NativeInferenceProfile.elapsed(readStarted));
-            long encodeStarted=profile==null?0L:NativeInferenceProfile.started();
-            transform.encode(passage,spectrum,check);
+            NativeInferenceProfile.Timing readStarted=profile==null?null:NativeInferenceProfile.started();
+            float[][] passage;
+            try { passage=NativeDeuxTransform.readStereo(audio,startSample,check); }
+            finally { if(profile!=null)profile.addRead(NativeInferenceProfile.elapsed(readStarted)); }
+            NativeInferenceProfile.Timing encodeStarted=profile==null?null:NativeInferenceProfile.started();
+            try { transform.encode(passage,spectrum,check); }
+            finally { if(profile!=null)profile.addEncode(NativeInferenceProfile.elapsed(encodeStarted)); }
             passage=null; // Permit the 13-second PCM window to be reclaimed before neural inference.
-            if(profile!=null)profile.addEncode(NativeInferenceProfile.elapsed(encodeStarted));
             phase("passage-encoded");
             OrtEnvironment environment=OrtEnvironment.getEnvironment();
             try(OrtSession session=open(environment,"front",check,profile)) {
@@ -135,15 +137,17 @@ public final class NativeDeux implements AutoCloseable {
                     for(int first=0;first<BANDS;first+=TIME_BATCH) {
                         check.check();int count=Math.min(TIME_BATCH,BANDS-first),size=count*FRAMES*FEATURES;
                         FloatBuffer in=slice(batchInput,0,size),out=slice(batchOutput,0,size);
-                        long packStarted=profile==null?0L:NativeInferenceProfile.started();
-                        for(int b=0;b<count;b++)for(int f=0;f<FRAMES;f++)
-                            copy(values,(f*BANDS+first+b)*FEATURES,in,(b*FRAMES+f)*FEATURES,FEATURES);
-                        if(profile!=null)profile.addPack(blockName(block)+"-time",NativeInferenceProfile.elapsed(packStarted));
+                        NativeInferenceProfile.Timing packStarted=profile==null?null:NativeInferenceProfile.started();
+                        try {
+                            for(int b=0;b<count;b++)for(int f=0;f<FRAMES;f++)
+                                copy(values,(f*BANDS+first+b)*FEATURES,in,(b*FRAMES+f)*FEATURES,FEATURES);
+                        } finally { if(profile!=null)profile.addPack(blockName(block)+"-time",NativeInferenceProfile.elapsed(packStarted)); }
                         run(session,in,new long[]{count,FRAMES,FEATURES},out,new long[]{count,FRAMES,FEATURES},check,profile);
-                        long scatterStarted=profile==null?0L:NativeInferenceProfile.started();
-                        for(int b=0;b<count;b++)for(int f=0;f<FRAMES;f++)
-                            copy(out,(b*FRAMES+f)*FEATURES,values,(f*BANDS+first+b)*FEATURES,FEATURES);
-                        if(profile!=null)profile.addScatter(blockName(block)+"-time",NativeInferenceProfile.elapsed(scatterStarted));
+                        NativeInferenceProfile.Timing scatterStarted=profile==null?null:NativeInferenceProfile.started();
+                        try {
+                            for(int b=0;b<count;b++)for(int f=0;f<FRAMES;f++)
+                                copy(out,(b*FRAMES+f)*FEATURES,values,(f*BANDS+first+b)*FEATURES,FEATURES);
+                        } finally { if(profile!=null)profile.addScatter(blockName(block)+"-time",NativeInferenceProfile.elapsed(scatterStarted)); }
                         progress(listener,(1+stage+.75*(first+count)/BANDS)/15,"Studio temporal detail · layer "+(stage+1)+"/12");
                     }
                 }
@@ -152,9 +156,9 @@ public final class NativeDeux implements AutoCloseable {
                         check.check();int count=Math.min(FREQUENCY_BATCH,FRAMES-first),size=count*BANDS*FEATURES;
                         FloatBuffer in=slice(values,first*BANDS*FEATURES,size),out=slice(batchOutput,0,size);
                         run(session,in,new long[]{count,BANDS,FEATURES},out,new long[]{count,BANDS,FEATURES},check,profile);
-                        long scatterStarted=profile==null?0L:NativeInferenceProfile.started();
-                        copy(out,0,values,first*BANDS*FEATURES,size);
-                        if(profile!=null)profile.addScatter(blockName(block)+"-frequency",NativeInferenceProfile.elapsed(scatterStarted));
+                        NativeInferenceProfile.Timing scatterStarted=profile==null?null:NativeInferenceProfile.started();
+                        try { copy(out,0,values,first*BANDS*FEATURES,size); }
+                        finally { if(profile!=null)profile.addScatter(blockName(block)+"-frequency",NativeInferenceProfile.elapsed(scatterStarted)); }
                         progress(listener,(1+stage+.75+.25*(first+count)/FRAMES)/15,"Studio harmonic detail · layer "+(stage+1)+"/12");
                     }
                 }
@@ -172,29 +176,30 @@ public final class NativeDeux implements AutoCloseable {
                             FloatBuffer in=slice(values,first*BANDS*FEATURES,count*BANDS*FEATURES);
                             FloatBuffer out=slice(batchOutput,0,indices.length*count*2);
                             run(session,in,new long[]{1,count,BANDS,FEATURES},out,new long[]{1,indices.length,count,2},check,profile);
-                            long scatterStarted=profile==null?0L:NativeInferenceProfile.started();
-                            for(int bin=0;bin<indices.length;bin++)copy(out,bin*count*2,mask,(bin*FRAMES+first)*2,count*2);
-                            if(profile!=null)profile.addScatter("head-"+head,NativeInferenceProfile.elapsed(scatterStarted));
+                            NativeInferenceProfile.Timing scatterStarted=profile==null?null:NativeInferenceProfile.started();
+                            try { for(int bin=0;bin<indices.length;bin++)copy(out,bin*count*2,mask,(bin*FRAMES+first)*2,count*2); }
+                            finally { if(profile!=null)profile.addScatter("head-"+head,NativeInferenceProfile.elapsed(scatterStarted)); }
                             progress(listener,(13+head+(first+count)/(double)FRAMES)/15,"Studio "+(head==0?"vocal":"accompaniment")+" reconstruction");
                         }
                     }
-                    long decodeStarted=profile==null?0L:NativeInferenceProfile.started();
-                    float[] pcm=transform.decode(spectrum,mask,indices,bandsPerFrequency,summed,check);
-                    if(profile!=null)profile.addDecode("head-"+head,NativeInferenceProfile.elapsed(decodeStarted));
-                    long writeStarted=profile==null?0L:NativeInferenceProfile.started();
-                    writeFloats(stream,pcm,check);
-                    if(profile!=null)profile.addWrite(NativeInferenceProfile.elapsed(writeStarted));
+                    NativeInferenceProfile.Timing decodeStarted=profile==null?null:NativeInferenceProfile.started();
+                    float[] pcm;
+                    try { pcm=transform.decode(spectrum,mask,indices,bandsPerFrequency,summed,check); }
+                    finally { if(profile!=null)profile.addDecode("head-"+head,NativeInferenceProfile.elapsed(decodeStarted)); }
+                    NativeInferenceProfile.Timing writeStarted=profile==null?null:NativeInferenceProfile.started();
+                    try { writeFloats(stream,pcm,check); }
+                    finally { if(profile!=null)profile.addWrite(NativeInferenceProfile.elapsed(writeStarted)); }
                     progress(listener,(14.0+head)/15,head==0?"Studio vocals recovered":"Studio accompaniment recovered");
                 }
-                long flushStarted=profile==null?0L:NativeInferenceProfile.started();
-                stream.getFD().sync();
-                if(profile!=null)profile.addFlush(NativeInferenceProfile.elapsed(flushStarted));
+                NativeInferenceProfile.Timing flushStarted=profile==null?null:NativeInferenceProfile.started();
+                try { stream.getFD().sync(); }
+                finally { if(profile!=null)profile.addFlush(NativeInferenceProfile.elapsed(flushStarted)); }
             }
             check.check();
             if(partial.length()!=2L*SAMPLES*4)throw new IOException("The studio passage is incomplete.");
-            long commitStarted=profile==null?0L:NativeInferenceProfile.started();
-            Files.move(partial.toPath(),output.toPath(),StandardCopyOption.ATOMIC_MOVE,StandardCopyOption.REPLACE_EXISTING);partial=null;
-            if(profile!=null)profile.addOutputCommit(NativeInferenceProfile.elapsed(commitStarted));
+            NativeInferenceProfile.Timing commitStarted=profile==null?null:NativeInferenceProfile.started();
+            try { Files.move(partial.toPath(),output.toPath(),StandardCopyOption.ATOMIC_MOVE,StandardCopyOption.REPLACE_EXISTING);partial=null; }
+            finally { if(profile!=null)profile.addOutputCommit(NativeInferenceProfile.elapsed(commitStarted)); }
         } finally {
             if(partial!=null)partial.delete();
             try {
@@ -236,12 +241,12 @@ public final class NativeDeux implements AutoCloseable {
     private void clearBuffers(){spectrum=null;values=null;mask=null;summed=null;batchInput=null;batchOutput=null;transform=null;}
 
     private OrtSession open(OrtEnvironment environment,String name,NativeDeuxTransform.Check check,NativeInferenceProfile profile) throws Exception {
-        check.check();long modelStarted=profile==null?0L:NativeInferenceProfile.started();
+        check.check();NativeInferenceProfile.Timing modelStarted=profile==null?null:NativeInferenceProfile.started();
         File model;
         try{model=model(name,check);}finally{if(profile!=null)profile.addModelPrepare(name,NativeInferenceProfile.elapsed(modelStarted));}
         check.check();
         phase("session-create-start; graph="+name);
-        long sessionStarted=profile==null?0L:NativeInferenceProfile.started();boolean recorded=false;
+        NativeInferenceProfile.Timing sessionStarted=profile==null?null:NativeInferenceProfile.started();boolean recorded=false;
         try(OrtSession.SessionOptions options=new OrtSession.SessionOptions()) {
             options.setIntraOpNumThreads(Math.max(1,Math.min(4,Runtime.getRuntime().availableProcessors())));
             options.setInterOpNumThreads(1);
@@ -259,11 +264,11 @@ public final class NativeDeux implements AutoCloseable {
     private void run(OrtSession session,FloatBuffer input,long[] inputShape,FloatBuffer output,long[] outputShape,NativeDeuxTransform.Check check,NativeInferenceProfile profile) throws Exception {
         check.check();
         boolean first=firstGraphRun;if(first)phase("session-run-start; graph="+activeGraph);
-        long bindStarted=profile==null?0L:NativeInferenceProfile.started();boolean bound=false;
+        NativeInferenceProfile.Timing bindStarted=profile==null?null:NativeInferenceProfile.started();boolean bound=false;
         try(OnnxTensor x=OnnxTensor.createTensor(OrtEnvironment.getEnvironment(),input,inputShape);
             OnnxTensor y=OnnxTensor.createTensor(OrtEnvironment.getEnvironment(),output,outputShape)) {
             if(profile!=null){profile.addTensorBind(activeGraph,NativeInferenceProfile.elapsed(bindStarted));bound=true;}
-            long runStarted=profile==null?0L:NativeInferenceProfile.started();
+            NativeInferenceProfile.Timing runStarted=profile==null?null:NativeInferenceProfile.started();
             try(OrtSession.Result result=session.run(Collections.singletonMap("input",x),Collections.emptySet(),Collections.singletonMap("output",y),activeRun)) {
                 if(first){firstGraphRun=false;phase("session-run-complete; graph="+activeGraph);}
                 check.check();
@@ -302,7 +307,7 @@ public final class NativeDeux implements AutoCloseable {
     }
 
     /** Fail before neural work if a first-time extraction cannot finish both heads. */
-    private void preflightCache(NativeDeuxTransform.Check check) throws Exception {
+    private void preflightCache(NativeDeuxTransform.Check check,NativeInferenceProfile profile) throws Exception {
         List<String> names=new ArrayList<>(Arrays.asList("front","head-0","head-1"));
         for(int i=0;i<12;i++){names.add(blockName(i)+"-time");names.add(blockName(i)+"-frequency");}
         long missing=0,largest=0;
@@ -310,9 +315,13 @@ public final class NativeDeux implements AutoCloseable {
             check.check();JSONObject entry=validateEntry(name);String filename=name+".onnx";File file=new File(modelDirectory,filename);
             long bytes=entry.getLong("bytes");boolean intact=false;
             if(file.isFile()&&file.length()==bytes)intact=verified.contains(filename)||entry.getString("sha256").equals(digest(file,check));
-            if(intact)verified.add(filename);
+            if(intact){
+                verified.add(filename);
+                if(profile!=null)profile.noteCacheModelHit(bytes);
+            }
             else {
                 verified.remove(filename);
+                if(profile!=null)profile.noteCacheModelMiss(bytes);
                 if(context==null)throw new IOException("The studio model checksum does not match: "+filename);
                 missing+=bytes;largest=Math.max(largest,bytes);
             }

@@ -68,7 +68,7 @@ final class NativePassageTask implements AutoCloseable {
                 if(closed||cancelled)throw new IOException("Native analysis cancelled.");
                 NativeDeux model=engine;
                 if(model==null){
-                    long engineStarted=NativeInferenceProfile.started();
+                    NativeInferenceProfile.Timing engineStarted=NativeInferenceProfile.started();
                     try{model=new NativeDeux(context);engine=model;}finally{profile.addEngineInit(NativeInferenceProfile.elapsed(engineStarted));}
                 }
                 final String[] lease={null};

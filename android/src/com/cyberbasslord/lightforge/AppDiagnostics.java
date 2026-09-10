@@ -118,14 +118,14 @@ public final class AppDiagnostics {
 
     /**
      * Emits a fixed, privacy-safe native-inference receipt as one queued operation. The profile
-     * owns its schema and bounded graph count; diagnostics never inspect media or model paths.
+     * owns its schema and bounded stage/graph counts; diagnostics never inspect media or model paths.
      */
     public static void profile(Context context, NativeInferenceProfile.Snapshot profile) {
         if (profile == null) return;
         try {
             initialize(context);
             final String[] records = profile.records();
-            if (records.length < 1 || records.length > NativeInferenceProfile.MAX_GRAPH_RECORDS + 1) {
+            if (records.length < 1 || records.length > NativeInferenceProfile.MAX_RECORDS) {
                 writeFailures.incrementAndGet(); return;
             }
             enqueue(() -> {

@@ -76,7 +76,7 @@ try:
     assert 'cancellation checks passed.' in run('NativeDeuxTest')
     receipt['checks'].append('Native Studio transform retains exact source-clock samples and stereo averaging; WAVE padding, malformed input and cancellation regressions passed without neural-model inference.')
     assert 'NativeInferenceProfile:' in run('NativeInferenceProfileTest')
-    receipt['checks'].append('Native inference profiling keeps one immutable summary plus at most 27 graph records, aggregates timings without per-run logs and retains no quoted/private fields.')
+    receipt['checks'].append('Native inference profiling keeps one immutable summary plus bounded stage/graph records, reports available CPU/heap/cache evidence without fabricated accelerator values, avoids per-run logs and retains no quoted/private fields.')
     run('ProjectPreviewTest')
     assert 'PASS:' in run('DiagnosticLogTest', FIXTURES / 'native-diagnostic-fixtures')
     receipt['checks'].append('Persistent diagnostic rotation, bounded messages, concurrency and redaction passed on the host JVM.')

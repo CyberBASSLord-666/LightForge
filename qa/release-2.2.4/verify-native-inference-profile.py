@@ -139,14 +139,14 @@ def main():
             measured = rows[0]
             require(measured == {
                 'outputSha256': baseline['sha256'], 'outputBytes': 2 * SAMPLES_PER_STEM * 4,
-                'profileRecords': 28, 'graphRecords': 27,
+                'profileRecords': 43, 'stageRecords': 15, 'graphRecords': 27,
             }, 'Profile receipt or exact output differs from the approved baseline.')
             evidence['result'] = measured
         evidence['checks'].extend([
             'All 27 reviewed Deux ONNX graph bytes match the current model manifest before inference.',
             'The profile-enabled production predictor compiled with the pinned Android API, org.json dependency and host ONNX Runtime.',
             'The full 13-second passage at startSample=-66150 exactly matches the approved current-runtime SHA-256 output.',
-            'The emitted profile contains one summary plus exactly 27 graph records; no graph was dropped.',
+            'The emitted profile contains one summary, 15 host-observable stages and exactly 27 graph records; no graph was dropped.',
         ])
         evidence['passed'] = True
     except Exception as error:
