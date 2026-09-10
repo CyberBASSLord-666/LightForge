@@ -50,6 +50,7 @@ async function ensureVocalSemantics(result,options,store,telemetry){
  const api=self.LightForgeVocalSemantics;
  if(!api||typeof api.build!=='function'||typeof api.validate!=='function'||typeof api.linkTimeline!=='function')throw Error('Vocal semantic enrichment module is unavailable.');
  if(!result?.vocals||!Number.isFinite(result.duration)||result.duration<=0)throw Error('Vocal semantic enrichment requires completed vocal analysis on the original audio clock.');
+ delete result.vocalSemanticLinks;
  const input={duration:result.duration,vocals:result.vocals},phase=telemetry.begin('vocal.semantics');
  let cached=null;
  try{cached=await store.read('vocal-semantics');}catch(_){telemetry.cache('vocal-semantics','corrupt');}
@@ -278,4 +279,3 @@ self.onmessage=async e=>{
   if(game)try{await game.release();}catch(_){}if(separator)try{await separator.release();}catch(_){}
   if(session)try{await session.release();}catch(_){}if(melSession)try{await melSession.release();}catch(_){}
  }};
-

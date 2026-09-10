@@ -82,6 +82,9 @@ test('worker keeps opt-in sidecars out of the base cache and removes them for de
  await ensureVocalSemantics(input,{vocalSemanticEnrichment:true},store,telemetry);
  assert.ok(input.vocalSemantics);assert.ok(values.has('vocal-semantics'));
  linkVocalSemantics(input);assert.equal(input.vocalSemanticLinks.articulations.length,input.vocalSemantics.articulations.length);
+ await ensureVocalSemantics(input,{vocalSemanticEnrichment:true},store,telemetry);
+ assert.equal('vocalSemanticLinks' in input,false,'a restored sidecar cannot retain a link from another timeline');
+ linkVocalSemantics(input);
  const persisted=persistableAnalysis(input);
  assert.equal('vocalSemantics' in persisted,false);assert.equal('vocalSemanticLinks' in persisted,false);
  await ensureVocalSemantics(input,{},store,telemetry);

@@ -29,7 +29,7 @@ linguistic transcription.
 ## Contract and cache
 
 The sidecar is schema version 1, carries the original decoded-audio clock, and
-has a deterministic `sourceFingerprint` over only its accepted acoustic inputs.
+has a deterministic 64-bit `sourceFingerprint` over only its accepted acoustic inputs.
 `validate(sidecar, {duration, vocals})` rejects stale input, corrupt cache,
 invalid spans, changed schema, and prohibited linguistic fields.
 
@@ -52,4 +52,3 @@ This is acoustic expression metadata, not lyrics alignment. Separation bleed,
 layered voices, distorted vocals, rapid delivery, and unvoiced consonants remain
 ambiguous. The sidecar preserves that uncertainty in confidence and does not
 turn low-confidence sound into a primary choreography event.
-

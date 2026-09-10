@@ -69,7 +69,7 @@ existing notes, pitch trajectory, intensity, and stress confidence.
 An articulation marked `syllableLike` is only a timed acoustic attack from
 `vocalDetail.accents`; it is not a recognised syllable, phoneme, word, or
 lyric. The sidecar deliberately contains no linguistic content. It has an
-exact fingerprint of its source vocal evidence and is discarded/rebuilt when
+deterministic 64-bit source binding for its vocal evidence and is discarded/rebuilt when
 that evidence or its schema changes. It is stored under the independent
 `vocal-semantics` checkpoint, so changing this opt-in feature does not
 invalidate separation, transcription, rhythm, or bass work.
@@ -156,4 +156,3 @@ separator inputs. Component tests using an original stem are labeled separately.
 The six short MUSDB excerpts are not representative or verified held-out data;
 training overlap is possible. Desktop WASM, parity and source-clock sample counts
 do not establish human note accuracy or physical Android/Tesla performance.
-
