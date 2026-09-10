@@ -34,7 +34,7 @@ async function main(){
   assert.deepEqual({...snapshot.runtime},{hardwareConcurrency:null,deviceMemoryGiB:null,crossOriginIsolated:false,jsHeapUsedBytes:null,jsHeapLimitBytes:null},label+' must be represented as unavailable telemetry');
  }
  let calls=0;const late=virtualProfile(context=>{context.performance={};Object.defineProperty(context.performance,'now',{get(){calls++;if(calls<=2)return ()=>calls===1?100:120;throw Error('late clock getter failure');}});context.navigator={};});
- const token=late.begin('late-clock');late.end(token);const lateSnapshot=late.snapshot();
+ const lateToken=late.begin('late-clock');late.end(lateToken);const lateSnapshot=late.snapshot();
  assert.equal(lateSnapshot.totalWallClockMs,0,'a late performance getter failure must not be mixed with Date.now');assert.equal(lateSnapshot.spans[0].durationMs,0);assert.deepEqual({...lateSnapshot.timing},{source:'performance.now',state:'observed-error'});
  let functionCalls=0;const lateFunction=virtualProfile(context=>{context.performance={now(){functionCalls++;if(functionCalls<=2)return functionCalls*100;throw Error('late clock function failure');}};context.navigator={};});
  const functionToken=lateFunction.begin('late-clock-function');lateFunction.end(functionToken);const functionSnapshot=lateFunction.snapshot();
