@@ -35,7 +35,7 @@ test('explicit holds cross section boundaries, mutes remove role gestures, and a
 test('final byte review detects output overrides, missing attacks, and disabled routes',()=>{
  const cue={id:'test',role:'vocals',action:'accent',start:1.137,end:1.437,strength:.8};
  const show=engine.generate(fixture(),{...settings,musicCues:[cue],manualCues:[{id:'mute-left',outputId:'left-signature',start:1,end:2,value:0},{id:'mute-right',outputId:'right-signature',start:1,end:2,value:0}]});
- assert.equal(show.synchronization.manual[0].status,'suppressed');
+ assert.equal(show.synchronization.manual[0].status,'suppressed');assert.equal(show.synchronization.manual[0].realizationStatus,'manualOverride');
  const allOff=Object.fromEntries(engine.getCapabilities().outputs.filter(o=>o.kind==='light').map(o=>[o.id,false]));
  const disabled=engine.generate(fixture(),{...settings,outputEnabled:allOff,musicCues:[cue]});assert.equal(disabled.synchronization.matched,0);assert.ok(disabled.synchronization.selected>0);
  const normal=engine.generate(fixture(),settings),e=normal.lightEvents.find(e=>e.role==='bass');

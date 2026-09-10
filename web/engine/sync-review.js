@@ -100,15 +100,17 @@
         if(state.attack){status='matched';errorMs=(actual*step-expected)*1000;output=event.id;break;}
         if(state.active)status='heldWithoutAttack';
       }
-      if(status==='suppressed')status=frame<0||frame>=show.frameCount-1?'outsideExport':targetLoss(show,byId,target,expected);
-      role.selected++;
-      if(status==='matched'||status==='heldWithoutAttack'||status==='suppressed')role[status]++;
+      const realizationStatus=status==='suppressed'?(frame<0||frame>=show.frameCount-1?'outsideExport':targetLoss(show,byId,target,expected)):status;
+      // Keep the v1 per-role and manual row vocabulary stable.  The new
+      // realizationStatus carries the more precise cause without redefining a
+      // manual override as a successful automatic musical attack.
+      role.selected++;role[status]++;
       if(isHighSalience(target))targetAggregate.highSalienceSelected++;
-      updateAggregate(targetAggregate,status,target);
+      updateAggregate(targetAggregate,realizationStatus,target);
       if(errorMs!==null)lightErrors.push(errorMs);
-      const row={role:target.role,time:target.time,end:number(target.end),kind:target.kind,cueId:target.cueId||null,status,output,errorMs,desiredPerceptualTime:expected};
+      const row={role:target.role,time:target.time,end:number(target.end),kind:target.kind,cueId:target.cueId||null,status,realizationStatus,output,errorMs,desiredPerceptualTime:expected};
       if(target.cueId)manual.push(row);
-      if(status!=='matched'&&issues.length<200)issues.push({...row,reason:status==='outsideExport'?'Outside exportable frames':status==='heldWithoutAttack'?'Output was already active':status==='manualOverride'?'Manual output override':status==='disabled'?'All eligible outputs are disabled':status==='unrouted'?'No eligible output route was recorded':'No eligible final output attack'});
+      if(status!=='matched'&&issues.length<200)issues.push({...row,reason:realizationStatus==='outsideExport'?'Outside exportable frames':realizationStatus==='heldWithoutAttack'?'Output was already active':realizationStatus==='manualOverride'?'Manual output override':realizationStatus==='disabled'?'All eligible outputs are disabled':realizationStatus==='unrouted'?'No eligible output route was recorded':'No eligible final output attack'});
     }
     const mechanical={selected:0,matched:0,suppressed:0,heldWithoutAttack:0,manualOverride:0,disabled:0,unrouted:0,outsideExport:0,collisionLoss:0,highSalienceSelected:0,highSalienceCollisionLoss:0};
     const mechanicalIssues=[],commandErrors=[],perceptualErrors=[],movementSeen=new Set();
