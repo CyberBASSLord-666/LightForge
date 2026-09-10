@@ -1,6 +1,6 @@
 /* Private worker: bounded PCM chunks -> exact log-mel -> pretrained Beat This! transformer. */
 'use strict';
-importScripts('wav-reader.js','dsp.js','bass-notes.js','vocal.js','vocal-detail.js','stem-cache.js','work-store.js','separator-mdx.js','separator-deux.js','game.js','vendor/ort.wasm.min.js');
+importScripts('telemetry.js','wav-reader.js','dsp.js','bass-notes.js','vocal.js','vocal-detail.js','stem-cache.js','work-store.js','separator-mdx.js','separator-deux.js','game.js','vendor/ort.wasm.min.js');
 const report=(progress,stage,detail='',extra={})=>postMessage({type:'progress',value:{...extra,progress,stage,detail}});
 let nativeSequence=0;const nativeRequests=new Map();
 let nativeMdxSequence=0;const nativeMdxRequests=new Map();
@@ -51,12 +51,20 @@ self.onmessage=async e=>{
  const {audioUrl,options={},stage}=e.data;
  if(!['rhythm','separation','voice','bass'].includes(stage))throw Error('Invalid music analysis stage.');
  const cacheKey=options.cacheKey,quality=options.analysisQuality==='balanced'?'balanced':'precision';
+ const telemetry=LightForgeAnalysisTelemetry.create(stage,{quality});
+ const storeOpen=telemetry.begin('store.open');
  const store=await LightForgeAnalysisStore.open(options.workId,{sourceId:options.projectId||''});
+ telemetry.end(storeOpen);
+ const manifestLoad=telemetry.begin('model.manifest');
  const config=await(await fetch('models/features.json')).json(),models=await(await fetch('models/model-manifest.json')).json(),selected=models[quality];
+ telemetry.end(manifestLoad);
+ const cacheRead=telemetry.begin('cache.read');
  let result=e.data.value||{},cached=await store.read(stage);
- if(cached&&stage==='separation')try{await LightForgeStemCache.files(cached.stemCache);await LightForgeStemCache.fullVoice(cached.stemCache);}catch{cached=null;}
- if(stage==='separation'&&!cached)await store.invalidate(['separation','voice','game','bass']);
- if(cached){report(({rhythm:.4,separation:.82,voice:.985,bass:1})[stage],'Restoring saved progress','Completed '+stage+' work restored',{checkpointSaved:true,restoredStage:stage});postMessage({type:'result',value:{...result,...cached},restored:true,seconds:0});return;}
+ telemetry.end(cacheRead,{hit:!!cached});
+ if(cached&&stage==='separation')try{await LightForgeStemCache.files(cached.stemCache);await LightForgeStemCache.fullVoice(cached.stemCache);}catch{cached=null;telemetry.cache(stage,'corrupt');}
+ if(stage==='separation'&&!cached){telemetry.cache(stage,'invalidate');await store.invalidate(['separation','voice','game','bass']);}
+ if(cached){telemetry.cache(stage,'restore');report(({rhythm:.4,separation:.82,voice:.985,bass:1})[stage],'Restoring saved progress','Completed '+stage+' work restored',{checkpointSaved:true,restoredStage:stage});postMessage({type:'result',value:{...result,...cached},restored:true,seconds:0,profile:telemetry.snapshot({restored:true})});return;}
+ telemetry.cache(stage,'miss');
  ort.env.wasm.wasmPaths=new URL('vendor/',self.location.href).href;ort.env.wasm.numThreads=self.crossOriginIsolated&&typeof SharedArrayBuffer==='function'?Math.min(4,Math.max(1,Math.floor((navigator.hardwareConcurrency||2)/2))):1;ort.env.wasm.proxy=false;
  const sessionOptions={executionProviders:['wasm'],graphOptimizationLevel:'all',enableCpuMemArena:false,enableMemPattern:false};
  if(stage==='rhythm'){
@@ -136,7 +144,7 @@ self.onmessage=async e=>{
    report(1,'Music understood','Progress saved',{checkpointSaved:true,analysisStage:stage});
   }
  }
- postMessage({type:'result',value:result,restored:false,seconds:(performance.now()-started)/1000});
+ postMessage({type:'result',value:result,restored:false,seconds:(performance.now()-started)/1000,profile:telemetry.snapshot({restored:false})});
  }catch(error){
   if(cacheWriter)try{await cacheWriter.abort();}catch(_){}
   postMessage({type:'error',message:String(error.message||error).slice(0,3072),stack:typeof error.stack==='string'?error.stack.slice(0,8192):undefined});

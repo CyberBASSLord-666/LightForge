@@ -58,7 +58,7 @@ async function analyze(audioUrl,options={},onProgress=()=>{},signal){
      else worker.postMessage({type:'native-mdx-result',requestId:m.requestId,fallback:true});
     }).catch(error=>{if(!finished){scope.LightForgeDiagnostics?.log(error.name==='AbortError'?'info':'error','analysis',error);nativeMdxActive=false;worker.postMessage({type:'native-mdx-result',requestId:m.requestId,error:error.message||String(error)});}});return;
    }
-   if(m.type==='result'){timings[stage]={seconds:Number.isFinite(m.seconds)?m.seconds:0,restored:!!m.restored};end(null,m.value);}
+   if(m.type==='result'){timings[stage]={seconds:Number.isFinite(m.seconds)?m.seconds:0,restored:!!m.restored,profile:m.profile&&m.profile.schemaVersion===1?m.profile:null};end(null,m.value);}
    else{const error=new Error(m.message||'Music analysis failed during '+stage+'.');if(typeof m.stack==='string')error.stack=m.stack.slice(0,8192);end(error);}
   };
   worker.onerror=e=>end(new Error(e.message||'The '+stage+' engine stopped. Completed passages are saved; reopen and resume.'));
