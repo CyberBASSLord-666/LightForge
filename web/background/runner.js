@@ -38,7 +38,7 @@
      compatibility=true;report(0,message,{stage:'compatibility'});
     }):undefined;
     music=await MusicAnalyzer.analyze(new URL(base+'audio.wav',location.href).href,{
-     projectId,analysisIdentity:request.analysisIdentity,analysisUrl:new URL(base+'analysis.wav',location.href).href,sensitivity:settings.sensitivity,
+     projectId,analysisIdentity:request.analysisIdentity,analysisAudioIdentity:request.analysisAudioIdentity,analysisUrl:new URL(base+'analysis.wav',location.href).href,sensitivity:settings.sensitivity,
      bpmOverride:settings.bpmOverride||undefined,analysisQuality:settings.analysisQuality,
      nativePredict,nativeMdx
     },p=>report(.96*Math.max(0,Math.min(1,Number(p.progress)||0)),(compatibility?'Compatibility · ':'')+(p.detail||p.message||p.stage||'Analyzing music'),p),controller.signal);

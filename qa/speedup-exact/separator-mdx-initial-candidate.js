@@ -8,9 +8,6 @@ const finite=x=>Number.isFinite(x)?x:0;
 // Padding to 8192 would move every spectral bin and invalidate the model.
 class FFT7680{
  constructor(){this.small=new root.LightForgeDSP.FFT(512);this.ar=new Float64Array(NFFT);this.ai=new Float64Array(NFFT);this.r=new Float64Array(512);this.im=new Float64Array(512);this.cos=new Float64Array(NFFT*15);this.sin=new Float64Array(NFFT*15);for(let k=0;k<NFFT;k++)for(let j=0;j<15;j++){const a=2*Math.PI*((k*j)%NFFT)/NFFT;this.cos[k*15+j]=Math.cos(a);this.sin[k*15+j]=Math.sin(a);}}
- // Recombination bins are independent. MDX consumes only the first BINS in
- // its forward spectrum; omit only values the original encoder discarded.
- // Every inverse bin and every multiply/add for consumed bins is unchanged.
  run(real,imag,inverse=false,outputBins=NFFT){const{r,im,ar,ai,small,cos,sin}=this;for(let j=0;j<15;j++){for(let i=0;i<512;i++){r[i]=real[i*15+j];im[i]=imag[i*15+j];}small.run(r,im,inverse);ar.set(r,j*512);ai.set(im,j*512);}for(let k=0;k<outputBins;k++){let re=0,ii=0;const f=k%512,w=k*15;for(let j=0;j<15;j++){const index=j*512+f,c=cos[w+j],s=sin[w+j]*(inverse?1:-1);re+=ar[index]*c-ai[index]*s;ii+=ar[index]*s+ai[index]*c;}real[k]=inverse?re/15:re;imag[k]=inverse?ii/15:ii;}}
 }
 class Frontend{

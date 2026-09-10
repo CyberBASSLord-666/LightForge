@@ -185,3 +185,32 @@ test('worker reserves passage storage before opening model output writers and sk
   const count=quality==='precision'?573300:constants.INPUT_LENGTH;assert.ok(plan.passages.every(p=>p.counts.length===(quality==='precision'?2:1)&&p.counts.every(n=>n===count)));
  }
 });
+
+test('rhythm edits reuse byte-bound role model work while audio, quality, runtime and release remain isolated',async()=>{
+ const h=analyzerHarness(),options={analysisIdentity:key,analysisAudioIdentity:other,analysisQuality:'precision',projectId:'song'};
+ const run=async extra=>{const start=h.workers.length;await h.analyze('/song.wav',{...options,...extra});return h.workers.slice(start).map(w=>w.request.options);};
+ const original=await run({}),sensitivity=await run({analysisIdentity:'c'.repeat(64),sensitivity:.61}),tempo=await run({analysisIdentity:'d'.repeat(64),bpmOverride:123});
+ for(const variant of [sensitivity,tempo]){
+  assert.notEqual(variant[0].workId,original[0].workId,'Updated rhythm interpretation was restored');
+  for(let stage=1;stage<4;stage++){assert.equal(variant[stage].workId,original[stage].workId);assert.equal(variant[stage].cacheKey,original[stage].cacheKey);}
+ }
+ for(const extra of [{analysisAudioIdentity:'e'.repeat(64)},{analysisQuality:'balanced'},{nativePredict:async()=>({url:'unused'})}]){
+  const changed=await run(extra);for(let stage=1;stage<4;stage++)assert.notEqual(changed[stage].workId,original[stage].workId);
+ }
+ h.context.LightForgeVersion.name='new-release';const upgraded=await run({});assert.notEqual(upgraded[1].workId,original[1].workId);
+ assert.deepEqual(h.discarded,[]);
+});
+test('restored bass evidence preserves the current rhythm and rebuilds final metadata without stale warnings',async()=>{
+ const actual=require('../qa/release-2.2.4/actual-analysis-falcon.json');
+ const current=structuredClone(actual);current.bpm=123;current.beats=[.125,.613,1.101];current.sections=[{start:0,end:current.duration,label:'new rhythm'}];current.warnings=['current rhythm warning'];
+ delete current.bassNotes;delete current.bassAnalysis;delete current.engine;
+ const cached={...structuredClone(actual),bpm:77,beats:[0],warnings:['stale rhythm warning']};
+ const messages=[],context=vm.createContext({console,URL,Float32Array,ArrayBuffer,DataView,performance,Map,Number,setTimeout,navigator:{},importScripts(){},postMessage:m=>messages.push(m),LightForgeAnalysisStore:{open:async()=>({read:async()=>cached})},fetch:async url=>({json:async()=>String(url).endsWith('features.json')?{}:{precision:{model:'unchanged-model',id:'same-model',sha256:'model-sha'},frontend:{sha256:'frontend-sha'}}})});
+ context.self=context;context.location={href:'https://app.test/analysis/worker.js'};vm.runInContext(source('worker.js'),context);
+ await context.onmessage({data:{stage:'bass',audioUrl:'/song.wav',value:current,options:{workId:key,analysisQuality:'precision'}}});
+ const result=messages.at(-1);assert.equal(result.type,'result');assert.equal(result.restored,true);
+ assert.equal(result.value.bpm,123);assert.deepEqual(result.value.beats,current.beats);assert.deepEqual(result.value.sections,current.sections);
+ assert.deepEqual(result.value.bassNotes,actual.bassNotes);assert.deepEqual(result.value.bassAnalysis,actual.bassAnalysis);
+ assert.ok(result.value.warnings.includes('current rhythm warning'));assert.ok(!result.value.warnings.includes('stale rhythm warning'));
+ assert.equal(result.value.engine.modelId,'same-model');assert.equal(result.value.engine.separationModel,result.value.separation);
+});

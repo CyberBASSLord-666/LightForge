@@ -11,7 +11,12 @@ async function analyze(audioUrl,options={},onProgress=()=>{},signal){
  const execution=[hasNative?'native-deux-v1':null,hasMdx?'native-mdx-v1':null].filter(Boolean).join('+')||'wasm-v1';
  const binding={pipeline:'bounded-analysis-v2',release:scope.LightForgeVersion.name,identity,quality:options.analysisQuality==='balanced'?'balanced':'precision',sensitivity:options.sensitivity??.82,bpmOverride:options.bpmOverride??null,execution};
  const workId=await scope.LightForgeAnalysisStore.hash(new TextEncoder().encode(JSON.stringify(binding)));
- const id=workId.slice(0,32),cacheKey='stem-'+[id.slice(0,8),id.slice(8,12),id.slice(12,16),id.slice(16,20),id.slice(20)].join('-');
+ // Rhythm settings change rhythm interpretation only. Reuse the exact separated
+ // waveforms and role inference under a separately verified audio/model identity.
+ // A caller without the native byte fingerprint retains the original isolation.
+ const sharedRoles=persistent&&/^[a-f0-9]{64}$/.test(options.analysisAudioIdentity||'');
+ const roleWorkId=sharedRoles?await scope.LightForgeAnalysisStore.hash(new TextEncoder().encode(JSON.stringify({pipeline:'bounded-roles-v1',release:scope.LightForgeVersion.name,identity:options.analysisAudioIdentity,quality:binding.quality,execution}))):workId;
+ const id=roleWorkId.slice(0,32),cacheKey='stem-'+[id.slice(0,8),id.slice(8,12),id.slice(12,16),id.slice(16,20),id.slice(20)].join('-');
  const runOptions={...serializableOptions,cacheKey,workId,supportsNativeDeux:hasNative,supportsNativeMdx:hasMdx},timings={},started=performance.now();let value={},progress=0;
  function runStage(stage){return new Promise((resolve,reject)=>{
   if(signal?.aborted){reject(aborted());return;}
@@ -63,7 +68,7 @@ async function analyze(audioUrl,options={},onProgress=()=>{},signal){
   };
   worker.onerror=e=>end(new Error(e.message||'The '+stage+' engine stopped. Completed passages are saved; reopen and resume.'));
   worker.onmessageerror=()=>end(new Error('The '+stage+' engine returned an unreadable response.'));
-  try{worker.postMessage({audioUrl:String(audioUrl),options:runOptions,stage,value});}catch(error){end(error);}
+  try{worker.postMessage({audioUrl:String(audioUrl),options:{...runOptions,workId:stage==='rhythm'?workId:roleWorkId},stage,value});}catch(error){end(error);}
  });}
  try{
   for(const stage of STAGES){

@@ -1,0 +1,73 @@
+{
+  "passed": true,
+  "scope": "Exact real/stress-input frontend comparison. Local alternating warm CPU timings; excludes inference and bridge and is not a phone benchmark.",
+  "sources": {
+    "baseline": "accc7aead92f045da9faf7a08019af757c73042850dd2fccc0e923f7d20043a1",
+    "candidate": "dda76df165503fb469f3dcf23fbcc83e982cb79602478c607ffb0ab2a57a0085",
+    "dsp": "32186b9268632cab85cadcb7e84fa1b4e3d8eb4bb9fbdf96a0873067cb9acd71",
+    "probe": "9e524a75ab9493fd97f4282b65043a74ef63dce1d823602b250313f8ccf69d44"
+  },
+  "cases": [
+    {
+      "fixture": "web/demo/glass-castle.wav",
+      "start": -3840,
+      "sourceSHA256": "33f07d502ba19832b62b97d8fb4a11354e81310264bd885d7a06438228773650",
+      "spectrumSHA256": "efd55c5d30599db2195a61c83735ff91aee4505ac7c51a0391c0cb41a91b7c95",
+      "spectrumValues": 3145728,
+      "pcmSHA256": "2bf2f567c5355e37dde8430cce89fffdc948faa2d22dcdc525aab7cccb053573",
+      "pcmSamples": 261120,
+      "exact": true
+    },
+    {
+      "fixture": "web/demo/glass-castle.wav",
+      "start": 878160,
+      "sourceSHA256": "33f07d502ba19832b62b97d8fb4a11354e81310264bd885d7a06438228773650",
+      "spectrumSHA256": "a1b729dd752e4c34655f7d6555c6326185d768854aa56953d7ba704469b06c40",
+      "spectrumValues": 3145728,
+      "pcmSHA256": "62a2206d10fcb98a832029f7d6faf2f8a5da155cd109d3ed64ab4add08abfd89",
+      "pcmSamples": 261120,
+      "exact": true
+    },
+    {
+      "fixture": "qa/release-1.6.0/fixtures/falcon-mix.wav",
+      "start": -3840,
+      "sourceSHA256": "effbbe3e3c0df821bf3cfa6535360b18339ded8041992373b41f8344998dba99",
+      "spectrumSHA256": "7d940d0ff698e18e25de3913554b26d599beea3d44427461959d7da710729824",
+      "spectrumValues": 3145728,
+      "pcmSHA256": "888bec54a96a1dd00ad9c7ef7840a50d53d76a33be09b0761a326f21bccff590",
+      "pcmSamples": 261120,
+      "exact": true
+    },
+    {
+      "fixture": "seeded full-band stereo and edge floats",
+      "spectrumSHA256": "140868ace3f508b9e77a75c652f130d9617900179b04b30bcd70a758e78c7095",
+      "spectrumValues": 3145728,
+      "pcmSHA256": "4cfe2e879d56375fece6b23baf6d97f05571327c9bdc8c88066ff5c4b99b9c05",
+      "pcmSamples": 261120,
+      "exact": true
+    }
+  ],
+  "timings": {
+    "baseline": [
+      387.834959,
+      384.8428980000001,
+      504.38728699999956,
+      373.35324200000014,
+      366.771925,
+      363.65421100000003
+    ],
+    "candidate": [
+      204.680926,
+      215.5883090000002,
+      226.0076570000001,
+      215.44625700000051,
+      206.4129329999996,
+      206.7109989999999
+    ]
+  },
+  "medianMilliseconds": {
+    "baseline": 384.8428980000001,
+    "candidate": 215.44625700000051
+  },
+  "speedup": 1.7862593825429012
+}

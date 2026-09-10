@@ -44,8 +44,8 @@ final class AnalysisJobStore {
             try{validateCheckpoint(request.optJSONObject("music"),meta.getDouble("duration"));}
             catch(Exception incomplete){request.put("needAnalysis",true);}
         }
-        String sourceHash=hash(source),analysisIdentity=analysisIdentity(dir,projectId,request);
-        request.put("analysisIdentity",analysisIdentity);
+        String sourceHash=hash(source),audioIdentity=analysisAudioIdentity(dir,projectId),analysisIdentity=analysisIdentity(audioIdentity,request);
+        request.put("analysisIdentity",analysisIdentity).put("analysisAudioIdentity",audioIdentity);
         // Names, save timestamps and choreography edits do not invalidate audio analysis.
         // The separate source hash still protects the final project commit from conflicts.
         JSONObject old=status(files);
@@ -75,13 +75,21 @@ final class AnalysisJobStore {
         if(reuse)job.put("checkpointSHA256",old.getString("checkpointSHA256"));
         persist(files,job);return job;
     }
+    static String analysisAudioIdentity(File dir,String projectId)throws Exception {
+        File analysis=new File(dir,"analysis.wav");
+        return identityHash("bounded-audio-v1|"+projectId+"|"+hash(new File(dir,"audio.wav"))+"|"+(analysis.isFile()?hash(analysis):""));
+    }
     static String analysisIdentity(File dir,String projectId,JSONObject request)throws Exception {
+        return analysisIdentity(analysisAudioIdentity(dir,projectId),request);
+    }
+    private static String analysisIdentity(String audioIdentity,JSONObject request)throws Exception {
         JSONObject settings=request.optJSONObject("settings");if(settings==null)settings=new JSONObject();
         String quality="balanced".equals(settings.optString("analysisQuality"))?"balanced":"precision";
         double sensitivity=settings.optDouble("sensitivity",.82),bpm=settings.optDouble("bpmOverride",0);
         if(!Double.isFinite(sensitivity)||!Double.isFinite(bpm))throw new IOException("Invalid analysis settings.");
-        File analysis=new File(dir,"analysis.wav");
-        String input="bounded-analysis-v2|"+request.optString("analysisAppVersion")+"|"+projectId+"|"+hash(new File(dir,"audio.wav"))+"|"+(analysis.isFile()?hash(analysis):"")+"|"+quality+"|"+sensitivity+"|"+bpm;
+        return identityHash("bounded-analysis-v3|"+request.optString("analysisAppVersion")+"|"+audioIdentity+"|"+quality+"|"+sensitivity+"|"+bpm);
+    }
+    private static String identityHash(String input)throws Exception {
         MessageDigest digest=MessageDigest.getInstance("SHA-256");
         byte[] bytes=digest.digest(input.getBytes(StandardCharsets.UTF_8));
         StringBuilder out=new StringBuilder();for(byte b:bytes)out.append(String.format(java.util.Locale.ROOT,"%02x",b&255));return out.toString();

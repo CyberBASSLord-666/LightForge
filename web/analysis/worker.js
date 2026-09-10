@@ -31,6 +31,15 @@ async function melForFrames(reader,session,first,frames,config){
  const tensor=new ort.Tensor('float32',pcm,[1,pcm.length]);let output;
  try{output=await session.run({audio_pcm:tensor});const mel=output.mel_spectrogram;return new Float32Array(mel.data.subarray(halo*128,(halo+frames)*128));}finally{if(output)dispose(output);tensor.dispose();}
 }
+function completeAnalysis(result,quality,selected,models,started){
+ result.analysisVersion=6;
+ result.roleAnalysis={version:3,clock:'Original decoded audio',vocalSource:'Separated vocal waveform with singing and speech evidence',bassSource:'Low-register harmonics in separated accompaniment',sourceSeparated:true,lyricsAligned:false};
+ for(const warning of [...(result.vocals.warnings||[]),...(result.separation.limitations||[])])if(!result.warnings.includes(warning))result.warnings.push(warning);
+ result.engine={name:'Beat This! '+(quality==='precision'?'full + Deux':'compact + MDX')+' + GAME Large',neural:true,detail:'Bundled pretrained rhythm transformer, stereo vocal separation, isolated-voice singing and speech classification, GAME Large neural sung-note transcription, measured source expression, and independent accompaniment bass tracking. All audio stays on this device.',model:selected.model,modelId:selected.id,modelSha256:selected.sha256,frontendSha256:models.frontend.sha256,vocalModel:result.vocals.model,noteModel:result.vocals.transcription.model,separationModel:result.separation,bassMethod:result.bassAnalysis.method,quality,runtime:(result.separation.nativeModelPasses>0||result.separation.runtime==='onnxruntime-android-cpu')?'ONNX Runtime Android CPU + ONNX Runtime Web 1.20.1':'ONNX Runtime Web 1.20.1',analysisSeconds:Math.round((performance.now()-started)/100)/10};
+ result.recommendedAudio={sampleRate:44100,channels:2,format:'PCM16 WAV'};
+
+ return result;
+}
 self.onmessage=async e=>{
  if(e.data?.type==='native-deux-result'||e.data?.type==='native-deux-progress'){
   const pending=nativeRequests.get(e.data.requestId);if(!pending)return;
@@ -56,7 +65,13 @@ self.onmessage=async e=>{
  let result=e.data.value||{},cached=await store.read(stage);
  if(cached&&stage==='separation')try{await LightForgeStemCache.files(cached.stemCache);await LightForgeStemCache.fullVoice(cached.stemCache);}catch{cached=null;}
  if(stage==='separation'&&!cached)await store.invalidate(['separation','voice','game','bass']);
- if(cached){report(({rhythm:.4,separation:.82,voice:.985,bass:1})[stage],'Restoring saved progress','Completed '+stage+' work restored',{checkpointSaved:true,restoredStage:stage});postMessage({type:'result',value:{...result,...cached},restored:true,seconds:0});return;}
+ if(cached){
+  // A bass checkpoint carries role evidence only; never overwrite the rhythm
+  // result from this request with another sensitivity/BPM interpretation.
+  if(stage==='bass')result=completeAnalysis({...result,bassNotes:cached.bassNotes,bassAnalysis:cached.bassAnalysis},quality,selected,models,started);
+  else result={...result,...cached};
+  report(({rhythm:.4,separation:.82,voice:.985,bass:1})[stage],'Restoring saved progress','Completed '+stage+' work restored',{checkpointSaved:true,restoredStage:stage});postMessage({type:'result',value:result,restored:true,seconds:0});return;
+ }
  ort.env.wasm.wasmPaths=new URL('vendor/',self.location.href).href;ort.env.wasm.numThreads=self.crossOriginIsolated&&typeof SharedArrayBuffer==='function'?Math.min(4,Math.max(1,Math.floor((navigator.hardwareConcurrency||2)/2))):1;ort.env.wasm.proxy=false;
  const sessionOptions={executionProviders:['wasm'],graphOptimizationLevel:'all',enableCpuMemArena:false,enableMemPattern:false};
  if(stage==='rhythm'){
@@ -126,13 +141,9 @@ self.onmessage=async e=>{
  report(.985,'Following bass notes','Listening beneath the separated singing');
  const bass=await LightForgeBass.analyze(stems.accompaniment,config,{onProgress:p=>report(.985+.014*p,'Following bass notes','Distinguishing sustained low notes from brief drum attacks')});
  const {notes,...bassAnalysis}=bass;result.bassNotes=notes;result.bassAnalysis={...bassAnalysis,source:'separated-accompaniment',sourceSeparated:true,limitations:[...(bassAnalysis.limitations||[]),'Bass notes are estimated from combined accompaniment, not an isolated bass instrument.']};
- result.analysisVersion=6;
- result.roleAnalysis={version:3,clock:'Original decoded audio',vocalSource:'Separated vocal waveform with singing and speech evidence',bassSource:'Low-register harmonics in separated accompaniment',sourceSeparated:true,lyricsAligned:false};
- for(const warning of [...(result.vocals.warnings||[]),...(result.separation.limitations||[])])if(!result.warnings.includes(warning))result.warnings.push(warning);
- result.engine={name:'Beat This! '+(quality==='precision'?'full + Deux':'compact + MDX')+' + GAME Large',neural:true,detail:'Bundled pretrained rhythm transformer, stereo vocal separation, isolated-voice singing and speech classification, GAME Large neural sung-note transcription, measured source expression, and independent accompaniment bass tracking. All audio stays on this device.',model:selected.model,modelId:selected.id,modelSha256:selected.sha256,frontendSha256:models.frontend.sha256,vocalModel:result.vocals.model,noteModel:result.vocals.transcription.model,separationModel:result.separation,bassMethod:result.bassAnalysis.method,quality,runtime:(result.separation.nativeModelPasses>0||result.separation.runtime==='onnxruntime-android-cpu')?'ONNX Runtime Android CPU + ONNX Runtime Web 1.20.1':'ONNX Runtime Web 1.20.1',analysisSeconds:Math.round((performance.now()-started)/100)/10};
- result.recommendedAudio={sampleRate:44100,channels:2,format:'PCM16 WAV'};report(1,'Music understood',`${result.bpm?result.bpm+' BPM':'No pulse detected'} • ${result.sections.length} sections`);
-
-   await store.write(stage,result);
+ completeAnalysis(result,quality,selected,models,started);
+ report(1,'Music understood',`${result.bpm?result.bpm+' BPM':'No pulse detected'} • ${result.sections.length} sections`);
+   await store.write(stage,{bassNotes:result.bassNotes,bassAnalysis:result.bassAnalysis});
    report(1,'Music understood','Progress saved',{checkpointSaved:true,analysisStage:stage});
   }
  }

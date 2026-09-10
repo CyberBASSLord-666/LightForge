@@ -91,6 +91,7 @@ public final class AnalysisJobStoreTest {
         JSONObject retryBase=read(saved).put("needAnalysis",true);
         ProjectStore.save(projects,projectId,retryBase);
         JSONObject identityJob=AnalysisJobStore.prepare(files,projectId,"2.2.1");String identity=identityJob.getString("analysisIdentity");
+        String audioIdentity=AnalysisJobStore.request(files,identityJob.getString("id")).getString("analysisAudioIdentity");
         AnalysisJobStore.checkpoint(files,identityJob.getString("id"),music.toString());AnalysisJobStore.finish(files,identityJob.getString("id"),"failed","Interrupted");
         JSONObject settings=read(saved).optJSONObject("settings");if(settings==null)settings=new JSONObject();
         settings.put("style","cinematic").put("vocalFocus",.99);
@@ -101,6 +102,7 @@ public final class AnalysisJobStoreTest {
         settings.put("sensitivity",.61);ProjectStore.save(projects,projectId,read(saved).put("settings",settings));
         JSONObject changed=AnalysisJobStore.prepare(files,projectId,"2.2.1");
         check(!changed.getBoolean("hasCheckpoint")&&!identity.equals(changed.getString("analysisIdentity")),"Analysis setting change reused stale work");
+        check(audioIdentity.equals(AnalysisJobStore.request(files,changed.getString("id")).getString("analysisAudioIdentity")),"Rhythm sensitivity discarded unchanged audio model identity");
         AnalysisJobStore.checkpoint(files,changed.getString("id"),music.toString());AnalysisJobStore.finish(files,changed.getString("id"),"failed","Interrupted");
         JSONObject upgraded=AnalysisJobStore.prepare(files,projectId,"2.2.2");
         check(!upgraded.getBoolean("hasCheckpoint"),"App upgrade reused old completed analysis");
@@ -129,6 +131,7 @@ public final class AnalysisJobStoreTest {
         try(RandomAccessFile edit=new RandomAccessFile(originalAudio,"rw")){edit.seek(edit.length()-1);int sample=edit.read();edit.seek(edit.length()-1);edit.write(sample^1);}
         JSONObject audioChanged=AnalysisJobStore.prepare(files,projectId,"2.2.2");
         check(!beforeAudio.equals(audioChanged.getString("analysisIdentity")),"Changed audio reused prior passage identity");
+        check(!audioIdentity.equals(AnalysisJobStore.request(files,audioChanged.getString("id")).getString("analysisAudioIdentity")),"Changed audio reused role-model identity");
         AnalysisJobStore.finish(files,audioChanged.getString("id"),"cancelled","Finished tests");
         System.out.println("PASS: job ownership, monotonic progress, checkpoint reuse, cancellation, conflict preservation, durable completion, damaged checkpoint recovery, version/audio/settings identity, structured progress and crash recovery");
     }
