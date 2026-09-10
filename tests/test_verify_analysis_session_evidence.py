@@ -1,11 +1,13 @@
-"""Fail-closed session binding tests for regenerated MDX/downstream evidence."""
+"""Fail-closed session binding tests for regenerated release evidence."""
 from hashlib import sha256
 from importlib.util import module_from_spec, spec_from_file_location
 import json
+import os
 from pathlib import Path
+import subprocess
+import tempfile
 from unittest import TestCase, main
 from unittest.mock import patch
-import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = spec_from_file_location('lightforge_verify_analysis_session', ROOT / 'qa/release-2.2.4/verify-analysis.py')
@@ -30,6 +32,26 @@ class EvidenceSessionBindingTest(TestCase):
             receipt.update({'evidenceSessionSchema': schema, 'evidenceSession': session})
         path.write_text(json.dumps(receipt))
         return path
+
+    def write_fresh_receipt(self, root, name='fresh.json', session=SESSION, passed=True, errors=None):
+        source_relative = 'web/source.js'
+        source = root / source_relative
+        source.parent.mkdir(parents=True, exist_ok=True)
+        source.write_text('const verifiedSource = true;\n')
+        receipt_path = root / 'qa' / name
+        receipt_path.parent.mkdir(parents=True, exist_ok=True)
+        receipt = {
+            'release': '2.2.4',
+            'passed': passed,
+            'errors': [] if errors is None else errors,
+            'completedAt': '2026-09-10T00:00:00Z',
+            'source_hashes': {source_relative: digest(source)},
+        }
+        if session is not None:
+            receipt.update({'evidenceSessionSchema': VERIFY.EVIDENCE_SESSION_SCHEMA,
+                            'evidenceSession': session})
+        receipt_path.write_text(json.dumps(receipt))
+        return receipt_path, source
 
     def test_no_session_requires_the_immutable_pin_and_rejects_session_bound_receipts(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -63,6 +85,72 @@ class EvidenceSessionBindingTest(TestCase):
             self.write_receipt(root, 'downstream.json')
             with self.assertRaisesRegex(ValueError, 'stale, absent'):
                 VERIFY.bind_session_receipt(root, 'qa/downstream.json', '0' * 64, {}, SESSION, 'Downstream')
+
+    def test_fresh_receipts_fail_closed_for_replay_missing_mismatch_changed_source_and_failure(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            receipt, source = self.write_fresh_receipt(root)
+            hashes = {}
+            result = VERIFY.verify_fresh_receipt(root, 'qa/fresh.json', hashes, SESSION,
+                                                 'Browser', {'web/source.js'})
+            self.assertTrue(result['passed'])
+            self.assertEqual(hashes['qa/fresh.json'], digest(receipt))
+            self.assertEqual(hashes['web/source.js'], digest(source))
+
+            self.write_fresh_receipt(root, session=OTHER_SESSION)
+            with self.assertRaisesRegex(ValueError, 'different evidence session'):
+                VERIFY.verify_fresh_receipt(root, 'qa/fresh.json', {}, SESSION,
+                                             'Browser', {'web/source.js'})
+
+            self.write_fresh_receipt(root, session=None)
+            with self.assertRaisesRegex(ValueError, 'stale, absent'):
+                VERIFY.verify_fresh_receipt(root, 'qa/fresh.json', {}, SESSION,
+                                             'Browser', {'web/source.js'})
+
+            self.write_fresh_receipt(root, passed=False)
+            with self.assertRaisesRegex(ValueError, 'did not pass cleanly'):
+                VERIFY.verify_fresh_receipt(root, 'qa/fresh.json', {}, SESSION,
+                                             'Browser', {'web/source.js'})
+
+            self.write_fresh_receipt(root, errors=['producer failed'])
+            with self.assertRaisesRegex(ValueError, 'did not pass cleanly'):
+                VERIFY.verify_fresh_receipt(root, 'qa/fresh.json', {}, SESSION,
+                                             'Browser', {'web/source.js'})
+
+            self.write_fresh_receipt(root)
+            source.write_text('replayed source bytes\n')
+            with self.assertRaisesRegex(ValueError, 'Source differs from measured evidence'):
+                VERIFY.verify_fresh_receipt(root, 'qa/fresh.json', {}, SESSION,
+                                             'Browser', {'web/source.js'})
+
+    def test_source_clock_accepts_historical_no_session_and_requires_exact_session_when_present(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source_hashes = {}
+            for relative in VERIFY.CLOCK_SOURCES:
+                source = root / relative
+                source.parent.mkdir(parents=True, exist_ok=True)
+                source.write_text(relative + '\n')
+                source_hashes[relative] = digest(source)
+            receipt_path = root / VERIFY.OUT / 'source-clock-verification.json'
+            receipt_path.parent.mkdir(parents=True, exist_ok=True)
+            receipt = {
+                'release': '2.2.4', 'passed': True, 'errors': [], 'source_hashes': source_hashes,
+                'samples': 932143, 'chunks': 4, 'maxAbsError': 0.0,
+                'contiguousSourceSamples': True, 'monotonicProgress': True,
+                'completedAt': '2026-09-10T00:00:00Z',
+            }
+            receipt_path.write_text(json.dumps(receipt))
+            self.assertEqual(VERIFY.verify_clock(root, {}, None)['samples'], 932143)
+
+            receipt.update({'evidenceSessionSchema': VERIFY.EVIDENCE_SESSION_SCHEMA,
+                            'evidenceSession': SESSION})
+            receipt_path.write_text(json.dumps(receipt))
+            with self.assertRaisesRegex(ValueError, 'session-bound source-clock'):
+                VERIFY.verify_clock(root, {}, None)
+            hashes = {}
+            self.assertEqual(VERIFY.verify_clock(root, hashes, SESSION)['chunks'], 4)
+            self.assertEqual(hashes[VERIFY.OUT + 'source-clock-verification.json'], digest(receipt_path))
 
     def test_mixed_receipt_nonces_cannot_form_one_evidence_set(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -99,7 +187,33 @@ class EvidenceSessionBindingTest(TestCase):
                 with self.assertRaisesRegex(ValueError, 'Invalid LIGHTFORGE_EVIDENCE_SESSION'):
                     VERIFY.current_evidence_session()
 
-    def test_producers_publish_failure_receipts_atomically_and_downstream_binds_upstream(self):
+    def test_new_producers_overwrite_a_stale_pass_before_invalid_setup(self):
+        producers = {
+            'qa/release-2.2.4/test-source-clock.cjs': 'source-clock-verification.json',
+            'qa/release-2.2.4/browser.cjs': 'browser-verification.json',
+            'qa/release-2.2.4/analysis-browser.cjs': 'analysis-browser-verification.json',
+        }
+        environment = {**os.environ, 'LIGHTFORGE_EVIDENCE_SESSION': 'invalid session'}
+        for relative, name in producers.items():
+            output = ROOT / VERIFY.OUT / name
+            original = output.read_bytes() if output.exists() else None
+            try:
+                output.write_text(json.dumps({'passed': True, 'errors': []}))
+                completed = subprocess.run(['node', relative], cwd=ROOT, env=environment,
+                                           text=True, capture_output=True, check=False)
+                self.assertNotEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+                receipt = json.loads(output.read_text())
+                self.assertIs(receipt['passed'], False)
+                self.assertTrue(receipt['errors'])
+                self.assertIn('Invalid LIGHTFORGE_EVIDENCE_SESSION', receipt['errors'][0])
+                self.assertEqual(list(output.parent.glob(output.name + '.*.tmp')), [])
+            finally:
+                if original is None:
+                    output.unlink(missing_ok=True)
+                else:
+                    output.write_bytes(original)
+
+    def test_producers_publish_failure_receipts_atomically_and_verifier_binds_all_session_receipts(self):
         mdx = (ROOT / 'qa/release-2.2.4/compare-native-mdx.py').read_text()
         downstream = (ROOT / 'qa/release-2.2.4/verify-mdx-downstream.cjs').read_text()
         self.assertIn('def write_atomic(path,value):', mdx)
@@ -110,12 +224,35 @@ class EvidenceSessionBindingTest(TestCase):
         self.assertIn('receipt.upstreamMdx=', downstream)
         self.assertIn('Upstream MDX receipt belongs to a different evidence session', downstream)
 
-    def test_workflow_generates_and_verifies_all_dynamic_receipts_in_one_nonce_bearing_step(self):
+        for relative in ['test-source-clock.cjs', 'browser.cjs', 'analysis-browser.cjs']:
+            producer = (ROOT / 'qa/release-2.2.4' / relative).read_text()
+            self.assertIn("const EVIDENCE_SESSION_SCHEMA='lightforge.evidence-session.v1'", producer)
+            self.assertIn('process.env.LIGHTFORGE_EVIDENCE_SESSION', producer)
+            self.assertIn('function writeJsonAtomic(file,value)', producer)
+            self.assertIn('fs.renameSync(temporary,file)', producer)
+            self.assertIn('writeJsonAtomic(output,receipt)', producer)
+            self.assertIn("source_hashes:{}", producer)
+
+        verifier = (ROOT / 'qa/release-2.2.4/verify-analysis.py').read_text()
+        self.assertIn('def verify_fresh_receipt(root, relative, hashes, session, label, sources):', verifier)
+        self.assertIn('browser = verify_browser_receipt(root, hashes, evidence_session)', verifier)
+        self.assertIn('analysis_browser = verify_analysis_browser_receipt(root, hashes, evidence_session)', verifier)
+        self.assertIn("receipt['session_evidence_receipts']", verifier)
+        self.assertIn("'native_profile_equivalence'", verifier)
+        self.assertIn("write_atomic(output, {'release': '2.2.4', 'passed': False, 'errors': []})", verifier)
+
+    def test_workflow_orders_all_session_evidence_before_final_verifier(self):
         workflow = (ROOT / '.github/workflows/verify-v2.yml').read_text()
-        start = workflow.index('name: Regenerate and verify same-session native evidence')
-        end = workflow.index('      - name:', start + 1)
-        block = workflow[start:end]
+        source_clock = workflow.index('test-source-clock.cjs')
+        browser = workflow.index('browser.cjs')
+        analysis_browser = workflow.index('analysis-browser.cjs')
+        native = workflow.index('name: Regenerate and verify same-session native evidence')
+        end = workflow.index('      - name:', native + 1)
+        block = workflow[native:end]
         self.assertIn('test -n "$LIGHTFORGE_EVIDENCE_SESSION"', block)
+        self.assertLess(source_clock, browser)
+        self.assertLess(browser, analysis_browser)
+        self.assertLess(analysis_browser, native)
         self.assertLess(block.index('compare-native-mdx.py'), block.index('verify-mdx-downstream.cjs'))
         self.assertLess(block.index('verify-mdx-downstream.cjs'), block.index('verify-native-inference-profile.py'))
         self.assertLess(block.index('verify-native-inference-profile.py'), block.index('verify-analysis.py'))

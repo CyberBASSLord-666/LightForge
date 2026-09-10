@@ -1,14 +1,42 @@
 'use strict';
 /* CI browser integration. The Android bridge is simulated; WebGL, workers,
  * project editing, storage, audio, and exported bytes use the real web app. */
-const {chromium}=require('playwright'),fs=require('node:fs'),path=require('node:path'),http=require('node:http'),crypto=require('node:crypto'),assert=require('node:assert/strict');
-const root=path.resolve(__dirname,'../..'),out=__dirname;
-const music=JSON.parse(fs.readFileSync(path.join(root,'qa/release-1.6.0/actual-music-user-glass-prefix64-analysis.json')));
-const fixture={version:1,name:'Glass Castle · Precision QA',settings:{style:'cinematic',dance:'off',seed:2025,vocalFocus:.85,bassFocus:.9,vocalRegions:[]},music};
+const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),crypto=require('node:crypto'),assert=require('node:assert/strict');
+const root=path.resolve(__dirname,'../..'),out=__dirname,output=path.join(out,'browser-verification.json');
+const EVIDENCE_SESSION_SCHEMA='lightforge.evidence-session.v1';
+const EVIDENCE_SESSION_PATTERN=/^[0-9a-f]{32,128}$/;
+// CI supplies a session. Its deliberate absence retains no-session local runs.
+function writeJsonAtomic(file,value){
+ const temporary=`${file}.${process.pid}.${crypto.randomBytes(8).toString('hex')}.tmp`;
+ try{fs.writeFileSync(temporary,JSON.stringify(value,null,2)+'\n');fs.renameSync(temporary,file);}
+ finally{if(fs.existsSync(temporary))fs.unlinkSync(temporary);}
+}
+function errorText(error){return error&&error.stack?error.stack:String(error);}
+function listen(server){
+ return new Promise((resolve,reject)=>{
+  const failed=error=>{server.off('listening',ready);reject(error);};
+  const ready=()=>{server.off('error',failed);resolve();};
+  server.once('error',failed);server.once('listening',ready);server.listen(0,'127.0.0.1');
+ });
+}
 const hashes=()=>Object.fromEntries(['qa/release-2.2.4/browser.cjs','version.json','web/cockpit.js','web/cockpit.css','web/version.js','web/app.js','web/diagnostics.js','web/diagnostics.css','web/index.html','web/styles.css','web/precision-studio.js','web/engine/worker.js','web/engine/client.js','web/engine/show-engine.js','web/engine/light-planner.js','web/engine/music-cues.js','web/engine/sync-review.js'].map(f=>[f,crypto.createHash('sha256').update(fs.readFileSync(path.join(root,f))).digest('hex')]));
 (async()=>{
- const receipt={release:'2.2.4',passed:false,checks:[],errors:[],source_hashes:hashes(),scope:'Desktop Chromium with actual WebGL and web workers; simulated Android bridge. No Android device or Tesla.'};
- const server=http.createServer((req,res)=>{
+ const evidenceSession=process.env.LIGHTFORGE_EVIDENCE_SESSION;
+ const sessionError=evidenceSession!==undefined&&!EVIDENCE_SESSION_PATTERN.test(evidenceSession)?
+  new Error('Invalid LIGHTFORGE_EVIDENCE_SESSION'):null;
+ const receipt={release:'2.2.4',passed:false,checks:[],errors:[],source_hashes:{},scope:'Desktop Chromium with actual WebGL and web workers; simulated Android bridge. No Android device or Tesla.'};
+ if(!sessionError&&evidenceSession!==undefined){receipt.evidenceSessionSchema=EVIDENCE_SESSION_SCHEMA;receipt.evidenceSession=evidenceSession;}
+ // Do this before imports, fixtures, hashing, or starting a server so a failed
+ // setup cannot leave a previous successful receipt visible.
+ writeJsonAtomic(output,receipt);
+ let server,browser,page,verified=false;
+ try{
+  if(sessionError)throw sessionError;
+  const {chromium}=require('playwright');
+  const music=JSON.parse(fs.readFileSync(path.join(root,'qa/release-1.6.0/actual-music-user-glass-prefix64-analysis.json')));
+  const fixture={version:1,name:'Glass Castle · Precision QA',settings:{style:'cinematic',dance:'off',seed:2025,vocalFocus:.85,bassFocus:.9,vocalRegions:[]},music};
+  receipt.source_hashes=hashes();
+  server=http.createServer((req,res)=>{
   const pathname=decodeURIComponent(req.url.split('?')[0]);
   if(pathname==='/fixture.json'){res.setHeader('Content-Type','application/json');res.end(JSON.stringify(fixture));return;}
   const p=path.resolve(root,'web','.'+(pathname==='/'?'/index.html':pathname));if(!p.startsWith(path.join(root,'web')+path.sep)){res.writeHead(403).end();return;}
@@ -16,9 +44,8 @@ const hashes=()=>Object.fromEntries(['qa/release-2.2.4/browser.cjs','version.jso
   res.setHeader('Content-Type',({'.js':'text/javascript','.html':'text/html','.css':'text/css','.json':'application/json','.wasm':'application/wasm','.wav':'audio/wav','.glb':'model/gltf-binary'})[path.extname(p)]||'application/octet-stream');
   res.setHeader('Cross-Origin-Opener-Policy','same-origin');res.setHeader('Cross-Origin-Embedder-Policy','require-corp');
   res.setHeader('Content-Length',fs.statSync(p).size);fs.createReadStream(p).pipe(res);
- });
- await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser,page;
- try{
+  });
+  await listen(server);
   browser=await chromium.launch({headless:true,...(process.env.PLAYWRIGHT_EXECUTABLE_PATH?{executablePath:process.env.PLAYWRIGHT_EXECUTABLE_PATH}:{}),args:['--no-sandbox','--enable-unsafe-swiftshader']});page=await browser.newPage({viewport:{width:393,height:852}});
   const errors=[];page.on('pageerror',e=>{errors.push(e.message);console.error('PAGE ERROR',e.stack);});page.on('console',m=>{if(m.type()==='error')console.error('CONSOLE',m.text());});
   await page.addInitScript(()=>{
@@ -51,7 +78,10 @@ const hashes=()=>Object.fromEntries(['qa/release-2.2.4/browser.cjs','version.jso
   for(const width of [393,1440]){await page.setViewportSize({width,height:960});for(const view of ['shows','guide']){await page.locator('.nav-item[data-navigate="'+view+'"]').click();assert.equal(await page.locator('#'+view).isVisible(),true);assert.equal(await page.locator('#'+view+'Title').isVisible(),true);assert.equal(await page.locator('.nav-item[data-navigate="'+view+'"]').getAttribute('aria-current'),'page');if(view==='shows')assert.equal(await page.locator('#showList .saved-show').count(),1);assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+1));await page.screenshot({path:path.join(out,view+'-'+width+'.png'),fullPage:true,animations:'disabled'});}}
   const backgroundDraws=await page.evaluate(async()=>{await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);const canvas=document.getElementById('scoreCanvas'),context=canvas.getContext('2d'),original=context.clearRect;let draws=0;context.clearRect=function(...args){draws++;return original.apply(this,args);};const audio=document.getElementById('audio');await audio.play();await new Promise(r=>setTimeout(r,400));audio.pause();context.clearRect=original;return draws;});assert.equal(backgroundDraws,0);receipt.checks.push('The source-time score stops drawing when its workspace is offscreen during audio playback.');
   const fresh=await browser.newPage({viewport:{width:393,height:852}});fresh.on('pageerror',e=>errors.push(e.message));await fresh.addInitScript(()=>{window.Android={pickAudio(){},getBootstrap:()=>JSON.stringify({projects:[],version:'2.2.4'})};});await fresh.goto('http://127.0.0.1:'+server.address().port);await fresh.waitForFunction(()=>!!window.LightForgeApp);assert.equal(await fresh.locator('#emptyCard').isVisible(),true);assert.ok(await fresh.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+1));await fresh.screenshot({path:path.join(out,'first-launch-393.png'),fullPage:true,animations:'disabled'});await fresh.close();receipt.checks.push('First launch, saved-show collection and vehicle guide render without overflow or page errors at phone and desktop sizes.');
-  assert.deepEqual(errors,[]);assert.deepEqual(hashes(),receipt.source_hashes);receipt.passed=true;
- }catch(e){if(page){await page.screenshot({path:path.join(out,'failure.png'),fullPage:true,animations:'disabled'}).catch(()=>{});receipt.failure=await page.evaluate(()=>({text:document.body.innerText,state:window.LightForgeApp?{project:LightForgeApp.state.project,loading:LightForgeApp.state.loadingProject,music:!!LightForgeApp.state.music,show:!!LightForgeApp.state.show,saveBlocked:LightForgeApp.state.saveBlocked,composing:LightForgeApp.state.composing}:null})).catch(()=>null);}receipt.errors.push(e.stack);console.error(e.stack);}finally{await browser?.close();await new Promise(r=>server.close(r));}
- receipt.completedAt=new Date().toISOString();fs.writeFileSync(path.join(out,'browser-verification.json'),JSON.stringify(receipt,null,2)+'\n');console.log(JSON.stringify(receipt,null,2));if(!receipt.passed)process.exitCode=1;
-})().catch(e=>{console.error(e);process.exitCode=1;});
+  assert.deepEqual(errors,[]);assert.deepEqual(hashes(),receipt.source_hashes);verified=true;
+ }catch(error){if(page){await page.screenshot({path:path.join(out,'failure.png'),fullPage:true,animations:'disabled'}).catch(()=>{});receipt.failure=await page.evaluate(()=>({text:document.body.innerText,state:window.LightForgeApp?{project:LightForgeApp.state.project,loading:LightForgeApp.state.loadingProject,music:!!LightForgeApp.state.music,show:!!LightForgeApp.state.show,saveBlocked:LightForgeApp.state.saveBlocked,composing:LightForgeApp.state.composing}:null})).catch(()=>null);}receipt.errors.push(errorText(error));console.error(errorText(error));}finally{
+  try{await browser?.close();}catch(error){receipt.errors.push(errorText(error));console.error(errorText(error));}
+  if(server?.listening)try{await new Promise((resolve,reject)=>server.close(error=>error?reject(error):resolve()));}catch(error){receipt.errors.push(errorText(error));console.error(errorText(error));}
+ }
+ receipt.passed=verified&&receipt.errors.length===0;receipt.completedAt=new Date().toISOString();writeJsonAtomic(output,receipt);console.log(JSON.stringify(receipt,null,2));if(!receipt.passed)process.exitCode=1;
+})().catch(error=>{console.error(errorText(error));process.exitCode=1;});

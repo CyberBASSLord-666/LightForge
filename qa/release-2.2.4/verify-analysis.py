@@ -83,6 +83,30 @@ CLOCK_SOURCES = {
     'web/analysis/separator-deux.js', 'web/analysis/dsp.js',
     'web/analysis/models/deux/manifest.json', OUT + 'test-source-clock.cjs',
 }
+BROWSER_SOURCES = {
+    OUT + 'browser.cjs', 'version.json', 'web/cockpit.js', 'web/cockpit.css',
+    'web/version.js', 'web/app.js', 'web/diagnostics.js', 'web/diagnostics.css',
+    'web/index.html', 'web/styles.css', 'web/precision-studio.js',
+    'web/engine/worker.js', 'web/engine/client.js', 'web/engine/show-engine.js',
+    'web/engine/light-planner.js', 'web/engine/music-cues.js',
+    'web/engine/sync-review.js',
+}
+ANALYSIS_BROWSER_SOURCES = {
+    OUT + 'analysis-browser.cjs', OUT + 'analysis-performance.cjs', 'version.json',
+    'web/index.html', 'web/analysis/ASSET_MANIFEST.json',
+    'web/analysis/diagnostic-clock.js', 'web/analysis/resource-diagnostics.js',
+    'web/analysis/telemetry.js', 'web/analysis/scheduler.js', 'web/analysis/worker.js',
+    'web/analysis/analyzer.js', 'web/analysis/feature-store.js', 'web/analysis/game.js',
+    'web/analysis/salience.js', 'web/analysis/semantic-timeline.js',
+    'web/analysis/separator-deux.js', 'web/analysis/stem-cache.js',
+    'web/analysis/stem-routing.js', 'web/analysis/work-store.js',
+    'web/analysis/vocal.js', 'web/analysis/vocal-detail.js',
+    'web/analysis/bass-notes.js', 'web/analysis/models/game/manifest.json',
+    'web/analysis/models/deux/manifest.json', 'web/engine/show-engine.js',
+    'web/engine/light-planner.js', 'web/engine/music-cues.js',
+    'web/engine/sync-review.js', 'web/engine/worker.js',
+}
+EVIDENCE_SESSION_UNSET = object()
 
 
 def require(condition, message):
@@ -93,6 +117,19 @@ def require(condition, message):
 def digest(path):
     with path.open('rb') as stream:
         return hashlib.file_digest(stream, 'sha256').hexdigest()
+
+
+def write_atomic(path, value):
+    with tempfile.NamedTemporaryFile(mode='w', dir=path.parent, delete=False) as stream:
+        temporary = Path(stream.name)
+        try:
+            json.dump(value, stream, indent=2)
+            stream.write('\n')
+            stream.flush()
+            os.fsync(stream.fileno())
+            os.replace(temporary, path)
+        finally:
+            temporary.unlink(missing_ok=True)
 
 
 def file(root, relative):
@@ -129,6 +166,7 @@ def bind_session_receipt(root, relative, immutable_sha256, hashes, session, labe
     """
     path = file(root, relative)
     result = json.loads(path.read_text())
+    require(isinstance(result, dict), label + ' receipt is not a JSON object')
     if session is None:
         require('evidenceSession' not in result and 'evidenceSessionSchema' not in result,
                 label + ' receipt is session-bound and cannot satisfy no-session verification')
@@ -139,6 +177,21 @@ def bind_session_receipt(root, relative, immutable_sha256, hashes, session, labe
             label + ' receipt is stale, absent, or belongs to a different evidence session')
     hashes[relative] = digest(path)
     return path, result
+
+
+def verify_fresh_receipt(root, relative, hashes, session, label, sources):
+    """Fail closed on any stale, mixed-session, failed, or incomplete producer."""
+    require(session is not None, label + ' fresh receipt requires an evidence session')
+    _, result = bind_session_receipt(root, relative, '0' * 64, hashes, session, label)
+    require(result.get('release') == '2.2.4' and result.get('passed') is True and
+            result.get('errors') == [] and isinstance(result.get('completedAt'), str) and
+            result['completedAt'], label + ' receipt did not pass cleanly')
+    require(isinstance(result.get('source_hashes'), dict) and
+            set(result['source_hashes']) == sources,
+            label + ' receipt source coverage changed')
+    for source, expected in result['source_hashes'].items():
+        bind(root, source, expected, hashes)
+    return result
 
 
 def finite_number(value):
@@ -198,7 +251,7 @@ def verify_comparison(root, hashes):
     return result, mutable
 
 
-def verify_profile_equivalence(root, hashes, comparison, mutable):
+def verify_profile_equivalence(root, hashes, comparison, mutable, evidence_session=EVIDENCE_SESSION_UNSET):
     # The ordinary comparison exercises an unprofiled public entry point. Once the
     # collector exists, a fresh paired proof is mandatory even when no historical
     # comparison source changed: only that same-invocation pair proves observer
@@ -215,8 +268,9 @@ def verify_profile_equivalence(root, hashes, comparison, mutable):
     require(set(result) == expected_keys and result.get('schema') == PROFILE_EQUIVALENCE_SCHEMA and
             result.get('release') == '2.2.4' and result.get('passed') is True,
             'Profile-enabled native equivalence did not pass')
-    expected_session = os.environ.get('LIGHTFORGE_EVIDENCE_SESSION')
-    require(expected_session is None or re.fullmatch(r'[0-9a-f]{32,128}', expected_session),
+    expected_session = (current_evidence_session() if evidence_session is EVIDENCE_SESSION_UNSET
+                        else evidence_session)
+    require(expected_session is None or EVIDENCE_SESSION_PATTERN.fullmatch(expected_session),
             'LIGHTFORGE_EVIDENCE_SESSION is invalid')
     if expected_session is None:
         require(result.get('evidence_session') is None,
@@ -345,21 +399,41 @@ def verify_assets(root, hashes):
     return assets
 
 
-def verify_clock(root, hashes):
+def verify_clock(root, hashes, evidence_session=None):
     relative = OUT + 'source-clock-verification.json'
-    path = file(root, relative)
-    result = json.loads(path.read_text())
+    if evidence_session is None:
+        path = file(root, relative)
+        result = json.loads(path.read_text())
+        require(isinstance(result, dict), 'Source-clock receipt is not a JSON object')
+        require('evidenceSession' not in result and 'evidenceSessionSchema' not in result,
+                'A session-bound source-clock receipt cannot satisfy no-session verification')
+    else:
+        result = verify_fresh_receipt(root, relative, hashes, evidence_session,
+                                      'Source-clock', CLOCK_SOURCES)
     require(result.get('release') == '2.2.4' and result.get('passed') is True and not result.get('errors'),
             'Fresh 2.2.4 source-clock check did not pass')
     require(result.get('samples') == 932143 and result.get('chunks') == 4 and
             result.get('contiguousSourceSamples') is True and result.get('monotonicProgress') is True and
             finite_number(result.get('maxAbsError')) and 0 <= result['maxAbsError'] < 2e-6,
             'Fresh source-clock boundaries failed')
-    require(set(result.get('source_hashes', {})) == CLOCK_SOURCES, 'Fresh source-clock source coverage changed')
-    for source, expected in result['source_hashes'].items():
-        bind(root, source, expected, hashes)
-    hashes[relative] = digest(path)
+    require(isinstance(result.get('source_hashes'), dict) and
+            set(result['source_hashes']) == CLOCK_SOURCES,
+            'Fresh source-clock source coverage changed')
+    if evidence_session is None:
+        for source, expected in result['source_hashes'].items():
+            bind(root, source, expected, hashes)
+        hashes[relative] = digest(path)
     return result
+
+
+def verify_browser_receipt(root, hashes, evidence_session):
+    return verify_fresh_receipt(root, OUT + 'browser-verification.json', hashes,
+                                 evidence_session, 'Browser', BROWSER_SOURCES)
+
+
+def verify_analysis_browser_receipt(root, hashes, evidence_session):
+    return verify_fresh_receipt(root, OUT + 'analysis-browser-verification.json', hashes,
+                                 evidence_session, 'Analysis-browser', ANALYSIS_BROWSER_SOURCES)
 
 
 MDX_COMPARISON_SHA256 = '3e8dc72c4f2659ff6404294c92bb77eb773e7bdf8e7043ca5ca5e916e64fa9ef'
@@ -573,15 +647,20 @@ def verify_release(root=ROOT):
     evidence_session = current_evidence_session()
     hashes = {'version.json': digest(version_path)}
     comparison, mutable_comparison_sources = verify_comparison(root, hashes)
-    profile_equivalence = verify_profile_equivalence(root, hashes, comparison, mutable_comparison_sources)
+    profile_equivalence = verify_profile_equivalence(root, hashes, comparison,
+                                                      mutable_comparison_sources, evidence_session)
     assets = verify_assets(root, hashes)
-    clock = verify_clock(root, hashes)
+    clock = verify_clock(root, hashes, evidence_session)
+    browser = analysis_browser = None
+    if evidence_session is not None:
+        browser = verify_browser_receipt(root, hashes, evidence_session)
+        analysis_browser = verify_analysis_browser_receipt(root, hashes, evidence_session)
     mdx = verify_mdx(root, hashes, profile_equivalence, evidence_session)
     downstream = verify_downstream(root, hashes, mdx, evidence_session)
     hashes[OUT + 'verify-analysis.py'] = digest(file(root, OUT + 'verify-analysis.py'))
     for relative, expected in {**hashes, **assets}.items():
         require(digest(file(root, relative)) == expected, 'Source changed during analysis verification: ' + relative)
-    return {
+    receipt = {
         'release': '2.2.4', 'passed': True, 'errors': [], 'source_hashes': hashes,
         'analysis_asset_hashes': assets,
         'analysis_asset_binding': {'manifest_path': 'web/analysis/ASSET_MANIFEST.json',
@@ -616,27 +695,44 @@ def verify_release(root=ROOT):
                        'No claim of physical phone crash resolution, full-song performance or Tesla timing is implied.'],
         'completedAt': datetime.datetime.now(datetime.timezone.utc).isoformat(),
     }
+    if evidence_session is not None:
+        receipt['session_evidence_receipts'] = {
+            'source_clock': {'path': OUT + 'source-clock-verification.json',
+                             'sha256': hashes[OUT + 'source-clock-verification.json'],
+                             'evidenceSession': evidence_session},
+            'browser': {'path': OUT + 'browser-verification.json',
+                        'sha256': hashes[OUT + 'browser-verification.json'],
+                        'evidenceSession': evidence_session, 'scope': browser.get('scope')},
+            'analysis_browser': {'path': OUT + 'analysis-browser-verification.json',
+                                 'sha256': hashes[OUT + 'analysis-browser-verification.json'],
+                                 'evidenceSession': evidence_session,
+                                 'scope': analysis_browser.get('scope')},
+            'native_mdx': {'path': OUT + 'native-mdx-comparison-verification.json',
+                           'sha256': hashes[OUT + 'native-mdx-comparison-verification.json'],
+                           'evidenceSession': evidence_session},
+            'native_mdx_downstream': {'path': OUT + 'native-mdx-downstream-verification.json',
+                                      'sha256': hashes[OUT + 'native-mdx-downstream-verification.json'],
+                                      'evidenceSession': evidence_session},
+            'native_profile_equivalence': {'path': PROFILE_EQUIVALENCE_PATH,
+                                           'sha256': hashes[PROFILE_EQUIVALENCE_PATH],
+                                           'evidenceSession': evidence_session},
+        }
+    return receipt
 
 
 def main():
     output = ROOT / OUT / 'analysis-verification.json'
+    # Replace any old pass before reading a producer receipt. A killed or failed
+    # refresh therefore remains visibly failed rather than inheriting stale proof.
+    write_atomic(output, {'release': '2.2.4', 'passed': False, 'errors': []})
     try:
         receipt = verify_release()
     except Exception as error:
         # Never leave a stale passing receipt after a failed refresh.
         receipt = {'release': '2.2.4', 'passed': False, 'errors': [str(error)]}
-        output.write_text(json.dumps(receipt, indent=2) + '\n')
+        write_atomic(output, receipt)
         raise
-    with tempfile.NamedTemporaryFile(mode='w', dir=output.parent, delete=False) as stream:
-        temporary = Path(stream.name)
-        try:
-            json.dump(receipt, stream, indent=2)
-            stream.write('\n')
-            stream.flush()
-            os.fsync(stream.fileno())
-            os.replace(temporary, output)
-        finally:
-            temporary.unlink(missing_ok=True)
+    write_atomic(output, receipt)
     print(json.dumps({'passed': True, 'release': receipt['release'], 'checks': receipt['checks']}, indent=2))
 
 

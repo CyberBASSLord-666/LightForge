@@ -2,20 +2,46 @@
 /* Actual public analyzer, bundled ONNX models, Chromium workers and OPFS.
  * Reference audio is a licensed MUSDB excerpt, never an oracle input stem.
  * The Android bridge and physical vehicle are outside this check's scope. */
-const {chromium}=require('playwright'),fs=require('fs'),path=require('path'),http=require('http'),crypto=require('crypto'),assert=require('assert/strict'),AnalysisPerformance=require('./analysis-performance.cjs');
-const root=path.resolve(__dirname,'../..'),qa=__dirname,fixture=path.join(root,'qa/release-1.6.0/fixtures/falcon-mix.wav');
+const fs=require('fs'),path=require('path'),http=require('http'),crypto=require('crypto'),assert=require('assert/strict');
+const root=path.resolve(__dirname,'../..'),qa=__dirname,fixture=path.join(root,'qa/release-1.6.0/fixtures/falcon-mix.wav'),output=path.join(qa,'analysis-browser-verification.json');
+const EVIDENCE_SESSION_SCHEMA='lightforge.evidence-session.v1';
+const EVIDENCE_SESSION_PATTERN=/^[0-9a-f]{32,128}$/;
+// CI supplies a session. Its deliberate absence retains no-session local runs.
+function writeJsonAtomic(file,value){
+ const temporary=`${file}.${process.pid}.${crypto.randomBytes(8).toString('hex')}.tmp`;
+ try{fs.writeFileSync(temporary,JSON.stringify(value,null,2)+'\n');fs.renameSync(temporary,file);}
+ finally{if(fs.existsSync(temporary))fs.unlinkSync(temporary);}
+}
+function errorText(error){return error&&error.stack?error.stack:String(error);}
+function listen(server){
+ return new Promise((resolve,reject)=>{
+  const failed=error=>{server.off('listening',ready);reject(error);};
+  const ready=()=>{server.off('error',failed);resolve();};
+  server.once('error',failed);server.once('listening',ready);server.listen(0,'127.0.0.1');
+ });
+}
 const sha=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
 const sources=['qa/release-2.2.4/analysis-browser.cjs','qa/release-2.2.4/analysis-performance.cjs','version.json','web/index.html','web/analysis/ASSET_MANIFEST.json','web/analysis/diagnostic-clock.js','web/analysis/resource-diagnostics.js','web/analysis/telemetry.js','web/analysis/scheduler.js','web/analysis/worker.js','web/analysis/analyzer.js','web/analysis/feature-store.js','web/analysis/game.js','web/analysis/salience.js','web/analysis/semantic-timeline.js','web/analysis/separator-deux.js','web/analysis/stem-cache.js','web/analysis/stem-routing.js','web/analysis/work-store.js','web/analysis/vocal.js','web/analysis/vocal-detail.js','web/analysis/bass-notes.js','web/analysis/models/game/manifest.json','web/analysis/models/deux/manifest.json','web/engine/show-engine.js','web/engine/light-planner.js','web/engine/music-cues.js','web/engine/sync-review.js','web/engine/worker.js'];
 (async()=>{
- const receipt={release:'2.2.4',passed:false,errors:[],checks:[],source_hashes:Object.fromEntries(sources.map(p=>[p,sha(path.join(root,p))])),scope:'Actual Chromium public MusicAnalyzer with production Deux, GAME Large, Beat This and Frame-MN10. Test controls and original-stem reference scoring are independent of model inputs. No physical Android or Tesla.'};
- const server=http.createServer((req,res)=>{
+ const evidenceSession=process.env.LIGHTFORGE_EVIDENCE_SESSION;
+ const sessionError=evidenceSession!==undefined&&!EVIDENCE_SESSION_PATTERN.test(evidenceSession)?
+  new Error('Invalid LIGHTFORGE_EVIDENCE_SESSION'):null;
+ const receipt={release:'2.2.4',passed:false,errors:[],checks:[],source_hashes:{},scope:'Actual Chromium public MusicAnalyzer with production Deux, GAME Large, Beat This and Frame-MN10. Test controls and original-stem reference scoring are independent of model inputs. No physical Android or Tesla.'};
+ if(!sessionError&&evidenceSession!==undefined){receipt.evidenceSessionSchema=EVIDENCE_SESSION_SCHEMA;receipt.evidenceSession=evidenceSession;}
+ // Publish failure before every fallible import, source read, fixture access, or server action.
+ writeJsonAtomic(output,receipt);
+ let server,browser,verified=false;
+ try{
+  if(sessionError)throw sessionError;
+  const {chromium}=require('playwright'),AnalysisPerformance=require('./analysis-performance.cjs');
+  receipt.source_hashes=Object.fromEntries(sources.map(p=>[p,sha(path.join(root,p))]));
+  server=http.createServer((req,res)=>{
   const u=new URL(req.url,'http://local'),p=u.pathname==='/qa/falcon.wav'?fixture:path.resolve(root,'web','.'+(u.pathname==='/'?'/index.html':u.pathname));
   if((p!==fixture&&!p.startsWith(path.join(root,'web')+path.sep))||!fs.existsSync(p)||!fs.statSync(p).isFile()){res.writeHead(404).end();return;}
   const size=fs.statSync(p).size,range=/^bytes=(\d+)-(\d+)$/.exec(req.headers.range||'');let start=0,end=size-1;
   res.setHeader('Cross-Origin-Opener-Policy','same-origin');res.setHeader('Cross-Origin-Embedder-Policy','require-corp');res.setHeader('Content-Type',({'.js':'text/javascript','.mjs':'text/javascript','.html':'text/html','.json':'application/json','.css':'text/css','.wasm':'application/wasm','.wav':'audio/wav'})[path.extname(p)]||'application/octet-stream');
   if(range){start=+range[1];end=Math.min(+range[2],size-1);if(start>end){res.writeHead(416).end();return;}res.statusCode=206;res.setHeader('Content-Range',`bytes ${start}-${end}/${size}`);}res.setHeader('Content-Length',end-start+1);fs.createReadStream(p,{start,end}).pipe(res);
- });await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;
- try{
+  });await listen(server);
   browser=await chromium.launch({headless:true,...(process.env.PLAYWRIGHT_EXECUTABLE_PATH?{executablePath:process.env.PLAYWRIGHT_EXECUTABLE_PATH}:{}),args:['--no-sandbox','--enable-unsafe-swiftshader']});const page=await browser.newPage({viewport:{width:393,height:852}});page.setDefaultTimeout(1200000);page.on('pageerror',e=>receipt.errors.push(e.message));page.on('console',m=>{if(m.type()==='log')console.log(m.text());});
   await page.goto('http://127.0.0.1:'+server.address().port);await page.waitForFunction(()=>!!window.MusicAnalyzer);assert.equal(await page.evaluate(()=>crossOriginIsolated),true);
   const analysisStartedAt=process.hrtime.bigint();
@@ -37,7 +63,10 @@ const sources=['qa/release-2.2.4/analysis-browser.cjs','qa/release-2.2.4/analysi
    const controller=new AbortController();let stage='';try{await MusicAnalyzer.analyze('/qa/falcon.wav',{projectId:'cancel-runtime',analysisQuality:'balanced'},p=>{if(p.progress>=.42){stage=p.stage;controller.abort();}},controller.signal);return {aborted:false};}catch(e){if(e.name!=='AbortError')throw e;}
    let extra=[];for(let i=0;i<24;i++){extra=[];for await(const [k]of dir.entries())if(!before.includes(k))extra.push(k);if(!extra.length)break;await new Promise(r=>setTimeout(r,500));}return {aborted:controller.signal.aborted,stage,remainingNamespaces:extra.length};
   });assert.ok(cancel.aborted);assert.equal(cancel.remainingNamespaces,0);receipt.cancellation=cancel;receipt.checks.push('Public analyzer cancellation during source separation removed its incomplete OPFS namespace.');
-  for(const [p,h]of Object.entries(receipt.source_hashes))assert.equal(sha(path.join(root,p)),h);assert.equal(receipt.errors.length,0);receipt.passed=true;
- }catch(e){receipt.errors.push(e.stack);console.error(e.stack);}finally{await browser?.close();await new Promise(r=>server.close(r));}
- receipt.completedAt=new Date().toISOString();fs.writeFileSync(path.join(qa,'analysis-browser-verification.json'),JSON.stringify(receipt,null,2));console.log(JSON.stringify({passed:receipt.passed,errors:receipt.errors}));if(!receipt.passed)process.exitCode=1;
-})();
+  for(const [p,h]of Object.entries(receipt.source_hashes))assert.equal(sha(path.join(root,p)),h);assert.equal(receipt.errors.length,0);verified=true;
+ }catch(error){receipt.errors.push(errorText(error));console.error(errorText(error));}finally{
+  try{await browser?.close();}catch(error){receipt.errors.push(errorText(error));console.error(errorText(error));}
+  if(server?.listening)try{await new Promise((resolve,reject)=>server.close(error=>error?reject(error):resolve()));}catch(error){receipt.errors.push(errorText(error));console.error(errorText(error));}
+ }
+ receipt.passed=verified&&receipt.errors.length===0;receipt.completedAt=new Date().toISOString();writeJsonAtomic(output,receipt);console.log(JSON.stringify({passed:receipt.passed,errors:receipt.errors}));if(!receipt.passed)process.exitCode=1;
+})().catch(error=>{console.error(errorText(error));process.exitCode=1;});
