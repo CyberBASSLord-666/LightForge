@@ -12,6 +12,7 @@
   const round=value=>Math.round(value*1000000)/1000000;
   const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
   const safeRole=value=>typeof value==='string'?value:'';
+  const compareText=(left,right)=>left<right?-1:left>right?1:0;
 
   function validSemantic(semantic){
     if(!semantic||!Array.isArray(semantic.events)||!semantic.events.length)return null;
@@ -21,7 +22,7 @@
       ids.add(raw.id);
       events.push(Object.freeze({id:raw.id,time:round(raw.time),source:safeRole(raw.source),score:round(raw.score),tier:raw.tier}));
     }
-    events.sort((a,b)=>a.time-b.time||a.id.localeCompare(b.id));
+    events.sort((a,b)=>a.time-b.time||compareText(a.id,b.id));
     return Object.freeze(events);
   }
   function nearest(items,time,role,windowSeconds,timeOf,itemRole){
@@ -37,7 +38,7 @@
         Math.abs(distance-best.distance)<=1e-9&&(sourcePenalty<best.sourcePenalty||
           sourcePenalty===best.sourcePenalty&&(score>best.score+1e-9||
             Math.abs(score-best.score)<=1e-9&&(itemTime<best.time-1e-9||
-              Math.abs(itemTime-best.time)<=1e-9&&String(item.id).localeCompare(String(best.item.id))<0)));
+              Math.abs(itemTime-best.time)<=1e-9&&compareText(String(item.id),String(best.item.id))<0)));
       if(better){
         best={item,distance,sourcePenalty,score,time:itemTime};
       }
@@ -45,7 +46,7 @@
     return best;
   }
   function mergeWindows(windows){
-    const sorted=windows.slice().sort((a,b)=>a.start-b.start||a.end-b.end||a.semanticEventId.localeCompare(b.semanticEventId)),merged=[];
+    const sorted=windows.slice().sort((a,b)=>a.start-b.start||a.end-b.end||compareText(a.semanticEventId,b.semanticEventId)),merged=[];
     for(const current of sorted){
       const previous=merged[merged.length-1];
       if(previous&&current.start<=previous.end+1e-9){
@@ -76,14 +77,14 @@
           score:match.item.score,tier:match.item.tier
         }));
       }
-      links.sort((a,b)=>a.musicTime-b.musicTime||a.semanticEventId.localeCompare(b.semanticEventId)||a.targetIndex-b.targetIndex);
+      links.sort((a,b)=>a.musicTime-b.musicTime||compareText(a.semanticEventId,b.semanticEventId)||a.targetIndex-b.targetIndex);
       const anchorsById=new Map();
       for(const link of links)if(TIER_INDEX[link.tier]>=TIER_INDEX.phrase){
         const previous=anchorsById.get(link.semanticEventId);
         if(!previous||TIER_INDEX[link.tier]>TIER_INDEX[previous.tier]||TIER_INDEX[link.tier]===TIER_INDEX[previous.tier]&&link.score>previous.score)anchorsById.set(link.semanticEventId,link);
       }
       const tierTargets=Object.fromEntries(TIERS.map(tier=>[tier,links.filter(link=>link.tier===tier).length]));
-      return {targetCount:safeTargets.length,links,anchors:Array.from(anchorsById.values()).sort((a,b)=>a.semanticEventTime-b.semanticEventTime||a.semanticEventId.localeCompare(b.semanticEventId)),tierTargets,hierarchyMatchedCandidateCount:0,hierarchyBoostedCandidateCount:0};
+      return {targetCount:safeTargets.length,links,anchors:Array.from(anchorsById.values()).sort((a,b)=>a.semanticEventTime-b.semanticEventTime||compareText(a.semanticEventId,b.semanticEventId)),tierTargets,hierarchyMatchedCandidateCount:0,hierarchyBoostedCandidateCount:0};
     }
     function classifyCandidate(candidate,state){
       if(!candidate||!state||!state.links.length)return candidate;
@@ -132,7 +133,7 @@
         if(!group){group={key,time,score:candidate.semanticScore||0,priority:candidate.priority||0,indices:[]};groups.set(key,group);}
         group.indices.push(index);group.score=Math.max(group.score,candidate.semanticScore||0);group.priority=Math.max(group.priority,candidate.priority||0);
       }
-      const ordered=Array.from(groups.values()).sort((a,b)=>b.score-a.score||b.priority-a.priority||a.time-b.time||a.key.localeCompare(b.key)),kept=[];
+      const ordered=Array.from(groups.values()).sort((a,b)=>b.score-a.score||b.priority-a.priority||a.time-b.time||compareText(a.key,b.key)),kept=[];
       let densitySuppressedCandidateCount=0,densitySuppressedGroupCount=0;
       for(const group of ordered){
         const occupancy=kept.filter(keptGroup=>Math.abs(keptGroup.time-group.time)<densityWindowSeconds-1e-9).length;
