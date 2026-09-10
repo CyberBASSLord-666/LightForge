@@ -4,8 +4,8 @@
     "sha256": "e8d7b13e63a88c3c15580faafd4ae309fda7fb51621efd45b7dac07aafa9f483"
   },
   "analyzer.js": {
-    "bytes": 8517,
-    "sha256": "30a9cab26ec492f8d134917e020360b9f23e26137895308182b5eb966e96d70a"
+    "bytes": 9729,
+    "sha256": "060394eb1823ef5ed1b7b951ac9edb120b64a198abad0a93dfbc155e29f49147"
   },
   "bass-notes.js": {
     "bytes": 14748,
@@ -243,6 +243,14 @@
     "bytes": 9916,
     "sha256": "52093f26d0bfe3f04bbb1563b287fafe5e61aa57a61391ea643b04d97838ca7e"
   },
+  "scheduler.js": {
+    "bytes": 5331,
+    "sha256": "7a9b97fd59c18b236090104ffe074945e802a99a239294c566a99148ef6e364e"
+  },
+  "semantic-timeline.js": {
+    "bytes": 10248,
+    "sha256": "6ff4bd7fa39f39f85ab42f6a0319b0a4a020a142bbbb75b8e8d1ec17f4b24dd1"
+  },
   "separator-deux.js": {
     "bytes": 10079,
     "sha256": "95508ddb8cffc7dff6e47b849f7722efd1c901fbacb2c059be392444f872aebe"
@@ -254,6 +262,10 @@
   "stem-cache.js": {
     "bytes": 10946,
     "sha256": "21633cd9e217ecca6e55b9fa04983512e651ddc9a7b9027af13580845ff4fe82"
+  },
+  "telemetry.js": {
+    "bytes": 3053,
+    "sha256": "3a957c338803380ddad6a3ebca3a9c8d7f9fb4fe11c5f9d1be907516bf373b98"
   },
   "vendor/ONNX-Runtime-LICENSE.txt": {
     "bytes": 1073,
@@ -290,17 +302,5 @@
   "worker.js": {
     "bytes": 23009,
     "sha256": "1e2ead32e0e62daa5a6df29dffc61ea9c2e5f093a1e68e15e1ae885af3814691"
-  },
-  "semantic-timeline.js": {
-    "bytes": 10248,
-    "sha256": "6ff4bd7fa39f39f85ab42f6a0319b0a4a020a142bbbb75b8e8d1ec17f4b24dd1"
-  },
-  "telemetry.js": {
-    "bytes": 3053,
-    "sha256": "3a957c338803380ddad6a3ebca3a9c8d7f9fb4fe11c5f9d1be907516bf373b98"
-  },
-  "scheduler.js": {
-    "bytes": 5331,
-    "sha256": "7a9b97fd59c18b236090104ffe074945e802a99a239294c566a99148ef6e364e"
   }
 }
