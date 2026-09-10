@@ -2,6 +2,8 @@
 'use strict';
 // Runs the shipped separator and WASM runtime, with optional PCM parity checks.
 // Each invocation is one isolated process so maxRSS measures that configuration.
+// Process isolation does not clear the host kernel's file cache or control
+// thermal state, so neither may be represented as a strict cold-I/O result.
 const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
 const root=path.resolve(__dirname,'..'),args=process.argv.slice(2),options={};
 for(let i=0;i<args.length;i+=2){if(!args[i].startsWith('--')||!args[i+1])throw Error('Expected --option value');options[args[i].slice(2)]=args[i+1];}
@@ -61,7 +63,7 @@ const runtime={Tensor:ort.Tensor,InferenceSession:{create:async(url,opts)=>{
    if(result.restoredPassages<1)throw Error('Controlled recovery did not restore its completed passage.');
   }
   const sessionConfiguration={executionProviders:['wasm'],graphOptimizationLevel:'all',enableCpuMemArena:false,enableMemPattern:false};
-  const report={schema:2,passed:true,errors:[],fixture:path.relative(root,fixture),fixtureSHA256:sha(bytes),sourceSHA256:implementationSHA256,manifestSHA256:sha(manifestBytes),modelId:manifest.id,model:{id:manifest.id,checkpointSHA256:manifest.checkpointSHA256,manifestSHA256:sha(manifestBytes)},source_hashes:{[path.relative(root,implementation)]:implementationSHA256,'tools/benchmark_deux_runtime.cjs':benchmarkSHA256},threads,mode:{spectrumReuse:{requested:spectrumReuse,enabled:spectrumReuse==='on',experimental:true,defaultEnabled:false},coldProcess:true},seconds:(performance.now()-start)/1000,peakRssMiB:process.resourceUsage().maxRSS/1024,sessionLoads:loads,inferenceRuns:runs,samples:total,fixtureSamples:reader.samples,result,recovery,pcm:{}};
+  const report={schema:2,passed:true,errors:[],fixture:path.relative(root,fixture),fixtureSHA256:sha(bytes),sourceSHA256:implementationSHA256,manifestSHA256:sha(manifestBytes),modelId:manifest.id,model:{id:manifest.id,checkpointSHA256:manifest.checkpointSHA256,manifestSHA256:sha(manifestBytes)},source_hashes:{[path.relative(root,implementation)]:implementationSHA256,'tools/benchmark_deux_runtime.cjs':benchmarkSHA256},threads,mode:{spectrumReuse:{requested:spectrumReuse,enabled:spectrumReuse==='on',experimental:true,defaultEnabled:false},coldProcess:true,filesystemCache:{state:'uncontrolled',strictColdIo:false},thermalState:{available:false}},seconds:(performance.now()-start)/1000,peakRssMiB:process.resourceUsage().maxRSS/1024,sessionLoads:loads,inferenceRuns:runs,samples:total,fixtureSamples:reader.samples,result,recovery,pcm:{}};
   report.runtime={elapsedMs:report.seconds*1000,peakRssBytes:report.peakRssMiB*1048576,threads,ortWebVersion:ort.env?.versions?.web||null,sessionConfiguration};
   if(options.reference)report.referenceProvenance=options.provenance||'Float32 PCM oracle at '+path.resolve(options.reference)+'-{vocals,accompaniment}.f32; exact hashes below.';
   for(const role of ['vocals','accompaniment']){
@@ -81,7 +83,7 @@ const runtime={Tensor:ort.Tensor,InferenceSession:{create:async(url,opts)=>{
     report.pcm[role]=info;
     if(options.pcm){const target=path.resolve(options.pcm+'-'+role+'.f32');fs.mkdirSync(path.dirname(target),{recursive:true});fs.writeFileSync(target,data);}
   }
-  report.performanceProfile=profile.snapshot({benchmark:{coldProcess:true,spectrumReuse:spectrumReuse==='on'}});
+  report.performanceProfile=profile.snapshot({benchmark:{coldProcess:true,filesystemCacheState:'uncontrolled',strictColdIo:false,spectrumReuse:spectrumReuse==='on'}});
   fs.mkdirSync(path.dirname(output),{recursive:true});fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');process.stdout.write(JSON.stringify(report,null,2)+'\n');
   if(!report.passed)process.exitCode=1;
 })().catch(error=>{process.stderr.write(error.stack+'\n');process.exitCode=1;});

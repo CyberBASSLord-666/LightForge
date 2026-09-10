@@ -7,18 +7,20 @@ optimization. The experimental overlap-spectrum reuse path is **off by default**
 and can only be requested with
 `options.experimentalDeuxSpectrumReuse === true`. It must not be enabled by
 default until the paired actual-model gate records exact final PCM identity,
-recovery identity, repeatable cold-process measurements, and a passing quality
+recovery identity, repeatable fresh-process measurements, and a passing quality
 gate on the locked corpus.
 
 The current full-analyzer evidence identifies the right bottleneck:
 
-| Cold full analyzer evidence | Seconds | Share of 400.3 s |
+| Fresh-process full analyzer evidence | Seconds | Share of 400.3 s |
 | --- | ---: | ---: |
 | Deux source separation | 359.37 | 89.8% |
 | Voice analysis | 36.08 | 9.0% |
 | Remaining analysis | 4.85 | 1.2% |
 
 This evidence is not a speedup claim. It motivates the subspan profiler below.
+The run used a fresh analyzer process, but its kernel file-cache and thermal
+state were not recorded; it is not evidence of a controlled cold-I/O comparison.
 
 ## What is measured
 
@@ -73,7 +75,10 @@ node --test tests/deux-preprocess-reuse.test.cjs \
   tests/deux-2.2.1.test.cjs
 ```
 
-Run each cold process separately on a licensed fixture longer than two passages:
+Run each fresh Node process separately on a licensed fixture longer than two
+passages. Process isolation resets the JavaScript runtime and model sessions,
+but does not reset the host kernel's file cache; that state must be reported as
+uncontrolled rather than relabeled as a cold-I/O condition:
 
 ```sh
 node tools/benchmark_deux_runtime.cjs \
@@ -86,7 +91,7 @@ node tools/benchmark_deux_runtime.cjs \
 ```
 
 `661501` is intentionally odd and requires a fixture at least that long.
-The paired gate runs separate cold-process baseline and candidate invocations
+The paired gate runs separate fresh-process baseline and candidate invocations
 of the same full shipped model with both settings, requires finite stems and
 byte identity for both roles, binds the benchmark/source/model/ORT/session
 configuration, and optionally injects a
@@ -106,3 +111,11 @@ that fails to restore a completed checkpoint. Recovery runs require at least
 three passages, so one post-restore local passage can establish the cache and a
 later passage can exercise it. Its one-pair timing value is
 diagnostic only; it is not sufficient to declare a quality-preserving speedup.
+
+`Deux preprocessing actual-model evidence` is the CI entry point for this
+receipt. It reproduces the 27 shipped float32 graphs, prepares the checksummed
+licensed fixture, runs both arms and a controlled recovery in one Ubuntu job,
+and uploads the comparator receipt plus a runner-conditions receipt. It proves
+only actual-model PCM/recovery equivalence for this experiment. It does not
+turn an uncontrolled filesystem-cache state, one pair, or a single fixture into
+a target-speed or locked-corpus quality-gate pass.
