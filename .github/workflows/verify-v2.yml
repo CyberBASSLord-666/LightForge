@@ -71,18 +71,20 @@ jobs:
           curl -fL --retry 3 https://github.com/sigsep/sigsep-mus-db/releases/download/v0.4.0/MUSDB18-7-STEMS.zip -o qa/release-1.6.0/fixtures/MUSDB18-7-STEMS.zip
           echo '365f66acffc57282e474a4c24b32afec3678258c50b8d45646ac849b0a287df3  qa/release-1.6.0/fixtures/MUSDB18-7-STEMS.zip' | sha256sum -c
           python3 qa/release-1.6.0/prepare-musdb-fixtures.py
-      - name: Verify current native comparison and complete model inventory
-        run: python3 qa/release-${{ env.LIGHTFORGE_RELEASE }}/verify-analysis.py
       - run: npx playwright install --with-deps chromium
       - run: node qa/release-${{ env.LIGHTFORGE_RELEASE }}/browser.cjs
       - run: node qa/release-${{ env.LIGHTFORGE_RELEASE }}/background-ui.cjs
       - name: Actual offline model pipeline and cancellation
         run: node qa/release-${{ env.LIGHTFORGE_RELEASE }}/analysis-browser.cjs
-      - run: python3 tools/bootstrap_toolchain.py
-      - name: Verify native Balanced startup, cancellation and crash-lease lifecycle
+      - name: Bootstrap pinned native host toolchain
+        run: python3 tools/bootstrap_toolchain.py
+      - name: Verify profile-enabled native equivalence and comparison bindings
         run: |
           python3 tools/bootstrap_testdeps.py
-          python3 tests/test_native_mdx_lifecycle.py
+          python3 qa/release-${{ env.LIGHTFORGE_RELEASE }}/verify-native-inference-profile.py
+          python3 qa/release-${{ env.LIGHTFORGE_RELEASE }}/verify-analysis.py
+      - name: Verify native Balanced startup, cancellation and crash-lease lifecycle
+        run: python3 tests/test_native_mdx_lifecycle.py
       - name: Build CI package with an ephemeral signing identity
         run: |
           set -o pipefail

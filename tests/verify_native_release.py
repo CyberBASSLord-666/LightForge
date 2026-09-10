@@ -28,7 +28,7 @@ CLASSES.mkdir(exist_ok=True)
 # Each run owns fresh fixtures, including after an interrupted/repeated local run.
 FIXTURES = Path(tempfile.mkdtemp(prefix="native-fixtures-", dir=OUT))
 sources = sorted((ROOT / 'android/src').rglob('*.java'))
-names = ['NativeRecoveryTest', 'ProjectStoreTest', 'NativeHardwareTest', 'NativeAudioTest', 'WebViewTransportTest', 'ProjectPreviewTest', 'AnalysisJobStoreTest', 'NativeDeuxTest', 'DiagnosticLogTest', 'NativeCrashTraceTest', 'NativeRuntimeGuardTest']
+names = ['NativeRecoveryTest', 'ProjectStoreTest', 'NativeHardwareTest', 'NativeAudioTest', 'WebViewTransportTest', 'ProjectPreviewTest', 'AnalysisJobStoreTest', 'NativeDeuxTest', 'NativeInferenceProfileTest', 'DiagnosticLogTest', 'NativeCrashTraceTest', 'NativeRuntimeGuardTest']
 tests = [ROOT / f'tests/{name}.java' for name in names + ['WebViewTransportServer']]
 bound_sources = sources + tests + [ROOT/'android/native-runtime.json', ROOT/'tests/verify_native_release.py']
 receipt = dict(release=args.release, passed=False, scope='Fresh production Java compilation and host JVM tests; no Android Activity/device/document-provider or physical Tesla execution.',
@@ -75,6 +75,8 @@ try:
     receipt['checks'].append('Durable background job ownership, checkpoint reuse, cancellation, conflicting edits, result commit and interrupted-process recovery passed on the host JVM.')
     assert 'cancellation checks passed.' in run('NativeDeuxTest')
     receipt['checks'].append('Native Studio transform retains exact source-clock samples and stereo averaging; WAVE padding, malformed input and cancellation regressions passed without neural-model inference.')
+    assert 'NativeInferenceProfile:' in run('NativeInferenceProfileTest')
+    receipt['checks'].append('Native inference profiling keeps one immutable summary plus at most 27 graph records, aggregates timings without per-run logs and retains no quoted/private fields.')
     run('ProjectPreviewTest')
     assert 'PASS:' in run('DiagnosticLogTest', FIXTURES / 'native-diagnostic-fixtures')
     receipt['checks'].append('Persistent diagnostic rotation, bounded messages, concurrency and redaction passed on the host JVM.')

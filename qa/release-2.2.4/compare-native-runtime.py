@@ -97,7 +97,8 @@ def main():
     android = Path(os.environ.get('ANDROID_SDK_ROOT', TOOLS / 'android-sdk')) / 'platforms/android-35/android.jar'
     source_files = [ROOT / 'android/src/com/cyberbasslord/lightforge/NativeDeux.java',
                     ROOT / 'android/src/com/cyberbasslord/lightforge/NativeDeuxTransform.java',
-                    ROOT / 'tests/NativeDeuxTest.java', runtime_manifest,
+                    ROOT / 'tests/NativeDeuxTest.java',
+                    ROOT / 'android/src/com/cyberbasslord/lightforge/NativeInferenceProfile.java', runtime_manifest,
                     models / 'manifest.json', audio, Path(__file__).resolve()]
     bound = {str(path.relative_to(ROOT)): sha(path) for path in source_files}
     evidence = {
@@ -136,7 +137,7 @@ def main():
         probe.write_text('package com.cyberbasslord.lightforge; public final class RuntimeComparisonMain { public static void main(String[] args) throws Exception {String actual=ai.onnxruntime.OrtEnvironment.getEnvironment().getVersion(); System.out.println("Actual ONNX runtime="+actual); if(!actual.equals(args[0]))throw new AssertionError("Runtime mismatch"); NativeDeuxTest.main(java.util.Arrays.copyOfRange(args,1,args.length));} }\n')
         compile_cp = os.pathsep.join(map(str, [android, jars[0], TOOLS / 'test-json.jar']))
         run([java / 'javac', '-encoding', 'UTF-8', '--release', '8', '-classpath', compile_cp,
-             '-d', classes, *source_files[:3], stub, probe], output / 'compile.log')
+             '-d', classes, *source_files[:4], stub, probe], output / 'compile.log')
         predictions = []
         for item, jar in zip([OLD, current], jars):
             name = item['version']

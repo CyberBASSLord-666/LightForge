@@ -31,6 +31,30 @@ COMPARISON_SOURCES = {
     'web/analysis/models/deux/manifest.json', 'web/demo/glass-castle.wav',
     OUT + 'compare-native-runtime.py',
 }
+# The immutable 2.2.4 comparison predates the observer. A newly measured comparison
+# must compile the observer because NativeDeux now references its package-private
+# type, but that newer evidence is still required to run the enabled-profile gate.
+PROFILED_COMPARISON_SOURCES = COMPARISON_SOURCES | {
+    'android/src/com/cyberbasslord/lightforge/NativeInferenceProfile.java',
+}
+PROFILE_EQUIVALENCE_PATH = OUT + 'native-inference-profile-equivalence.json'
+PROFILE_EQUIVALENCE_SCHEMA = 'lightforge.native-inference-profile-equivalence.v1'
+# A changed profile collector must prove its exact audio bytes before the historical
+# source hash may be superseded. The comparator change is limited to compiling the
+# added plain-Java collector alongside the existing predictor sources.
+PROFILED_COMPARISON_MUTABLE_SOURCES = {
+    'android/src/com/cyberbasslord/lightforge/NativeDeux.java',
+    OUT + 'compare-native-runtime.py',
+}
+PROFILE_EQUIVALENCE_SOURCES = {
+    'android/src/com/cyberbasslord/lightforge/NativeDeux.java',
+    'android/src/com/cyberbasslord/lightforge/NativeDeuxTransform.java',
+    'android/src/com/cyberbasslord/lightforge/NativeInferenceProfile.java',
+    'tests/NativeInferenceProfileEquivalenceTest.java',
+    'android/native-runtime.json', 'web/analysis/models/deux/manifest.json',
+    'web/demo/glass-castle.wav', OUT + 'native-runtime-comparison-verification.json',
+    OUT + 'compare-native-runtime.py', OUT + 'verify-native-inference-profile.py',
+}
 CLOCK_SOURCES = {
     'web/analysis/separator-deux.js', 'web/analysis/dsp.js',
     'web/analysis/models/deux/manifest.json', OUT + 'test-source-clock.cjs',
@@ -73,9 +97,18 @@ def verify_comparison(root, hashes):
     result = json.loads(path.read_text())
     require(result.get('release') == '2.2.4' and result.get('passed') is True and not result.get('failure'),
             'Current native runtime comparison did not pass')
-    require(set(result.get('source_hashes', {})) == COMPARISON_SOURCES, 'Native comparison source coverage changed')
+    source_set = set(result.get('source_hashes', {}))
+    require(source_set in (COMPARISON_SOURCES, PROFILED_COMPARISON_SOURCES),
+            'Native comparison source coverage changed')
+    mutable = set()
     for relative, expected in result['source_hashes'].items():
-        bind(root, relative, expected, hashes)
+        actual = digest(file(root, relative))
+        if relative in PROFILED_COMPARISON_MUTABLE_SOURCES and actual != expected:
+            hashes[relative] = actual
+            mutable.add(relative)
+        else:
+            require(actual == expected, 'Source differs from measured evidence: ' + relative)
+            hashes[relative] = actual
     require(result.get('start_sample') == -66150 and result.get('sample_rate') == 44100 and
             result.get('samples_per_stem') == SAMPLES, 'Native comparison does not cover the reported passage boundary')
     require(result.get('thresholds') == THRESHOLDS, 'Native comparison thresholds changed')
@@ -88,7 +121,7 @@ def verify_comparison(root, hashes):
     for run, expected, size in zip(runs, [OLD_RUNTIME_SHA256, NEW_RUNTIME_SHA256], [75255976, 41804437]):
         require(run.get('runtime_jar_sha256') == expected and run.get('runtime_jar_bytes') == size,
                 'Native comparison runtime identity changed')
-        require(run.get('samplesPerStem') == SAMPLES and run.get('output_bytes') == 2 * SAMPLES * 4,
+        require(run.get('samplesPerStem') == SAMPLES and run['output_bytes'] == 2 * SAMPLES * 4,
                 'Native comparison output is incomplete')
         require(finite_number(run.get('seconds')) and run['seconds'] > 0 and
                 type(run.get('peakRssBytes')) is int and run['peakRssBytes'] > 0 and
@@ -109,6 +142,46 @@ def verify_comparison(root, hashes):
     expected_models = {'web/analysis/models/deux/' + name: item['sha256'] for name, item in model_files.items()}
     require(len(expected_models) == 27 and result.get('model_asset_hashes') == expected_models,
             'Native comparison model inventory differs from current Deux models')
+    return result, mutable
+
+
+def verify_profile_equivalence(root, hashes, comparison, mutable):
+    # A newly rerun comparison can bind the profiler source directly, but it only
+    # exercises the ordinary public entry point. Always retain the enabled-profile
+    # proof whenever that collector is part of the measured source set.
+    profile_compiled = 'android/src/com/cyberbasslord/lightforge/NativeInferenceProfile.java' in comparison.get('source_hashes', {})
+    if not mutable and not profile_compiled:
+        return None
+    require(mutable.issubset(PROFILED_COMPARISON_MUTABLE_SOURCES), 'Unreviewed historical comparison source changed')
+    path = file(root, PROFILE_EQUIVALENCE_PATH)
+    result = json.loads(path.read_text())
+    require(result.get('schema') == PROFILE_EQUIVALENCE_SCHEMA and result.get('release') == '2.2.4' and
+            result.get('passed') is True and not result.get('failure'), 'Profile-enabled native equivalence did not pass')
+    require(set(result.get('source_hashes', {})) == PROFILE_EQUIVALENCE_SOURCES,
+            'Profile equivalence source coverage changed')
+    for relative, expected in result['source_hashes'].items():
+        bind(root, relative, expected, hashes)
+    runtime = json.loads(file(root, 'android/native-runtime.json').read_text())
+    expected_run = next((run for run in comparison['runs'] if run.get('version') == runtime.get('version')), None)
+    require(expected_run is not None, 'Profile equivalence has no approved current-runtime baseline')
+    baseline = {
+        'comparison_path': OUT + 'native-runtime-comparison-verification.json',
+        'comparison_sha256': COMPARISON_SHA256,
+        'runtime_version': '1.25.1', 'approved_output_sha256': expected_run['sha256'],
+        'start_sample': -66150,
+    }
+    require(result.get('baseline') == baseline, 'Profile equivalence baseline differs from approved runtime output')
+    require(result.get('result') == {'outputSha256': expected_run['sha256'], 'outputBytes': 2 * SAMPLES * 4,
+                                     'profileRecords': 28, 'graphRecords': 27},
+            'Profiled native output or bounded receipt differs from approved baseline')
+    models = json.loads(file(root, 'web/analysis/models/deux/manifest.json').read_text())['files']
+    expected_models = {'web/analysis/models/deux/' + name: item['sha256'] for name, item in models.items()}
+    require(len(expected_models) == 27 and result.get('model_asset_hashes') == expected_models,
+            'Profile equivalence did not bind every reviewed Deux graph')
+    checks = result.get('checks')
+    require(isinstance(checks, list) and len(checks) >= 4 and all(isinstance(item, str) and item for item in checks),
+            'Profile equivalence receipt is incomplete')
+    hashes[PROFILE_EQUIVALENCE_PATH] = digest(path)
     return result
 
 
@@ -181,7 +254,7 @@ MDX_SOURCES = {
 }
 
 
-def verify_mdx(root, hashes):
+def verify_mdx(root, hashes, profile_equivalence):
     relative = OUT + 'native-mdx-comparison-verification.json'
     path = bind(root, relative, MDX_COMPARISON_SHA256, hashes)
     result = json.loads(path.read_text())
@@ -191,7 +264,11 @@ def verify_mdx(root, hashes):
     require(bool(adapters) and set(result.get('source_hashes', {})) == MDX_SOURCES | adapters,
             'MDX comparison source coverage changed')
     for source, expected in result['source_hashes'].items():
-        bind(root, source, expected, hashes)
+        if source == 'android/src/com/cyberbasslord/lightforge/NativeDeux.java' and profile_equivalence is not None:
+            require(source in hashes and digest(file(root, source)) == hashes[source],
+                    'Profiled native predictor differs from its exact-byte equivalence proof')
+        else:
+            bind(root, source, expected, hashes)
     assets = {'web/analysis/models/uvr-mdx-voc-ft.onnx'} | {
         p.relative_to(root).as_posix() for p in (root / 'web/analysis/vendor').glob('*') if p.is_file()}
     require(set(result.get('analysis_asset_hashes', {})) == assets, 'MDX comparison asset coverage changed')
@@ -350,10 +427,11 @@ def verify_release(root=ROOT):
     require(json.loads(version_path.read_text()) == {'name': '2.2.4', 'code': 20204},
             'This evidence protocol belongs only to 2.2.4 / 20204')
     hashes = {'version.json': digest(version_path)}
-    comparison = verify_comparison(root, hashes)
+    comparison, mutable_comparison_sources = verify_comparison(root, hashes)
+    profile_equivalence = verify_profile_equivalence(root, hashes, comparison, mutable_comparison_sources)
     assets = verify_assets(root, hashes)
     clock = verify_clock(root, hashes)
-    mdx = verify_mdx(root, hashes)
+    mdx = verify_mdx(root, hashes, profile_equivalence)
     downstream = verify_downstream(root, hashes, mdx)
     hashes[OUT + 'verify-analysis.py'] = digest(file(root, OUT + 'verify-analysis.py'))
     for relative, expected in {**hashes, **assets}.items():
@@ -364,11 +442,11 @@ def verify_release(root=ROOT):
         'analysis_asset_binding': {'manifest_path': 'web/analysis/ASSET_MANIFEST.json',
             'manifest_sha256': ASSET_MANIFEST_SHA256, 'verified_asset_count': len(assets),
             'scope': 'All 73 installed analysis assets passed complete byte-count and SHA-256 checks. Generated model graphs are bound separately from checkout source files; the release publisher independently verifies their packaged bytes.'},
-        'scope': 'Fresh matched Linux/JVM full-passage Deux runtime comparison, fresh production native MDX versus CPU WASM comparison, fresh production source-clock regression, and exact verification of all bundled analysis assets. This is not a new corpus accuracy benchmark, Android/ARM64 crash reproduction, phone performance result, or validation of background compatibility fallback.',
+        'scope': 'Pinned matched Linux/JVM full-passage Deux runtime comparison, an exact-byte profile-enabled Deux equivalence when collector sources differ, fresh production native MDX versus CPU WASM comparison, fresh production source-clock regression, and exact verification of all bundled analysis assets. This is not a new corpus accuracy benchmark, Android/ARM64 crash reproduction, phone performance result, or validation of background compatibility fallback.',
         'checks': [
-            'Pinned fresh host evidence compares actually loaded ONNX Runtime 1.23.2 and 1.25.1 using identical production predictor code, original unquantized models, source audio, and startSample=-66150.',
+            'Pinned host evidence compares actually loaded ONNX Runtime 1.23.2 and 1.25.1 using the originally measured production predictor code, original unquantized models, source audio, and startSample=-66150.',
             'Both runtime runs completed two finite 573300-sample stems and satisfy the predeclared absolute and relative numerical thresholds; exact differences are recorded in the bound comparison.',
-            'Every source bound by the fresh host comparison remains byte-identical; the current native runtime manifest matches the measured 1.25.1 dependency.',
+            'When native profile collector sources differ from that immutable comparison, a fresh profile-enabled 13-second run must exactly match the approved 1.25.1 output SHA-256 and emit one summary plus all 27 graph records; otherwise every historical source remains byte-identical.',
             'All 73 analysis assets match the current reviewed inventory, including all 27 Deux graphs and every GAME graph.',
             'Fresh 2.2.4 source-clock execution preserves all 932143 samples across four overlapping windows, including the final odd sample.',
             'Fresh production NativeMdxTask and bundled CPU WASM compare three fixed inputs with unchanged graph weights and both polarity passes. Strict decoded waveform equivalence is mandatory; internal spectral diagnostics retain any failed coefficient comparisons, with protocol revision history preserved.',
@@ -378,6 +456,9 @@ def verify_release(root=ROOT):
         'fresh_native_runtime_comparison': {'path': OUT + 'native-runtime-comparison-verification.json',
             'sha256': COMPARISON_SHA256, 'runs': comparison['runs'], 'comparison': comparison['comparison'],
             'scope': comparison['scope']},
+        'native_inference_profile_equivalence': None if profile_equivalence is None else {
+            'path': PROFILE_EQUIVALENCE_PATH, 'sha256': hashes[PROFILE_EQUIVALENCE_PATH],
+            'result': profile_equivalence['result'], 'scope': profile_equivalence['scope']},
         'fresh_native_mdx_comparison': {'path': OUT + 'native-mdx-comparison-verification.json', 'sha256': hashes[OUT + 'native-mdx-comparison-verification.json'], 'passages': mdx['passages'], 'scope': mdx['scope'], 'decoded_waveform_passed': mdx['decoded_waveform_passed'], 'spectral_diagnostic_passed': mdx['spectral_diagnostic_passed'], 'protocol_revision': mdx['protocol_revision']},
         'fresh_native_mdx_downstream': {'path': OUT + 'native-mdx-downstream-verification.json', 'sha256': hashes[OUT + 'native-mdx-downstream-verification.json'], 'scope': downstream.get('scope'), 'fixture': downstream['fixture'], 'coverage': downstream['comparison']['coverage'], 'thresholds': downstream['thresholds']},
         'fresh_source_clock': {'path': OUT + 'source-clock-verification.json',
