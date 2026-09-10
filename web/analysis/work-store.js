@@ -9,6 +9,11 @@ const IDENTITY='identity',CONTROL='cache-control',RECORD_VERSION=2,CONTROL_VERSI
 const validKey=k=>typeof k==='string'&&/^[a-f0-9]{64}$/.test(k);
 const validName=n=>typeof n==='string'&&/^[a-z][a-z0-9-]{0,79}$/.test(n);
 const internalName=n=>n===IDENTITY||n===CONTROL;
+// Wall-clock metadata must never decide whether a checkpoint is valid. Some
+// embedders expose Date.now through a guarded bridge, so retain a harmless
+// sentinel when that bridge is unavailable rather than interrupting a durable
+// identity write or invalidation fence.
+const metadataNow=()=>{try{const value=Date.now();return Number.isFinite(value)&&value>=0?value:0;}catch{return 0;}};
 const hash=async bytes=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),n=>n.toString(16).padStart(2,'0')).join('');
 const encode=value=>JSON.stringify(value,(_,v)=>{
  if(typeof v==='number'&&!Number.isFinite(v))throw Error('Analysis progress contains an invalid number.');
@@ -42,7 +47,7 @@ async function open(key,{sourceId='',requiredBytes=0}={}){
  const parent=await namespace();
  // Cleanup is best effort: another job's abandoned lock must not prevent work.
  for await(const [name,entry]of parent.entries())if(name!==key&&entry.kind==='directory'&&validKey(name)){
-  try{const marker=await(await entry.getFileHandle('identity.json')).getFile();if(Date.now()-marker.lastModified>7*86400000)await parent.removeEntry(name,{recursive:true});}catch{}
+  try{const marker=await(await entry.getFileHandle('identity.json')).getFile();if(metadataNow()-marker.lastModified>7*86400000)await parent.removeEntry(name,{recursive:true});}catch{}
  }
  const dir=await parent.getDirectoryHandle(key,{create:true});
  const nameOf=(name,suffix)=>{if(!validName(name))throw Error('Invalid analysis checkpoint name.');return name+suffix;};
@@ -81,12 +86,12 @@ async function open(key,{sourceId='',requiredBytes=0}={}){
   // A missing or corrupt identity makes every other record untrusted.
   await clearAll();
   if(requiredBytes){const space=await navigator.storage.estimate().catch(()=>({}));if(space.quota&&space.quota-(space.usage||0)<requiredBytes+64*1024*1024)throw Error('Free device storage before analyzing this song. Recoverable analysis needs temporary space for completed passages.');}
-  await writeRecord(IDENTITY,{key,sourceId,version:1,updatedAt:Date.now()});
- }else await writeRecord(IDENTITY,{key,sourceId,version:1,updatedAt:Date.now()});
+  await writeRecord(IDENTITY,{key,sourceId,version:1,updatedAt:metadataNow()});
+ }else await writeRecord(IDENTITY,{key,sourceId,version:1,updatedAt:metadataNow()});
  const controlRecord=await record(CONTROL);
  const validControl=value=>value&&value.version===CONTROL_VERSION&&value.key===key&&value.sourceId===sourceId&&value.generations&&Object.getPrototypeOf(value.generations)===Object.prototype&&Object.entries(value.generations).every(([prefix,value])=>validName(prefix)&&Number.isSafeInteger(value)&&value>=0);
  if(controlRecord.state==='missing'){
-  control={version:CONTROL_VERSION,key,sourceId,generations:{},updatedAt:Date.now()};
+  control={version:CONTROL_VERSION,key,sourceId,generations:{},updatedAt:metadataNow()};
   recovery.legacyControlMigrated=true;
   await writeRecord(CONTROL,control);
  }else if(controlRecord.state!=='ok'||!validControl(controlRecord.payload)){
@@ -94,7 +99,7 @@ async function open(key,{sourceId='',requiredBytes=0}={}){
   // is stricter than a best-effort delete and prevents an old dependent stage
   // from becoming a cache hit after interrupted invalidation.
   await clearExceptIdentity();
-  control={version:CONTROL_VERSION,key,sourceId,generations:{},updatedAt:Date.now()};
+  control={version:CONTROL_VERSION,key,sourceId,generations:{},updatedAt:metadataNow()};
   recovery.corruptControlDiscarded=true;
   await writeRecord(CONTROL,control);
  }else control=controlRecord.payload;
@@ -131,7 +136,7 @@ async function open(key,{sourceId='',requiredBytes=0}={}){
   if(!Array.isArray(prefixes)||prefixes.some(p=>!validName(p)||internalName(p)))throw Error('Invalid checkpoint invalidation.');
  const unique=[...new Set(prefixes)].sort(),next={...control,generations:{...control.generations}};
  for(const prefix of unique)next.generations[prefix]=(next.generations[prefix]||0)+1;
- next.updatedAt=Date.now();
+ next.updatedAt=metadataNow();
   // Commit the fence first. Physical removal is merely reclamation, so a
   // locked OPFS file cannot make a stale record visible after cancellation.
  await writeRecord(CONTROL,next);
