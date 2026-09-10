@@ -44,7 +44,7 @@ test('bridge consumes only a freshly recomputed non-linguistic acoustic link and
   const original={role:'vocals',sourceStart:1,sourceEnd:3,sourceEventTime:1.2,articulation:true,musicTime:1.2,start:1.2,end:3,priority:70,strength:.42,release:0};
   const articulated=strategy.classifyCandidate(original);
   assert.deepEqual(original,{role:'vocals',sourceStart:1,sourceEnd:3,sourceEventTime:1.2,articulation:true,musicTime:1.2,start:1.2,end:3,priority:70,strength:.42,release:0},'bridge must not mutate an incoming cue');
-  assert.equal(articulated.vocalStress,'primary');assert.ok(articulated.priority>original.priority);assert.ok(articulated.strength>=.42);
+  assert.equal(articulated.vocalStress,'primary');assert.ok(articulated.priority>original.priority);assert.ok(articulated.priority<=78,'automatic vocal detail must not outrank a structural/climax cue');assert.ok(articulated.strength>=.42);
   assert.equal(articulated.end,2.6,'the measured release may shorten only an existing cue that covers it');
   assert.equal(articulated.vocalPitchMovement,'rising');
   const held=strategy.classifyCandidate({role:'vocals',sourceStart:1,sourceEnd:3,sourceEventTime:1.5,vocalNote:true,musicTime:1.5,start:1.5,end:3,priority:71,strength:.5,release:0});

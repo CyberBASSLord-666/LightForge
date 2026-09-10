@@ -33,7 +33,7 @@ The bridge annotates existing eligible vocal candidates only:
 
 | Acoustic evidence | Controlled visual hint |
 | --- | --- |
-| Primary/secondary acoustic articulation stress | Bounded collision priority and strength boost for the existing attack. |
+| Primary/secondary acoustic articulation stress | Bounded collision priority and strength boost for the existing attack; the added boost cannot cross the automatic structural/climax priority ceiling. |
 | Held note | Legal release ramp on the existing sustained candidate. |
 | Measured phrase release before its analysis span ends | Shortens only an existing phrase-scale candidate that already covers the release; onset is never moved. |
 | Confident rising/falling pitch trajectory | Uses the existing left/right signature route as a spatial direction hint. |

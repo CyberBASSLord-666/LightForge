@@ -11,6 +11,10 @@
 (function(root){
   'use strict';
   const VERSION='1.0.0';
+  // Automatic vocal detail must remain beneath automatic structural/climax
+  // cues. This caps only the bridge's added boost; it never lowers an
+  // existing priority supplied by another authority.
+  const AUTOMATIC_VOCAL_PRIORITY_CEILING=78;
   const finite=value=>typeof value==='number'&&Number.isFinite(value);
   const clamp=(value,min=0,max=1)=>Math.max(min,Math.min(max,finite(value)?value:0));
   const round=value=>Math.round(value*1000000)/1000000;
@@ -145,7 +149,7 @@
         const articulation=match.entry.semantic,weight=clamp(Math.min(articulation.stressConfidence,articulation.confidence));
         const boost=articulation.stress==='primary'?round(5+6*weight):articulation.stress==='secondary'?round(2+3*weight):0;
         base.vocalAcousticArticulation=true;base.vocalStress=articulation.stress;base.vocalStressConfidence=round(weight);
-        if(boost){base.priority=(finite(base.priority)?base.priority:0)+boost;base.strength=clamp(Math.max(finite(base.strength)?base.strength:0,articulation.intensity*.90));}
+        if(boost){const priority=finite(base.priority)?base.priority:0;base.priority=priority+Math.min(boost,Math.max(0,AUTOMATIC_VOCAL_PRIORITY_CEILING-priority));base.strength=clamp(Math.max(finite(base.strength)?base.strength:0,articulation.intensity*.90));}
         if(articulation.stress==='primary')observed.primaryArticulationIds.add(articulation.id);
       }
       if(match.type==='note'){
