@@ -1,0 +1,22 @@
+{
+  "scope": "Scalar binary32 grouping counterexample inferred from v1.25.1 native SGEMM scheduling and ARM64 NEON output accumulation; not actual ARM64 or Deux execution",
+  "shape": {
+    "M": 16,
+    "N": 256,
+    "K": 1024,
+    "batchSize": 1,
+    "packedB": false,
+    "TransA": "NoTrans"
+  },
+  "fourThreads": {
+    "localN": 64,
+    "strideK": 256,
+    "illustrativeOutput": 9.99999993922529e-09
+  },
+  "eightThreads": {
+    "localN": 32,
+    "strideK": 512,
+    "illustrativeOutput": 0.0
+  },
+  "different": true
+}

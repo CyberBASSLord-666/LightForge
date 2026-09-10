@@ -1,3 +1,22 @@
+# LightForge 2.2.5 — qualification in progress
+
+This candidate reduces redundant analysis work while retaining the bundled models, float32 precision, source timing, contexts and all eight GAME transcription steps. It has not yet passed the complete release gates or been published.
+
+## Changes
+
+- Run two independent singing-transcription passages concurrently on eligible devices. Admission uses current free memory immediately before allocating the models; devices need at least 6 GiB available RAM, 7 GiB total RAM, four cores and a 64-bit process.
+- Preserve exact source windows, per-passage seeds and checkpoints, then join completed notes in source order. A child failure retires it and recomputes the affected passage serially; later attempts retain serial processing for that audio/app version.
+- Reduce Balanced MDX preprocessing by omitting recombination of FFT bins that the model already discards. Every consumed bin and all inverse-transform calculations remain unchanged.
+- Reuse separation, vocal and bass analysis after sensitivity or BPM changes, while rebuilding the rhythm result and current metadata. This avoids repeating expensive models on eligible edits.
+
+## Verification status
+
+Fixed real/stress FFT comparisons preserve every output byte. Cache-composition comparisons preserve exact output JSON. Production GAME scheduling, cancellation, checkpoint failure and fallback regressions pass; actual Android pool qualification is still pending. Experimental native GAME and eight-thread Studio routes are not included because exact target-runtime behavior has not been established.
+
+The original signing identity will be required for the published update so it can install over an existing app and retain projects. Host measurements do not establish physical-phone speed, thermals or full-song completion time.
+
+---
+
 # LightForge 2.2.4
 
 LightForge 2.2.4 improves long-running analysis and recovery while preserving the bundled models, source timing and quality settings. The signed update uses the original LightForge certificate: install it over the existing app without uninstalling to retain private projects.

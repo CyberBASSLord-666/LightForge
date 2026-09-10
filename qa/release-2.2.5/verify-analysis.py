@@ -29,16 +29,7 @@ REQUIRED_CACHE_SOURCES = {
     'android/src/com/cyberbasslord/lightforge/AnalysisJobStore.java',
     'tests/analysis-recovery-2.2.1.test.cjs', 'version.json',
 }
-NATIVE_SOURCES = {
-    'android/src/com/cyberbasslord/lightforge/NativeDeux.java',
-    'android/src/com/cyberbasslord/lightforge/NativeDeuxTransform.java',
-    'tests/NativeDeuxTest.java', 'android/native-runtime.json',
-    'web/analysis/models/deux/manifest.json', 'web/demo/glass-castle.wav',
-    'qa/release-1.6.0/fixtures/falcon-mix.wav',
-    'qa/speedup-exact/native-threads/reference/NativeDeux.java',
-    'qa/speedup-exact/native-threads/reference/NativeDeuxTest.java',
-    'qa/speedup-exact/native-threads/verify.py',
-}
+
 
 
 def require(condition, message):
@@ -96,7 +87,9 @@ def verify_historical(root, hashes):
         if relative.startswith('qa/release-2.2.4/initial-mdx-absolute-only/') or relative.startswith('qa/release-2.2.4/revised-mdx-first-run/'):
             bind(root, relative, expected, hashes)
     # The unchanged MDX bridge/runtime requires no new cross-runtime claim.
-    for relative in ['android/native-runtime.json', 'android/src/com/cyberbasslord/lightforge/NativeMdxTask.java',
+    for relative in ['android/native-runtime.json', 'android/src/com/cyberbasslord/lightforge/NativeDeux.java',
+                     'android/src/com/cyberbasslord/lightforge/NativeDeuxTransform.java', 'tests/NativeDeuxTest.java',
+                     'android/src/com/cyberbasslord/lightforge/NativeMdxTask.java',
                      'android/src/com/cyberbasslord/lightforge/NativeRuntimeGuard.java', 'web/analysis/wav-reader.js']:
         bind(root, relative, old['source_hashes'][relative], hashes)
     return old
@@ -167,42 +160,31 @@ def verify_fft(root, relative, historical, hashes):
     return result
 
 
-def verify_native(root, relative, historical, hashes):
-    result = read_bound(root, relative, hashes)
-    passed(result, 'Current native thread comparison')
-    require(result.get('policyAndTransformChecksPassed') is True and set(result.get('sourceHashes', {})) == NATIVE_SOURCES,
-            'Native policy or source coverage changed')
-    for source, expected in result['sourceHashes'].items():
+def verify_unqualified_native_experiment(root, historical, hashes):
+    relative = 'qa/speedup-exact/native-threads/release-decision.json'
+    decision = read_bound(root, relative, hashes)
+    require(decision.get('shipping') is False and decision.get('targetQualification') == 'unqualified',
+            'The unqualified native eight-thread experiment must not ship')
+    prior = decision.get('historicalReceipt', {})
+    measured = json.loads(bind(root, prior.get('path'), prior.get('sha256'), hashes).read_text())
+    require(measured.get('host', {}).get('machine') == 'x86_64', 'Native experiment architecture evidence changed')
+    # Preserve candidate source snapshots under their recorded original hashes;
+    # never compare these experimental bindings to restored production source.
+    snapshots = decision.get('candidateSourceSnapshots', {})
+    require(isinstance(snapshots, dict) and snapshots, 'Rejected native candidate snapshots missing')
+    for source, metadata in snapshots.items():
+        bind(root, metadata.get('preservedPath'), metadata.get('sha256'), hashes)
+        if source in measured.get('sourceHashes', {}):
+            require(metadata['sha256'] == measured['sourceHashes'][source], 'Native experiment snapshot differs from measured source')
+    for source, expected in decision.get('restoredProductionHashes', {}).items():
         bind(root, source, expected, hashes)
-    require(result['sourceHashes']['qa/speedup-exact/native-threads/reference/NativeDeux.java'] == historical['source_hashes']['android/src/com/cyberbasslord/lightforge/NativeDeux.java'],
-            'Native reference is not the released predictor')
-    require((result.get('sampleRate'), result.get('contextSamples'), result.get('samplesPerStem'), result.get('outputBytes'), result.get('startSample')) == (44100, 573300, 573300, 4586400, -66150),
-            'Native comparison sample geometry changed')
-    manifest = json.loads(file(root, 'web/analysis/models/deux/manifest.json').read_text())
-    require(result.get('modelHashes') == {name: item['sha256'] for name, item in manifest['files'].items()}, 'Native comparison graph identity changed')
-    runtime = json.loads(file(root, 'android/native-runtime.json').read_text())
-    require(result.get('host', {}).get('runtimeJarSha256') == runtime['host']['sha256'], 'Native comparison ORT identity changed')
-    fixtures = result.get('fixtures', [])
-    require([item.get('id') for item in fixtures] == ['demo-start', 'falcon-start'], 'Native real-input coverage changed')
-    for item in fixtures:
-        require(item.get('byteIdentical') is True and item.get('maxAbsoluteError') == 0 and item.get('rmse') == 0,
-                'Native output is not exact')
-        runs = item.get('runs', {})
-        require(set(runs) == {'baseline', 'candidate'}, 'Incomplete native pair')
-        require(runs['baseline'].get('sha256') == runs['candidate'].get('sha256'), 'Native output digests differ')
-        for name, threads in [('baseline', 4), ('candidate', 8)]:
-            run = runs[name]
-            require(run.get('outputBytes') == 4586400 and run.get('samplesPerStem') == 573300
-                    and type(run.get('actualAvailableCores')) is int and run['actualAvailableCores'] >= 8 and run.get('selectedIntraOpThreads') == threads,
-                    'Native comparison did not exercise the required production thread policies')
-            require(isinstance(run.get('sha256'), str) and re.fullmatch(r'[a-f0-9]{64}', run['sha256']), 'Native output hash missing')
-            log_path = (Path(relative).parent / (item['id'] + '-' + name + '.log')).as_posix()
-            log = bind(root, log_path, run.get('logSha256'), hashes).read_text()
-            metrics = [json.loads(line) for line in log.splitlines() if line.startswith('{"seconds":')]
-            require(len(metrics) == 1 and metrics[0].get('sha256') == run['sha256']
-                    and metrics[0].get('samplesPerStem') == 573300 and metrics[0].get('seconds') == run.get('seconds'),
-                    'Native retained execution log disagrees with receipt')
-    return result
+        if source in historical['source_hashes']:
+            require(expected == historical['source_hashes'][source], 'Native rollback differs from the published implementation')
+    for source, expected in decision.get('architectureReviewHashes', {}).items():
+        bind(root, source, expected, hashes)
+    return {'shipping': False, 'target_qualification': 'unqualified', 'decision_path': relative,
+            'decision_sha256': hashes[relative], 'historical_receipt': prior,
+            'scope': 'Retained Linux/x86_64 experiment only; target ARM dispatch, prepacking and front/head kernel equivalence were not qualified. Production native source remains the published implementation.'}
 
 
 def verify_cache(root, relative, historical, hashes):
@@ -263,14 +245,14 @@ def verify_release(root=ROOT):
     version = read_bound(root, 'version.json', hashes)
     require(version == {'name': '2.2.5', 'code': 20205}, 'This protocol belongs only to 2.2.5 / 20205')
     inputs = read_bound(root, OUT + 'proof-inputs.json', hashes)
-    require(inputs.get('release') == '2.2.5' and set(inputs) == {'release', 'mdx_fft', 'role_cache', 'native_threads', 'game_pool_android'},
+    require(inputs.get('release') == '2.2.5' and set(inputs) == {'release', 'mdx_fft', 'role_cache', 'game_pool_android'},
             'Release proof input coverage changed')
     hashes[OUT + 'verify-analysis.py'] = digest(file(root, OUT + 'verify-analysis.py'))
     historical = verify_historical(root, hashes)
     assets = verify_assets(root, historical, hashes)
     clock = verify_clock(root, hashes)
     fft = verify_fft(root, inputs['mdx_fft'], historical, hashes)
-    native = verify_native(root, inputs['native_threads'], historical, hashes)
+    native_experiment = verify_unqualified_native_experiment(root, historical, hashes)
     cache = verify_cache(root, inputs['role_cache'], historical, hashes)
     game = verify_game_pool(root, inputs['game_pool_android'], hashes)
     for relative, expected in {**hashes, **assets}.items():
@@ -281,17 +263,18 @@ def verify_release(root=ROOT):
         'checks': [
             'All current analysis assets match their complete inventory; model weights, model configuration and ORT Web bytes match the published 2.2.4 evidence.',
             'Current MDX FFT encoding and decoding match every consumed float32 value on three real inputs and a deterministic edge-value stress input.',
-            'Current NativeDeux 4-thread reference and production 8-thread policy return byte-identical complete stereo-role outputs on two real inputs.',
+            'NativeDeux, its transform, runtime, and source test retain the published 2.2.4 bindings; the unqualified eight-thread experiment is excluded from shipping.',
             'Current role-cache composition preserves fresh and edited-rhythm JSON exactly, including warnings and model metadata; complete recovery tests pass.',
             'Current Android GAME pool qualification passed with exact production model outputs, unchanged steps, child execution, cancellation and durable retry protection.',
             'Fresh 2.2.5 source-clock regression preserves all 932143 samples across four overlapping passages.',
         ],
         'fresh_source_clock': clock,
-        'exact_optimization_proofs': {key: {'path': inputs[key], 'sha256': hashes[inputs[key]]} for key in ['mdx_fft', 'role_cache', 'native_threads', 'game_pool_android']},
+        'exact_optimization_proofs': {key: {'path': inputs[key], 'sha256': hashes[inputs[key]]} for key in ['mdx_fft', 'role_cache', 'game_pool_android']},
         'historical_model_evidence': {'release': '2.2.4', 'path': HISTORICAL, 'sha256': HISTORICAL_SHA256, 'status': 'Historical; not rerun or rebound to changed source',
             'spectral_diagnostic_passed': False, 'scope': historical['scope']},
+        'unqualified_experiments': {'native_eight_threads': native_experiment},
         'timing_limits': {'mdx_fft_timing_valid': fft.get('timing_valid'), 'mdx_fft_timing_limitation': fft.get('timing_limitation'),
-            'native': native.get('limitations'), 'cache': cache.get('limits'), 'game': game.get('limitations')},
+            'cache': cache.get('limits'), 'game': game.get('limitations')},
         'limitations': ['No historical measurement is represented as current execution.', 'No new corpus accuracy benchmark or physical-phone speed claim is made.',
                        'The new transformations and scheduling changes require exact output identity; historical MDX cross-runtime spectral differences and failed protocols remain preserved.'],
         'completedAt': datetime.datetime.now(datetime.timezone.utc).isoformat(),

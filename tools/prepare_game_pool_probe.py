@@ -11,6 +11,7 @@ import os
 from pathlib import Path
 import re
 import secrets
+import signal
 import shutil
 import subprocess
 import sys
@@ -53,10 +54,35 @@ PROBE_FILES = (
     'tests/android/game-pool-probe.js', '.github/workflows/probe-game-pool.yml',
 )
 TIMEOUT_SECONDS = 32 * 60
+HOST_RESERVE_BYTES = 1536 * 1024 * 1024
 
 
 def run(*command, **kwargs):
     return subprocess.check_output([str(part) for part in command], cwd=ROOT, env=ENV, text=True, **kwargs)
+
+
+def host_memory():
+    values = {}
+    for line in Path('/proc/meminfo').read_text().splitlines():
+        name, value = line.split(':', 1)
+        values[name] = int(value.split()[0]) * 1024
+    swaps = dict(line.split() for line in Path('/proc/vmstat').read_text().splitlines())
+    return {'totalBytes': values['MemTotal'], 'availableBytes': values['MemAvailable'],
+            'swapTotalBytes': values['SwapTotal'], 'swapFreeBytes': values['SwapFree'],
+            'swapInPages': int(swaps['pswpin']), 'swapOutPages': int(swaps['pswpout'])}
+
+
+def host_preflight():
+    EVIDENCE.mkdir(parents=True, exist_ok=True)
+    value = host_memory()
+    value.update(logicalCpus=os.cpu_count(), affinityCpus=len(os.sched_getaffinity(0)),
+                 configuredGuestMemoryMiB=8192, configuredGuestCores=4,
+                 hostReserveBytes=HOST_RESERVE_BYTES,
+                 scope='Host resources are measured separately from the advertised Android guest; no physical-phone equivalence or CPU speedup is implied.')
+    value['passed'] = value['totalBytes'] >= 7 * 1024**3 and value['availableBytes'] >= 6 * 1024**3
+    (EVIDENCE / 'host-capacity.json').write_text(json.dumps(value, indent=2) + '\n')
+    check(value['passed'], 'Runner lacks six GiB of actual available host RAM before emulator launch; use a larger real runner')
+    print(json.dumps(value))
 
 
 def source_hashes():
@@ -358,6 +384,16 @@ def validate_report(report, provenance):
         return sorted(records, key=lambda record: (record['pcm'], record['graph'], record['ordinal']))
 
     check(ordered(serial['records']) == ordered(parallel['records']), 'Raw graph-output records differ')
+    expected_calls = [('bd2dur', 0), ('dur2bd', 0), ('encoder', 0), ('estimator', 0)] + [('segmenter', step) for step in range(8)]
+    for mode, value in (('serial', serial), ('parallel', parallel)):
+        check([(entry['first'], entry['count']) for entry in value['reads']] == [(0, 617400), (441000, 617400)],
+              'Probe did not read both complete distinct fourteen-second contexts: ' + mode)
+        pcm_ids = [entry['sha256'] for entry in value['reads']]
+        check(len(set(pcm_ids)) == 2 and all(re.fullmatch(r'[0-9a-f]{64}', key) for key in pcm_ids), 'Distinct source PCM hashes missing')
+        check({entry['pcm'] for entry in value['records']} == set(pcm_ids), 'Raw outputs refer to different source contexts')
+        for key in pcm_ids:
+            check(sorted((entry['graph'], entry['ordinal']) for entry in value['records'] if entry['pcm'] == key) == expected_calls,
+                  'Per-passage graph coverage is incomplete: ' + mode)
     for mode, value in (('serial', serial), ('parallel', parallel)):
         executions = value.get('executions', [])
         check(len(executions) == 24, 'Actual graph execution intervals missing for ' + mode)
@@ -409,6 +445,9 @@ def validate_report(report, provenance):
     check(len(admissions) == len(expected_admissions)
           and {entry.get('phase'): entry.get('parallelism') for entry in admissions} == expected_admissions,
           'Fresh production admission/crash-guard evidence differs')
+    check(all(entry.get('availableBytes', 0) >= 6 * 1024**3 and entry.get('totalBytes', 0) >= 7 * 1024**3
+              and entry.get('cores', 0) >= 4 and entry.get('process64Bit') is True and entry.get('lowMemory') is False
+              for entry in admissions), 'Admission bypassed the actual six-GiB available-memory policy')
 
 
 def run_probe():
@@ -418,10 +457,44 @@ def run_probe():
     adb = Path(os.environ['ANDROID_HOME']) / 'platform-tools/adb'
     stop = threading.Event()
     sampler = None
+    host_watcher = None
     memory_counts = {'samples': 0, 'renderer_samples': 0, 'errors': 0}
+    host_safety = {'samples': 0, 'minimumAvailableBytes': None, 'errors': [], 'reserveBytes': HOST_RESERVE_BYTES}
 
     def device(*arguments, timeout=30):
         return subprocess.run([str(adb), *map(str, arguments)], capture_output=True, text=True, timeout=timeout, check=True).stdout
+
+    def watch_host():
+        baseline = host_memory()
+        last_write = 0
+        with (EVIDENCE / 'host-memory-samples.jsonl').open('w', buffering=1) as output:
+            while not stop.is_set():
+                try:
+                    sample = host_memory()
+                    sample['at'] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+                    host_safety['samples'] += 1
+                    previous = host_safety['minimumAvailableBytes']
+                    host_safety['minimumAvailableBytes'] = sample['availableBytes'] if previous is None else min(previous, sample['availableBytes'])
+                    reason = None
+                    if sample['availableBytes'] < HOST_RESERVE_BYTES:
+                        reason = 'Actual host RAM fell below the reserved 1.5 GiB; diagnostic emulator stopped before host starvation'
+                    if sample['swapInPages'] != baseline['swapInPages'] or sample['swapOutPages'] != baseline['swapOutPages']:
+                        reason = 'Host swap activity appeared during qualification; a swap-backed measurement is not accepted'
+                    now = time.monotonic()
+                    if now - last_write >= 1 or reason:
+                        output.write(json.dumps(sample) + '\n'); last_write = now
+                    if reason:
+                        host_safety['errors'].append(reason)
+                        pid = int((ROOT / 'emulator.pid').read_text().strip())
+                        command = Path('/proc') / str(pid) / 'cmdline'
+                        check(pid > 1 and command.is_file() and b'LightForgeGamePool' in command.read_bytes(), 'Refusing to stop a process not identified as this diagnostic emulator')
+                        os.kill(pid, signal.SIGTERM)
+                        host_safety['emulatorStopped'] = True
+                        return
+                except Exception as error:
+                    host_safety['errors'].append(str(error))
+                    return
+                stop.wait(.25)
 
     def sample_memory():
         with (EVIDENCE / 'memory-samples.jsonl').open('w', buffering=1) as output:
@@ -449,6 +522,12 @@ def run_probe():
         provenance = json.loads((EVIDENCE / 'provenance.json').read_text())
         check(provenance.get('prepared') is True and provenance.get('source_hashes') == source_hashes(), 'Prepared source provenance missing or changed')
         receipt['provenance_sha256'] = digest(EVIDENCE / 'provenance.json')
+        capacity = json.loads((EVIDENCE / 'host-capacity.json').read_text())
+        check(capacity.get('passed') is True and capacity.get('configuredGuestMemoryMiB') == 8192
+              and capacity.get('hostReserveBytes') == HOST_RESERVE_BYTES, 'Actual host capacity preflight is missing')
+        receipt['hostCapacity'] = capacity
+        host_watcher = threading.Thread(target=watch_host, name='game-pool-host-reserve', daemon=True)
+        host_watcher.start()
         deadline = time.monotonic() + 300
         while time.monotonic() < deadline:
             try:
@@ -492,6 +571,12 @@ def run_probe():
         raise
     finally:
         stop.set()
+        if host_watcher is not None:
+            host_watcher.join(timeout=2)
+        receipt['hostSafety'] = host_safety
+        if host_safety['errors'] or host_safety['samples'] < 2:
+            receipt['passed'] = False
+            receipt['errors'].extend(host_safety['errors'] or ['Continuous host capacity observations missing'])
         if sampler is not None:
             sampler.join(timeout=40)
         receipt['memory'] = memory_counts
@@ -518,11 +603,14 @@ if __name__ == '__main__':
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument('--run', action='store_true')
     mode.add_argument('--compile-only', action='store_true')
+    mode.add_argument('--host-preflight', action='store_true')
     args = parser.parse_args()
     if args.compile_only:
         compile_current(with_dex=False)
         print('Current app Java and independent GAME pool instrumentation compiled against pinned ORT. No DEX built, APK signed or model executed.')
     elif args.run:
         run_probe()
+    elif args.host_preflight:
+        host_preflight()
     else:
         prepare()

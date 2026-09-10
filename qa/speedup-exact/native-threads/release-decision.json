@@ -1,0 +1,51 @@
+{
+  "createdUtc": "2026-09-10T04:04:08.278648+00:00",
+  "shipping": false,
+  "status": "held-unqualified-for-target-arm64",
+  "decision": "Preserve the successful x86_64 experiment; restore the exact published 2.2.4 native predictor and existing native regression test/gate for 2.2.5.",
+  "reason": "The requested exact-output contract applies to target Android devices. Two complete host fixtures do not qualify ARM64 optimized kernels, prepacking, or architecture-specific dispatch. No actual Deux divergence was demonstrated; generic ORT arithmetic-order risks must not be presented as a failed Deux output test.",
+  "historicalReceipt": {
+    "path": "qa/speedup-exact/native-threads/verification.json",
+    "sha256": "5770a46c09adc3a997b56b22adc552614586287029c14f8bf7442bf42a262299",
+    "passed": true,
+    "bindingScope": "Historical candidate snapshots mapped below, not the restored production paths named in its original sourceHashes."
+  },
+  "candidateSourceSnapshots": {
+    "android/src/com/cyberbasslord/lightforge/NativeDeux.java": {
+      "preservedPath": "qa/speedup-exact/native-threads/candidate/NativeDeux.java",
+      "sha256": "26b0a2e9f7ada76ae56cfccffe5af24dc3cbd92e23a490abc8e7ef0d324844b1"
+    },
+    "tests/NativeDeuxTest.java": {
+      "preservedPath": "qa/speedup-exact/native-threads/candidate/NativeDeuxTest.java",
+      "sha256": "3693139eacf49797326913cf78d103e6277b9be44237eda6435f0d9f671068bc"
+    },
+    "tests/verify_native_release.py": {
+      "preservedPath": "qa/speedup-exact/native-threads/candidate/verify_native_release.py",
+      "sha256": "c55befc8c1b10b0cde75b6ec03b861d6706b79c9ce02f1febab27ff43172990a"
+    },
+    "qa/speedup-exact/native-threads/verify.py": {
+      "preservedPath": "qa/speedup-exact/native-threads/candidate/verify.py",
+      "sha256": "b3829ed2eee4587eb446946df5f53cf71b3079e14f91b03d759d8288d6b3205a"
+    }
+  },
+  "restoredProductionHashes": {
+    "android/src/com/cyberbasslord/lightforge/NativeDeux.java": "1cd0931e9740de978c44fbb3c77e0dcbe969eae151752cc70c8f792da5409cdc",
+    "tests/NativeDeuxTest.java": "f552fdbd93f01dc6051cdf6c8ca7ba4048b4391451e924e544741771e82ac2d4",
+    "tests/verify_native_release.py": "1cb5650d2660bde9f882d1e90da192e3a43b02f332db132d453170af6fb30bbd"
+  },
+  "targetQualification": "unqualified",
+  "shippingThreads": "Unchanged max(1,min(4,availableProcessors))",
+  "rerunWarning": "verify.py is the unchanged historical harness. Do not run it in the restored production tree because it expects the eight-thread candidate policy and would overwrite the historical receipt. Reproduction requires an isolated copy containing the archived candidate snapshots at their original paths; it is not a release gate.",
+  "architectureReviewHashes": {
+    "qa/speedup-exact/native-threads/architecture-review/deux-all-operators.json": "1274b399ab861c8cbe3660145f8341993b462d89db8a8211a69715e5c7b3f2cd",
+    "qa/speedup-exact/native-threads/architecture-review/deux-block-operators.json": "37a2e8a7a1e83a0e01519210989347d28f3f74e5fdc4286bfcd7d79f025cbc9a",
+    "qa/speedup-exact/native-threads/architecture-review/deux-block-shapes.json": "74ec7af8ab072ccccee1dab5f3ba89bcaa3174254ae5a067161bbf90bf5eb6cc",
+    "qa/speedup-exact/native-threads/architecture-review/downloads.json": "d36d8976fb5c4dc23b705b099e80d0ca871a188b2c143fa6480b1bf3d04a717c",
+    "qa/speedup-exact/native-threads/architecture-review/grouping-counterexample.json": "724190868d45d9a977c31451e3f005247de661441624a0042841fde868d4c446",
+    "qa/speedup-exact/native-threads/architecture-review/source-assessment.md": "18a4cd24291d500de5a487ab7ed1857b74b841910ae71ee27a117e3d6a75a6f5"
+  },
+  "supplementalRuntimeProvenance": {
+    "path": "qa/speedup-exact/native-threads/runtime-provenance.json",
+    "sha256": "a6fa5db2bba579a1c56c676227e1d2ffcb7487c22b87e8fd1d8eacccc6be90aa"
+  }
+}

@@ -1,0 +1,129 @@
+{
+  "scope": "Original production five-model GAME pipeline, sixteen-second geometry and eight diffusion steps; synthetic dense boundaries substituted only for bd2dur/estimator allocation stress. Not an analysis output or a quality comparison.",
+  "rssCeilingBytes": 2684354560,
+  "cgroupCeilingBytes": 20401094656,
+  "timeoutSeconds": 180,
+  "boundaryStride": 1,
+  "status": "completed",
+  "pid": 6,
+  "returnCode": 0,
+  "wallSeconds": 96.746305957,
+  "processReportedPeakRssBytes": 2429222912,
+  "fixture": {
+    "id": "demo-20s",
+    "file": "demo-20s.float32le",
+    "sha256": "d8fdbb767a8d728951cbd8c4ac83256d73974479a6df0db1fdbb153340ef829d",
+    "seed": 2025,
+    "samples": 705600,
+    "sampleRate": 44100,
+    "inputDescription": "Synthetic16-secondtilingofactual5.746-secondMDXvocalPCM; testsgeometry,memory,schedulingonly. No newreal-songcontextaccuracycoverage."
+  },
+  "stressGraphs": [
+    {
+      "type": "synthetic-boundaries",
+      "name": "bd2dur",
+      "frames": 1600,
+      "boundaries": 1600,
+      "stride": 1,
+      "rss": 1483145216,
+      "maxRss": 1483145216
+    },
+    {
+      "type": "synthetic-boundaries",
+      "name": "estimator",
+      "frames": 1600,
+      "boundaries": 1600,
+      "stride": 1,
+      "rss": 1486159872,
+      "maxRss": 1486159872
+    }
+  ],
+  "estimatorGraph": [
+    {
+      "type": "graph",
+      "id": "demo-20s",
+      "name": "estimator",
+      "seconds": 14.806855217999997,
+      "outputDims": {
+        "presence": [
+          1,
+          1601
+        ],
+        "scores": [
+          1,
+          1601
+        ]
+      },
+      "rss": 2428960768,
+      "maxRss": 2428960768
+    }
+  ],
+  "models": [
+    {
+      "name": "encoder",
+      "sha256": "fbda7df8791d5cafd02ed33c65f9926c5514c750278c27fb8a59259b4c1d7464"
+    },
+    {
+      "name": "dur2bd",
+      "sha256": "49d10d1ea186e43c51fd2c51cedb01a3852d363f1c7056ae77df50f7e8dd0996"
+    },
+    {
+      "name": "segmenter",
+      "sha256": "9db605a2ad3c179e9c4e4ae5b970727006020c65936773c26b2cbc27d8ef892f"
+    },
+    {
+      "name": "bd2dur",
+      "sha256": "6672d56b00f27a20e9bfaa92801c15e394bb520e49031d3ed2515b0a6cf27402"
+    },
+    {
+      "name": "estimator",
+      "sha256": "0d4a6e13bf475f79967e252b401bb5f317aa6b96bbe6665d5f8b14b42b179926"
+    }
+  ],
+  "graphCalls": [
+    "encoder",
+    "dur2bd",
+    "segmenter",
+    "segmenter",
+    "segmenter",
+    "segmenter",
+    "segmenter",
+    "segmenter",
+    "segmenter",
+    "segmenter",
+    "bd2dur",
+    "estimator"
+  ],
+  "conservativeTwoLanePlus512MiBBytes": 5395316736,
+  "fitsFresh4GiBWith512MiBReserve": false,
+  "monitorQualification": {
+    "externalProcMonitorValid": false,
+    "reason": "The command process used a PID namespace that did not match mounted /proc PID lookup; maxObservedRssBytes=307200 belongs to an incorrect PID and must not be used.",
+    "trustworthyPeakSource": "Node process.resourceUsage().maxRSS measured within the model process, multiplied by 1024. This value is independent of the failed external monitor.",
+    "ceilingEnforcedForThisRun": false,
+    "correctedWatchdog": "rss-watchdog.cjs uses an independent Node worker thread and process.memoryUsage().rss, then process.kill(process.pid) in the correct namespace. Its deliberately low-limit kill smoke passed; the model stress was not rerun.",
+    "correctedWatchdogSmoke": {
+      "scope": "An independent watchdog thread samples process.memoryUsage().rss; process.kill uses the process namespace directly.",
+      "rssCeilingBytes": 8388608,
+      "maxObservedRssBytes": 58589184,
+      "currentRssBytes": 58589184,
+      "safetyStop": true,
+      "pid": 8
+    }
+  },
+  "invalidExternalMonitorRssBytes": 307200,
+  "samples": 705600,
+  "sampleRate": 44100,
+  "framePositions": 1600,
+  "maximumEstimatorSlotsObserved": 1601,
+  "originalModelHashesMatchManifest": true,
+  "adapterSha256": "1627851738744a45c6c4c2cbb3b695bad1623f3b41d575f40754ca1a92185227",
+  "normalGeometryPeakRssBytes": 1636130816,
+  "fresh6GiBRemainingAfterTwoObservedPeaksBytes": 1584005120,
+  "limitations": [
+    "Synthetic 16-second tiling of actual separated vocal PCM is a geometry and allocation stress fixture, not new real-song accuracy coverage.",
+    "Every-frame synthetic boundaries intentionally stress the estimator beyond the 43-note normal fixture; no claim that this extreme arises in ordinary singing.",
+    "Single Node process RSS is not an Android WebView memory measurement.",
+    "One passage was run; four-inference reuse and device allocator behavior still require lifecycle qualification."
+  ]
+}

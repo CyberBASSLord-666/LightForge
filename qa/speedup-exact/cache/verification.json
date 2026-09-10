@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-10T03:54:31.803Z",
+  "generatedAt": "2026-09-10T04:05:39.426Z",
   "passed": true,
   "claim": "Worker finalization and restored role-cache composition preserve exact music JSON for the archived Falcon evidence and an explicit rhythm edit.",
   "limits": [
@@ -45,8 +45,8 @@
       },
       {
         "path": "tests/AnalysisJobStoreTest.java",
-        "bytes": 24487,
-        "sha256": "be8ad43af7c379b160b765db94eebf4a5208a42621dacadc2267662e1496b5b3"
+        "bytes": 24778,
+        "sha256": "1dd20ffce45eec21a004c63b42d336837fcf381f55a61e8b87a325b7f7d59775"
       },
       {
         "path": "web/background/runner.js",
@@ -199,8 +199,8 @@
     "todo": 0,
     "log": {
       "file": "recovery-tests.log",
-      "bytes": 2997,
-      "sha256": "65825b78f2471d8eac50e62acb528168365da5d9a8ded26efcc6f0f8f64fbc34"
+      "bytes": 3000,
+      "sha256": "12e4dc59fe9f3a894f76cd8a6f7cba2be40d35c96d9c76d8af1ca5099c4043cd"
     }
   }
 }

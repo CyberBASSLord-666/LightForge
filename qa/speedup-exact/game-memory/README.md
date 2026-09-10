@@ -1,0 +1,9 @@
+This directory preserves the dense GAME estimator allocation stress and binds it to the current six-GiB admission policy. It is memory-admission evidence, not a quality corpus or Android WebView qualification.
+
+The unchanged production five-model pipeline ran all eight diffusion steps on a declared synthetic 16-second fixture. Synthetic boundaries at all 1,600 frames then produced 1,601 estimator slots. The model process reported a 2.262-GiB peak; two such peaks plus 512 MiB require 5.025 GiB. `verification.json` records the current policy source hash and six-GiB threshold separately from the untouched historical evidence.
+
+`dense-memory-demo-20s.json` and its log are raw run records. `dense-memory-safety-receipt.json` is the original annotated receipt, copied byte for byte; it explicitly invalidates the faulty external PID monitor. Valid peak RSS came from the model process. The replacement independent-thread watchdog passed a disposable low-limit termination smoke, and the model was not rerun. The corrected runner is labeled as a post-run correction, not the runner used for the original measurement.
+
+`dense-memory.cjs` preserves the original stress harness and absolute source path. `game-at-probe.js` matches the adapter SHA recorded by the original receipt. `model-manifest.json` preserves the original model hashes. `geometry-demo-20s.json` and its log preserve the normal full-geometry comparison (43 retained notes). All copies and original paths are hashed in `verification.json`.
+
+No model weights, raw audio, or tensors are included. `inputs.json` declares the omitted PCM hashes, dimensions, seeds, and synthetic fixture construction. Reproduction requires those exact PCM bytes at the harness location and the original bundled models; absolute source paths should be adjusted explicitly in a new reproduction record, never silently rewritten in these historical files.

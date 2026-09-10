@@ -36,6 +36,8 @@ jobs:
           printf 'ANDROID_USER_HOME=%s\nANDROID_EMULATOR_HOME=%s\nANDROID_AVD_HOME=%s\n' "$RUNNER_TEMP/lightforge-android" "$RUNNER_TEMP/lightforge-android" "$RUNNER_TEMP/lightforge-android/avd" >> "$GITHUB_ENV"
       - name: Reclaim unused toolchains on the disposable runner
         run: sudo rm -rf -- "$ANDROID_HOME/ndk" /usr/share/dotnet
+      - name: Record real host RAM and CPU capacity before starting the eight-GiB guest
+        run: python3 tools/prepare_game_pool_probe.py --host-preflight
       - name: Start API 35 emulator with eight GiB RAM and four virtual CPU cores
         run: |
           sudo chmod a+rw /dev/kvm
@@ -44,6 +46,7 @@ jobs:
           echo no | "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" create avd --force --name LightForgeGamePool --package "system-images;android-35;google_apis;x86_64" --device pixel_6 --path "$ANDROID_AVD_HOME/LightForgeGamePool.avd"
           sed -i 's/^disk.dataPartition.size=.*/disk.dataPartition.size=6G/' "$ANDROID_AVD_HOME/LightForgeGamePool.avd/config.ini"
           nohup "$ANDROID_HOME/emulator/emulator" -avd LightForgeGamePool -no-window -no-audio -no-metrics -partition-size 6144 -no-boot-anim -no-snapshot -gpu swiftshader_indirect -memory 8192 -cores 4 -camera-back none -camera-front none > emulator.log 2>&1 < /dev/null &
+          printf '%s\n' "$!" > emulator.pid
       - name: Compare real serial and parallel GAME outputs and observe resource lifecycle
         run: python3 tools/prepare_game_pool_probe.py --run
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4

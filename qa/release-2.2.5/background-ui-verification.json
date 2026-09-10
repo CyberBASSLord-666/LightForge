@@ -1,0 +1,24 @@
+{
+  "release": "2.2.5",
+  "passed": true,
+  "checks": [
+    "Elapsed time, passage completion/reuse, delayed progress, cancellation recovery and device settings and diagnostic export fit 320px; export failure/retry/success/cancel acknowledgements preserve active work; background/power controls dispatch correctly and active inputs remain frozen.",
+    "Elapsed time, passage completion/reuse, delayed progress, cancellation recovery and device settings and diagnostic export fit 393px; export failure/retry/success/cancel acknowledgements preserve active work; background/power controls dispatch correctly and active inputs remain frozen.",
+    "Elapsed time, passage completion/reuse, delayed progress, cancellation recovery and device settings and diagnostic export fit 768px; export failure/retry/success/cancel acknowledgements preserve active work; background/power controls dispatch correctly and active inputs remain frozen."
+  ],
+  "errors": [],
+  "source_hashes": {
+    "qa/release-2.2.5/background-ui.cjs": "d5e9dc2d9e64af444631aea2f52c449f0741a6a03cd1549c9b330fde773e1cc8",
+    "version.json": "fa24b67fc3aa7677e274af0445c151d25a7638ce82facbe64085b05052331077",
+    "web/version.js": "db703d3ea7fab09f5c8eefd41f7bfb54e541623f460d9f798869b78d45137d97",
+    "web/app.js": "2a26794d2203a30a38180696ab6e62619ecac9b14d548aa57e6c53ebe73278b5",
+    "web/diagnostics.js": "da1dc3919d2bb7b987af6fe06527b3ff9034ce778a3339a8d4e5c5c903aea8eb",
+    "web/diagnostics.css": "c3c91ac9fe69cb15611e68f2ffd61f8b0ee7c2f167837e20cde60b1951577cae",
+    "web/index.html": "4a938310c87f1b0fa27f99b452ab01cc1997c6f5c68debaa35882f7448256905",
+    "web/styles.css": "e89ff197b174f00361c7b694d9a8b9f1ed8ef797c055e0a20176a195faff64f5",
+    "web/cockpit.css": "cb776661c5278d6d14302f442005db1a6b26e9baf553e776eab2ca642c0dafdc",
+    "web/cockpit.js": "cba1d693ee592ac9ea0bf028ba362d8247981c1678c25d81737db7a633163afe"
+  },
+  "scope": "Real Chromium UI with a simulated Android job/status bridge; native background lifetime is tested separately on Android.",
+  "completedAt": "2026-09-10T04:03:57.559Z"
+}

@@ -1,0 +1,1 @@
+PASS: job ownership, monotonic progress, checkpoint reuse, cancellation, conflict preservation, durable completion, damaged checkpoint recovery, version/audio/settings identity, structured progress, crash recovery, GAME memory/core/64-bit admission and durable parallel ownership/crash/cancellation guard

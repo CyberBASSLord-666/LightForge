@@ -1,12 +1,12 @@
 {
   "release": "2.2.5",
-  "passed": false,
+  "passed": true,
   "checks": [
-    "All selected engine, model-component, migration and DOM integration suites passed."
+    "All selected engine, model-component, migration and DOM integration suites passed.",
+    "Python APK archive and bounded release packaging regression suites passed.",
+    "Every bundled analysis asset matches the current manifest; actual model quality and runtime are checked separately."
   ],
-  "errors": [
-    "Command '['/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3', '-m', 'unittest', 'tests.test_analysis_assets', 'tests.test_analysis_evidence_2_2_3', 'tests.test_apk_archive', 'tests.test_apk_delta', 'tests.test_fixture_provenance', 'tests.test_mdx_numeric_2_2_4', 'tests.test_native_mdx_lifecycle', 'tests.test_package_release_streaming', 'tests.test_release_publication', 'tests.test_retained_analysis']' returned non-zero exit status 1."
-  ],
+  "errors": [],
   "source_hashes": {
     "android/AndroidManifest.xml": "7329675ebc8c9ace4e5a0a607fe8c4753924e89d168c266993c612084b7e4e19",
     "android/native-runtime.json": "e3ea568b3a8485235f23a59cd787466cdcbbfcaa54ac56df3ce040d29fcb2a94",
@@ -14,7 +14,7 @@
     "android/res/drawable/ic_launcher.xml": "3c411f5d88166510435daeb1702d155849cc0f8208bcfde9b9d61eed24d57b8e",
     "android/res/values/styles.xml": "24448bfe96b034f7bfadcd0d469d46da30538c3acfa67e2ded464869ad9a9859",
     "android/src/com/cyberbasslord/lightforge/AnalysisJobStore.java": "7693331f5121e9bb728781739d6b84b8fdfb443637d37502b085bda2e68fa895",
-    "android/src/com/cyberbasslord/lightforge/AnalysisResourcePolicy.java": "0d11d28540f5990cff632b89bd85761bc6c279d3c942ef7998c4f6d1b4c7d938",
+    "android/src/com/cyberbasslord/lightforge/AnalysisResourcePolicy.java": "c72cc715966ed1677e15dde07c2f4dfc23211b74d96d5316ac6f0e90a4979453",
     "android/src/com/cyberbasslord/lightforge/AnalysisService.java": "3f93ffbd8edfa8c2add1f585b09f98e697cfd40d64c0741633bf1f3604876581",
     "android/src/com/cyberbasslord/lightforge/AppDiagnostics.java": "3b0fccd2b166af52dfb25254f3b76bb635eb45caae6d3b19c2f6c391aa6242b6",
     "android/src/com/cyberbasslord/lightforge/AppResources.java": "f95a5d02007b40a0e2488b82298776be0fb9d171de8336380fec3dd553712430",
@@ -22,7 +22,7 @@
     "android/src/com/cyberbasslord/lightforge/DiagnosticLog.java": "1ac8c1866e2893e583b0aba42742d6123cea62fb4d6e8f0ceb39f26e9ce81c20",
     "android/src/com/cyberbasslord/lightforge/MainActivity.java": "7b1f8b7e8728cf5008b9efd477279b3c4b478458c7ed92b2a4692d841beafb05",
     "android/src/com/cyberbasslord/lightforge/NativeCrashTrace.java": "9a0a35aabe175d410a4cdd3dac7f4a53f5df79415ba6f12f13cd33ead9b079dd",
-    "android/src/com/cyberbasslord/lightforge/NativeDeux.java": "26b0a2e9f7ada76ae56cfccffe5af24dc3cbd92e23a490abc8e7ef0d324844b1",
+    "android/src/com/cyberbasslord/lightforge/NativeDeux.java": "1cd0931e9740de978c44fbb3c77e0dcbe969eae151752cc70c8f792da5409cdc",
     "android/src/com/cyberbasslord/lightforge/NativeDeuxTransform.java": "991b06501cfb88b904d0b714a525c389f169f00c231248b0e961b70f257e90b5",
     "android/src/com/cyberbasslord/lightforge/NativeMdxTask.java": "8e086f3700ae9a087c0e51dc314ac32cf9d3fb8ce4e0c6262efd024274a284bf",
     "android/src/com/cyberbasslord/lightforge/NativePassageTask.java": "58be6d232d1f7d139c100f979a19b938452593a4453f5e51bcba6d9133df14ac",
@@ -36,12 +36,12 @@
     "package-lock.json": "28b1d798e7df9317a2ac08c2efbbd1520ef67afc6414dc075c849e0dadb4ad24",
     "package.json": "c734e26067d0c7c99364d89f63e93dab69323ba706fa9f11b42b2d29da8c2035",
     "qa/release-1.6.0/prepare-musdb-fixtures.py": "001252ba45a905b859d41da5c99dd084549cf0ac7d252dc9684c76f76291a343",
-    "tests/AnalysisJobStoreTest.java": "be8ad43af7c379b160b765db94eebf4a5208a42621dacadc2267662e1496b5b3",
+    "tests/AnalysisJobStoreTest.java": "1dd20ffce45eec21a004c63b42d336837fcf381f55a61e8b87a325b7f7d59775",
     "tests/DiagnosticLogTest.java": "38c5b369fcd4d08dfb646abca2810e3f6f3c8248335dceb5a2ccb5e1d2b36e2e",
     "tests/ExportRestoreTest.java": "18da0906b4b0bdd923c195325ba296e7aacb316a812d83d3a2de5bee0a72e21b",
     "tests/NativeAudioTest.java": "7672dd051513d789f7cb4db32f7bcc6a9be5a952a28f7f7ca4a3ec1ec4cd10a8",
     "tests/NativeCrashTraceTest.java": "79fb08355f9903e5ef001dfba11a363bc6b12cc8117cc77e4477e722a11ce9f1",
-    "tests/NativeDeuxTest.java": "3693139eacf49797326913cf78d103e6277b9be44237eda6435f0d9f671068bc",
+    "tests/NativeDeuxTest.java": "f552fdbd93f01dc6051cdf6c8ca7ba4048b4391451e924e544741771e82ac2d4",
     "tests/NativeHardwareTest.java": "2726f33f235539c4685e87b9f5365bf1c76cc3170bab52c0d4f5e2115dc07e25",
     "tests/NativeMdxLifecycleTest.java": "e234684f1cac308fdbce8a3e28d6f3d7a3617437a99d5f60786047336e57ba43",
     "tests/NativeRecoveryTest.java": "1e5afd72ceb998676def5d38a96d4d30ce91cc8e49575a687efef45b9ab2b012",
@@ -54,7 +54,7 @@
     "tests/android/AnalysisCpuProbe.java": "7a09e096f0e70b75cac73c95f998337ebcdb55ccff81030e4566bf05c704d564",
     "tests/android/BackgroundInstrumentation.java": "d7dc1ee85de1077f43f259943ebcba7d57314abb66e11820082248e4076689f4",
     "tests/android/DiagnosticsInstrumentation.java": "1016db637115d016e8310b1f50c9aa6951d5b3079abcf185e34bdc5f2217c93b",
-    "tests/android/GamePoolProbe.java": "dfe60413a125f55d2332bcbfb39c4cee28645a0f5888c5420bc5288d07f4acf4",
+    "tests/android/GamePoolProbe.java": "dc857afae098d757b3c112acbf67fd025979249af16d70a65b352e1417583b1f",
     "tests/android/analysis-cpu-worker.js": "d7ee367416b7a6e457b46ffa3db541377d80822451d930ceae531a8750ad20e9",
     "tests/android/game-pool-probe.js": "e4b2e4b7a03166b576a752e68a831ce2a7ec004ca71b4db5eabb590246f14e53",
     "tests/background-2.2.test.cjs": "63b254c569033d24cd44a283aed44bc2b2bfa4c35996b3ef36d09b5d9f41bed5",
@@ -105,7 +105,7 @@
     "tests/stem-cache.test.cjs": "e3e117b261d0920e8a159f9f602b15dc4d423c579f0708f4c31ca7dbe7f1e85c",
     "tests/test_analysis_assets.py": "1ea4f1ba3bd8415611caebb31c076b39898e55f62084cf5def1d9f3c7f5e9738",
     "tests/test_analysis_evidence_2_2_2.py": "b3f99dcec0c1bfc090c2f171004dd28f1b61d5ca71d8979ba231b92f28cca776",
-    "tests/test_analysis_evidence_2_2_3.py": "e88e017e9803ca2ead158df0c72f5e6458e3a95fd39ac216ffdb57c32b5f06ed",
+    "tests/test_analysis_evidence_2_2_3.py": "23586f9d029d0af62670669e4f17165ed58affe3609dc7e78fc3d9989000fe28",
     "tests/test_apk_archive.py": "d3fadfab94a443567fe5e7ef20bccb9bd31097273ac7561b8426630bef1f4357",
     "tests/test_apk_delta.py": "3aa647504323d02086f218ff6ee53a2a4a682eaab8f93b2b50304445db4d7fe1",
     "tests/test_fixture_provenance.py": "1628f6d2f0087769c70b729d2ccae8efd049c08c63560409b56fc9618e749bf4",
@@ -114,7 +114,7 @@
     "tests/test_package_release_streaming.py": "1d5f317840c035217ffc0374f8533399ee4ee8439e04b259ca0bd0949fc6049e",
     "tests/test_release_publication.py": "82d03296f2d01d41ecc6e79f29500567decac0d911d7de92283a685eddac4505",
     "tests/test_retained_analysis.py": "9c882fa30db419a445cfd88a64784abdb2cc9f450211cad669fe34e383bae463",
-    "tests/verify_native_release.py": "c55befc8c1b10b0cde75b6ec03b861d6706b79c9ce02f1febab27ff43172990a",
+    "tests/verify_native_release.py": "1cb5650d2660bde9f882d1e90da192e3a43b02f332db132d453170af6fb30bbd",
     "tests/vocal-detail.test.cjs": "ac151e505e78de8b5cf2783df2138d15f68f35dfe7d1f56db8126554f6b70409",
     "tests/wav-reader.test.cjs": "25a63a1eecce4d6ec389522c7212ecf0a356a13af98c57e82adb202a33009c7a",
     "tests/worker-harness.cjs": "94352a9231fd142c0ecaf3dd91f628d52eaaae3b65f559ce70e9784ca499fb51",
@@ -135,7 +135,7 @@
     "tools/prepare_deux.py": "80b71795c6de65f1c068523565e1c44700bbc99f45e9dc0da83124bcf8a00db8",
     "tools/prepare_deux_fixture.py": "a31e94bd7ffa23d917516dcac1746c30856e298cc2a0a337e92b5d5593c45251",
     "tools/prepare_game.py": "7f1fb983ab1888b7ecc0731bdd22538f73820a33f88775fc7f63dd8b9b43e800",
-    "tools/prepare_game_pool_probe.py": "60cd2051e1f15ddc071cde39cb8e22133a640a4250c081d0f22a16f9753ec68a",
+    "tools/prepare_game_pool_probe.py": "3216a6aaf93171df7396d38bdd1fdcf0457ab15b62aacbb217b98909217153e4",
     "tools/publish_github_release.py": "d8308cbc575f05331889ea275c91a0c9b649bc5bd4a4fd8264aa9d21e447668c",
     "tools/run_android_background_tests.py": "331f9d566f45189e3dc757fc377e020afaa535b4096ba320f990d4a1be136075",
     "tools/run_android_diagnostics_tests.py": "3e5054364ae3cf017a4e7d82206619725d3e7dad4c27b6c6e3be0e7083c374ed",
@@ -190,5 +190,6 @@
     "web/version.js": "db703d3ea7fab09f5c8eefd41f7bfb54e541623f460d9f798869b78d45137d97"
   },
   "scope": "Node engine/worker/WebCrypto/gzip, real app DOM integration with simulated native and graphics, Python archive tests. Not a visual browser or physical Android/Tesla test.",
-  "completedAt": "2026-09-10T03:54:55.884830+00:00"
+  "analysis_manifest_sha256": "c51e0ff381802c8c7d52c100e4a6c762416a3cd04e4fec80aa3f604af2f75424",
+  "completedAt": "2026-09-10T04:07:33.863233+00:00"
 }

@@ -1,0 +1,1116 @@
+{
+  "scope": "Artificial estimator memory stress only. Actual unchanged production GAME inference runs all eight diffusion steps on the declared synthetic 16-second geometry fixture, then bd2dur and estimator receive synthetic dense boundaries. This is not an analysis output or quality comparison.",
+  "boundaryStride": 1,
+  "mode": "dense-memory",
+  "ids": [
+    "demo-20s"
+  ],
+  "runtime": "1.20.1",
+  "threads": 1,
+  "results": [
+    {
+      "id": "demo-20s",
+      "seed": 2025,
+      "pcmSha256": "d8fdbb767a8d728951cbd8c4ac83256d73974479a6df0db1fdbb153340ef829d",
+      "notes": [],
+      "graphs": [
+        {
+          "name": "encoder",
+          "seconds": 5.1712663170000015,
+          "feeds": {
+            "waveform": {
+              "type": "float32",
+              "dims": [
+                1,
+                705600
+              ],
+              "sha256": "d8fdbb767a8d728951cbd8c4ac83256d73974479a6df0db1fdbb153340ef829d"
+            },
+            "duration": {
+              "type": "float32",
+              "dims": [
+                1
+              ],
+              "sha256": "140efb356462f70dd1c7f1dfb10bcc07d0f14d439043fb9e9d50f4d7be71ea96"
+            }
+          },
+          "outputs": {
+            "x_seg": {
+              "type": "float32",
+              "dims": [
+                1,
+                1600,
+                256
+              ],
+              "sha256": "41dd4c21cfdc30f8f9003ec913e4cbc2407bf85778de046c37977fd94611490d"
+            },
+            "x_est": {
+              "type": "float32",
+              "dims": [
+                1,
+                1600,
+                256
+              ],
+              "sha256": "bfc9e441dc9df8b6d7fe24584e34539e48ce0d7dc27ed669900b0578ccb79d87"
+            },
+            "maskT": {
+              "type": "bool",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "504bc3fe5f1a16d3c33ae958f0542d01e4cf861071a97a6715cfd486ce7f7d6f"
+            }
+          }
+        },
+        {
+          "name": "dur2bd",
+          "seconds": 0.00063340000000062,
+          "feeds": {
+            "durations": {
+              "type": "float32",
+              "dims": [
+                1,
+                1
+              ],
+              "sha256": "140efb356462f70dd1c7f1dfb10bcc07d0f14d439043fb9e9d50f4d7be71ea96"
+            },
+            "maskT": {
+              "type": "bool",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "504bc3fe5f1a16d3c33ae958f0542d01e4cf861071a97a6715cfd486ce7f7d6f"
+            }
+          },
+          "outputs": {
+            "boundaries": {
+              "type": "bool",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "e61f41d57db208c5f92a35c4ce7198570924a3fc87eeba83441fceee5d6a2865"
+            }
+          }
+        },
+        {
+          "name": "segmenter",
+          "seconds": 9.230108688999998,
+          "feeds": {
+            "x_seg": {
+              "type": "float32",
+              "dims": [
+                1,
+                1600,
+                256
+              ],
+              "sha256": "41dd4c21cfdc30f8f9003ec913e4cbc2407bf85778de046c37977fd94611490d"
+            },
+            "maskT": {
+              "type": "bool",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "504bc3fe5f1a16d3c33ae958f0542d01e4cf861071a97a6715cfd486ce7f7d6f"
+            },
+            "known_boundaries": {
+              "type": "bool",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "e61f41d57db208c5f92a35c4ce7198570924a3fc87eeba83441fceee5d6a2865"
+            },
+            "prev_boundaries": {
+              "type": "bool",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "e61f41d57db208c5f92a35c4ce7198570924a3fc87eeba83441fceee5d6a2865"
+            },
+            "language": {
+              "type": "int64",
+              "dims": [
+                1
+              ],
+              "sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc"
+            },
+            "threshold": {
+              "type": "float32",
+              "dims": [],
+              "sha256": "5d96a77c55b4ac1eea2d77815396c4349292b85e3b07beaca6aff933e7ef8752"
+            },
+            "radius": {
+              "type": "int64",
+              "dims": [],
+              "sha256": "d86e8112f3c4c4442126f8e9f44f16867da487f29052bf91b810457db34209a4"
+            },
+            "t": {
+              "type": "float32",
+              "dims": [
+                1
+              ],
+              "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
+            },
+            "random_uniform": {
+              "type": "float32",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "5d004dd89ed556d00a43f3b448ff693cce65a9aba8685edb9179b9ca85a3f1a0"
+            }
+          },
+          "outputs": {
+            "boundaries": {
+              "type": "bool",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "6428ebc84fd3bf105f6ac620c101cb8ec9d09af32723c585bd50e6242bd6a8d1"
+            }
+          }
+        },
+        {
+          "name": "segmenter",
+          "seconds": 9.416067239,
+          "feeds": {
+            "x_seg": {
+              "type": "float32",
+              "dims": [
+                1,
+                1600,
+                256
+              ],
+              "sha256": "41dd4c21cfdc30f8f9003ec913e4cbc2407bf85778de046c37977fd94611490d"
+            },
+            "maskT": {
+              "type": "bool",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "504bc3fe5f1a16d3c33ae958f0542d01e4cf861071a97a6715cfd486ce7f7d6f"
+            },
+            "known_boundaries": {
+              "type": "bool",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "e61f41d57db208c5f92a35c4ce7198570924a3fc87eeba83441fceee5d6a2865"
+            },
+            "prev_boundaries": {
+              "type": "bool",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "6428ebc84fd3bf105f6ac620c101cb8ec9d09af32723c585bd50e6242bd6a8d1"
+            },
+            "language": {
+              "type": "int64",
+              "dims": [
+                1
+              ],
+              "sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc"
+            },
+            "threshold": {
+              "type": "float32",
+              "dims": [],
+              "sha256": "5d96a77c55b4ac1eea2d77815396c4349292b85e3b07beaca6aff933e7ef8752"
+            },
+            "radius": {
+              "type": "int64",
+              "dims": [],
+              "sha256": "d86e8112f3c4c4442126f8e9f44f16867da487f29052bf91b810457db34209a4"
+            },
+            "t": {
+              "type": "float32",
+              "dims": [
+                1
+              ],
+              "sha256": "31b67dba7cfd6e2d7540f9c96d90a45b8f2d44956620723024d4e1beeacd4602"
+            },
+            "random_uniform": {
+              "type": "float32",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "a08c97e8d64e8d319b4cce9dcb2c36b3f3e9f2cbe238d2c8db5df2c3ec003352"
+            }
+          },
+          "outputs": {
+            "boundaries": {
+              "type": "bool",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "87fc731ccf3d7f98c5e699c3f23f1d58375b5625b532d0dd42becbf79adfdd6d"
+            }
+          }
+        },
+        {
+          "name": "segmenter",
+          "seconds": 9.154848214000005,
+          "feeds": {
+            "x_seg": {
+              "type": "float32",
+              "dims": [
+                1,
+                1600,
+                256
+              ],
+              "sha256": "41dd4c21cfdc30f8f9003ec913e4cbc2407bf85778de046c37977fd94611490d"
+            },
+            "maskT": {
+              "type": "bool",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "504bc3fe5f1a16d3c33ae958f0542d01e4cf861071a97a6715cfd486ce7f7d6f"
+            },
+            "known_boundaries": {
+              "type": "bool",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "e61f41d57db208c5f92a35c4ce7198570924a3fc87eeba83441fceee5d6a2865"
+            },
+            "prev_boundaries": {
+              "type": "bool",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "87fc731ccf3d7f98c5e699c3f23f1d58375b5625b532d0dd42becbf79adfdd6d"
+            },
+            "language": {
+              "type": "int64",
+              "dims": [
+                1
+              ],
+              "sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc"
+            },
+            "threshold": {
+              "type": "float32",
+              "dims": [],
+              "sha256": "5d96a77c55b4ac1eea2d77815396c4349292b85e3b07beaca6aff933e7ef8752"
+            },
+            "radius": {
+              "type": "int64",
+              "dims": [],
+              "sha256": "d86e8112f3c4c4442126f8e9f44f16867da487f29052bf91b810457db34209a4"
+            },
+            "t": {
+              "type": "float32",
+              "dims": [
+                1
+              ],
+              "sha256": "75e253f50979177eba47b2d0805ad36038789108924514d2a761a70de057d16f"
+            },
+            "random_uniform": {
+              "type": "float32",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "496e52d10c8ef91370de0be091a11ff9926b1ebd5667c6bf55e5f53a2df61b15"
+            }
+          },
+          "outputs": {
+            "boundaries": {
+              "type": "bool",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "98ebc8dc489b5bb74ca3903fbba41b98431e0666ebb5358924593321e9389e47"
+            }
+          }
+        },
+        {
+          "name": "segmenter",
+          "seconds": 9.130073287,
+          "feeds": {
+            "x_seg": {
+              "type": "float32",
+              "dims": [
+                1,
+                1600,
+                256
+              ],
+              "sha256": "41dd4c21cfdc30f8f9003ec913e4cbc2407bf85778de046c37977fd94611490d"
+            },
+            "maskT": {
+              "type": "bool",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "504bc3fe5f1a16d3c33ae958f0542d01e4cf861071a97a6715cfd486ce7f7d6f"
+            },
+            "known_boundaries": {
+              "type": "bool",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "e61f41d57db208c5f92a35c4ce7198570924a3fc87eeba83441fceee5d6a2865"
+            },
+            "prev_boundaries": {
+              "type": "bool",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "98ebc8dc489b5bb74ca3903fbba41b98431e0666ebb5358924593321e9389e47"
+            },
+            "language": {
+              "type": "int64",
+              "dims": [
+                1
+              ],
+              "sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc"
+            },
+            "threshold": {
+              "type": "float32",
+              "dims": [],
+              "sha256": "5d96a77c55b4ac1eea2d77815396c4349292b85e3b07beaca6aff933e7ef8752"
+            },
+            "radius": {
+              "type": "int64",
+              "dims": [],
+              "sha256": "d86e8112f3c4c4442126f8e9f44f16867da487f29052bf91b810457db34209a4"
+            },
+            "t": {
+              "type": "float32",
+              "dims": [
+                1
+              ],
+              "sha256": "55b51bbfa89c63511da11a52068292b17b6644163afdaf734beee7bcaf33b6e3"
+            },
+            "random_uniform": {
+              "type": "float32",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "07638aa517b3831a1ec9d3bb2508d4da24703913a15643cfe2d47b986be60726"
+            }
+          },
+          "outputs": {
+            "boundaries": {
+              "type": "bool",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "b11731a418481f53f8df5ab258e97c92e98b449ce3e7b3d7956fceedfe5aa008"
+            }
+          }
+        },
+        {
+          "name": "segmenter",
+          "seconds": 9.263645138,
+          "feeds": {
+            "x_seg": {
+              "type": "float32",
+              "dims": [
+                1,
+                1600,
+                256
+              ],
+              "sha256": "41dd4c21cfdc30f8f9003ec913e4cbc2407bf85778de046c37977fd94611490d"
+            },
+            "maskT": {
+              "type": "bool",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "504bc3fe5f1a16d3c33ae958f0542d01e4cf861071a97a6715cfd486ce7f7d6f"
+            },
+            "known_boundaries": {
+              "type": "bool",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "e61f41d57db208c5f92a35c4ce7198570924a3fc87eeba83441fceee5d6a2865"
+            },
+            "prev_boundaries": {
+              "type": "bool",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "b11731a418481f53f8df5ab258e97c92e98b449ce3e7b3d7956fceedfe5aa008"
+            },
+            "language": {
+              "type": "int64",
+              "dims": [
+                1
+              ],
+              "sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc"
+            },
+            "threshold": {
+              "type": "float32",
+              "dims": [],
+              "sha256": "5d96a77c55b4ac1eea2d77815396c4349292b85e3b07beaca6aff933e7ef8752"
+            },
+            "radius": {
+              "type": "int64",
+              "dims": [],
+              "sha256": "d86e8112f3c4c4442126f8e9f44f16867da487f29052bf91b810457db34209a4"
+            },
+            "t": {
+              "type": "float32",
+              "dims": [
+                1
+              ],
+              "sha256": "d99e58435243d9fef9c88273b8d553b4fba4d0baf8009d29eae74fa99e0d9f57"
+            },
+            "random_uniform": {
+              "type": "float32",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "198dc55ff2356bc3516a4aa9f4e11d10683194d5828eba96bdabff639dd798f7"
+            }
+          },
+          "outputs": {
+            "boundaries": {
+              "type": "bool",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "4051ca8f77452ef004a52c8a2d16944ce491c5b49af802919237eff81d025e81"
+            }
+          }
+        },
+        {
+          "name": "segmenter",
+          "seconds": 8.945365698999995,
+          "feeds": {
+            "x_seg": {
+              "type": "float32",
+              "dims": [
+                1,
+                1600,
+                256
+              ],
+              "sha256": "41dd4c21cfdc30f8f9003ec913e4cbc2407bf85778de046c37977fd94611490d"
+            },
+            "maskT": {
+              "type": "bool",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "504bc3fe5f1a16d3c33ae958f0542d01e4cf861071a97a6715cfd486ce7f7d6f"
+            },
+            "known_boundaries": {
+              "type": "bool",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "e61f41d57db208c5f92a35c4ce7198570924a3fc87eeba83441fceee5d6a2865"
+            },
+            "prev_boundaries": {
+              "type": "bool",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "4051ca8f77452ef004a52c8a2d16944ce491c5b49af802919237eff81d025e81"
+            },
+            "language": {
+              "type": "int64",
+              "dims": [
+                1
+              ],
+              "sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc"
+            },
+            "threshold": {
+              "type": "float32",
+              "dims": [],
+              "sha256": "5d96a77c55b4ac1eea2d77815396c4349292b85e3b07beaca6aff933e7ef8752"
+            },
+            "radius": {
+              "type": "int64",
+              "dims": [],
+              "sha256": "d86e8112f3c4c4442126f8e9f44f16867da487f29052bf91b810457db34209a4"
+            },
+            "t": {
+              "type": "float32",
+              "dims": [
+                1
+              ],
+              "sha256": "f3cdf0320e41c4ed5579a3c9f9f114692c01d392cde482d3ae802c5b25290f68"
+            },
+            "random_uniform": {
+              "type": "float32",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "35fccf16b313eeca3ba9aa9542dc84da7004dd742a08947f1af51cba289d22fb"
+            }
+          },
+          "outputs": {
+            "boundaries": {
+              "type": "bool",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "7990b4bb0a5147e8fd7fbe03c34850dfca600bfc6bbb9ab9e9c80ac250bf32b3"
+            }
+          }
+        },
+        {
+          "name": "segmenter",
+          "seconds": 9.108301979999997,
+          "feeds": {
+            "x_seg": {
+              "type": "float32",
+              "dims": [
+                1,
+                1600,
+                256
+              ],
+              "sha256": "41dd4c21cfdc30f8f9003ec913e4cbc2407bf85778de046c37977fd94611490d"
+            },
+            "maskT": {
+              "type": "bool",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "504bc3fe5f1a16d3c33ae958f0542d01e4cf861071a97a6715cfd486ce7f7d6f"
+            },
+            "known_boundaries": {
+              "type": "bool",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "e61f41d57db208c5f92a35c4ce7198570924a3fc87eeba83441fceee5d6a2865"
+            },
+            "prev_boundaries": {
+              "type": "bool",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "7990b4bb0a5147e8fd7fbe03c34850dfca600bfc6bbb9ab9e9c80ac250bf32b3"
+            },
+            "language": {
+              "type": "int64",
+              "dims": [
+                1
+              ],
+              "sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc"
+            },
+            "threshold": {
+              "type": "float32",
+              "dims": [],
+              "sha256": "5d96a77c55b4ac1eea2d77815396c4349292b85e3b07beaca6aff933e7ef8752"
+            },
+            "radius": {
+              "type": "int64",
+              "dims": [],
+              "sha256": "d86e8112f3c4c4442126f8e9f44f16867da487f29052bf91b810457db34209a4"
+            },
+            "t": {
+              "type": "float32",
+              "dims": [
+                1
+              ],
+              "sha256": "9a8208635e00348ab64aac2b759e76391fd47089e9a749bbcec770d9eb5c6421"
+            },
+            "random_uniform": {
+              "type": "float32",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "2d1a6dc9e20fab92b8fb3511f6a7c1b5c03e6873fdaae0a85a85ef66104f1459"
+            }
+          },
+          "outputs": {
+            "boundaries": {
+              "type": "bool",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "b81981cc668551a03d0bf04887d23c7144a4d075468fc11099951fbbf012bfd0"
+            }
+          }
+        },
+        {
+          "name": "segmenter",
+          "seconds": 9.262125591999997,
+          "feeds": {
+            "x_seg": {
+              "type": "float32",
+              "dims": [
+                1,
+                1600,
+                256
+              ],
+              "sha256": "41dd4c21cfdc30f8f9003ec913e4cbc2407bf85778de046c37977fd94611490d"
+            },
+            "maskT": {
+              "type": "bool",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "504bc3fe5f1a16d3c33ae958f0542d01e4cf861071a97a6715cfd486ce7f7d6f"
+            },
+            "known_boundaries": {
+              "type": "bool",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "e61f41d57db208c5f92a35c4ce7198570924a3fc87eeba83441fceee5d6a2865"
+            },
+            "prev_boundaries": {
+              "type": "bool",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "b81981cc668551a03d0bf04887d23c7144a4d075468fc11099951fbbf012bfd0"
+            },
+            "language": {
+              "type": "int64",
+              "dims": [
+                1
+              ],
+              "sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc"
+            },
+            "threshold": {
+              "type": "float32",
+              "dims": [],
+              "sha256": "5d96a77c55b4ac1eea2d77815396c4349292b85e3b07beaca6aff933e7ef8752"
+            },
+            "radius": {
+              "type": "int64",
+              "dims": [],
+              "sha256": "d86e8112f3c4c4442126f8e9f44f16867da487f29052bf91b810457db34209a4"
+            },
+            "t": {
+              "type": "float32",
+              "dims": [
+                1
+              ],
+              "sha256": "4f9666bffd029360e6e44ae8be3ab0690dd7a2032737723fa16e3d757b4d4a6c"
+            },
+            "random_uniform": {
+              "type": "float32",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "bc7907621178c6baa41b0477c982fe1e74558c9fefde41a6a21f4439d5ae9259"
+            }
+          },
+          "outputs": {
+            "boundaries": {
+              "type": "bool",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "b81981cc668551a03d0bf04887d23c7144a4d075468fc11099951fbbf012bfd0"
+            }
+          }
+        },
+        {
+          "name": "bd2dur",
+          "seconds": 0.006784182000003056,
+          "feeds": {
+            "boundaries": {
+              "type": "bool",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "504bc3fe5f1a16d3c33ae958f0542d01e4cf861071a97a6715cfd486ce7f7d6f"
+            },
+            "maskT": {
+              "type": "bool",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "504bc3fe5f1a16d3c33ae958f0542d01e4cf861071a97a6715cfd486ce7f7d6f"
+            }
+          },
+          "outputs": {
+            "durations": {
+              "type": "float32",
+              "dims": [
+                1,
+                1601
+              ],
+              "sha256": "d33be94e2cfecb169cc0809330f8f4cbaa3ce0c106f8a4ff66faca7ad76eb87e"
+            },
+            "maskN": {
+              "type": "bool",
+              "dims": [
+                1,
+                1601
+              ],
+              "sha256": "77fa6af8c8892763ab06fc7d5843997d19c653b9fda59d0a79689b4fe82c61f3"
+            }
+          }
+        },
+        {
+          "name": "estimator",
+          "seconds": 14.806855217999997,
+          "feeds": {
+            "x_est": {
+              "type": "float32",
+              "dims": [
+                1,
+                1600,
+                256
+              ],
+              "sha256": "bfc9e441dc9df8b6d7fe24584e34539e48ce0d7dc27ed669900b0578ccb79d87"
+            },
+            "boundaries": {
+              "type": "bool",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "504bc3fe5f1a16d3c33ae958f0542d01e4cf861071a97a6715cfd486ce7f7d6f"
+            },
+            "maskT": {
+              "type": "bool",
+              "dims": [
+                1,
+                1600
+              ],
+              "sha256": "504bc3fe5f1a16d3c33ae958f0542d01e4cf861071a97a6715cfd486ce7f7d6f"
+            },
+            "maskN": {
+              "type": "bool",
+              "dims": [
+                1,
+                1601
+              ],
+              "sha256": "77fa6af8c8892763ab06fc7d5843997d19c653b9fda59d0a79689b4fe82c61f3"
+            },
+            "threshold": {
+              "type": "float32",
+              "dims": [],
+              "sha256": "5d96a77c55b4ac1eea2d77815396c4349292b85e3b07beaca6aff933e7ef8752"
+            }
+          },
+          "outputs": {
+            "presence": {
+              "type": "bool",
+              "dims": [
+                1,
+                1601
+              ],
+              "sha256": "3f5d59a58725eecf299f04c67059624bd84a3ecc61e1d38f3b51a192126561fa"
+            },
+            "scores": {
+              "type": "float32",
+              "dims": [
+                1,
+                1601
+              ],
+              "sha256": "d559e99926ea82d58bbaca49ae5e37fd2951495fd801a1da9db86070069571ad"
+            }
+          }
+        }
+      ],
+      "elapsedSeconds": 96.55773983600001,
+      "rss": 2428960768,
+      "maxRss": 2428960768
+    }
+  ],
+  "records": [
+    {
+      "type": "begin",
+      "id": "demo-20s",
+      "rss": 44761088,
+      "maxRss": 44761088
+    },
+    {
+      "type": "load",
+      "name": "encoder",
+      "seconds": 0.6680569000000001,
+      "modelSha256": "fbda7df8791d5cafd02ed33c65f9926c5514c750278c27fb8a59259b4c1d7464",
+      "rss": 648237056,
+      "maxRss": 674627584
+    },
+    {
+      "type": "load",
+      "name": "dur2bd",
+      "seconds": 0.003083744000000024,
+      "modelSha256": "49d10d1ea186e43c51fd2c51cedb01a3852d363f1c7056ae77df50f7e8dd0996",
+      "rss": 648237056,
+      "maxRss": 674627584
+    },
+    {
+      "type": "load",
+      "name": "segmenter",
+      "seconds": 0.521025198,
+      "modelSha256": "9db605a2ad3c179e9c4e4ae5b970727006020c65936773c26b2cbc27d8ef892f",
+      "rss": 1140805632,
+      "maxRss": 1140805632
+    },
+    {
+      "type": "load",
+      "name": "bd2dur",
+      "seconds": 0.004323202000000037,
+      "modelSha256": "6672d56b00f27a20e9bfaa92801c15e394bb520e49031d3ed2515b0a6cf27402",
+      "rss": 1141592064,
+      "maxRss": 1141592064
+    },
+    {
+      "type": "load",
+      "name": "estimator",
+      "seconds": 1.388134375,
+      "modelSha256": "0d4a6e13bf475f79967e252b401bb5f317aa6b96bbe6665d5f8b14b42b179926",
+      "rss": 1275572224,
+      "maxRss": 1275572224
+    },
+    {
+      "type": "graph",
+      "id": "demo-20s",
+      "name": "encoder",
+      "seconds": 5.1712663170000015,
+      "outputDims": {
+        "x_seg": [
+          1,
+          1600,
+          256
+        ],
+        "x_est": [
+          1,
+          1600,
+          256
+        ],
+        "maskT": [
+          1,
+          1600
+        ]
+      },
+      "rss": 1383006208,
+      "maxRss": 1383841792
+    },
+    {
+      "type": "graph",
+      "id": "demo-20s",
+      "name": "dur2bd",
+      "seconds": 0.00063340000000062,
+      "outputDims": {
+        "boundaries": [
+          1,
+          1600
+        ]
+      },
+      "rss": 1383006208,
+      "maxRss": 1383841792
+    },
+    {
+      "type": "graph",
+      "id": "demo-20s",
+      "name": "segmenter",
+      "seconds": 9.230108688999998,
+      "outputDims": {
+        "boundaries": [
+          1,
+          1600
+        ]
+      },
+      "rss": 1465319424,
+      "maxRss": 1465319424
+    },
+    {
+      "type": "graph",
+      "id": "demo-20s",
+      "name": "segmenter",
+      "seconds": 9.416067239,
+      "outputDims": {
+        "boundaries": [
+          1,
+          1600
+        ]
+      },
+      "rss": 1482227712,
+      "maxRss": 1482227712
+    },
+    {
+      "type": "graph",
+      "id": "demo-20s",
+      "name": "segmenter",
+      "seconds": 9.154848214000005,
+      "outputDims": {
+        "boundaries": [
+          1,
+          1600
+        ]
+      },
+      "rss": 1482883072,
+      "maxRss": 1482883072
+    },
+    {
+      "type": "graph",
+      "id": "demo-20s",
+      "name": "segmenter",
+      "seconds": 9.130073287,
+      "outputDims": {
+        "boundaries": [
+          1,
+          1600
+        ]
+      },
+      "rss": 1483145216,
+      "maxRss": 1483145216
+    },
+    {
+      "type": "graph",
+      "id": "demo-20s",
+      "name": "segmenter",
+      "seconds": 9.263645138,
+      "outputDims": {
+        "boundaries": [
+          1,
+          1600
+        ]
+      },
+      "rss": 1483145216,
+      "maxRss": 1483145216
+    },
+    {
+      "type": "graph",
+      "id": "demo-20s",
+      "name": "segmenter",
+      "seconds": 8.945365698999995,
+      "outputDims": {
+        "boundaries": [
+          1,
+          1600
+        ]
+      },
+      "rss": 1483145216,
+      "maxRss": 1483145216
+    },
+    {
+      "type": "graph",
+      "id": "demo-20s",
+      "name": "segmenter",
+      "seconds": 9.108301979999997,
+      "outputDims": {
+        "boundaries": [
+          1,
+          1600
+        ]
+      },
+      "rss": 1483145216,
+      "maxRss": 1483145216
+    },
+    {
+      "type": "graph",
+      "id": "demo-20s",
+      "name": "segmenter",
+      "seconds": 9.262125591999997,
+      "outputDims": {
+        "boundaries": [
+          1,
+          1600
+        ]
+      },
+      "rss": 1483145216,
+      "maxRss": 1483145216
+    },
+    {
+      "type": "synthetic-boundaries",
+      "name": "bd2dur",
+      "frames": 1600,
+      "boundaries": 1600,
+      "stride": 1,
+      "rss": 1483145216,
+      "maxRss": 1483145216
+    },
+    {
+      "type": "graph",
+      "id": "demo-20s",
+      "name": "bd2dur",
+      "seconds": 0.006784182000003056,
+      "outputDims": {
+        "durations": [
+          1,
+          1601
+        ],
+        "maskN": [
+          1,
+          1601
+        ]
+      },
+      "rss": 1486159872,
+      "maxRss": 1486159872
+    },
+    {
+      "type": "synthetic-boundaries",
+      "name": "estimator",
+      "frames": 1600,
+      "boundaries": 1600,
+      "stride": 1,
+      "rss": 1486159872,
+      "maxRss": 1486159872
+    },
+    {
+      "type": "graph",
+      "id": "demo-20s",
+      "name": "estimator",
+      "seconds": 14.806855217999997,
+      "outputDims": {
+        "presence": [
+          1,
+          1601
+        ],
+        "scores": [
+          1,
+          1601
+        ]
+      },
+      "rss": 2428960768,
+      "maxRss": 2428960768
+    },
+    {
+      "type": "passage",
+      "id": "demo-20s",
+      "seconds": 96.55773983600001,
+      "notes": 0,
+      "rss": 2428960768,
+      "maxRss": 2428960768
+    }
+  ],
+  "rss": 2429222912,
+  "maxRss": 2429222912
+}

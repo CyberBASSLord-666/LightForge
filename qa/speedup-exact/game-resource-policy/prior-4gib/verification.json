@@ -1,11 +1,10 @@
 {
-  "release": "2.2.5",
   "passed": true,
-  "createdAt": "2026-09-10T04:06:44.150404+00:00",
-  "scope": "Production Java compile plus host real-file AnalysisJobStore tests after restoring the published native predictor; six-GiB available-memory boundary, durable caught-worker fallback, completed-project retry, source identity, and cancellation. Fresh Android ActivityManager sampling and on-device memory peaks are not measured by this host test.",
+  "createdAt": "2026-09-10T03:45:13.267774+00:00",
+  "scope": "Production Java compile plus host real-file AnalysisJobStore tests, including caught worker fallback through successful release and completed project retry; fresh Android ActivityManager sampling and fallback throttle bypass are source-wired, not device-qualified. No neural inference or performance claim.",
   "source_hashes": {
     "android/src/com/cyberbasslord/lightforge/AnalysisJobStore.java": "7693331f5121e9bb728781739d6b84b8fdfb443637d37502b085bda2e68fa895",
-    "android/src/com/cyberbasslord/lightforge/AnalysisResourcePolicy.java": "c72cc715966ed1677e15dde07c2f4dfc23211b74d96d5316ac6f0e90a4979453",
+    "android/src/com/cyberbasslord/lightforge/AnalysisResourcePolicy.java": "0d11d28540f5990cff632b89bd85761bc6c279d3c942ef7998c4f6d1b4c7d938",
     "android/src/com/cyberbasslord/lightforge/AnalysisService.java": "3f93ffbd8edfa8c2add1f585b09f98e697cfd40d64c0741633bf1f3604876581",
     "android/src/com/cyberbasslord/lightforge/AppDiagnostics.java": "3b0fccd2b166af52dfb25254f3b76bb635eb45caae6d3b19c2f6c391aa6242b6",
     "android/src/com/cyberbasslord/lightforge/AppResources.java": "f95a5d02007b40a0e2488b82298776be0fb9d171de8336380fec3dd553712430",
@@ -13,7 +12,7 @@
     "android/src/com/cyberbasslord/lightforge/DiagnosticLog.java": "1ac8c1866e2893e583b0aba42742d6123cea62fb4d6e8f0ceb39f26e9ce81c20",
     "android/src/com/cyberbasslord/lightforge/MainActivity.java": "7b1f8b7e8728cf5008b9efd477279b3c4b478458c7ed92b2a4692d841beafb05",
     "android/src/com/cyberbasslord/lightforge/NativeCrashTrace.java": "9a0a35aabe175d410a4cdd3dac7f4a53f5df79415ba6f12f13cd33ead9b079dd",
-    "android/src/com/cyberbasslord/lightforge/NativeDeux.java": "1cd0931e9740de978c44fbb3c77e0dcbe969eae151752cc70c8f792da5409cdc",
+    "android/src/com/cyberbasslord/lightforge/NativeDeux.java": "26b0a2e9f7ada76ae56cfccffe5af24dc3cbd92e23a490abc8e7ef0d324844b1",
     "android/src/com/cyberbasslord/lightforge/NativeDeuxTransform.java": "991b06501cfb88b904d0b714a525c389f169f00c231248b0e961b70f257e90b5",
     "android/src/com/cyberbasslord/lightforge/NativeMdxTask.java": "8e086f3700ae9a087c0e51dc314ac32cf9d3fb8ce4e0c6262efd024274a284bf",
     "android/src/com/cyberbasslord/lightforge/NativePassageTask.java": "58be6d232d1f7d139c100f979a19b938452593a4453f5e51bcba6d9133df14ac",
@@ -24,23 +23,12 @@
     "android/src/com/cyberbasslord/lightforge/WavConverter.java": "f34b9bf3c8960678b6116619941307ce01b75c672807ca85f6f81b6adc33b1b6",
     "android/src/com/cyberbasslord/lightforge/WebViewFileTransport.java": "2deff6c473928a08a7e63172c3fa6798df1273d1907fc163f292aa43d5c39b6e",
     "build/generated/com/cyberbasslord/lightforge/R.java": "e3b50db3640de1cc9e3212125a2ff52335b45d2d36526f8209d6bcd708123f3a",
-    "tests/AnalysisJobStoreTest.java": "1dd20ffce45eec21a004c63b42d336837fcf381f55a61e8b87a325b7f7d59775",
-    "version.json": "fa24b67fc3aa7677e274af0445c151d25a7638ce82facbe64085b05052331077"
+    "tests/AnalysisJobStoreTest.java": "be8ad43af7c379b160b765db94eebf4a5208a42621dacadc2267662e1496b5b3"
   },
-  "admissionPolicy": {
-    "parallelism": 2,
-    "minimumTotalBytes": 7516192768,
-    "minimumAvailableBytes": 6442450944,
-    "minimumCores": 4,
-    "require64Bit": true,
-    "rejectLowMemory": true
-  },
-  "errors": [],
   "compileExitCode": 0,
   "testExitCode": 0,
   "logs": {
     "compile.log": "dece862a32d4e989fd23df958ea691a7e58fa3157857498e3049c7e8b6c37239",
     "AnalysisJobStoreTest.log": "038164b39712a07dc9861130f622db52a551b27be9b60af0325cc75cfb29b223"
-  },
-  "completedAt": "2026-09-10T04:06:46.172792+00:00"
+  }
 }

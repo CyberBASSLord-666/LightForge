@@ -73,7 +73,9 @@ try:
     receipt['checks'].append('Production COOP/COEP/CORP response policy is same-origin and independently instantiated across unknown, empty, partial and large responses; ranges and MIME protection remain intact without cross-origin grants.')
     assert 'PASS:' in run('AnalysisJobStoreTest', FIXTURES / 'native-background-fixtures')
     receipt['checks'].append('Durable background job ownership, checkpoint reuse, cancellation, conflicting edits, result commit and interrupted-process recovery passed on the host JVM.')
-    assert 'cancellation checks passed.' in run('NativeDeuxTest')
+    deux = run('NativeDeuxTest')
+    assert 'CPU thread budget' in deux and 'cancellation checks passed.' in deux
+    receipt['checks'].append('Native Studio thread policy retains the prior budgets for 1–7 available cores, caps eight or more at 8 threads, and handles defensive zero/negative/large counts across 14 explicit cases.')
     receipt['checks'].append('Native Studio transform retains exact source-clock samples and stereo averaging; WAVE padding, malformed input and cancellation regressions passed without neural-model inference.')
     run('ProjectPreviewTest')
     assert 'PASS:' in run('DiagnosticLogTest', FIXTURES / 'native-diagnostic-fixtures')

@@ -1,0 +1,56 @@
+{
+  "capturedUtc": "2026-09-10T04:05:48.185852+00:00",
+  "captureScope": "Supplemental environment inventory captured after the completed controlled qualification in the same workspace; this is not a new benchmark or a contemporaneous CPU-contention trace.",
+  "host": {
+    "system": "Linux",
+    "release": "6.18.35",
+    "machine": "x86_64",
+    "pythonVersion": "3.12.14",
+    "pythonLogicalCpuCount": 9,
+    "affinityCpus": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ]
+  },
+  "cgroup": {
+    "cpu.max": "800000 100000",
+    "cpuset.cpus.effective": "0-8",
+    "memory.max": "21474836480"
+  },
+  "javaVersion": "openjdk version \"17.0.20.1\" 2026-08-18\nOpenJDK Runtime Environment Temurin-17.0.20.1+1 (build 17.0.20.1+1)\nOpenJDK 64-Bit Server VM Temurin-17.0.20.1+1 (build 17.0.20.1+1, mixed mode, sharing)",
+  "runtime": {
+    "nativeRuntimeSource": "android/native-runtime.json",
+    "sourceSha256": "e3ea568b3a8485235f23a59cd787466cdcbbfcaa54ac56df3ce040d29fcb2a94",
+    "version": "1.25.1",
+    "hostJar": "onnxruntime-1.25.1.jar",
+    "hostJarSha256": "749793ebed63743fec853d093da7987a86ea5cd592d54fba898cd3233100c381"
+  },
+  "execution": {
+    "candidateMechanism": "Unpatched public production NativeDeux class selected eight through its normal available-core policy; saved original class selected four.",
+    "fixtureOrder": {
+      "demo-start": [
+        "baseline",
+        "candidate"
+      ],
+      "falcon-start": [
+        "candidate",
+        "baseline"
+      ]
+    },
+    "cpuCoordination": "Other agents explicitly paused neural-model benchmarks through all four final runs; no overlapping model benchmarks were scheduled.",
+    "heavyQualificationCompleted": true,
+    "additionalModelRunsForRollback": false
+  },
+  "measurementLimits": [
+    "One timed run per implementation per fixture, with order reversed on the second fixture; no repeated-trial confidence interval.",
+    "Peak RSS is host-process sampling and is not evidence of Android admission safety.",
+    "No target ARM64 or physical phone performance qualification."
+  ]
+}

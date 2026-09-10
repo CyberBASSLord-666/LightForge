@@ -1,5 +1,14 @@
 # LightForge changelog
 
+## 2.2.5 — exact-output analysis speedups (qualification in progress)
+
+- Process two independent GAME passages with unchanged single-thread models, all eight diffusion steps and original passage seeds when fresh device memory permits it. Preserve exact checkpoint payloads and stitch results in source order.
+- Require at least 6 GiB freshly available RAM, 7 GiB total RAM, four cores, a 64-bit process and no low-memory signal before pooling. Retire the child on cancellation or failure; retain a durable serial-retry guard.
+- Skip only unused MDX FFT output-bin recombination. The original transform length, consumed values, both polarity passes, inverse transform and source samples are preserved.
+- Reuse byte-bound separation, voice and bass work after sensitivity or BPM edits while recomputing rhythm. Restore only role fields into the current result.
+- Keep Studio's native thread policy unchanged. The faster host eight-thread experiment is retained as unqualified for ARM64 rather than shipped.
+- Current Android production-pool qualification and the complete release gates are still required before publishing the signed update.
+
 ## 2.2.4 — bounded long-run analysis and balanced acceleration
 
 - Bound MDX WebAssembly sessions and reuse the frontend spectrum so long Balanced runs release model heaps at passage boundaries instead of accumulating renderer memory.

@@ -1,0 +1,2384 @@
+[
+  {
+    "file": "block-00-frequency.onnx",
+    "sha256": "d9ff162f881b26376ab77fa6f5bc277e8525f35fe02a02c53fcbf512ae84b3ad",
+    "ops": {
+      "ReduceL2": 3,
+      "Constant": 163,
+      "Clip": 3,
+      "Shape": 40,
+      "Expand": 5,
+      "Div": 8,
+      "Mul": 27,
+      "MatMul": 7,
+      "Gather": 35,
+      "Cast": 11,
+      "Unsqueeze": 42,
+      "Concat": 14,
+      "Reshape": 9,
+      "Transpose": 4,
+      "Split": 3,
+      "Squeeze": 7,
+      "Range": 1,
+      "Einsum": 1,
+      "ConstantOfShape": 1,
+      "Equal": 1,
+      "Where": 1,
+      "Slice": 12,
+      "ScatterND": 1,
+      "Neg": 4,
+      "Cos": 2,
+      "Sin": 2,
+      "Add": 8,
+      "Pow": 1,
+      "Softmax": 1,
+      "Sigmoid": 1,
+      "Erf": 1
+    },
+    "inputs": {
+      "input": [
+        "batch",
+        60,
+        256
+      ]
+    },
+    "reductions": [
+      {
+        "name": "/layers.0.0/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/layers.0.1/net/net.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      }
+    ]
+  },
+  {
+    "file": "block-00-time.onnx",
+    "sha256": "99929d0603a18bc1aff6994d2c60780ffb37da0a7b326f5b34618bbb1af41feb",
+    "ops": {
+      "ReduceL2": 3,
+      "Constant": 243,
+      "Clip": 3,
+      "Shape": 40,
+      "Expand": 5,
+      "Div": 8,
+      "Mul": 47,
+      "MatMul": 47,
+      "Gather": 35,
+      "Cast": 11,
+      "Unsqueeze": 42,
+      "Concat": 14,
+      "Reshape": 9,
+      "Transpose": 4,
+      "Split": 3,
+      "Squeeze": 7,
+      "Range": 1,
+      "Einsum": 1,
+      "ConstantOfShape": 1,
+      "Equal": 1,
+      "Where": 1,
+      "Slice": 32,
+      "ScatterND": 1,
+      "Neg": 4,
+      "Cos": 2,
+      "Sin": 2,
+      "Add": 8,
+      "Pow": 1,
+      "Softmax": 21,
+      "Sigmoid": 1,
+      "Erf": 1
+    },
+    "inputs": {
+      "input": [
+        "batch",
+        1301,
+        256
+      ]
+    },
+    "reductions": [
+      {
+        "name": "/layers.0.0/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/layers.0.1/net/net.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      }
+    ]
+  },
+  {
+    "file": "block-01-frequency.onnx",
+    "sha256": "17fbd2962bfcadecca2b08eae3ab79e3ccf92f7b35da0dade1b83d003ac5345e",
+    "ops": {
+      "ReduceL2": 3,
+      "Constant": 142,
+      "Clip": 3,
+      "Shape": 36,
+      "Expand": 3,
+      "Div": 7,
+      "Mul": 24,
+      "MatMul": 7,
+      "Gather": 33,
+      "Cast": 9,
+      "Unsqueeze": 37,
+      "Concat": 12,
+      "Reshape": 7,
+      "Transpose": 4,
+      "Split": 3,
+      "Squeeze": 7,
+      "Slice": 11,
+      "Neg": 4,
+      "Cos": 2,
+      "Sin": 2,
+      "Add": 8,
+      "Pow": 1,
+      "Softmax": 1,
+      "Sigmoid": 1,
+      "Erf": 1
+    },
+    "inputs": {
+      "input": [
+        "batch",
+        60,
+        256
+      ]
+    },
+    "reductions": [
+      {
+        "name": "/layers.0.0/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/layers.0.1/net/net.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      }
+    ]
+  },
+  {
+    "file": "block-01-time.onnx",
+    "sha256": "340aa6e8297f3b7085918cfec93d353b1d8649d12e0e17c83b87226f2688d45f",
+    "ops": {
+      "ReduceL2": 3,
+      "Constant": 222,
+      "Clip": 3,
+      "Shape": 36,
+      "Expand": 3,
+      "Div": 7,
+      "Mul": 44,
+      "MatMul": 47,
+      "Gather": 33,
+      "Cast": 9,
+      "Unsqueeze": 37,
+      "Concat": 12,
+      "Reshape": 7,
+      "Transpose": 4,
+      "Split": 3,
+      "Squeeze": 7,
+      "Slice": 31,
+      "Neg": 4,
+      "Cos": 2,
+      "Sin": 2,
+      "Add": 8,
+      "Pow": 1,
+      "Softmax": 21,
+      "Sigmoid": 1,
+      "Erf": 1
+    },
+    "inputs": {
+      "input": [
+        "batch",
+        1301,
+        256
+      ]
+    },
+    "reductions": [
+      {
+        "name": "/layers.0.0/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/layers.0.1/net/net.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      }
+    ]
+  },
+  {
+    "file": "block-02-frequency.onnx",
+    "sha256": "2861f5265cfb3920c00c65533a88f1da919f1cc99306b9477c0d2dc155c4fb69",
+    "ops": {
+      "ReduceL2": 3,
+      "Constant": 142,
+      "Clip": 3,
+      "Shape": 36,
+      "Expand": 3,
+      "Div": 7,
+      "Mul": 24,
+      "MatMul": 7,
+      "Gather": 33,
+      "Cast": 9,
+      "Unsqueeze": 37,
+      "Concat": 12,
+      "Reshape": 7,
+      "Transpose": 4,
+      "Split": 3,
+      "Squeeze": 7,
+      "Slice": 11,
+      "Neg": 4,
+      "Cos": 2,
+      "Sin": 2,
+      "Add": 8,
+      "Pow": 1,
+      "Softmax": 1,
+      "Sigmoid": 1,
+      "Erf": 1
+    },
+    "inputs": {
+      "input": [
+        "batch",
+        60,
+        256
+      ]
+    },
+    "reductions": [
+      {
+        "name": "/layers.0.0/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/layers.0.1/net/net.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      }
+    ]
+  },
+  {
+    "file": "block-02-time.onnx",
+    "sha256": "fb7369fe1eeb340bbe1701e9706e60388785856d8642d9660b5018e505491660",
+    "ops": {
+      "ReduceL2": 3,
+      "Constant": 222,
+      "Clip": 3,
+      "Shape": 36,
+      "Expand": 3,
+      "Div": 7,
+      "Mul": 44,
+      "MatMul": 47,
+      "Gather": 33,
+      "Cast": 9,
+      "Unsqueeze": 37,
+      "Concat": 12,
+      "Reshape": 7,
+      "Transpose": 4,
+      "Split": 3,
+      "Squeeze": 7,
+      "Slice": 31,
+      "Neg": 4,
+      "Cos": 2,
+      "Sin": 2,
+      "Add": 8,
+      "Pow": 1,
+      "Softmax": 21,
+      "Sigmoid": 1,
+      "Erf": 1
+    },
+    "inputs": {
+      "input": [
+        "batch",
+        1301,
+        256
+      ]
+    },
+    "reductions": [
+      {
+        "name": "/layers.0.0/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/layers.0.1/net/net.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      }
+    ]
+  },
+  {
+    "file": "block-03-frequency.onnx",
+    "sha256": "284fdaeb343dc5c742503f4beb9a253faf7e7dc14184844c63091241c262d5f8",
+    "ops": {
+      "ReduceL2": 3,
+      "Constant": 142,
+      "Clip": 3,
+      "Shape": 36,
+      "Expand": 3,
+      "Div": 7,
+      "Mul": 24,
+      "MatMul": 7,
+      "Gather": 33,
+      "Cast": 9,
+      "Unsqueeze": 37,
+      "Concat": 12,
+      "Reshape": 7,
+      "Transpose": 4,
+      "Split": 3,
+      "Squeeze": 7,
+      "Slice": 11,
+      "Neg": 4,
+      "Cos": 2,
+      "Sin": 2,
+      "Add": 8,
+      "Pow": 1,
+      "Softmax": 1,
+      "Sigmoid": 1,
+      "Erf": 1
+    },
+    "inputs": {
+      "input": [
+        "batch",
+        60,
+        256
+      ]
+    },
+    "reductions": [
+      {
+        "name": "/layers.0.0/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/layers.0.1/net/net.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      }
+    ]
+  },
+  {
+    "file": "block-03-time.onnx",
+    "sha256": "5554b5723c995cd5ee5c72e7676ba4659ab56ca3d75b72681c6df5c56f14d298",
+    "ops": {
+      "ReduceL2": 3,
+      "Constant": 222,
+      "Clip": 3,
+      "Shape": 36,
+      "Expand": 3,
+      "Div": 7,
+      "Mul": 44,
+      "MatMul": 47,
+      "Gather": 33,
+      "Cast": 9,
+      "Unsqueeze": 37,
+      "Concat": 12,
+      "Reshape": 7,
+      "Transpose": 4,
+      "Split": 3,
+      "Squeeze": 7,
+      "Slice": 31,
+      "Neg": 4,
+      "Cos": 2,
+      "Sin": 2,
+      "Add": 8,
+      "Pow": 1,
+      "Softmax": 21,
+      "Sigmoid": 1,
+      "Erf": 1
+    },
+    "inputs": {
+      "input": [
+        "batch",
+        1301,
+        256
+      ]
+    },
+    "reductions": [
+      {
+        "name": "/layers.0.0/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/layers.0.1/net/net.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      }
+    ]
+  },
+  {
+    "file": "block-04-frequency.onnx",
+    "sha256": "442837a608d31c5efc7d481b222e49be046fc6ab02adc22cb2832aa7d26db0d1",
+    "ops": {
+      "ReduceL2": 3,
+      "Constant": 142,
+      "Clip": 3,
+      "Shape": 36,
+      "Expand": 3,
+      "Div": 7,
+      "Mul": 24,
+      "MatMul": 7,
+      "Gather": 33,
+      "Cast": 9,
+      "Unsqueeze": 37,
+      "Concat": 12,
+      "Reshape": 7,
+      "Transpose": 4,
+      "Split": 3,
+      "Squeeze": 7,
+      "Slice": 11,
+      "Neg": 4,
+      "Cos": 2,
+      "Sin": 2,
+      "Add": 8,
+      "Pow": 1,
+      "Softmax": 1,
+      "Sigmoid": 1,
+      "Erf": 1
+    },
+    "inputs": {
+      "input": [
+        "batch",
+        60,
+        256
+      ]
+    },
+    "reductions": [
+      {
+        "name": "/layers.0.0/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/layers.0.1/net/net.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      }
+    ]
+  },
+  {
+    "file": "block-04-time.onnx",
+    "sha256": "02138dae6b824d3a809d42b5f719d66b58a13595f29dc0df241cfd2c9635a377",
+    "ops": {
+      "ReduceL2": 3,
+      "Constant": 222,
+      "Clip": 3,
+      "Shape": 36,
+      "Expand": 3,
+      "Div": 7,
+      "Mul": 44,
+      "MatMul": 47,
+      "Gather": 33,
+      "Cast": 9,
+      "Unsqueeze": 37,
+      "Concat": 12,
+      "Reshape": 7,
+      "Transpose": 4,
+      "Split": 3,
+      "Squeeze": 7,
+      "Slice": 31,
+      "Neg": 4,
+      "Cos": 2,
+      "Sin": 2,
+      "Add": 8,
+      "Pow": 1,
+      "Softmax": 21,
+      "Sigmoid": 1,
+      "Erf": 1
+    },
+    "inputs": {
+      "input": [
+        "batch",
+        1301,
+        256
+      ]
+    },
+    "reductions": [
+      {
+        "name": "/layers.0.0/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/layers.0.1/net/net.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      }
+    ]
+  },
+  {
+    "file": "block-05-frequency.onnx",
+    "sha256": "2811d5f251810bd27af5e14674ac166a64753ccf24a23bf521daeb7a63cea62d",
+    "ops": {
+      "ReduceL2": 3,
+      "Constant": 142,
+      "Clip": 3,
+      "Shape": 36,
+      "Expand": 3,
+      "Div": 7,
+      "Mul": 24,
+      "MatMul": 7,
+      "Gather": 33,
+      "Cast": 9,
+      "Unsqueeze": 37,
+      "Concat": 12,
+      "Reshape": 7,
+      "Transpose": 4,
+      "Split": 3,
+      "Squeeze": 7,
+      "Slice": 11,
+      "Neg": 4,
+      "Cos": 2,
+      "Sin": 2,
+      "Add": 8,
+      "Pow": 1,
+      "Softmax": 1,
+      "Sigmoid": 1,
+      "Erf": 1
+    },
+    "inputs": {
+      "input": [
+        "batch",
+        60,
+        256
+      ]
+    },
+    "reductions": [
+      {
+        "name": "/layers.0.0/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/layers.0.1/net/net.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      }
+    ]
+  },
+  {
+    "file": "block-05-time.onnx",
+    "sha256": "166edd8406f525a1deb7e5eca9e383619b27a0d82adc80cf0636e473455e762a",
+    "ops": {
+      "ReduceL2": 3,
+      "Constant": 222,
+      "Clip": 3,
+      "Shape": 36,
+      "Expand": 3,
+      "Div": 7,
+      "Mul": 44,
+      "MatMul": 47,
+      "Gather": 33,
+      "Cast": 9,
+      "Unsqueeze": 37,
+      "Concat": 12,
+      "Reshape": 7,
+      "Transpose": 4,
+      "Split": 3,
+      "Squeeze": 7,
+      "Slice": 31,
+      "Neg": 4,
+      "Cos": 2,
+      "Sin": 2,
+      "Add": 8,
+      "Pow": 1,
+      "Softmax": 21,
+      "Sigmoid": 1,
+      "Erf": 1
+    },
+    "inputs": {
+      "input": [
+        "batch",
+        1301,
+        256
+      ]
+    },
+    "reductions": [
+      {
+        "name": "/layers.0.0/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/layers.0.1/net/net.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      }
+    ]
+  },
+  {
+    "file": "block-06-frequency.onnx",
+    "sha256": "31ef31ffc1507abf3af75dadef52a01131390c4a9916137d3e9d775106c44e45",
+    "ops": {
+      "ReduceL2": 3,
+      "Constant": 142,
+      "Clip": 3,
+      "Shape": 36,
+      "Expand": 3,
+      "Div": 7,
+      "Mul": 24,
+      "MatMul": 7,
+      "Gather": 33,
+      "Cast": 9,
+      "Unsqueeze": 37,
+      "Concat": 12,
+      "Reshape": 7,
+      "Transpose": 4,
+      "Split": 3,
+      "Squeeze": 7,
+      "Slice": 11,
+      "Neg": 4,
+      "Cos": 2,
+      "Sin": 2,
+      "Add": 8,
+      "Pow": 1,
+      "Softmax": 1,
+      "Sigmoid": 1,
+      "Erf": 1
+    },
+    "inputs": {
+      "input": [
+        "batch",
+        60,
+        256
+      ]
+    },
+    "reductions": [
+      {
+        "name": "/layers.0.0/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/layers.0.1/net/net.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      }
+    ]
+  },
+  {
+    "file": "block-06-time.onnx",
+    "sha256": "a83645af6e2e3b1107ed6e5a41e1e095da265dff985560a533c3a4774f1eb0fb",
+    "ops": {
+      "ReduceL2": 3,
+      "Constant": 222,
+      "Clip": 3,
+      "Shape": 36,
+      "Expand": 3,
+      "Div": 7,
+      "Mul": 44,
+      "MatMul": 47,
+      "Gather": 33,
+      "Cast": 9,
+      "Unsqueeze": 37,
+      "Concat": 12,
+      "Reshape": 7,
+      "Transpose": 4,
+      "Split": 3,
+      "Squeeze": 7,
+      "Slice": 31,
+      "Neg": 4,
+      "Cos": 2,
+      "Sin": 2,
+      "Add": 8,
+      "Pow": 1,
+      "Softmax": 21,
+      "Sigmoid": 1,
+      "Erf": 1
+    },
+    "inputs": {
+      "input": [
+        "batch",
+        1301,
+        256
+      ]
+    },
+    "reductions": [
+      {
+        "name": "/layers.0.0/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/layers.0.1/net/net.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      }
+    ]
+  },
+  {
+    "file": "block-07-frequency.onnx",
+    "sha256": "fc9a8b69d369f76f153373df180c94d437c9e3db8850a9a9ee2b63d9b1df0cf2",
+    "ops": {
+      "ReduceL2": 3,
+      "Constant": 142,
+      "Clip": 3,
+      "Shape": 36,
+      "Expand": 3,
+      "Div": 7,
+      "Mul": 24,
+      "MatMul": 7,
+      "Gather": 33,
+      "Cast": 9,
+      "Unsqueeze": 37,
+      "Concat": 12,
+      "Reshape": 7,
+      "Transpose": 4,
+      "Split": 3,
+      "Squeeze": 7,
+      "Slice": 11,
+      "Neg": 4,
+      "Cos": 2,
+      "Sin": 2,
+      "Add": 8,
+      "Pow": 1,
+      "Softmax": 1,
+      "Sigmoid": 1,
+      "Erf": 1
+    },
+    "inputs": {
+      "input": [
+        "batch",
+        60,
+        256
+      ]
+    },
+    "reductions": [
+      {
+        "name": "/layers.0.0/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/layers.0.1/net/net.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      }
+    ]
+  },
+  {
+    "file": "block-07-time.onnx",
+    "sha256": "eb1c4c6a84dca306da78a7524b004240916aca5fc704e9b64df6cde540a6a20c",
+    "ops": {
+      "ReduceL2": 3,
+      "Constant": 222,
+      "Clip": 3,
+      "Shape": 36,
+      "Expand": 3,
+      "Div": 7,
+      "Mul": 44,
+      "MatMul": 47,
+      "Gather": 33,
+      "Cast": 9,
+      "Unsqueeze": 37,
+      "Concat": 12,
+      "Reshape": 7,
+      "Transpose": 4,
+      "Split": 3,
+      "Squeeze": 7,
+      "Slice": 31,
+      "Neg": 4,
+      "Cos": 2,
+      "Sin": 2,
+      "Add": 8,
+      "Pow": 1,
+      "Softmax": 21,
+      "Sigmoid": 1,
+      "Erf": 1
+    },
+    "inputs": {
+      "input": [
+        "batch",
+        1301,
+        256
+      ]
+    },
+    "reductions": [
+      {
+        "name": "/layers.0.0/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/layers.0.1/net/net.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      }
+    ]
+  },
+  {
+    "file": "block-08-frequency.onnx",
+    "sha256": "090c7696c7edf37a30abecc12cfeb7c4cea740fb0065969fc5598598df2cfd07",
+    "ops": {
+      "ReduceL2": 3,
+      "Constant": 142,
+      "Clip": 3,
+      "Shape": 36,
+      "Expand": 3,
+      "Div": 7,
+      "Mul": 24,
+      "MatMul": 7,
+      "Gather": 33,
+      "Cast": 9,
+      "Unsqueeze": 37,
+      "Concat": 12,
+      "Reshape": 7,
+      "Transpose": 4,
+      "Split": 3,
+      "Squeeze": 7,
+      "Slice": 11,
+      "Neg": 4,
+      "Cos": 2,
+      "Sin": 2,
+      "Add": 8,
+      "Pow": 1,
+      "Softmax": 1,
+      "Sigmoid": 1,
+      "Erf": 1
+    },
+    "inputs": {
+      "input": [
+        "batch",
+        60,
+        256
+      ]
+    },
+    "reductions": [
+      {
+        "name": "/layers.0.0/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/layers.0.1/net/net.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      }
+    ]
+  },
+  {
+    "file": "block-08-time.onnx",
+    "sha256": "c24ef8f8a6224176dfc53d27c817a8e03ea8a7408fc6219c55237023cc848f8c",
+    "ops": {
+      "ReduceL2": 3,
+      "Constant": 222,
+      "Clip": 3,
+      "Shape": 36,
+      "Expand": 3,
+      "Div": 7,
+      "Mul": 44,
+      "MatMul": 47,
+      "Gather": 33,
+      "Cast": 9,
+      "Unsqueeze": 37,
+      "Concat": 12,
+      "Reshape": 7,
+      "Transpose": 4,
+      "Split": 3,
+      "Squeeze": 7,
+      "Slice": 31,
+      "Neg": 4,
+      "Cos": 2,
+      "Sin": 2,
+      "Add": 8,
+      "Pow": 1,
+      "Softmax": 21,
+      "Sigmoid": 1,
+      "Erf": 1
+    },
+    "inputs": {
+      "input": [
+        "batch",
+        1301,
+        256
+      ]
+    },
+    "reductions": [
+      {
+        "name": "/layers.0.0/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/layers.0.1/net/net.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      }
+    ]
+  },
+  {
+    "file": "block-09-frequency.onnx",
+    "sha256": "536070d2aca4324dda1efb4b78968033061d676abae7cb8e83ccd31640396d4f",
+    "ops": {
+      "ReduceL2": 3,
+      "Constant": 142,
+      "Clip": 3,
+      "Shape": 36,
+      "Expand": 3,
+      "Div": 7,
+      "Mul": 24,
+      "MatMul": 7,
+      "Gather": 33,
+      "Cast": 9,
+      "Unsqueeze": 37,
+      "Concat": 12,
+      "Reshape": 7,
+      "Transpose": 4,
+      "Split": 3,
+      "Squeeze": 7,
+      "Slice": 11,
+      "Neg": 4,
+      "Cos": 2,
+      "Sin": 2,
+      "Add": 8,
+      "Pow": 1,
+      "Softmax": 1,
+      "Sigmoid": 1,
+      "Erf": 1
+    },
+    "inputs": {
+      "input": [
+        "batch",
+        60,
+        256
+      ]
+    },
+    "reductions": [
+      {
+        "name": "/layers.0.0/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/layers.0.1/net/net.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      }
+    ]
+  },
+  {
+    "file": "block-09-time.onnx",
+    "sha256": "d6e53f8be9e91b6733b8452e752487655c986fa3ac116e40aa3154dd9e7ca00f",
+    "ops": {
+      "ReduceL2": 3,
+      "Constant": 222,
+      "Clip": 3,
+      "Shape": 36,
+      "Expand": 3,
+      "Div": 7,
+      "Mul": 44,
+      "MatMul": 47,
+      "Gather": 33,
+      "Cast": 9,
+      "Unsqueeze": 37,
+      "Concat": 12,
+      "Reshape": 7,
+      "Transpose": 4,
+      "Split": 3,
+      "Squeeze": 7,
+      "Slice": 31,
+      "Neg": 4,
+      "Cos": 2,
+      "Sin": 2,
+      "Add": 8,
+      "Pow": 1,
+      "Softmax": 21,
+      "Sigmoid": 1,
+      "Erf": 1
+    },
+    "inputs": {
+      "input": [
+        "batch",
+        1301,
+        256
+      ]
+    },
+    "reductions": [
+      {
+        "name": "/layers.0.0/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/layers.0.1/net/net.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      }
+    ]
+  },
+  {
+    "file": "block-10-frequency.onnx",
+    "sha256": "fe90ed9051b54cde3e3dd6c342930b882af334abc845dfc7d032bb867aca8b55",
+    "ops": {
+      "ReduceL2": 3,
+      "Constant": 142,
+      "Clip": 3,
+      "Shape": 36,
+      "Expand": 3,
+      "Div": 7,
+      "Mul": 24,
+      "MatMul": 7,
+      "Gather": 33,
+      "Cast": 9,
+      "Unsqueeze": 37,
+      "Concat": 12,
+      "Reshape": 7,
+      "Transpose": 4,
+      "Split": 3,
+      "Squeeze": 7,
+      "Slice": 11,
+      "Neg": 4,
+      "Cos": 2,
+      "Sin": 2,
+      "Add": 8,
+      "Pow": 1,
+      "Softmax": 1,
+      "Sigmoid": 1,
+      "Erf": 1
+    },
+    "inputs": {
+      "input": [
+        "batch",
+        60,
+        256
+      ]
+    },
+    "reductions": [
+      {
+        "name": "/layers.0.0/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/layers.0.1/net/net.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      }
+    ]
+  },
+  {
+    "file": "block-10-time.onnx",
+    "sha256": "8011e6cf59865a74548d1a894e1355c314c750e8bc5dfdd5c008ab253b240791",
+    "ops": {
+      "ReduceL2": 3,
+      "Constant": 222,
+      "Clip": 3,
+      "Shape": 36,
+      "Expand": 3,
+      "Div": 7,
+      "Mul": 44,
+      "MatMul": 47,
+      "Gather": 33,
+      "Cast": 9,
+      "Unsqueeze": 37,
+      "Concat": 12,
+      "Reshape": 7,
+      "Transpose": 4,
+      "Split": 3,
+      "Squeeze": 7,
+      "Slice": 31,
+      "Neg": 4,
+      "Cos": 2,
+      "Sin": 2,
+      "Add": 8,
+      "Pow": 1,
+      "Softmax": 21,
+      "Sigmoid": 1,
+      "Erf": 1
+    },
+    "inputs": {
+      "input": [
+        "batch",
+        1301,
+        256
+      ]
+    },
+    "reductions": [
+      {
+        "name": "/layers.0.0/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/layers.0.1/net/net.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      }
+    ]
+  },
+  {
+    "file": "block-11-frequency.onnx",
+    "sha256": "97c548efaf34d46ab3b6172954f394d3ae7cf75657295e2bc9ccab05a5c737a1",
+    "ops": {
+      "ReduceL2": 3,
+      "Constant": 142,
+      "Clip": 3,
+      "Shape": 36,
+      "Expand": 3,
+      "Div": 7,
+      "Mul": 24,
+      "MatMul": 7,
+      "Gather": 33,
+      "Cast": 9,
+      "Unsqueeze": 37,
+      "Concat": 12,
+      "Reshape": 7,
+      "Transpose": 4,
+      "Split": 3,
+      "Squeeze": 7,
+      "Slice": 11,
+      "Neg": 4,
+      "Cos": 2,
+      "Sin": 2,
+      "Add": 8,
+      "Pow": 1,
+      "Softmax": 1,
+      "Sigmoid": 1,
+      "Erf": 1
+    },
+    "inputs": {
+      "input": [
+        "batch",
+        60,
+        256
+      ]
+    },
+    "reductions": [
+      {
+        "name": "/layers.0.0/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/layers.0.1/net/net.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      }
+    ]
+  },
+  {
+    "file": "block-11-time.onnx",
+    "sha256": "7421c8c818240f76759b3534b6abb6a6bc84b07e16347c0f56a1d0478de9940d",
+    "ops": {
+      "ReduceL2": 3,
+      "Constant": 222,
+      "Clip": 3,
+      "Shape": 36,
+      "Expand": 3,
+      "Div": 7,
+      "Mul": 44,
+      "MatMul": 47,
+      "Gather": 33,
+      "Cast": 9,
+      "Unsqueeze": 37,
+      "Concat": 12,
+      "Reshape": 7,
+      "Transpose": 4,
+      "Split": 3,
+      "Squeeze": 7,
+      "Slice": 31,
+      "Neg": 4,
+      "Cos": 2,
+      "Sin": 2,
+      "Add": 8,
+      "Pow": 1,
+      "Softmax": 21,
+      "Sigmoid": 1,
+      "Erf": 1
+    },
+    "inputs": {
+      "input": [
+        "batch",
+        1301,
+        256
+      ]
+    },
+    "reductions": [
+      {
+        "name": "/layers.0.0/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/layers.0.1/net/net.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/norm/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      }
+    ]
+  },
+  {
+    "file": "front.onnx",
+    "sha256": "3f29ee37960f009c08653345aef7d558df7dc1b66247e5b4f5a3a80901306752",
+    "ops": {
+      "Gather": 1,
+      "Transpose": 1,
+      "Shape": 61,
+      "Constant": 185,
+      "Slice": 1,
+      "Concat": 2,
+      "Reshape": 1,
+      "Split": 1,
+      "ReduceL2": 60,
+      "Clip": 60,
+      "Expand": 60,
+      "Div": 60,
+      "Mul": 120,
+      "MatMul": 60,
+      "Add": 60,
+      "Unsqueeze": 60
+    },
+    "inputs": {
+      "input": [
+        1,
+        2050,
+        1301,
+        2
+      ]
+    },
+    "reductions": [
+      {
+        "name": "/bands/to_features.0/to_features.0.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.1/to_features.1.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.2/to_features.2.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.3/to_features.3.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.4/to_features.4.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.5/to_features.5.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.6/to_features.6.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.7/to_features.7.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.8/to_features.8.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.9/to_features.9.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.10/to_features.10.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.11/to_features.11.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.12/to_features.12.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.13/to_features.13.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.14/to_features.14.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.15/to_features.15.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.16/to_features.16.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.17/to_features.17.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.18/to_features.18.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.19/to_features.19.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.20/to_features.20.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.21/to_features.21.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.22/to_features.22.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.23/to_features.23.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.24/to_features.24.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.25/to_features.25.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.26/to_features.26.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.27/to_features.27.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.28/to_features.28.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.29/to_features.29.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.30/to_features.30.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.31/to_features.31.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.32/to_features.32.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.33/to_features.33.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.34/to_features.34.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.35/to_features.35.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.36/to_features.36.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.37/to_features.37.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.38/to_features.38.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.39/to_features.39.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.40/to_features.40.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.41/to_features.41.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.42/to_features.42.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.43/to_features.43.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.44/to_features.44.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.45/to_features.45.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.46/to_features.46.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.47/to_features.47.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.48/to_features.48.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.49/to_features.49.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.50/to_features.50.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.51/to_features.51.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.52/to_features.52.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.53/to_features.53.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.54/to_features.54.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.55/to_features.55.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.56/to_features.56.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.57/to_features.57.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.58/to_features.58.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      },
+      {
+        "name": "/bands/to_features.59/to_features.59.0/ReduceL2",
+        "op": "ReduceL2",
+        "attributes": {
+          "axes": [
+            -1
+          ],
+          "keepdims": 1
+        }
+      }
+    ]
+  },
+  {
+    "file": "head-0.onnx",
+    "sha256": "bf0036486e15774a1ec8289f530a00282cfc89b2921e2f82bf17144fc162bae2",
+    "ops": {
+      "Constant": 66,
+      "Split": 61,
+      "Squeeze": 60,
+      "MatMul": 180,
+      "Add": 180,
+      "Tanh": 120,
+      "Sigmoid": 60,
+      "Mul": 60,
+      "Concat": 2,
+      "Shape": 1,
+      "Gather": 1,
+      "Unsqueeze": 1,
+      "Reshape": 1,
+      "Transpose": 1
+    },
+    "inputs": {
+      "input": [
+        1,
+        "frames",
+        60,
+        256
+      ]
+    },
+    "reductions": []
+  },
+  {
+    "file": "head-1.onnx",
+    "sha256": "a307d5bac63bf8547f163ca55cd829fee89ff6b5e27569d8407a8cc11db2c108",
+    "ops": {
+      "Constant": 66,
+      "Split": 61,
+      "Squeeze": 60,
+      "MatMul": 180,
+      "Add": 180,
+      "Tanh": 120,
+      "Sigmoid": 60,
+      "Mul": 60,
+      "Concat": 2,
+      "Shape": 1,
+      "Gather": 1,
+      "Unsqueeze": 1,
+      "Reshape": 1,
+      "Transpose": 1
+    },
+    "inputs": {
+      "input": [
+        1,
+        "frames",
+        60,
+        256
+      ]
+    },
+    "reductions": []
+  }
+]

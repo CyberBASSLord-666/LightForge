@@ -13,27 +13,29 @@ public final class AnalysisJobStoreTest {
     static JSONObject read(File file)throws Exception{return AnalysisJobStore.read(file,ProjectStore.MAX_PROJECT_BYTES);}
     static JSONObject eligibleGame(File files,String id)throws Exception {
         long gib=AnalysisResourcePolicy.GIB;
-        return AnalysisJobStore.gameParallelism(files,id,7*gib,4*gib,4,true,false);
+        return AnalysisJobStore.gameParallelism(files,id,7*gib,6*gib,4,true,false);
     }
     static void changeSample(File audio)throws Exception {
         try(RandomAccessFile edit=new RandomAccessFile(audio,"rw")){edit.seek(edit.length()-1);int sample=edit.read();edit.seek(edit.length()-1);edit.write(sample^1);}
     }
     static void gameParallelTests(File files,String projectId,File saved,JSONObject music)throws Exception {
         long gib=AnalysisResourcePolicy.GIB;
-        check(AnalysisResourcePolicy.gameParallelism(7*gib,4*gib,4,true,false)==2,"Exact parallel memory/core boundaries rejected");
-        check(AnalysisResourcePolicy.gameParallelism(7*gib-1,4*gib,4,true,false)==1,"Below total-memory boundary admitted");
-        check(AnalysisResourcePolicy.gameParallelism(7*gib,4*gib-1,4,true,false)==1,"Below available-memory boundary admitted");
-        check(AnalysisResourcePolicy.gameParallelism(7*gib,4*gib,3,true,false)==1,"Insufficient cores admitted");
-        check(AnalysisResourcePolicy.gameParallelism(7*gib,4*gib,4,false,false)==1,"32-bit process admitted");
-        check(AnalysisResourcePolicy.gameParallelism(7*gib,4*gib,4,true,true)==1,"Android low-memory state admitted");
+        check(AnalysisResourcePolicy.gameParallelism(7*gib,6*gib,4,true,false)==2,"Exact parallel memory/core boundaries rejected");
+        check(AnalysisResourcePolicy.gameParallelism(7*gib-1,6*gib,4,true,false)==1,"Below total-memory boundary admitted");
+        check(AnalysisResourcePolicy.gameParallelism(7*gib,6*gib-1,4,true,false)==1,"Below available-memory boundary admitted");
+        check(AnalysisResourcePolicy.gameParallelism(7*gib,4*gib,4,true,false)==1,"Former four-GiB admission boundary remained eligible");
+        check(AnalysisResourcePolicy.gameParallelism(7*gib,5*gib,4,true,false)==1,"Five GiB cannot cover two maximum-context estimators plus reserve");
+        check(AnalysisResourcePolicy.gameParallelism(7*gib,6*gib,3,true,false)==1,"Insufficient cores admitted");
+        check(AnalysisResourcePolicy.gameParallelism(7*gib,6*gib,4,false,false)==1,"32-bit process admitted");
+        check(AnalysisResourcePolicy.gameParallelism(7*gib,6*gib,4,true,true)==1,"Android low-memory state admitted");
         check(AnalysisResourcePolicy.gameParallelism(7*gib,8*gib,4,true,false)==1,"Inconsistent memory snapshot admitted");
         check(AnalysisResourcePolicy.gameParallelism(-1,-1,4,true,false)==1,"Unavailable memory snapshot admitted");
         JSONObject first=AnalysisJobStore.prepare(files,projectId,"2.2.5");String firstId=first.getString("id");
         String audioIdentity=first.getString("analysisAudioIdentity");
         check(audioIdentity.equals(AnalysisJobStore.request(files,firstId).getString("analysisAudioIdentity"))&&"2.2.5".equals(first.getString("analysisAppVersion")),"GAME guard lost its frozen source/version binding");
-        JSONObject small=AnalysisJobStore.gameParallelism(files,firstId,7*gib,4*gib-1,4,true,false);
+        JSONObject small=AnalysisJobStore.gameParallelism(files,firstId,7*gib,6*gib-1,4,true,false);
         check(small.getInt("parallelism")==1&&!AnalysisJobStore.status(files).getBoolean("gameParallelActive"),"Ineligible device acquired parallel lease");
-        check(small.getLong("totalBytes")==7*gib&&small.getLong("availableBytes")==4*gib-1&&small.getInt("cores")==4&&small.getBoolean("process64Bit")&&!small.getBoolean("lowMemory"),"Resource decision hid its measured facts");
+        check(small.getLong("totalBytes")==7*gib&&small.getLong("availableBytes")==6*gib-1&&small.getInt("cores")==4&&small.getBoolean("process64Bit")&&!small.getBoolean("lowMemory"),"Resource decision hid its measured facts");
         AnalysisJobStore.progress(files,firstId,.1,"Serial GAME",new JSONObject().put("workerFallback",true));
         check(!AnalysisJobStore.status(files).getBoolean("gameParallelDisabled"),"Unleased progress disabled parallelism");
         check(eligibleGame(files,firstId).getInt("parallelism")==2&&AnalysisJobStore.status(files).getBoolean("gameParallelActive"),"Fresh memory recheck did not commit lease before admission");

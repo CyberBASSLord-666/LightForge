@@ -1,0 +1,181 @@
+{
+  "schema": "lightforge-game-memory-admission-1",
+  "recordedAtUtc": "2026-09-10T04:05:02.828890+00:00",
+  "scope": "Host memory-admission evidence only. No quality-corpus, Android-WebView, same-renderer, sustained-run, or performance qualification is claimed.",
+  "originalProbeDirectory": "/workspace/scratch/9a5ec23b7f4b/game-pool/geometry16",
+  "originalRawResult": "qa/speedup-exact/game-memory/dense-memory-demo-20s.json",
+  "originalAnnotatedReceipt": "qa/speedup-exact/game-memory/dense-memory-safety-receipt.json",
+  "evidenceCopies": [
+    {
+      "path": "qa/speedup-exact/game-memory/dense-memory.cjs",
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/game-pool/geometry16/dense-memory.cjs",
+      "sha256": "286080524d7ae7d405367f644ccc7f235385b095b126d3b98d02e23ab0ecdc88",
+      "bytes": 4080,
+      "exactCopy": true
+    },
+    {
+      "path": "qa/speedup-exact/game-memory/dense-memory-demo-20s.json",
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/game-pool/geometry16/dense-memory-demo-20s.json",
+      "sha256": "8760ba8576d07e6470ce5e5d59146e02a263f0ae1b590b3c750c87b2fbfc4054",
+      "bytes": 31143,
+      "exactCopy": true
+    },
+    {
+      "path": "qa/speedup-exact/game-memory/dense-memory-demo-20s.log",
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/game-pool/geometry16/dense-memory-demo-20s.log",
+      "sha256": "debce948207dbb304569775bacb5910bcea54915d5f06c21aac8496dbb6020a4",
+      "bytes": 3314,
+      "exactCopy": true
+    },
+    {
+      "path": "qa/speedup-exact/game-memory/dense-memory-safety-receipt.json",
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/game-pool/geometry16/dense-memory-safety-receipt.json",
+      "sha256": "83deb31f76b6e5c24c395707834d752a06103b62ef903b6a05f4a50c0000d2d6",
+      "bytes": 4550,
+      "exactCopy": true
+    },
+    {
+      "path": "qa/speedup-exact/game-memory/dense-memory-report.md",
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/game-pool/geometry16/dense-memory-report.md",
+      "sha256": "e75bc28b425ab29ff7b26a60995966b4b7891e269f302a8e07d002d3f00504ea",
+      "bytes": 2010,
+      "exactCopy": true
+    },
+    {
+      "path": "qa/speedup-exact/game-memory/geometry-demo-20s.json",
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/game-pool/geometry16/geometry-demo-20s.json",
+      "sha256": "a8407ffe29b961c1d71761f5ae15745d1fd148d86980493ed32b4e63f6786bbd",
+      "bytes": 34760,
+      "exactCopy": true
+    },
+    {
+      "path": "qa/speedup-exact/game-memory/geometry-demo-20s.log",
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/game-pool/geometry16/geometry-demo-20s.log",
+      "sha256": "c85423fa3e69a6abf91a91c080b7268d8808173c1e9aec2f78a25038c2e26b46",
+      "bytes": 2554,
+      "exactCopy": true
+    },
+    {
+      "path": "qa/speedup-exact/game-memory/inputs.json",
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/game-pool/geometry16/inputs.json",
+      "sha256": "a9ac122cff31b254e32b6030e88891f301ceb083bdafe193c8b97cb3af8ba888",
+      "bytes": 895,
+      "exactCopy": true
+    },
+    {
+      "path": "qa/speedup-exact/game-memory/worker.cjs",
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/game-pool/geometry16/worker.cjs",
+      "sha256": "8a8d8280377bad4aa16a071d114037f749b64f17147ac11aa0f1270dbc882821",
+      "bytes": 3179,
+      "exactCopy": true
+    },
+    {
+      "path": "qa/speedup-exact/game-memory/run-dense-memory.py",
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/game-pool/geometry16/run-dense-memory.py",
+      "sha256": "f6f1dccd86cafcea626252610f2e81cb359b898c1daf3dfa5a69bef593101461",
+      "bytes": 3769,
+      "exactCopy": true
+    },
+    {
+      "path": "qa/speedup-exact/game-memory/rss-watchdog.cjs",
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/game-pool/geometry16/rss-watchdog.cjs",
+      "sha256": "37650496c67cd2eb47ded01233c22833101c4823cf6e7313f5078b612d6f72c2",
+      "bytes": 879,
+      "exactCopy": true
+    },
+    {
+      "path": "qa/speedup-exact/game-memory/watchdog-smoke.json",
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/game-pool/geometry16/watchdog-smoke.json",
+      "sha256": "57be667a2916d3e2b75d5ad69a671e66b18a2d733d0a4ace4eaa023a2258fd6d",
+      "bytes": 237,
+      "exactCopy": true
+    },
+    {
+      "path": "qa/speedup-exact/game-memory/game-at-probe.js",
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/LightForge/web/analysis/game.js",
+      "sha256": "1627851738744a45c6c4c2cbb3b695bad1623f3b41d575f40754ca1a92185227",
+      "bytes": 19549,
+      "exactCopy": true,
+      "matchesOriginalReceipt": true
+    },
+    {
+      "path": "qa/speedup-exact/game-memory/model-manifest.json",
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/LightForge/web/analysis/models/game/manifest.json",
+      "sha256": "51e172cfaa967d9e2518f01f508a64d49cd283d23ae8e8456af9c6e76eeb4f97",
+      "bytes": 1532,
+      "exactCopy": true
+    }
+  ],
+  "execution": {
+    "runtime": "1.20.1",
+    "threads": 1,
+    "samples": 705600,
+    "sampleRate": 44100,
+    "seconds": 16,
+    "framePositions": 1600,
+    "diffusionSteps": 8,
+    "modelHashesMatchBundledManifest": true,
+    "syntheticBoundaryCount": 1600,
+    "estimatorSlots": 1601,
+    "inputSha256": "d8fdbb767a8d728951cbd8c4ac83256d73974479a6df0db1fdbb153340ef829d",
+    "inputDescription": "Synthetic16-secondtilingofactual5.746-secondMDXvocalPCM; testsgeometry,memory,schedulingonly. No newreal-songcontextaccuracycoverage.",
+    "adapterSha256": "1627851738744a45c6c4c2cbb3b695bad1623f3b41d575f40754ca1a92185227"
+  },
+  "measurement": {
+    "source": "Model process process.resourceUsage().maxRSS * 1024",
+    "peakRssBytes": 2429222912,
+    "normalFixturePeakRssBytes": 1636130816,
+    "normalRetainedNotes": 43,
+    "twoDenseLanePeaksBytes": 4858445824,
+    "reserveBytes": 536870912,
+    "twoDensePeaksPlusReserveBytes": 5395316736,
+    "fresh4GiBSufficient": false
+  },
+  "currentAdmissionPolicy": {
+    "path": "android/src/com/cyberbasslord/lightforge/AnalysisResourcePolicy.java",
+    "sha256": "c72cc715966ed1677e15dde07c2f4dfc23211b74d96d5316ac6f0e90a4979453",
+    "availableMemoryMinimumBytes": 6442450944,
+    "totalMemoryMinimumBytes": 7516192768,
+    "coreMinimum": 4,
+    "requires64Bit": true,
+    "requiresNotLowMemory": true,
+    "rejectsAvailableGreaterThanTotal": true,
+    "additionalRootOwnedGuards": [
+      "Fresh capacity snapshot at GAME stage",
+      "Single-thread WASM only",
+      "Durable active lease and interrupted-work fallback"
+    ],
+    "remainingBeyondTwoObservedPeaksBytes": 1584005120,
+    "observedPeakBudgetFits": true
+  },
+  "monitor": {
+    "externalProcMonitorValid": false,
+    "reason": "The command process used a PID namespace that did not match mounted /proc PID lookup; maxObservedRssBytes=307200 belongs to an incorrect PID and must not be used.",
+    "trustworthyPeakSource": "Node process.resourceUsage().maxRSS measured within the model process, multiplied by 1024. This value is independent of the failed external monitor.",
+    "ceilingEnforcedForThisRun": false,
+    "correctedWatchdog": "rss-watchdog.cjs uses an independent Node worker thread and process.memoryUsage().rss, then process.kill(process.pid) in the correct namespace. Its deliberately low-limit kill smoke passed; the model stress was not rerun.",
+    "correctedWatchdogSmoke": {
+      "scope": "An independent watchdog thread samples process.memoryUsage().rss; process.kill uses the process namespace directly.",
+      "rssCeilingBytes": 8388608,
+      "maxObservedRssBytes": 58589184,
+      "currentRssBytes": 58589184,
+      "safetyStop": true,
+      "pid": 8
+    }
+  },
+  "harnessHistory": {
+    "dense-memory.cjs": "Exact harness used for the recorded model run. Absolute source paths are retained.",
+    "worker.cjs": "Exact baseline full-geometry harness retained for comparison.",
+    "run-dense-memory.py": "Corrected after the model run. The original faulty /proc-monitor runner was not separately preserved; this file is not presented as the runner executed for the original result. No neural model rerun followed the correction.",
+    "rss-watchdog.cjs": "Added after the run; independent-thread safety ceiling. Only the disposable low-limit termination smoke was executed.",
+    "audioOmitted": "No raw audio, tensors, or model weights are copied. Reproduction requires the declared PCM bytes matching inputs.json, or original scratch fixtures while available."
+  },
+  "limitations": [
+    "Synthetic 16-second tiling of actual separated vocal PCM is a geometry and allocation stress fixture, not new real-song accuracy coverage.",
+    "Every-frame synthetic boundaries intentionally stress the estimator beyond the 43-note normal fixture; no claim that this extreme arises in ordinary singing.",
+    "Single Node process RSS is not an Android WebView memory measurement.",
+    "One passage was run; four-inference reuse and device allocator behavior still require lifecycle qualification."
+  ],
+  "passed": true,
+  "passMeaning": "The current six-GiB fresh-available-memory threshold exceeds two measured dense estimator peaks plus the declared reserve. This is not a device qualification result."
+}

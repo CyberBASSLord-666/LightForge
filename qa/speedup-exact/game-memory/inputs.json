@@ -1,0 +1,23 @@
+{
+  "fixtures": [
+    {
+      "id": "demo-20s",
+      "file": "demo-20s.float32le",
+      "sha256": "d8fdbb767a8d728951cbd8c4ac83256d73974479a6df0db1fdbb153340ef829d",
+      "seed": 2025,
+      "samples": 705600,
+      "sampleRate": 44100,
+      "inputDescription": "Synthetic16-secondtilingofactual5.746-secondMDXvocalPCM; testsgeometry,memory,schedulingonly. No newreal-songcontextaccuracycoverage."
+    },
+    {
+      "id": "falcon-start",
+      "file": "falcon-start.float32le",
+      "sha256": "e1ece783343611a94653d87da1a99f830fd15de016b94f8c3bd3927b302ed5c9",
+      "seed": 106754,
+      "samples": 705600,
+      "sampleRate": 44100,
+      "inputDescription": "Synthetic16-secondtilingofactual5.746-secondMDXvocalPCM; testsgeometry,memory,schedulingonly. No newreal-songcontextaccuracycoverage."
+    }
+  ],
+  "scope": "Syntheticlonggeometrymemoryprobe, NOTcontiguousoriginalsongaudio."
+}

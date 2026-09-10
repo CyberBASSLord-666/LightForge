@@ -91,13 +91,13 @@ public final class GamePoolProbe extends Instrumentation {
         bridge = probeService.new JobBridge(jobId, null, null);
     }
     private JSONObject admission(int expected) throws Exception {
-        if (expected == 2) {
-            long until = SystemClock.elapsedRealtime() + 45000;
-            while (memory().availMem < 4L * 1024 * 1024 * 1024 && SystemClock.elapsedRealtime() < until) SystemClock.sleep(1000);
-        }
+        long until = SystemClock.elapsedRealtime() + 45000;
+        while (memory().availMem < 6L * 1024 * 1024 * 1024 && SystemClock.elapsedRealtime() < until) SystemClock.sleep(1000);
         JSONObject result = new JSONObject(bridge.gameParallelism(jobId));
         admissions.put(new JSONObject(result.toString()).put("phase", phase));
         check(!result.has("error") && result.getInt("parallelism") == expected, "Fresh production admission did not return " + expected + ": " + result);
+        check(result.getLong("availableBytes") >= 6L * 1024 * 1024 * 1024 && result.getLong("totalBytes") >= 7L * 1024 * 1024 * 1024
+            && result.getInt("cores") >= 4 && result.getBoolean("process64Bit") && !result.getBoolean("lowMemory"), "Device does not meet the actual six-GiB admission policy");
         check(AnalysisJobStore.status(files).optBoolean("gameParallelActive") == (expected == 2), "Durable pool lease differs from admitted lane count");
         return result;
     }

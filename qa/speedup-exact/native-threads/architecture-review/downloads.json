@@ -1,0 +1,171 @@
+[
+  {
+    "path": "onnxruntime/core/mlas/lib/sgemm.cpp",
+    "url": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.25.1/onnxruntime/core/mlas/lib/sgemm.cpp",
+    "bytes": 42364,
+    "sha256": "10b23f5952dca74985a06a7911df7e4dd9f075ad96e7c8647a8730b6cf769960"
+  },
+  {
+    "path": "onnxruntime/core/mlas/lib/compute.cpp",
+    "url": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.25.1/onnxruntime/core/mlas/lib/compute.cpp",
+    "bytes": 32452,
+    "sha256": "40dbc269fe1b2768c3385746de465821c4285a89a9aadfb4c88fd792ee09a126"
+  },
+  {
+    "path": "onnxruntime/core/providers/cpu/math/softmax.cc",
+    "url": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.25.1/onnxruntime/core/providers/cpu/math/softmax.cc",
+    "bytes": 7621,
+    "sha256": "6ef8a2fa8b19007758fa4b4173c070ab1378488f76856de0556fd4242b533aff"
+  },
+  {
+    "path": "onnxruntime/core/providers/cpu/nn/layer_norm.cc",
+    "url": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.25.1/onnxruntime/core/providers/cpu/nn/layer_norm.cc",
+    "bytes": 859,
+    "sha256": "0ae44930c5713718c3d4fc53d2f7fede52f8dc21a21d3a4c0b405657d977d3bf"
+  },
+  {
+    "path": "onnxruntime/core/providers/cpu/reduction/reduction_ops.cc",
+    "url": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.25.1/onnxruntime/core/providers/cpu/reduction/reduction_ops.cc",
+    "bytes": 58927,
+    "sha256": "5ea2d5f9e348ff97e2ff5b9b04e42fe6c30d24150ddbf123a9d3fdfc1afd2657"
+  },
+  {
+    "path": "onnxruntime/core/providers/cpu/math/matmul.cc",
+    "url": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.25.1/onnxruntime/core/providers/cpu/math/matmul.cc",
+    "bytes": 11343,
+    "sha256": "8dc472a9ae665384f2f9094dd7665c8a5ec44c7df9557d714335146b6ed67e38"
+  },
+  {
+    "path": "onnxruntime/core/providers/cpu/math/gemm.cc",
+    "url": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.25.1/onnxruntime/core/providers/cpu/math/gemm.cc",
+    "bytes": 17747,
+    "sha256": "07e13f8d186b3d5fe62a54e591cb0abf59867480b4dcad38bdd07ce2cc647931"
+  },
+  {
+    "path": "onnxruntime/core/platform/threadpool.cc",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "path": "onnxruntime/core/util/math_cpu.cc",
+    "url": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.25.1/onnxruntime/core/util/math_cpu.cc",
+    "bytes": 45309,
+    "sha256": "1d2fadc0e7514460e1ec4070b3a2d8311c96dfc3452be356003ab7155762a032"
+  },
+  {
+    "path": "onnxruntime/core/mlas/lib/aarch64/SgemmKernelNeon.S",
+    "url": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.25.1/onnxruntime/core/mlas/lib/aarch64/SgemmKernelNeon.S",
+    "bytes": 12933,
+    "sha256": "f3cbc3a6d8fbbf6ba01697e1093790caa4420cbca9c5dbf9b067133cc8c3f5c7"
+  },
+  {
+    "path": "onnxruntime/core/mlas/lib/aarch64/SgemmKernelNeon.asm",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "path": "onnxruntime/core/providers/cpu/nn/layer_norm.h",
+    "url": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.25.1/onnxruntime/core/providers/cpu/nn/layer_norm.h",
+    "bytes": 367,
+    "sha256": "02eb2de43efca27829f464ab7c2b863b732938164068d72f96cc29c7799899b7"
+  },
+  {
+    "path": "onnxruntime/core/providers/cpu/nn/layer_norm_helper.h",
+    "url": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.25.1/onnxruntime/core/providers/cpu/nn/layer_norm_helper.h",
+    "bytes": 10027,
+    "sha256": "5100922d450f433a647c615975e5125acbc6370df33d6785a8f04984e36f6d1b"
+  },
+  {
+    "path": "onnxruntime/core/providers/cpu/nn/layer_norm_impl.cc",
+    "url": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.25.1/onnxruntime/core/providers/cpu/nn/layer_norm_impl.cc",
+    "bytes": 20398,
+    "sha256": "85fe04208feef7d46087f59813c5d63fa6c9baa0d0350130a0da388243be2f2a"
+  },
+  {
+    "path": "onnxruntime/core/providers/cpu/math/softmax_shared.h",
+    "url": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.25.1/onnxruntime/core/providers/cpu/math/softmax_shared.h",
+    "bytes": 786,
+    "sha256": "7799a5967a01ca440323efd0700185658144e8e772248c3207c588d225c07ec7"
+  },
+  {
+    "path": "onnxruntime/core/providers/cpu/math/softmax.h",
+    "url": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.25.1/onnxruntime/core/providers/cpu/math/softmax.h",
+    "bytes": 1812,
+    "sha256": "52b0b243a3326500a6ca8aff072714d10f86a1bd9804b9416cd4b3767d258649"
+  },
+  {
+    "path": "onnxruntime/core/providers/cpu/reduction/reduction_ops.h",
+    "url": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.25.1/onnxruntime/core/providers/cpu/reduction/reduction_ops.h",
+    "bytes": 38151,
+    "sha256": "123653f3e0896628697bb88db0f452bc9274aeeff07957e3684cc79fbcfbc6b6"
+  },
+  {
+    "path": "onnxruntime/core/providers/cpu/reduction/reduction_ops.inc",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "path": "onnxruntime/core/mlas/lib/softmax.cpp",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "path": "onnxruntime/core/mlas/lib/mlasi.h",
+    "url": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.25.1/onnxruntime/core/mlas/lib/mlasi.h",
+    "bytes": 88687,
+    "sha256": "8c72c4b56ff4db6147ad4874e88ee7a5d9de235b0c44c7bb7166eebe61114ad4"
+  },
+  {
+    "path": "onnxruntime/core/common/threadpool.cc",
+    "url": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.25.1/onnxruntime/core/common/threadpool.cc",
+    "bytes": 25646,
+    "sha256": "f1cbbe14c5d25c0ae7b2ae261df96340610c0b122452a1215f38dcc7d9e0c27c"
+  },
+  {
+    "path": "include/onnxruntime/core/platform/threadpool.h",
+    "url": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.25.1/include/onnxruntime/core/platform/threadpool.h",
+    "bytes": 17695,
+    "sha256": "643c154458a01c8da01cbed46b5f86f2e4a335f41e7b920937b0907b1c28a036"
+  },
+  {
+    "path": "onnxruntime/core/platform/EigenNonBlockingThreadPool.h",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "path": "onnxruntime/core/mlas/lib/platform.cpp",
+    "url": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.25.1/onnxruntime/core/mlas/lib/platform.cpp",
+    "bytes": 32002,
+    "sha256": "c6dfb1323c8c65fc9a785a292f50b25fd91f5892921ce70ce057b19cd6570e6f"
+  },
+  {
+    "path": "onnxruntime/core/mlas/lib/kai/sgemm.cpp",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "path": "onnxruntime/core/mlas/lib/kai_ukernel_interface.cpp",
+    "url": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.25.1/onnxruntime/core/mlas/lib/kai_ukernel_interface.cpp",
+    "bytes": 20656,
+    "sha256": "19d89c2c0d3e5c0007806adb11b18252c7d242c7172d347aa75da4af8c60d41b"
+  },
+  {
+    "path": "onnxruntime/core/mlas/lib/kai_ukernel_interface.h",
+    "url": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.25.1/onnxruntime/core/mlas/lib/kai_ukernel_interface.h",
+    "bytes": 3112,
+    "sha256": "fee0929b1c4774249e7378d0f8ffb70919e7de6efa7e9e3f5333126f0613349e"
+  },
+  {
+    "path": "onnxruntime/core/providers/cpu/math/softmax_shared.cc",
+    "url": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.25.1/onnxruntime/core/providers/cpu/math/softmax_shared.cc",
+    "bytes": 4217,
+    "sha256": "67e022a464de9e46330b083a5b62f15b9c5a9cc55094db30b47d0f7387322875"
+  },
+  {
+    "path": "onnxruntime/core/platform/env.h",
+    "url": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.25.1/onnxruntime/core/platform/env.h",
+    "bytes": 12635,
+    "sha256": "8cb5eeffd26eed8d986bd1f5c9101025946ef97a73a5a2df0b5e3c61a93a8083"
+  },
+  {
+    "path": "include/onnxruntime/core/session/onnxruntime_session_options_config_keys.h",
+    "localPath": "/workspace/scratch/9a5ec23b7f4b/ort-thread-source-audit/session_options_config_keys.h",
+    "url": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.25.1/include/onnxruntime/core/session/onnxruntime_session_options_config_keys.h",
+    "bytes": 30682,
+    "sha256": "d7eb2353dc9f4280e57a05626cb4cbe8df299441e1e9fde446c3b6f7ea6a77b1"
+  }
+]
