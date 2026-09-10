@@ -15,6 +15,10 @@ async function create({ort,baseUrl,onProgress=()=>{},checkpoint}){
   try{for(const name of ['encoder','dur2bd','segmenter','bd2dur','estimator']){onProgress('Loading '+name);sessions[name]=await ort.InferenceSession.create(new URL(name+'.onnx',baseUrl).href,{executionProviders:['wasm'],graphOptimizationLevel:'all',enableCpuMemArena:false,enableMemPattern:false});}loaded=true;}
   catch(e){await Promise.allSettled(Object.values(sessions).map(s=>s.release()));for(const name of Object.keys(sessions))delete sessions[name];throw e;}
  }
+ async function reset(){
+  const active=Object.values(sessions);for(const name of Object.keys(sessions))delete sessions[name];loaded=false;
+  await Promise.allSettled(active.map(s=>s.release?.()));
+ }
  const tensor=(type,data,dims)=>new ort.Tensor(type,data,dims);
  async function infer(pcm,language,seed,onStep=()=>{}){
   await load();
@@ -63,10 +67,15 @@ async function create({ort,baseUrl,onProgress=()=>{},checkpoint}){
     if(nb>na)notes.push({start:round(na),end:round(nb),midi:Math.round(n.midi*100)/100,source:'game-large',estimated:true,continuation:carry});
    }
    onProgress((i+1)/chunks,{passageIndex:i+1,passageCount:chunks,passagesCompleted:i+1,restoredPassages,checkpointSaved:!!checkpoint});
+   // GAME's five graphs are much larger than the compact rhythm model. A
+   // bounded reload every four 12-second passages prevents allocator growth
+   // from turning a long song into a renderer kill. It does not alter graph
+   // inputs, diffusion steps, note filtering, or checkpoint contents.
+   if((i+1)%4===0&&i+1<chunks){onProgress((i+1)/chunks,{passageIndex:i+1,passageCount:chunks,passagesCompleted:i+1,restoredPassages,sessionReset:true});await reset();}
   }
   notes.sort((a,b)=>a.start-b.start);for(let i=0;i<notes.length-1;i++)notes[i].end=Math.min(notes[i].end,notes[i+1].start);
   return {notes:notes.filter(n=>n.end-n.start>=.06-1e-6),model:manifest.id,frameSeconds:.01,steps:STEPS,language,sourceClock:'Original decoded PCM',lyricsAligned:false,confidenceIsProbability:false};
- },async release(){if(released)return;released=true;await Promise.allSettled(Object.values(sessions).map(s=>s.release()));for(const name of Object.keys(sessions))delete sessions[name];}};
+ },async release(){if(released)return;released=true;await reset();}};
 }
 function fuse(detail,transcription){
  const notes=[],accents=detail.accents.filter(a=>a.kind==='entrance'),contour={step:.04,midi:new Array(detail.pitchContour.midi.length).fill(0),confidence:new Array(detail.pitchContour.midi.length).fill(0)};

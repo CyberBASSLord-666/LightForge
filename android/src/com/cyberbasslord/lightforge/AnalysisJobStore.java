@@ -50,6 +50,12 @@ final class AnalysisJobStore {
         // The separate source hash still protects the final project commit from conflicts.
         JSONObject old=status(files);
         File checkpoint=new File(directory(files),"checkpoint.json");
+        // The renderer stores stage checkpoints in OPFS. They are intentionally
+        // separate from the small Java checkpoint.json, so a process kill can
+        // leave useful resumable work even when no complete music object has
+        // crossed the bridge yet. Preserve that UI signal for matching jobs.
+        boolean priorResume=old!=null&&old.optBoolean("resumeAvailable")&&projectId.equals(old.optString("projectId"))
+            &&analysisIdentity.equals(old.optString("analysisIdentity"));
         boolean reuse=old!=null&&!"completed".equals(old.optString("state"))&&projectId.equals(old.optString("projectId"))
             &&analysisIdentity.equals(old.optString("analysisIdentity"))&&checkpoint.isFile();
         if(reuse){
@@ -65,7 +71,7 @@ final class AnalysisJobStore {
             .put("name",meta.getString("name")).put("sourceSHA256",sourceHash).put("analysisIdentity",analysisIdentity).put("state","queued")
             .put("stage",reuse?"Restoring completed analysis":"Preparing background analysis").put("progress",0)
             .put("createdAt",System.currentTimeMillis()).put("updatedAt",System.currentTimeMillis()).put("hasCheckpoint",reuse)
-            .put("resumeAvailable",reuse);
+            .put("resumeAvailable",reuse||priorResume);
         if(reuse)job.put("checkpointSHA256",old.getString("checkpointSHA256"));
         persist(files,job);return job;
     }

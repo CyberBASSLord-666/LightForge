@@ -1,0 +1,11 @@
+{"output": "positive", "samples": 3145728, "finite": true, "max_absolute_error": 0.0001373291015625, "rmse": 2.630924857794878e-06, "reference_rms": 3.6610484689299674, "relative_rmse": 7.186260657630221e-07, "identical": false, "coefficient_violations": 1, "maximum_scaled_error": 1.0316313447648051, "within_thresholds": false}
+{"output": "negative", "samples": 3145728, "finite": true, "max_absolute_error": 0.00011444091796875, "rmse": 2.5839888013130635e-06, "reference_rms": 3.6528681277383006, "relative_rmse": 7.073862813966292e-07, "identical": false, "coefficient_violations": 0, "maximum_scaled_error": 0.787844881742123, "within_thresholds": true}
+{"output": "waveform", "samples": 261120, "finite": true, "max_absolute_error": 1.1920928955078125e-07, "rmse": 1.7793023756697896e-08, "reference_rms": 0.07662977532340393, "relative_rmse": 2.321946486415396e-07, "identical": false, "within_thresholds": true}
+Traceback (most recent call last):
+  File "/workspace/scratch/9a5ec23b7f4b/LightForge/qa/release-2.2.4/compare-native-mdx.py", line 63, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/workspace/scratch/9a5ec23b7f4b/LightForge/qa/release-2.2.4/compare-native-mdx.py", line 56, in main
+    assert all(r['within_thresholds'] for r in receipt['comparisons']),'Numerical threshold exceeded'
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Numerical threshold exceeded

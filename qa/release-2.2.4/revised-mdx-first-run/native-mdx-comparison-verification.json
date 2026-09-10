@@ -1,0 +1,168 @@
+{
+  "release": "2.2.4",
+  "passed": false,
+  "errors": [
+    "Numerical threshold exceeded"
+  ],
+  "source_hashes": {
+    "version.json": "8e8f3a2a335f12fc1090f15074dbe5c6544d75d4b488b83a73b6bbe31b0ea159",
+    "android/native-runtime.json": "e3ea568b3a8485235f23a59cd787466cdcbbfcaa54ac56df3ce040d29fcb2a94",
+    "android/src/com/cyberbasslord/lightforge/NativeMdxTask.java": "8e086f3700ae9a087c0e51dc314ac32cf9d3fb8ce4e0c6262efd024274a284bf",
+    "android/src/com/cyberbasslord/lightforge/NativeRuntimeGuard.java": "0ca218736d3006a2c67711ef4125eedfe79272cbf14924c8761ffa7eef36b28a",
+    "android/src/com/cyberbasslord/lightforge/NativeDeux.java": "1cd0931e9740de978c44fbb3c77e0dcbe969eae151752cc70c8f792da5409cdc",
+    "web/analysis/dsp.js": "32186b9268632cab85cadcb7e84fa1b4e3d8eb4bb9fbdf96a0873067cb9acd71",
+    "web/analysis/wav-reader.js": "0f0e5216dc1d2ca0bfb25eddacdaa21076990fa7638c22188023607e43d4005f",
+    "web/analysis/separator-mdx.js": "accc7aead92f045da9faf7a08019af757c73042850dd2fccc0e923f7d20043a1",
+    "web/analysis/models/separator-mdx-model.json": "0d7a6ff7c6a3a19fdd38b92a50cf39cfd91130bf2ed7dcbaca2f12890385e0c2",
+    "web/demo/glass-castle.wav": "33f07d502ba19832b62b97d8fb4a11354e81310264bd885d7a06438228773650",
+    "tests/native-mdx-host/android/app/ActivityManager.java": "e2f5cbef3091cca60fc56746c93e1ceb7f8d0f1076f76d7e64e6e8680c6e096e",
+    "tests/native-mdx-host/android/app/ApplicationExitInfo.java": "e5582ee517df4e104c96deab8841cc50f6dac8eecaea1c5d9a164030ffeaff98",
+    "tests/native-mdx-host/android/content/Context.java": "e2dbce961bfbef3f252f13d4124afd975e6672969f6e15a161048194f7bba734",
+    "tests/native-mdx-host/android/content/pm/PackageInfo.java": "4bf7cea5b289e41f8f49476d5aaaa3ebd21f9d7e7fd0aef6b9d773c3dd2d53f5",
+    "tests/native-mdx-host/android/content/pm/PackageManager.java": "3c5e6267969dc54ff28e0b5a4a842f302b14e3a0f619d3df806582c7f2f57b00",
+    "tests/native-mdx-host/android/content/res/AssetManager.java": "d9d8ebf9de885ad7be79a98fdc5dd80976dfe2edc7254a6615aadbbccf97bf8a",
+    "tests/native-mdx-host/android/os/Build.java": "3d70fc6f12ecb46c8fa4f9a9ce7a09ebd03d4c19e4c6cd686c419b1e7ba0adc1",
+    "tests/native-mdx-host/android/os/Process.java": "df24336d55366c5912b1bb294e49ced505ac4c7c8a963824807a758670851fc9",
+    "tests/native-mdx-host/android/util/Base64.java": "39bbdad0d0a227591d63f0757cea55c723626d05b923815a4abb6a8e73f6cc4b",
+    "tests/native-mdx-host/com/cyberbasslord/lightforge/AnalysisJobStore.java": "785a189c06e4c017424eaf5dcd01402d58f229f3f8a8f0663f16e674cedf5cc1",
+    "tests/native-mdx-host/com/cyberbasslord/lightforge/AppDiagnostics.java": "e342c7adffc7acebdc4bfe8c7894c30c311d3b244520ce86c7fd3c862994cfae",
+    "tests/native-mdx-host/com/cyberbasslord/lightforge/NativeDeux.java": "825db1e9c364b84059eaea95456aad01a8c1da951027bd4b84af88ceea24911c",
+    "qa/release-2.2.4/NativeMdxComparisonMain.java": "fcebbcd19624d804712db16a0996e097756e0ed1795b8a092058a20e8a07b983",
+    "qa/release-2.2.4/compare-mdx-wasm.cjs": "6d08cca62ea72cbae4dfc0dd38ae016a3be91d9e43c19e138fb7adb819e5ad31",
+    "qa/release-2.2.4/compare-native-mdx.py": "cac2bf7aca4b147e29154f3ca976eddeb56ed066c59deb29c4e187f9bfd281ab",
+    "qa/release-2.2.4/mdx_numeric.py": "b85d85455fcebb1928ca4c911052a4f89d4f2d849876af19de10a1f0dad6d87f"
+  },
+  "analysis_asset_hashes": {
+    "web/analysis/models/uvr-mdx-voc-ft.onnx": "534b2070fcc7df514b13ef660dc8cbb328679c2374d04354a5c42bb14ecce111",
+    "web/analysis/vendor/ONNX-Runtime-LICENSE.txt": "2f07c72751aed99790b8a4869cf2311df85a860b22ded05fa22803587a48922c",
+    "web/analysis/vendor/ort-wasm-simd-threaded.mjs": "745eb7c0ce6f18a6aa521971b2877babc7ffb27eecb58ab3bc6e5ef4692672e8",
+    "web/analysis/vendor/ort-wasm-simd-threaded.wasm": "207d02be4591c156b0a98f024f3d58005b5b04c92274d759fb390338c63559ea",
+    "web/analysis/vendor/ort.wasm.min.js": "e66568724f8848e57cc2a56e4bea3a5b86ce3ff81b2da11eac8ed7ab02b27bd4"
+  },
+  "thresholds": {
+    "spectrum": {
+      "absolute_tolerance": 0.0001,
+      "relative_tolerance": 1e-05,
+      "rmse": 1e-05,
+      "relative_rmse": 0.001
+    },
+    "waveform": {
+      "max_absolute_error": 1e-06,
+      "rmse": 1e-07,
+      "relative_rmse": 0.0001
+    }
+  },
+  "start_sample": -3840,
+  "sample_rate": 44100,
+  "spectrum_floats": 3145728,
+  "waveform_samples": 261120,
+  "native_runtime": "1.25.1",
+  "native_runtime_sha256": "749793ebed63743fec853d093da7987a86ea5cd592d54fba898cd3233100c381",
+  "wasm_runtime": "1.20.1",
+  "host": {
+    "system": "Linux",
+    "machine": "x86_64"
+  },
+  "scope": "Fresh production NativeMdxTask on Linux/JVM versus bundled ONNX Runtime Web CPU WASM under Node, including both polarity passes and production WAV/STFT/ensemble/waveform decoder. Android framework is adapted for host filesystem access; no Android/ARM64, lifecycle or phone-performance claim.",
+  "criterion_review": {
+    "initial_failure_path": "qa/release-2.2.4/initial-mdx-absolute-only/native-mdx-comparison-verification.json",
+    "initial_failure_sha256": "f8f8bf96173582abc686f050a0d4901b1335757da89f58a0e3380b677fac42c8",
+    "explanation": "The initial absolute-only spectral check failed (max 1.373291015625e-4 > 1e-4); that criterion copied normalized waveform units onto unnormalized FFT coefficients. The qualifying run uses fixed pointwise absolute-plus-relative spectral tolerances and separately stricter normalized waveform bounds, declared before rerunning. Cross-runtime outputs are close, not bit-identical."
+  },
+  "runs": {
+    "native": [
+      {
+        "seconds": 5.067903062,
+        "runtime": "1.25.1",
+        "polarity": "positive"
+      },
+      {
+        "seconds": 3.382556278,
+        "runtime": "1.25.1",
+        "polarity": "negative"
+      }
+    ],
+    "wasm": [
+      {
+        "polarity": "positive",
+        "seconds": 9.70378143,
+        "runtime": "1.20.1",
+        "executionProvider": "wasm",
+        "threads": 4
+      },
+      {
+        "polarity": "negative",
+        "seconds": 8.393794803999999,
+        "runtime": "1.20.1",
+        "executionProvider": "wasm",
+        "threads": 4
+      }
+    ]
+  },
+  "comparisons": [
+    {
+      "output": "positive",
+      "samples": 3145728,
+      "finite": true,
+      "max_absolute_error": 0.0001373291015625,
+      "rmse": 2.630924857794878e-06,
+      "reference_rms": 3.6610484689299674,
+      "relative_rmse": 7.186260657630221e-07,
+      "identical": false,
+      "coefficient_violations": 1,
+      "maximum_scaled_error": 1.0316313447648051,
+      "within_thresholds": false
+    },
+    {
+      "output": "negative",
+      "samples": 3145728,
+      "finite": true,
+      "max_absolute_error": 0.00011444091796875,
+      "rmse": 2.5839888013130635e-06,
+      "reference_rms": 3.6528681277383006,
+      "relative_rmse": 7.073862813966292e-07,
+      "identical": false,
+      "coefficient_violations": 0,
+      "maximum_scaled_error": 0.787844881742123,
+      "within_thresholds": true
+    },
+    {
+      "output": "waveform",
+      "samples": 261120,
+      "finite": true,
+      "max_absolute_error": 1.1920928955078125e-07,
+      "rmse": 1.7793023756697896e-08,
+      "reference_rms": 0.07662977532340393,
+      "relative_rmse": 2.321946486415396e-07,
+      "identical": false,
+      "within_thresholds": true
+    }
+  ],
+  "output_hashes": {
+    "native-positive.float32le": {
+      "bytes": 12582912,
+      "sha256": "13af664256101b248d08a02999388573b3a6f93ca4cc342033834a9eb32e2721"
+    },
+    "wasm-positive.float32le": {
+      "bytes": 12582912,
+      "sha256": "3213edb59b4c19c6447456fa06bd8389ec3f0806b9658e31f1f253236a71f1ad"
+    },
+    "native-negative.float32le": {
+      "bytes": 12582912,
+      "sha256": "d2c3c664b3581245414003b5dbb9a10ef047deef905452d6b42caf2a613ea1a3"
+    },
+    "wasm-negative.float32le": {
+      "bytes": 12582912,
+      "sha256": "76d4f214afd3bcf2a59d4f2aa02284f9687bf1249a8e00db01f3b9313554ab46"
+    },
+    "native-waveform.float32le": {
+      "bytes": 1044480,
+      "sha256": "618559fb6ddcba69066c5146b602f81d9e1244d0732a21379d3c47d70a445b57"
+    },
+    "wasm-waveform.float32le": {
+      "bytes": 1044480,
+      "sha256": "d44d53f3abfc351bda21a276a344f5fd7532d77da551b202038a38fad5df278e"
+    }
+  },
+  "completedAt": "2026-09-09T22:18:49.820106+00:00"
+}

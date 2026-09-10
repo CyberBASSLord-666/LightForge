@@ -1,0 +1,414 @@
+{
+  "release": "2.2.4",
+  "passed": true,
+  "errors": [],
+  "source_hashes": {
+    "version.json": "8e8f3a2a335f12fc1090f15074dbe5c6544d75d4b488b83a73b6bbe31b0ea159",
+    "android/native-runtime.json": "e3ea568b3a8485235f23a59cd787466cdcbbfcaa54ac56df3ce040d29fcb2a94",
+    "android/src/com/cyberbasslord/lightforge/NativeMdxTask.java": "8e086f3700ae9a087c0e51dc314ac32cf9d3fb8ce4e0c6262efd024274a284bf",
+    "android/src/com/cyberbasslord/lightforge/NativeRuntimeGuard.java": "0ca218736d3006a2c67711ef4125eedfe79272cbf14924c8761ffa7eef36b28a",
+    "android/src/com/cyberbasslord/lightforge/NativeDeux.java": "1cd0931e9740de978c44fbb3c77e0dcbe969eae151752cc70c8f792da5409cdc",
+    "web/analysis/dsp.js": "32186b9268632cab85cadcb7e84fa1b4e3d8eb4bb9fbdf96a0873067cb9acd71",
+    "web/analysis/wav-reader.js": "0f0e5216dc1d2ca0bfb25eddacdaa21076990fa7638c22188023607e43d4005f",
+    "web/analysis/separator-mdx.js": "accc7aead92f045da9faf7a08019af757c73042850dd2fccc0e923f7d20043a1",
+    "web/analysis/models/separator-mdx-model.json": "0d7a6ff7c6a3a19fdd38b92a50cf39cfd91130bf2ed7dcbaca2f12890385e0c2",
+    "web/demo/glass-castle.wav": "33f07d502ba19832b62b97d8fb4a11354e81310264bd885d7a06438228773650",
+    "qa/release-1.6.0/fixtures/falcon-mix.wav": "effbbe3e3c0df821bf3cfa6535360b18339ded8041992373b41f8344998dba99",
+    "qa/release-1.6.0/musdb-fixture-provenance.json": "9844748c69c1c490544f99aee688522ea461c74de557e2f57d4115261d156096",
+    "tests/native-mdx-host/android/app/ActivityManager.java": "e2f5cbef3091cca60fc56746c93e1ceb7f8d0f1076f76d7e64e6e8680c6e096e",
+    "tests/native-mdx-host/android/app/ApplicationExitInfo.java": "e5582ee517df4e104c96deab8841cc50f6dac8eecaea1c5d9a164030ffeaff98",
+    "tests/native-mdx-host/android/content/Context.java": "e2dbce961bfbef3f252f13d4124afd975e6672969f6e15a161048194f7bba734",
+    "tests/native-mdx-host/android/content/pm/PackageInfo.java": "4bf7cea5b289e41f8f49476d5aaaa3ebd21f9d7e7fd0aef6b9d773c3dd2d53f5",
+    "tests/native-mdx-host/android/content/pm/PackageManager.java": "3c5e6267969dc54ff28e0b5a4a842f302b14e3a0f619d3df806582c7f2f57b00",
+    "tests/native-mdx-host/android/content/res/AssetManager.java": "d9d8ebf9de885ad7be79a98fdc5dd80976dfe2edc7254a6615aadbbccf97bf8a",
+    "tests/native-mdx-host/android/os/Build.java": "3d70fc6f12ecb46c8fa4f9a9ce7a09ebd03d4c19e4c6cd686c419b1e7ba0adc1",
+    "tests/native-mdx-host/android/os/Process.java": "df24336d55366c5912b1bb294e49ced505ac4c7c8a963824807a758670851fc9",
+    "tests/native-mdx-host/android/util/Base64.java": "39bbdad0d0a227591d63f0757cea55c723626d05b923815a4abb6a8e73f6cc4b",
+    "tests/native-mdx-host/com/cyberbasslord/lightforge/AnalysisJobStore.java": "785a189c06e4c017424eaf5dcd01402d58f229f3f8a8f0663f16e674cedf5cc1",
+    "tests/native-mdx-host/com/cyberbasslord/lightforge/AppDiagnostics.java": "e342c7adffc7acebdc4bfe8c7894c30c311d3b244520ce86c7fd3c862994cfae",
+    "tests/native-mdx-host/com/cyberbasslord/lightforge/NativeDeux.java": "825db1e9c364b84059eaea95456aad01a8c1da951027bd4b84af88ceea24911c",
+    "qa/release-2.2.4/NativeMdxComparisonMain.java": "fcebbcd19624d804712db16a0996e097756e0ed1795b8a092058a20e8a07b983",
+    "qa/release-2.2.4/compare-mdx-wasm.cjs": "a78470461659b952ad3b76049002afa827defd5b6f3568746c560b90fa6bb527",
+    "qa/release-2.2.4/compare-native-mdx.py": "c4a8c67ab4c6a40143a8f44a0cdab1cca7982e04bf3eeed1acd6dafdc12a32d7",
+    "qa/release-2.2.4/mdx_numeric.py": "b85d85455fcebb1928ca4c911052a4f89d4f2d849876af19de10a1f0dad6d87f",
+    "qa/release-2.2.4/initial-mdx-absolute-only/compare-native-mdx.py": "12303c56657e69475cacf04a253446b955fb71752a28a3222692e99880821d86",
+    "qa/release-2.2.4/initial-mdx-absolute-only/native-mdx-comparison-verification.json": "f8f8bf96173582abc686f050a0d4901b1335757da89f58a0e3380b677fac42c8",
+    "qa/release-2.2.4/initial-mdx-absolute-only/native-mdx-comparison.log": "ef9a50b19a9077c6a5667e224589607d9d3a17cd9f9d124d3f3b23fb5c91286e",
+    "qa/release-2.2.4/revised-mdx-first-run/compare-native-mdx.py": "cac2bf7aca4b147e29154f3ca976eddeb56ed066c59deb29c4e187f9bfd281ab",
+    "qa/release-2.2.4/revised-mdx-first-run/mdx_numeric.py": "b85d85455fcebb1928ca4c911052a4f89d4f2d849876af19de10a1f0dad6d87f",
+    "qa/release-2.2.4/revised-mdx-first-run/native-mdx-comparison-verification.json": "6bea12b1fab2ae5589e1338e1c220b04ef4318cb5d8b01b713ac39e4b4c5b843",
+    "qa/release-2.2.4/revised-mdx-first-run/native-mdx-comparison.log": "b6dede1142f591fdcc6ebfb1865fdf0ce6245dfdc7c247e5a28f05db5bcc1d9c"
+  },
+  "analysis_asset_hashes": {
+    "web/analysis/models/uvr-mdx-voc-ft.onnx": "534b2070fcc7df514b13ef660dc8cbb328679c2374d04354a5c42bb14ecce111",
+    "web/analysis/vendor/ONNX-Runtime-LICENSE.txt": "2f07c72751aed99790b8a4869cf2311df85a860b22ded05fa22803587a48922c",
+    "web/analysis/vendor/ort-wasm-simd-threaded.mjs": "745eb7c0ce6f18a6aa521971b2877babc7ffb27eecb58ab3bc6e5ef4692672e8",
+    "web/analysis/vendor/ort-wasm-simd-threaded.wasm": "207d02be4591c156b0a98f024f3d58005b5b04c92274d759fb390338c63559ea",
+    "web/analysis/vendor/ort.wasm.min.js": "e66568724f8848e57cc2a56e4bea3a5b86ce3ff81b2da11eac8ed7ab02b27bd4"
+  },
+  "thresholds": {
+    "spectrum": {
+      "absolute_tolerance": 0.0001,
+      "relative_tolerance": 1e-05,
+      "rmse": 1e-05,
+      "relative_rmse": 0.001
+    },
+    "waveform": {
+      "max_absolute_error": 1e-06,
+      "rmse": 1e-07,
+      "relative_rmse": 0.0001
+    }
+  },
+  "inputs": [
+    {
+      "id": "demo-start",
+      "source": "web/demo/glass-castle.wav",
+      "start_sample": -3840
+    },
+    {
+      "id": "demo-20s",
+      "source": "web/demo/glass-castle.wav",
+      "start_sample": 878160
+    },
+    {
+      "id": "falcon-start",
+      "source": "qa/release-1.6.0/fixtures/falcon-mix.wav",
+      "start_sample": -3840
+    }
+  ],
+  "sample_rate": 44100,
+  "spectrum_floats": 3145728,
+  "waveform_samples": 261120,
+  "native_runtime": "1.25.1",
+  "native_runtime_sha256": "749793ebed63743fec853d093da7987a86ea5cd592d54fba898cd3233100c381",
+  "wasm_runtime": "1.20.1",
+  "host": {
+    "system": "Linux",
+    "machine": "x86_64"
+  },
+  "scope": "Fresh production NativeMdxTask on Linux/JVM versus bundled ONNX Runtime Web CPU WASM under Node, on three predetermined source passages (demo start, demo 20 seconds, independent Falcon mixture start), including both polarity passes and production WAV/STFT/ensemble/waveform decoder. Android framework is adapted for host filesystem access; no Android/ARM64, lifecycle or phone-performance claim.",
+  "criterion_review": {
+    "initial_failure_path": "qa/release-2.2.4/initial-mdx-absolute-only/native-mdx-comparison-verification.json",
+    "initial_failure_sha256": "f8f8bf96173582abc686f050a0d4901b1335757da89f58a0e3380b677fac42c8",
+    "initial_comparator_path": "qa/release-2.2.4/initial-mdx-absolute-only/compare-native-mdx.py",
+    "initial_comparator_sha256": "12303c56657e69475cacf04a253446b955fb71752a28a3222692e99880821d86",
+    "explanation": "The initial absolute-only spectral check failed (max 1.373291015625e-4 > 1e-4); that criterion copied normalized waveform units onto unnormalized FFT coefficients. The qualifying run uses fixed pointwise absolute-plus-relative spectral tolerances and separately stricter normalized waveform bounds, declared before rerunning. Cross-runtime outputs are close, not bit-identical."
+  },
+  "protocol_revision": {
+    "revision": 3,
+    "after_prior_failures": true,
+    "eligibility_contract": "Strict decoded normalized waveform equivalence at the exact consumer interface; finite spectra and original graph/input geometry are mandatory. Fixed coefficient allclose and spectral RMS comparisons remain separate diagnostics, including any failures. This receipt never certifies exact spectral parity. Final release qualification also requires separately bound paired downstream GAME and vocal-feature equivalence.",
+    "prior_revised_failure_path": "qa/release-2.2.4/revised-mdx-first-run/native-mdx-comparison-verification.json",
+    "prior_revised_failure_sha256": "6bea12b1fab2ae5589e1338e1c220b04ef4318cb5d8b01b713ac39e4b4c5b843",
+    "rationale": "The fixed coefficient tolerance fails on a small number of unnormalized internal FFT values, including across native graph optimizer settings; all decoded consumer waveforms remain far below one PCM16 quantization step. Review retained the failed diagnostics and established strict consumer-output plus downstream-equivalence criteria before this three-input qualifying run. No model, weights, execution options, gain, delay or thresholds were changed to improve the result."
+  },
+  "passages": [
+    {
+      "id": "demo-start",
+      "source": "web/demo/glass-castle.wav",
+      "start_sample": -3840,
+      "source_sha256": "33f07d502ba19832b62b97d8fb4a11354e81310264bd885d7a06438228773650",
+      "runs": {
+        "native": [
+          {
+            "seconds": 3.280614531,
+            "runtime": "1.25.1",
+            "polarity": "positive"
+          },
+          {
+            "seconds": 3.117914726,
+            "runtime": "1.25.1",
+            "polarity": "negative"
+          }
+        ],
+        "wasm": [
+          {
+            "polarity": "positive",
+            "seconds": 8.501868107999998,
+            "runtime": "1.20.1",
+            "executionProvider": "wasm",
+            "threads": 4
+          },
+          {
+            "polarity": "negative",
+            "seconds": 11.182674661,
+            "runtime": "1.20.1",
+            "executionProvider": "wasm",
+            "threads": 4
+          }
+        ]
+      },
+      "comparisons": [
+        {
+          "output": "positive",
+          "samples": 3145728,
+          "finite": true,
+          "max_absolute_error": 0.0001373291015625,
+          "rmse": 2.630924857794878e-06,
+          "reference_rms": 3.6610484689299674,
+          "relative_rmse": 7.186260657630221e-07,
+          "identical": false,
+          "coefficient_violations": 1,
+          "maximum_scaled_error": 1.0316313447648051,
+          "within_thresholds": false
+        },
+        {
+          "output": "negative",
+          "samples": 3145728,
+          "finite": true,
+          "max_absolute_error": 0.00011444091796875,
+          "rmse": 2.5839888013130635e-06,
+          "reference_rms": 3.6528681277383006,
+          "relative_rmse": 7.073862813966292e-07,
+          "identical": false,
+          "coefficient_violations": 0,
+          "maximum_scaled_error": 0.787844881742123,
+          "within_thresholds": true
+        },
+        {
+          "output": "waveform",
+          "samples": 261120,
+          "finite": true,
+          "max_absolute_error": 1.1920928955078125e-07,
+          "rmse": 1.7793023756697896e-08,
+          "reference_rms": 0.07662977532340393,
+          "relative_rmse": 2.321946486415396e-07,
+          "identical": false,
+          "within_thresholds": true
+        }
+      ],
+      "output_hashes": {
+        "native-positive.float32le": {
+          "bytes": 12582912,
+          "sha256": "13af664256101b248d08a02999388573b3a6f93ca4cc342033834a9eb32e2721"
+        },
+        "wasm-positive.float32le": {
+          "bytes": 12582912,
+          "sha256": "3213edb59b4c19c6447456fa06bd8389ec3f0806b9658e31f1f253236a71f1ad"
+        },
+        "native-negative.float32le": {
+          "bytes": 12582912,
+          "sha256": "d2c3c664b3581245414003b5dbb9a10ef047deef905452d6b42caf2a613ea1a3"
+        },
+        "wasm-negative.float32le": {
+          "bytes": 12582912,
+          "sha256": "76d4f214afd3bcf2a59d4f2aa02284f9687bf1249a8e00db01f3b9313554ab46"
+        },
+        "native-waveform.float32le": {
+          "bytes": 1044480,
+          "sha256": "618559fb6ddcba69066c5146b602f81d9e1244d0732a21379d3c47d70a445b57"
+        },
+        "wasm-waveform.float32le": {
+          "bytes": 1044480,
+          "sha256": "d44d53f3abfc351bda21a276a344f5fd7532d77da551b202038a38fad5df278e"
+        }
+      }
+    },
+    {
+      "id": "demo-20s",
+      "source": "web/demo/glass-castle.wav",
+      "start_sample": 878160,
+      "source_sha256": "33f07d502ba19832b62b97d8fb4a11354e81310264bd885d7a06438228773650",
+      "runs": {
+        "native": [
+          {
+            "seconds": 3.515623795,
+            "runtime": "1.25.1",
+            "polarity": "positive"
+          },
+          {
+            "seconds": 3.186922302,
+            "runtime": "1.25.1",
+            "polarity": "negative"
+          }
+        ],
+        "wasm": [
+          {
+            "polarity": "positive",
+            "seconds": 8.661456433,
+            "runtime": "1.20.1",
+            "executionProvider": "wasm",
+            "threads": 4
+          },
+          {
+            "polarity": "negative",
+            "seconds": 8.305978752000001,
+            "runtime": "1.20.1",
+            "executionProvider": "wasm",
+            "threads": 4
+          }
+        ]
+      },
+      "comparisons": [
+        {
+          "output": "positive",
+          "samples": 3145728,
+          "finite": true,
+          "max_absolute_error": 0.000164031982421875,
+          "rmse": 2.8786439479104348e-06,
+          "reference_rms": 3.395285742519983,
+          "relative_rmse": 8.478355479365055e-07,
+          "identical": false,
+          "coefficient_violations": 4,
+          "maximum_scaled_error": 1.3588896228472955,
+          "within_thresholds": false
+        },
+        {
+          "output": "negative",
+          "samples": 3145728,
+          "finite": true,
+          "max_absolute_error": 0.0001506805419921875,
+          "rmse": 2.864121869090533e-06,
+          "reference_rms": 3.393488986025504,
+          "relative_rmse": 8.440050581820298e-07,
+          "identical": false,
+          "coefficient_violations": 2,
+          "maximum_scaled_error": 1.2496015906321005,
+          "within_thresholds": false
+        },
+        {
+          "output": "waveform",
+          "samples": 261120,
+          "finite": true,
+          "max_absolute_error": 9.685754776000977e-08,
+          "rmse": 1.745056564883296e-08,
+          "reference_rms": 0.0709952164220673,
+          "relative_rmse": 2.4579917532878787e-07,
+          "identical": false,
+          "within_thresholds": true
+        }
+      ],
+      "output_hashes": {
+        "native-positive.float32le": {
+          "bytes": 12582912,
+          "sha256": "6cf349ad6b7caf676e0e7540dfee8bc369a9eed91bafac5db558da42e0ced119"
+        },
+        "wasm-positive.float32le": {
+          "bytes": 12582912,
+          "sha256": "704609dea82062b3bab30630c78316506399215b542547bfc46525e091509fac"
+        },
+        "native-negative.float32le": {
+          "bytes": 12582912,
+          "sha256": "5060c082303b4719f421f3e4dc15ddfaccb513d367270597d668696f44d2b323"
+        },
+        "wasm-negative.float32le": {
+          "bytes": 12582912,
+          "sha256": "66b4b10b6d8cb3c023fcb219ec149295e09619deb6dffbaa29b70c854f1702b6"
+        },
+        "native-waveform.float32le": {
+          "bytes": 1044480,
+          "sha256": "6625fb8970d93a4cda6483dc0b9bb5d30f04e602ac900f7dc53729fa7ca07975"
+        },
+        "wasm-waveform.float32le": {
+          "bytes": 1044480,
+          "sha256": "b0f2d064ed48e82b2e0fb3f059ef2d5aa81ada8a3d85fddc245ef430d8d72a62"
+        }
+      }
+    },
+    {
+      "id": "falcon-start",
+      "source": "qa/release-1.6.0/fixtures/falcon-mix.wav",
+      "start_sample": -3840,
+      "source_sha256": "effbbe3e3c0df821bf3cfa6535360b18339ded8041992373b41f8344998dba99",
+      "runs": {
+        "native": [
+          {
+            "seconds": 3.474706709,
+            "runtime": "1.25.1",
+            "polarity": "positive"
+          },
+          {
+            "seconds": 2.991917787,
+            "runtime": "1.25.1",
+            "polarity": "negative"
+          }
+        ],
+        "wasm": [
+          {
+            "polarity": "positive",
+            "seconds": 8.405912747999999,
+            "runtime": "1.20.1",
+            "executionProvider": "wasm",
+            "threads": 4
+          },
+          {
+            "polarity": "negative",
+            "seconds": 8.339137134000001,
+            "runtime": "1.20.1",
+            "executionProvider": "wasm",
+            "threads": 4
+          }
+        ]
+      },
+      "comparisons": [
+        {
+          "output": "positive",
+          "samples": 3145728,
+          "finite": true,
+          "max_absolute_error": 0.000194549560546875,
+          "rmse": 2.625977760676132e-06,
+          "reference_rms": 3.323780202155402,
+          "relative_rmse": 7.900575853280672e-07,
+          "identical": false,
+          "coefficient_violations": 17,
+          "maximum_scaled_error": 1.4416886809757072,
+          "within_thresholds": false
+        },
+        {
+          "output": "negative",
+          "samples": 3145728,
+          "finite": true,
+          "max_absolute_error": 0.00018143653869628906,
+          "rmse": 2.587958323258162e-06,
+          "reference_rms": 3.316727436858691,
+          "relative_rmse": 7.80274644970298e-07,
+          "identical": false,
+          "coefficient_violations": 10,
+          "maximum_scaled_error": 1.3575054489283316,
+          "within_thresholds": false
+        },
+        {
+          "output": "waveform",
+          "samples": 261120,
+          "finite": true,
+          "max_absolute_error": 2.5331974029541016e-07,
+          "rmse": 1.527431596070425e-08,
+          "reference_rms": 0.06812156696437748,
+          "relative_rmse": 2.2422144177469643e-07,
+          "identical": false,
+          "within_thresholds": true
+        }
+      ],
+      "output_hashes": {
+        "native-positive.float32le": {
+          "bytes": 12582912,
+          "sha256": "cd4dee3e885cf58cf36ddd28ac89a86657e7c47cf1ca7423ea11831b41ad251d"
+        },
+        "wasm-positive.float32le": {
+          "bytes": 12582912,
+          "sha256": "59b08f8bdfa681c05d3a9bb27e97ec352e35464f393bf067a14c08c55b56d352"
+        },
+        "native-negative.float32le": {
+          "bytes": 12582912,
+          "sha256": "d8be37ccc2ad1945dc108f6226c4ddf01556e73a5717da1bd86ccc194cd7c76b"
+        },
+        "wasm-negative.float32le": {
+          "bytes": 12582912,
+          "sha256": "7c6bd0c521595741c5b4cbb4a0677cfbe6bcba06abfb7933e21180c676570660"
+        },
+        "native-waveform.float32le": {
+          "bytes": 1044480,
+          "sha256": "db8f5261609da1f496dab2c016dd2cfb8065407873600600776ae6f705b1a706"
+        },
+        "wasm-waveform.float32le": {
+          "bytes": 1044480,
+          "sha256": "3b928e6b749283788de5f27a0685754cbead48fe8b76752ca90b5354165c280b"
+        }
+      }
+    }
+  ],
+  "spectral_diagnostic_passed": false,
+  "decoded_waveform_passed": true,
+  "qualification_scope": "Decoded waveform equivalence on three fixed inputs. Spectral diagnostics are reported independently and can fail; passing this receipt alone does not qualify release until the paired downstream gate passes.",
+  "completedAt": "2026-09-09T22:27:44.492341+00:00"
+}

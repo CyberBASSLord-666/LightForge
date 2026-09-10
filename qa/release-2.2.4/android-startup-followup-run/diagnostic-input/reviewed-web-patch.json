@@ -1,0 +1,10 @@
+{
+  "diagnostic_only": true,
+  "base_head_sha": "222fe9956f91579b34d80b1cad2f993b52b5fbb4",
+  "base_apk_sha256": "cb8baf01ac9ba2422ceaa3f8cf0883d9cc2d61a4058d2acab2546fba669d23b6",
+  "reviewed_web_sha256": {
+    "web/app.js": "2a26794d2203a30a38180696ab6e62619ecac9b14d548aa57e6c53ebe73278b5",
+    "web/preview/src/vehicle-preview.js": "0fff4a3ffff99f0d09286be26353d4bb51301e4876c8e723624052fd0089d6ae",
+    "web/preview/vehicle-preview.js": "d58a592747cb1f37ed39fffd079b182491a6f9568fbabe4f74cc5a9946099afb"
+  }
+}

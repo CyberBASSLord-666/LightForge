@@ -25,7 +25,11 @@ class FreshRuntimeEvidenceTest(unittest.TestCase):
     def copy(self, relative):
         path = self.root / relative
         path.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(ROOT / relative, path)
+        # Archived source must still satisfy the immutable 2.2.3 evidence hash.
+        source = ROOT / relative
+        if relative == "android/src/com/cyberbasslord/lightforge/NativeDeux.java":
+            source = ROOT / "qa/release-2.2.3/prior-source" / relative
+        shutil.copyfile(source, path)
         return path
 
     def flip_first_byte(self, path):

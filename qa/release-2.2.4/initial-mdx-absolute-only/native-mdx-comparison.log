@@ -1,0 +1,9 @@
+{"output": "positive", "samples": 3145728, "finite": true, "max_absolute_error": 0.0001373291015625, "rmse": 2.630924857794878e-06, "reference_rms": 3.6610484689299674, "relative_rmse": 7.186260657630221e-07, "identical": false}
+Traceback (most recent call last):
+  File "/workspace/scratch/9a5ec23b7f4b/LightForge/qa/release-2.2.4/compare-native-mdx.py", line 63, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/workspace/scratch/9a5ec23b7f4b/LightForge/qa/release-2.2.4/compare-native-mdx.py", line 56, in main
+    assert all(result[k]<=v for k,v in THRESHOLDS.items()),'Numerical threshold exceeded: '+output
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Numerical threshold exceeded: positive

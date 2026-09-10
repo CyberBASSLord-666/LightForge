@@ -1,0 +1,41 @@
+{
+  "phase": "reconnect-completed-project",
+  "elapsedSeconds": 365.662,
+  "phaseElapsedSeconds": 47.447,
+  "checks": [
+    "Actual Studio native CPU separation, neural analysis and choreography completed with the Activity destroyed, screen off and Doze forced with user-equivalent battery exemption; result was durably saved."
+  ],
+  "powerTransition": {
+    "phase": "first-screen-off-analysis",
+    "interactive": false,
+    "deepIdle": true,
+    "batteryExempt": true,
+    "controllerDeepState": "IDLE",
+    "commandOutput": "Now forced in to deep idle mode"
+  },
+  "uiReadiness": {
+    "phase": "reconnect-completed-project",
+    "state": "waiting-for-bootstrap-and-frame"
+  },
+  "job": {
+    "id": "474b5ea5-3892-44cd-a7f2-86442a40831b",
+    "projectId": "11381d59-8192-48c5-92ea-e6629ef39a45",
+    "name": "Background audio",
+    "sourceSHA256": "35a9290d16a0b6c4506dcf7a2fa9bfc105296588665a673973ffdab71076e6b1",
+    "analysisIdentity": "4fff02e4e5572f8b04be7cd31cfc56f03271d89548fa44415f182aa69e2ea71e",
+    "state": "completed",
+    "stage": "Your show is ready",
+    "progress": 1,
+    "createdAt": 1788998420152,
+    "updatedAt": 1788998724990,
+    "hasCheckpoint": true,
+    "resumeAvailable": true,
+    "progressAt": 1788998724961,
+    "elapsedMs": 304809,
+    "completedStages": 3,
+    "restoredStages": 0,
+    "analysisStage": "save",
+    "checkpointAt": 1788998724863,
+    "checkpointSHA256": "42591f9894ea31cfc5bb94577cc0d0ff8e51ace993b6ed71b015be56c5b65bd9"
+  }
+}

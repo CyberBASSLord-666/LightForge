@@ -15,10 +15,16 @@ public final class BackgroundInstrumentation extends Instrumentation {
     private File files;
     private MainActivity activity;
     private boolean checkedNativeStageRelease;
+    private volatile boolean balancedObserverStopped,checkedBalancedStageRelease,observedBalancedNativeRun;
+    private volatile Throwable balancedObservationFailure;
+    private volatile int balancedPassesAtRelease;
+    private Thread balancedObserver;
     private final long testStarted=SystemClock.elapsedRealtime();
     private long phaseStarted=testStarted,lastSnapshot;
     private volatile String currentPhase="starting";
     private JSONObject lastPowerTransition;
+    private volatile JSONObject lastUiReadiness;
+    private final JSONArray uiReadinessChecks=new JSONArray();
     private final Handler watchdogMain=new Handler(Looper.getMainLooper());
     private volatile boolean watchdogStopped;
     private Thread mainWatchdog;
@@ -53,6 +59,7 @@ public final class BackgroundInstrumentation extends Instrumentation {
             }
             JSONObject diagnostic=new JSONObject().put("phase",currentPhase).put("mainHeartbeatDelayMs",delayMs)
                 .put("elapsedSeconds",(SystemClock.elapsedRealtime()-testStarted)/1000.0).put("threads",threads);
+            if(lastUiReadiness!=null)diagnostic.put("uiReadiness",lastUiReadiness);
             Bundle event=new Bundle();event.putString("stream","LIGHTFORGE_MAIN_THREAD_DELAY "+diagnostic+"\n");sendStatus(0,event);
         }catch(Throwable error){
             android.util.Log.e("LightForgeTest","Could not capture delayed main-thread stacks",error);
@@ -72,6 +79,7 @@ public final class BackgroundInstrumentation extends Instrumentation {
             .put("phaseElapsedSeconds",(now-phaseStarted)/1000.0)
             .put("checks",new JSONArray(checks.toString()));
         if(lastPowerTransition!=null)value.put("powerTransition",lastPowerTransition);
+        if(lastUiReadiness!=null)value.put("uiReadiness",lastUiReadiness);
         if(files!=null){
             JSONObject job=AnalysisJobStore.status(files);
             value.put("job",job==null?JSONObject.NULL:job);
@@ -114,6 +122,7 @@ public final class BackgroundInstrumentation extends Instrumentation {
         long until=SystemClock.elapsedRealtime()+timeout;
         while(SystemClock.elapsedRealtime()<until){
             snapshot(false);
+            if(balancedObservationFailure!=null)throw new AssertionError("Balanced live lifecycle observation failed",balancedObservationFailure);
             JSONObject job=AnalysisJobStore.status(files);if(job!=null&&!AnalysisJobStore.active(job))return job;
             if(job!=null&&job.optDouble("progress")>=.83){
                 AnalysisService owner=service();NativePassageTask task=owner==null?null:(NativePassageTask)field(owner,"nativePassage");
@@ -124,7 +133,19 @@ public final class BackgroundInstrumentation extends Instrumentation {
         throw new AssertionError("Background job timed out: "+AnalysisJobStore.status(files));
     }
     private String fixture(String name)throws Exception{return fixture(name,3);}
-    private String fixture(String name,int seconds)throws Exception{
+    private String fixture(String name,int seconds)throws Exception{return fixture(name,seconds,"precision");}
+    private JSONObject studioSettings()throws Exception{
+        final WebView view=(WebView)field(activity,"web");
+        check(view!=null,"The initialized studio is required to freeze fixture settings");
+        final java.util.concurrent.CountDownLatch completed=new java.util.concurrent.CountDownLatch(1);
+        final java.util.concurrent.atomic.AtomicReference<String> result=new java.util.concurrent.atomic.AtomicReference<>();
+        runOnMainSync(()->view.evaluateJavascript("(()=>{const a=window.LightForgeApp;return a&&a.state&&a.state.settings;})()",value->{result.set(value);completed.countDown();}));
+        check(completed.await(15,java.util.concurrent.TimeUnit.SECONDS),"The studio did not return its complete settings");
+        JSONObject settings=new JSONObject(result.get());
+        check(settings.has("enabled")&&settings.has("vocalRegions")&&settings.has("outputEnabled"),"The studio settings snapshot is incomplete");
+        return settings;
+    }
+    private String fixture(String name,int seconds,String quality)throws Exception{
         File source=new File(getTargetContext().getCacheDir(),name+".wav"),mono=new File(getTargetContext().getCacheDir(),name+"-mono.wav");
         float[] pcm=new float[seconds*44100*2];for(int i=0;i<pcm.length;i++)pcm[i]=(float)(.18*Math.sin(2*Math.PI*220*(i/2)/44100));
         try(WavConverter writer=new WavConverter(source,mono,44100)){writer.accept(pcm,pcm.length/2);writer.finish();}
@@ -132,12 +153,126 @@ public final class BackgroundInstrumentation extends Instrumentation {
         try(InputStream in=new FileInputStream(source)){meta=ProjectStore.importAudio(new File(files,"projects"),in,name,new AudioImporter.Progress(){public void update(double p,String s){}public void check(){}});}
         String id=meta.getString("id");File project=new File(AnalysisJobStore.project(files,id),"project.json");
         JSONObject state=AnalysisJobStore.read(project,ProjectStore.MAX_PROJECT_BYTES);
-        state.put("settings",new JSONObject().put("analysisQuality","precision").put("dance","off").put("style","festival").put("stepMs",20).put("seed",2025));
+        // Real UI generation saves all studio settings before the native job
+        // freezes them. A five-field synthetic object produces an input hash
+        // that cannot survive the UI's later default merge on restoration.
+        // Read the actual initialized studio, then apply the same test choices.
+        state.put("settings",studioSettings().put("analysisQuality",quality).put("dance","off").put("style","festival").put("stepMs",20).put("seed",2025));
         ProjectStore.save(new File(files,"projects"),id,state);return id;
     }
-    private void launch(){
+    private void launch()throws Exception{
         activity=(MainActivity)startActivitySync(new Intent(getTargetContext(),MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-        waitForIdleSync();activity.new Bridge().getBootstrap();
+        waitForIdleSync();awaitUiReady();activity.new Bridge().getBootstrap();
+    }
+    private final class UiReadiness implements Runnable {
+        final MainActivity owner=activity;
+        final WebView view;
+        final long began=SystemClock.elapsedRealtime(),deadline=began+45000;
+        final java.util.concurrent.CountDownLatch completed=new java.util.concurrent.CountDownLatch(1);
+        final java.util.concurrent.atomic.AtomicBoolean finished=new java.util.concurrent.atomic.AtomicBoolean();
+        volatile Throwable failure;
+        volatile JSONObject evidence;
+        volatile JSONObject latest;
+        android.view.ViewTreeObserver tree;
+        Runnable commitCallback;
+        android.view.ViewTreeObserver.OnDrawListener drawListener;
+        UiReadiness()throws Exception{view=(WebView)field(owner,"web");check(view!=null,"Preview WebView missing on launch");}
+        boolean current()throws Exception{return activity==owner&&!owner.isFinishing()&&!owner.isDestroyed()&&field(owner,"web")==view;}
+        boolean visible(){return view.isAttachedToWindow()&&view.isShown()&&view.getWindowVisibility()==android.view.View.VISIBLE&&view.getWidth()>0&&view.getHeight()>0&&view.hasWindowFocus();}
+        void record(String stage,JSONObject state)throws JSONException{
+            JSONObject value=state!=null?new JSONObject(state.toString()):latest!=null?new JSONObject(latest.toString()):new JSONObject();
+            value.put("phase",currentPhase).put("probeStage",stage).put("waitSeconds",(SystemClock.elapsedRealtime()-began)/1000.0)
+                .put("nativeAttached",view.isAttachedToWindow()).put("nativeShown",view.isShown())
+                .put("nativeWindowVisibility",view.getWindowVisibility()).put("nativeWindowFocus",view.hasWindowFocus())
+                .put("viewWidth",view.getWidth()).put("viewHeight",view.getHeight());
+            latest=value;lastUiReadiness=value;
+        }
+        void cleanup(){
+            view.removeCallbacks(this);
+            if(tree!=null&&tree.isAlive()){
+                if(Build.VERSION.SDK_INT>=29&&commitCallback!=null)tree.unregisterFrameCommitCallback(commitCallback);
+                if(drawListener!=null)tree.removeOnDrawListener(drawListener);
+            }
+        }
+        void finish(Throwable error,JSONObject value){
+            if(!finished.compareAndSet(false,true))return;
+            try{record(error==null?"complete":"failed",value);evidence=error==null?latest:null;}
+            catch(Throwable diagnosticError){if(error==null)error=diagnosticError;}
+            failure=error;cleanup();completed.countDown();
+        }
+        @Override public void run(){
+            if(finished.get())return;
+            try{
+                check(SystemClock.elapsedRealtime()<deadline,"Preview JavaScript initialization exceeded 45 seconds");
+                check(current(),"Preview changed while awaiting its first frame");
+                if(!visible()){record("waiting-for-native-visibility",null);view.postOnAnimation(this);return;}
+                // Export follows readBootstrap's synchronous native inventory
+                // load, but its project restoration is asynchronous. Await the
+                // existing restore-state flags as well as the actual 3D model
+                // and a submitted canvas frame when that canvas is visible.
+                record("waiting-for-javascript-response",null);
+                view.evaluateJavascript("(()=>{const a=window.LightForgeApp,s=a&&a.state,p=a&&a.vehiclePreview,c=document.getElementById('carCanvas'),r=c&&c.getBoundingClientRect();const visible=!!(r&&r.width>0&&r.height>0&&!document.hidden);const boot=!!(s&&Array.isArray(s.projects)&&typeof window.onNativeEvent==='function');const restored=!!(boot&&!s.loadingProject&&!s.composing&&!s.backgroundApplying&&!s.backgroundSyncPending);return {ready:document.readyState==='complete'&&restored&&!!p&&p.loaded&&!p.lost&&(!visible||p.renderCount>0),documentState:document.readyState,documentHidden:document.hidden,bootstrapInventoryReady:boot,projectRestoreIdle:restored,loadingProject:!!(s&&s.loadingProject),composing:!!(s&&s.composing),backgroundApplying:!!(s&&s.backgroundApplying),backgroundSyncPending:!!(s&&s.backgroundSyncPending),saveBlocked:!!(s&&s.saveBlocked),previewModelReady:!!(p&&p.loaded),previewVisible:visible,previewRendererVisible:!!(p&&p.getPerformance().visible),previewPaused:!!(p&&p._paused),previewIntersecting:!!(p&&p._intersecting),previewHasSize:!!(p&&p._hasSize),previewFrames:p?p.renderCount:0,contextLost:!!(p&&p.lost),canvasRect:r?{left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}:null,viewport:{width:innerWidth,height:innerHeight,scrollX,scrollY}};})()",value->{
+                    if(finished.get())return;
+                    try{
+                        JSONObject state=new JSONObject(value);
+                        record(state.optBoolean("ready")?"waiting-for-visual-state":"waiting-for-app-readiness",state);
+                        if(!state.optBoolean("ready")){view.postOnAnimation(this);return;}
+                        check(current()&&visible(),"Preview lost visibility before visual-state synchronization");
+                        view.postVisualStateCallback(began,new WebView.VisualStateCallback(){
+                            @Override public void onComplete(long requestId){
+                                if(finished.get())return;
+                                try{
+                                    check(current()&&visible(),"Preview lost visibility before its first committed frame");
+                                    record("waiting-for-hardware-frame-commit",state);
+                                    check(view.isHardwareAccelerated(),"Lifecycle readiness requires the real hardware-accelerated WebView");
+                                    tree=view.getViewTreeObserver();
+                                    check(tree.isAlive(),"Preview view tree was detached before frame commit");
+                                    Runnable recorded=()->watchdogMain.post(()->{
+                                        if(finished.get())return;
+                                        try{
+                                            check(current()&&visible(),"Preview detached before frame-commit acknowledgement");
+                                            finish(null,new JSONObject(state.toString()).put("phase",currentPhase)
+                                                .put("visualStateReady",true).put("firstFrameCommitted",true)
+                                                .put("frameCommitMethod",Build.VERSION.SDK_INT>=29?"hardware-frame-commit":"on-draw-then-main")
+                                                .put("hardwareAccelerated",true).put("viewWidth",view.getWidth()).put("viewHeight",view.getHeight())
+                                                .put("waitSeconds",(SystemClock.elapsedRealtime()-began)/1000.0));
+                                        }catch(Throwable error){finish(error,null);}
+                                    });
+                                    // postVisualStateCallback promises the
+                                    // next draw is ready. It does not prove
+                                    // that HWUI has completed that draw.
+                                    if(Build.VERSION.SDK_INT>=29){commitCallback=recorded;tree.registerFrameCommitCallback(commitCallback);}
+                                    else{
+                                        java.util.concurrent.atomic.AtomicBoolean drawn=new java.util.concurrent.atomic.AtomicBoolean();
+                                        drawListener=()->{if(drawn.compareAndSet(false,true))recorded.run();};
+                                        tree.addOnDrawListener(drawListener);
+                                    }
+                                    view.invalidate();
+                                }catch(Throwable error){finish(error,null);}
+                            }
+                        });
+                    }catch(Throwable error){finish(error,null);}
+                });
+            }catch(Throwable error){finish(error,null);}
+        }
+    }
+    private void awaitUiReady()throws Exception{
+        UiReadiness probe=new UiReadiness();
+        lastUiReadiness=new JSONObject().put("phase",currentPhase).put("state","waiting-for-bootstrap-and-frame");snapshot(true);
+        watchdogMain.post(probe);
+        try{
+            boolean complete=false;
+            while(SystemClock.elapsedRealtime()<probe.deadline){
+                long remaining=probe.deadline-SystemClock.elapsedRealtime();
+                if(probe.completed.await(Math.max(1,Math.min(1000,remaining)),java.util.concurrent.TimeUnit.MILLISECONDS)){complete=true;break;}
+                snapshot(false);
+            }
+            if(!complete)snapshot(true);
+            check(complete,"Preview bootstrap/first-frame readiness timed out; latest probe: "+probe.latest);
+            if(probe.failure!=null)throw new AssertionError("Preview readiness failed",probe.failure);
+            check(probe.evidence!=null&&probe.evidence.optBoolean("firstFrameCommitted"),"Preview frame-commit evidence missing");
+            lastUiReadiness=probe.evidence;uiReadinessChecks.put(probe.evidence);snapshot(true);
+        }finally{probe.finished.set(true);watchdogMain.post(probe::cleanup);}
     }
     private void backgroundAndDoze()throws Exception{
         WebView closingView=(WebView)field(activity,"web");android.view.ViewGroup[] closingParent=new android.view.ViewGroup[1];
@@ -165,7 +300,7 @@ public final class BackgroundInstrumentation extends Instrumentation {
         String unforced=shell("dumpsys deviceidle unforce");shell("dumpsys battery reset");
         shell("input keyevent KEYCODE_WAKEUP");shell("wm dismiss-keyguard");
         awaitPower(()->power.isInteractive()&&!power.isDeviceIdleMode(),"Android did not leave Doze and wake for reopening");
-        launch();recordPowerTransition(power,unforced);
+        recordPowerTransition(power,unforced);launch();
     }
     private JSONObject start(String projectId)throws Exception{
         JSONObject job=new JSONObject(activity.new Bridge().startAnalysis(projectId));check(!job.has("error"),job.toString());waitService(true);
@@ -204,11 +339,88 @@ public final class BackgroundInstrumentation extends Instrumentation {
         check("onnxruntime-android-cpu".equals(separation.optString("runtime")),"Studio did not run native CPU inference: "+separation);
         return separation;
     }
+    private void observeBalanced(NativeMdxTask task){
+        // Start before Activity teardown/Doze: those transitions may span an
+        // entire short inference. Successful-pass counters survive idle
+        // release, so completion evidence does not depend on catching a
+        // transient output file or native RunOptions pointer between polls.
+        balancedObserverStopped=false;checkedBalancedStageRelease=false;observedBalancedNativeRun=false;
+        balancedObservationFailure=null;balancedPassesAtRelease=0;
+        balancedObserver=new Thread(()->{
+            try{
+                while(!balancedObserverStopped){
+                    JSONObject job=AnalysisJobStore.status(files);
+                    if(job!=null&&!AnalysisJobStore.active(job))return;
+                    synchronized(task){
+                        if(field(task,"session")!=null&&field(task,"activeRun")!=null)observedBalancedNativeRun=true;
+                        double progress=job==null?0:job.optDouble("progress");
+                        if(job!=null&&AnalysisJobStore.active(job)&&progress>=.96*.83&&progress<.96){
+                            check(field(task,"session")==null&&field(task,"inputBuffer")==null&&field(task,"outputBuffer")==null
+                                &&field(task,"activeRun")==null&&!(Boolean)field(task,"workerActive"),
+                                "Balanced MDX retained its model or tensor buffers during voice/GAME analysis");
+                            balancedPassesAtRelease=(Integer)field(task,"completedPasses");
+                            check(balancedPassesAtRelease==2,"Balanced polarity ensemble did not complete exactly two native inferences before voice/GAME: "+balancedPassesAtRelease);
+                            checkedBalancedStageRelease=true;
+                        }
+                    }
+                    Thread.sleep(25);
+                }
+            }catch(InterruptedException stopped){Thread.currentThread().interrupt();}
+            catch(Throwable error){balancedObservationFailure=error;}
+        },"LightForge-balanced-observer");
+        balancedObserver.setDaemon(true);balancedObserver.start();
+    }
+    private void stopBalancedObserver()throws Exception{
+        balancedObserverStopped=true;
+        if(balancedObserver!=null){balancedObserver.interrupt();balancedObserver.join(5000);check(!balancedObserver.isAlive(),"Balanced observation thread did not stop");}
+        if(balancedObservationFailure!=null)throw new AssertionError("Balanced live lifecycle observation failed",balancedObservationFailure);
+    }
+    private JSONObject balancedScreenOff()throws Exception{
+        phase("balanced-screen-off-analysis");String id=fixture("Balanced background audio",3,"balanced");JSONObject job=start(id);
+        AnalysisService owner=service();NativeMdxTask task=(NativeMdxTask)field(owner,"nativeMdx");
+        JSONObject frozen=AnalysisJobStore.request(files,job.getString("id"));
+        check("balanced".equals(frozen.getJSONObject("settings").getString("analysisQuality")),"Balanced fixture was not frozen into the analysis request");
+        check(!AnalysisJobStore.status(files).has("settings"),"Routing fixture unexpectedly exposes settings in its notification-only status");
+        check(task!=null,"Frozen Balanced request did not allocate the native MDX accelerator");
+        observeBalanced(task);long backgroundAt=System.currentTimeMillis();backgroundAndDoze();
+        JSONObject completed=waitTerminal(10*60*1000L);
+        check("completed".equals(completed.optString("state")),"Balanced screen-off analysis failed: "+completed);
+        check(completed.getLong("updatedAt")>backgroundAt,"Balanced analysis made no progress after Activity destruction");
+        waitService(false);stopBalancedObserver();
+        java.util.concurrent.ExecutorService executor=(java.util.concurrent.ExecutorService)field(task,"executor");
+        check(executor.awaitTermination(15,java.util.concurrent.TimeUnit.SECONDS),"Completed Balanced executor did not retire promptly");
+        check(field(owner,"nativeMdx")==null&&(Boolean)field(task,"closed"),"Completed service retained its native Balanced task");
+        check(checkedBalancedStageRelease,"No live voice/GAME-stage Balanced model and tensor release observation was recorded");
+        check((Integer)field(task,"completedPasses")==2,"Balanced fixture did not complete both model passes on Android");
+        JSONObject saved=AnalysisJobStore.read(new File(AnalysisJobStore.project(files,id),"project.json"),ProjectStore.MAX_PROJECT_BYTES);
+        JSONObject music=saved.getJSONObject("music"),engine=music.getJSONObject("engine"),separation=engine.getJSONObject("separationModel");
+        check(music.getInt("analysisVersion")==6&&engine.optBoolean("neural"),"Balanced fixture did not complete the actual neural pipeline");
+        check("balanced".equals(engine.optString("quality")),"Balanced quality was silently changed");
+        check("uvr-mdx-net-voc-ft".equals(separation.optString("modelId")),"Balanced fixture used the wrong separator");
+        check(separation.optBoolean("denoise")&&separation.optInt("modelPasses")==2&&separation.optInt("chunks")==1,
+            "Balanced fixture lost the two-pass polarity ensemble or recomputed through fallback: "+separation);
+        JSONObject stems=music.getJSONObject("stemCache");
+        check(stems.getInt("fullSamples")==3*44100&&stems.getInt("samples")==3*22050&&stems.getInt("sampleRate")==22050,
+            "Balanced separation truncated or extended the source/stem sample clock");
+        check(Math.abs(stems.getDouble("duration")-3)<1e-9&&Math.abs(music.getDouble("duration")-3)<1e-9,"Balanced source duration changed");
+        check(music.getJSONObject("vocals").getJSONObject("transcription").getInt("steps")==8,"Balanced transcription reduced its eight-step estimator");
+        JSONObject compiled=saved.getJSONObject("compiled");
+        check(compiled.getString("sha256").matches("[a-f0-9]{64}"),"Balanced show did not compile and save");
+        check(compiled.getInt("frameCount")==150&&compiled.getInt("stepMs")==20&&Math.abs(compiled.getJSONObject("meta").getDouble("audioDuration")-3)<1e-9,
+            "Balanced compiled choreography lost the three-second source clock");
+        JSONObject observation=new JSONObject().put("completedNativePasses",(Integer)field(task,"completedPasses"))
+            .put("nativePassesBeforeVoice",balancedPassesAtRelease).put("liveNativeRunObserved",observedBalancedNativeRun)
+            .put("modelReleasedDuringVoice",checkedBalancedStageRelease).put("sourceSamples",stems.getInt("fullSamples"))
+            .put("stemSamples",stems.getInt("samples")).put("separation",separation);
+        pass("Frozen Balanced request allocated native MDX and completed both polarity-ensemble passes on Android. The complete show finished with the Activity destroyed and screen off under Doze; model/tensor buffers were released before voice/GAME, preserving 132300 source samples, 66150 stem samples, the eight-step transcription setting and 150 saved choreography frames.");
+        return observation;
+    }
     @Override public void onCreate(Bundle arguments){super.onCreate(arguments);start();}
     @Override public void onStart(){
         JSONObject receipt=new JSONObject();Bundle output=new Bundle();
         try{
             files=getTargetContext().getFilesDir();startMainWatchdog();phase("first-screen-off-analysis");launch();String id=fixture("Background audio");JSONObject job=start(id);
+            check(field(service(),"nativeMdx")==null,"Precision Studio allocated the Balanced-only accelerator");
             long backgroundAt=System.currentTimeMillis();backgroundAndDoze();
             JSONObject completed=waitTerminal(15*60*1000L);
             check("completed".equals(completed.optString("state")),"Screen-off analysis failed: "+completed);
@@ -224,6 +436,7 @@ public final class BackgroundInstrumentation extends Instrumentation {
             JSONObject bootstrap=new JSONObject(activity.new Bridge().getBootstrap());
             check("completed".equals(bootstrap.getJSONObject("backgroundJob").getString("state")),"Reopened Activity did not reconnect");
             pass("Reopened Activity reports the completed job and its saved project.");
+            receipt.put("balanced",balancedScreenOff());phase("reopen-after-balanced");foreground();
             String cancelId=fixture("Resume fixture",12);File cancelProject=new File(AnalysisJobStore.project(files,cancelId),"project.json");String original=AnalysisJobStore.hash(cancelProject);
             phase("wait-for-second-native-passage");
             JSONObject interruptedJob=start(cancelId);AnalysisService cancelledService=service();PowerManager.WakeLock cancelledLock=(PowerManager.WakeLock)field(cancelledService,"wakeLock");
@@ -264,12 +477,12 @@ public final class BackgroundInstrumentation extends Instrumentation {
             check(beforeTimeout.equals(AnalysisJobStore.hash(timeoutProject)),"Timeout replaced saved project");
             pass("Android media-processing timeout callback stops promptly and leaves a retryable job with the previous show intact.");
             phase("completed");
-            receipt.put("passed",true).put("checks",checks).put("sdk",Build.VERSION.SDK_INT).put("scope","Android emulator with actual foreground service, native CPU Studio separation plus WebView/WASM rhythm/voice models, screen-off/Doze execution, live native cancellation, partial-passage resume and timeout callback; not a physical phone or Tesla.");
+            receipt.put("passed",true).put("checks",checks).put("uiReadiness",uiReadinessChecks).put("sdk",Build.VERSION.SDK_INT).put("scope","Android emulator with initialized hardware-accelerated WebView and committed visible frames before lifecycle actions, actual foreground service, native CPU Studio separation and two-pass Balanced MDX, frozen-request routing and live model/tensor release before WebView/WASM voice/GAME, screen-off/Doze execution, live native cancellation, partial-passage resume and timeout callback; not a physical phone or Tesla.");
             output.putString("stream","BACKGROUND_ANDROID_PASS\n"+receipt.toString()+"\n");finish(Activity.RESULT_OK,output);
         }catch(Throwable error){
             try{snapshot(true);}catch(Exception ignored){}
             try{receipt.put("passed",false).put("checks",checks).put("phase",currentPhase).put("error",error.toString());}catch(Exception ignored){}
             StringWriter trace=new StringWriter();error.printStackTrace(new PrintWriter(trace));output.putString("stream","BACKGROUND_ANDROID_FAIL\n"+receipt+"\n"+trace);finish(Activity.RESULT_CANCELED,output);
-        }finally{stopMainWatchdog();}
+        }finally{balancedObserverStopped=true;if(balancedObserver!=null)balancedObserver.interrupt();stopMainWatchdog();}
     }
 }

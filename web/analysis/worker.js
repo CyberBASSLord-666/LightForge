@@ -3,11 +3,16 @@
 importScripts('wav-reader.js','dsp.js','bass-notes.js','vocal.js','vocal-detail.js','stem-cache.js','work-store.js','separator-mdx.js','separator-deux.js','game.js','vendor/ort.wasm.min.js');
 const report=(progress,stage,detail='',extra={})=>postMessage({type:'progress',value:{...extra,progress,stage,detail}});
 let nativeSequence=0;const nativeRequests=new Map();
+let nativeMdxSequence=0;const nativeMdxRequests=new Map();
 function nativePredict(startSample,onProgress=()=>{}){return new Promise((resolve,reject)=>{const requestId=++nativeSequence;nativeRequests.set(requestId,{resolve,reject,onProgress});postMessage({type:'native-deux',requestId,startSample});}).then(async url=>{
  const response=await fetch(url);if(!response.ok)throw Error('Native studio audio could not be read.');const bytes=await response.arrayBuffer(),samples=573300;
  if(bytes.byteLength!==samples*8)throw Error('Native studio audio is incomplete.');const view=new DataView(bytes),result={};let at=0;
  for(const role of ['vocals','accompaniment']){const pcm=new Float32Array(samples);for(let i=0;i<samples;i++,at+=4){pcm[i]=view.getFloat32(at,true);if(!Number.isFinite(pcm[i]))throw Error('Native studio audio contains invalid samples.');}result[role]=pcm;}return result;
 });}
+function nativeMdxPredict(encoded,onProgress=()=>{}){
+ const payload=encoded.slice();
+ return new Promise((resolve,reject)=>{const requestId=++nativeMdxSequence;nativeMdxRequests.set(requestId,{resolve,reject,onProgress});postMessage({type:'native-mdx',requestId,buffer:payload.buffer},[payload.buffer]);});
+}
 function separationStoragePlan(total,quality){
  const samples=quality==='precision'?573300:LightForgeMdxSeparator.constants.INPUT_LENGTH;
  const core=quality==='precision'?441000:LightForgeMdxSeparator.constants.CORE,stride=quality==='precision'?220500:LightForgeMdxSeparator.constants.STRIDE;
@@ -30,7 +35,17 @@ self.onmessage=async e=>{
  if(e.data?.type==='native-deux-result'||e.data?.type==='native-deux-progress'){
   const pending=nativeRequests.get(e.data.requestId);if(!pending)return;
   if(e.data.type==='native-deux-progress'){pending.onProgress(e.data.value.progress,e.data.value.message);return;}
-  nativeRequests.delete(e.data.requestId);e.data.error?pending.reject(new Error(e.data.error)):pending.resolve(e.data.url);return;
+ nativeRequests.delete(e.data.requestId);e.data.error?pending.reject(new Error(e.data.error)):pending.resolve(e.data.url);return;
+ }
+ if(e.data?.type==='native-mdx-result'||e.data?.type==='native-mdx-progress'){
+  const pending=nativeMdxRequests.get(e.data.requestId);if(!pending)return;
+  if(e.data.type==='native-mdx-progress'){pending.onProgress(e.data.value);return;}
+  nativeMdxRequests.delete(e.data.requestId);
+  if(e.data.error)pending.reject(new Error(e.data.error));
+  else if(e.data.fallback)pending.resolve(undefined);
+  else if(!(e.data.buffer instanceof ArrayBuffer))pending.reject(new Error('Native balanced audio was not returned.'));
+  else pending.resolve(new Float32Array(e.data.buffer));
+  return;
  }
  let session,melSession,separator,game,cacheWriter;const started=performance.now();try{
  const {audioUrl,options={},stage}=e.data;
@@ -72,6 +87,10 @@ self.onmessage=async e=>{
  data=null;
 
   await store.write(stage,result);
+  // OPFS has a durable, checksummed rhythm result even before the Java
+  // checkpoint is committed. Surface that fact immediately so a killed
+  // renderer offers Resume instead of reporting a blank status.
+  report(.40,'Recognizing musical structure','Progress saved',{checkpointSaved:true,analysisStage:stage});
  }else{
   const sourceReader=new LightForgeWavReader(audioUrl);await sourceReader.open();
   if(stage==='separation'){
@@ -81,12 +100,13 @@ self.onmessage=async e=>{
  await store.reserve({...storagePlan,onProgress:(done,total)=>report(.405,'Checking saved analysis storage','Verified '+done+' / '+total+' passage checkpoints')});
  report(.41,'Separating voice and instruments','Recoverable passages • your music stays on this device');
  cacheWriter=await LightForgeStemCache.create(cacheKey,sourceReader.samples,config,options.projectId||'');
- separator=await (quality==='precision'?LightForgeDeux:LightForgeMdxSeparator).create({ort,baseUrl:new URL(quality==='precision'?'models/deux/':'models/',self.location.href).href,onProgress:p=>report(.41,'Loading studio vocal separation',p.message),checkpoint:store,nativePredict:quality==='precision'&&options.supportsNativeDeux?nativePredict:undefined});
+ separator=await (quality==='precision'?LightForgeDeux:LightForgeMdxSeparator).create({ort,baseUrl:new URL(quality==='precision'?'models/deux/':'models/',self.location.href).href,onProgress:p=>report(.41,'Loading studio vocal separation',p.message),checkpoint:store,nativePredict:quality==='precision'&&options.supportsNativeDeux?nativePredict:quality==='balanced'&&options.supportsNativeMdx?nativeMdxPredict:undefined});
  result.separation=await separator.process((start,count)=>sourceReader.stereo44100(start,count),sourceReader.samples,chunk=>cacheWriter.append(chunk),p=>report(.42+.40*p.progress,'Separating voice and instruments',`${p.message} • ${Math.min(sourceReader.duration,p.processedSeconds||0).toFixed(0)} / ${sourceReader.duration.toFixed(0)} seconds`,p));
  await separator.release();separator=null;
  result.stemCache=await cacheWriter.finish();cacheWriter=null;
 
    await store.write(stage,{separation:result.separation,stemCache:result.stemCache});
+   report(.82,'Separating voice and instruments','Progress saved',{checkpointSaved:true,analysisStage:stage});
   }else if(stage==='voice'){
  const stems=await LightForgeStemCache.readers(result.stemCache);
  report(.83,'Recognizing the isolated voice','Distinguishing singing, speech and remaining instrument bleed');
@@ -100,6 +120,7 @@ self.onmessage=async e=>{
  result.vocals=LightForgeGAME.fuse(detailExtractor.finish({classifier:classified.classifier,model:classified.model,transcription}),transcription);classified.classifier=null;await game.release();game=null;
 
    await store.write(stage,{vocals:result.vocals});
+   report(.985,'Recognizing the isolated voice','Progress saved',{checkpointSaved:true,analysisStage:stage});
   }else{
    const stems=await LightForgeStemCache.readers(result.stemCache);
  report(.985,'Following bass notes','Listening beneath the separated singing');
@@ -108,10 +129,11 @@ self.onmessage=async e=>{
  result.analysisVersion=6;
  result.roleAnalysis={version:3,clock:'Original decoded audio',vocalSource:'Separated vocal waveform with singing and speech evidence',bassSource:'Low-register harmonics in separated accompaniment',sourceSeparated:true,lyricsAligned:false};
  for(const warning of [...(result.vocals.warnings||[]),...(result.separation.limitations||[])])if(!result.warnings.includes(warning))result.warnings.push(warning);
- result.engine={name:'Beat This! '+(quality==='precision'?'full + Deux':'compact + MDX')+' + GAME Large',neural:true,detail:'Bundled pretrained rhythm transformer, stereo vocal separation, isolated-voice singing and speech classification, GAME Large neural sung-note transcription, measured source expression, and independent accompaniment bass tracking. All audio stays on this device.',model:selected.model,modelId:selected.id,modelSha256:selected.sha256,frontendSha256:models.frontend.sha256,vocalModel:result.vocals.model,noteModel:result.vocals.transcription.model,separationModel:result.separation,bassMethod:result.bassAnalysis.method,quality,runtime:result.separation.runtime==='onnxruntime-android-cpu'?'ONNX Runtime Android CPU + ONNX Runtime Web 1.20.1':'ONNX Runtime Web 1.20.1',analysisSeconds:Math.round((performance.now()-started)/100)/10};
+ result.engine={name:'Beat This! '+(quality==='precision'?'full + Deux':'compact + MDX')+' + GAME Large',neural:true,detail:'Bundled pretrained rhythm transformer, stereo vocal separation, isolated-voice singing and speech classification, GAME Large neural sung-note transcription, measured source expression, and independent accompaniment bass tracking. All audio stays on this device.',model:selected.model,modelId:selected.id,modelSha256:selected.sha256,frontendSha256:models.frontend.sha256,vocalModel:result.vocals.model,noteModel:result.vocals.transcription.model,separationModel:result.separation,bassMethod:result.bassAnalysis.method,quality,runtime:(result.separation.nativeModelPasses>0||result.separation.runtime==='onnxruntime-android-cpu')?'ONNX Runtime Android CPU + ONNX Runtime Web 1.20.1':'ONNX Runtime Web 1.20.1',analysisSeconds:Math.round((performance.now()-started)/100)/10};
  result.recommendedAudio={sampleRate:44100,channels:2,format:'PCM16 WAV'};report(1,'Music understood',`${result.bpm?result.bpm+' BPM':'No pulse detected'} • ${result.sections.length} sections`);
 
    await store.write(stage,result);
+   report(1,'Music understood','Progress saved',{checkpointSaved:true,analysisStage:stage});
   }
  }
  postMessage({type:'result',value:result,restored:false,seconds:(performance.now()-started)/1000});

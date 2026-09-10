@@ -1,0 +1,132 @@
+{
+  "release": "2.2.4",
+  "passed": true,
+  "checkedAt": "2026-09-09T22:34:34.314Z",
+  "checks": [
+    {
+      "name": "meaxic",
+      "passed": true
+    },
+    {
+      "name": "nightowl",
+      "passed": true
+    },
+    {
+      "name": "falcon",
+      "passed": true
+    },
+    {
+      "name": "stella",
+      "passed": true
+    },
+    {
+      "name": "grunge",
+      "passed": true
+    },
+    {
+      "name": "sdrnr",
+      "passed": true
+    },
+    {
+      "name": "source-led controlled NightOwl",
+      "passed": true
+    }
+  ],
+  "results": [
+    {
+      "name": "meaxic",
+      "source": "qa/release-1.6.0/vocal-detail-reference-meaxic.json",
+      "sourceConfidence": 0.869,
+      "sourceArticulations": 19,
+      "acceptedArticulations": 11,
+      "acceptedNoteCues": 4,
+      "pairedSignatureBrightFraction": 0.10526315789473684,
+      "singleSignatureBrightFraction": 0.38011695906432746,
+      "commandPlacementMaxMs": 9.999999999999787
+    },
+    {
+      "name": "nightowl",
+      "source": "qa/release-1.6.0/vocal-detail-reference-nightowl.json",
+      "sourceConfidence": 0.472,
+      "sourceArticulations": 19,
+      "acceptedArticulations": 13,
+      "acceptedNoteCues": 0,
+      "pairedSignatureBrightFraction": 0,
+      "singleSignatureBrightFraction": 0.3742690058479532,
+      "commandPlacementMaxMs": 10.000000000000675
+    },
+    {
+      "name": "falcon",
+      "source": "qa/release-1.6.0/vocal-detail-reference-falcon.json",
+      "sourceConfidence": 0.83,
+      "sourceArticulations": 13,
+      "acceptedArticulations": 7,
+      "acceptedNoteCues": 3,
+      "pairedSignatureBrightFraction": 0.17543859649122806,
+      "singleSignatureBrightFraction": 0.30994152046783624,
+      "commandPlacementMaxMs": 5.000000000000782
+    },
+    {
+      "name": "stella",
+      "source": "qa/release-1.6.0/vocal-detail-reference-stella.json",
+      "sourceConfidence": 0.852,
+      "sourceArticulations": 21,
+      "acceptedArticulations": 11,
+      "acceptedNoteCues": 4,
+      "pairedSignatureBrightFraction": 0.09941520467836257,
+      "singleSignatureBrightFraction": 0.43859649122807015,
+      "commandPlacementMaxMs": 5.000000000000004
+    },
+    {
+      "name": "grunge",
+      "source": "qa/release-1.6.0/vocal-detail-reference-grunge.json",
+      "sourceConfidence": 0.773,
+      "sourceArticulations": 23,
+      "acceptedArticulations": 11,
+      "acceptedNoteCues": 2,
+      "pairedSignatureBrightFraction": 0.03529411764705882,
+      "singleSignatureBrightFraction": 0.4235294117647059,
+      "commandPlacementMaxMs": 10.000000000000009
+    },
+    {
+      "name": "sdrnr",
+      "source": "qa/release-1.6.0/vocal-detail-reference-sdrnr.json",
+      "sourceConfidence": 0.749,
+      "sourceArticulations": 23,
+      "acceptedArticulations": 12,
+      "acceptedNoteCues": 1,
+      "pairedSignatureBrightFraction": 0.029239766081871343,
+      "singleSignatureBrightFraction": 0.4152046783625731,
+      "commandPlacementMaxMs": 10.000000000000009
+    },
+    {
+      "name": "source-led controlled NightOwl",
+      "source": "qa/release-1.6.0/detail-candidate-nightowl-controlled.json",
+      "acceptedPhrases": 2,
+      "acceptedArticulations": 3,
+      "acceptedNoteCues": 0,
+      "sourcePresence": "uncertain",
+      "cueCount": 5,
+      "singleLampOnly": true
+    }
+  ],
+  "source_hashes": {
+    "web/engine/show-engine.js": "d09cfcdf1e1eebf36d3e03bfd40a3939dcc0fd18a4437047217511a258674548",
+    "web/engine/light-planner.js": "970c7a2a736560bf01e318b8180b431863e09e6e28daad4525ec583a70a73aeb",
+    "web/engine/movement-planner.js": "d22998c270c01af72f4fa1467ea5f5c9a3cc3ddda9f2264395fd8bba870305ec",
+    "web/engine/vehicle-profile.js": "027bf87a827a900cda00505e2b539f84cbdb0d5a9800ea4eb1efdf85a0c10936",
+    "qa/release-1.6.0/vocal-detail-reference-meaxic.json": "d00b6b909a894adfb73c6a5afe86afb46c0c08d42451c365f3f89da1f2cf7a90",
+    "qa/release-1.6.0/vocal-detail-reference-nightowl.json": "86c094a7f05daeddd77dddb7b27d7d0155b07545e8a30fc5879a945c3a09b4b3",
+    "qa/release-1.6.0/vocal-detail-reference-falcon.json": "cc1bb26c328867d12549093b8f35ebc08a98412ed56eb0d1807097f36a2c0890",
+    "qa/release-1.6.0/vocal-detail-reference-stella.json": "6509062cd69cf1480fa036ba947f1287c4e80be95c775fcb1f3c4efcde7ac499",
+    "qa/release-1.6.0/vocal-detail-reference-grunge.json": "9b8acdb093d4ebd1d49723dd884bfb5a830b28e7431a84034743a5ac6b8d7a7e",
+    "qa/release-1.6.0/vocal-detail-reference-sdrnr.json": "a64ea29b5483e21c33e81f2e35c1fb7c81d5ba801a5cfd83597dab4a5d5ca1c2",
+    "qa/release-1.6.0/detail-candidate-nightowl-controlled.json": "4394a5826cadbee70e7416ac80108f02baea7385789f3ae1966179c1da74ede9"
+  },
+  "limitations": [
+    "Six short original MUSDB vocal stems and one controlled remix extracted by the production separator are acoustic references. This does not measure true beat accuracy, word timing, perceptual show quality or physical vehicle response.",
+    "A declared120BPM scaffold makes lighting translation reproducible; it is not asserted to be the tempo of these songs.",
+    "Source extraction confidence combines several estimates and is not a calibrated probability.",
+    "Expected physical lamp states are computed using the shipped preview simulator; independent fade-byte tests separately verify that simulator."
+  ]
+}

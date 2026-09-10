@@ -1,0 +1,439 @@
+✔ analysis checkpoints round-trip precise floats and reject changed, swapped and truncated records (22.902323ms)
+✔ failed atomic replacement keeps the last committed passage and a damaged identity invalidates every saved stage (6.699766ms)
+✔ invalidating downstream voice work preserves expensive separation passages and unrelated rhythm (5.500929ms)
+✔ rebuilding an audition cache removes its commit marker before independent stem writes (72.14971ms)
+✔ public analyzer destroys each model heap before the next stage and clears only transient work after success (4.965296ms)
+✔ retry uses identical checkpoint identity while changed analysis settings get a new namespace (5.649311ms)
+✔ cancellation and stage failures preserve durable work and never start a downstream model (3.449442ms)
+✔ native acceleration callback stays outside structured clone and its result returns to the requesting worker (2.507931ms)
+✔ aborting native acceleration cancels its operation and retains all completed passages (1.985588ms)
+✔ GAME resumes completed passages with identical note boundaries and without rereading or reloading cached inference (1146.966463ms)
+✔ worker restores completed separation without creating a model or replacing audition audio (2.842672ms)
+✔ worker invalidates derived stages when committed stems are missing and keeps passage checkpoint storage available (1.181752ms)
+✔ worker native transport preserves raw source floats and rejects truncated and non-finite output transactionally (124.031497ms)
+✔ native resources release after the worker consumes output and before the voice model starts (2.262773ms)
+✔ restored separation still releases idle native resources before voice analysis (3.261871ms)
+✔ native cancellation precedes best-effort release and retains the original interruption error (1.326649ms)
+✔ native release failure blocks the next model heap after successful separation (1.352098ms)
+✔ storage admission includes remaining passages and final stems while crediting valid completed work on retry (40.397186ms)
+✔ storage admission skips redundant checkpoint validation when quota already covers worst-case work (1.916844ms)
+✔ worker reserves passage storage before opening model output writers and skips reservation for committed separation (2.352818ms)
+✔ background runner checkpoints analysis and commits an actual compiled show without a studio document (58.892255ms)
+✔ background runner cancellation never submits a completed project (22.742854ms)
+✔ native studio delegates work, blocks stale saves, reconnects, and loads the background result (463.078413ms)
+✔ completed bootstrap restores once across poll/native races and preserves later Guide navigation (255.481167ms)
+✔ acknowledged completion restores the last selected project once (293.60484ms)
+✔ a completed job arriving while Guide is open restores without taking over navigation (217.755827ms)
+✔ off-grid harmonic bass entrances, pitch changes and releases keep their audio clock (136.894136ms)
+✔ louder kicks 50–150 ms around bass entrances do not become the note clock (415.262964ms)
+✔ brief sweeping kick transients, broadband noise and silence do not invent bass notes (86.109722ms)
+✔ pure sustained sub-bass remains eligible with estimated-source labels (27.796351ms)
+✔ different read chunk sizes preserve phase and note boundaries exactly (162.875243ms)
+✔ four-hour stationary pitch summaries use bounded columns without argument spreading (1766.832323ms)
+✔ cancelled analysis rejects without reading audio (1.497936ms)
+✔ cockpit navigation preserves real transactional cue editing and project changes (737.815994ms)
+PASS legacy waveform bins use full song timescale for movement salience
+PASS movement density independently controls physical command count while retaining hard budgets
+PASS bar anchor and meter correction preserve measured beat times and original analysis
+PASS half and double tempo preserve local tempo changes without re-running analysis
+PASS confident swing places explicit eighth-note accents on the measured groove
+PASS variation materially changes all three styles including quiet cinematic sections
+PASS locking a section preserves its exact bytes while neighboring sections regenerate
+PASS repeated analyzed sections share a local motif and color identity
+PASS streamed FSEQ header plus existing frame buffer exactly equals contiguous export
+PASS sparse preview matches independent frame integration through random fades and alias interruptions
+PASS prepared preview supports repeated random seeks without rescanning frame payload
+✔ /workspace/scratch/9a5ec23b7f4b/LightForge/tests/composer-1.6.test.cjs (1841.835746ms)
+✔ native passages retain source clock, reuse completed work and report durable progress (512.953944ms)
+✔ a failed passage leaves prior checkpoints reusable without committing partial output (190.1948ms)
+✔ malformed native or cached audio is never exported or accepted as completed (72.773996ms)
+✔ checkpoint commit failure preserves retry semantics and does not emit its passage (35.132873ms)
+✔ silence and released separators never start expensive model inference (42.32684ms)
+✔ captures actual script errors, promise rejections and resource failures with bounded original stack context (269.478662ms)
+✔ sanitization excludes credentials, private paths, known names, and raw object or audio payloads (70.702009ms)
+✔ retention and event throttles bound memory, messages and progress even when storage is full (204.964498ms)
+✔ browser history survives reload and rejects corrupt or oversized persisted history (225.210371ms)
+✔ native export stays pending until actual save acknowledgement and is available during processing (55.830057ms)
+✔ native save failure and picker cancellation restore export controls and allow retry (72.5298ms)
+✔ native bridge invocation failure never claims a saved log or leaves buttons disabled (50.327857ms)
+✔ browser export creates an actual text log download without claiming a verified filesystem save (67.585065ms)
+✔ diagnostics initialize before application scripts and export controls work if app startup fails (74.418521ms)
+✔ composition worker failures retain the originating stack and release the worker (12.413254ms)
+✔ canonical profile covers every exported channel and explicitly excludes uninstalled fogs (1.966339ms)
+✔ every available exterior and RGB output can be independently authored and exported (436.823182ms)
+✔ all exterior ramp directions and durations reach preview with exact frame boundaries (94.504797ms)
+✔ outer beam fades require an explicit verified-hardware option and preserve exact bytes (119.104278ms)
+✔ linked physical outputs share manual cues; valid unequal aliases retain physical OR semantics (37.953352ms)
+✔ manual closures replace only their own automatic track and accept all supported commands (275.492785ms)
+✔ Stop interrupts a partial travel; Idle preserves the reached position and closing resumes there (2.519758ms)
+✔ Idle ends Dance but does not cancel an in-flight one-frame Open/Close request (11.176378ms)
+✔ per-output switch masks automatic and manual cues, with independent RGB zones and closures (31.844161ms)
+✔ invalid commands, timing, overlaps, unsupported outputs and damaged colors fail before export (1.385498ms)
+✔ movement budgets, preparation, automatic close and final settled position are enforced (79.703376ms)
+✔ project JSON round-trip preserves all manual cues, switches, colors and exact FSEQ (33.55781ms)
+✔ FSEQ binary header, variable metadata, payload and duration agree with audio (400.841352ms)
+✔ broad tempo and duration matrix retains physical closure timing and budgets (5690.58755ms)
+✔ expressive choreography places visible gestures at musical beats within per-closure budgets (69.410142ms)
+✔ shared physical outputs and unsupported channels are correct in every binary frame (41.603535ms)
+✔ all supported fade durations are real Tesla commands, and preview evaluates their brightness (18.950477ms)
+✔ RGB segments and display are independently addressable and optional (15.497062ms)
+✔ disabled closures are absent, including in an expressive show (47.281199ms)
+✔ timing offset moves musical light and closure entrances while preserving preparation (96.314316ms)
+✔ quiet input is intentionally dark; malformed and overlong tracks are rejected (7.442851ms)
+✔ degraded analysis data is normalized with explicit warnings (10.147857ms)
+✔ seed reproducibility, pattern variation and section overrides are functional (83.112445ms)
+✔ validator catches corrupted payload, unsupported dimming, absent lamps and illegal movement (31.027256ms)
+✔ the exact four-hour limit is accepted without timing overflow (1749.963504ms)
+✔ the actual Glass Castle music analysis exports a complete validated show (89.829202ms)
+✔ learned notes keep their own off-grid boundaries, pitch and unvoiced source articulations (2.0405ms)
+✔ speech and unsupported isolated notes cannot become sung-note cues (0.199529ms)
+✔ context continuation extends pitch without inventing a new entrance (0.18025ms)
+✔ diffusion sampling is reproducible and uses a different sequence for each declared seed (2.475422ms)
+✔ known eight-second musical rest is dark in exterior and every RGB zone (158.020674ms)
+✔ legacy saved analysis without activityRanges still respects waveform silence (20.129765ms)
+✔ last genuine beat survives instead of being replaced by unconditional ending fade (16.347493ms)
+✔ three-quarter bars honor supplied downbeat phase and do not treat pickup as downbeat (17.558219ms)
+✔ three-quarter fallback bars use three beats when explicit downbeats are absent (15.654634ms)
+✔ changing tempo follows actual local beat intervals instead of average BPM (32.787446ms)
+✔ known non-grid impact attacks and offsets reach FSEQ within half an export frame (202.568643ms)
+✔ rounding at activity onset retains the accepted binary attack within half a frame (41.856685ms)
+✔ higher-salience collision preserves the strong known attack without moving it later (10.367046ms)
+✔ deterministic variation and per-section style edits preserve independent unaffected sections (86.027169ms)
+✔ disabled output masks still win over composed beats, impacts and movement tracks (85.673198ms)
+✔ actual recorded analysis exports settled, budget-valid choreography: baseline-demo-music.json (182.604037ms)
+✔ actual recorded analysis exports settled, budget-valid choreography: baseline-sample-music.json (392.590404ms)
+✔ actual recorded analysis exports settled, budget-valid choreography: current-demo-music.json (131.082871ms)
+✔ actual recorded analysis exports settled, budget-valid choreography: current-sample-music.json (350.042683ms)
+✔ identical rich results pass and expose their comparison contract (20.825308ms)
+✔ small independent differences inside all documented tolerances pass (7.351253ms)
+✔ transcription note count is exact (1.084767ms)
+✔ transcription note start exceeding its tolerance fails (1.878747ms)
+✔ transcription note end exceeding its tolerance fails (1.129043ms)
+✔ transcription note peakTime exceeding its tolerance fails (4.077404ms)
+✔ transcription note midi exceeding its tolerance fails (1.946849ms)
+✔ transcription note frequency exceeding its tolerance fails (0.698637ms)
+✔ transcription note confidence exceeding its tolerance fails (2.649093ms)
+✔ transcription note strength exceeding its tolerance fails (0.594231ms)
+✔ transcription note source category is exact (0.686289ms)
+✔ transcription note continuation category is exact (0.508232ms)
+✔ transcription note type category is exact (0.497306ms)
+✔ transcription note estimated category is exact (0.50049ms)
+✔ vocals note count is exact (1.095242ms)
+✔ vocals note start exceeding its tolerance fails (0.602884ms)
+✔ vocals note end exceeding its tolerance fails (0.522894ms)
+✔ vocals note peakTime exceeding its tolerance fails (1.004936ms)
+✔ vocals note midi exceeding its tolerance fails (0.565688ms)
+✔ vocals note frequency exceeding its tolerance fails (0.734742ms)
+✔ vocals note confidence exceeding its tolerance fails (0.385969ms)
+✔ vocals note strength exceeding its tolerance fails (1.379098ms)
+✔ vocals note source category is exact (6.423012ms)
+✔ vocals note continuation category is exact (0.534421ms)
+✔ vocals note type category is exact (0.355553ms)
+✔ vocals note estimated category is exact (0.346479ms)
+✔ phrase start cannot silently drift (0.46666ms)
+✔ phrase end cannot silently drift (0.42722ms)
+✔ phrase peakTime cannot silently drift (0.463174ms)
+✔ phrase releaseTime cannot silently drift (0.378097ms)
+✔ phrase confidence cannot silently drift (0.341232ms)
+✔ phrase strength cannot silently drift (0.327411ms)
+✔ phrase modelScore cannot silently drift (0.357065ms)
+✔ phrase speechScore cannot silently drift (0.55353ms)
+✔ phrase voicedFraction cannot silently drift (5.545675ms)
+✔ phrase stemEnergyRatio cannot silently drift (0.436074ms)
+✔ accent time regression fails (0.888643ms)
+✔ accent category regression fails (0.567802ms)
+✔ phrase category regression fails (2.454731ms)
+✔ classified presence regression fails (0.440881ms)
+✔ fused presence regression fails (0.537416ms)
+✔ envelope regression fails (0.902873ms)
+✔ contour pitch regression fails (0.508693ms)
+✔ contour confidence regression fails (1.393119ms)
+✔ measured frequency relative limit regression fails (3.273328ms)
+✔ zero-frequency absolute limit regression fails (0.425778ms)
+✔ classifier frame step regression fails (0.415574ms)
+✔ envelope frame step regression fails (0.904837ms)
+✔ contour frame step regression fails (0.38691ms)
+✔ singingScores maximum absolute error gate catches an isolated outlier (4.007129ms)
+✔ singingScores RMSE gate catches distributed errors below maximum tolerance (0.930095ms)
+✔ speechScores maximum absolute error gate catches an isolated outlier (3.259588ms)
+✔ speechScores RMSE gate catches distributed errors below maximum tolerance (0.895492ms)
+✔ fineEnergy maximum absolute error gate catches an isolated outlier (1.439458ms)
+✔ fineEnergy RMSE gate catches distributed errors below maximum tolerance (0.639489ms)
+✔ residualEnergy maximum absolute error gate catches an isolated outlier (0.543695ms)
+✔ residualEnergy RMSE gate catches distributed errors below maximum tolerance (0.44674ms)
+✔ periodicity maximum absolute error gate catches an isolated outlier (0.344446ms)
+✔ periodicity RMSE gate catches distributed errors below maximum tolerance (0.542524ms)
+✔ classifier singing rejects NaN numeric array elements (2.066028ms)
+✔ classifier singing rejects Infinity numeric array elements (0.970195ms)
+✔ classifier singing rejects -Infinity numeric array elements (4.443413ms)
+✔ classifier singing rejects 0.5 numeric array elements (3.095411ms)
+✔ classifier singing rejects null numeric array elements (1.025298ms)
+✔ classifier singing rejects true numeric array elements (0.930456ms)
+✔ classifier singing rejects identical nonfinite values on both sides (0.691998ms)
+✔ classifier singing array length is exact (4.029864ms)
+✔ classifier speech rejects NaN numeric array elements (7.280598ms)
+✔ classifier speech rejects Infinity numeric array elements (1.138076ms)
+✔ classifier speech rejects -Infinity numeric array elements (0.93352ms)
+✔ classifier speech rejects 0.5 numeric array elements (0.943505ms)
+✔ classifier speech rejects null numeric array elements (1.028863ms)
+✔ classifier speech rejects true numeric array elements (0.721963ms)
+✔ classifier speech rejects identical nonfinite values on both sides (0.62722ms)
+✔ classifier speech array length is exact (0.802493ms)
+✔ energy rejects NaN numeric array elements (4.682332ms)
+✔ energy rejects Infinity numeric array elements (0.902644ms)
+✔ energy rejects -Infinity numeric array elements (1.225588ms)
+✔ energy rejects 0.5 numeric array elements (0.819599ms)
+✔ energy rejects null numeric array elements (0.575023ms)
+✔ energy rejects true numeric array elements (0.657636ms)
+✔ energy rejects identical nonfinite values on both sides (0.616334ms)
+✔ energy array length is exact (0.582323ms)
+✔ residual energy rejects NaN numeric array elements (0.639439ms)
+✔ residual energy rejects Infinity numeric array elements (0.62008ms)
+✔ residual energy rejects -Infinity numeric array elements (1.261802ms)
+✔ residual energy rejects 0.5 numeric array elements (1.741351ms)
+✔ residual energy rejects null numeric array elements (0.583575ms)
+✔ residual energy rejects true numeric array elements (0.606149ms)
+✔ residual energy rejects identical nonfinite values on both sides (0.583445ms)
+✔ residual energy array length is exact (1.844316ms)
+✔ frequency rejects NaN numeric array elements (0.609043ms)
+✔ frequency rejects Infinity numeric array elements (0.619899ms)
+✔ frequency rejects -Infinity numeric array elements (0.594692ms)
+✔ frequency rejects 0.5 numeric array elements (0.577105ms)
+✔ frequency rejects null numeric array elements (1.197626ms)
+✔ frequency rejects true numeric array elements (0.581642ms)
+✔ frequency rejects identical nonfinite values on both sides (0.611497ms)
+✔ frequency array length is exact (0.60698ms)
+✔ periodicity rejects NaN numeric array elements (0.641622ms)
+✔ periodicity rejects Infinity numeric array elements (0.656604ms)
+✔ periodicity rejects -Infinity numeric array elements (0.61972ms)
+✔ periodicity rejects 0.5 numeric array elements (0.604727ms)
+✔ periodicity rejects null numeric array elements (0.679779ms)
+✔ periodicity rejects true numeric array elements (0.339679ms)
+✔ periodicity rejects identical nonfinite values on both sides (1.457826ms)
+✔ periodicity array length is exact (0.596264ms)
+✔ envelope rejects NaN numeric array elements (0.609223ms)
+✔ envelope rejects Infinity numeric array elements (0.550626ms)
+✔ envelope rejects -Infinity numeric array elements (0.568762ms)
+✔ envelope rejects 0.5 numeric array elements (1.068522ms)
+✔ envelope rejects null numeric array elements (0.361953ms)
+✔ envelope rejects true numeric array elements (0.488783ms)
+✔ envelope rejects identical nonfinite values on both sides (0.405267ms)
+✔ envelope array length is exact (0.368202ms)
+✔ contour midi rejects NaN numeric array elements (0.409565ms)
+✔ contour midi rejects Infinity numeric array elements (5.561229ms)
+✔ contour midi rejects -Infinity numeric array elements (0.414222ms)
+✔ contour midi rejects 0.5 numeric array elements (0.392889ms)
+✔ contour midi rejects null numeric array elements (0.332849ms)
+✔ contour midi rejects true numeric array elements (0.311337ms)
+✔ contour midi rejects identical nonfinite values on both sides (0.370666ms)
+✔ contour midi array length is exact (0.31993ms)
+✔ contour confidence rejects NaN numeric array elements (0.382494ms)
+✔ contour confidence rejects Infinity numeric array elements (0.31956ms)
+✔ contour confidence rejects -Infinity numeric array elements (0.31343ms)
+✔ contour confidence rejects 0.5 numeric array elements (0.330645ms)
+✔ contour confidence rejects null numeric array elements (0.662344ms)
+✔ contour confidence rejects true numeric array elements (0.376585ms)
+✔ contour confidence rejects identical nonfinite values on both sides (1.956023ms)
+✔ contour confidence array length is exact (0.342644ms)
+✔ numeric array replaced with an array-like object is rejected (2.210935ms)
+✔ samples44100 sample count is exact (0.538437ms)
+✔ samples44100 rejects numeric text (7.017833ms)
+✔ samples22050 sample count is exact (0.601662ms)
+✔ samples22050 rejects numeric text (0.556034ms)
+✔ transcription keeps all eight diffusion steps (0.630927ms)
+✔ segmenter execution count must match the complete pipeline (0.414942ms)
+✔ identically missing segmenter execution coverage cannot pass (2.148702ms)
+✔ encoder execution count must match the complete pipeline (0.430866ms)
+✔ identically missing encoder execution coverage cannot pass (3.390845ms)
+✔ dur2bd execution count must match the complete pipeline (0.415794ms)
+✔ identically missing dur2bd execution coverage cannot pass (0.377145ms)
+✔ bd2dur execution count must match the complete pipeline (0.352519ms)
+✔ identically missing bd2dur execution coverage cannot pass (0.415152ms)
+✔ estimator execution count must match the complete pipeline (4.9087ms)
+✔ identically missing estimator execution coverage cannot pass (0.362554ms)
+✔ frameMn10 execution count must match the complete pipeline (0.330606ms)
+✔ identically missing frameMn10 execution coverage cannot pass (0.385648ms)
+✔ identical zero transcription notes is a vacuous baseline and fails (1.283534ms)
+✔ identical too few transcription notes is a vacuous baseline and fails (0.657766ms)
+✔ identical zero fused notes is a vacuous baseline and fails (0.560841ms)
+✔ identical subsecond fused note coverage is a vacuous baseline and fails (0.605377ms)
+✔ identical zero phrases is a vacuous baseline and fails (0.615443ms)
+✔ identical speech-only phrases is a vacuous baseline and fails (0.696835ms)
+✔ identical missing classifier is a vacuous baseline and fails (0.62677ms)
+✔ identical empty singing scores is a vacuous baseline and fails (0.817495ms)
+✔ identical empty speech scores is a vacuous baseline and fails (0.732508ms)
+✔ identical insufficient singing evidence is a vacuous baseline and fails (1.057096ms)
+✔ identical seven transcription steps is a vacuous baseline and fails (1.219448ms)
+✔ optional event releaseTime present on only one side fails (1.376554ms)
+✔ optional event modelScore present on only one side fails (2.277806ms)
+✔ optional event speechScore present on only one side fails (0.729564ms)
+✔ optional event voicedFraction present on only one side fails (0.609014ms)
+✔ optional event stemEnergyRatio present on only one side fails (1.164967ms)
+✔ unknown added event field cannot silently pass (0.849684ms)
+✔ unknown scalar event field is compared exactly (1.137655ms)
+✔ identical optional metadata is preserved without invalidating real comparisons (0.66001ms)
+✔ optional nested field present on the reference alone fails (1.238978ms)
+✔ optional numeric scalar with nonfinite values on both sides fails (0.816524ms)
+✔ exact decimal timing, strength, and MIDI boundaries tolerate binary roundoff (1.73371ms)
+✔ identical numeric-text optional confidence scalars are rejected (0.843295ms)
+✔ optional classified summary envelopes honor the same 0.001 limit (2.62074ms)
+✔ actual 1.6 worker snapshot migrates to 2.0 with exact frames and stable repeated reopen (261.252742ms)
+✔ 1.4 direct and 1.5 rebound snapshots still migrate without replacing their frames (464.13766ms)
+✔ 2.0 cue metadata and final synchronization report survive an exact backup round trip (95.026529ms)
+PASS strongest musical arrivals replace percent-of-duration selection
+PASS 14-second trunk and four-second windows prepare before exact Dance onset
+PASS final windows close and mirrors unfold with completed home travel
+PASS mirror cycles reserve physical travel, begin folded, and never request Dance
+PASS expressive choreography is denser and spatially staggered; balanced remains restrained
+PASS positive and negative audio offsets apply once at musical arrivals
+PASS manual tracks, disabled outputs and global movement switches are respected
+PASS actual tempo changes determine stagger and all offsets retain frame precision
+PASS Dance ends before actual musical stops; unsupported short phrases do not consume budgets
+PASS long-track budgets focus on strongest remote peaks rather than evenly distributed gestures
+PASS short tracks, sparse beats and phase-shifted boundaries retain legal complete choreography
+PASS seeded adversarial phrase timing remains validated by the real exported-byte simulator
+PASS integrated show generation preserves analysis targets, offset and exact exported movement bytes
+✔ /workspace/scratch/9a5ec23b7f4b/LightForge/tests/movement-planner.test.cjs (1756.524124ms)
+✔ native bridge exposes only complete audio from the matching private passage (8.780406ms)
+✔ abort cancels the native operation and never reports a result (6.510343ms)
+✔ a stale token or external result URL cannot become source audio (11.610491ms)
+✔ native failures remain actionable and do not silently switch the model (3.856408ms)
+✔ invalid source position is rejected before starting native work (4.102031ms)
+✔ balanced native bridge uploads bounded chunks and returns exact little-endian output (1128.18637ms)
+✔ balanced native bridge falls back cleanly when Android reports no compatible runtime (1.082624ms)
+✔ native MDX output validation disables only the optional accelerator (400.693134ms)
+✔ guard identity follows the pinned native runtime version (1.000941ms)
+✔ confirmed native unavailability selects the existing same-model path before any native work (1.427531ms)
+✔ native compatibility query failures are surfaced instead of silently changing runtimes (2.496975ms)
+✔ available runtimes and older bridges retain native prediction and release (1.357345ms)
+✔ service runner completes the checkpoint transaction with compatibility routing and unchanged analysis identity (2.324175ms)
+✔ legato bass entrances survive held-note competition and preserve the off-grid clock (63.556354ms)
+✔ enabled alternative lamps carry voice and bass when preferred outputs are muted (10.207757ms)
+✔ part timing corrects automatic events while user cues keep their own soundtrack times (66.707009ms)
+✔ explicit holds cross section boundaries, mutes remove role gestures, and accompaniment survives (13.263669ms)
+✔ final byte review detects output overrides, missing attacks, and disabled routes (31.195117ms)
+✔ musical edits validate limits and remain deterministic through serialization (24.932723ms)
+✔ dense and simultaneous bass notes retain valid target ranges on a shared fallback lamp (25.342421ms)
+✔ real app facade commits, undoes, redoes, saves, and isolates musical edits through the DOM (693.994694ms)
+✔ all ramp durations begin at zero at the exact frame boundary and advance continuously (19.716149ms)
+✔ interrupted and reversed ramps continue from their actual brightness without jumping (3.401621ms)
+✔ Model 3 merged light outputs obey Channel 4 ramp duration and side/aux OR (2.42121ms)
+✔ physical outputs suppress absent lights and never invent unsupported closures (1.240621ms)
+✔ open/close commands persist through Idle and move from the current partial position (5.876341ms)
+✔ Stop holds the reached position and later movement resumes without jumping (2.242273ms)
+✔ mirrors start unfolded and use real open/close commands, with no invented dance (1.252017ms)
+✔ estimated Dance moves, stops at Idle, and seeks reproduce identical poses (8.126035ms)
+✔ charge Dance is an LED rainbow, never door oscillation, and auto-close occurs at two minutes (11.589258ms)
+✔ preview raw commands and all RGB zones exactly match independently decoded exported bytes (239.985121ms)
+✔ hiding before the first studio frame cancels it and resumes exactly one RAF chain (313.973522ms)
+✔ native preview pause stays effective while the document is visible until explicit resume (150.980096ms)
+✔ page lifecycle suspension is independent of native and document visibility state (123.833775ms)
+✔ renderer explicit pause cancels pending submission and blocks draws and resize allocations (2.063875ms)
+✔ renderer resume never submits or reallocates while the document remains hidden (2.704436ms)
+✔ renderer defers lighting generation and frame submission until the model is loaded and visible (2.568171ms)
+PASS separated articulations keep the original off-grid source clock through both frame modes and signed offsets
+PASS lead singing has articulation contrast and keeps bass, percussion and accompaniment active
+PASS stable sung pitch and isolated envelope shape real RGB bytes while the exact exterior rhythm stays fixed
+PASS instrumental corrections remove measured voice evidence locally and never mutate original analysis
+PASS explicit voice guides add a labeled phrase without inventing measured notes or syllables
+PASS short articulated phrases and cadences never nominate multi-second motor Dance outside their region
+PASS long sustained vocal and bass phrases compete for expressive gestures with full mechanical lead and return
+PASS saved and corrected detail is deterministic, masks apply and manual lights keep ownership
+✔ /workspace/scratch/9a5ec23b7f4b/LightForge/tests/role-composer-1.6.test.cjs (924.769429ms)
+PASS meaxic
+PASS nightowl
+PASS falcon
+PASS stella
+PASS grunge
+PASS sdrnr
+PASS source-led controlled NightOwl
+✔ /workspace/scratch/9a5ec23b7f4b/LightForge/tests/role-reference-composer-1.6.test.cjs (267.687456ms)
+✔ balanced separator can use native MDX without creating a WASM session (1939.029465ms)
+✔ balanced separator falls back to WASM as a complete polarity pair (1372.750027ms)
+✔ full-resolution writes preserve exact little-endian samples across bounded async buffer reuse (26.48202ms)
+✔ odd contiguous input chunks equal the independent centered 63-tap convolution exactly (85.66769ms)
+✔ an impulse remains on its original sample clock without FIR group-delay shift (6.48231ms)
+✔ floating-point stems retain very quiet audio below PCM16 resolution (21.451957ms)
+✔ one-sample and odd tails are flushed once with exact ceil(N/2) output (69.447407ms)
+✔ out-of-order, oversized and incomplete writer input rejects without closing incomplete audio (0.51368ms)
+✔ stream write failures propagate to cache transaction cleanup (0.456144ms)
+✔ cache WAV header is mono 22.05 kHz IEEE float with exact byte counts (0.493039ms)
+✔ stereo44100 decodes signed PCM16 independently for left and right (0.907611ms)
+✔ stereo44100 decodes signed PCM24 independently for left and right (0.376305ms)
+✔ stereo44100 decodes signed PCM32 independently for left and right (0.247491ms)
+✔ stereo44100 preserves float channels and silences non-finite samples (0.442353ms)
+✔ stereo44100 duplicates mono and uses the first two channels of multichannel PCM (0.415543ms)
+✔ negative and out-of-track stereo reads zero-pad exactly without moving audible samples (0.338768ms)
+✔ stereo input validates limits, rejects wrong sample rates and detects truncated transfers (0.670616ms)
+✔ isolated off-grid phrase edges and held pitches remain on the vocal clock (167.274186ms)
+✔ quiet verse remains voiced after a chorus forty decibels louder (258.066233ms)
+✔ local normalization recovers an immediately following quiet vocal phrase (97.107184ms)
+✔ vibrato sustains stay musical and source articulations do not follow accompaniment kicks (110.361879ms)
+✔ speech is represented as voice phrasing without invented sung notes (45.824895ms)
+✔ harmonic instrumental leakage without learned voice evidence is rejected (72.014487ms)
+✔ quiet instrumental leakage is not amplified into voice by uncertain contextual scores (98.862226ms)
+✔ an isolated aperiodic vocal source can retain uncertain phrasing with weak semantic evidence (109.077042ms)
+✔ a strong separated harmonic source without a semantic voice seed remains unclassified (78.816221ms)
+✔ silence and stochastic vocal-stem noise cannot invent periodic sung notes (76.751975ms)
+✔ streaming chunk boundaries preserve all musical results exactly (181.481484ms)
+✔ the 22.05 kHz source-cache path preserves vocal note pitches and timing (63.469388ms)
+✔ streaming rejects missing samples, overlaps, non-finite audio and rate mistakes (1.080931ms)
+✔ short and endpoint audio are finite without invented padding (6.120959ms)
+✔ minimum-length note eligibility does not depend on floating-point timestamp rounding (3.463193ms)
+✔ four-hour summaries retain bounded numeric arrays and avoid argument spreading (450.599935ms)
+✔ neural sung-note evidence recovers a prominent pitch-agreeing source without inflating classifier scores (102.097776ms)
+✔ neural candidates cannot bypass speech, pitch disagreement or weak separated-source energy (215.445885ms)
+{
+  "result": "PASS",
+  "tests": [
+    {
+      "name": "Exact ranges, first PCM offset44 and final clipped sample",
+      "status": "PASS"
+    },
+    {
+      "name": "Chromium double seek reproduction rejected as transport error",
+      "status": "PASS"
+    },
+    {
+      "name": "Range overread rejected without blaming source music",
+      "status": "PASS"
+    },
+    {
+      "name": "Wrong range start rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "Server without Range uses complete bounded cache",
+      "status": "PASS"
+    },
+    {
+      "name": "WAV metadata larger than64KiB and odd padding",
+      "status": "PASS"
+    },
+    {
+      "name": "Actual truncated WAV detected before model inference",
+      "status": "PASS"
+    },
+    {
+      "name": "PCM16/24/32 and IEEEfloat32 decoding with edge padding",
+      "status": "PASS"
+    },
+    {
+      "name": "Malformed PCM alignment and float encoding rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "Actual bundled music reads byte-exact at nonzero offsets",
+      "status": "PASS"
+    }
+  ]
+}
+✔ /workspace/scratch/9a5ec23b7f4b/LightForge/tests/wav-reader.test.cjs (148.435421ms)
+ℹ tests 347
+ℹ suites 0
+ℹ pass 347
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9647.299201

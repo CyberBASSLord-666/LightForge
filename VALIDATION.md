@@ -1,4 +1,25 @@
-# LightForge 2.2.2 validation
+# LightForge 2.2.4 validation
+
+The 2.2.4 candidate preserves the pinned models, denoise/transcription settings and sample clock. The current verification/build job and new original-signed APK build pass; focused Android diagnostics pass eight checks on their temporary APK. Deterministic production-worker execution reproduced the remaining background reconnection timeout from incomplete fixture settings, which were correctly rejected during restore. The fixture now reads complete actual UI settings before its unchanged overrides. Compilation passes; corrected Android execution and final seven-gate packaging remain pending.
+
+| 2.2.4 check | Current result and scope |
+| --- | --- |
+| Assets and host regression | Current local full regression passed all 347 Node and 69 Python tests with zero skips; 73 analysis assets matched. The source-bound local receipt completed on 2026-09-10 at 01:11:04 UTC. Verification/build job 102701898623 in run 34422875327 passed; complete Android lifecycle remains pending. |
+| Latest preview/startup checks | 22 focused tests passed. Tested completed Studio/Night renders are pixel-identical to the comparison source. Duplicate restore ownership, pending navigation, unloaded/paused rendering and environment creation are covered; full Android execution remains pending. |
+| Native lifecycle | Production MDX class tested with controlled JNI boundaries: responsive cancellation during graph creation, durable crash lease, shared execution gate, failed-session retirement and exact ownership. |
+| Android compilation and APK | Current original-signed build passes signature, certificate, alignment, ZIP, asset and native-library checks. APK: 1,204,357,470 bytes; SHA-256 `fc7eef58ed63d28ddb9de6dc3b16396db48fcd9281fc731d152768fcc0c863ad`. The fixture-only correction also compiles and does not change this app payload. Final seven-gate packaging is pending. |
+| Chromium UI and full pipeline | Current verification/build job passed responsive UI/worker/WebGL, actual Precision model analysis, saved voice audio, cancellation and FSEQ restore. This is separate from the pending corrected Android lifecycle fixture. |
+| Studio numeric comparison | Fresh two-runtime comparison returns identical vocal/accompaniment samples for the complete 13-second reference context. This is host evidence, not an ARM crash reproduction. |
+| Balanced output qualification | Three fixed decoded-audio comparisons and paired actual vocal/GAME comparison passed. Both downstream runs produced 16 sung notes; peak waveform error across the three inputs was at most 2.5332e-7. Strict internal-spectrum diagnostics failed and are retained. See [numerical protocol](qa/release-2.2.4/NUMERICAL_QUALIFICATION.md). |
+| Android runtime lifecycle | **Pending corrected-fixture verification.** Run 34422870517 saved screen-off Studio work but timed out reopening. Deterministic production-worker execution reproduced the five-settings/27-settings digest mismatch and subsequent retry state. The fixture now captures all actual UI settings before the same five overrides; validation is unchanged. The older full run still uses the invalid fixture and cannot verify this correction. |
+| Android diagnostics | **Passed, 8 checks on the focused temporary APK.** Run 34422870517 covers crash/tombstone persistence, compatibility selection, readable Downloads reports, selected-URI export, actual Guide JavaScript export and detached/repeated renderer recovery on API 35. This does not certify background lifecycle completion or make the temporary APK release eligible. |
+| Physical phone and Tesla | Unperformed: long-song timing, thermals, manufacturer power behavior, supplied Samsung crash reproduction and vehicle timing. |
+
+Original evidence remains separate for the [first teardown ANR](qa/release-2.2.4/android-first-run/README.md), [preview-readiness timeout](qa/release-2.2.4/android-preview-first-frame-run/README.md), [earlier focused diagnostic failure](qa/release-2.2.4/android-readiness-diagnostic-run/README.md), and [startup follow-up with failed background/passed diagnostics](qa/release-2.2.4/android-startup-followup-run/README.md). The demonstrated fixture bug does not turn any failed record into a passing gate or establish the cause of every earlier failure. The retained 2.2.2 and 2.2.1 sections below describe their original evidence and are not promoted to 2.2.4 results.
+
+---
+
+# Historical LightForge 2.2.2 validation
 
 Version 2.2.2 / code 20202 adds local diagnostic collection, Downloads export and guarded renderer recovery. All seven release gates pass against source `b0657fabbfec2a0c6482c2d6581179f604c4c010`. Evidence is in `qa/release-2.2.2/`. The complete [production verification run, attempt 2](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34179649874/attempts/2) passed both the verification and Android jobs, including background lifecycle and diagnostic export. The [focused Android diagnostics run](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34179649940) also passed on the same source. Historical numerical kernel evidence is explicitly retained below; it is not promoted to a fresh neural benchmark.
 

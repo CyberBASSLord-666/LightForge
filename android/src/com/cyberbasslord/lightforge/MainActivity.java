@@ -50,7 +50,7 @@ public final class MainActivity extends Activity {
             "memoryBytes",memory.totalMem,"availableMemoryBytes",memory.availMem,
             "lowMemory",memory.lowMemory,"cpuCores",Runtime.getRuntime().availableProcessors());
     }
-    @Override protected void onResume(){super.onResume();foreground=true;AppDiagnostics.log(this,"INFO","activity","resumed");sendAnalysisStatus();event("deviceCapabilities",deviceCapabilities());showPreviewRecovery();}
+    @Override protected void onResume(){super.onResume();foreground=true;AppDiagnostics.log(this,"INFO","activity","resumed");if(web!=null)web.evaluateJavascript("window.resumePreview && window.resumePreview()",null);sendAnalysisStatus();event("deviceCapabilities",deviceCapabilities());showPreviewRecovery();}
     @Override public void onRequestPermissionsResult(int request,String[] permissions,int[] results){
         super.onRequestPermissionsResult(request,permissions,results);event("deviceCapabilities",deviceCapabilities());
     }
@@ -146,7 +146,16 @@ public final class MainActivity extends Activity {
             if(!"true".equals(result)) MainActivity.super.onBackPressed();
         });
     }
-    @Override protected void onPause() {foreground=false;AppDiagnostics.log(this,"INFO","activity","paused");super.onPause();if(web!=null) web.evaluateJavascript("window.pausePreview && window.pausePreview()",null);}
+    @Override protected void onPause() {
+        foreground=false;AppDiagnostics.log(this,"INFO","activity","paused");
+        // During finish(), Android can tear down the hardware renderer between
+        // onPause() and onDestroy(). Detach the WebView synchronously while the
+        // window still owns it; otherwise ViewRootImpl may traverse a dead
+        // renderer and stall the Activity teardown.
+        if(isFinishing()||Build.VERSION.SDK_INT>=17&&isDestroyed())detachPreviewForTeardown();
+        WebView current=web;if(current!=null)current.evaluateJavascript("window.pausePreview && window.pausePreview()",null);
+        super.onPause();
+    }
     @Override protected void onSaveInstanceState(Bundle state) {
         state.putBoolean("savePickerOpen",savePickerOpen);
         state.putString("diagnosticName",diagnosticName);
@@ -160,9 +169,12 @@ public final class MainActivity extends Activity {
         if(analysisReceiverRegistered){unregisterReceiver(analysisReceiver);analysisReceiverRegistered=false;}
         cancelled.set(true);worker.shutdownNow();
         synchronized(exportLock) {if(activeExport!=null) activeExport.abort();}
+        detachPreviewForTeardown();
+        super.onDestroy();
+    }
+    private void detachPreviewForTeardown(){
         WebView previous=web;web=null;
         releasePreview(previous);
-        super.onDestroy();
     }
     private void releasePreview(WebView previous){
         if(previous==null||!retiredWebViews.add(previous))return;

@@ -1,8 +1,8 @@
-# LightForge 2.2.2 — troubleshooting logs and renderer recovery
+# LightForge 2.2.4 — bounded long-run analysis
 
-Current source: **2.2.3 release candidate**, with ARM native-runtime compatibility and richer native crash traces. The published installable version remains [2.2.2](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.2.2) while update validation and signing finish. See [release notes](RELEASE_NOTES.md).
+Current source is the **2.2.4 release candidate**. The verification/build job and new original-signed build pass; focused Android diagnostics pass all eight checks on a temporary test APK. A deterministic production-worker reproduction traced the remaining reopened-project timeout to an incomplete Android test fixture: its five saved settings differed from the 27 settings restored by the UI, so checksum validation correctly rejected it. The fixture now starts from the complete UI settings, retaining its same five overrides; compilation passes, and fresh Android verification is pending. Publication remains blocked on the complete lifecycle and final package gates. [2.2.2](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.2.2) remains the latest published update.
 
-**LightForge 2.2.2 is published with the complete signed APK and seven passing release gates.** [Download the complete APK](https://github.com/CyberBASSLord-666/LightForge/releases/download/v2.2.2/LightForge-2.2.2.apk) · [Release details](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.2.2). Install over the existing app without uninstalling. All models are bundled; no first-run download is required.
+This candidate bounds long Balanced runs, adds guarded native MDX execution, saves stage checkpoints promptly and preserves renderer recovery. Native initialization and inference share a cancellation-safe execution gate with Studio; failures retire native memory before the same-model WebAssembly fallback. Models, both denoise passes, GAME transcription steps and the original sample clock remain intact. No measured phone speedup is claimed before device testing.
 
 LightForge turns music on your phone into an editable Tesla light show for a **2025 Model 3 Long Range RWD, North America**. It bundles its neural models, graphics and audio tools and works entirely offline.
 

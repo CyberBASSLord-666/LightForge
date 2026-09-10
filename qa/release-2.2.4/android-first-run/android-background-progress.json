@@ -1,0 +1,38 @@
+{
+  "phase": "balanced-screen-off-analysis",
+  "elapsedSeconds": 390.866,
+  "phaseElapsedSeconds": 0,
+  "checks": [
+    "Actual Studio native CPU separation, neural analysis and choreography completed with the Activity destroyed, screen off and Doze forced with user-equivalent battery exemption; result was durably saved.",
+    "Reopened Activity reports the completed job and its saved project."
+  ],
+  "powerTransition": {
+    "phase": "reconnect-completed-project",
+    "interactive": true,
+    "deepIdle": false,
+    "batteryExempt": true,
+    "controllerDeepState": "ACTIVE",
+    "commandOutput": "Light state: OVERRIDE, deep state: IDLE\nmForceModeManagerQuickDozeRequest: false\nmForceModeManagerOffBodyState: false"
+  },
+  "job": {
+    "id": "759ab324-986e-41f1-8a5c-5c80b954e5a7",
+    "projectId": "2697a58a-ca51-462c-a102-afcf9014fe7c",
+    "name": "Background audio",
+    "sourceSHA256": "a0a26b6afc3dc712241f810fe4c514b6d04b47d75e9f598d3cd4477b3c495b68",
+    "analysisIdentity": "5ef05e122a3133ffc921a6a0679e2e5927c8708f28e719e58f1e19db4ad70cec",
+    "state": "completed",
+    "stage": "Your show is ready",
+    "progress": 1,
+    "createdAt": 1788995652778,
+    "updatedAt": 1788996026714,
+    "hasCheckpoint": true,
+    "resumeAvailable": true,
+    "progressAt": 1788996026670,
+    "elapsedMs": 373892,
+    "completedStages": 3,
+    "restoredStages": 0,
+    "analysisStage": "save",
+    "checkpointAt": 1788996026508,
+    "checkpointSHA256": "8e983959edeb6ae9b40f8c35252313e2a52b2d1b860588e15f1fb470048873c9"
+  }
+}

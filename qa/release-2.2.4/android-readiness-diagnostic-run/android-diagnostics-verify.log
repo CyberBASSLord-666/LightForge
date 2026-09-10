@@ -1,0 +1,16 @@
+Production app requests no broad storage permission and exports without a storage grant.
+An intentional SIGILL in a previous target process exports its actual Android native tombstone as decoded signal 4 and crashing-thread module/relative-PC frames.
+Production native availability reconciles the real crash with the durable execution lease and persists compatibility selection across new task instances, without loading JNI; prior guard state is restored after the test.
+Real uncaught worker crash, exception cause/stack, and prior-session history survive process restart and removal of a cache fixture.
+Two unique complete UTF-8 .txt logs are visible in Downloads/LightForge and can be read back through MediaStore.
+Selected-URI export helper writes a readable report and returns the provider's custom filename without inventing a destination folder (API 35 helper coverage; no legacy picker UI claim).
+java.lang.AssertionError: JavaScript callback timed out
+	at com.cyberbasslord.lightforge.DiagnosticsInstrumentation.check(DiagnosticsInstrumentation.java:58)
+	at com.cyberbasslord.lightforge.DiagnosticsInstrumentation.javascript(DiagnosticsInstrumentation.java:92)
+	at com.cyberbasslord.lightforge.DiagnosticsInstrumentation.verifyJavascriptExport(DiagnosticsInstrumentation.java:418)
+	at com.cyberbasslord.lightforge.DiagnosticsInstrumentation.onStart(DiagnosticsInstrumentation.java:520)
+	at android.app.Instrumentation$InstrumentationThread.run(Instrumentation.java:2594)
+
+DIAGNOSTICS_ANDROID_RESULT {"passed":false,"checks":["Production app requests no broad storage permission and exports without a storage grant.","An intentional SIGILL in a previous target process exports its actual Android native tombstone as decoded signal 4 and crashing-thread module\/relative-PC frames.","Production native availability reconciles the real crash with the durable execution lease and persists compatibility selection across new task instances, without loading JNI; prior guard state is restored after the test.","Real uncaught worker crash, exception cause\/stack, and prior-session history survive process restart and removal of a cache fixture.","Two unique complete UTF-8 .txt logs are visible in Downloads\/LightForge and can be read back through MediaStore.","Selected-URI export helper writes a readable report and returns the provider's custom filename without inventing a destination folder (API 35 helper coverage; no legacy picker UI claim)."],"error":"java.lang.AssertionError: JavaScript callback timed out"}
+DIAGNOSTICS_ANDROID_FAIL
+
