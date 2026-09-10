@@ -58,6 +58,44 @@ drums and other instruments remain, and real-song onset estimates can be ambiguo
 The semantic timeline records this as separated accompaniment context, never as
 an isolated bass source.
 
+## Optional dedicated-percussion semantic input
+
+The shipped worker does not currently include a dedicated drum/percussion model.
+It therefore never promotes mix onsets, impacts, beat estimates, accompaniment
+energy, or a low-frequency band into instrument-labelled drum events. This is an
+additive integration contract for a future dedicated analyzer or a legitimate
+manual/annotation importer; it is not a claim that those detections already
+exist.
+
+A caller that has actual classed evidence may supply it with the analysis result:
+
+```js
+percussionAnalysis: {
+  source: 'detector-or-annotation-id', // optional provenance
+  model: 'optional-model-version',
+  inputStem: 'drums',
+  inputStemSeparated: true,
+  sourceSeparated: true, // only when explicitly evidenced
+  events: [
+    {time: 12.48, kind: 'kick', confidence: 0.94, strength: 0.91},
+    {time: 12.98, duration: 0.18, kind: 'fill', confidence: 0.78, strength: 0.72}
+  ]
+}
+```
+
+Only valid supplied entries with exact lowercase `kind` values
+`kick`, `snare`, `clap`, `hat`, `crash`, `tom`, or `fill` are
+represented as `percussion_*` timeline events on the `drums` semantic
+source. Unknown labels, invalid time spans and missing input are ignored rather
+than guessed. An input stem is not treated as separated unless
+`sourceSeparated: true` is explicitly supplied.
+
+A `kick_bass_coincidence` relationship/event is produced only when a valid
+supplied kick falls within a valid `bassNotes` span (with a bounded 60 ms
+onset/end tolerance). It records the source event IDs and timing delta. Generic
+onsets, impacts, bass phrases and energy bands cannot create this relationship.
+The result remains deterministic for identical inputs.
+
 ## Rhythm, memory and cancellation
 
 Beat This! retains the full/compact author models, exact log-mel frontend,

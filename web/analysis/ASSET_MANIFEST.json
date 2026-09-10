@@ -1,7 +1,7 @@
 {
   "README.md": {
-    "bytes": 6221,
-    "sha256": "e8d7b13e63a88c3c15580faafd4ae309fda7fb51621efd45b7dac07aafa9f483"
+    "bytes": 7914,
+    "sha256": "52d1a61a8db9943f11e70f915364b51c0afc0f8d4dc5553416c2d39815378efa"
   },
   "analyzer.js": {
     "bytes": 9729,
@@ -252,8 +252,8 @@
     "sha256": "7a9b97fd59c18b236090104ffe074945e802a99a239294c566a99148ef6e364e"
   },
   "semantic-timeline.js": {
-    "bytes": 10248,
-    "sha256": "6ff4bd7fa39f39f85ab42f6a0319b0a4a020a142bbbb75b8e8d1ec17f4b24dd1"
+    "bytes": 15123,
+    "sha256": "a9c68bcb56a0784d12ca8a7eeb09c987f031dafb64ea12cb116e5dfe65811b70"
   },
   "separator-deux.js": {
     "bytes": 10079,
