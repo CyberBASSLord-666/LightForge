@@ -10,6 +10,7 @@ on:
       - 'qa/performance-gate-policy.json'
       - 'qa/locked-corpus-manifest.template.json'
       - 'tests/performance-quality-gate.test.py'
+      - 'tests/performance-quality-gate-workflow.test.py'
       - 'tests/analysis-benchmark-contract.test.py'
       - 'tests/locked-benchmark-runner.test.py'
       - 'tests/differential-analysis.test.py'
@@ -22,19 +23,26 @@ on:
     inputs:
       baseline_artifact:
         description: Baseline benchmark artifact name
-        required: false
+        required: true
+      baseline_repository:
+        description: Owner/repository containing the baseline artifact source run
+        required: true
       baseline_run_id:
         description: GitHub Actions run ID that produced the baseline artifact
-        required: false
+        required: true
       candidate_artifact:
         description: Candidate benchmark artifact name
-        required: false
+        required: true
+      candidate_repository:
+        description: Owner/repository containing the candidate artifact source run
+        required: true
       candidate_run_id:
         description: GitHub Actions run ID that produced the candidate artifact
-        required: false
+        required: true
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   unit:
@@ -45,6 +53,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: python3 tests/performance-quality-gate.test.py
+      - run: python3 tests/performance-quality-gate-workflow.test.py
       - run: python3 tests/analysis-benchmark-contract.test.py
       - run: python3 tests/locked-benchmark-runner.test.py
       - run: python3 tests/differential-analysis.test.py
@@ -56,7 +65,7 @@ jobs:
           tools/differential_analysis.py
 
   compare:
-    if: inputs.baseline_artifact != '' && inputs.candidate_artifact != '' && inputs.baseline_run_id != '' && inputs.candidate_run_id != ''
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -64,18 +73,25 @@ jobs:
         with:
           name: ${{ inputs.baseline_artifact }}
           path: gate/baseline
+          repository: ${{ inputs.baseline_repository }}
           run-id: ${{ inputs.baseline_run_id }}
           github-token: ${{ github.token }}
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: ${{ inputs.candidate_artifact }}
           path: gate/candidate
+          repository: ${{ inputs.candidate_repository }}
           run-id: ${{ inputs.candidate_run_id }}
           github-token: ${{ github.token }}
+      - run: >-
+          test -f gate/baseline/benchmark.json &&
+          test -f gate/candidate/benchmark.json &&
+          test -f gate/candidate/locked-corpus-manifest.json
       - run: >-
           python3 tools/performance_quality_gate.py
           --baseline gate/baseline/benchmark.json
           --candidate gate/candidate/benchmark.json
+          --locked-corpus-manifest gate/candidate/locked-corpus-manifest.json
           --policy qa/performance-gate-policy.json
           --output gate/quality-gate-report.json
       - if: always()
@@ -83,3 +99,4 @@ jobs:
         with:
           name: performance-quality-gate-report
           path: gate/quality-gate-report.json
+          if-no-files-found: warn

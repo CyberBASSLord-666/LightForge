@@ -9,6 +9,7 @@ resource behavior remained acceptable.
 python3 tools/performance_quality_gate.py \
   --baseline artifacts/benchmark-baseline.json \
   --candidate artifacts/benchmark-candidate.json \
+  --locked-corpus-manifest /secure/locked-corpus-manifest.json \
   --policy qa/performance-gate-policy.json \
   --output artifacts/performance-quality-report.json
 ```
@@ -33,20 +34,34 @@ binds the compiled contract into its policy digest:
   "required_tracks": ["private-track-a", "private-track-b"],
   "release_profile": {
     "mode": "release",
-    "metric_contract": "lightforge-release-metrics-v1",
+    "metric_contract": "lightforge-release-metrics-v2",
     "locked_corpus": {
       "corpus_id": "licensed-locked-corpus-2026q3",
       "manifest_sha256": "<lower-case sha256>"
     },
+    "locked_runtime_profile": {
+      "runtime_profile_id": "approved-host-profile",
+      "hardware_fingerprint": "...",
+      "runtime_backend": "...",
+      "runtime_version": "...",
+      "thermal_profile": "...",
+      "random_seed": 42,
+      "accelerator": {"available": true, "fingerprint_sha256": "<lower-case sha256>"}
+    },
     "human_perceptual_review": {
-      "required_for_major_pipeline_changes": true,
+      "required_for_every_release_candidate": true,
       "minimum_reviewers": 3,
       "required_attributes": [
         "musical_synchronization", "vocal_synchronization",
         "bass_synchronization", "beat_precision", "visual_coherence",
         "phrase_coherence", "contrast", "anticipation", "payoff",
         "repetitiveness", "climax_quality", "overall_musicality"
-      ]
+      ],
+      "attestation": {
+        "protocol": "external-review-attestation-v1",
+        "verifier_id": "approved-blind-review-service",
+        "verification_key_sha256": "<lower-case sha256>"
+      }
     }
   },
   "minimum_pairs_per_track": 5,
@@ -56,10 +71,13 @@ binds the compiled contract into its policy digest:
 ```
 
 The gate rejects a release policy that supplies its own metric rules, changes
-the contract name, has an unpinned corpus, has fewer than three reviewers, or
-omits any required blinded-review attribute. Its output includes the complete
-effective metric contract and SHA-256 so a result remains auditable even when
-the real corpus is private.
+the contract name, has an unpinned corpus/runtime profile, has fewer than five
+pairs, uses less than 99% confidence or 20,000 resamples, targets any metric
+other than total wall-clock time, or changes the target from exactly 75%.
+Those floors are enforced by the full comparison, not only by documentation.
+Its output includes the effective metric contract, corpus diagnostics, and
+SHA-256 bindings so a result remains auditable even when the real corpus is
+private.
 
 ## Locked evidence
 
@@ -92,7 +110,9 @@ hardware/runtime/accelerator, seed, thermal profile, and cache mode. Pipeline
 source version may differ because it is the candidate under test.
 
 Every required metric leaf is a finite number. A metric can be declared only
-as explicit non-applicable evidence when its release rule permits it:
+as explicit non-applicable evidence when its release rule permits it and the
+same `reason`/`evidence_id` is pre-bound in that track's immutable corpus
+manifest annotation record:
 
 ```json
 {
@@ -102,11 +122,21 @@ as explicit non-applicable evidence when its release rule permits it:
 }
 ```
 
-The same evidence must apply to every paired run on both sides. Tracks cannot
-silently switch a metric from numeric to non-applicable, and event-specific
-metrics require the committed corpus to make them applicable on at least one
-track. Hardware-unavailable accelerator/energy/thermal observations may use
-explicit evidence rather than fabricated zeroes.
+The manifest record additionally pins an annotation SHA-256. The same evidence
+must apply to every paired run on both sides. Tracks cannot silently switch a
+metric from numeric to non-applicable, and event-specific metrics require the
+committed corpus to make them applicable on at least one track. The only
+runtime exception is accelerator memory/utilization on a host whose
+`locked_runtime_profile.accelerator.available` is false and whose exact runtime
+reason/evidence ID matches every affected run. Energy and thermal fields do not
+receive a free-form non-applicable exception.
+
+The supplied release manifest must itself be canonical-hash equal to the policy
+pin, set `template: false` and `release_ready: true`, contain at least 16
+distinct audio identities, use exactly the committed coverage requirement and
+golden-artifact requirement lists, cover every required tag family, and provide
+all ten golden SHA-256 values for every track. `locked_corpus` diagnostics in
+the gate result expose only hashes, counts, and coverage status.
 
 ## Immutable release metric contract
 
@@ -146,16 +176,26 @@ tolerances are hashed into `policy_sha256` before collection begins.
 
 ## Blinded human perceptual review
 
-Every release candidate declares a top-level change classification. A `major`
-pipeline change must include `human_perceptual_review` with exactly these
-fields: schema version 1, protocol `blinded-ab-v1`, `pass`, `review_id`, and
-at least three blinded opaque reviewer IDs. Each reviewer rates every required
+Every release candidate, including one classified `minor`, must include
+`human_perceptual_review`. It has schema version 1, protocol `blinded-ab-v1`,
+status `pass`, a review ID, at least three blinded opaque reviewer IDs, and the
+external attestation described below. Each reviewer rates every required
 attribute as `candidate_preferred`, `baseline_preferred`, `equivalent`, or
 `inconclusive`.
 
-Missing, malformed, unblinded, incomplete, inconclusive, failed, or
-baseline-preferred major review evidence blocks the release. Reviewer IDs and
-ratings are structural evidence only; do not place comments, names, lyrics,
+The strict acceptance rule permits only `candidate_preferred` or `equivalent`
+ratings. Any baseline-preferred or inconclusive rating, even a single minority
+vote, blocks release. An all-equivalent review is an explicit decisive
+no-regression judgement; an all-inconclusive review is not.
+
+`blinded: true` alone is not a production proof. The review must carry an
+`external-review-attestation-v1` receipt issued by the verifier and key digest
+pinned in policy. The gate checks that the receipt hashes the review payload,
+candidate source/pipeline identity, policy SHA-256, and corpus manifest
+SHA-256. Candidate runs must contain the same source SHA-256 and pipeline
+version. Missing or mismatched attestation leaves the result `FAIL`; a
+self-attested boolean cannot produce `production_ready: true`. Reviewer IDs
+and ratings are structural evidence only; do not place comments, names, lyrics,
 or other private material in the report.
 
 ## Classification
@@ -186,3 +226,16 @@ locked-runner, and differential-analysis Python suites in addition to the
 engine tests. Those are contract tests only. A runtime or production-readiness
 claim still requires a real locked corpus, paired reports, valid review evidence
 when required, and an actual gate result.
+
+For the manually dispatched GitHub workflow, provide the artifact name, source
+repository, and source run ID for both baseline and candidate. The workflow has
+`actions: read` explicitly and downloads each artifact from exactly that source;
+it never guesses the current run. The candidate artifact must contain both
+`benchmark.json` and `locked-corpus-manifest.json`. It passes the latter through
+`--locked-corpus-manifest` before it can upload a result. All action references
+are full immutable commit SHAs and have a static regression test.
+
+The release bootstrap remains exactly 20,000 or more resamples at 99% or more
+confidence. The implementation memoizes only byte-identical deterministic
+series within one process; it never lowers the resample count, alters a seed,
+or substitutes a cheaper statistical test.

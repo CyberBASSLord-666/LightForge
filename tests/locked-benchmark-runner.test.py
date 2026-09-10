@@ -335,17 +335,34 @@ class LockedBenchmarkRunnerTest(unittest.TestCase):
         release_policy = {
             "schema_version": 3,
             "required_tracks": ["electronic-drop", "vocal-rock"],
-            "minimum_pairs_per_track": 3,
-            "bootstrap": {"method": "paired-percentile-v1", "seed": "release", "confidence": 0.99, "resamples": 256},
+            "minimum_pairs_per_track": 5,
+            "bootstrap": {"method": "paired-percentile-v1", "seed": "release", "confidence": 0.99, "resamples": 20000},
             "runtime_target": {"metric": "performance.total_wall_clock_seconds", "target_reduction_percent": 75, "scope": "each_required_track"},
             "release_profile": {
                 "mode": "release",
                 "metric_contract": runner.quality_gate.RELEASE_METRIC_CONTRACT_VERSION,
-                "locked_corpus": {"corpus_id": "wrong-corpus", "manifest_sha256": "a" * 64},
+                "locked_corpus": {"corpus_id": "wrong-corpus", "manifest_sha256": "0123456789abcdef" * 4},
+                "locked_runtime_profile": {
+                    "runtime_profile_id": "release-host",
+                    "hardware_fingerprint": "locked-pixel-test-device",
+                    "runtime_backend": "onnxruntime-android-cpu",
+                    "runtime_version": "1.20.1",
+                    "thermal_profile": "controlled-cold",
+                    "random_seed": 42,
+                    "accelerator": {
+                        "available": True,
+                        "fingerprint_sha256": runner.quality_gate._accelerator_fingerprint({"provider": "cpu", "threads": 4}),
+                    },
+                },
                 "human_perceptual_review": {
-                    "required_for_major_pipeline_changes": True,
+                    "required_for_every_release_candidate": True,
                     "minimum_reviewers": 3,
                     "required_attributes": list(runner.quality_gate.HUMAN_REVIEW_ATTRIBUTES),
+                    "attestation": {
+                        "protocol": runner.quality_gate.REVIEW_ATTESTATION_PROTOCOL,
+                        "verifier_id": "blind-review-service",
+                        "verification_key_sha256": "fedcba9876543210" * 4,
+                    },
                 },
             },
         }
@@ -360,6 +377,59 @@ class LockedBenchmarkRunnerTest(unittest.TestCase):
                     policy=release_policy,
                     protocol_id="locked-benchmark-test-v1",
                     cache_mode="cold",
+                )
+
+    def test_release_aggregate_revalidates_coverage_and_requires_an_explicit_side(self):
+        corpus = manifest()
+        policy = {
+            "schema_version": 3,
+            "required_tracks": ["electronic-drop", "vocal-rock"],
+            "minimum_pairs_per_track": 5,
+            "bootstrap": {"method": "paired-percentile-v1", "seed": "release", "confidence": 0.99, "resamples": 20000},
+            "runtime_target": {"metric": "performance.total_wall_clock_seconds", "target_reduction_percent": 75, "scope": "each_required_track"},
+            "release_profile": {
+                "mode": "release",
+                "metric_contract": runner.quality_gate.RELEASE_METRIC_CONTRACT_VERSION,
+                "locked_corpus": {
+                    "corpus_id": corpus["corpus_id"],
+                    "manifest_sha256": contract.corpus_manifest_sha256(corpus),
+                },
+                "locked_runtime_profile": {
+                    "runtime_profile_id": "release-host",
+                    "hardware_fingerprint": "locked-pixel-test-device",
+                    "runtime_backend": "onnxruntime-android-cpu",
+                    "runtime_version": "1.20.1",
+                    "thermal_profile": "controlled-cold",
+                    "random_seed": 42,
+                    "accelerator": {
+                        "available": True,
+                        "fingerprint_sha256": runner.quality_gate._accelerator_fingerprint({"provider": "cpu", "threads": 4}),
+                    },
+                },
+                "human_perceptual_review": {
+                    "required_for_every_release_candidate": True,
+                    "minimum_reviewers": 3,
+                    "required_attributes": list(runner.quality_gate.HUMAN_REVIEW_ATTRIBUTES),
+                    "attestation": {
+                        "protocol": runner.quality_gate.REVIEW_ATTESTATION_PROTOCOL,
+                        "verifier_id": "blind-review-service",
+                        "verification_key_sha256": "abcdef0123456789" * 4,
+                    },
+                },
+            },
+        }
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            manifest_path, reports = self.write_fixture_set(root, corpus)
+            loaded = runner.load_manifest(manifest_path)
+            with self.assertRaisesRegex(runner.LockedBenchmarkError, "release corpus contract is invalid"):
+                runner.aggregate_diagnostics(
+                    loaded,
+                    [reports],
+                    policy=policy,
+                    protocol_id="locked-benchmark-test-v1",
+                    cache_mode="cold",
+                    report_side="baseline",
                 )
 
     def test_cli_writes_atomic_gate_input(self):

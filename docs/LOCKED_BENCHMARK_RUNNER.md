@@ -21,10 +21,11 @@ synthetic audio identity, duration, tag set, and golden-artifact digest. Then:
 3. Version the manifest and record its canonical SHA-256 in release evidence.
 4. Create a reviewed `release_profile` in the gate policy with exactly its
    `track_id`s in `required_tracks`, the manifest's exact corpus ID/SHA-256,
-   and `lightforge-release-metrics-v1`; do not leave the fail-closed template
+   and `lightforge-release-metrics-v2`; do not leave the fail-closed template
    placeholder in place.
 
-The production manifest should include approved golden hashes for semantic
+The production manifest must contain at least 16 distinct audio identities,
+every immutable coverage tag family, and approved golden hashes for semantic
 timeline, rhythm, vocals, bass, drums, sections, salience, choreography, FSEQ
 characteristics, and perceptual validation. The template lists those required
 artifact categories, but is intentionally not a substitute for them.
@@ -123,6 +124,7 @@ python3 tools/locked_benchmark_runner.py aggregate \
   --policy qa/performance-gate-policy.json \
   --protocol-id locked-corpus-cold-v1 \
   --cache-mode cold \
+  --report-side baseline \
   --output artifacts/benchmark-baseline.json
 
 python3 tools/locked_benchmark_runner.py aggregate \
@@ -131,18 +133,20 @@ python3 tools/locked_benchmark_runner.py aggregate \
   --policy qa/performance-gate-policy.json \
   --protocol-id locked-corpus-cold-v1 \
   --cache-mode cold \
+  --report-side candidate \
   --output artifacts/benchmark-candidate.json
 
 python3 tools/performance_quality_gate.py \
   --baseline artifacts/benchmark-baseline.json \
   --candidate artifacts/benchmark-candidate.json \
+  --locked-corpus-manifest /secure/locked-corpus-manifest.json \
   --policy qa/performance-gate-policy.json \
   --output artifacts/performance-quality-report.json
 ```
 
-For a major candidate pipeline change, make the candidate declaration and
-blinded review part of the aggregate itself. The baseline aggregate does not
-need these fields.
+For every release candidate, make the candidate declaration and externally
+attested blinded review part of the aggregate itself. The baseline aggregate
+must use `--report-side baseline` and cannot carry candidate review fields.
 
 ```bash
 python3 tools/locked_benchmark_runner.py aggregate \
@@ -151,6 +155,7 @@ python3 tools/locked_benchmark_runner.py aggregate \
   --policy /secure/performance-gate-release-policy.json \
   --protocol-id locked-corpus-cold-v1 \
   --cache-mode cold \
+  --report-side candidate \
   --change-classification major \
   --change-id semantic-pipeline-rework \
   --human-perceptual-review /secure/blinded-review.json \
@@ -158,19 +163,23 @@ python3 tools/locked_benchmark_runner.py aggregate \
 ```
 
 The runner preserves this JSON without inventing reviewer results; the quality
-gate validates it. The review file must contain only the gate's structured
-schema (opaque reviewer/review IDs, blinded booleans, and per-attribute
-ratings). Do not include names, comments, lyrics, screenshots, or other
-private material. `--change-classification` and `--change-id` must be supplied
-together, and a review cannot be supplied without them.
+gate validates it. Candidate diagnostics must share a pinned `source_sha256`
+and pipeline version; the runner emits that as `candidate_identity`. The review
+file must contain the gate's structured ratings plus an
+`external-review-attestation-v1` receipt bound to that identity, the policy,
+and the corpus. A bare `blinded: true` boolean is not sufficient. Do not include
+names, comments, lyrics, screenshots, or other private material.
 
 `aggregate` writes atomically and sorts reports by track, run ID, and
 diagnostic digest, so a reordered directory traversal produces byte-equivalent
 JSON. It refuses to aggregate when `policy.required_tracks` does not exactly
 match the locked manifest or when its local minimum is lower than
 `policy.minimum_pairs_per_track`. In release mode it also refuses a policy
-whose pinned corpus ID/SHA-256 does not exactly match the manifest. The suite
-embeds the canonical hash of the committed policy before a candidate result is
+whose pinned corpus ID/SHA-256 does not exactly match the manifest, a manifest
+without full coverage/golden/annotation evidence, an ambiguous report side, or
+a candidate without source identity and review evidence. The aggregate carries
+the validated redacted release-corpus diagnostic projection and the suite embeds
+the canonical hash of the committed policy before a candidate result is
 compared.
 
 The authoritative gate comparability fields come from each run's provenance

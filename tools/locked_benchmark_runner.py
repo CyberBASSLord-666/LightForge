@@ -368,6 +368,7 @@ def aggregate_diagnostics(
     cache_mode: str,
     pairing: Mapping[tuple[str, str], str] | None = None,
     minimum_runs_per_track: int | None = None,
+    report_side: str | None = None,
     change: Mapping[str, Any] | None = None,
     human_perceptual_review: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
@@ -393,6 +394,7 @@ def aggregate_diagnostics(
         raise LockedBenchmarkError(
             "policy.required_tracks must exactly match the locked corpus track IDs before aggregation"
         )
+    release_corpus_contract = None
     if policy_profile["mode"] == "release":
         expected = policy_profile["locked_corpus"]
         actual = {
@@ -403,6 +405,14 @@ def aggregate_diagnostics(
             raise LockedBenchmarkError(
                 "release policy locked_corpus does not exactly match the aggregation manifest"
             )
+        try:
+            release_corpus_contract = quality_gate.validate_locked_corpus_manifest(manifest, dict(policy))
+        except ValueError as exc:
+            raise LockedBenchmarkError(f"release corpus contract is invalid: {exc}") from exc
+        if report_side not in {"baseline", "candidate"}:
+            raise LockedBenchmarkError("release aggregation requires report_side baseline or candidate")
+    elif report_side is not None and report_side not in {"baseline", "candidate"}:
+        raise LockedBenchmarkError("report_side must be baseline or candidate when supplied")
     diagnostics = load_diagnostics(manifest, inputs, require_complete_corpus=True)
     counts = Counter(diagnostic["track_id"] for diagnostic in diagnostics)
     too_few = {
@@ -444,6 +454,27 @@ def aggregate_diagnostics(
         "minimum_pairs_per_track": minimum_runs_per_track,
         "diagnostic_statistics": _diagnostic_statistics(diagnostics),
     }
+    if release_corpus_contract is not None:
+        # This immutable projection makes it clear which corpus coverage and
+        # golden-artifact contract was used to create the gate input, without
+        # adding audio, paths, titles, or annotation content to diagnostics.
+        aggregate["release_corpus_contract"] = release_corpus_contract
+    if policy_profile["mode"] == "release" and report_side == "candidate":
+        pipeline_versions = {item["provenance"]["implementation"].get("pipeline_version") for item in diagnostics}
+        source_hashes = {item["provenance"]["implementation"].get("source_sha256") for item in diagnostics}
+        if len(pipeline_versions) != 1 or len(source_hashes) != 1:
+            raise LockedBenchmarkError("release candidate diagnostics must share one source and pipeline identity")
+        pipeline_version = next(iter(pipeline_versions))
+        source_sha256 = next(iter(source_hashes))
+        try:
+            quality_gate._require_string(pipeline_version, "release candidate pipeline_version")
+            quality_gate._require_sha256(source_sha256, "release candidate source_sha256", reject_placeholder=True)
+        except ValueError as exc:
+            raise LockedBenchmarkError(f"release candidate identity is invalid: {exc}") from exc
+        aggregate["candidate_identity"] = {
+            "source_sha256": source_sha256,
+            "pipeline_version": pipeline_version,
+        }
     if change is not None:
         if not isinstance(change, Mapping):
             raise LockedBenchmarkError("change must be a JSON object")
@@ -456,6 +487,13 @@ def aggregate_diagnostics(
         aggregate["human_perceptual_review"] = json.loads(
             contract.canonical_json(dict(human_perceptual_review))
         )
+    if policy_profile["mode"] == "release":
+        if report_side == "candidate" and (change is None or human_perceptual_review is None):
+            raise LockedBenchmarkError(
+                "release candidate aggregation requires change classification and externally attested blinded review"
+            )
+        if report_side == "baseline" and (change is not None or human_perceptual_review is not None):
+            raise LockedBenchmarkError("release baseline aggregation cannot carry candidate review evidence")
     try:
         _, _, issues = quality_gate._index_report(
             aggregate, policy_metrics, quality_gate.policy_sha256(dict(policy))
@@ -513,6 +551,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--minimum-runs-per-track",
         type=int,
         help="override the policy minimum only for a stricter local preflight; defaults to policy.minimum_pairs_per_track",
+    )
+    aggregate.add_argument(
+        "--report-side",
+        choices=("baseline", "candidate"),
+        help="required for a release policy so candidate review evidence cannot be omitted by ambiguity",
     )
     aggregate.add_argument(
         "--change-classification",
@@ -580,6 +623,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                     cache_mode=args.cache_mode,
                     pairing=pairing,
                     minimum_runs_per_track=args.minimum_runs_per_track,
+                    report_side=args.report_side,
                     change=change,
                     human_perceptual_review=review,
                 ),
