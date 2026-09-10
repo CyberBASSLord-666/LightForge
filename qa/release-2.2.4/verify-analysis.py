@@ -21,6 +21,7 @@ OUT = 'qa/release-2.2.4/'
 COMPARISON_SHA256 = 'e74c12ca08132182f7cb971a98a6280401fcbfb5220a403e690e276c21c91712'
 # Reviewed asset inventory pin; tests/test_verify_analysis_asset_binding.py fails early if it drifts.
 ASSET_MANIFEST_SHA256 = 'ae279dfa94f51599dadeb414b5c5e6ba9f9c7bf16250f17215c9ca122a0f1e5d'
+ASSET_MANIFEST_ENTRY_COUNT = 77
 OLD_RUNTIME_SHA256 = 'e0ab4a1af57d2da09097202f2dfd691e390c82e81183314788ccde4cf7c3cc38'
 NEW_RUNTIME_SHA256 = '749793ebed63743fec853d093da7987a86ea5cd592d54fba898cd3233100c381'
 SAMPLES = 573300
@@ -196,7 +197,7 @@ def verify_asset(root, relative, metadata, hashes):
 def verify_assets(root, hashes):
     manifest_path = bind(root, 'web/analysis/ASSET_MANIFEST.json', ASSET_MANIFEST_SHA256, hashes)
     manifest = json.loads(manifest_path.read_text())
-    require(len(manifest) == 73, 'Analysis asset inventory changed')
+    require(len(manifest) == ASSET_MANIFEST_ENTRY_COUNT, 'Analysis asset inventory changed')
     base = root / 'web/analysis'
     actual = {path.relative_to(base).as_posix() for path in base.rglob('*') if path.is_file()
               and path.name != 'ASSET_MANIFEST.json' and
