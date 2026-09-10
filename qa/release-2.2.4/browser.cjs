@@ -19,7 +19,7 @@ function listen(server){
   server.once('error',failed);server.once('listening',ready);server.listen(0,'127.0.0.1');
  });
 }
-const hashes=()=>Object.fromEntries(['qa/release-2.2.4/browser.cjs','version.json','web/cockpit.js','web/cockpit.css','web/version.js','web/app.js','web/diagnostics.js','web/diagnostics.css','web/index.html','web/styles.css','web/precision-studio.js','web/engine/worker.js','web/engine/client.js','web/engine/show-engine.js','web/engine/light-planner.js','web/engine/music-cues.js','web/engine/sync-review.js'].map(f=>[f,crypto.createHash('sha256').update(fs.readFileSync(path.join(root,f))).digest('hex')]));
+const hashes=()=>Object.fromEntries(['qa/release-2.2.4/browser.cjs','qa/release-1.6.0/actual-music-user-glass-prefix64-analysis.json','version.json','web/cockpit.js','web/cockpit.css','web/version.js','web/app.js','web/diagnostics.js','web/diagnostics.css','web/index.html','web/styles.css','web/precision-studio.js','web/engine/worker.js','web/engine/client.js','web/engine/show-engine.js','web/engine/light-planner.js','web/engine/music-cues.js','web/engine/sync-review.js'].map(f=>[f,crypto.createHash('sha256').update(fs.readFileSync(path.join(root,f))).digest('hex')]));
 (async()=>{
  const evidenceSession=process.env.LIGHTFORGE_EVIDENCE_SESSION;
  const sessionError=evidenceSession!==undefined&&!EVIDENCE_SESSION_PATTERN.test(evidenceSession)?

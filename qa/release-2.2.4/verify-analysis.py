@@ -84,7 +84,8 @@ CLOCK_SOURCES = {
     'web/analysis/models/deux/manifest.json', OUT + 'test-source-clock.cjs',
 }
 BROWSER_SOURCES = {
-    OUT + 'browser.cjs', 'version.json', 'web/cockpit.js', 'web/cockpit.css',
+    OUT + 'browser.cjs', 'qa/release-1.6.0/actual-music-user-glass-prefix64-analysis.json',
+    'version.json', 'web/cockpit.js', 'web/cockpit.css',
     'web/version.js', 'web/app.js', 'web/diagnostics.js', 'web/diagnostics.css',
     'web/index.html', 'web/styles.css', 'web/precision-studio.js',
     'web/engine/worker.js', 'web/engine/client.js', 'web/engine/show-engine.js',
@@ -93,6 +94,7 @@ BROWSER_SOURCES = {
 }
 ANALYSIS_BROWSER_SOURCES = {
     OUT + 'analysis-browser.cjs', OUT + 'analysis-performance.cjs', 'version.json',
+    'qa/release-1.6.0/fixtures/falcon-mix.wav',
     'web/index.html', 'web/analysis/ASSET_MANIFEST.json',
     'web/analysis/diagnostic-clock.js', 'web/analysis/resource-diagnostics.js',
     'web/analysis/telemetry.js', 'web/analysis/scheduler.js', 'web/analysis/worker.js',

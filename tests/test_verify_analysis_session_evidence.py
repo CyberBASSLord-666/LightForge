@@ -53,6 +53,23 @@ class EvidenceSessionBindingTest(TestCase):
         receipt_path.write_text(json.dumps(receipt))
         return receipt_path, source
 
+    def write_fresh_producer_receipt(self, root, relative, sources):
+        source_hashes = {}
+        for source_relative in sources:
+            source = root / source_relative
+            source.parent.mkdir(parents=True, exist_ok=True)
+            source.write_bytes(('bound source: ' + source_relative + '\n').encode())
+            source_hashes[source_relative] = digest(source)
+        receipt_path = root / relative
+        receipt_path.parent.mkdir(parents=True, exist_ok=True)
+        receipt_path.write_text(json.dumps({
+            'release': '2.2.4', 'passed': True, 'errors': [],
+            'completedAt': '2026-09-10T00:00:00Z',
+            'evidenceSessionSchema': VERIFY.EVIDENCE_SESSION_SCHEMA,
+            'evidenceSession': SESSION, 'source_hashes': source_hashes,
+        }))
+        return receipt_path
+
     def test_no_session_requires_the_immutable_pin_and_rejects_session_bound_receipts(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -122,6 +139,28 @@ class EvidenceSessionBindingTest(TestCase):
             with self.assertRaisesRegex(ValueError, 'Source differs from measured evidence'):
                 VERIFY.verify_fresh_receipt(root, 'qa/fresh.json', {}, SESSION,
                                              'Browser', {'web/source.js'})
+
+    def test_browser_and_analysis_browser_consumed_fixtures_are_session_bound(self):
+        cases = [
+            (VERIFY.OUT + 'browser-verification.json', VERIFY.BROWSER_SOURCES,
+             'qa/release-1.6.0/actual-music-user-glass-prefix64-analysis.json',
+             VERIFY.verify_browser_receipt),
+            (VERIFY.OUT + 'analysis-browser-verification.json', VERIFY.ANALYSIS_BROWSER_SOURCES,
+             'qa/release-1.6.0/fixtures/falcon-mix.wav',
+             VERIFY.verify_analysis_browser_receipt),
+        ]
+        for receipt_relative, sources, fixture_relative, verify in cases:
+            with self.subTest(receipt=receipt_relative), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                self.assertIn(fixture_relative, sources)
+                receipt = self.write_fresh_producer_receipt(root, receipt_relative, sources)
+                hashes = {}
+                self.assertTrue(verify(root, hashes, SESSION)['passed'])
+                self.assertEqual(hashes[receipt_relative], digest(receipt))
+                fixture = root / fixture_relative
+                fixture.write_bytes(b'mutated consumed fixture\n')
+                with self.assertRaisesRegex(ValueError, 'Source differs from measured evidence'):
+                    verify(root, {}, SESSION)
 
     def test_source_clock_accepts_historical_no_session_and_requires_exact_session_when_present(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -232,6 +271,10 @@ class EvidenceSessionBindingTest(TestCase):
             self.assertIn('fs.renameSync(temporary,file)', producer)
             self.assertIn('writeJsonAtomic(output,receipt)', producer)
             self.assertIn("source_hashes:{}", producer)
+        browser = (ROOT / 'qa/release-2.2.4/browser.cjs').read_text()
+        analysis_browser = (ROOT / 'qa/release-2.2.4/analysis-browser.cjs').read_text()
+        self.assertIn('qa/release-1.6.0/actual-music-user-glass-prefix64-analysis.json', browser)
+        self.assertIn('qa/release-1.6.0/fixtures/falcon-mix.wav', analysis_browser)
 
         verifier = (ROOT / 'qa/release-2.2.4/verify-analysis.py').read_text()
         self.assertIn('def verify_fresh_receipt(root, relative, hashes, session, label, sources):', verifier)
