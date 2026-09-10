@@ -244,8 +244,8 @@
     "sha256": "52093f26d0bfe3f04bbb1563b287fafe5e61aa57a61391ea643b04d97838ca7e"
   },
   "salience.js": {
-    "bytes": 12887,
-    "sha256": "5f7a970330acbea8c8bd4d5a26189429a4c7b4b5c93ae102ee502a949054ee36"
+    "bytes": 12886,
+    "sha256": "2594dcc2b5428828e321ab4f4ecf0fcc66091f3464e2bcfdebdac130919dbf1f"
   },
   "scheduler.js": {
     "bytes": 5331,
@@ -304,7 +304,7 @@
     "sha256": "94cc60efb59146e1a12546d51871e8c45c6fcbec67d1090972deb0f313d001d2"
   },
   "worker.js": {
-    "bytes": 24472,
-    "sha256": "0e43b7e31fb875878f65f86a7786878fb3e9955dfdc19d3cbad6defb85cbf639"
+    "bytes": 24471,
+    "sha256": "ce8ac858ec530885e91b5cb483c7e95b49ac847816f066fdb08fd580ba44fd88"
   }
 }
