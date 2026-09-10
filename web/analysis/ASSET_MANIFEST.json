@@ -260,8 +260,8 @@
     "sha256": "013211a2f7e45846c5965df0aa83523dea8a1af67fe5ffcaf89e5b67d2e6d3ee"
   },
   "scheduler.js": {
-    "bytes": 5331,
-    "sha256": "7a9b97fd59c18b236090104ffe074945e802a99a239294c566a99148ef6e364e"
+    "bytes": 5810,
+    "sha256": "6211685adddffe7aaf7d23b315930301618aa5925498ae0b0bf4211500002e93"
   },
   "semantic-timeline.js": {
     "bytes": 16403,
@@ -284,8 +284,8 @@
     "sha256": "c2256c15be8a2285721fb16662915e0853de673a63a144e54b8d6838d5c1970a"
   },
   "telemetry.js": {
-    "bytes": 3492,
-    "sha256": "f8d3470a9ee08b4ddfad59d1f554b2303db10a802263dae33bbf10d40ae2626d"
+    "bytes": 4581,
+    "sha256": "efbdc066fd95473f5e2499bf0e35d0e67978d2a3c30bfb382e9ad89f85e406a4"
   },
   "vendor/ONNX-Runtime-LICENSE.txt": {
     "bytes": 1073,
