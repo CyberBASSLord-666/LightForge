@@ -1,0 +1,133 @@
+{
+  "schema_version": 1,
+  "corpus_id": "lightforge-locked-corpus-template",
+  "template": true,
+  "release_ready": false,
+  "template_notice": "This redacted template contains no audio, paths, URLs, lyrics, artists, or song titles. Replace every synthetic identity, remove template, and set release_ready true only after the private corpus and approved golden artifacts are locked.",
+  "coverage_requirements": [
+    "strong-lead-vocals",
+    "layered-backing-vocals",
+    "rap-and-spoken-vocals",
+    "vocal-chops",
+    "instrumental-and-acoustic",
+    "rock-metal-punk",
+    "pop-edm-trance-house-techno",
+    "hip-hop-heavy-sub-bass",
+    "country-and-cinematic-orchestral",
+    "dense-and-sparse-mixes",
+    "complex-percussion-and-fills",
+    "tempo-change-half-double-time-and-irregular-meter",
+    "repeated-and-structurally-irregular-sections",
+    "long-short-and-difficult-source-material"
+  ],
+  "golden_artifact_requirements": [
+    "semantic_timeline_sha256",
+    "rhythm_map_sha256",
+    "vocal_map_sha256",
+    "bass_map_sha256",
+    "drum_map_sha256",
+    "section_map_sha256",
+    "salience_map_sha256",
+    "choreography_plan_sha256",
+    "fseq_characteristics_sha256",
+    "validation_report_sha256"
+  ],
+  "tracks": [
+    {
+      "track_id": "reference-lead-vocal-pop",
+      "audio": {"content_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "duration_seconds": 185.0},
+      "tags": ["lead-vocal", "pop", "phrase-boundaries", "dynamic-master"],
+      "golden_artifacts": {"semantic_timeline_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "validation_report_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}
+    },
+    {
+      "track_id": "reference-layered-vocals",
+      "audio": {"content_sha256": "1111111111111111111111111111111111111111111111111111111111111111", "duration_seconds": 212.0},
+      "tags": ["lead-vocal", "backing-vocal", "harmony", "dense-mix"],
+      "golden_artifacts": {"semantic_timeline_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "validation_report_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}
+    },
+    {
+      "track_id": "reference-rap-spoken",
+      "audio": {"content_sha256": "2222222222222222222222222222222222222222222222222222222222222222", "duration_seconds": 164.0},
+      "tags": ["rap", "spoken-vocal", "rapid-articulation", "hip-hop"],
+      "golden_artifacts": {"semantic_timeline_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "validation_report_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}
+    },
+    {
+      "track_id": "reference-vocal-chops",
+      "audio": {"content_sha256": "3333333333333333333333333333333333333333333333333333333333333333", "duration_seconds": 143.0},
+      "tags": ["vocal-chops", "processed-vocal", "electronic", "drop"],
+      "golden_artifacts": {"semantic_timeline_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "validation_report_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}
+    },
+    {
+      "track_id": "reference-acoustic-instrumental",
+      "audio": {"content_sha256": "4444444444444444444444444444444444444444444444444444444444444444", "duration_seconds": 201.0},
+      "tags": ["instrumental", "acoustic", "sparse-mix", "negative-space"],
+      "golden_artifacts": {"semantic_timeline_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "validation_report_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}
+    },
+    {
+      "track_id": "reference-rock-vocal",
+      "audio": {"content_sha256": "5555555555555555555555555555555555555555555555555555555555555555", "duration_seconds": 197.0},
+      "tags": ["rock", "lead-vocal", "drums", "repeated-chorus"],
+      "golden_artifacts": {"semantic_timeline_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "validation_report_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}
+    },
+    {
+      "track_id": "reference-metal-punk",
+      "audio": {"content_sha256": "6666666666666666666666666666666666666666666666666666666666666666", "duration_seconds": 154.0},
+      "tags": ["metal", "punk", "dense-mix", "complex-percussion", "shouts"],
+      "golden_artifacts": {"semantic_timeline_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "validation_report_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}
+    },
+    {
+      "track_id": "reference-edm-drop",
+      "audio": {"content_sha256": "7777777777777777777777777777777777777777777777777777777777777777", "duration_seconds": 227.0},
+      "tags": ["edm", "build", "drop", "sub-bass", "repeated-motif"],
+      "golden_artifacts": {"semantic_timeline_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "validation_report_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}
+    },
+    {
+      "track_id": "reference-trance-house-techno",
+      "audio": {"content_sha256": "8888888888888888888888888888888888888888888888888888888888888888", "duration_seconds": 418.0},
+      "tags": ["trance", "house", "techno", "long-track", "steady-tempo"],
+      "golden_artifacts": {"semantic_timeline_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "validation_report_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}
+    },
+    {
+      "track_id": "reference-hiphop-subbass",
+      "audio": {"content_sha256": "9999999999999999999999999999999999999999999999999999999999999999", "duration_seconds": 178.0},
+      "tags": ["hip-hop", "heavy-sub-bass", "kick-bass-coincidence", "rap"],
+      "golden_artifacts": {"semantic_timeline_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "validation_report_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}
+    },
+    {
+      "track_id": "reference-country",
+      "audio": {"content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "duration_seconds": 192.0},
+      "tags": ["country", "lead-vocal", "acoustic", "narrative-phrase"],
+      "golden_artifacts": {"semantic_timeline_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "validation_report_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}
+    },
+    {
+      "track_id": "reference-cinematic-orchestral",
+      "audio": {"content_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "duration_seconds": 303.0},
+      "tags": ["cinematic", "orchestral", "climax", "tempo-change"],
+      "golden_artifacts": {"semantic_timeline_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "validation_report_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}
+    },
+    {
+      "track_id": "reference-complex-percussion",
+      "audio": {"content_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "duration_seconds": 206.0},
+      "tags": ["drums", "fills", "syncopation", "transient-detection"],
+      "golden_artifacts": {"semantic_timeline_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "validation_report_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}
+    },
+    {
+      "track_id": "reference-tempo-half-double",
+      "audio": {"content_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "duration_seconds": 238.0},
+      "tags": ["tempo-change", "half-time", "double-time", "downbeat-ambiguity"],
+      "golden_artifacts": {"semantic_timeline_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "validation_report_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}
+    },
+    {
+      "track_id": "reference-irregular-meter",
+      "audio": {"content_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "duration_seconds": 171.0},
+      "tags": ["irregular-meter", "pickup", "structurally-irregular", "instrumental"],
+      "golden_artifacts": {"semantic_timeline_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "validation_report_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}
+    },
+    {
+      "track_id": "reference-difficult-source",
+      "audio": {"content_sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", "duration_seconds": 96.0},
+      "tags": ["short-track", "noisy-source", "compressed-master", "adversarial"],
+      "golden_artifacts": {"semantic_timeline_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "validation_report_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}
+    }
+  ]
+}
