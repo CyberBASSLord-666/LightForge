@@ -23,6 +23,10 @@ function nearestIndex(values,time,tolerance){
  for(const index of candidates){const delta=Math.abs(values[index]-time);if(delta<bestDelta){best=index;bestDelta=delta;}}
  return bestDelta<=tolerance?best:-1;
 }
+function floorIndex(values,time){
+ let lo=0,hi=values.length;while(lo<hi){const middle=(lo+hi)>>1;if(values[middle]<=time+EPSILON)lo=middle+1;else hi=middle;}
+ return lo-1;
+}
 function legacyEvidence(analysis){
  if(!analysis||typeof analysis!=='object'||!finite(analysis.duration)||analysis.duration<0)return {valid:false,reason:'duration'};
  const duration=analysis.duration,beats=Array.isArray(analysis.beats)?analysis.beats:[];
@@ -70,19 +74,20 @@ function intervalEvidence(evidence){
 function tempoSegments(intervals){
  if(!intervals.length)return [];
  const runs=[],close=(left,right)=>relative(left.bpm,right.bpm)<=.085;
- let start=0;
+ let start=0,sum=intervals.length>1?intervals[0].bpm+intervals[1].bpm:intervals[0].bpm;
  // A new tempo needs two consecutive compatible intervals.  An isolated bad
  // peak therefore remains a low-confidence fluctuation rather than becoming a
  // fictional tempo change.
  for(let index=2;index<intervals.length;index++){
-  const candidate=intervals[index],previous=intervals[index-1],prefix=intervals.slice(start,index),reference=median(prefix.map(value=>value.bpm));
+  const candidate=intervals[index],previous=intervals[index-1],reference=sum/(index-start);
   if(relative(candidate.bpm,reference)>.12&&close(candidate,previous)){
    // The first of the two agreeing intervals belongs to the new tempo.  Keep
    // it with its supporting neighbour rather than contaminating the previous
    // segment with one beat of a confirmed transition.
    const boundary=index-1;
-   if(boundary-start>=2){runs.push(intervals.slice(start,boundary));start=boundary;}
+   if(boundary-start>=2){runs.push(intervals.slice(start,boundary));start=boundary;sum=intervals[boundary].bpm+candidate.bpm;continue;}
   }
+  sum+=candidate.bpm;
  }
  runs.push(intervals.slice(start));
  return runs.filter(run=>run.length).map((run,index)=>{
@@ -144,9 +149,9 @@ function subdivisions(analysis,beats,duration){
  if(!Array.isArray(analysis.onsets)||beats.length<2)return {microOnsets:[],subdivisions:[]};
  const source=analysis.onsets.filter(value=>value&&typeof value==='object'&&finite(value.time)&&value.time>=0&&value.time<=duration&&finite(value.strength)&&value.strength>=0).slice(0,MAX_ONSETS).sort((left,right)=>left.time-right.time);
  const microOnsets=source.map((value,index)=>({index,time:round(value.time),strength:round(clamp(value.strength)),band:typeof value.band==='string'?value.band:'unknown'}));
- const values=[];
+ const values=[],beatTimes=beats.map(beat=>beat.time);
  for(const onset of microOnsets){
-  let before=-1;for(let index=0;index<beats.length&&beats[index].time<=onset.time+EPSILON;index++)before=index;
+  const before=floorIndex(beatTimes,onset.time);
   if(before<0||before>=beats.length-1)continue;
   const left=beats[before],right=beats[before+1],span=right.time-left.time;
   if(span<.15||span>2)continue;
