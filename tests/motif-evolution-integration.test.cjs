@@ -195,7 +195,7 @@ test('a semantic strategy module fault fails closed to the exact legacy sequence
   assert.deepEqual(Engine.fseq(faulted,'semantic-fault.wav'),Engine.fseq(baseline,'semantic-fault.wav'));
 });
 
-test('semantic strategy callback faults fail closed and revert motif scenes to the exact legacy sequence',()=>{
+test('semantic strategy callback faults retain only a validated base semantic plan',()=>{
   const music=musicFixture(),{timeline,salience,evidence,sidecar}=buildBoundRecurrence(music);
   const analysis={...music,semanticTimeline:timeline,musicSalience:salience,recurrenceEvidence:evidence,recurrenceSidecar:sidecar,recurrenceAnalysis:recurrenceAnalysisMarker(sidecar)};
   const settings={stepMs:20,dance:'off',seed:780,semanticChoreography:true,motifEvolution:true};
@@ -209,34 +209,49 @@ test('semantic strategy callback faults fail closed and revert motif scenes to t
     assert.deepEqual(Engine.fseq(faulted,'semantic-callback-fault.wav'),Engine.fseq(baseline,'semantic-callback-fault.wav'),
       label+' must restore exact legacy FSEQ bytes');
   };
+  const assertSemanticOnlyFallback=(label,factory)=>{
+    const semanticOnly=withSemanticStrategy(factory,FaultedEngine=>FaultedEngine.generate(analysis,{...settings,motifEvolution:false}));
+    const faulted=withSemanticStrategy(factory,FaultedEngine=>FaultedEngine.generate(analysis,settings));
+    assert.equal(semanticOnly.choreography.semanticStrategy.active,true,label+' must first establish a real base semantic plan');
+    assert.equal(faulted.choreography.semanticStrategy.active,true,label+' must retain validated base semantic choreography');
+    assert.equal(faulted.choreography.motifEvolution.active,false,label+' must deactivate only motif evolution');
+    assert.equal(faulted.choreography.motifEvolution.reason,'semantic-strategy-inactive',label+' must discard the failed motif scene plan');
+    assert.deepEqual(faulted.sections,semanticOnly.sections,label+' must retain the exact base scene plan');
+    assert.deepEqual(faulted.frames,semanticOnly.frames,label+' must retain exact semantic-only frames');
+    assert.deepEqual(Engine.fseq(faulted,'semantic-callback-fault.wav'),Engine.fseq(semanticOnly,'semantic-callback-fault.wav'),
+      label+' must retain exact semantic-only FSEQ bytes');
+  };
 
-  assertLegacyFallback('prepareTargets fault',()=>activeStrategy({
+  assertLegacyFallback('base prepareTargets fault',()=>activeStrategy({
     prepareTargets(){throw Error('simulated prepareTargets fault');}
   }));
-  assertLegacyFallback('late prepareTargets fault',()=>{
+  assertLegacyFallback('base classifyCandidate fault',()=>activeStrategy({
+    classifyCandidate(){throw Error('simulated classifyCandidate fault');}
+  }));
+  assertLegacyFallback('base filterCandidates fault',()=>activeStrategy({
+    filterCandidates(){throw Error('simulated filterCandidates fault');}
+  }));
+  assertSemanticOnlyFallback('late prepareTargets fault',()=>{
     let calls=0;
     return activeStrategy({prepareTargets(){
       if(calls++===0)return {links:[{id:'test-link'}]};
       throw Error('simulated late prepareTargets fault');
     }});
   });
-  assertLegacyFallback('late inactive prepareTargets result',()=>{
+  assertSemanticOnlyFallback('late inactive prepareTargets result',()=>{
     let calls=0;
     return activeStrategy({prepareTargets(){
       return calls++===0?{links:[{id:'test-link'}]}:null;
     }});
   });
-  assertLegacyFallback('classifyCandidate fault',()=>activeStrategy({
-    classifyCandidate(){throw Error('simulated classifyCandidate fault');}
-  }));
-  assertLegacyFallback('filterCandidates fault',()=>{
+  assertSemanticOnlyFallback('late filterCandidates fault',()=>{
     let calls=0;
     return activeStrategy({filterCandidates(candidates){
       if(calls++===0)return {candidates:Array.isArray(candidates)?candidates:[],diagnostics:{schemaVersion:1,requested:true,active:true}};
       throw Error('simulated filterCandidates fault');
     }});
   });
-  assertLegacyFallback('late inactive filterCandidates result',()=>{
+  assertSemanticOnlyFallback('late inactive filterCandidates result',()=>{
     let calls=0;
     return activeStrategy({filterCandidates(candidates){
       const original=Array.isArray(candidates)?candidates:[];

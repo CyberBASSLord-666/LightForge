@@ -452,9 +452,6 @@
         if(!motifResolution.diagnostics.active){
           show=baseShow;lighting=baseLighting;
         }else{
-          // The base pass is only an eligibility check once motifs are valid;
-          // release its references before allocating the isolated motif plan.
-          baseShow=null;baseLighting=null;
           try{
             const motifShow=createShow(motifResolution.scenes);
             const motifLighting=LIGHTS.compose(motifShow,m,s,movement,semanticStrategy);
@@ -463,8 +460,10 @@
           }catch(_){
             // Motif evolution is optional. If a later callback faults or
             // becomes inactive, discard its isolated scene/frame plan and
-            // regenerate the exact legacy show from untouched base scenes.
-            legacyFallback();
+            // retain the already validated semantic-only base plan.
+            semanticStrategy=null;
+            motifResolution=resolveMotifEvolution(music,m.sections,baseScenes,s,false);
+            show=baseShow;lighting=baseLighting;
           }
         }
       }else if(!lighting){
