@@ -1,0 +1,25 @@
+'use strict';
+const test=require('node:test'),assert=require('node:assert/strict'),path=require('node:path');
+const {compareBytes,validateReport,sameBinding}=require(path.resolve(__dirname,'../tools/compare_deux_preprocess_reuse.cjs'));
+
+function report(enabled,{recovery=false}={}){
+ return {passed:true,sourceSHA256:'source',fixtureSHA256:'fixture',manifestSHA256:'manifest',model:{checkpointSHA256:'model'},source_hashes:{'web/analysis/separator-deux.js':'source','tools/benchmark_deux_runtime.cjs':'benchmark'},threads:4,samples:661501,mode:{spectrumReuse:{enabled}},result:{chunks:2,preprocessing:{spectrumReuse:{enabled}}},runtime:{ortWebVersion:'1.20.1',sessionConfiguration:{executionProviders:['wasm'],graphOptimizationLevel:'all',enableCpuMemArena:false,enableMemPattern:false}},performanceProfile:{resources:{cpuTimeMs:{available:false}},counters:{'transform.frames.reused':enabled?795:0}},...(recovery?{recovery:{controlledInterruption:true,restoredPassages:1}}:{})};
+}
+
+test('paired preprocessing comparison fails closed on a single changed byte',()=>{
+ assert.deepEqual(compareBytes(Buffer.from([1,2,3]),Buffer.from([1,2,3])),{byteIdentical:true,byteLengthLeft:3,byteLengthRight:3,firstDifferentByte:null});
+ const mismatch=compareBytes(Buffer.from([1,2,3]),Buffer.from([1,9,3]));
+ assert.equal(mismatch.byteIdentical,false);assert.equal(mismatch.firstDifferentByte,1);
+ assert.equal(compareBytes(Buffer.from([1]),Buffer.from([1,2])).byteIdentical,false);
+});
+
+test('paired gate requires matching bindings, odd multi-passage output and actual reuse',()=>{
+ validateReport(report(false),{enabled:false,minPassages:2});
+ validateReport(report(true,{recovery:true}),{enabled:true,minPassages:2,recovery:true});
+ assert.equal(sameBinding(report(false),report(true)),true);
+ assert.throws(()=>validateReport({...report(true),samples:661500},{enabled:true,minPassages:2}),/odd final/);
+ assert.throws(()=>validateReport({...report(true),performanceProfile:{resources:{cpuTimeMs:{available:false}},counters:{'transform.frames.reused':0}}},{enabled:true,minPassages:2}),/did not reuse/);
+ assert.equal(sameBinding(report(false),{...report(true),threads:1}),false);
+ assert.equal(sameBinding(report(false),{...report(true),source_hashes:{'web/analysis/separator-deux.js':'source','tools/benchmark_deux_runtime.cjs':'changed'}}),false);
+ assert.equal(sameBinding(report(false),{...report(true),runtime:{...report(true).runtime,ortWebVersion:'other'}}),false);
+});

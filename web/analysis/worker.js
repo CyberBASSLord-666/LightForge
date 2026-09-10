@@ -107,7 +107,7 @@ self.onmessage=async e=>{
   else pending.resolve(new Float32Array(e.data.buffer));
   return;
  }
- let session,melSession,separator,game,cacheWriter;const started=performance.now();try{
+ let session,melSession,separator,game,cacheWriter,deuxProfile;const started=performance.now();try{
  const {audioUrl,options={},stage}=e.data;
  if(!['rhythm','separation','voice','bass'].includes(stage))throw Error('Invalid music analysis stage.');
  const cacheKey=options.cacheKey,quality=options.analysisQuality==='balanced'?'balanced':'precision';
@@ -184,8 +184,20 @@ self.onmessage=async e=>{
  await store.reserve({...storagePlan,onProgress:(done,total)=>report(.405,'Checking saved analysis storage','Verified '+done+' / '+total+' passage checkpoints')});
  report(.41,'Separating voice and instruments','Recoverable passages • your music stays on this device');
  cacheWriter=await LightForgeStemCache.create(cacheKey,sourceReader.samples,config,options.projectId||'');
- separator=await (quality==='precision'?LightForgeDeux:LightForgeMdxSeparator).create({ort,baseUrl:new URL(quality==='precision'?'models/deux/':'models/',self.location.href).href,onProgress:p=>report(.41,'Loading studio vocal separation',p.message),checkpoint:store,nativePredict:quality==='precision'&&options.supportsNativeDeux?nativePredict:quality==='balanced'&&options.supportsNativeMdx?nativeMdxPredict:undefined});
- result.separation=await separator.process((start,count)=>sourceReader.stereo44100(start,count),sourceReader.samples,chunk=>cacheWriter.append(chunk),p=>report(.42+.40*p.progress,'Separating voice and instruments',`${p.message} • ${Math.min(sourceReader.duration,p.processedSeconds||0).toFixed(0)} / ${sourceReader.duration.toFixed(0)} seconds`,p));
+ const separatorOptions={ort,baseUrl:new URL(quality==='precision'?'models/deux/':'models/',self.location.href).href,onProgress:p=>report(.41,'Loading studio vocal separation',p.message),checkpoint:store,nativePredict:quality==='precision'&&options.supportsNativeDeux?nativePredict:quality==='balanced'&&options.supportsNativeMdx?nativeMdxPredict:undefined};
+ if(quality==='precision'&&typeof LightForgeDeux.createPerformanceProfile==='function'){
+  deuxProfile=LightForgeDeux.createPerformanceProfile();
+  separatorOptions.profile=deuxProfile;
+  // This remains opt-in until the paired actual-model comparison harness proves
+  // exact final stem identity and a reproducible cold/warm timing improvement.
+  separatorOptions.reuseSpectrum=options.experimentalDeuxSpectrumReuse===true;
+ }
+ separator=await (quality==='precision'?LightForgeDeux:LightForgeMdxSeparator).create(separatorOptions);
+ const deuxRun=quality==='precision'?telemetry.begin('separation.deux'):null;
+ try{
+  result.separation=await separator.process((start,count)=>sourceReader.stereo44100(start,count),sourceReader.samples,chunk=>cacheWriter.append(chunk),p=>report(.42+.40*p.progress,'Separating voice and instruments',`${p.message} • ${Math.min(sourceReader.duration,p.processedSeconds||0).toFixed(0)} / ${sourceReader.duration.toFixed(0)} seconds`,p));
+  if(deuxRun)telemetry.end(deuxRun,{outcome:'success',passages:result.separation.chunks,restoredPassages:result.separation.restoredPassages,spectrumReuse:result.separation.preprocessing?.spectrumReuse?.enabled===true});
+ }catch(error){if(deuxRun)telemetry.end(deuxRun,{outcome:'error'});throw error;}
  await separator.release();separator=null;
  result.stemCache=await cacheWriter.finish();cacheWriter=null;
 
