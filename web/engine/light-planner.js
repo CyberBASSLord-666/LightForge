@@ -137,7 +137,7 @@
         candidates.push({...details,id,start,end:stop,sectionIndex:section.index,priority,kind,strength,fade:supports?fade:0,release:supports&&details.release?details.release:0,serial:serial++,target:start+(supports?fade:0)});
       }
     }
-    const flash=(ids,t,width,priority,kind,strength=1,absolute=false)=>add(ids,t,Math.max(.10,width),priority,kind,strength,0,absolute);
+    const flash=(ids,t,width,priority,kind,strength=1,absolute=false,details={})=>add(ids,t,Math.max(.10,width),priority,kind,strength,0,absolute,details);
     function breathe(ids,t,period,priority=12){
       const length=period>=4.2?2:period>=2.2?1:.5;
       add(ids,t,length*2+.08,priority,'phrase fade',.6,length);
@@ -249,31 +249,103 @@
         if(!ctx.active(impact.time)||chosen.some(x=>Math.abs(x.time-impact.time)<3.2))continue;
         chosen.push(impact);if(chosen.length>=Math.max(1,Math.ceil(m.duration/7)))break;
       }
-      for(const impact of chosen){
-        const t=impact.time,scene=sceneAt(t),full=impact.strength>.78&&scene.intensity>.5;
-        flash(full?WHITE.concat(AMBER_L,AMBER_R,['park-markers']):FRONT.concat(['brakes','left-tail','right-tail']),t,full?.25:.2,80+impact.strength,'musical impact',impact.strength);
+      for(let impactIndex=0;impactIndex<chosen.length;impactIndex++){
+        const impact=chosen[impactIndex],t=impact.time,scene=sceneAt(t),full=impact.strength>.78&&scene.intensity>.5;
+        flash(full?WHITE.concat(AMBER_L,AMBER_R,['park-markers']):FRONT.concat(['brakes','left-tail','right-tail']),t,full?.25:.2,80+impact.strength,'musical impact',impact.strength,false,{collisionEventId:'impact-'+Math.round(t*1000)+'-'+impactIndex});
         // Start a legal fade before the arrival. Its full brightness lands on
         // the accent, instead of beginning a slow ramp after the music hits.
         const rise=impact.strength>.85?1:.5;
         if(t>=rise&&ctx.active(t-rise))add(['left-signature','right-signature'],t-rise,rise*2+.08,60,'impact anticipation',impact.strength,rise);
       }
-      for(const a of movement.accents||[]){
-        const cs=a.channels||[];
+      for(let movementIndex=0;movementIndex<(movement.accents||[]).length;movementIndex++){
+        const a=movement.accents[movementIndex],cs=a.channels||[];
         const ids=cs.includes(41)?WHITE:cs.includes(46)?AMBER_L.concat(AMBER_R):cs.length?Array.from(new Set(cs.flatMap(ch=>ch===37?LEFT.slice(0,3):ch===39?RIGHT.slice(0,3):ch===38?['left-tail','left-rear-turn']:ch===40?['right-tail','right-rear-turn']:ch===35?AMBER_L:ch===36?AMBER_R:outputs.filter(o=>o.channels.includes(ch)).map(o=>o.id)))):WHITE;
-        flash(ids,a.time,.22,72,'movement arrival',a.strength||.75,true);
+        flash(ids,a.time,.22,72,'movement arrival',a.strength||.75,true,{collisionEventId:'movement-'+Math.round(a.time*1000)+'-'+cs.join('-')+'-'+movementIndex});
       }
     }
     // Greedy salience scheduling on physical output groups: no OR-alias fights,
     // no late pulse shifts, and no low-priority cue overwrites a strong attack.
+    // Resolve all normal candidates first. A later rescue may only occupy an
+    // otherwise idle, semantically related output; it never moves or replaces
+    // an accepted command.
     candidates.sort((a,b)=>b.priority-a.priority||b.strength-a.strength||a.start-b.start||a.serial-b.serial);
+    const collisionGroups=new Map(),groupBySerial=new Map();
+    const normalizeKind=value=>String(value||'event').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'')||'event';
+    const highSalience=cue=>{
+      if(cue.kind==='musical impact'&&cue.priority>=80&&cue.strength>=.78)return {tier:cue.strength>=.88?'climax':'structural',salience:clamp(.55+cue.strength*.45)};
+      if(cue.kind==='movement arrival'&&cue.priority>=72&&cue.strength>=.85)return {tier:cue.strength>=.93?'climax':'structural',salience:clamp(.45+cue.strength*.55)};
+      return null;
+    };
+    const groupIdFor=cue=>{
+      const sourceTime=Number.isFinite(cue.sourceEventTime)?cue.sourceEventTime:Number.isFinite(cue.sourceStart)?cue.sourceStart:cue.start;
+      const sourceId=cue.collisionEventId?normalizeKind(cue.collisionEventId):String(Math.round(sourceTime*1000));
+      const role=cue.role||(cue.kind==='musical impact'?'structure':'arrangement');
+      return role+'-'+normalizeKind(cue.kind)+'-'+sourceId+'-'+cue.sectionIndex;
+    };
+    for(const cue of candidates){
+      const salience=highSalience(cue);if(!salience)continue;
+      const groupId=groupIdFor(cue);let group=collisionGroups.get(groupId);
+      if(!group){group={groupId,eventType:cue.kind,time:cue.start,tier:salience.tier,salience:salience.salience,preferred:cue,candidates:[],collided:0,accepted:0};collisionGroups.set(groupId,group);}
+      group.candidates.push(cue);if(cue.serial<group.preferred.serial)group.preferred=cue;groupBySerial.set(cue.serial,group);
+    }
+    function placement(cue){
+      const a=Math.max(0,Math.round(cue.start/step)),b=Math.min(show.frameCount-1,Math.round(cue.end/step));
+      if(b<=a)return {ok:false,reason:'duration'};
+      const lane=lanes.get(cue.id);if(!lane)return {ok:false,reason:'unavailable'};
+      const index=lower(lane,a,'a'),gap=Math.ceil(.08/step-1e-9);
+      if(index>0&&lane[index-1].b+(lane[index-1].sectionIndex===cue.sectionIndex?gap:0)>a||index<lane.length&&b+(lane[index].sectionIndex===cue.sectionIndex?gap:0)>lane[index].a)return {ok:false,reason:'collision'};
+      return {ok:true,a,b,lane,index};
+    }
+    function accept(cue,slot){
+      const item={...cue,a:slot.a,b:slot.b,actualStart:slot.a*step,actualEnd:slot.b*step};
+      slot.lane.splice(slot.index,0,item);accepted.push(item);
+      const group=groupBySerial.get(cue.serial);if(group)group.accepted++;
+      return item;
+    }
     let rejected=0;
     for(const cue of candidates){
-      const a=Math.max(0,Math.round(cue.start/step)),b=Math.min(show.frameCount-1,Math.round(cue.end/step));
-      if(b<=a){rejected++;continue;}
-      const lane=lanes.get(cue.id),index=lower(lane,a,'a'),gap=Math.ceil(.08/step-1e-9);
-      if(index>0&&lane[index-1].b+(lane[index-1].sectionIndex===cue.sectionIndex?gap:0)>a||index<lane.length&&b+(lane[index].sectionIndex===cue.sectionIndex?gap:0)>lane[index].a){rejected++;continue;}
-      const item={...cue,a,b,actualStart:a*step,actualEnd:b*step};lane.splice(index,0,item);accepted.push(item);
+      const slot=placement(cue);
+      if(!slot.ok){rejected++;if(slot.reason==='collision'){const group=groupBySerial.get(cue.serial);if(group)group.collided++;}continue;}
+      accept(cue,slot);
     }
+    // Full event loss is evaluated at the logical-cue level, not by counting
+    // rejected per-output candidates. Only structural impacts and strong
+    // movement arrivals qualify; phrase/detail material remains intentionally
+    // sparse rather than being mechanically forced into every free lamp.
+    const collisionResolutions=[],RESOLUTION_LIMIT=128;
+    let rescuedCollisions=0,unresolvedHighSalienceCollisions=0;
+    const fallbackGroups=group=>group.eventType==='movement arrival'
+      ?[['left-repeater','right-repeater'],['left-rear-turn','right-rear-turn']]
+      :group.eventType==='musical impact'
+        ?[['left-repeater','right-repeater'],['left-rear-turn','right-rear-turn']]
+        :[];
+    const resolution=(group,outcome,chosenOutput,chosenOutputs,reason)=>({
+      groupId:group.groupId,eventType:group.eventType,preferredOutput:group.preferred.id,
+      chosenOutput:chosenOutput||null,chosenOutputs:chosenOutputs||[],time:Number(group.time.toFixed(6)),
+      salience:Number(group.salience.toFixed(6)),tier:group.tier,outcome,reason
+    });
+    const orderedGroups=Array.from(collisionGroups.values()).sort((a,b)=>a.time-b.time||a.groupId.localeCompare(b.groupId));
+    for(const group of orderedGroups){
+      if(group.accepted||group.collided!==group.candidates.length)continue;
+      const preferredIds=new Set(group.candidates.map(c=>c.id));let resolved=false,reason='no-safe-secondary-output';
+      for(const routeIds of fallbackGroups(group)){
+        const unique=Array.from(new Set(routeIds));
+        if(unique.some(id=>preferredIds.has(id)||!enabled(id))){reason='secondary-output-unavailable';continue;}
+        const staged=[];
+        for(const id of unique){
+          const cue={...group.preferred,id,serial:serial++,collisionRescue:true,collisionGroupId:group.groupId};
+          const slot=placement(cue);if(!slot.ok){reason=slot.reason==='collision'?'secondary-output-collided':'secondary-output-unavailable';staged.length=0;break;}
+          staged.push({cue,slot});
+        }
+        if(!staged.length)continue;
+        for(const entry of staged){groupBySerial.set(entry.cue.serial,group);accept(entry.cue,entry.slot);}
+        collisionResolutions.push(resolution(group,'rescued',unique[0],unique,'safe-symmetric-secondary-group'));
+        rescuedCollisions++;resolved=true;break;
+      }
+      if(!resolved){collisionResolutions.push(resolution(group,'suppressed',null,[],'all-preferred-outputs-collided:'+reason));unresolvedHighSalienceCollisions++;}
+    }
+    collisionResolutions.sort((a,b)=>a.time-b.time||a.groupId.localeCompare(b.groupId)||a.outcome.localeCompare(b.outcome));
+    const reportedCollisionResolutions=collisionResolutions.slice(0,RESOLUTION_LIMIT);
     const frames=show.frames;
     for(const cue of accepted){
       const o=byId.get(cue.id),up=cue.fade===2?230:cue.fade===1?204:178,down=cue.fade===2?77:cue.fade===1?51:26;
@@ -286,7 +358,7 @@
     }
     const errors=accepted.map(c=>Math.abs(c.actualStart-c.start)*1000);
     return {context:ctx,targets,events:accepted.sort((a,b)=>a.start-b.start||a.serial-b.serial),diagnostics:{
-      candidateCues:candidates.length,acceptedCues:accepted.length,suppressedCollisions:rejected,
+      candidateCues:candidates.length,acceptedCues:accepted.length,suppressedCollisions:rejected,rescuedCollisions,unresolvedHighSalienceCollisions,collisionResolutions:reportedCollisionResolutions,collisionResolutionTruncated:Math.max(0,collisionResolutions.length-reportedCollisionResolutions.length),
       attackCues:accepted.filter(c=>c.kind.startsWith('detected')).length,fadeCues:accepted.filter(c=>c.fade>0||c.release>0).length,
       impactCues:accepted.filter(c=>c.kind==='musical impact').length,
       quantizationMaxMs:errors.reduce((a,b)=>Math.max(a,b),0),quantizationMedianMs:median(errors),
