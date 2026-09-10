@@ -151,7 +151,7 @@ test('GAME resumes completed passages with identical note boundaries and without
  const before=h.runs.loaded;game=await h.create();const restored=await game.process(()=>{throw Error('Cached audio reread');},total);await game.release();assert.equal(h.runs.loaded,before,'Cached work loaded GAME model graphs');assert.deepEqual(restored,result);
  h.records.get('game-0-0').notes[0].midi=999;game=await h.create();await game.process(read,total);await game.release();assert.equal(h.runs.encoder,4,'Invalid checkpoint pitch was accepted');
 });
-function workerHarness({cached=null,brokenStems=false,nativeBytes=null,quotaFailure=false}={}){
+function workerHarness({cached=null,brokenStems=false,nativeBytes=null,quotaFailure=false,configureCapabilities=null}={}){
  const messages=[],invalidations=[],writes=[],received=[],progress=[],reservations=[];let created=0,aborted=0,released=0;
  const context=vm.createContext({console,URL,Float32Array,ArrayBuffer,DataView,performance,Map,Number,setTimeout,crypto:webcrypto,navigator:{hardwareConcurrency:2},importScripts(){},ort:{env:{wasm:{}}},LightForgeAnalysisStore:{open:async()=>({read:async()=>cached,write:async(name,value)=>writes.push([name,value]),invalidate:async prefixes=>invalidations.push(Array.from(prefixes)),reserve:async plan=>{reservations.push(plan);if(quotaFailure)throw Error('Free at least 500 MB of device storage, then resume this song.');}})},LightForgeStemCache:{prune:async()=>{},files:async()=>{if(brokenStems)throw Error('Missing stems');},fullVoice:async()=>{},create:async()=>{created++;return {append:async chunk=>received.push(chunk),finish:async()=>({key:'rebuilt'}),abort:async()=>{aborted++;}};}},LightForgeWavReader:class{constructor(){this.samples=44100;this.duration=1;}async open(){}async stereo44100(){throw Error('Unexpected source read');}},fetch:async url=>{
   if(String(url).endsWith('features.json'))return {json:async()=>({})};if(String(url).endsWith('model-manifest.json'))return {json:async()=>({precision:{},balanced:{}})};
@@ -159,11 +159,20 @@ function workerHarness({cached=null,brokenStems=false,nativeBytes=null,quotaFail
  },LightForgeMdxSeparator:{constants:require('../web/analysis/separator-mdx.js').constants},LightForgeDeux:{create:async options=>({release:async()=>{released++;},process:async(read,total,onChunk,onProgress)=>{
   const result=options.nativePredict?await options.nativePredict(-66150,(p,message)=>progress.push([p,message])):{vocals:new Float32Array(1),accompaniment:new Float32Array(1)};
   await onChunk({sampleRate:44100,startSample:0,...result});onProgress({progress:1,processedSeconds:1,message:'Done',passagesCompleted:1,passageCount:1,checkpointSaved:true});return {modelId:'same-model'};
- }})}});context.self=context;context.location={href:'https://app.test/analysis/worker.js'};
+ }})}});context.self=context;configureCapabilities?.(context);context.location={href:'https://app.test/analysis/worker.js'};
  context.postMessage=m=>{messages.push(m);if(m.type==='native-deux')setImmediate(async()=>{await context.onmessage({data:{type:'native-deux-progress',requestId:m.requestId,value:{progress:.5,message:'Block'}}});await context.onmessage({data:{type:'native-deux-result',requestId:m.requestId,url:'https://app.test/native.bin'}});});};
  vm.runInContext(source('worker.js'),context);
- return {messages,invalidations,writes,received,progress,reservations,storagePlan:context.separationStoragePlan,get created(){return created;},get aborted(){return aborted;},get released(){return released;},run:()=>context.onmessage({data:{stage:'separation',audioUrl:'/song.wav',value:{duration:1},options:{workId:key,cacheKey:'test',supportsNativeDeux:nativeBytes!==null}}})};
+ return {messages,invalidations,writes,received,progress,reservations,storagePlan:context.separationStoragePlan,get created(){return created;},get aborted(){return aborted;},get released(){return released;},get wasmThreads(){return context.ort.env.wasm.numThreads;},run:()=>context.onmessage({data:{stage:'separation',audioUrl:'/song.wav',value:{duration:1},options:{workId:key,cacheKey:'test',supportsNativeDeux:nativeBytes!==null}}})};
 }
+test('worker capability getters fall back to one WASM thread without aborting recovery',async()=>{
+ const hostile=[
+  context=>{context.SharedArrayBuffer=SharedArrayBuffer;Object.defineProperty(context,'crossOriginIsolated',{configurable:true,get(){throw Error('hostile isolation getter');}});},
+  context=>{context.SharedArrayBuffer=SharedArrayBuffer;context.crossOriginIsolated=true;Object.defineProperty(context,'navigator',{configurable:true,get(){throw Error('hostile navigator getter');}});},
+  context=>{context.SharedArrayBuffer=SharedArrayBuffer;context.crossOriginIsolated=true;context.navigator={};Object.defineProperty(context.navigator,'hardwareConcurrency',{configurable:true,get(){throw Error('hostile core getter');}});}
+ ];
+ for(const configureCapabilities of hostile){const h=workerHarness({configureCapabilities});await h.run();assert.equal(h.messages.at(-1).type,'result');assert.equal(h.wasmThreads,1);}
+ const available=workerHarness({configureCapabilities:context=>{context.SharedArrayBuffer=SharedArrayBuffer;context.crossOriginIsolated=true;context.navigator={hardwareConcurrency:8};}});await available.run();assert.equal(available.messages.at(-1).type,'result');assert.equal(available.wasmThreads,4);
+});
 test('worker restores completed separation without creating a model or replacing audition audio',async()=>{
  const h=workerHarness({cached:{separation:{modelId:'same-model'},stemCache:{key:'saved'}}});await h.run();assert.equal(h.created,0);assert.equal(h.invalidations.length,0);assert.equal(h.messages.at(-1).restored,true);assert.equal(h.messages.at(-1).value.duration,1);assert.equal(h.messages.at(-1).value.stemCache.key,'saved');
 });
