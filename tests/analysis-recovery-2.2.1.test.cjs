@@ -67,10 +67,17 @@ function analyzerHarness({behavior,native=false}={}){
 test('public analyzer destroys each model heap before the next stage and clears only transient work after success',async()=>{
  const h=analyzerHarness(),progress=[],music=await h.analyze('/song.wav',{},p=>progress.push(p));assert.equal(h.maxActive,1);assert.deepEqual(h.stageStarts,['rhythm','separation','voice','bass']);assert.ok(h.workers.every(w=>w.closed));assert.equal(music.engine.stages.rhythm.restored,true);assert.equal(music.engine.recoverable,false);assert.deepEqual(h.discarded.map(x=>x[0]),['work']);assert.equal(progress.at(-1).completedStages,3);assert.equal(progress.at(-1).restoredStages,1);assert.ok(progress.every((p,i)=>i===0||p.progress>=progress[i-1].progress));
 });
-test('retry uses identical checkpoint identity while changed analysis settings get a new namespace',async()=>{
+test('analysis cache identity separates analysis evidence while choreography and vehicle choices reuse heavy work',async()=>{
  const h=analyzerHarness(),options={analysisIdentity:key,analysisQuality:'precision',projectId:'song'};
  await h.analyze('/song.wav',options);await h.analyze('/song.wav',options);await h.analyze('/song.wav',{...options,analysisQuality:'balanced'});await h.analyze('/song.wav',{...options,sensitivity:.7});
- assert.equal(h.workers[0].request.options.workId,h.workers[4].request.options.workId);assert.notEqual(h.workers[0].request.options.workId,h.workers[8].request.options.workId);assert.notEqual(h.workers[0].request.options.workId,h.workers[12].request.options.workId);assert.deepEqual(h.discarded,[]);
+ await h.analyze('/song.wav',{...options,enableEstimatedPercussionEvidence:true});
+ await h.analyze('/song.wav',{...options,semanticChoreography:true,motifEvolution:true,vehicleProfile:{revision:'calibrated-v2'}});
+ assert.equal(h.workers[0].request.options.workId,h.workers[4].request.options.workId);
+ assert.notEqual(h.workers[0].request.options.workId,h.workers[8].request.options.workId);assert.notEqual(h.workers[0].request.options.workId,h.workers[12].request.options.workId);
+ assert.notEqual(h.workers[0].request.options.workId,h.workers[16].request.options.workId,'estimated percussion must not reuse a default rhythm cache');
+ assert.equal(h.workers[16].request.options.enableEstimatedPercussionEvidence,true);
+ assert.equal(h.workers[0].request.options.workId,h.workers[20].request.options.workId,'choreography/vehicle changes must not invalidate completed music analysis');
+ assert.deepEqual(h.discarded,[]);
 });
 test('cancellation and stage failures preserve durable work and never start a downstream model',async()=>{
  const h=analyzerHarness(),controller=new AbortController();await assert.rejects(h.analyze('/song.wav',{analysisIdentity:key},p=>{if(p.stage==='separation')controller.abort();},controller.signal),e=>e.name==='AbortError');assert.deepEqual(h.stageStarts,['rhythm','separation']);assert.deepEqual(h.discarded,[]);assert.ok(h.workers.every(w=>w.closed));
