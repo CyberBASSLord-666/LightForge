@@ -14,18 +14,21 @@
  const LOCK_NAME='lightforge-analysis-heavy-v1',KEY=/^[a-f0-9]{64}$/;
  const read=(object,key)=>{try{return object==null?undefined:object[key];}catch(_){return undefined;}};
  const number=value=>typeof value==='number'&&Number.isFinite(value)?value:null;
- const invokeNow=(object,key)=>{
-  const clock=read(object,key);if(typeof clock!=='function')return null;
-  try{return number(clock.call(object));}catch(_){return null;}
+ const selectClock=key=>{
+  const receiver=read(root,key),callable=read(receiver,'now');
+  if(typeof callable!=='function')return null;
+  try{const value=number(callable.call(receiver));return value===null?null:{receiver,callable,value};}catch(_){return null;}
  };
- const performanceNow=()=>invokeNow(read(root,'performance'),'now'),dateNow=()=>invokeNow(read(root,'Date'),'now');
+ const sampleClock=clock=>{try{return number(clock.callable.call(clock.receiver));}catch(_){return null;}};
  // Select a clock once. Falling from a monotonic performance clock to epoch
  // time after a late hostile getter/call failure would fabricate wait times.
+ // Retain both receiver and callable: a later host getter may point at a
+ // different clock origin even when it still looks like performance.now.
  const createClock=()=>{
-  const first=performanceNow();
-  if(first!==null){let unavailable=false;return {now(){if(unavailable)return null;const value=performanceNow();if(value===null)unavailable=true;return value;}};}
-  const firstDate=dateNow();let unavailable=firstDate===null;
-  return {now(){if(unavailable)return null;const value=dateNow();if(value===null)unavailable=true;return value;}};
+  const performanceClock=selectClock('performance');
+  if(performanceClock){let unavailable=false,last=performanceClock.value;return {now(){if(unavailable)return null;const value=sampleClock(performanceClock);if(value===null||value<last){unavailable=true;return null;}last=value;return value;}};}
+  const dateClock=selectClock('Date');let unavailable=!dateClock,last=dateClock?.value??0;
+  return {now(){if(unavailable)return null;const value=sampleClock(dateClock);if(value===null||value<last){unavailable=true;return null;}last=value;return value;}};
  };
  const clock=createClock(),now=()=>clock.now(),elapsed=(start,end)=>{
   const first=number(start),last=number(end);return first===null||last===null?0:Math.max(0,last-first);
