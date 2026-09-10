@@ -7,6 +7,10 @@ const RATE=22050,NS='lightforge-stems-v1',HASH_CHUNK=1024*1024;
 const validKey=k=>typeof k==='string'&&/^stem-[a-f0-9-]{36}$/.test(k);
 const validDigest=value=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value);
 const verified=new Set();
+// Cache timestamps are retention/diagnostic metadata, never integrity input.
+// A hostile or unavailable Date bridge must not turn a completed stem write
+// into a partial cache or make a resumable analysis fail.
+const metadataNow=()=>{try{const value=Date.now();return Number.isFinite(value)&&value>=0?value:0;}catch{return 0;}};
 async function directory(){if(!navigator.storage?.getDirectory)throw Error('Update Android System WebView to analyze separated musical parts.');return(await navigator.storage.getDirectory()).getDirectoryHandle(NS,{create:true});}
 function header(samples,rate=RATE){const b=new ArrayBuffer(44),v=new DataView(b);const text=(at,s)=>{for(let i=0;i<s.length;i++)v.setUint8(at+i,s.charCodeAt(i));};text(0,'RIFF');v.setUint32(4,36+samples*4,true);text(8,'WAVEfmt ');v.setUint32(16,16,true);v.setUint16(20,3,true);v.setUint16(22,1,true);v.setUint32(24,rate,true);v.setUint32(28,rate*4,true);v.setUint16(32,4,true);v.setUint16(34,32,true);text(36,'data');v.setUint32(40,samples*4,true);return new Uint8Array(b);}
 // Incremental SHA-256 keeps verification bounded to a small buffer. WebCrypto's
@@ -59,7 +63,7 @@ async function prune(protect,needed=0){
  for await(const [key,handle]of dir.entries()){
   if(handle.kind!=='directory'||!validKey(key)||key===protect)continue;
   try{const file=await(await handle.getFileHandle('complete.json')).getFile(),meta=JSON.parse(await file.text());let size=0;for(const name of ['vocals.wav','accompaniment.wav'])size+=(await(await handle.getFileHandle(name)).getFile()).size;try{size+=(await(await handle.getFileHandle('voice-full.wav')).getFile()).size;}catch{}total+=size;entries.push({key,size,time:meta.createdAt||file.lastModified});}
-  catch{try{let abandoned=false;try{await handle.getFileHandle('aborted.json');abandoned=true;}catch{}const f=await(await handle.getFileHandle('started.json')).getFile();if(abandoned||Date.now()-f.lastModified>24*3600*1000)await dir.removeEntry(key,{recursive:true});}catch{}}
+  catch{try{let abandoned=false;try{await handle.getFileHandle('aborted.json');abandoned=true;}catch{}const f=await(await handle.getFileHandle('started.json')).getFile();if(abandoned||metadataNow()-f.lastModified>24*3600*1000)await dir.removeEntry(key,{recursive:true});}catch{}}
  }
  entries.sort((a,b)=>a.time-b.time);const budget=Math.max(512*1024*1024,needed*1.15);
  for(const item of entries)if(total+needed>budget){await dir.removeEntry(item.key,{recursive:true});for(const tag of [...verified])if(tag.startsWith(item.key+'|'))verified.delete(tag);total-=item.size;}
@@ -91,7 +95,7 @@ async function create(key,sampleCount,config,sourceId=''){
  if(!validKey(key)||!Number.isSafeInteger(sampleCount)||sampleCount<44100||sampleCount>44100*14400+3)throw Error('Invalid separated-audio cache request.');
  const expected=Math.ceil(sampleCount/2),needed=132+expected*8+sampleCount*4;
  await prune(key,needed);const space=await navigator.storage.estimate().catch(()=>({}));if(space.quota&&space.quota-(space.usage||0)<needed+16*1024*1024)throw Error('Free some device storage before analyzing this song. Its separated audio needs temporary space.');
- const dir=await(await directory()).getDirectoryHandle(key,{create:true}),marker=await(await dir.getFileHandle('started.json',{create:true})).createWritable();await marker.write(JSON.stringify({createdAt:Date.now(),sourceId}));await marker.close();
+ const dir=await(await directory()).getDirectoryHandle(key,{create:true}),marker=await(await dir.getFileHandle('started.json',{create:true})).createWritable();await marker.write(JSON.stringify({createdAt:metadataNow(),sourceId}));await marker.close();
  // Remove the commit marker before replacing any stem file. A worker killed
  // between independent stream closes must never expose a mixed old/new set.
  try{await dir.removeEntry('complete.json');}catch(e){if(e.name!=='NotFoundError')throw e;}
@@ -101,7 +105,7 @@ async function create(key,sampleCount,config,sourceId=''){
   full=await(await dir.getFileHandle('voice-full.wav',{create:true})).createWritable();fullDigest=new Sha256();const fullHeader=header(sampleCount,44100);await full.write(fullHeader);fullDigest.update(fullHeader);
  }catch(e){for(const writer of Object.values(writers))await writer.stream.abort().catch(()=>{});if(full)await full.abort().catch(()=>{});await discard(key);throw e;}
  const fullWriter=new FloatWriter(full,fullDigest);let finished=false;
- return {key,async append(chunk){if(finished)throw Error('Analysis audio is already complete.');if(chunk.sampleRate!==44100)throw Error('Separated audio has an unsupported sample rate.');if(!(chunk.vocals instanceof Float32Array)||!(chunk.accompaniment instanceof Float32Array)||chunk.vocals.length!==chunk.accompaniment.length)throw Error('Separated audio layers must have matching sample counts.');await writers.vocals.push(chunk.vocals,chunk.startSample);await writers.accompaniment.push(chunk.accompaniment,chunk.startSample);await fullWriter.push(chunk.vocals);},async finish(){const files={};for(const name of ['vocals','accompaniment'])files[name+'.wav']={bytes:44+expected*4,sha256:await writers[name].finish()};await full.close();files['voice-full.wav']={bytes:44+sampleCount*4,sha256:fullDigest.hex()};const meta={version:2,key,createdAt:Date.now(),sampleRate:RATE,samples:expected,duration:sampleCount/44100,sourceId,fullSamples:sampleCount,files};const stream=await(await dir.getFileHandle('complete.json',{create:true})).createWritable();await stream.write(JSON.stringify(meta));await stream.close();finished=true;return meta;},async abort(){if(full)await full.abort().catch(()=>{});for(const writer of Object.values(writers))await writer.stream.abort().catch(()=>{});await discard(key);}};
+ return {key,async append(chunk){if(finished)throw Error('Analysis audio is already complete.');if(chunk.sampleRate!==44100)throw Error('Separated audio has an unsupported sample rate.');if(!(chunk.vocals instanceof Float32Array)||!(chunk.accompaniment instanceof Float32Array)||chunk.vocals.length!==chunk.accompaniment.length)throw Error('Separated audio layers must have matching sample counts.');await writers.vocals.push(chunk.vocals,chunk.startSample);await writers.accompaniment.push(chunk.accompaniment,chunk.startSample);await fullWriter.push(chunk.vocals);},async finish(){const files={};for(const name of ['vocals','accompaniment'])files[name+'.wav']={bytes:44+expected*4,sha256:await writers[name].finish()};await full.close();files['voice-full.wav']={bytes:44+sampleCount*4,sha256:fullDigest.hex()};const meta={version:2,key,createdAt:metadataNow(),sampleRate:RATE,samples:expected,duration:sampleCount/44100,sourceId,fullSamples:sampleCount,files};const stream=await(await dir.getFileHandle('complete.json',{create:true})).createWritable();await stream.write(JSON.stringify(meta));await stream.close();finished=true;return meta;},async abort(){if(full)await full.abort().catch(()=>{});for(const writer of Object.values(writers))await writer.stream.abort().catch(()=>{});await discard(key);}};
 }
 function validMeta(meta){return !!meta&&(meta.version===1||meta.version===2)&&validKey(meta.key)&&meta.sampleRate===RATE&&Number.isSafeInteger(meta.samples)&&Number.isFinite(meta.duration)&&Math.abs(meta.samples/RATE-meta.duration)<=1/RATE;}
 async function storedMeta(meta){
