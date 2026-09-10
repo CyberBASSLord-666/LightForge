@@ -4,12 +4,16 @@
     "sha256": "db90d4ec041da4dc4924d7e806fba03060c5cad17e461932a97d453186b32ba5"
   },
   "analyzer.js": {
-    "bytes": 9806,
-    "sha256": "fb3a3d09c2fbcd4acc9fa24cdf97370f74d200e1a545240fbfc9865e42b1aef3"
+    "bytes": 10313,
+    "sha256": "ed59f71d84e020da6e63b955e5049614efebb65ef875f42600c68c3fadd025ae"
   },
   "bass-notes.js": {
     "bytes": 14748,
     "sha256": "5b81e2361295a1f8c02086d4668464ed1d7e93c923513c50a2c865a7aeb1531e"
+  },
+  "diagnostic-clock.js": {
+    "bytes": 3226,
+    "sha256": "4c88c58030305f37458860ca3355e3b059ce2eb18450eff6f51a15a19a53aa7d"
   },
   "dsp.js": {
     "bytes": 31844,
@@ -324,7 +328,8 @@
     "sha256": "94cc60efb59146e1a12546d51871e8c45c6fcbec67d1090972deb0f313d001d2"
   },
   "worker.js": {
-    "bytes": 33548,
-    "sha256": "ccf372febacab80c0ab65cf60ac43c16aa3b7669b1893a956cf921f9722c0c96"
+    "bytes": 34630,
+    "sha256": "3cd476aeb13c76ea781d32885eb9b715bf0b0d25df40a174f221d126c70cc8c2"
   }
 }
+
