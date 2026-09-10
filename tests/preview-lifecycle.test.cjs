@@ -153,7 +153,7 @@ function renderer() {
   const preview = Object.create(context.window.VehiclePreview.prototype);
   Object.assign(preview, {
     _raf: 0, _paused: false, _disposed: false, _intersecting: true, _hasSize: true,
-    lost: false, _lastRenderAt: 0, _warmupFrames: 5, renderCount: 0,
+    loaded: true, environment: {}, lost: false, _lastRenderAt: 0, _warmupFrames: 5, renderCount: 0,
     width: 320, height: 200, view: 'custom', last: [null, 0],
     canvas: {dataset: {}, getBoundingClientRect: () => ({width: 640, height: 400})},
     renderer: {shadowMap: {}, info: {reset() {}}, setSize() { gpuResizes++; }},
@@ -211,4 +211,35 @@ test('renderer resume never submits or reallocates while the document remains hi
   p.requestDraw();
   t.raf.flush(200);
   assert.equal(t.gpuDraws, 1);
+});
+
+test('renderer defers lighting generation and frame submission until the model is loaded and visible', () => {
+  const t = renderer(), p = t.preview, events = [];
+  p.loaded = false;
+  p.environment = null;
+  p.createEnvironment = () => { events.push('lighting'); p.environment = {}; };
+  const render = p.composer.render;
+  p.composer.render = () => { events.push('frame'); render(); };
+  p.render({frame: 24, time: 0.48}, 0.48);
+  p.requestDraw();
+  p.draw(100);
+  assert.equal(t.raf.pending.size, 0, 'An unloaded model must not schedule empty GPU frames');
+  assert.deepEqual(events, []);
+  p.loaded = true;
+  t.setHidden(true);
+  p.requestDraw();
+  p.draw(200);
+  assert.deepEqual(events, [], 'A completed model load must not generate lighting while hidden');
+  t.setHidden(false);
+  p.setPaused(true);
+  p.draw(250);
+  assert.deepEqual(events, [], 'Native pause must also defer lighting generation');
+  p.setPaused(false);
+  t.raf.flush(300);
+  assert.deepEqual(events, ['lighting', 'frame']);
+  assert.equal(p.last[0].frame, 24, 'The delayed first draw must retain the latest show frame');
+  assert.equal(p.last[1], 0.48);
+  p.redraw();
+  t.raf.flush(400);
+  assert.deepEqual(events, ['lighting', 'frame', 'frame'], 'Lighting is generated once per graphics context');
 });

@@ -59,3 +59,84 @@ test('native studio delegates work, blocks stale saves, reconnects, and loads th
   assert.equal(d.getElementById('backgroundRetry').textContent,'Resume analysis');
  }finally{dom.window.close();}
 });
+
+async function completedReconnect({acknowledged=false,hold=false}={}){
+ const dom=new JSDOM(fs.readFileSync(path.join(root,'web/index.html'),'utf8'),{url:'https://appassets.androidplatform.net/',runScripts:'outside-only'}),w=dom.window;
+ const polls=[];let restores=0,fetches=0,saved,bootstrap={projects:[],version:'2.2.4'};
+ const completed={id:'completed-project',name:'Completed',duration:2,projectUrl:'/project/completed/project.json',audioUrl:'/project/completed/audio.wav'};
+ const lastSelected={...completed,id:'last-selected-project',name:'Last selected',projectUrl:'/project/last/project.json'};
+ const job={id:'completed-job',projectId:completed.id,state:'completed',progress:1};
+ let enteredResolve,release;const entered=new Promise(r=>enteredResolve=r),gate=new Promise(r=>release=r);
+ Object.defineProperty(w.document,'hidden',{value:false,configurable:true});
+ w.scrollTo=()=>{};w.requestAnimationFrame=()=>1;w.cancelAnimationFrame=()=>{};w.matchMedia=()=>({matches:true,addEventListener(){}});
+ w.setInterval=(callback,delay)=>{if(delay===2000)polls.push(callback);return polls.length+1;};w.clearInterval=()=>{};
+ w.HTMLMediaElement.prototype.pause=function(){};w.HTMLMediaElement.prototype.load=function(){};
+ w.VehiclePreview=class{render(){}setPaused(){}setCamera(){}setStage(){}setQuality(){}resize(){}};
+ w.LightForgeVersion=require('../web/version.js');w.ShowEngine=require('../web/engine/show-engine.js');w.VehicleProfile=require('../web/engine/vehicle-profile.js');w.MusicCues=require('../web/engine/music-cues.js');
+ w.Android={pickAudio(){},getBootstrap:()=>JSON.stringify(bootstrap),saveProject:()=>true,startAnalysis(){throw Error('Reconnection must not restart analysis');},getAnalysisStatus:()=>JSON.stringify(job)};
+ w.fetch=async()=>{fetches++;return{ok:true,json:async()=>structuredClone(saved)};};
+ w.ShowCompiler={restore:async(compiled,m,s,_progress,signal)=>{
+  restores++;enteredResolve();
+  if(hold)await new Promise((resolve,reject)=>{
+   const abort=()=>reject(new w.DOMException('Restore superseded','AbortError'));
+   if(signal.aborted){abort();return;}signal.addEventListener('abort',abort,{once:true});
+   gate.then(()=>{signal.removeEventListener('abort',abort);resolve();});
+  });
+  if(signal.aborted)throw new w.DOMException('Restore superseded','AbortError');
+  return runWorker(path.join(root,'web/engine'),{action:'restore',compiled,music:m,settings:s});
+ }};
+ try{
+  w.eval(fs.readFileSync(path.join(root,'web/app.js'),'utf8'));const app=w.LightForgeApp,settings=structuredClone(app.state.settings);
+  const result=await runWorker(path.join(root,'web/engine'),{action:'generate',music,settings});saved={settings,music,compiled:result.compiled,needAnalysis:false};
+  if(acknowledged)w.localStorage.setItem('lightforge-background-ack',job.id);
+  bootstrap={projects:[completed,lastSelected],lastProjectId:lastSelected.id,version:'2.2.4',backgroundJob:job};
+  return{w,app,job,entered,release,polls,completed,lastSelected,get restores(){return restores;},get fetches(){return fetches;},close:()=>{release();w.close();}};
+ }catch(error){release();w.close();throw error;}
+}
+
+test('completed bootstrap restores once across poll/native races and preserves later Guide navigation',async()=>{
+ const t=await completedReconnect({hold:true});
+ try{
+  const bootstrap=t.app.readBootstrap();await t.entered;
+  assert.equal(t.app.state.backgroundApplying,true,'The completion handler must own the restore before waiting for its worker');
+  t.app.nav('guide');
+  for(let i=0;i<3;i++)t.w.onNativeEvent('analysisJob',t.job);
+  assert.equal(t.polls.length,1);for(const poll of t.polls)await poll();
+  assert.equal(t.restores,1,'Repeated completion delivery must not start a second verification worker');
+  assert.equal(t.fetches,1);
+  assert.equal(t.app.state.view,'guide');
+  t.release();await bootstrap;
+  assert.equal(t.restores,1);assert.equal(t.fetches,1);
+  assert.equal(t.app.state.project.id,t.completed.id);assert.ok(t.app.state.show.validation.valid);
+  assert.equal(t.w.localStorage.getItem('lightforge-background-ack'),t.job.id);
+  for(const key of ['loadingProject','composing','backgroundApplying','backgroundSyncPending'])assert.equal(t.app.state[key],false,key+' remained latched');
+  assert.equal(t.app.state.view,'guide','Completed restoration must not override navigation made while it was pending');
+ }finally{t.close();}
+});
+
+test('acknowledged completion restores the last selected project once',async()=>{
+ const t=await completedReconnect({acknowledged:true});
+ try{
+  await t.app.readBootstrap();
+  assert.equal(t.restores,1);assert.equal(t.fetches,1);
+  assert.equal(t.app.state.project.id,t.lastSelected.id,'An old acknowledged job must not replace the last selected project');
+  assert.ok(t.app.state.show.validation.valid);assert.equal(t.w.localStorage.getItem('lightforge-background-ack'),t.job.id);
+  assert.equal(t.app.state.loadingProject,false);assert.equal(t.app.state.composing,false);assert.equal(t.app.state.backgroundSyncPending,false);
+  t.app.nav('guide');await t.app.selectProject(t.completed,true);
+  assert.equal(t.app.state.view,'studio','Explicit project selection must still open the studio by default');
+ }finally{t.close();}
+});
+
+test('a completed job arriving while Guide is open restores without taking over navigation',async()=>{
+ const t=await completedReconnect({hold:true});
+ try{
+  t.app.nav('guide');t.w.onNativeEvent('analysisJob',t.job);await t.entered;
+  assert.equal(t.app.state.backgroundApplying,true);
+  assert.equal(t.app.state.view,'guide','Completion delivery must not navigate before its asynchronous restore');
+  t.release();await waitFor(()=>!t.app.state.backgroundApplying&&!t.app.state.backgroundSyncPending);
+  assert.equal(t.restores,1);assert.equal(t.fetches,1);assert.ok(t.app.state.show.validation.valid);
+  assert.equal(t.w.localStorage.getItem('lightforge-background-ack'),t.job.id);
+  for(const key of ['loadingProject','composing','backgroundApplying','backgroundSyncPending'])assert.equal(t.app.state[key],false,key+' remained latched');
+  assert.equal(t.app.state.view,'guide','Completion delivery must not navigate after its asynchronous restore');
+ }finally{t.close();}
+});

@@ -54,6 +54,18 @@ jobs:
           nohup "$ANDROID_HOME/emulator/emulator" -avd LightForge -no-window -no-audio -no-metrics -partition-size 6144 -no-boot-anim -no-snapshot -gpu swiftshader_indirect -memory 4096 -cores 2 -camera-back none -camera-front none > emulator.log 2>&1 < /dev/null &
       - name: Run complete background suite with readiness evidence
         run: python3 tools/run_android_background_tests.py
+      - name: Retain background evidence before diagnostic export tests
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: lightforge-2.2.4-readiness-background-${{ github.run_id }}
+          path: |
+            qa/release-2.2.4/android-*
+            diagnostic-input/*.json
+            diagnostic-input/*.sha256
+            emulator.log
+          if-no-files-found: error
+          retention-days: 30
       - name: Run complete crash recovery and export suite
         if: ${{ !cancelled() && steps.prepare.outcome == 'success' && steps.emulator.outcome == 'success' }}
         run: python3 tools/run_android_diagnostics_tests.py

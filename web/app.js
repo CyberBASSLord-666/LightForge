@@ -95,7 +95,10 @@ async function readBootstrap(){
   renderDeviceCapabilities(data.deviceCapabilities);
  }else{state.projects=parse(localStorage.getItem('lightforge-projects'),[]);state.lastProjectId=localStorage.getItem('lightforge-last-project');renderProjects();}
  try{state.settings=mergeSettings(parse(localStorage.getItem('lightforge-settings'),defaults));}catch{}
- syncControls();if(!state.project&&state.lastProjectId){const p=state.projects.find(p=>p.id===state.lastProjectId);if(p)await selectProject(p);}
+ // An unacknowledged completed job owns its restore in handleBackgroundJob.
+ // Loading it here first duplicates verification and can reopen the studio
+ // after the user has navigated away during that first asynchronous restore.
+ syncControls();if(!state.project&&state.lastProjectId&&!state.backgroundSyncPending){const p=state.projects.find(p=>p.id===state.lastProjectId);if(p)await selectProject(p);}
  if(background)await handleBackgroundJob(background);
 }
 function applyBootstrap(data){if(Array.isArray(data.projects)){state.projects=data.projects;for(const project of data.projects)diagnostics?.protectText(project.name);}if(data.version)text($('appVersion'),data.version);if('pendingExport'in data)state.pendingExport=data.pendingExport;if(state.project){const p=state.projects.find(p=>p.id===state.project.id);if(p){Object.assign(state.project,p);text($('trackTitle'),p.name);}}if(state.pendingProjectAction?.kind==='rename'){state.pendingProjectAction=null;endBusy();toast('Show renamed.');}renderProjects();document.dispatchEvent(new CustomEvent('lightforge:changed'));}
@@ -109,7 +112,7 @@ async function dbPut(store,key,value){const d=await db();return new Promise((res
 async function dbDelete(store,key){const d=await db();return new Promise((resolve,reject)=>{const tx=d.transaction(store,'readwrite');tx.objectStore(store).delete(key);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);});}
 function encodeWav(buffer){const frames=buffer.length,bytes=new ArrayBuffer(44+frames*4),v=new DataView(bytes),write=(p,s)=>{for(let i=0;i<s.length;i++)v.setUint8(p+i,s.charCodeAt(i));};write(0,'RIFF');v.setUint32(4,36+frames*4,true);write(8,'WAVEfmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,2,true);v.setUint32(24,44100,true);v.setUint32(28,176400,true);v.setUint16(32,4,true);v.setUint16(34,16,true);write(36,'data');v.setUint32(40,frames*4,true);const l=buffer.getChannelData(0),r=buffer.getChannelData(Math.min(1,buffer.numberOfChannels-1));for(let i=0;i<frames;i++){v.setInt16(44+i*4,Math.round(Math.max(-1,Math.min(1,l[i]))*32767),true);v.setInt16(46+i*4,Math.round(Math.max(-1,Math.min(1,r[i]))*32767),true);}return new Blob([bytes],{type:'audio/wav'});}
 async function importBrowser(file){if(!file)return;diagnostics?.protectText(file.name);diagnostics?.protectText(file.name.replace(/\.[^.]+$/,''));const job=beginBusy('Bringing your music in','Converting audio to the format your Tesla needs.');try{const ctx=new (window.AudioContext||window.webkitAudioContext)();const decoded=await ctx.decodeAudioData(await file.arrayBuffer());await ctx.close();if(job!==state.job)return;const offline=new OfflineAudioContext(2,Math.ceil(decoded.duration*44100),44100),source=offline.createBufferSource();source.buffer=decoded;source.connect(offline.destination);source.start();const pcm=await offline.startRendering();if(job!==state.job)return;const wav=encodeWav(pcm),id='show-'+Date.now(),project={id,name:file.name.replace(/\.[^.]+$/,''),duration:pcm.duration,createdAt:Date.now(),audioUrl:URL.createObjectURL(wav),browser:true};await dbPut('audio',id,wav);state.projects.unshift(project);localStorage.setItem('lightforge-projects',JSON.stringify(state.projects));endBusy();await selectProject(project,true);toast('Music imported. Choose your style and create.');}catch(e){diagnostics?.log('error','operation',e);endBusy();toast('This audio could not be imported. '+(e.message||'Try another file.'),true);}}
-async function selectProject(project,isNew=false){
+async function selectProject(project,isNew=false,{navigate=true}={}){
  diagnostics?.protectText(project?.name);
  stopInspection(); if(state.busy)return;clearTimeout(saveTimer);if(state.project&&!state.loadingProject&&!(await saveProject()))return;state.compileAbort?.abort();state.compileId++;state.composing=false;const selection=++state.selection,id=project.id;
  const current=()=>selection===state.selection&&state.project?.id===id;
@@ -117,7 +120,7 @@ async function selectProject(project,isNew=false){
  state.project=project;state.saveBlocked=false;state.loadingProject=true;state.music=null;state.show=null;state.compiled=null;state.history=[];state.future=[];state.renderedSettingsKey=null;state.showMusic=null;state.editing=null;state.needAnalysis=false;lastSection=-1;
  $('results').hidden=true;$('validationCard').hidden=true;$('sectionEditor').hidden=true;$('noShowOverlay').hidden=false;$('emptyCard').hidden=true;$('workingStudio').hidden=false;
  document.querySelector('.controls-column').inert=true;
- text($('trackTitle'),project.name||'Untitled show');text($('trackMeta'),isNew?'Audio ready':'Opening saved project…');text($('totalTime'),formatTime(project.duration));$('seek').max=project.duration||1;audio.src=project.previewUrl||project.audioUrl||'';nav('studio');updateButtons();
+ text($('trackTitle'),project.name||'Untitled show');text($('trackMeta'),isNew?'Audio ready':'Opening saved project…');text($('totalTime'),formatTime(project.duration));$('seek').max=project.duration||1;audio.src=project.previewUrl||project.audioUrl||'';if(navigate)nav('studio');else resizeCanvases();updateButtons();
  try{let saved;
   if(!isNew){if(project.browser){const blob=await dbGet('audio',id);if(!current())return;if(blob){if(project.audioUrl?.startsWith('blob:'))URL.revokeObjectURL(project.audioUrl);project.audioUrl=URL.createObjectURL(blob);audio.src=project.audioUrl;}saved=await dbGet('projects',id);if(!current())return;
    }else if(project.projectUrl){const response=await fetch(project.projectUrl);if(!current())return;if(response.ok){saved=await response.json();if(!current())return;}}}
@@ -220,7 +223,7 @@ async function handleBackgroundJob(job){
   try{
    clearTimeout(saveTimer);applyBootstrap(parse(bridge('getBootstrap'),{}));
    const project=state.projects.find(p=>p.id===job.projectId);if(!project)throw Error('The completed project could not be found.');
-   state.lastSaved=null;await selectProject(project,false);
+   state.lastSaved=null;await selectProject(project,false,{navigate:false});
    if(state.saveBlocked)throw Error('The saved show could not be opened.');
    state.backgroundSyncPending=false;localStorage.setItem('lightforge-background-ack',job.id);
    toast('Your background show is ready. Press play to review it.');

@@ -38,8 +38,7 @@ class VehiclePreview {
   this.controls.addEventListener('start',()=>{this.tween=null;this.view='custom';this.onViewChange?.(this.view,labels.custom);this.requestDraw();});
   this.controls.addEventListener('change',()=>{if(!this._drawing)this.requestDraw();});this.controls.addEventListener('end',()=>this.requestDraw());
   this.canvas.addEventListener('keydown',e=>{let a=0,b=0;if(e.key==='ArrowLeft')a=-.12;if(e.key==='ArrowRight')a=.12;if(e.key==='ArrowUp')b=.08;if(e.key==='ArrowDown')b=-.08;if(!a&&!b)return;e.preventDefault();this.view='custom';this.tween=null;const s=new THREE.Spherical().setFromVector3(this.camera.position.clone().sub(this.controls.target));s.theta-=a;s.phi=clamp(s.phi-b,.14,Math.PI/2-.035);this.camera.position.copy(new THREE.Vector3().setFromSpherical(s).add(this.controls.target));this.onViewChange?.(this.view,labels.custom);this.requestDraw();});
-  // Build the lighting texture with the first visible, loaded model. Rendering
-  // the empty stage here competes with model loading and project restoration.
+  this.createEnvironment();
   this.ambient=new THREE.HemisphereLight(0xc4dcf2,0x30323b,.65);this.scene.add(this.ambient);
   this.key=new THREE.DirectionalLight(0xe5f2ff,1.25);this.key.position.set(-3,6,-4);this.key.castShadow=true;this.key.shadow.mapSize.set(qualityPresets[this.effectiveQuality].shadowSize,qualityPresets[this.effectiveQuality].shadowSize);Object.assign(this.key.shadow.camera,{left:-4,right:4,top:4,bottom:-4,near:.1,far:15});this.key.shadow.normalBias=.035;this.key.shadow.bias=-.0004;this.key.shadow.radius=3;this.scene.add(this.key);
   this.rim=new THREE.DirectionalLight(0xb1c8df,.85);this.rim.position.set(4,3,3);this.scene.add(this.rim);
@@ -134,11 +133,10 @@ class VehiclePreview {
   if(level<2&&this._slowSamples>=24&&now-this._lastQualityChange>1500)this.applyQuality(qualityOrder[level+1],'Automatic quality reduced raster detail after sustained slow frames. Lamp brightness, fades and movement timing are unchanged.');
   else if(level>0&&this._fastSamples>=180&&now-this._lastQualityChange>8000)this.applyQuality(qualityOrder[level-1],'Automatic quality increased raster detail after sustained headroom.');
  }
- requestDraw(){if(!this._raf&&this.loaded&&this.isVisible())this._raf=requestAnimationFrame(t=>this.draw(t));}
- draw(now){this._raf=0;if(!this.renderer||!this.loaded||!this.isVisible()||!this.width||!this.height)return;
+ requestDraw(){if(!this._raf&&this.isVisible())this._raf=requestAnimationFrame(t=>this.draw(t));}
+ draw(now){this._raf=0;if(!this.renderer||!this.isVisible()||!this.width||!this.height)return;
   this._drawing=true;let animate=false;const start=performance.now();
   try{if(this._restorePending){this._restorePending=false;this.createEnvironment();this.composer.reset();this.applyQuality(this.effectiveQuality,'Graphics recovered; keeping your selected quality.',true);this.renderer.shadowMap.needsUpdate=true;this.resize();this.setStatus('3D · Highland','ready');}
-   else if(!this.environment)this.createEnvironment();
    if(this.tween){const u=this.tween.duration?clamp((now-this.tween.start)/this.tween.duration):1;this.camera.position.lerpVectors(this.tween.from,this.tween.to,1-Math.pow(1-u,3));this._snapshotDirty=true;if(u>=1)this.tween=null;else animate=true;}
    if(this.controls.update()){animate=true;this._snapshotDirty=true;}this.renderer.info.reset();this.composer.render();this.renderCount++;
   }finally{this._drawing=false;}

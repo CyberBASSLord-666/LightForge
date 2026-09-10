@@ -9,6 +9,7 @@ from pathlib import Path
 import re
 import secrets
 import shutil
+import struct
 import subprocess
 import sys
 import tempfile
@@ -27,6 +28,8 @@ APK_SHA256 = 'cb8baf01ac9ba2422ceaa3f8cf0883d9cc2d61a4058d2acab2546fba669d23b6'
 APK_BYTES = 1204357470
 CI_CERTIFICATE = '0f3d49f3d436df33be3529c7cf7760c00d963561091507af2a9ec218c371e998'
 APK_NAME = 'LightForge-2.2.4.apk'
+PATCH_PATHS = frozenset({'web/app.js', 'web/preview/src/vehicle-preview.js', 'web/preview/vehicle-preview.js'})
+PATCH_MANIFEST = ROOT / 'tools/android-readiness-patch.json'
 
 
 def check(condition, message):
@@ -40,17 +43,39 @@ def digest(path):
 
 
 def payloads(path):
-    """Bind every uncompressed ZIP entry except APK/JAR signature metadata."""
+    """Bind entry metadata and raw/uncompressed bytes, excluding only signatures.
+
+    Header offsets and local alignment padding may change during zipalign.
+    Central-directory metadata and compressed streams must otherwise survive.
+    """
     result = {}
-    with zipfile.ZipFile(path) as archive:
+    with zipfile.ZipFile(path) as archive, path.open('rb') as raw:
+        check(not archive.comment, 'Unexpected APK archive comment')
         names = [item.filename for item in archive.infolist()]
         check(len(names) == len(set(names)), 'Duplicate APK ZIP entries')
         for item in archive.infolist():
             if item.filename in {'META-INF/MANIFEST.MF', 'META-INF/LIGHTFOR.SF', 'META-INF/LIGHTFOR.RSA'}:
                 continue
+            raw.seek(item.header_offset)
+            header = raw.read(30)
+            check(len(header) == 30 and header[:4] == b'PK\x03\x04', 'Invalid local ZIP header')
+            name_bytes, extra_bytes = struct.unpack_from('<HH', header, 26)
+            raw.seek(name_bytes + extra_bytes, 1)
+            compressed_hash, remaining = hashlib.sha256(), item.compress_size
+            while remaining:
+                block = raw.read(min(1024 * 1024, remaining))
+                check(block, 'Truncated compressed APK entry')
+                compressed_hash.update(block)
+                remaining -= len(block)
             with archive.open(item) as stream:
                 result[item.filename] = dict(bytes=item.file_size, compression=item.compress_type,
-                                             sha256=hashlib.file_digest(stream, 'sha256').hexdigest())
+                                             sha256=hashlib.file_digest(stream, 'sha256').hexdigest(),
+                                             compressed_bytes=item.compress_size, compressed_sha256=compressed_hash.hexdigest(),
+                                             crc32=item.CRC, date_time=list(item.date_time), create_system=item.create_system,
+                                             create_version=item.create_version, extract_version=item.extract_version,
+                                             flag_bits=item.flag_bits, internal_attr=item.internal_attr,
+                                             external_attr=item.external_attr, comment_hex=item.comment.hex(),
+                                             extra_hex=item.extra.hex())
     check({'AndroidManifest.xml', 'resources.arsc', 'classes.dex'} <= result.keys(), 'Required APK payload entries missing')
     return result
 
@@ -59,6 +84,15 @@ def main():
     check(os.environ.get('GITHUB_REPOSITORY') == REPOSITORY, 'This diagnostic input belongs to another repository')
     check(os.environ.get('GITHUB_REF') == 'refs/heads/diagnostics/2.2.4-readiness', 'Diagnostic branch required')
     check(json.loads((ROOT / 'version.json').read_text()) == {'name': '2.2.4', 'code': 20204}, 'Unexpected release version')
+    manifest = json.loads(PATCH_MANIFEST.read_text())
+    patches = manifest.get('reviewed_web_sha256', {})
+    check(manifest.get('diagnostic_only') is True and manifest.get('base_head_sha') == HEAD_SHA
+          and manifest.get('base_apk_sha256') == APK_SHA256 and set(patches) == PATCH_PATHS,
+          'Patch manifest must identify exactly the three reviewed web assets and pinned base')
+    for name, expected in patches.items():
+        check(isinstance(expected, str) and re.fullmatch(r'[0-9a-f]{64}', expected), 'Reviewed patch SHA256 pin missing: ' + name)
+        check((ROOT / name).is_file() and not (ROOT / name).is_symlink()
+              and digest(ROOT / name) == expected, 'Reviewed patch source differs from its pin: ' + name)
     provenance = ROOT / 'diagnostic-input'
     provenance.mkdir(exist_ok=True)
     tool = Path(os.environ.get('LIGHTFORGE_TOOLCHAIN_DIR', ROOT.parent / 'toolchain'))
@@ -84,15 +118,20 @@ def main():
           and artifact['workflow_run']['id'] == RUN_ID and artifact['workflow_run']['head_sha'] == HEAD_SHA
           and artifact['digest'] == 'sha256:' + ARTIFACT_SHA256, 'Candidate artifact identity mismatch')
     run('git', 'fetch', '--no-tags', 'origin', HEAD_SHA)
-    run('git', 'diff', '--exit-code', HEAD_SHA, 'HEAD', '--', 'android', 'web', 'version.json')
-    run('git', 'diff', '--exit-code', HEAD_SHA, '--', 'android', 'web', 'version.json')
+    changed = set(filter(None, run('git', 'diff', '--name-only', '-z', HEAD_SHA, 'HEAD', '--', 'android', 'web', 'version.json').split('\0')))
+    check(changed == PATCH_PATHS, 'Production source diff must be exactly the three reviewed web files')
+    run('git', 'diff', '--exit-code', 'HEAD', '--', 'android', 'web', 'version.json')
+    check(not run('git', 'ls-files', '--others', '--exclude-standard', '--', 'android', 'web', 'version.json').strip(),
+          'Unexpected untracked production source')
     summary = dict(diagnostic_only=True, release_eligible=False, input_run_id=RUN_ID,
                    input_head_sha=HEAD_SHA, input_job_id=JOB_ID, input_job_conclusion='success',
                    input_run_conclusion=source_run['conclusion'], input_artifact_id=ARTIFACT_ID,
                    input_artifact_sha256=ARTIFACT_SHA256,
                    probe_head_sha=run('git', 'rev-parse', 'HEAD').strip(),
-                   production_source_diff='empty for android/, web/, version.json')
+                   production_source_diff='exactly the three pinned web assets; all other android/, web/, version.json unchanged',
+                   reviewed_patch_manifest_sha256=digest(PATCH_MANIFEST), patched_web_sha256=patches)
     (provenance / 'provenance.json').write_text(json.dumps(summary, indent=2) + '\n')
+    shutil.copyfile(PATCH_MANIFEST, provenance / 'reviewed-web-patch.json')
     archive_path = provenance / 'candidate.zip'
     with archive_path.open('wb') as output:
         subprocess.run(['gh', 'api', 'repos/' + REPOSITORY + '/actions/artifacts/' + str(ARTIFACT_ID) + '/zip'],
@@ -125,6 +164,22 @@ def main():
     (provenance / 'input-payloads.json').write_text(json.dumps(before, indent=2) + '\n')
     out = ROOT / 'build/readiness-probe'
     out.mkdir(parents=True, exist_ok=True)
+    entries = {'assets/' + name.removeprefix('web/'): name for name in PATCH_PATHS}
+    check(set(entries) <= before.keys(), 'A reviewed replacement is absent from the base APK')
+    stage = out / 'patch-assets'
+    for entry, name in entries.items():
+        destination = stage / entry
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(ROOT / name, destination)
+        check(digest(destination) == patches[name], 'Patch changed while staging: ' + name)
+    patched = out / 'patched.apk'
+    shutil.copyfile(source_apk, patched)
+    # Info-ZIP copies untouched compressed streams directly. Only these three
+    # explicitly named small assets are compressed; no model is repacked.
+    subprocess.run(['zip', '-q', '-X', '-D', '-9', str(patched), *sorted(entries)], cwd=stage, env=env, check=True)
+    aligned = out / 'patched-aligned.apk'
+    run(build / 'zipalign', '-P', '16', '-f', '4', patched, aligned)
+    patched.unlink()
     generated = out / 'generated'
     generated.mkdir(exist_ok=True)
     native = ROOT / 'qa/release-2.2.4/native-classes'
@@ -157,12 +212,22 @@ def main():
         run(build / 'apksigner', 'sign', '--ks', key / 'lightforge-release.jks',
             '--ks-key-alias', 'lightforge', '--ks-pass', 'file:' + str(password),
             '--v1-signing-enabled', 'true', '--v2-signing-enabled', 'true', '--v3-signing-enabled', 'true',
-            '--v4-signing-enabled', 'false', '--alignment-preserved', 'true', '--out', target, source_apk)
+            '--v4-signing-enabled', 'false', '--alignment-preserved', 'true', '--out', target, aligned)
         new_certificate = certificate(target)
         check(new_certificate not in (SIGNING_SHA256, CI_CERTIFICATE), 'Fresh diagnostic signer was not created')
         run(build / 'zipalign', '-c', '-P', '16', '4', target)
         after = payloads(target)
-        check(before == after, 'Re-signing changed a non-signature APK payload')
+        check(before.keys() == after.keys(), 'Diagnostic patch added or removed a non-signature APK entry')
+        for entry, original in before.items():
+            if entry in entries:
+                name = entries[entry]
+                check(after[entry]['sha256'] == patches[name] == digest(ROOT / name)
+                      and after[entry]['bytes'] == (ROOT / name).stat().st_size,
+                      'Patched APK entry differs from the exact reviewed source: ' + name)
+            else:
+                check(original == after[entry], 'Unreviewed APK entry bytes or metadata changed: ' + entry)
+        (provenance / 'patched-payloads.json').write_text(json.dumps(after, indent=2) + '\n')
+        aligned.unlink()
         for builder in ('build_android_tests.py', 'build_diagnostics_tests.py'):
             subprocess.run([sys.executable, str(ROOT / 'tools' / builder)], cwd=ROOT,
                            env={**env, 'LIGHTFORGE_SIGNING_DIR': str(key)}, check=True)
@@ -173,13 +238,15 @@ def main():
     diagnostic_metadata = {**metadata, 'diagnostic_only': True, 'update_compatible': False,
                            'sha256': digest(target), 'bytes': target.stat().st_size,
                            'signing_certificate_sha256': new_certificate,
-                           'input_ci_sha256': APK_SHA256, 'input_ci_head_sha': HEAD_SHA}
+                           'input_ci_sha256': APK_SHA256, 'input_ci_head_sha': HEAD_SHA,
+                           'patched_web_sha256': patches, 'release_eligible': False}
     (candidate / (APK_NAME + '.json')).write_text(json.dumps(diagnostic_metadata, indent=2) + '\n')
     summary.update(input_apk=metadata, diagnostic_apk=diagnostic_metadata,
-                   unchanged_payload_entries=len(before), payload_comparison='all non-signature ZIP entries identical',
+                   unchanged_payload_entries=len(before) - len(entries), patched_payload_entries=len(entries),
+                   payload_comparison='exactly three pinned web replacements; every other non-signature entry metadata and raw/uncompressed bytes identical',
                    signing_key_destroyed=True)
     (provenance / 'provenance.json').write_text(json.dumps(summary, indent=2) + '\n')
-    print('Diagnostic APKs ready: unchanged app payload; newly compiled instrumentation; fresh ephemeral signer.')
+    print('Diagnostic APKs ready: exactly three reviewed web replacements; all other entry bytes/metadata unchanged; fresh ephemeral signer.')
 
 
 if __name__ == '__main__':

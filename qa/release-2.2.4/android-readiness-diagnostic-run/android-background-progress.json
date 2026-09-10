@@ -1,0 +1,80 @@
+{
+  "phase": "reconnect-completed-project",
+  "elapsedSeconds": 377.779,
+  "phaseElapsedSeconds": 49.096,
+  "checks": [
+    "Actual Studio native CPU separation, neural analysis and choreography completed with the Activity destroyed, screen off and Doze forced with user-equivalent battery exemption; result was durably saved."
+  ],
+  "powerTransition": {
+    "phase": "reconnect-completed-project",
+    "interactive": true,
+    "deepIdle": false,
+    "batteryExempt": true,
+    "controllerDeepState": "ACTIVE",
+    "commandOutput": "Light state: OVERRIDE, deep state: IDLE\nmForceModeManagerQuickDozeRequest: false\nmForceModeManagerOffBodyState: false"
+  },
+  "uiReadiness": {
+    "backgroundApplying": true,
+    "backgroundSyncPending": true,
+    "bootstrapInventoryReady": true,
+    "canvasRect": {
+      "bottom": 1093.1011962890625,
+      "height": 330,
+      "left": 16.761905670166016,
+      "right": 395.42859268188477,
+      "top": 763.1011962890625,
+      "width": 378.66668701171875
+    },
+    "composing": true,
+    "contextLost": false,
+    "documentHidden": false,
+    "documentState": "complete",
+    "loadingProject": false,
+    "previewFrames": 2,
+    "previewHasSize": true,
+    "previewIntersecting": true,
+    "previewModelReady": false,
+    "previewPaused": false,
+    "previewRendererVisible": true,
+    "previewVisible": true,
+    "projectRestoreIdle": false,
+    "ready": false,
+    "saveBlocked": false,
+    "viewport": {
+      "height": 842,
+      "scrollX": 0,
+      "scrollY": 0,
+      "width": 412
+    },
+    "phase": "reconnect-completed-project",
+    "probeStage": "waiting-for-javascript-response",
+    "waitSeconds": 32.98,
+    "nativeAttached": true,
+    "nativeShown": true,
+    "nativeWindowVisibility": 0,
+    "nativeWindowFocus": true,
+    "viewWidth": 1080,
+    "viewHeight": 2209
+  },
+  "job": {
+    "id": "7d493969-2d1c-4a5c-9352-4c3bca4c9112",
+    "projectId": "c6d47d3a-fa30-41c8-995a-3aa5a2c720bb",
+    "name": "Background audio",
+    "sourceSHA256": "4c9b062ff6fb71c4eff2ef55cf0ae08c1eba9730efbdc30b05fa004776b13868",
+    "analysisIdentity": "b64e11507fde51ad2b80c75666ed874594a8e88efbcb58439e3e7e30a223652d",
+    "state": "completed",
+    "stage": "Your show is ready",
+    "progress": 1,
+    "createdAt": 1788999866781,
+    "updatedAt": 1789000178257,
+    "hasCheckpoint": true,
+    "resumeAvailable": true,
+    "progressAt": 1789000178226,
+    "elapsedMs": 311445,
+    "completedStages": 3,
+    "restoredStages": 0,
+    "analysisStage": "save",
+    "checkpointAt": 1789000178131,
+    "checkpointSHA256": "baf4f0daf22f0f68a803d982f9ba85a4a5c51f1219efd172352ec721847ba385"
+  }
+}
