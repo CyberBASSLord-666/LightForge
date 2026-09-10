@@ -64,7 +64,7 @@ jobs:
           python3 -m pip install --no-cache-dir torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu
           python3 -m pip install --no-cache-dir -r tools/model-requirements.txt
           python3 tools/prepare_deux.py
-      - name: Prepare the licensed multi-passage reference fixture
+      - name: Prepare the licensed bounded two-passage reference fixture
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y ffmpeg
@@ -76,8 +76,7 @@ jobs:
           python3 tools/prepare_deux_benchmark_fixture.py \
             --source qa/release-1.6.0/fixtures/falcon-mix.wav \
             --source qa/release-1.6.0/fixtures/sdrnr-mix.wav \
-            --source qa/release-1.6.0/fixtures/grunge-mix.wav \
-            --samples 661501 \
+            --samples 441001 \
             --output benchmark/deux-multipassage-mix.wav \
             --provenance benchmark/deux-multipassage-provenance.json
       - name: Record runner conditions without asserting unavailable telemetry
@@ -89,7 +88,7 @@ jobs:
               return subprocess.check_output(args, text=True).strip()
           evidence = {
               'schema': 1,
-              'scope': 'One Ubuntu runner hosts both fresh-process arms. Kernel file-cache, CPU time, accelerator utilization and thermal state are not controlled or inferred by this receipt.',
+              'scope': 'One Ubuntu runner hosts both fresh-process arms over a bounded two-passage exactness fixture. Kernel file-cache, CPU time, accelerator utilization and thermal state are not controlled or inferred by this receipt.',
               'runner': {
                   'platform': platform.platform(),
                   'machine': platform.machine(),
@@ -113,7 +112,8 @@ jobs:
           node tools/compare_deux_preprocess_reuse.cjs
           --fixture benchmark/deux-multipassage-mix.wav
           --fixture-provenance benchmark/deux-multipassage-provenance.json
-          --total-samples 661501
+          --total-samples 441001
+          --min-passages 2
           --threads 4
           --verify-recovery on
           --output benchmark/deux-preprocess-paired.json

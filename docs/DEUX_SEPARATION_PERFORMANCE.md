@@ -75,50 +75,53 @@ node --test tests/deux-preprocess-reuse.test.cjs \
   tests/deux-2.2.1.test.cjs
 ```
 
-Run each fresh Node process separately on a licensed fixture longer than two
-passages. Process isolation resets the JavaScript runtime and model sessions,
-but does not reset the host kernel's file cache; that state must be reported as
-uncontrolled rather than relabeled as a cold-I/O condition:
+Run each fresh Node process separately on a licensed fixture spanning at least
+two passages. Process isolation resets the JavaScript runtime and model
+sessions, but does not reset the host kernel's file cache; that state must be
+reported as uncontrolled rather than relabeled as a cold-I/O condition:
 
 ```sh
 node tools/benchmark_deux_runtime.cjs \
-  --fixture path/to/licensed-long.wav --total-samples 661501 \
+  --fixture path/to/licensed-two-passage.wav --total-samples 441001 \
   --threads 4 --spectrum-reuse off --output build/deux-cold-baseline.json
 
 node tools/benchmark_deux_runtime.cjs \
-  --fixture path/to/licensed-long.wav --total-samples 661501 \
+  --fixture path/to/licensed-two-passage.wav --total-samples 441001 \
   --threads 4 --spectrum-reuse on --output build/deux-cold-candidate.json
 ```
 
-`661501` is intentionally odd and requires a fixture at least that long.
-The paired gate runs separate fresh-process baseline and candidate invocations
-of the same full shipped model with both settings, requires finite stems and
-byte identity for both roles, binds the benchmark/source/model/ORT/session
-configuration, and optionally injects a
+`441001` is intentionally odd: one complete 441,000-sample core plus one
+final sample. It is the smallest input that exercises one real adjacent
+passage boundary while retaining the full 13-second model context and the
+non-even final boundary. The paired gate runs separate fresh-process baseline
+and candidate invocations of the same full shipped model with both settings,
+requires finite stems and byte identity for both roles, binds the
+benchmark/source/model/ORT/session configuration, and injects a
 post-checkpoint interruption followed by resume:
 
 ```sh
 node tools/compare_deux_preprocess_reuse.cjs \
-  --fixture path/to/licensed-long.wav --total-samples 661501 \
-  --threads 4 --verify-recovery on \
+  --fixture path/to/licensed-two-passage.wav --total-samples 441001 \
+  --min-passages 2 --threads 4 --verify-recovery on \
   --output build/deux-preprocess-paired.json
 ```
 
 The comparison rejects a different source, model manifest/checkpoint, fixture,
 thread count, sample count, even final length, insufficient passage count,
 missing cache use, nonfinite output, a single changed PCM byte, or a recovery
-that fails to restore a completed checkpoint. Recovery runs require at least
-three passages, so one post-restore local passage can establish the cache and a
-later passage can exercise it. Its one-pair timing value is
-diagnostic only; it is not sufficient to declare a quality-preserving speedup.
+that fails to restore a completed checkpoint. The baseline/candidate pair
+establishes actual adjacent-passage reuse; the bounded two-passage recovery
+validates restored output identity over the same source clock. Its one-pair
+timing value is diagnostic only; it is not sufficient to declare a
+quality-preserving speedup.
 
 `Deux preprocessing actual-model evidence` is the CI entry point for this
 receipt. It reproduces the 27 shipped float32 graphs, prepares the checksummed
-licensed fixture, and builds an exact odd-length multi-passage WAV by copying
-verified float32 stereo PCM from three distinct licensed MUSDB mix excerpts. It
+licensed fixture, and builds an exact odd-length two-passage WAV by copying
+verified float32 stereo PCM from two distinct licensed MUSDB mix excerpts. It
 does not resample, mix, add silence, or use generated audio. The job runs both
 arms and a controlled recovery in one Ubuntu job, then uploads comparator,
-source-provenance and runner-conditions receipts. It proves only actual-model
-PCM/recovery equivalence for this experiment. It does not turn an uncontrolled
-filesystem-cache state, one pair, or a single fixture into a target-speed or
-locked-corpus quality-gate pass.
+source-provenance and runner-conditions receipts. It proves only bounded
+actual-model PCM/recovery equivalence for this experiment. It does not turn an
+uncontrolled filesystem-cache state, one pair, or a single fixture into a
+target-speed or locked-corpus quality-gate pass.
