@@ -284,8 +284,8 @@
     "sha256": "c2256c15be8a2285721fb16662915e0853de673a63a144e54b8d6838d5c1970a"
   },
   "telemetry.js": {
-    "bytes": 3053,
-    "sha256": "3a957c338803380ddad6a3ebca3a9c8d7f9fb4fe11c5f9d1be907516bf373b98"
+    "bytes": 3492,
+    "sha256": "f8d3470a9ee08b4ddfad59d1f554b2303db10a802263dae33bbf10d40ae2626d"
   },
   "vendor/ONNX-Runtime-LICENSE.txt": {
     "bytes": 1073,
