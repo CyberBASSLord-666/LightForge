@@ -38,3 +38,10 @@ test('cancelling while another tab owns the Web Lock clears the local admission 
 test('invalid identities fail closed before entering the scheduler',async()=>{
  const scheduler=load();await assert.rejects(scheduler.acquire({key:'not-a-checkpoint'}),/Invalid analysis scheduler identity/);assert.equal(scheduler.snapshot().active,0);
 });
+
+test('hostile navigator locks probes fall back to the local scheduler',async()=>{
+ const navigator={};Object.defineProperty(navigator,'locks',{get(){throw Error('blocked locks probe');}});
+ const context=vm.createContext({AbortController,DOMException,performance,navigator,setTimeout,clearTimeout});context.self=context;vm.runInContext(source,context);
+ const scheduler=context.LightForgeAnalysisScheduler,lease=await scheduler.acquire({key:key(9)});
+ assert.equal(scheduler.snapshot().crossContextMode,'single-context');assert.equal(lease.diagnostics().crossContextMode,'single-context');await lease.release();
+});
