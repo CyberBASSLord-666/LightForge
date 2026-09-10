@@ -12,8 +12,28 @@
  const cacheOutcomes=['hit','miss','restore','invalidate','write','corrupt','unknown'];
  const finite=value=>typeof value==='number'&&Number.isFinite(value);
  const whole=value=>Number.isSafeInteger(value)&&value>=0;
- const plain=value=>value&&Object.getPrototypeOf(value)===Object.prototype;
- const now=()=>typeof performance!=='undefined'&&typeof performance.now==='function'?performance.now():Date.now();
+ // `Object.getPrototypeOf(value)===Object.prototype` rejects records created
+ // in a Web Worker, iframe, or Node VM. Accept a genuine plain object from
+ // another realm, but keep class instances and proxy failures out of the
+ // evidence contract.
+ const nativeObject=Function.prototype.toString.call(Object);
+ const plain=value=>{
+  if(!value||typeof value!=='object')return false;
+  try{
+   const prototype=Object.getPrototypeOf(value);
+   if(!prototype||Object.getPrototypeOf(prototype)!==null)return false;
+   const constructor=Object.getOwnPropertyDescriptor(prototype,'constructor')?.value;
+   return typeof constructor==='function'&&Function.prototype.toString.call(constructor)===nativeObject;
+  }catch(_){return false;}
+ };
+ // Privacy shims are allowed to expose browser APIs through throwing getters.
+ // Observation must not turn those shims into an analysis failure.
+ const read=(object,key)=>{try{return {error:false,value:object==null?undefined:object[key]};}catch(_){return {error:true,value:undefined};}};
+ function now(){
+  const performanceRef=read(root,'performance'),clock=performanceRef.error?{error:true,value:undefined}:read(performanceRef.value,'now');
+  if(!clock.error&&typeof clock.value==='function')try{const value=clock.value.call(performanceRef.value);if(finite(value))return value;}catch(_){}
+  try{return Date.now();}catch(_){return 0;}
+ }
  const clean=(value,max=MAX_SOURCE)=>String(value||'').replace(/[^a-zA-Z0-9_.:-]/g,'_').slice(0,max);
  const stageName=value=>typeof value==='string'&&/^[a-z][a-z0-9-]{0,63}$/.test(value)?value:null;
  const round=value=>Math.round(value*1000)/1000;
@@ -25,20 +45,30 @@
  const nullableWhole=value=>value===null||whole(value);
  const nullableFinite=value=>value===null||finite(value)&&value>=0;
  function heap(){
-  let memory;
-  try{memory=typeof performance==='undefined'?null:performance.memory;}catch(_){memory=null;}
-  const used=memory&&whole(memory.usedJSHeapSize)?memory.usedJSHeapSize:null;
-  const limit=memory&&whole(memory.jsHeapSizeLimit)?memory.jsHeapSizeLimit:null;
-  return {used,limit};
+  const performanceRef=read(root,'performance');
+  if(performanceRef.error)return {used:null,limit:null,reason:'performance-memory-api-observed-error'};
+  const memoryRef=read(performanceRef.value,'memory');
+  if(memoryRef.error)return {used:null,limit:null,reason:'performance-memory-api-observed-error'};
+  if(memoryRef.value===null||memoryRef.value===undefined)return {used:null,limit:null,reason:'performance-memory-api-unavailable'};
+  const usedRef=read(memoryRef.value,'usedJSHeapSize'),limitRef=read(memoryRef.value,'jsHeapSizeLimit');
+  if(usedRef.error||limitRef.error)return {used:null,limit:null,reason:'performance-memory-api-observed-error'};
+  const used=whole(usedRef.value)?usedRef.value:null;
+  const limit=whole(limitRef.value)?limitRef.value:null;
+  return {used,limit,reason:used===null?'performance-memory-api-unavailable':null};
  }
  function platform(){
-  const nav=typeof navigator==='undefined'?{}:navigator;
-  const cores=whole(nav.hardwareConcurrency)&&nav.hardwareConcurrency>0?nav.hardwareConcurrency:null;
-  const memory=finite(nav.deviceMemory)&&nav.deviceMemory>0?nav.deviceMemory:null;
+  const navigatorRef=read(root,'navigator');
+  if(navigatorRef.error)return {cores:null,memory:null,webgpu:false,coresReason:'navigator-hardware-concurrency-observed-error',memoryReason:'navigator-device-memory-observed-error',webgpuReason:'navigator-gpu-observed-error'};
+  const coresRef=read(navigatorRef.value,'hardwareConcurrency'),memoryRef=read(navigatorRef.value,'deviceMemory'),gpuRef=read(navigatorRef.value,'gpu');
+  const cores=whole(coresRef.value)&&coresRef.value>0?coresRef.value:null;
+  const memory=finite(memoryRef.value)&&memoryRef.value>0?memoryRef.value:null;
   // `navigator.gpu` only says that the WebGPU API is exposed. It does not
   // prove an adapter exists, which one will run inference, or its utilisation.
-  const webgpu=!!nav.gpu;
-  return {cores,memory,webgpu};
+  const webgpu=!gpuRef.error&&!!gpuRef.value;
+  return {cores,memory,webgpu,
+   coresReason:coresRef.error?'navigator-hardware-concurrency-observed-error':'navigator-hardware-concurrency-unavailable',
+   memoryReason:memoryRef.error?'navigator-device-memory-observed-error':'navigator-device-memory-unavailable',
+   webgpuReason:gpuRef.error?'navigator-gpu-observed-error':'webgpu-api-unavailable'};
  }
  function unavailable(reason){return {status:'unavailable',reason};}
  function validateWall(value){
@@ -101,11 +131,11 @@
  }
  function create(stage){
   const normalized=stageName(stage);if(!normalized)throw Error('Invalid resource diagnostics stage.');
-  const started=now(),initialHeap=heap();let peak=initialHeap.used,heapObserved=initialHeap.used!==null,heapLimit=initialHeap.limit;
+  const started=now(),initialHeap=heap();let peak=initialHeap.used,heapObserved=initialHeap.used!==null,heapLimit=initialHeap.limit,heapReason=initialHeap.reason;
   const outcomes=Object.fromEntries(cacheOutcomes.map(key=>[key,0]));
   let ioRead=0,ioWrite=0,ioReads=0,ioWrites=0,ioObserved=false,allocBytes=0,allocCount=0,copyBytes=0,copyCount=0,countersObserved=false;const ioCoverage=new Set();
   let scheduler=null;
-  function sample(){const current=heap();if(current.used!==null){heapObserved=true;peak=peak===null?current.used:Math.max(peak,current.used);}if(current.limit!==null)heapLimit=current.limit;return current;}
+  function sample(){const current=heap();if(current.reason)heapReason=current.reason;if(current.used!==null){heapObserved=true;peak=peak===null?current.used:Math.max(peak,current.used);}if(current.limit!==null)heapLimit=current.limit;return current;}
   function cache(outcome){sample();const key=cacheOutcomes.includes(outcome)?outcome:'unknown';outcomes[key]++;return true;}
   function io(direction,bytes,source='instrumented'){
    sample();if((direction!=='read'&&direction!=='write')||!whole(bytes)||typeof source!=='string'||!source)return false;
@@ -128,10 +158,10 @@
     scheduler:scheduler?{status:'available',waitMilliseconds:scheduler.waitMilliseconds,admissionMode:scheduler.admissionMode,reason:null}:{status:'unavailable',waitMilliseconds:null,admissionMode:null,reason:'scheduler-not-instrumented'},
     cache:{status:'instrumented',recordedEvents:cacheOutcomes.reduce((sum,key)=>sum+outcomes[key],0),outcomes:{...outcomes}},
     io:ioObserved?{status:'partial',readBytes:ioRead,writeBytes:ioWrite,readOperations:ioReads,writeOperations:ioWrites,coverage:[...ioCoverage].sort(),reason:'decoder-model-and-stem-cache-io-not-fully-instrumented'}:{status:'unavailable',readBytes:null,writeBytes:null,readOperations:null,writeOperations:null,coverage:[],reason:'no-instrumented-io'},
-    jsHeap:heapStatus==='unavailable'?{status:'unavailable',beforeBytes:null,afterBytes:null,peakBytes:null,limitBytes:null,reason:'performance-memory-api-unavailable'}:{status:'available',beforeBytes:initialHeap.used,afterBytes:finalHeap.used,peakBytes:peak,limitBytes:heapLimit,reason:null},
+    jsHeap:heapStatus==='unavailable'?{status:'unavailable',beforeBytes:null,afterBytes:null,peakBytes:null,limitBytes:null,reason:heapReason||'performance-memory-api-unavailable'}:{status:'available',beforeBytes:initialHeap.used,afterBytes:finalHeap.used,peakBytes:peak,limitBytes:heapLimit,reason:null},
     allocations:countersObserved?{status:'partial',allocationBytes:allocBytes,allocationCount:allocCount,copyBytes:copyBytes,copyCount:copyCount,reason:'only-instrumented-buffer-operations-are-counted'}:{status:'unavailable',allocationBytes:null,allocationCount:null,copyBytes:null,copyCount:null,reason:'no-instrumented-allocation-or-copy-operations'},
-    cpu:platformInfo.cores===null?{status:'unavailable',logicalCores:null,deviceMemoryGiB:null,reason:'navigator-hardware-concurrency-unavailable',utilization:{status:'unavailable',percent:null,reason:'browser-api-not-exposed'}}:{status:platformInfo.memory===null?'partial':'available',logicalCores:platformInfo.cores,deviceMemoryGiB:platformInfo.memory,reason:platformInfo.memory===null?'navigator-device-memory-unavailable':null,utilization:{status:'unavailable',percent:null,reason:'browser-api-not-exposed'}},
-    accelerator:platformInfo.webgpu?{status:'api-exposed',api:'webgpu',reason:'webgpu-api-exposed-but-adapter-and-utilisation-not-probed',utilization:{status:'unavailable',percent:null,reason:'browser-api-not-exposed'}}:{status:'unavailable',api:'none',reason:'webgpu-api-unavailable',utilization:{status:'unavailable',percent:null,reason:'browser-api-not-exposed'}}};
+    cpu:platformInfo.cores===null?{status:'unavailable',logicalCores:null,deviceMemoryGiB:null,reason:platformInfo.coresReason,utilization:{status:'unavailable',percent:null,reason:'browser-api-not-exposed'}}:{status:platformInfo.memory===null?'partial':'available',logicalCores:platformInfo.cores,deviceMemoryGiB:platformInfo.memory,reason:platformInfo.memory===null?platformInfo.memoryReason:null,utilization:{status:'unavailable',percent:null,reason:'browser-api-not-exposed'}},
+    accelerator:platformInfo.webgpu?{status:'api-exposed',api:'webgpu',reason:'webgpu-api-exposed-but-adapter-and-utilisation-not-probed',utilization:{status:'unavailable',percent:null,reason:'browser-api-not-exposed'}}:{status:'unavailable',api:'none',reason:platformInfo.webgpuReason,utilization:{status:'unavailable',percent:null,reason:'browser-api-not-exposed'}}};
    validate(report);return report;
   }
   return {cache,io,allocation,copy,observeScheduler,sample,snapshot};
@@ -140,13 +170,13 @@
   exact(value,['kind','scheduler','schemaVersion','stages','totalWallClockMs'],'pipeline resource diagnostics');
   if(value.kind!=='analysis-pipeline-resources'||value.schemaVersion!==VERSION||!finite(value.totalWallClockMs)||value.totalWallClockMs<0||!plain(value.stages)||!Object.keys(value.stages).length)throw Error('Invalid pipeline resource diagnostics.');
   validateScheduler(value.scheduler);
-  for(const [name,stage]of Object.entries(value.stages)){if(!stageName(name)||!validate(stage))throw Error('Invalid pipeline resource stage.');}
+  for(const [name,stage]of Object.entries(value.stages)){if(!stageName(name)||!validate(stage)||read(stage,'stage').error||read(stage,'stage').value!==name)throw Error('Invalid pipeline resource stage mapping.');}
   return true;
  }
  function pipeline(stages,scheduler,totalWallClockMs){
   if(!plain(stages))throw Error('Invalid pipeline resource stage map.');
   const rows={};for(const name of Object.keys(stages).sort()){
-   if(!stageName(name)||!validate(stages[name]))throw Error('Invalid pipeline resource stage.');rows[name]=stages[name];
+   if(!stageName(name)||!validate(stages[name])||read(stages[name],'stage').error||read(stages[name],'stage').value!==name)throw Error('Invalid pipeline resource stage mapping.');rows[name]=stages[name];
   }
   if(!Object.keys(rows).length)throw Error('Pipeline resource diagnostics require stage evidence.');
   const wait=scheduler&&finite(scheduler.waitMs)&&scheduler.waitMs>=0?{status:'available',waitMilliseconds:round(scheduler.waitMs),admissionMode:typeof scheduler.crossContextMode==='string'&&scheduler.crossContextMode.length<=MAX_MODE?scheduler.crossContextMode:'unknown',reason:null}:{status:'unavailable',waitMilliseconds:null,admissionMode:null,reason:'scheduler-not-observed'};

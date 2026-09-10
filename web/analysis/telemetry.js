@@ -1,7 +1,13 @@
 /* Bounded, privacy-safe timing evidence for offline music analysis. */
 (function(root){'use strict';
- const now=()=>typeof performance!=='undefined'&&typeof performance.now==='function'?performance.now():Date.now();
  const number=x=>typeof x==='number'&&Number.isFinite(x)?x:null;
+ const read=(object,key)=>{try{return {error:false,value:object==null?undefined:object[key]};}catch(_){return {error:true,value:undefined};}};
+ const observation=(probe,present)=>({status:probe.error?'observed-error':present(probe.value)?'available':'unavailable'});
+ function now(){
+  const performanceRef=read(root,'performance'),clock=performanceRef.error?{error:true,value:undefined}:read(performanceRef.value,'now');
+  if(!clock.error&&typeof clock.value==='function')try{const value=clock.value.call(performanceRef.value);if(number(value)!==null)return value;}catch(_){}
+  try{return Date.now();}catch(_){return 0;}
+ }
  const clampText=x=>String(x||'').replace(/[^a-zA-Z0-9_.:-]/g,'_').slice(0,96);
  const resourceApi=()=>{
   const direct=root.LightForgeResourceDiagnostics;
@@ -11,13 +17,16 @@
   if(typeof module!=='undefined'&&module.exports&&typeof require==='function')try{
    const loaded=require('./resource-diagnostics.js');return loaded&&typeof loaded.create==='function'?loaded:null;
   }catch(_){}
-  return null;
+ return null;
  };
  function runtime(){
-  const nav=typeof navigator==='undefined'?{}:navigator;
-  const memory=typeof performance!=='undefined'?performance.memory:undefined;
-  return {hardwareConcurrency:number(nav.hardwareConcurrency),deviceMemoryGiB:number(nav.deviceMemory),crossOriginIsolated:!!root.crossOriginIsolated,
-   jsHeapUsedBytes:number(memory?.usedJSHeapSize),jsHeapLimitBytes:number(memory?.jsHeapSizeLimit)};
+  const navigatorRef=read(root,'navigator'),hardware=navigatorRef.error?{error:true,value:undefined}:read(navigatorRef.value,'hardwareConcurrency'),deviceMemory=navigatorRef.error?{error:true,value:undefined}:read(navigatorRef.value,'deviceMemory');
+  const performanceRef=read(root,'performance'),memory=performanceRef.error?{error:true,value:undefined}:read(performanceRef.value,'memory');
+  const heapUsed=memory.error?{error:true,value:undefined}:read(memory.value,'usedJSHeapSize'),heapLimit=memory.error?{error:true,value:undefined}:read(memory.value,'jsHeapSizeLimit');
+  const isolated=read(root,'crossOriginIsolated');
+  return {hardwareConcurrency:number(hardware.value),deviceMemoryGiB:number(deviceMemory.value),crossOriginIsolated:isolated.value===true,
+   jsHeapUsedBytes:number(heapUsed.value),jsHeapLimitBytes:number(heapLimit.value),
+   observations:{hardwareConcurrency:observation(hardware,value=>number(value)!==null),deviceMemoryGiB:observation(deviceMemory,value=>number(value)!==null),crossOriginIsolated:observation(isolated,value=>typeof value==='boolean'),jsHeap:observation(memory,value=>value!==null&&value!==undefined),jsHeapUsedBytes:observation(heapUsed,value=>number(value)!==null),jsHeapLimitBytes:observation(heapLimit,value=>number(value)!==null)}};
  }
  function create(stage,extra={}){
   const begun=now(),open=new Map(),spans=[],caches=[],counters={};let resources=null;
@@ -39,8 +48,9 @@
   function scheduler(value){try{return resources?.observeScheduler(value)===true;}catch(_){return false;}}
   function snapshot(attributes={}){for(const token of [...open.keys()])end(token,{unfinished:true});
    const total=Math.max(0,now()-begun),summary={};for(const span of spans){const row=summary[span.name]||{count:0,totalMs:0,maxMs:0};row.count++;row.totalMs+=span.durationMs;row.maxMs=Math.max(row.maxMs,span.durationMs);summary[span.name]=row;}
-   const resourceSnapshot=resources?resources.snapshot():null;
-   return {schemaVersion:1,kind:'analysis-stage-profile',stage:clampText(stage),totalWallClockMs:total,runtime:runtime(),spans,spanSummary:summary,cache:caches,counters,attributes,resources:resourceSnapshot};}
+  let resourceSnapshot=null;try{resourceSnapshot=resources?resources.snapshot():null;}catch(_){}
+  let observedRuntime;try{observedRuntime=runtime();}catch(_){observedRuntime={hardwareConcurrency:null,deviceMemoryGiB:null,crossOriginIsolated:false,jsHeapUsedBytes:null,jsHeapLimitBytes:null,observations:{hardwareConcurrency:{status:'observed-error'},deviceMemoryGiB:{status:'observed-error'},crossOriginIsolated:{status:'observed-error'},jsHeap:{status:'observed-error'},jsHeapUsedBytes:{status:'observed-error'},jsHeapLimitBytes:{status:'observed-error'}}};}
+  return {schemaVersion:1,kind:'analysis-stage-profile',stage:clampText(stage),totalWallClockMs:total,runtime:observedRuntime,spans,spanSummary:summary,cache:caches,counters,attributes,resources:resourceSnapshot};}
   return {begin,end,measure,measureAsync,cache,increment,io,allocation,copy,scheduler,resource:resources,snapshot};
  }
  const api={create};root.LightForgeAnalysisTelemetry=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;

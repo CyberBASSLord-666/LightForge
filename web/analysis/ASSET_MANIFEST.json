@@ -252,8 +252,8 @@
     "sha256": "bfeba07ceaf9ad445a084a88ec4d4e5eb69e57ce8c1198966cd19ee84689b1c8"
   },
   "resource-diagnostics.js": {
-    "bytes": 16029,
-    "sha256": "ff1f8f823005b599878489204838021bd088cfc5df7c73042e9d5d7aa927a797"
+    "bytes": 18665,
+    "sha256": "ba22978229062a5059b8849b35b488be01ffef1c6b9f91c7dbf93e670d99fd42"
   },
   "rhythm-hierarchy.js": {
     "bytes": 18992,
@@ -288,8 +288,8 @@
     "sha256": "c2256c15be8a2285721fb16662915e0853de673a63a144e54b8d6838d5c1970a"
   },
   "telemetry.js": {
-    "bytes": 4350,
-    "sha256": "d6dcb89af8bc79b7481dde1022866bd3a31171567f4e03372066979d042e2422"
+    "bytes": 6260,
+    "sha256": "7df1600599405842a3142ddea82434c563f21ab7200dc5af55e579f1bf77e47c"
   },
   "vendor/ONNX-Runtime-LICENSE.txt": {
     "bytes": 1073,
@@ -328,7 +328,7 @@
     "sha256": "e2b185b4c8ff2318da511202d95502bebfc21a50ed84e7b3058c1df94e03b509"
   },
   "worker.js": {
-    "bytes": 33487,
-    "sha256": "5fe66527c09392ef9a1e91a7ae89ff2ff70869b9e273f21e9b00eb219ead7188"
+    "bytes": 33963,
+    "sha256": "8d2aba774f14b41848bf03b478f33e2d45557beaf4bab263de77d51826fd65c2"
   }
 }

@@ -32,10 +32,15 @@ baseline comparison, or release verdict.
 | CPU | Exposed logical-core count and device-memory class | CPU utilisation remains explicitly unavailable: web APIs do not expose it reliably. |
 | Accelerator | WebGPU API exposure only | API exposure is not an adapter selection, model provider, GPU utilisation or acceleration claim. |
 
-Every unavailable field carries a reason and `null` measurement values. The
-contract rejects malformed, mixed-status, non-finite, negative, or ambiguous
-records. It also rejects a partial I/O record without an explicit coverage
-label and limitation.
+Every unavailable field carries a reason and `null` measurement values. A
+privacy wrapper or hardened browser getter that throws is recorded as an
+explicit `*-observed-error` reason rather than being misreported as a zero or
+allowed to interrupt analysis. The legacy stage-profile `runtime.observations`
+map similarly reports `available`, `unavailable`, or `observed-error` for its
+browser probes while retaining the existing nullable numeric fields. The
+contract rejects malformed, mixed-status, non-finite, negative, ambiguous, or
+mis-keyed pipeline stage records. It also rejects a partial I/O record without
+an explicit coverage label and limitation.
 
 ## Instrumentation API
 

@@ -160,6 +160,17 @@ async function reusableRhythmFeatures(options,config,resourceDiagnostics=null){
   return await api.open({audioIdentity,preprocessingVersion:RHYTHM_PREPROCESSING,modelVersions:{'dsp-config':configIdentity,'dsp-extractor':RHYTHM_FEATURE_VERSION},analysisConfiguration:{analysisRate:22050,featureChunk:500,frameHopSamples:441,frameRateHz:50,chromaStep:.2,reflectionHaloHops:2}},{resourceDiagnostics});
  }catch(_){return null;}
 }
+function wasmThreadCount(){
+ // Privacy wrappers may intentionally deny hardware-concurrency access. The
+ // safe fallback keeps analysis running single-threaded instead of turning a
+ // diagnostic capability probe into a worker-stage failure.
+ try{
+  if(!self.crossOriginIsolated||typeof SharedArrayBuffer!=='function')return 1;
+  const nav=typeof navigator==='undefined'?null:navigator,reported=nav&&nav.hardwareConcurrency;
+  const cores=typeof reported==='number'&&Number.isFinite(reported)&&reported>0?reported:2;
+  return Math.min(4,Math.max(1,Math.floor(cores/2)));
+ }catch(_){return 1;}
+}
 self.onmessage=async e=>{
  if(e.data?.type==='native-deux-result'||e.data?.type==='native-deux-progress'){
   const pending=nativeRequests.get(e.data.requestId);if(!pending)return;
@@ -224,7 +235,7 @@ self.onmessage=async e=>{
   return;
  }
  telemetry.cache(stage,'miss');
- ort.env.wasm.wasmPaths=new URL('vendor/',self.location.href).href;ort.env.wasm.numThreads=self.crossOriginIsolated&&typeof SharedArrayBuffer==='function'?Math.min(4,Math.max(1,Math.floor((navigator.hardwareConcurrency||2)/2))):1;ort.env.wasm.proxy=false;
+ ort.env.wasm.wasmPaths=new URL('vendor/',self.location.href).href;ort.env.wasm.numThreads=wasmThreadCount();ort.env.wasm.proxy=false;
  const sessionOptions={executionProviders:['wasm'],graphOptimizationLevel:'all',enableCpuMemArena:false,enableMemPattern:false};
  if(stage==='rhythm'){
   report(.01,'Opening music','Reading your music locally');const reader=new LightForgeWavReader(options.analysisUrl||audioUrl);await reader.open();
