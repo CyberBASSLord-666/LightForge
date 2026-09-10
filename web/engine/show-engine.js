@@ -398,40 +398,24 @@
     const warnings=[],s=normalizeSettings(settings),m=correctRhythm(CUES.overlay(correctVocalRegions(CUES.apply(normalizeMusic(music,warnings),s),s),s),s);
     if(m.silent&&s.manualCues.length){const i=warnings.findIndex(w=>w.includes('This audio is silent.'));if(i>=0)warnings[i]='This audio is silent. Automatic choreography is disabled; your manual cues still play.';}
     const step=s.stepMs/1000,n=Math.ceil(m.duration/step-1e-9),duration=n*step;
-    let frames;try{frames=new Uint8Array(n*CHANNELS);}catch(e){throw new Error('This track is too large for the available device memory. Choose a shorter track.');}
     const baseScenes=m.sections.map(section=>{
       const o=s.sectionOverrides[section.index]||{},key=section.recurrenceGroup||'section-'+section.index;
       const seed=finite(o.seed)?o.seed>>>0:sceneSeed(s.seed,key),variant=Math.floor(random(seed)()*6);
       return {style:['festival','cinematic','pulse'].includes(o.style)?o.style:s.style,intensity:finite(o.intensity)?clamp(o.intensity,0,1):s.intensity,variant,seed,locked:finite(o.seed),motifGroup:key};
     });
     const semantic=matchingSemanticSalience(music);
-    let semanticStrategy=null,semanticGuard=null;
+    let semanticStrategy=null;
     if(s.semanticChoreography&&semantic&&SEMANTIC_CHOREOGRAPHY&&typeof SEMANTIC_CHOREOGRAPHY.create==='function'){
       // A module defect must not turn optional semantic planning into a
       // compilation failure. The legacy planner remains the safe fallback.
       try{
         const guarded=guardedSemanticStrategy(SEMANTIC_CHOREOGRAPHY.create(semantic,{stepMs:s.stepMs}));
-        semanticStrategy=guarded.strategy;semanticGuard=guarded.guard;
+        semanticStrategy=guarded.strategy;
       }catch(_){}
     }
     const movement=m.silent?{events:[],accents:[],targets:[],diagnostics:{selectedTargets:0}}:MOVEMENT.plan(m,s,PROFILE);
-    // Motifs are a scene-level variation, so establish whether the semantic
-    // strategy has a real, linkable planning target before scenes can change.
-    // The probe constructs only targets; it never allocates or paints frames.
-    let semanticStrategyActive=false;
-    if(semanticStrategy){
-      try{
-        const probe=LIGHTS.compose({frameCount:n,stepMs:s.stepMs,sections:baseScenes},m,s,movement,semanticStrategy,{semanticProbe:true});
-        semanticStrategyActive=probe?.diagnostics?.semanticStrategy?.active===true;
-      }catch(_){semanticStrategy=null;}
-      // A strategy without a verified target link has no authority to run
-      // during the actual composition. This also prevents a later callback
-      // from turning an inactive probe into a compilation failure.
-      if(!semanticStrategyActive)semanticStrategy=null;
-    }
-    let motifResolution=resolveMotifEvolution(music,m.sections,baseScenes,s,semanticStrategyActive),scenes=motifResolution.scenes;
-    const prepareShow=scenePlan=>{
-      frames.fill(0);
+    const createShow=scenePlan=>{
+      let frames;try{frames=new Uint8Array(n*CHANNELS);}catch(_){throw new Error('This track is too large for the available device memory. Choose a shorter track.');}
       const value={version:VERSION,vehicle:'2025 Tesla Model 3 Long Range RWD',channels:CHANNELS,channelCount:CHANNELS,frameCount:n,stepMs:s.stepMs,duration,audioDuration:m.duration,frames,
         movements:[],sections:m.sections.map((section,i)=>Object.assign({},section,scenePlan[i])),settings:s,stats:{},warnings};
       for(const event of movement.events){
@@ -442,17 +426,50 @@
       }
       return value;
     };
-    let show=prepareShow(scenes),lighting;
-    try{lighting=LIGHTS.compose(show,m,s,movement,semanticStrategy);}
-    catch(error){
-      // A callback can still fail after a successful target-only probe (for
-      // example while classifying real candidates). Only a fault that crossed
-      // the semantic guard is retried; unrelated planner errors still surface.
-      if(!semanticStrategy||!semanticGuard?.faulted)throw error;
-      semanticStrategy=null;semanticStrategyActive=false;
-      motifResolution=resolveMotifEvolution(music,m.sections,baseScenes,s,false);scenes=motifResolution.scenes;
-      show=prepareShow(scenes);
+    const semanticActive=lighting=>lighting?.diagnostics?.semanticStrategy?.active===true;
+    let motifResolution,show,lighting;
+    const legacyFallback=()=>{
+      semanticStrategy=null;
+      motifResolution=resolveMotifEvolution(music,m.sections,baseScenes,s,false);
+      show=createShow(motifResolution.scenes);
       lighting=LIGHTS.compose(show,m,s,movement,null);
+    };
+    if(!semanticStrategy){
+      legacyFallback();
+    }else{
+      // A target-only probe can be fooled by a stateful strategy. Establish
+      // eligibility with a complete base-scene composition, then let motifs
+      // run only after its actual scheduling diagnostic reports active.
+      let baseShow=null,baseLighting=null;
+      try{
+        baseShow=createShow(baseScenes);
+        baseLighting=LIGHTS.compose(baseShow,m,s,movement,semanticStrategy);
+      }catch(_){
+        legacyFallback();
+      }
+      if(!lighting&&baseLighting&&semanticActive(baseLighting)){
+        motifResolution=resolveMotifEvolution(music,m.sections,baseScenes,s,true);
+        if(!motifResolution.diagnostics.active){
+          show=baseShow;lighting=baseLighting;
+        }else{
+          // The base pass is only an eligibility check once motifs are valid;
+          // release its references before allocating the isolated motif plan.
+          baseShow=null;baseLighting=null;
+          try{
+            const motifShow=createShow(motifResolution.scenes);
+            const motifLighting=LIGHTS.compose(motifShow,m,s,movement,semanticStrategy);
+            if(!semanticActive(motifLighting))throw new Error('Semantic strategy became inactive during motif composition.');
+            show=motifShow;lighting=motifLighting;
+          }catch(_){
+            // Motif evolution is optional. If a later callback faults or
+            // becomes inactive, discard its isolated scene/frame plan and
+            // regenerate the exact legacy show from untouched base scenes.
+            legacyFallback();
+          }
+        }
+      }else if(!lighting){
+        legacyFallback();
+      }
     }
     const targetSalience=annotateSalienceTargets(music,lighting.targets,movement.targets,s),syncLightTargets=targetSalience?targetSalience.syncLightTargets:lighting.targets,syncMovementTargets=targetSalience?targetSalience.syncMovementTargets:movement.targets;
     if(!m.silent&&s.enabled.interior)paintInterior(show,m,s,lighting.context);

@@ -220,6 +220,12 @@ test('semantic strategy callback faults fail closed and revert motif scenes to t
       throw Error('simulated late prepareTargets fault');
     }});
   });
+  assertLegacyFallback('late inactive prepareTargets result',()=>{
+    let calls=0;
+    return activeStrategy({prepareTargets(){
+      return calls++===0?{links:[{id:'test-link'}]}:null;
+    }});
+  });
   assertLegacyFallback('classifyCandidate fault',()=>activeStrategy({
     classifyCandidate(){throw Error('simulated classifyCandidate fault');}
   }));
@@ -228,6 +234,14 @@ test('semantic strategy callback faults fail closed and revert motif scenes to t
     return activeStrategy({filterCandidates(candidates){
       if(calls++===0)return {candidates:Array.isArray(candidates)?candidates:[],diagnostics:{schemaVersion:1,requested:true,active:true}};
       throw Error('simulated filterCandidates fault');
+    }});
+  });
+  assertLegacyFallback('late inactive filterCandidates result',()=>{
+    let calls=0;
+    return activeStrategy({filterCandidates(candidates){
+      const original=Array.isArray(candidates)?candidates:[];
+      if(calls++===0)return {candidates:original,diagnostics:{schemaVersion:1,requested:true,active:true}};
+      return {candidates:original,diagnostics:{schemaVersion:1,requested:true,active:false,reason:'simulated late inactive result'}};
     }});
   });
 });
