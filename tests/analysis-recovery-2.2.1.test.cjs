@@ -52,9 +52,10 @@ test('rebuilding an audition cache removes its commit marker before independent 
  const first=await stems.create(cacheKey,samples,config,'song');await first.append({sampleRate:44100,startSample:0,vocals:new Float32Array(samples),accompaniment:new Float32Array(samples)});const meta=await first.finish();await stems.files(meta);
  const interrupted=await stems.create(cacheKey,samples,config,'song');await assert.rejects(stems.files(meta),e=>e.name==='NotFoundError');await interrupted.abort();
 });
-function analyzerHarness({behavior,native=false}={}){
+function analyzerHarness({behavior,native=false,configureClock}={}){
  const workers=[],discarded=[],stageStarts=[];let active=0,maxActive=0;
  const context=vm.createContext({URL,crypto:webcrypto,TextEncoder,DOMException,AbortController,performance,setInterval,clearInterval,console,LightForgeVersion:{name:'2.2.1'},document:{currentScript:{src:'https://app.test/analysis/analyzer.js'}},LightForgeAnalysisStore:{hash:async bytes=>Buffer.from(await webcrypto.subtle.digest('SHA-256',bytes)).toString('hex'),discard:async id=>discarded.push(['work',id])},LightForgeStemCache:{discard:async id=>discarded.push(['stem',id])}});context.window=context;
+ configureClock?.(context);
  context.Worker=class{
   constructor(){this.closed=false;workers.push(this);active++;maxActive=Math.max(maxActive,active);}
   terminate(){if(!this.closed){this.closed=true;active--;}}
@@ -62,10 +63,46 @@ function analyzerHarness({behavior,native=false}={}){
   emit(data){if(!this.closed)this.onmessage({data});}
   finish(m=this.request){this.emit({type:'progress',value:{progress:{rhythm:.4,separation:.82,voice:.985,bass:1}[m.stage],stage:m.stage}});if(!this.closed)this.emit({type:'result',value:{...m.value,engine:{name:'test'},[m.stage]:true},seconds:1,restored:m.stage==='rhythm'});}
  };
- vm.runInContext(source('analyzer.js'),context);return {analyze:context.MusicAnalyzer.analyze,workers,discarded,stageStarts,context,get maxActive(){return maxActive;}};
+ vm.runInContext(source('diagnostic-clock.js'),context);vm.runInContext(source('analyzer.js'),context);return {analyze:context.MusicAnalyzer.analyze,workers,discarded,stageStarts,context,get maxActive(){return maxActive;}};
+}
+function workerClockHarness(configureClock){
+ const messages=[],context=vm.createContext({
+  console,URL,Float32Array,ArrayBuffer,DataView,Map,Number,setTimeout,clearTimeout,performance,
+  fetch:async url=>String(url).endsWith('features.json')?{json:async()=>({})}:{json:async()=>({precision:{},balanced:{}})},
+  LightForgeAnalysisStore:{open:async()=>({read:async()=>({}),write:async()=>{},invalidate:async()=>{}})},
+  LightForgeAnalysisTelemetry:{create:()=>({begin:()=>null,end:()=>{},cache:()=>{},snapshot:attributes=>attributes})}
+ });
+ configureClock(context);context.self=context;context.location={href:'https://app.test/analysis/worker.js'};
+ context.importScripts=(...names)=>{if(names.includes('diagnostic-clock.js'))vm.runInContext(source('diagnostic-clock.js'),context);};context.postMessage=message=>messages.push(message);
+ vm.runInContext(source('worker.js'),context);
+ return {messages,run:()=>context.onmessage({data:{stage:'rhythm',audioUrl:'/song.wav',value:{duration:1},options:{workId:key,cacheKey:'test'}}})};
 }
 test('public analyzer destroys each model heap before the next stage and clears only transient work after success',async()=>{
  const h=analyzerHarness(),progress=[],music=await h.analyze('/song.wav',{},p=>progress.push(p));assert.equal(h.maxActive,1);assert.deepEqual(h.stageStarts,['rhythm','separation','voice','bass']);assert.ok(h.workers.every(w=>w.closed));assert.equal(music.engine.stages.rhythm.restored,true);assert.equal(music.engine.recoverable,false);assert.deepEqual(h.discarded.map(x=>x[0]),['work']);assert.equal(progress.at(-1).completedStages,3);assert.equal(progress.at(-1).restoredStages,1);assert.ok(progress.every((p,i)=>i===0||p.progress>=progress[i-1].progress));
+});
+test('analyzer survives unavailable and late hostile diagnostic clocks without changing stage recovery',async()=>{
+ const epoch=1789000000000,scenarios=[
+  context=>{context.performance={};context.Date={};},
+  context=>{context.Date={now:()=>epoch};context.performance={};Object.defineProperty(context.performance,'now',{get(){throw Error('blocked performance getter');}});},
+  context=>{let calls=0;context.Date={now:()=>epoch};context.performance={};Object.defineProperty(context.performance,'now',{get(){calls++;if(calls===1)return ()=>100;throw Error('late performance getter');}});},
+  context=>{let calls=0;context.Date={now:()=>epoch};context.performance={now(){calls++;if(calls===1)return 100;throw Error('late performance call');}};}
+ ];
+ for(const configureClock of scenarios){
+  const h=analyzerHarness({configureClock}),music=await h.analyze('/song.wav',{analysisIdentity:key});
+  assert.deepEqual(h.stageStarts,['rhythm','separation','voice','bass']);assert.equal(music.engine.analysisSeconds,0);assert.equal(music.engine.recoverable,true);
+ }
+});
+test('worker restores checkpoints through unavailable and late hostile diagnostic clocks',async()=>{
+ const epoch=1789000000000,scenarios=[
+  [context=>{context.performance={};context.Date={};},'unavailable'],
+  [context=>{context.Date={now:()=>epoch};context.performance={};Object.defineProperty(context.performance,'now',{get(){throw Error('blocked performance getter');}});},'fallback'],
+  [context=>{let calls=0;context.Date={now:()=>epoch};context.performance={};Object.defineProperty(context.performance,'now',{get(){calls++;if(calls===1)return ()=>100;throw Error('late performance getter');}});},'observed-error'],
+  [context=>{let calls=0;context.Date={now:()=>epoch};context.performance={now(){calls++;if(calls===1)return 100;throw Error('late performance call');}};},'observed-error']
+ ];
+ for(const [configureClock,status] of scenarios){
+  const h=workerClockHarness(configureClock);await h.run();const result=h.messages.at(-1);
+  assert.equal(result.type,'result');assert.equal(result.restored,true);assert.equal(result.seconds,0);assert.equal(result.profile.workerClockStatus,status);assert.equal(result.value.duration,1);
+ }
 });
 test('analysis cache identity separates analysis evidence while choreography and vehicle choices reuse heavy work',async()=>{
  const h=analyzerHarness(),options={analysisIdentity:key,analysisQuality:'precision',projectId:'song'};
