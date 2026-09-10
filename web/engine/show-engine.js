@@ -7,7 +7,8 @@
   'use strict';
   const VERSION = (root.LightForgeVersion || require('../version.js')).name;
   const CUES = root.MusicCues || (typeof require === 'function' ? require('./music-cues.js') : null);
-  const SYNC = root.SyncReview || (typeof require === 'function' ? require('./sync-review.js') : null);\n  const QUALITY = root.ChoreographyQuality || (typeof require === 'function' ? require('./choreography-quality.js') : null);
+  const SYNC = root.SyncReview || (typeof require === 'function' ? require('./sync-review.js') : null);
+  const QUALITY = root.ChoreographyQuality || (typeof require === 'function' ? require('./choreography-quality.js') : null);
   const PROFILE = root.VehicleProfile || (typeof require === 'function' ? require('./vehicle-profile.js') : null);
   const LIGHTS = root.LightPlanner || (typeof require === 'function' ? require('./light-planner.js') : null);
   const MOVEMENT = root.MovementPlanner || (typeof require === 'function' ? require('./movement-planner.js') : null);
@@ -234,7 +235,8 @@
     show.choreography.vocalDetail={phrases:m.vocals.phrases,notes:m.vocals.notes,accents:m.vocals.accents,sourceSeparated:m.vocals.sourceSeparated,source:m.vocals.source,presence:m.vocals.presence,manualRegions:m.vocals.manualRegions||[],lyricsAligned:false};
     show.stats={lightCues:lighting.events.length,manualCueCount:s.manualCues.length,beatCount:m.beats.length,onsetCount:m.onsets.length,bpm:m.bpm,beatConfidence:m.beatConfidence,beatLengthMs:60000/m.bpm,recommendedBeatDivision:m.bpm<=150?'eighth':'quarter',silent:m.silent,
       vocalPhraseCount:lighting.diagnostics.roles.vocals.eligibleEvents,bassNoteCount:lighting.diagnostics.roles.bass.eligibleEvents,vocalCues:lighting.diagnostics.roles.vocals.acceptedEvents,bassNoteCues:lighting.diagnostics.roles.bass.acceptedEvents,phraseCount:m.phrases.length,musicalImpactCount:m.impacts.length,movementTargets:movement.targets.length,lightQuantizationMaxMs:lighting.diagnostics.quantizationMaxMs};
-    show.synchronization=SYNC.review(show,lighting.targets,movement.targets);\n    if(QUALITY&&typeof QUALITY.evaluate==='function')show.choreography.quality=QUALITY.evaluate(show);
+    show.synchronization=SYNC.review(show,lighting.targets,movement.targets);
+    if(QUALITY&&typeof QUALITY.evaluate==='function')show.choreography.quality=QUALITY.evaluate(show);
     show.choreography.musicCues=m.musicCues;
     show.validation=validate(show,m);show.validation.synchronization=show.synchronization;show.stats=Object.assign(show.stats,show.validation.stats);
     if(!show.validation.valid)throw new Error('The generated show failed validation: '+show.validation.errors.join(' '));
