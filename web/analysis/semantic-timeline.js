@@ -10,7 +10,7 @@
  const typeWeight={section:.92,phrase:.68,downbeat:.72,beat:.38,impact:.70,onset:.28,vocal_phrase:.66,vocal_note:.55,vocal_accent:.76,bass_note:.58,bass_phrase:.64,percussion_kick:.72,percussion_snare:.68,percussion_clap:.66,percussion_hat:.38,percussion_crash:.72,percussion_tom:.60,percussion_fill:.70,kick_bass_coincidence:.84};
  const percussionKinds=new Set(['kick','snare','clap','hat','crash','tom','fill']);
  const percussionType=kind=>'percussion_'+kind;
- const MAX_KICK_BASS_OFFSET=.06;
+ const MAX_KICK_BASS_OFFSET=.06,MIX_ESTIMATE_SOURCE='mix-feature-estimate',MIX_ESTIMATE_SALIENCE_CAP=.41;
  function bassProvenance(music,item){
   const analysis=music?.bassAnalysis||{};
   // A vocal-separated accompaniment is still an instrument mixture. Isolation
@@ -48,17 +48,17 @@
   const events=[];let sequence=0;
   function add(type,time,durationValue,source,attributes={}){
    if(!finite(time)||time<0||time>duration||!finite(durationValue)||durationValue<0)return;
-   const confidence=scalar(attributes.confidence,attributes.estimated===false?1:.5),intensity=scalar(attributes.strength,scalar(attributes.energy,.5));
+   const confidence=scalar(attributes.confidence,attributes.estimated===false?1:.5),intensity=scalar(attributes.strength,scalar(attributes.energy,.5)),salienceCap=finite(attributes.salienceCap)?clamp(attributes.salienceCap):null;
    const sectionIndex=locate(sections,Math.min(time,Math.max(0,duration-1e-7))),phraseIndex=locate(phrases,Math.min(time,Math.max(0,duration-1e-7)));
    const beatIndex=nearest(beats,time),beatTime=beatIndex<0?null:beats[beatIndex],beatDetail=beatTime===null?null:details.get(round(beatTime));
    const structural = type === 'section' ? 1 : (type === 'phrase' ? 0.72 : ((sectionIndex >= 0 && Math.abs(time-sections[sectionIndex].start) <= 0.08) ? 0.82 : 0.28));
    const rhythmic = (type === 'downbeat' || type === 'beat' || type === 'impact' || type === 'onset') ? 1 : ((beatTime !== null && Math.abs(beatTime-time) <= 0.07) ? 0.7 : 0.15);
    const base=typeWeight[type]??.3;
-   const salience=clamp(.34*base+.20*confidence+.17*intensity+.17*structural+.12*rhythmic);
+   const salience=Math.min(clamp(.34*base+.20*confidence+.17*intensity+.17*structural+.12*rhythmic),salienceCap===null?1:salienceCap);
    const event={id:'m'+String(sequence++).padStart(6,'0'),type,time:round(time),duration:round(Math.min(durationValue,Math.max(0,duration-time))),source,confidence,intensity,
     salience, tier:tier(salience),rhythm:{beatIndex:beatIndex<0?null:beatIndex,beatTime:beatTime===null?null:round(beatTime),barPosition:finite(beatDetail?.barPosition)?beatDetail.barPosition:null,localBpm:finite(beatDetail?.localBpm)?beatDetail.localBpm:null},
     structure:{sectionIndex:sectionIndex<0?null:sectionIndex,phraseIndex:phraseIndex<0?null:phraseIndex},relationships:{crossStemAgreement:0,coincidentEventIds:[]}};
-   for(const key of ['kind','midi','frequency','articulation','recurrenceGroup','repetitionIndex','label','estimated','sourceSeparated','instrumentSeparated','inputStem','inputStemSeparated','manual','analysisSource','model'])if(attributes[key]!==undefined)event[key]=attributes[key];
+   for(const key of ['kind','midi','frequency','articulation','recurrenceGroup','repetitionIndex','label','estimated','sourceSeparated','instrumentSeparated','inputStem','inputStemSeparated','manual','analysisSource','model','salienceCap'])if(attributes[key]!==undefined)event[key]=attributes[key];
    events.push(event);return event;
   }
   sections.forEach((s,i)=>add('section',s.start,s.end-s.start,'structure',{confidence:finite(s.confidence)?s.confidence:1,energy:s.energy,kind:s.label,recurrenceGroup:s.recurrenceGroup,repetitionIndex:s.repetitionIndex,estimated:s.estimated!==false}));
@@ -75,12 +75,12 @@
   for(const phrase of bassAnalysis.phrases||[])if(validSpan(phrase,duration)){const provenance=bassProvenance(music,phrase);add('bass_phrase',phrase.start,phrase.end-phrase.start,'bass',{confidence:phrase.confidence,strength:phrase.strength,midi:phrase.midi,frequency:phrase.frequency,sourceSeparated:provenance.instrumentSeparated,instrumentSeparated:provenance.instrumentSeparated,inputStem:provenance.inputStem,inputStemSeparated:provenance.inputStemSeparated,estimated:phrase.estimated!==false});}
   const percussionAnalysis=music.percussionAnalysis,percussionEvents=[],kickBassPairs=[];
   for(const hit of orderedPercussionEvents(percussionAnalysis,duration)){
-   const provenance=percussionProvenance(percussionAnalysis,hit),event=add(percussionType(hit.kind),hit.time,finite(hit.duration)?hit.duration:0,'drums',{confidence:hit.confidence,strength:hit.strength,kind:hit.kind,estimated:hit.estimated!==false&&percussionAnalysis?.estimated!==false,manual:hit.manual===true?true:undefined,...provenance});
+   const provenance=percussionProvenance(percussionAnalysis,hit),estimated=hit.estimated!==false&&percussionAnalysis?.estimated!==false,cautiousMixEstimate=estimated&&provenance.analysisSource===MIX_ESTIMATE_SOURCE,event=add(percussionType(hit.kind),hit.time,finite(hit.duration)?hit.duration:0,'drums',{confidence:hit.confidence,strength:hit.strength,kind:hit.kind,estimated,manual:hit.manual===true?true:undefined,salienceCap:cautiousMixEstimate?MIX_ESTIMATE_SALIENCE_CAP:undefined,...provenance});
    if(event)percussionEvents.push({event,hit});
   }
   for(const kick of percussionEvents){
    if(kick.hit.kind!=='kick')continue;const bass=coincidentBass(kick.event,bassEvents);if(!bass)continue;
-   const event=add('kick_bass_coincidence',kick.event.time,0,'drums',{confidence:Math.min(kick.event.confidence,bass.event.confidence),strength:Math.max(kick.event.intensity,bass.event.intensity),kind:'kick+bass',estimated:kick.event.estimated!==false||bass.event.estimated!==false,manual:kick.event.manual===true&&bass.event.manual===true?true:undefined});
+   const cautiousMixEstimate=kick.event.estimated===true&&kick.event.analysisSource===MIX_ESTIMATE_SOURCE,event=add('kick_bass_coincidence',kick.event.time,0,'drums',{confidence:Math.min(kick.event.confidence,bass.event.confidence),strength:Math.max(kick.event.intensity,bass.event.intensity),kind:'kick+bass',estimated:kick.event.estimated!==false||bass.event.estimated!==false,manual:kick.event.manual===true&&bass.event.manual===true?true:undefined,salienceCap:cautiousMixEstimate?MIX_ESTIMATE_SALIENCE_CAP:undefined});
    if(!event)continue;
    const pair={kickEventId:kick.event.id,bassEventId:bass.event.id,timingOffsetMs:round((kick.event.time-bass.event.time)*1000)};
    event.relationships.kickBass=pair;event.relationships.coincidentEventIds=[kick.event.id,bass.event.id];
@@ -93,14 +93,14 @@
    const stems=new Set(related.filter(x=>x.source!==current.source).map(x=>x.source));
    if(current.relationships.kickBass)stems.add('bass');else if(Array.isArray(current.relationships.kickBassCoincidenceIds)&&current.relationships.kickBassCoincidenceIds.length)stems.add(current.source==='bass'?'drums':'bass');stems.delete(current.source);
    current.relationships.crossStemAgreement=clamp(stems.size/3);current.relationships.coincidentEventIds=Array.from(new Set([...explicitIds,...related.filter(x=>x.source!==current.source).map(x=>x.id)])).filter(id=>id!==current.id).slice(0,8);
-   current.salience=clamp(current.salience+.12*current.relationships.crossStemAgreement);current.tier=tier(current.salience);
+   current.salience=Math.min(clamp(current.salience+.12*current.relationships.crossStemAgreement),finite(current.salienceCap)?current.salienceCap:1);current.tier=tier(current.salience);
   }
   const countByTier={micro:0,secondary:0,primary:0,phrase:0,structural:0,climax:0};for(const event of events)countByTier[event.tier]++;
   const summary={eventCount:events.length,countByTier,hasSeparatedVocals:vocals.sourceSeparated===true,hasSeparatedBass:bassSummaryProvenance.instrumentSeparated,hasSeparatedAccompaniment:bassSummaryProvenance.inputStem==='accompaniment'&&bassSummaryProvenance.inputStemSeparated,lyricsAligned:music.roleAnalysis?.lyricsAligned===true};
-  if(percussionAnalysis&&typeof percussionAnalysis==='object'){const provenance=percussionProvenance(percussionAnalysis,{});summary.percussion={status:percussionEvents.length?'supplied':'no-valid-events',acceptedEventCount:percussionEvents.length,kickBassCoincidenceCount:kickBassPairs.length,source:provenance.analysisSource??null,model:provenance.model??null,sourceSeparated:provenance.sourceSeparated,inputStem:provenance.inputStem??null,inputStemSeparated:provenance.inputStemSeparated};}
+  if(percussionAnalysis&&typeof percussionAnalysis==='object'){const provenance=percussionProvenance(percussionAnalysis,{}),percussionSummary={status:percussionEvents.length?'supplied':'no-valid-events',acceptedEventCount:percussionEvents.length,kickBassCoincidenceCount:kickBassPairs.length,source:provenance.analysisSource??null,model:provenance.model??null,sourceSeparated:provenance.sourceSeparated,inputStem:provenance.inputStem??null,inputStemSeparated:provenance.inputStemSeparated};if(percussionAnalysis.estimated===true)percussionSummary.estimated=true;summary.percussion=percussionSummary;}
   return {schemaVersion:2,clock:'original-decoded-audio',duration,events,summary};
  }
- function validate(timeline){const errors=[];if(!timeline||timeline.schemaVersion!==2||!finite(timeline.duration)||timeline.duration<=0||!Array.isArray(timeline.events))errors.push('Invalid semantic timeline envelope.');
-  let prior=-1,ids=new Set();for(const event of timeline?.events||[]){if(!event||typeof event.id!=='string'||ids.has(event.id))errors.push('Duplicate or missing event id.');ids.add(event?.id);if(!finite(event.time)||event.time<0||event.time>timeline.duration||event.time<prior)errors.push('Invalid event order or time.');prior=event.time;if(!finite(event.salience)||event.salience<0||event.salience>1)errors.push('Invalid event salience.');}return {valid:errors.length===0,errors};}
+ function validate(timeline){const errors=[];if(!timeline||timeline.schemaVersion!==2||timeline.clock!=='original-decoded-audio'||!finite(timeline.duration)||timeline.duration<=0||!Array.isArray(timeline.events))errors.push('Invalid semantic timeline envelope.');
+  let prior=-1,ids=new Set();for(const event of timeline?.events||[]){if(!event||typeof event.id!=='string'||ids.has(event.id))errors.push('Duplicate or missing event id.');ids.add(event?.id);if(!finite(event.time)||event.time<0||event.time>timeline.duration||event.time<prior)errors.push('Invalid event order or time.');prior=event.time;if(!finite(event.salience)||event.salience<0||event.salience>1)errors.push('Invalid event salience.');if(event&&Object.prototype.hasOwnProperty.call(event,'salienceCap')&&(!finite(event.salienceCap)||event.salienceCap<0||event.salienceCap>1||event.salience>event.salienceCap+1e-9))errors.push('Invalid event salience cap.');}return {valid:errors.length===0,errors};}
  const api={build,validate};root.LightForgeSemanticTimeline=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof self!=='undefined'?self:globalThis);

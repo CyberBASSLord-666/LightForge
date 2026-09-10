@@ -29,6 +29,37 @@ the analysis identity. Recommended domains are:
 Choreography, UI, and vehicle settings do not belong in an audio/stem identity.
 Changing one must not force a stem, rhythm, or vocal recomputation.
 
+### Reusable FeatureStore contract
+
+`web/analysis/feature-store.js` is the production-worker-facing contract for
+shared deterministic feature reuse. Its address is derived from exactly:
+
+- the canonical audio SHA-256;
+- preprocessing version;
+- model versions; and
+- analysis configuration.
+
+Project IDs, source paths, and object URLs are deliberately excluded, so the
+same verified audio can reuse a feature in another project without turning a
+path-like identifier into cache identity.
+
+It supports checksummed JSON values and one-to-four Float32 arrays. Float data
+is committed before a small descriptor; an interruption can leave an orphaned
+binary record but cannot produce a hit without the matching descriptor. Reads
+validate the domain, identity key, feature name, schema, array lengths, and the
+underlying atomic/checksummed record. A mismatch or corruption is invalidated
+and returned as a miss.
+
+The rhythm worker currently reuses only its deterministic DSP source features:
+energy bands, tonal colour, fine RMS, and chroma. It still runs the same
+Beat-This frontend and rhythm model over the original PCM, so it never reuses
+predicted beat/downbeat output. Reuse is enabled only when a caller supplies a
+stable audio SHA-256; anonymous/browser auditions continue on the existing
+fresh path. A cache miss, malformed feature, changed model/configuration, or
+changed preprocessing version always falls back to the current extractor,
+then atomically replaces the invalid feature. This bounds reuse to an exact
+intermediate representation whose values and shape are validated before use.
+
 ## Atomic checkpoints and resume
 
 Each JSON or float checkpoint is written through an OPFS writable stream and is
@@ -78,3 +109,4 @@ The cache protects correctness and recovery, not a performance claim. Cache hit
 cost, streamed integrity verification cost, memory, and wall time must be
 measured through the locked benchmark/quality gate before changing defaults or
 claiming a speedup.
+

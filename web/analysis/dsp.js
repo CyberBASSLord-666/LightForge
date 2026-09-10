@@ -179,6 +179,48 @@ function grooveFromOnsets(rhythm,onsets){
  const ratio=percentile(ratios,.5)||.5,spread=percentile(ratios.map(x=>Math.abs(x-ratio)),.75),confidence=clamp(ratios.length/24)*clamp(1-spread/.13),swing=ratio>.58&&ratio<.73&&confidence>.45;
  return {feel:swing?'swing':Math.abs(ratio-.5)<.05&&confidence>.45?'straight':'free',subdivisionRatio:Math.round(ratio*1000)/1000,confidence,observations:ratios.length};
 }
+const ESTIMATED_PERCUSSION_SOURCE='mix-feature-estimate',ESTIMATED_PERCUSSION_SALIENCE_CAP=.41;
+function nearestAttackStrength(attacks,time){
+ let best=0;for(let i=lowerBound(attacks,time-.035,x=>x.time);i<attacks.length&&attacks[i].time<=time+.035;i++)best=Math.max(best,clamp(attacks[i].strength)*(1-Math.abs(attacks[i].time-time)/.05));return best;
+}
+function normalizedFlux(values,time,scale){
+ if(!values||!values.length||!scale)return 0;const at=Math.max(0,Math.min(values.length-1,Math.round(time/.02)));let peak=0;for(let index=Math.max(0,at-1);index<=Math.min(values.length-1,at+1);index++)peak=Math.max(peak,values[index]||0);return clamp(peak/scale);
+}
+/*
+ * Opt-in, low-trust percussion evidence from the original-mix feature pass.
+ * This is not a drum model and never claims separated instruments. A candidate
+ * needs an already localized spectral-flux peak plus an independent 5 ms PCM
+ * attack; its class/confidence are deliberately capped before semantic ranking.
+ */
+function estimatePercussionEvidence(data,context={}){
+ if(context.enabled!==true)return null;
+ const onsets=Array.isArray(context.onsets)?context.onsets:[],attacks=Array.isArray(context.attacks)?context.attacks:[],ranges=Array.isArray(context.activityRanges)?context.activityRanges:[],duration=Number(data?.duration);
+ const empty=()=>({schemaVersion:1,source:ESTIMATED_PERCUSSION_SOURCE,method:'Conservative original-mix spectral-flux and PCM-attack agreement; not a dedicated percussion model.',inputStem:'mixture',inputStemSeparated:false,sourceSeparated:false,estimated:true,salienceCap:ESTIMATED_PERCUSSION_SALIENCE_CAP,events:[],limitations:['Estimated from original-mix features; no isolated drum stem or classed drum model was used.','Low-trust estimates are capped below primary salience until independent evidence is supplied.']});
+ if(!Number.isFinite(duration)||duration<=0||!attacks.length)return empty();
+ const scale={bass:percentile(data.bass||[],.94)||0,mid:percentile(data.mid||[],.94)||0,high:percentile(data.high||[],.94)||0},candidates=[],rank={kick:0,snare:1,hat:2};
+ for(const onset of onsets){
+  if(!onset||!Number.isFinite(onset.time)||onset.time<0||onset.time>=duration||!['bass','mid','high'].includes(onset.band)||!Number.isFinite(onset.strength))continue;
+  if(ranges.length&&!insideRanges(onset.time,ranges))continue;
+  const low=normalizedFlux(data.bass,onset.time,scale.bass),mid=normalizedFlux(data.mid,onset.time,scale.mid),high=normalizedFlux(data.high,onset.time,scale.high),attack=nearestAttackStrength(attacks,onset.time),strength=clamp(onset.strength);
+  let kind=null,dominance=0,limit=0;
+  if(onset.band==='bass'&&strength>=.74&&attack>=.14&&low>=.82&&low>=mid*.86&&low>=high*.86){kind='kick';dominance=low-Math.max(mid,high)*.28;limit=.58;}
+  else if(onset.band==='mid'&&strength>=.76&&attack>=.16&&mid>=.84&&mid>=low*.88&&mid>=high*.80){kind='snare';dominance=mid-Math.max(low,high)*.24;limit=.53;}
+  else if(onset.band==='high'&&strength>=.80&&attack>=.12&&high>=.88&&high>=mid*.90&&high>=low*1.04){kind='hat';dominance=high-Math.max(mid,low)*.20;limit=.48;}
+  if(!kind)continue;
+  const evidence=clamp(.45*strength+.35*clamp(dominance)+.20*attack),confidence=Math.min(limit,clamp(.20+.46*evidence));
+  if(confidence<.38)continue;
+  candidates.push({time:onset.time,kind,confidence:Math.round(confidence*1e6)/1e6,strength:Math.round(evidence*1e6)/1e6,estimated:true,source:ESTIMATED_PERCUSSION_SOURCE,inputStem:'mixture',inputStemSeparated:false,sourceSeparated:false,salienceCap:ESTIMATED_PERCUSSION_SALIENCE_CAP});
+ }
+ candidates.sort((a,b)=>a.time-b.time||(rank[a.kind]-rank[b.kind])||b.confidence-a.confidence);
+ const spacing={kick:.12,snare:.12,hat:.06},events=[];
+ for(const candidate of candidates){
+  let previous=-1;for(let i=events.length-1;i>=0;i--)if(events[i].kind===candidate.kind){previous=i;break;}
+  if(previous>=0&&candidate.time-events[previous].time<spacing[candidate.kind]){if(candidate.confidence>events[previous].confidence)events[previous]=candidate;continue;}
+  events.push(candidate);
+ }
+ events.sort((a,b)=>a.time-b.time||(rank[a.kind]-rank[b.kind]));
+ const result=empty();result.events=events;return result;
+}
 function summarize(data,options={}){
  const sensitivity=clamp(Number(options.sensitivity??0.82)),attacks=data.fineRms?pcmAttacks(data.fineRms):[],rhythm=trackBeats(data.beat,data.down,data.rms,{...options,duration:data.duration,fineRms:data.fineRms,attacks});
  const onsets=[...pickOnsets(data.bass,'bass',sensitivity),...pickOnsets(data.mid,'mid',sensitivity),...pickOnsets(data.high,'high',sensitivity)].map(o=>({...o,time:alignToAttack(o.time,attacks)})).filter(o=>o.time<data.duration&&insideRanges(o.time,rhythm.activityRanges)).sort((a,b)=>a.time-b.time);
@@ -188,7 +230,10 @@ function summarize(data,options={}){
  for(let i=0;i<bins;i++){let a=Math.floor(i*data.rms.length/bins),b=Math.ceil((i+1)*data.rms.length/bins),v=0;for(let j=a;j<b;j++)v=Math.max(v,data.rms[j]);waveform.push(clamp(v/max));}
  const warnings=[];if(rhythm.downbeatConfidence<.35&&rhythm.beats.length)warnings.push('The first beat of the bar is uncertain. Mark a downbeat to align recurring accents.');if(!rhythm.bpm)warnings.push('No reliable musical pulse was detected. Choose audible music or enter a tempo.');else if(rhythm.beatConfidence<0.48)warnings.push('The beat estimate has low confidence. Preview the rhythm and adjust BPM if needed.');if(rhythm.meterConfidence<0.18&&rhythm.beats.length)warnings.push('Bar accents are uncertain; phrase boundaries use measured energy and pulse evidence.');
  const shifts=rhythm.beatDetails.map(b=>Math.abs(b.alignmentOffsetMs||0)/1000),manual=Number(options.bpmOverride)>=40&&Number(options.bpmOverride)<=240;
- return {duration:data.duration,...rhythm,onsets,sections:structure.sections,energy:structure.energy,...landmarks,waveform,energyStep:0.02,recommendedBeatLength:rhythm.bpm?60/rhythm.bpm:0,recommendedStepTime:20,analysisVersion:3,groove:grooveFromOnsets(rhythm,onsets),structure:{method:'Time-normalized tonal, energy and spectral fingerprints',recurringGroups:[...new Set(structure.sections.filter(s=>s.repetitionIndex>0).map(s=>s.recurrenceGroup))],semanticLabels:false},timing:{neuralFrameMs:20,pcmEnvelopeMs:data.fineRms?5:null,decoder:options.decoder==='transformer'?'Transformer direct peak decoding':'Adaptive CRNN lattice',alignment:manual?'Exact manual-tempo grid with evidence-based phase':'Neural pulse with local tempo and nearby measured PCM attacks',manualTempo:manual,attackCount:attacks.length,refinedBeatCount:manual?0:shifts.filter(s=>s>0.001).length,appliedGlobalOffsetMs:0},warnings};
+ const result={duration:data.duration,...rhythm,onsets,sections:structure.sections,energy:structure.energy,...landmarks,waveform,energyStep:0.02,recommendedBeatLength:rhythm.bpm?60/rhythm.bpm:0,recommendedStepTime:20,analysisVersion:3,groove:grooveFromOnsets(rhythm,onsets),structure:{method:'Time-normalized tonal, energy and spectral fingerprints',recurringGroups:[...new Set(structure.sections.filter(s=>s.repetitionIndex>0).map(s=>s.recurrenceGroup))],semanticLabels:false},timing:{neuralFrameMs:20,pcmEnvelopeMs:data.fineRms?5:null,decoder:options.decoder==='transformer'?'Transformer direct peak decoding':'Adaptive CRNN lattice',alignment:manual?'Exact manual-tempo grid with evidence-based phase':'Neural pulse with local tempo and nearby measured PCM attacks',manualTempo:manual,attackCount:attacks.length,refinedBeatCount:manual?0:shifts.filter(s=>s>0.001).length,appliedGlobalOffsetMs:0},warnings};
+ const percussionAnalysis=estimatePercussionEvidence(data,{enabled:options.enableEstimatedPercussionEvidence===true,onsets,attacks,activityRanges:rhythm.activityRanges});
+ if(percussionAnalysis)result.percussionAnalysis=percussionAnalysis;
+ return result;
 }
-scope.LightForgeDSP={FFT,Spectrum,FeatureExtractor,rolling,percentile,activityFromEnvelope,pcmAttacks,alignToAttack,trackBeats,recurringSections,grooveFromOnsets,summarize};
+scope.LightForgeDSP={FFT,Spectrum,FeatureExtractor,rolling,percentile,activityFromEnvelope,pcmAttacks,alignToAttack,trackBeats,recurringSections,grooveFromOnsets,estimatePercussionEvidence,summarize};
 })(typeof self!=='undefined'?self:globalThis);

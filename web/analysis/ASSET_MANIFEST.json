@@ -1,7 +1,7 @@
 {
   "README.md": {
-    "bytes": 7914,
-    "sha256": "52d1a61a8db9943f11e70f915364b51c0afc0f8d4dc5553416c2d39815378efa"
+    "bytes": 12426,
+    "sha256": "db90d4ec041da4dc4924d7e806fba03060c5cad17e461932a97d453186b32ba5"
   },
   "analyzer.js": {
     "bytes": 9729,
@@ -12,8 +12,12 @@
     "sha256": "5b81e2361295a1f8c02086d4668464ed1d7e93c923513c50a2c865a7aeb1531e"
   },
   "dsp.js": {
-    "bytes": 27384,
-    "sha256": "32186b9268632cab85cadcb7e84fa1b4e3d8eb4bb9fbdf96a0873067cb9acd71"
+    "bytes": 31844,
+    "sha256": "f84d9715be605e4459ddd0d3eb18eea8e412b56e983ddd0e7540c055842c9ef6"
+  },
+  "feature-store.js": {
+    "bytes": 7784,
+    "sha256": "a4fcc1e9c5e31ac88a63ac8620ae7a00a979de14be2c3cdff42616b0d4c1c0c7"
   },
   "game.js": {
     "bytes": 10103,
@@ -243,17 +247,25 @@
     "bytes": 9916,
     "sha256": "52093f26d0bfe3f04bbb1563b287fafe5e61aa57a61391ea643b04d97838ca7e"
   },
+  "recurrence.js": {
+    "bytes": 30364,
+    "sha256": "bfeba07ceaf9ad445a084a88ec4d4e5eb69e57ce8c1198966cd19ee84689b1c8"
+  },
+  "rhythm-hierarchy.js": {
+    "bytes": 18992,
+    "sha256": "df372b315a399ebf2b5b28f2042fd0ac3dbe4dc64d70b8d287aa30077031f409"
+  },
   "salience.js": {
-    "bytes": 12886,
-    "sha256": "2594dcc2b5428828e321ab4f4ecf0fcc66091f3464e2bcfdebdac130919dbf1f"
+    "bytes": 13779,
+    "sha256": "53647d3e861b0645a7a3bfbceb0b19a693039d14e1ef8fef4337e6116dff5341"
   },
   "scheduler.js": {
     "bytes": 5331,
     "sha256": "7a9b97fd59c18b236090104ffe074945e802a99a239294c566a99148ef6e364e"
   },
   "semantic-timeline.js": {
-    "bytes": 15123,
-    "sha256": "a9c68bcb56a0784d12ca8a7eeb09c987f031dafb64ea12cb116e5dfe65811b70"
+    "bytes": 16086,
+    "sha256": "14d920b39b616b73a4c95dfacee0b3b9309da1550d1a8c924d253f1ba8d07f91"
   },
   "separator-deux.js": {
     "bytes": 10079,
@@ -266,6 +278,10 @@
   "stem-cache.js": {
     "bytes": 17020,
     "sha256": "14bbcb8fd0c431491818cd466450d54fd6674ed9ff0cbd0f275c45a85f615b1d"
+  },
+  "stem-routing.js": {
+    "bytes": 8980,
+    "sha256": "c2256c15be8a2285721fb16662915e0853de673a63a144e54b8d6838d5c1970a"
   },
   "telemetry.js": {
     "bytes": 3053,
@@ -291,6 +307,10 @@
     "bytes": 22476,
     "sha256": "cd760d7a766d9a4ab0ac3a252a10f17a16a797b38e50b2d6712bc6adcd42713f"
   },
+  "vocal-semantics.js": {
+    "bytes": 23357,
+    "sha256": "f148f05075a3843640611c828c1de99a600fdd7609f8ee71ca0655cb18d0e32f"
+  },
   "vocal.js": {
     "bytes": 9662,
     "sha256": "94483ac6cf5db7532abfba98e7bab7cd826a82ad2adca0296d39fdebd827ac70"
@@ -304,7 +324,7 @@
     "sha256": "94cc60efb59146e1a12546d51871e8c45c6fcbec67d1090972deb0f313d001d2"
   },
   "worker.js": {
-    "bytes": 24471,
-    "sha256": "ce8ac858ec530885e91b5cb483c7e95b49ac847816f066fdb08fd580ba44fd88"
+    "bytes": 33147,
+    "sha256": "bed7584638788e630eae9521fef39b45fd6e29746bc0dc3eb3d5c344e98fc336"
   }
 }

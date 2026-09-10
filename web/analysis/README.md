@@ -58,14 +58,49 @@ drums and other instruments remain, and real-song onset estimates can be ambiguo
 The semantic timeline records this as separated accompaniment context, never as
 an isolated bass source.
 
+## Opt-in acoustic vocal semantic sidecar
+
+`vocalSemanticEnrichment: true` enables a validated sidecar after the
+existing separated-vocal detail and GAME passes. It does **not** run another
+model or inspect audio again. The sidecar normalizes already accepted vocal
+regions/phrases, phrase onsets/releases, existing acoustic articulation markers,
+existing notes, pitch trajectory, intensity, and stress confidence.
+
+An articulation marked `syllableLike` is only a timed acoustic attack from
+`vocalDetail.accents`; it is not a recognised syllable, phoneme, word, or
+lyric. The sidecar deliberately contains no linguistic content. It has a
+deterministic 64-bit source binding for its vocal evidence and is discarded/rebuilt when
+that evidence or its schema changes. It is stored under the independent
+`vocal-semantics` checkpoint, so changing this opt-in feature does not
+invalidate separation, transcription, rhythm, or bass work.
+
+The default analysis result, cached base semantic timeline, salience map and
+FSEQ path remain unchanged. When enabled, `vocalSemanticLinks` maps the
+sidecar only to exact existing vocal events in the semantic timeline; a stale
+or mismatched sidecar fails closed and is never converted into vehicle commands.
+See `docs/VOCAL_SEMANTIC_ENRICHMENT.md` for the contract.
+
 ## Optional dedicated-percussion semantic input
 
 The shipped worker does not currently include a dedicated drum/percussion model.
-It therefore never promotes mix onsets, impacts, beat estimates, accompaniment
-energy, or a low-frequency band into instrument-labelled drum events. This is an
-additive integration contract for a future dedicated analyzer or a legitimate
-manual/annotation importer; it is not a claim that those detections already
-exist.
+With its default settings it never promotes mix onsets, impacts, beat estimates,
+accompaniment energy, or a low-frequency band into instrument-labelled drum
+events. This remains an additive integration contract for a future dedicated
+analyzer or a legitimate manual/annotation importer; it is not a claim that
+those detections already exist.
+
+For controlled experiments only, a caller may set
+`enableEstimatedPercussionEvidence: true` on a fresh rhythm analysis. That
+opt-in adds low-trust `mix-feature-estimate` evidence only when a localized
+20 ms low/mid/high spectral-flux peak agrees with an independent 5 ms PCM
+attack. It can emit only `kick`, `snare`, or `hat`; every event is marked
+`estimated: true`, states that its input is the unseparated original mixture,
+and has a confidence/salience cap. The cap keeps it below primary salience and
+excludes it from automatic song-priority profiling. It does not claim a drum
+stem or a drum model, is disabled by default, and therefore cannot change
+default choreography or FSEQ output. Include this explicit setting in any
+analysis cache identity so a cached default rhythm result is not reused for an
+opt-in experiment.
 
 A caller that has actual classed evidence may supply it with the analysis result:
 
@@ -94,7 +129,61 @@ A `kick_bass_coincidence` relationship/event is produced only when a valid
 supplied kick falls within a valid `bassNotes` span (with a bounded 60 ms
 onset/end tolerance). It records the source event IDs and timing delta. Generic
 onsets, impacts, bass phrases and energy bands cannot create this relationship.
-The result remains deterministic for identical inputs.
+An opt-in `mix-feature-estimate` kick carries the same low-trust salience cap
+through any derived coincidence; only separately supplied evidence can receive
+normal percussion authority. The result remains deterministic for identical
+inputs.
+
+## Typed stem-routing contract
+
+The current bundled pipeline has two actual separated cache layers: a combined
+vocal layer and an accompaniment layer. The vocal layer is not labelled as a
+lead-only stem, and the accompaniment layer is not promoted to drums, bass, or
+harmonic isolation. The worker records the contract as additive
+`stemRouting` metadata after final bass analysis or a matching cache restore.
+It validates an existing contract and rebuilds only a missing or invalid one;
+no model stage, source audio, choreography input, or analysis-version contract
+is changed.
+
+A future importer or analyzer can provide optional semantic stems on the same
+original decoded-audio clock:
+
+```js
+LightForgeStemRouting.build({
+  legacyStems: {
+    vocals: {audioRef: 'stem-cache:.../vocals.wav'},
+    accompaniment: {audioRef: 'stem-cache:.../accompaniment.wav'}
+  },
+  semanticStems: [{
+    id: 'drum-pass-1',
+    role: 'drums',
+    audioRef: 'external://opaque-drum-reference',
+    clock: 'original-decoded-audio',
+    confidence: 0.91,
+    provenance: {
+      source: 'supplied-drum-analyzer',
+      model: 'optional-model-version',
+      isolationEvidence: 'declared'
+    }
+  }]
+});
+```
+
+The permitted external roles are `lead-vocals`, `backing-vocals`, `drums`,
+`bass`, and `harmonic`. Each requires an opaque audio reference, an
+original-clock declaration, a confidence in [0, 1] when supplied, and
+provenance. `isolationEvidence` is one of `verified`, `declared`, or
+`unknown`; the router preserves that statement rather than upgrading it to a
+physical separation claim. Legacy cache records carry the distinct
+`pipeline-separated` evidence label.
+
+`LightForgeStemRouting.route(contract, task)` selects only eligible existing
+records. It prefers a lead-vocal stem for vocal transcription, an external
+drum/bass/harmonic stem for the matching task, and may use legacy accompaniment
+only as an explicitly named mixture fallback for bass or harmonic analysis.
+There is deliberately no drum fallback from onset, impact, accompaniment, or
+energy data. Missing, duplicate, unsupported, unclocked, or unprovenanced
+descriptors are reported as rejected and do not create a route.
 
 ## Rhythm, memory and cancellation
 

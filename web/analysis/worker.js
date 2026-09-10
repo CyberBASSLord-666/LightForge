@@ -1,6 +1,6 @@
 /* Private worker: bounded PCM chunks -> exact log-mel -> pretrained Beat This! transformer. */
 'use strict';
-importScripts('telemetry.js','semantic-timeline.js','salience.js','wav-reader.js','dsp.js','bass-notes.js','vocal.js','vocal-detail.js','stem-cache.js','work-store.js','separator-mdx.js','separator-deux.js','game.js','vendor/ort.wasm.min.js');
+importScripts('telemetry.js','semantic-timeline.js','stem-routing.js','salience.js','rhythm-hierarchy.js','wav-reader.js','dsp.js','bass-notes.js','vocal.js','vocal-detail.js','vocal-semantics.js','stem-cache.js','work-store.js','feature-store.js','separator-mdx.js','separator-deux.js','game.js','vendor/ort.wasm.min.js');
 const report=(progress,stage,detail='',extra={})=>postMessage({type:'progress',value:{...extra,progress,stage,detail}});
 function createTelemetry(stage,metadata){
  const factory=self.LightForgeAnalysisTelemetry;
@@ -24,6 +24,13 @@ function ensureSemanticTimeline(result){
  result.semanticTimeline=timeline;
  return timeline;
 }
+function ensureStemRouting(result){
+ const api=self.LightForgeStemRouting;
+ if(!api||typeof api.ensureAnalysis!=='function'||typeof api.validate!=='function')throw Error('Stem-routing module is unavailable.');
+ const attached=api.ensureAnalysis(result),routing=attached?.routing,check=api.validate(routing);
+ if(!check||!check.valid)throw Error('Stem-routing validation failed: '+(check?.errors||[]).join('; ').slice(0,512));
+ return {routing,rebuilt:attached.rebuilt===true};
+}
 function ensureMusicSalience(result,timeline){
  const api=self.LightForgeMusicSalience;
  if(!api||typeof api.build!=='function'||typeof api.validate!=='function')throw Error('Music salience module is unavailable.');
@@ -36,6 +43,55 @@ function ensureMusicSalience(result,timeline){
  if(!check||!check.valid)throw Error('Music salience validation failed: '+(check?.errors||[]).join('; ').slice(0,512));
  result.musicSalience=musicSalience;
  return musicSalience;
+}
+function vocalSemanticsEnabled(options){return options?.vocalSemanticEnrichment===true;}
+function persistableAnalysis(result){
+ const {vocalSemantics,vocalSemanticLinks,...persisted}=result||{};
+ return persisted;
+}
+async function ensureVocalSemantics(result,options,store,telemetry){
+ if(!vocalSemanticsEnabled(options)){
+  if(result){delete result.vocalSemantics;delete result.vocalSemanticLinks;}
+  return null;
+ }
+ const api=self.LightForgeVocalSemantics;
+ if(!api||typeof api.build!=='function'||typeof api.validate!=='function'||typeof api.linkTimeline!=='function')throw Error('Vocal semantic enrichment module is unavailable.');
+ if(!result?.vocals||!Number.isFinite(result.duration)||result.duration<=0)throw Error('Vocal semantic enrichment requires completed vocal analysis on the original audio clock.');
+ delete result.vocalSemanticLinks;
+ const input={duration:result.duration,vocals:result.vocals},phase=telemetry.begin('vocal.semantics');
+ let cached=null;
+ try{cached=await store.read('vocal-semantics');}catch(_){telemetry.cache('vocal-semantics','corrupt');}
+ if(cached){
+  const check=api.validate(cached,input);
+  if(check?.valid){result.vocalSemantics=cached;telemetry.cache('vocal-semantics','restore');telemetry.end(phase,{restored:true,phraseCount:cached.summary.phraseCount,articulationCount:cached.summary.articulationCount});return cached;}
+  telemetry.cache('vocal-semantics','invalidate');
+  try{await store.invalidate(['vocal-semantics']);}catch(_){}
+ }
+ telemetry.cache('vocal-semantics','miss');
+ const sidecar=api.build(input),check=api.validate(sidecar,input);
+ if(!check?.valid)throw Error('Vocal semantic enrichment validation failed: '+(check?.errors||[]).join('; ').slice(0,512));
+ await store.write('vocal-semantics',sidecar);
+ result.vocalSemantics=sidecar;
+ telemetry.end(phase,{restored:false,phraseCount:sidecar.summary.phraseCount,articulationCount:sidecar.summary.articulationCount});
+ return sidecar;
+}
+function linkVocalSemantics(result){
+ if(!result?.vocalSemantics){if(result)delete result.vocalSemanticLinks;return null;}
+ const api=self.LightForgeVocalSemantics,input={duration:result.duration,vocals:result.vocals},check=api?.validate?.(result.vocalSemantics,input);
+ if(!check?.valid)throw Error('Vocal semantic enrichment no longer matches vocal analysis.');
+ const link=api.linkTimeline(result.vocalSemantics,result.semanticTimeline);
+ result.vocalSemanticLinks=link;
+ return link;
+}
+function ensureRhythmHierarchy(result,options={}){
+ if(options?.rhythmHierarchy!==true)return {enabled:false,attached:false,reused:false};
+ const api=self.LightForgeRhythmHierarchy;
+ if(!api||typeof api.attach!=='function'||typeof api.validate!=='function')throw Error('Rhythm hierarchy module is unavailable.');
+ const outcome=api.attach(result);
+ if(!outcome?.hierarchy)throw Error('Rhythm hierarchy rejected unvalidated rhythm evidence.');
+ const check=api.validate(outcome.hierarchy,result);
+ if(!check||!check.valid)throw Error('Rhythm hierarchy validation failed: '+(check?.reason||'unknown'));
+ return {enabled:true,attached:outcome.attached===true,reused:outcome.reused===true,hierarchy:outcome.hierarchy};
 }
 function normalizeBassProvenance(result){
  const analysis=result?.bassAnalysis;
@@ -91,6 +147,19 @@ async function melForFrames(reader,session,first,frames,config){
  const tensor=new ort.Tensor('float32',pcm,[1,pcm.length]);let output;
  try{output=await session.run({audio_pcm:tensor});const mel=output.mel_spectrogram;return new Float32Array(mel.data.subarray(halo*128,(halo+frames)*128));}finally{if(output)dispose(output);tensor.dispose();}
 }
+const RHYTHM_FEATURE='rhythm-dsp-v1',RHYTHM_FEATURE_VERSION='dsp-feature-extractor-v1',RHYTHM_PREPROCESSING='pcm-44100-mono22050-reflect-v1';
+const floatFeature=(value,length)=>value instanceof Float32Array&&value.length===length;
+function rhythmFeaturePayload(data,n){return {version:1,frameCount:n,duration:data.duration,chromaStep:data.chromaStep,rms:data.rms,bass:data.bass,mid:data.mid,high:data.high,colour:data.colour,fineRms:data.fineRms,chroma:data.chroma};}
+function validRhythmFeature(value,n,duration){return !!value&&value.version===1&&value.frameCount===n&&value.duration===duration&&value.chromaStep===.2&&floatFeature(value.rms,n)&&floatFeature(value.bass,n)&&floatFeature(value.mid,n)&&floatFeature(value.high,n)&&floatFeature(value.colour,n*3)&&floatFeature(value.fineRms,n*4)&&floatFeature(value.chroma,Math.ceil(n/10)*12);}
+function rhythmDataFromFeature(value,n){return {duration:value.duration,beat:new Float32Array(n),down:new Float32Array(n),rms:value.rms,bass:value.bass,mid:value.mid,high:value.high,colour:value.colour,fineRms:value.fineRms,chroma:value.chroma,chromaStep:value.chromaStep};}
+async function reusableRhythmFeatures(options,config){
+ const audioIdentity=options.analysisIdentity,api=self.LightForgeFeatureStore,store=self.LightForgeAnalysisStore;
+ if(typeof audioIdentity!=='string'||!/^[a-f0-9]{64}$/.test(audioIdentity)||!api||typeof api.open!=='function'||!store||typeof store.contentAddress!=='function')return null;
+ try{
+  const configIdentity=await store.contentAddress('dsp-feature-config',config);
+  return await api.open({audioIdentity,preprocessingVersion:RHYTHM_PREPROCESSING,modelVersions:{'dsp-config':configIdentity,'dsp-extractor':RHYTHM_FEATURE_VERSION},analysisConfiguration:{analysisRate:22050,featureChunk:500,frameHopSamples:441,frameRateHz:50,chromaStep:.2,reflectionHaloHops:2}});
+ }catch(_){return null;}
+}
 self.onmessage=async e=>{
  if(e.data?.type==='native-deux-result'||e.data?.type==='native-deux-progress'){
   const pending=nativeRequests.get(e.data.requestId);if(!pending)return;
@@ -122,19 +191,33 @@ self.onmessage=async e=>{
  let result=e.data.value||{},cached=await store.read(stage);
  telemetry.end(cacheRead,{hit:!!cached});
  if(cached&&stage==='separation')try{await LightForgeStemCache.files(cached.stemCache);await LightForgeStemCache.fullVoice(cached.stemCache);}catch{cached=null;telemetry.cache(stage,'corrupt');}
- if(stage==='separation'&&!cached){telemetry.cache(stage,'invalidate');await store.invalidate(['separation','voice','game','bass']);}
+ if(stage==='separation'&&!cached){telemetry.cache(stage,'invalidate');await store.invalidate(['separation','voice','vocal-semantics','game','bass']);}
  if(cached){
   telemetry.cache(stage,'restore');
   const restored={...result,...cached};
+  if(stage==='rhythm'){
+   if(options.rhythmHierarchy===true){
+    const hierarchyPhase=telemetry.begin('rhythm.hierarchy');
+    const hierarchy=ensureRhythmHierarchy(restored,options);
+    telemetry.end(hierarchyPhase,{restored:true,attached:hierarchy.attached,reused:hierarchy.reused,beatCount:hierarchy.hierarchy.beats.length,barCount:hierarchy.hierarchy.bars.length});
+    if(hierarchy.attached)await store.write(stage,restored);
+   }else if(Object.prototype.hasOwnProperty.call(restored,'rhythmHierarchy'))delete restored.rhythmHierarchy;
+  }
+  if(stage==='voice')await ensureVocalSemantics(restored,options,store,telemetry);
   if(stage==='bass'){
-   const provenanceChanged=normalizeBassProvenance(restored),cachedTimeline=restored.semanticTimeline;
-   const timelinePhase=telemetry.begin('semantic.timeline');
+   const provenanceChanged=normalizeBassProvenance(restored),cachedStemRouting=restored.stemRouting;
+   const vocalSemantics=await ensureVocalSemantics(restored,options,store,telemetry);
+   const stemRoutingPhase=telemetry.begin('stem.routing');
+   const stemRouting=ensureStemRouting(restored),stemRoutingWasCurrent=cachedStemRouting===stemRouting.routing;
+   telemetry.end(stemRoutingPhase,{restored:true,stemCount:stemRouting.routing.stems.length,rebuilt:stemRouting.rebuilt,cacheReused:stemRoutingWasCurrent});
+   const cachedTimeline=restored.semanticTimeline,timelinePhase=telemetry.begin('semantic.timeline');
    const timeline=ensureSemanticTimeline(restored),timelineWasCurrent=cachedTimeline===timeline;
    telemetry.end(timelinePhase,{restored:true,eventCount:timeline.events.length,provenanceMigrated:provenanceChanged,cacheReused:timelineWasCurrent});
    const cachedSalience=restored.musicSalience,saliencePhase=telemetry.begin('semantic.salience');
    const musicSalience=ensureMusicSalience(restored,timeline),salienceWasCurrent=cachedSalience===musicSalience;
    telemetry.end(saliencePhase,{restored:true,eventCount:musicSalience.events.length,profile:musicSalience.summary.context.profile,cacheReused:salienceWasCurrent});
-   if(!timelineWasCurrent||!salienceWasCurrent||provenanceChanged)await store.write(stage,restored);
+   if(!stemRoutingWasCurrent||!timelineWasCurrent||!salienceWasCurrent||provenanceChanged)await store.write(stage,persistableAnalysis(restored));
+   if(vocalSemantics)linkVocalSemantics(restored);
   }
   report(({rhythm:.4,separation:.82,voice:.985,bass:1})[stage],'Restoring saved progress','Completed '+stage+' work restored',{checkpointSaved:true,restoredStage:stage});
   postMessage({type:'result',value:restored,restored:true,seconds:0,profile:telemetry.snapshot({restored:true})});
@@ -145,10 +228,27 @@ self.onmessage=async e=>{
  const sessionOptions={executionProviders:['wasm'],graphOptimizationLevel:'all',enableCpuMemArena:false,enableMemPattern:false};
  if(stage==='rhythm'){
   report(.01,'Opening music','Reading your music locally');const reader=new LightForgeWavReader(options.analysisUrl||audioUrl);await reader.open();
- const n=Math.ceil(reader.duration*50);let data={duration:reader.duration,beat:new Float32Array(n),down:new Float32Array(n),rms:new Float32Array(n),bass:new Float32Array(n),mid:new Float32Array(n),high:new Float32Array(n),colour:new Float32Array(n*3),fineRms:new Float32Array(n*4),chroma:new Float32Array(Math.ceil(n/10)*12),chromaStep:.2};
- const extractor=new LightForgeDSP.FeatureExtractor(config),featureChunk=500;
- report(.025,'Listening to musical detail','Measuring attacks, tonal colour and quiet passages');
- for(let first=0;first<n;first+=featureChunk){const frames=Math.min(featureChunk,n-first),samples=await reader.mono22050(first*441-705,(frames-1)*441+1411,config),f=extractor.extract(samples,0,frames);for(const name of ['rms','bass','mid','high'])data[name].set(f[name],first);data.colour.set(f.colour,first*3);data.fineRms.set(f.fineRms,first*4);for(let i=0;i<frames;i++)for(let b=0;b<12;b++)data.chroma[Math.floor((first+i)/10)*12+b]+=f.chroma[i*12+b]/10;report(.03+.18*(first+frames)/n,'Listening to musical detail',`${Math.min(reader.duration,(first+frames)*.02).toFixed(0)} / ${reader.duration.toFixed(0)} seconds`);}
+ const n=Math.ceil(reader.duration*50),featureStore=await reusableRhythmFeatures(options,config);let featureHit=null;
+ if(featureStore){
+  const featureRead=telemetry.begin('shared-feature.read');
+  try{featureHit=await featureStore.read(RHYTHM_FEATURE);}catch(_){featureHit=null;}
+  telemetry.end(featureRead,{hit:!!featureHit});
+ }
+ if(featureHit&&!validRhythmFeature(featureHit.value,n,reader.duration)){telemetry.cache('shared-features','corrupt');try{await featureStore.invalidate([RHYTHM_FEATURE]);}catch(_){}featureHit=null;}
+ let data=featureHit?rhythmDataFromFeature(featureHit.value,n):null;
+ if(data){telemetry.cache('shared-features','hit');report(.025,'Restoring musical detail','Verified reusable energy and tonal features restored');}
+ else{
+  if(featureStore)telemetry.cache('shared-features','miss');
+  data={duration:reader.duration,beat:new Float32Array(n),down:new Float32Array(n),rms:new Float32Array(n),bass:new Float32Array(n),mid:new Float32Array(n),high:new Float32Array(n),colour:new Float32Array(n*3),fineRms:new Float32Array(n*4),chroma:new Float32Array(Math.ceil(n/10)*12),chromaStep:.2};
+  const extractor=new LightForgeDSP.FeatureExtractor(config),featureChunk=500;
+  report(.025,'Listening to musical detail','Measuring attacks, tonal colour and quiet passages');
+  for(let first=0;first<n;first+=featureChunk){const frames=Math.min(featureChunk,n-first),samples=await reader.mono22050(first*441-705,(frames-1)*441+1411,config),f=extractor.extract(samples,0,frames);for(const name of ['rms','bass','mid','high'])data[name].set(f[name],first);data.colour.set(f.colour,first*3);data.fineRms.set(f.fineRms,first*4);for(let i=0;i<frames;i++)for(let b=0;b<12;b++)data.chroma[Math.floor((first+i)/10)*12+b]+=f.chroma[i*12+b]/10;report(.03+.18*(first+frames)/n,'Listening to musical detail',`${Math.min(reader.duration,(first+frames)*.02).toFixed(0)} / ${reader.duration.toFixed(0)} seconds`);}
+  if(featureStore){
+   const featureWrite=telemetry.begin('shared-feature.write');
+   try{await featureStore.write(RHYTHM_FEATURE,rhythmFeaturePayload(data,n),{producer:RHYTHM_FEATURE_VERSION,frameCount:n});telemetry.cache('shared-features','write');}catch(_){telemetry.cache('shared-features','corrupt');}
+   telemetry.end(featureWrite);
+  }
+ }
  report(.22,'Loading music AI',quality==='precision'?'Beat This! full transformer • entirely on this device':'Beat This! compact transformer • entirely on this device');
 
  const chunk=1500,border=6,stride=chunk-border*2,starts=[];for(let s=-border;s<n-border;s+=stride)starts.push(s);if(n>stride)starts[starts.length-1]=n-(chunk-border);
@@ -166,6 +266,11 @@ self.onmessage=async e=>{
  if(session)await session.release();session=null;if(melSession)await melSession.release();melSession=null;
  report(.40,'Recognizing musical structure','Finding recurring passages, groove and confident movement moments');
  result=LightForgeDSP.summarize(data,{...options,decoder:'transformer'});
+ if(options.rhythmHierarchy===true){
+  const hierarchyPhase=telemetry.begin('rhythm.hierarchy');
+  const hierarchy=ensureRhythmHierarchy(result,options);
+  telemetry.end(hierarchyPhase,{restored:false,attached:hierarchy.attached,reused:hierarchy.reused,beatCount:hierarchy.hierarchy.beats.length,barCount:hierarchy.hierarchy.bars.length});
+ }
  // Release rhythm feature buffers and both transformer sessions before the
  // independent musical-role passes. Every pass uses the same original PCM clock.
  data=null;
@@ -202,6 +307,7 @@ self.onmessage=async e=>{
  game=await LightForgeGAME.create({ort,baseUrl:new URL('models/game/',self.location.href).href,onProgress:detail=>report(.942,'Loading singing transcription',detail),checkpoint:store});
  const transcription=await game.process(await LightForgeStemCache.fullVoice(result.stemCache),sourceReader.samples,{onProgress:(p,info)=>report(.945+.04*p,'Transcribing sung notes','GAME Large • '+Math.round(p*100)+'%',info)});
  result.vocals=LightForgeGAME.fuse(detailExtractor.finish({classifier:classified.classifier,model:classified.model,transcription}),transcription);classified.classifier=null;await game.release();game=null;
+ await ensureVocalSemantics(result,options,store,telemetry);
 
    await store.write(stage,{vocals:result.vocals});
    report(.985,'Recognizing the isolated voice','Progress saved',{checkpointSaved:true,analysisStage:stage});
@@ -215,15 +321,20 @@ self.onmessage=async e=>{
  result.roleAnalysis={version:5,clock:'Original decoded audio',vocalSource:'Separated vocal waveform with singing and speech evidence',bassSource:'Low-register harmonics in a vocal-separated accompaniment mixture; not an isolated bass stem',bassInputStem:'accompaniment',accompanimentStemSeparated:true,bassInstrumentSeparated:false,sourceSeparated:true,lyricsAligned:false};
  for(const warning of [...(result.vocals.warnings||[]),...(result.separation.limitations||[])])if(!result.warnings.includes(warning))result.warnings.push(warning);
  result.engine={name:'Beat This! '+(quality==='precision'?'full + Deux':'compact + MDX')+' + GAME Large',neural:true,detail:'Bundled pretrained rhythm transformer, stereo vocal separation, isolated-voice singing and speech classification, GAME Large neural sung-note transcription, measured source expression, and independent accompaniment bass tracking. All audio stays on this device.',model:selected.model,modelId:selected.id,modelSha256:selected.sha256,frontendSha256:models.frontend.sha256,vocalModel:result.vocals.model,noteModel:result.vocals.transcription.model,separationModel:result.separation,bassMethod:result.bassAnalysis.method,quality,runtime:(result.separation.nativeModelPasses>0||result.separation.runtime==='onnxruntime-android-cpu')?'ONNX Runtime Android CPU + ONNX Runtime Web 1.20.1':'ONNX Runtime Web 1.20.1',analysisSeconds:Math.round((performance.now()-started)/100)/10};
+ const vocalSemantics=await ensureVocalSemantics(result,options,store,telemetry);
+ const stemRoutingPhase=telemetry.begin('stem.routing');
+ const stemRouting=ensureStemRouting(result);
+ telemetry.end(stemRoutingPhase,{stemCount:stemRouting.routing.stems.length,rebuilt:stemRouting.rebuilt});
  const timelinePhase=telemetry.begin('semantic.timeline');
  const semanticTimeline=ensureSemanticTimeline(result);
  telemetry.end(timelinePhase,{eventCount:semanticTimeline.events.length,tiers:semanticTimeline.summary.countByTier});
  const saliencePhase=telemetry.begin('semantic.salience');
  const musicSalience=ensureMusicSalience(result,semanticTimeline);
  telemetry.end(saliencePhase,{eventCount:musicSalience.events.length,tiers:musicSalience.summary.countByTier,profile:musicSalience.summary.context.profile});
+ if(vocalSemantics)linkVocalSemantics(result);
  result.recommendedAudio={sampleRate:44100,channels:2,format:'PCM16 WAV'};report(1,'Music understood',(result.bpm?result.bpm+' BPM':'No pulse detected')+' • '+result.sections.length+' sections');
 
-   await store.write(stage,result);
+   await store.write(stage,persistableAnalysis(result));
    report(1,'Music understood','Progress saved',{checkpointSaved:true,analysisStage:stage});
   }
  }

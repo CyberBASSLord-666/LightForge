@@ -32,6 +32,8 @@
    if(!finite(event.time)||event.time<0||event.time>timeline.duration||event.time<prior)errors.push('Invalid event order or time.');
    prior=event?.time;
    if(!finite(event?.salience)||event.salience<0||event.salience>1)errors.push('Invalid event salience.');
+   if(Object.prototype.hasOwnProperty.call(event||{},'salienceCap')&&
+      (!finite(event.salienceCap)||event.salienceCap<0||event.salienceCap>1||event.salience>event.salienceCap+1e-9))errors.push('Invalid event salience cap.');
   }
   return {valid:errors.length===0,errors};
  };
@@ -44,6 +46,9 @@
    append(event.id);append(event.type);append(event.time);append(event.duration);append(event.source);append(event.confidence);append(event.intensity);append(event.salience);
    append(event.rhythm?.barPosition);append(event.rhythm?.beatTime);append(event.structure?.sectionIndex);append(event.structure?.phraseIndex);
    append(event.relationships?.crossStemAgreement);append(event.recurrenceGroup);append(event.repetitionIndex);
+   // Preserve legacy cache fingerprints unless an event carries the new explicit
+   // low-trust cap; a capped estimate must never reuse an uncapped ranking.
+   if(event.salienceCap!==undefined){append('salience-cap-v1');append(event.salienceCap);}
   }
   return ('00000000'+(hash>>>0).toString(16)).slice(-8);
  }
@@ -52,12 +57,16 @@
   let quality=0;for(const event of events)quality+=.6*clamp(event.confidence,.0,1)+.4*clamp(event.intensity,.0,1);
   return round(clamp(.7*(quality/events.length)+.3*Math.sqrt(clamp(events.length/expected,.0,1))));
  }
+ function cappedEstimate(event){return finite(event?.salienceCap)&&event.salienceCap<=.51;}
  function contextFor(events,duration){
   const select=predicate=>events.filter(predicate);
+  const trusted=event=>!cappedEstimate(event);
   const vocal=evidence(select(event=>event.source==='vocals'),6);
   const bass=evidence(select(event=>event.source==='bass'),6);
-  const rhythm=evidence(select(event=>event.source==='rhythm'||event.source==='drums'),16);
-  const percussion=evidence(select(event=>event.source==='drums'||event.type==='impact'||event.type==='onset'),8);
+  // Low-trust mix estimates may be displayed as secondary evidence, but cannot
+  // rewrite the song-level priority profile or promote themselves through it.
+  const rhythm=evidence(select(event=>trusted(event)&&(event.source==='rhythm'||event.source==='drums')),16);
+  const percussion=evidence(select(event=>trusted(event)&&(event.source==='drums'||event.type==='impact'||event.type==='onset')),8);
   const structural=evidence(select(event=>event.source==='structure'||event.type==='section'||event.type==='phrase'),2);
   const density=round(events.length/duration),rhythmicEvidence=Math.max(rhythm,percussion),strongest=Math.max(vocal,bass,rhythmicEvidence);
   let profile='balanced';
@@ -109,7 +118,7 @@
     baseline:clamp(event.salience),confidence:clamp(event.confidence),intensity:clamp(event.intensity),structural:structuralFactor(event),rhythmic:rhythmicFactor(event),transition:transitionFactor(event,sectionTimes),crossStem:clamp(event.relationships?.crossStemAgreement),recurrence:recurrenceFactor(event),sourcePriority:clamp(context.sourcePriorities[event.source]??.58)
    };
    let score=0;for(const key of Object.keys(factors))score+=factors[key]*context.weights[key];
-   score=round(clamp(score));entries.push({id:event.id,time:event.time,score,tier:tierFor(score),drivers:topDrivers(factors,context.weights)});
+   score=round(clamp(score));if(cappedEstimate(event))score=Math.min(score,round(clamp(event.salienceCap)));entries.push({id:event.id,time:event.time,score,tier:tierFor(score),drivers:topDrivers(factors,context.weights)});
   }
   const ranked=entries.slice().sort((left,right)=>right.score-left.score||left.time-right.time||compareText(left.id,right.id));
   for(let index=0;index<ranked.length;index++)ranked[index].rank=index+1;
