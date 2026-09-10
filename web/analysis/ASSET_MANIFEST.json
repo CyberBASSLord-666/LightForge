@@ -247,6 +247,10 @@
     "bytes": 12886,
     "sha256": "2594dcc2b5428828e321ab4f4ecf0fcc66091f3464e2bcfdebdac130919dbf1f"
   },
+  "rhythm-hierarchy.js": {
+    "bytes": 16045,
+    "sha256": "2523a8b7c573a9fbd55f1ea231eba40e8f6127287b502fe20ce02f47c7a4663a"
+  },
   "scheduler.js": {
     "bytes": 5331,
     "sha256": "7a9b97fd59c18b236090104ffe074945e802a99a239294c566a99148ef6e364e"
@@ -304,7 +308,7 @@
     "sha256": "94cc60efb59146e1a12546d51871e8c45c6fcbec67d1090972deb0f313d001d2"
   },
   "worker.js": {
-    "bytes": 24471,
-    "sha256": "ce8ac858ec530885e91b5cb483c7e95b49ac847816f066fdb08fd580ba44fd88"
+    "bytes": 26101,
+    "sha256": "62dc3c1873a56da7a292ee376f9c9c28e732becef19ecef4e4804db391057fe4"
   }
 }

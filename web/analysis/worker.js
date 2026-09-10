@@ -1,6 +1,6 @@
 /* Private worker: bounded PCM chunks -> exact log-mel -> pretrained Beat This! transformer. */
 'use strict';
-importScripts('telemetry.js','semantic-timeline.js','salience.js','wav-reader.js','dsp.js','bass-notes.js','vocal.js','vocal-detail.js','stem-cache.js','work-store.js','separator-mdx.js','separator-deux.js','game.js','vendor/ort.wasm.min.js');
+importScripts('telemetry.js','semantic-timeline.js','salience.js','rhythm-hierarchy.js','wav-reader.js','dsp.js','bass-notes.js','vocal.js','vocal-detail.js','stem-cache.js','work-store.js','separator-mdx.js','separator-deux.js','game.js','vendor/ort.wasm.min.js');
 const report=(progress,stage,detail='',extra={})=>postMessage({type:'progress',value:{...extra,progress,stage,detail}});
 function createTelemetry(stage,metadata){
  const factory=self.LightForgeAnalysisTelemetry;
@@ -36,6 +36,16 @@ function ensureMusicSalience(result,timeline){
  if(!check||!check.valid)throw Error('Music salience validation failed: '+(check?.errors||[]).join('; ').slice(0,512));
  result.musicSalience=musicSalience;
  return musicSalience;
+}
+function ensureRhythmHierarchy(result,options={}){
+ if(options?.rhythmHierarchy!==true)return {enabled:false,attached:false,reused:false};
+ const api=self.LightForgeRhythmHierarchy;
+ if(!api||typeof api.attach!=='function'||typeof api.validate!=='function')throw Error('Rhythm hierarchy module is unavailable.');
+ const outcome=api.attach(result);
+ if(!outcome?.hierarchy)throw Error('Rhythm hierarchy rejected unvalidated rhythm evidence.');
+ const check=api.validate(outcome.hierarchy,result);
+ if(!check||!check.valid)throw Error('Rhythm hierarchy validation failed: '+(check?.reason||'unknown'));
+ return {enabled:true,attached:outcome.attached===true,reused:outcome.reused===true,hierarchy:outcome.hierarchy};
 }
 function normalizeBassProvenance(result){
  const analysis=result?.bassAnalysis;
@@ -126,6 +136,14 @@ self.onmessage=async e=>{
  if(cached){
   telemetry.cache(stage,'restore');
   const restored={...result,...cached};
+  if(stage==='rhythm'){
+   if(options.rhythmHierarchy===true){
+    const hierarchyPhase=telemetry.begin('rhythm.hierarchy');
+    const hierarchy=ensureRhythmHierarchy(restored,options);
+    telemetry.end(hierarchyPhase,{restored:true,attached:hierarchy.attached,reused:hierarchy.reused,beatCount:hierarchy.hierarchy.beats.length,barCount:hierarchy.hierarchy.bars.length});
+    if(hierarchy.attached)await store.write(stage,restored);
+   }else if(Object.prototype.hasOwnProperty.call(restored,'rhythmHierarchy'))delete restored.rhythmHierarchy;
+  }
   if(stage==='bass'){
    const provenanceChanged=normalizeBassProvenance(restored),cachedTimeline=restored.semanticTimeline;
    const timelinePhase=telemetry.begin('semantic.timeline');
@@ -166,6 +184,11 @@ self.onmessage=async e=>{
  if(session)await session.release();session=null;if(melSession)await melSession.release();melSession=null;
  report(.40,'Recognizing musical structure','Finding recurring passages, groove and confident movement moments');
  result=LightForgeDSP.summarize(data,{...options,decoder:'transformer'});
+ if(options.rhythmHierarchy===true){
+  const hierarchyPhase=telemetry.begin('rhythm.hierarchy');
+  const hierarchy=ensureRhythmHierarchy(result,options);
+  telemetry.end(hierarchyPhase,{restored:false,attached:hierarchy.attached,reused:hierarchy.reused,beatCount:hierarchy.hierarchy.beats.length,barCount:hierarchy.hierarchy.bars.length});
+ }
  // Release rhythm feature buffers and both transformer sessions before the
  // independent musical-role passes. Every pass uses the same original PCM clock.
  data=null;
