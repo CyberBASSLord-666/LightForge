@@ -1,0 +1,62 @@
+{
+  "diagnostic_only": true,
+  "release_eligible": false,
+  "input_run_id": 34417512894,
+  "input_head_sha": "222fe9956f91579b34d80b1cad2f993b52b5fbb4",
+  "input_job_id": 102685553522,
+  "input_job_conclusion": "success",
+  "input_run_conclusion": "failure",
+  "input_artifact_id": 10130198948,
+  "input_artifact_sha256": "925e3919c5b43dc81bcad46cc3fb5f84eaeb8c6db72edb89b421bd490bb5bcb0",
+  "probe_head_sha": "57e6ee996bd8f9d135e89334585efe90d8667b68",
+  "production_source_diff": "exactly the three pinned web assets; all other android/, web/, version.json unchanged",
+  "reviewed_patch_manifest_sha256": "edf75f5e2be8f70f82dfa1eb9f7e2574f308788480d73298a6be607ca9cee701",
+  "patched_web_sha256": {
+    "web/app.js": "2a26794d2203a30a38180696ab6e62619ecac9b14d548aa57e6c53ebe73278b5",
+    "web/preview/src/vehicle-preview.js": "0fff4a3ffff99f0d09286be26353d4bb51301e4876c8e723624052fd0089d6ae",
+    "web/preview/vehicle-preview.js": "d58a592747cb1f37ed39fffd079b182491a6f9568fbabe4f74cc5a9946099afb"
+  },
+  "input_apk": {
+    "apk": "LightForge-2.2.4.apk",
+    "update_compatible": false,
+    "signing_certificate_sha256": "0f3d49f3d436df33be3529c7cf7760c00d963561091507af2a9ec218c371e998",
+    "bytes": 1204357470,
+    "sha256": "cb8baf01ac9ba2422ceaa3f8cf0883d9cc2d61a4058d2acab2546fba669d23b6",
+    "zip_integrity": "passed",
+    "alignment": "passed",
+    "signature": "verified",
+    "min_sdk": 26,
+    "target_sdk": 35,
+    "compile_sdk": 35,
+    "version_name": "2.2.4",
+    "version_code": 20204
+  },
+  "diagnostic_apk": {
+    "apk": "LightForge-2.2.4.apk",
+    "update_compatible": false,
+    "signing_certificate_sha256": "7f5bb3cf50ba27e2f44eec890c5ef84d6ea9c9e20e0ab4fbe4c5959320a4486c",
+    "bytes": 1204369758,
+    "sha256": "31bfc009bf3f3490833178909db6fe8d2af71d6ff38b730160d060b58826f82e",
+    "zip_integrity": "passed",
+    "alignment": "passed",
+    "signature": "verified",
+    "min_sdk": 26,
+    "target_sdk": 35,
+    "compile_sdk": 35,
+    "version_name": "2.2.4",
+    "version_code": 20204,
+    "diagnostic_only": true,
+    "input_ci_sha256": "cb8baf01ac9ba2422ceaa3f8cf0883d9cc2d61a4058d2acab2546fba669d23b6",
+    "input_ci_head_sha": "222fe9956f91579b34d80b1cad2f993b52b5fbb4",
+    "patched_web_sha256": {
+      "web/app.js": "2a26794d2203a30a38180696ab6e62619ecac9b14d548aa57e6c53ebe73278b5",
+      "web/preview/src/vehicle-preview.js": "0fff4a3ffff99f0d09286be26353d4bb51301e4876c8e723624052fd0089d6ae",
+      "web/preview/vehicle-preview.js": "d58a592747cb1f37ed39fffd079b182491a6f9568fbabe4f74cc5a9946099afb"
+    },
+    "release_eligible": false
+  },
+  "unchanged_payload_entries": 124,
+  "patched_payload_entries": 3,
+  "payload_comparison": "exactly three pinned web replacements; every other non-signature entry metadata and raw/uncompressed bytes identical",
+  "signing_key_destroyed": true
+}

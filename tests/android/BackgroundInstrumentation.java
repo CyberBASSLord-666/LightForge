@@ -24,6 +24,9 @@ public final class BackgroundInstrumentation extends Instrumentation {
     private volatile String currentPhase="starting";
     private JSONObject lastPowerTransition;
     private volatile JSONObject lastUiReadiness;
+    private volatile JSONObject lastDiagnosticReadiness;
+    private JSONObject failedUiGate;
+    private boolean diagnosticReadinessObservation;
     private final JSONArray uiReadinessChecks=new JSONArray();
     private final Handler watchdogMain=new Handler(Looper.getMainLooper());
     private volatile boolean watchdogStopped;
@@ -60,6 +63,7 @@ public final class BackgroundInstrumentation extends Instrumentation {
             JSONObject diagnostic=new JSONObject().put("phase",currentPhase).put("mainHeartbeatDelayMs",delayMs)
                 .put("elapsedSeconds",(SystemClock.elapsedRealtime()-testStarted)/1000.0).put("threads",threads);
             if(lastUiReadiness!=null)diagnostic.put("uiReadiness",lastUiReadiness);
+            if(lastDiagnosticReadiness!=null)diagnostic.put("postFailureUiReadiness",lastDiagnosticReadiness);
             Bundle event=new Bundle();event.putString("stream","LIGHTFORGE_MAIN_THREAD_DELAY "+diagnostic+"\n");sendStatus(0,event);
         }catch(Throwable error){
             android.util.Log.e("LightForgeTest","Could not capture delayed main-thread stacks",error);
@@ -167,7 +171,8 @@ public final class BackgroundInstrumentation extends Instrumentation {
     private final class UiReadiness implements Runnable {
         final MainActivity owner=activity;
         final WebView view;
-        final long began=SystemClock.elapsedRealtime(),deadline=began+45000;
+        final long began=SystemClock.elapsedRealtime(),deadline;
+        final boolean diagnosticOnly;
         final java.util.concurrent.CountDownLatch completed=new java.util.concurrent.CountDownLatch(1);
         final java.util.concurrent.atomic.AtomicBoolean finished=new java.util.concurrent.atomic.AtomicBoolean();
         volatile Throwable failure;
@@ -176,7 +181,12 @@ public final class BackgroundInstrumentation extends Instrumentation {
         android.view.ViewTreeObserver tree;
         Runnable commitCallback;
         android.view.ViewTreeObserver.OnDrawListener drawListener;
-        UiReadiness()throws Exception{view=(WebView)field(owner,"web");check(view!=null,"Preview WebView missing on launch");}
+        UiReadiness()throws Exception{this(false,45000);}
+        UiReadiness(boolean diagnostic,long budgetMillis)throws Exception{
+            diagnosticOnly=diagnostic;
+            deadline=began+(diagnostic?Math.min(90000,Math.max(1,budgetMillis)):45000);
+            view=(WebView)field(owner,"web");check(view!=null,"Preview WebView missing on launch");
+        }
         boolean current()throws Exception{return activity==owner&&!owner.isFinishing()&&!owner.isDestroyed()&&field(owner,"web")==view;}
         boolean visible(){return view.isAttachedToWindow()&&view.isShown()&&view.getWindowVisibility()==android.view.View.VISIBLE&&view.getWidth()>0&&view.getHeight()>0&&view.hasWindowFocus();}
         void record(String stage,JSONObject state)throws JSONException{
@@ -185,7 +195,8 @@ public final class BackgroundInstrumentation extends Instrumentation {
                 .put("nativeAttached",view.isAttachedToWindow()).put("nativeShown",view.isShown())
                 .put("nativeWindowVisibility",view.getWindowVisibility()).put("nativeWindowFocus",view.hasWindowFocus())
                 .put("viewWidth",view.getWidth()).put("viewHeight",view.getHeight());
-            latest=value;lastUiReadiness=value;
+            latest=value;
+            if(diagnosticOnly)lastDiagnosticReadiness=value;else lastUiReadiness=value;
         }
         void cleanup(){
             view.removeCallbacks(this);
@@ -203,7 +214,7 @@ public final class BackgroundInstrumentation extends Instrumentation {
         @Override public void run(){
             if(finished.get())return;
             try{
-                check(SystemClock.elapsedRealtime()<deadline,"Preview JavaScript initialization exceeded 45 seconds");
+                check(SystemClock.elapsedRealtime()<deadline,diagnosticOnly?"Diagnostic preview observation exceeded its separate budget":"Preview JavaScript initialization exceeded 45 seconds");
                 check(current(),"Preview changed while awaiting its first frame");
                 if(!visible()){record("waiting-for-native-visibility",null);view.postOnAnimation(this);return;}
                 // Export follows readBootstrap's synchronous native inventory
@@ -267,12 +278,116 @@ public final class BackgroundInstrumentation extends Instrumentation {
                 if(probe.completed.await(Math.max(1,Math.min(1000,remaining)),java.util.concurrent.TimeUnit.MILLISECONDS)){complete=true;break;}
                 snapshot(false);
             }
+            if(!complete||(probe.failure!=null&&SystemClock.elapsedRealtime()>=probe.deadline)){
+                failedUiGate=new JSONObject().put("phase",currentPhase).put("passed",false).put("limitSeconds",45)
+                    .put("failedAtElapsedMs",SystemClock.elapsedRealtime()).put("originalProbe",probe.latest==null?JSONObject.NULL:new JSONObject(probe.latest.toString()));
+            }
             if(!complete)snapshot(true);
             check(complete,"Preview bootstrap/first-frame readiness timed out; latest probe: "+probe.latest);
             if(probe.failure!=null)throw new AssertionError("Preview readiness failed",probe.failure);
             check(probe.evidence!=null&&probe.evidence.optBoolean("firstFrameCommitted"),"Preview frame-commit evidence missing");
             lastUiReadiness=probe.evidence;uiReadinessChecks.put(probe.evidence);snapshot(true);
         }finally{probe.finished.set(true);watchdogMain.post(probe::cleanup);}
+    }
+    private void diagnosticEvent(String marker,JSONObject value){
+        Bundle event=new Bundle();event.putString("stream",marker+" "+value+"\n");sendStatus(0,event);
+    }
+    /** Native export has no renderer dependency; its I/O must never own the test deadline. */
+    private final class NativeReportCapture implements Runnable {
+        final long deadline;
+        final java.util.concurrent.atomic.AtomicBoolean stopped=new java.util.concurrent.atomic.AtomicBoolean();
+        volatile boolean done;
+        volatile JSONObject result;
+        final Thread worker;
+        NativeReportCapture(long deadline){
+            this.deadline=deadline;worker=new Thread(this,"LightForge-readiness-report");worker.setDaemon(true);
+        }
+        void requireTime()throws IOException{
+            if(stopped.get()||SystemClock.elapsedRealtime()>=deadline)throw new IOException("Native diagnostic capture deadline expired");
+        }
+        void expire(){
+            if(!done){
+                // A worker may already be sending its final Binder event.
+                // That send must not keep the observer waiting beyond budget.
+                stopped.set(true);done=true;worker.interrupt();
+                try{
+                    result=new JSONObject().put("event","error").put("id","readiness-failure")
+                        .put("error","Native diagnostic capture exceeded its 20-second budget");
+                    diagnosticEvent("LIGHTFORGE_NATIVE_REPORT",result);
+                }catch(Throwable ignored){}
+            }
+        }
+        @Override public void run(){
+            try{
+                requireTime();JSONObject exported=AppDiagnostics.export(getTargetContext());requireTime();
+                long expected=exported.getLong("bytes");
+                check(expected>0&&expected<=2*1024*1024,"Native diagnostic report exceeds its bounded size");
+                byte[] report;
+                try(InputStream input=getTargetContext().getContentResolver().openInputStream(android.net.Uri.parse(exported.getString("uri")));
+                    ByteArrayOutputStream bytes=new ByteArrayOutputStream()){
+                    check(input!=null,"Native diagnostic report could not be reopened");
+                    byte[] block=new byte[8192];int count;
+                    while((count=input.read(block))!=-1){
+                        requireTime();check(bytes.size()+count<=2*1024*1024,"Native diagnostic report read exceeded its bound");
+                        bytes.write(block,0,count);
+                    }
+                    check(bytes.size()==expected,"Native diagnostic export byte count changed");report=bytes.toByteArray();
+                }
+                byte[] digest=java.security.MessageDigest.getInstance("SHA-256").digest(report);StringBuilder sha=new StringBuilder();
+                for(byte value:digest)sha.append(String.format(java.util.Locale.US,"%02x",value&255));
+                int index=0;
+                for(int offset=0;offset<report.length;offset+=32768){
+                    requireTime();
+                    String encoded=android.util.Base64.encodeToString(report,offset,Math.min(32768,report.length-offset),android.util.Base64.NO_WRAP);
+                    diagnosticEvent("LIGHTFORGE_NATIVE_REPORT",new JSONObject().put("event","chunk").put("id","readiness-failure").put("index",index++).put("data",encoded));
+                }
+                requireTime();
+                JSONObject complete=new JSONObject().put("event","complete").put("id","readiness-failure")
+                    .put("bytes",report.length).put("sha256",sha.toString()).put("chunks",index).put("export",exported);
+                if(stopped.compareAndSet(false,true)){result=complete;diagnosticEvent("LIGHTFORGE_NATIVE_REPORT",complete);done=true;}
+            }catch(Throwable error){
+                if(stopped.compareAndSet(false,true)){
+                    try{
+                        result=new JSONObject().put("event","error").put("id","readiness-failure").put("error",error.toString());
+                        diagnosticEvent("LIGHTFORGE_NATIVE_REPORT",result);
+                    }catch(Throwable ignored){}
+                    done=true;
+                }
+            }
+        }
+    }
+    private JSONObject observationState(long began,UiReadiness probe,NativeReportCapture capture)throws JSONException{
+        return new JSONObject().put("diagnosticOnly",true).put("originalGateFailed",true)
+            .put("originalFailure",new JSONObject(failedUiGate.toString())).put("budgetSeconds",90)
+            .put("elapsedSeconds",(SystemClock.elapsedRealtime()-began)/1000.0)
+            .put("observedReady",probe.evidence!=null&&probe.evidence.optBoolean("firstFrameCommitted"))
+            .put("latestProbe",probe.latest==null?JSONObject.NULL:new JSONObject(probe.latest.toString()))
+            .put("observerError",probe.failure==null?JSONObject.NULL:probe.failure.toString())
+            .put("nativeReport",capture.result==null?JSONObject.NULL:new JSONObject(capture.result.toString()));
+    }
+    /** Diagnostic-only extra observation never changes or resumes the failed release gate. */
+    private JSONObject observeReadinessFailure()throws Exception{
+        final long began=SystemClock.elapsedRealtime(),deadline=began+90000;
+        NativeReportCapture capture=new NativeReportCapture(Math.min(deadline,began+20000));capture.worker.start();
+        UiReadiness probe=null;
+        try{
+            probe=new UiReadiness(true,Math.max(1,deadline-SystemClock.elapsedRealtime()));
+            watchdogMain.post(probe);long nextStatus=began;
+            while(SystemClock.elapsedRealtime()<deadline){
+                long now=SystemClock.elapsedRealtime();
+                if(now>=capture.deadline)capture.expire();
+                if(now>=nextStatus){diagnosticEvent("LIGHTFORGE_READINESS_OBSERVATION",observationState(began,probe,capture));nextStatus=now+5000;}
+                if(probe.completed.getCount()==0&&capture.done)break;
+                SystemClock.sleep(Math.min(250,Math.max(1,deadline-now)));
+            }
+            if(!capture.done)capture.expire();
+            JSONObject result=observationState(began,probe,capture).put("complete",true)
+                .put("observationBudgetExpired",SystemClock.elapsedRealtime()>=deadline&&probe.evidence==null);
+            diagnosticEvent("LIGHTFORGE_READINESS_OBSERVATION",result);return result;
+        }finally{
+            if(probe!=null){probe.finished.set(true);final UiReadiness cleanup=probe;watchdogMain.post(cleanup::cleanup);}
+            if(!capture.done)capture.expire();
+        }
     }
     private void backgroundAndDoze()throws Exception{
         WebView closingView=(WebView)field(activity,"web");android.view.ViewGroup[] closingParent=new android.view.ViewGroup[1];
@@ -415,7 +530,9 @@ public final class BackgroundInstrumentation extends Instrumentation {
         pass("Frozen Balanced request allocated native MDX and completed both polarity-ensemble passes on Android. The complete show finished with the Activity destroyed and screen off under Doze; model/tensor buffers were released before voice/GAME, preserving 132300 source samples, 66150 stem samples, the eight-step transcription setting and 150 saved choreography frames.");
         return observation;
     }
-    @Override public void onCreate(Bundle arguments){super.onCreate(arguments);start();}
+    @Override public void onCreate(Bundle arguments){
+        super.onCreate(arguments);diagnosticReadinessObservation=arguments!=null&&"true".equals(arguments.getString("diagnosticReadinessObservation"));start();
+    }
     @Override public void onStart(){
         JSONObject receipt=new JSONObject();Bundle output=new Bundle();
         try{
@@ -482,6 +599,13 @@ public final class BackgroundInstrumentation extends Instrumentation {
         }catch(Throwable error){
             try{snapshot(true);}catch(Exception ignored){}
             try{receipt.put("passed",false).put("checks",checks).put("phase",currentPhase).put("error",error.toString());}catch(Exception ignored){}
+            if(failedUiGate!=null){
+                try{
+                    failedUiGate.put("error",error.toString());receipt.put("originalReadinessFailure",new JSONObject(failedUiGate.toString()));
+                    diagnosticEvent("LIGHTFORGE_READINESS_GATE_FAILED",new JSONObject(failedUiGate.toString()));
+                    if(diagnosticReadinessObservation)receipt.put("postFailureObservation",observeReadinessFailure());
+                }catch(Throwable diagnosticError){try{receipt.put("postFailureObservationError",diagnosticError.toString());}catch(Exception ignored){}}
+            }
             StringWriter trace=new StringWriter();error.printStackTrace(new PrintWriter(trace));output.putString("stream","BACKGROUND_ANDROID_FAIL\n"+receipt+"\n"+trace);finish(Activity.RESULT_CANCELED,output);
         }finally{balancedObserverStopped=true;if(balancedObserver!=null)balancedObserver.interrupt();stopMainWatchdog();}
     }

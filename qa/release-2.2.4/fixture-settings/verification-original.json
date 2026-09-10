@@ -1,0 +1,233 @@
+{
+  "schema": 1,
+  "passed": true,
+  "created_at": "2026-09-10T01:26:34.466Z",
+  "runtime": {
+    "node": "v24.19.0",
+    "jsdom": "26.1.0"
+  },
+  "scope": "Actual production app settings merge, composition worker generation/restore, and background completion/poll state. DOM, media, GPU preview, and native IO are hosted; no audio inference or Android performance claim.",
+  "command": "node qa/release-2.2.4/fixture-settings/reproduce.cjs",
+  "fixture": {
+    "music": {
+      "duration": 2,
+      "bpm": 120,
+      "beats": [
+        0,
+        0.5,
+        1,
+        1.5
+      ],
+      "waveform": [
+        0.4
+      ],
+      "beatConfidence": 0.9,
+      "sections": [
+        {
+          "start": 0,
+          "end": 2,
+          "energy": 0.7
+        }
+      ],
+      "analysisVersion": 6
+    },
+    "overrides": {
+      "analysisQuality": "precision",
+      "dance": "off",
+      "style": "festival",
+      "stepMs": 20,
+      "seed": 2025
+    },
+    "origin": "Same five settings choices as Android BackgroundInstrumentation; complete case reads defaults from initialized LightForgeApp.state.settings."
+  },
+  "source_sha256": {
+    "qa/release-2.2.4/fixture-settings/reproduce.cjs": "adba899caa7a3f95b6a1a1078d170d649f5ebe91cad56d38f55c2618325b7466",
+    "tests/worker-harness.cjs": "94352a9231fd142c0ecaf3dd91f628d52eaaae3b65f559ce70e9784ca499fb51",
+    "tests/android/BackgroundInstrumentation.java": "d7dc1ee85de1077f43f259943ebcba7d57314abb66e11820082248e4076689f4",
+    "web/index.html": "4a938310c87f1b0fa27f99b452ab01cc1997c6f5c68debaa35882f7448256905",
+    "web/app.js": "2a26794d2203a30a38180696ab6e62619ecac9b14d548aa57e6c53ebe73278b5",
+    "web/background/runner.js": "e4d27ded3160beadf53fcff42a0e47c3e0cf8689d5be38c13abbb2cdc0fb1390",
+    "web/version.js": "f6a9ac349a4dd7556ae3ef05ebf6e9e410dc4436025bccbd9db164652d4f8d95",
+    "web/engine/worker.js": "2be432291b31721734ae69e715c05ba11270c3a8a91fe89b049ee9fe51e55726",
+    "web/engine/vehicle-profile.js": "027bf87a827a900cda00505e2b539f84cbdb0d5a9800ea4eb1efdf85a0c10936",
+    "web/engine/movement-planner.js": "d22998c270c01af72f4fa1467ea5f5c9a3cc3ddda9f2264395fd8bba870305ec",
+    "web/engine/light-planner.js": "970c7a2a736560bf01e318b8180b431863e09e6e28daad4525ec583a70a73aeb",
+    "web/engine/music-cues.js": "1a87eea0502da2e1f19d2361a5646c127121211e91128017ce747b7f0d2f61d6",
+    "web/engine/sync-review.js": "eb9591060fffa20e2b12de97c6d344b61e06fc276af75817610d4e17095c61d9",
+    "web/engine/show-engine.js": "d09cfcdf1e1eebf36d3e03bfd40a3939dcc0fd18a4437047217511a258674548",
+    "package-lock.json": "ae415e3b1891a88a9e3d9f681fa18775cd6ad48bc0a72709efbd178162bae9fd"
+  },
+  "old_five_fields": {
+    "settings": {
+      "analysisQuality": "precision",
+      "dance": "off",
+      "style": "festival",
+      "stepMs": 20,
+      "seed": 2025
+    },
+    "settings_key_count": 5,
+    "effective_settings": {
+      "style": "festival",
+      "intensity": 0.85,
+      "dance": "off",
+      "stepMs": 20,
+      "sensitivity": 0.82,
+      "beatDivision": "auto",
+      "bpmOverride": null,
+      "offsetMs": 0,
+      "palette": "aurora",
+      "enabled": {
+        "windows": true,
+        "mirrors": true,
+        "trunk": true,
+        "charge": true,
+        "interior": true
+      },
+      "optionalFog": false,
+      "outerBeamRamping": false,
+      "outputEnabled": {},
+      "manualCues": [],
+      "sectionOverrides": {},
+      "seed": 2025,
+      "analysisQuality": "precision",
+      "movementDensity": 0.7,
+      "downbeatAnchor": null,
+      "meterOverride": null,
+      "tempoScale": 1,
+      "vocalFocus": 0.85,
+      "bassFocus": 0.9,
+      "vocalRegions": [],
+      "musicCues": [],
+      "vocalOffsetMs": 0,
+      "bassOffsetMs": 0
+    },
+    "effective_settings_key_count": 27,
+    "engine_version": "2.2.4",
+    "generated_input_digest": "60efa22fa1d1ecbb9f5193073a5f2754fa85791073f2814e53880154c7ce7fc7",
+    "effective_input_digest": "636c7dfa38b327fc781b5dd38fddb8d58e5b314d1cf094fb0afe980959889a91",
+    "generated_frame_sha256": "e3eee0c2bac583ed983c68e5afc116c181cacc5bb957a9e1d30a28fad50d95bf",
+    "original_input_restore_frame_sha256": "e3eee0c2bac583ed983c68e5afc116c181cacc5bb957a9e1d30a28fad50d95bf",
+    "after_first_restore": {
+      "loadingProject": false,
+      "composing": false,
+      "backgroundApplying": false,
+      "backgroundSyncPending": true,
+      "saveBlocked": true
+    },
+    "first_restore_fetches": 1,
+    "first_restore_worker_calls": 1,
+    "passed": true,
+    "expected_rejection": "The saved show does not match its music and edits. Create again to rebuild it.",
+    "background_seen_after_rejection": null,
+    "retry_flags": {
+      "loadingProject": true,
+      "composing": false,
+      "backgroundApplying": true,
+      "backgroundSyncPending": true,
+      "saveBlocked": false
+    },
+    "fetches_during_retry": 2,
+    "saved_project_writes_during_retry": 0,
+    "acknowledged": false,
+    "observed_worker_errors": [
+      "The saved show does not match its music and edits. Create again to rebuild it.",
+      "The saved show does not match its music and edits. Create again to rebuild it."
+    ]
+  },
+  "complete_ui_settings": {
+    "settings": {
+      "style": "festival",
+      "intensity": 0.85,
+      "dance": "off",
+      "stepMs": 20,
+      "sensitivity": 0.82,
+      "beatDivision": "auto",
+      "bpmOverride": null,
+      "offsetMs": 0,
+      "palette": "aurora",
+      "enabled": {
+        "windows": true,
+        "mirrors": true,
+        "trunk": true,
+        "charge": true,
+        "interior": true
+      },
+      "optionalFog": false,
+      "outerBeamRamping": false,
+      "outputEnabled": {},
+      "manualCues": [],
+      "sectionOverrides": {},
+      "seed": 2025,
+      "analysisQuality": "precision",
+      "movementDensity": 0.7,
+      "downbeatAnchor": null,
+      "meterOverride": null,
+      "tempoScale": 1,
+      "vocalFocus": 0.85,
+      "bassFocus": 0.9,
+      "vocalRegions": [],
+      "musicCues": [],
+      "vocalOffsetMs": 0,
+      "bassOffsetMs": 0
+    },
+    "settings_key_count": 27,
+    "effective_settings": {
+      "style": "festival",
+      "intensity": 0.85,
+      "dance": "off",
+      "stepMs": 20,
+      "sensitivity": 0.82,
+      "beatDivision": "auto",
+      "bpmOverride": null,
+      "offsetMs": 0,
+      "palette": "aurora",
+      "enabled": {
+        "windows": true,
+        "mirrors": true,
+        "trunk": true,
+        "charge": true,
+        "interior": true
+      },
+      "optionalFog": false,
+      "outerBeamRamping": false,
+      "outputEnabled": {},
+      "manualCues": [],
+      "sectionOverrides": {},
+      "seed": 2025,
+      "analysisQuality": "precision",
+      "movementDensity": 0.7,
+      "downbeatAnchor": null,
+      "meterOverride": null,
+      "tempoScale": 1,
+      "vocalFocus": 0.85,
+      "bassFocus": 0.9,
+      "vocalRegions": [],
+      "musicCues": [],
+      "vocalOffsetMs": 0,
+      "bassOffsetMs": 0
+    },
+    "effective_settings_key_count": 27,
+    "engine_version": "2.2.4",
+    "generated_input_digest": "636c7dfa38b327fc781b5dd38fddb8d58e5b314d1cf094fb0afe980959889a91",
+    "effective_input_digest": "636c7dfa38b327fc781b5dd38fddb8d58e5b314d1cf094fb0afe980959889a91",
+    "generated_frame_sha256": "e3eee0c2bac583ed983c68e5afc116c181cacc5bb957a9e1d30a28fad50d95bf",
+    "original_input_restore_frame_sha256": "e3eee0c2bac583ed983c68e5afc116c181cacc5bb957a9e1d30a28fad50d95bf",
+    "after_first_restore": {
+      "loadingProject": false,
+      "composing": false,
+      "backgroundApplying": false,
+      "backgroundSyncPending": false,
+      "saveBlocked": false
+    },
+    "first_restore_fetches": 1,
+    "first_restore_worker_calls": 1,
+    "passed": true,
+    "restored_frame_sha256": "e3eee0c2bac583ed983c68e5afc116c181cacc5bb957a9e1d30a28fad50d95bf",
+    "input_digest_preserved": true,
+    "frame_hash_preserved": true,
+    "acknowledged": true,
+    "fetches_after_poll": 1,
+    "worker_calls_after_poll": 1,
+    "observed_worker_errors": []
+  }
+}

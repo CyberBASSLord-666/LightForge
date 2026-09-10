@@ -1,0 +1,142 @@
+{
+  "provenance": "Exact bundled GLB and production rig source; CPU-only Node audit, texture decode stubbed. Timings do not model Android or shader compilation.",
+  "parseMs": 108.24264,
+  "buildMs": 118.49723599999999,
+  "samples": {
+    "sourceMeshes": 684,
+    "positionVertices": 158250,
+    "indexEntries": 539076,
+    "initialBounds": 684,
+    "initialSpheres": 684,
+    "nonIdentityLocalMatrices": 0
+  },
+  "counters": {
+    "object.updateMatrixWorld": 2205,
+    "object.traverse": 803,
+    "material.clone": 61,
+    "object.attach": 56,
+    "object.updateWorldMatrix": 328,
+    "geometry.toNonIndexed": 4,
+    "geometry.dispose": 604,
+    "geometry.clone": 600,
+    "geometry.applyMatrix4": 600,
+    "geometry.computeBoundingBox": 600,
+    "geometry.computeBoundingSphere": 600
+  },
+  "nonIndexed": [
+    {
+      "vertices": 451,
+      "indexEntries": 1131,
+      "attributes": [
+        "normal",
+        "position",
+        "uv"
+      ],
+      "attributeBytes": 14432,
+      "expandedAttributeBytes": 36192
+    },
+    {
+      "vertices": 206,
+      "indexEntries": 780,
+      "attributes": [
+        "normal",
+        "position",
+        "uv"
+      ],
+      "attributeBytes": 6592,
+      "expandedAttributeBytes": 24960
+    },
+    {
+      "vertices": 962,
+      "indexEntries": 1131,
+      "attributes": [
+        "normal",
+        "position",
+        "uv"
+      ],
+      "attributeBytes": 30784,
+      "expandedAttributeBytes": 36192
+    },
+    {
+      "vertices": 206,
+      "indexEntries": 780,
+      "attributes": [
+        "normal",
+        "position",
+        "uv"
+      ],
+      "attributeBytes": 6592,
+      "expandedAttributeBytes": 24960
+    }
+  ],
+  "applied": {
+    "count": 600,
+    "vertices": 137884,
+    "identityCount": 600
+  },
+  "merges": [
+    {
+      "count": 5,
+      "vertices": 257,
+      "indices": 660
+    },
+    {
+      "count": 39,
+      "vertices": 3753,
+      "indices": 13965
+    },
+    {
+      "count": 4,
+      "vertices": 822,
+      "indices": 3282
+    },
+    {
+      "count": 51,
+      "vertices": 19114,
+      "indices": 70710
+    },
+    {
+      "count": 13,
+      "vertices": 1244,
+      "indices": 2436
+    },
+    {
+      "count": 448,
+      "vertices": 82717,
+      "indices": 256488
+    },
+    {
+      "count": 12,
+      "vertices": 4864,
+      "indices": 16068
+    },
+    {
+      "count": 3,
+      "vertices": 443,
+      "indices": 1314
+    },
+    {
+      "count": 2,
+      "vertices": 840,
+      "indices": 1236
+    },
+    {
+      "count": 19,
+      "vertices": 7750,
+      "indices": 23592
+    },
+    {
+      "count": 4,
+      "vertices": 16080,
+      "indices": 86400
+    }
+  ],
+  "final": {
+    "meshes": 105,
+    "vertices": 159235,
+    "fitPoints": 21667,
+    "baseFitPoints": 12681,
+    "trunkSamples": 4493,
+    "avoidableAxisAllocations": 8986
+  }
+}

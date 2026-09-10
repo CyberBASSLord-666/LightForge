@@ -53,7 +53,9 @@ jobs:
           "$ANDROID_HOME/emulator/emulator" -list-avds
           nohup "$ANDROID_HOME/emulator/emulator" -avd LightForge -no-window -no-audio -no-metrics -partition-size 6144 -no-boot-anim -no-snapshot -gpu swiftshader_indirect -memory 4096 -cores 2 -camera-back none -camera-front none > emulator.log 2>&1 < /dev/null &
       - name: Run complete background suite with readiness evidence
-        run: python3 tools/run_android_background_tests.py
+        # Keeps the original 45-second gate failed. Only this diagnostic APK
+        # may observe its unchanged preview for a further bounded 90 seconds.
+        run: python3 tools/run_android_background_tests.py --diagnostic-readiness-observation
       - name: Retain background evidence before diagnostic export tests
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()

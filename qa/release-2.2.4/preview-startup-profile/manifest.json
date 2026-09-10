@@ -1,0 +1,73 @@
+{
+  "schema": 1,
+  "scope": "Evidence retention and portable invocation checks only. Original timing results are unchanged. These are not Android benchmarks or release timing gates.",
+  "original_evidence_preserved_byte_for_byte": true,
+  "portable_browser_check": {
+    "working_directory": "/tmp",
+    "invocation": "PLAYWRIGHT_EXECUTABLE_PATH=<local Chromium> node <repository>/qa/release-2.2.4/preview-startup-profile/profile-preview-startup.cjs <new output directory>",
+    "passed": true,
+    "cpu_rates": [
+      1,
+      4
+    ],
+    "unchanged_final_frame_sha256": "16d1afe9543aba85cc19fbffdda019d68b395288fa3fa129bb3bb8d5f5749351"
+  },
+  "original_instrumented_bundle_sha256": "52426443b5e88bf20bd547435a23f882f193cdf7a882ceeabdc6b4128acabb7e",
+  "source_sha256": {
+    "web/app.js": "2a26794d2203a30a38180696ab6e62619ecac9b14d548aa57e6c53ebe73278b5",
+    "web/index.html": "4a938310c87f1b0fa27f99b452ab01cc1997c6f5c68debaa35882f7448256905",
+    "web/preview/src/vehicle-preview.js": "0fff4a3ffff99f0d09286be26353d4bb51301e4876c8e723624052fd0089d6ae",
+    "web/preview/src/highland-rig.js": "7e09e586f3b018a5912e6060c5d0787aae253bdfa4198d067edd79690d0e916d",
+    "web/preview/models/highland.glb": "abf813f0013428409820121b7fd40ad70dda7cd00d1a0dca25cebd16b92035ba",
+    "web/engine/client.js": "fee51260bee6c1bd7e3dbb03e6b442f2656a9d6004fa71c95fcbb337a33036fa",
+    "web/engine/worker.js": "2be432291b31721734ae69e715c05ba11270c3a8a91fe89b049ee9fe51e55726",
+    "web/engine/show-engine.js": "d09cfcdf1e1eebf36d3e03bfd40a3939dcc0fd18a4437047217511a258674548",
+    "web/engine/vehicle-profile.js": "027bf87a827a900cda00505e2b539f84cbdb0d5a9800ea4eb1efdf85a0c10936",
+    "web/engine/light-planner.js": "970c7a2a736560bf01e318b8180b431863e09e6e28daad4525ec583a70a73aeb",
+    "web/engine/movement-planner.js": "d22998c270c01af72f4fa1467ea5f5c9a3cc3ddda9f2264395fd8bba870305ec",
+    "web/engine/music-cues.js": "1a87eea0502da2e1f19d2361a5646c127121211e91128017ce747b7f0d2f61d6",
+    "web/engine/sync-review.js": "eb9591060fffa20e2b12de97c6d344b61e06fc276af75817610d4e17095c61d9",
+    "web/version.js": "f6a9ac349a4dd7556ae3ef05ebf6e9e410dc4436025bccbd9db164652d4f8d95",
+    "qa/release-2.2.4/browser-export-project.json": "82a68443cb9061b102a8200ca9f6ec8c6013639370722ef9c06642e922489c6a",
+    "package-lock.json": "ae415e3b1891a88a9e3d9f681fa18775cd6ad48bc0a72709efbd178162bae9fd",
+    "web/preview/src/package-lock.json": "97d8caf3d1bb0ab75fa5a0da4ae3483f0191e6c484d6a1ed03fe2e710b5b525b"
+  },
+  "files": {
+    "README.md": {
+      "bytes": 3966,
+      "sha256": "318f6aef827d0a2be9097b1b02d762268b8b1b2180a7f905c8c40e417f5d635d"
+    },
+    "profile-preview-startup-original.cjs": {
+      "bytes": 6629,
+      "sha256": "2dfaaf64e742fef44fd074567438fc3cd89bcc3fd004396648dda16c0b94fa06"
+    },
+    "profile-preview-startup.cjs": {
+      "bytes": 7933,
+      "sha256": "00d52dd068e90d805c65b8fe1fe9c011b6b299f92683a9239554047acc65f5d2"
+    },
+    "rig-build-count-audit-original.json": {
+      "bytes": 2810,
+      "sha256": "a6d2c98a0eaa70de2f4e02a664376d91c37625aa4f85cd52080f472d63a796ca"
+    },
+    "rig-build-count-audit-original.mjs": {
+      "bytes": 4391,
+      "sha256": "03aab40f9f1ec1f62d7a05ea8d4f48ae49a5831b09df1e7b343fe74512c007a2"
+    },
+    "rig-build-count-audit-portability.json": {
+      "bytes": 2818,
+      "sha256": "54d5215eeb0b1758f22a14ce03b8dd6bb4ace5b8e4423c31d7522b34d408bb00"
+    },
+    "rig-build-count-audit.mjs": {
+      "bytes": 5487,
+      "sha256": "0cf61e206b9296f32eb1c3397728e4efc282d0ac8034abd19d4db1050cbf4159"
+    },
+    "timing-original.json": {
+      "bytes": 11702,
+      "sha256": "f654f855af9649ea816bfd299fa0bd7230d1506a3a87d3e96be23be6fd35859f"
+    },
+    "timing-portability.json": {
+      "bytes": 13521,
+      "sha256": "ad07af6f881a9ef899841af53ae37770a606d66772ab4412c9837177d1499d36"
+    }
+  }
+}

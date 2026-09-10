@@ -1,0 +1,403 @@
+{
+  "scope": "Desktop Chromium SwiftShader with timing-only scratch bundle; CPU throttle is not an Android benchmark. No timing pass threshold.",
+  "runtime": {
+    "node": "v24.19.0",
+    "chromium": "151.0.7922.34"
+  },
+  "script_sha256": "00d52dd068e90d805c65b8fe1fe9c011b6b299f92683a9239554047acc65f5d2",
+  "instrumented_bundle_sha256": "52426443b5e88bf20bd547435a23f882f193cdf7a882ceeabdc6b4128acabb7e",
+  "source_sha256": {
+    "web/app.js": "2a26794d2203a30a38180696ab6e62619ecac9b14d548aa57e6c53ebe73278b5",
+    "web/index.html": "4a938310c87f1b0fa27f99b452ab01cc1997c6f5c68debaa35882f7448256905",
+    "web/preview/src/vehicle-preview.js": "0fff4a3ffff99f0d09286be26353d4bb51301e4876c8e723624052fd0089d6ae",
+    "web/preview/src/highland-rig.js": "7e09e586f3b018a5912e6060c5d0787aae253bdfa4198d067edd79690d0e916d",
+    "web/preview/models/highland.glb": "abf813f0013428409820121b7fd40ad70dda7cd00d1a0dca25cebd16b92035ba",
+    "web/engine/client.js": "fee51260bee6c1bd7e3dbb03e6b442f2656a9d6004fa71c95fcbb337a33036fa",
+    "web/engine/worker.js": "2be432291b31721734ae69e715c05ba11270c3a8a91fe89b049ee9fe51e55726",
+    "web/engine/show-engine.js": "d09cfcdf1e1eebf36d3e03bfd40a3939dcc0fd18a4437047217511a258674548",
+    "web/engine/vehicle-profile.js": "027bf87a827a900cda00505e2b539f84cbdb0d5a9800ea4eb1efdf85a0c10936",
+    "web/engine/light-planner.js": "970c7a2a736560bf01e318b8180b431863e09e6e28daad4525ec583a70a73aeb",
+    "web/engine/movement-planner.js": "d22998c270c01af72f4fa1467ea5f5c9a3cc3ddda9f2264395fd8bba870305ec",
+    "web/engine/music-cues.js": "1a87eea0502da2e1f19d2361a5646c127121211e91128017ce747b7f0d2f61d6",
+    "web/engine/sync-review.js": "eb9591060fffa20e2b12de97c6d344b61e06fc276af75817610d4e17095c61d9",
+    "web/version.js": "f6a9ac349a4dd7556ae3ef05ebf6e9e410dc4436025bccbd9db164652d4f8d95",
+    "qa/release-2.2.4/browser-export-project.json": "82a68443cb9061b102a8200ca9f6ec8c6013639370722ef9c06642e922489c6a",
+    "package-lock.json": "ae415e3b1891a88a9e3d9f681fa18775cd6ad48bc0a72709efbd178162bae9fd",
+    "web/preview/src/package-lock.json": "97d8caf3d1bb0ab75fa5a0da4ae3483f0191e6c484d6a1ed03fe2e710b5b525b"
+  },
+  "runs": [
+    {
+      "trace": [
+        {
+          "name": "resize",
+          "start": 127.55499999970198,
+          "end": 127.7800000011921,
+          "duration": 0.23000000044703484
+        },
+        {
+          "name": "init",
+          "start": 107.61499999836087,
+          "end": 128.41999999806285,
+          "duration": 20.804999999701977
+        },
+        {
+          "name": "resize",
+          "start": 187.14000000059605,
+          "end": 190.00499999895692,
+          "duration": 2.8649999983608723
+        },
+        {
+          "name": "longtask",
+          "start": 106.96499999985099,
+          "duration": 59
+        },
+        {
+          "name": "longtask",
+          "start": 243.69500000029802,
+          "duration": 58
+        },
+        {
+          "name": "gltf-fetch-parse",
+          "start": 128.50999999791384,
+          "end": 327.1499999985099,
+          "duration": 198.64500000327826
+        },
+        {
+          "name": "buildHighlandRig",
+          "start": 327.160000000149,
+          "end": 371.26999999955297,
+          "duration": 44.10999999940395
+        },
+        {
+          "name": "createEnvironment",
+          "start": 376.48499999940395,
+          "end": 402.89499999955297,
+          "duration": 26.41000000014901
+        },
+        {
+          "name": "draw",
+          "start": 376.39000000059605,
+          "end": 1074.554999999702,
+          "duration": 698.1649999991059
+        },
+        {
+          "name": "longtask",
+          "start": 323.285000000149,
+          "duration": 52
+        },
+        {
+          "name": "longtask",
+          "start": 376.32999999821186,
+          "duration": 2746
+        },
+        {
+          "name": "restore-worker",
+          "start": 218.62999999895692,
+          "end": 3179.625,
+          "duration": 2960.995000001043
+        },
+        {
+          "name": "draw",
+          "start": 3192.14999999851,
+          "end": 3196.320000000298,
+          "duration": 4.170000001788139
+        }
+      ],
+      "workerTrace": [
+        {
+          "type": "progress",
+          "emittedAt": 1789004316365.465,
+          "receivedAt": 1789004316365.595,
+          "deliveryDelay": 0.1298828125
+        },
+        {
+          "type": "progress",
+          "emittedAt": 1789004316413.8901,
+          "receivedAt": 1789004316413.97,
+          "deliveryDelay": 0.079833984375
+        },
+        {
+          "type": "result",
+          "emittedAt": 1789004316413.915,
+          "receivedAt": 1789004316417.08,
+          "deliveryDelay": 3.1650390625
+        }
+      ],
+      "resources": [
+        {
+          "name": "http://127.0.0.1:46099/preview/models/highland.glb",
+          "entryType": "resource",
+          "startTime": 132.26999999955297,
+          "duration": 94.35999999940395,
+          "navigationId": 7046,
+          "initiatorType": "fetch",
+          "deliveryType": "",
+          "nextHopProtocol": "http/1.1",
+          "renderBlockingStatus": "non-blocking",
+          "contentType": "",
+          "contentEncoding": "",
+          "workerStart": 0,
+          "workerRouterEvaluationStart": 0,
+          "workerCacheLookupStart": 0,
+          "workerMatchedSourceType": "",
+          "workerFinalSourceType": "",
+          "redirectStart": 0,
+          "redirectEnd": 0,
+          "fetchStart": 132.26999999955297,
+          "domainLookupStart": 132.26999999955297,
+          "domainLookupEnd": 132.26999999955297,
+          "connectStart": 132.26999999955297,
+          "secureConnectionStart": 0,
+          "connectEnd": 132.26999999955297,
+          "requestStart": 132.85000000149012,
+          "responseStart": 133.839999999851,
+          "firstInterimResponseStart": 0,
+          "finalResponseHeadersStart": 133.839999999851,
+          "responseEnd": 226.62999999895692,
+          "transferSize": 8796732,
+          "encodedBodySize": 8796432,
+          "decodedBodySize": 8796432,
+          "responseStatus": 200,
+          "serverTiming": []
+        },
+        {
+          "name": "http://127.0.0.1:46099/fixture.json",
+          "entryType": "resource",
+          "startTime": 166.25,
+          "duration": 10,
+          "navigationId": 7046,
+          "initiatorType": "fetch",
+          "deliveryType": "",
+          "nextHopProtocol": "http/1.1",
+          "renderBlockingStatus": "non-blocking",
+          "contentType": "application/json",
+          "contentEncoding": "",
+          "workerStart": 0,
+          "workerRouterEvaluationStart": 0,
+          "workerCacheLookupStart": 0,
+          "workerMatchedSourceType": "",
+          "workerFinalSourceType": "",
+          "redirectStart": 0,
+          "redirectEnd": 0,
+          "fetchStart": 166.25,
+          "domainLookupStart": 166.25,
+          "domainLookupEnd": 166.25,
+          "connectStart": 166.25,
+          "secureConnectionStart": 0,
+          "connectEnd": 166.25,
+          "requestStart": 167,
+          "responseStart": 173.80499999970198,
+          "firstInterimResponseStart": 0,
+          "finalResponseHeadersStart": 173.80499999970198,
+          "responseEnd": 176.25,
+          "transferSize": 762473,
+          "encodedBodySize": 762173,
+          "decodedBodySize": 762173,
+          "responseStatus": 200,
+          "serverTiming": []
+        }
+      ],
+      "state": {
+        "loaded": true,
+        "frames": 2,
+        "composing": false,
+        "frameHash": "16d1afe9543aba85cc19fbffdda019d68b395288fa3fa129bb3bb8d5f5749351"
+      },
+      "cpuRate": 1
+    },
+    {
+      "trace": [
+        {
+          "name": "longtask",
+          "start": 93.28500000014901,
+          "duration": 72
+        },
+        {
+          "name": "resize",
+          "start": 370.14000000059605,
+          "end": 371.25,
+          "duration": 1.1099999994039536
+        },
+        {
+          "name": "init",
+          "start": 285.21000000089407,
+          "end": 374.714999999851,
+          "duration": 89.50499999895692
+        },
+        {
+          "name": "resize",
+          "start": 547.089999999851,
+          "end": 555.6550000011921,
+          "duration": 8.565000001341105
+        },
+        {
+          "name": "longtask",
+          "start": 281.9050000011921,
+          "duration": 252
+        },
+        {
+          "name": "longtask",
+          "start": 763.9050000011921,
+          "duration": 66
+        },
+        {
+          "name": "longtask",
+          "start": 880.6750000007451,
+          "duration": 236
+        },
+        {
+          "name": "gltf-fetch-parse",
+          "start": 374.78999999910593,
+          "end": 1260.620000001043,
+          "duration": 885.8300000019372
+        },
+        {
+          "name": "buildHighlandRig",
+          "start": 1260.625,
+          "end": 1478.8300000019372,
+          "duration": 218.21000000089407
+        },
+        {
+          "name": "createEnvironment",
+          "start": 1490.394999999553,
+          "end": 1564.1150000020862,
+          "duration": 73.7200000025332
+        },
+        {
+          "name": "draw",
+          "start": 1490.324999999255,
+          "end": 2426.310000002384,
+          "duration": 935.9850000031292
+        },
+        {
+          "name": "restore-worker",
+          "start": 843.9750000014901,
+          "end": 4419.585000000894,
+          "duration": 3575.609999999404
+        },
+        {
+          "name": "longtask",
+          "start": 1239.464999999851,
+          "duration": 250
+        },
+        {
+          "name": "longtask",
+          "start": 1490.245000001043,
+          "duration": 2918
+        },
+        {
+          "name": "longtask",
+          "start": 4411.765000000596,
+          "duration": 53
+        },
+        {
+          "name": "draw",
+          "start": 4481.155000001192,
+          "end": 4497.550000000745,
+          "duration": 16.394999999552965
+        }
+      ],
+      "workerTrace": [
+        {
+          "type": "progress",
+          "emittedAt": 1789004317992.775,
+          "receivedAt": 1789004318013.375,
+          "deliveryDelay": 20.60009765625
+        },
+        {
+          "type": "progress",
+          "emittedAt": 1789004318055.41,
+          "receivedAt": 1789004321217.81,
+          "deliveryDelay": 3162.400146484375
+        },
+        {
+          "type": "result",
+          "emittedAt": 1789004318055.44,
+          "receivedAt": 1789004321226.24,
+          "deliveryDelay": 3170.80517578125
+        }
+      ],
+      "resources": [
+        {
+          "name": "http://127.0.0.1:46099/preview/models/highland.glb",
+          "entryType": "resource",
+          "startTime": 403.08500000089407,
+          "duration": 355.179999999702,
+          "navigationId": 4089,
+          "initiatorType": "fetch",
+          "deliveryType": "",
+          "nextHopProtocol": "http/1.1",
+          "renderBlockingStatus": "non-blocking",
+          "contentType": "",
+          "contentEncoding": "",
+          "workerStart": 0,
+          "workerRouterEvaluationStart": 0,
+          "workerCacheLookupStart": 0,
+          "workerMatchedSourceType": "",
+          "workerFinalSourceType": "",
+          "redirectStart": 0,
+          "redirectEnd": 0,
+          "fetchStart": 403.08500000089407,
+          "domainLookupStart": 403.08500000089407,
+          "domainLookupEnd": 403.08500000089407,
+          "connectStart": 403.08500000089407,
+          "secureConnectionStart": 0,
+          "connectEnd": 403.08500000089407,
+          "requestStart": 403.85999999940395,
+          "responseStart": 405.20500000193715,
+          "firstInterimResponseStart": 0,
+          "finalResponseHeadersStart": 405.20500000193715,
+          "responseEnd": 758.265000000596,
+          "transferSize": 8796732,
+          "encodedBodySize": 8796432,
+          "decodedBodySize": 8796432,
+          "responseStatus": 200,
+          "serverTiming": []
+        },
+        {
+          "name": "http://127.0.0.1:46099/fixture.json",
+          "entryType": "resource",
+          "startTime": 532.679999999702,
+          "duration": 11.550000000745058,
+          "navigationId": 4089,
+          "initiatorType": "fetch",
+          "deliveryType": "",
+          "nextHopProtocol": "http/1.1",
+          "renderBlockingStatus": "non-blocking",
+          "contentType": "application/json",
+          "contentEncoding": "",
+          "workerStart": 0,
+          "workerRouterEvaluationStart": 0,
+          "workerCacheLookupStart": 0,
+          "workerMatchedSourceType": "",
+          "workerFinalSourceType": "",
+          "redirectStart": 0,
+          "redirectEnd": 0,
+          "fetchStart": 532.679999999702,
+          "domainLookupStart": 532.679999999702,
+          "domainLookupEnd": 532.679999999702,
+          "connectStart": 532.679999999702,
+          "secureConnectionStart": 0,
+          "connectEnd": 532.679999999702,
+          "requestStart": 533.5,
+          "responseStart": 541.515000000596,
+          "firstInterimResponseStart": 0,
+          "finalResponseHeadersStart": 541.515000000596,
+          "responseEnd": 544.230000000447,
+          "transferSize": 762473,
+          "encodedBodySize": 762173,
+          "decodedBodySize": 762173,
+          "responseStatus": 200,
+          "serverTiming": []
+        }
+      ],
+      "state": {
+        "loaded": true,
+        "frames": 2,
+        "composing": false,
+        "frameHash": "16d1afe9543aba85cc19fbffdda019d68b395288fa3fa129bb3bb8d5f5749351"
+      },
+      "cpuRate": 4
+    }
+  ]
+}

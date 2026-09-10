@@ -1,0 +1,40 @@
+{
+  "diagnostic_only": true,
+  "release_eligible": false,
+  "frozen_at": "2026-09-10T01:42:06.951565+00:00",
+  "source_hashes": {
+    "tests/android/BackgroundInstrumentation.java": "0a5b6e7e8a72717a934bb24cce3a8614560ea8f394622c02c80404e45d62110f",
+    "tools/run_android_background_tests.py": "c0bbaaa38cc94a083f3240132a000130be1a9993f8d924efc3e1fe0a53b9f118",
+    ".github/workflows/probe-android-2.2.4.yml": "bdcca5f6ff832c9309b21145ceb91fcd69204d2a5632bb4050bec7d95f90d576",
+    "tests/test_android_readiness_observation.py": "12b6fbe26699a29852f75e437d4ad7b16df4e67391e0b1a528e88b990151fc6c"
+  },
+  "validation": [
+    {
+      "command": "python3 tools/build_android_tests.py --compile-only",
+      "passed": true
+    },
+    {
+      "command": "python3 tests/test_android_readiness_observation.py",
+      "passed": true,
+      "tests": 12
+    },
+    {
+      "command": "python3 -m py_compile tools/run_android_background_tests.py",
+      "passed": true
+    },
+    {
+      "check": "Diagnostic workflow YAML parsed; opt-in restricted to diagnostic branch and absent from verify-v2.yml",
+      "passed": true
+    }
+  ],
+  "limits": {
+    "original_readiness_gate_seconds": 45,
+    "additional_observation_seconds": 90,
+    "native_report_capture_seconds": 20,
+    "report_max_bytes": 2097152,
+    "report_chunk_max_bytes": 32768,
+    "instrumentation_global_seconds": 3000
+  },
+  "no_production_edits": true,
+  "no_push": true
+}

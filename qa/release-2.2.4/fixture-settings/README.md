@@ -1,0 +1,13 @@
+# Android fixture settings contract
+
+Run `node qa/release-2.2.4/fixture-settings/reproduce.cjs` from the repository after `npm ci` (Node 22 or newer). The script writes `verification.json` and exits unsuccessfully if either expected outcome fails. The receipt binds the script, actual app and worker sources, imported planner sources, Android fixture source, and dependency lockfile by SHA-256.
+
+`verification-original.json` preserves the first successful reproduction against the corrected fixture at commit `57e6ee996bd8f9d135e89334585efe90d8667b68`. The current receipt repeats both cases after adding the separate diagnostic observer to the test harness; the production app and generated frame hash are unchanged.
+
+The previous Android fixture supplied only `analysisQuality`, `dance`, `style`, `stepMs`, and `seed`. The production background runner compiles the supplied settings and binds their exact input digest. The app adds its current defaults when opening a saved project, yielding 27 settings fields. The worker correctly rejects this changed input; it does not have a migration for missing current-version defaults.
+
+The negative case first proves the sparse saved result restores with its original inputs and exact frame hash. Opening it through the actual app then produces the real input-checksum error. Invoking the actual 2-second poll callback starts a second restoration; holding that fetch exposes the same `loadingProject=true`, `composing=false`, `backgroundApplying=true`, and `backgroundSyncPending=true` flags seen in the Android failure. No checksum corruption or artificial worker failure is injected, and no saved-project write occurs during this retry.
+
+The positive case reads all settings from the initialized production `LightForgeApp.state.settings`, then overrides the same five fixture choices. The app opens the result successfully with the identical generated/restored frame SHA-256, acknowledges completion, clears all pending flags, and does not reload it on the next poll. No production validation rule changes.
+
+This is a bounded settings/restore reproduction using actual app and worker code with hosted DOM, media, preview, and native IO. Its two-second music metadata is intentionally small: it does not run audio inference, render the GPU preview, or establish Android performance. The corrected fixture's real Android run remains separate evidence. The current production retry behavior after an invalid completed result is recorded, not changed, by this artifact.
