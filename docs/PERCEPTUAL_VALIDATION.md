@@ -55,3 +55,8 @@ claim of detector accuracy or perceptual synchronization.
 The event list is bounded to 10,000 accepted rows and at most 32 classes.  The
 report includes invalid and omitted counts so truncation cannot be mistaken for
 perfect recall.
+
+
+### Canonical event classes and timestamps
+
+The report canonicalizes LightForge semantic-timeline names before computing coverage: `vocal_note`, `bass_note`, `percussion_kick`, and `percussion_snare` contribute to `vocals`, `bass`, `kick`, and `snare`; other supported percussion subtypes contribute to `percussion`. `lighting` and `mechanical` are both canonical classes, so missing evidence remains visibly unavailable rather than disappearing from the report. Negative target, command, measured, and predicted timestamps are rejected as timing evidence; invalid rows are counted in the report instead of contributing a misleading alignment score.

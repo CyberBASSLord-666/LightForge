@@ -8,7 +8,7 @@
 (function(root){
  'use strict';
  const VERSION=1,MAX_EVENTS=10000,MAX_CLASSES=32;
- const DEFAULT_CLASSES=Object.freeze(['vocals','bass','kick','snare','percussion','beat','downbeat','section','climax','mechanical']);
+ const DEFAULT_CLASSES=Object.freeze(['vocals','bass','kick','snare','percussion','beat','downbeat','section','climax','lighting','mechanical']);
  const HIGH_TIERS=new Set(['primary','phrase','structural','climax']);
  const finite=value=>typeof value==='number'&&Number.isFinite(value);
  const clamp=(value,low=0,high=1)=>Math.max(low,Math.min(high,value));
@@ -36,23 +36,24 @@
   if(typeof value!=='string')return null;
   const normalized=value.trim().toLowerCase().replace(/[\s_]+/g,'-');
   if(!normalized||normalized.length>80)return null;
-  return ({vocal:'vocals',voice:'vocals','vocal-phrase':'vocals','vocal-accent':'vocals',lowend:'bass','low-end':'bass',drums:'percussion',drum:'percussion',hihat:'percussion','hi-hat':'percussion',hat:'percussion','section-transition':'section',transition:'section',drop:'climax',arrival:'climax',mechanism:'mechanical'})[normalized]||normalized;
+  return ({vocal:'vocals',voice:'vocals','vocal-phrase':'vocals','vocal-accent':'vocals','vocal-note':'vocals',lowend:'bass','low-end':'bass','bass-note':'bass','bass-phrase':'bass',drums:'percussion',drum:'percussion',hihat:'percussion','hi-hat':'percussion',hat:'percussion','percussion-kick':'kick','percussion-snare':'snare','percussion-clap':'percussion','percussion-hat':'percussion','percussion-crash':'percussion','percussion-tom':'percussion','percussion-fill':'percussion','kick-bass-coincidence':'percussion','section-transition':'section',transition:'section',drop:'climax',arrival:'climax',light:'lighting',lights:'lighting','lighting-output':'lighting',lamp:'lighting',mechanism:'mechanical',movement:'mechanical'})[normalized]||normalized;
  }
  function status(value){
   if(typeof value!=='string')return null;
   const normalized=value.trim().toLowerCase();
   return ['matched','suppressed','heldwithoutattack','held-without-attack','manualoverride','manual-override','disabled','unrouted','outsideexport','outside-export','timed'].includes(normalized)?normalized.replace(/-/g,''):null;
  }
+ function timestamp(value){return finite(value)&&value>=0?value:null;}
  function targetTime(event){
-  for(const key of ['desiredPerceptualTime','targetPerceptualTime','targetTime','time'])if(finite(event[key]))return event[key];
+  for(const key of ['desiredPerceptualTime','targetPerceptualTime','targetTime','time']){const value=timestamp(event[key]);if(value!==null)return value;}
   return null;
  }
- function commandTime(event){for(const key of ['commandTime','actualCommandTime','realizedCommandTime'])if(finite(event[key]))return event[key];return null;}
+ function commandTime(event){for(const key of ['commandTime','actualCommandTime','realizedCommandTime']){const value=timestamp(event[key]);if(value!==null)return value;}return null;}
  function measuredPerceptualTime(event){
-  if(finite(event.measuredPerceptualTime))return event.measuredPerceptualTime;
-  return event.perceptualEvidence==='measured'&&finite(event.perceptualTime)?event.perceptualTime:null;
+  const measured=timestamp(event.measuredPerceptualTime);if(measured!==null)return measured;
+  return event.perceptualEvidence==='measured'?timestamp(event.perceptualTime):null;
  }
- function predictedPerceptualTime(event){for(const key of ['predictedPerceptualTime','estimatedPerceptualTime'])if(finite(event[key]))return event[key];return null;}
+ function predictedPerceptualTime(event){for(const key of ['predictedPerceptualTime','estimatedPerceptualTime']){const value=timestamp(event[key]);if(value!==null)return value;}return null;}
  function highSalience(event){return finite(event.salience)?event.salience>=.7:HIGH_TIERS.has(String(event.tier||'').toLowerCase());}
  function salienceKnown(event){return finite(event.salience)||typeof event.tier==='string';}
  function normalize(event,index){

@@ -68,6 +68,28 @@ test('accepts an explicit measured response but rejects an unmarked perceptual t
  assert.equal(snare.timing.perceptual.medianMs,30);
 });
 
+test('normalizes semantic timeline event types into canonical coverage classes and rejects negative timestamps',()=>{
+ const report=Validation.evaluate(null,{events:[
+  {type:'vocal_note',targetTime:1,commandTime:1,status:'matched'},
+  {type:'bass_note',targetTime:2,commandTime:2,status:'matched'},
+  {type:'percussion_kick',targetTime:3,commandTime:3,status:'matched'},
+  {type:'percussion_snare',targetTime:4,commandTime:4,status:'matched'},
+  {type:'percussion_clap',targetTime:5,commandTime:5,status:'matched'},
+  {eventClass:'kick',targetTime:-1,commandTime:-1,status:'matched'},
+  {eventClass:'snare',targetTime:6,commandTime:-1,status:'matched'}
+ ]});
+ assert.equal(report.eventEvidence.acceptedCount,6);
+ assert.equal(report.eventEvidence.invalidCount,1);
+ assert.equal(report.perEventClass.vocals.eventEvidence.count,1);
+ assert.equal(report.perEventClass.bass.eventEvidence.count,1);
+ assert.equal(report.perEventClass.kick.eventEvidence.count,1);
+ assert.equal(report.perEventClass.snare.eventEvidence.count,2);
+ assert.equal(report.perEventClass.percussion.eventEvidence.count,1);
+ assert.equal(report.perEventClass.snare.timing.command.count,1,'negative commands are not timing evidence');
+ assert.equal(report.perEventClass.lighting.eventEvidence.state,'unavailable','lighting remains an explicit canonical unavailable state');
+ assert.equal(report.perEventClass['percussion-kick'],undefined);
+});
+
 test('bounds exported event evidence and leaves caller-owned data untouched',()=>{
  const events=Array.from({length:10005},(_,index)=>({eventClass:'beat',targetTime:index,commandTime:index,status:'matched',salience:.2}));
  const before=structuredClone(events),first=Validation.evaluate(null,{events}),second=Validation.analyze(null,{events});
