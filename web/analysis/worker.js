@@ -1,6 +1,6 @@
 /* Private worker: bounded PCM chunks -> exact log-mel -> pretrained Beat This! transformer. */
 'use strict';
-importScripts('telemetry.js','semantic-timeline.js','wav-reader.js','dsp.js','bass-notes.js','vocal.js','vocal-detail.js','stem-cache.js','work-store.js','separator-mdx.js','separator-deux.js','game.js','vendor/ort.wasm.min.js');
+importScripts('telemetry.js','semantic-timeline.js','salience.js','wav-reader.js','dsp.js','bass-notes.js','vocal.js','vocal-detail.js','stem-cache.js','work-store.js','separator-mdx.js','separator-deux.js','game.js','vendor/ort.wasm.min.js');
 const report=(progress,stage,detail='',extra={})=>postMessage({type:'progress',value:{...extra,progress,stage,detail}});
 function createTelemetry(stage,metadata){
  const factory=self.LightForgeAnalysisTelemetry;
@@ -23,6 +23,19 @@ function ensureSemanticTimeline(result){
  if(!check||!check.valid)throw Error('Semantic timeline validation failed: '+(check?.errors||[]).join('; ').slice(0,512));
  result.semanticTimeline=timeline;
  return timeline;
+}
+function ensureMusicSalience(result,timeline){
+ const api=self.LightForgeMusicSalience;
+ if(!api||typeof api.build!=='function'||typeof api.validate!=='function')throw Error('Music salience module is unavailable.');
+ const semanticTimeline=timeline||ensureSemanticTimeline(result);
+ if(result&&result.musicSalience){
+  const existing=api.validate(result.musicSalience,semanticTimeline);
+  if(existing&&existing.valid)return result.musicSalience;
+ }
+ const musicSalience=api.build(semanticTimeline),check=api.validate(musicSalience,semanticTimeline);
+ if(!check||!check.valid)throw Error('Music salience validation failed: '+(check?.errors||[]).join('; ').slice(0,512));
+ result.musicSalience=musicSalience;
+ return musicSalience;
 }
 function normalizeBassProvenance(result){
  const analysis=result?.bassAnalysis;
@@ -114,11 +127,14 @@ self.onmessage=async e=>{
   telemetry.cache(stage,'restore');
   const restored={...result,...cached};
   if(stage==='bass'){
-   const provenanceChanged=normalizeBassProvenance(restored);
+   const provenanceChanged=normalizeBassProvenance(restored),cachedTimeline=restored.semanticTimeline;
    const timelinePhase=telemetry.begin('semantic.timeline');
-   const timeline=ensureSemanticTimeline(restored),timelineWasCurrent=cached.semanticTimeline?.schemaVersion===timeline.schemaVersion;
-   telemetry.end(timelinePhase,{restored:true,eventCount:timeline.events.length,provenanceMigrated:provenanceChanged});
-   if(!timelineWasCurrent||provenanceChanged)await store.write(stage,restored);
+   const timeline=ensureSemanticTimeline(restored),timelineWasCurrent=cachedTimeline===timeline;
+   telemetry.end(timelinePhase,{restored:true,eventCount:timeline.events.length,provenanceMigrated:provenanceChanged,cacheReused:timelineWasCurrent});
+   const cachedSalience=restored.musicSalience,saliencePhase=telemetry.begin('semantic.salience');
+   const musicSalience=ensureMusicSalience(restored,timeline),salienceWasCurrent=cachedSalience===musicSalience;
+   telemetry.end(saliencePhase,{restored:true,eventCount:musicSalience.events.length,profile:musicSalience.summary.context.profile,cacheReused:salienceWasCurrent});
+   if(!timelineWasCurrent||!salienceWasCurrent||provenanceChanged)await store.write(stage,restored);
   }
   report(({rhythm:.4,separation:.82,voice:.985,bass:1})[stage],'Restoring saved progress','Completed '+stage+' work restored',{checkpointSaved:true,restoredStage:stage});
   postMessage({type:'result',value:restored,restored:true,seconds:0,profile:telemetry.snapshot({restored:true})});
@@ -202,6 +218,9 @@ self.onmessage=async e=>{
  const timelinePhase=telemetry.begin('semantic.timeline');
  const semanticTimeline=ensureSemanticTimeline(result);
  telemetry.end(timelinePhase,{eventCount:semanticTimeline.events.length,tiers:semanticTimeline.summary.countByTier});
+ const saliencePhase=telemetry.begin('semantic.salience');
+ const musicSalience=ensureMusicSalience(result,semanticTimeline);
+ telemetry.end(saliencePhase,{eventCount:musicSalience.events.length,tiers:musicSalience.summary.countByTier,profile:musicSalience.summary.context.profile});
  result.recommendedAudio={sampleRate:44100,channels:2,format:'PCM16 WAV'};report(1,'Music understood',(result.bpm?result.bpm+' BPM':'No pulse detected')+' • '+result.sections.length+' sections');
 
    await store.write(stage,result);
