@@ -20,7 +20,15 @@ test('automatic perceptual report observes final realization without changing de
  assert.ok(base.synchronization.eventEvidence.some(row=>row.eventClass==='mechanical'&&row.realizationStatus==='matched'));
  assert.equal(base.perceptualValidation.perEventClass.mechanical.timing.command.state,'available');
  assert.equal(base.perceptualValidation.perEventClass.mechanical.timing.perceptual.state,'unavailable','estimated arrivals must not be labelled as measured response');
- assert.equal(base.perceptualValidation.perEventClass.mechanical.timing.predictedPerceptual.state,'estimated');
+ assert.equal(base.perceptualValidation.perEventClass.mechanical.timing.predictedPerceptual.state,'unavailable','uncalibrated commands must not be relabelled as perceptual predictions');
+});
+
+test('only a calibrated planner intent may expose an estimated mechanical perceptual timestamp',()=>{
+ const show=Engine.generate(fixture(),{dance:'expressive',seed:9,vehicleTimingCalibration:{version:1,enabled:true,calibrationId:'mirror-latency',outputs:{mirrorL:{commandLatencyMs:80,activationLatencyMs:40}}}});
+ const mechanical=show.synchronization.eventEvidence.filter(row=>row.eventClass==='mechanical'&&row.realizationStatus==='matched');
+ assert.ok(mechanical.length>0);
+ assert.ok(mechanical.some(row=>Number.isFinite(row.predictedPerceptualTime)),'a calibrated arrival may be reported as an estimate');
+ assert.equal(show.perceptualValidation.perEventClass.mechanical.timing.predictedPerceptual.state,'estimated');
 });
 
 test('explicit vehicle timing limits remove infeasible automatic closure gestures before FSEQ realization',()=>{
