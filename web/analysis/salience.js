@@ -23,14 +23,16 @@
   sparse:{vocals:.78,bass:.68,rhythm:.60,drums:.60,mix:.55,structure:.94}
  };
  const validTimeline=timeline=>{
-  const errors=[];
-  if(!timeline||timeline.schemaVersion!==2||timeline.clock!=='original-decoded-audio'||!finite(timeline.duration)||timeline.duration<=0||!Array.isArray(timeline.events))errors.push('Invalid semantic timeline envelope.');
-  let prior=-1;const ids=new Set();
-  for(const event of timeline?.events||[]){
-   if(!event||typeof event.id!=='string'||!event.id||ids.has(event.id))errors.push('Duplicate or missing event id.');
-   ids.add(event?.id);
+ const errors=[];
+ if(!timeline||timeline.schemaVersion!==2||timeline.clock!=='original-decoded-audio'||!finite(timeline.duration)||timeline.duration<=0||!Array.isArray(timeline.events))errors.push('Invalid semantic timeline envelope.');
+  const events=Array.isArray(timeline?.events)?timeline.events:[];let prior=-1;const ids=new Set();
+  for(const event of events){
+   if(!event||typeof event!=='object'){errors.push('Invalid semantic event.');continue;}
+   if(typeof event.id!=='string'||!event.id||ids.has(event.id))errors.push('Duplicate or missing event id.');
+   ids.add(event.id);
    if(!finite(event.time)||event.time<0||event.time>timeline.duration||event.time<prior)errors.push('Invalid event order or time.');
-   prior=event?.time;
+   else prior=event.time;
+   if(!finite(event.duration)||event.duration<0||!finite(event.time)||event.time+event.duration>timeline.duration+1e-6)errors.push('Invalid event duration.');
    if(!finite(event?.salience)||event.salience<0||event.salience>1)errors.push('Invalid event salience.');
    if(Object.prototype.hasOwnProperty.call(event||{},'salienceCap')&&
       (!finite(event.salienceCap)||event.salienceCap<0||event.salienceCap>1||event.salience>event.salienceCap+1e-9))errors.push('Invalid event salience cap.');
@@ -129,21 +131,23 @@
  }
  function validate(salience,timeline){
   const errors=[];
-  if(!salience||salience.schemaVersion!==SCHEMA_VERSION||salience.engineVersion!==ENGINE_VERSION||!Number.isInteger(salience.timelineSchemaVersion)||typeof salience.timelineFingerprint!=='string'||!/^[0-9a-f]{8}$/.test(salience.timelineFingerprint)||!finite(salience.duration)||salience.duration<=0||!Array.isArray(salience.events)||!salience.summary||typeof salience.summary!=='object')errors.push('Invalid music salience envelope.');
-  let expectedIds=null;
-  if(timeline!==undefined){const timelineCheck=validTimeline(timeline);if(!timelineCheck.valid)errors.push('Invalid linked semantic timeline.');else{expectedIds=timeline.events.map(event=>event.id);if(salience?.timelineSchemaVersion!==timeline.schemaVersion||salience?.clock!==timeline.clock||salience?.duration!==timeline.duration||salience?.timelineFingerprint!==timelineFingerprint(timeline))errors.push('Music salience does not match semantic timeline.');}}
-  const ids=new Set(),ranks=new Set(),counts={micro:0,secondary:0,primary:0,phrase:0,structural:0,climax:0};
-  for(let index=0;index<(salience?.events||[]).length;index++){
-   const event=salience.events[index];
-   if(!event||typeof event.id!=='string'||!event.id||ids.has(event.id))errors.push('Duplicate or missing salience event id.');ids.add(event?.id);
+ if(!salience||salience.schemaVersion!==SCHEMA_VERSION||salience.engineVersion!==ENGINE_VERSION||!Number.isInteger(salience.timelineSchemaVersion)||typeof salience.timelineFingerprint!=='string'||!/^[0-9a-f]{8}$/.test(salience.timelineFingerprint)||!finite(salience.duration)||salience.duration<=0||!Array.isArray(salience.events)||!salience.summary||typeof salience.summary!=='object')errors.push('Invalid music salience envelope.');
+ let expectedIds=null;
+ if(timeline!==undefined){const timelineCheck=validTimeline(timeline);if(!timelineCheck.valid)errors.push('Invalid linked semantic timeline.');else{expectedIds=timeline.events.map(event=>event.id);if(salience?.timelineSchemaVersion!==timeline.schemaVersion||salience?.clock!==timeline.clock||salience?.duration!==timeline.duration||salience?.timelineFingerprint!==timelineFingerprint(timeline))errors.push('Music salience does not match semantic timeline.');}}
+ const salienceEvents=Array.isArray(salience?.events)?salience.events:[];
+ const ids=new Set(),ranks=new Set(),counts={micro:0,secondary:0,primary:0,phrase:0,structural:0,climax:0};
+ for(let index=0;index<salienceEvents.length;index++){
+  const event=salienceEvents[index];
+   if(!event||typeof event!=='object'){errors.push('Invalid salience event.');continue;}
+   if(typeof event.id!=='string'||!event.id||ids.has(event.id))errors.push('Duplicate or missing salience event id.');ids.add(event.id);
    if(!finite(event?.score)||event.score<0||event.score>1||tierFor(event.score)!==event.tier)errors.push('Invalid salience score or tier.');
    if(!Number.isInteger(event?.rank)||event.rank<1||ranks.has(event.rank))errors.push('Invalid salience rank.');ranks.add(event?.rank);
    if(Object.prototype.hasOwnProperty.call(counts,event?.tier))counts[event.tier]++;else errors.push('Invalid salience tier.');
    if(expectedIds&&event?.id!==expectedIds[index])errors.push('Salience event order does not match semantic timeline.');
-  }
-  for(let rank=1;rank<=ranks.size;rank++)if(!ranks.has(rank))errors.push('Non-contiguous salience ranks.');
-  const summary=salience?.summary,context=summary?.context;
-  if(!Number.isInteger(summary?.eventCount)||summary.eventCount!==(salience?.events||[]).length||!summary.countByTier||Object.keys(counts).some(key=>summary.countByTier[key]!==counts[key]))errors.push('Invalid salience summary counts.');
+ }
+ for(let rank=1;rank<=ranks.size;rank++)if(!ranks.has(rank))errors.push('Non-contiguous salience ranks.');
+ const summary=salience?.summary,context=summary?.context;
+ if(!Number.isInteger(summary?.eventCount)||summary.eventCount!==salienceEvents.length||!summary.countByTier||Object.keys(counts).some(key=>summary.countByTier[key]!==counts[key]))errors.push('Invalid salience summary counts.');
   if(!context||!profiles.has(context.profile)||!context.evidence||!finite(context.eventDensity)||!context.sourcePriorities||!context.weights)errors.push('Invalid salience context.');
   else{
    for(const key of ['vocal','bass','rhythm','percussion','structural'])if(!finite(context.evidence[key])||context.evidence[key]<0||context.evidence[key]>1)errors.push('Invalid salience evidence.');
@@ -151,9 +155,9 @@
    for(const key of ['vocals','bass','rhythm','drums','mix','structure'])if(!finite(context.sourcePriorities[key])||context.sourcePriorities[key]<0||context.sourcePriorities[key]>1)errors.push('Invalid salience source priorities.');
    if(Math.abs(total-1)>1e-6)errors.push('Salience weights must sum to one.');
   }
-  const highlights=summary?.highlights,topEventIds=summary?.topEventIds;
-  if(!Array.isArray(highlights)||highlights.length>MAX_HIGHLIGHTS||!Array.isArray(topEventIds)||topEventIds.length!==highlights.length)errors.push('Invalid salience highlights.');
-  else for(let index=0;index<highlights.length;index++){const highlight=highlights[index],event=(salience.events||[]).find(value=>value.id===highlight?.id);if(!event||highlight.id!==topEventIds[index]||highlight.score!==event.score||highlight.tier!==event.tier||highlight.rank!==event.rank||!Array.isArray(highlight.drivers)||highlight.drivers.some(driver=>typeof driver!=='string'))errors.push('Invalid salience highlight.');}
+ const highlights=summary?.highlights,topEventIds=summary?.topEventIds;
+ if(!Array.isArray(highlights)||highlights.length>MAX_HIGHLIGHTS||!Array.isArray(topEventIds)||topEventIds.length!==highlights.length)errors.push('Invalid salience highlights.');
+ else for(let index=0;index<highlights.length;index++){const highlight=highlights[index],event=salienceEvents.find(value=>value?.id===highlight?.id);if(!event||highlight.id!==topEventIds[index]||highlight.score!==event.score||highlight.tier!==event.tier||highlight.rank!==event.rank||!Array.isArray(highlight.drivers)||highlight.drivers.some(driver=>typeof driver!=='string'))errors.push('Invalid salience highlight.');}
   return {valid:errors.length===0,errors};
  }
  const api={build,validate,version:ENGINE_VERSION};root.LightForgeMusicSalience=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;

@@ -71,6 +71,13 @@ test('sidecars fail closed when their timeline or evidence binding changes',()=>
  assert.equal(Recurrence.validate(changedAssignment,timeline,evidence).valid,false);
 });
 
+test('recurrence validation rejects malformed motif records without throwing',()=>{
+ const {timeline,evidence,sidecar}=build(chromaMusic());
+ const malformed=structuredClone(sidecar);malformed.motifs=[null];
+ assert.doesNotThrow(()=>Recurrence.validate(malformed,timeline,evidence));
+ assert.equal(Recurrence.validate(malformed,timeline,evidence).valid,false);
+});
+
 test('capped mix-percussion keeps recurrence and salience timeline bindings identical',()=>{
  const music=baseMusic();
  music.percussionAnalysis={source:'mix-feature-estimate',method:'bounded test evidence',inputStem:'mixture',

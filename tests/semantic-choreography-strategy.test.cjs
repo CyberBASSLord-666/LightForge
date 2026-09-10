@@ -146,6 +146,10 @@ test('semantic consumers reject invalid canonical timelines even with a forged m
   delete invalidSalienceEvent.salienceCap;
   invalidSalienceEvent.salience=1.01;
   assertRejected(invalidSalience);
+  const emptyId=structuredClone(timeline);emptyId.events[0].id='';
+  assertRejected(emptyId);
+  const invalidDuration=structuredClone(timeline);invalidDuration.events[0].duration=invalidDuration.duration+1;
+  assertRejected(invalidDuration);
 });
 
 test('semantic choreography rejects a forged but fingerprint-matching salience ranking',()=>{
@@ -161,6 +165,67 @@ test('semantic choreography rejects a forged but fingerprint-matching salience r
   assert.equal(show.choreography.semanticStrategy.active,false);
   assert.deepEqual(show.frames,baseline.frames,'a malformed semantic ranking must fall back exactly to the legacy planner');
   assert.deepEqual(Engine.fseq(show,'invalid-salience.wav'),Engine.fseq(baseline,'invalid-salience.wav'));
+});
+
+test('semantic consumers reject malformed timeline event containers without throwing or activating choreography',()=>{
+  const music=musicFixture(),settings={stepMs:20,dance:'expressive',seed:88};
+  const timeline=Timeline.build(music),salience=Salience.build(timeline);
+  const evidence=Recurrence.captureEvidence(music,timeline),sidecar=Recurrence.build(timeline,evidence);
+  const baseline=Engine.generate(music,settings);
+  for(const [label,events] of [['null-event',[null]],['object-events',{}],['null-events',null],['string-events','x']]){
+    const malformed={...timeline,events};
+    assert.doesNotThrow(()=>Timeline.validate(malformed),label);
+    assert.equal(Timeline.validate(malformed).valid,false,label);
+    assert.doesNotThrow(()=>Salience.validate(salience,malformed),label);
+    assert.equal(Salience.validate(salience,malformed).valid,false,label);
+    assert.throws(()=>Salience.build(malformed),/valid semantic timeline/,label);
+    assert.throws(()=>Recurrence.captureEvidence(music,malformed),/valid semantic timeline/,label);
+    assert.equal(Recurrence.validateEvidence(evidence,malformed).valid,false,label);
+    assert.equal(Recurrence.validate(sidecar,malformed,evidence).valid,false,label);
+    const show=Engine.generate({...music,semanticTimeline:malformed,musicSalience:salience},{...settings,semanticChoreography:true});
+    assert.equal(show.choreography.semanticStrategy.active,false,label);
+    assert.deepEqual(show.frames,baseline.frames,label+' malformed semantic events must fall back exactly to the legacy planner');
+    assert.deepEqual(Engine.fseq(show,label+'-semantic.wav'),Engine.fseq(baseline,label+'-semantic.wav'),label);
+  }
+});
+
+test('semantic choreography rejects malformed salience events without throwing',()=>{
+  const music=musicFixture(),settings={stepMs:20,dance:'expressive',seed:88};
+  const timeline=Timeline.build(music),salience=Salience.build(timeline);
+  const malformed=structuredClone(salience);
+  malformed.events[0]=null;
+  assert.doesNotThrow(()=>Salience.validate(malformed,timeline));
+  assert.equal(Salience.validate(malformed,timeline).valid,false);
+  const baseline=Engine.generate(music,settings);
+  const show=Engine.generate({...music,semanticTimeline:timeline,musicSalience:malformed},{...settings,semanticChoreography:true});
+  assert.equal(show.choreography.semanticStrategy.active,false);
+  assert.deepEqual(show.frames,baseline.frames,'malformed salience events must fall back exactly to the legacy planner');
+  assert.deepEqual(Engine.fseq(show,'malformed-salience.wav'),Engine.fseq(baseline,'malformed-salience.wav'));
+});
+
+test('semantic choreography rejects a non-array salience event field without throwing',()=>{
+  const music=musicFixture(),settings={stepMs:20,dance:'expressive',seed:88};
+  const timeline=Timeline.build(music),salience=Salience.build(timeline);
+  const malformed={...salience,events:'x'};
+  assert.doesNotThrow(()=>Salience.validate(malformed,timeline));
+  assert.equal(Salience.validate(malformed,timeline).valid,false);
+  const baseline=Engine.generate(music,settings);
+  const show=Engine.generate({...music,semanticTimeline:timeline,musicSalience:malformed},{...settings,semanticChoreography:true});
+  assert.equal(show.choreography.semanticStrategy.active,false);
+  assert.deepEqual(show.frames,baseline.frames,'a non-array semantic ranking must fall back exactly to the legacy planner');
+  assert.deepEqual(Engine.fseq(show,'non-array-salience.wav'),Engine.fseq(baseline,'non-array-salience.wav'));
+});
+
+test('semantic choreography falls back when a future validator throws',()=>{
+  const music=musicFixture(),settings={stepMs:20,dance:'expressive',seed:88};
+  const timeline=Timeline.build(music),salience=Salience.build(timeline),baseline=Engine.generate(music,settings);
+  const original=Timeline.validate;Timeline.validate=()=>{throw Error('injected validator failure');};
+  try{
+    const show=Engine.generate({...music,semanticTimeline:timeline,musicSalience:salience},{...settings,semanticChoreography:true});
+    assert.equal(show.choreography.semanticStrategy.active,false);
+    assert.deepEqual(show.frames,baseline.frames,'validator exceptions must retain the legacy planner');
+    assert.deepEqual(Engine.fseq(show,'validator-failure.wav'),Engine.fseq(baseline,'validator-failure.wav'));
+  }finally{Timeline.validate=original;}
 });
 
 test('browser and composition-worker contexts load the canonical timeline before semantic strategy and ShowEngine',()=>{

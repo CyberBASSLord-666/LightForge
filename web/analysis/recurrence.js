@@ -61,14 +61,15 @@
  }
 
  function validTimeline(timeline){
-  const errors=[];
-  if(!timeline||timeline.schemaVersion!==2||timeline.clock!=='original-decoded-audio'||!finite(timeline.duration)||timeline.duration<=0||!Array.isArray(timeline.events))errors.push('Invalid semantic timeline envelope.');
-  let prior=-1;const ids=new Set();
-  for(const event of timeline?.events||[]){
-   if(!event||!validId(event.id)||ids.has(event.id))errors.push('Duplicate or missing semantic event id.');
-   ids.add(event?.id);
+ const errors=[];
+ if(!timeline||timeline.schemaVersion!==2||timeline.clock!=='original-decoded-audio'||!finite(timeline.duration)||timeline.duration<=0||!Array.isArray(timeline.events))errors.push('Invalid semantic timeline envelope.');
+  const events=Array.isArray(timeline?.events)?timeline.events:[];let prior=-1;const ids=new Set();
+  for(const event of events){
+   if(!event||typeof event!=='object'){errors.push('Invalid semantic event.');continue;}
+   if(!validId(event.id)||ids.has(event.id))errors.push('Duplicate or missing semantic event id.');
+   ids.add(event.id);
    if(!finite(event?.time)||event.time<0||event.time>timeline.duration||event.time<prior)errors.push('Invalid semantic event order or time.');
-   prior=event?.time;
+   else prior=event.time;
    if(!finite(event?.duration)||event.duration<0||event.time+event.duration>timeline.duration+1e-6)errors.push('Invalid semantic event duration.');
    if(!finite(event?.salience)||event.salience<0||event.salience>1)errors.push('Invalid semantic event salience.');
    if(Object.prototype.hasOwnProperty.call(event||{},'salienceCap')&&(!finite(event.salienceCap)||event.salienceCap<0||event.salienceCap>1||event.salience>event.salienceCap+1e-9))errors.push('Invalid semantic event salience cap.');
@@ -295,40 +296,45 @@
  }
  function validate(sidecar,timeline,evidence){
   const errors=[];
-  const timelineCheck=validTimeline(timeline);if(!timelineCheck.valid)errors.push('Invalid linked semantic timeline.');
-  const evidenceCheck=validateEvidence(evidence,timeline);if(!evidenceCheck.valid)errors.push('Invalid linked recurrence evidence.');
-  if(!sidecar||sidecar.schemaVersion!==SCHEMA_VERSION||sidecar.engineVersion!==ENGINE_VERSION||!Number.isInteger(sidecar.timelineSchemaVersion)||typeof sidecar.timelineFingerprint!=='string'||!/^[0-9a-f]{8}$/.test(sidecar.timelineFingerprint)||typeof sidecar.evidenceFingerprint!=='string'||!/^[0-9a-f]{8}$/.test(sidecar.evidenceFingerprint)||typeof sidecar.clock!=='string'||!finite(sidecar.duration)||sidecar.duration<=0||!Array.isArray(sidecar.motifs)||!Array.isArray(sidecar.assignments)||!sidecar.summary||typeof sidecar.summary!=='object')errors.push('Invalid recurrence sidecar envelope.');
-  if(timelineCheck.valid&&(sidecar?.timelineSchemaVersion!==timeline.schemaVersion||sidecar?.timelineFingerprint!==timelineFingerprint(timeline)||sidecar?.clock!==timeline.clock||sidecar?.duration!==timeline.duration))errors.push('Recurrence sidecar does not match semantic timeline.');
-  if(evidenceCheck.valid&&sidecar?.evidenceFingerprint!==evidenceFingerprint(evidence))errors.push('Recurrence sidecar does not match recurrence evidence.');
-  const sections=new Map((evidence?.sections||[]).map(section=>[section.sectionId,section]));
-  const motifIds=new Set(),assignmentIds=new Set(),instancesBySection=new Map();let priorStart=-1;
-  for(const motif of sidecar?.motifs||[]){
-   if(!motif||!validId(motif.id)||motifIds.has(motif.id)||!['prevalidated-section-recurrence','section-chroma-energy'].includes(motif.evidence)||!finite(motif.confidence)||motif.confidence<0||motif.confidence>1||!Array.isArray(motif.instances)||motif.instances.length<2)errors.push('Invalid recurrence motif.');
-   motifIds.add(motif?.id);
-   let prior=-1;const localIds=new Set();
-   for(let index=0;index<(motif?.instances||[]).length;index++){
-    const instance=motif.instances[index],section=sections.get(instance?.sectionId);
-    if(!instance||!section||localIds.has(instance.sectionId)||instance.sectionIndex!==section.sectionIndex||!finite(instance.start)||Math.abs(instance.start-section.start)>1e-6||!finite(instance.duration)||Math.abs(instance.duration-section.duration)>1e-6||!finite(instance.energy)||instance.energy<0||instance.energy>1||!finite(instance.similarity)||instance.similarity<0||instance.similarity>1||!finite(instance.confidence)||instance.confidence<0||instance.confidence>1||instance.repetitionIndex!==index||!validEvolution(instance.evolution)||instance.start<prior)errors.push('Invalid recurrence motif instance.');
-    localIds.add(instance?.sectionId);instancesBySection.set(instance?.sectionId,{motifId:motif?.id,instance});prior=instance?.start;
-   }
-   if(motif?.instances?.[0]?.start<priorStart)errors.push('Recurrence motifs are not in canonical order.');
-   priorStart=motif?.instances?.[0]?.start;
+ const timelineCheck=validTimeline(timeline);if(!timelineCheck.valid)errors.push('Invalid linked semantic timeline.');
+ const evidenceCheck=validateEvidence(evidence,timeline);if(!evidenceCheck.valid)errors.push('Invalid linked recurrence evidence.');
+ if(!sidecar||sidecar.schemaVersion!==SCHEMA_VERSION||sidecar.engineVersion!==ENGINE_VERSION||!Number.isInteger(sidecar.timelineSchemaVersion)||typeof sidecar.timelineFingerprint!=='string'||!/^[0-9a-f]{8}$/.test(sidecar.timelineFingerprint)||typeof sidecar.evidenceFingerprint!=='string'||!/^[0-9a-f]{8}$/.test(sidecar.evidenceFingerprint)||typeof sidecar.clock!=='string'||!finite(sidecar.duration)||sidecar.duration<=0||!Array.isArray(sidecar.motifs)||!Array.isArray(sidecar.assignments)||!sidecar.summary||typeof sidecar.summary!=='object')errors.push('Invalid recurrence sidecar envelope.');
+ if(timelineCheck.valid&&(sidecar?.timelineSchemaVersion!==timeline.schemaVersion||sidecar?.timelineFingerprint!==timelineFingerprint(timeline)||sidecar?.clock!==timeline.clock||sidecar?.duration!==timeline.duration))errors.push('Recurrence sidecar does not match semantic timeline.');
+ if(evidenceCheck.valid&&sidecar?.evidenceFingerprint!==evidenceFingerprint(evidence))errors.push('Recurrence sidecar does not match recurrence evidence.');
+ const evidenceSections=Array.isArray(evidence?.sections)?evidence.sections:[],motifs=Array.isArray(sidecar?.motifs)?sidecar.motifs:[],assignments=Array.isArray(sidecar?.assignments)?sidecar.assignments:[];
+ const sections=new Map(evidenceSections.filter(section=>section&&typeof section==='object').map(section=>[section.sectionId,section]));
+ const motifIds=new Set(),assignmentIds=new Set(),instancesBySection=new Map();let priorStart=-1;
+ for(const motif of motifs){
+  if(!motif||typeof motif!=='object'){errors.push('Invalid recurrence motif.');continue;}
+  const motifInstances=Array.isArray(motif.instances)?motif.instances:[];
+  if(!validId(motif.id)||motifIds.has(motif.id)||!['prevalidated-section-recurrence','section-chroma-energy'].includes(motif.evidence)||!finite(motif.confidence)||motif.confidence<0||motif.confidence>1||!Array.isArray(motif.instances)||motifInstances.length<2)errors.push('Invalid recurrence motif.');
+  motifIds.add(motif.id);
+  let prior=-1;const localIds=new Set();
+  for(let index=0;index<motifInstances.length;index++){
+   const instance=motifInstances[index];if(!instance||typeof instance!=='object'){errors.push('Invalid recurrence motif instance.');continue;}
+   const section=sections.get(instance.sectionId);
+   if(!section||localIds.has(instance.sectionId)||instance.sectionIndex!==section.sectionIndex||!finite(instance.start)||Math.abs(instance.start-section.start)>1e-6||!finite(instance.duration)||Math.abs(instance.duration-section.duration)>1e-6||!finite(instance.energy)||instance.energy<0||instance.energy>1||!finite(instance.similarity)||instance.similarity<0||instance.similarity>1||!finite(instance.confidence)||instance.confidence<0||instance.confidence>1||instance.repetitionIndex!==index||!validEvolution(instance.evolution)||instance.start<prior)errors.push('Invalid recurrence motif instance.');
+   localIds.add(instance.sectionId);instancesBySection.set(instance.sectionId,{motifId:motif.id,instance});if(finite(instance.start))prior=instance.start;
   }
-  let priorAssignmentIndex=-1;
-  for(const assignment of sidecar?.assignments||[]){
-   const section=sections.get(assignment?.sectionId);
-   const linked=instancesBySection.get(assignment?.sectionId);
-   if(!assignment||!section||assignmentIds.has(assignment.sectionId)||!motifIds.has(assignment.motifId)||assignment.sectionIndex!==section.sectionIndex||assignment.sectionIndex<priorAssignmentIndex||!finite(assignment.confidence)||assignment.confidence<0||assignment.confidence>1||!finite(assignment.similarity)||assignment.similarity<0||assignment.similarity>1||!Number.isInteger(assignment.repetitionIndex)||assignment.repetitionIndex<0||!validEvolution(assignment.evolution)||!linked||linked.motifId!==assignment.motifId||linked.instance.confidence!==assignment.confidence||linked.instance.similarity!==assignment.similarity||linked.instance.repetitionIndex!==assignment.repetitionIndex||JSON.stringify(linked.instance.evolution)!==JSON.stringify(assignment.evolution))errors.push('Invalid recurrence assignment.');
-   assignmentIds.add(assignment?.sectionId);
-   priorAssignmentIndex=assignment?.sectionIndex;
-  }
-  const motifInstances=(sidecar?.motifs||[]).flatMap(motif=>motif.instances||[]);
-  if(motifInstances.length!==assignmentIds.size)errors.push('Recurrence assignment count does not match motif instances.');
-  for(const instance of motifInstances)if(!assignmentIds.has(instance.sectionId))errors.push('Recurrence motif instance is missing an assignment.');
-  const summary=sidecar?.summary;
-  const prevalidatedCount=(sidecar?.motifs||[]).filter(motif=>motif.evidence==='prevalidated-section-recurrence').length;
-  const chromaCount=(sidecar?.motifs||[]).filter(motif=>motif.evidence==='section-chroma-energy').length;
-  if(!Number.isInteger(summary?.sectionCount)||summary.sectionCount!==sections.size||!Number.isInteger(summary?.motifCount)||summary.motifCount!==(sidecar?.motifs||[]).length||!Number.isInteger(summary?.repeatedSectionCount)||summary.repeatedSectionCount!==(sidecar?.assignments||[]).length||!Number.isInteger(summary?.unassignedSectionCount)||summary.unassignedSectionCount!==sections.size-(sidecar?.assignments||[]).length||!summary?.evidence||summary.evidence.hasEnergy!==Array.isArray(evidence?.energy)||summary.evidence.hasChroma!==Array.isArray(evidence?.chroma)||summary.evidence.prevalidatedMotifCount!==prevalidatedCount||summary.evidence.chromaEnergyMotifCount!==chromaCount||typeof summary.scope!=='string')errors.push('Invalid recurrence sidecar summary.');
+  if(motifInstances[0]?.start<priorStart)errors.push('Recurrence motifs are not in canonical order.');
+  if(finite(motifInstances[0]?.start))priorStart=motifInstances[0].start;
+ }
+ let priorAssignmentIndex=-1;
+ for(const assignment of assignments){
+  if(!assignment||typeof assignment!=='object'){errors.push('Invalid recurrence assignment.');continue;}
+  const section=sections.get(assignment.sectionId);
+  const linked=instancesBySection.get(assignment.sectionId);
+  if(!section||assignmentIds.has(assignment.sectionId)||!motifIds.has(assignment.motifId)||assignment.sectionIndex!==section.sectionIndex||assignment.sectionIndex<priorAssignmentIndex||!finite(assignment.confidence)||assignment.confidence<0||assignment.confidence>1||!finite(assignment.similarity)||assignment.similarity<0||assignment.similarity>1||!Number.isInteger(assignment.repetitionIndex)||assignment.repetitionIndex<0||!validEvolution(assignment.evolution)||!linked||linked.motifId!==assignment.motifId||linked.instance.confidence!==assignment.confidence||linked.instance.similarity!==assignment.similarity||linked.instance.repetitionIndex!==assignment.repetitionIndex||JSON.stringify(linked.instance.evolution)!==JSON.stringify(assignment.evolution))errors.push('Invalid recurrence assignment.');
+  assignmentIds.add(assignment.sectionId);
+  if(Number.isInteger(assignment.sectionIndex))priorAssignmentIndex=assignment.sectionIndex;
+ }
+ const allMotifInstances=motifs.flatMap(motif=>Array.isArray(motif?.instances)?motif.instances:[]);
+ if(allMotifInstances.length!==assignmentIds.size)errors.push('Recurrence assignment count does not match motif instances.');
+ for(const instance of allMotifInstances)if(!instance||typeof instance!=='object'||!assignmentIds.has(instance.sectionId))errors.push('Recurrence motif instance is missing an assignment.');
+ const summary=sidecar?.summary;
+ const prevalidatedCount=motifs.filter(motif=>motif?.evidence==='prevalidated-section-recurrence').length;
+ const chromaCount=motifs.filter(motif=>motif?.evidence==='section-chroma-energy').length;
+ if(!Number.isInteger(summary?.sectionCount)||summary.sectionCount!==sections.size||!Number.isInteger(summary?.motifCount)||summary.motifCount!==motifs.length||!Number.isInteger(summary?.repeatedSectionCount)||summary.repeatedSectionCount!==assignments.length||!Number.isInteger(summary?.unassignedSectionCount)||summary.unassignedSectionCount!==sections.size-assignments.length||!summary?.evidence||summary.evidence.hasEnergy!==Array.isArray(evidence?.energy)||summary.evidence.hasChroma!==Array.isArray(evidence?.chroma)||summary.evidence.prevalidatedMotifCount!==prevalidatedCount||summary.evidence.chromaEnergyMotifCount!==chromaCount||typeof summary.scope!=='string')errors.push('Invalid recurrence sidecar summary.');
   return {valid:errors.length===0,errors};
  }
 

@@ -101,6 +101,13 @@
   return {schemaVersion:2,clock:'original-decoded-audio',duration,events,summary};
  }
  function validate(timeline){const errors=[];if(!timeline||timeline.schemaVersion!==2||timeline.clock!=='original-decoded-audio'||!finite(timeline.duration)||timeline.duration<=0||!Array.isArray(timeline.events))errors.push('Invalid semantic timeline envelope.');
-  let prior=-1,ids=new Set();for(const event of timeline?.events||[]){if(!event||typeof event.id!=='string'||ids.has(event.id))errors.push('Duplicate or missing event id.');ids.add(event?.id);if(!finite(event.time)||event.time<0||event.time>timeline.duration||event.time<prior)errors.push('Invalid event order or time.');prior=event.time;if(!finite(event.salience)||event.salience<0||event.salience>1)errors.push('Invalid event salience.');if(event&&Object.prototype.hasOwnProperty.call(event,'salienceCap')&&(!finite(event.salienceCap)||event.salienceCap<0||event.salienceCap>1||event.salience>event.salienceCap+1e-9))errors.push('Invalid event salience cap.');}return {valid:errors.length===0,errors};}
+  const events=Array.isArray(timeline?.events)?timeline.events:[];let prior=-1,ids=new Set();for(const event of events){
+   if(!event||typeof event!=='object'){errors.push('Invalid semantic event.');continue;}
+   if(typeof event.id!=='string'||!event.id||ids.has(event.id))errors.push('Duplicate or missing event id.');ids.add(event.id);
+   if(!finite(event.time)||event.time<0||event.time>timeline.duration||event.time<prior)errors.push('Invalid event order or time.');else prior=event.time;
+   if(!finite(event.duration)||event.duration<0||!finite(event.time)||event.time+event.duration>timeline.duration+1e-6)errors.push('Invalid event duration.');
+   if(!finite(event.salience)||event.salience<0||event.salience>1)errors.push('Invalid event salience.');
+   if(Object.prototype.hasOwnProperty.call(event,'salienceCap')&&(!finite(event.salienceCap)||event.salienceCap<0||event.salienceCap>1||event.salience>event.salienceCap+1e-9))errors.push('Invalid event salience cap.');
+  }return {valid:errors.length===0,errors};}
  const api={build,validate};root.LightForgeSemanticTimeline=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof self!=='undefined'?self:globalThis);
