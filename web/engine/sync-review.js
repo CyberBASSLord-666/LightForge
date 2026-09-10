@@ -183,9 +183,15 @@
         if(state.attack){
           status='matched';commandErrorMs=(actualCommandTime-target.time)*1000;
           const intent=event.intent||{};
-          predictedPerceptualTime=finite(intent.estimatedArrival)?intent.estimatedArrival:finite(event.perceptualStart)?event.perceptualStart:actualCommandTime;
-          predictedPerceptualErrorMs=(predictedPerceptualTime-target.time)*1000;
-          commandErrors.push(commandErrorMs);perceptualErrors.push(predictedPerceptualErrorMs);
+          // A command transition is observed in the final FSEQ, but it is not
+          // evidence of when the physical actuator will be perceived.  Only
+          // an explicitly calibrated planner intent may contribute an
+          // estimated perceptual timestamp; in particular, a Dance command
+          // must never be relabelled as its own perceptual arrival.
+          const calibrated=plainObject(intent.perceptualTiming)&&typeof intent.perceptualTiming.calibrationId==='string'&&intent.perceptualTiming.calibrationId.length>0;
+          if(calibrated)predictedPerceptualTime=finite(intent.estimatedArrival)?intent.estimatedArrival:finite(event.perceptualStart)?event.perceptualStart:null;
+          if(predictedPerceptualTime!==null){predictedPerceptualErrorMs=(predictedPerceptualTime-target.time)*1000;perceptualErrors.push(predictedPerceptualErrorMs);}
+          commandErrors.push(commandErrorMs);
         }else if(state.active)status='heldWithoutAttack';
       }
       if(status==='suppressed'){
