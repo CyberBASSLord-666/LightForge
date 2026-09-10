@@ -3,6 +3,18 @@
  */
 (function(scope){'use strict';
 const base=new URL('.',document.currentScript.src),STAGES=['rhythm','separation','voice','bass'];
+function resourceDiagnostics(timings,scheduler,totalWallClockMs){
+ const api=scope.LightForgeResourceDiagnostics;
+ if(!api||typeof api.pipeline!=='function'||typeof api.validate!=='function')return null;
+ const stages={};
+ for(const [stage,timing] of Object.entries(timings)){
+  const resources=timing?.profile?.resources;
+  if(!resources)return null;
+  try{if(api.validate(resources)!==true)return null;}catch(_){return null;}
+  stages[stage]=resources;
+ }
+ try{return api.pipeline(stages,scheduler,totalWallClockMs);}catch(error){scope.LightForgeDiagnostics?.log('error','analysis-resource-diagnostics',error);return null;}
+}
 async function analyze(audioUrl,options={},onProgress=()=>{},signal){
  const aborted=()=>new DOMException('Analysis cancelled','AbortError');
  if(signal?.aborted)throw aborted();
@@ -103,6 +115,8 @@ async function analyze(audioUrl,options={},onProgress=()=>{},signal){
   if(!value?.engine)throw Error('Music analysis ended without a complete result.');
   value.engine.analysisSeconds=Math.round((performance.now()-started)/100)/10;
   value.engine.stages=timings;value.engine.recoverable=persistent;if(schedulerDiagnostics)value.engine.scheduler=schedulerDiagnostics;
+  const resources=resourceDiagnostics(timings,schedulerDiagnostics,performance.now()-started);
+  if(resources)value.engine.resourceDiagnostics=resources;
   // Browsers lack a durable source fingerprint. Keep their audition stems, but
   // do not retain an unreachable checkpoint namespace after successful work.
   if(!persistent)await scope.LightForgeAnalysisStore.discard(workId);

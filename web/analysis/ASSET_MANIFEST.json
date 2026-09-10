@@ -1,11 +1,7 @@
 {
-  "README.md": {
-    "bytes": 12426,
-    "sha256": "db90d4ec041da4dc4924d7e806fba03060c5cad17e461932a97d453186b32ba5"
-  },
   "analyzer.js": {
-    "bytes": 9729,
-    "sha256": "060394eb1823ef5ed1b7b951ac9edb120b64a198abad0a93dfbc155e29f49147"
+    "bytes": 10511,
+    "sha256": "51b1df2265630487212d26a964e0e783b13dd5dea27ce6bf68625b689c908c05"
   },
   "bass-notes.js": {
     "bytes": 14748,
@@ -16,40 +12,12 @@
     "sha256": "f84d9715be605e4459ddd0d3eb18eea8e412b56e983ddd0e7540c055842c9ef6"
   },
   "feature-store.js": {
-    "bytes": 7784,
-    "sha256": "a4fcc1e9c5e31ac88a63ac8620ae7a00a979de14be2c3cdff42616b0d4c1c0c7"
+    "bytes": 7834,
+    "sha256": "a0495b99ace6248ea16646eed0b2509695c0f369ca7ae83aae19f72c82f82423"
   },
   "game.js": {
     "bytes": 10103,
     "sha256": "28c3e824be79c6e5cab3a2522a2b75c769741b69ad6778b45033b292cbdf05e3"
-  },
-  "models/BeatNet-LICENSE.txt": {
-    "bytes": 18650,
-    "sha256": "7e7170e3cebf88a9f60c7b8421418323c09304da1af4d5e90f4da1dc1c8a2661"
-  },
-  "models/BeatThis-LICENSE.txt": {
-    "bytes": 1113,
-    "sha256": "909ab6549794a18e9bb243aacfadda4a5f308436fc2846f350755c53c4f06ae1"
-  },
-  "models/BeatThis-ONNX-Port-LICENSE.txt": {
-    "bytes": 1446,
-    "sha256": "41194de713e07f3dd017aabd9c9980005840997d888ab2d6f82b979bb891c8d5"
-  },
-  "models/MDX-NET-LICENSE.txt": {
-    "bytes": 1063,
-    "sha256": "2b60d95083e4339de80ef81c029149bf9ce4535ac55312b569392bcfef22782d"
-  },
-  "models/Madmom-LICENSE.txt": {
-    "bytes": 3103,
-    "sha256": "dbcc5a4d6c0dbc5ecb3d41ef98a5432b356073ee11d97c9c4eef507238ffb56a"
-  },
-  "models/UVR-MDX-NOTICE.md": {
-    "bytes": 1246,
-    "sha256": "fb51c7d4ae16036a9802c373e96989aee2945dba6c66842419f1d77ca85bf771"
-  },
-  "models/VOCAL-MODEL-LICENSE.txt": {
-    "bytes": 1071,
-    "sha256": "399acc6d903cfd65a6cd5baba6a99af3ee534d79161b07854c1a6ffeab3dc88b"
   },
   "models/beat-this-large.onnx": {
     "bytes": 83162650,
@@ -63,17 +31,21 @@
     "bytes": 10555592,
     "sha256": "a5f8d39d989f31859454ba27afe61c5317ca95e4d9373e6853e5361b8937172f"
   },
+  "models/BeatNet-LICENSE.txt": {
+    "bytes": 18650,
+    "sha256": "7e7170e3cebf88a9f60c7b8421418323c09304da1af4d5e90f4da1dc1c8a2661"
+  },
   "models/beatnet-v1.onnx": {
     "bytes": 1613916,
     "sha256": "c4462552994a2c5048dbc511dda01bbae8549829b1adfc58292be88bbdfc1eef"
   },
-  "models/deux/CODE-LICENSE.txt": {
-    "bytes": 1081,
-    "sha256": "3282dc057695ef5b9a64909a7092ca40b2c292c232580fc6ace6e5d665cc0207"
+  "models/BeatThis-LICENSE.txt": {
+    "bytes": 1113,
+    "sha256": "909ab6549794a18e9bb243aacfadda4a5f308436fc2846f350755c53c4f06ae1"
   },
-  "models/deux/NOTICE.txt": {
-    "bytes": 934,
-    "sha256": "5e971676004b04a1ce1372d1b9bb5ce81f55ca27eb519980cb214fbf8ee40968"
+  "models/BeatThis-ONNX-Port-LICENSE.txt": {
+    "bytes": 1446,
+    "sha256": "41194de713e07f3dd017aabd9c9980005840997d888ab2d6f82b979bb891c8d5"
   },
   "models/deux/block-00-frequency.onnx": {
     "bytes": 6422927,
@@ -171,6 +143,10 @@
     "bytes": 6378168,
     "sha256": "7421c8c818240f76759b3534b6abb6a6bc84b07e16347c0f56a1d0478de9940d"
   },
+  "models/deux/CODE-LICENSE.txt": {
+    "bytes": 1081,
+    "sha256": "3282dc057695ef5b9a64909a7092ca40b2c292c232580fc6ace6e5d665cc0207"
+  },
   "models/deux/front.onnx": {
     "bytes": 8377492,
     "sha256": "3f29ee37960f009c08653345aef7d558df7dc1b66247e5b4f5a3a80901306752"
@@ -187,6 +163,10 @@
     "bytes": 49411,
     "sha256": "c1cb548d8d02a8b947d66fd8ac672559ea175ac4462109acccba13220b788245"
   },
+  "models/deux/NOTICE.txt": {
+    "bytes": 934,
+    "sha256": "5e971676004b04a1ce1372d1b9bb5ce81f55ca27eb519980cb214fbf8ee40968"
+  },
   "models/features.json": {
     "bytes": 32062,
     "sha256": "8a9fb3bc88c3e2f35934dd0024f22458aa8d357e3e3946a6e2c6230d3886e278"
@@ -194,10 +174,6 @@
   "models/frame-mn10-singing.onnx": {
     "bytes": 13620408,
     "sha256": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a"
-  },
-  "models/game/NOTICE.txt": {
-    "bytes": 810,
-    "sha256": "9c35e5866b083797ef0fcbe5fd6098a80bdf569971b4ee084235635ae659506a"
   },
   "models/game/bd2dur.onnx": {
     "bytes": 4569,
@@ -223,9 +199,21 @@
     "bytes": 1532,
     "sha256": "51e172cfaa967d9e2518f01f508a64d49cd283d23ae8e8456af9c6e76eeb4f97"
   },
+  "models/game/NOTICE.txt": {
+    "bytes": 810,
+    "sha256": "9c35e5866b083797ef0fcbe5fd6098a80bdf569971b4ee084235635ae659506a"
+  },
   "models/game/segmenter.onnx": {
     "bytes": 159935846,
     "sha256": "9db605a2ad3c179e9c4e4ae5b970727006020c65936773c26b2cbc27d8ef892f"
+  },
+  "models/Madmom-LICENSE.txt": {
+    "bytes": 3103,
+    "sha256": "dbcc5a4d6c0dbc5ecb3d41ef98a5432b356073ee11d97c9c4eef507238ffb56a"
+  },
+  "models/MDX-NET-LICENSE.txt": {
+    "bytes": 1063,
+    "sha256": "2b60d95083e4339de80ef81c029149bf9ce4535ac55312b569392bcfef22782d"
   },
   "models/model-manifest.json": {
     "bytes": 1078,
@@ -235,6 +223,10 @@
     "bytes": 933,
     "sha256": "0d7a6ff7c6a3a19fdd38b92a50cf39cfd91130bf2ed7dcbaca2f12890385e0c2"
   },
+  "models/UVR-MDX-NOTICE.md": {
+    "bytes": 1246,
+    "sha256": "fb51c7d4ae16036a9802c373e96989aee2945dba6c66842419f1d77ca85bf771"
+  },
   "models/uvr-mdx-voc-ft.onnx": {
     "bytes": 66762490,
     "sha256": "534b2070fcc7df514b13ef660dc8cbb328679c2374d04354a5c42bb14ecce111"
@@ -243,13 +235,25 @@
     "bytes": 19110,
     "sha256": "72bdffced29bfdd6d1da77a4da2a2a4af1b2f839c71131d19dc9423db3d4732f"
   },
+  "models/VOCAL-MODEL-LICENSE.txt": {
+    "bytes": 1071,
+    "sha256": "399acc6d903cfd65a6cd5baba6a99af3ee534d79161b07854c1a6ffeab3dc88b"
+  },
   "models/vocal-model.json": {
     "bytes": 9916,
     "sha256": "52093f26d0bfe3f04bbb1563b287fafe5e61aa57a61391ea643b04d97838ca7e"
   },
+  "README.md": {
+    "bytes": 12426,
+    "sha256": "db90d4ec041da4dc4924d7e806fba03060c5cad17e461932a97d453186b32ba5"
+  },
   "recurrence.js": {
     "bytes": 30364,
     "sha256": "bfeba07ceaf9ad445a084a88ec4d4e5eb69e57ce8c1198966cd19ee84689b1c8"
+  },
+  "resource-diagnostics.js": {
+    "bytes": 16029,
+    "sha256": "ff1f8f823005b599878489204838021bd088cfc5df7c73042e9d5d7aa927a797"
   },
   "rhythm-hierarchy.js": {
     "bytes": 18992,
@@ -284,8 +288,8 @@
     "sha256": "c2256c15be8a2285721fb16662915e0853de673a63a144e54b8d6838d5c1970a"
   },
   "telemetry.js": {
-    "bytes": 3053,
-    "sha256": "3a957c338803380ddad6a3ebca3a9c8d7f9fb4fe11c5f9d1be907516bf373b98"
+    "bytes": 4350,
+    "sha256": "d6dcb89af8bc79b7481dde1022866bd3a31171567f4e03372066979d042e2422"
   },
   "vendor/ONNX-Runtime-LICENSE.txt": {
     "bytes": 1073,
@@ -320,11 +324,11 @@
     "sha256": "0f0e5216dc1d2ca0bfb25eddacdaa21076990fa7638c22188023607e43d4005f"
   },
   "work-store.js": {
-    "bytes": 14564,
-    "sha256": "94cc60efb59146e1a12546d51871e8c45c6fcbec67d1090972deb0f313d001d2"
+    "bytes": 15358,
+    "sha256": "e2b185b4c8ff2318da511202d95502bebfc21a50ed84e7b3058c1df94e03b509"
   },
   "worker.js": {
-    "bytes": 33147,
-    "sha256": "bed7584638788e630eae9521fef39b45fd6e29746bc0dc3eb3d5c344e98fc336"
+    "bytes": 33487,
+    "sha256": "5fe66527c09392ef9a1e91a7ae89ff2ff70869b9e273f21e9b00eb219ead7188"
   }
 }

@@ -42,13 +42,13 @@ function names(feature){
 function validDescriptor(record,feature,key){
  return plain(record)&&record.schemaVersion===SCHEMA_VERSION&&record.domain===DOMAIN&&record.feature===feature&&record.identityKey===key;
 }
-async function open(identity){
+async function open(identity,{resourceDiagnostics=null}={}){
  const storeApi=root.LightForgeAnalysisStore;
  if(!storeApi||typeof storeApi.open!=='function'||typeof storeApi.contentAddress!=='function')throw Error('Recoverable analysis storage is unavailable.');
  const normalized=normalizeIdentity(identity),key=await storeApi.contentAddress(DOMAIN,normalized);
  // A FeatureStore is deliberately portable across projects: source/project IDs
  // are neither an identity input nor a substitute for the audio digest.
- const store=await storeApi.open(key,{sourceId:''});
+ const store=await storeApi.open(key,{sourceId:'',resourceDiagnostics});
  async function discardInvalid(prefix){try{await store.invalidate([prefix]);}catch(_){} }
  async function read(feature){
   const item=names(feature),record=await store.read(item.json);

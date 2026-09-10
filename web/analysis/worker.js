@@ -1,6 +1,6 @@
 /* Private worker: bounded PCM chunks -> exact log-mel -> pretrained Beat This! transformer. */
 'use strict';
-importScripts('telemetry.js','semantic-timeline.js','stem-routing.js','salience.js','rhythm-hierarchy.js','wav-reader.js','dsp.js','bass-notes.js','vocal.js','vocal-detail.js','vocal-semantics.js','stem-cache.js','work-store.js','feature-store.js','separator-mdx.js','separator-deux.js','game.js','vendor/ort.wasm.min.js');
+importScripts('resource-diagnostics.js','telemetry.js','semantic-timeline.js','stem-routing.js','salience.js','rhythm-hierarchy.js','wav-reader.js','dsp.js','bass-notes.js','vocal.js','vocal-detail.js','vocal-semantics.js','stem-cache.js','work-store.js','feature-store.js','separator-mdx.js','separator-deux.js','game.js','vendor/ort.wasm.min.js');
 const report=(progress,stage,detail='',extra={})=>postMessage({type:'progress',value:{...extra,progress,stage,detail}});
 function createTelemetry(stage,metadata){
  const factory=self.LightForgeAnalysisTelemetry;
@@ -10,7 +10,7 @@ function createTelemetry(stage,metadata){
  }catch(_){}
  // Profiling must never make a resumable analysis fail when a test harness,
  // older WebView cache, or constrained worker cannot load its optional module.
- return {begin:()=>null,end:()=>{},cache:()=>{},snapshot:()=>null};
+ return {begin:()=>null,end:()=>{},cache:()=>{},resource:null,snapshot:()=>null};
 }
 function ensureSemanticTimeline(result){
  const api=self.LightForgeSemanticTimeline;
@@ -152,12 +152,12 @@ const floatFeature=(value,length)=>value instanceof Float32Array&&value.length==
 function rhythmFeaturePayload(data,n){return {version:1,frameCount:n,duration:data.duration,chromaStep:data.chromaStep,rms:data.rms,bass:data.bass,mid:data.mid,high:data.high,colour:data.colour,fineRms:data.fineRms,chroma:data.chroma};}
 function validRhythmFeature(value,n,duration){return !!value&&value.version===1&&value.frameCount===n&&value.duration===duration&&value.chromaStep===.2&&floatFeature(value.rms,n)&&floatFeature(value.bass,n)&&floatFeature(value.mid,n)&&floatFeature(value.high,n)&&floatFeature(value.colour,n*3)&&floatFeature(value.fineRms,n*4)&&floatFeature(value.chroma,Math.ceil(n/10)*12);}
 function rhythmDataFromFeature(value,n){return {duration:value.duration,beat:new Float32Array(n),down:new Float32Array(n),rms:value.rms,bass:value.bass,mid:value.mid,high:value.high,colour:value.colour,fineRms:value.fineRms,chroma:value.chroma,chromaStep:value.chromaStep};}
-async function reusableRhythmFeatures(options,config){
+async function reusableRhythmFeatures(options,config,resourceDiagnostics=null){
  const audioIdentity=options.analysisIdentity,api=self.LightForgeFeatureStore,store=self.LightForgeAnalysisStore;
  if(typeof audioIdentity!=='string'||!/^[a-f0-9]{64}$/.test(audioIdentity)||!api||typeof api.open!=='function'||!store||typeof store.contentAddress!=='function')return null;
  try{
   const configIdentity=await store.contentAddress('dsp-feature-config',config);
-  return await api.open({audioIdentity,preprocessingVersion:RHYTHM_PREPROCESSING,modelVersions:{'dsp-config':configIdentity,'dsp-extractor':RHYTHM_FEATURE_VERSION},analysisConfiguration:{analysisRate:22050,featureChunk:500,frameHopSamples:441,frameRateHz:50,chromaStep:.2,reflectionHaloHops:2}});
+  return await api.open({audioIdentity,preprocessingVersion:RHYTHM_PREPROCESSING,modelVersions:{'dsp-config':configIdentity,'dsp-extractor':RHYTHM_FEATURE_VERSION},analysisConfiguration:{analysisRate:22050,featureChunk:500,frameHopSamples:441,frameRateHz:50,chromaStep:.2,reflectionHaloHops:2}},{resourceDiagnostics});
  }catch(_){return null;}
 }
 self.onmessage=async e=>{
@@ -182,7 +182,7 @@ self.onmessage=async e=>{
  const cacheKey=options.cacheKey,quality=options.analysisQuality==='balanced'?'balanced':'precision';
  const telemetry=createTelemetry(stage,{quality});
  const storeOpen=telemetry.begin('store.open');
- const store=await LightForgeAnalysisStore.open(options.workId,{sourceId:options.projectId||''});
+ const store=await LightForgeAnalysisStore.open(options.workId,{sourceId:options.projectId||'',resourceDiagnostics:telemetry.resource});
  telemetry.end(storeOpen);
  const manifestLoad=telemetry.begin('model.manifest');
  const config=await(await fetch('models/features.json')).json(),models=await(await fetch('models/model-manifest.json')).json(),selected=models[quality];
@@ -228,7 +228,7 @@ self.onmessage=async e=>{
  const sessionOptions={executionProviders:['wasm'],graphOptimizationLevel:'all',enableCpuMemArena:false,enableMemPattern:false};
  if(stage==='rhythm'){
   report(.01,'Opening music','Reading your music locally');const reader=new LightForgeWavReader(options.analysisUrl||audioUrl);await reader.open();
- const n=Math.ceil(reader.duration*50),featureStore=await reusableRhythmFeatures(options,config);let featureHit=null;
+ const n=Math.ceil(reader.duration*50),featureStore=await reusableRhythmFeatures(options,config,telemetry.resource);let featureHit=null;
  if(featureStore){
   const featureRead=telemetry.begin('shared-feature.read');
   try{featureHit=await featureStore.read(RHYTHM_FEATURE);}catch(_){featureHit=null;}
@@ -239,7 +239,9 @@ self.onmessage=async e=>{
  if(data){telemetry.cache('shared-features','hit');report(.025,'Restoring musical detail','Verified reusable energy and tonal features restored');}
  else{
   if(featureStore)telemetry.cache('shared-features','miss');
-  data={duration:reader.duration,beat:new Float32Array(n),down:new Float32Array(n),rms:new Float32Array(n),bass:new Float32Array(n),mid:new Float32Array(n),high:new Float32Array(n),colour:new Float32Array(n*3),fineRms:new Float32Array(n*4),chroma:new Float32Array(Math.ceil(n/10)*12),chromaStep:.2};
+  const chromaCount=Math.ceil(n/10)*12,rhythmBytes=(n*6+n*3+n*4+chromaCount)*4;
+  data={duration:reader.duration,beat:new Float32Array(n),down:new Float32Array(n),rms:new Float32Array(n),bass:new Float32Array(n),mid:new Float32Array(n),high:new Float32Array(n),colour:new Float32Array(n*3),fineRms:new Float32Array(n*4),chroma:new Float32Array(chromaCount),chromaStep:.2};
+  telemetry.allocation?.(rhythmBytes,9);
   const extractor=new LightForgeDSP.FeatureExtractor(config),featureChunk=500;
   report(.025,'Listening to musical detail','Measuring attacks, tonal colour and quiet passages');
   for(let first=0;first<n;first+=featureChunk){const frames=Math.min(featureChunk,n-first),samples=await reader.mono22050(first*441-705,(frames-1)*441+1411,config),f=extractor.extract(samples,0,frames);for(const name of ['rms','bass','mid','high'])data[name].set(f[name],first);data.colour.set(f.colour,first*3);data.fineRms.set(f.fineRms,first*4);for(let i=0;i<frames;i++)for(let b=0;b<12;b++)data.chroma[Math.floor((first+i)/10)*12+b]+=f.chroma[i*12+b]/10;report(.03+.18*(first+frames)/n,'Listening to musical detail',`${Math.min(reader.duration,(first+frames)*.02).toFixed(0)} / ${reader.duration.toFixed(0)} seconds`);}
@@ -257,7 +259,7 @@ self.onmessage=async e=>{
   const first=starts[k],length=Math.min(chunk,n+border-first),lo=Math.max(0,first),hi=Math.min(n,first+length);let peak=0;for(let i=lo;i<hi;i++)peak=Math.max(peak,data.rms[i]);
   if(peak<=1e-7){copiedUntil=Math.max(copiedUntil,Math.min(n,first+length-border));report(.24+.15*(k+1)/starts.length,'Recognizing a quiet passage','Keeping complete silence clear of invented beats');continue;}
   if(!session){session=await ort.InferenceSession.create(new URL('models/'+selected.file,self.location.href).href,sessionOptions);melSession=await ort.InferenceSession.create(new URL('models/'+models.frontend.file,self.location.href).href,sessionOptions);}
-  const features=new Float32Array(length*128),mel=await melForFrames(reader,melSession,lo,hi-lo,config);features.set(mel,(lo-first)*128);
+  const features=new Float32Array(length*128),mel=await melForFrames(reader,melSession,lo,hi-lo,config);telemetry.allocation?.(features.byteLength,1);features.set(mel,(lo-first)*128);telemetry.copy?.(mel.byteLength,1);
   const input=new ort.Tensor('float32',features,[1,length,128]);let out;
   try{out=await session.run({spectrogram:input});const beats=out.beat.data,down=out.downbeat.data;const begin=Math.max(copiedUntil,0,first+border),end=Math.min(n,first+length-border);for(let i=begin;i<end;i++){const b=sigmoid(beats[i-first]),d=sigmoid(down[i-first]);data.beat[i]=Math.max(0,b-d);data.down[i]=d;}copiedUntil=Math.max(copiedUntil,end);}finally{if(out)dispose(out);input.dispose();}
   report(.24+.15*(k+1)/starts.length,'Understanding beats and bar accents',`${Math.min(reader.duration,copiedUntil*.02).toFixed(0)} / ${reader.duration.toFixed(0)} seconds • ${quality==='precision'?'Precision':'Balanced'}`);

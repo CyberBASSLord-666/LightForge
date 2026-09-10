@@ -36,9 +36,15 @@ async function contentAddress(domain,identity){
 async function namespace(){if(!navigator.storage?.getDirectory)throw Error('Update Android System WebView to use recoverable analysis.');return(await navigator.storage.getDirectory()).getDirectoryHandle(NS,{create:true});}
 async function discard(key){if(!validKey(key))return;try{await(await namespace()).removeEntry(key,{recursive:true});}catch(e){if(e.name!=='NotFoundError')throw e;}}
 function matchesPrefix(name,prefix){return name===prefix||name.startsWith(prefix+'-');}
-async function open(key,{sourceId='',requiredBytes=0}={}){
+async function open(key,{sourceId='',requiredBytes=0,resourceDiagnostics=null}={}){
  if(!validKey(key))throw Error('Invalid analysis checkpoint identity.');
  if(typeof sourceId!=='string'||sourceId.length>80||!Number.isSafeInteger(requiredBytes)||requiredBytes<0)throw Error('Invalid analysis checkpoint request.');
+ const resource=(direction,bytes)=>{
+  // Diagnostics are strictly observational: a bad/incompatible observer must
+  // never make a durable checkpoint unreadable or alter its write order.
+  try{if(resourceDiagnostics&&typeof resourceDiagnostics.io==='function'&&Number.isSafeInteger(bytes)&&bytes>=0)resourceDiagnostics.io(direction,bytes,'opfs-analysis-store');}catch(_){ }
+ };
+ const bytesOf=value=>value instanceof ArrayBuffer||ArrayBuffer.isView(value)?value.byteLength:typeof value==='string'?new TextEncoder().encode(value).byteLength:0;
  const parent=await namespace();
  // Cleanup is best effort: another job's abandoned lock must not prevent work.
  for await(const [name,entry]of parent.entries())if(name!==key&&entry.kind==='directory'&&validKey(name)){
@@ -50,14 +56,14 @@ async function open(key,{sourceId='',requiredBytes=0}={}){
  let control;
  async function atomic(name,parts){
   let stream;
-  try{stream=await(await dir.getFileHandle(name,{create:true})).createWritable();for(const part of parts)await stream.write(part);await stream.close();}
+  try{stream=await(await dir.getFileHandle(name,{create:true})).createWritable();let bytes=0;for(const part of parts){await stream.write(part);bytes+=bytesOf(part);}await stream.close();resource('write',bytes);}
   catch(e){if(stream)await stream.abort().catch(()=>{});if(e.name==='QuotaExceededError')throw Error('Device storage filled while saving analysis progress. Free storage, then resume this song.');throw e;}
  }
  async function file(name,max){try{const f=await(await dir.getFileHandle(name)).getFile();return f.size>0&&f.size<=max?f:null;}catch(e){if(e.name==='NotFoundError')return null;throw e;}}
  async function record(name,max=MAX_JSON){
   const f=await file(nameOf(name,'.json'),max);if(!f)return {state:'missing'};
   try{
-   const envelope=JSON.parse(await f.text());
+   const text=await f.text();resource('read',f.size);const envelope=JSON.parse(text);
    if((envelope.version!==1&&envelope.version!==RECORD_VERSION)||envelope.key!==key||envelope.name!==name||typeof envelope.payload!=='string'||typeof envelope.sha256!=='string'||await hash(new TextEncoder().encode(envelope.payload))!==envelope.sha256)return {state:'corrupt'};
    const generation=envelope.version===1?0:envelope.generation;
    if(!internalName(name)&&(!Number.isSafeInteger(generation)||generation<0))return {state:'corrupt'};
@@ -107,10 +113,10 @@ async function open(key,{sourceId='',requiredBytes=0}={}){
  async function write(name,value){await writeRecord(name,value,{generationValue:internalName(name)?0:generation(name)});}
  async function readFloats(name){
   const f=await file(nameOf(name,'.bin'),MAX_FLOATS);if(!f||f.size<8)return null;
-  const prefix=await f.slice(0,4).arrayBuffer();if(prefix.byteLength!==4)return null;
+  const prefix=await f.slice(0,4).arrayBuffer();resource('read',prefix.byteLength);if(prefix.byteLength!==4)return null;
   const headerSize=new DataView(prefix).getUint32(0,true);if(headerSize<1||headerSize>4096||4+headerSize>=f.size)return null;
   try{
-   const meta=JSON.parse(await f.slice(4,4+headerSize).text()),bytes=await f.slice(4+headerSize).arrayBuffer();
+   const headerText=await f.slice(4,4+headerSize).text();resource('read',headerSize);const meta=JSON.parse(headerText),bytes=await f.slice(4+headerSize).arrayBuffer();resource('read',bytes.byteLength);
    const metaGeneration=meta.version===1?0:meta.generation;
    if((meta.version!==1&&meta.version!==RECORD_VERSION)||meta.key!==key||meta.name!==name||!Array.isArray(meta.counts)||meta.counts.length<1||meta.counts.length>4||meta.counts.some(n=>!Number.isSafeInteger(n)||n<1)||!Number.isSafeInteger(metaGeneration)||metaGeneration<0||meta.counts.reduce((a,b)=>a+b,0)*4!==bytes.byteLength||await hash(bytes)!==meta.sha256||metaGeneration!==generation(name))return null;
    const data=new DataView(bytes),arrays=[];let at=0;

@@ -8,12 +8,15 @@ async function main(){
  profile.end(token,{model:'Deux'});
  profile.cache('stems','hit',{bytes:42});
  profile.increment('passages',2);
+ profile.io('read',128,'opfs-analysis-store');profile.allocation(64);profile.copy(32);
  await profile.measureAsync('checkpoint.write',async()=>{});
  const out=profile.snapshot({quality:'precision'});
  assert.equal(out.schemaVersion,1);assert.equal(out.stage,'separation');
  assert.equal(out.cache[0].outcome,'hit');assert.equal(out.counters.passages,2);
  assert.ok(out.totalWallClockMs>=0);assert.equal(out.attributes.quality,'precision');
  assert.ok(out.spanSummary['model.initialization'].count===1);
+ assert.equal(out.resources.kind,'analysis-stage-resources');assert.equal(out.resources.stage,'separation');
+ assert.equal(out.resources.io.readBytes,128);assert.equal(out.resources.allocations.copyBytes,32);
  console.log('Analysis telemetry contract passed.');
 }
 main().catch(error=>{console.error(error);process.exitCode=1;});
