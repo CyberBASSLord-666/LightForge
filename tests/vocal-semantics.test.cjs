@@ -76,6 +76,9 @@ test('links only exact existing vocal timeline events and fails closed on a chan
  capEvent.salienceCap=Math.max(0,capEvent.salience-.01);
  assert.equal(Timeline.validate(invalidCap).valid,false,'the integrated canonical timeline validator must reject caps below realized salience');
  assert.throws(()=>VocalSemantics.linkTimeline(sidecar,invalidCap),/Invalid event salience cap/,'cap-aware canonical validation must block an invalid timeline before linking');
+ const wrongClock=structuredClone(timeline);wrongClock.clock='resampled-clock';
+ assert.equal(Timeline.validate(wrongClock).valid,false,'the canonical semantic timeline validator must reject a non-original audio clock');
+ assert.throws(()=>VocalSemantics.linkTimeline(sidecar,wrongClock),/matching semantic timeline/,'a vocal link must never relabel a resampled timeline as original-audio time');
  const shifted=structuredClone(timeline);shifted.events.find(value=>value.type==='vocal_accent'&&value.kind==='syllabic-accent').time+=.01;
  assert.throws(()=>VocalSemantics.linkTimeline(sidecar,shifted),/cannot be linked/);
 });

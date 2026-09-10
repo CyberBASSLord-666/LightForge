@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parents[2]
 OUT = 'qa/release-2.2.4/'
 COMPARISON_SHA256 = 'e74c12ca08132182f7cb971a98a6280401fcbfb5220a403e690e276c21c91712'
 # Reviewed asset inventory pin; tests/test_verify_analysis_asset_binding.py fails early if it drifts.
-ASSET_MANIFEST_SHA256 = 'c26ca487ea6e95d960f5fcb5b70d0a6f7395349daf593610f10e6d13b4c52e48'
+ASSET_MANIFEST_SHA256 = '4d69f1ca19cd18f5d02d6d901a3abc984a094b0463cdf7a2012ae5b15c738b15'
 ASSET_MANIFEST_ENTRY_COUNT = 78
 OLD_RUNTIME_SHA256 = 'e0ab4a1af57d2da09097202f2dfd691e390c82e81183314788ccde4cf7c3cc38'
 NEW_RUNTIME_SHA256 = '749793ebed63743fec853d093da7987a86ea5cd592d54fba898cd3233100c381'

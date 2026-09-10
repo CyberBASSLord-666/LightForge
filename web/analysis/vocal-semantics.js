@@ -207,7 +207,7 @@
  }
  function linkTimeline(sidecar,timeline){
   const sidecarCheck=validate(sidecar);if(!sidecarCheck.valid)throw Error('Cannot link invalid vocal semantic sidecar: '+sidecarCheck.errors.join('; '));
-  if(!timeline||!finite(timeline.duration)||!near(timeline.duration,sidecar.duration)||!Array.isArray(timeline.events))throw Error('Vocal semantic timeline link requires a matching semantic timeline.');
+  if(!timeline||timeline.clock!=='original-decoded-audio'||!finite(timeline.duration)||!near(timeline.duration,sidecar.duration)||!Array.isArray(timeline.events))throw Error('Vocal semantic timeline link requires a matching semantic timeline.');
   validateTimeline(timeline);
   let prior=-1;const ids=new Set();for(const event of timeline.events){if(!event||typeof event.id!=='string'||ids.has(event.id)||!finite(event.time)||event.time<prior||event.time>timeline.duration)throw Error('Vocal semantic timeline link received an invalid timeline.');ids.add(event.id);prior=event.time;}
   const used=new Set(),match=(type,time,duration,kind)=>{const value=timeline.events.find(event=>!used.has(event.id)&&event.type===type&&event.source==='vocals'&&near(event.time,time)&&near(event.duration,duration)&&(!kind||event.kind===kind));if(!value)throw Error('Vocal semantic sidecar cannot be linked to the current semantic timeline.');used.add(value.id);return value.id;};
