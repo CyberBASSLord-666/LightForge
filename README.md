@@ -1,6 +1,6 @@
 # LightForge 2.2.4 — bounded long-run analysis
 
-Current source is the **2.2.4 release candidate**. Numerical qualification passes. The Android run completed Studio processing but exposed a preview/Activity teardown ANR; explicit preview suspension and a synchronized emulator harness are being verified in the follow-up candidate. Publication remains blocked on the current Android and signed-package gates. [2.2.2](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.2.2) remains the latest published update.
+Current source is the **2.2.4 release candidate**. Numerical qualification and the latest verification/build job pass. The Android follow-up completed and saved screen-off Studio processing, then timed out waiting for preview readiness after reopening. No ANR was recorded in that run; the earlier teardown ANR remains a separate failed result. Publication stays blocked on a complete successful Android run and final signed-package gates. [2.2.2](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.2.2) remains the latest published update.
 
 This candidate bounds long Balanced runs, adds guarded native MDX execution, saves stage checkpoints promptly and preserves renderer recovery. Native initialization and inference share a cancellation-safe execution gate with Studio; failures retire native memory before the same-model WebAssembly fallback. Models, both denoise passes, GAME transcription steps and the original sample clock remain intact. No measured phone speedup is claimed before device testing.
 

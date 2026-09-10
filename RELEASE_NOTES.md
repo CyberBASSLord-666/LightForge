@@ -1,6 +1,6 @@
 # LightForge 2.2.4
 
-Release candidate: an Android emulator ANR during preview teardown requires a fresh run after the preview suspension and harness synchronization fixes. Current Android and signed-package gates must pass before publication. Physical-phone and Tesla validation remain unperformed.
+Release candidate: publication remains blocked. The latest Android follow-up saved screen-off Studio processing but timed out waiting for preview readiness after reopening; no ANR was recorded. This is separate from the first run's teardown ANR. A complete successful Android run and current signed-package gates are still required. Physical-phone and Tesla validation remain unperformed.
 
 This update targets the two long-run failure modes in the supplied diagnostics: renderer memory growth during Balanced MDX/GAME work and a native Studio crash that can leave a partial job. It keeps the learned weights, sample clock, model geometry and quality settings unchanged.
 
@@ -15,7 +15,7 @@ This update targets the two long-run failure modes in the supplied diagnostics: 
 
 ## Validation scope
 
-The preceding candidate passed host, Chromium pipeline and package checks. Android Studio completed under screen-off/Doze and reconnected, but closing the reopened Activity triggered a graphics-thread ANR before Balanced inference. The current preview follow-up has focused lifecycle regressions and requires fresh full CI, Android execution and signed-package receipts. Fresh Studio outputs are bit-identical across the two compared native runtime versions on the reference passage.
+The latest verification/build job passed host and Chromium pipeline gates. In [Android run 34417512894](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34417512894), Studio completed under screen-off/Doze and saved its project in 304.809 seconds, but the reopened preview exceeded the 45-second readiness wait. No ANR was recorded since boot. Reconnection, Balanced inference, Cancel/Resume, timeout cleanup and diagnostics did not complete in this run. The [earlier teardown ANR](qa/release-2.2.4/android-first-run/README.md) and [new readiness-timeout records](qa/release-2.2.4/android-preview-first-frame-run/README.md) remain separate failures; the timeout cause is still under investigation. Fresh Studio outputs remain bit-identical across the two compared native runtime versions on the reference passage.
 
 Balanced native MDX passed three decoded-audio comparisons and an actual paired singing-note comparison with 16 sung notes. The initial absolute-only and revised relative spectral checks failed on a few coefficients; those records are retained and are not relabeled as passing spectral parity. See `qa/release-2.2.4/NUMERICAL_QUALIFICATION.md` for the revised output-domain contract and its scope. Android screen-off execution, sustained-phone memory/thermals and the supplied Samsung crash require their separate checks.
 
