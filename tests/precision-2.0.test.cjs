@@ -65,3 +65,21 @@ test('dense and simultaneous bass notes retain valid target ranges on a shared f
   assert.ok(show.lightEvents.some(e=>e.role==='bass'&&Math.abs(e.sourceStart-starts.at(-1))<1e-8),'latest entrance must survive without a duplicate route shortening itself');
  }
 });
+
+test('perceptual synchronization keeps mechanical command time separate from arrival time',()=>{
+ const show={stepMs:20,frameCount:251,frames:new Uint8Array(251*200),settings:{offsetMs:0,manualCues:[],outputEnabled:{}},lightEvents:[],movements:[{outputId:'mirrorL',channels:[35],start:2,end:4,value:63,command:'Open',intent:{type:'unfold-arrival',targetTime:4,estimatedArrival:4}}],choreography:{lighting:{suppressedCollisions:0}}};
+ show.frames[100*200+34]=63;
+ const report=sync.review(show,[],[{outputId:'mirrorL',channels:[35],time:4,kind:'unfold-arrival',salience:.9}]);
+ assert.equal(report.mechanical.matched,1);assert.equal(report.timing.command.mechanical.medianMs,2000);assert.equal(report.timing.predictedPerceptual.mechanical.medianMs,0);
+});
+test('high-salience target loss only counts as collision when a feasible candidate route disappeared',()=>{
+ const show={stepMs:20,frameCount:101,frames:new Uint8Array(101*200),settings:{offsetMs:0,manualCues:[],outputEnabled:{}},lightEvents:[],movements:[],choreography:{lighting:{suppressedCollisions:3}}};
+ const report=sync.review(show,[{role:'vocals',time:1,end:1.2,kind:'accent',salience:.9,candidateOutputIds:['left-signature']}]);
+ assert.equal(report.targets.suppressed,1);assert.equal(report.collision.targetLoss.count,1);assert.equal(report.collision.targetLoss.highSalienceCount,1);assert.equal(report.collision.candidateSuppressedCollisions,3);
+});
+test('movement targets are already on the offset FSEQ clock and are never shifted twice',()=>{
+ const show={stepMs:20,frameCount:251,frames:new Uint8Array(251*200),settings:{offsetMs:117,manualCues:[],outputEnabled:{}},lightEvents:[],movements:[{outputId:'mirrorL',channels:[35],start:4,end:5,value:63,command:'Open',intent:{type:'unfold-arrival',targetTime:4,estimatedArrival:4}}],choreography:{lighting:{suppressedCollisions:0}}};
+ show.frames[200*200+34]=63;
+ const report=sync.review(show,[],[{outputId:'mirrorL',channels:[35],time:4,kind:'unfold-arrival'}]);
+ assert.equal(report.mechanical.matched,1);assert.equal(report.timing.command.mechanical.medianMs,0);
+});

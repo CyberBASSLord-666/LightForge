@@ -112,10 +112,10 @@
       }
     }
     const userCues=(m.musicCues||[]).filter(c=>c.action!=='mute').map(c=>({...c,ids:c.role==='vocals'?voicePair:[bassSide(true),...(c.strength>=.8?[bassSide(false)]:[])].filter(Boolean)}));
-    for(const cue of detailedVoice)targets.push({role:'vocals',time:cue.time,end:cue.time+cue.length,kind:cue.kind});
-    for(const {p,length} of voiceRoutes)targets.push({role:'vocals',time:p.start,end:p.start+length,kind:'phrase'});
-    for(const {p,length} of bassRoutes)if(!p.continuation)targets.push({role:'bass',time:p.start,end:length>0?p.start+length:p.end,kind:'note'});
-    for(const cue of userCues){targets.push({role:cue.role,time:cue.start,end:cue.end,kind:cue.action,cueId:cue.id});for(const id of cue.ids)reserve(id,cue.start,cue.end);}
+    for(const cue of detailedVoice){const salience=clamp((Number(cue.confidence)||0)*(Number(cue.strength)||0));targets.push({role:'vocals',time:cue.time,end:cue.time+cue.length,kind:cue.kind,confidence:cue.confidence,strength:cue.strength,salience,candidateOutputIds:Array.from(new Set(cue.ids||[]))});}
+    for(const {p,ids,length} of voiceRoutes){const salience=clamp((Number(p.confidence)||0)*(Number(p.strength)||0));targets.push({role:'vocals',time:p.start,end:p.start+length,kind:'phrase',confidence:p.confidence,strength:p.strength,salience,candidateOutputIds:Array.from(new Set(ids||[]))});}
+    for(const {p,ids,length} of bassRoutes)if(!p.continuation){const salience=clamp((Number(p.confidence)||0)*(Number(p.strength)||0));targets.push({role:'bass',time:p.start,end:length>0?p.start+length:p.end,kind:'note',confidence:p.confidence,strength:p.strength,salience,candidateOutputIds:Array.from(new Set(ids||[]))});}
+    for(const cue of userCues){const salience=clamp(Number(cue.strength)||0);targets.push({role:cue.role,time:cue.start,end:cue.end,kind:cue.action,cueId:cue.id,confidence:1,strength:cue.strength,salience,candidateOutputIds:Array.from(new Set(cue.ids||[]))});for(const id of cue.ids)reserve(id,cue.start,cue.end);}
     for(const cue of detailedVoice)for(const id of cue.ids)reserve(id,cue.time,cue.time+cue.length);
     // Merge the detailed reservations after constructing motifs as well. They
     // cover accepted musical gestures, never the full surrounding vocal region.
