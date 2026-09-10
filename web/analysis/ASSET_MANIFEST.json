@@ -264,8 +264,8 @@
     "sha256": "accc7aead92f045da9faf7a08019af757c73042850dd2fccc0e923f7d20043a1"
   },
   "stem-cache.js": {
-    "bytes": 10946,
-    "sha256": "21633cd9e217ecca6e55b9fa04983512e651ddc9a7b9027af13580845ff4fe82"
+    "bytes": 17020,
+    "sha256": "14bbcb8fd0c431491818cd466450d54fd6674ed9ff0cbd0f275c45a85f615b1d"
   },
   "telemetry.js": {
     "bytes": 3053,
@@ -300,8 +300,8 @@
     "sha256": "0f0e5216dc1d2ca0bfb25eddacdaa21076990fa7638c22188023607e43d4005f"
   },
   "work-store.js": {
-    "bytes": 9403,
-    "sha256": "b6e6a251478ed727cee145418a61b1b7f1755076e0797f0a5a29ecedc4ce8f41"
+    "bytes": 14564,
+    "sha256": "94cc60efb59146e1a12546d51871e8c45c6fcbec67d1090972deb0f313d001d2"
   },
   "worker.js": {
     "bytes": 24472,

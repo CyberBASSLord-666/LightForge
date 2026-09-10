@@ -5,6 +5,11 @@ contract for evidence emitted by LightForge analysis jobs. It is intentionally
 separate from the choreography engine: collecting a metric must never change an
 audio feature, event timestamp, model, or FSEQ output.
 
+For the live WebView cache/checkpoint implementation and its recovery rules, see
+[`ANALYSIS_CACHE_RECOVERY.md`](ANALYSIS_CACHE_RECOVERY.md). The Python contract
+and OPFS implementation deliberately share the same fail-closed principles,
+but the contract is not a substitute for exercising the production cache path.
+
 It provides four things that release evidence needs:
 
 1. A canonical content address for analysis caches.
@@ -163,4 +168,3 @@ The temporary cache is disposable. Saved project analysis, curated goldens, and
 exported FSEQ remain separate durable products. Diagnostic data must never
 include a private file path, audio payload, access token, API key, password,
 authorization value, or raw exception string that could expose one.
-

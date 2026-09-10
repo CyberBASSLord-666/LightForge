@@ -1,0 +1,81 @@
+'use strict';
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),{webcrypto}=require('node:crypto');
+const root=path.resolve(__dirname,'..'),source=name=>fs.readFileSync(path.join(root,'web/analysis',name),'utf8');
+const missing=()=>new DOMException('Missing','NotFoundError');
+function opfs(){
+ const control={failWrite:false,blocked:new Set()};
+ class FileHandle{
+  constructor(){this.kind='file';this.data=Buffer.alloc(0);this.time=Date.now();}
+  async getFile(){const file=new Blob([this.data]);file.lastModified=this.time;return file;}
+  async createWritable(){
+   const handle=this,parts=[];let ended=false;
+   return {async write(data){if(control.failWrite){control.failWrite=false;throw new DOMException('Full','QuotaExceededError');}parts.push(Buffer.from(typeof data==='string'?data:data instanceof ArrayBuffer?new Uint8Array(data):data));},async close(){if(ended)throw Error('already closed');handle.data=Buffer.concat(parts);handle.time=Date.now();ended=true;},async abort(){ended=true;}};
+  }
+ }
+ class Directory{
+  constructor(){this.kind='directory';this.children=new Map();}
+  async getDirectoryHandle(name,{create=false}={}){if(!this.children.has(name)){if(!create)throw missing();this.children.set(name,new Directory());}const value=this.children.get(name);if(value.kind!=='directory')throw Error('Wrong type');return value;}
+  async getFileHandle(name,{create=false}={}){if(!this.children.has(name)){if(!create)throw missing();this.children.set(name,new FileHandle());}const value=this.children.get(name);if(value.kind!=='file')throw Error('Wrong type');return value;}
+  async removeEntry(name){if(control.blocked.has(name))throw new DOMException('Locked','InvalidStateError');if(!this.children.has(name))throw missing();this.children.delete(name);}
+  async *entries(){yield* [...this.children.entries()];}
+ }
+ const directory=new Directory();
+ return {directory,control,async file(...names){let entry=directory;for(const name of names.slice(0,-1))entry=await entry.getDirectoryHandle(name);return entry.getFileHandle(names.at(-1));},storage:{getDirectory:async()=>directory,estimate:async()=>({quota:8*1024**3,usage:0})}};
+}
+function load(disk=opfs()){
+ const context=vm.createContext({crypto:webcrypto,TextEncoder,TextDecoder,ArrayBuffer,DataView,Uint8Array,Uint32Array,Float32Array,Blob,DOMException,setTimeout,clearTimeout,navigator:{storage:disk.storage}});context.self=context;
+ vm.runInContext(source('work-store.js'),context);vm.runInContext(source('stem-cache.js'),context);
+ return {disk,context,store:context.LightForgeAnalysisStore,stems:context.LightForgeStemCache};
+}
+const key='c'.repeat(64),stemKey='stem-11111111-1111-1111-1111-111111111111';
+test('content addresses canonicalize cache domains without carrying source paths',async()=>{
+ const {store}=load();
+ const left=await store.contentAddress('stems',{audio:'a'.repeat(64),model:{b:2,a:1},settings:{quality:'precision'}});
+ const reordered=await store.contentAddress('stems',{settings:{quality:'precision'},model:{a:1,b:2},audio:'a'.repeat(64)});
+ const otherDomain=await store.contentAddress('vocal',{audio:'a'.repeat(64),model:{a:1,b:2},settings:{quality:'precision'}});
+ assert.equal(left,reordered);assert.notEqual(left,otherDomain);assert.match(left,/^[a-f0-9]{64}$/);assert.throws(()=>store.canonical({path:undefined}),/JSON values/);
+});
+test('streamed stem SHA-256 agrees with published vectors across chunk boundaries',()=>{
+ const {stems}=load(),digest=new stems.Sha256(),bytes=Buffer.from('The quick brown fox jumps over the lazy dog');
+ for(let at=0;at<bytes.length;at+=5)digest.update(new Uint8Array(bytes.buffer,bytes.byteOffset+at,Math.min(5,bytes.length-at)));
+ assert.equal(digest.hex(),'d7a8fbb307d7809469ca9abcb0082e4f8d5651e46d3cdb762d02d0bf37c9e592');
+});
+test('atomic invalidation fence prevents a locked dependent checkpoint from reviving on resume',async()=>{
+ const {disk,store}=load(),work=await store.open(key,{sourceId:'track'});
+ await work.write('voice',{revision:1});
+ const directory=await (await disk.directory.getDirectoryHandle('lightforge-analysis-v1')).getDirectoryHandle(key);
+ disk.control.blocked.add('voice.json');
+ const receipt=await work.invalidate(['voice']);
+ assert.equal(receipt.pending,1);assert.equal((await directory.getFileHandle('voice.json')).kind,'file');
+ assert.equal(await work.read('voice'),null,'fenced record must not be a cache hit');
+ const resumed=await store.open(key,{sourceId:'track'});
+ assert.equal(await resumed.read('voice'),null,'fence survives process restart');
+ await resumed.write('voice',{revision:2});
+ assert.equal((await resumed.read('voice')).revision,2);
+ assert.deepEqual(Object.keys(resumed.diagnostics()).sort(),['corruptControlDiscarded','corruptRecords','invalidationFences','invalidationGenerations','kind','legacyControlMigrated','pendingPhysicalDeletes','schemaVersion'].sort());
+});
+test('failed fence write preserves the old committed checkpoint until a valid retry commits',async()=>{
+ const {disk,store}=load(),work=await store.open(key,{sourceId:'track'});await work.write('bass',{revision:1});
+ disk.control.failWrite=true;
+ await assert.rejects(work.invalidate(['bass']),/storage filled/);
+ assert.equal((await work.read('bass')).revision,1);
+ await work.invalidate(['bass']);
+ assert.equal(await work.read('bass'),null);
+});
+test('a corrupt invalidation control record discards all stages before resume',async()=>{
+ const {disk,store}=load(),work=await store.open(key,{sourceId:'track'});await work.write('rhythm',{ok:true});await work.writeFloats('deux-0',[Float32Array.of(.25)]);
+ (await disk.file('lightforge-analysis-v1',key,'cache-control.json')).data=Buffer.from('{corrupt');
+ const resumed=await store.open(key,{sourceId:'track'});
+ assert.equal(await resumed.read('rhythm'),null);assert.equal(await resumed.readFloats('deux-0'),null);assert.equal(resumed.diagnostics().corruptControlDiscarded,true);
+});
+test('new completed stem caches reject interior PCM corruption while legacy completion markers remain structurally compatible',async()=>{
+ const {disk,stems}=load(),samples=44100,config={resampleHalfFIR:Float32Array.of(1)},values=new Float32Array(samples);
+ values[100]=.75;
+ const writer=await stems.create(stemKey,samples,config,'track');await writer.append({sampleRate:44100,startSample:0,vocals:values,accompaniment:new Float32Array(samples)});const meta=await writer.finish();
+ assert.equal(meta.version,2);assert.match(meta.files['vocals.wav'].sha256,/^[a-f0-9]{64}$/);await stems.files(meta);await stems.fullVoice(meta);
+ const vocal=await disk.file('lightforge-stems-v1',stemKey,'vocals.wav'),original=Buffer.from(vocal.data);vocal.data[64]^=1;
+ const fresh=load(disk);await assert.rejects(fresh.stems.files(meta),/integrity check failed/);
+ vocal.data=original;
+ const legacy={...meta,version:1};delete legacy.files;(await disk.file('lightforge-stems-v1',stemKey,'complete.json')).data=Buffer.from(JSON.stringify(legacy));
+ const legacyContext=load(disk);await legacyContext.stems.files(legacy);await legacyContext.stems.fullVoice(legacy);
+});

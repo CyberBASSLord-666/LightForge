@@ -1,11 +1,14 @@
 /* Durable, checksummed model work. Each OPFS write becomes visible only on close.
- * The identity and record names are bound to their payloads so a
- * missing marker, interrupted write or misplaced file cannot become a hit.
+ * Records are bound to the analysis identity, stage name, payload, and a durable
+ * invalidation generation. A failed physical delete can therefore never revive a
+ * dependent checkpoint after it has been invalidated.
  */
 (function(root){'use strict';
 const NS='lightforge-analysis-v1',MAX_JSON=24*1024*1024,MAX_FLOATS=16*1024*1024;
+const IDENTITY='identity',CONTROL='cache-control',RECORD_VERSION=2,CONTROL_VERSION=1;
 const validKey=k=>typeof k==='string'&&/^[a-f0-9]{64}$/.test(k);
 const validName=n=>typeof n==='string'&&/^[a-z][a-z0-9-]{0,79}$/.test(n);
+const internalName=n=>n===IDENTITY||n===CONTROL;
 const hash=async bytes=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),n=>n.toString(16).padStart(2,'0')).join('');
 const encode=value=>JSON.stringify(value,(_,v)=>{
  if(typeof v==='number'&&!Number.isFinite(v))throw Error('Analysis progress contains an invalid number.');
@@ -17,8 +20,22 @@ const decode=text=>JSON.parse(text,(_,v)=>{
   const values=Float32Array.from(v.float32);if(values.some(n=>!Number.isFinite(n)))throw new TypeError('Invalid saved samples.');return values;
  }return v;
 });
+function canonical(value){
+ if(value===null)return 'null';
+ if(typeof value==='string')return JSON.stringify(value);
+ if(typeof value==='boolean')return value?'true':'false';
+ if(typeof value==='number'){if(!Number.isFinite(value))throw Error('Cache identity contains an invalid number.');return JSON.stringify(value);}
+ if(Array.isArray(value))return '['+value.map(canonical).join(',')+']';
+ if(value&&Object.prototype.toString.call(value)==='[object Object]'){const keys=Object.keys(value).sort();return '{'+keys.map(key=>JSON.stringify(key)+':'+canonical(value[key])).join(',')+'}';}
+ throw Error('Cache identity must contain only JSON values.');
+}
+async function contentAddress(domain,identity){
+ if(!validName(domain))throw Error('Invalid cache domain.');
+ return hash(new TextEncoder().encode(canonical({schemaVersion:1,domain,identity})));
+}
 async function namespace(){if(!navigator.storage?.getDirectory)throw Error('Update Android System WebView to use recoverable analysis.');return(await navigator.storage.getDirectory()).getDirectoryHandle(NS,{create:true});}
 async function discard(key){if(!validKey(key))return;try{await(await namespace()).removeEntry(key,{recursive:true});}catch(e){if(e.name!=='NotFoundError')throw e;}}
+function matchesPrefix(name,prefix){return name===prefix||name.startsWith(prefix+'-');}
 async function open(key,{sourceId='',requiredBytes=0}={}){
  if(!validKey(key))throw Error('Invalid analysis checkpoint identity.');
  if(typeof sourceId!=='string'||sourceId.length>80||!Number.isSafeInteger(requiredBytes)||requiredBytes<0)throw Error('Invalid analysis checkpoint request.');
@@ -29,33 +46,73 @@ async function open(key,{sourceId='',requiredBytes=0}={}){
  }
  const dir=await parent.getDirectoryHandle(key,{create:true});
  const nameOf=(name,suffix)=>{if(!validName(name))throw Error('Invalid analysis checkpoint name.');return name+suffix;};
+ const recovery={schemaVersion:1,kind:'analysis-cache-recovery',legacyControlMigrated:false,corruptControlDiscarded:false,invalidationFences:0,pendingPhysicalDeletes:0,corruptRecords:0};
+ let control;
  async function atomic(name,parts){
   let stream;
   try{stream=await(await dir.getFileHandle(name,{create:true})).createWritable();for(const part of parts)await stream.write(part);await stream.close();}
   catch(e){if(stream)await stream.abort().catch(()=>{});if(e.name==='QuotaExceededError')throw Error('Device storage filled while saving analysis progress. Free storage, then resume this song.');throw e;}
  }
  async function file(name,max){try{const f=await(await dir.getFileHandle(name)).getFile();return f.size>0&&f.size<=max?f:null;}catch(e){if(e.name==='NotFoundError')return null;throw e;}}
- async function read(name){
-  const f=await file(nameOf(name,'.json'),MAX_JSON);if(!f)return null;
+ async function record(name,max=MAX_JSON){
+  const f=await file(nameOf(name,'.json'),max);if(!f)return {state:'missing'};
   try{
    const envelope=JSON.parse(await f.text());
-   if(envelope.version!==1||envelope.key!==key||envelope.name!==name||typeof envelope.payload!=='string'||await hash(new TextEncoder().encode(envelope.payload))!==envelope.sha256)return null;
-   return decode(envelope.payload);
-  }catch(e){if(e instanceof SyntaxError||e instanceof TypeError)return null;throw e;}
+   if((envelope.version!==1&&envelope.version!==RECORD_VERSION)||envelope.key!==key||envelope.name!==name||typeof envelope.payload!=='string'||typeof envelope.sha256!=='string'||await hash(new TextEncoder().encode(envelope.payload))!==envelope.sha256)return {state:'corrupt'};
+   const generation=envelope.version===1?0:envelope.generation;
+   if(!internalName(name)&&(!Number.isSafeInteger(generation)||generation<0))return {state:'corrupt'};
+   return {state:'ok',payload:decode(envelope.payload),generation:internalName(name)?0:generation};
+  }catch(e){if(e instanceof SyntaxError||e instanceof TypeError)return {state:'corrupt'};throw e;}
  }
- async function write(name,value){
+ function generation(name){let current=0;for(const [prefix,value]of Object.entries(control.generations))if(matchesPrefix(name,prefix))current=Math.max(current,value);return current;}
+ async function writeRecord(name,value,{generationValue=0}={}){
   nameOf(name,'.json');const payload=encode(value);if(typeof payload!=='string')throw Error('Invalid analysis checkpoint payload.');
   const encoded=new TextEncoder().encode(payload);if(encoded.length>MAX_JSON)throw Error('Analysis checkpoint is too large.');
-  const bytes=new TextEncoder().encode(JSON.stringify({version:1,key,name,payload,sha256:await hash(encoded)}));if(bytes.length>MAX_JSON)throw Error('Analysis checkpoint is too large.');
+  const envelope={version:RECORD_VERSION,key,name,payload,sha256:await hash(encoded)};
+  if(!internalName(name))envelope.generation=generationValue;
+  const bytes=new TextEncoder().encode(JSON.stringify(envelope));if(bytes.length>MAX_JSON)throw Error('Analysis checkpoint is too large.');
   await atomic(name+'.json',[bytes]);
  }
+ async function clearAll(){for await(const [name]of dir.entries())try{await dir.removeEntry(name,{recursive:true});}catch(e){if(e.name!=='NotFoundError')throw e;}}
+ async function clearExceptIdentity(){for await(const [name]of dir.entries())if(name!=='identity.json')try{await dir.removeEntry(name,{recursive:true});}catch(e){if(e.name!=='NotFoundError')throw e;}}
+ let identityRecord=await record(IDENTITY);
+ if(identityRecord.state==='ok'&&(identityRecord.payload?.version!==1||identityRecord.payload?.key!==key||identityRecord.payload?.sourceId!==sourceId))throw Error('Analysis progress belongs to different audio.');
+ if(identityRecord.state!=='ok'){
+  // A missing or corrupt identity makes every other record untrusted.
+  await clearAll();
+  if(requiredBytes){const space=await navigator.storage.estimate().catch(()=>({}));if(space.quota&&space.quota-(space.usage||0)<requiredBytes+64*1024*1024)throw Error('Free device storage before analyzing this song. Recoverable analysis needs temporary space for completed passages.');}
+  await writeRecord(IDENTITY,{key,sourceId,version:1,updatedAt:Date.now()});
+ }else await writeRecord(IDENTITY,{key,sourceId,version:1,updatedAt:Date.now()});
+ const controlRecord=await record(CONTROL);
+ const validControl=value=>value&&value.version===CONTROL_VERSION&&value.key===key&&value.sourceId===sourceId&&value.generations&&Object.getPrototypeOf(value.generations)===Object.prototype&&Object.entries(value.generations).every(([prefix,value])=>validName(prefix)&&Number.isSafeInteger(value)&&value>=0);
+ if(controlRecord.state==='missing'){
+  control={version:CONTROL_VERSION,key,sourceId,generations:{},updatedAt:Date.now()};
+  recovery.legacyControlMigrated=true;
+  await writeRecord(CONTROL,control);
+ }else if(controlRecord.state!=='ok'||!validControl(controlRecord.payload)){
+  // Do not retain checkpoints when the fence itself cannot be verified. This
+  // is stricter than a best-effort delete and prevents an old dependent stage
+  // from becoming a cache hit after interrupted invalidation.
+  await clearExceptIdentity();
+  control={version:CONTROL_VERSION,key,sourceId,generations:{},updatedAt:Date.now()};
+  recovery.corruptControlDiscarded=true;
+  await writeRecord(CONTROL,control);
+ }else control=controlRecord.payload;
+ async function read(name){
+  const item=await record(name);
+  if(item.state!=='ok'){if(item.state==='corrupt')recovery.corruptRecords++;return null;}
+  if(!internalName(name)&&item.generation!==generation(name))return null;
+  return item.payload;
+ }
+ async function write(name,value){await writeRecord(name,value,{generationValue:internalName(name)?0:generation(name)});}
  async function readFloats(name){
   const f=await file(nameOf(name,'.bin'),MAX_FLOATS);if(!f||f.size<8)return null;
   const prefix=await f.slice(0,4).arrayBuffer();if(prefix.byteLength!==4)return null;
   const headerSize=new DataView(prefix).getUint32(0,true);if(headerSize<1||headerSize>4096||4+headerSize>=f.size)return null;
   try{
    const meta=JSON.parse(await f.slice(4,4+headerSize).text()),bytes=await f.slice(4+headerSize).arrayBuffer();
-   if(meta.version!==1||meta.key!==key||meta.name!==name||!Array.isArray(meta.counts)||meta.counts.length<1||meta.counts.length>4||meta.counts.some(n=>!Number.isSafeInteger(n)||n<1)||meta.counts.reduce((a,b)=>a+b,0)*4!==bytes.byteLength||await hash(bytes)!==meta.sha256)return null;
+   const metaGeneration=meta.version===1?0:meta.generation;
+   if((meta.version!==1&&meta.version!==RECORD_VERSION)||meta.key!==key||meta.name!==name||!Array.isArray(meta.counts)||meta.counts.length<1||meta.counts.length>4||meta.counts.some(n=>!Number.isSafeInteger(n)||n<1)||!Number.isSafeInteger(metaGeneration)||metaGeneration<0||meta.counts.reduce((a,b)=>a+b,0)*4!==bytes.byteLength||await hash(bytes)!==meta.sha256||metaGeneration!==generation(name))return null;
    const data=new DataView(bytes),arrays=[];let at=0;
    for(const count of meta.counts){const pcm=new Float32Array(count);for(let i=0;i<count;i++,at+=4){pcm[i]=data.getFloat32(at,true);if(!Number.isFinite(pcm[i]))return null;}arrays.push(pcm);}return arrays;
   }catch(e){if(e instanceof SyntaxError||e instanceof RangeError||e instanceof TypeError)return null;throw e;}
@@ -66,13 +123,29 @@ async function open(key,{sourceId='',requiredBytes=0}={}){
   const size=arrays.reduce((n,a)=>n+a.byteLength,0);if(size>MAX_FLOATS-4100)throw Error('Passage checkpoint is too large.');
   const bytes=new Uint8Array(size),view=new DataView(bytes.buffer);let at=0;
   for(const pcm of arrays)for(const value of pcm){if(!Number.isFinite(value))throw Error('A passage contains invalid audio.');view.setFloat32(at,value,true);at+=4;}
-  const header=new TextEncoder().encode(JSON.stringify({version:1,key,name,counts:arrays.map(a=>a.length),sha256:await hash(bytes)})),prefix=new Uint8Array(4);
+  const header=new TextEncoder().encode(JSON.stringify({version:RECORD_VERSION,key,name,generation:generation(name),counts:arrays.map(a=>a.length),sha256:await hash(bytes)})),prefix=new Uint8Array(4);
   new DataView(prefix.buffer).setUint32(0,header.length,true);await atomic(name+'.bin',[prefix,header,bytes]);
  }
- async function remove(name){for(const suffix of ['.json','.bin'])try{await dir.removeEntry(nameOf(name,suffix));}catch(e){if(e.name!=='NotFoundError')throw e;}}
+ async function remove(name){if(internalName(name))throw Error('Internal analysis checkpoints cannot be removed.');for(const suffix of ['.json','.bin'])try{await dir.removeEntry(nameOf(name,suffix));}catch(e){if(e.name!=='NotFoundError')throw e;}}
  async function invalidate(prefixes){
-  if(!Array.isArray(prefixes)||prefixes.some(p=>!validName(p)))throw Error('Invalid checkpoint invalidation.');
-  for await(const [name,entry]of dir.entries())if(entry.kind==='file'&&name!=='identity.json'&&prefixes.some(p=>name===p+'.json'||name===p+'.bin'||name.startsWith(p+'-')))await dir.removeEntry(name);
+  if(!Array.isArray(prefixes)||prefixes.some(p=>!validName(p)||internalName(p)))throw Error('Invalid checkpoint invalidation.');
+ const unique=[...new Set(prefixes)].sort(),next={...control,generations:{...control.generations}};
+ for(const prefix of unique)next.generations[prefix]=(next.generations[prefix]||0)+1;
+ next.updatedAt=Date.now();
+  // Commit the fence first. Physical removal is merely reclamation, so a
+  // locked OPFS file cannot make a stale record visible after cancellation.
+ await writeRecord(CONTROL,next);
+ control=next;
+  recovery.invalidationFences+=unique.length;
+  let removed=0,pending=0;
+  for await(const [fileName,entry]of dir.entries()){
+   if(entry.kind!=='file'||fileName==='identity.json'||fileName==='cache-control.json')continue;
+   const candidate=fileName.endsWith('.json')?fileName.slice(0,-5):fileName.endsWith('.bin')?fileName.slice(0,-4):'';
+   if(!candidate||!unique.some(prefix=>matchesPrefix(candidate,prefix)))continue;
+   try{await dir.removeEntry(fileName);removed++;}catch(e){if(e.name!=='NotFoundError'){pending++;}}
+  }
+  recovery.pendingPhysicalDeletes+=pending;
+  return {invalidated:unique,removed,pending};
  }
  async function reserve({passages,stemBytes=0,onProgress=()=>{}}){
   if(!Array.isArray(passages)||passages.length>10000||!Number.isSafeInteger(stemBytes)||stemBytes<0)throw Error('Invalid analysis storage plan.');
@@ -96,16 +169,8 @@ async function open(key,{sourceId='',requiredBytes=0}={}){
   if(available<required)throw Error('Free at least '+Math.ceil((required-available)/1000000)+' MB of device storage, then resume this song. Completed passages stay saved.');
   return {checked:true,requiredBytes:required,availableBytes:available,creditedPassages:credited};
  }
- const identity=await read('identity');
- if(identity&&(identity.version!==1||identity.key!==key||identity.sourceId!==sourceId))throw Error('Analysis progress belongs to different audio.');
- if(!identity){
-  // An identity record is committed before any model work. Without it, every
-  // existing record is untrusted even if its individual checksum is valid.
-  for await(const [name]of dir.entries())await dir.removeEntry(name,{recursive:true});
-  if(requiredBytes){const space=await navigator.storage.estimate().catch(()=>({}));if(space.quota&&space.quota-(space.usage||0)<requiredBytes+64*1024*1024)throw Error('Free device storage before analyzing this song. Recoverable analysis needs temporary space for completed passages.');}
- }
- await write('identity',{key,sourceId,version:1,updatedAt:Date.now()});
- return {key,read,write,readFloats,writeFloats,remove,invalidate,reserve};
+ const diagnostics=()=>({...recovery,invalidationGenerations:Object.keys(control.generations).length});
+ return {key,read,write,readFloats,writeFloats,remove,invalidate,reserve,diagnostics};
 }
-root.LightForgeAnalysisStore={open,discard,validKey,hash};
+root.LightForgeAnalysisStore={open,discard,validKey,hash,contentAddress,canonical};
 })(typeof self!=='undefined'?self:globalThis);
