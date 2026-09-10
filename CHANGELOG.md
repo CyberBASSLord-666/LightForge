@@ -2,8 +2,9 @@
 
 ## 2.2.5 — exact-output analysis speedups (qualification in progress)
 
-- Process two independent GAME passages with unchanged single-thread models, all eight diffusion steps and original passage seeds when fresh device memory permits it. Preserve exact checkpoint payloads and stitch results in source order.
-- Require at least 6 GiB freshly available RAM, 7 GiB total RAM, four cores, a 64-bit process and no low-memory signal before pooling. Retire the child on cancellation or failure; retain a durable serial-retry guard.
+- Enable the public AndroidX shared-memory API only for the bundled app origin, retaining the default storage profile and existing unsupported-provider fallback.
+- Qualify four-thread Studio WASM separation and GAME with exact raw outputs. Keep beat recognition and voice classification serial; retire the classifier worker before loading GAME.
+- Keep production GAME passage pooling disabled; retain the separate experiment and failed Android attempt without treating either as release qualification.
 - Skip only unused MDX FFT output-bin recombination. The original transform length, consumed values, both polarity passes, inverse transform and source samples are preserved.
 - Reuse byte-bound separation, voice and bass work after sensitivity or BPM edits while recomputing rhythm. Restore only role fields into the current result.
 - Keep Studio's native thread policy unchanged. The faster host eight-thread experiment is retained as unqualified for ARM64 rather than shipped.
@@ -17,7 +18,7 @@
 - Reset GAME sessions every four chunks, detach preview WebViews before teardown, and surface each durable rhythm/separation/voice/bass checkpoint immediately.
 - Keep model initialization off the synchronous bridge lock; cover native loading and retirement with the crash lease, share execution ownership across modes, and release failed native allocations before fallback.
 - Report actual native/WASM MDX pass counts and runtime in saved analysis diagnostics.
-- Version 2.2.4 is a release candidate: its original-signed APK is built; current numerical and Android runtime gates remain pending. Physical-phone and Tesla execution are reported separately as unverified.
+- Version 2.2.4 was published with the original signing certificate after all seven release gates passed. Its numerical protocol preserves the disclosed internal spectral differences; physical-phone and Tesla execution remain unverified.
 
 # LightForge 2.2.2 — Troubleshooting logs and renderer recovery
 

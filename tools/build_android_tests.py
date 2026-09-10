@@ -3,6 +3,7 @@
 import argparse, json, os, subprocess, zipfile
 from pathlib import Path
 from package_release import SIGNING_SHA256
+from bootstrap_androidx_runtime import prepare as prepare_androidx, jar_paths as androidx_jar_paths, d8_jar
 
 ROOT=Path(__file__).resolve().parents[1]
 parser=argparse.ArgumentParser();parser.add_argument('--compile-only',action='store_true');args=parser.parse_args()
@@ -12,10 +13,12 @@ version=json.loads((ROOT/'version.json').read_text())['name'];out=ROOT/'build/an
 classes=out/'classes';classes.mkdir(exist_ok=True)
 native=ROOT/('qa/release-'+version+'/native-classes')
 env=dict(os.environ,JAVA_HOME=str(java.parent))
+prepare_androidx(check=True)
+androidx_jars=androidx_jar_paths()
 def run(*command):return subprocess.check_output([str(p) for p in command],env=env,text=True)
 manifest=out/'AndroidManifest.xml'
 manifest.write_text('''<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.cyberbasslord.lightforge.tests"><uses-sdk android:minSdkVersion="26" android:targetSdkVersion="35"/><application android:label="LightForge lifecycle tests"/><instrumentation android:name="com.cyberbasslord.lightforge.BackgroundInstrumentation" android:targetPackage="com.cyberbasslord.lightforge" android:functionalTest="true"/></manifest>''')
-run(java/'javac','--release','8','-classpath',str(android)+':'+str(native)+':'+str(tool/'onnx/classes.jar'),'-d',classes,ROOT/'tests/android/BackgroundInstrumentation.java')
+run(java/'javac','--release','8','-classpath',os.pathsep.join(map(str,[android,native,tool/'onnx/classes.jar',*androidx_jars])),'-d',classes,ROOT/'tests/android/BackgroundInstrumentation.java')
 if args.compile_only:
     print('Instrumentation compiled against the production Android classes.');raise SystemExit(0)
 key=Path(os.environ['LIGHTFORGE_SIGNING_DIR'])
@@ -24,7 +27,7 @@ if SIGNING_SHA256 in certificate.lower().replace(':',''):
     raise SystemExit('Instrumentation must never use the private release signing identity. Use the ephemeral CI identity.')
 classpath=out/'target-classes.jar';run(java/'jar','cf',classpath,'-C',native,'.')
 dex=out/'dex';dex.mkdir(exist_ok=True)
-run(build/'d8','--lib',android,'--classpath',classpath,'--classpath',tool/'onnx/classes.jar','--min-api','26','--output',dex,*classes.rglob('*.class'))
+run(java/'java','-cp',d8_jar(),'com.android.tools.r8.D8','--lib',android,'--classpath',classpath,'--classpath',tool/'onnx/classes.jar',*[part for jar in androidx_jars for part in ('--classpath',jar)],'--min-api','26','--output',dex,*classes.rglob('*.class'))
 unsigned=out/'unsigned.apk';run(build/'aapt2','link','-o',unsigned,'-I',android,'--manifest',manifest)
 with zipfile.ZipFile(unsigned,'a') as archive:
     for path in dex.glob('*.dex'):archive.write(path,path.name,compress_type=zipfile.ZIP_STORED)

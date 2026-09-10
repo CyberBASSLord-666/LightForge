@@ -2,6 +2,30 @@
 'use strict';
 importScripts('wav-reader.js','dsp.js','bass-notes.js','vocal.js','vocal-detail.js','stem-cache.js','work-store.js','separator-mdx.js','separator-deux.js','game.js','vendor/ort.wasm.min.js');
 const report=(progress,stage,detail='',extra={})=>postMessage({type:'progress',value:{...extra,progress,stage,detail}});
+// The two-heap experiment is retained for qualification, but is not enabled in
+// this release. Shared-memory threads use one model heap instead.
+const GAME_PASSAGE_POOL_ENABLED=false;
+function wasmThreadsForStage(options,stage,quality){
+ if(!self.crossOriginIsolated||typeof SharedArrayBuffer!=='function')return 1;
+ const cores=navigator.hardwareConcurrency||2;
+ if(options.androidApp===true){
+  // The beat frontend changed raw outputs with four threads. Balanced MDX has
+  // not qualified this route either. Keep those stages on their original path.
+  const qualified=stage==='voice'||stage==='separation'&&quality==='precision';
+  return qualified&&cores>=8?4:1;
+ }
+ return Math.min(4,Math.max(1,Math.floor(cores/2)));
+}
+function validVoiceClassifier(value,duration,model){
+ const classifier=value?.classifier,frames=Math.ceil(duration/.04);
+ if(value?.model?.id!==model.id||value.model.sha256!==model.sha256||classifier?.model?.id!==model.id||classifier.model.sha256!==model.sha256||classifier.frameStep!==.04)return false;
+ for(const name of ['singingScores','speechScores']){
+  const scores=classifier[name];
+  if(!(scores instanceof Float32Array)||scores.length!==frames)return false;
+  for(const score of scores)if(!Number.isFinite(score))return false;
+ }
+ return true;
+}
 let gameCapacitySequence=0;const gameCapacityRequests=new Map();
 function gameCapacity(action){return new Promise((resolve,reject)=>{const requestId=++gameCapacitySequence;gameCapacityRequests.set(requestId,{resolve,reject});postMessage({type:'game-capacity',requestId,action});});}
 let nativeSequence=0;const nativeRequests=new Map();
@@ -65,21 +89,41 @@ self.onmessage=async e=>{
  }
  let session,melSession,separator,game,cacheWriter;const started=performance.now();try{
  const {audioUrl,options={},stage}=e.data;
- if(!['rhythm','separation','voice','bass'].includes(stage))throw Error('Invalid music analysis stage.');
+ if(!['rhythm','separation','voice-classifier','voice','bass'].includes(stage))throw Error('Invalid music analysis stage.');
  const cacheKey=options.cacheKey,quality=options.analysisQuality==='balanced'?'balanced':'precision';
  const store=await LightForgeAnalysisStore.open(options.workId,{sourceId:options.projectId||''});
  const config=await(await fetch('models/features.json')).json(),models=await(await fetch('models/model-manifest.json')).json(),selected=models[quality];
- let result=e.data.value||{},cached=await store.read(stage);
+ let result=e.data.value||{},cached=await store.read(stage),sourceReader,classified;
  if(cached&&stage==='separation')try{await LightForgeStemCache.files(cached.stemCache);await LightForgeStemCache.fullVoice(cached.stemCache);}catch{cached=null;}
  if(stage==='separation'&&!cached)await store.invalidate(['separation','voice','game','bass']);
- if(cached){
+ // A complete voice checkpoint already owns both classifier and GAME work.
+ // The private pre-stage returns no classifier fields to the musical result.
+ if(stage==='voice-classifier'&&await store.read('voice')){
+  report(.905,'Restoring saved progress','Completed voice work restored',{checkpointSaved:true,restoredStage:stage});
+  postMessage({type:'result',value:result,restored:true,seconds:0,runtime:{androidApp:options.androidApp===true,configuredThreads:null,ortThreadsAfterStage:null,restored:true}});return;
+ }
+ if(cached&&stage!=='voice-classifier'){
   // A bass checkpoint carries role evidence only; never overwrite the rhythm
   // result from this request with another sensitivity/BPM interpretation.
   if(stage==='bass')result=completeAnalysis({...result,bassNotes:cached.bassNotes,bassAnalysis:cached.bassAnalysis},quality,selected,models,started);
   else result={...result,...cached};
-  report(({rhythm:.4,separation:.82,voice:.985,bass:1})[stage],'Restoring saved progress','Completed '+stage+' work restored',{checkpointSaved:true,restoredStage:stage});postMessage({type:'result',value:result,restored:true,seconds:0});return;
+  report(({rhythm:.4,separation:.82,voice:.985,bass:1})[stage],'Restoring saved progress','Completed '+stage+' work restored',{checkpointSaved:true,restoredStage:stage});postMessage({type:'result',value:result,restored:true,seconds:0,runtime:{androidApp:options.androidApp===true,configuredThreads:null,ortThreadsAfterStage:null,restored:true}});return;
  }
- ort.env.wasm.wasmPaths=new URL('vendor/',self.location.href).href;ort.env.wasm.numThreads=self.crossOriginIsolated&&typeof SharedArrayBuffer==='function'?Math.min(4,Math.max(1,Math.floor((navigator.hardwareConcurrency||2)/2))):1;ort.env.wasm.proxy=false;
+ // Read and validate the private handoff before the first ORT session starts.
+ // If it was lost or damaged, recompute the entire Android voice stage with
+ // one thread; changing numThreads after ORT initialization cannot do this.
+ if(stage==='voice'||stage==='voice-classifier'){
+  sourceReader=new LightForgeWavReader(audioUrl);await sourceReader.open();
+  const classifierModel=await(await fetch('models/vocal-model.json')).json(),stored=stage==='voice-classifier'?cached:await store.read('voice-classifier');
+  if(validVoiceClassifier(stored,sourceReader.duration,classifierModel))classified=stored;
+  if(stage==='voice-classifier'&&classified){
+   report(.905,'Restoring saved progress','Completed voice classification restored',{checkpointSaved:true,restoredStage:stage});
+   postMessage({type:'result',value:result,restored:true,seconds:0,runtime:{androidApp:options.androidApp===true,configuredThreads:null,ortThreadsAfterStage:null,restored:true}});return;
+  }
+ }
+ const classifierFallback=stage==='voice'&&!classified;
+ const configuredThreads=classifierFallback&&options.androidApp===true?1:wasmThreadsForStage(options,stage,quality);
+ ort.env.wasm.wasmPaths=new URL('vendor/',self.location.href).href;ort.env.wasm.numThreads=configuredThreads;ort.env.wasm.proxy=false;
  const sessionOptions={executionProviders:['wasm'],graphOptimizationLevel:'all',enableCpuMemArena:false,enableMemPattern:false};
  if(stage==='rhythm'){
   report(.01,'Opening music','Reading your music locally');const reader=new LightForgeWavReader(options.analysisUrl||audioUrl);await reader.open();
@@ -114,7 +158,7 @@ self.onmessage=async e=>{
   // renderer offers Resume instead of reporting a blank status.
   report(.40,'Recognizing musical structure','Progress saved',{checkpointSaved:true,analysisStage:stage});
  }else{
-  const sourceReader=new LightForgeWavReader(audioUrl);await sourceReader.open();
+  if(!sourceReader){sourceReader=new LightForgeWavReader(audioUrl);await sourceReader.open();}
   if(stage==='separation'){
  const storagePlan=separationStoragePlan(sourceReader.samples,quality);
  report(.405,'Checking analysis storage','Protecting enough space for this song and its saved progress');
@@ -129,18 +173,22 @@ self.onmessage=async e=>{
 
    await store.write(stage,{separation:result.separation,stemCache:result.stemCache});
    report(.82,'Separating voice and instruments','Progress saved',{checkpointSaved:true,analysisStage:stage});
+  }else if(stage==='voice-classifier'){
+ const stems=await LightForgeStemCache.readers(result.stemCache);
+ report(.83,'Recognizing the isolated voice','Distinguishing singing, speech and remaining instrument bleed');
+ classified=await LightForgeVocals.analyze(stems.vocals,config,{ort,includeClassifierScores:true,report:(p,stage,detail)=>report(.83+.075*p,'Recognizing the isolated voice',detail)});
+ await store.write('voice-classifier',classified);
+ report(.905,'Recognizing the isolated voice','Progress saved',{checkpointSaved:true,analysisStage:'voice-classifier'});
   }else if(stage==='voice'){
  const stems=await LightForgeStemCache.readers(result.stemCache);
  report(.83,'Recognizing the isolated voice','Distinguishing singing, speech and remaining instrument bleed');
- const classified=await store.read('voice-classifier')||await LightForgeVocals.analyze(stems.vocals,config,{ort,includeClassifierScores:true,report:(p,stage,detail)=>report(.83+.075*p,'Recognizing the isolated voice',detail)});
+ classified=classified||await LightForgeVocals.analyze(stems.vocals,config,{ort,includeClassifierScores:true,report:(p,stage,detail)=>report(.83+.075*p,'Recognizing the isolated voice',detail)});
  await store.write('voice-classifier',classified);
  const detailExtractor=new LightForgeVocalDetail.Extractor({sampleRate:22050,duration:sourceReader.duration}),detailCount=result.stemCache.samples,detailChunk=22050*8;
  for(let start=0;start<detailCount;start+=detailChunk){const count=Math.min(detailChunk,detailCount-start),voice=await stems.vocals.mono22050(start,count,config),backing=await stems.accompaniment.mono22050(start,count,config);detailExtractor.push(voice,start,backing);report(.905+.035*(start+count)/detailCount,'Following vocal expression','Measuring entrances, syllabic attacks, held notes and pauses');}
  report(.942,'Transcribing sung notes','GAME Large • identifying entrances, pitch changes and held notes');
  let gameParallelism=1;
- // One existing inference lane plus one child keeps exactly two WASM heaps.
- // Shared-memory runtimes retain their already qualified thread selection.
- if(options.supportsGameCapacity&&sourceReader.samples>44100*12&&ort.env.wasm.numThreads===1&&typeof Worker==='function')gameParallelism=await gameCapacity('start');
+ if(GAME_PASSAGE_POOL_ENABLED&&options.supportsGameCapacity&&sourceReader.samples>44100*12&&ort.env.wasm.numThreads===1&&typeof Worker==='function')gameParallelism=await gameCapacity('start');
  game=await LightForgeGAME.create({ort,baseUrl:new URL('models/game/',self.location.href).href,onProgress:detail=>report(.942,'Loading singing transcription',detail),checkpoint:store,parallelism:gameParallelism});
  const transcription=await game.process(await LightForgeStemCache.fullVoice(result.stemCache),sourceReader.samples,{onProgress:(p,info)=>report(.945+.04*p,'Transcribing sung notes','GAME Large • '+Math.round(p*100)+'%',info)});
  result.vocals=LightForgeGAME.fuse(detailExtractor.finish({classifier:classified.classifier,model:classified.model,transcription}),transcription);classified.classifier=null;await game.release();game=null;
@@ -159,7 +207,9 @@ self.onmessage=async e=>{
    report(1,'Music understood','Progress saved',{checkpointSaved:true,analysisStage:stage});
   }
  }
- postMessage({type:'result',value:result,restored:false,seconds:(performance.now()-started)/1000});
+ // These are ORT settings, not a claim that a graph or pthread ran: native,
+ // silent and passage-restored stages may initialize no WASM model at all.
+ postMessage({type:'result',value:result,restored:false,seconds:(performance.now()-started)/1000,runtime:{androidApp:options.androidApp===true,crossOriginIsolated:!!self.crossOriginIsolated,sharedArrayBuffer:typeof SharedArrayBuffer==='function',configuredThreads,ortThreadsAfterStage:ort.env.wasm.numThreads,classifierFallback,restored:false}});
  }catch(error){
   if(cacheWriter)try{await cacheWriter.abort();}catch(_){}
   postMessage({type:'error',message:String(error.message||error).slice(0,3072),stack:typeof error.stack==='string'?error.stack.slice(0,8192):undefined});

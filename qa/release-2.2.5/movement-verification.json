@@ -2,7 +2,7 @@
   "release": "2.2.5",
   "passed": true,
   "errors": [],
-  "checkedAt": "2026-09-10T04:07:16.719Z",
+  "checkedAt": "2026-09-10T04:53:10.530Z",
   "checks": [
     {
       "name": "strongest musical arrivals replace percent-of-duration selection",

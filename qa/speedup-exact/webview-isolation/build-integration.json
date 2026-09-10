@@ -1,0 +1,243 @@
+{
+  "passed": true,
+  "createdUtc": "2026-09-10T04:40:38.208066+00:00",
+  "scope": "Current production Java and AndroidX resource/DEX integration with tiny structural fixture assets. No signed APK, Android execution, neural inference, or performance qualification.",
+  "commands": [
+    {
+      "command": [
+        "/workspace/scratch/9a5ec23b7f4b/toolchain/android-sdk/build-tools/35.0.0/aapt2",
+        "compile",
+        "--dir",
+        "/workspace/scratch/9a5ec23b7f4b/toolchain/androidx/androidx.core.core-1.1.0/extracted/res",
+        "-o",
+        "/workspace/scratch/9a5ec23b7f4b/androidx-build-integration/dependency-0.zip"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/workspace/scratch/9a5ec23b7f4b/toolchain/android-sdk/build-tools/35.0.0/aapt2",
+        "compile",
+        "--dir",
+        "/workspace/scratch/9a5ec23b7f4b/LightForge/android/res",
+        "-o",
+        "/workspace/scratch/9a5ec23b7f4b/androidx-build-integration/app.zip"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/workspace/scratch/9a5ec23b7f4b/toolchain/android-sdk/build-tools/35.0.0/aapt2",
+        "link",
+        "-o",
+        "/workspace/scratch/9a5ec23b7f4b/androidx-build-integration/resources.apk",
+        "-I",
+        "/workspace/scratch/9a5ec23b7f4b/toolchain/android-sdk/platforms/android-35/android.jar",
+        "--manifest",
+        "/workspace/scratch/9a5ec23b7f4b/LightForge/android/AndroidManifest.xml",
+        "--java",
+        "/workspace/scratch/9a5ec23b7f4b/androidx-build-integration/generated",
+        "--min-sdk-version",
+        "26",
+        "--target-sdk-version",
+        "35",
+        "--version-code",
+        "20205",
+        "--version-name",
+        "2.2.5",
+        "--replace-version",
+        "--extra-packages",
+        "androidx.core",
+        "-A",
+        "/workspace/scratch/9a5ec23b7f4b/androidx-build-integration/assets",
+        "/workspace/scratch/9a5ec23b7f4b/androidx-build-integration/dependency-0.zip",
+        "/workspace/scratch/9a5ec23b7f4b/androidx-build-integration/app.zip"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/workspace/scratch/9a5ec23b7f4b/toolchain/jdk17/bin/javac",
+        "-encoding",
+        "UTF-8",
+        "--release",
+        "8",
+        "-classpath",
+        "/workspace/scratch/9a5ec23b7f4b/toolchain/android-sdk/platforms/android-35/android.jar:/workspace/scratch/9a5ec23b7f4b/toolchain/onnx/classes.jar:/workspace/scratch/9a5ec23b7f4b/toolchain/androidx/androidx.webkit.webkit-1.18.0-alpha01/extracted/classes.jar:/workspace/scratch/9a5ec23b7f4b/toolchain/androidx/androidx.core.core-1.1.0/extracted/classes.jar:/workspace/scratch/9a5ec23b7f4b/toolchain/androidx/androidx.annotation.annotation-jvm-1.8.1/annotation-jvm-1.8.1.jar:/workspace/scratch/9a5ec23b7f4b/toolchain/androidx/androidx.annotation.annotation-experimental-1.3.0/extracted/classes.jar:/workspace/scratch/9a5ec23b7f4b/toolchain/androidx/org.jetbrains.kotlin.kotlin-stdlib-2.1.20/kotlin-stdlib-2.1.20.jar:/workspace/scratch/9a5ec23b7f4b/toolchain/androidx/org.jspecify.jspecify-1.0.0/jspecify-1.0.0.jar:/workspace/scratch/9a5ec23b7f4b/toolchain/androidx/androidx.lifecycle.lifecycle-runtime-2.0.0/extracted/classes.jar:/workspace/scratch/9a5ec23b7f4b/toolchain/androidx/androidx.lifecycle.lifecycle-common-2.0.0/lifecycle-common-2.0.0.jar:/workspace/scratch/9a5ec23b7f4b/toolchain/androidx/androidx.arch.core.core-common-2.0.0/core-common-2.0.0.jar:/workspace/scratch/9a5ec23b7f4b/toolchain/androidx/androidx.versionedparcelable.versionedparcelable-1.1.0/extracted/classes.jar:/workspace/scratch/9a5ec23b7f4b/toolchain/androidx/androidx.collection.collection-1.0.0/collection-1.0.0.jar:/workspace/scratch/9a5ec23b7f4b/toolchain/androidx/org.jetbrains.annotations-13.0/annotations-13.0.jar",
+        "-d",
+        "/workspace/scratch/9a5ec23b7f4b/androidx-build-integration/classes",
+        "/workspace/scratch/9a5ec23b7f4b/LightForge/android/src/com/cyberbasslord/lightforge/AnalysisJobStore.java",
+        "/workspace/scratch/9a5ec23b7f4b/LightForge/android/src/com/cyberbasslord/lightforge/AnalysisResourcePolicy.java",
+        "/workspace/scratch/9a5ec23b7f4b/LightForge/android/src/com/cyberbasslord/lightforge/AnalysisService.java",
+        "/workspace/scratch/9a5ec23b7f4b/LightForge/android/src/com/cyberbasslord/lightforge/AppDiagnostics.java",
+        "/workspace/scratch/9a5ec23b7f4b/LightForge/android/src/com/cyberbasslord/lightforge/AppResources.java",
+        "/workspace/scratch/9a5ec23b7f4b/LightForge/android/src/com/cyberbasslord/lightforge/AudioImporter.java",
+        "/workspace/scratch/9a5ec23b7f4b/LightForge/android/src/com/cyberbasslord/lightforge/DiagnosticLog.java",
+        "/workspace/scratch/9a5ec23b7f4b/LightForge/android/src/com/cyberbasslord/lightforge/MainActivity.java",
+        "/workspace/scratch/9a5ec23b7f4b/LightForge/android/src/com/cyberbasslord/lightforge/NativeCrashTrace.java",
+        "/workspace/scratch/9a5ec23b7f4b/LightForge/android/src/com/cyberbasslord/lightforge/NativeDeux.java",
+        "/workspace/scratch/9a5ec23b7f4b/LightForge/android/src/com/cyberbasslord/lightforge/NativeDeuxTransform.java",
+        "/workspace/scratch/9a5ec23b7f4b/LightForge/android/src/com/cyberbasslord/lightforge/NativeMdxTask.java",
+        "/workspace/scratch/9a5ec23b7f4b/LightForge/android/src/com/cyberbasslord/lightforge/NativePassageTask.java",
+        "/workspace/scratch/9a5ec23b7f4b/LightForge/android/src/com/cyberbasslord/lightforge/NativeRuntimeGuard.java",
+        "/workspace/scratch/9a5ec23b7f4b/LightForge/android/src/com/cyberbasslord/lightforge/PendingExportStore.java",
+        "/workspace/scratch/9a5ec23b7f4b/LightForge/android/src/com/cyberbasslord/lightforge/ProjectPreview.java",
+        "/workspace/scratch/9a5ec23b7f4b/LightForge/android/src/com/cyberbasslord/lightforge/ProjectStore.java",
+        "/workspace/scratch/9a5ec23b7f4b/LightForge/android/src/com/cyberbasslord/lightforge/WavConverter.java",
+        "/workspace/scratch/9a5ec23b7f4b/LightForge/android/src/com/cyberbasslord/lightforge/WebViewFileTransport.java",
+        "/workspace/scratch/9a5ec23b7f4b/LightForge/android/src/com/cyberbasslord/lightforge/WebViewIsolation.java",
+        "/workspace/scratch/9a5ec23b7f4b/androidx-build-integration/generated/androidx/core/R.java",
+        "/workspace/scratch/9a5ec23b7f4b/androidx-build-integration/generated/com/cyberbasslord/lightforge/R.java"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": "Note: Some input files use or override a deprecated API.\nNote: Recompile with -Xlint:deprecation for details.\n"
+    },
+    {
+      "command": [
+        "/workspace/scratch/9a5ec23b7f4b/toolchain/jdk17/bin/jar",
+        "cf",
+        "/workspace/scratch/9a5ec23b7f4b/androidx-build-integration/classes.jar",
+        "-C",
+        "/workspace/scratch/9a5ec23b7f4b/androidx-build-integration/classes",
+        "."
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/workspace/scratch/9a5ec23b7f4b/toolchain/jdk17/bin/java",
+        "-cp",
+        "/workspace/scratch/9a5ec23b7f4b/toolchain/androidx/build-tools/r8-8.6.17.jar",
+        "com.android.tools.r8.D8",
+        "--release",
+        "--min-api",
+        "26",
+        "--lib",
+        "/workspace/scratch/9a5ec23b7f4b/toolchain/android-sdk/platforms/android-35/android.jar",
+        "--output",
+        "/workspace/scratch/9a5ec23b7f4b/androidx-build-integration/dex",
+        "/workspace/scratch/9a5ec23b7f4b/androidx-build-integration/classes.jar",
+        "/workspace/scratch/9a5ec23b7f4b/toolchain/onnx/classes.jar",
+        "/workspace/scratch/9a5ec23b7f4b/toolchain/androidx/androidx.webkit.webkit-1.18.0-alpha01/extracted/classes.jar",
+        "/workspace/scratch/9a5ec23b7f4b/toolchain/androidx/androidx.core.core-1.1.0/extracted/classes.jar",
+        "/workspace/scratch/9a5ec23b7f4b/toolchain/androidx/androidx.annotation.annotation-jvm-1.8.1/annotation-jvm-1.8.1.jar",
+        "/workspace/scratch/9a5ec23b7f4b/toolchain/androidx/androidx.annotation.annotation-experimental-1.3.0/extracted/classes.jar",
+        "/workspace/scratch/9a5ec23b7f4b/toolchain/androidx/org.jetbrains.kotlin.kotlin-stdlib-2.1.20/kotlin-stdlib-2.1.20.jar",
+        "/workspace/scratch/9a5ec23b7f4b/toolchain/androidx/org.jspecify.jspecify-1.0.0/jspecify-1.0.0.jar",
+        "/workspace/scratch/9a5ec23b7f4b/toolchain/androidx/androidx.lifecycle.lifecycle-runtime-2.0.0/extracted/classes.jar",
+        "/workspace/scratch/9a5ec23b7f4b/toolchain/androidx/androidx.lifecycle.lifecycle-common-2.0.0/lifecycle-common-2.0.0.jar",
+        "/workspace/scratch/9a5ec23b7f4b/toolchain/androidx/androidx.arch.core.core-common-2.0.0/core-common-2.0.0.jar",
+        "/workspace/scratch/9a5ec23b7f4b/toolchain/androidx/androidx.versionedparcelable.versionedparcelable-1.1.0/extracted/classes.jar",
+        "/workspace/scratch/9a5ec23b7f4b/toolchain/androidx/androidx.collection.collection-1.0.0/collection-1.0.0.jar",
+        "/workspace/scratch/9a5ec23b7f4b/toolchain/androidx/org.jetbrains.annotations-13.0/annotations-13.0.jar"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/workspace/scratch/9a5ec23b7f4b/toolchain/android-sdk/build-tools/35.0.0/aapt2",
+        "dump",
+        "xmltree",
+        "--file",
+        "AndroidManifest.xml",
+        "/workspace/scratch/9a5ec23b7f4b/androidx-build-integration/unsigned-structural.apk"
+      ],
+      "returncode": 0,
+      "stdout": "N: android=http://schemas.android.com/apk/res/android (line=1)\n  E: manifest (line=1)\n    A: http://schemas.android.com/apk/res/android:versionCode(0x0101021b)=20205\n    A: http://schemas.android.com/apk/res/android:versionName(0x0101021c)=\"2.2.5\" (Raw: \"2.2.5\")\n    A: http://schemas.android.com/apk/res/android:compileSdkVersion(0x01010572)=35\n    A: http://schemas.android.com/apk/res/android:compileSdkVersionCodename(0x01010573)=\"15\" (Raw: \"15\")\n    A: package=\"com.cyberbasslord.lightforge\" (Raw: \"com.cyberbasslord.lightforge\")\n    A: platformBuildVersionCode=35\n    A: platformBuildVersionName=15\n      E: uses-sdk (line=2)\n        A: http://schemas.android.com/apk/res/android:minSdkVersion(0x0101020c)=26\n        A: http://schemas.android.com/apk/res/android:targetSdkVersion(0x01010270)=35\n      E: uses-permission (line=3)\n        A: http://schemas.android.com/apk/res/android:name(0x01010003)=\"android.permission.FOREGROUND_SERVICE\" (Raw: \"android.permission.FOREGROUND_SERVICE\")\n      E: uses-permission (line=4)\n        A: http://schemas.android.com/apk/res/android:name(0x01010003)=\"android.permission.FOREGROUND_SERVICE_MEDIA_PROCESSING\" (Raw: \"android.permission.FOREGROUND_SERVICE_MEDIA_PROCESSING\")\n      E: uses-permission (line=5)\n        A: http://schemas.android.com/apk/res/android:name(0x01010003)=\"android.permission.FOREGROUND_SERVICE_DATA_SYNC\" (Raw: \"android.permission.FOREGROUND_SERVICE_DATA_SYNC\")\n      E: uses-permission (line=6)\n        A: http://schemas.android.com/apk/res/android:name(0x01010003)=\"android.permission.WAKE_LOCK\" (Raw: \"android.permission.WAKE_LOCK\")\n      E: uses-permission (line=7)\n        A: http://schemas.android.com/apk/res/android:name(0x01010003)=\"android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS\" (Raw: \"android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS\")\n      E: uses-permission (line=8)\n        A: http://schemas.android.com/apk/res/android:name(0x01010003)=\"android.permission.POST_NOTIFICATIONS\" (Raw: \"android.permission.POST_NOTIFICATIONS\")\n      E: application (line=9)\n        A: http://schemas.android.com/apk/res/android:theme(0x01010000)=@0x7f090000\n        A: http://schemas.android.com/apk/res/android:label(0x01010001)=\"LightForge\" (Raw: \"LightForge\")\n        A: http://schemas.android.com/apk/res/android:icon(0x01010002)=@0x7f040001\n        A: http://schemas.android.com/apk/res/android:allowBackup(0x01010280)=false\n        A: http://schemas.android.com/apk/res/android:largeHeap(0x0101035a)=true\n        A: http://schemas.android.com/apk/res/android:supportsRtl(0x010103af)=true\n        A: http://schemas.android.com/apk/res/android:usesCleartextTraffic(0x010104ec)=false\n        A: http://schemas.android.com/apk/res/android:appComponentFactory(0x0101057a)=\"androidx.core.app.CoreComponentFactory\" (Raw: \"androidx.core.app.CoreComponentFactory\")\n          E: service (line=10)\n            A: http://schemas.android.com/apk/res/android:name(0x01010003)=\".AnalysisService\" (Raw: \".AnalysisService\")\n            A: http://schemas.android.com/apk/res/android:exported(0x01010010)=false\n            A: http://schemas.android.com/apk/res/android:stopWithTask(0x0101036a)=false\n            A: http://schemas.android.com/apk/res/android:foregroundServiceType(0x01010599)=0x00002001\n          E: activity (line=11)\n            A: http://schemas.android.com/apk/res/android:name(0x01010003)=\".MainActivity\" (Raw: \".MainActivity\")\n            A: http://schemas.android.com/apk/res/android:exported(0x01010010)=true\n            A: http://schemas.android.com/apk/res/android:configChanges(0x0101001f)=0x00000ea0\n            A: http://schemas.android.com/apk/res/android:windowSoftInputMode(0x0101022b)=0x00000010\n            A: http://schemas.android.com/apk/res/android:enableOnBackInvokedCallback(0x0101066c)=false\n              E: intent-filter (line=12)\n                  E: action (line=13)\n                    A: http://schemas.android.com/apk/res/android:name(0x01010003)=\"android.intent.action.MAIN\" (Raw: \"android.intent.action.MAIN\")\n                  E: category (line=14)\n                    A: http://schemas.android.com/apk/res/android:name(0x01010003)=\"android.intent.category.LAUNCHER\" (Raw: \"android.intent.category.LAUNCHER\")\n",
+      "stderr": ""
+    }
+  ],
+  "artifacts": 12,
+  "javaResourceCount": 22,
+  "sourceHashes": {
+    "android/src/com/cyberbasslord/lightforge/AnalysisJobStore.java": "7693331f5121e9bb728781739d6b84b8fdfb443637d37502b085bda2e68fa895",
+    "android/src/com/cyberbasslord/lightforge/AnalysisResourcePolicy.java": "c72cc715966ed1677e15dde07c2f4dfc23211b74d96d5316ac6f0e90a4979453",
+    "android/src/com/cyberbasslord/lightforge/AnalysisService.java": "5c8945b8aadc28799ffdfcb88ac2f17cc4381205903a543f55ca935cd317bab5",
+    "android/src/com/cyberbasslord/lightforge/AppDiagnostics.java": "3b0fccd2b166af52dfb25254f3b76bb635eb45caae6d3b19c2f6c391aa6242b6",
+    "android/src/com/cyberbasslord/lightforge/AppResources.java": "642433534c7293a3414a8ef9f8ac4a8c34736a9872c1b1484dd65872adba65f4",
+    "android/src/com/cyberbasslord/lightforge/AudioImporter.java": "910ef3ec1d6f6ded54c91111d9ab34dbf4bbf4d4043f62f1978057183ca0b575",
+    "android/src/com/cyberbasslord/lightforge/DiagnosticLog.java": "1ac8c1866e2893e583b0aba42742d6123cea62fb4d6e8f0ceb39f26e9ce81c20",
+    "android/src/com/cyberbasslord/lightforge/MainActivity.java": "0aafb25d0bfdc4b5556d1c8acf9d3129ec4c6df73beae13d22461b9ec0a9bb0b",
+    "android/src/com/cyberbasslord/lightforge/NativeCrashTrace.java": "9a0a35aabe175d410a4cdd3dac7f4a53f5df79415ba6f12f13cd33ead9b079dd",
+    "android/src/com/cyberbasslord/lightforge/NativeDeux.java": "1cd0931e9740de978c44fbb3c77e0dcbe969eae151752cc70c8f792da5409cdc",
+    "android/src/com/cyberbasslord/lightforge/NativeDeuxTransform.java": "991b06501cfb88b904d0b714a525c389f169f00c231248b0e961b70f257e90b5",
+    "android/src/com/cyberbasslord/lightforge/NativeMdxTask.java": "8e086f3700ae9a087c0e51dc314ac32cf9d3fb8ce4e0c6262efd024274a284bf",
+    "android/src/com/cyberbasslord/lightforge/NativePassageTask.java": "58be6d232d1f7d139c100f979a19b938452593a4453f5e51bcba6d9133df14ac",
+    "android/src/com/cyberbasslord/lightforge/NativeRuntimeGuard.java": "0ca218736d3006a2c67711ef4125eedfe79272cbf14924c8761ffa7eef36b28a",
+    "android/src/com/cyberbasslord/lightforge/PendingExportStore.java": "1697003aab5f842d0bb90122df46f2d1f60da30232eca9d6912c972e421c4163",
+    "android/src/com/cyberbasslord/lightforge/ProjectPreview.java": "459e586684b6cea8b0b5c0541de766c45301347341ff2acdc15e876028e7c551",
+    "android/src/com/cyberbasslord/lightforge/ProjectStore.java": "51492859a40490533286574a08893bf3f6da5063c69b806f7760b3d056269472",
+    "android/src/com/cyberbasslord/lightforge/WavConverter.java": "f34b9bf3c8960678b6116619941307ce01b75c672807ca85f6f81b6adc33b1b6",
+    "android/src/com/cyberbasslord/lightforge/WebViewFileTransport.java": "322a85c3fc16190218899c393fb61089a8b78f3e98dfd51eb1cb09212ab676a2",
+    "android/src/com/cyberbasslord/lightforge/WebViewIsolation.java": "e0fece6d6e7aee07eb2d34f78131902eb0ed241f0438c65337284018a2e69c82",
+    "android/AndroidManifest.xml": "0f4006d859eb075d40f0f7d93e3651e34018f7cc0ec02e82cc0b9a27a97495b5",
+    "android/androidx-runtime.json": "582adee5e9037412fc77abbadf961d4761115944d48b8092c2e3039e4eabfdcb",
+    "tools/bootstrap_androidx_runtime.py": "09eb4346ddda9e08724475ac33c083bcd64f8835fa4d182199d40483be8ef9ef",
+    "build.sh": "00c13f2f7b0fd92a65b54370b8bae346185f8e236bda4d76a1a87755dfd65c49",
+    "tools/apk_archive.py": "f80370cd412b238ebbb8bfc8ec5853a669aae02284b0fd395dd37a3d3632dd35",
+    "tests/verify_native_release.py": "cea493edffdc5f314a7103b63cb814eac6c04f3fe4d436931b291929b9537e22",
+    "tools/build_android_tests.py": "477bbf8fcce5278bc59fab167b05b06cccc26c3a250ea0550766dc9fd8d3bf87",
+    "tools/build_diagnostics_tests.py": "b41248f8590c63aa5fcae0cfa59200e378729bb104dee4ab757f2029b43dc98b"
+  },
+  "dex": [
+    {
+      "name": "classes.dex",
+      "bytes": 3207352,
+      "sha256": "9af98a39e4015d0fe5bd3ca5aa29c4e1be2147b1e9e5a5b9536200fc580ab063"
+    }
+  ],
+  "factoryVerified": true,
+  "officialBoundaryAndPublicApiDexClasses": true,
+  "javaResourcesVerified": true,
+  "completedUtc": "2026-09-10T04:40:50.507340+00:00",
+  "verifierIntegration": {
+    "baselinePath": "qa/speedup-exact/native-threads/reference/verify_native_release.py",
+    "baselineSha256": "1cb5650d2660bde9f882d1e90da192e3a43b02f332db132d453170af6fb30bbd",
+    "currentPath": "tests/verify_native_release.py",
+    "currentSha256": "cea493edffdc5f314a7103b63cb814eac6c04f3fe4d436931b291929b9537e22",
+    "scope": "Standard AndroidX compile/runtime classpaths, generated dependency resource IDs, bootstrap integrity and source binding. Native inference class, transform, runtime pin, original NativeDeuxTest and its numerical/cancellation assertion are unchanged.",
+    "unifiedDiff": "--- qa/speedup-exact/native-threads/reference/verify_native_release.py\n+++ tests/verify_native_release.py\n@@ -10,6 +10,8 @@\n import os, sys, wave, tempfile\n \n ROOT = Path(__file__).resolve().parents[1]\n+sys.path.insert(0, str(ROOT / 'tools'))\n+from bootstrap_androidx_runtime import prepare as prepare_androidx, jar_paths as androidx_jar_paths\n parser = argparse.ArgumentParser(description=__doc__)\n parser.add_argument('--release', default=json.loads((ROOT / 'version.json').read_text())['name'])\n args = parser.parse_args()\n@@ -22,6 +24,7 @@\n JSON = TOOLS / 'test-json.jar'\n ORT_ANDROID = TOOLS / 'onnx/classes.jar'\n ORT_HOST = TOOLS / 'onnx' / json.loads((ROOT / 'android/native-runtime.json').read_text())['host']['name']\n+ANDROIDX_JARS = androidx_jar_paths()\n CLASSES = OUT / 'native-classes'\n OUT.mkdir(parents=True, exist_ok=True)\n CLASSES.mkdir(exist_ok=True)\n@@ -30,12 +33,13 @@\n sources = sorted((ROOT / 'android/src').rglob('*.java'))\n names = ['NativeRecoveryTest', 'ProjectStoreTest', 'NativeHardwareTest', 'NativeAudioTest', 'WebViewTransportTest', 'ProjectPreviewTest', 'AnalysisJobStoreTest', 'NativeDeuxTest', 'DiagnosticLogTest', 'NativeCrashTraceTest', 'NativeRuntimeGuardTest']\n tests = [ROOT / f'tests/{name}.java' for name in names + ['WebViewTransportServer']]\n-bound_sources = sources + tests + [ROOT/'android/native-runtime.json', ROOT/'tests/verify_native_release.py']\n+bound_sources = sources + tests + [ROOT/'android/native-runtime.json', ROOT/'android/androidx-runtime.json',\n+                                  ROOT/'tools/bootstrap_androidx_runtime.py', ROOT/'tests/verify_native_release.py']\n receipt = dict(release=args.release, passed=False, scope='Fresh production Java compilation and host JVM tests; no Android Activity/device/document-provider or physical Tesla execution.',\n                source_hashes={str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in bound_sources}, checks=[])\n \n def run(name, *args):\n-    p = subprocess.run([str(JAVA / 'java'), '-cp', ':'.join(map(str, [CLASSES, JSON, ANDROID, ORT_HOST])),\n+    p = subprocess.run([str(JAVA / 'java'), '-cp', os.pathsep.join(map(str, [CLASSES, JSON, ANDROID, ORT_HOST, *ANDROIDX_JARS])),\n                         'com.cyberbasslord.lightforge.' + name, *map(str, args)], cwd=ROOT, capture_output=True, text=True)\n     (OUT / (name + '.txt')).write_text(p.stdout + p.stderr)\n     p.check_returncode()\n@@ -44,6 +48,8 @@\n try:\n     subprocess.run([sys.executable, str(ROOT/'tools/bootstrap_testdeps.py')],check=True)\n     subprocess.run([sys.executable, str(ROOT/'tools/bootstrap_native_runtime.py'),'--check'],check=True)\n+    androidx = prepare_androidx(check=True)\n+    receipt['checks'].append('All ' + str(len(androidx['artifacts'])) + ' official AndroidX runtime artifacts and extracted Java/resources match their pinned hashes.')\n     hardware=OUT/'native-hardware-fixtures'\n     subprocess.run(['node','--test',str(ROOT/'tests/engine-manual.test.cjs')],cwd=ROOT,env={**os.environ,'LIGHTFORGE_NATIVE_FIXTURES':str(hardware)},check=True,capture_output=True)\n     for metadata in hardware.glob('*.json'):\n@@ -53,8 +59,10 @@\n             remaining=round(duration*44100)\n             while remaining:\n                 count=min(44100,remaining);wav.writeframesraw(bytes(count*4));remaining-=count\n-    result = subprocess.run([str(JAVA / 'javac'), '-encoding', 'UTF-8', '--release', '8', '-classpath', str(ANDROID)+':'+str(ORT_ANDROID),\n-                             '-d', str(CLASSES), *map(str, sources), str(ROOT / 'build/generated/com/cyberbasslord/lightforge/R.java'), *map(str, tests)],\n+    generated = sorted((ROOT / 'build/generated').rglob('*.java'))\n+    assert (ROOT/'build/generated/androidx/core/R.java') in generated, 'Build current app and dependency resource IDs first.'\n+    result = subprocess.run([str(JAVA / 'javac'), '-encoding', 'UTF-8', '--release', '8', '-classpath', os.pathsep.join(map(str, [ANDROID, ORT_ANDROID, *ANDROIDX_JARS])),\n+                             '-d', str(CLASSES), *map(str, sources), *map(str, generated), *map(str, tests)],\n                             cwd=ROOT, capture_output=True, text=True)\n     (OUT / 'native-compilation.txt').write_text(result.stdout + result.stderr)\n     result.check_returncode()\n"
+  },
+  "archiveRegression": {
+    "command": "python3 -m unittest tests.test_apk_archive",
+    "passed": true,
+    "tests": 20,
+    "scope": "Original APK/asset/JNI controls plus exactJavaresource packaging, missing/extra/tampered resources, and path/signature collisions."
+  },
+  "nativeHostGate": {
+    "path": "qa/speedup-exact/webview-isolation/native-host-at-integration.json",
+    "sha256": "1a39b915c2b2980194976ca59a4b39d3bc22a3eafad50f52ff13aaa19b2e3c6f",
+    "passed": true
+  },
+  "instrumentationCompilation": {
+    "passed": true,
+    "builders": [
+      "tools/build_android_tests.py",
+      "tools/build_diagnostics_tests.py"
+    ],
+    "scope": "Both standard instrumentation sources compile against current production Java, the complete pinned AndroidX classpath, and generated app/dependency resource IDs. No Android instrumentation execution."
+  },
+  "publicationRegression": {
+    "passed": true,
+    "command": "python3 -m unittest tests.test_release_publication tests.test_apk_archive",
+    "tests": 29,
+    "scope": "Publication metadata controls and exact Java-resource archive controls. No release publication or signed APK execution.",
+    "sourceHashes": {
+      "tools/publish_github_release.py": "09d61619952f894229f506d5e3f13b877be5bb3c1217a06ea9e961149879086b",
+      "tests/test_release_publication.py": "82d03296f2d01d41ecc6e79f29500567decac0d911d7de92283a685eddac4505",
+      "tests/test_apk_archive.py": "9c556c397ccb2e88dc2eb5d2f7b039324359cdc3126b0ff5a66a879543ca82cb",
+      "tools/apk_archive.py": "f80370cd412b238ebbb8bfc8ec5853a669aae02284b0fd395dd37a3d3632dd35"
+    }
+  }
+}

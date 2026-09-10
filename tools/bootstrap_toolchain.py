@@ -91,6 +91,7 @@ def main():
     subprocess.run([str(DEST/'jdk17/bin/javac'), '-version'], check=True)
     subprocess.run([str(DEST/'android-sdk/build-tools/35.0.0/aapt2'), 'version'], check=True)
     subprocess.run([__import__('sys').executable, str(PROJECT/'tools/bootstrap_native_runtime.py')], check=True)
+    subprocess.run([__import__('sys').executable, str(PROJECT/'tools/bootstrap_androidx_runtime.py')], check=True)
     print('Build toolchain ready. Run bash build.sh from ' + str(PROJECT))
 
 if __name__ == '__main__':

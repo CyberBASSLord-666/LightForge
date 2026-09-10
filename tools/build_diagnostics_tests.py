@@ -9,6 +9,7 @@ import subprocess
 import zipfile
 
 from package_release import SIGNING_SHA256
+from bootstrap_androidx_runtime import prepare as prepare_androidx, jar_paths as androidx_jar_paths, d8_jar
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -29,6 +30,8 @@ def main():
         shutil.rmtree(classes)
     classes.mkdir()
     env = dict(os.environ, JAVA_HOME=str(java.parent))
+    prepare_androidx(check=True)
+    androidx_jars = androidx_jar_paths()
 
     def run(*command):
         return subprocess.check_output([str(part) for part in command], env=env, text=True)
@@ -36,7 +39,7 @@ def main():
     if not (native / 'com/cyberbasslord/lightforge/AppDiagnostics.class').is_file():
         raise SystemExit('Compile current production sources with tests/verify_native_release.py first.')
     run(java / 'javac', '-encoding', 'UTF-8', '--release', '8', '-classpath',
-        str(android) + ':' + str(native) + ':' + str(tool / 'onnx/classes.jar'),
+        os.pathsep.join(map(str, [android, native, tool / 'onnx/classes.jar', *androidx_jars])),
         '-d', classes, ROOT / 'tests/android/DiagnosticsInstrumentation.java')
     if args.compile_only:
         print('Diagnostics instrumentation compiled against the production Android classes.')
@@ -54,8 +57,9 @@ def main():
     if dex.exists():
         shutil.rmtree(dex)
     dex.mkdir()
-    run(build / 'd8', '--lib', android, '--classpath', classpath,
-        '--classpath', tool / 'onnx/classes.jar', '--min-api', '26', '--output', dex,
+    run(java / 'java', '-cp', d8_jar(), 'com.android.tools.r8.D8', '--lib', android, '--classpath', classpath,
+        '--classpath', tool / 'onnx/classes.jar',
+        *[part for jar in androidx_jars for part in ('--classpath', jar)], '--min-api', '26', '--output', dex,
         *sorted(classes.rglob('*.class')))
     unsigned = out / 'unsigned.apk'
     run(build / 'aapt2', 'link', '-o', unsigned, '-I', android, '--manifest', manifest)

@@ -1,0 +1,69 @@
+Third-party notices for the AndroidX WebKit runtime
+
+LightForge includes the official, unmodified runtime artifacts listed below.
+They are distributed under the Apache License, Version 2.0. The complete
+license is reproduced in androidx-Apache-2.0-LICENSE.txt in this directory.
+The original published archives and their embedded notices are retained by
+the reproducible dependency bootstrap; their exact hashes are recorded in
+android/androidx-runtime.json. All runtime classes are passed to D8 without
+shrinking or obfuscation.
+
+AndroidX libraries
+Copyright The Android Open Source Project and the AndroidX contributors.
+Project: https://android.googlesource.com/platform/frameworks/support/
+License: Apache-2.0
+
+androidx.webkit:webkit:1.18.0-alpha01
+https://dl.google.com/dl/android/maven2/androidx/webkit/webkit/1.18.0-alpha01/webkit-1.18.0-alpha01.pom
+androidx.core:core:1.1.0
+https://dl.google.com/dl/android/maven2/androidx/core/core/1.1.0/core-1.1.0.pom
+androidx.annotation:annotation-jvm:1.8.1
+https://dl.google.com/dl/android/maven2/androidx/annotation/annotation-jvm/1.8.1/annotation-jvm-1.8.1.pom
+androidx.annotation:annotation-experimental:1.3.0
+https://dl.google.com/dl/android/maven2/androidx/annotation/annotation-experimental/1.3.0/annotation-experimental-1.3.0.pom
+androidx.lifecycle:lifecycle-runtime:2.0.0
+https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-runtime/2.0.0/lifecycle-runtime-2.0.0.pom
+androidx.lifecycle:lifecycle-common:2.0.0
+https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-common/2.0.0/lifecycle-common-2.0.0.pom
+androidx.arch.core:core-common:2.0.0
+https://dl.google.com/dl/android/maven2/androidx/arch/core/core-common/2.0.0/core-common-2.0.0.pom
+androidx.versionedparcelable:versionedparcelable:1.1.0
+https://dl.google.com/dl/android/maven2/androidx/versionedparcelable/versionedparcelable/1.1.0/versionedparcelable-1.1.0.pom
+androidx.collection:collection:1.0.0
+https://dl.google.com/dl/android/maven2/androidx/collection/collection/1.0.0/collection-1.0.0.pom
+
+Kotlin standard library
+Copyright JetBrains s.r.o. and Kotlin Programming Language contributors.
+Artifact: org.jetbrains.kotlin:kotlin-stdlib:2.1.20
+Project: https://github.com/JetBrains/kotlin
+Published license declaration:
+https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/2.1.20/kotlin-stdlib-2.1.20.pom
+License: Apache-2.0
+
+JetBrains annotations
+Copyright JetBrains s.r.o. and contributors.
+Artifact: org.jetbrains:annotations:13.0
+Project: https://github.com/JetBrains/java-annotations
+Published license declaration:
+https://repo.maven.apache.org/maven2/org/jetbrains/annotations/13.0/annotations-13.0.pom
+License: Apache-2.0
+
+JSpecify annotations
+Copyright The JSpecify Authors.
+Artifact: org.jspecify:jspecify:1.0.0
+Project: https://github.com/jspecify/jspecify
+Published license declaration:
+https://repo.maven.apache.org/maven2/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.pom
+License: Apache-2.0
+
+Chromium Android WebView support-library boundary
+The AndroidX WebKit artifact includes org.chromium.support_lib_boundary
+interfaces and supporting code from Chromium.
+Copyright The Chromium Authors.
+Project: https://chromium.googlesource.com/chromium/src/+/main/android_webview/support_library/boundary_interfaces/
+License: BSD-3-Clause; its full copyright, conditions, and disclaimer are
+reproduced in chromium-webkit-boundary-LICENSE.txt in this directory.
+The interfaces are the published classes from the official AndroidX AAR.
+
+This notice identifies bundled software and its licensing. It does not
+indicate endorsement of LightForge by any upstream project or contributor.

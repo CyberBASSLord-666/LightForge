@@ -1,0 +1,15 @@
+{
+  "totalBytes": 8323973120,
+  "availableBytes": 7335108608,
+  "swapTotalBytes": 3221221376,
+  "swapFreeBytes": 3221172224,
+  "swapInPages": 0,
+  "swapOutPages": 12,
+  "logicalCpus": 2,
+  "affinityCpus": 2,
+  "configuredGuestMemoryMiB": 8192,
+  "configuredGuestCores": 4,
+  "hostReserveBytes": 1610612736,
+  "scope": "Host resources are measured separately from the advertised Android guest; no physical-phone equivalence or CPU speedup is implied.",
+  "passed": true
+}

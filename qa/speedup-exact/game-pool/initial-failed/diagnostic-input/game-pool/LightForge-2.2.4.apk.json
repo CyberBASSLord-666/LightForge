@@ -1,0 +1,15 @@
+{
+  "apk": "LightForge-2.2.4.apk",
+  "update_compatible": false,
+  "signing_certificate_sha256": "578bc5ba4969e3a4003811572085ebbfe45480abe659463ae2c3b3f993cc73d6",
+  "bytes": 1204357470,
+  "sha256": "5620e784909b8fd14a4fb0e86c097f4acfe146f1b0a32681b1611015ef2c03d7",
+  "zip_integrity": "passed",
+  "alignment": "passed",
+  "signature": "verified",
+  "min_sdk": 26,
+  "target_sdk": 35,
+  "compile_sdk": 35,
+  "version_name": "2.2.4",
+  "version_code": 20204
+}

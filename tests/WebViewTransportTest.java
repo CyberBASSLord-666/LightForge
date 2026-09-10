@@ -79,6 +79,7 @@ public final class WebViewTransportTest {
             Map<String,String> headers=WebViewFileTransport.responseHeaders(length,range);
             check("same-origin".equals(headers.get("Cross-Origin-Opener-Policy")),"Document keeps same-origin opener isolation");
             check("require-corp".equals(headers.get("Cross-Origin-Embedder-Policy")),"Document and workers require embedded resources to opt in");
+            check("isolate-and-credentialless".equals(headers.get("Document-Isolation-Policy")),"Documents and workers opt into the provider's allowlisted isolation");
             check("same-origin".equals(headers.get("Cross-Origin-Resource-Policy")),"Local assets remain restricted to same-origin callers");
             check("nosniff".equals(headers.get("X-Content-Type-Options")),"Executable responses cannot MIME-sniff");
             check("no-store".equals(headers.get("Cache-Control")),"Project bytes cannot reuse stale cached responses");

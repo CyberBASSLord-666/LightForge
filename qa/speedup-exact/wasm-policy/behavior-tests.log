@@ -1,0 +1,82 @@
+TAP version 13
+# Subtest: Android runtime selection enables only qualified stage/thread combinations
+ok 1 - Android runtime selection enables only qualified stage/thread combinations
+  ---
+  duration_ms: 39.516147
+  type: 'test'
+  ...
+# Subtest: Android shared-memory prerequisites retain serial execution independently
+ok 2 - Android shared-memory prerequisites retain serial execution independently
+  ---
+  duration_ms: 8.193796
+  type: 'test'
+  ...
+# Subtest: browser runtime selection preserves the published two and three thread routes
+ok 3 - browser runtime selection preserves the published two and three thread routes
+  ---
+  duration_ms: 37.041056
+  type: 'test'
+  ...
+# Subtest: a completed stage restores before initializing or claiming a new model runtime
+ok 4 - a completed stage restores before initializing or claiming a new model runtime
+  ---
+  duration_ms: 1.890925
+  type: 'test'
+  ...
+# Subtest: production GAME pool stays disabled despite eligible capacity and nonzero multi-passage audio
+ok 5 - production GAME pool stays disabled despite eligible capacity and nonzero multi-passage audio
+  ---
+  duration_ms: 1189.854085
+  type: 'test'
+  ...
+# Subtest: runtime fallback after four-thread selection keeps serial GAME and complete inference
+ok 6 - runtime fallback after four-thread selection keeps serial GAME and complete inference
+  ---
+  duration_ms: 274.193817
+  type: 'test'
+  ...
+# Subtest: analyzer derives Android routing from callable app bridges and keeps runtime detail in diagnostics
+ok 7 - analyzer derives Android routing from callable app bridges and keeps runtime detail in diagnostics
+  ---
+  duration_ms: 10.857619
+  type: 'test'
+  ...
+# Subtest: private classifier handoff retires one-thread inference before four-thread GAME without changing output
+ok 8 - private classifier handoff retires one-thread inference before four-thread GAME without changing output
+  ---
+  duration_ms: 567.47389
+  type: 'test'
+  ...
+# Subtest: complete voice and valid classifier checkpoints bypass private inference and preserve the musical value
+ok 9 - complete voice and valid classifier checkpoints bypass private inference and preserve the musical value
+  ---
+  duration_ms: 2.032878
+  type: 'test'
+  ...
+# Subtest: missing, wrong-model, truncated and corrupt classifier handoffs force complete serial voice before ORT initialization
+ok 10 - missing, wrong-model, truncated and corrupt classifier handoffs force complete serial voice before ORT initialization
+  ---
+  duration_ms: 2023.594601
+  type: 'test'
+  ...
+# Subtest: private worker completes and terminates before GAME while public progress and timing retain four stages
+ok 11 - private worker completes and terminates before GAME while public progress and timing retain four stages
+  ---
+  duration_ms: 4.02881
+  type: 'test'
+  ...
+# Subtest: cancelling the private classifier retires its worker and never starts GAME
+ok 12 - cancelling the private classifier retires its worker and never starts GAME
+  ---
+  duration_ms: 2.435391
+  type: 'test'
+  ...
+1..12
+# tests 12
+# suites 0
+# pass 12
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4239.160336

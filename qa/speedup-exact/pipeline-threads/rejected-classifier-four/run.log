@@ -1,0 +1,64 @@
+THREAD-PROBE 4 Opening music
+THREAD-PROBE 4 Listening to musical detail
+{"run":4,"session":1,"stage":"rhythm","model":"/analysis/models/beat-this-large.onnx","threads":1}
+THREAD-PROBE 4 Loading music AI
+{"run":4,"session":2,"stage":"rhythm","model":"/analysis/models/beat-this-mel.onnx","threads":1}
+{"run":4,"graph":0,"stage":"rhythm","model":"/analysis/models/beat-this-mel.onnx","seconds":0.022980000000447035,"exact":true}
+{"run":4,"graph":1,"stage":"rhythm","model":"/analysis/models/beat-this-large.onnx","seconds":0.48367500000074504,"exact":true}
+THREAD-PROBE 4 Understanding beats and bar accents
+THREAD-PROBE 4 Recognizing musical structure
+THREAD-PROBE 4 Checking analysis storage
+THREAD-PROBE 4 Separating voice and instruments
+{"run":4,"session":1,"stage":"separation","model":"/analysis/models/deux/front.onnx","threads":4}
+{"run":4,"session":2,"stage":"separation","model":"/analysis/models/deux/block-00-time.onnx","threads":4}
+{"run":4,"session":3,"stage":"separation","model":"/analysis/models/deux/block-00-frequency.onnx","threads":4}
+{"run":4,"graph":20,"stage":"separation","model":"/analysis/models/deux/block-00-frequency.onnx","seconds":0.28605499999970196,"exact":true}
+{"run":4,"session":4,"stage":"separation","model":"/analysis/models/deux/block-01-time.onnx","threads":4}
+{"run":4,"graph":40,"stage":"separation","model":"/analysis/models/deux/block-01-time.onnx","seconds":0.3802249999977648,"exact":true}
+{"run":4,"session":5,"stage":"separation","model":"/analysis/models/deux/block-01-frequency.onnx","threads":4}
+{"run":4,"session":6,"stage":"separation","model":"/analysis/models/deux/block-02-time.onnx","threads":4}
+{"run":4,"graph":60,"stage":"separation","model":"/analysis/models/deux/block-02-time.onnx","seconds":0.3991400000005961,"exact":true}
+{"run":4,"session":7,"stage":"separation","model":"/analysis/models/deux/block-02-frequency.onnx","threads":4}
+{"run":4,"graph":80,"stage":"separation","model":"/analysis/models/deux/block-02-frequency.onnx","seconds":0.061875,"exact":true}
+{"run":4,"session":8,"stage":"separation","model":"/analysis/models/deux/block-03-time.onnx","threads":4}
+{"run":4,"session":9,"stage":"separation","model":"/analysis/models/deux/block-03-frequency.onnx","threads":4}
+{"run":4,"graph":100,"stage":"separation","model":"/analysis/models/deux/block-03-frequency.onnx","seconds":0.306355000000447,"exact":true}
+{"run":4,"session":10,"stage":"separation","model":"/analysis/models/deux/block-04-time.onnx","threads":4}
+{"run":4,"graph":120,"stage":"separation","model":"/analysis/models/deux/block-04-time.onnx","seconds":0.3604850000031292,"exact":true}
+{"run":4,"session":11,"stage":"separation","model":"/analysis/models/deux/block-04-frequency.onnx","threads":4}
+{"run":4,"session":12,"stage":"separation","model":"/analysis/models/deux/block-05-time.onnx","threads":4}
+{"run":4,"graph":140,"stage":"separation","model":"/analysis/models/deux/block-05-time.onnx","seconds":0.35957499999925496,"exact":true}
+{"run":4,"session":13,"stage":"separation","model":"/analysis/models/deux/block-05-frequency.onnx","threads":4}
+{"run":4,"session":14,"stage":"separation","model":"/analysis/models/deux/block-06-time.onnx","threads":4}
+{"run":4,"graph":160,"stage":"separation","model":"/analysis/models/deux/block-06-time.onnx","seconds":0.37848499999940394,"exact":true}
+{"run":4,"session":15,"stage":"separation","model":"/analysis/models/deux/block-06-frequency.onnx","threads":4}
+{"run":4,"graph":180,"stage":"separation","model":"/analysis/models/deux/block-06-frequency.onnx","seconds":0.23490000000223518,"exact":true}
+{"run":4,"session":16,"stage":"separation","model":"/analysis/models/deux/block-07-time.onnx","threads":4}
+{"run":4,"session":17,"stage":"separation","model":"/analysis/models/deux/block-07-frequency.onnx","threads":4}
+{"run":4,"graph":200,"stage":"separation","model":"/analysis/models/deux/block-07-frequency.onnx","seconds":0.22475,"exact":true}
+{"run":4,"session":18,"stage":"separation","model":"/analysis/models/deux/block-08-time.onnx","threads":4}
+{"run":4,"graph":220,"stage":"separation","model":"/analysis/models/deux/block-08-time.onnx","seconds":0.35210500000044703,"exact":true}
+{"run":4,"session":19,"stage":"separation","model":"/analysis/models/deux/block-08-frequency.onnx","threads":4}
+{"run":4,"session":20,"stage":"separation","model":"/analysis/models/deux/block-09-time.onnx","threads":4}
+{"run":4,"graph":240,"stage":"separation","model":"/analysis/models/deux/block-09-time.onnx","seconds":0.34685500000044706,"exact":true}
+{"run":4,"session":21,"stage":"separation","model":"/analysis/models/deux/block-09-frequency.onnx","threads":4}
+{"run":4,"graph":260,"stage":"separation","model":"/analysis/models/deux/block-09-frequency.onnx","seconds":0.22757000000029803,"exact":true}
+{"run":4,"session":22,"stage":"separation","model":"/analysis/models/deux/block-10-time.onnx","threads":4}
+{"run":4,"session":23,"stage":"separation","model":"/analysis/models/deux/block-10-frequency.onnx","threads":4}
+{"run":4,"graph":280,"stage":"separation","model":"/analysis/models/deux/block-10-frequency.onnx","seconds":0.2481499999985099,"exact":true}
+{"run":4,"session":24,"stage":"separation","model":"/analysis/models/deux/block-11-time.onnx","threads":4}
+{"run":4,"graph":300,"stage":"separation","model":"/analysis/models/deux/block-11-time.onnx","seconds":0.363839999999851,"exact":true}
+{"run":4,"session":25,"stage":"separation","model":"/analysis/models/deux/block-11-frequency.onnx","threads":4}
+{"run":4,"session":26,"stage":"separation","model":"/analysis/models/deux/head-0.onnx","threads":4}
+{"run":4,"graph":320,"stage":"separation","model":"/analysis/models/deux/head-0.onnx","seconds":0.267769999999553,"exact":true}
+{"run":4,"session":27,"stage":"separation","model":"/analysis/models/deux/head-1.onnx","threads":4}
+THREAD-PROBE 4 Recognizing the isolated voice
+{"run":4,"session":1,"stage":"voice","model":"/analysis/models/frame-mn10-singing.onnx","threads":4}
+{"run":4,"graph":337,"stage":"voice","model":"/analysis/models/frame-mn10-singing.onnx","seconds":0.10188499999791384,"exact":false}
+page.evaluate: Error: Raw graph mismatch at invocation 337 /analysis/models/frame-mn10-singing.onnx
+    at sendRecord (http://127.0.0.1:44689/analysis/thread-probe-worker.js?run=4:11:75)
+    at async session.run (http://127.0.0.1:44689/analysis/thread-probe-worker.js?run=4:33:5)
+    at async Object.analyze (http://127.0.0.1:44689/analysis/vocal.js:75:13)
+    at async self.onmessage (http://127.0.0.1:44689/analysis/worker.js:150:57)
+    at /workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/final-android-routing/run.cjs:57:58
+{"passed":false,"firstMismatch":{"index":337,"error":"Raw graph mismatch at invocation 337 /analysis/models/frame-mn10-singing.onnx"},"errors":["page.evaluate: Error: Raw graph mismatch at invocation 337 /analysis/models/frame-mn10-singing.onnx\n    at sendRecord (http://127.0.0.1:44689/analysis/thread-probe-worker.js?run=4:11:75)\n    at async session.run (http://127.0.0.1:44689/analysis/thread-probe-worker.js?run=4:33:5)\n    at async Object.analyze (http://127.0.0.1:44689/analysis/vocal.js:75:13)\n    at async self.onmessage (http://127.0.0.1:44689/analysis/worker.js:150:57)\n    at /workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/final-android-routing/run.cjs:57:58"]}

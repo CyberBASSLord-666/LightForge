@@ -1,0 +1,1 @@
+PASS: 21 native runtime guard checks; confirmed native crash, runtime/app updates, cancellation, ownership, timestamp/PID boundaries and corrupt state.

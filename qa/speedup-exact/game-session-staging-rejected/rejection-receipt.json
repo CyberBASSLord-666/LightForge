@@ -1,0 +1,76 @@
+{
+  "scope": "Rejected scratch experiment preserved as memory-admission evidence, not shipping behavior or a quality corpus.",
+  "acceptedForProduction": false,
+  "reason": "Do not implement session-only staging as a pooling enabler for the reported device memory conditions: even two normal measured peaks plus reserve exceed the highest reported available memory; dense estimation would be more demanding.",
+  "exactGraphInputsOutputsAndUnroundedNotes": true,
+  "normalPeakRssBytes": 1326026752,
+  "baselinePeakRssBytes": 1636130816,
+  "normalTwoLanesPlus512MiBBytes": 3188924416,
+  "sourceBindings": {
+    "adapter": {
+      "path": "/workspace/scratch/9a5ec23b7f4b/LightForge/web/analysis/game.js",
+      "sha256": "1627851738744a45c6c4c2cbb3b695bad1623f3b41d575f40754ca1a92185227"
+    },
+    "harness": {
+      "path": "/workspace/scratch/9a5ec23b7f4b/game-session-staging/staged.cjs",
+      "sha256": "e2b8e34eace59ea2e2a2a7f5d7d56aaf39d6092f9223c9df60dbaae667a337a5"
+    },
+    "inputManifest": {
+      "path": "/workspace/scratch/9a5ec23b7f4b/game-pool/geometry16/inputs.json",
+      "sha256": "a9ac122cff31b254e32b6030e88891f301ceb083bdafe193c8b97cb3af8ba888"
+    }
+  },
+  "baselineCopy": {
+    "path": "qa/speedup-exact/game-memory/geometry-demo-20s.json",
+    "originalPath": "/workspace/scratch/9a5ec23b7f4b/game-pool/geometry16/geometry-demo-20s.json",
+    "sha256": "a8407ffe29b961c1d71761f5ae15745d1fd148d86980493ed32b4e63f6786bbd"
+  },
+  "copies": [
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/game-session-staging/staged.cjs",
+      "path": "qa/speedup-exact/game-session-staging-rejected/staged.cjs",
+      "sha256": "e2b8e34eace59ea2e2a2a7f5d7d56aaf39d6092f9223c9df60dbaae667a337a5",
+      "bytes": 4861,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/game-session-staging/normal.log",
+      "path": "qa/speedup-exact/game-session-staging-rejected/normal.log",
+      "sha256": "077055ed5104debdd3c4b1fb0374a6de0aa32dec93326c9a820200e75a852fed",
+      "bytes": 4311,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/game-session-staging/normal-watchdog.json",
+      "path": "qa/speedup-exact/game-session-staging-rejected/normal-watchdog.json",
+      "sha256": "bd9f358b79390e3a7bdeb79f220ce8bf1fa64271ceb52097f06766431cbccb03",
+      "bytes": 246,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/game-session-staging/staged-normal-demo-20s.json",
+      "path": "qa/speedup-exact/game-session-staging-rejected/staged-normal-demo-20s.json",
+      "sha256": "a18b900f389f6086bfd5ed9a95c3ba6b070b1cfb3ea58ff8aae772a6406723e1",
+      "bytes": 39133,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/game-session-staging/normal-comparison.json",
+      "path": "qa/speedup-exact/game-session-staging-rejected/normal-comparison.json",
+      "sha256": "dafd70e3836546dd63fe98a8f29f8f584e861a0d433f688e0b6d35191e410c2c",
+      "bytes": 3242,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/game-session-staging/report.md",
+      "path": "qa/speedup-exact/game-session-staging-rejected/report.md",
+      "sha256": "e001e5988e1a43df2bde07f3ba953b6ce01f8126ac31831fcfa6d994aaa439ac",
+      "bytes": 1926,
+      "exactCopy": true
+    }
+  ],
+  "denseFollowOnRun": false,
+  "timingQualification": false,
+  "watchdogLimitation": "Independent watchdog thread adds its own V8 worker overhead to the staged process. Baseline run had no such watchdog. This biases measured savings downward but does not supply the substantial margin needed for dense pooling.",
+  "productionEdits": false
+}

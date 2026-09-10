@@ -1,0 +1,1 @@
+PASS: 836 diagnostic checks: restart durability, cause stacks, bounded rotation, concurrent records, privacy, torn writes, invalid UTF-8, oversized history, Unicode limits and storage failure.

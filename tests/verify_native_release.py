@@ -10,6 +10,8 @@ import argparse
 import os, sys, wave, tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / 'tools'))
+from bootstrap_androidx_runtime import prepare as prepare_androidx, jar_paths as androidx_jar_paths
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--release', default=json.loads((ROOT / 'version.json').read_text())['name'])
 args = parser.parse_args()
@@ -22,6 +24,7 @@ ANDROID = Path(os.environ.get('ANDROID_SDK_ROOT', TOOLS / 'android-sdk')) / 'pla
 JSON = TOOLS / 'test-json.jar'
 ORT_ANDROID = TOOLS / 'onnx/classes.jar'
 ORT_HOST = TOOLS / 'onnx' / json.loads((ROOT / 'android/native-runtime.json').read_text())['host']['name']
+ANDROIDX_JARS = androidx_jar_paths()
 CLASSES = OUT / 'native-classes'
 OUT.mkdir(parents=True, exist_ok=True)
 CLASSES.mkdir(exist_ok=True)
@@ -30,12 +33,13 @@ FIXTURES = Path(tempfile.mkdtemp(prefix="native-fixtures-", dir=OUT))
 sources = sorted((ROOT / 'android/src').rglob('*.java'))
 names = ['NativeRecoveryTest', 'ProjectStoreTest', 'NativeHardwareTest', 'NativeAudioTest', 'WebViewTransportTest', 'ProjectPreviewTest', 'AnalysisJobStoreTest', 'NativeDeuxTest', 'DiagnosticLogTest', 'NativeCrashTraceTest', 'NativeRuntimeGuardTest']
 tests = [ROOT / f'tests/{name}.java' for name in names + ['WebViewTransportServer']]
-bound_sources = sources + tests + [ROOT/'android/native-runtime.json', ROOT/'tests/verify_native_release.py']
+bound_sources = sources + tests + [ROOT/'android/native-runtime.json', ROOT/'android/androidx-runtime.json',
+                                  ROOT/'tools/bootstrap_androidx_runtime.py', ROOT/'tests/verify_native_release.py']
 receipt = dict(release=args.release, passed=False, scope='Fresh production Java compilation and host JVM tests; no Android Activity/device/document-provider or physical Tesla execution.',
                source_hashes={str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in bound_sources}, checks=[])
 
 def run(name, *args):
-    p = subprocess.run([str(JAVA / 'java'), '-cp', ':'.join(map(str, [CLASSES, JSON, ANDROID, ORT_HOST])),
+    p = subprocess.run([str(JAVA / 'java'), '-cp', os.pathsep.join(map(str, [CLASSES, JSON, ANDROID, ORT_HOST, *ANDROIDX_JARS])),
                         'com.cyberbasslord.lightforge.' + name, *map(str, args)], cwd=ROOT, capture_output=True, text=True)
     (OUT / (name + '.txt')).write_text(p.stdout + p.stderr)
     p.check_returncode()
@@ -44,6 +48,8 @@ def run(name, *args):
 try:
     subprocess.run([sys.executable, str(ROOT/'tools/bootstrap_testdeps.py')],check=True)
     subprocess.run([sys.executable, str(ROOT/'tools/bootstrap_native_runtime.py'),'--check'],check=True)
+    androidx = prepare_androidx(check=True)
+    receipt['checks'].append('All ' + str(len(androidx['artifacts'])) + ' official AndroidX runtime artifacts and extracted Java/resources match their pinned hashes.')
     hardware=OUT/'native-hardware-fixtures'
     subprocess.run(['node','--test',str(ROOT/'tests/engine-manual.test.cjs')],cwd=ROOT,env={**os.environ,'LIGHTFORGE_NATIVE_FIXTURES':str(hardware)},check=True,capture_output=True)
     for metadata in hardware.glob('*.json'):
@@ -53,8 +59,10 @@ try:
             remaining=round(duration*44100)
             while remaining:
                 count=min(44100,remaining);wav.writeframesraw(bytes(count*4));remaining-=count
-    result = subprocess.run([str(JAVA / 'javac'), '-encoding', 'UTF-8', '--release', '8', '-classpath', str(ANDROID)+':'+str(ORT_ANDROID),
-                             '-d', str(CLASSES), *map(str, sources), str(ROOT / 'build/generated/com/cyberbasslord/lightforge/R.java'), *map(str, tests)],
+    generated = sorted((ROOT / 'build/generated').rglob('*.java'))
+    assert (ROOT/'build/generated/androidx/core/R.java') in generated, 'Build current app and dependency resource IDs first.'
+    result = subprocess.run([str(JAVA / 'javac'), '-encoding', 'UTF-8', '--release', '8', '-classpath', os.pathsep.join(map(str, [ANDROID, ORT_ANDROID, *ANDROIDX_JARS])),
+                             '-d', str(CLASSES), *map(str, sources), *map(str, generated), *map(str, tests)],
                             cwd=ROOT, capture_output=True, text=True)
     (OUT / 'native-compilation.txt').write_text(result.stdout + result.stderr)
     result.check_returncode()

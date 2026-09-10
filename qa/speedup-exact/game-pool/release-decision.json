@@ -1,0 +1,37 @@
+{
+  "schema": "lightforge-game-pool-release-decision-1",
+  "release": "2.2.5",
+  "shipping": false,
+  "targetQualification": "unqualified",
+  "reason": "The two-heap GAME experiment lacks accepted actual Android qualification. Production worker activation is explicitly disabled.",
+  "activation": {
+    "source": "web/analysis/worker.js",
+    "sha256": "08c72615e2a90c306624c8108829254045dd790c73c76f9d3bbaac88d7676bd2",
+    "constant": "GAME_PASSAGE_POOL_ENABLED",
+    "value": false
+  },
+  "currentBehaviorProof": {
+    "path": "qa/speedup-exact/wasm-policy/verification.json",
+    "sha256": "59b58c284b9d4fc5e14bfbdb170b1351d69fef9245e54202b68f0b43becd7f70"
+  },
+  "historicalEvidence": [
+    {
+      "path": "qa/speedup-exact/game-pool/initial-failed/diagnostic-input/game-pool/verification.json",
+      "sha256": "5ecf0e04e2b118d7ee2a97a4b95e1085ae1f168ccfdcea149ff667de83081e7c",
+      "passed": false,
+      "bindingScope": "Historical original receipt; not rebound to current source and not shipping Android pool qualification."
+    },
+    {
+      "path": "qa/speedup-exact/game-memory/verification.json",
+      "sha256": "f049976fe600004953220acf66ade4cd46562c8e9c549b8e18b0308c2a0be64f",
+      "passed": true,
+      "bindingScope": "Historical original receipt; not rebound to current source and not shipping Android pool qualification."
+    },
+    {
+      "path": "qa/speedup-exact/game-resource-policy/verification.json",
+      "sha256": "2931974d247c63f9c78350b1afab9f3c41efd66c5a96534f67354286ae5936a2",
+      "passed": true,
+      "bindingScope": "Historical original receipt; not rebound to current source and not shipping Android pool qualification."
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+{"scope":"An independent watchdog thread samples process.memoryUsage().rss; process.kill uses the process namespace directly.","rssCeilingBytes":2684354560,"maxObservedRssBytes":1326026752,"currentRssBytes":1326026752,"safetyStop":false,"pid":15}

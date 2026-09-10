@@ -79,9 +79,9 @@ def host_preflight():
                  configuredGuestMemoryMiB=8192, configuredGuestCores=4,
                  hostReserveBytes=HOST_RESERVE_BYTES,
                  scope='Host resources are measured separately from the advertised Android guest; no physical-phone equivalence or CPU speedup is implied.')
-    value['passed'] = value['totalBytes'] >= 7 * 1024**3 and value['availableBytes'] >= 6 * 1024**3
+    value['passed'] = value['totalBytes'] >= 7 * 1024**3 and value['availableBytes'] >= 6 * 1024**3 and value['swapTotalBytes'] == 0
     (EVIDENCE / 'host-capacity.json').write_text(json.dumps(value, indent=2) + '\n')
-    check(value['passed'], 'Runner lacks six GiB of actual available host RAM before emulator launch; use a larger real runner')
+    check(value['passed'], 'Runner needs six GiB of actual available RAM and swap disabled before emulator launch; no swap-backed qualification is accepted')
     print(json.dumps(value))
 
 
@@ -462,7 +462,24 @@ def run_probe():
     host_safety = {'samples': 0, 'minimumAvailableBytes': None, 'errors': [], 'reserveBytes': HOST_RESERVE_BYTES}
 
     def device(*arguments, timeout=30):
-        return subprocess.run([str(adb), *map(str, arguments)], capture_output=True, text=True, timeout=timeout, check=True).stdout
+        command = [str(adb), *map(str, arguments)]
+        try:
+            completed = subprocess.run(command, capture_output=True, text=True, timeout=timeout)
+        except subprocess.TimeoutExpired as error:
+            failure = {'command': command, 'timeoutSeconds': timeout,
+                       'stdout': error.stdout.decode(errors='replace') if isinstance(error.stdout, bytes) else error.stdout or '',
+                       'stderr': error.stderr.decode(errors='replace') if isinstance(error.stderr, bytes) else error.stderr or ''}
+            with (EVIDENCE / 'adb-failures.jsonl').open('a') as output:
+                output.write(json.dumps(failure) + '\n')
+            print('ADB_FAILURE ' + json.dumps(failure), flush=True)
+            raise
+        if completed.returncode:
+            failure = {'command': command, 'returncode': completed.returncode, 'stdout': completed.stdout, 'stderr': completed.stderr}
+            with (EVIDENCE / 'adb-failures.jsonl').open('a') as output:
+                output.write(json.dumps(failure) + '\n')
+            print('ADB_FAILURE ' + json.dumps(failure), flush=True)
+            completed.check_returncode()
+        return completed.stdout
 
     def watch_host():
         baseline = host_memory()
@@ -480,6 +497,8 @@ def run_probe():
                         reason = 'Actual host RAM fell below the reserved 1.5 GiB; diagnostic emulator stopped before host starvation'
                     if sample['swapInPages'] != baseline['swapInPages'] or sample['swapOutPages'] != baseline['swapOutPages']:
                         reason = 'Host swap activity appeared during qualification; a swap-backed measurement is not accepted'
+                    if sample['swapTotalBytes'] != 0:
+                        reason = 'Host swap was enabled after the required swap-free preflight'
                     now = time.monotonic()
                     if now - last_write >= 1 or reason:
                         output.write(json.dumps(sample) + '\n'); last_write = now
@@ -524,7 +543,8 @@ def run_probe():
         receipt['provenance_sha256'] = digest(EVIDENCE / 'provenance.json')
         capacity = json.loads((EVIDENCE / 'host-capacity.json').read_text())
         check(capacity.get('passed') is True and capacity.get('configuredGuestMemoryMiB') == 8192
-              and capacity.get('hostReserveBytes') == HOST_RESERVE_BYTES, 'Actual host capacity preflight is missing')
+              and capacity.get('hostReserveBytes') == HOST_RESERVE_BYTES and capacity.get('swapTotalBytes') == 0,
+              'Actual swap-free host capacity preflight is missing')
         receipt['hostCapacity'] = capacity
         host_watcher = threading.Thread(target=watch_host, name='game-pool-host-reserve', daemon=True)
         host_watcher.start()

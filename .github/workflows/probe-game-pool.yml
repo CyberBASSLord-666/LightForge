@@ -36,6 +36,8 @@ jobs:
           printf 'ANDROID_USER_HOME=%s\nANDROID_EMULATOR_HOME=%s\nANDROID_AVD_HOME=%s\n' "$RUNNER_TEMP/lightforge-android" "$RUNNER_TEMP/lightforge-android" "$RUNNER_TEMP/lightforge-android/avd" >> "$GITHUB_ENV"
       - name: Reclaim unused toolchains on the disposable runner
         run: sudo rm -rf -- "$ANDROID_HOME/ndk" /usr/share/dotnet
+      - name: Disable swap on the disposable runner before emulator startup
+        run: sudo swapoff -a
       - name: Record real host RAM and CPU capacity before starting the eight-GiB guest
         run: python3 tools/prepare_game_pool_probe.py --host-preflight
       - name: Start API 35 emulator with eight GiB RAM and four virtual CPU cores

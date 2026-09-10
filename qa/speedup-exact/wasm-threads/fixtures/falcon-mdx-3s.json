@@ -1,0 +1,48 @@
+{
+  "format": "lightforge-diagnostic-pcm-v1",
+  "diagnosticOnly": true,
+  "encoding": "zlib+base64",
+  "file": "falcon-mdx-3s.float32le.zlib.base64",
+  "textBytes": 662975,
+  "textSha256": "ed583f258c7b90ae1391836e44818a48446194397daec4da8de7e3970a1833fd",
+  "compressedBytes": 490772,
+  "compressedSha256": "75b30562e4ed0134cef7719ebe8d7fe5ad56726d20e6b34df34c5c120c9789a3",
+  "assetName": "falcon-mdx-3s.float32le",
+  "bytes": 529200,
+  "sha256": "5cfb46f063a2263e56c54d176841e0f6b1cfb69feb894896ef6875c697e3de22",
+  "samples": 132300,
+  "sampleRate": 44100,
+  "durationSeconds": 3,
+  "sampleFormat": "float32le",
+  "seed": 2025,
+  "language": 0,
+  "source": {
+    "parentName": "falcon-start/wasm-waveform.float32le",
+    "parentBytes": 1044480,
+    "parentSha256": "3b928e6b749283788de5f27a0685754cbead48fe8b76752ca90b5354165c280b",
+    "cropFirstSample": 3840,
+    "cropLastSample": 136140,
+    "sampleBytesUnchanged": true,
+    "mixturePath": "qa/release-1.6.0/fixtures/falcon-mix.wav",
+    "mixtureSha256": "effbbe3e3c0df821bf3cfa6535360b18339ded8041992373b41f8344998dba99",
+    "releaseProofPath": "qa/release-2.2.4/native-mdx-comparison-verification.json",
+    "releaseProofSha256": "3e8dc72c4f2659ff6404294c92bb77eb773e7bdf8e7043ca5ca5e916e64fa9ef",
+    "provenance": "Original 2.2.4 MDX falcon-start WASM output, unchanged production frontend, both polarity passes and compensate decoder; source context starts at -3840."
+  },
+  "attribution": {
+    "title": "The Easton Ellises - Falcon 69",
+    "license": "CC BY-NC-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/3.0/",
+    "source": "C't Remix Comp.",
+    "datasetSplit": "test",
+    "archiveMember": "test/The Easton Ellises - Falcon 69.stem.mp4",
+    "archive": {
+      "url": "https://github.com/sigsep/sigsep-mus-db/releases/download/v0.4.0/MUSDB18-7-STEMS.zip",
+      "sha256": "365f66acffc57282e474a4c24b32afec3678258c50b8d45646ac849b0a287df3",
+      "bytes": 147209385
+    },
+    "provenancePath": "qa/release-1.6.0/musdb-fixture-provenance.json",
+    "provenanceSha256": "9844748c69c1c490544f99aee688522ea461c74de557e2f57d4115261d156096"
+  },
+  "scope": "QA-only three-second source-aligned separated vocal PCM, not a ground-truth stem. Only the separate instrumentation APK receives this fixture; the app model and asset payloads stay unchanged."
+}

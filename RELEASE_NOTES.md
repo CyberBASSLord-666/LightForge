@@ -4,16 +4,17 @@ This candidate reduces redundant analysis work while retaining the bundled model
 
 ## Changes
 
-- Run two independent singing-transcription passages concurrently on eligible devices. Admission uses current free memory immediately before allocating the models; devices need at least 6 GiB available RAM, 7 GiB total RAM, four cores and a 64-bit process.
-- Preserve exact source windows, per-passage seeds and checkpoints, then join completed notes in source order. A child failure retires it and recomputes the affected passage serially; later attempts retain serial processing for that audio/app version.
+- Enable shared-memory WebAssembly on supporting Android WebViews through the public AndroidX profile API. Keep the existing storage profile and grant only the bundled app origin.
+- Qualify four-thread Studio compatibility separation and GAME transcription on devices with at least eight reported cores. Keep beat recognition and the voice classifier on one thread after raw-output comparisons exposed differences; finish classification and release its worker before GAME starts. Balanced native separation retains its existing execution path.
 - Reduce Balanced MDX preprocessing by omitting recombination of FFT bins that the model already discards. Every consumed bin and all inverse-transform calculations remain unchanged.
 - Reuse separation, vocal and bass analysis after sensitivity or BPM changes, while rebuilding the rhythm result and current metadata. This avoids repeating expensive models on eligible edits.
+- Disable production activation of the two-engine GAME experiment. The shared-memory candidate uses one model heap; the experimental pool's memory and scheduling records remain preserved.
 
 ## Verification status
 
-Fixed real/stress FFT comparisons preserve every output byte. Cache-composition comparisons preserve exact output JSON. Production GAME scheduling, cancellation, checkpoint failure and fallback regressions pass; actual Android pool qualification is still pending. Experimental native GAME and eight-thread Studio routes are not included because exact target-runtime behavior has not been established.
+Fixed real/stress FFT comparisons preserve every output byte. Cache-composition comparisons preserve exact output JSON. The final pipeline replay and actual Android shared-memory/GAME qualification are pending. Failed all-four-thread frontend/classifier comparisons remain disclosed. Experimental native GAME and eight-thread Studio routes are not included.
 
-The original signing identity will be required for the published update so it can install over an existing app and retain projects. Host measurements do not establish physical-phone speed, thermals or full-song completion time.
+The original signing identity is required for the published update so it can install over an existing app and retain projects. Host measurements do not establish physical-phone speed, thermals or full-song completion time.
 
 ---
 

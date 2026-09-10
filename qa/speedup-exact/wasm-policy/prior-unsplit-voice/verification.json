@@ -1,0 +1,49 @@
+{
+  "schema": "lightforge-wasm-thread-policy-1",
+  "release": "2.2.5",
+  "passed": true,
+  "scope": "Actual worker/analyzer/GAME routing with mocked graph outputs; no numerical model or Android runtime claim.",
+  "source_hashes": {
+    "version.json": "fa24b67fc3aa7677e274af0445c151d25a7638ce82facbe64085b05052331077",
+    "web/analysis/worker.js": "d988b77ea4281b13b5c9d7b550f01c3fadb36a87a97be28209cb08ac5e360d49",
+    "web/analysis/analyzer.js": "459783a4cca87bad927bac88215b224bc4cc8f98540edbf1fc527041c4403299",
+    "web/analysis/game.js": "1627851738744a45c6c4c2cbb3b695bad1623f3b41d575f40754ca1a92185227",
+    "web/analysis/game-worker.js": "5388454e1f45f37c1cd930c08556acf0eb221995db0eae65e0a34b4e9e1634e9",
+    "web/background/runner.js": "ad788e1f6b81c13618945b09917c0287032d8bf940703d9b08ca824bc68153c8",
+    "tests/analysis-thread-policy.test.cjs": "72155518a49098dd182bd4de26dba8bc80a8c6757543ebab5f45553661bbd8c0",
+    "qa/speedup-exact/wasm-policy/verify.py": "e52b3f38f162c2b8bf441ee2c94432c29f3a51af7acdd50ad39b0d2bf7b75dd6"
+  },
+  "poolShipping": false,
+  "errors": [],
+  "tests": {
+    "command": [
+      "node",
+      "--test",
+      "--test-reporter=tap",
+      "tests/analysis-thread-policy.test.cjs"
+    ],
+    "exitCode": 0,
+    "tests": 7,
+    "suites": 0,
+    "pass": 7,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0,
+    "log": {
+      "path": "qa/speedup-exact/wasm-policy/behavior-tests.log",
+      "bytes": 1784,
+      "sha256": "1a6b773b37d44538897a007b3421c704cf1642f5399745d1ef100931f26941f6"
+    },
+    "node": "v24.19.0"
+  },
+  "checks": [
+    "Android stages and core boundaries select only qualified one/four-thread routes; browser two/three-thread selection is preserved.",
+    "Missing shared memory or isolation preserves serial selection.",
+    "Cached stages restore before runtime initialization and report null thread counts.",
+    "Actual GAME adapter executes two nonzero PCM passages and all sixteen diffusion steps serially despite an eligible capacity callback; no query or child starts.",
+    "ORT fallback after four-thread selection is reported independently and cannot activate the experimental pool.",
+    "Callable foreground/background app bridges determine routing; thread metadata remains in diagnostics rather than musical output."
+  ],
+  "completedAt": "2026-09-10T04:40:49.691722+00:00"
+}

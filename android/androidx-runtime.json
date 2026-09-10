@@ -1,0 +1,1248 @@
+{
+  "version": 1,
+  "coordinate": "androidx.webkit:webkit:1.18.0-alpha01",
+  "description": "Official complete JVM/Android runtime closure for the public AndroidX WebKit profile APIs. No bytecode trimming, custom boundary implementations, or model/runtime changes.",
+  "artifactCount": 12,
+  "runtimeJavaResourceCount": 22,
+  "versionResolution": {
+    "androidx.annotation:annotation": "Select published JVM variant androidx.annotation:annotation-jvm:1.8.1; lower 1.0.0/1.1.0 requests satisfied by1.8.1",
+    "org.jetbrains.kotlin:kotlin-stdlib": "2.1.20 wins over transitive1.7.10",
+    "testDependencies": "JUnit and Mockito are test scope, excluded from runtime closure",
+    "arch.core:core-runtime": "Not in the resolved closure; its POM was inspected only"
+  },
+  "buildRequirements": {
+    "minCompileSdk": 33,
+    "minSdk": 24,
+    "jdk": 17,
+    "minimumD8Version": "8.6.17",
+    "minimumD8VersionSource": "https://developer.android.com/build/kotlin-support",
+    "coreLibraryDesugaring": false,
+    "aarMetadataPolicy": "Preserve and check all published AAR metadata; compile SDK 35 and JDK 17 satisfy these artifacts. A standalone compatible D8 is required for Kotlin 2.1 metadata.",
+    "shrinking": false,
+    "manifestApplicationAttributes": {
+      "android:appComponentFactory": "androidx.core.app.CoreComponentFactory"
+    },
+    "testedCompileSdk": 35,
+    "testedMinSdk": 26
+  },
+  "artifacts": [
+    {
+      "id": "androidx.webkit.webkit-1.18.0-alpha01",
+      "coordinate": "androidx.webkit:webkit:1.18.0-alpha01",
+      "type": "aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/webkit/webkit/1.18.0-alpha01/webkit-1.18.0-alpha01.aar",
+      "file": "webkit-1.18.0-alpha01.aar",
+      "bytes": 295698,
+      "sha256": "3c5daec56259a3d55c2608a182719356391d7b5558768c043075237721560eb9",
+      "license": "Apache-2.0",
+      "pomUrl": "https://dl.google.com/dl/android/maven2/androidx/webkit/webkit/1.18.0-alpha01/webkit-1.18.0-alpha01.pom",
+      "declaredDependencies": [
+        {
+          "groupId": "org.jetbrains.kotlin",
+          "artifactId": "kotlin-stdlib",
+          "version": "2.1.20",
+          "scope": "compile"
+        },
+        {
+          "groupId": "org.jspecify",
+          "artifactId": "jspecify",
+          "version": "1.0.0",
+          "scope": "compile"
+        },
+        {
+          "groupId": "androidx.core",
+          "artifactId": "core",
+          "version": "1.1.0",
+          "scope": "compile"
+        },
+        {
+          "groupId": "androidx.annotation",
+          "artifactId": "annotation",
+          "version": "1.8.1",
+          "scope": "compile"
+        },
+        {
+          "groupId": "androidx.annotation",
+          "artifactId": "annotation-experimental",
+          "version": "1.3.0",
+          "scope": "compile"
+        }
+      ],
+      "publisherChecksum": {
+        "publishedChecksumUrl": "https://dl.google.com/dl/android/maven2/androidx/webkit/webkit/1.18.0-alpha01/webkit-1.18.0-alpha01.aar.sha256",
+        "publishedChecksumAlgorithm": "sha256",
+        "publishedChecksum": "3c5daec56259a3d55c2608a182719356391d7b5558768c043075237721560eb9"
+      },
+      "extractedFiles": {
+        "AndroidManifest.xml": {
+          "bytes": 197,
+          "sha256": "00cc9df8828cfd8cc69088fd8f35ff276c71d684af83a79db1641ae2a382af02"
+        },
+        "META-INF/androidx/webkit/webkit/LICENSE.txt": {
+          "bytes": 10175,
+          "sha256": "809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0"
+        },
+        "META-INF/com/android/build/gradle/aar-metadata.properties": {
+          "bytes": 157,
+          "sha256": "2eb43c9300a7ab92d0f029aa54f70ae8a039a7bcc6cb93f67a48a86661e5d85e"
+        },
+        "R.txt": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "annotations.zip": {
+          "bytes": 10611,
+          "sha256": "587817d5d658e3d599e859369805440756d3edc2aedf8dffd06a627c37e04e36"
+        },
+        "classes.jar": {
+          "bytes": 308190,
+          "sha256": "f1c86b4a0d6722793d0ffa3c79cff33cade257540da890e48c2533a25561596a"
+        },
+        "lint.jar": {
+          "bytes": 9983,
+          "sha256": "1d9decf58bdeddf1e31679a15005ad00ef021ff485fae4cce909dd8ee33c5284"
+        },
+        "proguard.txt": {
+          "bytes": 1855,
+          "sha256": "19e64901a32bf12cb40349ef6a7c262da0a7ec5d02bd370bb840824f3cba6baa"
+        },
+        "public.txt": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "res/values/values.xml": {
+          "bytes": 63,
+          "sha256": "0aed495e21a70cab045e3b4792a02f2c7ad68fc1687d73474a09db0b269bc041"
+        }
+      },
+      "resourceSymbolCount": 0
+    },
+    {
+      "id": "androidx.core.core-1.1.0",
+      "coordinate": "androidx.core:core:1.1.0",
+      "type": "aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/core/core/1.1.0/core-1.1.0.aar",
+      "file": "core-1.1.0.aar",
+      "bytes": 680824,
+      "sha256": "76c7cfbe596fe3c09a6983bf1c89e889299c08ac9a3b52ce5182a088d056647e",
+      "license": "Apache-2.0",
+      "pomUrl": "https://dl.google.com/dl/android/maven2/androidx/core/core/1.1.0/core-1.1.0.pom",
+      "declaredDependencies": [
+        {
+          "groupId": "androidx.annotation",
+          "artifactId": "annotation",
+          "version": "1.1.0",
+          "scope": "compile"
+        },
+        {
+          "groupId": "androidx.lifecycle",
+          "artifactId": "lifecycle-runtime",
+          "version": "2.0.0",
+          "scope": "compile"
+        },
+        {
+          "groupId": "androidx.versionedparcelable",
+          "artifactId": "versionedparcelable",
+          "version": "1.1.0",
+          "scope": "compile"
+        },
+        {
+          "groupId": "androidx.collection",
+          "artifactId": "collection",
+          "version": "1.0.0",
+          "scope": "compile"
+        }
+      ],
+      "publisherChecksum": {
+        "publishedChecksumUrl": "https://dl.google.com/dl/android/maven2/androidx/core/core/1.1.0/core-1.1.0.aar.sha1",
+        "publishedChecksumAlgorithm": "sha1",
+        "publishedChecksum": "b9addd897d6b9c8634fe789bdb82f993171432ae"
+      },
+      "extractedFiles": {
+        "AndroidManifest.xml": {
+          "bytes": 963,
+          "sha256": "ee1e1afebf8eb9598025228538749e285a1e005a7b2b906ef1ad8e5ab7815975"
+        },
+        "R.txt": {
+          "bytes": 8196,
+          "sha256": "15ed7d95a9ea643f83641ff89fcd0a54057380bf97875b95ebb09273a433f4e4"
+        },
+        "aidl/android/support/v4/os/ResultReceiver.aidl": {
+          "bytes": 675,
+          "sha256": "9fda5e70a81681c97a43a8682fdf0912d6bf497852eb174b32ee51cef39aa99c"
+        },
+        "annotations.zip": {
+          "bytes": 8041,
+          "sha256": "72c9addd1372a4d92e33e8ad5cee154f6f4fe6fe9bc2bd51ea2dd489ea7f658d"
+        },
+        "classes.jar": {
+          "bytes": 675389,
+          "sha256": "6dad2c3643d2e11e8ccf63c9af57d3e36ed4cfa5caa1930f44f4f90f2990fd50"
+        },
+        "proguard.txt": {
+          "bytes": 145,
+          "sha256": "7a405b76b5cd7878c8eb8fc3f965ada410e4e0d83ba8bcc485df3f868875567a"
+        },
+        "public.txt": {
+          "bytes": 479,
+          "sha256": "969126d296b978c8a66b213b08580c6ddbb3308e123169f44e3a3cfb60470397"
+        },
+        "res/drawable-hdpi-v4/notification_bg_low_normal.9.png": {
+          "bytes": 176,
+          "sha256": "411e9d6397b6309ce4406125738d28df4f1177e68d968cb91457d1b0e2f626e2"
+        },
+        "res/drawable-hdpi-v4/notification_bg_low_pressed.9.png": {
+          "bytes": 181,
+          "sha256": "1115b8c2c1fc0a2146bf6090ec8985273f5006a3e71a7eeeee9643ef1830f0bc"
+        },
+        "res/drawable-hdpi-v4/notification_bg_normal.9.png": {
+          "bytes": 176,
+          "sha256": "d32ccdc822c8184e52ed2ee1808f6cff5592c7a4496cc32d60e927aa0d61bd77"
+        },
+        "res/drawable-hdpi-v4/notification_bg_normal_pressed.9.png": {
+          "bytes": 180,
+          "sha256": "945f154bafd79223c8d62f86ad993c2fb8fe7c5f19b0f265f73e0746e28c007d"
+        },
+        "res/drawable-hdpi-v4/notify_panel_notification_icon_bg.png": {
+          "bytes": 107,
+          "sha256": "8430ec003e003f3f2ba2f78d48fd150e25407667e530e82e87a7d4841c0fd676"
+        },
+        "res/drawable-mdpi-v4/notification_bg_low_normal.9.png": {
+          "bytes": 165,
+          "sha256": "5289724662b65219a99e55c5f3a07890106375b2f5a0a046bdde9fb3f820fe19"
+        },
+        "res/drawable-mdpi-v4/notification_bg_low_pressed.9.png": {
+          "bytes": 169,
+          "sha256": "ef694f46431e10636673c0758d90d33d291814fd41a0d8f960f85f69a69052fb"
+        },
+        "res/drawable-mdpi-v4/notification_bg_normal.9.png": {
+          "bytes": 165,
+          "sha256": "c9bde6f6a6dde6ee8020bb78435d8b101519b9d98d22b901c65b916afa896be2"
+        },
+        "res/drawable-mdpi-v4/notification_bg_normal_pressed.9.png": {
+          "bytes": 171,
+          "sha256": "07e584044ea7f191f4ddbc147da6db4fb7bbe50b444eee23317bcfd0aacf0995"
+        },
+        "res/drawable-mdpi-v4/notify_panel_notification_icon_bg.png": {
+          "bytes": 98,
+          "sha256": "0d773e62c756422313262846c787e58f67e0ee87e45e1ae9942002e816c4cb9e"
+        },
+        "res/drawable-v21/notification_action_background.xml": {
+          "bytes": 1844,
+          "sha256": "08b53dd3bc530247eb1d7f4545966b59660f18f961463b6249d509c73cbb7140"
+        },
+        "res/drawable-xhdpi-v4/notification_bg_low_normal.9.png": {
+          "bytes": 200,
+          "sha256": "e90cdc6d0335ba0cc74e2d49f4553eb83f85bfe1c3d5629fa7c25a54f27c73a6"
+        },
+        "res/drawable-xhdpi-v4/notification_bg_low_pressed.9.png": {
+          "bytes": 210,
+          "sha256": "b6eda6610fbc02b04e18c24317b17e66468980a236962df017855b6b71fdbf33"
+        },
+        "res/drawable-xhdpi-v4/notification_bg_normal.9.png": {
+          "bytes": 200,
+          "sha256": "e4b12f752d3ab198937fb61284477a3a97724ccd0ecb2a5b56c14555acf530e5"
+        },
+        "res/drawable-xhdpi-v4/notification_bg_normal_pressed.9.png": {
+          "bytes": 207,
+          "sha256": "1210208ebd68c08932a1b66f5a1314b2bbb5fbb2e7dd1a5cc756eec7f0bc4204"
+        },
+        "res/drawable-xhdpi-v4/notify_panel_notification_icon_bg.png": {
+          "bytes": 138,
+          "sha256": "b44eeda34d7a529c2fe55719eb098fa29707caa91d18de06a7a775d6e6bcf973"
+        },
+        "res/drawable/notification_bg.xml": {
+          "bytes": 1033,
+          "sha256": "8b6594750e9e26b708b3c82695ac713052a73472030acb646c4557abba2a0833"
+        },
+        "res/drawable/notification_bg_low.xml": {
+          "bytes": 1027,
+          "sha256": "db22a0f7e3b0d6f27f9cfe91d25fc35693bb5b67ddeedd7f9fc60f964ea46d45"
+        },
+        "res/drawable/notification_icon_background.xml": {
+          "bytes": 847,
+          "sha256": "6d9b1e23b7be4bbb05469c3888a976594b06395aab43da6ee2cf2d2e547e41e5"
+        },
+        "res/drawable/notification_tile_bg.xml": {
+          "bytes": 841,
+          "sha256": "7a74142e179dadb058242221df7393aaf6d18509350f2b6da386086ab460e72b"
+        },
+        "res/layout-v16/notification_template_custom_big.xml": {
+          "bytes": 5706,
+          "sha256": "85e3d1b777538306ce5f2197533cb5e3abda53a0207c68be9dc9adb8b2879897"
+        },
+        "res/layout-v21/notification_action.xml": {
+          "bytes": 1690,
+          "sha256": "19e2b1e26a36b8dc86b68a9b0f0833f8d2aee26549a090d573ba363622bd8338"
+        },
+        "res/layout-v21/notification_action_tombstone.xml": {
+          "bytes": 1870,
+          "sha256": "e77dab13bd7623206f9bfa477fe4255fcbd6417afb3671f2533e1e0023542267"
+        },
+        "res/layout-v21/notification_template_custom_big.xml": {
+          "bytes": 4089,
+          "sha256": "acfca5cc908fee2e705a80d8cf02952f0da10ec1aa8f9b667a7b36b9cdb4ad0c"
+        },
+        "res/layout-v21/notification_template_icon_group.xml": {
+          "bytes": 1791,
+          "sha256": "143ef41185a25767bcf6da316e676c71bd6f51e5d938f47745a647868d9ab2b7"
+        },
+        "res/layout/custom_dialog.xml": {
+          "bytes": 458,
+          "sha256": "387d7fdf08e26a2ce95c9dad67e12cef717d37ea4918eac8c7b558af15ea897d"
+        },
+        "res/layout/notification_action.xml": {
+          "bytes": 1787,
+          "sha256": "cad7f2c6d463d2cb805e5f66eab9e008d6bec20fb57cb4225e612d2445d854de"
+        },
+        "res/layout/notification_action_tombstone.xml": {
+          "bytes": 1967,
+          "sha256": "1bfec92af06cd41bcb851229c140c8b501ec1871450015b4cfeec828073454b5"
+        },
+        "res/layout/notification_template_custom_big.xml": {
+          "bytes": 3168,
+          "sha256": "985259f71a07054686d6fd577bd42a86d0d79b88c54d16613e796789d0928c40"
+        },
+        "res/layout/notification_template_icon_group.xml": {
+          "bytes": 945,
+          "sha256": "10daad8713a08468c9c72b21de36ffa6084c7c9bf0f368ac74791c49cb2595f8"
+        },
+        "res/layout/notification_template_part_chronometer.xml": {
+          "bytes": 972,
+          "sha256": "8fe062d357f4b61d9bf8834dc84b0d62bc7b30a6ada39778dbb3fd4e14796f81"
+        },
+        "res/layout/notification_template_part_time.xml": {
+          "bytes": 966,
+          "sha256": "bb7044eff34763f6f348610b3c93cf58b7867278c6e66d006404b3f0c7a7c654"
+        },
+        "res/values-af/values-af.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-am/values-am.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-ar/values-ar.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-as/values-as.xml": {
+          "bytes": 170,
+          "sha256": "474a63787b836647b01383e77664845390467f56fc37b80bf458d3addfa08e96"
+        },
+        "res/values-az/values-az.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-b+sr+Latn/values-b+sr+Latn.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-be/values-be.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-bg/values-bg.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-bn/values-bn.xml": {
+          "bytes": 170,
+          "sha256": "474a63787b836647b01383e77664845390467f56fc37b80bf458d3addfa08e96"
+        },
+        "res/values-bs/values-bs.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-ca/values-ca.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-cs/values-cs.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-da/values-da.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-de/values-de.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-el/values-el.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-en-rAU/values-en-rAU.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-en-rCA/values-en-rCA.xml": {
+          "bytes": 164,
+          "sha256": "78450ff810fd18f4086ea3cebde3d191f1fb99444e1ad0edb774380a0f2bd6be"
+        },
+        "res/values-en-rGB/values-en-rGB.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-en-rIN/values-en-rIN.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-en-rXC/values-en-rXC.xml": {
+          "bytes": 470,
+          "sha256": "285fb3d1e2878f6a8163d3ab8a790b3cb813b402fd05db07e8e7580306378673"
+        },
+        "res/values-es-rUS/values-es-rUS.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-es/values-es.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-et/values-et.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-eu/values-eu.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-fa/values-fa.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-fi/values-fi.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-fr-rCA/values-fr-rCA.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-fr/values-fr.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-gl/values-gl.xml": {
+          "bytes": 164,
+          "sha256": "5a0d4d323985f5d135baeb5464b9f86bb8fa56635b924b1d199b579f59da5e77"
+        },
+        "res/values-gu/values-gu.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-hi/values-hi.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-hr/values-hr.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-hu/values-hu.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-hy/values-hy.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-in/values-in.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-is/values-is.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-it/values-it.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-iw/values-iw.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-ja/values-ja.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-ka/values-ka.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-kk/values-kk.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-km/values-km.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-kn/values-kn.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-ko/values-ko.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-ky/values-ky.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-lo/values-lo.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-lt/values-lt.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-lv/values-lv.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-mk/values-mk.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-ml/values-ml.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-mn/values-mn.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-mr/values-mr.xml": {
+          "bytes": 170,
+          "sha256": "dcd87eab4c7b8558790ac047cea1538002749991a04bfae500c004fa7e774d00"
+        },
+        "res/values-ms/values-ms.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-my/values-my.xml": {
+          "bytes": 170,
+          "sha256": "2a900853d8dab88076ec4114c4c7303d56a1c4ad2e42ad004d47b7c47b3d7599"
+        },
+        "res/values-nb/values-nb.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-ne/values-ne.xml": {
+          "bytes": 170,
+          "sha256": "dcd87eab4c7b8558790ac047cea1538002749991a04bfae500c004fa7e774d00"
+        },
+        "res/values-nl/values-nl.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-or/values-or.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-pa/values-pa.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-pl/values-pl.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-pt-rBR/values-pt-rBR.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-pt-rPT/values-pt-rPT.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-pt/values-pt.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-ro/values-ro.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-ru/values-ru.xml": {
+          "bytes": 164,
+          "sha256": "5a0d4d323985f5d135baeb5464b9f86bb8fa56635b924b1d199b579f59da5e77"
+        },
+        "res/values-si/values-si.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-sk/values-sk.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-sl/values-sl.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-sq/values-sq.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-sr/values-sr.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-sv/values-sv.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-sw/values-sw.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-ta/values-ta.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-te/values-te.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-th/values-th.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-tl/values-tl.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-tr/values-tr.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-uk/values-uk.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-ur/values-ur.xml": {
+          "bytes": 164,
+          "sha256": "573e7f39193e22325dbd789b7eec157ce8f9ea3a31c72cc418acd1a491533aa5"
+        },
+        "res/values-uz/values-uz.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-v16/values-v16.xml": {
+          "bytes": 129,
+          "sha256": "f51435933281192c08eee45d492dc188fa033beae874c4b90bfceae5192e2754"
+        },
+        "res/values-v21/values-v21.xml": {
+          "bytes": 1368,
+          "sha256": "6aa4579852fb688070d5b9f88b7c6fc74f698e85f78c72516f4df0f7d5a26a50"
+        },
+        "res/values-vi/values-vi.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-zh-rCN/values-zh-rCN.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-zh-rHK/values-zh-rHK.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-zh-rTW/values-zh-rTW.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values-zu/values-zu.xml": {
+          "bytes": 164,
+          "sha256": "acbe9158b478a17574fe0500d6cdefe9bdbbaf2cc5605c4ea2cfdee35e8f0b4d"
+        },
+        "res/values/values.xml": {
+          "bytes": 12990,
+          "sha256": "ef0ea5c94817f5c0f04a27a9fdbec366a31961d6c530ba40d431b8fbf760d521"
+        }
+      },
+      "resourceSymbolCount": 171
+    },
+    {
+      "id": "androidx.annotation.annotation-jvm-1.8.1",
+      "coordinate": "androidx.annotation:annotation-jvm:1.8.1",
+      "type": "jar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/annotation/annotation-jvm/1.8.1/annotation-jvm-1.8.1.jar",
+      "file": "annotation-jvm-1.8.1.jar",
+      "bytes": 56126,
+      "sha256": "9aab326d9492800991854360ac248f493ce7f7c3183519309b78ace9e240f6f6",
+      "license": "Apache-2.0",
+      "pomUrl": "https://dl.google.com/dl/android/maven2/androidx/annotation/annotation-jvm/1.8.1/annotation-jvm-1.8.1.pom",
+      "declaredDependencies": [
+        {
+          "groupId": "org.jetbrains.kotlin",
+          "artifactId": "kotlin-stdlib",
+          "version": "1.7.10",
+          "scope": "compile"
+        }
+      ],
+      "publisherChecksum": {
+        "publishedChecksumUrl": "https://dl.google.com/dl/android/maven2/androidx/annotation/annotation-jvm/1.8.1/annotation-jvm-1.8.1.jar.sha256",
+        "publishedChecksumAlgorithm": "sha256",
+        "publishedChecksum": "9aab326d9492800991854360ac248f493ce7f7c3183519309b78ace9e240f6f6"
+      },
+      "extractedFiles": {}
+    },
+    {
+      "id": "androidx.annotation.annotation-experimental-1.3.0",
+      "coordinate": "androidx.annotation:annotation-experimental:1.3.0",
+      "type": "aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/annotation/annotation-experimental/1.3.0/annotation-experimental-1.3.0.aar",
+      "file": "annotation-experimental-1.3.0.aar",
+      "bytes": 36019,
+      "sha256": "abfd29c8556e5bd0325a9f769ab9e9d154ff4a5515c476cdd5a2a8285b1b19dc",
+      "license": "Apache-2.0",
+      "pomUrl": "https://dl.google.com/dl/android/maven2/androidx/annotation/annotation-experimental/1.3.0/annotation-experimental-1.3.0.pom",
+      "declaredDependencies": [
+        {
+          "groupId": "org.jetbrains.kotlin",
+          "artifactId": "kotlin-stdlib",
+          "version": "1.7.10",
+          "scope": "compile"
+        }
+      ],
+      "publisherChecksum": {
+        "publishedChecksumUrl": "https://dl.google.com/dl/android/maven2/androidx/annotation/annotation-experimental/1.3.0/annotation-experimental-1.3.0.aar.sha256",
+        "publishedChecksumAlgorithm": "sha256",
+        "publishedChecksum": "abfd29c8556e5bd0325a9f769ab9e9d154ff4a5515c476cdd5a2a8285b1b19dc"
+      },
+      "extractedFiles": {
+        "AndroidManifest.xml": {
+          "bytes": 816,
+          "sha256": "4f01796583db0ffa43adcb3b938059abb0bde51b0b7cd965776671f614c385f2"
+        },
+        "META-INF/com/android/build/gradle/aar-metadata.properties": {
+          "bytes": 122,
+          "sha256": "4d71d4cc4d860d8def346517658ee6dff00f82fa89a0d3e7bef99114b15d53b9"
+        },
+        "R.txt": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "classes.jar": {
+          "bytes": 6282,
+          "sha256": "e336cd523d2a2ca31beb09047bf5a774f1d12bf124a2e38c86a75434d967ab51"
+        },
+        "lint.jar": {
+          "bytes": 30924,
+          "sha256": "ac7a87b29c419ef15a43133b1fb039201322c9568b5f208d08bf1ebb32bd39a5"
+        },
+        "public.txt": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "res/values/values.xml": {
+          "bytes": 63,
+          "sha256": "0aed495e21a70cab045e3b4792a02f2c7ad68fc1687d73474a09db0b269bc041"
+        }
+      },
+      "resourceSymbolCount": 0
+    },
+    {
+      "id": "org.jetbrains.kotlin.kotlin-stdlib-2.1.20",
+      "coordinate": "org.jetbrains.kotlin:kotlin-stdlib:2.1.20",
+      "type": "jar",
+      "url": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/2.1.20/kotlin-stdlib-2.1.20.jar",
+      "file": "kotlin-stdlib-2.1.20.jar",
+      "bytes": 1724057,
+      "sha256": "1bcc74e8ce84e2c25eaafde10f1248349cce3062b6e36978cbeec610db1e930a",
+      "license": "Apache-2.0",
+      "pomUrl": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/2.1.20/kotlin-stdlib-2.1.20.pom",
+      "declaredDependencies": [
+        {
+          "groupId": "org.jetbrains",
+          "artifactId": "annotations",
+          "version": "13.0",
+          "scope": "compile"
+        }
+      ],
+      "publisherChecksum": {
+        "publishedChecksumUrl": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/2.1.20/kotlin-stdlib-2.1.20.jar.sha1",
+        "publishedChecksumAlgorithm": "sha1",
+        "publishedChecksum": "aa8ca79cd50578314f6d1180c47cbe14c0fee567"
+      },
+      "extractedFiles": {}
+    },
+    {
+      "id": "org.jspecify.jspecify-1.0.0",
+      "coordinate": "org.jspecify:jspecify:1.0.0",
+      "type": "jar",
+      "url": "https://repo.maven.apache.org/maven2/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar",
+      "file": "jspecify-1.0.0.jar",
+      "bytes": 3819,
+      "sha256": "1fad6e6be7557781e4d33729d49ae1cdc8fdda6fe477bb0cc68ce351eafdfbab",
+      "license": "Apache-2.0",
+      "pomUrl": "https://repo.maven.apache.org/maven2/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.pom",
+      "declaredDependencies": [],
+      "publisherChecksum": {
+        "publishedChecksumUrl": "https://repo.maven.apache.org/maven2/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar.sha256",
+        "publishedChecksumAlgorithm": "sha256",
+        "publishedChecksum": "1fad6e6be7557781e4d33729d49ae1cdc8fdda6fe477bb0cc68ce351eafdfbab"
+      },
+      "extractedFiles": {}
+    },
+    {
+      "id": "androidx.lifecycle.lifecycle-runtime-2.0.0",
+      "coordinate": "androidx.lifecycle:lifecycle-runtime:2.0.0",
+      "type": "aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-runtime/2.0.0/lifecycle-runtime-2.0.0.aar",
+      "file": "lifecycle-runtime-2.0.0.aar",
+      "bytes": 9164,
+      "sha256": "e4afc9e636183f6f3e0edf1cf46121a492ffd2c673075bb07f55c7a99dd43cfb",
+      "license": "Apache-2.0",
+      "pomUrl": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-runtime/2.0.0/lifecycle-runtime-2.0.0.pom",
+      "declaredDependencies": [
+        {
+          "groupId": "androidx.lifecycle",
+          "artifactId": "lifecycle-common",
+          "version": "2.0.0",
+          "scope": "compile"
+        },
+        {
+          "groupId": "androidx.arch.core",
+          "artifactId": "core-common",
+          "version": "2.0.0",
+          "scope": "compile"
+        },
+        {
+          "groupId": "androidx.annotation",
+          "artifactId": "annotation",
+          "version": "1.0.0",
+          "scope": "compile"
+        }
+      ],
+      "publisherChecksum": {
+        "publishedChecksumUrl": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-runtime/2.0.0/lifecycle-runtime-2.0.0.aar.sha1",
+        "publishedChecksumAlgorithm": "sha1",
+        "publishedChecksum": "ea27e9e79e9a0fbedfa4dbbef5ddccf0e1d9d73f"
+      },
+      "extractedFiles": {
+        "AndroidManifest.xml": {
+          "bytes": 835,
+          "sha256": "b1d0b57290a8e01240a42b94632822e572a28e6e2540d7303fd8619bc59de0d1"
+        },
+        "R.txt": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "classes.jar": {
+          "bytes": 9055,
+          "sha256": "14ec31f2b5f8d3eb1db1fb664035e3ee44b7f8f3fa91c072b6ccc41cd478b1df"
+        },
+        "proguard.txt": {
+          "bytes": 336,
+          "sha256": "06e82b80a273650885efa806f646884b6f22a584a29e744cf7099eaf909e52ae"
+        }
+      },
+      "resourceSymbolCount": 0
+    },
+    {
+      "id": "androidx.lifecycle.lifecycle-common-2.0.0",
+      "coordinate": "androidx.lifecycle:lifecycle-common:2.0.0",
+      "type": "jar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-common/2.0.0/lifecycle-common-2.0.0.jar",
+      "file": "lifecycle-common-2.0.0.jar",
+      "bytes": 20306,
+      "sha256": "7bad7a188804adea6fa1f35d5ef99b705f20bd93ecadde484760ff86b535fefc",
+      "license": "Apache-2.0",
+      "pomUrl": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-common/2.0.0/lifecycle-common-2.0.0.pom",
+      "declaredDependencies": [
+        {
+          "groupId": "androidx.annotation",
+          "artifactId": "annotation",
+          "version": "1.0.0",
+          "scope": "compile"
+        }
+      ],
+      "publisherChecksum": {
+        "publishedChecksumUrl": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-common/2.0.0/lifecycle-common-2.0.0.jar.sha1",
+        "publishedChecksumAlgorithm": "sha1",
+        "publishedChecksum": "e070ffae07452331bc5684734fce6831d531785c"
+      },
+      "extractedFiles": {}
+    },
+    {
+      "id": "androidx.arch.core.core-common-2.0.0",
+      "coordinate": "androidx.arch.core:core-common:2.0.0",
+      "type": "jar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/arch/core/core-common/2.0.0/core-common-2.0.0.jar",
+      "file": "core-common-2.0.0.jar",
+      "bytes": 11249,
+      "sha256": "4b80b337779b526e64b0ee0ca9e0df43b808344d145f8e9b1c42a134dac57ad8",
+      "license": "Apache-2.0",
+      "pomUrl": "https://dl.google.com/dl/android/maven2/androidx/arch/core/core-common/2.0.0/core-common-2.0.0.pom",
+      "declaredDependencies": [
+        {
+          "groupId": "androidx.annotation",
+          "artifactId": "annotation",
+          "version": "1.0.0",
+          "scope": "compile"
+        }
+      ],
+      "publisherChecksum": {
+        "publishedChecksumUrl": "https://dl.google.com/dl/android/maven2/androidx/arch/core/core-common/2.0.0/core-common-2.0.0.jar.sha1",
+        "publishedChecksumAlgorithm": "sha1",
+        "publishedChecksum": "bb21b9a11761451b51624ac428d1f1bb5deeac38"
+      },
+      "extractedFiles": {}
+    },
+    {
+      "id": "androidx.versionedparcelable.versionedparcelable-1.1.0",
+      "coordinate": "androidx.versionedparcelable:versionedparcelable:1.1.0",
+      "type": "aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/versionedparcelable/versionedparcelable/1.1.0/versionedparcelable-1.1.0.aar",
+      "file": "versionedparcelable-1.1.0.aar",
+      "bytes": 31062,
+      "sha256": "9a1d77140ac222b7866b5054ee7d159bc1800987ed2d46dd6afdd145abb710c1",
+      "license": "Apache-2.0",
+      "pomUrl": "https://dl.google.com/dl/android/maven2/androidx/versionedparcelable/versionedparcelable/1.1.0/versionedparcelable-1.1.0.pom",
+      "declaredDependencies": [
+        {
+          "groupId": "androidx.annotation",
+          "artifactId": "annotation",
+          "version": "1.1.0",
+          "scope": "compile"
+        },
+        {
+          "groupId": "androidx.collection",
+          "artifactId": "collection",
+          "version": "1.0.0",
+          "scope": "compile"
+        }
+      ],
+      "publisherChecksum": {
+        "publishedChecksumUrl": "https://dl.google.com/dl/android/maven2/androidx/versionedparcelable/versionedparcelable/1.1.0/versionedparcelable-1.1.0.aar.sha1",
+        "publishedChecksumAlgorithm": "sha1",
+        "publishedChecksum": "91acce73e00a17b524f6697f6c3893efb8ea349f"
+      },
+      "extractedFiles": {
+        "AndroidManifest.xml": {
+          "bytes": 926,
+          "sha256": "71da3e3c0bc0f6e1799d38924ba918e54aebb5684aa33b8b379a726ea4e5e5bc"
+        },
+        "R.txt": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "aidl/androidx/versionedparcelable/ParcelImpl.aidl": {
+          "bytes": 62,
+          "sha256": "79afb01a9cea7351cdcad0b600b2eecc52765667a12a4e9a074c674fe86311ba"
+        },
+        "classes.jar": {
+          "bytes": 31906,
+          "sha256": "23ab2138b5cce78bf6e93f941197ec150eba39c8ab143b1164ecbbf796157ac6"
+        },
+        "proguard.txt": {
+          "bytes": 243,
+          "sha256": "739a7b26cd542e248fba1c8eb21a72194d3ba15c5b4336dbbcede34d1a9b6f68"
+        }
+      },
+      "resourceSymbolCount": 0
+    },
+    {
+      "id": "androidx.collection.collection-1.0.0",
+      "coordinate": "androidx.collection:collection:1.0.0",
+      "type": "jar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/collection/collection/1.0.0/collection-1.0.0.jar",
+      "file": "collection-1.0.0.jar",
+      "bytes": 41692,
+      "sha256": "9c8d117b5c2bc120a1cdfeb857e05b495b16c36013570372a708f7827e3ac9f9",
+      "license": "Apache-2.0",
+      "pomUrl": "https://dl.google.com/dl/android/maven2/androidx/collection/collection/1.0.0/collection-1.0.0.pom",
+      "declaredDependencies": [
+        {
+          "groupId": "androidx.annotation",
+          "artifactId": "annotation",
+          "version": "1.0.0",
+          "scope": "compile"
+        }
+      ],
+      "publisherChecksum": {
+        "publishedChecksumUrl": "https://dl.google.com/dl/android/maven2/androidx/collection/collection/1.0.0/collection-1.0.0.jar.sha1",
+        "publishedChecksumAlgorithm": "sha1",
+        "publishedChecksum": "42858b26cafdaa69b6149f45dfc2894007bc2c7a"
+      },
+      "extractedFiles": {}
+    },
+    {
+      "id": "org.jetbrains.annotations-13.0",
+      "coordinate": "org.jetbrains:annotations:13.0",
+      "type": "jar",
+      "url": "https://repo.maven.apache.org/maven2/org/jetbrains/annotations/13.0/annotations-13.0.jar",
+      "file": "annotations-13.0.jar",
+      "bytes": 17536,
+      "sha256": "ace2a10dc8e2d5fd34925ecac03e4988b2c0f851650c94b8cef49ba1bd111478",
+      "license": "Apache-2.0",
+      "pomUrl": "https://repo.maven.apache.org/maven2/org/jetbrains/annotations/13.0/annotations-13.0.pom",
+      "declaredDependencies": [],
+      "publisherChecksum": {
+        "publishedChecksumUrl": "https://repo.maven.apache.org/maven2/org/jetbrains/annotations/13.0/annotations-13.0.jar.sha1",
+        "publishedChecksumAlgorithm": "sha1",
+        "publishedChecksum": "919f0dfe192fb4e063e7dacadee7f8bb9a2672a9"
+      },
+      "extractedFiles": {}
+    }
+  ],
+  "jarPaths": [
+    {
+      "artifactId": "androidx.webkit.webkit-1.18.0-alpha01",
+      "path": "extracted/classes.jar"
+    },
+    {
+      "artifactId": "androidx.core.core-1.1.0",
+      "path": "extracted/classes.jar"
+    },
+    {
+      "artifactId": "androidx.annotation.annotation-jvm-1.8.1",
+      "path": "annotation-jvm-1.8.1.jar"
+    },
+    {
+      "artifactId": "androidx.annotation.annotation-experimental-1.3.0",
+      "path": "extracted/classes.jar"
+    },
+    {
+      "artifactId": "org.jetbrains.kotlin.kotlin-stdlib-2.1.20",
+      "path": "kotlin-stdlib-2.1.20.jar"
+    },
+    {
+      "artifactId": "org.jspecify.jspecify-1.0.0",
+      "path": "jspecify-1.0.0.jar"
+    },
+    {
+      "artifactId": "androidx.lifecycle.lifecycle-runtime-2.0.0",
+      "path": "extracted/classes.jar"
+    },
+    {
+      "artifactId": "androidx.lifecycle.lifecycle-common-2.0.0",
+      "path": "lifecycle-common-2.0.0.jar"
+    },
+    {
+      "artifactId": "androidx.arch.core.core-common-2.0.0",
+      "path": "core-common-2.0.0.jar"
+    },
+    {
+      "artifactId": "androidx.versionedparcelable.versionedparcelable-1.1.0",
+      "path": "extracted/classes.jar"
+    },
+    {
+      "artifactId": "androidx.collection.collection-1.0.0",
+      "path": "collection-1.0.0.jar"
+    },
+    {
+      "artifactId": "org.jetbrains.annotations-13.0",
+      "path": "annotations-13.0.jar"
+    }
+  ],
+  "resourceDirs": [
+    {
+      "artifactId": "androidx.core.core-1.1.0",
+      "path": "extracted/res",
+      "package": "androidx.core"
+    }
+  ],
+  "resourcePackages": [
+    "androidx.core"
+  ],
+  "javaResources": [
+    {
+      "path": "META-INF/androidx.annotation_annotation-experimental.version",
+      "artifactId": "androidx.annotation.annotation-experimental-1.3.0",
+      "jarPath": "extracted/classes.jar",
+      "bytes": 6,
+      "sha256": "64d23f858ef51b0f996e4966d4e27c0371b437e2d2787890b1f7ad22d4ec5663"
+    },
+    {
+      "path": "META-INF/androidx.core_core.version",
+      "artifactId": "androidx.core.core-1.1.0",
+      "jarPath": "extracted/classes.jar",
+      "bytes": 6,
+      "sha256": "1575e1af4a95f12f70b4ee6a6adce8160953d93ea17dc2611b90883ccc3ad3b8"
+    },
+    {
+      "path": "META-INF/androidx.lifecycle_lifecycle-runtime.version",
+      "artifactId": "androidx.lifecycle.lifecycle-runtime-2.0.0",
+      "jarPath": "extracted/classes.jar",
+      "bytes": 6,
+      "sha256": "c28fcca53637bc88e124af1725df13cb98c69dedefd62fb3cdbe1cdb6b760624"
+    },
+    {
+      "path": "META-INF/androidx.versionedparcelable_versionedparcelable.version",
+      "artifactId": "androidx.versionedparcelable.versionedparcelable-1.1.0",
+      "jarPath": "extracted/classes.jar",
+      "bytes": 6,
+      "sha256": "1575e1af4a95f12f70b4ee6a6adce8160953d93ea17dc2611b90883ccc3ad3b8"
+    },
+    {
+      "path": "META-INF/androidx.webkit_webkit.version",
+      "artifactId": "androidx.webkit.webkit-1.18.0-alpha01",
+      "jarPath": "extracted/classes.jar",
+      "bytes": 15,
+      "sha256": "987f52524968be02a6949a9d426c9dbbf5bf6157e8589fae8ba89cbe57651417"
+    },
+    {
+      "path": "META-INF/annotation-experimental_release.kotlin_module",
+      "artifactId": "androidx.annotation.annotation-experimental-1.3.0",
+      "jarPath": "extracted/classes.jar",
+      "bytes": 24,
+      "sha256": "30cc87a6f2da0ae5630b5cc87a9757ba34bf6850a48904df1b8653d53c1fe51e"
+    },
+    {
+      "path": "META-INF/annotation.kotlin_module",
+      "artifactId": "androidx.annotation.annotation-jvm-1.8.1",
+      "jarPath": "annotation-jvm-1.8.1.jar",
+      "bytes": 24,
+      "sha256": "b6e01b44be3f99ced0ab675640f7c768df404dce8fb80e752803b3543aae17e5"
+    },
+    {
+      "path": "META-INF/kotlin-stdlib-jdk7.kotlin_module",
+      "artifactId": "org.jetbrains.kotlin.kotlin-stdlib-2.1.20",
+      "jarPath": "kotlin-stdlib-2.1.20.jar",
+      "bytes": 156,
+      "sha256": "f9b8864745e83cc9fca5f9c38d00fe7ffa101861b3b17e2e2975f44c9adf1fbb"
+    },
+    {
+      "path": "META-INF/kotlin-stdlib-jdk8.kotlin_module",
+      "artifactId": "org.jetbrains.kotlin.kotlin-stdlib-2.1.20",
+      "jarPath": "kotlin-stdlib-2.1.20.jar",
+      "bytes": 323,
+      "sha256": "066fe76668439166e815ff0bdbfb23b084ba523c945b35f397614faa939019ec"
+    },
+    {
+      "path": "META-INF/kotlin-stdlib.kotlin_module",
+      "artifactId": "org.jetbrains.kotlin.kotlin-stdlib-2.1.20",
+      "jarPath": "kotlin-stdlib-2.1.20.jar",
+      "bytes": 7823,
+      "sha256": "1b577d4fd073a0081c8d100638fa306c0e15708d9e20d605798c344e31a08f85"
+    },
+    {
+      "path": "META-INF/maven/org.jetbrains/annotations/pom.properties",
+      "artifactId": "org.jetbrains.annotations-13.0",
+      "jarPath": "annotations-13.0.jar",
+      "bytes": 108,
+      "sha256": "965c897ac1473ff848649acae0eb9409c6b9fcc87941f68ed13924947573629b"
+    },
+    {
+      "path": "META-INF/maven/org.jetbrains/annotations/pom.xml",
+      "artifactId": "org.jetbrains.annotations-13.0",
+      "jarPath": "annotations-13.0.jar",
+      "bytes": 4930,
+      "sha256": "965aeb2bedff369819bdde1bf7a0b3b89b8247dd69c88b86375d76163bb8c397"
+    },
+    {
+      "path": "META-INF/proguard/androidx-annotations.pro",
+      "artifactId": "androidx.annotation.annotation-jvm-1.8.1",
+      "jarPath": "annotation-jvm-1.8.1.jar",
+      "bytes": 433,
+      "sha256": "64fb2b6036d3bfab479f615c38c29dfce48071cc357b2d062a71020d645e5c9d"
+    },
+    {
+      "path": "META-INF/versions/9/OSGI-INF/MANIFEST.MF",
+      "artifactId": "org.jspecify.jspecify-1.0.0",
+      "jarPath": "jspecify-1.0.0.jar",
+      "bytes": 145,
+      "sha256": "a844d62b02a9eefd9d112e74fd660843d91cd8b81dce6ce60a9eaba605fa939c"
+    },
+    {
+      "path": "kotlin/annotation/annotation.kotlin_builtins",
+      "artifactId": "org.jetbrains.kotlin.kotlin-stdlib-2.1.20",
+      "jarPath": "kotlin-stdlib-2.1.20.jar",
+      "bytes": 865,
+      "sha256": "f6bf68d4798ece5071900772a4a87150314aed3788e042d9e30ab60a0857b211"
+    },
+    {
+      "path": "kotlin/collections/collections.kotlin_builtins",
+      "artifactId": "org.jetbrains.kotlin.kotlin-stdlib-2.1.20",
+      "jarPath": "kotlin-stdlib-2.1.20.jar",
+      "bytes": 3635,
+      "sha256": "91d6cd4138e850c100a2dec88a965453b0042bf7f6f51202fe4b1efba38e96c0"
+    },
+    {
+      "path": "kotlin/concurrent/atomics/atomics.kotlin_builtins",
+      "artifactId": "org.jetbrains.kotlin.kotlin-stdlib-2.1.20",
+      "jarPath": "kotlin-stdlib-2.1.20.jar",
+      "bytes": 2471,
+      "sha256": "ef8b50112968a5e1be21c9c03d68ce6a7a939a057b9bc5d3fab72c95470561bf"
+    },
+    {
+      "path": "kotlin/coroutines/coroutines.kotlin_builtins",
+      "artifactId": "org.jetbrains.kotlin.kotlin-stdlib-2.1.20",
+      "jarPath": "kotlin-stdlib-2.1.20.jar",
+      "bytes": 137,
+      "sha256": "98ab3a3c18fcb237528dd63fa489815c583e1d6c13debd2a27ac6d74ccf8717b"
+    },
+    {
+      "path": "kotlin/internal/internal.kotlin_builtins",
+      "artifactId": "org.jetbrains.kotlin.kotlin-stdlib-2.1.20",
+      "jarPath": "kotlin-stdlib-2.1.20.jar",
+      "bytes": 583,
+      "sha256": "7489c6bcec13d048a4ce9d9f3bafa1a11bfa08021bfa0e07166978d0bc5e450a"
+    },
+    {
+      "path": "kotlin/kotlin.kotlin_builtins",
+      "artifactId": "org.jetbrains.kotlin.kotlin-stdlib-2.1.20",
+      "jarPath": "kotlin-stdlib-2.1.20.jar",
+      "bytes": 18653,
+      "sha256": "d03111a486daaa503eb6c17aa6770daf744a9b668f54a75b419d1de3deb868a0"
+    },
+    {
+      "path": "kotlin/ranges/ranges.kotlin_builtins",
+      "artifactId": "org.jetbrains.kotlin.kotlin-stdlib-2.1.20",
+      "jarPath": "kotlin-stdlib-2.1.20.jar",
+      "bytes": 3349,
+      "sha256": "ecf5a840ebf529fd9d1fa8216febc191b8559412a1068554266f64bc3b6f8428"
+    },
+    {
+      "path": "kotlin/reflect/reflect.kotlin_builtins",
+      "artifactId": "org.jetbrains.kotlin.kotlin-stdlib-2.1.20",
+      "jarPath": "kotlin-stdlib-2.1.20.jar",
+      "bytes": 2370,
+      "sha256": "b549fbaa2455d8bd417f44e3df1af2ff6802693a5aa0bb6a740848467b53b69a"
+    }
+  ],
+  "excludedJavaResources": {
+    "META-INF/MANIFEST.MF": "Conflicting source-JAR archive manifests are not Android runtime resources. APK signatures and manifest are generated by the application build."
+  },
+  "licenses": [
+    {
+      "path": "web/licenses/androidx-Apache-2.0-LICENSE.txt",
+      "source": "https://dl.google.com/dl/android/maven2/androidx/webkit/webkit/1.18.0-alpha01/webkit-1.18.0-alpha01.aar!/META-INF/androidx/webkit/webkit/LICENSE.txt",
+      "bytes": 10175,
+      "sha256": "809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0"
+    },
+    {
+      "path": "web/licenses/chromium-webkit-boundary-LICENSE.txt",
+      "source": "https://raw.githubusercontent.com/chromium/chromium/main/LICENSE",
+      "bytes": 1536,
+      "sha256": "368cca1106be99d39ecd32a38d8305585d802a475effb66380b91ffc9bcf709b"
+    },
+    {
+      "path": "web/licenses/androidx-THIRD-PARTY-NOTICES.txt",
+      "bytes": 3647,
+      "sha256": "81df31eb78cde450f6d4f5b3050d3d969d3f17a4a4eaebd4c6f0a29722df5c32"
+    }
+  ],
+  "d8": {
+    "coordinate": "com.android.tools:r8:8.6.17",
+    "url": "https://dl.google.com/dl/android/maven2/com/android/tools/r8/8.6.17/r8-8.6.17.jar",
+    "file": "r8-8.6.17.jar",
+    "bytes": 17061286,
+    "sha256": "e54ccdef1287768e6d9a514d3eb2e076b02c290a26a08e5166684fa4a83a01aa",
+    "minimumVersion": "8.6.17",
+    "publishedChecksumUrl": "https://dl.google.com/dl/android/maven2/com/android/tools/r8/8.6.17/r8-8.6.17.jar.sha256",
+    "publishedChecksumAlgorithm": "sha256",
+    "publishedChecksum": "e54ccdef1287768e6d9a514d3eb2e076b02c290a26a08e5166684fa4a83a01aa",
+    "purpose": "Build-time-only D8 compiler; not an application runtime dependency or APK input."
+  }
+}

@@ -1,0 +1,68 @@
+name: Android public WebView WASM thread qualification
+on:
+  push:
+    branches: ['diagnostics/wasm-threads']
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: lightforge-wasm-threads-diagnostic
+  cancel-in-progress: true
+jobs:
+  wasm-threads:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/*/
+            /.github/
+            /android/
+            /web/
+            /tools/
+            /tests/
+            /qa/speedup-exact/wasm-threads/fixtures/
+            /qa/release-2.2.4/native-mdx-comparison-verification.json
+            /qa/release-1.6.0/musdb-fixture-provenance.json
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - name: Reclaim unused toolchains on the disposable runner
+        run: sudo rm -rf -- "$ANDROID_HOME/ndk" /usr/share/dotnet
+      - name: Install complete pinned compile and AndroidX runtime inputs
+        run: python3 tools/bootstrap_toolchain.py
+      - name: Prepare current production code, exact pinned model payloads and official provider
+        run: python3 tools/prepare_wasm_thread_probe.py
+      - name: Configure Android virtual-device paths
+        run: |
+          printf 'ANDROID_USER_HOME=%s\nANDROID_EMULATOR_HOME=%s\nANDROID_AVD_HOME=%s\n' "$RUNNER_TEMP/lightforge-android" "$RUNNER_TEMP/lightforge-android" "$RUNNER_TEMP/lightforge-android/avd" >> "$GITHUB_ENV"
+      - name: Disable swap on the disposable runner
+        run: sudo swapoff -a
+      - name: Record actual host RAM and CPUs independently of guest configuration
+        run: python3 tools/prepare_wasm_thread_probe.py --host-preflight
+      - name: Start API35 userdebug guest with four GiB RAM and eight advertised CPUs
+        run: |
+          sudo chmod a+rw /dev/kvm
+          mkdir -p "$ANDROID_AVD_HOME"
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "system-images;android-35;google_apis;x86_64" "emulator"
+          echo no | "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" create avd --force --name LightForgeWasmThreads --package "system-images;android-35;google_apis;x86_64" --device pixel_6 --path "$ANDROID_AVD_HOME/LightForgeWasmThreads.avd"
+          sed -i 's/^disk.dataPartition.size=.*/disk.dataPartition.size=6G/' "$ANDROID_AVD_HOME/LightForgeWasmThreads.avd/config.ini"
+          nohup "$ANDROID_HOME/emulator/emulator" -avd LightForgeWasmThreads -no-window -no-audio -no-metrics -partition-size 6144 -no-boot-anim -no-snapshot -gpu swiftshader_indirect -memory 4096 -cores 8 -camera-back none -camera-front none > emulator.log 2>&1 < /dev/null &
+          printf '%s\n' "$!" > emulator.pid
+      - name: Qualify stock fallback then public modern isolation while retaining app data
+        run: python3 tools/prepare_wasm_thread_probe.py --run
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: lightforge-wasm-threads-${{ github.run_id }}
+          path: |
+            diagnostic-input/wasm-threads
+            emulator.log
+          if-no-files-found: error
+          retention-days: 30

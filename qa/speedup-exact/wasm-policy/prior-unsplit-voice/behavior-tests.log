@@ -1,0 +1,52 @@
+TAP version 13
+# Subtest: Android runtime selection enables only qualified stage/thread combinations
+ok 1 - Android runtime selection enables only qualified stage/thread combinations
+  ---
+  duration_ms: 216.059083
+  type: 'test'
+  ...
+# Subtest: Android shared-memory prerequisites retain serial execution independently
+ok 2 - Android shared-memory prerequisites retain serial execution independently
+  ---
+  duration_ms: 51.089109
+  type: 'test'
+  ...
+# Subtest: browser runtime selection preserves the published two and three thread routes
+ok 3 - browser runtime selection preserves the published two and three thread routes
+  ---
+  duration_ms: 149.607882
+  type: 'test'
+  ...
+# Subtest: a completed stage restores before initializing or claiming a new model runtime
+ok 4 - a completed stage restores before initializing or claiming a new model runtime
+  ---
+  duration_ms: 0.776414
+  type: 'test'
+  ...
+# Subtest: production GAME pool stays disabled despite eligible capacity and nonzero multi-passage audio
+ok 5 - production GAME pool stays disabled despite eligible capacity and nonzero multi-passage audio
+  ---
+  duration_ms: 1911.867762
+  type: 'test'
+  ...
+# Subtest: runtime fallback after four-thread selection keeps serial GAME and complete inference
+ok 6 - runtime fallback after four-thread selection keeps serial GAME and complete inference
+  ---
+  duration_ms: 388.596436
+  type: 'test'
+  ...
+# Subtest: analyzer derives Android routing from callable app bridges and keeps runtime detail in diagnostics
+ok 7 - analyzer derives Android routing from callable app bridges and keeps runtime detail in diagnostics
+  ---
+  duration_ms: 31.731046
+  type: 'test'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3041.517649

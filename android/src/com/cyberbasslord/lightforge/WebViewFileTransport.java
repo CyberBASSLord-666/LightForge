@@ -23,6 +23,7 @@ final class WebViewFileTransport {
         headers.put("Vary","Range");
         headers.put("Cross-Origin-Opener-Policy","same-origin");
         headers.put("Cross-Origin-Embedder-Policy","require-corp");
+        headers.put("Document-Isolation-Policy","isolate-and-credentialless");
         headers.put("Cross-Origin-Resource-Policy","same-origin");
         headers.put("X-Content-Type-Options","nosniff");
         if(length>=0)headers.put("Content-Length",Long.toString(length));

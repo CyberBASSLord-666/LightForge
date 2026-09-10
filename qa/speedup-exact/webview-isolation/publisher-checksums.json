@@ -1,0 +1,110 @@
+[
+  {
+    "coordinate": "androidx.webkit:webkit:1.18.0-alpha01",
+    "artifactUrl": "https://dl.google.com/dl/android/maven2/androidx/webkit/webkit/1.18.0-alpha01/webkit-1.18.0-alpha01.aar",
+    "sha256": "3c5daec56259a3d55c2608a182719356391d7b5558768c043075237721560eb9",
+    "publishedChecksumUrl": "https://dl.google.com/dl/android/maven2/androidx/webkit/webkit/1.18.0-alpha01/webkit-1.18.0-alpha01.aar.sha256",
+    "publishedChecksumAlgorithm": "sha256",
+    "publishedChecksum": "3c5daec56259a3d55c2608a182719356391d7b5558768c043075237721560eb9",
+    "matched": true
+  },
+  {
+    "coordinate": "androidx.core:core:1.1.0",
+    "artifactUrl": "https://dl.google.com/dl/android/maven2/androidx/core/core/1.1.0/core-1.1.0.aar",
+    "sha256": "76c7cfbe596fe3c09a6983bf1c89e889299c08ac9a3b52ce5182a088d056647e",
+    "publishedChecksumUrl": "https://dl.google.com/dl/android/maven2/androidx/core/core/1.1.0/core-1.1.0.aar.sha1",
+    "publishedChecksumAlgorithm": "sha1",
+    "publishedChecksum": "b9addd897d6b9c8634fe789bdb82f993171432ae",
+    "matched": true
+  },
+  {
+    "coordinate": "androidx.annotation:annotation-jvm:1.8.1",
+    "artifactUrl": "https://dl.google.com/dl/android/maven2/androidx/annotation/annotation-jvm/1.8.1/annotation-jvm-1.8.1.jar",
+    "sha256": "9aab326d9492800991854360ac248f493ce7f7c3183519309b78ace9e240f6f6",
+    "publishedChecksumUrl": "https://dl.google.com/dl/android/maven2/androidx/annotation/annotation-jvm/1.8.1/annotation-jvm-1.8.1.jar.sha256",
+    "publishedChecksumAlgorithm": "sha256",
+    "publishedChecksum": "9aab326d9492800991854360ac248f493ce7f7c3183519309b78ace9e240f6f6",
+    "matched": true
+  },
+  {
+    "coordinate": "androidx.annotation:annotation-experimental:1.3.0",
+    "artifactUrl": "https://dl.google.com/dl/android/maven2/androidx/annotation/annotation-experimental/1.3.0/annotation-experimental-1.3.0.aar",
+    "sha256": "abfd29c8556e5bd0325a9f769ab9e9d154ff4a5515c476cdd5a2a8285b1b19dc",
+    "publishedChecksumUrl": "https://dl.google.com/dl/android/maven2/androidx/annotation/annotation-experimental/1.3.0/annotation-experimental-1.3.0.aar.sha256",
+    "publishedChecksumAlgorithm": "sha256",
+    "publishedChecksum": "abfd29c8556e5bd0325a9f769ab9e9d154ff4a5515c476cdd5a2a8285b1b19dc",
+    "matched": true
+  },
+  {
+    "coordinate": "org.jetbrains.kotlin:kotlin-stdlib:2.1.20",
+    "artifactUrl": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/2.1.20/kotlin-stdlib-2.1.20.jar",
+    "sha256": "1bcc74e8ce84e2c25eaafde10f1248349cce3062b6e36978cbeec610db1e930a",
+    "publishedChecksumUrl": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/2.1.20/kotlin-stdlib-2.1.20.jar.sha1",
+    "publishedChecksumAlgorithm": "sha1",
+    "publishedChecksum": "aa8ca79cd50578314f6d1180c47cbe14c0fee567",
+    "matched": true
+  },
+  {
+    "coordinate": "org.jspecify:jspecify:1.0.0",
+    "artifactUrl": "https://repo.maven.apache.org/maven2/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar",
+    "sha256": "1fad6e6be7557781e4d33729d49ae1cdc8fdda6fe477bb0cc68ce351eafdfbab",
+    "publishedChecksumUrl": "https://repo.maven.apache.org/maven2/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar.sha256",
+    "publishedChecksumAlgorithm": "sha256",
+    "publishedChecksum": "1fad6e6be7557781e4d33729d49ae1cdc8fdda6fe477bb0cc68ce351eafdfbab",
+    "matched": true
+  },
+  {
+    "coordinate": "androidx.lifecycle:lifecycle-runtime:2.0.0",
+    "artifactUrl": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-runtime/2.0.0/lifecycle-runtime-2.0.0.aar",
+    "sha256": "e4afc9e636183f6f3e0edf1cf46121a492ffd2c673075bb07f55c7a99dd43cfb",
+    "publishedChecksumUrl": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-runtime/2.0.0/lifecycle-runtime-2.0.0.aar.sha1",
+    "publishedChecksumAlgorithm": "sha1",
+    "publishedChecksum": "ea27e9e79e9a0fbedfa4dbbef5ddccf0e1d9d73f",
+    "matched": true
+  },
+  {
+    "coordinate": "androidx.lifecycle:lifecycle-common:2.0.0",
+    "artifactUrl": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-common/2.0.0/lifecycle-common-2.0.0.jar",
+    "sha256": "7bad7a188804adea6fa1f35d5ef99b705f20bd93ecadde484760ff86b535fefc",
+    "publishedChecksumUrl": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-common/2.0.0/lifecycle-common-2.0.0.jar.sha1",
+    "publishedChecksumAlgorithm": "sha1",
+    "publishedChecksum": "e070ffae07452331bc5684734fce6831d531785c",
+    "matched": true
+  },
+  {
+    "coordinate": "androidx.arch.core:core-common:2.0.0",
+    "artifactUrl": "https://dl.google.com/dl/android/maven2/androidx/arch/core/core-common/2.0.0/core-common-2.0.0.jar",
+    "sha256": "4b80b337779b526e64b0ee0ca9e0df43b808344d145f8e9b1c42a134dac57ad8",
+    "publishedChecksumUrl": "https://dl.google.com/dl/android/maven2/androidx/arch/core/core-common/2.0.0/core-common-2.0.0.jar.sha1",
+    "publishedChecksumAlgorithm": "sha1",
+    "publishedChecksum": "bb21b9a11761451b51624ac428d1f1bb5deeac38",
+    "matched": true
+  },
+  {
+    "coordinate": "androidx.versionedparcelable:versionedparcelable:1.1.0",
+    "artifactUrl": "https://dl.google.com/dl/android/maven2/androidx/versionedparcelable/versionedparcelable/1.1.0/versionedparcelable-1.1.0.aar",
+    "sha256": "9a1d77140ac222b7866b5054ee7d159bc1800987ed2d46dd6afdd145abb710c1",
+    "publishedChecksumUrl": "https://dl.google.com/dl/android/maven2/androidx/versionedparcelable/versionedparcelable/1.1.0/versionedparcelable-1.1.0.aar.sha1",
+    "publishedChecksumAlgorithm": "sha1",
+    "publishedChecksum": "91acce73e00a17b524f6697f6c3893efb8ea349f",
+    "matched": true
+  },
+  {
+    "coordinate": "androidx.collection:collection:1.0.0",
+    "artifactUrl": "https://dl.google.com/dl/android/maven2/androidx/collection/collection/1.0.0/collection-1.0.0.jar",
+    "sha256": "9c8d117b5c2bc120a1cdfeb857e05b495b16c36013570372a708f7827e3ac9f9",
+    "publishedChecksumUrl": "https://dl.google.com/dl/android/maven2/androidx/collection/collection/1.0.0/collection-1.0.0.jar.sha1",
+    "publishedChecksumAlgorithm": "sha1",
+    "publishedChecksum": "42858b26cafdaa69b6149f45dfc2894007bc2c7a",
+    "matched": true
+  },
+  {
+    "coordinate": "org.jetbrains:annotations:13.0",
+    "artifactUrl": "https://repo.maven.apache.org/maven2/org/jetbrains/annotations/13.0/annotations-13.0.jar",
+    "sha256": "ace2a10dc8e2d5fd34925ecac03e4988b2c0f851650c94b8cef49ba1bd111478",
+    "publishedChecksumUrl": "https://repo.maven.apache.org/maven2/org/jetbrains/annotations/13.0/annotations-13.0.jar.sha1",
+    "publishedChecksumAlgorithm": "sha1",
+    "publishedChecksum": "919f0dfe192fb4e063e7dacadee7f8bb9a2672a9",
+    "matched": true
+  }
+]

@@ -2,7 +2,7 @@
 """Publish an update-compatible APK only after current source-bound release gates."""
 from pathlib import Path
 import json, os, re, zipfile
-from apk_archive import verify_native_libraries
+from apk_archive import verify_native_libraries, verify_java_resources
 from package_release import sha_file, sha_stream, require, atomic, atomic_copy, SIGNING_SHA256
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -25,11 +25,13 @@ def main():
     apk=ROOT/'dist'/('LightForge-'+name+'.apk');receipt=json.loads(apk.with_suffix('.apk.json').read_text())
     require(sha_file(apk)==receipt['sha256'],'APK checksum changed since its build.')
     require(receipt.get('version_name')==name and receipt.get('version_code')==version['code'],'APK version does not match source.')
+    require(receipt.get('androidx_manifest_sha256')==sha_file(ROOT/'android/androidx-runtime.json'),'APK AndroidX dependency manifest differs from source.')
     require(receipt.get('update_compatible') is True and receipt.get('signing_certificate_sha256')==SIGNING_SHA256,'This APK cannot update the original LightForge installation.')
     signature=(ROOT/'build/signature-verification.txt').read_text();require('certificate SHA-256 digest: '+SIGNING_SHA256 in signature,'Original signing certificate was not verified.')
     web=[p for p in (ROOT/'web').rglob('*') if p.is_file() and not any(x.startswith('.') or x in {'node_modules','__pycache__'} for x in p.relative_to(ROOT/'web').parts)]
     with zipfile.ZipFile(apk) as z:
         verify_native_libraries(z, ROOT/'android/native-runtime.json')
+        verify_java_resources(z, ROOT/'android/androidx-runtime.json')
         require(z.testzip() is None,'APK has a ZIP CRC failure.')
         packaged={n for n in z.namelist() if n.startswith('assets/') and not n.endswith('/')}
         expected={'assets/'+p.relative_to(ROOT/'web').as_posix() for p in web}

@@ -8,11 +8,13 @@ The comparison rule for these changes is exact output bytes. The reference is th
 | --- | --- | --- |
 | MDX forward FFT computes only the 3,072 frequency bins already consumed by the model | `mdx-fft-verification.json`: exact 3,145,728 spectral values and 261,120 decoded samples in each of four real/stress cases | Same 7,680-point transform and consumed arithmetic. The inverse still computes every bin. Current receipt timings overlapped other checks and are explicitly unqualified. The earlier controlled frontend-only probe measured 44% less time; inference was excluded. |
 | Rhythm edits reuse independently keyed separation, voice and bass work | `cache/verification.json` is generated against the final source | Native identities hash both decoded WAV files. Sensitivity and BPM still invalidate rhythm. The restored bass checkpoint contributes only bass fields to the current result. This avoids repeated model work after edits, without accelerating a first analysis. |
-| GAME processes two independent passages using the existing worker and one child | Actual Android production-adapter qualification is required before release | Both lanes use the same single-thread WASM engine. Admission requires a fresh memory snapshot, a 64-bit process, at least four cores, at least 7 GiB total RAM and 6 GiB available RAM, and no low-memory signal. Results become durable independently and are stitched in source order. Failure disables pooling for that audio/app version and retries retained PCM serially. |
+| Shared-memory Android WASM uses one model heap | Full pipeline and actual Android GAME qualifications are pending; policy/fallback tests are separate | Public AndroidX exact-origin allowlist and DIP enable capability detection. Android selects only one or four threads; beat and classifier stay serial after raw differences were found. Classification finishes in its own retired worker before GAME. Browser thread selection is preserved. |
 
 ## Retained experiments
 
 `native-threads/` retains the candidate eight-thread Studio experiment. Two real passages were byte-identical on Linux x86_64 and took 16.8% and 20.8% less time. The candidate is not shipping: architecture-specific ARM64 dispatch, prepacking and optimized front/head kernels were not qualified for exact output. Production retains its published four-thread cap.
+
+Production activation of the two-heap GAME pool is disabled. `game-pool/release-decision.json` binds that decision to actual worker behavior tests. Its initial Android attempt failed during installation and is retained as a failed run.
 
 The maximum-frame-boundary GAME estimator stress reached 2.262 GiB for one 16-second lane, making 4 GiB freshly available RAM insufficient for two lanes. The admission threshold was raised to 6 GiB. This artificial boundary case is a memory stress test, not an additional music-quality comparison. Its process-reported RSS is retained with the original failed external monitor clearly disclosed.
 
@@ -26,4 +28,4 @@ The 2.2.4 native/WASM MDX spectral differences remain in the historical release 
 
 ## Release status
 
-The signed 2.2.5 update is not yet qualified. Android production-pool execution and the complete seven release gates must pass against the final source before publication. Physical ARM64 byte identity, sustained phone thermals and full-song throughput have not been measured here.
+The signed 2.2.5 update is not yet qualified. The final mixed-thread pipeline, actual Android shared-memory/GAME execution and the complete seven release gates must pass against the final source before publication. Physical ARM64 byte identity, sustained phone thermals and full-song throughput have not been measured here.

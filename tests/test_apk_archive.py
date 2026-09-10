@@ -40,6 +40,65 @@ class ArchiveTests(unittest.TestCase):
         self.assertEqual(names, {'AndroidManifest.xml', 'resources.arsc',
                                  'assets/index.html', 'classes.dex'})
 
+    def java_fixture(self):
+        folder = self.root / 'java-resources'
+        payloads = {'kotlin/kotlin.kotlin_builtins': b'complete Kotlin builtins',
+                    'META-INF/androidx.webkit_webkit.version': b'1.18.0-alpha01'}
+        entries = []
+        for name, content in payloads.items():
+            path = folder / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(content)
+            entries.append({'path': name, 'bytes': len(content),
+                            'sha256': hashlib.sha256(content).hexdigest()})
+        manifest = self.root / 'androidx.json'
+        manifest.write_text(json.dumps({'javaResources': entries, 'runtimeJavaResourceCount': len(entries)}))
+        return folder, manifest, payloads
+
+    def test_java_resources_preserve_classloader_paths_and_exact_pinned_bytes(self):
+        folder, manifest, payloads = self.java_fixture()
+        apk_archive.assemble_apk(self.resources, self.dex, self.output, self.assets,
+                                 java_directory=folder, java_manifest=manifest)
+        apk_archive.validate_apk(self.output, self.assets, True, java_manifest=manifest)
+        with zipfile.ZipFile(self.output) as archive:
+            for name, content in payloads.items():
+                self.assertEqual(archive.read(name), content)
+        with self.assertRaisesRegex(ValueError, 'Java resource inventory'):
+            apk_archive.validate_apk(self.output, self.assets, True)
+
+    def test_missing_extra_or_changed_java_resource_cannot_be_packaged(self):
+        folder, manifest, payloads = self.java_fixture()
+        name = 'kotlin/kotlin.kotlin_builtins'
+        path = folder / name
+        for alteration in ('missing', 'extra', 'changed'):
+            with self.subTest(alteration=alteration):
+                path.write_bytes(payloads[name])
+                extra = folder / 'META-INF/unpinned.version'
+                extra.unlink(missing_ok=True)
+                if alteration == 'missing':
+                    path.unlink()
+                elif alteration == 'extra':
+                    extra.write_bytes(b'unreviewed runtime resource')
+                else:
+                    path.write_bytes(b'!' + payloads[name][1:])
+                with self.assertRaisesRegex(ValueError, 'Java resource'):
+                    apk_archive.assemble_apk(self.resources, self.dex, self.output, self.assets,
+                                             java_directory=folder, java_manifest=manifest)
+                self.assertFalse(self.output.exists())
+
+    def test_java_resource_manifest_cannot_overwrite_payloads_or_escape(self):
+        folder, manifest, _ = self.java_fixture()
+        data = json.loads(manifest.read_text())
+        for name in ('../outside', 'META-INF/../classes.dex', 'classes.dex',
+                     'META-INF/MANIFEST.MF', 'META-INF/CERT.RSA'):
+            with self.subTest(name=name):
+                data['javaResources'][0]['path'] = name
+                manifest.write_text(json.dumps(data))
+                with self.assertRaisesRegex(ValueError, 'Unsafe or duplicate Java resource'):
+                    apk_archive.assemble_apk(self.resources, self.dex, self.output, self.assets,
+                                             java_directory=folder, java_manifest=manifest)
+                self.assertFalse(self.output.exists())
+
     def test_truncated_central_directory_stops_before_output(self):
         data = self.resources.read_bytes()
         self.resources.write_bytes(data[:-64])

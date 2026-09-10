@@ -1,0 +1,70 @@
+{
+  "schema": "lightforge-full-pipeline-wasm-threads-1",
+  "passed": false,
+  "scope": "Actual public MusicAnalyzer, unchanged production adapters and model files, same original float32 source prefix, fresh Chromium storage for each run. This is host 1-vs-4 WASM thread qualification, not Android device timing.",
+  "input": {
+    "sourcePath": "/workspace/scratch/9a5ec23b7f4b/LightForge/qa/release-1.6.0/fixtures/falcon-mix.wav",
+    "sourceSha256": "effbbe3e3c0df821bf3cfa6535360b18339ded8041992373b41f8344998dba99",
+    "sourceDataOffset": 114,
+    "sourceDataBytes": 2400256,
+    "sourceFormatCode": 65534,
+    "formatChunkSha256": "69a0c0bc651fae35405c8a2019114ea9a6708802d62a1a2303a28976fe208f30",
+    "fixturePath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/falcon-3s.wav",
+    "fixtureSha256": "5e5d7d5d27971bbb8480420924af446ff21e87f57e07ec908bf4961a825e56bc",
+    "sampleRate": 44100,
+    "channels": 2,
+    "sampleType": "float32 WAV extensible",
+    "firstFrame": 0,
+    "frames": 132300,
+    "seconds": 3,
+    "dataBytes": 1058400,
+    "dataSha256": "4400ffd4777242dd69452597402d7b0b1ae7e14097d1933dd31b175b0843d77e",
+    "sourcePrefixDataSha256": "4400ffd4777242dd69452597402d7b0b1ae7e14097d1933dd31b175b0843d77e",
+    "sampleBytesUnchanged": true,
+    "construction": "Original RIFF prefix and first 132300 stereo sample frames retained byte for byte; only RIFF and data chunk lengths updated."
+  },
+  "controls": {
+    "quality": "precision",
+    "baselineHardwareConcurrency": 2,
+    "candidateHardwareConcurrency": 8,
+    "threadPolicy": "Unchanged production worker computes min(4,max(1,floor(hardwareConcurrency/2))) with crossOriginIsolated and SharedArrayBuffer required.",
+    "nativePrediction": false,
+    "gamePool": false,
+    "checkpoints": "Fresh independent browser context per run; same fixed analysisIdentity equal to WAV SHA256."
+  },
+  "sourceHashes": {
+    "web/analysis/worker.js": "7774fe4790feda6e51066c15fc51d1bec37720356bf629cf3f7e03fdcf2d3841",
+    "web/analysis/analyzer.js": "3b2be68e90b2d48665a0c7a267b13207e802304decd5f0764b869284ba706f64",
+    "web/analysis/game.js": "1627851738744a45c6c4c2cbb3b695bad1623f3b41d575f40754ca1a92185227",
+    "web/analysis/separator-deux.js": "95508ddb8cffc7dff6e47b849f7722efd1c901fbacb2c059be392444f872aebe",
+    "web/analysis/vocal.js": "94483ac6cf5db7532abfba98e7bab7cd826a82ad2adca0296d39fdebd827ac70",
+    "web/analysis/vocal-detail.js": "cd760d7a766d9a4ab0ac3a252a10f17a16a797b38e50b2d6712bc6adcd42713f",
+    "web/analysis/bass-notes.js": "5b81e2361295a1f8c02086d4668464ed1d7e93c923513c50a2c865a7aeb1531e",
+    "web/analysis/stem-cache.js": "21633cd9e217ecca6e55b9fa04983512e651ddc9a7b9027af13580845ff4fe82",
+    "web/analysis/work-store.js": "b6e6a251478ed727cee145418a61b1b7f1755076e0797f0a5a29ecedc4ce8f41",
+    "web/analysis/dsp.js": "32186b9268632cab85cadcb7e84fa1b4e3d8eb4bb9fbdf96a0873067cb9acd71",
+    "web/analysis/wav-reader.js": "0f0e5216dc1d2ca0bfb25eddacdaa21076990fa7638c22188023607e43d4005f",
+    "web/analysis/ASSET_MANIFEST.json": "c51e0ff381802c8c7d52c100e4a6c762416a3cd04e4fec80aa3f604af2f75424"
+  },
+  "runs": {
+    "1": {
+      "sessions": [],
+      "graphs": []
+    },
+    "4": {
+      "sessions": [],
+      "graphs": []
+    }
+  },
+  "errors": [
+    "browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝\n    at /workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/run.cjs:51:26"
+  ],
+  "firstMismatch": null,
+  "harness": {
+    "path": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/run.cjs",
+    "sha256": "3f3c8574045f6402a6c8043f1e866f9c58995e779c660a560a38cfe53909e988",
+    "bootstrapPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/worker-bootstrap.js",
+    "bootstrapSha256": "5dee0fc0ea6521192fc9564e78813c39dc575091ef08c7daf48237a6534eab19"
+  },
+  "completedAt": "2026-09-10T04:28:16.587Z"
+}

@@ -5,6 +5,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import shutil
 import struct
 import tempfile
@@ -158,7 +159,48 @@ def verify_native_libraries(archive, native_manifest=None):
                 raise ValueError('APK native library hash mismatch: ' + name)
 
 
-def validate_apk(path, assets, require_dex=False, native_manifest=None):
+def java_resource_entries(manifest_path):
+    """Pinned Java resources retain their normal class-loader paths in the APK."""
+    if manifest_path is None:
+        return {}
+    manifest = json.loads(Path(manifest_path).read_text())
+    entries = {}
+    for entry in manifest['javaResources']:
+        name = entry['path']
+        if (not isinstance(name, str) or not name.startswith(('META-INF/', 'kotlin/'))
+                or name.endswith('/') or '\\' in name or '\x00' in name
+                or any(part in ('', '.', '..') for part in name.split('/'))
+                or name in entries or is_signature_entry(name)):
+            raise ValueError('Unsafe or duplicate Java resource path: ' + str(name))
+        if (type(entry['bytes']) is not int or entry['bytes'] < 0
+                or not re.fullmatch(r'[0-9a-f]{64}', entry['sha256'])):
+            raise ValueError('Invalid Java resource pin: ' + name)
+        entries[name] = entry
+    if not entries or len(entries) != manifest['runtimeJavaResourceCount']:
+        raise ValueError('Java resource inventory count differs from the dependency manifest')
+    return entries
+
+
+def is_signature_entry(name):
+    return bool(re.fullmatch(r'META-INF/(?:MANIFEST\.MF|[^/]+\.(?:SF|RSA|DSA|EC))', name))
+
+
+def verify_java_resources(archive, manifest_path=None):
+    expected = java_resource_entries(manifest_path)
+    actual = {name for name in archive.namelist()
+              if name.startswith(('META-INF/', 'kotlin/')) and not name.endswith('/')
+              and not is_signature_entry(name)}
+    if actual != set(expected):
+        raise ValueError('APK Java resource inventory differs from pinned dependencies')
+    for name, entry in expected.items():
+        if archive.getinfo(name).file_size != entry['bytes']:
+            raise ValueError('APK Java resource size mismatch: ' + name)
+        with archive.open(name) as stream:
+            if hashlib.file_digest(stream, 'sha256').hexdigest() != entry['sha256']:
+                raise ValueError('APK Java resource hash mismatch: ' + name)
+
+
+def validate_apk(path, assets, require_dex=False, native_manifest=None, java_manifest=None):
     """Read mode rejects truncated archives; verify every CRC and staged asset."""
     path, assets = Path(path), Path(assets)
     with zipfile.ZipFile(path, 'r') as archive:
@@ -175,6 +217,7 @@ def validate_apk(path, assets, require_dex=False, native_manifest=None):
         if bad:
             raise ValueError('APK ZIP integrity failure: ' + bad)
         verify_native_libraries(archive, native_manifest)
+        verify_java_resources(archive, java_manifest)
         # Match build.sh's distributable inventory. aapt2 can leave hidden
         # compression scratch files beside very large staged model assets;
         # those are neither source assets nor entries in the linked APK.
@@ -197,7 +240,8 @@ def validate_apk(path, assets, require_dex=False, native_manifest=None):
     return set(names)
 
 
-def assemble_apk(resources, dex_directory, destination, assets, native_directory=None, native_manifest=None):
+def assemble_apk(resources, dex_directory, destination, assets, native_directory=None, native_manifest=None,
+                 java_directory=None, java_manifest=None):
     # ZipFile(mode='a') otherwise accepts arbitrary/truncated bytes as a prefix.
     # Never open append mode until the linked input has passed read-only checks.
     resource_names = validate_apk(resources, assets)
@@ -215,6 +259,21 @@ def assemble_apk(resources, dex_directory, destination, assets, native_directory
                         for p in native_directory.rglob('*') if p.is_file()}
     elif native_manifest is not None:
         raise ValueError('JNI packaging requires a staged native directory')
+    java_files = {}
+    if java_directory is not None:
+        if java_manifest is None:
+            raise ValueError('Java resource packaging requires a pinned dependency manifest')
+        java_directory = Path(java_directory)
+        paths = list(java_directory.rglob('*'))
+        if any(path.is_symlink() for path in paths):
+            raise ValueError('Symlinked Java resource staging entry')
+        java_files = {path.relative_to(java_directory).as_posix(): path for path in paths if path.is_file()}
+        if set(java_files) != set(java_resource_entries(java_manifest)):
+            raise ValueError('Staged Java resource inventory differs from pinned dependencies')
+        if set(java_files).intersection(resource_names | {p.name for p in dex_files} | set(native_files)):
+            raise ValueError('Java resources conflict with another APK payload')
+    elif java_manifest is not None:
+        raise ValueError('Java resource packaging requires a staged directory')
     destination = Path(destination)
     created = False
     try:
@@ -230,10 +289,13 @@ def assemble_apk(resources, dex_directory, destination, assets, native_directory
             # zipalign -P 16 places stored native libraries on 16 KiB boundaries.
             for name, native in sorted(native_files.items()):
                 archive.write(native, name, compress_type=zipfile.ZIP_STORED)
+            for name, resource in sorted(java_files.items()):
+                archive.write(resource, name)
         with destination.open('rb') as output:
             os.fsync(output.fileno())
-        output_names = validate_apk(destination, assets, require_dex=True, native_manifest=native_manifest)
-        if output_names != resource_names | {p.name for p in dex_files} | set(native_files):
+        output_names = validate_apk(destination, assets, require_dex=True, native_manifest=native_manifest,
+                                    java_manifest=java_manifest)
+        if output_names != resource_names | {p.name for p in dex_files} | set(native_files) | set(java_files):
             raise ValueError('DEX assembly changed resource archive entries')
     except BaseException:
         if created:
@@ -252,15 +314,19 @@ if __name__ == '__main__':
     validate.add_argument('assets', type=Path)
     validate.add_argument('--require-dex', action='store_true')
     validate.add_argument('--native-manifest', type=Path)
+    validate.add_argument('--java-manifest', type=Path)
     assemble = subparsers.add_parser('assemble')
     for argument in ('resources', 'dex_directory', 'destination', 'assets'):
         assemble.add_argument(argument, type=Path)
     assemble.add_argument('--native-directory', type=Path)
     assemble.add_argument('--native-manifest', type=Path)
+    assemble.add_argument('--java-directory', type=Path)
+    assemble.add_argument('--java-manifest', type=Path)
     args = parser.parse_args()
     if args.command == 'stage-assets':
         print(json.dumps(stage_assets(args.source, args.destination)))
     elif args.command == 'validate':
-        validate_apk(args.apk, args.assets, args.require_dex, args.native_manifest)
+        validate_apk(args.apk, args.assets, args.require_dex, args.native_manifest, args.java_manifest)
     else:
-        assemble_apk(args.resources, args.dex_directory, args.destination, args.assets, args.native_directory, args.native_manifest)
+        assemble_apk(args.resources, args.dex_directory, args.destination, args.assets, args.native_directory,
+                     args.native_manifest, args.java_directory, args.java_manifest)

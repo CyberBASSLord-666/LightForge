@@ -1,0 +1,41 @@
+{
+  "passed": false,
+  "diagnostic_only": true,
+  "scope": "Exact serial/parallel GAME output, child-worker lifecycle and memory on API 35 emulator; not a release gate or physical-phone speed claim",
+  "errors": [
+    "Command '['/usr/local/lib/android/sdk/platform-tools/adb', 'install', '-r', '/home/runner/work/LightForge/LightForge/candidate/LightForge-game-pool.apk']' returned non-zero exit status 1.",
+    "Host swap activity appeared during qualification; a swap-backed measurement is not accepted",
+    "Final diagnostics: Command '['/usr/local/lib/android/sdk/platform-tools/adb', 'logcat', '-d', '-v', 'threadtime']' timed out after 30 seconds"
+  ],
+  "provenance_sha256": "ad9b46f8b7877d8d77decd0ff5f96cb18274e71ecbe8cb20db76f9218bbb1c7f",
+  "hostCapacity": {
+    "totalBytes": 8323973120,
+    "availableBytes": 7335108608,
+    "swapTotalBytes": 3221221376,
+    "swapFreeBytes": 3221172224,
+    "swapInPages": 0,
+    "swapOutPages": 12,
+    "logicalCpus": 2,
+    "affinityCpus": 2,
+    "configuredGuestMemoryMiB": 8192,
+    "configuredGuestCores": 4,
+    "hostReserveBytes": 1610612736,
+    "scope": "Host resources are measured separately from the advertised Android guest; no physical-phone equivalence or CPU speedup is implied.",
+    "passed": true
+  },
+  "hostSafety": {
+    "samples": 383,
+    "minimumAvailableBytes": 1971941376,
+    "errors": [
+      "Host swap activity appeared during qualification; a swap-backed measurement is not accepted"
+    ],
+    "reserveBytes": 1610612736,
+    "emulatorStopped": true
+  },
+  "memory": {
+    "samples": 0,
+    "renderer_samples": 0,
+    "errors": 0
+  },
+  "completedAt": "2026-09-10T04:13:57.816765+00:00"
+}

@@ -1,0 +1,71 @@
+{
+  "passed": true,
+  "completedUtc": "2026-09-10T04:40:40.994114+00:00",
+  "checks": [
+    {
+      "name": "Complete closure, separate compiler, preserved licenses",
+      "passed": true
+    },
+    {
+      "name": "All 22 APK-root Java resources staged with exact hashes",
+      "passed": true
+    },
+    {
+      "name": "Nonempty staging destination",
+      "passed": true,
+      "rejection": "Java resource staging directory must be empty: /workspace/scratch/9a5ec23b7f4b/androidx-integrity-j59e286y/stage"
+    },
+    {
+      "name": "Corrupted original AAR",
+      "passed": true,
+      "rejection": "Missing or changed dependency archive: /workspace/scratch/9a5ec23b7f4b/androidx-integrity-j59e286y/androidx/androidx.webkit.webkit-1.18.0-alpha01/webkit-1.18.0-alpha01.aar"
+    },
+    {
+      "name": "Corrupted extracted runtime class JAR",
+      "passed": true,
+      "rejection": "Missing or changed extracted dependency: /workspace/scratch/9a5ec23b7f4b/androidx-integrity-j59e286y/androidx/androidx.webkit.webkit-1.18.0-alpha01/extracted/classes.jar"
+    },
+    {
+      "name": "Corrupted compiled-resource input XML",
+      "passed": true,
+      "rejection": "Missing or changed extracted dependency: /workspace/scratch/9a5ec23b7f4b/androidx-integrity-j59e286y/androidx/androidx.core.core-1.1.0/extracted/res/values-uz/values-uz.xml"
+    },
+    {
+      "name": "Corrupted cached Java resource",
+      "passed": true,
+      "rejection": "Missing or changed dependency Java resource: META-INF/androidx.annotation_annotation-experimental.version"
+    },
+    {
+      "name": "Unexpected Java resource",
+      "passed": true,
+      "rejection": "Unexpected files in staged dependency Java resources"
+    },
+    {
+      "name": "Unexpected extracted resource",
+      "passed": true,
+      "rejection": "Unexpected extracted dependency files: res/unexpected.xml"
+    },
+    {
+      "name": "Changed license notice",
+      "passed": true,
+      "rejection": "Missing or changed dependency license or notice: web/licenses/androidx-Apache-2.0-LICENSE.txt"
+    },
+    {
+      "name": "AAR minSdk disagrees with lock",
+      "passed": true,
+      "rejection": "Published AAR requirements differ from the qualified build contract"
+    },
+    {
+      "name": "Symlink staging destination",
+      "passed": true,
+      "rejection": "Dependency paths must not contain symlinks: /workspace/scratch/9a5ec23b7f4b/androidx-integrity-j59e286y/stage-link"
+    },
+    {
+      "name": "Downloaded archive hash mismatch",
+      "passed": true,
+      "rejection": "Dependency download integrity failure: bad.jar"
+    }
+  ],
+  "manifestSha256": "582adee5e9037412fc77abbadf961d4761115944d48b8092c2e3039e4eabfdcb",
+  "bootstrapSha256": "09eb4346ddda9e08724475ac33c083bcd64f8835fa4d182199d40483be8ef9ef"
+}

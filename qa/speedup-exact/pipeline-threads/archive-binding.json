@@ -1,0 +1,442 @@
+{
+  "scope": "Immutable original one-thread baseline and both rejected thread routes. The all-four attempt fails in the beat frontend; the rhythm-one/voice-four attempt fails in Frame-MN10. Neither is a passing shipping-route qualification. No tensors, audio, or model weights included. The third route preserves classifier1 but fails in GAME encoder4 on the three-second Deux input.",
+  "baselineReceipt": "qa/speedup-exact/pipeline-threads/initial-1-vs-4/verification.json",
+  "classifierFourFailureReceipt": "qa/speedup-exact/pipeline-threads/rejected-classifier-four/verification.json",
+  "copies": [
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/initial-1-vs-4/analysis-1.json",
+      "path": "qa/speedup-exact/pipeline-threads/initial-1-vs-4/analysis-1.json",
+      "sha256": "886e74635c9272bd2d3b27c7010ae708ddc9ad68560075c14bfbaa06b172f62f",
+      "bytes": 36445,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/initial-1-vs-4/compile-overlap.json",
+      "path": "qa/speedup-exact/pipeline-threads/initial-1-vs-4/compile-overlap.json",
+      "sha256": "2401384adb54d6abd21882b3a5b9a1ac13a77bf7515151a31fdf3dd39dfe2ea8",
+      "bytes": 837,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/initial-1-vs-4/executed-source/web/analysis/ASSET_MANIFEST.json",
+      "path": "qa/speedup-exact/pipeline-threads/initial-1-vs-4/executed-source/web/analysis/ASSET_MANIFEST.json",
+      "sha256": "c51e0ff381802c8c7d52c100e4a6c762416a3cd04e4fec80aa3f604af2f75424",
+      "bytes": 10377,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/initial-1-vs-4/executed-source/web/analysis/analyzer.js",
+      "path": "qa/speedup-exact/pipeline-threads/initial-1-vs-4/executed-source/web/analysis/analyzer.js",
+      "sha256": "3b2be68e90b2d48665a0c7a267b13207e802304decd5f0764b869284ba706f64",
+      "bytes": 10556,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/initial-1-vs-4/executed-source/web/analysis/bass-notes.js",
+      "path": "qa/speedup-exact/pipeline-threads/initial-1-vs-4/executed-source/web/analysis/bass-notes.js",
+      "sha256": "5b81e2361295a1f8c02086d4668464ed1d7e93c923513c50a2c865a7aeb1531e",
+      "bytes": 14748,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/initial-1-vs-4/executed-source/web/analysis/dsp.js",
+      "path": "qa/speedup-exact/pipeline-threads/initial-1-vs-4/executed-source/web/analysis/dsp.js",
+      "sha256": "32186b9268632cab85cadcb7e84fa1b4e3d8eb4bb9fbdf96a0873067cb9acd71",
+      "bytes": 27384,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/initial-1-vs-4/executed-source/web/analysis/game.js",
+      "path": "qa/speedup-exact/pipeline-threads/initial-1-vs-4/executed-source/web/analysis/game.js",
+      "sha256": "1627851738744a45c6c4c2cbb3b695bad1623f3b41d575f40754ca1a92185227",
+      "bytes": 19549,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/initial-1-vs-4/executed-source/web/analysis/separator-deux.js",
+      "path": "qa/speedup-exact/pipeline-threads/initial-1-vs-4/executed-source/web/analysis/separator-deux.js",
+      "sha256": "95508ddb8cffc7dff6e47b849f7722efd1c901fbacb2c059be392444f872aebe",
+      "bytes": 10079,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/initial-1-vs-4/executed-source/web/analysis/separator-mdx.js",
+      "path": "qa/speedup-exact/pipeline-threads/initial-1-vs-4/executed-source/web/analysis/separator-mdx.js",
+      "sha256": "98cdfcc0dacf115067c6be38271177dbee0c1e08f02e1b557f8bc8230065abb3",
+      "bytes": 11434,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/initial-1-vs-4/executed-source/web/analysis/stem-cache.js",
+      "path": "qa/speedup-exact/pipeline-threads/initial-1-vs-4/executed-source/web/analysis/stem-cache.js",
+      "sha256": "21633cd9e217ecca6e55b9fa04983512e651ddc9a7b9027af13580845ff4fe82",
+      "bytes": 10946,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/initial-1-vs-4/executed-source/web/analysis/vocal-detail.js",
+      "path": "qa/speedup-exact/pipeline-threads/initial-1-vs-4/executed-source/web/analysis/vocal-detail.js",
+      "sha256": "cd760d7a766d9a4ab0ac3a252a10f17a16a797b38e50b2d6712bc6adcd42713f",
+      "bytes": 22476,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/initial-1-vs-4/executed-source/web/analysis/vocal.js",
+      "path": "qa/speedup-exact/pipeline-threads/initial-1-vs-4/executed-source/web/analysis/vocal.js",
+      "sha256": "94483ac6cf5db7532abfba98e7bab7cd826a82ad2adca0296d39fdebd827ac70",
+      "bytes": 9662,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/initial-1-vs-4/executed-source/web/analysis/wav-reader.js",
+      "path": "qa/speedup-exact/pipeline-threads/initial-1-vs-4/executed-source/web/analysis/wav-reader.js",
+      "sha256": "0f0e5216dc1d2ca0bfb25eddacdaa21076990fa7638c22188023607e43d4005f",
+      "bytes": 7705,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/initial-1-vs-4/executed-source/web/analysis/work-store.js",
+      "path": "qa/speedup-exact/pipeline-threads/initial-1-vs-4/executed-source/web/analysis/work-store.js",
+      "sha256": "b6e6a251478ed727cee145418a61b1b7f1755076e0797f0a5a29ecedc4ce8f41",
+      "bytes": 9403,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/initial-1-vs-4/executed-source/web/analysis/worker.js",
+      "path": "qa/speedup-exact/pipeline-threads/initial-1-vs-4/executed-source/web/analysis/worker.js",
+      "sha256": "7774fe4790feda6e51066c15fc51d1bec37720356bf629cf3f7e03fdcf2d3841",
+      "bytes": 18152,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/initial-1-vs-4/input-binding.json",
+      "path": "qa/speedup-exact/pipeline-threads/initial-1-vs-4/input-binding.json",
+      "sha256": "09a7eb48afc0e8597119c5e05109f39ca87491a50b54964f0536a868247beaf3",
+      "bytes": 1071,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/initial-1-vs-4/run.cjs",
+      "path": "qa/speedup-exact/pipeline-threads/initial-1-vs-4/run.cjs",
+      "sha256": "3f3c8574045f6402a6c8043f1e866f9c58995e779c660a560a38cfe53909e988",
+      "bytes": 9974,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/initial-1-vs-4/run.log",
+      "path": "qa/speedup-exact/pipeline-threads/initial-1-vs-4/run.log",
+      "sha256": "0aeba19c837ef73353b76942c37936d990ecd1f46dbe4cf02a0e52b7b7ea909f",
+      "bytes": 9984,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/initial-1-vs-4/source-snapshot-binding.json",
+      "path": "qa/speedup-exact/pipeline-threads/initial-1-vs-4/source-snapshot-binding.json",
+      "sha256": "4bb323d4124b3c08dc39b89d3da5651a409e2fda025b53e0c0397cb37adfaf38",
+      "bytes": 9544,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/initial-1-vs-4/startup-failure.json",
+      "path": "qa/speedup-exact/pipeline-threads/initial-1-vs-4/startup-failure.json",
+      "sha256": "edf947f245fa29b54e88414529e2789c51ead3b522b221983b1a6c2504028595",
+      "bytes": 4763,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/initial-1-vs-4/startup-failure.log",
+      "path": "qa/speedup-exact/pipeline-threads/initial-1-vs-4/startup-failure.log",
+      "sha256": "81e213969b09d395ca86836affdb910690347ce517655883d69ad676f26fb04f",
+      "bytes": 2090,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/initial-1-vs-4/verification.json",
+      "path": "qa/speedup-exact/pipeline-threads/initial-1-vs-4/verification.json",
+      "sha256": "75a2e5033459502b6b490f316cd4cea7e0db275159ee179a6cef61b7ad4712f3",
+      "bytes": 429054,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/initial-1-vs-4/worker-bootstrap.js",
+      "path": "qa/speedup-exact/pipeline-threads/initial-1-vs-4/worker-bootstrap.js",
+      "sha256": "5dee0fc0ea6521192fc9564e78813c39dc575091ef08c7daf48237a6534eab19",
+      "bytes": 2643,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/final-android-routing/compile-overlap.json",
+      "path": "qa/speedup-exact/pipeline-threads/rejected-classifier-four/compile-overlap.json",
+      "sha256": "e321eba4a11d33129afb65549057181d2bc75ead6d081ab02ae0b99050ef5406",
+      "bytes": 686,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/final-android-routing/executed-source/web/analysis/ASSET_MANIFEST.json",
+      "path": "qa/speedup-exact/pipeline-threads/rejected-classifier-four/executed-source/web/analysis/ASSET_MANIFEST.json",
+      "sha256": "9ca213d8da2c288f997438b1fc3b03e5e445deeff2970e25689130993dde25ff",
+      "bytes": 10377,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/final-android-routing/executed-source/web/analysis/analyzer.js",
+      "path": "qa/speedup-exact/pipeline-threads/rejected-classifier-four/executed-source/web/analysis/analyzer.js",
+      "sha256": "459783a4cca87bad927bac88215b224bc4cc8f98540edbf1fc527041c4403299",
+      "bytes": 10794,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/final-android-routing/executed-source/web/analysis/bass-notes.js",
+      "path": "qa/speedup-exact/pipeline-threads/rejected-classifier-four/executed-source/web/analysis/bass-notes.js",
+      "sha256": "5b81e2361295a1f8c02086d4668464ed1d7e93c923513c50a2c865a7aeb1531e",
+      "bytes": 14748,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/final-android-routing/executed-source/web/analysis/dsp.js",
+      "path": "qa/speedup-exact/pipeline-threads/rejected-classifier-four/executed-source/web/analysis/dsp.js",
+      "sha256": "32186b9268632cab85cadcb7e84fa1b4e3d8eb4bb9fbdf96a0873067cb9acd71",
+      "bytes": 27384,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/final-android-routing/executed-source/web/analysis/game.js",
+      "path": "qa/speedup-exact/pipeline-threads/rejected-classifier-four/executed-source/web/analysis/game.js",
+      "sha256": "1627851738744a45c6c4c2cbb3b695bad1623f3b41d575f40754ca1a92185227",
+      "bytes": 19549,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/final-android-routing/executed-source/web/analysis/separator-deux.js",
+      "path": "qa/speedup-exact/pipeline-threads/rejected-classifier-four/executed-source/web/analysis/separator-deux.js",
+      "sha256": "95508ddb8cffc7dff6e47b849f7722efd1c901fbacb2c059be392444f872aebe",
+      "bytes": 10079,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/final-android-routing/executed-source/web/analysis/separator-mdx.js",
+      "path": "qa/speedup-exact/pipeline-threads/rejected-classifier-four/executed-source/web/analysis/separator-mdx.js",
+      "sha256": "98cdfcc0dacf115067c6be38271177dbee0c1e08f02e1b557f8bc8230065abb3",
+      "bytes": 11434,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/final-android-routing/executed-source/web/analysis/stem-cache.js",
+      "path": "qa/speedup-exact/pipeline-threads/rejected-classifier-four/executed-source/web/analysis/stem-cache.js",
+      "sha256": "21633cd9e217ecca6e55b9fa04983512e651ddc9a7b9027af13580845ff4fe82",
+      "bytes": 10946,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/final-android-routing/executed-source/web/analysis/vocal-detail.js",
+      "path": "qa/speedup-exact/pipeline-threads/rejected-classifier-four/executed-source/web/analysis/vocal-detail.js",
+      "sha256": "cd760d7a766d9a4ab0ac3a252a10f17a16a797b38e50b2d6712bc6adcd42713f",
+      "bytes": 22476,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/final-android-routing/executed-source/web/analysis/vocal.js",
+      "path": "qa/speedup-exact/pipeline-threads/rejected-classifier-four/executed-source/web/analysis/vocal.js",
+      "sha256": "94483ac6cf5db7532abfba98e7bab7cd826a82ad2adca0296d39fdebd827ac70",
+      "bytes": 9662,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/final-android-routing/executed-source/web/analysis/wav-reader.js",
+      "path": "qa/speedup-exact/pipeline-threads/rejected-classifier-four/executed-source/web/analysis/wav-reader.js",
+      "sha256": "0f0e5216dc1d2ca0bfb25eddacdaa21076990fa7638c22188023607e43d4005f",
+      "bytes": 7705,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/final-android-routing/executed-source/web/analysis/work-store.js",
+      "path": "qa/speedup-exact/pipeline-threads/rejected-classifier-four/executed-source/web/analysis/work-store.js",
+      "sha256": "b6e6a251478ed727cee145418a61b1b7f1755076e0797f0a5a29ecedc4ce8f41",
+      "bytes": 9403,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/final-android-routing/executed-source/web/analysis/worker.js",
+      "path": "qa/speedup-exact/pipeline-threads/rejected-classifier-four/executed-source/web/analysis/worker.js",
+      "sha256": "d988b77ea4281b13b5c9d7b550f01c3fadb36a87a97be28209cb08ac5e360d49",
+      "bytes": 19193,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/final-android-routing/run.cjs",
+      "path": "qa/speedup-exact/pipeline-threads/rejected-classifier-four/run.cjs",
+      "sha256": "8e4c780417cd154c7944d58471fea304169e045877cdefd5aa2d5505db2fe853",
+      "bytes": 10772,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/final-android-routing/run.log",
+      "path": "qa/speedup-exact/pipeline-threads/rejected-classifier-four/run.log",
+      "sha256": "cc603014aa4e968e0714b829ebb4e27c9b104829da63f7ce3ff3436c8721468e",
+      "bytes": 7356,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/final-android-routing/source-snapshot-binding.json",
+      "path": "qa/speedup-exact/pipeline-threads/rejected-classifier-four/source-snapshot-binding.json",
+      "sha256": "e98bc4d2f652f5a756f31e8447307f040740c097fa04470305a1779d5104e383",
+      "bytes": 8771,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/final-android-routing/verification.json",
+      "path": "qa/speedup-exact/pipeline-threads/rejected-classifier-four/verification.json",
+      "sha256": "aabe138ff4bc4efa909edaa0f33f6d07ad295b239894f035a94dec6b03fd705c",
+      "bytes": 771475,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/final-android-routing/worker-bootstrap.js",
+      "path": "qa/speedup-exact/pipeline-threads/rejected-classifier-four/worker-bootstrap.js",
+      "sha256": "f5d9d3ccc2598db19badbba35b1a13445b0da077cbaced0eadc3f1ee81ee69c0",
+      "bytes": 2848,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/input-binding.json",
+      "path": "qa/speedup-exact/pipeline-threads/input-binding.json",
+      "sha256": "09a7eb48afc0e8597119c5e05109f39ca87491a50b54964f0536a868247beaf3",
+      "bytes": 1071,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/falcon-mdx-3s-binding.json",
+      "path": "qa/speedup-exact/pipeline-threads/falcon-mdx-3s-binding.json",
+      "sha256": "f150baa742c6a49f671d9823a6b33a4b4ceba4b63450a562db80ec9947b17730",
+      "bytes": 1143,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/final-classifier-handoff/executed-source/web/analysis/ASSET_MANIFEST.json",
+      "path": "qa/speedup-exact/pipeline-threads/rejected-game-encoder-four/executed-source/web/analysis/ASSET_MANIFEST.json",
+      "sha256": "a3e7c95250613b37fb629dcfa11d325cb333fa7a006a6d4728ce4f176382cc50",
+      "bytes": 10377,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/final-classifier-handoff/executed-source/web/analysis/analyzer.js",
+      "path": "qa/speedup-exact/pipeline-threads/rejected-game-encoder-four/executed-source/web/analysis/analyzer.js",
+      "sha256": "2c2b19d19c40f2ed57df36ac9c2a86117559fc4a2582bc24736104196a2ff90d",
+      "bytes": 11295,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/final-classifier-handoff/executed-source/web/analysis/bass-notes.js",
+      "path": "qa/speedup-exact/pipeline-threads/rejected-game-encoder-four/executed-source/web/analysis/bass-notes.js",
+      "sha256": "5b81e2361295a1f8c02086d4668464ed1d7e93c923513c50a2c865a7aeb1531e",
+      "bytes": 14748,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/final-classifier-handoff/executed-source/web/analysis/dsp.js",
+      "path": "qa/speedup-exact/pipeline-threads/rejected-game-encoder-four/executed-source/web/analysis/dsp.js",
+      "sha256": "32186b9268632cab85cadcb7e84fa1b4e3d8eb4bb9fbdf96a0873067cb9acd71",
+      "bytes": 27384,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/final-classifier-handoff/executed-source/web/analysis/game.js",
+      "path": "qa/speedup-exact/pipeline-threads/rejected-game-encoder-four/executed-source/web/analysis/game.js",
+      "sha256": "1627851738744a45c6c4c2cbb3b695bad1623f3b41d575f40754ca1a92185227",
+      "bytes": 19549,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/final-classifier-handoff/executed-source/web/analysis/separator-deux.js",
+      "path": "qa/speedup-exact/pipeline-threads/rejected-game-encoder-four/executed-source/web/analysis/separator-deux.js",
+      "sha256": "95508ddb8cffc7dff6e47b849f7722efd1c901fbacb2c059be392444f872aebe",
+      "bytes": 10079,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/final-classifier-handoff/executed-source/web/analysis/separator-mdx.js",
+      "path": "qa/speedup-exact/pipeline-threads/rejected-game-encoder-four/executed-source/web/analysis/separator-mdx.js",
+      "sha256": "98cdfcc0dacf115067c6be38271177dbee0c1e08f02e1b557f8bc8230065abb3",
+      "bytes": 11434,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/final-classifier-handoff/executed-source/web/analysis/stem-cache.js",
+      "path": "qa/speedup-exact/pipeline-threads/rejected-game-encoder-four/executed-source/web/analysis/stem-cache.js",
+      "sha256": "21633cd9e217ecca6e55b9fa04983512e651ddc9a7b9027af13580845ff4fe82",
+      "bytes": 10946,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/final-classifier-handoff/executed-source/web/analysis/vocal-detail.js",
+      "path": "qa/speedup-exact/pipeline-threads/rejected-game-encoder-four/executed-source/web/analysis/vocal-detail.js",
+      "sha256": "cd760d7a766d9a4ab0ac3a252a10f17a16a797b38e50b2d6712bc6adcd42713f",
+      "bytes": 22476,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/final-classifier-handoff/executed-source/web/analysis/vocal.js",
+      "path": "qa/speedup-exact/pipeline-threads/rejected-game-encoder-four/executed-source/web/analysis/vocal.js",
+      "sha256": "94483ac6cf5db7532abfba98e7bab7cd826a82ad2adca0296d39fdebd827ac70",
+      "bytes": 9662,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/final-classifier-handoff/executed-source/web/analysis/wav-reader.js",
+      "path": "qa/speedup-exact/pipeline-threads/rejected-game-encoder-four/executed-source/web/analysis/wav-reader.js",
+      "sha256": "0f0e5216dc1d2ca0bfb25eddacdaa21076990fa7638c22188023607e43d4005f",
+      "bytes": 7705,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/final-classifier-handoff/executed-source/web/analysis/work-store.js",
+      "path": "qa/speedup-exact/pipeline-threads/rejected-game-encoder-four/executed-source/web/analysis/work-store.js",
+      "sha256": "b6e6a251478ed727cee145418a61b1b7f1755076e0797f0a5a29ecedc4ce8f41",
+      "bytes": 9403,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/final-classifier-handoff/executed-source/web/analysis/worker.js",
+      "path": "qa/speedup-exact/pipeline-threads/rejected-game-encoder-four/executed-source/web/analysis/worker.js",
+      "sha256": "08c72615e2a90c306624c8108829254045dd790c73c76f9d3bbaac88d7676bd2",
+      "bytes": 21993,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/final-classifier-handoff/run.cjs",
+      "path": "qa/speedup-exact/pipeline-threads/rejected-game-encoder-four/run.cjs",
+      "sha256": "41eff85f29669a0d295df42f347f51491a23c78fb0622489c3c5b8816208bd9d",
+      "bytes": 11312,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/final-classifier-handoff/run.log",
+      "path": "qa/speedup-exact/pipeline-threads/rejected-game-encoder-four/run.log",
+      "sha256": "dc8dc6db5e007f1a5fedeb70650a04ed4cb039552f341c2f0db9b54d6205223a",
+      "bytes": 8554,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/final-classifier-handoff/source-snapshot-binding.json",
+      "path": "qa/speedup-exact/pipeline-threads/rejected-game-encoder-four/source-snapshot-binding.json",
+      "sha256": "49e0e3d76d21162f05b04f51a88537189fea64d16684e254d9a78196eb4f6372",
+      "bytes": 9452,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/final-classifier-handoff/verification.json",
+      "path": "qa/speedup-exact/pipeline-threads/rejected-game-encoder-four/verification.json",
+      "sha256": "4ef5098fdc11dafb8d098118ed8d98636909e43a6df5e2a3b06bd4a5f1b01c1c",
+      "bytes": 778973,
+      "exactCopy": true
+    },
+    {
+      "originalPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/final-classifier-handoff/worker-bootstrap.js",
+      "path": "qa/speedup-exact/pipeline-threads/rejected-game-encoder-four/worker-bootstrap.js",
+      "sha256": "f5d9d3ccc2598db19badbba35b1a13445b0da077cbaced0eadc3f1ee81ee69c0",
+      "bytes": 2848,
+      "exactCopy": true
+    }
+  ],
+  "gameEncoderFourFailureReceipt": "qa/speedup-exact/pipeline-threads/rejected-game-encoder-four/verification.json"
+}

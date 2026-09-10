@@ -1,0 +1,12 @@
+{
+  "scope": "Ancillary AndroidX dependency compile permitted during strict byte qualification. No concurrent neural benchmark was authorized. Full-pipeline timing is not controlled performance evidence.",
+  "notifiedStartUtc": "2026-09-10T04:30:37.689407+00:00",
+  "work": "AAPT2 resource link, javac and D8 for official 2.93-MB AndroidX dependency closure.",
+  "status": "completed",
+  "reportedStartUtc": "2026-09-10T04:30:41.844554Z",
+  "reportedFinishUtc": "2026-09-10T04:30:48.373600Z",
+  "reportedWallSeconds": 6.53,
+  "precedingAaptOnlySeconds": 0.1,
+  "finishNotificationRecordedUtc": "2026-09-10T04:34:08.038413+00:00",
+  "timeProvenance": "Start and finish UTC supplied by mdx_transport_audit agent; notification timestamps recorded locally. They are preserved separately without reconciling any executor clock difference."
+}

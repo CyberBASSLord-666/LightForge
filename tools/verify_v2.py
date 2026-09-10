@@ -11,7 +11,7 @@ OUT.mkdir(parents=True,exist_ok=True)
 TESTS=['engine.test.cjs','engine-manual.test.cjs','preview-engine.test.cjs','preview-lifecycle.test.cjs','light-planner.test.cjs',
        'movement-planner.test.cjs','composer-1.6.test.cjs','role-composer-1.6.test.cjs',
        'role-reference-composer-1.6.test.cjs','bass-notes.test.cjs','vocal-detail.test.cjs',
-       'stem-cache.test.cjs','wav-reader.test.cjs','precision-2.0.test.cjs','migration-2.0.test.cjs','precision-ui-2.0.test.cjs','cockpit-2.1.test.cjs','game-2.1.test.cjs','game-pool.test.cjs','background-2.2.test.cjs','deux-2.2.1.test.cjs','analysis-recovery-2.2.1.test.cjs','native-deux-bridge.test.cjs','native-mdx-bridge.test.cjs','mdx-downstream-compare.test.cjs','separator-mdx-runtime.test.cjs','native-runtime-guard.test.cjs','diagnostics.test.cjs']
+       'stem-cache.test.cjs','wav-reader.test.cjs','precision-2.0.test.cjs','migration-2.0.test.cjs','precision-ui-2.0.test.cjs','cockpit-2.1.test.cjs','game-2.1.test.cjs','game-pool.test.cjs','background-2.2.test.cjs','deux-2.2.1.test.cjs','analysis-recovery-2.2.1.test.cjs','analysis-thread-policy.test.cjs','native-deux-bridge.test.cjs','native-mdx-bridge.test.cjs','mdx-downstream-compare.test.cjs','separator-mdx-runtime.test.cjs','native-runtime-guard.test.cjs','diagnostics.test.cjs']
 # The 2.2.2 adapter-retention test is intentionally historical: its contract
 # rejects any later analysis-manifest transition. Keep it runnable directly,
 # but do not let a new release fail the current regression gate by design.
@@ -21,7 +21,7 @@ def digest(p):
     with p.open('rb') as f:return hashlib.file_digest(f,'sha256').hexdigest()
 
 def hashes():
-    paths=[ROOT/'version.json',ROOT/'package.json',ROOT/'package-lock.json',ROOT/'build.sh',ROOT/'android/native-runtime.json',ROOT/'qa/release-1.6.0/prepare-musdb-fixtures.py']
+    paths=[ROOT/'version.json',ROOT/'package.json',ROOT/'package-lock.json',ROOT/'build.sh',ROOT/'android/native-runtime.json',ROOT/'android/androidx-runtime.json',ROOT/'qa/release-1.6.0/prepare-musdb-fixtures.py']
     for folder in ['web','android','tools','tests']:
         paths.extend(p for p in (ROOT/folder).rglob('*') if p.is_file() and p.suffix in {'.js','.cjs','.mjs','.java','.css','.html','.py','.xml'} and '__pycache__' not in p.parts)
     return {str(p.relative_to(ROOT)):digest(p) for p in sorted(set(paths))}

@@ -1,0 +1,18 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> lightforge@2.2.5 test
+> python3 tools/verify_v2.py
+
+{
+  "release": "2.2.5",
+  "passed": true,
+  "checks": [
+    "All selected engine, model-component, migration and DOM integration suites passed.",
+    "Python APK archive and bounded release packaging regression suites passed.",
+    "Every bundled analysis asset matches the current manifest; actual model quality and runtime are checked separately."
+  ],
+  "errors": [],
+  "scope": "Node engine/worker/WebCrypto/gzip, real app DOM integration with simulated native and graphics, Python archive tests. Not a visual browser or physical Android/Tesla test.",
+  "analysis_manifest_sha256": "a3e7c95250613b37fb629dcfa11d325cb333fa7a006a6d4728ce4f176382cc50",
+  "completedAt": "2026-09-10T04:53:27.961008+00:00"
+}

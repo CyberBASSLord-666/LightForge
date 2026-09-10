@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.*;
 
 public final class MainActivity extends Activity {
-    private static final String ORIGIN="https://appassets.androidplatform.net";
+    private static final String ORIGIN=WebViewIsolation.ORIGIN;
     private static final int PICK_AUDIO=101,SAVE_ZIP=102,PICK_BACKUP=103,SAVE_DIAGNOSTICS=104;
     private static final ExecutorService diagnosticWorker=Executors.newSingleThreadExecutor();
     private static final AtomicBoolean diagnosticExporting=new AtomicBoolean();
@@ -90,7 +90,7 @@ public final class MainActivity extends Activity {
         else registerReceiver(analysisReceiver,updates);
         analysisReceiverRegistered=true;
         FrameLayout root=new FrameLayout(this);root.setBackgroundColor(Color.rgb(8,13,24));
-        web=new WebView(this);web.setBackgroundColor(Color.rgb(8,13,24));
+        web=new WebView(this);WebViewIsolation.configure(web);web.setBackgroundColor(Color.rgb(8,13,24));
         root.addView(web,new FrameLayout.LayoutParams(-1,-1));setContentView(root);
         if(Build.VERSION.SDK_INT>=30) {
             getWindow().setDecorFitsSystemWindows(false);
@@ -117,7 +117,7 @@ public final class MainActivity extends Activity {
             }
             @Override public boolean shouldOverrideUrlLoading(WebView view,WebResourceRequest request) {
                 Uri uri=request.getUrl();
-                if(ORIGIN.equals(uri.getScheme()+"://"+uri.getAuthority())) return false;
+                if(WebViewIsolation.isTrustedOrigin(uri)) return false;
                 if(request.isForMainFrame()) openExternal(uri.toString());
                 return true;
             }

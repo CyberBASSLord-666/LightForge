@@ -1,0 +1,1 @@
+Historical seven-test policy/disabled-pool behavior proof before the isolated classifier-stage refactor. Original source hashes resolve to executed-source/ snapshots here. This is not numerical or Android runtime qualification.

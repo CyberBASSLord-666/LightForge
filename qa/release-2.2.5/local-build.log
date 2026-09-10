@@ -1,0 +1,82 @@
+Verified 74 bundled analysis assets.
+Verified native ONNX Runtime 1.25.1 with 8 JNI libraries.
+Verified 12 official AndroidX runtime dependencies and 22 Java resources; D8 8.6.17.
+Verified native ONNX Runtime 1.25.1 with 8 JNI libraries.
+Verified 12 official AndroidX runtime dependencies and 22 Java resources; D8 8.6.17.
+{"files": 118, "bytes": 1524986279}
+Compiling Android resources and bundling offline assets…
+Compiling Java and Android bytecode…
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Aligning and signing APK…
+{
+  "apk": "LightForge-2.2.5.apk",
+  "update_compatible": true,
+  "signing_certificate_sha256": "7187d6aa935d5b7d2d656cb87913af95fe1ca3a4b1653036d1d8d890e2016c6b",
+  "bytes": 1205386387,
+  "sha256": "fc8bc720cb59c0ea5744dbce5b16e782226112710c888ad34e5ff7180e3eaef1",
+  "zip_integrity": "passed",
+  "alignment": "passed",
+  "signature": "verified",
+  "min_sdk": 26,
+  "target_sdk": 35,
+  "compile_sdk": 35,
+  "version_name": "2.2.5",
+  "version_code": 20205,
+  "androidx_manifest_sha256": "582adee5e9037412fc77abbadf961d4761115944d48b8092c2e3039e4eabfdcb",
+  "androidx_artifacts": [
+    {
+      "coordinate": "androidx.webkit:webkit:1.18.0-alpha01",
+      "sha256": "3c5daec56259a3d55c2608a182719356391d7b5558768c043075237721560eb9"
+    },
+    {
+      "coordinate": "androidx.core:core:1.1.0",
+      "sha256": "76c7cfbe596fe3c09a6983bf1c89e889299c08ac9a3b52ce5182a088d056647e"
+    },
+    {
+      "coordinate": "androidx.annotation:annotation-jvm:1.8.1",
+      "sha256": "9aab326d9492800991854360ac248f493ce7f7c3183519309b78ace9e240f6f6"
+    },
+    {
+      "coordinate": "androidx.annotation:annotation-experimental:1.3.0",
+      "sha256": "abfd29c8556e5bd0325a9f769ab9e9d154ff4a5515c476cdd5a2a8285b1b19dc"
+    },
+    {
+      "coordinate": "org.jetbrains.kotlin:kotlin-stdlib:2.1.20",
+      "sha256": "1bcc74e8ce84e2c25eaafde10f1248349cce3062b6e36978cbeec610db1e930a"
+    },
+    {
+      "coordinate": "org.jspecify:jspecify:1.0.0",
+      "sha256": "1fad6e6be7557781e4d33729d49ae1cdc8fdda6fe477bb0cc68ce351eafdfbab"
+    },
+    {
+      "coordinate": "androidx.lifecycle:lifecycle-runtime:2.0.0",
+      "sha256": "e4afc9e636183f6f3e0edf1cf46121a492ffd2c673075bb07f55c7a99dd43cfb"
+    },
+    {
+      "coordinate": "androidx.lifecycle:lifecycle-common:2.0.0",
+      "sha256": "7bad7a188804adea6fa1f35d5ef99b705f20bd93ecadde484760ff86b535fefc"
+    },
+    {
+      "coordinate": "androidx.arch.core:core-common:2.0.0",
+      "sha256": "4b80b337779b526e64b0ee0ca9e0df43b808344d145f8e9b1c42a134dac57ad8"
+    },
+    {
+      "coordinate": "androidx.versionedparcelable:versionedparcelable:1.1.0",
+      "sha256": "9a1d77140ac222b7866b5054ee7d159bc1800987ed2d46dd6afdd145abb710c1"
+    },
+    {
+      "coordinate": "androidx.collection:collection:1.0.0",
+      "sha256": "9c8d117b5c2bc120a1cdfeb857e05b495b16c36013570372a708f7827e3ac9f9"
+    },
+    {
+      "coordinate": "org.jetbrains:annotations:13.0",
+      "sha256": "ace2a10dc8e2d5fd34925ecac03e4988b2c0f851650c94b8cef49ba1bd111478"
+    }
+  ],
+  "d8_compiler": {
+    "coordinate": "com.android.tools:r8:8.6.17",
+    "sha256": "e54ccdef1287768e6d9a514d3eb2e076b02c290a26a08e5166684fa4a83a01aa"
+  }
+}
+Ready: /workspace/scratch/9a5ec23b7f4b/LightForge/dist/LightForge-2.2.5.apk

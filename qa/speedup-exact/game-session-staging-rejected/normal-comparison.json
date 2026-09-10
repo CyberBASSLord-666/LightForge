@@ -1,0 +1,103 @@
+{
+  "scope": "Memory and exact-byte comparison only; stage timings may overlap root build/inference and are not controlled performance evidence.",
+  "baselinePath": "/workspace/scratch/9a5ec23b7f4b/game-pool/geometry16/geometry-demo-20s.json",
+  "stagedPath": "/workspace/scratch/9a5ec23b7f4b/game-session-staging/staged-normal-demo-20s.json",
+  "graphCallOrderExact": true,
+  "graphs": [
+    {
+      "name": "encoder",
+      "inputsExact": true,
+      "outputsExact": true
+    },
+    {
+      "name": "dur2bd",
+      "inputsExact": true,
+      "outputsExact": true
+    },
+    {
+      "name": "segmenter",
+      "inputsExact": true,
+      "outputsExact": true
+    },
+    {
+      "name": "segmenter",
+      "inputsExact": true,
+      "outputsExact": true
+    },
+    {
+      "name": "segmenter",
+      "inputsExact": true,
+      "outputsExact": true
+    },
+    {
+      "name": "segmenter",
+      "inputsExact": true,
+      "outputsExact": true
+    },
+    {
+      "name": "segmenter",
+      "inputsExact": true,
+      "outputsExact": true
+    },
+    {
+      "name": "segmenter",
+      "inputsExact": true,
+      "outputsExact": true
+    },
+    {
+      "name": "segmenter",
+      "inputsExact": true,
+      "outputsExact": true
+    },
+    {
+      "name": "segmenter",
+      "inputsExact": true,
+      "outputsExact": true
+    },
+    {
+      "name": "bd2dur",
+      "inputsExact": true,
+      "outputsExact": true
+    },
+    {
+      "name": "estimator",
+      "inputsExact": true,
+      "outputsExact": true
+    }
+  ],
+  "unroundedNotesExact": true,
+  "baselinePeakRssBytes": 1636130816,
+  "stagedPeakRssBytes": 1326026752,
+  "reductionFraction": 0.18953500598328687,
+  "recordedSeconds": {
+    "baseline": 88.06435884,
+    "staged": 91.712322755
+  },
+  "watchdog": {
+    "scope": "An independent watchdog thread samples process.memoryUsage().rss; process.kill uses the process namespace directly.",
+    "rssCeilingBytes": 2684354560,
+    "maxObservedRssBytes": 1326026752,
+    "currentRssBytes": 1326026752,
+    "safetyStop": false,
+    "pid": 15
+  },
+  "passed": true,
+  "normalTwoLanesPlus512MiBBytes": 3188924416,
+  "sourceBindings": {
+    "adapter": {
+      "path": "/workspace/scratch/9a5ec23b7f4b/LightForge/web/analysis/game.js",
+      "sha256": "1627851738744a45c6c4c2cbb3b695bad1623f3b41d575f40754ca1a92185227"
+    },
+    "harness": {
+      "path": "/workspace/scratch/9a5ec23b7f4b/game-session-staging/staged.cjs",
+      "sha256": "e2b8e34eace59ea2e2a2a7f5d7d56aaf39d6092f9223c9df60dbaae667a337a5"
+    },
+    "inputManifest": {
+      "path": "/workspace/scratch/9a5ec23b7f4b/game-pool/geometry16/inputs.json",
+      "sha256": "a9ac122cff31b254e32b6030e88891f301ceb083bdafe193c8b97cb3af8ba888"
+    }
+  },
+  "decision": "Do not implement session-only staging as a pooling enabler for the reported device memory conditions: even two normal measured peaks plus reserve exceed the highest reported available memory; dense estimation would be more demanding.",
+  "denseFollowOnRun": false,
+  "watchdogLimitation": "Independent watchdog thread adds its own V8 worker overhead to the staged process. Baseline run had no such watchdog. This biases measured savings downward but does not supply the substantial margin needed for dense pooling."
+}

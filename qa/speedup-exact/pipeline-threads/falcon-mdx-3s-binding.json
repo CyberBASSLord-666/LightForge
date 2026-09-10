@@ -1,0 +1,18 @@
+{
+  "sourcePath": "/workspace/scratch/9a5ec23b7f4b/native-mdx-comparison-2.2.4/falcon-start/wasm-waveform.float32le",
+  "sourceSha256": "3b928e6b749283788de5f27a0685754cbead48fe8b76752ca90b5354165c280b",
+  "sourceProvenance": "Original 2.2.4 MDX comparison falcon-start WASM output, generated from committed licensed qa/release-1.6.0/fixtures/falcon-mix.wav with source context start -3840 and unchanged production frontend, both polarity passes and compensate decoder.",
+  "sourceMixtureSha256": "effbbe3e3c0df821bf3cfa6535360b18339ded8041992373b41f8344998dba99",
+  "cropFirstSample": 3840,
+  "cropLastSample": 136140,
+  "samples": 132300,
+  "sampleRate": 44100,
+  "durationSeconds": 3,
+  "outputPath": "/workspace/scratch/9a5ec23b7f4b/pipeline-thread-qualification/falcon-mdx-3s.float32le",
+  "outputSha256": "5cfb46f063a2263e56c54d176841e0f6b1cfb69feb894896ef6875c697e3de22",
+  "bytes": 529200,
+  "seed": 2025,
+  "language": 0,
+  "sampleBytesUnchanged": true,
+  "scope": "Three-second source-aligned separated vocal PCM, cropped from actual 2.2.4 MDX WASM inference; not a ground-truth vocal stem or the newer full-pipeline Deux output."
+}

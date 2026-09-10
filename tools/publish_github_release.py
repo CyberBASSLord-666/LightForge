@@ -9,7 +9,7 @@ import subprocess
 import sys
 import zipfile
 
-from apk_archive import verify_native_libraries
+from apk_archive import verify_native_libraries, verify_java_resources
 from apk_delta import apply_delta, digest
 from package_release import SIGNING_SHA256
 
@@ -114,6 +114,7 @@ def verify_apk(apk, version):
     require('android.permission.INTERNET' not in badging, 'Unexpected Internet permission')
     with zipfile.ZipFile(apk) as archive:
         verify_native_libraries(archive, ROOT/'android/native-runtime.json')
+        verify_java_resources(archive, ROOT/'android/androidx-runtime.json')
         require(archive.testzip() is None, 'APK CRC failure')
         names = archive.namelist()
         require(len(set(names)) == len(names), 'Duplicate APK paths')
