@@ -6,6 +6,11 @@ output. It measures exported signal and explicit-planning characteristics; it
 does not claim music-detection accuracy, human preference, or real-vehicle
 behavior.
 
+`ShowEngine.generate()` attaches the report at
+`show.choreography.quality` immediately after final synchronization review. The
+interactive page and the composition Web Worker load the sidecar before
+`show-engine.js`; CommonJS callers receive it through the engine dependency.
+
 ```js
 const Quality=require('./web/engine/choreography-quality.js');
 const report=Quality.evaluate(show, {

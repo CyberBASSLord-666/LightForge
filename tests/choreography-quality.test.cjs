@@ -1,7 +1,10 @@
 'use strict';
 const test=require('node:test');
 const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
 const Quality=require('../web/engine/choreography-quality.js');
+const Engine=require('../web/engine/show-engine.js');
 
 function fixture(){
   const frames=new Uint8Array(12*4),set=(frame,channel,value)=>{frames[frame*4+channel-1]=value;};
@@ -88,4 +91,30 @@ test('quality sidecar rejects malformed frames without attempting a repair',()=>
   const result=Quality.evaluate(bad);
   assert.equal(result.validInput,false);
   assert.match(result.errors[0],/do not agree/);
+});
+
+test('ShowEngine attaches a read-only quality report without changing default FSEQ bytes',()=>{
+  const music={
+    duration:8,bpm:120,beatConfidence:.95,
+    beats:Array.from({length:16},(_,index)=>index*.5),downbeats:[0,2,4,6],
+    onsets:[{time:1,strength:.9,band:'bass'},{time:2,strength:.7,band:'mid'}],
+    sections:[{start:0,end:4,energy:.45,label:'Verse'},{start:4,end:8,energy:.8,label:'Peak'}],
+    waveform:Array(80).fill(.65)
+  };
+  const show=Engine.generate(music,{stepMs:20,dance:'off',seed:731});
+  assert.equal(show.choreography.quality.validInput,true);
+  assert.equal(show.choreography.quality.hierarchy.assessed,false,'no unlabelled target is promoted to a salience tier');
+  const frames=Uint8Array.from(show.frames),before=Engine.fseq(show,'quality-fixture.wav');
+  show.choreography.quality=Quality.evaluate(show);
+  assert.deepEqual(show.frames,frames);
+  assert.deepEqual(Engine.fseq(show,'quality-fixture.wav'),before,'diagnostic refresh must leave exported FSEQ bytes identical');
+});
+
+test('interactive and composition-worker engine contexts load quality diagnostics before ShowEngine',()=>{
+  const html=fs.readFileSync(path.join(__dirname,'../web/index.html'),'utf8');
+  const sync=html.indexOf('engine/sync-review.js'),quality=html.indexOf('engine/choreography-quality.js'),engine=html.indexOf('engine/show-engine.js');
+  assert.ok(sync>=0&&quality>sync&&engine>quality);
+  const worker=fs.readFileSync(path.join(__dirname,'../web/engine/worker.js'),'utf8');
+  const workerQuality=worker.indexOf("'choreography-quality.js'"),workerEngine=worker.indexOf("'show-engine.js'");
+  assert.ok(workerQuality>=0&&workerEngine>workerQuality);
 });
