@@ -255,13 +255,16 @@ engine tests. Those are contract tests only. A runtime or production-readiness
 claim still requires a real locked corpus, paired reports, valid review evidence
 when required, and an actual gate result.
 
-For the manually dispatched GitHub workflow, provide the artifact name, source
-repository, and source run ID for both baseline and candidate. The workflow has
-`actions: read` explicitly and downloads each artifact from exactly that source;
-it never guesses the current run. It runs only from protected `main`, requires
-the protected `lightforge-release-quality` environment, and rejects an absent
-trusted policy/corpus/digest before comparison. Candidate artifacts contain
-only `benchmark.json`; the policy and locked manifest are materialized from the
+For the manually dispatched GitHub workflow, provide the artifact name and
+exact successful source run ID for both baseline and candidate. The workflow
+has `actions: read` explicitly and downloads each artifact from that run ID in
+this LightForge repository only; it never guesses the current run or accepts a
+cross-repository artifact. Dispatchers must record source run URLs from the
+approved locked-benchmark workflow in the release evidence. The comparison runs
+only from protected `main`, requires the protected
+`lightforge-release-quality` environment, and rejects an absent trusted
+policy/corpus/digest before comparison. Candidate artifacts contain only
+`benchmark.json`; the policy and locked manifest are materialized from the
 protected environment and the trusted digest is passed through
 `--trusted-release-policy-sha256`. This prevents a candidate-supplied policy,
 corpus, verifier key, or self-signed review from becoming a release authority.

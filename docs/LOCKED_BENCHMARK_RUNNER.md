@@ -144,6 +144,13 @@ python3 tools/performance_quality_gate.py \
   --output artifacts/performance-quality-report.json
 ```
 
+That checked-in `qa/performance-gate-policy.json` is template-only. A release
+comparison instead uses the protected release policy and manifest authority and
+adds `--trusted-release-policy-sha256` from that authority; see
+`PERFORMANCE_QUALITY_GATE.md` for the protected-environment invocation. Passing
+a policy or manifest from the candidate artifact cannot produce a
+production-ready result.
+
 For every release candidate, make the candidate declaration and externally
 attested blinded review part of the aggregate itself. The baseline aggregate
 must use `--report-side baseline` and cannot carry candidate review fields.
@@ -173,12 +180,12 @@ sufficient. Do not include private signing material, names, comments, lyrics,
 screenshots, or other private material.
 
 For the manually dispatched GitHub quality-gate workflow, package only the
-candidate `benchmark.json` evidence. The workflow downloads it by its explicit
-repository and run ID, but it obtains the release policy, locked manifest, and
-independent policy digest from the protected `lightforge-release-quality`
-environment on protected `main`. A candidate artifact must never supply the
-policy, corpus manifest, verifier key, or trust digest because it could then
-create a self-signed release claim.
+candidate `benchmark.json` evidence. The workflow downloads it by its exact run
+ID from this LightForge repository only, but it obtains the release policy,
+locked manifest, and independent policy digest from the protected
+`lightforge-release-quality` environment on protected `main`. A candidate
+artifact must never supply the policy, corpus manifest, verifier key, or trust
+digest because it could then create a self-signed release claim.
 
 `aggregate` writes atomically and sorts reports by track, run ID, and
 diagnostic digest, so a reordered directory traversal produces byte-equivalent

@@ -13,15 +13,14 @@ class PerformanceQualityGateWorkflowTest(unittest.TestCase):
         self.assertIn("actions: read", text)
         for name in (
             "baseline_artifact:",
-            "baseline_repository:",
             "baseline_run_id:",
             "candidate_artifact:",
-            "candidate_repository:",
             "candidate_run_id:",
         ):
             self.assertRegex(text, re.escape(name) + r"\n\s+description:.*\n\s+required: true")
-        self.assertIn("repository: ${{ inputs.baseline_repository }}", text)
-        self.assertIn("repository: ${{ inputs.candidate_repository }}", text)
+        self.assertEqual(2, text.count("repository: ${{ github.repository }}"))
+        self.assertNotIn("baseline_repository:", text)
+        self.assertNotIn("candidate_repository:", text)
         self.assertIn("run-id: ${{ inputs.baseline_run_id }}", text)
         self.assertIn("run-id: ${{ inputs.candidate_run_id }}", text)
         self.assertIn("environment: lightforge-release-quality", text)

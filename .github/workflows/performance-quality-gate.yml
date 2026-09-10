@@ -24,20 +24,14 @@ on:
       baseline_artifact:
         description: Baseline benchmark artifact name
         required: true
-      baseline_repository:
-        description: Owner/repository containing the baseline artifact source run
-        required: true
       baseline_run_id:
-        description: GitHub Actions run ID that produced the baseline artifact
+        description: Successful approved LightForge Actions run ID that produced the baseline artifact
         required: true
       candidate_artifact:
         description: Candidate benchmark artifact name
         required: true
-      candidate_repository:
-        description: Owner/repository containing the candidate artifact source run
-        required: true
       candidate_run_id:
-        description: GitHub Actions run ID that produced the candidate artifact
+        description: Successful approved LightForge Actions run ID that produced the candidate artifact
         required: true
 
 permissions:
@@ -80,14 +74,14 @@ jobs:
         with:
           name: ${{ inputs.baseline_artifact }}
           path: gate/baseline
-          repository: ${{ inputs.baseline_repository }}
+          repository: ${{ github.repository }}
           run-id: ${{ inputs.baseline_run_id }}
           github-token: ${{ github.token }}
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: ${{ inputs.candidate_artifact }}
           path: gate/candidate
-          repository: ${{ inputs.candidate_repository }}
+          repository: ${{ github.repository }}
           run-id: ${{ inputs.candidate_run_id }}
           github-token: ${{ github.token }}
       - name: Compare with protected release policy and corpus
