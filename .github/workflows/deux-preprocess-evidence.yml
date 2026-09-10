@@ -25,9 +25,15 @@ on:
       - 'tests/regenerate_analysis_asset_manifest.test.py'
       - 'docs/DEUX_SEPARATION_PERFORMANCE.md'
   workflow_dispatch:
+    inputs:
+      resume_run_id:
+        description: 'Exact prior run ID whose completed exactness arms should be rehashed and resumed (blank starts a fresh evidence state)'
+        required: false
+        type: string
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: deux-preprocess-evidence-${{ github.event.pull_request.number || github.ref_name }}
@@ -58,6 +64,14 @@ jobs:
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.12'
+      - name: Restore a prior hash-bound exactness state
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.resume_run_id != '' }}
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: deux-preprocess-actual-model-state
+          path: benchmark/deux-preprocess-state
+          run-id: ${{ inputs.resume_run_id }}
+          github-token: ${{ github.token }}
       - name: Record exact checkout tree and source identities
         run: |
           mkdir -p benchmark
@@ -143,7 +157,7 @@ jobs:
               json.dump(evidence, stream, indent=2)
               stream.write('\n')
           PY
-      - name: Pair actual model arms and verify exact PCM plus recovery
+      - name: Run full actual-model exactness arms and verify PCM plus recovery
         run: >-
           node tools/compare_deux_preprocess_reuse.cjs
           --fixture benchmark/deux-multipassage-mix.wav
@@ -151,11 +165,22 @@ jobs:
           --total-samples 661501
           --threads 4
           --verify-recovery on
+          --evidence-mode resumable-exactness
+          --state-dir benchmark/deux-preprocess-state
+          --checkout-identities benchmark/deux-preprocess-checkout-identities.json
+          --asset-inventory benchmark/deux-asset-manifest.json
           --output benchmark/deux-preprocess-paired.json
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
           name: deux-preprocess-actual-model-${{ github.run_id }}
           path: benchmark/*.json
+          if-no-files-found: warn
+          retention-days: 30
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: deux-preprocess-actual-model-state
+          path: benchmark/deux-preprocess-state
           if-no-files-found: warn
           retention-days: 30
