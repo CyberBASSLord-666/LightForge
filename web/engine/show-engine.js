@@ -125,7 +125,8 @@
       beatDivision:['auto','quarter','eighth'].includes(input.beatDivision)?input.beatDivision:'auto',offsetMs:number('offsetMs',0,-2000,2000),
       enabled:Object.assign({windows:true,mirrors:true,trunk:true,charge:true,interior:true},input.enabled||{}),optionalFog:false,
       outerBeamRamping:input.outerBeamRamping===true,outputEnabled:normalizeOutputEnabled(input.outputEnabled),manualCues:normalizeManualCues(input.manualCues,input.outerBeamRamping===true),
-      sectionOverrides:input.sectionOverrides&&typeof input.sectionOverrides==='object'?input.sectionOverrides:{}};
+      sectionOverrides:input.sectionOverrides&&typeof input.sectionOverrides==='object'?input.sectionOverrides:{},
+      ...(input.vehicleTimingCalibration===undefined?{}:{vehicleTimingCalibration:PROFILE.normalizePerceptualCalibration(input.vehicleTimingCalibration)})};
   }
   function outputById(id) {return PROFILE && PROFILE.outputs.find(output=>output.id===id);}
   function normalizeVocalRegions(input){

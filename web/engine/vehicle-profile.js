@@ -56,15 +56,121 @@
     ['trunk','Powered trunk',41,true,6,'rear','Open before Dance. Model 3 moves its trunk lid; the rear glass stays fixed.'],
     ['charge','Charge port',46,true,3,'rear','Open before Dance. Dance cycles the port LED through rainbow colors, without oscillating the door. The port auto-closes after two minutes.']
   ]) outputs.push({id,name,kind:'closure',channels:[ch],mode:'closure',available:true,camera,commands:dance?['Idle','Open','Dance','Close','Stop']:['Idle','Open','Close','Stop'],commandLimit:limit,recommendedDanceSeconds:dance?30:0,note,source:GUIDE+'#closures-channels'});
-  // One JavaScript contract for planner budgets, validation and preview travel.
-  // Travel is Tesla's approximate public timing, never a measured vehicle fact.
+  // These are conservative planning envelopes retained for compatibility with
+  // existing FSEQ validation and preview behavior. They are not a claim of
+  // measured vehicle latency or travel time. A user-provided calibration may
+  // only make planning more conservative; it can never silently speed a motion.
   const closureSpecifications=Object.freeze(Object.fromEntries(outputs.filter(o=>o.kind==='closure').map(o=>{
     const channel=o.channels[0],group=channel<37?'mirrors':channel<=40?'windows':channel===41?'trunk':'charge';
     return [o.id,Object.freeze({channel,group,travel:group==='trunk'?14:group==='windows'?4:2,closeTravel:group==='trunk'?4:group==='windows'?4:2,limit:o.commandLimit,home:group==='mirrors'?1:0,danceSeconds:o.recommendedDanceSeconds})];
   })));
+  const timingBounds=Object.freeze({
+    commandLatencyMs:Object.freeze({min:0,max:5000}),
+    activationLatencyMs:Object.freeze({min:0,max:5000}),
+    deactivationLatencyMs:Object.freeze({min:0,max:5000}),
+    minimumUsefulDurationMs:Object.freeze({min:0,max:60000}),
+    minimumRepeatIntervalMs:Object.freeze({min:0,max:60000}),
+    travelMs:Object.freeze({min:100,max:60000})
+  });
+  const timingFields=Object.freeze(['commandLatencyMs','activationLatencyMs','deactivationLatencyMs','minimumUsefulDurationMs','minimumRepeatIntervalMs']);
+  const outputById=id=>outputs.find(output=>output.id===id)||null;
+  const plainObject=value=>!!value&&typeof value==='object'&&!Array.isArray(value);
+  const safeMilliseconds=(value,key,min,max)=>{
+    if(typeof value!=='number'||!Number.isFinite(value)||value<min||value>max)throw new Error('Vehicle timing calibration '+key+' must be a finite value between '+min+' and '+max+' ms.');
+    return Math.round(value*1000)/1000;
+  };
+  const unconfiguredCalibration=Object.freeze({version:1,enabled:false,calibrationId:null,outputs:Object.freeze({})});
+  function normalizePerceptualCalibration(input){
+    if(input===undefined||input===null)return unconfiguredCalibration;
+    if(!plainObject(input))throw new Error('Vehicle timing calibration must be an object.');
+    const allowedTop=new Set(['version','enabled','calibrationId','outputs']);
+    for(const key of Object.keys(input))if(!allowedTop.has(key))throw new Error('Vehicle timing calibration contains an unknown field: '+key+'.');
+    if(input.version!==undefined&&input.version!==1)throw new Error('Vehicle timing calibration version 1 is required.');
+    if(typeof input.enabled!=='boolean')throw new Error('Vehicle timing calibration must explicitly set enabled to true or false.');
+    if(!input.enabled){
+      const hasId=input.calibrationId!==undefined&&input.calibrationId!==null;
+      const hasOutputs=input.outputs!==undefined&&(!plainObject(input.outputs)||Object.keys(input.outputs).length>0);
+      if(hasId||hasOutputs)throw new Error('Disabled vehicle timing calibration cannot contain calibration data.');
+      return unconfiguredCalibration;
+    }
+    if(typeof input.calibrationId!=='string'||!/^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$/.test(input.calibrationId))throw new Error('Vehicle timing calibration needs a safe, non-empty calibrationId.');
+    if(!plainObject(input.outputs)||!Object.keys(input.outputs).length)throw new Error('Enabled vehicle timing calibration needs at least one output entry.');
+    const cleaned={};
+    for(const id of Object.keys(input.outputs).sort()){
+      const output=outputById(id),raw=input.outputs[id];
+      if(!output)throw new Error('Vehicle timing calibration references an unknown output: '+id+'.');
+      if(output.available===false)throw new Error('Vehicle timing calibration cannot target unavailable output: '+id+'.');
+      if(!plainObject(raw))throw new Error('Vehicle timing calibration for '+id+' must be an object.');
+      const allowed=new Set(timingFields);
+      const spec=closureSpecifications[id];
+      if(spec){allowed.add('openTravelMs');allowed.add('closeTravelMs');}
+      for(const key of Object.keys(raw))if(!allowed.has(key))throw new Error('Vehicle timing calibration field '+key+' is not supported for '+id+'.');
+      if(!Object.keys(raw).length)throw new Error('Vehicle timing calibration for '+id+' has no values.');
+      const entry={};
+      for(const key of timingFields)if(raw[key]!==undefined){
+        const bounds=timingBounds[key];entry[key]=safeMilliseconds(raw[key],key,bounds.min,bounds.max);
+      }
+      if(spec&&raw.openTravelMs!==undefined)entry.openTravelMs=safeMilliseconds(raw.openTravelMs,'openTravelMs',spec.travel*1000,timingBounds.travelMs.max);
+      if(spec&&raw.closeTravelMs!==undefined)entry.closeTravelMs=safeMilliseconds(raw.closeTravelMs,'closeTravelMs',spec.closeTravel*1000,timingBounds.travelMs.max);
+      if(!Object.keys(entry).length)throw new Error('Vehicle timing calibration for '+id+' has no usable values.');
+      const nonZero=Object.values(entry).some(value=>value>0);
+      if(!nonZero)throw new Error('Vehicle timing calibration for '+id+' must contain an explicit non-zero value.');
+      cleaned[id]=Object.freeze(entry);
+    }
+    return Object.freeze({version:1,enabled:true,calibrationId:input.calibrationId,outputs:Object.freeze(cleaned)});
+  }
+  const timingMetadata=Object.freeze(Object.fromEntries(outputs.map(output=>{
+    const spec=closureSpecifications[output.id];
+    return [output.id,Object.freeze({
+      outputId:output.id,kind:output.kind,status:'unconfigured',
+      commandTimingCorrectionMs:0,
+      activationLatencyMs:null,deactivationLatencyMs:null,
+      minimumUsefulDurationMs:null,minimumRepeatIntervalMs:null,
+      ...(spec?{planningOpenTravelMs:spec.travel*1000,planningCloseTravelMs:spec.closeTravel*1000,travelEvidence:'unverified-planning-envelope'}:{})
+    })];
+  })));
+  const perceptualTiming=Object.freeze({
+    schemaVersion:1,
+    defaultCommandTimingCorrectionMs:0,
+    status:'unconfigured-until-explicit-calibration',
+    calibrationContract:Object.freeze({
+      requiresExplicitEnable:true,requiresCalibrationId:true,
+      appliesOnlyNonNegativeLeadTime:true,
+      preservesUncalibratedFseqTiming:true,
+      note:'Calibration values are user-supplied evidence references, not verified Tesla measurements.'
+    }),
+    boundsMs:timingBounds,
+    outputs:timingMetadata
+  });
+  function resolvePerceptualTiming(input){
+    const calibration=normalizePerceptualCalibration(input),resolved={};
+    for(const output of outputs){
+      const spec=closureSpecifications[output.id],entry=calibration.enabled?calibration.outputs[output.id]:null;
+      const commandLatencyMs=entry&&entry.commandLatencyMs||0,activationLatencyMs=entry&&entry.activationLatencyMs||0,deactivationLatencyMs=entry&&entry.deactivationLatencyMs||0;
+      const openTravelMs=spec?(entry&&entry.openTravelMs!==undefined?entry.openTravelMs:spec.travel*1000):null;
+      const closeTravelMs=spec?(entry&&entry.closeTravelMs!==undefined?entry.closeTravelMs:spec.closeTravel*1000):null;
+      // Only closure commands have a validated realization path today.
+      // Light/RGB entries remain diagnostic evidence until a dedicated output
+      // path has passed the perceptual timing quality gate.
+      const leadAdjusted=!!entry&&!!spec&&(commandLatencyMs>0||activationLatencyMs>0||deactivationLatencyMs>0||openTravelMs>spec.travel*1000||closeTravelMs>spec.closeTravel*1000);
+      resolved[output.id]=Object.freeze({
+        outputId:output.id,kind:output.kind,calibrationConfigured:!!entry,leadAdjusted,
+        commandLatencyMs,activationLatencyMs,deactivationLatencyMs,
+        minimumUsefulDurationMs:entry&&entry.minimumUsefulDurationMs||null,
+        minimumRepeatIntervalMs:entry&&entry.minimumRepeatIntervalMs||null,
+        openTravelMs,closeTravelMs,
+        travelEvidence:spec?(entry&&(entry.openTravelMs!==undefined||entry.closeTravelMs!==undefined)?'explicit-calibration':'unverified-planning-envelope'):null
+      });
+    }
+    return Object.freeze({
+      schemaVersion:1,enabled:calibration.enabled,calibrationId:calibration.calibrationId,
+      status:calibration.enabled?'explicit-user-configuration':'unconfigured',
+      outputs:Object.freeze(resolved)
+    });
+  }
   for(const output of outputs){Object.freeze(output.channels);if(output.commands)Object.freeze(output.commands);Object.freeze(output);}
-  const profile=Object.freeze({id:'model3-highland-2025-na',version:'1.4.0',name:'2025 Model 3 Long Range RWD · North America',channels:200,
-    outputs:Object.freeze(outputs),sources,closureSpecifications,
+  const profile=Object.freeze({id:'model3-highland-2025-na',version:'1.5.0',name:'2025 Model 3 Long Range RWD · North America',channels:200,
+    outputs:Object.freeze(outputs),sources,closureSpecifications,perceptualTiming,normalizePerceptualCalibration,resolvePerceptualTiming,
     frameIntervals:Object.freeze([15,20]),recommendedFrameInterval:20,
     lightAccuracy:'Command timing and public channel groups; Highland headlamp sub-lens allocation remains estimated.',
     movementAccuracy:'Vehicle-command simulation. Motor travel, oscillation endpoints and thermal behavior vary; positions are estimated.',

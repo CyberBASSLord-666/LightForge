@@ -14,12 +14,38 @@
   const nearest=(list,t)=>{const i=lower(list,t);return !i?list[0]:i>=list.length?list[list.length-1]:t-list[i-1]<=list[i]-t?list[i-1]:list[i];};
   function plan(music,settings,profile){
     music=music||{};settings=settings||{};
+    const activeProfile=profile||PROFILE,specifications=activeProfile&&activeProfile.closureSpecifications||SPECS;
+    const resolveTiming=activeProfile&&typeof activeProfile.resolvePerceptualTiming==='function'?activeProfile.resolvePerceptualTiming:PROFILE&&typeof PROFILE.resolvePerceptualTiming==='function'?PROFILE.resolvePerceptualTiming:null;
+    const perceptualTiming=resolveTiming?resolveTiming(settings.vehicleTimingCalibration):{schemaVersion:1,enabled:false,calibrationId:null,outputs:{}};
+    const timingFor=id=>perceptualTiming.outputs&&perceptualTiming.outputs[id]||{calibrationConfigured:false,commandLatencyMs:0,activationLatencyMs:0,deactivationLatencyMs:0,openTravelMs:specifications[id]&&specifications[id].travel*1000,closeTravelMs:specifications[id]&&specifications[id].closeTravel*1000};
+    const milliseconds=(id,key,fallback)=>{const value=timingFor(id)[key];return finite(value)?value/1000:fallback;};
+    const commandLead=(id,phase)=>milliseconds(id,'commandLatencyMs',0)+milliseconds(id,phase==='close'?'deactivationLatencyMs':'activationLatencyMs',0);
+    const openTravel=id=>milliseconds(id,'openTravelMs',specifications[id].travel);
+    const closeTravel=id=>milliseconds(id,'closeTravelMs',specifications[id].closeTravel);
+    // Preserve each legacy envelope exactly when no calibration is configured.
+    // These margins are conservative planner allowances, not measured latencies.
+    const openMargin=id=>id==='trunk'?.35:.30;
+    const closeMargin=id=>id==='trunk'||specifications[id].group==='windows'?.35:.30;
+    const openLead=id=>commandLead(id,'open')+openTravel(id)+openMargin(id);
+    const closeLead=id=>commandLead(id,'close')+closeTravel(id)+closeMargin(id);
+    const predictedArrival=(id,phase,start,legacy)=>{
+      const row=timingFor(id);
+      if(!perceptualTiming.enabled||!row.calibrationConfigured)return legacy;
+      const travel=phase==='close'?closeTravel(id):openTravel(id);
+      return Number((start+commandLead(id,phase)+travel).toFixed(6));
+    };
+    const calibratedIntent=(id,phase,intent)=>{
+      const row=timingFor(id);
+      if(!perceptualTiming.enabled||!row.calibrationConfigured)return intent;
+      return Object.assign({},intent,{perceptualTiming:{schemaVersion:1,calibrationId:perceptualTiming.calibrationId,phase,commandLatencyMs:row.commandLatencyMs,activationLatencyMs:row.activationLatencyMs,deactivationLatencyMs:row.deactivationLatencyMs,openTravelMs:row.openTravelMs,closeTravelMs:row.closeTravelMs,travelEvidence:row.travelEvidence}});
+    };
     const duration=finite(music.duration)?music.duration:0,step=([15,20].includes(settings.stepMs)?settings.stepMs:20)/1000;
     const shift=clamp(finite(settings.offsetMs)?settings.offsetMs:0,-2000,2000)/1000;
     const q=t=>Math.round(t/step+1e-8)*step,up=t=>Math.ceil(t/step-1e-8)*step;
     const end=Math.max(0,Math.floor((duration-.30)/step)*step),expressive=settings.dance!=='balanced',density=clamp(finite(settings.movementDensity)?settings.movementDensity:.7,0,1);
     const events=[],accents=[],targets=[],skipped=[],tracks=new Map();
-    const diagnostics={version:VERSION,movementDensity:density,style:expressive?'expressive':'balanced',timingBasis:'Music arrival targets with actuator lead time; vehicle travel and Dance oscillation remain estimates.',offsetAppliedMs:shift*1000,commandCounts:{},danceSeconds:{},selectedTargets:0,consideredTargets:0,skipped,travelSeconds:{windows:4,mirrors:2,trunkOpen:14,trunkClose:4,charge:2},settlingMarginSeconds:.30,recoverySeconds:expressive?5:8};
+    const diagnostics={version:VERSION,movementDensity:density,style:expressive?'expressive':'balanced',timingBasis:'Music arrival targets with conservative planning lead time; no command correction is applied without an explicit calibration.',offsetAppliedMs:shift*1000,commandCounts:{},danceSeconds:{},selectedTargets:0,consideredTargets:0,skipped,travelSeconds:{windows:4,mirrors:2,trunkOpen:14,trunkClose:4,charge:2},settlingMarginSeconds:.30,recoverySeconds:expressive?5:8};
+    if(perceptualTiming.enabled)diagnostics.perceptualTiming={schemaVersion:1,calibrationId:perceptualTiming.calibrationId,status:'explicit-user-configuration',outputs:Object.fromEntries(Object.entries(perceptualTiming.outputs).filter(([,row])=>row.calibrationConfigured).map(([id,row])=>[id,{leadAdjusted:row.leadAdjusted,commandLatencyMs:row.commandLatencyMs,activationLatencyMs:row.activationLatencyMs,deactivationLatencyMs:row.deactivationLatencyMs,openTravelMs:row.openTravelMs,closeTravelMs:row.closeTravelMs,travelEvidence:row.travelEvidence}]))};
     const result=()=>{events.sort((a,b)=>a.start-b.start||a.channels[0]-b.channels[0]);accents.sort((a,b)=>a.time-b.time);targets.sort((a,b)=>a.time-b.time);for(const [id,track]of tracks){diagnostics.commandCounts[id]=track.length;diagnostics.danceSeconds[id]=Math.round(track.filter(e=>e.command==='Dance').reduce((n,e)=>n+e.end-e.start,0)*1000)/1000;}diagnostics.selectedTargets=targets.length;return{events,accents,targets,diagnostics};};
     if(settings.dance==='off'||density===0||music.silent||duration<6){skipped.push(settings.dance==='off'||density===0?'Movement is switched off.':music.silent?'Silent audio has no automatic movement.':'Track is too short for a complete movement and return.');return result();}
     const safeTimes=list=>Array.from(new Set(Array.from(list||[]).filter(t=>finite(t)&&t>=0&&t<duration))).sort((a,b)=>a-b);
@@ -32,7 +58,7 @@
     const energyStep=hasEnvelope&&finite(music.energyStep)&&music.energyStep>0?music.energyStep:duration/Math.max(1,energy.length);
     const confidence=clamp(finite(music.beatConfidence)?music.beatConfidence:.5,0,1),recovery=expressive?5:8;
     const enabled=Object.assign({windows:true,mirrors:true,trunk:true,charge:true},settings.enabled||{}),manual=new Set((settings.manualCues||[]).map(c=>c.outputId));
-    for(const [id,spec]of Object.entries(SPECS)){
+    for(const [id,spec]of Object.entries(specifications)){
       const output=profile&&profile.outputs&&profile.outputs.find(o=>o.id===id);
       if(enabled[spec.group]===false||settings.outputEnabled&&settings.outputEnabled[id]===false||manual.has(id)||output&&output.available===false)continue;
       tracks.set(id,[]);
@@ -82,7 +108,7 @@
     const candidates=Array.from(pool.values()).sort((a,b)=>b.score-a.score||a.time-b.time);diagnostics.consideredTargets=candidates.length;
     if(!candidates.length){skipped.push('No confident active musical passage has room for choreography.');return result();}
     function add(id,start,finish,command,label,intent){
-      const track=tracks.get(id),spec=SPECS[id];if(!track)return false;
+      const track=tracks.get(id),spec=specifications[id];if(!track)return false;
       const a=q(start),b=q(finish);
       if(a<0||b<=a||b>end+1e-7||track.length>=spec.limit||track.some(e=>a<e.end-1e-7&&b>e.start+1e-7))return false;
       if(command==='Dance'&&(spec.group==='mirrors'||track.filter(e=>e.command==='Dance').reduce((n,e)=>n+e.end-e.start,0)+b-a>spec.danceSeconds+1e-7))return false;
@@ -90,9 +116,9 @@
       events.push(event);track.push(event);return true;
     }
     function mark(id,candidate,kind,extra){
-      const target=Object.assign({outputId:id,channels:[SPECS[id].channel],time:candidate.time,musicTime:candidate.musicTime,kind,source:candidate.kind,role:candidate.role||'arrangement',score:Number(candidate.score.toFixed(4)),confidence:candidate.confidence},extra||{});
+      const target=Object.assign({outputId:id,channels:[specifications[id].channel],time:candidate.time,musicTime:candidate.musicTime,kind,source:candidate.kind,role:candidate.role||'arrangement',score:Number(candidate.score.toFixed(4)),confidence:candidate.confidence},extra||{});
       targets.push(target);
-      accents.push({time:candidate.time,channels:[SPECS[id].channel],kind:kind==='dance'?'movement-arrival':kind,strength:clamp(candidate.score,.4,1),outputId:id});
+      accents.push({time:candidate.time,channels:[specifications[id].channel],kind:kind==='dance'?'movement-arrival':kind,strength:clamp(candidate.score,.4,1),outputId:id});
     }
     function danceEnd(candidate,maxLength,minLength,latest){
       const t=candidate.time,musical=candidate.musicTime,range=rangeAt(musical),phrase=phraseAt(musical);
@@ -130,7 +156,9 @@
     // re-open can restore audibility without consuming an extra command per beat.
     const windowIds=['windowFL','windowFR','windowRL','windowRR'].filter(id=>tracks.has(id));
     if(windowIds.length){
-      const closeStart=end-up(4.35),maxEpisodes=Math.max(1,Math.round((expressive?3:2)*density/.7)),maxDance=Math.min(expressive?9.4:8,5+6*density);
+      // The strictest enabled window decides candidate eligibility. Individual
+      // return commands retain their own calibrated lead time below.
+      const closeStart=Math.min(...windowIds.map(id=>end-up(closeLead(id))),end),maxEpisodes=Math.max(1,Math.round((expressive?3:2)*density/.7)),maxDance=Math.min(expressive?9.4:8,5+6*density);
       const chosen=select(candidate=>{
         if(candidate.time<4.45||candidate.time>closeStart-4.5)return null;
         const finish=danceEnd(candidate,maxDance,4.4,closeStart-.25);
@@ -140,8 +168,8 @@
       if(chosen.length){
         const top=Math.max(...chosen.map(x=>x.candidate.score));
         for(let order=0;order<windowIds.length;order++){
-          const id=windowIds[order],first=chosen[0].candidate;
-          add(id,first.time-up(4.30),first.time,'Open','Lower window ahead of musical entrance',{type:'prepare',targetTime:first.time,travelSeconds:4,estimatedArrival:first.time-.30});
+          const id=windowIds[order],first=chosen[0].candidate,closeAt=end-up(closeLead(id)),openingStart=first.time-up(openLead(id));
+          add(id,openingStart,first.time,'Open','Lower window ahead of musical entrance',calibratedIntent(id,'open',{type:'prepare',targetTime:first.time,travelSeconds:openTravel(id),estimatedArrival:predictedArrival(id,'open',openingStart,first.time-.30)}));
           let lastEnd=0,danceUsed=0;
           for(const item of chosen){
             let c=item.candidate;
@@ -151,35 +179,35 @@
               const i=lower(beats,c.musicTime-1e-7),staggered=beats[i+order];
               if(finite(staggered)&&staggered-c.musicTime<=2.5)c=Object.assign({},c,{musicTime:staggered,time:q(staggered+shift)});
             }
-            const finish=danceEnd(c,Math.min(maxDance,SPECS[id].danceSeconds-danceUsed),4.4,Math.min(item.finish+2.5,closeStart-.25));
+            const finish=danceEnd(c,Math.min(maxDance,specifications[id].danceSeconds-danceUsed),4.4,Math.min(item.finish+2.5,closeAt-.25));
             if(finish===null||c.time<lastEnd+recovery-1e-7)continue;
-            if(add(id,c.time,finish,'Dance',c.score===top?'Window ensemble at musical peak':'Window phrase response',{type:'dance',targetTime:c.time,source:c.kind,estimatedOscillation:true})){danceUsed+=finish-c.time;lastEnd=finish;mark(id,c,'dance',{end:finish});}
+            if(add(id,c.time,finish,'Dance',c.score===top?'Window ensemble at musical peak':'Window phrase response',calibratedIntent(id,'dance',{type:'dance',targetTime:c.time,source:c.kind,estimatedOscillation:true}))){danceUsed+=finish-c.time;lastEnd=finish;mark(id,c,'dance',{end:finish});}
           }
-          if(lastEnd&&closeStart-lastEnd>8&&tracks.get(id).length<5)add(id,lastEnd,lastEnd+up(4.3),'Open','Restore open window for cabin audio',{type:'recovery',travelSeconds:4});
-          add(id,closeStart,end,'Close','Return window closed before the ending',{type:'return',travelSeconds:4,estimatedArrival:closeStart+4});
+          if(lastEnd&&closeAt-lastEnd>8&&tracks.get(id).length<5)add(id,lastEnd,lastEnd+up(4.3),'Open','Restore open window for cabin audio',calibratedIntent(id,'open',{type:'recovery',travelSeconds:openTravel(id)}));
+          add(id,closeAt,end,'Close','Return window closed before the ending',calibratedIntent(id,'close',{type:'return',travelSeconds:closeTravel(id),estimatedArrival:predictedArrival(id,'close',closeAt,closeAt+4)}));
         }
-      }else skipped.push('Windows: no active phrase allows four-second travel, visible Dance and a closed finish.');
+      }else skipped.push('Windows: no active phrase allows conservative travel, visible Dance and a closed finish.');
     }
     if(tracks.has('trunk')){
       const chosen=select(candidate=>{
-        const start=candidate.time-up(14.35);if(start<.05)return null;
-        const finish=danceEnd(candidate,expressive?14:10,6,end-up(4.35));
-        return finish===null?null:{candidate,from:start,to:finish+up(4.35),finish};
+        const start=candidate.time-up(openLead('trunk'));if(start<.05)return null;
+        const finish=danceEnd(candidate,expressive?14:10,6,end-up(closeLead('trunk')));
+        return finish===null?null:{candidate,from:start,to:finish+up(closeLead('trunk')),finish};
       },expressive&&density>=.6?2:1);
       for(const item of chosen){const t=item.candidate.time;
-        add('trunk',item.from,t,'Open','Raise trunk early for musical arrival',{type:'prepare',targetTime:t,travelSeconds:14,estimatedArrival:item.from+14});
-        add('trunk',t,item.finish,'Dance','Trunk phrase at musical peak',{type:'dance',targetTime:t,source:item.candidate.kind,estimatedOscillation:true});
-        add('trunk',item.finish,item.to,'Close','Recover trunk after the phrase',{type:'return',travelSeconds:4,estimatedArrival:item.finish+4});
-        mark('trunk',item.candidate,'dance',{end:item.finish,prepareStart:item.from,estimatedOpenArrival:item.from+14});
+        add('trunk',item.from,t,'Open','Raise trunk early for musical arrival',calibratedIntent('trunk','open',{type:'prepare',targetTime:t,travelSeconds:openTravel('trunk'),estimatedArrival:predictedArrival('trunk','open',item.from,item.from+14)}));
+        add('trunk',t,item.finish,'Dance','Trunk phrase at musical peak',calibratedIntent('trunk','dance',{type:'dance',targetTime:t,source:item.candidate.kind,estimatedOscillation:true}));
+        add('trunk',item.finish,item.to,'Close','Recover trunk after the phrase',calibratedIntent('trunk','close',{type:'return',travelSeconds:closeTravel('trunk'),estimatedArrival:predictedArrival('trunk','close',item.finish,item.finish+4)}));
+        mark('trunk',item.candidate,'dance',{end:item.finish,prepareStart:item.from,estimatedOpenArrival:predictedArrival('trunk','open',item.from,item.from+14)});
       }
-      if(!chosen.length)skipped.push('Trunk: no phrase leaves 14 seconds to open, a visible Dance passage and four seconds to close.');
+      if(!chosen.length)skipped.push('Trunk: no phrase leaves conservative open travel, a visible Dance passage and return time.');
     }
     if(tracks.has('charge')){
-      const chosen=select(candidate=>{const start=candidate.time-up(2.30);if(start<.05)return null;const finish=danceEnd(candidate,expressive?24:16,4,end-up(2.30));return finish===null?null:{candidate,from:start,to:finish+up(2.30),finish};},1);
+      const chosen=select(candidate=>{const start=candidate.time-up(openLead('charge'));if(start<.05)return null;const finish=danceEnd(candidate,expressive?24:16,4,end-up(closeLead('charge')));return finish===null?null:{candidate,from:start,to:finish+up(closeLead('charge')),finish};},1);
       for(const item of chosen){const t=item.candidate.time;
-        add('charge',item.from,t,'Open','Open charge port ahead of color arrival',{type:'prepare',targetTime:t,travelSeconds:2,estimatedArrival:item.from+2});
-        add('charge',t,item.finish,'Dance','Rainbow charge-port colors for the phrase',{type:'color',targetTime:t,source:item.candidate.kind});
-        add('charge',item.finish,item.to,'Close','Close charge port after its color phrase',{type:'return',travelSeconds:2,estimatedArrival:item.finish+2});
+        add('charge',item.from,t,'Open','Open charge port ahead of color arrival',calibratedIntent('charge','open',{type:'prepare',targetTime:t,travelSeconds:openTravel('charge'),estimatedArrival:predictedArrival('charge','open',item.from,item.from+2)}));
+        add('charge',t,item.finish,'Dance','Rainbow charge-port colors for the phrase',calibratedIntent('charge','dance',{type:'color',targetTime:t,source:item.candidate.kind}));
+        add('charge',item.finish,item.to,'Close','Close charge port after its color phrase',calibratedIntent('charge','close',{type:'return',travelSeconds:closeTravel('charge'),estimatedArrival:predictedArrival('charge','close',item.finish,item.finish+2)}));
         mark('charge',item.candidate,'rainbow',{end:item.finish,prepareStart:item.from});
       }
     }
@@ -188,17 +216,17 @@
         let c=candidate;
         if(expressive&&!candidate.role&&side&&beats.length){const i=lower(beats,c.musicTime-1e-7),t=beats[i+1];if(finite(t)&&t-c.musicTime<=1.5)c=Object.assign({},c,{time:q(t+shift),musicTime:t});}
         if(!rangeAt(c.musicTime))return null;
-        const unfold=c.time-up(2.30),earliestFoldArrival=unfold-.65;
+        const unfold=c.time-up(openLead(id)),earliestFoldArrival=unfold-.65;
         let foldArrival=earliestFoldArrival;
         if(downbeats.length){const i=lower(downbeats,earliestFoldArrival-shift+1e-7)-1;if(i<0)return null;foldArrival=q(downbeats[i]+shift);}
-        const fold=foldArrival-up(2.30);
+        const fold=foldArrival-up(closeLead(id));
         if(fold<.10||c.time>end-.05||unfold<foldArrival+.50)return null;
         return {candidate:c,from:fold,to:c.time,foldArrival,unfold};
       },Math.max(1,Math.round((expressive?7:3)*density/.7)));
       for(const item of chosen){
-        add(id,item.from,item.foldArrival,'Close','Fold mirror toward the preceding bar',{type:'fold-arrival',targetTime:item.foldArrival,travelSeconds:2,estimatedArrival:item.from+2});
-        add(id,item.unfold,item.to,'Open','Unfold mirror into musical arrival',{type:'unfold-arrival',targetTime:item.to,travelSeconds:2,estimatedArrival:item.unfold+2});
-        mark(id,item.candidate,'mirror-arrival',{prepareStart:item.unfold,estimatedOpenArrival:item.unfold+2});
+        add(id,item.from,item.foldArrival,'Close','Fold mirror toward the preceding bar',calibratedIntent(id,'close',{type:'fold-arrival',targetTime:item.foldArrival,travelSeconds:closeTravel(id),estimatedArrival:predictedArrival(id,'close',item.from,item.from+2)}));
+        add(id,item.unfold,item.to,'Open','Unfold mirror into musical arrival',calibratedIntent(id,'open',{type:'unfold-arrival',targetTime:item.to,travelSeconds:openTravel(id),estimatedArrival:predictedArrival(id,'open',item.unfold,item.unfold+2)}));
+        mark(id,item.candidate,'mirror-arrival',{prepareStart:item.unfold,estimatedOpenArrival:predictedArrival(id,'open',item.unfold,item.unfold+2)});
       }
     }
     return result();
