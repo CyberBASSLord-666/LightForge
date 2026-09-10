@@ -69,14 +69,14 @@ test('public analyzer destroys each model heap before the next stage and clears 
 });
 test('analysis cache identity separates analysis evidence while choreography and vehicle choices reuse heavy work',async()=>{
  const h=analyzerHarness(),options={analysisIdentity:key,analysisQuality:'precision',projectId:'song'};
- await h.analyze('/song.wav',options);await h.analyze('/song.wav',options);await h.analyze('/song.wav',{...options,analysisQuality:'balanced'});await h.analyze('/song.wav',{...options,sensitivity:.7});
+ await h.analyze('/song.wav',options);await h.analyze('/song.wav',options);await h.analyze('/song.wav',{...options,enableEstimatedPercussionEvidence:false});await h.analyze('/song.wav',{...options,analysisQuality:'balanced'});await h.analyze('/song.wav',{...options,sensitivity:.7});
  await h.analyze('/song.wav',{...options,enableEstimatedPercussionEvidence:true});
  await h.analyze('/song.wav',{...options,semanticChoreography:true,motifEvolution:true,vehicleProfile:{revision:'calibrated-v2'}});
- assert.equal(h.workers[0].request.options.workId,h.workers[4].request.options.workId);
- assert.notEqual(h.workers[0].request.options.workId,h.workers[8].request.options.workId);assert.notEqual(h.workers[0].request.options.workId,h.workers[12].request.options.workId);
- assert.notEqual(h.workers[0].request.options.workId,h.workers[16].request.options.workId,'estimated percussion must not reuse a default rhythm cache');
- assert.equal(h.workers[16].request.options.enableEstimatedPercussionEvidence,true);
- assert.equal(h.workers[0].request.options.workId,h.workers[20].request.options.workId,'choreography/vehicle changes must not invalidate completed music analysis');
+ assert.equal(h.workers[0].request.options.workId,h.workers[4].request.options.workId);assert.equal(h.workers[0].request.options.workId,h.workers[8].request.options.workId,'explicit false must share the default analysis namespace');
+ assert.notEqual(h.workers[0].request.options.workId,h.workers[12].request.options.workId);assert.notEqual(h.workers[0].request.options.workId,h.workers[16].request.options.workId);
+ assert.notEqual(h.workers[0].request.options.workId,h.workers[20].request.options.workId,'estimated percussion must not reuse a default rhythm cache');
+ assert.equal(h.workers[20].request.options.enableEstimatedPercussionEvidence,true);
+ assert.equal(h.workers[0].request.options.workId,h.workers[24].request.options.workId,'choreography/vehicle changes must not invalidate completed music analysis');
  assert.deepEqual(h.discarded,[]);
 });
 test('cancellation and stage failures preserve durable work and never start a downstream model',async()=>{
