@@ -30,12 +30,27 @@ passage completes, fails, is cancelled, or is released before completion. They
 are never emitted per ORT batch. The normal diagnostic redaction and bounded
 journal still apply.
 
-The profiling path is guarded by a full-passage host equivalence test. With the
-collector enabled, the production predictor must reproduce the approved
-1.25.1-runtime output SHA-256 for the fixed `startSample=-66150` fixture and
-must produce one summary, 15 host-observable stages, and exactly 27 graph
-records. This is an output-equivalence gate, not a performance claim or a
-substitute for device profiling.
+The profiling path is guarded by a full-passage host observer-equivalence test.
+In one fresh JVM/runtime it runs the fixed `startSample=-66150` passage first
+without the collector and then with it. Both `2 × 573300` float32-LE outputs
+must be complete, finite and byte-identical: the predeclared maximum absolute
+error, RMSE and relative RMSE are all exactly zero. Any measurable difference,
+nonfinite sample, incomplete output, unknown profile record or changed topology
+fails closed. The proof also records a SHA-256 over a canonical serialization of
+all profile records plus the fixed one-summary/15-stage/27-graph topology.
+
+The prior approved 1.25.1 output SHA-256 is retained only as reproducibility
+context. It is not a cross-run profile pass criterion, because the same pinned
+runtime can legitimately produce flaky cross-run bytes under different host
+scheduling. The ordinary immutable native-runtime comparison remains a separate
+unprofiled quality binding.
+
+CI creates one `LIGHTFORGE_EVIDENCE_SESSION` nonce for the verification run.
+The paired receipt records it and `verify-analysis.py` requires an exact match;
+a stale/wrong session fails. Outside session mode, only a fresh null-session v2
+receipt with current source, test, model, input and runtime hashes is accepted;
+a session-bound receipt is rejected. This is an output-equivalence gate, not a
+performance claim or a substitute for device profiling.
 
 Do not use a profile to justify session pooling, lower precision, reduced
 context, or any model change. Those changes require separate baseline/candidate
