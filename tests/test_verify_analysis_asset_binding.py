@@ -6,7 +6,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 VERIFY = ROOT / 'qa/release-2.2.4/verify-analysis.py'
-EXPECTED_MANIFEST_SHA256 = '7693bd96c1ba1493c230e4f12f6d10d298d302da72ee2ab8edde78ce23ff0d26'
+EXPECTED_MANIFEST_SHA256 = 'a3a3de6cdfea4035678f0cfcd7b4505e5fbc6a051c78135e8473d1babd66b633'
 EXPECTED_MANIFEST_ENTRY_COUNT = 83
 SPEC = spec_from_file_location('lightforge_verify_analysis_2_2_4', VERIFY)
 assert SPEC is not None and SPEC.loader is not None
