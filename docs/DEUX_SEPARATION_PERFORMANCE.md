@@ -146,6 +146,9 @@ happened to be resumed. It is therefore valid only as a durable quality/recovery
 proof. The CI workflow uploads the state artifact on every terminal path; a
 manual dispatch may supply the exact earlier `resume_run_id` to restore it.
 Automatic PR runs always start a fresh state, and cross-tree state is rejected.
+The workflow checks out the immutable PR head rather than GitHub's synthetic
+merge ref so a manual dispatch at that unchanged head can satisfy the exact
+commit/tree binding.
 
 ### Governed uninterrupted timing mode
 
