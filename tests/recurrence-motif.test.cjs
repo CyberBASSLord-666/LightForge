@@ -78,6 +78,35 @@ test('recurrence validation rejects malformed motif records without throwing',()
  assert.equal(Recurrence.validate(malformed,timeline,evidence).valid,false);
 });
 
+test('recurrence validation is total for non-array and malformed container values',()=>{
+ const {timeline,evidence,sidecar}=build(chromaMusic());
+ for(const mutate of [
+  value=>{value.motifs='x';},
+  value=>{value.assignments='x';},
+  value=>{value.motifs=[null];},
+ ]){
+  const malformed=structuredClone(sidecar);mutate(malformed);
+  assert.doesNotThrow(()=>{
+   const check=Recurrence.validate(malformed,timeline,evidence);
+   assert.equal(check.valid,false);
+  });
+ }
+ for(const sections of ['x',[null]]){
+  const malformedEvidence=structuredClone(evidence);malformedEvidence.sections=sections;
+  assert.doesNotThrow(()=>{
+   const check=Recurrence.validate(sidecar,timeline,malformedEvidence);
+   assert.equal(check.valid,false);
+  });
+ }
+ for(const events of [{},'x',null,[null]]){
+  const malformedTimeline=structuredClone(timeline);malformedTimeline.events=events;
+  assert.doesNotThrow(()=>{
+   const check=Recurrence.validate(sidecar,malformedTimeline,evidence);
+   assert.equal(check.valid,false);
+  });
+ }
+});
+
 test('capped mix-percussion keeps recurrence and salience timeline bindings identical',()=>{
  const music=baseMusic();
  music.percussionAnalysis={source:'mix-feature-estimate',method:'bounded test evidence',inputStem:'mixture',

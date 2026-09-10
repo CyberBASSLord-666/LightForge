@@ -28,6 +28,36 @@ if (!LightForgeRecurrence.validate(motifs, timeline, evidence).valid) {
 
 The sidecar has both a semantic-timeline fingerprint (using the same FNV-style field pattern as the salience sidecar) and an evidence fingerprint. A timeline, section span, energy value, or chroma value change invalidates it. This is a cache-coherency binding, not a cryptographic authenticity claim.
 
+## Analysis-worker opt-in and cache boundary
+
+`MusicAnalyzer.analyze()` schedules a final `recurrence` worker stage only when its caller supplies:
+
+```js
+{ recurrenceAnalysis: true }
+```
+
+That stage runs after the completed rhythm, separation, voice, and bass stages. It does not decode audio, invoke a model, create a stem, or modify the approved rhythm map. It validates the current canonical semantic timeline, captures the whitelisted structural evidence, then validates both the evidence and resulting sidecar before exposing them as:
+
+```js
+analysis.recurrenceAnalysis // explicit provenance marker
+analysis.recurrenceEvidence
+analysis.recurrenceSidecar
+```
+
+`recurrenceAnalysis` has `enabled: true`, the `recurrence` cache-domain name, engine/schema versions, and the exact timeline/evidence fingerprints. It is deterministic: it does not disclose whether the record was restored or recomputed.
+
+The worker stores its record only in the distinct `recurrence` cache domain. A cache hit is accepted only when `validateEvidence()` and `validate()` bind it to the current timeline. A changed section, energy/chroma feature, timeline cap, or audio-clock validation failure invalidates the record and rebuilds it from canonical evidence. The normal bass checkpoint deliberately strips all three recurrence fields, so a choreography-only opt-in never makes source separation, vocal analysis, or bass tracking run again. Default callers do not schedule this stage and receive no recurrence fields.
+
+## Exact choreography dependency
+
+Motif evolution is not enabled merely because recurrence metadata exists. It may activate only when all of the following are true:
+
+1. analysis was explicitly run with `recurrenceAnalysis: true`, proven by a current valid `analysis.recurrenceAnalysis.enabled === true` marker and a sidecar that validates against the supplied timeline/evidence;
+2. choreography explicitly requests `semanticChoreography: true`; and
+3. choreography explicitly requests `motifEvolution: true`.
+
+If any one condition is absent, stale, wrong-clock, or invalid, the motif strategy must report an inactive reason and preserve the legacy choreography path. Hand-supplied sidecars are subject to the same marker and exact-binding checks; there is no implicit activation path.
+
 ## Conservative repeat gates
 
 Fresh chroma-and-energy matching requires all of the following:
@@ -50,6 +80,6 @@ The state is calculated from repeat order and bounded energy change. It is not a
 
 ## Compatibility and limits
 
-No worker, planner, vehicle model, or sequence compiler imports this module automatically. Existing analysis and FSEQ output therefore remain byte-equivalent until a caller deliberately wires a valid sidecar into an opt-in strategy.
+The analysis worker loads the module only for the explicit recurrence stage. The normal pipeline neither schedules that stage nor returns a sidecar unless `recurrenceAnalysis: true` is explicit. A valid sidecar still has no effect on the planner, vehicle model, or sequence compiler unless the three-part choreography dependency above is also explicit. Existing default analysis and FSEQ output therefore remain byte-equivalent.
 
 Inputs are bounded to 512 sections, 360,000 energy frames, and 72,000 chroma frames. Incomplete, malformed, or stale evidence fails closed instead of being truncated or inferred. The module operates on the decoded-audio clock already established by the semantic timeline.

@@ -44,9 +44,70 @@ function ensureMusicSalience(result,timeline){
  result.musicSalience=musicSalience;
  return musicSalience;
 }
+function recurrenceAnalysisEnabled(options){return options?.recurrenceAnalysis===true;}
+function clearRecurrenceAnalysis(result){
+ if(!result)return;
+ delete result.recurrenceAnalysis;
+ delete result.recurrenceEvidence;
+ delete result.recurrenceSidecar;
+}
+function recurrenceMarker(api,evidence,sidecar){
+ return {schemaVersion:1,enabled:true,cacheDomain:'recurrence',engineVersion:api.version,sidecarSchemaVersion:sidecar.schemaVersion,
+  clock:sidecar.clock,duration:sidecar.duration,timelineFingerprint:sidecar.timelineFingerprint,evidenceFingerprint:sidecar.evidenceFingerprint};
+}
+function recurrenceCacheValid(record,timeline,currentEvidence,api){
+ if(!record||record.schemaVersion!==1||record.kind!=='recurrence-analysis-cache'||record.engineVersion!==api.version||typeof record.timelineFingerprint!=='string'||typeof record.evidenceFingerprint!=='string'||!record.evidence||!record.sidecar)return false;
+ const currentEvidenceCheck=api.validateEvidence(currentEvidence,timeline);
+ if(!currentEvidenceCheck?.valid)return false;
+ const evidenceCheck=api.validateEvidence(record.evidence,timeline);
+ if(!evidenceCheck?.valid)return false;
+ const sidecarCheck=api.validate(record.sidecar,timeline,record.evidence);
+ return !!sidecarCheck?.valid&&record.timelineFingerprint===record.sidecar.timelineFingerprint&&record.evidenceFingerprint===record.sidecar.evidenceFingerprint&&record.timelineFingerprint===api.timelineFingerprint(timeline)&&record.evidenceFingerprint===api.evidenceFingerprint(record.evidence)&&record.evidenceFingerprint===api.evidenceFingerprint(currentEvidence);
+}
+function attachRecurrenceAnalysis(result,api,evidence,sidecar){
+ result.recurrenceEvidence=evidence;
+ result.recurrenceSidecar=sidecar;
+ result.recurrenceAnalysis=recurrenceMarker(api,evidence,sidecar);
+ return result.recurrenceAnalysis;
+}
+async function ensureRecurrenceAnalysis(result,options,store,telemetry,featureConfig){
+ if(!recurrenceAnalysisEnabled(options)){
+  clearRecurrenceAnalysis(result);
+  return {enabled:false,restored:false,sidecar:null};
+ }
+ const api=self.LightForgeRecurrence;
+ if(!api||typeof api.captureEvidence!=='function'||typeof api.validateEvidence!=='function'||typeof api.evidenceFingerprint!=='function'||typeof api.timelineFingerprint!=='function'||typeof api.build!=='function'||typeof api.validate!=='function')throw Error('Recurrence analysis module is unavailable.');
+ clearRecurrenceAnalysis(result);
+ const timeline=ensureSemanticTimeline(result);
+ const evidenceInput=await recurrenceEvidenceInput(result,options,featureConfig,telemetry);
+ const evidence=api.captureEvidence(evidenceInput,timeline),evidenceCheck=api.validateEvidence(evidence,timeline);
+ if(!evidenceCheck?.valid)throw Error('Recurrence evidence validation failed: '+(evidenceCheck?.errors||[]).join('; ').slice(0,512));
+ let cached=null;
+ try{cached=await store.read('recurrence');}catch(_){telemetry.cache('recurrence','corrupt');}
+ if(cached&&recurrenceCacheValid(cached,timeline,evidence,api)){
+  attachRecurrenceAnalysis(result,api,cached.evidence,cached.sidecar);
+  telemetry.cache('recurrence','restore');
+  return {enabled:true,restored:true,sidecar:cached.sidecar};
+ }
+ if(cached){
+  telemetry.cache('recurrence','invalidate');
+  try{await store.invalidate(['recurrence']);}catch(_){}
+ }
+ telemetry.cache('recurrence','miss');
+ // captureEvidence has a strict whitelist: canonical section spans plus the
+ // existing normalized energy/chroma features. It cannot promote labels or
+ // create events from stems, lyrics, or raw PCM.
+ const sidecar=api.build(timeline,evidence),sidecarCheck=api.validate(sidecar,timeline,evidence);
+ if(!sidecarCheck?.valid)throw Error('Recurrence sidecar validation failed: '+(sidecarCheck?.errors||[]).join('; ').slice(0,512));
+ const record={schemaVersion:1,kind:'recurrence-analysis-cache',engineVersion:api.version,timelineFingerprint:sidecar.timelineFingerprint,evidenceFingerprint:sidecar.evidenceFingerprint,evidence,sidecar};
+ await store.write('recurrence',record);
+ attachRecurrenceAnalysis(result,api,evidence,sidecar);
+ telemetry.cache('recurrence','write');
+ return {enabled:true,restored:false,sidecar};
+}
 function vocalSemanticsEnabled(options){return options?.vocalSemanticEnrichment===true;}
 function persistableAnalysis(result){
- const {vocalSemantics,vocalSemanticLinks,...persisted}=result||{};
+ const {vocalSemantics,vocalSemanticLinks,recurrenceAnalysis,recurrenceEvidence,recurrenceSidecar,...persisted}=result||{};
  return persisted;
 }
 async function ensureVocalSemantics(result,options,store,telemetry){
@@ -160,6 +221,30 @@ async function reusableRhythmFeatures(options,config){
   return await api.open({audioIdentity,preprocessingVersion:RHYTHM_PREPROCESSING,modelVersions:{'dsp-config':configIdentity,'dsp-extractor':RHYTHM_FEATURE_VERSION},analysisConfiguration:{analysisRate:22050,featureChunk:500,frameHopSamples:441,frameRateHz:50,chromaStep:.2,reflectionHaloHops:2}});
  }catch(_){return null;}
 }
+async function recurrenceEvidenceInput(result,options,config,telemetry){
+ const input={duration:result?.duration,sections:result?.sections,energy:result?.energy,energyStep:result?.energyStep};
+ if(result?.chroma!==undefined||result?.chromaStep!==undefined){input.chroma=result.chroma;input.chromaStep=result.chromaStep;return input;}
+ // The rhythm stage already owns these feature frames. Reuse an exact,
+ // version-bound shared record when it is available; no new decode, FFT, or
+ // resample is permitted for recurrence analysis.
+ const featureStore=config?await reusableRhythmFeatures(options,config):null;
+ if(!featureStore)return input;
+ let hit=null;
+ const phase=telemetry.begin('shared-feature.recurrence.read');
+ try{hit=await featureStore.read(RHYTHM_FEATURE);}catch(_){telemetry.cache('shared-features','corrupt');}
+ telemetry.end(phase,{hit:!!hit});
+ const frames=Math.ceil(Number(result?.duration||0)*50);
+ if(hit&&!validRhythmFeature(hit.value,frames,result.duration)){
+  telemetry.cache('shared-features','corrupt');
+  try{await featureStore.invalidate([RHYTHM_FEATURE]);}catch(_){}
+  hit=null;
+ }
+ if(!hit)return input;
+ telemetry.cache('shared-features','recurrence-restore');
+ input.chroma=hit.value.chroma;
+ input.chromaStep=hit.value.chromaStep;
+ return input;
+}
 self.onmessage=async e=>{
  if(e.data?.type==='native-deux-result'||e.data?.type==='native-deux-progress'){
   const pending=nativeRequests.get(e.data.requestId);if(!pending)return;
@@ -178,20 +263,39 @@ self.onmessage=async e=>{
  }
  let session,melSession,separator,game,cacheWriter;const started=performance.now();try{
  const {audioUrl,options={},stage}=e.data;
- if(!['rhythm','separation','voice','bass'].includes(stage))throw Error('Invalid music analysis stage.');
+ if(!['rhythm','separation','voice','bass','recurrence'].includes(stage))throw Error('Invalid music analysis stage.');
  const cacheKey=options.cacheKey,quality=options.analysisQuality==='balanced'?'balanced':'precision';
  const telemetry=createTelemetry(stage,{quality});
  const storeOpen=telemetry.begin('store.open');
  const store=await LightForgeAnalysisStore.open(options.workId,{sourceId:options.projectId||''});
  telemetry.end(storeOpen);
+ if(stage==='recurrence'){
+  if(!self.LightForgeRecurrence)importScripts('recurrence.js');
+  const result=e.data.value||{};
+  let featureConfig=null;
+  if(typeof options.analysisIdentity==='string'&&/^[a-f0-9]{64}$/.test(options.analysisIdentity)){
+   const featureConfigPhase=telemetry.begin('shared-feature.recurrence.config');
+   featureConfig=await(await fetch('models/features.json')).json();
+   telemetry.end(featureConfigPhase);
+  }
+  const recurrencePhase=telemetry.begin('structure.recurrence');
+  const recurrence=await ensureRecurrenceAnalysis(result,options,store,telemetry,featureConfig),sidecar=recurrence.sidecar;
+  telemetry.end(recurrencePhase,{enabled:recurrence.enabled,restored:recurrence.restored,motifCount:sidecar?.summary?.motifCount||0,repeatedSectionCount:sidecar?.summary?.repeatedSectionCount||0});
+  if(recurrence.enabled)report(1,'Mapping recurring material','Validated generic repeated-section evidence saved',{checkpointSaved:true,analysisStage:stage});
+  else report(1,'Mapping recurring material','Opt-in recurrence analysis is disabled');
+  postMessage({type:'result',value:result,restored:recurrence.restored,seconds:recurrence.restored?0:(performance.now()-started)/1000,profile:telemetry.snapshot({restored:recurrence.restored})});
+  return;
+ }
  const manifestLoad=telemetry.begin('model.manifest');
  const config=await(await fetch('models/features.json')).json(),models=await(await fetch('models/model-manifest.json')).json(),selected=models[quality];
  telemetry.end(manifestLoad);
  const cacheRead=telemetry.begin('cache.read');
- let result=e.data.value||{},cached=await store.read(stage);
+ let result=e.data.value||{};
+ clearRecurrenceAnalysis(result);
+ let cached=await store.read(stage);
  telemetry.end(cacheRead,{hit:!!cached});
  if(cached&&stage==='separation')try{await LightForgeStemCache.files(cached.stemCache);await LightForgeStemCache.fullVoice(cached.stemCache);}catch{cached=null;telemetry.cache(stage,'corrupt');}
- if(stage==='separation'&&!cached){telemetry.cache(stage,'invalidate');await store.invalidate(['separation','voice','vocal-semantics','game','bass']);}
+ if(stage==='separation'&&!cached){telemetry.cache(stage,'invalidate');await store.invalidate(['separation','voice','vocal-semantics','game','bass','recurrence']);}
  if(cached){
   telemetry.cache(stage,'restore');
   const restored={...result,...cached};

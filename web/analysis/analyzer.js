@@ -2,7 +2,8 @@
  * Completed model work is retained under the source/settings/runtime identity.
  */
 (function(scope){'use strict';
-const base=new URL('.',document.currentScript.src),STAGES=['rhythm','separation','voice','bass'];
+const base=new URL('.',document.currentScript.src),BASE_STAGES=Object.freeze(['rhythm','separation','voice','bass']);
+const stagesFor=options=>options?.recurrenceAnalysis===true?[...BASE_STAGES,'recurrence']:BASE_STAGES;
 async function analyze(audioUrl,options={},onProgress=()=>{},signal){
  const aborted=()=>new DOMException('Analysis cancelled','AbortError');
  if(signal?.aborted)throw aborted();
@@ -12,7 +13,7 @@ async function analyze(audioUrl,options={},onProgress=()=>{},signal){
  const binding={pipeline:'bounded-analysis-v2',release:scope.LightForgeVersion.name,identity,quality:options.analysisQuality==='balanced'?'balanced':'precision',sensitivity:options.sensitivity??.82,bpmOverride:options.bpmOverride??null,execution};
  const workId=await scope.LightForgeAnalysisStore.hash(new TextEncoder().encode(JSON.stringify(binding)));
  const id=workId.slice(0,32),cacheKey='stem-'+[id.slice(0,8),id.slice(8,12),id.slice(12,16),id.slice(16,20),id.slice(20)].join('-');
- const runOptions={...serializableOptions,cacheKey,workId,supportsNativeDeux:hasNative,supportsNativeMdx:hasMdx},timings={},started=performance.now();let value={},progress=0;
+ const runOptions={...serializableOptions,cacheKey,workId,supportsNativeDeux:hasNative,supportsNativeMdx:hasMdx},stages=stagesFor(options),timings={},started=performance.now();let value={},progress=0;
  function runStage(stage){return new Promise((resolve,reject)=>{
   if(signal?.aborted){reject(aborted());return;}
   scope.LightForgeDiagnostics?.log('info','analysis-worker','Stage started: '+stage);
@@ -79,7 +80,7 @@ async function analyze(audioUrl,options={},onProgress=()=>{},signal){
    // must not turn an otherwise valid offline analysis into a failed show.
    scope.LightForgeDiagnostics?.log('error','analysis-scheduler',error);
   }
-  for(const stage of STAGES){
+  for(const stage of stages){
    try{value=await runStage(stage);}
    catch(error){
     // runStage aborts the native request before releasing its model resources.

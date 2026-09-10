@@ -80,6 +80,25 @@ sidecar only to exact existing vocal events in the semantic timeline; a stale
 or mismatched sidecar fails closed and is never converted into vehicle commands.
 See `docs/VOCAL_SEMANTIC_ENRICHMENT.md` for the contract.
 
+## Opt-in recurrence sidecar
+
+`recurrenceAnalysis: true` adds one final worker-only `recurrence` stage after
+the completed bass stage. It consumes the already validated semantic timeline
+and existing normalized section/energy (and chroma when present) evidence. It
+does not decode PCM, reopen a stem, run a model, assign a song-form label, or
+emit a vehicle command. The stage validates and stores only a separate
+`recurrence` checkpoint, then exposes a deterministic provenance marker plus
+`recurrenceEvidence` and `recurrenceSidecar` in the returned analysis.
+
+The bass checkpoint intentionally omits those three fields. A cache restore is
+accepted only when both recurrence records still bind to the exact canonical
+timeline, including a salience-cap-only change; a rejected audio clock is
+rebuilt from the canonical analysis rather than reused. Without the explicit
+option the stage is not scheduled and the default analysis/FSEQ path stays
+unchanged. Motif choreography additionally requires explicit semantic
+choreography and motif-evolution options; see
+`docs/RECURRENCE_MOTIF_SIDECAR.md`.
+
 ## Optional dedicated-percussion semantic input
 
 The shipped worker does not currently include a dedicated drum/percussion model.
