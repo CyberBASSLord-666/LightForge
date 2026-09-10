@@ -4,6 +4,7 @@ const test=require('node:test');
 const assert=require('node:assert/strict');
 const Engine=require('../web/engine/show-engine.js');
 const Profile=require('../web/engine/vehicle-profile.js');
+const SyncReview=require('../web/engine/sync-review.js');
 
 function fixture(duration=80){
  const beats=Array.from({length:duration*2},(_,index)=>index*.5);
@@ -29,6 +30,32 @@ test('only a calibrated planner intent may expose an estimated mechanical percep
  assert.ok(mechanical.length>0);
  assert.ok(mechanical.some(row=>Number.isFinite(row.predictedPerceptualTime)),'a calibrated arrival may be reported as an estimate');
  assert.equal(show.perceptualValidation.perEventClass.mechanical.timing.predictedPerceptual.state,'estimated');
+});
+
+test('feasibility-only vehicle calibration cannot create a perceptual-response estimate',()=>{
+ const show=Engine.generate(fixture(),{dance:'expressive',seed:9,vehicleTimingCalibration:{version:1,enabled:true,calibrationId:'mirror-feasibility',outputs:{mirrorL:{minimumUsefulDurationMs:1}}}});
+ const mechanical=show.synchronization.eventEvidence.filter(row=>row.eventClass==='mechanical'&&row.realizationStatus==='matched');
+ assert.ok(mechanical.length>0);
+ assert.equal(mechanical.filter(row=>Number.isFinite(row.predictedPerceptualTime)).length,0);
+ assert.equal(show.choreography.movement.perceptualTiming.outputs.mirrorL.responseTimingEvidence.open,false);
+ assert.equal(show.choreography.movement.perceptualTiming.outputs.mirrorL.responseTimingEvidence.close,false);
+ assert.equal(show.perceptualValidation.perEventClass.mechanical.timing.predictedPerceptual.state,'unavailable');
+});
+
+test('missing, empty, or invalid realization evidence is flagged as ineligible without changing FSEQ bytes',()=>{
+ const baseline=Engine.generate(fixture(),{dance:'expressive',seed:9}),original=SyncReview.review;
+ const cases=[
+  ['missing',review=>{delete review.eventEvidence;}],
+  ['empty',review=>{review.eventEvidence=[];}],
+  ['invalid',review=>{review.eventEvidence=[null,{eventClass:'mechanical',desiredPerceptualTime:-1}];}]
+ ];
+ try{for(const [name,mutate] of cases){
+  SyncReview.review=(...args)=>{const review=original(...args);mutate(review);return review;};
+  const flagged=Engine.generate(fixture(),{dance:'expressive',seed:9});
+  assert.deepEqual(Engine.fseq(flagged),Engine.fseq(baseline),name+' diagnostics must not alter FSEQ bytes');
+  assert.equal(flagged.validation.perceptualValidation.state,'unavailable',name+' evidence must not be release-available');
+  assert.ok(flagged.validation.warnings.some(warning=>warning.includes('no accepted realization evidence')));
+ }}finally{SyncReview.review=original;}
 });
 
 test('explicit vehicle timing limits remove infeasible automatic closure gestures before FSEQ realization',()=>{
