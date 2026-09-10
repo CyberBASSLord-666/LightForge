@@ -49,7 +49,8 @@
         "climax_quality",
         "overall_musicality"
       ],
-      "attestation_protocol": "external-review-attestation-v1"
+      "attestation_protocol": "external-review-attestation-v2",
+      "attestation_algorithm": "ed25519"
     }
   },
   "golden_artifact_requirements": [
@@ -470,4 +471,3 @@
     }
   ]
 }
-

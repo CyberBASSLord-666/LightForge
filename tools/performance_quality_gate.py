@@ -3,19 +3,23 @@
 
 The gate separates unconfigured template/legacy comparisons from a genuine
 release profile.  A release profile binds an immutable corpus, the complete
-metric contract, paired evidence, and blinded human perceptual review for a
-major pipeline change.  It never fills absent measurements with defaults.
+metric contract, paired evidence, and cryptographically verifiable blinded
+human perceptual review for every release candidate. It never fills absent
+measurements with defaults.
 """
 from __future__ import annotations
 
 import argparse
+import base64
 import functools
 import hashlib
 import json
 import math
 import re
 import statistics
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 
@@ -32,8 +36,9 @@ RELEASE_RUNTIME_METRIC = "performance.total_wall_clock_seconds"
 RELEASE_RUNTIME_TARGET_PERCENT = 75.0
 RELEASE_MINIMUM_CORPUS_TRACKS = 16
 HUMAN_REVIEW_SCHEMA_VERSION = 1
-REVIEW_ATTESTATION_SCHEMA_VERSION = 1
-REVIEW_ATTESTATION_PROTOCOL = "external-review-attestation-v1"
+REVIEW_ATTESTATION_SCHEMA_VERSION = 2
+REVIEW_ATTESTATION_PROTOCOL = "external-review-attestation-v2"
+REVIEW_ATTESTATION_ALGORITHM = "ed25519"
 HUMAN_REVIEW_ATTRIBUTES = (
     "musical_synchronization",
     "vocal_synchronization",
@@ -495,6 +500,27 @@ def _require_sha256(value, path, *, reject_placeholder=False):
     return value
 
 
+def _require_canonical_base64(value, path, *, decoded_length=None):
+    """Return canonical base64-decoded bytes or reject ambiguous evidence.
+
+    The release attestation uses raw Ed25519 public keys/signatures rather
+    than PEM text so the policy can hash the exact immutable key material.
+    Canonical base64 avoids alternate spellings that would defeat readable
+    evidence comparisons while preserving the bytes that are actually signed.
+    """
+    if not isinstance(value, str) or not value:
+        raise ValueError(f"{path} must be a non-empty canonical base64 string")
+    try:
+        decoded = base64.b64decode(value, validate=True)
+    except (ValueError, TypeError) as exc:
+        raise ValueError(f"{path} must be a canonical base64 string") from exc
+    if base64.b64encode(decoded).decode("ascii") != value:
+        raise ValueError(f"{path} must be a canonical base64 string")
+    if decoded_length is not None and len(decoded) != decoded_length:
+        raise ValueError(f"{path} must decode to exactly {decoded_length} bytes")
+    return decoded
+
+
 def _accelerator_fingerprint(accelerator):
     if not isinstance(accelerator, dict):
         return None
@@ -588,23 +614,129 @@ def _validate_review_attestation_profile(value):
     if not isinstance(value, dict) or set(value) != {
         "protocol",
         "verifier_id",
+        "algorithm",
+        "verification_key_base64",
         "verification_key_sha256",
     }:
-        raise ValueError("release profile requires a pinned external review attestation verifier")
+        raise ValueError(
+            "release profile requires pinned external review verifier key material and algorithm"
+        )
     if value.get("protocol") != REVIEW_ATTESTATION_PROTOCOL:
         raise ValueError("release profile review attestation protocol is unsupported")
+    if value.get("algorithm") != REVIEW_ATTESTATION_ALGORITHM:
+        raise ValueError("release profile review attestation algorithm is unsupported")
     verifier_id = value.get("verifier_id")
     if not isinstance(verifier_id, str) or not _OPAQUE_ID.fullmatch(verifier_id):
         raise ValueError("release profile review attestation verifier_id must be opaque")
+    public_key = _require_canonical_base64(
+        value.get("verification_key_base64"),
+        "policy.release_profile.human_perceptual_review.attestation.verification_key_base64",
+        decoded_length=32,
+    )
+    verification_key_sha256 = _require_sha256(
+        value.get("verification_key_sha256"),
+        "policy.release_profile.human_perceptual_review.attestation.verification_key_sha256",
+        reject_placeholder=True,
+    )
+    if hashlib.sha256(public_key).hexdigest() != verification_key_sha256:
+        raise ValueError(
+            "release profile review attestation verification_key_sha256 does not match pinned key material"
+        )
     return {
         "protocol": REVIEW_ATTESTATION_PROTOCOL,
         "verifier_id": verifier_id,
-        "verification_key_sha256": _require_sha256(
-            value.get("verification_key_sha256"),
-            "policy.release_profile.human_perceptual_review.attestation.verification_key_sha256",
-            reject_placeholder=True,
-        ),
+        "algorithm": REVIEW_ATTESTATION_ALGORITHM,
+        "verification_key_base64": value["verification_key_base64"],
+        "verification_key_sha256": verification_key_sha256,
     }
+
+
+def _review_attestation_payload(
+    *,
+    profile_attestation,
+    review_sha256,
+    candidate_identity_sha256,
+    policy_sha256,
+    corpus_manifest_sha256,
+):
+    """Construct exactly the byte-stable envelope an external reviewer signs."""
+    return {
+        "schema_version": REVIEW_ATTESTATION_SCHEMA_VERSION,
+        "protocol": profile_attestation["protocol"],
+        "verifier_id": profile_attestation["verifier_id"],
+        "algorithm": profile_attestation["algorithm"],
+        "verification_key_sha256": profile_attestation["verification_key_sha256"],
+        "review_sha256": review_sha256,
+        "candidate_identity_sha256": candidate_identity_sha256,
+        "policy_sha256": policy_sha256,
+        "corpus_manifest_sha256": corpus_manifest_sha256,
+    }
+
+
+def _verify_ed25519_attestation_signature(public_key, payload, signature):
+    """Verify the externally issued detached review signature, fail closed.
+
+    The gate intentionally has no fallback that treats a receipt hash or a
+    self-declared ``blinded`` flag as a valid verification. If the host lacks
+    an Ed25519 verification backend, the release candidate remains
+    non-production.
+    """
+    payload_bytes = canonical_json(payload).encode("utf-8")
+    try:
+        from cryptography.exceptions import InvalidSignature
+        from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
+    except ImportError:
+        # ``cryptography`` is optional for this host-side tool. Use the system
+        # OpenSSL Ed25519 verifier when available; no receipt hash fallback is
+        # allowed if neither verified backend exists.
+        pass
+    else:
+        try:
+            Ed25519PublicKey.from_public_bytes(public_key).verify(signature, payload_bytes)
+        except (InvalidSignature, ValueError, TypeError):
+            return False
+        return True
+
+    # SubjectPublicKeyInfo for Ed25519 is the fixed DER prefix below followed
+    # by the 32 raw public-key bytes (RFC 8410).  Keeping this small encoding
+    # local avoids accepting unpinned PEM formatting as policy evidence.
+    public_key_der = bytes.fromhex("302a300506032b6570032100") + public_key
+    public_key_pem = (
+        b"-----BEGIN PUBLIC KEY-----\n"
+        + base64.encodebytes(public_key_der)
+        + b"-----END PUBLIC KEY-----\n"
+    )
+    try:
+        with tempfile.TemporaryDirectory(prefix="lightforge-review-attestation-") as directory:
+            root = Path(directory)
+            key_path = root / "verifier-public-key.pem"
+            payload_path = root / "attestation-payload.json"
+            signature_path = root / "attestation-signature.bin"
+            key_path.write_bytes(public_key_pem)
+            payload_path.write_bytes(payload_bytes)
+            signature_path.write_bytes(signature)
+            completed = subprocess.run(
+                [
+                    "openssl",
+                    "pkeyutl",
+                    "-verify",
+                    "-pubin",
+                    "-inkey",
+                    str(key_path),
+                    "-rawin",
+                    "-in",
+                    str(payload_path),
+                    "-sigfile",
+                    str(signature_path),
+                ],
+                check=False,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=10,
+            )
+    except (FileNotFoundError, OSError, subprocess.TimeoutExpired):
+        return None
+    return completed.returncode == 0
 
 
 def _validate_release_profile(value, tracks):
@@ -828,6 +960,7 @@ def _release_evidence_requirements():
             "minimum_reviewers": 3,
             "required_attributes": list(HUMAN_REVIEW_ATTRIBUTES),
             "attestation_protocol": REVIEW_ATTESTATION_PROTOCOL,
+            "attestation_algorithm": REVIEW_ATTESTATION_ALGORITHM,
         },
     }
 
@@ -1045,6 +1178,38 @@ def _release_corpus_diagnostics(manifest, profile, required_tracks):
     diagnostics["valid"] = not blockers
     diagnostics["status"] = "valid" if not blockers else "invalid"
     return diagnostics, blockers, track_contract
+
+
+def _trusted_release_policy_diagnostics(profile, expected_policy_sha, supplied_sha256):
+    """Require an out-of-band policy digest before a release can be claimed.
+
+    A policy passed alongside candidate evidence is only an assertion. The
+    official workflow supplies this digest from a protected release environment
+    after materializing its trusted policy bundle, so a candidate cannot choose
+    its own corpus pin, verifier key, or metric rules and then sign itself.
+    """
+    diagnostics = {
+        "required": profile["mode"] == "release",
+        "status": "not_required",
+        "valid": profile["mode"] != "release",
+        "policy_sha256": expected_policy_sha if profile["mode"] == "release" else None,
+    }
+    if profile["mode"] != "release":
+        return diagnostics, []
+    try:
+        trusted = _require_sha256(
+            supplied_sha256,
+            "trusted_release_policy_sha256",
+            reject_placeholder=True,
+        )
+    except ValueError:
+        diagnostics.update({"status": "missing_or_invalid", "valid": False})
+        return diagnostics, [{"reason": "release_trusted_policy_binding_required"}]
+    if trusted != expected_policy_sha:
+        diagnostics.update({"status": "mismatch", "valid": False})
+        return diagnostics, [{"reason": "release_trusted_policy_binding_mismatch"}]
+    diagnostics.update({"status": "valid", "valid": True})
+    return diagnostics, []
 
 
 def validate_locked_corpus_manifest(manifest, policy):
@@ -1343,9 +1508,12 @@ def _review_evidence(candidate, profile, expected_policy_sha):
         if set(reviewer) != {"reviewer_id", "blinded", "ratings"}:
             complete = False
         reviewer_id = reviewer.get("reviewer_id")
-        if not isinstance(reviewer_id, str) or not _OPAQUE_ID.fullmatch(reviewer_id) or reviewer_id in seen:
+        if not isinstance(reviewer_id, str) or not _OPAQUE_ID.fullmatch(reviewer_id):
             complete = False
-        seen.add(reviewer_id)
+        elif reviewer_id in seen:
+            complete = False
+        else:
+            seen.add(reviewer_id)
         if reviewer.get("blinded") is not True:
             blinded = False
         ratings = reviewer.get("ratings")
@@ -1385,10 +1553,10 @@ def _review_evidence(candidate, profile, expected_policy_sha):
         blockers.append({"reason": "human_perceptual_review_inconclusive_rating", "attributes": inconclusive})
 
     # ``blinded: true`` is a reviewer claim, not an independently verifiable
-    # property.  Production status therefore additionally requires a receipt
-    # from the verifier pinned in policy.  The receipt binds this exact review,
-    # candidate source identity, corpus, and policy rather than just a mutable
-    # boolean in the candidate report.
+    # property. Production status therefore additionally requires an Ed25519
+    # signature from the verifier public key pinned in policy. The signed
+    # payload binds this exact review, candidate source identity, corpus, and
+    # policy rather than merely carrying a mutable receipt hash or boolean.
     identity = candidate.get("candidate_identity")
     identity_valid = (
         isinstance(identity, dict)
@@ -1426,12 +1594,14 @@ def _review_evidence(candidate, profile, expected_policy_sha):
         "schema_version",
         "protocol",
         "verifier_id",
+        "algorithm",
         "verification_key_sha256",
         "review_sha256",
         "candidate_identity_sha256",
         "policy_sha256",
         "corpus_manifest_sha256",
-        "external_receipt_sha256",
+        "signed_payload_sha256",
+        "signature_base64",
     }
     attestation_valid = isinstance(attestation, dict) and set(attestation) == expected_attestation_fields
     if not attestation_valid:
@@ -1444,28 +1614,58 @@ def _review_evidence(candidate, profile, expected_policy_sha):
             if identity_valid
             else None
         )
+        expected_payload = _review_attestation_payload(
+            profile_attestation=profile_attestation,
+            review_sha256=expected_review_sha,
+            candidate_identity_sha256=expected_identity_sha,
+            policy_sha256=expected_policy_sha,
+            corpus_manifest_sha256=profile["locked_corpus"]["manifest_sha256"],
+        )
+        expected_payload_sha = hashlib.sha256(
+            canonical_json(expected_payload).encode("utf-8")
+        ).hexdigest()
         immutable_fields_match = (
             attestation.get("schema_version") == REVIEW_ATTESTATION_SCHEMA_VERSION
             and attestation.get("protocol") == profile_attestation["protocol"]
             and attestation.get("verifier_id") == profile_attestation["verifier_id"]
+            and attestation.get("algorithm") == profile_attestation["algorithm"]
             and attestation.get("verification_key_sha256") == profile_attestation["verification_key_sha256"]
             and attestation.get("review_sha256") == expected_review_sha
             and attestation.get("candidate_identity_sha256") == expected_identity_sha
             and attestation.get("policy_sha256") == expected_policy_sha
             and attestation.get("corpus_manifest_sha256") == profile["locked_corpus"]["manifest_sha256"]
+            and attestation.get("signed_payload_sha256") == expected_payload_sha
         )
         try:
-            _require_sha256(
-                attestation.get("external_receipt_sha256"),
-                "human_perceptual_review.attestation.external_receipt_sha256",
-                reject_placeholder=True,
+            signature = _require_canonical_base64(
+                attestation.get("signature_base64"),
+                "human_perceptual_review.attestation.signature_base64",
+                decoded_length=64,
             )
         except ValueError:
             immutable_fields_match = False
         if not immutable_fields_match:
             blockers.append({"reason": "external_review_attestation_binding_mismatch"})
         else:
-            summary_result["externally_attested"] = True
+            public_key = _require_canonical_base64(
+                profile_attestation["verification_key_base64"],
+                "policy.release_profile.human_perceptual_review.attestation.verification_key_base64",
+                decoded_length=32,
+            )
+            verified = _verify_ed25519_attestation_signature(
+                public_key,
+                expected_payload,
+                signature,
+            )
+            if verified is None:
+                summary_result["external_verification"] = "unavailable"
+                blockers.append({"reason": "human_review_external_verification_unavailable"})
+            elif not verified:
+                summary_result["external_verification"] = "invalid_signature"
+                blockers.append({"reason": "external_review_attestation_signature_invalid"})
+            else:
+                summary_result["externally_attested"] = True
+                summary_result["external_verification"] = "verified"
     summary_result.update(
         {
             "reviewer_count": len(reviewers),
@@ -1479,12 +1679,25 @@ def _review_evidence(candidate, profile, expected_policy_sha):
     return summary_result, blockers
 
 
-def compare(baseline, candidate, policy, *, locked_corpus_manifest=None):
+def compare(
+    baseline,
+    candidate,
+    policy,
+    *,
+    locked_corpus_manifest=None,
+    trusted_release_policy_sha256=None,
+):
     policy_metrics, required_tracks, minimum_pairs, bootstrap, runtime_target, profile = _validate_policy(policy)
     expected_policy_sha = policy_sha256(policy)
     baseline_suite, baseline_runs, baseline_issues = _index_report(baseline, policy_metrics, expected_policy_sha)
     candidate_suite, candidate_runs, candidate_issues = _index_report(candidate, policy_metrics, expected_policy_sha)
     blockers = [*baseline_issues, *candidate_issues]
+    trusted_release_policy, trusted_policy_blockers = _trusted_release_policy_diagnostics(
+        profile,
+        expected_policy_sha,
+        trusted_release_policy_sha256,
+    )
+    blockers.extend(trusted_policy_blockers)
     locked_corpus, corpus_blockers, track_contract = _release_corpus_diagnostics(
         locked_corpus_manifest,
         profile,
@@ -1687,6 +1900,7 @@ def compare(baseline, candidate, policy, *, locked_corpus_manifest=None):
         "runtime": runtime,
         "metric_applicability": applicability,
         "locked_corpus": locked_corpus,
+        "trusted_release_policy": trusted_release_policy,
         "human_perceptual_review": review_summary,
         "release_profile": profile,
         "metric_contract": release_metric_contract() if profile["mode"] == "release" else {"mode": profile["mode"], "configured": False},
@@ -1704,6 +1918,10 @@ def main(argv=None):
     parser.add_argument(
         "--locked-corpus-manifest",
         help="private hash-pinned release corpus manifest; required by release mode",
+    )
+    parser.add_argument(
+        "--trusted-release-policy-sha256",
+        help="out-of-band SHA-256 from the protected release-policy authority; required by release mode",
     )
     parser.add_argument("--output", required=True)
     parser.add_argument("--allow-partial", action="store_true")
@@ -1723,6 +1941,7 @@ def main(argv=None):
         candidate,
         policy,
         locked_corpus_manifest=locked_corpus_manifest,
+        trusted_release_policy_sha256=args.trusted_release_policy_sha256,
     )
     Path(args.output).parent.mkdir(parents=True, exist_ok=True)
     Path(args.output).write_text(json.dumps(result, indent=2, sort_keys=True, allow_nan=False) + "\n", encoding="utf-8")

@@ -166,9 +166,19 @@ The runner preserves this JSON without inventing reviewer results; the quality
 gate validates it. Candidate diagnostics must share a pinned `source_sha256`
 and pipeline version; the runner emits that as `candidate_identity`. The review
 file must contain the gate's structured ratings plus an
-`external-review-attestation-v1` receipt bound to that identity, the policy,
-and the corpus. A bare `blinded: true` boolean is not sufficient. Do not include
-names, comments, lyrics, screenshots, or other private material.
+`external-review-attestation-v2` Ed25519 detached signature bound to that
+identity, the policy, and the corpus. Policy pins the verifier's public key and
+its SHA-256; a bare `blinded: true` boolean or arbitrary receipt hash is not
+sufficient. Do not include private signing material, names, comments, lyrics,
+screenshots, or other private material.
+
+For the manually dispatched GitHub quality-gate workflow, package only the
+candidate `benchmark.json` evidence. The workflow downloads it by its explicit
+repository and run ID, but it obtains the release policy, locked manifest, and
+independent policy digest from the protected `lightforge-release-quality`
+environment on protected `main`. A candidate artifact must never supply the
+policy, corpus manifest, verifier key, or trust digest because it could then
+create a self-signed release claim.
 
 `aggregate` writes atomically and sorts reports by track, run ID, and
 diagnostic digest, so a reordered directory traversal produces byte-equivalent

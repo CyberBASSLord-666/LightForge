@@ -1,3 +1,5 @@
+import base64
+import hashlib
 import importlib.util
 import json
 import tempfile
@@ -14,6 +16,17 @@ contract = runner.contract
 
 def sha(char):
     return char * 64
+
+
+def review_attestation_profile():
+    public_key = bytes(range(32))
+    return {
+        "protocol": runner.quality_gate.REVIEW_ATTESTATION_PROTOCOL,
+        "verifier_id": "blind-review-service",
+        "algorithm": runner.quality_gate.REVIEW_ATTESTATION_ALGORITHM,
+        "verification_key_base64": base64.b64encode(public_key).decode("ascii"),
+        "verification_key_sha256": hashlib.sha256(public_key).hexdigest(),
+    }
 
 
 def manifest():
@@ -358,11 +371,7 @@ class LockedBenchmarkRunnerTest(unittest.TestCase):
                     "required_for_every_release_candidate": True,
                     "minimum_reviewers": 3,
                     "required_attributes": list(runner.quality_gate.HUMAN_REVIEW_ATTRIBUTES),
-                    "attestation": {
-                        "protocol": runner.quality_gate.REVIEW_ATTESTATION_PROTOCOL,
-                        "verifier_id": "blind-review-service",
-                        "verification_key_sha256": "fedcba9876543210" * 4,
-                    },
+                    "attestation": review_attestation_profile(),
                 },
             },
         }
@@ -410,11 +419,7 @@ class LockedBenchmarkRunnerTest(unittest.TestCase):
                     "required_for_every_release_candidate": True,
                     "minimum_reviewers": 3,
                     "required_attributes": list(runner.quality_gate.HUMAN_REVIEW_ATTRIBUTES),
-                    "attestation": {
-                        "protocol": runner.quality_gate.REVIEW_ATTESTATION_PROTOCOL,
-                        "verifier_id": "blind-review-service",
-                        "verification_key_sha256": "abcdef0123456789" * 4,
-                    },
+                    "attestation": review_attestation_profile(),
                 },
             },
         }

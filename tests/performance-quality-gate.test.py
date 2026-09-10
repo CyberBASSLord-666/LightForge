@@ -1,7 +1,9 @@
 import copy
+import base64
 import hashlib
 import importlib.util
 import json
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -15,6 +17,88 @@ spec.loader.exec_module(gate)
 
 def sha(value):
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
+def sha_bytes(value):
+    return hashlib.sha256(value).hexdigest()
+
+
+_TEST_REVIEW_PRIVATE_KEY_PEM = None
+_TEST_REVIEW_PUBLIC_KEY = None
+
+
+def review_test_public_key():
+    """Generate one ephemeral Ed25519 verifier key; no signing secret is checked in."""
+    global _TEST_REVIEW_PRIVATE_KEY_PEM, _TEST_REVIEW_PUBLIC_KEY
+    if _TEST_REVIEW_PUBLIC_KEY is not None:
+        return _TEST_REVIEW_PUBLIC_KEY
+    with tempfile.TemporaryDirectory() as temporary:
+        root = Path(temporary)
+        private_path = root / "review-test-private-key.pem"
+        public_der_path = root / "review-test-public-key.der"
+        generated = subprocess.run(
+            ["openssl", "genpkey", "-algorithm", "ED25519", "-out", str(private_path)],
+            check=False,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        extracted = subprocess.run(
+            [
+                "openssl",
+                "pkey",
+                "-in",
+                str(private_path),
+                "-pubout",
+                "-outform",
+                "DER",
+                "-out",
+                str(public_der_path),
+            ],
+            check=False,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        if generated.returncode or extracted.returncode:
+            raise RuntimeError("OpenSSL could not create the ephemeral test Ed25519 key")
+        public_der = public_der_path.read_bytes()
+        prefix = bytes.fromhex("302a300506032b6570032100")
+        if not public_der.startswith(prefix) or len(public_der) != len(prefix) + 32:
+            raise RuntimeError("OpenSSL emitted an unexpected Ed25519 public key")
+        _TEST_REVIEW_PRIVATE_KEY_PEM = private_path.read_bytes()
+        _TEST_REVIEW_PUBLIC_KEY = public_der[len(prefix):]
+    return _TEST_REVIEW_PUBLIC_KEY
+
+
+def sign_review_attestation(payload):
+    """Sign an ephemeral test review with OpenSSL's Ed25519 implementation."""
+    review_test_public_key()
+    with tempfile.TemporaryDirectory() as temporary:
+        root = Path(temporary)
+        key_path = root / "review-test-private-key.pem"
+        payload_path = root / "payload.json"
+        signature_path = root / "signature.bin"
+        key_path.write_bytes(_TEST_REVIEW_PRIVATE_KEY_PEM)
+        payload_path.write_bytes(gate.canonical_json(payload).encode("utf-8"))
+        completed = subprocess.run(
+            [
+                "openssl",
+                "pkeyutl",
+                "-sign",
+                "-inkey",
+                str(key_path),
+                "-rawin",
+                "-in",
+                str(payload_path),
+                "-out",
+                str(signature_path),
+            ],
+            check=False,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        if completed.returncode:
+            raise RuntimeError("OpenSSL could not create the test Ed25519 attestation")
+        return base64.b64encode(signature_path.read_bytes()).decode("ascii")
 
 
 def legacy_policy():
@@ -147,7 +231,9 @@ def release_policy(manifest, *, accelerator_available=True):
                 "attestation": {
                     "protocol": gate.REVIEW_ATTESTATION_PROTOCOL,
                     "verifier_id": "blind-review-service",
-                    "verification_key_sha256": sha("review-verifier-key"),
+                    "algorithm": gate.REVIEW_ATTESTATION_ALGORITHM,
+                    "verification_key_base64": base64.b64encode(review_test_public_key()).decode("ascii"),
+                    "verification_key_sha256": sha_bytes(review_test_public_key()),
                 },
             },
         },
@@ -197,16 +283,25 @@ def review(policy, identity, *, status="pass", rating="equivalent", blinded=True
     }
     payload_sha = sha(gate.canonical_json(result))
     attestation = policy["release_profile"]["human_perceptual_review"]["attestation"]
+    signed_payload = gate._review_attestation_payload(
+        profile_attestation=attestation,
+        review_sha256=payload_sha,
+        candidate_identity_sha256=sha(gate.canonical_json(identity)),
+        policy_sha256=gate.policy_sha256(policy),
+        corpus_manifest_sha256=policy["release_profile"]["locked_corpus"]["manifest_sha256"],
+    )
     result["attestation"] = {
         "schema_version": gate.REVIEW_ATTESTATION_SCHEMA_VERSION,
         "protocol": gate.REVIEW_ATTESTATION_PROTOCOL,
         "verifier_id": attestation["verifier_id"],
+        "algorithm": attestation["algorithm"],
         "verification_key_sha256": attestation["verification_key_sha256"],
         "review_sha256": payload_sha,
         "candidate_identity_sha256": sha(gate.canonical_json(identity)),
         "policy_sha256": gate.policy_sha256(policy),
         "corpus_manifest_sha256": policy["release_profile"]["locked_corpus"]["manifest_sha256"],
-        "external_receipt_sha256": sha("external-review-receipt-001"),
+        "signed_payload_sha256": sha(gate.canonical_json(signed_payload)),
+        "signature_base64": sign_review_attestation(signed_payload),
     }
     return result
 
@@ -276,6 +371,16 @@ def inputs():
     )
 
 
+def compare_release(baseline, candidate, policy, manifest):
+    return gate.compare(
+        baseline,
+        candidate,
+        policy,
+        locked_corpus_manifest=manifest,
+        trusted_release_policy_sha256=gate.policy_sha256(policy),
+    )
+
+
 def blocker_reasons(result):
     return {blocker["reason"] for blocker in result["blockers"]}
 
@@ -289,12 +394,61 @@ class QualityGateTest(unittest.TestCase):
 
     def test_release_pass_uses_locked_corpus_and_external_attestation(self):
         manifest, policy, baseline, candidate = inputs()
-        result = gate.compare(baseline, candidate, policy, locked_corpus_manifest=manifest)
+        result = compare_release(baseline, candidate, policy, manifest)
         self.assertEqual("PASS_TARGET", result["status"])
         self.assertTrue(result["production_ready"])
         self.assertTrue(result["locked_corpus"]["valid"])
         self.assertTrue(result["human_perceptual_review"]["externally_attested"])
         self.assertEqual(16, result["locked_corpus"]["track_count"])
+
+    def test_candidate_supplied_release_policy_is_not_a_trust_anchor(self):
+        manifest, policy, baseline, candidate = inputs()
+        result = gate.compare(
+            baseline,
+            candidate,
+            policy,
+            locked_corpus_manifest=manifest,
+        )
+        self.assertEqual("FAIL", result["status"])
+        self.assertFalse(result["production_ready"])
+        self.assertIn("release_trusted_policy_binding_required", blocker_reasons(result))
+        mismatched = gate.compare(
+            baseline,
+            candidate,
+            policy,
+            locked_corpus_manifest=manifest,
+            trusted_release_policy_sha256=sha("different-trusted-policy"),
+        )
+        self.assertEqual("FAIL", mismatched["status"])
+        self.assertIn("release_trusted_policy_binding_mismatch", blocker_reasons(mismatched))
+
+    def test_cli_self_supplied_policy_corpus_key_and_signature_fail_closed(self):
+        """Even a coherent candidate-owned bundle lacks protected policy authority."""
+        manifest, policy, baseline, candidate = inputs()
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            for name, value in (
+                ("baseline.json", baseline),
+                ("candidate.json", candidate),
+                ("candidate-policy.json", policy),
+                ("candidate-manifest.json", manifest),
+            ):
+                (root / name).write_text(json.dumps(value), encoding="utf-8")
+            output = root / "result.json"
+            code = gate.main(
+                [
+                    "--baseline", str(root / "baseline.json"),
+                    "--candidate", str(root / "candidate.json"),
+                    "--policy", str(root / "candidate-policy.json"),
+                    "--locked-corpus-manifest", str(root / "candidate-manifest.json"),
+                    "--output", str(output),
+                ]
+            )
+            result = json.loads(output.read_text(encoding="utf-8"))
+        self.assertEqual(1, code)
+        self.assertEqual("FAIL", result["status"])
+        self.assertFalse(result["production_ready"])
+        self.assertIn("release_trusted_policy_binding_required", blocker_reasons(result))
 
     def test_exact_old_false_pass_vector_fails_before_a_result_can_be_claimed(self):
         manifest, policy, baseline, candidate = inputs()
@@ -330,15 +484,66 @@ class QualityGateTest(unittest.TestCase):
     def test_minor_or_boolean_only_review_cannot_bypass_release_review(self):
         manifest, policy, baseline, _ = inputs()
         minor = release_report(24, policy, manifest, candidate=True, classification="minor", review_value=False)
-        minor_result = gate.compare(baseline, minor, policy, locked_corpus_manifest=manifest)
+        minor_result = compare_release(baseline, minor, policy, manifest)
         self.assertEqual("FAIL", minor_result["status"])
         self.assertIn("missing_human_perceptual_review", blocker_reasons(minor_result))
 
         forged = release_report(24, policy, manifest, candidate=True)
         forged["human_perceptual_review"].pop("attestation")
-        forged_result = gate.compare(baseline, forged, policy, locked_corpus_manifest=manifest)
+        forged_result = compare_release(baseline, forged, policy, manifest)
         self.assertEqual("FAIL", forged_result["status"])
         self.assertIn("missing_or_invalid_external_review_attestation", blocker_reasons(forged_result))
+
+    def test_forged_external_review_receipt_fails_full_cli_pipeline(self):
+        """A self-computed binding hash and arbitrary signature cannot release."""
+        manifest, policy, baseline, candidate = inputs()
+        candidate["human_perceptual_review"]["attestation"]["signature_base64"] = (
+            base64.b64encode(b"forged-review-receipt".ljust(64, b"!")).decode("ascii")
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            for name, value in (
+                ("baseline.json", baseline),
+                ("candidate.json", candidate),
+                ("policy.json", policy),
+                ("manifest.json", manifest),
+            ):
+                (root / name).write_text(json.dumps(value), encoding="utf-8")
+            output = root / "result.json"
+            code = gate.main(
+                [
+                    "--baseline", str(root / "baseline.json"),
+                    "--candidate", str(root / "candidate.json"),
+                    "--policy", str(root / "policy.json"),
+                    "--locked-corpus-manifest", str(root / "manifest.json"),
+                    "--trusted-release-policy-sha256", gate.policy_sha256(policy),
+                    "--output", str(output),
+                ]
+            )
+            result = json.loads(output.read_text(encoding="utf-8"))
+        self.assertEqual(1, code)
+        self.assertEqual("FAIL", result["status"])
+        self.assertFalse(result["production_ready"])
+        self.assertIn("external_review_attestation_signature_invalid", blocker_reasons(result))
+
+    def test_malformed_reviewer_id_returns_structured_fail(self):
+        manifest, policy, baseline, candidate = inputs()
+        candidate["human_perceptual_review"]["reviewers"][0]["reviewer_id"] = []
+        result = compare_release(baseline, candidate, policy, manifest)
+        self.assertEqual("FAIL", result["status"])
+        self.assertIn("incomplete_human_perceptual_review", blocker_reasons(result))
+
+    def test_unavailable_signature_backend_is_fail_closed(self):
+        manifest, policy, baseline, candidate = inputs()
+        verifier = gate._verify_ed25519_attestation_signature
+        gate._verify_ed25519_attestation_signature = lambda *_: None
+        try:
+            result = compare_release(baseline, candidate, policy, manifest)
+        finally:
+            gate._verify_ed25519_attestation_signature = verifier
+        self.assertEqual("FAIL", result["status"])
+        self.assertFalse(result["production_ready"])
+        self.assertIn("human_review_external_verification_unavailable", blocker_reasons(result))
 
     def test_inconclusive_or_single_baseline_preference_is_rejected(self):
         manifest, policy, baseline, candidate = inputs()
@@ -349,7 +554,7 @@ class QualityGateTest(unittest.TestCase):
             candidate=True,
             review_value=review(policy, candidate_identity(), rating="inconclusive"),
         )
-        result = gate.compare(baseline, inconclusive, policy, locked_corpus_manifest=manifest)
+        result = compare_release(baseline, inconclusive, policy, manifest)
         self.assertEqual("FAIL", result["status"])
         self.assertIn("human_perceptual_review_inconclusive_rating", blocker_reasons(result))
 
@@ -358,7 +563,7 @@ class QualityGateTest(unittest.TestCase):
         # Mutating ratings invalidates the attested digest too; both blockers are
         # expected and a top-level pass still cannot conceal the vote.
         split_candidate = release_report(24, policy, manifest, candidate=True, review_value=split)
-        split_result = gate.compare(baseline, split_candidate, policy, locked_corpus_manifest=manifest)
+        split_result = compare_release(baseline, split_candidate, policy, manifest)
         self.assertEqual("FAIL", split_result["status"])
         self.assertIn("human_perceptual_review_baseline_preferred", blocker_reasons(split_result))
 
@@ -369,7 +574,7 @@ class QualityGateTest(unittest.TestCase):
             for run in report["runs"]:
                 if run["track_id"] == "lead-pop":
                     run["metrics"]["quality"]["vocal_lead_backing_role_accuracy"] = copy.deepcopy(evidence)
-        unbound = gate.compare(baseline, candidate, policy, locked_corpus_manifest=manifest)
+        unbound = compare_release(baseline, candidate, policy, manifest)
         self.assertEqual("FAIL", unbound["status"])
         self.assertIn("release_metric_not_applicable_unbound", blocker_reasons(unbound))
 
@@ -386,7 +591,7 @@ class QualityGateTest(unittest.TestCase):
                         "reason": "forged",
                         "evidence_id": "forged",
                     }
-        forged = gate.compare(baseline, candidate, policy, locked_corpus_manifest=manifest)
+        forged = compare_release(baseline, candidate, policy, manifest)
         self.assertEqual("FAIL", forged["status"])
         self.assertIn("release_accelerator_not_applicable_unbound", blocker_reasons(forged))
 
@@ -412,18 +617,18 @@ class QualityGateTest(unittest.TestCase):
                 for metric in gate._ACCELERATOR_NOT_APPLICABLE_METRICS:
                     root, leaf = metric.split(".")
                     run["metrics"][root][leaf] = copy.deepcopy(accelerator)
-        result = gate.compare(baseline, candidate, policy, locked_corpus_manifest=manifest)
+        result = compare_release(baseline, candidate, policy, manifest)
         self.assertEqual("PASS_TARGET", result["status"])
 
     def test_one_track_missing_coverage_or_golden_artifact_cannot_pass(self):
         manifest = release_manifest()
         manifest["tracks"] = manifest["tracks"][:1]
         policy = release_policy(manifest)
-        result = gate.compare(
+        result = compare_release(
             release_report(100, policy, manifest),
             release_report(24, policy, manifest, candidate=True),
             policy,
-            locked_corpus_manifest=manifest,
+            manifest,
         )
         self.assertEqual("FAIL", result["status"])
         self.assertIn("release_locked_corpus_too_small", blocker_reasons(result))
@@ -432,11 +637,11 @@ class QualityGateTest(unittest.TestCase):
         manifest = release_manifest()
         manifest["tracks"][0]["golden_artifacts"].pop("drum_map_sha256")
         policy = release_policy(manifest)
-        result = gate.compare(
+        result = compare_release(
             release_report(100, policy, manifest),
             release_report(24, policy, manifest, candidate=True),
             policy,
-            locked_corpus_manifest=manifest,
+            manifest,
         )
         self.assertEqual("FAIL", result["status"])
         self.assertIn("release_locked_corpus_golden_artifacts_invalid", blocker_reasons(result))
@@ -445,7 +650,7 @@ class QualityGateTest(unittest.TestCase):
         manifest, policy, baseline, candidate = inputs()
         candidate["runs"][0]["provenance"]["workload"]["audio"]["content_sha256"] = sha("wrong-audio")
         candidate["runs"][1]["provenance"]["environment"]["runtime_backend"] = "other"
-        result = gate.compare(baseline, candidate, policy, locked_corpus_manifest=manifest)
+        result = compare_release(baseline, candidate, policy, manifest)
         self.assertEqual("FAIL", result["status"])
         self.assertIn("release_policy_run_audio_mismatch", blocker_reasons(result))
         self.assertIn("release_locked_runtime_profile_mismatch", blocker_reasons(result))
@@ -471,8 +676,8 @@ class QualityGateTest(unittest.TestCase):
     def test_output_is_deterministic(self):
         manifest, policy, baseline, candidate = inputs()
         self.assertEqual(
-            gate.compare(baseline, candidate, policy, locked_corpus_manifest=manifest),
-            gate.compare(copy.deepcopy(baseline), copy.deepcopy(candidate), policy, locked_corpus_manifest=copy.deepcopy(manifest)),
+            compare_release(baseline, candidate, policy, manifest),
+            compare_release(copy.deepcopy(baseline), copy.deepcopy(candidate), policy, copy.deepcopy(manifest)),
         )
 
 

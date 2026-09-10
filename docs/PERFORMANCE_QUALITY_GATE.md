@@ -11,6 +11,7 @@ python3 tools/performance_quality_gate.py \
   --candidate artifacts/benchmark-candidate.json \
   --locked-corpus-manifest /secure/locked-corpus-manifest.json \
   --policy qa/performance-gate-policy.json \
+  --trusted-release-policy-sha256 "$LIGHTFORGE_RELEASE_POLICY_SHA256" \
   --output artifacts/performance-quality-report.json
 ```
 
@@ -20,10 +21,31 @@ python3 tools/performance_quality_gate.py \
 | --- | --- | --- |
 | Omitted or `legacy` | Existing, explicitly declared metric sets. | Comparable only; `production_ready` is always false. |
 | `template` | Checked-in redacted corpus configuration. | Always fails with `unconfigured_locked_corpus`; it needs only its declared template metrics. |
-| `release` | A reviewed private locked corpus and immutable complete metric contract. | Can produce `PASS_TARGET` and `production_ready: true`. |
+| `release` | A reviewed private locked corpus and immutable complete metric contract. | Can produce `PASS_TARGET` and `production_ready: true` only with a trusted out-of-band policy binding. |
 
 The checked-in policy is deliberately `template` mode. It must not be edited
 locally to turn a synthetic corpus into a production claim.
+
+## Trusted release authority
+
+A release policy, corpus manifest, verifier key, and review signature carried
+next to candidate data are not a trust boundary: a candidate could create all
+four. Therefore release mode also requires
+`--trusted-release-policy-sha256`, an out-of-band SHA-256 supplied by the
+protected release authority. It must equal the canonical policy hash that the
+gate computes; otherwise the gate emits
+`release_trusted_policy_binding_required` or
+`release_trusted_policy_binding_mismatch` and cannot be production-ready.
+
+The official dispatch runs only from protected `main` and the protected
+`lightforge-release-quality` GitHub Environment. That environment supplies
+three protected values: `LIGHTFORGE_RELEASE_POLICY_JSON`,
+`LIGHTFORGE_RELEASE_CORPUS_MANIFEST_JSON`, and
+`LIGHTFORGE_RELEASE_POLICY_SHA256`. Candidate and baseline artifacts supply
+only their `benchmark.json` evidence. The workflow never accepts a policy,
+manifest, public key, or trusted digest from a candidate artifact or dispatch
+input. Do not store a private signing key or HMAC secret in the policy,
+repository, manifest, artifact, or environment policy bundle.
 
 A real release policy pins the corpus identity, omits custom `metrics`, and
 binds the compiled contract into its policy digest:
@@ -58,9 +80,11 @@ binds the compiled contract into its policy digest:
         "repetitiveness", "climax_quality", "overall_musicality"
       ],
       "attestation": {
-        "protocol": "external-review-attestation-v1",
+        "protocol": "external-review-attestation-v2",
         "verifier_id": "approved-blind-review-service",
-        "verification_key_sha256": "<lower-case sha256>"
+        "algorithm": "ed25519",
+        "verification_key_base64": "<canonical-base64-32-byte-public-key>",
+        "verification_key_sha256": "<sha256-of-the-decoded-public-key>"
       }
     }
   },
@@ -131,8 +155,8 @@ runtime exception is accelerator memory/utilization on a host whose
 reason/evidence ID matches every affected run. Energy and thermal fields do not
 receive a free-form non-applicable exception.
 
-The supplied release manifest must itself be canonical-hash equal to the policy
-pin, set `template: false` and `release_ready: true`, contain at least 16
+The trusted supplied release manifest must itself be canonical-hash equal to the
+policy pin, set `template: false` and `release_ready: true`, contain at least 16
 distinct audio identities, use exactly the committed coverage requirement and
 golden-artifact requirement lists, cover every required tag family, and provide
 all ten golden SHA-256 values for every track. `locked_corpus` diagnostics in
@@ -140,7 +164,7 @@ the gate result expose only hashes, counts, and coverage status.
 
 ## Immutable release metric contract
 
-`lightforge-release-metrics-v1` requires all of the following families. The
+`lightforge-release-metrics-v2` requires all of the following families. The
 metric names are emitted under `metric_contract.rules` in every release result.
 
 - Performance: total and per-stage wall time (decode, feature generation,
@@ -189,14 +213,18 @@ vote, blocks release. An all-equivalent review is an explicit decisive
 no-regression judgement; an all-inconclusive review is not.
 
 `blinded: true` alone is not a production proof. The review must carry an
-`external-review-attestation-v1` receipt issued by the verifier and key digest
-pinned in policy. The gate checks that the receipt hashes the review payload,
-candidate source/pipeline identity, policy SHA-256, and corpus manifest
-SHA-256. Candidate runs must contain the same source SHA-256 and pipeline
-version. Missing or mismatched attestation leaves the result `FAIL`; a
-self-attested boolean cannot produce `production_ready: true`. Reviewer IDs
-and ratings are structural evidence only; do not place comments, names, lyrics,
-or other private material in the report.
+`external-review-attestation-v2` detached Ed25519 signature. Policy pins the
+verifier ID, the exact 32-byte public key (canonical base64), and its SHA-256.
+The signature covers a canonical payload containing the review hash, candidate
+source/pipeline identity hash, policy SHA-256, and corpus-manifest SHA-256.
+Candidate runs must contain the same source SHA-256 and pipeline version. A
+missing, mismatched, or invalid signature leaves the result `FAIL`; if neither
+an available Python Ed25519 backend nor an Ed25519-capable `openssl` is
+available, the result fails closed with
+`human_review_external_verification_unavailable`. A self-attested boolean or
+receipt hash cannot produce `production_ready: true`. Reviewer IDs and ratings
+are structural evidence only; do not place comments, names, lyrics, or other
+private material in the report.
 
 ## Classification
 
@@ -230,10 +258,15 @@ when required, and an actual gate result.
 For the manually dispatched GitHub workflow, provide the artifact name, source
 repository, and source run ID for both baseline and candidate. The workflow has
 `actions: read` explicitly and downloads each artifact from exactly that source;
-it never guesses the current run. The candidate artifact must contain both
-`benchmark.json` and `locked-corpus-manifest.json`. It passes the latter through
-`--locked-corpus-manifest` before it can upload a result. All action references
-are full immutable commit SHAs and have a static regression test.
+it never guesses the current run. It runs only from protected `main`, requires
+the protected `lightforge-release-quality` environment, and rejects an absent
+trusted policy/corpus/digest before comparison. Candidate artifacts contain
+only `benchmark.json`; the policy and locked manifest are materialized from the
+protected environment and the trusted digest is passed through
+`--trusted-release-policy-sha256`. This prevents a candidate-supplied policy,
+corpus, verifier key, or self-signed review from becoming a release authority.
+All action references are full immutable commit SHAs and have a static
+regression test.
 
 The release bootstrap remains exactly 20,000 or more resamples at 99% or more
 confidence. The implementation memoizes only byte-identical deterministic
