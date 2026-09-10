@@ -414,8 +414,10 @@
     }else show.perceptualValidation={version:1,state:'unavailable',reason:'Perceptual validation sidecar is unavailable.'};
     show.choreography.musicCues=m.musicCues;
     show.validation=validate(show,m);show.validation.synchronization=show.synchronization;
-    show.validation.perceptualValidation={state:show.perceptualValidation&&show.perceptualValidation.state==='available'?'available':'unavailable',reportVersion:show.perceptualValidation&&show.perceptualValidation.version||null,eventEvidenceState:show.perceptualValidation&&show.perceptualValidation.eventEvidence&&show.perceptualValidation.eventEvidence.state||null};
-    if(show.validation.perceptualValidation.state!=='available')show.validation.warnings.push('Perceptual validation is unavailable; this show is not eligible for a perceptual-quality release claim.');
+    const perceptualEvidence=show.perceptualValidation&&show.perceptualValidation.eventEvidence;
+    const perceptualEvidenceAccepted=perceptualEvidence&&perceptualEvidence.state==='available'&&Number.isInteger(perceptualEvidence.acceptedCount)&&perceptualEvidence.acceptedCount>0;
+    show.validation.perceptualValidation={state:show.perceptualValidation&&show.perceptualValidation.state==='available'&&perceptualEvidenceAccepted?'available':'unavailable',reportVersion:show.perceptualValidation&&show.perceptualValidation.version||null,eventEvidenceState:perceptualEvidence&&perceptualEvidence.state||null,eventEvidenceAcceptedCount:perceptualEvidence&&Number.isInteger(perceptualEvidence.acceptedCount)?perceptualEvidence.acceptedCount:0};
+    if(show.validation.perceptualValidation.state!=='available')show.validation.warnings.push(show.perceptualValidation&&show.perceptualValidation.state==='available'?'Perceptual validation has no accepted realization evidence; this show is not eligible for a perceptual-quality release claim.':'Perceptual validation is unavailable; this show is not eligible for a perceptual-quality release claim.');
     show.stats=Object.assign(show.stats,show.validation.stats);
     if(!show.validation.valid)throw new Error('The generated show failed validation: '+show.validation.errors.join(' '));
     preparePreview(show);
