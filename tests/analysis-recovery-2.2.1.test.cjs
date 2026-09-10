@@ -168,7 +168,9 @@ test('worker capability getters fall back to one WASM thread without aborting re
  const hostile=[
   context=>{context.SharedArrayBuffer=SharedArrayBuffer;Object.defineProperty(context,'crossOriginIsolated',{configurable:true,get(){throw Error('hostile isolation getter');}});},
   context=>{context.SharedArrayBuffer=SharedArrayBuffer;context.crossOriginIsolated=true;Object.defineProperty(context,'navigator',{configurable:true,get(){throw Error('hostile navigator getter');}});},
-  context=>{context.SharedArrayBuffer=SharedArrayBuffer;context.crossOriginIsolated=true;context.navigator={};Object.defineProperty(context.navigator,'hardwareConcurrency',{configurable:true,get(){throw Error('hostile core getter');}});}
+  context=>{context.SharedArrayBuffer=SharedArrayBuffer;context.crossOriginIsolated=true;context.navigator={};Object.defineProperty(context.navigator,'hardwareConcurrency',{configurable:true,get(){throw Error('hostile core getter');}});},
+  context=>{context.SharedArrayBuffer=SharedArrayBuffer;context.crossOriginIsolated=true;context.navigator=undefined;},
+  context=>{context.SharedArrayBuffer=SharedArrayBuffer;context.crossOriginIsolated=true;context.navigator={hardwareConcurrency:Infinity};}
  ];
  for(const configureCapabilities of hostile){const h=workerHarness({configureCapabilities});await h.run();assert.equal(h.messages.at(-1).type,'result');assert.equal(h.wasmThreads,1);}
  const available=workerHarness({configureCapabilities:context=>{context.SharedArrayBuffer=SharedArrayBuffer;context.crossOriginIsolated=true;context.navigator={hardwareConcurrency:8};}});await available.run();assert.equal(available.messages.at(-1).type,'result');assert.equal(available.wasmThreads,4);
