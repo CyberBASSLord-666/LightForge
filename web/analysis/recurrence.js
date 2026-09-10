@@ -248,8 +248,7 @@
    const withPrevious=items.map((item,index)=>({...item,previous:index?items[index-1]:null}));
    if(!qualifiedExistingGroup(withPrevious))continue;
    const instances=evolution(withPrevious.map((item,index)=>({sectionId:item.section.sectionId,sectionIndex:item.section.sectionIndex,start:item.section.start,duration:item.section.duration,energy:item.descriptor.energy,similarity:index?round(item.section.similarity):1,confidence:index?round(clamp(.65*item.section.similarity+.20*item.section.confidence+.15*item.descriptor.energyCoverage)):round(clamp(.65+.20*item.section.confidence+.15*item.descriptor.energyCoverage))})));
-   const id=motifId(instances[0].sectionId,motifs.length);
-   motifs.push({id,evidence:'prevalidated-section-recurrence',confidence:motifConfidence(instances),instances});
+   motifs.push({id:null,evidence:'prevalidated-section-recurrence',confidence:motifConfidence(instances),instances});
    for(const item of items)assigned.add(item.section.sectionId);
   }
   /* Chroma may be retained by a feature-store consumer even when the older DSP
@@ -271,10 +270,10 @@
   for(const representative of representatives){
    if(representative.instances.length<2)continue;
    const instances=evolution(representative.instances.map(value=>({sectionId:value.item.section.sectionId,sectionIndex:value.item.section.sectionIndex,start:value.item.section.start,duration:value.item.section.duration,energy:value.item.descriptor.energy,similarity:value.similarity,confidence:value.confidence})));
-   const id=motifId(instances[0].sectionId,motifs.length);
-   motifs.push({id,evidence:'section-chroma-energy',confidence:motifConfidence(instances),instances});
+   motifs.push({id:null,evidence:'section-chroma-energy',confidence:motifConfidence(instances),instances});
   }
   motifs.sort((left,right)=>left.instances[0].start-right.instances[0].start||compareText(left.id,right.id));
+  for(let index=0;index<motifs.length;index++)motifs[index].id=motifId(motifs[index].instances[0].sectionId,index);
   const assignments=[];
   /* Assignments are a denormalized read model for choreographers.  Keep their
    * evolution object independent from the motif record so an editor cannot
