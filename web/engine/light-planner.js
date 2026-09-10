@@ -45,7 +45,7 @@
     const roleEnvelope=(role,t,fallback)=>{if(!role.envelope?.length||!(role.envelopeStep>0))return clamp(fallback);const x=clamp((t-(role.envelopeOffset||0))/role.envelopeStep,0,role.envelope.length-1),i=Math.floor(x),f=x-i;return clamp(role.envelope[i]*(1-f)+(role.envelope[Math.min(i+1,role.envelope.length-1)]||0)*f);};
     return {active,energyAt,sectionAt,periodAt,beatInfo,phraseAt,meter,vocalAt:t=>roleAt(vocalPhrases,t),vocalNoteAt:t=>roleAt(vocalNotes,t),bassAt:t=>roleAt(bassNotes,t),roleEnvelope};
   }
-  function compose(show,m,s,movement={accents:[]}){
+  function compose(show,m,s,movement={accents:[]},semanticStrategy=null,vocalStrategy=null){
     const ctx=context(m),step=s.stepMs/1000,shift=s.offsetMs/1000,end=show.frameCount*step-step;
     const outputs=PROFILE.outputs.filter(o=>o.available&&o.kind==='light'),byId=new Map(outputs.map(o=>[o.id,o]));
     const candidates=[],accepted=[],lanes=new Map(outputs.map(o=>[o.id,[]]));let serial=0;
@@ -102,13 +102,16 @@
         const point=selected[i],next=selected[i+1]?.time??p.end,ni=lower(localNotes,point.time+.050001,'start')-1,match=localNotes[ni],note=point.note||(match?.end>point.time?match:null);
         const available=Math.min(next-.08,p.end)-point.time;if(available<.10)continue;
         const held=note&&note.end-point.time>=.7,phrasePeak=point.strength>=.82&&point.confidence>=.65;
-        const side=note&&basePitch&&Math.abs(note.midi-basePitch)>=1.5?note.midi>basePitch:((scene.variant+localPhrase+i)%2===0);
+        const direction=vocalStrategy&&typeof vocalStrategy.directionFor==='function'
+          ?vocalStrategy.directionFor({sourceStart:p.start,sourceEventTime:point.time,kind:point.kind,note})
+          :null;
+        const side=direction?direction.side:(note&&basePitch&&Math.abs(note.midi-basePitch)>=1.5?note.midi>basePitch:((scene.variant+localPhrase+i)%2===0));
         // Articulation moves between signature lamps; only deliberate phrase
         // entrances and rare peaks use both. The cabin carries continuous tone.
         const ids=!uncertainSource&&point.confidence>=.62&&(point.kind==='entrance'||phrasePeak&&i%3===0)?voicePair:[voiceSide(side)].filter(Boolean);
         const length=Math.min(available,uncertainSource?.18+point.strength*.12:vocalFocus<.55?.18+vocalFocus*.3:held?Math.min(note.end-point.time,1.8):.14+point.strength*.19);
         const release=held&&length>=.75?.5:0;
-        detailedVoice.push({p,ids,time:point.time,length,release,strength:point.strength,kind:point.kind,note,phraseIndex:pi,confidence:point.confidence,uncertainSource});
+        detailedVoice.push({p,ids,time:point.time,length,release,strength:point.strength,kind:point.kind,note,phraseIndex:pi,confidence:point.confidence,uncertainSource,vocalDirection:direction});
       }
     }
     const userCues=(m.musicCues||[]).filter(c=>c.action!=='mute').map(c=>({...c,ids:c.role==='vocals'?voicePair:[bassSide(true),...(c.strength>=.8?[bassSide(false)]:[])].filter(Boolean)}));
@@ -116,6 +119,7 @@
     for(const {p,ids,length} of voiceRoutes){const salience=clamp((Number(p.confidence)||0)*(Number(p.strength)||0));targets.push({role:'vocals',time:p.start,end:p.start+length,kind:'phrase',confidence:p.confidence,strength:p.strength,salience,candidateOutputIds:Array.from(new Set(ids||[]))});}
     for(const {p,ids,length} of bassRoutes)if(!p.continuation){const salience=clamp((Number(p.confidence)||0)*(Number(p.strength)||0));targets.push({role:'bass',time:p.start,end:length>0?p.start+length:p.end,kind:'note',confidence:p.confidence,strength:p.strength,salience,candidateOutputIds:Array.from(new Set(ids||[]))});}
     for(const cue of userCues){const salience=clamp(Number(cue.strength)||0);targets.push({role:cue.role,time:cue.start,end:cue.end,kind:cue.action,cueId:cue.id,confidence:1,strength:cue.strength,salience,candidateOutputIds:Array.from(new Set(cue.ids||[]))});for(const id of cue.ids)reserve(id,cue.start,cue.end);}
+    const semanticState=semanticStrategy&&typeof semanticStrategy.prepareTargets==='function'?semanticStrategy.prepareTargets(targets):null;
     for(const cue of detailedVoice)for(const id of cue.ids)reserve(id,cue.time,cue.time+cue.length);
     // Merge the detailed reservations after constructing motifs as well. They
     // cover accepted musical gestures, never the full surrounding vocal region.
@@ -134,7 +138,14 @@
       for(const id of new Set(ids)){
         const o=byId.get(id);if(!o||s.outputEnabled[id]===false||!details.role&&reserved(id,start,stop))continue;
         const supports=o.mode==='ramp'||s.outerBeamRamping&&o.optionalMode==='ramp';
-        candidates.push({...details,id,start,end:stop,sectionIndex:section.index,priority,kind,strength,fade:supports?fade:0,release:supports&&details.release?details.release:0,serial:serial++,target:start+(supports?fade:0)});
+        let candidate={...details,id,start,end:stop,sectionIndex:section.index,priority,kind,strength,fade:supports?fade:0,release:supports&&details.release?details.release:0,serial:serial++,target:start+(supports?fade:0)};
+        if(vocalStrategy&&typeof vocalStrategy.classifyCandidate==='function'){
+          candidate=vocalStrategy.classifyCandidate(Object.assign({},candidate,{musicTime}))||candidate;
+        }
+        if(semanticState&&semanticState.links&&semanticState.links.length&&typeof semanticStrategy.classifyCandidate==='function'){
+          candidate=semanticStrategy.classifyCandidate(Object.assign({},candidate,{musicTime}),semanticState)||candidate;
+        }
+        candidates.push(candidate);
       }
     }
     const flash=(ids,t,width,priority,kind,strength=1,absolute=false,details={})=>add(ids,t,Math.max(.10,width),priority,kind,strength,0,absolute,details);
@@ -148,7 +159,7 @@
       }
       for(const cue of detailedVoice){
         for(const sec of m.sections){const start=Math.max(cue.time,sec.start),stop=Math.min(cue.time+cue.length,sec.end);if(stop-start<.10)continue;
-          add(cue.ids,start,stop-start,69+cue.confidence*3,'vocal '+cue.kind,cue.strength,0,false,{role:'vocals',release:stop-start>=.75?cue.release:0,sourceStart:cue.p.start,sourceEnd:cue.p.end,sourceConfidence:cue.confidence,sourceEventTime:cue.time,articulation:cue.kind==='articulation',vocalNote:cue.kind==='note',sourceSeparated:true,evidenceMode:cue.uncertainSource?'separation-led':'classifier-supported',midi:cue.note?.midi,manual:cue.p.manual===true});
+          add(cue.ids,start,stop-start,69+cue.confidence*3,'vocal '+cue.kind,cue.strength,0,false,{role:'vocals',release:stop-start>=.75?cue.release:0,sourceStart:cue.p.start,sourceEnd:cue.p.end,sourceConfidence:cue.confidence,sourceEventTime:cue.time,articulation:cue.kind==='articulation',vocalNote:cue.kind==='note',sourceSeparated:true,evidenceMode:cue.uncertainSource?'separation-led':'classifier-supported',midi:cue.note?.midi,manual:cue.p.manual===true,vocalDirection:cue.vocalDirection?.direction});
         }
       }
       for(const {p,ids,length}of voiceRoutes){
@@ -268,7 +279,9 @@
     // Resolve all normal candidates first. A later rescue may only occupy an
     // otherwise idle, semantically related output; it never moves or replaces
     // an accepted command.
-    candidates.sort((a,b)=>b.priority-a.priority||b.strength-a.strength||a.start-b.start||a.serial-b.serial);
+    const semanticDecision=semanticState&&typeof semanticStrategy.filterCandidates==='function'?semanticStrategy.filterCandidates(candidates,semanticState):null;
+    const scheduledCandidates=semanticDecision&&Array.isArray(semanticDecision.candidates)?semanticDecision.candidates:candidates;
+    scheduledCandidates.sort((a,b)=>b.priority-a.priority||b.strength-a.strength||a.start-b.start||a.serial-b.serial);
     const collisionGroups=new Map(),groupBySerial=new Map();
     const normalizeKind=value=>String(value||'event').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'')||'event';
     const highSalience=cue=>{
@@ -282,7 +295,7 @@
       const role=cue.role||(cue.kind==='musical impact'?'structure':'arrangement');
       return role+'-'+normalizeKind(cue.kind)+'-'+sourceId+'-'+cue.sectionIndex;
     };
-    for(const cue of candidates){
+    for(const cue of scheduledCandidates){
       const salience=highSalience(cue);if(!salience)continue;
       const groupId=groupIdFor(cue);let group=collisionGroups.get(groupId);
       if(!group){group={groupId,eventType:cue.kind,time:cue.start,tier:salience.tier,salience:salience.salience,preferred:cue,candidates:[],collided:0,accepted:0};collisionGroups.set(groupId,group);}
@@ -303,7 +316,7 @@
       return item;
     }
     let rejected=0;
-    for(const cue of candidates){
+    for(const cue of scheduledCandidates){
       const slot=placement(cue);
       if(!slot.ok){rejected++;if(slot.reason==='collision'){const group=groupBySerial.get(cue.serial);if(group)group.collided++;}continue;}
       accept(cue,slot);
@@ -358,7 +371,9 @@
     }
     const errors=accepted.map(c=>Math.abs(c.actualStart-c.start)*1000);
     return {context:ctx,targets,events:accepted.sort((a,b)=>a.start-b.start||a.serial-b.serial),diagnostics:{
-      candidateCues:candidates.length,acceptedCues:accepted.length,suppressedCollisions:rejected,rescuedCollisions,unresolvedHighSalienceCollisions,collisionResolutions:reportedCollisionResolutions,collisionResolutionTruncated:Math.max(0,collisionResolutions.length-reportedCollisionResolutions.length),
+      candidateCues:scheduledCandidates.length,generatedCandidateCues:candidates.length,acceptedCues:accepted.length,suppressedCollisions:rejected,rescuedCollisions,unresolvedHighSalienceCollisions,collisionResolutions:reportedCollisionResolutions,collisionResolutionTruncated:Math.max(0,collisionResolutions.length-reportedCollisionResolutions.length),
+      ...(semanticDecision&&semanticDecision.diagnostics?{semanticStrategy:semanticDecision.diagnostics}:{}),
+      ...(vocalStrategy&&typeof vocalStrategy.diagnostics==='function'?{vocalChoreography:vocalStrategy.diagnostics()}:{}),
       attackCues:accepted.filter(c=>c.kind.startsWith('detected')).length,fadeCues:accepted.filter(c=>c.fade>0||c.release>0).length,
       impactCues:accepted.filter(c=>c.kind==='musical impact').length,
       quantizationMaxMs:errors.reduce((a,b)=>Math.max(a,b),0),quantizationMedianMs:median(errors),
