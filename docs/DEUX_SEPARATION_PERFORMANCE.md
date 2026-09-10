@@ -126,3 +126,6 @@ than claiming a global asset attestation; the production gate still verifies all
 73 assets. It proves only actual-model PCM/recovery equivalence for this
 experiment. It does not turn an uncontrolled filesystem-cache state, one pair,
 or a single fixture into a target-speed or locked-corpus quality-gate pass.
+The receipts bind only the exact checkout commit/tree/blob identities recorded
+by that run. They are not reusable evidence for a later cache-combined tree;
+that candidate must rebuild every source-bound receipt from its own checkout.
