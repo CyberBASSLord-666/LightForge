@@ -115,11 +115,39 @@ test('semantic choreography accepts the cap-bound salience sidecar for a conserv
   assert.equal(show.validation.valid,true);
 });
 
-test('browser and composition-worker contexts load the opt-in semantic strategy before ShowEngine',()=>{
+test('semantic consumers reject invalid canonical timelines even with a forged matching salience sidecar',()=>{
+  const music=musicFixture(),settings={stepMs:20,dance:'expressive',seed:88};
+  const timeline=Timeline.build(music),salience=Salience.build(timeline);
+  const evidence=Recurrence.captureEvidence(music,timeline),sidecar=Recurrence.build(timeline,evidence);
+  const baseline=Engine.generate(music,settings);
+  const assertRejected=invalid=>{
+    assert.equal(Timeline.validate(invalid).valid,false);
+    assert.equal(Salience.validate(salience,invalid).valid,false);
+    assert.throws(()=>Salience.build(invalid),/valid semantic timeline/);
+    assert.throws(()=>Recurrence.captureEvidence(music,invalid),/valid semantic timeline/);
+    assert.equal(Recurrence.validateEvidence(evidence,invalid).valid,false);
+    assert.equal(Recurrence.validate(sidecar,invalid,evidence).valid,false);
+    const forged={...salience,timelineSchemaVersion:invalid.schemaVersion,clock:invalid.clock,timelineFingerprint:engineTimelineFingerprint(invalid)};
+    const show=Engine.generate({...music,semanticTimeline:invalid,musicSalience:forged},{...settings,semanticChoreography:true});
+    assert.equal(show.choreography.semanticStrategy.active,false);
+    assert.deepEqual(show.frames,baseline.frames,'invalid semantic timing metadata must fall back exactly to the legacy planner');
+    assert.deepEqual(Engine.fseq(show,'invalid-semantic.wav'),Engine.fseq(baseline,'invalid-semantic.wav'));
+  };
+  const wrongClock=structuredClone(timeline);wrongClock.clock='resampled-clock';
+  assertRejected(wrongClock);
+  const wrongSchema=structuredClone(timeline);wrongSchema.schemaVersion=99;
+  assertRejected(wrongSchema);
+  const invalidCap=structuredClone(timeline);
+  const cappedEvent=invalidCap.events.find(event=>event.salience>.01);
+  cappedEvent.salienceCap=cappedEvent.salience-.001;
+  assertRejected(invalidCap);
+});
+
+test('browser and composition-worker contexts load the canonical timeline before semantic strategy and ShowEngine',()=>{
   const html=fs.readFileSync(path.join(__dirname,'../web/index.html'),'utf8');
-  const quality=html.indexOf('engine/choreography-quality.js'),semantic=html.indexOf('engine/semantic-choreography.js'),engine=html.indexOf('engine/show-engine.js');
-  assert.ok(quality>=0&&semantic>quality&&engine>semantic);
+  const timeline=html.indexOf('analysis/semantic-timeline.js'),quality=html.indexOf('engine/choreography-quality.js'),semantic=html.indexOf('engine/semantic-choreography.js'),engine=html.indexOf('engine/show-engine.js');
+  assert.ok(timeline>=0&&quality>timeline&&semantic>quality&&engine>semantic);
   const worker=fs.readFileSync(path.join(__dirname,'../web/engine/worker.js'),'utf8');
-  const workerSemantic=worker.indexOf("'semantic-choreography.js'"),workerEngine=worker.indexOf("'show-engine.js'");
-  assert.ok(workerSemantic>=0&&workerEngine>workerSemantic);
+  const workerTimeline=worker.indexOf("'../analysis/semantic-timeline.js'"),workerSemantic=worker.indexOf("'semantic-choreography.js'"),workerEngine=worker.indexOf("'show-engine.js'");
+  assert.ok(workerTimeline>=0&&workerSemantic>workerTimeline&&workerEngine>workerSemantic);
 });

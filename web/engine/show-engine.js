@@ -10,6 +10,9 @@
   const SYNC = root.SyncReview || (typeof require === 'function' ? require('./sync-review.js') : null);
   const QUALITY = root.ChoreographyQuality || (typeof require === 'function' ? require('./choreography-quality.js') : null);
   const SEMANTIC_CHOREOGRAPHY = root.SemanticChoreography || (typeof require === 'function' ? require('./semantic-choreography.js') : null);
+  // Keep semantic planning tied to the canonical decoded-audio timeline. This
+  // shared validator makes future timeline invariants fail closed here too.
+  const SEMANTIC_TIMELINE = root.LightForgeSemanticTimeline || (typeof require === 'function' ? require('../analysis/semantic-timeline.js') : null);
   const PROFILE = root.VehicleProfile || (typeof require === 'function' ? require('./vehicle-profile.js') : null);
   const LIGHTS = root.LightPlanner || (typeof require === 'function' ? require('./light-planner.js') : null);
   const MOVEMENT = root.MovementPlanner || (typeof require === 'function' ? require('./movement-planner.js') : null);
@@ -109,7 +112,8 @@
   }
   function matchingSemanticSalience(music){
     const timeline=music&&music.semanticTimeline,salience=music&&music.musicSalience;
-    if(!timeline||!salience||!Number.isInteger(timeline.schemaVersion)||!finite(timeline.duration)||timeline.duration<=0||typeof timeline.clock!=='string'||!Array.isArray(timeline.events)||salience.schemaVersion!==1||salience.timelineSchemaVersion!==timeline.schemaVersion||salience.clock!==timeline.clock||!finite(salience.duration)||Math.abs(salience.duration-timeline.duration)>1e-6||typeof salience.timelineFingerprint!=='string'||!/^[0-9a-f]{8}$/.test(salience.timelineFingerprint)||salience.timelineFingerprint!==semanticTimelineFingerprint(timeline)||!Array.isArray(salience.events)||salience.events.length!==timeline.events.length)return null;
+    const timelineCheck=SEMANTIC_TIMELINE&&typeof SEMANTIC_TIMELINE.validate==='function'?SEMANTIC_TIMELINE.validate(timeline):null;
+    if(!timelineCheck?.valid||!salience||salience.schemaVersion!==1||salience.timelineSchemaVersion!==timeline.schemaVersion||salience.clock!==timeline.clock||!finite(salience.duration)||Math.abs(salience.duration-timeline.duration)>1e-6||typeof salience.timelineFingerprint!=='string'||!/^[0-9a-f]{8}$/.test(salience.timelineFingerprint)||salience.timelineFingerprint!==semanticTimelineFingerprint(timeline)||!Array.isArray(salience.events)||salience.events.length!==timeline.events.length)return null;
     const ids=new Set(),events=[];
     for(let index=0;index<timeline.events.length;index++){
       const event=timeline.events[index],ranked=salience.events[index];
@@ -601,4 +605,3 @@
   const api={version:VERSION,getCapabilities:()=>PROFILE,normalizeSettings,generate,validate,fseq,fseqHeader,preparePreview,stateAt,frameAt:(show,time)=>show.frames.subarray(clamp(Math.floor(time*1000/show.stepMs),0,show.frameCount-1)*200,clamp(Math.floor(time*1000/show.stepMs),0,show.frameCount-1)*200+200),channelMap,groups,COMMAND,palettes:Object.keys(PALETTES),invalidatePreview:show=>{delete show.previewIndex;return previewCache.delete(show);}};
   root.ShowEngine=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
-

@@ -24,7 +24,7 @@
  };
  const validTimeline=timeline=>{
   const errors=[];
-  if(!timeline||!Number.isInteger(timeline.schemaVersion)||!finite(timeline.duration)||timeline.duration<=0||!Array.isArray(timeline.events))errors.push('Invalid semantic timeline envelope.');
+  if(!timeline||timeline.schemaVersion!==2||timeline.clock!=='original-decoded-audio'||!finite(timeline.duration)||timeline.duration<=0||!Array.isArray(timeline.events))errors.push('Invalid semantic timeline envelope.');
   let prior=-1;const ids=new Set();
   for(const event of timeline?.events||[]){
    if(!event||typeof event.id!=='string'||!event.id||ids.has(event.id))errors.push('Duplicate or missing event id.');
