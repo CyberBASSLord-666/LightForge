@@ -3,7 +3,7 @@
   "corpus_id": "lightforge-locked-corpus-template",
   "template": true,
   "release_ready": false,
-  "template_notice": "This redacted template contains no audio, paths, URLs, lyrics, artists, or song titles. Replace every synthetic identity and digest, remove template, and set release_ready true only after the private corpus, annotations, runtime profile, review verifier, and approved golden artifacts are locked.",
+  "template_notice": "This redacted template contains no audio, paths, URLs, lyrics, artists, or song titles. Replace every synthetic identity and digest, remove template, and set release_ready true only after the private corpus, annotations, runtime profile, source-pinned policy authority, review verifier, and approved golden artifacts are locked.",
   "coverage_requirements": [
     "strong-lead-vocals",
     "layered-backing-vocals",
@@ -31,6 +31,10 @@
       "metric": "performance.total_wall_clock_seconds",
       "target_reduction_percent": 75,
       "scope": "each_required_track"
+    },
+    "policy_authority": {
+      "protocol": "lightforge-release-policy-authority-v1",
+      "algorithm": "ed25519"
     },
     "human_perceptual_review": {
       "protocol": "blinded-ab-v1",

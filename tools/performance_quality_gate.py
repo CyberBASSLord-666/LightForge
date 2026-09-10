@@ -21,6 +21,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from types import MappingProxyType
 
 
 SCHEMA_VERSION = 3
@@ -36,9 +37,22 @@ RELEASE_RUNTIME_METRIC = "performance.total_wall_clock_seconds"
 RELEASE_RUNTIME_TARGET_PERCENT = 75.0
 RELEASE_MINIMUM_CORPUS_TRACKS = 16
 HUMAN_REVIEW_SCHEMA_VERSION = 1
-REVIEW_ATTESTATION_SCHEMA_VERSION = 2
+# Schema v3 adds baseline/candidate benchmark-evidence projections so review
+# attestation cannot be replayed after a metric or diagnostic is edited.
+REVIEW_ATTESTATION_SCHEMA_VERSION = 3
 REVIEW_ATTESTATION_PROTOCOL = "external-review-attestation-v2"
 REVIEW_ATTESTATION_ALGORITHM = "ed25519"
+# A release policy supplied beside candidate evidence is not a trust root.  A
+# release can be production-ready only when this *source-pinned* authority has
+# signed the exact policy and locked corpus binding.  The repository ships
+# deliberately unconfigured: adding an authority public key is a reviewed
+# source change, while its private signing key remains outside this repository
+# and outside CI artifacts.  Never replace this with an environment variable,
+# workflow input, candidate artifact, or policy-owned public key.
+RELEASE_POLICY_AUTHORITY_SCHEMA_VERSION = 1
+RELEASE_POLICY_AUTHORITY_PROTOCOL = "lightforge-release-policy-authority-v1"
+RELEASE_POLICY_AUTHORITY_ALGORITHM = "ed25519"
+RELEASE_POLICY_AUTHORITY_KEYS = MappingProxyType({})
 HUMAN_REVIEW_ATTRIBUTES = (
     "musical_synchronization",
     "vocal_synchronization",
@@ -651,6 +665,133 @@ def _validate_review_attestation_profile(value):
     }
 
 
+def _validate_policy_authority_profile(value):
+    """Validate the policy's reference to a source-pinned authority.
+
+    The policy deliberately carries no authority public key.  It can name an
+    authority and repeat its key digest for an auditable binding, but the
+    verifier resolves the actual key only from ``RELEASE_POLICY_AUTHORITY_KEYS``
+    compiled into the trusted gate source.
+    """
+    expected = {
+        "authority_id",
+        "protocol",
+        "algorithm",
+        "verification_key_sha256",
+    }
+    if not isinstance(value, dict) or set(value) != expected:
+        raise ValueError(
+            "release profile requires a source-pinned policy_authority reference"
+        )
+    if value.get("protocol") != RELEASE_POLICY_AUTHORITY_PROTOCOL:
+        raise ValueError("release profile policy authority protocol is unsupported")
+    if value.get("algorithm") != RELEASE_POLICY_AUTHORITY_ALGORITHM:
+        raise ValueError("release profile policy authority algorithm is unsupported")
+    authority_id = value.get("authority_id")
+    if not isinstance(authority_id, str) or not _OPAQUE_ID.fullmatch(authority_id):
+        raise ValueError("release profile policy authority_id must be opaque")
+    verification_key_sha256 = _require_sha256(
+        value.get("verification_key_sha256"),
+        "policy.release_profile.policy_authority.verification_key_sha256",
+        reject_placeholder=True,
+    )
+    return {
+        "authority_id": authority_id,
+        "protocol": RELEASE_POLICY_AUTHORITY_PROTOCOL,
+        "algorithm": RELEASE_POLICY_AUTHORITY_ALGORITHM,
+        "verification_key_sha256": verification_key_sha256,
+    }
+
+
+def _source_policy_authority(authority_id):
+    """Resolve and validate a public authority key from trusted gate source.
+
+    This helper intentionally does not consult the release policy, corpus,
+    CLI arguments, environment, or downloaded artifacts for key material.
+    Returning ``None`` means the named authority is not source-pinned.
+    """
+    if not isinstance(authority_id, str):
+        return None
+    try:
+        entry = RELEASE_POLICY_AUTHORITY_KEYS.get(authority_id)
+    except AttributeError:
+        return None
+    if not isinstance(entry, dict) or set(entry) != {
+        "protocol",
+        "algorithm",
+        "verification_key_base64",
+        "verification_key_sha256",
+    }:
+        return None
+    if (
+        entry.get("protocol") != RELEASE_POLICY_AUTHORITY_PROTOCOL
+        or entry.get("algorithm") != RELEASE_POLICY_AUTHORITY_ALGORITHM
+    ):
+        return None
+    try:
+        public_key = _require_canonical_base64(
+            entry.get("verification_key_base64"),
+            f"source policy authority {authority_id} verification_key_base64",
+            decoded_length=32,
+        )
+        key_sha = _require_sha256(
+            entry.get("verification_key_sha256"),
+            f"source policy authority {authority_id} verification_key_sha256",
+            reject_placeholder=True,
+        )
+    except ValueError:
+        return None
+    if hashlib.sha256(public_key).hexdigest() != key_sha:
+        return None
+    return {
+        "authority_id": authority_id,
+        "protocol": RELEASE_POLICY_AUTHORITY_PROTOCOL,
+        "algorithm": RELEASE_POLICY_AUTHORITY_ALGORITHM,
+        "verification_key_base64": entry["verification_key_base64"],
+        "verification_key_sha256": key_sha,
+    }
+
+
+def _policy_authority_attestation_payload(
+    *,
+    profile_authority,
+    policy_sha256,
+    corpus_manifest_sha256,
+):
+    """Construct the exact policy/corpus envelope a source authority signs."""
+    return {
+        "schema_version": RELEASE_POLICY_AUTHORITY_SCHEMA_VERSION,
+        "protocol": profile_authority["protocol"],
+        "authority_id": profile_authority["authority_id"],
+        "algorithm": profile_authority["algorithm"],
+        "verification_key_sha256": profile_authority["verification_key_sha256"],
+        "policy_sha256": policy_sha256,
+        "corpus_manifest_sha256": corpus_manifest_sha256,
+    }
+
+
+def benchmark_evidence_sha256(report):
+    """Hash report evidence while excluding only its circular review signature.
+
+    Human review is attached to the candidate benchmark report, so signing the
+    report byte-for-byte would include the signature being created.  The
+    projection removes only ``human_perceptual_review.attestation``; every
+    benchmark run, metric, provenance field, candidate identity, change
+    declaration, review rating, and output/diagnostic digest remains bound.
+    This turns a review signature into evidence for the actual baseline and
+    candidate measurements rather than merely their source identity.
+    """
+    if not isinstance(report, dict):
+        raise ValueError("benchmark evidence report must be an object")
+    projection = dict(report)
+    review = projection.get("human_perceptual_review")
+    if isinstance(review, dict):
+        projection["human_perceptual_review"] = {
+            key: value for key, value in review.items() if key != "attestation"
+        }
+    return hashlib.sha256(canonical_json(projection).encode("utf-8")).hexdigest()
+
+
 def _review_attestation_payload(
     *,
     profile_attestation,
@@ -658,6 +799,8 @@ def _review_attestation_payload(
     candidate_identity_sha256,
     policy_sha256,
     corpus_manifest_sha256,
+    baseline_benchmark_sha256,
+    candidate_benchmark_sha256,
 ):
     """Construct exactly the byte-stable envelope an external reviewer signs."""
     return {
@@ -670,6 +813,8 @@ def _review_attestation_payload(
         "candidate_identity_sha256": candidate_identity_sha256,
         "policy_sha256": policy_sha256,
         "corpus_manifest_sha256": corpus_manifest_sha256,
+        "baseline_benchmark_sha256": baseline_benchmark_sha256,
+        "candidate_benchmark_sha256": candidate_benchmark_sha256,
     }
 
 
@@ -755,6 +900,7 @@ def _validate_release_profile(value, tracks):
         "locked_corpus",
         "locked_runtime_profile",
         "human_perceptual_review",
+        "policy_authority",
     }
     if set(value) != expected_fields:
         raise ValueError("release profile must contain exactly the immutable release fields")
@@ -795,6 +941,7 @@ def _validate_release_profile(value, tracks):
         "metric_contract": RELEASE_METRIC_CONTRACT_VERSION,
         "locked_corpus": {"corpus_id": corpus_id, "manifest_sha256": manifest_sha256},
         "locked_runtime_profile": _validate_locked_runtime_profile(value.get("locked_runtime_profile")),
+        "policy_authority": _validate_policy_authority_profile(value.get("policy_authority")),
         "human_review": {
             "minimum_reviewers": minimum_reviewers,
             "required_attributes": tuple(attributes),
@@ -954,6 +1101,10 @@ def _release_evidence_requirements():
             "metric": RELEASE_RUNTIME_METRIC,
             "target_reduction_percent": RELEASE_RUNTIME_TARGET_PERCENT,
             "scope": "each_required_track",
+        },
+        "policy_authority": {
+            "protocol": RELEASE_POLICY_AUTHORITY_PROTOCOL,
+            "algorithm": RELEASE_POLICY_AUTHORITY_ALGORITHM,
         },
         "human_perceptual_review": {
             "protocol": "blinded-ab-v1",
@@ -1180,35 +1331,188 @@ def _release_corpus_diagnostics(manifest, profile, required_tracks):
     return diagnostics, blockers, track_contract
 
 
-def _trusted_release_policy_diagnostics(profile, expected_policy_sha, supplied_sha256):
-    """Require an out-of-band policy digest before a release can be claimed.
+def _legacy_trusted_policy_hint(supplied_sha256):
+    """Expose the old digest option as audit-only compatibility metadata.
 
-    A policy passed alongside candidate evidence is only an assertion. The
-    official workflow supplies this digest from a protected release environment
-    after materializing its trusted policy bundle, so a candidate cannot choose
-    its own corpus pin, verifier key, or metric rules and then sign itself.
+    A SHA-256 supplied by the same party that supplies policy bytes is not an
+    authority.  Keep accepting the old CLI/library argument long enough for
+    callers to migrate, but never let it affect a release decision.  This is
+    deliberately separate from the authoritative signature diagnostic below,
+    so a self-computed digest cannot regain trust through an incidental code
+    path.
     """
-    diagnostics = {
-        "required": profile["mode"] == "release",
-        "status": "not_required",
-        "valid": profile["mode"] != "release",
-        "policy_sha256": expected_policy_sha if profile["mode"] == "release" else None,
-    }
-    if profile["mode"] != "release":
-        return diagnostics, []
+    if supplied_sha256 is None:
+        return {"status": "absent", "trusted": False}
     try:
-        trusted = _require_sha256(
+        digest = _require_sha256(
             supplied_sha256,
             "trusted_release_policy_sha256",
             reject_placeholder=True,
         )
     except ValueError:
-        diagnostics.update({"status": "missing_or_invalid", "valid": False})
-        return diagnostics, [{"reason": "release_trusted_policy_binding_required"}]
-    if trusted != expected_policy_sha:
-        diagnostics.update({"status": "mismatch", "valid": False})
-        return diagnostics, [{"reason": "release_trusted_policy_binding_mismatch"}]
-    diagnostics.update({"status": "valid", "valid": True})
+        return {"status": "invalid_untrusted_hint", "trusted": False}
+    return {"status": "ignored_untrusted_hint", "trusted": False, "sha256": digest}
+
+
+def _release_policy_authority_diagnostics(profile, expected_policy_sha, supplied_attestation):
+    """Verify the independently source-authorized policy/corpus receipt.
+
+    The public key is resolved only from ``RELEASE_POLICY_AUTHORITY_KEYS`` in
+    this module.  Neither a policy-owned verifier key nor a matching
+    ``--trusted-release-policy-sha256`` value can make a release production
+    ready.  Every failure is represented as a blocker so callers receive a
+    machine-readable FAIL rather than an optimistic partial trust result.
+    """
+    diagnostics = {
+        "required": profile["mode"] == "release",
+        "status": "not_required",
+        "verified": profile["mode"] != "release",
+        "policy_sha256": expected_policy_sha if profile["mode"] == "release" else None,
+    }
+    if profile["mode"] != "release":
+        return diagnostics, []
+
+    profile_authority = profile.get("policy_authority")
+    if not isinstance(profile_authority, dict):
+        diagnostics.update({"status": "invalid_policy_authority_reference", "verified": False})
+        return diagnostics, [{"reason": "release_policy_authority_reference_invalid"}]
+
+    try:
+        configured_count = len(RELEASE_POLICY_AUTHORITY_KEYS)
+    except TypeError:
+        configured_count = 0
+    source_authority = _source_policy_authority(profile_authority.get("authority_id"))
+    if source_authority is None:
+        diagnostics.update(
+            {
+                "status": "unconfigured" if configured_count == 0 else "unknown_or_misconfigured",
+                "verified": False,
+                "authority_id": profile_authority.get("authority_id"),
+            }
+        )
+        return diagnostics, [
+            {
+                "reason": (
+                    "release_policy_authority_unconfigured"
+                    if configured_count == 0
+                    else "release_policy_authority_unknown_or_misconfigured"
+                )
+            }
+        ]
+
+    expected_reference = {
+        "authority_id": source_authority["authority_id"],
+        "protocol": source_authority["protocol"],
+        "algorithm": source_authority["algorithm"],
+        "verification_key_sha256": source_authority["verification_key_sha256"],
+    }
+    if profile_authority != expected_reference:
+        diagnostics.update(
+            {
+                "status": "profile_binding_mismatch",
+                "verified": False,
+                "authority_id": source_authority["authority_id"],
+                "verification_key_sha256": source_authority["verification_key_sha256"],
+            }
+        )
+        return diagnostics, [{"reason": "release_policy_authority_profile_binding_mismatch"}]
+
+    expected_fields = {
+        "schema_version",
+        "protocol",
+        "authority_id",
+        "algorithm",
+        "verification_key_sha256",
+        "policy_sha256",
+        "corpus_manifest_sha256",
+        "signed_payload_sha256",
+        "signature_base64",
+    }
+    if not isinstance(supplied_attestation, dict) or set(supplied_attestation) != expected_fields:
+        diagnostics.update(
+            {
+                "status": "attestation_required",
+                "verified": False,
+                "authority_id": source_authority["authority_id"],
+                "verification_key_sha256": source_authority["verification_key_sha256"],
+            }
+        )
+        return diagnostics, [{"reason": "release_policy_authority_attestation_required"}]
+
+    expected_payload = _policy_authority_attestation_payload(
+        profile_authority=expected_reference,
+        policy_sha256=expected_policy_sha,
+        corpus_manifest_sha256=profile["locked_corpus"]["manifest_sha256"],
+    )
+    expected_payload_sha = hashlib.sha256(
+        canonical_json(expected_payload).encode("utf-8")
+    ).hexdigest()
+    immutable_fields_match = (
+        supplied_attestation.get("schema_version") == RELEASE_POLICY_AUTHORITY_SCHEMA_VERSION
+        and supplied_attestation.get("protocol") == expected_reference["protocol"]
+        and supplied_attestation.get("authority_id") == expected_reference["authority_id"]
+        and supplied_attestation.get("algorithm") == expected_reference["algorithm"]
+        and supplied_attestation.get("verification_key_sha256")
+        == expected_reference["verification_key_sha256"]
+        and supplied_attestation.get("policy_sha256") == expected_policy_sha
+        and supplied_attestation.get("corpus_manifest_sha256")
+        == profile["locked_corpus"]["manifest_sha256"]
+        and supplied_attestation.get("signed_payload_sha256") == expected_payload_sha
+    )
+    try:
+        signature = _require_canonical_base64(
+            supplied_attestation.get("signature_base64"),
+            "release policy authority attestation signature_base64",
+            decoded_length=64,
+        )
+    except ValueError:
+        immutable_fields_match = False
+        signature = None
+    if not immutable_fields_match:
+        diagnostics.update(
+            {
+                "status": "attestation_binding_mismatch",
+                "verified": False,
+                "authority_id": source_authority["authority_id"],
+                "verification_key_sha256": source_authority["verification_key_sha256"],
+            }
+        )
+        return diagnostics, [{"reason": "release_policy_authority_attestation_binding_mismatch"}]
+
+    public_key = _require_canonical_base64(
+        source_authority["verification_key_base64"],
+        f"source policy authority {source_authority['authority_id']} verification_key_base64",
+        decoded_length=32,
+    )
+    verified = _verify_ed25519_attestation_signature(public_key, expected_payload, signature)
+    if verified is None:
+        diagnostics.update(
+            {
+                "status": "verification_unavailable",
+                "verified": False,
+                "authority_id": source_authority["authority_id"],
+                "verification_key_sha256": source_authority["verification_key_sha256"],
+            }
+        )
+        return diagnostics, [{"reason": "release_policy_authority_verification_unavailable"}]
+    if not verified:
+        diagnostics.update(
+            {
+                "status": "invalid_signature",
+                "verified": False,
+                "authority_id": source_authority["authority_id"],
+                "verification_key_sha256": source_authority["verification_key_sha256"],
+            }
+        )
+        return diagnostics, [{"reason": "release_policy_authority_attestation_signature_invalid"}]
+    diagnostics.update(
+        {
+            "status": "verified",
+            "verified": True,
+            "authority_id": source_authority["authority_id"],
+            "verification_key_sha256": source_authority["verification_key_sha256"],
+        }
+    )
     return diagnostics, []
 
 
@@ -1449,7 +1753,7 @@ def _release_run_binding_blockers(indexed, side, profile, track_contract):
     return blockers
 
 
-def _review_evidence(candidate, profile, expected_policy_sha):
+def _review_evidence(baseline, candidate, profile, expected_policy_sha):
     """Validate only structured blinded A/B evidence; never infer a verdict."""
     if profile["mode"] != "release":
         return {"required": False, "status": "not_required"}, []
@@ -1482,6 +1786,13 @@ def _review_evidence(candidate, profile, expected_policy_sha):
         "protocol": review.get("protocol"),
         "externally_attested": False,
     }
+    try:
+        baseline_benchmark_sha = benchmark_evidence_sha256(baseline)
+        candidate_benchmark_sha = benchmark_evidence_sha256(candidate)
+    except (TypeError, ValueError):
+        baseline_benchmark_sha = None
+        candidate_benchmark_sha = None
+        blockers.append({"reason": "invalid_benchmark_evidence_for_review_attestation"})
     if review.get("schema_version") != HUMAN_REVIEW_SCHEMA_VERSION or review.get("protocol") != "blinded-ab-v1":
         blockers.append({"reason": "invalid_human_perceptual_review"})
     status = review.get("status")
@@ -1600,6 +1911,8 @@ def _review_evidence(candidate, profile, expected_policy_sha):
         "candidate_identity_sha256",
         "policy_sha256",
         "corpus_manifest_sha256",
+        "baseline_benchmark_sha256",
+        "candidate_benchmark_sha256",
         "signed_payload_sha256",
         "signature_base64",
     }
@@ -1620,6 +1933,8 @@ def _review_evidence(candidate, profile, expected_policy_sha):
             candidate_identity_sha256=expected_identity_sha,
             policy_sha256=expected_policy_sha,
             corpus_manifest_sha256=profile["locked_corpus"]["manifest_sha256"],
+            baseline_benchmark_sha256=baseline_benchmark_sha,
+            candidate_benchmark_sha256=candidate_benchmark_sha,
         )
         expected_payload_sha = hashlib.sha256(
             canonical_json(expected_payload).encode("utf-8")
@@ -1634,6 +1949,8 @@ def _review_evidence(candidate, profile, expected_policy_sha):
             and attestation.get("candidate_identity_sha256") == expected_identity_sha
             and attestation.get("policy_sha256") == expected_policy_sha
             and attestation.get("corpus_manifest_sha256") == profile["locked_corpus"]["manifest_sha256"]
+            and attestation.get("baseline_benchmark_sha256") == baseline_benchmark_sha
+            and attestation.get("candidate_benchmark_sha256") == candidate_benchmark_sha
             and attestation.get("signed_payload_sha256") == expected_payload_sha
         )
         try:
@@ -1671,6 +1988,8 @@ def _review_evidence(candidate, profile, expected_policy_sha):
             "reviewer_count": len(reviewers),
             "blinded": blinded,
             "complete": complete,
+            "baseline_benchmark_sha256": baseline_benchmark_sha,
+            "candidate_benchmark_sha256": candidate_benchmark_sha,
             "attribute_votes": votes,
             "baseline_preferred_attributes": baseline_preferred,
             "inconclusive_attributes": inconclusive,
@@ -1686,18 +2005,22 @@ def compare(
     *,
     locked_corpus_manifest=None,
     trusted_release_policy_sha256=None,
+    release_policy_attestation=None,
 ):
     policy_metrics, required_tracks, minimum_pairs, bootstrap, runtime_target, profile = _validate_policy(policy)
     expected_policy_sha = policy_sha256(policy)
     baseline_suite, baseline_runs, baseline_issues = _index_report(baseline, policy_metrics, expected_policy_sha)
     candidate_suite, candidate_runs, candidate_issues = _index_report(candidate, policy_metrics, expected_policy_sha)
     blockers = [*baseline_issues, *candidate_issues]
-    trusted_release_policy, trusted_policy_blockers = _trusted_release_policy_diagnostics(
-        profile,
-        expected_policy_sha,
+    trusted_release_policy = _legacy_trusted_policy_hint(
         trusted_release_policy_sha256,
     )
-    blockers.extend(trusted_policy_blockers)
+    release_policy_authority, policy_authority_blockers = _release_policy_authority_diagnostics(
+        profile,
+        expected_policy_sha,
+        release_policy_attestation,
+    )
+    blockers.extend(policy_authority_blockers)
     locked_corpus, corpus_blockers, track_contract = _release_corpus_diagnostics(
         locked_corpus_manifest,
         profile,
@@ -1736,7 +2059,12 @@ def compare(
                 track_contract,
             )
         )
-    review_summary, review_blockers = _review_evidence(candidate, profile, expected_policy_sha)
+    review_summary, review_blockers = _review_evidence(
+        baseline,
+        candidate,
+        profile,
+        expected_policy_sha,
+    )
     blockers.extend(review_blockers)
 
     baseline_tracks = {track for track, _ in baseline_runs}
@@ -1891,7 +2219,11 @@ def compare(
     return {
         "schema_version": SCHEMA_VERSION,
         "status": status,
-        "production_ready": status == "PASS_TARGET" and profile["mode"] == "release",
+        "production_ready": (
+            status == "PASS_TARGET"
+            and profile["mode"] == "release"
+            and release_policy_authority["verified"]
+        ),
         "quality_regressions_detected": any(row["classification"] == "regressed" for row in comparisons)
         or any(blocker.get("reason") in quality_regression_reasons for blocker in blockers),
         "missing_required_tracks": missing_tracks,
@@ -1901,6 +2233,7 @@ def compare(
         "metric_applicability": applicability,
         "locked_corpus": locked_corpus,
         "trusted_release_policy": trusted_release_policy,
+        "release_policy_authority": release_policy_authority,
         "human_perceptual_review": review_summary,
         "release_profile": profile,
         "metric_contract": release_metric_contract() if profile["mode"] == "release" else {"mode": profile["mode"], "configured": False},
@@ -1921,7 +2254,14 @@ def main(argv=None):
     )
     parser.add_argument(
         "--trusted-release-policy-sha256",
-        help="out-of-band SHA-256 from the protected release-policy authority; required by release mode",
+        help="deprecated untrusted compatibility hint; it never authorizes a release",
+    )
+    parser.add_argument(
+        "--release-policy-attestation",
+        help=(
+            "detached policy/corpus authority receipt verified against a "
+            "source-pinned Ed25519 public key; required by release mode"
+        ),
     )
     parser.add_argument("--output", required=True)
     parser.add_argument("--allow-partial", action="store_true")
@@ -1936,12 +2276,17 @@ def main(argv=None):
     if args.locked_corpus_manifest:
         with Path(args.locked_corpus_manifest).open(encoding="utf-8") as stream:
             locked_corpus_manifest = json.load(stream)
+    release_policy_attestation = None
+    if args.release_policy_attestation:
+        with Path(args.release_policy_attestation).open(encoding="utf-8") as stream:
+            release_policy_attestation = json.load(stream)
     result = compare(
         baseline,
         candidate,
         policy,
         locked_corpus_manifest=locked_corpus_manifest,
         trusted_release_policy_sha256=args.trusted_release_policy_sha256,
+        release_policy_attestation=release_policy_attestation,
     )
     Path(args.output).parent.mkdir(parents=True, exist_ok=True)
     Path(args.output).write_text(json.dumps(result, indent=2, sort_keys=True, allow_nan=False) + "\n", encoding="utf-8")

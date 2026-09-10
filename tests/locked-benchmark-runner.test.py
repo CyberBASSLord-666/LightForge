@@ -29,6 +29,21 @@ def review_attestation_profile():
     }
 
 
+def policy_authority_profile():
+    """Syntactically pinned authority reference for release preflight tests.
+
+    These runner tests intentionally exercise corpus/preflight failures before
+    a gate comparison occurs; the public authority itself remains source-owned
+    and is therefore not configured by this fixture.
+    """
+    return {
+        "authority_id": "runner-test-policy-authority",
+        "protocol": runner.quality_gate.RELEASE_POLICY_AUTHORITY_PROTOCOL,
+        "algorithm": runner.quality_gate.RELEASE_POLICY_AUTHORITY_ALGORITHM,
+        "verification_key_sha256": hashlib.sha256(b"runner-test-policy-authority").hexdigest(),
+    }
+
+
 def manifest():
     return {
         "schema_version": 1,
@@ -367,6 +382,7 @@ class LockedBenchmarkRunnerTest(unittest.TestCase):
                         "fingerprint_sha256": runner.quality_gate._accelerator_fingerprint({"provider": "cpu", "threads": 4}),
                     },
                 },
+                "policy_authority": policy_authority_profile(),
                 "human_perceptual_review": {
                     "required_for_every_release_candidate": True,
                     "minimum_reviewers": 3,
@@ -415,6 +431,7 @@ class LockedBenchmarkRunnerTest(unittest.TestCase):
                         "fingerprint_sha256": runner.quality_gate._accelerator_fingerprint({"provider": "cpu", "threads": 4}),
                     },
                 },
+                "policy_authority": policy_authority_profile(),
                 "human_perceptual_review": {
                     "required_for_every_release_candidate": True,
                     "minimum_reviewers": 3,

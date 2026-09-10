@@ -29,12 +29,22 @@ class PerformanceQualityGateWorkflowTest(unittest.TestCase):
         for secret in (
             "LIGHTFORGE_RELEASE_POLICY_JSON: ${{ secrets.LIGHTFORGE_RELEASE_POLICY_JSON }}",
             "LIGHTFORGE_RELEASE_CORPUS_MANIFEST_JSON: ${{ secrets.LIGHTFORGE_RELEASE_CORPUS_MANIFEST_JSON }}",
-            "LIGHTFORGE_RELEASE_POLICY_SHA256: ${{ secrets.LIGHTFORGE_RELEASE_POLICY_SHA256 }}",
+            "LIGHTFORGE_RELEASE_POLICY_ATTESTATION_JSON: ${{ secrets.LIGHTFORGE_RELEASE_POLICY_ATTESTATION_JSON }}",
         ):
             self.assertIn(secret, text)
         self.assertIn("--locked-corpus-manifest gate/trusted/locked-corpus-manifest.json", text)
         self.assertIn("--policy gate/trusted/performance-gate-policy.json", text)
-        self.assertIn('--trusted-release-policy-sha256 "$LIGHTFORGE_RELEASE_POLICY_SHA256"', text)
+        self.assertIn(
+            "--release-policy-attestation gate/trusted/release-policy-attestation.json",
+            text,
+        )
+        self.assertIn(
+            "printf '%s' \"$LIGHTFORGE_RELEASE_POLICY_ATTESTATION_JSON\" > gate/trusted/release-policy-attestation.json",
+            text,
+        )
+        self.assertNotIn("--trusted-release-policy-sha256", text)
+        self.assertNotIn("LIGHTFORGE_RELEASE_POLICY_SHA256", text)
+        self.assertIn('test -n "$LIGHTFORGE_RELEASE_POLICY_ATTESTATION_JSON"', text)
         self.assertNotIn("gate/candidate/locked-corpus-manifest.json", text)
         self.assertNotIn("gate/candidate/performance-gate-policy.json", text)
 

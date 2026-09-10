@@ -11,7 +11,7 @@ python3 tools/performance_quality_gate.py \
   --candidate artifacts/benchmark-candidate.json \
   --locked-corpus-manifest /secure/locked-corpus-manifest.json \
   --policy qa/performance-gate-policy.json \
-  --trusted-release-policy-sha256 "$LIGHTFORGE_RELEASE_POLICY_SHA256" \
+  --release-policy-attestation /secure/release-policy-attestation.json \
   --output artifacts/performance-quality-report.json
 ```
 
@@ -21,7 +21,7 @@ python3 tools/performance_quality_gate.py \
 | --- | --- | --- |
 | Omitted or `legacy` | Existing, explicitly declared metric sets. | Comparable only; `production_ready` is always false. |
 | `template` | Checked-in redacted corpus configuration. | Always fails with `unconfigured_locked_corpus`; it needs only its declared template metrics. |
-| `release` | A reviewed private locked corpus and immutable complete metric contract. | Can produce `PASS_TARGET` and `production_ready: true` only with a trusted out-of-band policy binding. |
+| `release` | A reviewed private locked corpus and immutable complete metric contract. | Can produce `PASS_TARGET` and `production_ready: true` only with a source-pinned authority's detached policy/corpus signature. |
 
 The checked-in policy is deliberately `template` mode. It must not be edited
 locally to turn a synthetic corpus into a production claim.
@@ -30,22 +30,34 @@ locally to turn a synthetic corpus into a production claim.
 
 A release policy, corpus manifest, verifier key, and review signature carried
 next to candidate data are not a trust boundary: a candidate could create all
-four. Therefore release mode also requires
-`--trusted-release-policy-sha256`, an out-of-band SHA-256 supplied by the
-protected release authority. It must equal the canonical policy hash that the
-gate computes; otherwise the gate emits
-`release_trusted_policy_binding_required` or
-`release_trusted_policy_binding_mismatch` and cannot be production-ready.
+four. A matching SHA-256 supplied by that same party is not a trust boundary
+either. Release mode therefore requires `--release-policy-attestation`, an
+external detached Ed25519 receipt over the canonical policy SHA-256 and
+locked-corpus-manifest SHA-256. The receipt is verified only with a public key
+in the gate source's `RELEASE_POLICY_AUTHORITY_KEYS` registry. The gate never
+obtains a policy-authority key from a policy, manifest, artifact, CLI argument,
+or environment variable.
+
+The checked-in registry intentionally starts empty. That makes an otherwise
+valid release report fail closed with `release_policy_authority_unconfigured`
+until a reviewed trusted-source release adds the approved authority public key
+and digest. The private signing key remains outside this repository and outside
+CI artifacts. A candidate can name an authority only through the policy's
+auditable reference; that reference must exactly match the source-pinned ID,
+protocol, algorithm, and public-key digest. A fabricated authority ID, policy
+digest, or receipt cannot produce `production_ready: true`.
 
 The official dispatch runs only from protected `main` and the protected
 `lightforge-release-quality` GitHub Environment. That environment supplies
 three protected values: `LIGHTFORGE_RELEASE_POLICY_JSON`,
 `LIGHTFORGE_RELEASE_CORPUS_MANIFEST_JSON`, and
-`LIGHTFORGE_RELEASE_POLICY_SHA256`. Candidate and baseline artifacts supply
-only their `benchmark.json` evidence. The workflow never accepts a policy,
-manifest, public key, or trusted digest from a candidate artifact or dispatch
-input. Do not store a private signing key or HMAC secret in the policy,
-repository, manifest, artifact, or environment policy bundle.
+`LIGHTFORGE_RELEASE_POLICY_ATTESTATION_JSON`. Candidate and baseline artifacts
+supply only their `benchmark.json` evidence. The workflow never accepts a
+policy, manifest, authority key, or authority receipt from a candidate artifact
+or dispatch input. The protected receipt is useful only because the verifier
+key is independently pinned in reviewed gate source. Do not store a private
+signing key or HMAC secret in the policy, repository, manifest, artifact, or
+environment policy bundle.
 
 A real release policy pins the corpus identity, omits custom `metrics`, and
 binds the compiled contract into its policy digest:
@@ -70,6 +82,12 @@ binds the compiled contract into its policy digest:
       "random_seed": 42,
       "accelerator": {"available": true, "fingerprint_sha256": "<lower-case sha256>"}
     },
+    "policy_authority": {
+      "authority_id": "approved-release-policy-authority",
+      "protocol": "lightforge-release-policy-authority-v1",
+      "algorithm": "ed25519",
+      "verification_key_sha256": "<sha256-of-source-pinned-public-key>"
+    },
     "human_perceptual_review": {
       "required_for_every_release_candidate": true,
       "minimum_reviewers": 3,
@@ -93,6 +111,29 @@ binds the compiled contract into its policy digest:
   "runtime_target": {"metric": "performance.total_wall_clock_seconds", "target_reduction_percent": 75, "scope": "each_required_track"}
 }
 ```
+
+The protected authority receipt is a separate JSON object, never embedded in
+the candidate policy. Its exact fields are canonicalized before signing:
+
+```json
+{
+  "schema_version": 1,
+  "protocol": "lightforge-release-policy-authority-v1",
+  "authority_id": "approved-release-policy-authority",
+  "algorithm": "ed25519",
+  "verification_key_sha256": "<source-pinned-key-digest>",
+  "policy_sha256": "<canonical-policy-digest>",
+  "corpus_manifest_sha256": "<locked-corpus-digest>",
+  "signed_payload_sha256": "<canonical-envelope-digest>",
+  "signature_base64": "<canonical-base64-64-byte-ed25519-signature>"
+}
+```
+
+The signature binds the exact policy and corpus together. Replaying it after
+either changes, changing the named authority or key digest, supplying a
+malformed signature, or running without an Ed25519 verifier produces a
+machine-readable `FAIL`. The legacy `--trusted-release-policy-sha256` option is
+accepted only as a deprecated audit hint and never authorizes production.
 
 The gate rejects a release policy that supplies its own metric rules, changes
 the contract name, has an unpinned corpus/runtime profile, has fewer than five
@@ -216,8 +257,13 @@ no-regression judgement; an all-inconclusive review is not.
 `external-review-attestation-v2` detached Ed25519 signature. Policy pins the
 verifier ID, the exact 32-byte public key (canonical base64), and its SHA-256.
 The signature covers a canonical payload containing the review hash, candidate
-source/pipeline identity hash, policy SHA-256, and corpus-manifest SHA-256.
-Candidate runs must contain the same source SHA-256 and pipeline version. A
+source/pipeline identity hash, policy SHA-256, corpus-manifest SHA-256, and
+canonical baseline/candidate benchmark-evidence SHA-256 values. The benchmark
+projection excludes only the review signature itself to avoid a circular hash;
+it retains every run, metric, provenance field, change declaration, review
+rating, and diagnostic/output digest. Candidate runs must contain the same
+source SHA-256 and pipeline version. Editing either report after review—such
+as changing a wall-clock value—therefore invalidates the attestation. A
 missing, mismatched, or invalid signature leaves the result `FAIL`; if neither
 an available Python Ed25519 backend nor an Ed25519-capable `openssl` is
 available, the result fails closed with
@@ -262,12 +308,14 @@ this LightForge repository only; it never guesses the current run or accepts a
 cross-repository artifact. Dispatchers must record source run URLs from the
 approved locked-benchmark workflow in the release evidence. The comparison runs
 only from protected `main`, requires the protected
-`lightforge-release-quality` environment, and rejects an absent trusted
-policy/corpus/digest before comparison. Candidate artifacts contain only
-`benchmark.json`; the policy and locked manifest are materialized from the
-protected environment and the trusted digest is passed through
-`--trusted-release-policy-sha256`. This prevents a candidate-supplied policy,
-corpus, verifier key, or self-signed review from becoming a release authority.
+`lightforge-release-quality` environment, and rejects an absent protected
+policy/corpus/authority receipt before comparison. Candidate artifacts contain
+only `benchmark.json`; the policy, locked manifest, and detached authority
+receipt are materialized from the protected environment and the receipt is
+passed through `--release-policy-attestation`. The gate verifies it against a
+public key compiled into reviewed source, not against a candidate-owned key.
+This prevents a candidate-supplied policy, corpus, verifier key, digest, or
+self-signed authority receipt from becoming a release authority.
 All action references are full immutable commit SHAs and have a static
 regression test.
 
