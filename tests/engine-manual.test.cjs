@@ -117,7 +117,8 @@ if(process.env.LIGHTFORGE_NATIVE_FIXTURES){
     'stop-and-close':render([cue('trunk',1,1.02,63),cue('trunk',8,8.02,255),cue('trunk',12,12.02,191)],{},16),
     'all-closures':render(P.outputs.filter(o=>o.kind==='closure').flatMap(o=>o.channels[0]<37?[cue(o.id,1,1.02,191),cue(o.id,4,4.02,63)]:[cue(o.id,0,.02,63),cue(o.id,15,17,127),cue(o.id,20,20.02,191)])),
     'all-lamps':render(P.outputs.filter(o=>o.available&&o.kind!=='closure').map(o=>o.mode==='rgb'?{id:o.id,outputId:o.id,start:1,end:2,rgb:[22,98,241]}:cue(o.id,1,2,o.mode==='ramp'?204:255))),
-    'outer-ramp':render([cue('left-outer',1,4,204)],{outerBeamRamping:true})
+    'outer-ramp':render([cue('left-outer',1,4,204)],{outerBeamRamping:true}),
+    'precision-15':render([],{stepMs:15})
   };
   for(const [name,show] of Object.entries(cases)){fs.writeFileSync(path.join(out,name+'.fseq'),E.fseq(show));fs.writeFileSync(path.join(out,name+'.json'),JSON.stringify({duration:show.audioDuration,settings:show.settings}));}
 }

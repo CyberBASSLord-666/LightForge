@@ -664,7 +664,7 @@ public final class MainActivity extends Activity {
         byte[] head=new byte[32];long frames;int step,offset;
         try(RandomAccessFile r=new RandomAccessFile(sequence,"r")) {
             r.readFully(head);offset=AudioImporter.u16(head,4);frames=AudioImporter.u32(head,14);step=head[18]&255;
-            if(head[0]!='P'||head[1]!='S'||head[2]!='E'||head[3]!='Q'||head[6]!=0||head[7]!=2||head[20]!=0||offset<32||AudioImporter.u32(head,10)!=200||step<15||step>100||frames<1)
+            if(head[0]!='P'||head[1]!='S'||head[2]!='E'||head[3]!='Q'||head[6]!=0||head[7]!=2||head[20]!=0||offset<32||AudioImporter.u32(head,10)!=200||(step!=15&&step!=20)||frames<1)
                 throw new IOException("The generated FSEQ header is invalid.");
             if(sequence.length()!=offset+frames*200 || frames*step>14_400_000L)throw new IOException("The generated sequence has an invalid length.");
             byte[] wav=new byte[44];try(RandomAccessFile w=new RandomAccessFile(audio,"r")){w.readFully(wav);}
