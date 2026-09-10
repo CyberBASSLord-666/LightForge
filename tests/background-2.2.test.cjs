@@ -140,3 +140,36 @@ test('a completed job arriving while Guide is open restores without taking over 
   assert.equal(t.app.state.view,'guide','Completion delivery must not navigate after its asynchronous restore');
  }finally{t.close();}
 });
+
+
+test('Android destroyed-activity reconnect probes stay timer-backed without relaxing readiness',()=>{
+ const source=fs.readFileSync(path.join(root,'tests/android/BackgroundInstrumentation.java'),'utf8');
+ const start=source.indexOf('    private final class UiReadiness implements Runnable {');
+ const end=source.indexOf('    private void awaitUiReady()',start);
+ assert.ok(start>=0&&end>start,'UiReadiness source boundary missing');
+ const readiness=source.slice(start,end);
+ const retry=readiness.slice(readiness.indexOf('        void retry(){'),readiness.indexOf('        void cleanup(){'));
+ const cleanup=readiness.slice(readiness.indexOf('        void cleanup(){'),readiness.indexOf('        void finish('));
+ assert.ok(readiness.includes('static final long RETRY_DELAY_MS=250L;'));
+ assert.ok(readiness.includes('final java.util.concurrent.atomic.AtomicBoolean retryQueued'));
+ assert.ok(readiness.includes('final Runnable delayedRetry=()->{retryQueued.set(false);run();};'));
+ assert.ok(retry.includes('retryQueued.compareAndSet(false,true)'),'A nonready reconnect must retain exactly one pending retry');
+ assert.ok(retry.includes('view.postDelayed(delayedRetry,RETRY_DELAY_MS)'),'A nonready reconnect must use the main handler, not a renderer frame');
+ assert.ok(cleanup.includes('view.removeCallbacks(this);')&&cleanup.includes('view.removeCallbacks(delayedRetry);'),'Timeout/teardown must remove both probe continuations');
+ assert.equal(readiness.includes('postOnAnimation(this)'),false,'A missing first frame must not stop readiness probing');
+ assert.ok(readiness.includes('deadline=began+45000'));
+ assert.ok(readiness.includes('check(SystemClock.elapsedRealtime()<deadline'),'The unchanged 45-second timeout must still fail a permanently nonready reconnect');
+ assert.ok(readiness.includes('if(!visible()){record("waiting-for-native-visibility",null);retry();return;}'));
+ assert.ok(readiness.includes('if(!state.optBoolean("ready")){retry();return;}'),'A nonready JavaScript result must retry rather than pass');
+ for(const predicate of [
+  'boot&&!s.loadingProject&&!s.composing&&!s.backgroundApplying&&!s.backgroundSyncPending',
+  'p.loaded&&!p.lost',
+  '(!visible||p.renderCount>0)',
+  'view.postVisualStateCallback',
+  'firstFrameCommitted'
+ ])assert.ok(readiness.includes(predicate),'Reconnect readiness predicate was relaxed: '+predicate);
+ const awaitReady=source.slice(end,source.indexOf('    private void backgroundAndDoze()',end));
+ assert.ok(awaitReady.includes('finally{probe.finished.set(true);watchdogMain.post(probe::cleanup);}'),'Interrupted readiness must clean up delayed retries');
+ const foreground=source.slice(source.indexOf('    private void foreground()'),source.indexOf('    private JSONObject start',source.indexOf('    private void foreground()')));
+ assert.ok(foreground.includes('Reconnected preview did not retain timer-backed JavaScript readiness evidence'),'The destroyed-activity foreground path must retain probe evidence');
+});

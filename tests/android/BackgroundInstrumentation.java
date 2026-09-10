@@ -167,12 +167,19 @@ public final class BackgroundInstrumentation extends Instrumentation {
     private final class UiReadiness implements Runnable {
         final MainActivity owner=activity;
         final WebView view;
+        static final long RETRY_DELAY_MS=250L;
         final long began=SystemClock.elapsedRealtime(),deadline=began+45000;
         final java.util.concurrent.CountDownLatch completed=new java.util.concurrent.CountDownLatch(1);
         final java.util.concurrent.atomic.AtomicBoolean finished=new java.util.concurrent.atomic.AtomicBoolean();
+        final java.util.concurrent.atomic.AtomicBoolean retryQueued=new java.util.concurrent.atomic.AtomicBoolean();
+        final Runnable delayedRetry=()->{retryQueued.set(false);run();};
         volatile Throwable failure;
         volatile JSONObject evidence;
         volatile JSONObject latest;
+        int javascriptProbeCount;
+        int javascriptRetryCount;
+        long lastJavascriptProbeAt;
+        long lastJavascriptProbeGapMs=-1;
         android.view.ViewTreeObserver tree;
         Runnable commitCallback;
         android.view.ViewTreeObserver.OnDrawListener drawListener;
@@ -184,11 +191,24 @@ public final class BackgroundInstrumentation extends Instrumentation {
             value.put("phase",currentPhase).put("probeStage",stage).put("waitSeconds",(SystemClock.elapsedRealtime()-began)/1000.0)
                 .put("nativeAttached",view.isAttachedToWindow()).put("nativeShown",view.isShown())
                 .put("nativeWindowVisibility",view.getWindowVisibility()).put("nativeWindowFocus",view.hasWindowFocus())
-                .put("viewWidth",view.getWidth()).put("viewHeight",view.getHeight());
+                .put("viewWidth",view.getWidth()).put("viewHeight",view.getHeight())
+                .put("javascriptProbeCount",javascriptProbeCount).put("javascriptRetryCount",javascriptRetryCount)
+                .put("javascriptRetryDelayMs",RETRY_DELAY_MS)
+                .put("javascriptProbeGapMs",lastJavascriptProbeGapMs<0?JSONObject.NULL:lastJavascriptProbeGapMs);
             latest=value;lastUiReadiness=value;
         }
+        // A restored preview can be visible before it has a drawable frame.
+        // Timer-backed polling avoids tying the next JavaScript probe to that
+        // stalled frame while keeping exactly one pending probe continuation.
+        void retry(){
+            if(finished.get()||!retryQueued.compareAndSet(false,true))return;
+            javascriptRetryCount++;
+            if(!view.postDelayed(delayedRetry,RETRY_DELAY_MS))retryQueued.set(false);
+        }
         void cleanup(){
+            retryQueued.set(false);
             view.removeCallbacks(this);
+            view.removeCallbacks(delayedRetry);
             if(tree!=null&&tree.isAlive()){
                 if(Build.VERSION.SDK_INT>=29&&commitCallback!=null)tree.unregisterFrameCommitCallback(commitCallback);
                 if(drawListener!=null)tree.removeOnDrawListener(drawListener);
@@ -205,18 +225,21 @@ public final class BackgroundInstrumentation extends Instrumentation {
             try{
                 check(SystemClock.elapsedRealtime()<deadline,"Preview JavaScript initialization exceeded 45 seconds");
                 check(current(),"Preview changed while awaiting its first frame");
-                if(!visible()){record("waiting-for-native-visibility",null);view.postOnAnimation(this);return;}
+                if(!visible()){record("waiting-for-native-visibility",null);retry();return;}
                 // Export follows readBootstrap's synchronous native inventory
                 // load, but its project restoration is asynchronous. Await the
                 // existing restore-state flags as well as the actual 3D model
                 // and a submitted canvas frame when that canvas is visible.
+                long now=SystemClock.elapsedRealtime();
+                lastJavascriptProbeGapMs=lastJavascriptProbeAt==0?-1:now-lastJavascriptProbeAt;
+                lastJavascriptProbeAt=now;javascriptProbeCount++;
                 record("waiting-for-javascript-response",null);
                 view.evaluateJavascript("(()=>{const a=window.LightForgeApp,s=a&&a.state,p=a&&a.vehiclePreview,c=document.getElementById('carCanvas'),r=c&&c.getBoundingClientRect();const visible=!!(r&&r.width>0&&r.height>0&&!document.hidden);const boot=!!(s&&Array.isArray(s.projects)&&typeof window.onNativeEvent==='function');const restored=!!(boot&&!s.loadingProject&&!s.composing&&!s.backgroundApplying&&!s.backgroundSyncPending);return {ready:document.readyState==='complete'&&restored&&!!p&&p.loaded&&!p.lost&&(!visible||p.renderCount>0),documentState:document.readyState,documentHidden:document.hidden,bootstrapInventoryReady:boot,projectRestoreIdle:restored,loadingProject:!!(s&&s.loadingProject),composing:!!(s&&s.composing),backgroundApplying:!!(s&&s.backgroundApplying),backgroundSyncPending:!!(s&&s.backgroundSyncPending),saveBlocked:!!(s&&s.saveBlocked),previewModelReady:!!(p&&p.loaded),previewVisible:visible,previewRendererVisible:!!(p&&p.getPerformance().visible),previewPaused:!!(p&&p._paused),previewIntersecting:!!(p&&p._intersecting),previewHasSize:!!(p&&p._hasSize),previewFrames:p?p.renderCount:0,contextLost:!!(p&&p.lost),canvasRect:r?{left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}:null,viewport:{width:innerWidth,height:innerHeight,scrollX,scrollY}};})()",value->{
                     if(finished.get())return;
                     try{
                         JSONObject state=new JSONObject(value);
                         record(state.optBoolean("ready")?"waiting-for-visual-state":"waiting-for-app-readiness",state);
-                        if(!state.optBoolean("ready")){view.postOnAnimation(this);return;}
+                        if(!state.optBoolean("ready")){retry();return;}
                         check(current()&&visible(),"Preview lost visibility before visual-state synchronization");
                         view.postVisualStateCallback(began,new WebView.VisualStateCallback(){
                             @Override public void onComplete(long requestId){
@@ -258,6 +281,7 @@ public final class BackgroundInstrumentation extends Instrumentation {
     }
     private void awaitUiReady()throws Exception{
         UiReadiness probe=new UiReadiness();
+        check(probe.deadline-probe.began==45000,"Preview readiness deadline changed");
         lastUiReadiness=new JSONObject().put("phase",currentPhase).put("state","waiting-for-bootstrap-and-frame");snapshot(true);
         watchdogMain.post(probe);
         try{
@@ -301,6 +325,9 @@ public final class BackgroundInstrumentation extends Instrumentation {
         shell("input keyevent KEYCODE_WAKEUP");shell("wm dismiss-keyguard");
         awaitPower(()->power.isInteractive()&&!power.isDeviceIdleMode(),"Android did not leave Doze and wake for reopening");
         recordPowerTransition(power,unforced);launch();
+        check(lastUiReadiness!=null&&lastUiReadiness.optInt("javascriptProbeCount")>0
+            &&lastUiReadiness.optLong("javascriptRetryDelayMs",-1)==UiReadiness.RETRY_DELAY_MS,
+            "Reconnected preview did not retain timer-backed JavaScript readiness evidence");
     }
     private JSONObject start(String projectId)throws Exception{
         JSONObject job=new JSONObject(activity.new Bridge().startAnalysis(projectId));check(!job.has("error"),job.toString());waitService(true);
