@@ -1,6 +1,6 @@
 /* Private worker: bounded PCM chunks -> exact log-mel -> pretrained Beat This! transformer. */
 'use strict';
-importScripts('telemetry.js','semantic-timeline.js','salience.js','wav-reader.js','dsp.js','bass-notes.js','vocal.js','vocal-detail.js','stem-cache.js','work-store.js','separator-mdx.js','separator-deux.js','game.js','vendor/ort.wasm.min.js');
+importScripts('telemetry.js','semantic-timeline.js','salience.js','wav-reader.js','dsp.js','bass-notes.js','vocal.js','vocal-detail.js','stem-cache.js','work-store.js','feature-store.js','separator-mdx.js','separator-deux.js','game.js','vendor/ort.wasm.min.js');
 const report=(progress,stage,detail='',extra={})=>postMessage({type:'progress',value:{...extra,progress,stage,detail}});
 function createTelemetry(stage,metadata){
  const factory=self.LightForgeAnalysisTelemetry;
@@ -91,6 +91,19 @@ async function melForFrames(reader,session,first,frames,config){
  const tensor=new ort.Tensor('float32',pcm,[1,pcm.length]);let output;
  try{output=await session.run({audio_pcm:tensor});const mel=output.mel_spectrogram;return new Float32Array(mel.data.subarray(halo*128,(halo+frames)*128));}finally{if(output)dispose(output);tensor.dispose();}
 }
+const RHYTHM_FEATURE='rhythm-dsp-v1',RHYTHM_FEATURE_VERSION='dsp-feature-extractor-v1',RHYTHM_PREPROCESSING='pcm-44100-mono22050-reflect-v1';
+const floatFeature=(value,length)=>value instanceof Float32Array&&value.length===length;
+function rhythmFeaturePayload(data,n){return {version:1,frameCount:n,duration:data.duration,chromaStep:data.chromaStep,rms:data.rms,bass:data.bass,mid:data.mid,high:data.high,colour:data.colour,fineRms:data.fineRms,chroma:data.chroma};}
+function validRhythmFeature(value,n,duration){return !!value&&value.version===1&&value.frameCount===n&&value.duration===duration&&value.chromaStep===.2&&floatFeature(value.rms,n)&&floatFeature(value.bass,n)&&floatFeature(value.mid,n)&&floatFeature(value.high,n)&&floatFeature(value.colour,n*3)&&floatFeature(value.fineRms,n*4)&&floatFeature(value.chroma,Math.ceil(n/10)*12);}
+function rhythmDataFromFeature(value,n){return {duration:value.duration,beat:new Float32Array(n),down:new Float32Array(n),rms:value.rms,bass:value.bass,mid:value.mid,high:value.high,colour:value.colour,fineRms:value.fineRms,chroma:value.chroma,chromaStep:value.chromaStep};}
+async function reusableRhythmFeatures(options,config){
+ const audioIdentity=options.analysisIdentity,api=self.LightForgeFeatureStore,store=self.LightForgeAnalysisStore;
+ if(typeof audioIdentity!=='string'||!/^[a-f0-9]{64}$/.test(audioIdentity)||!api||typeof api.open!=='function'||!store||typeof store.contentAddress!=='function')return null;
+ try{
+  const configIdentity=await store.contentAddress('dsp-feature-config',config);
+  return await api.open({audioIdentity,preprocessingVersion:RHYTHM_PREPROCESSING,modelVersions:{'dsp-config':configIdentity,'dsp-extractor':RHYTHM_FEATURE_VERSION},analysisConfiguration:{analysisRate:22050,featureChunk:500,frameHopSamples:441,frameRateHz:50,chromaStep:.2,reflectionHaloHops:2}});
+ }catch(_){return null;}
+}
 self.onmessage=async e=>{
  if(e.data?.type==='native-deux-result'||e.data?.type==='native-deux-progress'){
   const pending=nativeRequests.get(e.data.requestId);if(!pending)return;
@@ -145,10 +158,27 @@ self.onmessage=async e=>{
  const sessionOptions={executionProviders:['wasm'],graphOptimizationLevel:'all',enableCpuMemArena:false,enableMemPattern:false};
  if(stage==='rhythm'){
   report(.01,'Opening music','Reading your music locally');const reader=new LightForgeWavReader(options.analysisUrl||audioUrl);await reader.open();
- const n=Math.ceil(reader.duration*50);let data={duration:reader.duration,beat:new Float32Array(n),down:new Float32Array(n),rms:new Float32Array(n),bass:new Float32Array(n),mid:new Float32Array(n),high:new Float32Array(n),colour:new Float32Array(n*3),fineRms:new Float32Array(n*4),chroma:new Float32Array(Math.ceil(n/10)*12),chromaStep:.2};
- const extractor=new LightForgeDSP.FeatureExtractor(config),featureChunk=500;
- report(.025,'Listening to musical detail','Measuring attacks, tonal colour and quiet passages');
- for(let first=0;first<n;first+=featureChunk){const frames=Math.min(featureChunk,n-first),samples=await reader.mono22050(first*441-705,(frames-1)*441+1411,config),f=extractor.extract(samples,0,frames);for(const name of ['rms','bass','mid','high'])data[name].set(f[name],first);data.colour.set(f.colour,first*3);data.fineRms.set(f.fineRms,first*4);for(let i=0;i<frames;i++)for(let b=0;b<12;b++)data.chroma[Math.floor((first+i)/10)*12+b]+=f.chroma[i*12+b]/10;report(.03+.18*(first+frames)/n,'Listening to musical detail',`${Math.min(reader.duration,(first+frames)*.02).toFixed(0)} / ${reader.duration.toFixed(0)} seconds`);}
+ const n=Math.ceil(reader.duration*50),featureStore=await reusableRhythmFeatures(options,config);let featureHit=null;
+ if(featureStore){
+  const featureRead=telemetry.begin('shared-feature.read');
+  try{featureHit=await featureStore.read(RHYTHM_FEATURE);}catch(_){featureHit=null;}
+  telemetry.end(featureRead,{hit:!!featureHit});
+ }
+ if(featureHit&&!validRhythmFeature(featureHit.value,n,reader.duration)){telemetry.cache('shared-features','corrupt');try{await featureStore.invalidate([RHYTHM_FEATURE]);}catch(_){}featureHit=null;}
+ let data=featureHit?rhythmDataFromFeature(featureHit.value,n):null;
+ if(data){telemetry.cache('shared-features','hit');report(.025,'Restoring musical detail','Verified reusable energy and tonal features restored');}
+ else{
+  if(featureStore)telemetry.cache('shared-features','miss');
+  data={duration:reader.duration,beat:new Float32Array(n),down:new Float32Array(n),rms:new Float32Array(n),bass:new Float32Array(n),mid:new Float32Array(n),high:new Float32Array(n),colour:new Float32Array(n*3),fineRms:new Float32Array(n*4),chroma:new Float32Array(Math.ceil(n/10)*12),chromaStep:.2};
+  const extractor=new LightForgeDSP.FeatureExtractor(config),featureChunk=500;
+  report(.025,'Listening to musical detail','Measuring attacks, tonal colour and quiet passages');
+  for(let first=0;first<n;first+=featureChunk){const frames=Math.min(featureChunk,n-first),samples=await reader.mono22050(first*441-705,(frames-1)*441+1411,config),f=extractor.extract(samples,0,frames);for(const name of ['rms','bass','mid','high'])data[name].set(f[name],first);data.colour.set(f.colour,first*3);data.fineRms.set(f.fineRms,first*4);for(let i=0;i<frames;i++)for(let b=0;b<12;b++)data.chroma[Math.floor((first+i)/10)*12+b]+=f.chroma[i*12+b]/10;report(.03+.18*(first+frames)/n,'Listening to musical detail',`${Math.min(reader.duration,(first+frames)*.02).toFixed(0)} / ${reader.duration.toFixed(0)} seconds`);}
+  if(featureStore){
+   const featureWrite=telemetry.begin('shared-feature.write');
+   try{await featureStore.write(RHYTHM_FEATURE,rhythmFeaturePayload(data,n),{producer:RHYTHM_FEATURE_VERSION,frameCount:n});telemetry.cache('shared-features','write');}catch(_){telemetry.cache('shared-features','corrupt');}
+   telemetry.end(featureWrite);
+  }
+ }
  report(.22,'Loading music AI',quality==='precision'?'Beat This! full transformer • entirely on this device':'Beat This! compact transformer • entirely on this device');
 
  const chunk=1500,border=6,stride=chunk-border*2,starts=[];for(let s=-border;s<n-border;s+=stride)starts.push(s);if(n>stride)starts[starts.length-1]=n-(chunk-border);
