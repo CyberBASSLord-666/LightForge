@@ -18,7 +18,7 @@ const EXPECTED=Object.freeze([
   {file:'baseline-demo-music.json',lineage:'baseline',track:'demo',analysisVersion:1,bytes:186709,sha256:'18b5ecdc10ba976de474d580e174106d292ffe88c2544dd5023459e2cb864319',duration:64,beats:99,downbeats:25,sections:4},
   {file:'baseline-sample-music.json',lineage:'baseline',track:'sample',analysisVersion:1,bytes:594175,sha256:'33a2aed406a0842c24e6895882e27b0c17d6c8da81136066e1f792c69959c39b',duration:238.04,beats:369,downbeats:93,sections:12},
   {file:'current-demo-music.json',lineage:'current',track:'demo',analysisVersion:2,bytes:199911,sha256:'b5c925d1f3eb4d1c36b043587849c161186a99039f88537660b0f58bd5958533',duration:64,beats:99,downbeats:25,sections:4,phrases:7,impacts:24},
-  {file:'current-sample-music.json',lineage:'current',track:'sample',analysisVersion:2,bytes:641621,sha256:'74764bd55772fcd54769423c5931f906fb1a1706e541df2cad2a716dc7ad1',duration:238.04,beats:369,downbeats:92,sections:14,phrases:27,impacts:75},
+  {file:'current-sample-music.json',lineage:'current',track:'sample',analysisVersion:2,bytes:641621,sha256:'74764bd55772fcd54769423c5931f906fb1eb1a1706e541df2cad2a716dc7ad1',duration:238.04,beats:369,downbeats:92,sections:14,phrases:27,impacts:75},
 ]);
 const EXPECTED_SAMPLE_AUDIO=Object.freeze({
   path:'upload/Sample.wav',channels:2,sampleRate:48000,sampleWidth:2,frames:11425919,
