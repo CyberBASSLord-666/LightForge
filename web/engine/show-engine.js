@@ -386,8 +386,12 @@
       return {style:['festival','cinematic','pulse'].includes(o.style)?o.style:s.style,intensity:finite(o.intensity)?clamp(o.intensity,0,1):s.intensity,variant,seed,locked:finite(o.seed),motifGroup:key};
     });
     const semantic=matchingSemanticSalience(music);
-    const semanticStrategy=s.semanticChoreography&&semantic&&SEMANTIC_CHOREOGRAPHY&&typeof SEMANTIC_CHOREOGRAPHY.create==='function'
-      ?SEMANTIC_CHOREOGRAPHY.create(semantic,{stepMs:s.stepMs}):null;
+    let semanticStrategy=null;
+    if(s.semanticChoreography&&semantic&&SEMANTIC_CHOREOGRAPHY&&typeof SEMANTIC_CHOREOGRAPHY.create==='function'){
+      // A module defect must not turn optional semantic planning into a
+      // compilation failure. The legacy planner remains the safe fallback.
+      try{semanticStrategy=SEMANTIC_CHOREOGRAPHY.create(semantic,{stepMs:s.stepMs});}catch(_){}
+    }
     const movement=m.silent?{events:[],accents:[],targets:[],diagnostics:{selectedTargets:0}}:MOVEMENT.plan(m,s,PROFILE);
     // Motifs are a scene-level variation, so establish whether the semantic
     // strategy has a real, linkable planning target before scenes can change.

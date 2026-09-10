@@ -46,6 +46,17 @@ function recurrenceAnalysisMarker(sidecar){
   return {schemaVersion:1,enabled:true,cacheDomain:'recurrence',engineVersion:sidecar.engineVersion,sidecarSchemaVersion:sidecar.schemaVersion,
     clock:sidecar.clock,duration:sidecar.duration,timelineFingerprint:sidecar.timelineFingerprint,evidenceFingerprint:sidecar.evidenceFingerprint};
 }
+function withThrowingSemanticStrategy(run){
+  const moduleId=require.resolve('../web/engine/show-engine.js'),cached=require.cache[moduleId],prior=globalThis.SemanticChoreography;
+  globalThis.SemanticChoreography={create(){throw Error('simulated semantic strategy module fault');}};
+  delete require.cache[moduleId];
+  try{return run(require('../web/engine/show-engine.js'));}
+  finally{
+    delete require.cache[moduleId];
+    if(cached)require.cache[moduleId]=cached;
+    if(prior===undefined)delete globalThis.SemanticChoreography;else globalThis.SemanticChoreography=prior;
+  }
+}
 
 test('motif evolution requires a valid cap-aware recurrence binding and keeps default FSEQ bytes identical',()=>{
   const music=musicFixture(),{timeline,salience,evidence,sidecar}=buildBoundRecurrence(music);
@@ -158,6 +169,19 @@ test('motif evolution requires canonical, active semantic salience before it can
     assert.equal(Timeline.validate(malformedTimeline.semanticTimeline).valid,false);
     assertSemanticFallback('malformed timeline events '+JSON.stringify(events),malformedTimeline);
   }
+});
+
+test('a semantic strategy module fault fails closed to the exact legacy sequence',()=>{
+  const music=musicFixture(),{timeline,salience,evidence,sidecar}=buildBoundRecurrence(music);
+  const analysis={...music,semanticTimeline:timeline,musicSalience:salience,recurrenceEvidence:evidence,recurrenceSidecar:sidecar,recurrenceAnalysis:recurrenceAnalysisMarker(sidecar)};
+  const settings={stepMs:20,dance:'off',seed:779,semanticChoreography:true,motifEvolution:true};
+  const baseline=Engine.generate(analysis,{stepMs:20,dance:'off',seed:779});
+  const faulted=withThrowingSemanticStrategy(FaultedEngine=>FaultedEngine.generate(analysis,settings));
+  assert.equal(faulted.choreography.semanticStrategy.active,false);
+  assert.equal(faulted.choreography.motifEvolution.active,false);
+  assert.equal(faulted.choreography.motifEvolution.reason,'semantic-strategy-inactive');
+  assert.deepEqual(faulted.frames,baseline.frames);
+  assert.deepEqual(Engine.fseq(faulted,'semantic-fault.wav'),Engine.fseq(baseline,'semantic-fault.wav'));
 });
 
 test('cap-aware recurrence fingerprints invalidate stale evidence and sidecars',()=>{
