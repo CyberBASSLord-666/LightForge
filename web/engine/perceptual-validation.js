@@ -90,13 +90,14 @@
  function feasibility(quality){
   if(!quality||quality.validInput!==true)return {state:'unavailable',knownViolationCount:null,components:{},reason:'No valid choreography-quality report was supplied.'};
   const components={};
-  const add=(name,source,key)=>{
-   if(source&&source.assessed===true&&finite(source[key]))components[name]={state:'available',violationCount:source[key]};
+  const add=(name,source,key,assessedKey='assessed')=>{
+   const assessed=source&&(source[assessedKey]===true||assessedKey!=='assessed'&&source.assessed===true);
+   if(assessed&&finite(source[key]))components[name]={state:'available',violationCount:source[key]};
    else components[name]={state:'unavailable',violationCount:null,reason:'This feasibility component was not assessed.'};
   };
   add('conflictingCommands',quality.conflictingCommands,'count');
   add('minimumDurations',quality.minimumDurations,'violationCount');
-  add('repeatIntervals',quality.minimumDurations,'repeatIntervalViolationCount');
+  add('repeatIntervals',quality.minimumDurations,'repeatIntervalViolationCount','repeatIntervalsAssessed');
   add('actuatorOveruse',quality.actuatorOveruse,'overusedOutputCount');
   add('outputOveruse',quality.outputOveruse,'violationCount');
   const available=Object.values(components).filter(component=>component.state==='available'),unknown=Object.keys(components).filter(name=>components[name].state!=='available');
@@ -123,7 +124,7 @@
   const quality=options.choreographyQuality||options.quality||show&&show.choreography&&show.choreography.quality||null;
   const sync=options.syncReview||options.synchronization||show&&show.synchronization||null;
   const aggregate=classSummary('all',accepted);
-  return {version:VERSION,scope:'Read-only realization diagnostics from explicit command/perceptual, salience, collision and feasibility evidence. It does not establish detector accuracy, human perceptual quality, or physical vehicle latency without external ground truth/calibration.',eventEvidence:{state:supplied.source?'available':'unavailable',source:supplied.source,suppliedCount:raw.length,acceptedCount:accepted.length,invalidCount:invalid,omittedCount:Math.max(0,raw.length-MAX_EVENTS),maximumEvents:MAX_EVENTS,maximumClasses:MAX_CLASSES,omittedClassCount:omittedClasses.size},perEventClass,aggregate:{timing:aggregate.timing,coverage:aggregate.coverage,highSalienceCoverage:aggregate.highSalienceCoverage,collisionLoss:aggregate.collisionLoss},collision:{eventEvidence:aggregate.collisionLoss,syncReview:syncCollision(sync)},feasibility:feasibility(quality)};
+  return {version:VERSION,state:'available',scope:'Read-only realization diagnostics from explicit command/perceptual, salience, collision and feasibility evidence. It does not establish detector accuracy, human perceptual quality, or physical vehicle latency without external ground truth/calibration.',eventEvidence:{state:supplied.source?'available':'unavailable',source:supplied.source,suppliedCount:raw.length,acceptedCount:accepted.length,invalidCount:invalid,omittedCount:Math.max(0,raw.length-MAX_EVENTS),maximumEvents:MAX_EVENTS,maximumClasses:MAX_CLASSES,omittedClassCount:omittedClasses.size},perEventClass,aggregate:{timing:aggregate.timing,coverage:aggregate.coverage,highSalienceCoverage:aggregate.highSalienceCoverage,collisionLoss:aggregate.collisionLoss},collision:{eventEvidence:aggregate.collisionLoss,syncReview:syncCollision(sync)},feasibility:feasibility(quality)};
  }
  const api={version:VERSION,evaluate,analyze:evaluate};
  root.PerceptualValidation=api;if(typeof module==='object'&&module.exports)module.exports=api;
