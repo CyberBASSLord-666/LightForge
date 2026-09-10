@@ -1,6 +1,6 @@
 /* Private worker: bounded PCM chunks -> exact log-mel -> pretrained Beat This! transformer. */
 'use strict';
-importScripts('telemetry.js','semantic-timeline.js','stem-routing.js','salience.js','rhythm-hierarchy.js','wav-reader.js','dsp.js','bass-notes.js','vocal.js','vocal-detail.js','vocal-semantics.js','stem-cache.js','work-store.js','feature-store.js','separator-mdx.js','separator-deux.js','game.js','vendor/ort.wasm.min.js');
+importScripts('diagnostic-clock.js','telemetry.js','semantic-timeline.js','stem-routing.js','salience.js','rhythm-hierarchy.js','wav-reader.js','dsp.js','bass-notes.js','vocal.js','vocal-detail.js','vocal-semantics.js','stem-cache.js','work-store.js','feature-store.js','separator-mdx.js','separator-deux.js','game.js','vendor/ort.wasm.min.js');
 const report=(progress,stage,detail='',extra={})=>postMessage({type:'progress',value:{...extra,progress,stage,detail}});
 function createTelemetry(stage,metadata){
  const factory=self.LightForgeAnalysisTelemetry;
@@ -12,6 +12,18 @@ function createTelemetry(stage,metadata){
  // older WebView cache, or constrained worker cannot load its optional module.
  return {begin:()=>null,end:()=>{},cache:()=>{},snapshot:()=>null};
 }
+function createDiagnosticClock(){
+ let factory;try{factory=self.LightForgeDiagnosticClock;}catch(_){factory=null;}
+ if(factory&&typeof factory.create==='function')try{
+  const clock=factory.create(self);
+  if(clock&&typeof clock.mark==='function'&&typeof clock.measure==='function')return clock;
+ }catch(_){}
+ return {mark:()=>({milliseconds:0,source:'unavailable'}),measure:()=>({milliseconds:0,measured:false,status:'unavailable',reason:'clock-unavailable',source:'unavailable'})};
+}
+function workerTimingAttributes(timing){
+ return {workerClockStatus:timing.status,workerClockSource:timing.source,workerClockMeasured:timing.measured,workerClockReason:timing.reason||'none'};
+}
+function workerTimingSeconds(timing){return timing.measured?timing.milliseconds/1000:0;}
 function safeValidation(api,value,context){
  // Checkpoints are persisted independently from the worker script. Treat a
  // validator exception as corrupt/stale evidence so analysis can rebuild.
@@ -182,7 +194,7 @@ self.onmessage=async e=>{
   else pending.resolve(new Float32Array(e.data.buffer));
   return;
  }
- let session,melSession,separator,game,cacheWriter;const started=performance.now();try{
+ let session,melSession,separator,game,cacheWriter;const workerClock=createDiagnosticClock(),started=workerClock.mark();try{
  const {audioUrl,options={},stage}=e.data;
  if(!['rhythm','separation','voice','bass'].includes(stage))throw Error('Invalid music analysis stage.');
  const cacheKey=options.cacheKey,quality=options.analysisQuality==='balanced'?'balanced':'precision';
@@ -226,7 +238,8 @@ self.onmessage=async e=>{
    if(vocalSemantics)linkVocalSemantics(restored);
   }
   report(({rhythm:.4,separation:.82,voice:.985,bass:1})[stage],'Restoring saved progress','Completed '+stage+' work restored',{checkpointSaved:true,restoredStage:stage});
-  postMessage({type:'result',value:restored,restored:true,seconds:0,profile:telemetry.snapshot({restored:true})});
+  const restoredTiming=workerClock.measure(started);
+  postMessage({type:'result',value:restored,restored:true,seconds:0,profile:telemetry.snapshot({restored:true,...workerTimingAttributes(restoredTiming)})});
   return;
  }
  telemetry.cache(stage,'miss');
@@ -326,7 +339,8 @@ self.onmessage=async e=>{
  result.analysisVersion=8;
  result.roleAnalysis={version:5,clock:'Original decoded audio',vocalSource:'Separated vocal waveform with singing and speech evidence',bassSource:'Low-register harmonics in a vocal-separated accompaniment mixture; not an isolated bass stem',bassInputStem:'accompaniment',accompanimentStemSeparated:true,bassInstrumentSeparated:false,sourceSeparated:true,lyricsAligned:false};
  for(const warning of [...(result.vocals.warnings||[]),...(result.separation.limitations||[])])if(!result.warnings.includes(warning))result.warnings.push(warning);
- result.engine={name:'Beat This! '+(quality==='precision'?'full + Deux':'compact + MDX')+' + GAME Large',neural:true,detail:'Bundled pretrained rhythm transformer, stereo vocal separation, isolated-voice singing and speech classification, GAME Large neural sung-note transcription, measured source expression, and independent accompaniment bass tracking. All audio stays on this device.',model:selected.model,modelId:selected.id,modelSha256:selected.sha256,frontendSha256:models.frontend.sha256,vocalModel:result.vocals.model,noteModel:result.vocals.transcription.model,separationModel:result.separation,bassMethod:result.bassAnalysis.method,quality,runtime:(result.separation.nativeModelPasses>0||result.separation.runtime==='onnxruntime-android-cpu')?'ONNX Runtime Android CPU + ONNX Runtime Web 1.20.1':'ONNX Runtime Web 1.20.1',analysisSeconds:Math.round((performance.now()-started)/100)/10};
+ const engineTiming=workerClock.measure(started);
+ result.engine={name:'Beat This! '+(quality==='precision'?'full + Deux':'compact + MDX')+' + GAME Large',neural:true,detail:'Bundled pretrained rhythm transformer, stereo vocal separation, isolated-voice singing and speech classification, GAME Large neural sung-note transcription, measured source expression, and independent accompaniment bass tracking. All audio stays on this device.',model:selected.model,modelId:selected.id,modelSha256:selected.sha256,frontendSha256:models.frontend.sha256,vocalModel:result.vocals.model,noteModel:result.vocals.transcription.model,separationModel:result.separation,bassMethod:result.bassAnalysis.method,quality,runtime:(result.separation.nativeModelPasses>0||result.separation.runtime==='onnxruntime-android-cpu')?'ONNX Runtime Android CPU + ONNX Runtime Web 1.20.1':'ONNX Runtime Web 1.20.1',analysisSeconds:Math.round(workerTimingSeconds(engineTiming)*10)/10};
  const vocalSemantics=await ensureVocalSemantics(result,options,store,telemetry);
  const stemRoutingPhase=telemetry.begin('stem.routing');
  const stemRouting=ensureStemRouting(result);
@@ -344,7 +358,8 @@ self.onmessage=async e=>{
    report(1,'Music understood','Progress saved',{checkpointSaved:true,analysisStage:stage});
   }
  }
- postMessage({type:'result',value:result,restored:false,seconds:(performance.now()-started)/1000,profile:telemetry.snapshot({restored:false})});
+ const completionTiming=workerClock.measure(started);
+ postMessage({type:'result',value:result,restored:false,seconds:workerTimingSeconds(completionTiming),profile:telemetry.snapshot({restored:false,...workerTimingAttributes(completionTiming)})});
  }catch(error){
   if(cacheWriter)try{await cacheWriter.abort();}catch(_){}
   postMessage({type:'error',message:String(error.message||error).slice(0,3072),stack:typeof error.stack==='string'?error.stack.slice(0,8192):undefined});
@@ -352,3 +367,4 @@ self.onmessage=async e=>{
   if(game)try{await game.release();}catch(_){}if(separator)try{await separator.release();}catch(_){}
   if(session)try{await session.release();}catch(_){}if(melSession)try{await melSession.release();}catch(_){}
  }};
+
