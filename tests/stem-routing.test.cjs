@@ -66,3 +66,20 @@ test('absence of semantic stems remains deterministic and does not alter legacy 
  const invalid=Routing.fromAnalysis({stemCache:{key:'not-a-cache-key'},separation:{}});
  assert.deepEqual(invalid,empty);
 });
+
+
+test('ensureAnalysis adds only missing or invalid routing metadata without changing analysis schema',()=>{
+ const analysis=legacyAnalysis();analysis.analysisVersion=8;
+ const before=JSON.parse(JSON.stringify(analysis)),first=Routing.ensureAnalysis(analysis);
+ assert.equal(first.rebuilt,true);
+ assert.equal(analysis.analysisVersion,8);
+ assert.deepEqual({...analysis,stemRouting:undefined},{...before,stemRouting:undefined});
+ assert.equal(Routing.validate(analysis.stemRouting).valid,true);
+ const saved=analysis.stemRouting,second=Routing.ensureAnalysis(analysis);
+ assert.equal(second.rebuilt,false);
+ assert.equal(second.routing,saved);
+ analysis.stemRouting={schemaVersion:99};
+ const repaired=Routing.ensureAnalysis(analysis);
+ assert.equal(repaired.rebuilt,true);
+ assert.equal(Routing.validate(analysis.stemRouting).valid,true);
+});

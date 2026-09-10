@@ -75,6 +75,14 @@
    accompaniment:{...shared,audioRef:'stem-cache:'+key+'/accompaniment.wav'}
   },semanticStems});
  }
+ function ensureAnalysis(analysis){
+  if(!object(analysis))throw Error('Stem routing requires an analysis object.');
+  const existing=validate(analysis.stemRouting);
+  if(existing.valid)return {routing:analysis.stemRouting,rebuilt:false};
+  const routing=fromAnalysis(analysis,analysis.semanticStems);
+  const check=validate(routing);if(!check.valid)throw Error('Stem routing rebuild failed: '+check.errors.join('; ').slice(0,512));
+  analysis.stemRouting=routing;return {routing,rebuilt:true};
+ }
  function validate(contract){
   const errors=[];
   if(!object(contract)||contract.schemaVersion!==SCHEMA_VERSION||contract.clock!==CLOCK||!Array.isArray(contract.stems)||!object(contract.diagnostics))errors.push('Invalid stem-routing envelope.');
@@ -103,6 +111,6 @@
   }
   return {schemaVersion:SCHEMA_VERSION,task,status:'unavailable',selected:null,alternatives:[],reason:'No supplied or actual legacy stem is eligible for this task.'};
  }
- const api={build,fromAnalysis,route,validate,roles:[...ROLES],tasks:Object.keys(TASKS),schemaVersion:SCHEMA_VERSION};
+ const api={build,fromAnalysis,ensureAnalysis,route,validate,roles:[...ROLES],tasks:Object.keys(TASKS),schemaVersion:SCHEMA_VERSION};
  root.LightForgeStemRouting=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof self!=='undefined'?self:globalThis);

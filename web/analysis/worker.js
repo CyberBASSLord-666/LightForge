@@ -1,6 +1,6 @@
 /* Private worker: bounded PCM chunks -> exact log-mel -> pretrained Beat This! transformer. */
 'use strict';
-importScripts('telemetry.js','semantic-timeline.js','salience.js','wav-reader.js','dsp.js','bass-notes.js','vocal.js','vocal-detail.js','stem-cache.js','work-store.js','separator-mdx.js','separator-deux.js','game.js','vendor/ort.wasm.min.js');
+importScripts('telemetry.js','semantic-timeline.js','stem-routing.js','salience.js','wav-reader.js','dsp.js','bass-notes.js','vocal.js','vocal-detail.js','stem-cache.js','work-store.js','separator-mdx.js','separator-deux.js','game.js','vendor/ort.wasm.min.js');
 const report=(progress,stage,detail='',extra={})=>postMessage({type:'progress',value:{...extra,progress,stage,detail}});
 function createTelemetry(stage,metadata){
  const factory=self.LightForgeAnalysisTelemetry;
@@ -23,6 +23,13 @@ function ensureSemanticTimeline(result){
  if(!check||!check.valid)throw Error('Semantic timeline validation failed: '+(check?.errors||[]).join('; ').slice(0,512));
  result.semanticTimeline=timeline;
  return timeline;
+}
+function ensureStemRouting(result){
+ const api=self.LightForgeStemRouting;
+ if(!api||typeof api.ensureAnalysis!=='function'||typeof api.validate!=='function')throw Error('Stem-routing module is unavailable.');
+ const attached=api.ensureAnalysis(result),routing=attached?.routing,check=api.validate(routing);
+ if(!check||!check.valid)throw Error('Stem-routing validation failed: '+(check?.errors||[]).join('; ').slice(0,512));
+ return {routing,rebuilt:attached.rebuilt===true};
 }
 function ensureMusicSalience(result,timeline){
  const api=self.LightForgeMusicSalience;
@@ -127,14 +134,17 @@ self.onmessage=async e=>{
   telemetry.cache(stage,'restore');
   const restored={...result,...cached};
   if(stage==='bass'){
-   const provenanceChanged=normalizeBassProvenance(restored),cachedTimeline=restored.semanticTimeline;
-   const timelinePhase=telemetry.begin('semantic.timeline');
+   const provenanceChanged=normalizeBassProvenance(restored),cachedStemRouting=restored.stemRouting;
+   const stemRoutingPhase=telemetry.begin('stem.routing');
+   const stemRouting=ensureStemRouting(restored),stemRoutingWasCurrent=cachedStemRouting===stemRouting.routing;
+   telemetry.end(stemRoutingPhase,{restored:true,stemCount:stemRouting.routing.stems.length,rebuilt:stemRouting.rebuilt,cacheReused:stemRoutingWasCurrent});
+   const cachedTimeline=restored.semanticTimeline,timelinePhase=telemetry.begin('semantic.timeline');
    const timeline=ensureSemanticTimeline(restored),timelineWasCurrent=cachedTimeline===timeline;
    telemetry.end(timelinePhase,{restored:true,eventCount:timeline.events.length,provenanceMigrated:provenanceChanged,cacheReused:timelineWasCurrent});
    const cachedSalience=restored.musicSalience,saliencePhase=telemetry.begin('semantic.salience');
    const musicSalience=ensureMusicSalience(restored,timeline),salienceWasCurrent=cachedSalience===musicSalience;
    telemetry.end(saliencePhase,{restored:true,eventCount:musicSalience.events.length,profile:musicSalience.summary.context.profile,cacheReused:salienceWasCurrent});
-   if(!timelineWasCurrent||!salienceWasCurrent||provenanceChanged)await store.write(stage,restored);
+   if(!stemRoutingWasCurrent||!timelineWasCurrent||!salienceWasCurrent||provenanceChanged)await store.write(stage,restored);
   }
   report(({rhythm:.4,separation:.82,voice:.985,bass:1})[stage],'Restoring saved progress','Completed '+stage+' work restored',{checkpointSaved:true,restoredStage:stage});
   postMessage({type:'result',value:restored,restored:true,seconds:0,profile:telemetry.snapshot({restored:true})});
@@ -215,6 +225,9 @@ self.onmessage=async e=>{
  result.roleAnalysis={version:5,clock:'Original decoded audio',vocalSource:'Separated vocal waveform with singing and speech evidence',bassSource:'Low-register harmonics in a vocal-separated accompaniment mixture; not an isolated bass stem',bassInputStem:'accompaniment',accompanimentStemSeparated:true,bassInstrumentSeparated:false,sourceSeparated:true,lyricsAligned:false};
  for(const warning of [...(result.vocals.warnings||[]),...(result.separation.limitations||[])])if(!result.warnings.includes(warning))result.warnings.push(warning);
  result.engine={name:'Beat This! '+(quality==='precision'?'full + Deux':'compact + MDX')+' + GAME Large',neural:true,detail:'Bundled pretrained rhythm transformer, stereo vocal separation, isolated-voice singing and speech classification, GAME Large neural sung-note transcription, measured source expression, and independent accompaniment bass tracking. All audio stays on this device.',model:selected.model,modelId:selected.id,modelSha256:selected.sha256,frontendSha256:models.frontend.sha256,vocalModel:result.vocals.model,noteModel:result.vocals.transcription.model,separationModel:result.separation,bassMethod:result.bassAnalysis.method,quality,runtime:(result.separation.nativeModelPasses>0||result.separation.runtime==='onnxruntime-android-cpu')?'ONNX Runtime Android CPU + ONNX Runtime Web 1.20.1':'ONNX Runtime Web 1.20.1',analysisSeconds:Math.round((performance.now()-started)/100)/10};
+ const stemRoutingPhase=telemetry.begin('stem.routing');
+ const stemRouting=ensureStemRouting(result);
+ telemetry.end(stemRoutingPhase,{stemCount:stemRouting.routing.stems.length,rebuilt:stemRouting.rebuilt});
  const timelinePhase=telemetry.begin('semantic.timeline');
  const semanticTimeline=ensureSemanticTimeline(result);
  telemetry.end(timelinePhase,{eventCount:semanticTimeline.events.length,tiers:semanticTimeline.summary.countByTier});

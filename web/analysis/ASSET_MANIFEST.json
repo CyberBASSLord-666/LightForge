@@ -1,7 +1,7 @@
 {
   "README.md": {
-    "bytes": 9926,
-    "sha256": "c6a432bf63d9b2226831a52027e8cb7aa96a4ceffdb5a92ab782f1a5ea8cc74d"
+    "bytes": 10091,
+    "sha256": "79805fc9369e6cc833d8c7f626b7db28d0166dcd581fd5559961faea97b33627"
   },
   "analyzer.js": {
     "bytes": 9729,
@@ -268,8 +268,8 @@
     "sha256": "14bbcb8fd0c431491818cd466450d54fd6674ed9ff0cbd0f275c45a85f615b1d"
   },
   "stem-routing.js": {
-    "bytes": 8467,
-    "sha256": "daa3b3e7f3f367857e53a299bedd6c6943dc393fe7d7451e2bb98d11bfb358fe"
+    "bytes": 8980,
+    "sha256": "c2256c15be8a2285721fb16662915e0853de673a63a144e54b8d6838d5c1970a"
   },
   "telemetry.js": {
     "bytes": 3053,
@@ -308,7 +308,7 @@
     "sha256": "94cc60efb59146e1a12546d51871e8c45c6fcbec67d1090972deb0f313d001d2"
   },
   "worker.js": {
-    "bytes": 24471,
-    "sha256": "ce8ac858ec530885e91b5cb483c7e95b49ac847816f066fdb08fd580ba44fd88"
+    "bytes": 25569,
+    "sha256": "3711b8b0f499bd27e21b4b4bb513f2e238eb9dbaefdbcd9f77f480a6c6f5219b"
   }
 }

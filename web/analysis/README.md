@@ -101,8 +101,11 @@ The result remains deterministic for identical inputs.
 The current bundled pipeline has two actual separated cache layers: a combined
 vocal layer and an accompaniment layer. The vocal layer is not labelled as a
 lead-only stem, and the accompaniment layer is not promoted to drums, bass, or
-harmonic isolation. The standalone `stem-routing.js` contract records that
-distinction without changing the existing worker or its legacy output.
+harmonic isolation. The worker records the contract as additive
+`stemRouting` metadata after final bass analysis or a matching cache restore.
+It validates an existing contract and rebuilds only a missing or invalid one;
+no model stage, source audio, choreography input, or analysis-version contract
+is changed.
 
 A future importer or analyzer can provide optional semantic stems on the same
 original decoded-audio clock:
