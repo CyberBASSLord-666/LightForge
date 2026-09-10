@@ -1,6 +1,6 @@
 /* Cancellable composition and durable frame snapshots, isolated from the UI. */
 'use strict';
-importScripts('../version.js','vehicle-profile.js','movement-planner.js','light-planner.js','music-cues.js','sync-review.js','choreography-quality.js','show-engine.js');
+importScripts('../version.js','vehicle-profile.js','movement-planner.js','light-planner.js','music-cues.js','sync-review.js','choreography-quality.js','perceptual-validation.js','show-engine.js');
 const MAX_FRAMES=960000, CHANNELS=200;
 const canonical=value=>JSON.stringify(value,(_,item)=>item&&typeof item==='object'&&!Array.isArray(item)?Object.fromEntries(Object.keys(item).sort().map(key=>[key,item[key]])):item);
 const progress=(value,detail)=>postMessage({type:'progress',value:{progress:value,stage:'generate',detail}});
@@ -70,3 +70,4 @@ self.onmessage=async({data})=>{try{
  else{show=ShowEngine.generate(data.music,data.settings);progress(.78,'Saving an exact, checked copy of your arrangement…');compiled=await encode(show,data.music,data.settings);}
  const header=ShowEngine.fseqHeader(show,'lightshow.wav');progress(1,'Arrangement ready');postMessage({type:'result',value:{show,compiled,header}},[show.frames.buffer,header.buffer]);
 }catch(error){postMessage({type:'error',message:String(error.message||error).slice(0,3072),stack:typeof error.stack==='string'?error.stack.slice(0,8192):undefined});}};
+
