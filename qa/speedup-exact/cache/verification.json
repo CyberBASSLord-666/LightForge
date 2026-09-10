@@ -1,0 +1,206 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-10T03:54:31.803Z",
+  "passed": true,
+  "claim": "Worker finalization and restored role-cache composition preserve exact music JSON for the archived Falcon evidence and an explicit rhythm edit.",
+  "limits": [
+    "Model inference and PCM decoding are stubbed; this validates composition and persistence behavior, not model numerical parity.",
+    "Clock fixed at 1000 ms for both implementations; no output field is omitted from comparisons.",
+    "No physical-device timing or first-analysis performance claim is made.",
+    "Execution identity remains the advertised native/WASM route, as in the baseline; actual fallback and WebView/thread fingerprints are not added by this patch."
+  ],
+  "runtime": {
+    "node": "v24.19.0",
+    "platform": "linux",
+    "arch": "x64"
+  },
+  "command": [
+    "node",
+    "compare-finalization.cjs",
+    "/workspace/scratch/9a5ec23b7f4b/LightForge",
+    "/workspace/scratch/9a5ec23b7f4b/LightForge/qa/speedup-exact/cache/reference",
+    "/workspace/scratch/9a5ec23b7f4b/LightForge/qa/speedup-exact/cache"
+  ],
+  "harness": {
+    "file": "compare-finalization.cjs",
+    "bytes": 10493,
+    "sha256": "1b646f09388cf06835c62652a623e57c3d1f8fa164b389bc30ef480b7c61c6dc"
+  },
+  "baseline": {
+    "root": "/workspace/scratch/9a5ec23b7f4b/LightForge/qa/speedup-exact/cache/reference",
+    "worker": {
+      "path": "web/analysis/worker.js",
+      "bytes": 16624,
+      "sha256": "9759877dc65a969927f2dbfcddc1b44dc16a0ff747cc5fa8f7ff97cd1624d062"
+    },
+    "snapshot": "baseline-worker.js"
+  },
+  "candidate": {
+    "root": "/workspace/scratch/9a5ec23b7f4b/LightForge",
+    "sources": [
+      {
+        "path": "android/src/com/cyberbasslord/lightforge/AnalysisJobStore.java",
+        "bytes": 21072,
+        "sha256": "7693331f5121e9bb728781739d6b84b8fdfb443637d37502b085bda2e68fa895"
+      },
+      {
+        "path": "tests/AnalysisJobStoreTest.java",
+        "bytes": 24487,
+        "sha256": "be8ad43af7c379b160b765db94eebf4a5208a42621dacadc2267662e1496b5b3"
+      },
+      {
+        "path": "web/background/runner.js",
+        "bytes": 5429,
+        "sha256": "ad788e1f6b81c13618945b09917c0287032d8bf940703d9b08ca824bc68153c8"
+      },
+      {
+        "path": "web/analysis/analyzer.js",
+        "bytes": 10556,
+        "sha256": "3b2be68e90b2d48665a0c7a267b13207e802304decd5f0764b869284ba706f64"
+      },
+      {
+        "path": "web/analysis/worker.js",
+        "bytes": 18152,
+        "sha256": "7774fe4790feda6e51066c15fc51d1bec37720356bf629cf3f7e03fdcf2d3841"
+      },
+      {
+        "path": "tests/analysis-recovery-2.2.1.test.cjs",
+        "bytes": 32194,
+        "sha256": "120b30f22eb3fe7301a96a91bfd22bb2a2b8683c943cadeb83bd0c9f0e7b66b0"
+      },
+      {
+        "path": "web/analysis/work-store.js",
+        "bytes": 9403,
+        "sha256": "b6e6a251478ed727cee145418a61b1b7f1755076e0797f0a5a29ecedc4ce8f41"
+      },
+      {
+        "path": "web/analysis/stem-cache.js",
+        "bytes": 10946,
+        "sha256": "21633cd9e217ecca6e55b9fa04983512e651ddc9a7b9027af13580845ff4fe82"
+      },
+      {
+        "path": "web/analysis/separator-mdx.js",
+        "bytes": 11434,
+        "sha256": "98cdfcc0dacf115067c6be38271177dbee0c1e08f02e1b557f8bc8230065abb3"
+      },
+      {
+        "path": "web/analysis/separator-deux.js",
+        "bytes": 10079,
+        "sha256": "95508ddb8cffc7dff6e47b849f7722efd1c901fbacb2c059be392444f872aebe"
+      },
+      {
+        "path": "web/analysis/game.js",
+        "bytes": 19549,
+        "sha256": "1627851738744a45c6c4c2cbb3b695bad1623f3b41d575f40754ca1a92185227"
+      },
+      {
+        "path": "web/analysis/wav-reader.js",
+        "bytes": 7705,
+        "sha256": "0f0e5216dc1d2ca0bfb25eddacdaa21076990fa7638c22188023607e43d4005f"
+      },
+      {
+        "path": "web/analysis/dsp.js",
+        "bytes": 27384,
+        "sha256": "32186b9268632cab85cadcb7e84fa1b4e3d8eb4bb9fbdf96a0873067cb9acd71"
+      },
+      {
+        "path": "web/analysis/vocal.js",
+        "bytes": 9662,
+        "sha256": "94483ac6cf5db7532abfba98e7bab7cd826a82ad2adca0296d39fdebd827ac70"
+      },
+      {
+        "path": "web/analysis/vocal-detail.js",
+        "bytes": 22476,
+        "sha256": "cd760d7a766d9a4ab0ac3a252a10f17a16a797b38e50b2d6712bc6adcd42713f"
+      },
+      {
+        "path": "web/analysis/bass-notes.js",
+        "bytes": 14748,
+        "sha256": "5b81e2361295a1f8c02086d4668464ed1d7e93c923513c50a2c865a7aeb1531e"
+      },
+      {
+        "path": "web/analysis/models/features.json",
+        "bytes": 32062,
+        "sha256": "8a9fb3bc88c3e2f35934dd0024f22458aa8d357e3e3946a6e2c6230d3886e278"
+      },
+      {
+        "path": "web/analysis/models/model-manifest.json",
+        "bytes": 1078,
+        "sha256": "b65e74feda05a792d88cf76eb9eca82a2c0f08d63f294c14ba6eabdd67617983"
+      },
+      {
+        "path": "version.json",
+        "bytes": 39,
+        "sha256": "fa24b67fc3aa7677e274af0445c151d25a7638ce82facbe64085b05052331077"
+      },
+      {
+        "path": "qa/release-2.2.4/actual-analysis-falcon.json",
+        "bytes": 41948,
+        "sha256": "eb5987ec2f2a46742f0c1d0bb05574e9a6b9f4c9c6280cf77d306a76ca275ba6"
+      }
+    ],
+    "snapshot": "candidate-worker.js"
+  },
+  "sourceUnchangedDuringVerification": true,
+  "comparisons": [
+    {
+      "left": "oldFresh",
+      "right": "newFresh",
+      "purpose": "Fresh finalization preserves every output field",
+      "passed": true,
+      "byteIdentical": true,
+      "bytes": 41694,
+      "sha256": "2f1def1e149c737f42dc1bdc80cfc280ab8f92f1d4bb772991955d60f4e79dfa"
+    },
+    {
+      "left": "oldEdited",
+      "right": "newEdited",
+      "purpose": "Fresh finalization preserves edited rhythm",
+      "passed": true,
+      "byteIdentical": true,
+      "bytes": 41561,
+      "sha256": "053ce4af234a11e2b05593bbc18271a32312a2068399b60d5115e028686369f2"
+    },
+    {
+      "left": "oldEdited",
+      "right": "restored",
+      "purpose": "Bass-only cache preserves current rhythm and exact final metadata",
+      "passed": true,
+      "byteIdentical": true,
+      "bytes": 41561,
+      "sha256": "053ce4af234a11e2b05593bbc18271a32312a2068399b60d5115e028686369f2"
+    },
+    {
+      "left": "oldEdited",
+      "right": "restoredLegacy",
+      "purpose": "Legacy full-result cache cannot replace current rhythm or warnings",
+      "passed": true,
+      "byteIdentical": true,
+      "bytes": 41561,
+      "sha256": "053ce4af234a11e2b05593bbc18271a32312a2068399b60d5115e028686369f2"
+    }
+  ],
+  "newBassCheckpointKeys": [
+    "bassAnalysis",
+    "bassNotes"
+  ],
+  "recoveryTests": {
+    "command": [
+      "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node",
+      "--test",
+      "tests/analysis-recovery-2.2.1.test.cjs"
+    ],
+    "exitCode": 0,
+    "tests": 25,
+    "pass": 25,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0,
+    "log": {
+      "file": "recovery-tests.log",
+      "bytes": 2997,
+      "sha256": "65825b78f2471d8eac50e62acb528168365da5d9a8ded26efcc6f0f8f64fbc34"
+    }
+  }
+}

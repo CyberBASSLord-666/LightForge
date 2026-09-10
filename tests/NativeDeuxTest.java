@@ -11,8 +11,12 @@ public final class NativeDeuxTest {
     private static final NativeDeuxTransform.Check CHECK=()->{};
     public static void main(String[] args) throws Exception {
         if(args.length>=3){inference(args);return;}
-        wav();roundTrip();
-        System.out.println("NativeDeux: stereo WAVE, zero padding, source-clock reconstruction, stereo averaging, invalid input and cancellation checks passed.");
+        threads();wav();roundTrip();
+        System.out.println("NativeDeux: CPU thread budget, stereo WAVE, zero padding, source-clock reconstruction, stereo averaging, invalid input and cancellation checks passed.");
+    }
+    private static void threads() {
+        int[][] cases={{Integer.MIN_VALUE,1},{-1,1},{0,1},{1,1},{2,2},{3,3},{4,4},{5,4},{6,4},{7,4},{8,8},{9,8},{16,8},{Integer.MAX_VALUE,8}};
+        for(int[] item:cases)require(NativeDeux.threadsForCores(item[0])==item[1],"native CPU thread budget for "+item[0]+" cores");
     }
     private static void wav() throws Exception {
         File dir=Files.createTempDirectory("deux-wav-test-").toFile(),file=new File(dir,"source.wav");

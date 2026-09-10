@@ -1,0 +1,34 @@
+{"streamedFixtureBytes": 8388608, "archiveBytes": 8392276, "peakPythonHeapBytes": 3800894, "manifestEntries": 4}
+....FE...............................................................
+======================================================================
+ERROR: test_exact_fresh_comparison_and_its_measured_sources_pass (tests.test_analysis_evidence_2_2_3.FreshRuntimeEvidenceTest.test_exact_fresh_comparison_and_its_measured_sources_pass)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/9a5ec23b7f4b/LightForge/tests/test_analysis_evidence_2_2_3.py", line 41, in test_exact_fresh_comparison_and_its_measured_sources_pass
+    receipt = protocol.verify_comparison(self.root, hashes)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/9a5ec23b7f4b/LightForge/qa/release-2.2.3/verify-analysis.py", line 77, in verify_comparison
+    bind(root, relative, expected, hashes)
+  File "/workspace/scratch/9a5ec23b7f4b/LightForge/qa/release-2.2.3/verify-analysis.py", line 61, in bind
+    require(actual == expected, 'Source differs from measured evidence: ' + relative)
+  File "/workspace/scratch/9a5ec23b7f4b/LightForge/qa/release-2.2.3/verify-analysis.py", line 41, in require
+    raise ValueError(message)
+ValueError: Source differs from measured evidence: tests/NativeDeuxTest.java
+
+======================================================================
+FAIL: test_changed_dependency_pins_reject_previous_comparison (tests.test_analysis_evidence_2_2_3.FreshRuntimeEvidenceTest.test_changed_dependency_pins_reject_previous_comparison)
+----------------------------------------------------------------------
+ValueError: Source differs from measured evidence: tests/NativeDeuxTest.java
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/workspace/scratch/9a5ec23b7f4b/LightForge/tests/test_analysis_evidence_2_2_3.py", line 65, in test_changed_dependency_pins_reject_previous_comparison
+    with self.assertRaisesRegex(ValueError, 'Source differs.*native-runtime.json'):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "Source differs.*native-runtime.json" does not match "Source differs from measured evidence: tests/NativeDeuxTest.java"
+
+----------------------------------------------------------------------
+Ran 69 tests in 2.055s
+
+FAILED (failures=1, errors=1)

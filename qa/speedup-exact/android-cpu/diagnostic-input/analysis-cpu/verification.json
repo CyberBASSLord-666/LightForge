@@ -1,0 +1,64 @@
+{
+  "passed": true,
+  "diagnostic_only": true,
+  "scope": "CPU capability initialization on API 35 emulator; not a music-analysis benchmark or release gate",
+  "errors": [],
+  "provenance_sha256": "05384d9410f2253d0163749dc134a862a81176c2ce83749724b9a352fcadef6d",
+  "device": {
+    "document": {
+      "crossOriginIsolated": false,
+      "hardwareConcurrency": 4,
+      "location": "https://appassets.androidplatform.net/index.html",
+      "secureContext": true,
+      "sharedArrayBuffer": false,
+      "userAgent": "Mozilla/5.0 (Linux; Android 15; sdk_gphone64_x86_64 Build/AE3A.240806.043; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/124.0.6367.219 Mobile Safari/537.36"
+    },
+    "worker": {
+      "checkpointRemoved": true,
+      "configuredThreads": 1,
+      "crossOriginIsolated": false,
+      "diagnosticOnly": true,
+      "effectiveThreads": 1,
+      "hardwareConcurrency": 4,
+      "identityExact": true,
+      "ortSourceSha256": "e66568724f8848e57cc2a56e4bea3a5b86ce3ff81b2da11eac8ed7ab02b27bd4",
+      "outputBits": [
+        1065353216,
+        3221225472,
+        1048576000,
+        2147483648
+      ],
+      "passed": true,
+      "pthreadWorkers": [],
+      "secureContext": true,
+      "sharedArrayBuffer": false,
+      "userAgent": "Mozilla/5.0 (Linux; Android 15; sdk_gphone64_x86_64 Build/AE3A.240806.043; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/124.0.6367.219 Mobile Safari/537.36",
+      "wasmPaths": "https://appassets.androidplatform.net/analysis/vendor/",
+      "wasmProxy": false,
+      "workerLocation": "https://appassets.androidplatform.net/analysis/__cpu_probe__.js",
+      "workerSourceSha256": "9759877dc65a969927f2dbfcddc1b44dc16a0ff747cc5fa8f7ff97cd1624d062"
+    },
+    "workerResponseHeaders": {
+      "Accept-Ranges": "bytes",
+      "Cache-Control": "no-store",
+      "X-Content-Type-Options": "nosniff",
+      "Vary": "Range",
+      "Cross-Origin-Opener-Policy": "same-origin",
+      "Cross-Origin-Embedder-Policy": "require-corp",
+      "Cross-Origin-Resource-Policy": "same-origin"
+    },
+    "probeScriptSha256": "d7ee367416b7a6e457b46ffa3db541377d80822451d930ceae531a8750ad20e9",
+    "webViewPackage": "com.google.android.webview",
+    "webViewVersion": "124.0.6367.219",
+    "androidSdk": 35,
+    "device": "sdk_gphone64_x86_64",
+    "supportedAbis": [
+      "x86_64",
+      "arm64-v8a"
+    ],
+    "passed": true,
+    "diagnosticOnly": true,
+    "scope": "Actual production Activity WebView, unchanged imported worker and ORT, tiny Identity initialization only; no music analysis, throughput result, or physical-phone claim."
+  },
+  "completedAt": "2026-09-10T03:31:19.585805+00:00"
+}

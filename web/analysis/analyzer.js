@@ -7,7 +7,8 @@ async function analyze(audioUrl,options={},onProgress=()=>{},signal){
  const aborted=()=>new DOMException('Analysis cancelled','AbortError');
  if(signal?.aborted)throw aborted();
  const persistent=/^[a-f0-9]{64}$/.test(options.analysisIdentity||''),identity=persistent?options.analysisIdentity:crypto.randomUUID();
- const {nativePredict,nativeMdx,...serializableOptions}=options,hasNative=typeof nativePredict==='function'&&options.analysisQuality!=='balanced',hasMdx=typeof nativeMdx==='function'&&options.analysisQuality==='balanced';
+ const {nativePredict,nativeMdx,gameCapacity,...serializableOptions}=options,hasNative=typeof nativePredict==='function'&&options.analysisQuality!=='balanced',hasMdx=typeof nativeMdx==='function'&&options.analysisQuality==='balanced';
+ const hasGameCapacity=typeof gameCapacity==='function'&&typeof gameCapacity.release==='function';
  const execution=[hasNative?'native-deux-v1':null,hasMdx?'native-mdx-v1':null].filter(Boolean).join('+')||'wasm-v1';
  const binding={pipeline:'bounded-analysis-v2',release:scope.LightForgeVersion.name,identity,quality:options.analysisQuality==='balanced'?'balanced':'precision',sensitivity:options.sensitivity??.82,bpmOverride:options.bpmOverride??null,execution};
  const workId=await scope.LightForgeAnalysisStore.hash(new TextEncoder().encode(JSON.stringify(binding)));
@@ -17,11 +18,11 @@ async function analyze(audioUrl,options={},onProgress=()=>{},signal){
  const sharedRoles=persistent&&/^[a-f0-9]{64}$/.test(options.analysisAudioIdentity||'');
  const roleWorkId=sharedRoles?await scope.LightForgeAnalysisStore.hash(new TextEncoder().encode(JSON.stringify({pipeline:'bounded-roles-v1',release:scope.LightForgeVersion.name,identity:options.analysisAudioIdentity,quality:binding.quality,execution}))):workId;
  const id=roleWorkId.slice(0,32),cacheKey='stem-'+[id.slice(0,8),id.slice(8,12),id.slice(12,16),id.slice(16,20),id.slice(20)].join('-');
- const runOptions={...serializableOptions,cacheKey,workId,supportsNativeDeux:hasNative,supportsNativeMdx:hasMdx},timings={},started=performance.now();let value={},progress=0;
+ const runOptions={...serializableOptions,cacheKey,workId,supportsNativeDeux:hasNative,supportsNativeMdx:hasMdx,supportsGameCapacity:hasGameCapacity},timings={},started=performance.now();let value={},progress=0;
  function runStage(stage){return new Promise((resolve,reject)=>{
   if(signal?.aborted){reject(aborted());return;}
   scope.LightForgeDiagnostics?.log('info','analysis-worker','Stage started: '+stage);
-  const worker=new Worker(new URL('worker.js',base)),controller=new AbortController();let finished=false,lastActivity=performance.now(),nativeActive=false,nativeMdxActive=false;
+  const worker=new Worker(new URL('worker.js',base)),controller=new AbortController();let finished=false,lastActivity=performance.now(),nativeActive=false,nativeMdxActive=false,gameCapacityPending=false,gameCapacityActive=false;
   const watchdog=setInterval(()=>{if(performance.now()-lastActivity>12*60*1000)end(new Error('Analysis stopped making progress during '+stage+'. Completed passages are saved; resume to continue.'));},15000);
   function cleanup(){clearInterval(watchdog);worker.terminate();controller.abort();signal?.removeEventListener('abort',abort);}
   function end(error,result){if(finished)return;finished=true;scope.LightForgeDiagnostics?.log(error&&error.name!=='AbortError'?'error':'info','analysis-worker',error||'Stage completed: '+stage);cleanup();error?reject(error):resolve(result);}
@@ -33,6 +34,21 @@ async function analyze(audioUrl,options={},onProgress=()=>{},signal){
     progress=Math.max(progress,Math.min(1,Number(m.value.progress)||0));
     scope.LightForgeDiagnostics?.progress('analysis-worker',{...m.value,stage,progress});
     try{onProgress({...m.value,progress,elapsedSeconds:(performance.now()-started)/1000,completedStages:Object.keys(timings).length,restoredStages:Object.values(timings).filter(t=>t.restored).length});}catch(error){end(error);}return;
+   }
+   if(m.type==='game-capacity'){
+    if(stage!=='voice'||!hasGameCapacity||gameCapacityPending||!Number.isSafeInteger(m.requestId)||!['start','release'].includes(m.action)||(m.action==='start'&&gameCapacityActive)||(m.action==='release'&&!gameCapacityActive)){end(new Error('Invalid singing transcription resource request.'));return;}
+    gameCapacityPending=true;
+    Promise.resolve().then(()=>m.action==='release'?gameCapacity.release():gameCapacity(controller.signal)).then(value=>{
+     if(finished)return;gameCapacityPending=false;lastActivity=performance.now();
+     const parallelism=m.action==='start'&&value===2?2:1;gameCapacityActive=parallelism===2;
+     worker.postMessage({type:'game-capacity-result',requestId:m.requestId,parallelism});
+    }).catch(error=>{
+     if(finished)return;gameCapacityPending=false;
+     // A failed capacity query uses the established serial path. A failed
+     // release retains the durable guard and prevents a false completion.
+     if(m.action==='start'&&error.name!=='AbortError')worker.postMessage({type:'game-capacity-result',requestId:m.requestId,parallelism:1});
+     else worker.postMessage({type:'game-capacity-result',requestId:m.requestId,error:error.message||String(error)});
+    });return;
    }
    if(m.type==='native-deux'){
     if(stage!=='separation'||!hasNative||nativeActive||!Number.isSafeInteger(m.requestId)||!Number.isSafeInteger(m.startSample)){end(new Error('Invalid native studio request.'));return;}

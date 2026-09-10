@@ -37,10 +37,17 @@
     const nativeMdx=quality==='balanced'?root.LightForgeNativeMdx?.create(BackgroundJob,id,message=>{
      compatibility=true;report(0,message,{stage:'compatibility'});
     }):undefined;
+    // Read live memory immediately before GAME is about to allocate its
+    // model heap. The frozen job request is too old for a memory decision.
+    let gameCapacity;
+    if(typeof BackgroundJob.gameParallelism==='function'&&typeof BackgroundJob.gameParallelRelease==='function'){
+     gameCapacity=async signal=>{if(signal?.aborted)throw new DOMException('Analysis cancelled','AbortError');const value=JSON.parse(BackgroundJob.gameParallelism(id));if(signal?.aborted)throw new DOMException('Analysis cancelled','AbortError');return value.parallelism===2?2:1;};
+     gameCapacity.release=async()=>{const value=JSON.parse(BackgroundJob.gameParallelRelease(id));if(value.error)throw Error(value.error);};
+    }
     music=await MusicAnalyzer.analyze(new URL(base+'audio.wav',location.href).href,{
      projectId,analysisIdentity:request.analysisIdentity,analysisAudioIdentity:request.analysisAudioIdentity,analysisUrl:new URL(base+'analysis.wav',location.href).href,sensitivity:settings.sensitivity,
      bpmOverride:settings.bpmOverride||undefined,analysisQuality:settings.analysisQuality,
-     nativePredict,nativeMdx
+     nativePredict,nativeMdx,gameCapacity
     },p=>report(.96*Math.max(0,Math.min(1,Number(p.progress)||0)),(compatibility?'Compatibility · ':'')+(p.detail||p.message||p.stage||'Analyzing music'),p),controller.signal);
    }
    check();const duration=Number(request.duration);

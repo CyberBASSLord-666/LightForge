@@ -1,0 +1,12 @@
+{
+  "passed": false,
+  "decision": "Reject native GAME under exact output contract; encoder and estimator raw outputs differ with same runtime version.",
+  "files": {
+    "compare.py": "68e4763616c73c9613a79b4ba3c2b31ffdcbf8e3f45bf33f9c3374ad8ffa5981",
+    "FINDINGS.md": "56762019b9f91739ef41885dc64c692b898065aab85c27863a2a13f47ba5b6b8",
+    "binding.json": "6ef5acb1e69de0e01fd72caec00ea5df22ef7f37cfb593858ee10014eeefc4f7",
+    "native-1.20.1-disabled-1/report.json": "a2bf4f345a6996d7e902cdf97830b95c6e35bbaa8b859fc101e0151a6db54b29",
+    "native-1.20.1-all-1/report.json": "20da1b4c33d93ed9d2e45798b96811766b1234774e20c766cdc08f1729dcf61b",
+    "native-1.20.1-basic-1/report.json": "6806e7a7e59a585bff2508eaa568fb15843f8adba1d7b6fdb4a7886492d558da"
+  }
+}

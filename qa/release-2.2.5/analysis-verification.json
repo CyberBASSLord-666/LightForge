@@ -1,0 +1,9 @@
+{
+  "release": "2.2.5",
+  "passed": false,
+  "errors": [
+    "Pending fresh 2.2.5 source-clock execution and final current-source exact optimization proofs.",
+    "Pending actual Android GAME pool qualification artifact and final receipt adapter."
+  ],
+  "status": "Pending qualification; this is not a passing release receipt."
+}

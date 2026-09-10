@@ -214,3 +214,29 @@ test('restored bass evidence preserves the current rhythm and rebuilds final met
  assert.ok(result.value.warnings.includes('current rhythm warning'));assert.ok(!result.value.warnings.includes('stale rhythm warning'));
  assert.equal(result.value.engine.modelId,'same-model');assert.equal(result.value.engine.separationModel,result.value.separation);
 });
+test('GAME capacity is queried at the voice request, stays outside cloning, and releases before completion',async()=>{
+ const events=[],capacity=async signal=>{assert.equal(signal.aborted,false);events.push('fresh-capacity');return 2;};capacity.release=async()=>events.push('released');
+ const h=analyzerHarness({behavior(w,m){
+  if(m.stage==='voice'){events.push('voice-ready');assert.equal('gameCapacity' in m.options,false);assert.equal(m.options.supportsGameCapacity,true);w.emit({type:'game-capacity',action:'start',requestId:10});}
+  else if(m.type==='game-capacity-result'&&m.requestId===10){assert.equal(m.parallelism,2);events.push('two-lanes-finished');w.emit({type:'game-capacity',action:'release',requestId:11});}
+  else if(m.type==='game-capacity-result'&&m.requestId===11){assert.equal(events.at(-1),'released');w.finish();}
+  else if(m.stage){if(m.stage==='bass')events.push('bass');w.finish(m);}
+ }});
+ await h.analyze('/song.wav',{analysisIdentity:key,gameCapacity:capacity});assert.deepEqual(events,['voice-ready','fresh-capacity','two-lanes-finished','released','bass']);
+});
+test('capacity failure retains serial GAME and release failure prevents a false completed analysis',async()=>{
+ const make=failRelease=>{
+  let releases=0;const capacity=async()=>{if(!failRelease)throw Error('Memory information unavailable');return 2;};capacity.release=async()=>{releases++;throw Error('Ownership ended');};
+  const h=analyzerHarness({behavior(w,m){if(m.stage==='voice')w.emit({type:'game-capacity',action:'start',requestId:1});else if(m.type==='game-capacity-result'&&m.requestId===1){assert.equal(m.parallelism,failRelease?2:1);if(failRelease)w.emit({type:'game-capacity',action:'release',requestId:2});else w.finish();}else if(m.type==='game-capacity-result'){assert.equal(m.error,'Ownership ended');w.emit({type:'error',message:m.error});}else if(m.stage)w.finish(m);}});
+  return {h,capacity,get releases(){return releases;}};
+ };
+ const serial=make(false);await serial.h.analyze('/song.wav',{analysisIdentity:key,gameCapacity:serial.capacity});assert.equal(serial.releases,0);
+ const failed=make(true);await assert.rejects(failed.h.analyze('/song.wav',{analysisIdentity:key,gameCapacity:failed.capacity}),/Ownership ended/);assert.equal(failed.releases,1);assert.deepEqual(failed.h.stageStarts,['rhythm','separation','voice']);assert.deepEqual(failed.h.discarded,[]);
+});
+test('GAME resources cannot be acquired from another stage or released without a lease',async()=>{
+ for(const scenario of ['wrong-stage','unowned-release']){
+  let calls=0;const capacity=async()=>{calls++;return 2;};capacity.release=async()=>calls++;
+  const h=analyzerHarness({behavior(w,m){if(m.stage===(scenario==='wrong-stage'?'rhythm':'voice'))w.emit({type:'game-capacity',action:scenario==='wrong-stage'?'start':'release',requestId:1});else if(m.stage)w.finish(m);}});
+  await assert.rejects(h.analyze('/song.wav',{analysisIdentity:key,gameCapacity:capacity}),/Invalid singing transcription resource request/);assert.equal(calls,0);assert.deepEqual(h.discarded,[]);
+ }
+});

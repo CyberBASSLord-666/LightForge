@@ -1,0 +1,88 @@
+{
+  "release": "2.2.5",
+  "passed": true,
+  "checkedAt": "2026-09-10T03:54:40.667Z",
+  "checks": [
+    {
+      "name": "separated articulations keep the original off-grid source clock through both frame modes and signed offsets",
+      "passed": true
+    },
+    {
+      "name": "lead singing has articulation contrast and keeps bass, percussion and accompaniment active",
+      "passed": true
+    },
+    {
+      "name": "stable sung pitch and isolated envelope shape real RGB bytes while the exact exterior rhythm stays fixed",
+      "passed": true
+    },
+    {
+      "name": "instrumental corrections remove measured voice evidence locally and never mutate original analysis",
+      "passed": true
+    },
+    {
+      "name": "explicit voice guides add a labeled phrase without inventing measured notes or syllables",
+      "passed": true
+    },
+    {
+      "name": "short articulated phrases and cadences never nominate multi-second motor Dance outside their region",
+      "passed": true
+    },
+    {
+      "name": "long sustained vocal and bass phrases compete for expressive gestures with full mechanical lead and return",
+      "passed": true
+    },
+    {
+      "name": "saved and corrected detail is deterministic, masks apply and manual lights keep ownership",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "metrics": {
+    "articulationCues": 48,
+    "signatureComposition": {
+      "pairedBrightFraction": 0.21543985637342908,
+      "alternatingFraction": 0.39676840215439857
+    },
+    "roleCoverage": {
+      "vocals": {
+        "available": true,
+        "presence": "detected",
+        "sourceSeparated": true,
+        "eligibleEvents": 2,
+        "acceptedEvents": 2,
+        "accentCues": 38,
+        "noteCues": 2,
+        "confidence": 0.94,
+        "focus": 0.85
+      },
+      "bass": {
+        "eligibleEvents": 50,
+        "acceptedEvents": 50,
+        "confidence": 0.91,
+        "focus": 0.9
+      },
+      "percussion": {
+        "acceptedCues": 557
+      },
+      "arrangement": {
+        "acceptedCues": 898
+      }
+    },
+    "movementRoles": {
+      "arrangement": 10,
+      "vocals": 19,
+      "bass": 6
+    }
+  },
+  "source_hashes": {
+    "web/engine/show-engine.js": "d09cfcdf1e1eebf36d3e03bfd40a3939dcc0fd18a4437047217511a258674548",
+    "web/engine/light-planner.js": "970c7a2a736560bf01e318b8180b431863e09e6e28daad4525ec583a70a73aeb",
+    "web/engine/movement-planner.js": "d22998c270c01af72f4fa1467ea5f5c9a3cc3ddda9f2264395fd8bba870305ec",
+    "web/engine/vehicle-profile.js": "027bf87a827a900cda00505e2b539f84cbdb0d5a9800ea4eb1efdf85a0c10936"
+  },
+  "limitations": [
+    "Declared-source fixtures validate choreography, corrections, exact export timing and physical command constraints; audio-estimation accuracy is evaluated separately against real reference stems.",
+    "Pitch/articulation remain acoustic estimates, not a lyric transcript or word alignment.",
+    "Motor timing and preview dynamics are vehicle estimates, not measured physical Tesla response."
+  ]
+}

@@ -49,6 +49,13 @@ final class AnalysisJobStore {
         // Names, save timestamps and choreography edits do not invalidate audio analysis.
         // The separate source hash still protects the final project commit from conflicts.
         JSONObject old=status(files);
+        // The lease is written before a second GAME heap starts. An interrupted
+        // lease disables that optimization for the same audio and app version.
+        // Explicit cancellation is never evidence of a memory/runtime failure.
+        boolean sameGameInput=old!=null&&audioIdentity.equals(old.optString("analysisAudioIdentity"))
+            &&appVersion.equals(old.optString("analysisAppVersion"));
+        boolean gameParallelDisabled=sameGameInput&&(old.optBoolean("gameParallelDisabled")
+            ||old.optBoolean("gameParallelActive")&&("failed".equals(old.optString("state"))||"interrupted".equals(old.optString("state"))));
         File checkpoint=new File(directory(files),"checkpoint.json");
         // The renderer stores stage checkpoints in OPFS. They are intentionally
         // separate from the small Java checkpoint.json, so a process kill can
@@ -68,7 +75,9 @@ final class AnalysisJobStore {
         if(!reuse)Files.deleteIfExists(checkpoint.toPath());
         write(new File(directory(files),"request.json"),request,ProjectStore.MAX_PROJECT_BYTES);
         JSONObject job=new JSONObject().put("id",UUID.randomUUID().toString()).put("projectId",projectId)
-            .put("name",meta.getString("name")).put("sourceSHA256",sourceHash).put("analysisIdentity",analysisIdentity).put("state","queued")
+            .put("name",meta.getString("name")).put("sourceSHA256",sourceHash).put("analysisIdentity",analysisIdentity)
+            .put("analysisAudioIdentity",audioIdentity).put("analysisAppVersion",appVersion)
+            .put("gameParallelDisabled",gameParallelDisabled).put("gameParallelActive",false).put("state","queued")
             .put("stage",reuse?"Restoring completed analysis":"Preparing background analysis").put("progress",0)
             .put("createdAt",System.currentTimeMillis()).put("updatedAt",System.currentTimeMillis()).put("hasCheckpoint",reuse)
             .put("resumeAvailable",reuse||priorResume);
@@ -104,6 +113,19 @@ final class AnalysisJobStore {
             throw new IOException("The analysis job has ended.");
         return job;
     }
+    static synchronized JSONObject gameParallelism(File files,String id,long totalBytes,long availableBytes,int cores,boolean process64Bit,boolean lowMemory)throws Exception {
+        JSONObject job=matching(files,id,true);
+        if(job.optBoolean("gameParallelActive"))throw new IOException("Parallel singing analysis is already active.");
+        int parallelism=job.optBoolean("gameParallelDisabled")?1:AnalysisResourcePolicy.gameParallelism(totalBytes,availableBytes,cores,process64Bit,lowMemory);
+        JSONObject result=new JSONObject().put("parallelism",parallelism).put("totalBytes",totalBytes).put("availableBytes",availableBytes)
+            .put("cores",cores).put("process64Bit",process64Bit).put("lowMemory",lowMemory);
+        if(parallelism==2){job.put("gameParallelActive",true);persist(files,job);}
+        return result;
+    }
+    static synchronized void gameParallelRelease(File files,String id)throws Exception {
+        JSONObject job=matching(files,id,true);
+        if(job.optBoolean("gameParallelActive")){job.put("gameParallelActive",false);persist(files,job);}
+    }
     static synchronized JSONObject progress(File files,String id,double progress,String stage) throws Exception {
         return progress(files,id,progress,stage,null);
     }
@@ -127,6 +149,10 @@ final class AnalysisJobStore {
             }
             if(info.has("stage"))job.put("analysisStage",limited(info.optString("stage"),120));
             if(info.optBoolean("checkpointSaved")){job.put("resumeAvailable",true).put("checkpointAt",now);}
+            // A caught child-worker failure can finish with exact serial work.
+            // Retain that compatibility decision even after successful release;
+            // only the currently leased job may report a parallel failure.
+            if(Boolean.TRUE.equals(info.opt("workerFallback"))&&job.optBoolean("gameParallelActive"))job.put("gameParallelDisabled",true);
         }
         persist(files,job);return job;
     }
@@ -199,6 +225,7 @@ final class AnalysisJobStore {
         if(!"cancelling".equals(job.optString("state")))job.put("lastStage",job.optString("stage"));
         long now=System.currentTimeMillis();
         job.put("state",state).put("stage",limited(message,500)).put("elapsedMs",Math.max(0,now-job.optLong("createdAt",now)));
+        if("cancelling".equals(state)||"cancelled".equals(state))job.put("gameParallelActive",false);
         if(!"cancelling".equals(state))job.put("stoppedAt",now);
         persist(files,job);return job;
     }

@@ -1,0 +1,7 @@
+{
+  "release": "2.2.5",
+  "mdx_fft": "qa/speedup-exact/mdx-fft-verification.json",
+  "role_cache": "qa/speedup-exact/cache/verification.json",
+  "native_threads": "qa/speedup-exact/native-threads/verification.json",
+  "game_pool_android": null
+}

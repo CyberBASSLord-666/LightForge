@@ -1,0 +1,224 @@
+{
+  "passed": true,
+  "scope": "Controlled local x86 WASM1.20.1 per-model execution on one5.746-second actual separated-vocal excerpt. All inputs/models/eightsteps/outputbytes held fixed. Not Android throughput, full-song recovery/memory, or broad corpus quality validation.",
+  "cpuAffinity": "0-7",
+  "fixture": {
+    "path": "native-mdx-comparison-2.2.4/demo-20s/wasm-waveform.float32le",
+    "cropSamples": [
+      3840,
+      257280
+    ],
+    "samples": 253440,
+    "sampleRate": 44100,
+    "voiceSha256": "bf0f7a436054cee3878cba27047950bbc64eac76bb4552f6f049d5ecb57792a1",
+    "notes": 16
+  },
+  "medianWarmInferenceSeconds": {
+    "1": 21.933570047,
+    "2": 12.455142342000002,
+    "4": 7.889421305000001
+  },
+  "measuredRatio1to4": 2.7801240672873404,
+  "measuredRatio2to4": 1.5787143138250748,
+  "runs": {
+    "control-a-1": {
+      "threads": 1,
+      "graphLoadSeconds": 2.344722894,
+      "peakObservedProcessRssBytes": 1517367296,
+      "passages": [
+        {
+          "passage": 1,
+          "inferenceSeconds": 21.800733912000002,
+          "perGraphSeconds": {
+            "encoder": 1.269098575,
+            "dur2bd": 0.0005950020000000222,
+            "segmenter": 19.270168003000002,
+            "bd2dur": 0.007749089000000822,
+            "estimator": 1.253123242999998
+          },
+          "rawOutputBytesMatchBaseline": true,
+          "unroundedNotesMatchBaseline": true
+        },
+        {
+          "passage": 2,
+          "inferenceSeconds": 21.933570047,
+          "perGraphSeconds": {
+            "encoder": 1.2890935590000008,
+            "dur2bd": 0.00019447199999922304,
+            "segmenter": 19.3947118,
+            "bd2dur": 0.0009120079999993322,
+            "estimator": 1.2486582080000008
+          },
+          "rawOutputBytesMatchBaseline": true,
+          "unroundedNotesMatchBaseline": true
+        }
+      ],
+      "outputSha256": "60846e34250204e8298c80320bd35dba295641300a1b542a08194c857d078b4f"
+    },
+    "control-a-2": {
+      "threads": 2,
+      "graphLoadSeconds": 2.5299868979999998,
+      "peakObservedProcessRssBytes": 1442496512,
+      "passages": [
+        {
+          "passage": 1,
+          "inferenceSeconds": 12.474895661,
+          "perGraphSeconds": {
+            "encoder": 0.7675812410000004,
+            "dur2bd": 0.0006462490000003527,
+            "segmenter": 10.960856073999999,
+            "bd2dur": 0.004375270000000455,
+            "estimator": 0.7414368269999996
+          },
+          "rawOutputBytesMatchBaseline": true,
+          "unroundedNotesMatchBaseline": true
+        },
+        {
+          "passage": 2,
+          "inferenceSeconds": 12.639543707999998,
+          "perGraphSeconds": {
+            "encoder": 0.7010882220000003,
+            "dur2bd": 0.00015131699999983538,
+            "segmenter": 11.196994964,
+            "bd2dur": 0.0003375559999985853,
+            "estimator": 0.7409716489999991
+          },
+          "rawOutputBytesMatchBaseline": true,
+          "unroundedNotesMatchBaseline": true
+        },
+        {
+          "passage": 3,
+          "inferenceSeconds": 12.270740976000004,
+          "perGraphSeconds": {
+            "encoder": 0.7646265600000006,
+            "dur2bd": 0.00015033500000208734,
+            "segmenter": 10.793021950999998,
+            "bd2dur": 0.00017740600000252016,
+            "estimator": 0.7127647240000006
+          },
+          "rawOutputBytesMatchBaseline": true,
+          "unroundedNotesMatchBaseline": true
+        }
+      ],
+      "outputSha256": "b7b097ebd1e930b4255e60d5c9f3748cd9bc14457bc412ea1858168383a5c0d0"
+    },
+    "control-a-4": {
+      "threads": 4,
+      "graphLoadSeconds": 2.349791218,
+      "peakObservedProcessRssBytes": 1465446400,
+      "passages": [
+        {
+          "passage": 1,
+          "inferenceSeconds": 7.987749015999998,
+          "perGraphSeconds": {
+            "encoder": 0.5973772880000001,
+            "dur2bd": 0.0005896139999999832,
+            "segmenter": 6.929852880999999,
+            "bd2dur": 0.004780957999999373,
+            "estimator": 0.45514827499999955
+          },
+          "rawOutputBytesMatchBaseline": true,
+          "unroundedNotesMatchBaseline": true
+        },
+        {
+          "passage": 2,
+          "inferenceSeconds": 7.9806377579999985,
+          "perGraphSeconds": {
+            "encoder": 0.5291066190000001,
+            "dur2bd": 0.0001408209999990504,
+            "segmenter": 6.976213727,
+            "bd2dur": 0.00021223800000007032,
+            "estimator": 0.4749643529999994
+          },
+          "rawOutputBytesMatchBaseline": true,
+          "unroundedNotesMatchBaseline": true
+        },
+        {
+          "passage": 3,
+          "inferenceSeconds": 7.889421305000001,
+          "perGraphSeconds": {
+            "encoder": 0.5232997639999994,
+            "dur2bd": 0.0003012120000021241,
+            "segmenter": 6.945176709,
+            "bd2dur": 0.00020512800000142305,
+            "estimator": 0.4204384919999975
+          },
+          "rawOutputBytesMatchBaseline": true,
+          "unroundedNotesMatchBaseline": true
+        }
+      ],
+      "outputSha256": "9a2cab974a95d9f95eeedd0bf86c73f9209b4f346574df69b3e694a9f728ee0b"
+    },
+    "control-b-4": {
+      "threads": 4,
+      "graphLoadSeconds": 2.248111759,
+      "peakObservedProcessRssBytes": 1438322688,
+      "passages": [
+        {
+          "passage": 1,
+          "inferenceSeconds": 7.732054516,
+          "perGraphSeconds": {
+            "encoder": 0.5689976689999998,
+            "dur2bd": 0.0006505360000001019,
+            "segmenter": 6.763987209,
+            "bd2dur": 0.004713668000000325,
+            "estimator": 0.3937054339999995
+          },
+          "rawOutputBytesMatchBaseline": true,
+          "unroundedNotesMatchBaseline": true
+        },
+        {
+          "passage": 2,
+          "inferenceSeconds": 7.786321410999996,
+          "perGraphSeconds": {
+            "encoder": 0.4821355399999993,
+            "dur2bd": 0.00014903400000002874,
+            "segmenter": 6.879080344999999,
+            "bd2dur": 0.00020679999999993016,
+            "estimator": 0.42474969199999757
+          },
+          "rawOutputBytesMatchBaseline": true,
+          "unroundedNotesMatchBaseline": true
+        }
+      ],
+      "outputSha256": "1632ff1d83ed199128cc5bb36ca68adb7e36bd492aedb77ffc71f6f86c7c515a"
+    }
+  },
+  "rejectedExplorations": {
+    "8threads": {
+      "rawBitParity": false,
+      "sameFinalRoundedNotesOnThisFixture": true,
+      "maxUnroundedMidiDifference": 7.62939453125e-06,
+      "reason": "Encoder and estimator raw floats differ; no demonstrated accuracy loss, but strict raw-bit criterion not met."
+    },
+    "fixedShape": {
+      "rawBitParity": false,
+      "reason": "Raw floats differ and no speed benefit."
+    },
+    "arenaAndMemoryPattern": {
+      "rawBitParity": true,
+      "reason": "No convincing speed benefit; no memory-policy change justified."
+    }
+  },
+  "sourceBindings": {
+    "scriptSha256": "9212cd83f8e5f6e5681bb8e1c33a284dcbc16309b0194fd50a7015ecdf3bd1a6",
+    "sources": {
+      "web/analysis/game.js": "28c3e824be79c6e5cab3a2522a2b75c769741b69ad6778b45033b292cbdf05e3",
+      "web/analysis/worker.js": "9759877dc65a969927f2dbfcddc1b44dc16a0ff747cc5fa8f7ff97cd1624d062",
+      "web/analysis/models/game/manifest.json": "51e172cfaa967d9e2518f01f508a64d49cd283d23ae8e8456af9c6e76eeb4f97",
+      "web/analysis/vendor/ort.wasm.min.js": "e66568724f8848e57cc2a56e4bea3a5b86ce3ff81b2da11eac8ed7ab02b27bd4",
+      "web/analysis/vendor/ort-wasm-simd-threaded.wasm": "207d02be4591c156b0a98f024f3d58005b5b04c92274d759fb390338c63559ea",
+      "web/analysis/vendor/ort-wasm-simd-threaded.mjs": "745eb7c0ce6f18a6aa521971b2877babc7ffb27eecb58ab3bc6e5ef4692672e8",
+      "web/analysis/models/game/bd2dur.onnx": "6672d56b00f27a20e9bfaa92801c15e394bb520e49031d3ed2515b0a6cf27402",
+      "web/analysis/models/game/config.json": "4d62b6d058a820e981184ea6f04605d37659c4331ee01979eb14a14be08af890",
+      "web/analysis/models/game/dur2bd.onnx": "49d10d1ea186e43c51fd2c51cedb01a3852d363f1c7056ae77df50f7e8dd0996",
+      "web/analysis/models/game/encoder.onnx": "fbda7df8791d5cafd02ed33c65f9926c5514c750278c27fb8a59259b4c1d7464",
+      "web/analysis/models/game/estimator.onnx": "0d4a6e13bf475f79967e252b401bb5f317aa6b96bbe6665d5f8b14b42b179926",
+      "web/analysis/models/game/segmenter.onnx": "9db605a2ad3c179e9c4e4ae5b970727006020c65936773c26b2cbc27d8ef892f"
+    },
+    "controlCpuAffinity": "0-7",
+    "cpuQuota": "800000 100000",
+    "scope": "No concurrent native inference during control runs confirmed by agents; not a physical Android benchmark. Earlier baseline/arena/shape times were contended and are excluded from qualifying speed claim.",
+    "capturedAt": "2026-09-10T03:17:25.946054+00:00"
+  }
+}

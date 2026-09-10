@@ -1,0 +1,137 @@
+{
+  "passed": true,
+  "createdUtc": "2026-09-10T03:46:52.757781+00:00",
+  "scope": "Actual original/current NativeDeux production classes on Linux/JVM x86_64 using pinned ONNX Runtime 1.25.1; no Android/ARM64 or physical-phone speed claim.",
+  "threadPolicy": "Cores 1\u20137 retain the old min(4, cores) with minimum 1; 8 or more cores use 8 intra-op threads. MDX unchanged.",
+  "host": {
+    "system": "Linux",
+    "machine": "x86_64",
+    "pythonLogicalCpuCount": 9,
+    "runtimeJarSha256": "749793ebed63743fec853d093da7987a86ea5cd592d54fba898cd3233100c381"
+  },
+  "sourceHashes": {
+    "android/src/com/cyberbasslord/lightforge/NativeDeux.java": "26b0a2e9f7ada76ae56cfccffe5af24dc3cbd92e23a490abc8e7ef0d324844b1",
+    "android/src/com/cyberbasslord/lightforge/NativeDeuxTransform.java": "991b06501cfb88b904d0b714a525c389f169f00c231248b0e961b70f257e90b5",
+    "tests/NativeDeuxTest.java": "3693139eacf49797326913cf78d103e6277b9be44237eda6435f0d9f671068bc",
+    "android/native-runtime.json": "e3ea568b3a8485235f23a59cd787466cdcbbfcaa54ac56df3ce040d29fcb2a94",
+    "web/analysis/models/deux/manifest.json": "c1cb548d8d02a8b947d66fd8ac672559ea175ac4462109acccba13220b788245",
+    "web/demo/glass-castle.wav": "33f07d502ba19832b62b97d8fb4a11354e81310264bd885d7a06438228773650",
+    "qa/release-1.6.0/fixtures/falcon-mix.wav": "effbbe3e3c0df821bf3cfa6535360b18339ded8041992373b41f8344998dba99",
+    "qa/speedup-exact/native-threads/reference/NativeDeux.java": "1cd0931e9740de978c44fbb3c77e0dcbe969eae151752cc70c8f792da5409cdc",
+    "qa/speedup-exact/native-threads/reference/NativeDeuxTest.java": "f552fdbd93f01dc6051cdf6c8ca7ba4048b4391451e924e544741771e82ac2d4",
+    "qa/speedup-exact/native-threads/verify.py": "b3829ed2eee4587eb446946df5f53cf71b3079e14f91b03d759d8288d6b3205a"
+  },
+  "fixtures": [
+    {
+      "id": "demo-start",
+      "inputSha256": "33f07d502ba19832b62b97d8fb4a11354e81310264bd885d7a06438228773650",
+      "inputBytes": 11289644,
+      "preparation": null,
+      "runs": {
+        "baseline": {
+          "seconds": 53.510825352,
+          "peakRssBytes": 880308224,
+          "samplesPerStem": 573300,
+          "sha256": "b5db5b5f8bcc576e1af22b0a9fca837dc9e809195ada006af1581458283578b7",
+          "outputBytes": 4586400,
+          "logSha256": "bf0719348f189e20a1bad9e621d1ecacc5a9039173549f8c832d55bd9adba815",
+          "actualAvailableCores": 8,
+          "selectedIntraOpThreads": 4
+        },
+        "candidate": {
+          "seconds": 44.511285178,
+          "peakRssBytes": 913149952,
+          "samplesPerStem": 573300,
+          "sha256": "b5db5b5f8bcc576e1af22b0a9fca837dc9e809195ada006af1581458283578b7",
+          "outputBytes": 4586400,
+          "logSha256": "085cb6345f7f2fab0112e245ee8518b34d989a91502038230d0891640da7a701",
+          "actualAvailableCores": 8,
+          "selectedIntraOpThreads": 8
+        }
+      },
+      "byteIdentical": true,
+      "speedRatio": 1.2021855836786326,
+      "maxAbsoluteError": 0.0,
+      "rmse": 0.0
+    },
+    {
+      "id": "falcon-start",
+      "inputSha256": "0d0bf21401ad0dbb8a49aae581a16f9a00cadca41e116b5a4dc27eaaa3625648",
+      "inputBytes": 1200172,
+      "preparation": {
+        "source": "qa/release-1.6.0/fixtures/falcon-mix.wav",
+        "sourceSha256": "effbbe3e3c0df821bf3cfa6535360b18339ded8041992373b41f8344998dba99",
+        "sampleFrames": 300032,
+        "preparation": "Existing float32 stereo fixture converted deterministically to the native PCM16 input contract with round-to-nearest/ties-even and signed 16-bit clamp. Both predictors read these exact same prepared bytes; production audio conversion is unchanged."
+      },
+      "runs": {
+        "candidate": {
+          "seconds": 43.194863028,
+          "peakRssBytes": 863404032,
+          "samplesPerStem": 573300,
+          "sha256": "e376591b6b588fc10a9661a6fb298d6acd020be7a3cb12528891908083ded835",
+          "outputBytes": 4586400,
+          "logSha256": "b551868ef6e31a8a6cb46b2f94e808395bfcdd751f8383729e745e47bc92126f",
+          "actualAvailableCores": 8,
+          "selectedIntraOpThreads": 8
+        },
+        "baseline": {
+          "seconds": 54.567219191,
+          "peakRssBytes": 862412800,
+          "samplesPerStem": 573300,
+          "sha256": "e376591b6b588fc10a9661a6fb298d6acd020be7a3cb12528891908083ded835",
+          "outputBytes": 4586400,
+          "logSha256": "11360e3ab89385132bd9174d1091c3429e72a3e6795953487285765e744f8764",
+          "actualAvailableCores": 8,
+          "selectedIntraOpThreads": 4
+        }
+      },
+      "byteIdentical": true,
+      "speedRatio": 1.2632802922798516,
+      "maxAbsoluteError": 0.0,
+      "rmse": 0.0
+    }
+  ],
+  "modelHashes": {
+    "block-00-frequency.onnx": "d9ff162f881b26376ab77fa6f5bc277e8525f35fe02a02c53fcbf512ae84b3ad",
+    "block-00-time.onnx": "99929d0603a18bc1aff6994d2c60780ffb37da0a7b326f5b34618bbb1af41feb",
+    "block-01-frequency.onnx": "17fbd2962bfcadecca2b08eae3ab79e3ccf92f7b35da0dade1b83d003ac5345e",
+    "block-01-time.onnx": "340aa6e8297f3b7085918cfec93d353b1d8649d12e0e17c83b87226f2688d45f",
+    "block-02-frequency.onnx": "2861f5265cfb3920c00c65533a88f1da919f1cc99306b9477c0d2dc155c4fb69",
+    "block-02-time.onnx": "fb7369fe1eeb340bbe1701e9706e60388785856d8642d9660b5018e505491660",
+    "block-03-frequency.onnx": "284fdaeb343dc5c742503f4beb9a253faf7e7dc14184844c63091241c262d5f8",
+    "block-03-time.onnx": "5554b5723c995cd5ee5c72e7676ba4659ab56ca3d75b72681c6df5c56f14d298",
+    "block-04-frequency.onnx": "442837a608d31c5efc7d481b222e49be046fc6ab02adc22cb2832aa7d26db0d1",
+    "block-04-time.onnx": "02138dae6b824d3a809d42b5f719d66b58a13595f29dc0df241cfd2c9635a377",
+    "block-05-frequency.onnx": "2811d5f251810bd27af5e14674ac166a64753ccf24a23bf521daeb7a63cea62d",
+    "block-05-time.onnx": "166edd8406f525a1deb7e5eca9e383619b27a0d82adc80cf0636e473455e762a",
+    "block-06-frequency.onnx": "31ef31ffc1507abf3af75dadef52a01131390c4a9916137d3e9d775106c44e45",
+    "block-06-time.onnx": "a83645af6e2e3b1107ed6e5a41e1e095da265dff985560a533c3a4774f1eb0fb",
+    "block-07-frequency.onnx": "fc9a8b69d369f76f153373df180c94d437c9e3db8850a9a9ee2b63d9b1df0cf2",
+    "block-07-time.onnx": "eb1c4c6a84dca306da78a7524b004240916aca5fc704e9b64df6cde540a6a20c",
+    "block-08-frequency.onnx": "090c7696c7edf37a30abecc12cfeb7c4cea740fb0065969fc5598598df2cfd07",
+    "block-08-time.onnx": "c24ef8f8a6224176dfc53d27c817a8e03ea8a7408fc6219c55237023cc848f8c",
+    "block-09-frequency.onnx": "536070d2aca4324dda1efb4b78968033061d676abae7cb8e83ccd31640396d4f",
+    "block-09-time.onnx": "d6e53f8be9e91b6733b8452e752487655c986fa3ac116e40aa3154dd9e7ca00f",
+    "block-10-frequency.onnx": "fe90ed9051b54cde3e3dd6c342930b882af334abc845dfc7d032bb867aca8b55",
+    "block-10-time.onnx": "8011e6cf59865a74548d1a894e1355c314c750e8bc5dfdd5c008ab253b240791",
+    "block-11-frequency.onnx": "97c548efaf34d46ab3b6172954f394d3ae7cf75657295e2bc9ccab05a5c737a1",
+    "block-11-time.onnx": "7421c8c818240f76759b3534b6abb6a6bc84b07e16347c0f56a1d0478de9940d",
+    "front.onnx": "3f29ee37960f009c08653345aef7d558df7dc1b66247e5b4f5a3a80901306752",
+    "head-0.onnx": "bf0036486e15774a1ec8289f530a00282cfc89b2921e2f82bf17144fc162bae2",
+    "head-1.onnx": "a307d5bac63bf8547f163ca55cd829fee89ff6b5e27569d8407a8cc11db2c108"
+  },
+  "comparisonRule": "Exact complete float32LE file bytes; no tolerance.",
+  "sampleRate": 44100,
+  "contextSamples": 573300,
+  "samplesPerStem": 573300,
+  "outputBytes": 4586400,
+  "startSample": -66150,
+  "limitations": [
+    "Heterogeneous phone CPUs can have slower efficiency cores; more logical cores does not guarantee faster ARM64 performance.",
+    "Host byte identity does not establish ARM64 bit identity or long-song thermal throughput.",
+    "Peak RSS is sampled per-process host memory, not Android memory admission evidence."
+  ],
+  "policyAndTransformChecksPassed": true,
+  "completedUtc": "2026-09-10T03:50:12.913418+00:00"
+}

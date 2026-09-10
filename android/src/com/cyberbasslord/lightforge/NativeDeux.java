@@ -199,11 +199,15 @@ public final class NativeDeux implements AutoCloseable {
     }
     private void clearBuffers(){spectrum=null;values=null;mask=null;summed=null;batchInput=null;batchOutput=null;transform=null;}
 
+    // Larger CPU pools keep the original graph, batches and arithmetic. Devices
+    // with fewer than eight available cores retain their previous thread budget.
+    static int threadsForCores(int cores){return cores>=8?8:Math.max(1,Math.min(4,cores));}
+
     private OrtSession open(OrtEnvironment environment,String name,NativeDeuxTransform.Check check) throws Exception {
         check.check();File model=model(name,check);check.check();
         phase("session-create-start; graph="+name);
         try(OrtSession.SessionOptions options=new OrtSession.SessionOptions()) {
-            options.setIntraOpNumThreads(Math.max(1,Math.min(4,Runtime.getRuntime().availableProcessors())));
+            options.setIntraOpNumThreads(threadsForCores(Runtime.getRuntime().availableProcessors()));
             options.setInterOpNumThreads(1);
             options.setExecutionMode(OrtSession.SessionOptions.ExecutionMode.SEQUENTIAL);
             options.setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT);

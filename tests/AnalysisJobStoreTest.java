@@ -11,6 +11,91 @@ public final class AnalysisJobStoreTest {
     static void check(boolean ok,String label){if(!ok)throw new AssertionError(label);}
     static void reject(Operation op)throws Exception{try{op.run();}catch(Exception expected){return;}throw new AssertionError("Invalid transaction accepted");}
     static JSONObject read(File file)throws Exception{return AnalysisJobStore.read(file,ProjectStore.MAX_PROJECT_BYTES);}
+    static JSONObject eligibleGame(File files,String id)throws Exception {
+        long gib=AnalysisResourcePolicy.GIB;
+        return AnalysisJobStore.gameParallelism(files,id,7*gib,4*gib,4,true,false);
+    }
+    static void changeSample(File audio)throws Exception {
+        try(RandomAccessFile edit=new RandomAccessFile(audio,"rw")){edit.seek(edit.length()-1);int sample=edit.read();edit.seek(edit.length()-1);edit.write(sample^1);}
+    }
+    static void gameParallelTests(File files,String projectId,File saved,JSONObject music)throws Exception {
+        long gib=AnalysisResourcePolicy.GIB;
+        check(AnalysisResourcePolicy.gameParallelism(7*gib,4*gib,4,true,false)==2,"Exact parallel memory/core boundaries rejected");
+        check(AnalysisResourcePolicy.gameParallelism(7*gib-1,4*gib,4,true,false)==1,"Below total-memory boundary admitted");
+        check(AnalysisResourcePolicy.gameParallelism(7*gib,4*gib-1,4,true,false)==1,"Below available-memory boundary admitted");
+        check(AnalysisResourcePolicy.gameParallelism(7*gib,4*gib,3,true,false)==1,"Insufficient cores admitted");
+        check(AnalysisResourcePolicy.gameParallelism(7*gib,4*gib,4,false,false)==1,"32-bit process admitted");
+        check(AnalysisResourcePolicy.gameParallelism(7*gib,4*gib,4,true,true)==1,"Android low-memory state admitted");
+        check(AnalysisResourcePolicy.gameParallelism(7*gib,8*gib,4,true,false)==1,"Inconsistent memory snapshot admitted");
+        check(AnalysisResourcePolicy.gameParallelism(-1,-1,4,true,false)==1,"Unavailable memory snapshot admitted");
+        JSONObject first=AnalysisJobStore.prepare(files,projectId,"2.2.5");String firstId=first.getString("id");
+        String audioIdentity=first.getString("analysisAudioIdentity");
+        check(audioIdentity.equals(AnalysisJobStore.request(files,firstId).getString("analysisAudioIdentity"))&&"2.2.5".equals(first.getString("analysisAppVersion")),"GAME guard lost its frozen source/version binding");
+        JSONObject small=AnalysisJobStore.gameParallelism(files,firstId,7*gib,4*gib-1,4,true,false);
+        check(small.getInt("parallelism")==1&&!AnalysisJobStore.status(files).getBoolean("gameParallelActive"),"Ineligible device acquired parallel lease");
+        check(small.getLong("totalBytes")==7*gib&&small.getLong("availableBytes")==4*gib-1&&small.getInt("cores")==4&&small.getBoolean("process64Bit")&&!small.getBoolean("lowMemory"),"Resource decision hid its measured facts");
+        AnalysisJobStore.progress(files,firstId,.1,"Serial GAME",new JSONObject().put("workerFallback",true));
+        check(!AnalysisJobStore.status(files).getBoolean("gameParallelDisabled"),"Unleased progress disabled parallelism");
+        check(eligibleGame(files,firstId).getInt("parallelism")==2&&AnalysisJobStore.status(files).getBoolean("gameParallelActive"),"Fresh memory recheck did not commit lease before admission");
+        AnalysisJobStore.progress(files,firstId,.2,"Parallel GAME",new JSONObject().put("workerFallback","true"));
+        check(!AnalysisJobStore.status(files).getBoolean("gameParallelDisabled"),"Non-boolean fallback metadata disabled parallelism");
+        File status=new File(AnalysisJobStore.directory(files),"job.json");String activeHash=AnalysisJobStore.hash(status);
+        reject(()->eligibleGame(files,firstId));reject(()->AnalysisJobStore.gameParallelRelease(files,"wrong-owner"));
+        check(activeHash.equals(AnalysisJobStore.hash(status)),"Duplicate or stale owner changed active lease");
+        AnalysisJobStore.recover(files);
+        check("interrupted".equals(AnalysisJobStore.status(files).getString("state")),"Process death was not recovered before guard reuse");
+        JSONObject failed=AnalysisJobStore.prepare(files,projectId,"2.2.5");String failedId=failed.getString("id"),beforeRhythm=failed.getString("analysisIdentity");
+        check(failed.getBoolean("gameParallelDisabled")&&!failed.getBoolean("gameParallelActive")&&eligibleGame(files,failedId).getInt("parallelism")==1,"Interrupted lease did not disable parallel retry");
+        AnalysisJobStore.finish(files,failedId,"cancelled","Edit rhythm after failed parallelism");
+        JSONObject project=read(saved),settings=project.optJSONObject("settings");if(settings==null)settings=new JSONObject();
+        settings.put("sensitivity",.53).put("bpmOverride",123);ProjectStore.save(new File(files,"projects"),projectId,project.put("settings",settings));
+        JSONObject rhythm=AnalysisJobStore.prepare(files,projectId,"2.2.5");String rhythmId=rhythm.getString("id");
+        check(!beforeRhythm.equals(rhythm.getString("analysisIdentity"))&&audioIdentity.equals(rhythm.getString("analysisAudioIdentity"))&&rhythm.getBoolean("gameParallelDisabled"),"Rhythm edit reset crash guard or reused stale rhythm identity");
+        check(eligibleGame(files,rhythmId).getInt("parallelism")==1,"Rhythm edit retried failed parallelism");
+        AnalysisJobStore.finish(files,rhythmId,"cancelled","Upgrade fixture");
+        JSONObject upgrade=AnalysisJobStore.prepare(files,projectId,"2.2.6");String upgradeId=upgrade.getString("id");
+        check(!upgrade.getBoolean("gameParallelDisabled")&&eligibleGame(files,upgradeId).getInt("parallelism")==2,"App version did not reset parallel guard");
+        activeHash=AnalysisJobStore.hash(status);
+        reject(()->AnalysisJobStore.gameParallelRelease(files,firstId));reject(()->eligibleGame(files,firstId));
+        check(activeHash.equals(AnalysisJobStore.hash(status)),"Old job affected the replacement job's lease");
+        AnalysisJobStore.gameParallelRelease(files,upgradeId);
+        check(!AnalysisJobStore.status(files).getBoolean("gameParallelActive"),"Successful GAME completion retained its lease");
+        AnalysisJobStore.finish(files,upgradeId,"failed","An unrelated later stage failed");
+        JSONObject clean=AnalysisJobStore.prepare(files,projectId,"2.2.6");String cleanId=clean.getString("id");
+        check(!clean.getBoolean("gameParallelDisabled")&&eligibleGame(files,cleanId).getInt("parallelism")==2,"Released successful work was treated as a parallel crash");
+        AnalysisJobStore.finish(files,cleanId,"cancelling","User cancelled");
+        check(!AnalysisJobStore.status(files).getBoolean("gameParallelActive"),"Cancellation did not durably disarm crash lease");
+        reject(()->AnalysisJobStore.gameParallelRelease(files,cleanId));
+        AnalysisJobStore.recover(files);
+        JSONObject cancelled=AnalysisJobStore.prepare(files,projectId,"2.2.6");String cancelledId=cancelled.getString("id");
+        check(!cancelled.getBoolean("gameParallelDisabled")&&eligibleGame(files,cancelledId).getInt("parallelism")==2,"User cancellation disabled parallelism");
+        AnalysisJobStore.finish(files,cancelledId,"cancelling","Cancel before shutdown error");
+        AnalysisJobStore.finish(files,cancelledId,"failed","A cleanup error followed cancellation");
+        JSONObject cancelError=AnalysisJobStore.prepare(files,projectId,"2.2.6");String cancelErrorId=cancelError.getString("id");
+        check(!cancelError.getBoolean("gameParallelDisabled")&&eligibleGame(files,cancelErrorId).getInt("parallelism")==2,"Cancellation cleanup error was misclassified as a parallel crash");
+        AnalysisJobStore.finish(files,cancelErrorId,"failed","Actual active parallel failure");
+        JSONObject disabled=AnalysisJobStore.prepare(files,projectId,"2.2.6");String disabledId=disabled.getString("id");
+        check(disabled.getBoolean("gameParallelDisabled")&&eligibleGame(files,disabledId).getInt("parallelism")==1,"Failed active parallel work was not guarded");
+        AnalysisJobStore.finish(files,disabledId,"cancelled","Replace analysis waveform");
+        changeSample(new File(AnalysisJobStore.project(files,projectId),"analysis.wav"));
+        JSONObject changed=AnalysisJobStore.prepare(files,projectId,"2.2.6");String changedId=changed.getString("id");
+        check(!audioIdentity.equals(changed.getString("analysisAudioIdentity"))&&!changed.getBoolean("gameParallelDisabled")&&eligibleGame(files,changedId).getInt("parallelism")==2,"Changed analysis PCM did not reset byte-bound guard");
+        AnalysisJobStore.finish(files,changedId,"cancelled","Direct cancellation after changed audio");
+        JSONObject directCancel=AnalysisJobStore.prepare(files,projectId,"2.2.6");
+        check(!directCancel.getBoolean("gameParallelDisabled"),"Direct cancellation disabled parallelism");
+        String fallbackId=directCancel.getString("id");
+        check(eligibleGame(files,fallbackId).getInt("parallelism")==2,"Healthy parallel work was not admitted for fallback test");
+        AnalysisJobStore.progress(files,fallbackId,.5,"GAME continued serially",new JSONObject().put("stage","voice").put("workerFallback",true).put("parallelism",1));
+        JSONObject fallback=AnalysisJobStore.status(files);
+        check(fallback.getBoolean("gameParallelDisabled")&&fallback.getBoolean("gameParallelActive"),"Caught worker fallback did not durably disable future pooling while retaining the active lease");
+        AnalysisJobStore.gameParallelRelease(files,fallbackId);
+        check(AnalysisJobStore.status(files).getBoolean("gameParallelDisabled")&&!AnalysisJobStore.status(files).getBoolean("gameParallelActive"),"Successful release erased caught worker failure");
+        JSONObject completed=read(saved).put("projectId",projectId).put("music",music).put("needAnalysis",false).put("compiled",new JSONObject().put("sha256","host-game-fallback-fixture"));
+        AnalysisJobStore.complete(files,fallbackId,completed.toString());
+        JSONObject afterFallback=AnalysisJobStore.prepare(files,projectId,"2.2.6");String afterFallbackId=afterFallback.getString("id");
+        check(afterFallback.getBoolean("gameParallelDisabled")&&eligibleGame(files,afterFallbackId).getInt("parallelism")==1,"Completed exact serial fallback re-enabled failed parallel work");
+        AnalysisJobStore.finish(files,afterFallbackId,"cancelled","Finished GAME resource tests");
+    }
     public static void main(String[] args)throws Exception{
         File files=new File(args[0]);files.mkdirs();File projects=new File(files,"projects");projects.mkdirs();
         File audio=new File(files,"input.wav"),mono=new File(files,"input-mono.wav");
@@ -133,6 +218,7 @@ public final class AnalysisJobStoreTest {
         check(!beforeAudio.equals(audioChanged.getString("analysisIdentity")),"Changed audio reused prior passage identity");
         check(!audioIdentity.equals(AnalysisJobStore.request(files,audioChanged.getString("id")).getString("analysisAudioIdentity")),"Changed audio reused role-model identity");
         AnalysisJobStore.finish(files,audioChanged.getString("id"),"cancelled","Finished tests");
-        System.out.println("PASS: job ownership, monotonic progress, checkpoint reuse, cancellation, conflict preservation, durable completion, damaged checkpoint recovery, version/audio/settings identity, structured progress and crash recovery");
+        gameParallelTests(files,projectId,saved,music);
+        System.out.println("PASS: job ownership, monotonic progress, checkpoint reuse, cancellation, conflict preservation, durable completion, damaged checkpoint recovery, version/audio/settings identity, structured progress, crash recovery, GAME memory/core/64-bit admission and durable parallel ownership/crash/cancellation guard");
     }
 }

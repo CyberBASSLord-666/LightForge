@@ -27,7 +27,7 @@ class FreshRuntimeEvidenceTest(unittest.TestCase):
         path.parent.mkdir(parents=True, exist_ok=True)
         # Archived source must still satisfy the immutable 2.2.3 evidence hash.
         source = ROOT / relative
-        if relative == "android/src/com/cyberbasslord/lightforge/NativeDeux.java":
+        if relative in {"android/src/com/cyberbasslord/lightforge/NativeDeux.java", "tests/NativeDeuxTest.java"}:
             source = ROOT / "qa/release-2.2.3/prior-source" / relative
         shutil.copyfile(source, path)
         return path

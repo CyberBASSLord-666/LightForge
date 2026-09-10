@@ -1,0 +1,36 @@
+{
+  "passed": true,
+  "createdUtc": "2026-09-10T03:52:53.403201+00:00",
+  "receiptSha256": "5770a46c09adc3a997b56b22adc552614586287029c14f8bf7442bf42a262299",
+  "sourceBindingsChecked": 10,
+  "modelPinsChecked": 27,
+  "nativeDiffOnlyThreadPolicy": true,
+  "fixtureChecks": [
+    {
+      "id": "demo-start",
+      "byteIdentical": true,
+      "comparedFiniteSamples": 1146600,
+      "outputSha256": "b5db5b5f8bcc576e1af22b0a9fca837dc9e809195ada006af1581458283578b7",
+      "elapsedReductionPercent": 16.818167379777915,
+      "speedRatio": 1.2021855836786326,
+      "baselineSeconds": 53.510825352,
+      "candidateSeconds": 44.511285178
+    },
+    {
+      "id": "falcon-start",
+      "byteIdentical": true,
+      "comparedFiniteSamples": 1146600,
+      "outputSha256": "e376591b6b588fc10a9661a6fb298d6acd020be7a3cb12528891908083ded835",
+      "elapsedReductionPercent": 20.84100368610261,
+      "speedRatio": 1.2632802922798516,
+      "baselineSeconds": 54.567219191,
+      "candidateSeconds": 43.194863028
+    }
+  ],
+  "limits": [
+    "Heterogeneous phone CPUs can have slower efficiency cores; more logical cores does not guarantee faster ARM64 performance.",
+    "Host byte identity does not establish ARM64 bit identity or long-song thermal throughput.",
+    "Peak RSS is sampled per-process host memory, not Android memory admission evidence."
+  ],
+  "policyAndTransformPassLogVerified": true
+}

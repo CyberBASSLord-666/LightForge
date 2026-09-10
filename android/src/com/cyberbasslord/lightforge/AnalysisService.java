@@ -146,6 +146,22 @@ public final class AnalysisService extends Service {
         JobBridge(String ownerJobId,NativePassageTask ownerTask,NativeMdxTask ownerMdx){this.ownerJobId=ownerJobId;this.ownerTask=ownerTask;this.ownerMdx=ownerMdx;}
         private boolean owns(String id){return !stopped&&ownerJobId.equals(id)&&ownerJobId.equals(jobId);}
         @JavascriptInterface public void logDiagnostic(String level,String source,String message){if(owns(ownerJobId))AppDiagnostics.log(AnalysisService.this,level,source,message);}
+        @JavascriptInterface public String gameParallelism(String id){
+            try{
+                if(!owns(id))throw new IOException("Singing analysis job is no longer active.");
+                ActivityManager manager=(ActivityManager)getSystemService(ACTIVITY_SERVICE);
+                if(manager==null)throw new IOException("Device memory information is unavailable.");
+                // Query at the start of GAME, after separation resources close;
+                // an earlier request or notification snapshot can be stale.
+                ActivityManager.MemoryInfo memory=new ActivityManager.MemoryInfo();manager.getMemoryInfo(memory);
+                return AnalysisJobStore.gameParallelism(getFilesDir(),id,memory.totalMem,memory.availMem,
+                    Runtime.getRuntime().availableProcessors(),android.os.Process.is64Bit(),memory.lowMemory).toString();
+            }catch(Exception error){return bridgeError(error);}
+        }
+        @JavascriptInterface public String gameParallelRelease(String id){
+            try{if(!owns(id))throw new IOException("Singing analysis job is no longer active.");AnalysisJobStore.gameParallelRelease(getFilesDir(),id);return "{}";}
+            catch(Exception error){return bridgeError(error);}
+        }
         @JavascriptInterface public String nativeDeuxAvailability(String id){
             try{if(!owns(id))throw new IOException("Native analysis job is no longer active.");return ownerTask.availability();}
             catch(Exception error){AppDiagnostics.record(AnalysisService.this,"native-compatibility",error);return bridgeError(error);}
@@ -196,7 +212,7 @@ public final class AnalysisService extends Service {
             try{
                 if(details==null||details.length()>4096)return;
                 JSONObject info=new JSONObject(details);
-                long now=SystemClock.elapsedRealtime();if(now-lastProgress<1000&&value<.96&&!info.optBoolean("checkpointSaved"))return;lastProgress=now;
+                long now=SystemClock.elapsedRealtime();if(now-lastProgress<1000&&value<.96&&!info.optBoolean("checkpointSaved")&&!Boolean.TRUE.equals(info.opt("workerFallback")))return;lastProgress=now;
                 JSONObject job=AnalysisJobStore.progress(getFilesDir(),id,value,stage,info);main.post(()->{if(!stopped&&id.equals(jobId)){notifyJob(job,false);signal();}});
                 if(now-lastDiagnosticProgress>=15000||info.optBoolean("checkpointSaved")){
                     lastDiagnosticProgress=now;

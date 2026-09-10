@@ -1,0 +1,21 @@
+HOST_CORES 8
+6% Studio frequency analysis
+11% Studio temporal detail · layer 1/12
+16% Studio temporal detail · layer 2/12
+21% Studio temporal detail · layer 3/12
+26% Studio harmonic detail · layer 3/12
+31% Studio temporal detail · layer 4/12
+36% Studio temporal detail · layer 5/12
+41% Studio temporal detail · layer 6/12
+46% Studio harmonic detail · layer 6/12
+51% Studio temporal detail · layer 7/12
+56% Studio temporal detail · layer 8/12
+61% Studio temporal detail · layer 9/12
+66% Studio harmonic detail · layer 9/12
+71% Studio temporal detail · layer 10/12
+76% Studio temporal detail · layer 11/12
+81% Studio temporal detail · layer 12/12
+86% Studio harmonic detail · layer 12/12
+91% Studio vocal reconstruction
+96% Studio accompaniment reconstruction
+{"seconds":53.510825352,"peakRssBytes":880308224,"samplesPerStem":573300,"sha256":"b5db5b5f8bcc576e1af22b0a9fca837dc9e809195ada006af1581458283578b7"}
