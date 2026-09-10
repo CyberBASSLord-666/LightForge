@@ -9,6 +9,7 @@
   const CUES = root.MusicCues || (typeof require === 'function' ? require('./music-cues.js') : null);
   const SYNC = root.SyncReview || (typeof require === 'function' ? require('./sync-review.js') : null);
   const QUALITY = root.ChoreographyQuality || (typeof require === 'function' ? require('./choreography-quality.js') : null);
+  const PERCEPTUAL_VALIDATION = root.PerceptualValidation || (typeof require === 'function' ? require('./perceptual-validation.js') : null);
   const SEMANTIC_CHOREOGRAPHY = root.SemanticChoreography || (typeof require === 'function' ? require('./semantic-choreography.js') : null);
   // Keep semantic planning tied to the canonical decoded-audio timeline. This
   // shared validator makes future timeline invariants fail closed here too.
@@ -201,6 +202,22 @@
       ...(input.vehicleTimingCalibration===undefined?{}:{vehicleTimingCalibration:PROFILE.normalizePerceptualCalibration(input.vehicleTimingCalibration)}),
       ...(input.collisionAllocation===undefined?{}:{collisionAllocation:normalizeCollisionAllocation(input.collisionAllocation)})};
   }
+  function calibratedFeasibilityKinds(calibration){
+    const kinds={minimum:false,repeat:false};
+    if(!calibration||calibration.enabled!==true||!calibration.outputs||typeof calibration.outputs!=='object')return kinds;
+    for(const row of Object.values(calibration.outputs))if(row&&typeof row==='object'){
+      if(finite(row.minimumUsefulDurationMs))kinds.minimum=true;
+      if(finite(row.minimumRepeatIntervalMs))kinds.repeat=true;
+    }
+    return kinds;
+  }
+  function assertCalibratedFeasibility(calibration,quality){
+    const kinds=calibratedFeasibilityKinds(calibration);if(!kinds.minimum&&!kinds.repeat)return;
+    const limits=quality&&quality.minimumDurations;
+    if(!limits||kinds.minimum&&(limits.assessed!==true||!finite(limits.violationCount))||kinds.repeat&&(limits.repeatIntervalsAssessed!==true||!finite(limits.repeatIntervalViolationCount)))throw new Error('Vehicle timing calibration feasibility could not be validated. Repair the calibration or retry after diagnostics are available.');
+    const violations=(kinds.minimum?limits.violationCount:0)+(kinds.repeat?limits.repeatIntervalViolationCount:0);
+    if(violations>0)throw new Error('Vehicle timing calibration rejects '+violations+' minimum-duration or repeat-interval command violation'+(violations===1?'':'s')+'. Repair the cues before exporting.');
+  }
   function normalizeCollisionAllocation(input) {
     if(!input||typeof input!=='object'||Array.isArray(input))throw new Error('Collision allocation must be an object.');
     const allowedTop=new Set(['version','enabled','minimumSalience','maxAllocations','tiers','fallbacks','targets']);
@@ -387,8 +404,19 @@
       vocalPhraseCount:lighting.diagnostics.roles.vocals.eligibleEvents,bassNoteCount:lighting.diagnostics.roles.bass.eligibleEvents,vocalCues:lighting.diagnostics.roles.vocals.acceptedEvents,bassNoteCues:lighting.diagnostics.roles.bass.acceptedEvents,phraseCount:m.phrases.length,musicalImpactCount:m.impacts.length,movementTargets:movement.targets.length,lightQuantizationMaxMs:lighting.diagnostics.quantizationMaxMs};
     show.synchronization=SYNC.review(show,syncLightTargets,syncMovementTargets);
     if(QUALITY&&typeof QUALITY.evaluate==='function')show.choreography.quality=QUALITY.evaluate(show,targetSalience&&targetSalience.qualityTargets.length?{tierTargets:targetSalience.qualityTargets}:undefined);
+    assertCalibratedFeasibility(s.vehicleTimingCalibration,show.choreography.quality);
+    // This diagnostic consumes explicit final-frame realization evidence from
+    // SyncReview. It is intentionally read-only: no timing report can alter a
+    // command, the show frame buffer, or the FSEQ that will be exported.
+    if(PERCEPTUAL_VALIDATION&&typeof PERCEPTUAL_VALIDATION.evaluate==='function'){
+      try{show.perceptualValidation=PERCEPTUAL_VALIDATION.evaluate(show,{eventEvidence:show.synchronization.eventEvidence,syncReview:show.synchronization,choreographyQuality:show.choreography.quality});}
+      catch(_){show.perceptualValidation={version:1,state:'unavailable',reason:'Perceptual validation did not complete.'};}
+    }else show.perceptualValidation={version:1,state:'unavailable',reason:'Perceptual validation sidecar is unavailable.'};
     show.choreography.musicCues=m.musicCues;
-    show.validation=validate(show,m);show.validation.synchronization=show.synchronization;show.stats=Object.assign(show.stats,show.validation.stats);
+    show.validation=validate(show,m);show.validation.synchronization=show.synchronization;
+    show.validation.perceptualValidation={state:show.perceptualValidation&&show.perceptualValidation.state==='available'?'available':'unavailable',reportVersion:show.perceptualValidation&&show.perceptualValidation.version||null,eventEvidenceState:show.perceptualValidation&&show.perceptualValidation.eventEvidence&&show.perceptualValidation.eventEvidence.state||null};
+    if(show.validation.perceptualValidation.state!=='available')show.validation.warnings.push('Perceptual validation is unavailable; this show is not eligible for a perceptual-quality release claim.');
+    show.stats=Object.assign(show.stats,show.validation.stats);
     if(!show.validation.valid)throw new Error('The generated show failed validation: '+show.validation.errors.join(' '));
     preparePreview(show);
     return show;
