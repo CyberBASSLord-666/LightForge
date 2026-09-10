@@ -96,7 +96,7 @@ test('worker restores checkpoints through unavailable and late hostile diagnosti
  const epoch=1789000000000,scenarios=[
   [context=>{context.performance={};context.Date={};},'unavailable'],
   [context=>{context.Date={now:()=>epoch};context.performance={};Object.defineProperty(context.performance,'now',{get(){throw Error('blocked performance getter');}});},'fallback'],
-  [context=>{let calls=0;context.Date={now:()=>epoch};context.performance={};Object.defineProperty(context.performance,'now',{get(){calls++;if(calls===1)return ()=>100;throw Error('late performance getter');}});},'observed-error'],
+  [context=>{let calls=0;context.Date={now:()=>epoch};context.performance={};Object.defineProperty(context.performance,'now',{get(){calls++;if(calls===1)return ()=>100;throw Error('late performance getter');}});},'available'],
   [context=>{let calls=0;context.Date={now:()=>epoch};context.performance={now(){calls++;if(calls===1)return 100;throw Error('late performance call');}};},'observed-error']
  ];
  for(const [configureClock,status] of scenarios){
