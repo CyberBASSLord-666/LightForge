@@ -12,9 +12,25 @@
  */
 (function(root){'use strict';
  const LOCK_NAME='lightforge-analysis-heavy-v1',KEY=/^[a-f0-9]{64}$/;
- const now=()=>typeof performance!=='undefined'&&typeof performance.now==='function'?performance.now():Date.now();
- const abortError=()=>typeof DOMException==='function'?new DOMException('Analysis cancelled','AbortError'):Object.assign(new Error('Analysis cancelled'),{name:'AbortError'});
  const read=(object,key)=>{try{return object==null?undefined:object[key];}catch(_){return undefined;}};
+ const number=value=>typeof value==='number'&&Number.isFinite(value)?value:null;
+ const invokeNow=(object,key)=>{
+  const clock=read(object,key);if(typeof clock!=='function')return null;
+  try{return number(clock.call(object));}catch(_){return null;}
+ };
+ const performanceNow=()=>invokeNow(read(root,'performance'),'now'),dateNow=()=>invokeNow(read(root,'Date'),'now');
+ // Select a clock once. Falling from a monotonic performance clock to epoch
+ // time after a late hostile getter/call failure would fabricate wait times.
+ const createClock=()=>{
+  const first=performanceNow();
+  if(first!==null){let unavailable=false;return {now(){if(unavailable)return null;const value=performanceNow();if(value===null)unavailable=true;return value;}};}
+  const firstDate=dateNow();let unavailable=firstDate===null;
+  return {now(){if(unavailable)return null;const value=dateNow();if(value===null)unavailable=true;return value;}};
+ };
+ const clock=createClock(),now=()=>clock.now(),elapsed=(start,end)=>{
+  const first=number(start),last=number(end);return first===null||last===null?0:Math.max(0,last-first);
+ };
+ const abortError=()=>typeof DOMException==='function'?new DOMException('Analysis cancelled','AbortError'):Object.assign(new Error('Analysis cancelled'),{name:'AbortError'});
  const supportedLocks=()=>{
   const navigatorRef=read(root,'navigator'),locks=read(navigatorRef,'locks'),request=read(locks,'request');
   return typeof request==='function'?{locks,request}:null;
@@ -65,7 +81,7 @@
    if(entry.abortListener)entry.signal?.removeEventListener?.('abort',entry.abortListener);
    let released=false;
    entry.resolve({
-    diagnostics:()=>({schemaVersion:1,resourceClass:'analysis-heavy',capacity:1,crossContextMode:origin.mode,waitMs:Math.max(0,entry.started-entry.submitted),admissionTicket:entry.position}),
+    diagnostics:()=>({schemaVersion:1,resourceClass:'analysis-heavy',capacity:1,crossContextMode:origin.mode,waitMs:elapsed(entry.submitted,entry.started),admissionTicket:entry.position}),
     async release(){
      if(released)return false;
      released=true;entry.status='released';
