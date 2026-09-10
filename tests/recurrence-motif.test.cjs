@@ -77,3 +77,12 @@ test('capture rejects incomplete frame evidence instead of silently truncating i
  const timeline=Timeline.build(music);
  assert.throws(()=>Recurrence.captureEvidence(music,timeline),/does not cover/);
 });
+
+test('capture rejects corrupt normalized section and frame evidence rather than clamping it',()=>{
+ const music=baseMusic();
+ music.sections[0].energy=1.1;
+ const timeline=Timeline.build(music);
+ assert.throws(()=>Recurrence.captureEvidence(music,timeline),/Invalid section energy/);
+ const frameMusic=baseMusic();frameMusic.energy=new Array(60).fill(1.1);frameMusic.energyStep=.2;
+ assert.throws(()=>Recurrence.captureEvidence(frameMusic,Timeline.build(frameMusic)),/must be normalized/);
+});

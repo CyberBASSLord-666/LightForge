@@ -88,14 +88,20 @@
  }
  function sameSpan(left,right){return Math.abs(left.start-right.start)<=1e-6&&Math.abs(left.end-right.end)<=1e-6;}
  function captureEvidence(music,timeline){
-  const timelineCheck=validTimeline(timeline);if(!timelineCheck.valid)throw Error('Recurrence evidence requires a valid semantic timeline: '+timelineCheck.errors.join('; ').slice(0,512));
-  const canonicalSections=sectionEvents(timeline);
-  if(canonicalSections.length>MAX_SECTIONS)throw Error('Recurrence evidence exceeds the bounded section limit.');
+ const timelineCheck=validTimeline(timeline);if(!timelineCheck.valid)throw Error('Recurrence evidence requires a valid semantic timeline: '+timelineCheck.errors.join('; ').slice(0,512));
+ const canonicalSections=sectionEvents(timeline);
+ if(canonicalSections.length>MAX_SECTIONS)throw Error('Recurrence evidence exceeds the bounded section limit.');
   const inputSections=Array.isArray(music?.sections)?music.sections:[];
+  const errors=[];
   const sections=canonicalSections.map((section,sectionIndex)=>{
    const source=inputSections.find(candidate=>candidate&&finite(candidate.start)&&finite(candidate.end)&&sameSpan(section,{start:candidate.start,end:candidate.end}));
    /* Semantic timeline fields are authoritative.  The optional DSP values are
     * copied only when they exactly describe the same span. */
+   if(source&&Object.prototype.hasOwnProperty.call(source,'energy')&&(!finite(source.energy)||source.energy<0||source.energy>1))errors.push('Invalid section energy evidence.');
+   if(source&&Object.prototype.hasOwnProperty.call(source,'confidence')&&(!finite(source.confidence)||source.confidence<0||source.confidence>1))errors.push('Invalid section confidence evidence.');
+   if(source&&Object.prototype.hasOwnProperty.call(source,'recurrenceGroup')&&source.recurrenceGroup!==undefined&&source.recurrenceGroup!==null&&!validGroup(source.recurrenceGroup))errors.push('Invalid section recurrence group evidence.');
+   if(source&&Object.prototype.hasOwnProperty.call(source,'similarity')&&source.similarity!==undefined&&source.similarity!==null&&(!finite(source.similarity)||source.similarity<0||source.similarity>1))errors.push('Invalid section similarity evidence.');
+   if(source&&Object.prototype.hasOwnProperty.call(source,'repetitionIndex')&&source.repetitionIndex!==undefined&&source.repetitionIndex!==null&&(!Number.isInteger(source.repetitionIndex)||source.repetitionIndex<0))errors.push('Invalid section repetition-index evidence.');
    const energy=finite(source?.energy)?clamp(source.energy):section.energy;
    const confidence=finite(source?.confidence)?clamp(source.confidence):section.confidence;
    const recurrenceGroup=validGroup(source?.recurrenceGroup)?source.recurrenceGroup:section.recurrenceGroup;
@@ -103,7 +109,6 @@
    const repetitionIndex=Number.isInteger(source?.repetitionIndex)&&source.repetitionIndex>=0?source.repetitionIndex:section.repetitionIndex;
    return {sectionId:section.id,sectionIndex,start:section.start,end:section.end,duration:section.duration,energy,confidence,recurrenceGroup,similarity,repetitionIndex};
   });
-  const errors=[];
   const energy=numberSeries(music?.energy,MAX_ENERGY_FRAMES,'energy',errors,true);
   const energyStep=normalizedStep(music?.energyStep,'energy step',errors);
   const chroma=numberSeries(music?.chroma,MAX_CHROMA_FRAMES*CHROMA_BINS,'chroma',errors,true);
@@ -111,6 +116,7 @@
   if((energy===null)!==(energyStep===null))errors.push('Energy evidence requires both values and a step.');
   if((chroma===null)!==(chromaStep===null))errors.push('Chroma evidence requires both values and a step.');
   if(chroma!==null&&chroma.length%CHROMA_BINS!==0)errors.push('Chroma evidence must contain twelve bins per frame.');
+  if(energy!==null&&energy.some(value=>value>1))errors.push('Energy evidence must be normalized.');
   if(energy!==null&&energy.length*energyStep+energyStep<timeline.duration)errors.push('Energy evidence does not cover the semantic timeline.');
   if(chroma!==null&&chroma.length/CHROMA_BINS*chromaStep+chromaStep<timeline.duration)errors.push('Chroma evidence does not cover the semantic timeline.');
   if(errors.length)throw Error('Invalid recurrence evidence: '+errors.join('; ').slice(0,512));
@@ -139,6 +145,7 @@
   if((energy===null)!==(energyStep===null))errors.push('Energy evidence requires both values and a step.');
   if((chroma===null)!==(chromaStep===null))errors.push('Chroma evidence requires both values and a step.');
   if(chroma!==null&&chroma.length%CHROMA_BINS!==0)errors.push('Chroma evidence must contain twelve bins per frame.');
+  if(energy!==null&&energy.some(value=>value>1))errors.push('Energy evidence must be normalized.');
   if(energy!==null&&energy.length*energyStep+energyStep<(timeline?.duration||0))errors.push('Energy evidence does not cover the semantic timeline.');
   if(chroma!==null&&chroma.length/CHROMA_BINS*chromaStep+chromaStep<(timeline?.duration||0))errors.push('Chroma evidence does not cover the semantic timeline.');
   return {valid:errors.length===0,errors};
