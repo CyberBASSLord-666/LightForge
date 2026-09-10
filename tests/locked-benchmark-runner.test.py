@@ -293,6 +293,75 @@ class LockedBenchmarkRunnerTest(unittest.TestCase):
             self.assertTrue(loaded["template"])
             self.assertEqual(0, runner.main(["validate-manifest", "--manifest", str(path), "--allow-template"]))
 
+    def test_candidate_change_and_blinded_review_are_preserved_for_the_gate(self):
+        corpus = manifest()
+        review = {
+            "schema_version": 1,
+            "protocol": "blinded-ab-v1",
+            "status": "pass",
+            "review_id": "review-001",
+            "reviewers": [],
+        }
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            manifest_path, reports = self.write_fixture_set(root, corpus)
+            loaded = runner.load_manifest(manifest_path)
+            aggregate = runner.aggregate_diagnostics(
+                loaded,
+                [reports],
+                policy=gate_policy(),
+                protocol_id="locked-benchmark-test-v1",
+                cache_mode="cold",
+                change={"classification": "major", "change_id": "semantic-pipeline-rework"},
+                human_perceptual_review=review,
+            )
+            self.assertEqual(
+                {"classification": "major", "change_id": "semantic-pipeline-rework"},
+                aggregate["change"],
+            )
+            self.assertEqual(review, aggregate["human_perceptual_review"])
+            with self.assertRaisesRegex(runner.LockedBenchmarkError, "requires an explicit candidate"):
+                runner.aggregate_diagnostics(
+                    loaded,
+                    [reports],
+                    policy=gate_policy(),
+                    protocol_id="locked-benchmark-test-v1",
+                    cache_mode="cold",
+                    human_perceptual_review=review,
+                )
+
+    def test_release_profile_must_pin_the_same_manifest_before_aggregation(self):
+        corpus = manifest()
+        release_policy = {
+            "schema_version": 3,
+            "required_tracks": ["electronic-drop", "vocal-rock"],
+            "minimum_pairs_per_track": 3,
+            "bootstrap": {"method": "paired-percentile-v1", "seed": "release", "confidence": 0.99, "resamples": 256},
+            "runtime_target": {"metric": "performance.total_wall_clock_seconds", "target_reduction_percent": 75, "scope": "each_required_track"},
+            "release_profile": {
+                "mode": "release",
+                "metric_contract": runner.quality_gate.RELEASE_METRIC_CONTRACT_VERSION,
+                "locked_corpus": {"corpus_id": "wrong-corpus", "manifest_sha256": "a" * 64},
+                "human_perceptual_review": {
+                    "required_for_major_pipeline_changes": True,
+                    "minimum_reviewers": 3,
+                    "required_attributes": list(runner.quality_gate.HUMAN_REVIEW_ATTRIBUTES),
+                },
+            },
+        }
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            manifest_path, reports = self.write_fixture_set(root, corpus)
+            loaded = runner.load_manifest(manifest_path)
+            with self.assertRaisesRegex(runner.LockedBenchmarkError, "locked_corpus does not exactly match"):
+                runner.aggregate_diagnostics(
+                    loaded,
+                    [reports],
+                    policy=release_policy,
+                    protocol_id="locked-benchmark-test-v1",
+                    cache_mode="cold",
+                )
+
     def test_cli_writes_atomic_gate_input(self):
         corpus = manifest()
         with tempfile.TemporaryDirectory() as temporary:

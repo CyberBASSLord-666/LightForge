@@ -368,10 +368,12 @@ def aggregate_diagnostics(
     cache_mode: str,
     pairing: Mapping[tuple[str, str], str] | None = None,
     minimum_runs_per_track: int | None = None,
+    change: Mapping[str, Any] | None = None,
+    human_perceptual_review: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Create a deterministic, performance-gate-compatible benchmark input."""
     try:
-        policy_metrics, policy_tracks, policy_minimum_pairs, _, _ = quality_gate._validate_policy(dict(policy))
+        policy_metrics, policy_tracks, policy_minimum_pairs, _, _, policy_profile = quality_gate._validate_policy(dict(policy))
     except ValueError as exc:
         raise LockedBenchmarkError(f"invalid performance quality policy: {exc}") from exc
     protocol_id = _opaque_id(protocol_id, "protocol_id")
@@ -391,6 +393,16 @@ def aggregate_diagnostics(
         raise LockedBenchmarkError(
             "policy.required_tracks must exactly match the locked corpus track IDs before aggregation"
         )
+    if policy_profile["mode"] == "release":
+        expected = policy_profile["locked_corpus"]
+        actual = {
+            "corpus_id": manifest.get("corpus_id"),
+            "manifest_sha256": contract.corpus_manifest_sha256(manifest),
+        }
+        if actual != expected:
+            raise LockedBenchmarkError(
+                "release policy locked_corpus does not exactly match the aggregation manifest"
+            )
     diagnostics = load_diagnostics(manifest, inputs, require_complete_corpus=True)
     counts = Counter(diagnostic["track_id"] for diagnostic in diagnostics)
     too_few = {
@@ -432,6 +444,18 @@ def aggregate_diagnostics(
         "minimum_pairs_per_track": minimum_runs_per_track,
         "diagnostic_statistics": _diagnostic_statistics(diagnostics),
     }
+    if change is not None:
+        if not isinstance(change, Mapping):
+            raise LockedBenchmarkError("change must be a JSON object")
+        aggregate["change"] = json.loads(contract.canonical_json(dict(change)))
+    if human_perceptual_review is not None:
+        if not isinstance(human_perceptual_review, Mapping):
+            raise LockedBenchmarkError("human_perceptual_review must be a JSON object")
+        if change is None:
+            raise LockedBenchmarkError("human_perceptual_review requires an explicit candidate change classification")
+        aggregate["human_perceptual_review"] = json.loads(
+            contract.canonical_json(dict(human_perceptual_review))
+        )
     try:
         _, _, issues = quality_gate._index_report(
             aggregate, policy_metrics, quality_gate.policy_sha256(dict(policy))
@@ -490,6 +514,19 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         help="override the policy minimum only for a stricter local preflight; defaults to policy.minimum_pairs_per_track",
     )
+    aggregate.add_argument(
+        "--change-classification",
+        choices=("minor", "major"),
+        help="candidate change classification; release policy requires it before comparison",
+    )
+    aggregate.add_argument(
+        "--change-id",
+        help="opaque ID bound to --change-classification, for example semantic-pipeline-rework",
+    )
+    aggregate.add_argument(
+        "--human-perceptual-review",
+        help="structured blinded A/B review JSON for a major candidate change; validated by the gate",
+    )
     aggregate.add_argument("--output", required=True, help="gate-compatible benchmark JSON output")
     return parser
 
@@ -525,6 +562,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         if args.command == "aggregate":
             policy = load_gate_policy(args.policy)
             pairing = load_pairing(args.pairing) if args.pairing else None
+            if bool(args.change_classification) != bool(args.change_id):
+                raise LockedBenchmarkError("--change-classification and --change-id must be supplied together")
+            change = None
+            if args.change_classification:
+                change = {
+                    "classification": args.change_classification,
+                    "change_id": _opaque_reference(args.change_id, "change_id"),
+                }
+            review = _load_json(Path(args.human_perceptual_review)) if args.human_perceptual_review else None
             _write_or_print(
                 aggregate_diagnostics(
                     manifest,
@@ -534,6 +580,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                     cache_mode=args.cache_mode,
                     pairing=pairing,
                     minimum_runs_per_track=args.minimum_runs_per_track,
+                    change=change,
+                    human_perceptual_review=review,
                 ),
                 args.output,
             )

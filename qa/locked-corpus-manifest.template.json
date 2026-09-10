@@ -20,6 +20,28 @@
     "repeated-and-structurally-irregular-sections",
     "long-short-and-difficult-source-material"
   ],
+  "release_evidence_requirements": {
+    "metric_contract": "lightforge-release-metrics-v1",
+    "minimum_paired_runs_per_track": 5,
+    "human_perceptual_review": {
+      "protocol": "blinded-ab-v1",
+      "minimum_reviewers": 3,
+      "required_attributes": [
+        "musical_synchronization",
+        "vocal_synchronization",
+        "bass_synchronization",
+        "beat_precision",
+        "visual_coherence",
+        "phrase_coherence",
+        "contrast",
+        "anticipation",
+        "payoff",
+        "repetitiveness",
+        "climax_quality",
+        "overall_musicality"
+      ]
+    }
+  },
   "golden_artifact_requirements": [
     "semantic_timeline_sha256",
     "rhythm_map_sha256",

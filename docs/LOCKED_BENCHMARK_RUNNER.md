@@ -19,8 +19,10 @@ synthetic audio identity, duration, tag set, and golden-artifact digest. Then:
 1. Remove `"template": true`.
 2. Set `"release_ready": true` only once the manifest and goldens are frozen.
 3. Version the manifest and record its canonical SHA-256 in release evidence.
-4. Configure `qa/performance-gate-policy.json` with exactly its `track_id`s in
-   `required_tracks`; do not leave the fail-closed placeholder in place.
+4. Create a reviewed `release_profile` in the gate policy with exactly its
+   `track_id`s in `required_tracks`, the manifest's exact corpus ID/SHA-256,
+   and `lightforge-release-metrics-v1`; do not leave the fail-closed template
+   placeholder in place.
 
 The production manifest should include approved golden hashes for semantic
 timeline, rhythm, vocals, bass, drums, sections, salience, choreography, FSEQ
@@ -138,12 +140,38 @@ python3 tools/performance_quality_gate.py \
   --output artifacts/performance-quality-report.json
 ```
 
+For a major candidate pipeline change, make the candidate declaration and
+blinded review part of the aggregate itself. The baseline aggregate does not
+need these fields.
+
+```bash
+python3 tools/locked_benchmark_runner.py aggregate \
+  --manifest /secure/locked-corpus-manifest.json \
+  --reports /secure/candidate-diagnostics \
+  --policy /secure/performance-gate-release-policy.json \
+  --protocol-id locked-corpus-cold-v1 \
+  --cache-mode cold \
+  --change-classification major \
+  --change-id semantic-pipeline-rework \
+  --human-perceptual-review /secure/blinded-review.json \
+  --output artifacts/benchmark-candidate.json
+```
+
+The runner preserves this JSON without inventing reviewer results; the quality
+gate validates it. The review file must contain only the gate's structured
+schema (opaque reviewer/review IDs, blinded booleans, and per-attribute
+ratings). Do not include names, comments, lyrics, screenshots, or other
+private material. `--change-classification` and `--change-id` must be supplied
+together, and a review cannot be supplied without them.
+
 `aggregate` writes atomically and sorts reports by track, run ID, and
 diagnostic digest, so a reordered directory traversal produces byte-equivalent
 JSON. It refuses to aggregate when `policy.required_tracks` does not exactly
 match the locked manifest or when its local minimum is lower than
-`policy.minimum_pairs_per_track`. The suite embeds the canonical hash of the
-committed policy before a candidate result is compared.
+`policy.minimum_pairs_per_track`. In release mode it also refuses a policy
+whose pinned corpus ID/SHA-256 does not exactly match the manifest. The suite
+embeds the canonical hash of the committed policy before a candidate result is
+compared.
 
 The authoritative gate comparability fields come from each run's provenance
 and condition:

@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Fail-closed, paired performance and music-quality release gate.
+"""Fail-closed paired performance and musical-quality release gate.
 
-The gate has deliberately no numerical dependencies. It validates the evidence
-before comparing it: an optimization cannot pass merely because a median hides
-one bad vocal, bass, rhythm, or structure run.
+The gate separates unconfigured template/legacy comparisons from a genuine
+release profile.  A release profile binds an immutable corpus, the complete
+metric contract, paired evidence, and blinded human perceptual review for a
+major pipeline change.  It never fills absent measurements with defaults.
 """
 from __future__ import annotations
 
@@ -11,12 +12,37 @@ import argparse
 import hashlib
 import json
 import math
+import re
 import statistics
 import sys
 from pathlib import Path
 
 
 SCHEMA_VERSION = 3
+RELEASE_METRIC_CONTRACT_VERSION = "lightforge-release-metrics-v1"
+HUMAN_REVIEW_SCHEMA_VERSION = 1
+HUMAN_REVIEW_ATTRIBUTES = (
+    "musical_synchronization",
+    "vocal_synchronization",
+    "bass_synchronization",
+    "beat_precision",
+    "visual_coherence",
+    "phrase_coherence",
+    "contrast",
+    "anticipation",
+    "payoff",
+    "repetitiveness",
+    "climax_quality",
+    "overall_musicality",
+)
+_HUMAN_RATINGS = {
+    "candidate_preferred",
+    "baseline_preferred",
+    "equivalent",
+    "inconclusive",
+}
+_OPAQUE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,255}$")
+_SHA256 = re.compile(r"^[0-9a-f]{64}$")
 COMPARABILITY_PATHS = (
     "provenance.workload.corpus_id",
     "provenance.workload.corpus_manifest_sha256",
@@ -38,9 +64,315 @@ def canonical_json(value):
     return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False)
 
 
+def _metric(
+    direction,
+    *,
+    critical=True,
+    tolerance=0.0,
+    hard=None,
+    bounds=None,
+    allow_not_applicable=False,
+    minimum_applicable_tracks=0,
+):
+    rule = {
+        "required": True,
+        "critical": critical,
+        "direction": direction,
+        "equivalence_tolerance": tolerance,
+        "pair_hard_regression": tolerance if hard is None else hard,
+    }
+    if bounds is not None:
+        rule["bounds"] = list(bounds)
+    if allow_not_applicable:
+        rule["allow_not_applicable"] = True
+        rule["minimum_applicable_tracks"] = minimum_applicable_tracks
+    return rule
+
+
+def _release_metric_rules():
+    """Fixed metric/tolerance contract, included in release-policy digests."""
+    rules = {}
+
+    def add(name, direction, **kwargs):
+        if name in rules:
+            raise AssertionError(f"duplicate release metric {name}")
+        rules[name] = _metric(direction, **kwargs)
+
+    # End-to-end and per-stage performance evidence.
+    for name in (
+        "performance.total_wall_clock_seconds",
+        "performance.audio_decode_seconds",
+        "performance.resample_normalize_seconds",
+        "performance.feature_generation_seconds",
+        "performance.source_separation_seconds",
+        "performance.rhythm_analysis_seconds",
+        "performance.tempo_inference_seconds",
+        "performance.beat_tracking_seconds",
+        "performance.downbeat_tracking_seconds",
+        "performance.vocal_analysis_seconds",
+        "performance.drum_analysis_seconds",
+        "performance.bass_analysis_seconds",
+        "performance.structural_analysis_seconds",
+        "performance.choreography_planning_seconds",
+        "performance.collision_resolution_seconds",
+        "performance.vehicle_realization_seconds",
+        "performance.fseq_generation_seconds",
+        "performance.validation_seconds",
+        "performance.model_initialization_seconds",
+        "performance.model_inference_seconds",
+        "performance.preprocessing_seconds",
+        "performance.postprocessing_seconds",
+        "performance.synchronization_waiting_seconds",
+        "performance.cache_miss_cost_seconds",
+        "performance.checkpoint_resume_overhead_seconds",
+    ):
+        add(name, "lower", critical=False, tolerance=0.0, bounds=(0, 1_000_000_000))
+    add("performance.cache_hit_rate", "higher", critical=False, tolerance=0.0, bounds=(0, 1))
+
+    # Resource observations are mandatory evidence. Only memory is a hard
+    # release guard; utilisation/thermal numbers are intentionally observed,
+    # not treated as automatically better in one direction.
+    add("resources.peak_ram_bytes", "lower", critical=True, tolerance=0.0, bounds=(0, 2**63 - 1))
+    add(
+        "resources.peak_accelerator_memory_bytes",
+        "lower",
+        critical=True,
+        tolerance=0.0,
+        bounds=(0, 2**63 - 1),
+        allow_not_applicable=True,
+        minimum_applicable_tracks=0,
+    )
+    for name in (
+        "resources.cpu_time_seconds",
+        "resources.cpu_utilization_percent",
+        "resources.accelerator_utilization_percent",
+        "resources.allocation_bytes",
+        "resources.total_disk_io_bytes",
+        "resources.temporary_storage_bytes",
+        "resources.energy_joules",
+        "resources.thermal_delta_celsius",
+    ):
+        bounds = (0, 100) if name.endswith("_percent") else (0, 2**63 - 1)
+        add(
+            name,
+            "neutral",
+            critical=False,
+            tolerance=0.0,
+            bounds=bounds,
+            allow_not_applicable=name in {
+                "resources.accelerator_utilization_percent",
+                "resources.energy_joules",
+                "resources.thermal_delta_celsius",
+            },
+            minimum_applicable_tracks=0,
+        )
+
+    # Rhythm: timing, tempo, meter, bar, and phrase reconstruction.
+    for name in (
+        "quality.tempo_accuracy",
+        "quality.beat_f1",
+        "quality.downbeat_f1",
+        "quality.meter_accuracy",
+        "quality.bar_boundary_accuracy",
+        "quality.phrase_boundary_accuracy",
+    ):
+        add(name, "higher", tolerance=0.002, hard=0.002, bounds=(0, 1))
+    for name in ("quality.beat_position_error_ms", "quality.downbeat_position_error_ms"):
+        add(name, "lower", tolerance=1.0, hard=1.0, bounds=(0, 10_000))
+
+    # Acoustic vocal understanding. Some tracks legitimately lack a particular
+    # annotated voice role, but the locked corpus must make every metric
+    # applicable on at least one track rather than fabricate a score.
+    for name in (
+        "quality.vocal_alignment_f1",
+        "quality.vocal_region_precision",
+        "quality.vocal_region_recall",
+        "quality.vocal_region_f1",
+        "quality.singing_speech_classification_accuracy",
+        "quality.vocal_note_onset_accuracy",
+        "quality.vocal_note_offset_accuracy",
+        "quality.vocal_pitch_accuracy",
+        "quality.vocal_phrase_boundary_accuracy",
+        "quality.vocal_stressed_syllable_accuracy",
+        "quality.vocal_lead_backing_role_accuracy",
+    ):
+        add(name, "higher", tolerance=0.002, hard=0.002, bounds=(0, 1), allow_not_applicable=True, minimum_applicable_tracks=1)
+    add(
+        "quality.vocal_syllable_articulation_alignment_error_ms",
+        "lower",
+        tolerance=1.0,
+        hard=1.0,
+        bounds=(0, 10_000),
+        allow_not_applicable=True,
+        minimum_applicable_tracks=1,
+    )
+
+    # Dedicated percussion classes and timing.
+    for drum_class in (
+        "kick",
+        "snare",
+        "clap",
+        "hat",
+        "crash",
+        "tom_fill",
+        "other_percussion",
+    ):
+        for statistic in ("precision", "recall", "f1"):
+            add(
+                f"quality.drum_{drum_class}_{statistic}",
+                "higher",
+                tolerance=0.002,
+                hard=0.002,
+                bounds=(0, 1),
+                allow_not_applicable=True,
+                minimum_applicable_tracks=1,
+            )
+    add(
+        "quality.drum_onset_timing_error_ms",
+        "lower",
+        tolerance=1.0,
+        hard=1.0,
+        bounds=(0, 10_000),
+        allow_not_applicable=True,
+        minimum_applicable_tracks=1,
+    )
+
+    # Bass is explicitly distinct from kick.
+    for name in (
+        "quality.bass_event_f1",
+        "quality.bass_note_onset_precision",
+        "quality.bass_note_onset_recall",
+        "quality.bass_note_onset_f1",
+        "quality.bass_pitch_accuracy",
+        "quality.bass_duration_accuracy",
+        "quality.sub_bass_event_recall",
+        "quality.kick_bass_coincidence_accuracy",
+    ):
+        add(name, "higher", tolerance=0.002, hard=0.002, bounds=(0, 1), allow_not_applicable=True, minimum_applicable_tracks=1)
+    add(
+        "quality.bass_timing_error_ms",
+        "lower",
+        tolerance=1.0,
+        hard=1.0,
+        bounds=(0, 10_000),
+        allow_not_applicable=True,
+        minimum_applicable_tracks=1,
+    )
+
+    # Structure and recurrence.
+    for name in (
+        "quality.structural_event_recall",
+        "quality.section_boundary_accuracy",
+        "quality.section_similarity_consistency",
+        "quality.recurrence_precision",
+        "quality.recurrence_recall",
+        "quality.motif_identity_consistency",
+        "quality.repeated_section_matching_accuracy",
+        "quality.semantic_event_classification_accuracy",
+    ):
+        add(name, "higher", tolerance=0.002, hard=0.002, bounds=(0, 1))
+
+    # Choreography hierarchy, density, feasibility, and non-monotony.
+    for name in (
+        "quality.high_salience_coverage",
+        "quality.important_event_recall",
+        "quality.structural_event_coverage",
+        "quality.vocal_accent_coverage",
+        "quality.bass_accent_coverage",
+        "quality.percussion_accent_coverage",
+        "quality.downbeat_emphasis_consistency",
+        "quality.phrase_level_coherence",
+        "quality.repeated_motif_consistency",
+        "quality.repeated_motif_evolution",
+        "quality.density_balance",
+        "quality.negative_space_usage",
+        "quality.dynamic_contrast",
+        "quality.climax_differentiation",
+        "quality.section_differentiation",
+        "quality.symmetry_consistency",
+        "quality.actuator_feasibility",
+    ):
+        add(name, "higher", tolerance=0.002, hard=0.002, bounds=(0, 1))
+    for name in (
+        "quality.visual_repetition_monotony",
+        "quality.choreography_redundancy_score",
+        "quality.collision_loss",
+        "quality.high_salience_collision_loss",
+        "quality.actuator_overuse",
+        "quality.minimum_duration_violation_rate",
+        "quality.conflicting_command_rate",
+    ):
+        add(name, "lower", tolerance=0.0, hard=0.0, bounds=(0, 1))
+    add("quality.choreography_entropy", "neutral", critical=False, tolerance=0.0, bounds=(0, 1))
+
+    # Command and predicted perceptual timing are deliberately reported
+    # separately for every relevant musical/output class.
+    classes = (
+        "vocals",
+        "bass",
+        "kick",
+        "snare",
+        "percussion",
+        "beat",
+        "downbeat",
+        "section_transition",
+        "climax",
+        "mechanical_actuator",
+        "lighting_output",
+    )
+    statistics_names = ("median_ms", "p90_ms", "p95_ms", "p99_ms", "max_ms")
+    for timing in ("command", "perceptual"):
+        for event_class in classes:
+            for statistic in statistics_names:
+                add(
+                    f"quality.sync.{timing}.{event_class}.{statistic}",
+                    "lower",
+                    tolerance=1.0,
+                    hard=1.0,
+                    bounds=(0, 10_000),
+                    allow_not_applicable=event_class in {"vocals", "bass", "kick", "snare", "percussion"},
+                    minimum_applicable_tracks=1 if event_class in {"vocals", "bass", "kick", "snare", "percussion"} else 0,
+                )
+    # Backward-readable headline stays in the release contract as a direct
+    # perceptual aggregate, in addition to the per-class percentiles.
+    add("quality.perceptual_sync_p95_ms", "lower", tolerance=1.0, hard=1.0, bounds=(0, 10_000))
+    return rules
+
+
+RELEASE_METRIC_RULES = _release_metric_rules()
+
+
+def _release_contract_payload():
+    return {
+        "version": RELEASE_METRIC_CONTRACT_VERSION,
+        "rules": RELEASE_METRIC_RULES,
+        "human_review_attributes": HUMAN_REVIEW_ATTRIBUTES,
+    }
+
+
+def release_metric_contract():
+    """Return the immutable release contract plus its audit digest."""
+    payload = _release_contract_payload()
+    result = {
+        **payload,
+        "sha256": hashlib.sha256(canonical_json(payload).encode("utf-8")).hexdigest(),
+    }
+    # A caller may safely annotate a returned report without mutating the
+    # module-level immutable policy rules used by later comparisons.
+    return json.loads(canonical_json(result))
+
+
+def _is_release_profile(policy):
+    profile = policy.get("release_profile") if isinstance(policy, dict) else None
+    return isinstance(profile, dict) and profile.get("mode") == "release"
+
+
 def policy_sha256(policy):
-    """Hash the committed policy before benchmark reports are collected."""
-    return hashlib.sha256(canonical_json(policy).encode("utf-8")).hexdigest()
+    """Hash committed policy plus immutable release metric rules when enabled."""
+    payload = {"policy": policy}
+    if _is_release_profile(policy):
+        payload["release_metric_contract"] = _release_contract_payload()
+    return hashlib.sha256(canonical_json(payload).encode("utf-8")).hexdigest()
 
 
 def percentile(values, q):
@@ -80,37 +412,129 @@ def _is_finite_number(value):
     return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(float(value))
 
 
-def _flatten_metrics(prefix, value, output):
-    if isinstance(value, dict):
-        if not value:
-            raise ValueError(f"{prefix or 'metrics'} must not be empty")
-        for key, child in value.items():
-            if not isinstance(key, str) or not key:
-                raise ValueError("metric keys must be non-empty strings")
-            _flatten_metrics(f"{prefix}.{key}" if prefix else key, child, output)
-    elif _is_finite_number(value):
-        output[prefix] = float(value)
-    else:
-        raise ValueError(f"{prefix or 'metric'} must be a finite numeric leaf")
-
-
 def _require_string(value, path):
     if not isinstance(value, str) or not value:
         raise ValueError(f"{path} must be a non-empty string")
     return value
 
 
+def _validate_release_profile(value, tracks):
+    if value is None:
+        return {"mode": "legacy", "configured": False}
+    if not isinstance(value, dict):
+        raise ValueError("policy.release_profile must be an object")
+    mode = value.get("mode")
+    if mode not in {"legacy", "template", "release"}:
+        raise ValueError("policy.release_profile.mode must be legacy, template, or release")
+    if mode in {"legacy", "template"}:
+        return {"mode": mode, "configured": False}
+    if value.get("metric_contract") != RELEASE_METRIC_CONTRACT_VERSION:
+        raise ValueError("release profile must pin the current immutable metric contract")
+    locked = value.get("locked_corpus")
+    if not isinstance(locked, dict):
+        raise ValueError("release profile requires locked_corpus")
+    corpus_id = _require_string(locked.get("corpus_id"), "policy.release_profile.locked_corpus.corpus_id")
+    manifest_sha256 = locked.get("manifest_sha256")
+    if not isinstance(manifest_sha256, str) or not _SHA256.fullmatch(manifest_sha256):
+        raise ValueError("release profile locked_corpus.manifest_sha256 must be a lower-case sha256")
+    if "__configure_locked_corpus__" in tracks:
+        raise ValueError("release profile cannot use the unconfigured corpus placeholder")
+    review = value.get("human_perceptual_review")
+    if not isinstance(review, dict):
+        raise ValueError("release profile requires human_perceptual_review")
+    minimum_reviewers = review.get("minimum_reviewers")
+    if not isinstance(minimum_reviewers, int) or isinstance(minimum_reviewers, bool) or minimum_reviewers < 3:
+        raise ValueError("release profile human_perceptual_review.minimum_reviewers must be at least three")
+    attributes = review.get("required_attributes")
+    if not isinstance(attributes, list) or not all(isinstance(item, str) and item for item in attributes):
+        raise ValueError("release profile human_perceptual_review.required_attributes must be a string array")
+    if len(attributes) != len(set(attributes)) or set(attributes) != set(HUMAN_REVIEW_ATTRIBUTES):
+        raise ValueError("release profile human review must declare exactly the mandatory blinded A/B attributes")
+    if review.get("required_for_major_pipeline_changes") is not True:
+        raise ValueError("release profile must require human review for major pipeline changes")
+    return {
+        "mode": "release",
+        "configured": True,
+        "metric_contract": RELEASE_METRIC_CONTRACT_VERSION,
+        "locked_corpus": {"corpus_id": corpus_id, "manifest_sha256": manifest_sha256},
+        "human_review": {
+            "minimum_reviewers": minimum_reviewers,
+            "required_attributes": tuple(attributes),
+        },
+    }
+
+
+def _flatten_metrics(prefix, value, output, unavailable):
+    if isinstance(value, dict) and value.get("status") == "not_applicable":
+        if not prefix:
+            raise ValueError("metrics root cannot be not_applicable")
+        allowed = {"status", "reason", "evidence_id"}
+        if set(value) - allowed:
+            raise ValueError(f"{prefix} not_applicable evidence has unsupported fields")
+        reason = value.get("reason")
+        evidence_id = value.get("evidence_id")
+        if not isinstance(reason, str) or not reason.strip():
+            raise ValueError(f"{prefix} not_applicable evidence requires a reason")
+        if not isinstance(evidence_id, str) or not _OPAQUE_ID.fullmatch(evidence_id):
+            raise ValueError(f"{prefix} not_applicable evidence requires an opaque evidence_id")
+        unavailable[prefix] = {"reason": reason.strip(), "evidence_id": evidence_id}
+        return
+    if isinstance(value, dict):
+        if not value:
+            raise ValueError(f"{prefix or 'metrics'} must not be empty")
+        for key, child in value.items():
+            if not isinstance(key, str) or not key:
+                raise ValueError("metric keys must be non-empty strings")
+            _flatten_metrics(f"{prefix}.{key}" if prefix else key, child, output, unavailable)
+    elif _is_finite_number(value):
+        output[prefix] = float(value)
+    else:
+        raise ValueError(f"{prefix or 'metric'} must be a finite numeric leaf or explicit not_applicable evidence")
+
+
+def _validate_metric_rules(metrics):
+    for name, rule in metrics.items():
+        if not isinstance(name, str) or not name or not isinstance(rule, dict):
+            raise ValueError("every policy metric requires a non-empty name and object rule")
+        if rule.get("direction", "higher") not in {"higher", "lower", "neutral"}:
+            raise ValueError(f"metric {name} has an invalid direction")
+        tolerance = rule.get("equivalence_tolerance", 0)
+        hard = rule.get("pair_hard_regression", tolerance)
+        if not _is_finite_number(tolerance) or float(tolerance) < 0:
+            raise ValueError(f"metric {name} has an invalid equivalence_tolerance")
+        if not _is_finite_number(hard) or float(hard) < 0:
+            raise ValueError(f"metric {name} has an invalid pair_hard_regression")
+        bounds = rule.get("bounds")
+        if bounds is not None:
+            if not isinstance(bounds, list) or len(bounds) != 2 or not all(_is_finite_number(item) for item in bounds) or float(bounds[0]) > float(bounds[1]):
+                raise ValueError(f"metric {name} has invalid bounds")
+        if rule.get("allow_not_applicable", False):
+            minimum = rule.get("minimum_applicable_tracks")
+            if not isinstance(minimum, int) or isinstance(minimum, bool) or minimum < 0:
+                raise ValueError(f"metric {name} allows not_applicable but has an invalid corpus coverage requirement")
+        elif "minimum_applicable_tracks" in rule:
+            raise ValueError(f"metric {name} has inapplicable minimum_applicable_tracks")
+
+
 def _validate_policy(policy):
     if not isinstance(policy, dict):
         raise ValueError("policy must be an object")
-    metrics = policy.get("metrics")
-    if not isinstance(metrics, dict) or not metrics:
-        raise ValueError("policy.metrics must be a non-empty object")
     tracks = policy.get("required_tracks")
     if not isinstance(tracks, list) or not tracks or not all(isinstance(track, str) and track for track in tracks):
         raise ValueError("policy.required_tracks must be a non-empty string array")
     if len(set(tracks)) != len(tracks):
         raise ValueError("policy.required_tracks must not contain duplicates")
+    profile = _validate_release_profile(policy.get("release_profile"), set(tracks))
+    if profile["mode"] == "release":
+        supplied = policy.get("metrics")
+        if supplied not in (None, {}):
+            raise ValueError("release policy metrics are immutable and supplied by its pinned metric contract")
+        metrics = RELEASE_METRIC_RULES
+    else:
+        metrics = policy.get("metrics")
+        if not isinstance(metrics, dict) or not metrics:
+            raise ValueError("policy.metrics must be a non-empty object")
+    _validate_metric_rules(metrics)
     minimum_pairs = policy.get("minimum_pairs_per_track", 5)
     if not isinstance(minimum_pairs, int) or isinstance(minimum_pairs, bool) or minimum_pairs < 3:
         raise ValueError("policy.minimum_pairs_per_track must be at least three")
@@ -126,21 +550,6 @@ def _validate_policy(policy):
         raise ValueError("policy.bootstrap.confidence must be between 0.5 and 1")
     if not isinstance(resamples, int) or isinstance(resamples, bool) or resamples < 256:
         raise ValueError("policy.bootstrap.resamples must be at least 256")
-    for name, rule in metrics.items():
-        if not isinstance(name, str) or not name or not isinstance(rule, dict):
-            raise ValueError("every policy metric requires a non-empty name and object rule")
-        if rule.get("direction", "higher") not in {"higher", "lower"}:
-            raise ValueError(f"metric {name} has an invalid direction")
-        tolerance = rule.get("equivalence_tolerance", 0)
-        hard = rule.get("pair_hard_regression", tolerance)
-        if not _is_finite_number(tolerance) or float(tolerance) < 0:
-            raise ValueError(f"metric {name} has an invalid equivalence_tolerance")
-        if not _is_finite_number(hard) or float(hard) < 0:
-            raise ValueError(f"metric {name} has an invalid pair_hard_regression")
-        bounds = rule.get("bounds")
-        if bounds is not None:
-            if not isinstance(bounds, list) or len(bounds) != 2 or not all(_is_finite_number(value) for value in bounds) or float(bounds[0]) > float(bounds[1]):
-                raise ValueError(f"metric {name} has invalid bounds")
     runtime = policy.get("runtime_target")
     if not isinstance(runtime, dict):
         raise ValueError("policy.runtime_target must be an object")
@@ -152,7 +561,7 @@ def _validate_policy(policy):
         raise ValueError("runtime target reduction must be within 0..100")
     if runtime.get("scope", "each_required_track") != "each_required_track":
         raise ValueError("only each_required_track runtime scope is supported")
-    return metrics, set(tracks), minimum_pairs, bootstrap, runtime
+    return metrics, set(tracks), minimum_pairs, bootstrap, runtime, profile
 
 
 def _validate_suite(report, expected_policy_sha):
@@ -189,11 +598,13 @@ def _index_report(report, policy_metrics, expected_policy_sha):
         metrics = run.get("metrics")
         if not isinstance(metrics, dict):
             raise ValueError(f"runs[{index}].metrics must be an object")
-        flattened = {}
-        _flatten_metrics("", metrics, flattened)
+        flattened, unavailable = {}, {}
+        _flatten_metrics("", metrics, flattened, unavailable)
         for name, rule in policy_metrics.items():
-            if rule.get("required", True) and name not in flattened:
+            if rule.get("required", True) and name not in flattened and name not in unavailable:
                 issues.append({"track": track_id, "pair_id": pair_id, "metric": name, "reason": "missing_metric"})
+            if name in unavailable and not rule.get("allow_not_applicable", False):
+                issues.append({"track": track_id, "pair_id": pair_id, "metric": name, "reason": "not_applicable_not_permitted"})
             if name in flattened and rule.get("bounds") is not None:
                 lower, upper = map(float, rule["bounds"])
                 if not lower <= flattened[name] <= upper:
@@ -205,7 +616,7 @@ def _index_report(report, policy_metrics, expected_policy_sha):
         if not isinstance(condition, dict):
             raise ValueError(f"runs[{index}].condition must be an object")
         _require_string(condition.get("cache_mode"), f"runs[{index}].condition.cache_mode")
-        indexed[key] = {"run": run, "metrics": flattened}
+        indexed[key] = {"run": run, "metrics": flattened, "not_applicable": unavailable}
     return suite, indexed, issues
 
 
@@ -241,13 +652,15 @@ def _compare_pair_provenance(baseline, candidate):
     return differences
 
 
-def _classify_effect(deltas, tolerance, hard_floor, bootstrap, seed):
+def _classify_effect(deltas, tolerance, hard_floor, bootstrap, seed, direction):
     lower, upper = _stable_bootstrap(
         deltas,
         seed=seed,
         confidence=float(bootstrap.get("confidence", 0.99)),
         resamples=int(bootstrap.get("resamples", 20000)),
     )
+    if direction == "neutral":
+        return "observed", lower, upper
     if any(delta < -hard_floor for delta in deltas) or upper < -tolerance:
         classification = "regressed"
     elif lower > 0:
@@ -259,16 +672,136 @@ def _classify_effect(deltas, tolerance, hard_floor, bootstrap, seed):
     return classification, lower, upper
 
 
+def _availability(entry, metric):
+    if metric in entry["metrics"]:
+        return "numeric"
+    if metric in entry["not_applicable"]:
+        return "not_applicable"
+    return "missing"
+
+
+def _review_evidence(candidate, profile):
+    """Validate only structured blinded A/B evidence; never infer a verdict."""
+    if profile["mode"] != "release":
+        return {"required": False, "status": "not_required"}, []
+    blockers = []
+    change = candidate.get("change")
+    if not isinstance(change, dict):
+        return {"required": True, "status": "missing_change_classification"}, [{"reason": "missing_change_classification"}]
+    if set(change) != {"classification", "change_id"}:
+        return {"required": True, "status": "invalid_change_classification"}, [{"reason": "invalid_change_classification"}]
+    classification = change.get("classification")
+    change_id = change.get("change_id")
+    if classification not in {"minor", "major"} or not isinstance(change_id, str) or not _OPAQUE_ID.fullmatch(change_id):
+        return {"required": True, "status": "invalid_change_classification"}, [{"reason": "invalid_change_classification"}]
+    required = classification == "major"
+    review = candidate.get("human_perceptual_review")
+    if review is None and not required:
+        return {"required": False, "change_classification": classification, "status": "not_required"}, []
+    if not isinstance(review, dict):
+        return {"required": required, "change_classification": classification, "status": "missing"}, [{"reason": "missing_human_perceptual_review"}] if required else [{"reason": "invalid_human_perceptual_review"}]
+    if set(review) != {"schema_version", "protocol", "status", "review_id", "reviewers"}:
+        return {"required": required, "change_classification": classification, "status": "invalid"}, [{"reason": "invalid_human_perceptual_review"}]
+    summary_result = {
+        "required": required,
+        "change_classification": classification,
+        "schema_version": review.get("schema_version"),
+        "status": review.get("status"),
+        "protocol": review.get("protocol"),
+    }
+    if review.get("schema_version") != HUMAN_REVIEW_SCHEMA_VERSION or review.get("protocol") != "blinded-ab-v1":
+        blockers.append({"reason": "invalid_human_perceptual_review"})
+    status = review.get("status")
+    if status not in {"pass", "inconclusive", "fail"}:
+        blockers.append({"reason": "invalid_human_perceptual_review_status"})
+    elif status != "pass":
+        blockers.append({"reason": f"human_perceptual_review_{status}"})
+    review_id = review.get("review_id")
+    if not isinstance(review_id, str) or not _OPAQUE_ID.fullmatch(review_id):
+        blockers.append({"reason": "invalid_human_perceptual_review"})
+    reviewers = review.get("reviewers")
+    if not isinstance(reviewers, list):
+        blockers.append({"reason": "invalid_human_perceptual_review"})
+        reviewers = []
+    required_attributes = profile["human_review"]["required_attributes"]
+    votes = {attribute: {rating: 0 for rating in sorted(_HUMAN_RATINGS)} for attribute in required_attributes}
+    seen = set()
+    blinded = True
+    complete = True
+    for reviewer in reviewers:
+        if not isinstance(reviewer, dict):
+            complete = False
+            continue
+        if set(reviewer) != {"reviewer_id", "blinded", "ratings"}:
+            complete = False
+        reviewer_id = reviewer.get("reviewer_id")
+        if not isinstance(reviewer_id, str) or not _OPAQUE_ID.fullmatch(reviewer_id) or reviewer_id in seen:
+            complete = False
+        seen.add(reviewer_id)
+        if reviewer.get("blinded") is not True:
+            blinded = False
+        ratings = reviewer.get("ratings")
+        if not isinstance(ratings, dict):
+            complete = False
+            continue
+        if set(ratings) != set(required_attributes):
+            complete = False
+        for attribute in required_attributes:
+            rating = ratings.get(attribute)
+            if rating not in _HUMAN_RATINGS:
+                complete = False
+                continue
+            votes[attribute][rating] += 1
+    if len(reviewers) < profile["human_review"]["minimum_reviewers"]:
+        blockers.append({"reason": "insufficient_human_perceptual_reviewers", "actual": len(reviewers), "minimum": profile["human_review"]["minimum_reviewers"]})
+    if not blinded:
+        blockers.append({"reason": "unblinded_human_perceptual_review"})
+    if not complete:
+        blockers.append({"reason": "incomplete_human_perceptual_review"})
+    baseline_preferred = [
+        attribute
+        for attribute, counts in votes.items()
+        if counts["baseline_preferred"] > counts["candidate_preferred"]
+    ]
+    if baseline_preferred:
+        blockers.append({"reason": "human_perceptual_review_baseline_preferred", "attributes": baseline_preferred})
+    summary_result.update(
+        {
+            "reviewer_count": len(reviewers),
+            "blinded": blinded,
+            "complete": complete,
+            "attribute_votes": votes,
+            "baseline_preferred_attributes": baseline_preferred,
+        }
+    )
+    return summary_result, blockers
+
+
 def compare(baseline, candidate, policy):
-    policy_metrics, required_tracks, minimum_pairs, bootstrap, runtime_target = _validate_policy(policy)
+    policy_metrics, required_tracks, minimum_pairs, bootstrap, runtime_target, profile = _validate_policy(policy)
     expected_policy_sha = policy_sha256(policy)
     baseline_suite, baseline_runs, baseline_issues = _index_report(baseline, policy_metrics, expected_policy_sha)
     candidate_suite, candidate_runs, candidate_issues = _index_report(candidate, policy_metrics, expected_policy_sha)
     blockers = [*baseline_issues, *candidate_issues]
     if canonical_json(baseline_suite) != canonical_json(candidate_suite):
         blockers.append({"reason": "incomparable_suite", "baseline": baseline_suite, "candidate": candidate_suite})
-    if "__configure_locked_corpus__" in required_tracks:
+    if profile["mode"] == "template" or "__configure_locked_corpus__" in required_tracks:
         blockers.append({"reason": "unconfigured_locked_corpus"})
+    if profile["mode"] == "release":
+        expected = profile["locked_corpus"]
+        for side, suite in (("baseline", baseline_suite), ("candidate", candidate_suite)):
+            if suite["corpus_id"] != expected["corpus_id"] or suite["corpus_manifest_sha256"] != expected["manifest_sha256"]:
+                blockers.append(
+                    {
+                        "reason": "release_policy_corpus_mismatch",
+                        "side": side,
+                        "expected": expected,
+                        "actual": {"corpus_id": suite["corpus_id"], "manifest_sha256": suite["corpus_manifest_sha256"]},
+                    }
+                )
+    review_summary, review_blockers = _review_evidence(candidate, profile)
+    blockers.extend(review_blockers)
+
     baseline_tracks = {track for track, _ in baseline_runs}
     candidate_tracks = {track for track, _ in candidate_runs}
     missing_tracks = sorted(required_tracks - (baseline_tracks & candidate_tracks))
@@ -289,25 +822,71 @@ def compare(baseline, candidate, policy):
         actual = len(pairs_by_track.get(track, []))
         if actual < minimum_pairs:
             blockers.append({"track": track, "reason": "insufficient_paired_runs", "actual": actual, "minimum": minimum_pairs})
+
     comparisons, runtime = [], []
+    applicability = {
+        name: {"applicable_tracks": [], "not_applicable_tracks": [], "not_applicable_evidence": []}
+        for name in sorted(policy_metrics)
+    }
     for track in sorted(required_tracks & baseline_tracks & candidate_tracks):
         keys = pairs_by_track.get(track, [])
         for metric, rule in sorted(policy_metrics.items()):
+            baseline_states = {_availability(baseline_runs[key], metric) for key in keys}
+            candidate_states = {_availability(candidate_runs[key], metric) for key in keys}
+            if len(baseline_states) != 1 or len(candidate_states) != 1:
+                blockers.append({"track": track, "metric": metric, "reason": "inconsistent_metric_applicability"})
+                continue
+            baseline_state = next(iter(baseline_states), "missing")
+            candidate_state = next(iter(candidate_states), "missing")
+            if baseline_state != candidate_state:
+                blockers.append({"track": track, "metric": metric, "reason": "metric_applicability_changed", "baseline": baseline_state, "candidate": candidate_state})
+                continue
+            if baseline_state == "not_applicable":
+                baseline_evidence = {
+                    canonical_json(baseline_runs[key]["not_applicable"][metric])
+                    for key in keys
+                }
+                candidate_evidence = {
+                    canonical_json(candidate_runs[key]["not_applicable"][metric])
+                    for key in keys
+                }
+                if len(baseline_evidence) != 1 or baseline_evidence != candidate_evidence:
+                    blockers.append({"track": track, "metric": metric, "reason": "not_applicable_evidence_changed"})
+                    continue
+                evidence = json.loads(next(iter(baseline_evidence)))
+                applicability[metric]["not_applicable_tracks"].append(track)
+                applicability[metric]["not_applicable_evidence"].append({"track": track, **evidence})
+                comparisons.append(
+                    {
+                        "track": track,
+                        "metric": metric,
+                        "critical": bool(rule.get("critical", False)),
+                        "classification": "not_applicable",
+                        "pairs": [],
+                    }
+                )
+                continue
+            if baseline_state != "numeric":
+                continue
+            applicability[metric]["applicable_tracks"].append(track)
             deltas, rows = [], []
             for key in keys:
-                before = baseline_runs[key]["metrics"].get(metric)
-                after = candidate_runs[key]["metrics"].get(metric)
-                if before is None or after is None:
-                    continue
-                # Positive always means candidate improved regardless of metric direction.
-                delta = after - before if rule.get("direction", "higher") == "higher" else before - after
+                before = baseline_runs[key]["metrics"][metric]
+                after = candidate_runs[key]["metrics"][metric]
+                direction = rule.get("direction", "higher")
+                delta = after - before if direction in {"higher", "neutral"} else before - after
                 deltas.append(delta)
                 rows.append({"pair_id": key[1], "baseline": before, "candidate": after, "effect": delta})
-            if len(deltas) != len(keys):
-                continue  # Missing metrics already produced a release blocker.
             tolerance = float(rule.get("equivalence_tolerance", 0))
             hard_floor = float(rule.get("pair_hard_regression", tolerance))
-            classification, lower, upper = _classify_effect(deltas, tolerance, hard_floor, bootstrap, f"{bootstrap.get('seed')}|{track}|{metric}")
+            classification, lower, upper = _classify_effect(
+                deltas,
+                tolerance,
+                hard_floor,
+                bootstrap,
+                f"{bootstrap.get('seed')}|{track}|{metric}",
+                rule.get("direction", "higher"),
+            )
             row = {
                 "track": track,
                 "metric": metric,
@@ -322,6 +901,7 @@ def compare(baseline, candidate, policy):
             comparisons.append(row)
             if row["critical"] and classification in {"regressed", "inconclusive"}:
                 blockers.append({"reason": f"critical_{classification}", "track": track, "metric": metric, "paired_mean_effect_ci": [lower, upper]})
+
         runtime_metric = runtime_target["metric"]
         reductions = []
         for key in keys:
@@ -334,19 +914,57 @@ def compare(baseline, candidate, policy):
             else:
                 reductions.append(100.0 * (before - after) / before)
         if len(reductions) == len(keys) and reductions:
-            lower, upper = _stable_bootstrap(reductions, seed=f"{bootstrap.get('seed')}|{track}|runtime", confidence=float(bootstrap.get("confidence", 0.99)), resamples=int(bootstrap.get("resamples", 20000)))
-            runtime.append({"track": track, "paired_reduction_percent": summary(reductions), "paired_mean_reduction_ci": [lower, upper], "target_reduction_percent": float(runtime_target["target_reduction_percent"]), "target_met": lower >= float(runtime_target["target_reduction_percent"])})
+            lower, upper = _stable_bootstrap(
+                reductions,
+                seed=f"{bootstrap.get('seed')}|{track}|runtime",
+                confidence=float(bootstrap.get("confidence", 0.99)),
+                resamples=int(bootstrap.get("resamples", 20000)),
+            )
+            runtime.append(
+                {
+                    "track": track,
+                    "paired_reduction_percent": summary(reductions),
+                    "paired_mean_reduction_ci": [lower, upper],
+                    "target_reduction_percent": float(runtime_target["target_reduction_percent"]),
+                    "target_met": lower >= float(runtime_target["target_reduction_percent"]),
+                }
+            )
+
+    for metric, rule in sorted(policy_metrics.items()):
+        if profile["mode"] != "release" or not rule.get("allow_not_applicable", False):
+            continue
+        required_coverage = int(rule["minimum_applicable_tracks"])
+        actual_coverage = len(applicability[metric]["applicable_tracks"])
+        if actual_coverage < required_coverage:
+            blockers.append(
+                {
+                    "reason": "insufficient_metric_applicability_coverage",
+                    "metric": metric,
+                    "actual_tracks": actual_coverage,
+                    "minimum_tracks": required_coverage,
+                }
+            )
+
     target_met = bool(runtime) and len(runtime) == len(required_tracks) and all(row["target_met"] for row in runtime)
     status = "FAIL" if missing_tracks or blockers else ("PASS_TARGET" if target_met else "PASS_PARTIAL")
+    quality_regression_reasons = {
+        "human_perceptual_review_baseline_preferred",
+        "human_perceptual_review_fail",
+    }
     return {
         "schema_version": SCHEMA_VERSION,
         "status": status,
-        "production_ready": status == "PASS_TARGET",
-        "quality_regressions_detected": any(row["classification"] == "regressed" for row in comparisons),
+        "production_ready": status == "PASS_TARGET" and profile["mode"] == "release",
+        "quality_regressions_detected": any(row["classification"] == "regressed" for row in comparisons)
+        or any(blocker.get("reason") in quality_regression_reasons for blocker in blockers),
         "missing_required_tracks": missing_tracks,
         "blockers": blockers,
         "comparisons": comparisons,
         "runtime": runtime,
+        "metric_applicability": applicability,
+        "human_perceptual_review": review_summary,
+        "release_profile": profile,
+        "metric_contract": release_metric_contract() if profile["mode"] == "release" else {"mode": profile["mode"], "configured": False},
         "suite": baseline_suite,
         "policy_sha256": expected_policy_sha,
         "bootstrap": bootstrap,
