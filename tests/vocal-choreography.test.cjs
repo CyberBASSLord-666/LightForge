@@ -101,6 +101,7 @@ test('actual cap-aware vocal semantics proof activates only on the current valid
   assert.deepEqual(Engine.fseq(sidecarOff,'vocal.wav'),Engine.fseq(baseline,'vocal.wav'));
   const active=Engine.generate(enriched,{...settings,vocalChoreography:true});
   assert.equal(active.choreography.vocalChoreography.active,true);
+  assert.ok(active.choreography.lighting.vocalChoreography.applied.matchedEventCount>0,'real acoustic evidence must reach existing planner candidates');
   const capStale=structuredClone(enriched),capEvent=capStale.semanticTimeline.events.find(event=>!Object.prototype.hasOwnProperty.call(event,'salienceCap'));
   assert.ok(capEvent,'fixture needs an uncapped event');capEvent.salienceCap=1;
   assert.equal(ActualTimeline.validate(capStale.semanticTimeline).valid,true,'a cap at one is valid yet must change the canonical timeline receipt');
