@@ -75,12 +75,16 @@ but is generation-stale and cannot become a hit on the next resume. A failed
 fence write leaves the previous control record and its checkpoints intact.
 
 A missing/corrupt identity discards the namespace before work resumes. A
-missing control record migrates a legacy namespace at generation zero; a
-corrupt control record discards all non-identity checkpoints because their
-invalidation state cannot be proven. `work.diagnostics()` returns a bounded,
-privacy-safe recovery summary (control migration/reset, corrupt record count,
-fence count, and pending physical deletes). It contains no file path, project
-ID, audio payload, or cache key.
+control-less namespace migrates at generation zero only when its identity
+envelope is itself the pre-fence record format. A missing control record beside
+a current identity is treated like a corrupt control: all non-identity
+checkpoints are discarded because a lost post-invalidation fence could
+otherwise revive a locked stale passage. If OPFS still holds one of those old
+files, resume fails safely and tells the user to retry after the previous
+analysis stops; it never returns the stale checkpoint. `work.diagnostics()`
+returns a bounded, privacy-safe recovery summary (control migration/reset,
+corrupt record count, fence count, and pending physical deletes). It contains
+no file path, project ID, audio payload, or cache key.
 
 ## Stem cache integrity
 

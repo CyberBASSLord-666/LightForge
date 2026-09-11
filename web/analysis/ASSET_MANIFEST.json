@@ -328,8 +328,8 @@
     "sha256": "0f0e5216dc1d2ca0bfb25eddacdaa21076990fa7638c22188023607e43d4005f"
   },
   "work-store.js": {
-    "bytes": 15768,
-    "sha256": "5b39c5e12c72d147313441122589b5567769c1ea078910e210031027d45d4706"
+    "bytes": 16624,
+    "sha256": "5c2455efa37f1235d1407df3977da3114379977df374d598fafb5960bf9b5bde"
   },
   "worker.js": {
     "bytes": 42675,

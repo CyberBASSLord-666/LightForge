@@ -72,7 +72,7 @@ async function open(key,{sourceId='',requiredBytes=0,resourceDiagnostics=null}={
    if((envelope.version!==1&&envelope.version!==RECORD_VERSION)||envelope.key!==key||envelope.name!==name||typeof envelope.payload!=='string'||typeof envelope.sha256!=='string'||await hash(new TextEncoder().encode(envelope.payload))!==envelope.sha256)return {state:'corrupt'};
    const generation=envelope.version===1?0:envelope.generation;
    if(!internalName(name)&&(!Number.isSafeInteger(generation)||generation<0))return {state:'corrupt'};
-   return {state:'ok',payload:decode(envelope.payload),generation:internalName(name)?0:generation};
+   return {state:'ok',recordVersion:envelope.version,payload:decode(envelope.payload),generation:internalName(name)?0:generation};
   }catch(e){if(e instanceof SyntaxError||e instanceof TypeError)return {state:'corrupt'};throw e;}
  }
  function generation(name){let current=0;for(const [prefix,value]of Object.entries(control.generations))if(matchesPrefix(name,prefix))current=Math.max(current,value);return current;}
@@ -96,15 +96,28 @@ async function open(key,{sourceId='',requiredBytes=0,resourceDiagnostics=null}={
  }else await writeRecord(IDENTITY,{key,sourceId,version:1,updatedAt:metadataNow()});
  const controlRecord=await record(CONTROL);
  const validControl=value=>value&&value.version===CONTROL_VERSION&&value.key===key&&value.sourceId===sourceId&&value.generations&&Object.getPrototypeOf(value.generations)===Object.prototype&&Object.entries(value.generations).every(([prefix,value])=>validName(prefix)&&Number.isSafeInteger(value)&&value>=0);
+ async function discardUntrustedCheckpoints(reason){
+  try{await clearExceptIdentity();}
+  catch(error){throw Error('Analysis checkpoint '+reason+' while old work is still busy. Wait for the previous analysis to stop, then resume this song.');}
+ }
  if(controlRecord.state==='missing'){
+  const legacyIdentity=identityRecord.state==='ok'&&identityRecord.recordVersion===1;
+  if(identityRecord.state==='ok'&&!legacyIdentity){
+   // A version-2 identity proves this namespace already used generation
+   // fences. Missing control can therefore be a lost post-invalidation
+   // fence, not a legacy namespace: discard dependent records rather than
+   // letting a physically locked pre-fence checkpoint become a cache hit.
+   await discardUntrustedCheckpoints('control is missing');
+   recovery.corruptControlDiscarded=true;
+  }
   control={version:CONTROL_VERSION,key,sourceId,generations:{},updatedAt:metadataNow()};
-  recovery.legacyControlMigrated=true;
+  recovery.legacyControlMigrated=legacyIdentity;
   await writeRecord(CONTROL,control);
  }else if(controlRecord.state!=='ok'||!validControl(controlRecord.payload)){
   // Do not retain checkpoints when the fence itself cannot be verified. This
   // is stricter than a best-effort delete and prevents an old dependent stage
   // from becoming a cache hit after interrupted invalidation.
-  await clearExceptIdentity();
+  await discardUntrustedCheckpoints('control is corrupt');
   control={version:CONTROL_VERSION,key,sourceId,generations:{},updatedAt:metadataNow()};
   recovery.corruptControlDiscarded=true;
   await writeRecord(CONTROL,control);

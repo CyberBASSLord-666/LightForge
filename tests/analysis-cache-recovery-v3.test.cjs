@@ -73,6 +73,33 @@ test('a corrupt invalidation control record discards all stages before resume',a
  const resumed=await store.open(key,{sourceId:'track'});
  assert.equal(await resumed.read('rhythm'),null);assert.equal(await resumed.readFloats('deux-0'),null);assert.equal(resumed.diagnostics().corruptControlDiscarded,true);
 });
+test('a missing post-invalidation control record cannot revive a locked stale checkpoint',async()=>{
+ const {disk,store}=load(),work=await store.open(key,{sourceId:'track'});
+ await work.write('voice',{revision:1});
+ const directory=await (await disk.directory.getDirectoryHandle('lightforge-analysis-v1')).getDirectoryHandle(key);
+ disk.control.blocked.add('voice.json');
+ await work.invalidate(['voice']);
+ await directory.removeEntry('cache-control.json');
+ await assert.rejects(store.open(key,{sourceId:'track'}),/control is missing while old work is still busy/,'a missing v2 control fence must not make the pre-fence record visible');
+ disk.control.blocked.delete('voice.json');
+ const resumed=await store.open(key,{sourceId:'track'});
+ assert.equal(await resumed.read('voice'),null,'the retry must clear the stale pre-fence record instead of restoring it');
+});
+test('a control-less version-one namespace remains eligible for its one-time safe migration',async()=>{
+ const {disk,store}=load(),work=await store.open(key,{sourceId:'track'});
+ const directory=await (await disk.directory.getDirectoryHandle('lightforge-analysis-v1')).getDirectoryHandle(key);
+ async function legacy(name,value){
+  const payload=JSON.stringify(value),envelope={version:1,key,name,payload,sha256:await store.hash(new TextEncoder().encode(payload))};
+  (await directory.getFileHandle(name+'.json',{create:true})).data=Buffer.from(JSON.stringify(envelope));
+ }
+ await legacy('identity',{key,sourceId:'track',version:1,updatedAt:0});
+ await legacy('rhythm',{revision:1});
+ await directory.removeEntry('cache-control.json');
+ const resumed=await store.open(key,{sourceId:'track'});
+ assert.equal((await resumed.read('rhythm')).revision,1);
+ assert.equal(resumed.diagnostics().legacyControlMigrated,true);
+ assert.equal(resumed.diagnostics().corruptControlDiscarded,false);
+});
 test('hostile Date.now cannot block checkpoint open, recovery, or invalidation fences',async()=>{
  for(const mode of ['getter','call']){
   const disk=opfs(),{store}=load(disk,hostileDate(mode)),work=await store.open(key,{sourceId:'track'});
