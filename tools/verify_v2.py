@@ -88,6 +88,17 @@ def hashes():
         )
     return {str(p.relative_to(ROOT)):digest(p) for p in sorted(set(paths))}
 
+def node_failure_summary(output, limit=4):
+    """Return only bounded TAP test labels for a failed trusted regression run."""
+    if not isinstance(output, str):
+        return 'no TAP failure marker captured'
+    markers=[]
+    for raw in output.splitlines():
+        line=raw.strip()
+        if line.startswith('not ok '):
+            markers.append(line[:240])
+    return ' | '.join(markers[-limit:]) if markers else 'no TAP failure marker captured'
+
 def run_python_scripts(scripts, log_path):
     output=[]
     for script in scripts:
@@ -108,8 +119,11 @@ def main():
     try:
         subprocess.run([sys.executable,str(ROOT/'tools/sync_version.py'),'--check'],check=True)
         result=subprocess.run(['node','--test',*[str(ROOT/'tests'/t) for t in TESTS]],cwd=ROOT,capture_output=True,text=True)
-        (OUT/'regression-tests.log').write_text(result.stdout+result.stderr)
-        result.check_returncode();receipt['checks'].append('All selected engine, model-component, migration and DOM integration suites passed.')
+        node_output=result.stdout+result.stderr
+        (OUT/'regression-tests.log').write_text(node_output)
+        if result.returncode:
+            raise RuntimeError('Node production regression failed: '+node_failure_summary(node_output))
+        receipt['checks'].append('All selected engine, model-component, migration and DOM integration suites passed.')
         result=subprocess.run([sys.executable,'-m','unittest',*[f'tests.{name}' for name in PYTHON_TESTS]],cwd=ROOT,capture_output=True,text=True)
         (OUT/'archive-tests.log').write_text(result.stdout+result.stderr)
         result.check_returncode();receipt['checks'].append('Python APK archive and bounded release packaging regression suites passed.')
