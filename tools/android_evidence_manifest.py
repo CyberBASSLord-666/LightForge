@@ -266,6 +266,12 @@ def _receipt(receipt, name, *, release, run_id, run_attempt, head_sha, session, 
     require(receipt.get('passed') is True and receipt.get('errors') == [], 'Android receipt did not pass: ' + name)
     require(receipt.get('release') == release, 'Android receipt release differs: ' + name)
     hashes = _source_hashes(receipt.get('source_hashes'), 'Android receipt source binding is invalid: ' + name)
+    # The instrumentations may also retain narrow, diagnostic-only source
+    # snapshots, but their release binding must be the *complete* source map
+    # sealed with the candidate.  Accepting merely any non-empty map would let
+    # a carried or selectively stale receipt appear current beside a genuine
+    # candidate manifest.
+    require(hashes == candidate['source_hashes'], 'Android receipt source binding differs from candidate: ' + name)
     ci = receipt.get('ci')
     require(isinstance(ci, dict), 'Android receipt CI binding is missing: ' + name)
     require(ci == {'run_id': run_id, 'run_attempt': run_attempt, 'head_sha': head_sha, 'evidence_session': session},
