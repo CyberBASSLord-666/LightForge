@@ -6,8 +6,8 @@ const diagnostics=window.LightForgeDiagnostics;
 const native = () => window.Android && typeof window.Android.pickAudio === 'function';
 const clone = x => JSON.parse(JSON.stringify(x));
 const defaults = {style:'festival',intensity:.85,dance:'expressive',stepMs:20,sensitivity:.82,beatDivision:'auto',bpmOverride:null,offsetMs:0,palette:'aurora',enabled:{windows:true,mirrors:true,trunk:true,charge:true,interior:true},optionalFog:false,outerBeamRamping:false,outputEnabled:{},manualCues:[],sectionOverrides:{},seed:2025,analysisQuality:'precision',movementDensity:.7,downbeatAnchor:null,meterOverride:null,tempoScale:1,vocalFocus:.85,bassFocus:.9,vocalRegions:[],musicCues:[],vocalOffsetMs:0,bassOffsetMs:0};
-const state = {audition:'mix',auditionAvailable:false,auditionLoading:false,project:null,music:null,show:null,settings:clone(defaults),projects:[],history:[],future:[],compiled:null,exportHeader:null,saveBlocked:false,composing:false,compileId:0,compileAbort:null,renderedSettingsKey:null,showMusic:null,pendingExport:null,busy:false,job:0,abort:null,view:'studio',editing:null,needAnalysis:false,previewMode:0,exportId:null,lastSave:0,acceptProgress:false,selection:0,loadingProject:false,pendingProjectAction:null,soloPreview:null};
-const audio=$('audio');let auditionEpoch=0,availabilityEpoch=0,auditionAbort=null,auditionURL=null,auditionIntent=null,auditionSignature=null,analysisFallback=null;let progressClock,toastTimer,saveTimer,regenTimer,lastDraw=0,lastSection=-1,frameRequest=0,dbPromise;
+const state = {audition:'mix',auditionAvailable:false,auditionLoading:false,project:null,music:null,show:null,settings:clone(defaults),projects:[],history:[],future:[],compiled:null,exportHeader:null,saveBlocked:false,composing:false,compileId:0,compileAbort:null,renderedSettingsKey:null,showMusic:null,pendingExport:null,busy:false,job:0,abort:null,view:'studio',editing:null,needAnalysis:false,previewMode:0,exportId:null,lastSave:0,acceptProgress:false,selection:0,loadingProject:false,pendingProjectAction:null,soloPreview:null,completedRestore:null};
+const audio=$('audio');let auditionEpoch=0,availabilityEpoch=0,auditionAbort=null,auditionURL=null,auditionIntent=null,auditionSignature=null,analysisFallback=null,completedRestoreEpoch=0;let progressClock,toastTimer,saveTimer,regenTimer,lastDraw=0,lastSection=-1,frameRequest=0,dbPromise;
 let previewPaused=document.hidden,nativePreviewPaused=false,pagePreviewPaused=false;
 function auditionChanged(){document.dispatchEvent(new CustomEvent('lightforge:changed'));}
 function mixAudioUrl(){return state.project?.previewUrl||state.project?.audioUrl||'';}
@@ -112,7 +112,7 @@ async function dbPut(store,key,value){const d=await db();return new Promise((res
 async function dbDelete(store,key){const d=await db();return new Promise((resolve,reject)=>{const tx=d.transaction(store,'readwrite');tx.objectStore(store).delete(key);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);});}
 function encodeWav(buffer){const frames=buffer.length,bytes=new ArrayBuffer(44+frames*4),v=new DataView(bytes),write=(p,s)=>{for(let i=0;i<s.length;i++)v.setUint8(p+i,s.charCodeAt(i));};write(0,'RIFF');v.setUint32(4,36+frames*4,true);write(8,'WAVEfmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,2,true);v.setUint32(24,44100,true);v.setUint32(28,176400,true);v.setUint16(32,4,true);v.setUint16(34,16,true);write(36,'data');v.setUint32(40,frames*4,true);const l=buffer.getChannelData(0),r=buffer.getChannelData(Math.min(1,buffer.numberOfChannels-1));for(let i=0;i<frames;i++){v.setInt16(44+i*4,Math.round(Math.max(-1,Math.min(1,l[i]))*32767),true);v.setInt16(46+i*4,Math.round(Math.max(-1,Math.min(1,r[i]))*32767),true);}return new Blob([bytes],{type:'audio/wav'});}
 async function importBrowser(file){if(!file)return;diagnostics?.protectText(file.name);diagnostics?.protectText(file.name.replace(/\.[^.]+$/,''));const job=beginBusy('Bringing your music in','Converting audio to the format your Tesla needs.');try{const ctx=new (window.AudioContext||window.webkitAudioContext)();const decoded=await ctx.decodeAudioData(await file.arrayBuffer());await ctx.close();if(job!==state.job)return;const offline=new OfflineAudioContext(2,Math.ceil(decoded.duration*44100),44100),source=offline.createBufferSource();source.buffer=decoded;source.connect(offline.destination);source.start();const pcm=await offline.startRendering();if(job!==state.job)return;const wav=encodeWav(pcm),id='show-'+Date.now(),project={id,name:file.name.replace(/\.[^.]+$/,''),duration:pcm.duration,createdAt:Date.now(),audioUrl:URL.createObjectURL(wav),browser:true};await dbPut('audio',id,wav);state.projects.unshift(project);localStorage.setItem('lightforge-projects',JSON.stringify(state.projects));endBusy();await selectProject(project,true);toast('Music imported. Choose your style and create.');}catch(e){diagnostics?.log('error','operation',e);endBusy();toast('This audio could not be imported. '+(e.message||'Try another file.'),true);}}
-async function selectProject(project,isNew=false,{navigate=true}={}){
+async function selectProject(project,isNew=false,{navigate=true,restoreLease=null}={}){
  diagnostics?.protectText(project?.name);
  stopInspection(); if(state.busy)return;clearTimeout(saveTimer);if(state.project&&!state.loadingProject&&!(await saveProject()))return;state.compileAbort?.abort();state.compileId++;state.composing=false;const selection=++state.selection,id=project.id;
  const current=()=>selection===state.selection&&state.project?.id===id;
@@ -126,8 +126,9 @@ async function selectProject(project,isNew=false,{navigate=true}={}){
    }else if(project.projectUrl){const response=await fetch(project.projectUrl);if(!current())return;if(response.ok){saved=await response.json();if(!current())return;}}}
   if(!current())return;
   if(saved){state.settings=mergeSettings(saved.settings);state.music=saved.music||null;state.compiled=saved.compiled||null;state.needAnalysis=!!saved.needAnalysis;}else state.settings=mergeSettings({...state.settings,sectionOverrides:{},manualCues:[],outputEnabled:{},vocalRegions:[],musicCues:[],vocalOffsetMs:0,bassOffsetMs:0});
+  if(restoreLease&&!completedRestorePulse(restoreLease,'project-loaded',typeof state.compiled?.frameData==='string'?state.compiled.frameData.length:0))throw Error('Native completed-restore lease rejected the project load phase.');
   state.loadingProject=false;document.querySelector('.controls-column').inert=false;text($('trackMeta'),`${formatTime(project.duration)} · ${project.previewSampleRate===22050?'Long-track mono preview · Stereo export':'44.1 kHz stereo · On this device'}`);syncControls();
-  if(state.music)await regenerate({save:false,restoreCompiled:state.compiled});else{updateButtons();renderFrame(0);drawWave();}
+  if(state.music)await regenerate({save:false,restoreCompiled:state.compiled,restoreLease});else{updateButtons();renderFrame(0);drawWave();}
   if(current()){scheduleSave();await refreshAuditionAvailability({force:true});}
  }catch(e){diagnostics?.log('error','operation',e);if(!current())return;state.saveBlocked=true;state.loadingProject=false;document.querySelector('.controls-column').inert=false;syncControls();updateButtons();renderFrame(0);text($('trackMeta'),'Audio ready · Saved settings could not be opened');toast('Audio is ready. Create a new show to rebuild this project.',true);}
 }
@@ -203,6 +204,94 @@ function renderDeviceCapabilities(data){
  text($('backgroundDeviceStatus'),data.batteryRestricted?'Android is restricting background work. Open Battery settings and allow unrestricted use for LightForge.':data.notifications===false?'Background analysis is available. Enable notifications to see progress and completion outside the app.':data.batteryOptimized?'Background analysis is ready. Allow background battery use for long jobs with the screen off.':'Background analysis is ready. Progress and Cancel stay available in your notification.');
  renderBackgroundNote();
 }
+function completedRestoreNonce(){completedRestoreEpoch++;return `${Date.now().toString(36)}-${completedRestoreEpoch.toString(36)}-${Math.random().toString(36).slice(2,14)}`;}
+function beginCompletedRestore(job){
+ const prior=state.completedRestore;
+ const lease={jobId:job.id,projectId:String(job.projectId||''),nonce:completedRestoreNonce(),phase:'bootstrap',sequence:0,bytes:0,renderCountBeforeAdopt:0,workerVerified:false,adoptedProjectId:null,adoptedSelection:0,adoptedCompileId:0,failed:false,terminal:false,ackWritten:false,ackConfirmed:false};
+ state.completedRestore=lease;
+ if(bridge('beginCompletedRestore',lease.jobId,lease.nonce,lease.bytes)!==true){state.completedRestore=prior||null;throw Error('Native completed-restore lease was rejected.');}
+ if(prior&&prior!==lease&&prior.terminal&&!prior.ackConfirmed&&prior.jobId!==lease.jobId){
+  // Native has atomically retired only this old unconfirmed terminal token
+  // for the new durable completed job. Keep the old job's persisted cap
+  // armed; a later old ACK now fails its exact job+nonce check.
+  prior.superseded=true;diagnostics?.log('warn','background','A later completed job superseded an unconfirmed native ACK token.');
+ }
+ return lease;
+}
+function completedRestoreOwnsAdoptedProject(lease){return !!lease&&state.completedRestore===lease&&!lease.failed&&!lease.terminal&&!!lease.projectId&&state.project?.id===lease.projectId&&lease.adoptedProjectId===lease.projectId&&lease.adoptedSelection===state.selection&&lease.adoptedCompileId===state.compileId&&!!state.show&&!!state.compiled;}
+function completedRestorePulse(lease,phase,bytes=lease?.bytes||0){
+ if(!lease||state.completedRestore!==lease||lease.failed||lease.terminal)return false;
+ lease.phase=phase;lease.sequence++;lease.bytes=Math.max(0,Number(bytes)||0);
+ if(bridge('completedRestorePulse',lease.jobId,lease.nonce,phase,lease.sequence,lease.bytes)===true)return true;
+ completedRestoreFailed(lease,'Native completed-restore pulse was rejected.');return false;
+}
+function completedRestoreFailed(lease,reason){
+ if(!lease||state.completedRestore!==lease||lease.failed||lease.terminal)return;
+ lease.failed=true;lease.phase='failed';lease.sequence++;bridge('completedRestoreFailed',lease.jobId,lease.nonce,String(reason||'restore-failed').slice(0,120));
+}
+function completedRestoreWorkerEvent(lease,event){
+ if(!lease||state.completedRestore!==lease||event?.lease?.jobId!==lease.jobId||event.lease?.nonce!==lease.nonce)return;
+ if(event.type==='restore-error'){completedRestoreFailed(lease,event.message||'worker-error');return;}
+ if(event.type==='restore-started')completedRestorePulse(lease,'worker-started');
+ else if(event.type==='restore-pulse')completedRestorePulse(lease,`worker-${event.phase||'pulse'}`,event.total||lease.bytes);
+ else if(event.type==='restore-verified'){lease.workerVerified=true;completedRestorePulse(lease,'worker-verified');}
+}
+function awaitCompletedRestoreRender(lease){return new Promise((resolve,reject)=>{
+ const inspect=()=>{
+  if(!completedRestoreOwnsAdoptedProject(lease))return reject(Error('Saved arrangement restoration was superseded.'));
+  if(vehiclePreview?.loaded&&Number(vehiclePreview.renderCount)>lease.renderCountBeforeAdopt){
+   if(!completedRestorePulse(lease,'preview-first-render'))return reject(Error('Native completed-restore lease rejected the first web render.'));
+   resolve();return;
+  }
+  requestAnimationFrame(inspect);
+ };
+ inspect();
+});}
+function awaitCompletedRestoreVisualCommit(lease){return new Promise((resolve,reject)=>{
+ const inspect=()=>{
+  if(!completedRestoreOwnsAdoptedProject(lease))return reject(Error('Saved arrangement restoration was superseded before its visual frame committed.'));
+  if(bridge('requestCompletedRestoreVisualCommit',lease.jobId,lease.nonce)!==true)return reject(Error('Native completed-restore visual proof was rejected.'));
+  if(bridge('completedRestoreVisualCommitted',lease.jobId,lease.nonce)===true){
+   if(!completedRestorePulse(lease,'preview-visual-commit'))return reject(Error('Native completed-restore visual phase was rejected.'));
+   resolve();return;
+  }
+  requestAnimationFrame(inspect);
+ };
+ inspect();
+});}
+function completeCompletedRestore(lease){
+ if(!completedRestoreOwnsAdoptedProject(lease)||!lease.workerVerified)throw Error('Saved arrangement restoration was superseded before worker verification.');
+ const priorPhase=lease.phase;lease.phase='terminal';lease.sequence++;
+ if(bridge('completedRestoreTerminal',lease.jobId,lease.nonce,lease.sequence,lease.bytes)!==true){lease.phase=priorPhase;lease.sequence--;throw Error('Native completed-restore terminal proof was rejected.');}
+ lease.terminal=true;
+}
+function completedRestoreAwaitingAck(lease,job){
+ return !!lease&&state.completedRestore===lease&&!lease.failed&&lease.terminal&&!lease.ackConfirmed&&lease.jobId===job?.id;
+}
+function completedRestoreAckCommitted(lease){
+ // This is a post-write confirmation for the native replacement cap only.
+ // It never lets native write, clear, or inspect the browser ACK itself.
+ // Do not allow an old lease to confirm a different job, or let an unproven
+ // terminal state claim a browser ACK it has not durably written.
+ if(!lease||state.completedRestore!==lease||lease.failed||!lease.terminal||lease.ackConfirmed)return false;
+ if(localStorage.getItem('lightforge-background-ack')!==lease.jobId)return false;
+ try{
+  if(bridge('completedRestoreAckCommitted',lease.jobId,lease.nonce)!==true){diagnostics?.log('warn','background','Native replacement cap remains armed after browser ACK confirmation was unavailable.');return false;}
+  lease.ackConfirmed=true;return true;
+ }catch(error){diagnostics?.log('warn','background','Native replacement cap confirmation failed: '+(error.message||error));return false;}
+}
+function writeCompletedRestoreAck(lease,job){
+ if(!completedRestoreAwaitingAck(lease,job))throw Error('Completed-restore ACK no longer belongs to this job.');
+ // Reuse this exact terminal lease after a storage failure.  A fresh lease is
+ // intentionally forbidden while native retains its terminal job+nonce token.
+ if(!lease.ackWritten||localStorage.getItem('lightforge-background-ack')!==job.id){
+  localStorage.setItem('lightforge-background-ack',job.id);
+  if(localStorage.getItem('lightforge-background-ack')!==job.id)throw Error('The completed show could not be acknowledged in browser storage.');
+  lease.ackWritten=true;
+ }
+ state.backgroundSyncPending=false;
+ return completedRestoreAckCommitted(lease);
+}
 async function handleBackgroundJob(job){
  if(!job?.id)return;state.backgroundJob=job;
  if(state.diagnosticBackgroundState!==job.id+':'+job.state){state.diagnosticBackgroundState=job.id+':'+job.state;const status=['queued','running','cancelling','completed','failed','interrupted','cancelled'].includes(job.state)?job.state:'unknown';diagnostics?.log(['failed','interrupted'].includes(status)?'error':'info','background','Analysis state='+status);}
@@ -213,22 +302,43 @@ async function handleBackgroundJob(job){
   renderBackgroundNote();setProgress({...job,stage:job.analysisStage||(job.progress>=.96?'generate':'analysis'),detail:job.stage});
   $('cancelWork').disabled=job.state==='cancelling';return;
  }
+ // Once native terminal proof exists, a failed browser-storage write must
+ // retry that same job+nonce rather than opening a new lease that native
+ // correctly rejects until its exact post-ACK confirmation arrives.
+ const terminalLease=state.completedRestore;
+ if(job.state==='completed'&&completedRestoreAwaitingAck(terminalLease,job)){
+  state.backgroundApplying=true;
+  try{
+   const confirmed=writeCompletedRestoreAck(terminalLease,job);
+   state.backgroundSeen=job.id+':'+job.state;
+   if(confirmed)toast('Your background show is ready. Press play to review it.');
+  }catch(error){
+   terminalLease.ackWritten=false;state.backgroundSyncPending=true;state.backgroundSeen=null;
+   diagnostics?.log('error','background',error);toast(error.message,true);
+  }finally{
+   if(terminalLease.ackConfirmed&&state.completedRestore===terminalLease)state.completedRestore=null;
+   state.backgroundApplying=false;
+  }
+  updateButtons();return;
+ }
  if(state.backgroundSeen===job.id+':'+job.state)return;
  state.backgroundSeen=job.id+':'+job.state;
  if(state.busy&&!state.abort)endBusy();
  const banner=$('backgroundRecovery');if(banner)banner.hidden=true;
  if(job.state==='completed'){
   if(!state.backgroundSyncPending)return;
-  state.backgroundApplying=true;
+  let restoreLease=null;state.backgroundApplying=true;
   try{
+   restoreLease=beginCompletedRestore(job);
    clearTimeout(saveTimer);applyBootstrap(parse(bridge('getBootstrap'),{}));
    const project=state.projects.find(p=>p.id===job.projectId);if(!project)throw Error('The completed project could not be found.');
-   state.lastSaved=null;await selectProject(project,false,{navigate:false});
-   if(state.saveBlocked)throw Error('The saved show could not be opened.');
-   state.backgroundSyncPending=false;localStorage.setItem('lightforge-background-ack',job.id);
+   state.lastSaved=null;await selectProject(project,false,{navigate:false,restoreLease});
+   if(state.saveBlocked||!completedRestoreOwnsAdoptedProject(restoreLease))throw Error('The completed project was superseded before its saved show could be adopted.');
+   await awaitCompletedRestoreRender(restoreLease);await awaitCompletedRestoreVisualCommit(restoreLease);completeCompletedRestore(restoreLease);
+   writeCompletedRestoreAck(restoreLease,job);
    toast('Your background show is ready. Press play to review it.');
-  }catch(error){diagnostics?.log('error','background',error);state.backgroundSeen=null;toast(error.message,true);}
-  finally{state.backgroundApplying=false;}
+  }catch(error){completedRestoreFailed(restoreLease,error.message||error);diagnostics?.log('error','background',error);state.backgroundSeen=null;toast(error.message,true);}
+  finally{if(restoreLease&&state.completedRestore===restoreLease&&(restoreLease.failed||restoreLease.ackConfirmed))state.completedRestore=null;state.backgroundApplying=false;}
  }else if(['failed','interrupted','cancelled'].includes(job.state)){
   state.backgroundSyncPending=false;
   if(banner){banner.hidden=false;const saved=job.hasCheckpoint?' Completed music analysis is saved; resume skips straight to choreography.':job.resumeAvailable?' Verified progress is saved and will be reused.':' Resume checks for saved progress before continuing.';text($('backgroundRecoveryMessage'),(job.stage||'Your saved show is intact.')+saved);text($('backgroundRetry'),'Resume analysis');}
@@ -274,17 +384,19 @@ function presentShow(){
  $('results').hidden=false;$('noShowOverlay').hidden=true;const bpm=Number(rhythm?.bpm??music.bpm);text($('bpmStat'),Number.isFinite(bpm)&&bpm>0?bpm.toFixed(1):'—');text($('beatStat'),bpm>0?Math.round(60000/bpm)+' ms':'—');text($('sectionStat'),show.sections?.length||music.sections?.length||0);text($('frameStat'),show.stepMs);text($('previewBadge'),music.engine?.neural?'NEURAL BEATS · LIVE':'LIVE PREVIEW');renderSections();renderValidation();renderFrame(audio.currentTime||0);drawWave();updateButtons();
 }
 function adoptShow(result,music,settings){state.saveBlocked=false;state.show=result.show;state.compiled=result.compiled;state.exportHeader=result.header;state.showMusic=music;state.renderedSettingsKey=JSON.stringify(settings);presentShow();refreshAuditionAvailability().catch(()=>{});}
-async function regenerate({save=true,preparedShow=null,restoreCompiled=null}={}){
+async function regenerate({save=true,preparedShow=null,restoreCompiled=null,restoreLease=null}={}){
  if(!state.music||!window.ShowCompiler)return null;clearTimeout(regenTimer);state.compileAbort?.abort();const controller=new AbortController(),ticket=++state.compileId,projectId=state.project?.id;
  state.compileAbort=controller;state.composing=true;updateButtons();
  try{
   const music=alignedMusic(state.music),settings=clone(state.settings);let result;
-  if(preparedShow)result={show:preparedShow,compiled:null};
-  else if(restoreCompiled)result=await ShowCompiler.restore(restoreCompiled,music,settings,()=>{},controller.signal,{retryStartup:state.backgroundApplying===true});
+ if(preparedShow)result={show:preparedShow,compiled:null};
+  else if(restoreCompiled){if(restoreLease&&!completedRestorePulse(restoreLease,'restore-dispatched'))throw Error('Native completed-restore lease rejected dispatch.');result=await ShowCompiler.restore(restoreCompiled,music,settings,()=>{},controller.signal,restoreLease?{restoreLease,onRestoreEvent:event=>completedRestoreWorkerEvent(restoreLease,event)}:undefined);}
   else result=await ShowCompiler.generate(music,settings,()=>{},controller.signal);
+  if(restoreLease?.failed)throw Error('Native completed-restore lease rejected an ordered worker event.');
   if(ticket!==state.compileId||projectId!==state.project?.id)return null;
-  state.music=music;adoptShow(result,music,settings);if(save)scheduleSave();return state.show;
- }catch(e){diagnostics?.log(e.name==='AbortError'?'info':'error','composition-worker',e);if(ticket!==state.compileId||e.name==='AbortError')return null;if(restoreCompiled)state.saveBlocked=true;toast((restoreCompiled?'Saved arrangement could not be verified: ':'The show could not be built: ')+e.message,true);return null;}
+  if(restoreLease&&(!restoreLease.projectId||state.completedRestore!==restoreLease||restoreLease.projectId!==projectId))return null;
+  state.music=music;if(restoreLease)restoreLease.renderCountBeforeAdopt=Number(vehiclePreview?.renderCount)||0;adoptShow(result,music,settings);if(restoreLease){restoreLease.adoptedProjectId=projectId;restoreLease.adoptedSelection=state.selection;restoreLease.adoptedCompileId=ticket;if(!completedRestorePulse(restoreLease,'show-adopted'))throw Error('Native completed-restore lease rejected the adopted show.');}if(save)scheduleSave();return state.show;
+ }catch(e){if(restoreLease)completedRestoreFailed(restoreLease,e.message||e);diagnostics?.log(e.name==='AbortError'?'info':'error','composition-worker',e);if(ticket!==state.compileId||e.name==='AbortError')return null;if(restoreCompiled)state.saveBlocked=true;toast((restoreCompiled?'Saved arrangement could not be verified: ':'The show could not be built: ')+e.message,true);return null;}
  finally{if(ticket===state.compileId){state.composing=false;state.compileAbort=null;updateButtons();}}
 }
 function renderValidation(){const v=state.show.validation;$('validationCard').hidden=false;$('validationCard').classList.toggle('invalid',!v.valid);text($('validationIcon'),v.valid?'✓':'!');text($('validationTitle'),v.valid?'Ready for your Model 3':'A check needs attention');text($('validationSummary'),v.valid?'Timing, format & movement limits checked':'Adjust the show before exporting');$('export').disabled=!v.valid;const content=$('validationContent');content.replaceChildren();const list=document.createElement('ul');const lines=[`Uncompressed FSEQ v2 · 200 channels · ${state.soloPreview?.show.stepMs||state.show?.stepMs||20} ms`,`Duration ${formatTime(state.show.duration)} · ${state.show.frameCount.toLocaleString()} frames`,'44.1 kHz stereo PCM WAV · matched filenames',`Analysis: ${state.music.engine?.name||'On-device rhythm engine'}`];for(const line of [...lines,...(v.errors||[]).map(x=>'Issue: '+x),...(v.warnings||[]).map(x=>'Note: '+x),...(state.music.warnings||[]).map(x=>'Analysis: '+x)]){const li=document.createElement('li');text(li,line);list.appendChild(li);}content.appendChild(list);}
