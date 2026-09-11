@@ -125,6 +125,9 @@ class AndroidEvidenceManifestTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'run differs'):
             evidence.candidate_binding(self.candidate, RELEASE, artifact_id=55, artifact_digest='d' * 64,
                                        head_sha=HEAD, run_id=45, run_attempt=3, evidence_session=SESSION)
+        with self.assertRaisesRegex(ValueError, 'session differs'):
+            evidence.candidate_binding(self.candidate, RELEASE, artifact_id=55, artifact_digest='d' * 64,
+                                       head_sha=HEAD, run_id=44, run_attempt=3, evidence_session='f' * 64)
         prior_session = 'f' * 64
         prior = self.root / 'candidate-prior-attempt'
         evidence.create_candidate(argparse.Namespace(
