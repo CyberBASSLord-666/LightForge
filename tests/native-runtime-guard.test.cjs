@@ -54,7 +54,7 @@ test('service runner completes the checkpoint transaction with compatibility rou
   }},
   ShowCompiler:{async generate(music,settings){assert.equal(music.engine,'deux-original-models');assert.equal(settings.analysisQuality,'precision');events.push('compose');return {compiled:{sha256:'frames'},show:{version:'planner'}};}},
   LightForgeVersion:{name:'test'},VehicleProfile:{version:'test'},
-  BackgroundJob:{nativeDeuxAvailability(){return JSON.stringify({available:false,reason:'previous-native-crash'});},nativeDeuxStart(){assert.fail('fallback must not enter JNI');},
+  BackgroundJob:{clearRunObservation(id){assert.equal(id,'job');events.push('clear');return true;},nativeDeuxAvailability(){return JSON.stringify({available:false,reason:'previous-native-crash'});},nativeDeuxStart(){assert.fail('fallback must not enter JNI');},
    progressInfo(id,value,detail,info){progress.push({detail,info:JSON.parse(info)});},
    checkpoint(id,body){assert.equal(JSON.parse(body).duration,12);events.push('checkpoint');return true;},
    complete(id,body){events.push('complete');complete(JSON.parse(body));return true;},failed(id,message){failed(Error(message));}}
@@ -62,7 +62,7 @@ test('service runner completes the checkpoint transaction with compatibility rou
  context.window=context;vm.runInNewContext(source,context);
  vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../web/background/runner.js'),'utf8'),context);
  const saved=await finished;
- assert.deepEqual(events,['analyze','checkpoint','compose','complete']);assert.equal(saved.music.engine,'deux-original-models');assert.equal(saved.needAnalysis,false);
+ assert.deepEqual(events,['clear','analyze','checkpoint','compose','complete']);assert.equal(saved.music.engine,'deux-original-models');assert.equal(saved.needAnalysis,false);
  assert.ok(progress.some(event=>/may take longer/.test(event.detail)));
  assert.ok(progress.some(event=>event.detail==='Compatibility · Studio passage 1'&&event.info.restoredPassages===1));
 });

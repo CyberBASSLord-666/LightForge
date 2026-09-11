@@ -136,11 +136,11 @@ async function completedReconnect({acknowledged=false,hold=false,restoreError=nu
   const snapshot=bytes.length+':'+snapshotId;
   return JSON.stringify({ok:true,offset:start,total:bytes.length,snapshot,base64:chunk.toString('base64')});
  };
- const initialBootstrap={projects:[completed,lastSelected],lastProjectId:lastSelected.id,version:'2.2.4',backgroundJob:job};let bootstrapReads=0;
- w.Android={pickAudio(){},getBootstrap:()=>JSON.stringify(deferInitialPreview&&++bootstrapReads<=2?initialBootstrap:bootstrap),saveProject:()=>true,startAnalysis(){throw Error('Reconnection must not restart analysis');},getAnalysisStatus:()=>JSON.stringify(job),
+ const coldBootstrap={projects:[],version:'2.2.4'},initialBootstrap={projects:[completed,lastSelected],lastProjectId:lastSelected.id,version:'2.2.4',backgroundJob:job};let bootstrapReads=0;
+ w.Android={pickAudio(){},getBootstrap:()=>JSON.stringify(deferInitialPreview?(++bootstrapReads<=2?initialBootstrap:bootstrap):(bootstrapReads++===0?coldBootstrap:bootstrap)),saveProject:()=>true,startAnalysis(){throw Error('Reconnection must not restart analysis');},getAnalysisStatus:()=>JSON.stringify(job),
   beginCompletedRestore:(...args)=>{leaseCalls.push({type:'begin',args});if(beginRejected)return false;if(nativeTerminalToken){if(nativeTerminalToken.jobId===args[0])return false;nativeTerminalToken=null;}return true;},completedRestorePulse:(...args)=>{leaseCalls.push({type:'pulse',args});return !pulseRejected;},requestCompletedRestoreVisualCommit:(...args)=>{leaseCalls.push({type:'visual-request',args});return true;},completedRestoreVisualCommitted:(...args)=>{leaseCalls.push({type:'visual-committed',args});return true;},completedRestoreTerminal:(...args)=>{leaseCalls.push({type:'terminal',args,ackAtCall:w.localStorage.getItem('lightforge-background-ack')});if(terminalRejected)return false;nativeTerminalToken={jobId:args[0],nonce:args[1]};return true;},completedRestoreAckCommitted:(...args)=>{leaseCalls.push({type:'ack-committed',args,ackAtCall:w.localStorage.getItem('lightforge-background-ack')});if(ackConfirmationRejectedNow||nativeTerminalToken?.jobId!==args[0]||nativeTerminalToken?.nonce!==args[1])return false;nativeCapClears.push(args[0]);nativeTerminalToken=null;return true;},completedRestoreFailed:(...args)=>{leaseCalls.push({type:'failed',args});return true;}};
  if(nativeProjectPayload)w.Android.readCompletedRestoreProjectChunk=readCompletedProject;
- w.fetch=async()=>{fetches++;if(fetchNeverResolves)return new Promise(()=>{});await initialSavedReady;return{ok:true,json:async()=>structuredClone(saved),text:async()=>JSON.stringify(saved)};};
+ w.fetch=async()=>{fetches++;if(fetchNeverResolves)return new Promise(()=>{});if(deferInitialPreview)await initialSavedReady;return{ok:true,json:async()=>structuredClone(saved),text:async()=>JSON.stringify(saved)};};
  w.ShowCompiler={restore:async(compiled,m,s,_progress,signal,options)=>{
   restoreOptions.push(options);restores++;enteredResolve();
   options?.onRestoreEvent?.({type:'restore-started',lease:options?.restoreLease});
@@ -419,7 +419,7 @@ test('a rejected native begin or pulse leaves the completed job pending without 
 test('a selection that supersedes the completed job cannot borrow another render for its terminal ACK',async()=>{
  const superseded=await completedReconnect({hold:true});
  try{
-  const bootstrap=superseded.app.readBootstrap();await superseded.entered;
+  const bootstrap=superseded.app.readBootstrap();await waitFor(()=>superseded.app.state.backgroundApplying&&superseded.app.state.completedRestore?.jobId===superseded.job.id&&superseded.restores===1);
   // The held harness intentionally pauses every restore.  Start the later
   // selection, wait until it owns its own restore, then release that shared
   // gate; awaiting selectProject before release would deadlock the test rather
