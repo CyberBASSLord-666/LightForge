@@ -124,7 +124,7 @@ jobs:
           name: lightforge-${{ env.LIGHTFORGE_RELEASE }}-verification
           path: |
             qa/release-${{ env.LIGHTFORGE_RELEASE }}/*.json
-            !qa/release-${{ env.LIGHTFORGE_RELEASE }}/android-*-verification.json
+            !qa/release-${{ env.LIGHTFORGE_RELEASE }}/android-*
             qa/release-${{ env.LIGHTFORGE_RELEASE }}/*.log
             qa/release-${{ env.LIGHTFORGE_RELEASE }}/*.txt
             qa/release-${{ env.LIGHTFORGE_RELEASE }}/*.png
@@ -170,6 +170,11 @@ jobs:
           name: lightforge-${{ env.LIGHTFORGE_RELEASE }}-ci-candidate
           path: ${{ runner.temp }}/lightforge-ci-candidate
           compression-level: 0
+          # The candidate name is intentionally stable for legacy quality-gate
+          # consumers, while its immutable output ID is what downstream jobs
+          # and the publisher bind.  This makes an explicit rerun-all replace
+          # the prior same-run candidate rather than failing open or reusing it.
+          overwrite: true
           retention-days: 30
           if-no-files-found: error
 
@@ -241,6 +246,7 @@ jobs:
           python3 tools/run_android_background_tests.py \
             --candidate-dir "$RUNNER_TEMP/lightforge-ci-candidate" \
             --output-dir "$LIGHTFORGE_ANDROID_EVIDENCE_ROOT/background" \
+            --emulator-log "$RUNNER_TEMP/lightforge-android-emulator.log" \
             --candidate-artifact-id "${{ needs.verify.outputs.candidate_artifact_id }}" \
             --candidate-artifact-digest "${{ needs.verify.outputs.candidate_artifact_digest }}" \
             --candidate-run-id "${{ needs.verify.outputs.candidate_run_id }}" \
@@ -254,6 +260,7 @@ jobs:
           python3 tools/run_android_diagnostics_tests.py \
             --candidate-dir "$RUNNER_TEMP/lightforge-ci-candidate" \
             --output-dir "$LIGHTFORGE_ANDROID_EVIDENCE_ROOT/diagnostics" \
+            --emulator-log "$RUNNER_TEMP/lightforge-android-emulator.log" \
             --candidate-artifact-id "${{ needs.verify.outputs.candidate_artifact_id }}" \
             --candidate-artifact-digest "${{ needs.verify.outputs.candidate_artifact_digest }}" \
             --candidate-run-id "${{ needs.verify.outputs.candidate_run_id }}" \
