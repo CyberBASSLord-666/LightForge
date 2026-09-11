@@ -88,9 +88,9 @@ jobs:
       - name: Regenerate and verify same-session native evidence
         run: |
           test -n "$LIGHTFORGE_EVIDENCE_SESSION"
+          python3 tools/bootstrap_testdeps.py
           python3 qa/release-${{ env.LIGHTFORGE_RELEASE }}/compare-native-mdx.py
           node qa/release-${{ env.LIGHTFORGE_RELEASE }}/verify-mdx-downstream.cjs
-          python3 tools/bootstrap_testdeps.py
           python3 qa/release-${{ env.LIGHTFORGE_RELEASE }}/verify-native-inference-profile.py
           python3 qa/release-${{ env.LIGHTFORGE_RELEASE }}/verify-analysis.py
       - name: Verify native Balanced startup, cancellation and crash-lease lifecycle
@@ -191,3 +191,4 @@ jobs:
             emulator.log
           if-no-files-found: error
           retention-days: 30
+
