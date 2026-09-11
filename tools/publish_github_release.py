@@ -5,10 +5,15 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
+import stat
 import subprocess
 import sys
+import tempfile
 import zipfile
 
+from android_evidence_manifest import RECEIPTS as ANDROID_RECEIPTS
+from android_evidence_manifest import candidate_binding, validate_source_hashes, verify_evidence
 from apk_archive import verify_native_libraries
 from apk_delta import apply_delta, digest
 from package_release import SIGNING_SHA256
@@ -40,6 +45,9 @@ RELEASE_ENFORCEMENT_PATHS = (
     'tools/analysis_benchmark_contract.py',
     'tools/locked_benchmark_runner.py',
     'tools/differential_analysis.py',
+    'tools/android_evidence_manifest.py',
+    'tools/run_android_background_tests.py',
+    'tools/run_android_diagnostics_tests.py',
 )
 
 
@@ -54,6 +62,139 @@ def run_bytes(*args, **kwargs):
 
 def api(path):
     return json.loads(run('gh', 'api', path))
+
+
+def _sha256(value, message):
+    require(isinstance(value, str), message)
+    value = value.removeprefix('sha256:')
+    require(re.fullmatch('[0-9a-f]{64}', value), message)
+    return value
+
+
+def _positive_int(value, message):
+    require(type(value) is int and value > 0, message)
+    return value
+
+
+def _artifact_metadata(repo, artifact_id, ci, source_commit, expected_name=None):
+    """Validate one Actions artifact before following its download URL.
+
+    Artifact names are used only to discover the one dynamic Android manifest
+    artifact.  Every download below is by immutable artifact ID and its API
+    digest is checked after streaming the archive to disk.
+    """
+    artifact_id = _positive_int(artifact_id, 'Artifact id is invalid')
+    artifact = api(f'repos/{repo}/actions/artifacts/{artifact_id}')
+    require(isinstance(artifact, dict) and artifact.get('id') == artifact_id, 'Artifact identity differs')
+    require(artifact.get('expired') is False, 'Artifact has expired')
+    require(isinstance(artifact.get('name'), str) and artifact['name'], 'Artifact name is invalid')
+    if expected_name is not None:
+        require(artifact['name'] == expected_name, 'Artifact name differs from the recorded producer')
+    require(type(artifact.get('size_in_bytes')) is int and artifact['size_in_bytes'] > 0, 'Artifact size is invalid')
+    _sha256(artifact.get('digest'), 'Artifact digest is invalid')
+    workflow = artifact.get('workflow_run')
+    require(isinstance(workflow, dict), 'Artifact workflow provenance is invalid')
+    require(workflow.get('id') == ci['id'] and workflow.get('head_sha') == source_commit,
+            'Artifact does not belong to the verified candidate run')
+    require(workflow.get('head_branch') == 'main', 'Artifact does not belong to protected main')
+    return artifact
+
+
+def _run_artifacts(repo, run_id):
+    """List a bounded run inventory; never download by a glob or guessed path."""
+    artifacts = []
+    for page in range(1, 1001):
+        result = api(f'repos/{repo}/actions/runs/{run_id}/artifacts?per_page=100&page={page}')
+        require(isinstance(result, dict) and isinstance(result.get('artifacts'), list), 'Artifact inventory is invalid')
+        artifacts.extend(result['artifacts'])
+        if len(result['artifacts']) < 100:
+            break
+    else:
+        raise ValueError('Artifact inventory pagination exceeded its safe bound')
+    return artifacts
+
+
+def _download_exact_artifact(repo, artifact, destination, expected_names):
+    """Stream an exact artifact ID to disk and extract only named regular files."""
+    destination = Path(destination)
+    destination.mkdir(parents=True, exist_ok=False)
+    archive_path = destination / '.artifact.zip'
+    try:
+        subprocess.run(
+            ['gh', 'api', f'repos/{repo}/actions/artifacts/{artifact["id"]}/zip', '--output', str(archive_path)],
+            check=True,
+        )
+        require(digest(archive_path) == _sha256(artifact['digest'], 'Artifact digest is invalid'),
+                'Downloaded artifact digest differs from Actions metadata')
+        with zipfile.ZipFile(archive_path) as archive:
+            infos = archive.infolist()
+            names = [info.filename for info in infos]
+            require(len(names) == len(set(names)) and set(names) == set(expected_names),
+                    'Artifact contains an unexpected or missing member')
+            total = 0
+            for info in infos:
+                mode = info.external_attr >> 16
+                require(info.filename and not info.filename.endswith('/') and not (info.flag_bits & 1)
+                        and stat.S_IFMT(mode) != stat.S_IFLNK, 'Artifact contains an unsafe member')
+                total += info.file_size
+                require(total <= 5 * 1024 * 1024 * 1024, 'Artifact exceeds the safe extraction limit')
+                target = destination / info.filename
+                require(target.parent.resolve().is_relative_to(destination.resolve()), 'Artifact member escapes its destination')
+                target.parent.mkdir(parents=True, exist_ok=True)
+                with archive.open(info) as source, target.open('xb') as output:
+                    shutil.copyfileobj(source, output, length=1024 * 1024)
+    finally:
+        archive_path.unlink(missing_ok=True)
+    return destination
+
+
+def _android_artifact_name(version, ci):
+    return 'lightforge-' + version['name'] + '-android-evidence-' + str(ci['id']) + '-' + str(ci['run_attempt'])
+
+
+def verify_android_release_evidence(repo, ci, version, source_commit, source_tree_sha):
+    """Fetch and verify the only Android evidence eligible for publication.
+
+    Checked-in ``qa/android-*-verification.json`` files are intentionally not
+    consulted.  A failed current instrumentation suite therefore cannot be
+    masked by a historic passing receipt retained for diagnostics.
+    """
+    _positive_int(ci.get('id'), 'Candidate run id is invalid')
+    _positive_int(ci.get('run_attempt'), 'Candidate run attempt is invalid')
+    expected_name = _android_artifact_name(version, ci)
+    matches = [record for record in _run_artifacts(repo, ci['id']) if record.get('name') == expected_name]
+    require(len(matches) == 1 and type(matches[0].get('id')) is int,
+            'Verified candidate run has no unique sealed Android evidence artifact')
+    android_artifact = _artifact_metadata(repo, matches[0]['id'], ci, source_commit, expected_name)
+    android_root = ROOT / 'build/release-android-evidence'
+    _download_exact_artifact(repo, android_artifact, android_root,
+                             {'android-evidence-manifest.json', *ANDROID_RECEIPTS.values()})
+    manifest = verify_evidence(android_root, release=version['name'], run_id=ci['id'],
+                               run_attempt=ci['run_attempt'], head_sha=source_commit)
+    candidate_record = manifest['candidate']
+    candidate_artifact = _artifact_metadata(repo, candidate_record['artifact_id'], ci, source_commit,
+                                            'lightforge-' + version['name'] + '-ci-candidate')
+    require(_sha256(candidate_artifact['digest'], 'Candidate artifact digest is invalid')
+            == candidate_record['artifact_digest'], 'Candidate artifact digest differs from Android evidence')
+    apk_name = 'LightForge-' + version['name'] + '.apk'
+    candidate_root = ROOT / 'build/release-candidate'
+    _download_exact_artifact(repo, candidate_artifact, candidate_root, {
+        apk_name, 'background-tests.apk', 'diagnostics-tests.apk', apk_name + '.json', apk_name + '.sha256',
+        'candidate-manifest.json',
+    })
+    candidate = candidate_binding(
+        candidate_root, version['name'], artifact_id=candidate_record['artifact_id'],
+        artifact_digest=candidate_record['artifact_digest'], head_sha=source_commit,
+        run_id=candidate_record['pipeline']['run_id'], run_attempt=candidate_record['pipeline']['run_attempt'],
+        evidence_session=candidate_record['pipeline']['evidence_session'],
+        identity_sha256=candidate_record['identity_sha256'],
+    )
+    require(candidate == candidate_record, 'Candidate manifest differs from Android evidence')
+    require(candidate['source']['tree_sha'] == _commit_sha(source_tree_sha, 'Candidate source tree is invalid'),
+            'Candidate manifest tree differs from the verified candidate source')
+    validate_source_hashes(candidate['source_hashes'], ROOT)
+    return {'android_artifact_id': android_artifact['id'], 'candidate_artifact_id': candidate_artifact['id'],
+            'manifest': manifest, 'candidate_root': candidate_root}
 
 
 def require(value, message):
@@ -503,7 +644,11 @@ def main():
     require(ci['status'] == 'completed' and ci['conclusion'] == 'success', 'Candidate CI has not passed')
     require(ci['head_sha'] == source_commit and ci['head_repository']['full_name'] == repo, 'Candidate provenance mismatch')
     require(ci['path'] == '.github/workflows/verify-v2.yml', 'Candidate used an unexpected workflow')
+    require(ci.get('event') == 'push' and ci.get('head_branch') == 'main', 'Candidate did not run from protected main')
+    _positive_int(ci.get('id'), 'Candidate run id is invalid')
+    _positive_int(ci.get('run_attempt'), 'Candidate run attempt is invalid')
     run('git', 'fetch', '--no-tags', 'origin', source_commit)
+    run('git', 'merge-base', '--is-ancestor', source_commit, 'HEAD')
     run(
         'git',
         'diff',
@@ -522,8 +667,6 @@ def main():
     quality = verify_release_quality(request, version, repo, ci, source_commit, source_tree_sha)
     gates = ROOT / ('qa/release-' + version['name'])
     required_gates=['regression-verification.json', 'browser-verification.json', 'native-verification.json', 'analysis-browser-verification.json', 'analysis-verification.json']
-    if version['code']>=20200:required_gates.append('android-background-verification.json')
-    if version['code']>=20202:required_gates.append('android-diagnostics-verification.json')
     for name in required_gates:
         evidence = json.loads((gates / name).read_text())
         require(evidence.get('passed') is True and not evidence.get('errors') and evidence['release'] == version['name'], 'Failed gate: ' + name)
@@ -531,19 +674,20 @@ def main():
         for relative, checksum in evidence['source_hashes'].items():
             path = (ROOT / relative).resolve()
             require(path.is_relative_to(ROOT) and path.is_file() and digest(path) == checksum, 'Stale evidence: ' + relative)
-    transfer = ROOT / 'build/release-candidate'
-    transfer.mkdir(parents=True, exist_ok=False)
-    run('gh', 'run', 'download', str(request['run_id']), '--name', 'lightforge-' + version['name'] + '-ci-candidate', '--dir', str(transfer))
+    android_evidence = None
+    if version['code'] >= 20200:
+        android_evidence = verify_android_release_evidence(repo, ci, version, source_commit, source_tree_sha)
+    transfer = android_evidence['candidate_root'] if android_evidence else ROOT / 'build/release-candidate'
     apk_name = 'LightForge-' + version['name'] + '.apk'
-    candidates = list(transfer.rglob(apk_name))
-    require(len(candidates) == 1, 'CI artifact must contain exactly one APK')
+    candidate_apk = transfer / apk_name
+    require(candidate_apk.is_file() and not candidate_apk.is_symlink(), 'CI candidate artifact is missing its exact APK')
     release_dir = ROOT / 'dist'
     release_dir.mkdir(exist_ok=True)
     apk = release_dir / apk_name
     delta_path = ROOT / ('releases/v' + version['name'] + '/signed-apk.delta.json')
     require(digest(delta_path) == request['delta_sha256'], 'Delta identity mismatch')
-    apply_delta(candidates[0], json.loads(delta_path.read_text()), apk)
-    verify_candidate_payload_equivalence(candidates[0], apk)
+    apply_delta(candidate_apk, json.loads(delta_path.read_text()), apk)
+    verify_candidate_payload_equivalence(candidate_apk, apk)
     receipt = json.loads((ROOT / 'release-verification.json').read_text())
     require(receipt['release']['sha256'] == digest(apk), 'Packaged release receipt mismatch')
     verify_apk(apk, version)
@@ -551,6 +695,14 @@ def main():
     sums.write_text(digest(apk) + '  ' + apk_name + '\n')
     tag = 'v' + version['name']
     notes = (ROOT / 'RELEASE_NOTES.md').read_text()
+    current_ci = api(f'repos/{repo}/actions/runs/{request["run_id"]}')
+    require(
+        current_ci.get('id') == ci['id'] and current_ci.get('status') == 'completed'
+        and current_ci.get('conclusion') == 'success' and current_ci.get('head_sha') == source_commit
+        and current_ci.get('run_attempt') == ci['run_attempt'] and current_ci.get('event') == 'push'
+        and current_ci.get('head_branch') == 'main',
+        'Candidate CI changed during release publication',
+    )
     # Resume only a specifically identified draft; never overwrite its APK.
     resume = request.get('resume_release_id')
     if resume is not None:
@@ -558,21 +710,21 @@ def main():
         resume_tag = request.get('resume_tag_name', tag)
         require(resume_tag == tag or re.fullmatch(r'untagged-[0-9a-f]+', resume_tag), 'Invalid recovery tag')
         release = lookup_release(repo, resume_tag, resume)
-        require(release['draft'] and release['target_commitish'] in {request.get('resume_target_commit'), os.environ['GITHUB_SHA']}, 'Unexpected draft target')
+        require(release['draft'] and release['target_commitish'] in {request.get('resume_target_commit'), source_commit}, 'Unexpected draft target')
     else:
-        release = create_draft(repo, tag, os.environ['GITHUB_SHA'], notes)
+        release = create_draft(repo, tag, source_commit, notes)
     files = {p.name: p for p in [apk, sums, ROOT / 'RELEASE_NOTES.md', ROOT / 'release-verification.json']}
     expected = {name: {'bytes': path.stat().st_size, 'sha256': digest(path)} for name, path in files.items()}
     uploads = asset_plan(release, expected, allow_metadata_update=resume is not None)
     # Validate the existing APK before repairing any explicitly identified draft.
-    release = update_metadata(repo, release, tag, os.environ['GITHUB_SHA'], notes)
+    release = update_metadata(repo, release, tag, source_commit, notes)
     for name, replace in uploads:
         args = ['gh', 'release', 'upload', tag, str(files[name])]
         if replace:args.append('--clobber')
         run(*args)
     uploaded = lookup_release(repo, tag, release['id'])
     verify_uploaded(uploaded, expected)
-    update_metadata(repo, uploaded, tag, os.environ['GITHUB_SHA'], notes, publish=True)
+    update_metadata(repo, uploaded, tag, source_commit, notes, publish=True)
     published = lookup_release(repo, tag, release['id'])
     require(not published['draft'], 'Release did not publish')
     verify_uploaded(published, expected)
