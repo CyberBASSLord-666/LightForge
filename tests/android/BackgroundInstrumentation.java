@@ -481,7 +481,7 @@ public final class BackgroundInstrumentation extends Instrumentation {
         Object decodedLease=new JSONTokener(rawLease).nextValue();JSONObject oldLease=decodedLease instanceof String?new JSONObject((String)decodedLease):(JSONObject)decodedLease;
         check(completed.getString("id").equals(oldLease.optString("jobId"))&&oldLease.optString("nonce").length()>0,"Active renderer-gone lease lacked exact job/nonce identity: "+oldLease);
         JSONObject payload=new JSONObject(stalledBridge.readCompletedRestoreProjectChunk(completed.getString("id"),oldLease.getString("nonce"),completed.getString("projectId"),0,1024));
-        check(payload.optBoolean("ok")&&payload.optLong("offset")==0&&payload.optLong("total")>0&&payload.optString("snapshot").matches("[0-9]+:[0-9]+")&&payload.optString("base64").length()>0,"Active lease could not read its bounded durable project payload: "+payload);
+        check(payload.optBoolean("ok")&&payload.optLong("offset")==0&&payload.optLong("total")>0&&payload.optString("snapshot").matches("[0-9]+:[0-9a-f-]{36}")&&payload.optString("base64").length()>0,"Active lease could not read its bounded durable project payload: "+payload);
         JSONObject deniedPayload=new JSONObject(stalledBridge.readCompletedRestoreProjectChunk(completed.getString("id"),oldLease.getString("nonce")+"-stale",completed.getString("projectId"),0,1024));
         check(!deniedPayload.optBoolean("ok"),"A stale completed-restore nonce read durable project payload");
         JSONObject deniedJob=new JSONObject(stalledBridge.readCompletedRestoreProjectChunk(completed.getString("id")+"-stale",oldLease.getString("nonce"),completed.getString("projectId"),0,1024));
@@ -489,6 +489,22 @@ public final class BackgroundInstrumentation extends Instrumentation {
         JSONObject deniedProject=new JSONObject(stalledBridge.readCompletedRestoreProjectChunk(completed.getString("id"),oldLease.getString("nonce"),"foreign-project",0,1024));
         check(!deniedProject.optBoolean("ok"),"A foreign completed project read durable project payload");
         runOnMainSync(()->check(owner.handlePreviewRenderProcessGone(stalled,false),"Active completed-restore renderer-gone branch rejected recovery"));
+        // handlePreviewRenderProcessGone deliberately posts recovery so the
+        // monitor can release its lock before the bridge transaction retires
+        // this tuple. Do not race that post: first observe the committed
+        // retirement (old instance marked terminating) or its completed
+        // same-Activity replacement, then prove the stale bridge is denied.
+        long retiredUntil=SystemClock.elapsedRealtime()+10000;
+        boolean retired=false;
+        while(SystemClock.elapsedRealtime()<retiredUntil){
+            snapshot(false);int count=(Integer)field(owner,"completedRestoreRecoveryCount");
+            WebView current=(WebView)field(owner,"web");WebView terminating=(WebView)field(owner,"completedRestoreTerminatingWebView");
+            if(count==recoveryCountAtStart+1&&(terminating==stalled||current!=stalled)){retired=true;break;}
+            SystemClock.sleep(50);
+        }
+        check(retired,"Active renderer-gone recovery did not commit old-bridge retirement before payload denial");
+        JSONObject retiredPayload=new JSONObject(stalledBridge.readCompletedRestoreProjectChunk(completed.getString("id"),oldLease.getString("nonce"),completed.getString("projectId"),0,1024));
+        check(!retiredPayload.optBoolean("ok"),"A retired WebView bridge read durable project payload after renderer-gone handoff");
         long until=SystemClock.elapsedRealtime()+30000;WebView replacement=null;
         while(SystemClock.elapsedRealtime()<until){
             snapshot(false);int count=(Integer)field(owner,"completedRestoreRecoveryCount");WebView current=(WebView)field(owner,"web");

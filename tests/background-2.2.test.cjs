@@ -90,11 +90,12 @@ async function completedReconnect({acknowledged=false,hold=false,restoreError=nu
   const bytes=Buffer.from(JSON.stringify(payload),'utf8'),start=Number(offset),count=Number(requested);
   if(!Number.isSafeInteger(start)||!Number.isSafeInteger(count)||start<0||count<=0||start>=bytes.length)return JSON.stringify({ok:false,error:'native completed-project range rejected'});
   const chunk=bytes.subarray(start,Math.min(bytes.length,start+count));
-  if(nativeProjectPayload==='offset')return JSON.stringify({ok:true,offset:start+1,total:bytes.length,snapshot:bytes.length+':1',base64:chunk.toString('base64')});
-  if(nativeProjectPayload==='base64')return JSON.stringify({ok:true,offset:start,total:bytes.length,snapshot:bytes.length+':1',base64:'%%%not-base64%%%'});
-  if(nativeProjectPayload==='utf8')return JSON.stringify({ok:true,offset:0,total:2,snapshot:'2:1',base64:Buffer.from([0xc3,0x28]).toString('base64')});
-  if(nativeProjectPayload==='oversized')return JSON.stringify({ok:true,offset:0,total:64*1024*1024+1,snapshot:(64*1024*1024+1)+':1',base64:Buffer.from('{}').toString('base64')});
-  const snapshot=nativeProjectPayload==='snapshot'&&nativeProjectReads.length>1?bytes.length+':2':bytes.length+':1';
+  const snapshotId=nativeProjectPayload==='snapshot'&&nativeProjectReads.length>1?'00000000-0000-4000-8000-000000000002':'00000000-0000-4000-8000-000000000001';
+  if(nativeProjectPayload==='offset')return JSON.stringify({ok:true,offset:start+1,total:bytes.length,snapshot:bytes.length+':'+snapshotId,base64:chunk.toString('base64')});
+  if(nativeProjectPayload==='base64')return JSON.stringify({ok:true,offset:start,total:bytes.length,snapshot:bytes.length+':'+snapshotId,base64:'%%%not-base64%%%'});
+  if(nativeProjectPayload==='utf8')return JSON.stringify({ok:true,offset:0,total:2,snapshot:'2:'+snapshotId,base64:Buffer.from([0xc3,0x28]).toString('base64')});
+  if(nativeProjectPayload==='oversized')return JSON.stringify({ok:true,offset:0,total:64*1024*1024+1,snapshot:(64*1024*1024+1)+':'+snapshotId,base64:Buffer.from('{}').toString('base64')});
+  const snapshot=bytes.length+':'+snapshotId;
   return JSON.stringify({ok:true,offset:start,total:bytes.length,snapshot,base64:chunk.toString('base64')});
  };
  w.Android={pickAudio(){},getBootstrap:()=>JSON.stringify(bootstrap),saveProject:()=>true,startAnalysis(){throw Error('Reconnection must not restart analysis');},getAnalysisStatus:()=>JSON.stringify(job),

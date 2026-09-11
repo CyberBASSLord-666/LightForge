@@ -251,18 +251,22 @@ async function readCompletedRestoreProjectFromBridge(project,lease){
  if(typeof window.Android?.readCompletedRestoreProjectChunk!=='function')return null;
  const Decoder=window.TextDecoder||globalThis.TextDecoder;
  if(typeof Decoder!=='function')throw Error('This device cannot safely decode the completed project payload.');
- const decoder=new Decoder('utf-8',{fatal:true});let offset=0,total=-1,snapshot='',parts='',chunks=0;
+ // Keep decoded chunks separately until the bounded snapshot is complete.
+ // Repeated string concatenation becomes quadratic for multi-megabyte FSEQ
+ // payloads and can starve the renderer that this recovery is trying to
+ // restore.
+ const decoder=new Decoder('utf-8',{fatal:true});let offset=0,total=-1,snapshot='',chunks=0;const parts=[];
  for(;;){
   if(!completedRestorePulse(lease,'project-read',offset))throw Error('Native completed-restore lease rejected the project-read phase.');
   const packet=parse(bridge('readCompletedRestoreProjectChunk',lease.jobId,lease.nonce,project.id,offset,COMPLETED_RESTORE_PROJECT_CHUNK_BYTES),null);
   if(!packet||packet.ok!==true)throw Error(packet?.error||'The completed project payload was unavailable.');
   const start=Number(packet.offset),declaredTotal=Number(packet.total),declaredSnapshot=String(packet.snapshot||'');
   if(!Number.isSafeInteger(start)||start!==offset||!Number.isSafeInteger(declaredTotal)||declaredTotal<=0||declaredTotal>COMPLETED_RESTORE_PROJECT_MAX_BYTES)throw Error('The completed project payload was malformed.');
-  if(!/^[0-9]+:[0-9]+$/.test(declaredSnapshot))throw Error('The completed project payload has no stable snapshot identity.');
+  if(!/^[0-9]+:[0-9a-f-]{36}$/.test(declaredSnapshot))throw Error('The completed project payload has no stable snapshot identity.');
   if(total<0){total=declaredTotal;snapshot=declaredSnapshot;}else if(total!==declaredTotal||snapshot!==declaredSnapshot)throw Error('The completed project payload changed while it was being read.');
   const bytes=completedRestorePacketBytes(packet.base64);if(bytes.length===0||offset+bytes.length>total)throw Error('The completed project payload ended unexpectedly.');
-  offset+=bytes.length;parts+=decoder.decode(bytes,{stream:offset<total});
-  if(offset===total){parts+=decoder.decode();return JSON.parse(parts);}
+  offset+=bytes.length;parts.push(decoder.decode(bytes,{stream:offset<total}));
+  if(offset===total){parts.push(decoder.decode());return JSON.parse(parts.join(''));}
   if(++chunks>Math.ceil(total/COMPLETED_RESTORE_PROJECT_CHUNK_BYTES)+1)throw Error('The completed project payload did not make bounded progress.');
   // Give the renderer/probe queue a turn during a very large saved-show read.
   if(chunks%16===0)await new Promise(resolve=>setTimeout(resolve,0));

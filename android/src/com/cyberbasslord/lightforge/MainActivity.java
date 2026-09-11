@@ -63,6 +63,13 @@ public final class MainActivity extends Activity {
     private boolean completedRestoreVisualRequested;
     private boolean completedRestoreVisualCommitted;
     private ViewTreeObserver.OnDrawListener completedRestoreVisualDrawListener;
+    // One active lease owns one open descriptor for project.json. ProjectStore
+    // publishes edits by atomic replacement, so this descriptor is an
+    // immutable completed-result snapshot even if a later write replaces the
+    // path. It is deliberately never a whole-project IPC payload.
+    private RandomAccessFile completedRestorePayloadFile;
+    private String completedRestorePayloadJobId,completedRestorePayloadNonce,completedRestorePayloadProjectId,completedRestorePayloadSnapshot;
+    private long completedRestorePayloadLength=-1L;
     // Timestamped diagnostics make the strict visual → terminal → post-ACK
     // ordering inspectable in the real instrumentation path.
     private volatile long completedRestoreLastVisualFrameAt;
@@ -275,6 +282,7 @@ public final class MainActivity extends Activity {
                 // A queued old bridge is therefore rejected throughout the
                 // renderer-termination handoff.
                 completedRestoreTerminatingWebView=previous;
+                clearCompletedRestorePayloadLocked();
                 completedRestoreMonitor.replacementStarted();
             }
             // Never hold bridgeLock while terminating/destroying a WebView or
@@ -353,6 +361,25 @@ public final class MainActivity extends Activity {
     private void clearCompletedRestoreVisualProofLocked(){
         completedRestoreVisualJobId=null;completedRestoreVisualNonce=null;completedRestoreVisualWebView=null;
         completedRestoreVisualRequested=false;completedRestoreVisualCommitted=false;completedRestoreVisualDrawListener=null;
+    }
+    private void clearCompletedRestorePayloadLocked(){
+        RandomAccessFile previous=completedRestorePayloadFile;completedRestorePayloadFile=null;
+        completedRestorePayloadJobId=null;completedRestorePayloadNonce=null;completedRestorePayloadProjectId=null;completedRestorePayloadSnapshot=null;completedRestorePayloadLength=-1L;
+        if(previous!=null)try{previous.close();}catch(IOException ignored){}
+    }
+    private RandomAccessFile completedRestorePayloadLocked(String jobId,String nonce,String projectId,File source)throws IOException{
+        if(completedRestorePayloadFile!=null){
+            if(jobId.equals(completedRestorePayloadJobId)&&nonce.equals(completedRestorePayloadNonce)&&projectId.equals(completedRestorePayloadProjectId))return completedRestorePayloadFile;
+            clearCompletedRestorePayloadLocked();
+        }
+        RandomAccessFile opened=new RandomAccessFile(source,"r");
+        try{
+            long length=opened.length();
+            if(length<=0||length>ProjectStore.MAX_PROJECT_BYTES)throw new IOException("The completed project payload is unavailable.");
+            completedRestorePayloadFile=opened;completedRestorePayloadJobId=jobId;completedRestorePayloadNonce=nonce;completedRestorePayloadProjectId=projectId;
+            completedRestorePayloadLength=length;completedRestorePayloadSnapshot=Long.toString(length)+":"+UUID.randomUUID().toString();
+            return opened;
+        }catch(Throwable failure){try{opened.close();}catch(IOException ignored){}if(failure instanceof IOException)throw (IOException)failure;throw new IOException("The completed project payload is unavailable.",failure);}
     }
     private boolean requestCompletedRestoreVisualCommit(String jobId,String nonce){
         final WebView target;
@@ -499,7 +526,7 @@ public final class MainActivity extends Activity {
         if(completedRestoreMonitor!=null)completedRestoreMonitor.close();
         if(completedRestoreTerminateFallback!=null)completedRestoreHandler.removeCallbacks(completedRestoreTerminateFallback);
         completedRestoreTerminateFallback=null;completedRestoreTerminatingWebView=null;
-        synchronized(completedRestoreBridgeLock){clearCompletedRestoreVisualProofLocked();}
+        synchronized(completedRestoreBridgeLock){clearCompletedRestoreVisualProofLocked();clearCompletedRestorePayloadLocked();}
         cancelled.set(true);worker.shutdownNow();
         synchronized(exportLock) {if(activeExport!=null) activeExport.abort();}
         detachPreviewForTeardown();
@@ -646,10 +673,12 @@ public final class MainActivity extends Activity {
                 // WebView's nonce or derive a terminal result.
                 if(accepted&&!ownsCurrentCompletedRestoreBridge()){
                     completedRestoreMonitor.failed(jobId,nonce,"retired-webview-begin");
+                    clearCompletedRestorePayloadLocked();
                     return false;
                 }
                 if(accepted){
                     clearCompletedRestoreVisualProofLocked();
+                    clearCompletedRestorePayloadLocked();
                     completedRestoreLastAcceptedBeginGeneration=ownerGeneration;
                     completedRestoreLastAcceptedBeginJobId=jobId;
                 }
@@ -678,6 +707,7 @@ public final class MainActivity extends Activity {
                 // browser has written its ACK and confirms that write. Native
                 // never reads or writes the browser's localStorage ACK.
                 clearCompletedRestoreVisualProofLocked();
+                clearCompletedRestorePayloadLocked();
                 completedRestoreLastTerminalAt=SystemClock.elapsedRealtime();
                 return true;
             }
@@ -709,7 +739,7 @@ public final class MainActivity extends Activity {
             synchronized(completedRestoreBridgeLock){
                 if(!ownsCurrentCompletedRestoreBridge())return false;
                 boolean accepted=completedRestoreMonitor!=null&&completedRestoreMonitor.failed(jobId,nonce,reason);
-                if(accepted)clearCompletedRestoreVisualProofLocked();
+                if(accepted){clearCompletedRestoreVisualProofLocked();clearCompletedRestorePayloadLocked();}
                 if(!accepted)
                     AppDiagnostics.log(MainActivity.this,"WARN","completed-restore-watchdog","ignored foreign failed event job="+jobId);
                 return accepted;
@@ -755,22 +785,25 @@ public final class MainActivity extends Activity {
             try {
                 synchronized(completedRestoreBridgeLock){
                     if(!ownsCurrentCompletedRestoreBridge()||completedRestoreMonitor==null||!completedRestoreMonitor.owns(jobId,nonce))throw new IOException("The completed restore lease is no longer active.");
-                }
-                if(offset<0||requestedBytes<=0||requestedBytes>COMPLETED_RESTORE_PROJECT_CHUNK_MAX_BYTES)throw new IOException("Invalid completed-project read range.");
-                final byte[] bytes;final long total;final String snapshot;
-                synchronized(AnalysisJobStore.class){
-                    JSONObject job=analysisStatus();
-                    if(job==null||!jobId.equals(job.optString("id"))||!"completed".equals(job.optString("state")))throw new IOException("The completed analysis job is no longer available.");
-                    if(projectId==null||!projectId.equals(job.optString("projectId")))throw new IOException("The completed project does not belong to this job.");
-                    File source=new File(AnalysisJobStore.project(getFilesDir(),projectId),"project.json");
-                    total=source.isFile()?source.length():-1;
-                    if(total<=0||total>ProjectStore.MAX_PROJECT_BYTES||offset>=total)throw new IOException("The completed project payload is unavailable.");
-                    snapshot=Long.toString(total)+":"+Long.toString(source.lastModified());
+                    if(offset<0||requestedBytes<=0||requestedBytes>COMPLETED_RESTORE_PROJECT_CHUNK_MAX_BYTES)throw new IOException("Invalid completed-project read range.");
+                    final RandomAccessFile input;final long total;final String snapshot;
+                    synchronized(AnalysisJobStore.class){
+                        JSONObject job=analysisStatus();
+                        if(job==null||!jobId.equals(job.optString("id"))||!"completed".equals(job.optString("state")))throw new IOException("The completed analysis job is no longer available.");
+                        if(projectId==null||!projectId.equals(job.optString("projectId")))throw new IOException("The completed project does not belong to this job.");
+                        File source=new File(AnalysisJobStore.project(getFilesDir(),projectId),"project.json");
+                        if(!source.isFile())throw new IOException("The completed project payload is unavailable.");
+                        input=completedRestorePayloadLocked(jobId,nonce,projectId,source);total=completedRestorePayloadLength;snapshot=completedRestorePayloadSnapshot;
+                    }
+                    if(offset>=total)throw new IOException("The completed project payload is unavailable.");
                     int count=(int)Math.min(Math.min((long)requestedBytes,total-offset),COMPLETED_RESTORE_PROJECT_CHUNK_MAX_BYTES);
-                    bytes=new byte[count];
-                    try(RandomAccessFile input=new RandomAccessFile(source,"r")){input.seek(offset);input.readFully(bytes);}
+                    byte[] bytes=new byte[count];input.seek(offset);input.readFully(bytes);
+                    // Recovery and bridge terminal/failure operations use this
+                    // same lock. A teardown that bypassed the monitor still
+                    // changes WebView ownership, so check it again at return.
+                    if(!ownsCurrentCompletedRestoreBridge()||completedRestoreMonitor==null||!completedRestoreMonitor.owns(jobId,nonce))throw new IOException("The completed restore lease was retired during payload read.");
+                    return json("ok",true,"offset",offset,"total",total,"snapshot",snapshot,"base64",Base64.encodeToString(bytes,Base64.NO_WRAP)).toString();
                 }
-                return json("ok",true,"offset",offset,"total",total,"snapshot",snapshot,"base64",Base64.encodeToString(bytes,Base64.NO_WRAP)).toString();
             }catch(Exception failure){
                 AppDiagnostics.log(MainActivity.this,"WARN","completed-restore-payload","chunk read rejected: "+(failure.getMessage()==null?failure.getClass().getSimpleName():failure.getMessage()));
                 return json("ok",false,"error","The completed project payload could not be read safely.").toString();
