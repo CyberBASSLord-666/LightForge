@@ -33,7 +33,8 @@ class VerifyV2SourceGuardTest(unittest.TestCase):
             '  ...',
         ])
         summary=verify_v2.node_failure_summary(output)
-        self.assertEqual(summary,'not ok 2 - safe two | not ok 3 - safe three | not ok 4 - safe four | not ok 5 - safe five [fifth detail]')
+        self.assertEqual(summary,'not ok 1 - safe one [first detail] | not ok 2 - safe two | not ok 3 - safe three | not ok 4 - safe four | not ok 5 - safe five [fifth detail]')
+        self.assertEqual(verify_v2.node_failure_summary(output,limit=4),'not ok 1 - safe one [first detail] | not ok 3 - safe three | not ok 4 - safe four | not ok 5 - safe five [fifth detail]')
         self.assertEqual(verify_v2.node_failure_summary('TAP version 13'), 'no TAP failure marker captured')
         self.assertEqual(verify_v2.node_failure_summary(None), 'no TAP failure marker captured')
 
