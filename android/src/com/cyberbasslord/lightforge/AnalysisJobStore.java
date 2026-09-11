@@ -166,7 +166,7 @@ final class AnalysisJobStore {
         if(timeline==null||timeline.optInt("schemaVersion",-1)!=2||!"original-decoded-audio".equals(timeline.optString("clock"))||!Double.isFinite(timeline.optDouble("duration",Double.NaN))||Math.abs(timeline.optDouble("duration",Double.NaN)-duration)>1e-7)throw new IOException("Canonical semantic timeline is missing or uses the wrong clock.");
         JSONArray timelineEvents=array(timeline,"events");java.util.HashSet<String> timelineIds=new java.util.HashSet<>();double previous=-1;
         for(int index=0;index<timelineEvents.length();index++){
-            JSONObject event=timelineEvents.optJSONObject(index);if(event==null)throw new IOException("Invalid canonical semantic event.");
+            JSONObject event=objectAt(timelineEvents,index,"Invalid canonical semantic event.");
             String id=event.optString("id"),type=event.optString("type"),source=event.optString("source"),tier=event.optString("tier");
             double time=event.optDouble("time",Double.NaN),eventDuration=event.optDouble("duration",Double.NaN),eventSalience=event.optDouble("salience",Double.NaN);
             if(!id.matches("[A-Za-z0-9._:-]{1,160}")||!timelineIds.add(id)||type.isEmpty()||source.isEmpty()||!knownTier(tier)||!Double.isFinite(time)||time<0||time>duration||time<previous||!Double.isFinite(eventDuration)||eventDuration<0||time+eventDuration>duration+1e-6||!Double.isFinite(eventSalience)||eventSalience<0||eventSalience>1||!semanticTier(eventSalience).equals(tier))throw new IOException("Canonical semantic timeline is inconsistent.");
@@ -179,7 +179,7 @@ final class AnalysisJobStore {
         for(int index=0;index<ranked.length();index++){
             JSONObject entry=ranked.optJSONObject(index);if(entry==null)throw new IOException("Invalid canonical salience event.");
             String id=entry.optString("id"),tier=entry.optString("tier");Object rankValue=entry.opt("rank");double rawRank=rankValue instanceof Number?((Number)rankValue).doubleValue():Double.NaN,score=entry.optDouble("score",Double.NaN);int rank=Double.isFinite(rawRank)&&rawRank==Math.rint(rawRank)?(int)rawRank:-1;
-            if(!timelineIds.contains(id)||!rankedIds.add(id)||!id.equals(timelineEvents.getJSONObject(index).optString("id"))||!Double.isFinite(score)||score<0||score>1||!salienceTier(score).equals(tier)||rank<1||rank>ranked.length()||!ranks.add(rank))throw new IOException("Canonical music salience is not a one-to-one ranking.");
+            if(!timelineIds.contains(id)||!rankedIds.add(id)||!id.equals(objectAt(timelineEvents,index,"Invalid canonical semantic event.").optString("id"))||!Double.isFinite(score)||score<0||score>1||!salienceTier(score).equals(tier)||rank<1||rank>ranked.length()||!ranks.add(rank))throw new IOException("Canonical music salience is not a one-to-one ranking.");
             counts.put(tier,counts.get(tier)+1);
         }
         for(int rank=1;rank<=ranked.length();rank++)if(!ranks.contains(rank))throw new IOException("Canonical music salience ranks are not contiguous.");
@@ -192,10 +192,13 @@ final class AnalysisJobStore {
         JSONArray highlights=array(summary,"highlights"),topIds=array(summary,"topEventIds");if(highlights.length()>32||highlights.length()!=topIds.length())throw new IOException("Canonical music salience highlights are invalid.");
         for(int index=0;index<highlights.length();index++){
             JSONObject highlight=highlights.optJSONObject(index);if(highlight==null||!(topIds.opt(index) instanceof String)||!((String)topIds.opt(index)).equals(highlight.optString("id")))throw new IOException("Canonical music salience highlight is invalid.");
-            JSONObject matching=null;for(int entry=0;entry<ranked.length();entry++)if(highlight.optString("id").equals(ranked.getJSONObject(entry).optString("id"))){matching=ranked.getJSONObject(entry);break;}
+            JSONObject matching=null;for(int entry=0;entry<ranked.length();entry++){JSONObject candidate=objectAt(ranked,entry,"Invalid canonical salience event.");if(highlight.optString("id").equals(candidate.optString("id"))){matching=candidate;break;}}
             if(matching==null||highlight.optDouble("score",Double.NaN)!=matching.optDouble("score",Double.NaN)||!highlight.optString("tier").equals(matching.optString("tier"))||highlight.optInt("rank",-1)!=matching.optInt("rank",-1))throw new IOException("Canonical music salience highlight is stale.");
             JSONArray drivers=highlight.optJSONArray("drivers");if(drivers==null)throw new IOException("Canonical music salience highlight drivers are missing.");for(int driver=0;driver<drivers.length();driver++)if(!(drivers.opt(driver) instanceof String))throw new IOException("Canonical music salience highlight driver is invalid.");
         }
+    }
+    static JSONObject objectAt(JSONArray value,int index,String error)throws IOException {
+        JSONObject object=value.optJSONObject(index);if(object==null)throw new IOException(error);return object;
     }
     static JSONArray array(JSONObject value,String key)throws IOException {
         JSONArray array=value.optJSONArray(key);if(array==null)throw new IOException("Analysis checkpoint is missing "+key+".");return array;
