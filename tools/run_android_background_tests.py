@@ -1,12 +1,30 @@
 #!/usr/bin/env python3
 """Install CI APKs and retain a source-bound Android background lifecycle receipt."""
-import datetime,hashlib,json,os,selectors,subprocess,time
+import argparse,datetime,hashlib,json,os,selectors,subprocess,time
 from pathlib import Path
-ROOT=Path(__file__).resolve().parents[1];version=json.loads((ROOT/'version.json').read_text())['name'];out=ROOT/('qa/release-'+version);out.mkdir(exist_ok=True)
+from android_evidence_manifest import _atomic_json, candidate_binding
+parser=argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--candidate-dir',type=Path,required=True)
+parser.add_argument('--output-dir',type=Path,required=True)
+parser.add_argument('--candidate-artifact-id',type=int,required=True)
+parser.add_argument('--candidate-artifact-digest',required=True)
+parser.add_argument('--run-id',type=int,required=True)
+parser.add_argument('--run-attempt',type=int,required=True)
+parser.add_argument('--head-sha',required=True)
+parser.add_argument('--evidence-session',required=True)
+args=parser.parse_args()
+ROOT=Path(__file__).resolve().parents[1]
+version=json.loads((ROOT/'version.json').read_text())['name']
+out=args.output_dir.resolve()
+if out.exists():raise SystemExit('Android evidence output directory must be fresh: '+str(out))
+out.mkdir(parents=True,mode=0o700)
+candidate_dir=args.candidate_dir.resolve()
+candidate=candidate_binding(candidate_dir,version,artifact_id=args.candidate_artifact_id,artifact_digest=args.candidate_artifact_digest,head_sha=args.head_sha)
+ci={'run_id':args.run_id,'run_attempt':args.run_attempt,'head_sha':args.head_sha,'evidence_session':args.evidence_session}
 sdk=Path(os.environ['ANDROID_HOME']);adb=sdk/'platform-tools/adb'
-sources=[*sorted((ROOT/'android').rglob('*.java')),*sorted((ROOT/'android').rglob('*.xml')),*sorted((ROOT/'web/background').rglob('*')),*sorted((ROOT/'web/analysis').glob('*.js')),*sorted((ROOT/'web/engine').glob('*.js')),ROOT/'web/app.js',ROOT/'web/index.html',ROOT/'tests/android/BackgroundInstrumentation.java',ROOT/'tools/run_android_background_tests.py',ROOT/'tools/build_android_tests.py',ROOT/'android/native-runtime.json',ROOT/'web/analysis/ASSET_MANIFEST.json']
+sources=[*sorted((ROOT/'android').rglob('*.java')),*sorted((ROOT/'android').rglob('*.xml')),*sorted((ROOT/'web/background').rglob('*')),*sorted((ROOT/'web/analysis').glob('*.js')),*sorted((ROOT/'web/engine').glob('*.js')),ROOT/'web/app.js',ROOT/'web/index.html',ROOT/'tests/android/BackgroundInstrumentation.java',ROOT/'tools/run_android_background_tests.py',ROOT/'tools/build_android_tests.py',ROOT/'android/native-runtime.json',ROOT/'web/analysis/ASSET_MANIFEST.json',ROOT/'tools/android_evidence_manifest.py']
 hashes={str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sources if p.is_file()}
-receipt={'release':version,'passed':False,'checks':[],'errors':[],'source_hashes':hashes,'scope':'Android API 35 emulator lifecycle test using the production service, native CPU Studio and two-pass Balanced MDX separation, frozen-request routing, live model/tensor release before WebView/WASM voice/GAME, screen-off completion, live inference cancellation, verified passage resume and compilation. Not a physical phone or Tesla test.'}
+receipt={'release':version,'passed':False,'checks':[],'errors':[],'source_hashes':hashes,'scope':'Android API 35 emulator lifecycle test using the production service, native CPU Studio and two-pass Balanced MDX separation, frozen-request routing, live model/tensor release before WebView/WASM voice/GAME, screen-off completion, live inference cancellation, verified passage resume and compilation. Not a physical phone or Tesla test.','ci':ci,'candidate':candidate}
 def run(*args,timeout=120):
     return subprocess.run([str(adb),*args],text=True,capture_output=True,timeout=timeout,check=True).stdout
 INSTRUMENT_TIMEOUT_SECONDS=3000
@@ -91,8 +109,8 @@ try:
         if run('shell','settings','get','global',setting).strip() not in {'0','0.0'}:
             raise RuntimeError('Android animation setting was not applied: '+setting)
     run('shell','input','keyevent','KEYCODE_WAKEUP');run('shell','wm','dismiss-keyguard')
-    run('install','-r',str(ROOT/'candidate'/('LightForge-'+version+'.apk')),timeout=300)
-    run('install','-r',str(ROOT/'candidate/background-tests.apk'))
+    run('install','-r',str(candidate_dir/('LightForge-'+version+'.apk')),timeout=300)
+    run('install','-r',str(candidate_dir/'background-tests.apk'))
     run('shell','pm','grant','com.cyberbasslord.lightforge','android.permission.POST_NOTIFICATIONS')
     run('shell','dumpsys','deviceidle','whitelist','+com.cyberbasslord.lightforge')
     result=run_instrumentation()
@@ -134,4 +152,4 @@ finally:
             try:(out/name).write_text(run(*command,timeout=15))
             except Exception as diagnostic_error:(out/name).write_text(str(diagnostic_error)+'\n')
     receipt['completedAt']=datetime.datetime.now(datetime.timezone.utc).isoformat()
-    (out/'android-background-verification.json').write_text(json.dumps(receipt,indent=2)+'\n');print(json.dumps(receipt,indent=2))
+    _atomic_json(out/'android-background-verification.json',receipt);print(json.dumps(receipt,indent=2))
