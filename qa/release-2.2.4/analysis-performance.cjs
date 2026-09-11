@@ -41,7 +41,7 @@ function build(engine,totalWallClockSeconds){
     if(typeof stage.restored!=='boolean')throw Error('Invalid analyzer stage restoration state.');
     stages[name]={seconds:nonnegative(stage.seconds,'analyzer stage seconds'),restored:stage.restored};
   }
-  const separation=engine.separation;
+  const separation=engine.separationModel;
   if(!plain(separation))throw Error('Invalid separation profile.');
   const profile={
     name:text(engine.name,'engine name'),modelId:text(engine.modelId,'engine model id'),

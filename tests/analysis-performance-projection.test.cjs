@@ -11,7 +11,15 @@ function engine(overrides={}){
     name:'Beat This! full + Deux + GAME Large',modelId:'beat-this-final0',quality:'precision',
     runtime:'ONNX Runtime Web 1.20.1',recoverable:false,analysisSeconds:12.3456789,
     stages:{rhythm:{seconds:1.25,restored:false},separation:{seconds:10.5,restored:true},voice:{seconds:.5,restored:false}},
-    separation:{modelId:'mel-band-roformer-deux-lightforge-2',runtime:'onnxruntime-web-wasm',chunks:3,restoredPassages:2},
+    separationModel:{
+      name:'Mel-Band RoFormer Deux',modelId:'mel-band-roformer-deux-lightforge-2',
+      modelSha256:'10255c02295bf3e3865d4ee50ff752d7b19b124ed5fd93b147babc4333eda3aa',runtime:'onnxruntime-web-wasm',
+      sourceSeparated:true,sampleRate:44100,sourceChannels:2,stems:['vocals','accompaniment'],
+      method:'Dual trained stereo source separation; Float32 bounded transformer with complete attention',
+      contextSeconds:13,coreSeconds:10,overlapSeconds:5,chunks:3,restoredPassages:2,estimated:true,
+      analysisSeconds:10.5,alignment:'Original PCM clock; centered STFT and normalized overlap-add with complementary chunk crossfades',
+      limitations:['Vocal and instrumental estimates can contain bleed; neither is an isolated bass instrument.']
+    },
     ...overrides
   };
 }
@@ -33,7 +41,8 @@ test('projects bounded stage/cache/profile timing without a performance threshol
 test('rejects nonfinite or malformed timing/cache inputs before receipt publication',()=>{
   assert.throws(()=>Performance.build(engine({analysisSeconds:Infinity}),1),/analyzer reported seconds/);
   assert.throws(()=>Performance.build(engine({stages:{rhythm:{seconds:1,restored:'yes'}}}),1),/restoration state/);
-  assert.throws(()=>Performance.build(engine({separation:{modelId:'m',runtime:'r',chunks:1.5,restoredPassages:0}}),1),/chunk count/);
+  assert.throws(()=>Performance.build(engine({separationModel:{modelId:'m',runtime:'r',chunks:1.5,restoredPassages:0}}),1),/chunk count/);
+  assert.throws(()=>Performance.build(engine({separationModel:undefined,separation:engine().separationModel}),1),/Invalid separation profile/);
   assert.throws(()=>Performance.build(engine({resourceDiagnostics:{schemaVersion:1}}),1),/pipeline resource diagnostics/);
   const value=Performance.build(engine(),1);
   value.cache.restoredStageNames=['rhythm'];
