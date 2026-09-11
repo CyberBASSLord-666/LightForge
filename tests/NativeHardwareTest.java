@@ -34,7 +34,8 @@ public final class NativeHardwareTest {
         reject(root,"all-lamps","unsupported-door",(d,o,s)->paint(d,o,s,42,1,2,63),"unsupported by your Model 3");
         reject(root,"all-lamps","reserved",(d,o,s)->paint(d,o,s,194,1,2,255),"Reserved channel");
         reject(root,"all-lamps","final-frame",(d,o,s)->d[d.length-200]=(byte)255,"settle all channels");
-        reject(root,"all-lamps","precision-step",(d,o,s)->d[18]=25,"header is invalid");
+        reject(root,"all-lamps","invalid-step",(d,o,s)->d[18]=14,"header is invalid");
+        reject(root,"all-lamps","duration-step",(d,o,s)->d[18]=25,"durations do not match.");
         System.out.println("PASS: "+checks+" production native sequence checks; valid manual Stop/Idle, all closures, all lamps/RGB, and optional outer ramps; corrupt commands and impossible choreography rejected.");
     }
 }
