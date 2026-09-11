@@ -665,7 +665,7 @@ public final class BackgroundInstrumentation extends Instrumentation {
         check((Integer)field(task,"completedPasses")==2,"Balanced fixture did not complete both model passes on Android");
         JSONObject saved=AnalysisJobStore.read(new File(AnalysisJobStore.project(files,id),"project.json"),ProjectStore.MAX_PROJECT_BYTES);
         JSONObject music=saved.getJSONObject("music"),engine=music.getJSONObject("engine"),separation=engine.getJSONObject("separationModel");
-        check(engine.optBoolean("neural"),"Balanced fixture did not complete the actual neural pipeline");checkCanonicalSemanticAnalysis(music,saved.getDouble("duration"),"Balanced fixture");
+        check(engine.optBoolean("neural"),"Balanced fixture did not complete the actual neural pipeline");checkCanonicalSemanticAnalysis(music,frozen.getDouble("duration"),"Balanced fixture");
         check("balanced".equals(engine.optString("quality")),"Balanced quality was silently changed");
         check("uvr-mdx-net-voc-ft".equals(separation.optString("modelId")),"Balanced fixture used the wrong separator");
         check(separation.optBoolean("denoise")&&separation.optInt("modelPasses")==2&&separation.optInt("chunks")==1,
@@ -690,14 +690,14 @@ public final class BackgroundInstrumentation extends Instrumentation {
     @Override public void onStart(){
         JSONObject receipt=new JSONObject();Bundle output=new Bundle();
         try{
-            files=getTargetContext().getFilesDir();startMainWatchdog();phase("completed-restore-monitor-contract");completedRestoreMonitorContract();phase("first-screen-off-analysis");launch();String id=fixture("Background audio");JSONObject job=start(id);
+            files=getTargetContext().getFilesDir();startMainWatchdog();phase("completed-restore-monitor-contract");completedRestoreMonitorContract();phase("first-screen-off-analysis");launch();String id=fixture("Background audio");JSONObject job=start(id);double sourceDuration=AnalysisJobStore.request(files,job.getString("id")).getDouble("duration");
             check(field(service(),"nativeMdx")==null,"Precision Studio allocated the Balanced-only accelerator");
             long backgroundAt=System.currentTimeMillis();backgroundAndDoze();
             JSONObject completed=waitTerminal(15*60*1000L);
             check("completed".equals(completed.optString("state")),"Screen-off analysis failed: "+completed);
             check(completed.getLong("updatedAt")>backgroundAt,"No progress after Activity destruction");waitService(false);
             JSONObject saved=AnalysisJobStore.read(new File(AnalysisJobStore.project(files,id),"project.json"),ProjectStore.MAX_PROJECT_BYTES);
-            checkCanonicalSemanticAnalysis(saved.getJSONObject("music"),saved.getDouble("duration"),"Actual analysis");
+            checkCanonicalSemanticAnalysis(saved.getJSONObject("music"),sourceDuration,"Actual analysis");
             check(saved.getJSONObject("music").getJSONObject("engine").optBoolean("neural"),"Neural analysis did not run");
             check(saved.getJSONObject("compiled").getString("sha256").matches("[a-f0-9]{64}"),"Compiled frames missing");
             check(separation(saved).optInt("chunks")==1,"Short Studio fixture did not execute exactly one native passage");
