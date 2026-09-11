@@ -33,6 +33,7 @@ from verification_evidence_manifest import (
     RECEIPTS as VERIFICATION_RECEIPTS,
     WRAPPER_MANIFEST as VERIFICATION_WRAPPER_MANIFEST,
     content_artifact_name as verification_content_artifact_name,
+    validate_reconstructed_material_provenance,
     validate_candidate_record as validate_verification_candidate_record,
     verify_content as verify_verification_content,
     verify_wrapper as verify_verification_wrapper,
@@ -283,13 +284,14 @@ def _verify_candidate_from_run(repo, ci, version, source_commit, source_tree_sha
     return {'candidate': candidate, 'candidate_root': root, 'candidate_artifact_id': artifact['id']}
 
 
-def _validate_verification_source_hashes(source_commit, receipts):
-    """Bind every sealed core receipt to bytes in the verified source commit.
+def _validate_verification_source_hashes(source_commit, receipts, source_bindings, content_root):
+    """Validate tree, rebuilt, and sealed-runtime dependencies without stale QA.
 
-    Publication runs from a later request commit.  Reading ``qa`` or sources
-    from that checkout would let a stale checked-in receipt override the
-    successful verify-v2 result, so every source byte is read directly from the
-    immutable candidate commit instead.
+    Candidate-tree bytes are read directly from the immutable Git commit.
+    The narrow rebuilt-material set is recreated by the protected publisher
+    workflow and checked against both its sealed digest and the exact candidate
+    provenance manifest.  Fresh QA intermediates are read only from the
+    immutable sealed content artifact.
     """
     expected = {}
     for name, receipt in receipts.items():
@@ -300,13 +302,54 @@ def _validate_verification_source_hashes(source_commit, receipts):
             require(isinstance(relative, str) and isinstance(checksum, str), 'Verification receipt source binding is invalid: ' + name)
             previous = expected.setdefault(relative, checksum)
             require(previous == checksum, 'Verification receipts disagree on source hash: ' + relative)
+    require(isinstance(source_bindings, dict) and set(source_bindings) == set(expected),
+            'Verification source binding inventory is invalid')
+    content_root = Path(content_root).resolve()
     for relative, checksum in expected.items():
-        try:
-            source = run_bytes('git', 'show', source_commit + ':' + relative)
-        except subprocess.CalledProcessError as error:
-            raise ValueError('Verification receipt source is absent from the candidate commit: ' + relative) from error
-        require(hashlib.sha256(source).hexdigest() == checksum,
-                'Verification receipt source hash differs from the candidate commit: ' + relative)
+        binding = source_bindings[relative]
+        require(isinstance(binding, dict), 'Verification source binding is invalid: ' + relative)
+        origin = binding.get('origin')
+        if origin == 'candidate_tree':
+            require(binding == {'origin': 'candidate_tree', 'sha256': checksum},
+                    'Verification candidate-tree binding differs: ' + relative)
+            try:
+                source = run_bytes('git', 'show', source_commit + ':' + relative)
+            except subprocess.CalledProcessError as error:
+                raise ValueError('Verification receipt source is absent from the candidate commit: ' + relative) from error
+            require(hashlib.sha256(source).hexdigest() == checksum,
+                    'Verification receipt source hash differs from the candidate commit: ' + relative)
+            continue
+        if origin == 'sealed_runtime_material':
+            archive_relative = binding.get('path')
+            require(isinstance(archive_relative, str) and archive_relative.startswith('materials/') and
+                    type(binding.get('bytes')) is int and binding['bytes'] > 0 and binding.get('sha256') == checksum,
+                    'Verification sealed runtime material binding is invalid: ' + relative)
+            material = (content_root / archive_relative).resolve()
+            require(material.is_relative_to(content_root) and material.is_file() and not material.is_symlink(),
+                    'Verification sealed runtime material is invalid: ' + relative)
+            require(material.stat().st_size == binding['bytes'] and digest(material) == checksum,
+                    'Verification sealed runtime material differs: ' + relative)
+            continue
+        if origin == 'reconstructed_material':
+            provenance_path = binding.get('provenance_path')
+            provenance_digest = binding.get('provenance_sha256')
+            require(isinstance(provenance_path, str) and isinstance(provenance_digest, str) and
+                    type(binding.get('bytes')) is int and binding['bytes'] > 0 and binding.get('sha256') == checksum,
+                    'Verification reconstructed material binding is invalid: ' + relative)
+            material = (ROOT / relative).resolve()
+            require(material.is_relative_to(ROOT.resolve()) and material.is_file() and not material.is_symlink(),
+                    'Verification reconstructed material is invalid: ' + relative)
+            require(material.stat().st_size == binding['bytes'] and digest(material) == checksum,
+                    'Verification reconstructed material differs: ' + relative)
+            try:
+                provenance = run_bytes('git', 'show', source_commit + ':' + provenance_path)
+            except subprocess.CalledProcessError as error:
+                raise ValueError('Verification reconstructed material provenance is absent from the candidate commit: ' + relative) from error
+            require(hashlib.sha256(provenance).hexdigest() == provenance_digest,
+                    'Verification reconstructed material provenance differs from the candidate commit: ' + relative)
+            validate_reconstructed_material_provenance(relative, checksum, binding['bytes'], provenance)
+            continue
+        raise ValueError('Verification source binding origin is invalid: ' + relative)
 
 
 def verify_nonandroid_release_evidence(repo, ci, version, source_commit, source_tree_sha, candidate):
@@ -328,16 +371,22 @@ def verify_nonandroid_release_evidence(repo, ci, version, source_commit, source_
     require(_sha256(content_artifact['digest'], 'Verification evidence artifact digest is invalid') == reference['digest'],
             'Verification evidence artifact digest differs from its sealed wrapper')
     content_root = ROOT / 'build/release-verification-evidence'
+    content_members = {
+        VERIFICATION_CONTENT_MANIFEST,
+        *VERIFICATION_RECEIPTS.values(),
+        *(record['path'] for record in wrapper['source_bindings'].values()
+          if record['origin'] == 'sealed_runtime_material'),
+    }
     _download_exact_artifact(repo, content_artifact, content_root,
-                             {VERIFICATION_CONTENT_MANIFEST, *VERIFICATION_RECEIPTS.values()})
+                             content_members)
     content = verify_verification_content(content_root, release=version['name'], pipeline=pipeline,
                                           expected_candidate=candidate)
     require(content['candidate'] == wrapper['candidate'] and content['pipeline'] == wrapper['pipeline']
-            and content['receipts'] == wrapper['receipts'],
+            and content['receipts'] == wrapper['receipts'] and content['source_bindings'] == wrapper['source_bindings'],
             'Verification evidence content differs from its sealed wrapper')
     require(digest(content_root / VERIFICATION_CONTENT_MANIFEST) == reference['content_manifest_sha256'],
             'Verification evidence content manifest differs from its sealed wrapper')
-    _validate_verification_source_hashes(source_commit, content['receipts'])
+    _validate_verification_source_hashes(source_commit, content['receipts'], content['source_bindings'], content_root)
     return {
         'wrapper_artifact_id': wrapper_artifact['id'],
         'content_artifact_id': content_artifact['id'],

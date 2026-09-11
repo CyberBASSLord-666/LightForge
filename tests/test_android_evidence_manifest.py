@@ -111,6 +111,24 @@ class AndroidEvidenceManifestTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'unexpected or missing'):
             evidence.verify_evidence(output, release=RELEASE, run_id=44, run_attempt=3, head_sha=HEAD)
 
+    def test_candidate_inventory_reports_missing_and_v4_sidecar(self):
+        (self.input / 'background-tests.apk').unlink()
+        (self.input / 'background-tests.apk.idsig').write_bytes(b'v4-sidecar')
+        with self.assertRaisesRegex(
+                ValueError,
+                r'missing: background-tests\.apk; unexpected: background-tests\.apk\.idsig'):
+            evidence.create_candidate(argparse.Namespace(
+                input_dir=self.input, output_dir=self.root / 'rejected-candidate', release=RELEASE,
+                run_id=44, run_attempt=3, head_sha=HEAD, tree_sha=TREE,
+                evidence_session=SESSION, source_hashes=self.source_hashes,
+            ))
+
+    def test_ci_instrumentation_signers_disable_v4_sidecars(self):
+        root = Path(__file__).resolve().parents[1]
+        for name in ('build_android_tests.py', 'build_diagnostics_tests.py'):
+            source = (root / 'tools' / name).read_text(encoding='utf-8')
+            self.assertIn("'--v4-signing-enabled','false'", source.replace(' ', ''))
+
     def test_rejects_tampered_receipt_digest_and_candidate_binding(self):
         output = self.root / 'accepted'
         self.write(output)

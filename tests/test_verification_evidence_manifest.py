@@ -9,6 +9,7 @@ from pathlib import Path
 import tempfile
 from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -89,7 +90,8 @@ class VerificationEvidenceManifestTest(unittest.TestCase):
             tree_sha=TREE,
             evidence_session=SESSION,
         )
-        manifest = evidence.write_content(args)
+        with patch.object(evidence, "_candidate_tree_bytes", side_effect=lambda _root, _commit, relative: SOURCE_BYTES if relative == "web/app.js" else None):
+            manifest = evidence.write_content(args)
         return candidate, receipts, content, manifest
 
     def _make_wrapper(self, root: Path, content: Path, attempt=1):
@@ -131,7 +133,16 @@ class VerificationEvidenceManifestTest(unittest.TestCase):
             root = Path(temporary)
             _, _, content, manifest = self._make_content(root)
             (content / evidence.RECEIPTS["native-verification.json"]).unlink()
-            with self.assertRaisesRegex(ValueError, "unexpected or missing"):
+            with self.assertRaisesRegex(ValueError, "missing"):
+                evidence.verify_content(content, release=RELEASE, pipeline=pipeline(), expected_candidate=manifest["candidate"])
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            _, _, content, manifest = self._make_content(root)
+            path = content / evidence.CONTENT_MANIFEST
+            value = json.loads(path.read_text(encoding="utf-8"))
+            value.pop("source_bindings")
+            path.write_text(json.dumps(value), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "fields are invalid"):
                 evidence.verify_content(content, release=RELEASE, pipeline=pipeline(), expected_candidate=manifest["candidate"])
 
     def test_missing_post_purge_receipt_cannot_be_sealed(self):
@@ -246,6 +257,99 @@ class VerificationEvidenceManifestTest(unittest.TestCase):
                     head_sha=HEAD,
                     tree_sha=TREE,
                     evidence_session=SESSION,
+                ))
+
+    def test_ci_only_materials_are_explicitly_classified_sealed_and_reconstructed(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            candidate = root / "candidate-manifest.json"
+            identity = candidate_manifest(candidate)
+            receipt_dir = root / "receipts"
+            receipt_dir.mkdir()
+            source_root = root / "source"
+            app = source_root / "web/app.js"
+            app.parent.mkdir(parents=True)
+            app.write_bytes(SOURCE_BYTES)
+            fixture = source_root / "qa/release-1.6.0/fixtures/falcon-mix.wav"
+            fixture.parent.mkdir(parents=True)
+            fixture.write_bytes(b"fresh-falcon")
+            game = source_root / "web/analysis/models/game/bd2dur.onnx"
+            game.parent.mkdir(parents=True)
+            game.write_bytes(b"game")
+            runtime = source_root / "qa/release-2.2.5/source-clock-verification.json"
+            runtime.parent.mkdir(parents=True)
+            runtime.write_bytes(b'{"fresh":true}')
+            fixture_hash = evidence.sha256_file(fixture)
+            game_hash = evidence.sha256_file(game)
+            runtime_hash = evidence.sha256_file(runtime)
+            sources = {
+                "web/app.js": SOURCE_HASH,
+                "qa/release-1.6.0/fixtures/falcon-mix.wav": fixture_hash,
+                "web/analysis/models/game/bd2dur.onnx": game_hash,
+                "qa/release-2.2.5/source-clock-verification.json": runtime_hash,
+            }
+            for name in evidence.RECEIPTS:
+                value = receipt(name)
+                value["source_hashes"] = sources
+                (receipt_dir / name).write_text(json.dumps(value), encoding="utf-8")
+            fixture_provenance = json.dumps({"tracks": [{"id": "falcon", "pcmSHA256": {"falcon-mix.wav": fixture_hash}}]}).encode()
+            game_provenance = json.dumps({"files": {"bd2dur.onnx": {"bytes": game.stat().st_size, "sha256": game_hash}}}).encode()
+
+            def tree_bytes(_root, _commit, relative):
+                return {
+                    "web/app.js": SOURCE_BYTES,
+                    "qa/release-1.6.0/musdb-fixture-provenance.json": fixture_provenance,
+                    "web/analysis/models/game/manifest.json": game_provenance,
+                    "qa/release-2.2.5/source-clock-verification.json": b"historical-output",
+                }.get(relative)
+
+            with patch.object(evidence, "_candidate_tree_bytes", side_effect=tree_bytes):
+                content = evidence.write_content(SimpleNamespace(
+                    output_dir=root / "content", receipt_dir=receipt_dir, source_root=source_root,
+                    candidate_manifest=candidate, candidate_artifact_id=911,
+                    candidate_artifact_digest="sha256:" + "f" * 64,
+                    candidate_identity_sha256=identity, release=RELEASE, run_id=741,
+                    run_attempt=1, head_sha=HEAD, tree_sha=TREE, evidence_session=SESSION,
+                ))
+            bindings = content["source_bindings"]
+            self.assertEqual(bindings["web/app.js"]["origin"], "candidate_tree")
+            self.assertEqual(bindings["qa/release-1.6.0/fixtures/falcon-mix.wav"]["origin"], "reconstructed_material")
+            self.assertEqual(bindings["web/analysis/models/game/bd2dur.onnx"]["origin"], "reconstructed_material")
+            sealed = bindings["qa/release-2.2.5/source-clock-verification.json"]
+            self.assertEqual(sealed["origin"], "sealed_runtime_material")
+            self.assertEqual((root / "content" / sealed["path"]).read_bytes(), runtime.read_bytes())
+            self.assertEqual(
+                evidence.verify_content(root / "content", release=RELEASE, pipeline=pipeline(), expected_candidate=content["candidate"]),
+                content,
+            )
+            (root / "content" / sealed["path"]).write_bytes(b"tampered")
+            with self.assertRaisesRegex(ValueError, "runtime material differs"):
+                evidence.verify_content(root / "content", release=RELEASE, pipeline=pipeline(), expected_candidate=content["candidate"])
+
+    def test_unapproved_non_tree_source_fails_sealing(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            candidate = root / "candidate-manifest.json"
+            identity = candidate_manifest(candidate)
+            receipt_dir = root / "receipts"
+            receipt_dir.mkdir()
+            source_root = root / "source"
+            bad = source_root / "qa/release-2.2.5/unreviewed-output.json"
+            bad.parent.mkdir(parents=True)
+            bad.write_bytes(b"unreviewed")
+            checksum = evidence.sha256_file(bad)
+            for name in evidence.RECEIPTS:
+                value = receipt(name)
+                value["source_hashes"] = {"qa/release-2.2.5/unreviewed-output.json": checksum}
+                (receipt_dir / name).write_text(json.dumps(value), encoding="utf-8")
+            with patch.object(evidence, "_candidate_tree_bytes", return_value=None), \
+                    self.assertRaisesRegex(ValueError, "approved CI material"):
+                evidence.write_content(SimpleNamespace(
+                    output_dir=root / "content", receipt_dir=receipt_dir, source_root=source_root,
+                    candidate_manifest=candidate, candidate_artifact_id=911,
+                    candidate_artifact_digest="sha256:" + "f" * 64,
+                    candidate_identity_sha256=identity, release=RELEASE, run_id=741,
+                    run_attempt=1, head_sha=HEAD, tree_sha=TREE, evidence_session=SESSION,
                 ))
 
 

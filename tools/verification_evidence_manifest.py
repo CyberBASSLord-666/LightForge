@@ -25,6 +25,7 @@ import os
 from pathlib import Path, PurePosixPath
 import re
 import shutil
+import subprocess
 import tempfile
 from typing import Any, Mapping
 
@@ -45,6 +46,20 @@ RECEIPTS = {
     "analysis-browser-verification.json": "receipts/analysis-browser-verification.json",
     "analysis-verification.json": "receipts/analysis-verification.json",
 }
+
+# These are deliberately narrow.  A receipt source that is not the exact byte
+# from the candidate tree must be one of these reviewed CI-only materials; a
+# new path fails sealing until its provenance policy is explicitly reviewed.
+RECONSTRUCTED_MATERIAL_PROVENANCE = {
+    "qa/release-1.6.0/fixtures/falcon-mix.wav": "qa/release-1.6.0/musdb-fixture-provenance.json",
+    "web/analysis/models/game/bd2dur.onnx": "web/analysis/models/game/manifest.json",
+    "web/analysis/models/game/dur2bd.onnx": "web/analysis/models/game/manifest.json",
+    "web/analysis/models/game/encoder.onnx": "web/analysis/models/game/manifest.json",
+    "web/analysis/models/game/estimator.onnx": "web/analysis/models/game/manifest.json",
+    "web/analysis/models/game/segmenter.onnx": "web/analysis/models/game/manifest.json",
+}
+MAX_RUNTIME_MATERIAL_BYTES = 128 * 1024 * 1024
+MAX_RUNTIME_MATERIAL_TOTAL_BYTES = 512 * 1024 * 1024
 
 _HEX64 = re.compile(r"[0-9a-f]{64}")
 _SHA40 = re.compile(r"[0-9a-f]{40}")
@@ -196,14 +211,175 @@ def validate_source_hashes(source_hashes: Any, source_root: Path | str) -> dict[
 
     This runs while the ordinary verify job is still operating on ``GITHUB_SHA``
     and after the workflow has removed any checked-in receipt files.  The later
-    publisher repeats the same binding directly against the immutable Git
-    object, rather than its release-request checkout.
+    publisher validates candidate-tree bytes from immutable Git, regenerated
+    materials from their exact source-controlled recipes, and fresh runtime
+    outputs from this sealed artifact rather than a release-request checkout.
     """
     hashes = _source_hashes(source_hashes, "Verification receipt source hashes are invalid")
     for relative, checksum in hashes.items():
         path = _regular(source_root, relative, "Verification receipt source path is invalid: " + relative)
         require(sha256_file(path) == checksum, "Verification receipt source hash differs from the verifier checkout: " + relative)
     return hashes
+
+
+def _runtime_evidence_materials(release: str) -> frozenset[str]:
+    """Fresh results which are inputs to the final analysis receipt.
+
+    The files are generated after the checkout and therefore cannot be read
+    from the candidate Git tree or from a later release-request checkout.  They
+    are copied into the sealed content artifact instead.
+    """
+    root = "qa/release-" + _release(release, "Evidence release is invalid") + "/"
+    return frozenset(root + name for name in {
+        "analysis-browser-verification.json",
+        "browser-verification.json",
+        "native-inference-profile-equivalence.json",
+        "native-mdx-comparison-verification.json",
+        "native-mdx-downstream-native.json",
+        "native-mdx-downstream-verification.json",
+        "native-mdx-downstream-wasm.json",
+        "source-clock-verification.json",
+    })
+
+
+def _material_path(relative: str) -> str:
+    _relative(relative, "Verification material path is invalid")
+    return "materials/" + hashlib.sha256(relative.encode("utf-8")).hexdigest()
+
+
+def _reconstructed_provenance_path(relative: str) -> str:
+    try:
+        return RECONSTRUCTED_MATERIAL_PROVENANCE[relative]
+    except KeyError as error:
+        raise ValueError("Evidence reconstructed material is not approved: " + relative) from error
+
+
+def validate_reconstructed_material_provenance(relative: str, checksum: str, size: int,
+                                                provenance_bytes: bytes) -> None:
+    """Validate an exact source-controlled recipe for a rebuilt material."""
+    checksum = _sha(checksum, "Evidence reconstructed material hash is invalid: " + relative)
+    require(type(size) is int and size > 0, "Evidence reconstructed material size is invalid: " + relative)
+    try:
+        provenance = json.loads(provenance_bytes.decode("utf-8"))
+    except (UnicodeError, json.JSONDecodeError) as error:
+        raise ValueError("Evidence reconstructed material provenance is invalid: " + relative) from error
+    if relative == "qa/release-1.6.0/fixtures/falcon-mix.wav":
+        tracks = provenance.get("tracks") if isinstance(provenance, dict) else None
+        falcon = next((track for track in tracks if isinstance(track, dict) and track.get("id") == "falcon"), None) if isinstance(tracks, list) else None
+        require(isinstance(falcon, dict) and falcon.get("pcmSHA256", {}).get("falcon-mix.wav") == checksum,
+                "Evidence fixture provenance differs from sealed material")
+        return
+    name = PurePosixPath(relative).name
+    files = provenance.get("files") if isinstance(provenance, dict) else None
+    record = files.get(name) if isinstance(files, dict) else None
+    require(isinstance(record, dict) and record == {"bytes": size, "sha256": checksum},
+            "Evidence model manifest differs from sealed material: " + relative)
+
+
+def _candidate_tree_bytes(source_root: Path | str, commit: str, relative: str) -> bytes | None:
+    """Read a candidate-tree path without trusting the mutable worktree."""
+    commit = _commit(commit, "Candidate source commit is invalid")
+    relative = _relative(relative, "Verification receipt source path is invalid").as_posix()
+    try:
+        return subprocess.check_output(
+            ("git", "-C", str(Path(source_root).resolve()), "show", commit + ":" + relative),
+            stderr=subprocess.DEVNULL,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return None
+
+
+def _source_hash_union(receipts: Mapping[str, Mapping[str, Any]]) -> dict[str, str]:
+    expected: dict[str, str] = {}
+    for name, receipt in receipts.items():
+        require(name in RECEIPTS and isinstance(receipt, Mapping), "Verification receipt record is invalid")
+        for relative, checksum in _source_hashes(receipt.get("source_hashes"), "Verification receipt source hashes are invalid: " + name).items():
+            previous = expected.setdefault(relative, checksum)
+            require(previous == checksum, "Verification receipts disagree on source hash: " + relative)
+    return expected
+
+
+def _source_bindings(value: Any, *, expected: Mapping[str, str], release: str,
+                     root: Path | None = None) -> dict[str, dict[str, Any]]:
+    """Validate complete source provenance, including CI-only material origins."""
+    require(isinstance(value, dict) and set(value) == set(expected), "Evidence source binding inventory is invalid")
+    result: dict[str, dict[str, Any]] = {}
+    runtime = _runtime_evidence_materials(release)
+    runtime_total = 0
+    for relative, checksum in expected.items():
+        record = value.get(relative)
+        require(isinstance(record, dict), "Evidence source binding is invalid: " + relative)
+        checksum = _sha(checksum, "Evidence source hash is invalid: " + relative)
+        origin = record.get("origin")
+        if origin == "candidate_tree":
+            require(record == {"origin": "candidate_tree", "sha256": checksum}, "Evidence candidate-tree binding differs: " + relative)
+            result[relative] = {"origin": "candidate_tree", "sha256": checksum}
+            continue
+        if origin == "reconstructed_material":
+            provenance_path = _reconstructed_provenance_path(relative)
+            require(record == {"origin": "reconstructed_material", "bytes": record.get("bytes"), "sha256": checksum,
+                               "provenance_path": provenance_path, "provenance_sha256": record.get("provenance_sha256")}
+                    and type(record.get("bytes")) is int and record["bytes"] > 0,
+                    "Evidence reconstructed-material binding differs: " + relative)
+            result[relative] = {"origin": "reconstructed_material", "bytes": record["bytes"], "sha256": checksum,
+                                "provenance_path": provenance_path,
+                                "provenance_sha256": _sha(record["provenance_sha256"], "Evidence reconstructed provenance digest is invalid: " + relative)}
+            continue
+        if origin == "sealed_runtime_material":
+            require(relative in runtime, "Evidence runtime material is not approved: " + relative)
+            expected_path = _material_path(relative)
+            require(record == {"origin": "sealed_runtime_material", "path": expected_path,
+                               "bytes": record.get("bytes"), "sha256": checksum}
+                    and type(record.get("bytes")) is int and 0 < record["bytes"] <= MAX_RUNTIME_MATERIAL_BYTES,
+                    "Evidence sealed-runtime-material binding differs: " + relative)
+            runtime_total += record["bytes"]
+            require(runtime_total <= MAX_RUNTIME_MATERIAL_TOTAL_BYTES, "Evidence runtime material total exceeds the safe limit")
+            if root is not None:
+                path = _regular(root, expected_path, "Evidence runtime material is missing: " + relative)
+                require(path.stat().st_size == record["bytes"] and sha256_file(path) == checksum,
+                        "Evidence runtime material differs: " + relative)
+            result[relative] = {"origin": "sealed_runtime_material", "path": expected_path,
+                                "bytes": record["bytes"], "sha256": checksum}
+            continue
+        raise ValueError("Evidence source binding origin is invalid: " + relative)
+    return result
+
+
+def _seal_source_bindings(receipts: Mapping[str, Mapping[str, Any]], *, source_root: Path | str,
+                          source_commit: str, release: str, output: Path) -> dict[str, dict[str, Any]]:
+    """Classify every receipt hash as tree, reconstructed, or sealed runtime data."""
+    expected = _source_hash_union(receipts)
+    runtime = _runtime_evidence_materials(release)
+    bindings: dict[str, dict[str, Any]] = {}
+    for relative, checksum in expected.items():
+        path = _regular(source_root, relative, "Verification receipt source path is invalid: " + relative)
+        require(sha256_file(path) == checksum,
+                "Verification receipt source hash differs from the verifier checkout: " + relative)
+        candidate_bytes = _candidate_tree_bytes(source_root, source_commit, relative)
+        if candidate_bytes is not None and hashlib.sha256(candidate_bytes).hexdigest() == checksum:
+            bindings[relative] = {"origin": "candidate_tree", "sha256": checksum}
+        elif relative in RECONSTRUCTED_MATERIAL_PROVENANCE:
+            provenance_path = _reconstructed_provenance_path(relative)
+            provenance_bytes = _candidate_tree_bytes(source_root, source_commit, provenance_path)
+            require(provenance_bytes is not None, "Evidence reconstructed material provenance is absent from the candidate tree: " + relative)
+            validate_reconstructed_material_provenance(relative, checksum, path.stat().st_size, provenance_bytes)
+            bindings[relative] = {
+                "origin": "reconstructed_material", "bytes": path.stat().st_size, "sha256": checksum,
+                "provenance_path": provenance_path, "provenance_sha256": hashlib.sha256(provenance_bytes).hexdigest(),
+            }
+        elif relative in runtime:
+            archive_path = _material_path(relative)
+            destination = output / archive_path
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(path, destination)
+            require(0 < destination.stat().st_size <= MAX_RUNTIME_MATERIAL_BYTES,
+                    "Evidence runtime material exceeds the safe per-file limit: " + relative)
+            bindings[relative] = {"origin": "sealed_runtime_material", "path": archive_path,
+                                  "bytes": destination.stat().st_size, "sha256": sha256_file(destination)}
+            require(bindings[relative]["sha256"] == checksum, "Evidence runtime material copy differs: " + relative)
+        else:
+            raise ValueError("Verification receipt source is not an exact candidate-tree byte or approved CI material: " + relative)
+    return _source_bindings(bindings, expected=expected, release=release, root=output)
 
 
 def candidate_artifact_name(release: str) -> str:
@@ -379,7 +555,7 @@ def _receipt_record(value: Any, name: str, release: str, root: Path) -> dict[str
 def _content_manifest(value: Any, *, release: str, pipeline: Mapping[str, Any], root: Path,
                       expected_candidate: Mapping[str, Any] | None = None) -> dict[str, Any]:
     require(isinstance(value, dict) and set(value) == {
-        "schema_version", "kind", "repository", "release", "pipeline", "candidate", "receipts"
+        "schema_version", "kind", "repository", "release", "pipeline", "candidate", "receipts", "source_bindings"
     }, "Evidence content manifest fields are invalid")
     require(value.get("schema_version") == SCHEMA_VERSION and value.get("kind") == CONTENT_KIND, "Evidence content manifest schema is invalid")
     require(value.get("repository") == REPOSITORY and value.get("release") == release, "Evidence content manifest identity differs")
@@ -391,6 +567,7 @@ def _content_manifest(value: Any, *, release: str, pipeline: Mapping[str, Any], 
     receipts = value.get("receipts")
     require(isinstance(receipts, dict) and set(receipts) == set(RECEIPTS), "Evidence receipt inventory is invalid")
     normalized = {name: _receipt_record(receipts[name], name, release, root) for name in RECEIPTS}
+    bindings = _source_bindings(value.get("source_bindings"), expected=_source_hash_union(normalized), release=release, root=root)
     return {
         "schema_version": SCHEMA_VERSION,
         "kind": CONTENT_KIND,
@@ -399,15 +576,18 @@ def _content_manifest(value: Any, *, release: str, pipeline: Mapping[str, Any], 
         "pipeline": parsed_pipeline,
         "candidate": candidate,
         "receipts": normalized,
+        "source_bindings": bindings,
     }
 
 
 def verify_content(artifact_dir: Path | str, *, release: str, pipeline: Mapping[str, Any],
                    expected_candidate: Mapping[str, Any] | None = None) -> dict[str, Any]:
     root = Path(artifact_dir).resolve()
-    _inventory(root, {CONTENT_MANIFEST, *RECEIPTS.values()}, "Verification evidence artifact")
     manifest_path = _regular(root, CONTENT_MANIFEST, "Evidence content manifest is missing")
     parsed = _content_manifest(_load(manifest_path, "Evidence content manifest is invalid"), release=_release(release, "Evidence release is invalid"), pipeline=pipeline, root=root, expected_candidate=expected_candidate)
+    material_paths = {record["path"] for record in parsed["source_bindings"].values()
+                      if record["origin"] == "sealed_runtime_material"}
+    _inventory(root, {CONTENT_MANIFEST, *RECEIPTS.values(), *material_paths}, "Verification evidence artifact")
     require(parsed == _load(manifest_path, "Evidence content manifest is invalid"), "Evidence content manifest is not canonical")
     return parsed
 
@@ -447,6 +627,13 @@ def write_content(args: argparse.Namespace) -> dict[str, Any]:
                 "sha256": sha256_file(destination),
                 **summary,
             }
+        bindings = _seal_source_bindings(
+            records,
+            source_root=args.source_root,
+            source_commit=pipeline["head_sha"],
+            release=release,
+            output=output,
+        )
         manifest = {
             "schema_version": SCHEMA_VERSION,
             "kind": CONTENT_KIND,
@@ -455,6 +642,7 @@ def write_content(args: argparse.Namespace) -> dict[str, Any]:
             "pipeline": pipeline,
             "candidate": candidate,
             "receipts": records,
+            "source_bindings": bindings,
         }
         _atomic_json(output / CONTENT_MANIFEST, manifest)
         verify_content(output, release=release, pipeline=pipeline, expected_candidate=candidate)
@@ -478,7 +666,7 @@ def _artifact_reference(value: Any, release: str, pipeline: Mapping[str, Any]) -
 def _wrapper_manifest(value: Any, *, release: str, pipeline: Mapping[str, Any], root: Path,
                       expected_candidate: Mapping[str, Any] | None = None) -> dict[str, Any]:
     require(isinstance(value, dict) and set(value) == {
-        "schema_version", "kind", "repository", "release", "pipeline", "candidate", "evidence_artifact", "receipts"
+        "schema_version", "kind", "repository", "release", "pipeline", "candidate", "evidence_artifact", "receipts", "source_bindings"
     }, "Evidence wrapper manifest fields are invalid")
     require(value.get("schema_version") == SCHEMA_VERSION and value.get("kind") == WRAPPER_KIND, "Evidence wrapper manifest schema is invalid")
     require(value.get("repository") == REPOSITORY and value.get("release") == release, "Evidence wrapper manifest identity differs")
@@ -512,6 +700,7 @@ def _wrapper_manifest(value: Any, *, release: str, pipeline: Mapping[str, Any], 
         normalized[name] = {
             "path": RECEIPTS[name], "bytes": record["bytes"], "sha256": record["sha256"], **summary,
         }
+    bindings = _source_bindings(value.get("source_bindings"), expected=_source_hash_union(normalized), release=release)
     return {
         "schema_version": SCHEMA_VERSION,
         "kind": WRAPPER_KIND,
@@ -521,6 +710,7 @@ def _wrapper_manifest(value: Any, *, release: str, pipeline: Mapping[str, Any], 
         "candidate": candidate,
         "evidence_artifact": artifact,
         "receipts": normalized,
+        "source_bindings": bindings,
     }
 
 
@@ -557,6 +747,7 @@ def write_wrapper(args: argparse.Namespace) -> dict[str, Any]:
                 "content_manifest_sha256": sha256_file(content_path),
             },
             "receipts": content["receipts"],
+            "source_bindings": content["source_bindings"],
         }
         _atomic_json(output / WRAPPER_MANIFEST, wrapper)
         verify_wrapper(output, release=release, pipeline=pipeline, expected_candidate=content["candidate"])

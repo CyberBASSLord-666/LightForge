@@ -71,21 +71,22 @@ class ReleaseVerificationEvidenceTest(unittest.TestCase):
                 "source_hashes": {"web/app.js": SOURCE_HASH},
             }), encoding="utf-8")
         content_root = root / "content"
-        content = evidence.write_content(SimpleNamespace(
-            output_dir=content_root,
-            receipt_dir=input_dir,
-            source_root=source_root,
-            candidate_manifest=candidate_path,
-            candidate_artifact_id=911,
-            candidate_artifact_digest="sha256:" + "f" * 64,
-            candidate_identity_sha256=identity,
-            release=RELEASE["name"],
-            run_id=741,
-            run_attempt=attempt,
-            head_sha=HEAD,
-            tree_sha=TREE,
-            evidence_session=SESSION,
-        ))
+        with patch.object(evidence, "_candidate_tree_bytes", side_effect=lambda _root, _commit, relative: SOURCE_BYTES if relative == "web/app.js" else None):
+            content = evidence.write_content(SimpleNamespace(
+                output_dir=content_root,
+                receipt_dir=input_dir,
+                source_root=source_root,
+                candidate_manifest=candidate_path,
+                candidate_artifact_id=911,
+                candidate_artifact_digest="sha256:" + "f" * 64,
+                candidate_identity_sha256=identity,
+                release=RELEASE["name"],
+                run_id=741,
+                run_attempt=attempt,
+                head_sha=HEAD,
+                tree_sha=TREE,
+                evidence_session=SESSION,
+            ))
         wrapper_root = root / "wrapper"
         wrapper = evidence.write_wrapper(SimpleNamespace(
             output_dir=wrapper_root,
@@ -152,7 +153,7 @@ class ReleaseVerificationEvidenceTest(unittest.TestCase):
             root = Path(temporary)
             content_root, wrapper_root, content, _ = self._artifacts(root)
             (content_root / evidence.RECEIPTS["native-verification.json"]).unlink()
-            with self.assertRaisesRegex(ValueError, "unexpected or missing"):
+            with self.assertRaisesRegex(ValueError, "missing"):
                 self._run(root, content_root, wrapper_root, content["candidate"])
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -190,6 +191,109 @@ class ReleaseVerificationEvidenceTest(unittest.TestCase):
                         "CyberBASSLord-666/LightForge", {"id": 741, "run_attempt": 2}, RELEASE,
                         HEAD, TREE, content["candidate"]
                     )
+
+    def test_ci_only_materials_are_checked_from_sealed_or_reconstructed_provenance(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            candidate_path = root / "candidate-manifest.json"
+            identity = candidate_manifest(candidate_path)
+            receipt_dir = root / "receipts"
+            receipt_dir.mkdir()
+            source_root = root / "publisher-checkout"
+            app = source_root / "web/app.js"
+            app.parent.mkdir(parents=True)
+            app.write_bytes(SOURCE_BYTES)
+            fixture = source_root / "qa/release-1.6.0/fixtures/falcon-mix.wav"
+            fixture.parent.mkdir(parents=True)
+            fixture.write_bytes(b"falcon")
+            game = source_root / "web/analysis/models/game/bd2dur.onnx"
+            game.parent.mkdir(parents=True)
+            game.write_bytes(b"game")
+            runtime = source_root / "qa/release-2.2.5/source-clock-verification.json"
+            runtime.parent.mkdir(parents=True)
+            runtime.write_bytes(b'{"fresh":true}')
+            fixture_hash, game_hash, runtime_hash = map(evidence.sha256_file, (fixture, game, runtime))
+            hashes = {
+                "web/app.js": SOURCE_HASH,
+                "qa/release-1.6.0/fixtures/falcon-mix.wav": fixture_hash,
+                "web/analysis/models/game/bd2dur.onnx": game_hash,
+                "qa/release-2.2.5/source-clock-verification.json": runtime_hash,
+            }
+            for name in evidence.RECEIPTS:
+                (receipt_dir / name).write_text(json.dumps({
+                    "release": RELEASE["name"], "passed": True, "errors": [], "source_hashes": hashes,
+                }), encoding="utf-8")
+            fixture_provenance = json.dumps({"tracks": [{"id": "falcon", "pcmSHA256": {"falcon-mix.wav": fixture_hash}}]}).encode()
+            game_provenance = json.dumps({"files": {"bd2dur.onnx": {"bytes": game.stat().st_size, "sha256": game_hash}}}).encode()
+
+            def candidate_bytes(_root, _commit, relative):
+                return {
+                    "web/app.js": SOURCE_BYTES,
+                    "qa/release-1.6.0/musdb-fixture-provenance.json": fixture_provenance,
+                    "web/analysis/models/game/manifest.json": game_provenance,
+                    "qa/release-2.2.5/source-clock-verification.json": b"historical-output",
+                }.get(relative)
+
+            with patch.object(evidence, "_candidate_tree_bytes", side_effect=candidate_bytes):
+                content = evidence.write_content(SimpleNamespace(
+                    output_dir=root / "content", receipt_dir=receipt_dir, source_root=source_root,
+                    candidate_manifest=candidate_path, candidate_artifact_id=911,
+                    candidate_artifact_digest="sha256:" + "f" * 64,
+                    candidate_identity_sha256=identity, release=RELEASE["name"], run_id=741,
+                    run_attempt=1, head_sha=HEAD, tree_sha=TREE, evidence_session=SESSION,
+                ))
+            # A later release-request checkout may contain a stale same-named
+            # QA output.  The publisher must use the sealed material copy.
+            runtime.write_bytes(b'{"stale":true}')
+            commands = []
+
+            def source(*args):
+                commands.append(args)
+                requested = args[-1].split(":", 1)[1]
+                return {
+                    "web/app.js": SOURCE_BYTES,
+                    "qa/release-1.6.0/musdb-fixture-provenance.json": fixture_provenance,
+                    "web/analysis/models/game/manifest.json": game_provenance,
+                }[requested]
+
+            with patch.object(publisher, "ROOT", source_root), patch.object(publisher, "run_bytes", side_effect=source):
+                publisher._validate_verification_source_hashes(
+                    HEAD, content["receipts"], content["source_bindings"], root / "content"
+                )
+            self.assertNotIn(("git", "show", HEAD + ":qa/release-2.2.5/source-clock-verification.json"), commands)
+            wrapper_root = root / "wrapper"
+            evidence.write_wrapper(SimpleNamespace(
+                output_dir=wrapper_root, content_dir=root / "content", evidence_artifact_id=912,
+                evidence_artifact_digest="sha256:" + "1" * 64, release=RELEASE["name"], pipeline=pipeline(),
+            ))
+            expected_wrapper = evidence.wrapper_artifact_name(RELEASE["name"], pipeline())
+            requested_members = []
+
+            def download(_repo, artifact, destination, expected_names):
+                requested_members.append(set(expected_names))
+                shutil.copytree(wrapper_root if artifact["id"] == 1001 else root / "content", destination)
+                return destination
+
+            with patch.object(publisher, "ROOT", source_root), \
+                    patch.object(publisher, "_run_artifacts", return_value=[{"name": expected_wrapper, "id": 1001}]), \
+                    patch.object(publisher, "_artifact_metadata", side_effect=[
+                        {"id": 1001, "digest": "sha256:" + "2" * 64},
+                        {"id": 912, "digest": "sha256:" + "1" * 64},
+                    ]), \
+                    patch.object(publisher, "_download_exact_artifact", side_effect=download), \
+                    patch.object(publisher, "run_bytes", side_effect=source):
+                publisher.verify_nonandroid_release_evidence(
+                    "CyberBASSLord-666/LightForge", {"id": 741, "run_attempt": 1}, RELEASE,
+                    HEAD, TREE, content["candidate"]
+                )
+            sealed = content["source_bindings"]["qa/release-2.2.5/source-clock-verification.json"]
+            self.assertIn(sealed["path"], requested_members[1])
+            (root / "content" / sealed["path"]).write_bytes(b"tampered")
+            with patch.object(publisher, "ROOT", source_root), patch.object(publisher, "run_bytes", side_effect=source), \
+                    self.assertRaisesRegex(ValueError, "sealed runtime material differs"):
+                publisher._validate_verification_source_hashes(
+                    HEAD, content["receipts"], content["source_bindings"], root / "content"
+                )
 
 
 if __name__ == "__main__":

@@ -130,15 +130,37 @@ def _files(release):
 def _file_inventory(root, names, label):
     root = Path(root).resolve()
     actual = {path.relative_to(root).as_posix() for path in root.rglob('*') if path.is_file() or path.is_symlink()}
-    require(actual == set(names), label + ' contains an unexpected or missing file')
+    expected = set(names)
+    _require_exact_inventory(label, 'file', expected, actual)
     expected_directories = {str(PurePosixPath(name).parent) for name in names if str(PurePosixPath(name).parent) != '.'}
     actual_directories = {path.relative_to(root).as_posix() for path in root.rglob('*') if path.is_dir() and not path.is_symlink()}
-    require(actual_directories == expected_directories, label + ' contains an unexpected directory')
+    _require_exact_inventory(label, 'directory', expected_directories, actual_directories)
     result = {}
     for name in names:
         path = _regular(root, name, label + ' contains a non-regular file: ' + name)
         result[name] = {'bytes': path.stat().st_size, 'sha256': sha256_file(path)}
     return result
+
+
+def _require_exact_inventory(label, kind, expected, actual):
+    """Fail closed with a bounded, actionable inventory difference."""
+    if actual == expected:
+        return
+
+    def describe(values):
+        values = sorted(values)
+        maximum = 10
+        preview = ', '.join(values[:maximum])
+        return preview + (', ... (' + str(len(values)) + ' total)' if len(values) > maximum else '')
+
+    parts = []
+    missing = expected - actual
+    unexpected = actual - expected
+    if missing:
+        parts.append('missing: ' + describe(missing))
+    if unexpected:
+        parts.append('unexpected: ' + describe(unexpected))
+    raise ValueError(label + ' contains an unexpected or missing ' + kind + ' (' + '; '.join(parts) + ')')
 
 
 def _candidate_manifest(candidate_dir, release, head_sha=None):

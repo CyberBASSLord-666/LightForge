@@ -32,7 +32,7 @@ names = ['NativeRecoveryTest', 'ProjectStoreTest', 'NativeHardwareTest', 'Native
 tests = [ROOT / f'tests/{name}.java' for name in names + ['WebViewTransportServer']]
 bound_sources = sources + tests + [ROOT/'android/native-runtime.json', ROOT/'tests/verify_native_release.py']
 receipt = dict(release=args.release, passed=False, scope='Fresh production Java compilation and host JVM tests; no Android Activity/device/document-provider or physical Tesla execution.',
-               source_hashes={str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in bound_sources}, checks=[])
+               source_hashes={str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in bound_sources}, checks=[], errors=[])
 
 def run(name, *args):
     p = subprocess.run([str(JAVA / 'java'), '-cp', ':'.join(map(str, [CLASSES, JSON, ANDROID, ORT_HOST])),
@@ -99,6 +99,7 @@ try:
     receipt['passed'] = True
 except Exception as error:
     receipt['failure'] = repr(error)
+    receipt['errors'].append(str(error))
     raise
 finally:
     receipt['completed'] = datetime.datetime.now(datetime.timezone.utc).isoformat()
