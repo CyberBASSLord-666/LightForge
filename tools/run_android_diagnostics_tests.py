@@ -21,6 +21,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--candidate-dir', type=Path, required=True)
     parser.add_argument('--output-dir', type=Path, required=True)
+    parser.add_argument('--emulator-log', type=Path, required=True)
     parser.add_argument('--candidate-artifact-id', type=int, required=True)
     parser.add_argument('--candidate-artifact-digest', required=True)
     parser.add_argument('--candidate-run-id', type=int, required=True)
@@ -60,7 +61,8 @@ def main():
                 for path in sources if path.is_file()}
 
     hashes = source_hashes()
-    receipt = dict(release=version, passed=False, checks=[], errors=[], source_hashes=hashes,
+    receipt = dict(release=version, passed=False, checks=[], errors=[], source_hashes=candidate['source_hashes'],
+                   instrumentation_source_hashes=hashes,
                    scope='Android API 35 emulator: real uncaught worker and intentional native SIGILL '
                          'crashes followed by process restart, binary tombstone extraction and production '
                          'native compatibility selection from a durable execution lease; persistent '
@@ -97,7 +99,7 @@ def main():
     try:
         deadline = time.monotonic() + 360
         while time.monotonic() < deadline:
-            log = ROOT / 'emulator.log'
+            log = args.emulator_log
             if log.is_file():
                 fatal = [line for line in log.read_text(errors='replace').splitlines() if 'FATAL' in line]
                 if fatal:
