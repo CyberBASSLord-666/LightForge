@@ -119,5 +119,20 @@ class PerformanceQualityGateWorkflowTest(unittest.TestCase):
             self.assertRegex(revision, r"^[0-9a-f]{40}$", f"{action} is not pinned to a full immutable SHA")
 
 
+    def test_exact_id_benchmark_downloads_are_merged_to_the_direct_compare_paths(self):
+        text = WORKFLOW.read_text(encoding="utf-8")
+        baseline = text.index("artifact-ids: ${{ steps.baseline-artifact.outputs.id }}")
+        candidate = text.index("artifact-ids: ${{ steps.candidate-artifact.outputs.id }}")
+        compare = text.index("Compare with protected release policy and corpus")
+        baseline_block = text[baseline:candidate]
+        candidate_block = text[candidate:compare]
+        self.assertIn("path: gate/baseline", baseline_block)
+        self.assertIn("merge-multiple: true", baseline_block)
+        self.assertIn("path: gate/candidate", candidate_block)
+        self.assertIn("merge-multiple: true", candidate_block)
+        self.assertIn("test -f gate/baseline/benchmark.json", text[compare:])
+        self.assertIn("test -f gate/candidate/benchmark.json", text[compare:])
+
+
 if __name__ == "__main__":
     unittest.main()

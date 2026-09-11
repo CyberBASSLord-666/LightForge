@@ -275,6 +275,29 @@ jobs:
         with:
           artifact-ids: ${{ needs.verify.outputs.candidate_artifact_id }}
           path: ${{ runner.temp }}/lightforge-ci-candidate
+          merge-multiple: true
+      - name: Assert exact flat sealed candidate handoff
+        run: |
+          python3 - "$RUNNER_TEMP/lightforge-ci-candidate" "$LIGHTFORGE_RELEASE" <<'PY'
+          from pathlib import Path
+          import sys
+
+          root = Path(sys.argv[1])
+          release = sys.argv[2]
+          expected = {
+              'candidate-manifest.json',
+              'LightForge-' + release + '.apk',
+              'LightForge-' + release + '.apk.json',
+              'LightForge-' + release + '.apk.sha256',
+              'background-tests.apk',
+              'diagnostics-tests.apk',
+          }
+          if not root.is_dir() or root.is_symlink():
+              raise SystemExit('Candidate artifact extraction is not a flat exact inventory')
+          entries = list(root.iterdir())
+          if {entry.name for entry in entries} != expected or any(not entry.is_file() or entry.is_symlink() for entry in entries):
+              raise SystemExit('Candidate artifact extraction is not a flat exact inventory')
+          PY
       - name: Configure Android virtual-device paths
         run: |
           printf 'ANDROID_USER_HOME=%s\nANDROID_EMULATOR_HOME=%s\nANDROID_AVD_HOME=%s\nLIGHTFORGE_ANDROID_EVIDENCE_ROOT=%s\n' \

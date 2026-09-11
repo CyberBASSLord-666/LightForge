@@ -257,6 +257,7 @@ jobs:
         with:
           artifact-ids: ${{ steps.baseline-artifact.outputs.id }}
           path: gate/baseline
+          merge-multiple: true
           repository: ${{ github.repository }}
           run-id: ${{ inputs.baseline_run_id }}
           github-token: ${{ github.token }}
@@ -264,6 +265,7 @@ jobs:
         with:
           artifact-ids: ${{ steps.candidate-artifact.outputs.id }}
           path: gate/candidate
+          merge-multiple: true
           repository: ${{ github.repository }}
           run-id: ${{ inputs.candidate_run_id }}
           github-token: ${{ github.token }}

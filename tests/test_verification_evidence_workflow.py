@@ -44,5 +44,25 @@ class VerificationEvidenceWorkflowTest(unittest.TestCase):
             self.assertIn(value, WORKFLOW)
 
 
+    def test_android_candidate_handoff_merges_exact_id_to_a_flat_root(self):
+        download = WORKFLOW.index("Download the exact same-signed CI app and instrumentation")
+        preflight = WORKFLOW.index("Assert exact flat sealed candidate handoff")
+        emulator = WORKFLOW.index("Prepare Android 15 emulator")
+        handoff = WORKFLOW[download:preflight]
+        self.assertIn("artifact-ids:", handoff)
+        self.assertIn("merge-multiple: true", handoff)
+        self.assertIn("Candidate artifact extraction is not a flat exact inventory", WORKFLOW[preflight:emulator])
+        self.assertLess(download, preflight)
+        self.assertLess(preflight, emulator)
+        flat = '--candidate-dir "$RUNNER_TEMP/lightforge-ci-candidate"'
+        self.assertEqual(WORKFLOW.count(flat), 3)
+        for command in (
+            "python3 tools/run_android_background_tests.py",
+            "python3 tools/run_android_diagnostics_tests.py",
+            "python3 tools/android_evidence_manifest.py write",
+        ):
+            self.assertIn(command, WORKFLOW)
+
+
 if __name__ == "__main__":
     unittest.main()
