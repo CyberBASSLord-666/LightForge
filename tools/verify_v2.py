@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Portable production regression gate. Historical model evidence stays historical."""
 from pathlib import Path
-import datetime, hashlib, json, subprocess, sys
+import datetime, hashlib, json, re, subprocess, sys
 from verify_analysis_assets import verify as verify_assets
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -119,20 +119,43 @@ def node_failure_summary(output, limit=12):
         return ' | '.join(markers[:limit])
     return ' | '.join([markers[0],*markers[-(limit-1):]])
 
+# These patterns intentionally accept only standard unittest result labels.
+# Diagnostics may include a traceback, assertion data, or arbitrary test output; none
+# of that is allowed into a production receipt.
+UNITTEST_FAILURE_LABEL=re.compile(
+    r'^(?:FAIL|ERROR|UNEXPECTED SUCCESS): [A-Za-z_][A-Za-z0-9_]* '
+    r'\((?:(?:tests|__main__)\.)[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*\)$'
+)
+UNITTEST_FAILURE_SUMMARY=re.compile(
+    r'^FAILED \((?:[a-z]+(?: [a-z]+)*=\d+)(?:, [a-z]+(?: [a-z]+)*=\d+)*\)$'
+)
+ANSI_ESCAPE=re.compile(r'\x1b\[[0-?]*[ -/]*[@-~]')
+PYTHON_FAILURE_SUMMARY_MAX_CHARS=1200
+
 def python_failure_summary(output, limit=12):
-    """Return bounded unittest labels without disclosing arbitrary test output."""
-    if not isinstance(output, str):
-        return 'no unittest failure marker captured'
+    """Return bounded standard unittest labels without exposing test output."""
+    empty='no unittest failure marker captured'
+    if not isinstance(output, str) or type(limit) is not int or limit<=0:
+        return empty
     markers=[]
     for raw in output.splitlines():
-        line=raw.strip()
-        if line.startswith(('FAIL:', 'ERROR:', 'UNEXPECTED SUCCESS:', 'FAILED (')):
+        line=ANSI_ESCAPE.sub('', raw)
+        if UNITTEST_FAILURE_LABEL.fullmatch(line) or UNITTEST_FAILURE_SUMMARY.fullmatch(line):
             markers.append(line[:240])
     if not markers:
-        return 'no unittest failure marker captured'
-    if limit<=1 or len(markers)<=limit:
-        return ' | '.join(markers[:limit])
-    return ' | '.join([markers[0],*markers[-(limit-1):]])
+        return empty
+    selected=markers if len(markers)<=limit else [markers[0],*markers[-(limit-1):]]
+    result=[]
+    size=0
+    for marker in selected:
+        addition=len(marker)+(3 if result else 0)
+        if size+addition>PYTHON_FAILURE_SUMMARY_MAX_CHARS:
+            if not result:
+                return marker[:PYTHON_FAILURE_SUMMARY_MAX_CHARS]
+            break
+        result.append(marker)
+        size+=addition
+    return ' | '.join(result) or empty
 
 def run_python_scripts(scripts, log_path):
     output=[]
