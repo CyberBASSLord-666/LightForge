@@ -143,11 +143,12 @@ async function completedReconnect({acknowledged=false,hold=false,restoreError=nu
   const snapshot=bytes.length+':'+snapshotId;
   return JSON.stringify({ok:true,offset:start,total:bytes.length,snapshot,base64:chunk.toString('base64')});
  };
- const coldBootstrap={projects:[],version:'2.2.4'},initialBootstrap={projects:[completed,lastSelected],lastProjectId:lastSelected.id,version:'2.2.4',backgroundJob:job};let bootstrapReads=0;
- // The native startup probe, bootstrap read, and restore-owned metadata refresh
- // must observe one durable completed-job snapshot before the fixture switches
- // to the generated saved project.
- w.Android={pickAudio(){},getBootstrap:()=>JSON.stringify(deferInitialPreview?(++bootstrapReads<=3?initialBootstrap:bootstrap):(bootstrapReads++===0?coldBootstrap:bootstrap)),saveProject:()=>true,startAnalysis(){throw Error('Reconnection must not restart analysis');},getAnalysisStatus:()=>JSON.stringify(job),
+ const coldBootstrap={projects:[],version:'2.2.4'},initialBootstrap={projects:[completed,lastSelected],lastProjectId:lastSelected.id,version:'2.2.4',backgroundJob:job};let bootstrapReads=0,initialBootstrapHeld=!!deferInitialPreview;
+ // Startup probes and the restore-owned metadata refresh all need one immutable
+ // completed-job snapshot. Release it only after the fixture has installed the
+ // generated saved project, not after an implementation-dependent read count.
+ const getBootstrap=()=>JSON.stringify(deferInitialPreview?(initialBootstrapHeld?initialBootstrap:bootstrap):(bootstrapReads++===0?coldBootstrap:bootstrap));
+ w.Android={pickAudio(){},getBootstrap,saveProject:()=>true,startAnalysis(){throw Error('Reconnection must not restart analysis');},getAnalysisStatus:()=>JSON.stringify(job),
   beginCompletedRestore:(...args)=>{leaseCalls.push({type:'begin',args});if(beginThrows)throw Error('Native completed-restore begin bridge failed.');if(beginRejected)return false;if(nativeTerminalToken){if(nativeTerminalToken.jobId===args[0])return false;nativeTerminalToken=null;}return true;},completedRestorePulse:(...args)=>{leaseCalls.push({type:'pulse',args});return !pulseRejected;},requestCompletedRestoreVisualCommit:(...args)=>{leaseCalls.push({type:'visual-request',args});return true;},completedRestoreVisualCommitted:(...args)=>{leaseCalls.push({type:'visual-committed',args});return true;},completedRestoreTerminal:(...args)=>{leaseCalls.push({type:'terminal',args,ackAtCall:w.localStorage.getItem('lightforge-background-ack')});if(terminalRejected)return false;nativeTerminalToken={jobId:args[0],nonce:args[1]};return true;},completedRestoreAckCommitted:(...args)=>{leaseCalls.push({type:'ack-committed',args,ackAtCall:w.localStorage.getItem('lightforge-background-ack')});if(ackConfirmationRejectedNow||nativeTerminalToken?.jobId!==args[0]||nativeTerminalToken?.nonce!==args[1])return false;nativeCapClears.push(args[0]);nativeTerminalToken=null;return true;},completedRestoreFailed:(...args)=>{leaseCalls.push({type:'failed',args});return true;}};
  if(nativeProjectPayload)w.Android.readCompletedRestoreProjectChunk=readCompletedProject;
  w.fetch=async()=>{fetches++;if(fetchNeverResolves)return new Promise(()=>{});if(deferInitialPreview)await initialSavedReady;return{ok:true,json:async()=>structuredClone(saved),text:async()=>JSON.stringify(saved)};};
@@ -166,9 +167,9 @@ async function completedReconnect({acknowledged=false,hold=false,restoreError=nu
  }};
  try{
   w.eval(fs.readFileSync(path.join(root,'web/app.js'),'utf8'));const app=w.LightForgeApp,settings=structuredClone(app.state.settings);
-  const result=await runWorker(path.join(root,'web/engine'),{action:'generate',music,settings});saved={settings,music,compiled:result.compiled,needAnalysis:false};releaseInitialSaved?.();
+  const result=await runWorker(path.join(root,'web/engine'),{action:'generate',music,settings});saved={settings,music,compiled:result.compiled,needAnalysis:false};
   if(acknowledged)w.localStorage.setItem('lightforge-background-ack',job.id);
-  bootstrap={projects:[completed,lastSelected],lastProjectId:lastSelected.id,version:'2.2.4',backgroundJob:job};
+  bootstrap={projects:[completed,lastSelected],lastProjectId:lastSelected.id,version:'2.2.4',backgroundJob:job};initialBootstrapHeld=false;releaseInitialSaved?.();
   return{w,app,job,entered,release,polls,completed,lastSelected,leaseCalls,nativeCapClears,nativeProjectReads,previews,previewDeferrals,setAckConfirmationRejected:value=>{ackConfirmationRejectedNow=!!value;},get restores(){return restores;},get fetches(){return fetches;},get restoreOptions(){return restoreOptions;},close:()=>{release();w.close();}};
  }catch(error){release();w.close();throw error;}
 }
@@ -183,7 +184,7 @@ test('unacknowledged cold completed restore defers GLTF loading until compiled-s
   deferred.release();await waitFor(()=>deferred.w.localStorage.getItem('lightforge-background-ack')===deferred.job.id&&!deferred.app.state.backgroundApplying);
   const release=deferred.previewDeferrals.find(event=>event.value===false),adopted=deferred.leaseCalls.findIndex(call=>call.type==='pulse'&&call.args[2]==='show-adopted');
   assert.ok(release,'Compiled-show adoption must release the deferred preview');
-  assert.ok(adopted>=0&&release.leaseCalls<adopted,'Preview loading must restart strictly before the existing adopted-show/first-frame proof path');
+  assert.ok(adopted>=0&&release.leaseCalls===adopted,'Preview loading must restart immediately before the adopted-show proof pulse.');
   assert.equal(deferred.app.state.completedRestorePreviewDeferred,false,'Terminal restore may not leave the preview load deferred');
  }finally{deferred.close();}
  const ordinary=await completedReconnect();
