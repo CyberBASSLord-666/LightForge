@@ -89,14 +89,30 @@ def hashes():
     return {str(p.relative_to(ROOT)):digest(p) for p in sorted(set(paths))}
 
 def node_failure_summary(output, limit=4):
-    """Return only bounded TAP test labels for a failed trusted regression run."""
+    """Return bounded trusted TAP labels with their first failure detail."""
     if not isinstance(output, str):
         return 'no TAP failure marker captured'
+    lines=output.splitlines()
     markers=[]
-    for raw in output.splitlines():
+    for index, raw in enumerate(lines):
         line=raw.strip()
-        if line.startswith('not ok '):
-            markers.append(line[:240])
+        if not line.startswith('not ok '):
+            continue
+        detail=''
+        for detail_index in range(index+1, min(len(lines), index+18)):
+            text=lines[detail_index].strip()
+            if text.startswith('not ok '):
+                break
+            if text.startswith('error:'):
+                detail=text[len('error:'):].strip()
+                if detail in {'', '|', '|-', '>', '>-'}:
+                    for continuation in lines[detail_index+1:min(len(lines), detail_index+7)]:
+                        text=continuation.strip()
+                        if text and text not in {'---', '...'} and not text.startswith(('duration_', 'type:', 'location:', 'failureType:', 'code:')):
+                            detail=text
+                            break
+                break
+        markers.append((line+(' ['+detail+']' if detail else ''))[:240])
     return ' | '.join(markers[-limit:]) if markers else 'no TAP failure marker captured'
 
 def run_python_scripts(scripts, log_path):
