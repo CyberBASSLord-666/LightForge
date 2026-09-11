@@ -20,6 +20,7 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
+      LIGHTFORGE_REF_PROTECTED: ${{ github.ref_protected }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -34,8 +35,6 @@ jobs:
             releases
             research/evaluation-1.6
       - name: Require protected main release authority
-        env:
-          LIGHTFORGE_REF_PROTECTED: ${{ github.ref_protected }}
         run: >-
           test "$GITHUB_REF" = "refs/heads/main" &&
           test "$LIGHTFORGE_REF_PROTECTED" = "true"

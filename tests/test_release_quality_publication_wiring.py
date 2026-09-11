@@ -248,6 +248,17 @@ class ReleaseQualityPublicationWiringTest(unittest.TestCase):
         self.assertIn('test "$GITHUB_REF" = "refs/heads/main"', workflow)
         self.assertIn('test "$LIGHTFORGE_REF_PROTECTED" = "true"', workflow)
 
+    def test_publisher_itself_rejects_unprotected_or_non_main_environment(self):
+        publisher.require_protected_main({"GITHUB_REF": "refs/heads/main", "LIGHTFORGE_REF_PROTECTED": "true"})
+        for environment in (
+            {"GITHUB_REF": "refs/heads/main"},
+            {"GITHUB_REF": "refs/heads/main", "LIGHTFORGE_REF_PROTECTED": "false"},
+            {"GITHUB_REF": "refs/heads/release", "LIGHTFORGE_REF_PROTECTED": "true"},
+        ):
+            with self.subTest(environment=environment):
+                with self.assertRaisesRegex(ValueError, "protected main|only from main"):
+                    publisher.require_protected_main(environment)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -61,6 +61,12 @@ def require(value, message):
         raise ValueError(message)
 
 
+def require_protected_main(environment):
+    """Keep protected-ref enforcement inside the publisher, not only YAML."""
+    require(environment.get('GITHUB_REF') == 'refs/heads/main', 'Releases publish only from main')
+    require(environment.get('LIGHTFORGE_REF_PROTECTED') == 'true', 'Releases publish only from protected main')
+
+
 def _commit_sha(value, message):
     require(isinstance(value, str) and re.fullmatch('[0-9a-f]{40}', value), message)
     return value
@@ -337,6 +343,47 @@ def verify_apk(apk, version):
                 require(hashlib.file_digest(stream, 'sha256').hexdigest() == checksum, 'Stale APK asset: ' + name)
 
 
+def _signature_metadata(name):
+    """Return whether a ZIP entry is signer metadata, not application payload."""
+    if not name.startswith('META-INF/'):
+        return False
+    leaf = name.rsplit('/', 1)[-1]
+    return leaf == 'MANIFEST.MF' or re.fullmatch(r'.+\.(?:SF|RSA|DSA|EC)', leaf) is not None
+
+
+def apk_payload_manifest(apk):
+    """Hash every application ZIP entry without reading an APK into memory."""
+    result = {}
+    with zipfile.ZipFile(apk) as archive:
+        require(archive.testzip() is None, 'APK CRC failure while comparing candidate payload')
+        for info in archive.infolist():
+            name = info.filename
+            require(name and not name.endswith('/'), 'APK contains a directory or empty payload entry')
+            if _signature_metadata(name):
+                continue
+            require(name not in result, 'APK contains duplicate application payload entries')
+            with archive.open(info) as stream:
+                result[name] = {
+                    'bytes': info.file_size,
+                    'sha256': hashlib.file_digest(stream, 'sha256').hexdigest(),
+                }
+    return result
+
+
+def verify_candidate_payload_equivalence(candidate, final):
+    """Forbid a post-CI APK delta from changing code or resources.
+
+    Signing changes ZIP metadata and the APK signing block, so those signer
+    records are excluded.  Every application payload—including classes*.dex,
+    manifest, resources, native libraries and assets—must remain byte-identical
+    to the successful CI candidate before the locally signed APK can publish.
+    """
+    require(
+        apk_payload_manifest(candidate) == apk_payload_manifest(final),
+        'Post-CI APK delta changed an application payload from the verified CI candidate',
+    )
+
+
 def source_release_declaration(source_commit, version):
     """Read the explicit rule that was present in the verified candidate tree.
 
@@ -419,7 +466,7 @@ def main():
     version = json.loads((ROOT / 'version.json').read_text())
     repo = os.environ['GH_REPO']
     require(repo == 'CyberBASSLord-666/LightForge', 'Unexpected publishing repository')
-    require(os.environ.get('GITHUB_REF') == 'refs/heads/main', 'Releases publish only from main')
+    require_protected_main(os.environ)
     require(request['version'] == version, 'Release request version mismatch')
     require(type(request['run_id']) is int and request['run_id'] > 0, 'Invalid CI run')
     source_commit = request['source_commit']
@@ -468,6 +515,7 @@ def main():
     delta_path = ROOT / ('releases/v' + version['name'] + '/signed-apk.delta.json')
     require(digest(delta_path) == request['delta_sha256'], 'Delta identity mismatch')
     apply_delta(candidates[0], json.loads(delta_path.read_text()), apk)
+    verify_candidate_payload_equivalence(candidates[0], apk)
     receipt = json.loads((ROOT / 'release-verification.json').read_text())
     require(receipt['release']['sha256'] == digest(apk), 'Packaged release receipt mismatch')
     verify_apk(apk, version)

@@ -3,8 +3,10 @@ import json
 from pathlib import Path
 import subprocess
 import sys
+import tempfile
 import unittest
 from unittest.mock import patch
+import zipfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
 import publish_github_release as publication
@@ -112,3 +114,35 @@ class PublicationTest(unittest.TestCase):
             elif change == 'extra':bad['assets'].append({'name': 'unreviewed.txt'})
             else:bad['assets'][0]['state'] = 'new'
             with self.assertRaises(ValueError):publication.verify_uploaded(bad, self.expected)
+
+    def test_post_ci_delta_cannot_change_classes_or_resources_but_may_replace_signatures(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            candidate, signed = root / 'candidate.apk', root / 'signed.apk'
+
+            def write(path, dex, signature, extra=None):
+                payload = {
+                    'AndroidManifest.xml': b'<manifest/>',
+                    'classes.dex': dex,
+                    'lib/arm64-v8a/runtime.so': b'native',
+                    'assets/web/app.js': b'web',
+                    'resources.arsc': b'resources',
+                    'META-INF/MANIFEST.MF': b'manifest',
+                    'META-INF/CERT.SF': signature,
+                    'META-INF/CERT.RSA': signature + b'-cert',
+                }
+                if extra is not None:
+                    payload.update(extra)
+                with zipfile.ZipFile(path, 'w') as archive:
+                    for name, value in payload.items():
+                        archive.writestr(name, value)
+
+            write(candidate, b'candidate-code', b'ci')
+            write(signed, b'candidate-code', b'production')
+            publication.verify_candidate_payload_equivalence(candidate, signed)
+            write(signed, b'changed-code', b'production')
+            with self.assertRaisesRegex(ValueError, 'Post-CI APK delta changed'):
+                publication.verify_candidate_payload_equivalence(candidate, signed)
+            write(signed, b'candidate-code', b'production', {'res/raw/new.bin': b'changed'})
+            with self.assertRaisesRegex(ValueError, 'Post-CI APK delta changed'):
+                publication.verify_candidate_payload_equivalence(candidate, signed)
