@@ -11,6 +11,13 @@ public final class AnalysisJobStoreTest {
     static void check(boolean ok,String label){if(!ok)throw new AssertionError(label);}
     static void reject(Operation op)throws Exception{try{op.run();}catch(Exception expected){return;}throw new AssertionError("Invalid transaction accepted");}
     static JSONObject read(File file)throws Exception{return AnalysisJobStore.read(file,ProjectStore.MAX_PROJECT_BYTES);}
+    static JSONObject canonicalV8(JSONObject legacy)throws Exception{
+        JSONObject music=new JSONObject(legacy.toString()).put("analysisVersion",8),timelineEvent=new JSONObject().put("id","m000000").put("type","section").put("time",0).put("duration",2).put("source","structure").put("confidence",1).put("intensity",.3).put("salience",.75).put("tier","phrase"),tierCounts=new JSONObject().put("micro",0).put("secondary",0).put("primary",0).put("phrase",1).put("structural",0).put("climax",0);
+        JSONObject timeline=new JSONObject().put("schemaVersion",2).put("clock","original-decoded-audio").put("duration",2).put("events",new JSONArray().put(timelineEvent)).put("summary",new JSONObject().put("eventCount",1).put("countByTier",tierCounts)),evidence=new JSONObject().put("vocal",0).put("bass",0).put("rhythm",0).put("percussion",0).put("structural",.5),priorities=new JSONObject().put("vocals",.75).put("bass",.75).put("rhythm",.80).put("drums",.80).put("mix",.76).put("structure",.82),weights=new JSONObject().put("baseline",.14).put("confidence",.13).put("intensity",.12).put("structural",.15).put("rhythmic",.14).put("transition",.09).put("crossStem",.10).put("recurrence",.04).put("sourcePriority",.09);
+        JSONObject ranked=new JSONObject().put("id","m000000").put("score",.65).put("tier","phrase").put("rank",1),highlight=new JSONObject().put("id","m000000").put("score",.65).put("tier","phrase").put("rank",1).put("drivers",new JSONArray().put("structural"));
+        JSONObject salience=new JSONObject().put("schemaVersion",1).put("engineVersion","1.0.0").put("timelineSchemaVersion",2).put("timelineFingerprint","0123abcd").put("clock","original-decoded-audio").put("duration",2).put("events",new JSONArray().put(ranked)).put("summary",new JSONObject().put("eventCount",1).put("countByTier",tierCounts).put("context",new JSONObject().put("profile","balanced").put("evidence",evidence).put("eventDensity",.5).put("sourcePriorities",priorities).put("weights",weights)).put("topEventIds",new JSONArray().put("m000000")).put("highlights",new JSONArray().put(highlight)));
+        return music.put("semanticTimeline",timeline).put("musicSalience",salience);
+    }
     public static void main(String[] args)throws Exception{
         File files=new File(args[0]);files.mkdirs();File projects=new File(files,"projects");projects.mkdirs();
         File audio=new File(files,"input.wav"),mono=new File(files,"input-mono.wav");
@@ -49,7 +56,19 @@ public final class AnalysisJobStoreTest {
         for(String file:new String[]{"actual-music-nightowl-mix-analysis.json","actual-music-falcon-mix-analysis.json","actual-music-user-glass-prefix64-analysis.json"}){
             JSONObject historical=read(new File("qa/release-1.6.0",file));AnalysisJobStore.validateCheckpoint(historical,historical.getDouble("duration"));
         }
+        JSONObject canonical=canonicalV8(music);AnalysisJobStore.validateCheckpoint(canonical,2);
+        JSONObject missingTimeline=new JSONObject(canonical.toString());missingTimeline.remove("semanticTimeline");reject(()->AnalysisJobStore.validateCheckpoint(missingTimeline,2));
+        JSONObject wrongClock=new JSONObject(canonical.toString());wrongClock.getJSONObject("semanticTimeline").put("clock","resampled-stem");reject(()->AnalysisJobStore.validateCheckpoint(wrongClock,2));
+        JSONObject outOfBounds=new JSONObject(canonical.toString());outOfBounds.getJSONObject("semanticTimeline").getJSONArray("events").getJSONObject(0).put("duration",2.001);reject(()->AnalysisJobStore.validateCheckpoint(outOfBounds,2));
+        JSONObject wrongOrder=new JSONObject(canonical.toString());wrongOrder.getJSONObject("musicSalience").getJSONArray("events").getJSONObject(0).put("id","m999999");reject(()->AnalysisJobStore.validateCheckpoint(wrongOrder,2));
+        JSONObject wrongTier=new JSONObject(canonical.toString());wrongTier.getJSONObject("musicSalience").getJSONArray("events").getJSONObject(0).put("tier","micro");reject(()->AnalysisJobStore.validateCheckpoint(wrongTier,2));
+        JSONObject wrongRank=new JSONObject(canonical.toString());wrongRank.getJSONObject("musicSalience").getJSONArray("events").getJSONObject(0).put("rank",2);reject(()->AnalysisJobStore.validateCheckpoint(wrongRank,2));
+        JSONObject wrongWeights=new JSONObject(canonical.toString());wrongWeights.getJSONObject("musicSalience").getJSONObject("summary").getJSONObject("context").getJSONObject("weights").put("baseline",.20);reject(()->AnalysisJobStore.validateCheckpoint(wrongWeights,2));
         reject(()->AnalysisJobStore.checkpoint(files,id,new JSONObject().put("analysisVersion",6).toString()));
+        AnalysisJobStore.checkpoint(files,id,canonical.toString());AnalysisJobStore.recover(files);
+        check("interrupted".equals(AnalysisJobStore.status(files).getString("state")),"Canonical checkpoint did not survive an interrupted process");
+        JSONObject v8Resume=AnalysisJobStore.prepare(files,projectId,"2.2.1");id=v8Resume.getString("id");
+        check(v8Resume.getBoolean("hasCheckpoint")&&AnalysisJobStore.request(files,id).getJSONObject("music").getInt("analysisVersion")==8,"Canonical schema checkpoint was not reused");
         AnalysisJobStore.progress(files,id,.61,"Passage 2 of 12",new JSONObject().put("stage","separation").put("passageIndex",2).put("passageCount",12).put("passagesCompleted",1).put("checkpointSaved",true).put("state","completed"));
         JSONObject display=AnalysisJobStore.status(files);
         check("running".equals(display.getString("state")),"Display metadata changed job ownership");
