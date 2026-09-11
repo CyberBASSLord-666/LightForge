@@ -1,6 +1,9 @@
 import copy
+import argparse
+import hashlib
 import json
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -10,6 +13,7 @@ import zipfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
 import publish_github_release as publication
+import android_evidence_manifest as android_evidence
 
 
 class PublicationTest(unittest.TestCase):
@@ -146,3 +150,88 @@ class PublicationTest(unittest.TestCase):
             write(signed, b'candidate-code', b'production', {'res/raw/new.bin': b'changed'})
             with self.assertRaisesRegex(ValueError, 'Post-CI APK delta changed'):
                 publication.verify_candidate_payload_equivalence(candidate, signed)
+
+    def test_android_publisher_uses_only_the_sealed_run_artifact(self):
+        """A stale checkout receipt cannot replace a partial/current artifact."""
+        head, tree, candidate_session, android_session = 'a' * 40, 'b' * 40, 'c' * 64, 'd' * 64
+        version, ci = {'name': '2.2.4', 'code': 20204}, {'id': 55, 'run_attempt': 3}
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / 'version.json').write_text('{}')
+            source_hashes = root / 'source-hashes.json'
+            source_hashes.write_text(json.dumps({'version.json': hashlib.sha256((root / 'version.json').read_bytes()).hexdigest()}))
+            dist = root / 'dist'
+            dist.mkdir()
+            apk = dist / 'LightForge-2.2.4.apk'
+            apk.write_bytes(b'candidate')
+            for name, payload in [('background-tests.apk', b'background'), ('diagnostics-tests.apk', b'diagnostics')]:
+                (dist / name).write_bytes(payload)
+            metadata = {'bytes': apk.stat().st_size, 'sha256': hashlib.sha256(apk.read_bytes()).hexdigest()}
+            (dist / (apk.name + '.json')).write_text(json.dumps(metadata))
+            (dist / (apk.name + '.sha256')).write_text(metadata['sha256'] + '  ' + apk.name + '\n')
+            candidate = root / 'candidate'
+            android_evidence.create_candidate(argparse.Namespace(
+                input_dir=dist, output_dir=candidate, release=version['name'], run_id=55, run_attempt=3,
+                head_sha=head, tree_sha=tree, evidence_session=candidate_session, source_hashes=source_hashes,
+            ))
+            binding = android_evidence.candidate_binding(candidate, version['name'], artifact_id=777,
+                artifact_digest='e' * 64, head_sha=head, run_id=55, run_attempt=3,
+                evidence_session=candidate_session)
+            receipts = root / 'receipts'
+            receipts.mkdir()
+            for name in android_evidence.RECEIPTS:
+                (receipts / name).write_text(json.dumps({
+                    'release': version['name'], 'passed': True, 'errors': [],
+                    'source_hashes': {'version.json': hashlib.sha256((root / 'version.json').read_bytes()).hexdigest()},
+                    'ci': {'run_id': 55, 'run_attempt': 3, 'head_sha': head, 'evidence_session': android_session},
+                    'candidate': binding,
+                }))
+            accepted = root / 'accepted'
+            android_evidence.write_evidence(argparse.Namespace(
+                output_dir=accepted, background_receipt=receipts / 'android-background-verification.json',
+                diagnostics_receipt=receipts / 'android-diagnostics-verification.json', candidate_dir=candidate,
+                candidate_artifact_id=777, candidate_artifact_digest='e' * 64,
+                candidate_run_id=55, candidate_run_attempt=3, candidate_evidence_session=candidate_session,
+                candidate_identity_sha256=binding['identity_sha256'], release=version['name'], run_id=55,
+                run_attempt=3, head_sha=head, evidence_session=android_session,
+            ))
+            stale = root / 'qa/release-2.2.4/android-background-verification.json'
+            stale.parent.mkdir(parents=True)
+            stale.write_text('{"passed":true}')
+            android_name = 'lightforge-2.2.4-android-evidence-55-3'
+            def record(identifier, name, digest):
+                return {'id': identifier, 'name': name, 'expired': False, 'size_in_bytes': 1,
+                        'digest': 'sha256:' + digest,
+                        'workflow_run': {'id': 55, 'head_sha': head, 'head_branch': 'main'}}
+            records = {888: record(888, android_name, 'f' * 64),
+                       777: record(777, 'lightforge-2.2.4-ci-candidate', 'e' * 64)}
+            def fake_api(path):
+                if '/actions/runs/55/artifacts?' in path:
+                    return {'artifacts': [records[888]]}
+                if path.endswith('/actions/artifacts/888'):
+                    return records[888]
+                if path.endswith('/actions/artifacts/777'):
+                    return records[777]
+                self.fail('unexpected API path ' + path)
+            def fake_download(repo, artifact, destination, expected):
+                shutil.copytree(accepted if artifact['id'] == 888 else candidate, destination)
+                return Path(destination)
+            with patch.object(publication, 'ROOT', root), \
+                    patch.object(publication, 'api', side_effect=fake_api), \
+                    patch.object(publication, '_download_exact_artifact', side_effect=fake_download):
+                result = publication.verify_android_release_evidence('owner/repo', ci, version, head, tree)
+                self.assertEqual(result['candidate_artifact_id'], 777)
+                shutil.rmtree(root / 'build')
+                with self.assertRaisesRegex(ValueError, 'tree differs'):
+                    publication.verify_android_release_evidence('owner/repo', ci, version, head, '9' * 40)
+                shutil.rmtree(root / 'build')
+                # The manifest's full source map, not the carried receipt, is
+                # revalidated against the publisher checkout.
+                (root / 'version.json').write_text('{"tampered":true}')
+                with self.assertRaisesRegex(ValueError, 'Candidate source hash differs'):
+                    publication.verify_android_release_evidence('owner/repo', ci, version, head, tree)
+                (root / 'version.json').write_text('{}')
+                shutil.rmtree(root / 'build')
+                (accepted / 'receipts/android-diagnostics-verification.json').unlink()
+                with self.assertRaisesRegex(ValueError, 'unexpected or missing'):
+                    publication.verify_android_release_evidence('owner/repo', ci, version, head, tree)
