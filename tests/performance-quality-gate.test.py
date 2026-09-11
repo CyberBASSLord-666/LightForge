@@ -514,6 +514,39 @@ class QualityGateTest(unittest.TestCase):
         self.assertEqual("PASS_TARGET", result["status"])
         self.assertFalse(result["production_ready"])
 
+    def test_checked_in_template_policy_cannot_claim_production_readiness(self):
+        policy=json.loads((ROOT/"qa/performance-gate-policy.json").read_text(encoding="utf-8"))
+        result=gate.compare(
+            legacy_report(100.0,policy),
+            legacy_report(24.0,policy,"candidate"),
+            policy,
+        )
+        self.assertEqual("FAIL",result["status"])
+        self.assertFalse(result["production_ready"])
+        self.assertIn("unconfigured_locked_corpus",blocker_reasons(result))
+
+    def test_nonfinite_metric_leaves_are_rejected_before_aggregation(self):
+        metric=next(iter(gate.RELEASE_METRIC_RULES))
+        for value in (float("nan"),float("inf"),-float("inf")):
+            with self.subTest(value=value):
+                manifest,policy,baseline,candidate=inputs()
+                set_metric(candidate["runs"][0]["metrics"],metric,value)
+                with self.assertRaisesRegex(ValueError,"finite"):
+                    compare_release(baseline,candidate,policy,manifest)
+
+    def test_missing_required_metric_in_one_pair_blocks_release(self):
+        manifest,policy,baseline,candidate=inputs()
+        metric=next(name for name,rule in gate.RELEASE_METRIC_RULES.items() if rule.get("required",True))
+        target=candidate["runs"][0]["metrics"]
+        parts=metric.split(".")
+        for part in parts[:-1]:
+            target=target[part]
+        del target[parts[-1]]
+        result=compare_release(baseline,candidate,policy,manifest)
+        self.assertEqual("FAIL",result["status"])
+        self.assertFalse(result["production_ready"])
+        self.assertIn("missing_metric",blocker_reasons(result))
+
     def test_release_pass_uses_locked_corpus_and_external_attestation(self):
         manifest, policy, baseline, candidate = inputs()
         result = compare_release(baseline, candidate, policy, manifest)
