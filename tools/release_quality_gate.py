@@ -28,6 +28,12 @@ REPOSITORY = "CyberBASSLord-666/LightForge"
 QUALITY_WORKFLOW = ".github/workflows/performance-quality-gate.yml"
 RELEASE_WORKFLOW = ".github/workflows/verify-v2.yml"
 QUALITY_ARTIFACT = "performance-quality-gate-report"
+# Benchmark aggregates are accepted only from the protected manual producer
+# implemented by the canonical performance-quality workflow.  The workflow's
+# benchmark job invokes locked_benchmark_runner.py with the release corpus and
+# policy held by its protected environment; arbitrary successful Actions runs
+# are not interchangeable evidence.
+BENCHMARK_WORKFLOW = QUALITY_WORKFLOW
 RELEASE_SCOPE_SCHEMA_VERSION = 1
 
 # A waiver is deliberately much narrower than "does not look like a model
@@ -289,10 +295,69 @@ def _run_identity(run: Mapping[str, Any], commit: Mapping[str, Any], label: str)
     return {"run_id": run_id, "artifact": None, "source_commit": source_commit, "source_tree_sha": source_tree, "workflow_path": path}
 
 
-def _benchmark_identity(run: Mapping[str, Any], commit: Mapping[str, Any], artifact: str, benchmark: Path | str, label: str) -> dict[str, Any]:
+def _artifact_identity(
+    artifact_record: Mapping[str, Any],
+    *,
+    run_identity: Mapping[str, Any],
+    artifact_name: str,
+    label: str,
+) -> dict[str, Any]:
+    """Validate immutable Actions metadata before it becomes release evidence.
+
+    The workflow resolves an artifact by exact ID before download.  Recording
+    its server-provided digest here prevents a later same-name artifact (or a
+    caller-supplied name from another run) from being treated as the reviewed
+    benchmark.  The publisher repeats this validation against the live API.
+    """
+    _require(isinstance(artifact_record, Mapping), label + " artifact metadata is invalid")
+    artifact_id = _positive_int(artifact_record.get("id"), label + " artifact id")
+    _require(artifact_record.get("name") == artifact_name, label + " artifact name differs from the selected artifact")
+    _require(artifact_record.get("expired") is False, label + " artifact has expired")
+    size = _positive_int(artifact_record.get("size_in_bytes"), label + " artifact size")
+    digest = artifact_record.get("digest")
+    _require(isinstance(digest, str) and digest.startswith("sha256:"), label + " artifact digest is invalid")
+    digest = _sha256(digest.removeprefix("sha256:"), label + " artifact digest")
+    workflow = artifact_record.get("workflow_run")
+    _require(isinstance(workflow, Mapping), label + " artifact workflow provenance is invalid")
+    _require(
+        workflow.get("id") == run_identity["run_id"]
+        and workflow.get("head_sha") == run_identity["source_commit"]
+        and workflow.get("head_branch") == "main",
+        label + " artifact does not belong to the protected benchmark run",
+    )
+    return {
+        "artifact": artifact_name,
+        "artifact_id": artifact_id,
+        "artifact_digest": digest,
+        "artifact_size_bytes": size,
+    }
+
+
+def _benchmark_identity(
+    run: Mapping[str, Any],
+    commit: Mapping[str, Any],
+    artifact: str,
+    artifact_record: Mapping[str, Any],
+    benchmark: Path | str | None,
+    label: str,
+) -> dict[str, Any]:
     result = _run_identity(run, commit, label)
-    result["artifact"] = _artifact(artifact, label + " artifact")
-    result["benchmark_sha256"] = sha256_file(benchmark)
+    _require(
+        result["workflow_path"] == BENCHMARK_WORKFLOW
+        and run.get("event") == "workflow_dispatch"
+        and run.get("head_branch") == "main",
+        label + " benchmark did not use the canonical locked benchmark workflow",
+    )
+    result.update(
+        _artifact_identity(
+            artifact_record,
+            run_identity=result,
+            artifact_name=_artifact(artifact, label + " artifact"),
+            label=label,
+        )
+    )
+    if benchmark is not None:
+        result["benchmark_sha256"] = sha256_file(benchmark)
     return result
 
 
@@ -310,10 +375,12 @@ def build_provenance(
     baseline_run: Mapping[str, Any],
     baseline_commit: Mapping[str, Any],
     baseline_artifact: str,
+    baseline_artifact_record: Mapping[str, Any],
     baseline_benchmark: Path | str,
     candidate_run: Mapping[str, Any],
     candidate_commit: Mapping[str, Any],
     candidate_artifact: str,
+    candidate_artifact_record: Mapping[str, Any],
     candidate_benchmark: Path | str,
     release_candidate_run: Mapping[str, Any],
     release_candidate_commit: Mapping[str, Any],
@@ -332,8 +399,12 @@ def build_provenance(
     source_tree_sha = _sha1(source_tree_sha, "quality-gate source tree")
     _require(ref == "refs/heads/main" and ref_protected is True, "quality gate must run on protected main")
     quality_run_id = _positive_int(quality_run_id, "quality-gate workflow run id")
-    baseline = _benchmark_identity(baseline_run, baseline_commit, baseline_artifact, baseline_benchmark, "baseline")
-    candidate = _benchmark_identity(candidate_run, candidate_commit, candidate_artifact, candidate_benchmark, "candidate")
+    baseline = _benchmark_identity(
+        baseline_run, baseline_commit, baseline_artifact, baseline_artifact_record, baseline_benchmark, "baseline"
+    )
+    candidate = _benchmark_identity(
+        candidate_run, candidate_commit, candidate_artifact, candidate_artifact_record, candidate_benchmark, "candidate"
+    )
     _require(candidate["source_commit"] == source_commit, "candidate benchmark run is not for the quality-gate source commit")
     _require(candidate["source_tree_sha"] == source_tree_sha, "candidate benchmark run is not for the quality-gate source tree")
     release_candidate = _run_identity(release_candidate_run, release_candidate_commit, "release candidate")
@@ -441,6 +512,12 @@ def validate_publication_evidence(
     source_tree_sha: str,
     quality_run: Mapping[str, Any],
     quality_commit: Mapping[str, Any],
+    baseline_run: Mapping[str, Any],
+    baseline_commit: Mapping[str, Any],
+    baseline_artifact_record: Mapping[str, Any],
+    candidate_run: Mapping[str, Any],
+    candidate_commit: Mapping[str, Any],
+    candidate_artifact_record: Mapping[str, Any],
     release_candidate_run: Mapping[str, Any],
     release_candidate_commit: Mapping[str, Any],
     report_sha256: str,
@@ -503,19 +580,40 @@ def validate_publication_evidence(
     )
     candidate = provenance.get("candidate")
     baseline = provenance.get("baseline")
-    for label, item in (("candidate", candidate), ("baseline", baseline)):
-        _require(isinstance(item, dict) and set(item) == {"run_id", "artifact", "source_commit", "source_tree_sha", "workflow_path", "benchmark_sha256"}, label + " benchmark provenance is invalid")
-        _positive_int(item.get("run_id"), label + " benchmark run id")
-        _artifact(item.get("artifact"), label + " benchmark artifact")
-        _sha1(item.get("source_commit"), label + " benchmark source commit")
-        _sha1(item.get("source_tree_sha"), label + " benchmark source tree")
-        _sha256(item.get("benchmark_sha256"), label + " benchmark digest")
-        _require(isinstance(item.get("workflow_path"), str) and item["workflow_path"].startswith(".github/workflows/"), label + " benchmark workflow path is invalid")
+    benchmark_fields = {
+        "run_id",
+        "artifact",
+        "artifact_id",
+        "artifact_digest",
+        "artifact_size_bytes",
+        "source_commit",
+        "source_tree_sha",
+        "workflow_path",
+        "benchmark_sha256",
+    }
+    for label, item, live_run, live_commit, live_artifact in (
+        ("candidate", candidate, candidate_run, candidate_commit, candidate_artifact_record),
+        ("baseline", baseline, baseline_run, baseline_commit, baseline_artifact_record),
+    ):
+        _require(isinstance(item, dict) and set(item) == benchmark_fields, label + " benchmark provenance is invalid")
+        live_identity = _benchmark_identity(
+            live_run,
+            live_commit,
+            _artifact(item.get("artifact"), label + " benchmark artifact"),
+            live_artifact,
+            None,
+            label,
+        )
+        expected = dict(live_identity)
+        expected["benchmark_sha256"] = _sha256(item.get("benchmark_sha256"), label + " benchmark digest")
+        _require(item == expected, label + " benchmark provenance differs from the live artifact identity")
     _require(candidate["source_commit"] == source_commit and candidate["source_tree_sha"] == source_tree_sha, "candidate benchmark evidence is not for the release source")
     return {
         "quality_gate_run_id": quality_identity["run_id"],
         "candidate_benchmark_run_id": candidate["run_id"],
         "candidate_benchmark_artifact": candidate["artifact"],
+        "candidate_benchmark_artifact_id": candidate["artifact_id"],
+        "candidate_benchmark_artifact_digest": candidate["artifact_digest"],
         "release_candidate_run_id": release_identity["run_id"],
         "release_candidate_artifact": release_candidate_receipt["artifact"],
         "report_sha256": report_receipt["sha256"],
@@ -538,6 +636,7 @@ def _cli() -> int:
         create.add_argument("--" + side + "-run-json", required=True, type=Path)
         create.add_argument("--" + side + "-commit-json", required=True, type=Path)
         create.add_argument("--" + side + "-artifact", required=True)
+        create.add_argument("--" + side + "-artifact-json", required=True, type=Path)
         create.add_argument("--" + side + "-benchmark", required=True, type=Path)
     create.add_argument("--release-candidate-run-json", required=True, type=Path)
     create.add_argument("--release-candidate-commit-json", required=True, type=Path)
@@ -558,10 +657,12 @@ def _cli() -> int:
         baseline_run=load_json(args.baseline_run_json),
         baseline_commit=load_json(args.baseline_commit_json),
         baseline_artifact=args.baseline_artifact,
+        baseline_artifact_record=load_json(args.baseline_artifact_json),
         baseline_benchmark=args.baseline_benchmark,
         candidate_run=load_json(args.candidate_run_json),
         candidate_commit=load_json(args.candidate_commit_json),
         candidate_artifact=args.candidate_artifact,
+        candidate_artifact_record=load_json(args.candidate_artifact_json),
         candidate_benchmark=args.candidate_benchmark,
         release_candidate_run=load_json(args.release_candidate_run_json),
         release_candidate_commit=load_json(args.release_candidate_commit_json),

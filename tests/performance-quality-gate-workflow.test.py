@@ -19,12 +19,14 @@ class PerformanceQualityGateWorkflowTest(unittest.TestCase):
             "release_candidate_run_id:",
             "release_version:",
         ):
-            self.assertRegex(text, re.escape(name) + r"\n\s+description:.*\n\s+required: true")
-        self.assertEqual(2, text.count("repository: ${{ github.repository }}"))
+            self.assertRegex(text, re.escape(name) + r"\n\s+description:.*\n\s+required: false")
+        self.assertGreaterEqual(text.count("repository: ${{ github.repository }}"), 3)
         self.assertNotIn("baseline_repository:", text)
         self.assertNotIn("candidate_repository:", text)
         self.assertIn("run-id: ${{ inputs.baseline_run_id }}", text)
         self.assertIn("run-id: ${{ inputs.candidate_run_id }}", text)
+        self.assertIn("inputs.baseline_artifact != ''", text)
+        self.assertIn("inputs.release_version != ''", text)
         self.assertIn("environment: lightforge-release-quality", text)
         self.assertIn('test "$GITHUB_REF" = "refs/heads/main"', text)
         self.assertIn('test "$LIGHTFORGE_REF_PROTECTED" = "true"', text)
@@ -50,6 +52,34 @@ class PerformanceQualityGateWorkflowTest(unittest.TestCase):
         self.assertNotIn("gate/candidate/locked-corpus-manifest.json", text)
         self.assertNotIn("gate/candidate/performance-gate-policy.json", text)
 
+    def test_only_protected_locked_runner_can_produce_benchmark_artifacts(self):
+        text = WORKFLOW.read_text(encoding="utf-8")
+        for name in (
+            "benchmark_diagnostics_artifact:",
+            "benchmark_diagnostics_run_id:",
+            "benchmark_artifact:",
+            "benchmark_protocol_id:",
+            "benchmark_cache_mode:",
+            "benchmark_report_side:",
+            "benchmark_change_classification:",
+            "benchmark_change_id:",
+        ):
+            self.assertRegex(text, re.escape(name) + r"\n\s+description:.*\n\s+required: false")
+        self.assertIn("Aggregate diagnostics with the protected locked runner", text)
+        self.assertIn("tools/locked_benchmark_runner.py aggregate", text)
+        self.assertIn('--report-side "$BENCHMARK_REPORT_SIDE"', text)
+        self.assertIn("--reports gate/diagnostics/reports", text)
+        self.assertIn("gate/diagnostics/human-perceptual-review.json", text)
+        self.assertIn("environment: lightforge-release-quality", text)
+        self.assertIn("if-no-files-found: error", text)
+        self.assertIn("gh api --paginate", text)
+        self.assertIn("expected exactly one baseline benchmark artifact", text)
+        self.assertIn("expected exactly one candidate benchmark artifact", text)
+        self.assertIn("artifact-ids: ${{ steps.baseline-artifact.outputs.id }}", text)
+        self.assertIn("artifact-ids: ${{ steps.candidate-artifact.outputs.id }}", text)
+        self.assertNotIn("name: ${{ inputs.baseline_artifact }}\n          path: gate/baseline", text)
+        self.assertNotIn("name: ${{ inputs.candidate_artifact }}\n          path: gate/candidate", text)
+
     def test_pass_target_artifact_records_release_candidate_provenance(self):
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("tools/release_quality_gate.py create-provenance", text)
@@ -61,6 +91,8 @@ class PerformanceQualityGateWorkflowTest(unittest.TestCase):
         self.assertIn("--candidate-run-json gate/candidate-run.json", text)
         self.assertIn("--candidate-commit-json gate/candidate-commit.json", text)
         self.assertIn("--candidate-artifact \"$CANDIDATE_ARTIFACT\"", text)
+        self.assertIn("--baseline-artifact-json gate/baseline-artifact.json", text)
+        self.assertIn("--candidate-artifact-json gate/candidate-artifact.json", text)
         self.assertIn("--candidate-benchmark gate/candidate/benchmark.json", text)
         self.assertIn("--release-candidate-run-json gate/release-candidate-run.json", text)
         self.assertIn("--release-candidate-commit-json gate/release-candidate-commit.json", text)

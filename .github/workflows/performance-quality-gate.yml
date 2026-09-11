@@ -27,22 +27,46 @@ on:
     inputs:
       baseline_artifact:
         description: Baseline benchmark artifact name
-        required: true
+        required: false
       baseline_run_id:
         description: Successful approved LightForge Actions run ID that produced the baseline artifact
-        required: true
+        required: false
       candidate_artifact:
         description: Candidate benchmark artifact name
-        required: true
+        required: false
       candidate_run_id:
         description: Successful approved LightForge Actions run ID that produced the candidate artifact
-        required: true
+        required: false
       release_candidate_run_id:
         description: Successful verify-v2 run ID that produced the exact candidate APK to publish
-        required: true
+        required: false
       release_version:
         description: Candidate LightForge release version, for example 2.2.5
-        required: true
+        required: false
+      benchmark_diagnostics_artifact:
+        description: Exact diagnostic-report artifact to aggregate with the locked runner
+        required: false
+      benchmark_diagnostics_run_id:
+        description: Actions run ID containing the exact diagnostic-report artifact
+        required: false
+      benchmark_artifact:
+        description: Exact output artifact name for the locked benchmark aggregate
+        required: false
+      benchmark_protocol_id:
+        description: Locked benchmark protocol identifier
+        required: false
+      benchmark_cache_mode:
+        description: Controlled benchmark cache mode (cold, warm, or resumed)
+        required: false
+      benchmark_report_side:
+        description: Locked benchmark side (baseline or candidate)
+        required: false
+      benchmark_change_classification:
+        description: Candidate change classification for the attested review (minor or major)
+        required: false
+      benchmark_change_id:
+        description: Opaque candidate change identifier for the attested review
+        required: false
 
 permissions:
   contents: read
@@ -72,8 +96,114 @@ jobs:
           tools/release_quality_gate.py
           tools/publish_github_release.py
 
+  benchmark:
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      (inputs.benchmark_diagnostics_artifact != '' ||
+       inputs.benchmark_diagnostics_run_id != '' ||
+       inputs.benchmark_artifact != '' ||
+       inputs.benchmark_protocol_id != '' ||
+       inputs.benchmark_cache_mode != '' ||
+       inputs.benchmark_report_side != '' ||
+       inputs.benchmark_change_classification != '' ||
+       inputs.benchmark_change_id != '')
+    runs-on: ubuntu-latest
+    environment: lightforge-release-quality
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Require protected default-branch benchmark authority
+        env:
+          LIGHTFORGE_REF_PROTECTED: ${{ github.ref_protected }}
+          DIAGNOSTIC_ARTIFACT: ${{ inputs.benchmark_diagnostics_artifact }}
+          DIAGNOSTIC_RUN_ID: ${{ inputs.benchmark_diagnostics_run_id }}
+          BENCHMARK_ARTIFACT: ${{ inputs.benchmark_artifact }}
+          BENCHMARK_PROTOCOL_ID: ${{ inputs.benchmark_protocol_id }}
+          BENCHMARK_CACHE_MODE: ${{ inputs.benchmark_cache_mode }}
+          BENCHMARK_REPORT_SIDE: ${{ inputs.benchmark_report_side }}
+          BENCHMARK_CHANGE_CLASSIFICATION: ${{ inputs.benchmark_change_classification }}
+          BENCHMARK_CHANGE_ID: ${{ inputs.benchmark_change_id }}
+        run: |
+          test "$GITHUB_REF" = "refs/heads/main"
+          test "$LIGHTFORGE_REF_PROTECTED" = "true"
+          test -n "$DIAGNOSTIC_ARTIFACT"
+          test -n "$DIAGNOSTIC_RUN_ID"
+          test -n "$BENCHMARK_ARTIFACT"
+          test -n "$BENCHMARK_PROTOCOL_ID"
+          test -n "$BENCHMARK_CACHE_MODE"
+          test "$BENCHMARK_REPORT_SIDE" = baseline || test "$BENCHMARK_REPORT_SIDE" = candidate
+          if test "$BENCHMARK_REPORT_SIDE" = baseline; then
+            test -z "$BENCHMARK_CHANGE_CLASSIFICATION"
+            test -z "$BENCHMARK_CHANGE_ID"
+          else
+            test -n "$BENCHMARK_CHANGE_CLASSIFICATION"
+            test -n "$BENCHMARK_CHANGE_ID"
+          fi
+          python3 - "$BENCHMARK_ARTIFACT" <<'PY'
+          import re
+          import sys
+          if re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", sys.argv[1]) is None:
+              raise SystemExit("benchmark artifact name is invalid")
+          PY
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: ${{ inputs.benchmark_diagnostics_artifact }}
+          path: gate/diagnostics
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.benchmark_diagnostics_run_id }}
+          github-token: ${{ github.token }}
+      - name: Aggregate diagnostics with the protected locked runner
+        env:
+          LIGHTFORGE_RELEASE_POLICY_JSON: ${{ secrets.LIGHTFORGE_RELEASE_POLICY_JSON }}
+          LIGHTFORGE_RELEASE_CORPUS_MANIFEST_JSON: ${{ secrets.LIGHTFORGE_RELEASE_CORPUS_MANIFEST_JSON }}
+          BENCHMARK_PROTOCOL_ID: ${{ inputs.benchmark_protocol_id }}
+          BENCHMARK_CACHE_MODE: ${{ inputs.benchmark_cache_mode }}
+          BENCHMARK_REPORT_SIDE: ${{ inputs.benchmark_report_side }}
+          BENCHMARK_CHANGE_CLASSIFICATION: ${{ inputs.benchmark_change_classification }}
+          BENCHMARK_CHANGE_ID: ${{ inputs.benchmark_change_id }}
+        run: |
+          test -n "$LIGHTFORGE_RELEASE_POLICY_JSON"
+          test -n "$LIGHTFORGE_RELEASE_CORPUS_MANIFEST_JSON"
+          mkdir -p gate/trusted gate/benchmark
+          printf '%s' "$LIGHTFORGE_RELEASE_POLICY_JSON" > gate/trusted/performance-gate-policy.json
+          printf '%s' "$LIGHTFORGE_RELEASE_CORPUS_MANIFEST_JSON" > gate/trusted/locked-corpus-manifest.json
+          python3 -m json.tool gate/trusted/performance-gate-policy.json > /dev/null
+          python3 -m json.tool gate/trusted/locked-corpus-manifest.json > /dev/null
+          test -d gate/diagnostics/reports
+          if test "$BENCHMARK_REPORT_SIDE" = candidate; then
+            test -f gate/diagnostics/human-perceptual-review.json
+          fi
+          arguments=(
+            --manifest gate/trusted/locked-corpus-manifest.json
+            --reports gate/diagnostics/reports
+            --policy gate/trusted/performance-gate-policy.json
+            --protocol-id "$BENCHMARK_PROTOCOL_ID"
+            --cache-mode "$BENCHMARK_CACHE_MODE"
+            --report-side "$BENCHMARK_REPORT_SIDE"
+            --output gate/benchmark/benchmark.json
+          )
+          if test "$BENCHMARK_REPORT_SIDE" = candidate; then
+            arguments+=(
+              --change-classification "$BENCHMARK_CHANGE_CLASSIFICATION"
+              --change-id "$BENCHMARK_CHANGE_ID"
+              --human-perceptual-review gate/diagnostics/human-perceptual-review.json
+            )
+          fi
+          python3 tools/locked_benchmark_runner.py aggregate "${arguments[@]}"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ${{ inputs.benchmark_artifact }}
+          path: gate/benchmark/benchmark.json
+          if-no-files-found: error
+
   compare:
-    if: github.event_name == 'workflow_dispatch'
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      inputs.baseline_artifact != '' &&
+      inputs.baseline_run_id != '' &&
+      inputs.candidate_artifact != '' &&
+      inputs.candidate_run_id != '' &&
+      inputs.release_candidate_run_id != '' &&
+      inputs.release_version != ''
     runs-on: ubuntu-latest
     environment: lightforge-release-quality
     steps:
@@ -84,16 +214,55 @@ jobs:
         run: >-
           test "$GITHUB_REF" = "refs/heads/main" &&
           test "$LIGHTFORGE_REF_PROTECTED" = "true"
+      - name: Resolve the exact baseline benchmark artifact
+        id: baseline-artifact
+        env:
+          RUN_ID: ${{ inputs.baseline_run_id }}
+          ARTIFACT_NAME: ${{ inputs.baseline_artifact }}
+        run: |
+          mkdir -p gate
+          gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID/artifacts?per_page=100" --jq '.artifacts[]' > gate/baseline-artifacts.ndjson
+          python3 - "$ARTIFACT_NAME" gate/baseline-artifacts.ndjson "$GITHUB_OUTPUT" <<'PY'
+          import json
+          import sys
+          expected, inventory, output = sys.argv[1:]
+          records = [json.loads(line) for line in open(inventory, encoding="utf-8") if line.strip()]
+          matches = [record for record in records if record.get("name") == expected]
+          if len(matches) != 1 or type(matches[0].get("id")) is not int or matches[0]["id"] <= 0:
+              raise SystemExit("expected exactly one baseline benchmark artifact")
+          with open(output, "a", encoding="utf-8") as stream:
+              print("id=" + str(matches[0]["id"]), file=stream)
+          PY
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/${{ steps.baseline-artifact.outputs.id }}" > gate/baseline-artifact.json
+      - name: Resolve the exact candidate benchmark artifact
+        id: candidate-artifact
+        env:
+          RUN_ID: ${{ inputs.candidate_run_id }}
+          ARTIFACT_NAME: ${{ inputs.candidate_artifact }}
+        run: |
+          gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID/artifacts?per_page=100" --jq '.artifacts[]' > gate/candidate-artifacts.ndjson
+          python3 - "$ARTIFACT_NAME" gate/candidate-artifacts.ndjson "$GITHUB_OUTPUT" <<'PY'
+          import json
+          import sys
+          expected, inventory, output = sys.argv[1:]
+          records = [json.loads(line) for line in open(inventory, encoding="utf-8") if line.strip()]
+          matches = [record for record in records if record.get("name") == expected]
+          if len(matches) != 1 or type(matches[0].get("id")) is not int or matches[0]["id"] <= 0:
+              raise SystemExit("expected exactly one candidate benchmark artifact")
+          with open(output, "a", encoding="utf-8") as stream:
+              print("id=" + str(matches[0]["id"]), file=stream)
+          PY
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/${{ steps.candidate-artifact.outputs.id }}" > gate/candidate-artifact.json
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          name: ${{ inputs.baseline_artifact }}
+          artifact-ids: ${{ steps.baseline-artifact.outputs.id }}
           path: gate/baseline
           repository: ${{ github.repository }}
           run-id: ${{ inputs.baseline_run_id }}
           github-token: ${{ github.token }}
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          name: ${{ inputs.candidate_artifact }}
+          artifact-ids: ${{ steps.candidate-artifact.outputs.id }}
           path: gate/candidate
           repository: ${{ github.repository }}
           run-id: ${{ inputs.candidate_run_id }}
@@ -160,10 +329,12 @@ jobs:
             --baseline-run-json gate/baseline-run.json \
             --baseline-commit-json gate/baseline-commit.json \
             --baseline-artifact "$BASELINE_ARTIFACT" \
+            --baseline-artifact-json gate/baseline-artifact.json \
             --baseline-benchmark gate/baseline/benchmark.json \
             --candidate-run-json gate/candidate-run.json \
             --candidate-commit-json gate/candidate-commit.json \
             --candidate-artifact "$CANDIDATE_ARTIFACT" \
+            --candidate-artifact-json gate/candidate-artifact.json \
             --candidate-benchmark gate/candidate/benchmark.json \
             --release-candidate-run-json gate/release-candidate-run.json \
             --release-candidate-commit-json gate/release-candidate-commit.json \

@@ -123,6 +123,7 @@ class ReleaseQualityPublicationWiringTest(unittest.TestCase):
             "tools/analysis_benchmark_contract.py",
             "tools/locked_benchmark_runner.py",
             "tools/differential_analysis.py",
+            ".github/workflows/performance-quality-gate.yml",
         ):
             self.assertIn(repr(path), source)
         declaration = nonperformance_declaration()
@@ -139,6 +140,60 @@ class ReleaseQualityPublicationWiringTest(unittest.TestCase):
                     COMMIT,
                     TREE,
                 )
+
+    def test_publisher_revalidates_exact_benchmark_artifact_id_and_run(self):
+        receipt = {
+            "run_id": 202,
+            "artifact": "candidate-benchmark",
+            "artifact_id": 502,
+            "artifact_digest": "2" * 64,
+            "artifact_size_bytes": 123,
+        }
+        run_record = {
+            "id": 202,
+            "status": "completed",
+            "conclusion": "success",
+            "head_repository": {"full_name": gate.REPOSITORY},
+            "head_sha": COMMIT,
+            "head_branch": "main",
+            "path": gate.BENCHMARK_WORKFLOW,
+            "event": "workflow_dispatch",
+        }
+        artifact = {
+            "id": 502,
+            "name": "candidate-benchmark",
+            "expired": False,
+            "size_in_bytes": 123,
+            "digest": "sha256:" + "2" * 64,
+            "workflow_run": {"id": 202, "head_sha": COMMIT, "head_branch": "main"},
+        }
+
+        def api(path):
+            if path.endswith("/actions/runs/202"):
+                return run_record
+            if path.endswith("/git/commits/" + COMMIT):
+                return {"tree": {"sha": TREE}}
+            if path.endswith("/actions/artifacts/502"):
+                return artifact
+            self.fail("unexpected API path " + path)
+
+        with patch.object(publisher, "api", side_effect=api):
+            live_run, live_commit, live_artifact = publisher._live_benchmark_artifact(
+                gate.REPOSITORY, {"candidate": receipt}, "candidate"
+            )
+        self.assertEqual(live_run["id"], 202)
+        self.assertEqual(live_commit["tree"]["sha"], TREE)
+        self.assertEqual(live_artifact["digest"], "sha256:" + "2" * 64)
+
+        unrelated = dict(artifact, workflow_run={"id": 999, "head_sha": COMMIT, "head_branch": "main"})
+        with patch.object(publisher, "api", side_effect=lambda path: (
+            run_record if path.endswith("/actions/runs/202")
+            else {"tree": {"sha": TREE}} if path.endswith("/git/commits/" + COMMIT)
+            else unrelated if path.endswith("/actions/artifacts/502")
+            else self.fail("unexpected API path " + path)
+        )):
+            with self.assertRaisesRegex(ValueError, "does not belong"):
+                publisher._live_benchmark_artifact(gate.REPOSITORY, {"candidate": receipt}, "candidate")
 
     def test_published_baseline_is_recovered_from_immutable_target_ledger_and_verified_ci(self):
         release = {

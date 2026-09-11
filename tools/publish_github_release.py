@@ -59,6 +59,7 @@ RELEASE_ENFORCEMENT_PATHS = (
     'tools/verification_evidence_manifest.py',
     'tools/run_android_background_tests.py',
     'tools/run_android_diagnostics_tests.py',
+    '.github/workflows/performance-quality-gate.yml',
 )
 
 
@@ -109,6 +110,32 @@ def _artifact_metadata(repo, artifact_id, ci, source_commit, expected_name=None)
             'Artifact does not belong to the verified candidate run')
     require(workflow.get('head_branch') == 'main', 'Artifact does not belong to protected main')
     return artifact
+
+
+def _live_benchmark_artifact(repo, provenance, label):
+    """Recover one benchmark producer and exact artifact from GitHub again.
+
+    Release provenance is a receipt, not authority by itself.  Re-fetching the
+    run, commit and immutable artifact by ID makes a copied report from an
+    arbitrary successful workflow, or a later same-name artifact, fail before
+    publication can use it.
+    """
+    receipt = provenance.get(label)
+    require(isinstance(receipt, dict), label + ' benchmark provenance is invalid')
+    run_id = _positive_int(receipt.get('run_id'), label + ' benchmark run id is invalid')
+    artifact_id = _positive_int(receipt.get('artifact_id'), label + ' benchmark artifact id is invalid')
+    name = receipt.get('artifact')
+    require(isinstance(name, str) and re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]{0,127}', name),
+            label + ' benchmark artifact name is invalid')
+    run_record = api(f'repos/{repo}/actions/runs/{run_id}')
+    require(isinstance(run_record, dict) and run_record.get('id') == run_id,
+            label + ' benchmark run identity differs')
+    head_sha = run_record.get('head_sha')
+    require(isinstance(head_sha, str) and re.fullmatch('[0-9a-f]{40}', head_sha),
+            label + ' benchmark source commit is invalid')
+    commit_record = api(f'repos/{repo}/git/commits/{head_sha}')
+    artifact_record = _artifact_metadata(repo, artifact_id, run_record, head_sha, name)
+    return run_record, commit_record, artifact_record
 
 
 def _run_artifacts(repo, run_id):
@@ -736,15 +763,29 @@ def verify_release_quality(request, version, repo, ci, source_commit, source_tre
     run('gh', 'run', 'download', str(quality_run_id), '--name', QUALITY_ARTIFACT, '--dir', str(transfer))
     report_path = single_artifact_file(transfer, 'quality-gate-report.json')
     provenance_path = single_artifact_file(transfer, 'quality-gate-provenance.json')
+    report = json.loads(report_path.read_text())
+    provenance = json.loads(provenance_path.read_text())
+    baseline_run, baseline_commit, baseline_artifact = _live_benchmark_artifact(
+        repo, provenance, 'baseline'
+    )
+    candidate_run, candidate_commit, candidate_artifact = _live_benchmark_artifact(
+        repo, provenance, 'candidate'
+    )
     evidence = validate_publication_evidence(
-        json.loads(report_path.read_text()),
-        json.loads(provenance_path.read_text()),
+        report,
+        provenance,
         version=version,
         source_declaration=declaration,
         source_commit=source_commit,
         source_tree_sha=source_tree_sha,
         quality_run=quality_run,
         quality_commit=quality_commit,
+        baseline_run=baseline_run,
+        baseline_commit=baseline_commit,
+        baseline_artifact_record=baseline_artifact,
+        candidate_run=candidate_run,
+        candidate_commit=candidate_commit,
+        candidate_artifact_record=candidate_artifact,
         release_candidate_run=ci,
         release_candidate_commit=api(f'repos/{repo}/git/commits/{ci["head_sha"]}'),
         report_sha256=digest(report_path),

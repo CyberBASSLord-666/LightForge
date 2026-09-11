@@ -229,6 +229,30 @@ required track's paired runtime lower confidence bound to reach the configured
 reduction and no critical quality regression or inconclusive critical result.
 A real corpus measurement is required before claiming either.
 
+## Canonical GitHub producer
+
+For release evidence, do not upload a hand-built `benchmark.json` from an
+arbitrary successful workflow. Dispatch
+`.github/workflows/performance-quality-gate.yml` on protected `main` with
+the benchmark inputs. Its protected `benchmark` job downloads the exact
+diagnostic artifact by run ID, invokes this locked runner with the private
+release manifest and policy, and uploads one named `benchmark.json` artifact.
+
+The diagnostic artifact must put contract diagnostics below `reports/`. A
+candidate artifact must additionally put its externally attested review at
+`human-perceptual-review.json` at the artifact root. Use
+`benchmark_report_side=baseline` for baseline aggregation. For a candidate,
+use `benchmark_report_side=candidate` and provide its change classification
+and change ID; the job fails closed if the review attachment is absent.
+
+The subsequent release comparison resolves each requested benchmark name to
+one Actions artifact ID, records the API SHA-256 digest and size in
+provenance, and downloads by that ID. Publication re-fetches that run and
+artifact ID and rejects a different workflow, run, name, digest, size, source
+commit, or protected-main branch. Existing benchmark artifacts from before
+this producer are intentionally not release-authoritative; regenerate them
+through the canonical protected job.
+
 ## Output and privacy boundaries
 
 The aggregate contains only track IDs, opaque hashes, durations already bound

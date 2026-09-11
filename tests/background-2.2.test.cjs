@@ -1,11 +1,23 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const {JSDOM}=require('jsdom'),runWorker=require('./worker-harness.cjs'),root=path.resolve(__dirname,'..'),{webcrypto}=require('node:crypto');
+const SemanticTimeline=require('../web/analysis/semantic-timeline.js'),MusicSalience=require('../web/analysis/salience.js'),VocalSemantics=require('../web/analysis/vocal-semantics.js'),Recurrence=require('../web/analysis/recurrence.js');require('../web/analysis/rhythm-hierarchy.js');const RhythmHierarchy=globalThis.LightForgeRhythmHierarchy;
 const music={duration:2,bpm:120,beats:[0,.5,1,1.5],waveform:[.4],beatConfidence:.9,sections:[{start:0,end:2,energy:.7}],analysisVersion:6};
+const canonicalV8=duration=>{
+ const value={...structuredClone(music),duration,analysisVersion:8,downbeats:[],energy:[.4,.4,.4],energyStep:1,onsets:[],bassNotes:[],warnings:[],
+  sections:[{start:0,end:duration,energy:.7}],vocals:{source:'separated-vocals',sourceSeparated:true,phrases:[],accents:[],notes:[],envelope:[0,0],transcription:{model:'fixture-game',notes:[]}},
+  bassAnalysis:{phrases:[],envelope:[0,0]},percussionAnalysis:{events:[]},engine:{name:'fixture analysis',neural:true,separationModel:{modelId:'fixture-separator',sourceSeparated:true}},roleAnalysis:{sourceSeparated:true}};
+ value.semanticTimeline=SemanticTimeline.build(value);value.musicSalience=MusicSalience.build(value.semanticTimeline);
+ value.vocalSemantics=VocalSemantics.build({duration:value.duration,vocals:value.vocals});value.vocalSemanticLinks=VocalSemantics.linkTimeline(value.vocalSemantics,value.semanticTimeline);
+ const rhythm=RhythmHierarchy.attach(value);assert.ok(rhythm.hierarchy,'Fixture rhythm hierarchy must build.');
+ const evidence=Recurrence.captureEvidence(value,value.semanticTimeline),sidecar=Recurrence.build(value.semanticTimeline,evidence);
+ value.recurrenceEvidence=evidence;value.recurrenceSidecar=sidecar;value.recurrenceAnalysis={schemaVersion:1,enabled:true,cacheDomain:'recurrence',engineVersion:Recurrence.version,sidecarSchemaVersion:sidecar.schemaVersion,clock:sidecar.clock,duration:sidecar.duration,timelineFingerprint:sidecar.timelineFingerprint,evidenceFingerprint:sidecar.evidenceFingerprint};
+ return value;
+};
 const waitFor=async fn=>{for(let i=0;i<200;i++){if(fn())return;await new Promise(r=>setTimeout(r,10));}throw Error('Timed out');};
-test('background runner loads the same analysis scheduler before MusicAnalyzer',()=>{
- const html=fs.readFileSync(path.join(root,'web/background/runner.html'),'utf8'),store=html.indexOf('../analysis/work-store.js'),scheduler=html.indexOf('../analysis/scheduler.js'),analyzer=html.indexOf('../analysis/analyzer.js');
- assert.ok(store>=0&&scheduler>store&&analyzer>scheduler,'Background runner must load checkpoint storage, scheduler, then analyzer in order.');
+test('background runner loads canonical duration contracts before MusicAnalyzer',()=>{
+ const html=fs.readFileSync(path.join(root,'web/background/runner.html'),'utf8'),store=html.indexOf('../analysis/work-store.js'),scheduler=html.indexOf('../analysis/scheduler.js'),timeline=html.indexOf('../analysis/semantic-timeline.js'),salience=html.indexOf('../analysis/salience.js'),vocal=html.indexOf('../analysis/vocal-semantics.js'),rhythm=html.indexOf('../analysis/rhythm-hierarchy.js'),recurrence=html.indexOf('../analysis/recurrence.js'),analyzer=html.indexOf('../analysis/analyzer.js');
+ assert.ok(store>=0&&scheduler>store&&timeline>scheduler&&salience>timeline&&vocal>salience&&rhythm>vocal&&recurrence>rhythm&&analyzer>recurrence,'Background runner must load checkpoint storage, canonical contracts, then MusicAnalyzer in order.');
 });
 test('background runner checkpoints analysis and commits an actual compiled show without a studio document',async()=>{
  const progressEvents=[],events=[],request={analysisIdentity:'a'.repeat(64),version:1,projectId:'show-test',name:'Background',duration:2,settings:{dance:'off'},music:null,needAnalysis:true};let done=false,saved;
@@ -17,6 +29,32 @@ test('background runner checkpoints analysis and commits an actual compiled show
  };context.window=context;vm.runInNewContext(fs.readFileSync(path.join(root,'web/background/runner.js'),'utf8'),context);
  await waitFor(()=>done);assert.equal(progressEvents[0].value,.48);assert.equal(progressEvents[0].info.passageIndex,3);assert.equal(progressEvents[0].info.restoredPassages,1);assert.equal(progressEvents[0].info.checkpointSaved,true);assert.deepEqual(events,['analysis','checkpoint','complete']);assert.equal(saved.needAnalysis,false);assert.equal(saved.projectId,'show-test');assert.match(saved.compiled.sha256,/^[a-f0-9]{64}$/);
  const restored=await runWorker(path.join(root,'web/engine'),{action:'restore',compiled:saved.compiled,music:saved.music,settings:saved.settings});assert.ok(restored.show.validation.valid);
+});
+test('background runner reconciles only the permitted odd-frame clock drift and rebinds v8 contracts',async()=>{
+ const playbackFrames=88201,playbackDuration=playbackFrames/44100,analysisDuration=Math.ceil(playbackFrames/2)/22050,source=canonicalV8(analysisDuration);
+ let checkpoint,completed,failed;
+ const request={analysisIdentity:'b'.repeat(64),projectId:'odd-frame-test',name:'Odd frame',duration:playbackDuration,settings:{},music:null,needAnalysis:true};
+ const context={URL,AbortController,DOMException,location:{href:'https://appassets.androidplatform.net/background/runner.html?job=odd-frame-job'},navigator:{},
+  LightForgeVersion:{name:'2.2.4'},VehicleProfile:{version:'fixture'},LightForgeSemanticTimeline:SemanticTimeline,LightForgeMusicSalience:MusicSalience,LightForgeVocalSemantics:VocalSemantics,LightForgeRhythmHierarchy:RhythmHierarchy,LightForgeRecurrence:Recurrence,
+  fetch:async()=>({ok:true,json:async()=>request}),MusicAnalyzer:{analyze:async()=>structuredClone(source)},ShowCompiler:{generate:async()=>({show:{version:'fixture-show'},compiled:{sha256:'a'.repeat(64)}})},
+  BackgroundJob:{progressInfo(){},checkpoint(id,body){assert.equal(id,'odd-frame-job');checkpoint=JSON.parse(body);return true;},complete(id){assert.equal(id,'odd-frame-job');completed=true;return true;},failed(_id,message){failed=message;}}
+ };
+ context.window=context;vm.runInNewContext(fs.readFileSync(path.join(root,'web/background/runner.js'),'utf8'),context);await waitFor(()=>completed||failed);
+ assert.equal(failed,undefined);assert.equal(checkpoint.duration,playbackDuration);assert.equal(checkpoint.sections.at(-1).end,playbackDuration);
+ assert.equal(checkpoint.semanticTimeline.duration,playbackDuration);assert.equal(checkpoint.musicSalience.duration,playbackDuration);assert.notEqual(checkpoint.musicSalience.timelineFingerprint,source.musicSalience.timelineFingerprint);
+ assert.ok(SemanticTimeline.validate(checkpoint.semanticTimeline).valid,'Rebuilt timeline must remain canonical.');assert.ok(MusicSalience.validate(checkpoint.musicSalience,checkpoint.semanticTimeline).valid,'Rebuilt salience must match the rebuilt timeline.');
+ assert.ok(VocalSemantics.validate(checkpoint.vocalSemantics,{duration:playbackDuration,vocals:checkpoint.vocals}).valid,'Vocal sidecar must be rebound.');assert.ok(Math.abs(checkpoint.vocalSemanticLinks.duration-playbackDuration)<=1e-6);assert.ok(Math.abs(checkpoint.rhythmHierarchy.duration-playbackDuration)<=1e-6);assert.equal(checkpoint.recurrenceEvidence.duration,playbackDuration);assert.equal(checkpoint.recurrenceSidecar.duration,playbackDuration);assert.equal(checkpoint.recurrenceAnalysis.timelineFingerprint,checkpoint.recurrenceSidecar.timelineFingerprint);
+});
+test('background runner rejects arbitrary decoded/playback duration mismatches',async()=>{
+ const source=canonicalV8(2);let checkpointed=false,completed=false,failed;
+ const request={analysisIdentity:'c'.repeat(64),projectId:'bad-clock-test',name:'Bad clock',duration:2.1,settings:{},music:null,needAnalysis:true};
+ const context={URL,AbortController,DOMException,location:{href:'https://appassets.androidplatform.net/background/runner.html?job=bad-clock-job'},navigator:{},
+  LightForgeVersion:{name:'2.2.4'},VehicleProfile:{version:'fixture'},LightForgeSemanticTimeline:SemanticTimeline,LightForgeMusicSalience:MusicSalience,LightForgeVocalSemantics:VocalSemantics,LightForgeRhythmHierarchy:RhythmHierarchy,LightForgeRecurrence:Recurrence,
+  fetch:async()=>({ok:true,json:async()=>request}),MusicAnalyzer:{analyze:async()=>structuredClone(source)},ShowCompiler:{generate:async()=>{throw Error('Must not compile an invalid clock.');}},
+  BackgroundJob:{progressInfo(){},checkpoint(){checkpointed=true;return true;},complete(){completed=true;return true;},failed(_id,message){failed=message;}}
+ };
+ context.window=context;vm.runInNewContext(fs.readFileSync(path.join(root,'web/background/runner.js'),'utf8'),context);await waitFor(()=>failed);
+ assert.match(failed,/permitted one-sample reconciliation/);assert.equal(checkpointed,false);assert.equal(completed,false);
 });
 test('background runner cancellation never submits a completed project',async()=>{
  let entered=false,failed,completed=false;

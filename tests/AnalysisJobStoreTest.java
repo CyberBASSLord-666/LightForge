@@ -18,6 +18,33 @@ public final class AnalysisJobStoreTest {
         JSONObject salience=new JSONObject().put("schemaVersion",1).put("engineVersion","1.0.0").put("timelineSchemaVersion",2).put("timelineFingerprint","0123abcd").put("clock","original-decoded-audio").put("duration",2).put("events",new JSONArray().put(ranked)).put("summary",new JSONObject().put("eventCount",1).put("countByTier",tierCounts).put("context",new JSONObject().put("profile","balanced").put("evidence",evidence).put("eventDensity",.5).put("sourcePriorities",priorities).put("weights",weights)).put("topEventIds",new JSONArray().put("m000000")).put("highlights",new JSONArray().put(highlight)));
         return music.put("semanticTimeline",timeline).put("musicSalience",salience);
     }
+    static JSONObject salienceEntry(JSONObject music,String id)throws Exception{
+        JSONArray events=music.getJSONObject("musicSalience").getJSONArray("events");
+        for(int index=0;index<events.length();index++){JSONObject entry=events.getJSONObject(index);if(id.equals(entry.getString("id")))return entry;}
+        throw new AssertionError("Missing salience fixture entry: "+id);
+    }
+    static void rebuildHighlights(JSONObject music,String... ids)throws Exception{
+        JSONObject summary=music.getJSONObject("musicSalience").getJSONObject("summary"),entry;
+        JSONArray top=new JSONArray(),highlights=new JSONArray();
+        for(String id:ids){
+            entry=salienceEntry(music,id);top.put(id);
+            highlights.put(new JSONObject().put("id",id).put("score",entry.getDouble("score")).put("tier",entry.getString("tier")).put("rank",entry.getInt("rank")).put("drivers",new JSONArray().put("structural")));
+        }
+        summary.put("topEventIds",top).put("highlights",highlights);
+    }
+    static JSONObject rankedCanonicalV8(JSONObject legacy)throws Exception{
+        JSONObject music=canonicalV8(legacy),timeline=music.getJSONObject("semanticTimeline"),salience=music.getJSONObject("musicSalience");
+        JSONArray timelineEvents=timeline.getJSONArray("events");timelineEvents.getJSONObject(0).put("duration",.5);
+        timelineEvents.put(new JSONObject(timelineEvents.getJSONObject(0).toString()).put("id","m000001").put("time",.5));
+        timelineEvents.put(new JSONObject(timelineEvents.getJSONObject(0).toString()).put("id","m000002").put("time",1));
+        timeline.getJSONObject("summary").put("eventCount",3).put("countByTier",new JSONObject().put("micro",0).put("secondary",0).put("primary",0).put("phrase",3).put("structural",0).put("climax",0));
+        salience.put("events",new JSONArray()
+            .put(new JSONObject().put("id","m000000").put("score",.80).put("tier","structural").put("rank",1))
+            .put(new JSONObject().put("id","m000001").put("score",.65).put("tier","phrase").put("rank",2))
+            .put(new JSONObject().put("id","m000002").put("score",.65).put("tier","phrase").put("rank",3)));
+        salience.getJSONObject("summary").put("eventCount",3).put("countByTier",new JSONObject().put("micro",0).put("secondary",0).put("primary",0).put("phrase",2).put("structural",1).put("climax",0));
+        rebuildHighlights(music,"m000000","m000001","m000002");return music;
+    }
     public static void main(String[] args)throws Exception{
         File files=new File(args[0]);files.mkdirs();File projects=new File(files,"projects");projects.mkdirs();
         File audio=new File(files,"input.wav"),mono=new File(files,"input-mono.wav");
@@ -57,6 +84,11 @@ public final class AnalysisJobStoreTest {
             JSONObject historical=read(new File("qa/release-1.6.0",file));AnalysisJobStore.validateCheckpoint(historical,historical.getDouble("duration"));
         }
         JSONObject canonical=canonicalV8(music);AnalysisJobStore.validateCheckpoint(canonical,2);
+        JSONObject rankedCanonical=rankedCanonicalV8(music);AnalysisJobStore.validateCheckpoint(rankedCanonical,2);
+        JSONObject invertedSalienceRank=new JSONObject(rankedCanonical.toString());salienceEntry(invertedSalienceRank,"m000000").put("rank",2);salienceEntry(invertedSalienceRank,"m000001").put("rank",1);rebuildHighlights(invertedSalienceRank,"m000001","m000000","m000002");reject(()->AnalysisJobStore.validateCheckpoint(invertedSalienceRank,2));
+        JSONObject invertedTieBreak=new JSONObject(rankedCanonical.toString());salienceEntry(invertedTieBreak,"m000001").put("rank",3);salienceEntry(invertedTieBreak,"m000002").put("rank",2);rebuildHighlights(invertedTieBreak,"m000000","m000002","m000001");reject(()->AnalysisJobStore.validateCheckpoint(invertedTieBreak,2));
+        JSONObject outOfRankHighlights=new JSONObject(rankedCanonical.toString());rebuildHighlights(outOfRankHighlights,"m000001","m000000","m000002");reject(()->AnalysisJobStore.validateCheckpoint(outOfRankHighlights,2));
+        JSONObject incompleteHighlights=new JSONObject(rankedCanonical.toString());rebuildHighlights(incompleteHighlights,"m000000","m000001");reject(()->AnalysisJobStore.validateCheckpoint(incompleteHighlights,2));
         JSONObject missingTimeline=new JSONObject(canonical.toString());missingTimeline.remove("semanticTimeline");reject(()->AnalysisJobStore.validateCheckpoint(missingTimeline,2));
         JSONObject wrongClock=new JSONObject(canonical.toString());wrongClock.getJSONObject("semanticTimeline").put("clock","resampled-stem");reject(()->AnalysisJobStore.validateCheckpoint(wrongClock,2));
         JSONObject outOfBounds=new JSONObject(canonical.toString());outOfBounds.getJSONObject("semanticTimeline").getJSONArray("events").getJSONObject(0).put("duration",2.001);reject(()->AnalysisJobStore.validateCheckpoint(outOfBounds,2));

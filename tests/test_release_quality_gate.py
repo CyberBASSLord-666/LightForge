@@ -37,11 +37,23 @@ def run(run_id, commit, workflow):
         "head_repository": {"full_name": gate.REPOSITORY},
         "path": workflow,
         "event": "workflow_dispatch",
+        "head_branch": "main",
     }
 
 
 def git_commit(tree):
     return {"tree": {"sha": tree}}
+
+
+def artifact(artifact_id, name, run_id, commit, digest):
+    return {
+        "id": artifact_id,
+        "name": name,
+        "expired": False,
+        "size_in_bytes": 123,
+        "digest": "sha256:" + digest,
+        "workflow_run": {"id": run_id, "head_sha": commit, "head_branch": "main"},
+    }
 
 
 def performance_declaration(version):
@@ -93,8 +105,10 @@ class ReleaseQualityGateTest(unittest.TestCase):
         self.candidate_benchmark = self.root / "candidate.json"
         self.baseline_benchmark.write_text('{"baseline":true}\n')
         self.candidate_benchmark.write_text('{"candidate":true}\n')
-        self.baseline_run = run(101, BASELINE_COMMIT, ".github/workflows/benchmark.yml")
-        self.candidate_run = run(202, COMMIT, ".github/workflows/benchmark.yml")
+        self.baseline_run = run(101, BASELINE_COMMIT, gate.BENCHMARK_WORKFLOW)
+        self.candidate_run = run(202, COMMIT, gate.BENCHMARK_WORKFLOW)
+        self.baseline_artifact_record = artifact(501, "baseline-benchmark", 101, BASELINE_COMMIT, "1" * 64)
+        self.candidate_artifact_record = artifact(502, "candidate-benchmark", 202, COMMIT, "2" * 64)
 
     def tearDown(self):
         self.temporary.cleanup()
@@ -113,10 +127,12 @@ class ReleaseQualityGateTest(unittest.TestCase):
             baseline_run=self.baseline_run,
             baseline_commit=git_commit(BASELINE_TREE),
             baseline_artifact="baseline-benchmark",
+            baseline_artifact_record=self.baseline_artifact_record,
             baseline_benchmark=self.baseline_benchmark,
             candidate_run=self.candidate_run,
             candidate_commit=git_commit(TREE),
             candidate_artifact="candidate-benchmark",
+            candidate_artifact_record=self.candidate_artifact_record,
             candidate_benchmark=self.candidate_benchmark,
             release_candidate_run=run(404, COMMIT, gate.RELEASE_WORKFLOW),
             release_candidate_commit=git_commit(TREE),
@@ -134,12 +150,20 @@ class ReleaseQualityGateTest(unittest.TestCase):
             source_tree_sha=TREE,
             quality_run=run(303, COMMIT, gate.QUALITY_WORKFLOW),
             quality_commit=git_commit(TREE),
+            baseline_run=self.baseline_run,
+            baseline_commit=git_commit(BASELINE_TREE),
+            baseline_artifact_record=self.baseline_artifact_record,
+            candidate_run=self.candidate_run,
+            candidate_commit=git_commit(TREE),
+            candidate_artifact_record=self.candidate_artifact_record,
             release_candidate_run=run(404, COMMIT, gate.RELEASE_WORKFLOW),
             release_candidate_commit=git_commit(TREE),
             report_sha256=gate.sha256_file(self.report_path),
         )
         self.assertEqual(result["quality_gate_run_id"], 303)
         self.assertEqual(result["candidate_benchmark_artifact"], "candidate-benchmark")
+        self.assertEqual(result["candidate_benchmark_artifact_id"], 502)
+        self.assertEqual(result["candidate_benchmark_artifact_digest"], "2" * 64)
         self.assertEqual(result["release_candidate_run_id"], 404)
         self.assertEqual(result["release_candidate_artifact"], "lightforge-2.2.5-ci-candidate")
         self.assertEqual(result["report_sha256"], gate.sha256_file(self.report_path))
@@ -158,6 +182,12 @@ class ReleaseQualityGateTest(unittest.TestCase):
                 source_tree_sha=TREE,
                 quality_run=run(303, COMMIT, gate.QUALITY_WORKFLOW),
                 quality_commit=git_commit(TREE),
+                baseline_run=self.baseline_run,
+                baseline_commit=git_commit(BASELINE_TREE),
+                baseline_artifact_record=self.baseline_artifact_record,
+                candidate_run=self.candidate_run,
+                candidate_commit=git_commit(TREE),
+                candidate_artifact_record=self.candidate_artifact_record,
                 release_candidate_run=run(404, COMMIT, gate.RELEASE_WORKFLOW),
                 release_candidate_commit=git_commit(TREE),
                 report_sha256=gate.sha256_file(self.report_path),
@@ -170,8 +200,8 @@ class ReleaseQualityGateTest(unittest.TestCase):
             gate.build_provenance(
                 report=bad, report_sha256=gate.sha256_file(self.report_path), version=self.version, release_declaration=self.declaration, source_commit=COMMIT, source_tree_sha=TREE,
                 ref="refs/heads/main", ref_protected=True, quality_run_id=303,
-                baseline_run=self.baseline_run, baseline_commit=git_commit(BASELINE_TREE), baseline_artifact="baseline-benchmark", baseline_benchmark=self.baseline_benchmark,
-                candidate_run=self.candidate_run, candidate_commit=git_commit(TREE), candidate_artifact="candidate-benchmark", candidate_benchmark=self.candidate_benchmark,
+                baseline_run=self.baseline_run, baseline_commit=git_commit(BASELINE_TREE), baseline_artifact="baseline-benchmark", baseline_artifact_record=self.baseline_artifact_record, baseline_benchmark=self.baseline_benchmark,
+                candidate_run=self.candidate_run, candidate_commit=git_commit(TREE), candidate_artifact="candidate-benchmark", candidate_artifact_record=self.candidate_artifact_record, candidate_benchmark=self.candidate_benchmark,
                 release_candidate_run=run(404, COMMIT, gate.RELEASE_WORKFLOW), release_candidate_commit=git_commit(TREE), release_candidate_artifact="lightforge-2.2.5-ci-candidate",
             )
         provenance = self.provenance()
@@ -180,7 +210,85 @@ class ReleaseQualityGateTest(unittest.TestCase):
             gate.validate_publication_evidence(
                 self.report, provenance, version=self.version, source_declaration=self.declaration, source_commit=COMMIT, source_tree_sha=TREE,
                 quality_run=wrong, quality_commit=git_commit(TREE),
+                baseline_run=self.baseline_run, baseline_commit=git_commit(BASELINE_TREE), baseline_artifact_record=self.baseline_artifact_record,
+                candidate_run=self.candidate_run, candidate_commit=git_commit(TREE), candidate_artifact_record=self.candidate_artifact_record,
                 release_candidate_run=run(404, COMMIT, gate.RELEASE_WORKFLOW), release_candidate_commit=git_commit(TREE),
+                report_sha256=gate.sha256_file(self.report_path),
+            )
+
+    def test_rejects_arbitrary_successful_workflow_and_wrong_live_artifact(self):
+        arbitrary = run(202, COMMIT, ".github/workflows/unrelated-success.yml")
+        with self.assertRaisesRegex(ValueError, "canonical locked benchmark workflow"):
+            gate.build_provenance(
+                report=self.report,
+                report_sha256=gate.sha256_file(self.report_path),
+                version=self.version,
+                release_declaration=self.declaration,
+                source_commit=COMMIT,
+                source_tree_sha=TREE,
+                ref="refs/heads/main",
+                ref_protected=True,
+                quality_run_id=303,
+                baseline_run=self.baseline_run,
+                baseline_commit=git_commit(BASELINE_TREE),
+                baseline_artifact="baseline-benchmark",
+                baseline_artifact_record=self.baseline_artifact_record,
+                baseline_benchmark=self.baseline_benchmark,
+                candidate_run=arbitrary,
+                candidate_commit=git_commit(TREE),
+                candidate_artifact="candidate-benchmark",
+                candidate_artifact_record=self.candidate_artifact_record,
+                candidate_benchmark=self.candidate_benchmark,
+                release_candidate_run=run(404, COMMIT, gate.RELEASE_WORKFLOW),
+                release_candidate_commit=git_commit(TREE),
+                release_candidate_artifact="lightforge-2.2.5-ci-candidate",
+            )
+        wrong_name = dict(self.candidate_artifact_record, name="other-artifact")
+        with self.assertRaisesRegex(ValueError, "name differs"):
+            gate.build_provenance(
+                report=self.report,
+                report_sha256=gate.sha256_file(self.report_path),
+                version=self.version,
+                release_declaration=self.declaration,
+                source_commit=COMMIT,
+                source_tree_sha=TREE,
+                ref="refs/heads/main",
+                ref_protected=True,
+                quality_run_id=303,
+                baseline_run=self.baseline_run,
+                baseline_commit=git_commit(BASELINE_TREE),
+                baseline_artifact="baseline-benchmark",
+                baseline_artifact_record=self.baseline_artifact_record,
+                baseline_benchmark=self.baseline_benchmark,
+                candidate_run=self.candidate_run,
+                candidate_commit=git_commit(TREE),
+                candidate_artifact="candidate-benchmark",
+                candidate_artifact_record=wrong_name,
+                candidate_benchmark=self.candidate_benchmark,
+                release_candidate_run=run(404, COMMIT, gate.RELEASE_WORKFLOW),
+                release_candidate_commit=git_commit(TREE),
+                release_candidate_artifact="lightforge-2.2.5-ci-candidate",
+            )
+        provenance = self.provenance()
+        replacement = dict(self.candidate_artifact_record, digest="sha256:" + "9" * 64)
+        with self.assertRaisesRegex(ValueError, "differs from the live artifact identity"):
+            gate.validate_publication_evidence(
+                self.report,
+                provenance,
+                version=self.version,
+                source_declaration=self.declaration,
+                source_commit=COMMIT,
+                source_tree_sha=TREE,
+                quality_run=run(303, COMMIT, gate.QUALITY_WORKFLOW),
+                quality_commit=git_commit(TREE),
+                baseline_run=self.baseline_run,
+                baseline_commit=git_commit(BASELINE_TREE),
+                baseline_artifact_record=self.baseline_artifact_record,
+                candidate_run=self.candidate_run,
+                candidate_commit=git_commit(TREE),
+                candidate_artifact_record=replacement,
+                release_candidate_run=run(404, COMMIT, gate.RELEASE_WORKFLOW),
+                release_candidate_commit=git_commit(TREE),
                 report_sha256=gate.sha256_file(self.report_path),
             )
 
@@ -197,6 +305,12 @@ class ReleaseQualityGateTest(unittest.TestCase):
                 source_tree_sha=TREE,
                 quality_run=run(303, COMMIT, gate.QUALITY_WORKFLOW),
                 quality_commit=git_commit(TREE),
+                baseline_run=self.baseline_run,
+                baseline_commit=git_commit(BASELINE_TREE),
+                baseline_artifact_record=self.baseline_artifact_record,
+                candidate_run=self.candidate_run,
+                candidate_commit=git_commit(TREE),
+                candidate_artifact_record=self.candidate_artifact_record,
                 release_candidate_run=run(404, COMMIT, gate.RELEASE_WORKFLOW),
                 release_candidate_commit=git_commit(TREE),
                 report_sha256=gate.sha256_file(self.report_path),
@@ -222,10 +336,12 @@ class ReleaseQualityGateTest(unittest.TestCase):
                 baseline_run=self.baseline_run,
                 baseline_commit=git_commit(BASELINE_TREE),
                 baseline_artifact="baseline-benchmark",
+                baseline_artifact_record=self.baseline_artifact_record,
                 baseline_benchmark=self.baseline_benchmark,
                 candidate_run=self.candidate_run,
                 candidate_commit=git_commit(TREE),
                 candidate_artifact="candidate-benchmark",
+                candidate_artifact_record=self.candidate_artifact_record,
                 candidate_benchmark=self.candidate_benchmark,
                 release_candidate_run=run(404, COMMIT, gate.RELEASE_WORKFLOW),
                 release_candidate_commit=git_commit(TREE),
@@ -235,6 +351,8 @@ class ReleaseQualityGateTest(unittest.TestCase):
             gate.validate_publication_evidence(
                 self.report, provenance, version=self.version, source_declaration=self.declaration, source_commit=COMMIT, source_tree_sha=TREE,
                 quality_run=run(303, COMMIT, gate.QUALITY_WORKFLOW), quality_commit=git_commit("f" * 40),
+                baseline_run=self.baseline_run, baseline_commit=git_commit(BASELINE_TREE), baseline_artifact_record=self.baseline_artifact_record,
+                candidate_run=self.candidate_run, candidate_commit=git_commit(TREE), candidate_artifact_record=self.candidate_artifact_record,
                 release_candidate_run=run(404, COMMIT, gate.RELEASE_WORKFLOW), release_candidate_commit=git_commit(TREE),
                 report_sha256=gate.sha256_file(self.report_path),
             )
