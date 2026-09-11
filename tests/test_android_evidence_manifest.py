@@ -67,6 +67,7 @@ class AndroidEvidenceManifestTest(unittest.TestCase):
             diagnostics_receipt=self.diagnostics, candidate_dir=self.candidate,
             candidate_artifact_id=55, candidate_artifact_digest='d' * 64, release=RELEASE,
             candidate_run_id=44, candidate_run_attempt=3, candidate_evidence_session=SESSION,
+            candidate_identity_sha256=self.binding['identity_sha256'],
             run_id=44, run_attempt=3, head_sha=HEAD, evidence_session=SESSION,
         ))
 
@@ -133,9 +134,33 @@ class AndroidEvidenceManifestTest(unittest.TestCase):
             output_dir=self.root / 'accepted-prior-attempt', background_receipt=self.background,
             diagnostics_receipt=self.diagnostics, candidate_dir=prior, candidate_artifact_id=55,
             candidate_artifact_digest='d' * 64, candidate_run_id=44, candidate_run_attempt=2,
-            candidate_evidence_session=prior_session, release=RELEASE, run_id=44, run_attempt=3,
+            candidate_evidence_session=prior_session, candidate_identity_sha256=binding['identity_sha256'],
+            release=RELEASE, run_id=44, run_attempt=3,
             head_sha=HEAD, evidence_session=SESSION,
         ))
+
+    def test_rejects_candidate_from_a_later_attempt(self):
+        future_session = '1' * 64
+        future = self.root / 'candidate-future-attempt'
+        evidence.create_candidate(argparse.Namespace(
+            input_dir=self.input, output_dir=future, release=RELEASE, run_id=44, run_attempt=4,
+            head_sha=HEAD, tree_sha=TREE, evidence_session=future_session, source_hashes=self.source_hashes,
+        ))
+        binding = evidence.candidate_binding(future, RELEASE, artifact_id=55, artifact_digest='d' * 64,
+                                             head_sha=HEAD, run_id=44, run_attempt=4,
+                                             evidence_session=future_session)
+        for path in (self.background, self.diagnostics):
+            receipt = json.loads(path.read_text())
+            receipt['candidate'] = binding
+            path.write_text(json.dumps(receipt))
+        with self.assertRaisesRegex(ValueError, 'newer than Android evidence'):
+            evidence.write_evidence(argparse.Namespace(
+                output_dir=self.root / 'accepted-future-attempt', background_receipt=self.background,
+                diagnostics_receipt=self.diagnostics, candidate_dir=future, candidate_artifact_id=55,
+                candidate_artifact_digest='d' * 64, candidate_run_id=44, candidate_run_attempt=4,
+                candidate_evidence_session=future_session, candidate_identity_sha256=binding['identity_sha256'],
+                release=RELEASE, run_id=44, run_attempt=3, head_sha=HEAD, evidence_session=SESSION,
+            ))
 
     def test_rejects_symlinked_receipt(self):
         output = self.root / 'accepted'
