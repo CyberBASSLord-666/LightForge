@@ -16,6 +16,7 @@ from release_quality_gate import (
     QUALITY_ARTIFACT,
     RELEASE_WORKFLOW,
     derive_release_scope,
+    sha256_canonical_json,
     validate_declaration_receipt,
     validate_publication_evidence,
     validate_release_declaration,
@@ -82,8 +83,15 @@ def _latest_published_release(repo, candidate_version):
     therefore cannot choose an older tree that hides their runtime change.
     """
     candidate = validate_version(candidate_version)
-    releases = api(f'repos/{repo}/releases?per_page=100')
-    require(isinstance(releases, list), 'Published release baseline response is invalid')
+    releases = []
+    for page in range(1, 1001):  # bounded: a pathological API response cannot loop forever
+        batch = api(f'repos/{repo}/releases?per_page=100&page={page}')
+        require(isinstance(batch, list), 'Published release baseline response is invalid')
+        releases.extend(batch)
+        if len(batch) < 100:
+            break
+    else:
+        raise ValueError('Published release baseline pagination exceeded its safe bound')
     candidates = []
     for release in releases:
         if not isinstance(release, dict) or release.get('draft') is True or release.get('prerelease') is True:
@@ -169,29 +177,61 @@ def _generated_web_version_is_exact(source_commit, version):
     return value == _generated_web_version(version)
 
 
+def _unwaivable_performance_scope(source_commit, source_tree_sha, version, reason):
+    """Return a source-bound receipt that can only authorize a full gate.
+
+    A legacy or malformed published baseline must never be interpreted as a
+    waiver.  It should not, however, prevent a candidate with independently
+    validated PASS_TARGET evidence from shipping.  The returned, hashed reason
+    makes that conservative decision auditable in the publisher result.
+    """
+    release = validate_version(version)
+    scope = {
+        'schema_version': 1,
+        'kind': 'lightforge-release-scope',
+        'base_release': None,
+        'source': {
+            'commit': _commit_sha(source_commit, 'release scope candidate source commit is invalid'),
+            'tree_sha': _commit_sha(source_tree_sha, 'release scope candidate source tree is invalid'),
+        },
+        'release': release,
+        'changes': [],
+        'classification': 'performance',
+        'waiver_blocker': reason,
+    }
+    # This is not self-referential: the digest is computed before it is added.
+    scope['sha256'] = sha256_canonical_json(scope)
+    return scope
+
+
 def _derive_published_release_scope(repo, source_commit, source_tree_sha, version):
     """Fetch the trusted baseline and derive a complete mode-aware scope."""
-    base = _verified_published_baseline(repo, version)
-    # The release workflow checks out complete history.  Fetching explicit
-    # commits also covers a source candidate that is not HEAD at publication.
-    run('git', 'fetch', '--no-tags', 'origin', base['target_commit'], base['source_commit'], source_commit)
     try:
+        base = _verified_published_baseline(repo, version)
+        # The release workflow checks out complete history.  Fetching explicit
+        # commits also covers a source candidate that is not HEAD at publication.
+        run('git', 'fetch', '--no-tags', 'origin', base['target_commit'], base['source_commit'], source_commit)
         run('git', 'merge-base', '--is-ancestor', base['source_commit'], base['target_commit'])
         run('git', 'merge-base', '--is-ancestor', base['source_commit'], source_commit)
-    except subprocess.CalledProcessError as error:
-        raise ValueError('Release candidate is not descended from the verified published baseline') from error
-    raw = run_bytes(
-        'git', 'diff', '--raw', '--no-abbrev', '--no-renames', '-z',
-        base['source_commit'], source_commit,
-    )
-    return derive_release_scope(
-        base_release=base,
-        source_commit=source_commit,
-        source_tree_sha=source_tree_sha,
-        version=version,
-        raw_tree_diff=raw,
-        generated_web_version_valid=_generated_web_version_is_exact(source_commit, version),
-    )
+        raw = run_bytes(
+            'git', 'diff', '--raw', '--no-abbrev', '--no-renames', '-z',
+            base['source_commit'], source_commit,
+        )
+        return derive_release_scope(
+            base_release=base,
+            source_commit=source_commit,
+            source_tree_sha=source_tree_sha,
+            version=version,
+            raw_tree_diff=raw,
+            generated_web_version_valid=_generated_web_version_is_exact(source_commit, version),
+        )
+    except (ValueError, subprocess.CalledProcessError):
+        return _unwaivable_performance_scope(
+            source_commit,
+            source_tree_sha,
+            version,
+            'unavailable_or_unverifiable_published_baseline',
+        )
 
 
 def lookup_release(repo, tag, release_id=None):

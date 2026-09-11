@@ -160,7 +160,7 @@ class ReleaseQualityPublicationWiringTest(unittest.TestCase):
             "path": gate.RELEASE_WORKFLOW,
         }
         def api(path):
-            if path.endswith("/releases?per_page=100"):
+            if path.endswith("/releases?per_page=100&page=1"):
                 return [release]
             if path.endswith("/git/commits/" + TARGET_COMMIT):
                 return {"tree": {"sha": "1" * 40}}
@@ -193,7 +193,7 @@ class ReleaseQualityPublicationWiringTest(unittest.TestCase):
             "target_commitish": TARGET_COMMIT,
         }
         def api(path):
-            if path.endswith("/releases?per_page=100"):
+            if path.endswith("/releases?per_page=100&page=1"):
                 return [release]
             if path.endswith("/git/commits/" + TARGET_COMMIT):
                 return {"tree": {"sha": "1" * 40}}
@@ -206,6 +206,39 @@ class ReleaseQualityPublicationWiringTest(unittest.TestCase):
                 patch.object(publisher, "run", side_effect=missing_ledger):
             with self.assertRaisesRegex(ValueError, "source-bound request ledger"):
                 publisher._verified_published_baseline("CyberBASSLord-666/LightForge", VERSION)
+
+    def test_missing_baseline_derives_performance_and_never_waives_it(self):
+        with patch.object(publisher, "_verified_published_baseline", side_effect=ValueError("legacy release")):
+            scope = publisher._derive_published_release_scope(
+                "CyberBASSLord-666/LightForge", COMMIT, TREE, VERSION
+            )
+        self.assertEqual(scope["classification"], "performance")
+        self.assertEqual(scope["waiver_blocker"], "unavailable_or_unverifiable_published_baseline")
+        self.assertIsNone(scope["base_release"])
+        declaration = nonperformance_declaration()
+        with patch.object(publisher, "run", return_value=json.dumps(declaration)), \
+                patch.object(publisher, "_derive_published_release_scope", return_value=scope):
+            with self.assertRaisesRegex(ValueError, "cannot waive"):
+                publisher.verify_release_quality(
+                    {"quality_gate_policy": declaration_receipt(declaration)},
+                    VERSION,
+                    "CyberBASSLord-666/LightForge",
+                    {},
+                    COMMIT,
+                    TREE,
+                )
+        stricter = dict(declaration, requirement="performance_quality_gate", classification="performance")
+        with patch.object(publisher, "run", return_value=json.dumps(stricter)), \
+                patch.object(publisher, "_derive_published_release_scope", return_value=scope):
+            with self.assertRaisesRegex(ValueError, "Performance release requires exactly"):
+                publisher.verify_release_quality(
+                    {"quality_gate_policy": declaration_receipt(stricter)},
+                    VERSION,
+                    "CyberBASSLord-666/LightForge",
+                    {},
+                    COMMIT,
+                    TREE,
+                )
 
     def test_publication_workflow_requires_protected_main_and_complete_history(self):
         workflow = (ROOT / ".github/workflows/publish-release.yml").read_text(encoding="utf-8")
