@@ -52,6 +52,14 @@ test('semantic strategy is deterministic and makes bounded hierarchy, density, a
   assert.ok(first.candidates.some(candidate=>candidate.serial===0),'the structural target remains schedulable');
 });
 
+test('semantic strategy falls back to the supported FSEQ clock for unsupported precision',()=>{
+  const semantic={events:[{id:'accent',time:0,source:'vocals',score:.9,tier:'primary'}]},target=[{role:'vocals',time:.09,end:.2}];
+  const supported=Strategy.create(semantic,{stepMs:20}).prepareTargets(target);
+  const fallback=Strategy.create(semantic,{stepMs:25}).prepareTargets(target);
+  assert.deepEqual(fallback,supported);
+  assert.equal(fallback.links.length,0,'25 ms must not widen semantic target matching');
+});
+
 function musicFixture(){
   const duration=80,beats=Array.from({length:duration*2},(_,index)=>index*.5);
   return {

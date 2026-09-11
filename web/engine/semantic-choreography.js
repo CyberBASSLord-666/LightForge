@@ -7,6 +7,7 @@
   'use strict';
   const TIERS=Object.freeze(['micro','secondary','primary','phrase','structural','climax']);
   const TIER_INDEX=Object.freeze(Object.fromEntries(TIERS.map((tier,index)=>[tier,index])));
+  const FRAME_INTERVALS=Object.freeze([15,20]);
   const PRIORITY_BOOST=Object.freeze({micro:0,secondary:2,primary:7,phrase:13,structural:20,climax:27});
   const finite=Number.isFinite;
   const round=value=>Math.round(value*1000000)/1000000;
@@ -58,7 +59,7 @@
   }
   function create(semantic, options={}){
     const events=validSemantic(semantic);if(!events)return null;
-    const stepMs=finite(options.stepMs)?clamp(options.stepMs,15,100):20;
+    const stepMs=FRAME_INTERVALS.includes(options.stepMs)?options.stepMs:20;
     const matchWindowSeconds=Math.max(.08,stepMs/1000*4);
     const densityWindowSeconds=1.2;
     const targetLinkLimit=10000;

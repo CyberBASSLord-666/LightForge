@@ -21,6 +21,7 @@
   const LIGHTS = root.LightPlanner || (typeof require === 'function' ? require('./light-planner.js') : null);
   const MOVEMENT = root.MovementPlanner || (typeof require === 'function' ? require('./movement-planner.js') : null);
   const CHANNELS = 200;
+  const FRAME_INTERVALS = Object.freeze([15,20]);
   const COMMAND = Object.freeze({Idle: 0, Open: 63, Dance: 127, Close: 191, Stop: 255});
   const COMMAND_NAME = Object.freeze({0: 'Idle', 63: 'Open', 127: 'Dance', 191: 'Close', 255: 'Stop'});
   const channelMap = Object.freeze({
@@ -191,7 +192,7 @@
   }
   function normalizeSettings(input) {
     input=input||{};
-    if(input.stepMs!==undefined&&![15,20].includes(Number(input.stepMs)))throw new Error('Choose a 20 ms recommended frame interval or 15 ms precision mode.');
+    if(input.stepMs!==undefined&&!FRAME_INTERVALS.includes(Number(input.stepMs)))throw new Error('Choose a 20 ms recommended frame interval or 15 ms precision mode.');
     const number=(key,def,min,max)=>clamp(finite(input[key])?input[key]:def,min,max);
     return {stepMs:Number(input.stepMs)||20,sensitivity:number('sensitivity',.8,0,1),intensity:number('intensity',.85,0,1),
       musicCues:CUES.normalize(input.musicCues),vocalOffsetMs:number('vocalOffsetMs',0,-2000,2000),bassOffsetMs:number('bassOffsetMs',0,-2000,2000),movementDensity:number('movementDensity',.7,0,1),vocalFocus:number('vocalFocus',.85,0,1),bassFocus:number('bassFocus',.9,0,1),vocalRegions:normalizeVocalRegions(input.vocalRegions),downbeatAnchor:finite(input.downbeatAnchor)&&input.downbeatAnchor>=0?input.downbeatAnchor:null,meterOverride:[3,4].includes(input.meterOverride)?input.meterOverride:null,tempoScale:[.5,1,2].includes(input.tempoScale)?input.tempoScale:1,
@@ -573,7 +574,7 @@
     if(!show||!(show.frames instanceof Uint8Array))return {valid:false,errors:['Sequence data must be a Uint8Array.'],warnings,stats};
     if(show.channels!==200&&show.channelCount!==200)error('Sequence must contain 200 channels.');
     if(!Number.isInteger(show.frameCount)||show.frameCount<1||show.frames.length!==show.frameCount*200)error('Sequence length does not match its frame count.');
-    if(!Number.isInteger(show.stepMs)||show.stepMs<15||show.stepMs>100)error('Frame interval must be 15–100 ms.');
+    if(!FRAME_INTERVALS.includes(show.stepMs))error('Frame interval must be 20 ms recommended or 15 ms precision.');
     const duration=show.frameCount*show.stepMs/1000;
     if(!finite(duration)||duration>14400)error('Sequence duration exceeds the four-hour limit.');
     if(errors.length)return {valid:false,errors,warnings,stats};
