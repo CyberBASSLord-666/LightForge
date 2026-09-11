@@ -23,6 +23,9 @@ def main():
     parser.add_argument('--output-dir', type=Path, required=True)
     parser.add_argument('--candidate-artifact-id', type=int, required=True)
     parser.add_argument('--candidate-artifact-digest', required=True)
+    parser.add_argument('--candidate-run-id', type=int, required=True)
+    parser.add_argument('--candidate-run-attempt', type=int, required=True)
+    parser.add_argument('--candidate-evidence-session', required=True)
     parser.add_argument('--run-id', type=int, required=True)
     parser.add_argument('--run-attempt', type=int, required=True)
     parser.add_argument('--head-sha', required=True)
@@ -34,7 +37,9 @@ def main():
         raise SystemExit('Android evidence output directory must be fresh: ' + str(out))
     out.mkdir(parents=True, mode=0o700)
     candidate = candidate_binding(args.candidate_dir.resolve(), version, artifact_id=args.candidate_artifact_id,
-                                  artifact_digest=args.candidate_artifact_digest, head_sha=args.head_sha)
+                                  artifact_digest=args.candidate_artifact_digest, head_sha=args.head_sha,
+                                  run_id=args.candidate_run_id, run_attempt=args.candidate_run_attempt,
+                                  evidence_session=args.candidate_evidence_session)
     ci = {'run_id': args.run_id, 'run_attempt': args.run_attempt, 'head_sha': args.head_sha,
           'evidence_session': args.evidence_session}
     sdk = Path(os.environ['ANDROID_HOME'])
@@ -108,7 +113,6 @@ def main():
         with apk.open('rb') as stream:
             actual_hash = hashlib.file_digest(stream, 'sha256').hexdigest()
         assert apk.stat().st_size == metadata['bytes'] and actual_hash == metadata['sha256'], 'Candidate APK does not match its build receipt'
-        receipt['candidate'] = metadata
         run('install', '-r', apk, timeout=300)
         run('install', '-r', args.candidate_dir / 'diagnostics-tests.apk')
         run('shell', 'dumpsys', 'deviceidle', 'unforce')
