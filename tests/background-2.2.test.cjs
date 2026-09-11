@@ -275,7 +275,13 @@ test('a selection that supersedes the completed job cannot borrow another render
  const superseded=await completedReconnect({hold:true});
  try{
   const bootstrap=superseded.app.readBootstrap();await superseded.entered;
-  await superseded.app.selectProject(superseded.lastSelected);superseded.release();await bootstrap;
+  // The held harness intentionally pauses every restore.  Start the later
+  // selection, wait until it owns its own restore, then release that shared
+  // gate; awaiting selectProject before release would deadlock the test rather
+  // than exercise the supersession path.
+  const selection=superseded.app.selectProject(superseded.lastSelected);
+  await waitFor(()=>superseded.app.state.project?.id===superseded.lastSelected.id&&superseded.restores===2);
+  superseded.release();await selection;await bootstrap;
   assert.equal(superseded.app.state.project.id,superseded.lastSelected.id);
   assert.equal(superseded.leaseCalls.some(call=>call.type==='terminal'),false,'A different selected project must not terminally prove the completed job');
   assert.equal(superseded.w.localStorage.getItem('lightforge-background-ack'),null);
