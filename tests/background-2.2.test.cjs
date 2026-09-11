@@ -15,6 +15,13 @@ const canonicalV8=duration=>{
  return value;
 };
 const waitFor=async fn=>{for(let i=0;i<200;i++){if(fn())return;await new Promise(r=>setTimeout(r,10));}throw Error('Timed out');};
+// This is a test-only deadlock diagnostic, never a recovery path.
+const completedRestoreDebug=h=>{const lease=h.app.state.completedRestore;return JSON.stringify({applying:!!h.app.state.backgroundApplying,pending:!!h.app.state.backgroundSyncPending,loading:!!h.app.state.loadingProject,composing:!!h.app.state.composing,job:lease?.jobId||null,phase:lease?.phase||null,terminal:!!lease?.terminal,ack:!!lease?.ackConfirmed,project:h.app.state.project?.id||null,selection:h.app.state.selection,compileId:h.app.state.compileId,restores:h.restores,fetches:h.fetches,loaded:!!h.previews[0]?.loaded,renderBefore:lease?.renderCountBeforeAdopt??null,renderCount:h.previews[0]?.renderCount??null,bridges:h.leaseCalls.slice(-8).map(call=>call.type).join(',')});};
+const settleCompletedRestore=async(label,h,promise)=>{
+ let timer;
+ try{return await Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error(label+': '+completedRestoreDebug(h))),2500);})]);}
+ finally{clearTimeout(timer);}
+};
 test('background runner loads canonical duration contracts before MusicAnalyzer',()=>{
  const html=fs.readFileSync(path.join(root,'web/background/runner.html'),'utf8'),store=html.indexOf('../analysis/work-store.js'),scheduler=html.indexOf('../analysis/scheduler.js'),timeline=html.indexOf('../analysis/semantic-timeline.js'),salience=html.indexOf('../analysis/salience.js'),vocal=html.indexOf('../analysis/vocal-semantics.js'),rhythm=html.indexOf('../analysis/rhythm-hierarchy.js'),recurrence=html.indexOf('../analysis/recurrence.js'),analyzer=html.indexOf('../analysis/analyzer.js');
  assert.ok(store>=0&&scheduler>store&&timeline>scheduler&&salience>timeline&&vocal>salience&&rhythm>vocal&&recurrence>rhythm&&analyzer>recurrence,'Background runner must load checkpoint storage, canonical contracts, then MusicAnalyzer in order.');
@@ -102,7 +109,7 @@ test('native studio delegates work, blocks stale saves, reconnects, and loads th
  }finally{dom.window.close();}
 });
 
-async function completedReconnect({acknowledged=false,hold=false,restoreError=null,terminalRejected=false,beginRejected=false,pulseRejected=false,ackConfirmationRejected=false,ackWriteFailures=0,nativeProjectPayload=false,fetchNeverResolves=false,deferInitialPreview=false}={}){
+async function completedReconnect({acknowledged=false,hold=false,restoreError=null,terminalRejected=false,beginRejected=false,beginThrows=false,pulseRejected=false,ackConfirmationRejected=false,ackWriteFailures=0,nativeProjectPayload=false,fetchNeverResolves=false,deferInitialPreview=false,previewReady=undefined}={}){
  const dom=new JSDOM(fs.readFileSync(path.join(root,'web/index.html'),'utf8'),{url:'https://appassets.androidplatform.net/',runScripts:'outside-only'}),w=dom.window;
  const polls=[],leaseCalls=[],nativeCapClears=[],previews=[],previewDeferrals=[];let restores=0,fetches=0,saved,bootstrap={projects:[],version:'2.2.4'},restoreOptions=[],nativeTerminalToken=null;
  const completed={id:'completed-project',name:'Completed',duration:2,projectUrl:'/project/completed/project.json',audioUrl:'/project/completed/audio.wav'};
@@ -118,7 +125,7 @@ async function completedReconnect({acknowledged=false,hold=false,restoreError=nu
   if(this===w.localStorage&&key==='lightforge-background-ack'&&remainingAckWriteFailures>0){remainingAckWriteFailures--;throw new w.DOMException('Storage quota','QuotaExceededError');}
   return storageSetItem.call(this,key,value);
  };
- w.VehiclePreview=class{constructor(_canvas,_onViewChange,options){this.loaded=true;this.renderCount=0;this.options=options;previews.push(this);}render(){this.renderCount++;}setLoadDeferred(value){previewDeferrals.push({value:!!value,leaseCalls:leaseCalls.length});}setPaused(){}setCamera(){}setStage(){}setQuality(){}resize(){}};
+ w.VehiclePreview=class{constructor(_canvas,_onViewChange,options){this.loaded=previewReady===false?false:true;this.ready=previewReady===undefined?undefined:Promise.resolve(previewReady);this.renderCount=0;this.options=options;previews.push(this);}render(){this.renderCount++;}setLoadDeferred(value){previewDeferrals.push({value:!!value,leaseCalls:leaseCalls.length});}setPaused(){}setCamera(){}setStage(){}setQuality(){}resize(){}};
  w.LightForgeVersion=require('../web/version.js');w.ShowEngine=require('../web/engine/show-engine.js');w.VehicleProfile=require('../web/engine/vehicle-profile.js');w.MusicCues=require('../web/engine/music-cues.js');
  const nativeProjectReads=[];
  const readCompletedProject=(...args)=>{
@@ -138,7 +145,7 @@ async function completedReconnect({acknowledged=false,hold=false,restoreError=nu
  };
  const coldBootstrap={projects:[],version:'2.2.4'},initialBootstrap={projects:[completed,lastSelected],lastProjectId:lastSelected.id,version:'2.2.4',backgroundJob:job};let bootstrapReads=0;
  w.Android={pickAudio(){},getBootstrap:()=>JSON.stringify(deferInitialPreview?(++bootstrapReads<=2?initialBootstrap:bootstrap):(bootstrapReads++===0?coldBootstrap:bootstrap)),saveProject:()=>true,startAnalysis(){throw Error('Reconnection must not restart analysis');},getAnalysisStatus:()=>JSON.stringify(job),
-  beginCompletedRestore:(...args)=>{leaseCalls.push({type:'begin',args});if(beginRejected)return false;if(nativeTerminalToken){if(nativeTerminalToken.jobId===args[0])return false;nativeTerminalToken=null;}return true;},completedRestorePulse:(...args)=>{leaseCalls.push({type:'pulse',args});return !pulseRejected;},requestCompletedRestoreVisualCommit:(...args)=>{leaseCalls.push({type:'visual-request',args});return true;},completedRestoreVisualCommitted:(...args)=>{leaseCalls.push({type:'visual-committed',args});return true;},completedRestoreTerminal:(...args)=>{leaseCalls.push({type:'terminal',args,ackAtCall:w.localStorage.getItem('lightforge-background-ack')});if(terminalRejected)return false;nativeTerminalToken={jobId:args[0],nonce:args[1]};return true;},completedRestoreAckCommitted:(...args)=>{leaseCalls.push({type:'ack-committed',args,ackAtCall:w.localStorage.getItem('lightforge-background-ack')});if(ackConfirmationRejectedNow||nativeTerminalToken?.jobId!==args[0]||nativeTerminalToken?.nonce!==args[1])return false;nativeCapClears.push(args[0]);nativeTerminalToken=null;return true;},completedRestoreFailed:(...args)=>{leaseCalls.push({type:'failed',args});return true;}};
+  beginCompletedRestore:(...args)=>{leaseCalls.push({type:'begin',args});if(beginThrows)throw Error('Native completed-restore begin bridge failed.');if(beginRejected)return false;if(nativeTerminalToken){if(nativeTerminalToken.jobId===args[0])return false;nativeTerminalToken=null;}return true;},completedRestorePulse:(...args)=>{leaseCalls.push({type:'pulse',args});return !pulseRejected;},requestCompletedRestoreVisualCommit:(...args)=>{leaseCalls.push({type:'visual-request',args});return true;},completedRestoreVisualCommitted:(...args)=>{leaseCalls.push({type:'visual-committed',args});return true;},completedRestoreTerminal:(...args)=>{leaseCalls.push({type:'terminal',args,ackAtCall:w.localStorage.getItem('lightforge-background-ack')});if(terminalRejected)return false;nativeTerminalToken={jobId:args[0],nonce:args[1]};return true;},completedRestoreAckCommitted:(...args)=>{leaseCalls.push({type:'ack-committed',args,ackAtCall:w.localStorage.getItem('lightforge-background-ack')});if(ackConfirmationRejectedNow||nativeTerminalToken?.jobId!==args[0]||nativeTerminalToken?.nonce!==args[1])return false;nativeCapClears.push(args[0]);nativeTerminalToken=null;return true;},completedRestoreFailed:(...args)=>{leaseCalls.push({type:'failed',args});return true;}};
  if(nativeProjectPayload)w.Android.readCompletedRestoreProjectChunk=readCompletedProject;
  w.fetch=async()=>{fetches++;if(fetchNeverResolves)return new Promise(()=>{});if(deferInitialPreview)await initialSavedReady;return{ok:true,json:async()=>structuredClone(saved),text:async()=>JSON.stringify(saved)};};
  w.ShowCompiler={restore:async(compiled,m,s,_progress,signal,options)=>{
@@ -379,7 +386,7 @@ test('a browser ACK write failure retries the same terminal lease without reopen
 test('an unconfirmed ACK for one completed job does not wedge a later completed job',async()=>{
  const handoff=await completedReconnect({ackConfirmationRejected:true});
  try{
-  await handoff.app.readBootstrap();
+  await settleCompletedRestore('first completed restore',handoff,handoff.app.readBootstrap());
   await waitFor(()=>handoff.leaseCalls.some(call=>call.type==='terminal')&&!handoff.app.state.backgroundApplying);
   const firstTerminal=handoff.leaseCalls.find(call=>call.type==='terminal');
   assert.equal(handoff.w.localStorage.getItem('lightforge-background-ack'),handoff.job.id,'The browser ACK was written before the simulated native confirmation failure');
@@ -407,15 +414,42 @@ test('a rejected native begin or pulse leaves the completed job pending without 
   assert.equal(beginRejected.restores,0,'Rejected native begin must prevent worker restoration');
   assert.equal(beginRejected.leaseCalls.some(call=>call.type==='terminal'),false);assert.equal(beginRejected.w.localStorage.getItem('lightforge-background-ack'),null);
   assert.equal(beginRejected.app.state.backgroundSyncPending,true);
+  assert.equal(beginRejected.app.state.backgroundApplying,false);
  }finally{beginRejected.close();}
+ const beginThrows=await completedReconnect({beginThrows:true});
+ try{
+  await beginThrows.app.readBootstrap();
+  assert.equal(beginThrows.restores,0,'A throwing native begin must prevent worker restoration');
+  assert.equal(beginThrows.leaseCalls.some(call=>call.type==='terminal'),false);
+  assert.equal(beginThrows.w.localStorage.getItem('lightforge-background-ack'),null);
+  assert.equal(beginThrows.leaseCalls.some(call=>call.type==='failed'),false,'A throwing begin has no accepted lease to fail.');
+  assert.equal(beginThrows.app.state.completedRestore,null,'A throwing begin must restore the prior JS lease state');
+  assert.equal(beginThrows.app.state.completedRestorePreviewDeferred,false,'A throwing begin must release the preview deferral');
+  assert.equal(beginThrows.app.state.backgroundSyncPending,true);
+  assert.equal(beginThrows.app.state.backgroundApplying,false);
+ }finally{beginThrows.close();}
  const pulseRejected=await completedReconnect({pulseRejected:true});
  try{
   await pulseRejected.app.readBootstrap();
   assert.equal(pulseRejected.leaseCalls.some(call=>call.type==='terminal'),false,'Rejected native pulse cannot be masked by later terminal proof');
   assert.equal(pulseRejected.leaseCalls.some(call=>call.type==='failed'),true);assert.equal(pulseRejected.w.localStorage.getItem('lightforge-background-ack'),null);
   assert.equal(pulseRejected.app.state.backgroundSyncPending,true);
+  assert.equal(pulseRejected.app.state.backgroundApplying,false);
  }finally{pulseRejected.close();}
 });
+test('an unavailable 3D preview fails a completed restore without acknowledging it',async()=>{
+ const unavailable=await completedReconnect({previewReady:false});
+ try{
+  await unavailable.app.readBootstrap();
+  assert.equal(unavailable.restores,1,'The completed show still requires worker verification before preview proof.');
+  assert.equal(unavailable.leaseCalls.some(call=>call.type==='terminal'),false,'An unavailable preview may never issue terminal proof.');
+  assert.equal(unavailable.leaseCalls.filter(call=>call.type==='failed').length,1,'The failed visual proof closes the lease once.');
+  assert.equal(unavailable.w.localStorage.getItem('lightforge-background-ack'),null,'An unavailable preview may not write an ACK.');
+  assert.equal(unavailable.app.state.backgroundSyncPending,true,'The durable completed job remains pending for a later valid preview.');
+  assert.equal(unavailable.app.state.backgroundApplying,false);
+ }finally{unavailable.close();}
+});
+
 test('a selection that supersedes the completed job cannot borrow another render for its terminal ACK',async()=>{
  const superseded=await completedReconnect({hold:true});
  try{

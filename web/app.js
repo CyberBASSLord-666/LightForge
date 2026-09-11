@@ -219,7 +219,10 @@ function beginCompletedRestore(job){
  const prior=state.completedRestore;
  const lease={jobId:job.id,projectId:String(job.projectId||''),nonce:completedRestoreNonce(),phase:'bootstrap',sequence:0,bytes:0,renderCountBeforeAdopt:0,workerVerified:false,adoptedProjectId:null,adoptedSelection:0,adoptedCompileId:0,failed:false,terminal:false,ackWritten:false,ackConfirmed:false};
  state.completedRestore=lease;
- if(bridge('beginCompletedRestore',lease.jobId,lease.nonce,lease.bytes)!==true){state.completedRestore=prior||null;setCompletedRestorePreviewDeferred(false);throw Error('Native completed-restore lease was rejected.');}
+ let accepted;
+ try{accepted=bridge('beginCompletedRestore',lease.jobId,lease.nonce,lease.bytes);}
+ catch(error){state.completedRestore=prior||null;setCompletedRestorePreviewDeferred(false);throw error;}
+ if(accepted!==true){state.completedRestore=prior||null;setCompletedRestorePreviewDeferred(false);throw Error('Native completed-restore lease was rejected.');}
  setCompletedRestorePreviewDeferred(true);
  if(prior&&prior!==lease&&prior.terminal&&!prior.ackConfirmed&&prior.jobId!==lease.jobId){
   // Native has atomically retired only this old unconfirmed terminal token
@@ -303,13 +306,22 @@ async function readCompletedRestoreProject(project,lease){
  return readCompletedRestoreProjectFromFetch(project,lease);
 }
 function awaitCompletedRestoreRender(lease){return new Promise((resolve,reject)=>{
+ let settled=false,frame=null;
+ const finish=(callback,value)=>{if(settled)return;settled=true;if(frame!==null){cancelAnimationFrame(frame);frame=null;}callback(value);};
+ const fail=error=>finish(reject,error);
+ const succeed=()=>finish(resolve);
+ const preview=vehiclePreview,ready=preview?.ready;
+ // A failed GLTF/WebGL preview cannot provide the required first-frame proof.
+ // Keep the completed job pending for a safe retry instead of waiting forever.
+ if(ready&&typeof ready.then==='function')Promise.resolve(ready).then(value=>{if(value===false)fail(Error('The 3D preview could not render the completed show.'));},()=>fail(Error('The 3D preview could not render the completed show.')));
  const inspect=()=>{
-  if(!completedRestoreOwnsAdoptedProject(lease))return reject(Error('Saved arrangement restoration was superseded.'));
-  if(vehiclePreview?.loaded&&Number(vehiclePreview.renderCount)>lease.renderCountBeforeAdopt){
-   if(!completedRestorePulse(lease,'preview-first-render'))return reject(Error('Native completed-restore lease rejected the first web render.'));
-   resolve();return;
+  frame=null;if(settled)return;
+  if(!completedRestoreOwnsAdoptedProject(lease))return fail(Error('Saved arrangement restoration was superseded.'));
+  if(preview?.loaded&&Number(preview.renderCount)>lease.renderCountBeforeAdopt){
+   if(!completedRestorePulse(lease,'preview-first-render'))return fail(Error('Native completed-restore lease rejected the first web render.'));
+   succeed();return;
   }
-  requestAnimationFrame(inspect);
+  frame=requestAnimationFrame(inspect);
  };
  inspect();
 });}

@@ -88,7 +88,7 @@ def hashes():
         )
     return {str(p.relative_to(ROOT)):digest(p) for p in sorted(set(paths))}
 
-def node_failure_summary(output, limit=4):
+def node_failure_summary(output, limit=12):
     """Return bounded trusted TAP labels with their first failure detail."""
     if not isinstance(output, str):
         return 'no TAP failure marker captured'
@@ -113,7 +113,11 @@ def node_failure_summary(output, limit=4):
                             break
                 break
         markers.append((line+(' ['+detail+']' if detail else ''))[:240])
-    return ' | '.join(markers[-limit:]) if markers else 'no TAP failure marker captured'
+    if not markers:
+        return 'no TAP failure marker captured'
+    if limit<=1 or len(markers)<=limit:
+        return ' | '.join(markers[:limit])
+    return ' | '.join([markers[0],*markers[-(limit-1):]])
 
 def run_python_scripts(scripts, log_path):
     output=[]
