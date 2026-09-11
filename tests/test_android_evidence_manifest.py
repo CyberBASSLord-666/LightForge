@@ -121,6 +121,16 @@ class AndroidEvidenceManifestTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'digest differs'):
             evidence.verify_evidence(output, release=RELEASE, run_id=44, run_attempt=3, head_sha=HEAD)
 
+    def test_rejects_candidate_file_shape_tampering(self):
+        output = self.root / 'accepted'
+        self.write(output)
+        manifest_path = output / 'android-evidence-manifest.json'
+        manifest = json.loads(manifest_path.read_text())
+        manifest['candidate']['files']['background-tests.apk']['unexpected'] = True
+        manifest_path.write_text(json.dumps(manifest))
+        with self.assertRaisesRegex(ValueError, 'candidate file inventory'):
+            evidence.verify_evidence(output, release=RELEASE, run_id=44, run_attempt=3, head_sha=HEAD)
+
     def test_rejects_cross_run_candidate_but_allows_a_prior_attempt_in_the_same_run(self):
         with self.assertRaisesRegex(ValueError, 'run differs'):
             evidence.candidate_binding(self.candidate, RELEASE, artifact_id=55, artifact_digest='d' * 64,
