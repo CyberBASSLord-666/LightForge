@@ -218,7 +218,7 @@ def create_candidate(args):
 
 
 def candidate_binding(candidate_dir, release, *, artifact_id, artifact_digest, head_sha=None,
-                      run_id=None, run_attempt=None, evidence_session=None):
+                      run_id=None, run_attempt=None, evidence_session=None, identity_sha256=None):
     candidate = _candidate_manifest(candidate_dir, release, head_sha)
     pipeline = candidate['manifest']['pipeline']
     if run_id is not None:
@@ -230,6 +230,9 @@ def candidate_binding(candidate_dir, release, *, artifact_id, artifact_digest, h
     if evidence_session is not None:
         require(pipeline['evidence_session'] == _session(evidence_session, 'Expected candidate session is invalid'),
                 'Candidate manifest session differs from its recorded producer')
+    if identity_sha256 is not None:
+        require(candidate['identity_sha256'] == _sha(identity_sha256, 'Expected candidate identity is invalid'),
+                'Candidate manifest identity differs from its recorded producer')
     return {
         'artifact_id': _int(artifact_id, 'Candidate artifact id is invalid'),
         'artifact_digest': _artifact_sha(artifact_digest, 'Candidate artifact digest is invalid'),
@@ -279,7 +282,8 @@ def write_evidence(args):
     candidate = candidate_binding(args.candidate_dir, args.release, artifact_id=args.candidate_artifact_id,
                                   artifact_digest=args.candidate_artifact_digest, head_sha=head,
                                   run_id=args.candidate_run_id, run_attempt=args.candidate_run_attempt,
-                                  evidence_session=args.candidate_evidence_session)
+                                  evidence_session=args.candidate_evidence_session,
+                                  identity_sha256=args.candidate_identity_sha256)
     inputs = {
         'android-background-verification.json': Path(args.background_receipt),
         'android-diagnostics-verification.json': Path(args.diagnostics_receipt),
@@ -350,6 +354,7 @@ def verify_evidence(artifact_dir, *, release, run_id, run_attempt, head_sha):
     _int(candidate_pipeline.get('run_attempt'), 'Android evidence candidate run attempt is invalid')
     _session(candidate_pipeline.get('evidence_session'), 'Android evidence candidate session is invalid')
     require(candidate_pipeline['run_id'] == run_id, 'Android evidence candidate run differs')
+    require(candidate_pipeline['run_attempt'] <= run_attempt, 'Android evidence candidate attempt is newer than Android evidence')
     _source_hashes(candidate.get('source_hashes'), 'Android evidence candidate source hashes are invalid')
     receipt_records = manifest.get('receipts')
     require(isinstance(receipt_records, dict) and set(receipt_records) == set(RECEIPTS), 'Android evidence receipt inventory is invalid')
@@ -391,6 +396,7 @@ def _parser():
     write.add_argument('--candidate-run-id', type=int, required=True)
     write.add_argument('--candidate-run-attempt', type=int, required=True)
     write.add_argument('--candidate-evidence-session', required=True)
+    write.add_argument('--candidate-identity-sha256', required=True)
     write.add_argument('--release', required=True)
     write.add_argument('--run-id', type=int, required=True)
     write.add_argument('--run-attempt', type=int, required=True)
