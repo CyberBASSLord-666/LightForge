@@ -26,6 +26,7 @@ def main():
     parser.add_argument('--candidate-run-id', type=int, required=True)
     parser.add_argument('--candidate-run-attempt', type=int, required=True)
     parser.add_argument('--candidate-evidence-session', required=True)
+    parser.add_argument('--candidate-identity-sha256', required=True)
     parser.add_argument('--run-id', type=int, required=True)
     parser.add_argument('--run-attempt', type=int, required=True)
     parser.add_argument('--head-sha', required=True)
@@ -39,7 +40,8 @@ def main():
     candidate = candidate_binding(args.candidate_dir.resolve(), version, artifact_id=args.candidate_artifact_id,
                                   artifact_digest=args.candidate_artifact_digest, head_sha=args.head_sha,
                                   run_id=args.candidate_run_id, run_attempt=args.candidate_run_attempt,
-                                  evidence_session=args.candidate_evidence_session)
+                                  evidence_session=args.candidate_evidence_session,
+                                  identity_sha256=args.candidate_identity_sha256)
     ci = {'run_id': args.run_id, 'run_attempt': args.run_attempt, 'head_sha': args.head_sha,
           'evidence_session': args.evidence_session}
     sdk = Path(os.environ['ANDROID_HOME'])
