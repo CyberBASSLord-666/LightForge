@@ -12,6 +12,12 @@ import zipfile
 from apk_archive import verify_native_libraries
 from apk_delta import apply_delta, digest
 from package_release import SIGNING_SHA256
+from release_quality_gate import (
+    QUALITY_ARTIFACT,
+    canonical_json as quality_canonical_json,
+    validate_publication_evidence,
+    validate_release_policy,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -132,6 +138,63 @@ def verify_apk(apk, version):
                 require(hashlib.file_digest(stream, 'sha256').hexdigest() == checksum, 'Stale APK asset: ' + name)
 
 
+def source_quality_policy(source_commit, source_tree_sha, version):
+    """Read the candidate-bound publication rule, not a later request-side hint."""
+    relative = 'releases/v' + version['name'] + '/quality-gate-policy.json'
+    current = ROOT / relative
+    require(current.is_file(), 'Missing explicit release quality policy: ' + relative)
+    try:
+        source = json.loads(run('git', 'show', source_commit + ':' + relative))
+    except subprocess.CalledProcessError as error:
+        raise ValueError('Release quality policy was not present in the verified candidate source') from error
+    policy = json.loads(current.read_text())
+    validate_release_policy(source, version=version, source_commit=source_commit, source_tree_sha=source_tree_sha)
+    validate_release_policy(policy, version=version, source_commit=source_commit, source_tree_sha=source_tree_sha)
+    require(quality_canonical_json(source) == quality_canonical_json(policy), 'Release quality policy changed after verified candidate CI')
+    return policy
+
+
+def single_artifact_file(root, name):
+    matches = list(root.rglob(name))
+    require(len(matches) == 1 and matches[0].is_file(), 'Quality-gate artifact must contain exactly one ' + name)
+    return matches[0]
+
+
+def verify_release_quality(request, version, repo, ci, source_commit, source_tree_sha):
+    """Require authoritative benchmark evidence unless source-pinned policy waives it."""
+    policy = source_quality_policy(source_commit, source_tree_sha, version)
+    if policy['requirement'] == 'not_required':
+        require('quality_gate' not in request, 'Non-performance release policy must not carry an unused quality-gate run')
+        return {'requirement': 'not_required', 'classification': policy['classification'], 'reason': policy['reason']}
+    quality_request = request.get('quality_gate')
+    require(isinstance(quality_request, dict) and set(quality_request) == {'run_id'}, 'Performance release requires exactly quality_gate.run_id')
+    quality_run_id = quality_request['run_id']
+    require(type(quality_run_id) is int and quality_run_id > 0, 'Invalid quality_gate.run_id')
+    quality_run = api(f'repos/{repo}/actions/runs/{quality_run_id}')
+    require(quality_run.get('status') == 'completed' and quality_run.get('conclusion') == 'success', 'Quality-gate workflow has not passed')
+    require(quality_run.get('head_repository', {}).get('full_name') == repo, 'Quality-gate workflow provenance mismatch')
+    require(quality_run.get('head_sha') == source_commit, 'Quality-gate workflow commit differs from release candidate')
+    quality_commit = api(f'repos/{repo}/git/commits/{quality_run["head_sha"]}')
+    transfer = ROOT / 'build/release-quality'
+    transfer.mkdir(parents=True, exist_ok=False)
+    run('gh', 'run', 'download', str(quality_run_id), '--name', QUALITY_ARTIFACT, '--dir', str(transfer))
+    report_path = single_artifact_file(transfer, 'quality-gate-report.json')
+    provenance_path = single_artifact_file(transfer, 'quality-gate-provenance.json')
+    evidence = validate_publication_evidence(
+        json.loads(report_path.read_text()),
+        json.loads(provenance_path.read_text()),
+        version=version,
+        source_commit=source_commit,
+        source_tree_sha=source_tree_sha,
+        quality_run=quality_run,
+        quality_commit=quality_commit,
+        release_candidate_run=ci,
+        release_candidate_commit=api(f'repos/{repo}/git/commits/{ci["head_sha"]}'),
+        report_sha256=digest(report_path),
+    )
+    return {'requirement': 'performance_quality_gate', **evidence}
+
+
 def main():
     os.chdir(ROOT)
     request = json.loads(Path(sys.argv[1]).read_text())
@@ -149,6 +212,10 @@ def main():
     require(ci['path'] == '.github/workflows/verify-v2.yml', 'Candidate used an unexpected workflow')
     run('git', 'fetch', '--no-tags', '--depth=1', 'origin', source_commit)
     run('git', 'diff', '--exit-code', source_commit, 'HEAD', '--', 'web', 'android', 'version.json')
+    source_commit_record = api(f'repos/{repo}/git/commits/{source_commit}')
+    source_tree_sha = source_commit_record.get('tree', {}).get('sha')
+    require(isinstance(source_tree_sha, str) and re.fullmatch('[0-9a-f]{40}', source_tree_sha), 'Candidate source tree is invalid')
+    quality = verify_release_quality(request, version, repo, ci, source_commit, source_tree_sha)
     gates = ROOT / ('qa/release-' + version['name'])
     required_gates=['regression-verification.json', 'browser-verification.json', 'native-verification.json', 'analysis-browser-verification.json', 'analysis-verification.json']
     if version['code']>=20200:required_gates.append('android-background-verification.json')
@@ -205,7 +272,7 @@ def main():
     require(not published['draft'], 'Release did not publish')
     verify_uploaded(published, expected)
     asset = next(a for a in published['assets'] if a['name'] == apk_name)
-    print(json.dumps({'release': published['html_url'], 'apk': asset['browser_download_url'], 'sha256': digest(apk)}))
+    print(json.dumps({'release': published['html_url'], 'apk': asset['browser_download_url'], 'sha256': digest(apk), 'quality_gate': quality}))
 
 
 if __name__ == '__main__':

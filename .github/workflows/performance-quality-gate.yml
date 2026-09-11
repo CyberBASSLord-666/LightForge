@@ -7,6 +7,8 @@ on:
       - 'tools/analysis_benchmark_contract.py'
       - 'tools/locked_benchmark_runner.py'
       - 'tools/differential_analysis.py'
+      - 'tools/release_quality_gate.py'
+      - 'tools/publish_github_release.py'
       - 'qa/performance-gate-policy.json'
       - 'qa/locked-corpus-manifest.template.json'
       - 'tests/performance-quality-gate.test.py'
@@ -14,6 +16,8 @@ on:
       - 'tests/analysis-benchmark-contract.test.py'
       - 'tests/locked-benchmark-runner.test.py'
       - 'tests/differential-analysis.test.py'
+      - 'tests/test_release_quality_gate.py'
+      - 'tests/test_release_quality_publication_wiring.py'
       - 'docs/PERFORMANCE_QUALITY_GATE.md'
       - 'docs/ANALYSIS_BENCHMARK_CONTRACT.md'
       - 'docs/LOCKED_BENCHMARK_RUNNER.md'
@@ -33,6 +37,9 @@ on:
       candidate_run_id:
         description: Successful approved LightForge Actions run ID that produced the candidate artifact
         required: true
+      release_version:
+        description: Candidate LightForge release version, for example 2.2.5
+        required: true
 
 permissions:
   contents: read
@@ -48,6 +55,8 @@ jobs:
           python-version: '3.12'
       - run: python3 tests/performance-quality-gate.test.py
       - run: python3 tests/performance-quality-gate-workflow.test.py
+      - run: python3 tests/test_release_quality_gate.py
+      - run: python3 tests/test_release_quality_publication_wiring.py
       - run: python3 tests/analysis-benchmark-contract.test.py
       - run: python3 tests/locked-benchmark-runner.test.py
       - run: python3 tests/differential-analysis.test.py
@@ -57,6 +66,8 @@ jobs:
           tools/analysis_benchmark_contract.py
           tools/locked_benchmark_runner.py
           tools/differential_analysis.py
+          tools/release_quality_gate.py
+          tools/publish_github_release.py
 
   compare:
     if: github.event_name == 'workflow_dispatch'
@@ -86,6 +97,7 @@ jobs:
           github-token: ${{ github.token }}
       - name: Compare with protected release policy and corpus
         env:
+          GH_TOKEN: ${{ github.token }}
           LIGHTFORGE_RELEASE_POLICY_JSON: ${{ secrets.LIGHTFORGE_RELEASE_POLICY_JSON }}
           LIGHTFORGE_RELEASE_CORPUS_MANIFEST_JSON: ${{ secrets.LIGHTFORGE_RELEASE_CORPUS_MANIFEST_JSON }}
           LIGHTFORGE_RELEASE_POLICY_ATTESTATION_JSON: ${{ secrets.LIGHTFORGE_RELEASE_POLICY_ATTESTATION_JSON }}
@@ -109,9 +121,47 @@ jobs:
             --policy gate/trusted/performance-gate-policy.json \
             --release-policy-attestation gate/trusted/release-policy-attestation.json \
             --output gate/quality-gate-report.json
+      - name: Bind PASS_TARGET report to candidate commit, tree, release and artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LIGHTFORGE_REF_PROTECTED: ${{ github.ref_protected }}
+          BASELINE_RUN_ID: ${{ inputs.baseline_run_id }}
+          BASELINE_ARTIFACT: ${{ inputs.baseline_artifact }}
+          CANDIDATE_RUN_ID: ${{ inputs.candidate_run_id }}
+          CANDIDATE_ARTIFACT: ${{ inputs.candidate_artifact }}
+          RELEASE_VERSION: ${{ inputs.release_version }}
+        run: |
+          test "$GITHUB_REF" = "refs/heads/main"
+          test "$LIGHTFORGE_REF_PROTECTED" = "true"
+          test "$RELEASE_VERSION" = "$(python3 -c 'import json; print(json.load(open("version.json"))["name"])')"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$BASELINE_RUN_ID" > gate/baseline-run.json
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$CANDIDATE_RUN_ID" > gate/candidate-run.json
+          baseline_commit="$(python3 -c 'import json; print(json.load(open("gate/baseline-run.json"))["head_sha"])')"
+          candidate_commit="$(python3 -c 'import json; print(json.load(open("gate/candidate-run.json"))["head_sha"])')"
+          gh api "repos/$GITHUB_REPOSITORY/git/commits/$baseline_commit" > gate/baseline-commit.json
+          gh api "repos/$GITHUB_REPOSITORY/git/commits/$candidate_commit" > gate/candidate-commit.json
+          python3 tools/release_quality_gate.py create-provenance \
+            --report gate/quality-gate-report.json \
+            --version-json version.json \
+            --source-commit "$GITHUB_SHA" \
+            --source-tree-sha "$(git rev-parse "$GITHUB_SHA^{tree}")" \
+            --ref "$GITHUB_REF" \
+            --ref-protected "$LIGHTFORGE_REF_PROTECTED" \
+            --quality-run-id "$GITHUB_RUN_ID" \
+            --baseline-run-json gate/baseline-run.json \
+            --baseline-commit-json gate/baseline-commit.json \
+            --baseline-artifact "$BASELINE_ARTIFACT" \
+            --baseline-benchmark gate/baseline/benchmark.json \
+            --candidate-run-json gate/candidate-run.json \
+            --candidate-commit-json gate/candidate-commit.json \
+            --candidate-artifact "$CANDIDATE_ARTIFACT" \
+            --candidate-benchmark gate/candidate/benchmark.json \
+            --output gate/quality-gate-provenance.json
       - if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: performance-quality-gate-report
-          path: gate/quality-gate-report.json
+          path: |
+            gate/quality-gate-report.json
+            gate/quality-gate-provenance.json
           if-no-files-found: warn
