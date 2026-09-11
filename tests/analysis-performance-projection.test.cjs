@@ -24,6 +24,24 @@ function engine(overrides={}){
   };
 }
 
+function balancedEngine(overrides={}){
+  return engine({
+    name:'Beat This! compact + MDX + GAME Large',modelId:'beat-this-small1',quality:'balanced',
+    runtime:'ONNX Runtime Web 1.20.1',recoverable:true,analysisSeconds:8.25,
+    stages:{rhythm:{seconds:1.25,restored:false},separation:{seconds:6.5,restored:false},voice:{seconds:.5,restored:false}},
+    separationModel:{
+      sourceSeparated:true,runtime:'onnxruntime-web-wasm',nativeModelPasses:0,wasmModelPasses:4,
+      name:'UVR MDX-Net Voc FT',modelId:'uvr-mdx-net-voc-ft',modelSha256:'534b2070fcc7df514b13ef660dc8cbb328679c2374d04354a5c42bb14ecce111',
+      sampleRate:44100,sourceChannels:2,stems:['vocals','accompaniment'],method:'Pretrained stereo complex-spectrum separation with polarity ensemble',
+      vocalBandwidthHz:17640,fftWindowSamples:7680,fftHopSamples:1024,contextSamples:3840,overlapSamples:126720,overlapFraction:.5,
+      denoise:true,modelPasses:4,alignment:'Original sample clock; normalized overlap-add and complementary chunk crossfades; no latency subtraction',
+      estimated:true,analysisSeconds:6.5,chunks:2,restoredPassages:1,
+      limitations:['Separation can retain instrument bleed or soften quiet and heavily processed singing.','Lead and backing vocals are combined; this is not lyric transcription.']
+    },
+    ...overrides
+  });
+}
+
 test('projects bounded stage/cache/profile timing without a performance threshold',()=>{
   const value=Performance.build(engine(),13.87654321);
   assert.deepEqual(value,{
@@ -38,11 +56,20 @@ test('projects bounded stage/cache/profile timing without a performance threshol
   assert.equal(Performance.validate(value),true);
 });
 
+test('projects the canonical live-shaped balanced MDX cache profile',()=>{
+  const value=Performance.build(balancedEngine(),9);
+  assert.deepEqual(value.profile.separation,{modelId:'uvr-mdx-net-voc-ft',runtime:'onnxruntime-web-wasm',chunks:2,restoredPassages:1});
+  assert.equal(value.cache.separationRestoredPassages,1);
+  assert.equal(Performance.validate(value),true);
+});
+
 test('rejects nonfinite or malformed timing/cache inputs before receipt publication',()=>{
   assert.throws(()=>Performance.build(engine({analysisSeconds:Infinity}),1),/analyzer reported seconds/);
   assert.throws(()=>Performance.build(engine({stages:{rhythm:{seconds:1,restored:'yes'}}}),1),/restoration state/);
   assert.throws(()=>Performance.build(engine({separationModel:{modelId:'m',runtime:'r',chunks:1.5,restoredPassages:0}}),1),/chunk count/);
   assert.throws(()=>Performance.build(engine({separationModel:undefined,separation:engine().separationModel}),1),/Invalid separation profile/);
+  assert.throws(()=>Performance.build(balancedEngine({separationModel:{...balancedEngine().separationModel,restoredPassages:-1}}),1),/restored passage count/);
+  assert.throws(()=>Performance.build(balancedEngine({separationModel:undefined,separation:balancedEngine().separationModel}),1),/Invalid separation profile/);
   assert.throws(()=>Performance.build(engine({resourceDiagnostics:{schemaVersion:1}}),1),/pipeline resource diagnostics/);
   const value=Performance.build(engine(),1);
   value.cache.restoredStageNames=['rhythm'];

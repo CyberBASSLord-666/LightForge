@@ -15,6 +15,22 @@ async function process(kind,configure,options){
  const result=kind==='deux'?await separator.process(async()=>[zero,zero],1,async chunk=>chunks.push(chunk)):await separator.process(async()=>[zero,zero],1,async chunk=>chunks.push(chunk));
  await separator.release();assert.equal(chunks.length,1);assert.equal(result.chunks,1);assert.equal(result.analysisSeconds,0);return result;
 }
+
+test('live Deux and MDX result shapes report zero restored passages without checkpoint hits',async()=>{
+ for(const kind of ['deux','mdx']){
+  const result=await process(kind,scope=>{scope.performance={now:()=>0};scope.Date={now:()=>0};});
+  assert.equal(result.restoredPassages,0,kind);
+ }
+});
+
+test('MDX counts only finite accepted ensemble checkpoint passages',async()=>{
+ const context=harness('mdx',scope=>{scope.performance={now:()=>0};scope.Date={now:()=>0};}),C=context.LightForgeMdxSeparator.constants,zero=new Float32Array(C.INPUT_LENGTH),reads=[];
+ const invalid=new Float32Array(C.INPUT_LENGTH);invalid[0]=NaN;
+ const separator=await context.LightForgeMdxSeparator.create({ort:{},manifest:mdxManifest,checkpoint:{readFloats:async name=>{reads.push(name);return reads.length===1?[new Float32Array(C.INPUT_LENGTH)]:[invalid];},writeFloats:async()=>{throw Error('Silent cache misses must not be written.');}}});
+ const chunks=[],result=await separator.process(async()=>[zero,zero],C.CORE+1,async chunk=>chunks.push(chunk));await separator.release();
+ assert.deepEqual(reads,['mdx-ensemble-0','mdx-ensemble-'+C.STRIDE]);
+ assert.equal(chunks.length,2);assert.equal(result.chunks,2);assert.equal(result.restoredPassages,1);assert.equal(result.modelPasses,0);
+});
 const scenarios=[
  ['blocked-getter',context=>{context.performance={};Object.defineProperty(context.performance,'now',{get(){throw Error('blocked performance getter');}});context.Date={};}],
  ['late-call',context=>{let calls=0;context.performance={now(){if(++calls===1)return 10;throw Error('late performance call');}};context.Date={now:()=>1789000000000};}],
