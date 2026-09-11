@@ -35,13 +35,17 @@ class AndroidEvidenceManifestTest(unittest.TestCase):
         metadata = {'bytes': self.apk.stat().st_size, 'sha256': checksum(self.apk)}
         (self.input / (self.apk.name + '.json')).write_text(json.dumps(metadata))
         (self.input / (self.apk.name + '.sha256')).write_text(metadata['sha256'] + '  ' + self.apk.name + '\n')
+        self.source_hashes = self.root / 'source-hashes.json'
+        self.source_hashes.write_text(json.dumps({'web/app.js': 'e' * 64}))
         self.candidate = self.root / 'candidate'
         evidence.create_candidate(argparse.Namespace(
             input_dir=self.input, output_dir=self.candidate, release=RELEASE, run_id=44,
             run_attempt=3, head_sha=HEAD, tree_sha=TREE, evidence_session=SESSION,
+            source_hashes=self.source_hashes,
         ))
         self.binding = evidence.candidate_binding(self.candidate, RELEASE, artifact_id=55,
-                                                  artifact_digest='d' * 64, head_sha=HEAD)
+                                                  artifact_digest='d' * 64, head_sha=HEAD,
+                                                  run_id=44, run_attempt=3, evidence_session=SESSION)
         self.receipts = self.root / 'receipts'
         self.receipts.mkdir()
         self.background = self.receipts / 'android-background-verification.json'
@@ -62,6 +66,7 @@ class AndroidEvidenceManifestTest(unittest.TestCase):
             output_dir=output, background_receipt=self.background,
             diagnostics_receipt=self.diagnostics, candidate_dir=self.candidate,
             candidate_artifact_id=55, candidate_artifact_digest='d' * 64, release=RELEASE,
+            candidate_run_id=44, candidate_run_attempt=3, candidate_evidence_session=SESSION,
             run_id=44, run_attempt=3, head_sha=HEAD, evidence_session=SESSION,
         ))
 
@@ -105,6 +110,42 @@ class AndroidEvidenceManifestTest(unittest.TestCase):
         altered['candidate']['artifact_id'] = 99
         receipt.write_text(json.dumps(altered))
         with self.assertRaisesRegex(ValueError, 'digest differs'):
+            evidence.verify_evidence(output, release=RELEASE, run_id=44, run_attempt=3, head_sha=HEAD)
+
+    def test_rejects_cross_run_candidate_but_allows_a_prior_attempt_in_the_same_run(self):
+        with self.assertRaisesRegex(ValueError, 'run differs'):
+            evidence.candidate_binding(self.candidate, RELEASE, artifact_id=55, artifact_digest='d' * 64,
+                                       head_sha=HEAD, run_id=45, run_attempt=3, evidence_session=SESSION)
+        prior_session = 'f' * 64
+        prior = self.root / 'candidate-prior-attempt'
+        evidence.create_candidate(argparse.Namespace(
+            input_dir=self.input, output_dir=prior, release=RELEASE, run_id=44, run_attempt=2,
+            head_sha=HEAD, tree_sha=TREE, evidence_session=prior_session, source_hashes=self.source_hashes,
+        ))
+        binding = evidence.candidate_binding(prior, RELEASE, artifact_id=55, artifact_digest='d' * 64,
+                                             head_sha=HEAD, run_id=44, run_attempt=2,
+                                             evidence_session=prior_session)
+        for path in (self.background, self.diagnostics):
+            receipt = json.loads(path.read_text())
+            receipt['candidate'] = binding
+            path.write_text(json.dumps(receipt))
+        evidence.write_evidence(argparse.Namespace(
+            output_dir=self.root / 'accepted-prior-attempt', background_receipt=self.background,
+            diagnostics_receipt=self.diagnostics, candidate_dir=prior, candidate_artifact_id=55,
+            candidate_artifact_digest='d' * 64, candidate_run_id=44, candidate_run_attempt=2,
+            candidate_evidence_session=prior_session, release=RELEASE, run_id=44, run_attempt=3,
+            head_sha=HEAD, evidence_session=SESSION,
+        ))
+
+    def test_rejects_symlinked_receipt(self):
+        output = self.root / 'accepted'
+        self.write(output)
+        receipt = output / 'receipts/android-background-verification.json'
+        outside = self.root / 'outside.json'
+        outside.write_text(receipt.read_text())
+        receipt.unlink()
+        receipt.symlink_to(outside)
+        with self.assertRaisesRegex(ValueError, 'non-regular|unexpected'):
             evidence.verify_evidence(output, release=RELEASE, run_id=44, run_attempt=3, head_sha=HEAD)
 
 
