@@ -119,18 +119,31 @@ def node_failure_summary(output, limit=12):
         return ' | '.join(markers[:limit])
     return ' | '.join([markers[0],*markers[-(limit-1):]])
 
-# These patterns intentionally accept only standard unittest result labels.
-# Diagnostics may include a traceback, assertion data, or arbitrary test output; none
-# of that is allowed into a production receipt.
-UNITTEST_FAILURE_LABEL=re.compile(
-    r'^(?:FAIL|ERROR|UNEXPECTED SUCCESS): [A-Za-z_][A-Za-z0-9_]* '
-    r'\((?:(?:tests|__main__)\.)[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*\)$'
-)
-UNITTEST_FAILURE_SUMMARY=re.compile(
-    r'^FAILED \((?:[a-z]+(?: [a-z]+)*=\d+)(?:, [a-z]+(?: [a-z]+)*=\d+)*\)$'
-)
+# Diagnostics may include a traceback, assertion data, or arbitrary test output.
+# Keep only standard unittest result labels, whose grammar is restricted below.
+ASCII_IDENTIFIER=re.compile(r'^[A-Za-z_][A-Za-z0-9_]*$')
+UNITTEST_FAILURE_SUMMARY_FIELD=re.compile(r'^[a-z]+(?: [a-z]+)*=\d+$')
 ANSI_ESCAPE=re.compile(r'\x1b\[[0-?]*[ -/]*[@-~]')
 PYTHON_FAILURE_SUMMARY_MAX_CHARS=1200
+
+def _standard_unittest_label(line):
+    for prefix in ('FAIL: ','ERROR: ','UNEXPECTED SUCCESS: '):
+        if line.startswith(prefix):
+            label=line[len(prefix):]
+            test_name,separator,qualified=label.partition(' (')
+            if not separator or not qualified.endswith(')') or not ASCII_IDENTIFIER.fullmatch(test_name):
+                return False
+            parts=qualified[:-1].split('.')
+            return len(parts)>=2 and parts[0] in {'tests','__main__'} and all(
+                ASCII_IDENTIFIER.fullmatch(part) for part in parts
+            )
+    return False
+
+def _standard_unittest_summary(line):
+    if not line.startswith('FAILED (') or not line.endswith(')'):
+        return False
+    fields=line[len('FAILED ('):-1].split(', ')
+    return bool(fields) and all(UNITTEST_FAILURE_SUMMARY_FIELD.fullmatch(field) for field in fields)
 
 def python_failure_summary(output, limit=12):
     """Return bounded standard unittest labels without exposing test output."""
@@ -140,7 +153,7 @@ def python_failure_summary(output, limit=12):
     markers=[]
     for raw in output.splitlines():
         line=ANSI_ESCAPE.sub('', raw)
-        if UNITTEST_FAILURE_LABEL.fullmatch(line) or UNITTEST_FAILURE_SUMMARY.fullmatch(line):
+        if _standard_unittest_label(line) or _standard_unittest_summary(line):
             markers.append(line[:240])
     if not markers:
         return empty
