@@ -149,6 +149,174 @@ class AnalysisBenchmarkContractTest(unittest.TestCase):
                 store.read(key, expected_identity=identity)
 
 
+    def test_completed_app_run_observation_is_privacy_bounded_and_supplementary(self):
+        observation = {
+            "schemaVersion": 1,
+            "kind": "lightforge.completed-analysis-run",
+            "runKind": "fresh-completed",
+            "privacy": {
+                "audioContent": "excluded",
+                "projectIdentity": "excluded",
+                "userContent": "excluded",
+            },
+            "timing": {
+                "analysis": {"source": "performance.now", "status": "available", "seconds": 12.5, "reason": None},
+                "choreography": {"source": "performance.now", "status": "available", "seconds": 1.25, "reason": None},
+                "total": {"source": "performance.now", "status": "available", "seconds": 15.0, "reason": None},
+            },
+            "analysis": {
+                "quality": "precision",
+                "implementation": {
+                    "rhythmModelFamily": "beat-this-full",
+                    "separationModelFamily": "deux",
+                    "runtimeKind": "android-cpu-plus-web",
+                },
+                "stages": [
+                    {
+                        "stageId": "bass",
+                        "restored": False,
+                        "timing": {"source": "performance.now", "status": "available", "seconds": 0.5, "reason": None},
+                    },
+                    {
+                        "stageId": "rhythm",
+                        "restored": False,
+                        "timing": {"source": "performance.now", "status": "available", "seconds": 1.0, "reason": None},
+                    },
+                    {
+                        "stageId": "separation",
+                        "restored": False,
+                        "timing": {"source": "performance.now", "status": "available", "seconds": 10.0, "reason": None},
+                    },
+                    {
+                        "stageId": "voice",
+                        "restored": True,
+                        "timing": {
+                            "source": "unavailable",
+                            "status": "unavailable",
+                            "seconds": None,
+                            "reason": "restored-stage-zero-cost",
+                        },
+                    },
+                ],
+                "cache": {
+                    "restoredStageCount": 1,
+                    "restoredStageNames": ["voice"],
+                    "separationRestoredPassages": 2,
+                },
+            },
+            "resources": {
+                "status": "available",
+                "schedulerWaitSeconds": 0.125,
+                "observedStageCount": 4,
+            },
+        }
+        contract.validate_completed_app_run_observation(observation)
+        projection = contract.observed_app_run_time_projection(observation)
+        self.assertTrue(projection["observed_time_available"])
+        self.assertEqual("not_comparable", projection["release_eligibility"]["status"])
+        self.assertEqual("unbound-completed-app-run-observation", projection["release_eligibility"]["reason"])
+        self.assertEqual(12.5, projection["timing"]["analysis"]["seconds"])
+        self.assertNotIn("metrics", projection)
+        self.assertNotIn("runtime", projection)
+        self.assertNotIn("provenance", projection)
+        no_passage_counter = copy.deepcopy(observation)
+        no_passage_counter["analysis"]["cache"]["separationRestoredPassages"] = None
+        contract.validate_completed_app_run_observation(no_passage_counter)
+
+        report = diagnostic()
+        baseline = contract.benchmark_run(report)
+        attached = contract.benchmark_run_with_observed_app_run(report, observation)
+        self.assertEqual(baseline["metrics"], attached["metrics"])
+        self.assertEqual(baseline["provenance"], attached["provenance"])
+        self.assertEqual(baseline["diagnostic_sha256"], attached["diagnostic_sha256"])
+        self.assertEqual(
+            baseline,
+            {key: value for key, value in attached.items() if key != "supplementary_observed_app_run"},
+        )
+
+    def test_completed_app_run_observation_rejects_identity_leaks_raw_runtime_and_false_zeroes(self):
+        observation = {
+            "schemaVersion": 1,
+            "kind": "lightforge.completed-analysis-run",
+            "runKind": "fresh-completed",
+            "privacy": {
+                "audioContent": "excluded",
+                "projectIdentity": "excluded",
+                "userContent": "excluded",
+            },
+            "timing": {
+                "analysis": {"source": "unavailable", "status": "unavailable", "seconds": None, "reason": "clock-unavailable"},
+                "choreography": {"source": "unavailable", "status": "unavailable", "seconds": None, "reason": "clock-unavailable"},
+                "total": {"source": "unavailable", "status": "unavailable", "seconds": None, "reason": "clock-unavailable"},
+            },
+            "analysis": {
+                "quality": "balanced",
+                "implementation": {
+                    "rhythmModelFamily": "beat-this-compact",
+                    "separationModelFamily": "mdx",
+                    "runtimeKind": "web-wasm",
+                },
+                "stages": [
+                    {
+                        "stageId": "rhythm",
+                        "restored": True,
+                        "timing": {
+                            "source": "unavailable",
+                            "status": "unavailable",
+                            "seconds": None,
+                            "reason": "restored-stage-zero-cost",
+                        },
+                    },
+                ],
+                "cache": {
+                    "restoredStageCount": 1,
+                    "restoredStageNames": ["rhythm"],
+                    "separationRestoredPassages": 0,
+                },
+            },
+            "resources": {
+                "status": "unavailable",
+                "schedulerWaitSeconds": None,
+                "observedStageCount": 0,
+            },
+        }
+        contract.validate_completed_app_run_observation(observation)
+        projection = contract.observed_app_run_time_projection(observation)
+        self.assertFalse(projection["observed_time_available"])
+        self.assertIsNone(projection["timing"]["analysis"]["seconds"])
+
+        leaked = copy.deepcopy(observation)
+        leaked["projectId"] = "private-project"
+        with self.assertRaises(contract.ContractValidationError):
+            contract.validate_completed_app_run_observation(leaked)
+        raw_runtime = copy.deepcopy(observation)
+        raw_runtime["analysis"]["runtime"] = "private backend /device"
+        with self.assertRaises(contract.ContractValidationError):
+            contract.validate_completed_app_run_observation(raw_runtime)
+        false_zero = copy.deepcopy(observation)
+        false_zero["analysis"]["stages"][0]["timing"] = {
+            "source": "performance.now",
+            "status": "available",
+            "seconds": 0.0,
+            "reason": None,
+        }
+        with self.assertRaises(contract.ContractValidationError):
+            contract.validate_completed_app_run_observation(false_zero)
+        unbounded = copy.deepcopy(observation)
+        unbounded["timing"]["analysis"] = {
+            "source": "performance.now",
+            "status": "available",
+            "seconds": 21600.001,
+            "reason": None,
+        }
+        with self.assertRaises(contract.ContractValidationError):
+            contract.validate_completed_app_run_observation(unbounded)
+        malformed = copy.deepcopy(observation)
+        malformed["timing"]["analysis"]["source"] = []
+        with self.assertRaises(contract.ContractValidationError):
+            contract.validate_completed_app_run_observation(malformed)
+
+
 if __name__ == "__main__":
     unittest.main()
 

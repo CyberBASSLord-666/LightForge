@@ -183,3 +183,36 @@ values with zero. This supplementary evidence cannot establish equivalence,
 the 75% reduction target, or production readiness without paired locked-corpus
 results.
 
+## Completed app-run observations
+
+The production background runner can record one `analysisRunObservation` only
+after a **fresh** analysis and choreography compilation have both succeeded,
+as part of the ordinary atomic completed-project commit. Before a new fresh
+analysis begins, the Android job bridge atomically clears any prior observation
+and refreshes its conflict-protection source hash. A failed, cancelled,
+interrupted, malformed, or compile-failed fresh run therefore leaves no stale
+observation. A cached/reused analysis does not manufacture a fresh observation.
+
+The schema is an exact static allowlist of bounded primitive fields:
+aggregate analysis/choreography/total timing; allowlisted stage timing;
+restoration counts; fixed analysis/separation family labels; a fixed runtime
+kind; and resource-summary availability. It never copies audio bytes or
+hashes, project/track IDs, names, lyrics, paths/URLs, cache keys, raw model IDs,
+backend strings, device/build IDs, timestamps, exceptions, settings, event
+data, credentials, or diagnostics. All durations and counters are bounded and
+rounded. A restored stage is explicitly unavailable with
+`restored-stage-zero-cost`; unavailable clocks are never converted to zero.
+
+The observation is out of analysis cache identity, semantic music, planner
+input, FSEQ compilation, validation score inputs, golden outputs, and
+quality-gate receipts/provenance. Project-backup export also removes it before
+freezing the editable JSON, so it cannot perturb exported-project byte
+comparisons. Observation construction is fail-closed: invalid data is not
+persisted and cannot alter analysis or choreography.
+
+`validate_completed_app_run_observation()` and
+`observed_app_run_time_projection()` accept this supplemental object. The
+projection is marked `not_comparable`, exposes no raw runtime/model profile,
+keeps unavailable values null, and cannot change `metrics.performance` or a
+benchmark pass result. It must not be used to establish a baseline/candidate
+speed claim, quality equivalence, the 75% target, or production readiness.

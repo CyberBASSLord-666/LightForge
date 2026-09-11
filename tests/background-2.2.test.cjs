@@ -25,7 +25,7 @@ test('background runner checkpoints analysis and commits an actual compiled show
   fetch:async()=>({ok:true,json:async()=>request}),LightForgeVersion:require('../web/version.js'),VehicleProfile:require('../web/engine/vehicle-profile.js'),
   MusicAnalyzer:{analyze:async(url,options,progress)=>{assert.equal(options.projectId,'show-test');assert.equal(options.analysisIdentity,request.analysisIdentity);assert.match(url,/\/project\/show-test\/audio.wav$/);progress({progress:.5,stage:'separation',detail:'Analyzing',passageIndex:3,passageCount:8,passagesCompleted:2,restoredPassages:1,checkpointSaved:true});events.push('analysis');return structuredClone(music);}},
   ShowCompiler:{generate:(m,s)=>runWorker(path.join(root,'web/engine'),{action:'generate',music:m,settings:s})},
-  BackgroundJob:{progress(){throw Error('Detailed progress bridge was bypassed');},progressInfo(id,value,detail,json){progressEvents.push({id,value,detail,info:JSON.parse(json)});},checkpoint(id,body){assert.equal(id,'job-one');assert.equal(JSON.parse(body).analysisVersion,6);events.push('checkpoint');return true;},complete(id,body){saved=JSON.parse(body);events.push('complete');done=true;return true;},failed(id,message){throw Error(message);}}
+  BackgroundJob:{clearRunObservation(){return true;},progress(){throw Error('Detailed progress bridge was bypassed');},progressInfo(id,value,detail,json){progressEvents.push({id,value,detail,info:JSON.parse(json)});},checkpoint(id,body){assert.equal(id,'job-one');assert.equal(JSON.parse(body).analysisVersion,6);events.push('checkpoint');return true;},complete(id,body){saved=JSON.parse(body);events.push('complete');done=true;return true;},failed(id,message){throw Error(message);}}
  };context.window=context;vm.runInNewContext(fs.readFileSync(path.join(root,'web/background/runner.js'),'utf8'),context);
  await waitFor(()=>done);assert.equal(progressEvents[0].value,.48);assert.equal(progressEvents[0].info.passageIndex,3);assert.equal(progressEvents[0].info.restoredPassages,1);assert.equal(progressEvents[0].info.checkpointSaved,true);assert.deepEqual(events,['analysis','checkpoint','complete']);assert.equal(saved.needAnalysis,false);assert.equal(saved.projectId,'show-test');assert.match(saved.compiled.sha256,/^[a-f0-9]{64}$/);
  const restored=await runWorker(path.join(root,'web/engine'),{action:'restore',compiled:saved.compiled,music:saved.music,settings:saved.settings});assert.ok(restored.show.validation.valid);
@@ -37,7 +37,7 @@ test('background runner reconciles only the permitted odd-frame clock drift and 
  const context={URL,AbortController,DOMException,location:{href:'https://appassets.androidplatform.net/background/runner.html?job=odd-frame-job'},navigator:{},
   LightForgeVersion:{name:'2.2.4'},VehicleProfile:{version:'fixture'},LightForgeSemanticTimeline:SemanticTimeline,LightForgeMusicSalience:MusicSalience,LightForgeVocalSemantics:VocalSemantics,LightForgeRhythmHierarchy:RhythmHierarchy,LightForgeRecurrence:Recurrence,
   fetch:async()=>({ok:true,json:async()=>request}),MusicAnalyzer:{analyze:async()=>structuredClone(source)},ShowCompiler:{generate:async()=>({show:{version:'fixture-show'},compiled:{sha256:'a'.repeat(64)}})},
-  BackgroundJob:{progressInfo(){},checkpoint(id,body){assert.equal(id,'odd-frame-job');checkpoint=JSON.parse(body);return true;},complete(id){assert.equal(id,'odd-frame-job');completed=true;return true;},failed(_id,message){failed=message;}}
+  BackgroundJob:{clearRunObservation(){return true;},progressInfo(){},checkpoint(id,body){assert.equal(id,'odd-frame-job');checkpoint=JSON.parse(body);return true;},complete(id){assert.equal(id,'odd-frame-job');completed=true;return true;},failed(_id,message){failed=message;}}
  };
  context.window=context;vm.runInNewContext(fs.readFileSync(path.join(root,'web/background/runner.js'),'utf8'),context);await waitFor(()=>completed||failed);
  assert.equal(failed,undefined);assert.equal(checkpoint.duration,playbackDuration);assert.equal(checkpoint.sections.at(-1).end,playbackDuration);
@@ -51,7 +51,7 @@ test('background runner rejects arbitrary decoded/playback duration mismatches',
  const context={URL,AbortController,DOMException,location:{href:'https://appassets.androidplatform.net/background/runner.html?job=bad-clock-job'},navigator:{},
   LightForgeVersion:{name:'2.2.4'},VehicleProfile:{version:'fixture'},LightForgeSemanticTimeline:SemanticTimeline,LightForgeMusicSalience:MusicSalience,LightForgeVocalSemantics:VocalSemantics,LightForgeRhythmHierarchy:RhythmHierarchy,LightForgeRecurrence:Recurrence,
   fetch:async()=>({ok:true,json:async()=>request}),MusicAnalyzer:{analyze:async()=>structuredClone(source)},ShowCompiler:{generate:async()=>{throw Error('Must not compile an invalid clock.');}},
-  BackgroundJob:{progressInfo(){},checkpoint(){checkpointed=true;return true;},complete(){completed=true;return true;},failed(_id,message){failed=message;}}
+  BackgroundJob:{clearRunObservation(){return true;},progressInfo(){},checkpoint(){checkpointed=true;return true;},complete(){completed=true;return true;},failed(_id,message){failed=message;}}
  };
  context.window=context;vm.runInNewContext(fs.readFileSync(path.join(root,'web/background/runner.js'),'utf8'),context);await waitFor(()=>failed);
  assert.match(failed,/permitted one-sample reconciliation/);assert.equal(checkpointed,false);assert.equal(completed,false);
@@ -61,7 +61,7 @@ test('background runner cancellation never submits a completed project',async()=
  const context={URL,AbortController,DOMException,location:{href:'https://appassets.androidplatform.net/background/runner.html?job=job-cancel'},navigator:{},
   fetch:async()=>({ok:true,json:async()=>({projectId:'show-test',settings:{},needAnalysis:true})}),
   MusicAnalyzer:{analyze:(url,options,p,signal)=>new Promise((resolve,reject)=>{entered=true;signal.addEventListener('abort',()=>reject(new DOMException('Cancelled','AbortError')));})},
-  BackgroundJob:{progress(){},checkpoint(){throw Error('Unexpected checkpoint');},complete(){completed=true;},failed(id,message,cancelled){failed={id,cancelled};}}
+  BackgroundJob:{clearRunObservation(){return true;},progress(){},checkpoint(){throw Error('Unexpected checkpoint');},complete(){completed=true;},failed(id,message,cancelled){failed={id,cancelled};}}
  };context.window=context;vm.runInNewContext(fs.readFileSync(path.join(root,'web/background/runner.js'),'utf8'),context);
  await waitFor(()=>entered);context.BackgroundAnalysis.cancel();await waitFor(()=>failed);assert.deepEqual(failed,{id:'job-cancel',cancelled:true});assert.equal(completed,false);
 });
@@ -102,13 +102,13 @@ test('native studio delegates work, blocks stale saves, reconnects, and loads th
  }finally{dom.window.close();}
 });
 
-async function completedReconnect({acknowledged=false,hold=false,restoreError=null,terminalRejected=false,beginRejected=false,pulseRejected=false,ackConfirmationRejected=false,ackWriteFailures=0,nativeProjectPayload=false,fetchNeverResolves=false}={}){
+async function completedReconnect({acknowledged=false,hold=false,restoreError=null,terminalRejected=false,beginRejected=false,pulseRejected=false,ackConfirmationRejected=false,ackWriteFailures=0,nativeProjectPayload=false,fetchNeverResolves=false,deferInitialPreview=false}={}){
  const dom=new JSDOM(fs.readFileSync(path.join(root,'web/index.html'),'utf8'),{url:'https://appassets.androidplatform.net/',runScripts:'outside-only'}),w=dom.window;
- const polls=[],leaseCalls=[],nativeCapClears=[];let restores=0,fetches=0,saved,bootstrap={projects:[],version:'2.2.4'},restoreOptions=[],nativeTerminalToken=null;
+ const polls=[],leaseCalls=[],nativeCapClears=[],previews=[],previewDeferrals=[];let restores=0,fetches=0,saved,bootstrap={projects:[],version:'2.2.4'},restoreOptions=[],nativeTerminalToken=null;
  const completed={id:'completed-project',name:'Completed',duration:2,projectUrl:'/project/completed/project.json',audioUrl:'/project/completed/audio.wav'};
  const lastSelected={...completed,id:'last-selected-project',name:'Last selected',projectUrl:'/project/last/project.json'};
  const job={id:'completed-job',projectId:completed.id,state:'completed',progress:1};
- let enteredResolve,release,remainingAckWriteFailures=ackWriteFailures,ackConfirmationRejectedNow=ackConfirmationRejected;const entered=new Promise(r=>enteredResolve=r),gate=new Promise(r=>release=r);
+ let enteredResolve,release,releaseInitialSaved,remainingAckWriteFailures=ackWriteFailures,ackConfirmationRejectedNow=ackConfirmationRejected;const entered=new Promise(r=>enteredResolve=r),gate=new Promise(r=>release=r),initialSavedReady=deferInitialPreview?new Promise(r=>releaseInitialSaved=r):Promise.resolve();
  Object.defineProperty(w.document,'hidden',{value:false,configurable:true});
  w.scrollTo=()=>{};w.requestAnimationFrame=()=>1;w.cancelAnimationFrame=()=>{};w.matchMedia=()=>({matches:true,addEventListener(){}});w.TextDecoder=TextDecoder;
  w.setInterval=(callback,delay)=>{if(delay===2000)polls.push(callback);return polls.length+1;};w.clearInterval=()=>{};
@@ -118,7 +118,7 @@ async function completedReconnect({acknowledged=false,hold=false,restoreError=nu
   if(this===w.localStorage&&key==='lightforge-background-ack'&&remainingAckWriteFailures>0){remainingAckWriteFailures--;throw new w.DOMException('Storage quota','QuotaExceededError');}
   return storageSetItem.call(this,key,value);
  };
- w.VehiclePreview=class{constructor(){this.loaded=true;this.renderCount=0;}render(){this.renderCount++;}setPaused(){}setCamera(){}setStage(){}setQuality(){}resize(){}};
+ w.VehiclePreview=class{constructor(_canvas,_onViewChange,options){this.loaded=true;this.renderCount=0;this.options=options;previews.push(this);}render(){this.renderCount++;}setLoadDeferred(value){previewDeferrals.push({value:!!value,leaseCalls:leaseCalls.length});}setPaused(){}setCamera(){}setStage(){}setQuality(){}resize(){}};
  w.LightForgeVersion=require('../web/version.js');w.ShowEngine=require('../web/engine/show-engine.js');w.VehicleProfile=require('../web/engine/vehicle-profile.js');w.MusicCues=require('../web/engine/music-cues.js');
  const nativeProjectReads=[];
  const readCompletedProject=(...args)=>{
@@ -136,10 +136,11 @@ async function completedReconnect({acknowledged=false,hold=false,restoreError=nu
   const snapshot=bytes.length+':'+snapshotId;
   return JSON.stringify({ok:true,offset:start,total:bytes.length,snapshot,base64:chunk.toString('base64')});
  };
- w.Android={pickAudio(){},getBootstrap:()=>JSON.stringify(bootstrap),saveProject:()=>true,startAnalysis(){throw Error('Reconnection must not restart analysis');},getAnalysisStatus:()=>JSON.stringify(job),
+ const initialBootstrap={projects:[completed,lastSelected],lastProjectId:lastSelected.id,version:'2.2.4',backgroundJob:job};let bootstrapReads=0;
+ w.Android={pickAudio(){},getBootstrap:()=>JSON.stringify(deferInitialPreview&&++bootstrapReads<=2?initialBootstrap:bootstrap),saveProject:()=>true,startAnalysis(){throw Error('Reconnection must not restart analysis');},getAnalysisStatus:()=>JSON.stringify(job),
   beginCompletedRestore:(...args)=>{leaseCalls.push({type:'begin',args});if(beginRejected)return false;if(nativeTerminalToken){if(nativeTerminalToken.jobId===args[0])return false;nativeTerminalToken=null;}return true;},completedRestorePulse:(...args)=>{leaseCalls.push({type:'pulse',args});return !pulseRejected;},requestCompletedRestoreVisualCommit:(...args)=>{leaseCalls.push({type:'visual-request',args});return true;},completedRestoreVisualCommitted:(...args)=>{leaseCalls.push({type:'visual-committed',args});return true;},completedRestoreTerminal:(...args)=>{leaseCalls.push({type:'terminal',args,ackAtCall:w.localStorage.getItem('lightforge-background-ack')});if(terminalRejected)return false;nativeTerminalToken={jobId:args[0],nonce:args[1]};return true;},completedRestoreAckCommitted:(...args)=>{leaseCalls.push({type:'ack-committed',args,ackAtCall:w.localStorage.getItem('lightforge-background-ack')});if(ackConfirmationRejectedNow||nativeTerminalToken?.jobId!==args[0]||nativeTerminalToken?.nonce!==args[1])return false;nativeCapClears.push(args[0]);nativeTerminalToken=null;return true;},completedRestoreFailed:(...args)=>{leaseCalls.push({type:'failed',args});return true;}};
  if(nativeProjectPayload)w.Android.readCompletedRestoreProjectChunk=readCompletedProject;
- w.fetch=async()=>{fetches++;if(fetchNeverResolves)return new Promise(()=>{});return{ok:true,json:async()=>structuredClone(saved),text:async()=>JSON.stringify(saved)};};
+ w.fetch=async()=>{fetches++;if(fetchNeverResolves)return new Promise(()=>{});await initialSavedReady;return{ok:true,json:async()=>structuredClone(saved),text:async()=>JSON.stringify(saved)};};
  w.ShowCompiler={restore:async(compiled,m,s,_progress,signal,options)=>{
   restoreOptions.push(options);restores++;enteredResolve();
   options?.onRestoreEvent?.({type:'restore-started',lease:options?.restoreLease});
@@ -155,12 +156,45 @@ async function completedReconnect({acknowledged=false,hold=false,restoreError=nu
  }};
  try{
   w.eval(fs.readFileSync(path.join(root,'web/app.js'),'utf8'));const app=w.LightForgeApp,settings=structuredClone(app.state.settings);
-  const result=await runWorker(path.join(root,'web/engine'),{action:'generate',music,settings});saved={settings,music,compiled:result.compiled,needAnalysis:false};
+  const result=await runWorker(path.join(root,'web/engine'),{action:'generate',music,settings});saved={settings,music,compiled:result.compiled,needAnalysis:false};releaseInitialSaved?.();
   if(acknowledged)w.localStorage.setItem('lightforge-background-ack',job.id);
   bootstrap={projects:[completed,lastSelected],lastProjectId:lastSelected.id,version:'2.2.4',backgroundJob:job};
-  return{w,app,job,entered,release,polls,completed,lastSelected,leaseCalls,nativeCapClears,nativeProjectReads,setAckConfirmationRejected:value=>{ackConfirmationRejectedNow=!!value;},get restores(){return restores;},get fetches(){return fetches;},get restoreOptions(){return restoreOptions;},close:()=>{release();w.close();}};
+  return{w,app,job,entered,release,polls,completed,lastSelected,leaseCalls,nativeCapClears,nativeProjectReads,previews,previewDeferrals,setAckConfirmationRejected:value=>{ackConfirmationRejectedNow=!!value;},get restores(){return restores;},get fetches(){return fetches;},get restoreOptions(){return restoreOptions;},close:()=>{release();w.close();}};
  }catch(error){release();w.close();throw error;}
 }
+
+test('unacknowledged cold completed restore defers GLTF loading until compiled-show adoption and never defers ordinary startup',async()=>{
+ const deferred=await completedReconnect({deferInitialPreview:true,hold:true});
+ try{
+  await deferred.entered;
+  assert.equal(deferred.previews.length,1,'Cold restore creates one preview host');
+  assert.equal(deferred.previews[0].options?.deferLoad,true,'Only the unacknowledged completed restore may defer the initial GLTF load');
+  assert.deepEqual(deferred.previewDeferrals,[],'The preview must remain deferred while the saved show is being verified');
+  deferred.release();await waitFor(()=>deferred.w.localStorage.getItem('lightforge-background-ack')===deferred.job.id&&!deferred.app.state.backgroundApplying);
+  const release=deferred.previewDeferrals.find(event=>event.value===false),adopted=deferred.leaseCalls.findIndex(call=>call.type==='pulse'&&call.args[2]==='show-adopted');
+  assert.ok(release,'Compiled-show adoption must release the deferred preview');
+  assert.ok(adopted>=0&&release.leaseCalls<adopted,'Preview loading must restart strictly before the existing adopted-show/first-frame proof path');
+  assert.equal(deferred.app.state.completedRestorePreviewDeferred,false,'Terminal restore may not leave the preview load deferred');
+ }finally{deferred.close();}
+ const ordinary=await completedReconnect();
+ try{
+  assert.equal(ordinary.previews.length,1);
+  assert.equal(ordinary.previews[0].options?.deferLoad,false,'Ordinary launch must retain immediate preview loading');
+  assert.deepEqual(ordinary.previewDeferrals,[],'Ordinary launch must not invoke restore-only preview deferral');
+ }finally{ordinary.close();}
+});
+
+test('failed completed restore releases the deferred preview without treating it as an ACK',async()=>{
+ const failed=await completedReconnect({deferInitialPreview:true,restoreError:Error('verified restore failure')});
+ try{
+  await failed.entered;
+  await waitFor(()=>!failed.app.state.backgroundApplying);
+  assert.equal(failed.app.state.completedRestorePreviewDeferred,false,'A failed restore must release the preview loading gate');
+  assert.ok(failed.previewDeferrals.some(event=>event.value===false),'Failed restore must explicitly resume the preview path');
+  assert.equal(failed.w.localStorage.getItem('lightforge-background-ack'),null,'A failed restore must not write an ACK');
+  assert.ok(failed.leaseCalls.some(call=>call.type==='failed'),'Native receives the existing failed-restore signal');
+ }finally{failed.close();}
+});
 
 test('completed bootstrap restores once across poll/native races and preserves later Guide navigation',async()=>{
  const t=await completedReconnect({hold:true});

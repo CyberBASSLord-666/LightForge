@@ -86,6 +86,9 @@
   return Number(normalized.analysisVersion)===8?rebuildCanonicalContracts(normalized):normalized;
  }
 
+ const observationClock=()=>{try{const factory=root.LightForgeDiagnosticClock;return factory&&typeof factory.create==='function'?factory.create(root):null;}catch(_){return null;}};
+ const observationMark=clock=>{try{return clock&&typeof clock.mark==='function'?clock.mark():null;}catch(_){return null;}};
+ const observationMeasure=(clock,mark)=>{try{return clock&&typeof clock.measure==='function'?clock.measure(mark):null;}catch(_){return null;}};
  const report=(progress,detail,info={})=>{
   root.LightForgeDiagnostics?.progress('background',{...info,progress});
   if(typeof BackgroundJob.progressInfo==='function')BackgroundJob.progressInfo(id,progress,detail,JSON.stringify(info));
@@ -93,6 +96,7 @@
  };
  async function run(){
   if(started)return;started=true;root.LightForgeDiagnostics?.log('info','background','Runner started');
+  const clock=observationClock(),totalStarted=observationMark(clock);let analysisTiming=null,analysisPerformed=false;
   try{
    const response=await fetch('/background/request.json',{cache:'no-store',signal:controller.signal});
    if(!response.ok)throw Error('The saved analysis request could not be opened.');
@@ -111,6 +115,8 @@
    const base='/project/'+encodeURIComponent(projectId)+'/';
    let music=request.music;
    if(!music||request.needAnalysis||(music.analysisVersion||1)<5){
+    if(typeof BackgroundJob.clearRunObservation!=='function'||BackgroundJob.clearRunObservation(id)!==true)throw Error('The prior analysis observation could not be cleared.');
+    analysisPerformed=true;const analysisStarted=observationMark(clock);
     let compatibility=false;
     const quality=settings.analysisQuality==='balanced'?'balanced':'precision';
     const nativePredict=quality==='precision'?root.LightForgeNativeDeux?.create(BackgroundJob,id,message=>{
@@ -124,15 +130,20 @@
      bpmOverride:settings.bpmOverride||undefined,analysisQuality:settings.analysisQuality,
      nativePredict,nativeMdx
     },p=>report(.96*Math.max(0,Math.min(1,Number(p.progress)||0)),(compatibility?'Compatibility · ':'')+(p.detail||p.message||p.stage||'Analyzing music'),p),controller.signal);
+    analysisTiming=observationMeasure(clock,analysisStarted);
    }
    check();const duration=Number(request.duration);
    if(Number.isFinite(duration)&&duration>0&&music.duration!==duration)music=reconcileMusicDuration(music,duration);
    if(!BackgroundJob.checkpoint(id,JSON.stringify(music)))throw Error('The analysis checkpoint could not be saved.');
    check();
+   const choreographyStarted=observationMark(clock);
    const result=await ShowCompiler.generate(music,settings,p=>report(.96+.035*Math.max(0,Math.min(1,Number(p.progress)||0)),p.detail||'Choreographing your show',{stage:'generate'}),controller.signal);
+   const choreographyTiming=observationMeasure(clock,choreographyStarted),totalTiming=observationMeasure(clock,totalStarted);
+   let analysisRunObservation=null;try{analysisRunObservation=root.LightForgeAnalysisRunObservation?.completed({analysisPerformed,engine:music.engine,analysisTiming,choreographyTiming,totalTiming});}catch(_){analysisRunObservation=null;}
    check();report(.999,'Saving your complete show',{stage:'save'});
    const saved={version:1,projectId,name:request.name,updatedAt:Date.now(),settings,music,needAnalysis:false,compiled:result.compiled,
     provenance:{app:LightForgeVersion.name,planner:result.show.version,profile:VehicleProfile.version,analysis:music.analysisVersion,model:music.engine,frameSHA256:result.compiled.sha256}};
+   if(analysisRunObservation) saved.analysisRunObservation=analysisRunObservation;
    if(!BackgroundJob.complete(id,JSON.stringify(saved)))throw Error('Your completed show could not be saved.');
    root.LightForgeDiagnostics?.log('info','background','Completed show committed');
   }catch(error){root.LightForgeDiagnostics?.log(error.name==='AbortError'?'info':'error','background',error);BackgroundJob.failed(id,error.message||'Analysis could not finish.',error.name==='AbortError');}

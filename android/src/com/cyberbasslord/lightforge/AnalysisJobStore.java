@@ -35,6 +35,10 @@ final class AnalysisJobStore {
         requireIdle(files);
         File dir=project(files,projectId),source=new File(dir,"project.json");
         JSONObject request=read(source,ProjectStore.MAX_PROJECT_BYTES);
+        // A completed app-run observation is deliberately unbound evidence. It
+        // must never cross into a frozen worker request, including on the very
+        // first fresh run that will later clear the durable project copy.
+        request.remove("analysisRunObservation");
         if(!new File(dir,"audio.wav").isFile())throw new IOException("This project's audio is missing.");
         JSONObject meta=ProjectStore.describe(new File(files,"projects"),projectId);
         request.put("projectId",projectId).put("name",meta.getString("name")).put("duration",meta.getDouble("duration")).put("analysisAppVersion",appVersion);
@@ -128,6 +132,33 @@ final class AnalysisJobStore {
         validateCheckpoint(music,request.getDouble("duration"));
         File checkpoint=new File(directory(files),"checkpoint.json");write(checkpoint,music,ProjectStore.MAX_PROJECT_BYTES);
         job.put("hasCheckpoint",true).put("resumeAvailable",true).put("checkpointAt",System.currentTimeMillis()).put("checkpointSHA256",hash(checkpoint));persist(files,job);
+    }
+    /**
+     * Clear only a prior supplementary app-run observation before a fresh
+     * analysis starts.  The project source hash is refreshed only after the
+     * durable project commit succeeds, so completion still rejects real edits.
+     */
+    static synchronized void clearRunObservation(File files,String id) throws Exception {
+        JSONObject job=matching(files,id,true);
+        // Fresh requests created by current builds are already scrubbed in
+        // prepare(). Rewriting here is a defence in depth repair for an
+        // in-flight or legacy request that was frozen before that rule existed.
+        // Do this before touching the durable project so a conflict cannot
+        // leave an exposed worker request behind.
+        clearFrozenRequestRunObservation(files);
+        String sourceHash=ProjectStore.clearAnalysisRunObservation(
+            new File(files,"projects"),job.getString("projectId"),job.getString("sourceSHA256"));
+        job.put("sourceSHA256",sourceHash);
+        persist(files,job);
+    }
+    private static void clearFrozenRequestRunObservation(File files) throws Exception {
+        File frozen=new File(directory(files),"request.json");
+        if(!frozen.isFile())return; // Legacy terminal jobs may have no request.
+        JSONObject request=read(frozen,ProjectStore.MAX_PROJECT_BYTES);
+        if(request.has("analysisRunObservation")){
+            request.remove("analysisRunObservation");
+            write(frozen,request,ProjectStore.MAX_PROJECT_BYTES);
+        }
     }
     static void validateCheckpoint(JSONObject music,double sourceDuration)throws IOException {
         if(music==null)throw new IOException("Analysis checkpoint is incomplete.");

@@ -53,6 +53,22 @@ jobs:
           python3 qa/release-1.6.0/prepare-musdb-fixtures.py
       - run: python3 tools/bootstrap_toolchain.py
       - name: Verify provenance, reconstruct exact signed APK and publish
+        env:
+          LIGHTFORGE_PHYSICAL_VALIDATION_ATTESTATION_JSON: ${{ secrets.LIGHTFORGE_PHYSICAL_VALIDATION_ATTESTATION_JSON }}
         run: |
+          set -euo pipefail
+          test -n "$LIGHTFORGE_PHYSICAL_VALIDATION_ATTESTATION_JSON"
+          umask 077
+          target="$(mktemp "$RUNNER_TEMP/lightforge-physical-validation-attestation.XXXXXX")"
+          cleanup() {
+            rm -f -- "$target"
+          }
+          trap cleanup EXIT HUP INT TERM
+          printf '%s' "$LIGHTFORGE_PHYSICAL_VALIDATION_ATTESTATION_JSON" > "$target"
+          unset LIGHTFORGE_PHYSICAL_VALIDATION_ATTESTATION_JSON
+          chmod 600 "$target"
+          test "$(stat -c '%a' "$target")" = "600"
+          python3 -m json.tool "$target" > /dev/null
           request="$(python3 -c 'import json; print("releases/v"+json.load(open("version.json"))["name"]+"/request.json")')"
-          python3 tools/publish_github_release.py "$request"
+          python3 tools/publish_github_release.py "$request" \
+            --physical-validation-attestation "$target"

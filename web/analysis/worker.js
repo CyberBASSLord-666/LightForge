@@ -20,6 +20,13 @@ function createDiagnosticClock(){
  }catch(_){ }
  return {mark:()=>({milliseconds:0,source:'unavailable'}),measure:()=>({milliseconds:0,measured:false,status:'unavailable',reason:'clock-unavailable',source:'unavailable'})};
 }
+function fullResolutionStemClock(stemCache){
+ const samples=stemCache?.fullSamples,duration=stemCache?.duration;
+ // The verified full-resolution vocal cache is bound to this original sample
+ // clock. It intentionally never uses elapsed-time telemetry.
+ if(!Number.isSafeInteger(samples)||!Number.isFinite(duration)||Math.abs(samples/44100-duration)>1/44100)throw Error('Re-analyze to recover full-resolution voice audio.');
+ return {samples,duration:samples/44100};
+}
 function safeValidation(api,value,context){
  // Checkpoints are persisted independently from the worker script. Treat a
  // validator exception as corrupt/stale evidence so analysis can rebuild.
@@ -422,9 +429,10 @@ self.onmessage=async e=>{
   // checkpoint is committed. Surface that fact immediately so a killed
   // renderer offers Resume instead of reporting a blank status.
   report(.40,'Recognizing musical structure','Progress saved',{checkpointSaved:true,analysisStage:stage});
- }else{
-  const sourceReader=new LightForgeWavReader(audioUrl);await sourceReader.open();
-  if(stage==='separation'){
+ }else if(stage==='separation'){
+  const sourceReader=new LightForgeWavReader(audioUrl);
+  await sourceReader.open();
+  telemetry.increment?.('source_wav_reader_opens');
  const storagePlan=separationStoragePlan(sourceReader.samples,quality);
  report(.405,'Checking analysis storage','Protecting enough space for this song and its saved progress');
  await LightForgeStemCache.prune(cacheKey,storagePlan.stemBytes);
@@ -439,15 +447,15 @@ self.onmessage=async e=>{
    await store.write(stage,{separation:result.separation,stemCache:result.stemCache});
    report(.82,'Separating voice and instruments','Progress saved',{checkpointSaved:true,analysisStage:stage});
   }else if(stage==='voice'){
- const stems=await LightForgeStemCache.readers(result.stemCache);
+ const stems=await LightForgeStemCache.readers(result.stemCache),fullVoice=await LightForgeStemCache.fullVoice(result.stemCache),sourceClock=fullResolutionStemClock(result.stemCache);
  report(.83,'Recognizing the isolated voice','Distinguishing singing, speech and remaining instrument bleed');
  const classified=await store.read('voice-classifier')||await LightForgeVocals.analyze(stems.vocals,config,{ort,includeClassifierScores:true,report:(p,stage,detail)=>report(.83+.075*p,'Recognizing the isolated voice',detail)});
  await store.write('voice-classifier',classified);
- const detailExtractor=new LightForgeVocalDetail.Extractor({sampleRate:22050,duration:sourceReader.duration}),detailCount=result.stemCache.samples,detailChunk=22050*8;
+ const detailExtractor=new LightForgeVocalDetail.Extractor({sampleRate:22050,duration:sourceClock.duration}),detailCount=result.stemCache.samples,detailChunk=22050*8;
  for(let start=0;start<detailCount;start+=detailChunk){const count=Math.min(detailChunk,detailCount-start),voice=await stems.vocals.mono22050(start,count,config),backing=await stems.accompaniment.mono22050(start,count,config);detailExtractor.push(voice,start,backing);report(.905+.035*(start+count)/detailCount,'Following vocal expression','Measuring entrances, syllabic attacks, held notes and pauses');}
  report(.942,'Transcribing sung notes','GAME Large • identifying entrances, pitch changes and held notes');
  game=await LightForgeGAME.create({ort,baseUrl:new URL('models/game/',self.location.href).href,onProgress:detail=>report(.942,'Loading singing transcription',detail),checkpoint:store});
- const transcription=await game.process(await LightForgeStemCache.fullVoice(result.stemCache),sourceReader.samples,{onProgress:(p,info)=>report(.945+.04*p,'Transcribing sung notes','GAME Large • '+Math.round(p*100)+'%',info)});
+ const transcription=await game.process(fullVoice,sourceClock.samples,{onProgress:(p,info)=>report(.945+.04*p,'Transcribing sung notes','GAME Large • '+Math.round(p*100)+'%',info)});
  result.vocals=LightForgeGAME.fuse(detailExtractor.finish({classifier:classified.classifier,model:classified.model,transcription}),transcription);classified.classifier=null;await game.release();game=null;
  await ensureVocalSemantics(result,options,store,telemetry);
 
@@ -480,7 +488,6 @@ self.onmessage=async e=>{
    await store.write(stage,persistableAnalysis(result));
    report(1,'Music understood','Progress saved',{checkpointSaved:true,analysisStage:stage});
   }
- }
  const completionTiming=workerClock.measure(started);
  postMessage({type:'result',value:result,restored:false,seconds:workerTimingSeconds(completionTiming),profile:telemetry.snapshot({restored:false,...workerTimingAttributes(completionTiming)})});
  }catch(error){

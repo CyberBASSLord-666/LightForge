@@ -181,6 +181,39 @@ public final class AnalysisJobStoreTest {
         JSONObject audioChanged=AnalysisJobStore.prepare(files,projectId,"2.2.2");
         check(!beforeAudio.equals(audioChanged.getString("analysisIdentity")),"Changed audio reused prior passage identity");
         AnalysisJobStore.finish(files,audioChanged.getString("id"),"cancelled","Finished tests");
-        System.out.println("PASS: job ownership, monotonic progress, checkpoint reuse, cancellation, conflict preservation, durable completion, damaged checkpoint recovery, version/audio/settings identity, structured progress and crash recovery");
+        // App-run observations are supplementary: they do not affect analysis
+        // identity, and a fresh run removes any prior one before doing work.
+        JSONObject observation=new JSONObject().put("schemaVersion",1).put("kind","lightforge.completed-analysis-run")
+            .put("runKind","fresh-completed").put("privateText","must be removed");
+        ProjectStore.save(projects,projectId,read(saved).put("needAnalysis",true).put("analysisRunObservation",observation));
+        JSONObject observationJob=AnalysisJobStore.prepare(files,projectId,"2.2.2");
+        File frozenRequestFile=new File(AnalysisJobStore.directory(files),"request.json");
+        JSONObject frozenRequest=read(frozenRequestFile);
+        check(!frozenRequest.has("analysisRunObservation"),"Frozen request.json leaked a stale run observation");
+        JSONObject requestWithObservation=new JSONObject(frozenRequest.toString()).put("analysisRunObservation",observation);
+        String withObservationIdentity=AnalysisJobStore.analysisIdentity(AnalysisJobStore.project(files,projectId),projectId,requestWithObservation);
+        String withoutObservationIdentity=AnalysisJobStore.analysisIdentity(AnalysisJobStore.project(files,projectId),projectId,frozenRequest);
+        check(withObservationIdentity.equals(withoutObservationIdentity),"Supplementary observation changed analysis identity");
+        // Repair an in-flight request created by an older build.  The bridge
+        // must rewrite this copy before it clears the durable project evidence.
+        AnalysisJobStore.write(frozenRequestFile,requestWithObservation,ProjectStore.MAX_PROJECT_BYTES);
+        check(AnalysisJobStore.request(files,observationJob.getString("id")).has("analysisRunObservation"),"Legacy frozen request fixture missing observation");
+        AnalysisJobStore.clearRunObservation(files,observationJob.getString("id"));
+        check(!read(frozenRequestFile).has("analysisRunObservation"),"Observation cleanup left stale evidence in request.json");
+        check(!read(saved).has("analysisRunObservation"),"Fresh analysis left a stale run observation");
+        File priorRevision=new File(AnalysisJobStore.project(files,projectId),".previous-revision.json");
+        check(!AnalysisJobStore.read(priorRevision,ProjectStore.MAX_PROJECT_BYTES).getJSONObject("project").has("analysisRunObservation"),"Undo revision retained a stale run observation");
+        check(AnalysisJobStore.status(files).getString("sourceSHA256").equals(AnalysisJobStore.hash(saved)),"Observation cleanup did not refresh the job source hash");
+        JSONObject observationResult=read(saved).put("projectId",projectId).put("music",music).put("needAnalysis",false)
+            .put("compiled",new JSONObject().put("sha256","observation-fixture"));
+        AnalysisJobStore.complete(files,observationJob.getString("id"),observationResult.toString());
+        check(!read(saved).has("analysisRunObservation"),"Completion restored a stale run observation");
+        ProjectStore.save(projects,projectId,read(saved).put("needAnalysis",true).put("analysisRunObservation",observation));
+        JSONObject changedBeforeClear=AnalysisJobStore.prepare(files,projectId,"2.2.2");
+        ProjectStore.save(projects,projectId,read(saved).put("name","Changed before observation cleanup"));
+        reject(()->AnalysisJobStore.clearRunObservation(files,changedBeforeClear.getString("id")));
+        check(read(saved).has("analysisRunObservation"),"Observation cleanup overwrote a newer project edit");
+        AnalysisJobStore.finish(files,changedBeforeClear.getString("id"),"cancelled","Finished observation cleanup tests");
+        System.out.println("PASS: job ownership, monotonic progress, checkpoint reuse, cancellation, conflict preservation, durable completion, damaged checkpoint recovery, version/audio/settings identity, structured progress, crash recovery and stale observation cleanup");
     }
 }

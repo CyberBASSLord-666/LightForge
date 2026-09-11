@@ -11,7 +11,7 @@ const clone = x => JSON.parse(JSON.stringify(x));
 // job, loading overlay and preview permanently latched together.
 const COMPLETED_RESTORE_PROJECT_CHUNK_BYTES=48*1024,COMPLETED_RESTORE_PROJECT_MAX_BYTES=64*1024*1024,COMPLETED_RESTORE_PROJECT_READ_TIMEOUT_MS=12000;
 const defaults = {style:'festival',intensity:.85,dance:'expressive',stepMs:20,sensitivity:.82,beatDivision:'auto',bpmOverride:null,offsetMs:0,palette:'aurora',enabled:{windows:true,mirrors:true,trunk:true,charge:true,interior:true},optionalFog:false,outerBeamRamping:false,outputEnabled:{},manualCues:[],sectionOverrides:{},seed:2025,analysisQuality:'precision',movementDensity:.7,downbeatAnchor:null,meterOverride:null,tempoScale:1,vocalFocus:.85,bassFocus:.9,vocalRegions:[],musicCues:[],vocalOffsetMs:0,bassOffsetMs:0};
-const state = {audition:'mix',auditionAvailable:false,auditionLoading:false,project:null,music:null,show:null,settings:clone(defaults),projects:[],history:[],future:[],compiled:null,exportHeader:null,saveBlocked:false,composing:false,compileId:0,compileAbort:null,renderedSettingsKey:null,showMusic:null,pendingExport:null,busy:false,job:0,abort:null,view:'studio',editing:null,needAnalysis:false,previewMode:0,exportId:null,lastSave:0,acceptProgress:false,selection:0,loadingProject:false,pendingProjectAction:null,soloPreview:null,completedRestore:null};
+const state = {audition:'mix',auditionAvailable:false,auditionLoading:false,project:null,music:null,show:null,settings:clone(defaults),projects:[],history:[],future:[],compiled:null,exportHeader:null,saveBlocked:false,composing:false,compileId:0,compileAbort:null,renderedSettingsKey:null,showMusic:null,pendingExport:null,busy:false,job:0,abort:null,view:'studio',editing:null,needAnalysis:false,previewMode:0,exportId:null,lastSave:0,acceptProgress:false,selection:0,loadingProject:false,pendingProjectAction:null,soloPreview:null,completedRestore:null,completedRestorePreviewDeferred:false};
 const audio=$('audio');let auditionEpoch=0,availabilityEpoch=0,auditionAbort=null,auditionURL=null,auditionIntent=null,auditionSignature=null,analysisFallback=null,completedRestoreEpoch=0;let progressClock,toastTimer,saveTimer,regenTimer,lastDraw=0,lastSection=-1,frameRequest=0,dbPromise;
 let previewPaused=document.hidden,nativePreviewPaused=false,pagePreviewPaused=false;
 function auditionChanged(){document.dispatchEvent(new CustomEvent('lightforge:changed'));}
@@ -90,12 +90,17 @@ function text(el,value){el.textContent=String(value==null?'':value);}
 function toast(message,error=false){if(error)diagnostics?.log('error','app',message);clearTimeout(toastTimer);text($('toast'),message);$('toast').hidden=false;$('toast').classList.toggle('error',error);toastTimer=setTimeout(()=>$('toast').hidden=true,error?7500:4200);}
 function mergeSettings(s){return {...clone(defaults),...s,enabled:{...defaults.enabled,...(s?.enabled||{})},sectionOverrides:s?.sectionOverrides||{}};}
 function bridge(method,...args){try{return window.Android?.[method]?.(...args);}catch(e){diagnostics?.log('error','bridge',e);toast(e.message||'The device action could not be completed.',true);throw e;}}
+function completedRestoreNeedsPreviewDeferral(job){return !!job?.id&&job.state==='completed'&&localStorage.getItem('lightforge-background-ack')!==job.id;}
+function setCompletedRestorePreviewDeferred(deferred){
+ const next=!!deferred;if(state.completedRestorePreviewDeferred===next)return;
+ state.completedRestorePreviewDeferred=next;vehiclePreview?.setLoadDeferred?.(next);
+}
 function nav(view){if(view!=='studio')stopInspection();if(!['studio','shows','guide'].includes(view))view='studio';state.view=view;document.querySelectorAll('.view').forEach(el=>el.classList.toggle('active',el.id===view));document.querySelectorAll('.nav-item').forEach(el=>{el.classList.toggle('active',el.dataset.navigate===view);if(el.dataset.navigate===view)el.setAttribute('aria-current','page');else el.removeAttribute('aria-current');});if(view==='shows'){if(native()&&!state.busy)applyBootstrap(parse(bridge('getBootstrap'),{}));else renderProjects();}window.scrollTo({top:0,behavior:'instant'});resizeCanvases();}
 async function readBootstrap(){
  let background=null;
  if(native()){
   const data=parse(bridge('getBootstrap'),{});background=data.backgroundJob||null;state.backgroundJob=background;
-  state.backgroundSyncPending=background?.state==='completed'&&localStorage.getItem('lightforge-background-ack')!==background.id;
+  state.backgroundSyncPending=completedRestoreNeedsPreviewDeferral(background);setCompletedRestorePreviewDeferred(state.backgroundSyncPending);
   applyBootstrap(data);state.lastProjectId=(backgroundActive(background)||state.backgroundSyncPending)?background.projectId:data.lastProjectId;
   renderDeviceCapabilities(data.deviceCapabilities);
  }else{state.projects=parse(localStorage.getItem('lightforge-projects'),[]);state.lastProjectId=localStorage.getItem('lightforge-last-project');renderProjects();}
@@ -214,7 +219,8 @@ function beginCompletedRestore(job){
  const prior=state.completedRestore;
  const lease={jobId:job.id,projectId:String(job.projectId||''),nonce:completedRestoreNonce(),phase:'bootstrap',sequence:0,bytes:0,renderCountBeforeAdopt:0,workerVerified:false,adoptedProjectId:null,adoptedSelection:0,adoptedCompileId:0,failed:false,terminal:false,ackWritten:false,ackConfirmed:false};
  state.completedRestore=lease;
- if(bridge('beginCompletedRestore',lease.jobId,lease.nonce,lease.bytes)!==true){state.completedRestore=prior||null;throw Error('Native completed-restore lease was rejected.');}
+ if(bridge('beginCompletedRestore',lease.jobId,lease.nonce,lease.bytes)!==true){state.completedRestore=prior||null;setCompletedRestorePreviewDeferred(false);throw Error('Native completed-restore lease was rejected.');}
+ setCompletedRestorePreviewDeferred(true);
  if(prior&&prior!==lease&&prior.terminal&&!prior.ackConfirmed&&prior.jobId!==lease.jobId){
   // Native has atomically retired only this old unconfirmed terminal token
   // for the new durable completed job. Keep the old job's persisted cap
@@ -232,7 +238,7 @@ function completedRestorePulse(lease,phase,bytes=lease?.bytes||0){
 }
 function completedRestoreFailed(lease,reason){
  if(!lease||state.completedRestore!==lease||lease.failed||lease.terminal)return;
- lease.failed=true;lease.phase='failed';lease.sequence++;bridge('completedRestoreFailed',lease.jobId,lease.nonce,String(reason||'restore-failed').slice(0,120));
+ lease.failed=true;lease.phase='failed';lease.sequence++;setCompletedRestorePreviewDeferred(false);bridge('completedRestoreFailed',lease.jobId,lease.nonce,String(reason||'restore-failed').slice(0,120));
 }
 function completedRestoreWorkerEvent(lease,event){
  if(!lease||state.completedRestore!==lease||event?.lease?.jobId!==lease.jobId||event.lease?.nonce!==lease.nonce)return;
@@ -456,7 +462,7 @@ async function regenerate({save=true,preparedShow=null,restoreCompiled=null,rest
   if(restoreLease?.failed)throw Error('Native completed-restore lease rejected an ordered worker event.');
   if(ticket!==state.compileId||projectId!==state.project?.id)return null;
   if(restoreLease&&(!restoreLease.projectId||state.completedRestore!==restoreLease||restoreLease.projectId!==projectId))return null;
-  state.music=music;if(restoreLease)restoreLease.renderCountBeforeAdopt=Number(vehiclePreview?.renderCount)||0;adoptShow(result,music,settings);if(restoreLease){restoreLease.adoptedProjectId=projectId;restoreLease.adoptedSelection=state.selection;restoreLease.adoptedCompileId=ticket;if(!completedRestorePulse(restoreLease,'show-adopted'))throw Error('Native completed-restore lease rejected the adopted show.');}if(save)scheduleSave();return state.show;
+  state.music=music;if(restoreLease)restoreLease.renderCountBeforeAdopt=Number(vehiclePreview?.renderCount)||0;adoptShow(result,music,settings);if(restoreLease){setCompletedRestorePreviewDeferred(false);restoreLease.adoptedProjectId=projectId;restoreLease.adoptedSelection=state.selection;restoreLease.adoptedCompileId=ticket;if(!completedRestorePulse(restoreLease,'show-adopted'))throw Error('Native completed-restore lease rejected the adopted show.');}if(save)scheduleSave();return state.show;
  }catch(e){if(restoreLease)completedRestoreFailed(restoreLease,e.message||e);diagnostics?.log(e.name==='AbortError'?'info':'error','composition-worker',e);if(ticket!==state.compileId||e.name==='AbortError')return null;if(restoreCompiled)state.saveBlocked=true;toast((restoreCompiled?'Saved arrangement could not be verified: ':'The show could not be built: ')+e.message,true);return null;}
  finally{if(ticket===state.compileId){state.composing=false;state.compileAbort=null;updateButtons();}}
 }
@@ -481,7 +487,10 @@ function resetStudio(){snapshot();state.settings=clone(defaults);state.needAnaly
 function canvasSize(canvas){const rect=canvas.getBoundingClientRect(),ratio=Math.min(window.devicePixelRatio||1,2);if(!rect.width||!rect.height)return null;const w=Math.round(rect.width*ratio),h=Math.round(rect.height*ratio);if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}return {ctx:canvas.getContext('2d'),w:rect.width,h:rect.height,ratio};}
 function resizeCanvases(){if(previewPaused||document.hidden)return;renderFrame(audio.currentTime||0);drawWave();}
 function rounded(ctx,x,y,w,h,r){ctx.beginPath();ctx.roundRect(x,y,w,h,r);}
-const vehiclePreview=new VehiclePreview($('carCanvas'),(view,label)=>{text($('cameraLabel'),label);document.querySelectorAll('[data-camera]').forEach(el=>{const selected=el.dataset.camera===view;el.classList.toggle('selected',selected);el.setAttribute('aria-pressed',String(selected));});});
+const startupPreviewBootstrap=(()=>{try{return native()?parse(window.Android?.getBootstrap?.(),null):null;}catch(error){diagnostics?.log('warn','bootstrap',error);return null;}})();
+const startupPreviewDeferred=completedRestoreNeedsPreviewDeferral(startupPreviewBootstrap?.backgroundJob);
+state.completedRestorePreviewDeferred=startupPreviewDeferred;
+const vehiclePreview=new VehiclePreview($('carCanvas'),(view,label)=>{text($('cameraLabel'),label);document.querySelectorAll('[data-camera]').forEach(el=>{const selected=el.dataset.camera===view;el.classList.toggle('selected',selected);el.setAttribute('aria-pressed',String(selected));});},{deferLoad:startupPreviewDeferred});
 const monitorGroups=VehicleProfile.outputs.filter(o=>o.available&&o.kind==='light').map(o=>[o.name,o.channels]);
 for(const [name,channels] of monitorGroups){const cell=document.createElement('span');cell.className='lamp-cell';cell.dataset.channels=channels.join(',');const dot=document.createElement('i'),label=document.createElement('span'),value=document.createElement('b');text(label,name);text(value,'0%');cell.append(dot,label,value);$('lampMonitor').appendChild(cell);}
 const rgbLabels=['Display','R rear cabin','R front cabin','Dashboard','L front cabin','L rear cabin'];for(let i=0;i<rgbLabels.length;i++){const cell=document.createElement('span');cell.className='lamp-cell';cell.dataset.rgb=i;const dot=document.createElement('i'),label=document.createElement('span'),value=document.createElement('b');text(label,rgbLabels[i]);text(value,'#000000');cell.append(dot,label,value);$('lampMonitor').appendChild(cell);}

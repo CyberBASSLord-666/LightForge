@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Publish an exact, locally signed CI build after provenance/signature gates."""
+import argparse
 import hashlib
 import json
 import os
@@ -17,6 +18,11 @@ from android_evidence_manifest import candidate_binding, validate_source_hashes,
 from apk_archive import verify_native_libraries
 from apk_delta import apply_delta, digest
 from package_release import SIGNING_SHA256
+from physical_validation_gate import (
+    VEHICLE_PROFILE_SOURCE_PATH,
+    load_attestation as load_physical_validation_attestation,
+    verify_physical_validation_attestation,
+)
 from release_quality_gate import (
     QUALITY_ARTIFACT,
     RELEASE_WORKFLOW,
@@ -49,6 +55,7 @@ RELEASE_ENFORCEMENT_PATHS = (
     '.github/workflows/publish-release.yml',
     'tools/publish_github_release.py',
     'tools/release_quality_gate.py',
+    'tools/physical_validation_gate.py',
     'tools/apk_archive.py',
     'tools/apk_delta.py',
     'tools/package_release.py',
@@ -232,8 +239,16 @@ def verify_android_release_evidence(repo, ci, version, source_commit, source_tre
     require(candidate['source']['tree_sha'] == _commit_sha(source_tree_sha, 'Candidate source tree is invalid'),
             'Candidate manifest tree differs from the verified candidate source')
     validate_source_hashes(candidate['source_hashes'], ROOT)
-    return {'android_artifact_id': android_artifact['id'], 'candidate_artifact_id': candidate_artifact['id'],
-            'manifest': manifest, 'candidate_root': candidate_root}
+    return {
+        'android_artifact_id': android_artifact['id'],
+        'android_artifact_digest': _sha256(
+            android_artifact['digest'], 'Android evidence artifact digest is invalid'
+        ),
+        'android_evidence_manifest_sha256': digest(android_root / 'android-evidence-manifest.json'),
+        'candidate_artifact_id': candidate_artifact['id'],
+        'manifest': manifest,
+        'candidate_root': candidate_root,
+    }
 
 
 def _candidate_evidence_pipeline(candidate, ci, source_commit, source_tree_sha):
@@ -394,6 +409,108 @@ def verify_nonandroid_release_evidence(repo, ci, version, source_commit, source_
         'candidate_root': None,
         'manifest': wrapper,
     }
+
+
+
+def _source_file_bytes(source_commit, relative):
+    """Read one immutable source file without consulting the working tree."""
+    try:
+        value = run_bytes('git', 'show', source_commit + ':' + relative)
+    except subprocess.CalledProcessError as error:
+        raise ValueError('Physical validation source file is absent from the candidate commit: ' + relative) from error
+    require(value and isinstance(value, bytes), 'Physical validation source file is empty: ' + relative)
+    return value
+
+
+def _source_vehicle_profile(source_commit):
+    """Recover only literal profile identity from the exact candidate source.
+
+    The publisher never executes vehicle-profile JavaScript while publishing a
+    release. A deliberately narrow literal grammar makes a format change fail
+    closed until the extraction contract is reviewed alongside the profile.
+    """
+    source = _source_file_bytes(source_commit, VEHICLE_PROFILE_SOURCE_PATH)
+    matches = re.findall(
+        rb"const\s+profile\s*=\s*Object\.freeze\(\{\s*id:'([A-Za-z0-9._-]{1,128})',version:'([A-Za-z0-9._-]{1,128})'",
+        source,
+    )
+    require(len(matches) == 1, 'Vehicle profile source has no unique literal id/version binding')
+    profile_id, profile_version = matches[0]
+    return {
+        'source_path': VEHICLE_PROFILE_SOURCE_PATH,
+        'source_sha256': hashlib.sha256(source).hexdigest(),
+        'id': profile_id.decode('ascii'),
+        'version': profile_version.decode('ascii'),
+    }
+
+
+def _source_android_package(source_commit):
+    """Recover the APK package identifier from immutable Android source."""
+    source = _source_file_bytes(source_commit, 'android/AndroidManifest.xml')
+    matches = re.findall(
+        rb'<manifest\b[^>]*\bpackage="([A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)+)"',
+        source,
+    )
+    require(len(matches) == 1, 'Android manifest source has no unique package binding')
+    return matches[0].decode('ascii')
+
+
+def verify_physical_validation(attestation, version, source_commit, source_tree_sha, android_evidence):
+    """Bind an external physical review to sealed Android/CI evidence.
+
+    The external attestation is deliberately only a confirmation of this
+    source-derived envelope. It cannot select a release, APK, evidence run,
+    profile, package, or source identity for itself.
+    """
+    require(android_evidence is not None, 'Physical validation requires sealed Android evidence')
+    manifest = android_evidence.get('manifest')
+    require(isinstance(manifest, dict), 'Physical validation Android evidence manifest is invalid')
+    candidate = manifest.get('candidate')
+    pipeline = manifest.get('pipeline')
+    receipts = manifest.get('receipts')
+    require(isinstance(candidate, dict) and isinstance(pipeline, dict) and isinstance(receipts, dict),
+            'Physical validation sealed Android evidence is invalid')
+    candidate_pipeline = candidate.get('pipeline')
+    files = candidate.get('files')
+    apk_name = 'LightForge-' + version['name'] + '.apk'
+    require(isinstance(candidate_pipeline, dict) and isinstance(files, dict)
+            and isinstance(files.get(apk_name), dict), 'Physical validation candidate binding is invalid')
+    expected_candidate = {
+        'workflow': '.github/workflows/verify-v2.yml',
+        'run_id': candidate_pipeline.get('run_id'),
+        'run_attempt': candidate_pipeline.get('run_attempt'),
+        'evidence_session': candidate_pipeline.get('evidence_session'),
+        'artifact_id': candidate.get('artifact_id'),
+        'artifact_digest': candidate.get('artifact_digest'),
+        'identity_sha256': candidate.get('identity_sha256'),
+        'apk_sha256': files[apk_name].get('sha256'),
+    }
+    background_receipt = receipts.get('android-background-verification.json')
+    diagnostics_receipt = receipts.get('android-diagnostics-verification.json')
+    require(isinstance(background_receipt, dict) and isinstance(diagnostics_receipt, dict),
+            'Physical validation Android evidence receipts are invalid')
+    expected_android_evidence = {
+        'workflow': pipeline.get('workflow'),
+        'run_id': pipeline.get('run_id'),
+        'run_attempt': pipeline.get('run_attempt'),
+        'evidence_session': pipeline.get('evidence_session'),
+        'artifact_id': android_evidence.get('android_artifact_id'),
+        'artifact_digest': android_evidence.get('android_artifact_digest'),
+        'manifest_sha256': android_evidence.get('android_evidence_manifest_sha256'),
+        'receipt_sha256': {
+            'android-background-verification.json': background_receipt.get('sha256'),
+            'android-diagnostics-verification.json': diagnostics_receipt.get('sha256'),
+        },
+    }
+    return verify_physical_validation_attestation(
+        attestation,
+        release=version,
+        source={'commit': source_commit, 'tree_sha': source_tree_sha},
+        candidate=expected_candidate,
+        android_evidence=expected_android_evidence,
+        expected_package_name=_source_android_package(source_commit),
+        expected_vehicle_profile=_source_vehicle_profile(source_commit),
+    )
 
 
 def require(value, message):
@@ -842,13 +959,24 @@ def verify_release_quality(request, version, repo, ci, source_commit, source_tre
     return {'requirement': 'performance_quality_gate', 'scope': scope, **evidence}
 
 
-def main():
+def main(argv=None):
+    parser = argparse.ArgumentParser()
+    parser.add_argument("request")
+    parser.add_argument(
+        "--physical-validation-attestation",
+        required=True,
+        help="private 0600 detached physical-validation attestation",
+    )
+    args = parser.parse_args(argv)
     os.chdir(ROOT)
-    request = json.loads(Path(sys.argv[1]).read_text())
+    request = json.loads(Path(args.request).read_text())
     version = json.loads((ROOT / 'version.json').read_text())
     repo = os.environ['GH_REPO']
     require(repo == 'CyberBASSLord-666/LightForge', 'Unexpected publishing repository')
     require_protected_main(os.environ)
+    physical_attestation = load_physical_validation_attestation(
+        args.physical_validation_attestation
+    )
     require(request['version'] == version, 'Release request version mismatch')
     require(type(request['run_id']) is int and request['run_id'] > 0, 'Invalid CI run')
     source_commit = request['source_commit']
@@ -890,6 +1018,9 @@ def main():
         transfer = legacy_candidate['candidate_root']
     verification_evidence = verify_nonandroid_release_evidence(
         repo, ci, version, source_commit, source_tree_sha, candidate
+    )
+    physical_validation = verify_physical_validation(
+        physical_attestation, version, source_commit, source_tree_sha, android_evidence
     )
     apk_name = 'LightForge-' + version['name'] + '.apk'
     candidate_apk = transfer / apk_name
@@ -943,7 +1074,8 @@ def main():
     verify_uploaded(published, expected)
     asset = next(a for a in published['assets'] if a['name'] == apk_name)
     print(json.dumps({'release': published['html_url'], 'apk': asset['browser_download_url'], 'sha256': digest(apk),
-                      'quality_gate': quality, 'verification_evidence': verification_evidence}))
+                      'quality_gate': quality, 'verification_evidence': verification_evidence,
+                      'physical_validation': physical_validation}))
 
 
 if __name__ == '__main__':

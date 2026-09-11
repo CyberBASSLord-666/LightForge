@@ -205,6 +205,11 @@ public final class AnalysisService extends Service {
             }
             catch(Exception ignored){} // A cancelled job can still have an in-flight progress message.
         }
+        @JavascriptInterface public boolean clearRunObservation(String id){
+            if(stopped||!jobId.equals(id))return false;
+            try{AnalysisJobStore.clearRunObservation(getFilesDir(),id);return true;}
+            catch(Exception error){AppDiagnostics.record(AnalysisService.this,"analysis-observation-clear",error);main.post(()->{if(!stopped&&id.equals(jobId))finish("failed",message(error));});return false;}
+        }
         @JavascriptInterface public boolean checkpoint(String id,String contents){
             if(stopped||!jobId.equals(id))return false;
             try{AnalysisJobStore.checkpoint(getFilesDir(),id,contents);AppDiagnostics.log(AnalysisService.this,"INFO","analysis-checkpoint","saved; job="+id);return true;}catch(Exception error){AppDiagnostics.record(AnalysisService.this,"analysis-checkpoint",error);main.post(()->{if(!stopped&&id.equals(jobId))finish("failed",message(error));});return false;}

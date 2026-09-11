@@ -25,6 +25,8 @@ public final class BackgroundInstrumentation extends Instrumentation {
     private JSONObject lastPowerTransition;
     private volatile JSONObject lastUiReadiness;
     private final JSONArray uiReadinessChecks=new JSONArray();
+    private static final long UI_READINESS_POLL_MS=100L;
+    private static final long UI_JAVASCRIPT_CALLBACK_BUDGET_MS=CompletedRestoreMonitor.CALLBACK_BUDGET_MS;
     private final Handler watchdogMain=new Handler(Looper.getMainLooper());
     private volatile boolean watchdogStopped;
     private Thread mainWatchdog;
@@ -285,38 +287,90 @@ public final class BackgroundInstrumentation extends Instrumentation {
     }
     private final class UiReadiness implements Runnable {
         final MainActivity owner=activity;
-        WebView view;
+        volatile WebView view;
         final int recoveryCountAtStart;
-        boolean reboundCompletedRestore;
+        volatile boolean reboundCompletedRestore;
         final long began=SystemClock.elapsedRealtime(),deadline=began+45000;
         final java.util.concurrent.CountDownLatch completed=new java.util.concurrent.CountDownLatch(1);
         final java.util.concurrent.atomic.AtomicBoolean finished=new java.util.concurrent.atomic.AtomicBoolean();
+        final Runnable dropJavascriptCallbackForTest;
+        private boolean javascriptCallbackDroppedForTest;
+        private long javascriptRequestSerial;
+        private long javascriptRequestAt;
+        private WebView javascriptRequested;
+        private boolean javascriptResponsePending;
         volatile Throwable failure;
         volatile JSONObject evidence;
         volatile JSONObject latest;
         android.view.ViewTreeObserver tree;
         Runnable commitCallback;
         android.view.ViewTreeObserver.OnDrawListener drawListener;
-        UiReadiness()throws Exception{
+        UiReadiness()throws Exception{this(null);}
+        UiReadiness(Runnable dropJavascriptCallbackForTest)throws Exception{
+            this.dropJavascriptCallbackForTest=dropJavascriptCallbackForTest;
             view=(WebView)field(owner,"web");check(view!=null,"Preview WebView missing on launch");
             recoveryCountAtStart=(Integer)field(owner,"completedRestoreRecoveryCount");
+        }
+        private boolean expectedCompletedRestoreRecovery(WebView current,int recoveryCount,String recovery)throws Exception{
+            JSONObject durable=AnalysisJobStore.status(files);
+            String jobId=durable==null?"":durable.optString("id");
+            String prefix=jobId+":";
+            String reason=recovery!=null&&recovery.startsWith(prefix)?recovery.substring(prefix.length()):"";
+            return !reboundCompletedRestore&&current!=null&&current!=view
+                &&durable!=null&&"completed".equals(durable.optString("state"))&&!jobId.isEmpty()
+                &&recoveryCount==recoveryCountAtStart+1
+                &&(reason.startsWith("callback-stall")||reason.startsWith("phase-stall")||reason.startsWith("renderer-gone"));
         }
         boolean current()throws Exception{
             if(activity!=owner||owner.isFinishing()||owner.isDestroyed())return false;
             WebView current=(WebView)field(owner,"web");if(current==view)return true;
-            // A strict readiness probe may span the one completed-restore
-            // recovery.  Rebind only to the replacement in this same owner
-            // Activity and only when its production watchdog recorded exactly
-            // one recovery; arbitrary reloads still fail this predicate.
+            // A strict readiness probe may span exactly one recovery of the
+            // current durable completed job. Arbitrary reloads remain failures.
             int recoveryCount=(Integer)field(owner,"completedRestoreRecoveryCount");
             String recovery=(String)field(owner,"completedRestoreLastRecovery");
-            if(!reboundCompletedRestore&&current!=null&&current!=view&&recoveryCount==recoveryCountAtStart+1&&recovery!=null
-                &&(recovery.contains("callback-stall")||recovery.contains("phase-stall")||recovery.contains("renderer-gone"))){
+            if(expectedCompletedRestoreRecovery(current,recoveryCount,recovery)){
                 cleanup();tree=null;commitCallback=null;drawListener=null;view=current;reboundCompletedRestore=true;
                 return true;
             }
             return false;
         }
+        private synchronized long beginJavascriptResponse(WebView requested){
+            javascriptRequested=requested;javascriptRequestAt=SystemClock.elapsedRealtime();
+            javascriptResponsePending=true;return ++javascriptRequestSerial;
+        }
+        private synchronized boolean ownsJavascriptResponse(WebView requested,long serial){
+            return javascriptResponsePending&&javascriptRequested==requested&&javascriptRequestSerial==serial;
+        }
+        private synchronized boolean completeJavascriptResponse(WebView requested,long serial){
+            if(!ownsJavascriptResponse(requested,serial))return false;
+            javascriptResponsePending=false;return true;
+        }
+        private synchronized boolean waitingForJavascriptResponse(){return javascriptResponsePending;}
+        private synchronized void clearJavascriptResponse(){
+            javascriptResponsePending=false;javascriptRequested=null;javascriptRequestAt=0;javascriptRequestSerial++;
+        }
+        // Called from the instrumentation thread only. It never touches a View:
+        // once an exact production recovery has made a replacement current, it
+        // invalidates the orphaned callback and asks the main thread to rebind.
+        void recoverMissingJavascriptCallback()throws Exception{
+            final WebView requested;final long serial,requestedAt;
+            synchronized(this){
+                if(finished.get()||!javascriptResponsePending)return;
+                requested=javascriptRequested;serial=javascriptRequestSerial;requestedAt=javascriptRequestAt;
+            }
+            if(requested==null||SystemClock.elapsedRealtime()-requestedAt<UI_JAVASCRIPT_CALLBACK_BUDGET_MS)return;
+            WebView current=(WebView)field(owner,"web");
+            int recoveryCount=(Integer)field(owner,"completedRestoreRecoveryCount");
+            String recovery=(String)field(owner,"completedRestoreLastRecovery");
+            boolean replaced=current!=requested;
+            if(!replaced||!expectedCompletedRestoreRecovery(current,recoveryCount,recovery))return;
+            synchronized(this){
+                if(!javascriptResponsePending||javascriptRequested!=requested||javascriptRequestSerial!=serial)return;
+                clearJavascriptResponse();
+            }
+            watchdogMain.post(this);
+        }
+        private void schedulePoll(){WebView target=view;if(target!=null)target.postDelayed(this,UI_READINESS_POLL_MS);}
         boolean visible(){return view.isAttachedToWindow()&&view.isShown()&&view.getWindowVisibility()==android.view.View.VISIBLE&&view.getWidth()>0&&view.getHeight()>0&&view.hasWindowFocus();}
         void record(String stage,JSONObject state)throws Exception{
             JSONObject value=state!=null?new JSONObject(state.toString()):latest!=null?new JSONObject(latest.toString()):new JSONObject();
@@ -329,7 +383,7 @@ public final class BackgroundInstrumentation extends Instrumentation {
             latest=value;lastUiReadiness=value;
         }
         void cleanup(){
-            view.removeCallbacks(this);
+            clearJavascriptResponse();view.removeCallbacks(this);
             if(tree!=null&&tree.isAlive()){
                 if(Build.VERSION.SDK_INT>=29&&commitCallback!=null)tree.unregisterFrameCommitCallback(commitCallback);
                 if(drawListener!=null)tree.removeOnDrawListener(drawListener);
@@ -346,21 +400,31 @@ public final class BackgroundInstrumentation extends Instrumentation {
             try{
                 check(SystemClock.elapsedRealtime()<deadline,"Preview JavaScript initialization exceeded 45 seconds");
                 check(current(),"Preview changed while awaiting its first frame");
-                if(!visible()){record("waiting-for-native-visibility",null);view.postOnAnimation(this);return;}
+                if(!visible()){record("waiting-for-native-visibility",null);schedulePoll();return;}
                 // Export follows readBootstrap's synchronous native inventory
                 // load, but its project restoration is asynchronous. Await the
                 // existing restore-state flags as well as the actual 3D model
                 // and a submitted canvas frame when that canvas is visible.
                 record("waiting-for-javascript-response",null);
+                // A delayed retry must never add a second renderer IPC while
+                // an earlier evaluateJavascript callback is still in flight.
+                if(waitingForJavascriptResponse())return;
                 final WebView requested=view;
+                final long javascriptRequest=beginJavascriptResponse(requested);
                 requested.evaluateJavascript("(()=>{const a=window.LightForgeApp,s=a&&a.state,p=a&&a.vehiclePreview,c=document.getElementById('carCanvas'),r=c&&c.getBoundingClientRect();const visible=!!(r&&r.width>0&&r.height>0&&!document.hidden);const boot=!!(s&&Array.isArray(s.projects)&&typeof window.onNativeEvent==='function');const restored=!!(boot&&!s.loadingProject&&!s.composing&&!s.backgroundApplying&&!s.backgroundSyncPending);return {ready:document.readyState==='complete'&&restored&&!!p&&p.loaded&&!p.lost&&(!visible||p.renderCount>0),documentState:document.readyState,documentHidden:document.hidden,bootstrapInventoryReady:boot,projectRestoreIdle:restored,loadingProject:!!(s&&s.loadingProject),composing:!!(s&&s.composing),backgroundApplying:!!(s&&s.backgroundApplying),backgroundSyncPending:!!(s&&s.backgroundSyncPending),saveBlocked:!!(s&&s.saveBlocked),previewModelReady:!!(p&&p.loaded),previewVisible:visible,previewRendererVisible:!!(p&&p.getPerformance().visible),previewPaused:!!(p&&p._paused),previewIntersecting:!!(p&&p._intersecting),previewHasSize:!!(p&&p._hasSize),previewFrames:p?p.renderCount:0,contextLost:!!(p&&p.lost),canvasRect:r?{left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}:null,viewport:{width:innerWidth,height:innerHeight,scrollX,scrollY}};})()",value->{
-                    if(finished.get())return;
+                    if(finished.get()||!ownsJavascriptResponse(requested,javascriptRequest))return;
+                    if(dropJavascriptCallbackForTest!=null&&!javascriptCallbackDroppedForTest){
+                        javascriptCallbackDroppedForTest=true;
+                        try{dropJavascriptCallbackForTest.run();}catch(Throwable error){clearJavascriptResponse();finish(error,null);}
+                        return;
+                    }
+                    if(!completeJavascriptResponse(requested,javascriptRequest))return;
                     try{
                         check(current(),"Preview changed while awaiting its JavaScript response");
-                        if(requested!=view){view.postOnAnimation(this);return;}
+                        if(requested!=view){schedulePoll();return;}
                         JSONObject state=new JSONObject(value);
                         record(state.optBoolean("ready")?"waiting-for-visual-state":"waiting-for-app-readiness",state);
-                        if(!state.optBoolean("ready")){view.postOnAnimation(this);return;}
+                        if(!state.optBoolean("ready")){schedulePoll();return;}
                         final WebView visualView=view;
                         check(current()&&visualView==view&&visible(),"Preview lost visibility before visual-state synchronization");
                         visualView.postVisualStateCallback(began,new WebView.VisualStateCallback(){
@@ -368,7 +432,7 @@ public final class BackgroundInstrumentation extends Instrumentation {
                                 if(finished.get())return;
                                 try{
                                     check(current(),"Preview changed before its first committed frame");
-                                    if(visualView!=view){view.postOnAnimation(UiReadiness.this);return;}
+                                    if(visualView!=view){schedulePoll();return;}
                                     check(visible(),"Preview lost visibility before its first committed frame");
                                     record("waiting-for-hardware-frame-commit",state);
                                     check(visualView.isHardwareAccelerated(),"Lifecycle readiness requires the real hardware-accelerated WebView");
@@ -378,7 +442,7 @@ public final class BackgroundInstrumentation extends Instrumentation {
                                         if(finished.get())return;
                                         try{
                                             check(current(),"Preview changed before frame-commit acknowledgement");
-                                            if(visualView!=view){view.postOnAnimation(UiReadiness.this);return;}
+                                            if(visualView!=view){schedulePoll();return;}
                                             check(visible(),"Preview detached before frame-commit acknowledgement");
                                             finish(null,new JSONObject(state.toString()).put("phase",currentPhase)
                                                 .put("visualStateReady",true).put("firstFrameCommitted",true)
@@ -405,8 +469,9 @@ public final class BackgroundInstrumentation extends Instrumentation {
             }catch(Throwable error){finish(error,null);}
         }
     }
-    private void awaitUiReady()throws Exception{
-        UiReadiness probe=new UiReadiness();
+    private void awaitUiReady()throws Exception{awaitUiReady(null);}
+    private void awaitUiReady(Runnable dropJavascriptCallbackForTest)throws Exception{
+        UiReadiness probe=new UiReadiness(dropJavascriptCallbackForTest);
         lastUiReadiness=new JSONObject().put("phase",currentPhase).put("state","waiting-for-bootstrap-and-frame");snapshot(true);
         watchdogMain.post(probe);
         try{
@@ -414,6 +479,11 @@ public final class BackgroundInstrumentation extends Instrumentation {
             while(SystemClock.elapsedRealtime()<probe.deadline){
                 long remaining=probe.deadline-SystemClock.elapsedRealtime();
                 if(probe.completed.await(Math.max(1,Math.min(1000,remaining)),java.util.concurrent.TimeUnit.MILLISECONDS)){complete=true;break;}
+                // A renderer can die after evaluateJavascript is accepted but
+                // before its callback. This observer only arms a retry after
+                // the real production completed-restore recovery has replaced
+                // that exact WebView; it never turns callback loss into ready.
+                probe.recoverMissingJavascriptCallback();
                 snapshot(false);
             }
             if(!complete)snapshot(true);
@@ -450,6 +520,15 @@ public final class BackgroundInstrumentation extends Instrumentation {
         shell("input keyevent KEYCODE_WAKEUP");shell("wm dismiss-keyguard");
         awaitPower(()->power.isInteractive()&&!power.isDeviceIdleMode(),"Android did not leave Doze and wake for reopening");
         recordPowerTransition(power,unforced);launch();
+    }
+    private void requireCompletedRestoreAck(JSONObject completed,String label)throws Exception{
+        WebView target=(WebView)field(activity,"web");check(target!=null,label+" has no active preview WebView");
+        String raw=evaluate(target,"(()=>{const a=window.LightForgeApp,s=a&&a.state,p=a&&a.vehiclePreview;return JSON.stringify({ack:localStorage.getItem('lightforge-background-ack')||'',backgroundApplying:!!(s&&s.backgroundApplying),backgroundSyncPending:!!(s&&s.backgroundSyncPending),previewFrames:Number(p&&p.renderCount)||0});})()",label+" could not read completed-restore ACK evidence");
+        Object decoded=new JSONTokener(raw).nextValue();JSONObject evidence=decoded instanceof String?new JSONObject((String)decoded):(JSONObject)decoded;
+        long nativeAckAt=(Long)field(activity,"completedRestoreLastAckConfirmationAt");
+        check(completed.getString("id").equals(evidence.optString("ack"))&&!evidence.optBoolean("backgroundApplying")
+            &&!evidence.optBoolean("backgroundSyncPending")&&evidence.optLong("previewFrames")>0&&nativeAckAt>0,
+            label+" did not retain a terminal native/browser ACK and rendered preview proof: "+evidence);
     }
     private void completedRestorePayloadBypassesProjectFetch(JSONObject completed)throws Exception{
         phase("completed-restore-durable-payload");
@@ -488,7 +567,12 @@ public final class BackgroundInstrumentation extends Instrumentation {
         check(!deniedJob.optBoolean("ok"),"A foreign completed job read durable project payload");
         JSONObject deniedProject=new JSONObject(stalledBridge.readCompletedRestoreProjectChunk(completed.getString("id"),oldLease.getString("nonce"),"foreign-project",0,1024));
         check(!deniedProject.optBoolean("ok"),"A foreign completed project read durable project payload");
-        runOnMainSync(()->check(owner.handlePreviewRenderProcessGone(stalled,false),"Active completed-restore renderer-gone branch rejected recovery"));
+        // Drop the one test probe callback after the real production
+        // renderer-gone recovery is accepted. The readiness watchdog must
+        // observe the replacement rather than treating callback loss as ready.
+        awaitUiReady(()->check(owner.handlePreviewRenderProcessGone(stalled,false),"Active completed-restore renderer-gone branch rejected recovery"));
+        check(lastUiReadiness!=null&&lastUiReadiness.optBoolean("completedRestoreRebound"),"UiReadiness did not rebind after the exact production completed-restore recovery");
+        requireCompletedRestoreAck(completed,"Active renderer-gone replacement");
         // handlePreviewRenderProcessGone deliberately posts recovery so the
         // monitor can release its lock before the bridge transaction retires
         // this tuple. Do not race that post: first observe the committed
@@ -522,7 +606,8 @@ public final class BackgroundInstrumentation extends Instrumentation {
         if(Build.VERSION.SDK_INT>=29)check(replacementPath!=null&&replacementPath.startsWith("terminate-requested->")&&(replacementPath.contains("render-process-gone")||replacementPath.contains("terminate-callback-budget")),"API 29+ active renderer-gone did not use terminate/onRenderProcessGone replacement: "+replacementPath);
         else check("direct-fallback".equals(replacementPath),"Pre-29 active renderer-gone did not use documented safe same-Activity replacement: "+replacementPath);
         String cap="completed-restore-recovery."+completed.getString("id");
-        check(owner.getPreferences(0).getBoolean(cap,false),"Active renderer-gone recovery did not persist its one-replacement cap before replacement boot");
+        // The callback-loss readiness regression has already required the
+        // replacement's terminal browser ACK, which correctly clears this cap.
         awaitUiReady();
         long replacementGeneration=(Long)field(owner,"previewGeneration"),acceptedGeneration=(Long)field(owner,"completedRestoreLastAcceptedBeginGeneration");
         check(acceptedGeneration==replacementGeneration&&completed.getString("id").equals((String)field(owner,"completedRestoreLastAcceptedBeginJobId")),"Active renderer-gone replacement did not open its own generation-bound lease");
@@ -704,6 +789,7 @@ public final class BackgroundInstrumentation extends Instrumentation {
             check(checkedNativeStageRelease,"No live voice/GAME-stage native-buffer release observation was recorded");
             pass("Actual Studio native CPU separation, neural analysis and choreography completed with the Activity destroyed, screen off and Doze forced with user-equivalent battery exemption; result was durably saved.");
             phase("reconnect-completed-project");foreground();
+            requireCompletedRestoreAck(completed,"Reopened Activity");
             JSONObject bootstrap=new JSONObject(bridge().getBootstrap());
             check("completed".equals(bootstrap.getJSONObject("backgroundJob").getString("state")),"Reopened Activity did not reconnect");
             pass("Reopened Activity reports the completed job and its saved project.");

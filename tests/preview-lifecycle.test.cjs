@@ -243,3 +243,21 @@ test('renderer defers lighting generation and frame submission until the model i
   t.raf.flush(400);
   assert.deepEqual(events, ['lighting', 'frame', 'frame'], 'Lighting is generated once per graphics context');
 });
+
+test('renderer defers GLTF work until completed restore adopts a verified show',async()=>{
+ const t=renderer(),p=t.preview;let resolveReady,loads=0;
+ p.loaded=false;p._loadDeferred=true;p._loadStarted=false;p.ready=new Promise(resolve=>{resolveReady=resolve;});p._readyResolve=resolveReady;
+ p.load=async()=>{loads++;return true;};
+ assert.equal(typeof p.setLoadDeferred,'function');
+ p.setLoadDeferred(true);assert.equal(loads,0,'A pending completed restore must not begin GLTF loading');
+ p.setLoadDeferred(false);assert.equal(loads,1,'Verified show adoption releases exactly one GLTF load');
+ await p.ready;
+ p.setLoadDeferred(false);assert.equal(loads,1,'Release remains idempotent after the deferred model load starts');
+});
+test('offline preview bundle preserves the deferred-load contract used by the Studio',()=>{
+ const source=fs.readFileSync(path.join(root,'web/preview/src/vehicle-preview.js'),'utf8');
+ const bundle=fs.readFileSync(path.join(root,'web/preview/vehicle-preview.js'),'utf8');
+ assert.match(source,/constructor\(canvas,onViewChange,\{deferLoad=false\}=\{\}\)/);
+ assert.match(source,/setLoadDeferred\(deferred\)/);
+ assert.match(bundle,/setLoadDeferred\(e\)/,'The Android-loaded offline bundle must not drop the source deferred-load contract');
+});

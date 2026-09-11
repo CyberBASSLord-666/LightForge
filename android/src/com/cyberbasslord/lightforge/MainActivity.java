@@ -876,6 +876,10 @@ public final class MainActivity extends Activity {
                         // state here, before asynchronous ZIP assembly begins.
                         projectState=new JSONObject(new String(readSmall(new File(dir,"project.json"),ProjectStore.MAX_PROJECT_BYTES),StandardCharsets.UTF_8));
                     }
+                    // Run observations are local, unbound diagnostics. They are not
+                    // project-backup or FSEQ export inputs and must not perturb
+                    // exported-project byte comparisons.
+                    projectState.remove("analysisRunObservation");
                     String frozenState=projectState.toString();
                     if(frozenState.getBytes(StandardCharsets.UTF_8).length>ProjectStore.MAX_PROJECT_BYTES)throw new IOException("This project's editable backup is too large.");
                     meta.remove("projectState");

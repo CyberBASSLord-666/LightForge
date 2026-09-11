@@ -728,3 +728,254 @@ def benchmark_run(diagnostic: Mapping[str, Any]) -> dict[str, Any]:
         "provenance": copy.deepcopy(diagnostic["provenance"]),
         "diagnostic_sha256": digest_json(diagnostic),
     }
+
+
+APP_RUN_OBSERVATION_SCHEMA_VERSION = 1
+_APP_RUN_OBSERVATION_KIND = "lightforge.completed-analysis-run"
+_APP_RUN_OBSERVATION_RUN_KIND = "fresh-completed"
+_OBSERVATION_MAX_SECONDS = 21600.0
+_OBSERVATION_MAX_COUNTER = 1_000_000
+_OBSERVATION_STAGES = ("bass", "recurrence", "rhythm", "separation", "voice")
+_OBSERVATION_SOURCES = frozenset({"performance.now", "date.now", "unavailable"})
+_OBSERVATION_STATES = frozenset({"available", "fallback", "unavailable", "observed-error"})
+_OBSERVATION_REASONS = frozenset({
+    "clock-unavailable",
+    "clock-observed-error",
+    "worker-clock-unavailable",
+    "worker-clock-observed-error",
+    "restored-stage-zero-cost",
+})
+_OBSERVATION_IMPLEMENTATIONS = {
+    "precision": {
+        "rhythmModelFamily": "beat-this-full",
+        "separationModelFamily": "deux",
+    },
+    "balanced": {
+        "rhythmModelFamily": "beat-this-compact",
+        "separationModelFamily": "mdx",
+    },
+}
+_OBSERVATION_RUNTIME_KINDS = frozenset({"android-cpu-plus-web", "web-wasm", "unknown"})
+
+
+def _observation_exact_keys(value: Any, expected: set[str], path: str, errors: list[str]) -> Mapping[str, Any]:
+    value = _require_mapping(value, path, errors)
+    actual = set(value)
+    if actual != expected:
+        errors.append(f"{path} must contain exactly {sorted(expected)}")
+    return value
+
+
+def _observation_counter(value: Any, path: str, errors: list[str]) -> Optional[int]:
+    if not isinstance(value, int) or isinstance(value, bool) or value < 0 or value > _OBSERVATION_MAX_COUNTER:
+        errors.append(f"{path} must be a bounded non-negative integer")
+        return None
+    return value
+
+
+def _validate_observed_timing(
+    value: Any, path: str, errors: list[str], *, worker: bool = False, restored: bool = False
+) -> Optional[float]:
+    timing = _observation_exact_keys(value, {"reason", "seconds", "source", "status"}, path, errors)
+    source = timing.get("source")
+    status = timing.get("status")
+    seconds = timing.get("seconds")
+    reason = timing.get("reason")
+    if not isinstance(source, str) or source not in _OBSERVATION_SOURCES:
+        errors.append(f"{path}.source is invalid")
+    if not isinstance(status, str) or status not in _OBSERVATION_STATES:
+        errors.append(f"{path}.status is invalid")
+    if seconds is not None and (
+        not _is_number(seconds) or float(seconds) < 0 or float(seconds) > _OBSERVATION_MAX_SECONDS
+    ):
+        errors.append(f"{path}.seconds must be null or a bounded non-negative finite number")
+    if reason is not None and (not isinstance(reason, str) or reason not in _OBSERVATION_REASONS):
+        errors.append(f"{path}.reason is not an allowlisted observation reason")
+    if status == "available":
+        if source != "performance.now" or seconds is None or reason is not None:
+            errors.append(f"{path} available timing must be measured by performance.now")
+    elif status == "fallback":
+        if source != "date.now" or seconds is None or reason is not None:
+            errors.append(f"{path} fallback timing must be measured by date.now")
+    elif status == "observed-error":
+        expected_reason = "worker-clock-observed-error" if worker else "clock-observed-error"
+        if source not in ("performance.now", "date.now") or seconds is not None or reason != expected_reason:
+            errors.append(f"{path} observed-error timing is invalid")
+    elif status == "unavailable":
+        expected_reason = (
+            "restored-stage-zero-cost"
+            if restored
+            else "worker-clock-unavailable"
+            if worker
+            else "clock-unavailable"
+        )
+        if source != "unavailable" or seconds is not None or reason != expected_reason:
+            errors.append(f"{path} unavailable timing is invalid")
+    return float(seconds) if _is_number(seconds) and 0 <= float(seconds) <= _OBSERVATION_MAX_SECONDS else None
+
+
+def validate_completed_app_run_observation(observation: Any) -> None:
+    """Fail closed on a privacy-bounded observation from one fresh completed app run.
+
+    The static schema intentionally excludes audio, project identity, user text,
+    paths, cache keys, raw model/runtime strings, timestamps, and diagnostics.
+    It is supplementary evidence only and cannot establish a quality comparison.
+    """
+    errors: list[str] = []
+    value = _observation_exact_keys(
+        observation,
+        {"analysis", "kind", "privacy", "resources", "runKind", "schemaVersion", "timing"},
+        "observation",
+        errors,
+    )
+    if value.get("schemaVersion") != APP_RUN_OBSERVATION_SCHEMA_VERSION:
+        errors.append(f"observation.schemaVersion must equal {APP_RUN_OBSERVATION_SCHEMA_VERSION}")
+    if value.get("kind") != _APP_RUN_OBSERVATION_KIND:
+        errors.append("observation.kind is unsupported")
+    if value.get("runKind") != _APP_RUN_OBSERVATION_RUN_KIND:
+        errors.append("observation.runKind must identify a fresh completed analysis")
+
+    privacy = _observation_exact_keys(
+        value.get("privacy"), {"audioContent", "projectIdentity", "userContent"}, "observation.privacy", errors
+    )
+    for field in ("audioContent", "projectIdentity", "userContent"):
+        if privacy.get(field) != "excluded":
+            errors.append(f"observation.privacy.{field} must be excluded")
+
+    timing = _observation_exact_keys(value.get("timing"), {"analysis", "choreography", "total"}, "observation.timing", errors)
+    analysis_seconds = _validate_observed_timing(timing.get("analysis"), "observation.timing.analysis", errors)
+    choreography_seconds = _validate_observed_timing(timing.get("choreography"), "observation.timing.choreography", errors)
+    total_seconds = _validate_observed_timing(timing.get("total"), "observation.timing.total", errors)
+    for name, phase_seconds in (("analysis", analysis_seconds), ("choreography", choreography_seconds)):
+        if total_seconds is not None and phase_seconds is not None and total_seconds + 1e-6 < phase_seconds:
+            errors.append(f"observation.timing.total is smaller than observation.timing.{name}")
+
+    analysis = _observation_exact_keys(
+        value.get("analysis"), {"cache", "implementation", "quality", "stages"}, "observation.analysis", errors
+    )
+    quality = analysis.get("quality")
+    if not isinstance(quality, str) or quality not in _OBSERVATION_IMPLEMENTATIONS:
+        errors.append("observation.analysis.quality is invalid")
+    implementation = _observation_exact_keys(
+        analysis.get("implementation"),
+        {"rhythmModelFamily", "runtimeKind", "separationModelFamily"},
+        "observation.analysis.implementation",
+        errors,
+    )
+    expected = _OBSERVATION_IMPLEMENTATIONS.get(quality, {}) if isinstance(quality, str) else {}
+    if (
+        implementation.get("rhythmModelFamily") != expected.get("rhythmModelFamily")
+        or implementation.get("separationModelFamily") != expected.get("separationModelFamily")
+        or not isinstance(implementation.get("runtimeKind"), str)
+        or implementation.get("runtimeKind") not in _OBSERVATION_RUNTIME_KINDS
+    ):
+        errors.append("observation.analysis.implementation is not an allowlisted family")
+
+    stages = analysis.get("stages")
+    restored_names: list[str] = []
+    if not isinstance(stages, list) or not 1 <= len(stages) <= len(_OBSERVATION_STAGES):
+        errors.append("observation.analysis.stages must be a non-empty bounded array")
+    else:
+        previous_index = -1
+        for index, stage in enumerate(stages):
+            path = f"observation.analysis.stages[{index}]"
+            stage = _observation_exact_keys(stage, {"restored", "stageId", "timing"}, path, errors)
+            stage_id = stage.get("stageId")
+            if not isinstance(stage_id, str) or stage_id not in _OBSERVATION_STAGES:
+                errors.append(f"{path}.stageId is not allowlisted")
+                stage_index = previous_index
+            else:
+                stage_index = _OBSERVATION_STAGES.index(stage_id)
+                if stage_index <= previous_index:
+                    errors.append(f"{path}.stageId must be strictly ordered and unique")
+            previous_index = stage_index
+            restored = stage.get("restored")
+            if not isinstance(restored, bool):
+                errors.append(f"{path}.restored must be a boolean")
+                restored = False
+            _validate_observed_timing(stage.get("timing"), f"{path}.timing", errors, worker=True, restored=restored)
+            stage_timing = stage.get("timing") if isinstance(stage.get("timing"), Mapping) else {}
+            if restored is True:
+                if not (
+                    stage_timing.get("source") == "unavailable"
+                    and stage_timing.get("status") == "unavailable"
+                    and stage_timing.get("seconds") is None
+                    and stage_timing.get("reason") == "restored-stage-zero-cost"
+                ):
+                    errors.append(f"{path} restored stage must not claim a measured or zero-cost time")
+                if isinstance(stage_id, str):
+                    restored_names.append(stage_id)
+
+    cache = _observation_exact_keys(
+        analysis.get("cache"),
+        {"restoredStageCount", "restoredStageNames", "separationRestoredPassages"},
+        "observation.analysis.cache",
+        errors,
+    )
+    restored_count = _observation_counter(cache.get("restoredStageCount"), "observation.analysis.cache.restoredStageCount", errors)
+    if cache.get("separationRestoredPassages") is not None:
+        _observation_counter(cache.get("separationRestoredPassages"), "observation.analysis.cache.separationRestoredPassages", errors)
+    names = cache.get("restoredStageNames")
+    if (
+        not isinstance(names, list)
+        or any(not isinstance(name, str) or name not in _OBSERVATION_STAGES for name in names)
+        or names != restored_names
+        or restored_count != len(restored_names)
+    ):
+        errors.append("observation.analysis.cache restored stage summary is inconsistent")
+
+    resources = _observation_exact_keys(
+        value.get("resources"), {"observedStageCount", "schedulerWaitSeconds", "status"}, "observation.resources", errors
+    )
+    if not isinstance(resources.get("status"), str) or resources.get("status") not in {"available", "unavailable"}:
+        errors.append("observation.resources.status is invalid")
+    observed_stage_count = _observation_counter(resources.get("observedStageCount"), "observation.resources.observedStageCount", errors)
+    if observed_stage_count is not None and observed_stage_count > len(_OBSERVATION_STAGES):
+        errors.append("observation.resources.observedStageCount exceeds the static stage allowlist")
+    wait = resources.get("schedulerWaitSeconds")
+    if wait is not None and (
+        not _is_number(wait) or float(wait) < 0 or float(wait) > _OBSERVATION_MAX_SECONDS
+    ):
+        errors.append("observation.resources.schedulerWaitSeconds must be null or a bounded non-negative finite number")
+    if resources.get("status") == "unavailable" and (observed_stage_count != 0 or wait is not None):
+        errors.append("unavailable observation resources must not claim measurements")
+    if errors:
+        raise ContractValidationError(errors)
+
+
+def observed_app_run_time_projection(observation: Mapping[str, Any]) -> dict[str, Any]:
+    """Adapt a valid app observation into explicitly non-comparable evidence.
+
+    The output has no workload, corpus, environment, model runtime string, or
+    benchmark metric binding.  Unavailable timings stay ``None``; they are
+    never converted to a synthetic zero.
+    """
+    validate_completed_app_run_observation(observation)
+    timing = copy.deepcopy(dict(observation["timing"]))
+    stages = {
+        stage["stageId"]: copy.deepcopy(dict(stage["timing"]))
+        for stage in observation["analysis"]["stages"]
+    }
+    observed = any(item["seconds"] is not None for item in [*timing.values(), *stages.values()])
+    return {
+        "schema_version": 1,
+        "kind": "supplementary-observed-app-run-timing",
+        "release_eligibility": {
+            "status": "not_comparable",
+            "reason": "unbound-completed-app-run-observation",
+        },
+        "observed_time_available": observed,
+        "timing": timing,
+        "stages": stages,
+        "cache": copy.deepcopy(dict(observation["analysis"]["cache"])),
+        "resources": copy.deepcopy(dict(observation["resources"])),
+    }
+
+
+def benchmark_run_with_observed_app_run(
+    diagnostic: Mapping[str, Any], observation: Mapping[str, Any]
+) -> dict[str, Any]:
+    """Attach a supplemental observation without altering benchmark metrics or pass state."""
+    result = benchmark_run(diagnostic)
+    result["supplementary_observed_app_run"] = observed_app_run_time_projection(observation)
+    return result
