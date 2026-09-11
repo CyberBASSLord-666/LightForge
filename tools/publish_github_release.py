@@ -153,7 +153,11 @@ def _verified_published_baseline(repo, candidate_version):
     base_run = api(f'repos/{repo}/actions/runs/{ledger["run_id"]}')
     require(isinstance(base_run, dict), 'Prior published release CI record is invalid')
     require(base_run.get('status') == 'completed' and base_run.get('conclusion') == 'success', 'Prior published release CI did not pass')
-    require(base_run.get('head_repository', {}).get('full_name') == repo, 'Prior published release CI repository differs')
+    require(
+        isinstance(base_run.get('head_repository'), dict)
+        and base_run['head_repository'].get('full_name') == repo,
+        'Prior published release CI repository differs',
+    )
     require(base_run.get('head_sha') == ledger['source_commit'], 'Prior published release CI source differs from its ledger')
     require(base_run.get('path') == RELEASE_WORKFLOW, 'Prior published release did not use production verification')
     base_record = api(f'repos/{repo}/git/commits/{ledger["source_commit"]}')
@@ -251,7 +255,11 @@ def _derive_published_release_scope(repo, source_commit, source_tree_sha, versio
             raw_tree_diff=raw,
             generated_web_version_valid=_generated_web_version_is_exact(source_commit, version),
         )
-    except (ValueError, subprocess.CalledProcessError):
+    # A legacy release may be structurally incomplete in several ways (for
+    # example an API record can omit a nested object).  None of those may turn
+    # into a waiver or prevent an independently proven performance release;
+    # they all take this conservative, auditable full-gate path.
+    except (ValueError, subprocess.CalledProcessError, OSError, TypeError, KeyError, AttributeError):
         return _unwaivable_performance_scope(
             source_commit,
             source_tree_sha,

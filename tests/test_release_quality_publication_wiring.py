@@ -208,6 +208,36 @@ class ReleaseQualityPublicationWiringTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "source-bound request ledger"):
                 publisher._verified_published_baseline("CyberBASSLord-666/LightForge", VERSION)
 
+        ledger = {
+            "version": {"name": "2.2.4", "code": 20204},
+            "run_id": 99,
+            "source_commit": BASE_COMMIT,
+            "delta_sha256": "a" * 64,
+        }
+        def malformed_run_api(path):
+            if path.endswith("/releases?per_page=100&page=1"):
+                return [release]
+            if path.endswith("/git/commits/" + TARGET_COMMIT):
+                return {"tree": {"sha": "1" * 40}}
+            if path.endswith("/actions/runs/99"):
+                return {
+                    "status": "completed",
+                    "conclusion": "success",
+                    "head_repository": None,
+                    "head_sha": BASE_COMMIT,
+                    "path": gate.RELEASE_WORKFLOW,
+                }
+            self.fail("unexpected API path " + path)
+        def malformed_run_command(*args):
+            if args[:3] == ("git", "fetch", "--no-tags"):
+                return ""
+            self.assertEqual(args, ("git", "show", TARGET_COMMIT + ":releases/v2.2.4/request.json"))
+            return json.dumps(ledger)
+        with patch.object(publisher, "api", side_effect=malformed_run_api), \
+                patch.object(publisher, "run", side_effect=malformed_run_command):
+            with self.assertRaisesRegex(ValueError, "repository differs"):
+                publisher._verified_published_baseline("CyberBASSLord-666/LightForge", VERSION)
+
     def test_missing_baseline_derives_performance_and_never_waives_it(self):
         with patch.object(publisher, "_verified_published_baseline", side_effect=ValueError("legacy release")):
             scope = publisher._derive_published_release_scope(
