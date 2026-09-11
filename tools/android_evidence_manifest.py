@@ -166,10 +166,9 @@ def _candidate_manifest(candidate_dir, release, head_sha=None):
     _session(pipeline.get('evidence_session'), 'Candidate manifest evidence session is invalid')
     _source_hashes(manifest.get('source_hashes'), 'Candidate manifest source hashes are invalid')
     files = manifest.get('files')
-    require(isinstance(files, dict) and set(files) == set(_files(release)), 'Candidate manifest file inventory is invalid')
+    _candidate_files(files, release, 'Candidate manifest file inventory is invalid')
     for name in _files(release):
         expected = files[name]
-        require(isinstance(expected, dict), 'Candidate manifest file record is invalid: ' + name)
         require(expected.get('bytes') == inventory[name]['bytes'] and _sha(expected.get('sha256'), 'Candidate manifest digest is invalid: ' + name) == inventory[name]['sha256'],
                 'Candidate artifact digest differs: ' + name)
     app_metadata = _load(root / ('LightForge-' + release + '.apk.json'), 'Candidate APK metadata is invalid')
@@ -183,6 +182,16 @@ def _candidate_manifest(candidate_dir, release, head_sha=None):
         'manifest': manifest,
         'files': {name: inventory[name] for name in _files(release)},
     }
+
+
+def _candidate_files(files, release, message):
+    require(isinstance(files, dict) and set(files) == set(_files(release)), message)
+    for name in _files(release):
+        record = files[name]
+        require(isinstance(record, dict) and set(record) == {'bytes', 'sha256'}, message + ': ' + name)
+        require(type(record['bytes']) is int and record['bytes'] >= 0
+                and _sha(record['sha256'], message + ': ' + name), message + ': ' + name)
+    return files
 
 
 def create_candidate(args):
@@ -362,6 +371,7 @@ def verify_evidence(artifact_dir, *, release, run_id, run_attempt, head_sha):
     require(candidate_pipeline['run_id'] == run_id, 'Android evidence candidate run differs')
     require(candidate_pipeline['run_attempt'] <= run_attempt, 'Android evidence candidate attempt is newer than Android evidence')
     _source_hashes(candidate.get('source_hashes'), 'Android evidence candidate source hashes are invalid')
+    _candidate_files(candidate.get('files'), release, 'Android evidence candidate file inventory is invalid')
     receipt_records = manifest.get('receipts')
     require(isinstance(receipt_records, dict) and set(receipt_records) == set(RECEIPTS), 'Android evidence receipt inventory is invalid')
     for name, relative in RECEIPTS.items():
