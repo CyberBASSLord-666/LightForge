@@ -61,7 +61,7 @@ test('service runner rejects a completed v8 result when its exact analysis cache
   MusicAnalyzer:{async cacheIdentity(options){events.push('identity');assert.equal(options.analysisIdentity,'saved-analysis-identity');assert.equal(options.nativeRuntimeProfile,undefined);return expected;},
    async analyze(url,options,report){events.push('analyze');assert.equal(options.nativeRuntimeProfile,undefined);report({progress:.5,stage:'rhythm',detail:'Fresh evidence'});return {duration:12,analysisVersion:8,engine:{cacheIdentity:expected}};}},
   ShowCompiler:{async generate(music){events.push('compose');assert.equal(music.engine.cacheIdentity.workId,'fresh-work');return {compiled:{sha256:'frames'},show:{version:'planner'}};}},
-  LightForgeVersion:{name:'test'},VehicleProfile:{version:'test'},LightForgeDiagnostics:{log(){}},
+  LightForgeVersion:{name:'test'},VehicleProfile:{version:'test'},LightForgeDiagnostics:{log(){},progress(){},protectText(){}},
   BackgroundJob:{clearRunObservation(){events.push('clear');return true;},progressInfo(){},checkpoint(id,body){events.push('checkpoint');assert.equal(JSON.parse(body).engine.cacheIdentity.workId,'fresh-work');return true;},
    complete(id,body){events.push('complete');complete(JSON.parse(body));return true;},failed(id,message){failed(Error(message));}}
  };
@@ -81,7 +81,7 @@ test('service runner retains completed music only for an exact current analysis 
   MusicAnalyzer:{async cacheIdentity(){events.push('identity');return identity;},analyze(){assert.fail('exact completed analysis must be reused for choreography-only work');}},
   ShowCompiler:{async generate(music){events.push('compose');assert.equal(music.engine.cacheIdentity.workId,'same-work');return {compiled:{sha256:'frames'},show:{version:'planner'}};}},
   LightForgeVersion:{name:'test'},VehicleProfile:{version:'test'},
-  BackgroundJob:{clearRunObservation(){assert.fail('exact completed analysis must not clear its observation');},checkpoint(){events.push('checkpoint');return true;},
+  BackgroundJob:{clearRunObservation(){assert.fail('exact completed analysis must not clear its observation');},progressInfo(){},checkpoint(){events.push('checkpoint');return true;},
    complete(id,body){events.push('complete');complete(JSON.parse(body));return true;},failed(id,message){failed(Error(message));}}
  };
  context.window=context;vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../web/background/runner.js'),'utf8'),context);
