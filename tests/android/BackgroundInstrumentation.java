@@ -208,6 +208,41 @@ public final class BackgroundInstrumentation extends Instrumentation {
         check(monitor.begin("completed-job","lease-b",0),"Replacement WebView could not start a fresh lease nonce");scheduler.drain();scheduler.advance(CompletedRestoreMonitor.CALLBACK_BUDGET_MS);
         check(host.recoveries==1,"Persisted per-job cap allowed a second completed-restore replacement");
 
+        // A valid ordered bridge pulse supersedes only the old callback. The
+        // fresh probe still detects a renderer that dies immediately after it.
+        Clock bridgeClock=new Clock();Scheduler bridgeScheduler=new Scheduler(bridgeClock);Host bridgeHost=new Host();
+        CompletedRestoreMonitor bridgeProgress=new CompletedRestoreMonitor(bridgeClock,bridgeScheduler,bridgeHost);
+        check(bridgeProgress.begin("bridge-job","bridge-lease",0),"Bridge liveness lease did not begin");bridgeScheduler.drain();
+        check(bridgeHost.callbacks.size()==1,"Bridge liveness lease did not issue its first probe");
+        check(bridgeProgress.pulse("bridge-job","bridge-lease","worker-started",1,0),"Valid bridge progress did not supersede its pending probe");
+        bridgeScheduler.advance(CompletedRestoreMonitor.PROBE_INTERVAL_MS);
+        check(bridgeHost.callbacks.size()==2,"Bridge progress did not open a fresh bounded probe");
+        bridgeScheduler.advance(CompletedRestoreMonitor.CALLBACK_BUDGET_MS-1);
+        check(bridgeHost.recoveries==0,"Superseded callback consumed the fresh probe budget");
+        bridgeScheduler.advance(1);
+        check(bridgeHost.recoveries==1,"A renderer that died after bridge progress was not recovered at the fresh callback budget");
+
+        // A late callback from the superseded probe shares its lease fields but
+        // must never satisfy the newer ticketed probe.
+        Clock ticketClock=new Clock();Scheduler ticketScheduler=new Scheduler(ticketClock);Host ticketHost=new Host();
+        CompletedRestoreMonitor ticketIsolation=new CompletedRestoreMonitor(ticketClock,ticketScheduler,ticketHost);
+        check(ticketIsolation.begin("ticket-job","ticket-lease",0),"Ticket-isolation lease did not begin");ticketScheduler.drain();
+        CompletedRestoreMonitor.ProbeCallback staleTicketCallback=ticketHost.callbacks.get(0);
+        check(ticketIsolation.pulse("ticket-job","ticket-lease","worker-started",1,0),"Ticket-isolation bridge pulse was rejected");
+        ticketScheduler.advance(CompletedRestoreMonitor.PROBE_INTERVAL_MS);
+        check(ticketHost.callbacks.size()==2,"Ticket-isolation lease did not issue its fresh probe");
+        staleTicketCallback.receive(new CompletedRestoreMonitor.Probe(true,true,true,false,"ticket-job","ticket-lease","worker-verified",2,0,false,0));
+        ticketScheduler.advance(CompletedRestoreMonitor.CALLBACK_BUDGET_MS);
+        check(ticketHost.recoveries==1,"A late superseded callback satisfied a newer same-lease probe");
+
+        // Only an accepted ordered pulse may suppress a callback timeout.
+        Clock rejectedClock=new Clock();Scheduler rejectedScheduler=new Scheduler(rejectedClock);Host rejectedHost=new Host();
+        CompletedRestoreMonitor rejectedPulse=new CompletedRestoreMonitor(rejectedClock,rejectedScheduler,rejectedHost);
+        check(rejectedPulse.begin("rejected-job","rejected-lease",0),"Rejected-pulse lease did not begin");rejectedScheduler.drain();
+        check(!rejectedPulse.pulse("rejected-job","rejected-lease","worker-expand",1,0),"Out-of-order pulse suppressed a callback timeout");
+        rejectedScheduler.advance(CompletedRestoreMonitor.CALLBACK_BUDGET_MS);
+        check(rejectedHost.recoveries==1,"Rejected bridge progress incorrectly prevented recovery");
+
         Clock callbackClock=new Clock();Scheduler callbackScheduler=new Scheduler(callbackClock);Host callbackHost=new Host();
         CompletedRestoreMonitor callbackIsolation=new CompletedRestoreMonitor(callbackClock,callbackScheduler,callbackHost);
         check(callbackIsolation.begin("callback-job","old-nonce",0),"Old callback-isolation lease did not begin");callbackScheduler.drain();
@@ -279,7 +314,7 @@ public final class BackgroundInstrumentation extends Instrumentation {
         check(!laterCompleted.begin("older-completed-job","same-job-retry",0),"Same completed job bypassed its unconfirmed terminal token");
         check(laterCompleted.begin("later-completed-job","later-lease",0),"A later completed job was wedged by an old unconfirmed terminal token");
         check(!laterCompleted.ackCommitted("older-completed-job","older-terminal"),"A stale old ACK released state after the later job began");
-        pass("Completed-restore native lease monitor rejects stale nonce/replayed pulses, foreign failed probes, retired callbacks and stale post-ACK tokens; it keeps same-job terminal exclusivity but admits a later completed job without clearing the old cap, survives ordered long restore pulses, bounds a stalled WebView callback to one persisted same-Activity replacement, and disarms only on worker/adopted/render/native-visual terminal proof without mutating the browser ACK.");
+        pass("Completed-restore native lease monitor rejects stale nonce/replayed pulses, foreign failed probes, retired callbacks and stale post-ACK tokens; it keeps same-job terminal exclusivity but admits a later completed job without clearing the old cap, survives ordered long restore pulses, bounds a stalled callback to one persisted same-Activity replacement, retires valid direct-progress probes with ticketed callbacks so late same-lease results cannot mask a dead renderer, and disarms only on worker/adopted/render/native-visual terminal proof without mutating the browser ACK.");
     }
     private void launch()throws Exception{
         activity=(MainActivity)startActivitySync(new Intent(getTargetContext(),MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));

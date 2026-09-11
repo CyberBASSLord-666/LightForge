@@ -1,5 +1,6 @@
 /* The service performs native CPU inference; audio remains in private app storage. */
 (function(root){'use strict';
+ const ANALYSIS_CACHE_PROFILE='native-deux-onnxruntime-android-1.25.1-v1';
  const abortError=()=>new DOMException('Analysis cancelled','AbortError');
  function create(bridge,jobId,onCompatibility=()=>{}){
   if(!bridge||typeof bridge.nativeDeuxStart!=='function')return undefined;
@@ -39,7 +40,10 @@
    }catch(error){cancel();throw error;}finally{signal?.removeEventListener('abort',cancel);}
   };
   predict.release=()=>{if(typeof bridge.nativeDeuxRelease==='function'){const result=JSON.parse(bridge.nativeDeuxRelease(jobId));if(result.error)throw Error(result.error);}};
+  // The profile is attached only after a real predictor is admitted. A
+  // compatibility fallback must remain a wasm cache identity.
+  predict.analysisCacheProfile=ANALYSIS_CACHE_PROFILE;
   return predict;
  }
- root.LightForgeNativeDeux={create};
+ root.LightForgeNativeDeux={create,analysisCacheProfile:ANALYSIS_CACHE_PROFILE};
 })(window);

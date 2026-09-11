@@ -7,6 +7,14 @@
  const PLAYBACK_SAMPLE_RATE=44100,ANALYSIS_SAMPLE_RATE=22050,FRAME_EPSILON=1e-9,SECTION_EPSILON=1e-7;
  const finite=value=>typeof value==='number'&&Number.isFinite(value);
  const close=(left,right,epsilon=FRAME_EPSILON)=>Math.abs(left-right)<=epsilon;
+ function currentAnalysisCache(music,expected){
+  const saved=music?.engine?.cacheIdentity;
+  return !!music&&!!expected&&expected.persistent===true&&(music.analysisVersion||0)>=8
+   &&saved?.schemaVersion===1&&saved.workId===expected.workId
+   &&saved.implementationFingerprint===expected.implementationFingerprint
+   &&saved.assetFingerprint===expected.assetFingerprint
+   &&saved.nativeRuntimeProfile===expected.nativeRuntimeProfile;
+ }
  function framesFor(duration,sampleRate,label){
   if(!finite(duration)||duration<=0)throw Error(label+' is invalid.');
   const frames=Math.round(duration*sampleRate);
@@ -113,23 +121,29 @@
     }
    }
    const base='/project/'+encodeURIComponent(projectId)+'/';
-   let music=request.music;
-   if(!music||request.needAnalysis||(music.analysisVersion||1)<5){
+   let music=request.music,compatibility=false;
+   const quality=settings.analysisQuality==='balanced'?'balanced':'precision';
+   const nativePredict=quality==='precision'?root.LightForgeNativeDeux?.create(BackgroundJob,id,message=>{
+    compatibility=true;report(0,message,{stage:'compatibility'});
+   }):undefined;
+   const nativeMdx=quality==='balanced'?root.LightForgeNativeMdx?.create(BackgroundJob,id,message=>{
+    compatibility=true;report(0,message,{stage:'compatibility'});
+   }):undefined;
+   // Only a predictor that was actually admitted may label the run native.
+   // Compatibility fallbacks therefore retain the wasm cache namespace.
+   const nativeRuntimeProfile=typeof nativePredict==='function'?nativePredict.analysisCacheProfile:typeof nativeMdx==='function'?nativeMdx.analysisCacheProfile:undefined;
+   const analysisOptions={projectId,analysisIdentity:request.analysisIdentity,analysisUrl:new URL(base+'analysis.wav',location.href).href,sensitivity:settings.sensitivity,
+    bpmOverride:settings.bpmOverride||undefined,analysisQuality:settings.analysisQuality,nativePredict,nativeMdx,nativeRuntimeProfile};
+   let expectedCacheIdentity=null;
+   if(typeof MusicAnalyzer.cacheIdentity==='function'){
+    try{expectedCacheIdentity=await MusicAnalyzer.cacheIdentity(analysisOptions,controller.signal);}
+    catch(error){if(error?.name==='AbortError')throw error;root.LightForgeDiagnostics?.log('error','analysis-cache-identity',error);}
+   }
+   if(!currentAnalysisCache(music,expectedCacheIdentity)){
+    if(music&&!request.needAnalysis)root.LightForgeDiagnostics?.log('info','analysis-cache-identity','Completed music analysis cache identity changed; rebuilding evidence.');
     if(typeof BackgroundJob.clearRunObservation!=='function'||BackgroundJob.clearRunObservation(id)!==true)throw Error('The prior analysis observation could not be cleared.');
     analysisPerformed=true;const analysisStarted=observationMark(clock);
-    let compatibility=false;
-    const quality=settings.analysisQuality==='balanced'?'balanced':'precision';
-    const nativePredict=quality==='precision'?root.LightForgeNativeDeux?.create(BackgroundJob,id,message=>{
-     compatibility=true;report(0,message,{stage:'compatibility'});
-    }):undefined;
-    const nativeMdx=quality==='balanced'?root.LightForgeNativeMdx?.create(BackgroundJob,id,message=>{
-     compatibility=true;report(0,message,{stage:'compatibility'});
-    }):undefined;
-    music=await MusicAnalyzer.analyze(new URL(base+'audio.wav',location.href).href,{
-     projectId,analysisIdentity:request.analysisIdentity,analysisUrl:new URL(base+'analysis.wav',location.href).href,sensitivity:settings.sensitivity,
-     bpmOverride:settings.bpmOverride||undefined,analysisQuality:settings.analysisQuality,
-     nativePredict,nativeMdx
-    },p=>report(.96*Math.max(0,Math.min(1,Number(p.progress)||0)),(compatibility?'Compatibility · ':'')+(p.detail||p.message||p.stage||'Analyzing music'),p),controller.signal);
+    music=await MusicAnalyzer.analyze(new URL(base+'audio.wav',location.href).href,analysisOptions,p=>report(.96*Math.max(0,Math.min(1,Number(p.progress)||0)),(compatibility?'Compatibility · ':'')+(p.detail||p.message||p.stage||'Analyzing music'),p),controller.signal);
     analysisTiming=observationMeasure(clock,analysisStarted);
    }
    check();const duration=Number(request.duration);

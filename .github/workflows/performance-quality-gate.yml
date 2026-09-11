@@ -2,27 +2,6 @@ name: Performance quality gate
 
 on:
   pull_request:
-    paths:
-      - 'tools/performance_quality_gate.py'
-      - 'tools/analysis_benchmark_contract.py'
-      - 'tools/locked_benchmark_runner.py'
-      - 'tools/differential_analysis.py'
-      - 'tools/release_quality_gate.py'
-      - 'tools/publish_github_release.py'
-      - 'qa/performance-gate-policy.json'
-      - 'qa/locked-corpus-manifest.template.json'
-      - 'tests/performance-quality-gate.test.py'
-      - 'tests/performance-quality-gate-workflow.test.py'
-      - 'tests/analysis-benchmark-contract.test.py'
-      - 'tests/locked-benchmark-runner.test.py'
-      - 'tests/differential-analysis.test.py'
-      - 'tests/test_release_quality_gate.py'
-      - 'tests/test_release_quality_publication_wiring.py'
-      - 'docs/PERFORMANCE_QUALITY_GATE.md'
-      - 'docs/ANALYSIS_BENCHMARK_CONTRACT.md'
-      - 'docs/LOCKED_BENCHMARK_RUNNER.md'
-      - 'docs/DIFFERENTIAL_ANALYSIS.md'
-      - '.github/workflows/performance-quality-gate.yml'
   workflow_dispatch:
     inputs:
       baseline_artifact:

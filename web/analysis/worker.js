@@ -237,11 +237,11 @@ function rhythmFeaturePayload(data,n){return {version:1,frameCount:n,duration:da
 function validRhythmFeature(value,n,duration){return !!value&&value.version===1&&value.frameCount===n&&value.duration===duration&&value.chromaStep===.2&&floatFeature(value.rms,n)&&floatFeature(value.bass,n)&&floatFeature(value.mid,n)&&floatFeature(value.high,n)&&floatFeature(value.colour,n*3)&&floatFeature(value.fineRms,n*4)&&floatFeature(value.chroma,Math.ceil(n/10)*12);}
 function rhythmDataFromFeature(value,n){return {duration:value.duration,beat:new Float32Array(n),down:new Float32Array(n),rms:value.rms,bass:value.bass,mid:value.mid,high:value.high,colour:value.colour,fineRms:value.fineRms,chroma:value.chroma,chromaStep:value.chromaStep};}
 async function reusableRhythmFeatures(options,config,resourceDiagnostics=null){
- const audioIdentity=options.analysisIdentity,api=self.LightForgeFeatureStore,store=self.LightForgeAnalysisStore;
- if(typeof audioIdentity!=='string'||!/^[a-f0-9]{64}$/.test(audioIdentity)||!api||typeof api.open!=='function'||!store||typeof store.contentAddress!=='function')return null;
+ const audioIdentity=options.analysisIdentity,assetFingerprint=options.analysisAssetFingerprint,api=self.LightForgeFeatureStore,store=self.LightForgeAnalysisStore;
+ if(typeof audioIdentity!=='string'||!/^[a-f0-9]{64}$/.test(audioIdentity)||typeof assetFingerprint!=='string'||!/^[a-f0-9]{64}$/.test(assetFingerprint)||!api||typeof api.open!=='function'||!store||typeof store.contentAddress!=='function')return null;
  try{
   const configIdentity=await store.contentAddress('dsp-feature-config',config);
-  return await api.open({audioIdentity,preprocessingVersion:RHYTHM_PREPROCESSING,modelVersions:{'dsp-config':configIdentity,'dsp-extractor':RHYTHM_FEATURE_VERSION},analysisConfiguration:{analysisRate:22050,featureChunk:500,frameHopSamples:441,frameRateHz:50,chromaStep:.2,reflectionHaloHops:2}},{resourceDiagnostics});
+  return await api.open({audioIdentity,preprocessingVersion:RHYTHM_PREPROCESSING,modelVersions:{'analysis-assets':assetFingerprint,'dsp-config':configIdentity,'dsp-extractor':RHYTHM_FEATURE_VERSION},analysisConfiguration:{analysisRate:22050,featureChunk:500,frameHopSamples:441,frameRateHz:50,chromaStep:.2,reflectionHaloHops:2}},{resourceDiagnostics});
  }catch(_){return null;}
 }
 async function recurrenceEvidenceInput(result,options,config,telemetry){

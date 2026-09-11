@@ -49,6 +49,9 @@ final class CompletedRestoreMonitor {
     private final Runnable tickTask=this::tick;
     private String jobId,nonce,phase,terminalJobId,terminalNonce;
     private long sequence,bytes,lastAdvanceAt,nextProbeAt,callbackStartedAt;
+    // Probe tickets prevent a late callback from an earlier same-lease probe
+    // from satisfying a newer probe after a direct bridge pulse supersedes it.
+    private long probeTicket,awaitingProbeTicket;
     private boolean awaitingCallback,recoveryRequested,disposed,workerStarted,workerVerified,showAdopted,previewFirstRender,visualCommitted;
 
     CompletedRestoreMonitor(Clock clock,Scheduler scheduler,Host host){
@@ -73,7 +76,7 @@ final class CompletedRestoreMonitor {
         }
         long now=clock.now();
         jobId=nextJobId;nonce=nextNonce;phase="bootstrap";sequence=0;bytes=Math.max(0,initialBytes);
-        lastAdvanceAt=now;nextProbeAt=now;callbackStartedAt=0;awaitingCallback=false;
+        lastAdvanceAt=now;nextProbeAt=now;callbackStartedAt=0;awaitingCallback=false;awaitingProbeTicket=0;
         workerStarted=false;workerVerified=false;showAdopted=false;previewFirstRender=false;visualCommitted=false;
         // A completed job is allowed one native replacement across every
         // WebView instance in this Activity/process.  A replacement creates a
@@ -92,13 +95,22 @@ final class CompletedRestoreMonitor {
         if("show-adopted".equals(nextPhase)&&(!workerStarted||!workerVerified||showAdopted))return false;
         if("preview-first-render".equals(nextPhase)&&(!workerVerified||!showAdopted))return false;
         if("preview-visual-commit".equals(nextPhase)&&(!workerVerified||!showAdopted||!previewFirstRender||visualCommitted))return false;
+        long now=clock.now();
         sequence=nextSequence;phase=valid(nextPhase)?nextPhase:"pulse";bytes=Math.max(bytes,Math.max(0,nextBytes));
         if("worker-started".equals(phase))workerStarted=true;
         if("worker-verified".equals(phase))workerVerified=true;
         if("show-adopted".equals(phase))showAdopted=true;
         if("preview-first-render".equals(phase))previewFirstRender=true;
         if("preview-visual-commit".equals(phase))visualCommitted=true;
-        lastAdvanceAt=clock.now();
+        lastAdvanceAt=now;
+        // An ordered, current bridge pulse is stronger liveness evidence than
+        // an older evaluateJavascript probe. Retire only that probe: a fresh
+        // ticketed probe still bounds a renderer that dies after this pulse.
+        if(awaitingCallback){
+            awaitingCallback=false;callbackStartedAt=0;awaitingProbeTicket=0;
+            nextProbeAt=now+PROBE_INTERVAL_MS;
+            arm(nextDelay(now));
+        }
         return true;
     }
 
@@ -163,19 +175,20 @@ final class CompletedRestoreMonitor {
         long phaseBudget=phaseBudget();
         if(phaseAge>=phaseBudget){requestRecovery("phase-stall:"+phase+":"+phaseAge+"ms",now);return;}
         if(now>=nextProbeAt){
-            awaitingCallback=true;callbackStartedAt=now;nextProbeAt=now+PROBE_INTERVAL_MS;
+            final long requestedProbeTicket=++probeTicket;
+            awaitingCallback=true;awaitingProbeTicket=requestedProbeTicket;callbackStartedAt=now;nextProbeAt=now+PROBE_INTERVAL_MS;
             final String requestedJobId=jobId,requestedNonce=nonce;
-            try{host.requestProbe(requestedJobId,requestedNonce,probe->receiveProbe(requestedJobId,requestedNonce,probe));}
+            try{host.requestProbe(requestedJobId,requestedNonce,probe->receiveProbe(requestedJobId,requestedNonce,requestedProbeTicket,probe));}
             catch(Throwable failure){host.diagnostic("completed-restore probe dispatch failed: "+safe(failure.getMessage()));requestRecovery("probe-dispatch",now);return;}
         }
         arm(nextDelay(now));
     }
 
-    private synchronized void receiveProbe(String requestedJobId,String requestedNonce,Probe probe){
-        // A callback from a retired WebView must not satisfy the new lease's
-        // callback budget after a same-Activity replacement.
-        if(disposed||jobId==null||!awaitingCallback||!matches(requestedJobId,requestedNonce))return;
-        awaitingCallback=false;
+    private synchronized void receiveProbe(String requestedJobId,String requestedNonce,long requestedProbeTicket,Probe probe){
+        // A callback from a retired WebView, or an older same-lease probe,
+        // must not satisfy the current callback budget.
+        if(disposed||jobId==null||!awaitingCallback||awaitingProbeTicket!=requestedProbeTicket||!matches(requestedJobId,requestedNonce))return;
+        awaitingCallback=false;callbackStartedAt=0;awaitingProbeTicket=0;
         long now=clock.now();
         if(probe==null){host.diagnostic("completed-restore probe returned no state job="+jobId);arm(nextDelay(now));return;}
         // Treat page state as belonging to this request only after both lease
@@ -206,10 +219,10 @@ final class CompletedRestoreMonitor {
             host.diagnostic("completed-restore recovery cap reached job="+jobId+" reason="+reason+" phase="+phase+" sequence="+sequence+" bytes="+bytes+"; leaving job pending");
             // Do not continue invoking a dead page.  The durable job and its
             // browser ACK remain untouched, so a later user reopen can retry.
-            awaitingCallback=false;nextProbeAt=Long.MAX_VALUE;return;
+            awaitingCallback=false;callbackStartedAt=0;awaitingProbeTicket=0;nextProbeAt=Long.MAX_VALUE;return;
         }
         recoveryRequested=true;
-        awaitingCallback=false;
+        awaitingCallback=false;callbackStartedAt=0;awaitingProbeTicket=0;
         host.diagnostic("completed-restore recovery requested job="+jobId+" nonce="+shortNonce(nonce)+" reason="+reason+" phase="+phase+" sequence="+sequence+" bytes="+bytes);
         host.recover(jobId,nonce,reason);
     }
@@ -224,7 +237,7 @@ final class CompletedRestoreMonitor {
     }
     private void clearLease(){
         scheduler.removeCallbacks(tickTask);jobId=null;nonce=null;phase=null;sequence=bytes=0;workerStarted=false;workerVerified=false;showAdopted=false;previewFirstRender=false;visualCommitted=false;
-        lastAdvanceAt=nextProbeAt=callbackStartedAt=0;awaitingCallback=false;recoveryRequested=false;
+        lastAdvanceAt=nextProbeAt=callbackStartedAt=0;awaitingProbeTicket=0;awaitingCallback=false;recoveryRequested=false;
     }
     private void clearTerminalProof(){terminalJobId=null;terminalNonce=null;}
     private boolean matches(String candidateJobId,String candidateNonce){return jobId!=null&&jobId.equals(candidateJobId)&&nonce!=null&&nonce.equals(candidateNonce);}

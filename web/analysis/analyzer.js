@@ -3,7 +3,54 @@
  */
 (function(scope){'use strict';
 const base=new URL('.',document.currentScript.src),BASE_STAGES=Object.freeze(['rhythm','separation','voice','bass']);
+const ANALYSIS_PIPELINE_REVISION='bounded-analysis-v3',ASSET_MANIFEST='ASSET_MANIFEST.json',HEX_256=/^[a-f0-9]{64}$/;
+const REQUIRED_IMPLEMENTATION_ASSETS=Object.freeze(['analyzer.js','worker.js','models/features.json','models/model-manifest.json']);
+let implementationAssets;
 const stagesFor=options=>options?.recurrenceAnalysis===true?[...BASE_STAGES,'recurrence']:BASE_STAGES;
+function nativeCapabilities(options={}){
+ const hasNative=typeof options.nativePredict==='function'&&options.analysisQuality!=='balanced',hasMdx=typeof options.nativeMdx==='function'&&options.analysisQuality==='balanced';
+ return {hasNative,hasMdx,execution:[hasNative?'native-deux-v1':null,hasMdx?'native-mdx-v1':null].filter(Boolean).join('+')||'wasm-v1'};
+}
+function nativeRuntimeProfile(options,hasNative,hasMdx){
+ if(!hasNative&&!hasMdx)return 'wasm';
+ const profile=options.nativeRuntimeProfile;
+ return typeof profile==='string'&&/^[A-Za-z0-9._:+-]{1,160}$/.test(profile)?profile:null;
+}
+function validAssetRecord(value){return !!value&&Number.isSafeInteger(value.bytes)&&value.bytes>0&&typeof value.sha256==='string'&&HEX_256.test(value.sha256);}
+async function assetsFingerprint(signal){
+ if(implementationAssets)return implementationAssets;
+ const response=await fetch(new URL(ASSET_MANIFEST,base),{cache:'no-store',signal});
+ if(!response||!response.ok)throw Error('Analysis asset manifest is unavailable.');
+ const raw=await response.text(),manifest=JSON.parse(raw);
+ for(const path of REQUIRED_IMPLEMENTATION_ASSETS)if(!validAssetRecord(manifest?.[path]))throw Error('Analysis asset manifest is incomplete.');
+ const fingerprint=await scope.LightForgeAnalysisStore.hash(new TextEncoder().encode(raw));
+ if(!HEX_256.test(fingerprint))throw Error('Analysis asset manifest fingerprint is invalid.');
+ implementationAssets={fingerprint};return implementationAssets;
+}
+async function implementationFingerprint(options,hasNative,hasMdx,signal){
+ const native=nativeRuntimeProfile(options,hasNative,hasMdx);
+ try{
+  const assets=(await assetsFingerprint(signal)).fingerprint;
+  if(!native)throw Error('Native analysis cache profile is unavailable.');
+  const fingerprint=await scope.LightForgeAnalysisStore.hash(new TextEncoder().encode(JSON.stringify({schemaVersion:1,pipeline:ANALYSIS_PIPELINE_REVISION,assets,native})));
+  if(!HEX_256.test(fingerprint))throw Error('Analysis implementation fingerprint is invalid.');
+  return {fingerprint,assets,native};
+ }catch(error){
+  if(error?.name==='AbortError')throw error;
+  // A manifest/profile that cannot be proven current must never reuse a
+  // completed semantic timeline. Keep analysis available with a fresh,
+  // nonpersistent identity and leave verified assets as the only memoized data.
+  scope.LightForgeDiagnostics?.log('error','analysis-cache-identity',error);
+  return {fingerprint:'unverified-'+crypto.randomUUID(),assets:'unverified',native:native||'unverified'};
+ }
+}
+async function analysisCacheIdentity(options={},signal){
+ const {hasNative,hasMdx,execution}=nativeCapabilities(options),persistent=HEX_256.test(options.analysisIdentity||''),identity=persistent?options.analysisIdentity:crypto.randomUUID();
+ const implementation=await implementationFingerprint(options,hasNative,hasMdx,signal);
+ const binding={pipeline:ANALYSIS_PIPELINE_REVISION,release:scope.LightForgeVersion?.name||'unknown',identity,quality:options.analysisQuality==='balanced'?'balanced':'precision',sensitivity:options.sensitivity??.82,bpmOverride:options.bpmOverride??null,estimatedPercussionEvidence:options.enableEstimatedPercussionEvidence===true,execution,implementationFingerprint:implementation.fingerprint};
+ const workId=await scope.LightForgeAnalysisStore.hash(new TextEncoder().encode(JSON.stringify(binding)));
+ return {schemaVersion:1,pipeline:ANALYSIS_PIPELINE_REVISION,persistent,workId,execution,implementationFingerprint:implementation.fingerprint,assetFingerprint:implementation.assets,nativeRuntimeProfile:implementation.native};
+}
 function createDiagnosticClock(){
  let factory;try{factory=scope.LightForgeDiagnosticClock;}catch(_){return {start:0,now:()=>null,elapsed:()=>0};}
  if(factory&&typeof factory.create==='function')try{
@@ -29,13 +76,10 @@ function resourceDiagnostics(timings,scheduler,totalWallClockMs){
 async function analyze(audioUrl,options={},onProgress=()=>{},signal){
  const aborted=()=>new DOMException('Analysis cancelled','AbortError');
  if(signal?.aborted)throw aborted();
- const persistent=/^[a-f0-9]{64}$/.test(options.analysisIdentity||''),identity=persistent?options.analysisIdentity:crypto.randomUUID();
- const {nativePredict,nativeMdx,...serializableOptions}=options,hasNative=typeof nativePredict==='function'&&options.analysisQuality!=='balanced',hasMdx=typeof nativeMdx==='function'&&options.analysisQuality==='balanced';
- const execution=[hasNative?'native-deux-v1':null,hasMdx?'native-mdx-v1':null].filter(Boolean).join('+')||'wasm-v1';
- const binding={pipeline:'bounded-analysis-v2',release:scope.LightForgeVersion.name,identity,quality:options.analysisQuality==='balanced'?'balanced':'precision',sensitivity:options.sensitivity??.82,bpmOverride:options.bpmOverride??null,estimatedPercussionEvidence:options.enableEstimatedPercussionEvidence===true,execution};
- const workId=await scope.LightForgeAnalysisStore.hash(new TextEncoder().encode(JSON.stringify(binding)));
+ const {nativePredict,nativeMdx,analysisImplementationFingerprint:ignoredImplementationFingerprint,analysisAssetFingerprint:ignoredAssetFingerprint,nativeRuntimeProfile:ignoredNativeRuntimeProfile,...serializableOptions}=options;
+ const {hasNative,hasMdx}=nativeCapabilities(options),cacheIdentity=await analysisCacheIdentity(options,signal),persistent=cacheIdentity.persistent,workId=cacheIdentity.workId;
  const id=workId.slice(0,32),cacheKey='stem-'+[id.slice(0,8),id.slice(8,12),id.slice(12,16),id.slice(16,20),id.slice(20)].join('-');
- const clock=createDiagnosticClock(),runOptions={...serializableOptions,cacheKey,workId,supportsNativeDeux:hasNative,supportsNativeMdx:hasMdx},stages=stagesFor(options),timings={},started=clock.start;let value={},progress=0;
+ const clock=createDiagnosticClock(),runOptions={...serializableOptions,cacheKey,workId,supportsNativeDeux:hasNative,supportsNativeMdx:hasMdx,analysisImplementationFingerprint:cacheIdentity.implementationFingerprint,analysisAssetFingerprint:cacheIdentity.assetFingerprint,nativeRuntimeProfile:cacheIdentity.nativeRuntimeProfile},stages=stagesFor(options),timings={},started=clock.start;let value={},progress=0;
  function runStage(stage){return new Promise((resolve,reject)=>{
   if(signal?.aborted){reject(aborted());return;}
   scope.LightForgeDiagnostics?.log('info','analysis-worker','Stage started: '+stage);
@@ -125,7 +169,9 @@ async function analyze(audioUrl,options={},onProgress=()=>{},signal){
   if(signal?.aborted)throw aborted();
   if(!value?.engine)throw Error('Music analysis ended without a complete result.');
   value.engine.analysisSeconds=Math.round(clock.elapsed(started)/100)/10;
-  value.engine.stages=timings;value.engine.recoverable=persistent;if(schedulerDiagnostics)value.engine.scheduler=schedulerDiagnostics;
+  value.engine.stages=timings;value.engine.recoverable=persistent;
+  value.engine.cacheIdentity={schemaVersion:cacheIdentity.schemaVersion,pipeline:cacheIdentity.pipeline,workId:cacheIdentity.workId,implementationFingerprint:cacheIdentity.implementationFingerprint,assetFingerprint:cacheIdentity.assetFingerprint,nativeRuntimeProfile:cacheIdentity.nativeRuntimeProfile};
+  if(schedulerDiagnostics)value.engine.scheduler=schedulerDiagnostics;
   const resources=resourceDiagnostics(timings,schedulerDiagnostics,clock.elapsed(started));
   if(resources)value.engine.resourceDiagnostics=resources;
   // Browsers lack a durable source fingerprint. Keep their audition stems, but
@@ -141,5 +187,5 @@ async function analyze(audioUrl,options={},onProgress=()=>{},signal){
   if(schedulerLease&&typeof schedulerLease.release==='function')try{await schedulerLease.release();}catch(error){scope.LightForgeDiagnostics?.log('error','analysis-scheduler',error);}
  }
 }
-scope.MusicAnalyzer={analyze,version:scope.LightForgeVersion.name,engine:'Beat This! transformer · offline'};
+scope.MusicAnalyzer={analyze,cacheIdentity:analysisCacheIdentity,version:scope.LightForgeVersion.name,engine:'Beat This! transformer · offline'};
 })(window);

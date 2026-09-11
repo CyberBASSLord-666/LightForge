@@ -65,9 +65,13 @@ async function runProduction(overrides={}){
  const freshMusic={analysisVersion:8,duration:2,engine:engine()};
  const request={projectId:'safe-project',name:'Private Song',duration:2,needAnalysis:true,settings:{analysisQuality:'precision'},...overrides.request};
  const fakeClock={mark:()=>({milliseconds:tickCount++*1000,source:'performance.now'}),measure:mark=>({milliseconds:Math.max(0,tickCount++*1000-mark.milliseconds),measured:true,status:'available',reason:null,source:'performance.now'})};
+ const musicAnalyzer={analyze:async()=>{events.push('analyze');if(overrides.analyzeError)throw overrides.analyzeError;return overrides.music||freshMusic;}};
+ // Cache reuse is permitted only when the saved result exposes the current
+ // immutable analysis identity; fresh paths do not need this preflight stub.
+ if(request.needAnalysis===false)musicAnalyzer.cacheIdentity=async()=>{events.push('identity');return request.music?.engine?.cacheIdentity||null;};
  const context={AbortController,DOMException,URL,location:{href:'https://appassets.androidplatform.net/background/runner.html?job=job'},navigator:{},console,setTimeout,clearTimeout,
   fetch:async()=>({ok:true,json:async()=>request}),
-  MusicAnalyzer:{analyze:async()=>{events.push('analyze');if(overrides.analyzeError)throw overrides.analyzeError;return overrides.music||freshMusic;}},
+  MusicAnalyzer:musicAnalyzer,
   ShowCompiler:{generate:async()=>{events.push('compile');if(overrides.compileError)throw overrides.compileError;return overrides.result||{show:{version:'show-v1'},compiled:{sha256:'compiled-sha',frames:[1,2]}};}},
   BackgroundJob:{progress:()=>{},clearRunObservation:()=>{events.push('clear');return overrides.clearResult!==undefined?overrides.clearResult:true;},checkpoint:()=>{events.push('checkpoint');return true;},complete:(_id,encoded)=>{events.push('complete');completed=JSON.parse(encoded);return true;},failed:(_id,message,cancelled)=>{events.push('failed');failures.push({message,cancelled});}},
   LightForgeDiagnostics:{log:()=>{},progress:()=>{},protectText:()=>{}},LightForgeVersion:{name:'test'},VehicleProfile:{version:'test'},LightForgeDiagnosticClock:{create:()=>fakeClock},LightForgeAnalysisRunObservation:{completed:value=>Observation.completed(JSON.parse(JSON.stringify(value))),validate:value=>Observation.validate(JSON.parse(JSON.stringify(value)))}
@@ -104,9 +108,10 @@ test('fresh failed, cancelled, and compile-failed runs clear stale evidence but 
 });
 
 test('cached/reused music produces no fresh observation and does not invoke the fresh-clear bridge',async()=>{
- const cachedMusic={analysisVersion:8,duration:2,engine:engine()};
+ const cacheIdentity={schemaVersion:1,persistent:true,workId:'same-work',implementationFingerprint:'same-implementation',assetFingerprint:'same-assets',nativeRuntimeProfile:'wasm'};
+ const cachedMusic={analysisVersion:8,duration:2,engine:engine({cacheIdentity})};
  const run=await runProduction({request:{needAnalysis:false,music:cachedMusic}});
- assert.deepEqual(run.events,['checkpoint','compile','complete']);
+ assert.deepEqual(run.events,['identity','checkpoint','compile','complete']);
  assert.equal(run.completed.analysisRunObservation,undefined);
  assert.deepEqual(run.completed.music,cachedMusic);
 });

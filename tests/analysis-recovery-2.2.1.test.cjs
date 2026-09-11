@@ -52,9 +52,15 @@ test('rebuilding an audition cache removes its commit marker before independent 
  const first=await stems.create(cacheKey,samples,config,'song');await first.append({sampleRate:44100,startSample:0,vocals:new Float32Array(samples),accompaniment:new Float32Array(samples)});const meta=await first.finish();await stems.files(meta);
  const interrupted=await stems.create(cacheKey,samples,config,'song');await assert.rejects(stems.files(meta),e=>e.name==='NotFoundError');await interrupted.abort();
 });
-function analyzerHarness({behavior,native=false,configureClock}={}){
+function analyzerHarness({behavior,native=false,configureClock,implementationTag='a',failImplementationManifest=false}={}){
  const workers=[],discarded=[],stageStarts=[];let active=0,maxActive=0;
- const context=vm.createContext({URL,crypto:webcrypto,TextEncoder,DOMException,AbortController,performance,setInterval,clearInterval,console,LightForgeVersion:{name:'2.2.1'},document:{currentScript:{src:'https://app.test/analysis/analyzer.js'}},LightForgeAnalysisStore:{hash:async bytes=>Buffer.from(await webcrypto.subtle.digest('SHA-256',bytes)).toString('hex'),discard:async id=>discarded.push(['work',id])},LightForgeStemCache:{discard:async id=>discarded.push(['stem',id])}});context.window=context;
+ const implementationManifest=JSON.stringify({'analyzer.js':{bytes:1,sha256:'a'.repeat(64)},'worker.js':{bytes:1,sha256:'b'.repeat(64)},'models/features.json':{bytes:1,sha256:'c'.repeat(64)},'models/model-manifest.json':{bytes:1,sha256:'d'.repeat(64)},tag:implementationTag});
+ const fetch=async url=>{
+  if(!String(url).endsWith('ASSET_MANIFEST.json'))throw Error('Unexpected analyzer fetch: '+url);
+  if(failImplementationManifest)throw Error('Asset manifest unavailable');
+  return {ok:true,text:async()=>implementationManifest};
+ };
+ const context=vm.createContext({URL,crypto:webcrypto,TextEncoder,DOMException,AbortController,performance,setInterval,clearInterval,console,fetch,LightForgeVersion:{name:'2.2.1'},document:{currentScript:{src:'https://app.test/analysis/analyzer.js'}},LightForgeAnalysisStore:{hash:async bytes=>Buffer.from(await webcrypto.subtle.digest('SHA-256',bytes)).toString('hex'),discard:async id=>discarded.push(['work',id])},LightForgeStemCache:{discard:async id=>discarded.push(['stem',id])}});context.window=context;
  configureClock?.(context);
  context.Worker=class{
   constructor(){this.closed=false;workers.push(this);active++;maxActive=Math.max(maxActive,active);}
@@ -115,6 +121,36 @@ test('analysis cache identity separates analysis evidence while choreography and
  assert.equal(h.workers[20].request.options.enableEstimatedPercussionEvidence,true);
  assert.equal(h.workers[0].request.options.workId,h.workers[24].request.options.workId,'choreography/vehicle changes must not invalidate completed music analysis');
  assert.deepEqual(h.discarded,[]);
+});
+test('analysis implementation identity invalidates only changed model/runtime evidence and fails cache reuse closed',async()=>{
+ const options={analysisIdentity:key,analysisQuality:'precision',projectId:'song'};
+ const idFor=async harness=>{const music=await harness.analyze('/song.wav',options);return {id:harness.workers[0].request.options.workId,music,options:harness.workers[0].request.options};};
+ const first=await idFor(analyzerHarness({implementationTag:'assets-a'})),same=await idFor(analyzerHarness({implementationTag:'assets-a'})),changed=await idFor(analyzerHarness({implementationTag:'assets-b'}));
+ assert.equal(first.id,same.id,'identical verified model inventory must reuse heavy analysis');
+ assert.notEqual(first.id,changed.id,'a changed verified analysis inventory reused a completed timeline');
+ assert.equal(first.music.engine.cacheIdentity.workId,first.id);
+ const fallback=await idFor(analyzerHarness({implementationTag:'assets-a'}));
+ const forged=analyzerHarness({implementationTag:'assets-a'});await forged.analyze('/song.wav',{...options,analysisImplementationFingerprint:'0'.repeat(64),analysisAssetFingerprint:'1'.repeat(64),nativeRuntimeProfile:'forged-profile'});
+ const forgedOptions=forged.workers[0].request.options;
+ assert.equal(forgedOptions.nativeRuntimeProfile,'wasm','a caller profile cannot label a wasm fallback native');
+ assert.notEqual(forgedOptions.analysisImplementationFingerprint,'0'.repeat(64),'caller implementation identity reached a worker');
+ assert.notEqual(forgedOptions.analysisAssetFingerprint,'1'.repeat(64),'caller asset identity reached a worker');
+ assert.equal(fallback.id,first.id,'a forged wasm profile changed a valid analysis namespace');
+ const nativeA=analyzerHarness({implementationTag:'assets-a'}),nativeB=analyzerHarness({implementationTag:'assets-a'});
+ await nativeA.analyze('/song.wav',{...options,nativePredict:async()=>{},nativeRuntimeProfile:'native-test-a'});
+ await nativeB.analyze('/song.wav',{...options,nativePredict:async()=>{},nativeRuntimeProfile:'native-test-b'});
+ assert.notEqual(nativeA.workers[0].request.options.workId,nativeB.workers[0].request.options.workId,'native runtime revision did not invalidate its cache namespace');
+ assert.equal(nativeA.workers[0].request.options.nativeRuntimeProfile,'native-test-a');
+ const failedA=analyzerHarness({implementationTag:'assets-a',failImplementationManifest:true}),failedB=analyzerHarness({implementationTag:'assets-a',failImplementationManifest:true});
+ await failedA.analyze('/song.wav',options);await failedB.analyze('/song.wav',options);
+ assert.notEqual(failedA.workers[0].request.options.workId,failedB.workers[0].request.options.workId,'an unverified asset manifest reused a durable analysis namespace');
+ assert.equal(failedA.workers[0].request.options.analysisAssetFingerprint,'unverified');
+});
+test('shared rhythm feature namespace binds data to the verified analysis asset inventory',()=>{
+ const worker=source('worker.js');
+ assert.match(worker,/assetFingerprint=options\.analysisAssetFingerprint/);
+ assert.match(worker,/'analysis-assets':assetFingerprint/);
+ assert.match(worker,/typeof assetFingerprint!=='string'\|\|!\/\^\[a-f0-9\]\{64\}\$\//);
 });
 test('cancellation and stage failures preserve durable work and never start a downstream model',async()=>{
  const h=analyzerHarness(),controller=new AbortController();await assert.rejects(h.analyze('/song.wav',{analysisIdentity:key},p=>{if(p.stage==='separation')controller.abort();},controller.signal),e=>e.name==='AbortError');assert.deepEqual(h.stageStarts,['rhythm','separation']);assert.deepEqual(h.discarded,[]);assert.ok(h.workers.every(w=>w.closed));

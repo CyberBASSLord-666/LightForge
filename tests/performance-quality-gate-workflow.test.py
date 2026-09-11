@@ -8,6 +8,11 @@ WORKFLOW = ROOT / ".github/workflows/performance-quality-gate.yml"
 
 
 class PerformanceQualityGateWorkflowTest(unittest.TestCase):
+    def test_pull_requests_always_run_the_quality_contract(self):
+        text = WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("  pull_request:\n  workflow_dispatch:", text)
+        self.assertNotIn("  pull_request:\n    paths:", text)
+
     def test_dispatch_comparison_has_explicit_artifact_provenance_and_permissions(self):
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("actions: read", text)
