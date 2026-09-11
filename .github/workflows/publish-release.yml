@@ -15,6 +15,7 @@ jobs:
   publish:
     if: github.repository == 'CyberBASSLord-666/LightForge' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    environment: lightforge-release-quality
     timeout-minutes: 30
     env:
       GH_TOKEN: ${{ github.token }}
@@ -22,6 +23,7 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
+          fetch-depth: 0
           sparse-checkout: |
             .github
             android
@@ -31,6 +33,12 @@ jobs:
             qa
             releases
             research/evaluation-1.6
+      - name: Require protected main release authority
+        env:
+          LIGHTFORGE_REF_PROTECTED: ${{ github.ref_protected }}
+        run: >-
+          test "$GITHUB_REF" = "refs/heads/main" &&
+          test "$LIGHTFORGE_REF_PROTECTED" = "true"
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.12'

@@ -14,9 +14,13 @@ from apk_delta import apply_delta, digest
 from package_release import SIGNING_SHA256
 from release_quality_gate import (
     QUALITY_ARTIFACT,
+    RELEASE_WORKFLOW,
+    derive_release_scope,
     validate_declaration_receipt,
     validate_publication_evidence,
     validate_release_declaration,
+    validate_version,
+    version_key,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -31,11 +35,20 @@ RELEASE_ENFORCEMENT_PATHS = (
     'tools/apk_archive.py',
     'tools/apk_delta.py',
     'tools/package_release.py',
+    'tools/performance_quality_gate.py',
+    'tools/analysis_benchmark_contract.py',
+    'tools/locked_benchmark_runner.py',
+    'tools/differential_analysis.py',
 )
 
 
 def run(*args, **kwargs):
     return subprocess.check_output(args, text=True, **kwargs).strip()
+
+
+def run_bytes(*args, **kwargs):
+    """Run a command whose NUL-delimited output must not be normalized."""
+    return subprocess.check_output(args, **kwargs)
 
 
 def api(path):
@@ -45,6 +58,140 @@ def api(path):
 def require(value, message):
     if not value:
         raise ValueError(message)
+
+
+def _commit_sha(value, message):
+    require(isinstance(value, str) and re.fullmatch('[0-9a-f]{40}', value), message)
+    return value
+
+
+def _tree_sha(record, message):
+    tree = record.get('tree') if isinstance(record, dict) else None
+    return _commit_sha(tree.get('sha') if isinstance(tree, dict) else None, message)
+
+
+def _release_version_from_tag(tag):
+    require(isinstance(tag, str) and re.fullmatch(r'v[0-9]+\.[0-9]+\.[0-9]+', tag), 'Published release tag is not a stable semantic version')
+    return {'name': tag[1:], 'code': None}
+
+
+def _latest_published_release(repo, candidate_version):
+    """Return the newest canonical published release older than candidate.
+
+    The base is resolved here, never from a release request.  A source author
+    therefore cannot choose an older tree that hides their runtime change.
+    """
+    candidate = validate_version(candidate_version)
+    releases = api(f'repos/{repo}/releases?per_page=100')
+    require(isinstance(releases, list), 'Published release baseline response is invalid')
+    candidates = []
+    for release in releases:
+        if not isinstance(release, dict) or release.get('draft') is True or release.get('prerelease') is True:
+            continue
+        try:
+            parsed = _release_version_from_tag(release.get('tag_name'))
+        except ValueError:
+            continue
+        if version_key({'name': parsed['name'], 'code': 1}) < version_key(candidate):
+            candidates.append((version_key({'name': parsed['name'], 'code': 1}), release, parsed['name']))
+    require(candidates, 'No prior canonical published release exists for a non-performance waiver')
+    candidates.sort(key=lambda item: item[0])
+    _, release, name = candidates[-1]
+    target = _commit_sha(release.get('target_commitish'), 'Published release target must be an immutable full commit SHA')
+    return release, {'name': name, 'target_commit': target}
+
+
+def _baseline_request(target_commit, base_version):
+    """Read the immutable release ledger at a published release target."""
+    relative = 'releases/v' + base_version['name'] + '/request.json'
+    try:
+        value = json.loads(run('git', 'show', target_commit + ':' + relative))
+    except (subprocess.CalledProcessError, json.JSONDecodeError) as error:
+        raise ValueError('Prior published release has no valid source-bound request ledger') from error
+    require(isinstance(value, dict), 'Prior published release request ledger is not an object')
+    request_version = validate_version(value.get('version'))
+    require(request_version['name'] == base_version['name'], 'Prior published request ledger version disagrees with its tag')
+    require(type(value.get('run_id')) is int and value['run_id'] > 0, 'Prior published request ledger has an invalid CI run')
+    source = _commit_sha(value.get('source_commit'), 'Prior published request ledger has an invalid source commit')
+    delta = value.get('delta_sha256')
+    require(isinstance(delta, str) and re.fullmatch('[0-9a-f]{64}', delta), 'Prior published request ledger has an invalid APK delta digest')
+    return {
+        'version': request_version,
+        'run_id': value['run_id'],
+        'source_commit': source,
+    }
+
+
+def _verified_published_baseline(repo, candidate_version):
+    """Recover the exact source tree that produced the previous release.
+
+    A release tag can point at a later publication/request commit than the CI
+    candidate whose APK was released.  The tag locates the immutable request
+    ledger; its successful verify-v2 run then identifies the true baseline.
+    Missing legacy evidence is a fail-closed performance classification.
+    """
+    release, published = _latest_published_release(repo, candidate_version)
+    target_commit = published['target_commit']
+    target_record = api(f'repos/{repo}/git/commits/{target_commit}')
+    _tree_sha(target_record, 'Published release target tree is invalid')
+    run('git', 'fetch', '--no-tags', 'origin', target_commit)
+    ledger = _baseline_request(target_commit, {'name': published['name'], 'code': 1})
+    base_run = api(f'repos/{repo}/actions/runs/{ledger["run_id"]}')
+    require(isinstance(base_run, dict), 'Prior published release CI record is invalid')
+    require(base_run.get('status') == 'completed' and base_run.get('conclusion') == 'success', 'Prior published release CI did not pass')
+    require(base_run.get('head_repository', {}).get('full_name') == repo, 'Prior published release CI repository differs')
+    require(base_run.get('head_sha') == ledger['source_commit'], 'Prior published release CI source differs from its ledger')
+    require(base_run.get('path') == RELEASE_WORKFLOW, 'Prior published release did not use production verification')
+    base_record = api(f'repos/{repo}/git/commits/{ledger["source_commit"]}')
+    return {
+        'tag': 'v' + published['name'],
+        'target_commit': target_commit,
+        'source_commit': ledger['source_commit'],
+        'source_tree_sha': _tree_sha(base_record, 'Prior published release source tree is invalid'),
+        'version': ledger['version'],
+    }
+
+
+def _generated_web_version(version):
+    value = json.dumps({'name': version['name'], 'code': version['code']}, separators=(',', ':'))
+    return (
+        '/* Generated by tools/sync_version.py from version.json. */\n'
+        '(function(root){const value=Object.freeze(' + value + ');root.LightForgeVersion=value;'
+        'if(typeof module!=="undefined"&&module.exports)module.exports=value;})(typeof window!=="undefined"?window:globalThis);\n'
+    )
+
+
+def _generated_web_version_is_exact(source_commit, version):
+    try:
+        value = run_bytes('git', 'show', source_commit + ':web/version.js').decode('utf-8')
+    except (subprocess.CalledProcessError, UnicodeDecodeError):
+        return False
+    return value == _generated_web_version(version)
+
+
+def _derive_published_release_scope(repo, source_commit, source_tree_sha, version):
+    """Fetch the trusted baseline and derive a complete mode-aware scope."""
+    base = _verified_published_baseline(repo, version)
+    # The release workflow checks out complete history.  Fetching explicit
+    # commits also covers a source candidate that is not HEAD at publication.
+    run('git', 'fetch', '--no-tags', 'origin', base['target_commit'], base['source_commit'], source_commit)
+    try:
+        run('git', 'merge-base', '--is-ancestor', base['source_commit'], base['target_commit'])
+        run('git', 'merge-base', '--is-ancestor', base['source_commit'], source_commit)
+    except subprocess.CalledProcessError as error:
+        raise ValueError('Release candidate is not descended from the verified published baseline') from error
+    raw = run_bytes(
+        'git', 'diff', '--raw', '--no-abbrev', '--no-renames', '-z',
+        base['source_commit'], source_commit,
+    )
+    return derive_release_scope(
+        base_release=base,
+        source_commit=source_commit,
+        source_tree_sha=source_tree_sha,
+        version=version,
+        raw_tree_diff=raw,
+        generated_web_version_valid=_generated_web_version_is_exact(source_commit, version),
+    )
 
 
 def lookup_release(repo, tag, release_id=None):
@@ -172,7 +319,7 @@ def single_artifact_file(root, name):
 
 
 def verify_release_quality(request, version, repo, ci, source_commit, source_tree_sha):
-    """Require authoritative benchmark evidence unless source-pinned policy waives it."""
+    """Require an authoritative gate unless the derived source scope is prose-only."""
     declaration = source_release_declaration(source_commit, version)
     receipt = request.get('quality_gate_policy')
     require(isinstance(receipt, dict), 'Release request is missing quality_gate_policy')
@@ -183,9 +330,19 @@ def verify_release_quality(request, version, repo, ci, source_commit, source_tre
         source_tree_sha=source_tree_sha,
         declaration=declaration,
     )
+    scope = _derive_published_release_scope(repo, source_commit, source_tree_sha, version)
     if declaration['requirement'] == 'not_required':
+        require(
+            scope['classification'] == 'non-performance',
+            'Non-performance declaration cannot waive a performance-affecting source change',
+        )
         require('quality_gate' not in request, 'Non-performance release policy must not carry an unused quality-gate run')
-        return {'requirement': 'not_required', 'classification': declaration['classification'], 'reason': declaration['reason']}
+        return {
+            'requirement': 'not_required',
+            'classification': 'non-performance',
+            'reason': declaration['reason'],
+            'scope': scope,
+        }
     quality_request = request.get('quality_gate')
     require(isinstance(quality_request, dict) and set(quality_request) == {'run_id'}, 'Performance release requires exactly quality_gate.run_id')
     quality_run_id = quality_request['run_id']
@@ -213,7 +370,7 @@ def verify_release_quality(request, version, repo, ci, source_commit, source_tre
         release_candidate_commit=api(f'repos/{repo}/git/commits/{ci["head_sha"]}'),
         report_sha256=digest(report_path),
     )
-    return {'requirement': 'performance_quality_gate', **evidence}
+    return {'requirement': 'performance_quality_gate', 'scope': scope, **evidence}
 
 
 def main():
@@ -231,7 +388,7 @@ def main():
     require(ci['status'] == 'completed' and ci['conclusion'] == 'success', 'Candidate CI has not passed')
     require(ci['head_sha'] == source_commit and ci['head_repository']['full_name'] == repo, 'Candidate provenance mismatch')
     require(ci['path'] == '.github/workflows/verify-v2.yml', 'Candidate used an unexpected workflow')
-    run('git', 'fetch', '--no-tags', '--depth=1', 'origin', source_commit)
+    run('git', 'fetch', '--no-tags', 'origin', source_commit)
     run(
         'git',
         'diff',

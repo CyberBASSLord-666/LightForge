@@ -28,6 +28,28 @@ REPOSITORY = "CyberBASSLord-666/LightForge"
 QUALITY_WORKFLOW = ".github/workflows/performance-quality-gate.yml"
 RELEASE_WORKFLOW = ".github/workflows/verify-v2.yml"
 QUALITY_ARTIFACT = "performance-quality-gate-report"
+RELEASE_SCOPE_SCHEMA_VERSION = 1
+
+# A waiver is deliberately much narrower than "does not look like a model
+# change".  It is only for a release whose delta is demonstrably limited to
+# prose, release identity and the source-pinned declaration.  Everything that
+# can change a shipped bit, its verification, or the release authority falls
+# through to the protected performance-quality gate.
+NONPERFORMANCE_ROOT_DOCUMENTS = frozenset({
+    "ARCHITECTURE.md",
+    "ASSETS.md",
+    "BUILD.md",
+    "CHANGELOG.md",
+    "INSTALL_OVER_1.5_to_1.6_CHECKLIST.md",
+    "README.md",
+    "RELEASE_NOTES.md",
+    "REPOSITORY.md",
+    "RESOURCES_MAP.md",
+    "VALIDATION.md",
+    "VERSIONING.md",
+})
+_REGULAR_FILE_MODE = "100644"
+_ABSENT_MODE = "000000"
 
 _SHA1 = re.compile(r"^[0-9a-f]{40}$")
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
@@ -84,6 +106,163 @@ def validate_version(version: Mapping[str, Any]) -> dict[str, Any]:
     _require(isinstance(name, str) and re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", name) is not None, "release version name must be dotted numeric")
     _positive_int(code, "release version code")
     return {"name": name, "code": code}
+
+
+def version_key(version: Mapping[str, Any]) -> tuple[int, int, int]:
+    """Return a strict sortable semantic-version key for a release object."""
+    normalized = validate_version(version)
+    return tuple(int(part) for part in normalized["name"].split("."))
+
+
+def parse_raw_tree_diff(raw: bytes | str) -> list[dict[str, str]]:
+    """Parse complete ``git diff --raw -z --no-renames`` output.
+
+    ``-z`` is essential: paths may contain whitespace, and a line-oriented
+    parser can silently misclassify a path.  Rename detection is disabled so a
+    runtime file moved under a documentation directory is still represented by
+    its forbidden deletion.  Modes are retained to reject symlink, executable,
+    submodule and type changes even when their path is otherwise allowlisted.
+    """
+    if isinstance(raw, bytes):
+        try:
+            text = raw.decode("utf-8")
+        except UnicodeDecodeError as error:
+            raise ValueError("Git tree diff contains a non-UTF-8 path") from error
+    else:
+        _require(isinstance(raw, str), "Git tree diff must be bytes or text")
+        text = raw
+    tokens = text.split("\0")
+    if tokens and tokens[-1] == "":
+        tokens.pop()
+    _require(len(tokens) % 2 == 0, "Git tree diff is not a complete NUL-delimited name-status stream")
+    changes: list[dict[str, str]] = []
+    for index in range(0, len(tokens), 2):
+        header, path = tokens[index], tokens[index + 1]
+        parts = header.split(" ")
+        _require(len(parts) == 5 and parts[0].startswith(":"), "Git tree diff has an invalid raw header")
+        old_mode, new_mode = parts[0][1:], parts[1]
+        old_sha, new_sha, status = parts[2:]
+        _require(re.fullmatch(r"(?:000000|[0-7]{6})", old_mode) is not None, "Git tree diff has an invalid old mode")
+        _require(re.fullmatch(r"(?:000000|[0-7]{6})", new_mode) is not None, "Git tree diff has an invalid new mode")
+        _require(re.fullmatch(r"[0-9a-f]{40}", old_sha) is not None, "Git tree diff has an invalid old object")
+        _require(re.fullmatch(r"[0-9a-f]{40}", new_sha) is not None, "Git tree diff has an invalid new object")
+        _require(status in {"A", "D", "M", "T"}, "Git tree diff has an unsupported status")
+        _require(
+            isinstance(path, str)
+            and path
+            and not path.startswith("/")
+            and "\\" not in path
+            and all(part not in {"", ".", ".."} for part in path.split("/")),
+            "Git tree diff has an unsafe repository path",
+        )
+        changes.append({
+            "status": status,
+            "path": path,
+            "old_mode": old_mode,
+            "new_mode": new_mode,
+        })
+    _require(len({item["path"] for item in changes}) == len(changes), "Git tree diff reports a path more than once")
+    return sorted(changes, key=lambda item: item["path"])
+
+
+def _regular_change(change: Mapping[str, str]) -> bool:
+    """Return whether a change is an ordinary 0644 file add/modify/delete."""
+    status = change.get("status")
+    old_mode, new_mode = change.get("old_mode"), change.get("new_mode")
+    return (
+        (status == "A" and old_mode == _ABSENT_MODE and new_mode == _REGULAR_FILE_MODE)
+        or (status == "M" and old_mode == _REGULAR_FILE_MODE and new_mode == _REGULAR_FILE_MODE)
+        or (status == "D" and old_mode == _REGULAR_FILE_MODE and new_mode == _ABSENT_MODE)
+    )
+
+
+def _nonperformance_path_allowed(change: Mapping[str, str], version: Mapping[str, Any]) -> bool:
+    """Whether one raw tree change is harmless enough for a waiver.
+
+    This deliberately makes false positives safe: an allowlist miss requires a
+    PASS_TARGET run, rather than allowing an unreviewed performance change.
+    """
+    if not _regular_change(change):
+        return False
+    path = change["path"]
+    release = validate_version(version)
+    declaration = "releases/v" + release["name"] + "/quality-gate-declaration.json"
+    if path == declaration:
+        return change["status"] == "A"
+    if path == "version.json":
+        return change["status"] == "M"
+    if path == "web/version.js":
+        return change["status"] == "M"
+    return (
+        path in NONPERFORMANCE_ROOT_DOCUMENTS
+        or (path.startswith("docs/") and path.endswith(".md"))
+    )
+
+
+def derive_release_scope(
+    *,
+    base_release: Mapping[str, Any],
+    source_commit: str,
+    source_tree_sha: str,
+    version: Mapping[str, Any],
+    raw_tree_diff: bytes | str,
+    generated_web_version_valid: bool,
+) -> dict[str, Any]:
+    """Derive the only classification a source declaration may request.
+
+    ``base_release`` is supplied by the publisher after it has recovered the
+    previous published release's source-bound candidate record.  The candidate
+    declaration never selects this baseline and cannot turn a disallowed path
+    into a waiver.  The caller must independently prove source ancestry before
+    invoking this function.
+    """
+    expected_base = {
+        "tag",
+        "target_commit",
+        "source_commit",
+        "source_tree_sha",
+        "version",
+    }
+    _require(set(base_release) == expected_base, "release scope baseline has unexpected or missing fields")
+    tag = base_release.get("tag")
+    _require(isinstance(tag, str) and re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+", tag) is not None, "release scope baseline tag is invalid")
+    base_version = validate_version(base_release.get("version"))
+    _require(tag == "v" + base_version["name"], "release scope baseline tag and version disagree")
+    release = validate_version(version)
+    _require(version_key(base_version) < version_key(release), "release scope baseline is not older than the candidate release")
+    _require(base_version["code"] < release["code"], "release scope baseline code is not lower than the candidate release")
+    target_commit = _sha1(base_release.get("target_commit"), "release scope baseline target commit")
+    baseline_commit = _sha1(base_release.get("source_commit"), "release scope baseline source commit")
+    baseline_tree = _sha1(base_release.get("source_tree_sha"), "release scope baseline source tree")
+    candidate_commit = _sha1(source_commit, "release scope candidate source commit")
+    candidate_tree = _sha1(source_tree_sha, "release scope candidate source tree")
+    _require(candidate_commit != baseline_commit and candidate_tree != baseline_tree, "release scope candidate is identical to the published baseline")
+    changes = parse_raw_tree_diff(raw_tree_diff)
+    _require(changes, "release scope candidate has no tree changes from the published baseline")
+    declaration = "releases/v" + release["name"] + "/quality-gate-declaration.json"
+    allowed = all(_nonperformance_path_allowed(change, release) for change in changes)
+    declaration_added = any(change["path"] == declaration and change["status"] == "A" for change in changes)
+    version_changed = any(change["path"] == "version.json" and change["status"] == "M" for change in changes)
+    web_version_changed = any(change["path"] == "web/version.js" and change["status"] == "M" for change in changes)
+    if not declaration_added or not version_changed or not web_version_changed or not generated_web_version_valid:
+        allowed = False
+    scope = {
+        "schema_version": RELEASE_SCOPE_SCHEMA_VERSION,
+        "kind": "lightforge-release-scope",
+        "base_release": {
+            "tag": tag,
+            "target_commit": target_commit,
+            "source_commit": baseline_commit,
+            "source_tree_sha": baseline_tree,
+            "version": base_version,
+        },
+        "source": {"commit": candidate_commit, "tree_sha": candidate_tree},
+        "release": release,
+        "changes": changes,
+        "classification": "non-performance" if allowed else "performance",
+    }
+    scope["sha256"] = sha256_canonical_json(scope)
+    return scope
 
 
 def validate_report(report: Mapping[str, Any]) -> None:

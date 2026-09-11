@@ -54,6 +54,32 @@ def performance_declaration(version):
     }
 
 
+def raw_change(status, path, old_mode="100644", new_mode="100644"):
+    old_sha = "0" * 40 if status == "A" else "1" * 40
+    new_sha = "0" * 40 if status == "D" else "2" * 40
+    return f":{old_mode} {new_mode} {old_sha} {new_sha} {status}\0{path}\0".encode()
+
+
+def scope_baseline():
+    return {
+        "tag": "v2.2.4",
+        "target_commit": "3" * 40,
+        "source_commit": COMMIT,
+        "source_tree_sha": TREE,
+        "version": {"name": "2.2.4", "code": 20204},
+    }
+
+
+def safe_nonperformance_diff(version):
+    declaration = "releases/v" + version["name"] + "/quality-gate-declaration.json"
+    return b"".join([
+        raw_change("M", "README.md"),
+        raw_change("M", "version.json"),
+        raw_change("M", "web/version.js"),
+        raw_change("A", declaration, "000000", "100644"),
+    ])
+
+
 class ReleaseQualityGateTest(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
@@ -250,6 +276,106 @@ class ReleaseQualityGateTest(unittest.TestCase):
         declaration["classification"] = "performance"
         with self.assertRaisesRegex(ValueError, "disagree"):
             gate.validate_release_declaration(declaration, version=self.version)
+
+    def test_full_tree_scope_allows_only_regular_docs_and_release_identity(self):
+        scope = gate.derive_release_scope(
+            base_release=scope_baseline(),
+            source_commit="4" * 40,
+            source_tree_sha="5" * 40,
+            version=self.version,
+            raw_tree_diff=safe_nonperformance_diff(self.version),
+            generated_web_version_valid=True,
+        )
+        self.assertEqual(scope["classification"], "non-performance")
+        self.assertEqual(scope["base_release"]["source_commit"], COMMIT)
+        self.assertEqual(scope["source"], {"commit": "4" * 40, "tree_sha": "5" * 40})
+        without_digest = dict(scope)
+        digest = without_digest.pop("sha256")
+        self.assertEqual(digest, gate.sha256_canonical_json(without_digest))
+
+    def test_scope_forces_gate_for_runtime_security_and_unknown_paths(self):
+        for path in (
+            "web/analysis/worker.js",
+            "android/src/com/cyberbasslord/lightforge/MainActivity.java",
+            "web/analysis/models/deux/manifest.json",
+            "tools/publish_github_release.py",
+            ".github/workflows/publish-release.yml",
+            "tests/test_release_quality_gate.py",
+            "qa/performance-gate-policy.json",
+            "package-lock.json",
+            "SOURCE_MANIFEST.json",
+        ):
+            with self.subTest(path=path):
+                scope = gate.derive_release_scope(
+                    base_release=scope_baseline(),
+                    source_commit="4" * 40,
+                    source_tree_sha="5" * 40,
+                    version=self.version,
+                    raw_tree_diff=safe_nonperformance_diff(self.version) + raw_change("M", path),
+                    generated_web_version_valid=True,
+                )
+                self.assertEqual(scope["classification"], "performance")
+
+    def test_scope_rejects_mode_changes_and_cannot_hide_runtime_rename(self):
+        cases = {
+            "symlink": safe_nonperformance_diff(self.version) + raw_change("T", "docs/guide.md", "100644", "120000"),
+            "executable": safe_nonperformance_diff(self.version) + raw_change("M", "docs/guide.md", "100644", "100755"),
+            "submodule": safe_nonperformance_diff(self.version) + raw_change("T", "docs/guide.md", "100644", "160000"),
+            "runtime-to-docs": safe_nonperformance_diff(self.version)
+            + raw_change("D", "web/analysis/worker.js", "100644", "000000")
+            + raw_change("A", "docs/worker.md", "000000", "100644"),
+        }
+        for name, diff in cases.items():
+            with self.subTest(name=name):
+                scope = gate.derive_release_scope(
+                    base_release=scope_baseline(),
+                    source_commit="4" * 40,
+                    source_tree_sha="5" * 40,
+                    version=self.version,
+                    raw_tree_diff=diff,
+                    generated_web_version_valid=True,
+                )
+                self.assertEqual(scope["classification"], "performance")
+
+    def test_scope_fails_closed_on_missing_identity_or_invalid_generated_version(self):
+        missing_declaration = b"".join([
+            raw_change("M", "README.md"),
+            raw_change("M", "version.json"),
+        ])
+        for diff, valid in (
+            (missing_declaration, True),
+            (safe_nonperformance_diff(self.version), False),
+        ):
+            with self.subTest(valid=valid):
+                scope = gate.derive_release_scope(
+                    base_release=scope_baseline(),
+                    source_commit="4" * 40,
+                    source_tree_sha="5" * 40,
+                    version=self.version,
+                    raw_tree_diff=diff,
+                    generated_web_version_valid=valid,
+                )
+                self.assertEqual(scope["classification"], "performance")
+        bad_base = scope_baseline()
+        bad_base["version"] = self.version
+        bad_base["tag"] = "v" + self.version["name"]
+        with self.assertRaisesRegex(ValueError, "not older"):
+            gate.derive_release_scope(
+                base_release=bad_base,
+                source_commit="4" * 40,
+                source_tree_sha="5" * 40,
+                version=self.version,
+                raw_tree_diff=safe_nonperformance_diff(self.version),
+                generated_web_version_valid=True,
+            )
+
+    def test_raw_tree_parser_rejects_rename_and_malformed_nul_streams(self):
+        with self.assertRaisesRegex(ValueError, "unsupported status"):
+            gate.parse_raw_tree_diff(
+                b":" + b"100644 100644 " + b"1" * 40 + b" " + b"2" * 40 + b" R100\0docs/old.md\0"
+            )
+        with self.assertRaisesRegex(ValueError, "NUL-delimited"):
+            gate.parse_raw_tree_diff(b":100644 100644 " + b"1" * 40)
 
 
 if __name__ == "__main__":
