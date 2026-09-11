@@ -12,9 +12,11 @@ TESTS=['engine.test.cjs','engine-manual.test.cjs','preview-engine.test.cjs','pre
        'movement-planner.test.cjs','composer-1.6.test.cjs','role-composer-1.6.test.cjs',
        'role-reference-composer-1.6.test.cjs','bass-notes.test.cjs','vocal-detail.test.cjs',
        'stem-cache.test.cjs','stem-routing.test.cjs','stem-routing-worker.test.cjs','rhythm-hierarchy.test.cjs','recurrence-motif.test.cjs','recurrence-worker.test.cjs','motif-evolution-integration.test.cjs','wav-reader.test.cjs','precision-2.0.test.cjs','migration-2.0.test.cjs','precision-ui-2.0.test.cjs','cockpit-2.1.test.cjs','game-2.1.test.cjs','background-2.2.test.cjs','deux-2.2.1.test.cjs','analysis-recovery-2.2.1.test.cjs','native-deux-bridge.test.cjs','native-mdx-bridge.test.cjs','mdx-downstream-compare.test.cjs','separator-mdx-runtime.test.cjs','separator-clock-resilience.test.cjs','native-runtime-guard.test.cjs','diagnostics.test.cjs','analysis-telemetry.test.cjs','resource-diagnostics.test.cjs','resource-diagnostics-wiring.test.cjs','analysis-scheduler.test.cjs','semantic-timeline.test.cjs','vocal-semantics.test.cjs','vocal-choreography.test.cjs','percussion-evidence.test.cjs','music-salience.test.cjs','choreography-quality.test.cjs','perceptual-validation.test.cjs','vehicle-perceptual-integration.test.cjs','semantic-choreography-strategy.test.cjs','analysis-cache-recovery-v3.test.cjs','feature-store-contract.test.cjs']
-# These release-specific contracts are intentionally historical: each rejects
-# later manifest or source transitions. Keep them runnable directly, but do not
-# let a new release fail the current regression gate by design.
+# The 2.2.2 adapter-retention contract freezes its then-current analysis
+# manifest, and the 2.2.3 native/runtime source-clock contract freezes its
+# measured source hashes. Both intentionally reject later release transitions.
+# Keep these two contracts runnable directly, but do not let a new release fail
+# the current regression gate by design.
 HISTORICAL_PYTHON_TESTS=frozenset({
     'test_analysis_evidence_2_2_2',
     'test_analysis_evidence_2_2_3',
