@@ -91,6 +91,14 @@ class AndroidEvidenceManifestTest(unittest.TestCase):
             self.write(self.root / 'accepted')
         self.assertFalse((self.root / 'accepted').exists())
 
+    def test_rejects_receipt_with_a_different_source_hash_inventory(self):
+        stale = json.loads(self.background.read_text())
+        stale['source_hashes'] = {'android/old.java': 'f' * 64}
+        self.background.write_text(json.dumps(stale))
+        with self.assertRaisesRegex(ValueError, 'source binding differs from candidate'):
+            self.write(self.root / 'accepted')
+        self.assertFalse((self.root / 'accepted').exists())
+
     def test_rejects_partial_and_extra_artifacts(self):
         output = self.root / 'accepted'
         self.write(output)
