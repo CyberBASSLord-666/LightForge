@@ -2,9 +2,10 @@
 """Install CI APKs and retain a source-bound Android background lifecycle receipt."""
 import datetime,hashlib,json,os,selectors,subprocess,time
 from pathlib import Path
+from android_evidence_binding import verify_provenance
 ROOT=Path(__file__).resolve().parents[1];version=json.loads((ROOT/'version.json').read_text())['name'];out=ROOT/('qa/release-'+version);out.mkdir(exist_ok=True)
 sdk=Path(os.environ['ANDROID_HOME']);adb=sdk/'platform-tools/adb'
-sources=[*sorted((ROOT/'android').rglob('*.java')),*sorted((ROOT/'android').rglob('*.xml')),*sorted((ROOT/'web/background').rglob('*')),*sorted((ROOT/'web/analysis').glob('*.js')),*sorted((ROOT/'web/engine').glob('*.js')),ROOT/'web/app.js',ROOT/'web/index.html',ROOT/'tests/android/BackgroundInstrumentation.java',ROOT/'tools/run_android_background_tests.py',ROOT/'tools/build_android_tests.py',ROOT/'android/native-runtime.json',ROOT/'web/analysis/ASSET_MANIFEST.json']
+sources=[*sorted((ROOT/'android').rglob('*.java')),*sorted((ROOT/'android').rglob('*.xml')),*sorted((ROOT/'web/background').rglob('*')),*sorted((ROOT/'web/analysis').glob('*.js')),*sorted((ROOT/'web/engine').glob('*.js')),ROOT/'web/app.js',ROOT/'web/index.html',ROOT/'tests/android/BackgroundInstrumentation.java',ROOT/'tools/run_android_background_tests.py',ROOT/'tools/build_android_tests.py',ROOT/'tools/android_evidence_binding.py',ROOT/'android/native-runtime.json',ROOT/'web/analysis/ASSET_MANIFEST.json']
 hashes={str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sources if p.is_file()}
 receipt={'release':version,'passed':False,'checks':[],'errors':[],'source_hashes':hashes,'scope':'Android API 35 emulator lifecycle test using the production service, native CPU Studio and two-pass Balanced MDX separation, frozen-request routing, live model/tensor release before WebView/WASM voice/GAME, screen-off completion, live inference cancellation, verified passage resume and compilation. Not a physical phone or Tesla test.'}
 def run(*args,timeout=120):
@@ -70,6 +71,7 @@ def run_instrumentation():
     return result
 
 try:
+    receipt['candidateBinding']=verify_provenance(ROOT,ROOT/'candidate')
     until=time.monotonic()+180
     while time.monotonic()<until:
         log=ROOT/'emulator.log'

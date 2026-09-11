@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+from android_evidence_binding import verify_provenance
 import re
 import subprocess
 import time
@@ -29,7 +30,7 @@ def main():
                           *ROOT.joinpath('web').rglob('*.js'),
                           *ROOT.joinpath('web').rglob('*.html'),
                           ROOT / 'tests/android/DiagnosticsInstrumentation.java',
-                          ROOT / 'tools/build_diagnostics_tests.py', Path(__file__).resolve(),
+                          ROOT / 'tools/build_diagnostics_tests.py', ROOT / 'tools/android_evidence_binding.py', Path(__file__).resolve(),
                           ROOT / 'android/native-runtime.json',
                           ROOT / 'version.json']))
 
@@ -73,6 +74,7 @@ def main():
     native_probe_started = False
     marker = None
     try:
+        receipt['candidateBinding'] = verify_provenance(ROOT, args.candidate_dir)
         deadline = time.monotonic() + 360
         while time.monotonic() < deadline:
             log = ROOT / 'emulator.log'

@@ -107,6 +107,8 @@ jobs:
         run: LIGHTFORGE_SIGNING_DIR="$RUNNER_TEMP/ci-signing" python3 tools/build_android_tests.py
       - name: Build same-signed diagnostic export instrumentation
         run: LIGHTFORGE_SIGNING_DIR="$RUNNER_TEMP/ci-signing" python3 tools/build_diagnostics_tests.py
+      - name: Bind Android candidate to this exact source checkout
+        run: python3 tools/android_evidence_binding.py write --candidate-dir dist
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
@@ -127,6 +129,7 @@ jobs:
             dist/diagnostics-tests.apk
             dist/LightForge-${{ env.LIGHTFORGE_RELEASE }}.apk.json
             dist/LightForge-${{ env.LIGHTFORGE_RELEASE }}.apk.sha256
+            dist/android-evidence-provenance.json
           compression-level: 0
           retention-days: 30
           if-no-files-found: error
@@ -142,6 +145,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           sparse-checkout: |
+            .github
             android
             web
             tools
@@ -157,6 +161,8 @@ jobs:
           PYVERSION
       - name: Download the same-signed CI app and instrumentation
         run: gh run download "${{ github.run_id }}" --name lightforge-${{ env.LIGHTFORGE_RELEASE }}-ci-candidate --dir candidate
+      - name: Verify candidate provenance against this exact source checkout
+        run: python3 tools/android_evidence_binding.py verify --candidate-dir candidate
       - name: Configure Android virtual-device paths
         run: |
           printf 'ANDROID_USER_HOME=%s\nANDROID_EMULATOR_HOME=%s\nANDROID_AVD_HOME=%s\n' "$RUNNER_TEMP/lightforge-android" "$RUNNER_TEMP/lightforge-android" "$RUNNER_TEMP/lightforge-android/avd" >> "$GITHUB_ENV"
