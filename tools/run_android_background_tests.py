@@ -11,6 +11,7 @@ parser.add_argument('--candidate-artifact-digest',required=True)
 parser.add_argument('--candidate-run-id',type=int,required=True)
 parser.add_argument('--candidate-run-attempt',type=int,required=True)
 parser.add_argument('--candidate-evidence-session',required=True)
+parser.add_argument('--candidate-identity-sha256',required=True)
 parser.add_argument('--run-id',type=int,required=True)
 parser.add_argument('--run-attempt',type=int,required=True)
 parser.add_argument('--head-sha',required=True)
@@ -22,7 +23,7 @@ out=args.output_dir.resolve()
 if out.exists():raise SystemExit('Android evidence output directory must be fresh: '+str(out))
 out.mkdir(parents=True,mode=0o700)
 candidate_dir=args.candidate_dir.resolve()
-candidate=candidate_binding(candidate_dir,version,artifact_id=args.candidate_artifact_id,artifact_digest=args.candidate_artifact_digest,head_sha=args.head_sha,run_id=args.candidate_run_id,run_attempt=args.candidate_run_attempt,evidence_session=args.candidate_evidence_session)
+candidate=candidate_binding(candidate_dir,version,artifact_id=args.candidate_artifact_id,artifact_digest=args.candidate_artifact_digest,head_sha=args.head_sha,run_id=args.candidate_run_id,run_attempt=args.candidate_run_attempt,evidence_session=args.candidate_evidence_session,identity_sha256=args.candidate_identity_sha256)
 ci={'run_id':args.run_id,'run_attempt':args.run_attempt,'head_sha':args.head_sha,'evidence_session':args.evidence_session}
 sdk=Path(os.environ['ANDROID_HOME']);adb=sdk/'platform-tools/adb'
 sources=[*sorted((ROOT/'android').rglob('*.java')),*sorted((ROOT/'android').rglob('*.xml')),*sorted((ROOT/'web/background').rglob('*')),*sorted((ROOT/'web/analysis').glob('*.js')),*sorted((ROOT/'web/engine').glob('*.js')),ROOT/'web/app.js',ROOT/'web/index.html',ROOT/'tests/android/BackgroundInstrumentation.java',ROOT/'tools/run_android_background_tests.py',ROOT/'tools/build_android_tests.py',ROOT/'android/native-runtime.json',ROOT/'web/analysis/ASSET_MANIFEST.json',ROOT/'tools/android_evidence_manifest.py']
