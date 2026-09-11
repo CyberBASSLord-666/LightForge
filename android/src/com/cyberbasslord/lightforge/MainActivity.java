@@ -27,6 +27,10 @@ public final class MainActivity extends Activity {
     // supervisor has already declared a stalled completed restore and spent
     // its one replacement. It is not a JavaScript/generation timeout.
     private static final long COMPLETED_RESTORE_TERMINATE_CALLBACK_BUDGET_MS=2500L;
+    // JavaScript interfaces must never shuttle an entire saved project in one
+    // renderer IPC message. Completed-project recovery reads a bounded,
+    // durable snapshot through this small chunk transport instead.
+    private static final int COMPLETED_RESTORE_PROJECT_CHUNK_MAX_BYTES=64*1024;
     private static final ExecutorService diagnosticWorker=Executors.newSingleThreadExecutor();
     private static final AtomicBoolean diagnosticExporting=new AtomicBoolean();
     private String diagnosticName;
@@ -747,6 +751,31 @@ public final class MainActivity extends Activity {
         });}
 
         @JavascriptInterface public String getBootstrap() {return bootstrap().toString();}
+        @JavascriptInterface public String readCompletedRestoreProjectChunk(String jobId,String nonce,String projectId,long offset,int requestedBytes) {
+            try {
+                synchronized(completedRestoreBridgeLock){
+                    if(!ownsCurrentCompletedRestoreBridge()||completedRestoreMonitor==null||!completedRestoreMonitor.owns(jobId,nonce))throw new IOException("The completed restore lease is no longer active.");
+                }
+                if(offset<0||requestedBytes<=0||requestedBytes>COMPLETED_RESTORE_PROJECT_CHUNK_MAX_BYTES)throw new IOException("Invalid completed-project read range.");
+                final byte[] bytes;final long total;final String snapshot;
+                synchronized(AnalysisJobStore.class){
+                    JSONObject job=analysisStatus();
+                    if(job==null||!jobId.equals(job.optString("id"))||!"completed".equals(job.optString("state")))throw new IOException("The completed analysis job is no longer available.");
+                    if(projectId==null||!projectId.equals(job.optString("projectId")))throw new IOException("The completed project does not belong to this job.");
+                    File source=new File(AnalysisJobStore.project(getFilesDir(),projectId),"project.json");
+                    total=source.isFile()?source.length():-1;
+                    if(total<=0||total>ProjectStore.MAX_PROJECT_BYTES||offset>=total)throw new IOException("The completed project payload is unavailable.");
+                    snapshot=Long.toString(total)+":"+Long.toString(source.lastModified());
+                    int count=(int)Math.min(Math.min((long)requestedBytes,total-offset),COMPLETED_RESTORE_PROJECT_CHUNK_MAX_BYTES);
+                    bytes=new byte[count];
+                    try(RandomAccessFile input=new RandomAccessFile(source,"r")){input.seek(offset);input.readFully(bytes);}
+                }
+                return json("ok",true,"offset",offset,"total",total,"snapshot",snapshot,"base64",Base64.encodeToString(bytes,Base64.NO_WRAP)).toString();
+            }catch(Exception failure){
+                AppDiagnostics.log(MainActivity.this,"WARN","completed-restore-payload","chunk read rejected: "+(failure.getMessage()==null?failure.getClass().getSimpleName():failure.getMessage()));
+                return json("ok",false,"error","The completed project payload could not be read safely.").toString();
+            }
+        }
         @JavascriptInterface public void pickAudio() {runOnUiThread(()-> {
             if(importing||exporting||AnalysisJobStore.active(analysisStatus())) {error(new IOException("The previous operation is still finishing. Try again in a moment."));return;}
             Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*");

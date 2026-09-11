@@ -5,6 +5,11 @@ const $ = id => document.getElementById(id);
 const diagnostics=window.LightForgeDiagnostics;
 const native = () => window.Android && typeof window.Android.pickAudio === 'function';
 const clone = x => JSON.parse(JSON.stringify(x));
+// A completed background job is restored before the ordinary project fetch
+// path is allowed to own the Studio.  Keep its durable payload transport
+// bounded: a WebView request that never resolves must not leave the completed
+// job, loading overlay and preview permanently latched together.
+const COMPLETED_RESTORE_PROJECT_CHUNK_BYTES=48*1024,COMPLETED_RESTORE_PROJECT_MAX_BYTES=64*1024*1024,COMPLETED_RESTORE_PROJECT_READ_TIMEOUT_MS=12000;
 const defaults = {style:'festival',intensity:.85,dance:'expressive',stepMs:20,sensitivity:.82,beatDivision:'auto',bpmOverride:null,offsetMs:0,palette:'aurora',enabled:{windows:true,mirrors:true,trunk:true,charge:true,interior:true},optionalFog:false,outerBeamRamping:false,outputEnabled:{},manualCues:[],sectionOverrides:{},seed:2025,analysisQuality:'precision',movementDensity:.7,downbeatAnchor:null,meterOverride:null,tempoScale:1,vocalFocus:.85,bassFocus:.9,vocalRegions:[],musicCues:[],vocalOffsetMs:0,bassOffsetMs:0};
 const state = {audition:'mix',auditionAvailable:false,auditionLoading:false,project:null,music:null,show:null,settings:clone(defaults),projects:[],history:[],future:[],compiled:null,exportHeader:null,saveBlocked:false,composing:false,compileId:0,compileAbort:null,renderedSettingsKey:null,showMusic:null,pendingExport:null,busy:false,job:0,abort:null,view:'studio',editing:null,needAnalysis:false,previewMode:0,exportId:null,lastSave:0,acceptProgress:false,selection:0,loadingProject:false,pendingProjectAction:null,soloPreview:null,completedRestore:null};
 const audio=$('audio');let auditionEpoch=0,availabilityEpoch=0,auditionAbort=null,auditionURL=null,auditionIntent=null,auditionSignature=null,analysisFallback=null,completedRestoreEpoch=0;let progressClock,toastTimer,saveTimer,regenTimer,lastDraw=0,lastSection=-1,frameRequest=0,dbPromise;
@@ -112,7 +117,7 @@ async function dbPut(store,key,value){const d=await db();return new Promise((res
 async function dbDelete(store,key){const d=await db();return new Promise((resolve,reject)=>{const tx=d.transaction(store,'readwrite');tx.objectStore(store).delete(key);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);});}
 function encodeWav(buffer){const frames=buffer.length,bytes=new ArrayBuffer(44+frames*4),v=new DataView(bytes),write=(p,s)=>{for(let i=0;i<s.length;i++)v.setUint8(p+i,s.charCodeAt(i));};write(0,'RIFF');v.setUint32(4,36+frames*4,true);write(8,'WAVEfmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,2,true);v.setUint32(24,44100,true);v.setUint32(28,176400,true);v.setUint16(32,4,true);v.setUint16(34,16,true);write(36,'data');v.setUint32(40,frames*4,true);const l=buffer.getChannelData(0),r=buffer.getChannelData(Math.min(1,buffer.numberOfChannels-1));for(let i=0;i<frames;i++){v.setInt16(44+i*4,Math.round(Math.max(-1,Math.min(1,l[i]))*32767),true);v.setInt16(46+i*4,Math.round(Math.max(-1,Math.min(1,r[i]))*32767),true);}return new Blob([bytes],{type:'audio/wav'});}
 async function importBrowser(file){if(!file)return;diagnostics?.protectText(file.name);diagnostics?.protectText(file.name.replace(/\.[^.]+$/,''));const job=beginBusy('Bringing your music in','Converting audio to the format your Tesla needs.');try{const ctx=new (window.AudioContext||window.webkitAudioContext)();const decoded=await ctx.decodeAudioData(await file.arrayBuffer());await ctx.close();if(job!==state.job)return;const offline=new OfflineAudioContext(2,Math.ceil(decoded.duration*44100),44100),source=offline.createBufferSource();source.buffer=decoded;source.connect(offline.destination);source.start();const pcm=await offline.startRendering();if(job!==state.job)return;const wav=encodeWav(pcm),id='show-'+Date.now(),project={id,name:file.name.replace(/\.[^.]+$/,''),duration:pcm.duration,createdAt:Date.now(),audioUrl:URL.createObjectURL(wav),browser:true};await dbPut('audio',id,wav);state.projects.unshift(project);localStorage.setItem('lightforge-projects',JSON.stringify(state.projects));endBusy();await selectProject(project,true);toast('Music imported. Choose your style and create.');}catch(e){diagnostics?.log('error','operation',e);endBusy();toast('This audio could not be imported. '+(e.message||'Try another file.'),true);}}
-async function selectProject(project,isNew=false,{navigate=true,restoreLease=null}={}){
+async function selectProject(project,isNew=false,{navigate=true,restoreLease=null,restoreSaved=undefined}={}){
  diagnostics?.protectText(project?.name);
  stopInspection(); if(state.busy)return;clearTimeout(saveTimer);if(state.project&&!state.loadingProject&&!(await saveProject()))return;state.compileAbort?.abort();state.compileId++;state.composing=false;const selection=++state.selection,id=project.id;
  const current=()=>selection===state.selection&&state.project?.id===id;
@@ -121,8 +126,8 @@ async function selectProject(project,isNew=false,{navigate=true,restoreLease=nul
  $('results').hidden=true;$('validationCard').hidden=true;$('sectionEditor').hidden=true;$('noShowOverlay').hidden=false;$('emptyCard').hidden=true;$('workingStudio').hidden=false;
  document.querySelector('.controls-column').inert=true;
  text($('trackTitle'),project.name||'Untitled show');text($('trackMeta'),isNew?'Audio ready':'Opening saved project…');text($('totalTime'),formatTime(project.duration));$('seek').max=project.duration||1;audio.src=project.previewUrl||project.audioUrl||'';if(navigate)nav('studio');else resizeCanvases();updateButtons();
- try{let saved;
-  if(!isNew){if(project.browser){const blob=await dbGet('audio',id);if(!current())return;if(blob){if(project.audioUrl?.startsWith('blob:'))URL.revokeObjectURL(project.audioUrl);project.audioUrl=URL.createObjectURL(blob);audio.src=project.audioUrl;}saved=await dbGet('projects',id);if(!current())return;
+ try{let saved=restoreSaved;
+  if(!isNew&&restoreSaved===undefined){if(project.browser){const blob=await dbGet('audio',id);if(!current())return;if(blob){if(project.audioUrl?.startsWith('blob:'))URL.revokeObjectURL(project.audioUrl);project.audioUrl=URL.createObjectURL(blob);audio.src=project.audioUrl;}saved=await dbGet('projects',id);if(!current())return;
    }else if(project.projectUrl){const response=await fetch(project.projectUrl);if(!current())return;if(response.ok){saved=await response.json();if(!current())return;}}}
   if(!current())return;
   if(saved){state.settings=mergeSettings(saved.settings);state.music=saved.music||null;state.compiled=saved.compiled||null;state.needAnalysis=!!saved.needAnalysis;}else state.settings=mergeSettings({...state.settings,sectionOverrides:{},manualCues:[],outputEnabled:{},vocalRegions:[],musicCues:[],vocalOffsetMs:0,bassOffsetMs:0});
@@ -130,7 +135,7 @@ async function selectProject(project,isNew=false,{navigate=true,restoreLease=nul
   state.loadingProject=false;document.querySelector('.controls-column').inert=false;text($('trackMeta'),`${formatTime(project.duration)} · ${project.previewSampleRate===22050?'Long-track mono preview · Stereo export':'44.1 kHz stereo · On this device'}`);syncControls();
   if(state.music)await regenerate({save:false,restoreCompiled:state.compiled,restoreLease});else{updateButtons();renderFrame(0);drawWave();}
   if(current()){scheduleSave();await refreshAuditionAvailability({force:true});}
- }catch(e){diagnostics?.log('error','operation',e);if(!current())return;state.saveBlocked=true;state.loadingProject=false;document.querySelector('.controls-column').inert=false;syncControls();updateButtons();renderFrame(0);text($('trackMeta'),'Audio ready · Saved settings could not be opened');toast('Audio is ready. Create a new show to rebuild this project.',true);}
+ }catch(e){diagnostics?.log('error','operation',e);if(!current())return;state.saveBlocked=true;state.loadingProject=false;document.querySelector('.controls-column').inert=false;syncControls();updateButtons();renderFrame(0);text($('trackMeta'),'Audio ready · Saved settings could not be opened');if(restoreLease)throw e;toast('Audio is ready. Create a new show to rebuild this project.',true);}
 }
 
 function currentShowMatches(){return !!state.show&&!state.needAnalysis&&state.showMusic===state.music&&state.renderedSettingsKey===JSON.stringify(state.settings);}
@@ -236,6 +241,57 @@ function completedRestoreWorkerEvent(lease,event){
  else if(event.type==='restore-pulse')completedRestorePulse(lease,`worker-${event.phase||'pulse'}`,event.total||lease.bytes);
  else if(event.type==='restore-verified'){lease.workerVerified=true;completedRestorePulse(lease,'worker-verified');}
 }
+function completedRestorePacketBytes(encoded){
+ if(typeof encoded!=='string'||encoded.length===0)return new Uint8Array(0);
+ const binary=atob(encoded),bytes=new Uint8Array(binary.length);
+ for(let index=0;index<binary.length;index++)bytes[index]=binary.charCodeAt(index);
+ return bytes;
+}
+async function readCompletedRestoreProjectFromBridge(project,lease){
+ if(typeof window.Android?.readCompletedRestoreProjectChunk!=='function')return null;
+ const Decoder=window.TextDecoder||globalThis.TextDecoder;
+ if(typeof Decoder!=='function')throw Error('This device cannot safely decode the completed project payload.');
+ const decoder=new Decoder('utf-8',{fatal:true});let offset=0,total=-1,snapshot='',parts='',chunks=0;
+ for(;;){
+  if(!completedRestorePulse(lease,'project-read',offset))throw Error('Native completed-restore lease rejected the project-read phase.');
+  const packet=parse(bridge('readCompletedRestoreProjectChunk',lease.jobId,lease.nonce,project.id,offset,COMPLETED_RESTORE_PROJECT_CHUNK_BYTES),null);
+  if(!packet||packet.ok!==true)throw Error(packet?.error||'The completed project payload was unavailable.');
+  const start=Number(packet.offset),declaredTotal=Number(packet.total),declaredSnapshot=String(packet.snapshot||'');
+  if(!Number.isSafeInteger(start)||start!==offset||!Number.isSafeInteger(declaredTotal)||declaredTotal<=0||declaredTotal>COMPLETED_RESTORE_PROJECT_MAX_BYTES)throw Error('The completed project payload was malformed.');
+  if(!/^[0-9]+:[0-9]+$/.test(declaredSnapshot))throw Error('The completed project payload has no stable snapshot identity.');
+  if(total<0){total=declaredTotal;snapshot=declaredSnapshot;}else if(total!==declaredTotal||snapshot!==declaredSnapshot)throw Error('The completed project payload changed while it was being read.');
+  const bytes=completedRestorePacketBytes(packet.base64);if(bytes.length===0||offset+bytes.length>total)throw Error('The completed project payload ended unexpectedly.');
+  offset+=bytes.length;parts+=decoder.decode(bytes,{stream:offset<total});
+  if(offset===total){parts+=decoder.decode();return JSON.parse(parts);}
+  if(++chunks>Math.ceil(total/COMPLETED_RESTORE_PROJECT_CHUNK_BYTES)+1)throw Error('The completed project payload did not make bounded progress.');
+  // Give the renderer/probe queue a turn during a very large saved-show read.
+  if(chunks%16===0)await new Promise(resolve=>setTimeout(resolve,0));
+ }
+}
+async function readCompletedRestoreProjectFromFetch(project,lease){
+ if(!project?.projectUrl)throw Error('The completed project has no saved payload.');
+ if(!completedRestorePulse(lease,'project-read-fallback',lease.bytes))throw Error('Native completed-restore lease rejected the project-read fallback.');
+ const Controller=window.AbortController||globalThis.AbortController,controller=Controller?new Controller():null;
+ let timer;
+ const timeout=new Promise((_,reject)=>{timer=setTimeout(()=>{try{controller?.abort();}catch{}reject(Error('The completed project read timed out before it could be restored.'));},COMPLETED_RESTORE_PROJECT_READ_TIMEOUT_MS);});
+ try{
+  const response=await Promise.race([fetch(project.projectUrl,controller?{signal:controller.signal}:undefined),timeout]);
+  if(!response?.ok)throw Error('The completed project could not be read.');
+  const body=typeof response.text==='function'
+   ?await Promise.race([response.text(),timeout])
+   :JSON.stringify(await Promise.race([response.json?.(),timeout]));
+  if(typeof body!=='string'||body.length===0||body.length>COMPLETED_RESTORE_PROJECT_MAX_BYTES)throw Error('The completed project payload is invalid or too large.');
+  if(!completedRestorePulse(lease,'project-read',body.length))throw Error('Native completed-restore lease rejected the project-read result.');
+  return JSON.parse(body);
+ }finally{clearTimeout(timer);}
+}
+async function readCompletedRestoreProject(project,lease){
+ if(typeof window.Android?.readCompletedRestoreProjectChunk==='function')return readCompletedRestoreProjectFromBridge(project,lease);
+ // Older native hosts have no scoped payload bridge. Their only escape hatch
+ // remains the same-origin project resource, bounded and never treated as a
+ // successful restore until the ordinary compiled-show verification finishes.
+ return readCompletedRestoreProjectFromFetch(project,lease);
+}
 function awaitCompletedRestoreRender(lease){return new Promise((resolve,reject)=>{
  const inspect=()=>{
   if(!completedRestoreOwnsAdoptedProject(lease))return reject(Error('Saved arrangement restoration was superseded.'));
@@ -332,7 +388,8 @@ async function handleBackgroundJob(job){
    restoreLease=beginCompletedRestore(job);
    clearTimeout(saveTimer);applyBootstrap(parse(bridge('getBootstrap'),{}));
    const project=state.projects.find(p=>p.id===job.projectId);if(!project)throw Error('The completed project could not be found.');
-   state.lastSaved=null;await selectProject(project,false,{navigate:false,restoreLease});
+   const restoreSaved=await readCompletedRestoreProject(project,restoreLease);
+   state.lastSaved=null;await selectProject(project,false,{navigate:false,restoreLease,restoreSaved});
    if(state.saveBlocked||!completedRestoreOwnsAdoptedProject(restoreLease))throw Error('The completed project was superseded before its saved show could be adopted.');
    await awaitCompletedRestoreRender(restoreLease);await awaitCompletedRestoreVisualCommit(restoreLease);completeCompletedRestore(restoreLease);
    writeCompletedRestoreAck(restoreLease,job);

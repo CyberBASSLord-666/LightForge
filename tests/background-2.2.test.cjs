@@ -64,7 +64,7 @@ test('native studio delegates work, blocks stale saves, reconnects, and loads th
  }finally{dom.window.close();}
 });
 
-async function completedReconnect({acknowledged=false,hold=false,restoreError=null,terminalRejected=false,beginRejected=false,pulseRejected=false,ackConfirmationRejected=false,ackWriteFailures=0}={}){
+async function completedReconnect({acknowledged=false,hold=false,restoreError=null,terminalRejected=false,beginRejected=false,pulseRejected=false,ackConfirmationRejected=false,ackWriteFailures=0,nativeProjectPayload=false,fetchNeverResolves=false}={}){
  const dom=new JSDOM(fs.readFileSync(path.join(root,'web/index.html'),'utf8'),{url:'https://appassets.androidplatform.net/',runScripts:'outside-only'}),w=dom.window;
  const polls=[],leaseCalls=[],nativeCapClears=[];let restores=0,fetches=0,saved,bootstrap={projects:[],version:'2.2.4'},restoreOptions=[],nativeTerminalToken=null;
  const completed={id:'completed-project',name:'Completed',duration:2,projectUrl:'/project/completed/project.json',audioUrl:'/project/completed/audio.wav'};
@@ -72,7 +72,7 @@ async function completedReconnect({acknowledged=false,hold=false,restoreError=nu
  const job={id:'completed-job',projectId:completed.id,state:'completed',progress:1};
  let enteredResolve,release,remainingAckWriteFailures=ackWriteFailures,ackConfirmationRejectedNow=ackConfirmationRejected;const entered=new Promise(r=>enteredResolve=r),gate=new Promise(r=>release=r);
  Object.defineProperty(w.document,'hidden',{value:false,configurable:true});
- w.scrollTo=()=>{};w.requestAnimationFrame=()=>1;w.cancelAnimationFrame=()=>{};w.matchMedia=()=>({matches:true,addEventListener(){}});
+ w.scrollTo=()=>{};w.requestAnimationFrame=()=>1;w.cancelAnimationFrame=()=>{};w.matchMedia=()=>({matches:true,addEventListener(){}});w.TextDecoder=TextDecoder;
  w.setInterval=(callback,delay)=>{if(delay===2000)polls.push(callback);return polls.length+1;};w.clearInterval=()=>{};
  w.HTMLMediaElement.prototype.pause=function(){};w.HTMLMediaElement.prototype.load=function(){};
  const storageSetItem=w.Storage.prototype.setItem;
@@ -82,9 +82,25 @@ async function completedReconnect({acknowledged=false,hold=false,restoreError=nu
  };
  w.VehiclePreview=class{constructor(){this.loaded=true;this.renderCount=0;}render(){this.renderCount++;}setPaused(){}setCamera(){}setStage(){}setQuality(){}resize(){}};
  w.LightForgeVersion=require('../web/version.js');w.ShowEngine=require('../web/engine/show-engine.js');w.VehicleProfile=require('../web/engine/vehicle-profile.js');w.MusicCues=require('../web/engine/music-cues.js');
+ const nativeProjectReads=[];
+ const readCompletedProject=(...args)=>{
+  nativeProjectReads.push(args);const [jobId,nonce,projectId,offset,requested]=args;
+  if(['reject','wrong-nonce','wrong-job','wrong-project'].includes(nativeProjectPayload)||jobId!==job.id||typeof nonce!=='string'||!nonce||projectId!==completed.id)return JSON.stringify({ok:false,error:'native completed-project lease rejected'});
+  const payload=nativeProjectPayload==='snapshot'?{...saved,__payloadPadding:'x'.repeat(64*1024)}:saved;
+  const bytes=Buffer.from(JSON.stringify(payload),'utf8'),start=Number(offset),count=Number(requested);
+  if(!Number.isSafeInteger(start)||!Number.isSafeInteger(count)||start<0||count<=0||start>=bytes.length)return JSON.stringify({ok:false,error:'native completed-project range rejected'});
+  const chunk=bytes.subarray(start,Math.min(bytes.length,start+count));
+  if(nativeProjectPayload==='offset')return JSON.stringify({ok:true,offset:start+1,total:bytes.length,snapshot:bytes.length+':1',base64:chunk.toString('base64')});
+  if(nativeProjectPayload==='base64')return JSON.stringify({ok:true,offset:start,total:bytes.length,snapshot:bytes.length+':1',base64:'%%%not-base64%%%'});
+  if(nativeProjectPayload==='utf8')return JSON.stringify({ok:true,offset:0,total:2,snapshot:'2:1',base64:Buffer.from([0xc3,0x28]).toString('base64')});
+  if(nativeProjectPayload==='oversized')return JSON.stringify({ok:true,offset:0,total:64*1024*1024+1,snapshot:(64*1024*1024+1)+':1',base64:Buffer.from('{}').toString('base64')});
+  const snapshot=nativeProjectPayload==='snapshot'&&nativeProjectReads.length>1?bytes.length+':2':bytes.length+':1';
+  return JSON.stringify({ok:true,offset:start,total:bytes.length,snapshot,base64:chunk.toString('base64')});
+ };
  w.Android={pickAudio(){},getBootstrap:()=>JSON.stringify(bootstrap),saveProject:()=>true,startAnalysis(){throw Error('Reconnection must not restart analysis');},getAnalysisStatus:()=>JSON.stringify(job),
   beginCompletedRestore:(...args)=>{leaseCalls.push({type:'begin',args});if(beginRejected)return false;if(nativeTerminalToken){if(nativeTerminalToken.jobId===args[0])return false;nativeTerminalToken=null;}return true;},completedRestorePulse:(...args)=>{leaseCalls.push({type:'pulse',args});return !pulseRejected;},requestCompletedRestoreVisualCommit:(...args)=>{leaseCalls.push({type:'visual-request',args});return true;},completedRestoreVisualCommitted:(...args)=>{leaseCalls.push({type:'visual-committed',args});return true;},completedRestoreTerminal:(...args)=>{leaseCalls.push({type:'terminal',args,ackAtCall:w.localStorage.getItem('lightforge-background-ack')});if(terminalRejected)return false;nativeTerminalToken={jobId:args[0],nonce:args[1]};return true;},completedRestoreAckCommitted:(...args)=>{leaseCalls.push({type:'ack-committed',args,ackAtCall:w.localStorage.getItem('lightforge-background-ack')});if(ackConfirmationRejectedNow||nativeTerminalToken?.jobId!==args[0]||nativeTerminalToken?.nonce!==args[1])return false;nativeCapClears.push(args[0]);nativeTerminalToken=null;return true;},completedRestoreFailed:(...args)=>{leaseCalls.push({type:'failed',args});return true;}};
- w.fetch=async()=>{fetches++;return{ok:true,json:async()=>structuredClone(saved)};};
+ if(nativeProjectPayload)w.Android.readCompletedRestoreProjectChunk=readCompletedProject;
+ w.fetch=async()=>{fetches++;if(fetchNeverResolves)return new Promise(()=>{});return{ok:true,json:async()=>structuredClone(saved),text:async()=>JSON.stringify(saved)};};
  w.ShowCompiler={restore:async(compiled,m,s,_progress,signal,options)=>{
   restoreOptions.push(options);restores++;enteredResolve();
   options?.onRestoreEvent?.({type:'restore-started',lease:options?.restoreLease});
@@ -103,7 +119,7 @@ async function completedReconnect({acknowledged=false,hold=false,restoreError=nu
   const result=await runWorker(path.join(root,'web/engine'),{action:'generate',music,settings});saved={settings,music,compiled:result.compiled,needAnalysis:false};
   if(acknowledged)w.localStorage.setItem('lightforge-background-ack',job.id);
   bootstrap={projects:[completed,lastSelected],lastProjectId:lastSelected.id,version:'2.2.4',backgroundJob:job};
-  return{w,app,job,entered,release,polls,completed,lastSelected,leaseCalls,nativeCapClears,setAckConfirmationRejected:value=>{ackConfirmationRejectedNow=!!value;},get restores(){return restores;},get fetches(){return fetches;},get restoreOptions(){return restoreOptions;},close:()=>{release();w.close();}};
+  return{w,app,job,entered,release,polls,completed,lastSelected,leaseCalls,nativeCapClears,nativeProjectReads,setAckConfirmationRejected:value=>{ackConfirmationRejectedNow=!!value;},get restores(){return restores;},get fetches(){return fetches;},get restoreOptions(){return restoreOptions;},close:()=>{release();w.close();}};
  }catch(error){release();w.close();throw error;}
 }
 
@@ -192,6 +208,58 @@ test('completed reconnect opens a lease and commits terminal proof before its AC
  const ordinary=await completedReconnect({acknowledged:true});
  try{await ordinary.app.readBootstrap();assert.equal(ordinary.restoreOptions.length,1);assert.equal(ordinary.restoreOptions[0],undefined);assert.equal(ordinary.leaseCalls.length,0,'Ordinary foreground restoration must not open a completed-job lease');}
  finally{ordinary.close();}
+});
+test('completed reconnect reads the scoped durable payload when the appassets project fetch never resolves',async()=>{
+ const completed=await completedReconnect({nativeProjectPayload:true,fetchNeverResolves:true});
+ try{
+  await completed.app.readBootstrap();
+  assert.equal(completed.fetches,0,'An active completed-restore lease must bypass an unresolved appassets project fetch');
+  assert.ok(completed.nativeProjectReads.length>0,'The completed project was not read through the scoped native payload bridge');
+  const firstRead=completed.nativeProjectReads[0],begin=completed.leaseCalls.find(call=>call.type==='begin');
+  assert.deepEqual(firstRead.slice(0,1),[completed.job.id],'Native payload read must bind the durable completed job');
+  assert.equal(firstRead[1],begin.args[1],'Native payload read must bind the active restore nonce');
+  assert.equal(firstRead[2],completed.completed.id,'Native payload read must bind the completed project identity');
+  const phases=completed.leaseCalls.filter(call=>call.type==='pulse').map(call=>call.args[2]);
+  assert.ok(phases.indexOf('project-read')>=0,'The native payload read must publish an ordered project-read lease pulse');
+  assert.ok(phases.indexOf('project-read')<phases.indexOf('project-loaded'),'Project payload evidence must precede the loaded-project pulse');
+  assert.ok(phases.indexOf('project-loaded')<phases.indexOf('worker-started'),'The worker may not begin before the durable project is adopted');
+  const visual=completed.leaseCalls.findIndex(call=>call.type==='pulse'&&call.args[2]==='preview-visual-commit');
+  const terminal=completed.leaseCalls.findIndex(call=>call.type==='terminal');
+  assert.ok(visual>=0&&terminal>visual,'Terminal proof remains after the visible-frame proof');
+  assert.equal(completed.w.localStorage.getItem('lightforge-background-ack'),completed.job.id,'Only the verified native payload path may write the completed-job ACK');
+  for(const key of ['loadingProject','composing','backgroundApplying','backgroundSyncPending'])assert.equal(completed.app.state[key],false,key+' remained latched after native payload recovery');
+ }finally{completed.close();}
+});
+test('a rejected completed-project payload bridge does not fall back to an unbounded fetch or acknowledge the job',async()=>{
+ const rejected=await completedReconnect({nativeProjectPayload:'reject',fetchNeverResolves:true});
+ try{
+  await rejected.app.readBootstrap();
+  assert.equal(rejected.nativeProjectReads.length,1,'The rejected bridge should be attempted exactly once for the active lease');
+  assert.equal(rejected.fetches,0,'A rejected scoped payload lease must not evade its identity checks through appassets fetch');
+  assert.equal(rejected.restores,0,'No worker restore may start from a rejected completed-project payload');
+  assert.equal(rejected.leaseCalls.some(call=>call.type==='terminal'),false);
+  assert.equal(rejected.w.localStorage.getItem('lightforge-background-ack'),null,'Rejected payloads may never be acknowledged');
+  assert.equal(rejected.app.state.backgroundSyncPending,true,'The durable completed job remains pending for a later valid renderer');
+  assert.equal(rejected.app.state.backgroundApplying,false);assert.equal(rejected.app.state.loadingProject,false);
+  assert.equal(rejected.leaseCalls.filter(call=>call.type==='failed').length,1,'The rejected native payload must close the active lease deterministically');
+ }finally{rejected.close();}
+});
+test('foreign and malformed completed-project payload packets fail closed without fetch downgrade',async()=>{
+ for(const mode of ['wrong-nonce','wrong-job','wrong-project','offset','snapshot','base64','utf8','oversized']){
+  const rejected=await completedReconnect({nativeProjectPayload:mode,fetchNeverResolves:true});
+  try{
+   await rejected.app.readBootstrap();
+   assert.ok(rejected.nativeProjectReads.length>0,mode+' did not exercise the scoped payload bridge');
+   assert.equal(rejected.fetches,0,mode+' downgraded an invalid scoped payload to appassets fetch');
+   assert.equal(rejected.restores,0,mode+' started a restore from invalid durable payload bytes');
+   assert.equal(rejected.leaseCalls.some(call=>call.type==='terminal'),false,mode+' reached native terminal proof');
+   assert.equal(rejected.w.localStorage.getItem('lightforge-background-ack'),null,mode+' wrote a browser ACK');
+   assert.equal(rejected.app.state.backgroundSyncPending,true,mode+' cleared the durable pending state');
+   assert.equal(rejected.app.state.backgroundApplying,false,mode+' left the background handoff latched');
+   assert.equal(rejected.app.state.loadingProject,false,mode+' left project loading latched');
+   assert.equal(rejected.leaseCalls.filter(call=>call.type==='failed').length,1,mode+' did not close its failed lease exactly once');
+  }finally{rejected.close();}
+ }
 });
 test('a completed restore failure clears transient state without acknowledging the saved job',async()=>{
  const failed=await completedReconnect({restoreError:Error('The saved arrangement verification worker stopped.')});

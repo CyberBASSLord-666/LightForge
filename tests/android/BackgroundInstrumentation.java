@@ -451,6 +451,22 @@ public final class BackgroundInstrumentation extends Instrumentation {
         awaitPower(()->power.isInteractive()&&!power.isDeviceIdleMode(),"Android did not leave Doze and wake for reopening");
         recordPowerTransition(power,unforced);launch();
     }
+    private void completedRestorePayloadBypassesProjectFetch(JSONObject completed)throws Exception{
+        phase("completed-restore-durable-payload");
+        WebView target=(WebView)field(activity,"web");check(target!=null,"No WebView available for durable completed-project payload test");
+        String projectId=completed.getString("projectId");
+        String injected="(()=>{const a=window.LightForgeApp;if(!a||!window.Android||typeof window.Android.readCompletedRestoreProjectChunk!=='function')throw Error('Scoped completed-project bridge unavailable');localStorage.removeItem('lightforge-background-ack');a.state.backgroundSeen=null;const original=window.fetch;const probe={calls:0,original};window.__lightforgeCompletedProjectFetchProbe=probe;window.fetch=(input,...rest)=>{const url=String(input&&input.url||input||'');if(url.includes('/project/"+projectId+"/project.json')){probe.calls++;return new Promise(()=>{});}return original(input,...rest);};window.onNativeEvent('analysisJob',JSON.parse("+JSONObject.quote(completed.toString())+"));return true;})()";
+        try{
+            check("true".equals(evaluate(target,injected,"Durable completed-project payload test could not arm its project fetch stall")),"Durable completed-project payload test returned an unexpected result");
+            awaitUiReady();
+            String proof=evaluate((WebView)field(activity,"web"),"(()=>{const a=window.LightForgeApp,s=a&&a.state,p=window.__lightforgeCompletedProjectFetchProbe;return JSON.stringify({fetchCalls:Number(p&&p.calls)||0,ack:localStorage.getItem('lightforge-background-ack')||'',loadingProject:!!(s&&s.loadingProject),backgroundApplying:!!(s&&s.backgroundApplying),backgroundSyncPending:!!(s&&s.backgroundSyncPending),previewFrames:Number(a&&a.vehiclePreview&&a.vehiclePreview.renderCount)||0});})()","Durable completed-project payload evidence could not be read");
+            Object decoded=new JSONTokener(proof).nextValue();JSONObject evidence=decoded instanceof String?new JSONObject((String)decoded):(JSONObject)decoded;
+            check(evidence.optInt("fetchCalls")==0,"Completed restore re-entered the stalled appassets project fetch: "+evidence);
+            check(completed.getString("id").equals(evidence.optString("ack")),"Completed restore did not ACK after its direct durable payload read: "+evidence);
+            check(!evidence.optBoolean("loadingProject")&&!evidence.optBoolean("backgroundApplying")&&!evidence.optBoolean("backgroundSyncPending")&&evidence.optLong("previewFrames")>0,"Direct durable payload restore left UI state latched: "+evidence);
+            pass("A real completed-project reconnect bypassed an intentionally never-resolving appassets project.json fetch through the generation- and nonce-bound durable payload bridge, then reached a visible preview and terminal browser ACK.");
+        }finally{evaluate((WebView)field(activity,"web"),"(()=>{const p=window.__lightforgeCompletedProjectFetchProbe;if(p&&p.original)window.fetch=p.original;delete window.__lightforgeCompletedProjectFetchProbe;return true;})()","Durable completed-project payload test could not restore fetch");}
+    }
     private void completedRestoreActiveRendererGone(JSONObject completed)throws Exception{
         phase("completed-restore-active-renderer-gone");
         MainActivity owner=activity;WebView stalled=(WebView)field(owner,"web");check(stalled!=null,"No WebView available for active renderer-gone lease injection");
@@ -464,6 +480,14 @@ public final class BackgroundInstrumentation extends Instrumentation {
         String rawLease=evaluate(stalled,"(()=>{const l=window.LightForgeApp&&window.LightForgeApp.state&&window.LightForgeApp.state.completedRestore;return JSON.stringify(l?{jobId:String(l.jobId||''),nonce:String(l.nonce||''),sequence:Number(l.sequence)||0}:null);})()","Active lease identity could not be read before renderer-gone handling");
         Object decodedLease=new JSONTokener(rawLease).nextValue();JSONObject oldLease=decodedLease instanceof String?new JSONObject((String)decodedLease):(JSONObject)decodedLease;
         check(completed.getString("id").equals(oldLease.optString("jobId"))&&oldLease.optString("nonce").length()>0,"Active renderer-gone lease lacked exact job/nonce identity: "+oldLease);
+        JSONObject payload=new JSONObject(stalledBridge.readCompletedRestoreProjectChunk(completed.getString("id"),oldLease.getString("nonce"),completed.getString("projectId"),0,1024));
+        check(payload.optBoolean("ok")&&payload.optLong("offset")==0&&payload.optLong("total")>0&&payload.optString("snapshot").matches("[0-9]+:[0-9]+")&&payload.optString("base64").length()>0,"Active lease could not read its bounded durable project payload: "+payload);
+        JSONObject deniedPayload=new JSONObject(stalledBridge.readCompletedRestoreProjectChunk(completed.getString("id"),oldLease.getString("nonce")+"-stale",completed.getString("projectId"),0,1024));
+        check(!deniedPayload.optBoolean("ok"),"A stale completed-restore nonce read durable project payload");
+        JSONObject deniedJob=new JSONObject(stalledBridge.readCompletedRestoreProjectChunk(completed.getString("id")+"-stale",oldLease.getString("nonce"),completed.getString("projectId"),0,1024));
+        check(!deniedJob.optBoolean("ok"),"A foreign completed job read durable project payload");
+        JSONObject deniedProject=new JSONObject(stalledBridge.readCompletedRestoreProjectChunk(completed.getString("id"),oldLease.getString("nonce"),"foreign-project",0,1024));
+        check(!deniedProject.optBoolean("ok"),"A foreign completed project read durable project payload");
         runOnMainSync(()->check(owner.handlePreviewRenderProcessGone(stalled,false),"Active completed-restore renderer-gone branch rejected recovery"));
         long until=SystemClock.elapsedRealtime()+30000;WebView replacement=null;
         while(SystemClock.elapsedRealtime()<until){
@@ -667,6 +691,7 @@ public final class BackgroundInstrumentation extends Instrumentation {
             JSONObject bootstrap=new JSONObject(bridge().getBootstrap());
             check("completed".equals(bootstrap.getJSONObject("backgroundJob").getString("state")),"Reopened Activity did not reconnect");
             pass("Reopened Activity reports the completed job and its saved project.");
+            completedRestorePayloadBypassesProjectFetch(completed);
             completedRestoreActiveRendererGone(completed);
             completedRestoreCallbackStall(completed);
             receipt.put("balanced",balancedScreenOff());phase("reopen-after-balanced");foreground();
