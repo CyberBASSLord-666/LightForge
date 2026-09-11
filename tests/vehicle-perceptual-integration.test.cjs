@@ -99,3 +99,26 @@ test('vehicle timing calibration rejects malformed input and preserves explicit 
   {version:1,enabled:true,calibrationId:'x',outputs:{trunk:{commandLatencyMs:Infinity}}}
  ])assert.throws(()=>Profile.normalizePerceptualCalibration(input),/calibration/i);
 });
+
+test('manual light frames cannot be credited as surviving automatic musical attacks',()=>{
+ const show={stepMs:20,frameCount:101,frames:new Uint8Array(101*200),settings:{offsetMs:0,manualCues:[{outputId:'left-signature',start:.9,end:1.1}],outputEnabled:{}},
+  lightEvents:[{role:'vocals',id:'left-signature',actualStart:1,sourceEventTime:1}],movements:[],choreography:{lighting:{suppressedCollisions:0}}};
+ show.frames[50*200+4]=255;
+ const report=SyncReview.review(show,[{role:'vocals',time:1,end:1.1,kind:'accent',salience:.9,candidateOutputIds:['left-signature']}]);
+ assert.equal(report.roles.vocals.matched,0);
+ assert.equal(report.roles.vocals.suppressed,1);
+ assert.equal(report.targets.manualOverride,1);
+ assert.equal(report.collision.targetLoss.count,0);
+ assert.equal(report.eventEvidence[0].realizationStatus,'manualOverride');
+ assert.equal(report.eventEvidence[0].commandTime,undefined);
+});
+
+test('an automatic attack on the first frame after a manual cue ends remains eligible',()=>{
+ const show={stepMs:20,frameCount:101,frames:new Uint8Array(101*200),settings:{offsetMs:0,manualCues:[{outputId:'left-signature',start:.8,end:1}],outputEnabled:{}},
+  lightEvents:[{role:'vocals',id:'left-signature',actualStart:1,sourceEventTime:1}],movements:[],choreography:{lighting:{suppressedCollisions:0}}};
+ show.frames[50*200+4]=255;
+ const report=SyncReview.review(show,[{role:'vocals',time:1,end:1.1,kind:'accent',salience:.9,candidateOutputIds:['left-signature']}]);
+ assert.equal(report.roles.vocals.matched,1);
+ assert.equal(report.targets.manualOverride,0);
+ assert.equal(report.eventEvidence[0].realizationStatus,'matched');
+});

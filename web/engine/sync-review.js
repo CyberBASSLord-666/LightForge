@@ -35,7 +35,19 @@
     return {attack,active};
   }
   function manualAt(show,outputId,time){
-    return (show&&show.settings&&Array.isArray(show.settings.manualCues)?show.settings.manualCues:[]).some(cue=>cue&&cue.outputId===outputId&&finite(cue.start)&&finite(cue.end)&&time>=cue.start-1e-7&&time<cue.end+1e-7);
+    // Manual cues are compiled as a half-open range of FSEQ frames.  Compare
+    // their quantized frames here rather than their source-clock floats so a
+    // cue ending on a frame never masks the automatic attack in that next
+    // frame.  This must exactly follow ShowEngine.applyManualCues().
+    const step=show&&finite(show.stepMs)&&show.stepMs>0?show.stepMs/1000:null;
+    if(!step||!finite(time))return false;
+    const quantized=value=>Math.floor(value/step+.5+1e-8);
+    const frame=quantized(time);
+    return (show&&show.settings&&Array.isArray(show.settings.manualCues)?show.settings.manualCues:[]).some(cue=>{
+      if(!cue||cue.outputId!==outputId||!finite(cue.start)||!finite(cue.end)||cue.end<=cue.start)return false;
+      const start=quantized(cue.start),end=quantized(cue.end);
+      return frame>=start&&frame<end;
+    });
   }
   function enabled(show,output){return !!(output&&output.available!==false&&!(show&&show.settings&&show.settings.outputEnabled&&show.settings.outputEnabled[output.id]===false));}
   function uniqueIds(ids){return Array.from(new Set((Array.isArray(ids)?ids:[]).filter(id=>typeof id==='string'&&id)));}
@@ -149,15 +161,19 @@
       if(!target||!roles[target.role]||!finite(target.time))continue;
       const targetKey=key(target);if(seen.has(targetKey))continue;seen.add(targetKey);
       const role=roles[target.role],expected=target.time+(finite(show.settings&&show.settings.offsetMs)?show.settings.offsetMs:0)/1000,frame=Math.round(expected/step);
-      let status='suppressed',errorMs=null,output=null,actualCommandTime=null;
+      let status='suppressed',errorMs=null,output=null,actualCommandTime=null,manualOverrideObserved=false;
       for(const event of events.get(targetKey)||[]){
         const actual=Math.round(event.actualStart/step),candidate=byId.get(event.id);
         if(!candidate||Math.abs(actual*step-expected)>step/2+1e-7)continue;
+        // applyManualCues overwrites final frame bytes while preserving the
+        // original automatic light-event metadata.  Never let that manual
+        // transition be credited as proof that the automatic target survived.
+        if(manualAt(show,event.id,actual*step)){manualOverrideObserved=true;continue;}
         const state=frameState(show,candidate,actual);
         if(state.attack){status='matched';actualCommandTime=actual*step;errorMs=(actualCommandTime-expected)*1000;output=event.id;break;}
         if(state.active)status='heldWithoutAttack';
       }
-      const realizationStatus=status==='suppressed'?(frame<0||frame>=show.frameCount-1?'outsideExport':targetLoss(show,byId,target,expected)):status;
+      const realizationStatus=status==='suppressed'?(manualOverrideObserved?'manualOverride':frame<0||frame>=show.frameCount-1?'outsideExport':targetLoss(show,byId,target,expected)):status;
       // Keep the v1 per-role and manual row vocabulary stable.  The new
       // realizationStatus carries the more precise cause without redefining a
       // manual override as a successful automatic musical attack.
