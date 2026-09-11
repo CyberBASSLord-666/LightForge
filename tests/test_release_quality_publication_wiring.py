@@ -110,6 +110,7 @@ class ReleaseQualityPublicationWiringTest(unittest.TestCase):
         self.assertIn("--no-renames", source)
         self.assertIn("-z", source)
         self.assertIn("merge-base", source)
+        self.assertIn("rev-parse", source)
         self.assertIn("Prior published release has no valid source-bound request ledger", source)
         for path in (
             ".github/workflows/publish-release.yml",
@@ -239,6 +240,34 @@ class ReleaseQualityPublicationWiringTest(unittest.TestCase):
                     COMMIT,
                     TREE,
                 )
+
+    def test_fetched_baseline_tree_must_match_the_verified_release_receipt(self):
+        baseline = {
+            "tag": "v2.2.4",
+            "target_commit": TARGET_COMMIT,
+            "source_commit": BASE_COMMIT,
+            "source_tree_sha": BASE_TREE,
+            "version": {"name": "2.2.4", "code": 20204},
+        }
+
+        def command(*args):
+            if args[:3] == ("git", "fetch", "--no-tags"):
+                return ""
+            if args[:2] == ("git", "rev-parse"):
+                # The fetched object disagrees with the API/verified-run tree
+                # record.  A malformed provenance baseline may never waive.
+                return "e" * 40
+            self.fail("unexpected command " + repr(args))
+
+        with patch.object(publisher, "_verified_published_baseline", return_value=baseline), \
+                patch.object(publisher, "run", side_effect=command), \
+                patch.object(publisher, "run_bytes") as raw_diff:
+            scope = publisher._derive_published_release_scope(
+                "CyberBASSLord-666/LightForge", COMMIT, TREE, VERSION
+            )
+        self.assertEqual(scope["classification"], "performance")
+        self.assertEqual(scope["waiver_blocker"], "unavailable_or_unverifiable_published_baseline")
+        raw_diff.assert_not_called()
 
     def test_publication_workflow_requires_protected_main_and_complete_history(self):
         workflow = (ROOT / ".github/workflows/publish-release.yml").read_text(encoding="utf-8")

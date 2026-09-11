@@ -210,6 +210,17 @@ def _unwaivable_performance_scope(source_commit, source_tree_sha, version, reaso
     return scope
 
 
+def _fetched_tree_sha(commit, label):
+    """Read a tree identity from the object database after an explicit fetch.
+
+    Git object identity already commits to the tree, but comparing this value
+    with the independently retrieved API record makes the provenance binding
+    explicit and turns an incomplete/incorrect fetch into a conservative
+    performance classification rather than a waiver.
+    """
+    return _commit_sha(run('git', 'rev-parse', commit + '^{tree}'), label)
+
+
 def _derive_published_release_scope(repo, source_commit, source_tree_sha, version):
     """Fetch the trusted baseline and derive a complete mode-aware scope."""
     try:
@@ -217,6 +228,15 @@ def _derive_published_release_scope(repo, source_commit, source_tree_sha, versio
         # The release workflow checks out complete history.  Fetching explicit
         # commits also covers a source candidate that is not HEAD at publication.
         run('git', 'fetch', '--no-tags', 'origin', base['target_commit'], base['source_commit'], source_commit)
+        require(
+            _fetched_tree_sha(base['source_commit'], 'Fetched published release source tree is invalid')
+            == base['source_tree_sha'],
+            'Fetched published release source tree differs from its verified receipt',
+        )
+        require(
+            _fetched_tree_sha(source_commit, 'Fetched release candidate source tree is invalid') == source_tree_sha,
+            'Fetched release candidate source tree differs from its GitHub record',
+        )
         run('git', 'merge-base', '--is-ancestor', base['source_commit'], base['target_commit'])
         run('git', 'merge-base', '--is-ancestor', base['source_commit'], source_commit)
         raw = run_bytes(
