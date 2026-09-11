@@ -80,8 +80,10 @@ def _relative(value, message):
 def _regular(root, relative, message):
     relative = _relative(relative, message)
     root = Path(root).resolve()
-    path = (root / relative).resolve()
-    require(path.is_relative_to(root) and path.is_file() and not path.is_symlink(), message)
+    raw = root / relative
+    require(raw.is_file() and not raw.is_symlink(), message)
+    path = raw.resolve()
+    require(path.is_relative_to(root), message)
     return path
 
 
@@ -129,6 +131,9 @@ def _file_inventory(root, names, label):
     root = Path(root).resolve()
     actual = {path.relative_to(root).as_posix() for path in root.rglob('*') if path.is_file() or path.is_symlink()}
     require(actual == set(names), label + ' contains an unexpected or missing file')
+    expected_directories = {str(PurePosixPath(name).parent) for name in names if str(PurePosixPath(name).parent) != '.'}
+    actual_directories = {path.relative_to(root).as_posix() for path in root.rglob('*') if path.is_dir() and not path.is_symlink()}
+    require(actual_directories == expected_directories, label + ' contains an unexpected directory')
     result = {}
     for name in names:
         path = _regular(root, name, label + ' contains a non-regular file: ' + name)
@@ -142,20 +147,24 @@ def _candidate_manifest(candidate_dir, release, head_sha=None):
     inventory = _file_inventory(root, names, 'Candidate artifact')
     manifest_path = _regular(root, 'candidate-manifest.json', 'Candidate manifest is missing')
     manifest = _load(manifest_path, 'Candidate manifest is invalid')
+    require(set(manifest) == {'schema_version', 'kind', 'release', 'source', 'pipeline', 'source_hashes', 'files'},
+            'Candidate manifest fields are invalid')
     require(manifest.get('schema_version') == SCHEMA_VERSION and manifest.get('kind') == CANDIDATE_KIND,
             'Candidate manifest schema is invalid')
     require(manifest.get('release') == release, 'Candidate manifest release differs')
     source = manifest.get('source')
-    require(isinstance(source, dict), 'Candidate manifest source is invalid')
+    require(isinstance(source, dict) and set(source) == {'commit', 'tree_sha'}, 'Candidate manifest source is invalid')
     commit = _commit(source.get('commit'), 'Candidate manifest source commit is invalid')
     _commit(source.get('tree_sha'), 'Candidate manifest source tree is invalid')
     if head_sha is not None:
         require(commit == _commit(head_sha, 'Expected source commit is invalid'), 'Candidate manifest source differs from workflow')
     pipeline = manifest.get('pipeline')
-    require(isinstance(pipeline, dict), 'Candidate manifest pipeline is invalid')
+    require(isinstance(pipeline, dict) and set(pipeline) == {'run_id', 'run_attempt', 'evidence_session'},
+            'Candidate manifest pipeline is invalid')
     _int(pipeline.get('run_id'), 'Candidate manifest run id is invalid')
     _int(pipeline.get('run_attempt'), 'Candidate manifest run attempt is invalid')
     _session(pipeline.get('evidence_session'), 'Candidate manifest evidence session is invalid')
+    _source_hashes(manifest.get('source_hashes'), 'Candidate manifest source hashes are invalid')
     files = manifest.get('files')
     require(isinstance(files, dict) and set(files) == set(_files(release)), 'Candidate manifest file inventory is invalid')
     for name in _files(release):
@@ -187,6 +196,8 @@ def create_candidate(args):
             'Candidate APK metadata differs from the APK')
     checks = (source / (apk + '.sha256')).read_text(encoding='utf-8').strip().split()
     require(checks == [inventory[apk]['sha256'], apk], 'Candidate APK checksum file differs')
+    source_hashes = _load(args.source_hashes, 'Candidate source hashes are invalid')
+    _source_hashes(source_hashes, 'Candidate source hashes are invalid')
     for name in names:
         shutil.copyfile(_regular(source, name, 'Candidate input file is invalid: ' + name), output / name)
     manifest = {
@@ -198,6 +209,7 @@ def create_candidate(args):
         'pipeline': {'run_id': _int(args.run_id, 'Candidate run id is invalid'),
                      'run_attempt': _int(args.run_attempt, 'Candidate run attempt is invalid'),
                      'evidence_session': _session(args.evidence_session, 'Candidate evidence session is invalid')},
+        'source_hashes': source_hashes,
         'files': inventory,
     }
     _atomic_json(output / 'candidate-manifest.json', manifest)
@@ -205,14 +217,26 @@ def create_candidate(args):
     print(json.dumps({'candidate_identity_sha256': checked['identity_sha256']}, sort_keys=True))
 
 
-def candidate_binding(candidate_dir, release, *, artifact_id, artifact_digest, head_sha=None):
+def candidate_binding(candidate_dir, release, *, artifact_id, artifact_digest, head_sha=None,
+                      run_id=None, run_attempt=None, evidence_session=None):
     candidate = _candidate_manifest(candidate_dir, release, head_sha)
+    pipeline = candidate['manifest']['pipeline']
+    if run_id is not None:
+        require(pipeline['run_id'] == _int(run_id, 'Expected candidate run id is invalid'),
+                'Candidate manifest run differs from its recorded producer')
+    if run_attempt is not None:
+        require(pipeline['run_attempt'] == _int(run_attempt, 'Expected candidate run attempt is invalid'),
+                'Candidate manifest attempt differs from its recorded producer')
+    if evidence_session is not None:
+        require(pipeline['evidence_session'] == _session(evidence_session, 'Expected candidate session is invalid'),
+                'Candidate manifest session differs from its recorded producer')
     return {
         'artifact_id': _int(artifact_id, 'Candidate artifact id is invalid'),
         'artifact_digest': _artifact_sha(artifact_digest, 'Candidate artifact digest is invalid'),
         'identity_sha256': candidate['identity_sha256'],
         'source': candidate['manifest']['source'],
         'pipeline': candidate['manifest']['pipeline'],
+        'source_hashes': candidate['manifest']['source_hashes'],
         'files': candidate['files'],
     }
 
@@ -223,6 +247,16 @@ def _source_hashes(value, message):
         _relative(path, message)
         _sha(checksum, message)
     return value
+
+
+def validate_source_hashes(source_hashes, source_root):
+    """Verify the candidate's declared source bytes in the publisher checkout."""
+    hashes = _source_hashes(source_hashes, 'Candidate source hashes are invalid')
+    root = Path(source_root).resolve()
+    for relative, checksum in hashes.items():
+        path = _regular(root, relative, 'Candidate source path is invalid: ' + relative)
+        require(sha256_file(path) == checksum, 'Candidate source hash differs: ' + relative)
+    return hashes
 
 
 def _receipt(receipt, name, *, release, run_id, run_attempt, head_sha, session, candidate):
@@ -243,7 +277,9 @@ def write_evidence(args):
     head = _commit(args.head_sha, 'Android evidence head SHA is invalid')
     session = _session(args.evidence_session, 'Android evidence session is invalid')
     candidate = candidate_binding(args.candidate_dir, args.release, artifact_id=args.candidate_artifact_id,
-                                  artifact_digest=args.candidate_artifact_digest, head_sha=head)
+                                  artifact_digest=args.candidate_artifact_digest, head_sha=head,
+                                  run_id=args.candidate_run_id, run_attempt=args.candidate_run_attempt,
+                                  evidence_session=args.candidate_evidence_session)
     inputs = {
         'android-background-verification.json': Path(args.background_receipt),
         'android-diagnostics-verification.json': Path(args.diagnostics_receipt),
@@ -284,6 +320,8 @@ def verify_evidence(artifact_dir, *, release, run_id, run_attempt, head_sha):
     _file_inventory(root, expected, 'Android evidence artifact')
     manifest_path = _regular(root, 'android-evidence-manifest.json', 'Android evidence manifest is missing')
     manifest = _load(manifest_path, 'Android evidence manifest is invalid')
+    require(set(manifest) == {'schema_version', 'kind', 'release', 'pipeline', 'candidate', 'receipts'},
+            'Android evidence manifest fields are invalid')
     require(manifest.get('schema_version') == SCHEMA_VERSION and manifest.get('kind') == KIND,
             'Android evidence manifest schema is invalid')
     require(manifest.get('release') == release, 'Android evidence manifest release differs')
@@ -295,20 +333,24 @@ def verify_evidence(artifact_dir, *, release, run_id, run_attempt, head_sha):
     session = _session(pipeline['evidence_session'], 'Android evidence manifest session is invalid')
     candidate = manifest.get('candidate')
     require(isinstance(candidate, dict), 'Android evidence manifest candidate is invalid')
-    require(set(candidate) == {'artifact_id', 'artifact_digest', 'identity_sha256', 'source', 'pipeline', 'files'},
+    require(set(candidate) == {'artifact_id', 'artifact_digest', 'identity_sha256', 'source', 'pipeline', 'source_hashes', 'files'},
             'Android evidence manifest candidate fields are invalid')
     _int(candidate['artifact_id'], 'Android evidence candidate artifact id is invalid')
     _artifact_sha(candidate['artifact_digest'], 'Android evidence candidate artifact digest is invalid')
     _sha(candidate['identity_sha256'], 'Android evidence candidate identity is invalid')
     source = candidate['source']
-    require(isinstance(source, dict) and _commit(source.get('commit'), 'Android evidence candidate source is invalid') == head_sha,
+    require(isinstance(source, dict) and set(source) == {'commit', 'tree_sha'}
+            and _commit(source.get('commit'), 'Android evidence candidate source is invalid') == head_sha,
             'Android evidence candidate source differs')
     _commit(source.get('tree_sha'), 'Android evidence candidate tree is invalid')
     candidate_pipeline = candidate['pipeline']
-    require(isinstance(candidate_pipeline, dict), 'Android evidence candidate pipeline is invalid')
+    require(isinstance(candidate_pipeline, dict) and set(candidate_pipeline) == {'run_id', 'run_attempt', 'evidence_session'},
+            'Android evidence candidate pipeline is invalid')
     _int(candidate_pipeline.get('run_id'), 'Android evidence candidate run id is invalid')
     _int(candidate_pipeline.get('run_attempt'), 'Android evidence candidate run attempt is invalid')
     _session(candidate_pipeline.get('evidence_session'), 'Android evidence candidate session is invalid')
+    require(candidate_pipeline['run_id'] == run_id, 'Android evidence candidate run differs')
+    _source_hashes(candidate.get('source_hashes'), 'Android evidence candidate source hashes are invalid')
     receipt_records = manifest.get('receipts')
     require(isinstance(receipt_records, dict) and set(receipt_records) == set(RECEIPTS), 'Android evidence receipt inventory is invalid')
     for name, relative in RECEIPTS.items():
@@ -338,6 +380,7 @@ def _parser():
     candidate.add_argument('--head-sha', required=True)
     candidate.add_argument('--tree-sha', required=True)
     candidate.add_argument('--evidence-session', required=True)
+    candidate.add_argument('--source-hashes', type=Path, required=True)
     write = commands.add_parser('write')
     write.add_argument('--output-dir', type=Path, required=True)
     write.add_argument('--background-receipt', type=Path, required=True)
@@ -345,6 +388,9 @@ def _parser():
     write.add_argument('--candidate-dir', type=Path, required=True)
     write.add_argument('--candidate-artifact-id', type=int, required=True)
     write.add_argument('--candidate-artifact-digest', required=True)
+    write.add_argument('--candidate-run-id', type=int, required=True)
+    write.add_argument('--candidate-run-attempt', type=int, required=True)
+    write.add_argument('--candidate-evidence-session', required=True)
     write.add_argument('--release', required=True)
     write.add_argument('--run-id', type=int, required=True)
     write.add_argument('--run-attempt', type=int, required=True)
