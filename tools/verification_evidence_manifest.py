@@ -1,0 +1,630 @@
+#!/usr/bin/env python3
+"""Seal success-only non-Android verify-v2 receipts for release publication.
+
+The broad ``lightforge-<version>-verification`` Actions artifact is retained
+for diagnostics and deliberately uploads under ``if: always()``.  It is never
+release authority.  This module creates a separate, exact evidence content
+artifact only after the verify job has completed all of its ordinary steps,
+then a tiny wrapper artifact after Actions has assigned the content artifact an
+immutable ID and digest.  The wrapper makes the otherwise self-referential
+artifact identity auditable without trusting a checkout receipt or an artifact
+name glob.
+
+The candidate artifact is the common provenance root shared with Android
+instrumentation evidence.  A failed-job-only rerun may have a newer
+``GITHUB_RUN_ATTEMPT`` than the original verify/candidate job; consequently all
+names and bindings are derived from the candidate manifest's pipeline identity,
+not from a later retry attempt.
+"""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path, PurePosixPath
+import re
+import shutil
+import tempfile
+from typing import Any, Mapping
+
+
+SCHEMA_VERSION = 1
+REPOSITORY = "CyberBASSLord-666/LightForge"
+WORKFLOW = ".github/workflows/verify-v2.yml"
+CANDIDATE_KIND = "lightforge-ci-candidate"
+CONTENT_KIND = "lightforge-verify-v2-nonandroid-evidence"
+WRAPPER_KIND = "lightforge-verify-v2-nonandroid-evidence-manifest"
+CONTENT_MANIFEST = "verification-evidence-content.json"
+WRAPPER_MANIFEST = "verification-evidence-manifest.json"
+
+RECEIPTS = {
+    "regression-verification.json": "receipts/regression-verification.json",
+    "browser-verification.json": "receipts/browser-verification.json",
+    "native-verification.json": "receipts/native-verification.json",
+    "analysis-browser-verification.json": "receipts/analysis-browser-verification.json",
+    "analysis-verification.json": "receipts/analysis-verification.json",
+}
+
+_HEX64 = re.compile(r"[0-9a-f]{64}")
+_SHA40 = re.compile(r"[0-9a-f]{40}")
+_RELEASE = re.compile(r"[0-9]+\.[0-9]+\.[0-9]+")
+
+
+def require(value: bool, message: str) -> None:
+    if not value:
+        raise ValueError(message)
+
+
+def canonical_json(value: Any) -> str:
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False)
+
+
+def canonical_sha256(value: Any) -> str:
+    return hashlib.sha256(canonical_json(value).encode("utf-8")).hexdigest()
+
+
+def sha256_file(path: Path | str) -> str:
+    with Path(path).open("rb") as stream:
+        return hashlib.file_digest(stream, "sha256").hexdigest()
+
+
+def _sha(value: Any, message: str) -> str:
+    require(isinstance(value, str) and _HEX64.fullmatch(value) is not None, message)
+    return value
+
+
+def _artifact_sha(value: Any, message: str) -> str:
+    require(isinstance(value, str), message)
+    return _sha(value.removeprefix("sha256:"), message)
+
+
+def _integer(value: Any, message: str) -> int:
+    require(type(value) is int and value > 0, message)
+    return value
+
+
+def _commit(value: Any, message: str) -> str:
+    require(isinstance(value, str) and _SHA40.fullmatch(value) is not None, message)
+    return value
+
+
+def _session(value: Any, message: str) -> str:
+    require(isinstance(value, str) and re.fullmatch(r"[0-9a-f]{64}", value) is not None, message)
+    return value
+
+
+def _release(value: Any, message: str) -> str:
+    require(isinstance(value, str) and _RELEASE.fullmatch(value) is not None, message)
+    return value
+
+
+def _relative(value: Any, message: str) -> PurePosixPath:
+    """Validate a repository/archive path before it reaches filesystem or Git."""
+    require(isinstance(value, str) and value and "\x00" not in value and "\\" not in value and ":" not in value, message)
+    relative = PurePosixPath(value)
+    require(
+        relative.as_posix() == value
+        and not relative.is_absolute()
+        and all(part not in {"", ".", ".."} for part in relative.parts),
+        message,
+    )
+    return relative
+
+
+def _regular(root: Path | str, relative: str, message: str) -> Path:
+    root_path = Path(root).resolve()
+    path = root_path / _relative(relative, message)
+    require(path.is_file() and not path.is_symlink(), message)
+    resolved = path.resolve()
+    require(resolved.is_relative_to(root_path), message)
+    return resolved
+
+
+def _load(path: Path | str, message: str) -> dict[str, Any]:
+    try:
+        value = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as error:
+        raise ValueError(message) from error
+    require(isinstance(value, dict), message)
+    return value
+
+
+def _atomic_json(path: Path | str, value: Mapping[str, Any]) -> None:
+    destination = Path(path)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, temporary = tempfile.mkstemp(prefix="." + destination.name + ".", suffix=".tmp", dir=destination.parent)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+            json.dump(value, stream, sort_keys=True, indent=2)
+            stream.write("\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, destination)
+    except BaseException:
+        try:
+            os.unlink(temporary)
+        except FileNotFoundError:
+            pass
+        raise
+
+
+def _fresh_directory(path: Path | str) -> Path:
+    result = Path(path)
+    require(not result.exists(), "Evidence output directory must be fresh: " + str(result))
+    result.mkdir(parents=True, mode=0o700)
+    return result
+
+
+def _inventory(root: Path | str, expected: set[str], label: str) -> dict[str, dict[str, Any]]:
+    root_path = Path(root).resolve()
+    actual = {
+        entry.relative_to(root_path).as_posix()
+        for entry in root_path.rglob("*")
+        if entry.is_file() or entry.is_symlink()
+    }
+    require(actual == expected, label + " contains an unexpected or missing file")
+    expected_directories = {
+        str(PurePosixPath(name).parent)
+        for name in expected
+        if str(PurePosixPath(name).parent) != "."
+    }
+    actual_directories = {
+        entry.relative_to(root_path).as_posix()
+        for entry in root_path.rglob("*")
+        if entry.is_dir() and not entry.is_symlink()
+    }
+    require(actual_directories == expected_directories, label + " contains an unexpected directory")
+    result: dict[str, dict[str, Any]] = {}
+    for name in expected:
+        path = _regular(root_path, name, label + " contains a non-regular file: " + name)
+        result[name] = {"bytes": path.stat().st_size, "sha256": sha256_file(path)}
+    return result
+
+
+def _source_hashes(value: Any, message: str) -> dict[str, str]:
+    require(isinstance(value, dict) and value, message)
+    result: dict[str, str] = {}
+    for relative, checksum in value.items():
+        result[_relative(relative, message).as_posix()] = _sha(checksum, message)
+    require(len(result) == len(value), message)
+    return result
+
+
+def validate_source_hashes(source_hashes: Any, source_root: Path | str) -> dict[str, str]:
+    """Verify a freshly emitted receipt against the exact verifier checkout.
+
+    This runs while the ordinary verify job is still operating on ``GITHUB_SHA``
+    and after the workflow has removed any checked-in receipt files.  The later
+    publisher repeats the same binding directly against the immutable Git
+    object, rather than its release-request checkout.
+    """
+    hashes = _source_hashes(source_hashes, "Verification receipt source hashes are invalid")
+    for relative, checksum in hashes.items():
+        path = _regular(source_root, relative, "Verification receipt source path is invalid: " + relative)
+        require(sha256_file(path) == checksum, "Verification receipt source hash differs from the verifier checkout: " + relative)
+    return hashes
+
+
+def candidate_artifact_name(release: str) -> str:
+    return "lightforge-" + _release(release, "Candidate release is invalid") + "-ci-candidate"
+
+
+def content_artifact_name(release: str, pipeline: Mapping[str, Any]) -> str:
+    parsed = _pipeline(pipeline, "Evidence artifact pipeline is invalid")
+    return "lightforge-" + _release(release, "Evidence release is invalid") + "-verification-evidence-" + str(parsed["run_id"]) + "-" + str(parsed["run_attempt"])
+
+
+def wrapper_artifact_name(release: str, pipeline: Mapping[str, Any]) -> str:
+    parsed = _pipeline(pipeline, "Evidence wrapper pipeline is invalid")
+    return "lightforge-" + _release(release, "Evidence release is invalid") + "-verification-evidence-manifest-" + str(parsed["run_id"]) + "-" + str(parsed["run_attempt"])
+
+
+def _candidate_files(release: str) -> tuple[str, ...]:
+    apk = "LightForge-" + release + ".apk"
+    return (apk, "background-tests.apk", "diagnostics-tests.apk", apk + ".json", apk + ".sha256")
+
+
+def _pipeline(value: Any, message: str) -> dict[str, Any]:
+    require(isinstance(value, dict) and set(value) == {"workflow", "run_id", "run_attempt", "head_sha", "tree_sha", "evidence_session"}, message)
+    require(value.get("workflow") == WORKFLOW, message)
+    return {
+        "workflow": WORKFLOW,
+        "run_id": _integer(value.get("run_id"), message),
+        "run_attempt": _integer(value.get("run_attempt"), message),
+        "head_sha": _commit(value.get("head_sha"), message),
+        "tree_sha": _commit(value.get("tree_sha"), message),
+        "evidence_session": _session(value.get("evidence_session"), message),
+    }
+
+
+def _candidate_pipeline(value: Any, message: str) -> dict[str, Any]:
+    require(isinstance(value, dict) and set(value) == {"run_id", "run_attempt", "evidence_session"}, message)
+    return {
+        "run_id": _integer(value.get("run_id"), message),
+        "run_attempt": _integer(value.get("run_attempt"), message),
+        "evidence_session": _session(value.get("evidence_session"), message),
+    }
+
+
+def _candidate_record(value: Any, release: str, message: str) -> dict[str, Any]:
+    require(isinstance(value, dict) and set(value) == {
+        "artifact_id", "artifact_digest", "identity_sha256", "source", "pipeline", "source_hashes", "files"
+    }, message)
+    source = value.get("source")
+    require(isinstance(source, dict) and set(source) == {"commit", "tree_sha"}, message)
+    candidate = {
+        "artifact_id": _integer(value.get("artifact_id"), message),
+        "artifact_digest": _artifact_sha(value.get("artifact_digest"), message),
+        "identity_sha256": _sha(value.get("identity_sha256"), message),
+        "source": {
+            "commit": _commit(source.get("commit"), message),
+            "tree_sha": _commit(source.get("tree_sha"), message),
+        },
+        "pipeline": _candidate_pipeline(value.get("pipeline"), message),
+        "source_hashes": _source_hashes(value.get("source_hashes"), message),
+    }
+    files = value.get("files")
+    expected = set(_candidate_files(release))
+    require(isinstance(files, dict) and set(files) == expected, message)
+    candidate["files"] = {}
+    for name in sorted(expected):
+        record = files[name]
+        require(isinstance(record, dict) and set(record) == {"bytes", "sha256"}, message)
+        candidate["files"][name] = {
+            "bytes": _integer(record.get("bytes"), message),
+            "sha256": _sha(record.get("sha256"), message),
+        }
+    return candidate
+
+
+def candidate_binding(
+    candidate_manifest: Path | str,
+    *,
+    release: str,
+    artifact_id: int,
+    artifact_digest: str,
+    identity_sha256: str,
+    pipeline: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Convert the common candidate manifest into its artifact-bound record."""
+    release = _release(release, "Candidate release is invalid")
+    expected_pipeline = _pipeline(pipeline, "Expected candidate pipeline is invalid")
+    raw = _load(candidate_manifest, "Candidate manifest is invalid")
+    require(set(raw) == {"schema_version", "kind", "release", "source", "pipeline", "source_hashes", "files"}, "Candidate manifest fields are invalid")
+    require(raw.get("schema_version") == SCHEMA_VERSION and raw.get("kind") == CANDIDATE_KIND, "Candidate manifest schema is invalid")
+    require(raw.get("release") == release, "Candidate manifest release differs")
+    source = raw.get("source")
+    require(isinstance(source, dict) and set(source) == {"commit", "tree_sha"}, "Candidate manifest source is invalid")
+    candidate_source = {
+        "commit": _commit(source.get("commit"), "Candidate manifest source is invalid"),
+        "tree_sha": _commit(source.get("tree_sha"), "Candidate manifest source is invalid"),
+    }
+    require(candidate_source == {"commit": expected_pipeline["head_sha"], "tree_sha": expected_pipeline["tree_sha"]}, "Candidate manifest source differs from verification source")
+    candidate_pipeline = _candidate_pipeline(raw.get("pipeline"), "Candidate manifest pipeline is invalid")
+    require(candidate_pipeline == {
+        "run_id": expected_pipeline["run_id"],
+        "run_attempt": expected_pipeline["run_attempt"],
+        "evidence_session": expected_pipeline["evidence_session"],
+    }, "Candidate manifest pipeline differs from verification")
+    source_hashes = _source_hashes(raw.get("source_hashes"), "Candidate manifest source hashes are invalid")
+    files = raw.get("files")
+    expected_files = set(_candidate_files(release))
+    require(isinstance(files, dict) and set(files) == expected_files, "Candidate manifest file inventory is invalid")
+    normalized_files: dict[str, dict[str, Any]] = {}
+    for name in sorted(expected_files):
+        record = files[name]
+        require(isinstance(record, dict) and set(record) == {"bytes", "sha256"}, "Candidate manifest file record is invalid")
+        normalized_files[name] = {"bytes": _integer(record.get("bytes"), "Candidate manifest file size is invalid"),
+                                  "sha256": _sha(record.get("sha256"), "Candidate manifest file digest is invalid")}
+    actual_identity = sha256_file(candidate_manifest)
+    require(actual_identity == _sha(identity_sha256, "Candidate manifest identity is invalid"), "Candidate manifest identity differs from Actions output")
+    return {
+        "artifact_id": _integer(artifact_id, "Candidate artifact id is invalid"),
+        "artifact_digest": _artifact_sha(artifact_digest, "Candidate artifact digest is invalid"),
+        "identity_sha256": actual_identity,
+        "source": candidate_source,
+        "pipeline": candidate_pipeline,
+        "source_hashes": source_hashes,
+        "files": normalized_files,
+    }
+
+
+def validate_candidate_record(value: Any, *, release: str, pipeline: Mapping[str, Any]) -> dict[str, Any]:
+    candidate = _candidate_record(value, _release(release, "Evidence release is invalid"), "Evidence candidate binding is invalid")
+    expected = _pipeline(pipeline, "Evidence pipeline is invalid")
+    require(candidate["source"] == {"commit": expected["head_sha"], "tree_sha": expected["tree_sha"]}, "Evidence candidate source differs")
+    require(candidate["pipeline"] == {
+        "run_id": expected["run_id"],
+        "run_attempt": expected["run_attempt"],
+        "evidence_session": expected["evidence_session"],
+    }, "Evidence candidate pipeline differs")
+    return candidate
+
+
+def _receipt(value: Any, name: str, release: str, source_root: Path | str | None = None) -> dict[str, Any]:
+    require(isinstance(value, dict), "Verification receipt is invalid: " + name)
+    require(value.get("passed") is True and value.get("errors") == [], "Verification receipt did not pass: " + name)
+    require(value.get("release") == release, "Verification receipt release differs: " + name)
+    source_hashes = _source_hashes(value.get("source_hashes"), "Verification receipt source hashes are invalid: " + name)
+    if source_root is not None:
+        validate_source_hashes(source_hashes, source_root)
+    return {
+        "passed": True,
+        "release": release,
+        "source_hashes": source_hashes,
+        "source_hashes_sha256": canonical_sha256(source_hashes),
+    }
+
+
+def _receipt_record(value: Any, name: str, release: str, root: Path) -> dict[str, Any]:
+    require(isinstance(value, dict) and set(value) == {
+        "path", "bytes", "sha256", "passed", "release", "source_hashes", "source_hashes_sha256"
+    }, "Evidence receipt record is invalid: " + name)
+    require(value.get("path") == RECEIPTS[name], "Evidence receipt path differs: " + name)
+    path = _regular(root, value["path"], "Evidence receipt is missing: " + name)
+    require(value.get("bytes") == path.stat().st_size and _sha(value.get("sha256"), "Evidence receipt digest is invalid: " + name) == sha256_file(path),
+            "Evidence receipt digest differs: " + name)
+    actual = _receipt(_load(path, "Evidence receipt is invalid: " + name), name, release)
+    expected = {
+        "path": RECEIPTS[name],
+        "bytes": path.stat().st_size,
+        "sha256": sha256_file(path),
+        **actual,
+    }
+    require(value == expected, "Evidence receipt metadata differs: " + name)
+    return expected
+
+
+def _content_manifest(value: Any, *, release: str, pipeline: Mapping[str, Any], root: Path,
+                      expected_candidate: Mapping[str, Any] | None = None) -> dict[str, Any]:
+    require(isinstance(value, dict) and set(value) == {
+        "schema_version", "kind", "repository", "release", "pipeline", "candidate", "receipts"
+    }, "Evidence content manifest fields are invalid")
+    require(value.get("schema_version") == SCHEMA_VERSION and value.get("kind") == CONTENT_KIND, "Evidence content manifest schema is invalid")
+    require(value.get("repository") == REPOSITORY and value.get("release") == release, "Evidence content manifest identity differs")
+    parsed_pipeline = _pipeline(value.get("pipeline"), "Evidence content pipeline is invalid")
+    require(parsed_pipeline == _pipeline(pipeline, "Expected evidence pipeline is invalid"), "Evidence content pipeline differs")
+    candidate = validate_candidate_record(value.get("candidate"), release=release, pipeline=parsed_pipeline)
+    if expected_candidate is not None:
+        require(candidate == _candidate_record(expected_candidate, release, "Expected evidence candidate is invalid"), "Evidence content candidate differs")
+    receipts = value.get("receipts")
+    require(isinstance(receipts, dict) and set(receipts) == set(RECEIPTS), "Evidence receipt inventory is invalid")
+    normalized = {name: _receipt_record(receipts[name], name, release, root) for name in RECEIPTS}
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "kind": CONTENT_KIND,
+        "repository": REPOSITORY,
+        "release": release,
+        "pipeline": parsed_pipeline,
+        "candidate": candidate,
+        "receipts": normalized,
+    }
+
+
+def verify_content(artifact_dir: Path | str, *, release: str, pipeline: Mapping[str, Any],
+                   expected_candidate: Mapping[str, Any] | None = None) -> dict[str, Any]:
+    root = Path(artifact_dir).resolve()
+    _inventory(root, {CONTENT_MANIFEST, *RECEIPTS.values()}, "Verification evidence artifact")
+    manifest_path = _regular(root, CONTENT_MANIFEST, "Evidence content manifest is missing")
+    parsed = _content_manifest(_load(manifest_path, "Evidence content manifest is invalid"), release=_release(release, "Evidence release is invalid"), pipeline=pipeline, root=root, expected_candidate=expected_candidate)
+    require(parsed == _load(manifest_path, "Evidence content manifest is invalid"), "Evidence content manifest is not canonical")
+    return parsed
+
+
+def write_content(args: argparse.Namespace) -> dict[str, Any]:
+    pipeline = {
+        "workflow": WORKFLOW,
+        "run_id": args.run_id,
+        "run_attempt": args.run_attempt,
+        "head_sha": args.head_sha,
+        "tree_sha": args.tree_sha,
+        "evidence_session": args.evidence_session,
+    }
+    pipeline = _pipeline(pipeline, "Evidence pipeline is invalid")
+    release = _release(args.release, "Evidence release is invalid")
+    candidate = candidate_binding(
+        args.candidate_manifest,
+        release=release,
+        artifact_id=args.candidate_artifact_id,
+        artifact_digest=args.candidate_artifact_digest,
+        identity_sha256=args.candidate_identity_sha256,
+        pipeline=pipeline,
+    )
+    source = Path(args.receipt_dir).resolve()
+    output = _fresh_directory(args.output_dir)
+    try:
+        records: dict[str, dict[str, Any]] = {}
+        for name, relative in RECEIPTS.items():
+            origin = _regular(source, name, "Verification receipt is missing: " + name)
+            summary = _receipt(_load(origin, "Verification receipt is invalid: " + name), name, release, args.source_root)
+            destination = output / relative
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(origin, destination)
+            records[name] = {
+                "path": relative,
+                "bytes": destination.stat().st_size,
+                "sha256": sha256_file(destination),
+                **summary,
+            }
+        manifest = {
+            "schema_version": SCHEMA_VERSION,
+            "kind": CONTENT_KIND,
+            "repository": REPOSITORY,
+            "release": release,
+            "pipeline": pipeline,
+            "candidate": candidate,
+            "receipts": records,
+        }
+        _atomic_json(output / CONTENT_MANIFEST, manifest)
+        verify_content(output, release=release, pipeline=pipeline, expected_candidate=candidate)
+        return manifest
+    except BaseException:
+        shutil.rmtree(output, ignore_errors=True)
+        raise
+
+
+def _artifact_reference(value: Any, release: str, pipeline: Mapping[str, Any]) -> dict[str, Any]:
+    require(isinstance(value, dict) and set(value) == {"id", "digest", "name", "content_manifest_sha256"}, "Evidence artifact reference is invalid")
+    parsed_pipeline = _pipeline(pipeline, "Evidence pipeline is invalid")
+    return {
+        "id": _integer(value.get("id"), "Evidence artifact id is invalid"),
+        "digest": _artifact_sha(value.get("digest"), "Evidence artifact digest is invalid"),
+        "name": content_artifact_name(release, parsed_pipeline),
+        "content_manifest_sha256": _sha(value.get("content_manifest_sha256"), "Evidence content manifest digest is invalid"),
+    }
+
+
+def _wrapper_manifest(value: Any, *, release: str, pipeline: Mapping[str, Any], root: Path,
+                      expected_candidate: Mapping[str, Any] | None = None) -> dict[str, Any]:
+    require(isinstance(value, dict) and set(value) == {
+        "schema_version", "kind", "repository", "release", "pipeline", "candidate", "evidence_artifact", "receipts"
+    }, "Evidence wrapper manifest fields are invalid")
+    require(value.get("schema_version") == SCHEMA_VERSION and value.get("kind") == WRAPPER_KIND, "Evidence wrapper manifest schema is invalid")
+    require(value.get("repository") == REPOSITORY and value.get("release") == release, "Evidence wrapper manifest identity differs")
+    parsed_pipeline = _pipeline(value.get("pipeline"), "Evidence wrapper pipeline is invalid")
+    require(parsed_pipeline == _pipeline(pipeline, "Expected evidence pipeline is invalid"), "Evidence wrapper pipeline differs")
+    candidate = validate_candidate_record(value.get("candidate"), release=release, pipeline=parsed_pipeline)
+    if expected_candidate is not None:
+        require(candidate == _candidate_record(expected_candidate, release, "Expected evidence candidate is invalid"), "Evidence wrapper candidate differs")
+    artifact = _artifact_reference(value.get("evidence_artifact"), release, parsed_pipeline)
+    require(value["evidence_artifact"].get("name") == artifact["name"], "Evidence artifact name differs")
+    receipts = value.get("receipts")
+    require(isinstance(receipts, dict) and set(receipts) == set(RECEIPTS), "Evidence wrapper receipt inventory is invalid")
+    # The wrapper repeats these records so that source-hash bindings are sealed
+    # before the referenced content archive is even downloaded.
+    normalized: dict[str, dict[str, Any]] = {}
+    for name, record in receipts.items():
+        require(isinstance(record, dict) and set(record) == {
+            "path", "bytes", "sha256", "passed", "release", "source_hashes", "source_hashes_sha256"
+        }, "Evidence wrapper receipt record is invalid: " + name)
+        require(record.get("path") == RECEIPTS[name] and type(record.get("bytes")) is int and record["bytes"] >= 0
+                and _sha(record.get("sha256"), "Evidence wrapper receipt digest is invalid: " + name), "Evidence wrapper receipt fields are invalid: " + name)
+        summary = {
+            "passed": record.get("passed"),
+            "release": record.get("release"),
+            "source_hashes": _source_hashes(record.get("source_hashes"), "Evidence wrapper source hashes are invalid: " + name),
+            "source_hashes_sha256": record.get("source_hashes_sha256"),
+        }
+        require(summary["passed"] is True and summary["release"] == release
+                and _sha(summary["source_hashes_sha256"], "Evidence wrapper source-hash digest is invalid: " + name)
+                == canonical_sha256(summary["source_hashes"]), "Evidence wrapper receipt summary differs: " + name)
+        normalized[name] = {
+            "path": RECEIPTS[name], "bytes": record["bytes"], "sha256": record["sha256"], **summary,
+        }
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "kind": WRAPPER_KIND,
+        "repository": REPOSITORY,
+        "release": release,
+        "pipeline": parsed_pipeline,
+        "candidate": candidate,
+        "evidence_artifact": artifact,
+        "receipts": normalized,
+    }
+
+
+def verify_wrapper(artifact_dir: Path | str, *, release: str, pipeline: Mapping[str, Any],
+                   expected_candidate: Mapping[str, Any] | None = None) -> dict[str, Any]:
+    root = Path(artifact_dir).resolve()
+    _inventory(root, {WRAPPER_MANIFEST}, "Verification evidence wrapper")
+    path = _regular(root, WRAPPER_MANIFEST, "Evidence wrapper manifest is missing")
+    parsed = _wrapper_manifest(_load(path, "Evidence wrapper manifest is invalid"), release=_release(release, "Evidence release is invalid"), pipeline=pipeline, root=root, expected_candidate=expected_candidate)
+    require(parsed == _load(path, "Evidence wrapper manifest is invalid"), "Evidence wrapper manifest is not canonical")
+    return parsed
+
+
+def write_wrapper(args: argparse.Namespace) -> dict[str, Any]:
+    content_path = Path(args.content_dir).resolve() / CONTENT_MANIFEST
+    raw_content = _load(content_path, "Evidence content manifest is invalid")
+    release = _release(args.release, "Evidence release is invalid")
+    pipeline = _pipeline(args.pipeline, "Evidence pipeline is invalid")
+    content = verify_content(args.content_dir, release=release, pipeline=pipeline)
+    require(content == raw_content, "Evidence content manifest differs")
+    output = _fresh_directory(args.output_dir)
+    try:
+        wrapper = {
+            "schema_version": SCHEMA_VERSION,
+            "kind": WRAPPER_KIND,
+            "repository": REPOSITORY,
+            "release": release,
+            "pipeline": pipeline,
+            "candidate": content["candidate"],
+            "evidence_artifact": {
+                "id": _integer(args.evidence_artifact_id, "Evidence artifact id is invalid"),
+                "digest": _artifact_sha(args.evidence_artifact_digest, "Evidence artifact digest is invalid"),
+                "name": content_artifact_name(release, pipeline),
+                "content_manifest_sha256": sha256_file(content_path),
+            },
+            "receipts": content["receipts"],
+        }
+        _atomic_json(output / WRAPPER_MANIFEST, wrapper)
+        verify_wrapper(output, release=release, pipeline=pipeline, expected_candidate=content["candidate"])
+        return wrapper
+    except BaseException:
+        shutil.rmtree(output, ignore_errors=True)
+        raise
+
+
+def _parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description=__doc__)
+    commands = parser.add_subparsers(dest="command", required=True)
+    content = commands.add_parser("write-content")
+    content.add_argument("--output-dir", type=Path, required=True)
+    content.add_argument("--receipt-dir", type=Path, required=True)
+    content.add_argument("--source-root", type=Path, required=True)
+    content.add_argument("--candidate-manifest", type=Path, required=True)
+    content.add_argument("--candidate-artifact-id", type=int, required=True)
+    content.add_argument("--candidate-artifact-digest", required=True)
+    content.add_argument("--candidate-identity-sha256", required=True)
+    content.add_argument("--release", required=True)
+    content.add_argument("--run-id", type=int, required=True)
+    content.add_argument("--run-attempt", type=int, required=True)
+    content.add_argument("--head-sha", required=True)
+    content.add_argument("--tree-sha", required=True)
+    content.add_argument("--evidence-session", required=True)
+    wrapper = commands.add_parser("write-wrapper")
+    wrapper.add_argument("--output-dir", type=Path, required=True)
+    wrapper.add_argument("--content-dir", type=Path, required=True)
+    wrapper.add_argument("--evidence-artifact-id", type=int, required=True)
+    wrapper.add_argument("--evidence-artifact-digest", required=True)
+    wrapper.add_argument("--release", required=True)
+    wrapper.add_argument("--run-id", type=int, required=True)
+    wrapper.add_argument("--run-attempt", type=int, required=True)
+    wrapper.add_argument("--head-sha", required=True)
+    wrapper.add_argument("--tree-sha", required=True)
+    wrapper.add_argument("--evidence-session", required=True)
+    verify_content_parser = commands.add_parser("verify-content")
+    verify_content_parser.add_argument("--artifact-dir", type=Path, required=True)
+    verify_content_parser.add_argument("--release", required=True)
+    verify_content_parser.add_argument("--pipeline", required=True, type=json.loads)
+    verify_wrapper_parser = commands.add_parser("verify-wrapper")
+    verify_wrapper_parser.add_argument("--artifact-dir", type=Path, required=True)
+    verify_wrapper_parser.add_argument("--release", required=True)
+    verify_wrapper_parser.add_argument("--pipeline", required=True, type=json.loads)
+    return parser
+
+
+def main() -> None:
+    args = _parser().parse_args()
+    if args.command == "write-content":
+        result = write_content(args)
+    elif args.command == "write-wrapper":
+        args.pipeline = {
+            "workflow": WORKFLOW,
+            "run_id": args.run_id,
+            "run_attempt": args.run_attempt,
+            "head_sha": args.head_sha,
+            "tree_sha": args.tree_sha,
+            "evidence_session": args.evidence_session,
+        }
+        result = write_wrapper(args)
+    elif args.command == "verify-content":
+        result = verify_content(args.artifact_dir, release=args.release, pipeline=args.pipeline)
+    else:
+        result = verify_wrapper(args.artifact_dir, release=args.release, pipeline=args.pipeline)
+    print(json.dumps({"manifest_sha256": canonical_sha256(result)}, sort_keys=True))
+
+
+if __name__ == "__main__":
+    main()

@@ -24,6 +24,17 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 55
+    outputs:
+      candidate_artifact_id: ${{ steps.upload_candidate.outputs.artifact-id }}
+      candidate_artifact_digest: ${{ steps.upload_candidate.outputs.artifact-digest }}
+      candidate_identity_sha256: ${{ steps.candidate_manifest.outputs.identity_sha256 }}
+      candidate_run_id: ${{ github.run_id }}
+      candidate_run_attempt: ${{ github.run_attempt }}
+      candidate_evidence_session: ${{ steps.candidate_session.outputs.session }}
+      verification_evidence_artifact_id: ${{ steps.upload_verification_evidence.outputs.artifact-id }}
+      verification_evidence_artifact_digest: ${{ steps.upload_verification_evidence.outputs.artifact-digest }}
+      verification_evidence_wrapper_artifact_id: ${{ steps.upload_verification_evidence_wrapper.outputs.artifact-id }}
+      verification_evidence_wrapper_artifact_digest: ${{ steps.upload_verification_evidence_wrapper.outputs.artifact-digest }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -45,13 +56,26 @@ jobs:
           assert len(version.split('.'))==3 and all(p.isdigit() for p in version.split('.'))
           with open(os.environ['GITHUB_ENV'],'a') as out:out.write('LIGHTFORGE_RELEASE='+version+'\n')
           PYVERSION
-      - name: Create per-run evidence session
+      - name: Create per-run candidate evidence session
+        id: candidate_session
         run: |
           python3 - <<'PYSESSION'
           import os, secrets
+          session = secrets.token_hex(32)
           with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as out:
-              out.write('LIGHTFORGE_EVIDENCE_SESSION=' + secrets.token_hex(32) + '\n')
+              out.write('LIGHTFORGE_EVIDENCE_SESSION=' + session + '\n')
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as out:
+              out.write('session=' + session + '\n')
           PYSESSION
+      - name: Remove checked-in core receipts before fresh verification
+        run: |
+          receipt_root="qa/release-$LIGHTFORGE_RELEASE"
+          rm -f -- \
+            "$receipt_root/regression-verification.json" \
+            "$receipt_root/browser-verification.json" \
+            "$receipt_root/native-verification.json" \
+            "$receipt_root/analysis-browser-verification.json" \
+            "$receipt_root/analysis-verification.json"
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '22'
@@ -107,29 +131,106 @@ jobs:
         run: LIGHTFORGE_SIGNING_DIR="$RUNNER_TEMP/ci-signing" python3 tools/build_android_tests.py
       - name: Build same-signed diagnostic export instrumentation
         run: LIGHTFORGE_SIGNING_DIR="$RUNNER_TEMP/ci-signing" python3 tools/build_diagnostics_tests.py
-      - name: Bind Android candidate to this exact source checkout
-        run: python3 tools/android_evidence_binding.py write --candidate-dir dist
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
           name: lightforge-${{ env.LIGHTFORGE_RELEASE }}-verification
           path: |
             qa/release-${{ env.LIGHTFORGE_RELEASE }}/*.json
+            !qa/release-${{ env.LIGHTFORGE_RELEASE }}/android-*
             qa/release-${{ env.LIGHTFORGE_RELEASE }}/*.log
             qa/release-${{ env.LIGHTFORGE_RELEASE }}/*.txt
             qa/release-${{ env.LIGHTFORGE_RELEASE }}/*.png
           retention-days: 30
-      - name: Retain verified candidate for local release signing
+      - name: Seal exact same-signed candidate
+        id: candidate_manifest
+        run: |
+          candidate_root="$RUNNER_TEMP/lightforge-ci-candidate"
+          source_hashes="$RUNNER_TEMP/lightforge-ci-source-hashes.json"
+          git diff --exit-code "$GITHUB_SHA" -- android web tools tests .github/workflows/verify-v2.yml version.json build.sh
+          python3 - "$source_hashes" <<'PYSOURCES'
+          import hashlib, json, subprocess, sys
+          from pathlib import Path
+          root = Path('.').resolve()
+          names = subprocess.check_output([
+              'git', 'ls-files', '-z', '--', 'android', 'web', 'tools', 'tests',
+              '.github/workflows/verify-v2.yml', 'version.json', 'build.sh',
+          ]).split(b'\0')
+          hashes = {}
+          for raw in names:
+              if not raw:
+                  continue
+              relative = raw.decode('utf-8')
+              path = root / relative
+              if not path.is_file():
+                  raise SystemExit('Tracked source is unavailable in sparse checkout: ' + relative)
+              hashes[relative] = hashlib.sha256(path.read_bytes()).hexdigest()
+          if not hashes:
+              raise SystemExit('Candidate source hash inventory is empty')
+          Path(sys.argv[1]).write_text(json.dumps(hashes, sort_keys=True) + '\n', encoding='utf-8')
+          PYSOURCES
+          python3 tools/android_evidence_manifest.py create-candidate \
+            --input-dir dist --output-dir "$candidate_root" \
+            --release "$LIGHTFORGE_RELEASE" --run-id "$GITHUB_RUN_ID" \
+            --run-attempt "$GITHUB_RUN_ATTEMPT" --head-sha "$GITHUB_SHA" \
+            --tree-sha "$(git rev-parse "$GITHUB_SHA^{tree}")" \
+            --evidence-session "$LIGHTFORGE_EVIDENCE_SESSION" --source-hashes "$source_hashes"
+          echo "identity_sha256=$(sha256sum "$candidate_root/candidate-manifest.json" | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+      - name: Retain sealed candidate for local release signing
+        id: upload_candidate
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: lightforge-${{ env.LIGHTFORGE_RELEASE }}-ci-candidate
-          path: |
-            dist/LightForge-${{ env.LIGHTFORGE_RELEASE }}.apk
-            dist/background-tests.apk
-            dist/diagnostics-tests.apk
-            dist/LightForge-${{ env.LIGHTFORGE_RELEASE }}.apk.json
-            dist/LightForge-${{ env.LIGHTFORGE_RELEASE }}.apk.sha256
-            dist/android-evidence-provenance.json
+          path: ${{ runner.temp }}/lightforge-ci-candidate
+          compression-level: 0
+          # The candidate name is intentionally stable for legacy quality-gate
+          # consumers, while its immutable output ID is what downstream jobs
+          # and the publisher bind.  This makes an explicit rerun-all replace
+          # the prior same-run candidate rather than failing open or reusing it.
+          overwrite: true
+          retention-days: 30
+          if-no-files-found: error
+      - name: Seal success-only non-Android verification evidence
+        run: |
+          evidence_root="$RUNNER_TEMP/lightforge-verification-evidence"
+          python3 tools/verification_evidence_manifest.py write-content \
+            --output-dir "$evidence_root" \
+            --receipt-dir "qa/release-$LIGHTFORGE_RELEASE" \
+            --source-root "$GITHUB_WORKSPACE" \
+            --candidate-manifest "$RUNNER_TEMP/lightforge-ci-candidate/candidate-manifest.json" \
+            --candidate-artifact-id "${{ steps.upload_candidate.outputs.artifact-id }}" \
+            --candidate-artifact-digest "${{ steps.upload_candidate.outputs.artifact-digest }}" \
+            --candidate-identity-sha256 "${{ steps.candidate_manifest.outputs.identity_sha256 }}" \
+            --release "$LIGHTFORGE_RELEASE" --run-id "$GITHUB_RUN_ID" \
+            --run-attempt "$GITHUB_RUN_ATTEMPT" --head-sha "$GITHUB_SHA" \
+            --tree-sha "$(git rev-parse "$GITHUB_SHA^{tree}")" \
+            --evidence-session "$LIGHTFORGE_EVIDENCE_SESSION"
+      - name: Retain sealed non-Android verification evidence
+        id: upload_verification_evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: lightforge-${{ env.LIGHTFORGE_RELEASE }}-verification-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/lightforge-verification-evidence
+          compression-level: 0
+          retention-days: 30
+          if-no-files-found: error
+      - name: Seal immutable non-Android evidence manifest
+        run: |
+          python3 tools/verification_evidence_manifest.py write-wrapper \
+            --output-dir "$RUNNER_TEMP/lightforge-verification-evidence-wrapper" \
+            --content-dir "$RUNNER_TEMP/lightforge-verification-evidence" \
+            --evidence-artifact-id "${{ steps.upload_verification_evidence.outputs.artifact-id }}" \
+            --evidence-artifact-digest "${{ steps.upload_verification_evidence.outputs.artifact-digest }}" \
+            --release "$LIGHTFORGE_RELEASE" --run-id "$GITHUB_RUN_ID" \
+            --run-attempt "$GITHUB_RUN_ATTEMPT" --head-sha "$GITHUB_SHA" \
+            --tree-sha "$(git rev-parse "$GITHUB_SHA^{tree}")" \
+            --evidence-session "$LIGHTFORGE_EVIDENCE_SESSION"
+      - name: Retain immutable non-Android evidence manifest
+        id: upload_verification_evidence_wrapper
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: lightforge-${{ env.LIGHTFORGE_RELEASE }}-verification-evidence-manifest-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/lightforge-verification-evidence-wrapper
           compression-level: 0
           retention-days: 30
           if-no-files-found: error
@@ -138,6 +239,9 @@ jobs:
     needs: verify
     runs-on: ubuntu-latest
     timeout-minutes: 65
+    outputs:
+      android_evidence_artifact_id: ${{ steps.upload_android_evidence.outputs.artifact-id }}
+      android_evidence_artifact_digest: ${{ steps.upload_android_evidence.outputs.artifact-digest }}
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
@@ -145,7 +249,6 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           sparse-checkout: |
-            .github
             android
             web
             tools
@@ -159,13 +262,24 @@ jobs:
           assert len(version.split('.'))==3 and all(p.isdigit() for p in version.split('.'))
           with open(os.environ['GITHUB_ENV'],'a') as out:out.write('LIGHTFORGE_RELEASE='+version+'\n')
           PYVERSION
-      - name: Download the same-signed CI app and instrumentation
-        run: gh run download "${{ github.run_id }}" --name lightforge-${{ env.LIGHTFORGE_RELEASE }}-ci-candidate --dir candidate
-      - name: Verify candidate provenance against this exact source checkout
-        run: python3 tools/android_evidence_binding.py verify --candidate-dir candidate
+      - name: Create current Android evidence session
+        id: android_session
+        run: |
+          python3 - <<'PYSESSION'
+          import os, secrets
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as out:
+              out.write('session=' + secrets.token_hex(32) + '\n')
+          PYSESSION
+      - name: Download the exact same-signed CI app and instrumentation
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          artifact-ids: ${{ needs.verify.outputs.candidate_artifact_id }}
+          path: ${{ runner.temp }}/lightforge-ci-candidate
       - name: Configure Android virtual-device paths
         run: |
-          printf 'ANDROID_USER_HOME=%s\nANDROID_EMULATOR_HOME=%s\nANDROID_AVD_HOME=%s\n' "$RUNNER_TEMP/lightforge-android" "$RUNNER_TEMP/lightforge-android" "$RUNNER_TEMP/lightforge-android/avd" >> "$GITHUB_ENV"
+          printf 'ANDROID_USER_HOME=%s\nANDROID_EMULATOR_HOME=%s\nANDROID_AVD_HOME=%s\nLIGHTFORGE_ANDROID_EVIDENCE_ROOT=%s\n' \
+            "$RUNNER_TEMP/lightforge-android" "$RUNNER_TEMP/lightforge-android" "$RUNNER_TEMP/lightforge-android/avd" \
+            "$RUNNER_TEMP/lightforge-android-evidence-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" >> "$GITHUB_ENV"
       - name: Reclaim unused preinstalled toolchains on the disposable runner
         run: |
           # This Java/WebView app needs neither the NDK nor the .NET SDK.
@@ -183,17 +297,71 @@ jobs:
           "$ANDROID_HOME/emulator/emulator" -list-avds
           # This runner exposes two KVM CPUs. Oversubscribing virtual CPUs
           # competes with SwiftShader and can stall real WebView frame commits.
-          nohup "$ANDROID_HOME/emulator/emulator" -avd LightForge -no-window -no-audio -no-metrics -partition-size 6144 -no-boot-anim -no-snapshot -gpu swiftshader_indirect -memory 4096 -cores 2 -camera-back none -camera-front none > emulator.log 2>&1 < /dev/null &
+          nohup "$ANDROID_HOME/emulator/emulator" -avd LightForge -no-window -no-audio -no-metrics -partition-size 6144 -no-boot-anim -no-snapshot -gpu swiftshader_indirect -memory 4096 -cores 2 -camera-back none -camera-front none > "$RUNNER_TEMP/lightforge-android-emulator.log" 2>&1 < /dev/null &
       - name: Verify screen-off analysis and Activity-independent completion
-        run: python3 tools/run_android_background_tests.py
+        run: |
+          python3 tools/run_android_background_tests.py \
+            --candidate-dir "$RUNNER_TEMP/lightforge-ci-candidate" \
+            --output-dir "$LIGHTFORGE_ANDROID_EVIDENCE_ROOT/background" \
+            --emulator-log "$RUNNER_TEMP/lightforge-android-emulator.log" \
+            --candidate-artifact-id "${{ needs.verify.outputs.candidate_artifact_id }}" \
+            --candidate-artifact-digest "${{ needs.verify.outputs.candidate_artifact_digest }}" \
+            --candidate-run-id "${{ needs.verify.outputs.candidate_run_id }}" \
+            --candidate-run-attempt "${{ needs.verify.outputs.candidate_run_attempt }}" \
+            --candidate-evidence-session "${{ needs.verify.outputs.candidate_evidence_session }}" \
+            --candidate-identity-sha256 "${{ needs.verify.outputs.candidate_identity_sha256 }}" \
+            --run-id "$GITHUB_RUN_ID" --run-attempt "$GITHUB_RUN_ATTEMPT" \
+            --head-sha "$GITHUB_SHA" --evidence-session "${{ steps.android_session.outputs.session }}"
       - name: Verify crash trace recovery and diagnostic export to Downloads
-        run: python3 tools/run_android_diagnostics_tests.py
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        if: always()
+        run: |
+          python3 tools/run_android_diagnostics_tests.py \
+            --candidate-dir "$RUNNER_TEMP/lightforge-ci-candidate" \
+            --output-dir "$LIGHTFORGE_ANDROID_EVIDENCE_ROOT/diagnostics" \
+            --emulator-log "$RUNNER_TEMP/lightforge-android-emulator.log" \
+            --candidate-artifact-id "${{ needs.verify.outputs.candidate_artifact_id }}" \
+            --candidate-artifact-digest "${{ needs.verify.outputs.candidate_artifact_digest }}" \
+            --candidate-run-id "${{ needs.verify.outputs.candidate_run_id }}" \
+            --candidate-run-attempt "${{ needs.verify.outputs.candidate_run_attempt }}" \
+            --candidate-evidence-session "${{ needs.verify.outputs.candidate_evidence_session }}" \
+            --candidate-identity-sha256 "${{ needs.verify.outputs.candidate_identity_sha256 }}" \
+            --run-id "$GITHUB_RUN_ID" --run-attempt "$GITHUB_RUN_ATTEMPT" \
+            --head-sha "$GITHUB_SHA" --evidence-session "${{ steps.android_session.outputs.session }}"
+      - name: Seal fresh Android instrumentation evidence
+        run: |
+          python3 tools/android_evidence_manifest.py write \
+            --output-dir "$LIGHTFORGE_ANDROID_EVIDENCE_ROOT/accepted" \
+            --background-receipt "$LIGHTFORGE_ANDROID_EVIDENCE_ROOT/background/android-background-verification.json" \
+            --diagnostics-receipt "$LIGHTFORGE_ANDROID_EVIDENCE_ROOT/diagnostics/android-diagnostics-verification.json" \
+            --candidate-dir "$RUNNER_TEMP/lightforge-ci-candidate" \
+            --candidate-artifact-id "${{ needs.verify.outputs.candidate_artifact_id }}" \
+            --candidate-artifact-digest "${{ needs.verify.outputs.candidate_artifact_digest }}" \
+            --candidate-run-id "${{ needs.verify.outputs.candidate_run_id }}" \
+            --candidate-run-attempt "${{ needs.verify.outputs.candidate_run_attempt }}" \
+            --candidate-evidence-session "${{ needs.verify.outputs.candidate_evidence_session }}" \
+            --candidate-identity-sha256 "${{ needs.verify.outputs.candidate_identity_sha256 }}" \
+            --release "$LIGHTFORGE_RELEASE" --run-id "$GITHUB_RUN_ID" \
+            --run-attempt "$GITHUB_RUN_ATTEMPT" --head-sha "$GITHUB_SHA" \
+            --evidence-session "${{ steps.android_session.outputs.session }}"
+      - name: Retain sealed Android release evidence
+        id: upload_android_evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: lightforge-${{ env.LIGHTFORGE_RELEASE }}-android-background
-          path: |
-            qa/release-${{ env.LIGHTFORGE_RELEASE }}/android-*
-            emulator.log
+          name: lightforge-${{ env.LIGHTFORGE_RELEASE }}-android-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.LIGHTFORGE_ANDROID_EVIDENCE_ROOT }}/accepted
           if-no-files-found: error
+          retention-days: 30
+      - name: Collect Android diagnostics outside release evidence
+        if: always()
+        run: |
+          debug_root="$RUNNER_TEMP/lightforge-android-debug-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          mkdir -p "$debug_root"
+          if [ -d "$LIGHTFORGE_ANDROID_EVIDENCE_ROOT" ]; then cp -a "$LIGHTFORGE_ANDROID_EVIDENCE_ROOT/." "$debug_root/"; fi
+          if [ -f "$RUNNER_TEMP/lightforge-android-emulator.log" ]; then cp "$RUNNER_TEMP/lightforge-android-emulator.log" "$debug_root/emulator.log"; fi
+      - name: Retain Android diagnostics (not release evidence)
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: lightforge-${{ env.LIGHTFORGE_RELEASE }}-android-debug-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/lightforge-android-debug-${{ github.run_id }}-${{ github.run_attempt }}
+          if-no-files-found: warn
           retention-days: 30

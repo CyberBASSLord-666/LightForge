@@ -16,6 +16,8 @@ class PerformanceQualityGateWorkflowTest(unittest.TestCase):
             "baseline_run_id:",
             "candidate_artifact:",
             "candidate_run_id:",
+            "release_candidate_run_id:",
+            "release_version:",
         ):
             self.assertRegex(text, re.escape(name) + r"\n\s+description:.*\n\s+required: true")
         self.assertEqual(2, text.count("repository: ${{ github.repository }}"))
@@ -47,6 +49,24 @@ class PerformanceQualityGateWorkflowTest(unittest.TestCase):
         self.assertIn('test -n "$LIGHTFORGE_RELEASE_POLICY_ATTESTATION_JSON"', text)
         self.assertNotIn("gate/candidate/locked-corpus-manifest.json", text)
         self.assertNotIn("gate/candidate/performance-gate-policy.json", text)
+
+    def test_pass_target_artifact_records_release_candidate_provenance(self):
+        text = WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("tools/release_quality_gate.py create-provenance", text)
+        self.assertIn("gate/quality-gate-provenance.json", text)
+        self.assertIn("--source-commit \"$GITHUB_SHA\"", text)
+        self.assertIn("--source-tree-sha \"$(git rev-parse \"$GITHUB_SHA^{tree}\")\"", text)
+        self.assertIn("--release-declaration-json \"releases/v$RELEASE_VERSION/quality-gate-declaration.json\"", text)
+        self.assertIn('test -f "releases/v$RELEASE_VERSION/quality-gate-declaration.json"', text)
+        self.assertIn("--candidate-run-json gate/candidate-run.json", text)
+        self.assertIn("--candidate-commit-json gate/candidate-commit.json", text)
+        self.assertIn("--candidate-artifact \"$CANDIDATE_ARTIFACT\"", text)
+        self.assertIn("--candidate-benchmark gate/candidate/benchmark.json", text)
+        self.assertIn("--release-candidate-run-json gate/release-candidate-run.json", text)
+        self.assertIn("--release-candidate-commit-json gate/release-candidate-commit.json", text)
+        self.assertIn("--release-candidate-artifact \"lightforge-$RELEASE_VERSION-ci-candidate\"", text)
+        self.assertIn('test "$GITHUB_REF" = "refs/heads/main"', text)
+        self.assertIn('test "$LIGHTFORGE_REF_PROTECTED" = "true"', text)
 
     def test_all_actions_references_are_immutable_commit_shas(self):
         text = WORKFLOW.read_text(encoding="utf-8")
