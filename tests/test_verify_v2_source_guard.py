@@ -38,18 +38,43 @@ class VerifyV2SourceGuardTest(unittest.TestCase):
         self.assertEqual(verify_v2.node_failure_summary('TAP version 13'), 'no TAP failure marker captured')
         self.assertEqual(verify_v2.node_failure_summary(None), 'no TAP failure marker captured')
 
-    def test_python_failure_summary_reports_only_bounded_standard_unittest_labels(self):
+    def test_python_failure_summary_accepts_fail_label(self):
+        line='FAIL: test_safe_one (tests.fixture)'
+        self.assertEqual(verify_v2.python_failure_summary(line),line)
+
+    def test_python_failure_summary_accepts_error_label(self):
+        line='ERROR: test_safe_two (tests.fixture)'
+        self.assertEqual(verify_v2.python_failure_summary(line),line)
+
+    def test_python_failure_summary_accepts_unexpected_success_label(self):
+        line='UNEXPECTED SUCCESS: test_safe_three (tests.fixture)'
+        self.assertEqual(verify_v2.python_failure_summary(line),line)
+
+    def test_python_failure_summary_accepts_failed_summary(self):
+        line='FAILED (failures=1, errors=1)'
+        self.assertEqual(verify_v2.python_failure_summary(line),line)
+
+    def test_python_failure_summary_preserves_order_and_first_tail_limit(self):
         output='\n'.join([
             'FAIL: test_safe_one (tests.fixture)',
             'ERROR: test_safe_two (tests.fixture)',
             'UNEXPECTED SUCCESS: test_safe_three (tests.fixture)',
             'FAILED (failures=1, errors=1)',
         ])
-        expected='FAIL: test_safe_one (tests.fixture) | ERROR: test_safe_two (tests.fixture) | UNEXPECTED SUCCESS: test_safe_three (tests.fixture) | FAILED (failures=1, errors=1)'
-        self.assertEqual(verify_v2.python_failure_summary(output),expected)
-        self.assertEqual(verify_v2.python_failure_summary(output,limit=2),'FAIL: test_safe_one (tests.fixture) | FAILED (failures=1, errors=1)')
-        self.assertEqual(verify_v2.python_failure_summary(output,limit=1),'FAIL: test_safe_one (tests.fixture)')
-        self.assertEqual(verify_v2.python_failure_summary(output,limit=0),'no unittest failure marker captured')
+        self.assertEqual(
+            verify_v2.python_failure_summary(output),
+            'FAIL: test_safe_one (tests.fixture) | ERROR: test_safe_two (tests.fixture) | UNEXPECTED SUCCESS: test_safe_three (tests.fixture) | FAILED (failures=1, errors=1)',
+        )
+        self.assertEqual(
+            verify_v2.python_failure_summary(output,limit=2),
+            'FAIL: test_safe_one (tests.fixture) | FAILED (failures=1, errors=1)',
+        )
+
+    def test_python_failure_summary_rejects_nonstandard_output_and_zero_limit(self):
+        output='AssertionError: omitted detail\nFAILURE: project detail\nFAILED something'
+        self.assertEqual(verify_v2.python_failure_summary(output),'no unittest failure marker captured')
+        self.assertEqual(verify_v2.python_failure_summary('FAIL: test_safe_one (tests.fixture)',limit=0),
+                         'no unittest failure marker captured')
         self.assertEqual(verify_v2.python_failure_summary(None),'no unittest failure marker captured')
 
     def test_python_failure_summary_uses_combined_streams_for_both_failure_paths(self):
