@@ -119,6 +119,21 @@ def node_failure_summary(output, limit=12):
         return ' | '.join(markers[:limit])
     return ' | '.join([markers[0],*markers[-(limit-1):]])
 
+def python_failure_summary(output, limit=12):
+    """Return bounded unittest labels without disclosing arbitrary test output."""
+    if not isinstance(output, str):
+        return 'no unittest failure marker captured'
+    markers=[]
+    for raw in output.splitlines():
+        line=raw.strip()
+        if line.startswith(('FAIL:', 'ERROR:', 'UNEXPECTED SUCCESS:', 'FAILED (')):
+            markers.append(line[:240])
+    if not markers:
+        return 'no unittest failure marker captured'
+    if limit<=1 or len(markers)<=limit:
+        return ' | '.join(markers[:limit])
+    return ' | '.join([markers[0],*markers[-(limit-1):]])
+
 def run_python_scripts(scripts, log_path):
     output=[]
     for script in scripts:
@@ -129,7 +144,7 @@ def run_python_scripts(scripts, log_path):
         output.append(f'$ {sys.executable} {path.relative_to(ROOT)}\\n{result.stdout}{result.stderr}')
         if result.returncode:
             log_path.write_text('\\n'.join(output))
-            result.check_returncode()
+            raise RuntimeError('Python quality-tool regression failed: '+python_failure_summary(output[-1]))
     log_path.write_text('\\n'.join(output))
 
 def main():
@@ -145,8 +160,11 @@ def main():
             raise RuntimeError('Node production regression failed: '+node_failure_summary(node_output))
         receipt['checks'].append('All selected engine, model-component, migration and DOM integration suites passed.')
         result=subprocess.run([sys.executable,'-m','unittest',*[f'tests.{name}' for name in PYTHON_TESTS]],cwd=ROOT,capture_output=True,text=True)
-        (OUT/'archive-tests.log').write_text(result.stdout+result.stderr)
-        result.check_returncode();receipt['checks'].append('Python APK archive and bounded release packaging regression suites passed.')
+        archive_output=result.stdout+result.stderr
+        (OUT/'archive-tests.log').write_text(archive_output)
+        if result.returncode:
+            raise RuntimeError('Python archive and release regression failed: '+python_failure_summary(archive_output))
+        receipt['checks'].append('Python APK archive and bounded release packaging regression suites passed.')
         run_python_scripts(QUALITY_TOOL_TESTS,OUT/'quality-tool-tests.log')
         receipt['checks'].append('Performance-quality gate, benchmark contract, locked-runner and differential-analysis suites passed.')
         verify_assets()

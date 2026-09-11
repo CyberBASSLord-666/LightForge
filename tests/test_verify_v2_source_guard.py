@@ -38,6 +38,17 @@ class VerifyV2SourceGuardTest(unittest.TestCase):
         self.assertEqual(verify_v2.node_failure_summary('TAP version 13'), 'no TAP failure marker captured')
         self.assertEqual(verify_v2.node_failure_summary(None), 'no TAP failure marker captured')
 
+    def test_python_failure_summary_reports_only_bounded_unittest_labels(self):
+        output='\n'.join([
+            'FAIL: test_safe_one (tests.fixture)',
+            '  AssertionError: omitted detail',
+            'ERROR: test_safe_two (tests.fixture)',
+            'FAILED (failures=1, errors=1)',
+        ])
+        self.assertEqual(verify_v2.python_failure_summary(output),'FAIL: test_safe_one (tests.fixture) | ERROR: test_safe_two (tests.fixture) | FAILED (failures=1, errors=1)')
+        self.assertEqual(verify_v2.python_failure_summary(output,limit=2),'FAIL: test_safe_one (tests.fixture) | FAILED (failures=1, errors=1)')
+        self.assertEqual(verify_v2.python_failure_summary(None),'no unittest failure marker captured')
+
     def test_only_explicit_historical_evidence_contracts_are_excluded(self):
         historical=frozenset({
             'test_analysis_evidence_2_2_2',
