@@ -6,6 +6,7 @@ from android_evidence_manifest import _atomic_json, candidate_binding
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--candidate-dir',type=Path,required=True)
 parser.add_argument('--output-dir',type=Path,required=True)
+parser.add_argument('--emulator-log',type=Path,required=True)
 parser.add_argument('--candidate-artifact-id',type=int,required=True)
 parser.add_argument('--candidate-artifact-digest',required=True)
 parser.add_argument('--candidate-run-id',type=int,required=True)
@@ -28,7 +29,7 @@ ci={'run_id':args.run_id,'run_attempt':args.run_attempt,'head_sha':args.head_sha
 sdk=Path(os.environ['ANDROID_HOME']);adb=sdk/'platform-tools/adb'
 sources=[*sorted((ROOT/'android').rglob('*.java')),*sorted((ROOT/'android').rglob('*.xml')),*sorted((ROOT/'web/background').rglob('*')),*sorted((ROOT/'web/analysis').glob('*.js')),*sorted((ROOT/'web/engine').glob('*.js')),ROOT/'web/app.js',ROOT/'web/index.html',ROOT/'tests/android/BackgroundInstrumentation.java',ROOT/'tools/run_android_background_tests.py',ROOT/'tools/build_android_tests.py',ROOT/'android/native-runtime.json',ROOT/'web/analysis/ASSET_MANIFEST.json',ROOT/'tools/android_evidence_manifest.py']
 hashes={str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sources if p.is_file()}
-receipt={'release':version,'passed':False,'checks':[],'errors':[],'source_hashes':hashes,'scope':'Android API 35 emulator lifecycle test using the production service, native CPU Studio and two-pass Balanced MDX separation, frozen-request routing, live model/tensor release before WebView/WASM voice/GAME, screen-off completion, live inference cancellation, verified passage resume and compilation. Not a physical phone or Tesla test.','ci':ci,'candidate':candidate}
+receipt={'release':version,'passed':False,'checks':[],'errors':[],'source_hashes':candidate['source_hashes'],'instrumentation_source_hashes':hashes,'scope':'Android API 35 emulator lifecycle test using the production service, native CPU Studio and two-pass Balanced MDX separation, frozen-request routing, live model/tensor release before WebView/WASM voice/GAME, screen-off completion, live inference cancellation, verified passage resume and compilation. Not a physical phone or Tesla test.','ci':ci,'candidate':candidate}
 def run(*args,timeout=120):
     return subprocess.run([str(adb),*args],text=True,capture_output=True,timeout=timeout,check=True).stdout
 INSTRUMENT_TIMEOUT_SECONDS=3000
@@ -94,7 +95,7 @@ def run_instrumentation():
 try:
     until=time.monotonic()+180
     while time.monotonic()<until:
-        log=ROOT/'emulator.log'
+        log=args.emulator_log
         if log.is_file():
             fatal=[line for line in log.read_text(errors='replace').splitlines() if 'FATAL' in line]
             if fatal:raise RuntimeError('Android emulator failed to start: '+fatal[-1])
