@@ -1,0 +1,133 @@
+name: Prepare reviewed legacy draw fix
+on:
+  push:
+    branches: ['codex/legacy-draw-assembly']
+permissions:
+  contents: read
+concurrency:
+  group: reviewed-legacy-draw-assembly
+  cancel-in-progress: true
+jobs:
+  prepare:
+    if: github.repository == 'CyberBASSLord-666/LightForge'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Verify exact inputs and install the regression
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import base64, hashlib, json, os, subprocess
+          from pathlib import Path
+          base = '5fb6e713b05b602f872da6e87bb548c21cdba5bb'
+          assert subprocess.check_output(['git','diff','--name-only',base,'HEAD'],text=True).splitlines() == ['.github/workflows/prepare-legacy-draw-fix.yml']
+          main = Path('android/src/com/cyberbasslord/lightforge/MainActivity.java')
+          assert hashlib.sha256(main.read_bytes()).hexdigest() == 'f6b4373cee3e396a68c12b719b424cf5c65c9b37d42bb99f532c669f6ae74016'
+          test = Path('tests/test_legacy_preview_draw_commit.py')
+          assert not test.exists()
+          def fetch(sha, expected):
+              obj = json.loads(subprocess.check_output(['gh','api','repos/CyberBASSLord-666/LightForge/git/blobs/'+sha],text=True))
+              data = base64.b64decode(obj['content'])
+              assert hashlib.sha256(data).hexdigest() == expected
+              return data
+          test.write_bytes(fetch('620e434689128f2715616f9509ab261841dace75','bb0a30a18f4bd0a66900307bcadd99614d3582e16e69885ff5dcea2fdf3926d7'))
+          (Path(os.environ['RUNNER_TEMP'])/'legacy.patch').write_bytes(fetch('bc6be2d510659354706811c5a099fbe0d0eccfcd','1e95e2864fafc040848583abf2fa530c7f76abba3999df4f81b7430ff7244984'))
+          red = subprocess.run(['python3','-m','unittest','discover','-s','tests','-p','test_legacy_preview_draw_commit.py'],capture_output=True,text=True)
+          assert red.returncode != 0 and 'FAILED (failures=4)' in red.stderr, red.stdout+red.stderr
+          (Path(os.environ['RUNNER_TEMP'])/'legacy-baseline-red.log').write_text(red.stdout+red.stderr)
+          PY
+          git apply --check --unidiff-zero "$RUNNER_TEMP/legacy.patch"
+          git apply --unidiff-zero "$RUNNER_TEMP/legacy.patch"
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Run current Node and Python regression suites
+        run: |
+          python3 - <<'PY'
+          import subprocess, sys
+          sys.path.insert(0,'tools')
+          from verify_v2 import TESTS, PYTHON_TESTS
+          subprocess.run(['node','--test','--test-concurrency=2',*['tests/'+name for name in TESTS]],check=True)
+          subprocess.run(['python3','-m','unittest','-v',*PYTHON_TESTS],cwd='tests',check=True)
+          PY
+      - name: Seal only the reviewed native source and regression
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          expected = {'android/src/com/cyberbasslord/lightforge/MainActivity.java':'cbcf17f90651a0e459f014095cf4a761e4018c400bdeed1d7b023fa28af7b203','tests/test_legacy_preview_draw_commit.py':'bb0a30a18f4bd0a66900307bcadd99614d3582e16e69885ff5dcea2fdf3926d7'}
+          output = Path(os.environ['RUNNER_TEMP'])/'reviewed-legacy'
+          output.mkdir()
+          files = []
+          for name, sha in expected.items():
+              source = Path(name)
+              assert source.is_file() and not source.is_symlink()
+              data = source.read_bytes()
+              assert hashlib.sha256(data).hexdigest() == sha
+              dest = output/'payload'/name
+              dest.parent.mkdir(parents=True,exist_ok=True)
+              dest.write_bytes(data)
+              files.append({'path':name,'mode':'100644','type':'blob','sha256':sha,'bytes':len(data)})
+          (output/'manifest.json').write_text(json.dumps({'base':'5fb6e713b05b602f872da6e87bb548c21cdba5bb','assemblyHead':os.environ['GITHUB_SHA'],'scope':'Host-JVM framework-contract regression; not Android device/frame-commit or release evidence','files':files},indent=2)+'\n')
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: reviewed-legacy-files
+          path: ${{ runner.temp }}/reviewed-legacy
+          if-no-files-found: error
+          retention-days: 7
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: legacy-baseline-red
+          path: ${{ runner.temp }}/legacy-baseline-red.log
+          retention-days: 7
+  publish-blobs:
+    needs: prepare
+    if: github.repository == 'CyberBASSLord-666/LightForge' && github.ref == 'refs/heads/codex/legacy-draw-assembly'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: reviewed-legacy-files
+          path: reviewed-legacy
+      - name: Store verified blobs without updating any branch or release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import base64, hashlib, json, subprocess
+          from pathlib import Path
+          root = Path('reviewed-legacy')
+          manifest = json.loads((root/'manifest.json').read_text())
+          assert manifest['base'] == '5fb6e713b05b602f872da6e87bb548c21cdba5bb'
+          assert len(manifest['files']) == 2 and {e['path'] for e in manifest['files']} == {'android/src/com/cyberbasslord/lightforge/MainActivity.java','tests/test_legacy_preview_draw_commit.py'}
+          for e in manifest['files']:
+              path = root/'payload'/e['path']
+              assert path.is_file() and not path.is_symlink()
+              data = path.read_bytes()
+              assert len(data) == e['bytes'] and hashlib.sha256(data).hexdigest() == e['sha256']
+              request = json.dumps({'encoding':'base64','content':base64.b64encode(data).decode()})
+              response = json.loads(subprocess.check_output(['gh','api','--method','POST','repos/CyberBASSLord-666/LightForge/git/blobs','--input','-'],input=request,text=True))
+              expected = hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
+              assert response['sha'] == expected
+              e['sha'] = expected
+          Path('reviewed-legacy-blobs.json').write_text(json.dumps(manifest,indent=2)+'\n')
+          print(json.dumps(manifest,indent=2))
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: reviewed-legacy-blobs
+          path: reviewed-legacy-blobs.json
+          if-no-files-found: error
+          retention-days: 7
