@@ -76,6 +76,7 @@ test('native studio delegates work, blocks stale saves, reconnects, and loads th
  const dom=new JSDOM(fs.readFileSync(path.join(root,'web/index.html'),'utf8'),{url:'https://appassets.androidplatform.net/',runScripts:'outside-only'}),w=dom.window,d=w.document;
  let saved={version:1,projectId:'show-test',name:'Background',settings:{dance:'off'},music:null,needAnalysis:true},job=null,writes=0,starts=0,cancels=0;
  const project={id:'show-test',name:'Background',duration:2,projectUrl:'/project/show-test/project.json',audioUrl:'/project/show-test/audio.wav'};
+ Object.defineProperty(d,'hidden',{value:false,configurable:true});
  w.scrollTo=()=>{};w.requestAnimationFrame=()=>0;w.cancelAnimationFrame=()=>{};w.matchMedia=()=>({matches:true,addEventListener(){}});
  w.HTMLMediaElement.prototype.pause=function(){};w.HTMLMediaElement.prototype.load=function(){};
  w.VehiclePreview=class{constructor(){this.loaded=true;this.renderCount=0;}render(){this.renderCount++;}setCamera(){}setStage(){}setQuality(){}resize(){}};
@@ -99,7 +100,10 @@ test('native studio delegates work, blocks stale saves, reconnects, and loads th
   const before=writes;await app.saveProject();w.pausePreview();assert.equal(writes,before,'Background UI overwrote frozen inputs');
   d.getElementById('cancelWork').click();assert.equal(cancels,1);assert.equal(app.state.busy,true,'Cancellation was not acknowledged yet');
   const settings=structuredClone(app.state.settings),result=await w.ShowCompiler.generate(music,settings);saved={...saved,settings,music,needAnalysis:false,compiled:result.compiled};
-  job={...job,state:'completed',progress:1};w.onNativeEvent('analysisJob',job);await waitFor(()=>app.state.show&&!app.state.backgroundApplying);
+  job={...job,state:'completed',progress:1};w.onNativeEvent('analysisJob',job);
+  assert.equal(app.state.busy,false,'Durable completion must close the progress overlay while paused');
+  assert.equal(app.state.backgroundSyncPending,true);assert.equal(w.localStorage.getItem('lightforge-background-ack'),null);
+  w.resumePreview();await waitFor(()=>app.state.show&&!app.state.backgroundApplying);
   assert.equal(app.state.busy,false);assert.equal(app.state.music.analysisVersion,6);assert.equal(app.state.compiled.sha256,result.compiled.sha256);
   assert.equal(w.localStorage.getItem('lightforge-background-ack'),'native-job');
   job={...job,id:'later-interrupted-job',state:'interrupted',hasCheckpoint:true,stage:'Android stopped analysis.'};w.onNativeEvent('analysisJob',job);
@@ -172,6 +176,39 @@ async function completedReconnect({acknowledged=false,hold=false,restoreError=nu
   bootstrap={projects:[completed,lastSelected],lastProjectId:lastSelected.id,version:'2.2.4',backgroundJob:job};initialBootstrapHeld=false;releaseInitialSaved?.();
   return{w,app,job,entered,release,polls,completed,lastSelected,leaseCalls,nativeCapClears,nativeProjectReads,previews,previewDeferrals,setAckConfirmationRejected:value=>{ackConfirmationRejectedNow=!!value;},get restores(){return restores;},get fetches(){return fetches;},get restoreOptions(){return restoreOptions;},close:()=>{release();w.close();}};
  }catch(error){release();w.close();throw error;}
+}
+
+
+for(const mode of ['native-pause','hidden-document','pagehide']){
+ test(`completed ${mode} delivery stays durable and unacknowledged until the preview resumes`,async()=>{
+  const t=await completedReconnect();
+  try{
+   const pause=()=>{
+    if(mode==='native-pause')t.w.pausePreview();
+    else if(mode==='hidden-document'){Object.defineProperty(t.w.document,'hidden',{value:true,configurable:true});t.w.document.dispatchEvent(new t.w.Event('visibilitychange'));}
+    else t.w.dispatchEvent(new t.w.Event('pagehide'));
+   };
+   const resume=()=>{
+    if(mode==='native-pause')t.w.resumePreview();
+    else if(mode==='hidden-document'){Object.defineProperty(t.w.document,'hidden',{value:false,configurable:true});t.w.document.dispatchEvent(new t.w.Event('visibilitychange'));}
+    else t.w.dispatchEvent(new t.w.Event('pageshow'));
+   };
+   pause();await settleCompletedRestore('paused bootstrap',t,t.app.readBootstrap());
+   for(let i=0;i<3;i++)t.w.onNativeEvent('analysisJob',t.job);
+   for(const poll of t.polls)await poll();
+   assert.equal(t.restores,0,'A paused preview must not start compiled-show verification');
+   assert.equal(t.fetches,0,'A paused preview must not read the completed payload');
+   assert.equal(t.leaseCalls.length,0,'A background UI must not open or complete a native watchdog lease');
+   assert.equal(t.w.localStorage.getItem('lightforge-background-ack'),null);
+   assert.equal(t.app.state.backgroundSyncPending,true,'Completed work must remain pending for foreground adoption');
+   assert.equal(!!t.app.state.backgroundApplying,false);assert.equal(t.app.state.busy,false);
+   resume();await waitFor(()=>t.w.localStorage.getItem('lightforge-background-ack')===t.job.id&&!t.app.state.backgroundApplying);
+   assert.equal(t.restores,1);assert.equal(t.fetches,1);
+   assert.equal(t.leaseCalls.filter(call=>call.type==='begin').length,1);
+   assert.equal(t.leaseCalls.filter(call=>call.type==='ack-committed').length,1);
+   assert.equal(t.app.state.backgroundSyncPending,false);assert.ok(t.app.state.show.validation.valid);
+  }finally{t.close();}
+ });
 }
 
 test('unacknowledged cold completed restore defers GLTF loading until compiled-show adoption and never defers ordinary startup',async()=>{
