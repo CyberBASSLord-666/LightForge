@@ -1,0 +1,153 @@
+name: Prepare reviewed restore fix
+on:
+  push:
+    branches: ['codex/restore-preview-assembly']
+permissions:
+  contents: read
+concurrency:
+  group: reviewed-restore-assembly
+  cancel-in-progress: true
+jobs:
+  prepare:
+    if: github.repository == 'CyberBASSLord-666/LightForge'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Retrieve and verify the reviewed patch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/CyberBASSLord-666/LightForge/git/blobs/7cdd853a1cf6641839f668e9f52999cb31e50731 > "$RUNNER_TEMP/reviewed-blob.json"
+          python3 - <<'PY'
+          import base64, gzip, hashlib, json, os, subprocess
+          from pathlib import Path
+          temp = Path(os.environ['RUNNER_TEMP'])
+          blob = json.loads((temp / 'reviewed-blob.json').read_text())
+          data = base64.b64decode(blob['content'])
+          assert hashlib.sha256(data).hexdigest() == '8c3f684232e34a66d23dfe5706350bfcb76d0878e55d6c910d1656aa1b00e56d', 'Review transport digest mismatch'
+          payload = json.loads(gzip.decompress(data))
+          manifest, patch = payload['manifest'], payload['patch']
+          assert manifest['base'] == 'ce49db55a72b5c83d93181864df182baa7978c22'
+          changed = subprocess.check_output(['git', 'diff', '--name-only', manifest['base'], 'HEAD'], text=True).splitlines()
+          assert changed == ['.github/workflows/prepare-restore-fix.yml'], 'Assembly source drifted from the reviewed base'
+          assert hashlib.sha256(patch.encode()).hexdigest() == manifest['patch_sha256']
+          for name, expected in manifest['before'].items():
+              path = Path(name)
+              assert not path.is_symlink()
+              assert (hashlib.sha256(path.read_bytes()).hexdigest() if path.exists() else None) == expected, 'Unreviewed input: ' + name
+          (temp / 'reviewed.patch').write_text(patch)
+          (temp / 'reviewed-manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
+          PY
+          git apply --check --unidiff-zero "$RUNNER_TEMP/reviewed.patch"
+          git apply --unidiff-zero "$RUNNER_TEMP/reviewed.patch"
+      - name: Install locked test and renderer dependencies
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          mkdir -p ../toolchain/graphics
+          cp web/preview/src/package*.json ../toolchain/graphics/
+          npm ci --prefix ../toolchain/graphics --ignore-scripts --no-audit --no-fund
+          node tools/build_preview.mjs
+      - name: Verify all selected Node suites and strict readiness contract
+        run: |
+          python3 - <<'PY'
+          import ast, subprocess
+          from pathlib import Path
+          tree = ast.parse(Path('tools/verify_v2.py').read_text())
+          suites = next(ast.literal_eval(n.value) for n in tree.body if isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id == 'TESTS' for t in n.targets))
+          subprocess.run(['node', '--test', '--test-concurrency=2', *['tests/' + name for name in suites]], check=True)
+          PY
+          python3 -m unittest discover -s tests -p 'test_background_instrumentation_ui_readiness_contract.py'
+      - name: Verify actual browser workers and WebGL restoration
+        run: |
+          npx playwright install --with-deps chromium
+          node qa/restore-preview/browser.cjs
+      - name: Seal only the exact reviewed files
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os, shutil, subprocess
+          from pathlib import Path
+          temp = Path(os.environ['RUNNER_TEMP'])
+          manifest = json.loads((temp / 'reviewed-manifest.json').read_text())
+          output = temp / 'reviewed-files'
+          output.mkdir()
+          files = []
+          for name, expected in manifest['after'].items():
+              path = Path(name)
+              assert path.is_file() and not path.is_symlink()
+              data = path.read_bytes()
+              assert hashlib.sha256(data).hexdigest() == expected, 'Reviewed output drift: ' + name
+              destination = output / 'payload' / name
+              destination.parent.mkdir(parents=True, exist_ok=True)
+              destination.write_bytes(data)
+              tracked = subprocess.check_output(['git', 'ls-files', '--stage', '--', name], text=True).strip()
+              mode = tracked.split()[0] if tracked else '100644'
+              assert mode in {'100644', '100755'}
+              files.append({'path': name, 'mode': mode, 'type': 'blob', 'sha256': expected, 'bytes': len(data)})
+          (output / 'manifest.json').write_text(json.dumps({'base': manifest['base'], 'assemblyHead': os.environ['GITHUB_SHA'], 'scope': 'Reviewed source assembly; not Android or release evidence', 'files': files}, indent=2) + '\n')
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: reviewed-restore-files
+          path: ${{ runner.temp }}/reviewed-files
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: reviewed-restore-browser
+          path: |
+            qa/restore-preview/*.json
+            qa/restore-preview/*.png
+          retention-days: 14
+  publish-blobs:
+    needs: prepare
+    if: github.repository == 'CyberBASSLord-666/LightForge' && github.ref == 'refs/heads/codex/restore-preview-assembly'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: reviewed-restore-files
+          path: reviewed-files
+      - name: Store verified blobs without updating any branch or release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import base64, hashlib, json, subprocess
+          from pathlib import Path
+          root = Path('reviewed-files')
+          manifest = json.loads((root / 'manifest.json').read_text())
+          assert manifest['base'] == 'ce49db55a72b5c83d93181864df182baa7978c22'
+          allowed = {'web/app.js', 'web/preview/src/vehicle-preview.js', 'web/preview/vehicle-preview.js', 'tests/background-2.2.test.cjs', 'tests/preview-lifecycle.test.cjs', 'tests/preview-startup.test.cjs', 'tests/android/BackgroundInstrumentation.java', 'tests/test_background_instrumentation_ui_readiness_contract.py', 'tools/verify_v2.py', 'qa/restore-preview/browser.cjs', '.github/workflows/restore-regression.yml'}
+          assert len(manifest['files']) == len(allowed) and {x['path'] for x in manifest['files']} == allowed
+          for entry in manifest['files']:
+              path = root / 'payload' / entry['path']
+              assert path.is_file() and not path.is_symlink()
+              data = path.read_bytes()
+              assert len(data) == entry['bytes'] and hashlib.sha256(data).hexdigest() == entry['sha256']
+              request = json.dumps({'encoding': 'base64', 'content': base64.b64encode(data).decode()})
+              response = json.loads(subprocess.check_output(['gh', 'api', '--method', 'POST', 'repos/CyberBASSLord-666/LightForge/git/blobs', '--input', '-'], input=request, text=True))
+              expected = hashlib.sha1(b'blob ' + str(len(data)).encode() + b'\0' + data).hexdigest()
+              assert response['sha'] == expected, 'Uploaded Git blob digest mismatch'
+              entry['sha'] = expected
+          Path('reviewed-restore-blobs.json').write_text(json.dumps(manifest, indent=2) + '\n')
+          print(json.dumps(manifest, indent=2))
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: lightforge-reviewed-restore-blobs-${{ github.run_id }}
+          path: reviewed-restore-blobs.json
+          if-no-files-found: error
+          retention-days: 7
