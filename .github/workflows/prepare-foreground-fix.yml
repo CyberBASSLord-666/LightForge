@@ -1,0 +1,139 @@
+name: Prepare reviewed foreground restore fix
+on:
+  push:
+    branches: ['codex/foreground-restore-assembly']
+permissions:
+  contents: read
+concurrency:
+  group: reviewed-foreground-assembly
+  cancel-in-progress: true
+jobs:
+  prepare:
+    if: github.repository == 'CyberBASSLord-666/LightForge'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Apply only the exact reviewed foreground patch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/CyberBASSLord-666/LightForge/git/blobs/990a9b527015c808e94489cd539fb910c8362913 > "$RUNNER_TEMP/foreground-blob.json"
+          python3 - <<'PY'
+          import base64, hashlib, json, os, subprocess
+          from pathlib import Path
+          temp = Path(os.environ['RUNNER_TEMP'])
+          data = base64.b64decode(json.loads((temp / 'foreground-blob.json').read_text())['content'])
+          assert hashlib.sha256(data).hexdigest() == '7b4062cf1f1f6c37a31e63005cabd9a61f5e9a09325633c7dc660897fe77ba5e'
+          base = 'cf69bb47c787ce33963381d76e1ff2b73ae2b216'
+          assert subprocess.check_output(['git', 'diff', '--name-only', base, 'HEAD'], text=True).splitlines() == ['.github/workflows/prepare-foreground-fix.yml']
+          before = {'web/app.js':'86cad52ffcb40a72e96d56205abced186d27dfb45fd1e69c73eecd4c654ee517','tests/background-2.2.test.cjs':'85b728fd0b5b07dfde6bd20568c1a92dac9b92843b3d1baeacf10bb82573f3df','qa/restore-preview/browser.cjs':'d809ad076688bd50398106d26b6dc8b491b22b9fc4bcfb51075b29b162674f7f'}
+          after = {'web/app.js':'d8657de5d4a85c5a6c25019dc64d307e9a11d6d327eee33247ae96872ec0fb56','tests/background-2.2.test.cjs':'a2c5cdf362e8623c617fc181a34b3bd11f711a26472ae758daaa460fd2cdb089','qa/restore-preview/browser.cjs':'3c793ec4fdec23f5ef975a3fc52e4fc7d404e46b8a3e323695d68ddc9f6f3d41'}
+          for name, expected in before.items():
+              path = Path(name)
+              assert path.is_file() and not path.is_symlink() and hashlib.sha256(path.read_bytes()).hexdigest() == expected, 'Unreviewed input: ' + name
+          (temp / 'foreground.patch').write_bytes(data)
+          (temp / 'foreground-manifest.json').write_text(json.dumps({'base': base, 'after': after}) + '\n')
+          PY
+          git apply --check --unidiff-zero "$RUNNER_TEMP/foreground.patch"
+          git apply --unidiff-zero "$RUNNER_TEMP/foreground.patch"
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Verify complete Node suites and strict Android readiness contract
+        run: |
+          python3 - <<'PY'
+          import ast, subprocess
+          from pathlib import Path
+          tree = ast.parse(Path('tools/verify_v2.py').read_text())
+          suites = next(ast.literal_eval(n.value) for n in tree.body if isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id == 'TESTS' for t in n.targets))
+          subprocess.run(['node', '--test', '--test-concurrency=2', *['tests/' + name for name in suites]], check=True)
+          PY
+          python3 -m unittest discover -s tests -p 'test_background_instrumentation_ui_readiness_contract.py'
+      - name: Verify actual browser workers and WebGL foreground restoration
+        run: |
+          npx playwright install --with-deps chromium
+          node qa/restore-preview/browser.cjs
+      - name: Seal only the exact reviewed files
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          temp = Path(os.environ['RUNNER_TEMP'])
+          manifest = json.loads((temp / 'foreground-manifest.json').read_text())
+          output = temp / 'foreground-files'
+          output.mkdir()
+          files = []
+          for name, expected in manifest['after'].items():
+              path = Path(name)
+              assert path.is_file() and not path.is_symlink()
+              data = path.read_bytes()
+              assert hashlib.sha256(data).hexdigest() == expected, 'Reviewed output drift: ' + name
+              destination = output / 'payload' / name
+              destination.parent.mkdir(parents=True, exist_ok=True)
+              destination.write_bytes(data)
+              files.append({'path': name, 'mode': '100644', 'type': 'blob', 'sha256': expected, 'bytes': len(data)})
+          (output / 'manifest.json').write_text(json.dumps({'base': manifest['base'], 'assemblyHead': os.environ['GITHUB_SHA'], 'scope': 'Reviewed foreground source assembly; not Android or release evidence', 'files': files}, indent=2) + '\n')
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: reviewed-foreground-files
+          path: ${{ runner.temp }}/foreground-files
+          if-no-files-found: error
+          retention-days: 7
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: reviewed-foreground-browser
+          path: |
+            qa/restore-preview/*.json
+            qa/restore-preview/*.png
+          retention-days: 14
+  publish-blobs:
+    needs: prepare
+    if: github.repository == 'CyberBASSLord-666/LightForge' && github.ref == 'refs/heads/codex/foreground-restore-assembly'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: reviewed-foreground-files
+          path: foreground-files
+      - name: Store verified blobs without updating any branch or release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import base64, hashlib, json, subprocess
+          from pathlib import Path
+          root = Path('foreground-files')
+          manifest = json.loads((root / 'manifest.json').read_text())
+          assert manifest['base'] == 'cf69bb47c787ce33963381d76e1ff2b73ae2b216'
+          allowed = {'web/app.js', 'tests/background-2.2.test.cjs', 'qa/restore-preview/browser.cjs'}
+          assert len(manifest['files']) == 3 and {x['path'] for x in manifest['files']} == allowed
+          for entry in manifest['files']:
+              path = root / 'payload' / entry['path']
+              assert path.is_file() and not path.is_symlink()
+              data = path.read_bytes()
+              assert len(data) == entry['bytes'] and hashlib.sha256(data).hexdigest() == entry['sha256']
+              request = json.dumps({'encoding': 'base64', 'content': base64.b64encode(data).decode()})
+              response = json.loads(subprocess.check_output(['gh', 'api', '--method', 'POST', 'repos/CyberBASSLord-666/LightForge/git/blobs', '--input', '-'], input=request, text=True))
+              expected = hashlib.sha1(b'blob ' + str(len(data)).encode() + b'\0' + data).hexdigest()
+              assert response['sha'] == expected, 'Uploaded Git blob digest mismatch'
+              entry['sha'] = expected
+          Path('reviewed-foreground-blobs.json').write_text(json.dumps(manifest, indent=2) + '\n')
+          print(json.dumps(manifest, indent=2))
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: lightforge-reviewed-foreground-blobs-${{ github.run_id }}
+          path: reviewed-foreground-blobs.json
+          if-no-files-found: error
+          retention-days: 7
