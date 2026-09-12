@@ -184,7 +184,7 @@ test('unacknowledged cold completed restore defers GLTF loading until compiled-s
   deferred.release();await waitFor(()=>deferred.w.localStorage.getItem('lightforge-background-ack')===deferred.job.id&&!deferred.app.state.backgroundApplying);
   const release=deferred.previewDeferrals.find(event=>event.value===false),adopted=deferred.leaseCalls.findIndex(call=>call.type==='pulse'&&call.args[2]==='show-adopted');
   assert.ok(release,'Compiled-show adoption must release the deferred preview');
-  assert.ok(adopted>=0&&release.leaseCalls===adopted,'Preview loading must restart immediately before the adopted-show proof pulse.');
+  assert.ok(adopted>=0&&release.leaseCalls===adopted+1,'GPU startup must follow the accepted adopted-show proof, before the separate first-frame proof.');
   assert.equal(deferred.app.state.completedRestorePreviewDeferred,false,'Terminal restore may not leave the preview load deferred');
  }finally{deferred.close();}
  const ordinary=await completedReconnect();

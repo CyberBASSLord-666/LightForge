@@ -474,7 +474,16 @@ async function regenerate({save=true,preparedShow=null,restoreCompiled=null,rest
   if(restoreLease?.failed)throw Error('Native completed-restore lease rejected an ordered worker event.');
   if(ticket!==state.compileId||projectId!==state.project?.id)return null;
   if(restoreLease&&(!restoreLease.projectId||state.completedRestore!==restoreLease||restoreLease.projectId!==projectId))return null;
-  state.music=music;if(restoreLease)restoreLease.renderCountBeforeAdopt=Number(vehiclePreview?.renderCount)||0;adoptShow(result,music,settings);if(restoreLease){setCompletedRestorePreviewDeferred(false);restoreLease.adoptedProjectId=projectId;restoreLease.adoptedSelection=state.selection;restoreLease.adoptedCompileId=ticket;if(!completedRestorePulse(restoreLease,'show-adopted'))throw Error('Native completed-restore lease rejected the adopted show.');}if(save)scheduleSave();return state.show;
+  state.music=music;if(restoreLease)restoreLease.renderCountBeforeAdopt=Number(vehiclePreview?.renderCount)||0;
+  adoptShow(result,music,settings);
+  if(restoreLease){
+   restoreLease.adoptedProjectId=projectId;restoreLease.adoptedSelection=state.selection;restoreLease.adoptedCompileId=ticket;
+   // Commit the verified CPU-side adoption before beginning GPU startup. The
+   // first rendered frame and native visual proof remain separate requirements.
+   if(!completedRestorePulse(restoreLease,'show-adopted'))throw Error('Native completed-restore lease rejected the adopted show.');
+   setCompletedRestorePreviewDeferred(false);
+  }
+  if(save)scheduleSave();return state.show;
  }catch(e){if(restoreLease)completedRestoreFailed(restoreLease,e.message||e);diagnostics?.log(e.name==='AbortError'?'info':'error','composition-worker',e);if(ticket!==state.compileId||e.name==='AbortError')return null;if(restoreCompiled)state.saveBlocked=true;toast((restoreCompiled?'Saved arrangement could not be verified: ':'The show could not be built: ')+e.message,true);return null;}
  finally{if(ticket===state.compileId){state.composing=false;state.compileAbort=null;updateButtons();}}
 }

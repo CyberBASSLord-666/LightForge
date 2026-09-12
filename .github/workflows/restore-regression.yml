@@ -89,7 +89,23 @@ jobs:
           path: ${{ runner.temp }}/lightforge-review-runtime
           retention-days: 7
           if-no-files-found: error
+      - name: Reproduce the checked-in offline renderer
+        run: |
+          node tools/build_preview.mjs
+          git diff --exit-code -- web/preview/vehicle-preview.js
       - name: Restore, worker, and preview lifecycle regressions
-        run: node --test tests/background-2.2.test.cjs tests/preview-lifecycle.test.cjs tests/preview-engine.test.cjs
+        run: node --test tests/background-2.2.test.cjs tests/preview-lifecycle.test.cjs tests/preview-startup.test.cjs tests/preview-engine.test.cjs
       - name: Preserve strict Android readiness contract
         run: python3 -m unittest discover -s tests -p 'test_background_instrumentation_ui_readiness_contract.py'
+      - name: Actual cold-restore browser and WebGL regression
+        run: |
+          npx playwright install --with-deps chromium
+          node qa/restore-preview/browser.cjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: lightforge-restore-preview-${{ github.run_id }}
+          path: |
+            qa/restore-preview/*.json
+            qa/restore-preview/*.png
+          retention-days: 14

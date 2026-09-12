@@ -67,6 +67,23 @@ public final class BackgroundInstrumentation extends Instrumentation {
             android.util.Log.e("LightForgeTest","Could not capture delayed main-thread stacks",error);
         }
     }
+    // Failure-only, same-signed instrumentation evidence. Production keeps its
+    // existing private, sanitized journal and exposes no additional bridge API.
+    private void emitFailureDiagnostics(){
+        try{
+            AppDiagnostics.flush(1000);
+            DiagnosticLog journal=(DiagnosticLog)field(AppDiagnostics.class,"journal");
+            if(journal==null)return;
+            ByteArrayOutputStream snapshot=new ByteArrayOutputStream();journal.snapshot(snapshot);
+            byte[] bytes=snapshot.toByteArray();int start=Math.max(0,bytes.length-64*1024);
+            // Keep complete UTF-8 log lines and stay well below Binder limits.
+            if(start>0){while(start<bytes.length&&bytes[start]!='\n')start++;if(start<bytes.length)start++;}
+            String trace=new String(bytes,start,bytes.length-start,java.nio.charset.StandardCharsets.UTF_8);
+            Bundle event=new Bundle();event.putString("stream","LIGHTFORGE_DIAGNOSTICS_BEGIN\n"+trace+"LIGHTFORGE_DIAGNOSTICS_END\n");sendStatus(0,event);
+        }catch(Throwable diagnosticError){
+            android.util.Log.e("LightForgeTest","Could not capture sanitized failure journal",diagnosticError);
+        }
+    }
     private void stopMainWatchdog(){
         watchdogStopped=true;watchdogMain.removeCallbacksAndMessages(null);
         if(mainWatchdog!=null)mainWatchdog.interrupt();
@@ -446,7 +463,7 @@ public final class BackgroundInstrumentation extends Instrumentation {
                 if(waitingForJavascriptResponse())return;
                 final WebView requested=view;
                 final long javascriptRequest=beginJavascriptResponse(requested);
-                requested.evaluateJavascript("(()=>{const a=window.LightForgeApp,s=a&&a.state,p=a&&a.vehiclePreview,c=document.getElementById('carCanvas'),r=c&&c.getBoundingClientRect();const visible=!!(r&&r.width>0&&r.height>0&&!document.hidden);const boot=!!(s&&Array.isArray(s.projects)&&typeof window.onNativeEvent==='function');const restored=!!(boot&&!s.loadingProject&&!s.composing&&!s.backgroundApplying&&!s.backgroundSyncPending);return {ready:document.readyState==='complete'&&restored&&!!p&&p.loaded&&!p.lost&&(!visible||p.renderCount>0),documentState:document.readyState,documentHidden:document.hidden,bootstrapInventoryReady:boot,projectRestoreIdle:restored,loadingProject:!!(s&&s.loadingProject),composing:!!(s&&s.composing),backgroundApplying:!!(s&&s.backgroundApplying),backgroundSyncPending:!!(s&&s.backgroundSyncPending),saveBlocked:!!(s&&s.saveBlocked),previewModelReady:!!(p&&p.loaded),previewVisible:visible,previewRendererVisible:!!(p&&p.getPerformance().visible),previewPaused:!!(p&&p._paused),previewIntersecting:!!(p&&p._intersecting),previewHasSize:!!(p&&p._hasSize),previewFrames:p?p.renderCount:0,contextLost:!!(p&&p.lost),canvasRect:r?{left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}:null,viewport:{width:innerWidth,height:innerHeight,scrollX,scrollY}};})()",value->{
+                requested.evaluateJavascript("(()=>{const a=window.LightForgeApp,s=a&&a.state,p=a&&a.vehiclePreview,c=document.getElementById('carCanvas'),r=c&&c.getBoundingClientRect();const visible=!!(r&&r.width>0&&r.height>0&&!document.hidden);const boot=!!(s&&Array.isArray(s.projects)&&typeof window.onNativeEvent==='function');const restored=!!(boot&&!s.loadingProject&&!s.composing&&!s.backgroundApplying&&!s.backgroundSyncPending);return {ready:document.readyState==='complete'&&restored&&!!p&&p.loaded&&!p.lost&&(!visible||p.renderCount>0),documentState:document.readyState,documentHidden:document.hidden,bootstrapInventoryReady:boot,projectRestoreIdle:restored,loadingProject:!!(s&&s.loadingProject),composing:!!(s&&s.composing),backgroundApplying:!!(s&&s.backgroundApplying),backgroundSyncPending:!!(s&&s.backgroundSyncPending),saveBlocked:!!(s&&s.saveBlocked),previewModelReady:!!(p&&p.loaded),previewGraphicsInitialized:!!(p&&p.renderer),previewLoadStarted:!!(p&&p._loadStarted),previewLoadDeferred:!!(p&&p._loadDeferred),restorePhase:s&&s.completedRestore?String(s.completedRestore.phase||'').slice(0,80):null,restoreSequence:s&&s.completedRestore?Number(s.completedRestore.sequence)||0:0,previewVisible:visible,previewRendererVisible:!!(p&&p.getPerformance().visible),previewPaused:!!(p&&p._paused),previewIntersecting:!!(p&&p._intersecting),previewHasSize:!!(p&&p._hasSize),previewFrames:p?p.renderCount:0,contextLost:!!(p&&p.lost),canvasRect:r?{left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}:null,viewport:{width:innerWidth,height:innerHeight,scrollX,scrollY}};})()",value->{
                     if(finished.get()||!ownsJavascriptResponse(requested,javascriptRequest))return;
                     if(dropJavascriptCallbackForTest!=null&&!javascriptCallbackDroppedForTest){
                         javascriptCallbackDroppedForTest=true;
@@ -876,6 +893,7 @@ public final class BackgroundInstrumentation extends Instrumentation {
             output.putString("stream","BACKGROUND_ANDROID_PASS\n"+receipt.toString()+"\n");finish(Activity.RESULT_OK,output);
         }catch(Throwable error){
             try{snapshot(true);}catch(Exception ignored){}
+            emitFailureDiagnostics();
             try{receipt.put("passed",false).put("checks",checks).put("phase",currentPhase).put("error",error.toString());}catch(Exception ignored){}
             StringWriter trace=new StringWriter();error.printStackTrace(new PrintWriter(trace));output.putString("stream","BACKGROUND_ANDROID_FAIL\n"+receipt+"\n"+trace);finish(Activity.RESULT_CANCELED,output);
         }finally{balancedObserverStopped=true;if(balancedObserver!=null)balancedObserver.interrupt();stopMainWatchdog();}

@@ -23,17 +23,24 @@ class VehiclePreview {
   this._snapshotPosition=new THREE.Vector3();this._snapshotNormal=new THREE.Vector3();this._snapshotDirection=new THREE.Vector3();
   this.reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
   this.status=document.getElementById('previewStatus');this.setStatus('Loading Highland 3D model…','loading');
-  try {
-   this.init();this.ready=new Promise(resolve=>{this._readyResolve=resolve;});
-   if(!this._loadDeferred)this.startLoad();
-  } catch(e){this.fail(e);this._loadStarted=true;this.ready=Promise.resolve(false);}
+  try{this.stage=localStorage.getItem('lightforge-stage')==='night'?'night':'studio';}catch{}
+  // A pending completed restore must not allocate a WebGL context, render
+  // targets, or observers while its saved arrangement is being verified.
+  // Keep one readiness promise across deferred startup, failure, and disposal.
+  this.ready=new Promise(resolve=>{this._readyResolve=resolve;});
+  if(!this._loadDeferred)this.startLoad();
  }
  setStatus(message,state){if(this.status){this.status.hidden=false;this.status.textContent=message;this.status.dataset.state=state;}this.canvas.dataset.rendererState=state;}
  fail(e){this.error=String(e?.message||e);this.setStatus('3D unavailable — update Android System WebView. Your show can still be edited and exported.','error');console.warn('LightForge preview:',this.error);}
  startLoad(){
-  if(this._loadStarted)return this.ready;
-  this._loadStarted=true;const resolve=this._readyResolve;
-  this.load().then(value=>resolve?.(value),()=>resolve?.(false));return this.ready;
+  if(this._loadStarted||this._disposed)return this.ready;
+  this._loadStarted=true;
+  const settle=value=>{this._readyResolve?.(value);this._readyResolve=null;};
+  try{
+   this.init();
+   Promise.resolve(this.load()).then(settle,error=>{this.fail(error);settle(false);});
+  }catch(error){this.fail(error);settle(false);}
+  return this.ready;
  }
  setLoadDeferred(deferred){
   this._loadDeferred=!!deferred;
@@ -46,7 +53,7 @@ class VehiclePreview {
   this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.autoUpdate=false;this.renderer.shadowMap.needsUpdate=true;this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;
   this.scene=new THREE.Scene();this.scene.background=new THREE.Color('#10171e');this.scene.fog=new THREE.Fog('#10171e',14,36);
   this.camera=new THREE.PerspectiveCamera(32,1,.08,60);this.camera.position.set(-5,2.7,-6);
-  this.controls=new OrbitControls(this.camera,this.canvas);this.controls.target.set(0,.72,0);this.controls.enablePan=false;this.controls.enableDamping=true;this.controls.dampingFactor=.11;this.controls.rotateSpeed=.6;this.controls.zoomSpeed=.7;this.controls.minDistance=3.7;this.controls.maxDistance=22;this.controls.minPolarAngle=.14;this.controls.maxPolarAngle=Math.PI/2-.035;
+  this.controls=new OrbitControls(this.camera,this.canvas);this.controls.target.set(0,.72,0);this.controls.enabled=!this._paused;this.controls.enablePan=false;this.controls.enableDamping=true;this.controls.dampingFactor=.11;this.controls.rotateSpeed=.6;this.controls.zoomSpeed=.7;this.controls.minDistance=3.7;this.controls.maxDistance=22;this.controls.minPolarAngle=.14;this.controls.maxPolarAngle=Math.PI/2-.035;
   this.controls.addEventListener('start',()=>{this.tween=null;this.view='custom';this.onViewChange?.(this.view,labels.custom);this.requestDraw();});
   this.controls.addEventListener('change',()=>{if(!this._drawing)this.requestDraw();});this.controls.addEventListener('end',()=>this.requestDraw());
   this.canvas.addEventListener('keydown',e=>{let a=0,b=0;if(e.key==='ArrowLeft')a=-.12;if(e.key==='ArrowRight')a=.12;if(e.key==='ArrowUp')b=.08;if(e.key==='ArrowDown')b=-.08;if(!a&&!b)return;e.preventDefault();this.view='custom';this.tween=null;const s=new THREE.Spherical().setFromVector3(this.camera.position.clone().sub(this.controls.target));s.theta-=a;s.phi=clamp(s.phi-b,.14,Math.PI/2-.035);this.camera.position.copy(new THREE.Vector3().setFromSpherical(s).add(this.controls.target));this.onViewChange?.(this.view,labels.custom);this.requestDraw();});
@@ -70,7 +77,7 @@ class VehiclePreview {
   this._onContextLost=e=>{e.preventDefault();this.lost=true;cancelAnimationFrame(this._raf);this._raf=0;this._lastRenderAt=0;this.setStatus('3D paused — waiting for graphics to recover…','loading');this.reportPerformance();};this.canvas.addEventListener('webglcontextlost',this._onContextLost);
   this._onContextRestored=()=>{this.lost=false;this._restorePending=true;this.requestDraw();this.reportPerformance();};this.canvas.addEventListener('webglcontextrestored',this._onContextRestored);
   this._onVisibility=()=>{this._lastRenderAt=0;if(document.hidden){cancelAnimationFrame(this._raf);this._raf=0;}else{this.resize();this.requestDraw();}this.reportPerformance();};document.addEventListener('visibilitychange',this._onVisibility);
-  this.resize();this.reportPerformance();this.positionCamera(this.yaw,this.pitch);this.controls.update();try{this.setStage(localStorage.getItem('lightforge-stage')||'studio');}catch{}
+  this.resize();this.reportPerformance();this.positionCamera(this.yaw,this.pitch);this.controls.update();this.setStage(this.stage);
  }
  createEnvironment(){
   const env=new THREE.Scene();env.background=new THREE.Color(.055,.065,.085);
@@ -81,8 +88,8 @@ class VehiclePreview {
  async load(){
   try {const gltf=await new GLTFLoader().loadAsync('preview/models/highland.glb');if(this._disposed)return false;this.rig=buildHighlandRig(gltf.scene);this.scene.add(this.rig.root);this.rig.setCutaway(this.view==='cabin');this.renderer.shadowMap.needsUpdate=true;if(this.view!=='custom'){this.positionCamera(this.yaw,this.pitch);this.controls.update();}this.loaded=true;this.setStatus('3D · Highland','ready');this.render(...this.last);this.canvas.dispatchEvent(new CustomEvent('previewready'));return true;}catch(e){this.fail(e);return false;}
  }
- setStage(stage){this.stage=stage==='night'?'night':'studio';this._snapshotDirty=true;const night=this.stage==='night';if(!this.scene)return;
-  this.scene.background.set(night?'#050a10':'#10171e');this.scene.fog.color.copy(this.scene.background);this.scene.environmentIntensity=night?.25:.9;this.ambient.intensity=night?.18:.65;this.key.intensity=night?.35:1.25;this.rim.intensity=night?.25:.85;this.ground.material.color.set(night?0x0b1019:0x171c23);this.bloom.strength=night?.42:.28;
+ setStage(stage){this.stage=stage==='night'?'night':'studio';this._snapshotDirty=true;const night=this.stage==='night';if(this.scene){
+  this.scene.background.set(night?'#050a10':'#10171e');this.scene.fog.color.copy(this.scene.background);this.scene.environmentIntensity=night?.25:.9;this.ambient.intensity=night?.18:.65;this.key.intensity=night?.35:1.25;this.rim.intensity=night?.25:.85;this.ground.material.color.set(night?0x0b1019:0x171c23);this.bloom.strength=night?.42:.28;}
   document.querySelectorAll('[data-stage]').forEach(b=>{b.classList.toggle('selected',b.dataset.stage===this.stage);b.setAttribute('aria-pressed',String(b.dataset.stage===this.stage));});try{localStorage.setItem('lightforge-stage',this.stage);}catch{}this.requestDraw();
  }
  resize(){if(!this.renderer||this._disposed||this._paused||document.hidden)return;const r=this.canvas.getBoundingClientRect();this._hasSize=r.width>=1&&r.height>=1;if(!this._hasSize){cancelAnimationFrame(this._raf);this._raf=0;return;}const w=Math.round(r.width),h=Math.round(r.height);if(w===this.width&&h===this.height)return;this.width=w;this.height=h;this.renderer.setSize(w,h,false);this.composer.setSize(w,h);this.camera.aspect=w/h;this.camera.updateProjectionMatrix();this._snapshotDirty=true;if(this.view!=='custom'){this.positionCamera(this.yaw,this.pitch);this.controls.update();}}
@@ -115,7 +122,7 @@ class VehiclePreview {
   this.snapshot={time:Number(data?.time??time),frame:data?.frame??null,view:this.view,lamps,closures:(data?.closures||[]).map(x=>({channel:x.channel,position:clamp(x.openFraction??x.estimatedPosition),motion:x.motion,command:x.command,rainbow:x.rainbow})),interior:(data?.interior||[]).map(x=>Array.from(x)),renderer:'WebGL2',modelReady:this.loaded,stage:this.stage};this._snapshotDirty=false;
  }
  isVisible(){return !this._disposed&&!this._paused&&!document.hidden&&!this.lost&&this._intersecting&&this._hasSize;}
- setPaused(paused){paused=!!paused;if(this._disposed||paused===this._paused)return;this._paused=paused;this._lastRenderAt=0;if(paused){cancelAnimationFrame(this._raf);this._raf=0;}else{this.resize();this.requestDraw();}this.reportPerformance();}
+ setPaused(paused){paused=!!paused;if(this._disposed||paused===this._paused)return;this._paused=paused;if(this.controls)this.controls.enabled=!paused;this._lastRenderAt=0;if(paused){cancelAnimationFrame(this._raf);this._raf=0;}else{this.resize();this.requestDraw();}this.reportPerformance();}
  setQuality(quality){
   if(quality!=='auto'&&!qualityPresets[quality])throw new RangeError('Preview quality must be auto, high, balanced or battery.');
   this.quality=quality;try{localStorage.setItem('lightforge-preview-quality',quality);}catch{}

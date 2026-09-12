@@ -176,6 +176,7 @@ test('renderer explicit pause cancels pending submission and blocks draws and re
   p.setPaused(true);
   assert.equal(t.document.hidden, false);
   assert.equal(p.isVisible(), false);
+  assert.equal(p.controls.enabled, false, 'Native pause also blocks orbit input');
   assert.equal(t.raf.pending.size, 0);
   p.render({frame: 10, time: 0.2}, 0.2);
   p.resize();
@@ -187,6 +188,7 @@ test('renderer explicit pause cancels pending submission and blocks draws and re
   p.setPaused(false);
   p.setPaused(false);
   assert.equal(p.isVisible(), true);
+  assert.equal(p.controls.enabled, true, 'Resume restores orbit input after deferred initialization');
   assert.equal(t.raf.pending.size, 1);
   assert.ok(t.gpuResizes > 0, 'Resume must apply the size deferred while paused');
   t.raf.flush(300);
@@ -247,7 +249,7 @@ test('renderer defers lighting generation and frame submission until the model i
 test('renderer defers GLTF work until completed restore adopts a verified show',async()=>{
  const t=renderer(),p=t.preview;let resolveReady,loads=0;
  p.loaded=false;p._loadDeferred=true;p._loadStarted=false;p.ready=new Promise(resolve=>{resolveReady=resolve;});p._readyResolve=resolveReady;
- p.load=async()=>{loads++;return true;};
+ p.init=()=>{};p.load=async()=>{loads++;return true;};
  assert.equal(typeof p.setLoadDeferred,'function');
  p.setLoadDeferred(true);assert.equal(loads,0,'A pending completed restore must not begin GLTF loading');
  p.setLoadDeferred(false);assert.equal(loads,1,'Verified show adoption releases exactly one GLTF load');

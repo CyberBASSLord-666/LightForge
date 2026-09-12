@@ -65,5 +65,20 @@ class BackgroundInstrumentationUiReadinessContractTest(unittest.TestCase):
         self.assertIn('firstFrameCommitted', self.readiness)
 
 
+    def test_failure_evidence_is_bounded_sanitized_and_does_not_extend_readiness(self):
+        self.assertIn("deadline=began+45000", self.readiness_compact)
+        self.assertIn("private void emitFailureDiagnostics()", self.source)
+        self.assertIn("AppDiagnostics.flush(1000)", self.source)
+        self.assertIn('field(AppDiagnostics.class,"journal")', self.source)
+        self.assertIn("journal.snapshot(snapshot)", self.source)
+        self.assertIn("bytes.length-64*1024", self.source)
+        self.assertIn("LIGHTFORGE_DIAGNOSTICS_BEGIN", self.source)
+        self.assertIn("LIGHTFORGE_DIAGNOSTICS_END", self.source)
+        failure = self.source[self.source.rindex("}catch(Throwable error){"):]
+        self.assertIn("emitFailureDiagnostics();", failure)
+        for name in ("previewGraphicsInitialized", "previewLoadStarted", "previewLoadDeferred", "restorePhase", "restoreSequence"):
+            self.assertIn(name + ":", self.readiness)
+
+
 if __name__ == "__main__":
     unittest.main()
