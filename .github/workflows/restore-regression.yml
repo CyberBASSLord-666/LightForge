@@ -12,7 +12,7 @@ concurrency:
 jobs:
   restore-regression:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -73,6 +73,22 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Prepare pinned offline review dependencies
+        run: |
+          mkdir -p ../toolchain/graphics
+          cp web/preview/src/package*.json ../toolchain/graphics/
+          npm ci --prefix ../toolchain/graphics --ignore-scripts --no-audit --no-fund
+          mkdir -p "$RUNNER_TEMP/lightforge-review-runtime"
+          tar -czf "$RUNNER_TEMP/lightforge-review-runtime/test-dependencies.tar.gz" node_modules
+          tar -czf "$RUNNER_TEMP/lightforge-review-runtime/graphics-dependencies.tar.gz" -C ../toolchain graphics
+          tar -czf "$RUNNER_TEMP/lightforge-review-runtime/preview-assets.tar.gz" web/preview/models web/demo
+          sha256sum package-lock.json web/preview/src/package-lock.json > "$RUNNER_TEMP/lightforge-review-runtime/lockfiles.sha256"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: lightforge-review-runtime-${{ github.run_id }}
+          path: ${{ runner.temp }}/lightforge-review-runtime
+          retention-days: 7
+          if-no-files-found: error
       - name: Restore, worker, and preview lifecycle regressions
         run: node --test tests/background-2.2.test.cjs tests/preview-lifecycle.test.cjs tests/preview-engine.test.cjs
       - name: Preserve strict Android readiness contract
