@@ -1,14 +1,19 @@
 /* Durable, checksummed model work. Each OPFS write becomes visible only on close.
- * Records are bound to the analysis identity, stage name, payload, and a durable
- * invalidation generation. A failed physical delete can therefore never revive a
- * dependent checkpoint after it has been invalidated.
+ * Records are bound to the analysis identity, stage name, payload, and immutable
+ * invalidation-fence snapshots. A failed physical delete or a stale WebView can
+ * therefore never revive a dependent checkpoint after it has been invalidated.
  */
 (function(root){'use strict';
 const NS='lightforge-analysis-v1',MAX_JSON=24*1024*1024,MAX_FLOATS=16*1024*1024;
-const IDENTITY='identity',CONTROL='cache-control',RECORD_VERSION=2,CONTROL_VERSION=1;
+const IDENTITY='identity',CONTROL='cache-control',RECORD_VERSION=3,CONTROL_VERSION=1,FENCE_VERSION=1,FENCE_PREFIX='cache-fence-';
 const validKey=k=>typeof k==='string'&&/^[a-f0-9]{64}$/.test(k);
 const validName=n=>typeof n==='string'&&/^[a-z][a-z0-9-]{0,79}$/.test(n);
 const internalName=n=>n===IDENTITY||n===CONTROL;
+const validFenceToken=value=>typeof value==='string'&&/^[a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(value);
+const fenceFile=token=>FENCE_PREFIX+token+'.json';
+const fenceFileToken=name=>{const match=typeof name==='string'&&new RegExp('^'+FENCE_PREFIX+'([a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12})\\.json$').exec(name);return match?match[1]:null;};
+function newFenceToken(){if(typeof crypto.randomUUID==='function'){const token=crypto.randomUUID().toLowerCase();if(validFenceToken(token))return token;}if(typeof crypto.getRandomValues!=='function')throw Error('Secure storage invalidation identifiers are unavailable.');const bytes=crypto.getRandomValues(new Uint8Array(16));bytes[6]=(bytes[6]&15)|64;bytes[8]=(bytes[8]&63)|128;const hex=Array.from(bytes,value=>value.toString(16).padStart(2,'0')).join('');return hex.slice(0,8)+'-'+hex.slice(8,12)+'-'+hex.slice(12,16)+'-'+hex.slice(16,20)+'-'+hex.slice(20);}
+function staleWorkError(message){const error=new Error(message);error.code='analysis-cache-stale';return error;}
 // Wall-clock metadata must never decide whether a checkpoint is valid. Some
 // embedders expose Date.now through a guarded bridge, so retain a harmless
 // sentinel when that bridge is unavailable rather than interrupting a durable
@@ -58,7 +63,7 @@ async function open(key,{sourceId='',requiredBytes=0,resourceDiagnostics=null}={
  const dir=await parent.getDirectoryHandle(key,{create:true});
  const nameOf=(name,suffix)=>{if(!validName(name))throw Error('Invalid analysis checkpoint name.');return name+suffix;};
  const recovery={schemaVersion:1,kind:'analysis-cache-recovery',legacyControlMigrated:false,corruptControlDiscarded:false,invalidationFences:0,pendingPhysicalDeletes:0,corruptRecords:0};
- let control;
+ let control,authorizedControl;const authorizedFences=new Set();
  async function atomic(name,parts){
   let stream;
   try{stream=await(await dir.getFileHandle(name,{create:true})).createWritable();let bytes=0;for(const part of parts){await stream.write(part);bytes+=bytesOf(part);}await stream.close();resource('write',bytes);}
@@ -69,21 +74,37 @@ async function open(key,{sourceId='',requiredBytes=0,resourceDiagnostics=null}={
   const f=await file(nameOf(name,'.json'),max);if(!f)return {state:'missing'};
   try{
    const text=await f.text();resource('read',f.size);const envelope=JSON.parse(text);
-   if((envelope.version!==1&&envelope.version!==RECORD_VERSION)||envelope.key!==key||envelope.name!==name||typeof envelope.payload!=='string'||typeof envelope.sha256!=='string'||await hash(new TextEncoder().encode(envelope.payload))!==envelope.sha256)return {state:'corrupt'};
+   if((envelope.version!==1&&envelope.version!==2&&envelope.version!==RECORD_VERSION)||envelope.key!==key||envelope.name!==name||typeof envelope.payload!=='string'||typeof envelope.sha256!=='string'||await hash(new TextEncoder().encode(envelope.payload))!==envelope.sha256)return {state:'corrupt'};
    const generation=envelope.version===1?0:envelope.generation;
-   if(!internalName(name)&&(!Number.isSafeInteger(generation)||generation<0))return {state:'corrupt'};
-   return {state:'ok',recordVersion:envelope.version,payload:decode(envelope.payload),generation:internalName(name)?0:generation};
+   const fences=envelope.version===RECORD_VERSION&&!internalName(name)?envelope.fences:[];
+   if(!internalName(name)&&(!Number.isSafeInteger(generation)||generation<0||!Array.isArray(fences)||fences.some(token=>!validFenceToken(token))||new Set(fences).size!==fences.length||fences.some((token,index)=>index&&fences[index-1]>=token)))return {state:'corrupt'};
+   return {state:'ok',recordVersion:envelope.version,payload:decode(envelope.payload),generation:internalName(name)?0:generation,fences};
   }catch(e){if(e instanceof SyntaxError||e instanceof TypeError)return {state:'corrupt'};throw e;}
  }
- function generation(name){let current=0;for(const [prefix,value]of Object.entries(control.generations))if(matchesPrefix(name,prefix))current=Math.max(current,value);return current;}
- async function writeRecord(name,value,{generationValue=0}={}){
+ function generation(name,value=control){let current=0;for(const [prefix,revision]of Object.entries(value.generations))if(matchesPrefix(name,prefix))current=Math.max(current,revision);return current;}
+ const sameFences=(left,right)=>left.length===right.length&&left.every((token,index)=>token===right[index]);
+ async function writeRecord(name,value,{generationValue=0,fences=[]}={}){
   nameOf(name,'.json');const payload=encode(value);if(typeof payload!=='string')throw Error('Invalid analysis checkpoint payload.');
   const encoded=new TextEncoder().encode(payload);if(encoded.length>MAX_JSON)throw Error('Analysis checkpoint is too large.');
   const envelope={version:RECORD_VERSION,key,name,payload,sha256:await hash(encoded)};
-  if(!internalName(name))envelope.generation=generationValue;
+  if(!internalName(name)){if(!Array.isArray(fences)||fences.some(token=>!validFenceToken(token))||new Set(fences).size!==fences.length||fences.some((token,index)=>index&&fences[index-1]>=token))throw Error('Invalid analysis invalidation fence snapshot.');envelope.generation=generationValue;envelope.fences=fences;}
   const bytes=new TextEncoder().encode(JSON.stringify(envelope));if(bytes.length>MAX_JSON)throw Error('Analysis checkpoint is too large.');
   await atomic(name+'.json',[bytes]);
  }
+ async function readFence(fileName){
+  const token=fenceFileToken(fileName),f=token?await file(fileName,MAX_JSON):null;if(!token||!f)return {state:'corrupt'};
+  try{const text=await f.text();resource('read',f.size);const envelope=JSON.parse(text);if(envelope.version!==FENCE_VERSION||typeof envelope.payload!=='string'||typeof envelope.sha256!=='string'||await hash(new TextEncoder().encode(envelope.payload))!==envelope.sha256)return {state:'corrupt'};const payload=JSON.parse(envelope.payload);if(!payload||payload.version!==FENCE_VERSION||payload.key!==key||payload.sourceId!==sourceId||payload.token!==token||!Array.isArray(payload.prefixes)||!payload.prefixes.length||payload.prefixes.some(prefix=>!validName(prefix)||internalName(prefix))||new Set(payload.prefixes).size!==payload.prefixes.length||payload.prefixes.some((prefix,index)=>index&&payload.prefixes[index-1]>=prefix))return {state:'corrupt'};return {state:'ok',token,payload};}
+  catch(error){if(error instanceof SyntaxError||error instanceof TypeError)return {state:'corrupt'};throw error;}
+ }
+ async function fences(){
+  const values=[];for await(const [fileName,entry]of dir.entries()){
+   if(entry.kind!=='file'||!fenceFileToken(fileName))continue;
+   const item=await readFence(fileName);if(item.state!=='ok')throw Error('Analysis invalidation fence is corrupt. Start a fresh analysis again.');values.push(item);
+  }
+  return values.sort((left,right)=>left.token.localeCompare(right.token));
+ }
+ async function matchingFences(name){return (await fences()).filter(item=>item.payload.prefixes.some(prefix=>matchesPrefix(name,prefix))).map(item=>item.token);}
+async function writeFence(prefixes){const token=newFenceToken(),name=fenceFile(token),payload=JSON.stringify({version:FENCE_VERSION,key,sourceId,token,prefixes}),envelope=JSON.stringify({version:FENCE_VERSION,payload,sha256:await hash(new TextEncoder().encode(payload))});try{await atomic(name,[new TextEncoder().encode(envelope)]);}catch(error){try{await dir.removeEntry(name);}catch(_){}throw error;}return token;}
  async function clearAll(){for await(const [name]of dir.entries())try{await dir.removeEntry(name,{recursive:true});}catch(e){if(e.name!=='NotFoundError')throw e;}}
  async function clearExceptIdentity(){for await(const [name]of dir.entries())if(name!=='identity.json')try{await dir.removeEntry(name,{recursive:true});}catch(e){if(e.name!=='NotFoundError')throw e;}}
  let identityRecord=await record(IDENTITY);
@@ -103,8 +124,8 @@ async function open(key,{sourceId='',requiredBytes=0,resourceDiagnostics=null}={
  if(controlRecord.state==='missing'){
   const legacyIdentity=identityRecord.state==='ok'&&identityRecord.recordVersion===1;
   if(identityRecord.state==='ok'&&!legacyIdentity){
-   // A version-2 identity proves this namespace already used generation
-   // fences. Missing control can therefore be a lost post-invalidation
+   // A version-two-or-newer identity proves this namespace already used
+   // durable invalidation state. Missing control can therefore be a lost
    // fence, not a legacy namespace: discard dependent records rather than
    // letting a physically locked pre-fence checkpoint become a cache hit.
    await discardUntrustedCheckpoints('control is missing');
@@ -122,21 +143,37 @@ async function open(key,{sourceId='',requiredBytes=0,resourceDiagnostics=null}={
   recovery.corruptControlDiscarded=true;
   await writeRecord(CONTROL,control);
  }else control=controlRecord.payload;
+ authorizedControl={...control,generations:{...control.generations}};
+ for(const item of await fences())authorizedFences.add(item.token);
+ async function currentControl(){const item=await record(CONTROL);if(item.state!=='ok'||!validControl(item.payload))throw Error('Analysis invalidation control is corrupt. Start a fresh analysis again.');control=item.payload;return control;}
+ async function writableFences(name){
+  const current=await matchingFences(name);
+  if(current.some(token=>!authorizedFences.has(token)))throw staleWorkError('Analysis work was invalidated by another session. Reopen and resume this song.');
+  return current;
+ }
  async function read(name){
-  const item=await record(name);
+  if(internalName(name)){const item=await record(name);return item.state==='ok'?item.payload:null;}
+  const before=await matchingFences(name),item=await record(name),current=await currentControl(),after=await matchingFences(name);
   if(item.state!=='ok'){if(item.state==='corrupt')recovery.corruptRecords++;return null;}
-  if(!internalName(name)&&item.generation!==generation(name))return null;
+  if(!sameFences(before,after)||item.generation!==generation(name,current)||!sameFences(item.fences,after))return null;
   return item.payload;
  }
- async function write(name,value){await writeRecord(name,value,{generationValue:internalName(name)?0:generation(name)});}
+ async function write(name,value){
+  if(internalName(name)){await writeRecord(name,value);return;}
+  const current=await currentControl();if(generation(name,current)!==generation(name,authorizedControl))throw staleWorkError('Analysis work was invalidated by another session. Reopen and resume this song.');
+  const fenceIds=await writableFences(name);await writeRecord(name,value,{generationValue:generation(name,current),fences:fenceIds});
+  if(!sameFences(fenceIds,await matchingFences(name)))throw staleWorkError('Analysis work was invalidated while saving. Reopen and resume this song.');
+ }
  async function readFloats(name){
+  const before=await matchingFences(name);
   const f=await file(nameOf(name,'.bin'),MAX_FLOATS);if(!f||f.size<8)return null;
   const prefix=await f.slice(0,4).arrayBuffer();resource('read',prefix.byteLength);if(prefix.byteLength!==4)return null;
   const headerSize=new DataView(prefix).getUint32(0,true);if(headerSize<1||headerSize>4096||4+headerSize>=f.size)return null;
   try{
    const headerText=await f.slice(4,4+headerSize).text();resource('read',headerSize);const meta=JSON.parse(headerText),bytes=await f.slice(4+headerSize).arrayBuffer();resource('read',bytes.byteLength);
-   const metaGeneration=meta.version===1?0:meta.generation;
-   if((meta.version!==1&&meta.version!==RECORD_VERSION)||meta.key!==key||meta.name!==name||!Array.isArray(meta.counts)||meta.counts.length<1||meta.counts.length>4||meta.counts.some(n=>!Number.isSafeInteger(n)||n<1)||!Number.isSafeInteger(metaGeneration)||metaGeneration<0||meta.counts.reduce((a,b)=>a+b,0)*4!==bytes.byteLength||await hash(bytes)!==meta.sha256||metaGeneration!==generation(name))return null;
+   const metaGeneration=meta.version===1?0:meta.generation,metaFences=meta.version===RECORD_VERSION?meta.fences:[];
+   const current=await currentControl(),after=await matchingFences(name);
+   if((meta.version!==1&&meta.version!==2&&meta.version!==RECORD_VERSION)||meta.key!==key||meta.name!==name||!Array.isArray(meta.counts)||meta.counts.length<1||meta.counts.length>4||meta.counts.some(n=>!Number.isSafeInteger(n)||n<1)||!Number.isSafeInteger(metaGeneration)||metaGeneration<0||!Array.isArray(metaFences)||metaFences.some(token=>!validFenceToken(token))||new Set(metaFences).size!==metaFences.length||metaFences.some((token,index)=>index&&metaFences[index-1]>=token)||meta.counts.reduce((a,b)=>a+b,0)*4!==bytes.byteLength||await hash(bytes)!==meta.sha256||!sameFences(before,after)||metaGeneration!==generation(name,current)||!sameFences(metaFences,after))return null;
    const data=new DataView(bytes),arrays=[];let at=0;
    for(const count of meta.counts){const pcm=new Float32Array(count);for(let i=0;i<count;i++,at+=4){pcm[i]=data.getFloat32(at,true);if(!Number.isFinite(pcm[i]))return null;}arrays.push(pcm);}return arrays;
   }catch(e){if(e instanceof SyntaxError||e instanceof RangeError||e instanceof TypeError)return null;throw e;}
@@ -145,25 +182,26 @@ async function open(key,{sourceId='',requiredBytes=0,resourceDiagnostics=null}={
   nameOf(name,'.bin');
   if(!Array.isArray(arrays)||!arrays.length||arrays.length>4||arrays.some(a=>!(a instanceof Float32Array)||!a.length))throw Error('Invalid passage checkpoint.');
   const size=arrays.reduce((n,a)=>n+a.byteLength,0);if(size>MAX_FLOATS-4100)throw Error('Passage checkpoint is too large.');
-  const bytes=new Uint8Array(size),view=new DataView(bytes.buffer);let at=0;
+  const current=await currentControl();if(generation(name,current)!==generation(name,authorizedControl))throw staleWorkError('Analysis work was invalidated by another session. Reopen and resume this song.');
+  const fenceIds=await writableFences(name),bytes=new Uint8Array(size),view=new DataView(bytes.buffer);let at=0;
   for(const pcm of arrays)for(const value of pcm){if(!Number.isFinite(value))throw Error('A passage contains invalid audio.');view.setFloat32(at,value,true);at+=4;}
-  const header=new TextEncoder().encode(JSON.stringify({version:RECORD_VERSION,key,name,generation:generation(name),counts:arrays.map(a=>a.length),sha256:await hash(bytes)})),prefix=new Uint8Array(4);
+  const header=new TextEncoder().encode(JSON.stringify({version:RECORD_VERSION,key,name,generation:generation(name,current),fences:fenceIds,counts:arrays.map(a=>a.length),sha256:await hash(bytes)})),prefix=new Uint8Array(4);
   new DataView(prefix.buffer).setUint32(0,header.length,true);await atomic(name+'.bin',[prefix,header,bytes]);
+  if(!sameFences(fenceIds,await matchingFences(name)))throw staleWorkError('Analysis work was invalidated while saving. Reopen and resume this song.');
  }
  async function remove(name){if(internalName(name))throw Error('Internal analysis checkpoints cannot be removed.');for(const suffix of ['.json','.bin'])try{await dir.removeEntry(nameOf(name,suffix));}catch(e){if(e.name!=='NotFoundError')throw e;}}
  async function invalidate(prefixes){
   if(!Array.isArray(prefixes)||prefixes.some(p=>!validName(p)||internalName(p)))throw Error('Invalid checkpoint invalidation.');
- const unique=[...new Set(prefixes)].sort(),next={...control,generations:{...control.generations}};
- for(const prefix of unique)next.generations[prefix]=(next.generations[prefix]||0)+1;
-  next.updatedAt=metadataNow();
-  // Commit the fence first. Physical removal is merely reclamation, so a
-  // locked OPFS file cannot make a stale record visible after cancellation.
- await writeRecord(CONTROL,next);
- control=next;
+ const unique=[...new Set(prefixes)].sort();
+  if(!unique.length)return {invalidated:[],removed:0,pending:0};
+  // Fences are immutable, so concurrent WebViews cannot overwrite another
+  // invalidation. Physical removal is merely reclamation: a locked OPFS file
+  // cannot make a stale record visible after cancellation.
+  const token=await writeFence(unique);authorizedFences.add(token);
   recovery.invalidationFences+=unique.length;
   let removed=0,pending=0;
   for await(const [fileName,entry]of dir.entries()){
-   if(entry.kind!=='file'||fileName==='identity.json'||fileName==='cache-control.json')continue;
+   if(entry.kind!=='file'||fileName==='identity.json'||fileName==='cache-control.json'||fenceFileToken(fileName))continue;
    const candidate=fileName.endsWith('.json')?fileName.slice(0,-5):fileName.endsWith('.bin')?fileName.slice(0,-4):'';
    if(!candidate||!unique.some(prefix=>matchesPrefix(candidate,prefix)))continue;
    try{await dir.removeEntry(fileName);removed++;}catch(e){if(e.name!=='NotFoundError'){pending++;}}
