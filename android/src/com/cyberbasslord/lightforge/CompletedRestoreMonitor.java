@@ -20,6 +20,9 @@ final class CompletedRestoreMonitor {
     static final long PREVIEW_STARTUP_BUDGET_MS=30000L;
     private static final long BYTES_PER_BUDGET_STEP=512L*1024L;
     private static final long BUDGET_STEP_MS=1000L;
+    private static final int PHASE_NONE=0,PHASE_WORKER_STARTED=1,PHASE_WORKER_VERIFIED=2,
+        PHASE_SHOW_ADOPTED=3,PHASE_PREVIEW_STARTING=4,PHASE_PREVIEW_FIRST_RENDER=5,
+        PHASE_VISUAL_COMMIT=6;
 
     interface Clock {long now();}
     interface Scheduler {
@@ -135,8 +138,10 @@ final class CompletedRestoreMonitor {
     }
 
     synchronized boolean terminal(String terminalJobId,String terminalNonce,long terminalSequence,long terminalBytes){
-        // Browser ACK is permitted only after these direct, ordered bridge
-        // proofs.  Eval state is intentionally insufficient for a terminal.
+        // Browser ACK remains an explicit ordered bridge call.  A same-lease
+        // fallback probe may recover a validated non-terminal phase closure
+        // after a bridge response is lost, but it can never supply the native
+        // visual-commit proof required below.
         if(!matches(terminalJobId,terminalNonce)||terminalSequence<=sequence||!workerStarted||!workerVerified||!showAdopted||!previewFirstRender||!visualCommitted)return false;
         bytes=Math.max(bytes,Math.max(0,terminalBytes));
         host.diagnostic("completed-restore terminal job="+jobId+" sequence="+terminalSequence+" phase="+phase);
@@ -222,14 +227,67 @@ final class CompletedRestoreMonitor {
             host.diagnostic("completed-restore probe observed application failure job="+jobId);
             clearLease();return;
         }
-        // The bridge is the authoritative ordered path.  The callback is a
-        // liveness observation and a bounded fallback if a renderer delivers
-        // state after a bridge call was lost during teardown.
-        if(probe.sequence>sequence){
-            sequence=probe.sequence;phase=valid(probe.phase)?probe.phase:phase;
-            bytes=Math.max(bytes,probe.bytes);lastAdvanceAt=now;
-        }
+        // A callback may arrive after a bridge response was lost.  Recover a
+        // known, monotonic prerequisite closure so the next direct phase can
+        // proceed, but fail closed on regressing/unknown critical states and
+        // keep native visual commit direct-only.
+        if(probe.sequence>sequence)applyProbeProgress(probe,now);
         arm(nextDelay(now));
+    }
+
+    private boolean applyProbeProgress(Probe probe,long now){
+        int observed=phaseRank(probe.phase),confirmed=confirmedPhaseRank();
+        if(observed==PHASE_NONE){
+            host.diagnostic("completed-restore probe ignored unknown phase="+safe(probe.phase)+" job="+jobId);
+            return false;
+        }
+        if(observed<confirmed){
+            host.diagnostic("completed-restore probe ignored regressing phase="+safe(probe.phase)+" job="+jobId);
+            return false;
+        }
+        if(observed>confirmed){
+            // A WebView probe can show a rendered preview, but it cannot
+            // replace MainActivity's lease-bound hardware-frame callback.
+            if(observed==PHASE_VISUAL_COMMIT){
+                host.diagnostic("completed-restore probe deferred native visual commit job="+jobId);
+                return false;
+            }
+            if(observed>=PHASE_PREVIEW_FIRST_RENDER&&(!probe.previewLoaded||probe.previewFrames<1)){
+                host.diagnostic("completed-restore probe ignored unrendered preview phase="+safe(probe.phase)+" job="+jobId);
+                return false;
+            }
+            applyPhaseClosure(observed);
+            phase=probe.phase;
+            if(observed==PHASE_PREVIEW_STARTING)nextProbeAt=now+PREVIEW_STARTUP_BUDGET_MS;
+            else if(observed==PHASE_PREVIEW_FIRST_RENDER)nextProbeAt=now+PROBE_INTERVAL_MS;
+        }
+        sequence=probe.sequence;bytes=Math.max(bytes,probe.bytes);lastAdvanceAt=now;
+        return true;
+    }
+
+    private void applyPhaseClosure(int observed){
+        if(observed>=PHASE_WORKER_STARTED)workerStarted=true;
+        if(observed>=PHASE_WORKER_VERIFIED)workerVerified=true;
+        if(observed>=PHASE_SHOW_ADOPTED)showAdopted=true;
+        if(observed>=PHASE_PREVIEW_STARTING)previewStarting=true;
+        if(observed>=PHASE_PREVIEW_FIRST_RENDER)previewFirstRender=true;
+    }
+    private int confirmedPhaseRank(){
+        if(visualCommitted)return PHASE_VISUAL_COMMIT;
+        if(previewFirstRender)return PHASE_PREVIEW_FIRST_RENDER;
+        if(previewStarting)return PHASE_PREVIEW_STARTING;
+        if(showAdopted)return PHASE_SHOW_ADOPTED;
+        if(workerVerified)return PHASE_WORKER_VERIFIED;
+        return workerStarted?PHASE_WORKER_STARTED:PHASE_NONE;
+    }
+    private static int phaseRank(String candidate){
+        if("worker-started".equals(candidate))return PHASE_WORKER_STARTED;
+        if("worker-verified".equals(candidate))return PHASE_WORKER_VERIFIED;
+        if("show-adopted".equals(candidate))return PHASE_SHOW_ADOPTED;
+        if("preview-starting".equals(candidate))return PHASE_PREVIEW_STARTING;
+        if("preview-first-render".equals(candidate))return PHASE_PREVIEW_FIRST_RENDER;
+        if("preview-visual-commit".equals(candidate))return PHASE_VISUAL_COMMIT;
+        return PHASE_NONE;
     }
 
     private void requestRecovery(String reason,long now){
@@ -275,4 +333,3 @@ final class CompletedRestoreMonitor {
     private static String shortNonce(String value){return value==null?"":value.substring(0,Math.min(16,value.length()));}
     private static String safe(String value){return value==null?"":value.replace('\n',' ').replace('\r',' ').substring(0,Math.min(180,value.length()));}
 }
-
