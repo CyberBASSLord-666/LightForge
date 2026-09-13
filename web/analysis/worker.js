@@ -205,14 +205,15 @@ function normalizeBassProvenance(result){
 let nativeSequence=0;const nativeRequests=new Map();
 let nativeMdxSequence=0;const nativeMdxRequests=new Map();
 const NATIVE_DEUX_FALLBACK_CODE='native-deux-fallback',NATIVE_MDX_FALLBACK_CODE='native-mdx-fallback';
-function nativeFallbackError(code){const error=new Error('Native separation requested a verified WASM restart.');error.code=code;return error;}
-function nativeDeuxFallbackError(){return nativeFallbackError(NATIVE_DEUX_FALLBACK_CODE);}
-function nativeMdxFallbackError(){return nativeFallbackError(NATIVE_MDX_FALLBACK_CODE);}
+function nativeFallbackError(code,cause){const detail=typeof cause?.message==='string'?cause.message.replace(/[\r\n\t]+/g,' ').trim().slice(0,320):'';const error=new Error('Native separation requested a verified WASM restart.'+(detail?' '+detail:''));error.code=code;return error;}
+function nativeDeuxFallbackError(cause){return nativeFallbackError(NATIVE_DEUX_FALLBACK_CODE,cause);}
+function nativeMdxFallbackError(cause){return nativeFallbackError(NATIVE_MDX_FALLBACK_CODE,cause);}
+function nativeTransportError(detail){return new Error(typeof detail==='string'&&detail.trim()?detail.slice(0,320):'Native runtime output is unavailable.');}
 function nativeAbortError(message){try{return new DOMException(message||'Analysis cancelled','AbortError');}catch(_){const error=new Error(message||'Analysis cancelled');error.name='AbortError';return error;}}
 async function normalizeNativeFailure(error,onFallback,fallback){
  if(error?.name==='AbortError')throw error;
  if(error?.code===fallback().code)throw error;
- await onFallback();throw fallback();
+ await onFallback();throw fallback(error);
 }
 function nativePredict(startSample,onProgress=()=>{},onFallback=()=>{}){return new Promise((resolve,reject)=>{const requestId=++nativeSequence;nativeRequests.set(requestId,{resolve,reject,onProgress,onFallback});try{postMessage({type:'native-deux',requestId,startSample});}catch(error){nativeRequests.delete(requestId);reject(error);}}).then(async url=>{
  if(typeof url!=='string')throw Error('Native studio audio is unavailable.');
@@ -242,11 +243,14 @@ async function melForFrames(reader,session,first,frames,config){
  const tensor=new ort.Tensor('float32',pcm,[1,pcm.length]);let output;
  try{output=await session.run({audio_pcm:tensor});const mel=output.mel_spectrogram;return new Float32Array(mel.data.subarray(halo*128,(halo+frames)*128));}finally{if(output)dispose(output);tensor.dispose();}
 }
-const RHYTHM_FEATURE='rhythm-dsp-v1',RHYTHM_FEATURE_VERSION='dsp-feature-extractor-v1',RHYTHM_PREPROCESSING='pcm-44100-mono22050-reflect-v1';
+const RHYTHM_FEATURE='rhythm-dsp-v2',RHYTHM_FEATURE_VERSION='dsp-feature-extractor-v2',RHYTHM_PREPROCESSING='pcm-44100-mono22050-reflect-v1';
+const RHYTHM_FIELDS=Object.freeze(['rms','bass','mid','high','colour','fineRms','chroma']);
 const floatFeature=(value,length)=>value instanceof Float32Array&&value.length===length;
-function rhythmFeaturePayload(data,n){return {version:1,frameCount:n,duration:data.duration,chromaStep:data.chromaStep,rms:data.rms,bass:data.bass,mid:data.mid,high:data.high,colour:data.colour,fineRms:data.fineRms,chroma:data.chroma};}
-function validRhythmFeature(value,n,duration){return !!value&&value.version===1&&value.frameCount===n&&value.duration===duration&&value.chromaStep===.2&&floatFeature(value.rms,n)&&floatFeature(value.bass,n)&&floatFeature(value.mid,n)&&floatFeature(value.high,n)&&floatFeature(value.colour,n*3)&&floatFeature(value.fineRms,n*4)&&floatFeature(value.chroma,Math.ceil(n/10)*12);}
-function rhythmDataFromFeature(value,n){return {duration:value.duration,beat:new Float32Array(n),down:new Float32Array(n),rms:value.rms,bass:value.bass,mid:value.mid,high:value.high,colour:value.colour,fineRms:value.fineRms,chroma:value.chroma,chromaStep:value.chromaStep};}
+const rhythmFeatureLengths=n=>[n,n,n,n,n*3,n*4,Math.ceil(n/10)*12];
+const rhythmFeatureSamples=n=>rhythmFeatureLengths(n).reduce((total,length)=>total+length,0);
+function rhythmFeatureBundle(data,n){const lengths=rhythmFeatureLengths(n),packed=new Float32Array(rhythmFeatureSamples(n));let offset=0;for(let index=0;index<RHYTHM_FIELDS.length;index++){const value=data[RHYTHM_FIELDS[index]];if(!floatFeature(value,lengths[index]))throw Error('Invalid rhythm feature bundle.');packed.set(value,offset);offset+=value.length;}return {arrays:[packed],metadata:{version:2,frameCount:n,duration:data.duration,chromaStep:data.chromaStep,fieldOrder:[...RHYTHM_FIELDS]}};}
+function validRhythmFeature(hit,n,duration){const metadata=hit?.metadata,packed=hit?.arrays?.[0];return !!metadata&&metadata.version===2&&metadata.frameCount===n&&metadata.duration===duration&&metadata.chromaStep===.2&&Array.isArray(metadata.fieldOrder)&&metadata.fieldOrder.length===RHYTHM_FIELDS.length&&metadata.fieldOrder.every((name,index)=>name===RHYTHM_FIELDS[index])&&Array.isArray(hit.arrays)&&hit.arrays.length===1&&floatFeature(packed,rhythmFeatureSamples(n));}
+function rhythmDataFromFeature(hit,n){const data={duration:hit.metadata.duration,beat:new Float32Array(n),down:new Float32Array(n),chromaStep:hit.metadata.chromaStep},packed=hit.arrays[0],lengths=rhythmFeatureLengths(n);let offset=0;for(let index=0;index<RHYTHM_FIELDS.length;index++){const length=lengths[index];data[RHYTHM_FIELDS[index]]=packed.subarray(offset,offset+length);offset+=length;}return data;}
 async function reusableRhythmFeatures(options,config,resourceDiagnostics=null){
  const audioIdentity=options.analysisIdentity,assetFingerprint=options.analysisAssetFingerprint,api=self.LightForgeFeatureStore,store=self.LightForgeAnalysisStore;
  if(typeof audioIdentity!=='string'||!/^[a-f0-9]{64}$/.test(audioIdentity)||typeof assetFingerprint!=='string'||!/^[a-f0-9]{64}$/.test(assetFingerprint)||!api||typeof api.open!=='function'||!store||typeof store.contentAddress!=='function')return null;
@@ -265,18 +269,19 @@ async function recurrenceEvidenceInput(result,options,config,telemetry){
  if(!featureStore)return input;
  let hit=null;
  const phase=telemetry.begin('shared-feature.recurrence.read');
- try{hit=await featureStore.read(RHYTHM_FEATURE);}catch(_){telemetry.cache('shared-features','corrupt');}
+ try{hit=await featureStore.readFloat32(RHYTHM_FEATURE);}catch(_){telemetry.cache('shared-features','corrupt');}
  telemetry.end(phase,{hit:!!hit});
  const frames=Math.ceil(Number(result?.duration||0)*50);
- if(hit&&!validRhythmFeature(hit.value,frames,result.duration)){
+ if(hit&&!validRhythmFeature(hit,frames,result.duration)){
   telemetry.cache('shared-features','corrupt');
   try{await featureStore.invalidate([RHYTHM_FEATURE]);}catch(_){}
   hit=null;
  }
  if(!hit)return input;
  telemetry.cache('shared-features','recurrence-restore');
- input.chroma=hit.value.chroma;
- input.chromaStep=hit.value.chromaStep;
+ const data=rhythmDataFromFeature(hit,frames);
+ input.chroma=data.chroma;
+ input.chromaStep=data.chromaStep;
  return input;
 }
 function wasmThreadCount(){
@@ -300,7 +305,7 @@ self.onmessage=async e=>{
   if(e.data.type==='native-deux-progress'){pending.onProgress(e.data.value.progress,e.data.value.message);return;}
   nativeRequests.delete(e.data.requestId);
   if(e.data.aborted){pending.reject(nativeAbortError(e.data.message));return;}
-  if(e.data.fallback||e.data.error||typeof e.data.url!=='string')Promise.resolve().then(()=>pending.onFallback()).then(()=>pending.reject(nativeDeuxFallbackError()),error=>pending.reject(error));
+  if(e.data.fallback||e.data.error||typeof e.data.url!=='string')Promise.resolve().then(()=>pending.onFallback()).then(()=>pending.reject(nativeDeuxFallbackError(nativeTransportError(e.data.message||e.data.error))),error=>pending.reject(error));
   else pending.resolve(e.data.url);
   return;
  }
@@ -309,7 +314,7 @@ self.onmessage=async e=>{
   if(e.data.type==='native-mdx-progress'){pending.onProgress(e.data.value);return;}
   nativeMdxRequests.delete(e.data.requestId);
   if(e.data.aborted){pending.reject(nativeAbortError(e.data.message));return;}
-  if(e.data.fallback||e.data.error||!(e.data.buffer instanceof ArrayBuffer)||e.data.buffer.byteLength!==pending.expectedBytes||e.data.buffer.byteLength%Float32Array.BYTES_PER_ELEMENT!==0)Promise.resolve().then(()=>pending.onFallback()).then(()=>pending.reject(nativeMdxFallbackError()),error=>pending.reject(error));
+  if(e.data.fallback||e.data.error||!(e.data.buffer instanceof ArrayBuffer)||e.data.buffer.byteLength!==pending.expectedBytes||e.data.buffer.byteLength%Float32Array.BYTES_PER_ELEMENT!==0)Promise.resolve().then(()=>pending.onFallback()).then(()=>pending.reject(nativeMdxFallbackError(nativeTransportError(e.data.message||e.data.error))),error=>pending.reject(error));
   else pending.resolve(new Float32Array(e.data.buffer));
   return;
  }
@@ -392,11 +397,11 @@ self.onmessage=async e=>{
  const n=Math.ceil(reader.duration*50),featureStore=await reusableRhythmFeatures(options,config,telemetry.resource);let featureHit=null;
  if(featureStore){
   const featureRead=telemetry.begin('shared-feature.read');
-  try{featureHit=await featureStore.read(RHYTHM_FEATURE);}catch(_){featureHit=null;}
+  try{featureHit=await featureStore.readFloat32(RHYTHM_FEATURE);}catch(_){featureHit=null;}
   telemetry.end(featureRead,{hit:!!featureHit});
  }
- if(featureHit&&!validRhythmFeature(featureHit.value,n,reader.duration)){telemetry.cache('shared-features','corrupt');try{await featureStore.invalidate([RHYTHM_FEATURE]);}catch(_){}featureHit=null;}
- let data=featureHit?rhythmDataFromFeature(featureHit.value,n):null;
+ if(featureHit&&!validRhythmFeature(featureHit,n,reader.duration)){telemetry.cache('shared-features','corrupt');try{await featureStore.invalidate([RHYTHM_FEATURE]);}catch(_){}featureHit=null;}
+ let data=featureHit?rhythmDataFromFeature(featureHit,n):null;
  if(data){telemetry.cache('shared-features','hit');report(.025,'Restoring musical detail','Verified reusable energy and tonal features restored');}
  else{
   if(featureStore)telemetry.cache('shared-features','miss');
@@ -408,7 +413,7 @@ self.onmessage=async e=>{
   for(let first=0;first<n;first+=featureChunk){const frames=Math.min(featureChunk,n-first),samples=await reader.mono22050(first*441-705,(frames-1)*441+1411,config),f=extractor.extract(samples,0,frames);for(const name of ['rms','bass','mid','high'])data[name].set(f[name],first);data.colour.set(f.colour,first*3);data.fineRms.set(f.fineRms,first*4);for(let i=0;i<frames;i++)for(let b=0;b<12;b++)data.chroma[Math.floor((first+i)/10)*12+b]+=f.chroma[i*12+b]/10;report(.03+.18*(first+frames)/n,'Listening to musical detail',`${Math.min(reader.duration,(first+frames)*.02).toFixed(0)} / ${reader.duration.toFixed(0)} seconds`);}
   if(featureStore){
    const featureWrite=telemetry.begin('shared-feature.write');
-   try{await featureStore.write(RHYTHM_FEATURE,rhythmFeaturePayload(data,n),{producer:RHYTHM_FEATURE_VERSION,frameCount:n});telemetry.cache('shared-features','write');}catch(_){telemetry.cache('shared-features','corrupt');}
+   try{const bundle=rhythmFeatureBundle(data,n);await featureStore.writeFloat32(RHYTHM_FEATURE,bundle.arrays,{...bundle.metadata,producer:RHYTHM_FEATURE_VERSION});telemetry.cache('shared-features','write');}catch(_){telemetry.cache('shared-features','corrupt');}
    telemetry.end(featureWrite);
   }
  }
@@ -534,4 +539,3 @@ self.onmessage=async e=>{
   if(game)try{await game.release();}catch(_){}if(separator)try{await separator.release();}catch(_){}
   if(session)try{await session.release();}catch(_){}if(melSession)try{await melSession.release();}catch(_){}
  }};
-
