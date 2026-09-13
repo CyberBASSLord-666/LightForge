@@ -7,6 +7,7 @@ const path=require('node:path');
 const root=process.env.LIGHTFORGE_ROOT||path.join(__dirname,'..');
 const app=fs.readFileSync(process.env.LIGHTFORGE_APP_SOURCE||path.join(root,'web/app.js'),'utf8');
 const monitor=fs.readFileSync(process.env.LIGHTFORGE_MONITOR_SOURCE||path.join(root,'android/src/com/cyberbasslord/lightforge/CompletedRestoreMonitor.java'),'utf8');
+const background=fs.readFileSync(process.env.LIGHTFORGE_BACKGROUND_INSTRUMENTATION_SOURCE||path.join(root,'tests/android/BackgroundInstrumentation.java'),'utf8');
 
 test('completed restore arms an explicit preview-starting pulse before releasing deferred WebGL startup',()=>{
  const adopted=app.indexOf("completedRestorePulse(restoreLease,'show-adopted')");
@@ -35,4 +36,13 @@ test('fallback probes recover only a validated prerequisite closure before a lat
  assert.match(monitor,/private void applyPhaseClosure\(int observed\)[\s\S]*?previewFirstRender=true/s);
  const unknownGuard=monitor.indexOf('if(observed==PHASE_NONE)'),probeAdvance=monitor.indexOf('sequence=probe.sequence');
  assert.ok(unknownGuard>=0&&probeAdvance>unknownGuard,'unknown probe phases must be rejected before they can advance liveness');
+});
+
+test('the strict Android readiness probe grants one verified completed-restore replacement a fresh bounded bootstrap window',()=>{
+ assert.match(background,/UI_READINESS_INITIAL_BUDGET_MS=45000L/);
+ assert.match(background,/UI_READINESS_RECOVERY_BUDGET_MS=45000L/);
+ assert.match(background,/expectedCompletedRestoreRecovery\(current,recoveryCount,recovery\)[\s\S]*?reboundCompletedRestore=true;[\s\S]*?deadline=Math\.max\(deadline,SystemClock\.elapsedRealtime\(\)\+UI_READINESS_RECOVERY_BUDGET_MS\)/);
+ const current=background.indexOf('check(current(),"Preview changed while awaiting its first frame")');
+ const deadline=background.indexOf('check(SystemClock.elapsedRealtime()<deadline,"Preview JavaScript initialization exceeded its bounded readiness window")');
+ assert.ok(current>=0&&deadline>current,'an expected replacement must be rebound before the readiness deadline is evaluated');
 });
