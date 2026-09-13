@@ -56,19 +56,20 @@ test('malformed feature descriptors are invalidated rather than accepted as comp
  assert.equal(await store.read('chroma'),null);
 });
 test('cached rhythm payload restores byte-identical downstream feature buffers',async()=>{
- const worker=workerContext(),n=23,duration=.46,fresh=freshRhythmFeatures(n,duration),payload=worker.rhythmFeaturePayload(fresh,n);
- assert.equal(worker.validRhythmFeature(payload,n,duration),true);
- const h=load(),store=await h.features.open(identity);await store.write('rhythm-dsp-v1',payload,{producer:'dsp-feature-extractor-v1',frameCount:n});
- const hit=await (await load(h.disk).features.open(identity)).read('rhythm-dsp-v1');assert.ok(hit);assert.equal(worker.validRhythmFeature(hit.value,n,duration),true);
- const restored=worker.rhythmDataFromFeature(hit.value,n);
+ const worker=workerContext(),n=23,duration=.46,fresh=freshRhythmFeatures(n,duration);fresh.rms[0]=-0;fresh.colour[1]=-0;const bundle=worker.rhythmFeatureBundle(fresh,n);
+ assert.equal(worker.validRhythmFeature(bundle,n,duration),true);
+ const h=load(),store=await h.features.open(identity);await store.writeFloat32('rhythm-dsp-v2',bundle.arrays,{...bundle.metadata,producer:'dsp-feature-extractor-v2'});
+ const hit=await (await load(h.disk).features.open(identity)).readFloat32('rhythm-dsp-v2');assert.ok(hit);assert.equal(worker.validRhythmFeature(hit,n,duration),true);
+ const restored=worker.rhythmDataFromFeature(hit,n);
  assert.deepEqual(Object.keys(restored).sort(),Object.keys(fresh).sort());assert.equal(restored.duration,fresh.duration);assert.equal(restored.chromaStep,fresh.chromaStep);
  for(const field of ['beat','down','rms','bass','mid','high','colour','fineRms','chroma'])assert.deepEqual(bytes(restored[field]),bytes(fresh[field]),field+' cache hit differs from fresh downstream input');
+ assert.equal(Object.is(restored.rms[0],-0),true);assert.equal(Object.is(restored.colour[1],-0),true);
 });
 test('rhythm worker reuses only shape-validated source features and keeps anonymous analysis fresh',async()=>{
  const context=workerContext();
- const n=2,feature={version:1,frameCount:n,duration:1.5,chromaStep:.2,rms:Float32Array.of(.1,.2),bass:Float32Array.of(.3,.4),mid:Float32Array.of(.5,.6),high:Float32Array.of(.7,.8),colour:Float32Array.of(1,2,3,4,5,6),fineRms:Float32Array.of(1,2,3,4,5,6,7,8),chroma:new Float32Array(12)};
- assert.equal(context.validRhythmFeature(feature,n,1.5),true);assert.equal(context.validRhythmFeature({...feature,high:Float32Array.of(.7)},n,1.5),false);
- const data=context.rhythmDataFromFeature(feature,n);assert.deepEqual(Array.from(data.rms),Array.from(feature.rms));assert.deepEqual(Array.from(data.beat),[0,0]);assert.deepEqual(Array.from(data.down),[0,0]);
+ const n=2,feature={duration:1.5,chromaStep:.2,rms:Float32Array.of(.1,.2),bass:Float32Array.of(.3,.4),mid:Float32Array.of(.5,.6),high:Float32Array.of(.7,.8),colour:Float32Array.of(1,2,3,4,5,6),fineRms:Float32Array.of(1,2,3,4,5,6,7,8),chroma:new Float32Array(12)},bundle=context.rhythmFeatureBundle(feature,n);
+ assert.equal(context.validRhythmFeature(bundle,n,1.5),true);assert.equal(context.validRhythmFeature({...bundle,arrays:[bundle.arrays[0].subarray(0,-1)]},n,1.5),false);assert.equal(context.validRhythmFeature({...bundle,metadata:{...bundle.metadata,fieldOrder:['bass',...bundle.metadata.fieldOrder.slice(1)]}},n,1.5),false);
+ const data=context.rhythmDataFromFeature(bundle,n);assert.deepEqual(Array.from(data.rms),Array.from(feature.rms));assert.deepEqual(Array.from(data.beat),[0,0]);assert.deepEqual(Array.from(data.down),[0,0]);
  assert.equal(await context.reusableRhythmFeatures({analysisIdentity:'not-a-sha'},{}),null);
  assert.match(source('worker.js'),/work-store\.js','feature-store\.js/);
 });
