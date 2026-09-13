@@ -30,8 +30,11 @@ public final class BackgroundInstrumentation extends Instrumentation {
     // A normal foreground bootstrap must be prompt. If the production
     // completed-restore watchdog performs its one exact, durable recovery,
     // the replacement is a new renderer with its own bounded bootstrap window.
-    private static final long UI_READINESS_INITIAL_BUDGET_MS=45000L;
-    private static final long UI_READINESS_RECOVERY_BUDGET_MS=45000L;
+    // Completed restore permits a real, named 45-second GLTF/WebGL startup
+    // phase. Retain only a small bounded bootstrap margin around that product
+    // policy, including the one verified renderer replacement below.
+    private static final long UI_READINESS_INITIAL_BUDGET_MS=60000L;
+    private static final long UI_READINESS_RECOVERY_BUDGET_MS=60000L;
     private final Handler watchdogMain=new Handler(Looper.getMainLooper());
     private volatile boolean watchdogStopped;
     private Thread mainWatchdog;

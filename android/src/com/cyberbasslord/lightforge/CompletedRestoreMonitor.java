@@ -15,9 +15,12 @@ final class CompletedRestoreMonitor {
     static final long BOOTSTRAP_PHASE_BUDGET_MS=45000L;
     // Deferred completed-show restore releases real WebGL/GLTF startup only
     // after adoption. That startup can legitimately block bridge callbacks,
-    // so it has one named, bounded grace phase; visible first-frame proof is
-    // still mandatory and a stuck renderer still recovers at this deadline.
-    static final long PREVIEW_STARTUP_BUDGET_MS=30000L;
+    // so it has one named, bounded grace phase. Cold Android WebView GLTF/WebGL
+    // initialization can validly take a little over 30 seconds; retain a
+    // 45-second bound so the watchdog does not kill a renderer just before its
+    // first-frame proof. Visible proof is still mandatory and a truly stuck
+    // renderer still gets only the persisted one-replacement recovery.
+    static final long PREVIEW_STARTUP_BUDGET_MS=45000L;
     private static final long BYTES_PER_BUDGET_STEP=512L*1024L;
     private static final long BUDGET_STEP_MS=1000L;
     private static final int PHASE_NONE=0,PHASE_WORKER_STARTED=1,PHASE_WORKER_VERIFIED=2,

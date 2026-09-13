@@ -17,7 +17,7 @@ test('completed restore arms an explicit preview-starting pulse before releasing
 });
 
 test('Android monitor grants only a named bounded preview-startup phase and still requires first render',()=>{
- assert.match(monitor,/PREVIEW_STARTUP_BUDGET_MS=30000L/);
+ assert.match(monitor,/PREVIEW_STARTUP_BUDGET_MS=45000L/);
  assert.match(monitor,/"preview-starting"\.equals\(nextPhase\).*previewStarting/s);
  assert.match(monitor,/"preview-first-render"\.equals\(nextPhase\).*\!previewStarting/s);
  assert.match(monitor,/if\("preview-starting"\.equals\(phase\)\)\{[\s\S]*?nextProbeAt=now\+PREVIEW_STARTUP_BUDGET_MS/);
@@ -39,8 +39,8 @@ test('fallback probes recover only a validated prerequisite closure before a lat
 });
 
 test('the strict Android readiness probe grants one verified completed-restore replacement a fresh bounded bootstrap window',()=>{
- assert.match(background,/UI_READINESS_INITIAL_BUDGET_MS=45000L/);
- assert.match(background,/UI_READINESS_RECOVERY_BUDGET_MS=45000L/);
+ assert.match(background,/UI_READINESS_INITIAL_BUDGET_MS=60000L/);
+ assert.match(background,/UI_READINESS_RECOVERY_BUDGET_MS=60000L/);
  assert.match(background,/expectedCompletedRestoreRecovery\(current,recoveryCount,recovery\)[\s\S]*?reboundCompletedRestore=true;[\s\S]*?deadline=Math\.max\(deadline,SystemClock\.elapsedRealtime\(\)\+UI_READINESS_RECOVERY_BUDGET_MS\)/);
  const current=background.indexOf('check(current(),"Preview changed while awaiting its first frame")');
  const deadline=background.indexOf('check(SystemClock.elapsedRealtime()<deadline,"Preview JavaScript initialization exceeded its bounded readiness window")');
