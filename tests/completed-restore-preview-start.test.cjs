@@ -23,3 +23,16 @@ test('Android monitor grants only a named bounded preview-startup phase and stil
  assert.match(monitor,/if\("preview-starting"\.equals\(phase\)\)return PREVIEW_STARTUP_BUDGET_MS/);
  assert.match(monitor,/terminalSequence<=sequence\|\|!workerStarted\|\|!workerVerified\|\|!showAdopted\|\|!previewFirstRender\|\|!visualCommitted/);
 });
+
+test('fallback probes recover only a validated prerequisite closure before a later direct phase',()=>{
+ assert.match(monitor,/if\(probe\.sequence>sequence\)applyProbeProgress\(probe,now\)/);
+ assert.match(monitor,/int observed=phaseRank\(probe\.phase\),confirmed=confirmedPhaseRank\(\)/);
+ assert.match(monitor,/if\(observed==PHASE_NONE\)[\s\S]*?ignored unknown phase[\s\S]*?return false/s);
+ assert.match(monitor,/if\(observed<confirmed\)[\s\S]*?ignored regressing phase/s);
+ assert.match(monitor,/if\(observed==PHASE_VISUAL_COMMIT\)[\s\S]*?deferred native visual commit/s);
+ assert.match(monitor,/observed>=PHASE_PREVIEW_FIRST_RENDER&&\(!probe\.previewLoaded\|\|probe\.previewFrames<1\)/);
+ assert.match(monitor,/applyPhaseClosure\(observed\)[\s\S]*?observed==PHASE_PREVIEW_STARTING\)nextProbeAt=now\+PREVIEW_STARTUP_BUDGET_MS/s);
+ assert.match(monitor,/private void applyPhaseClosure\(int observed\)[\s\S]*?previewFirstRender=true/s);
+ const unknownGuard=monitor.indexOf('if(observed==PHASE_NONE)'),probeAdvance=monitor.indexOf('sequence=probe.sequence');
+ assert.ok(unknownGuard>=0&&probeAdvance>unknownGuard,'unknown probe phases must be rejected before they can advance liveness');
+});
