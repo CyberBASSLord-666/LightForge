@@ -308,9 +308,15 @@ public final class BackgroundInstrumentation extends Instrumentation {
         Clock unknownDeadlineClock=new Clock();Scheduler unknownDeadlineScheduler=new Scheduler(unknownDeadlineClock);Host unknownDeadlineHost=new Host();
         CompletedRestoreMonitor unknownDeadline=new CompletedRestoreMonitor(unknownDeadlineClock,unknownDeadlineScheduler,unknownDeadlineHost);
         check(unknownDeadline.begin("unknown-deadline-job","unknown-deadline-lease",0),"Unknown deadline lease did not begin");unknownDeadlineScheduler.drain();
-        unknownDeadlineScheduler.advance(CompletedRestoreMonitor.PROBE_INTERVAL_MS);
-        unknownDeadlineHost.callbacks.get(1).receive(new CompletedRestoreMonitor.Probe(true,true,true,false,"unknown-deadline-job","unknown-deadline-lease","unrecognized-phase",99,0,false,0));
-        unknownDeadlineScheduler.advance(CompletedRestoreMonitor.BOOTSTRAP_PHASE_BUDGET_MS-CompletedRestoreMonitor.PROBE_INTERVAL_MS);
+        // The initial probe is still the outstanding callback until it is
+        // answered. Feed that callback an unknown state, then keep later
+        // probes responsive so callback-stall cannot mask the bootstrap
+        // deadline we are asserting here.
+        unknownDeadlineHost.callbacks.get(0).receive(new CompletedRestoreMonitor.Probe(true,true,true,false,"unknown-deadline-job","unknown-deadline-lease","unrecognized-phase",99,0,false,0));
+        unknownDeadlineHost.respond=true;
+        for(long elapsed=0;elapsed<CompletedRestoreMonitor.BOOTSTRAP_PHASE_BUDGET_MS;elapsed+=CompletedRestoreMonitor.PROBE_INTERVAL_MS){
+            unknownDeadlineScheduler.advance(Math.min(CompletedRestoreMonitor.PROBE_INTERVAL_MS,CompletedRestoreMonitor.BOOTSTRAP_PHASE_BUDGET_MS-elapsed));
+        }
         check(unknownDeadlineHost.recoveries==1,"Unknown fallback probes postponed the bounded bootstrap recovery");
 
         // Deferred preview startup is a real GL/WebGL + GLTF load, not a
