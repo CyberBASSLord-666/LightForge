@@ -50,12 +50,13 @@ test('available runtimes and older bridges retain native prediction and release'
   assert.equal(started,1);assert.equal(released,1);assert.equal(logs.length,0);
  }
 });
+const wasmCacheIdentity=values=>({schemaVersion:1,persistent:true,verified:true,execution:'wasm-v1',refreshEpoch:null,nativeRuntimeProfile:'wasm',...values});
 test('service runner rejects a completed v8 result when its exact analysis cache identity changed',async()=>{
  let complete,failed;
  const finished=new Promise((resolve,reject)=>{complete=resolve;failed=reject;});
- const events=[],expected={schemaVersion:1,persistent:true,workId:'fresh-work',implementationFingerprint:'fresh-implementation',assetFingerprint:'fresh-assets',nativeRuntimeProfile:'wasm'};
+ const events=[],expected=wasmCacheIdentity({workId:'fresh-work',implementationFingerprint:'fresh-implementation',assetFingerprint:'fresh-assets'});
  const request={projectId:'stale-show',name:'Stale show',duration:12,analysisIdentity:'saved-analysis-identity',needAnalysis:false,settings:{analysisQuality:'precision',sensitivity:70},
-  music:{duration:12,analysisVersion:8,engine:{cacheIdentity:{schemaVersion:1,workId:'old-work',implementationFingerprint:'old-implementation',assetFingerprint:'old-assets',nativeRuntimeProfile:'wasm'}}}};
+  music:{duration:12,analysisVersion:8,engine:{cacheIdentity:wasmCacheIdentity({workId:'old-work',implementationFingerprint:'old-implementation',assetFingerprint:'old-assets'})}}};
  const context={URL,AbortController,DOMException,setTimeout,navigator:{},location:{href:'https://appassets.androidplatform.net/background/runner.html?job=job'},
   fetch:async url=>{assert.equal(url,'/background/request.json');return {ok:true,json:async()=>request};},
   MusicAnalyzer:{async cacheIdentity(options){events.push('identity');assert.equal(options.analysisIdentity,'saved-analysis-identity');assert.equal(options.nativeRuntimeProfile,undefined);return expected;},
@@ -73,7 +74,7 @@ test('service runner rejects a completed v8 result when its exact analysis cache
 test('service runner retains completed music only for an exact current analysis cache identity',async()=>{
  let complete,failed;
  const finished=new Promise((resolve,reject)=>{complete=resolve;failed=reject;});
- const events=[],identity={schemaVersion:1,persistent:true,workId:'same-work',implementationFingerprint:'same-implementation',assetFingerprint:'same-assets',nativeRuntimeProfile:'wasm'};
+ const events=[],identity=wasmCacheIdentity({workId:'same-work',implementationFingerprint:'same-implementation',assetFingerprint:'same-assets'});
  const request={projectId:'reused-show',name:'Reused show',duration:12,analysisIdentity:'saved-analysis-identity',needAnalysis:false,settings:{analysisQuality:'precision',sensitivity:70},
   music:{duration:12,analysisVersion:8,engine:{cacheIdentity:identity}}};
  const context={URL,AbortController,DOMException,setTimeout,navigator:{},location:{href:'https://appassets.androidplatform.net/background/runner.html?job=job'},
