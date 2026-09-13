@@ -108,7 +108,7 @@ test('fresh failed, cancelled, and compile-failed runs clear stale evidence but 
 });
 
 test('cached/reused music produces no fresh observation and does not invoke the fresh-clear bridge',async()=>{
- const cacheIdentity={schemaVersion:1,persistent:true,workId:'same-work',implementationFingerprint:'same-implementation',assetFingerprint:'same-assets',nativeRuntimeProfile:'wasm'};
+ const cacheIdentity={schemaVersion:1,persistent:true,verified:true,execution:'wasm-v1',refreshEpoch:null,workId:'same-work',implementationFingerprint:'same-implementation',assetFingerprint:'same-assets',nativeRuntimeProfile:'wasm'};
  const cachedMusic={analysisVersion:8,duration:2,engine:engine({cacheIdentity})};
  const run=await runProduction({request:{needAnalysis:false,music:cachedMusic}});
  assert.deepEqual(run.events,['identity','checkpoint','compile','complete']);
