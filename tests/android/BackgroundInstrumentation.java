@@ -274,6 +274,37 @@ public final class BackgroundInstrumentation extends Instrumentation {
         callbackScheduler.advance(CompletedRestoreMonitor.CALLBACK_BUDGET_MS);
         check(callbackHost.recoveries==1&&"new-nonce".equals(callbackHost.recoveredNonce),"Stale WebView callback satisfied the replacement lease callback budget");
 
+        // Deferred preview startup is a real GL/WebGL + GLTF load, not a
+        // synthetic readiness signal. The ordered bridge phase retires the old
+        // probe and grants only that startup interval a bounded grace; a real
+        // first frame is still required before terminal proof.
+        Clock startupClock=new Clock();Scheduler startupScheduler=new Scheduler(startupClock);Host startupHost=new Host();
+        CompletedRestoreMonitor startup=new CompletedRestoreMonitor(startupClock,startupScheduler,startupHost);
+        check(startup.begin("startup-job","startup-lease",0),"Preview-startup lease did not begin");startupScheduler.drain();
+        check(startup.pulse("startup-job","startup-lease","worker-started",1,0),"Preview-startup worker start was rejected");
+        check(startup.pulse("startup-job","startup-lease","worker-verified",2,0),"Preview-startup worker verification was rejected");
+        check(startup.pulse("startup-job","startup-lease","show-adopted",3,0),"Preview-startup show adoption was rejected");
+        check(!startup.pulse("startup-job","startup-lease","preview-first-render",4,0),"First render bypassed the preview-starting phase");
+        check(startup.pulse("startup-job","startup-lease","preview-starting",4,0),"Preview-startup phase was rejected");
+        int startupProbes=startupHost.probes;
+        startupScheduler.advance(CompletedRestoreMonitor.CALLBACK_BUDGET_MS+1);
+        check(startupHost.recoveries==0&&startupHost.probes==startupProbes,"Deferred WebGL/GLTF startup was treated as a generic JavaScript callback stall");
+        check(startup.pulse("startup-job","startup-lease","preview-first-render",5,0),"A real first frame was rejected after bounded preview startup");
+        check(startup.pulse("startup-job","startup-lease","preview-visual-commit",6,0),"Preview startup did not retain native visual proof");
+        check(startup.terminal("startup-job","startup-lease",7,0),"Preview startup did not retain terminal proof after its real first frame");
+
+        Clock stalledStartupClock=new Clock();Scheduler stalledStartupScheduler=new Scheduler(stalledStartupClock);Host stalledStartupHost=new Host();
+        CompletedRestoreMonitor stalledStartup=new CompletedRestoreMonitor(stalledStartupClock,stalledStartupScheduler,stalledStartupHost);
+        check(stalledStartup.begin("stalled-startup-job","stalled-startup-lease",0),"Stalled preview-startup lease did not begin");stalledStartupScheduler.drain();
+        check(stalledStartup.pulse("stalled-startup-job","stalled-startup-lease","worker-started",1,0),"Stalled preview-startup worker start was rejected");
+        check(stalledStartup.pulse("stalled-startup-job","stalled-startup-lease","worker-verified",2,0),"Stalled preview-startup worker verification was rejected");
+        check(stalledStartup.pulse("stalled-startup-job","stalled-startup-lease","show-adopted",3,0),"Stalled preview-startup adoption was rejected");
+        check(stalledStartup.pulse("stalled-startup-job","stalled-startup-lease","preview-starting",4,0),"Stalled preview-startup phase was rejected");
+        stalledStartupScheduler.advance(CompletedRestoreMonitor.PREVIEW_STARTUP_BUDGET_MS-1);
+        check(stalledStartupHost.recoveries==0,"Bounded preview-startup grace expired early");
+        stalledStartupScheduler.advance(1);
+        check(stalledStartupHost.recoveries==1,"A genuinely stalled preview startup did not recover at its bounded deadline");
+
         Clock staleClock=new Clock();Scheduler staleScheduler=new Scheduler(staleClock);Host staleHost=new Host();staleHost.respond=true;
         CompletedRestoreMonitor stale=new CompletedRestoreMonitor(staleClock,staleScheduler,staleHost);
         check(stale.begin("phase-job","lease-phase",0),"Phase lease did not begin");staleScheduler.drain();staleScheduler.advance(CompletedRestoreMonitor.BOOTSTRAP_PHASE_BUDGET_MS);
@@ -296,10 +327,12 @@ public final class BackgroundInstrumentation extends Instrumentation {
         check(!progress.terminal("completed-job","lease-progress",6,5120),"Terminal proof bypassed verified/adopted/first-render/visual predicates");
         check(progress.pulse("completed-job","lease-progress","worker-verified",6,5120),"Worker verification proof was rejected");
         check(progress.pulse("completed-job","lease-progress","show-adopted",7,5120),"Adopted show proof was rejected");
-        check(progress.pulse("completed-job","lease-progress","preview-first-render",8,5120),"First web render proof was rejected");
-        check(!progress.terminal("completed-job","lease-progress",9,5120),"Terminal proof bypassed the native visual-frame predicate");
-        check(progress.pulse("completed-job","lease-progress","preview-visual-commit",9,5120),"Native visual-frame proof was rejected");
-        check(progress.terminal("completed-job","lease-progress",10,5120),"Ordered terminal proof was rejected");
+        check(!progress.pulse("completed-job","lease-progress","preview-first-render",8,5120),"First web render bypassed preview startup ordering");
+        check(progress.pulse("completed-job","lease-progress","preview-starting",8,5120),"Preview startup proof was rejected");
+        check(progress.pulse("completed-job","lease-progress","preview-first-render",9,5120),"First web render proof was rejected");
+        check(!progress.terminal("completed-job","lease-progress",10,5120),"Terminal proof bypassed the native visual-frame predicate");
+        check(progress.pulse("completed-job","lease-progress","preview-visual-commit",10,5120),"Native visual-frame proof was rejected");
+        check(progress.terminal("completed-job","lease-progress",11,5120),"Ordered terminal proof was rejected");
         check(!progress.ackCommitted("completed-job","stale-lease"),"Foreign post-ACK confirmation released the terminal token");
         check(progress.ackCommitted("completed-job","lease-progress"),"Exact post-ACK confirmation did not release the terminal token");
         check(!progress.ackCommitted("completed-job","lease-progress"),"Replayed post-ACK confirmation released a second token");
@@ -312,9 +345,10 @@ public final class BackgroundInstrumentation extends Instrumentation {
         check(staleAck.pulse("ack-job","old-terminal","worker-started",1,0),"Terminal-token start failed");
         check(staleAck.pulse("ack-job","old-terminal","worker-verified",2,0),"Terminal-token verification failed");
         check(staleAck.pulse("ack-job","old-terminal","show-adopted",3,0),"Terminal-token adoption failed");
-        check(staleAck.pulse("ack-job","old-terminal","preview-first-render",4,0),"Terminal-token render proof failed");
-        check(staleAck.pulse("ack-job","old-terminal","preview-visual-commit",5,0),"Terminal-token visual proof failed");
-        check(staleAck.terminal("ack-job","old-terminal",6,0),"Terminal-token proof failed");
+        check(staleAck.pulse("ack-job","old-terminal","preview-starting",4,0),"Terminal-token preview startup failed");
+        check(staleAck.pulse("ack-job","old-terminal","preview-first-render",5,0),"Terminal-token render proof failed");
+        check(staleAck.pulse("ack-job","old-terminal","preview-visual-commit",6,0),"Terminal-token visual proof failed");
+        check(staleAck.terminal("ack-job","old-terminal",7,0),"Terminal-token proof failed");
         check(!staleAck.begin("ack-job","fresh-lease",0),"Fresh lease bypassed a terminal token awaiting browser ACK confirmation");
         check(staleAck.ackCommitted("ack-job","old-terminal"),"Exact terminal ACK confirmation did not release its token");
         check(staleAck.begin("ack-job","fresh-lease",0),"Fresh lease did not begin after exact ACK confirmation");
@@ -325,13 +359,14 @@ public final class BackgroundInstrumentation extends Instrumentation {
         check(laterCompleted.pulse("older-completed-job","older-terminal","worker-started",1,0),"Older terminal start failed");
         check(laterCompleted.pulse("older-completed-job","older-terminal","worker-verified",2,0),"Older terminal verification failed");
         check(laterCompleted.pulse("older-completed-job","older-terminal","show-adopted",3,0),"Older terminal adoption failed");
-        check(laterCompleted.pulse("older-completed-job","older-terminal","preview-first-render",4,0),"Older terminal render proof failed");
-        check(laterCompleted.pulse("older-completed-job","older-terminal","preview-visual-commit",5,0),"Older terminal visual proof failed");
-        check(laterCompleted.terminal("older-completed-job","older-terminal",6,0),"Older terminal proof failed");
+        check(laterCompleted.pulse("older-completed-job","older-terminal","preview-starting",4,0),"Older terminal preview startup failed");
+        check(laterCompleted.pulse("older-completed-job","older-terminal","preview-first-render",5,0),"Older terminal render proof failed");
+        check(laterCompleted.pulse("older-completed-job","older-terminal","preview-visual-commit",6,0),"Older terminal visual proof failed");
+        check(laterCompleted.terminal("older-completed-job","older-terminal",7,0),"Older terminal proof failed");
         check(!laterCompleted.begin("older-completed-job","same-job-retry",0),"Same completed job bypassed its unconfirmed terminal token");
         check(laterCompleted.begin("later-completed-job","later-lease",0),"A later completed job was wedged by an old unconfirmed terminal token");
         check(!laterCompleted.ackCommitted("older-completed-job","older-terminal"),"A stale old ACK released state after the later job began");
-        pass("Completed-restore native lease monitor rejects stale nonce/replayed pulses, foreign failed probes, retired callbacks and stale post-ACK tokens; it keeps same-job terminal exclusivity but admits a later completed job without clearing the old cap, survives ordered long restore pulses, bounds a stalled callback to one persisted same-Activity replacement, retires valid direct-progress probes with ticketed callbacks so late same-lease results cannot mask a dead renderer, and disarms only on worker/adopted/render/native-visual terminal proof without mutating the browser ACK.");
+        pass("Completed-restore native lease monitor rejects stale nonce/replayed pulses, foreign failed probes, retired callbacks and stale post-ACK tokens; it keeps same-job terminal exclusivity but admits a later completed job without clearing the old cap, survives ordered long restore pulses, gives real deferred WebGL/GLTF startup one bounded named grace without relaxing first-render/visual proof, bounds ordinary stalled callbacks to one persisted same-Activity replacement, retires valid direct-progress probes with ticketed callbacks so late same-lease results cannot mask a dead renderer, and never mutates the browser ACK.");
     }
     private void launch()throws Exception{
         activity=(MainActivity)startActivitySync(new Intent(getTargetContext(),MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));

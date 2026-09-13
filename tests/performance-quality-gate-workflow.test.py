@@ -65,6 +65,9 @@ class PerformanceQualityGateWorkflowTest(unittest.TestCase):
             "benchmark_artifact:",
             "benchmark_protocol_id:",
             "benchmark_cache_mode:",
+            "benchmark_cache_setup_id:",
+            "benchmark_pair_order:",
+            "benchmark_thermal_cycle_id:",
             "benchmark_report_side:",
             "benchmark_change_classification:",
             "benchmark_change_id:",
@@ -73,6 +76,13 @@ class PerformanceQualityGateWorkflowTest(unittest.TestCase):
         self.assertIn("Aggregate diagnostics with the protected locked runner", text)
         self.assertIn("tools/locked_benchmark_runner.py aggregate", text)
         self.assertIn('--report-side "$BENCHMARK_REPORT_SIDE"', text)
+        self.assertIn('--cache-setup-id "$BENCHMARK_CACHE_SETUP_ID"', text)
+        self.assertIn('--pair-order "$BENCHMARK_PAIR_ORDER"', text)
+        self.assertIn('--thermal-cycle-id "$BENCHMARK_THERMAL_CYCLE_ID"', text)
+        self.assertIn('test -n "$BENCHMARK_CACHE_SETUP_ID"', text)
+        self.assertIn('test -n "$BENCHMARK_THERMAL_CYCLE_ID"', text)
+        self.assertIn('test "$BENCHMARK_PAIR_ORDER" = baseline-first', text)
+        self.assertIn("candidate-output-differential.json", text)
         self.assertIn("--reports gate/diagnostics/reports", text)
         self.assertIn("gate/diagnostics/human-perceptual-review.json", text)
         self.assertIn("environment: lightforge-release-quality", text)
@@ -104,6 +114,23 @@ class PerformanceQualityGateWorkflowTest(unittest.TestCase):
         self.assertIn("--release-candidate-artifact \"lightforge-$RELEASE_VERSION-ci-candidate\"", text)
         self.assertIn('test "$GITHUB_REF" = "refs/heads/main"', text)
         self.assertIn('test "$LIGHTFORGE_REF_PROTECTED" = "true"', text)
+        self.assertIn("--require-production-ready", text)
+
+    def test_manual_dispatch_is_complete_and_jobs_wait_for_unit_contract(self):
+        text = WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("Reject incomplete manual gate requests", text)
+        self.assertIn("manual dispatch must request exactly one complete operation", text)
+        self.assertIn('("benchmark aggregation", aggregate)', text)
+        self.assertIn('("release comparison", compare)', text)
+        self.assertIn('raise SystemExit(f"incomplete manual {name} request")', text)
+        self.assertRegex(
+            text,
+            r"(?ms)^  benchmark:\n.*?^    needs: unit$",
+        )
+        self.assertRegex(
+            text,
+            r"(?ms)^  compare:\n.*?^    needs: unit$",
+        )
 
     def test_all_actions_references_are_immutable_commit_shas(self):
         text = WORKFLOW.read_text(encoding="utf-8")

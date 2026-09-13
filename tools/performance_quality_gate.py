@@ -24,18 +24,27 @@ from pathlib import Path
 from types import MappingProxyType
 
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 # A release contract is deliberately versioned when its acceptance semantics
 # change.  ``v2`` closes the old policy-floor, corpus, and applicability
 # loopholes rather than silently reinterpreting a v1 policy collected earlier.
-RELEASE_METRIC_CONTRACT_VERSION = "lightforge-release-metrics-v2"
-RELEASE_CORPUS_CONTRACT_VERSION = "lightforge-release-corpus-v1"
+RELEASE_METRIC_CONTRACT_VERSION = "lightforge-release-metrics-v4"
+RELEASE_CORPUS_CONTRACT_VERSION = "lightforge-release-corpus-v2"
 RELEASE_MINIMUM_PAIRS_PER_TRACK = 5
 RELEASE_MINIMUM_BOOTSTRAP_CONFIDENCE = 0.99
 RELEASE_MINIMUM_BOOTSTRAP_RESAMPLES = 20_000
 RELEASE_RUNTIME_METRIC = "performance.total_wall_clock_seconds"
 RELEASE_RUNTIME_TARGET_PERCENT = 75.0
 RELEASE_MINIMUM_CORPUS_TRACKS = 16
+# Cache state is part of the benchmark workload.  A report cannot self-label an
+# arbitrary warm/cold condition without evidence derived from stage telemetry.
+CACHE_CONDITION_PROTOCOL = "lightforge-cache-condition-v2"
+CACHE_SETUP_PROTOCOL = "lightforge-cache-setup-v1"
+CACHE_SETUP_PAIR_ORDERS = frozenset({"baseline-first", "candidate-first", "counterbalanced"})
+CACHE_CONDITION_MODES = frozenset({"cold", "warm", "resumed"})
+CACHE_CONDITION_STAGE_STATUSES = frozenset({"completed", "reused", "skipped", "failed", "cancelled"})
+CACHE_CONDITION_CACHE_STATUSES = frozenset({"hit", "miss", "disabled", "not_applicable"})
+CACHE_CONDITION_CHECKPOINT_STATUSES = frozenset({"written", "reused", "not_applicable"})
 HUMAN_REVIEW_SCHEMA_VERSION = 1
 # Schema v3 adds baseline/candidate benchmark-evidence projections so review
 # attestation cannot be replayed after a metric or diagnostic is edited.
@@ -131,6 +140,9 @@ COMPARABILITY_PATHS = (
     "provenance.workload.corpus_id",
     "provenance.workload.corpus_manifest_sha256",
     "provenance.workload.audio.content_sha256",
+    "provenance.workload.audio.duration_seconds",
+    "provenance.workload.audio.canonical_sample_rate",
+    "provenance.workload.audio.channels",
     "provenance.workload.analysis_configuration",
     "provenance.implementation.preprocessing_version",
     "provenance.implementation.model_versions",
@@ -141,7 +153,163 @@ COMPARABILITY_PATHS = (
     "provenance.environment.random_seed",
     "provenance.environment.thermal_profile",
     "condition.cache_mode",
+    "condition.cache_protocol",
+    "condition.cache_setup_sha256",
 )
+
+
+def cache_condition_digest(evidence):
+    """Hash canonical cache-stage evidence embedded in every paired run."""
+    return hashlib.sha256(canonical_json(evidence).encode("utf-8")).hexdigest()
+
+
+def cache_setup_digest(setup):
+    """Hash controlled cache preparation, not its observed outcome.
+
+    A correct candidate may reuse a shared feature or checkpoint that the
+    baseline did not.  Pairing therefore binds reset/warm/resume procedure and
+    order, while retaining independently validated outcome telemetry.
+    """
+    return hashlib.sha256(canonical_json(setup).encode("utf-8")).hexdigest()
+
+
+def validate_cache_condition(condition):
+    """Fail closed unless cache mode, setup, and stage evidence agree."""
+    if not isinstance(condition, dict):
+        raise ValueError("condition must be an object")
+    expected_condition_fields = {
+        "cache_mode", "cache_protocol", "cache_setup", "cache_setup_sha256",
+        "cache_evidence", "cache_evidence_sha256",
+    }
+    if set(condition) != expected_condition_fields:
+        raise ValueError("condition has unsupported or missing cache-contract fields")
+    mode = condition.get("cache_mode")
+    if mode not in CACHE_CONDITION_MODES:
+        raise ValueError("condition.cache_mode must be one of cold, warm, or resumed")
+    if condition.get("cache_protocol") != CACHE_CONDITION_PROTOCOL:
+        raise ValueError("condition.cache_protocol is unsupported")
+    setup = condition.get("cache_setup")
+    expected_setup_fields = {
+        "schema_version", "protocol", "mode", "setup_id", "pair_order", "thermal_cycle_id"
+    }
+    if not isinstance(setup, dict) or set(setup) != expected_setup_fields:
+        raise ValueError("condition.cache_setup has an invalid shape")
+    if (
+        setup.get("schema_version") != 1
+        or setup.get("protocol") != CACHE_SETUP_PROTOCOL
+        or setup.get("mode") != mode
+        or not isinstance(setup.get("setup_id"), str)
+        or not _OPAQUE_ID.fullmatch(setup["setup_id"])
+        or setup.get("pair_order") not in CACHE_SETUP_PAIR_ORDERS
+        or not isinstance(setup.get("thermal_cycle_id"), str)
+        or not _OPAQUE_ID.fullmatch(setup["thermal_cycle_id"])
+    ):
+        raise ValueError("condition.cache_setup does not bind a valid controlled setup")
+    if condition.get("cache_setup_sha256") != cache_setup_digest(setup):
+        raise ValueError("condition.cache_setup_sha256 does not match its setup")
+    evidence = condition.get("cache_evidence")
+    if not isinstance(evidence, dict):
+        raise ValueError("condition.cache_evidence must be an object")
+    if (
+        evidence.get("schema_version") != 2
+        or evidence.get("protocol") != CACHE_CONDITION_PROTOCOL
+        or evidence.get("mode") != mode
+    ):
+        raise ValueError("condition.cache_evidence does not bind the declared cache protocol and mode")
+    stages = evidence.get("stages")
+    if not isinstance(stages, list) or not stages:
+        raise ValueError("condition.cache_evidence.stages must be a non-empty array")
+    observed, seen = [], set()
+    expected_stage_fields = {
+        "stage_id", "attempt", "stage_status", "cache_status", "checkpoint_status", "recovery_from_attempt"
+    }
+    for index, row in enumerate(stages):
+        if not isinstance(row, dict) or set(row) != expected_stage_fields:
+            raise ValueError(f"condition.cache_evidence.stages[{index}] has an invalid shape")
+        stage_id = row["stage_id"]
+        attempt = row["attempt"]
+        if not isinstance(stage_id, str) or not _OPAQUE_ID.fullmatch(stage_id):
+            raise ValueError(f"condition.cache_evidence.stages[{index}].stage_id is invalid")
+        if not isinstance(attempt, int) or isinstance(attempt, bool) or attempt < 1:
+            raise ValueError(f"condition.cache_evidence.stages[{index}].attempt is invalid")
+        if row["stage_status"] not in CACHE_CONDITION_STAGE_STATUSES:
+            raise ValueError(f"condition.cache_evidence.stages[{index}].stage_status is invalid")
+        if row["cache_status"] not in CACHE_CONDITION_CACHE_STATUSES:
+            raise ValueError(f"condition.cache_evidence.stages[{index}].cache_status is invalid")
+        if row["checkpoint_status"] not in CACHE_CONDITION_CHECKPOINT_STATUSES:
+            raise ValueError(f"condition.cache_evidence.stages[{index}].checkpoint_status is invalid")
+        recovery_from = row["recovery_from_attempt"]
+        if recovery_from is not None and (
+            not isinstance(recovery_from, int)
+            or isinstance(recovery_from, bool)
+            or recovery_from < 1
+            or recovery_from >= attempt
+        ):
+            raise ValueError(f"condition.cache_evidence.stages[{index}].recovery_from_attempt is invalid")
+        if recovery_from is not None and not (
+            row["stage_status"] == "reused" and row["checkpoint_status"] == "reused"
+        ):
+            raise ValueError("recovery lineage requires a reused stage and reused checkpoint")
+        identity = (stage_id, attempt)
+        if identity in seen:
+            raise ValueError("condition.cache_evidence.stages contains duplicate stage attempts")
+        seen.add(identity)
+        observed.append(row)
+    if observed != sorted(observed, key=lambda row: (row["stage_id"], row["attempt"])):
+        raise ValueError("condition.cache_evidence.stages must be canonical-order")
+    by_stage = {}
+    for row in observed:
+        by_stage.setdefault(row["stage_id"], []).append(row)
+    interrupted_attempts = 0
+    for stage_id, attempts in by_stage.items():
+        if [row["attempt"] for row in attempts] != list(range(1, len(attempts) + 1)):
+            raise ValueError(f"condition.cache_evidence stage {stage_id} must use contiguous attempts")
+        for row in attempts:
+            if row["stage_status"] in {"failed", "cancelled"}:
+                interrupted_attempts += 1
+                if not any(
+                    later["attempt"] > row["attempt"]
+                    and later["stage_status"] in {"completed", "reused"}
+                    for later in attempts
+                ):
+                    raise ValueError("failed or cancelled cache stages require a successful later retry")
+            recovery_from = row["recovery_from_attempt"]
+            if recovery_from is not None:
+                parent = attempts[recovery_from - 1]
+                if (
+                    parent["checkpoint_status"] != "written"
+                    or parent["stage_status"] not in {"failed", "cancelled"}
+                ):
+                    raise ValueError("recovery lineage must reference an interrupted written checkpoint")
+        if attempts[-1]["stage_status"] not in {"completed", "reused", "skipped"}:
+            raise ValueError("every cache stage must end in a successful terminal state")
+    counts = {
+        "cache_hits": sum(row["cache_status"] == "hit" for row in observed),
+        "cache_misses": sum(row["cache_status"] == "miss" for row in observed),
+        "checkpoint_reuses": sum(row["checkpoint_status"] == "reused" for row in observed),
+        "recovery_stages": sum(row["recovery_from_attempt"] is not None for row in observed),
+        "interrupted_stage_attempts": interrupted_attempts,
+    }
+    for key, expected in counts.items():
+        if evidence.get(key) != expected:
+            raise ValueError(f"condition.cache_evidence.{key} does not match its stages")
+    if condition.get("cache_evidence_sha256") != cache_condition_digest(evidence):
+        raise ValueError("condition.cache_evidence_sha256 does not match its evidence")
+    if mode == "cold" and not (
+        counts["cache_hits"] == 0
+        and counts["checkpoint_reuses"] == 0
+        and counts["cache_misses"] >= 1
+    ):
+        raise ValueError("cold cache mode requires a real miss and no cache/checkpoint reuse")
+    if mode == "warm" and counts["cache_hits"] + counts["checkpoint_reuses"] < 1:
+        raise ValueError("warm cache mode requires at least one cache or checkpoint reuse")
+    if mode == "resumed" and not (
+        counts["checkpoint_reuses"] >= 1
+        and counts["recovery_stages"] >= 1
+        and counts["interrupted_stage_attempts"] >= 1
+    ):
+        raise ValueError("resumed cache mode requires an interrupted checkpoint recovery lineage")
+    return evidence
 
 
 def canonical_json(value):
@@ -1079,6 +1247,8 @@ def _validate_suite(report, expected_policy_sha):
         raise ValueError("report.suite must be an object")
     for path in ("corpus_id", "corpus_manifest_sha256", "protocol_id", "policy_sha256"):
         _require_string(suite.get(path), f"report.suite.{path}")
+    if suite.get("cache_protocol") != CACHE_CONDITION_PROTOCOL:
+        raise ValueError("report.suite.cache_protocol is unsupported")
     if suite["policy_sha256"] != expected_policy_sha:
         raise ValueError("report suite policy_sha256 does not match the supplied policy")
     return suite
@@ -1212,7 +1382,12 @@ def _release_corpus_diagnostics(manifest, profile, required_tracks):
             blockers.append(_corpus_error("release_locked_corpus_track_id_invalid", track_index=index))
             continue
         audio = track.get("audio")
-        if not isinstance(audio, dict) or set(audio) != {"content_sha256", "duration_seconds"}:
+        if not isinstance(audio, dict) or set(audio) != {
+            "content_sha256",
+            "duration_seconds",
+            "canonical_sample_rate",
+            "channels",
+        }:
             blockers.append(_corpus_error("release_locked_corpus_audio_invalid", track=track_id))
             continue
         try:
@@ -1227,6 +1402,18 @@ def _release_corpus_diagnostics(manifest, profile, required_tracks):
         duration = audio.get("duration_seconds")
         if not _is_finite_number(duration) or float(duration) <= 0:
             blockers.append(_corpus_error("release_locked_corpus_audio_duration_invalid", track=track_id))
+            continue
+        rate = audio.get("canonical_sample_rate")
+        channels = audio.get("channels")
+        if (
+            not isinstance(rate, int)
+            or isinstance(rate, bool)
+            or rate <= 0
+            or not isinstance(channels, int)
+            or isinstance(channels, bool)
+            or channels <= 0
+        ):
+            blockers.append(_corpus_error("release_locked_corpus_audio_format_invalid", track=track_id))
             continue
         if audio_sha in audio_ids:
             blockers.append(_corpus_error("release_locked_corpus_duplicate_audio", track=track_id))
@@ -1294,6 +1481,9 @@ def _release_corpus_diagnostics(manifest, profile, required_tracks):
         diagnostics["annotation_evidence_count"] += len(normalized_applicability)
         track_contract[track_id] = {
             "audio_sha256": audio_sha,
+            "audio_duration_seconds": float(duration),
+            "canonical_sample_rate": rate,
+            "channels": channels,
             "metric_applicability": normalized_applicability,
             "golden_artifacts": dict(golden),
         }
@@ -1565,7 +1755,15 @@ def _index_report(report, policy_metrics, expected_policy_sha):
             raise ValueError(f"runs[{index}].provenance must be an object")
         if not isinstance(condition, dict):
             raise ValueError(f"runs[{index}].condition must be an object")
-        _require_string(condition.get("cache_mode"), f"runs[{index}].condition.cache_mode")
+        try:
+            validate_cache_condition(condition)
+        except ValueError as error:
+            issues.append({
+                "track": track_id,
+                "pair_id": pair_id,
+                "reason": "invalid_cache_condition",
+                "detail": str(error),
+            })
         indexed[key] = {"run": run, "metrics": flattened, "not_applicable": unavailable}
     return suite, indexed, issues
 
@@ -1679,7 +1877,18 @@ def _release_run_binding_blockers(indexed, side, profile, track_contract):
                 }
             )
         audio = workload.get("audio") if isinstance(workload, dict) else None
-        if not isinstance(audio, dict) or audio.get("content_sha256") != track["audio_sha256"]:
+        if not isinstance(audio, dict) or (
+            audio.get("content_sha256") != track["audio_sha256"]
+            or not _is_finite_number(audio.get("duration_seconds"))
+            or not math.isclose(
+                float(audio["duration_seconds"]),
+                track["audio_duration_seconds"],
+                rel_tol=0.0,
+                abs_tol=1e-6,
+            )
+            or audio.get("canonical_sample_rate") != track["canonical_sample_rate"]
+            or audio.get("channels") != track["channels"]
+        ):
             blockers.append(
                 {
                     "reason": "release_policy_run_audio_mismatch",
@@ -1688,6 +1897,57 @@ def _release_run_binding_blockers(indexed, side, profile, track_contract):
                     "pair_id": pair_id,
                 }
             )
+        # Both sides must provide the full privacy-safe golden projection. The
+        # baseline must exactly reproduce its locked reference. Candidate
+        # deltas are validated separately against a canonical, review-attested
+        # differential so a legitimate improvement is neither silently
+        # rejected nor silently accepted.
+        outputs = run.get("outputs")
+        expected_outputs = track["golden_artifacts"]
+        if not isinstance(outputs, dict) or set(outputs) != set(expected_outputs):
+            blockers.append(
+                {
+                    "reason": "release_policy_run_golden_outputs_missing_or_invalid",
+                    "side": side,
+                    "track": track_id,
+                    "pair_id": pair_id,
+                }
+            )
+        else:
+            invalid_output = None
+            for artifact, observed_sha in outputs.items():
+                try:
+                    _require_sha256(
+                        observed_sha,
+                        f"runs[{track_id}:{pair_id}].outputs.{artifact}",
+                        reject_placeholder=True,
+                    )
+                except ValueError:
+                    invalid_output = artifact
+                    break
+            if invalid_output is not None:
+                blockers.append(
+                    {
+                        "reason": "release_policy_run_golden_outputs_missing_or_invalid",
+                        "side": side,
+                        "track": track_id,
+                        "pair_id": pair_id,
+                        "artifact": invalid_output,
+                    }
+                )
+            elif side == "baseline":
+                for artifact, expected_sha in expected_outputs.items():
+                    if outputs.get(artifact) != expected_sha:
+                        blockers.append(
+                            {
+                                "reason": "release_policy_baseline_golden_output_mismatch",
+                                "side": side,
+                                "track": track_id,
+                                "pair_id": pair_id,
+                                "artifact": artifact,
+                            }
+                        )
+                        break
         observed_runtime = {
             "hardware_fingerprint": environment.get("hardware_fingerprint") if isinstance(environment, dict) else None,
             "runtime_backend": environment.get("runtime_backend") if isinstance(environment, dict) else None,
@@ -1750,6 +2010,252 @@ def _release_run_binding_blockers(indexed, side, profile, track_contract):
                         "metric": metric,
                     }
                 )
+    return blockers
+
+
+_CANDIDATE_OUTPUT_DIFFERENTIAL_PROTOCOL = "lightforge-candidate-output-differential-v1"
+
+
+def _candidate_output_differential_blockers(candidate, indexed, profile, track_contract):
+    """Bind every candidate output change to an external-reviewable rationale.
+
+    The golden corpus is a baseline reference, not a prohibition on improving
+    choreography.  Candidate output changes are valid only when they are
+    deterministic across repeated pairs and listed exactly in this
+    source-identity/corpus-bound differential.  The already mandatory detached
+    human-review signature covers the complete candidate report, including
+    these rows and their rationale hashes.
+    """
+    blockers, observed_changes = [], []
+    per_track_outputs = {}
+    for (track_id, pair_id), entry in sorted(indexed.items()):
+        outputs = entry["run"].get("outputs")
+        expected = track_contract.get(track_id, {}).get("golden_artifacts")
+        if not isinstance(outputs, dict) or not isinstance(expected, dict):
+            continue
+        canonical_outputs = canonical_json(outputs)
+        previous = per_track_outputs.get(track_id)
+        if previous is not None and previous != canonical_outputs:
+            blockers.append({
+                "reason": "release_candidate_outputs_nondeterministic",
+                "track": track_id,
+                "pair_id": pair_id,
+            })
+            continue
+        if previous is not None:
+            continue
+        per_track_outputs[track_id] = canonical_outputs
+        for artifact in sorted(expected):
+            candidate_sha = outputs.get(artifact)
+            if candidate_sha != expected[artifact]:
+                observed_changes.append({
+                    "track_id": track_id,
+                    "artifact": artifact,
+                    "baseline_sha256": expected[artifact],
+                    "candidate_sha256": candidate_sha,
+                })
+    observed_changes.sort(key=lambda row: (row["track_id"], row["artifact"]))
+    differential = candidate.get("candidate_output_differential")
+    if not observed_changes:
+        if differential is not None:
+            blockers.append({"reason": "release_candidate_output_differential_unexpected"})
+        return blockers, {
+            "required": False,
+            "changed_artifacts": [],
+            "status": "unchanged",
+        }
+    expected_fields = {
+        "schema_version",
+        "protocol",
+        "corpus_manifest_sha256",
+        "candidate_identity_sha256",
+        "changes",
+    }
+    if not isinstance(differential, dict) or set(differential) != expected_fields:
+        return blockers + [{"reason": "release_candidate_output_differential_required"}], {
+            "required": True,
+            "changed_artifacts": observed_changes,
+            "status": "missing_or_invalid",
+        }
+    identity = candidate.get("candidate_identity")
+    expected_identity_sha = (
+        hashlib.sha256(canonical_json(identity).encode("utf-8")).hexdigest()
+        if isinstance(identity, dict)
+        else None
+    )
+    if (
+        differential.get("schema_version") != 1
+        or differential.get("protocol") != _CANDIDATE_OUTPUT_DIFFERENTIAL_PROTOCOL
+        or differential.get("corpus_manifest_sha256") != profile["locked_corpus"]["manifest_sha256"]
+        or differential.get("candidate_identity_sha256") != expected_identity_sha
+        or not isinstance(differential.get("changes"), list)
+    ):
+        return blockers + [{"reason": "release_candidate_output_differential_binding_mismatch"}], {
+            "required": True,
+            "changed_artifacts": observed_changes,
+            "status": "binding_mismatch",
+        }
+    normalized, seen = [], set()
+    expected_row_fields = {
+        "track_id",
+        "artifact",
+        "baseline_sha256",
+        "candidate_sha256",
+        "rationale_id",
+        "rationale_sha256",
+    }
+    for index, row in enumerate(differential["changes"]):
+        if not isinstance(row, dict) or set(row) != expected_row_fields:
+            blockers.append({"reason": "release_candidate_output_differential_invalid_row", "index": index})
+            continue
+        key = (row.get("track_id"), row.get("artifact"))
+        if (
+            not isinstance(key[0], str)
+            or not _OPAQUE_ID.fullmatch(key[0])
+            or not isinstance(key[1], str)
+            or key[1] not in RELEASE_GOLDEN_ARTIFACT_REQUIREMENTS
+            or key in seen
+            or not isinstance(row.get("rationale_id"), str)
+            or not _OPAQUE_ID.fullmatch(row["rationale_id"])
+        ):
+            blockers.append({"reason": "release_candidate_output_differential_invalid_row", "index": index})
+            continue
+        seen.add(key)
+        try:
+            for field in ("baseline_sha256", "candidate_sha256", "rationale_sha256"):
+                _require_sha256(
+                    row.get(field),
+                    f"candidate_output_differential.changes[{index}].{field}",
+                    reject_placeholder=True,
+                )
+        except ValueError:
+            blockers.append({"reason": "release_candidate_output_differential_invalid_row", "index": index})
+            continue
+        normalized.append({
+            "track_id": row["track_id"],
+            "artifact": row["artifact"],
+            "baseline_sha256": row["baseline_sha256"],
+            "candidate_sha256": row["candidate_sha256"],
+        })
+    if differential["changes"] != sorted(
+        differential["changes"], key=lambda row: (row.get("track_id", ""), row.get("artifact", ""))
+    ):
+        blockers.append({"reason": "release_candidate_output_differential_not_canonical"})
+    if normalized != observed_changes:
+        blockers.append({"reason": "release_candidate_output_differential_mismatch"})
+    return blockers, {
+        "required": True,
+        "changed_artifacts": observed_changes,
+        "status": "valid" if not blockers else "invalid",
+    }
+
+
+def _release_side_identity_blockers(report, indexed, side):
+    """Require a source-pinned, internally consistent identity for each side."""
+    field = f"{side}_identity"
+    identity = report.get(field)
+    if not (
+        isinstance(identity, dict)
+        and set(identity) == {"source_sha256", "pipeline_version"}
+        and isinstance(identity.get("pipeline_version"), str)
+        and identity["pipeline_version"]
+    ):
+        return [{"reason": f"invalid_{field}"}]
+    try:
+        source_sha256 = _require_sha256(
+            identity.get("source_sha256"),
+            f"{field}.source_sha256",
+            reject_placeholder=True,
+        )
+    except ValueError:
+        return [{"reason": f"invalid_{field}"}]
+    blockers = []
+    for (track_id, pair_id), entry in sorted(indexed.items()):
+        implementation = entry["run"].get("provenance", {}).get("implementation", {})
+        if not isinstance(implementation, dict) or (
+            implementation.get("pipeline_version") != identity["pipeline_version"]
+            or implementation.get("source_sha256") != source_sha256
+        ):
+            blockers.append(
+                {
+                    "reason": f"{field}_unbound_to_run",
+                    "track": track_id,
+                    "pair_id": pair_id,
+                }
+            )
+    return blockers
+
+
+def _strict_numeric_match(expected, observed):
+    """Compare metric evidence without permitting large relative drift.
+
+    Integer resource values are byte counters and must match exactly.  Floats
+    are values produced by one profiler serialization path; a tiny
+    representation tolerance is enough and unlike relative tolerance cannot
+    conceal a multi-gigabyte delta on large hosts.
+    """
+    if not _is_finite_number(expected) or not _is_finite_number(observed):
+        return False
+    if isinstance(expected, int) and not isinstance(expected, bool) and isinstance(observed, int) and not isinstance(observed, bool):
+        return expected == observed
+    return math.isclose(float(expected), float(observed), rel_tol=0.0, abs_tol=1e-9)
+
+
+def _release_profiler_evidence_blockers(indexed, side):
+    """Require release performance/resource leaves to equal profiler evidence."""
+    blockers = []
+    for (track_id, pair_id), entry in sorted(indexed.items()):
+        evidence = entry["run"].get("profiler_measurement_evidence")
+        if not isinstance(evidence, dict) or set(evidence) != {
+            "schema_version", "execution", "stage_wall_clock_seconds", "metric_bindings", "resource_bindings"
+        } or evidence.get("schema_version") != 1:
+            blockers.append({
+                "reason": "release_profiler_evidence_missing_or_invalid",
+                "side": side,
+                "track": track_id,
+                "pair_id": pair_id,
+            })
+            continue
+        bindings = evidence.get("metric_bindings")
+        resources = evidence.get("resource_bindings")
+        if not isinstance(bindings, dict) or not isinstance(resources, dict):
+            blockers.append({
+                "reason": "release_profiler_evidence_missing_or_invalid",
+                "side": side,
+                "track": track_id,
+                "pair_id": pair_id,
+            })
+            continue
+        for metric in RELEASE_METRIC_RULES:
+            if metric.startswith("performance."):
+                observed = bindings.get(metric)
+            elif metric.startswith("resources."):
+                if metric in entry["not_applicable"]:
+                    continue
+                observed = resources.get(metric)
+            else:
+                continue
+            # Keep the original JSON numeric type here. `_flatten_metrics`
+            # intentionally converts values to float for statistics, but that
+            # would make very large byte counters lose unit precision before
+            # reconciliation.
+            expected = _get(entry["run"].get("metrics"), metric)
+            if not _is_finite_number(observed):
+                blockers.append({
+                    "reason": "release_profiler_metric_unobserved",
+                    "side": side,
+                    "track": track_id,
+                    "pair_id": pair_id,
+                    "metric": metric,
+                })
+            elif expected is None or not _strict_numeric_match(expected, observed):
+                blockers.append({
+                    "reason": "release_profiler_metric_mismatch",
+                    "side": side,
+                    "track": track_id,
+                    "pair_id": pair_id,
+                    "metric": metric,
+                })
     return blockers
 
 
@@ -2059,6 +2565,19 @@ def compare(
                 track_contract,
             )
         )
+        blockers.extend(_release_side_identity_blockers(baseline, baseline_runs, "baseline"))
+        blockers.extend(_release_side_identity_blockers(candidate, candidate_runs, "candidate"))
+        candidate_output_blockers, candidate_output_differential = _candidate_output_differential_blockers(
+            candidate,
+            candidate_runs,
+            profile,
+            track_contract,
+        )
+        blockers.extend(candidate_output_blockers)
+        blockers.extend(_release_profiler_evidence_blockers(baseline_runs, "baseline"))
+        blockers.extend(_release_profiler_evidence_blockers(candidate_runs, "candidate"))
+    else:
+        candidate_output_differential = {"required": False, "changed_artifacts": [], "status": "not_required"}
     review_summary, review_blockers = _review_evidence(
         baseline,
         candidate,
@@ -2231,6 +2750,7 @@ def compare(
         "comparisons": comparisons,
         "runtime": runtime,
         "metric_applicability": applicability,
+        "candidate_output_differential": candidate_output_differential,
         "locked_corpus": locked_corpus,
         "trusted_release_policy": trusted_release_policy,
         "release_policy_authority": release_policy_authority,
@@ -2265,6 +2785,11 @@ def main(argv=None):
     )
     parser.add_argument("--output", required=True)
     parser.add_argument("--allow-partial", action="store_true")
+    parser.add_argument(
+        "--require-production-ready",
+        action="store_true",
+        help="return success only for an independently authorized release-grade PASS_TARGET",
+    )
     args = parser.parse_args(argv)
     with Path(args.baseline).open(encoding="utf-8") as stream:
         baseline = json.load(stream)
@@ -2291,6 +2816,8 @@ def main(argv=None):
     Path(args.output).parent.mkdir(parents=True, exist_ok=True)
     Path(args.output).write_text(json.dumps(result, indent=2, sort_keys=True, allow_nan=False) + "\n", encoding="utf-8")
     print(f"quality-gate={result['status']} target-tracks={sum(row['target_met'] for row in result['runtime'])}/{len(result['runtime'])}")
+    if args.require_production_ready:
+        return 0 if result["production_ready"] is True else 1
     return 0 if result["status"] == "PASS_TARGET" or (args.allow_partial and result["status"] == "PASS_PARTIAL") else 1
 
 

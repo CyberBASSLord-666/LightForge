@@ -11,7 +11,13 @@ OUT.mkdir(parents=True,exist_ok=True)
 TESTS=['engine.test.cjs','engine-manual.test.cjs','preview-engine.test.cjs','preview-lifecycle.test.cjs','preview-startup.test.cjs','light-planner.test.cjs','recorded-music-fixture-contract.test.cjs','collision-resolver.test.cjs','semantic-collision-allocation.test.cjs','semantic-allocation-integration.test.cjs','analysis-performance-projection.test.cjs','analysis-run-observation.test.cjs',
        'movement-planner.test.cjs','composer-1.6.test.cjs','role-composer-1.6.test.cjs',
        'role-reference-composer-1.6.test.cjs','bass-notes.test.cjs','vocal-detail.test.cjs',
-       'stem-cache.test.cjs','stem-routing.test.cjs','stem-routing-worker.test.cjs','rhythm-hierarchy.test.cjs','recurrence-motif.test.cjs','recurrence-worker.test.cjs','motif-evolution-integration.test.cjs','wav-reader.test.cjs','precision-2.0.test.cjs','migration-2.0.test.cjs','precision-ui-2.0.test.cjs','cockpit-2.1.test.cjs','game-2.1.test.cjs','background-2.2.test.cjs','deux-2.2.1.test.cjs','analysis-recovery-2.2.1.test.cjs','native-deux-bridge.test.cjs','native-mdx-bridge.test.cjs','mdx-downstream-compare.test.cjs','separator-mdx-runtime.test.cjs','separator-clock-resilience.test.cjs','native-runtime-guard.test.cjs','diagnostics.test.cjs','analysis-telemetry.test.cjs','resource-diagnostics.test.cjs','resource-diagnostics-wiring.test.cjs','analysis-scheduler.test.cjs','semantic-timeline.test.cjs','vocal-semantics.test.cjs','vocal-choreography.test.cjs','percussion-evidence.test.cjs','music-salience.test.cjs','choreography-quality.test.cjs','perceptual-validation.test.cjs','vehicle-perceptual-integration.test.cjs','semantic-choreography-strategy.test.cjs','analysis-cache-recovery-v3.test.cjs','feature-store-contract.test.cjs','source-reader-reuse-worker.test.cjs']
+       'stem-cache.test.cjs','stem-routing.test.cjs','stem-routing-worker.test.cjs','rhythm-hierarchy.test.cjs','recurrence-motif.test.cjs','recurrence-worker.test.cjs','motif-evolution-integration.test.cjs','wav-reader.test.cjs','precision-2.0.test.cjs','migration-2.0.test.cjs','precision-ui-2.0.test.cjs','cockpit-2.1.test.cjs','game-2.1.test.cjs','background-2.2.test.cjs','analysis-recovery-2.2.1.test.cjs','native-deux-bridge.test.cjs','native-mdx-bridge.test.cjs','mdx-downstream-compare.test.cjs','separator-mdx-runtime.test.cjs','separator-clock-resilience.test.cjs','native-runtime-guard.test.cjs','diagnostics.test.cjs','analysis-telemetry.test.cjs','resource-diagnostics.test.cjs','resource-diagnostics-wiring.test.cjs','analysis-scheduler.test.cjs','semantic-timeline.test.cjs','vocal-semantics.test.cjs','vocal-choreography.test.cjs','percussion-evidence.test.cjs','music-salience.test.cjs','choreography-quality.test.cjs','perceptual-validation.test.cjs','vehicle-perceptual-integration.test.cjs','semantic-choreography-strategy.test.cjs','analysis-cache-recovery-v3.test.cjs','feature-store-contract.test.cjs','source-reader-reuse-worker.test.cjs',
+       # These contracts cover cache-identity isolation, native-to-WASM
+       # fallback fencing, and bounded restore preview startup. They have no
+       # archive-discovery name, so they remain explicit in the release gate.
+       'execution-lineage-contract.test.cjs','analyzer-native-retry.test.cjs',
+       'native-fallback-fence.test.cjs','native-mdx-fence.test.cjs',
+       'completed-restore-preview-start.test.cjs']
 # The 2.2.2 adapter-retention contract freezes its then-current analysis
 # manifest, and the 2.2.3 native/runtime source-clock contract freezes its
 # measured source hashes. Both intentionally reject later release transitions.
@@ -30,6 +36,7 @@ PYTHON_TESTS=sorted(
 # gate: a green quality-gate workflow alone is not release verification.
 QUALITY_TOOL_TESTS=[
     'performance-quality-gate.test.py',
+    'performance-quality-gate-workflow.test.py',
     'analysis-benchmark-contract.test.py',
     'locked-benchmark-runner.test.py',
     'differential-analysis.test.py',
@@ -202,7 +209,7 @@ def main():
             raise RuntimeError('Python archive and release regression failed: '+python_failure_summary(archive_output))
         receipt['checks'].append('Python APK archive and bounded release packaging regression suites passed.')
         run_python_scripts(QUALITY_TOOL_TESTS,OUT/'quality-tool-tests.log')
-        receipt['checks'].append('Performance-quality gate, benchmark contract, locked-runner and differential-analysis suites passed.')
+        receipt['checks'].append('Performance-quality gate/workflow, benchmark contract, locked-runner and differential-analysis suites passed.')
         verify_assets()
         receipt['checks'].append('Every bundled analysis asset matches the current manifest; actual model quality and runtime are checked separately.')
         receipt['analysis_manifest_sha256']=digest(ROOT/'web/analysis/ASSET_MANIFEST.json')

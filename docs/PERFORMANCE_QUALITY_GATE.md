@@ -12,7 +12,8 @@ python3 tools/performance_quality_gate.py \
   --locked-corpus-manifest /secure/locked-corpus-manifest.json \
   --policy qa/performance-gate-policy.json \
   --release-policy-attestation /secure/release-policy-attestation.json \
-  --output artifacts/performance-quality-report.json
+  --output artifacts/performance-quality-report.json \
+  --require-production-ready
 ```
 
 ## Policy modes
@@ -25,6 +26,10 @@ python3 tools/performance_quality_gate.py \
 
 The checked-in policy is deliberately `template` mode. It must not be edited
 locally to turn a synthetic corpus into a production claim.
+Use `--require-production-ready` only for protected release execution: it
+returns nonzero for a merely comparable or `PASS_TARGET` result that lacks
+all production authority, corpus, telemetry, and review requirements. The
+release workflow always uses this strict mode.
 
 ## Trusted release authority
 
@@ -64,11 +69,11 @@ binds the compiled contract into its policy digest:
 
 ```json
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "required_tracks": ["private-track-a", "private-track-b"],
   "release_profile": {
     "mode": "release",
-    "metric_contract": "lightforge-release-metrics-v2",
+    "metric_contract": "lightforge-release-metrics-v4",
     "locked_corpus": {
       "corpus_id": "licensed-locked-corpus-2026q3",
       "manifest_sha256": "<lower-case sha256>"
@@ -146,16 +151,17 @@ private.
 
 ## Locked evidence
 
-Both reports use schema version 3 and have the same suite identity:
+Both reports use schema version 4 and have the same suite identity:
 
 ```json
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "suite": {
     "corpus_id": "licensed-locked-corpus-2026q3",
     "corpus_manifest_sha256": "...",
     "protocol_id": "performance-quality-release-v1",
-    "policy_sha256": "..."
+    "policy_sha256": "...",
+    "cache_protocol": "lightforge-cache-condition-v2"
   },
   "runs": [{
     "track_id": "private-track-a",
@@ -163,16 +169,43 @@ Both reports use schema version 3 and have the same suite identity:
     "run_id": "candidate-private-track-a-001",
     "metrics": {"performance": {}, "resources": {}, "quality": {}},
     "provenance": {},
-    "condition": {"cache_mode": "cold", "pair_order": "baseline-first"}
+    "condition": {
+      "cache_mode": "cold",
+      "cache_protocol": "lightforge-cache-condition-v2",
+      "cache_setup": {
+        "schema_version": 1,
+        "protocol": "lightforge-cache-setup-v1",
+        "mode": "cold",
+        "setup_id": "release-cold-reset-2026q3",
+        "pair_order": "counterbalanced",
+        "thermal_cycle_id": "release-cold-cycle-2026q3-a"
+      },
+      "cache_setup_sha256": "...",
+      "cache_evidence": {
+        "schema_version": 2,
+        "protocol": "lightforge-cache-condition-v2",
+        "mode": "cold",
+        "stages": [{"stage_id": "source_separation", "attempt": 1, "stage_status": "completed", "cache_status": "miss", "checkpoint_status": "written", "recovery_from_attempt": null}],
+        "cache_hits": 0,
+        "cache_misses": 1,
+        "checkpoint_reuses": 0,
+        "recovery_stages": 0,
+        "interrupted_stage_attempts": 0
+      },
+      "cache_evidence_sha256": "..."
+    }
   }]
 }
 ```
 
 Each `pair_id` identifies one baseline/candidate pair for one track. The gate
-requires the same track set, enough repeated pairs, equal corpus and audio
-identity, analysis configuration, preprocessing and model versions,
-hardware/runtime/accelerator, seed, thermal profile, and cache mode. Pipeline
-source version may differ because it is the candidate under test.
+requires the same track set, enough repeated pairs, equal corpus/audio identity
+including duration, canonical sample rate, and channels; analysis
+configuration; preprocessing and model versions; hardware/runtime/accelerator;
+seed; thermal profile; cache mode; protocol; and controlled cache setup digest.
+Observed cache evidence is independently validated but is not cross-side equal:
+a correct cache optimization may legitimately change it. Pipeline source version
+may differ because it is the candidate under test.
 
 Every required metric leaf is a finite number. A metric can be declared only
 as explicit non-applicable evidence when its release rule permits it and the
@@ -198,14 +231,23 @@ receive a free-form non-applicable exception.
 
 The trusted supplied release manifest must itself be canonical-hash equal to the
 policy pin, set `template: false` and `release_ready: true`, contain at least 16
-distinct audio identities, use exactly the committed coverage requirement and
-golden-artifact requirement lists, cover every required tag family, and provide
-all ten golden SHA-256 values for every track. `locked_corpus` diagnostics in
+distinct audio identities, pin each track's duration, canonical sample rate,
+and channels, use exactly the committed coverage requirement and golden-artifact
+requirement lists, cover every required tag family, and provide all ten golden
+SHA-256 values for every track. `locked_corpus` diagnostics in
 the gate result expose only hashes, counts, and coverage status.
+
+Baseline output hashes must exactly reproduce those locked goldens. Candidate
+output hashes are present for every repeated run and must be deterministic per
+track. A legitimate candidate change requires a canonical
+`candidate_output_differential` that exactly lists the changed hashes and
+rationale hashes. The mandatory external blinded-review signature covers that
+differential and the full candidate benchmark evidence, so a musical
+improvement can be reviewed without allowing an unexplained behavioral change.
 
 ## Immutable release metric contract
 
-`lightforge-release-metrics-v2` requires all of the following families. The
+`lightforge-release-metrics-v4` requires all of the following families. The
 metric names are emitted under `metric_contract.rules` in every release result.
 
 - Performance: total and per-stage wall time (decode, feature generation,
@@ -238,6 +280,11 @@ metric names are emitted under `metric_contract.rules` in every release result.
 
 No rule is synthesized from a candidate report. The complete fixed rules and
 tolerances are hashed into `policy_sha256` before collection begins.
+
+All performance and resource values in a release report are reconciled against
+`profiler_measurement_evidence` derived from execution/stage telemetry.
+Unmeasured values are omitted rather than converted to zero; because release
+metrics are required, missing instrumentation blocks release evidence.
 
 ## Blinded human perceptual review
 

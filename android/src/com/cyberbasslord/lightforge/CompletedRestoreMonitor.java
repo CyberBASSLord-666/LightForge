@@ -13,6 +13,11 @@ final class CompletedRestoreMonitor {
     static final long MIN_PHASE_BUDGET_MS=15000L;
     static final long MAX_PHASE_BUDGET_MS=120000L;
     static final long BOOTSTRAP_PHASE_BUDGET_MS=45000L;
+    // Deferred completed-show restore releases real WebGL/GLTF startup only
+    // after adoption. That startup can legitimately block bridge callbacks,
+    // so it has one named, bounded grace phase; visible first-frame proof is
+    // still mandatory and a stuck renderer still recovers at this deadline.
+    static final long PREVIEW_STARTUP_BUDGET_MS=30000L;
     private static final long BYTES_PER_BUDGET_STEP=512L*1024L;
     private static final long BUDGET_STEP_MS=1000L;
 
@@ -52,7 +57,7 @@ final class CompletedRestoreMonitor {
     // Probe tickets prevent a late callback from an earlier same-lease probe
     // from satisfying a newer probe after a direct bridge pulse supersedes it.
     private long probeTicket,awaitingProbeTicket;
-    private boolean awaitingCallback,recoveryRequested,disposed,workerStarted,workerVerified,showAdopted,previewFirstRender,visualCommitted;
+    private boolean awaitingCallback,recoveryRequested,disposed,workerStarted,workerVerified,showAdopted,previewStarting,previewFirstRender,visualCommitted;
 
     CompletedRestoreMonitor(Clock clock,Scheduler scheduler,Host host){
         this.clock=clock;this.scheduler=scheduler;this.host=host;
@@ -77,7 +82,7 @@ final class CompletedRestoreMonitor {
         long now=clock.now();
         jobId=nextJobId;nonce=nextNonce;phase="bootstrap";sequence=0;bytes=Math.max(0,initialBytes);
         lastAdvanceAt=now;nextProbeAt=now;callbackStartedAt=0;awaitingCallback=false;awaitingProbeTicket=0;
-        workerStarted=false;workerVerified=false;showAdopted=false;previewFirstRender=false;visualCommitted=false;
+        workerStarted=false;workerVerified=false;showAdopted=false;previewStarting=false;previewFirstRender=false;visualCommitted=false;
         // A completed job is allowed one native replacement across every
         // WebView instance in this Activity/process.  A replacement creates a
         // fresh nonce, so consult the durable cap for each begin.
@@ -93,21 +98,36 @@ final class CompletedRestoreMonitor {
         if(nextPhase!=null&&nextPhase.startsWith("worker-")&&!"worker-started".equals(nextPhase)&&!workerStarted)return false;
         if("worker-verified".equals(nextPhase)&&(!workerStarted||workerVerified))return false;
         if("show-adopted".equals(nextPhase)&&(!workerStarted||!workerVerified||showAdopted))return false;
-        if("preview-first-render".equals(nextPhase)&&(!workerVerified||!showAdopted))return false;
+        if("preview-starting".equals(nextPhase)&&(!workerStarted||!workerVerified||!showAdopted||previewStarting))return false;
+        if("preview-first-render".equals(nextPhase)&&(!workerVerified||!showAdopted||!previewStarting||previewFirstRender))return false;
         if("preview-visual-commit".equals(nextPhase)&&(!workerVerified||!showAdopted||!previewFirstRender||visualCommitted))return false;
         long now=clock.now();
         sequence=nextSequence;phase=valid(nextPhase)?nextPhase:"pulse";bytes=Math.max(bytes,Math.max(0,nextBytes));
         if("worker-started".equals(phase))workerStarted=true;
         if("worker-verified".equals(phase))workerVerified=true;
         if("show-adopted".equals(phase))showAdopted=true;
+        if("preview-starting".equals(phase))previewStarting=true;
         if("preview-first-render".equals(phase))previewFirstRender=true;
         if("preview-visual-commit".equals(phase))visualCommitted=true;
         lastAdvanceAt=now;
+        if("preview-starting".equals(phase)){
+            // Retire the pre-startup probe before GPU/model initialization.
+            // Its generic callback budget is not meaningful during this one
+            // named phase; the 30-second phase deadline below remains active.
+            awaitingCallback=false;callbackStartedAt=0;awaitingProbeTicket=0;
+            nextProbeAt=now+PREVIEW_STARTUP_BUDGET_MS;
+            arm(nextDelay(now));
+            return true;
+        }
         // An ordered, current bridge pulse is stronger liveness evidence than
         // an older evaluateJavascript probe. Retire only that probe: a fresh
         // ticketed probe still bounds a renderer that dies after this pulse.
         if(awaitingCallback){
             awaitingCallback=false;callbackStartedAt=0;awaitingProbeTicket=0;
+            nextProbeAt=now+PROBE_INTERVAL_MS;
+            arm(nextDelay(now));
+        }else if("preview-first-render".equals(phase)){
+            // GPU startup is over: resume the normal bounded liveness probes.
             nextProbeAt=now+PROBE_INTERVAL_MS;
             arm(nextDelay(now));
         }
@@ -236,13 +256,14 @@ final class CompletedRestoreMonitor {
         if(!disposed&&jobId!=null)scheduler.postDelayed(tickTask,Math.max(0,delay));
     }
     private void clearLease(){
-        scheduler.removeCallbacks(tickTask);jobId=null;nonce=null;phase=null;sequence=bytes=0;workerStarted=false;workerVerified=false;showAdopted=false;previewFirstRender=false;visualCommitted=false;
+        scheduler.removeCallbacks(tickTask);jobId=null;nonce=null;phase=null;sequence=bytes=0;workerStarted=false;workerVerified=false;showAdopted=false;previewStarting=false;previewFirstRender=false;visualCommitted=false;
         lastAdvanceAt=nextProbeAt=callbackStartedAt=0;awaitingProbeTicket=0;awaitingCallback=false;recoveryRequested=false;
     }
     private void clearTerminalProof(){terminalJobId=null;terminalNonce=null;}
     private boolean matches(String candidateJobId,String candidateNonce){return jobId!=null&&jobId.equals(candidateJobId)&&nonce!=null&&nonce.equals(candidateNonce);}
     private long phaseBudget(){
         if("bootstrap".equals(phase))return Math.max(BOOTSTRAP_PHASE_BUDGET_MS,phaseBudget(bytes));
+        if("preview-starting".equals(phase))return PREVIEW_STARTUP_BUDGET_MS;
         return phaseBudget(bytes);
     }
     private static long phaseBudget(long byteCount){
@@ -254,3 +275,4 @@ final class CompletedRestoreMonitor {
     private static String shortNonce(String value){return value==null?"":value.substring(0,Math.min(16,value.length()));}
     private static String safe(String value){return value==null?"":value.replace('\n',' ').replace('\r',' ').substring(0,Math.min(180,value.length()));}
 }
+

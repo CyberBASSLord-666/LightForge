@@ -1,5 +1,6 @@
 import base64
 import hashlib
+import copy
 import importlib.util
 import json
 import tempfile
@@ -108,7 +109,6 @@ def diagnostic(corpus, track, run_number, *, backend="onnxruntime-android-cpu"):
         stage.checkpoint("written", cache_key)
     return recorder.finalize(
         metrics={
-            "performance": {"total_wall_clock_seconds": 100.0 - run_number},
             "quality": {"beat_f1": 0.97, "vocal_alignment_f1": 0.96},
         },
         outputs={"semantic_timeline_sha256": track["golden_artifacts"]["semantic_timeline_sha256"]},
@@ -180,6 +180,9 @@ class LockedBenchmarkRunnerTest(unittest.TestCase):
                 policy=policy,
                 protocol_id="locked-benchmark-test-v1",
                 cache_mode="cold",
+                cache_setup_id="locked-test-cache-setup-v1",
+                pair_order="counterbalanced",
+                thermal_cycle_id="locked-test-thermal-cycle-v1",
                 minimum_runs_per_track=3,
             )
             reversed_inputs = sorted(reports.glob("*.json"), reverse=True)
@@ -189,6 +192,9 @@ class LockedBenchmarkRunnerTest(unittest.TestCase):
                 policy=policy,
                 protocol_id="locked-benchmark-test-v1",
                 cache_mode="cold",
+                cache_setup_id="locked-test-cache-setup-v1",
+                pair_order="counterbalanced",
+                thermal_cycle_id="locked-test-thermal-cycle-v1",
                 minimum_runs_per_track=3,
             )
 
@@ -224,6 +230,9 @@ class LockedBenchmarkRunnerTest(unittest.TestCase):
                     policy=gate_policy(),
                     protocol_id="locked-benchmark-test-v1",
                     cache_mode="cold",
+                    cache_setup_id="locked-test-cache-setup-v1",
+                    pair_order="counterbalanced",
+                    thermal_cycle_id="locked-test-thermal-cycle-v1",
                     minimum_runs_per_track=3,
                 )
 
@@ -265,6 +274,9 @@ class LockedBenchmarkRunnerTest(unittest.TestCase):
                     policy=incompatible_policy,
                     protocol_id="locked-benchmark-test-v1",
                     cache_mode="cold",
+                    cache_setup_id="locked-test-cache-setup-v1",
+                    pair_order="counterbalanced",
+                    thermal_cycle_id="locked-test-thermal-cycle-v1",
                 )
 
             broken_path = reports / "vocal-rock-1.json"
@@ -278,6 +290,9 @@ class LockedBenchmarkRunnerTest(unittest.TestCase):
                     policy=gate_policy(),
                     protocol_id="locked-benchmark-test-v1",
                     cache_mode="cold",
+                    cache_setup_id="locked-test-cache-setup-v1",
+                    pair_order="counterbalanced",
+                    thermal_cycle_id="locked-test-thermal-cycle-v1",
                 )
 
     def test_pairing_sidecar_and_uuid_like_run_identifiers_are_supported(self):
@@ -304,6 +319,9 @@ class LockedBenchmarkRunnerTest(unittest.TestCase):
                 policy=gate_policy(),
                 protocol_id="locked-benchmark-test-v1",
                 cache_mode="cold",
+                cache_setup_id="locked-test-cache-setup-v1",
+                pair_order="counterbalanced",
+                thermal_cycle_id="locked-test-thermal-cycle-v1",
                 pairing=pairing,
             )
             self.assertEqual("electronic-drop-pair-000", aggregate["runs"][0]["pair_id"])
@@ -340,6 +358,9 @@ class LockedBenchmarkRunnerTest(unittest.TestCase):
                 policy=gate_policy(),
                 protocol_id="locked-benchmark-test-v1",
                 cache_mode="cold",
+                cache_setup_id="locked-test-cache-setup-v1",
+                pair_order="counterbalanced",
+                thermal_cycle_id="locked-test-thermal-cycle-v1",
                 change={"classification": "major", "change_id": "semantic-pipeline-rework"},
                 human_perceptual_review=review,
             )
@@ -355,6 +376,9 @@ class LockedBenchmarkRunnerTest(unittest.TestCase):
                     policy=gate_policy(),
                     protocol_id="locked-benchmark-test-v1",
                     cache_mode="cold",
+                    cache_setup_id="locked-test-cache-setup-v1",
+                    pair_order="counterbalanced",
+                    thermal_cycle_id="locked-test-thermal-cycle-v1",
                     human_perceptual_review=review,
                 )
 
@@ -402,6 +426,9 @@ class LockedBenchmarkRunnerTest(unittest.TestCase):
                     policy=release_policy,
                     protocol_id="locked-benchmark-test-v1",
                     cache_mode="cold",
+                    cache_setup_id="locked-release-cache-setup-v1",
+                    pair_order="counterbalanced",
+                    thermal_cycle_id="locked-release-thermal-cycle-v1",
                 )
 
     def test_release_aggregate_revalidates_coverage_and_requires_an_explicit_side(self):
@@ -451,8 +478,65 @@ class LockedBenchmarkRunnerTest(unittest.TestCase):
                     policy=policy,
                     protocol_id="locked-benchmark-test-v1",
                     cache_mode="cold",
+                    cache_setup_id="locked-release-cache-setup-v1",
+                    pair_order="counterbalanced",
+                    thermal_cycle_id="locked-release-thermal-cycle-v1",
                     report_side="baseline",
                 )
+
+    def test_cache_modes_are_derived_from_stage_evidence_and_recovery_is_real(self):
+        corpus = manifest()
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            manifest_path, reports = self.write_fixture_set(root, corpus)
+            loaded = runner.load_manifest(manifest_path)
+            policy = gate_policy()
+            common = {
+                "policy": policy,
+                "protocol_id": "locked-benchmark-test-v1",
+                "cache_setup_id": "locked-test-cache-setup-v1",
+                "pair_order": "counterbalanced",
+                "thermal_cycle_id": "locked-test-thermal-cycle-v1",
+                "minimum_runs_per_track": 3,
+            }
+            with self.assertRaisesRegex(runner.LockedBenchmarkError, "invalid_cache_condition"):
+                runner.aggregate_diagnostics(loaded, [reports], cache_mode="warm", **common)
+
+            for path in reports.glob("*.json"):
+                value = json.loads(path.read_text(encoding="utf-8"))
+                stage = value["stages"][0]
+                stage["cache"]["status"] = "hit"
+                stage["checkpoint"]["status"] = "reused"
+                write_json(path, value)
+            warm = runner.aggregate_diagnostics(loaded, [reports], cache_mode="warm", **common)
+            self.assertEqual("warm", warm["runs"][0]["condition"]["cache_evidence"]["mode"])
+
+            for path in reports.glob("*.json"):
+                value = json.loads(path.read_text(encoding="utf-8"))
+                interrupted = value["stages"][0]
+                interrupted["status"] = "cancelled"
+                interrupted["cache"]["status"] = "miss"
+                interrupted["checkpoint"]["status"] = "written"
+                retry = copy.deepcopy(interrupted)
+                retry["attempt"] = 2
+                retry["status"] = "reused"
+                retry["cache"]["status"] = "hit"
+                retry["checkpoint"]["status"] = "reused"
+                value["stages"].append(retry)
+                write_json(path, value)
+            resumed = runner.aggregate_diagnostics(loaded, [reports], cache_mode="resumed", **common)
+            evidence = resumed["runs"][0]["condition"]["cache_evidence"]
+            self.assertEqual(1, evidence["recovery_stages"])
+            self.assertEqual(1, evidence["interrupted_stage_attempts"])
+
+            ordinary_reuse = copy.deepcopy(resumed["runs"][0]["condition"])
+            ordinary_reuse["cache_evidence"]["stages"][0]["stage_status"] = "completed"
+            ordinary_reuse["cache_evidence"]["interrupted_stage_attempts"] = 0
+            ordinary_reuse["cache_evidence_sha256"] = runner.quality_gate.cache_condition_digest(
+                ordinary_reuse["cache_evidence"]
+            )
+            with self.assertRaisesRegex(ValueError, "interrupted written checkpoint"):
+                runner.quality_gate.validate_cache_condition(ordinary_reuse)
 
     def test_cli_writes_atomic_gate_input(self):
         corpus = manifest()
@@ -475,13 +559,19 @@ class LockedBenchmarkRunnerTest(unittest.TestCase):
                     "locked-benchmark-test-v1",
                     "--cache-mode",
                     "cold",
+                    "--cache-setup-id",
+                    "locked-test-cache-setup-v1",
+                    "--pair-order",
+                    "counterbalanced",
+                    "--thermal-cycle-id",
+                    "locked-test-thermal-cycle-v1",
                     "--output",
                     str(output),
                 ]
             )
             self.assertEqual(0, result)
             saved = json.loads(output.read_text(encoding="utf-8"))
-            self.assertEqual("lightforge.locked-benchmark-runs.v2", saved["format"])
+            self.assertEqual("lightforge.locked-benchmark-runs.v3", saved["format"])
             self.assertEqual(6, len(saved["runs"]))
 
 

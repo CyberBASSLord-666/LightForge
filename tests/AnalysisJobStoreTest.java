@@ -214,6 +214,30 @@ public final class AnalysisJobStoreTest {
         reject(()->AnalysisJobStore.clearRunObservation(files,changedBeforeClear.getString("id")));
         check(read(saved).has("analysisRunObservation"),"Observation cleanup overwrote a newer project edit");
         AnalysisJobStore.finish(files,changedBeforeClear.getString("id"),"cancelled","Finished observation cleanup tests");
+        // Fresh analysis is a distinct cache lineage and its exact epoch must
+        // survive an interrupted native-to-WASM recovery without trusting
+        // project.json-provided execution fields.
+        ProjectStore.save(projects,projectId,read(saved).put("needAnalysis","false").put("analysisExecutionMode","fresh")
+            .put("analysisRefreshEpoch","aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa").put("analysisEffectiveExecution","native-deux-v1"));
+        JSONObject strictFresh=AnalysisJobStore.prepare(files,projectId,"2.2.5",true);
+        JSONObject strictRequest=AnalysisJobStore.request(files,strictFresh.getString("id"));
+        check(strictRequest.optBoolean("needAnalysis"),"Only a boolean false may skip analysis");
+        check("fresh".equals(strictRequest.optString("analysisExecutionMode"))&&strictRequest.optString("analysisRefreshEpoch").matches("[a-f0-9-]{36}"),"Fresh request did not receive a trusted epoch");
+        check(!strictRequest.has("analysisEffectiveExecution")&&!strictRequest.has("analysisNativeFallbackReason"),"Project data selected an untrusted native execution path");
+        String strictEpoch=strictRequest.getString("analysisRefreshEpoch");
+        check(AnalysisJobStore.markAnalysisWasmFallback(files,strictFresh.getString("id"),"native-deux-fallback"),"Native fallback marker was not persisted");
+        JSONObject strictMarked=AnalysisJobStore.request(files,strictFresh.getString("id"));
+        check("wasm-v1".equals(strictMarked.optString("analysisEffectiveExecution"))&&"native-deux-fallback".equals(strictMarked.optString("analysisNativeFallbackReason")),"Frozen WASM fallback lineage was incomplete");
+        AnalysisJobStore.finish(files,strictFresh.getString("id"),"interrupted","Restart test");
+        JSONObject strictResume=AnalysisJobStore.prepare(files,projectId,"2.2.5");
+        JSONObject resumedRequest=AnalysisJobStore.request(files,strictResume.getString("id"));
+        check("fresh".equals(resumedRequest.optString("analysisExecutionMode"))&&strictEpoch.equals(resumedRequest.optString("analysisRefreshEpoch")),"Interrupted fresh epoch was not resumed exactly");
+        check("wasm-v1".equals(resumedRequest.optString("analysisEffectiveExecution"))&&"native-deux-fallback".equals(resumedRequest.optString("analysisNativeFallbackReason")),"Interrupted native fallback did not remain fenced to WASM");
+        JSONObject tamperedRequest=read(new File(AnalysisJobStore.directory(files),"request.json")).put("analysisRefreshEpoch","bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb");
+        AnalysisJobStore.write(new File(AnalysisJobStore.directory(files),"request.json"),tamperedRequest,ProjectStore.MAX_PROJECT_BYTES);
+        reject(()->AnalysisJobStore.request(files,strictResume.getString("id")));
+        AnalysisJobStore.finish(files,strictResume.getString("id"),"cancelled","Finished execution-lineage tests");
         System.out.println("PASS: job ownership, monotonic progress, checkpoint reuse, cancellation, conflict preservation, durable completion, damaged checkpoint recovery, version/audio/settings identity, structured progress, crash recovery and stale observation cleanup");
     }
 }
+

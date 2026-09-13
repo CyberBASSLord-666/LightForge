@@ -32,67 +32,143 @@ final class AnalysisJobStore {
         return dir;
     }
     static synchronized JSONObject prepare(File files,String projectId,String appVersion) throws Exception {
+        return prepare(files,projectId,appVersion,false);
+    }
+    static synchronized JSONObject prepare(File files,String projectId,String appVersion,boolean requestFresh) throws Exception {
         requireIdle(files);
         File dir=project(files,projectId),source=new File(dir,"project.json");
         JSONObject request=read(source,ProjectStore.MAX_PROJECT_BYTES);
-        // A completed app-run observation is deliberately unbound evidence. It
-        // must never cross into a frozen worker request, including on the very
-        // first fresh run that will later clear the durable project copy.
+        // Execution lineage is trusted job metadata, never editable project data.
+        // In particular a restored project cannot select or collide with an
+        // analysis cache namespace.
         request.remove("analysisRunObservation");
+        request.remove("analysisExecutionMode");
+        request.remove("analysisRefreshEpoch");
+        request.remove("analysisEffectiveExecution");
+        request.remove("analysisNativeFallbackReason");
+        request.remove("analysisJobId");
+        request.remove("forceFreshAnalysis");
         if(!new File(dir,"audio.wav").isFile())throw new IOException("This project's audio is missing.");
         JSONObject meta=ProjectStore.describe(new File(files,"projects"),projectId);
         request.put("projectId",projectId).put("name",meta.getString("name")).put("duration",meta.getDouble("duration")).put("analysisAppVersion",appVersion);
-        // Only explicit generation reaches here; reading old compiled projects is unchanged.
-        // Incomplete saved music must be re-analyzed instead of failing every Resume.
-        if(!request.optBoolean("needAnalysis",true)){
+        // Only a real JSON boolean false may skip analysis. Malformed/restored
+        // values fail closed to new analysis rather than bypassing the cache
+        // and checkpoint contract.
+        Object rawNeedAnalysis=request.opt("needAnalysis");
+        boolean needAnalysis=rawNeedAnalysis instanceof Boolean?(Boolean)rawNeedAnalysis:true;
+        request.put("needAnalysis",needAnalysis);
+        if(!needAnalysis){
             try{validateCheckpoint(request.optJSONObject("music"),meta.getDouble("duration"));}
             catch(Exception incomplete){request.put("needAnalysis",true);}
         }
         String sourceHash=hash(source),analysisIdentity=analysisIdentity(dir,projectId,request);
         request.put("analysisIdentity",analysisIdentity);
-        // Names, save timestamps and choreography edits do not invalidate audio analysis.
-        // The separate source hash still protects the final project commit from conflicts.
         JSONObject old=status(files);
         File checkpoint=new File(directory(files),"checkpoint.json");
-        // The renderer stores stage checkpoints in OPFS. They are intentionally
-        // separate from the small Java checkpoint.json, so a process kill can
-        // leave useful resumable work even when no complete music object has
-        // crossed the bridge yet. Preserve that UI signal for matching jobs.
-        boolean priorResume=old!=null&&old.optBoolean("resumeAvailable")&&projectId.equals(old.optString("projectId"))
-            &&analysisIdentity.equals(old.optString("analysisIdentity"));
-        boolean reuse=old!=null&&!"completed".equals(old.optString("state"))&&projectId.equals(old.optString("projectId"))
-            &&analysisIdentity.equals(old.optString("analysisIdentity"))&&checkpoint.isFile();
+        boolean matchingPrior=old!=null&&!"completed".equals(old.optString("state"))
+            &&projectId.equals(old.optString("projectId"))&&analysisIdentity.equals(old.optString("analysisIdentity"));
+        String priorMode=matchingPrior?normalizedExecutionMode(old):null;
+        // AUTO resumes an interrupted explicit-fresh namespace exactly. An
+        // explicit fresh request always creates a new namespace, including when
+        // a previous fresh attempt exists.
+        boolean priorFresh=!requestFresh&&"fresh".equals(priorMode);
+        String executionMode=priorFresh||requestFresh?"fresh":"resume";
+        String refreshEpoch=priorFresh?canonicalRefreshEpoch(old.optString("analysisRefreshEpoch")):(requestFresh?UUID.randomUUID().toString():null);
+        // A native failure is persisted before WASM retry. Matching interrupted
+        // work must keep that effective runtime so its OPFS checkpoint identity
+        // remains deterministic across process death.
+        boolean forceWasm=!requestFresh&&matchingPrior&&priorMode!=null&&"wasm-v1".equals(old.optString("analysisEffectiveExecution"));
+        String nativeFallbackReason=forceWasm?old.optString("analysisNativeFallbackReason"):null;
+        if(forceWasm&&!validNativeFallbackReason(nativeFallbackReason))
+            throw new IOException("The persisted native fallback lineage is invalid.");
+        if("fresh".equals(executionMode)){
+            // Project.json is not the fresh request; always rebuild unless a
+            // matching validated Java checkpoint is restored below.
+            request.put("needAnalysis",true).remove("music");
+        }
+        request.put("analysisExecutionMode",executionMode);
+        if(refreshEpoch!=null)request.put("analysisRefreshEpoch",refreshEpoch);else request.remove("analysisRefreshEpoch");
+        if(forceWasm)request.put("analysisEffectiveExecution","wasm-v1").put("analysisNativeFallbackReason",nativeFallbackReason);
+        boolean reuse=!requestFresh&&priorMode!=null&&matchingPrior&&checkpoint.isFile();
         if(reuse){
-            // A torn or damaged checkpoint must not trap every retry in the same failure.
-            try{if(!hash(checkpoint).equals(old.optString("checkpointSHA256")))throw new IOException("Analysis checkpoint changed.");
-                JSONObject music=read(checkpoint,ProjectStore.MAX_PROJECT_BYTES);validateCheckpoint(music,meta.getDouble("duration"));
+            try{
+                if(!hash(checkpoint).equals(old.optString("checkpointSHA256")))throw new IOException("Analysis checkpoint changed.");
+                JSONObject music=read(checkpoint,ProjectStore.MAX_PROJECT_BYTES);
+                validateCheckpoint(music,meta.getDouble("duration"));
                 request.put("music",music).put("needAnalysis",false);
             }catch(Exception damaged){reuse=false;}
         }
         if(!reuse)Files.deleteIfExists(checkpoint.toPath());
-        write(new File(directory(files),"request.json"),request,ProjectStore.MAX_PROJECT_BYTES);
-        JSONObject job=new JSONObject().put("id",UUID.randomUUID().toString()).put("projectId",projectId)
-            .put("name",meta.getString("name")).put("sourceSHA256",sourceHash).put("analysisIdentity",analysisIdentity).put("state","queued")
+        String jobId=UUID.randomUUID().toString();
+        request.put("analysisJobId",jobId);
+        JSONObject job=new JSONObject().put("id",jobId).put("projectId",projectId)
+            .put("name",meta.getString("name")).put("sourceSHA256",sourceHash).put("analysisIdentity",analysisIdentity)
+            .put("analysisExecutionMode",executionMode).put("requestId",jobId).put("state","preparing")
             .put("stage",reuse?"Restoring completed analysis":"Preparing background analysis").put("progress",0)
             .put("createdAt",System.currentTimeMillis()).put("updatedAt",System.currentTimeMillis()).put("hasCheckpoint",reuse)
-            .put("resumeAvailable",reuse||priorResume);
+            .put("resumeAvailable",reuse||(matchingPrior&&priorMode!=null));
+        if(refreshEpoch!=null)job.put("analysisRefreshEpoch",refreshEpoch);
+        if(forceWasm)job.put("analysisEffectiveExecution","wasm-v1").put("analysisNativeFallbackReason",nativeFallbackReason);
         if(reuse)job.put("checkpointSHA256",old.getString("checkpointSHA256"));
-        persist(files,job);return job;
+        // No service can start until this method returns. Persist lineage before
+        // publishing its frozen request, then atomically expose the queued job.
+        // A process death at either boundary leaves only a non-active
+        // "preparing" record; the next prepare reconstructs the same trusted
+        // fresh epoch or intentionally creates a new one.
+        persist(files,job);
+        write(new File(directory(files),"request.json"),request,ProjectStore.MAX_PROJECT_BYTES);
+        job.put("state","queued");
+        persist(files,job);
+        return job;
     }
-    static String analysisIdentity(File dir,String projectId,JSONObject request)throws Exception {
+    private static String canonicalRefreshEpoch(String value){
+        return validRefreshEpoch(value)?value.toLowerCase(java.util.Locale.ROOT):null;
+    }
+    private static String normalizedExecutionMode(JSONObject value){
+        if(value==null)return null;
+        boolean hasMode=value.has("analysisExecutionMode"),hasEpoch=value.has("analysisRefreshEpoch");
+        String mode=value.optString("analysisExecutionMode"),epoch=canonicalRefreshEpoch(value.optString("analysisRefreshEpoch"));
+        // Legacy jobs without either field are the ordinary resume namespace.
+        if(!hasMode&&!hasEpoch)return "resume";
+        if("resume".equals(mode)&&!hasEpoch)return "resume";
+        if("fresh".equals(mode)&&hasEpoch&&epoch!=null)return "fresh";
+        return null;
+    }
+    private static boolean validRefreshEpoch(String value){
+        return value!=null&&value.matches("^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89aAbB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$");
+    }
+    private static boolean validNativeFallbackReason(String value){
+        return "native-deux-fallback".equals(value)||"native-mdx-fallback".equals(value);
+    }
+        static String analysisIdentity(File dir,String projectId,JSONObject request)throws Exception {
         JSONObject settings=request.optJSONObject("settings");if(settings==null)settings=new JSONObject();
         String quality="balanced".equals(settings.optString("analysisQuality"))?"balanced":"precision";
         double sensitivity=settings.optDouble("sensitivity",.82),bpm=settings.optDouble("bpmOverride",0);
         if(!Double.isFinite(sensitivity)||!Double.isFinite(bpm))throw new IOException("Invalid analysis settings.");
         File analysis=new File(dir,"analysis.wav");
-        String input="bounded-analysis-v2|"+request.optString("analysisAppVersion")+"|"+projectId+"|"+hash(new File(dir,"audio.wav"))+"|"+(analysis.isFile()?hash(analysis):"")+"|"+quality+"|"+sensitivity+"|"+bpm;
+        String input="bounded-analysis-v3|"+request.optString("analysisAppVersion")+"|"+projectId+"|"+hash(new File(dir,"audio.wav"))+"|"+(analysis.isFile()?hash(analysis):"")+"|"+quality+"|"+sensitivity+"|"+bpm;
         MessageDigest digest=MessageDigest.getInstance("SHA-256");
         byte[] bytes=digest.digest(input.getBytes(StandardCharsets.UTF_8));
         StringBuilder out=new StringBuilder();for(byte b:bytes)out.append(String.format(java.util.Locale.ROOT,"%02x",b&255));return out.toString();
     }
     static synchronized JSONObject request(File files,String id) throws Exception {
-        matching(files,id,true);
-        return read(new File(directory(files),"request.json"),ProjectStore.MAX_PROJECT_BYTES);
+        JSONObject job=matching(files,id,true),request=read(new File(directory(files),"request.json"),ProjectStore.MAX_PROJECT_BYTES);
+        // New jobs bind the immutable request to the durable job id. Legacy
+        // in-flight jobs without requestId remain readable for upgrade safety.
+        if(job.has("requestId")&&!id.equals(request.optString("analysisJobId")))throw new IOException("The analysis request binding is invalid.");
+        String jobMode=normalizedExecutionMode(job),requestMode=normalizedExecutionMode(request);
+        if(jobMode==null||requestMode==null||!jobMode.equals(requestMode)
+            ||!job.optString("projectId").equals(request.optString("projectId"))
+            ||!job.optString("analysisIdentity").equals(request.optString("analysisIdentity")))
+            throw new IOException("The analysis request lineage is invalid.");
+        if("fresh".equals(jobMode)&&!canonicalRefreshEpoch(job.optString("analysisRefreshEpoch")).equals(canonicalRefreshEpoch(request.optString("analysisRefreshEpoch"))))
+            throw new IOException("The analysis refresh epoch does not match its job.");
+        boolean jobWasm="wasm-v1".equals(job.optString("analysisEffectiveExecution")),requestWasm="wasm-v1".equals(request.optString("analysisEffectiveExecution"));
+        if(jobWasm!=requestWasm)throw new IOException("The effective analysis runtime does not match its job.");
+        if(jobWasm&&(!validNativeFallbackReason(job.optString("analysisNativeFallbackReason"))
+            ||!job.optString("analysisNativeFallbackReason").equals(request.optString("analysisNativeFallbackReason"))))
+            throw new IOException("The native fallback lineage does not match its job.");
+        return request;
     }
     static JSONObject matching(File files,String id,boolean running) throws Exception {
         JSONObject job=status(files);
@@ -125,6 +201,18 @@ final class AnalysisJobStore {
             if(info.optBoolean("checkpointSaved")){job.put("resumeAvailable",true).put("checkpointAt",now);}
         }
         persist(files,job);return job;
+    }
+    static synchronized boolean markAnalysisWasmFallback(File files,String id,String reason) throws Exception {
+        if(!validNativeFallbackReason(reason))throw new IOException("Invalid native fallback reason.");
+        JSONObject job=matching(files,id,true),request=request(files,id);
+        // Persist the job lineage first. A crash before the frozen request is
+        // republished is still recoverable: prepare() reconstructs this marker
+        // from the matching nonterminal job before any runner can start.
+        job.put("analysisEffectiveExecution","wasm-v1").put("analysisNativeFallbackReason",reason);
+        persist(files,job);
+        request.put("analysisEffectiveExecution","wasm-v1").put("analysisNativeFallbackReason",reason);
+        write(new File(directory(files),"request.json"),request,ProjectStore.MAX_PROJECT_BYTES);
+        return true;
     }
     static synchronized void checkpoint(File files,String id,String contents) throws Exception {
         JSONObject job=matching(files,id,true),music=parse(contents);
@@ -274,6 +362,13 @@ final class AnalysisJobStore {
     }
     static synchronized JSONObject recover(File files) throws Exception {
         JSONObject job=status(files);
+        // A crash in prepare() can leave a durable lineage record before the
+        // frozen request becomes runnable. Expose it as a resumable interrupt,
+        // preserving its epoch/effective-runtime marker for the next prepare.
+        if(job!=null&&"preparing".equals(job.optString("state"))){
+            job.put("state","interrupted").put("stage","Analysis preparation was interrupted. Resume continues from its verified namespace.").put("stoppedAt",System.currentTimeMillis());
+            persist(files,job);return job;
+        }
         if(!active(job))return job;
         try {
             JSONObject project=read(new File(project(files,job.getString("projectId")),"project.json"),ProjectStore.MAX_PROJECT_BYTES);

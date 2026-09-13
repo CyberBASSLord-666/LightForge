@@ -7,13 +7,42 @@
  const PLAYBACK_SAMPLE_RATE=44100,ANALYSIS_SAMPLE_RATE=22050,FRAME_EPSILON=1e-9,SECTION_EPSILON=1e-7;
  const finite=value=>typeof value==='number'&&Number.isFinite(value);
  const close=(left,right,epsilon=FRAME_EPSILON)=>Math.abs(left-right)<=epsilon;
- function currentAnalysisCache(music,expected){
+ const normalizeRefreshEpoch=value=>typeof value==='string'&&/^[a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(value)?value.toLowerCase():null;
+ const validRefreshEpoch=value=>normalizeRefreshEpoch(value)!==null;
+ const own=(value,key)=>!!value&&Object.prototype.hasOwnProperty.call(value,key);
+ function analysisExecutionContract(request){
+  const hasMode=own(request,'analysisExecutionMode'),hasEpoch=own(request,'analysisRefreshEpoch'),mode=request?.analysisExecutionMode,epoch=normalizeRefreshEpoch(request?.analysisRefreshEpoch);
+  // Legacy frozen requests had neither field and use the ordinary namespace.
+  if(!hasMode&&!hasEpoch)return {mode:'resume',refreshEpoch:null};
+  if(mode==='resume'&&!hasEpoch)return {mode:'resume',refreshEpoch:null};
+  if(mode==='fresh'&&hasEpoch&&epoch)return {mode:'fresh',refreshEpoch:epoch};
+  return null;
+ }
+ function cacheIdentityProbe(music,quality,forceWasm=false){
   const saved=music?.engine?.cacheIdentity;
-  return !!music&&!!expected&&expected.persistent===true&&(music.analysisVersion||0)>=8
-   &&saved?.schemaVersion===1&&saved.workId===expected.workId
-   &&saved.implementationFingerprint===expected.implementationFingerprint
-   &&saved.assetFingerprint===expected.assetFingerprint
-   &&saved.nativeRuntimeProfile===expected.nativeRuntimeProfile;
+  if(!saved||saved.schemaVersion!==1||saved.persistent!==true||saved.verified!==true)return null;
+  const savedEpoch=saved.refreshEpoch===null||saved.refreshEpoch===undefined?null:normalizeRefreshEpoch(saved.refreshEpoch);
+  if(saved.refreshEpoch!==null&&saved.refreshEpoch!==undefined&&!savedEpoch)return null;
+  const profile=saved.nativeRuntimeProfile,execution=saved.execution;
+  const wasm=execution==='wasm-v1'&&profile==='wasm';
+  const studio=quality==='precision'&&execution==='native-deux-v1'&&profile===root.LightForgeNativeDeux?.analysisCacheProfile;
+  const balanced=quality==='balanced'&&execution==='native-mdx-v1'&&profile===root.LightForgeNativeMdx?.analysisCacheProfile;
+  // A persisted native failure is an execution fence, not a performance hint:
+  // its next result must be derived solely from the WASM namespace. Never
+  // admit an old native completed identity after that fence survived a process
+  // death.
+  if(forceWasm&&!wasm)return null;
+  if(!wasm&&!studio&&!balanced)return null;
+  return {cacheIdentityQuery:true,cacheIdentityExecution:execution,cacheIdentityNativeRuntimeProfile:profile,...(savedEpoch?{cacheIdentityRefreshEpoch:savedEpoch}:{})};
+ }
+ function currentAnalysisCache(music,expected,forceWasm=false){
+  const saved=music?.engine?.cacheIdentity;
+  return !!music&&!!expected&&expected.persistent===true&&expected.verified===true&&(music.analysisVersion||0)>=8
+   &&saved?.schemaVersion===1&&saved.persistent===true&&saved.verified===true&&saved.workId===expected.workId
+   &&(!forceWasm||(saved.execution==='wasm-v1'&&expected.execution==='wasm-v1'))
+   &&saved.execution===expected.execution&&saved.implementationFingerprint===expected.implementationFingerprint
+   &&saved.assetFingerprint===expected.assetFingerprint&&saved.nativeRuntimeProfile===expected.nativeRuntimeProfile
+   &&(saved.refreshEpoch??null)===(expected.refreshEpoch??null);
  }
  function framesFor(duration,sampleRate,label){
   if(!finite(duration)||duration<=0)throw Error(label+' is invalid.');
@@ -110,38 +139,59 @@
    if(!response.ok)throw Error('The saved analysis request could not be opened.');
    const request=await response.json();root.LightForgeDiagnostics?.protectText(request.name);const settings=request.settings||{},projectId=request.projectId;
    if(!/^[A-Za-z0-9_-]{1,80}$/.test(projectId))throw Error('Invalid analysis project.');
-   // A killed renderer can leave an incomplete OPFS namespace. Native job
-   // ownership guarantees no other analysis is writing when a new runner starts.
-   if(navigator.storage?.getDirectory){
-    const storage=await navigator.storage.getDirectory();let stems;
-    try{stems=await storage.getDirectoryHandle('lightforge-stems-v1');}catch(error){if(error.name!=='NotFoundError')throw error;}
-    if(stems)for await(const [key,entry]of stems.entries()){
-     check();if(entry.kind!=='directory'||!LightForgeStemCache.validKey(key))continue;
-     try{await entry.getFileHandle('complete.json');}catch(error){if(error.name==='NotFoundError')await LightForgeStemCache.discard(key);else throw error;}
-    }
-   }
+   // Incomplete stem namespaces can belong to an interrupted or another-tab
+   // analysis. Their exact owner fences/aborts them; age-based pruning reclaims
+   // abandoned data without deleting a live job during background startup.
    const base='/project/'+encodeURIComponent(projectId)+'/';
    let music=request.music,compatibility=false;
-   const quality=settings.analysisQuality==='balanced'?'balanced':'precision';
-   const nativePredict=quality==='precision'?root.LightForgeNativeDeux?.create(BackgroundJob,id,message=>{
-    compatibility=true;report(0,message,{stage:'compatibility'});
-   }):undefined;
-   const nativeMdx=quality==='balanced'?root.LightForgeNativeMdx?.create(BackgroundJob,id,message=>{
-    compatibility=true;report(0,message,{stage:'compatibility'});
-   }):undefined;
-   // Only a predictor that was actually admitted may label the run native.
-   // Compatibility fallbacks therefore retain the wasm cache namespace.
-   const nativeRuntimeProfile=typeof nativePredict==='function'?nativePredict.analysisCacheProfile:typeof nativeMdx==='function'?nativeMdx.analysisCacheProfile:undefined;
-   const analysisOptions={projectId,analysisIdentity:request.analysisIdentity,analysisUrl:new URL(base+'analysis.wav',location.href).href,sensitivity:settings.sensitivity,
-    bpmOverride:settings.bpmOverride||undefined,analysisQuality:settings.analysisQuality,nativePredict,nativeMdx,nativeRuntimeProfile};
+   const quality=settings.analysisQuality==='balanced'?'balanced':'precision',needsAnalysis=request.needAnalysis!==false;
+   const executionContract=analysisExecutionContract(request),hasEffectiveExecution=own(request,'analysisEffectiveExecution'),forceWasm=request.analysisEffectiveExecution==='wasm-v1';
+   if(!executionContract)throw Error('The frozen analysis execution contract is invalid. Start a fresh analysis again.');
+   if(hasEffectiveExecution&&!forceWasm)throw Error('The frozen effective analysis runtime is invalid. Start a fresh analysis again.');
+   const fallbackReason=request.analysisNativeFallbackReason;
+   const attemptedExecution=fallbackReason==='native-deux-fallback'?'native-deux-v1':fallbackReason==='native-mdx-fallback'?'native-mdx-v1':null;
+   if(forceWasm&&!attemptedExecution)throw Error('The persisted native fallback lineage is invalid. Start a fresh analysis again.');
+   const baseAnalysisOptions={projectId,analysisIdentity:request.analysisIdentity,analysisUrl:new URL(base+'analysis.wav',location.href).href,sensitivity:settings.sensitivity,
+    bpmOverride:settings.bpmOverride||undefined,analysisQuality:settings.analysisQuality};
    let expectedCacheIdentity=null;
-   if(typeof MusicAnalyzer.cacheIdentity==='function'){
-    try{expectedCacheIdentity=await MusicAnalyzer.cacheIdentity(analysisOptions,controller.signal);}
+   if(!needsAnalysis&&typeof MusicAnalyzer.cacheIdentity==='function'){
+    // This probe reconstructs only a fully validated completed identity. Its
+    // saved epoch is never copied into a rebuild request. A frozen fresh
+    // lineage may reuse only its exact trusted epoch; ordinary resume may
+    // inspect a completed fresh identity but never inherits it on a miss.
+    const probe=cacheIdentityProbe(music,quality,forceWasm),savedEpoch=music?.engine?.cacheIdentity?.refreshEpoch;
+    const freshEpochMatches=executionContract.mode!=='fresh'||(normalizeRefreshEpoch(savedEpoch)===executionContract.refreshEpoch);
+    if(probe&&freshEpochMatches)try{const probeOptions={...baseAnalysisOptions,...probe};expectedCacheIdentity=await MusicAnalyzer.cacheIdentity(probeOptions,controller.signal);}
     catch(error){if(error?.name==='AbortError')throw error;root.LightForgeDiagnostics?.log('error','analysis-cache-identity',error);}
    }
-   if(!currentAnalysisCache(music,expectedCacheIdentity)){
-    if(music&&!request.needAnalysis)root.LightForgeDiagnostics?.log('info','analysis-cache-identity','Completed music analysis cache identity changed; rebuilding evidence.');
+   if(needsAnalysis||!currentAnalysisCache(music,expectedCacheIdentity,forceWasm)){
+    if(music&&!needsAnalysis)root.LightForgeDiagnostics?.log('info','analysis-cache-identity','Completed music analysis cache identity changed; rebuilding evidence.');
     if(typeof BackgroundJob.clearRunObservation!=='function'||BackgroundJob.clearRunObservation(id)!==true)throw Error('The prior analysis observation could not be cleared.');
+    let nativePredict,nativeMdx;
+    if(forceWasm){
+     compatibility=true;
+     report(0,'Resuming the verified WebAssembly retry after native separation fallback.',{stage:'compatibility'});
+    }else try{
+     if(quality==='precision')nativePredict=root.LightForgeNativeDeux?.create(BackgroundJob,id,message=>{compatibility=true;report(0,message,{stage:'compatibility'});});
+     else nativeMdx=root.LightForgeNativeMdx?.create(BackgroundJob,id,message=>{compatibility=true;report(0,message,{stage:'compatibility'});});
+    }catch(error){
+     // A bridge availability query is an optimization only. A failed query may
+     // never block a verified cached result or silently alter its identity.
+     compatibility=true;nativePredict=undefined;nativeMdx=undefined;
+     root.LightForgeDiagnostics?.log('warn','analysis-native-compatibility',error);
+     report(0,'Native acceleration is unavailable; using verified WebAssembly.',{stage:'compatibility'});
+    }
+    // Only a predictor that was actually admitted may label the run native.
+    // Compatibility fallbacks therefore retain the wasm cache namespace.
+    const nativeRuntimeProfile=typeof nativePredict==='function'?nativePredict.analysisCacheProfile:typeof nativeMdx==='function'?nativeMdx.analysisCacheProfile:undefined;
+    // Use only the trusted frozen contract. A saved completed epoch is valid
+    // for a probe, never as an implicit rebuild namespace.
+    const persistNativeFallback=async fallback=>{
+     const reason=fallback?.reason;
+     if(typeof BackgroundJob.markAnalysisWasmFallback!=='function'||BackgroundJob.markAnalysisWasmFallback(id,reason)!==true)throw Error('The native fallback checkpoint could not be persisted safely.');
+     return true;
+    };
+    const analysisOptions={...baseAnalysisOptions,nativePredict,nativeMdx,nativeRuntimeProfile,...(executionContract.refreshEpoch?{analysisRefreshEpoch:executionContract.refreshEpoch}:{}),...(forceWasm?{analysisNativeFallback:{attemptedExecution,reason:fallbackReason}}:{}),...((typeof nativePredict==='function'||typeof nativeMdx==='function')?{onNativeFallback:persistNativeFallback}:{})};
     analysisPerformed=true;const analysisStarted=observationMark(clock);
     music=await MusicAnalyzer.analyze(new URL(base+'audio.wav',location.href).href,analysisOptions,p=>report(.96*Math.max(0,Math.min(1,Number(p.progress)||0)),(compatibility?'Compatibility · ':'')+(p.detail||p.message||p.stage||'Analyzing music'),p),controller.signal);
     analysisTiming=observationMeasure(clock,analysisStarted);

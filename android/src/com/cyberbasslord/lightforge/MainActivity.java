@@ -745,10 +745,12 @@ public final class MainActivity extends Activity {
                 return accepted;
             }
         }
-        @JavascriptInterface public String startAnalysis(String projectId){
+        @JavascriptInterface public String startAnalysis(String projectId){return beginAnalysis(projectId,false);}
+        @JavascriptInterface public String startFreshAnalysis(String projectId){return beginAnalysis(projectId,true);}
+        private String beginAnalysis(String projectId,boolean fresh){
             try{
                 if(!foreground||importing||exporting)throw new IOException("Open LightForge and finish the current file operation before starting analysis.");
-                final JSONObject job=AnalysisJobStore.prepare(getFilesDir(),projectId,appVersion());
+                final JSONObject job=AnalysisJobStore.prepare(getFilesDir(),projectId,appVersion(),fresh);
                 getPreferences(0).edit().putString("lastProjectId",projectId).apply();
                 runOnUiThread(()->{
                     try{
@@ -1242,3 +1244,4 @@ public final class MainActivity extends Activity {
         return new AppResources(this,null).resource(uri,headers);
     }
 }
+

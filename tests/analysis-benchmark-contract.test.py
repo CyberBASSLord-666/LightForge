@@ -81,7 +81,6 @@ def diagnostic():
     return recorder.finalize(
         metrics={
             "quality": {"vocal_alignment_f1": 0.96, "beat_f1": 0.97},
-            "performance": {"source_separation_seconds": 12.0},
         },
         outputs={"semantic_timeline_sha256": OTHER_SHA},
     )
@@ -114,10 +113,22 @@ class AnalysisBenchmarkContractTest(unittest.TestCase):
         run = contract.benchmark_run(report)
         self.assertEqual("vocal-rock", run["track_id"])
         self.assertIn("total_wall_clock_seconds", run["metrics"]["performance"])
+        self.assertEqual(report["outputs"], run["outputs"])
+        self.assertEqual(
+            report["execution"]["wall_clock_seconds"],
+            run["profiler_measurement_evidence"]["metric_bindings"]["performance.total_wall_clock_seconds"],
+        )
         stage = report["stages"][0]
         self.assertEqual("miss", stage["cache"]["status"])
         self.assertEqual("written", stage["checkpoint"]["status"])
         self.assertGreaterEqual(stage["timings"]["wall_clock_seconds"], 0.0)
+
+    def test_profiler_owned_metrics_cannot_be_hand_entered(self):
+        recorder = contract.AnalysisRunRecorder("vocal-rock", provenance(), run_id="forged-profiler-run")
+        with recorder.stage("source_separation") as stage:
+            stage.timing("inference_seconds", 0.0)
+        with self.assertRaises(contract.ContractValidationError):
+            recorder.finalize(metrics={"performance": {"source_separation_seconds": 12.0}})
 
     def test_comparability_permits_pipeline_change_but_blocks_models_and_hardware(self):
         baseline = diagnostic()
@@ -319,4 +330,3 @@ class AnalysisBenchmarkContractTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

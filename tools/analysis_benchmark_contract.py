@@ -65,6 +65,7 @@ _TIME_FIELDS = frozenset(
         "inference_seconds",
         "postprocessing_seconds",
         "waiting_seconds",
+        "checkpoint_resume_overhead_seconds",
     }
 )
 _BYTE_FIELDS = frozenset(
@@ -77,6 +78,27 @@ _BYTE_FIELDS = frozenset(
         "temporary_storage_bytes",
     }
 )
+# Stable aliases make profiler evidence portable across the Android/web stage
+# names while keeping release performance claims tied to measured telemetry.
+_PERFORMANCE_STAGE_ALIASES = {
+    "audio_decode_seconds": frozenset({"audio_decode", "decode"}),
+    "resample_normalize_seconds": frozenset({"resample_normalize", "resample", "normalize"}),
+    "feature_generation_seconds": frozenset({"feature_generation", "features"}),
+    "source_separation_seconds": frozenset({"source_separation", "separation"}),
+    "rhythm_analysis_seconds": frozenset({"rhythm_analysis", "rhythm"}),
+    "tempo_inference_seconds": frozenset({"tempo_inference", "tempo"}),
+    "beat_tracking_seconds": frozenset({"beat_tracking", "beats"}),
+    "downbeat_tracking_seconds": frozenset({"downbeat_tracking", "downbeats"}),
+    "vocal_analysis_seconds": frozenset({"vocal_analysis", "voice", "vocals"}),
+    "drum_analysis_seconds": frozenset({"drum_analysis", "drums"}),
+    "bass_analysis_seconds": frozenset({"bass_analysis", "bass"}),
+    "structural_analysis_seconds": frozenset({"structural_analysis", "structure"}),
+    "choreography_planning_seconds": frozenset({"choreography_planning", "choreography"}),
+    "collision_resolution_seconds": frozenset({"collision_resolution", "collision"}),
+    "vehicle_realization_seconds": frozenset({"vehicle_realization", "realization"}),
+    "fseq_generation_seconds": frozenset({"fseq_generation", "fseq"}),
+    "validation_seconds": frozenset({"validation"}),
+}
 
 
 class ContractValidationError(ValueError):
@@ -411,6 +433,13 @@ def validate_against_corpus(report: Mapping[str, Any], manifest: Mapping[str, An
             errors.append("report audio content hash does not match the locked corpus")
         if not math.isclose(float(actual_audio["duration_seconds"]), float(expected_audio["duration_seconds"]), abs_tol=1e-6):
             errors.append("report audio duration does not match the locked corpus")
+        if (
+            "canonical_sample_rate" in expected_audio
+            and actual_audio["canonical_sample_rate"] != expected_audio["canonical_sample_rate"]
+        ):
+            errors.append("report canonical sample rate does not match the locked corpus")
+        if "channels" in expected_audio and actual_audio["channels"] != expected_audio["channels"]:
+            errors.append("report audio channels do not match the locked corpus")
     if errors:
         raise ContractValidationError(errors)
 
@@ -615,6 +644,10 @@ class AnalysisRunRecorder:
         performance.setdefault("total_wall_clock_seconds", report["execution"]["wall_clock_seconds"])
         report["outputs"] = copy.deepcopy(dict(outputs or {}))
         validate_diagnostic(report)
+        # Reconcile profiler-owned performance/resource leaves before this
+        # diagnostic can leave the recorder.  A caller cannot replace elapsed
+        # wall time or stage/resource telemetry with an aspirational number.
+        profiler_measurement_evidence(report)
         return report
 
 
@@ -718,13 +751,151 @@ class CheckpointStore:
             return False
 
 
+def _numeric_metric_leaves(value: Mapping[str, Any], prefix: str = "") -> dict[str, int | float]:
+    result: dict[str, int | float] = {}
+    for key, child in value.items():
+        name = f"{prefix}.{key}" if prefix else key
+        if isinstance(child, Mapping):
+            result.update(_numeric_metric_leaves(child, name))
+        elif _is_number(child):
+            # Preserve integer byte counters so reconciliation cannot lose
+            # precision by first converting a large value to IEEE-754 float.
+            result[name] = child
+    return result
+
+
+def _measured_timing_total(stages: list[Mapping[str, Any]], field: str) -> Optional[float]:
+    values = [
+        float(stage["timings"][field])
+        for stage in stages
+        if field in stage["timings"]
+    ]
+    return sum(values) if values else None
+
+
+def _measured_resource_peak(stages: list[Mapping[str, Any]], field: str) -> Optional[int]:
+    if not stages or not all(field in stage["resources"] for stage in stages):
+        return None
+    return max(int(stage["resources"][field]) for stage in stages)
+
+
+def _measured_resource_sum(stages: list[Mapping[str, Any]], fields: tuple[str, ...]) -> Optional[int]:
+    if not stages or not all(all(field in stage["resources"] for field in fields) for stage in stages):
+        return None
+    return sum(sum(int(stage["resources"][field]) for field in fields) for stage in stages)
+
+
+def _profiler_numbers_match(expected: Any, observed: Any) -> bool:
+    if not _is_number(expected) or not _is_number(observed):
+        return False
+    if isinstance(expected, int) and not isinstance(expected, bool) and isinstance(observed, int) and not isinstance(observed, bool):
+        return expected == observed
+    return math.isclose(float(expected), float(observed), rel_tol=0.0, abs_tol=1e-9)
+
+
+def profiler_measurement_evidence(diagnostic: Mapping[str, Any]) -> dict[str, Any]:
+    """Derive benchmark performance/resource evidence from profiler telemetry.
+
+    This function intentionally omits an unmeasured observation rather than
+    inventing zero.  Release mode treats an omitted required observation as a
+    blocker; ordinary diagnostics may remain useful for development.
+    """
+    validate_diagnostic(diagnostic)
+    execution = diagnostic["execution"]
+    stages = diagnostic["stages"]
+    stage_wall = {
+        stage_id: sum(
+            float(stage["timings"]["wall_clock_seconds"])
+            for stage in stages
+            if stage["stage_id"] == stage_id
+        )
+        for stage_id in sorted({stage["stage_id"] for stage in stages})
+    }
+    bindings: dict[str, float] = {
+        "performance.total_wall_clock_seconds": float(execution["wall_clock_seconds"]),
+    }
+    timing_bindings = {
+        "model_initialization_seconds": "performance.model_initialization_seconds",
+        "inference_seconds": "performance.model_inference_seconds",
+        "preprocessing_seconds": "performance.preprocessing_seconds",
+        "postprocessing_seconds": "performance.postprocessing_seconds",
+        "waiting_seconds": "performance.synchronization_waiting_seconds",
+        "checkpoint_resume_overhead_seconds": "performance.checkpoint_resume_overhead_seconds",
+    }
+    for timing_field, metric in timing_bindings.items():
+        observed = _measured_timing_total(stages, timing_field)
+        if observed is not None:
+            bindings[metric] = observed
+    for metric, aliases in _PERFORMANCE_STAGE_ALIASES.items():
+        observed = [stage_wall[stage_id] for stage_id in aliases if stage_id in stage_wall]
+        if observed:
+            bindings[f"performance.{metric}"] = sum(observed)
+    cacheable = [stage for stage in stages if stage["cache"]["status"] in {"hit", "miss"}]
+    if cacheable:
+        bindings["performance.cache_hit_rate"] = sum(
+            stage["cache"]["status"] == "hit" for stage in cacheable
+        ) / len(cacheable)
+    misses = [stage for stage in stages if stage["cache"]["status"] == "miss"]
+    if misses:
+        bindings["performance.cache_miss_cost_seconds"] = sum(
+            float(stage["timings"]["wall_clock_seconds"]) for stage in misses
+        )
+
+    resources: dict[str, float | int] = {
+        "resources.cpu_time_seconds": float(execution["cpu_seconds"]),
+    }
+    resource_specs = {
+        "resources.peak_ram_bytes": ("peak", ("peak_rss_bytes",)),
+        "resources.peak_accelerator_memory_bytes": ("peak", ("peak_accelerator_bytes",)),
+        "resources.allocation_bytes": ("sum", ("allocation_bytes",)),
+        "resources.total_disk_io_bytes": ("sum", ("read_bytes", "write_bytes")),
+        "resources.temporary_storage_bytes": ("peak", ("temporary_storage_bytes",)),
+    }
+    for metric, (kind, fields) in resource_specs.items():
+        observed = (
+            _measured_resource_peak(stages, fields[0])
+            if kind == "peak"
+            else _measured_resource_sum(stages, fields)
+        )
+        if observed is not None:
+            resources[metric] = observed
+
+    metrics = diagnostic.get("metrics", {})
+    leaves = _numeric_metric_leaves(metrics if isinstance(metrics, Mapping) else {})
+    reconciliation_errors: list[str] = []
+    for name, actual in leaves.items():
+        if not name.startswith(("performance.", "resources.")):
+            continue
+        observed = bindings.get(name, resources.get(name))
+        if observed is None:
+            reconciliation_errors.append(f"{name} has no profiler telemetry binding")
+        elif not _profiler_numbers_match(actual, observed):
+            reconciliation_errors.append(f"{name} conflicts with profiler telemetry")
+    if reconciliation_errors:
+        raise ContractValidationError(reconciliation_errors)
+    return {
+        "schema_version": 1,
+        "execution": {
+            "wall_clock_seconds": float(execution["wall_clock_seconds"]),
+            "cpu_seconds": float(execution["cpu_seconds"]),
+        },
+        "stage_wall_clock_seconds": stage_wall,
+        "metric_bindings": dict(sorted(bindings.items())),
+        "resource_bindings": dict(sorted(resources.items())),
+    }
+
+
 def benchmark_run(diagnostic: Mapping[str, Any]) -> dict[str, Any]:
     """Project a complete diagnostic into a gate-compatible benchmark run."""
     validate_diagnostic(diagnostic)
+    measurement_evidence = profiler_measurement_evidence(diagnostic)
     return {
         "track_id": diagnostic["track_id"],
         "run_id": diagnostic["run_id"],
         "metrics": copy.deepcopy(diagnostic["metrics"]),
+        # Golden output hashes are evidence, not presentation metadata.
+        "outputs": copy.deepcopy(diagnostic["outputs"]),
+        "profiler_measurement_evidence": measurement_evidence,
         "provenance": copy.deepcopy(diagnostic["provenance"]),
         "diagnostic_sha256": digest_json(diagnostic),
     }

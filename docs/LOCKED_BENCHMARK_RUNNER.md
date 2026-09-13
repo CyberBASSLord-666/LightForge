@@ -14,14 +14,15 @@ It cannot be used as a release corpus.
 
 Keep the actual corpus audio in the approved private test store, not in this
 repository. Create a private manifest from the template and replace every
-synthetic audio identity, duration, tag set, and golden-artifact digest. Then:
+synthetic audio identity, duration, canonical sample rate, channels, tag set,
+and golden-artifact digest. Then:
 
 1. Remove `"template": true`.
 2. Set `"release_ready": true` only once the manifest and goldens are frozen.
 3. Version the manifest and record its canonical SHA-256 in release evidence.
 4. Create a reviewed `release_profile` in the gate policy with exactly its
    `track_id`s in `required_tracks`, the manifest's exact corpus ID/SHA-256,
-   and `lightforge-release-metrics-v2`; do not leave the fail-closed template
+   and `lightforge-release-metrics-v4`; do not leave the fail-closed template
    placeholder in place.
 
 The production manifest must contain at least 16 distinct audio identities,
@@ -87,7 +88,7 @@ from silently being counted as evidence for a candidate.
 ## Pairing and controlled condition
 
 The gate's schema requires a `suite` identity, stable cross-side `pair_id`, and
-per-run `condition.cache_mode`. `aggregate` derives the pair ID from the
+per-run versioned cache evidence. `aggregate` derives the pair ID from the
 diagnostic `run_id` by default. Therefore the benchmark harness should assign
 the same opaque run ID to the corresponding baseline and candidate attempt,
 for example `vocal-rock-pair-001`. A run ID need not be a wall-clock timestamp.
@@ -107,12 +108,17 @@ aggregate command:
 The mapping must cover exactly the supplied diagnostics and may not map two
 runs of the same track to one pair. The baseline and candidate mappings must
 resolve to the same pair IDs. Run cold-cache and warm-cache protocols as
-separate suites; never label both as the same `cache_mode`.
+separate suites; never label both as the same `cache_mode`. Every aggregation
+also supplies a controlled `cache_setup_id`, `pair_order`, and
+`thermal_cycle_id`. Pair comparability uses the resulting
+`cache_setup_sha256`; observed `cache_evidence_sha256` intentionally may
+differ after a valid candidate cache optimization changes hits or checkpoint
+reuse.
 
 ## Build the quality-gate inputs
 
 Aggregate baseline and candidate diagnostics separately with the same committed
-policy, protocol ID, and cache mode. The output has the gate's schema-3
+policy, protocol ID, and cache setup. The output has the gate's schema-4
 `suite` and paired `runs` fields, while retaining contract provenance and
 deterministic per-track, per-stage timing and cache summaries for
 investigation.
@@ -124,6 +130,9 @@ python3 tools/locked_benchmark_runner.py aggregate \
   --policy qa/performance-gate-policy.json \
   --protocol-id locked-corpus-cold-v1 \
   --cache-mode cold \
+  --cache-setup-id release-cold-reset-2026q3 \
+  --pair-order counterbalanced \
+  --thermal-cycle-id release-cold-cycle-2026q3-a \
   --report-side baseline \
   --output artifacts/benchmark-baseline.json
 
@@ -133,6 +142,9 @@ python3 tools/locked_benchmark_runner.py aggregate \
   --policy qa/performance-gate-policy.json \
   --protocol-id locked-corpus-cold-v1 \
   --cache-mode cold \
+  --cache-setup-id release-cold-reset-2026q3 \
+  --pair-order counterbalanced \
+  --thermal-cycle-id release-cold-cycle-2026q3-a \
   --report-side candidate \
   --output artifacts/benchmark-candidate.json
 
@@ -163,6 +175,9 @@ python3 tools/locked_benchmark_runner.py aggregate \
   --policy /secure/performance-gate-release-policy.json \
   --protocol-id locked-corpus-cold-v1 \
   --cache-mode cold \
+  --cache-setup-id release-cold-reset-2026q3 \
+  --pair-order counterbalanced \
+  --thermal-cycle-id release-cold-cycle-2026q3-a \
   --report-side candidate \
   --change-classification major \
   --change-id semantic-pipeline-rework \
@@ -171,8 +186,9 @@ python3 tools/locked_benchmark_runner.py aggregate \
 ```
 
 The runner preserves this JSON without inventing reviewer results; the quality
-gate validates it. Candidate diagnostics must share a pinned `source_sha256`
-and pipeline version; the runner emits that as `candidate_identity`. The review
+gate validates it. Each side's diagnostics must share a pinned
+`source_sha256` and pipeline version; the runner emits
+`baseline_identity` or `candidate_identity`. The review
 file must contain the gate's structured ratings plus an
 `external-review-attestation-v2` Ed25519 detached signature bound to that
 identity, the policy, the corpus, and canonical baseline/candidate benchmark
@@ -182,6 +198,19 @@ diagnostic/output hashes invalidate the release. Policy pins the verifier's
 public key and its SHA-256; a bare `blinded: true` boolean or arbitrary receipt
 hash is not sufficient. Do not include private signing material, names,
 comments, lyrics, screenshots, or other private material.
+
+Every benchmark run carries its output-hash projection and profiler
+measurement evidence. The baseline projection must exactly match the locked
+goldens. A candidate may change output hashes only through a canonical
+`candidate_output_differential` that lists every changed artifact, baseline
+and candidate hash, and a rationale hash. The signed blinded review covers this
+entire differential. This permits explainable musical improvements without
+letting an unreviewed FSEQ or semantic-timeline change disappear.
+
+Performance and resource leaves are reconciled against stage/execution
+telemetry by `analysis_benchmark_contract`; they are never accepted as
+hand-entered benchmark numbers. Unobserved required telemetry is not converted
+to zero and blocks a release profile until instrumented.
 
 For the manually dispatched GitHub quality-gate workflow, package only the
 candidate `benchmark.json` evidence. The workflow downloads it by its exact run
@@ -211,9 +240,11 @@ and condition:
 | Gate comparison | Contract source |
 | --- | --- |
 | corpus/audio workload | `provenance.workload` |
+| canonical duration, sample rate, channels | `provenance.workload.audio`, pinned by the release manifest |
 | analysis configuration, preprocessing, model versions | `provenance.workload` and `provenance.implementation` |
 | hardware, runtime, accelerator, seed, thermal profile | `provenance.environment` |
-| cold/warm/resume condition | runner-supplied `condition.cache_mode` |
+| observed cold/warm/resume condition | validated `condition.cache_evidence` |
+| controlled cache preparation | `condition.cache_setup_sha256` |
 
 The aggregate additionally exposes a readable `environment` summary with
 canonical model/configuration digests. It is not a substitute for per-run
@@ -244,6 +275,10 @@ candidate artifact must additionally put its externally attested review at
 `benchmark_report_side=baseline` for baseline aggregation. For a candidate,
 use `benchmark_report_side=candidate` and provide its change classification
 and change ID; the job fails closed if the review attachment is absent.
+When a candidate intentionally changes an output golden, its diagnostic
+artifact must also carry `candidate-output-differential.json`. The protected
+runner includes it only for a candidate aggregate; the quality gate rejects
+any unlisted, stale, noncanonical, or nondeterministic output delta.
 
 The subsequent release comparison resolves each requested benchmark name to
 one Actions artifact ID, records the API SHA-256 digest and size in

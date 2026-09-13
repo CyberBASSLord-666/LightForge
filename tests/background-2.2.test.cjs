@@ -182,9 +182,9 @@ test('unacknowledged cold completed restore defers GLTF loading until compiled-s
   assert.equal(deferred.previews[0].options?.deferLoad,true,'Only the unacknowledged completed restore may defer the initial GLTF load');
   assert.deepEqual(deferred.previewDeferrals,[],'The preview must remain deferred while the saved show is being verified');
   deferred.release();await waitFor(()=>deferred.w.localStorage.getItem('lightforge-background-ack')===deferred.job.id&&!deferred.app.state.backgroundApplying);
-  const release=deferred.previewDeferrals.find(event=>event.value===false),adopted=deferred.leaseCalls.findIndex(call=>call.type==='pulse'&&call.args[2]==='show-adopted');
+  const release=deferred.previewDeferrals.find(event=>event.value===false),adopted=deferred.leaseCalls.findIndex(call=>call.type==='pulse'&&call.args[2]==='show-adopted'),starting=deferred.leaseCalls.findIndex(call=>call.type==='pulse'&&call.args[2]==='preview-starting');
   assert.ok(release,'Compiled-show adoption must release the deferred preview');
-  assert.ok(adopted>=0&&release.leaseCalls===adopted+1,'GPU startup must follow the accepted adopted-show proof, before the separate first-frame proof.');
+  assert.ok(adopted>=0&&starting===adopted+1&&release.leaseCalls===starting+1,'GPU startup must follow the accepted bounded preview-starting proof, before the separate first-frame proof.');
   assert.equal(deferred.app.state.completedRestorePreviewDeferred,false,'Terminal restore may not leave the preview load deferred');
  }finally{deferred.close();}
  const ordinary=await completedReconnect();
@@ -275,7 +275,10 @@ test('completed reconnect opens a lease and commits terminal proof before its AC
   assert.equal(completed.leaseCalls[0]?.type,'begin');assert.equal(completed.leaseCalls[0]?.args[0],completed.job.id);
   completed.release();await bootstrap;
   const terminal=completed.leaseCalls.findIndex(call=>call.type==='terminal');assert.ok(terminal>0,'A completed restore must publish terminal proof');
+  const adopted=completed.leaseCalls.findIndex(call=>call.type==='pulse'&&call.args[2]==='show-adopted');
+  const previewStarting=completed.leaseCalls.findIndex(call=>call.type==='pulse'&&call.args[2]==='preview-starting');
   const firstRender=completed.leaseCalls.findIndex(call=>call.type==='pulse'&&call.args[2]==='preview-first-render');
+  assert.ok(adopted>=0&&previewStarting>adopted&&previewStarting<firstRender,'The native startup grace must be armed after adopted show and before deferred WebGL/GLTF loading');
   assert.ok(firstRender>=0&&firstRender<terminal,'Terminal proof follows adopted show and its first web render');
   const visualCommit=completed.leaseCalls.findIndex(call=>call.type==='pulse'&&call.args[2]==='preview-visual-commit');
   assert.ok(visualCommit>firstRender&&visualCommit<terminal,'Terminal proof follows the native visual/HW-frame lease phase');

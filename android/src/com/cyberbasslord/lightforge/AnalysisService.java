@@ -8,6 +8,7 @@ import android.os.*;
 import android.webkit.*;
 import org.json.JSONObject;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 
 /** Owns the analysis WebView independently of any Activity or screen surface. */
 public final class AnalysisService extends Service {
@@ -59,21 +60,35 @@ public final class AnalysisService extends Service {
         return START_NOT_STICKY;
     }
     private void startEngine(JSONObject job) throws Exception {
-        nativePassage=new NativePassageTask(this,new File(AnalysisJobStore.project(getFilesDir(),job.getString("projectId")),"audio.wav"),jobId);
-        final NativePassageTask ownedPassage=nativePassage;
-        NativeMdxTask mdx=null;
         // The status record intentionally contains only bounded notification
         // fields. Read the frozen request to select the accelerator; never
         // infer quality from a mutable UI object.
         JSONObject request=AnalysisJobStore.request(getFilesDir(),job.getString("id"));
         JSONObject requestSettings=request.optJSONObject("settings");
         boolean balanced=requestSettings!=null&&"balanced".equals(requestSettings.optString("analysisQuality"));
-        if(balanced)try{mdx=new NativeMdxTask(this,jobId);}catch(Exception error){
+        boolean forceWasm="wasm-v1".equals(request.optString("analysisEffectiveExecution"));
+        final File audio=new File(AnalysisJobStore.project(getFilesDir(),job.getString("projectId")),"audio.wav");
+        NativePassageTask passage=null;
+        // Balanced jobs use the MDX route exclusively. Do not allocate the
+        // precision Deux bridge merely because it is available; apart from
+        // wasting memory, its constructor used to turn an optional native
+        // setup failure into a terminal job failure before WASM could start.
+        if(!forceWasm&&!balanced)try{passage=new NativePassageTask(this,audio,jobId);}catch(Exception error){
+            AppDiagnostics.record(this,"native-deux-compatibility",error);
+            request=persistNativeFallback(jobId,"native-deux-fallback");
+            forceWasm=true;
+        }
+        nativePassage=passage;
+        final NativePassageTask ownedPassage=passage;
+        NativeMdxTask mdx=null;
+        if(balanced&&!forceWasm)try{mdx=new NativeMdxTask(this,jobId);}catch(Exception error){
             // Balanced analysis remains fully functional on devices where the
             // optional native MDX graph cannot be prepared; the worker falls
             // back to its quality-checked WebAssembly path. Precision Studio
             // never pays the setup cost for an accelerator it cannot use.
             AppDiagnostics.record(this,"native-mdx-compatibility",error);
+            request=persistNativeFallback(jobId,"native-mdx-fallback");
+            forceWasm=true;
         }
         nativeMdx=mdx;
         final NativeMdxTask ownedMdx=mdx;
@@ -100,7 +115,7 @@ public final class AnalysisService extends Service {
                 String nativePath=uri.getPath();
                 if("https".equals(uri.getScheme())&&"appassets.androidplatform.net".equals(uri.getHost())&&nativePath!=null&&nativePath.matches("/background/native/[a-f0-9-]{36}\\.bin")){
                     try{
-                        if(stopped||!ownedJobId.equals(jobId))throw new IOException("Native analysis stopped.");
+                        if(ownedPassage==null||stopped||!ownedJobId.equals(jobId))throw new IOException("Native analysis stopped.");
                         String token=nativePath.substring("/background/native/".length(),nativePath.length()-4);
                         File result=ownedPassage.result(token);
                         String range=null;for(java.util.Map.Entry<String,String> entry:request.getRequestHeaders().entrySet())if("Range".equalsIgnoreCase(entry.getKey()))range=entry.getValue();
@@ -119,8 +134,11 @@ public final class AnalysisService extends Service {
                     }catch(Exception error){return AppResources.response(404,"Not Found","text/plain",new ByteArrayInputStream(new byte[0]),0,null);}
                 }
                 if("https://appassets.androidplatform.net/background/request.json".equals(uri.toString())) {
-                    try{return AppResources.response(200,"OK","application/json",new FileInputStream(new File(AnalysisJobStore.directory(getFilesDir()),"request.json")),-1,null);}
-                    catch(Exception error){return AppResources.response(404,"Not Found","text/plain",new ByteArrayInputStream(new byte[0]),0,null);}
+                    try{
+                        JSONObject frozen=AnalysisJobStore.request(getFilesDir(),ownedJobId);
+                        byte[] payload=frozen.toString().getBytes(StandardCharsets.UTF_8);
+                        return AppResources.response(200,"OK","application/json",new ByteArrayInputStream(payload),payload.length,null);
+                    }catch(Exception error){AppDiagnostics.record(AnalysisService.this,"analysis-request-binding",error);return AppResources.response(404,"Not Found","text/plain",new ByteArrayInputStream(new byte[0]),0,null);}
                 }
                 return resources.resource(uri,request.getRequestHeaders());
             }
@@ -139,6 +157,13 @@ public final class AnalysisService extends Service {
         engine.loadUrl("https://appassets.androidplatform.net/background/runner.html?job="+Uri.encode(jobId));
         signal();
     }
+    private JSONObject persistNativeFallback(String id,String reason)throws Exception{
+        if(!AnalysisJobStore.markAnalysisWasmFallback(getFilesDir(),id,reason))throw new IOException("Could not persist native fallback.");
+        JSONObject frozen=AnalysisJobStore.request(getFilesDir(),id);
+        if(!"wasm-v1".equals(frozen.optString("analysisEffectiveExecution"))||!reason.equals(frozen.optString("analysisNativeFallbackReason")))
+            throw new IOException("Native fallback execution fence was not durable.");
+        return frozen;
+    }
     public final class JobBridge {
         private final String ownerJobId;
         private final NativePassageTask ownerTask;
@@ -147,20 +172,20 @@ public final class AnalysisService extends Service {
         private boolean owns(String id){return !stopped&&ownerJobId.equals(id)&&ownerJobId.equals(jobId);}
         @JavascriptInterface public void logDiagnostic(String level,String source,String message){if(owns(ownerJobId))AppDiagnostics.log(AnalysisService.this,level,source,message);}
         @JavascriptInterface public String nativeDeuxAvailability(String id){
-            try{if(!owns(id))throw new IOException("Native analysis job is no longer active.");return ownerTask.availability();}
+            try{if(ownerTask==null||!owns(id))throw new IOException("Native analysis is unavailable.");return ownerTask.availability();}
             catch(Exception error){AppDiagnostics.record(AnalysisService.this,"native-compatibility",error);return bridgeError(error);}
         }
         @JavascriptInterface public String nativeDeuxStart(String id,long startSample){
-            try{if(!owns(id))throw new IOException("Native analysis job is no longer active.");return ownerTask.start(startSample);}
+            try{if(ownerTask==null||!owns(id))throw new IOException("Native analysis is unavailable.");return ownerTask.start(startSample);}
             catch(Exception error){AppDiagnostics.record(AnalysisService.this,"native-start",error);return bridgeError(error);}
         }
         @JavascriptInterface public String nativeDeuxStatus(String id,String token){
-            try{if(!owns(id))throw new IOException("Native analysis job is no longer active.");return ownerTask.status(token);}
+            try{if(ownerTask==null||!owns(id))throw new IOException("Native analysis is unavailable.");return ownerTask.status(token);}
             catch(Exception error){return bridgeError(error);}
         }
-        @JavascriptInterface public void nativeDeuxCancel(String id,String token){if(owns(id))ownerTask.cancel(token);}
+        @JavascriptInterface public void nativeDeuxCancel(String id,String token){if(ownerTask!=null&&owns(id))ownerTask.cancel(token);}
         @JavascriptInterface public String nativeDeuxRelease(String id){
-            try{if(!owns(id))throw new IOException("Native analysis job is no longer active.");ownerTask.releaseIdle();return "{}";}
+            try{if(ownerTask==null||!owns(id))throw new IOException("Native analysis is unavailable.");ownerTask.releaseIdle();return "{}";}
             catch(Exception error){return bridgeError(error);}
         }
         @JavascriptInterface public String nativeMdxAvailability(String id){
@@ -204,6 +229,11 @@ public final class AnalysisService extends Service {
                 }
             }
             catch(Exception ignored){} // A cancelled job can still have an in-flight progress message.
+        }
+        @JavascriptInterface public boolean markAnalysisWasmFallback(String id,String reason){
+            if(stopped||!jobId.equals(id))return false;
+            try{return AnalysisJobStore.markAnalysisWasmFallback(getFilesDir(),id,reason);}
+            catch(Exception error){AppDiagnostics.record(AnalysisService.this,"analysis-native-fallback",error);main.post(()->{if(!stopped&&id.equals(jobId))finish("failed",message(error));});return false;}
         }
         @JavascriptInterface public boolean clearRunObservation(String id){
             if(stopped||!jobId.equals(id))return false;

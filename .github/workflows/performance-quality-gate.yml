@@ -37,6 +37,15 @@ on:
       benchmark_cache_mode:
         description: Controlled benchmark cache mode (cold, warm, or resumed)
         required: false
+      benchmark_cache_setup_id:
+        description: Opaque ID for the controlled cache reset/warm/resume procedure
+        required: false
+      benchmark_pair_order:
+        description: Pair ordering (baseline-first, candidate-first, or counterbalanced)
+        required: false
+      benchmark_thermal_cycle_id:
+        description: Opaque ID for the controlled thermal cycle
+        required: false
       benchmark_report_side:
         description: Locked benchmark side (baseline or candidate)
         required: false
@@ -59,6 +68,48 @@ jobs:
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.12'
+      - name: Reject incomplete manual gate requests
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          BASELINE_ARTIFACT: ${{ inputs.baseline_artifact }}
+          BASELINE_RUN_ID: ${{ inputs.baseline_run_id }}
+          CANDIDATE_ARTIFACT: ${{ inputs.candidate_artifact }}
+          CANDIDATE_RUN_ID: ${{ inputs.candidate_run_id }}
+          RELEASE_CANDIDATE_RUN_ID: ${{ inputs.release_candidate_run_id }}
+          RELEASE_VERSION: ${{ inputs.release_version }}
+          DIAGNOSTIC_ARTIFACT: ${{ inputs.benchmark_diagnostics_artifact }}
+          DIAGNOSTIC_RUN_ID: ${{ inputs.benchmark_diagnostics_run_id }}
+          BENCHMARK_ARTIFACT: ${{ inputs.benchmark_artifact }}
+          BENCHMARK_PROTOCOL_ID: ${{ inputs.benchmark_protocol_id }}
+          BENCHMARK_CACHE_MODE: ${{ inputs.benchmark_cache_mode }}
+          BENCHMARK_CACHE_SETUP_ID: ${{ inputs.benchmark_cache_setup_id }}
+          BENCHMARK_PAIR_ORDER: ${{ inputs.benchmark_pair_order }}
+          BENCHMARK_THERMAL_CYCLE_ID: ${{ inputs.benchmark_thermal_cycle_id }}
+          BENCHMARK_REPORT_SIDE: ${{ inputs.benchmark_report_side }}
+        run: |
+          python3 - <<'PY'
+          import os
+          aggregate = (
+              "DIAGNOSTIC_ARTIFACT", "DIAGNOSTIC_RUN_ID", "BENCHMARK_ARTIFACT",
+              "BENCHMARK_PROTOCOL_ID", "BENCHMARK_CACHE_MODE", "BENCHMARK_CACHE_SETUP_ID",
+              "BENCHMARK_PAIR_ORDER", "BENCHMARK_THERMAL_CYCLE_ID", "BENCHMARK_REPORT_SIDE",
+          )
+          compare = (
+              "BASELINE_ARTIFACT", "BASELINE_RUN_ID", "CANDIDATE_ARTIFACT",
+              "CANDIDATE_RUN_ID", "RELEASE_CANDIDATE_RUN_ID", "RELEASE_VERSION",
+          )
+          groups = [(name, [os.environ.get(key, "") for key in fields]) for name, fields in (
+              ("benchmark aggregation", aggregate), ("release comparison", compare)
+          )]
+          complete = []
+          for name, values in groups:
+              supplied = [bool(value) for value in values]
+              if any(supplied) and not all(supplied):
+                  raise SystemExit(f"incomplete manual {name} request")
+              complete.append(all(supplied))
+          if sum(complete) != 1:
+              raise SystemExit("manual dispatch must request exactly one complete operation")
+          PY
       - run: python3 tests/performance-quality-gate.test.py
       - run: python3 tests/performance-quality-gate-workflow.test.py
       - run: python3 tests/test_release_quality_gate.py
@@ -83,9 +134,13 @@ jobs:
        inputs.benchmark_artifact != '' ||
        inputs.benchmark_protocol_id != '' ||
        inputs.benchmark_cache_mode != '' ||
+       inputs.benchmark_cache_setup_id != '' ||
+       inputs.benchmark_pair_order != '' ||
+       inputs.benchmark_thermal_cycle_id != '' ||
        inputs.benchmark_report_side != '' ||
        inputs.benchmark_change_classification != '' ||
        inputs.benchmark_change_id != '')
+    needs: unit
     runs-on: ubuntu-latest
     environment: lightforge-release-quality
     steps:
@@ -98,6 +153,9 @@ jobs:
           BENCHMARK_ARTIFACT: ${{ inputs.benchmark_artifact }}
           BENCHMARK_PROTOCOL_ID: ${{ inputs.benchmark_protocol_id }}
           BENCHMARK_CACHE_MODE: ${{ inputs.benchmark_cache_mode }}
+          BENCHMARK_CACHE_SETUP_ID: ${{ inputs.benchmark_cache_setup_id }}
+          BENCHMARK_PAIR_ORDER: ${{ inputs.benchmark_pair_order }}
+          BENCHMARK_THERMAL_CYCLE_ID: ${{ inputs.benchmark_thermal_cycle_id }}
           BENCHMARK_REPORT_SIDE: ${{ inputs.benchmark_report_side }}
           BENCHMARK_CHANGE_CLASSIFICATION: ${{ inputs.benchmark_change_classification }}
           BENCHMARK_CHANGE_ID: ${{ inputs.benchmark_change_id }}
@@ -109,6 +167,10 @@ jobs:
           test -n "$BENCHMARK_ARTIFACT"
           test -n "$BENCHMARK_PROTOCOL_ID"
           test -n "$BENCHMARK_CACHE_MODE"
+          test -n "$BENCHMARK_CACHE_SETUP_ID"
+          test -n "$BENCHMARK_PAIR_ORDER"
+          test -n "$BENCHMARK_THERMAL_CYCLE_ID"
+          test "$BENCHMARK_PAIR_ORDER" = baseline-first || test "$BENCHMARK_PAIR_ORDER" = candidate-first || test "$BENCHMARK_PAIR_ORDER" = counterbalanced
           test "$BENCHMARK_REPORT_SIDE" = baseline || test "$BENCHMARK_REPORT_SIDE" = candidate
           if test "$BENCHMARK_REPORT_SIDE" = baseline; then
             test -z "$BENCHMARK_CHANGE_CLASSIFICATION"
@@ -136,6 +198,9 @@ jobs:
           LIGHTFORGE_RELEASE_CORPUS_MANIFEST_JSON: ${{ secrets.LIGHTFORGE_RELEASE_CORPUS_MANIFEST_JSON }}
           BENCHMARK_PROTOCOL_ID: ${{ inputs.benchmark_protocol_id }}
           BENCHMARK_CACHE_MODE: ${{ inputs.benchmark_cache_mode }}
+          BENCHMARK_CACHE_SETUP_ID: ${{ inputs.benchmark_cache_setup_id }}
+          BENCHMARK_PAIR_ORDER: ${{ inputs.benchmark_pair_order }}
+          BENCHMARK_THERMAL_CYCLE_ID: ${{ inputs.benchmark_thermal_cycle_id }}
           BENCHMARK_REPORT_SIDE: ${{ inputs.benchmark_report_side }}
           BENCHMARK_CHANGE_CLASSIFICATION: ${{ inputs.benchmark_change_classification }}
           BENCHMARK_CHANGE_ID: ${{ inputs.benchmark_change_id }}
@@ -157,6 +222,9 @@ jobs:
             --policy gate/trusted/performance-gate-policy.json
             --protocol-id "$BENCHMARK_PROTOCOL_ID"
             --cache-mode "$BENCHMARK_CACHE_MODE"
+            --cache-setup-id "$BENCHMARK_CACHE_SETUP_ID"
+            --pair-order "$BENCHMARK_PAIR_ORDER"
+            --thermal-cycle-id "$BENCHMARK_THERMAL_CYCLE_ID"
             --report-side "$BENCHMARK_REPORT_SIDE"
             --output gate/benchmark/benchmark.json
           )
@@ -166,6 +234,11 @@ jobs:
               --change-id "$BENCHMARK_CHANGE_ID"
               --human-perceptual-review gate/diagnostics/human-perceptual-review.json
             )
+            if test -f gate/diagnostics/candidate-output-differential.json; then
+              arguments+=(
+                --candidate-output-differential gate/diagnostics/candidate-output-differential.json
+              )
+            fi
           fi
           python3 tools/locked_benchmark_runner.py aggregate "${arguments[@]}"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -183,6 +256,7 @@ jobs:
       inputs.candidate_run_id != '' &&
       inputs.release_candidate_run_id != '' &&
       inputs.release_version != ''
+    needs: unit
     runs-on: ubuntu-latest
     environment: lightforge-release-quality
     steps:
@@ -272,9 +346,10 @@ jobs:
             --candidate gate/candidate/benchmark.json \
             --locked-corpus-manifest gate/trusted/locked-corpus-manifest.json \
             --policy gate/trusted/performance-gate-policy.json \
-            --release-policy-attestation gate/trusted/release-policy-attestation.json \
-            --output gate/quality-gate-report.json
-      - name: Bind PASS_TARGET report to candidate commit, tree, release and artifacts
+           --release-policy-attestation gate/trusted/release-policy-attestation.json \
+            --output gate/quality-gate-report.json \
+            --require-production-ready
+      - name: Bind production-ready report to candidate commit, tree, release and artifacts
         env:
           GH_TOKEN: ${{ github.token }}
           LIGHTFORGE_REF_PROTECTED: ${{ github.ref_protected }}

@@ -11,7 +11,7 @@ const clone = x => JSON.parse(JSON.stringify(x));
 // job, loading overlay and preview permanently latched together.
 const COMPLETED_RESTORE_PROJECT_CHUNK_BYTES=48*1024,COMPLETED_RESTORE_PROJECT_MAX_BYTES=64*1024*1024,COMPLETED_RESTORE_PROJECT_READ_TIMEOUT_MS=12000;
 const defaults = {style:'festival',intensity:.85,dance:'expressive',stepMs:20,sensitivity:.82,beatDivision:'auto',bpmOverride:null,offsetMs:0,palette:'aurora',enabled:{windows:true,mirrors:true,trunk:true,charge:true,interior:true},optionalFog:false,outerBeamRamping:false,outputEnabled:{},manualCues:[],sectionOverrides:{},seed:2025,analysisQuality:'precision',movementDensity:.7,downbeatAnchor:null,meterOverride:null,tempoScale:1,vocalFocus:.85,bassFocus:.9,vocalRegions:[],musicCues:[],vocalOffsetMs:0,bassOffsetMs:0};
-const state = {audition:'mix',auditionAvailable:false,auditionLoading:false,project:null,music:null,show:null,settings:clone(defaults),projects:[],history:[],future:[],compiled:null,exportHeader:null,saveBlocked:false,composing:false,compileId:0,compileAbort:null,renderedSettingsKey:null,showMusic:null,pendingExport:null,busy:false,job:0,abort:null,view:'studio',editing:null,needAnalysis:false,previewMode:0,exportId:null,lastSave:0,acceptProgress:false,selection:0,loadingProject:false,pendingProjectAction:null,soloPreview:null,completedRestore:null,completedRestorePreviewDeferred:false};
+const state = {audition:'mix',auditionAvailable:false,auditionLoading:false,project:null,music:null,show:null,settings:clone(defaults),projects:[],history:[],future:[],compiled:null,exportHeader:null,saveBlocked:false,composing:false,compileId:0,compileAbort:null,renderedSettingsKey:null,showMusic:null,pendingExport:null,busy:false,job:0,abort:null,view:'studio',editing:null,needAnalysis:false,previewMode:0,exportId:null,lastSave:0,acceptProgress:false,selection:0,loadingProject:false,pendingProjectAction:null,soloPreview:null,completedRestore:null,completedRestorePreviewDeferred:false,analysisExecutionMode:'resume'};
 const audio=$('audio');let auditionEpoch=0,availabilityEpoch=0,auditionAbort=null,auditionURL=null,auditionIntent=null,auditionSignature=null,analysisFallback=null,completedRestoreEpoch=0;let progressClock,toastTimer,saveTimer,regenTimer,lastDraw=0,lastSection=-1,frameRequest=0,dbPromise;
 let previewPaused=document.hidden,nativePreviewPaused=false,pagePreviewPaused=false;
 function auditionChanged(){document.dispatchEvent(new CustomEvent('lightforge:changed'));}
@@ -127,7 +127,7 @@ async function selectProject(project,isNew=false,{navigate=true,restoreLease=nul
  stopInspection(); if(state.busy)return;clearTimeout(saveTimer);if(state.project&&!state.loadingProject&&!(await saveProject()))return;state.compileAbort?.abort();state.compileId++;state.composing=false;const selection=++state.selection,id=project.id;
  const current=()=>selection===state.selection&&state.project?.id===id;
  abandonAudition();audio.pause();clearTimeout(regenTimer);if(project.audioUrl)project.audioUrl=new URL(project.audioUrl,location.href).href;if(project.analysisUrl)project.analysisUrl=new URL(project.analysisUrl,location.href).href;if(project.previewUrl)project.previewUrl=new URL(project.previewUrl,location.href).href;
- state.project=project;state.saveBlocked=false;state.loadingProject=true;state.music=null;state.show=null;state.compiled=null;state.history=[];state.future=[];state.renderedSettingsKey=null;state.showMusic=null;state.editing=null;state.needAnalysis=false;lastSection=-1;
+ state.project=project;state.saveBlocked=false;state.loadingProject=true;state.music=null;state.show=null;state.compiled=null;state.history=[];state.future=[];state.renderedSettingsKey=null;state.showMusic=null;state.editing=null;state.needAnalysis=false;state.analysisExecutionMode='resume';lastSection=-1;
  $('results').hidden=true;$('validationCard').hidden=true;$('sectionEditor').hidden=true;$('noShowOverlay').hidden=false;$('emptyCard').hidden=true;$('workingStudio').hidden=false;
  document.querySelector('.controls-column').inert=true;
  text($('trackTitle'),project.name||'Untitled show');text($('trackMeta'),isNew?'Audio ready':'Opening saved project…');text($('totalTime'),formatTime(project.duration));$('seek').max=project.duration||1;audio.src=project.previewUrl||project.audioUrl||'';if(navigate)nav('studio');else resizeCanvases();updateButtons();
@@ -164,7 +164,7 @@ function syncControls(){const s=state.settings;document.querySelectorAll('[data-
 function updateRangeFill(el){el.style.setProperty('--fill',100*(Number(el.value)-Number(el.min))/(Number(el.max)-Number(el.min))+'%');}
 function settingsChanged(needsAnalysis=false){
  state.compileAbort?.abort();state.compileId++;state.composing=false;clearTimeout(regenTimer);
- if(needsAnalysis)state.needAnalysis=true;syncControls();scheduleSave();
+ if(needsAnalysis){state.needAnalysis=true;state.analysisExecutionMode='fresh';}syncControls();scheduleSave();
  if(state.music&&!needsAnalysis&&!state.needAnalysis){state.composing=true;updateButtons();regenTimer=setTimeout(()=>regenerate(),220);}
  else if(state.needAnalysis){$('validationCard').hidden=true;text($('generationHint'),'Create again to analyze the music with your updated rhythm settings.');}
 }
@@ -431,9 +431,12 @@ async function pollBackgroundJob(){
 async function startBackgroundGeneration(){
  if(!(await saveProject()))return;
  clearTimeout(saveTimer);abandonAudition();audio.pause();audio.src=mixAudioUrl();
- const job=parse(bridge('startAnalysis',state.project.id),{});
+ const fresh=state.analysisExecutionMode==='fresh'&&!!window.Android&&typeof window.Android.startFreshAnalysis==='function';
+ const job=parse(bridge(fresh?'startFreshAnalysis':'startAnalysis',state.project.id),{});
  if(job.error||!job.id){toast(job.error||'Background analysis could not start.',true);return;}
- state.backgroundSeen=null;state.backgroundSyncPending=false;
+ // A fresh request mints one epoch. Subsequent cancellation/retry is a normal
+ // resume so the durable checkpoint and its forced-WASM marker stay reachable.
+ state.analysisExecutionMode='resume';state.backgroundSeen=null;state.backgroundSyncPending=false;
  if($('backgroundRecovery'))$('backgroundRecovery').hidden=true;
  await handleBackgroundJob(job);
 }
@@ -453,7 +456,7 @@ async function generate(){
   const result=await ShowCompiler.generate(music,settings,p=>{if(job===state.job)setProgress({...p,progress:.96+.04*Math.max(0,Math.min(1,Number(p.progress)||0))});},state.abort.signal);
   if(job!==state.job)return;
   if(previous.music){state.history.push(previous);trimHistory(state.history);state.future=[];}
-  analysisFallback=null;state.music=music;state.needAnalysis=false;state.settings=settings;adoptShow(result,music,settings);
+  analysisFallback=null;state.music=music;state.needAnalysis=false;state.analysisExecutionMode='resume';state.settings=settings;adoptShow(result,music,settings);
   const saved=await saveProject();endBusy();await refreshAuditionAvailability({force:true});if(saved)toast('Your show is ready. Press play and make it yours.');$('previewBadge').focus?.();
  }catch(e){diagnostics?.log(e.name==='AbortError'?'info':'error','analysis',e);if(job!==state.job)return;restoreAnalysisFallback();endBusy();await refreshAuditionAvailability({force:true});if(e.name!=='AbortError')toast('Could not create this show. '+(e.message||'Please try again.'),true);}updateButtons();
 }
@@ -481,6 +484,10 @@ async function regenerate({save=true,preparedShow=null,restoreCompiled=null,rest
    // Commit the verified CPU-side adoption before beginning GPU startup. The
    // first rendered frame and native visual proof remain separate requirements.
    if(!completedRestorePulse(restoreLease,'show-adopted'))throw Error('Native completed-restore lease rejected the adopted show.');
+   // Tell Android that the deferred real renderer/GLTF startup is about to
+   // begin. This opens only its bounded startup liveness phase; first-frame
+   // and visual-commit proof remain mandatory before terminal acknowledgement.
+   if(!completedRestorePulse(restoreLease,'preview-starting'))throw Error('Native completed-restore lease rejected preview startup.');
    setCompletedRestorePreviewDeferred(false);
   }
   if(save)scheduleSave();return state.show;

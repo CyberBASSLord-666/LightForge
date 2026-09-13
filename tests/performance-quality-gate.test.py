@@ -131,6 +131,76 @@ def policy_test_authority():
     return authority
 
 
+def cache_condition(
+    mode="cold",
+    *,
+    setup_id="controlled-cache-reset-v1",
+    pair_order="counterbalanced",
+    thermal_cycle_id="cold-cycle-v1",
+):
+    if mode == "resumed":
+        stages = [
+            {
+                "stage_id": "source_separation",
+                "attempt": 1,
+                "stage_status": "cancelled",
+                "cache_status": "miss",
+                "checkpoint_status": "written",
+                "recovery_from_attempt": None,
+            },
+            {
+                "stage_id": "source_separation",
+                "attempt": 2,
+                "stage_status": "reused",
+                "cache_status": "hit",
+                "checkpoint_status": "reused",
+                "recovery_from_attempt": 1,
+            },
+        ]
+    else:
+        stage_status, cache_status, checkpoint_status = {
+            "cold": ("completed", "miss", "written"),
+            "warm": ("completed", "hit", "reused"),
+        }[mode]
+        stages = [{
+            "stage_id": "source_separation",
+            "attempt": 1,
+            "stage_status": stage_status,
+            "cache_status": cache_status,
+            "checkpoint_status": checkpoint_status,
+            "recovery_from_attempt": None,
+        }]
+    evidence = {
+        "schema_version": 2,
+        "protocol": gate.CACHE_CONDITION_PROTOCOL,
+        "mode": mode,
+        "stages": stages,
+        "cache_hits": sum(stage["cache_status"] == "hit" for stage in stages),
+        "cache_misses": sum(stage["cache_status"] == "miss" for stage in stages),
+        "checkpoint_reuses": sum(stage["checkpoint_status"] == "reused" for stage in stages),
+        "recovery_stages": sum(stage["recovery_from_attempt"] is not None for stage in stages),
+        "interrupted_stage_attempts": sum(
+            stage["stage_status"] in {"failed", "cancelled"} for stage in stages
+        ),
+    }
+    setup = {
+        "schema_version": 1,
+        "protocol": gate.CACHE_SETUP_PROTOCOL,
+        "mode": mode,
+        "setup_id": setup_id,
+        "pair_order": pair_order,
+        "thermal_cycle_id": thermal_cycle_id,
+    }
+    return {
+        "cache_mode": mode,
+        "cache_protocol": gate.CACHE_CONDITION_PROTOCOL,
+        "cache_setup": setup,
+        "cache_setup_sha256": gate.cache_setup_digest(setup),
+        "cache_evidence": evidence,
+        "cache_evidence_sha256": gate.cache_condition_digest(evidence),
+    }
+
+
 def legacy_policy():
     return {
         "required_tracks": ["vocal-rock"],
@@ -146,12 +216,13 @@ def legacy_policy():
 
 def legacy_report(runtime, policy, pipeline="baseline"):
     return {
-        "schema_version": 3,
+        "schema_version": gate.SCHEMA_VERSION,
         "suite": {
             "corpus_id": "legacy-corpus",
             "corpus_manifest_sha256": sha("legacy-manifest"),
             "protocol_id": "legacy-v1",
             "policy_sha256": gate.policy_sha256(policy),
+            "cache_protocol": gate.CACHE_CONDITION_PROTOCOL,
         },
         "runs": [
             {
@@ -163,13 +234,18 @@ def legacy_report(runtime, policy, pipeline="baseline"):
                     "workload": {
                         "corpus_id": "legacy-corpus",
                         "corpus_manifest_sha256": sha("legacy-manifest"),
-                        "audio": {"content_sha256": sha("legacy-audio")},
+                        "audio": {
+                            "content_sha256": sha("legacy-audio"),
+                            "duration_seconds": 180.0,
+                            "canonical_sample_rate": 44100,
+                            "channels": 2,
+                        },
                         "analysis_configuration": {"quality": "precision"},
                     },
                     "implementation": {"pipeline_version": pipeline, "preprocessing_version": "pcm-v1", "model_versions": {"model": "pinned"}},
                     "environment": {"hardware_fingerprint": "legacy-host", "runtime_backend": "cpu", "runtime_version": "1", "accelerator": {"provider": "cpu"}, "random_seed": 42, "thermal_profile": "cold"},
                 },
-                "condition": {"cache_mode": "cold"},
+                "condition": cache_condition(),
             }
             for index in range(3)
         ],
@@ -208,7 +284,12 @@ def release_manifest():
         "tracks": [
             {
                 "track_id": track_id,
-                "audio": {"content_sha256": sha(f"audio:{track_id}"), "duration_seconds": 120 + index},
+                "audio": {
+                    "content_sha256": sha(f"audio:{track_id}"),
+                    "duration_seconds": 120 + index,
+                    "canonical_sample_rate": 44100,
+                    "channels": 2,
+                },
                 "tags": list(tags),
                 "golden_artifacts": {
                     artifact: sha(f"golden:{track_id}:{artifact}")
@@ -242,7 +323,7 @@ def runtime_profile(*, accelerator_available=True):
 def release_policy(manifest, *, accelerator_available=True):
     authority = policy_test_authority()
     return {
-        "schema_version": 3,
+        "schema_version": gate.SCHEMA_VERSION,
         "required_tracks": [track["track_id"] for track in manifest["tracks"]],
         "minimum_pairs_per_track": 5,
         "bootstrap": {"method": "paired-percentile-v1", "seed": "release", "confidence": 0.99, "resamples": 20000},
@@ -314,8 +395,40 @@ def release_metrics(runtime):
     return metrics
 
 
+def metric_value(metrics, name):
+    value = metrics
+    for part in name.split("."):
+        value = value[part]
+    return value
+
+
+def profiler_evidence(metrics):
+    return {
+        "schema_version": 1,
+        "execution": {
+            "wall_clock_seconds": metric_value(metrics, "performance.total_wall_clock_seconds"),
+            "cpu_seconds": metric_value(metrics, "resources.cpu_time_seconds"),
+        },
+        "stage_wall_clock_seconds": {},
+        "metric_bindings": {
+            name: metric_value(metrics, name)
+            for name in gate.RELEASE_METRIC_RULES
+            if name.startswith("performance.")
+        },
+        "resource_bindings": {
+            name: metric_value(metrics, name)
+            for name in gate.RELEASE_METRIC_RULES
+            if name.startswith("resources.")
+        },
+    }
+
+
 def candidate_identity():
     return {"source_sha256": sha("candidate-source"), "pipeline_version": "candidate-pipeline-v2"}
+
+
+def baseline_identity():
+    return {"source_sha256": sha("baseline-source"), "pipeline_version": "baseline-pipeline"}
 
 
 def review(
@@ -383,35 +496,42 @@ def review(
 
 def release_report(runtime, policy, manifest, *, candidate=False, review_value=False, classification="major"):
     manifest_sha = gate.locked_corpus_manifest_sha256(manifest)
-    identity = candidate_identity()
+    identity = candidate_identity() if candidate else baseline_identity()
     report = {
-        "schema_version": 3,
+        "schema_version": gate.SCHEMA_VERSION,
         "suite": {
             "corpus_id": manifest["corpus_id"],
             "corpus_manifest_sha256": manifest_sha,
             "protocol_id": "release-v2",
             "policy_sha256": gate.policy_sha256(policy),
+            "cache_protocol": gate.CACHE_CONDITION_PROTOCOL,
         },
         "runs": [],
     }
     for track in manifest["tracks"]:
         for index in range(5):
+            metrics = release_metrics(runtime)
             report["runs"].append(
                 {
                     "track_id": track["track_id"],
                     "pair_id": f"{track['track_id']}-pair-{index}",
                     "run_id": f"{'candidate' if candidate else 'baseline'}-{track['track_id']}-{index}",
-                    "metrics": release_metrics(runtime),
+                    "metrics": metrics,
                     "provenance": {
                         "workload": {
                             "corpus_id": manifest["corpus_id"],
                             "corpus_manifest_sha256": manifest_sha,
-                            "audio": {"content_sha256": track["audio"]["content_sha256"]},
+                            "audio": {
+                                "content_sha256": track["audio"]["content_sha256"],
+                                "duration_seconds": track["audio"]["duration_seconds"],
+                                "canonical_sample_rate": 44100,
+                                "channels": 2,
+                            },
                             "analysis_configuration": {"quality": "precision"},
                         },
                         "implementation": {
-                            "pipeline_version": identity["pipeline_version"] if candidate else "baseline-pipeline",
-                            "source_sha256": identity["source_sha256"] if candidate else sha("baseline-source"),
+                            "pipeline_version": identity["pipeline_version"],
+                            "source_sha256": identity["source_sha256"],
                             "preprocessing_version": "pcm-44100-v2",
                             "model_versions": {"model": "pinned"},
                         },
@@ -424,11 +544,13 @@ def release_report(runtime, policy, manifest, *, candidate=False, review_value=F
                             "thermal_profile": "controlled-cold",
                         },
                     },
-                    "condition": {"cache_mode": "cold"},
+                    "condition": cache_condition(),
+                    "outputs": copy.deepcopy(track["golden_artifacts"]),
+                    "profiler_measurement_evidence": profiler_evidence(metrics),
                 }
             )
+    report["candidate_identity" if candidate else "baseline_identity"] = identity
     if candidate:
-        report["candidate_identity"] = identity
         report["change"] = {"classification": classification, "change_id": "candidate-change-001"}
         if review_value not in (False, None):
             report["human_perceptual_review"] = review_value
@@ -479,6 +601,38 @@ def attest_candidate_review(candidate, baseline, policy, *, status="pass", ratin
         blinded=blinded,
     )
     return candidate
+
+
+def candidate_output_differential(candidate, manifest):
+    changes = []
+    by_track = {}
+    for run in candidate["runs"]:
+        by_track.setdefault(run["track_id"], run["outputs"])
+    for track in manifest["tracks"]:
+        observed = by_track[track["track_id"]]
+        for artifact, baseline_sha in sorted(track["golden_artifacts"].items()):
+            candidate_sha = observed[artifact]
+            if candidate_sha != baseline_sha:
+                changes.append(
+                    {
+                        "track_id": track["track_id"],
+                        "artifact": artifact,
+                        "baseline_sha256": baseline_sha,
+                        "candidate_sha256": candidate_sha,
+                        "rationale_id": "reviewed-visual-improvement",
+                        "rationale_sha256": sha(
+                            f"rationale:{track['track_id']}:{artifact}:{candidate_sha}"
+                        ),
+                    }
+                )
+    changes.sort(key=lambda row: (row["track_id"], row["artifact"]))
+    return {
+        "schema_version": 1,
+        "protocol": gate._CANDIDATE_OUTPUT_DIFFERENTIAL_PROTOCOL,
+        "corpus_manifest_sha256": gate.locked_corpus_manifest_sha256(manifest),
+        "candidate_identity_sha256": sha(gate.canonical_json(candidate["candidate_identity"])),
+        "changes": changes,
+    }
 
 
 def inputs():
@@ -969,6 +1123,111 @@ class QualityGateTest(unittest.TestCase):
         self.assertEqual("FAIL", result["status"])
         self.assertIn("release_policy_run_audio_mismatch", blocker_reasons(result))
         self.assertIn("release_locked_runtime_profile_mismatch", blocker_reasons(result))
+
+    def test_audio_shape_and_baseline_identity_are_bound(self):
+        manifest, policy, baseline, candidate = inputs()
+        candidate["runs"][0]["provenance"]["workload"]["audio"]["duration_seconds"] += 1
+        candidate["runs"][1]["provenance"]["workload"]["audio"]["canonical_sample_rate"] = 22050
+        candidate["runs"][2]["provenance"]["workload"]["audio"]["channels"] = 1
+        baseline["runs"][3]["provenance"]["implementation"]["source_sha256"] = sha("mixed-baseline")
+        result = compare_release(baseline, candidate, policy, manifest)
+        self.assertEqual("FAIL", result["status"])
+        self.assertIn("incomparable_pair_provenance", blocker_reasons(result))
+        self.assertIn("baseline_identity_unbound_to_run", blocker_reasons(result))
+
+    def test_cache_setup_is_paired_but_cache_outcome_can_improve(self):
+        policy = legacy_policy()
+        baseline = legacy_report(100, policy, "baseline")
+        candidate = legacy_report(20, policy, "candidate")
+        for run in baseline["runs"]:
+            run["condition"] = cache_condition("warm")
+        for run in candidate["runs"]:
+            condition = cache_condition("warm")
+            row = condition["cache_evidence"]["stages"][0]
+            row["cache_status"] = "disabled"
+            row["checkpoint_status"] = "reused"
+            condition["cache_evidence"]["cache_hits"] = 0
+            condition["cache_evidence_sha256"] = gate.cache_condition_digest(
+                condition["cache_evidence"]
+            )
+            run["condition"] = condition
+        result = gate.compare(baseline, candidate, policy)
+        self.assertEqual("PASS_TARGET", result["status"])
+
+        changed = copy.deepcopy(candidate)
+        changed["runs"][0]["condition"] = cache_condition(
+            "warm", setup_id="different-cache-preparation-v1"
+        )
+        result = gate.compare(baseline, changed, policy)
+        self.assertEqual("FAIL", result["status"])
+        self.assertIn("incomparable_pair_provenance", blocker_reasons(result))
+
+    def test_cache_condition_rejects_forged_resume_lineage(self):
+        for mode in ("cold", "warm", "resumed"):
+            self.assertEqual(mode, gate.validate_cache_condition(cache_condition(mode))["mode"])
+        forged = cache_condition("resumed")
+        forged["cache_evidence"]["stages"][0]["stage_status"] = "completed"
+        forged["cache_evidence"]["interrupted_stage_attempts"] = 0
+        forged["cache_evidence_sha256"] = gate.cache_condition_digest(
+            forged["cache_evidence"]
+        )
+        with self.assertRaisesRegex(ValueError, "interrupted written checkpoint"):
+            gate.validate_cache_condition(forged)
+
+    def test_profiler_evidence_and_output_differentials_are_release_bound(self):
+        manifest, policy, baseline, candidate = inputs()
+        candidate["runs"][0]["metrics"]["performance"]["total_wall_clock_seconds"] = 0.001
+        result = compare_release(baseline, candidate, policy, manifest)
+        self.assertEqual("FAIL", result["status"])
+        self.assertIn("release_profiler_metric_mismatch", blocker_reasons(result))
+
+        manifest, policy, baseline, candidate = inputs()
+        for run in baseline["runs"]:
+            if run["track_id"] == manifest["tracks"][0]["track_id"]:
+                run["outputs"]["drum_map_sha256"] = sha("wrong-baseline-output")
+        result = compare_release(baseline, candidate, policy, manifest)
+        self.assertEqual("FAIL", result["status"])
+        self.assertIn("release_policy_baseline_golden_output_mismatch", blocker_reasons(result))
+
+        manifest, policy, baseline, candidate = inputs()
+        for run in candidate["runs"]:
+            if run["track_id"] == manifest["tracks"][0]["track_id"]:
+                run["outputs"]["vocal_map_sha256"] = sha("reviewed-candidate-output")
+        result = compare_release(baseline, candidate, policy, manifest)
+        self.assertEqual("FAIL", result["status"])
+        self.assertIn("release_candidate_output_differential_required", blocker_reasons(result))
+        candidate["candidate_output_differential"] = candidate_output_differential(candidate, manifest)
+        attest_candidate_review(candidate, baseline, policy)
+        result = compare_release(baseline, candidate, policy, manifest)
+        self.assertEqual("PASS_TARGET", result["status"])
+        self.assertEqual("valid", result["candidate_output_differential"]["status"])
+
+    def test_strict_cli_mode_requires_production_readiness(self):
+        policy = legacy_policy()
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            baseline = legacy_report(100, policy, "baseline")
+            candidate = legacy_report(20, policy, "candidate")
+            for name, value in (
+                ("baseline.json", baseline),
+                ("candidate.json", candidate),
+                ("policy.json", policy),
+            ):
+                (root / name).write_text(json.dumps(value), encoding="utf-8")
+            code = gate.main(
+                [
+                    "--baseline",
+                    str(root / "baseline.json"),
+                    "--candidate",
+                    str(root / "candidate.json"),
+                    "--policy",
+                    str(root / "policy.json"),
+                    "--output",
+                    str(root / "result.json"),
+                    "--require-production-ready",
+                ]
+            )
+            self.assertEqual(1, code)
 
     def test_cli_missing_manifest_writes_fail_not_production(self):
         manifest, policy, baseline, candidate = inputs()

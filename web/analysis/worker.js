@@ -204,14 +204,25 @@ function normalizeBassProvenance(result){
 }
 let nativeSequence=0;const nativeRequests=new Map();
 let nativeMdxSequence=0;const nativeMdxRequests=new Map();
-function nativePredict(startSample,onProgress=()=>{}){return new Promise((resolve,reject)=>{const requestId=++nativeSequence;nativeRequests.set(requestId,{resolve,reject,onProgress});postMessage({type:'native-deux',requestId,startSample});}).then(async url=>{
+const NATIVE_DEUX_FALLBACK_CODE='native-deux-fallback',NATIVE_MDX_FALLBACK_CODE='native-mdx-fallback';
+function nativeFallbackError(code){const error=new Error('Native separation requested a verified WASM restart.');error.code=code;return error;}
+function nativeDeuxFallbackError(){return nativeFallbackError(NATIVE_DEUX_FALLBACK_CODE);}
+function nativeMdxFallbackError(){return nativeFallbackError(NATIVE_MDX_FALLBACK_CODE);}
+function nativeAbortError(message){try{return new DOMException(message||'Analysis cancelled','AbortError');}catch(_){const error=new Error(message||'Analysis cancelled');error.name='AbortError';return error;}}
+async function normalizeNativeFailure(error,onFallback,fallback){
+ if(error?.name==='AbortError')throw error;
+ if(error?.code===fallback().code)throw error;
+ await onFallback();throw fallback();
+}
+function nativePredict(startSample,onProgress=()=>{},onFallback=()=>{}){return new Promise((resolve,reject)=>{const requestId=++nativeSequence;nativeRequests.set(requestId,{resolve,reject,onProgress,onFallback});try{postMessage({type:'native-deux',requestId,startSample});}catch(error){nativeRequests.delete(requestId);reject(error);}}).then(async url=>{
+ if(typeof url!=='string')throw Error('Native studio audio is unavailable.');
  const response=await fetch(url);if(!response.ok)throw Error('Native studio audio could not be read.');const bytes=await response.arrayBuffer(),samples=573300;
  if(bytes.byteLength!==samples*8)throw Error('Native studio audio is incomplete.');const view=new DataView(bytes),result={};let at=0;
  for(const role of ['vocals','accompaniment']){const pcm=new Float32Array(samples);for(let i=0;i<samples;i++,at+=4){pcm[i]=view.getFloat32(at,true);if(!Number.isFinite(pcm[i]))throw Error('Native studio audio contains invalid samples.');}result[role]=pcm;}return result;
-});}
-function nativeMdxPredict(encoded,onProgress=()=>{}){
+}).catch(error=>normalizeNativeFailure(error,onFallback,nativeDeuxFallbackError));}
+function nativeMdxPredict(encoded,onProgress=()=>{},onFallback=()=>{}){
  const payload=encoded.slice();
- return new Promise((resolve,reject)=>{const requestId=++nativeMdxSequence;nativeMdxRequests.set(requestId,{resolve,reject,onProgress});postMessage({type:'native-mdx',requestId,buffer:payload.buffer},[payload.buffer]);});
+ return new Promise((resolve,reject)=>{const requestId=++nativeMdxSequence,expectedBytes=payload.byteLength;nativeMdxRequests.set(requestId,{resolve,reject,onProgress,onFallback,expectedBytes});try{postMessage({type:'native-mdx',requestId,buffer:payload.buffer},[payload.buffer]);}catch(error){nativeMdxRequests.delete(requestId);reject(error);}}).catch(error=>normalizeNativeFailure(error,onFallback,nativeMdxFallbackError));
 }
 function separationStoragePlan(total,quality){
  const samples=quality==='precision'?573300:LightForgeMdxSeparator.constants.INPUT_LENGTH;
@@ -287,19 +298,22 @@ self.onmessage=async e=>{
  if(e.data?.type==='native-deux-result'||e.data?.type==='native-deux-progress'){
   const pending=nativeRequests.get(e.data.requestId);if(!pending)return;
   if(e.data.type==='native-deux-progress'){pending.onProgress(e.data.value.progress,e.data.value.message);return;}
- nativeRequests.delete(e.data.requestId);e.data.error?pending.reject(new Error(e.data.error)):pending.resolve(e.data.url);return;
+  nativeRequests.delete(e.data.requestId);
+  if(e.data.aborted){pending.reject(nativeAbortError(e.data.message));return;}
+  if(e.data.fallback||e.data.error||typeof e.data.url!=='string')Promise.resolve().then(()=>pending.onFallback()).then(()=>pending.reject(nativeDeuxFallbackError()),error=>pending.reject(error));
+  else pending.resolve(e.data.url);
+  return;
  }
  if(e.data?.type==='native-mdx-result'||e.data?.type==='native-mdx-progress'){
   const pending=nativeMdxRequests.get(e.data.requestId);if(!pending)return;
   if(e.data.type==='native-mdx-progress'){pending.onProgress(e.data.value);return;}
   nativeMdxRequests.delete(e.data.requestId);
-  if(e.data.error)pending.reject(new Error(e.data.error));
-  else if(e.data.fallback)pending.resolve(undefined);
-  else if(!(e.data.buffer instanceof ArrayBuffer))pending.reject(new Error('Native balanced audio was not returned.'));
+  if(e.data.aborted){pending.reject(nativeAbortError(e.data.message));return;}
+  if(e.data.fallback||e.data.error||!(e.data.buffer instanceof ArrayBuffer)||e.data.buffer.byteLength!==pending.expectedBytes||e.data.buffer.byteLength%Float32Array.BYTES_PER_ELEMENT!==0)Promise.resolve().then(()=>pending.onFallback()).then(()=>pending.reject(nativeMdxFallbackError()),error=>pending.reject(error));
   else pending.resolve(new Float32Array(e.data.buffer));
   return;
  }
- let session,melSession,separator,game,cacheWriter;const workerClock=createDiagnosticClock(),started=workerClock.mark();try{
+ let session,melSession,separator,game,cacheWriter;let nativeMdxFallback=false,nativeDeuxFallback=false,nativeMdxFencing=false,nativeDeuxFencing=false,nativeMdxFence=null,nativeDeuxFence=null;const workerClock=createDiagnosticClock(),started=workerClock.mark();try{
  const {audioUrl,options={},stage}=e.data;
  if(!['rhythm','separation','voice','bass','recurrence'].includes(stage))throw Error('Invalid music analysis stage.');
  const cacheKey=options.cacheKey,quality=options.analysisQuality==='balanced'?'balanced':'precision';
@@ -439,9 +453,32 @@ self.onmessage=async e=>{
  await store.reserve({...storagePlan,onProgress:(done,total)=>report(.405,'Checking saved analysis storage','Verified '+done+' / '+total+' passage checkpoints')});
  report(.41,'Separating voice and instruments','Recoverable passages • your music stays on this device');
  cacheWriter=await LightForgeStemCache.create(cacheKey,sourceReader.samples,config,options.projectId||'');
- separator=await (quality==='precision'?LightForgeDeux:LightForgeMdxSeparator).create({ort,baseUrl:new URL(quality==='precision'?'models/deux/':'models/',self.location.href).href,onProgress:p=>report(.41,'Loading studio vocal separation',p.message),checkpoint:store,nativePredict:quality==='precision'&&options.supportsNativeDeux?nativePredict:quality==='balanced'&&options.supportsNativeMdx?nativeMdxPredict:undefined});
- result.separation=await separator.process((start,count)=>sourceReader.stereo44100(start,count),sourceReader.samples,chunk=>cacheWriter.append(chunk),p=>report(.42+.40*p.progress,'Separating voice and instruments',`${p.message} • ${Math.min(sourceReader.duration,p.processedSeconds||0).toFixed(0)} / ${sourceReader.duration.toFixed(0)} seconds`,p));
+ const markNativeDeuxFallback=()=>{
+  if(nativeDeuxFence)return nativeDeuxFence;
+  nativeDeuxFencing=true;
+  // Fence all DEUX-dependent passages before the parent can admit the new
+  // WASM identity. Do not mark fallback complete until invalidation succeeds.
+  nativeDeuxFence=Promise.resolve().then(()=>store.invalidate(['separation','deux','voice','vocal-semantics','game','bass','recurrence'])).then(()=>{nativeDeuxFallback=true;});
+  return nativeDeuxFence;
+ };
+ const markNativeMdxFallback=()=>{
+  if(nativeMdxFence)return nativeMdxFence;
+  nativeMdxFencing=true;
+  // Fence all MDX-dependent passages before the parent can admit the new
+  // WASM identity. Do not mark fallback complete until invalidation succeeds.
+  nativeMdxFence=Promise.resolve().then(()=>store.invalidate(['separation','mdx','voice','vocal-semantics','game','bass','recurrence'])).then(()=>{nativeMdxFallback=true;});
+  return nativeMdxFence;
+ };
+ const nativeStudioPredict=quality==='precision'&&options.supportsNativeDeux?(start,onProgress)=>nativePredict(start,onProgress,markNativeDeuxFallback):undefined;
+ const nativeBalancedPredict=quality==='balanced'&&options.supportsNativeMdx?(encoded,onProgress)=>nativeMdxPredict(encoded,onProgress,markNativeMdxFallback):undefined;
+ separator=await (quality==='precision'?LightForgeDeux:LightForgeMdxSeparator).create({ort,baseUrl:new URL(quality==='precision'?'models/deux/':'models/',self.location.href).href,onProgress:p=>report(.41,'Loading studio vocal separation',p.message),checkpoint:store,nativePredict:nativeStudioPredict||nativeBalancedPredict});
+ result.separation=await separator.process((start,count)=>sourceReader.stereo44100(start,count),sourceReader.samples,chunk=>{
+  if(nativeMdxFallback||nativeDeuxFallback||nativeMdxFencing||nativeDeuxFencing)return;
+  return cacheWriter.append(chunk);
+ },p=>report(.42+.40*p.progress,'Separating voice and instruments',`${p.message} • ${Math.min(sourceReader.duration,p.processedSeconds||0).toFixed(0)} / ${sourceReader.duration.toFixed(0)} seconds`,p));
  await separator.release();separator=null;
+ if(nativeDeuxFallback)throw nativeDeuxFallbackError();
+ if(nativeMdxFallback)throw nativeMdxFallbackError();
  result.stemCache=await cacheWriter.finish();cacheWriter=null;
 
    await store.write(stage,{separation:result.separation,stemCache:result.stemCache});
@@ -492,8 +529,9 @@ self.onmessage=async e=>{
  postMessage({type:'result',value:result,restored:false,seconds:workerTimingSeconds(completionTiming),profile:telemetry.snapshot({restored:false,...workerTimingAttributes(completionTiming)})});
  }catch(error){
   if(cacheWriter)try{await cacheWriter.abort();}catch(_){}
-  postMessage({type:'error',message:String(error.message||error).slice(0,3072),stack:typeof error.stack==='string'?error.stack.slice(0,8192):undefined});
+  postMessage({type:'error',message:String(error.message||error).slice(0,3072),code:typeof error.code==='string'?error.code:undefined,stack:typeof error.stack==='string'?error.stack.slice(0,8192):undefined});
  }finally{
   if(game)try{await game.release();}catch(_){}if(separator)try{await separator.release();}catch(_){}
   if(session)try{await session.release();}catch(_){}if(melSession)try{await melSession.release();}catch(_){}
  }};
+

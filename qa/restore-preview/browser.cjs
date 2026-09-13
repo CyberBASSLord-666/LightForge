@@ -68,7 +68,7 @@ write();
         requestCompletedRestoreVisualCommit: matches,
         completedRestoreVisualCommitted(id, nonce) { return matches(id, nonce) && LightForgeApp.vehiclePreview.renderCount > 0; },
         completedRestoreTerminal(id, nonce, next) {
-          const phases = ['worker-started', 'worker-verified', 'show-adopted', 'preview-first-render', 'preview-visual-commit'];
+          const phases = ['worker-started', 'worker-verified', 'show-adopted', 'preview-starting', 'preview-first-render', 'preview-visual-commit'];
           const positions = phases.map(phase => calls.indexOf(phase));
           if (!matches(id, nonce) || next <= sequence || positions.some((value, index) => value < 0 || index > 0 && value <= positions[index - 1]) || localStorage.getItem('lightforge-background-ack')) return false;
           terminal = true; calls.push('terminal'); return true;

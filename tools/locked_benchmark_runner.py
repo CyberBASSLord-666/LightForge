@@ -359,6 +359,78 @@ def validation_summary(diagnostics: Sequence[Mapping[str, Any]], manifest: Mappi
     }
 
 
+def _cache_condition_from_diagnostic(
+    diagnostic: Mapping[str, Any],
+    *,
+    cache_mode: str,
+    cache_setup_id: str,
+    pair_order: str,
+    thermal_cycle_id: str,
+) -> dict[str, Any]:
+    """Project raw stage telemetry into the gate's versioned cache contract."""
+    prior_by_stage: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+    rows: list[dict[str, Any]] = []
+    ordered_stages = sorted(
+        diagnostic["stages"],
+        key=lambda stage: (stage["stage_id"], stage.get("attempt", 1)),
+    )
+    for stage in ordered_stages:
+        stage_id = stage["stage_id"]
+        checkpoint = stage["checkpoint"]
+        recovery_from_attempt = None
+        if stage["status"] == "reused" and checkpoint["status"] == "reused":
+            checkpoint_key = checkpoint.get("key")
+            for parent in reversed(prior_by_stage[stage_id]):
+                parent_checkpoint = parent["checkpoint"]
+                if (
+                    parent["status"] in {"failed", "cancelled"}
+                    and parent_checkpoint["status"] == "written"
+                    and parent_checkpoint.get("key") == checkpoint_key
+                ):
+                    recovery_from_attempt = parent["attempt"]
+                    break
+        rows.append(
+            {
+                "stage_id": stage_id,
+                "attempt": stage["attempt"],
+                "stage_status": stage["status"],
+                "cache_status": stage["cache"]["status"],
+                "checkpoint_status": checkpoint["status"],
+                "recovery_from_attempt": recovery_from_attempt,
+            }
+        )
+        prior_by_stage[stage_id].append(stage)
+    evidence = {
+        "schema_version": 2,
+        "protocol": quality_gate.CACHE_CONDITION_PROTOCOL,
+        "mode": cache_mode,
+        "stages": rows,
+        "cache_hits": sum(row["cache_status"] == "hit" for row in rows),
+        "cache_misses": sum(row["cache_status"] == "miss" for row in rows),
+        "checkpoint_reuses": sum(row["checkpoint_status"] == "reused" for row in rows),
+        "recovery_stages": sum(row["recovery_from_attempt"] is not None for row in rows),
+        "interrupted_stage_attempts": sum(
+            row["stage_status"] in {"failed", "cancelled"} for row in rows
+        ),
+    }
+    setup = {
+        "schema_version": 1,
+        "protocol": quality_gate.CACHE_SETUP_PROTOCOL,
+        "mode": cache_mode,
+        "setup_id": cache_setup_id,
+        "pair_order": pair_order,
+        "thermal_cycle_id": thermal_cycle_id,
+    }
+    return {
+        "cache_mode": cache_mode,
+        "cache_protocol": quality_gate.CACHE_CONDITION_PROTOCOL,
+        "cache_setup": setup,
+        "cache_setup_sha256": quality_gate.cache_setup_digest(setup),
+        "cache_evidence": evidence,
+        "cache_evidence_sha256": quality_gate.cache_condition_digest(evidence),
+    }
+
+
 def aggregate_diagnostics(
     manifest: Mapping[str, Any],
     inputs: Iterable[Path | str],
@@ -366,11 +438,15 @@ def aggregate_diagnostics(
     policy: Mapping[str, Any],
     protocol_id: str,
     cache_mode: str,
+    cache_setup_id: str,
+    pair_order: str,
+    thermal_cycle_id: str,
     pairing: Mapping[tuple[str, str], str] | None = None,
     minimum_runs_per_track: int | None = None,
     report_side: str | None = None,
     change: Mapping[str, Any] | None = None,
     human_perceptual_review: Mapping[str, Any] | None = None,
+    candidate_output_differential: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Create a deterministic, performance-gate-compatible benchmark input."""
     try:
@@ -379,6 +455,14 @@ def aggregate_diagnostics(
         raise LockedBenchmarkError(f"invalid performance quality policy: {exc}") from exc
     protocol_id = _opaque_id(protocol_id, "protocol_id")
     cache_mode = _opaque_id(cache_mode, "cache_mode")
+    if cache_mode not in quality_gate.CACHE_CONDITION_MODES:
+        raise LockedBenchmarkError("cache_mode must be cold, warm, or resumed")
+    cache_setup_id = _opaque_id(cache_setup_id, "cache_setup_id")
+    thermal_cycle_id = _opaque_id(thermal_cycle_id, "thermal_cycle_id")
+    if pair_order not in quality_gate.CACHE_SETUP_PAIR_ORDERS:
+        raise LockedBenchmarkError(
+            "pair_order must be baseline-first, candidate-first, or counterbalanced"
+        )
     if minimum_runs_per_track is None:
         minimum_runs_per_track = policy_minimum_pairs
     if not isinstance(minimum_runs_per_track, int) or isinstance(minimum_runs_per_track, bool):
@@ -411,6 +495,8 @@ def aggregate_diagnostics(
             raise LockedBenchmarkError(f"release corpus contract is invalid: {exc}") from exc
         if report_side not in {"baseline", "candidate"}:
             raise LockedBenchmarkError("release aggregation requires report_side baseline or candidate")
+        if cache_setup_id.startswith("test-") or thermal_cycle_id.startswith("test-"):
+            raise LockedBenchmarkError("release aggregation cannot use test cache setup identities")
     elif report_side is not None and report_side not in {"baseline", "candidate"}:
         raise LockedBenchmarkError("report_side must be baseline or candidate when supplied")
     diagnostics = load_diagnostics(manifest, inputs, require_complete_corpus=True)
@@ -432,16 +518,23 @@ def aggregate_diagnostics(
     for diagnostic in diagnostics:
         run = contract.benchmark_run(diagnostic)
         run["pair_id"] = pair_ids[(diagnostic["track_id"], diagnostic["run_id"])]
-        run["condition"] = {"cache_mode": cache_mode}
+        run["condition"] = _cache_condition_from_diagnostic(
+            diagnostic,
+            cache_mode=cache_mode,
+            cache_setup_id=cache_setup_id,
+            pair_order=pair_order,
+            thermal_cycle_id=thermal_cycle_id,
+        )
         runs.append(run)
     aggregate = {
         "schema_version": quality_gate.SCHEMA_VERSION,
-        "format": "lightforge.locked-benchmark-runs.v2",
+        "format": "lightforge.locked-benchmark-runs.v3",
         "suite": {
             "corpus_id": manifest["corpus_id"],
             "corpus_manifest_sha256": contract.corpus_manifest_sha256(manifest),
             "protocol_id": protocol_id,
             "policy_sha256": quality_gate.policy_sha256(dict(policy)),
+            "cache_protocol": quality_gate.CACHE_CONDITION_PROTOCOL,
         },
         "corpus": {"track_ids": sorted(track["track_id"] for track in manifest["tracks"]), "complete": True},
         # This top-level shape is deliberately compatible with the existing
@@ -459,19 +552,19 @@ def aggregate_diagnostics(
         # golden-artifact contract was used to create the gate input, without
         # adding audio, paths, titles, or annotation content to diagnostics.
         aggregate["release_corpus_contract"] = release_corpus_contract
-    if policy_profile["mode"] == "release" and report_side == "candidate":
+    if policy_profile["mode"] == "release":
         pipeline_versions = {item["provenance"]["implementation"].get("pipeline_version") for item in diagnostics}
         source_hashes = {item["provenance"]["implementation"].get("source_sha256") for item in diagnostics}
         if len(pipeline_versions) != 1 or len(source_hashes) != 1:
-            raise LockedBenchmarkError("release candidate diagnostics must share one source and pipeline identity")
+            raise LockedBenchmarkError("release diagnostics must share one source and pipeline identity")
         pipeline_version = next(iter(pipeline_versions))
         source_sha256 = next(iter(source_hashes))
         try:
-            quality_gate._require_string(pipeline_version, "release candidate pipeline_version")
-            quality_gate._require_sha256(source_sha256, "release candidate source_sha256", reject_placeholder=True)
+            quality_gate._require_string(pipeline_version, f"release {report_side} pipeline_version")
+            quality_gate._require_sha256(source_sha256, f"release {report_side} source_sha256", reject_placeholder=True)
         except ValueError as exc:
-            raise LockedBenchmarkError(f"release candidate identity is invalid: {exc}") from exc
-        aggregate["candidate_identity"] = {
+            raise LockedBenchmarkError(f"release {report_side} identity is invalid: {exc}") from exc
+        aggregate[f"{report_side}_identity"] = {
             "source_sha256": source_sha256,
             "pipeline_version": pipeline_version,
         }
@@ -486,6 +579,12 @@ def aggregate_diagnostics(
             raise LockedBenchmarkError("human_perceptual_review requires an explicit candidate change classification")
         aggregate["human_perceptual_review"] = json.loads(
             contract.canonical_json(dict(human_perceptual_review))
+        )
+    if candidate_output_differential is not None:
+        if report_side != "candidate":
+            raise LockedBenchmarkError("candidate_output_differential is only valid for a candidate aggregate")
+        aggregate["candidate_output_differential"] = json.loads(
+            contract.canonical_json(dict(candidate_output_differential))
         )
     if policy_profile["mode"] == "release":
         if report_side == "candidate" and (change is None or human_perceptual_review is None):
@@ -544,6 +643,22 @@ def build_parser() -> argparse.ArgumentParser:
     aggregate.add_argument("--protocol-id", required=True, help="opaque benchmark protocol identifier shared by baseline and candidate")
     aggregate.add_argument("--cache-mode", required=True, help="controlled cache condition, for example cold or warm")
     aggregate.add_argument(
+        "--cache-setup-id",
+        required=True,
+        help="opaque ID for the controlled reset/warm/resume procedure",
+    )
+    aggregate.add_argument(
+        "--pair-order",
+        required=True,
+        choices=tuple(sorted(quality_gate.CACHE_SETUP_PAIR_ORDERS)),
+        help="baseline/candidate ordering used inside the controlled thermal cycle",
+    )
+    aggregate.add_argument(
+        "--thermal-cycle-id",
+        required=True,
+        help="opaque ID for the controlled thermal cycle",
+    )
+    aggregate.add_argument(
         "--pairing",
         help="optional JSON mapping of diagnostic (track_id, run_id) values to stable cross-side pair IDs",
     )
@@ -569,6 +684,10 @@ def build_parser() -> argparse.ArgumentParser:
     aggregate.add_argument(
         "--human-perceptual-review",
         help="structured blinded A/B review JSON for a major candidate change; validated by the gate",
+    )
+    aggregate.add_argument(
+        "--candidate-output-differential",
+        help="canonical reviewed candidate-output differential JSON when outputs change from locked goldens",
     )
     aggregate.add_argument("--output", required=True, help="gate-compatible benchmark JSON output")
     return parser
@@ -614,6 +733,11 @@ def main(argv: Sequence[str] | None = None) -> int:
                     "change_id": _opaque_reference(args.change_id, "change_id"),
                 }
             review = _load_json(Path(args.human_perceptual_review)) if args.human_perceptual_review else None
+            output_differential = (
+                _load_json(Path(args.candidate_output_differential))
+                if args.candidate_output_differential
+                else None
+            )
             _write_or_print(
                 aggregate_diagnostics(
                     manifest,
@@ -621,11 +745,15 @@ def main(argv: Sequence[str] | None = None) -> int:
                     policy=policy,
                     protocol_id=args.protocol_id,
                     cache_mode=args.cache_mode,
+                    cache_setup_id=args.cache_setup_id,
+                    pair_order=args.pair_order,
+                    thermal_cycle_id=args.thermal_cycle_id,
                     pairing=pairing,
                     minimum_runs_per_track=args.minimum_runs_per_track,
                     report_side=args.report_side,
                     change=change,
                     human_perceptual_review=review,
+                    candidate_output_differential=output_differential,
                 ),
                 args.output,
             )
