@@ -27,6 +27,11 @@ public final class BackgroundInstrumentation extends Instrumentation {
     private final JSONArray uiReadinessChecks=new JSONArray();
     private static final long UI_READINESS_POLL_MS=100L;
     private static final long UI_JAVASCRIPT_CALLBACK_BUDGET_MS=CompletedRestoreMonitor.CALLBACK_BUDGET_MS;
+    // A normal foreground bootstrap must be prompt. If the production
+    // completed-restore watchdog performs its one exact, durable recovery,
+    // the replacement is a new renderer with its own bounded bootstrap window.
+    private static final long UI_READINESS_INITIAL_BUDGET_MS=45000L;
+    private static final long UI_READINESS_RECOVERY_BUDGET_MS=45000L;
     private final Handler watchdogMain=new Handler(Looper.getMainLooper());
     private volatile boolean watchdogStopped;
     private Thread mainWatchdog;
@@ -422,7 +427,8 @@ public final class BackgroundInstrumentation extends Instrumentation {
         volatile WebView view;
         final int recoveryCountAtStart;
         volatile boolean reboundCompletedRestore;
-        final long began=SystemClock.elapsedRealtime(),deadline=began+45000;
+        final long began=SystemClock.elapsedRealtime();
+        volatile long deadline=began+UI_READINESS_INITIAL_BUDGET_MS;
         final java.util.concurrent.CountDownLatch completed=new java.util.concurrent.CountDownLatch(1);
         final java.util.concurrent.atomic.AtomicBoolean finished=new java.util.concurrent.atomic.AtomicBoolean();
         final Runnable dropJavascriptCallbackForTest;
@@ -462,6 +468,11 @@ public final class BackgroundInstrumentation extends Instrumentation {
             String recovery=(String)field(owner,"completedRestoreLastRecovery");
             if(expectedCompletedRestoreRecovery(current,recoveryCount,recovery)){
                 cleanup();tree=null;commitCallback=null;drawListener=null;view=current;reboundCompletedRestore=true;
+                // The monitor has already persisted its one per-job recovery
+                // cap and retired the old lease. Give only this exact
+                // replacement its own bounded page/bootstrap interval; do not
+                // turn an arbitrary reload into extra readiness time.
+                deadline=Math.max(deadline,SystemClock.elapsedRealtime()+UI_READINESS_RECOVERY_BUDGET_MS);
                 return true;
             }
             return false;
@@ -530,8 +541,8 @@ public final class BackgroundInstrumentation extends Instrumentation {
         @Override public void run(){
             if(finished.get())return;
             try{
-                check(SystemClock.elapsedRealtime()<deadline,"Preview JavaScript initialization exceeded 45 seconds");
                 check(current(),"Preview changed while awaiting its first frame");
+                check(SystemClock.elapsedRealtime()<deadline,"Preview JavaScript initialization exceeded its bounded readiness window");
                 if(!visible()){record("waiting-for-native-visibility",null);schedulePoll();return;}
                 // Export follows readBootstrap's synchronous native inventory
                 // load, but its project restoration is asynchronous. Await the
