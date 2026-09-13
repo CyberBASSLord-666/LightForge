@@ -64,9 +64,19 @@ class BackgroundInstrumentationUiReadinessContractTest(unittest.TestCase):
         )
         self.assertIn('firstFrameCommitted', self.readiness)
 
-
-    def test_failure_evidence_is_bounded_sanitized_and_does_not_extend_readiness(self):
-        self.assertIn("deadline=began+45000", self.readiness_compact)
+    def test_failure_evidence_is_bounded_sanitized_and_only_exact_replacement_gets_a_new_window(self):
+        self.assertIn("UI_READINESS_INITIAL_BUDGET_MS=45000L", self.compact)
+        self.assertIn("UI_READINESS_RECOVERY_BUDGET_MS=45000L", self.compact)
+        self.assertIn("volatilelongdeadline=began+UI_READINESS_INITIAL_BUDGET_MS", self.readiness_compact)
+        self.assertIn("!reboundCompletedRestore", self.readiness_compact)
+        self.assertIn(
+            "deadline=Math.max(deadline,SystemClock.elapsedRealtime()+UI_READINESS_RECOVERY_BUDGET_MS)",
+            self.readiness_compact,
+        )
+        self.assertLess(
+            self.readiness.index('check(current(),"Preview changed while awaiting its first frame")'),
+            self.readiness.index('check(SystemClock.elapsedRealtime()<deadline,"Preview JavaScript initialization exceeded its bounded readiness window")'),
+        )
         self.assertIn("private void emitFailureDiagnostics()", self.source)
         self.assertIn("AppDiagnostics.flush(1000)", self.source)
         self.assertIn('field(AppDiagnostics.class,"journal")', self.source)
