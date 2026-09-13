@@ -59,6 +59,26 @@ test('atomic invalidation fence prevents a locked dependent checkpoint from revi
  assert.equal((await resumed.read('voice')).revision,2);
  assert.deepEqual(Object.keys(resumed.diagnostics()).sort(),['corruptControlDiscarded','corruptRecords','invalidationFences','invalidationGenerations','kind','legacyControlMigrated','pendingPhysicalDeletes','schemaVersion'].sort());
 });
+test('independent immutable fences keep stale handles from reviving locked JSON or Float32 work',async()=>{
+ const firstContext=load(),disk=firstContext.disk,secondContext=load(disk),first=await firstContext.store.open(key,{sourceId:'track'}),second=await secondContext.store.open(key,{sourceId:'track'});
+ await first.write('voice',{revision:1});await first.write('bass',{revision:1});await first.writeFloats('deux-0',[Float32Array.of(.25,-0)]);
+ disk.control.blocked.add('voice.json');disk.control.blocked.add('bass.json');disk.control.blocked.add('deux-0.bin');
+ await first.invalidate(['voice','deux']);
+ assert.equal(await second.read('voice'),null,'an already-open handle must observe another handle’s voice fence');
+ assert.equal(await second.readFloats('deux-0'),null,'an already-open handle must observe another handle’s binary fence');
+ await assert.rejects(second.write('voice',{revision:2}),error=>error?.code==='analysis-cache-stale');
+ await assert.rejects(second.writeFloats('deux-0',[Float32Array.of(.5)]),error=>error?.code==='analysis-cache-stale');
+ await second.invalidate(['bass']);
+ const resumed=await load(disk).store.open(key,{sourceId:'track'});
+ assert.equal(await resumed.read('voice'),null);assert.equal(await resumed.read('bass'),null);assert.equal(await resumed.readFloats('deux-0'),null);
+ await resumed.write('voice',{revision:3});await resumed.writeFloats('deux-0',[Float32Array.of(-0,.75)]);
+ assert.equal((await resumed.read('voice')).revision,3);assert.equal(Object.is((await resumed.readFloats('deux-0'))[0][0],-0),true);
+});
+test('an empty invalidation is a safe no-op and does not create a corrupt fence',async()=>{
+ const {store}=load(),work=await store.open(key,{sourceId:'track'});await work.write('voice',{revision:1});
+ const receipt=await work.invalidate([]);assert.deepEqual([...receipt.invalidated],[]);assert.equal(receipt.removed,0);assert.equal(receipt.pending,0);
+ assert.equal((await work.read('voice')).revision,1);
+});
 test('failed fence write preserves the old committed checkpoint until a valid retry commits',async()=>{
  const {disk,store}=load(),work=await store.open(key,{sourceId:'track'});await work.write('bass',{revision:1});
  disk.control.failWrite=true;
