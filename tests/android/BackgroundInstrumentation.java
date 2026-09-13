@@ -274,6 +274,45 @@ public final class BackgroundInstrumentation extends Instrumentation {
         callbackScheduler.advance(CompletedRestoreMonitor.CALLBACK_BUDGET_MS);
         check(callbackHost.recoveries==1&&"new-nonce".equals(callbackHost.recoveredNonce),"Stale WebView callback satisfied the replacement lease callback budget");
 
+        // A same-lease fallback probe may recover the monotonic prerequisite
+        // closure of a lost bridge response. It must grant the named preview
+        // startup interval and allow the later direct first-frame phase, but
+        // must not fabricate MainActivity's native visual-commit proof.
+        Clock mixedClock=new Clock();Scheduler mixedScheduler=new Scheduler(mixedClock);Host mixedHost=new Host();
+        CompletedRestoreMonitor mixed=new CompletedRestoreMonitor(mixedClock,mixedScheduler,mixedHost);
+        check(mixed.begin("mixed-job","mixed-lease",0),"Mixed fallback lease did not begin");mixedScheduler.drain();
+        check(mixedHost.callbacks.size()==1,"Mixed fallback lease did not issue its probe");
+        mixedHost.callbacks.get(0).receive(new CompletedRestoreMonitor.Probe(true,true,true,false,"mixed-job","mixed-lease","preview-starting",4,0,false,0));
+        int mixedProbes=mixedHost.probes;
+        mixedScheduler.advance(CompletedRestoreMonitor.CALLBACK_BUDGET_MS+1);
+        check(mixedHost.recoveries==0&&mixedHost.probes==mixedProbes,"Fallback preview startup did not receive its bounded phase grace");
+        check(mixed.pulse("mixed-job","mixed-lease","preview-first-render",5,0),"Direct first frame was wedged after fallback preview startup");
+        check(!mixed.terminal("mixed-job","mixed-lease",6,0),"Fallback phase closure fabricated native visual commit");
+        check(mixed.pulse("mixed-job","mixed-lease","preview-visual-commit",6,0),"Direct native visual phase was rejected after fallback closure");
+        check(mixed.terminal("mixed-job","mixed-lease",7,0),"Mixed fallback/direct restore could not terminally prove completion");
+
+        Clock invalidProbeClock=new Clock();Scheduler invalidProbeScheduler=new Scheduler(invalidProbeClock);Host invalidProbeHost=new Host();
+        CompletedRestoreMonitor invalidProbe=new CompletedRestoreMonitor(invalidProbeClock,invalidProbeScheduler,invalidProbeHost);
+        check(invalidProbe.begin("invalid-probe-job","invalid-probe-lease",0),"Invalid fallback lease did not begin");invalidProbeScheduler.drain();
+        invalidProbeHost.callbacks.get(0).receive(new CompletedRestoreMonitor.Probe(true,true,true,false,"invalid-probe-job","invalid-probe-lease","preview-first-render",5,0,false,0));
+        check(!invalidProbe.pulse("invalid-probe-job","invalid-probe-lease","preview-first-render",6,0),"An unrendered fallback probe bypassed phase prerequisites");
+
+        // A malformed same-lease probe must not consume ordered direct bridge
+        // sequence space or reset the phase deadline indefinitely.
+        Clock unknownProbeClock=new Clock();Scheduler unknownProbeScheduler=new Scheduler(unknownProbeClock);Host unknownProbeHost=new Host();
+        CompletedRestoreMonitor unknownProbe=new CompletedRestoreMonitor(unknownProbeClock,unknownProbeScheduler,unknownProbeHost);
+        check(unknownProbe.begin("unknown-probe-job","unknown-probe-lease",0),"Unknown fallback lease did not begin");unknownProbeScheduler.drain();
+        unknownProbeHost.callbacks.get(0).receive(new CompletedRestoreMonitor.Probe(true,true,true,false,"unknown-probe-job","unknown-probe-lease","unrecognized-phase",99,0,false,0));
+        check(unknownProbe.pulse("unknown-probe-job","unknown-probe-lease","worker-started",1,0),"Unknown fallback probe consumed ordered direct bridge progress");
+
+        Clock unknownDeadlineClock=new Clock();Scheduler unknownDeadlineScheduler=new Scheduler(unknownDeadlineClock);Host unknownDeadlineHost=new Host();
+        CompletedRestoreMonitor unknownDeadline=new CompletedRestoreMonitor(unknownDeadlineClock,unknownDeadlineScheduler,unknownDeadlineHost);
+        check(unknownDeadline.begin("unknown-deadline-job","unknown-deadline-lease",0),"Unknown deadline lease did not begin");unknownDeadlineScheduler.drain();
+        unknownDeadlineScheduler.advance(CompletedRestoreMonitor.PROBE_INTERVAL_MS);
+        unknownDeadlineHost.callbacks.get(1).receive(new CompletedRestoreMonitor.Probe(true,true,true,false,"unknown-deadline-job","unknown-deadline-lease","unrecognized-phase",99,0,false,0));
+        unknownDeadlineScheduler.advance(CompletedRestoreMonitor.BOOTSTRAP_PHASE_BUDGET_MS-CompletedRestoreMonitor.PROBE_INTERVAL_MS);
+        check(unknownDeadlineHost.recoveries==1,"Unknown fallback probes postponed the bounded bootstrap recovery");
+
         // Deferred preview startup is a real GL/WebGL + GLTF load, not a
         // synthetic readiness signal. The ordered bridge phase retires the old
         // probe and grants only that startup interval a bounded grace; a real
