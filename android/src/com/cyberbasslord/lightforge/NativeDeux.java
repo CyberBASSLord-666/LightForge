@@ -230,14 +230,27 @@ public final class NativeDeux implements AutoCloseable {
     }
 
     private void ensureBuffers(NativeInferenceProfile profile) {
-        if(transform!=null)return;
-        transform=new NativeDeuxTransform();spectrum=direct(NativeDeuxTransform.SPECTRUM_FLOATS);summed=direct(NativeDeuxTransform.SPECTRUM_FLOATS);
-        values=direct(FRAMES*BANDS*FEATURES);mask=direct(indices.length*FRAMES*2);
+        if(buffersReady())return;
+        // Direct allocations can fail independently.  Do not publish the transform
+        // until the complete buffer set exists: transform used to be assigned first,
+        // so a later OOM made the next passage skip initialization and dereference a
+        // missing buffer.  Clearing a legacy partial set first also makes retries
+        // deterministic after a process survives an allocation failure.
+        clearBuffers();
+        NativeDeuxTransform nextTransform=new NativeDeuxTransform();
+        FloatBuffer nextSpectrum=direct(NativeDeuxTransform.SPECTRUM_FLOATS);
+        FloatBuffer nextSummed=direct(NativeDeuxTransform.SPECTRUM_FLOATS);
+        FloatBuffer nextValues=direct(FRAMES*BANDS*FEATURES);
+        FloatBuffer nextMask=direct(indices.length*FRAMES*2);
         int size=Math.max(TIME_BATCH*FRAMES*FEATURES,FREQUENCY_BATCH*BANDS*FEATURES);
         if(headFrames<FRAMES)size=Math.max(size,headFrames*indices.length*2);
-        batchInput=direct(size);batchOutput=direct(size);
+        FloatBuffer nextBatchInput=direct(size);
+        FloatBuffer nextBatchOutput=direct(size);
+        transform=nextTransform;spectrum=nextSpectrum;summed=nextSummed;values=nextValues;mask=nextMask;
+        batchInput=nextBatchInput;batchOutput=nextBatchOutput;
         if(profile!=null)profile.noteDirectBufferBytes(4L*(spectrum.capacity()+summed.capacity()+values.capacity()+mask.capacity()+batchInput.capacity()+batchOutput.capacity()));
     }
+    private boolean buffersReady(){return transform!=null&&spectrum!=null&&values!=null&&mask!=null&&summed!=null&&batchInput!=null&&batchOutput!=null;}
     private void clearBuffers(){spectrum=null;values=null;mask=null;summed=null;batchInput=null;batchOutput=null;transform=null;}
 
     private OrtSession open(OrtEnvironment environment,String name,NativeDeuxTransform.Check check,NativeInferenceProfile profile) throws Exception {
