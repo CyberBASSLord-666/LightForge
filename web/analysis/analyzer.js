@@ -133,7 +133,7 @@ async function analyze(audioUrl,options={},onProgress=()=>{},signal){
     Promise.resolve().then(()=>nativePredict(m.startSample,controller.signal,reportNative)).then(result=>{
      if(finished)return;if(typeof result?.url!=='string')throw Error('Native studio output is unavailable.');
      nativeActive=false;lastActivity=clock.now();worker.postMessage({type:'native-deux-result',requestId:m.requestId,url:result.url});
-    }).catch(error=>{if(!finished){scope.LightForgeDiagnostics?.log(error?.name==='AbortError'?'info':'error','analysis',error);nativeActive=false;if(error?.name==='AbortError')worker.postMessage({type:'native-deux-result',requestId:m.requestId,aborted:true,message:error.message||'Analysis cancelled'});else worker.postMessage({type:'native-deux-result',requestId:m.requestId,fallback:true});}});return;
+    }).catch(error=>{if(!finished){scope.LightForgeDiagnostics?.log(error?.name==='AbortError'?'info':'error','analysis',error);nativeActive=false;if(error?.name==='AbortError')worker.postMessage({type:'native-deux-result',requestId:m.requestId,aborted:true,message:error.message||'Analysis cancelled'});else worker.postMessage({type:'native-deux-result',requestId:m.requestId,fallback:true,message:typeof error?.message==='string'?error.message.slice(0,320):undefined});}});return;
    }
    if(m.type==='native-mdx'){
     if(stage!=='separation'||!hasMdx||nativeMdxActive||!Number.isSafeInteger(m.requestId)||!(m.buffer instanceof ArrayBuffer)){end(new Error('Invalid native balanced request.'));return;}
@@ -153,7 +153,7 @@ async function analyze(audioUrl,options={},onProgress=()=>{},signal){
      const fullArrayBuffer=result.buffer instanceof ArrayBuffer&&result.byteOffset===0&&result.byteLength===result.buffer.byteLength;
      const buffer=fullArrayBuffer?result.buffer:Float32Array.from(result).buffer;
      worker.postMessage({type:'native-mdx-result',requestId:m.requestId,buffer},[buffer]);
-    }).catch(error=>{if(!finished){scope.LightForgeDiagnostics?.log(error?.name==='AbortError'?'info':'error','analysis',error);nativeMdxActive=false;if(error?.name==='AbortError')worker.postMessage({type:'native-mdx-result',requestId:m.requestId,aborted:true,message:error.message||'Analysis cancelled'});else worker.postMessage({type:'native-mdx-result',requestId:m.requestId,fallback:true});}});return;
+    }).catch(error=>{if(!finished){scope.LightForgeDiagnostics?.log(error?.name==='AbortError'?'info':'error','analysis',error);nativeMdxActive=false;if(error?.name==='AbortError')worker.postMessage({type:'native-mdx-result',requestId:m.requestId,aborted:true,message:error.message||'Analysis cancelled'});else worker.postMessage({type:'native-mdx-result',requestId:m.requestId,fallback:true,message:typeof error?.message==='string'?error.message.slice(0,320):undefined});}});return;
    }
    if(m.type==='result'){timings[stage]={seconds:Number.isFinite(m.seconds)?m.seconds:0,restored:!!m.restored,profile:m.profile&&m.profile.schemaVersion===1?m.profile:null};end(null,m.value);}
    else{const error=new Error(m.message||'Music analysis failed during '+stage+'.');if(typeof m.code==='string')error.code=m.code;if(typeof m.stack==='string')error.stack=m.stack.slice(0,8192);end(error);}
@@ -209,7 +209,7 @@ async function analyze(audioUrl,options={},onProgress=()=>{},signal){
    if(resources)value.engine.resourceDiagnostics=resources;
    // Browsers lack a durable source fingerprint. Keep their audition stems, but
    // do not retain an unreachable checkpoint namespace after successful work.
-   if(!persistent)await Promise.allSettled([scope.LightForgeStemCache.discard(cacheKey),scope.LightForgeAnalysisStore.discard(workId)]);
+   if(!persistent)await Promise.allSettled([scope.LightForgeAnalysisStore.discard(workId)]);
    return value;
   }
  }catch(error){
@@ -242,4 +242,3 @@ async function analyze(audioUrl,options={},onProgress=()=>{},signal){
 }
 scope.MusicAnalyzer={analyze,cacheIdentity:analysisCacheIdentity,version:scope.LightForgeVersion.name,engine:'Beat This! transformer · offline'};
 })(window);
-
