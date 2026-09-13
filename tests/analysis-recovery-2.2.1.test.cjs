@@ -164,7 +164,7 @@ test('native acceleration callback stays outside structured clone and its result
 test('aborting native acceleration cancels its operation and retains all completed passages',async()=>{
  const controller=new AbortController();let nativeSignal;
  const h=analyzerHarness({behavior(w,m){if(m.stage==='separation')w.emit({type:'native-deux',requestId:1,startSample:0});else if(m.stage)w.finish(m);}});
- await assert.rejects(h.analyze('/song.wav',{analysisIdentity:key,nativePredict:(start,signal)=>{nativeSignal=signal;setImmediate(()=>controller.abort());return new Promise(()=>{});}},()=>{},controller.signal),e=>e.name==='AbortError');assert.equal(nativeSignal.aborted,true);assert.deepEqual(h.discarded,[]);assert.deepEqual(h.stageStarts,['rhythm','separation']);
+ await assert.rejects(h.analyze('/song.wav',{analysisIdentity:key,nativeRuntimeProfile:'native-deux-test-v1',nativePredict:(start,signal)=>{nativeSignal=signal;setImmediate(()=>controller.abort());return new Promise(()=>{});}},()=>{},controller.signal),e=>e.name==='AbortError');assert.equal(nativeSignal.aborted,true);assert.deepEqual(h.discarded,[]);assert.deepEqual(h.stageStarts,['rhythm','separation']);
 });
 function gameHarness(){
  const records=new Map(),runs={encoder:0,loaded:0},manifest={id:'game-large-test'};
@@ -242,11 +242,11 @@ test('native cancellation precedes best-effort release and retains the original 
  const nativePredict=(start,signal)=>{signal.addEventListener('abort',()=>events.push('cancelled'));setImmediate(()=>controller.abort());return new Promise(()=>{});};
  nativePredict.release=async()=>{events.push('release-attempt');throw Error('Native model still stopping');};
  const h=analyzerHarness({behavior(w,m){if(m.stage==='separation')w.emit({type:'native-deux',requestId:1,startSample:0});else if(m.stage)w.finish(m);}});
- await assert.rejects(h.analyze('/song.wav',{analysisIdentity:key,nativePredict},()=>{},controller.signal),e=>e.name==='AbortError');assert.deepEqual(events,['cancelled','release-attempt']);assert.deepEqual(h.stageStarts,['rhythm','separation']);assert.deepEqual(h.discarded,[]);
+ await assert.rejects(h.analyze('/song.wav',{analysisIdentity:key,nativeRuntimeProfile:'native-deux-test-v1',nativePredict},()=>{},controller.signal),e=>e.name==='AbortError');assert.deepEqual(events,['cancelled','release-attempt']);assert.deepEqual(h.stageStarts,['rhythm','separation']);assert.deepEqual(h.discarded,[]);
 });
 test('native release failure blocks the next model heap after successful separation',async()=>{
  const nativePredict=async()=>{throw Error('Unexpected inference');};nativePredict.release=async()=>{throw Error('Native resources could not close');};
- const h=analyzerHarness();await assert.rejects(h.analyze('/song.wav',{analysisIdentity:key,nativePredict}),/Native resources could not close/);assert.deepEqual(h.stageStarts,['rhythm','separation']);assert.deepEqual(h.discarded,[]);
+ const h=analyzerHarness();await assert.rejects(h.analyze('/song.wav',{analysisIdentity:key,nativeRuntimeProfile:'native-deux-test-v1',nativePredict}),/Native resources could not close/);assert.deepEqual(h.stageStarts,['rhythm','separation']);assert.deepEqual(h.discarded,[]);
 });
 test('storage admission includes remaining passages and final stems while crediting valid completed work on retry',async()=>{
  const {store,disk}=loadStore(),work=await store.open(key),counts=[4096,4096],perPassage=4096*8+4100,stemBytes=10000,headroom=64*1024*1024;
