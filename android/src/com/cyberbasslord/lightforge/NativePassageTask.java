@@ -52,6 +52,9 @@ final class NativePassageTask implements AutoCloseable {
     synchronized String start(long startSample)throws Exception {
         if(closed)throw new IOException("Native analysis has stopped.");
         if("running".equals(state))throw new IOException("A native passage is already running.");
+        // cancel() permanently terminates a NativeDeux instance.  A failed or
+        // cancelled passage must therefore never donate that instance to a retry.
+        if(cancelled||!"completed".equals(state))retireEngine(null);
         if(!new JSONObject(availability()).getBoolean("available"))throw new IOException("Resume in compatibility mode after the previous native crash.");
         if(startSample < -66150L||startSample>44100L*14400)throw new IOException("Invalid native passage position.");
         if(output!=null&&output.exists()&&!output.delete())throw new IOException("Previous native passage could not be released.");
@@ -64,9 +67,10 @@ final class NativePassageTask implements AutoCloseable {
         AppDiagnostics.sample(context,"native-start-memory");
         final String current=token;output=new File(directory,current+".bin");final File result=output;
         executor.execute(()->{
+            NativeDeux model=null;
             try {
                 if(closed||cancelled)throw new IOException("Native analysis cancelled.");
-                NativeDeux model=engine;
+                model=engine;
                 if(model==null){
                     NativeInferenceProfile.Timing engineStarted=NativeInferenceProfile.started();
                     try{model=new NativeDeux(context);engine=model;}finally{profile.addEngineInit(NativeInferenceProfile.elapsed(engineStarted));}
@@ -91,13 +95,17 @@ final class NativePassageTask implements AutoCloseable {
                 // releaseIdle (for example after a process interruption between result and release).
                 emitProfile(profile,"completed");
             }catch(Throwable error){
+                // This covers native cancellation, failed direct-buffer setup and
+                // failed inference.  Keeping the instance would reuse its permanent
+                // cancelled flag or a partially initialized direct-buffer set.
+                retireEngine(model);
                 AppDiagnostics.record(context,"native-passage",error);
                 String outcome;
                 synchronized(this){outcome=closed||cancelled?"cancelled":"failed";state=outcome;message=AnalysisJobStore.limited(error.getMessage()==null?"Native Studio analysis could not finish.":error.getMessage(),500);}
                 emitProfile(profile,outcome);
                 result.delete();
             }finally{
-                if(closed){emitProfile(profile,"cancelled");NativeDeux model=engine;engine=null;if(model!=null)try{model.close();}catch(Exception ignored){}result.delete();directory.delete();}
+                if(closed){emitProfile(profile,"cancelled");retireEngine(model);result.delete();directory.delete();}
             }
         });
         return status(current);
@@ -128,6 +136,15 @@ final class NativePassageTask implements AutoCloseable {
         emitProfile(inferenceProfile,"released");inferenceProfile=null;
         NativeDeux model=engine;engine=null;if(model!=null)model.close();
         if(output!=null)output.delete();output=null;token=null;state="idle";
+    }
+    /** Detach the exact worker engine before closing it, so a later start can only allocate fresh state. */
+    private void retireEngine(NativeDeux expected){
+        NativeDeux model=null;
+        synchronized(this){
+            if(expected==null){model=engine;engine=null;}
+            else if(engine==expected){model=expected;engine=null;}
+        }
+        if(model!=null)try{model.close();}catch(Exception ignored){}
     }
     private void emitProfile(NativeInferenceProfile profile,String outcome){
         if(profile==null)return;
