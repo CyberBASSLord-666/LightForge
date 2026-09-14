@@ -368,7 +368,7 @@ def _validate_verification_source_hashes(source_commit, receipts, source_binding
 
 
 def verify_nonandroid_release_evidence(repo, ci, version, source_commit, source_tree_sha, candidate):
-    """Load only the success-only, candidate-bound five-receipt artifact chain."""
+    """Load only the success-only, candidate-bound seven-receipt artifact chain."""
     pipeline = _candidate_evidence_pipeline(candidate, ci, source_commit, source_tree_sha)
     candidate = validate_verification_candidate_record(candidate, release=version['name'], pipeline=pipeline)
     expected_wrapper_name = verification_wrapper_artifact_name(version['name'], pipeline)
