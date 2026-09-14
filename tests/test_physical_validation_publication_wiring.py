@@ -77,7 +77,8 @@ class PhysicalValidationPublicationWiringTest(unittest.TestCase):
             final_step,
         )
         self.assertNotIn("LIGHTFORGE_PHYSICAL_VALIDATION_ATTESTATION_JSON", prior_steps)
-        self.assertNotIn("GITHUB_ENV", WORKFLOW)
+        self.assertNotIn("GITHUB_ENV", final_step)
+        self.assertEqual(WORKFLOW.count("secrets.LIGHTFORGE_PHYSICAL_VALIDATION_ATTESTATION_JSON"), 1)
         self.assertNotIn("LIGHTFORGE_PHYSICAL_VALIDATION_ATTESTATION_PATH", WORKFLOW)
         self.assertIn('target="$(mktemp "$RUNNER_TEMP/lightforge-physical-validation-attestation.XXXXXX")"', final_step)
         self.assertIn("trap cleanup EXIT HUP INT TERM", final_step)
@@ -85,11 +86,11 @@ class PhysicalValidationPublicationWiringTest(unittest.TestCase):
         self.assertIn("unset LIGHTFORGE_PHYSICAL_VALIDATION_ATTESTATION_JSON", final_step)
         self.assertIn("set -euo pipefail", final_step)
         self.assertIn("chmod 600", final_step)
-        self.assertIn('python3 -m json.tool "$target" > /dev/null', final_step)
+        self.assertIn('python3 -I -S -m json.tool "$target" > /dev/null', final_step)
         self.assertIn("--physical-validation-attestation", final_step)
         self.assertLess(
             final_step.index("unset LIGHTFORGE_PHYSICAL_VALIDATION_ATTESTATION_JSON"),
-            final_step.index("python3 tools/publish_github_release.py"),
+            final_step.index("python3 -E -S tools/publish_github_release.py"),
         )
 
 
