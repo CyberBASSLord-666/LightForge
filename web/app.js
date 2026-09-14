@@ -399,6 +399,14 @@ async function handleBackgroundJob(job){
   }
   updateButtons();return;
  }
+ // A completed analysis is durable even while its Activity/document is paused.
+ // Do not start a foreground-only visual proof while drawing is intentionally
+ // suspended: doing so spends a watchdog lease waiting for an impossible frame.
+ // Terminal leases above still retry their exact, already-proven browser ACK.
+ if(job.state==='completed'&&state.backgroundSyncPending&&(previewPaused||document.hidden)){
+  if(state.busy&&!state.abort)endBusy();
+  updateButtons();return;
+ }
  if(state.backgroundSeen===job.id+':'+job.state)return;
  state.backgroundSeen=job.id+':'+job.state;
  if(state.busy&&!state.abort)endBusy();
@@ -425,7 +433,7 @@ async function handleBackgroundJob(job){
  updateButtons();
 }
 async function pollBackgroundJob(){
- if(!backgroundSupported()||document.hidden)return;
+ if(!backgroundSupported()||previewPaused||document.hidden)return;
  const job=parse(bridge('getAnalysisStatus'),null);if(job)await handleBackgroundJob(job);
 }
 async function startBackgroundGeneration(){
@@ -576,7 +584,7 @@ function updatePreviewLifecycle(){
  // stopping inspection/audio, since their handlers can request another frame.
  vehiclePreview.setPaused?.(paused);
  if(paused){cancelAnimationFrame(frameRequest);frameRequest=0;lastDraw=0;if(changed){stopInspection();audio.pause();clearTimeout(saveTimer);saveProject();}}
- else{if(!frameRequest)frameRequest=requestAnimationFrame(tick);if(changed){lastDraw=0;resizeCanvases();}}
+ else{if(!frameRequest)frameRequest=requestAnimationFrame(tick);if(changed){lastDraw=0;resizeCanvases();pollBackgroundJob();}}
 }
 window.pausePreview=()=>{nativePreviewPaused=true;updatePreviewLifecycle();};
 window.resumePreview=()=>{nativePreviewPaused=false;updatePreviewLifecycle();};
