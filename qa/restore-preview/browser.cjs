@@ -4,12 +4,19 @@
 const fs = require('node:fs'), path = require('node:path'), http = require('node:http');
 const crypto = require('node:crypto'), assert = require('node:assert/strict');
 const root = path.resolve(__dirname, '../..');
-const RELEASE = JSON.parse(fs.readFileSync(path.join(root, 'version.json'), 'utf8')).name;
+const RELEASE = '2.2.5';
 const output = path.resolve(process.env.LIGHTFORGE_RESTORE_QA_OUTPUT || __dirname);
 const EVIDENCE_SESSION_SCHEMA = 'lightforge.evidence-session.v1';
 const EVIDENCE_SESSION_PATTERN = /^[0-9a-f]{32,128}$/;
-const inputs = ['qa/restore-preview/browser.cjs', 'version.json', 'web/app.js', 'web/preview/src/vehicle-preview.js',
-  'web/preview/vehicle-preview.js', 'web/engine/client.js', 'web/engine/worker.js'];
+function sourceNames() {
+  const inventory = JSON.parse(fs.readFileSync(path.join(root, 'qa/release-2.2.5/browser-source-inventory.json'), 'utf8'));
+  assert.equal(inventory?.schema, 'lightforge.browser-source-inventory.v1', 'Restore-preview source inventory schema is invalid');
+  assert.ok(Array.isArray(inventory?.common) && Array.isArray(inventory?.restore_preview), 'Restore-preview source inventory is invalid');
+  const names = [...inventory.common, ...inventory.restore_preview];
+  assert.ok(names.length && names.every(name => typeof name === 'string' && name && !path.isAbsolute(name) && !name.split('/').includes('..')), 'Restore-preview source inventory contains an invalid path');
+  assert.equal(new Set(names).size, names.length, 'Restore-preview source inventory contains duplicates');
+  return names;
+}
 function writeJsonAtomic(file, value) {
   const temporary = `${file}.${process.pid}.${crypto.randomBytes(8).toString('hex')}.tmp`;
   try { fs.writeFileSync(temporary, JSON.stringify(value, null, 2) + '\n'); fs.renameSync(temporary, file); }
@@ -35,7 +42,7 @@ write();
   const errors = [];
   try {
     if (sessionError) throw sessionError;
-    receipt.source_hashes = Object.fromEntries(inputs.map(name => [name, crypto.createHash('sha256').update(fs.readFileSync(path.join(root, name))).digest('hex')]));
+    receipt.source_hashes = Object.fromEntries(sourceNames().map(name => [name, crypto.createHash('sha256').update(fs.readFileSync(path.join(root, name))).digest('hex')]));
     ({chromium} = require('playwright'));
     server = http.createServer((req, res) => {
       const pathname = decodeURIComponent(new URL(req.url, 'http://local').pathname);

@@ -3,12 +3,22 @@ from hashlib import sha256
 from importlib.util import module_from_spec, spec_from_file_location
 import json
 import os
+import re
+import sys
 from pathlib import Path
 import subprocess
 import tempfile
 from unittest import TestCase, main
 
 ROOT = Path(__file__).resolve().parents[1]
+TOOLS = ROOT / 'tools'
+if str(TOOLS) not in sys.path:
+    sys.path.insert(0, str(TOOLS))
+PACKAGE_SPEC = spec_from_file_location('lightforge_package_v2', TOOLS / 'package_v2.py')
+PACKAGE = module_from_spec(PACKAGE_SPEC)
+assert PACKAGE_SPEC.loader is not None
+PACKAGE_SPEC.loader.exec_module(PACKAGE)
+from verification_evidence_manifest import RECEIPTS as VERIFICATION_RECEIPTS
 SPEC = spec_from_file_location('lightforge_verify_analysis_2_2_5',
                                ROOT / 'qa/release-2.2.5/verify-analysis.py')
 VERIFY = module_from_spec(SPEC)
@@ -124,7 +134,7 @@ class Release225QaProtocolTest(TestCase):
         })
         expected = {
             'README.md', 'NativeMdxComparisonMain.java', 'analysis-browser.cjs',
-            'analysis-performance.cjs', 'background-ui.cjs', 'browser.cjs',
+            'analysis-performance.cjs', 'background-ui.cjs', 'browser.cjs', 'browser-source-inventory.json',
             'compare-mdx-wasm.cjs', 'compare-native-mdx.py', 'mdx-downstream-compare.cjs',
             'mdx_numeric.py', 'test-source-clock.cjs', 'verify-analysis.py',
             'verify-mdx-downstream.cjs', 'verify-native-inference-profile.py',
@@ -133,6 +143,103 @@ class Release225QaProtocolTest(TestCase):
             ['git', 'ls-files', '--', VERIFY.OUT], cwd=ROOT, text=True).splitlines())
         self.assertEqual(tracked, {VERIFY.OUT + name for name in expected})
 
+    def test_native_producers_publish_invalid_session_failure_first(self):
+        cases = [
+            ([sys.executable, str(ROOT / 'qa/release-2.2.5/compare-native-mdx.py')],
+             ROOT / 'qa/release-2.2.5/native-mdx-comparison-verification.json'),
+            (['node', str(ROOT / 'qa/release-2.2.5/verify-mdx-downstream.cjs')],
+             ROOT / 'qa/release-2.2.5/native-mdx-downstream-verification.json'),
+        ]
+        for command, receipt_path in cases:
+            with self.subTest(command=command[1]):
+                prior = receipt_path.read_bytes() if receipt_path.exists() else None
+                try:
+                    receipt_path.write_text(json.dumps({'release': '2.2.5', 'passed': True, 'errors': []}))
+                    completed = subprocess.run(command, cwd=ROOT,
+                                               env={**os.environ, 'LIGHTFORGE_EVIDENCE_SESSION': 'invalid session'},
+                                               text=True, capture_output=True, check=False)
+                    self.assertNotEqual(completed.returncode, 0,
+                                        completed.stdout + completed.stderr)
+                    receipt = json.loads(receipt_path.read_text())
+                    self.assertIs(receipt['passed'], False)
+                    self.assertTrue(receipt['errors'])
+                    self.assertIn('Invalid LIGHTFORGE_EVIDENCE_SESSION', receipt['errors'][0])
+                finally:
+                    if prior is None:
+                        receipt_path.unlink(missing_ok=True)
+                    else:
+                        receipt_path.write_bytes(prior)
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / 'profile.json'
+            output.write_text(json.dumps({'release': '2.2.5', 'passed': True, 'errors': []}))
+            completed = subprocess.run(
+                [sys.executable, str(ROOT / 'qa/release-2.2.5/verify-native-inference-profile.py'),
+                 '--output', str(output)],
+                cwd=ROOT, env={**os.environ, 'LIGHTFORGE_EVIDENCE_SESSION': 'invalid session'},
+                text=True, capture_output=True, check=False)
+            self.assertNotEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+            receipt = json.loads(output.read_text())
+            self.assertIs(receipt['passed'], False)
+            self.assertTrue(receipt['errors'])
+            self.assertIn('LIGHTFORGE_EVIDENCE_SESSION is invalid.', receipt['errors'][0])
+
+    def test_browser_source_inventory_covers_loaded_runtime_closure(self):
+        inventory = VERIFY.BROWSER_SOURCE_INVENTORY
+        common = set(inventory['common'])
+        self.assertIn(VERIFY.BROWSER_SOURCE_INVENTORY_PATH, common)
+        index = (ROOT / 'web/index.html').read_text(encoding='utf-8')
+        for reference in re.findall(r'<(?:script|link)\b[^>]+(?:src|href)=["\']([^"\']+)["\']', index):
+            reference = reference.split('?', 1)[0]
+            if reference.startswith(('http:', 'https:', '//', 'data:', '#')):
+                continue
+            self.assertIn((Path('web') / reference.lstrip('/')).as_posix(), common)
+        styles = (ROOT / 'web/styles.css').read_text(encoding='utf-8')
+        fonts = (ROOT / 'web/fonts/fonts.css').read_text(encoding='utf-8')
+        self.assertIn('fonts/fonts.css', styles)
+        self.assertIn('InterVariable.woff2', fonts)
+        self.assertTrue({'web/fonts/fonts.css', 'web/fonts/InterVariable.woff2'} <= common)
+        self.assertIn('web/engine/worker.js', common)
+        for arguments in re.findall(r'importScripts\((.*?)\)', (ROOT / 'web/engine/worker.js').read_text(), flags=re.S):
+            for name in re.findall(r'["\']([^"\']+)["\']', arguments):
+                self.assertIn((ROOT / 'web/engine' / name).resolve().relative_to(ROOT.resolve()).as_posix(), common)
+        analysis_covered = common | set(inventory['analysis_browser'])
+        for arguments in re.findall(r'importScripts\((.*?)\)', (ROOT / 'web/analysis/worker.js').read_text(), flags=re.S):
+            for name in re.findall(r'["\']([^"\']+)["\']', arguments):
+                self.assertIn((ROOT / 'web/analysis' / name).resolve().relative_to(ROOT.resolve()).as_posix(), analysis_covered)
+        preview = (ROOT / 'web/preview/vehicle-preview.js').read_text(encoding='utf-8')
+        self.assertIn('preview/models/highland.glb', preview)
+        self.assertIn('web/preview/models/highland.glb', common)
+        for producer in [ROOT / 'qa/release-2.2.5/browser.cjs',
+                         ROOT / 'qa/release-2.2.5/analysis-browser.cjs',
+                         ROOT / 'qa/restore-preview/browser.cjs']:
+            self.assertIn('browser-source-inventory.json', producer.read_text(encoding='utf-8'))
+
+    def test_analysis_browser_observed_assets_are_manifest_bound(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            asset = root / 'web/analysis/models/example.onnx'
+            asset.parent.mkdir(parents=True)
+            asset.write_bytes(b'bound asset')
+            manifest = root / 'web/analysis/ASSET_MANIFEST.json'
+            manifest.write_text(json.dumps({'models/example.onnx': {
+                'bytes': asset.stat().st_size, 'sha256': digest(asset)}}))
+            relative = 'web/analysis/models/example.onnx'
+            observed = {'analysis_asset_hashes': {relative: digest(asset)}}
+            hashes = {}
+            VERIFY.verify_analysis_browser_assets(root, observed, hashes)
+            self.assertEqual(hashes[relative], digest(asset))
+            with self.assertRaisesRegex(ValueError, 'unapproved analysis asset'):
+                VERIFY.verify_analysis_browser_assets(root, {
+                    'analysis_asset_hashes': {'web/analysis/unlisted.bin': digest(asset)}}, {})
+            asset.write_bytes(b'changed asset')
+            with self.assertRaisesRegex(ValueError, 'Source differs from measured evidence'):
+                VERIFY.verify_analysis_browser_assets(root, observed, {})
+
+    def test_packager_requires_every_current_manifest_receipt(self):
+        gates = PACKAGE.release_gate_names({'name': '2.2.5', 'code': 20205})
+        self.assertTrue(set(VERIFICATION_RECEIPTS) <= set(gates))
+        self.assertIn('android-background-verification.json', gates)
+        self.assertIn('android-diagnostics-verification.json', gates)
 
 if __name__ == '__main__':
     main()

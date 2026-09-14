@@ -21,7 +21,15 @@ function listen(server){
  });
 }
 const sha=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
-const sources=['qa/release-2.2.5/analysis-browser.cjs','qa/release-2.2.5/analysis-performance.cjs','qa/release-1.6.0/fixtures/falcon-mix.wav','version.json','web/index.html','web/analysis/ASSET_MANIFEST.json','web/analysis/diagnostic-clock.js','web/analysis/resource-diagnostics.js','web/analysis/telemetry.js','web/analysis/scheduler.js','web/analysis/worker.js','web/analysis/analyzer.js','web/analysis/feature-store.js','web/analysis/game.js','web/analysis/salience.js','web/analysis/semantic-timeline.js','web/analysis/separator-deux.js','web/analysis/stem-cache.js','web/analysis/stem-routing.js','web/analysis/work-store.js','web/analysis/vocal.js','web/analysis/vocal-detail.js','web/analysis/bass-notes.js','web/analysis/models/game/manifest.json','web/analysis/models/deux/manifest.json','web/engine/show-engine.js','web/engine/light-planner.js','web/engine/music-cues.js','web/engine/sync-review.js','web/engine/worker.js'];
+function sourceNames(){
+ const inventory=JSON.parse(fs.readFileSync(path.join(root,'qa/release-2.2.5/browser-source-inventory.json'),'utf8'));
+ assert.equal(inventory?.schema,'lightforge.browser-source-inventory.v1','Analysis browser source inventory schema is invalid');
+ assert.ok(Array.isArray(inventory?.common)&&Array.isArray(inventory?.analysis_browser),'Analysis browser source inventory is invalid');
+ const names=[...inventory.common,...inventory.analysis_browser];
+ assert.ok(names.length&&names.every(name=>typeof name==='string'&&name&&!path.isAbsolute(name)&&!name.split('/').includes('..')),'Analysis browser source inventory contains an invalid path');
+ assert.equal(new Set(names).size,names.length,'Analysis browser source inventory contains duplicates');
+ return names;
+}
 (async()=>{
  const evidenceSession=process.env.LIGHTFORGE_EVIDENCE_SESSION;
  const sessionError=evidenceSession!==undefined&&!EVIDENCE_SESSION_PATTERN.test(evidenceSession)?
@@ -30,14 +38,22 @@ const sources=['qa/release-2.2.5/analysis-browser.cjs','qa/release-2.2.5/analysi
  if(!sessionError&&evidenceSession!==undefined){receipt.evidenceSessionSchema=EVIDENCE_SESSION_SCHEMA;receipt.evidenceSession=evidenceSession;}
  // Publish failure before every fallible import, source read, fixture access, or server action.
  writeJsonAtomic(output,receipt);
- let server,browser,verified=false;
+ let server,browser,verified=false,allowedAnalysisAssets=null,servedAnalysisAssets={},unboundAnalysisAsset=null;
  try{
   if(sessionError)throw sessionError;
   const {chromium}=require('playwright'),AnalysisPerformance=require('./analysis-performance.cjs');
-  receipt.source_hashes=Object.fromEntries(sources.map(p=>[p,sha(path.join(root,p))]));
+  const assetManifest=JSON.parse(fs.readFileSync(path.join(root,'web/analysis/ASSET_MANIFEST.json'),'utf8'));
+  allowedAnalysisAssets=new Map(Object.entries(assetManifest).map(([name,metadata])=>['web/analysis/'+name,metadata]));
+  receipt.source_hashes=Object.fromEntries(sourceNames().map(p=>[p,sha(path.join(root,p))]));
   server=http.createServer((req,res)=>{
   const u=new URL(req.url,'http://local'),p=u.pathname==='/qa/falcon.wav'?fixture:path.resolve(root,'web','.'+(u.pathname==='/'?'/index.html':u.pathname));
   if((p!==fixture&&!p.startsWith(path.join(root,'web')+path.sep))||!fs.existsSync(p)||!fs.statSync(p).isFile()){res.writeHead(404).end();return;}
+  const relative=p===fixture?null:path.relative(root,p).split(path.sep).join('/');
+  if(relative?.startsWith('web/analysis/')&&relative!=='web/analysis/ASSET_MANIFEST.json'){
+   const metadata=allowedAnalysisAssets.get(relative);
+   if(!metadata){unboundAnalysisAsset=relative;res.writeHead(500).end();return;}
+   servedAnalysisAssets[relative]=sha(p);
+  }
   const size=fs.statSync(p).size,range=/^bytes=(\d+)-(\d+)$/.exec(req.headers.range||'');let start=0,end=size-1;
   res.setHeader('Cross-Origin-Opener-Policy','same-origin');res.setHeader('Cross-Origin-Embedder-Policy','require-corp');res.setHeader('Content-Type',({'.js':'text/javascript','.mjs':'text/javascript','.html':'text/html','.json':'application/json','.css':'text/css','.wasm':'application/wasm','.wav':'audio/wav'})[path.extname(p)]||'application/octet-stream');
   if(range){start=+range[1];end=Math.min(+range[2],size-1);if(start>end){res.writeHead(416).end();return;}res.statusCode=206;res.setHeader('Content-Range',`bytes ${start}-${end}/${size}`);}res.setHeader('Content-Length',end-start+1);fs.createReadStream(p,{start,end}).pipe(res);
@@ -65,6 +81,10 @@ const sources=['qa/release-2.2.5/analysis-browser.cjs','qa/release-2.2.5/analysi
    const controller=new AbortController();let stage='';try{await MusicAnalyzer.analyze('/qa/falcon.wav',{projectId:'cancel-runtime',analysisQuality:'balanced'},p=>{if(p.progress>=.42){stage=p.stage;controller.abort();}},controller.signal);return {aborted:false};}catch(e){if(e.name!=='AbortError')throw e;}
    let extra=[];for(let i=0;i<24;i++){extra=[];for await(const [k]of dir.entries())if(!before.includes(k))extra.push(k);if(!extra.length)break;await new Promise(r=>setTimeout(r,500));}return {aborted:controller.signal.aborted,stage,remainingNamespaces:extra.length};
   });assert.ok(cancel.aborted);assert.equal(cancel.remainingNamespaces,0);receipt.cancellation=cancel;receipt.checks.push('Public analyzer cancellation during source separation removed its incomplete OPFS namespace.');
+  receipt.analysis_asset_hashes=Object.fromEntries(Object.entries(servedAnalysisAssets).sort(([left],[right])=>left.localeCompare(right)));
+  assert.equal(unboundAnalysisAsset,null,'Analysis browser served a path absent from ASSET_MANIFEST: '+unboundAnalysisAsset);
+  assert.ok(Object.keys(receipt.analysis_asset_hashes).length>0,'Analysis browser did not bind any served analysis assets');
+  for(const [p,h]of Object.entries(receipt.analysis_asset_hashes)){const metadata=allowedAnalysisAssets.get(p);assert.ok(metadata&&metadata.sha256===h&&metadata.bytes===fs.statSync(path.join(root,p)).size,'Analysis browser asset differs from ASSET_MANIFEST: '+p);assert.equal(sha(path.join(root,p)),h);}
   for(const [p,h]of Object.entries(receipt.source_hashes))assert.equal(sha(path.join(root,p)),h);assert.equal(receipt.errors.length,0);verified=true;
  }catch(error){receipt.errors.push(errorText(error));console.error(errorText(error));}finally{
   try{await browser?.close();}catch(error){receipt.errors.push(errorText(error));console.error(errorText(error));}

@@ -19,7 +19,16 @@ function listen(server){
   server.once('error',failed);server.once('listening',ready);server.listen(0,'127.0.0.1');
  });
 }
-const hashes=()=>Object.fromEntries(['qa/release-2.2.5/browser.cjs','qa/release-1.6.0/actual-music-user-glass-prefix64-analysis.json','version.json','web/cockpit.js','web/cockpit.css','web/version.js','web/app.js','web/diagnostics.js','web/diagnostics.css','web/index.html','web/styles.css','web/precision-studio.js','web/engine/worker.js','web/engine/client.js','web/engine/show-engine.js','web/engine/light-planner.js','web/engine/music-cues.js','web/engine/sync-review.js'].map(f=>[f,crypto.createHash('sha256').update(fs.readFileSync(path.join(root,f))).digest('hex')]));
+function sourceNames(){
+ const inventory=JSON.parse(fs.readFileSync(path.join(root,'qa/release-2.2.5/browser-source-inventory.json'),'utf8'));
+ assert.equal(inventory?.schema,'lightforge.browser-source-inventory.v1','Browser source inventory schema is invalid');
+ assert.ok(Array.isArray(inventory?.common)&&Array.isArray(inventory?.browser),'Browser source inventory is invalid');
+ const names=[...inventory.common,...inventory.browser];
+ assert.ok(names.length&&names.every(name=>typeof name==='string'&&name&&!path.isAbsolute(name)&&!name.split('/').includes('..')),'Browser source inventory contains an invalid path');
+ assert.equal(new Set(names).size,names.length,'Browser source inventory contains duplicates');
+ return names;
+}
+const hashes=()=>Object.fromEntries(sourceNames().map(f=>[f,crypto.createHash('sha256').update(fs.readFileSync(path.join(root,f))).digest('hex')]));
 (async()=>{
  const evidenceSession=process.env.LIGHTFORGE_EVIDENCE_SESSION;
  const sessionError=evidenceSession!==undefined&&!EVIDENCE_SESSION_PATTERN.test(evidenceSession)?

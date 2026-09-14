@@ -7,14 +7,24 @@ from package_release import sha_file, sha_stream, require, atomic, atomic_copy, 
 
 ROOT=Path(__file__).resolve().parents[1]
 
-def main():
-    version=json.loads((ROOT/'version.json').read_text());name=version['name'];qa=ROOT/('qa/release-'+name)
-    evidence={}
+def release_gate_names(version):
     gates=['regression-verification.json','browser-verification.json','native-verification.json']
     if version['code']>=20100:
         gates+=['analysis-browser-verification.json','analysis-verification.json']
-    if version['code']>=20200:gates+=['android-background-verification.json']
-    if version['code']>=20202:gates+=['android-diagnostics-verification.json']
+    if version['code']>=20205:
+        from verification_evidence_manifest import RECEIPTS as verification_receipts
+        gates=list(verification_receipts)
+    if version['code']>=20200:
+        gates+=['android-background-verification.json']
+    if version['code']>=20202:
+        gates+=['android-diagnostics-verification.json']
+    return gates
+
+
+def main():
+    version=json.loads((ROOT/'version.json').read_text());name=version['name'];qa=ROOT/('qa/release-'+name)
+    evidence={}
+    gates=release_gate_names(version)
     for filename in gates:
         p=qa/filename;require(p.is_file(),'Missing current release gate: '+str(p))
         data=json.loads(p.read_text());require(data.get('passed') is True and not data.get('errors') and data.get('release')==name,'Release gate did not pass: '+filename)

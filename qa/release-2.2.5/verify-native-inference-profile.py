@@ -204,12 +204,7 @@ def validate_pair_result(measured, evidence_session, approved_historical, unprof
             profile['topology'] == topology, 'Canonical profile topology differs from the production passage.')
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--output', type=Path, default=OUT / 'native-inference-profile-equivalence.json')
-    args = parser.parse_args()
-    output = args.output.resolve()
-    evidence_session = os.environ.get('LIGHTFORGE_EVIDENCE_SESSION')
+def _run(output, evidence_session):
     require(evidence_session is None or SESSION_PATTERN.fullmatch(evidence_session), 'LIGHTFORGE_EVIDENCE_SESSION is invalid.')
     runtime = json.loads((ROOT / 'android/native-runtime.json').read_text())
     comparison_path = HISTORICAL_OUT / 'native-runtime-comparison-verification.json'
@@ -318,6 +313,30 @@ def main():
     finally:
         write_atomic(output, evidence)
     print(json.dumps({'passed': evidence['passed'], 'evidence_session': evidence_session, 'result': evidence.get('result'), 'checks': evidence['checks']}, indent=2))
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--output', type=Path, default=OUT / 'native-inference-profile-equivalence.json')
+    args = parser.parse_args()
+    output = args.output.resolve()
+    evidence_session = os.environ.get('LIGHTFORGE_EVIDENCE_SESSION')
+    failure = {'schema': SCHEMA, 'release': RELEASE, 'passed': False, 'errors': []}
+    write_atomic(output, failure)
+    try:
+        _run(output, evidence_session)
+    except Exception as error:
+        try:
+            current = json.loads(output.read_text())
+        except (OSError, UnicodeError, json.JSONDecodeError):
+            current = failure
+        if not isinstance(current, dict) or current.get('schema') != SCHEMA or current.get('passed') is not False:
+            current = failure
+        if not current.get('failure'):
+            current['failure'] = str(error)
+            current.setdefault('errors', []).append(str(error))
+            write_atomic(output, current)
+        raise
 
 
 if __name__ == '__main__':

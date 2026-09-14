@@ -87,40 +87,11 @@ CLOCK_SOURCES = {
     'web/analysis/separator-deux.js', 'web/analysis/dsp.js',
     'web/analysis/models/deux/manifest.json', OUT + 'test-source-clock.cjs',
 }
-BROWSER_SOURCES = {
-    OUT + 'browser.cjs', 'qa/release-1.6.0/actual-music-user-glass-prefix64-analysis.json',
-    'version.json', 'web/cockpit.js', 'web/cockpit.css',
-    'web/version.js', 'web/app.js', 'web/diagnostics.js', 'web/diagnostics.css',
-    'web/index.html', 'web/styles.css', 'web/precision-studio.js',
-    'web/engine/worker.js', 'web/engine/client.js', 'web/engine/show-engine.js',
-    'web/engine/light-planner.js', 'web/engine/music-cues.js',
-    'web/engine/sync-review.js',
-}
-ANALYSIS_BROWSER_SOURCES = {
-    OUT + 'analysis-browser.cjs', OUT + 'analysis-performance.cjs', 'version.json',
-    'qa/release-1.6.0/fixtures/falcon-mix.wav',
-    'web/index.html', 'web/analysis/ASSET_MANIFEST.json',
-    'web/analysis/diagnostic-clock.js', 'web/analysis/resource-diagnostics.js',
-    'web/analysis/telemetry.js', 'web/analysis/scheduler.js', 'web/analysis/worker.js',
-    'web/analysis/analyzer.js', 'web/analysis/feature-store.js', 'web/analysis/game.js',
-    'web/analysis/salience.js', 'web/analysis/semantic-timeline.js',
-    'web/analysis/separator-deux.js', 'web/analysis/stem-cache.js',
-    'web/analysis/stem-routing.js', 'web/analysis/work-store.js',
-    'web/analysis/vocal.js', 'web/analysis/vocal-detail.js',
-    'web/analysis/bass-notes.js', 'web/analysis/models/game/manifest.json',
-    'web/analysis/models/deux/manifest.json', 'web/engine/show-engine.js',
-    'web/engine/light-planner.js', 'web/engine/music-cues.js',
-    'web/engine/sync-review.js', 'web/engine/worker.js',
-}
+BROWSER_SOURCE_INVENTORY_PATH = OUT + 'browser-source-inventory.json'
 BACKGROUND_UI_SOURCES = {
     OUT + 'background-ui.cjs', 'version.json', 'web/version.js', 'web/app.js',
     'web/diagnostics.js', 'web/diagnostics.css', 'web/index.html', 'web/styles.css',
     'web/cockpit.css', 'web/cockpit.js',
-}
-RESTORE_PREVIEW_SOURCES = {
-    'qa/restore-preview/browser.cjs', 'version.json', 'web/app.js',
-    'web/preview/src/vehicle-preview.js', 'web/preview/vehicle-preview.js',
-    'web/engine/client.js', 'web/engine/worker.js',
 }
 EVIDENCE_SESSION_UNSET = object()
 
@@ -128,6 +99,39 @@ EVIDENCE_SESSION_UNSET = object()
 def require(condition, message):
     if not condition:
         raise ValueError(message)
+
+
+def load_browser_source_inventory():
+    path = ROOT / BROWSER_SOURCE_INVENTORY_PATH
+    try:
+        value = json.loads(path.read_text(encoding='utf-8'))
+    except (OSError, UnicodeError, json.JSONDecodeError) as error:
+        raise ValueError('Browser source inventory is invalid') from error
+    expected = {'schema', 'common', 'browser', 'analysis_browser', 'restore_preview'}
+    require(isinstance(value, dict) and set(value) == expected and
+            value.get('schema') == 'lightforge.browser-source-inventory.v1',
+            'Browser source inventory schema is invalid')
+    parsed = {}
+    for name in sorted(expected - {'schema'}):
+        paths = value.get(name)
+        require(isinstance(paths, list) and paths and all(
+                isinstance(path, str) and path and not Path(path).is_absolute() and
+                '\\' not in path and all(part not in {'', '.', '..'} for part in Path(path).parts)
+                for path in paths) and len(paths) == len(set(paths)),
+                'Browser source inventory paths are invalid: ' + name)
+        parsed[name] = frozenset(paths)
+    for name in ('browser', 'analysis_browser', 'restore_preview'):
+        require(not parsed['common'] & parsed[name],
+                'Browser source inventory duplicates common path: ' + name)
+    require(BROWSER_SOURCE_INVENTORY_PATH in parsed['common'],
+            'Browser source inventory must bind itself')
+    return parsed
+
+
+BROWSER_SOURCE_INVENTORY = load_browser_source_inventory()
+BROWSER_SOURCES = BROWSER_SOURCE_INVENTORY['common'] | BROWSER_SOURCE_INVENTORY['browser']
+ANALYSIS_BROWSER_SOURCES = BROWSER_SOURCE_INVENTORY['common'] | BROWSER_SOURCE_INVENTORY['analysis_browser']
+RESTORE_PREVIEW_SOURCES = BROWSER_SOURCE_INVENTORY['common'] | BROWSER_SOURCE_INVENTORY['restore_preview']
 
 
 def digest(path):
@@ -430,9 +434,35 @@ def verify_browser_receipt(root, hashes, evidence_session):
                                  evidence_session, 'Browser', BROWSER_SOURCES)
 
 
+def verify_analysis_browser_assets(root, result, hashes):
+    manifest_path = file(root, 'web/analysis/ASSET_MANIFEST.json')
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+    except (UnicodeError, json.JSONDecodeError) as error:
+        raise ValueError('Analysis asset manifest is invalid') from error
+    require(isinstance(manifest, dict) and manifest, 'Analysis asset manifest is invalid')
+    observed = result.get('analysis_asset_hashes')
+    require(isinstance(observed, dict) and observed,
+            'Analysis-browser receipt has no observed asset bindings')
+    allowed = {'web/analysis/' + name: metadata for name, metadata in manifest.items()}
+    require(set(observed).issubset(set(allowed)),
+            'Analysis-browser receipt served an unapproved analysis asset')
+    for relative, expected in observed.items():
+        metadata = allowed[relative]
+        require(isinstance(metadata, dict) and set(metadata) == {'bytes', 'sha256'} and
+                type(metadata['bytes']) is int and metadata['bytes'] > 0 and
+                expected == metadata['sha256'],
+                'Analysis-browser asset binding differs from ASSET_MANIFEST: ' + relative)
+        path = bind(root, relative, expected, hashes)
+        require(path.stat().st_size == metadata['bytes'],
+                'Analysis-browser asset byte count differs from ASSET_MANIFEST: ' + relative)
+
+
 def verify_analysis_browser_receipt(root, hashes, evidence_session):
-    return verify_fresh_receipt(root, OUT + 'analysis-browser-verification.json', hashes,
-                                 evidence_session, 'Analysis-browser', ANALYSIS_BROWSER_SOURCES)
+    result = verify_fresh_receipt(root, OUT + 'analysis-browser-verification.json', hashes,
+                                  evidence_session, 'Analysis-browser', ANALYSIS_BROWSER_SOURCES)
+    verify_analysis_browser_assets(root, result, hashes)
+    return result
 
 
 def verify_background_ui_receipt(root, hashes, evidence_session):

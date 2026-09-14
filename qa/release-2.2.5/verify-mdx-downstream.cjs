@@ -8,7 +8,7 @@ const ROOT=path.resolve(__dirname,'../..'),QA=__dirname,WORK=path.resolve(proces
 const PAIR=path.resolve(process.env.LIGHTFORGE_MDX_DOWNSTREAM_PAIR||path.join(ROOT,'../native-mdx-comparison-2.2.5/demo-20s'));
 const SOURCE='web/demo/glass-castle.wav',CORE_START=882000,FIXTURE='demo-20s';
 const EVIDENCE_SESSION_SCHEMA='lightforge.evidence-session.v1',EVIDENCE_SESSION=process.env.LIGHTFORGE_EVIDENCE_SESSION;
-if(EVIDENCE_SESSION!==undefined)assert.match(EVIDENCE_SESSION,/^[0-9a-f]{32,128}$/,'Invalid LIGHTFORGE_EVIDENCE_SESSION');
+const EVIDENCE_SESSION_ERROR=EVIDENCE_SESSION!==undefined&&!/^[0-9a-f]{32,128}$/.test(EVIDENCE_SESSION)?new Error('Invalid LIGHTFORGE_EVIDENCE_SESSION'):null;
 const sha=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
 const json=(value)=>JSON.stringify(value,(_,v)=>ArrayBuffer.isView(v)?Array.from(v):v,2)+'\n';
 function writeJsonAtomic(file,value){
@@ -73,14 +73,20 @@ async function child(kind){
  console.log(JSON.stringify({runtime:kind,gameNotes:transcription.notes.length,fusedNotes:fused.notes.length,phrases:fused.phrases.length,executions}));
 }
 async function main(){
- fs.mkdirSync(WORK,{recursive:true});
- const {compare}=require('./mdx-downstream-compare.cjs');
+ const output=path.join(QA,'native-mdx-downstream-verification.json');
+ let receipt={release:'2.2.5',passed:false,errors:[],source_hashes:{}};
+ if(EVIDENCE_SESSION!==undefined&&!EVIDENCE_SESSION_ERROR){receipt.evidenceSessionSchema=EVIDENCE_SESSION_SCHEMA;receipt.evidenceSession=EVIDENCE_SESSION;}
+ writeJsonAtomic(output,receipt);
+ try{
+  if(EVIDENCE_SESSION_ERROR)throw EVIDENCE_SESSION_ERROR;
+  fs.mkdirSync(WORK,{recursive:true});
+  const {compare}=require('./mdx-downstream-compare.cjs');
  const sourceNames=['version.json','qa/release-2.2.5/verify-mdx-downstream.cjs','qa/release-2.2.5/mdx-downstream-compare.cjs','tests/mdx-downstream-compare.test.cjs','web/analysis/vocal.js','web/analysis/vocal-detail.js','web/analysis/game.js','web/analysis/dsp.js','web/analysis/stem-cache.js','web/analysis/wav-reader.js','web/analysis/separator-mdx.js','web/analysis/worker.js','web/analysis/models/features.json','web/analysis/models/vocal-model.json','web/analysis/models/vocal-frontend.json','web/analysis/models/game/manifest.json','web/analysis/models/separator-mdx-model.json',SOURCE];
  const sources=Object.fromEntries(sourceNames.map(p=>[p,sha(path.join(ROOT,p))]));
  const gameManifest=JSON.parse(fs.readFileSync(ROOT+'/web/analysis/models/game/manifest.json')),vocalModel=JSON.parse(fs.readFileSync(ROOT+'/web/analysis/models/vocal-model.json'));
  const assetNames=Object.keys(gameManifest.files).map(p=>'web/analysis/models/game/'+p).concat(['web/analysis/models/'+vocalModel.file],fs.readdirSync(ROOT+'/web/analysis/vendor').map(p=>'web/analysis/vendor/'+p));
  const assets=Object.fromEntries(assetNames.filter(p=>fs.statSync(path.join(ROOT,p)).isFile()).map(p=>[p,sha(path.join(ROOT,p))]));
- const receipt={release:'2.2.5',passed:false,errors:[],source_hashes:sources,analysis_asset_hashes:assets,
+ receipt={release:'2.2.5',passed:false,errors:[],source_hashes:sources,analysis_asset_hashes:assets,
   scope:'Paired actual production centered resampling, Frame-MN10, vocal expression, GAME Large eight-step transcription and fusion on a measured native-ALL/4 versus WASM MDX kept-core excerpt. Node filesystem adapters supply bytes; original model graphs and numeric code execute. Nonempty voice coverage is mandatory. Not full-song OLA, corpus accuracy, Android execution, or physical-car validation.',
   fixture:{id:FIXTURE,source:SOURCE,sourceSha256:sources[SOURCE],contextReadStart:CORE_START-3840,contextReadSamples:261120,coreStart:CORE_START,coreSamples:253440,sampleRate:44100},
   inputs:Object.fromEntries(['native','wasm'].map(k=>[k,{file:k+'-waveform.float32le',bytes:fs.statSync(path.join(PAIR,k+'-waveform.float32le')).size,sha256:sha(path.join(PAIR,k+'-waveform.float32le'))}]))};
@@ -91,8 +97,7 @@ async function main(){
   receipt.evidenceSessionSchema=EVIDENCE_SESSION_SCHEMA;receipt.evidenceSession=EVIDENCE_SESSION;
   receipt.upstreamMdx={path:path.relative(ROOT,upstreamPath).split(path.sep).join('/'),sha256:sha(upstreamPath),evidenceSession:EVIDENCE_SESSION};
  }
- const output=path.join(QA,'native-mdx-downstream-verification.json');writeJsonAtomic(output,receipt);
- try{
+  writeJsonAtomic(output,receipt);
   for(const kind of ['native','wasm']){
    const log=fs.openSync(path.join(WORK,kind+'.log'),'w');let p;
    try{p=spawnSync(process.execPath,[__filename,'--child',kind],{cwd:ROOT,env:process.env,stdio:['ignore',log,log],timeout:600000});}finally{fs.closeSync(log);}
