@@ -121,8 +121,14 @@ class VerificationEvidenceManifestTest(unittest.TestCase):
     def test_success_chain_is_candidate_bound_and_uses_original_retry_attempt(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            _, _, content, manifest = self._make_content(root, attempt=1)
+            candidate_path, _, content, manifest = self._make_content(root, attempt=1)
             wrapper, wrapped = self._make_wrapper(root, content, attempt=1)
+            self.assertEqual(
+                json.loads(candidate_path.read_text(encoding="utf-8"))["schema_version"],
+                evidence.CANDIDATE_SCHEMA_VERSION,
+            )
+            self.assertEqual(manifest["schema_version"], evidence.CONTENT_SCHEMA_VERSION)
+            self.assertEqual(wrapped["schema_version"], evidence.WRAPPER_SCHEMA_VERSION)
             self.assertEqual(manifest["candidate"]["pipeline"]["run_attempt"], 1)
             # A later Android-only retry may be attempt 2.  Core evidence must
             # retain the candidate's attempt 1 identity and deterministic name.
