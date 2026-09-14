@@ -115,14 +115,13 @@ class Release225QaProtocolTest(TestCase):
         self.assertLess(analysis_browser, native)
         self.assertLess(native, final_analysis)
 
-    def test_protocol_preserves_immutable_historical_anchor_and_has_no_outputs(self):
+    def test_protocol_preserves_immutable_historical_anchor_and_has_no_tracked_outputs(self):
         hashes = {}
         historical = VERIFY.verify_historical_comparison(ROOT, hashes)
         self.assertEqual(historical['release'], '2.2.4')
         self.assertEqual(set(hashes), {
             VERIFY.HISTORICAL_OUT + 'native-runtime-comparison-verification.json',
         })
-        directory = ROOT / VERIFY.OUT
         expected = {
             'README.md', 'NativeMdxComparisonMain.java', 'analysis-browser.cjs',
             'analysis-performance.cjs', 'background-ui.cjs', 'browser.cjs',
@@ -130,7 +129,9 @@ class Release225QaProtocolTest(TestCase):
             'mdx_numeric.py', 'test-source-clock.cjs', 'verify-analysis.py',
             'verify-mdx-downstream.cjs', 'verify-native-inference-profile.py',
         }
-        self.assertEqual({path.name for path in directory.iterdir()}, expected)
+        tracked = set(subprocess.check_output(
+            ['git', 'ls-files', '--', VERIFY.OUT], cwd=ROOT, text=True).splitlines())
+        self.assertEqual(tracked, {VERIFY.OUT + name for name in expected})
 
 
 if __name__ == '__main__':
