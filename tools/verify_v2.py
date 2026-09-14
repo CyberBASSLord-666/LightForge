@@ -63,6 +63,7 @@ GENERATED_RUNTIME_REPORTS=frozenset({
     'native-runtime-comparison-verification.json',
     'native-verification.json',
     'regression-verification.json',
+    'restore-preview-verification.json',
     'role-composer-verification.json',
     'role-reference-composer-verification.json',
     'source-clock-verification.json',
