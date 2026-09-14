@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "release": {
+    "name": "2.2.4",
+    "code": 20204
+  },
+  "requirement": "performance_quality_gate",
+  "classification": "performance",
+  "reason": "Runtime restore behavior and release-performance validation changed in this candidate."
+}
