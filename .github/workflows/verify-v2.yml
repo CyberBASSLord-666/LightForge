@@ -85,6 +85,7 @@ jobs:
             "$receipt_root/native-mdx-downstream-native.json" \
             "$receipt_root/native-mdx-downstream-wasm.json" \
             "$receipt_root/native-recovery-results.json" \
+            "$receipt_root/native-runtime-comparison-verification.json" \
             "$receipt_root/native-verification.json" \
             "$receipt_root/analysis-verification.json" \
             "$receipt_root/composer-verification.json" \
