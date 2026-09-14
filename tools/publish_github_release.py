@@ -68,6 +68,13 @@ RELEASE_ENFORCEMENT_PATHS = (
     'tools/run_android_background_tests.py',
     'tools/run_android_diagnostics_tests.py',
     '.github/workflows/performance-quality-gate.yml',
+    'tools/release_source_preflight.py',
+    'tools/prepare_game.py',
+    'tools/prepare_deux.py',
+    'tools/model-requirements.txt',
+    'tools/bootstrap_toolchain.py',
+    'qa/release-1.6.0/prepare-musdb-fixtures.py',
+    'research/upstream/deux',
 )
 
 
@@ -988,7 +995,9 @@ def main(argv=None):
     require(ci.get('event') == 'push' and ci.get('head_branch') == 'main', 'Candidate did not run from protected main')
     _positive_int(ci.get('id'), 'Candidate run id is invalid')
     _positive_int(ci.get('run_attempt'), 'Candidate run attempt is invalid')
-    run('git', 'fetch', '--no-tags', 'origin', source_commit)
+    require(run('git', 'rev-parse', 'HEAD') == source_commit,
+            'Publisher checkout is not the exact verified candidate commit')
+    run('git', 'cat-file', '-e', source_commit + '^{commit}')
     run('git', 'merge-base', '--is-ancestor', source_commit, 'HEAD')
     run(
         'git',

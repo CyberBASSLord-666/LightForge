@@ -128,5 +128,33 @@ class VerificationEvidenceWorkflowTest(unittest.TestCase):
         self.assertLess(sparse, restore)
         self.assertLess(restore, publish)
 
+    def test_publisher_preflight_runs_before_every_repository_execution(self):
+        preflight = PUBLISH_WORKFLOW.index("Establish immutable release source before privileged preparation")
+        candidate_api = PUBLISH_WORKFLOW.index('gh api "repos/$GITHUB_REPOSITORY/actions/runs/$LIGHTFORGE_RELEASE_RUN_ID"')
+        token_clear = PUBLISH_WORKFLOW.index("unset GH_TOKEN")
+        worktree = PUBLISH_WORKFLOW.index("git worktree add --detach")
+        restore = PUBLISH_WORKFLOW.index("Restore source-bound GAME and Deux graphs")
+        bootstrap = PUBLISH_WORKFLOW.index("Bootstrap exact candidate toolchain")
+        publish = PUBLISH_WORKFLOW.index("Verify provenance, reconstruct exact signed APK and publish")
+        self.assertIn("persist-credentials: false", PUBLISH_WORKFLOW)
+        self.assertIn("release_source_preflight.py", PUBLISH_WORKFLOW)
+        self.assertIn('--checkout "$GITHUB_WORKSPACE"', PUBLISH_WORKFLOW)
+        self.assertIn("Publisher checkout is not the exact verified candidate commit",
+                      (ROOT / "tools/publish_github_release.py").read_text(encoding="utf-8"))
+        for value in (
+            "python3 -m pip install",
+            "python3 tools/prepare_game.py",
+            "python3 tools/prepare_deux.py",
+            "prepare-musdb-fixtures.py",
+            "python3 tools/bootstrap_toolchain.py",
+        ):
+            self.assertGreater(PUBLISH_WORKFLOW.index(value), preflight)
+        self.assertLess(preflight, candidate_api)
+        self.assertLess(candidate_api, token_clear)
+        self.assertLess(token_clear, worktree)
+        self.assertLess(worktree, restore)
+        self.assertLess(restore, bootstrap)
+        self.assertLess(bootstrap, publish)
+
 if __name__ == "__main__":
     unittest.main()
