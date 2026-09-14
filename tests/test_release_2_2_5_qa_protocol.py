@@ -192,12 +192,17 @@ class Release225QaProtocolTest(TestCase):
             downstream.write_text(json.dumps({'release': '2.2.5', 'passed': True, 'errors': []}))
             upstream.unlink(missing_ok=True)
             with tempfile.TemporaryDirectory() as temporary:
+                pair = Path(temporary) / 'pair'
+                pair.mkdir()
+                for runtime in ('native', 'wasm'):
+                    (pair / (runtime + '-waveform.float32le')).write_bytes(b'upstream-fixture')
                 completed = subprocess.run(
                     ['node', str(ROOT / 'qa/release-2.2.5/verify-mdx-downstream.cjs')],
                     cwd=ROOT, env={
                         **os.environ,
                         'LIGHTFORGE_EVIDENCE_SESSION': SESSION,
                         'LIGHTFORGE_MDX_DOWNSTREAM_DIR': temporary,
+                        'LIGHTFORGE_MDX_DOWNSTREAM_PAIR': str(pair),
                     }, text=True, capture_output=True, check=False, timeout=30)
             self.assertNotEqual(completed.returncode, 0,
                                 completed.stdout + completed.stderr)
