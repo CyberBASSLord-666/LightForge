@@ -23,14 +23,62 @@ import java.util.zip.*;
 public final class MainActivity extends Activity {
     private static final String ORIGIN="https://appassets.androidplatform.net";
     private static final int PICK_AUDIO=101,SAVE_ZIP=102,PICK_BACKUP=103,SAVE_DIAGNOSTICS=104;
+    // This is only the Android renderer-gone callback budget after the lease
+    // supervisor has already declared a stalled completed restore and spent
+    // its one replacement. It is not a JavaScript/generation timeout.
+    private static final long COMPLETED_RESTORE_TERMINATE_CALLBACK_BUDGET_MS=2500L;
+    // JavaScript interfaces must never shuttle an entire saved project in one
+    // renderer IPC message. Completed-project recovery reads a bounded,
+    // durable snapshot through this small chunk transport instead.
+    private static final int COMPLETED_RESTORE_PROJECT_CHUNK_MAX_BYTES=64*1024;
     private static final ExecutorService diagnosticWorker=Executors.newSingleThreadExecutor();
     private static final AtomicBoolean diagnosticExporting=new AtomicBoolean();
     private String diagnosticName;
-    private WebView web;
+    private volatile WebView web;
+    private volatile long previewGeneration;
+    private FrameLayout previewRoot;
     private volatile boolean foreground;
     private final Set<WebView> retiredWebViews=Collections.newSetFromMap(new WeakHashMap<WebView,Boolean>());
     private boolean previewRecoveryPending;
     private AlertDialog previewRecoveryDialog;
+    private final Handler completedRestoreHandler=new Handler(Looper.getMainLooper());
+    private CompletedRestoreMonitor completedRestoreMonitor;
+    // Diagnostics only: this never enables a fault path and is reset with the
+    // Activity.  The durable per-job cap below is the recovery authority.
+    private int completedRestoreRecoveryCount;
+    private String completedRestoreLastRecovery;
+    private String completedRestoreReplacementPath;
+    // Diagnostics/test evidence only: records the WebView generation whose
+    // bridge actually opened the current completed-restore lease.
+    private volatile long completedRestoreLastAcceptedBeginGeneration=-1L;
+    private volatile String completedRestoreLastAcceptedBeginJobId;
+    private volatile WebView completedRestoreTerminatingWebView;
+    private Runnable completedRestoreTerminateFallback;
+    // Native visual proof for the narrow completed-restore terminal path.
+    // These are identity-bound to the lease and stale WebView callbacks are
+    // ignored after replacement.
+    private String completedRestoreVisualJobId;
+    private String completedRestoreVisualNonce;
+    private WebView completedRestoreVisualWebView;
+    private boolean completedRestoreVisualRequested;
+    private boolean completedRestoreVisualCommitted;
+    private ViewTreeObserver.OnDrawListener completedRestoreVisualDrawListener;
+    // One active lease owns one open descriptor for project.json. ProjectStore
+    // publishes edits by atomic replacement, so this descriptor is an
+    // immutable completed-result snapshot even if a later write replaces the
+    // path. It is deliberately never a whole-project IPC payload.
+    private RandomAccessFile completedRestorePayloadFile;
+    private String completedRestorePayloadJobId,completedRestorePayloadNonce,completedRestorePayloadProjectId,completedRestorePayloadSnapshot;
+    private long completedRestorePayloadLength=-1L;
+    // Timestamped diagnostics make the strict visual → terminal → post-ACK
+    // ordering inspectable in the real instrumentation path.
+    private volatile long completedRestoreLastVisualFrameAt;
+    private volatile long completedRestoreLastTerminalAt;
+    private volatile long completedRestoreLastAckConfirmationAt;
+    // JS bridge methods may arrive on WebView's bridge thread while recovery
+    // runs on the UI thread.  Serialize native status validation, monitor
+    // transitions, and the persistent recovery-cap update.
+    private final Object completedRestoreBridgeLock=new Object();
     private boolean analysisReceiverRegistered;
     private final BroadcastReceiver analysisReceiver=new BroadcastReceiver(){
         @Override public void onReceive(Context context,Intent intent){sendAnalysisStatus();}
@@ -89,9 +137,7 @@ public final class MainActivity extends Activity {
         if(Build.VERSION.SDK_INT>=33)registerReceiver(analysisReceiver,updates,Context.RECEIVER_NOT_EXPORTED);
         else registerReceiver(analysisReceiver,updates);
         analysisReceiverRegistered=true;
-        FrameLayout root=new FrameLayout(this);root.setBackgroundColor(Color.rgb(8,13,24));
-        web=new WebView(this);web.setBackgroundColor(Color.rgb(8,13,24));
-        root.addView(web,new FrameLayout.LayoutParams(-1,-1));setContentView(root);
+        FrameLayout root=new FrameLayout(this);root.setBackgroundColor(Color.rgb(8,13,24));previewRoot=root;setContentView(root);
         if(Build.VERSION.SDK_INT>=30) {
             getWindow().setDecorFitsSystemWindows(false);
             root.setOnApplyWindowInsetsListener((v,insets)-> {
@@ -99,19 +145,34 @@ public final class MainActivity extends Activity {
                 v.setPadding(bars.left,bars.top,bars.right,bars.bottom);return insets;
             });
         }
-        WebSettings s=web.getSettings();s.setJavaScriptEnabled(true);s.setDomStorageEnabled(true);
+        completedRestoreMonitor=new CompletedRestoreMonitor(SystemClock::elapsedRealtime,new CompletedRestoreMonitor.Scheduler(){
+            @Override public void postDelayed(Runnable task,long delayMs){completedRestoreHandler.postDelayed(task,delayMs);}
+            @Override public void removeCallbacks(Runnable task){completedRestoreHandler.removeCallbacks(task);}
+        },new CompletedRestoreMonitor.Host(){
+            @Override public void requestProbe(String jobId,String nonce,CompletedRestoreMonitor.ProbeCallback callback){probeCompletedRestore(jobId,nonce,callback);}
+            @Override public boolean recoveryAlreadyUsed(String jobId){return completedRestoreRecoveryUsed(jobId);}
+            @Override public void recover(String jobId,String nonce,String reason){recoverCompletedRestore(jobId,nonce,reason);}
+            @Override public void diagnostic(String message){AppDiagnostics.log(MainActivity.this,"INFO","completed-restore-watchdog",message);}
+        });
+        createPreview();
+    }
+    private void createPreview(){
+        if(previewRoot==null||isFinishing()||Build.VERSION.SDK_INT>=17&&isDestroyed())return;
+        final long createdGeneration=previewGeneration+1;
+        final WebView created=new WebView(this);created.setBackgroundColor(Color.rgb(8,13,24));
+        WebSettings s=created.getSettings();s.setJavaScriptEnabled(true);s.setDomStorageEnabled(true);
         s.setAllowFileAccess(false);s.setAllowContentAccess(false);s.setMediaPlaybackRequiresUserGesture(false);
         s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);s.setSupportMultipleWindows(false);
         s.setBuiltInZoomControls(false);s.setTextZoom(100);s.setDatabaseEnabled(false);
-        web.addJavascriptInterface(new Bridge(),"Android");
-        web.setWebChromeClient(new WebChromeClient(){
+        created.addJavascriptInterface(new Bridge(created,createdGeneration),"Android");
+        created.setWebChromeClient(new WebChromeClient(){
             @Override public boolean onConsoleMessage(ConsoleMessage message){
                 if(message.messageLevel()==ConsoleMessage.MessageLevel.ERROR||message.messageLevel()==ConsoleMessage.MessageLevel.WARNING)
                     AppDiagnostics.log(MainActivity.this,message.messageLevel()==ConsoleMessage.MessageLevel.ERROR?"ERROR":"WARN","preview-console",message.message()+" at "+message.sourceId()+":"+message.lineNumber());
                 return true;
             }
         });
-        web.setWebViewClient(new WebViewClient() {
+        created.setWebViewClient(new WebViewClient() {
             @Override public WebResourceResponse shouldInterceptRequest(WebView view,WebResourceRequest request) {
                 return resource(request.getUrl(),request.getRequestHeaders());
             }
@@ -122,22 +183,317 @@ public final class MainActivity extends Activity {
                 return true;
             }
             @Override public boolean onRenderProcessGone(WebView view,RenderProcessGoneDetail detail) {
-                boolean current=view==web;
-                AppDiagnostics.record(MainActivity.this,"preview-renderer",new IOException(detail.didCrash()?"Preview renderer crashed.":"Android reclaimed the preview renderer."));
-                if(current)web=null;
-                releasePreview(view);
-                // Renderer loss can be delivered for an already detached old
-                // view while the Activity is closing or another view owns UI.
-                if(current&&!isFinishing()&&!isDestroyed()){
-                    previewRecoveryPending=true;showPreviewRecovery();
-                }
-                return true;
+                return handlePreviewRenderProcessGone(view,detail.didCrash());
             }
             @Override public void onReceivedError(WebView view,WebResourceRequest request,WebResourceError error){
                 AppDiagnostics.log(MainActivity.this,"ERROR","preview-resource","code="+error.getErrorCode()+"; mainFrame="+request.isForMainFrame()+"; "+error.getDescription());
             }
         });
-        web.loadUrl(ORIGIN+"/index.html");
+        previewGeneration=createdGeneration;web=created;previewRoot.addView(created,new FrameLayout.LayoutParams(-1,-1));
+        created.loadUrl(ORIGIN+"/index.html");
+    }
+    // Shared by WebViewClient and same-signed instrumentation so the real
+    // active-lease renderer-gone branch is exercised without a shipped fault
+    // switch. This method only performs production recovery behavior.
+    boolean handlePreviewRenderProcessGone(WebView view,boolean crashed){
+        boolean current=view==web;
+        AppDiagnostics.record(this,"preview-renderer",new IOException(crashed?"Preview renderer crashed.":"Android reclaimed the preview renderer."));
+        // A callback/phase-stall recovery on API 29+ first terminates the
+        // renderer. Complete its same-Activity replacement from that callback,
+        // rather than reloading the stalled WebView object.
+        if(current&&view==completedRestoreTerminatingWebView){
+            finishCompletedRestoreWebViewReplacement(view,"render-process-gone");
+            return true;
+        }
+        // The active completed-restore lease is the sole automatic recovery
+        // exception. Non-lease renderer loss retains the explicit dialog.
+        if(current&&completedRestoreMonitor!=null&&completedRestoreMonitor.active()){
+            completedRestoreMonitor.rendererGone();
+            // rendererGone() posts the lease recovery first. Post a second
+            // FIFO fallback instead of falling through to the ordinary dialog:
+            // recovery gets the first chance to persist its cap, retire this
+            // WebView and start same-Activity replacement. The fallback keeps
+            // the dialog only when recovery could not arm (for example, cap).
+            completedRestoreHandler.post(()->{
+                if(view!=web||view==completedRestoreTerminatingWebView)return;
+                web=null;releasePreview(view);
+                if(!isFinishing()&&!isDestroyed()){
+                    previewRecoveryPending=true;showPreviewRecovery();
+                }
+            });
+            return true;
+        }
+        if(view==web){
+            web=null;releasePreview(view);
+            if(!isFinishing()&&!isDestroyed()){
+                previewRecoveryPending=true;showPreviewRecovery();
+            }
+        }else releasePreview(view);
+        return true;
+    }
+    private boolean completedRestoreJobMatches(String jobId){
+        JSONObject job=analysisStatus();return job!=null&&jobId!=null&&jobId.equals(job.optString("id"))&&"completed".equals(job.optString("state"));
+    }
+    private String completedRestoreRecoveryKey(String jobId){return "completed-restore-recovery."+jobId;}
+    private boolean completedRestoreRecoveryUsed(String jobId){return jobId!=null&&getPreferences(0).getBoolean(completedRestoreRecoveryKey(jobId),false);}
+    private boolean markCompletedRestoreRecoveryUsed(String jobId){
+        return jobId!=null&&getPreferences(0).edit().putBoolean(completedRestoreRecoveryKey(jobId),true).commit();
+    }
+    private void clearCompletedRestoreRecoveryUsed(String jobId){
+        if(jobId!=null)getPreferences(0).edit().remove(completedRestoreRecoveryKey(jobId)).apply();
+    }
+    private void recoverCompletedRestore(String jobId,String nonce,String reason){
+        Runnable recover=()->{
+            if(isFinishing()||Build.VERSION.SDK_INT>=17&&isDestroyed())return;
+            final WebView previous;
+            // A bridge call takes bridgeLock → monitor. The monitor tick that
+            // requested this recovery may still hold its monitor lock, so this
+            // runnable is always posted below rather than run inline. Once it
+            // executes, make the final ownership check, persisted-cap write,
+            // old-WebView retirement marker and lease invalidation one bridge
+            // transaction. Terminal/ACK either wins before this transaction
+            // (so `owns` fails and no cap is armed) or loses after retirement
+            // (so it cannot terminally prove or clear a cap for this nonce).
+            synchronized(completedRestoreBridgeLock){
+                if(completedRestoreMonitor==null||!completedRestoreMonitor.owns(jobId,nonce))return;
+                if(!completedRestoreJobMatches(jobId)){
+                    AppDiagnostics.log(this,"WARN","completed-restore-watchdog","recovery skipped; durable job no longer completed job="+jobId);
+                    return;
+                }
+                if(completedRestoreRecoveryUsed(jobId)){
+                    AppDiagnostics.log(this,"WARN","completed-restore-watchdog","recovery skipped by persisted cap job="+jobId+" reason="+reason);
+                    return;
+                }
+                previous=web;
+                if(previous==null){
+                    AppDiagnostics.log(this,"WARN","completed-restore-watchdog","replacement skipped; current WebView already absent job="+jobId);
+                    return;
+                }
+                // Commit the cap before retiring the renderer. A process death
+                // between these operations may leave the job pending, but can
+                // never cause a replacement loop or forge an ACK.
+                if(!markCompletedRestoreRecoveryUsed(jobId)){
+                    AppDiagnostics.log(this,"ERROR","completed-restore-watchdog","recovery cap could not persist job="+jobId);
+                    return;
+                }
+                completedRestoreRecoveryCount++;completedRestoreLastRecovery=jobId+":"+reason;
+                AppDiagnostics.log(this,"WARN","completed-restore-watchdog","same-activity WebView replacement="+completedRestoreRecoveryCount+" job="+jobId+" reason="+reason);
+                // Publish the retiring instance before invalidating the tuple.
+                // A queued old bridge is therefore rejected throughout the
+                // renderer-termination handoff.
+                completedRestoreTerminatingWebView=previous;
+                clearCompletedRestorePayloadLocked();
+                completedRestoreMonitor.replacementStarted();
+            }
+            // Never hold bridgeLock while terminating/destroying a WebView or
+            // starting the replacement; renderer callbacks may enter bridge
+            // paths and must observe the already-committed retirement state.
+            beginCompletedRestoreWebViewReplacement(previous,jobId,reason);
+        };
+        // CompletedRestoreMonitor.tick invokes Host.recover while holding its
+        // own lock. Posting even on the UI thread releases that lock before
+        // this runnable acquires bridgeLock → monitor, preserving one lock
+        // order with JavaScript bridge methods.
+        completedRestoreHandler.post(recover);
+    }
+    private void beginCompletedRestoreWebViewReplacement(WebView previous,String jobId,String reason){
+        if(previous==null){
+            AppDiagnostics.log(this,"WARN","completed-restore-watchdog","replacement skipped; current WebView already absent job="+jobId);
+            return;
+        }
+        completedRestoreReplacementPath=null;
+        completedRestoreTerminatingWebView=previous;
+        Runnable fallback=()->{
+            if(completedRestoreTerminatingWebView==previous){
+                AppDiagnostics.log(this,"WARN","completed-restore-watchdog","renderer-gone callback exceeded native budget job="+jobId+" reason="+reason);
+                finishCompletedRestoreWebViewReplacement(previous,"terminate-callback-budget");
+            }
+        };
+        completedRestoreTerminateFallback=fallback;
+        if(Build.VERSION.SDK_INT>=29){
+            try{
+                WebViewRenderProcess renderer=previous.getWebViewRenderProcess();
+                if(renderer!=null){
+                    completedRestoreReplacementPath="terminate-requested";
+                    if(renderer.terminate()){
+                        if(completedRestoreTerminatingWebView==previous)completedRestoreHandler.postDelayed(fallback,COMPLETED_RESTORE_TERMINATE_CALLBACK_BUDGET_MS);
+                        return;
+                    }
+                }
+            }catch(RuntimeException error){
+                AppDiagnostics.record(this,"completed-restore-terminate",error);
+            }
+        }
+        // Older devices and an already-detached renderer have no process to
+        // terminate.  They still replace the WebView in this Activity once;
+        // the persisted cap prevents any loop.
+        finishCompletedRestoreWebViewReplacement(previous,"direct-fallback");
+    }
+    private void finishCompletedRestoreWebViewReplacement(WebView previous,String path){
+        if(completedRestoreTerminatingWebView!=previous)return;
+        if(completedRestoreTerminateFallback!=null)completedRestoreHandler.removeCallbacks(completedRestoreTerminateFallback);
+        completedRestoreTerminateFallback=null;
+        completedRestoreReplacementPath=(completedRestoreReplacementPath==null?"":completedRestoreReplacementPath+"->")+path;
+        // Keep the old instance marked retired until it is no longer current.
+        // Clearing this marker first creates a bridge-thread window where the
+        // destroyed page still equals `web` and can begin a fresh lease after
+        // replacementStarted() cleared the retired nonce.  The replacement
+        // bridge has a distinct WebView/generation and remains admissible
+        // while this old-instance marker is still present.
+        if(web==previous){
+            web=null;
+            releasePreview(previous);
+            createPreview();
+        }else releasePreview(previous);
+        completedRestoreTerminatingWebView=null;
+    }
+    private boolean completedRestoreFrameEligible(WebView target){
+        return target!=null&&target==web&&target.isAttachedToWindow()&&target.isShown()
+            &&target.getWindowVisibility()==View.VISIBLE&&target.hasWindowFocus()
+            &&target.getWidth()>0&&target.getHeight()>0&&target.isHardwareAccelerated();
+    }
+    private boolean completedRestoreVisualMatchesLocked(String jobId,String nonce,WebView target){
+        return completedRestoreMonitor!=null&&completedRestoreMonitor.owns(jobId,nonce)
+            &&jobId!=null&&jobId.equals(completedRestoreVisualJobId)
+            &&nonce!=null&&nonce.equals(completedRestoreVisualNonce)
+            &&target==completedRestoreVisualWebView&&target==web;
+    }
+    private void clearCompletedRestoreVisualProofLocked(){
+        completedRestoreVisualJobId=null;completedRestoreVisualNonce=null;completedRestoreVisualWebView=null;
+        completedRestoreVisualRequested=false;completedRestoreVisualCommitted=false;completedRestoreVisualDrawListener=null;
+    }
+    private void clearCompletedRestorePayloadLocked(){
+        RandomAccessFile previous=completedRestorePayloadFile;completedRestorePayloadFile=null;
+        completedRestorePayloadJobId=null;completedRestorePayloadNonce=null;completedRestorePayloadProjectId=null;completedRestorePayloadSnapshot=null;completedRestorePayloadLength=-1L;
+        if(previous!=null)try{previous.close();}catch(IOException ignored){}
+    }
+    private RandomAccessFile completedRestorePayloadLocked(String jobId,String nonce,String projectId,File source)throws IOException{
+        if(completedRestorePayloadFile!=null){
+            if(jobId.equals(completedRestorePayloadJobId)&&nonce.equals(completedRestorePayloadNonce)&&projectId.equals(completedRestorePayloadProjectId))return completedRestorePayloadFile;
+            clearCompletedRestorePayloadLocked();
+        }
+        RandomAccessFile opened=new RandomAccessFile(source,"r");
+        try{
+            long length=opened.length();
+            if(length<=0||length>ProjectStore.MAX_PROJECT_BYTES)throw new IOException("The completed project payload is unavailable.");
+            completedRestorePayloadFile=opened;completedRestorePayloadJobId=jobId;completedRestorePayloadNonce=nonce;completedRestorePayloadProjectId=projectId;
+            completedRestorePayloadLength=length;completedRestorePayloadSnapshot=Long.toString(length)+":"+UUID.randomUUID().toString();
+            return opened;
+        }catch(Throwable failure){try{opened.close();}catch(IOException ignored){}if(failure instanceof IOException)throw (IOException)failure;throw new IOException("The completed project payload is unavailable.",failure);}
+    }
+    private boolean requestCompletedRestoreVisualCommit(String jobId,String nonce){
+        final WebView target;
+        synchronized(completedRestoreBridgeLock){
+            if(completedRestoreMonitor==null||!completedRestoreMonitor.owns(jobId,nonce)||web==null)return false;
+            target=web;
+            if(jobId.equals(completedRestoreVisualJobId)&&nonce.equals(completedRestoreVisualNonce)&&target==completedRestoreVisualWebView
+                &&(completedRestoreVisualRequested||completedRestoreVisualCommitted))return true;
+            clearCompletedRestoreVisualProofLocked();
+            completedRestoreVisualJobId=jobId;completedRestoreVisualNonce=nonce;completedRestoreVisualWebView=target;completedRestoreVisualRequested=true;
+        }
+        Runnable request=()->startCompletedRestoreVisualCommit(jobId,nonce,target);
+        if(Looper.myLooper()==Looper.getMainLooper())request.run();else runOnUiThread(request);
+        return true;
+    }
+    private void startCompletedRestoreVisualCommit(String jobId,String nonce,WebView target){
+        synchronized(completedRestoreBridgeLock){
+            if(!completedRestoreVisualMatchesLocked(jobId,nonce,target))return;
+            if(!completedRestoreFrameEligible(target)){
+                completedRestoreVisualRequested=false;
+                AppDiagnostics.log(this,"INFO","completed-restore-watchdog","visual proof waiting for eligible WebView job="+jobId);
+                return;
+            }
+        }
+        try{
+            target.postVisualStateCallback(SystemClock.elapsedRealtime(),new WebView.VisualStateCallback(){
+                @Override public void onComplete(long requestId){beginCompletedRestoreHardwareCommit(jobId,nonce,target);}
+            });
+        }catch(RuntimeException error){
+            synchronized(completedRestoreBridgeLock){if(completedRestoreVisualMatchesLocked(jobId,nonce,target))completedRestoreVisualRequested=false;}
+            AppDiagnostics.record(this,"completed-restore-visual-state",error);
+        }
+    }
+    private void beginCompletedRestoreHardwareCommit(String jobId,String nonce,WebView target){
+        synchronized(completedRestoreBridgeLock){
+            if(!completedRestoreVisualMatchesLocked(jobId,nonce,target))return;
+            if(!completedRestoreFrameEligible(target)){
+                completedRestoreVisualRequested=false;
+                return;
+            }
+        }
+        ViewTreeObserver tree=target.getViewTreeObserver();
+        if(!tree.isAlive()){
+            synchronized(completedRestoreBridgeLock){if(completedRestoreVisualMatchesLocked(jobId,nonce,target))completedRestoreVisualRequested=false;}
+            return;
+        }
+        try{
+            if(Build.VERSION.SDK_INT>=29){
+                tree.registerFrameCommitCallback(()->target.post(()->completeCompletedRestoreVisualCommit(jobId,nonce,target)));
+            }else{
+                final ViewTreeObserver.OnDrawListener[] listener=new ViewTreeObserver.OnDrawListener[1];
+                listener[0]=()->{
+                    ViewTreeObserver observer=target.getViewTreeObserver();if(observer.isAlive())observer.removeOnDrawListener(listener[0]);
+                    synchronized(completedRestoreBridgeLock){if(completedRestoreVisualDrawListener==listener[0])completedRestoreVisualDrawListener=null;}
+                    completeCompletedRestoreVisualCommit(jobId,nonce,target);
+                };
+                synchronized(completedRestoreBridgeLock){
+                    if(!completedRestoreVisualMatchesLocked(jobId,nonce,target))return;
+                    completedRestoreVisualDrawListener=listener[0];
+                }
+                tree.addOnDrawListener(listener[0]);
+            }
+            target.invalidate();
+        }catch(RuntimeException error){
+            synchronized(completedRestoreBridgeLock){if(completedRestoreVisualMatchesLocked(jobId,nonce,target))completedRestoreVisualRequested=false;}
+            AppDiagnostics.record(this,"completed-restore-frame-commit",error);
+        }
+    }
+    private void completeCompletedRestoreVisualCommit(String jobId,String nonce,WebView target){
+        synchronized(completedRestoreBridgeLock){
+            if(!completedRestoreVisualMatchesLocked(jobId,nonce,target))return;
+            if(!completedRestoreFrameEligible(target)){
+                completedRestoreVisualRequested=false;
+                return;
+            }
+            completedRestoreVisualRequested=false;completedRestoreVisualCommitted=true;
+            completedRestoreLastVisualFrameAt=SystemClock.elapsedRealtime();
+            AppDiagnostics.log(this,"INFO","completed-restore-watchdog","visual hardware frame committed job="+jobId+" nonce="+nonce.substring(0,Math.min(16,nonce.length())));
+        }
+    }
+    private boolean completedRestoreVisualCommitComplete(String jobId,String nonce){
+        synchronized(completedRestoreBridgeLock){
+            return completedRestoreVisualCommitted&&completedRestoreVisualMatchesLocked(jobId,nonce,completedRestoreVisualWebView);
+        }
+    }
+    private void probeCompletedRestore(String jobId,String nonce,CompletedRestoreMonitor.ProbeCallback callback){
+        Runnable probe=()->{
+            if(completedRestoreMonitor==null||!completedRestoreMonitor.owns(jobId,nonce))return;
+            WebView target=web;
+            if(target==null)return;
+            try{
+                target.evaluateJavascript("(()=>{try{const a=window.LightForgeApp,s=a&&a.state,l=s&&s.completedRestore,p=a&&a.vehiclePreview;return JSON.stringify({booted:!!(a&&typeof window.onNativeEvent==='function'),backgroundApplying:!!(s&&s.backgroundApplying),backgroundPending:!!(s&&s.backgroundSyncPending),failed:!!(l&&l.failed),lease:l?{jobId:String(l.jobId||''),nonce:String(l.nonce||''),phase:String(l.phase||''),sequence:Number(l.sequence)||0,bytes:Number(l.bytes)||0}:null,previewLoaded:!!(p&&p.loaded),previewFrames:Number(p&&p.renderCount)||0});}catch(e){return JSON.stringify({probeError:String(e&&e.message||e)})}})()",raw->callback.receive(completedRestoreProbe(raw)));
+            }catch(RuntimeException error){
+                AppDiagnostics.log(this,"WARN","completed-restore-watchdog","probe evaluateJavascript failed: "+error.getMessage());
+                // Do not turn an Android-side exception into a browser ACK or
+                // an app failure.  The monitor's native callback budget will
+                // decide whether this specific lease needs its one recovery.
+            }
+        };
+        if(Looper.myLooper()==Looper.getMainLooper())probe.run();else runOnUiThread(probe);
+    }
+    private CompletedRestoreMonitor.Probe completedRestoreProbe(String raw){
+        try{
+            Object decoded=new JSONTokener(raw).nextValue();
+            JSONObject value=decoded instanceof String?new JSONObject((String)decoded):(JSONObject)decoded;
+            JSONObject lease=value.optJSONObject("lease");
+            return new CompletedRestoreMonitor.Probe(value.optBoolean("booted"),value.optBoolean("backgroundApplying"),value.optBoolean("backgroundPending"),
+                value.optBoolean("failed"),lease==null?"":lease.optString("jobId"),lease==null?"":lease.optString("nonce"),
+                lease==null?"":lease.optString("phase"),lease==null?0:lease.optLong("sequence"),lease==null?0:lease.optLong("bytes"),
+                value.optBoolean("previewLoaded"),value.optLong("previewFrames"));
+        }catch(Exception error){
+            AppDiagnostics.log(this,"WARN","completed-restore-watchdog","probe parse failed: "+error.getMessage());
+            return null;
+        }
     }
     // UI is kept across fold/unfold and rotation by manifest configChanges.
     @Override public void onBackPressed() {
@@ -167,6 +523,10 @@ public final class MainActivity extends Activity {
         foreground=false;previewRecoveryPending=false;
         if(previewRecoveryDialog!=null){previewRecoveryDialog.dismiss();previewRecoveryDialog=null;}
         if(analysisReceiverRegistered){unregisterReceiver(analysisReceiver);analysisReceiverRegistered=false;}
+        if(completedRestoreMonitor!=null)completedRestoreMonitor.close();
+        if(completedRestoreTerminateFallback!=null)completedRestoreHandler.removeCallbacks(completedRestoreTerminateFallback);
+        completedRestoreTerminateFallback=null;completedRestoreTerminatingWebView=null;
+        synchronized(completedRestoreBridgeLock){clearCompletedRestoreVisualProofLocked();clearCompletedRestorePayloadLocked();}
         cancelled.set(true);worker.shutdownNow();
         synchronized(exportLock) {if(activeExport!=null) activeExport.abort();}
         detachPreviewForTeardown();
@@ -284,14 +644,113 @@ public final class MainActivity extends Activity {
         });
     }
     public final class Bridge {
+        private final WebView ownerWeb;
+        private final long ownerGeneration;
+        Bridge(WebView ownerWeb,long ownerGeneration){this.ownerWeb=ownerWeb;this.ownerGeneration=ownerGeneration;}
+        private boolean ownsCurrentCompletedRestoreBridge(){
+            return ownerWeb!=null&&ownerWeb==web&&ownerWeb!=completedRestoreTerminatingWebView&&ownerGeneration==previewGeneration
+                &&!isFinishing()&&!(Build.VERSION.SDK_INT>=17&&isDestroyed());
+        }
         @JavascriptInterface public void logDiagnostic(String level,String source,String message){AppDiagnostics.log(MainActivity.this,level,source,message);}
         @JavascriptInterface public void exportDiagnostics(){MainActivity.this.exportDiagnostics();}
         @JavascriptInterface public String getAnalysisStatus(){JSONObject job=analysisStatus();return job==null?"null":job.toString();}
         @JavascriptInterface public String getDeviceCapabilities(){return deviceCapabilities().toString();}
-        @JavascriptInterface public String startAnalysis(String projectId){
+        @JavascriptInterface public boolean beginCompletedRestore(String jobId,String nonce,long bytes){
+            synchronized(completedRestoreBridgeLock){
+                if(!ownsCurrentCompletedRestoreBridge()){
+                    AppDiagnostics.log(MainActivity.this,"WARN","completed-restore-watchdog","ignored lease begin from retired WebView job="+jobId);
+                    return false;
+                }
+                if(completedRestoreMonitor==null)return false;
+                if(!completedRestoreJobMatches(jobId)){
+                    AppDiagnostics.log(MainActivity.this,"WARN","completed-restore-watchdog","ignored lease begin for non-completed job="+jobId);
+                    return false;
+                }
+                boolean accepted=completedRestoreMonitor.begin(jobId,nonce,bytes);
+                // A recovery can publish retirement while this bridge thread is
+                // waiting for the monitor lock. Clear that just-created lease
+                // before returning so a late old page cannot block the new
+                // WebView's nonce or derive a terminal result.
+                if(accepted&&!ownsCurrentCompletedRestoreBridge()){
+                    completedRestoreMonitor.failed(jobId,nonce,"retired-webview-begin");
+                    clearCompletedRestorePayloadLocked();
+                    return false;
+                }
+                if(accepted){
+                    clearCompletedRestoreVisualProofLocked();
+                    clearCompletedRestorePayloadLocked();
+                    completedRestoreLastAcceptedBeginGeneration=ownerGeneration;
+                    completedRestoreLastAcceptedBeginJobId=jobId;
+                }
+                return accepted;
+            }
+        }
+        @JavascriptInterface public boolean completedRestorePulse(String jobId,String nonce,String phase,long sequence,long bytes){
+            synchronized(completedRestoreBridgeLock){
+                if(!ownsCurrentCompletedRestoreBridge())return false;
+                boolean visualPhase="preview-visual-commit".equals(phase);
+                boolean accepted=completedRestoreMonitor!=null&&(!visualPhase||completedRestoreVisualCommitted&&completedRestoreVisualMatchesLocked(jobId,nonce,completedRestoreVisualWebView))
+                    &&completedRestoreMonitor.pulse(jobId,nonce,phase,sequence,bytes);
+                if(!accepted)
+                    AppDiagnostics.log(MainActivity.this,"WARN","completed-restore-watchdog","ignored non-monotonic or foreign pulse job="+jobId+" sequence="+sequence);
+                return accepted;
+            }
+        }
+        @JavascriptInterface public boolean completedRestoreTerminal(String jobId,String nonce,long sequence,long bytes){
+            synchronized(completedRestoreBridgeLock){
+                if(!ownsCurrentCompletedRestoreBridge())return false;
+                if(completedRestoreMonitor==null||!completedRestoreJobMatches(jobId)||!completedRestoreMonitor.terminal(jobId,nonce,sequence,bytes)){
+                    AppDiagnostics.log(MainActivity.this,"WARN","completed-restore-watchdog","ignored foreign terminal job="+jobId+" sequence="+sequence);
+                    return false;
+                }
+                // The monitor retains this exact terminal token until the
+                // browser has written its ACK and confirms that write. Native
+                // never reads or writes the browser's localStorage ACK.
+                clearCompletedRestoreVisualProofLocked();
+                clearCompletedRestorePayloadLocked();
+                completedRestoreLastTerminalAt=SystemClock.elapsedRealtime();
+                return true;
+            }
+        }
+        @JavascriptInterface public boolean requestCompletedRestoreVisualCommit(String jobId,String nonce){
+            if(!ownsCurrentCompletedRestoreBridge())return false;
+            return MainActivity.this.requestCompletedRestoreVisualCommit(jobId,nonce);
+        }
+        @JavascriptInterface public boolean completedRestoreVisualCommitted(String jobId,String nonce){
+            if(!ownsCurrentCompletedRestoreBridge())return false;
+            return completedRestoreVisualCommitComplete(jobId,nonce);
+        }
+        @JavascriptInterface public boolean completedRestoreAckCommitted(String jobId,String nonce){
+            synchronized(completedRestoreBridgeLock){
+                if(!ownsCurrentCompletedRestoreBridge())return false;
+                if(!completedRestoreJobMatches(jobId)||completedRestoreMonitor==null||!completedRestoreMonitor.ackCommitted(jobId,nonce)){
+                    AppDiagnostics.log(MainActivity.this,"WARN","completed-restore-watchdog","ignored foreign post-ACK confirmation job="+jobId);
+                    return false;
+                }
+                // This releases only the native recovery cap after the browser
+                // has committed its own ACK.  It cannot inspect or mutate that
+                // ACK and it invalidates the nonce so a replay is harmless.
+                clearCompletedRestoreRecoveryUsed(jobId);
+                completedRestoreLastAckConfirmationAt=SystemClock.elapsedRealtime();
+                return true;
+            }
+        }
+        @JavascriptInterface public boolean completedRestoreFailed(String jobId,String nonce,String reason){
+            synchronized(completedRestoreBridgeLock){
+                if(!ownsCurrentCompletedRestoreBridge())return false;
+                boolean accepted=completedRestoreMonitor!=null&&completedRestoreMonitor.failed(jobId,nonce,reason);
+                if(accepted){clearCompletedRestoreVisualProofLocked();clearCompletedRestorePayloadLocked();}
+                if(!accepted)
+                    AppDiagnostics.log(MainActivity.this,"WARN","completed-restore-watchdog","ignored foreign failed event job="+jobId);
+                return accepted;
+            }
+        }
+        @JavascriptInterface public String startAnalysis(String projectId){return beginAnalysis(projectId,false);}
+        @JavascriptInterface public String startFreshAnalysis(String projectId){return beginAnalysis(projectId,true);}
+        private String beginAnalysis(String projectId,boolean fresh){
             try{
                 if(!foreground||importing||exporting)throw new IOException("Open LightForge and finish the current file operation before starting analysis.");
-                final JSONObject job=AnalysisJobStore.prepare(getFilesDir(),projectId,appVersion());
+                final JSONObject job=AnalysisJobStore.prepare(getFilesDir(),projectId,appVersion(),fresh);
                 getPreferences(0).edit().putString("lastProjectId",projectId).apply();
                 runOnUiThread(()->{
                     try{
@@ -324,6 +783,34 @@ public final class MainActivity extends Activity {
         });}
 
         @JavascriptInterface public String getBootstrap() {return bootstrap().toString();}
+        @JavascriptInterface public String readCompletedRestoreProjectChunk(String jobId,String nonce,String projectId,long offset,int requestedBytes) {
+            try {
+                synchronized(completedRestoreBridgeLock){
+                    if(!ownsCurrentCompletedRestoreBridge()||completedRestoreMonitor==null||!completedRestoreMonitor.owns(jobId,nonce))throw new IOException("The completed restore lease is no longer active.");
+                    if(offset<0||requestedBytes<=0||requestedBytes>COMPLETED_RESTORE_PROJECT_CHUNK_MAX_BYTES)throw new IOException("Invalid completed-project read range.");
+                    final RandomAccessFile input;final long total;final String snapshot;
+                    synchronized(AnalysisJobStore.class){
+                        JSONObject job=analysisStatus();
+                        if(job==null||!jobId.equals(job.optString("id"))||!"completed".equals(job.optString("state")))throw new IOException("The completed analysis job is no longer available.");
+                        if(projectId==null||!projectId.equals(job.optString("projectId")))throw new IOException("The completed project does not belong to this job.");
+                        File source=new File(AnalysisJobStore.project(getFilesDir(),projectId),"project.json");
+                        if(!source.isFile())throw new IOException("The completed project payload is unavailable.");
+                        input=completedRestorePayloadLocked(jobId,nonce,projectId,source);total=completedRestorePayloadLength;snapshot=completedRestorePayloadSnapshot;
+                    }
+                    if(offset>=total)throw new IOException("The completed project payload is unavailable.");
+                    int count=(int)Math.min(Math.min((long)requestedBytes,total-offset),COMPLETED_RESTORE_PROJECT_CHUNK_MAX_BYTES);
+                    byte[] bytes=new byte[count];input.seek(offset);input.readFully(bytes);
+                    // Recovery and bridge terminal/failure operations use this
+                    // same lock. A teardown that bypassed the monitor still
+                    // changes WebView ownership, so check it again at return.
+                    if(!ownsCurrentCompletedRestoreBridge()||completedRestoreMonitor==null||!completedRestoreMonitor.owns(jobId,nonce))throw new IOException("The completed restore lease was retired during payload read.");
+                    return json("ok",true,"offset",offset,"total",total,"snapshot",snapshot,"base64",Base64.encodeToString(bytes,Base64.NO_WRAP)).toString();
+                }
+            }catch(Exception failure){
+                AppDiagnostics.log(MainActivity.this,"WARN","completed-restore-payload","chunk read rejected: "+(failure.getMessage()==null?failure.getClass().getSimpleName():failure.getMessage()));
+                return json("ok",false,"error","The completed project payload could not be read safely.").toString();
+            }
+        }
         @JavascriptInterface public void pickAudio() {runOnUiThread(()-> {
             if(importing||exporting||AnalysisJobStore.active(analysisStatus())) {error(new IOException("The previous operation is still finishing. Try again in a moment."));return;}
             Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*");
@@ -391,6 +878,10 @@ public final class MainActivity extends Activity {
                         // state here, before asynchronous ZIP assembly begins.
                         projectState=new JSONObject(new String(readSmall(new File(dir,"project.json"),ProjectStore.MAX_PROJECT_BYTES),StandardCharsets.UTF_8));
                     }
+                    // Run observations are local, unbound diagnostics. They are not
+                    // project-backup or FSEQ export inputs and must not perturb
+                    // exported-project byte comparisons.
+                    projectState.remove("analysisRunObservation");
                     String frozenState=projectState.toString();
                     if(frozenState.getBytes(StandardCharsets.UTF_8).length>ProjectStore.MAX_PROJECT_BYTES)throw new IOException("This project's editable backup is too large.");
                     meta.remove("projectState");
@@ -664,7 +1155,7 @@ public final class MainActivity extends Activity {
         byte[] head=new byte[32];long frames;int step,offset;
         try(RandomAccessFile r=new RandomAccessFile(sequence,"r")) {
             r.readFully(head);offset=AudioImporter.u16(head,4);frames=AudioImporter.u32(head,14);step=head[18]&255;
-            if(head[0]!='P'||head[1]!='S'||head[2]!='E'||head[3]!='Q'||head[6]!=0||head[7]!=2||head[20]!=0||offset<32||AudioImporter.u32(head,10)!=200||step<15||step>100||frames<1)
+            if(head[0]!='P'||head[1]!='S'||head[2]!='E'||head[3]!='Q'||head[6]!=0||head[7]!=2||head[20]!=0||offset<32||AudioImporter.u32(head,10)!=200||(step!=15&&step!=20)||frames<1)
                 throw new IOException("The generated FSEQ header is invalid.");
             if(sequence.length()!=offset+frames*200 || frames*step>14_400_000L)throw new IOException("The generated sequence has an invalid length.");
             byte[] wav=new byte[44];try(RandomAccessFile w=new RandomAccessFile(audio,"r")){w.readFully(wav);}
@@ -753,3 +1244,4 @@ public final class MainActivity extends Activity {
         return new AppResources(this,null).resource(uri,headers);
     }
 }
+

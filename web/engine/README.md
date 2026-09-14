@@ -42,7 +42,7 @@ Analysis version 3 adds section and phrase `recurrenceGroup`, `similarity`, and 
 
 The show contains flat `Uint8Array frames`, `frameCount`, `channels: 200`, `channelCount: 200`, `stepMs`, `duration`, `audioDuration`, `sections`, `movements`, `settings`, `stats`, and `validation`. `generate()` throws actionable errors for unrepresentable audio durations, unsupported frame intervals, memory allocation failure, or an invalid generated result.
 
-`validate(show, music?)` returns `{valid, errors, warnings, stats}` and independently reads frame values to check closure use, channel validity, physical timing, and the end state. Supply `music` when checking audio duration alignment.
+`validate(show, music?)` returns `{valid, errors, warnings, stats}` and independently reads frame values to check closure use, channel validity, physical timing, and the end state. Supply `music` when checking audio duration alignment. Generated shows also attach `validation.synchronization`: its collision report keeps raw candidate rejections separate from logical high-salience rescue/unresolved counts, and `calibrationProvenance` records only an explicit user timing configuration (or that none was assumed).
 
 `fseq(show, audioFilename)` validates again and emits FSEQ v2.0, uncompressed, with 200 channels and the media filename metadata. Its duration rounds audio up by less than one frame. Audio conversion and ZIP creation belong to the native/export integration: use 44.1 kHz PCM WAV and put a matching basename pair inside the top-level case-sensitive `LightShow` directory.
 
@@ -54,7 +54,7 @@ The show contains flat `Uint8Array frames`, `frameCount`, `channels: 200`, `chan
 
 `closures` includes the supported eight parts; `closureState` exposes the same objects under `mirrorL`, `mirrorR`, `windowFL`, `windowRL`, `windowFR`, `windowRR`, `trunk`, and `charge`. Each reports raw/current command, actual continuing motion status, normalized `openFraction`, mirror `foldedFraction`, and `estimated: true`. Initial windows/trunk/charge are closed and mirrors unfolded. Open/Close continue through Idle, Stop freezes the reached position, interrupted movements begin from the current position, and Dance stops at its command end. Seek and playback produce the same pose. Charge Dance animates rainbow LED color while its door stays open; the two-minute automatic charge-door close is modeled.
 
-Physical positions are **estimates**, using Tesla's approximate 4-second window, 14/4-second trunk-open/close, and 2-second mirror/charge travel times. Tesla does not publish dance endpoints or cadence. The visualization uses illustrative window travel between 18–86% open and trunk travel between 68–100% open at those motor-rate estimates, independently of song tempo. Actual motor speed, travel, thermal limits, lamp photometry, optical diffusion, and charge-rainbow cadence can differ on the vehicle. Preview accuracy is command timing and channel assignment, not a claim of physical vehicle calibration.
+Physical positions are **estimates**. The default 4-second window, 14/4-second trunk-open/close, and 2-second mirror/charge values are retained as unverified conservative planning envelopes for compatibility; they are not Tesla latency measurements. Tesla does not publish Dance endpoints or cadence. The visualization uses illustrative window travel between 18–86% open and trunk travel between 68–100% open independently of song tempo. Actual motor speed, travel, thermal limits, lamp photometry, optical diffusion, and charge-rainbow cadence can differ on the vehicle. A non-default calibration is explicitly labeled as user-supplied configuration; preview accuracy remains command timing and channel assignment, not a claim of physical vehicle calibration.
 
 ## Settings
 
@@ -76,6 +76,7 @@ Physical positions are **estimates**, using Tesla's approximate 4-second window,
 | `outputEnabled` | Available output ID → boolean; false masks automatic and manual cues |
 | `manualCues` | Timed per-output cues, described below |
 | `outerBeamRamping` | False by default; allow documented outer-beam ramp codes only after vehicle confirmation |
+| `vehicleTimingCalibration` | Optional explicit, local timing-calibration record; absent by default and never assumes Tesla latency |
 | `sectionOverrides` | Section index → `{style, intensity, seed}` |
 
 Automatic beat division uses the detected local beat spacing when available;
@@ -83,6 +84,35 @@ manual quarter/eighth choices remain available. Lamp effects retain meaningful
 durations and gaps; the frame interval is timing resolution, not a target strobe
 frequency. Styles and intensity can be overridden per detected section without
 changing music analysis.
+
+### Optional vehicle timing calibration
+
+By default, no latency correction is assumed: command timestamps retain the
+existing deterministic FSEQ schedule. The profile records closure travel values
+as **unverified planning envelopes**, not Tesla measurements. A calibration can
+only be enabled deliberately, identifies its local evidence record, accepts
+bounded non-negative values, and can only lengthen the built-in travel envelope.
+That guarantees it cannot silently make a motion less conservative.
+
+```js
+vehicleTimingCalibration: {
+  version: 1,
+  enabled: true,
+  calibrationId: 'local-rig-2026-09',
+  outputs: {
+    mirrorL: { commandLatencyMs: 120 },
+    windowFL: { activationLatencyMs: 80, openTravelMs: 4200, closeTravelMs: 4100 }
+  }
+}
+```
+
+Supported per-output metadata includes command, activation and deactivation
+latencies plus minimum useful/repeat durations. Closure entries may also set
+open/close travel times, but only at or above their built-in envelope. Light
+and RGB latency values are retained as evidence metadata until a validated
+output-specific realization path consumes them; they do not silently retime
+lighting. Dance endpoints and cadence remain vehicle-controlled and are not
+claimed to be calibrated by this setting.
 
 ## Musical light planning
 

@@ -11,6 +11,40 @@ public final class AnalysisJobStoreTest {
     static void check(boolean ok,String label){if(!ok)throw new AssertionError(label);}
     static void reject(Operation op)throws Exception{try{op.run();}catch(Exception expected){return;}throw new AssertionError("Invalid transaction accepted");}
     static JSONObject read(File file)throws Exception{return AnalysisJobStore.read(file,ProjectStore.MAX_PROJECT_BYTES);}
+    static JSONObject canonicalV8(JSONObject legacy)throws Exception{
+        JSONObject music=new JSONObject(legacy.toString()).put("analysisVersion",8),timelineEvent=new JSONObject().put("id","m000000").put("type","section").put("time",0).put("duration",2).put("source","structure").put("confidence",1).put("intensity",.3).put("salience",.75).put("tier","phrase"),tierCounts=new JSONObject().put("micro",0).put("secondary",0).put("primary",0).put("phrase",1).put("structural",0).put("climax",0);
+        JSONObject timeline=new JSONObject().put("schemaVersion",2).put("clock","original-decoded-audio").put("duration",2).put("events",new JSONArray().put(timelineEvent)).put("summary",new JSONObject().put("eventCount",1).put("countByTier",tierCounts)),evidence=new JSONObject().put("vocal",0).put("bass",0).put("rhythm",0).put("percussion",0).put("structural",.5),priorities=new JSONObject().put("vocals",.75).put("bass",.75).put("rhythm",.80).put("drums",.80).put("mix",.76).put("structure",.82),weights=new JSONObject().put("baseline",.14).put("confidence",.13).put("intensity",.12).put("structural",.15).put("rhythmic",.14).put("transition",.09).put("crossStem",.10).put("recurrence",.04).put("sourcePriority",.09);
+        JSONObject ranked=new JSONObject().put("id","m000000").put("score",.65).put("tier","phrase").put("rank",1),highlight=new JSONObject().put("id","m000000").put("score",.65).put("tier","phrase").put("rank",1).put("drivers",new JSONArray().put("structural"));
+        JSONObject salience=new JSONObject().put("schemaVersion",1).put("engineVersion","1.0.0").put("timelineSchemaVersion",2).put("timelineFingerprint","0123abcd").put("clock","original-decoded-audio").put("duration",2).put("events",new JSONArray().put(ranked)).put("summary",new JSONObject().put("eventCount",1).put("countByTier",tierCounts).put("context",new JSONObject().put("profile","balanced").put("evidence",evidence).put("eventDensity",.5).put("sourcePriorities",priorities).put("weights",weights)).put("topEventIds",new JSONArray().put("m000000")).put("highlights",new JSONArray().put(highlight)));
+        return music.put("semanticTimeline",timeline).put("musicSalience",salience);
+    }
+    static JSONObject salienceEntry(JSONObject music,String id)throws Exception{
+        JSONArray events=music.getJSONObject("musicSalience").getJSONArray("events");
+        for(int index=0;index<events.length();index++){JSONObject entry=events.getJSONObject(index);if(id.equals(entry.getString("id")))return entry;}
+        throw new AssertionError("Missing salience fixture entry: "+id);
+    }
+    static void rebuildHighlights(JSONObject music,String... ids)throws Exception{
+        JSONObject summary=music.getJSONObject("musicSalience").getJSONObject("summary"),entry;
+        JSONArray top=new JSONArray(),highlights=new JSONArray();
+        for(String id:ids){
+            entry=salienceEntry(music,id);top.put(id);
+            highlights.put(new JSONObject().put("id",id).put("score",entry.getDouble("score")).put("tier",entry.getString("tier")).put("rank",entry.getInt("rank")).put("drivers",new JSONArray().put("structural")));
+        }
+        summary.put("topEventIds",top).put("highlights",highlights);
+    }
+    static JSONObject rankedCanonicalV8(JSONObject legacy)throws Exception{
+        JSONObject music=canonicalV8(legacy),timeline=music.getJSONObject("semanticTimeline"),salience=music.getJSONObject("musicSalience");
+        JSONArray timelineEvents=timeline.getJSONArray("events");timelineEvents.getJSONObject(0).put("duration",.5);
+        timelineEvents.put(new JSONObject(timelineEvents.getJSONObject(0).toString()).put("id","m000001").put("time",.5));
+        timelineEvents.put(new JSONObject(timelineEvents.getJSONObject(0).toString()).put("id","m000002").put("time",1));
+        timeline.getJSONObject("summary").put("eventCount",3).put("countByTier",new JSONObject().put("micro",0).put("secondary",0).put("primary",0).put("phrase",3).put("structural",0).put("climax",0));
+        salience.put("events",new JSONArray()
+            .put(new JSONObject().put("id","m000000").put("score",.80).put("tier","structural").put("rank",1))
+            .put(new JSONObject().put("id","m000001").put("score",.65).put("tier","phrase").put("rank",2))
+            .put(new JSONObject().put("id","m000002").put("score",.65).put("tier","phrase").put("rank",3)));
+        salience.getJSONObject("summary").put("eventCount",3).put("countByTier",new JSONObject().put("micro",0).put("secondary",0).put("primary",0).put("phrase",2).put("structural",1).put("climax",0));
+        rebuildHighlights(music,"m000000","m000001","m000002");return music;
+    }
     public static void main(String[] args)throws Exception{
         File files=new File(args[0]);files.mkdirs();File projects=new File(files,"projects");projects.mkdirs();
         File audio=new File(files,"input.wav"),mono=new File(files,"input-mono.wav");
@@ -49,22 +83,39 @@ public final class AnalysisJobStoreTest {
         for(String file:new String[]{"actual-music-nightowl-mix-analysis.json","actual-music-falcon-mix-analysis.json","actual-music-user-glass-prefix64-analysis.json"}){
             JSONObject historical=read(new File("qa/release-1.6.0",file));AnalysisJobStore.validateCheckpoint(historical,historical.getDouble("duration"));
         }
+        JSONObject canonical=canonicalV8(music);AnalysisJobStore.validateCheckpoint(canonical,2);
+        JSONObject rankedCanonical=rankedCanonicalV8(music);AnalysisJobStore.validateCheckpoint(rankedCanonical,2);
+        JSONObject invertedSalienceRank=new JSONObject(rankedCanonical.toString());salienceEntry(invertedSalienceRank,"m000000").put("rank",2);salienceEntry(invertedSalienceRank,"m000001").put("rank",1);rebuildHighlights(invertedSalienceRank,"m000001","m000000","m000002");reject(()->AnalysisJobStore.validateCheckpoint(invertedSalienceRank,2));
+        JSONObject invertedTieBreak=new JSONObject(rankedCanonical.toString());salienceEntry(invertedTieBreak,"m000001").put("rank",3);salienceEntry(invertedTieBreak,"m000002").put("rank",2);rebuildHighlights(invertedTieBreak,"m000000","m000002","m000001");reject(()->AnalysisJobStore.validateCheckpoint(invertedTieBreak,2));
+        JSONObject outOfRankHighlights=new JSONObject(rankedCanonical.toString());rebuildHighlights(outOfRankHighlights,"m000001","m000000","m000002");reject(()->AnalysisJobStore.validateCheckpoint(outOfRankHighlights,2));
+        JSONObject incompleteHighlights=new JSONObject(rankedCanonical.toString());rebuildHighlights(incompleteHighlights,"m000000","m000001");reject(()->AnalysisJobStore.validateCheckpoint(incompleteHighlights,2));
+        JSONObject missingTimeline=new JSONObject(canonical.toString());missingTimeline.remove("semanticTimeline");reject(()->AnalysisJobStore.validateCheckpoint(missingTimeline,2));
+        JSONObject wrongClock=new JSONObject(canonical.toString());wrongClock.getJSONObject("semanticTimeline").put("clock","resampled-stem");reject(()->AnalysisJobStore.validateCheckpoint(wrongClock,2));
+        JSONObject outOfBounds=new JSONObject(canonical.toString());outOfBounds.getJSONObject("semanticTimeline").getJSONArray("events").getJSONObject(0).put("duration",2.001);reject(()->AnalysisJobStore.validateCheckpoint(outOfBounds,2));
+        JSONObject wrongOrder=new JSONObject(canonical.toString());wrongOrder.getJSONObject("musicSalience").getJSONArray("events").getJSONObject(0).put("id","m999999");reject(()->AnalysisJobStore.validateCheckpoint(wrongOrder,2));
+        JSONObject wrongTier=new JSONObject(canonical.toString());wrongTier.getJSONObject("musicSalience").getJSONArray("events").getJSONObject(0).put("tier","micro");reject(()->AnalysisJobStore.validateCheckpoint(wrongTier,2));
+        JSONObject wrongRank=new JSONObject(canonical.toString());wrongRank.getJSONObject("musicSalience").getJSONArray("events").getJSONObject(0).put("rank",2);reject(()->AnalysisJobStore.validateCheckpoint(wrongRank,2));
+        JSONObject wrongWeights=new JSONObject(canonical.toString());wrongWeights.getJSONObject("musicSalience").getJSONObject("summary").getJSONObject("context").getJSONObject("weights").put("baseline",.20);reject(()->AnalysisJobStore.validateCheckpoint(wrongWeights,2));
         reject(()->AnalysisJobStore.checkpoint(files,id,new JSONObject().put("analysisVersion",6).toString()));
-        AnalysisJobStore.progress(files,id,.61,"Passage 2 of 12",new JSONObject().put("stage","separation").put("passageIndex",2).put("passageCount",12).put("passagesCompleted",1).put("checkpointSaved",true).put("state","completed"));
+        AnalysisJobStore.checkpoint(files,id,canonical.toString());AnalysisJobStore.recover(files);
+        check("interrupted".equals(AnalysisJobStore.status(files).getString("state")),"Canonical checkpoint did not survive an interrupted process");
+        JSONObject v8Resume=AnalysisJobStore.prepare(files,projectId,"2.2.1");final String v8ResumeId=v8Resume.getString("id");
+        check(v8Resume.getBoolean("hasCheckpoint")&&AnalysisJobStore.request(files,v8ResumeId).getJSONObject("music").getInt("analysisVersion")==8,"Canonical schema checkpoint was not reused");
+        AnalysisJobStore.progress(files,v8ResumeId,.61,"Passage 2 of 12",new JSONObject().put("stage","separation").put("passageIndex",2).put("passageCount",12).put("passagesCompleted",1).put("checkpointSaved",true).put("state","completed"));
         JSONObject display=AnalysisJobStore.status(files);
         check("running".equals(display.getString("state")),"Display metadata changed job ownership");
         check(display.getInt("passageIndex")==2&&display.getBoolean("resumeAvailable"),"Passage recovery progress missing");
-        reject(()->AnalysisJobStore.progress(files,id,.7,"Bad count",new JSONObject().put("passageIndex",-1)));
+        reject(()->AnalysisJobStore.progress(files,v8ResumeId,.7,"Bad count",new JSONObject().put("passageIndex",-1)));
         check(AnalysisJobStore.status(files).getDouble("progress")==.61,"Invalid progress partially persisted");
-        AnalysisJobStore.progress(files,id,.62,"Reading voice",new JSONObject().put("stage","voice"));
+        AnalysisJobStore.progress(files,v8ResumeId,.62,"Reading voice",new JSONObject().put("stage","voice"));
         check(!AnalysisJobStore.status(files).has("passageCount"),"Old passage counts leaked into another stage");
-        AnalysisJobStore.checkpoint(files,id,music.toString());
+        AnalysisJobStore.checkpoint(files,v8ResumeId,music.toString());
         AnalysisJobStore.recover(files);
         check("interrupted".equals(AnalysisJobStore.status(files).getString("state")),"Dead process left running status");
         JSONObject retry=AnalysisJobStore.prepare(files,projectId,"2.2.1");String retryId=retry.getString("id");
         check(retry.getBoolean("hasCheckpoint"),"Matching checkpoint was lost");
         check(AnalysisJobStore.request(files,retryId).getJSONObject("music").getInt("analysisVersion")==6,"Checkpoint not reused");
-        reject(()->AnalysisJobStore.progress(files,id,.9,"Stale owner"));
+        reject(()->AnalysisJobStore.progress(files,v8ResumeId,.9,"Stale owner"));
         AnalysisJobStore.finish(files,retryId,"cancelling","Cancelling");
         JSONObject result=read(saved).put("projectId",projectId).put("music",music).put("needAnalysis",false).put("compiled",new JSONObject().put("sha256","host-transaction-fixture"));
         reject(()->AnalysisJobStore.complete(files,retryId,result.toString()));
@@ -130,6 +181,63 @@ public final class AnalysisJobStoreTest {
         JSONObject audioChanged=AnalysisJobStore.prepare(files,projectId,"2.2.2");
         check(!beforeAudio.equals(audioChanged.getString("analysisIdentity")),"Changed audio reused prior passage identity");
         AnalysisJobStore.finish(files,audioChanged.getString("id"),"cancelled","Finished tests");
-        System.out.println("PASS: job ownership, monotonic progress, checkpoint reuse, cancellation, conflict preservation, durable completion, damaged checkpoint recovery, version/audio/settings identity, structured progress and crash recovery");
+        // App-run observations are supplementary: they do not affect analysis
+        // identity, and a fresh run removes any prior one before doing work.
+        JSONObject observation=new JSONObject().put("schemaVersion",1).put("kind","lightforge.completed-analysis-run")
+            .put("runKind","fresh-completed").put("privateText","must be removed");
+        ProjectStore.save(projects,projectId,read(saved).put("needAnalysis",true).put("analysisRunObservation",observation));
+        JSONObject observationJob=AnalysisJobStore.prepare(files,projectId,"2.2.2");
+        File frozenRequestFile=new File(AnalysisJobStore.directory(files),"request.json");
+        JSONObject frozenRequest=read(frozenRequestFile);
+        check(!frozenRequest.has("analysisRunObservation"),"Frozen request.json leaked a stale run observation");
+        JSONObject requestWithObservation=new JSONObject(frozenRequest.toString()).put("analysisRunObservation",observation);
+        String withObservationIdentity=AnalysisJobStore.analysisIdentity(AnalysisJobStore.project(files,projectId),projectId,requestWithObservation);
+        String withoutObservationIdentity=AnalysisJobStore.analysisIdentity(AnalysisJobStore.project(files,projectId),projectId,frozenRequest);
+        check(withObservationIdentity.equals(withoutObservationIdentity),"Supplementary observation changed analysis identity");
+        // Repair an in-flight request created by an older build.  The bridge
+        // must rewrite this copy before it clears the durable project evidence.
+        AnalysisJobStore.write(frozenRequestFile,requestWithObservation,ProjectStore.MAX_PROJECT_BYTES);
+        check(AnalysisJobStore.request(files,observationJob.getString("id")).has("analysisRunObservation"),"Legacy frozen request fixture missing observation");
+        AnalysisJobStore.clearRunObservation(files,observationJob.getString("id"));
+        check(!read(frozenRequestFile).has("analysisRunObservation"),"Observation cleanup left stale evidence in request.json");
+        check(!read(saved).has("analysisRunObservation"),"Fresh analysis left a stale run observation");
+        File priorRevision=new File(AnalysisJobStore.project(files,projectId),".previous-revision.json");
+        check(!AnalysisJobStore.read(priorRevision,ProjectStore.MAX_PROJECT_BYTES).getJSONObject("project").has("analysisRunObservation"),"Undo revision retained a stale run observation");
+        check(AnalysisJobStore.status(files).getString("sourceSHA256").equals(AnalysisJobStore.hash(saved)),"Observation cleanup did not refresh the job source hash");
+        JSONObject observationResult=read(saved).put("projectId",projectId).put("music",music).put("needAnalysis",false)
+            .put("compiled",new JSONObject().put("sha256","observation-fixture"));
+        AnalysisJobStore.complete(files,observationJob.getString("id"),observationResult.toString());
+        check(!read(saved).has("analysisRunObservation"),"Completion restored a stale run observation");
+        ProjectStore.save(projects,projectId,read(saved).put("needAnalysis",true).put("analysisRunObservation",observation));
+        JSONObject changedBeforeClear=AnalysisJobStore.prepare(files,projectId,"2.2.2");
+        ProjectStore.save(projects,projectId,read(saved).put("name","Changed before observation cleanup"));
+        reject(()->AnalysisJobStore.clearRunObservation(files,changedBeforeClear.getString("id")));
+        check(read(saved).has("analysisRunObservation"),"Observation cleanup overwrote a newer project edit");
+        AnalysisJobStore.finish(files,changedBeforeClear.getString("id"),"cancelled","Finished observation cleanup tests");
+        // Fresh analysis is a distinct cache lineage and its exact epoch must
+        // survive an interrupted native-to-WASM recovery without trusting
+        // project.json-provided execution fields.
+        ProjectStore.save(projects,projectId,read(saved).put("needAnalysis","false").put("analysisExecutionMode","fresh")
+            .put("analysisRefreshEpoch","aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa").put("analysisEffectiveExecution","native-deux-v1"));
+        JSONObject strictFresh=AnalysisJobStore.prepare(files,projectId,"2.2.5",true);
+        JSONObject strictRequest=AnalysisJobStore.request(files,strictFresh.getString("id"));
+        check(strictRequest.optBoolean("needAnalysis"),"Only a boolean false may skip analysis");
+        check("fresh".equals(strictRequest.optString("analysisExecutionMode"))&&strictRequest.optString("analysisRefreshEpoch").matches("[a-f0-9-]{36}"),"Fresh request did not receive a trusted epoch");
+        check(!strictRequest.has("analysisEffectiveExecution")&&!strictRequest.has("analysisNativeFallbackReason"),"Project data selected an untrusted native execution path");
+        String strictEpoch=strictRequest.getString("analysisRefreshEpoch");
+        check(AnalysisJobStore.markAnalysisWasmFallback(files,strictFresh.getString("id"),"native-deux-fallback"),"Native fallback marker was not persisted");
+        JSONObject strictMarked=AnalysisJobStore.request(files,strictFresh.getString("id"));
+        check("wasm-v1".equals(strictMarked.optString("analysisEffectiveExecution"))&&"native-deux-fallback".equals(strictMarked.optString("analysisNativeFallbackReason")),"Frozen WASM fallback lineage was incomplete");
+        AnalysisJobStore.finish(files,strictFresh.getString("id"),"interrupted","Restart test");
+        JSONObject strictResume=AnalysisJobStore.prepare(files,projectId,"2.2.5");
+        JSONObject resumedRequest=AnalysisJobStore.request(files,strictResume.getString("id"));
+        check("fresh".equals(resumedRequest.optString("analysisExecutionMode"))&&strictEpoch.equals(resumedRequest.optString("analysisRefreshEpoch")),"Interrupted fresh epoch was not resumed exactly");
+        check("wasm-v1".equals(resumedRequest.optString("analysisEffectiveExecution"))&&"native-deux-fallback".equals(resumedRequest.optString("analysisNativeFallbackReason")),"Interrupted native fallback did not remain fenced to WASM");
+        JSONObject tamperedRequest=read(new File(AnalysisJobStore.directory(files),"request.json")).put("analysisRefreshEpoch","bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb");
+        AnalysisJobStore.write(new File(AnalysisJobStore.directory(files),"request.json"),tamperedRequest,ProjectStore.MAX_PROJECT_BYTES);
+        reject(()->AnalysisJobStore.request(files,strictResume.getString("id")));
+        AnalysisJobStore.finish(files,strictResume.getString("id"),"cancelled","Finished execution-lineage tests");
+        System.out.println("PASS: job ownership, monotonic progress, checkpoint reuse, cancellation, conflict preservation, durable completion, damaged checkpoint recovery, version/audio/settings identity, structured progress, crash recovery and stale observation cleanup");
     }
 }
+

@@ -79,6 +79,41 @@ final class ProjectStore {
         return meta;
     }
 
+    /**
+     * Remove local, supplementary run evidence before fresh analysis.  The
+     * current state and retained undo revision are both sanitized so an undo
+     * cannot resurrect an observation that no longer describes the active run.
+     */
+    static synchronized String clearAnalysisRunObservation(File projectsRoot, String id, String expectedSourceSHA256)
+            throws Exception {
+        File dir = project(root(projectsRoot), id); recoverProject(dir);
+        File source = safeFile(dir, "project.json");
+        if (!expectedSourceSHA256.equals(AnalysisJobStore.hash(source)))
+            throw new IOException("This project changed while analysis was running. Its newer edits were preserved.");
+        JSONObject meta = readObject(safeFile(dir, "meta.json"), MAX_META_BYTES);
+        JSONObject state = readState(dir, meta.optString("name", "My show"));
+        if (state.has("analysisRunObservation")) {
+            state.remove("analysisRunObservation");
+            String name = validName(state.optString("name", meta.optString("name", "My show")));
+            state.put("projectId", id).put("name", name);
+            meta.put("name", name).put("hasShow", state.optJSONObject("music") != null && !state.optBoolean("needAnalysis", false))
+                    .put("updatedAt", System.currentTimeMillis()).put("hasPreviousRevision", true);
+            JSONObject settings = state.optJSONObject("settings");
+            if (settings != null) meta.put("style", settings.optString("style", "festival"));
+            commit(dir, meta, state, true, true);
+        }
+        File previous = safeFile(dir, PREVIOUS);
+        if (previous.isFile()) {
+            JSONObject revision = readObject(previous, MAX_REVISION_BYTES);
+            JSONObject priorState = revision.optJSONObject("project");
+            if (priorState != null && priorState.has("analysisRunObservation")) {
+                priorState.remove("analysisRunObservation");
+                writeObject(previous, revision, MAX_REVISION_BYTES);
+            }
+        }
+        return AnalysisJobStore.hash(source);
+    }
+
     /** Explicit undo of the last durable save; swaps revisions so it can be undone. */
     static synchronized JSONObject restorePrevious(File projectsRoot, String id) throws Exception {
         File dir = project(root(projectsRoot), id); recoverProject(dir);
@@ -99,6 +134,11 @@ final class ProjectStore {
     }
 
     private static void commit(File dir, JSONObject meta, JSONObject state, boolean retainPrevious) throws Exception {
+        commit(dir, meta, state, retainPrevious, false);
+    }
+
+    private static void commit(File dir, JSONObject meta, JSONObject state, boolean retainPrevious,
+                               boolean stripRunObservationFromPrevious) throws Exception {
         validatePair(dir, meta, state);
         // Staging is not a commit. If storage fills before the marker is durable,
         // the current pair remains authoritative and the abandoned stages are discarded.
@@ -108,6 +148,7 @@ final class ProjectStore {
             JSONObject oldMeta = readObject(safeFile(dir, "meta.json"), MAX_META_BYTES);
             JSONObject oldState = readState(dir, oldMeta.optString("name", "My show"));
             oldState.put("projectId", dir.getName()).put("name", oldMeta.getString("name"));
+            if (stripRunObservationFromPrevious) oldState.remove("analysisRunObservation");
             writeObject(new File(dir, PREVIOUS), new JSONObject().put("version", 1)
                     .put("savedAt", System.currentTimeMillis()).put("meta", oldMeta).put("project", oldState), MAX_REVISION_BYTES);
         }

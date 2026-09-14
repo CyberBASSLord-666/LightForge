@@ -116,6 +116,24 @@ public final class AppDiagnostics {
         catch (Throwable ignored) { writeFailures.incrementAndGet(); }
     }
 
+    /**
+     * Emits a fixed, privacy-safe native-inference receipt as one queued operation. The profile
+     * owns its schema and bounded stage/graph counts; diagnostics never inspect media or model paths.
+     */
+    public static void profile(Context context, NativeInferenceProfile.Snapshot profile) {
+        if (profile == null) return;
+        try {
+            initialize(context);
+            final String[] records = profile.records();
+            if (records.length < 1 || records.length > NativeInferenceProfile.MAX_RECORDS) {
+                writeFailures.incrementAndGet(); return;
+            }
+            enqueue(() -> {
+                for (String record : records) append("INFO", "native-inference-profile", record, false);
+            }, true);
+        } catch (Throwable ignored) { writeFailures.incrementAndGet(); }
+    }
+
     private static boolean enqueue(Runnable work, boolean important) {
         try { writer.execute(work); return true; }
         catch (RejectedExecutionException full) {

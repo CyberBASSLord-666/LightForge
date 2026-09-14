@@ -89,6 +89,34 @@ test('integrated show generation preserves analysis targets, offset and exact ex
   for(const e of direct.events){const frame=Math.round(e.start*1000/settings.stepMs);for(const ch of e.channels)assert.equal(fseq[offset+frame*200+ch-1],e.value,e.outputId+' exported onset');}
   for(const t of show.choreography.targets.filter(t=>t.kind==='dance'))assert.ok(Math.abs(t.time-t.musicTime-.315)<=.0075001);
 });
+test('explicit vehicle timing calibration preserves the default FSEQ and only adds conservative command lead',()=>{
+  const base={stepMs:20,dance:'expressive',offsetMs:0},music=song();
+  const normal=Engine.generate(music,base);
+  const disabled=Engine.generate(music,{...base,vehicleTimingCalibration:{enabled:false}});
+  assert.deepEqual(disabled.frames,normal.frames,'disabled calibration must not alter FSEQ bytes');
+  assert.deepEqual(Engine.fseq(disabled),Engine.fseq(normal),'header and payload stay deterministic without a nonzero calibration');
+  assert.equal(Profile.perceptualTiming.status,'unconfigured-until-explicit-calibration');
+  assert.equal(Profile.resolvePerceptualTiming().outputs.mirrorL.calibrationConfigured,false);
+  assert.throws(()=>Engine.generate(music,{...base,vehicleTimingCalibration:{enabled:true,calibrationId:'rig',outputs:{mirrorL:{commandLatencyMs:0}}}}),/explicit non-zero/);
+  assert.throws(()=>Engine.generate(music,{...base,vehicleTimingCalibration:{enabled:true,calibrationId:'rig',outputs:{mirrorL:{openTravelMs:100}}}}),/between 2000 and 60000/);
+  assert.throws(()=>Engine.generate(music,{...base,vehicleTimingCalibration:{enabled:true,calibrationId:'rig',outputs:{unknown:{commandLatencyMs:1}}}}),/unknown output/);
+  const calibration={version:1,enabled:true,calibrationId:'local-rig-01',outputs:{
+    mirrorL:{commandLatencyMs:150},
+    windowFL:{activationLatencyMs:100,openTravelMs:4200,closeTravelMs:4100}
+  }};
+  const calibrated=Engine.generate(music,{...base,vehicleTimingCalibration:calibration});
+  assert.equal(calibrated.validation.valid,true,calibrated.validation.errors.join('; '));
+  const normalMirror=normal.movements.find(e=>e.outputId==='mirrorL'&&e.command==='Open');
+  const calibratedMirror=calibrated.movements.find(e=>e.outputId==='mirrorL'&&e.command==='Open');
+  assert.ok(calibratedMirror.start<normalMirror.start,'explicit positive calibration may only lead the command');
+  assert.equal(calibratedMirror.intent.targetTime,normalMirror.intent.targetTime,'desired perceptual target remains on the music clock');
+  assert.equal(calibratedMirror.intent.perceptualTiming.calibrationId,'local-rig-01');
+  const normalWindow=normal.movements.find(e=>e.outputId==='windowFL'&&e.command==='Open');
+  const calibratedWindow=calibrated.movements.find(e=>e.outputId==='windowFL'&&e.command==='Open');
+  assert.ok(calibratedWindow.start<normalWindow.start,'longer explicit travel is scheduled earlier');
+  assert.ok(calibrated.choreography.movement.perceptualTiming.outputs.windowFL.leadAdjusted);
+  assert.equal(calibrated.choreography.targets.find(t=>t.outputId==='mirrorL').time,normal.choreography.targets.find(t=>t.outputId==='mirrorL').time);
+});
 const files=['web/engine/movement-planner.js','web/engine/show-engine.js','web/engine/vehicle-profile.js'];
-const receipt={release:Engine.version,passed:errors.length===0,errors,checkedAt:new Date().toISOString(),checks,fixtures,source_hashes:Object.fromEntries(files.map(f=>[f,crypto.createHash('sha256').update(fs.readFileSync(path.join(root,f))).digest('hex')])),limitations:['Motor travel is estimated from Tesla documented approximate durations. No physical car or Android device was used.','Dance oscillation cadence and endpoints are controlled by the car; only command start/end and prepared arrivals are scheduled.'],source:'https://github.com/teslamotors/light-show#closures-channels'};
+const receipt={release:Engine.version,passed:errors.length===0,errors,checkedAt:new Date().toISOString(),checks,fixtures,source_hashes:Object.fromEntries(files.map(f=>[f,crypto.createHash('sha256').update(fs.readFileSync(path.join(root,f))).digest('hex')])),limitations:['Motor travel uses unverified conservative planning envelopes. No physical car or Android device was used.','Dance oscillation cadence and endpoints are controlled by the car; only command start/end and prepared arrivals are scheduled.'],source:'https://github.com/teslamotors/light-show#closures-channels'};
 fs.mkdirSync(path.join(root,'qa/release-'+Engine.version),{recursive:true});fs.writeFileSync(path.join(root,'qa/release-'+Engine.version,'movement-verification.json'),JSON.stringify(receipt,null,2)+'\n');if(errors.length)process.exitCode=1;

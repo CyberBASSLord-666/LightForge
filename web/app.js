@@ -5,9 +5,14 @@ const $ = id => document.getElementById(id);
 const diagnostics=window.LightForgeDiagnostics;
 const native = () => window.Android && typeof window.Android.pickAudio === 'function';
 const clone = x => JSON.parse(JSON.stringify(x));
+// A completed background job is restored before the ordinary project fetch
+// path is allowed to own the Studio.  Keep its durable payload transport
+// bounded: a WebView request that never resolves must not leave the completed
+// job, loading overlay and preview permanently latched together.
+const COMPLETED_RESTORE_PROJECT_CHUNK_BYTES=48*1024,COMPLETED_RESTORE_PROJECT_MAX_BYTES=64*1024*1024,COMPLETED_RESTORE_PROJECT_READ_TIMEOUT_MS=12000;
 const defaults = {style:'festival',intensity:.85,dance:'expressive',stepMs:20,sensitivity:.82,beatDivision:'auto',bpmOverride:null,offsetMs:0,palette:'aurora',enabled:{windows:true,mirrors:true,trunk:true,charge:true,interior:true},optionalFog:false,outerBeamRamping:false,outputEnabled:{},manualCues:[],sectionOverrides:{},seed:2025,analysisQuality:'precision',movementDensity:.7,downbeatAnchor:null,meterOverride:null,tempoScale:1,vocalFocus:.85,bassFocus:.9,vocalRegions:[],musicCues:[],vocalOffsetMs:0,bassOffsetMs:0};
-const state = {audition:'mix',auditionAvailable:false,auditionLoading:false,project:null,music:null,show:null,settings:clone(defaults),projects:[],history:[],future:[],compiled:null,exportHeader:null,saveBlocked:false,composing:false,compileId:0,compileAbort:null,renderedSettingsKey:null,showMusic:null,pendingExport:null,busy:false,job:0,abort:null,view:'studio',editing:null,needAnalysis:false,previewMode:0,exportId:null,lastSave:0,acceptProgress:false,selection:0,loadingProject:false,pendingProjectAction:null,soloPreview:null};
-const audio=$('audio');let auditionEpoch=0,availabilityEpoch=0,auditionAbort=null,auditionURL=null,auditionIntent=null,auditionSignature=null,analysisFallback=null;let progressClock,toastTimer,saveTimer,regenTimer,lastDraw=0,lastSection=-1,frameRequest=0,dbPromise;
+const state = {audition:'mix',auditionAvailable:false,auditionLoading:false,project:null,music:null,show:null,settings:clone(defaults),projects:[],history:[],future:[],compiled:null,exportHeader:null,saveBlocked:false,composing:false,compileId:0,compileAbort:null,renderedSettingsKey:null,showMusic:null,pendingExport:null,busy:false,job:0,abort:null,view:'studio',editing:null,needAnalysis:false,previewMode:0,exportId:null,lastSave:0,acceptProgress:false,selection:0,loadingProject:false,pendingProjectAction:null,soloPreview:null,completedRestore:null,completedRestorePreviewDeferred:false,analysisExecutionMode:'resume'};
+const audio=$('audio');let auditionEpoch=0,availabilityEpoch=0,auditionAbort=null,auditionURL=null,auditionIntent=null,auditionSignature=null,analysisFallback=null,completedRestoreEpoch=0;let progressClock,toastTimer,saveTimer,regenTimer,lastDraw=0,lastSection=-1,frameRequest=0,dbPromise;
 let previewPaused=document.hidden,nativePreviewPaused=false,pagePreviewPaused=false;
 function auditionChanged(){document.dispatchEvent(new CustomEvent('lightforge:changed'));}
 function mixAudioUrl(){return state.project?.previewUrl||state.project?.audioUrl||'';}
@@ -85,12 +90,17 @@ function text(el,value){el.textContent=String(value==null?'':value);}
 function toast(message,error=false){if(error)diagnostics?.log('error','app',message);clearTimeout(toastTimer);text($('toast'),message);$('toast').hidden=false;$('toast').classList.toggle('error',error);toastTimer=setTimeout(()=>$('toast').hidden=true,error?7500:4200);}
 function mergeSettings(s){return {...clone(defaults),...s,enabled:{...defaults.enabled,...(s?.enabled||{})},sectionOverrides:s?.sectionOverrides||{}};}
 function bridge(method,...args){try{return window.Android?.[method]?.(...args);}catch(e){diagnostics?.log('error','bridge',e);toast(e.message||'The device action could not be completed.',true);throw e;}}
+function completedRestoreNeedsPreviewDeferral(job){return !!job?.id&&job.state==='completed'&&localStorage.getItem('lightforge-background-ack')!==job.id;}
+function setCompletedRestorePreviewDeferred(deferred){
+ const next=!!deferred;if(state.completedRestorePreviewDeferred===next)return;
+ state.completedRestorePreviewDeferred=next;vehiclePreview?.setLoadDeferred?.(next);
+}
 function nav(view){if(view!=='studio')stopInspection();if(!['studio','shows','guide'].includes(view))view='studio';state.view=view;document.querySelectorAll('.view').forEach(el=>el.classList.toggle('active',el.id===view));document.querySelectorAll('.nav-item').forEach(el=>{el.classList.toggle('active',el.dataset.navigate===view);if(el.dataset.navigate===view)el.setAttribute('aria-current','page');else el.removeAttribute('aria-current');});if(view==='shows'){if(native()&&!state.busy)applyBootstrap(parse(bridge('getBootstrap'),{}));else renderProjects();}window.scrollTo({top:0,behavior:'instant'});resizeCanvases();}
 async function readBootstrap(){
  let background=null;
  if(native()){
   const data=parse(bridge('getBootstrap'),{});background=data.backgroundJob||null;state.backgroundJob=background;
-  state.backgroundSyncPending=background?.state==='completed'&&localStorage.getItem('lightforge-background-ack')!==background.id;
+  state.backgroundSyncPending=completedRestoreNeedsPreviewDeferral(background);setCompletedRestorePreviewDeferred(state.backgroundSyncPending);
   applyBootstrap(data);state.lastProjectId=(backgroundActive(background)||state.backgroundSyncPending)?background.projectId:data.lastProjectId;
   renderDeviceCapabilities(data.deviceCapabilities);
  }else{state.projects=parse(localStorage.getItem('lightforge-projects'),[]);state.lastProjectId=localStorage.getItem('lightforge-last-project');renderProjects();}
@@ -112,24 +122,25 @@ async function dbPut(store,key,value){const d=await db();return new Promise((res
 async function dbDelete(store,key){const d=await db();return new Promise((resolve,reject)=>{const tx=d.transaction(store,'readwrite');tx.objectStore(store).delete(key);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);});}
 function encodeWav(buffer){const frames=buffer.length,bytes=new ArrayBuffer(44+frames*4),v=new DataView(bytes),write=(p,s)=>{for(let i=0;i<s.length;i++)v.setUint8(p+i,s.charCodeAt(i));};write(0,'RIFF');v.setUint32(4,36+frames*4,true);write(8,'WAVEfmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,2,true);v.setUint32(24,44100,true);v.setUint32(28,176400,true);v.setUint16(32,4,true);v.setUint16(34,16,true);write(36,'data');v.setUint32(40,frames*4,true);const l=buffer.getChannelData(0),r=buffer.getChannelData(Math.min(1,buffer.numberOfChannels-1));for(let i=0;i<frames;i++){v.setInt16(44+i*4,Math.round(Math.max(-1,Math.min(1,l[i]))*32767),true);v.setInt16(46+i*4,Math.round(Math.max(-1,Math.min(1,r[i]))*32767),true);}return new Blob([bytes],{type:'audio/wav'});}
 async function importBrowser(file){if(!file)return;diagnostics?.protectText(file.name);diagnostics?.protectText(file.name.replace(/\.[^.]+$/,''));const job=beginBusy('Bringing your music in','Converting audio to the format your Tesla needs.');try{const ctx=new (window.AudioContext||window.webkitAudioContext)();const decoded=await ctx.decodeAudioData(await file.arrayBuffer());await ctx.close();if(job!==state.job)return;const offline=new OfflineAudioContext(2,Math.ceil(decoded.duration*44100),44100),source=offline.createBufferSource();source.buffer=decoded;source.connect(offline.destination);source.start();const pcm=await offline.startRendering();if(job!==state.job)return;const wav=encodeWav(pcm),id='show-'+Date.now(),project={id,name:file.name.replace(/\.[^.]+$/,''),duration:pcm.duration,createdAt:Date.now(),audioUrl:URL.createObjectURL(wav),browser:true};await dbPut('audio',id,wav);state.projects.unshift(project);localStorage.setItem('lightforge-projects',JSON.stringify(state.projects));endBusy();await selectProject(project,true);toast('Music imported. Choose your style and create.');}catch(e){diagnostics?.log('error','operation',e);endBusy();toast('This audio could not be imported. '+(e.message||'Try another file.'),true);}}
-async function selectProject(project,isNew=false,{navigate=true}={}){
+async function selectProject(project,isNew=false,{navigate=true,restoreLease=null,restoreSaved=undefined}={}){
  diagnostics?.protectText(project?.name);
  stopInspection(); if(state.busy)return;clearTimeout(saveTimer);if(state.project&&!state.loadingProject&&!(await saveProject()))return;state.compileAbort?.abort();state.compileId++;state.composing=false;const selection=++state.selection,id=project.id;
  const current=()=>selection===state.selection&&state.project?.id===id;
  abandonAudition();audio.pause();clearTimeout(regenTimer);if(project.audioUrl)project.audioUrl=new URL(project.audioUrl,location.href).href;if(project.analysisUrl)project.analysisUrl=new URL(project.analysisUrl,location.href).href;if(project.previewUrl)project.previewUrl=new URL(project.previewUrl,location.href).href;
- state.project=project;state.saveBlocked=false;state.loadingProject=true;state.music=null;state.show=null;state.compiled=null;state.history=[];state.future=[];state.renderedSettingsKey=null;state.showMusic=null;state.editing=null;state.needAnalysis=false;lastSection=-1;
+ state.project=project;state.saveBlocked=false;state.loadingProject=true;state.music=null;state.show=null;state.compiled=null;state.history=[];state.future=[];state.renderedSettingsKey=null;state.showMusic=null;state.editing=null;state.needAnalysis=false;state.analysisExecutionMode='resume';lastSection=-1;
  $('results').hidden=true;$('validationCard').hidden=true;$('sectionEditor').hidden=true;$('noShowOverlay').hidden=false;$('emptyCard').hidden=true;$('workingStudio').hidden=false;
  document.querySelector('.controls-column').inert=true;
  text($('trackTitle'),project.name||'Untitled show');text($('trackMeta'),isNew?'Audio ready':'Opening saved project…');text($('totalTime'),formatTime(project.duration));$('seek').max=project.duration||1;audio.src=project.previewUrl||project.audioUrl||'';if(navigate)nav('studio');else resizeCanvases();updateButtons();
- try{let saved;
-  if(!isNew){if(project.browser){const blob=await dbGet('audio',id);if(!current())return;if(blob){if(project.audioUrl?.startsWith('blob:'))URL.revokeObjectURL(project.audioUrl);project.audioUrl=URL.createObjectURL(blob);audio.src=project.audioUrl;}saved=await dbGet('projects',id);if(!current())return;
+ try{let saved=restoreSaved;
+  if(!isNew&&restoreSaved===undefined){if(project.browser){const blob=await dbGet('audio',id);if(!current())return;if(blob){if(project.audioUrl?.startsWith('blob:'))URL.revokeObjectURL(project.audioUrl);project.audioUrl=URL.createObjectURL(blob);audio.src=project.audioUrl;}saved=await dbGet('projects',id);if(!current())return;
    }else if(project.projectUrl){const response=await fetch(project.projectUrl);if(!current())return;if(response.ok){saved=await response.json();if(!current())return;}}}
   if(!current())return;
   if(saved){state.settings=mergeSettings(saved.settings);state.music=saved.music||null;state.compiled=saved.compiled||null;state.needAnalysis=!!saved.needAnalysis;}else state.settings=mergeSettings({...state.settings,sectionOverrides:{},manualCues:[],outputEnabled:{},vocalRegions:[],musicCues:[],vocalOffsetMs:0,bassOffsetMs:0});
+  if(restoreLease&&!completedRestorePulse(restoreLease,'project-loaded',typeof state.compiled?.frameData==='string'?state.compiled.frameData.length:0))throw Error('Native completed-restore lease rejected the project load phase.');
   state.loadingProject=false;document.querySelector('.controls-column').inert=false;text($('trackMeta'),`${formatTime(project.duration)} · ${project.previewSampleRate===22050?'Long-track mono preview · Stereo export':'44.1 kHz stereo · On this device'}`);syncControls();
-  if(state.music)await regenerate({save:false,restoreCompiled:state.compiled});else{updateButtons();renderFrame(0);drawWave();}
+  if(state.music)await regenerate({save:false,restoreCompiled:state.compiled,restoreLease});else{updateButtons();renderFrame(0);drawWave();}
   if(current()){scheduleSave();await refreshAuditionAvailability({force:true});}
- }catch(e){diagnostics?.log('error','operation',e);if(!current())return;state.saveBlocked=true;state.loadingProject=false;document.querySelector('.controls-column').inert=false;syncControls();updateButtons();renderFrame(0);text($('trackMeta'),'Audio ready · Saved settings could not be opened');toast('Audio is ready. Create a new show to rebuild this project.',true);}
+ }catch(e){diagnostics?.log('error','operation',e);if(!current())return;state.saveBlocked=true;state.loadingProject=false;document.querySelector('.controls-column').inert=false;syncControls();updateButtons();renderFrame(0);text($('trackMeta'),'Audio ready · Saved settings could not be opened');if(restoreLease)throw e;toast('Audio is ready. Create a new show to rebuild this project.',true);}
 }
 
 function currentShowMatches(){return !!state.show&&!state.needAnalysis&&state.showMusic===state.music&&state.renderedSettingsKey===JSON.stringify(state.settings);}
@@ -153,7 +164,7 @@ function syncControls(){const s=state.settings;document.querySelectorAll('[data-
 function updateRangeFill(el){el.style.setProperty('--fill',100*(Number(el.value)-Number(el.min))/(Number(el.max)-Number(el.min))+'%');}
 function settingsChanged(needsAnalysis=false){
  state.compileAbort?.abort();state.compileId++;state.composing=false;clearTimeout(regenTimer);
- if(needsAnalysis)state.needAnalysis=true;syncControls();scheduleSave();
+ if(needsAnalysis){state.needAnalysis=true;state.analysisExecutionMode='fresh';}syncControls();scheduleSave();
  if(state.music&&!needsAnalysis&&!state.needAnalysis){state.composing=true;updateButtons();regenTimer=setTimeout(()=>regenerate(),220);}
  else if(state.needAnalysis){$('validationCard').hidden=true;text($('generationHint'),'Create again to analyze the music with your updated rhythm settings.');}
 }
@@ -203,6 +214,162 @@ function renderDeviceCapabilities(data){
  text($('backgroundDeviceStatus'),data.batteryRestricted?'Android is restricting background work. Open Battery settings and allow unrestricted use for LightForge.':data.notifications===false?'Background analysis is available. Enable notifications to see progress and completion outside the app.':data.batteryOptimized?'Background analysis is ready. Allow background battery use for long jobs with the screen off.':'Background analysis is ready. Progress and Cancel stay available in your notification.');
  renderBackgroundNote();
 }
+function completedRestoreNonce(){completedRestoreEpoch++;return `${Date.now().toString(36)}-${completedRestoreEpoch.toString(36)}-${Math.random().toString(36).slice(2,14)}`;}
+function beginCompletedRestore(job){
+ const prior=state.completedRestore;
+ const lease={jobId:job.id,projectId:String(job.projectId||''),nonce:completedRestoreNonce(),phase:'bootstrap',sequence:0,bytes:0,renderCountBeforeAdopt:0,workerVerified:false,adoptedProjectId:null,adoptedSelection:0,adoptedCompileId:0,failed:false,terminal:false,ackWritten:false,ackConfirmed:false};
+ state.completedRestore=lease;
+ let accepted;
+ try{accepted=bridge('beginCompletedRestore',lease.jobId,lease.nonce,lease.bytes);}
+ catch(error){state.completedRestore=prior||null;setCompletedRestorePreviewDeferred(false);throw error;}
+ if(accepted!==true){state.completedRestore=prior||null;setCompletedRestorePreviewDeferred(false);throw Error('Native completed-restore lease was rejected.');}
+ setCompletedRestorePreviewDeferred(true);
+ if(prior&&prior!==lease&&prior.terminal&&!prior.ackConfirmed&&prior.jobId!==lease.jobId){
+  // Native has atomically retired only this old unconfirmed terminal token
+  // for the new durable completed job. Keep the old job's persisted cap
+  // armed; a later old ACK now fails its exact job+nonce check.
+  prior.superseded=true;diagnostics?.log('warn','background','A later completed job superseded an unconfirmed native ACK token.');
+ }
+ return lease;
+}
+function completedRestoreOwnsAdoptedProject(lease){return !!lease&&state.completedRestore===lease&&!lease.failed&&!lease.terminal&&!!lease.projectId&&state.project?.id===lease.projectId&&lease.adoptedProjectId===lease.projectId&&lease.adoptedSelection===state.selection&&lease.adoptedCompileId===state.compileId&&!!state.show&&!!state.compiled;}
+function completedRestorePulse(lease,phase,bytes=lease?.bytes||0){
+ if(!lease||state.completedRestore!==lease||lease.failed||lease.terminal)return false;
+ lease.phase=phase;lease.sequence++;lease.bytes=Math.max(0,Number(bytes)||0);
+ if(bridge('completedRestorePulse',lease.jobId,lease.nonce,phase,lease.sequence,lease.bytes)===true)return true;
+ completedRestoreFailed(lease,'Native completed-restore pulse was rejected.');return false;
+}
+function completedRestoreFailed(lease,reason){
+ if(!lease||state.completedRestore!==lease||lease.failed||lease.terminal)return;
+ lease.failed=true;lease.phase='failed';lease.sequence++;setCompletedRestorePreviewDeferred(false);bridge('completedRestoreFailed',lease.jobId,lease.nonce,String(reason||'restore-failed').slice(0,120));
+}
+function completedRestoreWorkerEvent(lease,event){
+ if(!lease||state.completedRestore!==lease||event?.lease?.jobId!==lease.jobId||event.lease?.nonce!==lease.nonce)return;
+ if(event.type==='restore-error'){completedRestoreFailed(lease,event.message||'worker-error');return;}
+ if(event.type==='restore-started')completedRestorePulse(lease,'worker-started');
+ else if(event.type==='restore-pulse')completedRestorePulse(lease,`worker-${event.phase||'pulse'}`,event.total||lease.bytes);
+ else if(event.type==='restore-verified'){lease.workerVerified=true;completedRestorePulse(lease,'worker-verified');}
+}
+function completedRestorePacketBytes(encoded){
+ if(typeof encoded!=='string'||encoded.length===0)return new Uint8Array(0);
+ const binary=atob(encoded),bytes=new Uint8Array(binary.length);
+ for(let index=0;index<binary.length;index++)bytes[index]=binary.charCodeAt(index);
+ return bytes;
+}
+async function readCompletedRestoreProjectFromBridge(project,lease){
+ if(typeof window.Android?.readCompletedRestoreProjectChunk!=='function')return null;
+ const Decoder=window.TextDecoder||globalThis.TextDecoder;
+ if(typeof Decoder!=='function')throw Error('This device cannot safely decode the completed project payload.');
+ // Keep decoded chunks separately until the bounded snapshot is complete.
+ // Repeated string concatenation becomes quadratic for multi-megabyte FSEQ
+ // payloads and can starve the renderer that this recovery is trying to
+ // restore.
+ const decoder=new Decoder('utf-8',{fatal:true});let offset=0,total=-1,snapshot='',chunks=0;const parts=[];
+ for(;;){
+  if(!completedRestorePulse(lease,'project-read',offset))throw Error('Native completed-restore lease rejected the project-read phase.');
+  const packet=parse(bridge('readCompletedRestoreProjectChunk',lease.jobId,lease.nonce,project.id,offset,COMPLETED_RESTORE_PROJECT_CHUNK_BYTES),null);
+  if(!packet||packet.ok!==true)throw Error(packet?.error||'The completed project payload was unavailable.');
+  const start=Number(packet.offset),declaredTotal=Number(packet.total),declaredSnapshot=String(packet.snapshot||'');
+  if(!Number.isSafeInteger(start)||start!==offset||!Number.isSafeInteger(declaredTotal)||declaredTotal<=0||declaredTotal>COMPLETED_RESTORE_PROJECT_MAX_BYTES)throw Error('The completed project payload was malformed.');
+  if(!/^[0-9]+:[0-9a-f-]{36}$/.test(declaredSnapshot))throw Error('The completed project payload has no stable snapshot identity.');
+  if(total<0){total=declaredTotal;snapshot=declaredSnapshot;}else if(total!==declaredTotal||snapshot!==declaredSnapshot)throw Error('The completed project payload changed while it was being read.');
+  const bytes=completedRestorePacketBytes(packet.base64);if(bytes.length===0||offset+bytes.length>total)throw Error('The completed project payload ended unexpectedly.');
+  offset+=bytes.length;parts.push(decoder.decode(bytes,{stream:offset<total}));
+  if(offset===total){parts.push(decoder.decode());return JSON.parse(parts.join(''));}
+  if(++chunks>Math.ceil(total/COMPLETED_RESTORE_PROJECT_CHUNK_BYTES)+1)throw Error('The completed project payload did not make bounded progress.');
+  // Give the renderer/probe queue a turn during a very large saved-show read.
+  if(chunks%16===0)await new Promise(resolve=>setTimeout(resolve,0));
+ }
+}
+async function readCompletedRestoreProjectFromFetch(project,lease){
+ if(!project?.projectUrl)throw Error('The completed project has no saved payload.');
+ if(!completedRestorePulse(lease,'project-read-fallback',lease.bytes))throw Error('Native completed-restore lease rejected the project-read fallback.');
+ const Controller=window.AbortController||globalThis.AbortController,controller=Controller?new Controller():null;
+ let timer;
+ const timeout=new Promise((_,reject)=>{timer=setTimeout(()=>{try{controller?.abort();}catch{}reject(Error('The completed project read timed out before it could be restored.'));},COMPLETED_RESTORE_PROJECT_READ_TIMEOUT_MS);});
+ try{
+  const response=await Promise.race([fetch(project.projectUrl,controller?{signal:controller.signal}:undefined),timeout]);
+  if(!response?.ok)throw Error('The completed project could not be read.');
+  const body=typeof response.text==='function'
+   ?await Promise.race([response.text(),timeout])
+   :JSON.stringify(await Promise.race([response.json?.(),timeout]));
+  if(typeof body!=='string'||body.length===0||body.length>COMPLETED_RESTORE_PROJECT_MAX_BYTES)throw Error('The completed project payload is invalid or too large.');
+  if(!completedRestorePulse(lease,'project-read',body.length))throw Error('Native completed-restore lease rejected the project-read result.');
+  return JSON.parse(body);
+ }finally{clearTimeout(timer);}
+}
+async function readCompletedRestoreProject(project,lease){
+ if(typeof window.Android?.readCompletedRestoreProjectChunk==='function')return readCompletedRestoreProjectFromBridge(project,lease);
+ // Older native hosts have no scoped payload bridge. Their only escape hatch
+ // remains the same-origin project resource, bounded and never treated as a
+ // successful restore until the ordinary compiled-show verification finishes.
+ return readCompletedRestoreProjectFromFetch(project,lease);
+}
+function awaitCompletedRestoreRender(lease){return new Promise((resolve,reject)=>{
+ let settled=false,frame=null;
+ const finish=(callback,value)=>{if(settled)return;settled=true;if(frame!==null){cancelAnimationFrame(frame);frame=null;}callback(value);};
+ const fail=error=>finish(reject,error);
+ const succeed=()=>finish(resolve);
+ const preview=vehiclePreview,ready=preview?.ready;
+ // A failed GLTF/WebGL preview cannot provide the required first-frame proof.
+ // Keep the completed job pending for a safe retry instead of waiting forever.
+ if(ready&&typeof ready.then==='function')Promise.resolve(ready).then(value=>{if(value===false)fail(Error('The 3D preview could not render the completed show.'));},()=>fail(Error('The 3D preview could not render the completed show.')));
+ const inspect=()=>{
+  frame=null;if(settled)return;
+  if(!completedRestoreOwnsAdoptedProject(lease))return fail(Error('Saved arrangement restoration was superseded.'));
+  if(preview?.loaded&&Number(preview.renderCount)>lease.renderCountBeforeAdopt){
+   if(!completedRestorePulse(lease,'preview-first-render'))return fail(Error('Native completed-restore lease rejected the first web render.'));
+   succeed();return;
+  }
+  frame=requestAnimationFrame(inspect);
+ };
+ inspect();
+});}
+function awaitCompletedRestoreVisualCommit(lease){return new Promise((resolve,reject)=>{
+ const inspect=()=>{
+  if(!completedRestoreOwnsAdoptedProject(lease))return reject(Error('Saved arrangement restoration was superseded before its visual frame committed.'));
+  if(bridge('requestCompletedRestoreVisualCommit',lease.jobId,lease.nonce)!==true)return reject(Error('Native completed-restore visual proof was rejected.'));
+  if(bridge('completedRestoreVisualCommitted',lease.jobId,lease.nonce)===true){
+   if(!completedRestorePulse(lease,'preview-visual-commit'))return reject(Error('Native completed-restore visual phase was rejected.'));
+   resolve();return;
+  }
+  requestAnimationFrame(inspect);
+ };
+ inspect();
+});}
+function completeCompletedRestore(lease){
+ if(!completedRestoreOwnsAdoptedProject(lease)||!lease.workerVerified)throw Error('Saved arrangement restoration was superseded before worker verification.');
+ const priorPhase=lease.phase;lease.phase='terminal';lease.sequence++;
+ if(bridge('completedRestoreTerminal',lease.jobId,lease.nonce,lease.sequence,lease.bytes)!==true){lease.phase=priorPhase;lease.sequence--;throw Error('Native completed-restore terminal proof was rejected.');}
+ lease.terminal=true;
+}
+function completedRestoreAwaitingAck(lease,job){
+ return !!lease&&state.completedRestore===lease&&!lease.failed&&lease.terminal&&!lease.ackConfirmed&&lease.jobId===job?.id;
+}
+function completedRestoreAckCommitted(lease){
+ // This is a post-write confirmation for the native replacement cap only.
+ // It never lets native write, clear, or inspect the browser ACK itself.
+ // Do not allow an old lease to confirm a different job, or let an unproven
+ // terminal state claim a browser ACK it has not durably written.
+ if(!lease||state.completedRestore!==lease||lease.failed||!lease.terminal||lease.ackConfirmed)return false;
+ if(localStorage.getItem('lightforge-background-ack')!==lease.jobId)return false;
+ try{
+  if(bridge('completedRestoreAckCommitted',lease.jobId,lease.nonce)!==true){diagnostics?.log('warn','background','Native replacement cap remains armed after browser ACK confirmation was unavailable.');return false;}
+  lease.ackConfirmed=true;return true;
+ }catch(error){diagnostics?.log('warn','background','Native replacement cap confirmation failed: '+(error.message||error));return false;}
+}
+function writeCompletedRestoreAck(lease,job){
+ if(!completedRestoreAwaitingAck(lease,job))throw Error('Completed-restore ACK no longer belongs to this job.');
+ // Reuse this exact terminal lease after a storage failure.  A fresh lease is
+ // intentionally forbidden while native retains its terminal job+nonce token.
+ if(!lease.ackWritten||localStorage.getItem('lightforge-background-ack')!==job.id){
+  localStorage.setItem('lightforge-background-ack',job.id);
+  if(localStorage.getItem('lightforge-background-ack')!==job.id)throw Error('The completed show could not be acknowledged in browser storage.');
+  lease.ackWritten=true;
+ }
+ state.backgroundSyncPending=false;
+ return completedRestoreAckCommitted(lease);
+}
 async function handleBackgroundJob(job){
  if(!job?.id)return;state.backgroundJob=job;
  if(state.diagnosticBackgroundState!==job.id+':'+job.state){state.diagnosticBackgroundState=job.id+':'+job.state;const status=['queued','running','cancelling','completed','failed','interrupted','cancelled'].includes(job.state)?job.state:'unknown';diagnostics?.log(['failed','interrupted'].includes(status)?'error':'info','background','Analysis state='+status);}
@@ -213,22 +380,44 @@ async function handleBackgroundJob(job){
   renderBackgroundNote();setProgress({...job,stage:job.analysisStage||(job.progress>=.96?'generate':'analysis'),detail:job.stage});
   $('cancelWork').disabled=job.state==='cancelling';return;
  }
+ // Once native terminal proof exists, a failed browser-storage write must
+ // retry that same job+nonce rather than opening a new lease that native
+ // correctly rejects until its exact post-ACK confirmation arrives.
+ const terminalLease=state.completedRestore;
+ if(job.state==='completed'&&completedRestoreAwaitingAck(terminalLease,job)){
+  state.backgroundApplying=true;
+  try{
+   const confirmed=writeCompletedRestoreAck(terminalLease,job);
+   state.backgroundSeen=job.id+':'+job.state;
+   if(confirmed)toast('Your background show is ready. Press play to review it.');
+  }catch(error){
+   terminalLease.ackWritten=false;state.backgroundSyncPending=true;state.backgroundSeen=null;
+   diagnostics?.log('error','background',error);toast(error.message,true);
+  }finally{
+   if(terminalLease.ackConfirmed&&state.completedRestore===terminalLease)state.completedRestore=null;
+   state.backgroundApplying=false;
+  }
+  updateButtons();return;
+ }
  if(state.backgroundSeen===job.id+':'+job.state)return;
  state.backgroundSeen=job.id+':'+job.state;
  if(state.busy&&!state.abort)endBusy();
  const banner=$('backgroundRecovery');if(banner)banner.hidden=true;
  if(job.state==='completed'){
   if(!state.backgroundSyncPending)return;
-  state.backgroundApplying=true;
+  let restoreLease=null;state.backgroundApplying=true;
   try{
+   restoreLease=beginCompletedRestore(job);
    clearTimeout(saveTimer);applyBootstrap(parse(bridge('getBootstrap'),{}));
    const project=state.projects.find(p=>p.id===job.projectId);if(!project)throw Error('The completed project could not be found.');
-   state.lastSaved=null;await selectProject(project,false,{navigate:false});
-   if(state.saveBlocked)throw Error('The saved show could not be opened.');
-   state.backgroundSyncPending=false;localStorage.setItem('lightforge-background-ack',job.id);
+   const restoreSaved=await readCompletedRestoreProject(project,restoreLease);
+   state.lastSaved=null;await selectProject(project,false,{navigate:false,restoreLease,restoreSaved});
+   if(state.saveBlocked||!completedRestoreOwnsAdoptedProject(restoreLease))throw Error('The completed project was superseded before its saved show could be adopted.');
+   await awaitCompletedRestoreRender(restoreLease);await awaitCompletedRestoreVisualCommit(restoreLease);completeCompletedRestore(restoreLease);
+   writeCompletedRestoreAck(restoreLease,job);
    toast('Your background show is ready. Press play to review it.');
-  }catch(error){diagnostics?.log('error','background',error);state.backgroundSeen=null;toast(error.message,true);}
-  finally{state.backgroundApplying=false;}
+  }catch(error){completedRestoreFailed(restoreLease,error.message||error);diagnostics?.log('error','background',error);state.backgroundSeen=null;toast(error.message,true);}
+  finally{if(restoreLease&&state.completedRestore===restoreLease&&(restoreLease.failed||restoreLease.ackConfirmed))state.completedRestore=null;state.backgroundApplying=false;}
  }else if(['failed','interrupted','cancelled'].includes(job.state)){
   state.backgroundSyncPending=false;
   if(banner){banner.hidden=false;const saved=job.hasCheckpoint?' Completed music analysis is saved; resume skips straight to choreography.':job.resumeAvailable?' Verified progress is saved and will be reused.':' Resume checks for saved progress before continuing.';text($('backgroundRecoveryMessage'),(job.stage||'Your saved show is intact.')+saved);text($('backgroundRetry'),'Resume analysis');}
@@ -242,9 +431,12 @@ async function pollBackgroundJob(){
 async function startBackgroundGeneration(){
  if(!(await saveProject()))return;
  clearTimeout(saveTimer);abandonAudition();audio.pause();audio.src=mixAudioUrl();
- const job=parse(bridge('startAnalysis',state.project.id),{});
+ const fresh=state.analysisExecutionMode==='fresh'&&!!window.Android&&typeof window.Android.startFreshAnalysis==='function';
+ const job=parse(bridge(fresh?'startFreshAnalysis':'startAnalysis',state.project.id),{});
  if(job.error||!job.id){toast(job.error||'Background analysis could not start.',true);return;}
- state.backgroundSeen=null;state.backgroundSyncPending=false;
+ // A fresh request mints one epoch. Subsequent cancellation/retry is a normal
+ // resume so the durable checkpoint and its forced-WASM marker stay reachable.
+ state.analysisExecutionMode='resume';state.backgroundSeen=null;state.backgroundSyncPending=false;
  if($('backgroundRecovery'))$('backgroundRecovery').hidden=true;
  await handleBackgroundJob(job);
 }
@@ -264,7 +456,7 @@ async function generate(){
   const result=await ShowCompiler.generate(music,settings,p=>{if(job===state.job)setProgress({...p,progress:.96+.04*Math.max(0,Math.min(1,Number(p.progress)||0))});},state.abort.signal);
   if(job!==state.job)return;
   if(previous.music){state.history.push(previous);trimHistory(state.history);state.future=[];}
-  analysisFallback=null;state.music=music;state.needAnalysis=false;state.settings=settings;adoptShow(result,music,settings);
+  analysisFallback=null;state.music=music;state.needAnalysis=false;state.analysisExecutionMode='resume';state.settings=settings;adoptShow(result,music,settings);
   const saved=await saveProject();endBusy();await refreshAuditionAvailability({force:true});if(saved)toast('Your show is ready. Press play and make it yours.');$('previewBadge').focus?.();
  }catch(e){diagnostics?.log(e.name==='AbortError'?'info':'error','analysis',e);if(job!==state.job)return;restoreAnalysisFallback();endBusy();await refreshAuditionAvailability({force:true});if(e.name!=='AbortError')toast('Could not create this show. '+(e.message||'Please try again.'),true);}updateButtons();
 }
@@ -274,17 +466,32 @@ function presentShow(){
  $('results').hidden=false;$('noShowOverlay').hidden=true;const bpm=Number(rhythm?.bpm??music.bpm);text($('bpmStat'),Number.isFinite(bpm)&&bpm>0?bpm.toFixed(1):'—');text($('beatStat'),bpm>0?Math.round(60000/bpm)+' ms':'—');text($('sectionStat'),show.sections?.length||music.sections?.length||0);text($('frameStat'),show.stepMs);text($('previewBadge'),music.engine?.neural?'NEURAL BEATS · LIVE':'LIVE PREVIEW');renderSections();renderValidation();renderFrame(audio.currentTime||0);drawWave();updateButtons();
 }
 function adoptShow(result,music,settings){state.saveBlocked=false;state.show=result.show;state.compiled=result.compiled;state.exportHeader=result.header;state.showMusic=music;state.renderedSettingsKey=JSON.stringify(settings);presentShow();refreshAuditionAvailability().catch(()=>{});}
-async function regenerate({save=true,preparedShow=null,restoreCompiled=null}={}){
+async function regenerate({save=true,preparedShow=null,restoreCompiled=null,restoreLease=null}={}){
  if(!state.music||!window.ShowCompiler)return null;clearTimeout(regenTimer);state.compileAbort?.abort();const controller=new AbortController(),ticket=++state.compileId,projectId=state.project?.id;
  state.compileAbort=controller;state.composing=true;updateButtons();
  try{
   const music=alignedMusic(state.music),settings=clone(state.settings);let result;
-  if(preparedShow)result={show:preparedShow,compiled:null};
-  else if(restoreCompiled)result=await ShowCompiler.restore(restoreCompiled,music,settings,()=>{},controller.signal);
+ if(preparedShow)result={show:preparedShow,compiled:null};
+  else if(restoreCompiled){if(restoreLease&&!completedRestorePulse(restoreLease,'restore-dispatched'))throw Error('Native completed-restore lease rejected dispatch.');result=await ShowCompiler.restore(restoreCompiled,music,settings,()=>{},controller.signal,restoreLease?{restoreLease,onRestoreEvent:event=>completedRestoreWorkerEvent(restoreLease,event)}:undefined);}
   else result=await ShowCompiler.generate(music,settings,()=>{},controller.signal);
+  if(restoreLease?.failed)throw Error('Native completed-restore lease rejected an ordered worker event.');
   if(ticket!==state.compileId||projectId!==state.project?.id)return null;
-  state.music=music;adoptShow(result,music,settings);if(save)scheduleSave();return state.show;
- }catch(e){diagnostics?.log(e.name==='AbortError'?'info':'error','composition-worker',e);if(ticket!==state.compileId||e.name==='AbortError')return null;if(restoreCompiled)state.saveBlocked=true;toast((restoreCompiled?'Saved arrangement could not be verified: ':'The show could not be built: ')+e.message,true);return null;}
+  if(restoreLease&&(!restoreLease.projectId||state.completedRestore!==restoreLease||restoreLease.projectId!==projectId))return null;
+  state.music=music;if(restoreLease)restoreLease.renderCountBeforeAdopt=Number(vehiclePreview?.renderCount)||0;
+  adoptShow(result,music,settings);
+  if(restoreLease){
+   restoreLease.adoptedProjectId=projectId;restoreLease.adoptedSelection=state.selection;restoreLease.adoptedCompileId=ticket;
+   // Commit the verified CPU-side adoption before beginning GPU startup. The
+   // first rendered frame and native visual proof remain separate requirements.
+   if(!completedRestorePulse(restoreLease,'show-adopted'))throw Error('Native completed-restore lease rejected the adopted show.');
+   // Tell Android that the deferred real renderer/GLTF startup is about to
+   // begin. This opens only its bounded startup liveness phase; first-frame
+   // and visual-commit proof remain mandatory before terminal acknowledgement.
+   if(!completedRestorePulse(restoreLease,'preview-starting'))throw Error('Native completed-restore lease rejected preview startup.');
+   setCompletedRestorePreviewDeferred(false);
+  }
+  if(save)scheduleSave();return state.show;
+ }catch(e){if(restoreLease)completedRestoreFailed(restoreLease,e.message||e);diagnostics?.log(e.name==='AbortError'?'info':'error','composition-worker',e);if(ticket!==state.compileId||e.name==='AbortError')return null;if(restoreCompiled)state.saveBlocked=true;toast((restoreCompiled?'Saved arrangement could not be verified: ':'The show could not be built: ')+e.message,true);return null;}
  finally{if(ticket===state.compileId){state.composing=false;state.compileAbort=null;updateButtons();}}
 }
 function renderValidation(){const v=state.show.validation;$('validationCard').hidden=false;$('validationCard').classList.toggle('invalid',!v.valid);text($('validationIcon'),v.valid?'✓':'!');text($('validationTitle'),v.valid?'Ready for your Model 3':'A check needs attention');text($('validationSummary'),v.valid?'Timing, format & movement limits checked':'Adjust the show before exporting');$('export').disabled=!v.valid;const content=$('validationContent');content.replaceChildren();const list=document.createElement('ul');const lines=[`Uncompressed FSEQ v2 · 200 channels · ${state.soloPreview?.show.stepMs||state.show?.stepMs||20} ms`,`Duration ${formatTime(state.show.duration)} · ${state.show.frameCount.toLocaleString()} frames`,'44.1 kHz stereo PCM WAV · matched filenames',`Analysis: ${state.music.engine?.name||'On-device rhythm engine'}`];for(const line of [...lines,...(v.errors||[]).map(x=>'Issue: '+x),...(v.warnings||[]).map(x=>'Note: '+x),...(state.music.warnings||[]).map(x=>'Analysis: '+x)]){const li=document.createElement('li');text(li,line);list.appendChild(li);}content.appendChild(list);}
@@ -308,7 +515,10 @@ function resetStudio(){snapshot();state.settings=clone(defaults);state.needAnaly
 function canvasSize(canvas){const rect=canvas.getBoundingClientRect(),ratio=Math.min(window.devicePixelRatio||1,2);if(!rect.width||!rect.height)return null;const w=Math.round(rect.width*ratio),h=Math.round(rect.height*ratio);if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}return {ctx:canvas.getContext('2d'),w:rect.width,h:rect.height,ratio};}
 function resizeCanvases(){if(previewPaused||document.hidden)return;renderFrame(audio.currentTime||0);drawWave();}
 function rounded(ctx,x,y,w,h,r){ctx.beginPath();ctx.roundRect(x,y,w,h,r);}
-const vehiclePreview=new VehiclePreview($('carCanvas'),(view,label)=>{text($('cameraLabel'),label);document.querySelectorAll('[data-camera]').forEach(el=>{const selected=el.dataset.camera===view;el.classList.toggle('selected',selected);el.setAttribute('aria-pressed',String(selected));});});
+const startupPreviewBootstrap=(()=>{try{return native()?parse(window.Android?.getBootstrap?.(),null):null;}catch(error){diagnostics?.log('warn','bootstrap',error);return null;}})();
+const startupPreviewDeferred=completedRestoreNeedsPreviewDeferral(startupPreviewBootstrap?.backgroundJob);
+state.completedRestorePreviewDeferred=startupPreviewDeferred;
+const vehiclePreview=new VehiclePreview($('carCanvas'),(view,label)=>{text($('cameraLabel'),label);document.querySelectorAll('[data-camera]').forEach(el=>{const selected=el.dataset.camera===view;el.classList.toggle('selected',selected);el.setAttribute('aria-pressed',String(selected));});},{deferLoad:startupPreviewDeferred});
 const monitorGroups=VehicleProfile.outputs.filter(o=>o.available&&o.kind==='light').map(o=>[o.name,o.channels]);
 for(const [name,channels] of monitorGroups){const cell=document.createElement('span');cell.className='lamp-cell';cell.dataset.channels=channels.join(',');const dot=document.createElement('i'),label=document.createElement('span'),value=document.createElement('b');text(label,name);text(value,'0%');cell.append(dot,label,value);$('lampMonitor').appendChild(cell);}
 const rgbLabels=['Display','R rear cabin','R front cabin','Dashboard','L front cabin','L rear cabin'];for(let i=0;i<rgbLabels.length;i++){const cell=document.createElement('span');cell.className='lamp-cell';cell.dataset.rgb=i;const dot=document.createElement('i'),label=document.createElement('span'),value=document.createElement('b');text(label,rgbLabels[i]);text(value,'#000000');cell.append(dot,label,value);$('lampMonitor').appendChild(cell);}

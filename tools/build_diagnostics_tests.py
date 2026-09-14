@@ -68,7 +68,7 @@ def main():
     target.parent.mkdir(exist_ok=True)
     run(build / 'apksigner', 'sign', '--ks', key / 'lightforge-release.jks',
         '--ks-key-alias', 'lightforge', '--ks-pass', 'file:' + str(key / 'keystore-password.txt'),
-        '--out', target, aligned)
+        '--v4-signing-enabled', 'false', '--out', target, aligned)
     run(build / 'apksigner', 'verify', target)
     print('Built ephemeral, same-signed diagnostics-tests.apk')
 

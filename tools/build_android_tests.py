@@ -32,5 +32,5 @@ aligned=out/'aligned.apk';run(build/'zipalign','-f','4',unsigned,aligned)
 target=ROOT/'dist/background-tests.apk'
 # The generated key uses the store password. apksigner consumes password-file
 # lines, so specifying that same single-line file twice incorrectly reaches EOF.
-run(build/'apksigner','sign','--ks',key/'lightforge-release.jks','--ks-key-alias','lightforge','--ks-pass','file:'+str(key/'keystore-password.txt'),'--out',target,aligned)
+run(build/'apksigner','sign','--ks',key/'lightforge-release.jks','--ks-key-alias','lightforge','--ks-pass','file:'+str(key/'keystore-password.txt'),'--v4-signing-enabled','false','--out',target,aligned)
 run(build/'apksigner','verify',target);print('Built ephemeral, same-signed background-tests.apk')

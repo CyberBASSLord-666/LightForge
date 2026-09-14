@@ -25,6 +25,16 @@ public final class BackgroundInstrumentation extends Instrumentation {
     private JSONObject lastPowerTransition;
     private volatile JSONObject lastUiReadiness;
     private final JSONArray uiReadinessChecks=new JSONArray();
+    private static final long UI_READINESS_POLL_MS=100L;
+    private static final long UI_JAVASCRIPT_CALLBACK_BUDGET_MS=CompletedRestoreMonitor.CALLBACK_BUDGET_MS;
+    // A normal foreground bootstrap must be prompt. If the production
+    // completed-restore watchdog performs its one exact, durable recovery,
+    // the replacement is a new renderer with its own bounded bootstrap window.
+    // Completed restore permits a real, named 45-second GLTF/WebGL startup
+    // phase. Retain only a small bounded bootstrap margin around that product
+    // policy, including the one verified renderer replacement below.
+    private static final long UI_READINESS_INITIAL_BUDGET_MS=60000L;
+    private static final long UI_READINESS_RECOVERY_BUDGET_MS=60000L;
     private final Handler watchdogMain=new Handler(Looper.getMainLooper());
     private volatile boolean watchdogStopped;
     private Thread mainWatchdog;
@@ -65,6 +75,23 @@ public final class BackgroundInstrumentation extends Instrumentation {
             android.util.Log.e("LightForgeTest","Could not capture delayed main-thread stacks",error);
         }
     }
+    // Failure-only, same-signed instrumentation evidence. Production keeps its
+    // existing private, sanitized journal and exposes no additional bridge API.
+    private void emitFailureDiagnostics(){
+        try{
+            AppDiagnostics.flush(1000);
+            DiagnosticLog journal=(DiagnosticLog)field(AppDiagnostics.class,"journal");
+            if(journal==null)return;
+            ByteArrayOutputStream snapshot=new ByteArrayOutputStream();journal.snapshot(snapshot);
+            byte[] bytes=snapshot.toByteArray();int start=Math.max(0,bytes.length-64*1024);
+            // Keep complete UTF-8 log lines and stay well below Binder limits.
+            if(start>0){while(start<bytes.length&&bytes[start]!='\n')start++;if(start<bytes.length)start++;}
+            String trace=new String(bytes,start,bytes.length-start,java.nio.charset.StandardCharsets.UTF_8);
+            Bundle event=new Bundle();event.putString("stream","LIGHTFORGE_DIAGNOSTICS_BEGIN\n"+trace+"LIGHTFORGE_DIAGNOSTICS_END\n");sendStatus(0,event);
+        }catch(Throwable diagnosticError){
+            android.util.Log.e("LightForgeTest","Could not capture sanitized failure journal",diagnosticError);
+        }
+    }
     private void stopMainWatchdog(){
         watchdogStopped=true;watchdogMain.removeCallbacksAndMessages(null);
         if(mainWatchdog!=null)mainWatchdog.interrupt();
@@ -88,6 +115,12 @@ public final class BackgroundInstrumentation extends Instrumentation {
         Bundle event=new Bundle();event.putString("stream","LIGHTFORGE_PROGRESS "+value+"\n");sendStatus(0,event);
     }
     private void check(boolean value,String label){if(!value)throw new AssertionError(label);}
+    private void checkCanonicalSemanticAnalysis(JSONObject music,double sourceDuration,String label)throws Exception{
+        check(music.getInt("analysisVersion")==8,label+" did not complete canonical schema v8");
+        AnalysisJobStore.validateCheckpoint(music,sourceDuration);
+        JSONObject timeline=music.getJSONObject("semanticTimeline"),salience=music.getJSONObject("musicSalience");
+        check(timeline.getJSONArray("events").length()==salience.getJSONArray("events").length()&&salience.getJSONObject("summary").getInt("eventCount")==timeline.getJSONArray("events").length(),label+" semantic timeline and salience map disagree");
+    }
     private void pass(String label)throws Exception{checks.put(label);snapshot(true);Bundle event=new Bundle();event.putString("stream",label+"\n");sendStatus(0,event);}
     private String shell(String command)throws Exception{
         try(ParcelFileDescriptor descriptor=getUiAutomation().executeShellCommand(command);InputStream in=new ParcelFileDescriptor.AutoCloseInputStream(descriptor)){
@@ -111,6 +144,9 @@ public final class BackgroundInstrumentation extends Instrumentation {
     private Object field(Object object,String name)throws Exception{
         Field field=(object instanceof Class?(Class<?>)object:object.getClass()).getDeclaredField(name);field.setAccessible(true);
         return field.get(object instanceof Class?null:object);
+    }
+    private MainActivity.Bridge bridge()throws Exception{
+        return activity.new Bridge((WebView)field(activity,"web"),(Long)field(activity,"previewGeneration"));
     }
     private AnalysisService service()throws Exception{return (AnalysisService)field(AnalysisService.class,"instance");}
     private void waitService(boolean expected)throws Exception{
@@ -145,6 +181,13 @@ public final class BackgroundInstrumentation extends Instrumentation {
         check(settings.has("enabled")&&settings.has("vocalRegions")&&settings.has("outputEnabled"),"The studio settings snapshot is incomplete");
         return settings;
     }
+    private String evaluate(WebView view,String source,String failure)throws Exception{
+        final java.util.concurrent.CountDownLatch completed=new java.util.concurrent.CountDownLatch(1);
+        final java.util.concurrent.atomic.AtomicReference<String> result=new java.util.concurrent.atomic.AtomicReference<>();
+        runOnMainSync(()->view.evaluateJavascript(source,value->{result.set(value);completed.countDown();}));
+        check(completed.await(15,java.util.concurrent.TimeUnit.SECONDS),failure);
+        return result.get();
+    }
     private String fixture(String name,int seconds,String quality)throws Exception{
         File source=new File(getTargetContext().getCacheDir(),name+".wav"),mono=new File(getTargetContext().getCacheDir(),name+"-mono.wav");
         float[] pcm=new float[seconds*44100*2];for(int i=0;i<pcm.length;i++)pcm[i]=(float)(.18*Math.sin(2*Math.PI*220*(i/2)/44100));
@@ -160,35 +203,333 @@ public final class BackgroundInstrumentation extends Instrumentation {
         state.put("settings",studioSettings().put("analysisQuality",quality).put("dance","off").put("style","festival").put("stepMs",20).put("seed",2025));
         ProjectStore.save(new File(files,"projects"),id,state);return id;
     }
+    private void completedRestoreMonitorContract()throws Exception{
+        final class Clock implements CompletedRestoreMonitor.Clock {long now;@Override public long now(){return now;}}
+        final class Scheduler implements CompletedRestoreMonitor.Scheduler {
+            Runnable task;long due=Long.MAX_VALUE;final Clock clock;
+            Scheduler(Clock clock){this.clock=clock;}
+            @Override public void postDelayed(Runnable next,long delay){task=next;due=clock.now+Math.max(0,delay);}
+            @Override public void removeCallbacks(Runnable next){if(task==next){task=null;due=Long.MAX_VALUE;}}
+            void drain(){for(int guard=0;guard<100;guard++){if(task==null||due>clock.now)return;Runnable next=task;task=null;due=Long.MAX_VALUE;next.run();}throw new AssertionError("Completed restore monitor scheduled without yielding");}
+            void advance(long ms){clock.now+=ms;drain();}
+        }
+        final class Host implements CompletedRestoreMonitor.Host {
+            boolean respond,recoveryUsed;int probes,recoveries,ackMutations;String recoveredJob,recoveredNonce;
+            final java.util.List<CompletedRestoreMonitor.ProbeCallback> callbacks=new java.util.ArrayList<>();
+            @Override public void requestProbe(String job,String nonce,CompletedRestoreMonitor.ProbeCallback callback){
+                probes++;callbacks.add(callback);if(respond)callback.receive(new CompletedRestoreMonitor.Probe(true,true,true,false,job,nonce,"worker-started",0,0,false,0));
+            }
+            @Override public boolean recoveryAlreadyUsed(String job){return recoveryUsed;}
+            @Override public void recover(String job,String nonce,String reason){recoveries++;recoveredJob=job;recoveredNonce=nonce;recoveryUsed=true;}
+            @Override public void diagnostic(String message){}
+        }
+        Clock clock=new Clock();Scheduler scheduler=new Scheduler(clock);Host host=new Host();
+        CompletedRestoreMonitor monitor=new CompletedRestoreMonitor(clock,scheduler,host);
+        check(monitor.begin("completed-job","lease-a",0),"Completed-restore monitor rejected a valid lease");scheduler.drain();
+        check(host.probes==1,"Completed-restore monitor did not dispatch its native liveness probe");
+        scheduler.advance(CompletedRestoreMonitor.CALLBACK_BUDGET_MS);
+        check(host.recoveries==1&&"completed-job".equals(host.recoveredJob)&&"lease-a".equals(host.recoveredNonce),"A stalled WebView callback did not request exactly one lease-scoped replacement");
+        monitor.replacementStarted();check(!monitor.active()&&!monitor.pulse("completed-job","lease-a","worker-verified",1,0),"Retired lease remained able to advance after WebView replacement");
+        check(monitor.begin("completed-job","lease-b",0),"Replacement WebView could not start a fresh lease nonce");scheduler.drain();scheduler.advance(CompletedRestoreMonitor.CALLBACK_BUDGET_MS);
+        check(host.recoveries==1,"Persisted per-job cap allowed a second completed-restore replacement");
+
+        // A valid ordered bridge pulse supersedes only the old callback. The
+        // fresh probe still detects a renderer that dies immediately after it.
+        Clock bridgeClock=new Clock();Scheduler bridgeScheduler=new Scheduler(bridgeClock);Host bridgeHost=new Host();
+        CompletedRestoreMonitor bridgeProgress=new CompletedRestoreMonitor(bridgeClock,bridgeScheduler,bridgeHost);
+        check(bridgeProgress.begin("bridge-job","bridge-lease",0),"Bridge liveness lease did not begin");bridgeScheduler.drain();
+        check(bridgeHost.callbacks.size()==1,"Bridge liveness lease did not issue its first probe");
+        check(bridgeProgress.pulse("bridge-job","bridge-lease","worker-started",1,0),"Valid bridge progress did not supersede its pending probe");
+        bridgeScheduler.advance(CompletedRestoreMonitor.PROBE_INTERVAL_MS);
+        check(bridgeHost.callbacks.size()==2,"Bridge progress did not open a fresh bounded probe");
+        bridgeScheduler.advance(CompletedRestoreMonitor.CALLBACK_BUDGET_MS-1);
+        check(bridgeHost.recoveries==0,"Superseded callback consumed the fresh probe budget");
+        bridgeScheduler.advance(1);
+        check(bridgeHost.recoveries==1,"A renderer that died after bridge progress was not recovered at the fresh callback budget");
+
+        // A late callback from the superseded probe shares its lease fields but
+        // must never satisfy the newer ticketed probe.
+        Clock ticketClock=new Clock();Scheduler ticketScheduler=new Scheduler(ticketClock);Host ticketHost=new Host();
+        CompletedRestoreMonitor ticketIsolation=new CompletedRestoreMonitor(ticketClock,ticketScheduler,ticketHost);
+        check(ticketIsolation.begin("ticket-job","ticket-lease",0),"Ticket-isolation lease did not begin");ticketScheduler.drain();
+        CompletedRestoreMonitor.ProbeCallback staleTicketCallback=ticketHost.callbacks.get(0);
+        check(ticketIsolation.pulse("ticket-job","ticket-lease","worker-started",1,0),"Ticket-isolation bridge pulse was rejected");
+        ticketScheduler.advance(CompletedRestoreMonitor.PROBE_INTERVAL_MS);
+        check(ticketHost.callbacks.size()==2,"Ticket-isolation lease did not issue its fresh probe");
+        staleTicketCallback.receive(new CompletedRestoreMonitor.Probe(true,true,true,false,"ticket-job","ticket-lease","worker-verified",2,0,false,0));
+        ticketScheduler.advance(CompletedRestoreMonitor.CALLBACK_BUDGET_MS);
+        check(ticketHost.recoveries==1,"A late superseded callback satisfied a newer same-lease probe");
+
+        // Only an accepted ordered pulse may suppress a callback timeout.
+        Clock rejectedClock=new Clock();Scheduler rejectedScheduler=new Scheduler(rejectedClock);Host rejectedHost=new Host();
+        CompletedRestoreMonitor rejectedPulse=new CompletedRestoreMonitor(rejectedClock,rejectedScheduler,rejectedHost);
+        check(rejectedPulse.begin("rejected-job","rejected-lease",0),"Rejected-pulse lease did not begin");rejectedScheduler.drain();
+        check(!rejectedPulse.pulse("rejected-job","rejected-lease","worker-expand",1,0),"Out-of-order pulse suppressed a callback timeout");
+        rejectedScheduler.advance(CompletedRestoreMonitor.CALLBACK_BUDGET_MS);
+        check(rejectedHost.recoveries==1,"Rejected bridge progress incorrectly prevented recovery");
+
+        Clock callbackClock=new Clock();Scheduler callbackScheduler=new Scheduler(callbackClock);Host callbackHost=new Host();
+        CompletedRestoreMonitor callbackIsolation=new CompletedRestoreMonitor(callbackClock,callbackScheduler,callbackHost);
+        check(callbackIsolation.begin("callback-job","old-nonce",0),"Old callback-isolation lease did not begin");callbackScheduler.drain();
+        check(callbackHost.callbacks.size()==1,"Old lease did not retain its probe callback for isolation test");
+        callbackIsolation.replacementStarted();
+        check(callbackIsolation.begin("callback-job","new-nonce",0),"New callback-isolation lease did not begin");callbackScheduler.drain();
+        callbackHost.callbacks.get(0).receive(new CompletedRestoreMonitor.Probe(true,true,true,false,"callback-job","old-nonce","worker-started",1,0,false,0));
+        check(!callbackIsolation.pulse("callback-job","old-nonce","worker-verified",1,0),"Retired nonce pulse advanced a replacement lease");
+        callbackHost.callbacks.get(1).receive(new CompletedRestoreMonitor.Probe(true,true,true,true,"callback-job","old-nonce","failed",1,0,false,0));
+        check(callbackIsolation.active(),"Foreign failed probe cleared the replacement lease");
+        callbackScheduler.advance(CompletedRestoreMonitor.PROBE_INTERVAL_MS);
+        callbackScheduler.advance(CompletedRestoreMonitor.CALLBACK_BUDGET_MS);
+        check(callbackHost.recoveries==1&&"new-nonce".equals(callbackHost.recoveredNonce),"Stale WebView callback satisfied the replacement lease callback budget");
+
+        // A same-lease fallback probe may recover the monotonic prerequisite
+        // closure of a lost bridge response. It must grant the named preview
+        // startup interval and allow the later direct first-frame phase, but
+        // must not fabricate MainActivity's native visual-commit proof.
+        Clock mixedClock=new Clock();Scheduler mixedScheduler=new Scheduler(mixedClock);Host mixedHost=new Host();
+        CompletedRestoreMonitor mixed=new CompletedRestoreMonitor(mixedClock,mixedScheduler,mixedHost);
+        check(mixed.begin("mixed-job","mixed-lease",0),"Mixed fallback lease did not begin");mixedScheduler.drain();
+        check(mixedHost.callbacks.size()==1,"Mixed fallback lease did not issue its probe");
+        mixedHost.callbacks.get(0).receive(new CompletedRestoreMonitor.Probe(true,true,true,false,"mixed-job","mixed-lease","preview-starting",4,0,false,0));
+        int mixedProbes=mixedHost.probes;
+        mixedScheduler.advance(CompletedRestoreMonitor.CALLBACK_BUDGET_MS+1);
+        check(mixedHost.recoveries==0&&mixedHost.probes==mixedProbes,"Fallback preview startup did not receive its bounded phase grace");
+        check(mixed.pulse("mixed-job","mixed-lease","preview-first-render",5,0),"Direct first frame was wedged after fallback preview startup");
+        check(!mixed.terminal("mixed-job","mixed-lease",6,0),"Fallback phase closure fabricated native visual commit");
+        check(mixed.pulse("mixed-job","mixed-lease","preview-visual-commit",6,0),"Direct native visual phase was rejected after fallback closure");
+        check(mixed.terminal("mixed-job","mixed-lease",7,0),"Mixed fallback/direct restore could not terminally prove completion");
+
+        Clock invalidProbeClock=new Clock();Scheduler invalidProbeScheduler=new Scheduler(invalidProbeClock);Host invalidProbeHost=new Host();
+        CompletedRestoreMonitor invalidProbe=new CompletedRestoreMonitor(invalidProbeClock,invalidProbeScheduler,invalidProbeHost);
+        check(invalidProbe.begin("invalid-probe-job","invalid-probe-lease",0),"Invalid fallback lease did not begin");invalidProbeScheduler.drain();
+        invalidProbeHost.callbacks.get(0).receive(new CompletedRestoreMonitor.Probe(true,true,true,false,"invalid-probe-job","invalid-probe-lease","preview-first-render",5,0,false,0));
+        check(!invalidProbe.pulse("invalid-probe-job","invalid-probe-lease","preview-first-render",6,0),"An unrendered fallback probe bypassed phase prerequisites");
+
+        // A malformed same-lease probe must not consume ordered direct bridge
+        // sequence space or reset the phase deadline indefinitely.
+        Clock unknownProbeClock=new Clock();Scheduler unknownProbeScheduler=new Scheduler(unknownProbeClock);Host unknownProbeHost=new Host();
+        CompletedRestoreMonitor unknownProbe=new CompletedRestoreMonitor(unknownProbeClock,unknownProbeScheduler,unknownProbeHost);
+        check(unknownProbe.begin("unknown-probe-job","unknown-probe-lease",0),"Unknown fallback lease did not begin");unknownProbeScheduler.drain();
+        unknownProbeHost.callbacks.get(0).receive(new CompletedRestoreMonitor.Probe(true,true,true,false,"unknown-probe-job","unknown-probe-lease","unrecognized-phase",99,0,false,0));
+        check(unknownProbe.pulse("unknown-probe-job","unknown-probe-lease","worker-started",1,0),"Unknown fallback probe consumed ordered direct bridge progress");
+
+        Clock unknownDeadlineClock=new Clock();Scheduler unknownDeadlineScheduler=new Scheduler(unknownDeadlineClock);Host unknownDeadlineHost=new Host();
+        CompletedRestoreMonitor unknownDeadline=new CompletedRestoreMonitor(unknownDeadlineClock,unknownDeadlineScheduler,unknownDeadlineHost);
+        check(unknownDeadline.begin("unknown-deadline-job","unknown-deadline-lease",0),"Unknown deadline lease did not begin");unknownDeadlineScheduler.drain();
+        // The initial probe is still the outstanding callback until it is
+        // answered. Feed that callback an unknown state, then keep later
+        // probes responsive so callback-stall cannot mask the bootstrap
+        // deadline we are asserting here.
+        unknownDeadlineHost.callbacks.get(0).receive(new CompletedRestoreMonitor.Probe(true,true,true,false,"unknown-deadline-job","unknown-deadline-lease","unrecognized-phase",99,0,false,0));
+        unknownDeadlineHost.respond=true;
+        for(long elapsed=0;elapsed<CompletedRestoreMonitor.BOOTSTRAP_PHASE_BUDGET_MS;elapsed+=CompletedRestoreMonitor.PROBE_INTERVAL_MS){
+            unknownDeadlineScheduler.advance(Math.min(CompletedRestoreMonitor.PROBE_INTERVAL_MS,CompletedRestoreMonitor.BOOTSTRAP_PHASE_BUDGET_MS-elapsed));
+        }
+        check(unknownDeadlineHost.recoveries==1,"Unknown fallback probes postponed the bounded bootstrap recovery");
+
+        // Deferred preview startup is a real GL/WebGL + GLTF load, not a
+        // synthetic readiness signal. The ordered bridge phase retires the old
+        // probe and grants only that startup interval a bounded grace; a real
+        // first frame is still required before terminal proof.
+        Clock startupClock=new Clock();Scheduler startupScheduler=new Scheduler(startupClock);Host startupHost=new Host();
+        CompletedRestoreMonitor startup=new CompletedRestoreMonitor(startupClock,startupScheduler,startupHost);
+        check(startup.begin("startup-job","startup-lease",0),"Preview-startup lease did not begin");startupScheduler.drain();
+        check(startup.pulse("startup-job","startup-lease","worker-started",1,0),"Preview-startup worker start was rejected");
+        check(startup.pulse("startup-job","startup-lease","worker-verified",2,0),"Preview-startup worker verification was rejected");
+        check(startup.pulse("startup-job","startup-lease","show-adopted",3,0),"Preview-startup show adoption was rejected");
+        check(!startup.pulse("startup-job","startup-lease","preview-first-render",4,0),"First render bypassed the preview-starting phase");
+        check(startup.pulse("startup-job","startup-lease","preview-starting",4,0),"Preview-startup phase was rejected");
+        int startupProbes=startupHost.probes;
+        startupScheduler.advance(CompletedRestoreMonitor.CALLBACK_BUDGET_MS+1);
+        check(startupHost.recoveries==0&&startupHost.probes==startupProbes,"Deferred WebGL/GLTF startup was treated as a generic JavaScript callback stall");
+        check(startup.pulse("startup-job","startup-lease","preview-first-render",5,0),"A real first frame was rejected after bounded preview startup");
+        check(startup.pulse("startup-job","startup-lease","preview-visual-commit",6,0),"Preview startup did not retain native visual proof");
+        check(startup.terminal("startup-job","startup-lease",7,0),"Preview startup did not retain terminal proof after its real first frame");
+
+        Clock stalledStartupClock=new Clock();Scheduler stalledStartupScheduler=new Scheduler(stalledStartupClock);Host stalledStartupHost=new Host();
+        CompletedRestoreMonitor stalledStartup=new CompletedRestoreMonitor(stalledStartupClock,stalledStartupScheduler,stalledStartupHost);
+        check(stalledStartup.begin("stalled-startup-job","stalled-startup-lease",0),"Stalled preview-startup lease did not begin");stalledStartupScheduler.drain();
+        check(stalledStartup.pulse("stalled-startup-job","stalled-startup-lease","worker-started",1,0),"Stalled preview-startup worker start was rejected");
+        check(stalledStartup.pulse("stalled-startup-job","stalled-startup-lease","worker-verified",2,0),"Stalled preview-startup worker verification was rejected");
+        check(stalledStartup.pulse("stalled-startup-job","stalled-startup-lease","show-adopted",3,0),"Stalled preview-startup adoption was rejected");
+        check(stalledStartup.pulse("stalled-startup-job","stalled-startup-lease","preview-starting",4,0),"Stalled preview-startup phase was rejected");
+        stalledStartupScheduler.advance(CompletedRestoreMonitor.PREVIEW_STARTUP_BUDGET_MS-1);
+        check(stalledStartupHost.recoveries==0,"Bounded preview-startup grace expired early");
+        stalledStartupScheduler.advance(1);
+        check(stalledStartupHost.recoveries==1,"A genuinely stalled preview startup did not recover at its bounded deadline");
+
+        Clock staleClock=new Clock();Scheduler staleScheduler=new Scheduler(staleClock);Host staleHost=new Host();staleHost.respond=true;
+        CompletedRestoreMonitor stale=new CompletedRestoreMonitor(staleClock,staleScheduler,staleHost);
+        check(stale.begin("phase-job","lease-phase",0),"Phase lease did not begin");staleScheduler.drain();staleScheduler.advance(CompletedRestoreMonitor.BOOTSTRAP_PHASE_BUDGET_MS);
+        check(staleHost.recoveries==1,"Responsive but non-advancing completed restore did not hit its lease phase budget");
+
+        Clock progressClock=new Clock();Scheduler progressScheduler=new Scheduler(progressClock);Host progressHost=new Host();progressHost.respond=true;
+        CompletedRestoreMonitor progress=new CompletedRestoreMonitor(progressClock,progressScheduler,progressHost);
+        check(progress.begin("completed-job","lease-progress",0),"Progress lease did not begin");progressScheduler.drain();
+        check(!progress.pulse("completed-job","stale-nonce","worker-started",1,0),"Foreign lease pulse advanced the monitor");
+        check(!progress.pulse("completed-job","lease-progress","worker-expand",1,1024),"Worker pulse bypassed restore-started ordering");
+        check(progress.pulse("completed-job","lease-progress","worker-started",1,0),"Ordered restore-started proof was rejected");
+        for(long sequence=2;sequence<=5;sequence++){
+            progressScheduler.advance(CompletedRestoreMonitor.MIN_PHASE_BUDGET_MS-1);
+            check(progress.pulse("completed-job","lease-progress","worker-expand",sequence,sequence*1024),"Ordered restore pulse was rejected");
+            check(!progress.pulse("completed-job","lease-progress","replay",sequence,sequence*1024),"Non-monotonic restore pulse advanced the monitor");
+            progressScheduler.drain();
+        }
+        check(progressHost.recoveries==0,"Valid long completed restore was treated as a generic page timeout");
+        check(!progress.terminal("completed-job","stale-nonce",6,5120),"Foreign terminal proof disarmed the monitor");
+        check(!progress.terminal("completed-job","lease-progress",6,5120),"Terminal proof bypassed verified/adopted/first-render/visual predicates");
+        check(progress.pulse("completed-job","lease-progress","worker-verified",6,5120),"Worker verification proof was rejected");
+        check(progress.pulse("completed-job","lease-progress","show-adopted",7,5120),"Adopted show proof was rejected");
+        check(!progress.pulse("completed-job","lease-progress","preview-first-render",8,5120),"First web render bypassed preview startup ordering");
+        check(progress.pulse("completed-job","lease-progress","preview-starting",8,5120),"Preview startup proof was rejected");
+        check(progress.pulse("completed-job","lease-progress","preview-first-render",9,5120),"First web render proof was rejected");
+        check(!progress.terminal("completed-job","lease-progress",10,5120),"Terminal proof bypassed the native visual-frame predicate");
+        check(progress.pulse("completed-job","lease-progress","preview-visual-commit",10,5120),"Native visual-frame proof was rejected");
+        check(progress.terminal("completed-job","lease-progress",11,5120),"Ordered terminal proof was rejected");
+        check(!progress.ackCommitted("completed-job","stale-lease"),"Foreign post-ACK confirmation released the terminal token");
+        check(progress.ackCommitted("completed-job","lease-progress"),"Exact post-ACK confirmation did not release the terminal token");
+        check(!progress.ackCommitted("completed-job","lease-progress"),"Replayed post-ACK confirmation released a second token");
+        progressScheduler.advance(CompletedRestoreMonitor.MAX_PHASE_BUDGET_MS+CompletedRestoreMonitor.CALLBACK_BUDGET_MS);
+        check(!progress.active()&&progressHost.recoveries==0,"Terminal proof did not disarm the monitor");
+        check(progressHost.ackMutations==0,"Native monitor mutated the browser ACK");
+        Clock ackClock=new Clock();Scheduler ackScheduler=new Scheduler(ackClock);Host ackHost=new Host();
+        CompletedRestoreMonitor staleAck=new CompletedRestoreMonitor(ackClock,ackScheduler,ackHost);
+        check(staleAck.begin("ack-job","old-terminal",0),"Terminal-token lease did not begin");
+        check(staleAck.pulse("ack-job","old-terminal","worker-started",1,0),"Terminal-token start failed");
+        check(staleAck.pulse("ack-job","old-terminal","worker-verified",2,0),"Terminal-token verification failed");
+        check(staleAck.pulse("ack-job","old-terminal","show-adopted",3,0),"Terminal-token adoption failed");
+        check(staleAck.pulse("ack-job","old-terminal","preview-starting",4,0),"Terminal-token preview startup failed");
+        check(staleAck.pulse("ack-job","old-terminal","preview-first-render",5,0),"Terminal-token render proof failed");
+        check(staleAck.pulse("ack-job","old-terminal","preview-visual-commit",6,0),"Terminal-token visual proof failed");
+        check(staleAck.terminal("ack-job","old-terminal",7,0),"Terminal-token proof failed");
+        check(!staleAck.begin("ack-job","fresh-lease",0),"Fresh lease bypassed a terminal token awaiting browser ACK confirmation");
+        check(staleAck.ackCommitted("ack-job","old-terminal"),"Exact terminal ACK confirmation did not release its token");
+        check(staleAck.begin("ack-job","fresh-lease",0),"Fresh lease did not begin after exact ACK confirmation");
+        check(!staleAck.ackCommitted("ack-job","old-terminal"),"Old terminal confirmation released a cap after fresh nonce begin");
+        Clock laterClock=new Clock();Scheduler laterScheduler=new Scheduler(laterClock);Host laterHost=new Host();
+        CompletedRestoreMonitor laterCompleted=new CompletedRestoreMonitor(laterClock,laterScheduler,laterHost);
+        check(laterCompleted.begin("older-completed-job","older-terminal",0),"Older terminal lease did not begin");
+        check(laterCompleted.pulse("older-completed-job","older-terminal","worker-started",1,0),"Older terminal start failed");
+        check(laterCompleted.pulse("older-completed-job","older-terminal","worker-verified",2,0),"Older terminal verification failed");
+        check(laterCompleted.pulse("older-completed-job","older-terminal","show-adopted",3,0),"Older terminal adoption failed");
+        check(laterCompleted.pulse("older-completed-job","older-terminal","preview-starting",4,0),"Older terminal preview startup failed");
+        check(laterCompleted.pulse("older-completed-job","older-terminal","preview-first-render",5,0),"Older terminal render proof failed");
+        check(laterCompleted.pulse("older-completed-job","older-terminal","preview-visual-commit",6,0),"Older terminal visual proof failed");
+        check(laterCompleted.terminal("older-completed-job","older-terminal",7,0),"Older terminal proof failed");
+        check(!laterCompleted.begin("older-completed-job","same-job-retry",0),"Same completed job bypassed its unconfirmed terminal token");
+        check(laterCompleted.begin("later-completed-job","later-lease",0),"A later completed job was wedged by an old unconfirmed terminal token");
+        check(!laterCompleted.ackCommitted("older-completed-job","older-terminal"),"A stale old ACK released state after the later job began");
+        pass("Completed-restore native lease monitor rejects stale nonce/replayed pulses, foreign failed probes, retired callbacks and stale post-ACK tokens; it keeps same-job terminal exclusivity but admits a later completed job without clearing the old cap, survives ordered long restore pulses, gives real deferred WebGL/GLTF startup one bounded named grace without relaxing first-render/visual proof, bounds ordinary stalled callbacks to one persisted same-Activity replacement, retires valid direct-progress probes with ticketed callbacks so late same-lease results cannot mask a dead renderer, and never mutates the browser ACK.");
+    }
     private void launch()throws Exception{
         activity=(MainActivity)startActivitySync(new Intent(getTargetContext(),MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-        waitForIdleSync();awaitUiReady();activity.new Bridge().getBootstrap();
+        waitForIdleSync();awaitUiReady();bridge().getBootstrap();
     }
     private final class UiReadiness implements Runnable {
         final MainActivity owner=activity;
-        final WebView view;
-        final long began=SystemClock.elapsedRealtime(),deadline=began+45000;
+        volatile WebView view;
+        final int recoveryCountAtStart;
+        volatile boolean reboundCompletedRestore;
+        final long began=SystemClock.elapsedRealtime();
+        volatile long deadline=began+UI_READINESS_INITIAL_BUDGET_MS;
         final java.util.concurrent.CountDownLatch completed=new java.util.concurrent.CountDownLatch(1);
         final java.util.concurrent.atomic.AtomicBoolean finished=new java.util.concurrent.atomic.AtomicBoolean();
+        final Runnable dropJavascriptCallbackForTest;
+        private boolean javascriptCallbackDroppedForTest;
+        private long javascriptRequestSerial;
+        private long javascriptRequestAt;
+        private WebView javascriptRequested;
+        private boolean javascriptResponsePending;
         volatile Throwable failure;
         volatile JSONObject evidence;
         volatile JSONObject latest;
         android.view.ViewTreeObserver tree;
         Runnable commitCallback;
         android.view.ViewTreeObserver.OnDrawListener drawListener;
-        UiReadiness()throws Exception{view=(WebView)field(owner,"web");check(view!=null,"Preview WebView missing on launch");}
-        boolean current()throws Exception{return activity==owner&&!owner.isFinishing()&&!owner.isDestroyed()&&field(owner,"web")==view;}
+        UiReadiness()throws Exception{this(null);}
+        UiReadiness(Runnable dropJavascriptCallbackForTest)throws Exception{
+            this.dropJavascriptCallbackForTest=dropJavascriptCallbackForTest;
+            view=(WebView)field(owner,"web");check(view!=null,"Preview WebView missing on launch");
+            recoveryCountAtStart=(Integer)field(owner,"completedRestoreRecoveryCount");
+        }
+        private boolean expectedCompletedRestoreRecovery(WebView current,int recoveryCount,String recovery)throws Exception{
+            JSONObject durable=AnalysisJobStore.status(files);
+            String jobId=durable==null?"":durable.optString("id");
+            String prefix=jobId+":";
+            String reason=recovery!=null&&recovery.startsWith(prefix)?recovery.substring(prefix.length()):"";
+            return !reboundCompletedRestore&&current!=null&&current!=view
+                &&durable!=null&&"completed".equals(durable.optString("state"))&&!jobId.isEmpty()
+                &&recoveryCount==recoveryCountAtStart+1
+                &&(reason.startsWith("callback-stall")||reason.startsWith("phase-stall")||reason.startsWith("renderer-gone"));
+        }
+        boolean current()throws Exception{
+            if(activity!=owner||owner.isFinishing()||owner.isDestroyed())return false;
+            WebView current=(WebView)field(owner,"web");if(current==view)return true;
+            // A strict readiness probe may span exactly one recovery of the
+            // current durable completed job. Arbitrary reloads remain failures.
+            int recoveryCount=(Integer)field(owner,"completedRestoreRecoveryCount");
+            String recovery=(String)field(owner,"completedRestoreLastRecovery");
+            if(expectedCompletedRestoreRecovery(current,recoveryCount,recovery)){
+                cleanup();tree=null;commitCallback=null;drawListener=null;view=current;reboundCompletedRestore=true;
+                // The monitor has already persisted its one per-job recovery
+                // cap and retired the old lease. Give only this exact
+                // replacement its own bounded page/bootstrap interval; do not
+                // turn an arbitrary reload into extra readiness time.
+                deadline=Math.max(deadline,SystemClock.elapsedRealtime()+UI_READINESS_RECOVERY_BUDGET_MS);
+                return true;
+            }
+            return false;
+        }
+        private synchronized long beginJavascriptResponse(WebView requested){
+            javascriptRequested=requested;javascriptRequestAt=SystemClock.elapsedRealtime();
+            javascriptResponsePending=true;return ++javascriptRequestSerial;
+        }
+        private synchronized boolean ownsJavascriptResponse(WebView requested,long serial){
+            return javascriptResponsePending&&javascriptRequested==requested&&javascriptRequestSerial==serial;
+        }
+        private synchronized boolean completeJavascriptResponse(WebView requested,long serial){
+            if(!ownsJavascriptResponse(requested,serial))return false;
+            javascriptResponsePending=false;return true;
+        }
+        private synchronized boolean waitingForJavascriptResponse(){return javascriptResponsePending;}
+        private synchronized void clearJavascriptResponse(){
+            javascriptResponsePending=false;javascriptRequested=null;javascriptRequestAt=0;javascriptRequestSerial++;
+        }
+        // Called from the instrumentation thread only. It never touches a View:
+        // once an exact production recovery has made a replacement current, it
+        // invalidates the orphaned callback and asks the main thread to rebind.
+        void recoverMissingJavascriptCallback()throws Exception{
+            final WebView requested;final long serial,requestedAt;
+            synchronized(this){
+                if(finished.get()||!javascriptResponsePending)return;
+                requested=javascriptRequested;serial=javascriptRequestSerial;requestedAt=javascriptRequestAt;
+            }
+            if(requested==null||SystemClock.elapsedRealtime()-requestedAt<UI_JAVASCRIPT_CALLBACK_BUDGET_MS)return;
+            WebView current=(WebView)field(owner,"web");
+            int recoveryCount=(Integer)field(owner,"completedRestoreRecoveryCount");
+            String recovery=(String)field(owner,"completedRestoreLastRecovery");
+            boolean replaced=current!=requested;
+            if(!replaced||!expectedCompletedRestoreRecovery(current,recoveryCount,recovery))return;
+            synchronized(this){
+                if(!javascriptResponsePending||javascriptRequested!=requested||javascriptRequestSerial!=serial)return;
+                clearJavascriptResponse();
+            }
+            watchdogMain.post(this);
+        }
+        private void schedulePoll(){WebView target=view;if(target!=null)target.postDelayed(this,UI_READINESS_POLL_MS);}
         boolean visible(){return view.isAttachedToWindow()&&view.isShown()&&view.getWindowVisibility()==android.view.View.VISIBLE&&view.getWidth()>0&&view.getHeight()>0&&view.hasWindowFocus();}
-        void record(String stage,JSONObject state)throws JSONException{
+        void record(String stage,JSONObject state)throws Exception{
             JSONObject value=state!=null?new JSONObject(state.toString()):latest!=null?new JSONObject(latest.toString()):new JSONObject();
             value.put("phase",currentPhase).put("probeStage",stage).put("waitSeconds",(SystemClock.elapsedRealtime()-began)/1000.0)
                 .put("nativeAttached",view.isAttachedToWindow()).put("nativeShown",view.isShown())
                 .put("nativeWindowVisibility",view.getWindowVisibility()).put("nativeWindowFocus",view.hasWindowFocus())
-                .put("viewWidth",view.getWidth()).put("viewHeight",view.getHeight());
+                .put("viewWidth",view.getWidth()).put("viewHeight",view.getHeight())
+                .put("completedRestoreRebound",reboundCompletedRestore)
+                .put("completedRestoreRecoveryCount",field(owner,"completedRestoreRecoveryCount"));
             latest=value;lastUiReadiness=value;
         }
         void cleanup(){
-            view.removeCallbacks(this);
+            clearJavascriptResponse();view.removeCallbacks(this);
             if(tree!=null&&tree.isAlive()){
                 if(Build.VERSION.SDK_INT>=29&&commitCallback!=null)tree.unregisterFrameCommitCallback(commitCallback);
                 if(drawListener!=null)tree.removeOnDrawListener(drawListener);
@@ -203,38 +544,56 @@ public final class BackgroundInstrumentation extends Instrumentation {
         @Override public void run(){
             if(finished.get())return;
             try{
-                check(SystemClock.elapsedRealtime()<deadline,"Preview JavaScript initialization exceeded 45 seconds");
                 check(current(),"Preview changed while awaiting its first frame");
-                if(!visible()){record("waiting-for-native-visibility",null);view.postOnAnimation(this);return;}
+                check(SystemClock.elapsedRealtime()<deadline,"Preview JavaScript initialization exceeded its bounded readiness window");
+                if(!visible()){record("waiting-for-native-visibility",null);schedulePoll();return;}
                 // Export follows readBootstrap's synchronous native inventory
                 // load, but its project restoration is asynchronous. Await the
                 // existing restore-state flags as well as the actual 3D model
                 // and a submitted canvas frame when that canvas is visible.
                 record("waiting-for-javascript-response",null);
-                view.evaluateJavascript("(()=>{const a=window.LightForgeApp,s=a&&a.state,p=a&&a.vehiclePreview,c=document.getElementById('carCanvas'),r=c&&c.getBoundingClientRect();const visible=!!(r&&r.width>0&&r.height>0&&!document.hidden);const boot=!!(s&&Array.isArray(s.projects)&&typeof window.onNativeEvent==='function');const restored=!!(boot&&!s.loadingProject&&!s.composing&&!s.backgroundApplying&&!s.backgroundSyncPending);return {ready:document.readyState==='complete'&&restored&&!!p&&p.loaded&&!p.lost&&(!visible||p.renderCount>0),documentState:document.readyState,documentHidden:document.hidden,bootstrapInventoryReady:boot,projectRestoreIdle:restored,loadingProject:!!(s&&s.loadingProject),composing:!!(s&&s.composing),backgroundApplying:!!(s&&s.backgroundApplying),backgroundSyncPending:!!(s&&s.backgroundSyncPending),saveBlocked:!!(s&&s.saveBlocked),previewModelReady:!!(p&&p.loaded),previewVisible:visible,previewRendererVisible:!!(p&&p.getPerformance().visible),previewPaused:!!(p&&p._paused),previewIntersecting:!!(p&&p._intersecting),previewHasSize:!!(p&&p._hasSize),previewFrames:p?p.renderCount:0,contextLost:!!(p&&p.lost),canvasRect:r?{left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}:null,viewport:{width:innerWidth,height:innerHeight,scrollX,scrollY}};})()",value->{
-                    if(finished.get())return;
+                // A delayed retry must never add a second renderer IPC while
+                // an earlier evaluateJavascript callback is still in flight.
+                if(waitingForJavascriptResponse())return;
+                final WebView requested=view;
+                final long javascriptRequest=beginJavascriptResponse(requested);
+                requested.evaluateJavascript("(()=>{const a=window.LightForgeApp,s=a&&a.state,p=a&&a.vehiclePreview,c=document.getElementById('carCanvas'),r=c&&c.getBoundingClientRect();const visible=!!(r&&r.width>0&&r.height>0&&!document.hidden);const boot=!!(s&&Array.isArray(s.projects)&&typeof window.onNativeEvent==='function');const restored=!!(boot&&!s.loadingProject&&!s.composing&&!s.backgroundApplying&&!s.backgroundSyncPending);return {ready:document.readyState==='complete'&&restored&&!!p&&p.loaded&&!p.lost&&(!visible||p.renderCount>0),documentState:document.readyState,documentHidden:document.hidden,bootstrapInventoryReady:boot,projectRestoreIdle:restored,loadingProject:!!(s&&s.loadingProject),composing:!!(s&&s.composing),backgroundApplying:!!(s&&s.backgroundApplying),backgroundSyncPending:!!(s&&s.backgroundSyncPending),saveBlocked:!!(s&&s.saveBlocked),previewModelReady:!!(p&&p.loaded),previewGraphicsInitialized:!!(p&&p.renderer),previewLoadStarted:!!(p&&p._loadStarted),previewLoadDeferred:!!(p&&p._loadDeferred),restorePhase:s&&s.completedRestore?String(s.completedRestore.phase||'').slice(0,80):null,restoreSequence:s&&s.completedRestore?Number(s.completedRestore.sequence)||0:0,previewVisible:visible,previewRendererVisible:!!(p&&p.getPerformance().visible),previewPaused:!!(p&&p._paused),previewIntersecting:!!(p&&p._intersecting),previewHasSize:!!(p&&p._hasSize),previewFrames:p?p.renderCount:0,contextLost:!!(p&&p.lost),canvasRect:r?{left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}:null,viewport:{width:innerWidth,height:innerHeight,scrollX,scrollY}};})()",value->{
+                    if(finished.get()||!ownsJavascriptResponse(requested,javascriptRequest))return;
+                    if(dropJavascriptCallbackForTest!=null&&!javascriptCallbackDroppedForTest){
+                        javascriptCallbackDroppedForTest=true;
+                        try{dropJavascriptCallbackForTest.run();}catch(Throwable error){clearJavascriptResponse();finish(error,null);}
+                        return;
+                    }
+                    if(!completeJavascriptResponse(requested,javascriptRequest))return;
                     try{
+                        check(current(),"Preview changed while awaiting its JavaScript response");
+                        if(requested!=view){schedulePoll();return;}
                         JSONObject state=new JSONObject(value);
                         record(state.optBoolean("ready")?"waiting-for-visual-state":"waiting-for-app-readiness",state);
-                        if(!state.optBoolean("ready")){view.postOnAnimation(this);return;}
-                        check(current()&&visible(),"Preview lost visibility before visual-state synchronization");
-                        view.postVisualStateCallback(began,new WebView.VisualStateCallback(){
+                        if(!state.optBoolean("ready")){schedulePoll();return;}
+                        final WebView visualView=view;
+                        check(current()&&visualView==view&&visible(),"Preview lost visibility before visual-state synchronization");
+                        visualView.postVisualStateCallback(began,new WebView.VisualStateCallback(){
                             @Override public void onComplete(long requestId){
                                 if(finished.get())return;
                                 try{
-                                    check(current()&&visible(),"Preview lost visibility before its first committed frame");
+                                    check(current(),"Preview changed before its first committed frame");
+                                    if(visualView!=view){schedulePoll();return;}
+                                    check(visible(),"Preview lost visibility before its first committed frame");
                                     record("waiting-for-hardware-frame-commit",state);
-                                    check(view.isHardwareAccelerated(),"Lifecycle readiness requires the real hardware-accelerated WebView");
-                                    tree=view.getViewTreeObserver();
+                                    check(visualView.isHardwareAccelerated(),"Lifecycle readiness requires the real hardware-accelerated WebView");
+                                    tree=visualView.getViewTreeObserver();
                                     check(tree.isAlive(),"Preview view tree was detached before frame commit");
                                     Runnable recorded=()->watchdogMain.post(()->{
                                         if(finished.get())return;
                                         try{
-                                            check(current()&&visible(),"Preview detached before frame-commit acknowledgement");
+                                            check(current(),"Preview changed before frame-commit acknowledgement");
+                                            if(visualView!=view){schedulePoll();return;}
+                                            check(visible(),"Preview detached before frame-commit acknowledgement");
                                             finish(null,new JSONObject(state.toString()).put("phase",currentPhase)
                                                 .put("visualStateReady",true).put("firstFrameCommitted",true)
                                                 .put("frameCommitMethod",Build.VERSION.SDK_INT>=29?"hardware-frame-commit":"on-draw-then-main")
-                                                .put("hardwareAccelerated",true).put("viewWidth",view.getWidth()).put("viewHeight",view.getHeight())
+                                                .put("hardwareAccelerated",true).put("viewWidth",visualView.getWidth()).put("viewHeight",visualView.getHeight())
                                                 .put("waitSeconds",(SystemClock.elapsedRealtime()-began)/1000.0));
                                         }catch(Throwable error){finish(error,null);}
                                     });
@@ -247,7 +606,7 @@ public final class BackgroundInstrumentation extends Instrumentation {
                                         drawListener=()->{if(drawn.compareAndSet(false,true))recorded.run();};
                                         tree.addOnDrawListener(drawListener);
                                     }
-                                    view.invalidate();
+                                    visualView.invalidate();
                                 }catch(Throwable error){finish(error,null);}
                             }
                         });
@@ -256,8 +615,9 @@ public final class BackgroundInstrumentation extends Instrumentation {
             }catch(Throwable error){finish(error,null);}
         }
     }
-    private void awaitUiReady()throws Exception{
-        UiReadiness probe=new UiReadiness();
+    private void awaitUiReady()throws Exception{awaitUiReady(null);}
+    private void awaitUiReady(Runnable dropJavascriptCallbackForTest)throws Exception{
+        UiReadiness probe=new UiReadiness(dropJavascriptCallbackForTest);
         lastUiReadiness=new JSONObject().put("phase",currentPhase).put("state","waiting-for-bootstrap-and-frame");snapshot(true);
         watchdogMain.post(probe);
         try{
@@ -265,6 +625,11 @@ public final class BackgroundInstrumentation extends Instrumentation {
             while(SystemClock.elapsedRealtime()<probe.deadline){
                 long remaining=probe.deadline-SystemClock.elapsedRealtime();
                 if(probe.completed.await(Math.max(1,Math.min(1000,remaining)),java.util.concurrent.TimeUnit.MILLISECONDS)){complete=true;break;}
+                // A renderer can die after evaluateJavascript is accepted but
+                // before its callback. This observer only arms a retry after
+                // the real production completed-restore recovery has replaced
+                // that exact WebView; it never turns callback loss into ready.
+                probe.recoverMissingJavascriptCallback();
                 snapshot(false);
             }
             if(!complete)snapshot(true);
@@ -302,8 +667,145 @@ public final class BackgroundInstrumentation extends Instrumentation {
         awaitPower(()->power.isInteractive()&&!power.isDeviceIdleMode(),"Android did not leave Doze and wake for reopening");
         recordPowerTransition(power,unforced);launch();
     }
+    private void requireCompletedRestoreAck(JSONObject completed,String label)throws Exception{
+        WebView target=(WebView)field(activity,"web");check(target!=null,label+" has no active preview WebView");
+        String raw=evaluate(target,"(()=>{const a=window.LightForgeApp,s=a&&a.state,p=a&&a.vehiclePreview;return JSON.stringify({ack:localStorage.getItem('lightforge-background-ack')||'',backgroundApplying:!!(s&&s.backgroundApplying),backgroundSyncPending:!!(s&&s.backgroundSyncPending),previewFrames:Number(p&&p.renderCount)||0});})()",label+" could not read completed-restore ACK evidence");
+        Object decoded=new JSONTokener(raw).nextValue();JSONObject evidence=decoded instanceof String?new JSONObject((String)decoded):(JSONObject)decoded;
+        long nativeAckAt=(Long)field(activity,"completedRestoreLastAckConfirmationAt");
+        check(completed.getString("id").equals(evidence.optString("ack"))&&!evidence.optBoolean("backgroundApplying")
+            &&!evidence.optBoolean("backgroundSyncPending")&&evidence.optLong("previewFrames")>0&&nativeAckAt>0,
+            label+" did not retain a terminal native/browser ACK and rendered preview proof: "+evidence);
+    }
+    private void completedRestorePayloadBypassesProjectFetch(JSONObject completed)throws Exception{
+        phase("completed-restore-durable-payload");
+        WebView target=(WebView)field(activity,"web");check(target!=null,"No WebView available for durable completed-project payload test");
+        String projectId=completed.getString("projectId");
+        String injected="(()=>{const a=window.LightForgeApp;if(!a||!window.Android||typeof window.Android.readCompletedRestoreProjectChunk!=='function')throw Error('Scoped completed-project bridge unavailable');localStorage.removeItem('lightforge-background-ack');a.state.backgroundSeen=null;const original=window.fetch;const probe={calls:0,original};window.__lightforgeCompletedProjectFetchProbe=probe;window.fetch=(input,...rest)=>{const url=String(input&&input.url||input||'');if(url.includes('/project/"+projectId+"/project.json')){probe.calls++;return new Promise(()=>{});}return original(input,...rest);};window.onNativeEvent('analysisJob',JSON.parse("+JSONObject.quote(completed.toString())+"));return true;})()";
+        try{
+            check("true".equals(evaluate(target,injected,"Durable completed-project payload test could not arm its project fetch stall")),"Durable completed-project payload test returned an unexpected result");
+            awaitUiReady();
+            String proof=evaluate((WebView)field(activity,"web"),"(()=>{const a=window.LightForgeApp,s=a&&a.state,p=window.__lightforgeCompletedProjectFetchProbe;return JSON.stringify({fetchCalls:Number(p&&p.calls)||0,ack:localStorage.getItem('lightforge-background-ack')||'',loadingProject:!!(s&&s.loadingProject),backgroundApplying:!!(s&&s.backgroundApplying),backgroundSyncPending:!!(s&&s.backgroundSyncPending),previewFrames:Number(a&&a.vehiclePreview&&a.vehiclePreview.renderCount)||0});})()","Durable completed-project payload evidence could not be read");
+            Object decoded=new JSONTokener(proof).nextValue();JSONObject evidence=decoded instanceof String?new JSONObject((String)decoded):(JSONObject)decoded;
+            check(evidence.optInt("fetchCalls")==0,"Completed restore re-entered the stalled appassets project fetch: "+evidence);
+            check(completed.getString("id").equals(evidence.optString("ack")),"Completed restore did not ACK after its direct durable payload read: "+evidence);
+            check(!evidence.optBoolean("loadingProject")&&!evidence.optBoolean("backgroundApplying")&&!evidence.optBoolean("backgroundSyncPending")&&evidence.optLong("previewFrames")>0,"Direct durable payload restore left UI state latched: "+evidence);
+            pass("A real completed-project reconnect bypassed an intentionally never-resolving appassets project.json fetch through the generation- and nonce-bound durable payload bridge, then reached a visible preview and terminal browser ACK.");
+        }finally{evaluate((WebView)field(activity,"web"),"(()=>{const p=window.__lightforgeCompletedProjectFetchProbe;if(p&&p.original)window.fetch=p.original;delete window.__lightforgeCompletedProjectFetchProbe;return true;})()","Durable completed-project payload test could not restore fetch");}
+    }
+    private void completedRestoreActiveRendererGone(JSONObject completed)throws Exception{
+        phase("completed-restore-active-renderer-gone");
+        MainActivity owner=activity;WebView stalled=(WebView)field(owner,"web");check(stalled!=null,"No WebView available for active renderer-gone lease injection");
+        MainActivity.Bridge stalledBridge=bridge();int recoveryCountAtStart=(Integer)field(owner,"completedRestoreRecoveryCount");
+        long faultAt=SystemClock.elapsedRealtime();
+        String injected="(()=>{const a=window.LightForgeApp;if(!a||!window.ShowCompiler)throw Error('Studio compiler unavailable for test');localStorage.removeItem('lightforge-background-ack');a.state.backgroundSeen=null;const restore=window.ShowCompiler.restore;let held=false;window.ShowCompiler.restore=function(){const result=restore.apply(this,arguments);if(!held){held=true;return new Promise(()=>{});}return result;};window.onNativeEvent('analysisJob',JSON.parse("+JSONObject.quote(completed.toString())+"));return true;})()";
+        check("true".equals(evaluate(stalled,injected,"Active renderer-gone lease injection did not arm")),"Active renderer-gone lease injection returned an unexpected result");
+        long activeBy=SystemClock.elapsedRealtime()+10000;CompletedRestoreMonitor monitor=(CompletedRestoreMonitor)field(owner,"completedRestoreMonitor");
+        while(SystemClock.elapsedRealtime()<activeBy&&!(monitor!=null&&monitor.active()&&(WebView)field(owner,"web")==stalled)){snapshot(false);SystemClock.sleep(50);monitor=(CompletedRestoreMonitor)field(owner,"completedRestoreMonitor");}
+        check(monitor!=null&&monitor.active()&&(WebView)field(owner,"web")==stalled,"Completed restore did not hold an active lease before renderer-gone handling");
+        String rawLease=evaluate(stalled,"(()=>{const l=window.LightForgeApp&&window.LightForgeApp.state&&window.LightForgeApp.state.completedRestore;return JSON.stringify(l?{jobId:String(l.jobId||''),nonce:String(l.nonce||''),sequence:Number(l.sequence)||0}:null);})()","Active lease identity could not be read before renderer-gone handling");
+        Object decodedLease=new JSONTokener(rawLease).nextValue();JSONObject oldLease=decodedLease instanceof String?new JSONObject((String)decodedLease):(JSONObject)decodedLease;
+        check(completed.getString("id").equals(oldLease.optString("jobId"))&&oldLease.optString("nonce").length()>0,"Active renderer-gone lease lacked exact job/nonce identity: "+oldLease);
+        JSONObject payload=new JSONObject(stalledBridge.readCompletedRestoreProjectChunk(completed.getString("id"),oldLease.getString("nonce"),completed.getString("projectId"),0,1024));
+        check(payload.optBoolean("ok")&&payload.optLong("offset")==0&&payload.optLong("total")>0&&payload.optString("snapshot").matches("[0-9]+:[0-9a-f-]{36}")&&payload.optString("base64").length()>0,"Active lease could not read its bounded durable project payload: "+payload);
+        JSONObject deniedPayload=new JSONObject(stalledBridge.readCompletedRestoreProjectChunk(completed.getString("id"),oldLease.getString("nonce")+"-stale",completed.getString("projectId"),0,1024));
+        check(!deniedPayload.optBoolean("ok"),"A stale completed-restore nonce read durable project payload");
+        JSONObject deniedJob=new JSONObject(stalledBridge.readCompletedRestoreProjectChunk(completed.getString("id")+"-stale",oldLease.getString("nonce"),completed.getString("projectId"),0,1024));
+        check(!deniedJob.optBoolean("ok"),"A foreign completed job read durable project payload");
+        JSONObject deniedProject=new JSONObject(stalledBridge.readCompletedRestoreProjectChunk(completed.getString("id"),oldLease.getString("nonce"),"foreign-project",0,1024));
+        check(!deniedProject.optBoolean("ok"),"A foreign completed project read durable project payload");
+        // Drop the one test probe callback after the real production
+        // renderer-gone recovery is accepted. The readiness watchdog must
+        // observe the replacement rather than treating callback loss as ready.
+        awaitUiReady(()->check(owner.handlePreviewRenderProcessGone(stalled,false),"Active completed-restore renderer-gone branch rejected recovery"));
+        check(lastUiReadiness!=null&&lastUiReadiness.optBoolean("completedRestoreRebound"),"UiReadiness did not rebind after the exact production completed-restore recovery");
+        requireCompletedRestoreAck(completed,"Active renderer-gone replacement");
+        // handlePreviewRenderProcessGone deliberately posts recovery so the
+        // monitor can release its lock before the bridge transaction retires
+        // this tuple. Do not race that post: first observe the committed
+        // retirement (old instance marked terminating) or its completed
+        // same-Activity replacement, then prove the stale bridge is denied.
+        long retiredUntil=SystemClock.elapsedRealtime()+10000;
+        boolean retired=false;
+        while(SystemClock.elapsedRealtime()<retiredUntil){
+            snapshot(false);int count=(Integer)field(owner,"completedRestoreRecoveryCount");
+            WebView current=(WebView)field(owner,"web");WebView terminating=(WebView)field(owner,"completedRestoreTerminatingWebView");
+            if(count==recoveryCountAtStart+1&&(terminating==stalled||current!=stalled)){retired=true;break;}
+            SystemClock.sleep(50);
+        }
+        check(retired,"Active renderer-gone recovery did not commit old-bridge retirement before payload denial");
+        JSONObject retiredPayload=new JSONObject(stalledBridge.readCompletedRestoreProjectChunk(completed.getString("id"),oldLease.getString("nonce"),completed.getString("projectId"),0,1024));
+        check(!retiredPayload.optBoolean("ok"),"A retired WebView bridge read durable project payload after renderer-gone handoff");
+        long until=SystemClock.elapsedRealtime()+30000;WebView replacement=null;
+        while(SystemClock.elapsedRealtime()<until){
+            snapshot(false);int count=(Integer)field(owner,"completedRestoreRecoveryCount");WebView current=(WebView)field(owner,"web");
+            if(count==recoveryCountAtStart+1&&current!=null&&current!=stalled){replacement=current;break;}
+            SystemClock.sleep(100);
+        }
+        check(replacement!=null,"Active completed-restore renderer-gone branch did not replace its WebView in the same Activity");
+        check(activity==owner&&!owner.isDestroyed()&&!owner.isFinishing(),"Active renderer-gone recovery recreated or destroyed the Activity");
+        check(!((Boolean)field(owner,"previewRecoveryPending"))&&field(owner,"previewRecoveryDialog")==null,"Active completed-restore renderer-gone recovery fell through to the ordinary preview dialog");
+        check(!stalledBridge.completedRestoreTerminal(oldLease.getString("jobId"),oldLease.getString("nonce"),oldLease.optLong("sequence")+1,0),"Retired WebView bridge terminal proof was accepted after active renderer-gone retirement");
+        check(!stalledBridge.completedRestoreAckCommitted(oldLease.getString("jobId"),oldLease.getString("nonce")),"Retired WebView bridge post-ACK confirmation was accepted after active renderer-gone retirement");
+        String recovery=(String)field(owner,"completedRestoreLastRecovery");
+        check(recovery!=null&&recovery.contains(completed.getString("id")+":renderer-gone"),"Active renderer-gone did not schedule the lease-specific recovery: "+recovery);
+        String replacementPath=(String)field(owner,"completedRestoreReplacementPath");
+        if(Build.VERSION.SDK_INT>=29)check(replacementPath!=null&&replacementPath.startsWith("terminate-requested->")&&(replacementPath.contains("render-process-gone")||replacementPath.contains("terminate-callback-budget")),"API 29+ active renderer-gone did not use terminate/onRenderProcessGone replacement: "+replacementPath);
+        else check("direct-fallback".equals(replacementPath),"Pre-29 active renderer-gone did not use documented safe same-Activity replacement: "+replacementPath);
+        String cap="completed-restore-recovery."+completed.getString("id");
+        // The callback-loss readiness regression has already required the
+        // replacement's terminal browser ACK, which correctly clears this cap.
+        awaitUiReady();
+        long replacementGeneration=(Long)field(owner,"previewGeneration"),acceptedGeneration=(Long)field(owner,"completedRestoreLastAcceptedBeginGeneration");
+        check(acceptedGeneration==replacementGeneration&&completed.getString("id").equals((String)field(owner,"completedRestoreLastAcceptedBeginJobId")),"Active renderer-gone replacement did not open its own generation-bound lease");
+        String ack=evaluate(replacement,"localStorage.getItem('lightforge-background-ack')||''","Active renderer-gone replacement did not report browser ACK");
+        check(completed.getString("id").equals(new JSONTokener(ack).nextValue()),"Active renderer-gone replacement did not acknowledge the completed job");
+        long visualAt=(Long)field(owner,"completedRestoreLastVisualFrameAt"),terminalAt=(Long)field(owner,"completedRestoreLastTerminalAt"),ackAt=(Long)field(owner,"completedRestoreLastAckConfirmationAt");
+        check(visualAt>=faultAt&&terminalAt>=visualAt&&ackAt>=terminalAt,"Active renderer-gone lost visual → terminal → post-ACK ordering: visual="+visualAt+" terminal="+terminalAt+" ack="+ackAt+" fault="+faultAt);
+        check(!owner.getPreferences(0).getBoolean(cap,false),"Active renderer-gone terminal ACK did not clear its own persisted cap");
+        pass("A real active completed-restore renderer-gone branch queued one same-Activity replacement before its FIFO dialog fallback, rejected terminal and ACK calls from the retired bridge, rebound a generation-scoped lease, and preserved visible hardware-frame proof before terminal/browser ACK.");
+    }
+    private void completedRestoreCallbackStall(JSONObject completed)throws Exception{
+        phase("completed-restore-callback-stall");
+        MainActivity owner=activity;WebView stalled=(WebView)field(owner,"web");check(stalled!=null,"No WebView available for completed-restore stall injection");
+        MainActivity.Bridge stalledBridge=bridge();
+        int recoveryCountAtStart=(Integer)field(owner,"completedRestoreRecoveryCount");
+        long faultAt=SystemClock.elapsedRealtime();
+        String injected="(()=>{const a=window.LightForgeApp;if(!a||!window.ShowCompiler)throw Error('Studio compiler unavailable for test');localStorage.removeItem('lightforge-background-ack');a.state.backgroundSeen=null;const restore=window.ShowCompiler.restore;let stalledOnce=false;window.ShowCompiler.restore=function(){const result=restore.apply(this,arguments);if(!stalledOnce){stalledOnce=true;setTimeout(()=>{const until=performance.now()+12000;while(performance.now()<until){}},250);}return result;};window.onNativeEvent('analysisJob',JSON.parse("+JSONObject.quote(completed.toString())+"));return true;})()";
+        check("true".equals(evaluate(stalled,injected,"Completed-restore fault injection did not arm")),"Completed-restore fault injection returned an unexpected result");
+        long until=SystemClock.elapsedRealtime()+30000;WebView replacement=null;
+        while(SystemClock.elapsedRealtime()<until){
+            snapshot(false);int count=(Integer)field(owner,"completedRestoreRecoveryCount");WebView current=(WebView)field(owner,"web");
+            if(count==recoveryCountAtStart+1&&current!=null&&current!=stalled){replacement=current;break;}
+            SystemClock.sleep(100);
+        }
+        check(replacement!=null,"Completed restore callback stall did not replace its WebView in the same Activity");
+        check(activity==owner&&!owner.isDestroyed()&&!owner.isFinishing(),"Completed restore recovery recreated or destroyed the Activity");
+        check(!stalledBridge.beginCompletedRestore(completed.getString("id"),"retired-bridge-handoff",0),"A bridge bound to the stalled WebView opened a lease after same-Activity replacement began");
+        String recovery=(String)field(owner,"completedRestoreLastRecovery");
+        check(recovery!=null&&recovery.contains(completed.getString("id")+":callback-stall"),"Recovery was not caused by the bounded native callback lease: "+recovery);
+        String replacementPath=(String)field(owner,"completedRestoreReplacementPath");
+        if(Build.VERSION.SDK_INT>=29)check(replacementPath!=null&&replacementPath.startsWith("terminate-requested->")&&(replacementPath.contains("render-process-gone")||replacementPath.contains("terminate-callback-budget")),"API 29+ callback stall did not use the terminate/onRenderProcessGone replacement path: "+replacementPath);
+        else check("direct-fallback".equals(replacementPath),"Pre-29 callback stall did not use the documented safe same-Activity replacement path: "+replacementPath);
+        JSONObject durable=AnalysisJobStore.status(files);check("completed".equals(durable.optString("state"))&&completed.getString("id").equals(durable.optString("id")),"Native recovery mutated the durable completed job");
+        String cap="completed-restore-recovery."+completed.getString("id");
+        check(owner.getPreferences(0).getBoolean(cap,false),"One-replacement cap was not persisted before the replacement WebView booted");
+        // This re-runs the original booted/model/visible-render/
+        // postVisualStateCallback/hardware-frame predicate on the replacement
+        // WebView. It also verifies the eventual idle state; ordering below is
+        // proven from the production native visual → terminal → post-ACK
+        // timestamps, not inferred from this post-sync readiness probe.
+        awaitUiReady();
+        long replacementGeneration=(Long)field(owner,"previewGeneration"),acceptedGeneration=(Long)field(owner,"completedRestoreLastAcceptedBeginGeneration");
+        check(acceptedGeneration==replacementGeneration&&completed.getString("id").equals((String)field(owner,"completedRestoreLastAcceptedBeginJobId")),"The replacement WebView did not open its own generation-bound completed-restore lease");
+        String ack=evaluate(replacement,"localStorage.getItem('lightforge-background-ack')||''","Replacement WebView did not report its browser ACK");
+        check(completed.getString("id").equals(new JSONTokener(ack).nextValue()),"Replacement did not terminally acknowledge the completed job");
+        long visualAt=(Long)field(owner,"completedRestoreLastVisualFrameAt"),terminalAt=(Long)field(owner,"completedRestoreLastTerminalAt"),ackAt=(Long)field(owner,"completedRestoreLastAckConfirmationAt");
+        check(visualAt>=faultAt&&terminalAt>=visualAt&&ackAt>=terminalAt,"Strict visual/HW frame proof did not precede terminal and post-ACK confirmation: visual="+visualAt+" terminal="+terminalAt+" ack="+ackAt+" fault="+faultAt);
+        check(!owner.getPreferences(0).getBoolean(cap,false),"Terminal proof did not disarm the persisted replacement cap");
+        pass("A test-only real restore callback stall kept the completed job pending, rejected the retired WebView bridge, admitted the replacement generation's lease, caused exactly one same-Activity WebView replacement, and recorded the unchanged visible model, post-visual-state and hardware-frame proof before terminal and the browser's post-ACK cap confirmation.");
+    }
     private JSONObject start(String projectId)throws Exception{
-        JSONObject job=new JSONObject(activity.new Bridge().startAnalysis(projectId));check(!job.has("error"),job.toString());waitService(true);
+        JSONObject job=new JSONObject(bridge().startAnalysis(projectId));check(!job.has("error"),job.toString());waitService(true);
         long until=SystemClock.elapsedRealtime()+15000;
         while(field(service(),"engine")==null&&SystemClock.elapsedRealtime()<until)SystemClock.sleep(100);
         check(field(service(),"engine")!=null,"Service WebView did not start");
@@ -394,7 +896,7 @@ public final class BackgroundInstrumentation extends Instrumentation {
         check((Integer)field(task,"completedPasses")==2,"Balanced fixture did not complete both model passes on Android");
         JSONObject saved=AnalysisJobStore.read(new File(AnalysisJobStore.project(files,id),"project.json"),ProjectStore.MAX_PROJECT_BYTES);
         JSONObject music=saved.getJSONObject("music"),engine=music.getJSONObject("engine"),separation=engine.getJSONObject("separationModel");
-        check(music.getInt("analysisVersion")==6&&engine.optBoolean("neural"),"Balanced fixture did not complete the actual neural pipeline");
+        check(engine.optBoolean("neural"),"Balanced fixture did not complete the actual neural pipeline");checkCanonicalSemanticAnalysis(music,frozen.getDouble("duration"),"Balanced fixture");
         check("balanced".equals(engine.optString("quality")),"Balanced quality was silently changed");
         check("uvr-mdx-net-voc-ft".equals(separation.optString("modelId")),"Balanced fixture used the wrong separator");
         check(separation.optBoolean("denoise")&&separation.optInt("modelPasses")==2&&separation.optInt("chunks")==1,
@@ -419,23 +921,27 @@ public final class BackgroundInstrumentation extends Instrumentation {
     @Override public void onStart(){
         JSONObject receipt=new JSONObject();Bundle output=new Bundle();
         try{
-            files=getTargetContext().getFilesDir();startMainWatchdog();phase("first-screen-off-analysis");launch();String id=fixture("Background audio");JSONObject job=start(id);
+            files=getTargetContext().getFilesDir();startMainWatchdog();phase("completed-restore-monitor-contract");completedRestoreMonitorContract();phase("first-screen-off-analysis");launch();String id=fixture("Background audio");JSONObject job=start(id);double sourceDuration=AnalysisJobStore.request(files,job.getString("id")).getDouble("duration");
             check(field(service(),"nativeMdx")==null,"Precision Studio allocated the Balanced-only accelerator");
             long backgroundAt=System.currentTimeMillis();backgroundAndDoze();
             JSONObject completed=waitTerminal(15*60*1000L);
             check("completed".equals(completed.optString("state")),"Screen-off analysis failed: "+completed);
             check(completed.getLong("updatedAt")>backgroundAt,"No progress after Activity destruction");waitService(false);
             JSONObject saved=AnalysisJobStore.read(new File(AnalysisJobStore.project(files,id),"project.json"),ProjectStore.MAX_PROJECT_BYTES);
-            check(saved.getJSONObject("music").getInt("analysisVersion")==6,"Actual analysis missing");
+            checkCanonicalSemanticAnalysis(saved.getJSONObject("music"),sourceDuration,"Actual analysis");
             check(saved.getJSONObject("music").getJSONObject("engine").optBoolean("neural"),"Neural analysis did not run");
             check(saved.getJSONObject("compiled").getString("sha256").matches("[a-f0-9]{64}"),"Compiled frames missing");
             check(separation(saved).optInt("chunks")==1,"Short Studio fixture did not execute exactly one native passage");
             check(checkedNativeStageRelease,"No live voice/GAME-stage native-buffer release observation was recorded");
             pass("Actual Studio native CPU separation, neural analysis and choreography completed with the Activity destroyed, screen off and Doze forced with user-equivalent battery exemption; result was durably saved.");
             phase("reconnect-completed-project");foreground();
-            JSONObject bootstrap=new JSONObject(activity.new Bridge().getBootstrap());
+            requireCompletedRestoreAck(completed,"Reopened Activity");
+            JSONObject bootstrap=new JSONObject(bridge().getBootstrap());
             check("completed".equals(bootstrap.getJSONObject("backgroundJob").getString("state")),"Reopened Activity did not reconnect");
             pass("Reopened Activity reports the completed job and its saved project.");
+            completedRestorePayloadBypassesProjectFetch(completed);
+            completedRestoreActiveRendererGone(completed);
+            completedRestoreCallbackStall(completed);
             receipt.put("balanced",balancedScreenOff());phase("reopen-after-balanced");foreground();
             String cancelId=fixture("Resume fixture",12);File cancelProject=new File(AnalysisJobStore.project(files,cancelId),"project.json");String original=AnalysisJobStore.hash(cancelProject);
             phase("wait-for-second-native-passage");
@@ -481,6 +987,7 @@ public final class BackgroundInstrumentation extends Instrumentation {
             output.putString("stream","BACKGROUND_ANDROID_PASS\n"+receipt.toString()+"\n");finish(Activity.RESULT_OK,output);
         }catch(Throwable error){
             try{snapshot(true);}catch(Exception ignored){}
+            emitFailureDiagnostics();
             try{receipt.put("passed",false).put("checks",checks).put("phase",currentPhase).put("error",error.toString());}catch(Exception ignored){}
             StringWriter trace=new StringWriter();error.printStackTrace(new PrintWriter(trace));output.putString("stream","BACKGROUND_ANDROID_FAIL\n"+receipt+"\n"+trace);finish(Activity.RESULT_CANCELED,output);
         }finally{balancedObserverStopped=true;if(balancedObserver!=null)balancedObserver.interrupt();stopMainWatchdog();}

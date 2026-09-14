@@ -6,6 +6,8 @@ import hashlib
 import json
 import os
 from pathlib import Path
+
+from android_evidence_manifest import _atomic_json, candidate_binding
 import re
 import subprocess
 import time
@@ -17,11 +19,32 @@ RUNNER = PACKAGE + '.diagnostics.tests/' + PACKAGE + '.DiagnosticsInstrumentatio
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--candidate-dir', type=Path, default=ROOT / 'candidate')
+    parser.add_argument('--candidate-dir', type=Path, required=True)
+    parser.add_argument('--output-dir', type=Path, required=True)
+    parser.add_argument('--emulator-log', type=Path, required=True)
+    parser.add_argument('--candidate-artifact-id', type=int, required=True)
+    parser.add_argument('--candidate-artifact-digest', required=True)
+    parser.add_argument('--candidate-run-id', type=int, required=True)
+    parser.add_argument('--candidate-run-attempt', type=int, required=True)
+    parser.add_argument('--candidate-evidence-session', required=True)
+    parser.add_argument('--candidate-identity-sha256', required=True)
+    parser.add_argument('--run-id', type=int, required=True)
+    parser.add_argument('--run-attempt', type=int, required=True)
+    parser.add_argument('--head-sha', required=True)
+    parser.add_argument('--evidence-session', required=True)
     args = parser.parse_args()
     version = json.loads((ROOT / 'version.json').read_text())['name']
-    out = ROOT / ('qa/release-' + version)
-    out.mkdir(parents=True, exist_ok=True)
+    out = args.output_dir.resolve()
+    if out.exists():
+        raise SystemExit('Android evidence output directory must be fresh: ' + str(out))
+    out.mkdir(parents=True, mode=0o700)
+    candidate = candidate_binding(args.candidate_dir.resolve(), version, artifact_id=args.candidate_artifact_id,
+                                  artifact_digest=args.candidate_artifact_digest, head_sha=args.head_sha,
+                                  run_id=args.candidate_run_id, run_attempt=args.candidate_run_attempt,
+                                  evidence_session=args.candidate_evidence_session,
+                                  identity_sha256=args.candidate_identity_sha256)
+    ci = {'run_id': args.run_id, 'run_attempt': args.run_attempt, 'head_sha': args.head_sha,
+          'evidence_session': args.evidence_session}
     sdk = Path(os.environ['ANDROID_HOME'])
     adb = sdk / 'platform-tools/adb'
     sources = sorted(set([*ROOT.joinpath('android').rglob('*.java'),
@@ -31,20 +54,21 @@ def main():
                           ROOT / 'tests/android/DiagnosticsInstrumentation.java',
                           ROOT / 'tools/build_diagnostics_tests.py', Path(__file__).resolve(),
                           ROOT / 'android/native-runtime.json',
-                          ROOT / 'version.json']))
+                          ROOT / 'version.json', ROOT / 'tools/android_evidence_manifest.py']))
 
     def source_hashes():
         return {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest()
                 for path in sources if path.is_file()}
 
     hashes = source_hashes()
-    receipt = dict(release=version, passed=False, checks=[], errors=[], source_hashes=hashes,
+    receipt = dict(release=version, passed=False, checks=[], errors=[], source_hashes=candidate['source_hashes'],
+                   instrumentation_source_hashes=hashes,
                    scope='Android API 35 emulator: real uncaught worker and intentional native SIGILL '
                          'crashes followed by process restart, binary tombstone extraction and production '
                          'native compatibility selection from a durable execution lease; persistent '
                          'sanitized traces, production Guide export through its JavaScript '
                          'bridge to MediaStore Downloads, repeated files and detached renderer recovery. '
-                         'No neural inference or physical-device performance claim.')
+                         'No neural inference or physical-device performance claim.', ci=ci, candidate=candidate)
 
     def run(*command, timeout=120, check=True):
         result = subprocess.run([str(adb), *map(str, command)], text=True, capture_output=True,
@@ -75,7 +99,7 @@ def main():
     try:
         deadline = time.monotonic() + 360
         while time.monotonic() < deadline:
-            log = ROOT / 'emulator.log'
+            log = args.emulator_log
             if log.is_file():
                 fatal = [line for line in log.read_text(errors='replace').splitlines() if 'FATAL' in line]
                 if fatal:
@@ -93,7 +117,6 @@ def main():
         with apk.open('rb') as stream:
             actual_hash = hashlib.file_digest(stream, 'sha256').hexdigest()
         assert apk.stat().st_size == metadata['bytes'] and actual_hash == metadata['sha256'], 'Candidate APK does not match its build receipt'
-        receipt['candidate'] = metadata
         run('install', '-r', apk, timeout=300)
         run('install', '-r', args.candidate_dir / 'diagnostics-tests.apk')
         run('shell', 'dumpsys', 'deviceidle', 'unforce')
@@ -157,7 +180,7 @@ def main():
                 except Exception:
                     pass
         receipt['completedAt'] = datetime.datetime.now(datetime.timezone.utc).isoformat()
-        (out / 'android-diagnostics-verification.json').write_text(json.dumps(receipt, indent=2) + '\n')
+        _atomic_json(out / 'android-diagnostics-verification.json', receipt)
         print(json.dumps(receipt, indent=2))
         if not receipt['passed'] and not receipt['errors']:
             raise RuntimeError('Android diagnostic verification failed')

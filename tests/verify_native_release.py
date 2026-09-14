@@ -28,11 +28,11 @@ CLASSES.mkdir(exist_ok=True)
 # Each run owns fresh fixtures, including after an interrupted/repeated local run.
 FIXTURES = Path(tempfile.mkdtemp(prefix="native-fixtures-", dir=OUT))
 sources = sorted((ROOT / 'android/src').rglob('*.java'))
-names = ['NativeRecoveryTest', 'ProjectStoreTest', 'NativeHardwareTest', 'NativeAudioTest', 'WebViewTransportTest', 'ProjectPreviewTest', 'AnalysisJobStoreTest', 'NativeDeuxTest', 'DiagnosticLogTest', 'NativeCrashTraceTest', 'NativeRuntimeGuardTest']
+names = ['NativeRecoveryTest', 'ProjectStoreTest', 'NativeHardwareTest', 'NativeAudioTest', 'WebViewTransportTest', 'ProjectPreviewTest', 'AnalysisJobStoreTest', 'NativeDeuxTest', 'NativeInferenceProfileTest', 'NativeInferenceProfilePairComparisonTest', 'DiagnosticLogTest', 'NativeCrashTraceTest', 'NativeRuntimeGuardTest']
 tests = [ROOT / f'tests/{name}.java' for name in names + ['WebViewTransportServer']]
 bound_sources = sources + tests + [ROOT/'android/native-runtime.json', ROOT/'tests/verify_native_release.py']
 receipt = dict(release=args.release, passed=False, scope='Fresh production Java compilation and host JVM tests; no Android Activity/device/document-provider or physical Tesla execution.',
-               source_hashes={str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in bound_sources}, checks=[])
+               source_hashes={str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in bound_sources}, checks=[], errors=[])
 
 def run(name, *args):
     p = subprocess.run([str(JAVA / 'java'), '-cp', ':'.join(map(str, [CLASSES, JSON, ANDROID, ORT_HOST])),
@@ -64,8 +64,8 @@ try:
     receipt['checks'].extend(recovery['checks'])
     assert 'PASS:' in run('ProjectStoreTest', FIXTURES / 'native-project-fixtures')
     receipt['checks'].append('Existing duplicate/rename/backup restore/CRC/traversal/cancellation and legacy rename-journal regression suite passed.')
-    assert 'PASS: 16' in run('NativeHardwareTest', hardware)
-    receipt['checks'].append('All 16 independent native FSEQ hardware/closure validation cases passed.')
+    assert 'PASS: 19' in run('NativeHardwareTest', hardware)
+    receipt['checks'].append('All 19 independent native FSEQ hardware/closure validation cases passed.')
     assert 'PASS:' in run('NativeAudioTest', FIXTURES / 'native-audio-fixtures')
     receipt['checks'].append('Native PCM conversion/resampling, supported WAV variants and incomplete-audio rejection regression suite passed.')
     assert 'PASS:' in run('WebViewTransportTest', ROOT / 'web/demo/glass-castle.wav', FIXTURES / 'native-transport-fixtures')
@@ -75,6 +75,10 @@ try:
     receipt['checks'].append('Durable background job ownership, checkpoint reuse, cancellation, conflicting edits, result commit and interrupted-process recovery passed on the host JVM.')
     assert 'cancellation checks passed.' in run('NativeDeuxTest')
     receipt['checks'].append('Native Studio transform retains exact source-clock samples and stereo averaging; WAVE padding, malformed input and cancellation regressions passed without neural-model inference.')
+    assert 'NativeInferenceProfile:' in run('NativeInferenceProfileTest')
+    receipt['checks'].append('Native inference profiling keeps one immutable summary plus bounded stage/graph records, reports available CPU/heap/cache evidence without fabricated accelerator values, avoids per-run logs and retains no quoted/private fields.')
+    assert 'paired equivalence:' in run('NativeInferenceProfilePairComparisonTest')
+    receipt['checks'].append('Same-runtime unprofiled/profiled float-pair comparator requires complete finite outputs, exact byte identity and zero predeclared max-absolute, RMSE and relative-RMSE error; every measurable observer difference fails closed.')
     run('ProjectPreviewTest')
     assert 'PASS:' in run('DiagnosticLogTest', FIXTURES / 'native-diagnostic-fixtures')
     receipt['checks'].append('Persistent diagnostic rotation, bounded messages, concurrency and redaction passed on the host JVM.')
@@ -95,6 +99,7 @@ try:
     receipt['passed'] = True
 except Exception as error:
     receipt['failure'] = repr(error)
+    receipt['errors'].append(str(error))
     raise
 finally:
     receipt['completed'] = datetime.datetime.now(datetime.timezone.utc).isoformat()

@@ -1,0 +1,111 @@
+name: LightForge restore regression
+on:
+  pull_request:
+  push:
+    branches: ['codex/performance-quality-gate']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: restore-regression-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+jobs:
+  restore-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          sparse-checkout: |
+            .github
+            android
+            web
+            tools
+            tests
+            qa
+            docs
+            research/model-source
+            research/evaluation-1.6
+            research/upstream/deux
+      - name: Archive immutable review sources without model weights or signing material
+        run: |
+          python3 - <<'PY'
+          import hashlib, io, json, os, subprocess, tarfile
+          from pathlib import Path
+          root = Path.cwd()
+          output = Path(os.environ['RUNNER_TEMP']) / 'lightforge-review'
+          output.mkdir()
+          head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          tree = subprocess.check_output(['git', 'rev-parse', 'HEAD^{tree}'], text=True).strip()
+          allowed_roots = {'.github', 'android', 'web', 'tools', 'tests', 'qa', 'docs', 'research'}
+          denied_suffixes = {'.apk', '.aab', '.jks', '.keystore', '.p12', '.pem', '.onnx', '.pt', '.pth', '.ckpt', '.safetensors'}
+          inventory = {'head': head, 'tree': tree, 'scope': 'review-only; not release or performance evidence', 'files': {}, 'omitted': {}}
+          paths = subprocess.check_output(['git', 'ls-files', '-z']).decode().split('\0')
+          with tarfile.open(output / 'source.tar.gz', 'w:gz') as archive:
+              for name in sorted(filter(None, paths)):
+                  path = root / name
+                  relative = Path(name)
+                  if len(relative.parts) > 1 and relative.parts[0] not in allowed_roots:
+                      inventory['omitted'][name] = 'outside review scope'
+                      continue
+                  if path.is_symlink() or not path.is_file():
+                      inventory['omitted'][name] = 'not an available regular tracked file'
+                      continue
+                  if path.suffix.lower() in denied_suffixes or path.stat().st_size > 8 * 1024 * 1024:
+                      inventory['omitted'][name] = 'binary model, signing material, or large asset'
+                      continue
+                  data = path.read_bytes()
+                  inventory['files'][name] = hashlib.sha256(data).hexdigest()
+                  info = tarfile.TarInfo(name)
+                  info.size = len(data)
+                  info.mode = 0o755 if os.access(path, os.X_OK) else 0o644
+                  archive.addfile(info, io.BytesIO(data))
+          (output / 'source-manifest.json').write_text(json.dumps(inventory, indent=2, sort_keys=True) + '\n')
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: lightforge-review-source-${{ github.run_id }}
+          path: ${{ runner.temp }}/lightforge-review
+          retention-days: 14
+          if-no-files-found: error
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Prepare pinned offline review dependencies
+        run: |
+          mkdir -p ../toolchain/graphics
+          cp web/preview/src/package*.json ../toolchain/graphics/
+          npm ci --prefix ../toolchain/graphics --ignore-scripts --no-audit --no-fund
+          mkdir -p "$RUNNER_TEMP/lightforge-review-runtime"
+          tar -czf "$RUNNER_TEMP/lightforge-review-runtime/test-dependencies.tar.gz" node_modules
+          tar -czf "$RUNNER_TEMP/lightforge-review-runtime/graphics-dependencies.tar.gz" -C ../toolchain graphics
+          tar -czf "$RUNNER_TEMP/lightforge-review-runtime/preview-assets.tar.gz" web/preview/models web/demo
+          sha256sum package-lock.json web/preview/src/package-lock.json > "$RUNNER_TEMP/lightforge-review-runtime/lockfiles.sha256"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: lightforge-review-runtime-${{ github.run_id }}
+          path: ${{ runner.temp }}/lightforge-review-runtime
+          retention-days: 7
+          if-no-files-found: error
+      - name: Reproduce the checked-in offline renderer
+        run: |
+          node tools/build_preview.mjs
+          git diff --exit-code -- web/preview/vehicle-preview.js
+      - name: Restore, worker, and preview lifecycle regressions
+        run: node --test tests/background-2.2.test.cjs tests/preview-lifecycle.test.cjs tests/preview-startup.test.cjs tests/preview-engine.test.cjs
+      - name: Preserve strict Android readiness contract
+        run: python3 -m unittest discover -s tests -p 'test_background_instrumentation_ui_readiness_contract.py'
+      - name: Actual cold-restore browser and WebGL regression
+        run: |
+          npx playwright install --with-deps chromium
+          node qa/restore-preview/browser.cjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: lightforge-restore-preview-${{ github.run_id }}
+          path: |
+            qa/restore-preview/*.json
+            qa/restore-preview/*.png
+          retention-days: 14

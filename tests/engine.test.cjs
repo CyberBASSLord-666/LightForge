@@ -19,7 +19,7 @@ function music(duration=238.0399773243,bpm=120,energy=.8){
 function decode(bytes){
   const b=Buffer.from(bytes);assert.equal(b.subarray(0,4).toString(),'PSEQ');assert.equal(b[7],2);assert.equal(b[6],0);
   const offset=b.readUInt16LE(4),fixed=b.readUInt16LE(8),channels=b.readUInt32LE(10),count=b.readUInt32LE(14),step=b[18];
-  assert.equal(fixed,32);assert.equal(channels,200);assert.equal(b[20],0);assert.ok(step>=15&&step<=100);
+  assert.equal(fixed,32);assert.equal(channels,200);assert.equal(b[20],0);assert.ok([15,20].includes(step));
   assert.equal(b.length,offset+channels*count);assert.ok(offset%4===0);
   const fields={};let p=fixed;while(p+4<=offset){const length=b.readUInt16LE(p);if(length===0)break;assert.ok(length>=4&&p+length<=offset);fields[b.subarray(p+2,p+4).toString()]=b.subarray(p+4,p+length).toString().replace(/\0$/,'');p+=length;}
   return {channels,count,step,offset,fields,data:b.subarray(offset)};
@@ -37,6 +37,24 @@ test('FSEQ binary header, variable metadata, payload and duration agree with aud
     assert.deepEqual(new Uint8Array(decoded.data),show.frames);assert.ok(decoded.count*stepMs/1000>=m.duration);
     assert.ok(decoded.count*stepMs/1000-m.duration<stepMs/1000+1e-9);
     assert.ok(decoded.data.subarray(decoded.data.length-200).every(v=>v===0));
+  }
+});
+
+test('FSEQ frame-step contract is shared by validation and serialization',()=>{
+  for(const stepMs of [15,20]){
+    const show=Engine.generate(music(2),{stepMs,dance:'off'});
+    assert.equal(Engine.validate(show,music(2)).valid,true,'valid '+stepMs+' ms show');
+    assert.equal(Engine.fseqHeader(show)[18],stepMs,'valid '+stepMs+' ms header');
+    assert.equal(Engine.fseq(show)[18],stepMs,'valid '+stepMs+' ms sequence');
+  }
+  const valid=Engine.generate(music(2),{stepMs:20,dance:'off'});
+  for(const stepMs of [14,16,19,21,25,100]){
+    assert.throws(()=>Engine.generate(music(2),{stepMs}),/20 ms recommended frame interval or 15 ms precision mode/);
+    const corrupt={...valid,stepMs},report=Engine.validate(corrupt);
+    assert.equal(report.valid,false,'reject '+stepMs+' ms during validation');
+    assert.ok(report.errors.includes('Frame interval must be 20 ms recommended or 15 ms precision.'),report.errors.join('; '));
+    assert.throws(()=>Engine.fseqHeader(corrupt),/Frame interval must be 20 ms recommended or 15 ms precision/);
+    assert.throws(()=>Engine.fseq(corrupt),/Frame interval must be 20 ms recommended or 15 ms precision/);
   }
 });
 

@@ -21,6 +21,9 @@ final class NativePassageTask implements AutoCloseable {
     private double progress;
     private long startedAt,lastDiagnosticAt;
     private File output;
+    // A completed profile is retained until releaseIdle so one passage yields one compact receipt.
+    private NativeInferenceProfile inferenceProfile;
+    private boolean profileEmitted;
 
     NativePassageTask(Context context,File audio,String jobId)throws IOException {
         this.context=context.getApplicationContext();this.audio=audio;
@@ -49,19 +52,29 @@ final class NativePassageTask implements AutoCloseable {
     synchronized String start(long startSample)throws Exception {
         if(closed)throw new IOException("Native analysis has stopped.");
         if("running".equals(state))throw new IOException("A native passage is already running.");
+        // cancel() permanently terminates a NativeDeux instance.  A failed or
+        // cancelled passage must therefore never donate that instance to a retry.
+        if(cancelled||!"completed".equals(state))retireEngine(null);
         if(!new JSONObject(availability()).getBoolean("available"))throw new IOException("Resume in compatibility mode after the previous native crash.");
         if(startSample < -66150L||startSample>44100L*14400)throw new IOException("Invalid native passage position.");
         if(output!=null&&output.exists()&&!output.delete())throw new IOException("Previous native passage could not be released.");
+        emitProfile(inferenceProfile,"released");
+        final NativeInferenceProfile profile=new NativeInferenceProfile();profile.captureStartMemory();
+        inferenceProfile=profile;profileEmitted=false;
         token=UUID.randomUUID().toString();state="running";progress=0;message="Preparing native Studio analysis";cancelled=false;
         startedAt=android.os.SystemClock.elapsedRealtime();lastDiagnosticAt=startedAt;
         AppDiagnostics.log(context,"INFO","native-passage","started; passage="+token.substring(0,8)+"; startSample="+startSample+"; cacheFreeBytes="+directory.getUsableSpace());
         AppDiagnostics.sample(context,"native-start-memory");
         final String current=token;output=new File(directory,current+".bin");final File result=output;
         executor.execute(()->{
+            NativeDeux model=null;
             try {
                 if(closed||cancelled)throw new IOException("Native analysis cancelled.");
-                NativeDeux model=engine;
-                if(model==null){model=new NativeDeux(context);engine=model;}
+                model=engine;
+                if(model==null){
+                    NativeInferenceProfile.Timing engineStarted=NativeInferenceProfile.started();
+                    try{model=new NativeDeux(context);engine=model;}finally{profile.addEngineInit(NativeInferenceProfile.elapsed(engineStarted));}
+                }
                 final String[] lease={null};
                 model.predict(audio,startSample,result,(value,detail)->update(current,value,detail),()->closed||cancelled||Thread.currentThread().isInterrupted(),new NativeDeux.ExecutionScope(){
                     @Override public void begin()throws Exception {
@@ -69,20 +82,30 @@ final class NativePassageTask implements AutoCloseable {
                         lease[0]=runtimeGuard.begin(android.os.Process.myPid(),System.currentTimeMillis());
                     }
                     @Override public void end(){try{runtimeGuard.end(lease[0]);}catch(IOException error){AppDiagnostics.record(context,"native-marker",error);}}
-                });
+                },profile);
                 synchronized(this){
                     if(closed||cancelled)throw new IOException("Native analysis cancelled.");
                     if(result.length()!=OUTPUT_BYTES)throw new IOException("Native separation returned incomplete audio.");
                     state="completed";progress=1;message="Native passage complete";
+                    profile.finish("completed");
                     AppDiagnostics.log(context,"INFO","native-passage","completed; passage="+current.substring(0,8)+"; elapsedMs="+(android.os.SystemClock.elapsedRealtime()-startedAt));
                     AppDiagnostics.sample(context,"native-complete-memory");
                 }
+                // A completed passage must leave a receipt even if its consumer never calls
+                // releaseIdle (for example after a process interruption between result and release).
+                emitProfile(profile,"completed");
             }catch(Throwable error){
+                // This covers native cancellation, failed direct-buffer setup and
+                // failed inference.  Keeping the instance would reuse its permanent
+                // cancelled flag or a partially initialized direct-buffer set.
+                retireEngine(model);
                 AppDiagnostics.record(context,"native-passage",error);
-                synchronized(this){state=closed||cancelled?"cancelled":"failed";message=AnalysisJobStore.limited(error.getMessage()==null?"Native Studio analysis could not finish.":error.getMessage(),500);}
+                String outcome;
+                synchronized(this){outcome=closed||cancelled?"cancelled":"failed";state=outcome;message=AnalysisJobStore.limited(error.getMessage()==null?"Native Studio analysis could not finish.":error.getMessage(),500);}
+                emitProfile(profile,outcome);
                 result.delete();
             }finally{
-                if(closed){NativeDeux model=engine;engine=null;if(model!=null)try{model.close();}catch(Exception ignored){}result.delete();directory.delete();}
+                if(closed){emitProfile(profile,"cancelled");retireEngine(model);result.delete();directory.delete();}
             }
         });
         return status(current);
@@ -110,11 +133,28 @@ final class NativePassageTask implements AutoCloseable {
     }
     synchronized void releaseIdle()throws Exception {
         if("running".equals(state))throw new IOException("The native passage is still running.");
+        emitProfile(inferenceProfile,"released");inferenceProfile=null;
         NativeDeux model=engine;engine=null;if(model!=null)model.close();
         if(output!=null)output.delete();output=null;token=null;state="idle";
     }
+    /** Detach the exact worker engine before closing it, so a later start can only allocate fresh state. */
+    private void retireEngine(NativeDeux expected){
+        NativeDeux model=null;
+        synchronized(this){
+            if(expected==null){model=engine;engine=null;}
+            else if(engine==expected){model=expected;engine=null;}
+        }
+        if(model!=null)try{model.close();}catch(Exception ignored){}
+    }
+    private void emitProfile(NativeInferenceProfile profile,String outcome){
+        if(profile==null)return;
+        NativeInferenceProfile.Snapshot snapshot=profile.finish(outcome);
+        synchronized(this){if(profile!=inferenceProfile||profileEmitted)return;profileEmitted=true;}
+        AppDiagnostics.profile(context,snapshot);
+    }
     @Override public synchronized void close(){
         if(closed)return;closed=true;cancelled=true;
+        emitProfile(inferenceProfile,"cancelled");
         NativeDeux model=engine;if(model!=null)model.close();
         executor.shutdownNow();
         if(!"running".equals(state)){

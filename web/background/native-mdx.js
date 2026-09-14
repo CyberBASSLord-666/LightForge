@@ -1,5 +1,6 @@
 /* Optional Android bridge for the unchanged balanced UVR MDX graph. */
 (function(root){'use strict';
+ const ANALYSIS_CACHE_PROFILE='native-mdx-onnxruntime-android-1.25.1-v1';
  const BINS=3072,FRAMES=256,INPUT_FLOATS=4*BINS*FRAMES,INPUT_BYTES=INPUT_FLOATS*4,RAW_CHUNK=48*1024;
  const abortError=()=>new DOMException('Analysis cancelled','AbortError');
  const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
@@ -92,7 +93,9 @@
    }
    if(typeof bridge.nativeMdxRelease==='function')try{const value=parse(bridge.nativeMdxRelease(jobId));if(value.error)throw Error(value.error);}catch(error){root.LightForgeDiagnostics?.log('warn','native-mdx-release',error);}
   };
+  // A predictor-specific profile cannot leak onto the fallback wasm path.
+  predict.analysisCacheProfile=ANALYSIS_CACHE_PROFILE;
   return predict;
  }
- root.LightForgeNativeMdx={create,constants:{BINS,FRAMES,INPUT_FLOATS,INPUT_BYTES}};
+ root.LightForgeNativeMdx={create,analysisCacheProfile:ANALYSIS_CACHE_PROFILE,constants:{BINS,FRAMES,INPUT_FLOATS,INPUT_BYTES}};
 })(window);

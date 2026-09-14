@@ -2,7 +2,21 @@
  * Original weights are unchanged; attribution and parameters are bundled.
  * Audio stays on its original 44.1 kHz clock throughout STFT and overlap-add. */
 (function(root){'use strict';
-const RATE=44100,NFFT=7680,HOP=1024,FRAMES=256,BINS=3072,TRIM=NFFT/2,INPUT_LENGTH=HOP*(FRAMES-1),CORE=INPUT_LENGTH-2*TRIM,OVERLAP=CORE/2,STRIDE=CORE-OVERLAP;
+const RATE=44100,NFFT=7680,HOP=1024,FRAMES=256,BINS=3072,TRIM=NFFT/2,INPUT_LENGTH=HOP*(FRAMES-1),CORE=INPUT_LENGTH-2*TRIM,OVERLAP=CORE/2,STRIDE=CORE-OVERLAP,NATIVE_MDX_FALLBACK_CODE='native-mdx-fallback';
+function nativeMdxFallback(detail){const error=new Error(detail||'Native balanced separation needs a verified WASM restart.');error.code=NATIVE_MDX_FALLBACK_CODE;return error;}
+function localStageClock(){
+ const finite=value=>typeof value==='number'&&Number.isFinite(value)?value:null;
+ const read=(object,key)=>{try{return object==null?undefined:object[key];}catch(_){return undefined;}};
+ const select=key=>{const receiver=read(root,key),callable=read(receiver,'now');if(typeof callable!=='function')return null;try{const value=finite(callable.call(receiver));return value===null?null:{receiver,callable,value};}catch(_){return null;}};
+ const performance=select('performance'),selected=performance||select('Date'),start=selected?.value??0;let last=start,unavailable=!selected;
+ const now=()=>{if(unavailable)return null;try{const value=finite(selected.callable.call(selected.receiver));if(value===null||value<last){unavailable=true;return null;}last=value;return value;}catch(_){unavailable=true;return null;}};
+ return {start,seconds:()=>{const end=now();return end===null?0:Math.max(0,end-start)/1000;}};
+}
+function stageClock(){
+ let factory;try{factory=root.LightForgeDiagnosticClock;}catch(_){factory=null;}
+ if(factory&&typeof factory.create==='function')try{const clock=factory.create(root);if(clock&&typeof clock.measure==='function'&&typeof clock.source==='string'&&Number.isFinite(clock.start)){const mark={milliseconds:clock.start,source:clock.source};return {start:mark,seconds:()=>{try{const result=clock.measure(mark);return result?.measured&&Number.isFinite(result.milliseconds)?Math.max(0,result.milliseconds)/1000:0;}catch(_){return 0;}}};}}catch(_){}
+ return localStageClock();
+}
 const finite=x=>Number.isFinite(x)?x:0;
 // A mixed-radix 15 x 512 transform preserves MDX's trained 7680-point FFT.
 // Padding to 8192 would move every spectral bin and invalidate the model.
@@ -34,34 +48,38 @@ async function create(options={}){
   try{tensor=new ort.Tensor('float32',encoded,[1,4,BINS,FRAMES]);result=await active.run({[active.inputNames[0]]:tensor});prediction=Float32Array.from(result[active.outputNames[0]].data);return prediction;}
   finally{tensor?.dispose?.();if(result)for(const value of Object.values(result))value.dispose?.();}
  }
+ const validPrediction=value=>{if(!(value instanceof Float32Array)||value.length!==4*BINS*FRAMES)return false;for(let i=0;i<value.length;i++)if(!Number.isFinite(value[i]))return false;return true;};
+ async function runNative(encoded,onProgress){
+  try{
+   const prediction=await options.nativePredict(encoded,onProgress);
+   if(!validPrediction(prediction))throw nativeMdxFallback('Native balanced audio was incomplete.');
+   return prediction;
+  }catch(error){
+   if(error?.name==='AbortError'||error?.code===NATIVE_MDX_FALLBACK_CODE)throw error;
+   throw nativeMdxFallback('Native balanced separation became unavailable. '+String(error?.message||error));
+  }
+ }
  return{manifest,async process(readStereo44100,sampleCount,onChunk,onProgress){
-  if(released)throw new Error('This vocal-separation session is closed.');if(typeof readStereo44100!=='function'||typeof onChunk!=='function'||!Number.isSafeInteger(sampleCount)||sampleCount<1||sampleCount>RATE*14401)throw new Error('Invalid source-separation audio request.');let pending=null,emitted=0,chunks=0,passes=0,nativePasses=0,wasmPasses=0;const clock=performance.now();
+  if(released)throw new Error('This vocal-separation session is closed.');if(typeof readStereo44100!=='function'||typeof onChunk!=='function'||!Number.isSafeInteger(sampleCount)||sampleCount<1||sampleCount>RATE*14401)throw new Error('Invalid source-separation audio request.');let pending=null,emitted=0,chunks=0,restoredPassages=0,passes=0,nativePasses=0,wasmPasses=0;const timing=stageClock();
   for(let start=0;start<sampleCount;start+=STRIDE){const keep=Math.min(CORE,sampleCount-start),last=sampleCount-start<=CORE,stereo=await readStereo44100(start-TRIM,INPUT_LENGTH);let peak=0;for(let c=0;c<2;c++)for(let i=0;i<stereo[c].length;i++)peak=Math.max(peak,Math.abs(finite(stereo[c][i])));let decoded;
    const report=(phase,fraction)=>onProgress?.({stage:'separating',progress:Math.min(.99,(start+STRIDE*fraction)/sampleCount),processedSeconds:start/RATE,totalSeconds:sampleCount/RATE,message:phase});report('Separating singing from the instruments',0);
-   const checkpointName='mdx-'+(denoise?'ensemble-':'single-')+start,cached=await options.checkpoint?.readFloats(checkpointName);
-   if(cached?.length===1&&cached[0].length===INPUT_LENGTH){decoded=cached[0];report('Restoring a completed vocal passage',.9);}
-   else if(peak<1e-7)decoded=new Float32Array(INPUT_LENGTH);else{const encoded=frontend.encode(stereo);let prediction,nativeUsed=false;
-    const valid=value=>{if(!(value instanceof Float32Array)||value.length!==4*BINS*FRAMES)return false;for(let i=0;i<value.length;i++)if(!Number.isFinite(value[i]))return false;return true;};
+   const checkpointName='mdx-'+(denoise?'ensemble-':'single-')+start,cached=await options.checkpoint?.readFloats(checkpointName),restored=cached?.length===1&&cached[0] instanceof Float32Array&&cached[0].length===INPUT_LENGTH&&cached[0].every(Number.isFinite);
+   if(restored){decoded=cached[0];restoredPassages++;report('Restoring a completed vocal passage',.9);}
+   else if(peak<1e-7)decoded=new Float32Array(INPUT_LENGTH);else{const encoded=frontend.encode(stereo),nativeAvailable=typeof options.nativePredict==='function';let prediction;
     const nativeProgress=p=>report(p?.message||'Running balanced MDX',Math.max(0,Math.min(1,Number(p?.progress)||0)));
-    if(typeof options.nativePredict==='function'){
-     const candidate=await options.nativePredict(encoded,nativeProgress);
-     if(valid(candidate)){prediction=candidate;nativeUsed=true;passes++;nativePasses++;}
-    }
-    if(!prediction){prediction=await runWasm(encoded);passes++;wasmPasses++;}
-    if(denoise){report('Refining vocal isolation with a second listening pass',.5);const reversed=encoded.slice();for(let i=0;i<reversed.length;i++)reversed[i]=-reversed[i];let reverse;
-     if(nativeUsed){reverse=await options.nativePredict(reversed,nativeProgress);if(valid(reverse)){for(let i=0;i<prediction.length;i++)prediction[i]=(prediction[i]-reverse[i])*.5;passes++;nativePasses++;}else{
-      // Never mix native and WebAssembly passes. If the optional bridge stops
-      // halfway through a polarity pair, recompute both with the verified
-      // WebAssembly graph so the denoiser remains deterministic.
-      prediction=await runWasm(encoded);passes++;wasmPasses++;reverse=await runWasm(reversed);passes++;wasmPasses++;for(let i=0;i<prediction.length;i++)prediction[i]=(prediction[i]-reverse[i])*.5;
-     }}else{reverse=await runWasm(reversed);passes++;wasmPasses++;for(let i=0;i<prediction.length;i++)prediction[i]=(prediction[i]-reverse[i])*.5;}
+    if(nativeAvailable){prediction=await runNative(encoded,nativeProgress);passes++;nativePasses++;}
+    else{prediction=await runWasm(encoded);passes++;wasmPasses++;}
+    if(denoise){report('Refining vocal isolation with a second listening pass',.5);const reversed=encoded.slice();for(let i=0;i<reversed.length;i++)reversed[i]=-reversed[i];const reverse=nativeAvailable?await runNative(reversed,nativeProgress):await runWasm(reversed);
+     if(nativeAvailable){passes++;nativePasses++;}else{passes++;wasmPasses++;}
+     for(let i=0;i<prediction.length;i++)prediction[i]=(prediction[i]-reverse[i])*.5;
     }
     decoded=frontend.decode(prediction,manifest.compensate);await options.checkpoint?.writeFloats(checkpointName,[decoded]);}
    const vocals=decoded.slice(TRIM,TRIM+keep),mixture=new Float32Array(keep);for(let i=0;i<keep;i++)mixture[i]=(finite(stereo[0][i+TRIM])+finite(stereo[1][i+TRIM]))*.5;if(pending){for(let i=0;i<Math.min(OVERLAP,keep,pending.length);i++){const w=.5-.5*Math.cos(Math.PI*(i+.5)/OVERLAP);vocals[i]=pending[i]*(1-w)+vocals[i]*w;}}
    const count=last?keep:STRIDE,outputVocals=vocals.slice(0,count),accompaniment=new Float32Array(count);for(let i=0;i<count;i++)accompaniment[i]=mixture[i]-outputVocals[i];if(start!==emitted)throw new Error('Vocal-separation timing continuity was lost.');await onChunk({vocals:outputVocals,accompaniment,startSample:start,sampleRate:RATE});emitted+=count;chunks++;pending=last?null:vocals.slice(STRIDE);if(last)break;await retireSession();await new Promise(resolve=>setTimeout(resolve,0));
   }
-  if(emitted!==sampleCount)throw new Error('The separated vocal track is incomplete. Your original music is unchanged.');onProgress?.({stage:'complete',progress:1,processedSeconds:sampleCount/RATE,totalSeconds:sampleCount/RATE,message:'Studio vocal separation complete'});return{sourceSeparated:true,runtime:nativePasses?(wasmPasses?'onnxruntime-android-cpu+onnxruntime-web-wasm':'onnxruntime-android-cpu'):'onnxruntime-web-wasm',nativeModelPasses:nativePasses,wasmModelPasses:wasmPasses,name:'UVR MDX-Net Voc FT',modelId:manifest.id,modelSha256:manifest.sha256,sampleRate:RATE,sourceChannels:2,stems:['vocals','accompaniment'],method:denoise?'Pretrained stereo complex-spectrum separation with polarity ensemble':'Pretrained stereo complex-spectrum separation',vocalBandwidthHz:BINS*RATE/NFFT,fftWindowSamples:NFFT,fftHopSamples:HOP,contextSamples:TRIM,overlapSamples:OVERLAP,overlapFraction:.5,denoise,modelPasses:passes,alignment:'Original sample clock; normalized overlap-add and complementary chunk crossfades; no latency subtraction',estimated:true,analysisSeconds:(performance.now()-clock)/1000,chunks,limitations:['Separation can retain instrument bleed or soften quiet and heavily processed singing.','Lead and backing vocals are combined; this is not lyric transcription.']};
+  if(emitted!==sampleCount)throw new Error('The separated vocal track is incomplete. Your original music is unchanged.');onProgress?.({stage:'complete',progress:1,processedSeconds:sampleCount/RATE,totalSeconds:sampleCount/RATE,message:'Studio vocal separation complete'});return{sourceSeparated:true,runtime:nativePasses?(wasmPasses?'onnxruntime-android-cpu+onnxruntime-web-wasm':'onnxruntime-android-cpu'):'onnxruntime-web-wasm',nativeModelPasses:nativePasses,wasmModelPasses:wasmPasses,name:'UVR MDX-Net Voc FT',modelId:manifest.id,modelSha256:manifest.sha256,sampleRate:RATE,sourceChannels:2,stems:['vocals','accompaniment'],method:denoise?'Pretrained stereo complex-spectrum separation with polarity ensemble':'Pretrained stereo complex-spectrum separation',vocalBandwidthHz:BINS*RATE/NFFT,fftWindowSamples:NFFT,fftHopSamples:HOP,contextSamples:TRIM,overlapSamples:OVERLAP,overlapFraction:.5,denoise,modelPasses:passes,alignment:'Original sample clock; normalized overlap-add and complementary chunk crossfades; no latency subtraction',estimated:true,analysisSeconds:timing.seconds(),chunks,restoredPassages,limitations:['Separation can retain instrument bleed or soften quiet and heavily processed singing.','Lead and backing vocals are combined; this is not lyric transcription.']};
   },async release(){if(released)return;released=true;const pending=sessionPromise;sessionPromise=null;try{if(pending)await pending.catch(()=>{});}finally{await retireSession();}}
 }}
 root.LightForgeMdxSeparator={create,Frontend,FFT7680,constants:{RATE,NFFT,HOP,FRAMES,BINS,TRIM,INPUT_LENGTH,CORE,OVERLAP,STRIDE}};if(typeof module!=='undefined'&&module.exports)module.exports=root.LightForgeMdxSeparator;
 })(typeof self!=='undefined'?self:globalThis);
+
