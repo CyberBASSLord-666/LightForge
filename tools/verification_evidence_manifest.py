@@ -30,7 +30,12 @@ import tempfile
 from typing import Any, Mapping
 
 
-SCHEMA_VERSION = 1
+# Candidate manifests are consumed by the Android handoff as well as this
+# evidence chain. Keep that stable schema at 1; the content and wrapper schemas
+# independently advance when their sealed receipt records evolve.
+CANDIDATE_SCHEMA_VERSION = 1
+CONTENT_SCHEMA_VERSION = 2
+WRAPPER_SCHEMA_VERSION = 2
 REPOSITORY = "CyberBASSLord-666/LightForge"
 WORKFLOW = ".github/workflows/verify-v2.yml"
 CANDIDATE_KIND = "lightforge-ci-candidate"
@@ -42,10 +47,20 @@ WRAPPER_MANIFEST = "verification-evidence-manifest.json"
 RECEIPTS = {
     "regression-verification.json": "receipts/regression-verification.json",
     "browser-verification.json": "receipts/browser-verification.json",
+    "background-ui-verification.json": "receipts/background-ui-verification.json",
+    "restore-preview-verification.json": "receipts/restore-preview-verification.json",
     "native-verification.json": "receipts/native-verification.json",
     "analysis-browser-verification.json": "receipts/analysis-browser-verification.json",
     "analysis-verification.json": "receipts/analysis-verification.json",
 }
+CAMELCASE_SESSION_RECEIPTS = frozenset({
+    "browser-verification.json",
+    "background-ui-verification.json",
+    "restore-preview-verification.json",
+    "analysis-browser-verification.json",
+})
+ANALYSIS_SESSION_RECEIPT = "analysis-verification.json"
+EVIDENCE_SESSION_SCHEMA = "lightforge.evidence-session.v1"
 
 # These are deliberately narrow.  A receipt source that is not the exact byte
 # from the candidate tree must be one of these reviewed CI-only materials; a
@@ -232,7 +247,9 @@ def _runtime_evidence_materials(release: str) -> frozenset[str]:
     root = "qa/release-" + _release(release, "Evidence release is invalid") + "/"
     return frozenset(root + name for name in {
         "analysis-browser-verification.json",
+        "background-ui-verification.json",
         "browser-verification.json",
+        "restore-preview-verification.json",
         "native-inference-profile-equivalence.json",
         "native-mdx-comparison-verification.json",
         "native-mdx-downstream-native.json",
@@ -468,7 +485,7 @@ def candidate_binding(
     expected_pipeline = _pipeline(pipeline, "Expected candidate pipeline is invalid")
     raw = _load(candidate_manifest, "Candidate manifest is invalid")
     require(set(raw) == {"schema_version", "kind", "release", "source", "pipeline", "source_hashes", "files"}, "Candidate manifest fields are invalid")
-    require(raw.get("schema_version") == SCHEMA_VERSION and raw.get("kind") == CANDIDATE_KIND, "Candidate manifest schema is invalid")
+    require(raw.get("schema_version") == CANDIDATE_SCHEMA_VERSION and raw.get("kind") == CANDIDATE_KIND, "Candidate manifest schema is invalid")
     require(raw.get("release") == release, "Candidate manifest release differs")
     source = raw.get("source")
     require(isinstance(source, dict) and set(source) == {"commit", "tree_sha"}, "Candidate manifest source is invalid")
@@ -518,7 +535,55 @@ def validate_candidate_record(value: Any, *, release: str, pipeline: Mapping[str
     return candidate
 
 
-def _receipt(value: Any, name: str, release: str, source_root: Path | str | None = None) -> dict[str, Any]:
+def _session_evidence_record(value: Any, name: str, expected_session: str,
+                             message: str) -> dict[str, str]:
+    """Validate and retain the exact session fields observed in one receipt."""
+    expected_session = _session(expected_session, message)
+    if name in CAMELCASE_SESSION_RECEIPTS:
+        expected = {
+            "evidenceSessionSchema": EVIDENCE_SESSION_SCHEMA,
+            "evidenceSession": expected_session,
+        }
+        require(value == expected, message)
+        return expected
+    if name == ANALYSIS_SESSION_RECEIPT:
+        expected = {"evidence_session": expected_session}
+        require(value == expected, message)
+        return expected
+    require(value == {}, message)
+    return {}
+
+
+def _receipt_session_evidence(value: Mapping[str, Any], name: str,
+                              expected_session: str) -> dict[str, str]:
+    if name in CAMELCASE_SESSION_RECEIPTS:
+        return _session_evidence_record(
+            {
+                "evidenceSessionSchema": value.get("evidenceSessionSchema"),
+                "evidenceSession": value.get("evidenceSession"),
+            },
+            name,
+            expected_session,
+            "Verification receipt evidence session differs: " + name,
+        )
+    if name == ANALYSIS_SESSION_RECEIPT:
+        return _session_evidence_record(
+            {"evidence_session": value.get("evidence_session")},
+            name,
+            expected_session,
+            "Verification receipt evidence session differs: " + name,
+        )
+    require(
+        "evidenceSessionSchema" not in value
+        and "evidenceSession" not in value
+        and "evidence_session" not in value,
+        "Verification receipt is unexpectedly session-bound: " + name,
+    )
+    return {}
+
+
+def _receipt(value: Any, name: str, release: str, evidence_session: str,
+             source_root: Path | str | None = None) -> dict[str, Any]:
     require(isinstance(value, dict), "Verification receipt is invalid: " + name)
     require(value.get("passed") is True and value.get("errors") == [], "Verification receipt did not pass: " + name)
     require(value.get("release") == release, "Verification receipt release differs: " + name)
@@ -530,18 +595,29 @@ def _receipt(value: Any, name: str, release: str, source_root: Path | str | None
         "release": release,
         "source_hashes": source_hashes,
         "source_hashes_sha256": canonical_sha256(source_hashes),
+        # Keep the raw producer spelling in both artifacts. The final analysis
+        # receipt intentionally uses snake case while browser producers use
+        # camel case, and a wrapper must not erase that binding.
+        "session_evidence": _receipt_session_evidence(value, name, evidence_session),
     }
 
 
-def _receipt_record(value: Any, name: str, release: str, root: Path) -> dict[str, Any]:
+def _receipt_record(value: Any, name: str, release: str, pipeline: Mapping[str, Any],
+                    root: Path) -> dict[str, Any]:
     require(isinstance(value, dict) and set(value) == {
-        "path", "bytes", "sha256", "passed", "release", "source_hashes", "source_hashes_sha256"
+        "path", "bytes", "sha256", "passed", "release", "source_hashes",
+        "source_hashes_sha256", "session_evidence",
     }, "Evidence receipt record is invalid: " + name)
     require(value.get("path") == RECEIPTS[name], "Evidence receipt path differs: " + name)
     path = _regular(root, value["path"], "Evidence receipt is missing: " + name)
     require(value.get("bytes") == path.stat().st_size and _sha(value.get("sha256"), "Evidence receipt digest is invalid: " + name) == sha256_file(path),
             "Evidence receipt digest differs: " + name)
-    actual = _receipt(_load(path, "Evidence receipt is invalid: " + name), name, release)
+    actual = _receipt(
+        _load(path, "Evidence receipt is invalid: " + name),
+        name,
+        release,
+        _pipeline(pipeline, "Evidence receipt pipeline is invalid")["evidence_session"],
+    )
     expected = {
         "path": RECEIPTS[name],
         "bytes": path.stat().st_size,
@@ -551,13 +627,12 @@ def _receipt_record(value: Any, name: str, release: str, root: Path) -> dict[str
     require(value == expected, "Evidence receipt metadata differs: " + name)
     return expected
 
-
 def _content_manifest(value: Any, *, release: str, pipeline: Mapping[str, Any], root: Path,
                       expected_candidate: Mapping[str, Any] | None = None) -> dict[str, Any]:
     require(isinstance(value, dict) and set(value) == {
         "schema_version", "kind", "repository", "release", "pipeline", "candidate", "receipts", "source_bindings"
     }, "Evidence content manifest fields are invalid")
-    require(value.get("schema_version") == SCHEMA_VERSION and value.get("kind") == CONTENT_KIND, "Evidence content manifest schema is invalid")
+    require(value.get("schema_version") == CONTENT_SCHEMA_VERSION and value.get("kind") == CONTENT_KIND, "Evidence content manifest schema is invalid")
     require(value.get("repository") == REPOSITORY and value.get("release") == release, "Evidence content manifest identity differs")
     parsed_pipeline = _pipeline(value.get("pipeline"), "Evidence content pipeline is invalid")
     require(parsed_pipeline == _pipeline(pipeline, "Expected evidence pipeline is invalid"), "Evidence content pipeline differs")
@@ -566,10 +641,13 @@ def _content_manifest(value: Any, *, release: str, pipeline: Mapping[str, Any], 
         require(candidate == _candidate_record(expected_candidate, release, "Expected evidence candidate is invalid"), "Evidence content candidate differs")
     receipts = value.get("receipts")
     require(isinstance(receipts, dict) and set(receipts) == set(RECEIPTS), "Evidence receipt inventory is invalid")
-    normalized = {name: _receipt_record(receipts[name], name, release, root) for name in RECEIPTS}
+    normalized = {
+        name: _receipt_record(receipts[name], name, release, parsed_pipeline, root)
+        for name in RECEIPTS
+    }
     bindings = _source_bindings(value.get("source_bindings"), expected=_source_hash_union(normalized), release=release, root=root)
     return {
-        "schema_version": SCHEMA_VERSION,
+        "schema_version": CONTENT_SCHEMA_VERSION,
         "kind": CONTENT_KIND,
         "repository": REPOSITORY,
         "release": release,
@@ -617,7 +695,13 @@ def write_content(args: argparse.Namespace) -> dict[str, Any]:
         records: dict[str, dict[str, Any]] = {}
         for name, relative in RECEIPTS.items():
             origin = _regular(source, name, "Verification receipt is missing: " + name)
-            summary = _receipt(_load(origin, "Verification receipt is invalid: " + name), name, release, args.source_root)
+            summary = _receipt(
+                _load(origin, "Verification receipt is invalid: " + name),
+                name,
+                release,
+                pipeline["evidence_session"],
+                args.source_root,
+            )
             destination = output / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(origin, destination)
@@ -635,7 +719,7 @@ def write_content(args: argparse.Namespace) -> dict[str, Any]:
             output=output,
         )
         manifest = {
-            "schema_version": SCHEMA_VERSION,
+            "schema_version": CONTENT_SCHEMA_VERSION,
             "kind": CONTENT_KIND,
             "repository": REPOSITORY,
             "release": release,
@@ -668,7 +752,7 @@ def _wrapper_manifest(value: Any, *, release: str, pipeline: Mapping[str, Any], 
     require(isinstance(value, dict) and set(value) == {
         "schema_version", "kind", "repository", "release", "pipeline", "candidate", "evidence_artifact", "receipts", "source_bindings"
     }, "Evidence wrapper manifest fields are invalid")
-    require(value.get("schema_version") == SCHEMA_VERSION and value.get("kind") == WRAPPER_KIND, "Evidence wrapper manifest schema is invalid")
+    require(value.get("schema_version") == WRAPPER_SCHEMA_VERSION and value.get("kind") == WRAPPER_KIND, "Evidence wrapper manifest schema is invalid")
     require(value.get("repository") == REPOSITORY and value.get("release") == release, "Evidence wrapper manifest identity differs")
     parsed_pipeline = _pipeline(value.get("pipeline"), "Evidence wrapper pipeline is invalid")
     require(parsed_pipeline == _pipeline(pipeline, "Expected evidence pipeline is invalid"), "Evidence wrapper pipeline differs")
@@ -684,7 +768,8 @@ def _wrapper_manifest(value: Any, *, release: str, pipeline: Mapping[str, Any], 
     normalized: dict[str, dict[str, Any]] = {}
     for name, record in receipts.items():
         require(isinstance(record, dict) and set(record) == {
-            "path", "bytes", "sha256", "passed", "release", "source_hashes", "source_hashes_sha256"
+            "path", "bytes", "sha256", "passed", "release", "source_hashes",
+            "source_hashes_sha256", "session_evidence",
         }, "Evidence wrapper receipt record is invalid: " + name)
         require(record.get("path") == RECEIPTS[name] and type(record.get("bytes")) is int and record["bytes"] >= 0
                 and _sha(record.get("sha256"), "Evidence wrapper receipt digest is invalid: " + name), "Evidence wrapper receipt fields are invalid: " + name)
@@ -693,6 +778,12 @@ def _wrapper_manifest(value: Any, *, release: str, pipeline: Mapping[str, Any], 
             "release": record.get("release"),
             "source_hashes": _source_hashes(record.get("source_hashes"), "Evidence wrapper source hashes are invalid: " + name),
             "source_hashes_sha256": record.get("source_hashes_sha256"),
+            "session_evidence": _session_evidence_record(
+                record.get("session_evidence"),
+                name,
+                parsed_pipeline["evidence_session"],
+                "Evidence wrapper receipt session differs: " + name,
+            ),
         }
         require(summary["passed"] is True and summary["release"] == release
                 and _sha(summary["source_hashes_sha256"], "Evidence wrapper source-hash digest is invalid: " + name)
@@ -702,7 +793,7 @@ def _wrapper_manifest(value: Any, *, release: str, pipeline: Mapping[str, Any], 
         }
     bindings = _source_bindings(value.get("source_bindings"), expected=_source_hash_union(normalized), release=release)
     return {
-        "schema_version": SCHEMA_VERSION,
+        "schema_version": WRAPPER_SCHEMA_VERSION,
         "kind": WRAPPER_KIND,
         "repository": REPOSITORY,
         "release": release,
@@ -734,7 +825,7 @@ def write_wrapper(args: argparse.Namespace) -> dict[str, Any]:
     output = _fresh_directory(args.output_dir)
     try:
         wrapper = {
-            "schema_version": SCHEMA_VERSION,
+            "schema_version": WRAPPER_SCHEMA_VERSION,
             "kind": WRAPPER_KIND,
             "repository": REPOSITORY,
             "release": release,
