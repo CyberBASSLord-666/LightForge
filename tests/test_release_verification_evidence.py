@@ -45,7 +45,7 @@ def pipeline(attempt=1):
 
 def candidate_manifest(path: Path, attempt=1):
     path.write_text(json.dumps({
-        "schema_version": 1,
+        "schema_version": evidence.CANDIDATE_SCHEMA_VERSION,
         "kind": evidence.CANDIDATE_KIND,
         "release": RELEASE["name"],
         "source": {"commit": HEAD, "tree_sha": TREE},
@@ -54,6 +54,28 @@ def candidate_manifest(path: Path, attempt=1):
         "files": {name: {"bytes": 1, "sha256": "d" * 64} for name in evidence._candidate_files(RELEASE["name"])},
     }), encoding="utf-8")
     return evidence.sha256_file(path)
+
+
+def receipt(name, source_hashes=None, session=SESSION):
+    value = {
+        "release": RELEASE["name"],
+        "passed": True,
+        "errors": [],
+        "source_hashes": {"web/app.js": SOURCE_HASH} if source_hashes is None else source_hashes,
+    }
+    if name in {
+        "browser-verification.json",
+        "analysis-browser-verification.json",
+        "background-ui-verification.json",
+        "restore-preview-verification.json",
+    }:
+        value.update({
+            "evidenceSessionSchema": evidence.EVIDENCE_SESSION_SCHEMA,
+            "evidenceSession": session,
+        })
+    elif name == "analysis-verification.json":
+        value["evidence_session"] = session
+    return value
 
 
 class ReleaseVerificationEvidenceTest(unittest.TestCase):
@@ -66,10 +88,7 @@ class ReleaseVerificationEvidenceTest(unittest.TestCase):
         (source_root / "web").mkdir(parents=True)
         (source_root / "web/app.js").write_bytes(SOURCE_BYTES)
         for name in evidence.RECEIPTS:
-            (input_dir / name).write_text(json.dumps({
-                "release": RELEASE["name"], "passed": True, "errors": [],
-                "source_hashes": {"web/app.js": SOURCE_HASH},
-            }), encoding="utf-8")
+            (input_dir / name).write_text(json.dumps(receipt(name)), encoding="utf-8")
         content_root = root / "content"
         with patch.object(evidence, "_candidate_tree_bytes", side_effect=lambda _root, _commit, relative: SOURCE_BYTES if relative == "web/app.js" else None):
             content = evidence.write_content(SimpleNamespace(
@@ -163,6 +182,15 @@ class ReleaseVerificationEvidenceTest(unittest.TestCase):
             value["evidence_artifact"]["digest"] = "0" * 64
             wrapper_path.write_text(json.dumps(value), encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "manifest is not canonical|artifact digest differs"):
+                self._run(root, content_root, wrapper_root, content["candidate"])
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            content_root, wrapper_root, content, _ = self._artifacts(root)
+            wrapper_path = wrapper_root / evidence.WRAPPER_MANIFEST
+            value = json.loads(wrapper_path.read_text(encoding="utf-8"))
+            value["receipts"]["restore-preview-verification.json"]["session_evidence"]["evidenceSession"] = "d" * 64
+            wrapper_path.write_text(json.dumps(value), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "session differs"):
                 self._run(root, content_root, wrapper_root, content["candidate"])
 
     def test_cross_run_candidate_binding_and_source_tampering_fail_closed(self):
