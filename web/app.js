@@ -216,8 +216,8 @@ function renderDeviceCapabilities(data){
 }
 function completedRestoreNonce(){completedRestoreEpoch++;return `${Date.now().toString(36)}-${completedRestoreEpoch.toString(36)}-${Math.random().toString(36).slice(2,14)}`;}
 function beginCompletedRestore(job){
- const prior=state.completedRestore;
- const lease={jobId:job.id,projectId:String(job.projectId||''),nonce:completedRestoreNonce(),phase:'bootstrap',sequence:0,bytes:0,renderCountBeforeAdopt:0,workerVerified:false,adoptedProjectId:null,adoptedSelection:0,adoptedCompileId:0,failed:false,terminal:false,ackWritten:false,ackConfirmed:false};
+ const prior=state.completedRestore,Controller=window.AbortController||globalThis.AbortController,abortController=Controller?new Controller():null;
+ const lease={jobId:job.id,projectId:String(job.projectId||''),nonce:completedRestoreNonce(),phase:'bootstrap',sequence:0,bytes:0,renderCountBeforeAdopt:0,workerVerified:false,adoptedProjectId:null,adoptedSelection:0,adoptedCompileId:0,failed:false,terminal:false,ackWritten:false,ackConfirmed:false,abortController,abortSignal:abortController?.signal||null,deferredForPause:false};
  state.completedRestore=lease;
  let accepted;
  try{accepted=bridge('beginCompletedRestore',lease.jobId,lease.nonce,lease.bytes);}
@@ -239,9 +239,11 @@ function completedRestorePulse(lease,phase,bytes=lease?.bytes||0){
  if(bridge('completedRestorePulse',lease.jobId,lease.nonce,phase,lease.sequence,lease.bytes)===true)return true;
  completedRestoreFailed(lease,'Native completed-restore pulse was rejected.');return false;
 }
-function completedRestoreFailed(lease,reason){
+function completedRestoreFailed(lease,reason,{retainPreviewDeferral=false}={}){
  if(!lease||state.completedRestore!==lease||lease.failed||lease.terminal)return;
- lease.failed=true;lease.phase='failed';lease.sequence++;setCompletedRestorePreviewDeferred(false);bridge('completedRestoreFailed',lease.jobId,lease.nonce,String(reason||'restore-failed').slice(0,120));
+ lease.failed=true;lease.phase='failed';lease.sequence++;try{lease.abortController?.abort();}catch{}
+ if(!retainPreviewDeferral)setCompletedRestorePreviewDeferred(false);
+ bridge('completedRestoreFailed',lease.jobId,lease.nonce,String(reason||'restore-failed').slice(0,120));
 }
 function completedRestoreWorkerEvent(lease,event){
  if(!lease||state.completedRestore!==lease||event?.lease?.jobId!==lease.jobId||event.lease?.nonce!==lease.nonce)return;
@@ -285,9 +287,12 @@ async function readCompletedRestoreProjectFromFetch(project,lease){
  if(!project?.projectUrl)throw Error('The completed project has no saved payload.');
  if(!completedRestorePulse(lease,'project-read-fallback',lease.bytes))throw Error('Native completed-restore lease rejected the project-read fallback.');
  const Controller=window.AbortController||globalThis.AbortController,controller=Controller?new Controller():null;
+ const cancelRead=()=>{try{controller?.abort();}catch{}};
+ if(lease?.abortSignal){if(lease.abortSignal.aborted)cancelRead();else lease.abortSignal.addEventListener?.('abort',cancelRead,{once:true});}
  let timer;
  const timeout=new Promise((_,reject)=>{timer=setTimeout(()=>{try{controller?.abort();}catch{}reject(Error('The completed project read timed out before it could be restored.'));},COMPLETED_RESTORE_PROJECT_READ_TIMEOUT_MS);});
  try{
+  if(lease?.abortSignal?.aborted)throw Error('Completed restoration was deferred until foreground resume.');
   const response=await Promise.race([fetch(project.projectUrl,controller?{signal:controller.signal}:undefined),timeout]);
   if(!response?.ok)throw Error('The completed project could not be read.');
   const body=typeof response.text==='function'
@@ -296,7 +301,7 @@ async function readCompletedRestoreProjectFromFetch(project,lease){
   if(typeof body!=='string'||body.length===0||body.length>COMPLETED_RESTORE_PROJECT_MAX_BYTES)throw Error('The completed project payload is invalid or too large.');
   if(!completedRestorePulse(lease,'project-read',body.length))throw Error('Native completed-restore lease rejected the project-read result.');
   return JSON.parse(body);
- }finally{clearTimeout(timer);}
+ }finally{clearTimeout(timer);lease?.abortSignal?.removeEventListener?.('abort',cancelRead);}
 }
 async function readCompletedRestoreProject(project,lease){
  if(typeof window.Android?.readCompletedRestoreProjectChunk==='function')return readCompletedRestoreProjectFromBridge(project,lease);
@@ -307,9 +312,12 @@ async function readCompletedRestoreProject(project,lease){
 }
 function awaitCompletedRestoreRender(lease){return new Promise((resolve,reject)=>{
  let settled=false,frame=null;
- const finish=(callback,value)=>{if(settled)return;settled=true;if(frame!==null){cancelAnimationFrame(frame);frame=null;}callback(value);};
+ const finish=(callback,value)=>{if(settled)return;settled=true;if(frame!==null){cancelAnimationFrame(frame);frame=null;}lease?.abortSignal?.removeEventListener?.('abort',cancel);callback(value);};
  const fail=error=>finish(reject,error);
  const succeed=()=>finish(resolve);
+ const cancel=()=>fail(Error('Completed restoration was deferred until foreground resume.'));
+ if(lease?.abortSignal?.aborted){cancel();return;}
+ lease?.abortSignal?.addEventListener?.('abort',cancel,{once:true});
  const preview=vehiclePreview,ready=preview?.ready;
  // A failed GLTF/WebGL preview cannot provide the required first-frame proof.
  // Keep the completed job pending for a safe retry instead of waiting forever.
@@ -326,14 +334,24 @@ function awaitCompletedRestoreRender(lease){return new Promise((resolve,reject)=
  inspect();
 });}
 function awaitCompletedRestoreVisualCommit(lease){return new Promise((resolve,reject)=>{
+ let settled=false,frame=null;
+ const finish=(callback,value)=>{if(settled)return;settled=true;if(frame!==null){cancelAnimationFrame(frame);frame=null;}lease?.abortSignal?.removeEventListener?.('abort',cancel);callback(value);};
+ const fail=error=>finish(reject,error);
+ const succeed=()=>finish(resolve);
+ const cancel=()=>fail(Error('Completed restoration was deferred until foreground resume.'));
+ if(lease?.abortSignal?.aborted){cancel();return;}
+ lease?.abortSignal?.addEventListener?.('abort',cancel,{once:true});
  const inspect=()=>{
-  if(!completedRestoreOwnsAdoptedProject(lease))return reject(Error('Saved arrangement restoration was superseded before its visual frame committed.'));
-  if(bridge('requestCompletedRestoreVisualCommit',lease.jobId,lease.nonce)!==true)return reject(Error('Native completed-restore visual proof was rejected.'));
-  if(bridge('completedRestoreVisualCommitted',lease.jobId,lease.nonce)===true){
-   if(!completedRestorePulse(lease,'preview-visual-commit'))return reject(Error('Native completed-restore visual phase was rejected.'));
-   resolve();return;
-  }
-  requestAnimationFrame(inspect);
+  frame=null;if(settled)return;
+  try{
+   if(!completedRestoreOwnsAdoptedProject(lease))return fail(Error('Saved arrangement restoration was superseded before its visual frame committed.'));
+   if(bridge('requestCompletedRestoreVisualCommit',lease.jobId,lease.nonce)!==true)return fail(Error('Native completed-restore visual proof was rejected.'));
+   if(bridge('completedRestoreVisualCommitted',lease.jobId,lease.nonce)===true){
+    if(!completedRestorePulse(lease,'preview-visual-commit'))return fail(Error('Native completed-restore visual phase was rejected.'));
+    succeed();return;
+   }
+   frame=requestAnimationFrame(inspect);
+  }catch(error){fail(error);}
  };
  inspect();
 });}
@@ -399,6 +417,14 @@ async function handleBackgroundJob(job){
   }
   updateButtons();return;
  }
+ // A completed analysis is durable even while its Activity/document is paused.
+ // Do not start a foreground-only visual proof while drawing is intentionally
+ // suspended: doing so spends a watchdog lease waiting for an impossible frame.
+ // Terminal leases above still retry their exact, already-proven browser ACK.
+ if(job.state==='completed'&&state.backgroundSyncPending&&(previewPaused||document.hidden)){
+  if(state.busy&&!state.abort)endBusy();
+  updateButtons();return;
+ }
  if(state.backgroundSeen===job.id+':'+job.state)return;
  state.backgroundSeen=job.id+':'+job.state;
  if(state.busy&&!state.abort)endBusy();
@@ -416,7 +442,10 @@ async function handleBackgroundJob(job){
    await awaitCompletedRestoreRender(restoreLease);await awaitCompletedRestoreVisualCommit(restoreLease);completeCompletedRestore(restoreLease);
    writeCompletedRestoreAck(restoreLease,job);
    toast('Your background show is ready. Press play to review it.');
-  }catch(error){completedRestoreFailed(restoreLease,error.message||error);diagnostics?.log('error','background',error);state.backgroundSeen=null;toast(error.message,true);}
+  }catch(error){
+   if(restoreLease?.deferredForPause){state.backgroundSyncPending=true;state.backgroundSeen=null;diagnostics?.log('info','background','Completed restore deferred until foreground resume.');}
+   else{completedRestoreFailed(restoreLease,error.message||error);diagnostics?.log('error','background',error);state.backgroundSeen=null;toast(error.message,true);}
+  }
   finally{if(restoreLease&&state.completedRestore===restoreLease&&(restoreLease.failed||restoreLease.ackConfirmed))state.completedRestore=null;state.backgroundApplying=false;}
  }else if(['failed','interrupted','cancelled'].includes(job.state)){
   state.backgroundSyncPending=false;
@@ -425,7 +454,7 @@ async function handleBackgroundJob(job){
  updateButtons();
 }
 async function pollBackgroundJob(){
- if(!backgroundSupported()||document.hidden)return;
+ if(!backgroundSupported()||previewPaused||document.hidden)return;
  const job=parse(bridge('getAnalysisStatus'),null);if(job)await handleBackgroundJob(job);
 }
 async function startBackgroundGeneration(){
@@ -570,13 +599,24 @@ for(const id of ['stepMs','beatDivision','palette','bpmOverride','offsetMs'])$(i
 document.querySelectorAll('[data-feature]').forEach(el=>el.onchange=()=>{snapshot();state.settings.enabled[el.dataset.feature]=el.checked;settingsChanged();});$('optionalFog').onchange=()=>{snapshot();state.settings.optionalFog=$('optionalFog').checked;settingsChanged();};$('undo').onclick=()=>undo().catch(e=>toast(e.message,true));if($('redo'))$('redo').onclick=()=>redo().catch(e=>toast(e.message,true));$('resetSettings').onclick=resetStudio;
 $('sectionEnergy').oninput=()=>{text($('sectionEnergyValue'),Math.round($('sectionEnergy').value*100)+'%');updateRangeFill($('sectionEnergy'));};$('applySection').onclick=async()=>{if(state.editing===null)return;snapshot();const override={...state.settings.sectionOverrides[state.editing],intensity:Number($('sectionEnergy').value)};delete override.style;if($('sectionStyle').value)override.style=$('sectionStyle').value;state.settings.sectionOverrides[state.editing]=override;await regenerate();toast('Section updated. Play it back to hear the change in context.');};$('closeSection').onclick=()=>{$('sectionEditor').hidden=true;document.querySelectorAll('.section-item').forEach(b=>b.classList.remove('selecting'));};$('resetSections').onclick=()=>{if(!Object.keys(state.settings.sectionOverrides).length)return;snapshot();state.settings.sectionOverrides={};regenerate();$('sectionEditor').hidden=true;toast('Section overrides cleared.');};
 $('export').onclick=exportShow;$('shareExport').onclick=()=>bridge('shareExport',String(state.exportId||''));$('exportDone').onclick=()=>$('exportSuccess').hidden=true;$('officialGuide').onclick=()=>{const url='https://github.com/teslamotors/light-show';if(native())bridge('openExternal',url);else window.open(url,'_blank','noopener');};
+function deferActiveCompletedRestoreForPause(){
+ const lease=state.completedRestore;
+ if(!lease||lease.failed||lease.terminal)return false;
+ lease.deferredForPause=true;state.backgroundSyncPending=true;state.backgroundSeen=null;
+ try{completedRestoreFailed(lease,'foreground-paused',{retainPreviewDeferral:true});}
+ catch(error){diagnostics?.log('warn','background','Completed restore pause retirement could not reach native: '+(error.message||error));}
+ state.compileAbort?.abort();return true;
+}
 function updatePreviewLifecycle(){
  const paused=nativePreviewPaused||pagePreviewPaused||document.hidden,changed=paused!==previewPaused;previewPaused=paused;
+ // Retire an unproven restore before its private proof frames are suspended.
+ // Terminal leases are already proven and retain their exact ACK retry path.
+ if(paused&&changed)deferActiveCompletedRestoreForPause();
  // Native focus loss can precede document.hidden. Suspend the renderer before
  // stopping inspection/audio, since their handlers can request another frame.
  vehiclePreview.setPaused?.(paused);
  if(paused){cancelAnimationFrame(frameRequest);frameRequest=0;lastDraw=0;if(changed){stopInspection();audio.pause();clearTimeout(saveTimer);saveProject();}}
- else{if(!frameRequest)frameRequest=requestAnimationFrame(tick);if(changed){lastDraw=0;resizeCanvases();}}
+ else{if(!frameRequest)frameRequest=requestAnimationFrame(tick);if(changed){lastDraw=0;resizeCanvases();pollBackgroundJob();}}
 }
 window.pausePreview=()=>{nativePreviewPaused=true;updatePreviewLifecycle();};
 window.resumePreview=()=>{nativePreviewPaused=false;updatePreviewLifecycle();};
