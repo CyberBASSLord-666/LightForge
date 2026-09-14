@@ -17,7 +17,7 @@ class VerificationEvidenceWorkflowTest(unittest.TestCase):
         self.assertNotIn("if: always()", WORKFLOW[max(0, content - 220):content])
         self.assertNotIn("if: always()", WORKFLOW[max(0, wrapper - 220):wrapper])
 
-    def test_receipts_are_purged_before_tests_and_sealed_after_candidate_upload(self):
+    def test_fresh_receipts_are_purged_before_producers_and_sealed_after_candidate_upload(self):
         purge = WORKFLOW.index("Remove checked-in core receipts before fresh verification")
         tests = WORKFLOW.index("Production regression, diagnostics, and quality-tool suites")
         candidate = WORKFLOW.index("id: upload_candidate")
@@ -25,11 +25,54 @@ class VerificationEvidenceWorkflowTest(unittest.TestCase):
         self.assertLess(purge, tests)
         self.assertLess(candidate, seal)
         for name in (
-            "regression-verification.json", "browser-verification.json", "native-verification.json",
-            "analysis-browser-verification.json", "analysis-verification.json",
+            "source-clock-verification.json",
+            "regression-verification.json",
+            "browser-verification.json",
+            "background-ui-verification.json",
+            "restore-preview-verification.json",
+            "analysis-browser-verification.json",
+            "native-inference-profile-equivalence.json",
+            "native-mdx-comparison-verification.json",
+            "native-mdx-downstream-verification.json",
+            "native-mdx-downstream-native.json",
+            "native-mdx-downstream-wasm.json",
+            "native-recovery-results.json",
+            "native-verification.json",
+            "analysis-verification.json",
         ):
             self.assertIn('"$receipt_root/' + name + '"', WORKFLOW)
         self.assertIn("--source-root \"$GITHUB_WORKSPACE\"", WORKFLOW)
+
+    def test_restore_proof_runs_in_current_qa_directory_before_final_analysis(self):
+        source_clock = WORKFLOW.index("test-source-clock.cjs")
+        browser = WORKFLOW.index("node qa/release-${{ env.LIGHTFORGE_RELEASE }}/browser.cjs")
+        background = WORKFLOW.index("node qa/release-${{ env.LIGHTFORGE_RELEASE }}/background-ui.cjs")
+        restore_output = WORKFLOW.index('LIGHTFORGE_RESTORE_QA_OUTPUT="qa/release-$LIGHTFORGE_RELEASE"')
+        restore = WORKFLOW.index("node qa/restore-preview/browser.cjs", restore_output)
+        analysis_browser = WORKFLOW.index("node qa/release-${{ env.LIGHTFORGE_RELEASE }}/analysis-browser.cjs")
+        native = WORKFLOW.index("name: Regenerate and verify same-session native evidence")
+        final_analysis = WORKFLOW.index("verify-analysis.py", native)
+        self.assertLess(source_clock, browser)
+        self.assertLess(browser, background)
+        self.assertLess(background, restore_output)
+        self.assertLess(restore_output, restore)
+        self.assertLess(restore, analysis_browser)
+        self.assertLess(analysis_browser, native)
+        self.assertLess(native, final_analysis)
+
+    def test_candidate_sealing_covers_current_qa_restore_runner_and_package_metadata(self):
+        for source in (
+            '"qa/release-$LIGHTFORGE_RELEASE"',
+            "qa/restore-preview/browser.cjs",
+            "package.json",
+            "package-lock.json",
+            "'qa/release-' + os.environ['LIGHTFORGE_RELEASE']",
+        ):
+            self.assertIn(source, WORKFLOW)
+        diff = WORKFLOW.index('git diff --exit-code "$GITHUB_SHA"')
+        source_hashes = WORKFLOW.index("'git', 'ls-files', '-z', '--'")
+        self.assertLess(diff, source_hashes)
+        self.assertIn("import hashlib, json, os, subprocess, sys", WORKFLOW)
 
     def test_wrapper_binds_action_output_identity_and_candidate_retry_contract(self):
         for value in (
@@ -42,7 +85,6 @@ class VerificationEvidenceWorkflowTest(unittest.TestCase):
             "write-wrapper", "--run-attempt \"$GITHUB_RUN_ATTEMPT\"",
         ):
             self.assertIn(value, WORKFLOW)
-
 
     def test_android_candidate_handoff_merges_exact_id_to_a_flat_root(self):
         download = WORKFLOW.index("Download the exact same-signed CI app and instrumentation")
