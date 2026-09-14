@@ -1,8 +1,8 @@
-# LightForge 2.2.4 — bounded long-run analysis
+# LightForge 2.2.5 — release candidate
 
-The **2.2.4 update passes all seven source-bound release verification gates**, including the complete [Android and offline-pipeline run](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34424617050). Install the original-signed update over your existing app to preserve private projects.
+**LightForge 2.2.5 / Android version code 20205 is a release candidate, not a published update.** It awaits a fresh source-bound verification run, protected performance-quality approval, original-signed APK validation, and the required physical validation. [LightForge 2.2.4](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.2.4) remains the published update; install that original-signed APK over an existing app to preserve private projects.
 
-This update adds guarded native Balanced separation, bounds model memory between passages and stages, reports saved progress promptly, and improves completed-project and preview recovery. Models, both denoise passes, all eight GAME transcription steps and the original sample clock remain intact. Android emulator checks passed screen-off Studio and Balanced processing, cancellation and saved-passage Resume. Preview startup can still vary; sustained phone speed and the supplied Samsung crash have not been independently confirmed.
+The candidate retains the published 2.2.4 functionality: guarded native Balanced separation, bounded model memory between passages and stages, prompt saved-progress reporting, and completed-project/preview recovery. It also carries the current lifecycle and quality-gate work, which is not evidence-qualified until the candidate passes its own gates. Models, both denoise passes, all eight GAME transcription steps and the original sample clock remain intact.
 
 LightForge turns music on your phone into an editable Tesla light show for a **2025 Model 3 Long Range RWD, North America**. It bundles its neural models, graphics and audio tools and works entirely offline.
 
@@ -10,7 +10,7 @@ LightForge turns music on your phone into an editable Tesla light show for a **2
 
 **The Studio cockpit includes:** a Tesla-inspired monochrome interface, source-time score, keyboard-accessible Compose/Music/Outputs/Review workspaces, Deux source separation and GAME Large singing-note transcription. Precision Studio retains editable voice/bass gestures, independent timing offsets and review against final exported lamp commands. See [release notes](RELEASE_NOTES.md), [build instructions](BUILD.md) and [validation scope](VALIDATION.md).
 
-## Install the update
+## Install the published update
 
 Install [LightForge-2.2.4.apk](https://github.com/CyberBASSLord-666/LightForge/releases/download/v2.2.4/LightForge-2.2.4.apk) over your existing app. **Do not uninstall first.** The release gate requires the original signing identity so the update preserves private projects. CI builds use a temporary identity and are not the update APK.
 
@@ -317,9 +317,9 @@ The renderer source and pinned npm dependency lock are in `web/preview/src/`.
 
 ## Verification and device status
 
-[VALIDATION.md](VALIDATION.md) separates the seven current 2.2.4 release gates from historical measurements. The complete [production run](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34424617050) passed both verification and Android jobs against source `57e6ee996bd8f9d135e89334585efe90d8667b68`. The Android API 35 x86_64 emulator exercised production services and native models; it is separate from physical-phone testing.
+[VALIDATION.md](VALIDATION.md) preserves the seven published 2.2.4 release gates separately from historical measurements. That evidence does not qualify 2.2.5: this candidate must obtain fresh source-bound and release-stage validation before publication. The complete [2.2.4 production run](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34424617050) passed both verification and Android jobs against source `57e6ee996bd8f9d135e89334585efe90d8667b68`. The Android API 35 x86_64 emulator exercised production services and native models; it is separate from physical-phone testing.
 
-| Check | Current 2.2.4 status |
+| Check | Published 2.2.4 status |
 | --- | --- |
 | Version synchronization | 2.2.4 / 20204 |
 | Source and native regression | Passed: 347 Node tests, Python suite and separately required native lifecycle test; 24 host Java check groups |
