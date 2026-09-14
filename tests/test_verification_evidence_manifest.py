@@ -325,6 +325,32 @@ class VerificationEvidenceManifestTest(unittest.TestCase):
                     evidence_session=SESSION,
                 ))
 
+    def test_deux_reconstruction_policy_is_explicit_and_manifest_bound(self):
+        manifest_path = ROOT / "web/analysis/models/deux/manifest.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        expected = {
+            "web/analysis/models/deux/" + name: "web/analysis/models/deux/manifest.json"
+            for name in manifest["files"]
+        }
+        actual = {
+            relative: provenance
+            for relative, provenance in evidence.RECONSTRUCTED_MATERIAL_PROVENANCE.items()
+            if relative.startswith("web/analysis/models/deux/")
+        }
+        self.assertEqual(actual, expected)
+        relative = "web/analysis/models/deux/block-00-frequency.onnx"
+        record = manifest["files"]["block-00-frequency.onnx"]
+        provenance = manifest_path.read_bytes()
+        evidence.validate_reconstructed_material_provenance(
+            relative, record["sha256"], record["bytes"], provenance
+        )
+        with self.assertRaisesRegex(ValueError, "manifest differs"):
+            evidence.validate_reconstructed_material_provenance(
+                relative, record["sha256"], record["bytes"] + 1, provenance
+            )
+        with self.assertRaisesRegex(ValueError, "not approved"):
+            evidence._reconstructed_provenance_path("web/analysis/models/deux/evil.onnx")
+
     def test_ci_only_materials_are_explicitly_classified_sealed_and_reconstructed(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -342,6 +368,9 @@ class VerificationEvidenceManifestTest(unittest.TestCase):
             game = source_root / "web/analysis/models/game/bd2dur.onnx"
             game.parent.mkdir(parents=True)
             game.write_bytes(b"game")
+            deux = source_root / "web/analysis/models/deux/block-00-frequency.onnx"
+            deux.parent.mkdir(parents=True)
+            deux.write_bytes(b"deux")
             runtime = source_root / "qa/release-2.2.5/source-clock-verification.json"
             runtime.parent.mkdir(parents=True)
             runtime.write_bytes(b'{"fresh":true}')
@@ -351,6 +380,7 @@ class VerificationEvidenceManifestTest(unittest.TestCase):
             restore_runtime.write_bytes(b'{"fresh":"restore"}')
             fixture_hash = evidence.sha256_file(fixture)
             game_hash = evidence.sha256_file(game)
+            deux_hash = evidence.sha256_file(deux)
             runtime_hash = evidence.sha256_file(runtime)
             background_runtime_hash = evidence.sha256_file(background_runtime)
             restore_runtime_hash = evidence.sha256_file(restore_runtime)
@@ -358,6 +388,7 @@ class VerificationEvidenceManifestTest(unittest.TestCase):
                 "web/app.js": SOURCE_HASH,
                 "qa/release-1.6.0/fixtures/falcon-mix.wav": fixture_hash,
                 "web/analysis/models/game/bd2dur.onnx": game_hash,
+                "web/analysis/models/deux/block-00-frequency.onnx": deux_hash,
                 "qa/release-2.2.5/source-clock-verification.json": runtime_hash,
                 "qa/release-2.2.5/background-ui-verification.json": background_runtime_hash,
                 "qa/release-2.2.5/restore-preview-verification.json": restore_runtime_hash,
@@ -368,12 +399,14 @@ class VerificationEvidenceManifestTest(unittest.TestCase):
                 (receipt_dir / name).write_text(json.dumps(value), encoding="utf-8")
             fixture_provenance = json.dumps({"tracks": [{"id": "falcon", "pcmSHA256": {"falcon-mix.wav": fixture_hash}}]}).encode()
             game_provenance = json.dumps({"files": {"bd2dur.onnx": {"bytes": game.stat().st_size, "sha256": game_hash}}}).encode()
+            deux_provenance = json.dumps({"files": {"block-00-frequency.onnx": {"bytes": deux.stat().st_size, "sha256": deux_hash}}}).encode()
 
             def tree_bytes(_root, _commit, relative):
                 return {
                     "web/app.js": SOURCE_BYTES,
                     "qa/release-1.6.0/musdb-fixture-provenance.json": fixture_provenance,
                     "web/analysis/models/game/manifest.json": game_provenance,
+                    "web/analysis/models/deux/manifest.json": deux_provenance,
                     "qa/release-2.2.5/source-clock-verification.json": b"historical-output",
                     "qa/release-2.2.5/background-ui-verification.json": b"historical-background-output",
                     "qa/release-2.2.5/restore-preview-verification.json": b"historical-restore-output",
@@ -391,6 +424,7 @@ class VerificationEvidenceManifestTest(unittest.TestCase):
             self.assertEqual(bindings["web/app.js"]["origin"], "candidate_tree")
             self.assertEqual(bindings["qa/release-1.6.0/fixtures/falcon-mix.wav"]["origin"], "reconstructed_material")
             self.assertEqual(bindings["web/analysis/models/game/bd2dur.onnx"]["origin"], "reconstructed_material")
+            self.assertEqual(bindings["web/analysis/models/deux/block-00-frequency.onnx"]["origin"], "reconstructed_material")
             sealed = bindings["qa/release-2.2.5/source-clock-verification.json"]
             self.assertEqual(sealed["origin"], "sealed_runtime_material")
             self.assertEqual((root / "content" / sealed["path"]).read_bytes(), runtime.read_bytes())

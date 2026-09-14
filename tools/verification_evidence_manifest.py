@@ -65,6 +65,36 @@ EVIDENCE_SESSION_SCHEMA = "lightforge.evidence-session.v1"
 # These are deliberately narrow.  A receipt source that is not the exact byte
 # from the candidate tree must be one of these reviewed CI-only materials; a
 # new path fails sealing until its provenance policy is explicitly reviewed.
+DEUX_RECONSTRUCTED_MATERIALS = (
+    "block-00-frequency.onnx",
+    "block-00-time.onnx",
+    "block-01-frequency.onnx",
+    "block-01-time.onnx",
+    "block-02-frequency.onnx",
+    "block-02-time.onnx",
+    "block-03-frequency.onnx",
+    "block-03-time.onnx",
+    "block-04-frequency.onnx",
+    "block-04-time.onnx",
+    "block-05-frequency.onnx",
+    "block-05-time.onnx",
+    "block-06-frequency.onnx",
+    "block-06-time.onnx",
+    "block-07-frequency.onnx",
+    "block-07-time.onnx",
+    "block-08-frequency.onnx",
+    "block-08-time.onnx",
+    "block-09-frequency.onnx",
+    "block-09-time.onnx",
+    "block-10-frequency.onnx",
+    "block-10-time.onnx",
+    "block-11-frequency.onnx",
+    "block-11-time.onnx",
+    "front.onnx",
+    "head-0.onnx",
+    "head-1.onnx",
+)
+
 RECONSTRUCTED_MATERIAL_PROVENANCE = {
     "qa/release-1.6.0/fixtures/falcon-mix.wav": "qa/release-1.6.0/musdb-fixture-provenance.json",
     "web/analysis/models/game/bd2dur.onnx": "web/analysis/models/game/manifest.json",
@@ -72,6 +102,10 @@ RECONSTRUCTED_MATERIAL_PROVENANCE = {
     "web/analysis/models/game/encoder.onnx": "web/analysis/models/game/manifest.json",
     "web/analysis/models/game/estimator.onnx": "web/analysis/models/game/manifest.json",
     "web/analysis/models/game/segmenter.onnx": "web/analysis/models/game/manifest.json",
+    **{
+        "web/analysis/models/deux/" + name: "web/analysis/models/deux/manifest.json"
+        for name in DEUX_RECONSTRUCTED_MATERIALS
+    },
 }
 MAX_RUNTIME_MATERIAL_BYTES = 128 * 1024 * 1024
 MAX_RUNTIME_MATERIAL_TOTAL_BYTES = 512 * 1024 * 1024

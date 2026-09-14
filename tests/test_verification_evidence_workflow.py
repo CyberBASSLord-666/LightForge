@@ -6,6 +6,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = (ROOT / ".github/workflows/verify-v2.yml").read_text(encoding="utf-8")
+PUBLISH_WORKFLOW = (ROOT / ".github/workflows/publish-release.yml").read_text(encoding="utf-8")
 
 
 class VerificationEvidenceWorkflowTest(unittest.TestCase):
@@ -111,6 +112,21 @@ class VerificationEvidenceWorkflowTest(unittest.TestCase):
         ):
             self.assertIn(command, WORKFLOW)
 
+
+    def test_protected_publisher_reconstructs_all_allowlisted_model_families(self):
+        sparse = PUBLISH_WORKFLOW.index("sparse-checkout:")
+        restore = PUBLISH_WORKFLOW.index("Restore source-bound GAME and Deux graphs")
+        publish = PUBLISH_WORKFLOW.index("python3 tools/publish_github_release.py")
+        for value in (
+            "research/upstream/deux",
+            "torch==2.6.0",
+            "-r tools/model-requirements.txt",
+            "python3 tools/prepare_game.py",
+            "python3 tools/prepare_deux.py",
+        ):
+            self.assertIn(value, PUBLISH_WORKFLOW)
+        self.assertLess(sparse, restore)
+        self.assertLess(restore, publish)
 
 if __name__ == "__main__":
     unittest.main()

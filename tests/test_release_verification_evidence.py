@@ -237,26 +237,32 @@ class ReleaseVerificationEvidenceTest(unittest.TestCase):
             game = source_root / "web/analysis/models/game/bd2dur.onnx"
             game.parent.mkdir(parents=True)
             game.write_bytes(b"game")
+            deux = source_root / "web/analysis/models/deux/block-00-frequency.onnx"
+            deux.parent.mkdir(parents=True)
+            deux.write_bytes(b"deux")
             runtime = source_root / "qa/release-2.2.5/source-clock-verification.json"
             runtime.parent.mkdir(parents=True)
             runtime.write_bytes(b'{"fresh":true}')
-            fixture_hash, game_hash, runtime_hash = map(evidence.sha256_file, (fixture, game, runtime))
+            fixture_hash, game_hash, deux_hash, runtime_hash = map(evidence.sha256_file, (fixture, game, deux, runtime))
             hashes = {
                 "web/app.js": SOURCE_HASH,
                 "qa/release-1.6.0/fixtures/falcon-mix.wav": fixture_hash,
                 "web/analysis/models/game/bd2dur.onnx": game_hash,
+                "web/analysis/models/deux/block-00-frequency.onnx": deux_hash,
                 "qa/release-2.2.5/source-clock-verification.json": runtime_hash,
             }
             for name in evidence.RECEIPTS:
                 (receipt_dir / name).write_text(json.dumps(receipt(name, hashes)), encoding="utf-8")
             fixture_provenance = json.dumps({"tracks": [{"id": "falcon", "pcmSHA256": {"falcon-mix.wav": fixture_hash}}]}).encode()
             game_provenance = json.dumps({"files": {"bd2dur.onnx": {"bytes": game.stat().st_size, "sha256": game_hash}}}).encode()
+            deux_provenance = json.dumps({"files": {"block-00-frequency.onnx": {"bytes": deux.stat().st_size, "sha256": deux_hash}}}).encode()
 
             def candidate_bytes(_root, _commit, relative):
                 return {
                     "web/app.js": SOURCE_BYTES,
                     "qa/release-1.6.0/musdb-fixture-provenance.json": fixture_provenance,
                     "web/analysis/models/game/manifest.json": game_provenance,
+                    "web/analysis/models/deux/manifest.json": deux_provenance,
                     "qa/release-2.2.5/source-clock-verification.json": b"historical-output",
                 }.get(relative)
 
@@ -280,6 +286,7 @@ class ReleaseVerificationEvidenceTest(unittest.TestCase):
                     "web/app.js": SOURCE_BYTES,
                     "qa/release-1.6.0/musdb-fixture-provenance.json": fixture_provenance,
                     "web/analysis/models/game/manifest.json": game_provenance,
+                    "web/analysis/models/deux/manifest.json": deux_provenance,
                 }[requested]
 
             with patch.object(publisher, "ROOT", source_root), patch.object(publisher, "run_bytes", side_effect=source):
@@ -287,6 +294,7 @@ class ReleaseVerificationEvidenceTest(unittest.TestCase):
                     HEAD, content["receipts"], content["source_bindings"], root / "content"
                 )
             self.assertNotIn(("git", "show", HEAD + ":qa/release-2.2.5/source-clock-verification.json"), commands)
+            self.assertIn(("git", "show", HEAD + ":web/analysis/models/deux/manifest.json"), commands)
             wrapper_root = root / "wrapper"
             evidence.write_wrapper(SimpleNamespace(
                 output_dir=wrapper_root, content_dir=root / "content", evidence_artifact_id=912,
