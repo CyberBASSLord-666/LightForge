@@ -172,7 +172,7 @@ jobs:
             android web tools tests "qa/release-$LIGHTFORGE_RELEASE" qa/restore-preview/browser.cjs \
             .github/workflows/verify-v2.yml version.json package.json package-lock.json build.sh
           python3 - "$source_hashes" <<'PYSOURCES'
-          import hashlib, json, subprocess, sys
+          import hashlib, json, os, subprocess, sys
           from pathlib import Path
           root = Path('.').resolve()
           names = subprocess.check_output([
