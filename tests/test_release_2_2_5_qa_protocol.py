@@ -97,6 +97,24 @@ class Release225QaProtocolTest(TestCase):
                 self.assertTrue(receipt['errors'])
                 self.assertIn('Invalid LIGHTFORGE_EVIDENCE_SESSION', receipt['errors'][0])
 
+    def test_workflow_runs_restore_proof_in_fresh_current_release_order(self):
+        workflow = (ROOT / '.github/workflows/verify-v2.yml').read_text(encoding='utf-8')
+        source_clock = workflow.index('test-source-clock.cjs')
+        browser = workflow.index('node qa/release-${{ env.LIGHTFORGE_RELEASE }}/browser.cjs')
+        background = workflow.index('node qa/release-${{ env.LIGHTFORGE_RELEASE }}/background-ui.cjs')
+        restore_output = workflow.index('LIGHTFORGE_RESTORE_QA_OUTPUT="qa/release-$LIGHTFORGE_RELEASE"')
+        restore = workflow.index('node qa/restore-preview/browser.cjs', restore_output)
+        analysis_browser = workflow.index('node qa/release-${{ env.LIGHTFORGE_RELEASE }}/analysis-browser.cjs')
+        native = workflow.index('name: Regenerate and verify same-session native evidence')
+        final_analysis = workflow.index('verify-analysis.py', native)
+        self.assertLess(source_clock, browser)
+        self.assertLess(browser, background)
+        self.assertLess(background, restore_output)
+        self.assertLess(restore_output, restore)
+        self.assertLess(restore, analysis_browser)
+        self.assertLess(analysis_browser, native)
+        self.assertLess(native, final_analysis)
+
     def test_protocol_preserves_immutable_historical_anchor_and_has_no_outputs(self):
         hashes = {}
         historical = VERIFY.verify_historical_comparison(ROOT, hashes)
