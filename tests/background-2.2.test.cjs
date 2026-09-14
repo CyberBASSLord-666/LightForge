@@ -113,13 +113,13 @@ test('native studio delegates work, blocks stale saves, reconnects, and loads th
  }finally{dom.window.close();}
 });
 
-async function completedReconnect({acknowledged=false,hold=false,restoreError=null,terminalRejected=false,beginRejected=false,beginThrows=false,pulseRejected=false,ackConfirmationRejected=false,ackWriteFailures=0,nativeProjectPayload=false,fetchNeverResolves=false,deferInitialPreview=false,previewReady=undefined}={}){
+async function completedReconnect({acknowledged=false,hold=false,restoreError=null,terminalRejected=false,beginRejected=false,beginThrows=false,pulseRejected=false,ackConfirmationRejected=false,ackWriteFailures=0,nativeProjectPayload=false,fetchNeverResolves=false,deferInitialPreview=false,previewReady=undefined,visualCommitReady=true}={}){
  const dom=new JSDOM(fs.readFileSync(path.join(root,'web/index.html'),'utf8'),{url:'https://appassets.androidplatform.net/',runScripts:'outside-only'}),w=dom.window;
  const polls=[],leaseCalls=[],nativeCapClears=[],previews=[],previewDeferrals=[];let restores=0,fetches=0,saved,bootstrap={projects:[],version:'2.2.4'},restoreOptions=[],nativeTerminalToken=null;
  const completed={id:'completed-project',name:'Completed',duration:2,projectUrl:'/project/completed/project.json',audioUrl:'/project/completed/audio.wav'};
  const lastSelected={...completed,id:'last-selected-project',name:'Last selected',projectUrl:'/project/last/project.json'};
  const job={id:'completed-job',projectId:completed.id,state:'completed',progress:1};
- let enteredResolve,release,releaseInitialSaved,remainingAckWriteFailures=ackWriteFailures,ackConfirmationRejectedNow=ackConfirmationRejected;const entered=new Promise(r=>enteredResolve=r),gate=new Promise(r=>release=r),initialSavedReady=deferInitialPreview?new Promise(r=>releaseInitialSaved=r):Promise.resolve();
+ let enteredResolve,release,releaseInitialSaved,remainingAckWriteFailures=ackWriteFailures,ackConfirmationRejectedNow=ackConfirmationRejected,visualCommitReadyNow=visualCommitReady;const entered=new Promise(r=>enteredResolve=r),gate=new Promise(r=>release=r),initialSavedReady=deferInitialPreview?new Promise(r=>releaseInitialSaved=r):Promise.resolve();
  Object.defineProperty(w.document,'hidden',{value:false,configurable:true});
  w.scrollTo=()=>{};w.requestAnimationFrame=()=>1;w.cancelAnimationFrame=()=>{};w.matchMedia=()=>({matches:true,addEventListener(){}});w.TextDecoder=TextDecoder;
  w.setInterval=(callback,delay)=>{if(delay===2000)polls.push(callback);return polls.length+1;};w.clearInterval=()=>{};
@@ -153,7 +153,7 @@ async function completedReconnect({acknowledged=false,hold=false,restoreError=nu
  // generated saved project, not after an implementation-dependent read count.
  const getBootstrap=()=>JSON.stringify(deferInitialPreview?(initialBootstrapHeld?initialBootstrap:bootstrap):(bootstrapReads++===0?coldBootstrap:bootstrap));
  w.Android={pickAudio(){},getBootstrap,saveProject:()=>true,startAnalysis(){throw Error('Reconnection must not restart analysis');},getAnalysisStatus:()=>JSON.stringify(job),
-  beginCompletedRestore:(...args)=>{leaseCalls.push({type:'begin',args});if(beginThrows)throw Error('Native completed-restore begin bridge failed.');if(beginRejected)return false;if(nativeTerminalToken){if(nativeTerminalToken.jobId===args[0])return false;nativeTerminalToken=null;}return true;},completedRestorePulse:(...args)=>{leaseCalls.push({type:'pulse',args});return !pulseRejected;},requestCompletedRestoreVisualCommit:(...args)=>{leaseCalls.push({type:'visual-request',args});return true;},completedRestoreVisualCommitted:(...args)=>{leaseCalls.push({type:'visual-committed',args});return true;},completedRestoreTerminal:(...args)=>{leaseCalls.push({type:'terminal',args,ackAtCall:w.localStorage.getItem('lightforge-background-ack')});if(terminalRejected)return false;nativeTerminalToken={jobId:args[0],nonce:args[1]};return true;},completedRestoreAckCommitted:(...args)=>{leaseCalls.push({type:'ack-committed',args,ackAtCall:w.localStorage.getItem('lightforge-background-ack')});if(ackConfirmationRejectedNow||nativeTerminalToken?.jobId!==args[0]||nativeTerminalToken?.nonce!==args[1])return false;nativeCapClears.push(args[0]);nativeTerminalToken=null;return true;},completedRestoreFailed:(...args)=>{leaseCalls.push({type:'failed',args});return true;}};
+  beginCompletedRestore:(...args)=>{leaseCalls.push({type:'begin',args});if(beginThrows)throw Error('Native completed-restore begin bridge failed.');if(beginRejected)return false;if(nativeTerminalToken){if(nativeTerminalToken.jobId===args[0])return false;nativeTerminalToken=null;}return true;},completedRestorePulse:(...args)=>{leaseCalls.push({type:'pulse',args});return !pulseRejected;},requestCompletedRestoreVisualCommit:(...args)=>{leaseCalls.push({type:'visual-request',args});return true;},completedRestoreVisualCommitted:(...args)=>{leaseCalls.push({type:'visual-committed',args});return visualCommitReadyNow;},completedRestoreTerminal:(...args)=>{leaseCalls.push({type:'terminal',args,ackAtCall:w.localStorage.getItem('lightforge-background-ack')});if(terminalRejected)return false;nativeTerminalToken={jobId:args[0],nonce:args[1]};return true;},completedRestoreAckCommitted:(...args)=>{leaseCalls.push({type:'ack-committed',args,ackAtCall:w.localStorage.getItem('lightforge-background-ack')});if(ackConfirmationRejectedNow||nativeTerminalToken?.jobId!==args[0]||nativeTerminalToken?.nonce!==args[1])return false;nativeCapClears.push(args[0]);nativeTerminalToken=null;return true;},completedRestoreFailed:(...args)=>{leaseCalls.push({type:'failed',args});return true;}};
  if(nativeProjectPayload)w.Android.readCompletedRestoreProjectChunk=readCompletedProject;
  w.fetch=async()=>{fetches++;if(fetchNeverResolves)return new Promise(()=>{});if(deferInitialPreview)await initialSavedReady;return{ok:true,json:async()=>structuredClone(saved),text:async()=>JSON.stringify(saved)};};
  w.ShowCompiler={restore:async(compiled,m,s,_progress,signal,options)=>{
@@ -174,7 +174,7 @@ async function completedReconnect({acknowledged=false,hold=false,restoreError=nu
   const result=await runWorker(path.join(root,'web/engine'),{action:'generate',music,settings});saved={settings,music,compiled:result.compiled,needAnalysis:false};
   if(acknowledged)w.localStorage.setItem('lightforge-background-ack',job.id);
   bootstrap={projects:[completed,lastSelected],lastProjectId:lastSelected.id,version:'2.2.4',backgroundJob:job};initialBootstrapHeld=false;releaseInitialSaved?.();
-  return{w,app,job,entered,release,polls,completed,lastSelected,leaseCalls,nativeCapClears,nativeProjectReads,previews,previewDeferrals,setAckConfirmationRejected:value=>{ackConfirmationRejectedNow=!!value;},get restores(){return restores;},get fetches(){return fetches;},get restoreOptions(){return restoreOptions;},close:()=>{release();w.close();}};
+  return{w,app,job,entered,release,polls,completed,lastSelected,leaseCalls,nativeCapClears,nativeProjectReads,previews,previewDeferrals,setAckConfirmationRejected:value=>{ackConfirmationRejectedNow=!!value;},setVisualCommitReady:value=>{visualCommitReadyNow=!!value;},get restores(){return restores;},get fetches(){return fetches;},get restoreOptions(){return restoreOptions;},close:()=>{release();w.close();}};
  }catch(error){release();w.close();throw error;}
 }
 
@@ -210,6 +210,41 @@ for(const mode of ['native-pause','hidden-document','pagehide']){
   }finally{t.close();}
  });
 }
+
+test('pause during visual proof retires the unproven lease and retries it after foreground resume',async()=>{
+ const t=await completedReconnect({visualCommitReady:false});
+ try{
+  const restore=t.app.readBootstrap();
+  await waitFor(()=>t.leaseCalls.some(call=>call.type==='pulse'&&call.args[2]==='preview-first-render')&&t.leaseCalls.some(call=>call.type==='visual-request'));
+  const firstBegin=t.leaseCalls.find(call=>call.type==='begin');
+  t.w.pausePreview();await settleCompletedRestore('paused visual proof must unwind',t,restore);await waitFor(()=>!t.app.state.backgroundApplying);
+  const failed=t.leaseCalls.find(call=>call.type==='failed');
+  assert.equal(failed?.args[0],t.job.id);assert.equal(failed?.args[1],firstBegin.args[1],'Pause must retire the exact active nonce');
+  assert.equal(t.leaseCalls.filter(call=>call.type==='terminal').length,0);assert.equal(t.w.localStorage.getItem('lightforge-background-ack'),null);
+  assert.equal(t.app.state.backgroundSyncPending,true);assert.equal(t.app.state.completedRestorePreviewDeferred,true,'A paused unproven restore keeps the preview load deferred');
+  t.setVisualCommitReady(true);t.w.resumePreview();
+  await waitFor(()=>t.w.localStorage.getItem('lightforge-background-ack')===t.job.id&&!t.app.state.backgroundApplying);
+  const begins=t.leaseCalls.filter(call=>call.type==='begin');
+  assert.equal(begins.length,2);assert.notEqual(begins[1].args[1],firstBegin.args[1],'Foreground retry must mint a fresh lease nonce');
+  assert.equal(t.leaseCalls.filter(call=>call.type==='terminal').length,1);assert.equal(t.leaseCalls.filter(call=>call.type==='ack-committed').length,1);
+ }finally{t.close();}
+});
+
+test('pause during worker restore aborts the active lease and resumes with a fresh retry',async()=>{
+ const t=await completedReconnect({hold:true});
+ try{
+  const restore=t.app.readBootstrap();await settleCompletedRestore('worker restore must start',t,t.entered);
+  const firstBegin=t.leaseCalls.find(call=>call.type==='begin');
+  t.w.pausePreview();await settleCompletedRestore('paused worker restore must unwind',t,restore);await waitFor(()=>!t.app.state.backgroundApplying);
+  const failed=t.leaseCalls.find(call=>call.type==='failed');
+  assert.equal(failed?.args[0],t.job.id);assert.equal(failed?.args[1],firstBegin.args[1]);assert.equal(t.w.localStorage.getItem('lightforge-background-ack'),null);
+  assert.equal(t.app.state.backgroundSyncPending,true);assert.equal(t.leaseCalls.filter(call=>call.type==='terminal').length,0);
+  t.release();t.w.resumePreview();
+  await waitFor(()=>t.w.localStorage.getItem('lightforge-background-ack')===t.job.id&&!t.app.state.backgroundApplying);
+  const begins=t.leaseCalls.filter(call=>call.type==='begin');
+  assert.equal(begins.length,2);assert.notEqual(begins[1].args[1],firstBegin.args[1]);assert.equal(t.leaseCalls.filter(call=>call.type==='ack-committed').length,1);
+ }finally{t.close();}
+});
 
 test('unacknowledged cold completed restore defers GLTF loading until compiled-show adoption and never defers ordinary startup',async()=>{
  const deferred=await completedReconnect({deferInitialPreview:true,hold:true});
