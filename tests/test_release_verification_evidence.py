@@ -248,9 +248,7 @@ class ReleaseVerificationEvidenceTest(unittest.TestCase):
                 "qa/release-2.2.5/source-clock-verification.json": runtime_hash,
             }
             for name in evidence.RECEIPTS:
-                (receipt_dir / name).write_text(json.dumps({
-                    "release": RELEASE["name"], "passed": True, "errors": [], "source_hashes": hashes,
-                }), encoding="utf-8")
+                (receipt_dir / name).write_text(json.dumps(receipt(name, hashes)), encoding="utf-8")
             fixture_provenance = json.dumps({"tracks": [{"id": "falcon", "pcmSHA256": {"falcon-mix.wav": fixture_hash}}]}).encode()
             game_provenance = json.dumps({"files": {"bd2dur.onnx": {"bytes": game.stat().st_size, "sha256": game_hash}}}).encode()
 
