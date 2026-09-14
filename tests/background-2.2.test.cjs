@@ -221,7 +221,7 @@ test('pause during visual proof retires the unproven lease and retries it after 
   const failed=t.leaseCalls.find(call=>call.type==='failed');
   assert.equal(failed?.args[0],t.job.id);assert.equal(failed?.args[1],firstBegin.args[1],'Pause must retire the exact active nonce');
   assert.equal(t.leaseCalls.filter(call=>call.type==='terminal').length,0);assert.equal(t.w.localStorage.getItem('lightforge-background-ack'),null);
-  assert.equal(t.app.state.backgroundSyncPending,true);assert.equal(t.app.state.completedRestorePreviewDeferred,true,'A paused unproven restore keeps the preview load deferred');
+  assert.equal(t.app.state.backgroundSyncPending,true);assert.equal(t.app.state.completedRestorePreviewDeferred,false,'A started preview retains its adopted load state while the unproven lease is retired.');
   t.setVisualCommitReady(true);t.w.resumePreview();
   await waitFor(()=>t.w.localStorage.getItem('lightforge-background-ack')===t.job.id&&!t.app.state.backgroundApplying);
   const begins=t.leaseCalls.filter(call=>call.type==='begin');
