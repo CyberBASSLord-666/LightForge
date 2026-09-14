@@ -43,7 +43,7 @@ def candidate_manifest(path: Path, attempt=1):
         for name in evidence._candidate_files(RELEASE)
     }
     path.write_text(json.dumps({
-        "schema_version": 1,
+        "schema_version": evidence.CANDIDATE_SCHEMA_VERSION,
         "kind": evidence.CANDIDATE_KIND,
         "release": RELEASE,
         "source": {"commit": HEAD, "tree_sha": TREE},
@@ -54,13 +54,26 @@ def candidate_manifest(path: Path, attempt=1):
     return evidence.sha256_file(path)
 
 
-def receipt(name):
-    return {
+def receipt(name, session=SESSION):
+    value = {
         "release": RELEASE,
         "passed": True,
         "errors": [],
         "source_hashes": {"web/app.js": SOURCE_HASH},
     }
+    if name in {
+        "browser-verification.json",
+        "analysis-browser-verification.json",
+        "background-ui-verification.json",
+        "restore-preview-verification.json",
+    }:
+        value.update({
+            "evidenceSessionSchema": evidence.EVIDENCE_SESSION_SCHEMA,
+            "evidenceSession": session,
+        })
+    elif name == "analysis-verification.json":
+        value["evidence_session"] = session
+    return value
 
 
 class VerificationEvidenceManifestTest(unittest.TestCase):
@@ -108,8 +121,14 @@ class VerificationEvidenceManifestTest(unittest.TestCase):
     def test_success_chain_is_candidate_bound_and_uses_original_retry_attempt(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            _, _, content, manifest = self._make_content(root, attempt=1)
+            candidate_path, _, content, manifest = self._make_content(root, attempt=1)
             wrapper, wrapped = self._make_wrapper(root, content, attempt=1)
+            self.assertEqual(
+                json.loads(candidate_path.read_text(encoding="utf-8"))["schema_version"],
+                evidence.CANDIDATE_SCHEMA_VERSION,
+            )
+            self.assertEqual(manifest["schema_version"], evidence.CONTENT_SCHEMA_VERSION)
+            self.assertEqual(wrapped["schema_version"], evidence.WRAPPER_SCHEMA_VERSION)
             self.assertEqual(manifest["candidate"]["pipeline"]["run_attempt"], 1)
             # A later Android-only retry may be attempt 2.  Core evidence must
             # retain the candidate's attempt 1 identity and deterministic name.
@@ -127,6 +146,53 @@ class VerificationEvidenceManifestTest(unittest.TestCase):
                 evidence.verify_wrapper(wrapper, release=RELEASE, pipeline=pipeline(1), expected_candidate=manifest["candidate"]),
                 wrapped,
             )
+
+    def test_session_bound_receipts_and_wrappers_reject_absent_or_mismatched_nonces(self):
+        session_cases = (
+            ("browser-verification.json", "evidenceSession"),
+            ("analysis-browser-verification.json", "evidenceSession"),
+            ("background-ui-verification.json", "evidenceSession"),
+            ("restore-preview-verification.json", "evidenceSession"),
+            ("analysis-verification.json", "evidence_session"),
+        )
+        for name, field in session_cases:
+            with self.subTest(receipt=name, condition="mismatched"):
+                value = receipt(name, session="d" * 64)
+                with self.assertRaisesRegex(ValueError, "evidence session differs"):
+                    evidence._receipt(value, name, RELEASE, SESSION)
+            with self.subTest(receipt=name, condition="missing"):
+                value = receipt(name)
+                if field == "evidenceSession":
+                    value.pop("evidenceSessionSchema")
+                    value.pop("evidenceSession")
+                else:
+                    value.pop(field)
+                with self.assertRaisesRegex(ValueError, "evidence session differs"):
+                    evidence._receipt(value, name, RELEASE, SESSION)
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            _, _, content, manifest = self._make_content(root)
+            wrapper, wrapped = self._make_wrapper(root, content)
+            self.assertEqual(manifest["schema_version"], evidence.CONTENT_SCHEMA_VERSION)
+            self.assertEqual(wrapped["schema_version"], evidence.WRAPPER_SCHEMA_VERSION)
+            self.assertEqual(
+                manifest["receipts"]["restore-preview-verification.json"]["session_evidence"],
+                {"evidenceSessionSchema": evidence.EVIDENCE_SESSION_SCHEMA, "evidenceSession": SESSION},
+            )
+            self.assertEqual(
+                wrapped["receipts"]["analysis-verification.json"]["session_evidence"],
+                {"evidence_session": SESSION},
+            )
+            wrapper_path = wrapper / evidence.WRAPPER_MANIFEST
+            tampered = json.loads(wrapper_path.read_text(encoding="utf-8"))
+            tampered["receipts"]["background-ui-verification.json"]["session_evidence"]["evidenceSession"] = "d" * 64
+            wrapper_path.write_text(json.dumps(tampered), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "session differs"):
+                evidence.verify_wrapper(
+                    wrapper, release=RELEASE, pipeline=pipeline(),
+                    expected_candidate=manifest["candidate"],
+                )
 
     def test_partial_or_tampered_content_artifact_is_rejected(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -279,14 +345,22 @@ class VerificationEvidenceManifestTest(unittest.TestCase):
             runtime = source_root / "qa/release-2.2.5/source-clock-verification.json"
             runtime.parent.mkdir(parents=True)
             runtime.write_bytes(b'{"fresh":true}')
+            background_runtime = source_root / "qa/release-2.2.5/background-ui-verification.json"
+            background_runtime.write_bytes(b'{"fresh":"background"}')
+            restore_runtime = source_root / "qa/release-2.2.5/restore-preview-verification.json"
+            restore_runtime.write_bytes(b'{"fresh":"restore"}')
             fixture_hash = evidence.sha256_file(fixture)
             game_hash = evidence.sha256_file(game)
             runtime_hash = evidence.sha256_file(runtime)
+            background_runtime_hash = evidence.sha256_file(background_runtime)
+            restore_runtime_hash = evidence.sha256_file(restore_runtime)
             sources = {
                 "web/app.js": SOURCE_HASH,
                 "qa/release-1.6.0/fixtures/falcon-mix.wav": fixture_hash,
                 "web/analysis/models/game/bd2dur.onnx": game_hash,
                 "qa/release-2.2.5/source-clock-verification.json": runtime_hash,
+                "qa/release-2.2.5/background-ui-verification.json": background_runtime_hash,
+                "qa/release-2.2.5/restore-preview-verification.json": restore_runtime_hash,
             }
             for name in evidence.RECEIPTS:
                 value = receipt(name)
@@ -301,6 +375,8 @@ class VerificationEvidenceManifestTest(unittest.TestCase):
                     "qa/release-1.6.0/musdb-fixture-provenance.json": fixture_provenance,
                     "web/analysis/models/game/manifest.json": game_provenance,
                     "qa/release-2.2.5/source-clock-verification.json": b"historical-output",
+                    "qa/release-2.2.5/background-ui-verification.json": b"historical-background-output",
+                    "qa/release-2.2.5/restore-preview-verification.json": b"historical-restore-output",
                 }.get(relative)
 
             with patch.object(evidence, "_candidate_tree_bytes", side_effect=tree_bytes):
@@ -318,6 +394,14 @@ class VerificationEvidenceManifestTest(unittest.TestCase):
             sealed = bindings["qa/release-2.2.5/source-clock-verification.json"]
             self.assertEqual(sealed["origin"], "sealed_runtime_material")
             self.assertEqual((root / "content" / sealed["path"]).read_bytes(), runtime.read_bytes())
+            for relative, material in (
+                ("qa/release-2.2.5/background-ui-verification.json", background_runtime),
+                ("qa/release-2.2.5/restore-preview-verification.json", restore_runtime),
+            ):
+                self.assertIn(relative, evidence._runtime_evidence_materials(RELEASE))
+                sealed_runtime = bindings[relative]
+                self.assertEqual(sealed_runtime["origin"], "sealed_runtime_material")
+                self.assertEqual((root / "content" / sealed_runtime["path"]).read_bytes(), material.read_bytes())
             self.assertEqual(
                 evidence.verify_content(root / "content", release=RELEASE, pipeline=pipeline(), expected_candidate=content["candidate"]),
                 content,

@@ -1,6 +1,8 @@
-# Build and verify LightForge 2.2.4
+# Build and verify LightForge 2.2.5 candidate
 
 The repository root contains the complete Android/WebView source, retained assets, model-reproduction tools and tests. No Gradle, backend, account or runtime model download is needed.
+
+LightForge 2.2.5 / Android version code 20205 is a release candidate, not a published update. The published original-signed update remains 2.2.4. A CI or development APK must never be presented as an update; only an exact original-signed candidate that completes every required release control may be published.
 
 ## Reproduce the Android update
 
@@ -17,7 +19,7 @@ python3 -m venv ../model-build
 ../model-build/bin/python tools/prepare_deux.py
 npm test
 LIGHTFORGE_SIGNING_DIR=/absolute/path/to/original-private-signing bash build.sh
-python3 tests/verify_native_release.py --release 2.2.4
+python3 tests/verify_native_release.py --release 2.2.5
 ```
 
 The signing directory must contain the original `lightforge-release.jks` and `keystore-password.txt` from the private source backup. Never commit them. The build rejects missing or incompatible update signing material. For an intentionally separate development installation only:
@@ -30,13 +32,13 @@ That APK cannot update the original installation. Do not uninstall the original 
 
 The build verifies resource and asset ZIP integrity, compiles Java/DEX, aligns the APK, signs it, verifies the certificate and manifest, and atomically publishes:
 
-- `dist/LightForge-2.2.4.apk`
-- `dist/LightForge-2.2.4.apk.json`
-- `dist/LightForge-2.2.4.apk.sha256`
+- `dist/LightForge-2.2.5.apk`
+- `dist/LightForge-2.2.5.apk.json`
+- `dist/LightForge-2.2.5.apk.sha256`
 
 `update_compatible` in the JSON receipt must be `true` for the original installation.
 
-For the current 2.2.4 source-only gate, run the same `npm test` command above plus:
+For the 2.2.5 candidate source-only gate, run the same `npm test` command above plus:
 
 ```bash
 python3 tools/verify_analysis_assets.py
@@ -44,7 +46,7 @@ find web -type f \( -name '*.js' -o -name '*.mjs' \) -print0 | xargs -0 -n1 node
 node --test tests/native-deux-bridge.test.cjs tests/native-mdx-bridge.test.cjs tests/separator-mdx-runtime.test.cjs tests/analysis-recovery-2.2.1.test.cjs tests/deux-2.2.1.test.cjs tests/game-2.1.test.cjs tests/native-runtime-guard.test.cjs
 ```
 
-The Android SDK, pinned ONNX Runtime AAR and an original signing directory are required for the remaining 2.2.4 APK gates. Do not treat a desktop pass as phone or long-song validation.
+The Android SDK, pinned ONNX Runtime AAR and an original signing directory are required for the remaining 2.2.5 candidate APK gates. Do not treat a desktop pass as phone or long-song validation.
 
 ## Historical 2.2.2 browser and release gates
 
@@ -73,9 +75,9 @@ The toolchain bootstrap pins SHA-256 checksums for Android build-tools 35.0.0, A
 
 Supported environment variables: `LIGHTFORGE_TOOLCHAIN_DIR`, `LIGHTFORGE_JAVA_HOME`, `ANDROID_SDK_ROOT`, and `LIGHTFORGE_SIGNING_DIR`. Android SDK paths are `build-tools/35.0.0` and `platforms/android-35/android.jar`. Unset runner-injected `ANDROID_SDK_ROOT`/`ANDROID_HOME` when using the supplied toolchain on CI.
 
-Application ID: `com.cyberbasslord.lightforge`; minimum API 26; compile/target API 35; Java language level 8; version code 20204. The APK includes ONNX Runtime/JNI `.so` libraries for the ABIs listed in `android/native-runtime.json` (arm64-v8a, armeabi-v7a, x86 and x86_64). It has no Internet permission. All models and runtimes are bundled.
+Application ID: `com.cyberbasslord.lightforge`; minimum API 26; compile/target API 35; Java language level 8; version code 20205. The APK includes ONNX Runtime/JNI `.so` libraries for the ABIs listed in `android/native-runtime.json` (arm64-v8a, armeabi-v7a, x86 and x86_64). It has no Internet permission. All models and runtimes are bundled.
 
-The 2.2.4 source also includes an optional native Balanced MDX graph. It is constructed only for Balanced jobs, is guarded by the app/runtime native-crash lease, and falls back to the verified WebAssembly separator if the device cannot load or complete it. The bridge transports bounded chunks rather than retaining a second JavaScript copy of the model output.
+The 2.2.5 candidate includes an optional native Balanced MDX graph. It is constructed only for Balanced jobs, is guarded by the app/runtime native-crash lease, and falls back to the verified WebAssembly separator if the device cannot load or complete it. The bridge transports bounded chunks rather than retaining a second JavaScript copy of the model output.
 
 ## Renderer source
 

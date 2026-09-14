@@ -1,4 +1,8 @@
-# LightForge 2.2.4 validation
+# LightForge 2.2.5 candidate validation
+
+LightForge 2.2.5 / Android version code 20205 is a candidate only. It has no fresh release-gate, protected performance-quality, original-signed APK, or physical-validation result in this branch. Those results must be freshly generated and bound to the final candidate source before publication.
+
+## Published LightForge 2.2.4 evidence (historical)
 
 All seven source-bound release verification gates passed in [full production run 34424617050](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34424617050) against source `57e6ee996bd8f9d135e89334585efe90d8667b68`. This includes both the verification/build job and Android lifecycle/diagnostics job. The pinned models, denoise and transcription settings, source clock and 45-second preview-readiness deadline are unchanged. Original-signed seven-gate packaging also passed. Publication and uploaded-file verification are subsequent release steps.
 

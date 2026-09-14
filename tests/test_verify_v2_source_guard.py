@@ -13,6 +13,7 @@ class VerifyV2SourceGuardTest(unittest.TestCase):
         generated=verify_v2.OUT/'movement-verification.json'
         self.assertTrue(verify_v2.is_generated_runtime_report(generated))
         self.assertTrue(verify_v2.is_generated_runtime_report(verify_v2.OUT/'native-mdx-downstream-wasm.json'))
+        self.assertTrue(verify_v2.is_generated_runtime_report(verify_v2.OUT/'restore-preview-verification.json'))
         self.assertFalse(verify_v2.is_generated_runtime_report(verify_v2.OUT/'reference-golden-small.json'))
         self.assertFalse(verify_v2.is_generated_runtime_report(ROOT/'qa/release-1.6.0/movement-verification.json'))
         self.assertFalse(verify_v2.is_generated_runtime_report(verify_v2.OUT/'unlisted-verification.json'))

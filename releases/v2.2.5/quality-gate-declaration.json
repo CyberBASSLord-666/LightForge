@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "release": {
+    "name": "2.2.5",
+    "code": 20205
+  },
+  "requirement": "performance_quality_gate",
+  "classification": "performance",
+  "reason": "This release includes analysis lifecycle, recovery, diagnostics, and performance-gate changes that require the protected performance quality gate."
+}
