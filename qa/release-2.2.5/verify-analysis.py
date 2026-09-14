@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Bind 2.2.4's fresh native runtime comparison and source-clock evidence.
+"""Bind fresh 2.2.5 source-clock and analysis evidence to a historical anchor.
 
-The native predictor source and Balanced execution path changed, so these
-comparisons are newly executed. This gate binds the measured host predictions,
-the complete current analysis inventory, and a fresh source-clock regression. It
-does not claim a new corpus accuracy benchmark or an ARM64 crash reproduction.
+The v2.2.4 native runtime comparison remains immutable historical context. This
+gate binds newly measured host predictions, the complete current analysis
+inventory, and a fresh source-clock regression for v2.2.5. It does not claim a
+new corpus accuracy benchmark or an ARM64 crash reproduction.
 """
 from pathlib import Path
 import datetime
