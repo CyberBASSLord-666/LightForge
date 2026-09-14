@@ -96,7 +96,7 @@ class Release225QaProtocolTest(TestCase):
                 env = {**os.environ, 'LIGHTFORGE_EVIDENCE_SESSION': 'invalid session',
                        output_var: temporary}
                 completed = subprocess.run(['node', str(script)], cwd=ROOT, env=env,
-                                           text=True, capture_output=True, check=False)
+                                           text=True, capture_output=True, check=False, timeout=30)
                 self.assertNotEqual(completed.returncode, 0,
                                     completed.stdout + completed.stderr)
                 receipt_name = ('background-ui-verification.json'
@@ -157,7 +157,7 @@ class Release225QaProtocolTest(TestCase):
                     receipt_path.write_text(json.dumps({'release': '2.2.5', 'passed': True, 'errors': []}))
                     completed = subprocess.run(command, cwd=ROOT,
                                                env={**os.environ, 'LIGHTFORGE_EVIDENCE_SESSION': 'invalid session'},
-                                               text=True, capture_output=True, check=False)
+                                               text=True, capture_output=True, check=False, timeout=30)
                     self.assertNotEqual(completed.returncode, 0,
                                         completed.stdout + completed.stderr)
                     receipt = json.loads(receipt_path.read_text())
@@ -176,12 +176,44 @@ class Release225QaProtocolTest(TestCase):
                 [sys.executable, str(ROOT / 'qa/release-2.2.5/verify-native-inference-profile.py'),
                  '--output', str(output)],
                 cwd=ROOT, env={**os.environ, 'LIGHTFORGE_EVIDENCE_SESSION': 'invalid session'},
-                text=True, capture_output=True, check=False)
+                text=True, capture_output=True, check=False, timeout=30)
             self.assertNotEqual(completed.returncode, 0, completed.stdout + completed.stderr)
             receipt = json.loads(output.read_text())
             self.assertIs(receipt['passed'], False)
             self.assertTrue(receipt['errors'])
             self.assertIn('LIGHTFORGE_EVIDENCE_SESSION is invalid.', receipt['errors'][0])
+
+    def test_downstream_replaces_stale_pass_when_upstream_is_missing(self):
+        downstream = ROOT / 'qa/release-2.2.5/native-mdx-downstream-verification.json'
+        upstream = ROOT / 'qa/release-2.2.5/native-mdx-comparison-verification.json'
+        previous_downstream = downstream.read_bytes() if downstream.exists() else None
+        previous_upstream = upstream.read_bytes() if upstream.exists() else None
+        try:
+            downstream.write_text(json.dumps({'release': '2.2.5', 'passed': True, 'errors': []}))
+            upstream.unlink(missing_ok=True)
+            with tempfile.TemporaryDirectory() as temporary:
+                completed = subprocess.run(
+                    ['node', str(ROOT / 'qa/release-2.2.5/verify-mdx-downstream.cjs')],
+                    cwd=ROOT, env={
+                        **os.environ,
+                        'LIGHTFORGE_EVIDENCE_SESSION': SESSION,
+                        'LIGHTFORGE_MDX_DOWNSTREAM_DIR': temporary,
+                    }, text=True, capture_output=True, check=False, timeout=30)
+            self.assertNotEqual(completed.returncode, 0,
+                                completed.stdout + completed.stderr)
+            receipt = json.loads(downstream.read_text())
+            self.assertIs(receipt['passed'], False)
+            self.assertTrue(receipt['errors'])
+            self.assertIn('native-mdx-comparison-verification.json', receipt['errors'][0])
+        finally:
+            if previous_downstream is None:
+                downstream.unlink(missing_ok=True)
+            else:
+                downstream.write_bytes(previous_downstream)
+            if previous_upstream is None:
+                upstream.unlink(missing_ok=True)
+            else:
+                upstream.write_bytes(previous_upstream)
 
     def test_browser_source_inventory_covers_loaded_runtime_closure(self):
         inventory = VERIFY.BROWSER_SOURCE_INVENTORY
