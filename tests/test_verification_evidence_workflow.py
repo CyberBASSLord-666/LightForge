@@ -37,6 +37,7 @@ class VerificationEvidenceWorkflowTest(unittest.TestCase):
             "native-mdx-downstream-native.json",
             "native-mdx-downstream-wasm.json",
             "native-recovery-results.json",
+            "native-runtime-comparison-verification.json",
             "native-verification.json",
             "analysis-verification.json",
         ):
