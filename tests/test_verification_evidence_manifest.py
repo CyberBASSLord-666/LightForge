@@ -339,14 +339,22 @@ class VerificationEvidenceManifestTest(unittest.TestCase):
             runtime = source_root / "qa/release-2.2.5/source-clock-verification.json"
             runtime.parent.mkdir(parents=True)
             runtime.write_bytes(b'{"fresh":true}')
+            background_runtime = source_root / "qa/release-2.2.5/background-ui-verification.json"
+            background_runtime.write_bytes(b'{"fresh":"background"}')
+            restore_runtime = source_root / "qa/release-2.2.5/restore-preview-verification.json"
+            restore_runtime.write_bytes(b'{"fresh":"restore"}')
             fixture_hash = evidence.sha256_file(fixture)
             game_hash = evidence.sha256_file(game)
             runtime_hash = evidence.sha256_file(runtime)
+            background_runtime_hash = evidence.sha256_file(background_runtime)
+            restore_runtime_hash = evidence.sha256_file(restore_runtime)
             sources = {
                 "web/app.js": SOURCE_HASH,
                 "qa/release-1.6.0/fixtures/falcon-mix.wav": fixture_hash,
                 "web/analysis/models/game/bd2dur.onnx": game_hash,
                 "qa/release-2.2.5/source-clock-verification.json": runtime_hash,
+                "qa/release-2.2.5/background-ui-verification.json": background_runtime_hash,
+                "qa/release-2.2.5/restore-preview-verification.json": restore_runtime_hash,
             }
             for name in evidence.RECEIPTS:
                 value = receipt(name)
@@ -361,6 +369,8 @@ class VerificationEvidenceManifestTest(unittest.TestCase):
                     "qa/release-1.6.0/musdb-fixture-provenance.json": fixture_provenance,
                     "web/analysis/models/game/manifest.json": game_provenance,
                     "qa/release-2.2.5/source-clock-verification.json": b"historical-output",
+                    "qa/release-2.2.5/background-ui-verification.json": b"historical-background-output",
+                    "qa/release-2.2.5/restore-preview-verification.json": b"historical-restore-output",
                 }.get(relative)
 
             with patch.object(evidence, "_candidate_tree_bytes", side_effect=tree_bytes):
@@ -378,6 +388,14 @@ class VerificationEvidenceManifestTest(unittest.TestCase):
             sealed = bindings["qa/release-2.2.5/source-clock-verification.json"]
             self.assertEqual(sealed["origin"], "sealed_runtime_material")
             self.assertEqual((root / "content" / sealed["path"]).read_bytes(), runtime.read_bytes())
+            for relative, material in (
+                ("qa/release-2.2.5/background-ui-verification.json", background_runtime),
+                ("qa/release-2.2.5/restore-preview-verification.json", restore_runtime),
+            ):
+                self.assertIn(relative, evidence._runtime_evidence_materials(RELEASE))
+                sealed_runtime = bindings[relative]
+                self.assertEqual(sealed_runtime["origin"], "sealed_runtime_material")
+                self.assertEqual((root / "content" / sealed_runtime["path"]).read_bytes(), material.read_bytes())
             self.assertEqual(
                 evidence.verify_content(root / "content", release=RELEASE, pipeline=pipeline(), expected_candidate=content["candidate"]),
                 content,
