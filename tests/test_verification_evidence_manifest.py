@@ -43,7 +43,7 @@ def candidate_manifest(path: Path, attempt=1):
         for name in evidence._candidate_files(RELEASE)
     }
     path.write_text(json.dumps({
-        "schema_version": 1,
+        "schema_version": evidence.CANDIDATE_SCHEMA_VERSION,
         "kind": evidence.CANDIDATE_KIND,
         "release": RELEASE,
         "source": {"commit": HEAD, "tree_sha": TREE},
@@ -54,13 +54,26 @@ def candidate_manifest(path: Path, attempt=1):
     return evidence.sha256_file(path)
 
 
-def receipt(name):
-    return {
+def receipt(name, session=SESSION):
+    value = {
         "release": RELEASE,
         "passed": True,
         "errors": [],
         "source_hashes": {"web/app.js": SOURCE_HASH},
     }
+    if name in {
+        "browser-verification.json",
+        "analysis-browser-verification.json",
+        "background-ui-verification.json",
+        "restore-preview-verification.json",
+    }:
+        value.update({
+            "evidenceSessionSchema": evidence.EVIDENCE_SESSION_SCHEMA,
+            "evidenceSession": session,
+        })
+    elif name == "analysis-verification.json":
+        value["evidence_session"] = session
+    return value
 
 
 class VerificationEvidenceManifestTest(unittest.TestCase):
@@ -127,6 +140,53 @@ class VerificationEvidenceManifestTest(unittest.TestCase):
                 evidence.verify_wrapper(wrapper, release=RELEASE, pipeline=pipeline(1), expected_candidate=manifest["candidate"]),
                 wrapped,
             )
+
+    def test_session_bound_receipts_and_wrappers_reject_absent_or_mismatched_nonces(self):
+        session_cases = (
+            ("browser-verification.json", "evidenceSession"),
+            ("analysis-browser-verification.json", "evidenceSession"),
+            ("background-ui-verification.json", "evidenceSession"),
+            ("restore-preview-verification.json", "evidenceSession"),
+            ("analysis-verification.json", "evidence_session"),
+        )
+        for name, field in session_cases:
+            with self.subTest(receipt=name, condition="mismatched"):
+                value = receipt(name, session="d" * 64)
+                with self.assertRaisesRegex(ValueError, "evidence session differs"):
+                    evidence._receipt(value, name, RELEASE, SESSION)
+            with self.subTest(receipt=name, condition="missing"):
+                value = receipt(name)
+                if field == "evidenceSession":
+                    value.pop("evidenceSessionSchema")
+                    value.pop("evidenceSession")
+                else:
+                    value.pop(field)
+                with self.assertRaisesRegex(ValueError, "evidence session differs"):
+                    evidence._receipt(value, name, RELEASE, SESSION)
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            _, _, content, manifest = self._make_content(root)
+            wrapper, wrapped = self._make_wrapper(root, content)
+            self.assertEqual(manifest["schema_version"], evidence.CONTENT_SCHEMA_VERSION)
+            self.assertEqual(wrapped["schema_version"], evidence.WRAPPER_SCHEMA_VERSION)
+            self.assertEqual(
+                manifest["receipts"]["restore-preview-verification.json"]["session_evidence"],
+                {"evidenceSessionSchema": evidence.EVIDENCE_SESSION_SCHEMA, "evidenceSession": SESSION},
+            )
+            self.assertEqual(
+                wrapped["receipts"]["analysis-verification.json"]["session_evidence"],
+                {"evidence_session": SESSION},
+            )
+            wrapper_path = wrapper / evidence.WRAPPER_MANIFEST
+            tampered = json.loads(wrapper_path.read_text(encoding="utf-8"))
+            tampered["receipts"]["background-ui-verification.json"]["session_evidence"]["evidenceSession"] = "d" * 64
+            wrapper_path.write_text(json.dumps(tampered), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "session differs"):
+                evidence.verify_wrapper(
+                    wrapper, release=RELEASE, pipeline=pipeline(),
+                    expected_candidate=manifest["candidate"],
+                )
 
     def test_partial_or_tampered_content_artifact_is_rejected(self):
         with tempfile.TemporaryDirectory() as temporary:
