@@ -40,6 +40,11 @@ class VerificationEvidenceWorkflowTest(unittest.TestCase):
             "native-runtime-comparison-verification.json",
             "native-verification.json",
             "analysis-verification.json",
+            "composer-verification.json",
+            "light-verification.json",
+            "movement-verification.json",
+            "role-composer-verification.json",
+            "role-reference-composer-verification.json",
         ):
             self.assertIn('"$receipt_root/' + name + '"', WORKFLOW)
         self.assertIn("--source-root \"$GITHUB_WORKSPACE\"", WORKFLOW)
