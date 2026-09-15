@@ -1,4 +1,10 @@
+import json
+import os
 from pathlib import Path
+import subprocess
+import sys
+import tempfile
+import textwrap
 import unittest
 
 
@@ -88,10 +94,65 @@ class PhysicalValidationPublicationWiringTest(unittest.TestCase):
         self.assertIn("chmod 600", final_step)
         self.assertIn('python3 -I -S -m json.tool "$target" > /dev/null', final_step)
         self.assertIn("--physical-validation-attestation", final_step)
+        self.assertIn('if [[ -n "${LIGHTFORGE_PHYSICAL_VALIDATION_ATTESTATION_JSON:-}" ]]; then', final_step)
+        self.assertNotIn('test -n "$LIGHTFORGE_PHYSICAL_VALIDATION_ATTESTATION_JSON"', final_step)
         self.assertLess(
             final_step.index("unset LIGHTFORGE_PHYSICAL_VALIDATION_ATTESTATION_JSON"),
             final_step.index("python3 -E -S tools/publish_github_release.py"),
         )
+
+    def run_final_step(self, secret):
+        """Run the literal shell step; substitute only the final publisher process."""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            binary = root / "bin"
+            binary.mkdir()
+            launcher = binary / "python3"
+            launcher.write_text("#!" + sys.executable + "\n" + textwrap.dedent('''\
+                import json, os, pathlib, stat, sys
+                if "tools/publish_github_release.py" not in sys.argv:
+                    os.execv(sys.executable, [sys.executable, *sys.argv[1:]])
+                result = {"args": sys.argv[1:], "secret_available": "LIGHTFORGE_PHYSICAL_VALIDATION_ATTESTATION_JSON" in os.environ}
+                if "--physical-validation-attestation" in sys.argv:
+                    target = pathlib.Path(sys.argv[-1])
+                    result["mode"] = stat.S_IMODE(target.stat().st_mode)
+                    result["content"] = json.loads(target.read_text())
+                pathlib.Path(os.environ["TEST_RESULT"]).write_text(json.dumps(result))
+                '''))
+            launcher.chmod(0o755)
+            env = dict(os.environ, PATH=str(binary) + os.pathsep + os.environ["PATH"],
+                       LIGHTFORGE_RELEASE_SOURCE=str(root), LIGHTFORGE_RELEASE_REQUEST="request.json",
+                       RUNNER_TEMP=str(root), TEST_RESULT=str(root / "result.json"))
+            env.pop("LIGHTFORGE_PHYSICAL_VALIDATION_ATTESTATION_JSON", None)
+            if secret is not None:
+                env["LIGHTFORGE_PHYSICAL_VALIDATION_ATTESTATION_JSON"] = secret
+            step = WORKFLOW.split("      - name: Verify provenance, reconstruct exact signed APK and publish\n", 1)[1]
+            script = textwrap.dedent(step.split("        run: |\n", 1)[1])
+            process = subprocess.run(["bash", "-c", script], env=env, text=True, capture_output=True)
+            result = json.loads((root / "result.json").read_text()) if (root / "result.json").exists() else None
+            self.assertEqual(list(root.glob("lightforge-physical-validation-attestation.*")), [])
+            return process, result
+
+    def test_unset_and_empty_secrets_allow_publication_without_attestation_argument(self):
+        for secret in (None, ""):
+            with self.subTest(secret=secret):
+                process, result = self.run_final_step(secret)
+                self.assertEqual(process.returncode, 0, process.stderr)
+                self.assertEqual(result["args"], ["-E", "-S", "tools/publish_github_release.py", "request.json"])
+                self.assertFalse(result["secret_available"])
+
+    def test_supplied_secret_is_private_and_removed_after_publication(self):
+        process, result = self.run_final_step('{"synthetic_test":true}')
+        self.assertEqual(process.returncode, 0, process.stderr)
+        self.assertEqual(result["mode"], 0o600)
+        self.assertEqual(result["content"], {"synthetic_test": True})
+        self.assertFalse(result["secret_available"])
+        self.assertIn("--physical-validation-attestation", result["args"])
+
+    def test_malformed_supplied_secret_aborts_before_publication_and_is_removed(self):
+        process, result = self.run_final_step("invalid-json")
+        self.assertNotEqual(process.returncode, 0)
+        self.assertIsNone(result)
 
 
 if __name__ == "__main__":

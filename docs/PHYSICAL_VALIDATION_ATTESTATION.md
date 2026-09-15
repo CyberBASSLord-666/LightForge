@@ -1,12 +1,16 @@
-# Physical validation attestation gate
+# Optional physical validation evidence
 
-A production release must have a signed physical-validation attestation in
-addition to the sealed Android, package, provenance, and quality gates. This
-gate exists because emulator, desktop, and static FSEQ checks cannot establish
-real-phone power behavior or Tesla lamp and actuator timing.
+A production release does not require physical phone or Tesla observations.
+The sealed Android emulator, package, provenance, and performance-quality
+gates remain required. With no physical attestation, the publisher records
+`physical_validation.requirement: optional` and
+`physical_validation.status: unverified` in the public release-verification
+receipt. It never infers real-phone power behavior or Tesla lamp and actuator
+timing from emulator, desktop, or static FSEQ checks.
 
-The publisher accepts an attestation only from the protected
-LIGHTFORGE_PHYSICAL_VALIDATION_ATTESTATION_JSON environment secret. The final
+An optional attestation can be supplied through the protected
+LIGHTFORGE_PHYSICAL_VALIDATION_ATTESTATION_JSON environment secret. An unset
+or empty secret does not block publication. When supplied, the final
 publisher step materializes it only after all setup has completed, writes it to
 a private mode-0600 temporary file, immediately unsets the secret, checks the
 file is valid JSON, and passes only that file path to the publisher. A shell
@@ -16,11 +20,14 @@ to a release asset.
 
 The protocol is lightforge-physical-validation-attestation-v1 with Ed25519.
 The repository intentionally starts with an empty source-pinned authority
-registry. Therefore publication fails closed until a reviewed source change
-adds an authority identifier, raw public key, and matching public-key digest.
-A secret cannot introduce or replace an authority key.
+registry. No authority enrollment is needed to publish without physical
+evidence. To claim verified physical observations, a reviewed source change
+must first add an authority identifier, raw public key, and matching public-key
+digest. A secret cannot introduce or replace an authority key. Supplied
+evidence must pass every check below; invalid evidence aborts publication
+instead of being silently dropped.
 
-## Required signed binding
+## Required binding for supplied evidence
 
 The signed canonical payload is every top-level attestation field except
 signed_payload_sha256 and signature_base64. Its digest and the detached
@@ -78,10 +85,11 @@ observations or stale issuance cannot become a valid release claim.
 The publisher derives all release, source, candidate, Android-evidence,
 package, and vehicle-profile values itself. An attestation with any different
 value is rejected before signature verification. The publisher also refuses a
-missing, unknown, malformed, expired, non-zero-safety, non-zero-uncommanded,
+unknown, malformed, expired, non-zero-safety, non-zero-uncommanded,
 unordered-percentile, or unverifiable attestation.
 
-This gate records a verified release receipt without exposing raw device
+Accepted optional evidence records a verified physical result in the public
+release receipt without exposing raw device
 fingerprints, deterministic device-derived identifiers/hashes, the detached
 signature, or the signed-payload digest in public workflow output. The
 publisher verifies the payload digest and signature only in memory because that

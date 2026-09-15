@@ -391,17 +391,22 @@ jobs:
         run: |
           set -euo pipefail
           cd "$LIGHTFORGE_RELEASE_SOURCE"
-          test -n "$LIGHTFORGE_PHYSICAL_VALIDATION_ATTESTATION_JSON"
-          umask 077
-          target="$(mktemp "$RUNNER_TEMP/lightforge-physical-validation-attestation.XXXXXX")"
-          cleanup() {
-            rm -f -- "$target"
-          }
-          trap cleanup EXIT HUP INT TERM
-          printf '%s' "$LIGHTFORGE_PHYSICAL_VALIDATION_ATTESTATION_JSON" > "$target"
+          physical_validation_args=()
+          if [[ -n "${LIGHTFORGE_PHYSICAL_VALIDATION_ATTESTATION_JSON:-}" ]]; then
+            umask 077
+            target="$(mktemp "$RUNNER_TEMP/lightforge-physical-validation-attestation.XXXXXX")"
+            cleanup() {
+              rm -f -- "$target"
+            }
+            trap cleanup EXIT HUP INT TERM
+            printf '%s' "$LIGHTFORGE_PHYSICAL_VALIDATION_ATTESTATION_JSON" > "$target"
+            chmod 600 "$target"
+            test "$(stat -c '%a' "$target")" = "600"
+            physical_validation_args+=(--physical-validation-attestation "$target")
+          fi
           unset LIGHTFORGE_PHYSICAL_VALIDATION_ATTESTATION_JSON
-          chmod 600 "$target"
-          test "$(stat -c '%a' "$target")" = "600"
-          python3 -I -S -m json.tool "$target" > /dev/null
+          if (( ${#physical_validation_args[@]} )); then
+            python3 -I -S -m json.tool "$target" > /dev/null
+          fi
           python3 -E -S tools/publish_github_release.py "$LIGHTFORGE_RELEASE_REQUEST" \
-            --physical-validation-attestation "$target"
+            "${physical_validation_args[@]}"

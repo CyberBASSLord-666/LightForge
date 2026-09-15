@@ -94,7 +94,7 @@ Three.js remains pinned at 0.180.0. Model conversion provenance and scripts are 
 
 ## Physical validation
 
-Host tests do not execute an Android Activity, document provider or media codec, and do not measure vehicle behavior. Native host inference establishes numerical/runtime evidence on that host; browser inference establishes the browser path. Neither replaces the Android native Studio lifecycle test or physical-phone measurements. A phone with current Android System WebView is required for final install, playback, long-song performance, thermal/battery and USB/car checks.
+Host tests do not execute an Android Activity, document provider or media codec, and do not measure vehicle behavior. Native host inference establishes numerical/runtime evidence on that host; browser inference establishes the browser path. Neither replaces the required Android native Studio lifecycle test. Physical phone and Tesla observations are optional for publication. Claims about physical install, playback, long-song performance, thermal/battery behavior or USB/car timing still require actual observations; without them the release receipt records physical validation as unverified. See [optional physical evidence](docs/PHYSICAL_VALIDATION_ATTESTATION.md).
 
 Analysis and choreography run in a foreground service and can continue when switching apps or locking the screen. Allow notifications and, for long screen-off jobs, the user-controlled battery exemption. Import/export document pickers require returning to the app. Android time allowances, Force stop and manufacturer restrictions still apply; completed verified work can be resumed after interruption.
 

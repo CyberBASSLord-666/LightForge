@@ -497,12 +497,21 @@ def _source_android_package(source_commit):
 
 
 def verify_physical_validation(attestation, version, source_commit, source_tree_sha, android_evidence):
-    """Bind an external physical review to sealed Android/CI evidence.
+    """Record optional physical evidence without inferring a hardware pass.
 
     The external attestation is deliberately only a confirmation of this
     source-derived envelope. It cannot select a release, APK, evidence run,
     profile, package, or source identity for itself.
     """
+    if attestation is None:
+        return {
+            'schema_version': 1,
+            'requirement': 'optional',
+            'status': 'unverified',
+            'reason': 'No signed physical phone or Tesla observations supplied.',
+            'release': dict(version),
+            'source': {'commit': source_commit, 'tree_sha': source_tree_sha},
+        }
     require(android_evidence is not None, 'Physical validation requires sealed Android evidence')
     manifest = android_evidence.get('manifest')
     require(isinstance(manifest, dict), 'Physical validation Android evidence manifest is invalid')
@@ -543,7 +552,7 @@ def verify_physical_validation(attestation, version, source_commit, source_tree_
             'android-diagnostics-verification.json': diagnostics_receipt.get('sha256'),
         },
     }
-    return verify_physical_validation_attestation(
+    verified = verify_physical_validation_attestation(
         attestation,
         release=version,
         source={'commit': source_commit, 'tree_sha': source_tree_sha},
@@ -552,6 +561,7 @@ def verify_physical_validation(attestation, version, source_commit, source_tree_
         expected_package_name=_source_android_package(source_commit),
         expected_vehicle_profile=_source_vehicle_profile(source_commit),
     )
+    return {'requirement': 'optional', **verified}
 
 
 def require(value, message):
@@ -1005,8 +1015,7 @@ def main(argv=None):
     parser.add_argument("request")
     parser.add_argument(
         "--physical-validation-attestation",
-        required=True,
-        help="private 0600 detached physical-validation attestation",
+        help="optional private 0600 detached physical-validation attestation; absence is recorded as unverified",
     )
     args = parser.parse_args(argv)
     os.chdir(ROOT)
@@ -1019,7 +1028,7 @@ def main(argv=None):
     version = json.loads((ROOT / 'version.json').read_text())
     physical_attestation = load_physical_validation_attestation(
         args.physical_validation_attestation
-    )
+    ) if args.physical_validation_attestation is not None else None
     require(request['version'] == version, 'Release request version mismatch')
     require(type(request['run_id']) is int and request['run_id'] > 0, 'Invalid CI run')
     ci = api(f'repos/{repo}/actions/runs/{request["run_id"]}')
@@ -1062,6 +1071,10 @@ def main(argv=None):
     receipt = json.loads((ROOT / 'release-verification.json').read_text())
     require(receipt['release']['sha256'] == digest(apk), 'Packaged release receipt mismatch')
     verify_apk(apk, version)
+    # The public receipt must disclose missing physical observations. Replace
+    # any request-supplied claim with the result derived by this publisher.
+    receipt['physical_validation'] = physical_validation
+    (ROOT / 'release-verification.json').write_text(json.dumps(receipt, indent=2) + '\n')
     sums = release_dir / 'SHA256SUMS.txt'
     sums.write_text(digest(apk) + '  ' + apk_name + '\n')
     tag = 'v' + version['name']
