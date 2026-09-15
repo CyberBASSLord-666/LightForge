@@ -56,11 +56,15 @@ test('a target hanging in cleanup is killed and reaped within the cleanup allowa
   const dir = temp(t);
   const pidFile = path.join(dir, 'cleanup.pid');
   const marker = path.join(dir, 'cleanup.started');
-  const result = await run(`const fs=require('node:fs'); fs.writeFileSync(${JSON.stringify(pidFile)},String(process.pid)); process.on('SIGTERM',()=>{fs.writeFileSync(${JSON.stringify(marker)},'entered cleanup');}); setInterval(()=>{},1000);`, 700);
+  // Atomic, idempotent publication proves TERM-handler entry without requiring
+  // a separate content write to finish before forced termination.
+  const result = await run(`const fs=require('node:fs'); fs.writeFileSync(${JSON.stringify(pidFile)},String(process.pid)); process.on('SIGTERM',()=>{fs.mkdirSync(${JSON.stringify(marker)},{recursive:true});}); setInterval(()=>{},1000);`, 700);
   assert.equal(result.exit_code, 124);
+  assert.equal(result.timed_out, true);
   assert.equal(result.signal, 'SIGKILL');
   assert.equal(result.termination.verified, true);
-  assert.equal(fs.readFileSync(marker, 'utf8'), 'entered cleanup');
+  assert.deepEqual(result.termination.remaining_pids, []);
+  assert.equal(fs.statSync(marker).isDirectory(), true);
   assert.equal(exists(Number(fs.readFileSync(pidFile, 'utf8'))), false);
 });
 
