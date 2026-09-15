@@ -46,6 +46,9 @@
     return {active,energyAt,sectionAt,periodAt,beatInfo,phraseAt,meter,vocalAt:t=>roleAt(vocalPhrases,t),vocalNoteAt:t=>roleAt(vocalNotes,t),bassAt:t=>roleAt(bassNotes,t),roleEnvelope};
   }
   function compose(show,m,s,movement={accents:[]},semanticStrategy=null,options={},vocalStrategy=null){
+    const timing=options?.timing;
+    let token=timing?.begin('performance.choreography_planning'),scope='light-candidate-planning';
+    try{
     const ctx=context(m),step=s.stepMs/1000,shift=s.offsetMs/1000,end=show.frameCount*step-step;
     const outputs=PROFILE.outputs.filter(o=>o.available&&o.kind==='light'),byId=new Map(outputs.map(o=>[o.id,o]));
     const candidates=[],accepted=[],lanes=new Map(outputs.map(o=>[o.id,[]]));let serial=0;
@@ -291,6 +294,7 @@
     // an accepted command.
     const semanticDecision=semanticState&&typeof semanticStrategy.filterCandidates==='function'?semanticStrategy.filterCandidates(candidates,semanticState):null;
     const scheduledCandidates=semanticDecision&&Array.isArray(semanticDecision.candidates)?semanticDecision.candidates:candidates;
+    timing?.end(token,{scope});scope='light-allocation-and-collision-rescue';token=timing?.begin('performance.collision_resolution');
     scheduledCandidates.sort((a,b)=>b.priority-a.priority||b.strength-a.strength||a.start-b.start||a.serial-b.serial);
     const collisionGroups=new Map(),groupBySerial=new Map();
     const normalizeKind=value=>String(value||'event').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'')||'event';
@@ -448,6 +452,7 @@
       }
       semanticTargetAllocation={enabled:true,maxAllocations:maxTargets,minimumSalience,tiers:Array.from(allowedTiers).sort(),...summary,rows,omittedTargets:Math.max(0,rawTargets.length-maxTargets)};
     }
+    timing?.end(token,{scope});scope='accepted-light-frame-commands';token=timing?.begin('performance.vehicle_realization');
     const frames=show.frames;
     for(const cue of accepted){
       const o=byId.get(cue.id),up=cue.fade===2?230:cue.fade===1?204:178,down=cue.fade===2?77:cue.fade===1?51:26;
@@ -458,6 +463,7 @@
         for(const ch of o.channels)frames[f*200+ch-1]=value;
       }
     }
+    timing?.end(token,{scope});scope='light-planning-diagnostics';token=timing?.begin('performance.choreography_planning');
     const errors=accepted.map(c=>Math.abs(c.actualStart-c.start)*1000);
     return {context:ctx,targets,events:accepted.sort((a,b)=>a.start-b.start||a.serial-b.serial),diagnostics:{
       candidateCues:scheduledCandidates.length,generatedCandidateCues:candidates.length,acceptedCues:accepted.length,suppressedCollisions:rejected,rescuedCollisions,unresolvedHighSalienceCollisions,collisionResolutions:reportedCollisionResolutions,collisionResolutionTruncated:Math.max(0,collisionResolutions.length-reportedCollisionResolutions.length),
@@ -470,6 +476,7 @@
       meter:ctx.meter,recurringMotifGroups:Array.from(new Set(show.sections.filter(x=>x.recurrenceGroup).map(x=>x.recurrenceGroup))).length,lockedSections:show.sections.filter(x=>x.locked).length,timingScope:'Command placement within half a frame of the selected musical target. Audio detection and vehicle response are separate estimates.',
       ...(semanticTargetAllocation?{semanticTargetAllocation}:{})
     }};
+    }finally{timing?.end(token,{scope});}
   }
   const api={compose,context,version:'2.0.0'};root.LightPlanner=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);

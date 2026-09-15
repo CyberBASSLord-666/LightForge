@@ -38,49 +38,52 @@ class Transform{
   const out=new Float32Array(SAMPLES);for(let i=0;i<SAMPLES;i++)out[i]=pcm[i+NFFT/2]/Math.max(1e-12,this.norm[i+NFFT/2]);return out;
  }
 }
-async function create({ort,baseUrl,onProgress=()=>{},checkpoint,nativePredict}){
+async function create({ort,baseUrl,onProgress=()=>{},checkpoint,nativePredict,telemetry}){
+ // These disjoint spans measure local work only; native bridge waits are not model inference.
+ const timed=(name,fn)=>telemetry?.measure?telemetry.measure('performance.'+name,fn,{component:'deux'}):fn();
+ const timedAsync=(name,fn)=>telemetry?.measureAsync?telemetry.measureAsync('performance.'+name,fn,{component:'deux',runtime:'onnxruntime-web-wasm'}):fn();
  const manifest=await(await fetch(new URL('manifest.json',baseUrl))).json(),transform=new Transform();let closed=false,session=null,sessionName=null;
  if(manifest.execution!=='bounded-independent-batches-v1'||manifest.headFrames!==128||manifest.frames!==FRAMES||manifest.samples!==SAMPLES||manifest.indices.length!==3958||manifest.bandsPerFrequency.length!==1025)throw Error('Studio separation model configuration is invalid.');
  async function releaseStage(){const previous=session;session=null;sessionName=null;if(previous)await previous.release();}
  async function stage(name,input){
   if(closed)throw Error('Studio separation is closed.');
-  if(sessionName!==name){await releaseStage();session=await ort.InferenceSession.create(new URL(name+'.onnx',baseUrl).href,{executionProviders:['wasm'],graphOptimizationLevel:'all',enableCpuMemArena:false,enableMemPattern:false});sessionName=name;}
-  return (await session.run({input})).output;
+  if(sessionName!==name){await releaseStage();session=await timedAsync('model_initialization',()=>ort.InferenceSession.create(new URL(name+'.onnx',baseUrl).href,{executionProviders:['wasm'],graphOptimizationLevel:'all',enableCpuMemArena:false,enableMemPattern:false}));sessionName=name;}
+  return (await timedAsync('model_inference',()=>session.run({input}))).output;
  }
  async function boundedBlock(values,index,progress){
   const name='block-'+String(index).padStart(2,'0');
   for(let first=0;first<60;first+=4){
-   const count=Math.min(4,60-first),data=new Float32Array(count*FRAMES*256);
-   for(let b=0;b<count;b++)for(let f=0;f<FRAMES;f++)data.set(values.subarray((f*60+first+b)*256,(f*60+first+b+1)*256),(b*FRAMES+f)*256);
+   const count=Math.min(4,60-first),data=timed('preprocessing',()=>{const data=new Float32Array(count*FRAMES*256);
+   for(let b=0;b<count;b++)for(let f=0;f<FRAMES;f++)data.set(values.subarray((f*60+first+b)*256,(f*60+first+b+1)*256),(b*FRAMES+f)*256);return data;});
    const input=new ort.Tensor('float32',data,[count,FRAMES,256]);let output;
-   try{output=await stage(name+'-time',input);for(let b=0;b<count;b++)for(let f=0;f<FRAMES;f++)values.set(output.data.subarray((b*FRAMES+f)*256,(b*FRAMES+f+1)*256),(f*60+first+b)*256);}
+   try{output=await stage(name+'-time',input);timed('postprocessing',()=>{for(let b=0;b<count;b++)for(let f=0;f<FRAMES;f++)values.set(output.data.subarray((b*FRAMES+f)*256,(b*FRAMES+f+1)*256),(f*60+first+b)*256);});}
    finally{input.dispose();output?.dispose();}progress(.75*(first+count)/60);
   }
   for(let first=0;first<FRAMES;first+=128){
-   const count=Math.min(128,FRAMES-first),input=new ort.Tensor('float32',values.slice(first*60*256,(first+count)*60*256),[count,60,256]);let output;
-   try{output=await stage(name+'-frequency',input);values.set(output.data,first*60*256);}finally{input.dispose();output?.dispose();}
+   const count=Math.min(128,FRAMES-first),input=new ort.Tensor('float32',timed('preprocessing',()=>values.slice(first*60*256,(first+count)*60*256)),[count,60,256]);let output;
+   try{output=await stage(name+'-frequency',input);timed('postprocessing',()=>values.set(output.data,first*60*256));}finally{input.dispose();output?.dispose();}
    progress(.75+.25*(first+count)/FRAMES);
   }
  }
  async function predict(stereo,progress=()=>{}){
-  const spectrum=transform.encode(stereo),input=new ort.Tensor('float32',spectrum,[1,2050,FRAMES,2]);let front,values;
-  try{front=await stage('front',input);values=Float32Array.from(front.data);}finally{input.dispose();front?.dispose();}progress(1/15);
+  const spectrum=timed('preprocessing',()=>transform.encode(stereo)),input=new ort.Tensor('float32',spectrum,[1,2050,FRAMES,2]);let front,values;
+  try{front=await stage('front',input);values=timed('postprocessing',()=>Float32Array.from(front.data));}finally{input.dispose();front?.dispose();}progress(1/15);
   for(let i=0;i<12;i++)await boundedBlock(values,i,p=>progress((1+i+p)/15));
   const out={};
   try{for(let role=0;role<2;role++){
    const mask=new Float32Array(manifest.indices.length*FRAMES*2);
    for(let first=0;first<FRAMES;first+=128){
-    const count=Math.min(128,FRAMES-first),input=new ort.Tensor('float32',values.slice(first*60*256,(first+count)*60*256),[1,count,60,256]);let y;
+    const count=Math.min(128,FRAMES-first),input=new ort.Tensor('float32',timed('preprocessing',()=>values.slice(first*60*256,(first+count)*60*256)),[1,count,60,256]);let y;
     try{
      y=await stage('head-'+role,input);
      if(y.data.length!==manifest.indices.length*count*2)throw Error('Studio separator returned an invalid mask batch.');
-     for(let bin=0;bin<manifest.indices.length;bin++)mask.set(y.data.subarray(bin*count*2,(bin+1)*count*2),(bin*FRAMES+first)*2);
+     timed('postprocessing',()=>{for(let bin=0;bin<manifest.indices.length;bin++)mask.set(y.data.subarray(bin*count*2,(bin+1)*count*2),(bin*FRAMES+first)*2);});
     }finally{input.dispose();y?.dispose();}
     progress((13+role+(first+count)/FRAMES)/15);
    }
    // Model creation temporarily copies weights. Release each large head before
    // decoding or opening the next one, and never carry it into another passage.
-   await releaseStage();out[role===0?'vocals':'accompaniment']=transform.decode(spectrum,mask,manifest);
+   await releaseStage();out[role===0?'vocals':'accompaniment']=timed('postprocessing',()=>transform.decode(spectrum,mask,manifest));
   }return out;}finally{await releaseStage();}
  }
  return {manifest,predict,async process(read,total,onChunk,onProgress=()=>{}){
@@ -90,7 +93,7 @@ async function create({ort,baseUrl,onProgress=()=>{},checkpoint,nativePredict}){
    if(closed)throw Error('Studio separation is closed.');
    const keep=Math.min(CORE,total-start),last=start+CORE>=total,stereo=await read(start-HALO,SAMPLES);
    if(!Array.isArray(stereo)||stereo.length!==2||stereo.some(x=>!(x instanceof Float32Array)||x.length!==SAMPLES))throw Error('Studio separation requires complete stereo chunks.');
-   let peak=0;for(const channel of stereo)for(const x of channel)peak=Math.max(peak,Math.abs(x));
+   const peak=timed('preprocessing',()=>{let peak=0;for(const channel of stereo)for(const x of channel)peak=Math.max(peak,Math.abs(x));return peak;});
    const key='deux-'+start,cached=await checkpoint?.readFloats(key);
    const restored=cached?.length===2&&cached.every(a=>a instanceof Float32Array&&a.length===SAMPLES&&a.every(Number.isFinite));
    const report=(p,extra={})=>onProgress({progress:Math.min(1,(start+(last?keep:STRIDE)*p)/total),processedSeconds:start/RATE,passageIndex:chunks+1,passageCount,passagesCompleted:chunks,restoredPassages,checkpointSaved:false,message:'Studio · passage '+(chunks+1)+' of '+passageCount+' · '+Math.round(p*100)+'%',...extra});
@@ -100,9 +103,9 @@ async function create({ort,baseUrl,onProgress=()=>{},checkpoint,nativePredict}){
    let checkpointSaved=restored;
    if(restored)restoredPassages++;
    else if(checkpoint&&peak>=1e-7){await checkpoint.writeFloats(key,[estimated.vocals,estimated.accompaniment]);checkpointSaved=true;}
-   const core={};for(const role of ['vocals','accompaniment']){core[role]=estimated[role].slice(HALO,HALO+keep);if(pending){const overlap=Math.min(pending[role].length,keep);for(let i=0;i<overlap;i++){const weight=.5-.5*Math.cos(Math.PI*(i+.5)/STRIDE);core[role][i]=pending[role][i]*(1-weight)+core[role][i]*weight;}}}
+   const core=timed('postprocessing',()=>{const core={};for(const role of ['vocals','accompaniment']){core[role]=estimated[role].slice(HALO,HALO+keep);if(pending){const overlap=Math.min(pending[role].length,keep);for(let i=0;i<overlap;i++){const weight=.5-.5*Math.cos(Math.PI*(i+.5)/STRIDE);core[role][i]=pending[role][i]*(1-weight)+core[role][i]*weight;}}}return core;});
    const count=last?keep:STRIDE;if(start!==emitted)throw Error('Studio separation lost the source clock.');
-   await onChunk({vocals:core.vocals.slice(0,count),accompaniment:core.accompaniment.slice(0,count),startSample:start,sampleRate:RATE});emitted+=count;chunks++;pending=last?null:{vocals:core.vocals.slice(STRIDE),accompaniment:core.accompaniment.slice(STRIDE)};
+   const chunk=timed('postprocessing',()=>({vocals:core.vocals.slice(0,count),accompaniment:core.accompaniment.slice(0,count),startSample:start,sampleRate:RATE}));await onChunk(chunk);emitted+=count;chunks++;pending=timed('postprocessing',()=>last?null:{vocals:core.vocals.slice(STRIDE),accompaniment:core.accompaniment.slice(STRIDE)});
    onProgress({progress:emitted/total,processedSeconds:emitted/RATE,passageIndex:chunks,passageCount,passagesCompleted:chunks,restoredPassages,checkpointSaved,message:restored?'Restored completed passage '+chunks+' of '+passageCount:'Studio · passage '+chunks+' of '+passageCount+' complete'});if(last)break;
   }
   if(emitted!==total)throw Error('Studio separation ended before the audio.');

@@ -207,20 +207,135 @@ class Sensors:
         return result
 
 
-def root_sample(pid):
-    # /proc/PID/stat names may contain ')' and spaces. Start after the last ')'.
-    fields = read_text(f"/proc/{pid}/stat").rsplit(")", 1)[1].split()
-    ticks = int(fields[11]) + int(fields[12])
-    result = {"cpu_seconds": ticks / os.sysconf("SC_CLK_TCK"),
-              "rss_bytes": max(0, int(fields[21])) * os.sysconf("SC_PAGE_SIZE")}
-    # Some hosts deny child /proc I/O despite readable stat. Keep those domains
-    # independent; an inaccessible I/O counter is not a measured zero.
-    try:
-        values = pairs(read_text(f"/proc/{pid}/io").replace(":", ""))
-        result.update({"read_bytes": values["read_bytes"], "write_bytes": values["write_bytes"]})
-    except (OSError, ValueError, KeyError):
-        pass
+def proc_status(text):
+    """Only identity fields are retained, never names or other process data."""
+    result = {}
+    for line in text.splitlines():
+        key, separator, value = line.partition(":")
+        if key not in {"Pid", "Tgid", "PPid", "NSpid"}:
+            continue
+        if not separator or key in result:
+            raise MeasurementError("invalid_proc_identity")
+        values = value.split()
+        if not values or len(values) > 32 or key != "NSpid" and len(values) != 1:
+            raise MeasurementError("invalid_proc_identity")
+        result[key] = [counter(item) for item in values]
+    if set(result) != {"Pid", "Tgid", "PPid", "NSpid"}:
+        raise MeasurementError("proc_namespace_identity_missing")
+    if result["Pid"] != result["Tgid"] or result["Pid"][0] != result["NSpid"][0]:
+        raise MeasurementError("proc_identity_mismatch")
+    if any(value == 0 for value in result["NSpid"]):
+        raise MeasurementError("invalid_proc_identity")
     return result
+
+
+def proc_stat(text):
+    # A command name may contain ')' and spaces; all numeric indexes start
+    # after its last ')'. The name is never retained in evidence.
+    before, separator, after = text.rpartition(")")
+    if not separator or "(" not in before:
+        raise MeasurementError("invalid_proc_stat")
+    pid = counter(before.split("(", 1)[0].strip())
+    fields = after.split()
+    if len(fields) < 22:
+        raise MeasurementError("invalid_proc_stat")
+    return {"pid": pid, "ppid": counter(fields[1]), "start": counter(fields[19]),
+            "cpu_ticks": counter(fields[11]) + counter(fields[12]), "rss_pages": counter(fields[21])}
+
+
+class RootProcSampler:
+    """Bind a direct waitable child to outer procfs before reading resources.
+
+    Popen.pid belongs to the caller's PID namespace, which need not be the
+    namespace of the mounted /proc. A matching PPid, namespace-depth PID,
+    and pinned start time are required; unprovable mappings are omitted.
+    """
+    def __init__(self, pid, *, deadline):
+        self.pid = pid
+        self.proc_pid = None
+        self.start = None
+        own = proc_status(read_text("/proc/self/status"))
+        if own["NSpid"][-1] != os.getpid():
+            raise MeasurementError("collector_proc_namespace_unverified")
+        self.parent = own["Pid"][0]
+        self.depth = len(own["NSpid"]) - 1
+        self._owned()
+        found = []
+        for candidate in self._candidates(deadline):
+            if time.monotonic() >= deadline:
+                raise MeasurementError("proc_identity_scan_deadline")
+            try:
+                identity, _ = self._identity(candidate)
+                found.append(identity)
+            except (OSError, ValueError, IndexError, KeyError):
+                continue
+        if len(found) != 1:
+            raise MeasurementError("direct_child_proc_identity_unverified")
+        self.proc_pid, self.start = found[0]
+        self._owned()
+        identity, _ = self._identity(self.proc_pid)
+        if identity != (self.proc_pid, self.start):
+            raise MeasurementError("direct_child_proc_identity_changed")
+
+    def _candidates(self, deadline):
+        if self.depth == 0:
+            yield self.pid
+            return
+        try:
+            children = read_text("/proc/thread-self/children")
+        except FileNotFoundError:
+            # Some kernels do not expose children. Bound enumeration itself,
+            # including non-PID entries, without first allocating a full list.
+            with os.scandir("/proc") as entries:
+                for count, entry in enumerate(entries, 1):
+                    if count > 65536:
+                        raise MeasurementError("proc_identity_scan_limit")
+                    if time.monotonic() >= deadline:
+                        raise MeasurementError("proc_identity_scan_deadline")
+                    if entry.name.isascii() and entry.name.isdigit():
+                        yield int(entry.name)
+            return
+        candidates = children.split()
+        if len(candidates) > 65536:
+            raise MeasurementError("proc_identity_scan_limit")
+        for candidate in candidates:
+            yield counter(candidate)
+
+    def _owned(self):
+        # This does not reap the child. Its numeric PID remains reserved until
+        # the collector's separate wait4 path releases it.
+        os.waitid(os.P_PID, self.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT)
+
+    def _identity(self, outer_pid):
+        record = proc_stat(read_text(f"/proc/{outer_pid}/stat", 8192))
+        if record["pid"] != outer_pid or record["ppid"] != self.parent:
+            raise MeasurementError("not_direct_child_proc_identity")
+        status = proc_status(read_text(f"/proc/{outer_pid}/status"))
+        identifiers = status["NSpid"]
+        if (status["Pid"][0] != outer_pid or status["PPid"][0] != self.parent
+                or len(identifiers) != self.depth + 1 or identifiers[self.depth] != self.pid):
+            raise MeasurementError("wrong_direct_child_proc_namespace")
+        return (outer_pid, record["start"]), record
+
+    def sample(self):
+        self._owned()
+        identity, record = self._identity(self.proc_pid)
+        if identity != (self.proc_pid, self.start):
+            raise MeasurementError("direct_child_proc_identity_changed")
+        result = {"cpu_seconds": record["cpu_ticks"] / os.sysconf("SC_CLK_TCK"),
+                  "rss_bytes": record["rss_pages"] * os.sysconf("SC_PAGE_SIZE")}
+        try:
+            values = pairs(read_text(f"/proc/{self.proc_pid}/io").replace(":", ""))
+            result.update({"read_bytes": values["read_bytes"], "write_bytes": values["write_bytes"]})
+        except (OSError, ValueError, KeyError):
+            pass
+        # A changed namespace/parent/start time invalidates the entire sample,
+        # including I/O read between the two identity observations.
+        after, _ = self._identity(self.proc_pid)
+        self._owned()
+        if after != identity:
+            raise MeasurementError("direct_child_proc_identity_changed")
+        return result
 
 
 def collect(command, *, timeout=3600.0, interval=0.1, cgroup_parent=None,
@@ -257,7 +372,10 @@ def collect(command, *, timeout=3600.0, interval=0.1, cgroup_parent=None,
     if energy:
         report["limitations"].append("energy-is-host-package-scope-not-process-attribution")
     process = None
+    root_pid_reserved = False
     root_observed = []
+    root_sampler = None
+    proc_binding_failed = False
     usage = None
     capacity_read = capacity_write = None
     started = finished = None
@@ -268,24 +386,55 @@ def collect(command, *, timeout=3600.0, interval=0.1, cgroup_parent=None,
         interrupted[0] = signum
 
     def reap():
-        nonlocal usage
+        nonlocal usage, root_pid_reserved
         if process is None or process.returncode is not None:
             return
-        pid, status, result = os.wait4(process.pid, os.WNOHANG)
+        try:
+            if not group:
+                # Keep the exited leader unreaped while cleaning its own
+                # process group: its PID/PGID cannot be reused in this window.
+                exited = os.waitid(os.P_PID, process.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT)
+                if exited is None:
+                    return
+                signal_unreaped_group()
+            pid, status, result = os.wait4(process.pid, os.WNOHANG)
+        except ChildProcessError:
+            root_pid_reserved = False
+            raise
         if pid:
             process.returncode = os.waitstatus_to_exitcode(status)
+            root_pid_reserved = False
             usage = result
 
-    def terminate():
+    def signal_unreaped_group():
+        nonlocal root_pid_reserved
+        if process is None or process.returncode is not None or not root_pid_reserved:
+            return
+        # Confirm it remains our waitable child. Losing wait ownership must
+        # never turn a stale numeric PGID into authority to signal a new group.
+        try:
+            os.waitid(os.P_PID, process.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT)
+        except ChildProcessError:
+            root_pid_reserved = False
+            raise
+        try:
+            os.killpg(process.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+
+    def terminate_owned_work():
         # The bootstrap may still be outside the cgroup while attaching. Kill
-        # its own new process group as well; never target the caller's group.
-        if process is not None:
-            try:
-                os.killpg(process.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
-        if group:
+        # its group only while the leader's PID is still reserved. After reap,
+        # surviving descendants can be targeted only by the owned cgroup.
+        signal_error = None
+        try:
+            signal_unreaped_group()
+        except (OSError, ValueError) as error:
+            signal_error = error
+        if group and group.populated():
             group.kill()
+        if signal_error is not None:
+            raise signal_error
 
     try:
         for sig in (signal.SIGINT, signal.SIGTERM):
@@ -298,31 +447,35 @@ def collect(command, *, timeout=3600.0, interval=0.1, cgroup_parent=None,
                                    stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
                                    stderr=subprocess.DEVNULL, start_new_session=True,
                                    pass_fds=(capacity_write,) if group else ())
+        root_pid_reserved = True
         if capacity_write is not None:
             os.close(capacity_write)
             capacity_write = None
+        if not group:
+            try:
+                root_sampler = RootProcSampler(process.pid, deadline=min(started + timeout, time.monotonic() + .25))
+            except (OSError, ValueError, IndexError, KeyError):
+                proc_binding_failed = True
         report["status"] = "running"
         next_sample = started
         while True:
             now = time.monotonic()
             if interrupted[0] is not None or now - started >= timeout:
                 report["status"] = "cancelled" if interrupted[0] is not None else "timeout"
-                terminate()
+                terminate_owned_work()
                 break
             if now >= next_sample:
-                if not group and process.returncode is None:
+                if root_sampler is not None and process.returncode is None:
                     try:
-                        root_observed.append(root_sample(process.pid))
+                        root_observed.append(root_sampler.sample())
                     except (OSError, ValueError, IndexError, KeyError):
-                        pass  # A fast-exiting process is explicitly unobserved.
+                        root_sampler = None
+                        proc_binding_failed = True
                 sensors.sample(now - started)
                 next_sample = now + interval
             reap()
             if process.returncode is not None and (not group or not group.populated()):
                 report["status"] = "completed" if process.returncode == 0 else "command_failed"
-                # Without a cgroup do not leave same-session descendants alive.
-                if not group:
-                    terminate()
                 break
             time.sleep(min(0.02, max(0.001, next_sample - time.monotonic())))
         cleanup_deadline = time.monotonic() + 5.0
@@ -377,6 +530,10 @@ def collect(command, *, timeout=3600.0, interval=0.1, cgroup_parent=None,
                                                      "cpu_seconds": cpu_seconds, "resource_counters": counters},
                                                  "scope": "dedicated-cgroup-v2-external-workload"}
         else:
+            observation["root_procfs_binding"] = {"status": "verified" if root_observed else "unobserved",
+                                                   "protocol": "direct-child-ppid-nspid-starttime-v1",
+                                                   "binding_unavailable_or_changed": proc_binding_failed,
+                                                   "samples_revalidated": len(root_observed)}
             observation["root_procfs_samples"] = len(root_observed)
             if root_observed:
                 observation["root_sampled_peak_rss_bytes"] = max(row["rss_bytes"] for row in root_observed)
@@ -400,13 +557,19 @@ def collect(command, *, timeout=3600.0, interval=0.1, cgroup_parent=None,
         for descriptor in (capacity_read, capacity_write):
             if descriptor is not None:
                 os.close(descriptor)
-        if process is not None and (process.returncode is None or group):
+        if process is not None:
             try:
-                terminate()
+                # This is a no-op for a reaped root and empty owned cgroup.
+                # A failed population read is an explicit cleanup failure;
+                # it never authorizes a fallback signal to a stale PGID.
+                terminate_owned_work()
                 deadline = time.monotonic() + 5
-                while process.returncode is None and time.monotonic() < deadline:
+                while ((root_pid_reserved and process.returncode is None) or group and group.populated()) and time.monotonic() < deadline:
                     reap()
                     time.sleep(0.01)
+                if (root_pid_reserved and process.returncode is None) or group and group.populated():
+                    if "process_cleanup_incomplete" not in report["errors"]:
+                        report["errors"].append("process_cleanup_incomplete")
             except (OSError, ValueError):
                 report["errors"].append("process_cleanup_failed")
         if group:

@@ -7,6 +7,8 @@ const path = require('node:path');
 const http = require('node:http');
 const crypto = require('node:crypto');
 const os = require('node:os');
+const { parse: parseStrictJson } = require('./strict-json.cjs');
+const { supervise } = require('./capture-supervisor.cjs');
 
 const SCHEMA = 'lightforge.app-capture.v1';
 const HEX = /^[0-9a-f]{64}$/;
@@ -21,7 +23,7 @@ const BOOTSTRAP_ORDER = [
 const CORE_SCRIPTS = ['version.js', 'analysis/stem-cache.js', 'analysis/work-store.js', 'analysis/analyzer.js', 'engine/client.js'];
 const CORE_FILES = [...CORE_SCRIPTS, 'analysis/worker.js', 'engine/worker.js', 'analysis/ASSET_MANIFEST.json'];
 function requireValue(condition, message) { if (!condition) throw Error(message); }
-function plain(value) { return value !== null && Object.getPrototypeOf(value) === Object.prototype; }
+function plain(value) { return value !== null && typeof value === 'object' && Object.getPrototypeOf(value) === Object.prototype; }
 function canonical(value) {
   function sorted(v) {
     if (v === null || typeof v === 'string' || typeof v === 'boolean') return v;
@@ -45,7 +47,7 @@ function regular(file) {
 }
 function readJson(file) {
   requireValue(regular(file).size <= 8 * 1024 ** 2, 'JSON input exceeds 8 MiB');
-  const value = JSON.parse(fs.readFileSync(file, 'utf8'));
+  const value = parseStrictJson(fs.readFileSync(file, 'utf8'));
   requireValue(plain(value), 'JSON input must be an object');
   canonical(value);
   return value;
@@ -146,7 +148,7 @@ function wavInfo(file) {
     requireValue([1, 3].includes(tag) && [1, 2].includes(format.channels) && [16, 24, 32].includes(format.bits_per_sample) && (tag !== 3 || format.bits_per_sample === 32), 'Unsupported PCM/float WAV encoding');
     requireValue(format.sample_rate === 44100, 'The complete production pipeline requires decoded 44.1 kHz WAV');
     requireValue(format.block_align === format.channels * format.bits_per_sample / 8 && format.byte_rate === format.sample_rate * format.block_align && data.bytes % format.block_align === 0, 'Inconsistent WAV audio properties');
-    requireValue(data.bytes / format.byte_rate >= 1 && data.bytes / format.byte_rate <= 14400.05, 'The production pipeline requires 1 second to 4 hours of audio');
+    requireValue(data.bytes / format.byte_rate >= 1 && data.bytes / format.byte_rate <= 14400, 'The production pipeline requires 1 second to 4 hours of audio');
     return { ...format, sample_frames: data.bytes / format.block_align, duration_seconds: data.bytes / format.byte_rate, data_bytes: data.bytes, file_bytes: stat.size };
   } finally { fs.closeSync(descriptor); }
 }
@@ -217,14 +219,96 @@ function parseArgs(argv) {
   else for (const key of ['wav', 'audio-sha256', 'configuration', 'identity', 'web-manifest', 'output-dir']) requireValue(options[key], 'Missing --' + key);
   return options;
 }
-async function capture(options) {
+// Runs in both Node tests and the browser realm. Validate before JSON.stringify
+// can turn NaN/Infinity into null. Preserve the historical JSON representation
+// of numeric typed arrays used by ShowEngine's derived preview index.
+function producerJson(value, maxBytes = 128 * 1024 ** 2) {
+  const active = new Set();
+  function visit(item, where, depth, inArray = false) {
+    if (depth > 512) throw Error('Producer JSON nesting exceeds 512 at ' + where);
+    if (item === null || typeof item === 'string' || typeof item === 'boolean') return;
+    if (typeof item === 'number') { if (!Number.isFinite(item)) throw Error('Non-finite producer number at ' + where); return; }
+    if (item === undefined && !inArray) return; // JSON object fields omitted by the producer are recorded as missing.
+    if (typeof item !== 'object' || item === null) throw Error('Unsupported producer JSON value at ' + where);
+    if (active.has(item)) throw Error('Circular producer JSON at ' + where);
+    if (Object.hasOwn(item, 'toJSON') || typeof item.toJSON === 'function') throw Error('Producer JSON custom serialization at ' + where);
+    const array = Array.isArray(item), typed = ArrayBuffer.isView(item) && !(item instanceof DataView);
+    if (!array && !typed && Object.getPrototypeOf(item) !== Object.prototype) throw Error('Unsupported producer JSON object at ' + where);
+    active.add(item);
+    for (const key of Object.keys(item)) {
+      const descriptor = Object.getOwnPropertyDescriptor(item, key);
+      if (descriptor.get || descriptor.set) throw Error('Producer JSON accessor at ' + where + '.' + key);
+      visit(descriptor.value, where + '.' + key, depth + 1, array || typed);
+    }
+    if (array) for (let i = 0; i < item.length; ++i) if (!Object.hasOwn(item, i)) throw Error('Sparse producer JSON array at ' + where);
+    active.delete(item);
+  }
+  visit(value, '$', 0);
+  const json = JSON.stringify(value);
+  if (typeof json !== 'string') throw Error('Producer omitted the entire JSON value');
+  if (new TextEncoder().encode(json).byteLength > maxBytes) throw Error('Producer JSON exceeds the artifact byte bound');
+  return json;
+}
+function captureProjectId(identity) {
+  return 'capture-' + hashBytes(canonical({ track_id: identity.track_id, run_id: identity.run_id }));
+}
+function initialReport() {
+  return { schema: SCHEMA, status: 'failed', production_ready: false, qualification_status: 'not_evaluated', physical_validation: 'unverified', limitations: ['Raw application observations only; no complete metric contract, annotation scoring, paired comparison or authenticated human review.', 'Browser/WASM execution without Android native model bridges.', 'Fresh browser origin/cache only; host page-cache, energy and thermal conditions are not controlled or measured by this runner.'] };
+}
+function checkpoint(out, report) {
+  const next = path.join(out, '.capture-next.json');
+  try { writeJson(next, report); fs.renameSync(next, path.join(out, '.capture-checkpoint.json')); }
+  catch (error) {
+    try { fs.unlinkSync(next); } catch {}
+    const fallback = initialReport();
+    fallback.error = 'Capture receipt serialization failed: ' + String(error.message || error).slice(0, 500);
+    // Never turn malformed producer data into a success or silently replace it.
+    writeJson(next, fallback); fs.renameSync(next, path.join(out, '.capture-checkpoint.json'));
+    throw error;
+  }
+}
+function retainRawArtifacts(out, result, report) {
+  const artifacts = report.artifacts = {}, missing = report.missing_optional_artifacts = {};
+  const failures = report.artifact_errors = [];
+  function save(name, bytes) {
+    fs.writeFileSync(path.join(out, name), bytes, { flag: 'wx', mode: 0o600 });
+    artifacts[name] = { bytes: bytes.length, sha256: hashBytes(bytes) };
+  }
+  function json(name, value) {
+    if (value === undefined) { missing[name] = 'not emitted or not serializable by the actual configured application'; return; }
+    try { const bytes = Buffer.from(canonical(value) + '\n'); requireValue(bytes.length <= 128 * 1024 ** 2, 'JSON artifact exceeds 128 MiB'); save(name, bytes); }
+    catch (error) { failures.push({ artifact: name, error: String(error.message || error).slice(0, 500) }); }
+  }
+  for (const [name, value] of Object.entries({ 'analysis.json': result.music, 'show.json': result.show, 'compiled.json': result.compiled, 'progress.json': result.progress, 'compiler-profile.json': result.compiler_profile })) json(name, value);
+  json('perceptual-validation.json', plain(result.show) ? result.show.perceptualValidation : undefined);
+  let frames, header;
+  for (const [key, name, bound] of [['frames', 'show.frames.bin', 192000000], ['header', 'show.header.bin', 65535]]) {
+    if (typeof result[key] !== 'string') { missing[name] = 'actual compiler bytes were not emitted'; continue; }
+    try {
+      requireValue(result[key].length <= 4 * Math.ceil(bound / 3), 'Invalid or oversized compiler byte transport');
+      const bytes = Buffer.from(result[key], 'base64'); requireValue(bytes.length <= bound && bytes.toString('base64') === result[key], 'Invalid compiler byte transport');
+      save(name, bytes); if (key === 'frames') frames = bytes; else header = bytes;
+    } catch (error) { failures.push({ artifact: name, error: String(error.message || error).slice(0, 500) }); }
+  }
+  if (result.producer_error || result.serialization_errors?.length) json('producer-failure.json', { producer_error: result.producer_error || null, serialization_errors: result.serialization_errors || [] });
+  report.raw_evidence_status = 'retained-before-validation; not-qualified';
+  return { save, frames, header };
+}
+function captureDeadlineSeconds(options) {
+  const seconds = options['timeout-seconds'] === undefined ? 3600 : Number(options['timeout-seconds']);
+  requireValue(Number.isSafeInteger(seconds) && seconds >= 1 && seconds <= 14400, 'Capture deadline must be 1..14400 seconds');
+  return seconds;
+}
+async function captureWorker(options) {
+  const seconds = captureDeadlineSeconds(options);
   const webRoot = path.resolve(options['app-root'], 'web'), wav = path.resolve(options.wav), out = path.resolve(options['output-dir']);
-  requireValue(!fs.existsSync(out), 'Output directory already exists; use a new attempt directory');
-  fs.mkdirSync(out, { recursive: false, mode: 0o700 });
-  const report = { schema: SCHEMA, status: 'failed', production_ready: false, qualification_status: 'not_evaluated', physical_validation: 'unverified', limitations: ['Raw application observations only; no complete metric contract, annotation scoring, paired comparison or authenticated human review.', 'Browser/WASM execution without Android native model bridges.', 'Fresh browser origin/cache only; host page-cache, energy and thermal conditions are not controlled or measured by this runner.'] };
-  let server, browser, timeout, success = false;
+  const report = initialReport();
+  let server, browser, success = false;
   const errors = [], blocked = [];
+  let blockedCount = 0, browserErrorCount = 0;
+  const persist = () => checkpoint(out, report);
   try {
+    persist();
     const lock = readJson(options['web-manifest']), lockDigest = validateLock(lock), identity = readJson(options.identity), config = readJson(options.configuration);
     validateIdentity(identity, lockDigest); validateConfiguration(config);
     requireValue(HEX.test(options['audio-sha256']), 'Invalid locked audio SHA-256');
@@ -234,86 +318,137 @@ async function capture(options) {
     const scripts = bootstrapScripts(lock);
     const manifest = readJson(path.join(webRoot, 'analysis/ASSET_MANIFEST.json'));
     for (const [name, record] of Object.entries(manifest)) requireValue(safeRelative(name) && canonical(lock.files['analysis/' + name]) === canonical(record), 'Analysis asset differs from its production manifest: ' + name);
-    Object.assign(report, { identity, source_identity_binding: { git_commit_and_tree: 'caller-declared', web_inventory: 'verified-against-supplied-lock', git_to_inventory_binding: 'requires-independent-release-orchestration' }, configuration: config, configuration_sha256: hashBytes(canonical(config)), audio: { ...audio, content_sha256: audioHash }, source_lock_sha256: lockDigest, collector_sha256: await hashFile(__filename), cache_condition: { browser_origin: 'fresh', browser_http_cache: 'disabled', persisted_app_state: 'empty', host_page_cache: 'uncontrolled', release_controlled: false } });
+    const projectId = captureProjectId(identity);
+    Object.assign(report, { identity, source_identity_binding: { git_commit_and_tree: 'caller-declared', web_inventory: 'verified-against-supplied-lock', git_to_inventory_binding: 'requires-independent-release-orchestration' }, configuration: config, configuration_sha256: hashBytes(canonical(config)), audio: { ...audio, content_sha256: audioHash }, source_lock_sha256: lockDigest, collector_sha256: await hashFile(__filename), collector_support_sha256: Object.fromEntries(await Promise.all(['strict-json.cjs', 'capture-supervisor.cjs', 'capture-supervisor.py'].map(async name => [name, await hashFile(path.join(__dirname, name))]))), cache_condition: { browser_origin: 'fresh', browser_http_cache: 'disabled', persisted_app_state: 'empty', host_page_cache: 'uncontrolled', release_controlled: false }, submitted_analysis_options: { ...config.analysis_options, analysisIdentity: audioHash, projectId } });
     report.bootstrap = { loaded_scripts: scripts, absent_optional_scripts: BOOTSTRAP_ORDER.filter(name => !scripts.includes(name)), source: 'locked-distribution-only' };
+    persist();
     const served = new Set();
     server = createServer(webRoot, wav, lock, served);
     await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });
     const origin = 'http://127.0.0.1:' + server.address().port;
     const { chromium } = require('playwright');
-    const launch = { headless: true, args: ['--no-sandbox', '--enable-unsafe-swiftshader', '--disable-background-networking', '--disable-component-update'] };
+    const launch = { headless: true, timeout: seconds * 1000, args: ['--no-sandbox', '--enable-unsafe-swiftshader', '--disable-background-networking', '--disable-component-update'] };
     if (process.env.PLAYWRIGHT_EXECUTABLE_PATH) launch.executablePath = process.env.PLAYWRIGHT_EXECUTABLE_PATH;
     browser = await chromium.launch(launch);
     const context = await browser.newContext({ serviceWorkers: 'block' });
-    await context.route('**/*', route => { const url = new URL(route.request().url()); if (url.origin === origin) return route.continue(); blocked.push(url.protocol + '//external'); return route.abort(); });
+    await context.route('**/*', route => { const url = new URL(route.request().url()); if (url.origin === origin) return route.continue(); blockedCount++; if (blocked.length < 1000) blocked.push(url.protocol + '//external'); return route.abort(); });
     const page = await context.newPage();
-    page.on('pageerror', error => errors.push(error.message.slice(0,400)));
-    const seconds = options['timeout-seconds'] === undefined ? 3600 : Number(options['timeout-seconds']);
-    requireValue(Number.isSafeInteger(seconds) && seconds >= 1 && seconds <= 14400, 'Capture deadline must be 1..14400 seconds');
+    page.on('pageerror', error => { browserErrorCount++; if (errors.length < 1000) errors.push(error.message.slice(0,400)); });
     page.setDefaultTimeout(seconds * 1000);
-    timeout = setTimeout(() => { report.timeout = true; browser.close().catch(() => {}); }, seconds * 1000);
     await page.goto(origin); await page.waitForFunction(() => !!window.MusicAnalyzer && !!window.ShowCompiler);
     requireValue(await page.evaluate(() => crossOriginIsolated), 'Capture is not cross-origin isolated');
+    await page.addScriptTag({ content: 'globalThis.__captureProducerJson = ' + producerJson.toString() + ';' });
     report.runtime = { browser: browser.version(), node: process.version, platform: process.platform, arch: process.arch, logical_cpus: os.availableParallelism(), model_asset_manifest_sha256: await hashFile(path.join(webRoot, 'analysis/ASSET_MANIFEST.json')), harness: 'production analyzer/compiler scripts without app UI', external_network_requests_blocked: 0 };
-    // Chromium bindings emit transitions while work runs, so an external process
-    // monitor can align its observations; collection/startup time remains separate.
+    persist();
     await page.exposeFunction('__capturePhase', (phase, extra) => emit(phase, { ...extra, track_id: identity.track_id, run_id: identity.run_id, report_side: identity.report_side }));
-    const result = await page.evaluate(async ({ config, identity, audioHash }) => {
+    const result = await page.evaluate(async ({ config, options }) => {
       function base64(array) { let s = ''; for (let i = 0; i < array.length; i += 24576) s += String.fromCharCode(...array.subarray(i, i + 24576)); return btoa(s); }
-      const progress = []; let lastProgress = -1;
-      const options = { ...config.analysis_options, analysisIdentity: audioHash, projectId: 'capture-' + identity.track_id + '-' + identity.run_id };
-      await window.__capturePhase('analysis_start', {}); const analysisStart = performance.now();
-      const music = await MusicAnalyzer.analyze('/__capture__/input.wav', options, value => {
-        if (progress.length < 20000) progress.push({ progress: value.progress, stage: value.stage, elapsedSeconds: value.elapsedSeconds ?? null });
-        if (value.progress < lastProgress) throw Error('Analysis progress moved backwards');
-        lastProgress = value.progress;
-      });
-      const analysisEnd = performance.now(); await window.__capturePhase('analysis_end', { duration_ms: analysisEnd - analysisStart });
-      await window.__capturePhase('compilation_start', {}); const compilationStart = performance.now();
-      const generated = await ShowCompiler.generate(music, config.show_settings);
-      const compilationEnd = performance.now(); await window.__capturePhase('compilation_end', { duration_ms: compilationEnd - compilationStart });
-      const { frames, ...show } = generated.show;
-      if (!(frames instanceof Uint8Array) || !(generated.header instanceof Uint8Array)) throw Error('Compiler did not return actual frame/header bytes');
-      if (frames.byteLength > 192000000) throw Error('Compiler frame result exceeds its production bound');
-      return JSON.parse(JSON.stringify({ music, show, compiled: generated.compiled, frames: base64(frames), header: base64(generated.header), progress,
-        timing: { clock: 'performance.now', analysis_ms: analysisEnd - analysisStart, compilation_ms: compilationEnd - compilationStart, analysis_start_ms: analysisStart, analysis_end_ms: analysisEnd, compilation_start_ms: compilationStart, compilation_end_ms: compilationEnd }, effective_analysis_options: options }));
-    }, { config, identity, audioHash });
-    clearTimeout(timeout);
-    requireValue(report.timeout !== true, 'Browser execution exceeded the capture deadline');
+      const raw = { progress: [] }, result = { serialization_errors: [] };
+      let lastProgress = -1;
+      try {
+        await window.__capturePhase('analysis_start', {}); const analysisStart = performance.now();
+        raw.music = await MusicAnalyzer.analyze('/__capture__/input.wav', options, value => {
+          if (raw.progress.length < 20000) raw.progress.push({ progress: value.progress, stage: value.stage, elapsedSeconds: value.elapsedSeconds ?? null });
+          if (value.progress < lastProgress) throw Error('Analysis progress moved backwards');
+          lastProgress = value.progress;
+        });
+        const analysisEnd = performance.now(); await window.__capturePhase('analysis_end', { duration_ms: analysisEnd - analysisStart });
+        raw.timing = { clock: 'performance.now', analysis_ms: analysisEnd - analysisStart, analysis_start_ms: analysisStart, analysis_end_ms: analysisEnd };
+        await window.__capturePhase('compilation_start', {}); const compilationStart = performance.now();
+        const generated = await ShowCompiler.generate(raw.music, config.show_settings);
+        const compilationEnd = performance.now(); await window.__capturePhase('compilation_end', { duration_ms: compilationEnd - compilationStart });
+        Object.assign(raw.timing, { compilation_ms: compilationEnd - compilationStart, compilation_start_ms: compilationStart, compilation_end_ms: compilationEnd });
+        const { frames, ...show } = generated.show;
+        raw.show = show; raw.compiled = generated.compiled; raw.compiler_profile = generated.profile;
+        if (!(frames instanceof Uint8Array) || !(generated.header instanceof Uint8Array)) throw Error('Compiler did not return actual frame/header bytes');
+        if (frames.byteLength > 192000000 || generated.header.byteLength > 65535) throw Error('Compiler bytes exceed the artifact bound');
+        result.frames = base64(frames); result.header = base64(generated.header);
+      } catch (error) { result.producer_error = String(error.message || error).slice(0, 1000); }
+      for (const [name, value] of Object.entries(raw)) {
+        try { result[name] = JSON.parse(window.__captureProducerJson(value)); }
+        catch (error) { result.serialization_errors.push({ field: name, error: String(error.message || error).slice(0, 500) }); }
+      }
+      return result;
+    }, { config, options: report.submitted_analysis_options });
+    // Preserve all bounded, safely serializable observations before deciding
+    // whether the producer result, validation or package dimensions are valid.
+    const retained = retainRawArtifacts(out, result, report);
+    report.timing = result.timing || { status: 'unavailable', reason: 'application-timings-not-emitted' };
+    report.effective_show_settings = result.show?.settings === undefined ? { status: 'unavailable', reason: 'compiler-did-not-emit-settings' } : result.show.settings;
+    report.engine = result.music?.engine === undefined ? { status: 'unavailable', reason: 'analyzer-did-not-emit-engine-report' } : result.music.engine;
+    report.resource_observations = result.music?.engine?.resourceDiagnostics || { status: 'unavailable', reason: 'application-did-not-emit-resource-diagnostics' };
+    report.compiler_profile = result.compiler_profile || { status: 'unavailable', reason: 'compiler-did-not-emit-timing-profile' };
+    report.served_source_hashes = Object.fromEntries([...served].sort().map(name => [name, lock.files[name]]));
+    report.progress_records = Array.isArray(result.progress) ? result.progress.length : 0;
+    persist();
+    requireValue(!result.producer_error && result.serialization_errors?.length === 0 && report.artifact_errors.length === 0, 'Producer or artifact serialization failed; see retained failure evidence');
     requireValue(errors.length === 0 && blocked.length === 0, 'Browser errors or external requests occurred during capture');
-    requireValue(result.show?.validation?.valid === true, 'Actual generated show did not pass application validation');
-    const frames = Buffer.from(result.frames, 'base64'), header = Buffer.from(result.header, 'base64');
+    requireValue(plain(result.music) && plain(result.show) && plain(result.compiled), 'Application did not emit its required result objects');
+    requireValue(result.show.validation?.valid === true, 'Actual generated show did not pass application validation');
+    const { frames, header, save } = retained;
+    requireValue(Buffer.isBuffer(frames) && Buffer.isBuffer(header), 'Compiler frame/header bytes are missing');
     requireValue(header.length >= 32 && header.toString('ascii', 0, 4) === 'PSEQ' && header.readUInt16LE(4) === header.length, 'Compiler emitted invalid FSEQ header');
     requireValue(frames.length === result.show.frameCount * result.show.channelCount && header.readUInt32LE(10) === result.show.channelCount && header.readUInt32LE(14) === result.show.frameCount && header[18] === result.show.stepMs, 'FSEQ payload dimensions differ from application metadata');
     requireValue(hashBytes(frames) === result.compiled.sha256, 'Actual frame bytes differ from compiled payload digest');
     requireValue(await hashFile(wav) === audioHash && canonical(await inventory(webRoot)) === canonical(lock), 'Locked audio or application source changed during capture');
     const fseq = Buffer.concat([header, frames]);
     const fseqProperties = { version_major: header[7], version_minor: header[6], data_offset: header.length, channel_count: result.show.channelCount, frame_count: result.show.frameCount, step_ms: result.show.stepMs, sequence_bytes: fseq.length, frame_bytes: frames.length, frames_sha256: hashBytes(frames), fseq_sha256: hashBytes(fseq) };
-    const projection = outputCategories(result.music, result.show, fseqProperties), artifacts = {}, goldens = {};
-    function save(name, bytes) { fs.writeFileSync(path.join(out, name), bytes, { flag: 'wx', mode: 0o600 }); artifacts[name] = { bytes: bytes.length, sha256: hashBytes(bytes) }; }
-    for (const [name, value] of Object.entries({ 'analysis.json': result.music, 'show.json': result.show, 'compiled.json': result.compiled, 'progress.json': result.progress })) save(name, Buffer.from(canonical(value) + '\n'));
-    if (Object.hasOwn(result.show, 'perceptualValidation')) save('perceptual-validation.json', Buffer.from(canonical(result.show.perceptualValidation) + '\n'));
-    else report.missing_optional_artifacts = { 'perceptual-validation.json': 'not emitted by the actual configured application' };
-    save('show.frames.bin', frames); save('show.header.bin', header); save('lightshow.fseq', fseq);
-    for (const [name, value] of Object.entries(projection.categories)) { const file = name + '.json'; save(file, Buffer.from(canonical(value) + '\n')); goldens[name + '_sha256'] = artifacts[file].sha256; }
-    Object.assign(report, { status: 'captured', timing: result.timing, effective_analysis_options: result.effective_analysis_options, effective_show_settings: result.show.settings, engine: result.music.engine, resource_observations: result.music.engine?.resourceDiagnostics || { status: 'unavailable', reason: 'application-did-not-emit-resource-diagnostics' }, artifacts, observed_output_hashes: goldens, missing_output_categories: projection.missing, served_source_hashes: Object.fromEntries([...served].sort().map(name => [name, lock.files[name]])), progress_records: result.progress.length });
+    const projection = outputCategories(result.music, result.show, fseqProperties), goldens = {};
+    save('lightshow.fseq', fseq);
+    for (const [name, value] of Object.entries(projection.categories)) { const file = name + '.json'; save(file, Buffer.from(canonical(value) + '\n')); goldens[name + '_sha256'] = report.artifacts[file].sha256; }
+    Object.assign(report, { status: 'captured', observed_output_hashes: goldens, missing_output_categories: projection.missing });
     success = true;
   } catch (error) { report.error = String(error.message || error).slice(0, 1000); }
   finally {
-    clearTimeout(timeout);
     report.browser_errors = errors;
-    report.external_network_requests_blocked = blocked.length;
-    if (report.runtime) report.runtime.external_network_requests_blocked = blocked.length;
+    report.external_network_requests_blocked = blockedCount;
+    report.browser_error_count = browserErrorCount;
+    report.browser_errors_omitted = browserErrorCount - errors.length;
+    if (report.runtime) report.runtime.external_network_requests_blocked = blockedCount;
+    persist(); // The supervisor can retain this even when browser.close hangs.
     try { await browser?.close(); } catch { report.cleanup_error = 'browser-close-failed'; success = false; }
     if (server?.listening) { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }
   }
-  if (!success) report.status = 'failed';
+  if (!success) { report.status = 'failed'; delete report.observed_output_hashes; }
   report.completed_at = new Date().toISOString();
-  writeJson(path.join(out, 'capture.json'), report);
-  emit(report.status, { output_directory: out, production_ready: false, error: report.error || null });
+  persist();
   return success ? 0 : 1;
 }
+async function capture(options) {
+  const out = path.resolve(options['output-dir']);
+  requireValue(!fs.existsSync(out), 'Output directory already exists; use a new attempt directory');
+  const seconds = captureDeadlineSeconds(options);
+  fs.mkdirSync(out, { recursive: false, mode: 0o700 });
+  let report = initialReport(), outcome;
+  try {
+    checkpoint(out, report);
+    const args = [__filename, '__capture-worker', 'capture'];
+    for (const [name, value] of Object.entries(options)) if (name !== 'command') args.push('--' + name, String(value));
+    outcome = await supervise({ executable: process.execPath, args, timeoutMs: seconds * 1000, env: { ...process.env, LIGHTFORGE_CAPTURE_SUPERVISED: '1' } });
+    report = readJson(path.join(out, '.capture-checkpoint.json'));
+    report.supervision = outcome;
+    if (outcome.exit_code !== 0 || report.status !== 'captured') {
+      report.status = 'failed';
+      if (outcome.timed_out) { report.timeout = true; report.error = 'Capture exceeded its whole-worker deadline, including startup or cleanup'; }
+      else if (!report.error) report.error = 'Capture worker or supervised cleanup failed';
+    }
+  } catch (error) { report.status = 'failed'; report.error = String(error.message || error).slice(0, 1000); if (outcome) report.supervision = outcome; }
+  if (report.status !== 'captured') delete report.observed_output_hashes;
+  report.completed_at = new Date().toISOString();
+  try { writeJson(path.join(out, 'capture.json'), report); }
+  catch (error) {
+    report = { ...initialReport(), error: 'Final receipt serialization failed: ' + String(error.message || error).slice(0, 500), completed_at: new Date().toISOString() };
+    writeJson(path.join(out, 'capture.json'), report);
+  }
+  for (const name of ['.capture-checkpoint.json', '.capture-next.json']) try { fs.unlinkSync(path.join(out, name)); } catch {}
+  emit(report.status, { output_directory: out, production_ready: false, error: report.error || null });
+  return report.status === 'captured' ? 0 : 1;
+}
 async function main(argv = process.argv.slice(2)) {
+  if (argv[0] === '__capture-worker') {
+    requireValue(process.env.LIGHTFORGE_CAPTURE_SUPERVISED === '1', 'Internal capture worker requires its supervisor');
+    return captureWorker(parseArgs(argv.slice(1)));
+  }
   const options = parseArgs(argv);
   if (options.command === 'inventory') {
     const lock = await inventory(path.resolve(options['app-root'], 'web'));
@@ -323,5 +458,5 @@ async function main(argv = process.argv.slice(2)) {
   }
   return capture(options);
 }
-module.exports = { canonical, hashBytes, inventory, validateLock, bootstrapScripts, validateIdentity, validateConfiguration, wavInfo, parseRange, createServer, outputCategories, parseArgs, capture, main };
+module.exports = { plain, readJson, producerJson, captureProjectId, retainRawArtifacts, checkpoint, canonical, hashBytes, inventory, validateLock, bootstrapScripts, validateIdentity, validateConfiguration, wavInfo, parseRange, createServer, outputCategories, parseArgs, capture, main };
 if (require.main === module) main().then(code => { process.exitCode = code; }).catch(error => { process.stderr.write(String(error.message || error) + '\n'); process.exitCode = 1; });

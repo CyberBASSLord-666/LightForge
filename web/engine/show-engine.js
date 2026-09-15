@@ -412,7 +412,13 @@
     }
     frames.fill(0,(n-1)*200);
   }
-  function generate(music, settings) {
+  // Profiles are returned by the worker separately from deterministic show data.
+  // Same-name intervals are sequential; the accumulator must never be asked to
+  // subtract nested work or turn an unavailable clock into a measured zero.
+  const measured=(timing,name,scope,fn)=>timing?timing.measure(name,fn,{scope}):fn();
+  function generate(music, settings, timing=null) {
+    let planningToken=timing?.begin('performance.choreography_planning');
+    try{
     if(!LIGHTS||!MOVEMENT)throw new Error('The musical composition tools are unavailable. Restart the app.');
     const warnings=[],s=normalizeSettings(settings),m=correctRhythm(CUES.overlay(correctVocalRegions(CUES.apply(normalizeMusic(music,warnings),s),s),s),s);
     if(m.silent&&s.manualCues.length){const i=warnings.findIndex(w=>w.includes('This audio is silent.'));if(i>=0)warnings[i]='This audio is silent. Automatic choreography is disabled; your manual cues still play.';}
@@ -444,8 +450,9 @@
         }catch(_){vocalStrategyFailure='vocal-choreography-error';}
       }
     }
-    const movement=m.silent?{events:[],accents:[],targets:[],diagnostics:{selectedTargets:0}}:MOVEMENT.plan(m,s,PROFILE);
-    const createShow=scenePlan=>{
+    timing?.end(planningToken,{scope:'show-input-and-strategy-planning'});planningToken=undefined;
+    const movement=m.silent?{events:[],accents:[],targets:[],diagnostics:{selectedTargets:0}}:MOVEMENT.plan(m,s,PROFILE,timing);
+    const createShow=scenePlan=>measured(timing,'performance.vehicle_realization','frame-allocation-and-movement-commands',()=>{
       let frames;try{frames=new Uint8Array(n*CHANNELS);}catch(_){throw new Error('This track is too large for the available device memory. Choose a shorter track.');}
       const value={version:VERSION,vehicle:'2025 Tesla Model 3 Long Range RWD',channels:CHANNELS,channelCount:CHANNELS,frameCount:n,stepMs:s.stepMs,duration,audioDuration:m.duration,frames,
         movements:[],sections:m.sections.map((section,i)=>Object.assign({},section,scenePlan[i])),settings:s,stats:{},warnings};
@@ -456,14 +463,15 @@
         for(let f=a;f<b;f++)for(const ch of event.channels)frames[f*200+ch-1]=event.value;
       }
       return value;
-    };
+    });
+    const resolveMotifs=active=>measured(timing,'performance.choreography_planning','motif-evolution',()=>resolveMotifEvolution(music,m.sections,baseScenes,s,active));
     const semanticActive=lighting=>lighting?.diagnostics?.semanticStrategy?.active===true;
     let motifResolution,show,lighting;
     const legacyFallback=()=>{
       semanticStrategy=null;
-      motifResolution=resolveMotifEvolution(music,m.sections,baseScenes,s,false);
+      motifResolution=resolveMotifs(false);
       show=createShow(motifResolution.scenes);
-      lighting=LIGHTS.compose(show,m,s,movement,null,undefined,vocalStrategy);
+      lighting=LIGHTS.compose(show,m,s,movement,null,{timing},vocalStrategy);
     };
     if(!semanticStrategy){
       legacyFallback();
@@ -474,18 +482,18 @@
       let baseShow=null,baseLighting=null;
       try{
         baseShow=createShow(baseScenes);
-        baseLighting=LIGHTS.compose(baseShow,m,s,movement,semanticStrategy,undefined,vocalStrategy);
+        baseLighting=LIGHTS.compose(baseShow,m,s,movement,semanticStrategy,{timing},vocalStrategy);
       }catch(_){
         legacyFallback();
       }
       if(!lighting&&baseLighting&&semanticActive(baseLighting)){
-        motifResolution=resolveMotifEvolution(music,m.sections,baseScenes,s,true);
+        motifResolution=resolveMotifs(true);
         if(!motifResolution.diagnostics.active){
           show=baseShow;lighting=baseLighting;
         }else{
           try{
             const motifShow=createShow(motifResolution.scenes);
-            const motifLighting=LIGHTS.compose(motifShow,m,s,movement,semanticStrategy,undefined,vocalStrategy);
+            const motifLighting=LIGHTS.compose(motifShow,m,s,movement,semanticStrategy,{timing},vocalStrategy);
             if(!semanticActive(motifLighting))throw new Error('Semantic strategy became inactive during motif composition.');
             show=motifShow;lighting=motifLighting;
           }catch(_){
@@ -493,7 +501,7 @@
             // becomes inactive, discard its isolated scene/frame plan and
             // retain the already validated semantic-only base plan.
             semanticStrategy=null;
-            motifResolution=resolveMotifEvolution(music,m.sections,baseScenes,s,false);
+            motifResolution=resolveMotifs(false);
             show=baseShow;lighting=baseLighting;
           }
         }
@@ -501,9 +509,9 @@
         legacyFallback();
       }
     }
-    const targetSalience=annotateSalienceTargets(music,lighting.targets,movement.targets,s),syncLightTargets=targetSalience?targetSalience.syncLightTargets:lighting.targets,syncMovementTargets=targetSalience?targetSalience.syncMovementTargets:movement.targets;
-    if(!m.silent&&s.enabled.interior)paintInterior(show,m,s,lighting.context);
-    applyManualCues(show);
+    const targetSalience=measured(timing,'performance.choreography_planning','salience-target-annotation',()=>annotateSalienceTargets(music,lighting.targets,movement.targets,s)),syncLightTargets=targetSalience?targetSalience.syncLightTargets:lighting.targets,syncMovementTargets=targetSalience?targetSalience.syncMovementTargets:movement.targets;
+    if(!m.silent&&s.enabled.interior)measured(timing,'performance.vehicle_realization','interior-commands',()=>paintInterior(show,m,s,lighting.context));
+    measured(timing,'performance.vehicle_realization','manual-commands-and-final-off-frame',()=>applyManualCues(show));
     show.movements.sort((a,b)=>a.start-b.start||a.channels[0]-b.channels[0]);
     show.lightEvents=lighting.events;
     show.choreography={version:VERSION,analysisVersion:m.analysisVersion,meter:m.meter,meterConfidence:m.meterConfidence,phrases:m.phrases,impacts:m.impacts,targets:movement.targets,lighting:lighting.diagnostics,movement:movement.diagnostics,timing:m.timing,roles:{vocals:{available:m.vocals.available,presence:m.vocals.presence,confidence:m.vocals.confidence,method:m.vocals.method,phrases:m.vocals.phrases,accents:m.vocals.accents},bassNotes:m.bassNotes,bassAnalysis:{method:m.bassAnalysis.method,source:m.bassAnalysis.source,confidence:m.bassAnalysis.confidence,phrases:m.bassAnalysis.phrases}},rhythm:{beats:m.beats,downbeats:m.downbeats,meter:m.meter,bpm:m.bpm,groove:m.groove,correction:m.rhythmCorrection}};
@@ -518,18 +526,18 @@
     show.choreography.vocalDetail={phrases:m.vocals.phrases,notes:m.vocals.notes,accents:m.vocals.accents,sourceSeparated:m.vocals.sourceSeparated,source:m.vocals.source,presence:m.vocals.presence,manualRegions:m.vocals.manualRegions||[],lyricsAligned:false};
     show.stats={lightCues:lighting.events.length,manualCueCount:s.manualCues.length,beatCount:m.beats.length,onsetCount:m.onsets.length,bpm:m.bpm,beatConfidence:m.beatConfidence,beatLengthMs:60000/m.bpm,recommendedBeatDivision:m.bpm<=150?'eighth':'quarter',silent:m.silent,
       vocalPhraseCount:lighting.diagnostics.roles.vocals.eligibleEvents,bassNoteCount:lighting.diagnostics.roles.bass.eligibleEvents,vocalCues:lighting.diagnostics.roles.vocals.acceptedEvents,bassNoteCues:lighting.diagnostics.roles.bass.acceptedEvents,phraseCount:m.phrases.length,musicalImpactCount:m.impacts.length,movementTargets:movement.targets.length,lightQuantizationMaxMs:lighting.diagnostics.quantizationMaxMs};
-    show.synchronization=SYNC.review(show,syncLightTargets,syncMovementTargets);
-    if(QUALITY&&typeof QUALITY.evaluate==='function')show.choreography.quality=QUALITY.evaluate(show,targetSalience&&targetSalience.qualityTargets.length?{tierTargets:targetSalience.qualityTargets}:undefined);
-    assertCalibratedFeasibility(s.vehicleTimingCalibration,show.choreography.quality);
+    show.synchronization=measured(timing,'performance.validation','synchronization-review',()=>SYNC.review(show,syncLightTargets,syncMovementTargets));
+    if(QUALITY&&typeof QUALITY.evaluate==='function')show.choreography.quality=measured(timing,'performance.validation','choreography-quality',()=>QUALITY.evaluate(show,targetSalience&&targetSalience.qualityTargets.length?{tierTargets:targetSalience.qualityTargets}:undefined));
+    measured(timing,'performance.validation','calibrated-feasibility',()=>assertCalibratedFeasibility(s.vehicleTimingCalibration,show.choreography.quality));
     // This diagnostic consumes explicit final-frame realization evidence from
     // SyncReview. It is intentionally read-only: no timing report can alter a
     // command, the show frame buffer, or the FSEQ that will be exported.
     if(PERCEPTUAL_VALIDATION&&typeof PERCEPTUAL_VALIDATION.evaluate==='function'){
-      try{show.perceptualValidation=PERCEPTUAL_VALIDATION.evaluate(show,{eventEvidence:show.synchronization.eventEvidence,syncReview:show.synchronization,choreographyQuality:show.choreography.quality});}
+      try{show.perceptualValidation=measured(timing,'performance.validation','perceptual-event-evidence',()=>PERCEPTUAL_VALIDATION.evaluate(show,{eventEvidence:show.synchronization.eventEvidence,syncReview:show.synchronization,choreographyQuality:show.choreography.quality}));}
       catch(_){show.perceptualValidation={version:1,state:'unavailable',reason:'Perceptual validation did not complete.'};}
     }else show.perceptualValidation={version:1,state:'unavailable',reason:'Perceptual validation sidecar is unavailable.'};
     show.choreography.musicCues=m.musicCues;
-    show.validation=validate(show,m);show.validation.synchronization=show.synchronization;
+    show.validation=validate(show,m,timing);show.validation.synchronization=show.synchronization;
     const perceptualEvidence=show.perceptualValidation&&show.perceptualValidation.eventEvidence;
     const perceptualEvidenceAccepted=perceptualEvidence&&perceptualEvidence.state==='available'&&Number.isInteger(perceptualEvidence.acceptedCount)&&perceptualEvidence.acceptedCount>0;
     show.validation.perceptualValidation={state:show.perceptualValidation&&show.perceptualValidation.state==='available'&&perceptualEvidenceAccepted?'available':'unavailable',reportVersion:show.perceptualValidation&&show.perceptualValidation.version||null,eventEvidenceState:perceptualEvidence&&perceptualEvidence.state||null,eventEvidenceAcceptedCount:perceptualEvidence&&Number.isInteger(perceptualEvidence.acceptedCount)?perceptualEvidence.acceptedCount:0};
@@ -538,6 +546,7 @@
     if(!show.validation.valid)throw new Error('The generated show failed validation: '+show.validation.errors.join(' '));
     preparePreview(show);
     return show;
+    }finally{if(planningToken!==undefined)timing?.end(planningToken,{scope:'show-input-and-strategy-planning'});}
   }
   function paintInterior(show,m,s,ctx){
     const {frames,frameCount,stepMs}=show,step=stepMs/1000,palette=PALETTES[s.palette],separatedVoice=m.vocals.sourceSeparated===true;let bi=0,voiceLevel=0,bassLevel=0,pitchLevel=.5;
@@ -568,7 +577,10 @@
     }
   }
   function runs(show,ch){const result=[];const {frames,frameCount}=show;let start=0;while(start<frameCount){const value=frames[start*200+ch-1];let end=start+1;while(end<frameCount&&frames[end*200+ch-1]===value)end++;if(value!==0)result.push({start:start*show.stepMs/1000,end:end*show.stepMs/1000,value,command:COMMAND_NAME[value]});start=end;}return result;}
-  function validate(show,music){
+  function validate(show,music,timing=null){
+    return measured(timing,'performance.validation','show-frame-format',()=>validateShow(show,music));
+  }
+  function validateShow(show,music){
     const errors=[],warnings=Array.from(show&&show.warnings||[]),stats={};
     const error=s=>{if(!errors.includes(s))errors.push(s);};
     if(!show||!(show.frames instanceof Uint8Array))return {valid:false,errors:['Sequence data must be a Uint8Array.'],warnings,stats};
@@ -632,8 +644,9 @@
     Object.assign(stats,{frameCount:n,stepMs:show.stepMs,duration,sequenceBytes:frames.length,commandCounts:counts,danceSeconds,lightTransitions,activeExteriorPercent:Math.round(activeFrames/n*1000)/10,rampCommandFrames:rampFrames,interiorDisplayFrames:rgbFrames});
     return {valid:errors.length===0,errors,warnings:Array.from(new Set(warnings)),stats};
   }
-  function fseqHeader(show,audioFilename='lightshow.wav'){
-    const checked=validate(show);if(!checked.valid)throw new Error(checked.errors.join(' '));
+  function fseqHeader(show,audioFilename='lightshow.wav',timing=null){
+    const checked=validate(show,undefined,timing);if(!checked.valid)throw new Error(checked.errors.join(' '));
+    return measured(timing,'performance.fseq_generation','header-serialization',()=>{
     if(typeof audioFilename!=='string'||!/^[A-Za-z0-9][A-Za-z0-9_-]{0,99}\.(wav|mp3)$/i.test(audioFilename))throw new Error('Use a simple audio filename such as lightshow.wav.');
     const encoder=new TextEncoder(),media=encoder.encode(audioFilename+'\0'),producer=encoder.encode('LightForge '+VERSION+'\0');
     const fieldsLength=4+media.length+4+producer.length,offset=32+Math.ceil(fieldsLength/4)*4;
@@ -642,10 +655,14 @@
     let p=32;for(const [code,payload] of [['mf',media],['sp',producer]]){view.setUint16(p,payload.length+4,true);bytes[p+2]=code.charCodeAt(0);bytes[p+3]=code.charCodeAt(1);bytes.set(payload,p+4);p+=4+payload.length;}
     // Reserved/compression fields and the optional UUID intentionally remain zero.
     return bytes;
+    });
   }
-  function fseq(show,audioFilename='lightshow.wav'){
-    const header=fseqHeader(show,audioFilename),bytes=new Uint8Array(header.length+show.frames.length);
+  function fseq(show,audioFilename='lightshow.wav',timing=null){
+    const header=fseqHeader(show,audioFilename,timing);
+    return measured(timing,'performance.fseq_generation','contiguous-header-and-frame-payload',()=>{
+    const bytes=new Uint8Array(header.length+show.frames.length);
     bytes.set(header);bytes.set(show.frames,header.length);return bytes;
+    });
   }
   // The simulator evaluates the command bytes that are exported, not musical
   // metadata. Tesla controls physical motors and does not publish dance travel

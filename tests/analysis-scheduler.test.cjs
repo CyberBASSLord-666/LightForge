@@ -65,14 +65,60 @@ test('hostile scheduler clocks retain admission and never mix a failed performan
  const dateLease=await switchingDate.acquire({key:key(14)});assert.equal(dateLease.diagnostics().waitMs,0,'scheduler must not replace a Date fallback with epoch time');assert.equal(dateReads,1);await dateLease.release();
  let descendingCalls=0;
  const descending=load({configure(context){context.performance={now:()=>++descendingCalls===1?10:9};}});
- const descendingLease=await descending.acquire({key:key(15)});assert.equal(descendingLease.diagnostics().waitMs,0,'nonmonotonic scheduler timing must fail closed');await descendingLease.release();
+ const descendingLease=await descending.acquire({key:key(15)});assert.equal(descendingLease.diagnostics().waitMs,null,'nonmonotonic scheduler timing must stay unobserved');await descendingLease.release();
  let functionCalls=0;
  const lateFunction=load({configure(context){
   context.Date={now:()=>epoch};context.performance={now(){functionCalls++;if(functionCalls<=2)return 100;throw Error('late performance call failure');}};
  }});
- const functionLease=await lateFunction.acquire({key:key(11)});assert.equal(functionLease.diagnostics().waitMs,0);await functionLease.release();
+ const functionLease=await lateFunction.acquire({key:key(11)});assert.equal(functionLease.diagnostics().waitMs,null);await functionLease.release();
  const blockedGetter=load({configure(context){
   context.Date={now:()=>40};context.performance={};Object.defineProperty(context.performance,'now',{get(){throw Error('blocked performance getter');}});
  }});
  const fallbackLease=await blockedGetter.acquire({key:key(12)});assert.ok(Number.isFinite(fallbackLease.diagnostics().waitMs));await fallbackLease.release();
+});
+
+test('unavailable clocks preserve FIFO admission and report null through resource consumers',async()=>{
+ const resources=require('../web/analysis/resource-diagnostics.js'),observations=require('../web/analysis/run-observation.js');
+ for(const kind of ['missing','throwing','nonfinite']){
+  const scheduler=load({configure(context){
+   if(kind==='missing'){context.performance=undefined;context.Date=undefined;}
+   else if(kind==='throwing'){
+    Object.defineProperty(context,'performance',{get(){throw Error('clock unavailable');}});
+    Object.defineProperty(context,'Date',{get(){throw Error('clock unavailable');}});
+   }else{context.performance={now:()=>NaN};context.Date={now:()=>Infinity};}
+  }});
+  const first=await scheduler.acquire({key:key(20)}),secondPromise=scheduler.acquire({key:key(21)});
+  assert.equal(scheduler.snapshot().active,1);assert.equal(scheduler.snapshot().queued,1);
+  assert.equal(first.diagnostics().waitMs,null,kind);
+  await first.release();const second=await secondPromise,diagnostics=second.diagnostics();
+  assert.equal(diagnostics.waitMs,null,kind);assert.equal(diagnostics.admissionTicket,2);
+  const recorder=resources.create('rhythm');assert.equal(recorder.observeScheduler({...diagnostics}),false);
+  const stage=recorder.snapshot();assert.equal(stage.scheduler.status,'unavailable');assert.equal(stage.scheduler.waitMilliseconds,null);
+  const pipeline=resources.pipeline({rhythm:stage},diagnostics,100);
+  assert.equal(pipeline.scheduler.status,'unavailable');assert.equal(pipeline.scheduler.waitMilliseconds,null);
+  const observation=observations.build({analysisPerformed:true,engine:{quality:'precision',separationModel:{},stages:{rhythm:{seconds:.1,restored:false}},resourceDiagnostics:pipeline}});
+  assert.equal(observation.resources.schedulerWaitSeconds,null,'the run observation must not coerce a missing admission clock to zero');
+  for(const waitMs of [0,5]){
+   const measured=resources.create('rhythm');assert.equal(measured.observeScheduler({...diagnostics,waitMs}),true);
+   const accepted=measured.snapshot();assert.equal(accepted.scheduler.status,'available');assert.equal(accepted.scheduler.waitMilliseconds,waitMs);
+  }
+  await second.release();assert.equal(scheduler.snapshot().active,0);
+ }
+});
+
+test('a failed clock during queued admission stays unavailable without losing an earlier measured wait',async()=>{
+ let calls=0,dateReads=0;
+ const scheduler=load({configure(context){
+  context.performance={now(){calls++;if(calls===1)return 10;if(calls===2)return 12;if(calls===3)return 17;if(calls===4)return 20;throw Error('late clock failure');}};
+  Object.defineProperty(context,'Date',{get(){dateReads++;return {now:()=>1789000000000};}});
+ }});
+ const first=await scheduler.acquire({key:key(22)}),waiting=scheduler.acquire({key:key(23)});
+ assert.equal(first.diagnostics().waitMs,5);
+ await first.release();const second=await waiting;
+ assert.equal(second.diagnostics().waitMs,null);
+ assert.equal(first.diagnostics().waitMs,5,'later clock failure must not replace an already measured admission interval');
+ await second.release();const third=await scheduler.acquire({key:key(24)});
+ assert.equal(third.diagnostics().waitMs,null,'a failed selected clock remains unavailable');
+ assert.equal(dateReads,0,'no fallback to a different clock origin after failure');
+ await third.release();assert.equal(scheduler.snapshot().active,0);
 });

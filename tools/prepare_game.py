@@ -4,11 +4,12 @@
 Weights and this graph derivative: CC BY-NC-SA 4.0, openvpi contributors.
 Only change: expose the sampler's uniform noise as an input for reproducible
 inference across platforms. No weight, threshold or precision modification.
-Requires onnx==1.20.1. Downloads happen at build time, never on the phone.
+Requires onnx==1.22.0. Downloads happen at build time, never on the phone.
 """
 from pathlib import Path
 import hashlib, json, tempfile, urllib.request, zipfile, shutil, argparse
 import onnx
+if onnx.__version__!='1.22.0':raise ValueError('GAME exporter requires onnx==1.22.0')
 ROOT=Path(__file__).resolve().parents[1]
 URL='https://github.com/openvpi/GAME/releases/download/v1.0.3/GAME-1.0.3-large-onnx.zip'
 SHA='8a5480539fe7d995800dc0efe149b83a1cd4f4e4a36aa2a1f7665f1765dcac08'
@@ -26,7 +27,7 @@ def main():
                 (target/name).write_bytes(z.read('GAME-1.0.3-large-onnx/'+name))
         p=target/'segmenter.onnx';m=onnx.load(p)
         nodes=[n for n in m.graph.node if n.op_type=='RandomUniformLike']
-        assert len(nodes)==1,'Upstream sampling graph changed'
+        if len(nodes)!=1:raise ValueError('Upstream sampling graph changed')
         noise=nodes[0]
         for n in m.graph.node:
             for i,name in enumerate(n.input):

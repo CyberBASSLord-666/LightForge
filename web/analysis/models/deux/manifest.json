@@ -1,5 +1,26 @@
 {
-  "converterSHA256": "80b71795c6de65f1c068523565e1c44700bbc99f45e9dc0da83124bcf8a00db8",
+  "converterSHA256": "477548ba14b256cbce7b2a252513f82f299053be0afd657aeae8b0ab7b3d1a05",
+  "exporterIdentity": {
+    "python": "3.12.14",
+    "distributions": {
+      "torch": "2.13.0+cpu",
+      "onnx": "1.22.0",
+      "numpy": "2.5.3",
+      "PyYAML": "6.0.3",
+      "einops": "0.8.1",
+      "rotary-embedding-torch": "0.8.9",
+      "beartype": "0.22.9",
+      "librosa": "0.11.0"
+    },
+    "sourceSHA256": {
+      "tools/model-requirements.txt": "52213348056c9fe2ad94a2244cbfdaaebf6ba1585443b52623948eda26438bc1",
+      "tools/model_export_guard.py": "3f11604b8573a872f79f4ba255c5df9d7316b121389694eaebbbf9c8b10fc0cc",
+      "research/upstream/deux/config.yaml": "bb3ea9bce37ca96d63568490d5a92d7e41df3d7726788b6970c10d89eb62d902",
+      "research/upstream/deux/models/bs_roformer/attend.py": "0459d799ade55541df2994b0becf7aec12214491360c5a06e346f6d615eaed15",
+      "research/upstream/deux/models/bs_roformer/mel_band_roformer.py": "3b4a57ab268933900172e05fb76dd9e8acc1eb770c745d583a4e42b94b79ec15"
+    },
+    "onnxExporter": "torch.onnx.export; dynamo=False; opset=17"
+  },
   "id": "mel-band-roformer-deux-lightforge-2",
   "name": "Mel-Band RoFormer Deux",
   "author": "becruily",
@@ -5004,112 +5025,112 @@
   ],
   "files": {
     "block-00-frequency.onnx": {
-      "bytes": 6422927,
-      "sha256": "d9ff162f881b26376ab77fa6f5bc277e8525f35fe02a02c53fcbf512ae84b3ad"
+      "bytes": 6422928,
+      "sha256": "361ff85e20567a74c076fab06ddfa87dd8c58108cbfc72340fafa8ae92a239b6"
     },
     "block-00-time.onnx": {
-      "bytes": 6449891,
-      "sha256": "99929d0603a18bc1aff6994d2c60780ffb37da0a7b326f5b34618bbb1af41feb"
+      "bytes": 6449892,
+      "sha256": "688feca1115d610e9bc9d15ac9dac6e33c4cf0a03966d9effe8974d2674ae924"
     },
     "block-01-frequency.onnx": {
-      "bytes": 6351204,
-      "sha256": "17fbd2962bfcadecca2b08eae3ab79e3ccf92f7b35da0dade1b83d003ac5345e"
+      "bytes": 6351205,
+      "sha256": "fdcf43737acdaa452af52f57eb4a46659b16479bd21bd25ce15edf4c242c0b79"
     },
     "block-01-time.onnx": {
-      "bytes": 6378168,
-      "sha256": "340aa6e8297f3b7085918cfec93d353b1d8649d12e0e17c83b87226f2688d45f"
+      "bytes": 6378169,
+      "sha256": "af09b80e7d365402f98ddea310d5de5fa469397389bb00f6812b9ad4afded96f"
     },
     "block-02-frequency.onnx": {
-      "bytes": 6351204,
-      "sha256": "2861f5265cfb3920c00c65533a88f1da919f1cc99306b9477c0d2dc155c4fb69"
+      "bytes": 6351205,
+      "sha256": "5e37f7dfadb785dcf1b4b4f688437506db621ebf42fe1ed573c080d42ec80d73"
     },
     "block-02-time.onnx": {
-      "bytes": 6378168,
-      "sha256": "fb7369fe1eeb340bbe1701e9706e60388785856d8642d9660b5018e505491660"
+      "bytes": 6378169,
+      "sha256": "1822e5f163c9d5596ecf4463970dee6a873c9d5ecc625ab018000f1ac5708788"
     },
     "block-03-frequency.onnx": {
-      "bytes": 6351204,
-      "sha256": "284fdaeb343dc5c742503f4beb9a253faf7e7dc14184844c63091241c262d5f8"
+      "bytes": 6351205,
+      "sha256": "4e8a32b3324465a14d8675550fba44e0a65c80625f670647c060efd2120a17f7"
     },
     "block-03-time.onnx": {
-      "bytes": 6378168,
-      "sha256": "5554b5723c995cd5ee5c72e7676ba4659ab56ca3d75b72681c6df5c56f14d298"
+      "bytes": 6378169,
+      "sha256": "4832532d1fcb067413adb1f51e3a90af94cbcd8c40c9be5e8640c33b3a38d731"
     },
     "block-04-frequency.onnx": {
-      "bytes": 6351204,
-      "sha256": "442837a608d31c5efc7d481b222e49be046fc6ab02adc22cb2832aa7d26db0d1"
+      "bytes": 6351205,
+      "sha256": "dd64feabf8f4cb9052a782d94279e17285e0ad69b740c1a91a6e0257eb3b3206"
     },
     "block-04-time.onnx": {
-      "bytes": 6378168,
-      "sha256": "02138dae6b824d3a809d42b5f719d66b58a13595f29dc0df241cfd2c9635a377"
+      "bytes": 6378169,
+      "sha256": "f5c58deab56f5669691d6b38844ef63dc2f3606ea2fe6993a895c36ca881e95b"
     },
     "block-05-frequency.onnx": {
-      "bytes": 6351204,
-      "sha256": "2811d5f251810bd27af5e14674ac166a64753ccf24a23bf521daeb7a63cea62d"
+      "bytes": 6351205,
+      "sha256": "e8c2cdc608270649b4e198663701e361f6ee1786c11fd846d56bd7684cb0cc4c"
     },
     "block-05-time.onnx": {
-      "bytes": 6378168,
-      "sha256": "166edd8406f525a1deb7e5eca9e383619b27a0d82adc80cf0636e473455e762a"
+      "bytes": 6378169,
+      "sha256": "648dc03432489c44f08eb610eb7c079941ce0d5fbfc0d59275d39f837d495bbc"
     },
     "block-06-frequency.onnx": {
-      "bytes": 6351204,
-      "sha256": "31ef31ffc1507abf3af75dadef52a01131390c4a9916137d3e9d775106c44e45"
+      "bytes": 6351205,
+      "sha256": "1a7006f146070693e8c8b2ad6a7ec1dd27c1cc4e1b3f8308dad0b31b41032504"
     },
     "block-06-time.onnx": {
-      "bytes": 6378168,
-      "sha256": "a83645af6e2e3b1107ed6e5a41e1e095da265dff985560a533c3a4774f1eb0fb"
+      "bytes": 6378169,
+      "sha256": "eab3fd6652bd41198dc8920ce2b89f30a4e3ae7bdca3049c6ffd93cfe2c63245"
     },
     "block-07-frequency.onnx": {
-      "bytes": 6351204,
-      "sha256": "fc9a8b69d369f76f153373df180c94d437c9e3db8850a9a9ee2b63d9b1df0cf2"
+      "bytes": 6351205,
+      "sha256": "1d5144c390d023660b8441256eb6bd18e778181b0c79fa5f95bbf2eda88c1b1f"
     },
     "block-07-time.onnx": {
-      "bytes": 6378168,
-      "sha256": "eb1c4c6a84dca306da78a7524b004240916aca5fc704e9b64df6cde540a6a20c"
+      "bytes": 6378169,
+      "sha256": "87e6c0b57591fc145eb43924ed0998a77eed0b24b9fbb91fe52a5c5dcec05353"
     },
     "block-08-frequency.onnx": {
-      "bytes": 6351204,
-      "sha256": "090c7696c7edf37a30abecc12cfeb7c4cea740fb0065969fc5598598df2cfd07"
+      "bytes": 6351205,
+      "sha256": "f77a0fa744adfd0bdf2aa93b34664cb7c245c3a9f325e6f799695ea2a78ea7ca"
     },
     "block-08-time.onnx": {
-      "bytes": 6378168,
-      "sha256": "c24ef8f8a6224176dfc53d27c817a8e03ea8a7408fc6219c55237023cc848f8c"
+      "bytes": 6378169,
+      "sha256": "0f55a98b1876a9d96ad63e0cf89d7f52a76e9c124bee6e6281fc93b422b03107"
     },
     "block-09-frequency.onnx": {
-      "bytes": 6351204,
-      "sha256": "536070d2aca4324dda1efb4b78968033061d676abae7cb8e83ccd31640396d4f"
+      "bytes": 6351205,
+      "sha256": "8d647c15bb2ddbec51e392a5045cfd10e8ef8745af1242e1923a12d98c611899"
     },
     "block-09-time.onnx": {
-      "bytes": 6378168,
-      "sha256": "d6e53f8be9e91b6733b8452e752487655c986fa3ac116e40aa3154dd9e7ca00f"
+      "bytes": 6378169,
+      "sha256": "1499ace8b7683ce31d7af60a5dfa649a4834f32469f5fa161cb06453a91eb958"
     },
     "block-10-frequency.onnx": {
-      "bytes": 6351204,
-      "sha256": "fe90ed9051b54cde3e3dd6c342930b882af334abc845dfc7d032bb867aca8b55"
+      "bytes": 6351205,
+      "sha256": "1dd6b316eee0f9a312d2b1752a8f0d1051c5265ea6ab6361e64b386685824a34"
     },
     "block-10-time.onnx": {
-      "bytes": 6378168,
-      "sha256": "8011e6cf59865a74548d1a894e1355c314c750e8bc5dfdd5c008ab253b240791"
+      "bytes": 6378169,
+      "sha256": "3c70c547ff304f7ba369eed6c8180eb23bfcd6246b72a6e66fd683b2aaa36c47"
     },
     "block-11-frequency.onnx": {
-      "bytes": 6351204,
-      "sha256": "97c548efaf34d46ab3b6172954f394d3ae7cf75657295e2bc9ccab05a5c737a1"
+      "bytes": 6351205,
+      "sha256": "1ac019e6270d55218d5809a7cbc10dff238d0bb0d14738ee76e54227306f55a1"
     },
     "block-11-time.onnx": {
-      "bytes": 6378168,
-      "sha256": "7421c8c818240f76759b3534b6abb6a6bc84b07e16347c0f56a1d0478de9940d"
+      "bytes": 6378169,
+      "sha256": "31a94b200d07dcde3c8fc4b4846c46f64ad8f44c084a73c6a5bf05f54ed81397"
     },
     "front.onnx": {
-      "bytes": 8377492,
-      "sha256": "3f29ee37960f009c08653345aef7d558df7dc1b66247e5b4f5a3a80901306752"
+      "bytes": 8377493,
+      "sha256": "7906638e713a517297de6cbb758551e5f86fe4a01d19c45f3e1eac28953bcb0e"
     },
     "head-0.onnx": {
-      "bytes": 380136982,
-      "sha256": "bf0036486e15774a1ec8289f530a00282cfc89b2921e2f82bf17144fc162bae2"
+      "bytes": 380136983,
+      "sha256": "9f8253c46c48f700e6682faf9c22a03b662a65941862414d649a94c38940d0bb"
     },
     "head-1.onnx": {
-      "bytes": 380136982,
-      "sha256": "a307d5bac63bf8547f163ca55cd829fee89ff6b5e27569d8407a8cc11db2c108"
+      "bytes": 380136983,
+      "sha256": "343131b2c6c8dda367d720c0d42b933dacaa131f433e942258ef7aaa41c2471f"
     }
   }
 }

@@ -17,7 +17,7 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           sparse-checkout: |
@@ -114,14 +114,14 @@ jobs:
                             'candidate_apk_sha256': manifest['apk']['sha256'], 'part_count': len(manifest['parts']),
                             'release_signed': False}))
           PY
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: verified-candidate-index
           path: build/candidate-index.json
           if-no-files-found: error
           retention-days: 30
       - name: Retain private candidate transfer identity
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: lightforge-signing-${{ github.run_id }}-${{ github.run_attempt }}-manifest
           path: |
@@ -133,7 +133,7 @@ jobs:
           retention-days: 3
       - name: Retain private candidate APK part 01
         if: ${{ fromJSON(steps.transfer.outputs.part_count) >= 1 }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: lightforge-signing-${{ github.run_id }}-${{ github.run_attempt }}-part-01
           path: build/transfer/parts/part-01.bin
@@ -142,7 +142,7 @@ jobs:
           retention-days: 3
       - name: Retain private candidate APK part 02
         if: ${{ fromJSON(steps.transfer.outputs.part_count) >= 2 }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: lightforge-signing-${{ github.run_id }}-${{ github.run_attempt }}-part-02
           path: build/transfer/parts/part-02.bin
@@ -151,7 +151,7 @@ jobs:
           retention-days: 3
       - name: Retain private candidate APK part 03
         if: ${{ fromJSON(steps.transfer.outputs.part_count) >= 3 }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: lightforge-signing-${{ github.run_id }}-${{ github.run_attempt }}-part-03
           path: build/transfer/parts/part-03.bin
@@ -160,7 +160,7 @@ jobs:
           retention-days: 3
       - name: Retain private candidate APK part 04
         if: ${{ fromJSON(steps.transfer.outputs.part_count) >= 4 }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: lightforge-signing-${{ github.run_id }}-${{ github.run_attempt }}-part-04
           path: build/transfer/parts/part-04.bin
@@ -169,7 +169,7 @@ jobs:
           retention-days: 3
       - name: Retain private candidate APK part 05
         if: ${{ fromJSON(steps.transfer.outputs.part_count) >= 5 }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: lightforge-signing-${{ github.run_id }}-${{ github.run_attempt }}-part-05
           path: build/transfer/parts/part-05.bin
@@ -178,7 +178,7 @@ jobs:
           retention-days: 3
       - name: Retain private candidate APK part 06
         if: ${{ fromJSON(steps.transfer.outputs.part_count) >= 6 }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: lightforge-signing-${{ github.run_id }}-${{ github.run_attempt }}-part-06
           path: build/transfer/parts/part-06.bin

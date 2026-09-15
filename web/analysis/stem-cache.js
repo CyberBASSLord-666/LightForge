@@ -7,6 +7,8 @@ const RATE=22050,NS='lightforge-stems-v1',HASH_CHUNK=1024*1024;
 const validKey=k=>typeof k==='string'&&/^stem-[a-f0-9-]{36}$/.test(k);
 const validDigest=value=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value);
 const verified=new Set();
+// Optional CPU-kernel observations are separate from stem identity and IO.
+const timed=(telemetry,name,fn,scope)=>telemetry?.measure?telemetry.measure(name,fn,{scope}):fn();
 // Cache timestamps are retention/diagnostic metadata, never integrity input.
 // A hostile or unavailable Date bridge must not turn a completed stem write
 // into a partial cache or make a resumable analysis fail.
@@ -69,29 +71,29 @@ async function prune(protect,needed=0){
  for(const item of entries)if(total+needed>budget){await dir.removeEntry(item.key,{recursive:true});for(const tag of [...verified])if(tag.startsWith(item.key+'|'))verified.delete(tag);total-=item.size;}
 }
 class DownsampleWriter{
- constructor(stream,filter,total,digest=new Sha256()){this.stream=stream;this.filter=filter;this.total=total;this.digest=digest;this.received=0;this.next=0;this.base=0;this.buffer=new Float32Array(0);}
+ constructor(stream,filter,total,digest=new Sha256(),telemetry=null){this.stream=stream;this.filter=filter;this.total=total;this.digest=digest;this.telemetry=telemetry;this.received=0;this.next=0;this.base=0;this.buffer=new Float32Array(0);}
  async push(pcm,start,final=false){
   if(!(pcm instanceof Float32Array)||start!==this.received||start+pcm.length>this.total)throw Error('Separated audio arrived out of sequence.');
   const joined=new Float32Array(this.buffer.length+pcm.length);joined.set(this.buffer);joined.set(pcm,this.buffer.length);this.buffer=joined;this.received+=pcm.length;
   const end=final?Math.ceil(this.total/2):Math.max(0,Math.floor((this.received-32)/2)+1),values=new Float32Array(Math.max(0,end-this.next));
-  for(let i=0;i<values.length;i++){const center=(this.next+i)*2;let value=0;for(let j=0;j<this.filter.length;j++)value+=(this.buffer[center+j-31-this.base]||0)*this.filter[j];values[i]=Number.isFinite(value)?value:0;}
-  if(values.length){const bytes=new ArrayBuffer(values.length*4),view=new DataView(bytes);for(let i=0;i<values.length;i++)view.setFloat32(i*4,values[i],true);const encoded=new Uint8Array(bytes);await this.stream.write(encoded);this.digest.update(encoded);}
+  if(values.length)timed(this.telemetry,'performance.resample_normalize',()=>{for(let i=0;i<values.length;i++){const center=(this.next+i)*2;let value=0;for(let j=0;j<this.filter.length;j++)value+=(this.buffer[center+j-31-this.base]||0)*this.filter[j];values[i]=Number.isFinite(value)?value:0;}},'stem-output-half-rate-fir');
+  if(values.length){const encoded=timed(this.telemetry,'performance.postprocessing',()=>{const bytes=new ArrayBuffer(values.length*4),view=new DataView(bytes);for(let i=0;i<values.length;i++)view.setFloat32(i*4,values[i],true);return new Uint8Array(bytes);},'stem-output-float32-encoding');await this.stream.write(encoded);this.digest.update(encoded);}
   this.next=end;const keep=Math.max(this.base,this.next*2-31),offset=Math.min(this.buffer.length,Math.max(0,keep-this.base));this.buffer=this.buffer.slice(offset);this.base+=offset;
  }
  async finish(){if(this.received!==this.total)throw Error('Separated audio ended before the music did.');await this.push(new Float32Array(0),this.received,true);await this.stream.close();return this.digest.hex();}
 }
 // Bounded reusable encoding storage; writes complete before the next refill.
 class FloatWriter{
- constructor(stream,digest=new Sha256()){this.stream=stream;this.digest=digest;this.bytes=new Uint8Array(65536);this.view=new DataView(this.bytes.buffer);}
+ constructor(stream,digest=new Sha256(),telemetry=null){this.stream=stream;this.digest=digest;this.telemetry=telemetry;this.bytes=new Uint8Array(65536);this.view=new DataView(this.bytes.buffer);}
  async push(pcm){
   for(let start=0;start<pcm.length;start+=this.bytes.length/4){
    const count=Math.min(this.bytes.length/4,pcm.length-start);
-   for(let i=0;i<count;i++){const value=pcm[start+i];if(!Number.isFinite(value))throw Error('Invalid full-resolution vocal sample.');this.view.setFloat32(i*4,value,true);}
+   timed(this.telemetry,'performance.postprocessing',()=>{for(let i=0;i<count;i++){const value=pcm[start+i];if(!Number.isFinite(value))throw Error('Invalid full-resolution vocal sample.');this.view.setFloat32(i*4,value,true);}},'stem-output-full-rate-float32-encoding');
    const encoded=this.bytes.subarray(0,count*4);await this.stream.write(encoded);this.digest.update(encoded);
   }
  }
 }
-async function create(key,sampleCount,config,sourceId=''){
+async function create(key,sampleCount,config,sourceId='',telemetry=null){
  if(!validKey(key)||!Number.isSafeInteger(sampleCount)||sampleCount<44100||sampleCount>44100*14400+3)throw Error('Invalid separated-audio cache request.');
  const expected=Math.ceil(sampleCount/2),needed=132+expected*8+sampleCount*4;
  await prune(key,needed);const space=await navigator.storage.estimate().catch(()=>({}));if(space.quota&&space.quota-(space.usage||0)<needed+16*1024*1024)throw Error('Free some device storage before analyzing this song. Its separated audio needs temporary space.');
@@ -101,10 +103,10 @@ async function create(key,sampleCount,config,sourceId=''){
  try{await dir.removeEntry('complete.json');}catch(e){if(e.name!=='NotFoundError')throw e;}
  const writers={},digests={};let full,fullDigest;
  try{
-  for(const name of ['vocals','accompaniment']){const stream=await(await dir.getFileHandle(name+'.wav',{create:true})).createWritable(),digest=new Sha256(),initial=header(expected);await stream.write(initial);digest.update(initial);digests[name]=digest;writers[name]=new DownsampleWriter(stream,config.resampleHalfFIR,sampleCount,digest);}
+  for(const name of ['vocals','accompaniment']){const stream=await(await dir.getFileHandle(name+'.wav',{create:true})).createWritable(),digest=new Sha256(),initial=header(expected);await stream.write(initial);digest.update(initial);digests[name]=digest;writers[name]=new DownsampleWriter(stream,config.resampleHalfFIR,sampleCount,digest,telemetry);}
   full=await(await dir.getFileHandle('voice-full.wav',{create:true})).createWritable();fullDigest=new Sha256();const fullHeader=header(sampleCount,44100);await full.write(fullHeader);fullDigest.update(fullHeader);
  }catch(e){for(const writer of Object.values(writers))await writer.stream.abort().catch(()=>{});if(full)await full.abort().catch(()=>{});await discard(key);throw e;}
- const fullWriter=new FloatWriter(full,fullDigest);let finished=false;
+ const fullWriter=new FloatWriter(full,fullDigest,telemetry);let finished=false;
  return {key,async append(chunk){if(finished)throw Error('Analysis audio is already complete.');if(chunk.sampleRate!==44100)throw Error('Separated audio has an unsupported sample rate.');if(!(chunk.vocals instanceof Float32Array)||!(chunk.accompaniment instanceof Float32Array)||chunk.vocals.length!==chunk.accompaniment.length)throw Error('Separated audio layers must have matching sample counts.');await writers.vocals.push(chunk.vocals,chunk.startSample);await writers.accompaniment.push(chunk.accompaniment,chunk.startSample);await fullWriter.push(chunk.vocals);},async finish(){const files={};for(const name of ['vocals','accompaniment'])files[name+'.wav']={bytes:44+expected*4,sha256:await writers[name].finish()};await full.close();files['voice-full.wav']={bytes:44+sampleCount*4,sha256:fullDigest.hex()};const meta={version:2,key,createdAt:metadataNow(),sampleRate:RATE,samples:expected,duration:sampleCount/44100,sourceId,fullSamples:sampleCount,files};const stream=await(await dir.getFileHandle('complete.json',{create:true})).createWritable();await stream.write(JSON.stringify(meta));await stream.close();finished=true;return meta;},async abort(){if(full)await full.abort().catch(()=>{});for(const writer of Object.values(writers))await writer.stream.abort().catch(()=>{});await discard(key);}};
 }
 function validMeta(meta){return !!meta&&(meta.version===1||meta.version===2)&&validKey(meta.key)&&meta.sampleRate===RATE&&Number.isSafeInteger(meta.samples)&&Number.isFinite(meta.duration)&&Math.abs(meta.samples/RATE-meta.duration)<=1/RATE;}
@@ -121,13 +123,13 @@ async function files(meta){
  for(const name of ['vocals','accompaniment']){const file=await(await dir.getFileHandle(name+'.wav')).getFile();if(file.size!==44+stored.samples*4)throw Error('The separated audio is incomplete. Analyze this song again.');const actual=new Uint8Array(await file.slice(0,44).arrayBuffer()),expected=header(stored.samples);if(actual.length!==44||actual.some((v,i)=>v!==expected[i]))throw Error('The separated audio header is damaged. Analyze this song again.');await verify(file,stored,name+'.wav');result[name]=file;}
  return result;
 }
-async function readers(meta){const source=await files(meta),out={};for(const [name,file]of Object.entries(source)){const reader=new root.LightForgeWavReader('');reader.bytes=async(start,end)=>{if(!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start<0||end<start)throw Error('Invalid cached-audio bounds.');reader.totalBytes=file.size;return file.slice(start,Math.min(file.size,end+1)).arrayBuffer();};await reader.open();out[name]=reader;}return out;}
-async function fullVoice(meta){
+async function readers(meta,telemetry=null){const source=await files(meta),out={};for(const [name,file]of Object.entries(source)){const reader=new root.LightForgeWavReader('',telemetry);reader.bytes=async(start,end)=>{if(!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start<0||end<start)throw Error('Invalid cached-audio bounds.');reader.totalBytes=file.size;return file.slice(start,Math.min(file.size,end+1)).arrayBuffer();};await reader.open();out[name]=reader;}return out;}
+async function fullVoice(meta,telemetry=null){
  await files(meta);if(!Number.isSafeInteger(meta.fullSamples)||Math.abs(meta.fullSamples/44100-meta.duration)>1/44100)throw Error('Re-analyze to recover full-resolution voice audio.');
  const {dir,stored}=await storedMeta(meta),file=await(await dir.getFileHandle('voice-full.wav')).getFile();
  if(file.size!==44+meta.fullSamples*4)throw Error('Full-resolution voice audio is incomplete.');
  const actual=new Uint8Array(await file.slice(0,44).arrayBuffer()),expected=header(meta.fullSamples,44100);if(actual.length!==44||actual.some((v,i)=>v!==expected[i]))throw Error('Full-resolution voice header is invalid.');await verify(file,stored,'voice-full.wav');
- return async(start,count)=>{if(!Number.isSafeInteger(start)||!Number.isSafeInteger(count)||start<0||count<0||start+count>meta.fullSamples)throw Error('Invalid full-resolution voice bounds.');const buffer=await file.slice(44+start*4,44+(start+count)*4).arrayBuffer(),view=new DataView(buffer),out=new Float32Array(count);for(let i=0;i<count;i++)out[i]=view.getFloat32(i*4,true);return out;};
+ return async(start,count)=>{if(!Number.isSafeInteger(start)||!Number.isSafeInteger(count)||start<0||count<0||start+count>meta.fullSamples)throw Error('Invalid full-resolution voice bounds.');const buffer=await file.slice(44+start*4,44+(start+count)*4).arrayBuffer();return timed(telemetry,'performance.audio_decode',()=>{const view=new DataView(buffer),out=new Float32Array(count);for(let i=0;i<count;i++)out[i]=view.getFloat32(i*4,true);return out;},'cached-full-voice-float32-pcm-decode');};
 }
 root.LightForgeStemCache={create,files,readers,fullVoice,discard,prune,validKey,header,DownsampleWriter,FloatWriter,Sha256,digestFile};
 })(typeof self!=='undefined'?self:globalThis);

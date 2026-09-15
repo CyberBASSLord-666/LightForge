@@ -3,11 +3,12 @@
   "purpose": "Observed source inventory regression, not an executable benchmark/source lock",
   "source": {
     "ref": "v2.2.4",
-    "tree_sha": "a8c6fd8abf76c413913c3aed85cba2ad6bae17bd",
+    "tree_sha": "6c24fb9a14a25f1fdfc90addcf6dac9ef327a63f",
     "index_git_blob_sha": "5b48fe26f5f183487087e5af2f77bb620db14146",
     "analyzer_git_blob_sha": "417dfffc09b0d6a6c60b64ba72089254a79b057f",
     "compiler_client_git_blob_sha": "f3a246fa7d348e27cf15d092be56e5b41af73440",
-    "compiler_worker_git_blob_sha": "1a843268c8db197ae49e635e5518404aa1de5893"
+    "compiler_worker_git_blob_sha": "1a843268c8db197ae49e635e5518404aa1de5893",
+    "commit_sha": "a8c6fd8abf76c413913c3aed85cba2ad6bae17bd"
   },
   "index_script_order": [
     "diagnostics.js",

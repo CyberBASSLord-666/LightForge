@@ -8,11 +8,14 @@ const RATE=44100,CORE=12,HALO=2,STEPS=8;
 const round=n=>Math.round(n*1000)/1000;
 function noise(length,seed){const out=new Float32Array(length);let x=seed>>>0;for(let i=0;i<length;i++){x^=x<<13;x^=x>>>17;x^=x<<5;out[i]=((x>>>0)+.5)/4294967296;}return out;}
 function free(out){if(out)for(const t of Object.values(out))t.dispose?.();}
-async function create({ort,baseUrl,onProgress=()=>{},checkpoint}){
+async function create({ort,baseUrl,onProgress=()=>{},checkpoint,telemetry}){
+ // These disjoint spans measure local work only; native bridge waits are not model inference.
+ const timed=(name,fn)=>telemetry?.measure?telemetry.measure('performance.'+name,fn,{component:'game'}):fn();
+ const timedAsync=(name,fn)=>telemetry?.measureAsync?telemetry.measureAsync('performance.'+name,fn,{component:'game',runtime:'onnxruntime-web-wasm'}):fn();
  const sessions={},manifest=await(await fetch(new URL('manifest.json',baseUrl))).json();let loaded=false,released=false;
  async function load(){
   if(released)throw Error('Singing transcription is closed.');if(loaded)return;
-  try{for(const name of ['encoder','dur2bd','segmenter','bd2dur','estimator']){onProgress('Loading '+name);sessions[name]=await ort.InferenceSession.create(new URL(name+'.onnx',baseUrl).href,{executionProviders:['wasm'],graphOptimizationLevel:'all',enableCpuMemArena:false,enableMemPattern:false});}loaded=true;}
+  try{for(const name of ['encoder','dur2bd','segmenter','bd2dur','estimator']){onProgress('Loading '+name);sessions[name]=await timedAsync('model_initialization',()=>ort.InferenceSession.create(new URL(name+'.onnx',baseUrl).href,{executionProviders:['wasm'],graphOptimizationLevel:'all',enableCpuMemArena:false,enableMemPattern:false}));}loaded=true;}
   catch(e){await Promise.allSettled(Object.values(sessions).map(s=>s.release()));for(const name of Object.keys(sessions))delete sessions[name];throw e;}
  }
  async function reset(){
@@ -20,22 +23,23 @@ async function create({ort,baseUrl,onProgress=()=>{},checkpoint}){
   await Promise.allSettled(active.map(s=>s.release?.()));
  }
  const tensor=(type,data,dims)=>new ort.Tensor(type,data,dims);
+ const run=(name,feeds)=>timedAsync('model_inference',()=>sessions[name].run(feeds));
  async function infer(pcm,language,seed,onStep=()=>{}){
   await load();
   const owned=[],own=t=>(owned.push(t),t);let encoded,known,previous,timing,estimated;
   try{
-   encoded=await sessions.encoder.run({waveform:own(tensor('float32',pcm,[1,pcm.length])),duration:own(tensor('float32',Float32Array.of(pcm.length/RATE),[1]))});onStep(1/(STEPS+2));
-   known=await sessions.dur2bd.run({durations:own(tensor('float32',Float32Array.of(pcm.length/RATE),[1,1])),maskT:encoded.maskT});
+   encoded=await run('encoder',{waveform:own(tensor('float32',pcm,[1,pcm.length])),duration:own(tensor('float32',Float32Array.of(pcm.length/RATE),[1]))});onStep(1/(STEPS+2));
+   known=await run('dur2bd',{durations:own(tensor('float32',Float32Array.of(pcm.length/RATE),[1,1])),maskT:encoded.maskT});
    const lang=own(tensor('int64',BigInt64Array.of(BigInt(language)),[1])),threshold=own(tensor('float32',Float32Array.of(.2),[])),radius=own(tensor('int64',BigInt64Array.of(2n),[]));
    for(let k=0;k<STEPS;k++){
-    const time=tensor('float32',Float32Array.of(k/STEPS),[1]),random=tensor('float32',noise(encoded.maskT.data.length,(seed+k*2654435761)>>>0),encoded.maskT.dims);
-    let next;try{next=await sessions.segmenter.run({x_seg:encoded.x_seg,maskT:encoded.maskT,known_boundaries:known.boundaries,prev_boundaries:previous?.boundaries||known.boundaries,language:lang,threshold,radius,t:time,random_uniform:random});}finally{time.dispose();random.dispose();}
+    const time=tensor('float32',Float32Array.of(k/STEPS),[1]),random=tensor('float32',timed('preprocessing',()=>noise(encoded.maskT.data.length,(seed+k*2654435761)>>>0)),encoded.maskT.dims);
+    let next;try{next=await run('segmenter',{x_seg:encoded.x_seg,maskT:encoded.maskT,known_boundaries:known.boundaries,prev_boundaries:previous?.boundaries||known.boundaries,language:lang,threshold,radius,t:time,random_uniform:random});}finally{time.dispose();random.dispose();}
     free(previous);previous=next;onStep((k+2)/(STEPS+2));
    }
-   timing=await sessions.bd2dur.run({boundaries:previous.boundaries,maskT:encoded.maskT});
-   estimated=await sessions.estimator.run({x_est:encoded.x_est,boundaries:previous.boundaries,maskT:encoded.maskT,maskN:timing.maskN,threshold});
-   const result=[];let start=0;
-   for(let i=0;i<timing.durations.data.length;i++){const length=timing.durations.data[i],end=start+length,midi=estimated.scores.data[i];if(!Number.isFinite(length)||length<0||!Number.isFinite(midi))throw Error('Singing transcription returned invalid note data.');if(timing.maskN.data[i]&&estimated.presence.data[i]&&length>=.06&&midi>=0&&midi<=127)result.push({start,end,midi});start=end;}
+   timing=await run('bd2dur',{boundaries:previous.boundaries,maskT:encoded.maskT});
+   estimated=await run('estimator',{x_est:encoded.x_est,boundaries:previous.boundaries,maskT:encoded.maskT,maskN:timing.maskN,threshold});
+   const result=timed('postprocessing',()=>{const result=[];let start=0;
+   for(let i=0;i<timing.durations.data.length;i++){const length=timing.durations.data[i],end=start+length,midi=estimated.scores.data[i];if(!Number.isFinite(length)||length<0||!Number.isFinite(midi))throw Error('Singing transcription returned invalid note data.');if(timing.maskN.data[i]&&estimated.presence.data[i]&&length>=.06&&midi>=0&&midi<=127)result.push({start,end,midi});start=end;}return result;});
    onStep(1);return result;
   }finally{free(encoded);free(known);free(previous);free(timing);free(estimated);owned.forEach(t=>t.dispose());}
  }
@@ -52,10 +56,10 @@ async function create({ort,baseUrl,onProgress=()=>{},checkpoint}){
    if(restored){candidates=stored.notes;restoredPassages++;}
    else{
     const pcm=await read(first,last-first);if(!(pcm instanceof Float32Array)||pcm.length!==last-first)throw Error('Singing audio clock is incomplete.');
-    let peak=0;for(const x of pcm){if(!Number.isFinite(x))throw Error('Singing audio contains invalid samples.');peak=Math.max(peak,Math.abs(x));}
+    const peak=timed('preprocessing',()=>{let peak=0;for(const x of pcm){if(!Number.isFinite(x))throw Error('Singing audio contains invalid samples.');peak=Math.max(peak,Math.abs(x));}return peak;});
     candidates=peak>1e-5?await infer(pcm,language,(2025+i*104729)>>>0,p=>onProgress((i+p)/chunks,{passageIndex:i+1,passageCount:chunks,passagesCompleted:i,restoredPassages})):[];await checkpoint?.write(key,{first,last,model:manifest.id,steps:STEPS,notes:candidates});
    }
-   for(const n of candidates){
+   timed('postprocessing',()=>{for(const n of candidates){
     const a=start+n.start,b=Math.min(duration,start+n.end);
     // Each chunk owns its core. A note carried in from the left context
     // extends the preceding same-pitch sustain instead of creating a seam
@@ -65,7 +69,7 @@ async function create({ort,baseUrl,onProgress=()=>{},checkpoint}){
     if(carry&&previous&&previous.end>=coreStart-.04&&Math.abs(previous.midi-n.midi)<.75){previous.end=round(Math.min(coreEnd,b));continue;}
     const na=Math.max(coreStart,a),nb=Math.min(coreEnd,b);
     if(nb>na)notes.push({start:round(na),end:round(nb),midi:Math.round(n.midi*100)/100,source:'game-large',estimated:true,continuation:carry});
-   }
+   }});
    onProgress((i+1)/chunks,{passageIndex:i+1,passageCount:chunks,passagesCompleted:i+1,restoredPassages,checkpointSaved:!!checkpoint});
    // GAME's five graphs are much larger than the compact rhythm model. A
    // bounded reload every four 12-second passages prevents allocator growth
@@ -73,8 +77,8 @@ async function create({ort,baseUrl,onProgress=()=>{},checkpoint}){
    // inputs, diffusion steps, note filtering, or checkpoint contents.
    if((i+1)%4===0&&i+1<chunks){onProgress((i+1)/chunks,{passageIndex:i+1,passageCount:chunks,passagesCompleted:i+1,restoredPassages,sessionReset:true});await reset();}
   }
-  notes.sort((a,b)=>a.start-b.start);for(let i=0;i<notes.length-1;i++)notes[i].end=Math.min(notes[i].end,notes[i+1].start);
-  return {notes:notes.filter(n=>n.end-n.start>=.06-1e-6),model:manifest.id,frameSeconds:.01,steps:STEPS,language,sourceClock:'Original decoded PCM',lyricsAligned:false,confidenceIsProbability:false};
+  const filtered=timed('postprocessing',()=>{notes.sort((a,b)=>a.start-b.start);for(let i=0;i<notes.length-1;i++)notes[i].end=Math.min(notes[i].end,notes[i+1].start);return notes.filter(n=>n.end-n.start>=.06-1e-6);});
+  return {notes:filtered,model:manifest.id,frameSeconds:.01,steps:STEPS,language,sourceClock:'Original decoded PCM',lyricsAligned:false,confidenceIsProbability:false};
  },async release(){if(released)return;released=true;await reset();}};
 }
 function fuse(detail,transcription){

@@ -1,6 +1,6 @@
 /* Cancellable composition and durable frame snapshots, isolated from the UI. */
 'use strict';
-importScripts('../version.js','../analysis/semantic-timeline.js','../analysis/vocal-semantics.js','../analysis/salience.js','../analysis/recurrence.js','vehicle-profile.js','movement-planner.js','light-planner.js','music-cues.js','sync-review.js','choreography-quality.js','semantic-choreography.js','motif-evolution.js','vocal-choreography.js','perceptual-validation.js','show-engine.js');
+importScripts('../version.js','../analysis/resource-diagnostics.js','../analysis/telemetry.js','../analysis/semantic-timeline.js','../analysis/vocal-semantics.js','../analysis/salience.js','../analysis/recurrence.js','vehicle-profile.js','movement-planner.js','light-planner.js','music-cues.js','sync-review.js','choreography-quality.js','semantic-choreography.js','motif-evolution.js','vocal-choreography.js','perceptual-validation.js','show-engine.js');
 const MAX_FRAMES=960000, CHANNELS=200;
 const canonical=value=>JSON.stringify(value,(_,item)=>item&&typeof item==='object'&&!Array.isArray(item)?Object.fromEntries(Object.keys(item).sort().map(key=>[key,item[key]])):item);
 const progress=(value,detail)=>postMessage({type:'progress',value:{progress:value,stage:'generate',detail}});
@@ -25,7 +25,7 @@ async function encode(show,music,settings){
  const meta={...show};delete meta.frames;delete meta.previewIndex;
  return {format:'lightforge-gzip-frames-v1',engineVersion:show.version,frameCount:show.frameCount,channels:200,stepMs:show.stepMs,sha256:await digest(show.frames),inputDigest:await inputDigest(music,settings),frameData:base64(frameData),metaSHA256:await digest(new TextEncoder().encode(canonical(meta))),meta};
 }
-async function restore(compiled,music,settings,pulse=()=>{}){
+async function restore(compiled,music,settings,pulse=()=>{},timing=null){
  if(!compiled||compiled.format!=='lightforge-gzip-frames-v1'||!Number.isInteger(compiled.frameCount)||compiled.frameCount<1||compiled.frameCount>MAX_FRAMES||compiled.channels!==CHANNELS||![15,20].includes(compiled.stepMs))throw Error('The saved compiled show has an unsupported format.');
  pulse('input-digest');
  const currentInputDigest=await inputDigest(music,settings);let migration=null;
@@ -63,7 +63,7 @@ async function restore(compiled,music,settings,pulse=()=>{}){
  if(await digest(frames)!==compiled.sha256)throw Error('The saved show checksum failed. Restore a previous project revision.');
  const show={...compiled.meta,frames,frameCount:compiled.frameCount,channels:CHANNELS,channelCount:CHANNELS,stepMs:compiled.stepMs,duration:compiled.frameCount*compiled.stepMs/1000,audioDuration:music.duration,settings:ShowEngine.normalizeSettings(settings)};delete show.previewIndex;
  pulse('validate-show');
- show.validation=ShowEngine.validate(show,music);if(show.synchronization)show.validation.synchronization=show.synchronization;if(!show.validation.valid)throw Error('The saved show failed current format checks: '+show.validation.errors.join(' '));
+ show.validation=ShowEngine.validate(show,music,timing);if(show.synchronization)show.validation.synchronization=show.synchronization;if(!show.validation.valid)throw Error('The saved show failed current format checks: '+show.validation.errors.join(' '));
  pulse('prepare-preview');
  if(ShowEngine.preparePreview)ShowEngine.preparePreview(show);
  // Rebind only after metadata, decompression, payload hash, physical format and
@@ -72,11 +72,17 @@ async function restore(compiled,music,settings,pulse=()=>{}){
  if(migration){compiled.inputDigest=currentInputDigest;compiled.settingsMigration=migration;}
  return show;
 }
- self.onmessage=async({data})=>{const lease=data.action==='restore'?data.restoreLease:null;try{
+// Header bytes are generated here, while the already realized frame buffer is
+// transferred separately. This is not a measurement of full FSEQ assembly or
+// native export, and project gzip/digests are not FSEQ generation.
+const compilerProfile=(timing,action,outcome)=>timing.snapshot({action:action==='restore'?'restore':'generate',outcome,
+ timingContract:'compiler-phases-v1',phaseAccounting:'sequential-selected-boundaries',
+ fseqGenerationScope:'header-only',fseqPayloadAssembly:'not-executed'});
+ self.onmessage=async({data})=>{const lease=data.action==='restore'?data.restoreLease:null,timing=LightForgeAnalysisTelemetry.create('compiler');try{
  if(lease)restoreEvent(lease,'restore-started');
  progress(.04,data.action==='restore'?'Verifying your saved arrangement…':'Planning musical phrases and movement arrivals…');
  let show,compiled;
- if(data.action==='restore'){compiled=data.compiled;show=await restore(compiled,data.music,data.settings,(phase,completed,total)=>restoreEvent(lease,'restore-pulse',{phase,completed,total}));restoreEvent(lease,'restore-verified',{sha256:compiled.sha256});}
- else{show=ShowEngine.generate(data.music,data.settings);progress(.78,'Saving an exact, checked copy of your arrangement…');compiled=await encode(show,data.music,data.settings);}
- const header=ShowEngine.fseqHeader(show,'lightshow.wav');progress(1,'Arrangement ready');postMessage({type:'result',value:{show,compiled,header}},[show.frames.buffer,header.buffer]);
-}catch(error){const message=String(error.message||error).slice(0,3072);if(lease)restoreEvent(lease,'restore-error',{message});postMessage({type:'error',message,stack:typeof error.stack==='string'?error.stack.slice(0,8192):undefined});}};
+ if(data.action==='restore'){compiled=data.compiled;show=await restore(compiled,data.music,data.settings,(phase,completed,total)=>restoreEvent(lease,'restore-pulse',{phase,completed,total}),timing);restoreEvent(lease,'restore-verified',{sha256:compiled.sha256});}
+ else{show=ShowEngine.generate(data.music,data.settings,timing);progress(.78,'Saving an exact, checked copy of your arrangement…');compiled=await encode(show,data.music,data.settings);}
+ const header=ShowEngine.fseqHeader(show,'lightshow.wav',timing),profile=compilerProfile(timing,data.action,'completed');progress(1,'Arrangement ready');postMessage({type:'result',value:{show,compiled,header,profile}},[show.frames.buffer,header.buffer]);
+}catch(error){const message=String(error.message||error).slice(0,3072);if(lease)restoreEvent(lease,'restore-error',{message});postMessage({type:'error',message,stack:typeof error.stack==='string'?error.stack.slice(0,8192):undefined,profile:compilerProfile(timing,data.action,'failed')});}};

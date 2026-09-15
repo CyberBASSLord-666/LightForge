@@ -12,8 +12,79 @@ function virtualClock(configure){
  vm.runInContext(clockSource,context);return context.LightForgeDiagnosticClock.create(context);
 }
 function runtimeSnapshot(runtime){return {hardwareConcurrency:runtime.hardwareConcurrency,deviceMemoryGiB:runtime.deviceMemoryGiB,crossOriginIsolated:runtime.crossOriginIsolated,jsHeapUsedBytes:runtime.jsHeapUsedBytes,jsHeapLimitBytes:runtime.jsHeapLimitBytes};}
+function testCumulativeSpans(){
+ let time=0;
+ const profile=virtualProfile(context=>{context.performance={now:()=>time};});
+ for(let index=1;index<=120;index++){const token=profile.begin('model.inference');time+=index;profile.end(token);}
+ const first=profile.snapshot();
+ assert.equal(first.spans.length,96,'raw span history remains bounded');
+ assert.deepEqual({...first.spanSummary['model.inference']},{count:120,totalMs:7260,maxMs:120},'all completed spans contribute, including the longest spans after the raw prefix');
+ assert.deepEqual({...first.spanSummaryCoverage},{namesComplete:true,summaryNameLimit:96,omittedSpanCount:0,totalSpanCount:120,retainedSpanCount:96});
+ assert.equal(first.spans[95].durationMs,96,'retain the existing first-span history policy');
+ const late=profile.begin('model.postprocess');time+=17;profile.end(late);
+ const second=profile.snapshot();
+ assert.deepEqual({...second.spanSummary['model.postprocess']},{count:1,totalMs:17,maxMs:17},'a new name after the raw prefix still receives a summary');
+ assert.deepEqual({...second.spanSummary['model.inference']},{count:120,totalMs:7260,maxMs:120},'snapshot must not count retained spans again');
+ assert.equal(first.spanSummary['model.postprocess'],undefined,'earlier summaries are immutable snapshots of the accumulated totals');
+ first.spanSummary['model.inference'].count=9999;
+ assert.equal(profile.snapshot().spanSummary['model.inference'].count,120,'consumer mutation cannot corrupt subsequent totals');
+ const pending=profile.begin('checkpoint.write');time+=3;
+ const closed=profile.snapshot();
+ assert.deepEqual({...closed.spanSummary['checkpoint.write']},{count:1,totalMs:3,maxMs:3});
+ assert.equal(profile.end(pending),null,'snapshot closes an unfinished span once');
+ assert.equal(profile.snapshot().spanSummary['checkpoint.write'].count,1);
+}
+function testBoundedSpanNames(){
+ let time=0;
+ const profile=virtualProfile(context=>{context.performance={now:()=>time};});
+ for(let index=0;index<100;index++){const token=profile.begin('stage.'+index);time+=2;profile.end(token);}
+ let token=profile.begin('stage.0');time+=5;profile.end(token);
+ token=profile.begin('stage.99');time+=7;profile.end(token);
+ const out=profile.snapshot();
+ assert.equal(Object.keys(out.spanSummary).length,96,'named summaries are bounded independently of raw history');
+ assert.equal(out.spanSummary['stage.99'],undefined,'omitted names must not be relabeled as a real stage');
+ assert.deepEqual({...out.spanSummary['stage.0']},{count:2,totalMs:7,maxMs:5},'retained names still accumulate after name capacity is exhausted');
+ assert.deepEqual({...out.spanSummaryCoverage},{namesComplete:false,summaryNameLimit:96,omittedSpanCount:5,totalSpanCount:102,retainedSpanCount:96});
+}
+function testSpanIdentityAndAvailability(){
+ let time=0;
+ const profile=virtualProfile(context=>{context.performance={now:()=>time};});
+ for(const name of ['__proto__','constructor','toString']){const token=profile.begin(name);time+=3;profile.end(token,{name:'forged-name',durationMs:9999,note:'retained'});}
+ const out=profile.snapshot();
+ for(const name of ['__proto__','constructor','toString'])assert.deepEqual({...out.spanSummary[name]},{count:1,totalMs:3,maxMs:3},'all sanitized names are own summary entries');
+ const serialized=JSON.parse(JSON.stringify(out.spanSummary));
+ for(const name of ['__proto__','constructor','toString']){assert.ok(Object.hasOwn(serialized,name));assert.deepEqual(serialized[name],{count:1,totalMs:3,maxMs:3});}
+ assert.equal(out.spans[0].name,'__proto__');assert.equal(out.spans[0].durationMs,3);assert.equal(out.spans[0].note,'retained');
+ let brokenTime=0;
+ const broken=virtualProfile(context=>{context.performance={now:()=>brokenTime};});
+ let token=broken.begin('model.inference');brokenTime=4;broken.end(token);
+ token=broken.begin('model.inference');brokenTime=NaN;broken.end(token);
+ const unavailable=broken.snapshot();
+ assert.equal(unavailable.spans[1].durationMs,null,'failed timing must not be a measured zero');
+ assert.deepEqual({...unavailable.spanSummary['model.inference']},{count:2,totalMs:null,maxMs:null,unavailableCount:1},'an incomplete timing summary must not report partial totals as complete');
+ assert.equal(unavailable.timing.state,'observed-error');
+ let extreme=-Number.MAX_VALUE;
+ const overflow=virtualProfile(context=>{context.performance={now:()=>extreme};});
+ token=overflow.begin('model.inference');extreme=Number.MAX_VALUE;overflow.end(token);
+ const finite=overflow.snapshot();
+ assert.equal(finite.spans[0].durationMs,null,'finite clock samples with an unrepresentable duration remain unavailable');
+ assert.equal(finite.spanSummary['model.inference'].totalMs,null);
+ let cumulativeTime=-1e308;
+ const cumulative=virtualProfile(context=>{context.performance={now:()=>cumulativeTime};});
+ token=cumulative.begin('model.inference');cumulativeTime=0;cumulative.end(token);
+ token=cumulative.begin('model.inference');cumulativeTime=1e308;cumulative.end(token);
+ assert.deepEqual({...cumulative.snapshot().spanSummary['model.inference']},{count:2,totalMs:null,maxMs:null,overflowed:true},'finite individual durations cannot produce an infinite aggregate');
+ const bounded=virtualProfile(context=>{context.performance={now:()=>0};});
+ for(let index=0;index<33;index++)bounded.begin('open.'+index);
+ bounded.begin('open.0');
+ const boundedSnapshot=bounded.snapshot();
+ assert.equal(boundedSnapshot.spanSummaryCoverage.totalSpanCount,32,'only admitted spans close, and a repeated begin does not create a second span');
+ assert.equal(boundedSnapshot.spanSummary['open.32'],undefined);
+ assert.equal(boundedSnapshot.spanSummary['open.0'].count,1);
+}
 
 async function main(){
+ testCumulativeSpans();testBoundedSpanNames();testSpanIdentityAndAvailability();
  const profile=telemetry.create('separation');
  const token=profile.begin('model.initialization');
  profile.end(token,{model:'Deux'});
@@ -47,7 +118,7 @@ async function main(){
  assert.equal(lateSnapshot.totalWallClockMs,0,'a late performance getter failure must not be mixed with Date.now');assert.equal(lateSnapshot.spans[0].durationMs,0);assert.equal(calls,1,'telemetry must retain its selected performance callable');assert.deepEqual({...lateSnapshot.timing},{source:'performance.now',state:'available'});
  let functionCalls=0;const lateFunction=virtualProfile(context=>{context.performance={now(){functionCalls++;if(functionCalls<=2)return functionCalls*100;throw Error('late clock function failure');}};context.navigator={};});
  const functionToken=lateFunction.begin('late-clock-function');lateFunction.end(functionToken);const functionSnapshot=lateFunction.snapshot();
- assert.equal(functionSnapshot.totalWallClockMs,0,'a late performance function failure must not be mixed with Date.now');assert.equal(functionSnapshot.spans[0].durationMs,0);assert.deepEqual({...functionSnapshot.timing},{source:'performance.now',state:'observed-error'});
+ assert.equal(functionSnapshot.totalWallClockMs,0,'a late performance function failure must not be mixed with Date.now');assert.equal(functionSnapshot.spans[0].durationMs,null);assert.deepEqual({...functionSnapshot.timing},{source:'performance.now',state:'observed-error'});
  let profileSourceReads=0;const switchingProfile=virtualProfile(context=>{context.Date={now:()=>1789000000000};Object.defineProperty(context,'performance',{get(){profileSourceReads++;return profileSourceReads===1?{now:()=>10}:{now:()=>1789000000000};}});context.navigator={};});
  const switchToken=switchingProfile.begin('switching-clock');switchingProfile.end(switchToken);const switchSnapshot=switchingProfile.snapshot();
  assert.equal(switchSnapshot.totalWallClockMs,0,'telemetry must not replace performance time with epoch time');assert.equal(switchSnapshot.spans[0].durationMs,0);assert.equal(profileSourceReads,2,'only the unrelated runtime probe may reread performance');assert.deepEqual({...switchSnapshot.timing},{source:'performance.now',state:'available'});
@@ -56,7 +127,7 @@ async function main(){
  assert.equal(dateSwitchSnapshot.totalWallClockMs,0,'telemetry fallback must not switch Date origins');assert.equal(dateSwitchSnapshot.spans[0].durationMs,0);assert.equal(dateSourceReads,1);assert.deepEqual({...dateSwitchSnapshot.timing},{source:'date.now',state:'available'});
  let descendingCalls=0;const descendingProfile=virtualProfile(context=>{context.performance={now:()=>++descendingCalls===1?10:9};context.navigator={};});
  const descendingToken=descendingProfile.begin('nonmonotonic-clock');descendingProfile.end(descendingToken);const descendingSnapshot=descendingProfile.snapshot();
- assert.equal(descendingSnapshot.totalWallClockMs,0);assert.equal(descendingSnapshot.spans[0].durationMs,0);assert.deepEqual({...descendingSnapshot.timing},{source:'performance.now',state:'observed-error'});
+ assert.equal(descendingSnapshot.totalWallClockMs,0);assert.equal(descendingSnapshot.spans[0].durationMs,null);assert.deepEqual({...descendingSnapshot.timing},{source:'performance.now',state:'observed-error'});
  const unavailable=virtualClock(context=>{context.performance={};context.Date={};});
  assert.equal(unavailable.source,'unavailable');assert.equal(unavailable.elapsed(unavailable.start),0);assert.deepEqual({...unavailable.diagnostics()},{source:'unavailable',state:'unavailable',reason:'date-now-unavailable'});
  const fallback=virtualClock(context=>{context.performance={};context.Date={now:()=>50};});

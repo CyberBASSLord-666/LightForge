@@ -80,7 +80,8 @@ test('inventory rejects paths that could escape its web root', () => {
 });
 test('published 2.2.4 bootstrap uses its observed module order without candidate enhancements', () => {
   const lock = fixtureLock(publishedBootstrap.web_blob_paths), loaded = capture.bootstrapScripts(lock);
-  assert.equal(publishedBootstrap.source.tree_sha, 'a8c6fd8abf76c413913c3aed85cba2ad6bae17bd');
+  assert.equal(publishedBootstrap.source.commit_sha, 'a8c6fd8abf76c413913c3aed85cba2ad6bae17bd');
+  assert.equal(publishedBootstrap.source.tree_sha, '6c24fb9a14a25f1fdfc90addcf6dac9ef327a63f');
   assert.deepEqual(loaded, publishedBootstrap.expected_capture_scripts);
   assert.deepEqual(publishedBootstrap.index_script_order.filter(name => loaded.includes(name)), loaded);
   for (const missing of publishedBootstrap.absent_enhancement_scripts) {
@@ -174,4 +175,141 @@ test('a wrong audio hash writes a failed receipt without starting Chromium or cr
   assert.equal(report.status, 'failed'); assert.equal(report.production_ready, false); assert.match(report.error, /Audio content differs/);
   assert.deepEqual(fs.readdirSync(out), ['capture.json']);
   await assert.rejects(capture.capture({ 'app-root': dir, wav: audio, 'output-dir': out }), /already exists/);
+});
+
+
+test('external JSON files reject nested and escaped duplicate keys before evidence can be rebound', t => {
+  const file = path.join(temporary(t), 'input.json');
+  for (const content of ['{"source_commit":"first","source_commit":"last"}', '{"outer":{"sha256":"first","sha\\u003256":"last"}}', '{"rows":[{"x":1,"x":2}]}']) {
+    fs.writeFileSync(file, content); assert.throws(() => capture.readJson(file), /Duplicate/);
+  }
+});
+test('producer numeric validation precedes lossy JSON conversion, including typed arrays', () => {
+  for (const value of [{ semantic: { time: NaN } }, { preview: new Float64Array([0, Infinity]) }, { offset: -Infinity }]) {
+    assert.throws(() => capture.producerJson(value), /Non-finite producer number/);
+  }
+  const actual = { previewIndex: { lights: [{ times: new Float64Array([0, 1.25]), values: new Uint8Array([0, 255]) }] } };
+  assert.deepEqual(JSON.parse(capture.producerJson(actual)), JSON.parse(JSON.stringify(actual)));
+  assert.throws(() => capture.producerJson({ values: [undefined] }), /Unsupported/);
+  assert.throws(() => capture.producerJson({ custom: { toJSON() { return null; } } }), /serialization/);
+  let reads = 0; assert.throws(() => capture.producerJson({ get time() { return reads++ ? NaN : 1; } }), /accessor/);
+  assert.equal(reads, 0);
+  assert.throws(() => capture.producerJson({ text: 'larger than bound' }, 5), /byte bound/);
+});
+test('maximum legal identity fields produce a stable project ID within work-store 80 characters', () => {
+  const item = { track_id: 't'.repeat(128), run_id: 'r'.repeat(128) };
+  const first = capture.captureProjectId(item);
+  assert.equal(first.length, 72); assert.match(first, /^capture-[0-9a-f]{64}$/);
+  assert.equal(first, capture.captureProjectId({ ...item, report_side: 'baseline' }));
+  assert.notEqual(first, capture.captureProjectId({ ...item, run_id: 'r'.repeat(127) + 's' }));
+});
+test('four-hour compiler duration bound rejects even one extra sample before startup', t => {
+  const file = path.join(temporary(t), 'long-sparse.wav');
+  function sparse(samples) {
+    const header = wav().subarray(0, 44), size = 44 + samples * 2;
+    header.writeUInt32LE(size - 8, 4); header.writeUInt16LE(1, 22); header.writeUInt32LE(88200, 28); header.writeUInt16LE(2, 32); header.writeUInt32LE(samples * 2, 40);
+    fs.writeFileSync(file, header); fs.truncateSync(file, size);
+  }
+  sparse(14400 * 44100); assert.equal(capture.wavInfo(file).duration_seconds, 14400);
+  sparse(14400 * 44100 + 1); assert.throws(() => capture.wavInfo(file), /4 hours/);
+});
+test('failed show retains bounded original fields and byte evidence without success goldens', t => {
+  const dir = temporary(t), report = {}, sidecar = { eventEvidence: { accepted: 0, invalid: 3, omitted: 1 }, timing: { command: { p95: 0.12 } }, label: 'original' };
+  const result = { music: { beats: [1] }, show: { validation: { valid: false, errors: ['invalid movement'] }, perceptualValidation: sidecar }, compiled: { schema: 1 }, progress: [], frames: Buffer.from([1,2]).toString('base64'), header: Buffer.from([3,4]).toString('base64') };
+  capture.retainRawArtifacts(dir, result, report);
+  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(dir, 'perceptual-validation.json'))), sidecar);
+  assert.equal(JSON.parse(fs.readFileSync(path.join(dir, 'show.json'))).validation.valid, false);
+  assert.deepEqual(fs.readFileSync(path.join(dir, 'show.frames.bin')), Buffer.from([1,2]));
+  assert.match(report.raw_evidence_status, /not-qualified/);
+  assert.equal(Object.hasOwn(report, 'observed_output_hashes'), false);
+  for (const [name, record] of Object.entries(report.artifacts)) { const bytes = fs.readFileSync(path.join(dir, name)); assert.equal(capture.hashBytes(bytes), record.sha256); assert.equal(bytes.length, record.bytes); }
+});
+test('unserializable artifact retains the other raw outputs and explicit failure reason', t => {
+  const dir = temporary(t), report = {};
+  capture.retainRawArtifacts(dir, { music: { time: NaN }, show: { validation: { valid: false } }, serialization_errors: [{ field: 'progress', error: 'non-finite' }] }, report);
+  assert.equal(fs.existsSync(path.join(dir, 'analysis.json')), false);
+  assert.equal(fs.existsSync(path.join(dir, 'show.json')), true);
+  assert.equal(report.artifact_errors.length, 1);
+  assert.equal(fs.existsSync(path.join(dir, 'producer-failure.json')), true);
+  assert.match(report.missing_optional_artifacts['perceptual-validation.json'], /not emitted/);
+});
+test('undefined optional values are plain-false and cannot erase a failure checkpoint', t => {
+  assert.equal(capture.plain(undefined), false);
+  const dir = temporary(t);
+  assert.throws(() => capture.checkpoint(dir, { schema: 'bad', engine: undefined }), /plain JSON/);
+  const report = JSON.parse(fs.readFileSync(path.join(dir, '.capture-checkpoint.json')));
+  assert.equal(report.status, 'failed'); assert.equal(report.production_ready, false); assert.match(report.error, /receipt serialization failed/);
+});
+
+async function protocolAttempt(t, result, extra = {}, closeBody = '') {
+  const dir = temporary(t), web = path.join(dir, 'web'); fs.mkdirSync(web);
+  for (const relative of coreFiles) { const file = path.join(web, relative); fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, relative.endsWith('.json') ? '{}' : 'unit protocol fixture'); }
+  const audio = path.join(dir, 'audio.wav'); fs.writeFileSync(audio, wav()); const lock = await capture.inventory(web);
+  for (const [name, value] of Object.entries({ lock, identity: identity(capture.validateLock(lock)), configuration: configuration() })) fs.writeFileSync(path.join(dir, name + '.json'), JSON.stringify(value));
+  const stub = path.join(dir, 'node_modules', 'playwright'); fs.mkdirSync(stub, { recursive: true });
+  fs.writeFileSync(path.join(stub, 'index.js'), `module.exports={chromium:{launch:async()=>({version:()=>"protocol-test",close:async()=>{${closeBody}},newContext:async()=>({route:async()=>{},newPage:async()=>({on(){},setDefaultTimeout(){},goto:async()=>{},waitForFunction:async()=>{},addScriptTag:async()=>{},exposeFunction:async()=>{},evaluate:async(fn,arg)=>arg?${JSON.stringify(result)}:true})})})}};`);
+  // Keep the real collector bytes but resolve its protocol stub locally.
+  // NODE_PATH cannot override a checkout's installed node_modules/playwright.
+  const harness = path.join(dir, 'harness'); fs.mkdirSync(harness);
+  for (const name of ['capture-app.cjs', 'strict-json.cjs', 'capture-supervisor.cjs', 'capture-supervisor.py']) {
+    fs.copyFileSync(path.join(__dirname, '..', 'qa', 'locked-benchmark', name), path.join(harness, name));
+  }
+  const isolatedCapture = require(path.join(harness, 'capture-app.cjs'));
+  const out = path.join(dir, 'attempt');
+  const code = await isolatedCapture.capture({ 'app-root': dir, wav: audio, 'audio-sha256': await capture.hashBytes(fs.readFileSync(audio)), identity: path.join(dir, 'identity.json'), configuration: path.join(dir, 'configuration.json'), 'web-manifest': path.join(dir, 'lock.json'), 'output-dir': out, ...extra });
+  return { code, out, report: JSON.parse(fs.readFileSync(path.join(out, 'capture.json'))) };
+}
+test('supervised pipeline keeps failed validation artifacts and authoritative failure receipt', async t => {
+  const { code, out, report } = await protocolAttempt(t, { music: { beats: [1] }, show: { validation: { valid: false, errors: ['unit fixture failure'] } }, compiled: {}, progress: [], serialization_errors: [] });
+  assert.equal(code, 1); assert.equal(report.status, 'failed'); assert.match(report.error, /application validation/);
+  assert.equal(report.effective_show_settings.status, 'unavailable'); assert.equal(report.engine.status, 'unavailable');
+  assert.equal(fs.existsSync(path.join(out, 'analysis.json')), true); assert.equal(fs.existsSync(path.join(out, 'show.json')), true);
+  assert.equal(report.supervision.termination.verified, true); assert.equal(report.production_ready, false);
+});
+
+
+test('large valid frame transport is retained without regex stack overflow', t => {
+  const dir = temporary(t), report = {};
+  const encoded = 'A'.repeat(8 * 1024 ** 2);
+  const retained = capture.retainRawArtifacts(dir, { frames: encoded }, report);
+  assert.equal(retained.frames.length, 6 * 1024 ** 2);
+  assert.equal(report.artifact_errors.length, 0);
+  assert.equal(report.artifacts['show.frames.bin'].bytes, 6 * 1024 ** 2);
+});
+
+function validProtocolResult() {
+  const frames = Buffer.from([17]), header = Buffer.alloc(32);
+  header.write('PSEQ', 0); header.writeUInt16LE(32, 4);
+  header.writeUInt32LE(1, 10); header.writeUInt32LE(1, 14); header[18] = 20;
+  return { music: { beats: [0.5] }, show: { validation: { valid: true }, settings: {}, frameCount: 1, channelCount: 1, stepMs: 20 },
+    compiled: { sha256: capture.hashBytes(frames) }, frames: frames.toString('base64'), header: header.toString('base64'), progress: [], serialization_errors: [] };
+}
+for (const scenario of [
+  { name: 'browser close failure', closeBody: "throw Error('fixture close failure')", timedOut: false },
+  { name: 'browser close timeout', closeBody: 'await new Promise(() => {})', timedOut: true },
+]) test(scenario.name + ' retains raw artifacts but removes validated category hashes', async t => {
+  const { code, out, report } = await protocolAttempt(t, validProtocolResult(), { 'timeout-seconds': '1' }, scenario.closeBody);
+  assert.equal(code, 1); assert.equal(report.status, 'failed');
+  assert.equal(report.runtime.browser, 'protocol-test', 'the fixture uses its local protocol stub even when real Playwright is installed');
+  assert.equal(report.supervision.timed_out, scenario.timedOut);
+  assert.equal(Object.hasOwn(report, 'observed_output_hashes'), false);
+  assert.equal(fs.existsSync(path.join(out, 'lightshow.fseq')), true, 'capture passed validation before cleanup failed');
+  assert.equal(fs.existsSync(path.join(out, 'analysis.json')), true);
+  assert.equal(report.production_ready, false);
+});
+
+test('internal dispatch also rejects invalid deadlines before any file or browser work', async () => {
+  const saved = process.env.LIGHTFORGE_CAPTURE_SUPERVISED;
+  process.env.LIGHTFORGE_CAPTURE_SUPERVISED = '1';
+  try {
+    for (const seconds of ['0', '-1', '1.5', '14401', 'NaN', 'Infinity']) {
+      const args = ['__capture-worker', 'capture', '--app-root', '/missing-capture-fixture'];
+      for (const name of ['wav', 'audio-sha256', 'configuration', 'identity', 'web-manifest', 'output-dir']) args.push('--' + name, '/missing-capture-fixture');
+      args.push('--timeout-seconds', seconds);
+      await assert.rejects(capture.main(args), /Capture deadline must be 1\.\.14400 seconds/);
+    }
+  } finally {
+    if (saved === undefined) delete process.env.LIGHTFORGE_CAPTURE_SUPERVISED;
+    else process.env.LIGHTFORGE_CAPTURE_SUPERVISED = saved;
+  }
 });

@@ -141,6 +141,23 @@ class SyncProjectionTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Duplicate"):
             json.loads('{"version":1,"version":2}', object_pairs_hook=projection.unique_object)
 
+    def test_cli_rejects_oversized_integer_without_traceback_or_output(self):
+        report = produced([event("beat")])
+        report["perEventClass"]["beat"]["timing"]["command"]["medianMs"] = 10 ** 400
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source, output = root / "input.json", root / "output.json"
+            source.write_text(json.dumps(report))
+            result = subprocess.run([
+                sys.executable, str(ROOT / "tools/project_sync_metrics.py"),
+                "--report", str(source), "--expected-sha256", hashlib.sha256(source.read_bytes()).hexdigest(),
+                "--source-commit", "1" * 40, "--run-id", "pair-01",
+                "--perceptual-basis", "predicted", "--output", str(output),
+            ], text=True, capture_output=True)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertEqual(result.stderr.strip(), "Synchronization projection failed: ValueError")
+            self.assertFalse(output.exists())
+
 
 if __name__ == "__main__":
     unittest.main()

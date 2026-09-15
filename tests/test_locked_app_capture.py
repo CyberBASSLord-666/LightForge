@@ -8,7 +8,7 @@ class LockedAppCaptureTests(unittest.TestCase):
     def test_capture_protocol(self):
         root = Path(__file__).resolve().parents[1]
         result = subprocess.run(
-            ["node", "--test", str(root / "tests/app-capture.test.cjs")],
+            ["node", "--test", *[str(root / "tests" / name) for name in ("app-capture.test.cjs", "strict-json.test.cjs", "capture-supervisor.test.cjs")]],
             cwd=root, text=True, stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT, timeout=60, check=False,
         )
