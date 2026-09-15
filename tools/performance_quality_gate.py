@@ -53,15 +53,23 @@ REVIEW_ATTESTATION_PROTOCOL = "external-review-attestation-v2"
 REVIEW_ATTESTATION_ALGORITHM = "ed25519"
 # A release policy supplied beside candidate evidence is not a trust root.  A
 # release can be production-ready only when this *source-pinned* authority has
-# signed the exact policy and locked corpus binding.  The repository ships
-# deliberately unconfigured: adding an authority public key is a reviewed
-# source change, while its private signing key remains outside this repository
-# and outside CI artifacts.  Never replace this with an environment variable,
+# signed the exact policy and locked corpus binding.  The owner enrolled the
+# public key below through a reviewed source change; its private policy key
+# remains outside this repository and outside CI artifacts.  Key enrollment
+# does not approve a policy, corpus, benchmark result, or human review.
+# Never replace this with an environment variable,
 # workflow input, candidate artifact, or policy-owned public key.
 RELEASE_POLICY_AUTHORITY_SCHEMA_VERSION = 1
 RELEASE_POLICY_AUTHORITY_PROTOCOL = "lightforge-release-policy-authority-v1"
 RELEASE_POLICY_AUTHORITY_ALGORITHM = "ed25519"
-RELEASE_POLICY_AUTHORITY_KEYS = MappingProxyType({})
+RELEASE_POLICY_AUTHORITY_KEYS = MappingProxyType({
+    "lightforge-owner-policy-2026-09": {
+        "protocol": "lightforge-release-policy-authority-v1",
+        "algorithm": "ed25519",
+        "verification_key_base64": "gsj+FZKu+e/5qv74QWB+g4oBNGHpQ5IaHXIP37Co1sU=",
+        "verification_key_sha256": "04674bb0fba8986e9eece3ced056d145ee9fa377251c33f0e3e4b373102fdca7",
+    },
+})
 HUMAN_REVIEW_ATTRIBUTES = (
     "musical_synchronization",
     "vocal_synchronization",
@@ -1812,6 +1820,13 @@ def _compare_pair_provenance(baseline, candidate):
     for path in COMPARABILITY_PATHS:
         before, after = _get(baseline, path), _get(candidate, path)
         if before is None or after is None or canonical_json(before) != canonical_json(after):
+            differences.append({"field": path, "baseline": before, "candidate": after})
+    # Old diagnostics may omit host counters. Once observed, the same counter
+    # and CPU-capacity definitions must be used on both sides of a pair.
+    for source in ("cpu.logical_cpu_count", "energy.counter_id", "thermal.sensor_id", "accelerator.counter_id"):
+        path = "profiler_measurement_evidence.execution.resource_counters." + source
+        before, after = _get(baseline, path), _get(candidate, path)
+        if canonical_json(before) != canonical_json(after):
             differences.append({"field": path, "baseline": before, "candidate": after})
     return differences
 

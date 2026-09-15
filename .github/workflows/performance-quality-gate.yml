@@ -114,12 +114,14 @@ jobs:
       - run: python3 tests/performance-quality-gate-workflow.test.py
       - run: python3 tests/test_release_quality_gate.py
       - run: python3 tests/test_release_quality_publication_wiring.py
+      - run: python3 tests/test_release_policy_setup.py
       - run: python3 tests/analysis-benchmark-contract.test.py
       - run: python3 tests/locked-benchmark-runner.test.py
       - run: python3 tests/differential-analysis.test.py
       - run: >-
           python3 -m py_compile
           tools/performance_quality_gate.py
+          tools/release_policy_setup.py
           tools/analysis_benchmark_contract.py
           tools/locked_benchmark_runner.py
           tools/differential_analysis.py

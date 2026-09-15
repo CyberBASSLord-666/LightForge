@@ -1,0 +1,66 @@
+{
+  "passed": true,
+  "scope": "Desktop Chromium WebGL2, complete vehicle with unchanged shadow/bloom/output passes; pixel-identical lighting comparison and real context loss/recovery, not Android approval.",
+  "browser": "153.0.8010.0",
+  "cases": [
+    {
+      "stage": "studio",
+      "view": "front",
+      "quality": "high",
+      "pixel_bytes": 518760,
+      "baked_sha256": "2b1c17a63af34c8ea9173f28571d7dde6ae2912904b2b2238d6a7a99ddc6ffa2",
+      "live_sha256": "2b1c17a63af34c8ea9173f28571d7dde6ae2912904b2b2238d6a7a99ddc6ffa2",
+      "different_components": 0,
+      "max_component_difference": 0,
+      "distinct_colors": 7043
+    },
+    {
+      "stage": "night",
+      "view": "rear",
+      "quality": "high",
+      "pixel_bytes": 518760,
+      "baked_sha256": "356fb80e268e68666b286d7cf33e3ee20df59c27460ab098b613a514f1733750",
+      "live_sha256": "356fb80e268e68666b286d7cf33e3ee20df59c27460ab098b613a514f1733750",
+      "different_components": 0,
+      "max_component_difference": 0,
+      "distinct_colors": 3242
+    },
+    {
+      "stage": "studio",
+      "view": "cabin",
+      "quality": "balanced",
+      "pixel_bytes": 518760,
+      "baked_sha256": "dca23595feb232d7b261f3663a4fb9bf220e163f25c146eb590f73fc6ca14552",
+      "live_sha256": "dca23595feb232d7b261f3663a4fb9bf220e163f25c146eb590f73fc6ca14552",
+      "different_components": 0,
+      "max_component_difference": 0,
+      "distinct_colors": 3996
+    },
+    {
+      "stage": "night",
+      "view": "driver",
+      "quality": "battery",
+      "pixel_bytes": 374080,
+      "baked_sha256": "dd64c93b541767af82309776c16c6d94fa0692a9827bc864ba1b45257c80917c",
+      "live_sha256": "dd64c93b541767af82309776c16c6d94fa0692a9827bc864ba1b45257c80917c",
+      "different_components": 0,
+      "max_component_difference": 0,
+      "distinct_colors": 1439
+    }
+  ],
+  "recovery": {
+    "atlasRetained": true,
+    "uploadedSameValues": true,
+    "loaded": true,
+    "firstFrameAfterRecovery": true
+  },
+  "source_hashes": {
+    "web/preview/src/studio-environment-source.js": "7e1b284ed7edc9edb6a7504ea97330159abd784aa4bcd9b14b21ff03a30aa0c6",
+    "web/preview/src/studio-environment.js": "10fb8748d270c9b0d2f761a0609ebc286a2fe5bd2d12f0cf6330aee68f1d90bf",
+    "web/preview/src/vehicle-preview.js": "1449134db16710db66c9c92c872bb515234faf19e668d828d9c55b3204699264",
+    "web/preview/vehicle-preview.js": "ab638c7fdb1bcc0b59183bd828aa1b85c9e1a9930f6ca36ea4c1217502962abb",
+    "web/preview/models/highland.glb": "abf813f0013428409820121b7fd40ad70dda7cd00d1a0dca25cebd16b92035ba",
+    "web/preview/models/studio-environment.rgba16f.gz": "26c8d97f746142727df0c0c0cd7b3a552c86851f1836c29ee36afff293ba37c4",
+    "qa/restore-preview/environment.cjs": "b0756906ec52785c5f42da3d869c3bcd372fc539acdeb4ef6c20eb8a0c77f90f"
+  }
+}

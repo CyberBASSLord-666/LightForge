@@ -43,11 +43,13 @@ in the gate source's `RELEASE_POLICY_AUTHORITY_KEYS` registry. The gate never
 obtains a policy-authority key from a policy, manifest, artifact, CLI argument,
 or environment variable.
 
-The checked-in registry intentionally starts empty. That makes an otherwise
-valid release report fail closed with `release_policy_authority_unconfigured`
-until a reviewed trusted-source release adds the approved authority public key
-and digest. The private signing key remains outside this repository and outside
-CI artifacts. A candidate can name an authority only through the policy's
+The source registry enrolls the owner-controlled Ed25519 public authority
+`lightforge-owner-policy-2026-09`. Enrollment does not itself approve a policy,
+corpus, benchmark, or human review. Follow [RELEASE_QUALITY_SETUP.md](RELEASE_QUALITY_SETUP.md)
+for the public-key fingerprint, private local policy signing and protected
+environment setup. An empty or unknown authority still fails closed. The private
+signing key remains outside this repository and CI artifacts. A candidate can
+name an authority only through the policy's
 auditable reference; that reference must exactly match the source-pinned ID,
 protocol, algorithm, and public-key digest. A fabricated authority ID, policy
 digest, or receipt cannot produce `production_ready: true`.

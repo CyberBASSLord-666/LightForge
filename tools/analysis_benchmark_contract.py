@@ -42,6 +42,7 @@ except ImportError:  # pragma: no cover - exercised by Windows consumers.
 
 SCHEMA_VERSION = 1
 CACHE_FORMAT_VERSION = 1
+RESOURCE_COUNTER_PROTOCOL = "lightforge-resource-counters-v1"
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 _STAGE_ID = re.compile(r"^[a-z][a-z0-9_.:-]{0,127}$")
 _CACHE_KEY = re.compile(r"^sha256:[0-9a-f]{64}$")
@@ -356,6 +357,8 @@ def validate_diagnostic(report: Any) -> None:
         value = execution.get(field)
         if not _is_number(value) or float(value) < 0:
             errors.append(f"execution.{field} must be a non-negative finite number")
+    if "resource_counters" in execution:
+        _resource_counter_bindings(execution, errors)
     stages = report.get("stages")
     if not isinstance(stages, list) or not stages:
         errors.append("stages must be a non-empty array")
@@ -372,6 +375,107 @@ def validate_diagnostic(report: Any) -> None:
     _validate_json_value(report.get("warnings", []), "warnings", errors)
     if errors:
         raise ContractValidationError(errors)
+
+
+def _resource_counter_bindings(execution: Mapping[str, Any], errors: list[str]) -> dict[str, float]:
+    """Validate same-run raw counters and derive the previously unbound resources.
+
+    The host collector owns these observations. No sensor is inferred from a
+    browser capability, and omitted domains remain unobserved. Counter resets
+    and wraps require a new collection; this contract never guesses a delta.
+    """
+    path = "execution.resource_counters"
+    counters = execution.get("resource_counters")
+    if not isinstance(counters, Mapping):
+        errors.append(f"{path} must be an object")
+        return {}
+    required = {"schema_version", "protocol", "elapsed_seconds"}
+    domains = {"cpu", "energy", "thermal", "accelerator"}
+    if not required.issubset(counters) or set(counters) - required - domains or not (set(counters) & domains):
+        errors.append(f"{path} must contain the counter protocol, window, and supported observations only")
+        return {}
+    if type(counters.get("schema_version")) is not int or counters["schema_version"] != 1 or counters.get("protocol") != RESOURCE_COUNTER_PROTOCOL:
+        errors.append(f"{path} has an unsupported protocol")
+    elapsed = counters.get("elapsed_seconds")
+    wall = execution.get("wall_clock_seconds")
+    if not _is_number(elapsed) or elapsed <= 0 or not _is_number(wall) or not _profiler_numbers_match(elapsed, wall):
+        errors.append(f"{path}.elapsed_seconds must equal the positive execution wall-clock window")
+        return {}
+    result: dict[str, float] = {}
+
+    def domain(name: str, fields: set[str]) -> Mapping[str, Any] | None:
+        value = counters[name]
+        if not isinstance(value, Mapping) or set(value) != fields:
+            errors.append(f"{path}.{name} has unsupported or missing fields")
+            return None
+        return value
+
+    def identity(value: Any, name: str) -> bool:
+        if not isinstance(value, str) or not _STAGE_ID.fullmatch(value):
+            errors.append(f"{path}.{name} must be an opaque stable counter identifier")
+            return False
+        return True
+
+    def delta(value: Mapping[str, Any], first: str, last: str, name: str) -> int | None:
+        start, end = value[first], value[last]
+        if any(type(item) is not int or item < 0 or item > 2**63 - 1 for item in (start, end)) or end < start:
+            errors.append(f"{path}.{name} requires nonnegative monotonic integer counters without a reset or wrap")
+            return None
+        return end - start
+
+    if "cpu" in counters:
+        value = domain("cpu", {"logical_cpu_count"})
+        if value is not None:
+            count = value["logical_cpu_count"]
+            cpu = execution.get("cpu_seconds")
+            if type(count) is not int or not 1 <= count <= 65536:
+                errors.append(f"{path}.cpu.logical_cpu_count must be a positive measured capacity")
+            elif not _is_number(cpu) or cpu < 0 or cpu > elapsed * count:
+                errors.append(f"{path}.cpu execution CPU time exceeds the observed capacity/window")
+            else:
+                result["resources.cpu_utilization_percent"] = cpu / elapsed / count * 100.0
+    if "energy" in counters:
+        value = domain("energy", {"counter_id", "start_microjoules", "end_microjoules"})
+        if value is not None:
+            identity(value["counter_id"], "energy.counter_id")
+            measured = delta(value, "start_microjoules", "end_microjoules", "energy")
+            if measured is not None:
+                result["resources.energy_joules"] = measured / 1_000_000.0
+    if "thermal" in counters:
+        value = domain("thermal", {"sensor_id", "samples"})
+        if value is not None:
+            identity(value["sensor_id"], "thermal.sensor_id")
+            samples = value["samples"]
+            valid = isinstance(samples, list) and 2 <= len(samples) <= 100000
+            previous = -1.0
+            if valid:
+                for sample in samples:
+                    if not isinstance(sample, Mapping) or set(sample) != {"elapsed_seconds", "celsius"}:
+                        valid = False
+                        break
+                    offset, temperature = sample["elapsed_seconds"], sample["celsius"]
+                    if not _is_number(offset) or not previous < offset <= elapsed or not _is_number(temperature) or not -273.15 <= temperature <= 1000:
+                        valid = False
+                        break
+                    previous = offset
+                if valid:
+                    valid = samples[0]["elapsed_seconds"] == 0 and _profiler_numbers_match(samples[-1]["elapsed_seconds"], elapsed)
+            if not valid:
+                errors.append(f"{path}.thermal.samples must contain ordered measured temperatures spanning the complete window")
+            else:
+                result["resources.thermal_delta_celsius"] = max(sample["celsius"] for sample in samples) - samples[0]["celsius"]
+    if "accelerator" in counters:
+        value = domain("accelerator", {"counter_id", "start_busy_nanoseconds", "end_busy_nanoseconds"})
+        if value is not None:
+            identity(value["counter_id"], "accelerator.counter_id")
+            measured = delta(value, "start_busy_nanoseconds", "end_busy_nanoseconds", "accelerator")
+            if measured is not None:
+                busy_seconds = measured / 1_000_000_000.0
+                if busy_seconds > elapsed:
+                    errors.append(f"{path}.accelerator busy time exceeds the observation window")
+                else:
+                    result["resources.accelerator_utilization_percent"] = busy_seconds / elapsed * 100.0
+    return result
 
 
 def validate_corpus_manifest(manifest: Any) -> None:
@@ -467,14 +571,18 @@ def comparability_differences(baseline: Mapping[str, Any], candidate: Mapping[st
         ("provenance", "environment", "accelerator"),
         ("provenance", "environment", "random_seed"),
         ("provenance", "environment", "thermal_profile"),
+        ("execution", "resource_counters", "cpu", "logical_cpu_count"),
+        ("execution", "resource_counters", "energy", "counter_id"),
+        ("execution", "resource_counters", "thermal", "sensor_id"),
+        ("execution", "resource_counters", "accelerator", "counter_id"),
     )
     differences: list[dict[str, Any]] = []
     for path in paths:
         left: Any = baseline
         right: Any = candidate
         for part in path:
-            left = left[part]
-            right = right[part]
+            left = left.get(part) if isinstance(left, Mapping) else None
+            right = right.get(part) if isinstance(right, Mapping) else None
         if canonical_json(left) != canonical_json(right):
             differences.append({"field": ".".join(path), "baseline": left, "candidate": right})
     return differences
@@ -844,6 +952,11 @@ def profiler_measurement_evidence(diagnostic: Mapping[str, Any]) -> dict[str, An
     resources: dict[str, float | int] = {
         "resources.cpu_time_seconds": float(execution["cpu_seconds"]),
     }
+    if "resource_counters" in execution:
+        counter_errors: list[str] = []
+        resources.update(_resource_counter_bindings(execution, counter_errors))
+        if counter_errors:
+            raise ContractValidationError(counter_errors)
     resource_specs = {
         "resources.peak_ram_bytes": ("peak", ("peak_rss_bytes",)),
         "resources.peak_accelerator_memory_bytes": ("peak", ("peak_accelerator_bytes",)),
@@ -878,6 +991,7 @@ def profiler_measurement_evidence(diagnostic: Mapping[str, Any]) -> dict[str, An
         "execution": {
             "wall_clock_seconds": float(execution["wall_clock_seconds"]),
             "cpu_seconds": float(execution["cpu_seconds"]),
+            **({"resource_counters": copy.deepcopy(execution["resource_counters"])} if "resource_counters" in execution else {}),
         },
         "stage_wall_clock_seconds": stage_wall,
         "metric_bindings": dict(sorted(bindings.items())),
