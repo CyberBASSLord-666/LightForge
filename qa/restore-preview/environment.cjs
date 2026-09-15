@@ -17,7 +17,8 @@ const hash=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
   browser=await chromium.launch({headless:true,...(process.env.PLAYWRIGHT_EXECUTABLE_PATH?{executablePath:process.env.PLAYWRIGHT_EXECUTABLE_PATH}:{}),args:['--no-sandbox','--enable-unsafe-swiftshader','--use-gl=angle','--use-angle=swiftshader']});
   const page=await browser.newPage({viewport:{width:393,height:330},reducedMotion:'reduce'}),errors=[];
   page.on('pageerror',e=>errors.push(e.message));await page.goto('http://127.0.0.1:'+server.address().port);await page.addScriptTag({content:bundle.outputFiles[0].text});
-  const cases=await page.evaluate(async()=>{
+  const {cases,startup}=await page.evaluate(async()=>{
+   window.startupMarkers=[];window.LightForgeDiagnostics={log:(level,source,message)=>startupMarkers.push({level,source,message})};
    const preview=window.preview=new VehiclePreview(document.getElementById('car'));if(await preview.ready!==true)throw Error(preview.error||'Preview failed');
    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
    if(preview.renderCount<1)throw Error('Baked preview did not submit an initial full frame');
@@ -34,7 +35,7 @@ const hash=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
     const distinct=new Set();for(let i=0;i<a.length;i+=4)distinct.add(a[i]+','+a[i+1]+','+a[i+2]);
     cases.push({stage,view,quality,pixel_bytes:a.length,baked_sha256:await digest(a),live_sha256:await digest(b),different_components:different,max_component_difference:maxDifference,distinct_colors:distinct.size});
    }
-   preview.environment=baked;preview.scene.environment=baked;liveTarget.dispose();preview.redraw();return cases;
+   preview.environment=baked;preview.scene.environment=baked;liveTarget.dispose();preview.redraw();return {cases,startup:startupMarkers};
   });
   const recoveryBefore=await page.evaluate(()=>{window.recoveryAtlas=preview._environmentData;window.recoveryFrames=preview.renderCount;window.contextLoss=preview.renderer.getContext().getExtension('WEBGL_lose_context');if(!contextLoss)throw Error('Context-loss extension unavailable');contextLoss.loseContext();return recoveryFrames;});
   await page.waitForFunction(()=>preview.lost===true);
@@ -43,9 +44,13 @@ const hash=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
   await page.waitForFunction(()=>!preview.lost&&preview.renderCount>recoveryFrames);
   const recovery=await page.evaluate(()=>({atlasRetained:preview._environmentData===recoveryAtlas,uploadedSameValues:preview.environment.image.data===recoveryAtlas,loaded:preview.loaded,firstFrameAfterRecovery:preview.renderCount>recoveryFrames}));
   assert.deepEqual(recovery,{atlasRetained:true,uploadedSameValues:true,loaded:true,firstFrameAfterRecovery:true});
+  assert.equal(startup.length,6,'Actual preview startup must emit exactly six bounded markers');
+  const phases=startup.map(event=>event.message.match(/^preview-startup phase=([a-z-]+) elapsedMs=\d+\.\d{2}(?: durationMs=\d+\.\d{2})?$/)?.[1]);
+  assert.deepEqual([...phases].sort(),['graphics-initialized','gltf-loaded','atlas-loaded','rig-built','first-composer-start','first-composer-end'].sort());
+  assert.equal(await page.evaluate(()=>startupMarkers.length),6,'Context recovery and later frames must not repeat startup markers');
   await page.screenshot({path:path.join(out,'full-vehicle.png')});
   assert.deepEqual(errors,[]);for(const c of cases){assert.ok(c.distinct_colors>100,'Comparison must render a detailed vehicle');assert.equal(c.different_components,0,JSON.stringify(c));assert.equal(c.baked_sha256,c.live_sha256);}
-  const receipt={passed:true,scope:'Desktop Chromium WebGL2, complete vehicle with unchanged shadow/bloom/output passes; pixel-identical lighting comparison and real context loss/recovery, not Android approval.',browser:browser.version(),cases,recovery,source_hashes:Object.fromEntries(['web/preview/src/studio-environment-source.js','web/preview/src/studio-environment.js','web/preview/src/vehicle-preview.js','web/preview/vehicle-preview.js','web/preview/models/highland.glb','web/preview/models/studio-environment.rgba16f.gz','qa/restore-preview/environment.cjs'].map(name=>[name,hash(fs.readFileSync(path.join(root,name)))]))};
+  const receipt={passed:true,scope:'Desktop Chromium WebGL2, complete vehicle with unchanged shadow/bloom/output passes; pixel-identical lighting comparison, real context loss/recovery and bounded startup diagnostics, not Android approval.',browser:browser.version(),cases,recovery,startup,source_hashes:Object.fromEntries(['web/preview/src/studio-environment-source.js','web/preview/src/studio-environment.js','web/preview/src/vehicle-preview.js','web/preview/vehicle-preview.js','web/preview/models/highland.glb','web/preview/models/studio-environment.rgba16f.gz','qa/restore-preview/environment.cjs'].map(name=>[name,hash(fs.readFileSync(path.join(root,name)))]))};
   fs.writeFileSync(path.join(out,'verification.json'),JSON.stringify(receipt,null,2)+'\n');console.log(JSON.stringify(receipt,null,2));
  }finally{await browser?.close();await new Promise(resolve=>server.close(resolve));}
 })().catch(error=>{console.error(error);process.exitCode=1;});
