@@ -41,12 +41,20 @@
    observations:{hardwareConcurrency:observation(hardware,value=>number(value)!==null),deviceMemoryGiB:observation(deviceMemory,value=>number(value)!==null),crossOriginIsolated:observation(isolated,value=>typeof value==='boolean'),jsHeap:observation(memory,value=>value!==null&&value!==undefined),jsHeapUsedBytes:observation(heapUsed,value=>number(value)!==null),jsHeapLimitBytes:observation(heapLimit,value=>number(value)!==null)}};
  }
  function create(stage,extra={}){
-  const clock=createClock(),begun=clock.start,open=new Map(),spans=[],caches=[],counters={};let resources=null;
+  const clock=createClock(),begun=clock.start,open=new Map(),spans=[],summaries=new Map(),caches=[],counters={};let resources=null,totalSpanCount=0,omittedSpanCount=0;
   try{const api=resourceApi();resources=api?api.create(stage):null;}catch(_){resources=null;}
   function begin(name){const token=clampText(name);if(!open.has(token)&&open.size<32)open.set(token,clock.now());return token;}
   function end(token,attributes){const started=open.get(token);if(started===undefined)return null;open.delete(token);
-   const duration=clock.elapsed(started),entry={name:token,durationMs:duration};
-   if(attributes&&typeof attributes==='object')for(const [key,value] of Object.entries(attributes))if(typeof value==='string'||typeof value==='boolean'||number(value)!==null)entry[clampText(key)]=typeof value==='string'?value.slice(0,160):value;
+   const finished=clock.now(),duration=finished===null||number(started)===null?null:number(Math.max(0,finished-started)),entry={name:token,durationMs:duration};
+   // Keep complete totals independently of the bounded raw-span prefix. Bound
+   // distinct names too, and expose omissions rather than inventing a stage.
+   totalSpanCount++;let row=summaries.get(token);
+   if(!row&&summaries.size<96){row={count:0,totalMs:0,maxMs:0};summaries.set(token,row);}
+   if(row){row.count++;
+    if(duration===null){row.unavailableCount=(row.unavailableCount||0)+1;row.totalMs=null;row.maxMs=null;}
+    else if(row.totalMs!==null){const total=number(row.totalMs+duration);if(total===null){row.overflowed=true;row.totalMs=null;row.maxMs=null;}else{row.totalMs=total;row.maxMs=Math.max(row.maxMs,duration);}}
+   }else omittedSpanCount++;
+   if(attributes&&typeof attributes==='object')for(const [key,value] of Object.entries(attributes)){const name=clampText(key);if(name!=='name'&&name!=='durationMs'&&(typeof value==='string'||typeof value==='boolean'||number(value)!==null))entry[name]=typeof value==='string'?value.slice(0,160):value;}
    if(spans.length<96)spans.push(entry);return entry;
   }
   function measure(name,fn,attributes){const token=begin(name);try{return fn();}finally{end(token,attributes);}}
@@ -59,10 +67,10 @@
   function copy(bytes,count=1){try{return resources?.copy(bytes,count)===true;}catch(_){return false;}}
   function scheduler(value){try{return resources?.observeScheduler(value)===true;}catch(_){return false;}}
   function snapshot(attributes={}){for(const token of [...open.keys()])end(token,{unfinished:true});
-   const total=clock.elapsed(begun),summary={};for(const span of spans){const row=summary[span.name]||{count:0,totalMs:0,maxMs:0};row.count++;row.totalMs+=span.durationMs;row.maxMs=Math.max(row.maxMs,span.durationMs);summary[span.name]=row;}
+   const total=clock.elapsed(begun),summary=Object.fromEntries([...summaries].map(([name,row])=>[name,{...row}]));
   let resourceSnapshot=null;try{resourceSnapshot=resources?resources.snapshot():null;}catch(_){}
   let observedRuntime;try{observedRuntime=runtime();}catch(_){observedRuntime={hardwareConcurrency:null,deviceMemoryGiB:null,crossOriginIsolated:false,jsHeapUsedBytes:null,jsHeapLimitBytes:null,observations:{hardwareConcurrency:{status:'observed-error'},deviceMemoryGiB:{status:'observed-error'},crossOriginIsolated:{status:'observed-error'},jsHeap:{status:'observed-error'},jsHeapUsedBytes:{status:'observed-error'},jsHeapLimitBytes:{status:'observed-error'}}};}
-  return {schemaVersion:1,kind:'analysis-stage-profile',stage:clampText(stage),totalWallClockMs:total,timing:clock.diagnostics(),runtime:observedRuntime,spans,spanSummary:summary,cache:caches,counters,attributes,resources:resourceSnapshot};}
+  return {schemaVersion:1,kind:'analysis-stage-profile',stage:clampText(stage),totalWallClockMs:total,timing:clock.diagnostics(),runtime:observedRuntime,spans,spanSummary:summary,spanSummaryCoverage:{namesComplete:omittedSpanCount===0,summaryNameLimit:96,omittedSpanCount,totalSpanCount,retainedSpanCount:spans.length},cache:caches,counters,attributes,resources:resourceSnapshot};}
   return {begin,end,measure,measureAsync,cache,increment,io,allocation,copy,scheduler,resource:resources,snapshot};
  }
  const api={create};root.LightForgeAnalysisTelemetry=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
