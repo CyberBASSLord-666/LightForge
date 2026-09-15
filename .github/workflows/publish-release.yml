@@ -6,25 +6,28 @@ on:
       - 'releases/v*/request.json'
   workflow_dispatch:
 permissions:
-  contents: write
+  contents: read
   actions: read
 concurrency:
   group: lightforge-release-publication
   cancel-in-progress: false
 jobs:
-  publish:
+  reconstruct:
     if: github.repository == 'CyberBASSLord-666/LightForge' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    environment: lightforge-release-quality
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      artifact_id: ${{ steps.upload_materials.outputs.artifact-id }}
+      artifact_digest: ${{ steps.upload_materials.outputs.artifact-digest }}
+      artifact_name: lightforge-release-materials-${{ github.run_id }}-${{ github.run_attempt }}
     timeout-minutes: 30
-    env:
-      GH_TOKEN: ${{ github.token }}
-      GH_REPO: ${{ github.repository }}
-      LIGHTFORGE_REF_PROTECTED: ${{ github.ref_protected }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
+          persist-credentials: false
           sparse-checkout: |
             .github
             android
@@ -34,29 +37,360 @@ jobs:
             qa
             releases
             research/evaluation-1.6
+            research/upstream/deux
       - name: Require protected main release authority
+        env:
+          LIGHTFORGE_REF_PROTECTED: ${{ github.ref_protected }}
         run: >-
           test "$GITHUB_REF" = "refs/heads/main" &&
           test "$LIGHTFORGE_REF_PROTECTED" = "true"
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.12'
-      - name: Restore source-bound GAME graphs and licensed reference fixtures
+      - name: Establish immutable release source before repository execution
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          python3 -m pip install --no-cache-dir onnx==1.20.1 numpy==2.5.3 scipy==1.18.1
+          set -euo pipefail
+          mapfile -t release_metadata < <(python3 -I -S - <<'PY'
+          import json, os, pathlib, re
+          root = pathlib.Path(os.environ["GITHUB_WORKSPACE"])
+          version = json.loads((root / "version.json").read_text(encoding="utf-8"))
+          name = version.get("name") if isinstance(version, dict) else None
+          if not isinstance(name, str) or re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", name) is None:
+              raise SystemExit("Release version is invalid")
+          request_path = "releases/v" + name + "/request.json"
+          request = json.loads((root / request_path).read_text(encoding="utf-8"))
+          source_commit = request.get("source_commit") if isinstance(request, dict) else None
+          run_id = request.get("run_id") if isinstance(request, dict) else None
+          if request.get("version") != version or not isinstance(source_commit, str) or re.fullmatch(r"[0-9a-f]{40}", source_commit) is None or type(run_id) is not int or run_id <= 0:
+              raise SystemExit("Release request is not bound to the current version, source and CI run")
+          print(name)
+          print(request_path)
+          print(source_commit)
+          print(run_id)
+          PY
+          )
+          test "${#release_metadata[@]}" -eq 4
+          LIGHTFORGE_RELEASE="${release_metadata[0]}"
+          LIGHTFORGE_RELEASE_REQUEST="${release_metadata[1]}"
+          LIGHTFORGE_RELEASE_SOURCE_COMMIT="${release_metadata[2]}"
+          LIGHTFORGE_RELEASE_RUN_ID="${release_metadata[3]}"
+          printf '%s\n' \
+            "LIGHTFORGE_RELEASE=$LIGHTFORGE_RELEASE" \
+            "LIGHTFORGE_RELEASE_REQUEST=$LIGHTFORGE_RELEASE_REQUEST" \
+            "LIGHTFORGE_RELEASE_SOURCE_COMMIT=$LIGHTFORGE_RELEASE_SOURCE_COMMIT" \
+            "LIGHTFORGE_RELEASE_RUN_ID=$LIGHTFORGE_RELEASE_RUN_ID" >> "$GITHUB_ENV"
+          candidate_record="$RUNNER_TEMP/lightforge-release-candidate-run.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$LIGHTFORGE_RELEASE_RUN_ID" > "$candidate_record"
+          python3 -I -S - "$candidate_record" "$LIGHTFORGE_RELEASE_SOURCE_COMMIT" "$GITHUB_REPOSITORY" <<'PY'
+          import json, sys
+          record = json.load(open(sys.argv[1], encoding="utf-8"))
+          source_commit, repository = sys.argv[2:]
+          expected = (
+              record.get("status") == "completed"
+              and record.get("conclusion") == "success"
+              and record.get("head_sha") == source_commit
+              and record.get("event") == "push"
+              and record.get("head_branch") == "main"
+              and record.get("path") == ".github/workflows/verify-v2.yml"
+              and isinstance(record.get("head_repository"), dict)
+              and record["head_repository"].get("full_name") == repository
+          )
+          if not expected:
+              raise SystemExit("Release request CI provenance is invalid")
+          PY
+          unset GH_TOKEN
+          source_root="$RUNNER_TEMP/lightforge-release-source"
+          test ! -e "$source_root"
+          git worktree add --detach "$source_root" "$LIGHTFORGE_RELEASE_SOURCE_COMMIT"
+          python3 -E -S "$source_root/tools/release_source_preflight.py" \
+            --checkout "$GITHUB_WORKSPACE" \
+            --source-commit "$LIGHTFORGE_RELEASE_SOURCE_COMMIT"
+          echo "LIGHTFORGE_RELEASE_SOURCE=$source_root" >> "$GITHUB_ENV"
+      - name: Restore source-bound GAME and Deux graphs and licensed reference fixtures
+        run: |
+          cd "$LIGHTFORGE_RELEASE_SOURCE"
+          python3 -m pip install --no-cache-dir torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu
+          python3 -m pip install --no-cache-dir -r tools/model-requirements.txt scipy==1.18.1
           python3 tools/prepare_game.py
+          python3 tools/prepare_deux.py
           sudo apt-get update -qq
           sudo apt-get install -y ffmpeg
           mkdir -p qa/release-1.6.0/fixtures
           curl -fL --retry 3 https://github.com/sigsep/sigsep-mus-db/releases/download/v0.4.0/MUSDB18-7-STEMS.zip -o qa/release-1.6.0/fixtures/MUSDB18-7-STEMS.zip
           echo '365f66acffc57282e474a4c24b32afec3678258c50b8d45646ac849b0a287df3  qa/release-1.6.0/fixtures/MUSDB18-7-STEMS.zip' | sha256sum -c
           python3 qa/release-1.6.0/prepare-musdb-fixtures.py
-      - run: python3 tools/bootstrap_toolchain.py
+      - name: Seal data-only reconstructed materials
+        run: |
+          set -euo pipefail
+          cd "$LIGHTFORGE_RELEASE_SOURCE"
+          python3 -E -S tools/release_material_handoff.py write \
+            --source-root "$LIGHTFORGE_RELEASE_SOURCE" \
+            --source-commit "$LIGHTFORGE_RELEASE_SOURCE_COMMIT" \
+            --output "$RUNNER_TEMP/lightforge-release-materials.zip"
+      - name: Upload immutable data-only material handoff
+        id: upload_materials
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: lightforge-release-materials-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/lightforge-release-materials.zip
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    needs: reconstruct
+    permissions:
+      contents: write
+      actions: read
+    if: github.repository == 'CyberBASSLord-666/LightForge' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: lightforge-release-quality
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          sparse-checkout: |
+            .github
+            android
+            web
+            tools
+            tests
+            qa
+            releases
+            research/evaluation-1.6
+            research/upstream/deux
+      - name: Require protected main release authority
+        env:
+          LIGHTFORGE_REF_PROTECTED: ${{ github.ref_protected }}
+        run: >-
+          test "$GITHUB_REF" = "refs/heads/main" &&
+          test "$LIGHTFORGE_REF_PROTECTED" = "true"
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - name: Establish immutable release source before repository execution
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mapfile -t release_metadata < <(python3 -I -S - <<'PY'
+          import json, os, pathlib, re
+          root = pathlib.Path(os.environ["GITHUB_WORKSPACE"])
+          version = json.loads((root / "version.json").read_text(encoding="utf-8"))
+          name = version.get("name") if isinstance(version, dict) else None
+          if not isinstance(name, str) or re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", name) is None:
+              raise SystemExit("Release version is invalid")
+          request_path = "releases/v" + name + "/request.json"
+          request = json.loads((root / request_path).read_text(encoding="utf-8"))
+          source_commit = request.get("source_commit") if isinstance(request, dict) else None
+          run_id = request.get("run_id") if isinstance(request, dict) else None
+          if request.get("version") != version or not isinstance(source_commit, str) or re.fullmatch(r"[0-9a-f]{40}", source_commit) is None or type(run_id) is not int or run_id <= 0:
+              raise SystemExit("Release request is not bound to the current version, source and CI run")
+          print(name)
+          print(request_path)
+          print(source_commit)
+          print(run_id)
+          PY
+          )
+          test "${#release_metadata[@]}" -eq 4
+          LIGHTFORGE_RELEASE="${release_metadata[0]}"
+          LIGHTFORGE_RELEASE_REQUEST="${release_metadata[1]}"
+          LIGHTFORGE_RELEASE_SOURCE_COMMIT="${release_metadata[2]}"
+          LIGHTFORGE_RELEASE_RUN_ID="${release_metadata[3]}"
+          printf '%s\n' \
+            "LIGHTFORGE_RELEASE=$LIGHTFORGE_RELEASE" \
+            "LIGHTFORGE_RELEASE_REQUEST=$LIGHTFORGE_RELEASE_REQUEST" \
+            "LIGHTFORGE_RELEASE_SOURCE_COMMIT=$LIGHTFORGE_RELEASE_SOURCE_COMMIT" \
+            "LIGHTFORGE_RELEASE_RUN_ID=$LIGHTFORGE_RELEASE_RUN_ID" >> "$GITHUB_ENV"
+          candidate_record="$RUNNER_TEMP/lightforge-release-candidate-run.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$LIGHTFORGE_RELEASE_RUN_ID" > "$candidate_record"
+          python3 -I -S - "$candidate_record" "$LIGHTFORGE_RELEASE_SOURCE_COMMIT" "$GITHUB_REPOSITORY" <<'PY'
+          import json, sys
+          record = json.load(open(sys.argv[1], encoding="utf-8"))
+          source_commit, repository = sys.argv[2:]
+          expected = (
+              record.get("status") == "completed"
+              and record.get("conclusion") == "success"
+              and record.get("head_sha") == source_commit
+              and record.get("event") == "push"
+              and record.get("head_branch") == "main"
+              and record.get("path") == ".github/workflows/verify-v2.yml"
+              and isinstance(record.get("head_repository"), dict)
+              and record["head_repository"].get("full_name") == repository
+          )
+          if not expected:
+              raise SystemExit("Release request CI provenance is invalid")
+          PY
+          unset GH_TOKEN
+          source_root="$RUNNER_TEMP/lightforge-release-source"
+          test ! -e "$source_root"
+          git worktree add --detach "$source_root" "$LIGHTFORGE_RELEASE_SOURCE_COMMIT"
+          python3 -E -S "$source_root/tools/release_source_preflight.py" \
+            --checkout "$GITHUB_WORKSPACE" \
+            --source-commit "$LIGHTFORGE_RELEASE_SOURCE_COMMIT"
+          for relative in \
+            RELEASE_NOTES.md \
+            release-verification.json \
+            "$LIGHTFORGE_RELEASE_REQUEST" \
+            "releases/v$LIGHTFORGE_RELEASE/prepare.json" \
+            "releases/v$LIGHTFORGE_RELEASE/signed-apk.delta.json" \
+            "releases/v$LIGHTFORGE_RELEASE/publication.json"; do
+            source="$GITHUB_WORKSPACE/$relative"
+            if test -e "$source"; then
+              test -f "$source" && test ! -L "$source"
+              mkdir -p "$source_root/$(dirname "$relative")"
+              cp --preserve=mode,timestamps -- "$source" "$source_root/$relative"
+            fi
+          done
+          test -f "$source_root/$LIGHTFORGE_RELEASE_REQUEST"
+          test -f "$source_root/releases/v$LIGHTFORGE_RELEASE/signed-apk.delta.json"
+          echo "LIGHTFORGE_RELEASE_SOURCE=$source_root" >> "$GITHUB_ENV"
+      - name: Validate exact same-run material artifact identity
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MATERIAL_ARTIFACT_ID: ${{ needs.reconstruct.outputs.artifact_id }}
+          MATERIAL_ARTIFACT_DIGEST: ${{ needs.reconstruct.outputs.artifact_digest }}
+          MATERIAL_ARTIFACT_NAME: ${{ needs.reconstruct.outputs.artifact_name }}
+        run: |
+          set -euo pipefail
+          python3 -I -S - <<'PY'
+          import os, re
+          if re.fullmatch(r"[1-9][0-9]*", os.environ["MATERIAL_ARTIFACT_ID"]) is None:
+              raise SystemExit("Invalid material artifact ID")
+          if re.fullmatch(r"(?:sha256:)?[0-9a-f]{64}", os.environ["MATERIAL_ARTIFACT_DIGEST"]) is None:
+              raise SystemExit("Invalid material artifact digest")
+          expected_name = r"lightforge-release-materials-" + re.escape(os.environ["GITHUB_RUN_ID"]) + r"-[1-9][0-9]*"
+          if re.fullmatch(expected_name, os.environ["MATERIAL_ARTIFACT_NAME"]) is None:
+              raise SystemExit("Invalid material artifact name")
+          PY
+          record="$RUNNER_TEMP/lightforge-material-artifact.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$MATERIAL_ARTIFACT_ID" > "$record"
+          python3 -I -S - "$record" <<'PY'
+          import json, os, sys
+          record = json.load(open(sys.argv[1], encoding="utf-8"))
+          run = record.get("workflow_run") or {}
+          expected_digest = "sha256:" + os.environ["MATERIAL_ARTIFACT_DIGEST"].removeprefix("sha256:")
+          if not (
+              record.get("id") == int(os.environ["MATERIAL_ARTIFACT_ID"])
+              and record.get("digest") == expected_digest
+              and record.get("expired") is False
+              and record.get("name") == os.environ["MATERIAL_ARTIFACT_NAME"]
+              and run.get("id") == int(os.environ["GITHUB_RUN_ID"])
+              and run.get("head_sha") == os.environ["GITHUB_SHA"]
+              and run.get("head_branch") == "main"
+          ):
+              raise SystemExit("Material artifact is not the exact immutable same-run handoff")
+          PY
+      - name: Download and verify exact material artifact before extraction
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MATERIAL_ARTIFACT_ID: ${{ needs.reconstruct.outputs.artifact_id }}
+          MATERIAL_ARTIFACT_DIGEST: ${{ needs.reconstruct.outputs.artifact_digest }}
+        run: |
+          set -euo pipefail
+          python3 -I -S - <<'PY'
+          import hashlib, os, pathlib, re, stat, subprocess, zipfile
+          artifact_id = os.environ["MATERIAL_ARTIFACT_ID"]
+          checksum = os.environ["MATERIAL_ARTIFACT_DIGEST"].removeprefix("sha256:")
+          if re.fullmatch(r"[1-9][0-9]*", artifact_id) is None or re.fullmatch(r"[0-9a-f]{64}", checksum) is None:
+              raise SystemExit("Invalid material artifact identity")
+          root = pathlib.Path(os.environ["RUNNER_TEMP"]) / "lightforge-release-materials"
+          root.mkdir(exist_ok=False)
+          archive_path = root.with_suffix(".artifact.zip")
+          limit = 2 * 1024**3 + 2 * 1024**2
+          command = ["gh", "api", "repos/" + os.environ["GITHUB_REPOSITORY"] + "/actions/artifacts/" + artifact_id + "/zip"]
+          total = 0
+          digest = hashlib.sha256()
+          with archive_path.open("xb") as output, subprocess.Popen(command, stdout=subprocess.PIPE) as process:
+              try:
+                  while chunk := process.stdout.read(1024**2):
+                      total += len(chunk)
+                      if total > limit:
+                          raise ValueError("Material artifact exceeds download limit")
+                      digest.update(chunk)
+                      output.write(chunk)
+                  if process.wait() != 0:
+                      raise ValueError("Material artifact download failed")
+              except BaseException:
+                  process.kill()
+                  process.wait()
+                  raise
+          if digest.hexdigest() != checksum:
+              raise SystemExit("Downloaded material artifact digest differs from Actions metadata")
+          with zipfile.ZipFile(archive_path) as archive:
+              infos = archive.infolist()
+              if len(infos) != 1 or infos[0].filename != "lightforge-release-materials.zip":
+                  raise SystemExit("Material artifact is not the exact flat inventory")
+              info = infos[0]
+              if info.flag_bits & 1 or stat.S_IFMT(info.external_attr >> 16) not in (0, stat.S_IFREG) or not 0 < info.file_size <= limit:
+                  raise SystemExit("Material artifact contains an unsafe member")
+              with archive.open(info) as source, (root / info.filename).open("xb") as output:
+                  count = 0
+                  while chunk := source.read(1024**2):
+                      count += len(chunk)
+                      if count > info.file_size:
+                          raise ValueError("Material artifact member exceeds declared size")
+                      output.write(chunk)
+                  if count != info.file_size:
+                      raise ValueError("Material artifact member size differs")
+          PY
+      - name: Install only source-pinned material bytes
+        run: |
+          set -euo pipefail
+          python3 -I -S - <<'PY'
+          import os, pathlib
+          root = pathlib.Path(os.environ["RUNNER_TEMP"]) / "lightforge-release-materials"
+          entries = list(root.iterdir())
+          if len(entries) != 1 or entries[0].name != "lightforge-release-materials.zip" or entries[0].is_symlink() or not entries[0].is_file():
+              raise SystemExit("Material artifact extraction is not a flat exact inventory")
+          PY
+          cd "$LIGHTFORGE_RELEASE_SOURCE"
+          python3 -E -S tools/release_material_handoff.py install \
+            --source-root "$LIGHTFORGE_RELEASE_SOURCE" \
+            --source-commit "$LIGHTFORGE_RELEASE_SOURCE_COMMIT" \
+            --input "$RUNNER_TEMP/lightforge-release-materials/lightforge-release-materials.zip"
+      - name: Provision independently pinned APK verification tools
+        run: |
+          set -euo pipefail
+          toolchain="$RUNNER_TEMP/lightforge-publication-toolchain"
+          test ! -e "$toolchain"
+          mkdir -p "$toolchain/downloads" "$toolchain/android-sdk/build-tools"
+          curl -fL --retry 3 'https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.20.1%2B1/OpenJDK17U-jdk_x64_linux_hotspot_17.0.20.1_1.tar.gz' -o "$toolchain/downloads/jdk17.tar.gz"
+          test "$(stat -c '%s' "$toolchain/downloads/jdk17.tar.gz")" = "193252603"
+          printf '%s  %s\n' '3808d1d15e3ec6bd5b84057fb5d84c33d8a1536a258146bcea2e603fc726e08e' "$toolchain/downloads/jdk17.tar.gz" | sha256sum -c
+          tar -xzf "$toolchain/downloads/jdk17.tar.gz" -C "$toolchain"
+          mv "$toolchain/jdk-17.0.20.1+1" "$toolchain/jdk17"
+          curl -fL --retry 3 'https://dl.google.com/android/repository/build-tools_r35_linux.zip' -o "$toolchain/downloads/build-tools.zip"
+          test "$(stat -c '%s' "$toolchain/downloads/build-tools.zip")" = "61958799"
+          printf '%s  %s\n' 'bd3a4966912eb8b30ed0d00b0cda6b6543b949d5ffe00bea54c04c81e1561d88' "$toolchain/downloads/build-tools.zip" | sha256sum -c
+          unzip -q "$toolchain/downloads/build-tools.zip" -d "$toolchain"
+          mv "$toolchain/android-15" "$toolchain/android-sdk/build-tools/35.0.0"
+          chmod +x "$toolchain/android-sdk/build-tools/35.0.0/"{aapt2,apksigner,zipalign}
+          test -x "$toolchain/jdk17/bin/java"
+          echo "LIGHTFORGE_TOOLCHAIN_DIR=$toolchain" >> "$GITHUB_ENV"
+      - name: Recheck immutable publisher source and installed materials
+        run: |
+          set -euo pipefail
+          cd "$LIGHTFORGE_RELEASE_SOURCE"
+          git diff --exit-code "$LIGHTFORGE_RELEASE_SOURCE_COMMIT" -- .github tools web android version.json
+          python3 -E -S tools/release_material_handoff.py verify \
+            --source-root "$LIGHTFORGE_RELEASE_SOURCE" \
+            --source-commit "$LIGHTFORGE_RELEASE_SOURCE_COMMIT"
+          for executable in aapt2 apksigner zipalign; do
+            test -x "$LIGHTFORGE_TOOLCHAIN_DIR/android-sdk/build-tools/35.0.0/$executable"
+          done
       - name: Verify provenance, reconstruct exact signed APK and publish
         env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          LIGHTFORGE_REF_PROTECTED: ${{ github.ref_protected }}
           LIGHTFORGE_PHYSICAL_VALIDATION_ATTESTATION_JSON: ${{ secrets.LIGHTFORGE_PHYSICAL_VALIDATION_ATTESTATION_JSON }}
         run: |
           set -euo pipefail
+          cd "$LIGHTFORGE_RELEASE_SOURCE"
           test -n "$LIGHTFORGE_PHYSICAL_VALIDATION_ATTESTATION_JSON"
           umask 077
           target="$(mktemp "$RUNNER_TEMP/lightforge-physical-validation-attestation.XXXXXX")"
@@ -68,7 +402,6 @@ jobs:
           unset LIGHTFORGE_PHYSICAL_VALIDATION_ATTESTATION_JSON
           chmod 600 "$target"
           test "$(stat -c '%a' "$target")" = "600"
-          python3 -m json.tool "$target" > /dev/null
-          request="$(python3 -c 'import json; print("releases/v"+json.load(open("version.json"))["name"]+"/request.json")')"
-          python3 tools/publish_github_release.py "$request" \
+          python3 -I -S -m json.tool "$target" > /dev/null
+          python3 -E -S tools/publish_github_release.py "$LIGHTFORGE_RELEASE_REQUEST" \
             --physical-validation-attestation "$target"

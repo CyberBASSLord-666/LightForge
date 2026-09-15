@@ -1,8 +1,19 @@
-# LightForge 2.2.4
+# LightForge 2.2.5 — release candidate
 
-LightForge 2.2.4 improves long-running analysis and recovery while preserving the bundled models, source timing and quality settings. The signed update uses the original LightForge certificate: install it over the existing app without uninstalling to retain private projects.
+LightForge 2.2.5 / Android version code 20205 is a candidate for the current source. It is not a published or installable update, and it does not claim a new APK, verification run, signature, quality result, or physical validation.
 
-## Changes
+## Candidate changes
+
+- Carry the current foreground-only completed-restore handling and fresh session-bound 2.2.5 QA sources.
+- Declare that the current source requires the protected performance-quality gate rather than a non-performance waiver.
+
+## Candidate status
+
+The candidate must pass fresh source-bound verification, the protected performance-quality gate, original-signed APK validation, and required physical validation before publication. Until then, the published update is [LightForge 2.2.4](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.2.4).
+
+## Published LightForge 2.2.4 release notes
+
+### Changes
 
 - Run Balanced MDX separation through a guarded native Android CPU path, retaining both polarity passes and the existing waveform decoder. Compatibility fallback uses the same model and retries a complete pair in one runtime.
 - Bound WebAssembly model lifetimes between passages and stages, reuse large transform buffers, and release native resources before voice/GAME processing. GAME retains all eight transcription steps.
@@ -11,7 +22,7 @@ LightForge 2.2.4 improves long-running analysis and recovery while preserving th
 - Restore completed projects once across competing startup events. Suspend paused preview animation and defer empty-scene rendering until the model and view are ready, preserving the tested final graphics.
 - Improve native crash reports and renderer recovery while retaining local-only diagnostics and user-controlled export.
 
-## Verification and limits
+### Verification and limits
 
 All seven release verification gates passed in the complete [production run](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34424617050). Android 15 emulator checks completed Studio and two-pass native Balanced analysis with the Activity destroyed and screen off under Doze, reopened completed shows, cancelled live work, resumed a saved passage and verified timeout cleanup. All eight diagnostic/export/recovery checks also passed. The original 45-second readiness deadline was retained.
 

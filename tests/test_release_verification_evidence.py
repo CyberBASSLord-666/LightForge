@@ -45,7 +45,7 @@ def pipeline(attempt=1):
 
 def candidate_manifest(path: Path, attempt=1):
     path.write_text(json.dumps({
-        "schema_version": 1,
+        "schema_version": evidence.CANDIDATE_SCHEMA_VERSION,
         "kind": evidence.CANDIDATE_KIND,
         "release": RELEASE["name"],
         "source": {"commit": HEAD, "tree_sha": TREE},
@@ -54,6 +54,28 @@ def candidate_manifest(path: Path, attempt=1):
         "files": {name: {"bytes": 1, "sha256": "d" * 64} for name in evidence._candidate_files(RELEASE["name"])},
     }), encoding="utf-8")
     return evidence.sha256_file(path)
+
+
+def receipt(name, source_hashes=None, session=SESSION):
+    value = {
+        "release": RELEASE["name"],
+        "passed": True,
+        "errors": [],
+        "source_hashes": {"web/app.js": SOURCE_HASH} if source_hashes is None else source_hashes,
+    }
+    if name in {
+        "browser-verification.json",
+        "analysis-browser-verification.json",
+        "background-ui-verification.json",
+        "restore-preview-verification.json",
+    }:
+        value.update({
+            "evidenceSessionSchema": evidence.EVIDENCE_SESSION_SCHEMA,
+            "evidenceSession": session,
+        })
+    elif name == "analysis-verification.json":
+        value["evidence_session"] = session
+    return value
 
 
 class ReleaseVerificationEvidenceTest(unittest.TestCase):
@@ -66,10 +88,7 @@ class ReleaseVerificationEvidenceTest(unittest.TestCase):
         (source_root / "web").mkdir(parents=True)
         (source_root / "web/app.js").write_bytes(SOURCE_BYTES)
         for name in evidence.RECEIPTS:
-            (input_dir / name).write_text(json.dumps({
-                "release": RELEASE["name"], "passed": True, "errors": [],
-                "source_hashes": {"web/app.js": SOURCE_HASH},
-            }), encoding="utf-8")
+            (input_dir / name).write_text(json.dumps(receipt(name)), encoding="utf-8")
         content_root = root / "content"
         with patch.object(evidence, "_candidate_tree_bytes", side_effect=lambda _root, _commit, relative: SOURCE_BYTES if relative == "web/app.js" else None):
             content = evidence.write_content(SimpleNamespace(
@@ -164,6 +183,15 @@ class ReleaseVerificationEvidenceTest(unittest.TestCase):
             wrapper_path.write_text(json.dumps(value), encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "manifest is not canonical|artifact digest differs"):
                 self._run(root, content_root, wrapper_root, content["candidate"])
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            content_root, wrapper_root, content, _ = self._artifacts(root)
+            wrapper_path = wrapper_root / evidence.WRAPPER_MANIFEST
+            value = json.loads(wrapper_path.read_text(encoding="utf-8"))
+            value["receipts"]["restore-preview-verification.json"]["session_evidence"]["evidenceSession"] = "d" * 64
+            wrapper_path.write_text(json.dumps(value), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "session differs"):
+                self._run(root, content_root, wrapper_root, content["candidate"])
 
     def test_cross_run_candidate_binding_and_source_tampering_fail_closed(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -209,28 +237,32 @@ class ReleaseVerificationEvidenceTest(unittest.TestCase):
             game = source_root / "web/analysis/models/game/bd2dur.onnx"
             game.parent.mkdir(parents=True)
             game.write_bytes(b"game")
+            deux = source_root / "web/analysis/models/deux/block-00-frequency.onnx"
+            deux.parent.mkdir(parents=True)
+            deux.write_bytes(b"deux")
             runtime = source_root / "qa/release-2.2.5/source-clock-verification.json"
             runtime.parent.mkdir(parents=True)
             runtime.write_bytes(b'{"fresh":true}')
-            fixture_hash, game_hash, runtime_hash = map(evidence.sha256_file, (fixture, game, runtime))
+            fixture_hash, game_hash, deux_hash, runtime_hash = map(evidence.sha256_file, (fixture, game, deux, runtime))
             hashes = {
                 "web/app.js": SOURCE_HASH,
                 "qa/release-1.6.0/fixtures/falcon-mix.wav": fixture_hash,
                 "web/analysis/models/game/bd2dur.onnx": game_hash,
+                "web/analysis/models/deux/block-00-frequency.onnx": deux_hash,
                 "qa/release-2.2.5/source-clock-verification.json": runtime_hash,
             }
             for name in evidence.RECEIPTS:
-                (receipt_dir / name).write_text(json.dumps({
-                    "release": RELEASE["name"], "passed": True, "errors": [], "source_hashes": hashes,
-                }), encoding="utf-8")
+                (receipt_dir / name).write_text(json.dumps(receipt(name, hashes)), encoding="utf-8")
             fixture_provenance = json.dumps({"tracks": [{"id": "falcon", "pcmSHA256": {"falcon-mix.wav": fixture_hash}}]}).encode()
             game_provenance = json.dumps({"files": {"bd2dur.onnx": {"bytes": game.stat().st_size, "sha256": game_hash}}}).encode()
+            deux_provenance = json.dumps({"files": {"block-00-frequency.onnx": {"bytes": deux.stat().st_size, "sha256": deux_hash}}}).encode()
 
             def candidate_bytes(_root, _commit, relative):
                 return {
                     "web/app.js": SOURCE_BYTES,
                     "qa/release-1.6.0/musdb-fixture-provenance.json": fixture_provenance,
                     "web/analysis/models/game/manifest.json": game_provenance,
+                    "web/analysis/models/deux/manifest.json": deux_provenance,
                     "qa/release-2.2.5/source-clock-verification.json": b"historical-output",
                 }.get(relative)
 
@@ -254,6 +286,7 @@ class ReleaseVerificationEvidenceTest(unittest.TestCase):
                     "web/app.js": SOURCE_BYTES,
                     "qa/release-1.6.0/musdb-fixture-provenance.json": fixture_provenance,
                     "web/analysis/models/game/manifest.json": game_provenance,
+                    "web/analysis/models/deux/manifest.json": deux_provenance,
                 }[requested]
 
             with patch.object(publisher, "ROOT", source_root), patch.object(publisher, "run_bytes", side_effect=source):
@@ -261,6 +294,7 @@ class ReleaseVerificationEvidenceTest(unittest.TestCase):
                     HEAD, content["receipts"], content["source_bindings"], root / "content"
                 )
             self.assertNotIn(("git", "show", HEAD + ":qa/release-2.2.5/source-clock-verification.json"), commands)
+            self.assertIn(("git", "show", HEAD + ":web/analysis/models/deux/manifest.json"), commands)
             wrapper_root = root / "wrapper"
             evidence.write_wrapper(SimpleNamespace(
                 output_dir=wrapper_root, content_dir=root / "content", evidence_artifact_id=912,

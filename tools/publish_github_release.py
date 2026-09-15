@@ -47,6 +47,7 @@ from verification_evidence_manifest import (
 )
 
 ROOT = Path(__file__).resolve().parents[1]
+MAX_ARTIFACT_ARCHIVE_BYTES = 5 * 1024 * 1024 * 1024
 
 # These determine whether the release publisher actually applies its
 # provenance/signature checks.  A post-CI release-request commit may add
@@ -68,6 +69,14 @@ RELEASE_ENFORCEMENT_PATHS = (
     'tools/run_android_background_tests.py',
     'tools/run_android_diagnostics_tests.py',
     '.github/workflows/performance-quality-gate.yml',
+    'tools/release_source_preflight.py',
+    'tools/release_material_handoff.py',
+    'tools/prepare_game.py',
+    'tools/prepare_deux.py',
+    'tools/model-requirements.txt',
+    'tools/bootstrap_toolchain.py',
+    'qa/release-1.6.0/prepare-musdb-fixtures.py',
+    'research/upstream/deux',
 )
 
 
@@ -78,6 +87,24 @@ def run(*args, **kwargs):
 def run_bytes(*args, **kwargs):
     """Run a command whose NUL-delimited output must not be normalized."""
     return subprocess.check_output(args, **kwargs)
+
+
+def require_candidate_worktree(source_commit):
+    """Check runtime source bytes, not just two immutable Git objects.
+
+    The workflow must establish this boundary before starting Python, because
+    this function cannot undo an import from a modified publisher.  Repeat the
+    check here before evidence downloads or any release API mutation.
+    """
+    require(isinstance(source_commit, str) and re.fullmatch('[0-9a-f]{40}', source_commit),
+            'Invalid source commit')
+    require(run('git', 'rev-parse', 'HEAD') == source_commit,
+            'Publisher checkout is not the exact verified candidate commit')
+    run('git', 'cat-file', '-e', source_commit + '^{commit}')
+    run(
+        'git', 'diff', '--no-ext-diff', '--exit-code', source_commit, '--',
+        'web', 'android', 'version.json', *RELEASE_ENFORCEMENT_PATHS,
+    )
 
 
 def api(path):
@@ -166,10 +193,24 @@ def _download_exact_artifact(repo, artifact, destination, expected_names):
     destination.mkdir(parents=True, exist_ok=False)
     archive_path = destination / '.artifact.zip'
     try:
-        subprocess.run(
-            ['gh', 'api', f'repos/{repo}/actions/artifacts/{artifact["id"]}/zip', '--output', str(archive_path)],
-            check=True,
-        )
+        # `gh api` writes response bodies to stdout; it has no --output flag.
+        # Bound that stream before writing or opening any attacker-supplied ZIP.
+        command = ['gh', 'api', f'repos/{repo}/actions/artifacts/{artifact["id"]}/zip']
+        with archive_path.open('xb') as output, subprocess.Popen(command, stdout=subprocess.PIPE) as process:
+            try:
+                total = 0
+                while chunk := process.stdout.read(1024 * 1024):
+                    total += len(chunk)
+                    require(total <= MAX_ARTIFACT_ARCHIVE_BYTES,
+                            'Artifact exceeds the safe download limit')
+                    output.write(chunk)
+                returncode = process.wait()
+                if returncode:
+                    raise subprocess.CalledProcessError(returncode, command)
+            except BaseException:
+                process.kill()
+                process.wait()
+                raise
         require(digest(archive_path) == _sha256(artifact['digest'], 'Artifact digest is invalid'),
                 'Downloaded artifact digest differs from Actions metadata')
         with zipfile.ZipFile(archive_path) as archive:
@@ -368,7 +409,7 @@ def _validate_verification_source_hashes(source_commit, receipts, source_binding
 
 
 def verify_nonandroid_release_evidence(repo, ci, version, source_commit, source_tree_sha, candidate):
-    """Load only the success-only, candidate-bound five-receipt artifact chain."""
+    """Load only the success-only, candidate-bound seven-receipt artifact chain."""
     pipeline = _candidate_evidence_pipeline(candidate, ci, source_commit, source_tree_sha)
     candidate = validate_verification_candidate_record(candidate, release=version['name'], pipeline=pipeline)
     expected_wrapper_name = verification_wrapper_artifact_name(version['name'], pipeline)
@@ -970,17 +1011,17 @@ def main(argv=None):
     args = parser.parse_args(argv)
     os.chdir(ROOT)
     request = json.loads(Path(args.request).read_text())
-    version = json.loads((ROOT / 'version.json').read_text())
     repo = os.environ['GH_REPO']
     require(repo == 'CyberBASSLord-666/LightForge', 'Unexpected publishing repository')
     require_protected_main(os.environ)
+    source_commit = request['source_commit']
+    require_candidate_worktree(source_commit)
+    version = json.loads((ROOT / 'version.json').read_text())
     physical_attestation = load_physical_validation_attestation(
         args.physical_validation_attestation
     )
     require(request['version'] == version, 'Release request version mismatch')
     require(type(request['run_id']) is int and request['run_id'] > 0, 'Invalid CI run')
-    source_commit = request['source_commit']
-    require(re.fullmatch('[0-9a-f]{40}', source_commit), 'Invalid source commit')
     ci = api(f'repos/{repo}/actions/runs/{request["run_id"]}')
     require(ci['status'] == 'completed' and ci['conclusion'] == 'success', 'Candidate CI has not passed')
     require(ci['head_sha'] == source_commit and ci['head_repository']['full_name'] == repo, 'Candidate provenance mismatch')
@@ -988,20 +1029,6 @@ def main(argv=None):
     require(ci.get('event') == 'push' and ci.get('head_branch') == 'main', 'Candidate did not run from protected main')
     _positive_int(ci.get('id'), 'Candidate run id is invalid')
     _positive_int(ci.get('run_attempt'), 'Candidate run attempt is invalid')
-    run('git', 'fetch', '--no-tags', 'origin', source_commit)
-    run('git', 'merge-base', '--is-ancestor', source_commit, 'HEAD')
-    run(
-        'git',
-        'diff',
-        '--exit-code',
-        source_commit,
-        'HEAD',
-        '--',
-        'web',
-        'android',
-        'version.json',
-        *RELEASE_ENFORCEMENT_PATHS,
-    )
     source_commit_record = api(f'repos/{repo}/git/commits/{source_commit}')
     source_tree_sha = source_commit_record.get('tree', {}).get('sha')
     require(isinstance(source_tree_sha, str) and re.fullmatch('[0-9a-f]{40}', source_tree_sha), 'Candidate source tree is invalid')

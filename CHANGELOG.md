@@ -1,5 +1,10 @@
 # LightForge changelog
 
+## 2.2.5 — verification candidate (unpublished)
+
+- Stage version metadata 2.2.5 / Android version code 20205, fresh session-bound 2.2.5 QA sources, foreground-only completed-restore handling, and the required protected performance-quality declaration for the current source.
+- This candidate has no fresh CI, original-signed APK, physical-validation, or publication receipt. It must complete those release-stage controls before publication; 2.2.4 remains the available update.
+
 ## 2.2.4 — bounded long-run analysis and balanced acceleration
 
 - Bound MDX WebAssembly sessions and reuse the frontend spectrum so long Balanced runs release model heaps at passage boundaries instead of accumulating renderer memory.
@@ -8,7 +13,7 @@
 - Reset GAME sessions every four chunks, detach preview WebViews before teardown, and surface each durable rhythm/separation/voice/bass checkpoint immediately.
 - Keep model initialization off the synchronous bridge lock; cover native loading and retirement with the crash lease, share execution ownership across modes, and release failed native allocations before fallback.
 - Report actual native/WASM MDX pass counts and runtime in saved analysis diagnostics.
-- Version 2.2.4 is a release candidate: its original-signed APK is built; current numerical and Android runtime gates remain pending. Physical-phone and Tesla execution are reported separately as unverified.
+- Version 2.2.4 is the published original-signed update. Its complete source-bound gate evidence is retained; physical-phone and Tesla execution remain separately unverified.
 
 # LightForge 2.2.2 — Troubleshooting logs and renderer recovery
 

@@ -1,24 +1,49 @@
 'use strict';
 // Real browser workers and WebGL; the Android bridge and visual-commit callback
 // are simulated. This is not Android lifecycle, audio quality, or release proof.
-const {chromium} = require('playwright');
 const fs = require('node:fs'), path = require('node:path'), http = require('node:http');
 const crypto = require('node:crypto'), assert = require('node:assert/strict');
 const root = path.resolve(__dirname, '../..');
+const RELEASE = '2.2.5';
 const output = path.resolve(process.env.LIGHTFORGE_RESTORE_QA_OUTPUT || __dirname);
-const inputs = ['qa/restore-preview/browser.cjs', 'web/app.js', 'web/preview/src/vehicle-preview.js',
-  'web/preview/vehicle-preview.js', 'web/engine/client.js', 'web/engine/worker.js'];
+const EVIDENCE_SESSION_SCHEMA = 'lightforge.evidence-session.v1';
+const EVIDENCE_SESSION_PATTERN = /^[0-9a-f]{32,128}$/;
+function sourceNames() {
+  const inventory = JSON.parse(fs.readFileSync(path.join(root, 'qa/release-2.2.5/browser-source-inventory.json'), 'utf8'));
+  assert.equal(inventory?.schema, 'lightforge.browser-source-inventory.v1', 'Restore-preview source inventory schema is invalid');
+  assert.ok(Array.isArray(inventory?.common) && Array.isArray(inventory?.restore_preview), 'Restore-preview source inventory is invalid');
+  const names = [...inventory.common, ...inventory.restore_preview];
+  assert.ok(names.length && names.every(name => typeof name === 'string' && name && !path.isAbsolute(name) && !name.split('/').includes('..')), 'Restore-preview source inventory contains an invalid path');
+  assert.equal(new Set(names).size, names.length, 'Restore-preview source inventory contains duplicates');
+  return names;
+}
+function writeJsonAtomic(file, value) {
+  const temporary = `${file}.${process.pid}.${crypto.randomBytes(8).toString('hex')}.tmp`;
+  try { fs.writeFileSync(temporary, JSON.stringify(value, null, 2) + '\n'); fs.renameSync(temporary, file); }
+  finally { if (fs.existsSync(temporary)) fs.unlinkSync(temporary); }
+}
+function errorText(error) { return error && error.stack ? error.stack : String(error); }
 fs.mkdirSync(output, {recursive: true});
-const receipt = {passed: false, scope: 'Desktop Chromium with actual workers, compiled frames, GLB, and WebGL. Synthetic music analysis and simulated native bridge; not Android, musical-quality, speedup, or release certification.', checks: [], errors: [],
-  sourceHashes: Object.fromEntries(inputs.map(name => [name, crypto.createHash('sha256').update(fs.readFileSync(path.join(root, name))).digest('hex')]))};
+const evidenceSession = process.env.LIGHTFORGE_EVIDENCE_SESSION;
+const sessionError = evidenceSession !== undefined && !EVIDENCE_SESSION_PATTERN.test(evidenceSession) ?
+  new Error('Invalid LIGHTFORGE_EVIDENCE_SESSION') : null;
+const receipt = {release: RELEASE, passed: false, scope: 'Desktop Chromium with actual workers, compiled frames, GLB, and WebGL. Synthetic music analysis and simulated native bridge; not Android, musical-quality, speedup, or release certification.', checks: [], errors: [], source_hashes: {}};
+if (!sessionError && evidenceSession !== undefined) {
+  receipt.evidenceSessionSchema = EVIDENCE_SESSION_SCHEMA;
+  receipt.evidenceSession = evidenceSession;
+}
 const receiptPath = path.join(output, 'restore-preview-verification.json');
-const write = () => fs.writeFileSync(receiptPath, JSON.stringify(receipt, null, 2) + '\n');
+const write = () => writeJsonAtomic(receiptPath, receipt);
+// Publish an atomic failed receipt before source reads, Playwright import, or browser work.
 write();
 (async () => {
-  let browser, server, releaseRead, saved;
+  let browser, server, releaseRead, saved, chromium;
   const readGate = new Promise(resolve => { releaseRead = resolve; });
   const errors = [];
   try {
+    if (sessionError) throw sessionError;
+    receipt.source_hashes = Object.fromEntries(sourceNames().map(name => [name, crypto.createHash('sha256').update(fs.readFileSync(path.join(root, name))).digest('hex')]));
+    ({chromium} = require('playwright'));
     server = http.createServer((req, res) => {
       const pathname = decodeURIComponent(new URL(req.url, 'http://local').pathname);
       if (pathname === '/completed-project.json') {
@@ -37,7 +62,7 @@ write();
     browser = await chromium.launch({headless: true, ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH ? {executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH} : {}), args: ['--no-sandbox', '--enable-unsafe-swiftshader']});
     const setup = await browser.newPage({viewport: {width: 393, height: 852}});
     setup.on('pageerror', error => errors.push(error.message));
-    await setup.addInitScript(() => { window.Android = {pickAudio() {}, getBootstrap: () => JSON.stringify({projects: [], version: '2.2.4'})}; });
+    await setup.addInitScript(release => { window.Android = {pickAudio() {}, getBootstrap: () => JSON.stringify({projects: [], version: release})}; }, RELEASE);
     await setup.goto(origin);
     await setup.waitForFunction(() => !!window.LightForgeApp && !!window.ShowCompiler);
     saved = await setup.evaluate(async () => {
@@ -51,7 +76,7 @@ write();
     page.on('pageerror', error => errors.push(error.message));
     let modelRequests = 0;
     page.on('request', request => { if (request.url().endsWith('/preview/models/highland.glb')) modelRequests++; });
-    const nativeBridge = ({deferCompletion = false} = {}) => {
+    const nativeBridge = ({deferCompletion = false, release} = {}) => {
       const project = {id: 'restore-preview-fixture', name: 'Restore preview fixture', duration: 2, projectUrl: '/completed-project.json', audioUrl: '/demo/glass-castle.wav'};
       const job = {id: 'completed-preview-fixture', projectId: project.id, state: 'completed', progress: 1};
       const calls = []; let lease, sequence = 0, terminal = false;
@@ -60,7 +85,7 @@ write();
       const getContext = HTMLCanvasElement.prototype.getContext;
       HTMLCanvasElement.prototype.getContext = function (type, ...args) { if (/^webgl/.test(type)) restoreQA.contexts++; return getContext.call(this, type, ...args); };
       window.Android = {
-        pickAudio() {}, getBootstrap: () => JSON.stringify(restoreQA.armed ? {projects: [project], lastProjectId: project.id, backgroundJob: job, version: '2.2.4'} : {projects: [], version: '2.2.4'}),
+        pickAudio() {}, getBootstrap: () => JSON.stringify(restoreQA.armed ? {projects: [project], lastProjectId: project.id, backgroundJob: job, version: release} : {projects: [], version: release}),
         getAnalysisStatus: () => JSON.stringify(restoreQA.armed ? job : null), saveProject: () => true,
         startAnalysis() { throw Error('A completed restore must not restart analysis'); },
         beginCompletedRestore(id, nonce) { if (lease) return false; lease = {id, nonce}; calls.push('begin'); return id === job.id; },
@@ -77,7 +102,7 @@ write();
         completedRestoreFailed(_id, _nonce, reason) { calls.push('failed:' + reason); return true; },
       };
     };
-    await page.addInitScript(nativeBridge, {});
+    await page.addInitScript(nativeBridge, {release: RELEASE});
     await page.goto(origin, {waitUntil: 'domcontentloaded'});
     await page.waitForFunction(() => window.LightForgeApp?.state.completedRestore?.phase === 'project-read-fallback');
     const deferred = await page.evaluate(() => ({contexts: restoreQA.contexts, graphics: !!LightForgeApp.vehiclePreview.renderer, started: LightForgeApp.vehiclePreview._loadStarted, deferred: LightForgeApp.vehiclePreview._loadDeferred, frames: LightForgeApp.vehiclePreview.renderCount}));
@@ -103,7 +128,7 @@ write();
     foreground.on('pageerror', error => errors.push(error.message));
     let foregroundReads = 0;
     foreground.on('request', request => { if (request.url().endsWith('/completed-project.json')) foregroundReads++; });
-    await foreground.addInitScript(nativeBridge, {deferCompletion: true});
+    await foreground.addInitScript(nativeBridge, {deferCompletion: true, release: RELEASE});
     await foreground.goto(origin, {waitUntil: 'domcontentloaded'});
     await foreground.waitForFunction(() => window.LightForgeApp?.vehiclePreview.loaded);
     await foreground.evaluate(() => {
@@ -125,9 +150,10 @@ write();
     receipt.checks.push('Native pause followed by repeated completed-job deliveries performs no project read, worker restore, or native lease/ACK until resume; foreground restoration then renders the exact saved frames and acknowledges once.');
     receipt.foregroundObservation = resumed;
     await foreground.screenshot({path: path.join(output, 'foreground-resume.png'), fullPage: true, animations: 'disabled'});
+    for (const [name, expected] of Object.entries(receipt.source_hashes)) assert.equal(crypto.createHash('sha256').update(fs.readFileSync(path.join(root, name))).digest('hex'), expected, 'Source changed during restore verification: ' + name);
     receipt.passed = true;
   } catch (error) {
-    receipt.errors.push(error.stack || String(error)); process.exitCode = 1;
+    receipt.errors.push(errorText(error)); console.error(errorText(error)); process.exitCode = 1;
   } finally {
     releaseRead?.(); await browser?.close();
     if (server?.listening) await new Promise(resolve => server.close(resolve));

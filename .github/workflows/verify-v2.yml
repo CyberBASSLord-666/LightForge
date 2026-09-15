@@ -70,12 +70,30 @@ jobs:
       - name: Remove checked-in core receipts before fresh verification
         run: |
           receipt_root="qa/release-$LIGHTFORGE_RELEASE"
+          # Every CI-produced current-release receipt starts absent.  This
+          # makes a killed producer visibly missing rather than allowing a
+          # checked-in or prior-run pass to be sealed.
           rm -f -- \
             "$receipt_root/regression-verification.json" \
             "$receipt_root/browser-verification.json" \
-            "$receipt_root/native-verification.json" \
+            "$receipt_root/background-ui-verification.json" \
+            "$receipt_root/restore-preview-verification.json" \
             "$receipt_root/analysis-browser-verification.json" \
-            "$receipt_root/analysis-verification.json"
+            "$receipt_root/native-inference-profile-equivalence.json" \
+            "$receipt_root/native-mdx-comparison-verification.json" \
+            "$receipt_root/native-mdx-downstream-verification.json" \
+            "$receipt_root/native-mdx-downstream-native.json" \
+            "$receipt_root/native-mdx-downstream-wasm.json" \
+            "$receipt_root/native-recovery-results.json" \
+            "$receipt_root/native-runtime-comparison-verification.json" \
+            "$receipt_root/native-verification.json" \
+            "$receipt_root/analysis-verification.json" \
+            "$receipt_root/composer-verification.json" \
+            "$receipt_root/light-verification.json" \
+            "$receipt_root/movement-verification.json" \
+            "$receipt_root/role-composer-verification.json" \
+            "$receipt_root/role-reference-composer-verification.json" \
+            "$receipt_root/source-clock-verification.json"
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '22'
@@ -105,6 +123,10 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: node qa/release-${{ env.LIGHTFORGE_RELEASE }}/browser.cjs
       - run: node qa/release-${{ env.LIGHTFORGE_RELEASE }}/background-ui.cjs
+      - name: Foreground-resume restore preview proof
+        run: |
+          LIGHTFORGE_RESTORE_QA_OUTPUT="qa/release-$LIGHTFORGE_RELEASE" \
+            node qa/restore-preview/browser.cjs
       - name: Actual offline model pipeline and cancellation
         run: node qa/release-${{ env.LIGHTFORGE_RELEASE }}/analysis-browser.cjs
       - name: Bootstrap pinned native host toolchain
@@ -147,14 +169,18 @@ jobs:
         run: |
           candidate_root="$RUNNER_TEMP/lightforge-ci-candidate"
           source_hashes="$RUNNER_TEMP/lightforge-ci-source-hashes.json"
-          git diff --exit-code "$GITHUB_SHA" -- android web tools tests .github/workflows/verify-v2.yml version.json build.sh
+          git diff --exit-code "$GITHUB_SHA" -- \
+            android web tools tests "qa/release-$LIGHTFORGE_RELEASE" qa/restore-preview/browser.cjs \
+            .github/workflows/verify-v2.yml version.json package.json package-lock.json build.sh
           python3 - "$source_hashes" <<'PYSOURCES'
-          import hashlib, json, subprocess, sys
+          import hashlib, json, os, subprocess, sys
           from pathlib import Path
           root = Path('.').resolve()
           names = subprocess.check_output([
               'git', 'ls-files', '-z', '--', 'android', 'web', 'tools', 'tests',
-              '.github/workflows/verify-v2.yml', 'version.json', 'build.sh',
+              'qa/release-' + os.environ['LIGHTFORGE_RELEASE'], 'qa/restore-preview/browser.cjs',
+              '.github/workflows/verify-v2.yml', 'version.json', 'package.json', 'package-lock.json',
+              'build.sh',
           ]).split(b'\0')
           hashes = {}
           for raw in names:
