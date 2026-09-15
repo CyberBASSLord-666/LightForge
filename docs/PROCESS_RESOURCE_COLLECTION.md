@@ -50,8 +50,18 @@ For complete process-tree counters add the explicitly delegated `--cgroup-parent
 before `--`; without it this invocation deliberately reports partial accounting.
 
 Without a delegated cgroup, `accounting_scope` is `root-process-incomplete`.
-The tool samples the root's `/proc` RSS and block-I/O counters and obtains that
-child's actual `wait4` CPU/RSS statistics. `wait4` may include descendants the
+The tool obtains the child's actual `wait4` CPU/RSS statistics. It samples the
+root's `/proc` RSS and block-I/O counters only after proving that the procfs row
+belongs to that owned, unreaped child. The mounted procfs may use an outer PID
+namespace, so the numeric `Popen.pid` alone is insufficient. Binding requires
+the collector's outer PPid, the child's `NSpid` at the caller's namespace depth,
+and a stable start time. A bounded direct-child lookup or procfs identity scan
+locates that row; identity and wait ownership are rechecked around every sample.
+Unprovable or changed bindings omit those reads, never substitute unrelated
+process counters. `root_procfs_binding` reports how many samples were verified
+and whether binding became unavailable. Earlier verified samples remain usable
+when later reads cannot be bound. No PID, process name or private path is emitted.
+`wait4` may include descendants the
 root reaped, but cannot prove complete process-tree coverage. Short-lived I/O
 may escape sampling. This mode never emits a gate contract projection.
 If the host restricts child `/proc` I/O, that byte domain remains absent while

@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
 """Counter rejection and real external-workload collector checks."""
 import importlib.util
+from contextlib import contextmanager
 import json
 import os
 from pathlib import Path
+import select
 import signal
 import subprocess
 import sys
 import tempfile
 import time
+from types import SimpleNamespace
 import unittest
 from unittest import mock
 
@@ -20,7 +23,184 @@ C = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(C)
 
 
+class ProcFixture:
+    """Synthetic namespace table for binding rejection tests, never evidence."""
+    def __init__(self, nested=True):
+        self.files, self.reads = {}, []
+        self.parent = 1000 if nested else 5
+        self.files["/proc/self/status"] = self.status(self.parent, 1, [1000, 5] if nested else [5])
+
+    @staticmethod
+    def status(pid, parent, namespace_ids):
+        return f"Name:\tignored-private-name\nPid:\t{pid}\nTgid:\t{pid}\nPPid:\t{parent}\nNSpid:\t" + "\t".join(map(str, namespace_ids)) + "\n"
+
+    @staticmethod
+    def stat(pid, parent, start=200, rss=17, cpu=13):
+        fields = ["0"] * 22
+        fields[0], fields[1], fields[11], fields[12] = "S", str(parent), str(cpu), "5"
+        fields[19], fields[21] = str(start), str(rss)
+        return f"{pid} (ignored ) private name) " + " ".join(fields)
+
+    def child(self, outer=1007, namespace_ids=(1007, 7), parent=None, start=200):
+        parent = self.parent if parent is None else parent
+        self.files[f"/proc/{outer}/status"] = self.status(outer, parent, namespace_ids)
+        self.files[f"/proc/{outer}/stat"] = self.stat(outer, parent, start)
+        self.files[f"/proc/{outer}/io"] = "read_bytes: 8192\nwrite_bytes: 16384\n"
+
+    def read(self, path, limit=65536):
+        path = str(path)
+        self.reads.append(path)
+        if path not in self.files:
+            raise FileNotFoundError(path)
+        return self.files[path]
+
+    @contextmanager
+    def patched(self):
+        names = {path.split("/")[2] for path in self.files if path.startswith("/proc/")}
+        scan = mock.MagicMock()
+        scan.__enter__.return_value = (SimpleNamespace(name=name) for name in names)
+        with mock.patch.object(C, "read_text", side_effect=self.read), \
+                mock.patch.object(C.os, "getpid", return_value=5), \
+                mock.patch.object(C.os, "waitid", return_value=None), \
+                mock.patch.object(C.os, "scandir", return_value=scan):
+            yield
+
+
 class CollectorTests(unittest.TestCase):
+    def assert_runtime_process_exited(self, pid):
+        # pidfd_open uses the same PID namespace as Popen/kill, unlike the
+        # mounted procfs. Readable pidfds include exited, unreaped zombies.
+        try:
+            descriptor = os.pidfd_open(pid, 0)
+        except ProcessLookupError:
+            return
+        try:
+            poller = select.poll()
+            poller.register(descriptor, select.POLLIN)
+            ready = poller.poll(1000)
+            self.assertTrue(ready and ready[0][1] & select.POLLIN,
+                            "same-session descendant must have exited")
+        finally:
+            os.close(descriptor)
+
+    def test_nested_proc_namespace_maps_owned_child_not_same_numeric_outer_pid(self):
+        fixture = ProcFixture()
+        fixture.child()
+        fixture.child(outer=7, namespace_ids=(7,), parent=1)
+        with fixture.patched():
+            sampler = C.RootProcSampler(7, deadline=time.monotonic() + 1)
+            sample = sampler.sample()
+        self.assertEqual(sampler.proc_pid, 1007)
+        self.assertEqual(sample["rss_bytes"], 17 * os.sysconf("SC_PAGE_SIZE"))
+        self.assertEqual(sample["write_bytes"], 16384)
+        self.assertIn("/proc/1007/io", fixture.reads)
+        self.assertNotIn("/proc/7/io", fixture.reads)
+        self.assertNotIn("private", json.dumps(sample))
+
+    def test_same_namespace_direct_pid_and_children_index_bind(self):
+        for nested in (False, True):
+            with self.subTest(nested=nested):
+                fixture = ProcFixture(nested)
+                outer = 1007 if nested else 7
+                fixture.child(outer, (1007, 7) if nested else (7,))
+                fixture.files["/proc/thread-self/children"] = str(outer)
+                with fixture.patched(), mock.patch.object(C.os, "scandir", side_effect=AssertionError("bounded child index should avoid scan")):
+                    sampler = C.RootProcSampler(7, deadline=time.monotonic() + 1)
+                    self.assertEqual(sampler.sample()["read_bytes"], 8192)
+
+    def test_proc_binding_rejects_wrong_namespace_parent_and_ambiguity(self):
+        for mutation in ("namespace", "parent", "ambiguity", "own-namespace", "deadline", "not-owned"):
+            with self.subTest(mutation=mutation):
+                fixture = ProcFixture()
+                fixture.child(namespace_ids=(1007, 8) if mutation == "namespace" else (1007, 7),
+                              parent=999 if mutation == "parent" else 1000)
+                if mutation == "ambiguity":
+                    fixture.child(outer=1008, namespace_ids=(1008, 7))
+                if mutation == "own-namespace":
+                    fixture.files["/proc/self/status"] = fixture.status(1000, 1, [1000, 6])
+                with fixture.patched():
+                    if mutation == "not-owned":
+                        C.os.waitid.side_effect = ChildProcessError()
+                    with self.assertRaises((C.MeasurementError, ChildProcessError)):
+                        C.RootProcSampler(7, deadline=time.monotonic() + (-1 if mutation == "deadline" else 1))
+                self.assertFalse(any(path.endswith("/io") for path in fixture.reads))
+
+    def test_proc_enumeration_is_bounded_before_materializing_full_table(self):
+        for expired in (False, True):
+            with self.subTest(expired=expired):
+                fixture = ProcFixture()
+                consumed = []
+                def entries():
+                    for index in range(1000000):
+                        consumed.append(index)
+                        yield SimpleNamespace(name="non-pid-entry")
+                with fixture.patched():
+                    scanner = C.os.scandir.return_value
+                    scanner.__enter__.return_value = entries()
+                    expected = "proc_identity_scan_deadline" if expired else "proc_identity_scan_limit"
+                    with self.assertRaisesRegex(C.MeasurementError, expected):
+                        C.RootProcSampler(7, deadline=0 if expired else float("inf"))
+                    scanner.__exit__.assert_called_once()
+                self.assertEqual(len(consumed), 1 if expired else 65537)
+
+    def test_proc_sample_revalidates_start_parent_namespace_and_wait_ownership(self):
+        for mutation in ("start", "parent", "namespace", "ownership"):
+            with self.subTest(mutation=mutation):
+                fixture = ProcFixture()
+                fixture.child()
+                with fixture.patched():
+                    sampler = C.RootProcSampler(7, deadline=time.monotonic() + 1)
+                    def changing_read(path, limit=65536):
+                        result = fixture.read(path, limit)
+                        if str(path).endswith("/io"):
+                            if mutation == "start":
+                                fixture.child(start=201)
+                            elif mutation == "parent":
+                                fixture.child(parent=999)
+                            elif mutation == "namespace":
+                                fixture.child(namespace_ids=(1007, 8))
+                            else:
+                                C.os.waitid.side_effect = ChildProcessError()
+                        return result
+                    with mock.patch.object(C, "read_text", side_effect=changing_read):
+                        with self.assertRaises((C.MeasurementError, ChildProcessError)):
+                            sampler.sample()
+
+    def test_unavailable_proc_binding_omits_counters_and_preserves_wait4(self):
+        with mock.patch.object(C, "RootProcSampler", side_effect=C.MeasurementError("unverified")):
+            report = C.collect([sys.executable, "-c", "sum(i*i for i in range(100000))"], timeout=2)
+        observations = report["observations"]
+        self.assertEqual(report["status"], "completed", report)
+        self.assertEqual(observations["root_procfs_binding"]["status"], "unobserved")
+        self.assertTrue(observations["root_procfs_binding"]["binding_unavailable_or_changed"])
+        self.assertEqual(observations["root_procfs_samples"], 0)
+        self.assertEqual(observations["root_procfs_io_samples"], 0)
+        for key in ("root_sampled_peak_rss_bytes", "root_sampled_read_bytes", "root_sampled_write_bytes"):
+            self.assertNotIn(key, observations)
+        self.assertGreater(observations["wait4_cpu_seconds"], 0)
+        self.assertGreater(observations["wait4_peak_rss_bytes"], 0)
+        self.assertIsNone(report["contract_projection"])
+
+    def test_actual_child_reports_same_outer_pid_as_bound_proc_record(self):
+        # The child independently reports its procfs PID. On hosts with nested
+        # PID namespaces this differs from Popen.pid; both must map correctly.
+        with tempfile.TemporaryDirectory() as directory:
+            identity_path = Path(directory) / "child-identity"
+            code = "import os,time;from pathlib import Path;p=Path('/proc/self/stat').read_text().split(' ',1)[0];Path(" + repr(str(identity_path)) + ").write_text(p);time.sleep(5)"
+            process = subprocess.Popen([sys.executable, "-c", code], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            try:
+                deadline = time.monotonic() + 2
+                while not identity_path.exists() and time.monotonic() < deadline:
+                    time.sleep(.01)
+                outer_pid = int(identity_path.read_text())
+                sampler = C.RootProcSampler(process.pid, deadline=deadline)
+                self.assertEqual(sampler.proc_pid, outer_pid)
+                self.assertGreater(sampler.sample()["rss_bytes"], 0)
+                self.assertIsNone(process.poll())
+            finally:
+                process.kill()
+                process.wait(timeout=2)
+
     def test_strict_counter_tables_and_monotonicity(self):
         self.assertEqual(C.io_totals("8:0 rbytes=12 wbytes=19 rios=1 wios=2\n8:1 rbytes=3 wbytes=5\n"),
                          {"read_bytes": 15, "write_bytes": 24})
@@ -69,10 +249,7 @@ class CollectorTests(unittest.TestCase):
             report = C.collect([sys.executable, "-c", code], timeout=.3, interval=.02)
             self.assertEqual(report["status"], "timeout", report)
             self.assertLess(time.monotonic()-start, 3)
-            child = int(pidfile.read_text())
-            stat = Path(f"/proc/{child}/stat")
-            if stat.exists():
-                self.assertEqual(stat.read_text().rsplit(")", 1)[1].split()[0], "Z")
+            self.assert_runtime_process_exited(int(pidfile.read_text()))
             self.assertIsNone(report["contract_projection"])
 
     def test_signal_cancellation_restores_handlers(self):
@@ -224,9 +401,7 @@ class CollectorTests(unittest.TestCase):
             self.assertEqual(report["status"], "completed", report)
             self.assertTrue(signaled)
             self.assertEqual(set(signaled), reaped)
-            descendant = Path(f"/proc/{int(pidfile.read_text())}/stat")
-            if descendant.exists():
-                self.assertEqual(descendant.read_text().rsplit(")", 1)[1].split()[0], "Z")
+            self.assert_runtime_process_exited(int(pidfile.read_text()))
 
     def test_blocked_cgroup_attachment_remains_under_timeout(self):
         class BlockedGroup:
