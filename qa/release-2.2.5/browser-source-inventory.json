@@ -34,6 +34,8 @@
     "web/engine/worker.js",
     "web/preview/vehicle-preview.js",
     "web/preview/models/highland.glb",
+    "web/preview/models/studio-environment.rgba16f.gz",
+    "web/preview/models/studio-environment.rgba16f.gz.json",
     "web/app.js",
     "web/channel-studio.js",
     "web/music-insights.js",

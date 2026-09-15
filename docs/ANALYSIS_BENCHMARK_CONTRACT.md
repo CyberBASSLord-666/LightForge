@@ -169,6 +169,51 @@ exported FSEQ remain separate durable products. Diagnostic data must never
 include a private file path, audio payload, access token, API key, password,
 authorization value, or raw exception string that could expose one.
 
+## Host resource counters
+
+Host adapters may attach `execution.resource_counters` using
+`lightforge-resource-counters-v1`. This closes the diagnostic projection's
+previous inability to bind CPU utilization, energy, temperature rise, and
+accelerator utilization. It does not collect those measurements or make
+unsupported browser observations available.
+
+The object has `schema_version: 1`,
+`protocol: "lightforge-resource-counters-v1"`, and a positive
+`elapsed_seconds` exactly matching `execution.wall_clock_seconds`. It contains
+only the domains actually observed:
+
+| Domain | Raw observation | Derived resource metric |
+| --- | --- | --- |
+| `cpu` | `logical_cpu_count`, the measured logical CPU capacity | `cpu_utilization_percent`: execution CPU seconds / wall seconds / logical CPU count × 100 |
+| `energy` | Opaque `counter_id`, integer `start_microjoules` and `end_microjoules` from one cumulative counter | `energy_joules`: observed counter difference / 1,000,000 |
+| `thermal` | Opaque `sensor_id` and `samples`, each containing `elapsed_seconds` and `celsius` | `thermal_delta_celsius`: highest observed temperature minus the first observation |
+| `accelerator` | Opaque `counter_id`, integer `start_busy_nanoseconds` and `end_busy_nanoseconds` from one cumulative busy-time counter | `accelerator_utilization_percent`: observed busy seconds / wall seconds × 100 |
+
+Temperature samples must be strictly ordered, begin at zero, and end at the
+execution window boundary. The initial sample is included in the maximum, so a
+run that only cools has zero measured temperature rise. Counter resets, wraps,
+invalid values, out-of-window samples, and utilization above measured capacity
+are rejected. A collector must recollect an ambiguous counter window; it must
+not infer the number of wraps or invent a zero. Integer counter differences
+are computed before conversion to floating point.
+
+These are private host observations reduced to opaque counter identities and
+numeric samples. Do not put sensor paths, device serial numbers, credentials,
+or URLs into them. The source counter and CPU-capacity definitions must match
+between paired runs. The profiler receipt retains the raw observations, and
+each reported metric must equal its derived value. Missing domains remain
+unobserved and continue to block the release gate when required.
+
+A collector must measure the complete production workload with a consistent
+resource scope and synchronized boundaries. `AnalysisRunRecorder` measures
+its own Python process CPU; it does not silently include browser, worker, or
+native child processes. Whole-application benchmarking therefore needs an
+adapter that accounts for those processes and supplies the corresponding
+execution record. The current browser resource projection and CI parity
+fixtures are supplementary observations, not such a collector. An approved
+benchmark host or external measurement feed can supply energy and temperature;
+physical phone or Tesla observations are not required.
+
 ## Browser resource diagnostics
 
 The WebView analyzer additionally emits a bounded, source-validated

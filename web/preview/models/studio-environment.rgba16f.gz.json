@@ -1,0 +1,18 @@
+{
+  "schema": "lightforge.studio-environment.v1",
+  "three_revision": "180",
+  "browser": "153.0.8010.0",
+  "mapping": "CubeUVReflectionMapping",
+  "color_space": "LinearSRGBColorSpace",
+  "format": "RGBA16F little-endian",
+  "width": 768,
+  "height": 1024,
+  "bytes": 6291456,
+  "sha256": "01828489f23db929589a0e25f7d5e4109eb328eb93d7804e13213b5d6255537b",
+  "source_sha256": "7e1b284ed7edc9edb6a7504ea97330159abd784aa4bcd9b14b21ff03a30aa0c6",
+  "graphics_lock_sha256": "97d8caf3d1bb0ab75fa5a0da4ae3483f0191e6c484d6a1ed03fe2e710b5b525b",
+  "sigma_radians": 0.055,
+  "cube_size": 256,
+  "compressed_bytes": 575287,
+  "compressed_sha256": "26c8d97f746142727df0c0c0cd7b3a552c86851f1836c29ee36afff293ba37c4"
+}

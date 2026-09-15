@@ -10,6 +10,7 @@ import {RenderPass} from 'three/addons/postprocessing/RenderPass.js';
 import {UnrealBloomPass} from 'three/addons/postprocessing/UnrealBloomPass.js';
 import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
 import {buildHighlandRig} from './highland-rig.js';
+import {loadStudioEnvironment,createStudioEnvironmentTexture} from './studio-environment.js';
 const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,Number(v)||0));
 const presets={front:[-.70,.24],rear:[Math.PI+.64,.27],driver:[-Math.PI/2,.19],cabin:[-.38,.99]};
 const qualityPresets={high:{pixelRatio:1.6,shadowSize:1024,samples:2},balanced:{pixelRatio:1.15,shadowSize:512,samples:0},battery:{pixelRatio:.85,shadowSize:256,samples:0}};
@@ -80,13 +81,13 @@ class VehiclePreview {
   this.resize();this.reportPerformance();this.positionCamera(this.yaw,this.pitch);this.controls.update();this.setStage(this.stage);
  }
  createEnvironment(){
-  const env=new THREE.Scene();env.background=new THREE.Color(.055,.065,.085);
-  const card=(pos,w,h,color)=>{const material=new THREE.MeshBasicMaterial({color:new THREE.Color(...color),side:THREE.DoubleSide,toneMapped:false});const panel=new THREE.Mesh(new THREE.PlaneGeometry(w,h),material);panel.position.set(...pos);panel.lookAt(0,.5,0);env.add(panel);};
-  card([0,5,-1],7,1.3,[4.5,4.8,5.2]);card([-4,2,0],7,1.8,[2.8,3.4,4]);card([4,2.5,1],7,1.0,[3.8,4.0,4.2]);card([0,3,5],4,2,[1.2,1.7,2.2]);
-  const pmrem=new THREE.PMREMGenerator(this.renderer);this.environment?.dispose();this.environment=pmrem.fromScene(env,.055).texture;this.scene.environment=this.environment;this.scene.environmentIntensity=this.stage==='night'?.25:.9;pmrem.dispose();env.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});
+  // Upload the complete, losslessly baked HDR atlas. Runtime PMREM convolution
+  // monopolized Android's graphics queue before the first completed-show frame.
+  // Context recovery re-uploads these same lighting values without new passes.
+  this.environment?.dispose();this.environment=createStudioEnvironmentTexture(this._environmentData);this.scene.environment=this.environment;this.scene.environmentIntensity=this.stage==='night'?.25:.9;
  }
  async load(){
-  try {const gltf=await new GLTFLoader().loadAsync('preview/models/highland.glb');if(this._disposed)return false;this.rig=buildHighlandRig(gltf.scene);this.scene.add(this.rig.root);this.rig.setCutaway(this.view==='cabin');this.renderer.shadowMap.needsUpdate=true;if(this.view!=='custom'){this.positionCamera(this.yaw,this.pitch);this.controls.update();}this.loaded=true;this.setStatus('3D · Highland','ready');this.render(...this.last);this.canvas.dispatchEvent(new CustomEvent('previewready'));return true;}catch(e){this.fail(e);return false;}
+  try {const [gltf,environmentData]=await Promise.all([new GLTFLoader().loadAsync('preview/models/highland.glb'),loadStudioEnvironment()]);if(this._disposed)return false;this._environmentData=environmentData;this.rig=buildHighlandRig(gltf.scene);this.scene.add(this.rig.root);this.rig.setCutaway(this.view==='cabin');this.renderer.shadowMap.needsUpdate=true;if(this.view!=='custom'){this.positionCamera(this.yaw,this.pitch);this.controls.update();}this.loaded=true;this.setStatus('3D · Highland','ready');this.render(...this.last);this.canvas.dispatchEvent(new CustomEvent('previewready'));return true;}catch(e){this.fail(e);return false;}
  }
  setStage(stage){this.stage=stage==='night'?'night':'studio';this._snapshotDirty=true;const night=this.stage==='night';if(this.scene){
   this.scene.background.set(night?'#050a10':'#10171e');this.scene.fog.color.copy(this.scene.background);this.scene.environmentIntensity=night?.25:.9;this.ambient.intensity=night?.18:.65;this.key.intensity=night?.35:1.25;this.rim.intensity=night?.25:.85;this.ground.material.color.set(night?0x0b1019:0x171c23);this.bloom.strength=night?.42:.28;}

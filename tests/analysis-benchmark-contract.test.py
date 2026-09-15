@@ -1,5 +1,6 @@
 import copy
 import importlib.util
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -9,6 +10,9 @@ ROOT = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location("contract", ROOT / "tools/analysis_benchmark_contract.py")
 contract = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(contract)
+gate_spec = importlib.util.spec_from_file_location("gate", ROOT / "tools/performance_quality_gate.py")
+gate = importlib.util.module_from_spec(gate_spec)
+gate_spec.loader.exec_module(gate)
 
 
 AUDIO_SHA = "a" * 64
@@ -86,7 +90,164 @@ def diagnostic():
     )
 
 
+def counter_diagnostic():
+    """Synthetic raw observations for contract tests, never release evidence."""
+    report = diagnostic()
+    report["execution"] = {
+        "wall_clock_seconds": 10.0,
+        "cpu_seconds": 8.0,
+        "resource_counters": {
+            "schema_version": 1,
+            "protocol": contract.RESOURCE_COUNTER_PROTOCOL,
+            "elapsed_seconds": 10.0,
+            "cpu": {"logical_cpu_count": 4},
+            "energy": {"counter_id": "package-energy-0", "start_microjoules": 1000000, "end_microjoules": 4500000},
+            "thermal": {"sensor_id": "package-temperature-0", "samples": [
+                {"elapsed_seconds": 0, "celsius": 40.0},
+                {"elapsed_seconds": 5, "celsius": 46.5},
+                {"elapsed_seconds": 10, "celsius": 42.0},
+            ]},
+            "accelerator": {"counter_id": "gpu-busy-0", "start_busy_nanoseconds": 100, "end_busy_nanoseconds": 2500000100},
+        },
+    }
+    report["metrics"]["performance"]["total_wall_clock_seconds"] = 10.0
+    report["metrics"]["resources"] = {
+        "cpu_utilization_percent": 20.0,
+        "energy_joules": 3.5,
+        "thermal_delta_celsius": 6.5,
+        "accelerator_utilization_percent": 25.0,
+    }
+    return report
+
+
 class AnalysisBenchmarkContractTest(unittest.TestCase):
+    def test_observed_resource_counters_reach_release_profiler_bindings(self):
+        report = counter_diagnostic()
+        run = contract.benchmark_run(report)
+        for name, value in report["metrics"]["resources"].items():
+            self.assertEqual(value, run["profiler_measurement_evidence"]["resource_bindings"]["resources." + name])
+        retained = run["profiler_measurement_evidence"]["execution"]["resource_counters"]
+        self.assertEqual(report["execution"]["resource_counters"], retained)
+        blockers = gate._release_profiler_evidence_blockers({("vocal-rock", "pair-1"): {"run": run, "not_applicable": set()}}, "candidate")
+        blocked_metrics = {row.get("metric") for row in blockers}
+        self.assertFalse({"resources." + name for name in report["metrics"]["resources"]} & blocked_metrics)
+        retained["energy"]["end_microjoules"] = 0
+        self.assertEqual(4500000, report["execution"]["resource_counters"]["energy"]["end_microjoules"])
+
+    def test_real_host_cpu_clock_observation_is_projectable(self):
+        logical_cpu_count = os.cpu_count()
+        if logical_cpu_count is None:
+            self.skipTest("host does not expose logical CPU capacity")
+        recorder = contract.AnalysisRunRecorder("vocal-rock", provenance(), run_id="local-cpu-unit-observation")
+        with recorder.stage("source_separation"):
+            sum(value * value for value in range(20000))
+        report = recorder.finalize()
+        report["execution"]["resource_counters"] = {
+            "schema_version": 1,
+            "protocol": contract.RESOURCE_COUNTER_PROTOCOL,
+            "elapsed_seconds": report["execution"]["wall_clock_seconds"],
+            "cpu": {"logical_cpu_count": logical_cpu_count},
+        }
+        evidence = contract.profiler_measurement_evidence(report)
+        self.assertGreater(evidence["resource_bindings"]["resources.cpu_utilization_percent"], 0)
+        self.assertLessEqual(evidence["resource_bindings"]["resources.cpu_utilization_percent"], 100)
+        self.assertNotIn("resources.energy_joules", evidence["resource_bindings"])
+
+    def test_missing_counter_domains_cannot_be_numeric_release_evidence(self):
+        domains = {"cpu": "cpu_utilization_percent", "energy": "energy_joules", "thermal": "thermal_delta_celsius", "accelerator": "accelerator_utilization_percent"}
+        for domain, metric in domains.items():
+            with self.subTest(domain=domain):
+                report = counter_diagnostic()
+                del report["execution"]["resource_counters"][domain]
+                with self.assertRaisesRegex(contract.ContractValidationError, "no profiler telemetry binding"):
+                    contract.benchmark_run(report)
+                del report["metrics"]["resources"][metric]
+                run = contract.benchmark_run(report)
+                self.assertNotIn("resources." + metric, run["profiler_measurement_evidence"]["resource_bindings"])
+                blockers = gate._release_profiler_evidence_blockers({("vocal-rock", "pair-1"): {"run": run, "not_applicable": set()}}, "candidate")
+                self.assertIn("resources." + metric, {row.get("metric") for row in blockers})
+
+    def test_hand_entered_resource_metrics_cannot_replace_counter_deltas(self):
+        for metric in counter_diagnostic()["metrics"]["resources"]:
+            with self.subTest(metric=metric):
+                report = counter_diagnostic()
+                report["metrics"]["resources"][metric] += 0.125
+                with self.assertRaisesRegex(contract.ContractValidationError, "conflicts with profiler telemetry"):
+                    contract.benchmark_run(report)
+
+    def test_observed_zeros_are_distinct_from_missing_measurements(self):
+        report = counter_diagnostic()
+        report["execution"]["cpu_seconds"] = 0
+        counters = report["execution"]["resource_counters"]
+        counters["energy"]["end_microjoules"] = counters["energy"]["start_microjoules"]
+        counters["accelerator"]["end_busy_nanoseconds"] = counters["accelerator"]["start_busy_nanoseconds"]
+        for sample in counters["thermal"]["samples"]:
+            sample["celsius"] = 40
+        report["metrics"]["resources"] = {key: 0 for key in report["metrics"]["resources"]}
+        result = contract.benchmark_run(report)["profiler_measurement_evidence"]["resource_bindings"]
+        self.assertTrue(all(result["resources." + name] == 0 for name in report["metrics"]["resources"]))
+
+    def test_counter_protocol_rejects_wrong_window_shape_and_types(self):
+        mutations = [
+            lambda c: c.update(schema_version=True),
+            lambda c: c.update(protocol="unreviewed"),
+            lambda c: c.update(elapsed_seconds=9.0),
+            lambda c: c.update(elapsed_seconds=0),
+            lambda c: c.update(elapsed_seconds=float("nan")),
+            lambda c: c.update(unrecognized={}),
+            lambda c: c["cpu"].update(logical_cpu_count=True),
+            lambda c: c["cpu"].update(logical_cpu_count=0),
+            lambda c: c["energy"].update(end_microjoules=1),
+            lambda c: c["energy"].update(end_microjoules=2**63),
+            lambda c: c["energy"].update(start_microjoules=True),
+            lambda c: c["energy"].update(counter_id="/sys/private-path"),
+            lambda c: c["thermal"].update(samples=[]),
+            lambda c: c["thermal"]["samples"][0].update(elapsed_seconds=1),
+            lambda c: c["thermal"]["samples"][-1].update(elapsed_seconds=9),
+            lambda c: c["thermal"]["samples"][1].update(elapsed_seconds=0),
+            lambda c: c["thermal"]["samples"][1].update(celsius=float("inf")),
+            lambda c: c["thermal"]["samples"][1].update(celsius=True),
+            lambda c: c["thermal"]["samples"][1].update(celsius=-274),
+            lambda c: c["accelerator"].update(end_busy_nanoseconds=11000000100),
+            lambda c: c["accelerator"].update(end_busy_nanoseconds=1),
+            lambda c: c["accelerator"].update(start_busy_nanoseconds=100.0),
+        ]
+        for number, mutate in enumerate(mutations):
+            with self.subTest(case=number):
+                report = counter_diagnostic()
+                mutate(report["execution"]["resource_counters"])
+                with self.assertRaises(contract.ContractValidationError):
+                    contract.benchmark_run(report)
+        report = counter_diagnostic()
+        report["execution"]["cpu_seconds"] = 41
+        with self.assertRaisesRegex(contract.ContractValidationError, "exceeds the observed capacity/window"):
+            contract.benchmark_run(report)
+
+    def test_counter_delta_preserves_large_integer_precision(self):
+        report = counter_diagnostic()
+        report["execution"]["resource_counters"]["energy"].update(start_microjoules=2**63 - 2, end_microjoules=2**63 - 1)
+        report["metrics"]["resources"]["energy_joules"] = 0.000001
+        evidence = contract.benchmark_run(report)["profiler_measurement_evidence"]
+        self.assertEqual(0.000001, evidence["resource_bindings"]["resources.energy_joules"])
+
+    def test_counter_source_and_cpu_capacity_changes_are_noncomparable(self):
+        for domain, field, replacement in (
+            ("cpu", "logical_cpu_count", 8),
+            ("energy", "counter_id", "another-energy-counter"),
+            ("thermal", "sensor_id", "another-temperature-sensor"),
+            ("accelerator", "counter_id", "another-busy-counter"),
+        ):
+            with self.subTest(domain=domain):
+                baseline = counter_diagnostic()
+                candidate = copy.deepcopy(baseline)
+                candidate["execution"]["resource_counters"][domain][field] = replacement
+                if domain == "cpu":
+                    candidate["metrics"]["resources"]["cpu_utilization_percent"] = 10
+                expected = "execution.resource_counters." + domain + "." + field
+                self.assertIn(expected, {row["field"] for row in contract.comparability_differences(baseline, candidate)})
+                differences = gate._compare_pair_provenance(contract.benchmark_run(baseline), contract.benchmark_run(candidate))
+                self.assertIn("profiler_measurement_evidence." + expected, {row["field"] for row in differences})
+
     def test_content_address_is_canonical_and_invalidates_real_analysis_inputs(self):
         first = contract.analysis_cache_identity(
             audio_sha256=AUDIO_SHA,

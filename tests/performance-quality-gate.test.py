@@ -105,8 +105,8 @@ def sign_review_attestation(payload):
 def policy_test_authority():
     """Install an ephemeral *source-side* authority only for this test module.
 
-    Production source intentionally ships with no configured policy authority.
-    Tests simulate the separately reviewed source deployment by replacing the
+    Tests never use the enrolled owner's private authority key. They simulate
+    a separately reviewed source deployment by replacing the
     module registry, never by embedding a private key in policy or corpus
     evidence.  The private half exists only in this process's temporary test
     fixture.

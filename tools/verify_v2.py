@@ -17,7 +17,7 @@ TESTS=['engine.test.cjs','engine-manual.test.cjs','preview-engine.test.cjs','pre
        # archive-discovery name, so they remain explicit in the release gate.
        'execution-lineage-contract.test.cjs','analyzer-native-retry.test.cjs',
        'native-fallback-fence.test.cjs','native-mdx-fence.test.cjs',
-       'completed-restore-preview-start.test.cjs']
+       'completed-restore-preview-start.test.cjs','preview-environment.test.cjs']
 # The 2.2.2 adapter-retention contract freezes its then-current analysis
 # manifest, and the 2.2.3 native/runtime source-clock contract freezes its
 # measured source hashes. Both intentionally reject later release transitions.
