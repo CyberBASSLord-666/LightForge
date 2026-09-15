@@ -1,4 +1,10 @@
+import json
+import os
 import re
+import subprocess
+import sys
+import tempfile
+import textwrap
 import unittest
 from pathlib import Path
 
@@ -8,6 +14,86 @@ WORKFLOW = ROOT / ".github/workflows/performance-quality-gate.yml"
 
 
 class PerformanceQualityGateWorkflowTest(unittest.TestCase):
+    def _resolve_artifact(self, side, records):
+        text = WORKFLOW.read_text(encoding="utf-8")
+        marker = "      - name: Resolve the exact " + side + " benchmark artifact\n"
+        step = text.split(marker, 1)[1].split("      - ", 1)[0]
+        self.assertIn("GH_TOKEN: ${{ github.token }}", step)
+        script = textwrap.dedent(step.split("        run: |\n", 1)[1])
+        self.assertNotIn("${{", script, "Resolution cannot consume its own unavailable step outputs")
+        with tempfile.TemporaryDirectory(prefix="lightforge-artifact-resolution-") as temporary:
+            root = Path(temporary)
+            (root / "gate").mkdir()
+            binaries = root / "bin"
+            binaries.mkdir()
+            gh = binaries / "gh"
+            gh.write_text("#!" + sys.executable + "\n" + textwrap.dedent('''\
+                import json
+                import os
+                import sys
+                if os.environ.get("GH_TOKEN") != "test-actions-token":
+                    raise SystemExit("missing Actions authentication")
+                with open(os.environ["MOCK_GH_CALLS"], "a", encoding="utf-8") as stream:
+                    print(json.dumps(sys.argv[1:]), file=stream)
+                records = json.loads(os.environ["MOCK_ARTIFACT_RECORDS"])
+                if sys.argv[1:3] == ["api", "--paginate"]:
+                    for record in records:
+                        print(json.dumps(record))
+                elif len(sys.argv) == 3 and sys.argv[1] == "api":
+                    expected = "repos/example/LightForge/actions/artifacts/73"
+                    if sys.argv[2] != expected:
+                        raise SystemExit("incorrect artifact metadata endpoint")
+                    print(json.dumps({"id": 73, "digest": "sha256:" + "a" * 64}))
+                else:
+                    raise SystemExit("unexpected gh arguments")
+                '''), encoding="utf-8")
+            gh.chmod(0o700)
+            calls_path = root / "calls.ndjson"
+            output_path = root / "step-output"
+            env = dict(os.environ, PATH=str(binaries) + os.pathsep + os.environ["PATH"],
+                       GH_TOKEN="test-actions-token", GITHUB_REPOSITORY="example/LightForge",
+                       RUN_ID="321", ARTIFACT_NAME="benchmark-target", GITHUB_OUTPUT=str(output_path),
+                       MOCK_GH_CALLS=str(calls_path), MOCK_ARTIFACT_RECORDS=json.dumps(records))
+            result = subprocess.run(["bash", "-e", "-o", "pipefail", "-c", script],
+                                    cwd=root, env=env, text=True, capture_output=True)
+            calls = [json.loads(line) for line in calls_path.read_text().splitlines()]
+            output = output_path.read_text() if output_path.exists() else ""
+            metadata_path = root / "gate" / (side + "-artifact.json")
+            metadata = json.loads(metadata_path.read_text()) if metadata_path.exists() else None
+            return result, calls, output, metadata
+
+    def test_artifact_resolution_authenticates_and_fetches_the_selected_id(self):
+        for side in ("baseline", "candidate"):
+            with self.subTest(side=side):
+                result, calls, output, metadata = self._resolve_artifact(side, [
+                    {"id": 12, "name": "unrelated-artifact"},
+                    {"id": 73, "name": "benchmark-target"},
+                ])
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(calls, [
+                    ["api", "--paginate", "repos/example/LightForge/actions/runs/321/artifacts?per_page=100",
+                     "--jq", ".artifacts[]"],
+                    ["api", "repos/example/LightForge/actions/artifacts/73"],
+                ])
+                self.assertEqual(output, "id=73\n")
+                self.assertEqual(metadata, {"id": 73, "digest": "sha256:" + "a" * 64})
+
+    def test_artifact_resolution_stops_before_metadata_fetch_for_invalid_inventory(self):
+        cases = {
+            "missing": [],
+            "duplicate": [{"id": 73, "name": "benchmark-target"}, {"id": 74, "name": "benchmark-target"}],
+            "invalid_id": [{"id": True, "name": "benchmark-target"}],
+        }
+        for side in ("baseline", "candidate"):
+            for case, records in cases.items():
+                with self.subTest(side=side, case=case):
+                    result, calls, output, metadata = self._resolve_artifact(side, records)
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn("expected exactly one " + side + " benchmark artifact", result.stderr)
+                    self.assertEqual(len(calls), 1)
+                    self.assertEqual(output, "")
+                    self.assertIsNone(metadata)
+
     def test_pull_requests_always_run_the_quality_contract(self):
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("  pull_request:\n  workflow_dispatch:", text)
