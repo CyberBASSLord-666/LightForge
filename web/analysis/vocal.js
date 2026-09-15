@@ -25,11 +25,13 @@ function logMel(pcm,frontend){
 // Windowed-sinc 22.05 -> 16 kHz resampling with 64 taps and global rational
 // coordinates. All chunk boundaries read the same source halo (no phase reset).
 const resamplePhases=Array.from({length:320},(_,p)=>{const a=new Float64Array(64),fraction=p/320,cutoff=16000/22050*.94;let sum=0;for(let j=0;j<64;j++){const x=j-31-fraction,w=.42+.5*Math.cos(Math.PI*x/32)+.08*Math.cos(2*Math.PI*x/32),v=Math.abs(x)<1e-10?cutoff:Math.sin(Math.PI*cutoff*x)/(Math.PI*x);a[j]=v*w;sum+=a[j];}for(let j=0;j<64;j++)a[j]/=sum;return a;});
-async function pcm16000(reader,start,count,config){
+async function pcm16000(reader,start,count,config,telemetry){
  const first=Math.floor(start*441/320)-32,last=Math.ceil((start+count-1)*441/320)+33;
- const raw=await reader.mono22050(first,last-first,config),out=new Float32Array(count);
+ const raw=await reader.mono22050(first,last-first,config);
+ const resample=()=>{const out=new Float32Array(count);
  for(let i=0;i<count;i++){const numerator=(start+i)*441,center=Math.floor(numerator/320),phase=numerator-center*320,filter=resamplePhases[phase];let sum=0;for(let j=0;j<64;j++)sum+=(raw[center-31+j-first]||0)*filter[j];out[i]=sum;}
- return out;
+ return out;};
+ return telemetry?.measure?telemetry.measure('performance.resample_normalize',resample,{component:'vocal'}):resample();
 }
 function quantile(values,q){if(!values.length)return 0;const a=Array.from(values).sort((a,b)=>a-b);return a[Math.min(a.length-1,Math.floor((a.length-1)*q))];}
 function summarize(scores,detail,duration,model){
@@ -60,24 +62,27 @@ function summarize(scores,detail,duration,model){
 }
 function chunkStarts(duration){const n=Math.ceil(duration/.04),starts=[0];if(n<=OUTPUT)return starts;for(let first=150;first+OUTPUT<n;first+=150)starts.push(first);const last=Math.max(0,Math.ceil(duration/.04)-OUTPUT);if(last!==starts[starts.length-1])starts.push(last);return starts;}
 async function analyze(reader,config,options={}){
+ // These disjoint spans measure local work only; native bridge waits are not model inference.
+ const timed=(name,fn)=>options.telemetry?.measure?options.telemetry.measure('performance.'+name,fn,{component:'vocal'}):fn();
+ const timedAsync=(name,fn)=>options.telemetry?.measureAsync?options.telemetry.measureAsync('performance.'+name,fn,{component:'vocal',runtime:'onnxruntime-web-wasm'}):fn();
  const runtime=options.ort||root.ort,report=options.report||(()=>{}),model=options.model||await(await fetch('models/vocal-model.json')).json(),frontend=options.frontend||await(await fetch('models/vocal-frontend.json')).json(),n=Math.ceil(reader.duration/.04),scores=new Float32Array(n),speechScores=new Float32Array(n),weights=new Float32Array(n),detail=new Float32Array(Math.ceil(reader.duration/.02)),starts=chunkStarts(reader.duration);let session;
  try{
   report(0,'Listening for singing','Frame-MN10 • trained on timed sound events • entirely on this device');
   for(let k=0;k<starts.length;k++){
-   const first=starts[k],pcm=await pcm16000(reader,first*640,CONTEXT,config);let peak=0;for(const x of pcm)peak=Math.max(peak,Math.abs(x));
+   const first=starts[k],pcm=await pcm16000(reader,first*640,CONTEXT,config,options.telemetry);const peak=timed('preprocessing',()=>{let peak=0;for(const x of pcm)peak=Math.max(peak,Math.abs(x));return peak;});
    if(peak>1e-7){
-    const features=logMel(pcm,frontend);
+    const features=timed('feature_generation',()=>logMel(pcm,frontend));
     // Supporting mixture detail is admitted only where real singing evidence
     // exists. It is never represented as a separated voice or sung note.
-    for(let f=0;f<FRAMES;f+=2){const at=first*2+f/2;if(at>=detail.length)break;let sum=0;for(let b=40;b<105;b++)sum+=Math.exp((features[b*FRAMES+f]*5-4.5)/2);let energy=0;for(let j=f*HOP;j<Math.min(pcm.length,(f+2)*HOP);j++)energy+=pcm[j]*pcm[j];if(energy/320>1e-12)detail[at]=Math.max(detail[at],sum/65);}
-    if(!session)session=await runtime.InferenceSession.create(new URL('models/'+model.file,root.location.href).href,{executionProviders:['wasm'],graphOptimizationLevel:'all',enableCpuMemArena:true});
+    timed('feature_generation',()=>{for(let f=0;f<FRAMES;f+=2){const at=first*2+f/2;if(at>=detail.length)break;let sum=0;for(let b=40;b<105;b++)sum+=Math.exp((features[b*FRAMES+f]*5-4.5)/2);let energy=0;for(let j=f*HOP;j<Math.min(pcm.length,(f+2)*HOP);j++)energy+=pcm[j]*pcm[j];if(energy/320>1e-12)detail[at]=Math.max(detail[at],sum/65);}});
+    if(!session)session=await timedAsync('model_initialization',()=>runtime.InferenceSession.create(new URL('models/'+model.file,root.location.href).href,{executionProviders:['wasm'],graphOptimizationLevel:'all',enableCpuMemArena:true}));
     const tensor=new runtime.Tensor('float32',features,[1,1,BANDS,FRAMES]);let out;
-    try{out=await session.run({log_mel:tensor});const all=out.scores.data;for(let f=0;f<OUTPUT&&first+f<n;f++){let singing=0,speech=0;for(const id of model.singingClassIds)singing=Math.max(singing,all[id*OUTPUT+f]);for(const id of model.speechClassIds||[])speech=Math.max(speech,all[id*OUTPUT+f]);const w=.1+.9*Math.sin(Math.PI*(f+.5)/OUTPUT);scores[first+f]+=singing*w;speechScores[first+f]+=speech*w;weights[first+f]+=w;}}finally{if(out)for(const t of Object.values(out))t.dispose?.();tensor.dispose?.();}
+    try{out=await timedAsync('model_inference',()=>session.run({log_mel:tensor}));timed('postprocessing',()=>{const all=out.scores.data;for(let f=0;f<OUTPUT&&first+f<n;f++){let singing=0,speech=0;for(const id of model.singingClassIds)singing=Math.max(singing,all[id*OUTPUT+f]);for(const id of model.speechClassIds||[])speech=Math.max(speech,all[id*OUTPUT+f]);const w=.1+.9*Math.sin(Math.PI*(f+.5)/OUTPUT);scores[first+f]+=singing*w;speechScores[first+f]+=speech*w;weights[first+f]+=w;}});}finally{if(out)for(const t of Object.values(out))t.dispose?.();tensor.dispose?.();}
    }
    report((k+1)/starts.length,'Following sung phrases',`${Math.min(reader.duration,(first+OUTPUT)*.04).toFixed(0)} / ${reader.duration.toFixed(0)} seconds`);
   }
-  for(let i=0;i<n;i++){scores[i]/=weights[i]||1;speechScores[i]/=weights[i]||1;}
-  const result=summarize(scores,detail,reader.duration,model);if(options.includeDiagnostics)result.classifierScores=Array.from(scores);if(options.includeClassifierScores)result.classifier={singingScores:scores,speechScores,frameStep:.04,model:result.model};return result;
+  const result=timed('postprocessing',()=>{for(let i=0;i<n;i++){scores[i]/=weights[i]||1;speechScores[i]/=weights[i]||1;}
+  return summarize(scores,detail,reader.duration,model);});if(options.includeDiagnostics)result.classifierScores=Array.from(scores);if(options.includeClassifierScores)result.classifier={singingScores:scores,speechScores,frameStep:.04,model:result.model};return result;
  }finally{if(session)await session.release();}
 }
 root.LightForgeVocals={analyze,logMel,pcm16000,summarize,chunkStarts};

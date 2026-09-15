@@ -80,7 +80,8 @@ test('inventory rejects paths that could escape its web root', () => {
 });
 test('published 2.2.4 bootstrap uses its observed module order without candidate enhancements', () => {
   const lock = fixtureLock(publishedBootstrap.web_blob_paths), loaded = capture.bootstrapScripts(lock);
-  assert.equal(publishedBootstrap.source.tree_sha, 'a8c6fd8abf76c413913c3aed85cba2ad6bae17bd');
+  assert.equal(publishedBootstrap.source.commit_sha, 'a8c6fd8abf76c413913c3aed85cba2ad6bae17bd');
+  assert.equal(publishedBootstrap.source.tree_sha, '6c24fb9a14a25f1fdfc90addcf6dac9ef327a63f');
   assert.deepEqual(loaded, publishedBootstrap.expected_capture_scripts);
   assert.deepEqual(publishedBootstrap.index_script_order.filter(name => loaded.includes(name)), loaded);
   for (const missing of publishedBootstrap.absent_enhancement_scripts) {
@@ -240,17 +241,22 @@ test('undefined optional values are plain-false and cannot erase a failure check
   assert.equal(report.status, 'failed'); assert.equal(report.production_ready, false); assert.match(report.error, /receipt serialization failed/);
 });
 
-async function protocolAttempt(t, result, extra = {}) {
+async function protocolAttempt(t, result, extra = {}, closeBody = '') {
   const dir = temporary(t), web = path.join(dir, 'web'); fs.mkdirSync(web);
   for (const relative of coreFiles) { const file = path.join(web, relative); fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, relative.endsWith('.json') ? '{}' : 'unit protocol fixture'); }
   const audio = path.join(dir, 'audio.wav'); fs.writeFileSync(audio, wav()); const lock = await capture.inventory(web);
   for (const [name, value] of Object.entries({ lock, identity: identity(capture.validateLock(lock)), configuration: configuration() })) fs.writeFileSync(path.join(dir, name + '.json'), JSON.stringify(value));
   const stub = path.join(dir, 'node_modules', 'playwright'); fs.mkdirSync(stub, { recursive: true });
-  fs.writeFileSync(path.join(stub, 'index.js'), `module.exports={chromium:{launch:async()=>({version:()=>"protocol-test",close:async()=>{},newContext:async()=>({route:async()=>{},newPage:async()=>({on(){},setDefaultTimeout(){},goto:async()=>{},waitForFunction:async()=>{},addScriptTag:async()=>{},exposeFunction:async()=>{},evaluate:async(fn,arg)=>arg?${JSON.stringify(result)}:true})})})}};`);
-  const saved = process.env.NODE_PATH; process.env.NODE_PATH = path.join(dir, 'node_modules');
-  t.after(() => { if (saved === undefined) delete process.env.NODE_PATH; else process.env.NODE_PATH = saved; });
+  fs.writeFileSync(path.join(stub, 'index.js'), `module.exports={chromium:{launch:async()=>({version:()=>"protocol-test",close:async()=>{${closeBody}},newContext:async()=>({route:async()=>{},newPage:async()=>({on(){},setDefaultTimeout(){},goto:async()=>{},waitForFunction:async()=>{},addScriptTag:async()=>{},exposeFunction:async()=>{},evaluate:async(fn,arg)=>arg?${JSON.stringify(result)}:true})})})}};`);
+  // Keep the real collector bytes but resolve its protocol stub locally.
+  // NODE_PATH cannot override a checkout's installed node_modules/playwright.
+  const harness = path.join(dir, 'harness'); fs.mkdirSync(harness);
+  for (const name of ['capture-app.cjs', 'strict-json.cjs', 'capture-supervisor.cjs', 'capture-supervisor.py']) {
+    fs.copyFileSync(path.join(__dirname, '..', 'qa', 'locked-benchmark', name), path.join(harness, name));
+  }
+  const isolatedCapture = require(path.join(harness, 'capture-app.cjs'));
   const out = path.join(dir, 'attempt');
-  const code = await capture.capture({ 'app-root': dir, wav: audio, 'audio-sha256': await capture.hashBytes(fs.readFileSync(audio)), identity: path.join(dir, 'identity.json'), configuration: path.join(dir, 'configuration.json'), 'web-manifest': path.join(dir, 'lock.json'), 'output-dir': out, ...extra });
+  const code = await isolatedCapture.capture({ 'app-root': dir, wav: audio, 'audio-sha256': await capture.hashBytes(fs.readFileSync(audio)), identity: path.join(dir, 'identity.json'), configuration: path.join(dir, 'configuration.json'), 'web-manifest': path.join(dir, 'lock.json'), 'output-dir': out, ...extra });
   return { code, out, report: JSON.parse(fs.readFileSync(path.join(out, 'capture.json'))) };
 }
 test('supervised pipeline keeps failed validation artifacts and authoritative failure receipt', async t => {
@@ -269,4 +275,41 @@ test('large valid frame transport is retained without regex stack overflow', t =
   assert.equal(retained.frames.length, 6 * 1024 ** 2);
   assert.equal(report.artifact_errors.length, 0);
   assert.equal(report.artifacts['show.frames.bin'].bytes, 6 * 1024 ** 2);
+});
+
+function validProtocolResult() {
+  const frames = Buffer.from([17]), header = Buffer.alloc(32);
+  header.write('PSEQ', 0); header.writeUInt16LE(32, 4);
+  header.writeUInt32LE(1, 10); header.writeUInt32LE(1, 14); header[18] = 20;
+  return { music: { beats: [0.5] }, show: { validation: { valid: true }, settings: {}, frameCount: 1, channelCount: 1, stepMs: 20 },
+    compiled: { sha256: capture.hashBytes(frames) }, frames: frames.toString('base64'), header: header.toString('base64'), progress: [], serialization_errors: [] };
+}
+for (const scenario of [
+  { name: 'browser close failure', closeBody: "throw Error('fixture close failure')", timedOut: false },
+  { name: 'browser close timeout', closeBody: 'await new Promise(() => {})', timedOut: true },
+]) test(scenario.name + ' retains raw artifacts but removes validated category hashes', async t => {
+  const { code, out, report } = await protocolAttempt(t, validProtocolResult(), { 'timeout-seconds': '1' }, scenario.closeBody);
+  assert.equal(code, 1); assert.equal(report.status, 'failed');
+  assert.equal(report.runtime.browser, 'protocol-test', 'the fixture uses its local protocol stub even when real Playwright is installed');
+  assert.equal(report.supervision.timed_out, scenario.timedOut);
+  assert.equal(Object.hasOwn(report, 'observed_output_hashes'), false);
+  assert.equal(fs.existsSync(path.join(out, 'lightshow.fseq')), true, 'capture passed validation before cleanup failed');
+  assert.equal(fs.existsSync(path.join(out, 'analysis.json')), true);
+  assert.equal(report.production_ready, false);
+});
+
+test('internal dispatch also rejects invalid deadlines before any file or browser work', async () => {
+  const saved = process.env.LIGHTFORGE_CAPTURE_SUPERVISED;
+  process.env.LIGHTFORGE_CAPTURE_SUPERVISED = '1';
+  try {
+    for (const seconds of ['0', '-1', '1.5', '14401', 'NaN', 'Infinity']) {
+      const args = ['__capture-worker', 'capture', '--app-root', '/missing-capture-fixture'];
+      for (const name of ['wav', 'audio-sha256', 'configuration', 'identity', 'web-manifest', 'output-dir']) args.push('--' + name, '/missing-capture-fixture');
+      args.push('--timeout-seconds', seconds);
+      await assert.rejects(capture.main(args), /Capture deadline must be 1\.\.14400 seconds/);
+    }
+  } finally {
+    if (saved === undefined) delete process.env.LIGHTFORGE_CAPTURE_SUPERVISED;
+    else process.env.LIGHTFORGE_CAPTURE_SUPERVISED = saved;
+  }
 });

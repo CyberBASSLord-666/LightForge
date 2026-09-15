@@ -6,14 +6,15 @@ LightForge 2.2.5 / Android version code 20205 is a release candidate, not a publ
 
 ## Reproduce the Android update
 
-Requirements: Linux x86_64, Python 3.12+, Node 22+, Bash, and at least 16 GB of free build space and 8 GB of RAM. The offline models add approximately 1.2 GiB before APK compression.
+Requirements: Linux x86_64, Python 3.12.14, Node 22+, Bash, and at least 16 GB of free build space and 8 GB of RAM. The offline models add approximately 1.2 GiB before APK compression.
 
 ```bash
 npm ci --ignore-scripts --no-audit --no-fund
 python3 tools/bootstrap_toolchain.py
 python3 tools/bootstrap_native_runtime.py
 python3 -m venv ../model-build
-../model-build/bin/pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu
+../model-build/bin/pip install pip==26.2.1 setuptools==83.0.0
+../model-build/bin/pip install torch==2.13.0 --index-url https://download.pytorch.org/whl/cpu
 ../model-build/bin/pip install -r tools/model-requirements.txt
 ../model-build/bin/python tools/prepare_game.py
 ../model-build/bin/python tools/prepare_deux.py

@@ -229,9 +229,17 @@ from unittest import mock
 def expire(owned, _deadline):
     owned.discovery_deadline_exhausted = True
     return False
+spawned = []
+real_popen = supervisor.subprocess.Popen
+def retain_child(*args, **kwargs):
+    child = real_popen(*args, **kwargs)
+    spawned.append(child)
+    return child
 result = None
 try:
-    with mock.patch.object(supervisor.OwnedProcesses, 'discover_direct_children', expire):
+    # Retain the real Popen object so its destructor cannot reap the child
+    # between supervise() returning and our independent exit-signal check.
+    with mock.patch.object(supervisor.OwnedProcesses, 'discover_direct_children', expire), mock.patch.object(supervisor.subprocess, 'Popen', side_effect=retain_child):
         result = supervisor.supervise(time.monotonic_ns() + 500_000_000, [sys.executable, '-I', '-c', 'import signal,time; signal.signal(signal.SIGTERM, signal.SIG_IGN); time.sleep(10)'])
     assert result['exit_code'] == 124, result
     assert result['termination']['verified'] is False, result
@@ -245,6 +253,9 @@ try:
             exited, status = os.waitpid(pid, os.WNOHANG)
             if exited:
                 assert os.waitstatus_to_exitcode(status) == -signal.SIGKILL, status
+                for child in spawned:
+                    if child.pid == pid:
+                        child.returncode = os.waitstatus_to_exitcode(status)
                 break
             assert time.monotonic() < deadline, 'pinned child survived exhausted discovery'
             time.sleep(0.01)
@@ -255,7 +266,10 @@ finally:
             try:
                 os.waitid(os.P_PID, pid, os.WEXITED | os.WNOHANG | os.WNOWAIT)
                 os.kill(pid, signal.SIGKILL)
-                os.waitpid(pid, 0)
+                _, status = os.waitpid(pid, 0)
+                for child in spawned:
+                    if child.pid == pid:
+                        child.returncode = os.waitstatus_to_exitcode(status)
             except ChildProcessError:
                 pass
 `);

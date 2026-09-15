@@ -6,11 +6,11 @@ function createTelemetry(stage,metadata){
  const factory=self.LightForgeAnalysisTelemetry;
  if(factory&&typeof factory.create==='function')try{
   const telemetry=factory.create(stage,metadata);
-  if(telemetry&&typeof telemetry.begin==='function'&&typeof telemetry.end==='function'&&typeof telemetry.cache==='function'&&typeof telemetry.snapshot==='function')return telemetry;
+  if(telemetry&&typeof telemetry.begin==='function'&&typeof telemetry.end==='function'&&typeof telemetry.measure==='function'&&typeof telemetry.measureAsync==='function'&&typeof telemetry.cache==='function'&&typeof telemetry.snapshot==='function')return telemetry;
  }catch(_){}
  // Profiling must never make a resumable analysis fail when a test harness,
  // older WebView cache, or constrained worker cannot load its optional module.
- return {begin:()=>null,end:()=>{},cache:()=>{},resource:null,snapshot:()=>null};
+ return {begin:()=>null,end:()=>{},measure:(_name,fn)=>fn(),measureAsync:(_name,fn)=>fn(),cache:()=>{},resource:null,snapshot:()=>null};
 }
 function createDiagnosticClock(){
  let factory;try{factory=self.LightForgeDiagnosticClock;}catch(_){factory=null;}
@@ -102,7 +102,7 @@ async function ensureRecurrenceAnalysis(result,options,store,telemetry,featureCo
  clearRecurrenceAnalysis(result);
  const timeline=ensureSemanticTimeline(result);
  const evidenceInput=await recurrenceEvidenceInput(result,options,featureConfig,telemetry);
- const evidence=api.captureEvidence(evidenceInput,timeline),evidenceCheck=api.validateEvidence(evidence,timeline);
+ const evidence=telemetry.measure('performance.structural_analysis',()=>api.captureEvidence(evidenceInput,timeline),{scope:'optional-recurrence-feature-evidence'}),evidenceCheck=api.validateEvidence(evidence,timeline);
  if(!evidenceCheck?.valid)throw Error('Recurrence evidence validation failed: '+(evidenceCheck?.errors||[]).join('; ').slice(0,512));
  let cached=null;
  try{cached=await store.read('recurrence');}catch(_){telemetry.cache('recurrence','corrupt');}
@@ -119,7 +119,7 @@ async function ensureRecurrenceAnalysis(result,options,store,telemetry,featureCo
  // captureEvidence has a strict whitelist: canonical section spans plus the
  // existing normalized energy/chroma features. It cannot promote labels or
  // create events from stems, lyrics, or raw PCM.
- const sidecar=api.build(timeline,evidence),sidecarCheck=api.validate(sidecar,timeline,evidence);
+ const sidecar=telemetry.measure('performance.structural_analysis',()=>api.build(timeline,evidence),{scope:'optional-recurrence-sidecar-construction'}),sidecarCheck=api.validate(sidecar,timeline,evidence);
  if(!sidecarCheck?.valid)throw Error('Recurrence sidecar validation failed: '+(sidecarCheck?.errors||[]).join('; ').slice(0,512));
  const record={schemaVersion:1,kind:'recurrence-analysis-cache',engineVersion:api.version,timelineFingerprint:sidecar.timelineFingerprint,evidenceFingerprint:sidecar.evidenceFingerprint,evidence,sidecar};
  await store.write('recurrence',record);
@@ -236,12 +236,14 @@ const dispose=outputs=>{for(const value of Object.values(outputs))if(value.dispo
 const sigmoid=x=>1/(1+Math.exp(-Math.max(-50,Math.min(50,x))));
 // Full-track mel coordinates with real neighbouring audio, even at inference seams.
 // Two extra hops on each side isolate STFT's 512-sample reflection halo.
-async function melForFrames(reader,session,first,frames,config){
+async function melForFrames(reader,session,first,frames,config,telemetry){
  const halo=2,start=(first-halo)*441,count=(frames+halo*2-1)*441+1;
  const pcm=await reader.mono22050(start,count,config),total=Math.ceil(reader.duration*22050);
- for(let i=0;i<pcm.length;i++){const at=start+i;if(at<0){const source=-at-start;if(source<pcm.length)pcm[i]=pcm[source];}else if(at>=total){const source=2*(total-1)-at-start;if(source>=0)pcm[i]=pcm[source];}}
- const tensor=new ort.Tensor('float32',pcm,[1,pcm.length]);let output;
- try{output=await session.run({audio_pcm:tensor});const mel=output.mel_spectrogram;return new Float32Array(mel.data.subarray(halo*128,(halo+frames)*128));}finally{if(output)dispose(output);tensor.dispose();}
+ const tensor=telemetry.measure('performance.preprocessing',()=>{
+  for(let i=0;i<pcm.length;i++){const at=start+i;if(at<0){const source=-at-start;if(source<pcm.length)pcm[i]=pcm[source];}else if(at>=total){const source=2*(total-1)-at-start;if(source>=0)pcm[i]=pcm[source];}}
+  return new ort.Tensor('float32',pcm,[1,pcm.length]);
+ },{scope:'rhythm-frontend-reflection-and-tensor'});let output;
+ try{output=await telemetry.measureAsync('performance.feature_generation',()=>telemetry.measureAsync('performance.model_inference',()=>session.run({audio_pcm:tensor}),{scope:'rhythm-mel-session-run'}),{scope:'rhythm-mel-model-frontend'});return telemetry.measure('performance.postprocessing',()=>{const mel=output.mel_spectrogram;return new Float32Array(mel.data.subarray(halo*128,(halo+frames)*128));},{scope:'rhythm-mel-halo-trim'});}finally{if(output)dispose(output);tensor.dispose();}
 }
 const RHYTHM_FEATURE='rhythm-dsp-v2',RHYTHM_FEATURE_VERSION='dsp-feature-extractor-v2',RHYTHM_PREPROCESSING='pcm-44100-mono22050-reflect-v1';
 const RHYTHM_FIELDS=Object.freeze(['rms','bass','mid','high','colour','fineRms','chroma']);
@@ -341,7 +343,7 @@ self.onmessage=async e=>{
   if(recurrence.enabled)report(1,'Mapping recurring material','Validated generic repeated-section evidence saved',{checkpointSaved:true,analysisStage:stage});
   else report(1,'Mapping recurring material','Opt-in recurrence analysis is disabled');
   const recurrenceTiming=workerClock.measure(started);
-  postMessage({type:'result',value:result,restored:recurrence.restored,seconds:recurrence.restored?0:workerTimingSeconds(recurrenceTiming),profile:telemetry.snapshot({restored:recurrence.restored,...workerTimingAttributes(recurrenceTiming)})});
+  postMessage({type:'result',value:result,restored:recurrence.restored,seconds:recurrence.restored?0:workerTimingSeconds(recurrenceTiming),profile:telemetry.snapshot({performanceProbeVersion:1,restored:recurrence.restored,...workerTimingAttributes(recurrenceTiming)})});
   return;
  }
  const manifestLoad=telemetry.begin('model.manifest');
@@ -386,14 +388,14 @@ self.onmessage=async e=>{
   // Restored work remains zero-cost in analyzer stage accounting. The clock
   // evidence is attached only to diagnostics, so a hostile runtime cannot
   // alter cache semantics or any downstream FSEQ/default behavior.
-  postMessage({type:'result',value:restored,restored:true,seconds:0,profile:telemetry.snapshot({restored:true,...workerTimingAttributes(restoredTiming)})});
+  postMessage({type:'result',value:restored,restored:true,seconds:0,profile:telemetry.snapshot({performanceProbeVersion:1,restored:true,...workerTimingAttributes(restoredTiming)})});
   return;
  }
  telemetry.cache(stage,'miss');
  ort.env.wasm.wasmPaths=new URL('vendor/',self.location.href).href;ort.env.wasm.numThreads=wasmThreadCount();ort.env.wasm.proxy=false;
  const sessionOptions={executionProviders:['wasm'],graphOptimizationLevel:'all',enableCpuMemArena:false,enableMemPattern:false};
  if(stage==='rhythm'){
-  report(.01,'Opening music','Reading your music locally');const reader=new LightForgeWavReader(options.analysisUrl||audioUrl);await reader.open();
+  report(.01,'Opening music','Reading your music locally');const reader=new LightForgeWavReader(options.analysisUrl||audioUrl,telemetry);await reader.open();
  const n=Math.ceil(reader.duration*50),featureStore=await reusableRhythmFeatures(options,config,telemetry.resource);let featureHit=null;
  if(featureStore){
   const featureRead=telemetry.begin('shared-feature.read');
@@ -408,7 +410,7 @@ self.onmessage=async e=>{
   const chromaCount=Math.ceil(n/10)*12,rhythmBytes=(n*6+n*3+n*4+chromaCount)*4;
   data={duration:reader.duration,beat:new Float32Array(n),down:new Float32Array(n),rms:new Float32Array(n),bass:new Float32Array(n),mid:new Float32Array(n),high:new Float32Array(n),colour:new Float32Array(n*3),fineRms:new Float32Array(n*4),chroma:new Float32Array(chromaCount),chromaStep:.2};
   telemetry.allocation?.(rhythmBytes,9);
-  const extractor=new LightForgeDSP.FeatureExtractor(config),featureChunk=500;
+  const extractor=new LightForgeDSP.FeatureExtractor(config,telemetry),featureChunk=500;
   report(.025,'Listening to musical detail','Measuring attacks, tonal colour and quiet passages');
   for(let first=0;first<n;first+=featureChunk){const frames=Math.min(featureChunk,n-first),samples=await reader.mono22050(first*441-705,(frames-1)*441+1411,config),f=extractor.extract(samples,0,frames);for(const name of ['rms','bass','mid','high'])data[name].set(f[name],first);data.colour.set(f.colour,first*3);data.fineRms.set(f.fineRms,first*4);for(let i=0;i<frames;i++)for(let b=0;b<12;b++)data.chroma[Math.floor((first+i)/10)*12+b]+=f.chroma[i*12+b]/10;report(.03+.18*(first+frames)/n,'Listening to musical detail',`${Math.min(reader.duration,(first+frames)*.02).toFixed(0)} / ${reader.duration.toFixed(0)} seconds`);}
   if(featureStore){
@@ -424,16 +426,16 @@ self.onmessage=async e=>{
  for(let k=0;k<starts.length;k++){
   const first=starts[k],length=Math.min(chunk,n+border-first),lo=Math.max(0,first),hi=Math.min(n,first+length);let peak=0;for(let i=lo;i<hi;i++)peak=Math.max(peak,data.rms[i]);
   if(peak<=1e-7){copiedUntil=Math.max(copiedUntil,Math.min(n,first+length-border));report(.24+.15*(k+1)/starts.length,'Recognizing a quiet passage','Keeping complete silence clear of invented beats');continue;}
-  if(!session){session=await ort.InferenceSession.create(new URL('models/'+selected.file,self.location.href).href,sessionOptions);melSession=await ort.InferenceSession.create(new URL('models/'+models.frontend.file,self.location.href).href,sessionOptions);}
-  const features=new Float32Array(length*128),mel=await melForFrames(reader,melSession,lo,hi-lo,config);telemetry.allocation?.(features.byteLength,1);features.set(mel,(lo-first)*128);telemetry.copy?.(mel.byteLength,1);
+  if(!session){session=await telemetry.measureAsync('performance.model_initialization',()=>ort.InferenceSession.create(new URL('models/'+selected.file,self.location.href).href,sessionOptions),{scope:'rhythm-transformer-session'});melSession=await telemetry.measureAsync('performance.model_initialization',()=>ort.InferenceSession.create(new URL('models/'+models.frontend.file,self.location.href).href,sessionOptions),{scope:'rhythm-mel-session'});}
+  const features=new Float32Array(length*128),mel=await melForFrames(reader,melSession,lo,hi-lo,config,telemetry);telemetry.allocation?.(features.byteLength,1);features.set(mel,(lo-first)*128);telemetry.copy?.(mel.byteLength,1);
   const input=new ort.Tensor('float32',features,[1,length,128]);let out;
-  try{out=await session.run({spectrogram:input});const beats=out.beat.data,down=out.downbeat.data;const begin=Math.max(copiedUntil,0,first+border),end=Math.min(n,first+length-border);for(let i=begin;i<end;i++){const b=sigmoid(beats[i-first]),d=sigmoid(down[i-first]);data.beat[i]=Math.max(0,b-d);data.down[i]=d;}copiedUntil=Math.max(copiedUntil,end);}finally{if(out)dispose(out);input.dispose();}
+  try{out=await telemetry.measureAsync('performance.model_inference',()=>session.run({spectrogram:input}),{scope:'rhythm-transformer-session-run'});telemetry.measure('performance.postprocessing',()=>{const beats=out.beat.data,down=out.downbeat.data;const begin=Math.max(copiedUntil,0,first+border),end=Math.min(n,first+length-border);for(let i=begin;i<end;i++){const b=sigmoid(beats[i-first]),d=sigmoid(down[i-first]);data.beat[i]=Math.max(0,b-d);data.down[i]=d;}copiedUntil=Math.max(copiedUntil,end);},{scope:'rhythm-probability-stitch'});}finally{if(out)dispose(out);input.dispose();}
   report(.24+.15*(k+1)/starts.length,'Understanding beats and bar accents',`${Math.min(reader.duration,copiedUntil*.02).toFixed(0)} / ${reader.duration.toFixed(0)} seconds • ${quality==='precision'?'Precision':'Balanced'}`);
  }
  if(copiedUntil!==n)throw new Error('The music analysis did not cover the full track. Please try again.');
  if(session)await session.release();session=null;if(melSession)await melSession.release();melSession=null;
  report(.40,'Recognizing musical structure','Finding recurring passages, groove and confident movement moments');
- result=LightForgeDSP.summarize(data,{...options,decoder:'transformer'});
+ result=LightForgeDSP.summarize(data,{...options,decoder:'transformer',telemetry});
  if(options.rhythmHierarchy===true){
   const hierarchyPhase=telemetry.begin('rhythm.hierarchy');
   const hierarchy=ensureRhythmHierarchy(result,options);
@@ -449,7 +451,7 @@ self.onmessage=async e=>{
   // renderer offers Resume instead of reporting a blank status.
   report(.40,'Recognizing musical structure','Progress saved',{checkpointSaved:true,analysisStage:stage});
  }else if(stage==='separation'){
-  const sourceReader=new LightForgeWavReader(audioUrl);
+  const sourceReader=new LightForgeWavReader(audioUrl,telemetry);
   await sourceReader.open();
   telemetry.increment?.('source_wav_reader_opens');
  const storagePlan=separationStoragePlan(sourceReader.samples,quality);
@@ -457,7 +459,7 @@ self.onmessage=async e=>{
  await LightForgeStemCache.prune(cacheKey,storagePlan.stemBytes);
  await store.reserve({...storagePlan,onProgress:(done,total)=>report(.405,'Checking saved analysis storage','Verified '+done+' / '+total+' passage checkpoints')});
  report(.41,'Separating voice and instruments','Recoverable passages • your music stays on this device');
- cacheWriter=await LightForgeStemCache.create(cacheKey,sourceReader.samples,config,options.projectId||'');
+ cacheWriter=await LightForgeStemCache.create(cacheKey,sourceReader.samples,config,options.projectId||'',telemetry);
  const markNativeDeuxFallback=()=>{
   if(nativeDeuxFence)return nativeDeuxFence;
   nativeDeuxFencing=true;
@@ -476,7 +478,7 @@ self.onmessage=async e=>{
  };
  const nativeStudioPredict=quality==='precision'&&options.supportsNativeDeux?(start,onProgress)=>nativePredict(start,onProgress,markNativeDeuxFallback):undefined;
  const nativeBalancedPredict=quality==='balanced'&&options.supportsNativeMdx?(encoded,onProgress)=>nativeMdxPredict(encoded,onProgress,markNativeMdxFallback):undefined;
- separator=await (quality==='precision'?LightForgeDeux:LightForgeMdxSeparator).create({ort,baseUrl:new URL(quality==='precision'?'models/deux/':'models/',self.location.href).href,onProgress:p=>report(.41,'Loading studio vocal separation',p.message),checkpoint:store,nativePredict:nativeStudioPredict||nativeBalancedPredict});
+ separator=await (quality==='precision'?LightForgeDeux:LightForgeMdxSeparator).create({ort,telemetry,baseUrl:new URL(quality==='precision'?'models/deux/':'models/',self.location.href).href,onProgress:p=>report(.41,'Loading studio vocal separation',p.message),checkpoint:store,nativePredict:nativeStudioPredict||nativeBalancedPredict});
  result.separation=await separator.process((start,count)=>sourceReader.stereo44100(start,count),sourceReader.samples,chunk=>{
   if(nativeMdxFallback||nativeDeuxFallback||nativeMdxFencing||nativeDeuxFencing)return;
   return cacheWriter.append(chunk);
@@ -489,24 +491,24 @@ self.onmessage=async e=>{
    await store.write(stage,{separation:result.separation,stemCache:result.stemCache});
    report(.82,'Separating voice and instruments','Progress saved',{checkpointSaved:true,analysisStage:stage});
   }else if(stage==='voice'){
- const stems=await LightForgeStemCache.readers(result.stemCache),fullVoice=await LightForgeStemCache.fullVoice(result.stemCache),sourceClock=fullResolutionStemClock(result.stemCache);
+ const stems=await LightForgeStemCache.readers(result.stemCache,telemetry),fullVoice=await LightForgeStemCache.fullVoice(result.stemCache,telemetry),sourceClock=fullResolutionStemClock(result.stemCache);
  report(.83,'Recognizing the isolated voice','Distinguishing singing, speech and remaining instrument bleed');
- const classified=await store.read('voice-classifier')||await LightForgeVocals.analyze(stems.vocals,config,{ort,includeClassifierScores:true,report:(p,stage,detail)=>report(.83+.075*p,'Recognizing the isolated voice',detail)});
+ const classified=await store.read('voice-classifier')||await LightForgeVocals.analyze(stems.vocals,config,{ort,telemetry,includeClassifierScores:true,report:(p,stage,detail)=>report(.83+.075*p,'Recognizing the isolated voice',detail)});
  await store.write('voice-classifier',classified);
  const detailExtractor=new LightForgeVocalDetail.Extractor({sampleRate:22050,duration:sourceClock.duration}),detailCount=result.stemCache.samples,detailChunk=22050*8;
- for(let start=0;start<detailCount;start+=detailChunk){const count=Math.min(detailChunk,detailCount-start),voice=await stems.vocals.mono22050(start,count,config),backing=await stems.accompaniment.mono22050(start,count,config);detailExtractor.push(voice,start,backing);report(.905+.035*(start+count)/detailCount,'Following vocal expression','Measuring entrances, syllabic attacks, held notes and pauses');}
+ for(let start=0;start<detailCount;start+=detailChunk){const count=Math.min(detailChunk,detailCount-start),voice=await stems.vocals.mono22050(start,count,config),backing=await stems.accompaniment.mono22050(start,count,config);telemetry.measure('performance.feature_generation',()=>detailExtractor.push(voice,start,backing),{scope:'vocal-detail-features'});report(.905+.035*(start+count)/detailCount,'Following vocal expression','Measuring entrances, syllabic attacks, held notes and pauses');}
  report(.942,'Transcribing sung notes','GAME Large • identifying entrances, pitch changes and held notes');
- game=await LightForgeGAME.create({ort,baseUrl:new URL('models/game/',self.location.href).href,onProgress:detail=>report(.942,'Loading singing transcription',detail),checkpoint:store});
+ game=await LightForgeGAME.create({ort,telemetry,baseUrl:new URL('models/game/',self.location.href).href,onProgress:detail=>report(.942,'Loading singing transcription',detail),checkpoint:store});
  const transcription=await game.process(fullVoice,sourceClock.samples,{onProgress:(p,info)=>report(.945+.04*p,'Transcribing sung notes','GAME Large • '+Math.round(p*100)+'%',info)});
- result.vocals=LightForgeGAME.fuse(detailExtractor.finish({classifier:classified.classifier,model:classified.model,transcription}),transcription);classified.classifier=null;await game.release();game=null;
+ result.vocals=telemetry.measure('performance.postprocessing',()=>LightForgeGAME.fuse(detailExtractor.finish({classifier:classified.classifier,model:classified.model,transcription}),transcription),{scope:'vocal-detail-finalization-and-game-fusion'});classified.classifier=null;await game.release();game=null;
  await ensureVocalSemantics(result,options,store,telemetry);
 
    await store.write(stage,{vocals:result.vocals});
    report(.985,'Recognizing the isolated voice','Progress saved',{checkpointSaved:true,analysisStage:stage});
   }else{
-   const stems=await LightForgeStemCache.readers(result.stemCache);
+   const stems=await LightForgeStemCache.readers(result.stemCache,telemetry);
  report(.985,'Following bass notes','Listening beneath the separated singing');
- const bass=await LightForgeBass.analyze(stems.accompaniment,config,{onProgress:p=>report(.985+.014*p,'Following bass notes','Distinguishing sustained low notes from brief drum attacks')});
+ const bass=await LightForgeBass.analyze(stems.accompaniment,config,{telemetry,onProgress:p=>report(.985+.014*p,'Following bass notes','Distinguishing sustained low notes from brief drum attacks')});
  const {notes,...bassAnalysis}=bass;result.bassNotes=notes;result.bassAnalysis={...bassAnalysis,source:'accompaniment-mixture-estimate',inputStem:'accompaniment',inputStemSeparated:true,instrumentSeparated:false,sourceSeparated:false,limitations:[...(bassAnalysis.limitations||[]),'Bass notes are estimated from a vocal-separated accompaniment mixture, not an isolated bass stem.']};
  normalizeBassProvenance(result);
  result.analysisVersion=8;
@@ -531,7 +533,7 @@ self.onmessage=async e=>{
    report(1,'Music understood','Progress saved',{checkpointSaved:true,analysisStage:stage});
   }
  const completionTiming=workerClock.measure(started);
- postMessage({type:'result',value:result,restored:false,seconds:workerTimingSeconds(completionTiming),profile:telemetry.snapshot({restored:false,...workerTimingAttributes(completionTiming)})});
+ postMessage({type:'result',value:result,restored:false,seconds:workerTimingSeconds(completionTiming),profile:telemetry.snapshot({performanceProbeVersion:1,restored:false,...workerTimingAttributes(completionTiming)})});
  }catch(error){
   if(cacheWriter)try{await cacheWriter.abort();}catch(_){}
   postMessage({type:'error',message:String(error.message||error).slice(0,3072),code:typeof error.code==='string'?error.code:undefined,stack:typeof error.stack==='string'?error.stack.slice(0,8192):undefined});

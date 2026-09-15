@@ -84,6 +84,12 @@ of 3 seconds, plus at most 0.6 seconds for the outer helper watchdog.
 cleanup is a failure. This supervises trusted application processes and is
 not a sandbox for malicious code. The authoritative receipt is written by
 the parent even if startup or browser cleanup hangs.
+Use the public `capture` command or exported `capture()` API for supervision.
+The private `__capture-worker` entry point and its environment marker are internal
+dispatch plumbing, not authentication; a caller controlling the host can run
+JavaScript directly. Both entry points validate the numeric deadline before
+starting a server or browser. A raw worker checkpoint does not establish
+supervised completion or release qualification.
 The accepted WAV encodings are mono/stereo RIFF PCM16/24/32 and float32 with
 consistent headers, exactly 44.1 kHz sample rate, a duration of 1 second to
 4 hours, and at most 2 GiB. The complete production pipeline requires this

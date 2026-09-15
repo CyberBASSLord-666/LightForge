@@ -64,8 +64,8 @@ jobs:
   unit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.12'
       - name: Reject incomplete manual gate requests
@@ -146,7 +146,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: lightforge-release-quality
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Require protected default-branch benchmark authority
         env:
           LIGHTFORGE_REF_PROTECTED: ${{ github.ref_protected }}
@@ -187,7 +187,7 @@ jobs:
           if re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", sys.argv[1]) is None:
               raise SystemExit("benchmark artifact name is invalid")
           PY
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: ${{ inputs.benchmark_diagnostics_artifact }}
           path: gate/diagnostics
@@ -243,7 +243,7 @@ jobs:
             fi
           fi
           python3 tools/locked_benchmark_runner.py aggregate "${arguments[@]}"
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: ${{ inputs.benchmark_artifact }}
           path: gate/benchmark/benchmark.json
@@ -262,7 +262,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: lightforge-release-quality
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Require protected default-branch release authority
         env:
           LIGHTFORGE_REF_PROTECTED: ${{ github.ref_protected }}
@@ -316,7 +316,7 @@ jobs:
           PY
           )"
           gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id" > gate/candidate-artifact.json
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           artifact-ids: ${{ steps.baseline-artifact.outputs.id }}
           path: gate/baseline
@@ -324,7 +324,7 @@ jobs:
           repository: ${{ github.repository }}
           run-id: ${{ inputs.baseline_run_id }}
           github-token: ${{ github.token }}
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           artifact-ids: ${{ steps.candidate-artifact.outputs.id }}
           path: gate/candidate
@@ -407,7 +407,7 @@ jobs:
             --release-candidate-artifact "lightforge-$RELEASE_VERSION-ci-candidate" \
             --output gate/quality-gate-provenance.json
       - if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: performance-quality-gate-report
           path: |

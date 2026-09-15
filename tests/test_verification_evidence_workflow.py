@@ -144,7 +144,7 @@ class VerificationEvidenceWorkflowTest(unittest.TestCase):
             self.assertIn("persist-credentials: false", job)
             self.assertIn('test "$LIGHTFORGE_REF_PROTECTED" = "true"', job)
         for command in (
-            "python3 -m pip install", "torch==2.6.0", "-r tools/model-requirements.txt",
+            "python3 -m pip install", "torch==2.13.0", "-r tools/model-requirements.txt",
             "python3 tools/prepare_game.py", "python3 tools/prepare_deux.py", "prepare-musdb-fixtures.py",
         ):
             self.assertIn(command, reconstruct)

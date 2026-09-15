@@ -279,7 +279,7 @@ function retainRawArtifacts(out, result, report) {
     try { const bytes = Buffer.from(canonical(value) + '\n'); requireValue(bytes.length <= 128 * 1024 ** 2, 'JSON artifact exceeds 128 MiB'); save(name, bytes); }
     catch (error) { failures.push({ artifact: name, error: String(error.message || error).slice(0, 500) }); }
   }
-  for (const [name, value] of Object.entries({ 'analysis.json': result.music, 'show.json': result.show, 'compiled.json': result.compiled, 'progress.json': result.progress })) json(name, value);
+  for (const [name, value] of Object.entries({ 'analysis.json': result.music, 'show.json': result.show, 'compiled.json': result.compiled, 'progress.json': result.progress, 'compiler-profile.json': result.compiler_profile })) json(name, value);
   json('perceptual-validation.json', plain(result.show) ? result.show.perceptualValidation : undefined);
   let frames, header;
   for (const [key, name, bound] of [['frames', 'show.frames.bin', 192000000], ['header', 'show.header.bin', 65535]]) {
@@ -294,7 +294,13 @@ function retainRawArtifacts(out, result, report) {
   report.raw_evidence_status = 'retained-before-validation; not-qualified';
   return { save, frames, header };
 }
+function captureDeadlineSeconds(options) {
+  const seconds = options['timeout-seconds'] === undefined ? 3600 : Number(options['timeout-seconds']);
+  requireValue(Number.isSafeInteger(seconds) && seconds >= 1 && seconds <= 14400, 'Capture deadline must be 1..14400 seconds');
+  return seconds;
+}
 async function captureWorker(options) {
+  const seconds = captureDeadlineSeconds(options);
   const webRoot = path.resolve(options['app-root'], 'web'), wav = path.resolve(options.wav), out = path.resolve(options['output-dir']);
   const report = initialReport();
   let server, browser, success = false;
@@ -320,7 +326,6 @@ async function captureWorker(options) {
     server = createServer(webRoot, wav, lock, served);
     await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });
     const origin = 'http://127.0.0.1:' + server.address().port;
-    const seconds = options['timeout-seconds'] === undefined ? 3600 : Number(options['timeout-seconds']);
     const { chromium } = require('playwright');
     const launch = { headless: true, timeout: seconds * 1000, args: ['--no-sandbox', '--enable-unsafe-swiftshader', '--disable-background-networking', '--disable-component-update'] };
     if (process.env.PLAYWRIGHT_EXECUTABLE_PATH) launch.executablePath = process.env.PLAYWRIGHT_EXECUTABLE_PATH;
@@ -354,7 +359,7 @@ async function captureWorker(options) {
         const compilationEnd = performance.now(); await window.__capturePhase('compilation_end', { duration_ms: compilationEnd - compilationStart });
         Object.assign(raw.timing, { compilation_ms: compilationEnd - compilationStart, compilation_start_ms: compilationStart, compilation_end_ms: compilationEnd });
         const { frames, ...show } = generated.show;
-        raw.show = show; raw.compiled = generated.compiled;
+        raw.show = show; raw.compiled = generated.compiled; raw.compiler_profile = generated.profile;
         if (!(frames instanceof Uint8Array) || !(generated.header instanceof Uint8Array)) throw Error('Compiler did not return actual frame/header bytes');
         if (frames.byteLength > 192000000 || generated.header.byteLength > 65535) throw Error('Compiler bytes exceed the artifact bound');
         result.frames = base64(frames); result.header = base64(generated.header);
@@ -372,6 +377,7 @@ async function captureWorker(options) {
     report.effective_show_settings = result.show?.settings === undefined ? { status: 'unavailable', reason: 'compiler-did-not-emit-settings' } : result.show.settings;
     report.engine = result.music?.engine === undefined ? { status: 'unavailable', reason: 'analyzer-did-not-emit-engine-report' } : result.music.engine;
     report.resource_observations = result.music?.engine?.resourceDiagnostics || { status: 'unavailable', reason: 'application-did-not-emit-resource-diagnostics' };
+    report.compiler_profile = result.compiler_profile || { status: 'unavailable', reason: 'compiler-did-not-emit-timing-profile' };
     report.served_source_hashes = Object.fromEntries([...served].sort().map(name => [name, lock.files[name]]));
     report.progress_records = Array.isArray(result.progress) ? result.progress.length : 0;
     persist();
@@ -403,7 +409,7 @@ async function captureWorker(options) {
     try { await browser?.close(); } catch { report.cleanup_error = 'browser-close-failed'; success = false; }
     if (server?.listening) { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }
   }
-  if (!success) report.status = 'failed';
+  if (!success) { report.status = 'failed'; delete report.observed_output_hashes; }
   report.completed_at = new Date().toISOString();
   persist();
   return success ? 0 : 1;
@@ -411,8 +417,7 @@ async function captureWorker(options) {
 async function capture(options) {
   const out = path.resolve(options['output-dir']);
   requireValue(!fs.existsSync(out), 'Output directory already exists; use a new attempt directory');
-  const seconds = options['timeout-seconds'] === undefined ? 3600 : Number(options['timeout-seconds']);
-  requireValue(Number.isSafeInteger(seconds) && seconds >= 1 && seconds <= 14400, 'Capture deadline must be 1..14400 seconds');
+  const seconds = captureDeadlineSeconds(options);
   fs.mkdirSync(out, { recursive: false, mode: 0o700 });
   let report = initialReport(), outcome;
   try {
@@ -428,6 +433,7 @@ async function capture(options) {
       else if (!report.error) report.error = 'Capture worker or supervised cleanup failed';
     }
   } catch (error) { report.status = 'failed'; report.error = String(error.message || error).slice(0, 1000); if (outcome) report.supervision = outcome; }
+  if (report.status !== 'captured') delete report.observed_output_hashes;
   report.completed_at = new Date().toISOString();
   try { writeJson(path.join(out, 'capture.json'), report); }
   catch (error) {

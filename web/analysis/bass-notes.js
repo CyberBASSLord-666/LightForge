@@ -5,28 +5,31 @@
 (function(scope){'use strict';
 const RATE=22050,DECIMATE=4,SR=RATE/DECIMATE,FFT_SIZE=2048,HOP=441,STEP=.02;
 const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
+const measure=(telemetry,name,fn)=>telemetry&&typeof telemetry.measure==='function'?telemetry.measure('performance.'+name,fn):fn();
 function quantile(a,p){if(!a.length)return 0;const b=Array.from(a).sort((x,y)=>x-y);return b[Math.min(b.length-1,Math.floor((b.length-1)*p))];}
 function fir(length,cutoff,sampleRate){const out=new Float64Array(length),mid=(length-1)/2;let sum=0;for(let i=0;i<length;i++){const t=i-mid,x=t===0?2*cutoff/sampleRate:Math.sin(2*Math.PI*cutoff/sampleRate*t)/(Math.PI*t),w=.42-.5*Math.cos(2*Math.PI*i/(length-1))+.08*Math.cos(4*Math.PI*i/(length-1));sum+=out[i]=x*w;}for(let i=0;i<length;i++)out[i]/=sum;return out;}
 function abort(signal){if(signal?.aborted)throw new DOMException('Analysis cancelled','AbortError');}
 class Extractor {
- constructor(){if(!scope.LightForgeDSP?.FFT)throw new Error('Bass analysis requires LightForgeDSP.FFT.');this.fft=new scope.LightForgeDSP.FFT(FFT_SIZE);this.re=new Float64Array(FFT_SIZE);this.im=new Float64Array(FFT_SIZE);this.mag=new Float64Array(FFT_SIZE/2);this.window=Float64Array.from({length:FFT_SIZE},(_,i)=>.5-.5*Math.cos(2*Math.PI*i/(FFT_SIZE-1)));this.antialias=fir(65,1050,RATE);this.lowpass=fir(129,245,SR);this.highpass=fir(129,27,SR);}
+ constructor(telemetry){this.telemetry=telemetry;if(!scope.LightForgeDSP?.FFT)throw new Error('Bass analysis requires LightForgeDSP.FFT.');this.fft=new scope.LightForgeDSP.FFT(FFT_SIZE);this.re=new Float64Array(FFT_SIZE);this.im=new Float64Array(FFT_SIZE);this.mag=new Float64Array(FFT_SIZE/2);this.window=Float64Array.from({length:FFT_SIZE},(_,i)=>.5-.5*Math.cos(2*Math.PI*i/(FFT_SIZE-1)));this.antialias=fir(65,1050,RATE);this.lowpass=fir(129,245,SR);this.highpass=fir(129,27,SR);}
  decimate(samples,firstSample){
   // Use absolute decimation coordinates so arbitrary read boundaries produce
   // identical samples and frame phases. All filters are centred, with real halo.
   const base=Math.ceil((firstSample+32)/DECIMATE),count=Math.max(0,Math.floor((firstSample+samples.length-33)/DECIMATE)-base+1),pcm=new Float32Array(count),a=this.antialias;
-  for(let i=0;i<count;i++){const at=(base+i)*DECIMATE-firstSample;let v=0;for(let k=0;k<a.length;k++)v+=samples[at+k-32]*a[k];pcm[i]=v;}
+  measure(count>0?this.telemetry:null,'resample_normalize',()=>{for(let i=0;i<count;i++){const at=(base+i)*DECIMATE-firstSample;let v=0;for(let k=0;k<a.length;k++)v+=samples[at+k-32]*a[k];pcm[i]=v;}});
   return {pcm,base};
  }
  chunk(samples,firstSample,firstFrame,frames){
-  const {pcm,base}=this.decimate(samples,firstSample),count=pcm.length,low=new Float32Array(count);
-  for(let i=64;i<count-64;i++){let v=0;for(let k=0;k<129;k++)v+=pcm[i+k-64]*(this.lowpass[k]-this.highpass[k]);low[i]=v;}
+  const {pcm,base}=this.decimate(samples,firstSample),count=pcm.length,low=measure(count>128?this.telemetry:null,'feature_generation',()=>{const low=new Float32Array(count);
+  for(let i=64;i<count-64;i++){let v=0;for(let k=0;k<129;k++)v+=pcm[i+k-64]*(this.lowpass[k]-this.highpass[k]);low[i]=v;}return low;});
   const result=[];
   for(let f=0;f<frames;f++){
+   const energy=measure(this.telemetry,'feature_generation',()=>{
    const center=(firstFrame+f)*HOP/DECIMATE-base,start=Math.round(center-FFT_SIZE/2),{re,im,mag}=this;im.fill(0);
    for(let i=0;i<FFT_SIZE;i++)re[i]=(pcm[start+i]||0)*this.window[i];this.fft.run(re,im);
    for(let i=0;i<mag.length;i++)mag[i]=Math.hypot(re[i],im[i]);
    let energy=0;const from=Math.round(center-SR*.02),to=Math.round(center+SR*.02);for(let i=from;i<to;i++)energy+=(low[i]||0)**2;energy=Math.sqrt(energy/Math.max(1,to-from));
-   result.push({...this.pitch(mag),energy});
+   return energy;});
+   result.push({...this.pitch(this.mag),energy});
   }
   return result;
  }
@@ -92,10 +95,10 @@ function summarize(frames,duration){
  const envelope=new Float32Array(count);for(const n of accepted)for(let i=Math.max(0,Math.floor(n.start/STEP));i<Math.min(count,Math.ceil(n.end/STEP));i++)envelope[i]=clamp(energy[i]/norm)*n.confidence;
  return {method:'Harmonic low-register tracking',source:'mixture-estimate',confidence:accepted.length?Math.round(accepted.reduce((s,n)=>s+n.confidence,0)/accepted.length*1000)/1000:0,notes:accepted,phrases,envelope:Array.from(envelope,x=>Math.round(x*1000)/1000),envelopeStep:STEP,diagnostics:{version:1,sampleRate:RATE,pitchWindowMs:Math.round(FFT_SIZE/SR*1000),frameMs:20,frequencyRangeHz:[30,220],notes:accepted.length,rejectedShort,rejectedTransient,sourceSeparated:false,pitchIsEstimated:true,confidenceIsProbability:false,limitations:'Low-register harmonic estimates can include piano, low voice or tuned sustained drums. Brief or sweeping kick transients are suppressed; overlapping instruments, glides and quiet bass can be missed. Kicks overlapping a low note can still move its estimated boundary; the 5 ms boundary grid is not an accuracy guarantee.'}};
 }
-function harmonicBoundary(pcm,base,note,kind,duration){
+function harmonicBoundary(pcm,base,note,kind,duration,telemetry){
  const window=256,weights=Float64Array.from({length:window},(_,i)=>.5-.5*Math.cos(2*Math.PI*i/(window-1))),mid=(note.start+note.end)/2,anchor=kind==='start'?Math.min(note.start+.1,mid):Math.max(note.end-.1,mid),edge=kind==='start'?note.start:note.end,begin=Math.max(0,kind==='start'?edge-.55:anchor-.04),finish=Math.min(duration,kind==='start'?anchor+.04:edge+.4),step=.005,amps=[];
  const coefficients=Array.from({length:4},(_,i)=>2*Math.cos(2*Math.PI*note.frequency*(i+1)/SR));
- for(let t=begin;t<=finish+step/2;t+=step){const first=Math.round(t*SR-base-window/2),v=[];for(const coefficient of coefficients){let x1=0,x2=0;for(let j=0;j<window;j++){const x=(pcm[first+j]||0)*weights[j]+coefficient*x1-x2;x2=x1;x1=x;}v.push(Math.sqrt(Math.max(0,x1*x1+x2*x2-coefficient*x1*x2)));}amps.push(v);}
+ measure(telemetry,'feature_generation',()=>{for(let t=begin;t<=finish+step/2;t+=step){const first=Math.round(t*SR-base-window/2),v=[];for(const coefficient of coefficients){let x1=0,x2=0;for(let j=0;j<window;j++){const x=(pcm[first+j]||0)*weights[j]+coefficient*x1-x2;x2=x1;x1=x;}v.push(Math.sqrt(Math.max(0,x1*x1+x2*x2-coefficient*x1*x2)));}amps.push(v);}});
  if(!amps.length)return edge;
  const ai=Math.max(0,Math.min(amps.length-1,Math.round((anchor-begin)/step))),reference=coefficients.map((_,h)=>quantile(amps.slice(Math.max(0,ai-3),Math.min(amps.length,ai+4)).map(a=>a[h]),.5)),maximum=Math.max(...reference),selected=[];
  for(let h=1;h<4;h++)if(reference[h]>maximum*.085)selected.push(h);if(selected.length<2){selected.length=0;selected.push(0);}
@@ -116,7 +119,7 @@ async function refineBoundaries(reader,config,result,extractor,options){
  const events=result.notes.flatMap(note=>[{note,kind:'start',time:note.start},{note,kind:'end',time:note.end}]).sort((a,b)=>a.time-b.time),chunkSeconds=10,groups=new Map();
  for(const event of events){const key=Math.floor(event.time/chunkSeconds);if(!groups.has(key))groups.set(key,[]);groups.get(key).push(event);}
  let done=0;for(const [key,group]of groups){abort(options.signal);const start=Math.floor((key*chunkSeconds-1)*RATE),count=(chunkSeconds+2)*RATE+1,samples=await reader.mono22050(start,count,config),{pcm,base}=extractor.decimate(samples,start);
-  for(const event of group){const value=harmonicBoundary(pcm,base,event.note,event.kind,reader.duration);event.note[event.kind==='start'?'refinedStart':'refinedEnd']=value;}
+  for(const event of group){const value=harmonicBoundary(pcm,base,event.note,event.kind,reader.duration,options.telemetry);event.note[event.kind==='start'?'refinedStart':'refinedEnd']=value;}
   options.onProgress?.(.7+.3*(++done)/groups.size);
  }
  for(const note of result.notes){note.start=note.refinedStart??note.start;note.end=note.refinedEnd??note.end;note.time=note.start;delete note.refinedStart;delete note.refinedEnd;}
@@ -125,7 +128,7 @@ async function refineBoundaries(reader,config,result,extractor,options){
 }
 async function analyze(reader,config,options={}){
  const duration=Number(reader.duration)||0;if(!Number.isFinite(duration)||duration<0||duration>14400.05)throw new Error('Bass analysis supports audio up to four hours.');
- const count=Math.ceil(duration/STEP),extractor=new Extractor(),keys=['frequency','confidence','harmonics','energy'],frames={length:count},chunk=Math.max(1,Math.min(1000,Math.floor(options.chunkFrames||500))),halo=FFT_SIZE*DECIMATE/2+64*DECIMATE+64;
+ const count=Math.ceil(duration/STEP),extractor=new Extractor(options.telemetry),keys=['frequency','confidence','harmonics','energy'],frames={length:count},chunk=Math.max(1,Math.min(1000,Math.floor(options.chunkFrames||500))),halo=FFT_SIZE*DECIMATE/2+64*DECIMATE+64;
  for(const key of keys)frames[key]=new Float32Array(count);
  for(let first=0;first<count;first+=chunk){abort(options.signal);const n=Math.min(chunk,count-first),start=first*HOP-halo,samples=await reader.mono22050(start,(n-1)*HOP+2*halo+1,config),part=extractor.chunk(samples,start,first,n);for(let i=0;i<n;i++)for(const key of keys)frames[key][first+i]=part[i][key];options.onProgress?.(.7*(first+n)/count);}
  abort(options.signal);const result=summarize(frames,duration);await refineBoundaries(reader,config,result,extractor,options);

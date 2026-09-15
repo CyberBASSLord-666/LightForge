@@ -76,7 +76,9 @@ function workerClockHarness(configureClock){
   console,URL,Float32Array,ArrayBuffer,DataView,Map,Number,setTimeout,clearTimeout,performance,
   fetch:async url=>String(url).endsWith('features.json')?{json:async()=>({})}:{json:async()=>({precision:{},balanced:{}})},
   LightForgeAnalysisStore:{open:async()=>({read:async()=>({}),write:async()=>{},invalidate:async()=>{}})},
-  LightForgeAnalysisTelemetry:{create:()=>({begin:()=>null,end:()=>{},cache:()=>{},snapshot:attributes=>attributes})}
+  // Keep the full optional telemetry interface while isolating the worker's
+  // diagnostic clock from any additional samples by the timing accumulator.
+  LightForgeAnalysisTelemetry:{create:()=>({begin:()=>null,end:()=>{},measure:(_name,fn)=>fn(),measureAsync:async(_name,fn)=>fn(),cache:()=>{},snapshot:attributes=>attributes})}
  });
  configureClock(context);context.self=context;context.location={href:'https://app.test/analysis/worker.js'};
  context.importScripts=(...names)=>{if(names.includes('diagnostic-clock.js'))vm.runInContext(source('diagnostic-clock.js'),context);};context.postMessage=message=>messages.push(message);

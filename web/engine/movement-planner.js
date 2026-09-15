@@ -12,7 +12,12 @@
   const finite=n=>typeof n==='number'&&Number.isFinite(n);
   const lower=(list,t,key)=>{let a=0,b=list.length;while(a<b){const m=(a+b)>>>1;if((key?list[m][key]:list[m])<t)a=m+1;else b=m;}return a;};
   const nearest=(list,t)=>{const i=lower(list,t);return !i?list[0]:i>=list.length?list[list.length-1]:t-list[i-1]<=list[i]-t?list[i-1]:list[i];};
-  function plan(music,settings,profile){
+  function plan(music,settings,profile,timing=null){
+    const token=timing?.begin('performance.choreography_planning');
+    try{return planMovement(music,settings,profile);}
+    finally{timing?.end(token,{scope:'movement-targets-and-feasibility-planning'});}
+  }
+  function planMovement(music,settings,profile){
     music=music||{};settings=settings||{};
     const activeProfile=profile||PROFILE,specifications=activeProfile&&activeProfile.closureSpecifications||SPECS;
     const resolveTiming=activeProfile&&typeof activeProfile.resolvePerceptualTiming==='function'?activeProfile.resolvePerceptualTiming:PROFILE&&typeof PROFILE.resolvePerceptualTiming==='function'?PROFILE.resolvePerceptualTiming:null;

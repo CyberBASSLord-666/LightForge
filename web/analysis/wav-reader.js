@@ -1,9 +1,10 @@
 /* Bounded PCM WAV reader shared by the neural worker and transport regression tests. */
 (function(root){
 'use strict';
+const measure=(telemetry,name,fn)=>telemetry&&typeof telemetry.measure==='function'?telemetry.measure('performance.'+name,fn):fn();
 const text4=(v,p)=>String.fromCharCode(v.getUint8(p),v.getUint8(p+1),v.getUint8(p+2),v.getUint8(p+3));
 class WavReader{
- constructor(url){this.url=url;this.cached=null;this.totalBytes=null;}
+ constructor(url,telemetry){this.telemetry=telemetry;this.url=url;this.cached=null;this.totalBytes=null;}
  async body(response,limit){
   // Never cache a multi-gigabyte response from a provider that ignores Range.
   const declared=Number(response.headers.get('Content-Length')||0);
@@ -61,8 +62,8 @@ class WavReader{
   if(!Number.isFinite(this.duration)||this.duration<1)throw new Error('Choose a music file at least one second long.');
   if(this.duration>14400.05)throw new Error('Tesla supports shows up to four hours. Trim this track before importing.');
  }
- async mono22050(start,count,config){const factor=this.rate/22050,margin=factor===2?31:0,rawStart=Math.floor(start*factor)-margin,rawEnd=Math.ceil((start+count-1)*factor)+margin+1,lo=Math.max(0,rawStart),hi=Math.min(this.samples,rawEnd);let raw=new Float32Array(Math.max(0,rawEnd-rawStart));if(hi>lo){const b=await this.bytes(this.offset+lo*this.align,this.offset+hi*this.align-1);if(b.byteLength!==(hi-lo)*this.align)throw new Error('The audio transfer was incomplete. Your project is still saved; reopen it in the updated app.');const v=new DataView(b),width=this.bits/8;for(let i=0;i<hi-lo;i++){let sum=0;for(let c=0;c<this.channels;c++){let p=i*this.align+c*width,a;if(this.format===3)a=v.getFloat32(p,true);else if(this.bits===16)a=v.getInt16(p,true)/32768;else if(this.bits===32)a=v.getInt32(p,true)/2147483648;else{let n=v.getUint8(p)|(v.getUint8(p+1)<<8)|(v.getUint8(p+2)<<16);if(n&0x800000)n|=0xff000000;a=n/8388608;}sum+=Number.isFinite(a)?a:0;}raw[lo-rawStart+i]=sum/this.channels;}}
- const out=new Float32Array(count);if(factor===1){out.set(raw.subarray(-rawStart+start,-rawStart+start+count));}else{const filter=config.resampleHalfFIR;for(let i=0;i<count;i++){let center=(start+i)*2-rawStart,sum=0;for(let j=0;j<filter.length;j++)sum+=(raw[center+j-31]||0)*filter[j];out[i]=sum;}}return out;}
+ async mono22050(start,count,config){const factor=this.rate/22050,margin=factor===2?31:0,rawStart=Math.floor(start*factor)-margin,rawEnd=Math.ceil((start+count-1)*factor)+margin+1,lo=Math.max(0,rawStart),hi=Math.min(this.samples,rawEnd);let raw=new Float32Array(Math.max(0,rawEnd-rawStart));if(hi>lo){const b=await this.bytes(this.offset+lo*this.align,this.offset+hi*this.align-1);if(b.byteLength!==(hi-lo)*this.align)throw new Error('The audio transfer was incomplete. Your project is still saved; reopen it in the updated app.');measure(this.telemetry,'audio_decode',()=>{const v=new DataView(b),width=this.bits/8;for(let i=0;i<hi-lo;i++){let sum=0;for(let c=0;c<this.channels;c++){let p=i*this.align+c*width,a;if(this.format===3)a=v.getFloat32(p,true);else if(this.bits===16)a=v.getInt16(p,true)/32768;else if(this.bits===32)a=v.getInt32(p,true)/2147483648;else{let n=v.getUint8(p)|(v.getUint8(p+1)<<8)|(v.getUint8(p+2)<<16);if(n&0x800000)n|=0xff000000;a=n/8388608;}sum+=Number.isFinite(a)?a:0;}raw[lo-rawStart+i]=sum/this.channels;}});}
+ const out=new Float32Array(count);if(factor===1){out.set(raw.subarray(-rawStart+start,-rawStart+start+count));}else{measure(count>0?this.telemetry:null,'resample_normalize',()=>{const filter=config.resampleHalfFIR;for(let i=0;i<count;i++){let center=(start+i)*2-rawStart,sum=0;for(let j=0;j<filter.length;j++)sum+=(raw[center+j-31]||0)*filter[j];out[i]=sum;}});}return out;}
  async stereo44100(start,count){
   if(this.rate!==44100)throw new Error('Voice separation needs the original 44.1 kHz music. Import the track through the app first.');
   if(!Number.isSafeInteger(start)||!Number.isSafeInteger(count)||count<0||count>44100*40)throw new Error('Invalid stereo audio read bounds.');
@@ -70,6 +71,7 @@ class WavReader{
   if(hi<=lo)return output;
   const bytes=await this.bytes(this.offset+lo*this.align,this.offset+hi*this.align-1);
   if(bytes.byteLength!==(hi-lo)*this.align)throw new Error('The stereo audio transfer was incomplete. Reopen the project and try again.');
+  measure(this.telemetry,'audio_decode',()=>{
   const view=new DataView(bytes),width=this.bits/8;
   for(let i=0;i<hi-lo;i++)for(let c=0;c<2;c++){
    const at=i*this.align+Math.min(c,this.channels-1)*width;let sample;
@@ -79,6 +81,7 @@ class WavReader{
    else{let value=view.getUint8(at)|(view.getUint8(at+1)<<8)|(view.getUint8(at+2)<<16);if(value&0x800000)value|=0xff000000;sample=value/8388608;}
    output[c][lo-start+i]=Number.isFinite(sample)?sample:0;
   }
+  });
   return output;
  }
 }
