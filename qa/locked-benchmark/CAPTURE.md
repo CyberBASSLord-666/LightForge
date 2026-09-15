@@ -7,7 +7,8 @@ result is raw engineering evidence. It is **not** a complete 231-metric
 benchmark, an approved corpus, an authenticated human review, or a qualified
 release. `production_ready` always remains false.
 
-Use Node 20 or later and the repository's pinned Playwright installation with
+Use Linux with readable procfs and kernel pidfd support, Python 3.9 or later,
+Node 20 or later, and the repository's pinned Playwright installation with
 its Chromium browser. `PLAYWRIGHT_EXECUTABLE_PATH` may select an existing
 compatible Chromium binary. No dependencies are installed by the collector.
 
@@ -43,11 +44,14 @@ Create a separate explicit configuration JSON object containing
 `analysis_options` and `show_settings`. `analysis_options.analysisQuality`
 must select `precision` or `balanced`. `show_settings.seed` must be a uint32
 and `show_settings.stepMs` must be 15 or 20. Other options are passed unchanged
-to the application; inspect `effective_analysis_options` and
-`effective_show_settings` in the output to see what it used. The harness
+to the application; `submitted_analysis_options` records these API arguments
+and `effective_show_settings` records the compiler's normalized result.
+An argument may be ignored or clamped by the locked application. The harness
 supplies the source-audio cache identity and project ID. It forbids caller
 overrides of native execution, cache keys, or identity fingerprints.
-The analysis options record is the exact public API argument object; internal
+The project ID hashes the track/run identity to a stable 72-character value
+within the production work-store limit. The analysis options record is the
+exact public API argument object; internal
 defaults remain defined by the locked production source. The show-settings
 record is the compiler's normalized result. Pipeline/preprocessing labels
 are caller declarations, with their actual source/model bytes retained in
@@ -66,7 +70,16 @@ node qa/locked-benchmark/capture-app.cjs capture \
 
 The output directory must not exist, and its parent must exist. The collector
 creates it with private permissions and never overwrites an earlier attempt.
-`--timeout-seconds` bounds browser execution (default 3600, maximum 14400).
+`--timeout-seconds` bounds the complete capture worker (default 3600, maximum
+14400), including input verification, Chromium startup, analysis, compilation,
+serialization and browser cleanup. A separate Linux child subreaper uses
+pidfds to terminate and reap owned descendants, including detached browser
+processes. Deadline termination has an additional bounded cleanup allowance
+of 3 seconds, plus at most 0.6 seconds for the outer helper watchdog.
+`capture.json` records whether termination was confirmed; an unconfirmed
+cleanup is a failure. This supervises trusted application processes and is
+not a sandbox for malicious code. The authoritative receipt is written by
+the parent even if startup or browser cleanup hangs.
 The accepted WAV encodings are mono/stereo RIFF PCM16/24/32 and float32 with
 consistent headers, exactly 44.1 kHz sample rate, a duration of 1 second to
 4 hours, and at most 2 GiB. The complete production pipeline requires this
@@ -104,13 +117,30 @@ browser startup, compilation, serialization and teardown; that interval is not
 the analyzer-only performance target. Energy, CPU utilization and thermal
 measurements are not invented when the application cannot observe them.
 
-The runner saves the original `analysis.json`, `show.json`, `compiled.json`,
-`progress.json`, exact frame/header bytes and `lightshow.fseq`. When emitted,
-the original `show.perceptualValidation` JSON is also saved unchanged in
-`perceptual-validation.json` for the synchronization projector. `show.json`
+The runner saves `analysis.json`, `show.json`, `compiled.json`, `progress.json`,
+exact frame/header bytes and, after package validation, `lightshow.fseq`.
+JSON artifacts preserve emitted JSON field values with sorted keys and a
+trailing newline; they are a canonical serialization of producer objects,
+not an original byte stream. Numeric typed arrays, including the derived
+preview index, retain the application's existing JSON representation as
+index-keyed objects. Non-finite values, accessor properties and custom JSON
+serialization fail before they could silently become null or change values.
+When emitted, all JSON fields and values of `show.perceptualValidation` are
+preserved in `perceptual-validation.json` for the synchronization projector. `show.json`
 retains the full synchronization and perceptual-validation sidecars, including
 omitted/invalid event counts and model-based timing assumptions. Actual frame
 dimensions, header dimensions and the compiler's frame digest must agree.
+
+Safe raw outputs are saved and hash-bound before checking show validity or
+FSEQ dimensions. Failed attempts retain available analysis, show, compiler,
+progress, sidecar and frame/header evidence with `status: failed` and
+`production_ready: false`; they receive no validated output-category hashes.
+Missing engine/settings fields are explicitly unavailable. Unserializable
+artifacts are omitted with a specific error while other safe observations
+remain available. JSON artifacts are bounded to 128 MiB each, raw frames to
+192,000,000 bytes and headers to 65,535 bytes. Model/startup termination before
+an output exists cannot create that output; the latest input/runtime checkpoint
+and timeout/failure receipt are retained instead.
 
 The following canonical JSON projections exclude the analyzer engine's
 operational timings. Their hashes describe observed outputs; repeatability
@@ -145,7 +175,10 @@ Physical phone/Tesla observations remain optional.
 
 `python3 tests/test_locked_app_capture.py` runs the Node protocol tests, including
 wrong audio/source locks, malformed WAV data, path/range boundaries, absent
-output evidence, forbidden identity overrides, and failure receipts. The
+output evidence, forbidden identity overrides, duplicate JSON keys, producer
+numeric boundaries, retained failed outputs, and actual hanging child-process
+startup/cleanup with detached descendants. These protocol fixtures never run
+production model inference. The
 existing `verify_v2.py` discovers this Python wrapper automatically. Actual
 model execution is a separate, explicitly selected engineering smoke or
 approved benchmark collection; the unit fixtures are never a release corpus.
