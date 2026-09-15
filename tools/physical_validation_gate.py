@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Fail-closed physical device and vehicle validation attestation gate.
+"""Verify optional physical device and vehicle validation attestations.
 
 A production release cannot infer physical Android or vehicle behavior from an
 emulator receipt. This module verifies a detached Ed25519 attestation that is
 bound to the exact sealed CI candidate and current source profile. Authority
 keys live only in reviewed source; the repository intentionally ships with no
-configured production key.
+configured production key. Physical observations are optional for publication;
+this verifier is used only when a physical validation claim is supplied.
 """
 import base64
 from datetime import datetime, timedelta, timezone
@@ -33,7 +34,7 @@ VEHICLE_PROFILE_SOURCE_PATH = "web/engine/vehicle-profile.js"
 # attestation.
 PHYSICAL_VALIDATION_AUTHORITY_KEYS = MappingProxyType({})
 
-# Release eligibility bounds are immutable source policy. An external signer
+# Physical claim acceptance bounds are immutable source policy. An external signer
 # can attest observed evidence, but cannot relax the evidence floor or tail
 # latency limits through a secret payload.
 MINIMUM_PHYSICAL_TIMING_SAMPLES = 100
