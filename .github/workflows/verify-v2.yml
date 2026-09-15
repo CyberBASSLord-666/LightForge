@@ -271,6 +271,7 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
+      ANDROID_SERIAL: emulator-5554
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -346,7 +347,17 @@ jobs:
           "$ANDROID_HOME/emulator/emulator" -list-avds
           # This runner exposes two KVM CPUs. Oversubscribing virtual CPUs
           # competes with SwiftShader and can stall real WebView frame commits.
-          nohup "$ANDROID_HOME/emulator/emulator" -avd LightForge -no-window -no-audio -no-metrics -partition-size 6144 -no-boot-anim -no-snapshot -gpu swiftshader_indirect -memory 4096 -cores 2 -camera-back none -camera-front none > "$RUNNER_TEMP/lightforge-android-emulator.log" 2>&1 < /dev/null &
+          nohup "$ANDROID_HOME/emulator/emulator" -avd LightForge -port 5554 -no-window -no-audio -no-metrics -partition-size 6144 -no-boot-anim -no-snapshot -gpu swiftshader_indirect -memory 4096 -cores 2 -camera-back none -camera-front none > "$RUNNER_TEMP/lightforge-android-emulator.log" 2>&1 < /dev/null &
+      - name: Verify offline connectivity on the disposable emulator
+        run: |
+          # LightForge is offline. Keep system model downloads from competing
+          # with the lifecycle tests; retain the unchanged application checks.
+          python3 tools/configure_offline_android_emulator.py \
+            --adb "$ANDROID_HOME/platform-tools/adb" --serial "$ANDROID_SERIAL" \
+            --head-sha "$GITHUB_SHA" --run-id "$GITHUB_RUN_ID" \
+            --run-attempt "$GITHUB_RUN_ATTEMPT" \
+            --evidence-session "${{ steps.android_session.outputs.session }}" \
+            --output "$LIGHTFORGE_ANDROID_EVIDENCE_ROOT/emulator-offline-setup.json"
       - name: Verify screen-off analysis and Activity-independent completion
         run: |
           python3 tools/run_android_background_tests.py \

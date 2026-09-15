@@ -7,7 +7,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-function harness({initError, loadError, rejection, saved = {}} = {}) {
+function harness({initError, loadError, rejection, saved = {}, diagnostics, now = () => 100} = {}) {
   const events = [], warnings = [], storage = new Map(Object.entries(saved));
   const controls = ['studio', 'night'].map(stage => ({
     dataset: {stage}, attributes: {}, selected: false,
@@ -19,8 +19,8 @@ function harness({initError, loadError, rejection, saved = {}} = {}) {
   let resolveLoad;
   const loading = new Promise(resolve => { resolveLoad = resolve; });
   const context = {
-    window: {}, navigator: {deviceMemory: 8}, THREE: {Vector3: class {}},
-    matchMedia: () => ({matches: false}), performance: {now: () => 100},
+    window: {LightForgeDiagnostics:diagnostics}, navigator: {deviceMemory: 8}, THREE: {Vector3: class {}},
+    matchMedia: () => ({matches: false}), performance: {now},
     CustomEvent: class { constructor(type, options) { this.type = type; this.detail = options?.detail; } },
     localStorage: {getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value)},
     document: {hidden: false, getElementById: () => status, querySelectorAll: () => controls, removeEventListener() {}},
@@ -150,4 +150,24 @@ test('stage selection is persisted and reflected in controls before graphics sta
   assert.equal(h.events[0].stage, 'night');
   h.resolve(true);
   assert.equal(await p.ready, true);
+});
+
+test('startup diagnostics are fixed, bounded and omit project or caller payloads', () => {
+  let clock=10;const logged=[];
+  const h=harness({now:()=>clock,diagnostics:{log:(...args)=>logged.push(args)}}),p=new h.Preview(h.canvas,null,{deferLoad:true});
+  clock=34.25;
+  for(const phase of ['graphics-initialized','gltf-loaded','atlas-loaded','rig-built','first-composer-start','first-composer-end']){
+    p.markStartup(phase,20);p.markStartup(phase,20);
+  }
+  p.markStartup('private song title and URL',20);
+  assert.equal(logged.length,6);
+  for(const [level,source,message] of logged){assert.equal(level,'info');assert.equal(source,'app');assert.match(message,/^preview-startup phase=[a-z-]+ elapsedMs=24\.25 durationMs=14\.25$/);}
+  assert.equal(p.renderCount,0);assert.equal(p.loaded,false);assert.deepEqual(h.events,[]);
+});
+
+test('diagnostic sink failure cannot change preview readiness or retry logging', async () => {
+  let calls=0;const h=harness({diagnostics:{log(){calls++;throw Error('diagnostic sink failed');}}});
+  const p=new h.Preview(h.canvas,null,{deferLoad:true});p.setLoadDeferred(false);h.resolve(true);
+  assert.equal(await p.ready,true);assert.equal(calls,1);p.markStartup('graphics-initialized');assert.equal(calls,1);
+  assert.deepEqual(h.events.map(event=>event.type),['init','load']);
 });

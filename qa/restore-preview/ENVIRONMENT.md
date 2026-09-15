@@ -51,5 +51,17 @@ an actual WebGL context-loss/recovery cycle and the first recovered full frame.
 This is visual-equivalence evidence, not Android or release qualification.
 The complete Android lifecycle workflow must still pass on the candidate.
 
+The subsequent PR and main Android runs still exceeded startup deadlines. On
+main, the application did render and acknowledge the completed show, but too
+late for the instrumentation's additional hardware-frame callback. Six fixed
+`preview-startup` diagnostic markers now separate graphics initialization,
+GLTF loading, atlas decoding, rig assembly and the first full compositor's
+start/end. `elapsedMs` uses the preview's monotonic creation time; `durationMs`
+measures the indicated operation (GLTF and atlas both begin with model loading).
+The compositor duration measures synchronous submission, independently of the
+later native hardware-frame callback. Only numeric timings and fixed phase
+names are logged, once per preview lifetime. These observations add no timing
+allowance and do not alter loading, drawing, quality or acknowledgement checks.
+
 The decoder/provenance regression is part of `tools/verify_v2.py`; the asset and
 metadata are also included in the browser evidence's source inventory.

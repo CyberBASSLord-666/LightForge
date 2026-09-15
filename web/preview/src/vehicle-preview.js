@@ -16,8 +16,10 @@ const presets={front:[-.70,.24],rear:[Math.PI+.64,.27],driver:[-Math.PI/2,.19],c
 const qualityPresets={high:{pixelRatio:1.6,shadowSize:1024,samples:2},balanced:{pixelRatio:1.15,shadowSize:512,samples:0},battery:{pixelRatio:.85,shadowSize:256,samples:0}};
 const qualityOrder=['high','balanced','battery'];
 const labels={front:'Front · driver side',rear:'Rear · driver side',driver:'Driver side',cabin:'Cabin · roof cutaway',orbit:'Orbit · drag to explore',custom:'Custom view · drag to orbit'};
+const startupPhases=new Set(['graphics-initialized','gltf-loaded','atlas-loaded','rig-built','first-composer-start','first-composer-end']);
 class VehiclePreview {
  constructor(canvas,onViewChange,{deferLoad=false}={}){
+  this._startupBegan=performance.now();this._startupMarks=new Set();
   this.canvas=canvas;this.onViewChange=onViewChange;this.view='front';this.stage='studio';this.yaw=-.70;this.pitch=.24;this.zoom=1;this.last=[null,0];this.snapshot=null;this.loaded=false;this.lost=false;this.animating=false;this._raf=0;this.tween=null;this.renderCount=0;this._snapshotDirty=true;this._intersecting=true;this._hasSize=false;this._disposed=false;this._paused=false;this._restorePending=false;this._loadDeferred=!!deferLoad;this._loadStarted=false;this._readyResolve=null;this._lastRenderAt=0;this._sampleCount=0;this._slowSamples=0;this._fastSamples=0;this._warmupFrames=5;this._renderCpuMs=0;this._frameIntervalMs=0;this._lastQualityChange=0;this.quality='auto';this.effectiveQuality='high';this.adaptationReason='Automatic quality starts at high detail.';
   try{const saved=localStorage.getItem('lightforge-preview-quality');if(saved==='auto'||qualityPresets[saved])this.quality=saved;}catch{}
   this.effectiveQuality=this.quality==='auto'?((navigator.deviceMemory||8)<=4?'balanced':'high'):this.quality;this.adaptationReason=this.quality==='auto'?'Automatic quality starts at '+this.effectiveQuality+' detail.':'Quality selected by you.';
@@ -33,12 +35,23 @@ class VehiclePreview {
  }
  setStatus(message,state){if(this.status){this.status.hidden=false;this.status.textContent=message;this.status.dataset.state=state;}this.canvas.dataset.rendererState=state;}
  fail(e){this.error=String(e?.message||e);this.setStatus('3D unavailable — update Android System WebView. Your show can still be edited and exported.','error');console.warn('LightForge preview:',this.error);}
+ markStartup(phase,began){
+  // Six fixed diagnostics per preview lifetime. No project, URL or payload data;
+  // logging must never change renderer control flow or completed-restore proof.
+  try{
+   if(!startupPhases.has(phase)||!this._startupMarks||this._startupMarks.has(phase))return;
+   this._startupMarks.add(phase);const now=performance.now();
+   let message='preview-startup phase='+phase+' elapsedMs='+Math.max(0,now-this._startupBegan).toFixed(2);
+   if(Number.isFinite(began))message+=' durationMs='+Math.max(0,now-began).toFixed(2);
+   window.LightForgeDiagnostics?.log('info','app',message);
+  }catch{/* Timing diagnostics cannot delay or fail preview readiness. */}
+ }
  startLoad(){
   if(this._loadStarted||this._disposed)return this.ready;
   this._loadStarted=true;
   const settle=value=>{this._readyResolve?.(value);this._readyResolve=null;};
   try{
-   this.init();
+   const graphicsStarted=performance.now();this.init();this.markStartup('graphics-initialized',graphicsStarted);
    Promise.resolve(this.load()).then(settle,error=>{this.fail(error);settle(false);});
   }catch(error){this.fail(error);settle(false);}
   return this.ready;
@@ -87,7 +100,7 @@ class VehiclePreview {
   this.environment?.dispose();this.environment=createStudioEnvironmentTexture(this._environmentData);this.scene.environment=this.environment;this.scene.environmentIntensity=this.stage==='night'?.25:.9;
  }
  async load(){
-  try {const [gltf,environmentData]=await Promise.all([new GLTFLoader().loadAsync('preview/models/highland.glb'),loadStudioEnvironment()]);if(this._disposed)return false;this._environmentData=environmentData;this.rig=buildHighlandRig(gltf.scene);this.scene.add(this.rig.root);this.rig.setCutaway(this.view==='cabin');this.renderer.shadowMap.needsUpdate=true;if(this.view!=='custom'){this.positionCamera(this.yaw,this.pitch);this.controls.update();}this.loaded=true;this.setStatus('3D · Highland','ready');this.render(...this.last);this.canvas.dispatchEvent(new CustomEvent('previewready'));return true;}catch(e){this.fail(e);return false;}
+  try {const loadStarted=performance.now();const [gltf,environmentData]=await Promise.all([new GLTFLoader().loadAsync('preview/models/highland.glb').then(value=>{this.markStartup('gltf-loaded',loadStarted);return value;}),loadStudioEnvironment().then(value=>{this.markStartup('atlas-loaded',loadStarted);return value;})]);if(this._disposed)return false;this._environmentData=environmentData;const rigStarted=performance.now();this.rig=buildHighlandRig(gltf.scene);this.markStartup('rig-built',rigStarted);this.scene.add(this.rig.root);this.rig.setCutaway(this.view==='cabin');this.renderer.shadowMap.needsUpdate=true;if(this.view!=='custom'){this.positionCamera(this.yaw,this.pitch);this.controls.update();}this.loaded=true;this.setStatus('3D · Highland','ready');this.render(...this.last);this.canvas.dispatchEvent(new CustomEvent('previewready'));return true;}catch(e){this.fail(e);return false;}
  }
  setStage(stage){this.stage=stage==='night'?'night':'studio';this._snapshotDirty=true;const night=this.stage==='night';if(this.scene){
   this.scene.background.set(night?'#050a10':'#10171e');this.scene.fog.color.copy(this.scene.background);this.scene.environmentIntensity=night?.25:.9;this.ambient.intensity=night?.18:.65;this.key.intensity=night?.35:1.25;this.rim.intensity=night?.25:.85;this.ground.material.color.set(night?0x0b1019:0x171c23);this.bloom.strength=night?.42:.28;}
@@ -160,7 +173,7 @@ class VehiclePreview {
   try{if(this._restorePending){this._restorePending=false;this.createEnvironment();this.composer.reset();this.applyQuality(this.effectiveQuality,'Graphics recovered; keeping your selected quality.',true);this.renderer.shadowMap.needsUpdate=true;this.resize();this.setStatus('3D · Highland','ready');}
    else if(!this.environment)this.createEnvironment();
    if(this.tween){const u=this.tween.duration?clamp((now-this.tween.start)/this.tween.duration):1;this.camera.position.lerpVectors(this.tween.from,this.tween.to,1-Math.pow(1-u,3));this._snapshotDirty=true;if(u>=1)this.tween=null;else animate=true;}
-   if(this.controls.update()){animate=true;this._snapshotDirty=true;}this.renderer.info.reset();this.composer.render();this.renderCount++;
+   if(this.controls.update()){animate=true;this._snapshotDirty=true;}this.renderer.info.reset();const firstComposer=this.renderCount===0,composerStarted=firstComposer?performance.now():0;if(firstComposer)this.markStartup('first-composer-start');this.composer.render();this.renderCount++;if(firstComposer)this.markStartup('first-composer-end',composerStarted);
   }finally{this._drawing=false;}
   this.recordPerformance(now,performance.now()-start);if(animate)this.requestDraw();
  }

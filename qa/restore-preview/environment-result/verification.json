@@ -1,6 +1,6 @@
 {
   "passed": true,
-  "scope": "Desktop Chromium WebGL2, complete vehicle with unchanged shadow/bloom/output passes; pixel-identical lighting comparison and real context loss/recovery, not Android approval.",
+  "scope": "Desktop Chromium WebGL2, complete vehicle with unchanged shadow/bloom/output passes; pixel-identical lighting comparison, real context loss/recovery and bounded startup diagnostics, not Android approval.",
   "browser": "153.0.8010.0",
   "cases": [
     {
@@ -54,13 +54,45 @@
     "loaded": true,
     "firstFrameAfterRecovery": true
   },
+  "startup": [
+    {
+      "level": "info",
+      "source": "app",
+      "message": "preview-startup phase=graphics-initialized elapsedMs=24.30 durationMs=23.50"
+    },
+    {
+      "level": "info",
+      "source": "app",
+      "message": "preview-startup phase=atlas-loaded elapsedMs=134.90 durationMs=110.50"
+    },
+    {
+      "level": "info",
+      "source": "app",
+      "message": "preview-startup phase=gltf-loaded elapsedMs=341.60 durationMs=317.20"
+    },
+    {
+      "level": "info",
+      "source": "app",
+      "message": "preview-startup phase=rig-built elapsedMs=432.70 durationMs=91.00"
+    },
+    {
+      "level": "info",
+      "source": "app",
+      "message": "preview-startup phase=first-composer-start elapsedMs=442.30"
+    },
+    {
+      "level": "info",
+      "source": "app",
+      "message": "preview-startup phase=first-composer-end elapsedMs=1317.40 durationMs=875.10"
+    }
+  ],
   "source_hashes": {
     "web/preview/src/studio-environment-source.js": "7e1b284ed7edc9edb6a7504ea97330159abd784aa4bcd9b14b21ff03a30aa0c6",
     "web/preview/src/studio-environment.js": "10fb8748d270c9b0d2f761a0609ebc286a2fe5bd2d12f0cf6330aee68f1d90bf",
-    "web/preview/src/vehicle-preview.js": "1449134db16710db66c9c92c872bb515234faf19e668d828d9c55b3204699264",
-    "web/preview/vehicle-preview.js": "ab638c7fdb1bcc0b59183bd828aa1b85c9e1a9930f6ca36ea4c1217502962abb",
+    "web/preview/src/vehicle-preview.js": "e777ca9773a95a2d1706670d23f4cacaa1dca59189d476b9941ebb8c333ae2cb",
+    "web/preview/vehicle-preview.js": "bf2d8359fc41793123e51906de1890585daa9132efe5e48d6e4e5d7abada91dd",
     "web/preview/models/highland.glb": "abf813f0013428409820121b7fd40ad70dda7cd00d1a0dca25cebd16b92035ba",
     "web/preview/models/studio-environment.rgba16f.gz": "26c8d97f746142727df0c0c0cd7b3a552c86851f1836c29ee36afff293ba37c4",
-    "qa/restore-preview/environment.cjs": "b0756906ec52785c5f42da3d869c3bcd372fc539acdeb4ef6c20eb8a0c77f90f"
+    "qa/restore-preview/environment.cjs": "da987be2494877e79fbca03072a9c98de8c53fb33303e4631ae4999c7db442ac"
   }
 }
