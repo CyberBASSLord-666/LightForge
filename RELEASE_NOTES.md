@@ -1,16 +1,36 @@
 # LightForge 2.2.5 — release candidate
 
-LightForge 2.2.5 / Android version code 20205 is a candidate for the current source. It is not a published or installable update, and it does not claim a new APK, verification run, signature, quality result, or physical validation.
+LightForge 2.2.5 / Android version code 20205 contains the current merged work. Full automated candidate verification has passed. Original-key APK signing and compatibility verification have passed; protected performance/quality qualification and publication remain pending. Physical phone and Tesla observations are optional.
 
 ## Candidate changes
 
-- Carry the current foreground-only completed-restore handling and fresh session-bound 2.2.5 QA sources.
-- Declare that the current source requires the protected performance-quality gate rather than a non-performance waiver.
-- Make physical phone and Tesla observations optional for publication; the public verification receipt explicitly records their absence as unverified.
+- Build a validated music timeline with confidence, source provenance and deterministic salience rankings on the original audio clock. Bass tracking retains its accompaniment-source provenance.
+- Accept explicitly supplied percussion evidence and provide experimental, opt-in mix-based kick/snare/hat estimates with confidence and salience caps.
+- Add opt-in rhythm hierarchy, acoustic vocal expression and recurrence metadata. Explicit semantic, vocal and motif planning settings consume validated matching evidence and retain the applicable base plan when that evidence is missing, stale or invalid.
+- Rescue fully suppressed high-salience impact and movement-arrival light accents on available compatible outputs without moving accepted cues. An additional opt-in semantic allocation mode supports explicit fallback groups while retaining collision and output constraints.
+- Attach read-only choreography and perceptual reports covering density, repetition, output use, collision losses and event realization. Estimated response timing and measured timing remain distinct.
+- Support explicitly enabled local vehicle timing calibration with recorded provenance and bounded values. Unconfigured profiles keep their existing schedule and label travel assumptions as unverified planning estimates.
+- Enforce 15 ms or 20 ms FSEQ frame intervals consistently through generation, validation and export.
+- Serialize heavy analysis jobs, preserve matching resumable stages and strengthen checkpoint, stem and shared-feature integrity checks. Reject stale or corrupt cached work and rebuild affected results from valid inputs.
+- Harden native buffer cleanup, cancellation and compatibility fallback so subsequent runs cannot reuse invalid resources or stale checkpoints from failed or retiring work.
+- Restore completed projects in the foreground using fresh session-bound verification.
+- Load losslessly precomputed HDR studio lighting when the full vehicle preview starts or recovers its graphics context. This removes runtime lighting convolution while retaining the original lighting appearance and first-frame acknowledgement checks.
+- Record bounded preview startup timings and isolate the disposable Android verification emulator from unrelated system downloads. Existing lifecycle, frame-commit and readiness checks retain their original deadlines.
+- Preserve explicit unverified status when physical phone or Tesla observations are absent.
+
+## Release verification and signing
+
+- Validate CPU utilization, energy, temperature rise and accelerator utilization against same-run raw counters. Missing measurements remain unobserved; invalid or mismatched paired counters fail validation.
+- Enroll the owner's public policy-authority key and provide a private local policy/corpus signing helper. The Android update signer, policy authority and authenticated human-review verifier remain separate identities.
+- Transfer the exact verified candidate in bounded parts for original-key signing. Verify every non-signature APK payload and reconstruct the signed APK from a digest-bound public delta.
+- Isolate release reconstruction from privileged publication, and verify source-bound CI evidence and uploaded release-asset digests.
+- Retain the required protected performance/quality gate, including genuine paired measurements and blinded human review. Passing its unit tests is not release qualification.
 
 ## Candidate status
 
-The candidate must pass fresh source-bound verification, the protected performance-quality gate, and original-signed APK validation before publication. Physical phone and Tesla observations are optional; emulator results do not establish physical-device or vehicle behavior. Until the required gates pass, the published update is [LightForge 2.2.4](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.2.4).
+The latest published update remains [LightForge 2.2.4](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.2.4). The complete [main verification run 34939857731](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34939857731) passed for commit `f2a1c65f35efbfd43b0bd7832bde3f42ea7abe79`, including the host/browser/model/APK job, all ten Android lifecycle checks and all eight Android diagnostic/export/recovery checks. Completed-project reconnection passed with the existing first-frame and hardware-frame requirements and unchanged deadlines.
+
+Four full-vehicle WebGL comparisons of the preview lighting were pixel-identical, and actual graphics-context recovery passed. The verified candidate was transferred for private original-key signing in [run 34944128303](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34944128303). The APK is now signed with the original certificate and has a verified `update_compatible: true` receipt. All 148 non-signature payload entries match the CI candidate, and the signed-APK delta reconstructs its exact SHA-256 digest, `67a4de0619b786bbf9ca956bdb778c775ac233db2a8123cf8c13868bce653b39`. The genuine protected performance/quality comparison is still required before publication. These results establish their stated test coverage only; no physical-device or vehicle behavior is claimed.
 
 ## Published LightForge 2.2.4 release notes
 
