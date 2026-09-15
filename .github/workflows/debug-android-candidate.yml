@@ -1,0 +1,268 @@
+name: Diagnose sealed Android candidate offline
+on:
+  push:
+    branches: [diagnostic/offline-preview-225]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: offline-preview-diagnostic-${{ github.ref_name }}
+  cancel-in-progress: true
+jobs:
+  android-offline-diagnostic:
+    if: github.repository == 'CyberBASSLord-666/LightForge' && github.ref == 'refs/heads/diagnostic/offline-preview-225'
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    env:
+      GH_REPO: ${{ github.repository }}
+      LIGHTFORGE_RELEASE: '2.2.5'
+      ANDROID_SERIAL: emulator-5554
+      CANDIDATE_SOURCE: 732cf34bc0d8ec9b10d94456266054f0dc69895b
+      CANDIDATE_RUN_ID: '34934590716'
+      CANDIDATE_RUN_ATTEMPT: '1'
+      CANDIDATE_ARTIFACT_ID: '10383369567'
+      CANDIDATE_ARTIFACT_DIGEST: sha256:e25700ff934f264352c14847c856fb09931678a1ffd6e1c220ac065b481b9b58
+      CANDIDATE_ARCHIVE_BYTES: '1205285958'
+    steps:
+      - name: Check out reviewed diagnostic helper separately
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          path: diagnostic-workflow
+          sparse-checkout: |
+            tools
+      - name: Check out the unchanged sealed candidate source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          ref: ${{ env.CANDIDATE_SOURCE }}
+          path: candidate-source
+          sparse-checkout: |
+            .github
+            android
+            web
+            tools
+            tests
+            qa
+      - name: Download and validate the exact candidate for diagnostics only
+        id: candidate
+        working-directory: candidate-source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          python3 -I -S - <<'PY'
+          import json, os, pathlib, secrets, shutil, stat, subprocess, sys, zipfile
+          sys.path.insert(0, str(pathlib.Path('tools').resolve()))
+          from android_evidence_manifest import candidate_binding, sha256_file, validate_source_hashes
+          repo = os.environ['GITHUB_REPOSITORY']
+          source = os.environ['CANDIDATE_SOURCE']
+          run_id = int(os.environ['CANDIDATE_RUN_ID'])
+          attempt = int(os.environ['CANDIDATE_RUN_ATTEMPT'])
+          artifact_id = int(os.environ['CANDIDATE_ARTIFACT_ID'])
+          checksum = os.environ['CANDIDATE_ARTIFACT_DIGEST']
+          archive_bytes = int(os.environ['CANDIDATE_ARCHIVE_BYTES'])
+          release = os.environ['LIGHTFORGE_RELEASE']
+          def api(path):
+              return json.loads(subprocess.check_output(['gh', 'api', path], text=True))
+          def records(path, key):
+              result = subprocess.check_output(['gh', 'api', '--paginate', path, '--jq', '.' + key + '[]'], text=True)
+              return [json.loads(line) for line in result.splitlines() if line.strip()]
+          assert repo == 'CyberBASSLord-666/LightForge'
+          assert subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip() == source
+          assert json.loads(pathlib.Path('version.json').read_text())['name'] == release
+          run = api(f'repos/{repo}/actions/runs/{run_id}')
+          # This diagnostic permits this known failed Android producer only.
+          # Production preparation and publishing still require full success.
+          assert run['id'] == run_id and run['run_attempt'] == attempt
+          assert run['status'] == 'completed' and run['conclusion'] == 'failure'
+          assert run['head_sha'] == source and run['head_repository']['full_name'] == repo
+          assert run['path'] == '.github/workflows/verify-v2.yml'
+          assert run['event'] == 'push' and run['head_branch'] == 'main'
+          jobs = records(f'repos/{repo}/actions/runs/{run_id}/attempts/{attempt}/jobs?per_page=100', 'jobs')
+          hosts = [job for job in jobs if job.get('name') == 'verify']
+          assert len(hosts) == 1 and hosts[0]['status'] == 'completed' and hosts[0]['conclusion'] == 'success'
+          assert hosts[0]['run_id'] == run_id
+          inventory = records(f'repos/{repo}/actions/runs/{run_id}/artifacts?per_page=100', 'artifacts')
+          matches = [record for record in inventory if record.get('name') == 'lightforge-' + release + '-ci-candidate']
+          assert len(matches) == 1 and matches[0]['id'] == artifact_id
+          artifact = api(f'repos/{repo}/actions/artifacts/{artifact_id}')
+          assert artifact['id'] == artifact_id and artifact['name'] == matches[0]['name'] and artifact['expired'] is False
+          assert artifact['workflow_run']['id'] == run_id and artifact['workflow_run']['head_sha'] == source
+          assert artifact['workflow_run']['head_branch'] == 'main'
+          assert artifact['digest'] == checksum and artifact['size_in_bytes'] == archive_bytes
+          archive_limit = 2 * 1024**3 + 16 * 1024**2
+          assert 0 < archive_bytes <= archive_limit
+          temporary = pathlib.Path(os.environ['RUNNER_TEMP'])
+          archive_path = temporary / 'lightforge-offline-candidate.zip'
+          command = ['gh', 'api', f'repos/{repo}/actions/artifacts/{artifact_id}/zip']
+          with archive_path.open('xb') as output, subprocess.Popen(command, stdout=subprocess.PIPE) as process:
+              try:
+                  total = 0
+                  while chunk := process.stdout.read(1024**2):
+                      total += len(chunk)
+                      if total > archive_bytes:
+                          raise ValueError('Candidate archive exceeds declared byte limit')
+                      output.write(chunk)
+                  returncode = process.wait()
+                  if returncode:
+                      raise subprocess.CalledProcessError(returncode, command)
+              except BaseException:
+                  process.kill()
+                  process.wait()
+                  raise
+          assert archive_path.stat().st_size == archive_bytes
+          assert sha256_file(archive_path) == checksum.removeprefix('sha256:')
+          out = temporary / 'lightforge-ci-candidate'
+          out.mkdir()
+          apk_name = 'LightForge-' + release + '.apk'
+          names = {apk_name, apk_name + '.json', apk_name + '.sha256',
+                   'background-tests.apk', 'diagnostics-tests.apk', 'candidate-manifest.json'}
+          # Parse only after the independently pinned archive digest matches.
+          with zipfile.ZipFile(archive_path) as archive:
+              infos = archive.infolist()
+              assert len(infos) == len(names) and {info.filename for info in infos} == names
+              assert sum(info.file_size for info in infos) <= archive_limit
+              for info in infos:
+                  assert not info.flag_bits & 1 and stat.S_IFMT(info.external_attr >> 16) in (0, stat.S_IFREG)
+                  assert 0 < info.file_size <= archive_limit
+                  with archive.open(info) as member, (out / info.filename).open('xb') as destination:
+                      shutil.copyfileobj(member, destination, 1024**2)
+          binding = candidate_binding(out, release, artifact_id=artifact_id, artifact_digest=checksum,
+                                      head_sha=source, run_id=run_id, run_attempt=attempt)
+          commit = api(f'repos/{repo}/git/commits/{source}')
+          assert binding['source']['tree_sha'] == commit['tree']['sha']
+          assert subprocess.check_output(['git', 'rev-parse', 'HEAD^{tree}'], text=True).strip() == commit['tree']['sha']
+          validate_source_hashes(binding['source_hashes'], pathlib.Path('.'))
+          current = api(f'repos/{repo}/actions/runs/{run_id}')
+          assert all(current.get(key) == run[key] for key in (
+              'id', 'status', 'conclusion', 'head_sha', 'run_attempt', 'event', 'head_branch'))
+          debug = temporary / 'lightforge-offline-diagnostic'
+          debug.mkdir()
+          helper = pathlib.Path(os.environ['GITHUB_WORKSPACE']) / 'diagnostic-workflow/tools/configure_offline_android_emulator.py'
+          context = {
+              'schema_version': 1, 'diagnostic_only': True, 'release_qualified': False,
+              'reason': 'Offline emulator investigation; original production Android run failed.',
+              'workflow': '.github/workflows/debug-android-candidate.yml',
+              'workflow_source_commit': os.environ['GITHUB_SHA'],
+              'diagnostic_run_id': int(os.environ['GITHUB_RUN_ID']),
+              'diagnostic_run_attempt': int(os.environ['GITHUB_RUN_ATTEMPT']),
+              'candidate_source_commit': source, 'candidate': binding,
+              'producer_run_conclusion': run['conclusion'], 'producer_host_job_id': hosts[0]['id'],
+              'offline_helper_sha256': sha256_file(helper),
+              'receipt_head_sha_semantics': 'Sealed candidate source; actual diagnostic workflow commit is recorded separately.',
+          }
+          (debug / 'diagnostic-context.json').write_text(json.dumps(context, indent=2, sort_keys=True) + '\n')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              print('candidate_session=' + binding['pipeline']['evidence_session'], file=output)
+              print('candidate_identity=' + binding['identity_sha256'], file=output)
+              print('diagnostic_session=' + secrets.token_hex(32), file=output)
+              print('diagnostic_only=true', file=output)
+              print('release_qualified=false', file=output)
+          archive_path.unlink()
+          print(json.dumps({'diagnostic_only': True, 'release_qualified': False,
+                            'candidate_source': source, 'candidate_artifact_id': artifact_id}))
+          PY
+      - name: Configure Android virtual-device paths
+        run: |
+          printf 'ANDROID_USER_HOME=%s\nANDROID_EMULATOR_HOME=%s\nANDROID_AVD_HOME=%s\nLIGHTFORGE_ANDROID_EVIDENCE_ROOT=%s\n' \
+            "$RUNNER_TEMP/lightforge-android" "$RUNNER_TEMP/lightforge-android" "$RUNNER_TEMP/lightforge-android/avd" \
+            "$RUNNER_TEMP/lightforge-offline-diagnostic/observations" >> "$GITHUB_ENV"
+      - name: Reclaim unused preinstalled toolchains on the disposable runner
+        run: |
+          sudo rm -rf -- "$ANDROID_HOME/ndk" /usr/share/dotnet
+          df -h .
+      - name: Prepare Android 15 emulator
+        run: |
+          sudo chmod a+rw /dev/kvm
+          mkdir -p "$ANDROID_AVD_HOME"
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "system-images;android-35;google_apis;x86_64" "emulator"
+          echo no | "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" create avd --force --name LightForge --package "system-images;android-35;google_apis;x86_64" --device pixel_6 --path "$ANDROID_AVD_HOME/LightForge.avd"
+          test -f "$ANDROID_AVD_HOME/LightForge.ini"
+          sed -i 's/^disk.dataPartition.size=.*/disk.dataPartition.size=6G/' "$ANDROID_AVD_HOME/LightForge.avd/config.ini"
+          df -h "$ANDROID_AVD_HOME"
+          "$ANDROID_HOME/emulator/emulator" -list-avds
+          # Same GPU, memory and CPU settings as the failed run; explicit ADB port.
+          nohup "$ANDROID_HOME/emulator/emulator" -avd LightForge -port 5554 -no-window -no-audio -no-metrics -partition-size 6144 -no-boot-anim -no-snapshot -gpu swiftshader_indirect -memory 4096 -cores 2 -camera-back none -camera-front none > "$RUNNER_TEMP/lightforge-android-emulator.log" 2>&1 < /dev/null &
+      - name: Set and record disposable emulator offline state
+        id: offline
+        run: |
+          python3 diagnostic-workflow/tools/configure_offline_android_emulator.py \
+            --adb "$ANDROID_HOME/platform-tools/adb" --serial "$ANDROID_SERIAL" \
+            --head-sha "$GITHUB_SHA" --run-id "$GITHUB_RUN_ID" --run-attempt "$GITHUB_RUN_ATTEMPT" \
+            --evidence-session "${{ steps.candidate.outputs.diagnostic_session }}" \
+            --output "$LIGHTFORGE_ANDROID_EVIDENCE_ROOT/emulator-offline-setup.json"
+      - name: Verify screen-off analysis and Activity-independent completion with unchanged gates
+        id: background
+        working-directory: candidate-source
+        run: |
+          python3 tools/run_android_background_tests.py \
+            --candidate-dir "$RUNNER_TEMP/lightforge-ci-candidate" \
+            --output-dir "$LIGHTFORGE_ANDROID_EVIDENCE_ROOT/background" \
+            --emulator-log "$RUNNER_TEMP/lightforge-android-emulator.log" \
+            --candidate-artifact-id "$CANDIDATE_ARTIFACT_ID" \
+            --candidate-artifact-digest "$CANDIDATE_ARTIFACT_DIGEST" \
+            --candidate-run-id "$CANDIDATE_RUN_ID" \
+            --candidate-run-attempt "$CANDIDATE_RUN_ATTEMPT" \
+            --candidate-evidence-session "${{ steps.candidate.outputs.candidate_session }}" \
+            --candidate-identity-sha256 "${{ steps.candidate.outputs.candidate_identity }}" \
+            --run-id "$GITHUB_RUN_ID" --run-attempt "$GITHUB_RUN_ATTEMPT" \
+            --head-sha "$CANDIDATE_SOURCE" --evidence-session "${{ steps.candidate.outputs.diagnostic_session }}"
+      - name: Verify crash trace recovery and diagnostic export to Downloads
+        id: diagnostics
+        if: ${{ !cancelled() && steps.candidate.outcome == 'success' && steps.offline.outcome == 'success' }}
+        working-directory: candidate-source
+        run: |
+          python3 tools/run_android_diagnostics_tests.py \
+            --candidate-dir "$RUNNER_TEMP/lightforge-ci-candidate" \
+            --output-dir "$LIGHTFORGE_ANDROID_EVIDENCE_ROOT/diagnostics" \
+            --emulator-log "$RUNNER_TEMP/lightforge-android-emulator.log" \
+            --candidate-artifact-id "$CANDIDATE_ARTIFACT_ID" \
+            --candidate-artifact-digest "$CANDIDATE_ARTIFACT_DIGEST" \
+            --candidate-run-id "$CANDIDATE_RUN_ID" \
+            --candidate-run-attempt "$CANDIDATE_RUN_ATTEMPT" \
+            --candidate-evidence-session "${{ steps.candidate.outputs.candidate_session }}" \
+            --candidate-identity-sha256 "${{ steps.candidate.outputs.candidate_identity }}" \
+            --run-id "$GITHUB_RUN_ID" --run-attempt "$GITHUB_RUN_ATTEMPT" \
+            --head-sha "$CANDIDATE_SOURCE" --evidence-session "${{ steps.candidate.outputs.diagnostic_session }}"
+      - name: Collect observations without sealing production evidence
+        if: always()
+        env:
+          CANDIDATE_OUTCOME: ${{ steps.candidate.outcome }}
+          OFFLINE_OUTCOME: ${{ steps.offline.outcome }}
+          BACKGROUND_OUTCOME: ${{ steps.background.outcome }}
+          DIAGNOSTICS_OUTCOME: ${{ steps.diagnostics.outcome }}
+        run: |
+          debug_root="$RUNNER_TEMP/lightforge-offline-diagnostic"
+          mkdir -p "$debug_root"
+          if [ -f "$RUNNER_TEMP/lightforge-android-emulator.log" ]; then
+            cp "$RUNNER_TEMP/lightforge-android-emulator.log" "$debug_root/emulator.log"
+          fi
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          root = Path(os.environ['RUNNER_TEMP']) / 'lightforge-offline-diagnostic'
+          result = {'diagnostic_only': True, 'release_qualified': False,
+                    'candidate_validation_outcome': os.environ['CANDIDATE_OUTCOME'],
+                    'offline_setup_outcome': os.environ['OFFLINE_OUTCOME'],
+                    'background_outcome': os.environ['BACKGROUND_OUTCOME'],
+                    'diagnostics_outcome': os.environ['DIAGNOSTICS_OUTCOME']}
+          (root / 'diagnostic-result.json').write_text(json.dumps(result, indent=2) + '\n')
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as summary:
+              summary.write('## Diagnostic only — not release qualification\n\n')
+              summary.write('Target: unchanged sealed APK and instrumentation from production run 34934590716.\n\n')
+              summary.write('Candidate validation: ' + result['candidate_validation_outcome'] + '\n\n')
+              summary.write('Offline setup: ' + result['offline_setup_outcome'] + '\n\n')
+              summary.write('Background: ' + result['background_outcome'] + '\n\n')
+              summary.write('Diagnostics: ' + result['diagnostics_outcome'] + '\n\n')
+              summary.write('A subsequent complete production verification run is still required.\n')
+          PY
+      - name: Retain offline investigation observations only
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: lightforge-2.2.5-offline-preview-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/lightforge-offline-diagnostic
+          if-no-files-found: error
+          retention-days: 30
