@@ -18,7 +18,9 @@ import time
 
 
 BOOT_TIMEOUT_SECONDS = 180
-STATE_TIMEOUT_SECONDS = 30
+# First-boot radio/service callbacks can outlast a 30-second observation window.
+# This fixture-only budget does not change any Android instrumentation deadline.
+STATE_TIMEOUT_SECONDS = 120
 COMMAND_TIMEOUT_SECONDS = 10
 POLL_SECONDS = 1
 SERIAL_PATTERN = re.compile(r"emulator-[0-9]+", re.ASCII)
@@ -30,6 +32,26 @@ class SetupError(RuntimeError):
 
 def utc_now():
     return datetime.datetime.now(datetime.timezone.utc).isoformat()
+
+
+def output_summary(stdout, stderr):
+    """Retain fixed diagnostic tokens, never network names or raw service dumps."""
+    combined = stdout + "\n" + stderr
+    signals = {
+        "permission-denied": r"permission denied|permission denial|not allowed|requires .*permission",
+        "security-exception": r"securityexception|security exception",
+        "unknown-command": r"unknown command|unrecognized command|invalid command",
+        "service-unavailable": r"can't find service|cannot find service|service .*not found|no service published",
+        "exception": r"\bexception\b|[A-Za-z]+Exception\b",
+        "error": r"(?m)^\s*(?:error|failed)\b",
+    }
+    return {
+        "stdout_bytes": len(stdout.encode("utf-8")),
+        "stderr_bytes": len(stderr.encode("utf-8")),
+        "stdout_lines": len(stdout.splitlines()),
+        "stderr_lines": len(stderr.splitlines()),
+        "signals": sorted(name for name, pattern in signals.items() if re.search(pattern, combined, re.IGNORECASE)),
+    }
 
 
 class OfflineEmulator:
@@ -49,6 +71,7 @@ class OfflineEmulator:
         remaining = deadline - self.monotonic()
         if remaining <= 0:
             raise SetupError("Emulator setup deadline expired")
+        began = self.monotonic()
         entry = {"arguments": list(args)}
         self.receipt["commands"].append(entry)
         try:
@@ -64,11 +87,25 @@ class OfflineEmulator:
             entry["status"] = "unavailable"
             raise SetupError("Cannot execute adb") from error
         entry["returncode"] = result.returncode
+        entry["elapsed_ms"] = round((self.monotonic() - began) * 1000)
+        entry["output"] = output_summary(result.stdout, result.stderr)
         if result.returncode != 0:
             entry["status"] = "failed"
             if allow_unavailable:
                 return None
             raise SetupError("adb command failed: " + " ".join(args))
+        # Some Android shell wrappers print failures but exit successfully.
+        # Query dumps contain historical errors, so classify those for diagnosis
+        # without mistaking them for the current shell command's result.
+        mutation = (
+            args[:4] == ("shell", "cmd", "connectivity", "airplane-mode") and len(args) == 5
+            or args[:4] == ("shell", "cmd", "wifi", "set-wifi-enabled")
+            or args[:4] == ("shell", "cmd", "phone", "data")
+        )
+        if mutation:
+            if result.stdout.strip() or result.stderr.strip():
+                entry["status"] = "reported-error"
+                raise SetupError("Android service returned unexpected mutation output: " + " ".join(args))
         entry["status"] = "completed"
         # Full service output can contain network identifiers. The receipt keeps
         # only the narrowly parsed state, never raw dumpsys/settings output.
@@ -96,6 +133,7 @@ class OfflineEmulator:
                         raise SetupError("Only the default single-SIM emulator configuration is supported")
                     self.receipt["emulator_verified"] = True
                     self.receipt["subscription_configuration"] = "default-single-sim"
+                    self.receipt["mobile_data_setting_key"] = "mobile_data"
                     return
             self.pause(deadline)
 
@@ -106,16 +144,27 @@ class OfflineEmulator:
         wifi_setting = self.command("shell", "settings", "get", "global", "wifi_on", deadline=deadline)
         mobile_data = self.command("shell", "settings", "get", "global", "mobile_data", deadline=deadline)
         connectivity = self.command("shell", "dumpsys", "connectivity", deadline=deadline)
-        default_networks = re.findall(r"^\s*Active default network:\s*(\S+)\s*$", connectivity, re.MULTILINE)
+        default_networks = re.findall(r"^[ \t]*Active default network:[ \t]*(\S+)[ \t]*$", connectivity, re.MULTILINE)
+        wifi_states = re.findall(r"^[ \t]*(?:Wifi|Wi-Fi) is (enabled|disabled)[ \t]*$", wifi, re.MULTILINE)
+        self.receipt["state_parse"] = {
+            "wifi_status_lines": len(wifi_states),
+            "default_network_lines": len(default_networks),
+            "numeric_default_networks": sum(bool(re.fullmatch(r"[0-9]+", value)) for value in default_networks),
+        }
         observed = {
             "airplane_mode": airplane if airplane in {"enabled", "disabled"} else "unknown",
             "airplane_mode_setting": airplane_setting if airplane_setting in {"0", "1"} else "unknown",
-            "wifi": "disabled" if wifi.splitlines()[:1] == ["Wifi is disabled"] else "unverified",
+            "wifi": wifi_states[0] if len(wifi_states) == 1 else "unverified",
             "wifi_setting": wifi_setting if wifi_setting in {"0", "1", "2", "3"} else "unknown",
             "mobile_data_setting": mobile_data if mobile_data in {"0", "1"} else "unknown",
-            "default_network": "none" if default_networks == ["none"] else "present-or-unverified",
+            "default_network": "none" if default_networks == ["none"] else (
+                "present" if len(default_networks) == 1 and re.fullmatch(r"[0-9]+", default_networks[0]) else "unverified"
+            ),
         }
         self.receipt["observed_state"] = observed
+        history = self.receipt.setdefault("state_history", [])
+        history.append({"at": utc_now(), **observed})
+        del history[:-16]
         return observed == {
             "airplane_mode": "enabled",
             "airplane_mode_setting": "1",
@@ -128,10 +177,40 @@ class OfflineEmulator:
     def configure(self):
         self.wait_for_emulator()
         deadline = self.monotonic() + STATE_TIMEOUT_SECONDS
-        self.command("shell", "cmd", "connectivity", "airplane-mode", "enable", deadline=deadline)
-        self.command("shell", "svc", "wifi", "disable", deadline=deadline)
-        self.command("shell", "svc", "data", "disable", deadline=deadline)
-        while not self.observe(deadline):
+        # Airplane mode can reject Wi-Fi toggles or preserve an enabled Wi-Fi
+        # override. Settle the user radio settings before enabling it. A retry
+        # of this disposable fixture may start with airplane mode already on.
+        airplane = self.command("shell", "cmd", "connectivity", "airplane-mode", deadline=deadline)
+        if airplane not in {"enabled", "disabled"}:
+            raise SetupError("Cannot read the emulator airplane-mode state")
+        if airplane == "enabled":
+            self.command("shell", "cmd", "connectivity", "airplane-mode", "disable", deadline=deadline)
+        phase = "disable-radios"
+        while True:
+            self.receipt["setup_phase"] = phase
+            state = self.receipt.get("observed_state", {})
+            if phase == "disable-radios":
+                # The default Phone can appear after sys.boot_completed.
+                # Reapply only states still enabled/unknown, within this budget.
+                if state.get("wifi") != "disabled" or state.get("wifi_setting") != "0":
+                    self.command("shell", "cmd", "wifi", "set-wifi-enabled", "disabled", deadline=deadline)
+                if state.get("mobile_data_setting") != "0":
+                    self.command("shell", "cmd", "phone", "data", "disable", deadline=deadline)
+            verified = self.observe(deadline)
+            state = self.receipt["observed_state"]
+            radios_disabled = state["wifi"] == "disabled" and state["wifi_setting"] == "0" and state["mobile_data_setting"] == "0"
+            if phase == "disable-radios" and radios_disabled:
+                self.command("shell", "cmd", "connectivity", "airplane-mode", "enable", deadline=deadline)
+                phase = "verify-offline"
+                continue
+            if phase == "verify-offline" and verified:
+                return
+            if phase == "verify-offline":
+                if not radios_disabled:
+                    self.command("shell", "cmd", "connectivity", "airplane-mode", "disable", deadline=deadline)
+                    phase = "disable-radios"
+                elif state["airplane_mode"] != "enabled" or state["airplane_mode_setting"] != "1":
+                    self.command("shell", "cmd", "connectivity", "airplane-mode", "enable", deadline=deadline)
             self.pause(deadline)
 
 
