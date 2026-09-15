@@ -12,12 +12,14 @@ const SCHEMA = 'lightforge.app-capture.v1';
 const HEX = /^[0-9a-f]{64}$/;
 const OPAQUE = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
 const MAX_WAV_BYTES = 2 * 1024 ** 3;
-const SCRIPTS = [
+const BOOTSTRAP_ORDER = [
   'version.js', 'analysis/semantic-timeline.js', 'analysis/vocal-semantics.js',
   'analysis/salience.js', 'analysis/recurrence.js', 'analysis/stem-cache.js',
   'analysis/work-store.js', 'analysis/diagnostic-clock.js', 'analysis/scheduler.js',
   'analysis/resource-diagnostics.js', 'analysis/analyzer.js', 'engine/client.js',
 ];
+const CORE_SCRIPTS = ['version.js', 'analysis/stem-cache.js', 'analysis/work-store.js', 'analysis/analyzer.js', 'engine/client.js'];
+const CORE_FILES = [...CORE_SCRIPTS, 'analysis/worker.js', 'engine/worker.js', 'analysis/ASSET_MANIFEST.json'];
 function requireValue(condition, message) { if (!condition) throw Error(message); }
 function plain(value) { return value !== null && Object.getPrototypeOf(value) === Object.prototype; }
 function canonical(value) {
@@ -80,6 +82,14 @@ function validateLock(lock) {
       Number.isSafeInteger(record.bytes) && record.bytes >= 0 && HEX.test(record.sha256), 'Invalid locked web entry');
   }
   return hashBytes(canonical(lock));
+}
+function bootstrapScripts(lock) {
+  validateLock(lock);
+  for (const name of CORE_FILES) requireValue(Object.hasOwn(lock.files, name) && lock.files[name].bytes > 0, 'Required production capture file absent: ' + name);
+  // Older published baselines lack later enhancement modules. Load only bytes
+  // present in this distribution's independently locked inventory; never
+  // import candidate modules or fabricate absent baseline outputs.
+  return BOOTSTRAP_ORDER.filter(name => Object.hasOwn(lock.files, name));
 }
 function validateIdentity(identity, lockDigest) {
   const names = ['source_commit', 'source_tree_sha', 'web_manifest_sha256', 'pipeline_version', 'preprocessing_version', 'track_id', 'run_id', 'report_side'];
@@ -149,7 +159,8 @@ function parseRange(value, size) {
   return { start, end, partial: true };
 }
 function createServer(webRoot, wav, lock, served) {
-  const html = '<!doctype html><meta charset="utf-8"><title>LightForge capture</title>' + SCRIPTS.map(name => '<script src="/' + name + '"></script>').join('');
+  const scripts = bootstrapScripts(lock);
+  const html = '<!doctype html><meta charset="utf-8"><title>LightForge capture</title>' + scripts.map(name => '<script src="/' + name + '"></script>').join('');
   return http.createServer((request, response) => {
     try {
     response.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
@@ -220,10 +231,11 @@ async function capture(options) {
     const audio = wavInfo(wav), audioHash = await hashFile(wav);
     requireValue(audioHash === options['audio-sha256'], 'Audio content differs from the supplied lock');
     requireValue(canonical(await inventory(webRoot)) === canonical(lock), 'Current web bytes differ from the supplied source lock');
-    for (const name of SCRIPTS) requireValue(Object.hasOwn(lock.files, name), 'Required production script absent: ' + name);
+    const scripts = bootstrapScripts(lock);
     const manifest = readJson(path.join(webRoot, 'analysis/ASSET_MANIFEST.json'));
     for (const [name, record] of Object.entries(manifest)) requireValue(safeRelative(name) && canonical(lock.files['analysis/' + name]) === canonical(record), 'Analysis asset differs from its production manifest: ' + name);
     Object.assign(report, { identity, source_identity_binding: { git_commit_and_tree: 'caller-declared', web_inventory: 'verified-against-supplied-lock', git_to_inventory_binding: 'requires-independent-release-orchestration' }, configuration: config, configuration_sha256: hashBytes(canonical(config)), audio: { ...audio, content_sha256: audioHash }, source_lock_sha256: lockDigest, collector_sha256: await hashFile(__filename), cache_condition: { browser_origin: 'fresh', browser_http_cache: 'disabled', persisted_app_state: 'empty', host_page_cache: 'uncontrolled', release_controlled: false } });
+    report.bootstrap = { loaded_scripts: scripts, absent_optional_scripts: BOOTSTRAP_ORDER.filter(name => !scripts.includes(name)), source: 'locked-distribution-only' };
     const served = new Set();
     server = createServer(webRoot, wav, lock, served);
     await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });
@@ -311,5 +323,5 @@ async function main(argv = process.argv.slice(2)) {
   }
   return capture(options);
 }
-module.exports = { canonical, hashBytes, inventory, validateLock, validateIdentity, validateConfiguration, wavInfo, parseRange, createServer, outputCategories, parseArgs, capture, main };
+module.exports = { canonical, hashBytes, inventory, validateLock, bootstrapScripts, validateIdentity, validateConfiguration, wavInfo, parseRange, createServer, outputCategories, parseArgs, capture, main };
 if (require.main === module) main().then(code => { process.exitCode = code; }).catch(error => { process.stderr.write(String(error.message || error) + '\n'); process.exitCode = 1; });

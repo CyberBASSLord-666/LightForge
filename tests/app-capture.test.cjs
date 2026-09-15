@@ -5,6 +5,9 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const capture = require('../qa/locked-benchmark/capture-app.cjs');
+const publishedBootstrap = require('./fixtures/capture-bootstrap-2.2.4.json');
+const coreFiles = [...publishedBootstrap.expected_capture_scripts, 'analysis/worker.js', 'engine/worker.js', 'analysis/ASSET_MANIFEST.json'];
+function fixtureLock(names) { return { schema: 'lightforge.web-capture-lock.v1', files: Object.fromEntries(names.map(name => [name, { bytes: 1, sha256: '0'.repeat(64) }])) }; }
 
 function temporary(t) { const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lightforge-capture-test-')); t.after(() => fs.rmSync(dir, { recursive: true, force: true })); return dir; }
 function wav(samples = 44100) {
@@ -75,6 +78,26 @@ test('inventory rejects paths that could escape its web root', () => {
     assert.throws(() => capture.validateLock({ schema: 'lightforge.web-capture-lock.v1', files: { [name]: { bytes: 1, sha256: 'a'.repeat(64) } } }));
   }
 });
+test('published 2.2.4 bootstrap uses its observed module order without candidate enhancements', () => {
+  const lock = fixtureLock(publishedBootstrap.web_blob_paths), loaded = capture.bootstrapScripts(lock);
+  assert.equal(publishedBootstrap.source.tree_sha, 'a8c6fd8abf76c413913c3aed85cba2ad6bae17bd');
+  assert.deepEqual(loaded, publishedBootstrap.expected_capture_scripts);
+  assert.deepEqual(publishedBootstrap.index_script_order.filter(name => loaded.includes(name)), loaded);
+  for (const missing of publishedBootstrap.absent_enhancement_scripts) {
+    assert.equal(Object.hasOwn(lock.files, missing), false); assert.equal(loaded.includes(missing), false);
+  }
+});
+test('enhancement scripts load only when present in the locked distribution and keep candidate dependency order', () => {
+  const lock = fixtureLock([...coreFiles, ...publishedBootstrap.absent_enhancement_scripts]);
+  assert.deepEqual(capture.bootstrapScripts(lock), ['version.js', 'analysis/semantic-timeline.js', 'analysis/vocal-semantics.js', 'analysis/salience.js', 'analysis/recurrence.js', 'analysis/stem-cache.js', 'analysis/work-store.js', 'analysis/diagnostic-clock.js', 'analysis/scheduler.js', 'analysis/resource-diagnostics.js', 'analysis/analyzer.js', 'engine/client.js']);
+  delete lock.files['analysis/scheduler.js']; assert.equal(capture.bootstrapScripts(lock).includes('analysis/scheduler.js'), false);
+});
+test('baseline compatibility does not make real analyzer/compiler core files optional', () => {
+  for (const missing of coreFiles) {
+    const lock = fixtureLock(coreFiles); delete lock.files[missing];
+    assert.throws(() => capture.bootstrapScripts(lock), /Required production capture file absent/);
+  }
+});
 test('paired identity needs explicit side and stable opaque run ID', () => {
   const item = identity('c'.repeat(64)); assert.doesNotThrow(() => capture.validateIdentity(item, item.web_manifest_sha256));
   for (const mutation of [{ run_id: '../pair' }, { run_id: 123 }, { source_commit: ['a'.repeat(40)] }, { report_side: 'release' }, { source_commit: 'short' }, { extra: true }]) assert.throws(() => capture.validateIdentity({ ...item, ...mutation }, item.web_manifest_sha256));
@@ -96,7 +119,9 @@ test('range parser accepts bounded open-ended reads and rejects invalid or multi
 });
 test('server serves exact locked WAV ranges and cannot expose another local file', async t => {
   const dir = temporary(t), web = path.join(dir, 'web'); fs.mkdirSync(web);
-  fs.writeFileSync(path.join(web, 'worker.js'), 'worker'); const file = path.join(dir, 'input.wav'), bytes = wav(10); fs.writeFileSync(file, bytes);
+  fs.writeFileSync(path.join(web, 'worker.js'), 'worker');
+  for (const relative of coreFiles) { const file = path.join(web, relative); fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, 'unit protocol fixture'); }
+  const file = path.join(dir, 'input.wav'), bytes = wav(10); fs.writeFileSync(file, bytes);
   fs.writeFileSync(path.join(dir, 'secret.txt'), 'must not be served');
   const server = capture.createServer(web, file, await capture.inventory(web), new Set());
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
@@ -113,6 +138,14 @@ test('absent percussion is missing evidence, never generated from onsets', () =>
   const result = capture.outputCategories({ onsets: [{ time: 1 }], beats: [] }, {}, { frame_count: 10 });
   assert.equal(Object.hasOwn(result.categories, 'drum_map'), false); assert.match(result.missing.drum_map, /not emitted/);
   assert.equal(Object.hasOwn(result.categories, 'validation_report'), false);
+});
+test('baseline-shaped output leaves unavailable semantic, salience, drum and perceptual sidecars absent', () => {
+  const music = { beats: [], downbeats: [], bpm: 120, meter: 4, vocals: { notes: [] }, bassNotes: [], bassAnalysis: { method: 'baseline' }, sections: [], engine: { analysisSeconds: 1, stages: {} } };
+  const show = { choreography: { version: '2.2.4' }, settings: { seed: 1 }, validation: { valid: true, errors: [] } };
+  const result = capture.outputCategories(music, show, { frame_count: 50 });
+  assert.deepEqual(Object.keys(result.missing).sort(), ['drum_map', 'salience_map', 'semantic_timeline']);
+  assert.equal(Object.hasOwn(show, 'perceptualValidation'), false); assert.equal(Object.hasOwn(music.engine, 'resourceDiagnostics'), false);
+  assert.equal(Object.keys(result.categories).length, 7);
 });
 test('actual percussion provenance and optional perceptual sidecars are preserved without invented scores', () => {
   const percussion = { estimated: true, events: [{ kind: 'kick', time: 1, confidence: 0.4 }] };

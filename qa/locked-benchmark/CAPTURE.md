@@ -83,6 +83,18 @@ it does not reset OS page caches or establish thermal equivalence. It does
 not implement warm/resumed experiments or Android native model bridges.
 External page requests are blocked, and any such request fails capture.
 
+Bootstrap is compatible with the actual published 2.2.4 baseline. The source
+version, stem cache, work store, analyzer and compiler client are required,
+along with their worker entries and analysis asset manifest. Later semantic,
+salience, recurrence, clock, scheduler and resource modules load only when
+present in that distribution's verified lock, in dependency order. Nothing
+is imported from a candidate to fill a baseline omission. `capture.json`
+records the loaded scripts and absent optional modules. The original 2.2.4
+`MusicAnalyzer.analyze(audioUrl, options, onProgress, signal)` and
+`ShowCompiler.generate(music, settings, onProgress, signal)` APIs remain
+supported; its `{show, compiled, header}` result is preserved. Absent baseline
+semantic/perceptual/resource outputs remain explicitly missing or unavailable.
+
 `capture.json` contains input identities, complete configuration, actual
 browser-call timings, actual engine/resource reports, requested source hashes,
 and hashes of all saved artifacts. Monotonic stdout phase events identify
