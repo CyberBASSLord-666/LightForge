@@ -31,7 +31,9 @@
   return {now(){if(unavailable)return null;const value=sampleClock(dateClock);if(value===null||value<last){unavailable=true;return null;}last=value;return value;}};
  };
  const clock=createClock(),now=()=>clock.now(),elapsed=(start,end)=>{
-  const first=number(start),last=number(end);return first===null||last===null?0:Math.max(0,last-first);
+  // A real zero wait requires two valid samples. Clock failures must stay
+  // unavailable when resource diagnostics consume this admission evidence.
+  const first=number(start),last=number(end);return first===null||last===null?null:number(Math.max(0,last-first));
  };
  const abortError=()=>typeof DOMException==='function'?new DOMException('Analysis cancelled','AbortError'):Object.assign(new Error('Analysis cancelled'),{name:'AbortError'});
  const supportedLocks=()=>{

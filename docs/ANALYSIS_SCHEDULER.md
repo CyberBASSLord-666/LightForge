@@ -10,9 +10,11 @@ Each granted lease exposes a bounded, privacy-safe diagnostics object:
 - `resourceClass` (`analysis-heavy`)
 - `capacity` (currently one, pending measured native-memory evidence)
 - `crossContextMode`
-- `waitMs`
+- `waitMs` (a nonnegative finite observation, or `null` when clock samples are unavailable or invalid)
 - `admissionTicket`
 
 No audio path, project ID, cache key, lyric, or model payload is placed in scheduler diagnostics. A queued job can be cancelled before admission without touching its existing checkpoint. The caller must always release a granted lease in `finally`; release is idempotent and waits for the cross-tab lock to be relinquished before the next local job starts.
+
+A measured zero wait requires valid samples at submission and admission. Missing, failing or backward-moving clocks leave `waitMs` unavailable without affecting admission, cancellation or release. The resource and run-observation consumers retain that unavailable state; they do not convert it to measured zero. An interval measured before a later clock failure remains valid.
 
 The interactive studio (`web/index.html`) and service-owned background runner (`web/background/runner.html`) both load this module before `analysis/analyzer.js`. If a background WebView does not expose Web Locks, the scheduler records `single-context` for that run and preserves the established one-job service ownership.
