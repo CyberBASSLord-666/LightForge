@@ -1,0 +1,177 @@
+name: Transport verified LightForge 2.2.5 candidate
+on:
+  push:
+    branches: [release/2.2.5-signing-transfer]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  index:
+    if: github.repository == 'CyberBASSLord-666/LightForge' && github.ref == 'refs/heads/release/2.2.5-signing-transfer'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          ref: f2a1c65f35efbfd43b0bd7832bde3f42ea7abe79
+          sparse-checkout: |
+            tools
+      - name: Transport the exact successful candidate without changing release authority
+        id: transfer
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          python3 -I -S - <<'PY'
+          import json, os, pathlib, shutil, stat, subprocess, sys, zipfile
+          sys.path.insert(0, str(pathlib.Path('tools').resolve()))
+          from android_evidence_manifest import candidate_binding, sha256_file
+          from candidate_apk_transfer import MAX_APK_BYTES, PART_BYTES, split_apk
+          repo = os.environ['GITHUB_REPOSITORY']
+          assert repo == 'CyberBASSLord-666/LightForge'
+          assert os.environ['GITHUB_REF'] == 'refs/heads/release/2.2.5-signing-transfer'
+          def api(path):
+              return json.loads(subprocess.check_output(['gh', 'api', path], text=True))
+          release = '2.2.5'
+          request = {'run_id': 34939857731, 'source_commit': 'f2a1c65f35efbfd43b0bd7832bde3f42ea7abe79'}
+          expected_attempt = 1
+          expected_artifact = 10384999901
+          expected_bytes = 1205286191
+          expected_digest = 'sha256:be59f9d81b6d015eb252e6e64543b803dd43ae0ec966d50667e2e47d8311723d'
+          expected_apk = 'dab68d426ad993383da187160ddb703520f975577d582a462dfa2accfbfbc6d5'
+          assert json.loads(pathlib.Path('version.json').read_text())['name'] == release
+          assert subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip() == request['source_commit']
+          run = api(f"repos/{repo}/actions/runs/{request['run_id']}")
+          assert run['id'] == request['run_id'] and run['conclusion'] == 'success' and run['status'] == 'completed'
+          assert run['head_sha'] == request['source_commit'] and run['head_repository']['full_name'] == repo
+          assert run['path'] == '.github/workflows/verify-v2.yml' and run['event'] == 'push' and run['head_branch'] == 'main'
+          assert run['run_attempt'] == expected_attempt
+          job_inventory = subprocess.check_output(['gh', 'api', '--paginate',
+              f"repos/{repo}/actions/runs/{run['id']}/attempts/{expected_attempt}/jobs?per_page=100", '--jq', '.jobs[]'], text=True)
+          jobs = [json.loads(line) for line in job_inventory.splitlines() if line.strip()]
+          for name in ('verify', 'android-background'):
+              matches = [job for job in jobs if job.get('name') == name]
+              assert len(matches) == 1 and matches[0]['run_id'] == run['id']
+              assert matches[0]['status'] == 'completed' and matches[0]['conclusion'] == 'success'
+          inventory = subprocess.check_output(['gh', 'api', '--paginate',
+              f"repos/{repo}/actions/runs/{run['id']}/artifacts?per_page=100", '--jq', '.artifacts[]'], text=True)
+          records = [json.loads(line) for line in inventory.splitlines() if line.strip()]
+          matches = [record for record in records if record.get('name') == 'lightforge-' + release + '-ci-candidate']
+          assert len(matches) == 1 and matches[0]['id'] == expected_artifact
+          artifact = api(f"repos/{repo}/actions/artifacts/{matches[0]['id']}")
+          assert artifact['id'] == matches[0]['id'] and artifact['name'] == matches[0]['name'] and artifact['expired'] is False
+          assert artifact['workflow_run']['id'] == run['id'] and artifact['workflow_run']['head_sha'] == run['head_sha']
+          assert artifact['workflow_run']['head_branch'] == 'main'
+          checksum = artifact['digest']
+          assert checksum == expected_digest
+          archive_limit = MAX_APK_BYTES + 16 * 1024**2
+          assert artifact['size_in_bytes'] == expected_bytes and 0 < expected_bytes <= archive_limit
+          build = pathlib.Path('build'); build.mkdir(exist_ok=False)
+          archive_path = build / 'candidate-artifact.zip'
+          command = ['gh', 'api', f"repos/{repo}/actions/artifacts/{artifact['id']}/zip"]
+          with archive_path.open('xb') as output, subprocess.Popen(command, stdout=subprocess.PIPE) as process:
+              try:
+                  total = 0
+                  while chunk := process.stdout.read(1024**2):
+                      total += len(chunk)
+                      if total > artifact['size_in_bytes']:
+                          raise ValueError('Candidate archive exceeds declared byte limit')
+                      output.write(chunk)
+                  returncode = process.wait()
+                  if returncode:
+                      raise subprocess.CalledProcessError(returncode, command)
+              except BaseException:
+                  process.kill()
+                  process.wait()
+                  raise
+          assert archive_path.stat().st_size == artifact['size_in_bytes'] and sha256_file(archive_path) == checksum.removeprefix('sha256:')
+          out = build / 'candidate'; out.mkdir()
+          apk_name = 'LightForge-' + release + '.apk'
+          names = {apk_name, apk_name + '.json', apk_name + '.sha256',
+                   'background-tests.apk', 'diagnostics-tests.apk', 'candidate-manifest.json'}
+          with zipfile.ZipFile(archive_path) as archive:
+              infos = archive.infolist()
+              assert len(infos) == len(names) and {info.filename for info in infos} == names
+              assert sum(info.file_size for info in infos) <= archive_limit
+              for info in infos:
+                  assert not info.flag_bits & 1 and stat.S_IFMT(info.external_attr >> 16) in (0, stat.S_IFREG)
+                  assert 0 < info.file_size <= archive_limit
+                  with archive.open(info) as source, (out / info.filename).open('xb') as destination:
+                      shutil.copyfileobj(source, destination, 1024**2)
+          binding = candidate_binding(out, release, artifact_id=artifact['id'], artifact_digest=checksum,
+              head_sha=run['head_sha'], run_id=run['id'], run_attempt=expected_attempt)
+          assert binding['files'][apk_name]['sha256'] == expected_apk
+          commit = api(f"repos/{repo}/git/commits/{run['head_sha']}")
+          assert binding['source']['tree_sha'] == commit['tree']['sha']
+          assert subprocess.check_output(['git', 'rev-parse', 'HEAD^{tree}'], text=True).strip() == commit['tree']['sha']
+          preparation = {'run_id': int(os.environ['GITHUB_RUN_ID']), 'run_attempt': int(os.environ['GITHUB_RUN_ATTEMPT'])}
+          manifest = split_apk(out / apk_name, release, binding, preparation, build / 'transfer')
+          assert manifest['part_bytes'] == PART_BYTES == 400 * 1024**2 and len(manifest['parts']) == 3
+          assert manifest['apk']['sha256'] == expected_apk
+          shutil.copyfile(out / 'candidate-manifest.json', build / 'transfer/candidate-manifest.json')
+          for name, record in [('candidate-run.json', run), ('candidate-artifact.json', artifact)]:
+              (build / 'transfer' / name).write_text(json.dumps(record, indent=2, sort_keys=True) + '\n')
+          current_run = api(f"repos/{repo}/actions/runs/{run['id']}")
+          assert all(current_run.get(key) == run[key] for key in ('id', 'status', 'conclusion', 'head_sha', 'run_attempt', 'event', 'head_branch'))
+          context = {
+              'schema_version': 1, 'transport_only': True, 'release_qualified': False,
+              'workflow': '.github/workflows/transfer-verified-candidate-225.yml',
+              'workflow_source_commit': os.environ['GITHUB_SHA'],
+              'workflow_ref': os.environ['GITHUB_REF'], 'transport_run': preparation,
+              'trusted_tools_source_commit': request['source_commit'],
+              'candidate': binding, 'producer_run_conclusion': run['conclusion'],
+              'purpose': 'Byte transport for private signing; no policy, review, signing or publication authority.',
+          }
+          (build / 'transfer/transfer-context.json').write_text(json.dumps(context, indent=2, sort_keys=True) + '\n')
+          archive_path.unlink()
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              print('part_count=' + str(len(manifest['parts'])), file=output)
+              print('transport_only=true', file=output)
+              print('release_qualified=false', file=output)
+          print(json.dumps({'source_commit': run['head_sha'], 'candidate_artifact_id': artifact['id'],
+                            'candidate_apk_sha256': manifest['apk']['sha256'], 'part_count': len(manifest['parts']),
+                            'release_signed': False, 'transport_only': True, 'release_qualified': False}))
+          PY
+      - name: Retain private candidate transfer identity
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: lightforge-signing-${{ github.run_id }}-${{ github.run_attempt }}-manifest
+          path: |
+            build/transfer/transfer-manifest.json
+            build/transfer/candidate-manifest.json
+            build/transfer/candidate-run.json
+            build/transfer/candidate-artifact.json
+            build/transfer/transfer-context.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Retain private candidate APK part 01
+        if: ${{ fromJSON(steps.transfer.outputs.part_count) >= 1 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: lightforge-signing-${{ github.run_id }}-${{ github.run_attempt }}-part-01
+          path: build/transfer/parts/part-01.bin
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 30
+      - name: Retain private candidate APK part 02
+        if: ${{ fromJSON(steps.transfer.outputs.part_count) >= 2 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: lightforge-signing-${{ github.run_id }}-${{ github.run_attempt }}-part-02
+          path: build/transfer/parts/part-02.bin
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 30
+      - name: Retain private candidate APK part 03
+        if: ${{ fromJSON(steps.transfer.outputs.part_count) >= 3 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: lightforge-signing-${{ github.run_id }}-${{ github.run_attempt }}-part-03
+          path: build/transfer/parts/part-03.bin
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 30
+
