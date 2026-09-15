@@ -74,7 +74,11 @@ creates it with private permissions and never overwrites an earlier attempt.
 14400), including input verification, Chromium startup, analysis, compilation,
 serialization and browser cleanup. A separate Linux child subreaper uses
 pidfds to terminate and reap owned descendants, including detached browser
-processes. Deadline termination has an additional bounded cleanup allowance
+processes. Normal monitoring only waits for owned child exits; it performs no
+procfs enumeration during analysis. During cleanup, non-consuming `waitid`
+authenticates each unreaped direct child before its pidfd is opened. If the
+kernel omits procfs child-list files, a cleanup-only PPid scan supplies
+candidate hints; the kernel ownership check still authorizes every signal. Deadline termination has an additional bounded cleanup allowance
 of 3 seconds, plus at most 0.6 seconds for the outer helper watchdog.
 `capture.json` records whether termination was confirmed; an unconfirmed
 cleanup is a failure. This supervises trusted application processes and is
@@ -207,3 +211,12 @@ timing metrics for bass/vocals and leaves 101 synchronization metrics
 unobserved under either explicitly selected timing basis. No predicted
 perceptual headline metric is observed, and no physical measurement is
 claimed. Missing measurements remain missing.
+
+A later full engineering run verified the strict pre-serialization boundary
+with genuine model output: analysis took 553.388 seconds and compilation
+0.304 seconds, with no restored stages, 3,200 valid 200-channel frames,
+18 hash-verified artifacts and ten emitted output categories. Its receipt
+retains the precise capture and then-executed supervisor hashes. The later
+direct-child supervisor revision is validated separately by actual process
+regressions and a real Chromium/compiler replay; that revision does not
+retroactively change the recorded model run or establish a speedup.

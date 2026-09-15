@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """Own and bound a Linux capture subprocess and its ordinary descendants.
 
-The helper is a child subreaper. Detached descendants are therefore adopted
-when their parents exit. Signals use pidfds, never a reused PID or host group.
-This is lifecycle supervision of trusted capture code, not a hostile sandbox.
+The helper is a child subreaper. Normal monitoring only reaps owned children;
+it does not enumerate procfs while the capture is being measured. During
+cleanup, procfs suggests direct-child PIDs, but non-consuming waitid provides
+the ownership proof before a pidfd is opened. Detached descendants become
+direct children when their parents exit. This is lifecycle supervision of
+trusted capture code, not a hostile sandbox.
 """
 
 import ctypes
@@ -38,7 +41,11 @@ def stat_record(pid):
 
 def namespace_ids(proc_path):
     with open(proc_path + "/status", encoding="ascii", errors="replace") as stream:
-        for line in stream:
+        # NSpid is in the fixed header; do not read an unbounded Groups line.
+        for _ in range(64):
+            line = stream.readline(4096)
+            if not line:
+                break
             if line.startswith("NSpid:"):
                 return [int(value) for value in line.split()[1:]]
     raise RuntimeError("procfs NSpid mapping is required")
@@ -57,57 +64,98 @@ class OwnedProcesses:
         self.main_pid = None
         self.main_status = None
         self.reaped = 0
-
-    def observe(self):
-        records = {}
-        for name in os.listdir("/proc"):
-            if name.isascii() and name.isdigit():
-                record = stat_record(int(name))
-                if record is not None:
-                    records[record["pid"]] = record
-        owned = {self.parent}
-        pending = list(records.values())
-        while pending:
-            rest = []
-            added = False
-            for record in pending:
-                if record["ppid"] in owned:
-                    owned.add(record["pid"])
-                    self.pin(record)
-                    added = True
-                else:
-                    rest.append(record)
-            if not added:
-                break
-            pending = rest
-        for pid, (start, handle) in list(self.handles.items()):
-            current = records.get(pid)
-            if current is None or current["start"] != start:
-                os.close(handle)
-                del self.handles[pid]
-
-    def pin(self, record):
-        pid = record["pid"]
-        existing = self.handles.get(pid)
-        if existing is not None and existing[0] == record["start"]:
-            return
+        self.cleanup_discovery_scans = 0
+        self.discovery_deadline_exhausted = False
+        self.children_path = "/proc/thread-self/children"
+        self.discovery = "procfs_direct_children"
         try:
-            identifiers = namespace_ids(f"/proc/{pid}")
-            if len(identifiers) <= self.namespace_depth:
-                raise RuntimeError("owned process is outside supervisor PID namespace")
-            handle = os.pidfd_open(identifiers[self.namespace_depth])
-        except (FileNotFoundError, ProcessLookupError):
-            return
-        current = stat_record(pid)
-        if current is None or current["start"] != record["start"]:
-            os.close(handle)
-            return
-        if existing is not None:
-            os.close(existing[1])
-        self.handles[pid] = (record["start"], handle)
+            with open(self.children_path, encoding="ascii") as stream:
+                stream.read(1)
+        except FileNotFoundError:
+            self.children_path = f"/proc/self/task/{self.parent}/children"
+            try:
+                with open(self.children_path, encoding="ascii") as stream:
+                    stream.read(1)
+            except FileNotFoundError:
+                # Kernels without CONFIG_CHECKPOINT_RESTORE omit children.
+                # This fallback is used exclusively during forced cleanup.
+                self.children_path = None
+                self.discovery = "procfs_ppid_hints_at_cleanup_only"
+
+    def before_deadline(self, deadline_ns):
+        if time.monotonic_ns() >= deadline_ns:
+            self.discovery_deadline_exhausted = True
+            return False
+        return True
+
+    def proc_pid_hints(self, deadline_ns):
+        """Stream bounded hints; never eagerly consume a host process table."""
+        if self.children_path is not None:
+            with open(self.children_path, encoding="ascii") as stream:
+                pending = ""
+                while self.before_deadline(deadline_ns):
+                    chunk = stream.read(4096)
+                    if not chunk:
+                        if pending and self.before_deadline(deadline_ns):
+                            yield int(pending)
+                        return
+                    tokens = (pending + chunk).split()
+                    pending = "" if chunk[-1].isspace() else tokens.pop()
+                    if len(pending) > 32:
+                        raise RuntimeError("invalid procfs child PID token")
+                    for token in tokens:
+                        if not self.before_deadline(deadline_ns):
+                            return
+                        yield int(token)
+        else:
+            with os.scandir("/proc") as entries:
+                while self.before_deadline(deadline_ns):
+                    try:
+                        entry = next(entries)
+                    except StopIteration:
+                        return
+                    if entry.name.isascii() and entry.name.isdigit():
+                        record = stat_record(int(entry.name))
+                        if record is not None and record["ppid"] == self.parent:
+                            yield record["pid"]
+
+    def candidate_pids(self, deadline_ns):
+        """Discover hints, not ownership; called only during forced cleanup."""
+        self.cleanup_discovery_scans += 1
+        for proc_pid in self.proc_pid_hints(deadline_ns):
+            if not self.before_deadline(deadline_ns):
+                return
+            try:
+                identifiers = namespace_ids(f"/proc/{proc_pid}")
+            except (FileNotFoundError, ProcessLookupError, PermissionError):
+                continue
+            if len(identifiers) > self.namespace_depth:
+                yield identifiers[self.namespace_depth]
+
+    def pin_direct(self, pid):
+        """Pin only an unreaped direct child, as authenticated by the kernel.
+
+        This process is single-threaded and its signal handlers never reap.
+        Once waitid succeeds, nobody can reap/reuse the child PID before
+        pidfd_open. A PPid hint or its intermediate ancestor is never trusted.
+        """
+        try:
+            os.waitid(os.P_PID, pid, os.WEXITED | os.WNOHANG | os.WNOWAIT)
+        except ChildProcessError:
+            return False
+        if pid not in self.handles:
+            self.handles[pid] = os.pidfd_open(pid)
+        return True
+
+    def discover_direct_children(self, deadline_ns):
+        for pid in self.candidate_pids(deadline_ns):
+            if not self.before_deadline(deadline_ns):
+                return False
+            self.pin_direct(pid)
+        return not self.discovery_deadline_exhausted and self.before_deadline(deadline_ns)
 
     def signal_all(self, signum):
-        for _start, handle in self.handles.values():
+        for handle in self.handles.values():
             try:
                 signal.pidfd_send_signal(handle, signum)
             except ProcessLookupError:
@@ -123,19 +171,24 @@ class OwnedProcesses:
             if pid == 0:
                 return False
             self.reaped += 1
+            handle = self.handles.pop(pid, None)
+            if handle is not None:
+                os.close(handle)
             if pid == self.main_pid:
                 self.main_status = os.waitstatus_to_exitcode(status)
 
     def remaining(self):
         result = []
-        for pid, (start, _handle) in self.handles.items():
-            current = stat_record(pid)
-            if current is not None and current["start"] == start:
+        for pid in self.handles:
+            try:
+                os.waitid(os.P_PID, pid, os.WEXITED | os.WNOHANG | os.WNOWAIT)
                 result.append(pid)
+            except ChildProcessError:
+                pass
         return sorted(result)
 
     def close(self):
-        for _start, handle in self.handles.values():
+        for handle in self.handles.values():
             os.close(handle)
         self.handles.clear()
 
@@ -173,8 +226,9 @@ def supervise(deadline_ns, command):
         else:
             child = subprocess.Popen(command, start_new_session=True, close_fds=True)
             owned.main_pid = child.pid
+            if not owned.pin_direct(child.pid):
+                raise RuntimeError("spawned process was not an owned direct child")
             while True:
-                owned.observe()
                 empty = owned.reap()
                 now = time.monotonic_ns()
                 if now >= deadline_ns:
@@ -187,7 +241,7 @@ def supervise(deadline_ns, command):
                     verified = empty
                     cleanup_required = not empty
                     break
-                time.sleep(min(0.01, max(0, (deadline_ns - now) / 1_000_000_000)))
+                time.sleep(min(0.05, max(0, (deadline_ns - now) / 1_000_000_000)))
     except Exception as error:
         errors.append(f"{type(error).__name__}: {str(error)[:400]}")
     finally:
@@ -197,8 +251,18 @@ def supervise(deadline_ns, command):
             cleanup_deadline = started + CLEANUP_NS
             while time.monotonic_ns() < cleanup_deadline:
                 try:
-                    owned.observe()
                     signum = signal.SIGTERM if time.monotonic_ns() - started < TERM_GRACE_NS else signal.SIGKILL
+                    # Signal pinned parents first. Exiting parents cause their
+                    # detached descendants to be adopted by this subreaper.
+                    owned.signal_all(signum)
+                    if owned.reap():
+                        verified = True
+                        break
+                    if not owned.discover_direct_children(cleanup_deadline):
+                        # Exhausted discovery cannot justify leaving identities
+                        # already proven and pinned running after only TERM.
+                        owned.signal_all(signal.SIGKILL)
+                        break
                     owned.signal_all(signum)
                     if owned.reap():
                         verified = True
@@ -228,7 +292,10 @@ def supervise(deadline_ns, command):
             "remaining_pids": owned.remaining(),
             "cleanup_required": cleanup_required,
             "reaped_processes": owned.reaped,
-            "scope": "Linux child subreaper descendants; pidfd signals; kernel waitpid confirmation",
+            "process_discovery": owned.discovery,
+            "cleanup_discovery_scans": owned.cleanup_discovery_scans,
+            "discovery_deadline_exhausted": owned.discovery_deadline_exhausted,
+            "scope": "Linux subreaper; waitid-owned direct children; pidfd signals; kernel waitpid confirmation",
         },
     }
     if errors:
