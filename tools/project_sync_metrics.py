@@ -59,7 +59,7 @@ def distribution(value, basis, maximum_count):
     require(value.get("state") == expected_state and count > 0,
             "Timing state does not establish the selected evidence basis")
     numbers = [value.get(key) for key in STATISTICS]
-    require(all(type(v) in (int, float) and math.isfinite(v) and 0 <= v <= 10000 for v in numbers),
+    require(all(type(v) in (int, float) and 0 <= v <= 10000 and math.isfinite(v) for v in numbers),
             "Timing statistic is missing, non-finite or outside the compiled metric bounds")
     require(numbers == sorted(numbers), "Timing percentiles are not monotonic")
     return {name: float(value[key]) for key, name in STATISTICS.items()}

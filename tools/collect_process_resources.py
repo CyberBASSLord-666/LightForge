@@ -257,6 +257,7 @@ def collect(command, *, timeout=3600.0, interval=0.1, cgroup_parent=None,
     if energy:
         report["limitations"].append("energy-is-host-package-scope-not-process-attribution")
     process = None
+    root_pid_reserved = False
     root_observed = []
     usage = None
     capacity_read = capacity_write = None
@@ -268,24 +269,55 @@ def collect(command, *, timeout=3600.0, interval=0.1, cgroup_parent=None,
         interrupted[0] = signum
 
     def reap():
-        nonlocal usage
+        nonlocal usage, root_pid_reserved
         if process is None or process.returncode is not None:
             return
-        pid, status, result = os.wait4(process.pid, os.WNOHANG)
+        try:
+            if not group:
+                # Keep the exited leader unreaped while cleaning its own
+                # process group: its PID/PGID cannot be reused in this window.
+                exited = os.waitid(os.P_PID, process.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT)
+                if exited is None:
+                    return
+                signal_unreaped_group()
+            pid, status, result = os.wait4(process.pid, os.WNOHANG)
+        except ChildProcessError:
+            root_pid_reserved = False
+            raise
         if pid:
             process.returncode = os.waitstatus_to_exitcode(status)
+            root_pid_reserved = False
             usage = result
 
-    def terminate():
+    def signal_unreaped_group():
+        nonlocal root_pid_reserved
+        if process is None or process.returncode is not None or not root_pid_reserved:
+            return
+        # Confirm it remains our waitable child. Losing wait ownership must
+        # never turn a stale numeric PGID into authority to signal a new group.
+        try:
+            os.waitid(os.P_PID, process.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT)
+        except ChildProcessError:
+            root_pid_reserved = False
+            raise
+        try:
+            os.killpg(process.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+
+    def terminate_owned_work():
         # The bootstrap may still be outside the cgroup while attaching. Kill
-        # its own new process group as well; never target the caller's group.
-        if process is not None:
-            try:
-                os.killpg(process.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
-        if group:
+        # its group only while the leader's PID is still reserved. After reap,
+        # surviving descendants can be targeted only by the owned cgroup.
+        signal_error = None
+        try:
+            signal_unreaped_group()
+        except (OSError, ValueError) as error:
+            signal_error = error
+        if group and group.populated():
             group.kill()
+        if signal_error is not None:
+            raise signal_error
 
     try:
         for sig in (signal.SIGINT, signal.SIGTERM):
@@ -298,6 +330,7 @@ def collect(command, *, timeout=3600.0, interval=0.1, cgroup_parent=None,
                                    stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
                                    stderr=subprocess.DEVNULL, start_new_session=True,
                                    pass_fds=(capacity_write,) if group else ())
+        root_pid_reserved = True
         if capacity_write is not None:
             os.close(capacity_write)
             capacity_write = None
@@ -307,7 +340,7 @@ def collect(command, *, timeout=3600.0, interval=0.1, cgroup_parent=None,
             now = time.monotonic()
             if interrupted[0] is not None or now - started >= timeout:
                 report["status"] = "cancelled" if interrupted[0] is not None else "timeout"
-                terminate()
+                terminate_owned_work()
                 break
             if now >= next_sample:
                 if not group and process.returncode is None:
@@ -320,9 +353,6 @@ def collect(command, *, timeout=3600.0, interval=0.1, cgroup_parent=None,
             reap()
             if process.returncode is not None and (not group or not group.populated()):
                 report["status"] = "completed" if process.returncode == 0 else "command_failed"
-                # Without a cgroup do not leave same-session descendants alive.
-                if not group:
-                    terminate()
                 break
             time.sleep(min(0.02, max(0.001, next_sample - time.monotonic())))
         cleanup_deadline = time.monotonic() + 5.0
@@ -400,13 +430,19 @@ def collect(command, *, timeout=3600.0, interval=0.1, cgroup_parent=None,
         for descriptor in (capacity_read, capacity_write):
             if descriptor is not None:
                 os.close(descriptor)
-        if process is not None and (process.returncode is None or group):
+        if process is not None:
             try:
-                terminate()
+                # This is a no-op for a reaped root and empty owned cgroup.
+                # A failed population read is an explicit cleanup failure;
+                # it never authorizes a fallback signal to a stale PGID.
+                terminate_owned_work()
                 deadline = time.monotonic() + 5
-                while process.returncode is None and time.monotonic() < deadline:
+                while ((root_pid_reserved and process.returncode is None) or group and group.populated()) and time.monotonic() < deadline:
                     reap()
                     time.sleep(0.01)
+                if (root_pid_reserved and process.returncode is None) or group and group.populated():
+                    if "process_cleanup_incomplete" not in report["errors"]:
+                        report["errors"].append("process_cleanup_incomplete")
             except (OSError, ValueError):
                 report["errors"].append("process_cleanup_failed")
         if group:

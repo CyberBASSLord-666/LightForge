@@ -143,10 +143,10 @@ class CollectorTests(unittest.TestCase):
                 bootstrap = "import os,sys;f=int(sys.argv[1]);os.write(f,b'1\\n');os.close(f);os.execvpe(sys.argv[2],sys.argv[2:],os.environ)"
                 return [sys.executable, "-I", "-S", "-c", bootstrap, str(capacity_fd), *command]
             def populated(self): return False
-            def kill(self): pass
+            def kill(self): raise AssertionError("completed empty cgroup must not be killed")
             def remove(self): pass
             def sample(self): return {"cpu_microseconds": 123, "peak_memory_bytes": 4096, "read_bytes": 17, "write_bytes": 29}
-        with mock.patch.object(C, "Cgroup", FakeGroup):
+        with mock.patch.object(C, "Cgroup", FakeGroup), mock.patch.object(C.os, "killpg", side_effect=AssertionError("completed reaped root must not be signaled")):
             result = C.collect([sys.executable, "-c", "pass"], cgroup_parent="fake-kernel", timeout=2)
         self.assertTrue(result["process_tree_accounting_complete"])
         projection = result["contract_projection"]
@@ -161,6 +161,72 @@ class CollectorTests(unittest.TestCase):
         self.assertNotIn("resources.thermal_delta_celsius", bindings)
         self.assertNotIn("peak_ram_bytes", projection)
         self.assertFalse(result["release_qualified"])
+
+    def test_reaped_root_with_pending_descendants_kills_only_owned_cgroup(self):
+        groups = []
+        class PendingGroup:
+            def __init__(self, parent):
+                self.initial = {"cpu_microseconds": 0, "read_bytes": 0, "write_bytes": 0}
+                self.pending, self.kill_count = True, 0
+                groups.append(self)
+            def child_command(self, command, capacity_fd):
+                bootstrap = "import os,sys;f=int(sys.argv[1]);os.write(f,b'1\\n');os.close(f);os.execvpe(sys.argv[2],sys.argv[2:],os.environ)"
+                return [sys.executable, "-I", "-S", "-c", bootstrap, str(capacity_fd), *command]
+            def populated(self): return self.pending
+            def kill(self): self.kill_count += 1; self.pending = False
+            def remove(self):
+                if self.pending: raise OSError("still populated")
+            def sample(self): return {"cpu_microseconds": 123, "peak_memory_bytes": 4096, "read_bytes": 17, "write_bytes": 29}
+        with mock.patch.object(C, "Cgroup", PendingGroup), mock.patch.object(C.os, "killpg", side_effect=AssertionError("reaped leader's PGID is stale")):
+            result = C.collect([sys.executable, "-c", "pass"], cgroup_parent="fake-kernel", timeout=.3)
+        self.assertEqual(result["status"], "timeout", result)
+        self.assertEqual(result["exit_code"], 0)
+        self.assertEqual(groups[0].kill_count, 1)
+        self.assertEqual(result["errors"], [])
+        self.assertIsNone(result["contract_projection"])
+
+    def test_population_error_after_reap_never_signals_stale_group(self):
+        class BrokenPopulation:
+            def __init__(self, parent):
+                self.initial = {"cpu_microseconds": 0, "read_bytes": 0, "write_bytes": 0}
+            def child_command(self, command, capacity_fd): return command
+            def populated(self): raise OSError("population inaccessible")
+            def kill(self): raise AssertionError("unknown population does not authorize kill")
+            def remove(self): pass
+        with mock.patch.object(C, "Cgroup", BrokenPopulation), mock.patch.object(C.os, "killpg", side_effect=AssertionError("reaped leader's PGID is stale")):
+            started = time.monotonic()
+            result = C.collect([sys.executable, "-c", "pass"], cgroup_parent="fake-kernel", timeout=2)
+        self.assertLess(time.monotonic() - started, 1)
+        self.assertEqual(result["status"], "measurement_failed")
+        self.assertIn("process_cleanup_failed", result["errors"])
+        self.assertFalse(result["process_tree_accounting_complete"])
+        self.assertIsNone(result["contract_projection"])
+
+    def test_fallback_descendants_are_signaled_before_root_is_reaped(self):
+        original_wait4, original_killpg = os.wait4, os.killpg
+        reaped, signaled = set(), []
+        def observed_wait4(pid, flags):
+            result = original_wait4(pid, flags)
+            if result[0]: reaped.add(result[0])
+            return result
+        def owned_killpg(pid, sig):
+            self.assertNotIn(pid, reaped, "collector must not signal a reaped PGID")
+            observation = os.waitid(os.P_PID, pid, os.WEXITED | os.WNOHANG | os.WNOWAIT)
+            self.assertIsNotNone(observation)
+            self.assertEqual(observation.si_pid, pid)
+            signaled.append(pid)
+            original_killpg(pid, sig)
+        with tempfile.TemporaryDirectory() as directory:
+            pidfile = Path(directory)/"child-pid"
+            code = "import subprocess,sys; p=subprocess.Popen([sys.executable,'-c','import time;time.sleep(30)']);open(" + repr(str(pidfile)) + ",'w').write(str(p.pid))"
+            with mock.patch.object(C.os, "wait4", side_effect=observed_wait4), mock.patch.object(C.os, "killpg", side_effect=owned_killpg):
+                report = C.collect([sys.executable, "-c", code], timeout=2, interval=.02)
+            self.assertEqual(report["status"], "completed", report)
+            self.assertTrue(signaled)
+            self.assertEqual(set(signaled), reaped)
+            descendant = Path(f"/proc/{int(pidfile.read_text())}/stat")
+            if descendant.exists():
+                self.assertEqual(descendant.read_text().rsplit(")", 1)[1].split()[0], "Z")
 
     def test_blocked_cgroup_attachment_remains_under_timeout(self):
         class BlockedGroup:

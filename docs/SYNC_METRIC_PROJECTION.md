@@ -9,7 +9,7 @@ accuracy against corpus annotations.
 
 First capture the actual application with
 [`qa/locked-benchmark/capture-app.cjs`](../qa/locked-benchmark/CAPTURE.md).
-Use its verbatim `perceptual-validation.json` sidecar and the SHA-256 recorded
+Use its complete `perceptual-validation.json` sidecar and the SHA-256 recorded
 in `capture.json`'s artifact inventory. Then run:
 
 ```bash
