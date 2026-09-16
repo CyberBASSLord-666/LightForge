@@ -1,0 +1,51 @@
+name: Repository maintenance snapshot
+on:
+  push:
+    branches: ['maintenance/repository-cleanup-20260916']
+    paths: ['.github/workflows/maintenance-audit.yml']
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Export tracked text and complete object inventory
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, pathlib, subprocess, zipfile
+          root = pathlib.Path('.')
+          records = subprocess.check_output(['git', 'ls-tree', '-rlz', 'HEAD']).split(b'\0')
+          inventory = []
+          with zipfile.ZipFile('/tmp/maintenance-source.zip', 'w', zipfile.ZIP_DEFLATED) as archive:
+              for record in records:
+                  if not record:
+                      continue
+                  metadata, raw_path = record.split(b'\t', 1)
+                  mode, kind, oid, size = metadata.decode().split()
+                  name = raw_path.decode('utf-8')
+                  entry = {'path': name, 'mode': mode, 'type': kind, 'sha': oid, 'size': int(size) if size != '-' else 0}
+                  inventory.append(entry)
+                  if kind != 'blob' or mode == '120000' or entry['size'] > 8 * 1024 * 1024:
+                      continue
+                  data = (root / name).read_bytes()
+                  try:
+                      data.decode('utf-8')
+                  except UnicodeDecodeError:
+                      continue
+                  if b'\0' in data:
+                      continue
+                  archive.writestr(name, data)
+                  entry['included'] = True
+              archive.writestr('MAINTENANCE_SNAPSHOT.json', json.dumps({'commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(), 'files': inventory}, indent=2))
+          print('Tracked objects:', len(inventory))
+          print('Text files:', sum(bool(e.get('included')) for e in inventory))
+          print('Archive SHA-256:', hashlib.sha256(pathlib.Path('/tmp/maintenance-source.zip').read_bytes()).hexdigest())
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: maintenance-source
+          path: /tmp/maintenance-source.zip
+          retention-days: 1
+          compression-level: 0
