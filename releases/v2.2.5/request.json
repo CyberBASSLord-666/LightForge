@@ -1,0 +1,15 @@
+{
+  "version": {
+    "name": "2.2.5",
+    "code": 20205
+  },
+  "run_id": 35038907453,
+  "source_commit": "9ad78719179a6502adab50a92216ddc74d5dd261",
+  "delta_sha256": "2008475b618e6fc9dd8d20b03641f10987975535fb76b8e89358e98dab5ee87b",
+  "quality_gate_policy": {
+    "schema_version": 1,
+    "source_commit": "9ad78719179a6502adab50a92216ddc74d5dd261",
+    "source_tree_sha": "8eec3c884c0efbd28ec1449132dac564221dc03f",
+    "declaration_sha256": "d9f2f9904d17631a7576e2207a411eedbf4ef79fe4621f19d58998712f65a30a"
+  }
+}

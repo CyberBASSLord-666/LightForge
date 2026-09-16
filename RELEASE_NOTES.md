@@ -13,7 +13,9 @@ Android version code: **20205**. Install the original-signed release APK over th
 
 ## Verification and limits
 
-Publication requires a successful full source-bound host and Android workflow, sealed verification evidence, original-key signature validation, unchanged application payload and matching uploaded-APK digest. The accompanying `release-verification.json` records the published artifact and the scope of its evidence.
+All nine source-bound host and Android verification gates passed in [production run 35038907453](https://github.com/CyberBASSLord-666/LightForge/actions/runs/35038907453) for source `9ad78719179a6502adab50a92216ddc74d5dd261`. Coverage includes completed-project preview restoration, background analysis and durable saving, cancellation and resume, and diagnostic export and recovery. Android results are from an emulator.
+
+Publication also requires sealed verification evidence, original-key signature validation, unchanged application payload and a matching uploaded-APK digest. The accompanying `release-verification.json` records the published artifact and the scope of its evidence.
 
 Comparative performance and musical quality are **unverified**. This release does not claim a 75% analysis-time reduction, completed blinded perceptual review, measured energy/thermal behavior or physical phone/Tesla validation. Diagnostic timings and unit tests are not substitutes for those measurements. The strict optional performance-quality workflow retains its existing acceptance requirements.
 
