@@ -127,6 +127,83 @@ class CurrentReleaseQaProtocolTest(TestCase):
         self.assertLess(analysis_browser, native)
         self.assertLess(native, final_analysis)
 
+    def test_restore_producer_uses_current_metadata_and_inventory_for_default_and_override_outputs(self):
+        for release, code, override in ((RELEASE, VERSION['code'], False), ('9.8.7', 90807, True)):
+            with self.subTest(release=release, override=override), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                script = root / 'qa/restore-preview/browser.cjs'
+                script.parent.mkdir(parents=True)
+                script.write_bytes((ROOT / 'qa/restore-preview/browser.cjs').read_bytes())
+                (root / 'version.json').write_text(json.dumps({'name': release, 'code': code}))
+                inventory_name = f'qa/release-{release}/browser-source-inventory.json'
+                inventory_path = root / inventory_name
+                inventory_path.parent.mkdir(parents=True)
+                names = [inventory_name, 'version.json', 'qa/restore-preview/browser.cjs', 'source-marker.txt']
+                inventory_path.write_text(json.dumps({
+                    'schema': 'lightforge.browser-source-inventory.v1',
+                    'common': [inventory_name], 'restore_preview': names[1:],
+                }))
+                (root / 'source-marker.txt').write_text('current release source\n')
+                # An old inventory must never be selected just because it remains available.
+                old_inventory = root / 'qa/release-2.2.5/browser-source-inventory.json'
+                old_inventory.parent.mkdir(parents=True)
+                old_inventory.write_text('{"schema":"stale inventory"}')
+                playwright = root / 'node_modules/playwright/index.js'
+                playwright.parent.mkdir(parents=True)
+                playwright.write_text('throw new Error("fixture stop after source binding");\n')
+                env = dict(os.environ, LIGHTFORGE_EVIDENCE_SESSION=SESSION)
+                env.pop('LIGHTFORGE_RESTORE_QA_OUTPUT', None)
+                output = root / 'override-output' if override else script.parent
+                if override:
+                    env['LIGHTFORGE_RESTORE_QA_OUTPUT'] = str(output)
+                completed = subprocess.run(['node', str(script)], cwd=root, env=env,
+                                           text=True, capture_output=True, check=False, timeout=30)
+                self.assertNotEqual(completed.returncode, 0)
+                receipt = json.loads((output / 'restore-preview-verification.json').read_text())
+                self.assertEqual(receipt['release'], release)
+                self.assertEqual(receipt['evidenceSession'], SESSION)
+                self.assertEqual(receipt['evidenceSessionSchema'], VERIFY.EVIDENCE_SESSION_SCHEMA)
+                self.assertEqual(receipt['source_hashes'], {name: digest(root / name) for name in names})
+                self.assertIs(receipt['passed'], False)
+                self.assertIn('fixture stop after source binding', receipt['errors'][0])
+                for omitted in ('version.json', inventory_name):
+                    with self.subTest(omitted=omitted):
+                        inventory_path.write_text(json.dumps({
+                            'schema': 'lightforge.browser-source-inventory.v1',
+                            'common': [] if omitted == inventory_name else [inventory_name],
+                            'restore_preview': [name for name in names[1:] if name != omitted],
+                        }))
+                        completed = subprocess.run(['node', str(script)], cwd=root, env=env,
+                                                   text=True, capture_output=True, check=False, timeout=30)
+                        self.assertNotEqual(completed.returncode, 0)
+                        rejected = json.loads((output / 'restore-preview-verification.json').read_text())
+                        self.assertIs(rejected['passed'], False)
+                        self.assertEqual(rejected['source_hashes'], {})
+                        self.assertIn('must bind its release metadata and inventory', rejected['errors'][0])
+
+    def test_restore_producer_replaces_stale_pass_when_version_metadata_cannot_be_used(self):
+        for document in (None, '{broken json', '{}', '{"name":"../../old-release"}'):
+            with self.subTest(document=document), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                script = root / 'qa/restore-preview/browser.cjs'
+                script.parent.mkdir(parents=True)
+                script.write_bytes((ROOT / 'qa/restore-preview/browser.cjs').read_bytes())
+                if document is not None:
+                    (root / 'version.json').write_text(document)
+                receipt_path = script.parent / 'restore-preview-verification.json'
+                receipt_path.write_text(json.dumps({'release': RELEASE, 'passed': True, 'errors': []}))
+                env = dict(os.environ, LIGHTFORGE_EVIDENCE_SESSION=SESSION)
+                env.pop('LIGHTFORGE_RESTORE_QA_OUTPUT', None)
+                completed = subprocess.run(['node', str(script)], cwd=root, env=env,
+                                           text=True, capture_output=True, check=False, timeout=30)
+                self.assertNotEqual(completed.returncode, 0)
+                receipt = json.loads(receipt_path.read_text())
+                self.assertIs(receipt['passed'], False)
+                self.assertIsNone(receipt['release'])
+                self.assertTrue(receipt['errors'])
+                self.assertEqual(receipt['source_hashes'], {})
+                self.assertEqual(receipt['evidenceSession'], SESSION)
+
     def test_protocol_preserves_immutable_historical_anchor_and_has_no_tracked_outputs(self):
         hashes = {}
         historical = VERIFY.verify_historical_comparison(ROOT, hashes)

@@ -4,17 +4,18 @@
 const fs = require('node:fs'), path = require('node:path'), http = require('node:http');
 const crypto = require('node:crypto'), assert = require('node:assert/strict');
 const root = path.resolve(__dirname, '../..');
-const RELEASE = '2.2.5';
+let RELEASE = null, inventoryPath = null;
 const output = path.resolve(process.env.LIGHTFORGE_RESTORE_QA_OUTPUT || __dirname);
 const EVIDENCE_SESSION_SCHEMA = 'lightforge.evidence-session.v1';
 const EVIDENCE_SESSION_PATTERN = /^[0-9a-f]{32,128}$/;
 function sourceNames() {
-  const inventory = JSON.parse(fs.readFileSync(path.join(root, 'qa/release-2.2.5/browser-source-inventory.json'), 'utf8'));
+  const inventory = JSON.parse(fs.readFileSync(path.join(root, inventoryPath), 'utf8'));
   assert.equal(inventory?.schema, 'lightforge.browser-source-inventory.v1', 'Restore-preview source inventory schema is invalid');
   assert.ok(Array.isArray(inventory?.common) && Array.isArray(inventory?.restore_preview), 'Restore-preview source inventory is invalid');
   const names = [...inventory.common, ...inventory.restore_preview];
   assert.ok(names.length && names.every(name => typeof name === 'string' && name && !path.isAbsolute(name) && !name.split('/').includes('..')), 'Restore-preview source inventory contains an invalid path');
   assert.equal(new Set(names).size, names.length, 'Restore-preview source inventory contains duplicates');
+  assert.ok(names.includes('version.json') && names.includes(inventoryPath), 'Restore-preview source inventory must bind its release metadata and inventory');
   return names;
 }
 function writeJsonAtomic(file, value) {
@@ -34,7 +35,7 @@ if (!sessionError && evidenceSession !== undefined) {
 }
 const receiptPath = path.join(output, 'restore-preview-verification.json');
 const write = () => writeJsonAtomic(receiptPath, receipt);
-// Publish an atomic failed receipt before source reads, Playwright import, or browser work.
+// Publish an atomic failed receipt before version/source reads, Playwright import, or browser work.
 write();
 (async () => {
   let browser, server, releaseRead, saved, chromium;
@@ -42,6 +43,11 @@ write();
   const errors = [];
   try {
     if (sessionError) throw sessionError;
+    const version = JSON.parse(fs.readFileSync(path.join(root, 'version.json'), 'utf8'));
+    assert.match(version?.name, /^[0-9]+\.[0-9]+\.[0-9]+$/, 'Restore-preview release version is invalid');
+    RELEASE = version.name;
+    inventoryPath = `qa/release-${RELEASE}/browser-source-inventory.json`;
+    receipt.release = RELEASE;
     receipt.source_hashes = Object.fromEntries(sourceNames().map(name => [name, crypto.createHash('sha256').update(fs.readFileSync(path.join(root, name))).digest('hex')]));
     ({chromium} = require('playwright'));
     server = http.createServer((req, res) => {
