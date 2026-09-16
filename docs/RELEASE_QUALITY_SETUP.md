@@ -1,5 +1,7 @@
 # Configure the protected release-quality authority
 
+For **2.2.5 / code 20205**, these external qualification inputs are optional under the owner-approved `automated_verification_only` publication declaration. No policy/corpus/review bundle needs to be supplied to publish that version. Comparative performance, musical quality and hardware measurements remain unverified. Existing protected-main and deployment controls, full host/Android verification, original-key signing and package integrity checks remain mandatory. The following setup applies when running the separate strict benchmark qualification; its thresholds and evidence requirements are unchanged.
+
 This setup authorizes one exact acceptance policy and locked corpus. It does
 not qualify a release, generate benchmark observations, or provide human
 perceptual review. Physical phone and Tesla observations remain optional.

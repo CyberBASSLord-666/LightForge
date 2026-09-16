@@ -1,6 +1,6 @@
 # LightForge 2.2.5 candidate validation
 
-LightForge 2.2.5 / Android version code 20205 is a candidate only. The automated release gates, protected performance-quality approval, and original-signed APK validation must be freshly generated and bound to the final candidate source before publication. Physical phone and Tesla observations are optional for publication. When no signed physical observations are supplied, the public release receipt records physical validation as unverified; automated checks do not imply a physical pass.
+LightForge 2.2.5 / Android version code 20205 requires fresh automated release verification and original-signed APK validation bound to the final candidate source. Its owner-approved `automated_verification_only` policy removes external corpus, blinded human review and hardware energy/thermal measurements as publication prerequisites. The public receipt records comparative performance, musical quality and those external observations as unverified; no 75% speedup or perceptual-quality result is claimed. Physical phone and Tesla observations remain optional and unverified when absent. Existing protected-main and deployment controls remain in force.
 
 ## Published LightForge 2.2.4 evidence (historical)
 

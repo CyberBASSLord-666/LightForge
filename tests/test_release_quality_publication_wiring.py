@@ -1,8 +1,13 @@
 import importlib.util
+from contextlib import ExitStack
+import hashlib
 import json
+import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
+import tempfile
 import unittest
 from unittest.mock import patch
 
@@ -33,6 +38,15 @@ def nonperformance_declaration():
         "classification": "non-performance",
         "reason": "Documentation-only publication metadata correction.",
     }
+
+
+def automated_declaration():
+    return dict(
+        nonperformance_declaration(),
+        requirement="automated_verification_only",
+        classification="performance",
+        reason="Owner authorized automated verification; comparative performance and musical quality remain unverified.",
+    )
 
 
 def declaration_receipt(declaration):
@@ -70,6 +84,148 @@ def performance_scope():
 
 
 class ReleaseQualityPublicationWiringTest(unittest.TestCase):
+    def test_automated_only_policy_discloses_unverified_qualification_without_external_calls(self):
+        declaration = automated_declaration()
+        with patch.object(publisher, "run", return_value=json.dumps(declaration)), \
+                patch.object(publisher, "_derive_published_release_scope", return_value=performance_scope()) as scope, \
+                patch.object(publisher, "api") as api:
+            returned = publisher.verify_release_quality(
+                {"quality_gate_policy": declaration_receipt(declaration)}, VERSION, gate.REPOSITORY, {}, COMMIT, TREE
+            )
+        self.assertEqual(returned["requirement"], "automated_verification_only")
+        self.assertEqual(returned["classification"], "performance")
+        for field in (
+            "qualification_status", "comparative_performance", "performance_target_75_percent_reduction",
+            "musical_quality_non_regression", "blinded_human_review", "hardware_energy_and_thermal_measurements",
+        ):
+            self.assertEqual(returned[field], "unverified")
+        self.assertNotIn("production_ready", returned)
+        self.assertNotIn("PASS_TARGET", json.dumps(returned))
+        scope.assert_called_once_with(gate.REPOSITORY, COMMIT, TREE, VERSION)
+        api.assert_not_called()
+
+    def test_automated_only_rejects_forged_receipt_and_unused_quality_run(self):
+        declaration = automated_declaration()
+        receipt = declaration_receipt(declaration)
+        cases = [({"quality_gate_policy": receipt, "quality_gate": {"run_id": 44}}, "unused quality-gate")]
+        for field, value in (("source_commit", "9" * 40), ("source_tree_sha", "9" * 40), ("declaration_sha256", "9" * 64)):
+            cases.append(({"quality_gate_policy": dict(receipt, **{field: value})}, "source commit|source tree|digest differs"))
+        # A receipt for the old strict declaration cannot silently opt out.
+        strict = dict(declaration, requirement="performance_quality_gate")
+        cases.append(({"quality_gate_policy": declaration_receipt(strict)}, "digest differs"))
+        for request, message in cases:
+            with self.subTest(request=request), \
+                    patch.object(publisher, "run", return_value=json.dumps(declaration)), \
+                    patch.object(publisher, "_derive_published_release_scope", return_value=performance_scope()), \
+                    patch.object(publisher, "api") as api:
+                with self.assertRaisesRegex(ValueError, message):
+                    publisher.verify_release_quality(request, VERSION, gate.REPOSITORY, {}, COMMIT, TREE)
+                api.assert_not_called()
+
+    def _run_automated_publication(self, *, ci_changes=None, failing_guard=None, bad_delta=False):
+        """Exercise main's ordering with small artifacts and isolated external boundaries."""
+        with tempfile.TemporaryDirectory() as temporary, ExitStack() as stack:
+            root = Path(temporary)
+            original_cwd = Path.cwd()
+            stack.callback(os.chdir, original_cwd)
+            candidate_root = root / "candidate"
+            candidate_root.mkdir()
+            candidate_apk = candidate_root / "LightForge-2.2.5.apk"
+            candidate_apk.write_bytes(b"test candidate payload")
+            apk_digest = hashlib.sha256(candidate_apk.read_bytes()).hexdigest()
+            delta = root / "releases/v2.2.5/signed-apk.delta.json"
+            delta.parent.mkdir(parents=True)
+            delta.write_text("{}")
+            declaration = automated_declaration()
+            request = {
+                "version": VERSION, "run_id": 404, "source_commit": COMMIT,
+                "delta_sha256": "0" * 64 if bad_delta else hashlib.sha256(delta.read_bytes()).hexdigest(),
+                "quality_gate_policy": declaration_receipt(declaration),
+            }
+            (root / "request.json").write_text(json.dumps(request))
+            (root / "version.json").write_text(json.dumps(VERSION))
+            (root / "RELEASE_NOTES.md").write_text("Qualification remains unverified.\n")
+            (root / "release-verification.json").write_text(json.dumps({
+                "release": {"sha256": apk_digest},
+                "quality_gate": {"status": "PASS_TARGET", "production_ready": True},
+            }))
+            ci = {
+                "id": 404, "run_attempt": 1, "status": "completed", "conclusion": "success",
+                "head_sha": COMMIT, "head_repository": {"full_name": gate.REPOSITORY},
+                "path": gate.RELEASE_WORKFLOW, "event": "push", "head_branch": "main",
+                **(ci_changes or {}),
+            }
+            def api(path):
+                if path.endswith("/actions/runs/404"):
+                    return ci
+                if path.endswith("/git/commits/" + COMMIT):
+                    return {"tree": {"sha": TREE}}
+                self.fail("Unexpected API operation: " + path)
+            stack.enter_context(patch.object(publisher, "ROOT", root))
+            stack.enter_context(patch.dict(os.environ, {
+                "GH_REPO": gate.REPOSITORY, "GITHUB_REF": "refs/heads/main", "LIGHTFORGE_REF_PROTECTED": "true",
+            }))
+            stack.enter_context(patch.object(publisher, "api", side_effect=api))
+            stack.enter_context(patch.object(publisher, "run", return_value=json.dumps(declaration)))
+            stack.enter_context(patch.object(publisher, "_derive_published_release_scope", return_value=performance_scope()))
+            guards = {}
+            for name, value in (
+                ("require_candidate_worktree", None),
+                ("verify_android_release_evidence", {"manifest": {"candidate": {}}, "candidate_root": candidate_root}),
+                ("verify_nonandroid_release_evidence", {"verified": True}),
+                ("verify_candidate_payload_equivalence", None),
+                ("verify_apk", None),
+            ):
+                guards[name] = stack.enter_context(patch.object(
+                    publisher, name, return_value=value,
+                    side_effect=ValueError("rejected by " + name) if name == failing_guard else None,
+                ))
+            stack.enter_context(patch.object(publisher, "verify_physical_validation", return_value={"status": "unverified"}))
+            stack.enter_context(patch.object(publisher, "apply_delta", side_effect=lambda source, delta, dest: shutil.copyfile(source, dest)))
+            release = {"id": 123, "draft": False, "html_url": "https://example.invalid/release", "assets": [
+                {"name": candidate_apk.name, "browser_download_url": "https://example.invalid/apk"},
+            ]}
+            draft = stack.enter_context(patch.object(publisher, "create_draft", return_value=release))
+            stack.enter_context(patch.object(publisher, "asset_plan", return_value=[]))
+            stack.enter_context(patch.object(publisher, "update_metadata", return_value=release))
+            stack.enter_context(patch.object(publisher, "lookup_release", return_value=release))
+            stack.enter_context(patch.object(publisher, "verify_uploaded"))
+            stack.enter_context(patch("builtins.print"))
+            if failing_guard or ci_changes or bad_delta:
+                with self.assertRaises(ValueError):
+                    publisher.main([str(root / "request.json")])
+                draft.assert_not_called()
+                return
+            publisher.main([str(root / "request.json")])
+            for guard in guards.values():
+                guard.assert_called_once()
+            draft.assert_called_once()
+            receipt = json.loads((root / "release-verification.json").read_text())
+            self.assertEqual(receipt["quality_gate"]["qualification_status"], "unverified")
+            self.assertNotIn("PASS_TARGET", json.dumps(receipt))
+            self.assertNotIn("production_ready", receipt["quality_gate"])
+
+    def test_automated_only_publication_runs_all_mandatory_gates_and_overwrites_false_qualification(self):
+        self._run_automated_publication()
+
+    def test_automated_only_does_not_publish_when_any_integrity_or_evidence_gate_fails(self):
+        for guard in (
+            "require_candidate_worktree", "verify_android_release_evidence", "verify_nonandroid_release_evidence",
+            "verify_candidate_payload_equivalence", "verify_apk",
+        ):
+            with self.subTest(guard=guard):
+                self._run_automated_publication(failing_guard=guard)
+        self._run_automated_publication(bad_delta=True)
+
+    def test_automated_only_does_not_publish_without_successful_main_source_bound_ci(self):
+        for changes in (
+            {"conclusion": "failure"}, {"status": "in_progress"}, {"head_sha": "9" * 40},
+            {"head_repository": {"full_name": "someone/fork"}}, {"path": "another.yml"},
+            {"event": "workflow_dispatch"}, {"head_branch": "feature"},
+        ):
+            with self.subTest(changes=changes):
+                self._run_automated_publication(ci_changes=changes)
+
     def test_nonperformance_policy_needs_a_derived_prose_only_scope(self):
         declaration = nonperformance_declaration()
         request = {"quality_gate_policy": declaration_receipt(declaration)}

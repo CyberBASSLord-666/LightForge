@@ -1,5 +1,7 @@
 # Performance quality gate
 
+**Publication policy for 2.2.5 / code 20205:** the owner explicitly removed external corpus, human-review and hardware-measurement inputs as prerequisites. Its source-pinned `automated_verification_only` declaration permits publication after the existing automated host/Android, signature and integrity checks, with comparative performance and quality recorded as unverified. This is a version-specific publication decision, not a `PASS_TARGET` result or a non-performance classification. The strict comparison described below is unchanged and remains available for a later, separately evidenced qualification.
+
 `tools/performance_quality_gate.py` compares paired baseline and candidate
 analysis reports. It is a fail-closed release gate: a faster run is never
 evidence that the musical interpretation, choreography, synchronization, or
@@ -29,7 +31,7 @@ locally to turn a synthetic corpus into a production claim.
 Use `--require-production-ready` only for protected release execution: it
 returns nonzero for a merely comparable or `PASS_TARGET` result that lacks
 all production authority, corpus, telemetry, and review requirements. The
-release workflow always uses this strict mode.
+performance-quality workflow always uses this strict mode when a comparison is requested.
 
 ## Trusted release authority
 
