@@ -25,6 +25,14 @@ def _publisher_step(job, name):
 
 
 class VerificationEvidenceWorkflowTest(unittest.TestCase):
+    def test_host_checkout_includes_the_publication_declaration_used_by_regression(self):
+        host = WORKFLOW.split("\n  android-background:", 1)[0]
+        sparse = re.search(r"sparse-checkout: \|\n((?: {12}[^\n]+\n)+)", host)
+        self.assertIsNotNone(sparse)
+        paths = {line.strip() for line in sparse.group(1).splitlines()}
+        self.assertIn("releases", paths)
+        self.assertIn("run: npm test", host)
+
     def test_only_the_diagnostic_archive_uses_always(self):
         generic = WORKFLOW.index("name: lightforge-${{ env.LIGHTFORGE_RELEASE }}-verification\n")
         self.assertIn("if: always()", WORKFLOW[max(0, generic - 180):generic])
