@@ -18,4 +18,6 @@ The JSON contains:
 
 `observed` includes a genuine reported zero. `partial` contains an `observed_subtotal` and a null complete `value`. `unavailable` keeps missing, invalid and explicitly unavailable values distinct. An unfinished passage records only its observed partial interval. Profile metric summaries include observed/population counts, missing/unavailable/invalid counts, minimum, maximum and mean. All duration keys are milliseconds; native field suffixes preserve their original units.
 
+Native bundles accept the optional `engine-init` stage emitted during engine initialization. A producer's `cpuTelemetry=partial` remains a distinct telemetry observation; unavailable CPU totals are not filled from wall time or assumed to be zero.
+
 Stage, passage and native profile intervals overlap: do not add them together. These diagnostics cannot establish a controlled baseline, complete job lineage, a 75% speedup, or unchanged musical quality. Full-song runtime remains unavailable until those observations are collected separately. The tool intentionally does not change release policy or qualify a release.

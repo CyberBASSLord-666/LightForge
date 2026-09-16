@@ -35,7 +35,8 @@ Every ZIP file member is streamed through CRC verification and SHA-256 hashing.
 The wrapper rejects traversal paths, links and special files, duplicate or
 case-ambiguous names, incompatible compression, encrypted members, and expanded
 size violations. It never calls `extractall`. Defaults allow at most 128 entries,
-3 GiB total expanded data, 64 MiB per JSON member, and the existing compiler's
+3 GiB total expanded data, 64 MiB per JSON member regardless of extension case,
+and the existing compiler's
 960,000-frame limit. `--max-total-bytes` can change the total archive budget.
 Only the application's stereo 44.1 kHz, 16-bit PCM WAV and uncompressed 200-channel
 FSEQ 2.0 with 15 or 20 ms steps are supported. Other formats produce an explicit
@@ -97,6 +98,10 @@ They must not be summed into a new total.
 internal checkpoints, operating-system caches, or model initialization started
 cold. A controlled baseline/candidate analysis pair on the same hardware and
 settings is needed for a defensible speedup measurement.
+
+Missing or zero restored-passage counts do not establish restoration. A positive
+reported count or a restored-stage record does. Unknown stage-cache state stays
+unknown when neither form of evidence is present.
 
 Synchronization coverage here is against targets from saved automatic music
 detection. It does not establish that the detector found every real beat, word,

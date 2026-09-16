@@ -2,6 +2,11 @@ package com.cyberbasslord.lightforge;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import org.json.*;
 
 /** Real job/source/checkpoint transactions; no Android renderer or ML claim. */
@@ -43,6 +48,69 @@ public final class AnalysisRendererRecoveryTest {
             .put("engine",new JSONObject().put("name","Fixture analysis").put("neural",true)
                 .put("separationModel",new JSONObject().put("modelId","fixture-separator").put("sourceSeparated",true)))
             .put("roleAnalysis",new JSONObject().put("sourceSeparated",true));
+    }
+    static void replaceKeepingSizeAndTime(File file)throws Exception{
+        BasicFileAttributes before=Files.readAttributes(file.toPath(),BasicFileAttributes.class);
+        byte[] bytes=Files.readAllBytes(file.toPath());bytes[bytes.length-2]^=1;
+        File replacement=new File(file.getParentFile(),file.getName()+".replacement");
+        Files.write(replacement.toPath(),bytes);Files.setLastModifiedTime(replacement.toPath(),before.lastModifiedTime());
+        Files.move(replacement.toPath(),file.toPath(),StandardCopyOption.ATOMIC_MOVE,StandardCopyOption.REPLACE_EXISTING);
+        BasicFileAttributes after=Files.readAttributes(file.toPath(),BasicFileAttributes.class);
+        check(before.size()==after.size()&&before.lastModifiedTime().equals(after.lastModifiedTime()),"Replacement fixture changed size or modification time");
+        check(before.fileKey()!=null&&!before.fileKey().equals(after.fileKey()),"Replacement fixture did not replace the file identity");
+    }
+    static void commitWindowChecks(File root)throws Exception{
+        for(String name:new String[]{"project.json","audio.wav","analysis.wav"}){
+            Fixture fixture=new Fixture(root,"replaced-"+name,false);
+            AnalysisJobStore.checkpoint(fixture.files,fixture.id,music().toString());
+            AnalysisRendererRecovery.PreparedRequest prepared=AnalysisRendererRecovery.prepareRequest(fixture.files,fixture.id);
+            String frozenHash=AnalysisJobStore.hash(fixture.frozen());
+            File changed=new File(fixture.project,name);replaceKeepingSizeAndTime(changed);String changedHash=AnalysisJobStore.hash(changed);
+            reject(()->AnalysisRendererRecovery.commitRequest(prepared),"Source replacement between validation and commit was accepted: "+name);
+            check(frozenHash.equals(AnalysisJobStore.hash(fixture.frozen()))&&changedHash.equals(AnalysisJobStore.hash(changed)),"Failed recovery rewrote the request or newer source: "+name);
+        }
+        Fixture renamed=new Fixture(root,"rename-before-commit",false);
+        AnalysisRendererRecovery.PreparedRequest preparedRename=AnalysisRendererRecovery.prepareRequest(renamed.files,renamed.id);
+        ProjectStore.rename(new File(renamed.files,"projects"),renamed.request.getString("projectId"),"Changed during recovery");
+        reject(()->AnalysisRendererRecovery.commitRequest(preparedRename),"A supported project rename between validation and commit was accepted");
+        Fixture removed=new Fixture(root,"analysis-removed-before-commit",false);
+        AnalysisRendererRecovery.PreparedRequest preparedRemoval=AnalysisRendererRecovery.prepareRequest(removed.files,removed.id);
+        Files.delete(new File(removed.project,"analysis.wav").toPath());
+        reject(()->AnalysisRendererRecovery.commitRequest(preparedRemoval),"Removed analysis audio was accepted at commit");
+        Fixture added=new Fixture(root,"analysis-added-before-commit",false);
+        AnalysisJobStore.finish(added.files,added.id,"cancelled","Recreate fixture without optional analysis audio");
+        File optional=new File(added.project,"analysis.wav");byte[] analysisBytes=Files.readAllBytes(optional.toPath());Files.delete(optional.toPath());
+        JSONObject newJob=AnalysisJobStore.prepare(added.files,added.request.getString("projectId"),"2.2.5");
+        AnalysisRendererRecovery.PreparedRequest preparedAddition=AnalysisRendererRecovery.prepareRequest(added.files,newJob.getString("id"));
+        Files.write(optional.toPath(),analysisBytes);
+        reject(()->AnalysisRendererRecovery.commitRequest(preparedAddition),"New analysis audio was accepted after validating its absence");
+        Fixture cancelled=new Fixture(root,"cancel-after-preparation",false);
+        AnalysisRendererRecovery.PreparedRequest preparedCancellation=AnalysisRendererRecovery.prepareRequest(cancelled.files,cancelled.id);
+        AnalysisJobStore.finish(cancelled.files,cancelled.id,"cancelling","Cancelled after source validation");
+        reject(()->AnalysisRendererRecovery.commitRequest(preparedCancellation),"Cancellation between validation and commit was lost");
+        check("cancelling".equals(cancelled.status().getString("state")),"Final validation changed cancellation state");
+        Fixture rebound=new Fixture(root,"request-after-preparation",false);
+        AnalysisRendererRecovery.PreparedRequest preparedRebind=AnalysisRendererRecovery.prepareRequest(rebound.files,rebound.id);
+        JSONObject altered=AnalysisJobStore.request(rebound.files,rebound.id);altered.getJSONObject("settings").put("sensitivity",.9);
+        AnalysisJobStore.write(rebound.frozen(),altered,ProjectStore.MAX_PROJECT_BYTES);
+        reject(()->AnalysisRendererRecovery.commitRequest(preparedRebind),"Changed frozen request was accepted at commit");
+    }
+    static void cancellationWhileSourceLocked(File root)throws Exception{
+        Fixture fixture=new Fixture(root,"source-lock-cancellation",false);
+        AtomicReference<Throwable> outcome=new AtomicReference<>(),cancelError=new AtomicReference<>();
+        Thread restore=new Thread(()->{try{AnalysisRendererRecovery.restoreRequest(fixture.files,fixture.id);outcome.set(new AssertionError("Cancelled restore committed"));}catch(Exception expected){outcome.set(expected);}},"recovery-source-lock-test");
+        CountDownLatch cancelled=new CountDownLatch(1);
+        Thread cancel=new Thread(()->{try{AnalysisJobStore.finish(fixture.files,fixture.id,"cancelling","Cancel remains responsive");}catch(Throwable error){cancelError.set(error);}finally{cancelled.countDown();}},"recovery-cancel-test");
+        synchronized(ProjectStore.class){
+            restore.start();long until=System.nanoTime()+TimeUnit.SECONDS.toNanos(5);
+            while(restore.getState()!=Thread.State.BLOCKED&&System.nanoTime()<until)Thread.sleep(1);
+            check(restore.getState()==Thread.State.BLOCKED,"Recovery did not reach the held source monitor");
+            cancel.start();check(cancelled.await(2,TimeUnit.SECONDS),"Source validation held the job monitor and blocked Cancel");
+            check(cancelError.get()==null,"Cancellation failed while source validation waited");
+        }
+        restore.join(5000);cancel.join(5000);
+        check(!restore.isAlive()&&!cancel.isAlive()&&outcome.get() instanceof IOException,"Cancelled source validation did not retire without committing");
+        check("cancelling".equals(fixture.status().getString("state")),"Recovery changed the concurrent cancellation state");
     }
     public static void main(String[] args)throws Exception{
         File root=new File(args[0]);root.mkdirs();Fixture first=new Fixture(root,"first",false);
@@ -112,6 +180,8 @@ public final class AnalysisRendererRecoveryTest {
         File savedCheckpoint=new File(AnalysisJobStore.directory(checkpoint.files),"checkpoint.json");
         Files.write(savedCheckpoint.toPath(),"{}".getBytes("UTF-8"));
         reject(()->AnalysisRendererRecovery.restoreRequest(checkpoint.files,checkpoint.id),"Damaged checkpoint was accepted");
+        commitWindowChecks(root);
+        cancellationWhileSourceLocked(root);
         System.out.println("PASS: "+checks+" renderer recovery policy and durable source/lineage checks");
     }
 }

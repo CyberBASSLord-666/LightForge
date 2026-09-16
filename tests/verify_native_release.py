@@ -30,7 +30,10 @@ FIXTURES = Path(tempfile.mkdtemp(prefix="native-fixtures-", dir=OUT))
 sources = sorted((ROOT / 'android/src').rglob('*.java'))
 names = ['NativeRecoveryTest', 'ProjectStoreTest', 'NativeHardwareTest', 'NativeAudioTest', 'WebViewTransportTest', 'ProjectPreviewTest', 'AnalysisJobStoreTest', 'AnalysisRendererRecoveryTest', 'NativeDeuxTest', 'NativeInferenceProfileTest', 'NativeInferenceProfilePairComparisonTest', 'DiagnosticLogTest', 'NativeCrashTraceTest', 'NativeRuntimeGuardTest']
 tests = [ROOT / f'tests/{name}.java' for name in names + ['WebViewTransportServer']]
-bound_sources = sources + tests + [ROOT/'android/native-runtime.json', ROOT/'tests/verify_native_release.py']
+passage_lifecycle_sources = [ROOT/'tests/test_native_passage_lifecycle.py', ROOT/'tests/NativePassageLifecycleTest.java',
+                             ROOT/'tests/native-mdx-host/com/cyberbasslord/lightforge/AnalysisJobStore.java',
+                             *sorted((ROOT/'tests/native-mdx-host/android').rglob('*.java'))]
+bound_sources = sources + tests + passage_lifecycle_sources + [ROOT/'android/native-runtime.json', ROOT/'tests/verify_native_release.py']
 receipt = dict(release=args.release, passed=False, scope='Fresh production Java compilation and host JVM tests; no Android Activity/device/document-provider or physical Tesla execution.',
                source_hashes={str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in bound_sources}, checks=[], errors=[])
 
@@ -44,6 +47,8 @@ def run(name, *args):
 try:
     subprocess.run([sys.executable, str(ROOT/'tools/bootstrap_testdeps.py')],check=True)
     subprocess.run([sys.executable, str(ROOT/'tools/bootstrap_native_runtime.py'),'--check'],check=True)
+    subprocess.run([sys.executable, str(ROOT/'tests/test_native_passage_lifecycle.py')],check=True)
+    receipt['checks'].append('Production NativePassageTask close-before-start, queued-start cleanup, active native cleanup and same-job replacement isolation passed with controlled native boundaries; retired requires executor finalization and resource/file cleanup.')
     hardware=OUT/'native-hardware-fixtures'
     subprocess.run(['node','--test',str(ROOT/'tests/engine-manual.test.cjs')],cwd=ROOT,env={**os.environ,'LIGHTFORGE_NATIVE_FIXTURES':str(hardware)},check=True,capture_output=True)
     for metadata in hardware.glob('*.json'):

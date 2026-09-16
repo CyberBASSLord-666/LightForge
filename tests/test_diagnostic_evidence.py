@@ -35,10 +35,11 @@ def report(*events):
     ))
 
 
-def profile(seconds, *, wall="100", inference="90", outcome="completed", graph_count=1, details=True):
+def profile(seconds, *, wall="100", inference="90", outcome="completed", graph_count=1, details=True,
+            cpu_telemetry="unavailable", instrumented_cpu="unavailable"):
     lines = [event(seconds, "native-inference-profile",
                    f"schema=native-inference-profile-v2 outcome={outcome} wallMs={wall} inferenceWallMs={inference} "
-                   "waitWallMs=0 instrumentedCpuMs=unavailable cpuTelemetry=unavailable "
+                   f"waitWallMs=0 instrumentedCpuMs={instrumented_cpu} cpuTelemetry={cpu_telemetry} "
                    f"acceleratorTelemetry=unavailable stageRecords=1 graphRecords={graph_count} "
                    "droppedStageRecords=0 droppedGraphRecords=0 cacheModelHits=1 cacheModelMisses=0 "
                    "PRIVATE_FIELD=PRIVATE_PROFILE_TEXT")]
@@ -84,6 +85,53 @@ class DiagnosticEvidenceTest(unittest.TestCase):
         self.assertEqual(profiles["incomplete_bundles"]["count"], 2)
         self.assertEqual(profiles["incomplete_bundles"]["metrics"]["wallMs"]["value"], 1700)
         self.assertEqual(profiles["other_outcomes_complete_bundles"]["metrics"]["wallMs"]["value"], 700)
+
+    def test_complete_native_receipt_with_engine_initialization_is_retained(self):
+        # Full producer topology, including optional addEngineInit(). Keep the
+        # fixture independent of the parser vocabulary so omissions fail here.
+        stages = (
+            "inference-gate-wait", "engine-init", "cache-preflight", "buffer-init",
+            "runtime-setup", "pcm-read", "feature-encode", "model-init", "tensor-bind",
+            "inference", "pack", "scatter", "decode", "output-write", "output-flush", "output-commit",
+        )
+        graphs = ("front", "head-0", "head-1") + tuple(
+            f"block-{index:02d}-{axis}" for index in range(12) for axis in ("time", "frequency")
+        )
+        events = [event(0, "native-inference-profile",
+                        "schema=native-inference-profile-v2 outcome=completed wallMs=500 engineInitWallMs=7 "
+                        "cpuTelemetry=available instrumentedCpuMs=470 stageRecords=16 graphRecords=27 "
+                        "droppedStageRecords=0 droppedGraphRecords=0")]
+        events.extend(event(.001, "native-inference-profile",
+                            f"schema=native-inference-stage-v1 stage={stage} samples=1 "
+                            f"wallMs={7 if stage == 'engine-init' else 1} cpuTelemetry=available cpuMs=1")
+                      for stage in stages)
+        events.extend(event(.002, "native-inference-profile",
+                            f"schema=native-inference-graph-v2 graph={graph} runCount=1 runWallMs=1 runCpuMs=1")
+                      for graph in graphs)
+        profiles = EVIDENCE.summarize(report(*events))["attempts"][0]["native_profiles"]
+        complete = profiles["completed_complete_bundles"]
+        self.assertEqual(complete["count"], 1)
+        self.assertEqual(profiles["incomplete_bundles"]["count"], 0)
+        self.assertEqual(len(complete["stages"]), 16)
+        self.assertEqual(len(complete["graphs"]), 27)
+        self.assertEqual(complete["stages"]["engine-init"]["wallMs"]["value"], 7)
+        self.assertEqual(complete["metrics"]["engineInitWallMs"]["value"], 7)
+        self.assertEqual(complete["metrics"]["wallMs"]["value"], 500)
+
+    def test_partial_cpu_telemetry_is_preserved_without_inventing_total_cpu_time(self):
+        result = EVIDENCE.summarize(report(
+            *profile(0, cpu_telemetry="available", instrumented_cpu="80"),
+            *profile(1, cpu_telemetry="partial", instrumented_cpu="unavailable"),
+        ))
+        complete = result["attempts"][0]["native_profiles"]["completed_complete_bundles"]
+        self.assertEqual(complete["count"], 2)
+        self.assertEqual(complete["telemetry"]["cpuTelemetry"], {"available": 1, "partial": 1})
+        self.assertEqual(complete["metrics"]["wallMs"]["value"], 200)
+        cpu = complete["metrics"]["instrumentedCpuMs"]
+        self.assertEqual(cpu["status"], "partial")
+        self.assertIsNone(cpu["value"])
+        self.assertEqual(cpu["observed_subtotal"], 80)
+        self.assertEqual(cpu["unavailable_count"], 1)
 
     def test_missing_unavailable_invalid_and_zero_remain_distinct(self):
         result = EVIDENCE.summarize(report(*profile(0), *profile(1, inference="unavailable")))

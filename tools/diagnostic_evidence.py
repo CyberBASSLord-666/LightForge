@@ -15,7 +15,7 @@ EVENT = re.compile(r"^(\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d+(?:Z|[+-]\d\d:\d\d)) (
 FIELD = re.compile(r"(?:^|[ ;])([A-Za-z][A-Za-z0-9]*)=([^\s;]+)")
 STAGES = frozenset(("rhythm", "separation", "voice", "bass", "recurrence"))
 NATIVE_STAGES = frozenset((
-    "inference-gate-wait", "cache-preflight", "buffer-init", "runtime-setup",
+    "inference-gate-wait", "engine-init", "cache-preflight", "buffer-init", "runtime-setup",
     "pcm-read", "feature-encode", "model-init", "tensor-bind", "inference",
     "pack", "scatter", "decode", "output-write", "output-flush", "output-commit",
 ))
@@ -133,7 +133,7 @@ def _profile_totals(profiles):
     telemetry = {}
     for key in TELEMETRY:
         # Values are a fixed vocabulary, never arbitrary report text.
-        allowed = {"available", "unavailable", "java-heap", "observed"}
+        allowed = {"available", "partial", "unavailable", "java-heap", "observed"}
         telemetry[key] = dict(Counter(row[key] if row.get(key) in allowed else "missing-or-unknown" for row in fields))
     return {
         "count": len(profiles), "summary_lines": [row["line"] for row in profiles],

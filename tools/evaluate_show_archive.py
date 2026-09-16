@@ -76,7 +76,7 @@ def audit_entries(archive, max_total_bytes):
         if info.is_dir():
             require(info.file_size == 0, 'Nonempty archive directory entry')
             continue
-        limit = MAX_JSON_BYTES if name.endswith('.json') else MAX_FSEQ_BYTES if name == FSEQ else max_total_bytes
+        limit = MAX_JSON_BYTES if name.casefold().endswith('.json') else MAX_FSEQ_BYTES if name == FSEQ else max_total_bytes
         require(0 <= info.file_size <= limit, 'Archive member exceeds size limit')
         total += info.file_size
         require(total <= max_total_bytes, 'Archive expands beyond total size limit')
@@ -164,7 +164,8 @@ def saved_timings(project):
     separation = model.get('separationModel', {})
     separation = separation if isinstance(separation, dict) else {}
     restored_passages = number(separation.get('restoredPassages'))
-    cache_restored = any(row['cacheState'] == 'restored' for row in rows.values()) or bool(restored_passages)
+    passages_restored = restored_passages is not None and restored_passages > 0
+    cache_restored = any(row['cacheState'] == 'restored' for row in rows.values()) or passages_restored
     return {
         'source':'Historical metadata saved in the exported project; not newly measured analysis',
         'executionClassification':'restored-or-resumed' if cache_restored else 'cache-state-unknown' if any(row['cacheState'] == 'unknown' for row in rows.values()) else 'no-stage-restores-reported',

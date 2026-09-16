@@ -167,6 +167,17 @@ const run=require('./tests/worker-harness.cjs');
         with self.assertRaisesRegex(ValueError,'Compressed, sparse or flagged'):
             TOOL.evaluate_archive(self.make_archive(members))
 
+    def test_json_member_cap_is_case_insensitive_and_precedes_payload_reads(self):
+        # Keep the test small while leaving all required JSON below the cap.
+        cap = max(len(data) for name,data in self.members.items() if name.endswith('.json')) + 16
+        for suffix in ('.json','.JSON','.JsOn'):
+            with self.subTest(suffix=suffix):
+                archive = self.make_archive(extras=[('Review/payload'+suffix,b'x'*(cap+1))])
+                with mock.patch.object(TOOL,'MAX_JSON_BYTES',cap), \
+                     mock.patch.object(zipfile.ZipFile,'open',side_effect=AssertionError('Oversized JSON reached payload reads')):
+                    with self.assertRaisesRegex(ValueError,'Archive member exceeds size limit'):
+                        TOOL.evaluate_archive(archive)
+
     def test_high_bit_signature_and_metadata_codes_cannot_alias_valid_ascii(self):
         second_field = 32 + struct.unpack_from('<H',self.members[TOOL.FSEQ],32)[0]
         cases = [(offset,'Invalid FSEQ signature/header') for offset in range(4)]
@@ -219,6 +230,27 @@ const run=require('./tests/worker-harness.cjs');
         self.assertIsNone(result['reportedPipelineWallSeconds'])
         self.assertIsNone(result['stages']['voice']['observedWallSeconds'])
         self.assertFalse(result['coldStartVerified'])
+
+    def test_restore_count_requires_reported_positive_value(self):
+        for complete_stages in (False,True):
+            for count in (None,0,3):
+                with self.subTest(complete_stages=complete_stages,count=count):
+                    model = {'separationModel':{}}
+                    if count is not None:
+                        model['separationModel']['restoredPassages'] = count
+                    if complete_stages:
+                        model['stages'] = {name:{'restored':False,'profile':profile(name,False)}
+                                           for name in ('rhythm','separation','voice','bass')}
+                    result = TOOL.saved_timings({'music':{'engine':model}})
+                    expected = 'restored-or-resumed' if count else 'no-stage-restores-reported' if complete_stages else 'cache-state-unknown'
+                    self.assertEqual(result['executionClassification'],expected)
+                    self.assertEqual(result['separationRestoredPassages'],count)
+                    self.assertFalse(result['coldStartVerified'])
+        # Independent stage evidence still establishes restoration with a zero
+        # passage count; the two forms of cache evidence are not interchangeable.
+        model = {'separationModel':{'restoredPassages':0},
+                 'stages':{'rhythm':{'restored':True,'profile':profile('rhythm',True)}}}
+        self.assertEqual(TOOL.saved_timings({'music':{'engine':model}})['executionClassification'],'restored-or-resumed')
 
     def test_cli_refuses_overwrite_and_repo_output(self):
         archive = self.make_archive(); output = self.root/'existing.json'; output.write_text('keep')
