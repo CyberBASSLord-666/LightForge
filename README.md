@@ -1,367 +1,91 @@
-# LightForge 2.2.5 — release candidate
-
-**LightForge 2.2.5 / Android version code 20205 is awaiting publication.** Publication requires successful source-bound host and Android verification, original-key signing and package integrity checks. The owner-approved policy for this version makes external corpus benchmarks, human perceptual review and hardware energy/thermal measurements optional; comparative performance and musical quality remain unverified. Physical phone and Tesla observations are also optional. Until v2.2.5 is published, [LightForge 2.2.4](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.2.4) remains the available update; install the original-signed APK over the existing app to preserve private projects.
-
-The candidate retains the published 2.2.4 functionality: guarded native Balanced separation, bounded model memory between passages and stages, prompt saved-progress reporting, and completed-project/preview recovery. It also carries the current lifecycle and quality-gate work, which is not evidence-qualified until the candidate passes its own gates. Models, both denoise passes, all eight GAME transcription steps and the original sample clock remain intact.
-
-LightForge turns music on your phone into an editable Tesla light show for a **2025 Model 3 Long Range RWD, North America**. It bundles its neural models, graphics and audio tools and works entirely offline.
-
-**Native Studio analysis remains recoverable:** Studio separation uses native CPU inference on Android, while completed passages and analysis stages can be reused after interruption. Elapsed time, passage progress and resumed-work counts make long operations visible. The learned weights, full 13-second separation context, both source heads and Studio quality remain intact; failures do not silently switch to Balanced. Processing time and memory still depend on the song and device.
-
-**The Studio cockpit includes:** a Tesla-inspired monochrome interface, source-time score, keyboard-accessible Compose/Music/Outputs/Review workspaces, Deux source separation and GAME Large singing-note transcription. Precision Studio retains editable voice/bass gestures, independent timing offsets and review against final exported lamp commands. See [release notes](RELEASE_NOTES.md), [build instructions](BUILD.md) and [validation scope](VALIDATION.md).
-
-## Install the published update
-
-Install [LightForge-2.2.4.apk](https://github.com/CyberBASSLord-666/LightForge/releases/download/v2.2.4/LightForge-2.2.4.apk) over your existing app. **Do not uninstall first.** The release gate requires the original signing identity so the update preserves private projects. CI builds use a temporary identity and are not the update APK.
-
-Android 8+ and a current Android System WebView are required. The app targets Android 15. No account, API key, subscription, server or model download is needed. Create runs in an Android foreground service, so you can switch apps or turn off the display. Studio uses native ONNX Runtime CPU inference with bounded batches and model buffers; it can still take longer than the song and needs substantial free memory and temporary storage. Balanced remains an explicit lighter choice. Separated listening audio needs about 21.2 MB per minute of music; recoverable passage checkpoints need additional temporary space.
-
-## Background analysis
-
-**Create my light show** now runs both analysis and choreography independently of the Studio screen. Use **Continue in background**, switch to another app, lock the screen, or dismiss Studio from Recents. The progress panel shows elapsed time, current passage, completed/reused work and when a model step has stopped reporting updates. Elapsed time is not a completion estimate. A notification shows progress, an elapsed-time chronometer and **Cancel**; completed shows are saved before the service stops. Reopening LightForge reconnects to the current job or opens the completed show.
-
-Allow notifications when Android asks. For long screen-off jobs, choose **Allow screen-off processing** or **Guide → Allow background battery use** and approve Android's battery exemption. Manufacturer-specific sleeping-app restrictions may also need unrestricted battery use in the app's Android settings. These are system-controlled choices; the app does not grant itself permissions.
-
-Your last saved show is preserved on cancellation, low-memory renderer loss, process interruption or failure. **Resume analysis** checks completed separation passages, transcription work and analysis stages before continuing. The interrupted passage may run again; completed matching work is reused. Source audio, analysis settings, execution path and app version identify checkpoints. Renaming a show or changing choreography alone does not discard matching analysis. Damaged checkpoints are rejected and recomputed. A completed overall analysis checkpoint skips directly to choreography. Android's Stop/Force stop, reboot and media-processing time limits still apply (normally six background hours per 24-hour allowance on Android 15+). No automatic reboot launch or endless restart loop is used.
-
-Import and export document pickers still require returning to the app. Background analysis does not grant root, unrestricted access to other apps, hidden recording, vehicle API access or unverified GPU acceleration. All model quality settings and the offline privacy boundary are preserved.
-
-## Troubleshooting logs
-
-Use **Guide → Export diagnostic log**. Reproduce the problem, reopen LightForge if it closed, and export the `.txt` report to **Downloads/LightForge**. On Android 8–9, choose Downloads in the system save dialog. Send that file with a short description of what you were doing and approximately when the failure happened. A native recovery action also makes reporting available when the preview engine cannot render the normal interface.
-
-The report gathers recent app events, Java/JavaScript error stacks, analysis stages and interruptions, renderer failures, device/WebView versions, memory/storage context, and available Android process-exit information. Logs stay on the device until you choose to export them; there is no automatic upload. Reports exclude audio, model data and saved-show contents and redact common sensitive values. Diagnostic text can still contain details useful for troubleshooting, so review a report before sharing it publicly.
-
-Logs are bounded and rotated. A killed process cannot reliably write its own final event; available Android exit information and the last saved trace help reconstruct that case. Exported reports remain in Downloads even if app cache is later cleared. Clearing Android app storage or uninstalling removes private projects, so export show backups before doing either.
-
-## Precision Studio
-
-After creating a show, open the **Review** workspace to refine synchronization.
-
-1. Listen with Full song, Voice or Instruments and pause near the moment you want.
-2. Open **Edit musical cues**, choose Voice or Bass, and add at the playhead or start from a detected event.
-3. Set start/end times. Use **Accent** for a short gesture, **Hold** for a sustained gesture, or **Ignore this part** to remove automatic role cues in that range. Optional pitch and labels remain user-authored information.
-4. Loop the passage, save the cue and inspect the resulting lights. Undo/Redo includes these edits.
-5. Use **Correct timing for a musical part** if automatic vocal or bass estimates consistently arrive early or late. Negative corrections move estimates earlier; your entered cue times do not move.
-
-The original model analysis is preserved. Edits on different parts may overlap; same-part overlaps are rejected with an actionable message. New songs start without another project's cues or part corrections. Output switches and individual lamp cues retain final ownership.
-
-**Review synchronization** compares selected targets with final exported lamp commands, including the effects of individual output edits. It reports matched targets, frame error and seekable exceptions. It does not measure vocal-detection accuracy, lyric alignment, perceptual quality or physical vehicle latency. The report is included in the show ZIP.
-
-Saved 1.4–1.6 arrangements reopen with their exact frame payloads. Recreate to use the new routing/review; a complete 1.6 analysis can be reused without rerunning its models.
-
-## Make a show
-
-Choose **Choose music**, select an unprotected local audio file, pick a style,
-and tap **Create my light show**. Common WAV, MP3, M4A/AAC, FLAC and OGG/Opus files
-are supported through Android's installed media decoders. DRM-protected
-streaming downloads are not ordinary importable audio files.
-
-The native importer actually decodes the music and prepares a stereo 16-bit
-44.1 kHz PCM WAV. A separate mono 22.05 kHz analysis file keeps neural inference
-efficient. Sample-rate conversion uses a streaming 48-tap polyphase sinc filter.
-Existing 44.1 kHz stereo PCM16 WAV samples are preserved byte for byte.
-
-**Festival**, **Cinematic** and **Pulse** have different visual patterns. Tune
-light intensity, choose Expressive/Balanced/Lights only movement, and enable or
-disable individual moving parts. Fine tune adds:
-
-- 20 ms timing, Tesla's recommended default, or 15 ms finer timing.
-- Sensitive onset detection, quarter/eighth/automatic rhythm and tempo override.
-- A light-timing offset and interior palettes for the fitted accent lights.
-- Individual section style/intensity edits, retained motifs, Undo/Redo and reset.
-- First-downbeat correction, 3/4 or 4/4 meter and half/double-tempo interpretation.
-- Independent movement frequency, passage looping, beat seeking and A/B arrangements.
-- Studio (Deux separation, full rhythm transformer) or Balanced (MDX separation, compact rhythm transformer); both include GAME Large.
-- Full song, Voice first, and Bass first emphasis presets.
-- Full song / Voice / Instruments listening, detected phrase and held-note inspection.
-- Editable Voice and Instrumental passage guides, with looping, Restore and Undo/Redo.
-
-The separator isolates a combined lead/backing vocal waveform. A trained sound-event network then distinguishes singing and speech; acoustic detail follows entrances, syllabic accents, pauses and estimated pitches. The arrangement gives these events distinct gestures and supported fades. Instruments continue to supply rhythm, bass, colour and structure. No lyrics or word transcription are fabricated.
-
-The composer uses detected beats, downbeats, local tempo, phrases, musical
-impacts and active audio ranges to build an arrangement. Stronger sections
-receive more assertive patterns; quieter passages retain space and longer
-transitions. Light timing follows the analyzed music and is quantized to the
-selected 15 or 20 ms export frame interval. The finer frame interval improves
-command placement; it cannot make a lamp ramp or motor travel faster.
-
-Movements are planned against musical arrivals. A trunk that needs about
-14 seconds to open must begin before the chosen entrance; windows and mirrors
-have their own travel allowances. When there is too little time to prepare,
-perform and return a movement, the planner omits it. Dance runs use musically
-selected windows while respecting per-part command budgets and final return
-positions. Tesla controls the cadence of a Dance stroke, so individual strokes
-cannot be locked to every drum hit through the FSEQ format.
-
-The 3D preview uses a detailed Highland-generation Model 3 asset with about 180,000
-triangles, finished in black. A bundled Three.js WebGL 2 renderer adds reflective
-paint, studio lighting, soft shadows and lamp glow. Switch between Studio and
-Night stages, choose a front, rear, driver-side or cabin cutaway camera, drag to
-orbit, pinch to zoom and expand the preview. Camera changes ease into place. Auto quality adapts resolution and shadows to measured performance; High, Balanced and Battery can also be selected. All modes retain the same lamp commands, glow and estimated movement state. Offscreen previews stop rendering.
-
-The soundtrack clock drives the exported light commands, documented fades,
-shared Model 3 lamp outputs and six interior RGB zones. Windows, mirrors, trunk
-and charge-port position animate from the sequence. Seeking reconstructs the
-same state as continuous playback. Charge-port Dance shows rainbow LED activity.
-The live output monitor remains available for lamps obscured by the camera.
-The front display has its own RGB output; the rear display has no documented
-custom-show channel and is not driven by the preview.
-
-The refreshed interface adds larger controls, clearer contrast, keyboard camera
-and style navigation, accessible seek/progress feedback and restrained playback
-and button animation. Decorative animation respects the device's reduced-motion
-setting. Visual controls do not alter the saved choreography.
-
-Exterior timing follows the actual FSEQ bytes. Some headlamp sub-lens, rear
-brake-surface and parking-marker assignments remain estimates because Tesla
-has not published a Highland-specific per-lens channel diagram. Panel positions
-and projected light spill are also visual estimates; Tesla does not publish exact motor dance
-cadence, travel endpoints, lamp optics or hardware latency. The app labels
-movement as estimated rather than claiming a guaranteed physical simulation.
-The model represents the Highland body generation used by the 2025 car. It is
-an artistic asset, not a Tesla-certified replica of every Long Range RWD detail.
-
-The bundled **Glass Castle demo excerpt** is a 64-second portion of the user's
-supplied recording, included for this private app. It is not a separate licensed
-stock-music asset for redistribution.
-
-## Improve and explore the musical composition
-
-After creating a show, **Music intelligence → Built around the music** shows
-beats per bar, detected phrases and planned movement arrivals. Expand
-**Planned movement moments** and tap a time to inspect that arrival in the
-preview. Motor travel is estimated; vehicle-defined Dance strokes are not
-individually synchronized to drum hits.
-
-**New variation ↻** creates another light arrangement from the existing analysis
-and preserves your custom cues and output switches. Undo restores the previous
-variation. **Re-analyze music** applies the improved analysis to an older project
-without replacing its audio or manual edits. The main Create/Recreate button also
-updates an earlier analysis when needed. New imports use the new analysis by
-default. All processing remains on the device, with bundled trained music models.
-
-## Follow singing and bass notes
-
-**Singing emphasis** and **Bass-note emphasis** control how strongly these parts
-shape the arrangement. The recommended starting values are 85% and 90%.
-Singing uses a stereo separator, trained singing/speech evidence, GAME Large neural note transcription and measured waveform expression. Bass uses sustained low-register
-harmonics in the separated accompaniment. General low-frequency transients
-continue to inform the drum rhythm. Lead and backing singers remain combined;
-this does not produce lyrics or exact word timings.
-
-Sung articulations receive alternating lamp gestures and legal fades; held notes
-shape sustained gestures and cabin colour. Bass-note entrances get independent
-accents and holds. Percussion, melody, recurring patterns and section energy
-continue on supporting lanes. Slow moving parts use suitable phrase entrances
-and cadences within their travel, recovery and command limits.
-
-The colored **Singing** and **Bass notes** lanes show what the analyzer found.
-Drag to a moment or use **Next phrase** / **Next note** to listen and inspect it.
-No confident singing means the show continues with its instrumental arrangement.
-Higher emphasis does not make an uncertain estimate more accurate.
-
-Existing saved arrangements reopen with their original frames. Select
-**Analyze singing & bass** or **Re-analyze music** once to add this detail to an
-older project; manual edits and output switches are kept. Undo can return to the
-previous arrangement within the current editing session. Changing emphasis on
-an analyzed project recomposes the show without rerunning the audio models.
-
-## Edit individual outputs and movements
-
-Open **Lights & dance editor** beneath the preview. The vehicle catalog
-contains **34 available controls**: 20 exterior lamp groups, six RGB zones and
-eight moving parts. Shared Model 3 channels appear as a single control with
-all their addresses shown. Tesla's 56 candidate addresses are audited; three
-fog-light addresses are unavailable on this North American Highland profile,
-leaving 53 active byte addresses. The headlight matrix has no documented
-individual-pixel custom-show addresses.
-
-Choose an output to see its supported commands, coverage note and channel
-addresses. **Inspect in preview** isolates it without changing the saved show.
-Include or mute an output, or add timed cues using the current playhead.
-Light and RGB cues overlay the generated show within their time range; adding
-manual cues to a moving part replaces that part's automatic movement track.
-Restore automatic control to remove that part's manual cues. Cues, output
-switches and the optional outer-beam setting are saved with each project.
-
-Light commands expose the documented on/off and 500, 1000 or 2000 ms fades
-where supported; they are not arbitrary steady dimmer values. Outer-beam ramps
-are off by default because Highland support needs vehicle confirmation. RGB
-zones allow direct color selection. Movement commands include Open, Close,
-Idle and Stop, plus Dance where supported. Mirror Dance is unavailable; use
-Fold and Unfold. Charge-port Dance cycles its LED colors while the port is open.
-Trunk and charge-port Dance need an earlier Open command and enough opening
-time. When an opening, folding or dance cue needs a final return, the editor
-adds a visible, editable Return closed or Return unfolded cue near the end.
-A first trunk/charge Dance can also add its preparatory Open when enough time
-is available before it. A completed track returns parts to their normal finish
-position. The engine checks these prerequisites and per-part command
-budgets before accepting edits or exporting a show. An output disabled with
-**Include in this show** is zero in the final sequence, including custom cues.
-
-The preview uses the model's actual lamp surfaces, including the headlamp
-signature and front indicators, fixed fender repeaters, trunk-mounted tail and
-plate lights, rear fascia reverse lamps and high-mounted brake light. It does
-not add separate front fog lights, color the rear display or illuminate body
-reflectors as lamps. Detailed physical channel assignments still need comparison
-on the user's vehicle; see the individual output notes and `VALIDATION.md`.
-
-## Multiple projects
-
-**My shows** keeps separate projects in the app's private storage. Each retains
-its soundtrack, analysis, creative settings, section edits and individual cues. Reopen a project
-to edit it without analyzing the same song again, unless a rhythm-analysis
-setting has changed. Rename, duplicate and delete projects from the collection.
-A duplicate is independent, so it can hold a different arrangement of the same
-song. Saving is automatic.
-
-An exported native show ZIP is also a project backup: it includes the matched
-audio and `Review/LightForge_Project.json`. Use **Restore backup** in My shows
-to bring it back into LightForge. Restoring creates a new project, rebuilds the
-analysis audio, preserves the saved creative settings, and reopens a matching checked frame snapshot. Backups without a usable compiled snapshot require recreation with the installed engine. Only LightForge exports that contain its project
-JSON can restore all editing information.
-
-Uninstalling the app removes its private projects. Export ZIP backups of work
-you want to keep before uninstalling or moving to another phone.
-
-## Export and run on the car
-
-Tap **Export USB-ready show** and use Android's Save dialog to choose a location.
-The native exporter verifies the actual FSEQ bytes against the soundtrack,
-checks movement budgets, creates the ZIP, then reads every ZIP entry to check
-its size and CRC before presenting the Save dialog.
-
-The playback paths are exactly:
-
-| Path | Contents |
-|---|---|
-| `LightShow/lightshow.fseq` | FSEQ 2.0, uncompressed, 200 channels |
-| `LightShow/lightshow.wav` | Stereo 44.1 kHz 16-bit PCM audio |
-| `Review/LightForge_Project.json` | Editable project backup |
-| `Review/Validation.json` | Choreography and native byte checks |
-| `START_HERE.txt` | Installation instructions |
-
-Extract the ZIP. Put `LightShow` directly at the top level of an exFAT/FAT32
-USB drive without a top-level `TeslaCam` folder or map/vehicle update files.
-Connect it to the data-capable USB-A port in the glovebox, then select the
-custom show in **Toybox → Light Show → Schedule Show** and follow the car's
-prompts. The folder must not be nested inside another folder.
-
-## What the car can perform
-
-The engine uses the Model 3's supported exterior channels, coordinated shared
-outputs, fade commands, interior RGB/display colors, windows, mirrors, powered
-trunk and charge port. Optional lamps depend on the hardware fitted to the car.
-It does not send Model X door commands, powered-frunk commands, presenting
-door-handle commands, unsupported pixels or unrelated vehicle commands.
-
-Fades use Tesla's documented 500, 1,000 and 2,000 ms ramp commands on compatible
-channels. Most other exterior lamps are on/off; arbitrary steady brightness
-values do not create real dimming on those lamps. The planner respects command
-counts, approximate opening/closing travel, end states and a dance allowance
-below 30 seconds per dancing component. The charge-port Dance command produces
-rainbow LED activity rather than physical oscillation.
-
-Tesla determines the speed and travel of each Dance stroke. No custom FSEQ
-parameter can increase those values. Actual response depends on the vehicle,
-software, temperature and actuator state. Generated shows have not been
-physically tested on the user's car.
-
-## Free neural analysis, accurately described
-
-The current pipeline bundles pretrained **Beat This!** rhythm models, **Deux** Studio or **MDX-Net** Balanced source separation, **Frame-MN10** singing/speech evidence and **GAME Large** sung-note transcription. Native Android CPU separation and ONNX Runtime WebAssembly run locally. The retained BeatNet assets belong to the historical analysis implementation.
-
-Local signal processing adds tempo and meter interpretation, PCM attack timing, energy transitions, phrases and prominent impacts. The planners use those results to schedule lights and movements; these processing and choreography steps are not additional trained models. Tempo can be ambiguous in half-time/double-time, sparse music, rubato or changing meter. Preview and override controls let you inspect and adjust it. Confidence is an app heuristic, not a calibrated probability; silence is not assigned fabricated beats.
-
-Analysis streams audio in bounded chunks and is cancellable. Files can extend to Tesla's four-hour limit, although storage and processing time increase with duration. Create runs in the foreground service while you switch apps or turn off the display; return to the app for import and export document dialogs. No full four-hour phone benchmark is claimed.
-
-## Privacy and source
-
-The installed app has no Internet permission. Music and project data stay in
-private app storage. All model, JavaScript, font and WebAssembly assets are
-bundled. Export and optional sharing use Android's document picker and share
-sheet under the user's control. Opening the official guide launches the user's
-browser; it does not upload music.
-
-This is independent personal software, not an official Tesla or xLights app.
-It implements a focused mobile music-to-show workflow, rather than claiming
-complete desktop xLights feature parity or `.xsq` project compatibility.
-
-See `BUILD.md` to reproduce the APK. **Keep the private `signing/` folder from
-the source backup**: its keystore and password are required to sign compatible
-updates without uninstalling the app and losing private projects. Do not
-publish that signing material.
-
-## References and licenses
-
-- [Tesla's official light-show guide](https://github.com/teslamotors/light-show).
-- [Tesla's sequence validator](https://github.com/teslamotors/light-show/blob/master/validator.py).
-- [BeatNet repository](https://github.com/mjhydri/BeatNet) and
-  [ISMIR 2021 paper](https://arxiv.org/abs/2108.03576).
-- [ONNX Runtime web documentation](https://onnxruntime.ai/docs/tutorials/web/).
-- [Three.js](https://threejs.org/) (MIT), bundled version 0.180.0.
-- [Highland model listing](https://sketchfab.com/3d-models/tesla-model-3-2024-36c52f3f89f6439c90310f14e8ff33f2):
-  “2024 Tesla Model 3” by RBLXSupercars, published by brandonleong28,
-  [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
-
-`web/analysis/README.md` records model provenance, pinned upstream revisions,
-conversion details and licenses. BeatNet is CC BY 4.0, ONNX Runtime is MIT,
-the bundled Madmom-derived filter coefficients carry their upstream notice,
-and Inter is SIL Open Font License. License texts accompany their assets.
-Reproducible verification and conversion code are included in the source.
-`web/preview/models/CREDITS.md` credits the vehicle model and records its
-modifications. `research/model-source/` includes the original licensed GLB,
-download evidence, geometry conversion scripts and verification receipts.
-The renderer source and pinned npm dependency lock are in `web/preview/src/`.
-
-## Verification and device status
-
-[VALIDATION.md](VALIDATION.md) preserves the seven published 2.2.4 release gates separately from historical measurements. That evidence does not qualify 2.2.5: this candidate must obtain fresh source-bound and release-stage validation before publication. The complete [2.2.4 production run](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34424617050) passed both verification and Android jobs against source `57e6ee996bd8f9d135e89334585efe90d8667b68`. The Android API 35 x86_64 emulator exercised production services and native models; it is separate from physical-phone testing.
-
-| Check | Published 2.2.4 status |
+# LightForge
+
+An offline Android studio that turns local music into editable Tesla light shows.
+The vehicle profile targets the **2025 Model 3 Long Range RWD, North America**.
+Models, audio tools, vehicle geometry and required notices are bundled in the APK;
+there is no account, API key, backend or runtime model download.
+
+## Install
+
+Download the original-signed APK from the [latest published release](https://github.com/CyberBASSLord-666/LightForge/releases/latest).
+**Install over the existing app; do not uninstall first.** A matching update
+preserves private projects. Development and CI APKs use a different identity and
+must not be substituted for the published update.
+
+Android 8 or newer and a current Android System WebView are required. Analysis is
+memory- and storage-intensive and may take substantially longer than the song.
+The source version is maintained in [version.json](version.json); a version in
+source or a successful build is not, by itself, a published release.
+
+## Create, edit and export
+
+Choose **Choose music**, select an unprotected local audio file, select a style
+and analysis mode, then use **Create my light show**. Studio prioritizes the full
+Deux separation path; Balanced is an explicit lighter MDX alternative. Both
+include learned rhythm and sung-note analysis. Model outputs remain estimates,
+not lyric alignment or guaranteed musical accuracy.
+
+The **Compose / Music / Outputs / Review** workspaces provide arrangements,
+voice/bass cues, individual output controls, timing corrections and a preview of
+the compiled show. **My shows** keeps independent, automatically saved projects.
+**Export USB-ready show** writes the soundtrack, validated FSEQ and an editable
+project backup. Keep exported backups before moving devices or clearing app data.
+
+See the [user guide](docs/USER_GUIDE.md) for background processing, editing,
+backup/restore, USB layout and troubleshooting.
+
+## Background processing and diagnostics
+
+Analysis runs in an Android foreground service. Allow notifications and use
+**Allow screen-off processing** when Android offers the battery exemption.
+System limits and manufacturer battery restrictions still apply. After an
+interruption, **Resume analysis** can reuse matching, verified checkpoints;
+clearing cache does not replace the saved show as the export source of truth.
+
+Use **Guide → Export diagnostic log** after reproducing a problem. Reports stay
+local until exported and contain no attached music or saved-show payload. Review
+reports before sharing publicly; never commit personal audio, diagnostics or
+signing credentials to this repository.
+
+## Verification and limitations
+
+[Validation](VALIDATION.md) distinguishes published-release evidence from current
+source checks, historical numerical tests and optional physical observations.
+The published 2.2.5 release passed its nine source-bound host/Android gates, but
+**comparative musical quality, a 75% analysis-time reduction, and physical
+phone/Tesla performance are not established by those tests**. See its
+[release record](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.2.5)
+for the signed APK and verification report. Later commits require their own
+verification; old receipts must not be relabelled as current results.
+
+## Development
+
+[BUILD.md](BUILD.md) is the build and release entry point. For a smaller fresh
+checkout that does not download retired transfer history:
+
+```bash
+git clone --depth 1 --single-branch https://github.com/CyberBASSLord-666/LightForge.git
+cd LightForge
+python3 tools/repository_hygiene.py
+```
+
+The build uses Android SDK command-line tools rather than a Gradle app module.
+Required retained assets stay in the repository; GAME and Deux graphs are
+reproduced from pinned inputs. No model, precision or quality downgrade is a
+repository-cleanup technique.
+
+| Document | Purpose |
 | --- | --- |
-| Version synchronization | 2.2.4 / 20204 |
-| Source and native regression | Passed: 347 Node tests, Python suite and separately required native lifecycle test; 24 host Java check groups |
-| Browser UI and complete analysis | Passed: responsive Chromium/WebGL, actual models, saved audio, cancellation and compiled-show restore |
-| Android background lifecycle | Passed: Studio and native Balanced under screen-off/Doze, reconnection, live cancellation, saved-passage Resume and timeout cleanup |
-| Android diagnostics | Passed: 8 checks covering crash persistence, native tombstones/compatibility selection, Guide/Downloads export and renderer recovery |
-| Numerical output | Three fixed Balanced decoded-waveform comparisons and paired vocal/GAME output passed; internal-spectrum diagnostics remain failed and disclosed |
-| Original-signed update build | Verified original certificate, asset inventory, native libraries, alignment and checksum; publication is a separate step |
-| Physical phone performance, long songs, thermals and battery management | Unmeasured |
-| Supplied Samsung crash reproduction and physical Tesla timing | Unverified |
+| [Documentation index](docs/README.md) | Guides and focused engineering contracts |
+| [Build and release](BUILD.md) | Reproduction, tests and gated publication |
+| [Architecture](ARCHITECTURE.md) | Module ownership and dependency boundaries |
+| [Validation](VALIDATION.md) | Evidence scope and unresolved claims |
+| [Assets](ASSETS.md) | Model reproduction and licensing |
+| [Versioning](VERSIONING.md) | Source identity and original update certificate |
+| [Maintenance](REPOSITORY.md) | Repository layout, cleanup policy and history |
+| [Changelog](CHANGELOG.md) | Version history |
 
-**Historical 2.2.1 measurement:** on one 6.803-second PCM16 excerpt with four threads on a Linux development machine, native Java CPU separation took **61.11 seconds**, compared with **127.25 seconds** for bounded WASM. Peak process RSS was **720.56 MiB** versus **1,920.96 MiB**: 2.08× faster and 62.49% lower measured peak memory. Both paths retained the original model, source sample count and measured Float32 equivalence. These original short-excerpt host measurements are not a new 2.2.4 benchmark or a phone/full-song guarantee. See [the historical runtime evidence](qa/release-2.2.1/DEUX_RUNTIME.md).
-
-The full release run met the unchanged 45-second preview-readiness deadline at every lifecycle transition. A separate diagnostic run missed that deadline and became ready about six seconds later with the same conditions. Cold preview startup remains variable; earlier failed records are retained in [the validation history](VALIDATION.md). A small emulator fixture does not establish that every full song will complete on every phone.
-
-## Update from an earlier release
-
-The 2.2.4 signed update is `LightForge-2.2.4.apk`, version code 20204. Install it over the existing LightForge app; the release gate requires the original package ID and signing identity. **Do not uninstall first**, because uninstalling removes
-private projects. Saved music and projects remain compatible; matching checked arrangements reopen with their saved frames. Recreate to apply current analysis and composition.
-
-Version 1.3.0 improves musical analysis, structure-aware lighting and movement
-arrival planning. It preserves the 1.2.0 individual output and movement editor,
-audited Tesla channel catalog, corrected Highland lamp rig and unsupported-fog
-rejection. It retains the 1.1.0 detailed 3D model and UI, the 1.0.1
-audio transport correction, damaged-analysis repair, common-format imports and
-automatic **44.1 kHz, 16-bit stereo PCM WAV** export conversion. The WAV and FSEQ
-keep matching `lightshow` basenames.
-
-Extremely long tracks whose full stereo WAV exceeds 2 GiB use the smaller
-22.05 kHz mono analysis WAV for in-app playback. This avoids WebView's 32-bit
-stream length limit. The preview labels this mode; exported audio remains the
-original normalized 44.1 kHz stereo PCM16 file. Ordinary songs preview in
-full stereo.
-
-## Project durability in 1.4
-
-Newly composed projects store compressed, checksummed frames and model/planner/profile provenance. Saved compiled arrangements reopen without silently rerunning a newer composer. Existing projects without frame snapshots are composed once from their earlier analysis. Use Re-analyze to adopt the new transformer. Large comparison/undo snapshots retain compressed frames rather than keeping multiple dense sequences in memory.
-
-Native autosaves publish project and collection metadata together and retain one previous revision. The collection menu can restore it. Interrupted imports remain staged; a prepared export can be resumed after Android restarts the app or the Save dialog is cancelled. Export ZIPs include the exact editable project used for that export. A/B alternatives are session scoped; duplicate a project to retain another branch permanently.
-
-## Existing projects and separated-audio cache
-
-Install over the existing app. Saved 1.4/1.5 arrangements retain their checked frame payload. Re-analyze once to create isolated voice and instrument audio and the new vocal detail; editing emphasis or passage guides afterward does not rerun the neural models.
-
-The listening layers are replaceable private analysis caches; project backups retain original audio, settings, detected events and compiled frames. Cache cleanup or a restored backup may require re-analysis to hear isolated layers again. Cached layers never replace the original full-quality soundtrack in the exported show.
+This repository is public. Public visibility does not grant a license to all
+included material. Preserve third-party notices and model-weight restrictions;
+several bundled models are restricted to noncommercial use. LightForge is not
+an official Tesla product.

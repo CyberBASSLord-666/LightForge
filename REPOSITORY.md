@@ -1,43 +1,102 @@
 # Repository maintenance
 
-The published update remains LightForge 2.2.4, Android version code 20204. All seven release verification gates passed in the complete [production run](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34424617050) on `57e6ee996bd8f9d135e89334585efe90d8667b68`, including offline model execution, Android screen-off/Resume and crash-report export. The original-signed APK build retains the update identity. [LightForge 2.2.4](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.2.4) is published; the publication workflow verified every uploaded asset digest before exposing it.
+Keep one maintained source tree, one current build guide and explicit evidence
+boundaries. [README.md](README.md) is the user entry point;
+[docs/README.md](docs/README.md) indexes focused guides and contracts.
+[version.json](version.json) owns source version metadata, while
+[GitHub Releases](https://github.com/CyberBASSLord-666/LightForge/releases) owns
+published APK availability. Do not copy changing release-status paragraphs into
+multiple documents.
 
-LightForge 2.2.5 / Android version code 20205 is a candidate only. It needs fresh source-bound verification, protected performance-quality approval, original-signed APK validation, and required physical validation before publication. No 2.2.5 result, signing receipt, or release asset is asserted by this branch. Use [BUILD.md](BUILD.md) for the build pipeline and [VALIDATION.md](VALIDATION.md) for exact evidence and limits.
+## What belongs in Git
 
-Current sources, model converters, manifests, tests, workflows and maintenance documents live at the repository root. The 2.2.5 candidate has source helpers, but no fresh receipts, in `qa/release-2.2.5/`; its evidence must be generated anew rather than copied from 2.2.4. The published 2.2.4 release adds guarded native Balanced MDX, bounded model lifetimes, prompt checkpoint reporting and preview/startup recovery while retaining the model weights, sample clock and quality settings. The 2.2.3 precursor and earlier releases retain their historical identities; failed 2.2.4 probes remain separately archived. The diagnostic observer source is supplemental and is not part of the published release. Native dependencies are pinned in `android/native-runtime.json`. `verify_snapshot.py` checks the historical preserved snapshot; current application changes must pass the current release gates.
+Retain application code, canonical required assets, pinned converters and
+manifests, dependency lockfiles, test fixtures, versioned evidence referenced by
+verification, third-party notices and reviewed release requests. `qa/` is not
+simply a disposable output folder: current tests reuse historical harnesses and
+some numerical protocols require immutable receipts.
 
-## Historical 1.6 restoration
+Do not commit build/SDK caches, npm or Python environments, private signing
+material, personal music/diagnostics, generated large activation dumps, or split
+copies of assets already available at canonical paths. Generated GAME/Deux
+graphs are reproduced by the pinned build tools rather than checked in.
 
+Use GitHub release assets for published APKs. Preserve their original signer,
+checksums and public verification records. Repository visibility is public;
+private projects, audio and credentials do not belong here. Visibility does not
+change the third-party rights described in [ASSETS.md](ASSETS.md).
 
-This completion preserves the existing `main` branch and repository-root app layout. Compared with the verified LightForge 1.6.0 backup, the repository already had 859 identical files and two updated maintenance documents; 39 source assets and evidence files were missing. Those missing files are restored here. Current development history and documentation are retained.
+## Layout
 
-The backup contained 904 entries. All 900 non-secret source files are preserved: the original README, BUILD and VALIDATION documents are kept under `archive/v1.6.0/` while their current root versions remain available for maintenance. The signing keystore, its password, and two obsolete archive wrapper documents are excluded. The private archive SHA-256 is `8d23b72254c0de148526386c4a5f4d6121e221340fdb377a42156f4677a7d2cb`.
+| Path | Purpose |
+| --- | --- |
+| `android/`, `web/` | Shipped application and canonical runtime assets |
+| `tools/`, `tests/` | Build, verification, release tooling and automated contracts |
+| `docs/` | Focused maintained documentation |
+| `qa/` | Current release harnesses, required references and historical evidence |
+| `research/` | Model/geometry source, attribution and retained research inputs; not an APK payload |
+| `releases/` | Historical requests, public signing deltas, publication metadata and release pointers |
+| `.github/workflows/` | Maintained verification/publication and focused diagnostic workflows |
 
-## Verify and build
+## Check a change
 
-The initial transfer carried eight large source assets as 8 MiB pieces. The completed migration restored them to their normal paths, verified the preserved snapshot, and committed only those restored paths to `main` without force-pushing. Its one-time publishing workflow is retained at `archive/v1.6.0/publish-workflow.yml`; the active release pipeline is now `publish-release.yml`. If working from the initial transfer before restoration completes:
+Run from the repository root after staging additions/removals, so the index
+represents the intended checkout:
 
 ```bash
-python3 migration/restore.py --only source
-python3 verify_snapshot.py
+python3 tools/repository_hygiene.py
+python3 tests/test_repository_hygiene.py
+python3 tools/sync_version.py --check
+git diff --check
 ```
 
-Once restored, all original 1.6 model weights, WebAssembly, demo audio, geometry and retained QA data are present. The newer GAME/Deux graphs are reproduced as described in BUILD.md. Follow [BUILD.md](BUILD.md) from the repository root. Installed toolchains and reproducible build caches are not included. Some historical test harnesses reference the original development workspace; adapt those environment paths when reproducing them. Historical QA is not evidence of new tests against future code changes.
+The hygiene checker validates maintained Markdown links, documents the boundary
+of its checks, and rejects retired transfer paths, build caches and common
+credential filenames. It uses tracked paths, so a sparse checkout is supported.
+It does not scan arbitrary secret contents or validate every external URL;
+manual review and the existing release security controls remain necessary.
+Application, model or verification changes must also pass their applicable
+[build/test gates](BUILD.md). A fast hygiene check is not a substitute for them.
 
-`SOURCE_MANIFEST.json` records the 900 preserved original source files and their hashes. It intentionally does not claim that newer maintenance documents are identical to the original archive. After future source edits, rerun affected checks; never change evidence hashes merely to pass release packaging.
+Before removing a file, inspect code, workflow, manifest and documentation
+references. Do not delete versioned tests by age, alter golden hashes, relax
+release checks, remove licenses or reduce model quality to obtain a smaller tree.
+Check open PRs before touching shared runtime files.
 
-## Original signed APK
+## Retired transfer material and historical recovery
 
-The [v1.6.0 release](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v1.6.0) contains the original verified signed APK, SHA-256 `9767c40847534f7438a42a5c6821bfffd0434ddbdc231c86538f80f7f7cdba57`. It is reassembled from the saved bytes, not rebuilt or re-signed. The existing `v1.6.0-qa` release is retained separately; its APK has a different hash and is not overwritten. See [release instructions](releases/v1.6.0/README.md).
+The completed 1.6 import formerly kept split copies of eight restored source
+assets and a published APK. Those transfer pieces and their one-time restoration
+utilities are no longer needed in a working checkout. The canonical source
+assets remain, and the original APK is available through the
+[1.6.0 release record](releases/v1.6.0/README.md).
 
-## Preserve the signing identity
+The old snapshot manifest, migration scripts, import-era documentation and
+one-shot 2.2.1 artifact-recovery workflows are recoverable from Git history.
+The last pre-cleanup main source is
+`07511f5544b688c657773dce8a29d8d31ba68cb1`. Inspect that revision in a separate
+worktree when researching the import; do not run its snapshot validator against
+current application sources or promote historical records to current proof.
 
-Restore `lightforge-release.jks` and `keystore-password.txt` from the separate private backup into a directory outside the checkout. Build with:
+This cleanup is an ordinary forward commit. It does not rewrite history,
+force-push, alter published tags/assets or change another PR. Removing duplicate
+files reduces the current checkout and future shallow clones; it does not purge
+those bytes from existing clones or GitHub's historical object database.
+
+For a fresh current-source checkout:
 
 ```bash
-LIGHTFORGE_SIGNING_DIR=/absolute/path/to/private-signing bash build.sh
+git clone --depth 1 --single-branch https://github.com/CyberBASSLord-666/LightForge.git
 ```
 
-The original certificate SHA-256 is `7187d6aa935d5b7d2d656cb87913af95fe1ca3a4b1653036d1d8d890e2016c6b`. A new signing key cannot update the installed app. Keep the private source ZIP outside Git because it contains these credentials.
+Fetch older history explicitly when needed. History rewriting and shared-branch
+cleanup are separate, coordinated operations—not an implicit part of routine
+source maintenance.
 
-This repository and its music/assets remain private. Existing third-party notices and rights remain in effect. No physical phone or vehicle testing is claimed by this migration.
+## Keep documentation accurate
+
+Use relative links to canonical guides instead of repeated procedures. Keep
+release history in [CHANGELOG.md](CHANGELOG.md) and evidence pointers in
+[VALIDATION.md](VALIDATION.md). Label unmeasured performance, optional inputs and
+physical observations honestly. Update implementation contracts alongside code;
+do not erase unfinished capability work to make a readiness document look green.

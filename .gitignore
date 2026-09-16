@@ -1,45 +1,29 @@
-# Secrets — never commit
+# Private credentials and local configuration; never force-add these.
 /signing/
 **/keystore-password.txt
-**/*.jks
-**/*.keystore
+*.jks
+*.keystore
+*.p12
+*.pfx
+.env
+.env.*
+!.env.example
+!.env.sample
 local.properties
+*Private-Source*.zip
+LightForge-diagnostics-*.txt
 
-# Build / toolchain
+# Installed tools, dependencies, IDE state and reproducible build outputs.
 /build/
 /dist/
+/output/
 **/toolchain/
-
-# Fat binaries (restore from private archive / /workspace/lightforge-assets/)
-web/analysis/models/beat-this-large.onnx
-web/analysis/models/beat-this-small.onnx
-web/analysis/models/frame-mn10-singing.onnx
-web/analysis/models/beatnet-v1.onnx
-web/analysis/models/uvr-mdx-voc-ft.onnx
-web/analysis/vendor/ort-wasm-simd-threaded.wasm
-web/demo/glass-castle.wav
-web/preview/models/highland.glb
-research/upstream/vocal-candidates/EfficientAT/resources/metro_station-paris.wav
-research/upstream/pretrained-sed/test_files/*.wav
-research/model-source/2024_tesla_model_3.glb
-
-# Research weights / datasets
-**/*.pth
-**/*.pt
-**/*.h5
-research/upstream/pretrained-sed/hf_dataset_gen/metadata/audioset_train_strong.csv
-research/upstream/pretrained-sed/hf_dataset_gen/metadata/audioset_eval_strong.csv
-research/hardware-1.2.0/tesla-xlights.zip
-
-# Oversized QA / verification JSON dumps
-qa/**/current-sample-activations.json
-qa/**/current-sample-balanced-activations.json
-qa/**/current-reference-balanced-activations.json
-qa/**/baseline-sample-activations.json
-release-verification.json
-# catch-all for huge activation dumps
-qa/**/*activations*.json
-
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
 .gradle/
 .idea/
 *.iml
@@ -49,74 +33,20 @@ qa/**/*activations*.json
 *.dex
 *.class
 
-# QA demo / synthetic activation dumps (keep on disk under /workspace/lightforge-assets/)
-qa/**/*demo*
-qa/**/*synthetic*activations*.json
-
-# Explicitly retained assets and evidence from the verified 1.6.0 source backup.
-!/qa/music-1.3.0/baseline-demo-activations.json
-!/qa/music-1.3.0/baseline-demo-music.json
-!/qa/music-1.3.0/baseline-sample-activations.json
-!/qa/music-1.3.0/current-demo-activations.json
-!/qa/music-1.3.0/current-demo-music.json
-!/qa/music-1.3.0/current-sample-activations.json
-!/qa/music-1.3.0/current-synthetic-activations.json
-!/qa/release-1.4.0/current-demo-activations.json
-!/qa/release-1.4.0/current-demo-balanced-activations.json
-!/qa/release-1.4.0/current-demo-balanced-music.json
-!/qa/release-1.4.0/current-demo-music.json
-!/qa/release-1.4.0/current-reference-balanced-activations.json
-!/qa/release-1.4.0/current-sample-activations.json
-!/qa/release-1.4.0/current-sample-balanced-activations.json
-!/qa/release-1.4.0/current-synthetic-activations.json
-!/qa/release-1.4.0/current-synthetic-balanced-activations.json
-!/qa/release-1.5.0/vocal-demo.json
-!/release-verification.json
-!/research/hardware-1.2.0/tesla-xlights.zip
-!/research/model-source/2024_tesla_model_3.glb
-!/research/upstream/BeatNet/model_1_weights.pt
-!/research/upstream/panns/Cnn6_mAP=0.343.pth
-!/research/upstream/panns/MobileNetV2_mAP=0.383.pth
-!/research/upstream/pretrained-sed/hf_dataset_gen/metadata/audioset_eval_strong.csv
-!/research/upstream/pretrained-sed/hf_dataset_gen/metadata/audioset_train_strong.csv
-!/research/upstream/pretrained-sed/resources/frame_mn10_strong_1.pt
-!/research/upstream/pretrained-sed/test_files/752547__iscence__milan_metro_coming_in_station.wav
-!/research/upstream/vocal-candidates/EfficientAT/resources/metro_station-paris.wav
-!/research/upstream/yamnet/yamnet.h5
-!/web/analysis/models/beat-this-large.onnx
-!/web/analysis/models/beat-this-small.onnx
-!/web/analysis/models/beatnet-v1.onnx
-!/web/analysis/models/frame-mn10-singing.onnx
-!/web/analysis/models/uvr-mdx-voc-ft.onnx
-!/web/analysis/vendor/ort-wasm-simd-threaded.wasm
-!/web/demo/glass-castle.wav
-!/web/preview/models/highland.glb
-!/qa/apk-badging.txt
-!/qa/apk-signature-verification.txt
-
-# Local reconstructed release and private backups.
-/releases/v1.6.0/LightForge-1.6.0.apk
-*Private-Source*.zip
-__pycache__/
-*.py[cod]
-
-# Generated 2.0 development dependencies and native fixtures.
-node_modules/
-/output/
-qa/hardware-1.2.0/fixtures/
-qa/release-2.0.0/native-*-fixtures/
-qa/release-2.0.0/browser-export.fseq
-
-# Reproduced at build time from pinned official GAME release.
+# Reproduce these graphs from the pinned converters/manifests.
+# Canonical retained models, WASM, geometry and notices remain tracked.
 web/analysis/models/game/*.onnx
-qa/release-1.6.0/fixtures/
-qa/release-2.1.0/native-*-fixtures/
 web/analysis/models/deux/*.onnx
 
-qa/release-2.2.0/native-*-fixtures/
-
-# Reproducible native/current-release fixtures and raw numeric comparison output.
+# Downloaded/generated test data. Existing committed evidence stays historical.
+qa/hardware-1.2.0/fixtures/
+qa/release-*/fixtures/
 qa/release-*/native-*-fixtures/
 qa/release-*/native-classes/
-qa/release-2.2.1/fixtures/
-qa/release-2.2.1/*.f32
+qa/release-*/*.f32
+qa/release-*/browser-export.fseq
+qa/**/*activations*.json
+
+# Retired transfer copies are not build inputs; use Releases or Git history.
+/migration/
+/releases/*/parts/
