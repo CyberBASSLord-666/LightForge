@@ -1,16 +1,21 @@
-# LightForge 2.2.5 — release candidate
+# LightForge 2.2.5
 
-LightForge 2.2.5 / Android version code 20205 is a candidate for the current source. It is not a published or installable update, and it does not claim a new APK, verification run, signature, quality result, or physical validation.
+Android version code: **20205**. Install the original-signed release APK over the existing app to retain private projects.
 
-## Candidate changes
+## Changes
 
-- Carry the current foreground-only completed-restore handling and fresh session-bound 2.2.5 QA sources.
-- Declare that the current source requires the protected performance-quality gate rather than a non-performance waiver.
-- Make physical phone and Tesla observations optional for publication; the public verification receipt explicitly records their absence as unverified.
+- Repair completed-project preview restoration and retain foreground-only restore handling, background-analysis recovery and durable saving.
+- Update and pin the model-export toolchain, CI actions and host test dependencies; retain original model identities and numerical comparison checks.
+- Add bounded timing, resource and synchronization diagnostics with explicit missing-data and measurement-scope reporting.
+- Strengthen source-bound verification, supervised capture cleanup, sealed Android evidence and exact-candidate signing transfer.
+- Use the owner-approved automated-verification publication policy for this version. External corpus benchmarks, human perceptual review and energy/thermal measurements are optional; their absence remains explicit in the public verification report.
+- Keep physical phone and Tesla observations optional and explicitly unverified when absent.
 
-## Candidate status
+## Verification and limits
 
-The candidate must pass fresh source-bound verification, the protected performance-quality gate, and original-signed APK validation before publication. Physical phone and Tesla observations are optional; emulator results do not establish physical-device or vehicle behavior. Until the required gates pass, the published update is [LightForge 2.2.4](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.2.4).
+Publication requires a successful full source-bound host and Android workflow, sealed verification evidence, original-key signature validation, unchanged application payload and matching uploaded-APK digest. The accompanying `release-verification.json` records the published artifact and the scope of its evidence.
+
+Comparative performance and musical quality are **unverified**. This release does not claim a 75% analysis-time reduction, completed blinded perceptual review, measured energy/thermal behavior or physical phone/Tesla validation. Diagnostic timings and unit tests are not substitutes for those measurements. The strict optional performance-quality workflow retains its existing acceptance requirements.
 
 ## Published LightForge 2.2.4 release notes
 

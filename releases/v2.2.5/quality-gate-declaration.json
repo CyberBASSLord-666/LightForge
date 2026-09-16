@@ -4,7 +4,7 @@
     "name": "2.2.5",
     "code": 20205
   },
-  "requirement": "performance_quality_gate",
+  "requirement": "automated_verification_only",
   "classification": "performance",
-  "reason": "This release includes analysis lifecycle, recovery, diagnostics, and performance-gate changes that require the protected performance quality gate."
+  "reason": "The owner authorized v2.2.5 publication using full source-bound automated verification, original signing identity, and package integrity checks, without external corpus, human review, or hardware telemetry as publication prerequisites. Comparative performance, the 75% analysis-time reduction target, musical-quality non-regression, and energy/thermal behavior remain unverified."
 }

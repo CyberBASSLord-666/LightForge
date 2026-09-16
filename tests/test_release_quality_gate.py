@@ -113,6 +113,53 @@ class ReleaseQualityGateTest(unittest.TestCase):
     def tearDown(self):
         self.temporary.cleanup()
 
+    def test_automated_only_policy_is_explicit_and_limited_to_the_authorized_release(self):
+        declaration = dict(self.declaration, requirement="automated_verification_only")
+        self.assertEqual(gate.validate_release_declaration(declaration, version=self.version), declaration)
+        for version in (
+            {"name": "2.2.6", "code": 20206},
+            {"name": "2.2.5", "code": 20206},
+            {"name": "2.2.4", "code": 20204},
+        ):
+            with self.subTest(version=version):
+                with self.assertRaisesRegex(ValueError, "authorized only"):
+                    gate.validate_release_declaration(dict(declaration, release=version), version=version)
+        with self.assertRaisesRegex(ValueError, "classification disagree"):
+            gate.validate_release_declaration(dict(declaration, classification="non-performance"), version=self.version)
+        with self.assertRaisesRegex(ValueError, "unexpected or missing fields"):
+            gate.validate_release_declaration(dict(declaration, production_ready=True), version=self.version)
+        for schema in (True, 1.0, "1"):
+            with self.subTest(schema=schema):
+                with self.assertRaisesRegex(ValueError, "schema is unsupported"):
+                    gate.validate_release_declaration(dict(declaration, schema_version=schema), version=self.version)
+                with self.assertRaisesRegex(ValueError, "schema is unsupported"):
+                    gate.validate_declaration_receipt(
+                        {"schema_version": schema, "source_commit": COMMIT, "source_tree_sha": TREE,
+                         "declaration_sha256": gate.sha256_canonical_json(declaration)},
+                        version=self.version, source_commit=COMMIT, source_tree_sha=TREE, declaration=declaration,
+                    )
+
+    def test_automated_only_cannot_generate_a_pass_target_qualification_receipt(self):
+        self.declaration["requirement"] = "automated_verification_only"
+        with self.assertRaisesRegex(ValueError, "PASS_TARGET provenance requires"):
+            self.provenance()
+
+    def test_automated_only_cannot_reuse_a_performance_qualification_receipt(self):
+        provenance = self.provenance()
+        declaration = dict(self.declaration, requirement="automated_verification_only")
+        with self.assertRaisesRegex(ValueError, "performance quality provenance cannot authorize"):
+            gate.validate_publication_evidence(
+                self.report, provenance, version=self.version, source_declaration=declaration,
+                source_commit=COMMIT, source_tree_sha=TREE,
+                quality_run=run(303, COMMIT, gate.QUALITY_WORKFLOW), quality_commit=git_commit(TREE),
+                baseline_run=self.baseline_run, baseline_commit=git_commit(BASELINE_TREE),
+                baseline_artifact_record=self.baseline_artifact_record,
+                candidate_run=self.candidate_run, candidate_commit=git_commit(TREE),
+                candidate_artifact_record=self.candidate_artifact_record,
+                release_candidate_run=run(404, COMMIT, gate.RELEASE_WORKFLOW),
+                release_candidate_commit=git_commit(TREE), report_sha256=gate.sha256_file(self.report_path),
+            )
+
     def provenance(self):
         return gate.build_provenance(
             report=self.report,

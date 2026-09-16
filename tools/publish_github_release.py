@@ -942,7 +942,7 @@ def single_artifact_file(root, name):
 
 
 def verify_release_quality(request, version, repo, ci, source_commit, source_tree_sha):
-    """Require an authoritative gate unless the derived source scope is prose-only."""
+    """Enforce the source-bound policy without claiming unmeasured qualification."""
     declaration = source_release_declaration(source_commit, version)
     receipt = request.get('quality_gate_policy')
     require(isinstance(receipt, dict), 'Release request is missing quality_gate_policy')
@@ -954,6 +954,20 @@ def verify_release_quality(request, version, repo, ci, source_commit, source_tre
         declaration=declaration,
     )
     scope = _derive_published_release_scope(repo, source_commit, source_tree_sha, version)
+    if declaration['requirement'] == 'automated_verification_only':
+        require('quality_gate' not in request, 'Automated-only release policy must not carry an unused quality-gate run')
+        return {
+            'requirement': 'automated_verification_only',
+            'classification': 'performance',
+            'reason': declaration['reason'],
+            'scope': scope,
+            'qualification_status': 'unverified',
+            'comparative_performance': 'unverified',
+            'performance_target_75_percent_reduction': 'unverified',
+            'musical_quality_non_regression': 'unverified',
+            'blinded_human_review': 'unverified',
+            'hardware_energy_and_thermal_measurements': 'unverified',
+        }
     if declaration['requirement'] == 'not_required':
         require(
             scope['classification'] == 'non-performance',
@@ -1071,8 +1085,10 @@ def main(argv=None):
     receipt = json.loads((ROOT / 'release-verification.json').read_text())
     require(receipt['release']['sha256'] == digest(apk), 'Packaged release receipt mismatch')
     verify_apk(apk, version)
-    # The public receipt must disclose missing physical observations. Replace
-    # any request-supplied claim with the result derived by this publisher.
+    # Public receipts disclose the source-bound qualification policy and any
+    # missing observations. Replace request-supplied claims with the results
+    # derived by this publisher. Automated-only publication is never PASS_TARGET.
+    receipt['quality_gate'] = quality
     receipt['physical_validation'] = physical_validation
     (ROOT / 'release-verification.json').write_text(json.dumps(receipt, indent=2) + '\n')
     sums = release_dir / 'SHA256SUMS.txt'

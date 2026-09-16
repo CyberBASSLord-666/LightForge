@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
 """Bind an authoritative quality-gate result to a publishable LightForge release.
 
-The performance-quality gate already decides whether a benchmark candidate is
-fit for release.  This module closes the handoff to the APK publisher: it
+The performance-quality gate decides whether a benchmark candidate meets its
+qualification policy. This module closes the handoff to the APK publisher: it
 records the exact benchmark artifacts, successful Actions runs, candidate
 commit/tree, release version, and the candidate's explicit release
 declaration.  A declaration deliberately contains no commit/tree value: a
 file cannot contain the hash of the tree that contains itself.  Its canonical
 digest is instead bound by the later immutable release request and, for a
-performance release, this protected-workflow provenance receipt.
+performance-qualified release, this protected-workflow provenance receipt.
+The explicitly authorized v2.2.5 automated-only publication policy retains
+all APK verification requirements and reports comparative qualification as
+unverified; it cannot produce performance-quality PASS_TARGET provenance.
 
 It intentionally has no network or credential logic; GitHub API data is
 collected by the protected workflow and rechecked by the publisher.
@@ -35,6 +38,10 @@ QUALITY_ARTIFACT = "performance-quality-gate-report"
 # are not interchangeable evidence.
 BENCHMARK_WORKFLOW = QUALITY_WORKFLOW
 RELEASE_SCOPE_SCHEMA_VERSION = 1
+# The owner explicitly removed external qualification inputs for this pending
+# release. This is a version-scoped publication policy, not a PASS_TARGET result
+# or a reclassification of its runtime changes as documentation-only.
+AUTOMATED_VERIFICATION_ONLY_RELEASE = {"name": "2.2.5", "code": 20205}
 
 # A waiver is deliberately much narrower than "does not look like a model
 # change".  It is only for a release whose delta is demonstrably limited to
@@ -448,7 +455,7 @@ def build_provenance(
 
 
 def validate_release_declaration(declaration: Mapping[str, Any], *, version: Mapping[str, Any]) -> dict[str, Any]:
-    """Validate the candidate-source opt-in or explicit non-performance waiver.
+    """Validate the source-bound qualification or publication policy.
 
     The declaration is stored in the candidate tree, so it must not claim its
     own commit or tree hash.  ``validate_declaration_receipt`` binds it to
@@ -456,16 +463,22 @@ def validate_release_declaration(declaration: Mapping[str, Any], *, version: Map
     """
     expected = {"schema_version", "release", "requirement", "classification", "reason"}
     _require(set(declaration) == expected, "release quality declaration has unexpected or missing fields")
-    _require(declaration.get("schema_version") == SCHEMA_VERSION, "release quality declaration schema is unsupported")
+    _require(type(declaration.get("schema_version")) is int and declaration["schema_version"] == SCHEMA_VERSION, "release quality declaration schema is unsupported")
     _require(validate_version(declaration.get("release")) == validate_version(version), "release quality declaration belongs to another version")
     requirement = declaration.get("requirement")
     classification = declaration.get("classification")
-    _require(requirement in {"performance_quality_gate", "not_required"}, "release quality declaration has an invalid requirement")
+    _require(requirement in {"performance_quality_gate", "not_required", "automated_verification_only"}, "release quality declaration has an invalid requirement")
     _require(
         (requirement == "performance_quality_gate" and classification == "performance")
-        or (requirement == "not_required" and classification == "non-performance"),
+        or (requirement == "not_required" and classification == "non-performance")
+        or (requirement == "automated_verification_only" and classification == "performance"),
         "release quality declaration requirement and classification disagree",
     )
+    if requirement == "automated_verification_only":
+        _require(
+            validate_version(version) == AUTOMATED_VERIFICATION_ONLY_RELEASE,
+            "automated-verification-only publication is authorized only for release 2.2.5 code 20205",
+        )
     reason = declaration.get("reason")
     _require(isinstance(reason, str) and 12 <= len(reason) <= 1000 and "\n" not in reason, "release quality declaration reason must be a concise explicit justification")
     return dict(declaration)
@@ -482,7 +495,7 @@ def validate_declaration_receipt(
     """Validate the post-CI release-request binding for a source declaration."""
     expected = {"schema_version", "source_commit", "source_tree_sha", "declaration_sha256"}
     _require(set(receipt) == expected, "release quality declaration receipt has unexpected or missing fields")
-    _require(receipt.get("schema_version") == SCHEMA_VERSION, "release quality declaration receipt schema is unsupported")
+    _require(type(receipt.get("schema_version")) is int and receipt["schema_version"] == SCHEMA_VERSION, "release quality declaration receipt schema is unsupported")
     validate_release_declaration(declaration, version=version)
     _require(
         _sha1(receipt.get("source_commit"), "release quality declaration receipt source commit")
@@ -528,7 +541,7 @@ def validate_publication_evidence(
     source_declaration = validate_release_declaration(source_declaration, version=version)
     _require(
         source_declaration["requirement"] == "performance_quality_gate",
-        "performance quality provenance cannot authorize a non-performance declaration",
+        "performance quality provenance cannot authorize a declaration that does not require that gate",
     )
     source_commit = _sha1(source_commit, "release source commit")
     source_tree_sha = _sha1(source_tree_sha, "release source tree")

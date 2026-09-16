@@ -4,6 +4,8 @@ The repository root contains the complete Android/WebView source, retained asset
 
 LightForge 2.2.5 / Android version code 20205 is a release candidate, not a published update. The published original-signed update remains 2.2.4. A CI or development APK must never be presented as an update; only an exact original-signed candidate that completes every required release control may be published.
 
+For this version, the owner-approved `automated_verification_only` declaration makes the external locked-corpus comparison, human perceptual review and hardware energy/thermal observations optional. It does not claim the 75% performance target, production-quality qualification or physical validation. The publisher records these results as unverified and still requires protected-main source-bound host/Android CI, sealed evidence, original signing identity, payload equivalence and uploaded-APK digest verification. The separate strict performance-quality workflow remains available without relaxed thresholds; it is not a publication prerequisite for 2.2.5. Existing deployment protections are unchanged.
+
 ## Reproduce the Android update
 
 Requirements: Linux x86_64, Python 3.12.14, Node 22+, Bash, and at least 16 GB of free build space and 8 GB of RAM. The offline models add approximately 1.2 GiB before APK compression.
