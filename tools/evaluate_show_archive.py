@@ -46,7 +46,12 @@ def digest_file(path):
 
 
 def number(value):
-    return value if type(value) in (float, int) and math.isfinite(value) and value >= 0 else None
+    if type(value) not in (float, int) or value < 0:
+        return None
+    try:
+        return value if math.isfinite(value) else None
+    except OverflowError:
+        return None
 
 
 def audit_entries(archive, max_total_bytes):
@@ -140,8 +145,11 @@ def saved_timings(project):
         row = stages.get(name, {})
         require(isinstance(row, dict), 'Invalid stage timing metadata')
         profile = row.get('profile')
-        measured = wall(profile, name)
-        inference = span(profile, name, 'model_inference')
+        try:
+            measured = wall(profile, name)
+            inference = span(profile, name, 'model_inference')
+        except OverflowError as error:
+            raise ValueError('Saved timing metadata contains an out-of-range number') from error
         cache = profile.get('cache', []) if isinstance(profile, dict) else []
         cache = cache if isinstance(cache, list) else []
         outcomes = {entry.get('outcome') for entry in cache if isinstance(entry, dict) and entry.get('domain') == name}
@@ -175,6 +183,8 @@ def saved_timings(project):
 
 def evaluate_archive(archive_path, *, node='node', max_total_bytes=DEFAULT_MAX_TOTAL):
     source = Path(archive_path).resolve()
+    require(type(max_total_bytes) is int and max_total_bytes > 0, 'Total size limit must be positive')
+    require(source.is_file() and 0 < source.stat().st_size <= max_total_bytes, 'Archive file size or type is outside supported bounds')
     before = digest_file(source)
     with tempfile.TemporaryDirectory(prefix='lightforge-show-evidence-') as temporary:
         destination = Path(temporary)

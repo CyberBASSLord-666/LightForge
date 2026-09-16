@@ -3,6 +3,7 @@ import hashlib
 import importlib.util
 import io
 import json
+import os
 from pathlib import Path
 import shutil
 import stat
@@ -10,6 +11,7 @@ import struct
 import subprocess
 import tempfile
 import unittest
+from unittest import mock
 import warnings
 import wave
 import zipfile
@@ -164,6 +166,52 @@ const run=require('./tests/worker-harness.cjs');
         members = dict(self.members); fseq = bytearray(members[TOOL.FSEQ]); fseq[20] = 1; members[TOOL.FSEQ] = bytes(fseq)
         with self.assertRaisesRegex(ValueError,'Compressed, sparse or flagged'):
             TOOL.evaluate_archive(self.make_archive(members))
+
+    def test_high_bit_signature_and_metadata_codes_cannot_alias_valid_ascii(self):
+        second_field = 32 + struct.unpack_from('<H',self.members[TOOL.FSEQ],32)[0]
+        cases = [(offset,'Invalid FSEQ signature/header') for offset in range(4)]
+        cases += [(offset,'Invalid FSEQ variable-header code')
+                  for offset in (34,35,second_field+2,second_field+3)]
+        for offset,message in cases:
+            with self.subTest(offset=offset):
+                members = dict(self.members)
+                # No historical checksum is required by the format. Raw header
+                # validation must reject corruption independently of that file.
+                del members[TOOL.VALIDATION]
+                fseq = bytearray(members[TOOL.FSEQ]); fseq[offset] |= 0x80
+                members[TOOL.FSEQ] = bytes(fseq)
+                with self.assertRaisesRegex(ValueError,message):
+                    TOOL.evaluate_archive(self.make_archive(members))
+
+    def test_source_bounds_and_special_files_fail_before_hashing(self):
+        oversized = self.root/'oversized.bin'; oversized.write_bytes(b'x'*17)
+        empty = self.root/'empty.bin'; empty.touch()
+        directory = self.root/'directory'; directory.mkdir()
+        cases = [(oversized,16),(empty,16),(directory,16)]
+        if hasattr(os,'mkfifo'):
+            fifo = self.root/'pipe'; os.mkfifo(fifo); cases.append((fifo,16))
+        with mock.patch.object(TOOL,'digest_file',side_effect=AssertionError('Invalid source reached hashing')):
+            for source,budget in cases:
+                with self.subTest(source=source.name), self.assertRaisesRegex(ValueError,'size or type'):
+                    TOOL.evaluate_archive(source,max_total_bytes=budget)
+
+    def test_oversized_numeric_metadata_is_unavailable_or_cleanly_rejected(self):
+        huge = 10**1000
+        self.assertIsNone(TOOL.number(huge))
+        self.assertIsNone(TOOL.number(-huge))
+        model = {'analysisSeconds':huge,'resourceDiagnostics':{'totalWallClockMs':huge},
+                 'separationModel':{'analysisSeconds':huge}}
+        result = TOOL.saved_timings({'music':{'engine':model}})
+        for field in ('reportedPipelineWallSeconds','declaredAnalysisSeconds','separationModelHistoricalSeconds'):
+            self.assertIsNone(result[field])
+        for field in ('wall','inference'):
+            with self.subTest(field=field):
+                measured = profile('voice',False)
+                if field == 'wall': measured['totalWallClockMs'] = huge
+                else: measured['spanSummary']['performance.model_inference']['totalMs'] = huge
+                model['stages'] = {'voice':{'restored':False,'profile':measured}}
+                with self.assertRaisesRegex(ValueError,'out-of-range number'):
+                    TOOL.saved_timings({'music':{'engine':model}})
 
     def test_absent_timing_is_unavailable_not_zero_or_cold(self):
         result = TOOL.saved_timings({'music':{}})

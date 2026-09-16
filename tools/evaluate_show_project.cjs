@@ -27,7 +27,7 @@ function readBounded(filename, limit) {
 // uncompressed LightForge envelope here; actual channel/motion/duration rules
 // are checked by the production ShowEngine validator below.
 function inspectFseq(bytes) {
-  requireValue(bytes.length >= 32 && bytes.toString('ascii', 0, 4) === 'PSEQ', 'Invalid FSEQ signature/header');
+  requireValue(bytes.length >= 32 && bytes.subarray(0, 4).equals(Buffer.from([0x50,0x53,0x45,0x51])), 'Invalid FSEQ signature/header');
   const offset = bytes.readUInt16LE(4), channels = bytes.readUInt32LE(10), frames = bytes.readUInt32LE(14), stepMs = bytes[18];
   requireValue(bytes[6] === 0 && bytes[7] === 2 && bytes.readUInt16LE(8) === 32, 'Expected LightForge FSEQ 2.0');
   requireValue(offset >= 32 && offset <= bytes.length && channels === 200 && frames >= 1 && frames <= 960000 && [15,20].includes(stepMs), 'Invalid FSEQ dimensions');
@@ -37,7 +37,11 @@ function inspectFseq(bytes) {
   for (let cursor = 32; cursor < offset;) {
     if (bytes.subarray(cursor, offset).every(value => value === 0)) break;
     requireValue(cursor + 4 <= offset, 'Truncated FSEQ variable header');
-    const length = bytes.readUInt16LE(cursor), code = bytes.toString('ascii', cursor + 2, cursor + 4);
+    const length = bytes.readUInt16LE(cursor), codeBytes = bytes.subarray(cursor + 2, cursor + 4);
+    // Node's ASCII decoder masks high bits; validate raw bytes before decoding
+    // so malformed codes cannot become a valid media/producer field alias.
+    requireValue(codeBytes.every(value => value >= 0x20 && value <= 0x7e), 'Invalid FSEQ variable-header code');
+    const code = codeBytes.toString('ascii');
     requireValue(length >= 5 && cursor + length <= offset && !Object.hasOwn(fields, code), 'Invalid or duplicate FSEQ variable header');
     const value = bytes.subarray(cursor + 4, cursor + length);
     requireValue(value.at(-1) === 0 && !value.subarray(0, -1).includes(0), 'Malformed FSEQ text field');
