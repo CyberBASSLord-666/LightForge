@@ -1,4 +1,4 @@
-name: Repository maintenance snapshot
+name: Verify retired transfer duplicates
 on:
   push:
     branches: ['maintenance/repository-cleanup-20260916']
@@ -6,46 +6,58 @@ on:
 permissions:
   contents: read
 jobs:
-  snapshot:
+  verify-duplicates:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      - name: Export tracked text and complete object inventory
+        with:
+          persist-credentials: false
+      - name: Verify canonical assets, every transfer piece, and published APK digest
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           python3 - <<'PY'
-          import hashlib, json, pathlib, subprocess, zipfile
+          import hashlib, json, pathlib, subprocess
           root = pathlib.Path('.')
-          records = subprocess.check_output(['git', 'ls-tree', '-rlz', 'HEAD']).split(b'\0')
-          inventory = []
-          with zipfile.ZipFile('/tmp/maintenance-source.zip', 'w', zipfile.ZIP_DEFLATED) as archive:
-              for record in records:
-                  if not record:
-                      continue
-                  metadata, raw_path = record.split(b'\t', 1)
-                  mode, kind, oid, size = metadata.decode().split()
-                  name = raw_path.decode('utf-8')
-                  entry = {'path': name, 'mode': mode, 'type': kind, 'sha': oid, 'size': int(size) if size != '-' else 0}
-                  inventory.append(entry)
-                  if kind != 'blob' or mode == '120000' or entry['size'] > 8 * 1024 * 1024:
-                      continue
-                  data = (root / name).read_bytes()
-                  try:
-                      data.decode('utf-8')
-                  except UnicodeDecodeError:
-                      continue
-                  if b'\0' in data:
-                      continue
-                  archive.writestr(name, data)
-                  entry['included'] = True
-              archive.writestr('MAINTENANCE_SNAPSHOT.json', json.dumps({'commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(), 'files': inventory}, indent=2))
-          print('Tracked objects:', len(inventory))
-          print('Text files:', sum(bool(e.get('included')) for e in inventory))
-          print('Archive SHA-256:', hashlib.sha256(pathlib.Path('/tmp/maintenance-source.zip').read_bytes()).hexdigest())
+          manifest = json.loads((root / 'migration/manifest.json').read_text())
+          release = json.loads(subprocess.check_output(['gh', 'api', 'repos/CyberBASSLord-666/LightForge/releases/tags/v1.6.0']))
+          assert release['draft'] is False and release['prerelease'] is False
+          results = []
+          for entry in manifest['artifacts']:
+              combined = hashlib.sha256()
+              total = 0
+              for piece in entry['parts']:
+                  path = root / piece['path']
+                  assert path.stat().st_size == piece['bytes'], str(path)
+                  digest = hashlib.sha256()
+                  with path.open('rb') as stream:
+                      while data := stream.read(1024 * 1024):
+                          digest.update(data)
+                          combined.update(data)
+                          total += len(data)
+                  assert digest.hexdigest() == piece['sha256'], str(path)
+              assert total == entry['bytes'] and combined.hexdigest() == entry['sha256'], entry['path']
+              if entry['kind'] == 'source':
+                  canonical = root / entry['path']
+                  assert canonical.stat().st_size == entry['bytes'], str(canonical)
+                  with canonical.open('rb') as stream:
+                      assert hashlib.file_digest(stream, 'sha256').hexdigest() == entry['sha256'], str(canonical)
+                  retained = 'canonical tracked source'
+              else:
+                  matches = [asset for asset in release['assets'] if asset['name'] == 'LightForge-1.6.0.apk']
+                  assert len(matches) == 1
+                  asset = matches[0]
+                  assert asset['state'] == 'uploaded' and asset['size'] == entry['bytes']
+                  assert asset['digest'] == 'sha256:' + entry['sha256']
+                  retained = asset['browser_download_url']
+              results.append({'path': entry['path'], 'bytes': total, 'sha256': combined.hexdigest(), 'parts': len(entry['parts']), 'retained': retained, 'verified': True})
+          report = {'source_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(), 'passed': True, 'artifacts': results, 'redundant_bytes': sum(e['bytes'] for e in results), 'redundant_parts': sum(e['parts'] for e in results)}
+          pathlib.Path('/tmp/maintenance-proof.json').write_text(json.dumps(report, indent=2) + '\n')
+          print(json.dumps(report, indent=2))
           PY
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: maintenance-source
-          path: /tmp/maintenance-source.zip
-          retention-days: 1
-          compression-level: 0
+          name: maintenance-proof
+          path: /tmp/maintenance-proof.json
+          retention-days: 7
