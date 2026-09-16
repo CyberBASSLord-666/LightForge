@@ -1,174 +1,79 @@
-# LightForge 2.2.5 candidate validation
+# Validation and evidence scope
 
-LightForge 2.2.5 / Android version code 20205 requires fresh automated release verification and original-signed APK validation bound to the final candidate source. Its owner-approved `automated_verification_only` policy removes external corpus, blinded human review and hardware energy/thermal measurements as publication prerequisites. The public receipt records comparative performance, musical quality and those external observations as unverified; no 75% speedup or perceptual-quality result is claimed. Physical phone and Tesla observations remain optional and unverified when absent. Existing protected-main and deployment controls remain in force.
+A repository test, an APK build, a published release and a performance claim are
+different results. Each must identify the source and evidence it actually covers.
+This page is an index, not a replacement for source-bound receipts.
 
-## Published LightForge 2.2.4 evidence (historical)
+## Published 2.2.5 record
 
-All seven source-bound release verification gates passed in [full production run 34424617050](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34424617050) against source `57e6ee996bd8f9d135e89334585efe90d8667b68`. This includes both the verification/build job and Android lifecycle/diagnostics job. The pinned models, denoise and transcription settings, source clock and 45-second preview-readiness deadline are unchanged. Original-signed seven-gate packaging also passed. Publication and uploaded-file verification are subsequent release steps.
+LightForge **2.2.5 / Android version code 20205** was published on
+**September 16, 2026**. Its immutable release source is
+`9ad78719179a6502adab50a92216ddc74d5dd261`; all nine host/Android verification
+gates passed in [production run 35038907453](https://github.com/CyberBASSLord-666/LightForge/actions/runs/35038907453).
+The [public release](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.2.5)
+contains the original-signed APK, checksum, notes and verification report.
 
-| 2.2.4 check | Result and scope |
-| --- | --- |
-| Assets and regression | Passed: 347 Node tests and all 73 analysis-asset hashes. The npm Python phase ran 69 tests with 68 passes and one native-toolchain skip; the required native lifecycle test then passed separately after bootstrap. The local fully provisioned run passed all 69 without skips. |
-| Preview/startup components | 22 focused tests passed, including restore ownership, pending navigation and unloaded/paused rendering. Completed Studio/Night comparison renders were pixel-identical in the tested scenes. |
-| Native host checks | 24 grouped production-Java checks passed. Controlled JNI lifecycle tests cover cancellation during graph creation, durable crash leases, shared execution ownership and failed-session retirement. |
-| Chromium UI and full pipeline | Passed responsive UI/worker/WebGL checks and the actual Precision model pipeline, saved voice audio, cancellation and compiled-show persistence. |
-| Studio numerical comparison | The matched Linux/JVM comparison of runtime 1.23.2 and 1.25.1 returns bit-identical vocal/accompaniment samples for one complete 13-second context. This is not an ARM crash reproduction. |
-| Balanced output qualification | Three predetermined decoded-waveform comparisons and a paired actual Frame-MN10/vocal/GAME comparison passed; both downstream runs produced 16 sung notes. Worst waveform error was 2.5332e-7. Internal-spectrum diagnostics failed and remain disclosed in the [revised numerical protocol](qa/release-2.2.4/NUMERICAL_QUALIFICATION.md). The CI rechecks the retained same-release numerical receipts without relabeling their original execution dates. |
-| Android background lifecycle | Passed all 6 grouped checks on an API 35 x86_64 emulator: Studio and native Balanced screen-off/Doze execution, completed-project reopening, live notification cancellation, immediate Resume with verified saved-passage reuse, and media-processing timeout cleanup. |
-| Android Balanced route | Actual native MDX executed both polarity passes with no WASM separator passes. Model/tensor release was observed before WASM voice/GAME. The 3-second fixture retained 132,300 source samples, 66,150 half-rate stem samples, all 8 GAME steps and 150 choreography frames. |
-| Android diagnostics | Passed all 8 checks: persistent worker/native crash traces, binary tombstone decoding, compatibility selection from the durable lease, readable Downloads reports, selected-URI helper, actual Guide JavaScript export and detached/repeated renderer recovery. Intentional SIGILL does not reproduce the supplied Samsung crash; API 35 helper coverage is not an Android 8–9 picker-UI test. |
-| Original-signed update build | Verified signature/original certificate, alignment, ZIP, assets and native libraries. APK: 1,204,357,470 bytes; SHA-256 `fc7eef58ed63d28ddb9de6dc3b16396db48fcd9281fc731d152768fcc0c863ad`. The CI emulator used the separately temporary-signed APK; that file cannot update an existing original-signed installation. Final packaging passed all seven source-bound gates and binds their receipts to the original-signed build. |
-| Physical phone and Tesla | Unperformed: sustained long-song timing, thermals, manufacturer power behavior, the supplied Samsung crash reproduction and physical vehicle timing. |
+Coverage includes completed-project preview restoration, background analysis and
+durable saving, cancellation/resume, and diagnostic export/recovery. Android
+results are emulator observations, not physical-phone or Tesla tests. Original
+signing identity, unchanged application payload and uploaded-APK digest are
+separate publication checks.
 
-The full Android lifecycle run completed in 982.212 seconds. Its five readiness waits were 5.519, 27.138, 20.711, 36.482 and 21.189 seconds, all below the unchanged 45-second deadline, with visual-state completion and actual hardware frame commitment. On the synthetic three-second fixture, Studio finished in 276.031 seconds and Balanced in 55.683 seconds, including 27.4406 seconds of MDX separation. A 12-second Studio Resume attempt finished in 290.228 seconds after cancellation, reusing at least one verified passage and saving two final passages. These are small emulator-fixture observations across different quality modes, not a quality-equivalent speed comparison or physical-phone benchmark.
+The version-scoped `automated_verification_only` policy did not require an
+external corpus, human perceptual review or energy/thermal observations. Their
+absence remains disclosed. It did **not** establish comparative musical quality,
+zero regression across arbitrary songs or a 75% runtime reduction. The strict
+optional performance-quality workflow was not weakened.
 
-The [portable settings proof](qa/release-2.2.4/fixture-settings/README.md) demonstrates the earlier fixture defect: five sparse settings correctly fail the unchanged worker input-digest check, while the complete UI settings preserve input/frame hashes and avoid repeated restore. This component proof runs production app/worker logic through hosted adapters; it does not run audio models, GPU rendering or Android.
+## Current source versus release evidence
 
-Original failures remain distinct: [teardown ANR](qa/release-2.2.4/android-first-run/README.md), [preview-readiness timeout](qa/release-2.2.4/android-preview-first-frame-run/README.md), [focused diagnostic failure](qa/release-2.2.4/android-readiness-diagnostic-run/README.md), [startup follow-up](qa/release-2.2.4/android-startup-followup-run/README.md), and [corrected-fixture timeout](qa/release-2.2.4/android-corrected-fixture-run/README.md). The fixture correction did not turn those failed records into passes or fully explain their different observations.
+[version.json](version.json) describes the source identity. Commits after a
+release may retain that version while development continues; they are not covered
+by the released APK's receipt. Read the exact source SHA and run in each record.
 
-The additional [observer diagnostic run](qa/release-2.2.4/android-observer-run/README.md), source `92d8392140e8cfa3fd2980df10695a66629f11ef`, remains failed at its original 45-second readiness gate. Continued observation of the same view reached all the same readiness conditions, visual-state callback and hardware frame commitment 6.225 seconds later. Its separate diagnostics passed eight checks. The retained native journal has no ERROR/FATAL entries, with about 2.46 GB of available memory and no observed OOM; this does not establish a single cause for every earlier timeout. This demonstrates variable cold preview startup in that emulator observation, not a persistent deadlock or a new passing release gate. The observer changes are supplemental and are absent from release source `57e6ee996bd8f9d135e89334585efe90d8667b68`. No deadline was extended and no model or rendering quality was reduced to make the full release run pass.
+| Evidence | What it establishes | What it does not establish |
+| --- | --- | --- |
+| Repository hygiene | Current documentation links, layout and prohibited tracked clutter | App behavior, model accuracy or APK qualification |
+| Node/Python regression | Tested software contracts on the test host | Android lifecycle or general musical accuracy |
+| Native/model comparison | The explicitly paired inputs, source, graphs and numerical/runtime checks | Universal parity or representative device performance |
+| Browser/preview tests | Browser execution, adapters, persistence and tested rendering paths | Physical car behavior or real Android services |
+| Android emulator tests | Packaged app and the instrumented lifecycle/diagnostic scenarios | Physical phone thermal behavior or Tesla latency |
+| Signed release verification | Exact APK integrity, original certificate and source-bound publication gates | Unmeasured comparative or physical claims |
+| Strict benchmark qualification | Only the locked corpus, paired conditions and accepted statistical/human evidence | Unrepresented songs, hardware or settings |
 
-Version 2.2.3 remains an unpublished development precursor with its original evidence in `qa/release-2.2.3/`. The retained 2.2.2 and 2.2.1 sections below describe their original evidence and are not promoted to 2.2.4 results.
+[Production verification](.github/workflows/verify-v2.yml) is the executable
+source for current gate ordering. [BUILD.md](BUILD.md) describes reproduction.
+Generated current-run reports are not new golden references. Source/model
+changes require fresh evidence or the existing explicit immutable-retention
+protocol; changing an old hash or timestamp is not verification.
 
----
+## Historical evidence retained in place
 
-# Historical LightForge 2.2.2 validation
+Versioned `qa/` directories contain both historical evidence and helpers still
+imported by current tests. Do not delete them merely because a filename contains
+an earlier version. Preserve failed probes alongside later passes; do not
+relabel old results to support a changed release.
 
-Version 2.2.2 / code 20202 adds local diagnostic collection, Downloads export and guarded renderer recovery. All seven release gates pass against source `b0657fabbfec2a0c6482c2d6581179f604c4c010`. Evidence is in `qa/release-2.2.2/`. The complete [production verification run, attempt 2](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34179649874/attempts/2) passed both the verification and Android jobs, including background lifecycle and diagnostic export. The [focused Android diagnostics run](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34179649940) also passed on the same source. Historical numerical kernel evidence is explicitly retained below; it is not promoted to a fresh neural benchmark.
+The 2.2.4 [numerical qualification](qa/release-2.2.4/NUMERICAL_QUALIFICATION.md)
+and retained failed Android probes document their original limits. The 2.2.1
+[Deux runtime comparison](qa/release-2.2.1/DEUX_RUNTIME.md) is a short host excerpt,
+not a phone/full-song benchmark. Earlier reports remain in their original
+versioned folders and Git history. Historical prose has been removed from this
+landing page rather than duplicated as current instructions.
 
-| Current check | Status and scope |
-| --- | --- |
-| Version synchronization | **Passed.** Version, package metadata and generated web version are synchronized to 2.2.2 / 20202. |
-| Node/Python regressions | **Passed: 155 Node tests and 54 Python tests.** Includes diagnostic behavior, redaction/retention, renderer recovery wiring, archive/publication contracts and evidence-corruption rejection. |
-| Native compilation and diagnostic tests | **Passed: 22 host checks.** Production Java compilation, storage/audio/format validation, diagnostic rotation, bounded messages, concurrency and redaction. This is separate from Android execution. |
-| Browser diagnostics and responsive UI | **Passed in Chromium.** Guide and error-state export actions, captured errors/rejected promises, readable browser `.txt` reports, status feedback and responsive layouts. The complete public analysis pipeline also runs the actual bundled models and tests cancellation. |
-| Android renderer and Downloads behavior | **Passed on Android 15.** An actual uncaught worker exception terminates the process; the next process recovers its persisted trace. Repeated complete `.txt` reports are readable in Downloads/LightForge. The real Guide action exports JavaScript errors/rejections, and detached/repeated stale renderer callbacks recover through the native reporting dialog. The selected-URI helper respects a provider-chosen filename; this is not an Android 8–9 picker UI test. |
-| Native Studio lifecycle | **Passed on Android 15.** Actual native Studio analysis and choreography complete with the Activity destroyed, display off and Doze active. Reopening reconnects; cancellation and immediate Resume reuse a saved passage; resource and timeout cleanup pass. No physical-phone performance result is implied. |
-| Analysis numerical evidence | **Numerical kernel evidence retained under the fixed 2.2.2 review.** Immutable prior receipt and all directly measured kernels/model bytes match; only the two explicitly reviewed diagnostics adapters and version metadata differ. A fresh four-window source-clock test passes (932,143 samples, maximum error 2.24 × 10⁻⁸). Six protocol tests reject changed kernels, graphs, other adapters, regenerated unreviewed manifests and altered predecessor evidence. This is not fresh neural inference; current complete-browser/Android execution is validated separately. |
-| Signed update APK | **Passed.** All seven source-bound package gates, full asset matching, native ABIs, original signing identity, version, alignment and checksum. APK: **1,171,745,041 bytes**, SHA-256 `4327295e32b369861d1689686cc877c88f5131402c3ad958e0f93bf5d0a10ebf`. Publication independently verifies the uploaded asset digests before exposing the release. |
-| Physical phone and Tesla | **Unverified.** No claim of resolution for the user's specific device crash without its report and a confirming device run; no long-song, thermal, manufacturer power-policy or physical lamp/motor timing certification. |
+## Unverified claims and optional observations
 
-Reports are collected locally and exported only at the user's request. Host and Android checks cover bounded retention, common-secret redaction, process-restart persistence, provider filenames and readable report contents. A killed process cannot always write a final event, so diagnostic history and available Android process-exit information cannot guarantee a final stack for every native crash, low-memory kill or abrupt termination.
+The [implementation map](docs/ARCHITECTURE_AND_PRODUCTION_READINESS.md) distinguishes
+enabled behavior, optional inputs and missing detector/scheduler capabilities.
+The [strict gate](docs/PERFORMANCE_QUALITY_GATE.md),
+[benchmark contract](docs/ANALYSIS_BENCHMARK_CONTRACT.md) and
+[locked runner](docs/LOCKED_BENCHMARK_RUNNER.md) define comparative qualification.
+A template, synthetic test, cache hit or single timing observation is not a
+substitute for that evidence.
 
-The first combined production attempt passed background analysis, then failed during the diagnostics test while waiting for a JavaScript callback; its emulator logs also contained graphics errors. These observations do not establish a product cause. The failed receipt is preserved as [android-diagnostics-first-combined-attempt-verification.json](qa/release-2.2.2/android-diagnostics-first-combined-attempt-verification.json), outside the passing gates. Rerunning the failed Android job with unchanged source and the same CI candidate passed both background and diagnostics checks; the final receipts come from artifact `10039747863` in attempt 2.
-
-The numerical receipt keeps all 37 original direct source bindings and reports all 73 verified analysis assets separately, anchored to exact outer/model manifests. The fixed before/after adapter review is in [ADAPTER_EVIDENCE_REVIEW.md](qa/release-2.2.2/ADAPTER_EVIDENCE_REVIEW.md).
-
-The following sections retain the completed 2.2.1 results and their original measurement scope. Their use of “current” refers to that historical release.
-
-# Historical LightForge 2.2.1 validation
-
-Version 2.2.1 / code 20201 changes Studio execution and recovery while retaining analysis v6, learned model weights, original soundtrack timing, existing musical semantics and saved-arrangement integrity. Current evidence is under `qa/release-2.2.1/`. All six source-bound release gates, the complete production CI run and original-signed package verification pass; historical measurements below retain their original scope.
-
-| Current check | Status and scope |
-| --- | --- |
-| Node/Python regressions | **Passed against the current sources: 145 Node checks and 39 Python checks.** Engine/role boundaries, deterministic FSEQ, migration, actual-app DOM editing, checkpoint corruption/reuse, native transport, resource sequencing and APK transfer/package contracts. This is not browser rendering or Android execution. |
-| Native host compilation/storage | **Passed against the current Activity teardown sources: 21 host verification checks.** Production Java compilation, storage/audio/format checks, stronger final-checkpoint validation and compatibility with three real 1.6 music-analysis fixtures. |
-| Deux runtime equivalence | **Passed on the development host.** Bounded WASM matches the declared original Float32 output; production Java native CPU matches the separate, identical PCM16 WASM input within measured Float32 error. |
-| Vocal/bass role regression | **Passed: 18 cases.** Fresh downstream neural inference on fixed original-model source estimates retains voice in 12 positive cases and produces zero vocal events in six instrumental cases. These are not 18 newly separated native-runtime mixtures. |
-| Source-clock reconstruction | **Passed.** Production transform/scheduler tests exercise overlapping joins and an odd final sample count with neutral masks; model timing and perceptual accuracy are separate questions. |
-| Chromium UI and complete public analysis | **Passed against unchanged web sources.** Real UI/WebGL, responsive layouts, workers, OPFS, cancellation, persistence and export, including elapsed/passage/reuse progress. The complete production CI run passes both its verification and Android lifecycle jobs. |
-| Android native Studio lifecycle | **Complete current-source probe and production Android job passed.** Native Studio completion/reopen under screen-off/Doze, cancellation during a later passage, immediate Resume with verified passage reuse, resource cleanup and timeout handling. The final production run independently repeats the complete lifecycle checks on its candidate APK. |
-| Signed update APK | **All six source-bound package gates passed; original signing identity verified.** Current APK: 1,171,728,522 bytes, SHA-256 `9fdbc60afecb6ce278d890f36ad58cb67623a485fd800d9e6c4215c6a7b3dd9f`. Exact asset inventory, native ABIs, alignment, ZIP CRCs, version and certificate checks pass. [GitHub release v2.2.1](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.2.1) is published; all four uploaded asset digests match the verified release files. |
-| Physical phone and Tesla | **Unverified.** No sustained-phone, thermal, manufacturer battery-policy or physical lamp/motor timing certification. |
-
-All 73 declared bundled analysis assets have been restored and verified against their pinned manifests. The bounded APK staging check streamed 111 files totaling 1,524,917,198 bytes and verified their exact source hashes; six staging regression tests pass. This establishes staging integrity, not a complete signed release. `tools/package_v2.py` refuses missing, failed or stale required receipts. Build and package verification check every declared model and native-runtime asset against pinned hashes. Native libraries do not enter the APK merely because a host test passes; dependency, ABI, ZIP and signing checks remain separate gates.
-
-## Measured native execution on one development excerpt
-
-The exact comparison uses the same **300,032-sample, approximately 6.803-second stereo PCM16 Falcon excerpt**, the same learned model weights and four inference threads on a Linux x86_64 development machine. See [`DEUX_RUNTIME.md`](qa/release-2.2.1/DEUX_RUNTIME.md), [`deux-native-java.json`](qa/release-2.2.1/deux-native-java.json) and its pinned [`PCM16 WASM reference`](qa/release-2.2.1/deux-bounded-pcm16-wasm.json).
-
-| Measure | Bounded WASM | Production Java native CPU |
-| --- | ---: | ---: |
-| Processing time | 127.25 s | 61.11 s |
-| Peak process resident memory | 1,920.96 MiB | 720.56 MiB |
-
-Native execution was **2.08× faster** in this comparison, with approximately **62.49% less peak process RSS**. These are whole-process host measurements on one short excerpt, not an isolated tensor-allocation budget, full-song result or phone prediction. Even the faster result takes much longer than this excerpt's playback duration. Sustained performance, thermals and successful completion on the user's phone remain unverified.
-
-Native output retains both 300,032-sample crops with no non-finite values. Maximum absolute error against the identical PCM16 WASM reference is approximately **3.21 × 10⁻⁷** for vocals and **2.99 × 10⁻⁷** for accompaniment; RMS error is below **4.51 × 10⁻⁸**. The full model input remains 13 seconds, including source context. Context crop offsets are not a measured output delay.
-
-A separate Float32-input WASM comparison to the historical combined-graph output is bit-identical for both stems. Its input differs from the PCM16 native comparison and must not be substituted for that oracle. The current [`analysis-verification.json`](qa/release-2.2.1/analysis-verification.json) binds these results to exact sources and states their limits. Preserving learned weights does not by itself prove execution equivalence; native transforms, graph partitioning and source-clock handling require the fresh numerical checks above.
-
-## Recovery, cancellation and lifecycle scope
-
-Host transactions now reject incomplete overall music checkpoints, wrong source duration, unsupported versions, malformed arrays, missing role/model fields and changed checkpoint bytes. Repeated attempts after damaged checkpoints return to analysis rather than reusing the same invalid result. Complete legacy v5 analysis remains eligible; existing compiled projects still reopen through their unchanged checksum/migration path. Changing audio, analysis settings, app version or execution namespace prevents stale work reuse; rename and choreography-only edits preserve matching work.
-
-Checkpoint/component tests cover committed passage reuse, failed writes, corrupted or swapped records, stage invalidation when stems are missing, cancellation and exact source sample counts. A fresh worker per rhythm/separation/voice/bass stage frees its prior WASM heap. Native resources are released after separation before voice/GAME; cancellation reaches the active native run, and a process-wide gate serializes heavy native allocations across rapid cancel/resume. Host/DOM tests verify these contracts; the Android lifecycle test must independently confirm runtime behavior.
-
-The implemented Android 15 test runs Studio native CPU separation and full neural choreography after destroying the Activity and turning the display off under forced Doze and a user-equivalent battery exemption. It then cancels during the second passage of a 12-second fixture, immediately starts Resume, checks old native-executor cleanup, and requires at least one restored passage, two final source passages and a compiled show on the same clock. It also observes native-model release during voice/GAME and exercises the media-processing timeout callback. The earlier [native probe](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34166156881) completed its first background fixture and reopened the saved show, then failed while establishing Doze for the second fixture. The next [probe](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34168136295) passed the repeated Doze setup, saved one passage and cancelled native work, but hit an Android focus-event ANR during the resume sequence. It did not verify complete Resume. `MainActivity` now detaches the preview WebView before destruction; the instrumentation asserts actual Activity destruction and WebView detachment. A two-second diagnostic watchdog captures stacks while preserving Android’s normal ANR threshold. The corrected source `f80de0d7fd075cf22506c60910e41ea9f625e922` passed the [complete Android probe](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34169529496), including completion/reopen, cancellation, immediate Resume, verified saved-passage reuse and timeout cleanup. It has a new original-signed APK. The [final production run](https://github.com/CyberBASSLord-666/LightForge/actions/runs/34169530104) passed both verification job `101887086863` and Android lifecycle job `101890350207` on the same source. All six 2.2.1 local package gates also passed for its original-signed APK. Earlier failed probes are retained as diagnostic history, not current passing receipts.
-
-The 18 current role cases use fixed original-PyTorch separation estimates followed by fresh production resampling, singing/speech evidence, vocal detail, GAME and bass processing. They demonstrate the declared positive/negative behavior on that small set, not fresh native separation quality across 18 songs or human-annotated note/word timing. Historical 2.1 separation scores follow below; they remain historical and are not relabeled as a new native benchmark.
-
-## Historical 2.1 separator comparison
-
-| Mixture | Previous MDX vocal SI-SDR | Deux vocal SI-SDR |
-| --- | ---: | ---: |
-| Night Owl | 6.878 | 7.504 |
-| Stella | 17.054 | 18.791 |
-| Meaxic | 16.060 | 16.558 |
-| Grunge | 9.887 | 10.790 |
-| Falcon | 3.058 | 7.044 |
-| SDRNR | 7.315 | 8.162 |
-| Mean | 10.042 | 11.475 |
-
-Units are dB. Deux uses the exact production 13-second context and 1.5-second left halo in the original PyTorch reference. The historical MDX scores use the same declared mixtures and scorer. The six short excerpts are neither representative nor verified held-out data; training overlap is possible. SI-SDR includes its conventional scale projection; plain SDR, envelope correlation, sample counts and instrumental/control leakage are also retained. No reference-derived timing shift, separator mask or per-song tuning is used.
-
-A separate neutral-mask transform test crosses four overlapping windows with 932,143 nonzero source samples, including seam impulses and an odd final count. Maximum round-trip error is below 0.000000023. This checks the real STFT/scatter/ISTFT and scheduler with fake graph sessions; it is not neural-model accuracy.
-
-On controlled remixes, Deux mean vocal SI-SDR is 11.991 dB and envelope correlation is 0.9935. Residual estimated-voice energy outside the exact voice windows is **0.237%**, versus the historical MDX **0.059%**. This is a measured tradeoff: improved mixture fidelity does not make Deux uniformly better at rejecting every tail or artifact. The role gate separately checks that all six instrument-only cases create zero vocal events.
-
-Actual production JS/WASM on Falcon returns exactly 300,032 samples. Compared with the original model's vocal waveform at the same context/crop, maximum absolute error is 0.000468 and RMS error is 0.0000244 (rounded upward). Zero envelope lag was measured on the excerpt's 5 ms diagnostic grid. This does not establish sub-frame perceptual precision or vehicle latency. Both source heads are checked separately in the original ONNX parity probe.
-
-The role component evaluation uses estimated vocals/accompaniment and the production Float32 resampler, classifier, detail extractor and GAME adapter. Original vocal stems are reserved for scoring. Weak general event scores may use independent GAME/source-pitch agreement while retaining existing prominence, duration and speech guards. Classifier scores remain unchanged. Its event counts establish the declared positive/negative behavior, not note-boundary or pitch accuracy against human annotations. The full public browser pipeline is an independent integration gate.
-
-Synchronization review compares selected voice/bass targets with final exported lamp commands after manual output edits. A matching command proves frame placement, not whether an automatic musical target was detected correctly. Bass remains a harmonic estimate from combined accompaniment. There are no lyrics, word timestamps or individually synchronized Tesla Dance strokes.
-
-Those historical desktop WASM, Chromium and host JVM checks do not execute Android Activities, document providers, phone codecs or a physical Tesla. Their original WASM memory needs are not a measurement of the new native execution path. Current host memory/runtime results and pending device scope are recorded above.
-
-## Historical 1.6.0 model choice and measured quality
-
-The selected UVR MDX-Net Voc FT model was compared with Spleeter, HTDemucs FT's vocal specialist, four deterministic Demucs shifts, and a fixed equal MDX/Demucs waveform blend. The official MUSDB18 short excerpts provide six original reference mixtures and vocal stems, six accompaniment-only negatives, and six controlled voice-window remixes. There was no reference-derived mask, gain fitting, latency correction or per-song ensemble selection.
-
-| Candidate | Mean vocal SI-SDR | Vocal RMS-envelope correlation |
-| --- | ---: | ---: |
-| Spleeter | 5.923 dB | 0.8669 |
-| MDX with polarity refinement | **10.042 dB** | 0.9204 |
-| HTDemucs FT, four shifts | 8.687 dB | 0.9227 |
-| Fixed equal MDX/Demucs blend | 9.976 dB | **0.9330** |
-
-MDX improved separation fidelity over Spleeter on every tested mixture. The blend helped the most difficult Falcon excerpt but reduced four other SI-SDR results; it was not a consistent overall winner. Its additional working memory and upstream weight-use uncertainty are recorded in the candidate evidence. MDX was the selected 1.6.0 quality-first model; this does not establish superiority on every song or over every available model.
-
-On the six controlled remixes, MDX's mean estimated voice energy outside the exact voice windows was 0.059%, versus 0.801% for Spleeter; envelope correlation was approximately 0.9898 versus 0.9514. No envelope timing lag was measured in the six natural mixture excerpts. These are acoustic source-estimate metrics, not word-boundary annotations or a subjective choreography score. Original stems contain production effects and codec artifacts; the small set is neither statistically representative nor a verified held-out benchmark.
-
-The final application envelope tracked original vocal dynamics more closely: mean correlation rose from 0.4445 to 0.8331 on the six natural mixtures and from 0.7202 to 0.9652 on the controlled remixes. All 12 positive reference variants retain voice and all six instrumental variants produce zero vocal events. These results concern the declared small reference set.
-
-The complete production pipeline is tested separately from those raw separator outputs. It includes Float32 cache conversion, trained singing/speech evidence, measured vocal detail, bass tracking, composition and export. Component tests using original reference vocals demonstrate detail extraction and command translation only; they are not represented as separator accuracy.
-
-## 3. Retained analysis timing and uncertainty
-
-The separator uses the exact trained 7,680-point FFT geometry. JavaScript spectra and reconstructed waveform are checked against PyTorch reference transforms. Centered filtering and overlap-add remain on the original audio clock. The cache's 63-tap resampler has zero added impulse delay in the independent test; chunked and whole-buffer outputs match. Odd source sample counts produce only the required final half-rate sample, without cumulative drift.
-
-Frame-MN10 produces 40 ms singing/speech evidence. The detail extractor follows separated waveform energy, source contrast, periodicity and local pitch on finer grids. Its phrases, syllabic accents and estimated notes are acoustic estimates. Lead and backing singers are combined; speech does not invent sung notes. There is no lyric transcription or word-by-word forced alignment. Dense, breathy, quiet or heavily processed singing can still be uncertain, and source separation can retain instruments. User Voice/Instrumental guides are reversible editing overlays, not fabricated model confidence.
-
-Bass is estimated from combined accompaniment, not an isolated bass stem. Synthetic ordinary/nearby-kick fixtures use 40 ms onset and 50 ms offset bounds; the closest 50 ms overlapping-kick fixture has a separately disclosed 80 ms onset bound. These do not certify real-song precision. A 5 ms analysis grid and 15/20 ms export frame interval do not guarantee equivalent perceptual or physical accuracy.
-
-The original supplied Sample WAV is complete at 238.04 seconds. Glass Castle declares that duration but physically contains only about 121.749 seconds; only its available prefix is recoverable. Original uploads are unchanged. Neither supplied song has independent vocal or bass-note annotations.
-
-## 4. Reliability and compatibility / limits
-
-Original 1.4, 1.5, 1.6 and previously migrated compiled arrangements are checked against their original settings before only explicitly recognized empty or zero defaults are bound. The 2.0 defaults are an empty musical cue list and zero voice/bass timing offsets; prior guide/focus migrations remain supported. Changes to music, previous settings, nondefault new settings or nonempty guides cannot bypass the check. Accepted upgrades preserve exact original frame and compressed payload bytes; the export header identifies the current producer. Current projects with actual guides follow ordinary full-input integrity checks.
-
-Audio decoding, project revisions, transactional imports, backup/recovery and native FSEQ/ZIP validation execute against production Java on the host JVM. Actual browser workers exercise compression, checksums, corruption rejection, Undo/Redo and IndexedDB reopening. Separate real OPFS tests cover streaming writes, corruption, metadata, cancellation, stored samples and browser audio playback. Missing audition caches do not rewrite saved analysis or prevent original-audio export.
-
-In 2.2.1, a separate worker is terminated after each major model stage so its WebAssembly heap is not carried into the next stage; releasing an individual session alone still does not promise an immediate resident-memory drop. Native separation buffers are separately released before voice/GAME. PCM reads and checkpoint writes are bounded, and the original full-quality soundtrack remains the export audio. Runtime and remaining storage/memory requirements depend on the track and device and can substantially exceed song duration.
-
-The retained 1.6.0 preview gate loaded 105 meshes and 180,081 triangles in actual WebGL2, and checks command/pose parity across quality modes, seeking, hidden views and graphics-context recovery. Visual lamp optics, lens subdivisions, motor travel and Tesla-controlled Dance cadence remain estimates requiring physical comparison.
-
-No physical Android phone or Tesla was tested in this workspace. APK alignment, signature and ZIP checks establish package integrity; desktop Chromium and host JVM checks do not establish phone memory/performance, Android codec-provider behavior or physical lamp/motor timing. Full four-hour neural analysis has not been timed on a phone.
-
-## Related docs
-
-- [`BUILD.md`](BUILD.md)
-- [`ASSETS.md`](ASSETS.md)
-- [`ARCHITECTURE.md`](ARCHITECTURE.md)
-- [`INSTALL_OVER_1.5_to_1.6_CHECKLIST.md`](INSTALL_OVER_1.5_to_1.6_CHECKLIST.md)
+Physical observations are optional for the applicable publication policy, but
+claims about phone performance, energy/thermal behavior, actual Tesla playback,
+actuator travel and perceptual synchronization still require those observations.
+See [physical-validation attestation](docs/PHYSICAL_VALIDATION_ATTESTATION.md).
+Software timing correction and FSEQ frame resolution are not physical latency
+calibration.

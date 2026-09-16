@@ -1,12 +1,15 @@
 # LightForge architecture and production-readiness boundary
 
-**Historical foundation:** `8406acb89faa10ea486e1ec822379d2e177eccbd`  
-**Current assembly parent:** `15120e566c2bfe0f838841dc6e31dede911e3a24`,
-rooted in approved core `ef19fb03f98de3f2121eb8e5257f8afdcc8bdc0f`  
-**Purpose:** describe what this revision implements, what its outputs mean, and
-what evidence is still required before a production-release claim. This is an
-implementation map, not a claim that every requirement in the long-term music
-intelligence roadmap is already met.
+This is the implementation and evidence-boundary map, not a claim that every
+long-term music-intelligence requirement is complete. Use [ARCHITECTURE.md](../ARCHITECTURE.md)
+for ownership contracts and [VALIDATION.md](../VALIDATION.md) for exact published
+release evidence. Source history belongs in Git rather than a manually maintained
+"current assembly parent" paragraph.
+
+The published 2.2.5 release uses a version-scoped automated-verification policy.
+The strict comparative qualification described below remains necessary for the
+corresponding quality/performance claims, but external corpus, human-review and
+hardware measurements are not prerequisites for publishing that version.
 
 ## Status vocabulary
 
@@ -108,7 +111,7 @@ audio.
 | Diagnostic / release-gate tooling | Telemetry, benchmark contract, locked benchmark runner, performance-quality gate, differential analysis, native inference profiling | These establish a reproducible measurement mechanism. The shipped placeholder corpus policy means no current PASS or runtime-reduction conclusion follows from them. |
 | Not established in this snapshot | Generic cross-analyzer spectral feature broker; reliable automatic four-stem/lead-backing separation; automatic classed drum detection; lyrics/word/phoneme alignment; adaptive compute equivalence; resource-aware parallel analysis DAG; measured Tesla perceptual latency; 75% end-to-end improvement | Treat these as roadmap or evidence gaps, not hidden capabilities. |
 
-## Current profiling observation — not a benchmark
+## Historical profiling observation — not a benchmark
 
 One cold CI run of the actual analyzer on a 2-core / 8 GiB worker recorded
 **400.3 s** end-to-end: separation **359.37 s**, voice **36.08 s**, rhythm
@@ -117,10 +120,12 @@ One cold CI run of the actual analyzer on a 2-core / 8 GiB worker recorded
 a locked-corpus baseline/candidate comparison, does not establish a speedup,
 and makes **no 75% runtime-reduction claim**.
 
-## Hard production-release blockers
+## Requirements for comparative and physical claims
 
-This revision must not be described as production-release certified until all
-of the following have evidence in the release record.
+These requirements govern strict comparative qualification and physical claims.
+They are not an additional external-input publication gate for 2.2.5. Automated
+Android, original-key signing, source binding and APK integrity remain mandatory
+under its separate publication policy.
 
 1. **Configure and lock the corpus.** Replace the placeholder
    `__configure_locked_corpus__` policy entry with a reviewed, licensed private
@@ -172,12 +177,13 @@ of the following have evidence in the release record.
    proof. Historical timestamps or receipt hashes must never be rewritten as
    a substitute for the fresh run.
 
-## Current release statement
+## Release and claim boundary
 
-This integration candidate carries forward the historical `8406acb` foundation
-through the approved `ef19` core and current assembly parent with bounded,
-opt-in sidecars, deterministic sequence safeguards, cache contracts, and
-fail-closed evidence plumbing. It is **not yet supported by a configured
-locked corpus and measured baseline/candidate release result**, and therefore
-must not claim production readiness, a quality-regression-free optimization,
-or a 75% runtime reduction.
+The published release record and its exact verification source are indexed in
+[VALIDATION.md](../VALIDATION.md). Current code contains optional sidecars,
+deterministic sequence safeguards, cache contracts and fail-closed evidence
+tooling. It is **not supported by a completed locked-corpus baseline/candidate
+quality/performance result**. Do not claim zero regression across arbitrary
+music, measured physical synchronization, or a 75% runtime reduction without
+the corresponding evidence. Later source changes require fresh applicable
+verification; publication does not close the capability gaps above.

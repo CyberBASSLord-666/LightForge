@@ -1,0 +1,28 @@
+name: Repository hygiene
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: repository-hygiene-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+jobs:
+  hygiene:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            docs
+            tools
+            tests
+            releases/v1.6.0
+      - name: Test repository maintenance contracts
+        run: python3 tests/test_repository_hygiene.py
+      - name: Check tracked clutter and maintained documentation links
+        run: python3 tools/repository_hygiene.py
