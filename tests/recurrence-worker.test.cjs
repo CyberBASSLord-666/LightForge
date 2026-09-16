@@ -115,3 +115,19 @@ test('analyzer adds the recurrence stage only for an explicit analysis option',(
  assert.match(analyzer,/for\(const stage of stages\)/);
 });
 
+
+test('default-enabled recurrence cannot fail a supported long show after neural work is complete',async()=>{
+ const music=fixture();music.duration=7200.02;music.energyStep=.02;music.energy=new Array(360001).fill(.5);music.sections=[{start:0,end:music.duration,energy:.5,confidence:.9}];music.semanticTimeline=Timeline.build(music);
+ const before=JSON.stringify(music),store=memoryStore(),result=await run({recurrenceAnalysis:true},music,store);
+ assert.equal(result.result.duration,7200.02);assert.equal(result.result.energy.length,360001,'never truncate or resample original evidence');
+ assert.equal(result.result.recurrenceAnalysis.enabled,false);assert.equal(result.result.recurrenceAnalysis.requested,true);assert.equal(result.result.recurrenceAnalysis.reason,'evidence-size-limit');assert.deepEqual(Array.from(result.result.recurrenceAnalysis.limits),['energy-frame-limit']);
+ assert.equal(result.result.recurrenceSidecar,undefined);assert.equal(result.result.recurrenceEvidence,undefined);assert.equal(store.values.has('recurrence'),false);
+ const {recurrenceAnalysis,...retained}=result.result;assert.equal(JSON.stringify(retained),before,'complete base analysis remains unchanged');
+ assert.ok(result.messages.some(message=>message.type==='progress'&&message.value.detail.includes('optional recurrence exceeds')));
+});
+
+test('excess section count completes without inventing or caching a partial recurrence descriptor',async()=>{
+ const music=fixture();music.duration=1026;music.energy=new Array(5130).fill(.5);music.sections=Array.from({length:513},(_,i)=>({start:i*2,end:(i+1)*2,energy:.5,confidence:.9}));music.semanticTimeline=Timeline.build(music);
+ const result=await run({recurrenceAnalysis:true},music,memoryStore());
+ assert.equal(result.result.sections.length,513);assert.equal(result.result.recurrenceAnalysis.enabled,false);assert.deepEqual(Array.from(result.result.recurrenceAnalysis.limits),['section-limit']);assert.equal(result.result.recurrenceSidecar,undefined);
+});

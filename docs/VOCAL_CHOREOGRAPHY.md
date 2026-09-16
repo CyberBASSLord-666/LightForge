@@ -1,7 +1,9 @@
 # Acoustic vocal choreography bridge
 
-`vocalChoreography: true` is an explicit, opt-in planning mode. It is off by
-default and does not change legacy frame bytes or FSEQ output when disabled,
+`vocalChoreography: true` is an explicit engine setting. Since 2.3.0 the Studio
+requests it for new projects through **Follow musical expression**. Restoring
+a saved project keeps absent or explicitly false settings off. The engine
+itself remains opt-in and does not change legacy frame bytes or FSEQ output when disabled,
 when enrichment is absent, or when any validation proof fails.
 
 The bridge is intentionally not a recognizer. It consumes only the acoustic
@@ -75,3 +77,18 @@ lyrics, words, phonemes, or semantic stress. Separation artifacts, vocal
 doubles, highly processed voices, screams, rapid delivery, and sparse vocal
 evidence remain confidence-limited and may leave the bridge inactive.
 
+
+## Studio activation and saved evidence
+
+New projects request acoustic enrichment, vocal choreography, semantic hierarchy
+and recurrence/motif planning together. The switch can be turned off per project.
+An existing version-8 analysis can gain freshly validated sidecars and an updated
+composition directly from its saved musical evidence, without decoding audio,
+rerunning Deux/GAME or changing an analysis refresh epoch. Undo restores both
+its original analysis and exact frame sequence. Earlier or incomplete analyses
+request ordinary resumable analysis when enriched evidence is unavailable.
+
+Semantic density control preserves exact selected vocal/bass source attacks.
+Nearby decorative cues can still yield around strong phrases; a lower salience
+tier alone must not erase an already selected measured note or articulation.
+Collision allocation, vehicle constraints and final frame validation still apply.

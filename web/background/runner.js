@@ -94,6 +94,7 @@
   throw Error(label+' validation failed: '+String(detail).slice(0,512));
  }
  function rebuildCanonicalContracts(music){
+  const previousTimeline=music.semanticTimeline,previousEvidence=music.recurrenceEvidence,previousSidecar=music.recurrenceSidecar;
   const timelineApi=requireApi('LightForgeSemanticTimeline',['build','validate']),timeline=timelineApi.build(music);requireValid('Canonical semantic timeline',timelineApi.validate(timeline));
   const salienceApi=requireApi('LightForgeMusicSalience',['build','validate']),salience=salienceApi.build(timeline);requireValid('Canonical music salience',salienceApi.validate(salience,timeline));
   if(timeline.duration!==music.duration||salience.duration!==music.duration)throw Error('Canonical duration reconciliation is inconsistent.');
@@ -106,7 +107,10 @@
    music.vocalSemantics=sidecar;music.vocalSemanticLinks=vocalApi.linkTimeline(sidecar,timeline);
   }
   if(music.recurrenceAnalysis?.enabled===true||music.recurrenceEvidence||music.recurrenceSidecar){
-   const recurrenceApi=requireApi('LightForgeRecurrence',['captureEvidence','validateEvidence','build','validate']),evidence=recurrenceApi.captureEvidence(music,timeline);requireValid('Recurrence evidence',recurrenceApi.validateEvidence(evidence,timeline));
+   const recurrenceApi=requireApi('LightForgeRecurrence',['captureEvidence','validateEvidence','build','validate']);
+   const previousValid=recurrenceApi.validateEvidence(previousEvidence,previousTimeline)?.valid===true&&recurrenceApi.validate(previousSidecar,previousTimeline,previousEvidence)?.valid===true;
+   const input=previousValid&&Array.isArray(previousEvidence.chroma)?{...music,chroma:previousEvidence.chroma,chromaStep:previousEvidence.chromaStep}:music;
+   const evidence=recurrenceApi.captureEvidence(input,timeline);requireValid('Recurrence evidence',recurrenceApi.validateEvidence(evidence,timeline));
    const sidecar=recurrenceApi.build(timeline,evidence);requireValid('Recurrence sidecar',recurrenceApi.validate(sidecar,timeline,evidence));
    music.recurrenceEvidence=evidence;music.recurrenceSidecar=sidecar;music.recurrenceAnalysis={schemaVersion:1,enabled:true,cacheDomain:'recurrence',engineVersion:recurrenceApi.version,sidecarSchemaVersion:sidecar.schemaVersion,clock:sidecar.clock,duration:sidecar.duration,timelineFingerprint:sidecar.timelineFingerprint,evidenceFingerprint:sidecar.evidenceFingerprint};
   }
@@ -152,7 +156,8 @@
    const attemptedExecution=fallbackReason==='native-deux-fallback'?'native-deux-v1':fallbackReason==='native-mdx-fallback'?'native-mdx-v1':null;
    if(forceWasm&&!attemptedExecution)throw Error('The persisted native fallback lineage is invalid. Start a fresh analysis again.');
    const baseAnalysisOptions={projectId,analysisIdentity:request.analysisIdentity,analysisUrl:new URL(base+'analysis.wav',location.href).href,sensitivity:settings.sensitivity,
-    bpmOverride:settings.bpmOverride||undefined,analysisQuality:settings.analysisQuality};
+    bpmOverride:settings.bpmOverride||undefined,analysisQuality:settings.analysisQuality,
+    vocalSemanticEnrichment:settings.vocalSemanticEnrichment===true,recurrenceAnalysis:settings.recurrenceAnalysis===true};
    let expectedCacheIdentity=null;
    if(!needsAnalysis&&typeof MusicAnalyzer.cacheIdentity==='function'){
     // This probe reconstructs only a fully validated completed identity. Its

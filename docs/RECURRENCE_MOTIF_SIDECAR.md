@@ -80,7 +80,7 @@ The state is calculated from repeat order and bounded energy change. It is not a
 The normal pipeline neither schedules the recurrence stage nor returns a
 sidecar unless `recurrenceAnalysis: true` is explicit. A valid sidecar still
 has no effect on the planner, vehicle model, or sequence compiler unless the
-three-part choreography dependency below is also explicit. Existing default
+three-part choreography dependency below is also explicit. Existing engine-default
 analysis and FSEQ output therefore remain byte-equivalent.
 
 Inputs are bounded to 512 sections, 360,000 energy frames, and 72,000 chroma frames. Incomplete, malformed, or stale evidence fails closed instead of being truncated or inferred. The module operates on the decoded-audio clock already established by the semantic timeline.
@@ -112,3 +112,31 @@ the section scene and maps bounded \`phase\`, \`repetitionIndex\`,
 plus at most a 0.12 intensity change. It does not apply command-timing offsets,
 add musical events, overwrite a user-supplied section seed, or relax
 vehicle/collision checks.
+
+## Studio defaults since 2.3.0
+
+The worker and engine APIs retain their explicit opt-in contracts. New Studio
+projects set `recurrenceAnalysis`, `semanticChoreography` and `motifEvolution`
+to true through **Follow musical expression**. Saved projects with absent or
+false flags retain their existing composition until the user enables it.
+
+Enabling expression on a completed version-8 analysis validates and reuses
+current recurrence evidence and its sidecar when available. This preserves
+chroma retained only inside the evidence receipt across off/on changes. If
+there is no current receipt, the app can derive recurrence from the saved
+section and energy evidence without rerunning separation or transcription.
+It does not invent missing chroma, labels or motif matches. Evidence outside
+the optional recurrence contract leaves motif evolution inactive; it must not
+turn an otherwise usable saved analysis into a required neural rerun.
+
+The permitted one-sample background playback-clock reconciliation also carries
+forward chroma only from a previously validated evidence/sidecar pair, then
+rebuilds and validates the new timeline binding.
+
+Optional recurrence bounds are 360,000 energy frames, 72,000 chroma frames
+and 512 sections. At the current 20 ms energy step the energy bound is two
+hours; a supported longer show still completes its base music analysis. When
+a bound is exceeded, the worker returns a requested-but-unavailable recurrence
+marker with `reason: "evidence-size-limit"` and the exceeded limit names. It
+neither truncates the evidence nor retries neural inference. Vocal expression
+and the base composition remain available; motif evolution stays inactive.

@@ -1,4 +1,4 @@
-"""Release 2.2.5 source-only QA protocol guards."""
+"""Current-release source-only QA protocol guards."""
 from hashlib import sha256
 from importlib.util import module_from_spec, spec_from_file_location
 import json
@@ -11,6 +11,8 @@ import tempfile
 from unittest import TestCase, main
 
 ROOT = Path(__file__).resolve().parents[1]
+VERSION = json.loads((ROOT / 'version.json').read_text())
+RELEASE = VERSION['name']
 TOOLS = ROOT / 'tools'
 if str(TOOLS) not in sys.path:
     sys.path.insert(0, str(TOOLS))
@@ -19,8 +21,8 @@ PACKAGE = module_from_spec(PACKAGE_SPEC)
 assert PACKAGE_SPEC.loader is not None
 PACKAGE_SPEC.loader.exec_module(PACKAGE)
 from verification_evidence_manifest import RECEIPTS as VERIFICATION_RECEIPTS
-SPEC = spec_from_file_location('lightforge_verify_analysis_2_2_5',
-                               ROOT / 'qa/release-2.2.5/verify-analysis.py')
+SPEC = spec_from_file_location('lightforge_verify_analysis_current',
+                               ROOT / f'qa/release-{RELEASE}/verify-analysis.py')
 VERIFY = module_from_spec(SPEC)
 assert SPEC.loader is not None
 SPEC.loader.exec_module(VERIFY)
@@ -33,7 +35,7 @@ def digest(path):
     return sha256(path.read_bytes()).hexdigest()
 
 
-class Release225QaProtocolTest(TestCase):
+class CurrentReleaseQaProtocolTest(TestCase):
     def write_receipt(self, root, relative, sources, session=SESSION):
         hashes = {}
         for source_relative in sources:
@@ -44,7 +46,7 @@ class Release225QaProtocolTest(TestCase):
         receipt = root / relative
         receipt.parent.mkdir(parents=True, exist_ok=True)
         receipt.write_text(json.dumps({
-            'release': '2.2.5', 'passed': True, 'errors': [],
+            'release': RELEASE, 'passed': True, 'errors': [],
             'completedAt': '2026-09-14T00:00:00Z',
             'evidenceSessionSchema': VERIFY.EVIDENCE_SESSION_SCHEMA,
             'evidenceSession': session, 'source_hashes': hashes,
@@ -86,7 +88,7 @@ class Release225QaProtocolTest(TestCase):
 
     def test_background_and_restore_producers_publish_invalid_session_failure_first(self):
         producers = [
-            (ROOT / 'qa/release-2.2.5/background-ui.cjs',
+            (ROOT / f'qa/release-{RELEASE}/background-ui.cjs',
              'LIGHTFORGE_BACKGROUND_UI_OUTPUT'),
             (ROOT / 'qa/restore-preview/browser.cjs',
              'LIGHTFORGE_RESTORE_QA_OUTPUT'),
@@ -145,16 +147,16 @@ class Release225QaProtocolTest(TestCase):
 
     def test_native_producers_publish_invalid_session_failure_first(self):
         cases = [
-            ([sys.executable, str(ROOT / 'qa/release-2.2.5/compare-native-mdx.py')],
-             ROOT / 'qa/release-2.2.5/native-mdx-comparison-verification.json'),
-            (['node', str(ROOT / 'qa/release-2.2.5/verify-mdx-downstream.cjs')],
-             ROOT / 'qa/release-2.2.5/native-mdx-downstream-verification.json'),
+            ([sys.executable, str(ROOT / f'qa/release-{RELEASE}/compare-native-mdx.py')],
+             ROOT / f'qa/release-{RELEASE}/native-mdx-comparison-verification.json'),
+            (['node', str(ROOT / f'qa/release-{RELEASE}/verify-mdx-downstream.cjs')],
+             ROOT / f'qa/release-{RELEASE}/native-mdx-downstream-verification.json'),
         ]
         for command, receipt_path in cases:
             with self.subTest(command=command[1]):
                 prior = receipt_path.read_bytes() if receipt_path.exists() else None
                 try:
-                    receipt_path.write_text(json.dumps({'release': '2.2.5', 'passed': True, 'errors': []}))
+                    receipt_path.write_text(json.dumps({'release': RELEASE, 'passed': True, 'errors': []}))
                     completed = subprocess.run(command, cwd=ROOT,
                                                env={**os.environ, 'LIGHTFORGE_EVIDENCE_SESSION': 'invalid session'},
                                                text=True, capture_output=True, check=False, timeout=30)
@@ -171,9 +173,9 @@ class Release225QaProtocolTest(TestCase):
                         receipt_path.write_bytes(prior)
         with tempfile.TemporaryDirectory() as temporary:
             output = Path(temporary) / 'profile.json'
-            output.write_text(json.dumps({'release': '2.2.5', 'passed': True, 'errors': []}))
+            output.write_text(json.dumps({'release': RELEASE, 'passed': True, 'errors': []}))
             completed = subprocess.run(
-                [sys.executable, str(ROOT / 'qa/release-2.2.5/verify-native-inference-profile.py'),
+                [sys.executable, str(ROOT / f'qa/release-{RELEASE}/verify-native-inference-profile.py'),
                  '--output', str(output)],
                 cwd=ROOT, env={**os.environ, 'LIGHTFORGE_EVIDENCE_SESSION': 'invalid session'},
                 text=True, capture_output=True, check=False, timeout=30)
@@ -184,12 +186,12 @@ class Release225QaProtocolTest(TestCase):
             self.assertIn('LIGHTFORGE_EVIDENCE_SESSION is invalid.', receipt['errors'][0])
 
     def test_downstream_replaces_stale_pass_when_upstream_is_missing(self):
-        downstream = ROOT / 'qa/release-2.2.5/native-mdx-downstream-verification.json'
-        upstream = ROOT / 'qa/release-2.2.5/native-mdx-comparison-verification.json'
+        downstream = ROOT / f'qa/release-{RELEASE}/native-mdx-downstream-verification.json'
+        upstream = ROOT / f'qa/release-{RELEASE}/native-mdx-comparison-verification.json'
         previous_downstream = downstream.read_bytes() if downstream.exists() else None
         previous_upstream = upstream.read_bytes() if upstream.exists() else None
         try:
-            downstream.write_text(json.dumps({'release': '2.2.5', 'passed': True, 'errors': []}))
+            downstream.write_text(json.dumps({'release': RELEASE, 'passed': True, 'errors': []}))
             upstream.unlink(missing_ok=True)
             with tempfile.TemporaryDirectory() as temporary:
                 pair = Path(temporary) / 'pair'
@@ -197,7 +199,7 @@ class Release225QaProtocolTest(TestCase):
                 for runtime in ('native', 'wasm'):
                     (pair / (runtime + '-waveform.float32le')).write_bytes(b'upstream-fixture')
                 completed = subprocess.run(
-                    ['node', str(ROOT / 'qa/release-2.2.5/verify-mdx-downstream.cjs')],
+                    ['node', str(ROOT / f'qa/release-{RELEASE}/verify-mdx-downstream.cjs')],
                     cwd=ROOT, env={
                         **os.environ,
                         'LIGHTFORGE_EVIDENCE_SESSION': SESSION,
@@ -246,8 +248,8 @@ class Release225QaProtocolTest(TestCase):
         preview = (ROOT / 'web/preview/vehicle-preview.js').read_text(encoding='utf-8')
         self.assertIn('preview/models/highland.glb', preview)
         self.assertIn('web/preview/models/highland.glb', common)
-        for producer in [ROOT / 'qa/release-2.2.5/browser.cjs',
-                         ROOT / 'qa/release-2.2.5/analysis-browser.cjs',
+        for producer in [ROOT / f'qa/release-{RELEASE}/browser.cjs',
+                         ROOT / f'qa/release-{RELEASE}/analysis-browser.cjs',
                          ROOT / 'qa/restore-preview/browser.cjs']:
             self.assertIn('browser-source-inventory.json', producer.read_text(encoding='utf-8'))
 
@@ -273,7 +275,7 @@ class Release225QaProtocolTest(TestCase):
                 VERIFY.verify_analysis_browser_assets(root, observed, {})
 
     def test_packager_requires_every_current_manifest_receipt(self):
-        gates = PACKAGE.release_gate_names({'name': '2.2.5', 'code': 20205})
+        gates = PACKAGE.release_gate_names(VERSION)
         self.assertTrue(set(VERIFICATION_RECEIPTS) <= set(gates))
         self.assertIn('android-background-verification.json', gates)
         self.assertIn('android-diagnostics-verification.json', gates)

@@ -128,9 +128,11 @@ Do not republish or overwrite a released version to deliver changed application
 bytes. Update the version deliberately, produce a new successful source-bound
 verification run and qualify that exact candidate under the applicable policy.
 
-For **2.2.5 / 20205 only**, the owner-approved `automated_verification_only`
+For **2.2.5 / 20205 and 2.3.0 / 20300**, the owner-approved `automated_verification_only`
 policy makes external corpus benchmarks, human perceptual review and hardware
-energy/thermal observations optional. This exception is version-scoped; it is
+energy/thermal observations optional. The 2.3.0 authorization continues the
+owner's request to develop the improvements and publish when ready without
+user-supplied measurements. This exception is version-scoped; it is
 not a blanket policy for future releases or a `PASS_TARGET` result. The separate
 strict [performance-quality gate](docs/PERFORMANCE_QUALITY_GATE.md) retains its
 thresholds. Physical phone/Tesla observations may be absent, but corresponding

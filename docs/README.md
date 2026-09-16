@@ -21,6 +21,7 @@
 | [Cache recovery](ANALYSIS_CACHE_RECOVERY.md) | Checkpoint identity, corruption and reuse |
 | [Scheduler](ANALYSIS_SCHEDULER.md) | Resource-aware execution and checkpoint behavior |
 | [Rhythm hierarchy](RHYTHM_HIERARCHY.md) | Validated rhythm sidecar and timing hierarchy |
+| [Tonal structure and phrasing](MUSICAL_STRUCTURE.md) | Evidence-supported harmonic boundaries and phrase lengths |
 | [Vocal semantics](VOCAL_SEMANTIC_ENRICHMENT.md) | Evidence, provenance and vocal interpretation |
 | [Vocal choreography](VOCAL_CHOREOGRAPHY.md) | Mapping supported vocal evidence to gestures |
 | [Recurrence and motifs](RECURRENCE_MOTIF_SIDECAR.md) | Optional recurrence sidecar and limitations |
@@ -32,7 +33,7 @@
 
 These contracts define how to collect and evaluate evidence. Their presence is
 not a successful benchmark. The owner-approved external-input exception applies
-to **2.2.5 / 20205 only**; it does not weaken the separate strict qualification
+to **2.2.5 / 20205** and **2.3.0 / 20300**; it does not weaken the separate strict qualification
 thresholds or establish comparative quality, speed or physical behavior.
 
 | Contract | Scope |
@@ -46,6 +47,8 @@ thresholds or establish comparative quality, speed or physical behavior.
 | [Physical attestation](PHYSICAL_VALIDATION_ATTESTATION.md) | Optional phone/Tesla observations |
 | [Timing probes](PERFORMANCE_TIMING_PROBES.md) | Bounded timing observations, not speed claims |
 | [Native inference profiling](NATIVE_INFERENCE_PROFILING.md) | Native-call timing and unchanged-output checks |
+| [Native execution benchmark](NATIVE_EXECUTION_BENCHMARK.md) | Repeated full-passage execution comparisons with exact-output checks |
+| [GAME backend experiment](../tools/game_benchmark/README.md) | Development-only stage comparisons before a native transcription rollout |
 | [Resource diagnostics](RESOURCE_DIAGNOSTICS.md) | Runtime resource reporting |
 | [Process resource collection](PROCESS_RESOURCE_COLLECTION.md) | Explicit process-resource capture |
 | [Synchronization metrics](SYNC_METRIC_PROJECTION.md) | Derived timing metrics and unassessed cases |

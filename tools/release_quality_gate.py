@@ -9,9 +9,9 @@ declaration.  A declaration deliberately contains no commit/tree value: a
 file cannot contain the hash of the tree that contains itself.  Its canonical
 digest is instead bound by the later immutable release request and, for a
 performance-qualified release, this protected-workflow provenance receipt.
-The explicitly authorized v2.2.5 automated-only publication policy retains
-all APK verification requirements and reports comparative qualification as
-unverified; it cannot produce performance-quality PASS_TARGET provenance.
+The explicitly authorized automated-only publication policies retain
+all APK verification requirements and report comparative qualification as
+unverified; they cannot produce performance-quality PASS_TARGET provenance.
 
 It intentionally has no network or credential logic; GitHub API data is
 collected by the protected workflow and rechecked by the publisher.
@@ -38,10 +38,14 @@ QUALITY_ARTIFACT = "performance-quality-gate-report"
 # are not interchangeable evidence.
 BENCHMARK_WORKFLOW = QUALITY_WORKFLOW
 RELEASE_SCOPE_SCHEMA_VERSION = 1
-# The owner explicitly removed external qualification inputs for this pending
-# release. This is a version-scoped publication policy, not a PASS_TARGET result
-# or a reclassification of its runtime changes as documentation-only.
-AUTOMATED_VERIFICATION_ONLY_RELEASE = {"name": "2.2.5", "code": 20205}
+# The owner removed external qualification inputs for 2.2.5 and subsequently
+# authorized publishing the musical-intelligence/inference release when ready
+# without user-supplied measurements. Keep explicit version/code pairs: this
+# publication policy never generates PASS_TARGET or a measured quality claim.
+AUTOMATED_VERIFICATION_ONLY_RELEASES = frozenset({
+    ("2.2.5", 20205),
+    ("2.3.0", 20300),
+})
 
 # A waiver is deliberately much narrower than "does not look like a model
 # change".  It is only for a release whose delta is demonstrably limited to
@@ -476,8 +480,9 @@ def validate_release_declaration(declaration: Mapping[str, Any], *, version: Map
     )
     if requirement == "automated_verification_only":
         _require(
-            validate_version(version) == AUTOMATED_VERIFICATION_ONLY_RELEASE,
-            "automated-verification-only publication is authorized only for release 2.2.5 code 20205",
+            (validate_version(version)["name"], validate_version(version)["code"])
+            in AUTOMATED_VERIFICATION_ONLY_RELEASES,
+            "automated-verification-only publication is authorized only for explicitly listed release/version-code pairs",
         )
     reason = declaration.get("reason")
     _require(isinstance(reason, str) and 12 <= len(reason) <= 1000 and "\n" not in reason, "release quality declaration reason must be a concise explicit justification")

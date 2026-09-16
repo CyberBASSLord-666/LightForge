@@ -10,7 +10,9 @@ const clone = x => JSON.parse(JSON.stringify(x));
 // bounded: a WebView request that never resolves must not leave the completed
 // job, loading overlay and preview permanently latched together.
 const COMPLETED_RESTORE_PROJECT_CHUNK_BYTES=48*1024,COMPLETED_RESTORE_PROJECT_MAX_BYTES=64*1024*1024,COMPLETED_RESTORE_PROJECT_READ_TIMEOUT_MS=12000;
-const defaults = {style:'festival',intensity:.85,dance:'expressive',stepMs:20,sensitivity:.82,beatDivision:'auto',bpmOverride:null,offsetMs:0,palette:'aurora',enabled:{windows:true,mirrors:true,trunk:true,charge:true,interior:true},optionalFog:false,outerBeamRamping:false,outputEnabled:{},manualCues:[],sectionOverrides:{},seed:2025,analysisQuality:'precision',movementDensity:.7,downbeatAnchor:null,meterOverride:null,tempoScale:1,vocalFocus:.85,bassFocus:.9,vocalRegions:[],musicCues:[],vocalOffsetMs:0,bassOffsetMs:0};
+const musicalExpressionKeys=Object.freeze(['vocalSemanticEnrichment','recurrenceAnalysis','semanticChoreography','vocalChoreography','motifEvolution']);
+const recommendedExpression=Object.freeze(Object.fromEntries(musicalExpressionKeys.map(key=>[key,true])));
+const defaults = {...recommendedExpression,style:'festival',intensity:.85,dance:'expressive',stepMs:20,sensitivity:.82,beatDivision:'auto',bpmOverride:null,offsetMs:0,palette:'aurora',enabled:{windows:true,mirrors:true,trunk:true,charge:true,interior:true},optionalFog:false,outerBeamRamping:false,outputEnabled:{},manualCues:[],sectionOverrides:{},seed:2025,analysisQuality:'precision',movementDensity:.7,downbeatAnchor:null,meterOverride:null,tempoScale:1,vocalFocus:.85,bassFocus:.9,vocalRegions:[],musicCues:[],vocalOffsetMs:0,bassOffsetMs:0};
 const state = {audition:'mix',auditionAvailable:false,auditionLoading:false,project:null,music:null,show:null,settings:clone(defaults),projects:[],history:[],future:[],compiled:null,exportHeader:null,saveBlocked:false,composing:false,compileId:0,compileAbort:null,renderedSettingsKey:null,showMusic:null,pendingExport:null,busy:false,job:0,abort:null,view:'studio',editing:null,needAnalysis:false,previewMode:0,exportId:null,lastSave:0,acceptProgress:false,selection:0,loadingProject:false,pendingProjectAction:null,soloPreview:null,completedRestore:null,completedRestorePreviewDeferred:false,analysisExecutionMode:'resume'};
 const audio=$('audio');let auditionEpoch=0,availabilityEpoch=0,auditionAbort=null,auditionURL=null,auditionIntent=null,auditionSignature=null,analysisFallback=null,completedRestoreEpoch=0;let progressClock,toastTimer,saveTimer,regenTimer,lastDraw=0,lastSection=-1,frameRequest=0,dbPromise;
 let previewPaused=document.hidden,nativePreviewPaused=false,pagePreviewPaused=false;
@@ -88,7 +90,8 @@ function parse(value,fallback={}){try{return typeof value==='string'?JSON.parse(
 function formatTime(sec){sec=Number.isFinite(Number(sec))?Math.max(0,Number(sec)):0;return `${Math.floor(sec/60)}:${String(Math.floor(sec%60)).padStart(2,'0')}`;}
 function text(el,value){el.textContent=String(value==null?'':value);}
 function toast(message,error=false){if(error)diagnostics?.log('error','app',message);clearTimeout(toastTimer);text($('toast'),message);$('toast').hidden=false;$('toast').classList.toggle('error',error);toastTimer=setTimeout(()=>$('toast').hidden=true,error?7500:4200);}
-function mergeSettings(s){return {...clone(defaults),...s,enabled:{...defaults.enabled,...(s?.enabled||{})},sectionOverrides:s?.sectionOverrides||{}};}
+// Missing flags belong to historical projects and keep their original arrangement.
+function mergeSettings(s){return {...clone(defaults),...s,...Object.fromEntries(musicalExpressionKeys.map(key=>[key,s?.[key]===true])),enabled:{...defaults.enabled,...(s?.enabled||{})},sectionOverrides:s?.sectionOverrides||{}};}
 function bridge(method,...args){try{return window.Android?.[method]?.(...args);}catch(e){diagnostics?.log('error','bridge',e);toast(e.message||'The device action could not be completed.',true);throw e;}}
 function completedRestoreNeedsPreviewDeferral(job){return !!job?.id&&job.state==='completed'&&localStorage.getItem('lightforge-background-ack')!==job.id;}
 function setCompletedRestorePreviewDeferred(deferred){
@@ -135,7 +138,7 @@ async function selectProject(project,isNew=false,{navigate=true,restoreLease=nul
   if(!isNew&&restoreSaved===undefined){if(project.browser){const blob=await dbGet('audio',id);if(!current())return;if(blob){if(project.audioUrl?.startsWith('blob:'))URL.revokeObjectURL(project.audioUrl);project.audioUrl=URL.createObjectURL(blob);audio.src=project.audioUrl;}saved=await dbGet('projects',id);if(!current())return;
    }else if(project.projectUrl){const response=await fetch(project.projectUrl);if(!current())return;if(response.ok){saved=await response.json();if(!current())return;}}}
   if(!current())return;
-  if(saved){state.settings=mergeSettings(saved.settings);state.music=saved.music||null;state.compiled=saved.compiled||null;state.needAnalysis=!!saved.needAnalysis;}else state.settings=mergeSettings({...state.settings,sectionOverrides:{},manualCues:[],outputEnabled:{},vocalRegions:[],musicCues:[],vocalOffsetMs:0,bassOffsetMs:0});
+  if(saved){state.settings=mergeSettings(saved.settings);state.music=saved.music||null;state.compiled=saved.compiled||null;state.needAnalysis=!!saved.needAnalysis;}else state.settings=mergeSettings({...state.settings,...recommendedExpression,sectionOverrides:{},manualCues:[],outputEnabled:{},vocalRegions:[],musicCues:[],vocalOffsetMs:0,bassOffsetMs:0});
   if(restoreLease&&!completedRestorePulse(restoreLease,'project-loaded',typeof state.compiled?.frameData==='string'?state.compiled.frameData.length:0))throw Error('Native completed-restore lease rejected the project load phase.');
   state.loadingProject=false;document.querySelector('.controls-column').inert=false;text($('trackMeta'),`${formatTime(project.duration)} · ${project.previewSampleRate===22050?'Long-track mono preview · Stereo export':'44.1 kHz stereo · On this device'}`);syncControls();
   if(state.music)await regenerate({save:false,restoreCompiled:state.compiled,restoreLease});else{updateButtons();renderFrame(0);drawWave();}
@@ -160,13 +163,13 @@ async function restoreSnapshot(saved,{recordHistory=true}={}){
 }
 async function undo(){if(!state.history.length||state.busy||state.loadingProject)return;const saved=state.history.pop();state.future.push(captureSnapshot());trimHistory(state.future);await restoreSnapshot(saved,{recordHistory:false});syncControls();}
 async function redo(){if(!state.future.length||state.busy||state.loadingProject)return;const saved=state.future.pop();state.history.push(captureSnapshot());trimHistory(state.history);await restoreSnapshot(saved,{recordHistory:false});syncControls();}
-function syncControls(){const s=state.settings;document.querySelectorAll('[data-style]').forEach(b=>{b.classList.toggle('selected',b.dataset.style===s.style);b.setAttribute('aria-checked',String(b.dataset.style===s.style));});document.querySelectorAll('[data-dance]').forEach(b=>{b.classList.toggle('selected',b.dataset.dance===s.dance);b.setAttribute('aria-checked',String(b.dataset.dance===s.dance));});for(const id of ['intensity','stepMs','sensitivity','beatDivision','offsetMs','palette'])$(id).value=s[id];$('bpmOverride').value=s.bpmOverride||'';$('optionalFog').checked=!!s.optionalFog;document.querySelectorAll('[data-feature]').forEach(el=>el.checked=!!s.enabled[el.dataset.feature]);text($('intensityValue'),Math.round(s.intensity*100)+'%');text($('sensitivityValue'),Math.round(s.sensitivity*100)+'%');text($('danceHelp'),s.dance==='off'?'Keep the rhythm in the lights. Powered closures stay still.':s.dance==='balanced'?'Musical gestures with room to breathe between the big moments.':'Coordinated window, mirror, trunk and charge-port moves at musical peaks.');document.querySelectorAll('input[type=range]:not(#seek)').forEach(updateRangeFill);$('undo').disabled=!state.history.length;updateButtons();}
+function syncControls(){const s=state.settings;document.querySelectorAll('[data-style]').forEach(b=>{b.classList.toggle('selected',b.dataset.style===s.style);b.setAttribute('aria-checked',String(b.dataset.style===s.style));});document.querySelectorAll('[data-dance]').forEach(b=>{b.classList.toggle('selected',b.dataset.dance===s.dance);b.setAttribute('aria-checked',String(b.dataset.dance===s.dance));});for(const id of ['intensity','stepMs','sensitivity','beatDivision','offsetMs','palette'])$(id).value=s[id];$('bpmOverride').value=s.bpmOverride||'';$('optionalFog').checked=!!s.optionalFog;const expression=$('musicalExpression');if(expression){expression.checked=musicalExpressionKeys.every(key=>s[key]===true);expression.indeterminate=musicalExpressionKeys.some(key=>s[key]===true)&&!expression.checked;}document.querySelectorAll('[data-feature]').forEach(el=>el.checked=!!s.enabled[el.dataset.feature]);text($('intensityValue'),Math.round(s.intensity*100)+'%');text($('sensitivityValue'),Math.round(s.sensitivity*100)+'%');text($('danceHelp'),s.dance==='off'?'Keep the rhythm in the lights. Powered closures stay still.':s.dance==='balanced'?'Musical gestures with room to breathe between the big moments.':'Coordinated window, mirror, trunk and charge-port moves at musical peaks.');document.querySelectorAll('input[type=range]:not(#seek)').forEach(updateRangeFill);$('undo').disabled=!state.history.length;updateButtons();}
 function updateRangeFill(el){el.style.setProperty('--fill',100*(Number(el.value)-Number(el.min))/(Number(el.max)-Number(el.min))+'%');}
 function settingsChanged(needsAnalysis=false){
  state.compileAbort?.abort();state.compileId++;state.composing=false;clearTimeout(regenTimer);
  if(needsAnalysis){state.needAnalysis=true;state.analysisExecutionMode='fresh';}syncControls();scheduleSave();
  if(state.music&&!needsAnalysis&&!state.needAnalysis){state.composing=true;updateButtons();regenTimer=setTimeout(()=>regenerate(),220);}
- else if(state.needAnalysis){$('validationCard').hidden=true;text($('generationHint'),'Create again to analyze the music with your updated rhythm settings.');}
+ else if(state.needAnalysis){$('validationCard').hidden=true;text($('generationHint'),'Create again to analyze the music with your updated music settings.');}
 }
 function updateButtons(){
  const has=!!state.show,waiting=state.busy||state.loadingProject||state.composing||state.auditionLoading,ready=currentShowMatches()&&state.show.validation?.valid;
@@ -479,7 +482,7 @@ async function generate(){
  try{
   await setAudition('mix',{internal:true,resume:false});if(job!==state.job)return;
   let music=state.music;const settings=clone(state.settings);
-  if(!music||state.needAnalysis||(music.analysisVersion||1)<5)music=await MusicAnalyzer.analyze(state.project.audioUrl,{sensitivity:settings.sensitivity,bpmOverride:settings.bpmOverride||undefined,analysisQuality:settings.analysisQuality,projectId:state.project.id,analysisUrl:state.project.analysisUrl||undefined},p=>{if(job===state.job)setProgress({...p,progress:.96*Math.max(0,Math.min(1,Number(p.progress)||0))});},state.abort.signal);
+  if(!music||state.needAnalysis||(music.analysisVersion||1)<5)music=await MusicAnalyzer.analyze(state.project.audioUrl,{sensitivity:settings.sensitivity,bpmOverride:settings.bpmOverride||undefined,analysisQuality:settings.analysisQuality,vocalSemanticEnrichment:settings.vocalSemanticEnrichment===true,recurrenceAnalysis:settings.recurrenceAnalysis===true,projectId:state.project.id,analysisUrl:state.project.analysisUrl||undefined},p=>{if(job===state.job)setProgress({...p,progress:.96*Math.max(0,Math.min(1,Number(p.progress)||0))});},state.abort.signal);
   if(job!==state.job)return;setProgress({progress:.96,stage:'generate',detail:'Composing phrases and preparing movements for musical arrivals.'});
   music=alignedMusic(music);
   const result=await ShowCompiler.generate(music,settings,p=>{if(job===state.job)setProgress({...p,progress:.96+.04*Math.max(0,Math.min(1,Number(p.progress)||0))});},state.abort.signal);
@@ -535,6 +538,7 @@ function projectMenu(p){text($('menuProjectName'),p.name);$('projectMenu').showM
 function namePrompt(title,value,action){return new Promise(resolve=>{text($('nameTitle'),title);text($('nameOkay'),action);$('projectNameInput').value=value;const finish=value=>{diagnostics?.protectText(value);$('nameDialog').close();resolve(value);};const accept=()=>{const value=$('projectNameInput').value.trim();if(value)finish(value);else $('projectNameInput').focus();};$('nameOkay').onclick=accept;$('nameCancel').onclick=()=>finish(null);$('nameDialog').oncancel=()=>resolve(null);$('projectNameInput').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();accept();}};$('projectNameInput').oninput=()=>$('nameOkay').disabled=!$('projectNameInput').value.trim();$('nameOkay').disabled=!value.trim();$('nameDialog').showModal();setTimeout(()=>{$('projectNameInput').focus();$('projectNameInput').select();},50);});}
 async function renameProject(p){const name=await namePrompt('Rename your show',p.name,'Save name');if(!name||name===p.name)return;try{if(state.project?.id===p.id&&!(await saveProject()))return;if(native()){state.pendingProjectAction={kind:'rename',id:p.id};beginBusy('Renaming your show','Updating your collection.');bridge('renameProject',p.id,name);return;}const saved=await dbGet('projects',p.id);if(saved){saved.name=name;saved.updatedAt=Date.now();await dbPut('projects',p.id,saved);}p.name=name;p.updatedAt=Date.now();if(state.project?.id===p.id){state.project.name=name;text($('trackTitle'),name);}localStorage.setItem('lightforge-projects',JSON.stringify(state.projects));renderProjects();toast('Show renamed.');}catch(e){diagnostics?.log('error','operation',e);endBusy();toast('Could not rename this show: '+e.message,true);}}
 async function duplicateProject(p){const name=await namePrompt('Name your new version',p.name+' copy','Create copy');if(!name)return;try{if(state.project?.id===p.id&&!(await saveProject()))return;const job=beginBusy('Creating your new version','Copying music, analysis and your creative settings.');if(native()){state.pendingProjectAction={kind:'duplicate',id:p.id};bridge('duplicateProject',p.id,name);return;}let blob=await dbGet('audio',p.id);if(job!==state.job)return;if(!blob){const response=await fetch(p.audioUrl);if(job!==state.job)return;blob=await response.blob();if(job!==state.job)return;}const saved=await dbGet('projects',p.id);if(job!==state.job)return;const id='show-'+crypto.randomUUID(),copy={...p,id,name,browser:true,createdAt:Date.now(),updatedAt:Date.now(),audioUrl:URL.createObjectURL(blob)};delete copy.projectUrl;delete copy.analysisUrl;await dbPut('audio',id,blob);if(saved)await dbPut('projects',id,{...saved,name,projectId:id,updatedAt:Date.now()});if(job!==state.job)return;state.projects.unshift(copy);localStorage.setItem('lightforge-projects',JSON.stringify(state.projects));endBusy();await selectProject(copy,false);toast('New version created. Make it your own.');}catch(e){diagnostics?.log('error','operation',e);endBusy();toast('Could not copy this show: '+e.message,true);}}
+$('musicalExpression').onchange=async()=>{const enabled=$('musicalExpression').checked;try{await commitChannelSettings(Object.fromEntries(musicalExpressionKeys.map(key=>[key,enabled])));}catch(error){syncControls();toast(error.message,true);}};
 $('newProject').onclick=openAudioPicker;$('restoreBackup').onclick=()=>{if(!native())return;state.acceptProgress=true;bridge('pickProjectBackup');};
 
 function safeName(name){return String(name||'My_Show').replace(/[^a-zA-Z0-9_-]+/g,'_').replace(/^_+|_+$/g,'').slice(0,70)||'My_Show';}
@@ -563,12 +567,43 @@ window.onNativeEvent=(type,payload)=>{if(diagnostics?.handleNativeEvent(type,pay
 
 let editQueue=Promise.resolve();
 function commitChannelSettings(patch){const copied=clone(patch),projectId=state.project?.id;const apply=()=>{if(projectId!==state.project?.id)throw Error('The project changed before this edit was applied.');return applyChannelSettings(copied);};const task=editQueue.then(apply,apply);editQueue=task.catch(()=>{});return task;}
+// Completed evidence can gain acoustic/recurrence sidecars without reopening
+// audio or paying for source separation and transcription a second time.
+function enrichCompletedMusicalEvidence(music,settings){
+ if(!music||Number(music.analysisVersion)<8)return null;
+ const timelineApi=window.LightForgeSemanticTimeline,salienceApi=window.LightForgeMusicSalience,vocalApi=window.LightForgeVocalSemantics,recurrenceApi=window.LightForgeRecurrence;
+ try{
+  if(!timelineApi||!salienceApi)return null;
+  const next={...music},timeline=timelineApi.build(next);
+  if(timelineApi.validate(timeline)?.valid!==true)return null;
+  const salience=salienceApi.build(timeline);if(salienceApi.validate(salience,timeline)?.valid!==true)return null;
+  next.semanticTimeline=timeline;next.musicSalience=salience;
+  if(settings.vocalSemanticEnrichment===true){
+   if(!vocalApi)return null;const input={duration:next.duration,vocals:next.vocals},sidecar=vocalApi.build(input);
+   if(vocalApi.validate(sidecar,input)?.valid!==true)return null;
+   next.vocalSemantics=sidecar;next.vocalSemanticLinks=vocalApi.linkTimeline(sidecar,timeline);
+  }
+  if(settings.recurrenceAnalysis===true){try{
+   if(!recurrenceApi)throw Error('Recurrence module unavailable');
+   const savedEvidence=music.recurrenceEvidence,savedSidecar=music.recurrenceSidecar;
+   const current=recurrenceApi.validateEvidence(savedEvidence,timeline)?.valid===true&&recurrenceApi.validate(savedSidecar,timeline,savedEvidence)?.valid===true;
+   const evidence=current?savedEvidence:recurrenceApi.captureEvidence(next,timeline);
+   if(recurrenceApi.validateEvidence(evidence,timeline)?.valid!==true)throw Error('Recurrence evidence unavailable');
+   const sidecar=current?savedSidecar:recurrenceApi.build(timeline,evidence);if(recurrenceApi.validate(sidecar,timeline,evidence)?.valid!==true)throw Error('Recurrence sidecar unavailable');
+   next.recurrenceEvidence=evidence;next.recurrenceSidecar=sidecar;next.recurrenceAnalysis={schemaVersion:1,enabled:true,cacheDomain:'recurrence',engineVersion:recurrenceApi.version,sidecarSchemaVersion:sidecar.schemaVersion,clock:sidecar.clock,duration:sidecar.duration,timelineFingerprint:sidecar.timelineFingerprint,evidenceFingerprint:sidecar.evidenceFingerprint};
+  }catch(_){delete next.recurrenceEvidence;delete next.recurrenceSidecar;next.recurrenceAnalysis={schemaVersion:1,requested:true,enabled:false,status:'unavailable',reason:'recurrence-evidence-unavailable'};}}
+  return next;
+ }catch(_){return null;}
+}
 async function applyChannelSettings(patch){
  if(state.busy||state.loadingProject)throw new Error('Wait for the current operation to finish.');
- const next=mergeSettings(clone({...state.settings,...patch}));if(JSON.stringify(next)===JSON.stringify(state.settings))return true;const needsAnalysis=['analysisQuality','bpmOverride','sensitivity'].some(k=>next[k]!==state.settings[k]);
+ const next=mergeSettings(clone({...state.settings,...patch}));if(JSON.stringify(next)===JSON.stringify(state.settings))return true;let needsAnalysis=['analysisQuality','bpmOverride','sensitivity'].some(k=>next[k]!==state.settings[k]);
+ const expressionChanged=['vocalSemanticEnrichment','recurrenceAnalysis'].some(k=>next[k]===true&&state.settings[k]!==true);
+ let enriched=null;if(expressionChanged&&!needsAnalysis&&!state.needAnalysis)enriched=enrichCompletedMusicalEvidence(state.music,next);
+ if(expressionChanged&&!enriched)needsAnalysis=true;
  clearTimeout(regenTimer);state.compileAbort?.abort();const ticket=++state.compileId,projectId=state.project?.id;
  if(needsAnalysis||state.needAnalysis||!state.music){snapshot();state.settings=next;if(needsAnalysis)state.needAnalysis=true;state.composing=false;syncControls();scheduleSave();return true;}
- const music=alignedMusic(state.music),controller=new AbortController();state.compileAbort=controller;state.composing=true;updateButtons();
+ const music=alignedMusic(enriched||state.music),controller=new AbortController();state.compileAbort=controller;state.composing=true;updateButtons();
  try{const result=await ShowCompiler.generate(music,next,()=>{},controller.signal);if(ticket!==state.compileId||projectId!==state.project?.id)throw new DOMException('Edit superseded','AbortError');snapshot();stopInspection();state.settings=next;state.music=music;adoptShow(result,music,next);syncControls();scheduleSave();return true;}
  finally{if(ticket===state.compileId){state.composing=false;state.compileAbort=null;updateButtons();}}
 }

@@ -6,7 +6,25 @@ A source version or an entry here does not itself establish publication. The
 [pre-cleanup changelog](https://github.com/CyberBASSLord-666/LightForge/blob/07511f5544b688c657773dce8a29d8d31ba68cb1/CHANGELOG.md)
 retains detailed historical development notes and their original limitations.
 
-## Unreleased — repository maintenance
+## 2.3.0 — musical expression and inference engineering
+
+Add tonal novelty and evidence-supported irregular phrasing to default analysis.
+Recommend validated vocal expression and recurring motifs for new projects;
+allow compatible saved shows to enable expression without rerunning models.
+Preserve selected vocal/bass attacks, historical settings and reversible edits.
+Keep oversized optional recurrence from failing a completed long-show analysis.
+
+Add repeated, exact-output native execution comparisons and a separate GAME
+backend prototype with strict intermediate-output comparison. The prototype is
+not enabled in the app. Retain original model fidelity and the independent
+strict performance target. Publication still requires exact-source host/Android
+verification and the original update-signing identity.
+
+This source also includes bounded automatic renderer recovery from valid saved
+progress and the repository maintenance below. Publication status is recorded
+in GitHub Releases, independently of this source history.
+
+### Repository maintenance
 
 Remove verified redundant source/APK transfer pieces, the completed import
 machinery, obsolete snapshot/checklist documents and two one-shot recovery

@@ -1,6 +1,6 @@
 # Configure the protected release-quality authority
 
-For **2.2.5 / code 20205**, these external qualification inputs are optional under the owner-approved `automated_verification_only` publication declaration. No policy/corpus/review bundle needs to be supplied to publish that version. Comparative performance, musical quality and hardware measurements remain unverified. Existing protected-main and deployment controls, full host/Android verification, original-key signing and package integrity checks remain mandatory. The following setup applies when running the separate strict benchmark qualification; its thresholds and evidence requirements are unchanged.
+For **2.2.5 / code 20205 and 2.3.0 / code 20300**, these external qualification inputs are optional under the owner-approved `automated_verification_only` publication declarations. No policy/corpus/review bundle needs to be supplied to publish these versions. The 2.3.0 declaration follows the owner's request to improve musical intelligence and inference and publish when ready without user-supplied measurements. Comparative claims remain limited to actual recorded test scope; the 75% whole-analysis target, general musical-quality non-regression and hardware measurements remain unverified. Existing protected-main and deployment controls, full host/Android verification, original-key signing and package integrity checks remain mandatory. The following setup applies when running the separate strict benchmark qualification; its thresholds and evidence requirements are unchanged.
 
 This setup authorizes one exact acceptance policy and locked corpus. It does
 not qualify a release, generate benchmark observations, or provide human
@@ -161,13 +161,13 @@ that measurements exist or that those targets passed.
 
 After the exact candidate's full `verify-v2.yml` run succeeds, dispatch
 **Performance quality gate** from `main` with complete baseline artifact/run,
-candidate artifact/run, release candidate run, and `release_version=2.2.5`
-inputs. Complete any existing deployment-review step. The release comparison
+candidate artifact/run, release candidate run, and `release_version` matching
+the exact candidate's `version.json`. Complete any existing deployment-review step. The release comparison
 must report `PASS_TARGET` and `production_ready: true`, with its receipt bound
 to the exact candidate source, tree, APK and artifact metadata. Unit-job
 success or an aggregation job alone is not qualification.
 
 Then follow [BUILD.md](../BUILD.md) for candidate preparation, original-key APK
-signing, delta creation and publication. The public, non-draft `v2.2.5`
+signing, delta creation and publication. The public, non-draft `v<version>`
 release must contain the verified original-signed APK, checksum, release notes
 and verification report. Physical validation may remain explicitly unverified.
