@@ -28,7 +28,7 @@ CLASSES.mkdir(exist_ok=True)
 # Each run owns fresh fixtures, including after an interrupted/repeated local run.
 FIXTURES = Path(tempfile.mkdtemp(prefix="native-fixtures-", dir=OUT))
 sources = sorted((ROOT / 'android/src').rglob('*.java'))
-names = ['NativeRecoveryTest', 'ProjectStoreTest', 'NativeHardwareTest', 'NativeAudioTest', 'WebViewTransportTest', 'ProjectPreviewTest', 'AnalysisJobStoreTest', 'NativeDeuxTest', 'NativeInferenceProfileTest', 'NativeInferenceProfilePairComparisonTest', 'DiagnosticLogTest', 'NativeCrashTraceTest', 'NativeRuntimeGuardTest']
+names = ['NativeRecoveryTest', 'ProjectStoreTest', 'NativeHardwareTest', 'NativeAudioTest', 'WebViewTransportTest', 'ProjectPreviewTest', 'AnalysisJobStoreTest', 'AnalysisRendererRecoveryTest', 'NativeDeuxTest', 'NativeInferenceProfileTest', 'NativeInferenceProfilePairComparisonTest', 'DiagnosticLogTest', 'NativeCrashTraceTest', 'NativeRuntimeGuardTest']
 tests = [ROOT / f'tests/{name}.java' for name in names + ['WebViewTransportServer']]
 bound_sources = sources + tests + [ROOT/'android/native-runtime.json', ROOT/'tests/verify_native_release.py']
 receipt = dict(release=args.release, passed=False, scope='Fresh production Java compilation and host JVM tests; no Android Activity/device/document-provider or physical Tesla execution.',
@@ -73,6 +73,8 @@ try:
     receipt['checks'].append('Production COOP/COEP/CORP response policy is same-origin and independently instantiated across unknown, empty, partial and large responses; ranges and MIME protection remain intact without cross-origin grants.')
     assert 'PASS:' in run('AnalysisJobStoreTest', FIXTURES / 'native-background-fixtures')
     receipt['checks'].append('Durable background job ownership, checkpoint reuse, cancellation, conflicting edits, result commit and interrupted-process recovery passed on the host JVM.')
+    assert 'PASS:' in run('AnalysisRendererRecoveryTest', FIXTURES / 'native-renderer-recovery-fixtures')
+    receipt['checks'].append('Reclaimed-renderer recovery preserves job/source/settings/fresh/runtime lineage and validated checkpoints, rejects crashes, cancellation, stale progress and damaged sources, and enforces backoff, memory/native-retirement conditions and the two-attempt cap on the host JVM.')
     assert 'cancellation checks passed.' in run('NativeDeuxTest')
     receipt['checks'].append('Native Studio transform retains exact source-clock samples and stereo averaging; WAVE padding, malformed input and cancellation regressions passed without neural-model inference.')
     assert 'NativeInferenceProfile:' in run('NativeInferenceProfileTest')

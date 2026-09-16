@@ -162,4 +162,6 @@ final class NativePassageTask implements AutoCloseable {
             if(output!=null)output.delete();directory.delete();
         }
     }
+    /** True only after queued/running work and its finally cleanup have ended. */
+    boolean isRetired(){return closed&&executor.isTerminated();}
 }
