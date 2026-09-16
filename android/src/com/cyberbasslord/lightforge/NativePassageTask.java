@@ -156,10 +156,15 @@ final class NativePassageTask implements AutoCloseable {
         if(closed)return;closed=true;cancelled=true;
         emitProfile(inferenceProfile,"cancelled");
         NativeDeux model=engine;if(model!=null)model.close();
-        executor.shutdownNow();
+        // A queued start owns terminal/finally cleanup, too. Preserve it so it
+        // observes closed instead of letting shutdownNow discard that owner.
+        // model.close() and the volatile flags cancel active native work.
+        executor.shutdown();
         if(!"running".equals(state)){
             engine=null;if(model!=null)try{model.close();}catch(Exception ignored){}
             if(output!=null)output.delete();directory.delete();
         }
     }
+    /** True only after queued/running work and its finally cleanup have ended. */
+    boolean isRetired(){return closed&&executor.isTerminated();}
 }

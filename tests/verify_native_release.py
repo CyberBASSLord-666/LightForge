@@ -28,9 +28,12 @@ CLASSES.mkdir(exist_ok=True)
 # Each run owns fresh fixtures, including after an interrupted/repeated local run.
 FIXTURES = Path(tempfile.mkdtemp(prefix="native-fixtures-", dir=OUT))
 sources = sorted((ROOT / 'android/src').rglob('*.java'))
-names = ['NativeRecoveryTest', 'ProjectStoreTest', 'NativeHardwareTest', 'NativeAudioTest', 'WebViewTransportTest', 'ProjectPreviewTest', 'AnalysisJobStoreTest', 'NativeDeuxTest', 'NativeInferenceProfileTest', 'NativeInferenceProfilePairComparisonTest', 'DiagnosticLogTest', 'NativeCrashTraceTest', 'NativeRuntimeGuardTest']
+names = ['NativeRecoveryTest', 'ProjectStoreTest', 'NativeHardwareTest', 'NativeAudioTest', 'WebViewTransportTest', 'ProjectPreviewTest', 'AnalysisJobStoreTest', 'AnalysisRendererRecoveryTest', 'NativeDeuxTest', 'NativeInferenceProfileTest', 'NativeInferenceProfilePairComparisonTest', 'DiagnosticLogTest', 'NativeCrashTraceTest', 'NativeRuntimeGuardTest']
 tests = [ROOT / f'tests/{name}.java' for name in names + ['WebViewTransportServer']]
-bound_sources = sources + tests + [ROOT/'android/native-runtime.json', ROOT/'tests/verify_native_release.py']
+passage_lifecycle_sources = [ROOT/'tests/test_native_passage_lifecycle.py', ROOT/'tests/NativePassageLifecycleTest.java',
+                             ROOT/'tests/native-mdx-host/com/cyberbasslord/lightforge/AnalysisJobStore.java',
+                             *sorted((ROOT/'tests/native-mdx-host/android').rglob('*.java'))]
+bound_sources = sources + tests + passage_lifecycle_sources + [ROOT/'android/native-runtime.json', ROOT/'tests/verify_native_release.py']
 receipt = dict(release=args.release, passed=False, scope='Fresh production Java compilation and host JVM tests; no Android Activity/device/document-provider or physical Tesla execution.',
                source_hashes={str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in bound_sources}, checks=[], errors=[])
 
@@ -44,6 +47,8 @@ def run(name, *args):
 try:
     subprocess.run([sys.executable, str(ROOT/'tools/bootstrap_testdeps.py')],check=True)
     subprocess.run([sys.executable, str(ROOT/'tools/bootstrap_native_runtime.py'),'--check'],check=True)
+    subprocess.run([sys.executable, str(ROOT/'tests/test_native_passage_lifecycle.py')],check=True)
+    receipt['checks'].append('Production NativePassageTask close-before-start, queued-start cleanup, active native cleanup and same-job replacement isolation passed with controlled native boundaries; retired requires executor finalization and resource/file cleanup.')
     hardware=OUT/'native-hardware-fixtures'
     subprocess.run(['node','--test',str(ROOT/'tests/engine-manual.test.cjs')],cwd=ROOT,env={**os.environ,'LIGHTFORGE_NATIVE_FIXTURES':str(hardware)},check=True,capture_output=True)
     for metadata in hardware.glob('*.json'):
@@ -73,6 +78,8 @@ try:
     receipt['checks'].append('Production COOP/COEP/CORP response policy is same-origin and independently instantiated across unknown, empty, partial and large responses; ranges and MIME protection remain intact without cross-origin grants.')
     assert 'PASS:' in run('AnalysisJobStoreTest', FIXTURES / 'native-background-fixtures')
     receipt['checks'].append('Durable background job ownership, checkpoint reuse, cancellation, conflicting edits, result commit and interrupted-process recovery passed on the host JVM.')
+    assert 'PASS:' in run('AnalysisRendererRecoveryTest', FIXTURES / 'native-renderer-recovery-fixtures')
+    receipt['checks'].append('Reclaimed-renderer recovery preserves job/source/settings/fresh/runtime lineage and validated checkpoints, rejects crashes, cancellation, stale progress and damaged sources, and enforces backoff, memory/native-retirement conditions and the two-attempt cap on the host JVM.')
     assert 'cancellation checks passed.' in run('NativeDeuxTest')
     receipt['checks'].append('Native Studio transform retains exact source-clock samples and stereo averaging; WAVE padding, malformed input and cancellation regressions passed without neural-model inference.')
     assert 'NativeInferenceProfile:' in run('NativeInferenceProfileTest')

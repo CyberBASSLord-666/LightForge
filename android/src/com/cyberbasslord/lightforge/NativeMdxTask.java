@@ -219,5 +219,7 @@ final class NativeMdxTask implements AutoCloseable {
         if(!workerActive)executor.execute(()->{synchronized(this){closeSession();releaseFiles();clearBuffers();jobDirectory.delete();}});
         executor.shutdown();
     }
+    /** Includes asynchronous model/tensor cleanup before another renderer starts. */
+    boolean isRetired(){return closed&&executor.isTerminated();}
     private static String hex(byte[] bytes){StringBuilder out=new StringBuilder(bytes.length*2);for(byte b:bytes)out.append(Character.forDigit((b>>>4)&15,16)).append(Character.forDigit(b&15,16));return out.toString();}
 }

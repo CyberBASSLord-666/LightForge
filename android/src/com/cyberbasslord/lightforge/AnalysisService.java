@@ -28,6 +28,9 @@ public final class AnalysisService extends Service {
     private long lastDiagnosticProgress;
     private volatile NativePassageTask nativePassage;
     private volatile NativeMdxTask nativeMdx;
+    private final Object engineOwnership=new Object();
+    private volatile long engineGeneration;
+    private volatile Thread recoveryThread;
 
     static boolean alive(){return instance!=null&&!instance.stopped;}
     static void recoverIfStopped(Context context) throws Exception {
@@ -60,6 +63,8 @@ public final class AnalysisService extends Service {
         return START_NOT_STICKY;
     }
     private void startEngine(JSONObject job) throws Exception {
+        final long ownedGeneration;
+        synchronized(engineOwnership){ownedGeneration=++engineGeneration;}
         // The status record intentionally contains only bounded notification
         // fields. Read the frozen request to select the accelerator; never
         // infer quality from a mutable UI object.
@@ -100,7 +105,7 @@ public final class AnalysisService extends Service {
         // Keep the out-of-process WASM renderer protected while the service runs,
         // including when no Activity is visible. No screen-on flag or fake media.
         engine.setRendererPriorityPolicy(WebView.RENDERER_PRIORITY_IMPORTANT,false);
-        engine.addJavascriptInterface(new JobBridge(ownedJobId,ownedPassage,ownedMdx),"BackgroundJob");
+        engine.addJavascriptInterface(new JobBridge(ownedJobId,ownedGeneration,ownedPassage,ownedMdx),"BackgroundJob");
         engine.setWebChromeClient(new WebChromeClient(){
             @Override public boolean onConsoleMessage(ConsoleMessage message){
                 if(message.messageLevel()==ConsoleMessage.MessageLevel.ERROR||message.messageLevel()==ConsoleMessage.MessageLevel.WARNING)
@@ -115,7 +120,7 @@ public final class AnalysisService extends Service {
                 String nativePath=uri.getPath();
                 if("https".equals(uri.getScheme())&&"appassets.androidplatform.net".equals(uri.getHost())&&nativePath!=null&&nativePath.matches("/background/native/[a-f0-9-]{36}\\.bin")){
                     try{
-                        if(ownedPassage==null||stopped||!ownedJobId.equals(jobId))throw new IOException("Native analysis stopped.");
+                        if(ownedPassage==null||!ownsEngine(ownedJobId,ownedGeneration))throw new IOException("Native analysis stopped.");
                         String token=nativePath.substring("/background/native/".length(),nativePath.length()-4);
                         File result=ownedPassage.result(token);
                         String range=null;for(java.util.Map.Entry<String,String> entry:request.getRequestHeaders().entrySet())if("Range".equalsIgnoreCase(entry.getKey()))range=entry.getValue();
@@ -125,7 +130,7 @@ public final class AnalysisService extends Service {
                 }
                 if("https".equals(uri.getScheme())&&"appassets.androidplatform.net".equals(uri.getHost())&&nativePath!=null&&nativePath.matches("/background/native-mdx/[a-f0-9-]{36}\\.bin")){
                     try{
-                        if(ownedMdx==null||stopped||!ownedJobId.equals(jobId))throw new IOException("Native analysis stopped.");
+                        if(ownedMdx==null||!ownsEngine(ownedJobId,ownedGeneration))throw new IOException("Native analysis stopped.");
                         String token=nativePath.substring("/background/native-mdx/".length(),nativePath.length()-4);
                         File result=ownedMdx.result(ownedJobId,token);
                         String range=null;for(java.util.Map.Entry<String,String> entry:request.getRequestHeaders().entrySet())if("Range".equalsIgnoreCase(entry.getKey()))range=entry.getValue();
@@ -135,6 +140,7 @@ public final class AnalysisService extends Service {
                 }
                 if("https://appassets.androidplatform.net/background/request.json".equals(uri.toString())) {
                     try{
+                        if(!ownsEngine(ownedJobId,ownedGeneration))throw new IOException("Analysis renderer retired.");
                         JSONObject frozen=AnalysisJobStore.request(getFilesDir(),ownedJobId);
                         byte[] payload=frozen.toString().getBytes(StandardCharsets.UTF_8);
                         return AppResources.response(200,"OK","application/json",new ByteArrayInputStream(payload),payload.length,null);
@@ -144,10 +150,7 @@ public final class AnalysisService extends Service {
             }
             @Override public boolean shouldOverrideUrlLoading(WebView view,WebResourceRequest request){return true;}
             @Override public boolean onRenderProcessGone(WebView view,RenderProcessGoneDetail detail){
-                AppDiagnostics.record(AnalysisService.this,"analysis-renderer",new IOException(detail.didCrash()?"Analysis renderer crashed.":"Android reclaimed the analysis renderer."));
-                boolean current=view==engine;if(current)engine=null;releaseEngine(view);if(current&&!stopped)finish("interrupted",detail.didCrash()
-                    ?"The analysis engine stopped unexpectedly. Resume checks saved passages and continues from verified progress. Your saved show is intact."
-                    :"Android reclaimed the analysis engine. Resume checks saved passages and continues from verified progress. Your saved show is intact.");return true;
+                handleRendererGone(view,detail.didCrash());return true;
             }
             @Override public void onReceivedError(WebView view,WebResourceRequest request,WebResourceError error){
                 AppDiagnostics.log(AnalysisService.this,"ERROR","analysis-resource","code="+error.getErrorCode()+"; mainFrame="+request.isForMainFrame()+"; "+error.getDescription());
@@ -156,6 +159,55 @@ public final class AnalysisService extends Service {
         });
         engine.loadUrl("https://appassets.androidplatform.net/background/runner.html?job="+Uri.encode(jobId));
         signal();
+    }
+    private boolean ownsEngine(String id,long generation){return !stopped&&id!=null&&id.equals(jobId)&&generation==engineGeneration;}
+    private void handleRendererGone(WebView view,boolean crashed){
+        AppDiagnostics.record(this,"analysis-renderer",new IOException(crashed?"Analysis renderer crashed.":"Android reclaimed the analysis renderer."));
+        final String owner=jobId;final long generation;final boolean current;
+        synchronized(engineOwnership){current=view==engine;if(current){engine=null;++engineGeneration;}generation=engineGeneration;}
+        releaseEngine(view);
+        if(!current||stopped)return;
+        final NativePassageTask retiredPassage=nativePassage;nativePassage=null;
+        final NativeMdxTask retiredMdx=nativeMdx;nativeMdx=null;
+        try{
+            if(retiredPassage!=null)retiredPassage.close();
+            if(retiredMdx!=null)retiredMdx.close();
+            JSONObject job=AnalysisRendererRecovery.reserve(getFilesDir(),owner,crashed);
+            if(job==null){finish("interrupted",crashed
+                ?"The analysis engine stopped unexpectedly. Resume checks saved passages and continues from verified progress. Your saved show is intact."
+                :"Android reclaimed the analysis engine. Resume checks saved passages and continues from verified progress. Your saved show is intact.");return;}
+            int attempt=job.getInt("rendererRecoveryAttempts");
+            notifyJob(job,false);signal();
+            AppDiagnostics.log(this,"INFO","analysis-renderer-recovery","scheduled; job="+owner+"; attempt="+attempt);
+            recoveryThread=new Thread(()->{
+                long began=SystemClock.elapsedRealtime();
+                try{
+                    ActivityManager manager=(ActivityManager)getSystemService(ACTIVITY_SERVICE);
+                    if(manager==null)throw new IOException("Android memory state is unavailable.");
+                    while(ownsEngine(owner,generation)){
+                        long elapsed=SystemClock.elapsedRealtime()-began;
+                        if(elapsed>=AnalysisRendererRecovery.MAX_WAIT_MS)throw new IOException("Android still needs memory or the old native task has not retired. Resume saved analysis when ready.");
+                        ActivityManager.MemoryInfo memory=new ActivityManager.MemoryInfo();manager.getMemoryInfo(memory);
+                        boolean retired=(retiredPassage==null||retiredPassage.isRetired())&&(retiredMdx==null||retiredMdx.isRetired());
+                        if(AnalysisRendererRecovery.ready(elapsed,attempt,retired,memory.lowMemory))break;
+                        Thread.sleep(250);
+                    }
+                    if(!ownsEngine(owner,generation))return;
+                    AnalysisRendererRecovery.restoreRequest(getFilesDir(),owner);
+                    main.post(()->{
+                        if(!ownsEngine(owner,generation))return;
+                        try{
+                            JSONObject resumed=AnalysisJobStore.matching(getFilesDir(),owner,true);
+                            lastProgress=0;
+                            AppDiagnostics.log(this,"INFO","analysis-renderer-recovery","restarting; job="+owner+"; attempt="+attempt);
+                            startEngine(resumed);
+                        }catch(Exception error){AppDiagnostics.record(this,"analysis-renderer-recovery",error);finish("interrupted",message(error));}
+                    });
+                }catch(InterruptedException cancelled){Thread.currentThread().interrupt();}
+                catch(Exception error){main.post(()->{if(ownsEngine(owner,generation)){AppDiagnostics.record(this,"analysis-renderer-recovery",error);finish("interrupted",message(error));}});}
+            },"LightForge-renderer-recovery");
+            recoveryThread.start();
+        }catch(Exception error){AppDiagnostics.record(this,"analysis-renderer-recovery",error);finish("interrupted",message(error));}
     }
     private JSONObject persistNativeFallback(String id,String reason)throws Exception{
         if(!AnalysisJobStore.markAnalysisWasmFallback(getFilesDir(),id,reason))throw new IOException("Could not persist native fallback.");
@@ -166,10 +218,11 @@ public final class AnalysisService extends Service {
     }
     public final class JobBridge {
         private final String ownerJobId;
+        private final long ownerGeneration;
         private final NativePassageTask ownerTask;
         private final NativeMdxTask ownerMdx;
-        JobBridge(String ownerJobId,NativePassageTask ownerTask,NativeMdxTask ownerMdx){this.ownerJobId=ownerJobId;this.ownerTask=ownerTask;this.ownerMdx=ownerMdx;}
-        private boolean owns(String id){return !stopped&&ownerJobId.equals(id)&&ownerJobId.equals(jobId);}
+        JobBridge(String ownerJobId,long ownerGeneration,NativePassageTask ownerTask,NativeMdxTask ownerMdx){this.ownerJobId=ownerJobId;this.ownerGeneration=ownerGeneration;this.ownerTask=ownerTask;this.ownerMdx=ownerMdx;}
+        private boolean owns(String id){return ownerJobId.equals(id)&&ownsEngine(ownerJobId,ownerGeneration);}
         @JavascriptInterface public void logDiagnostic(String level,String source,String message){if(owns(ownerJobId))AppDiagnostics.log(AnalysisService.this,level,source,message);}
         @JavascriptInterface public String nativeDeuxAvailability(String id){
             try{if(ownerTask==null||!owns(id))throw new IOException("Native analysis is unavailable.");return ownerTask.availability();}
@@ -217,41 +270,51 @@ public final class AnalysisService extends Service {
             progressInfo(id,value,stage,"{}");
         }
         @JavascriptInterface public void progressInfo(String id,double value,String stage,String details){
-            if(stopped||!jobId.equals(id))return;
+            synchronized(engineOwnership){
+            if(!owns(id))return;
             try{
                 if(details==null||details.length()>4096)return;
                 JSONObject info=new JSONObject(details);
                 long now=SystemClock.elapsedRealtime();if(now-lastProgress<1000&&value<.96&&!info.optBoolean("checkpointSaved"))return;lastProgress=now;
-                JSONObject job=AnalysisJobStore.progress(getFilesDir(),id,value,stage,info);main.post(()->{if(!stopped&&id.equals(jobId)){notifyJob(job,false);signal();}});
+                JSONObject job=AnalysisJobStore.progress(getFilesDir(),id,value,stage,info);main.post(()->{if(owns(id)){notifyJob(job,false);signal();}});
                 if(now-lastDiagnosticProgress>=15000||info.optBoolean("checkpointSaved")){
                     lastDiagnosticProgress=now;
                     AppDiagnostics.log(AnalysisService.this,"INFO","analysis-progress","job="+id+"; progress="+value+"; stage="+stage+"; checkpoint="+info.optBoolean("checkpointSaved")+"; passage="+info.optInt("passageIndex",-1)+"; completed="+info.optInt("passagesCompleted",-1));
                 }
             }
             catch(Exception ignored){} // A cancelled job can still have an in-flight progress message.
+            }
         }
         @JavascriptInterface public boolean markAnalysisWasmFallback(String id,String reason){
-            if(stopped||!jobId.equals(id))return false;
+            synchronized(engineOwnership){
+            if(!owns(id))return false;
             try{return AnalysisJobStore.markAnalysisWasmFallback(getFilesDir(),id,reason);}
-            catch(Exception error){AppDiagnostics.record(AnalysisService.this,"analysis-native-fallback",error);main.post(()->{if(!stopped&&id.equals(jobId))finish("failed",message(error));});return false;}
+            catch(Exception error){AppDiagnostics.record(AnalysisService.this,"analysis-native-fallback",error);main.post(()->{if(owns(id))finish("failed",message(error));});return false;}
+            }
         }
         @JavascriptInterface public boolean clearRunObservation(String id){
-            if(stopped||!jobId.equals(id))return false;
+            synchronized(engineOwnership){
+            if(!owns(id))return false;
             try{AnalysisJobStore.clearRunObservation(getFilesDir(),id);return true;}
-            catch(Exception error){AppDiagnostics.record(AnalysisService.this,"analysis-observation-clear",error);main.post(()->{if(!stopped&&id.equals(jobId))finish("failed",message(error));});return false;}
+            catch(Exception error){AppDiagnostics.record(AnalysisService.this,"analysis-observation-clear",error);main.post(()->{if(owns(id))finish("failed",message(error));});return false;}
+            }
         }
         @JavascriptInterface public boolean checkpoint(String id,String contents){
-            if(stopped||!jobId.equals(id))return false;
-            try{AnalysisJobStore.checkpoint(getFilesDir(),id,contents);AppDiagnostics.log(AnalysisService.this,"INFO","analysis-checkpoint","saved; job="+id);return true;}catch(Exception error){AppDiagnostics.record(AnalysisService.this,"analysis-checkpoint",error);main.post(()->{if(!stopped&&id.equals(jobId))finish("failed",message(error));});return false;}
+            synchronized(engineOwnership){
+            if(!owns(id))return false;
+            try{AnalysisJobStore.checkpoint(getFilesDir(),id,contents);AppDiagnostics.log(AnalysisService.this,"INFO","analysis-checkpoint","saved; job="+id);return true;}catch(Exception error){AppDiagnostics.record(AnalysisService.this,"analysis-checkpoint",error);main.post(()->{if(owns(id))finish("failed",message(error));});return false;}
+            }
         }
         @JavascriptInterface public boolean complete(String id,String contents){
-            if(stopped||!jobId.equals(id))return false;
-            try{JSONObject job=AnalysisJobStore.complete(getFilesDir(),id,contents);main.post(()->{if(!stopped&&id.equals(jobId))shutdown(job,true);});return true;}
-            catch(Exception error){AppDiagnostics.record(AnalysisService.this,"analysis-complete",error);main.post(()->{if(!stopped&&id.equals(jobId))finish("failed",message(error));});return false;}
+            synchronized(engineOwnership){
+            if(!owns(id))return false;
+            try{JSONObject job=AnalysisJobStore.complete(getFilesDir(),id,contents);main.post(()->{if(owns(id))shutdown(job,true);});return true;}
+            catch(Exception error){AppDiagnostics.record(AnalysisService.this,"analysis-complete",error);main.post(()->{if(owns(id))finish("failed",message(error));});return false;}
+            }
         }
         @JavascriptInterface public void failed(String id,String detail,boolean cancelled){
-            if(stopped||!jobId.equals(id))return;
-            main.post(()->{if(!stopped&&id.equals(jobId))finish(cancelled?"cancelled":"failed",cancelled?"Analysis cancelled. Your saved show is intact.":detail);});
+            if(!owns(id))return;
+            main.post(()->{if(owns(id))finish(cancelled?"cancelled":"failed",cancelled?"Analysis cancelled. Your saved show is intact.":detail);});
         }
     }
     private void cancel(String id){
@@ -278,7 +341,9 @@ public final class AnalysisService extends Service {
         catch(Exception error){AppDiagnostics.record(this,"analysis-finish",error);shutdown(null,false);}
     }
     private void shutdown(JSONObject job,boolean notify){
-        if(stopped)return;stopped=true;main.removeCallbacksAndMessages(null);
+        synchronized(engineOwnership){if(stopped)return;stopped=true;++engineGeneration;}
+        main.removeCallbacksAndMessages(null);
+        Thread recovery=recoveryThread;recoveryThread=null;if(recovery!=null)recovery.interrupt();
         AppDiagnostics.log(this,"INFO","analysis-shutdown","job="+jobId+"; state="+(job==null?"unknown":job.optString("state")));
         NativePassageTask previousTask=nativePassage;nativePassage=null;
         try{if(previousTask!=null)previousTask.close();}catch(RuntimeException error){AppDiagnostics.record(this,"native-shutdown",error);}

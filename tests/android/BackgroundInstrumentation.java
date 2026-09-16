@@ -835,6 +835,58 @@ public final class BackgroundInstrumentation extends Instrumentation {
         check(executor.awaitTermination(15,java.util.concurrent.TimeUnit.SECONDS),"Cancelled native inference did not terminate promptly");
         check((Boolean)field(task,"closed")&&field(task,"engine")==null,"Native model was retained after cancellation");
     }
+    private void reclaimAndResume(JSONObject job)throws Exception{
+        phase("renderer-reclaim-auto-resume");
+        AnalysisService owner=service();
+        NativePassageTask retired=waitNativePassage(owner,1,15*60*1000L);
+        String id=job.getString("id"),beforeRequest=AnalysisJobStore.hash(new File(AnalysisJobStore.directory(files),"request.json"));
+        JSONObject before=AnalysisJobStore.status(files);
+        PowerManager.WakeLock lock=(PowerManager.WakeLock)field(owner,"wakeLock");
+        WebView lost=(WebView)field(owner,"engine");
+        AnalysisService.JobBridge stale=owner.new JobBridge(id,(Long)field(owner,"engineGeneration"),retired,null);
+        java.util.concurrent.atomic.AtomicReference<android.webkit.WebViewClient> client=new java.util.concurrent.atomic.AtomicReference<>();
+        // Terminate the actual renderer process. This invokes the platform's
+        // non-crash callback and destroys its Worker/OPFS handles; it is a
+        // reproducible reclaim surrogate, not an induced Android low-memory kill.
+        runOnMainSync(()->{
+            client.set(lost.getWebViewClient());
+            android.webkit.WebViewRenderProcess process=lost.getWebViewRenderProcess();
+            check(process!=null&&process.terminate(),"The live analysis renderer could not be terminated");
+        });
+        long until=SystemClock.elapsedRealtime()+AnalysisRendererRecovery.MAX_WAIT_MS+15000;
+        boolean retiredBridgeChecked=false;
+        while(SystemClock.elapsedRealtime()<until){
+            snapshot(false);
+            JSONObject current=AnalysisJobStore.status(files);
+            check(AnalysisService.alive()&&AnalysisJobStore.active(current),"Reclaim stopped the foreground job: "+current);
+            check(lock.isHeld(),"Recovery released the foreground CPU lock");
+            if(current.optInt("rendererRecoveryAttempts")==1&&!retiredBridgeChecked){
+                check(!stale.checkpoint(id,"{}")&&!stale.complete(id,"{}")&&!stale.clearRunObservation(id)
+                    &&!stale.markAnalysisWasmFallback(id,"native-deux-fallback"),"A retired analysis bridge retained mutation authority");
+                stale.progress(id,.999,"Stale renderer progress");stale.failed(id,"Stale renderer failure",false);
+                retiredBridgeChecked=true;
+            }
+            WebView replacement=(WebView)field(owner,"engine");
+            if(retiredBridgeChecked&&replacement!=null&&replacement!=lost)break;
+            SystemClock.sleep(100);
+        }
+        WebView replacement=(WebView)field(owner,"engine");
+        check(retiredBridgeChecked&&replacement!=null&&replacement!=lost,"No bounded automatic renderer replacement occurred");
+        check(retired.isRetired(),"Replacement began before native cleanup retired");
+        JSONObject after=AnalysisJobStore.status(files);
+        for(String key:new String[]{"id","projectId","analysisIdentity","sourceSHA256","analysisExecutionMode","analysisRefreshEpoch","analysisEffectiveExecution","analysisNativeFallbackReason","createdAt"})
+            check(before.optString(key).equals(after.optString(key)),"Recovery changed "+key);
+        check(beforeRequest.equals(AnalysisJobStore.hash(new File(AnalysisJobStore.directory(files),"request.json"))),"Partial recovery changed the frozen request");
+        // A duplicate callback for the retired view cannot consume another
+        // attempt, release the current renderer, or stop its replacement job.
+        runOnMainSync(()->client.get().onRenderProcessGone(lost,new android.webkit.RenderProcessGoneDetail(){
+            @Override public boolean didCrash(){return false;}
+            @Override public int rendererPriorityAtExit(){return WebView.RENDERER_PRIORITY_IMPORTANT;}
+        }));
+        check(field(owner,"engine")==replacement&&AnalysisJobStore.status(files).optInt("rendererRecoveryAttempts")==1,
+            "A stale renderer callback affected the replacement");
+        pass("Actual non-crash renderer termination automatically restarts the same foreground job from checkpointed work, rejects stale bridge mutations and callbacks, and waits for native retirement while preserving source, runtime, quality, fresh epoch and original deadline.");
+    }
     private JSONObject separation(JSONObject saved)throws Exception{
         JSONObject music=saved.getJSONObject("music"),separation=music.getJSONObject("engine").getJSONObject("separationModel");
         check("precision".equals(music.getJSONObject("engine").optString("quality")),"Studio quality was silently changed");
@@ -968,6 +1020,7 @@ public final class BackgroundInstrumentation extends Instrumentation {
             phase("resume-screen-off-analysis");JSONObject resumedJob=start(cancelId);backgroundAndDoze();waitNativeReleased(cancelledNative);
             pass("Notification cancellation interrupts live native Studio work; immediate Resume can start while old native resources quiesce, with the previous project, CPU lock and WebView safely released.");
             check(interruptedJob.getString("analysisIdentity").equals(resumedJob.getString("analysisIdentity")),"Retry discarded the stable source/settings identity");
+            reclaimAndResume(resumedJob);
             JSONObject resumed=waitTerminal(15*60*1000L);check("completed".equals(resumed.optString("state")),"Partial Studio resume failed: "+resumed);waitService(false);
             JSONObject resumedProject=AnalysisJobStore.read(cancelProject,ProjectStore.MAX_PROJECT_BYTES),resumedSeparation=separation(resumedProject);
             check(resumedSeparation.optInt("restoredPassages")>=1,"Retry recomputed every passage instead of restoring completed work");
