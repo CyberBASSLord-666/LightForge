@@ -102,6 +102,19 @@ async function ensureRecurrenceAnalysis(result,options,store,telemetry,featureCo
  clearRecurrenceAnalysis(result);
  const timeline=ensureSemanticTimeline(result);
  const evidenceInput=await recurrenceEvidenceInput(result,options,featureConfig,telemetry);
+ // Recurrence is an optional bounded descriptor. A valid four-hour base
+ // analysis can exceed this sidecar's two-hour energy or section capacity.
+ // Preserve the complete evidence and finish the show without a motif hint;
+ // never truncate/downsample it or discard completed neural work to retry.
+ const limits=api.constants||{},exceeded=[];
+ if(Number.isSafeInteger(limits.MAX_SECTIONS)&&timeline.events.filter(event=>event.type==='section').length>limits.MAX_SECTIONS)exceeded.push('section-limit');
+ if(Number.isSafeInteger(limits.MAX_ENERGY_FRAMES)&&evidenceInput.energy?.length>limits.MAX_ENERGY_FRAMES)exceeded.push('energy-frame-limit');
+ if(Number.isSafeInteger(limits.MAX_CHROMA_FRAMES)&&evidenceInput.chroma?.length>limits.MAX_CHROMA_FRAMES*12)exceeded.push('chroma-frame-limit');
+ if(exceeded.length){
+  result.recurrenceAnalysis={schemaVersion:1,requested:true,enabled:false,status:'unavailable',reason:'evidence-size-limit',limits:exceeded};
+  telemetry.increment?.('recurrence_evidence_size_limit');
+  return {enabled:false,requested:true,unavailable:true,reason:'evidence-size-limit',restored:false,sidecar:null};
+ }
  const evidence=telemetry.measure('performance.structural_analysis',()=>api.captureEvidence(evidenceInput,timeline),{scope:'optional-recurrence-feature-evidence'}),evidenceCheck=api.validateEvidence(evidence,timeline);
  if(!evidenceCheck?.valid)throw Error('Recurrence evidence validation failed: '+(evidenceCheck?.errors||[]).join('; ').slice(0,512));
  let cached=null;
@@ -339,9 +352,9 @@ self.onmessage=async e=>{
   }
   const recurrencePhase=telemetry.begin('structure.recurrence');
   const recurrence=await ensureRecurrenceAnalysis(result,options,store,telemetry,featureConfig),sidecar=recurrence.sidecar;
-  telemetry.end(recurrencePhase,{enabled:recurrence.enabled,restored:recurrence.restored,motifCount:sidecar?.summary?.motifCount||0,repeatedSectionCount:sidecar?.summary?.repeatedSectionCount||0});
+  telemetry.end(recurrencePhase,{enabled:recurrence.enabled,unavailable:recurrence.unavailable===true,reason:recurrence.reason||null,restored:recurrence.restored,motifCount:sidecar?.summary?.motifCount||0,repeatedSectionCount:sidecar?.summary?.repeatedSectionCount||0});
   if(recurrence.enabled)report(1,'Mapping recurring material','Validated generic repeated-section evidence saved',{checkpointSaved:true,analysisStage:stage});
-  else report(1,'Mapping recurring material','Opt-in recurrence analysis is disabled');
+  else report(1,'Mapping recurring material',recurrence.unavailable?'Base analysis complete; optional recurrence exceeds its evidence limit':'Opt-in recurrence analysis is disabled');
   const recurrenceTiming=workerClock.measure(started);
   postMessage({type:'result',value:result,restored:recurrence.restored,seconds:recurrence.restored?0:workerTimingSeconds(recurrenceTiming),profile:telemetry.snapshot({performanceProbeVersion:1,restored:recurrence.restored,...workerTimingAttributes(recurrenceTiming)})});
   return;

@@ -140,31 +140,116 @@ function trackBeats(beat,down,rms,options={}){
  const {downbeats,barPhaseAlternatives}=measure(options.telemetry,'downbeat_tracking',()=>({downbeats:beatDetails.filter(e=>e.barPosition===1).map(e=>e.time),barPhaseAlternatives:phaseFits.map((fit,passage)=>({passage,confidence:fit.confidence,candidates:fit.alternatives}))}));
  return {beats,downbeats,beatDetails,bpm:Math.round(bpm*100)/100,meter,meterConfidence,downbeatConfidence,barPhaseAlternatives,beatConfidence:clamp(strength*0.7+consistency*0.3),activityRanges:activity.ranges};
 }
-function sectionsFromFeatures(rms,colour,rhythm,duration){
+// Multi-scale box-checkerboard novelty without constructing an O(n²)
+// self-similarity matrix: ||mean(left)-mean(right)||² / 2 is the
+// normalized within-region minus cross-region dot-product contrast.
+// Chroma is evidence of tonal change, never a key/chord/song-form label.
+const STRUCTURE_VERSION=2;
+function tonalStructure(data,rhythm){
+ const empty=reason=>({version:STRUCTURE_VERSION,available:false,reason,sections:[],phrases:[],frameCount:0});
+ if(!Number.isFinite(data.duration)||data.duration<=0||data.duration>14400.05)return empty('invalid-duration');
+ const chroma=data.chroma,step=data.chromaStep;
+ if(!(Array.isArray(chroma)||ArrayBuffer.isView(chroma))||!Number.isFinite(step)||step<.02||step>1||chroma.length%12)return empty('missing-or-invalid-chroma');
+ const count=chroma.length/12;
+ if(count<12||count>72000||Math.abs(count*step-data.duration)>step+.021)return empty('chroma-coverage');
+ for(const value of chroma)if(!Number.isFinite(value)||value<0)return empty('invalid-chroma-value');
+ const rms=data.rms,norm=percentile(rms,.94);
+ if(!(norm>1e-7))return empty('silent-audio');
+ const width=13,prefix=new Float64Array((count+1)*width),beatLength=rhythm.bpm?60/rhythm.bpm:.5;
+ // Weak or absent meter does not justify a guessed long bar; four seconds is
+ // then only an analysis window, and no alternate beat grid is synthesized.
+ const bar=rhythm.meterConfidence>=.35&&rhythm.meter>=2?clamp(beatLength*rhythm.meter,1,6):2;
+ let usable=0;
+ for(let i=0;i<count;i++){
+  const previous=i*width,next=(i+1)*width;for(let b=0;b<width;b++)prefix[next+b]=prefix[previous+b];
+  let square=0,total=0,floor=Infinity;for(let b=0;b<12;b++){const value=chroma[i*12+b];square+=value*value;total+=value;floor=Math.min(floor,value);}
+  if(!Number.isFinite(square)||!Number.isFinite(total))return empty('invalid-chroma-scale');
+  let envelope=0,frames=0;for(let f=Math.floor(i*step*50);f<Math.min(rms.length,Math.ceil((i+1)*step*50));f++){envelope+=rms[f];frames++;}
+  // Flat pitch-class noise and near-silence cannot become tonal boundaries.
+  const concentration=total>0?Math.sqrt(clamp((12*square/(total*total)-1)/11)):0;
+  if(!Number.isFinite(concentration))return empty('invalid-chroma-scale');
+  if(square<=1e-20||envelope/Math.max(1,frames)<Math.max(1e-7,norm*.025)||concentration<.035)continue;
+  // Remove only the shared pitch-class floor, after the concentration gate;
+  // otherwise broadband energy can mask harmony, or flat numerical noise can
+  // be amplified into an apparently certain chord change.
+  let tonalSquare=0;for(let b=0;b<12;b++)tonalSquare+=(chroma[i*12+b]-floor)**2;
+  if(!Number.isFinite(tonalSquare)||tonalSquare<=0)return empty('invalid-chroma-scale');
+  const scale=1/Math.sqrt(tonalSquare);for(let b=0;b<12;b++)prefix[next+b]+=(chroma[i*12+b]-floor)*scale;
+  prefix[next+12]++;usable++;
+ }
+ if(usable<count*.5)return empty('insufficient-tonal-evidence');
+ const contrast=(index,radius)=>{
+  if(index<radius||index+radius>count)return 0;
+  const a=(index-radius)*width,b=index*width,c=(index+radius)*width,leftCount=prefix[b+12]-prefix[a+12],rightCount=prefix[c+12]-prefix[b+12];
+  if(leftCount<radius*.8||rightCount<radius*.8)return 0;
+  let distance=0;for(let k=0;k<12;k++){const delta=(prefix[b+k]-prefix[a+k])/leftCount-(prefix[c+k]-prefix[b+k])/rightCount;distance+=delta*delta;}
+  return clamp(distance*.5);
+ };
+ const radii=[Math.max(2,Math.round(bar/step)),Math.max(3,Math.round(2*bar/step)),Math.max(4,Math.round(4*bar/step))];
+ const curves=[new Float32Array(count),new Float32Array(count)];
+ for(let i=0;i<count;i++){
+  const short=contrast(i,radii[0]),medium=contrast(i,radii[1]),long=contrast(i,radii[2]);
+  // Both scales must agree: a one-frame artifact or a passing chord must not
+  // masquerade as a long-lived musical transition.
+  curves[0][i]=Math.sqrt(short*medium);curves[1][i]=Math.sqrt(medium*long);
+ }
+ function peaks(curve,minimum,kind,radius){
+  const localRadius=Math.max(2,Math.round(bar/step)),backgroundRadius=Math.max(localRadius*4,10),result=[];
+  for(let i=radius+localRadius;i<=count-radius-localRadius;i++){
+   const strength=curve[i];if(strength<minimum)continue;
+   let peak=true;for(let j=i-localRadius;j<=i+localRadius;j++)if(curve[j]>strength+1e-7||(j<i&&Math.abs(curve[j]-strength)<1e-7)){peak=false;break;}
+   if(!peak)continue;
+   const baseline=percentile(curve.subarray(Math.max(0,i-backgroundRadius),Math.min(count,i+backgroundRadius+1)),.5);
+   if(strength<baseline+.035)continue;
+   result.push({time:Math.round(i*step*1e6)/1e6,strength:clamp(strength),source:'tonal-novelty',kind,estimated:true});
+  }
+  return result;
+ }
+ return {version:STRUCTURE_VERSION,available:true,reason:null,sections:peaks(curves[1],.085,'section',radii[2]),phrases:peaks(curves[0],.10,'phrase',radii[1]),frameCount:count,validFrameCount:usable,windowSeconds:radii.map(radius=>radius*step)};
+}
+function sectionsFromFeatures(rms,colour,rhythm,duration,tonal=null){
  const fast=rolling(rms,6),slow=rolling(rms,40),norm=percentile(fast,0.94)||1,energy=Array.from(fast,x=>clamp(x/norm)),novelty=new Float32Array(rms.length),r=100;
  const sum=(array,a,b,stride=1,offset=0)=>{let value=0,n=0;for(let j=Math.max(0,a);j<Math.min(rms.length,b);j+=stride){value+=array[j*(array===colour?3:1)+offset];n++;}return value/Math.max(1,n);};
  for(let i=r;i<rms.length-r;i+=5){const before=sum(slow,i-r,i,5),after=sum(slow,i,i+r,5);novelty[i]=Math.abs(after-before)/Math.max(norm*0.12,after+before)*0.7;for(let b=0;b<3;b++){const a=sum(colour,i-r,i,5,b),c=sum(colour,i,i+r,5,b);novelty[i]+=Math.abs(a-c)/Math.max(0.1,a+c)*0.1;}}
- const candidates=[];for(let i=r;i<rms.length-r;i+=5){const v=novelty[i];if(v<0.11)continue;let peak=true;for(let k=Math.max(r,i-75);k<=Math.min(rms.length-r-1,i+75);k+=5)if(novelty[k]>v){peak=false;break;}if(peak)candidates.push({time:i*0.02,strength:clamp(v)});}
+ const candidates=[];for(let i=r;i<rms.length-r;i+=5){const v=novelty[i];if(v<0.11)continue;let peak=true;for(let k=Math.max(r,i-75);k<=Math.min(rms.length-r-1,i+75);k+=5)if(novelty[k]>v){peak=false;break;}if(peak)candidates.push({time:i*0.02,strength:clamp(v),source:'energy-spectral-novelty',estimated:true});}
+ if(tonal?.available)candidates.push(...tonal.sections);
  const beatLength=rhythm.bpm?60/rhythm.bpm:0.5,barLength=beatLength*rhythm.meter,boundaries=[{time:0,strength:1},{time:duration,strength:1}],minimum=Math.max(3.5,barLength*2);
- for(const c of candidates.sort((a,b)=>b.strength-a.strength)){
-  let t=c.time;const near=rhythm.meterConfidence>0.12?rhythm.downbeats:rhythm.beats;let delta=Math.min(0.7,beatLength*0.8);for(let j=lowerBound(near,t-delta);j<near.length&&near[j]<=t+delta;j++)if(Math.abs(near[j]-t)<delta){delta=Math.abs(near[j]-t);c.snap=near[j];}if(c.snap!==undefined)t=c.snap;
-  if(boundaries.every(b=>Math.abs(b.time-t)>=minimum))boundaries.push({time:t,strength:c.strength});
- }
  // Silence boundaries are musical events and must survive minimum-section spacing.
  for(let i=0;i<rhythm.activityRanges.length;i++){const a=rhythm.activityRanges[i],next=rhythm.activityRanges[i+1];if(i===0&&a.start>0.7)boundaries.push({time:a.start,strength:1});if(next&&next.start-a.end>0.7){boundaries.push({time:a.end,strength:1},{time:next.start,strength:1});}if(i===rhythm.activityRanges.length-1&&duration-a.end>0.7)boundaries.push({time:a.end,strength:1});}
+ for(const c of candidates.sort((a,b)=>b.strength-a.strength)){
+  let t=c.time;const near=rhythm.meterConfidence>0.12?rhythm.downbeats:rhythm.beats;let delta=Math.min(0.7,beatLength*0.8);for(let j=lowerBound(near,t-delta);j<near.length&&near[j]<=t+delta;j++)if(Math.abs(near[j]-t)<delta){delta=Math.abs(near[j]-t);c.snap=near[j];}if(c.snap!==undefined)t=c.snap;
+  if(!rhythm.activityRanges.some(range=>t>=range.start&&t<range.end))continue;
+  if(boundaries.every(b=>Math.abs(b.time-t)>=minimum))boundaries.push({time:t,strength:c.strength,source:c.source,detectedTime:c.time});
+ }
+
  boundaries.sort((a,b)=>a.time-b.time);const unique=boundaries.filter((b,i)=>!i||b.time-boundaries[i-1].time>0.15),sections=[];
- for(let i=0;i<unique.length-1;i++){const start=unique[i].time,end=unique[i+1].time,e=sum(fast,Math.floor(start*50),Math.ceil(end*50))/norm,prev=sections.length?sections[sections.length-1].energy:e,active=rhythm.activityRanges.some(a=>a.start<end&&a.end>start+0.04);const label=!active?'Silence':i===0?'Opening':i===unique.length-2?'Finale':e>0.79?'Peak':e>prev+0.13?'Build':e<0.35?'Breakdown':'Groove';sections.push({start,end,energy:clamp(e),label,confidence:clamp(unique[i].strength)});}
- return {sections,energy,transitions:candidates};
+ for(let i=0;i<unique.length-1;i++){const start=unique[i].time,end=unique[i+1].time,e=sum(fast,Math.floor(start*50),Math.ceil(end*50))/norm,prev=sections.length?sections[sections.length-1].energy:e,active=rhythm.activityRanges.some(a=>a.start<end&&a.end>start+0.04);const label=!active?'Silence':i===0?'Opening':i===unique.length-2?'Finale':e>0.79?'Peak':e>prev+0.13?'Build':e<0.35?'Breakdown':'Groove';sections.push({start,end,energy:clamp(e),label,confidence:clamp(unique[i].strength),estimated:true,boundarySource:unique[i].source||'activity-boundary',detectedBoundaryTime:unique[i].detectedTime??start});}
+ return {sections,energy,transitions:candidates,tonal};
 }
 function phrasesAndImpacts(rhythm,structure,onsets,duration){
  const phrases=[],impacts=[],beatLength=rhythm.bpm?60/rhythm.bpm:0.5,meter=rhythm.meter,energy=structure.energy;
  const mean=(a,b)=>{let s=0,n=0;for(let i=Math.max(0,Math.floor(a*50));i<Math.min(energy.length,Math.ceil(b*50));i++){s+=energy[i];n++;}return s/Math.max(1,n);};
  for(const section of structure.sections){
-  const points=[section.start];let bars=0;for(let j=lowerBound(rhythm.downbeats,section.start+beatLength*0.5);j<rhythm.downbeats.length&&rhythm.downbeats[j]<section.end-beatLength;j++){
-   if(++bars===4){const t=rhythm.downbeats[j];if(t-points[points.length-1]>=beatLength*meter*2&&section.end-t>=beatLength*meter*2){points.push(t);bars=0;}}
-  }points.push(section.end);
+  const anchors=[{time:section.start,source:section.boundarySource||'section-boundary',confidence:section.confidence},{time:section.end,source:'section-end',confidence:section.confidence}],minimum=Math.max(1,beatLength*meter*2);
+  // Give measured changes priority, including three-/five-bar phrases. The
+  // four-bar grid remains a low-confidence scaffold only in unsupported gaps.
+  if(section.label!=='Silence')for(const candidate of (structure.tonal?.phrases||[]).slice().sort((a,b)=>b.strength-a.strength||a.time-b.time)){
+   let time=candidate.time;
+   if(rhythm.downbeatConfidence>=.35){const near=lowerBound(rhythm.downbeats,time),choices=[rhythm.downbeats[near-1],rhythm.downbeats[near]].filter(Number.isFinite).sort((a,b)=>Math.abs(a-time)-Math.abs(b-time));if(choices.length&&Math.abs(choices[0]-time)<=Math.min(.35,beatLength*.5))time=choices[0];}
+   if(time<=section.start||time>=section.end||anchors.some(anchor=>Math.abs(anchor.time-time)<minimum-1e-6))continue;
+   anchors.push({time,source:candidate.source,confidence:clamp(.35+candidate.strength*.6)});
+  }
+  anchors.sort((a,b)=>a.time-b.time);const boundaries=[];
+  for(let a=0;a<anchors.length-1;a++){
+   const left=anchors[a],right=anchors[a+1];boundaries.push(left);let bars=0,previous=left.time;
+   if(section.label==='Silence')continue;
+   for(let j=lowerBound(rhythm.downbeats,left.time+beatLength*.5);j<rhythm.downbeats.length&&rhythm.downbeats[j]<right.time-beatLength;j++){
+    if(++bars<4)continue;const time=rhythm.downbeats[j];if(time-previous>=minimum&&right.time-time>=minimum){boundaries.push({time,source:'meter-scaffold',confidence:clamp(rhythm.beatConfidence*.35+rhythm.meterConfidence*.15)});previous=time;bars=0;}
+   }
+  }
+  boundaries.push(anchors[anchors.length-1]);const points=boundaries.map(boundary=>boundary.time);
   for(let i=0;i<points.length-1;i++){const start=points[i],end=points[i+1],e=mean(start,end),mid=(start+end)/2,change=mean(mid,end)-mean(start,mid),kind=section.label==='Silence'?'silence':e<0.3?'quiet':change>0.16?'build':change< -0.16?'release':e>0.78?'peak':'groove';let accentTime=start,best=0;for(let j=lowerBound(onsets,start,x=>x.time);j<onsets.length&&onsets[j].time<Math.min(end,start+beatLength*meter);j++){const o=onsets[j],score=o.strength*(o.band==='bass'?1:0.7);if(score>best){best=score;accentTime=o.time;}}
-   phrases.push({start,end,energy:e,kind,recurrenceGroup:section.recurrenceGroup,repetitionIndex:section.repetitionIndex,similarity:section.similarity,confidence:clamp(rhythm.beatConfidence*0.65+rhythm.meterConfidence*0.35),accentTime});
+   phrases.push({start,end,energy:e,kind,recurrenceGroup:section.recurrenceGroup,repetitionIndex:section.repetitionIndex,similarity:section.similarity,confidence:clamp(boundaries[i].confidence??0),estimated:true,boundarySource:boundaries[i].source,accentTime});
   }
  }
  const norm=percentile(onsets.map(o=>o.strength),0.8)||1;
@@ -243,14 +328,14 @@ function summarize(data,options={}){
  const onsets=[...pickOnsets(data.bass,'bass',sensitivity),...pickOnsets(data.mid,'mid',sensitivity),...pickOnsets(data.high,'high',sensitivity)].map(o=>({...o,time:alignToAttack(o.time,attacks)})).filter(o=>o.time<data.duration&&insideRanges(o.time,rhythm.activityRanges)).sort((a,b)=>a.time-b.time);
  // Re-alignment can bring adjacent spectral peaks onto the same physical attack.
  for(let i=onsets.length-1;i>0;i--)if(onsets.slice(Math.max(0,i-4),i).some(o=>o.band===onsets[i].band&&Math.abs(o.time-onsets[i].time)<0.025))onsets.splice(i,1);
- const {structure,landmarks}=measure(options.telemetry,'structural_analysis',()=>{const structure=sectionsFromFeatures(data.rms,data.colour,rhythm,data.duration);recurringSections(structure.sections,data);const landmarks=phrasesAndImpacts(rhythm,structure,onsets,data.duration);return {structure,landmarks};}),waveform=[],bins=Math.min(1800,data.rms.length),max=percentile(data.rms,0.98)||1;
+ const {structure,landmarks}=measure(options.telemetry,'structural_analysis',()=>{const tonal=tonalStructure(data,rhythm),structure=sectionsFromFeatures(data.rms,data.colour,rhythm,data.duration,tonal);recurringSections(structure.sections,data);const landmarks=phrasesAndImpacts(rhythm,structure,onsets,data.duration);return {structure,landmarks};}),waveform=[],bins=Math.min(1800,data.rms.length),max=percentile(data.rms,0.98)||1;
  for(let i=0;i<bins;i++){let a=Math.floor(i*data.rms.length/bins),b=Math.ceil((i+1)*data.rms.length/bins),v=0;for(let j=a;j<b;j++)v=Math.max(v,data.rms[j]);waveform.push(clamp(v/max));}
  const warnings=[];if(rhythm.downbeatConfidence<.35&&rhythm.beats.length)warnings.push('The first beat of the bar is uncertain. Mark a downbeat to align recurring accents.');if(!rhythm.bpm)warnings.push('No reliable musical pulse was detected. Choose audible music or enter a tempo.');else if(rhythm.beatConfidence<0.48)warnings.push('The beat estimate has low confidence. Preview the rhythm and adjust BPM if needed.');if(rhythm.meterConfidence<0.18&&rhythm.beats.length)warnings.push('Bar accents are uncertain; phrase boundaries use measured energy and pulse evidence.');
  const shifts=rhythm.beatDetails.map(b=>Math.abs(b.alignmentOffsetMs||0)/1000),manual=Number(options.bpmOverride)>=40&&Number(options.bpmOverride)<=240;
- const result={duration:data.duration,...rhythm,onsets,sections:structure.sections,energy:structure.energy,...landmarks,waveform,energyStep:0.02,recommendedBeatLength:rhythm.bpm?60/rhythm.bpm:0,recommendedStepTime:20,analysisVersion:3,groove:grooveFromOnsets(rhythm,onsets),structure:{method:'Time-normalized tonal, energy and spectral fingerprints',recurringGroups:[...new Set(structure.sections.filter(s=>s.repetitionIndex>0).map(s=>s.recurrenceGroup))],semanticLabels:false},timing:{neuralFrameMs:20,pcmEnvelopeMs:data.fineRms?5:null,decoder:options.decoder==='transformer'?'Transformer direct peak decoding':'Adaptive CRNN lattice',alignment:manual?'Exact manual-tempo grid with evidence-based phase':'Neural pulse with local tempo and nearby measured PCM attacks',manualTempo:manual,attackCount:attacks.length,refinedBeatCount:manual?0:shifts.filter(s=>s>0.001).length,appliedGlobalOffsetMs:0},warnings};
+ const result={duration:data.duration,...rhythm,onsets,sections:structure.sections,energy:structure.energy,...landmarks,waveform,energyStep:0.02,recommendedBeatLength:rhythm.bpm?60/rhythm.bpm:0,recommendedStepTime:20,analysisVersion:3,groove:grooveFromOnsets(rhythm,onsets),structure:{version:STRUCTURE_VERSION,method:'Multi-scale tonal novelty with energy, spectral change and measured phrase boundaries',tonalEvidence:{available:structure.tonal.available,reason:structure.tonal.reason,frameCount:structure.tonal.frameCount,validFrameCount:structure.tonal.validFrameCount||0,windowSeconds:structure.tonal.windowSeconds||[],sectionCandidates:structure.tonal.sections.length,phraseCandidates:structure.tonal.phrases.length},recurringGroups:[...new Set(structure.sections.filter(s=>s.repetitionIndex>0).map(s=>s.recurrenceGroup))],semanticLabels:false},timing:{neuralFrameMs:20,pcmEnvelopeMs:data.fineRms?5:null,decoder:options.decoder==='transformer'?'Transformer direct peak decoding':'Adaptive CRNN lattice',alignment:manual?'Exact manual-tempo grid with evidence-based phase':'Neural pulse with local tempo and nearby measured PCM attacks',manualTempo:manual,attackCount:attacks.length,refinedBeatCount:manual?0:shifts.filter(s=>s>0.001).length,appliedGlobalOffsetMs:0},warnings};
  const percussionAnalysis=estimatePercussionEvidence(data,{enabled:options.enableEstimatedPercussionEvidence===true,telemetry:options.telemetry,onsets,attacks,activityRanges:rhythm.activityRanges});
  if(percussionAnalysis)result.percussionAnalysis=percussionAnalysis;
  return result;
 }
-scope.LightForgeDSP={FFT,Spectrum,FeatureExtractor,rolling,percentile,activityFromEnvelope,pcmAttacks,alignToAttack,trackBeats,recurringSections,grooveFromOnsets,estimatePercussionEvidence,summarize};
+scope.LightForgeDSP={FFT,Spectrum,FeatureExtractor,rolling,percentile,activityFromEnvelope,pcmAttacks,alignToAttack,trackBeats,tonalStructure,sectionsFromFeatures,phrasesAndImpacts,recurringSections,grooveFromOnsets,estimatePercussionEvidence,summarize};
 })(typeof self!=='undefined'?self:globalThis);

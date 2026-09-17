@@ -29,6 +29,16 @@ interior palettes, voice/bass emphasis and individual section edits. The export
 frame interval is 15 or 20 ms. Finer command placement does not imply equally
 accurate music detection or faster physical movement.
 
+## Musical expression
+
+**Follow musical expression** is recommended for new shows. It gives detected
+vocal accents and held notes their own emphasis and lets repeated musical
+sections develop related visual patterns. Existing saved shows keep their
+original setting. Turn it on to update an older arrangement; when enough music
+detail is already saved, the update needs no new separation or transcription.
+Older analyses may need **Create** once more. You can turn it off or use **Undo**
+to return to the previous arrangement.
+
 ## Background analysis and recovery
 
 Use **Continue in background** to switch apps or turn off the display. Allow

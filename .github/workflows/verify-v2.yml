@@ -45,6 +45,7 @@ jobs:
             tools
             tests
             qa
+            releases
             research/model-source
             research/evaluation-1.6
             research/upstream/deux

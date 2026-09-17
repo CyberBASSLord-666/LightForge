@@ -1,4 +1,4 @@
-# LightForge 2.1 offline music intelligence
+# LightForge offline music intelligence
 
 `MusicAnalyzer.analyze(audioUrl, options, onProgress, signal)` returns analysis version 8.
 Every runtime graph is bundled in the APK. Audio never leaves the device, and
@@ -58,7 +58,25 @@ drums and other instruments remain, and real-song onset estimates can be ambiguo
 The semantic timeline records this as separated accompaniment context, never as
 an isolated bass source.
 
-## Opt-in acoustic vocal semantic sidecar
+## Structure and musical-expression defaults
+
+New analyses include multi-scale tonal structure and measured phrase boundaries.
+Existing pitch-class features can identify a sustained harmonic change even
+when loudness is unchanged; measured boundaries take priority over fixed
+four-bar phrasing. Silence remains protected, and the beat/model clock is
+unchanged. The default light and movement composers consume the improved
+sections and phrases. See `docs/MUSICAL_STRUCTURE.md` for uncertainty,
+controlled validation and the original-audio comparison tool.
+
+New projects explicitly enable vocal semantic enrichment, recurrence analysis,
+semantic choreography, vocal choreography and motif evolution. These settings
+remain opt-in at the worker/engine API boundary (`=== true`); a restored project
+with missing or false flags keeps those features off. Turning expression on
+for a saved schema-8 analysis derives validated sidecars from existing evidence
+without repeating neural inference. Fresh foreground and background analyses
+receive the same explicit flags. See `docs/MUSICAL_EXPRESSION.md`.
+
+## Acoustic vocal semantic sidecar
 
 `vocalSemanticEnrichment: true` enables a validated sidecar after the
 existing separated-vocal detail and GAME passes. It does **not** run another
@@ -74,13 +92,13 @@ that evidence or its schema changes. It is stored under the independent
 `vocal-semantics` checkpoint, so changing this opt-in feature does not
 invalidate separation, transcription, rhythm, or bass work.
 
-The default analysis result, cached base semantic timeline, salience map and
-FSEQ path remain unchanged. When enabled, `vocalSemanticLinks` maps the
+The cached base semantic timeline and salience map remain unchanged by this
+sidecar. Callers with enrichment disabled retain the existing path. When enabled, `vocalSemanticLinks` maps the
 sidecar only to exact existing vocal events in the semantic timeline; a stale
 or mismatched sidecar fails closed and is never converted into vehicle commands.
 See `docs/VOCAL_SEMANTIC_ENRICHMENT.md` for the contract.
 
-## Opt-in acoustic vocal choreography
+## Acoustic vocal choreography
 
 `vocalChoreography: true` is a separate composition setting. It uses no PCM,
 model, lyric, word, phoneme, or text input. When both the acoustic vocal
@@ -90,12 +108,13 @@ legal held-note release, measured phrase release, and left/right direction
 from an accepted pitch trajectory. It never creates a musical event or a
 vehicle command. The canonical schema-v2 original-clock timeline validator
 must pass before the link is used; malformed, stale, resampled, or edited
-evidence leaves the bridge inactive. With the setting off (the default), or
-when any proof fails, legacy frames and FSEQ bytes are unchanged.
+evidence leaves the bridge inactive. With the setting off, or when any proof fails, legacy frames and FSEQ bytes
+are unchanged. New projects explicitly enable it; older project settings are
+preserved.
 
 See `docs/VOCAL_CHOREOGRAPHY.md` for the activation and output contract.
 
-## Opt-in recurrence sidecar
+## Recurrence sidecar
 
 `recurrenceAnalysis: true` adds a final, cache-isolated recurrence stage only
 after the base rhythm, separation, voice, and bass stages complete. It reuses
@@ -104,8 +123,8 @@ it does not decode audio again, invoke another model, alter the beat grid, or
 invent musical labels. The stage emits a deterministic
 `recurrenceAnalysis.enabled` provenance marker together with exact
 `recurrenceEvidence` and `recurrenceSidecar` bindings. The base checkpoint
-strips those opt-in fields, so default callers retain identical analysis and
-FSEQ behavior.
+strips those opt-in fields, so API callers that omit or disable the flags
+retain the existing analysis and FSEQ path.
 
 A sidecar is still analysis data, not choreography. Motif evolution additionally
 requires a current valid marker, valid evidence/sidecar binding, and both

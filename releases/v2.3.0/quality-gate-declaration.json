@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "release": {
+    "name": "2.3.0",
+    "code": 20300
+  },
+  "requirement": "automated_verification_only",
+  "classification": "performance",
+  "reason": "The owner authorized musical-intelligence and inference improvements and full publication when ready, without requiring user-supplied measurements. Publication requires fresh source-bound automated host and Android verification, the original signing identity, and package integrity. Comparative speed and quality claims are limited to the actual recorded test scope; the 75% whole-analysis target, general musical-quality non-regression, blinded human review, and hardware energy/thermal behavior remain unverified."
+}

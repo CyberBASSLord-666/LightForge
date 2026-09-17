@@ -244,3 +244,14 @@ test('browser and composition-worker contexts load the canonical timeline before
   const workerTimeline=worker.indexOf("'../analysis/semantic-timeline.js'"),workerSalience=worker.indexOf("'../analysis/salience.js'"),workerSemantic=worker.indexOf("'semantic-choreography.js'"),workerEngine=worker.indexOf("'show-engine.js'");
   assert.ok(workerTimeline>=0&&workerSalience>workerTimeline&&workerSemantic>workerSalience&&workerEngine>workerSemantic);
 });
+
+test('density and breathing space preserve exact selected source attacks while pruning nearby decoration',()=>{
+ const semantic={events:[{id:'anchor',time:1,source:'vocals',score:.96,tier:'structural'},...Array.from({length:4},(_,i)=>({id:'voice-'+i,time:1.08+i*.1,source:'vocals',score:.2,tier:'secondary'}))]},strategy=Strategy.create(semantic,{stepMs:15});
+ const targets=semantic.events.map(event=>({role:'vocals',time:event.time,end:event.time+.12})),state=strategy.prepareTargets(targets);
+ const attacks=targets.slice(1).map((target,i)=>({serial:i,role:'vocals',sourceSeparated:true,sourceConfidence:.399,sourceEventTime:target.time,priority:70,kind:'vocal articulation'}));
+ const decoration=attacks.map((attack,i)=>({...attack,serial:10+i,role:undefined,sourceEventTime:attack.sourceEventTime+.015}));
+ const classified=[...attacks,...decoration].map(candidate=>strategy.classifyCandidate(candidate,state)),result=strategy.filterCandidates(classified,state);
+ for(const attack of attacks)assert.ok(result.candidates.some(candidate=>candidate.serial===attack.serial),'an already selected source attack remains available for collision allocation');
+ assert.equal(result.diagnostics.density.protectedTargetCandidateCount,4);assert.ok(result.candidates.length<classified.length,'decorative copies still yield to higher musical authority');
+ assert.equal(classified.find(candidate=>candidate.serial===10).semanticTargetAttack,false,'a nearby decorative event is not an exact source attack');
+});

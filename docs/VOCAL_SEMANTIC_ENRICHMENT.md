@@ -6,9 +6,9 @@ understanding.
 
 ## Enable explicitly
 
-Pass `vocalSemanticEnrichment: true` in the existing analysis options. It is
-intentionally not a UI default and does not alter the legacy FSEQ path. With
-that option absent or false, no `vocalSemantics` or `vocalSemanticLinks` field
+Pass `vocalSemanticEnrichment: true` in the existing analysis options. New
+Studio projects now supply this option through **Follow musical expression**;
+the analysis API itself does not infer a default. With that option absent or false, no `vocalSemantics` or `vocalSemanticLinks` field
 is returned, including when a prior opt-in result exists in cache.
 
 ## Evidence boundary
@@ -62,3 +62,13 @@ This is acoustic expression metadata, not lyrics alignment. Separation bleed,
 layered voices, distorted vocals, rapid delivery, and unvoiced consonants remain
 ambiguous. The sidecar preserves that uncertainty in confidence and does not
 turn low-confidence sound into a primary choreography event.
+
+## Studio defaults since 2.3.0
+
+The analysis API still requires `vocalSemanticEnrichment: true` explicitly.
+New Studio projects supply it through **Follow musical expression**, along
+with the separately validated choreography settings. Historical projects keep
+missing and false settings off. Turning expression on for completed version-8
+evidence builds and validates the acoustic sidecar locally from saved vocal
+phrases, notes and accents; no neural inference is necessary for that upgrade.
+The sidecar remains acoustic evidence, not words, lyrics or phoneme alignment.
