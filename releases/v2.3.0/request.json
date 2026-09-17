@@ -1,0 +1,15 @@
+{
+  "version": {
+    "name": "2.3.0",
+    "code": 20300
+  },
+  "run_id": 35165237293,
+  "source_commit": "086ebc86869b48cdb0a5792b8d7473ab1da6dfb7",
+  "delta_sha256": "24d36231dedbb77a5483878df3adead2d0776e21ca8a09c6fbe927f84c65d11d",
+  "quality_gate_policy": {
+    "schema_version": 1,
+    "source_commit": "086ebc86869b48cdb0a5792b8d7473ab1da6dfb7",
+    "source_tree_sha": "fb113ce1c8be7e41a67363d5e8c7e5db90536b43",
+    "declaration_sha256": "33c35551fdab4a98c627441602837dc8a1b846bb769dc322d9fa5ca294702e95"
+  }
+}
