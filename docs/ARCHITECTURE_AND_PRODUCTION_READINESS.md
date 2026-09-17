@@ -6,7 +6,8 @@ for ownership contracts and [VALIDATION.md](../VALIDATION.md) for exact publishe
 release evidence. Source history belongs in Git rather than a manually maintained
 "current assembly parent" paragraph.
 
-The published 2.2.5 release and 2.3.0 source use version-scoped automated-verification policies.
+The published 2.2.5 and 2.3.0 releases and the 2.3.1 source use version-scoped
+automated-verification policies.
 The strict comparative qualification described below remains necessary for the
 corresponding quality/performance claims, but external corpus, human-review and
 hardware measurements are not prerequisites for publishing those versions.

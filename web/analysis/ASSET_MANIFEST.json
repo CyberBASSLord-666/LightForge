@@ -4,8 +4,8 @@
     "sha256": "a94f5ab6b261f43a07049df5292f95a58f618786fd862d9a41ebac60d832b9a2"
   },
   "bass-notes.js": {
-    "bytes": 15251,
-    "sha256": "3da15e81907809b779b3985cd010709f7daa0e70973f80b71a770fda71f86efd"
+    "bytes": 19683,
+    "sha256": "f63f8da8b7f06d6b4a0aeb490c2610a542541b97bc9c59c97db388a1ddd94ff9"
   },
   "diagnostic-clock.js": {
     "bytes": 3508,
@@ -248,8 +248,8 @@
     "sha256": "52093f26d0bfe3f04bbb1563b287fafe5e61aa57a61391ea643b04d97838ca7e"
   },
   "README.md": {
-    "bytes": 15461,
-    "sha256": "01ed5b9732b6a497cb4df9adda7469c15552640736ea963289466d67ba22a845"
+    "bytes": 15944,
+    "sha256": "eadf8ab99ca8f0e37d2f575f0dbef4bafe09f0b5b4fd8d242687b66b5276b9ba"
   },
   "recurrence.js": {
     "bytes": 31249,

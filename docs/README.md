@@ -33,7 +33,8 @@
 
 These contracts define how to collect and evaluate evidence. Their presence is
 not a successful benchmark. The owner-approved external-input exception applies
-to **2.2.5 / 20205** and **2.3.0 / 20300**; it does not weaken the separate strict qualification
+to **2.2.5 / 20205**, **2.3.0 / 20300** and **2.3.1 / 20301**; it does not
+weaken the separate strict qualification
 thresholds or establish comparative quality, speed or physical behavior.
 
 | Contract | Scope |

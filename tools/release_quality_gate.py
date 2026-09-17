@@ -45,6 +45,7 @@ RELEASE_SCOPE_SCHEMA_VERSION = 1
 AUTOMATED_VERIFICATION_ONLY_RELEASES = frozenset({
     ("2.2.5", 20205),
     ("2.3.0", 20300),
+    ("2.3.1", 20301),
 })
 
 # A waiver is deliberately much narrower than "does not look like a model

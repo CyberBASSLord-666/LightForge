@@ -58,6 +58,14 @@ drums and other instruments remain, and real-song onset estimates can be ambiguo
 The semantic timeline records this as separated accompaniment context, never as
 an isolated bass source.
 
+Repeated notes at the same estimated pitch use a short-window harmonic
+articulation pass after coarse pitch tracking. A low-band energy dip only
+nominates a boundary; the note's own supported harmonics must fall deeply and
+restart rapidly. This preserves measured attacks that the longer pitch window
+can blur while rejecting smooth tremolo as a restart. The result remains an
+accompaniment-mixture estimate, and overlapping kicks can still affect coarse
+pitch spans or boundaries.
+
 ## Structure and musical-expression defaults
 
 New analyses include multi-scale tonal structure and measured phrase boundaries.
