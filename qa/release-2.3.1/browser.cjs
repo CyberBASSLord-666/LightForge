@@ -5,7 +5,7 @@ const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),
 const root=path.resolve(__dirname,'../..'),out=__dirname,output=path.join(out,'browser-verification.json');
 const EVIDENCE_SESSION_SCHEMA='lightforge.evidence-session.v1';
 const EVIDENCE_SESSION_PATTERN=/^[0-9a-f]{32,128}$/;
-// CI supplies a session. Its deliberate absence retains no-session local runs.
+// Current release evidence is accepted only with the CI evidence session.
 function writeJsonAtomic(file,value){
  const temporary=`${file}.${process.pid}.${crypto.randomBytes(8).toString('hex')}.tmp`;
  try{fs.writeFileSync(temporary,JSON.stringify(value,null,2)+'\n');fs.renameSync(temporary,file);}

@@ -25,7 +25,7 @@ HISTORICAL_OUT = 'qa/release-2.2.4/'
 COMPARISON_SHA256 = 'e74c12ca08132182f7cb971a98a6280401fcbfb5220a403e690e276c21c91712'
 # Reviewed 2.3.1 inventory: the exact complete asset manifest remains pinned.
 # Original model/runtime assets and all source-bound verification gates remain mandatory.
-ASSET_MANIFEST_SHA256 = '34b4ccc69342613626ef48942cb75aa1b7af1380ea1a016a570fab301d0a6317'
+ASSET_MANIFEST_SHA256 = 'd9861da5a8bfda2999276eec6bc5b19270e6d3a7d4fe9800a05aa2d6d9e98682'
 ASSET_MANIFEST_ENTRY_COUNT = 85
 OLD_RUNTIME_SHA256 = 'e0ab4a1af57d2da09097202f2dfd691e390c82e81183314788ccde4cf7c3cc38'
 NEW_RUNTIME_SHA256 = '749793ebed63743fec853d093da7987a86ea5cd592d54fba898cd3233100c381'
@@ -90,11 +90,6 @@ CLOCK_SOURCES = {
     'web/analysis/models/deux/manifest.json', OUT + 'test-source-clock.cjs',
 }
 BROWSER_SOURCE_INVENTORY_PATH = OUT + 'browser-source-inventory.json'
-BACKGROUND_UI_SOURCES = {
-    OUT + 'background-ui.cjs', 'version.json', 'web/version.js', 'web/app.js',
-    'web/diagnostics.js', 'web/diagnostics.css', 'web/index.html', 'web/styles.css',
-    'web/cockpit.css', 'web/cockpit.js',
-}
 EVIDENCE_SESSION_UNSET = object()
 
 
@@ -109,7 +104,7 @@ def load_browser_source_inventory():
         value = json.loads(path.read_text(encoding='utf-8'))
     except (OSError, UnicodeError, json.JSONDecodeError) as error:
         raise ValueError('Browser source inventory is invalid') from error
-    expected = {'schema', 'common', 'browser', 'analysis_browser', 'restore_preview'}
+    expected = {'schema', 'common', 'browser', 'background', 'analysis_browser', 'restore_preview'}
     require(isinstance(value, dict) and set(value) == expected and
             value.get('schema') == 'lightforge.browser-source-inventory.v1',
             'Browser source inventory schema is invalid')
@@ -122,7 +117,7 @@ def load_browser_source_inventory():
                 for path in paths) and len(paths) == len(set(paths)),
                 'Browser source inventory paths are invalid: ' + name)
         parsed[name] = frozenset(paths)
-    for name in ('browser', 'analysis_browser', 'restore_preview'):
+    for name in ('browser', 'background', 'analysis_browser', 'restore_preview'):
         require(not parsed['common'] & parsed[name],
                 'Browser source inventory duplicates common path: ' + name)
     require(BROWSER_SOURCE_INVENTORY_PATH in parsed['common'],
@@ -130,10 +125,19 @@ def load_browser_source_inventory():
     return parsed
 
 
-BROWSER_SOURCE_INVENTORY = load_browser_source_inventory()
-BROWSER_SOURCES = BROWSER_SOURCE_INVENTORY['common'] | BROWSER_SOURCE_INVENTORY['browser']
-ANALYSIS_BROWSER_SOURCES = BROWSER_SOURCE_INVENTORY['common'] | BROWSER_SOURCE_INVENTORY['analysis_browser']
-RESTORE_PREVIEW_SOURCES = BROWSER_SOURCE_INVENTORY['common'] | BROWSER_SOURCE_INVENTORY['restore_preview']
+BROWSER_SOURCE_INVENTORY = None
+BROWSER_SOURCES = ANALYSIS_BROWSER_SOURCES = BACKGROUND_UI_SOURCES = RESTORE_PREVIEW_SOURCES = frozenset()
+
+
+def ensure_browser_source_inventory():
+    global BROWSER_SOURCE_INVENTORY, BROWSER_SOURCES, ANALYSIS_BROWSER_SOURCES, BACKGROUND_UI_SOURCES, RESTORE_PREVIEW_SOURCES
+    if BROWSER_SOURCE_INVENTORY is None:
+        BROWSER_SOURCE_INVENTORY = load_browser_source_inventory()
+        BROWSER_SOURCES = BROWSER_SOURCE_INVENTORY['common'] | BROWSER_SOURCE_INVENTORY['browser']
+        ANALYSIS_BROWSER_SOURCES = BROWSER_SOURCE_INVENTORY['common'] | BROWSER_SOURCE_INVENTORY['analysis_browser']
+        BACKGROUND_UI_SOURCES = BROWSER_SOURCE_INVENTORY['common'] | BROWSER_SOURCE_INVENTORY['background']
+        RESTORE_PREVIEW_SOURCES = BROWSER_SOURCE_INVENTORY['common'] | BROWSER_SOURCE_INVENTORY['restore_preview']
+    return BROWSER_SOURCE_INVENTORY
 
 
 def digest(path):
@@ -432,6 +436,7 @@ def verify_clock(root, hashes, evidence_session=None):
 
 
 def verify_browser_receipt(root, hashes, evidence_session):
+    ensure_browser_source_inventory()
     return verify_fresh_receipt(root, OUT + 'browser-verification.json', hashes,
                                  evidence_session, 'Browser', BROWSER_SOURCES)
 
@@ -461,6 +466,7 @@ def verify_analysis_browser_assets(root, result, hashes):
 
 
 def verify_analysis_browser_receipt(root, hashes, evidence_session):
+    ensure_browser_source_inventory()
     result = verify_fresh_receipt(root, OUT + 'analysis-browser-verification.json', hashes,
                                   evidence_session, 'Analysis-browser', ANALYSIS_BROWSER_SOURCES)
     verify_analysis_browser_assets(root, result, hashes)
@@ -468,11 +474,13 @@ def verify_analysis_browser_receipt(root, hashes, evidence_session):
 
 
 def verify_background_ui_receipt(root, hashes, evidence_session):
+    ensure_browser_source_inventory()
     return verify_fresh_receipt(root, OUT + 'background-ui-verification.json', hashes,
                                  evidence_session, 'Background UI', BACKGROUND_UI_SOURCES)
 
 
 def verify_restore_preview_receipt(root, hashes, evidence_session):
+    ensure_browser_source_inventory()
     return verify_fresh_receipt(root, OUT + 'restore-preview-verification.json', hashes,
                                  evidence_session, 'Restore preview', RESTORE_PREVIEW_SOURCES)
 
@@ -510,7 +518,7 @@ def verify_mdx(root, hashes, profile_equivalence, evidence_session=None):
             'MDX comparison source coverage changed')
     for source, expected in result['source_hashes'].items():
         if source == 'android/src/com/cyberbasslord/lightforge/NativeDeux.java' and profile_equivalence is not None:
-            require(source in hashes and digest(file(root, source)) == hashes[source],
+            require(source in hashes and expected == hashes[source] and digest(file(root, source)) == hashes[source],
                     'Profiled native predictor differs from its exact-byte equivalence proof')
         else:
             bind(root, source, expected, hashes)
@@ -688,6 +696,9 @@ def verify_release(root=ROOT):
     require(json.loads(version_path.read_text()) == {'name': RELEASE, 'code': RELEASE_CODE},
             'This evidence protocol belongs only to 2.3.1 / 20301')
     evidence_session = current_evidence_session()
+    require(evidence_session is not None,
+            'Current 2.3.1 release verification requires a fresh evidence session')
+    ensure_browser_source_inventory()
     hashes = {'version.json': digest(version_path)}
     comparison = verify_historical_comparison(root, hashes)
     profile_equivalence = verify_profile_equivalence(root, hashes, comparison, evidence_session)

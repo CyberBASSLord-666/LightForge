@@ -51,6 +51,10 @@
     "version.json",
     "web/demo/glass-castle.wav"
   ],
+  "background": [
+    "qa/release-2.3.1/background-ui.cjs",
+    "version.json"
+  ],
   "restore_preview": [
     "qa/restore-preview/browser.cjs",
     "version.json",

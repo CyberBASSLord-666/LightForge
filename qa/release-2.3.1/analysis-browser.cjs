@@ -6,7 +6,7 @@ const fs=require('fs'),path=require('path'),http=require('http'),crypto=require(
 const root=path.resolve(__dirname,'../..'),qa=__dirname,fixture=path.join(root,'qa/release-1.6.0/fixtures/falcon-mix.wav'),output=path.join(qa,'analysis-browser-verification.json');
 const EVIDENCE_SESSION_SCHEMA='lightforge.evidence-session.v1';
 const EVIDENCE_SESSION_PATTERN=/^[0-9a-f]{32,128}$/;
-// CI supplies a session. Its deliberate absence retains no-session local runs.
+// Current release evidence is accepted only with the CI evidence session.
 function writeJsonAtomic(file,value){
  const temporary=`${file}.${process.pid}.${crypto.randomBytes(8).toString('hex')}.tmp`;
  try{fs.writeFileSync(temporary,JSON.stringify(value,null,2)+'\n');fs.renameSync(temporary,file);}

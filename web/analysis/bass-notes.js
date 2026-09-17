@@ -151,12 +151,21 @@ function articulationBoundary(pcm,base,note,time,telemetry){
  return null;
 }
 async function splitArticulations(reader,config,result,extractor,frames,options){
- const groups=new Map(),energy=frames.energy;
+ const groups=new Map(),energy=frames.energy,candidates=[];
  for(const note of result.notes){let last=-Infinity;for(let i=Math.max(10,Math.ceil((note.start+.14)/STEP));i<Math.min(energy.length-4,Math.floor((note.end-.14)/STEP));i++){
   let after=0,before=0,low=Infinity;for(let j=i;j<i+4;j++)after=Math.max(after,energy[j]);for(let j=i-10;j<i-3;j++)before=Math.max(before,energy[j]);for(let j=i-3;j<i;j++)low=Math.min(low,energy[j]);
   if(after<.00015||low>Math.min(before,after)*.45||energy[i]-energy[i-1]<after*.18||i-last<4)continue;
-  last=i;const time=i*STEP,key=Math.floor(time/10);if(!groups.has(key))groups.set(key,[]);groups.get(key).push({note,time});
+  last=i;candidates.push({note,time:i*STEP,priority:(after-low)/Math.max(after,.000001)});
  }}
+ // Exact-frequency confirmation is intentionally capped. Rank candidates by
+ // supported restart strength, retain at most eight per coarse note, then cap
+ // the complete track so adversarial tremolo cannot dominate analysis time.
+ const perNote=new Map(),selected=[];
+ for(const candidate of candidates.sort((a,b)=>b.priority-a.priority||a.time-b.time)){
+  const count=perNote.get(candidate.note)||0;if(count>=8||selected.length>=512)continue;
+  perNote.set(candidate.note,count+1);selected.push(candidate);
+ }
+ for(const candidate of selected.sort((a,b)=>a.time-b.time)){const key=Math.floor(candidate.time/10);if(!groups.has(key))groups.set(key,[]);groups.get(key).push(candidate);}
  const boundaries=new Map();let done=0;for(const [key,events]of groups){abort(options.signal);const first=Math.floor((key*10-1)*RATE),samples=await reader.mono22050(first,12*RATE+1,config);abort(options.signal);const {pcm,base}=extractor.decimate(samples,first);
   for(const {note,time}of events){abort(options.signal);const boundary=articulationBoundary(pcm,base,note,time,options.telemetry);if(!boundary)continue;if(!boundaries.has(note))boundaries.set(note,[]);boundaries.get(note).push(boundary);}
   options.onProgress?.(.9+.1*(++done)/groups.size);
@@ -167,6 +176,7 @@ async function splitArticulations(reader,config,result,extractor,frames,options)
  }if(!children.length){notes.push(note);continue;}children.push({...note,start,time:start});for(const child of children){let peak=0;for(let i=Math.max(0,Math.ceil(child.start/STEP));i<Math.min(energy.length,Math.ceil(child.end/STEP));i++)peak=Math.max(peak,energy[i]);child.strength=Math.round(clamp(peak/norm)*1000)/1000;notes.push(child);}}
  result.notes=notes;result.diagnostics.repeatedArticulations=added;
  result.diagnostics.articulationMethod='Rapid harmonic restart after a supported deep trough';
+ result.diagnostics.articulationCandidates={nominated:candidates.length,checked:selected.length,perNoteLimit:8,trackLimit:512};
 }
 async function analyze(reader,config,options={}){
  const duration=Number(reader.duration)||0;if(!Number.isFinite(duration)||duration<0||duration>14400.05)throw new Error('Bass analysis supports audio up to four hours.');

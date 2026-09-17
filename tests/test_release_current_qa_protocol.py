@@ -54,6 +54,7 @@ class CurrentReleaseQaProtocolTest(TestCase):
         return receipt
 
     def test_background_and_restore_receipts_reject_stale_nonce_and_changed_source(self):
+        VERIFY.ensure_browser_source_inventory()
         cases = [
             (VERIFY.OUT + 'background-ui-verification.json', VERIFY.BACKGROUND_UI_SOURCES,
              VERIFY.verify_background_ui_receipt),
@@ -300,7 +301,7 @@ class CurrentReleaseQaProtocolTest(TestCase):
                 upstream.write_bytes(previous_upstream)
 
     def test_browser_source_inventory_covers_loaded_runtime_closure(self):
-        inventory = VERIFY.BROWSER_SOURCE_INVENTORY
+        inventory = VERIFY.ensure_browser_source_inventory()
         common = set(inventory['common'])
         self.assertIn(VERIFY.BROWSER_SOURCE_INVENTORY_PATH, common)
         index = (ROOT / 'web/index.html').read_text(encoding='utf-8')
@@ -327,6 +328,7 @@ class CurrentReleaseQaProtocolTest(TestCase):
         self.assertIn('web/preview/models/highland.glb', common)
         for producer in [ROOT / f'qa/release-{RELEASE}/browser.cjs',
                          ROOT / f'qa/release-{RELEASE}/analysis-browser.cjs',
+                         ROOT / f'qa/release-{RELEASE}/background-ui.cjs',
                          ROOT / 'qa/restore-preview/browser.cjs']:
             self.assertIn('browser-source-inventory.json', producer.read_text(encoding='utf-8'))
 

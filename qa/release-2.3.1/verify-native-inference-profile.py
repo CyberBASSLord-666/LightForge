@@ -148,7 +148,12 @@ def profile_topology(records):
         elif record.startswith('schema=native-inference-graph-v2 '):
             require({'graph', 'cpuTelemetry', 'heapTelemetry', 'heapObservedBytes', 'runCount', 'runWallMs', 'runCpuMs'} <= set(fields),
                     'Profile graph record is incomplete.')
-            require(fields['runCount'] != '0', 'Profile graph was not executed.')
+            try:
+                run_count = int(fields['runCount'])
+            except ValueError as error:
+                raise RuntimeError('Profile graph runCount is not an integer.') from error
+            require(run_count > 0 and str(run_count) == fields['runCount'],
+                    'Profile graph was not executed with a canonical positive runCount.')
             graphs.append(fields['graph'])
         else:
             raise RuntimeError('Canonical profile record uses an unknown schema.')

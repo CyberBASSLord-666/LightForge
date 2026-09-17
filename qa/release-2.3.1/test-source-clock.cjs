@@ -4,7 +4,8 @@
  * across several nonzero context windows, including impulses at seams.
  *
  * CI supplies LIGHTFORGE_EVIDENCE_SESSION. Omitting it deliberately preserves
- * the historical no-session local mode; a supplied value must be a valid
+ * local diagnostics may omit it, but current release verification requires a
+ * fresh session; a supplied value must be a valid
  * session token and is recorded on both the initial failed and final receipt. */
 const fs=require('fs'),path=require('path'),assert=require('assert/strict'),crypto=require('crypto');
 const root=path.resolve(__dirname,'../..'),output=path.join(__dirname,'source-clock-verification.json');

@@ -1,10 +1,8 @@
 'use strict';
 const fs=require('fs'),path=require('path'),http=require('http'),crypto=require('crypto'),assert=require('assert/strict');
 const root=path.resolve(__dirname,'../..'),out=path.resolve(process.env.LIGHTFORGE_BACKGROUND_UI_OUTPUT||__dirname);
-const RELEASE=JSON.parse(fs.readFileSync(path.join(root,'version.json'),'utf8')).name;
 const EVIDENCE_SESSION_SCHEMA='lightforge.evidence-session.v1';
 const EVIDENCE_SESSION_PATTERN=/^[0-9a-f]{32,128}$/;
-const inputs=['qa/release-2.3.1/background-ui.cjs','version.json','web/version.js','web/app.js','web/diagnostics.js','web/diagnostics.css','web/index.html','web/styles.css','web/cockpit.css','web/cockpit.js'];
 function writeJsonAtomic(file,value){
  const temporary=`${file}.${process.pid}.${crypto.randomBytes(8).toString('hex')}.tmp`;
  try{fs.writeFileSync(temporary,JSON.stringify(value,null,2)+'\n');fs.renameSync(temporary,file);}
@@ -15,7 +13,7 @@ function errorText(error){return error&&error.stack?error.stack:String(error);}
  const evidenceSession=process.env.LIGHTFORGE_EVIDENCE_SESSION;
  const sessionError=evidenceSession!==undefined&&!EVIDENCE_SESSION_PATTERN.test(evidenceSession)?
   new Error('Invalid LIGHTFORGE_EVIDENCE_SESSION'):null;
- const receipt={release:RELEASE,passed:false,checks:[],errors:[],source_hashes:{},scope:'Real Chromium UI with a simulated Android job/status bridge; native background lifetime is tested separately on Android.'};
+ const receipt={release:null,passed:false,checks:[],errors:[],source_hashes:{},scope:'Real Chromium UI with a simulated Android job/status bridge; native background lifetime is tested separately on Android.'};
  if(!sessionError&&evidenceSession!==undefined){receipt.evidenceSessionSchema=EVIDENCE_SESSION_SCHEMA;receipt.evidenceSession=evidenceSession;}
  const output=path.join(out,'background-ui-verification.json');
  fs.mkdirSync(out,{recursive:true});
@@ -24,6 +22,12 @@ function errorText(error){return error&&error.stack?error.stack:String(error);}
  let server,browser;
  try{
   if(sessionError)throw sessionError;
+  receipt.release=JSON.parse(fs.readFileSync(path.join(root,'version.json'),'utf8')).name;
+  const inventory=JSON.parse(fs.readFileSync(path.join(root,'qa/release-2.3.1/browser-source-inventory.json'),'utf8'));
+  assert.equal(inventory?.schema,'lightforge.browser-source-inventory.v1','Background source inventory schema is invalid');
+  assert.ok(Array.isArray(inventory?.common)&&Array.isArray(inventory?.background),'Background source inventory is invalid');
+  const inputs=[...inventory.common,...inventory.background];
+  assert.equal(new Set(inputs).size,inputs.length,'Background source inventory contains duplicates');
   receipt.source_hashes=Object.fromEntries(inputs.map(p=>[p,crypto.createHash('sha256').update(fs.readFileSync(path.join(root,p))).digest('hex')]));
   const {chromium}=require('playwright');
   server=http.createServer((req,res)=>{
