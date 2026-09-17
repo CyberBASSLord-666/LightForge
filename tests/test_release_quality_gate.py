@@ -116,7 +116,7 @@ class ReleaseQualityGateTest(unittest.TestCase):
     def test_automated_only_policy_is_explicit_and_limited_to_authorized_releases(self):
         declaration = dict(self.declaration, requirement="automated_verification_only")
         self.assertEqual(gate.validate_release_declaration(declaration, version=self.version), declaration)
-        next_version = {"name": "2.3.0", "code": 20300}
+        next_version = {"name": "2.3.1", "code": 20301}
         next_declaration = dict(declaration, release=next_version)
         self.assertEqual(gate.validate_release_declaration(next_declaration, version=next_version), next_declaration)
         for version in (
@@ -124,7 +124,8 @@ class ReleaseQualityGateTest(unittest.TestCase):
             {"name": "2.2.5", "code": 20206},
             {"name": "2.2.4", "code": 20204},
             {"name": "2.3.0", "code": 20205},
-            {"name": "2.3.1", "code": 20301},
+            {"name": "2.3.1", "code": 20300},
+            {"name": "2.3.2", "code": 20302},
         ):
             with self.subTest(version=version):
                 with self.assertRaisesRegex(ValueError, "authorized only"):
@@ -145,16 +146,17 @@ class ReleaseQualityGateTest(unittest.TestCase):
                     )
 
     def test_automated_only_cannot_generate_a_pass_target_qualification_receipt(self):
-        for version in ({"name": "2.2.5", "code": 20205}, {"name": "2.3.0", "code": 20300}):
+        for version in ({"name": "2.2.5", "code": 20205}, {"name": "2.3.0", "code": 20300},
+                        {"name": "2.3.1", "code": 20301}):
             with self.subTest(version=version):
                 self.version = version
                 self.declaration.update(release=version, requirement="automated_verification_only")
                 with self.assertRaisesRegex(ValueError, "PASS_TARGET provenance requires"):
                     self.provenance()
 
-    def test_230_publication_declaration_requires_exact_source_and_digest_binding(self):
-        version = {"name": "2.3.0", "code": 20300}
-        declaration = json.loads((ROOT / "releases/v2.3.0/quality-gate-declaration.json").read_text())
+    def test_231_publication_declaration_requires_exact_source_and_digest_binding(self):
+        version = {"name": "2.3.1", "code": 20301}
+        declaration = json.loads((ROOT / "releases/v2.3.1/quality-gate-declaration.json").read_text())
         self.assertEqual(gate.validate_release_declaration(declaration, version=version), declaration)
         receipt = {"schema_version": 1, "source_commit": COMMIT, "source_tree_sha": TREE,
                    "declaration_sha256": gate.sha256_canonical_json(declaration)}

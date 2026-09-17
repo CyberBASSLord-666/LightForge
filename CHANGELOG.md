@@ -6,6 +6,22 @@ A source version or an entry here does not itself establish publication. The
 [pre-cleanup changelog](https://github.com/CyberBASSLord-666/LightForge/blob/07511f5544b688c657773dce8a29d8d31ba68cb1/CHANGELOG.md)
 retains detailed historical development notes and their original limitations.
 
+## 2.3.1 — repeated bass articulation and inference experiments
+
+Recover repeated same-pitch bass attacks from short-window harmonic trough and
+restart evidence instead of merging them into a single held note. Rebuild bass
+phrases, strengths and semantic events from the recovered source-clock
+boundaries. Preserve accompaniment-mixture provenance and the existing limits on
+isolated-instrument claims. Focused fixtures cover repeated harmonic notes,
+decaying plucks, sustained sub-bass, smooth tremolo, kicks, noise and read seams.
+
+Add a source-bound GAME WASM batch-specialization comparison with complete stage
+fingerprints, raw tensor parity, unrounded notes, alternating fresh processes and
+separate inference/initialization/CPU/RSS observations. The measured candidate
+preserved exact output but was slower and remains disabled. A separate native
+Deux geometry experiment changed output bytes and was also rejected. Original
+models, precision, contexts, steps and production inference settings remain.
+
 ## 2.3.0 — musical expression and inference engineering
 
 Add tonal novelty and evidence-supported irregular phrasing to default analysis.

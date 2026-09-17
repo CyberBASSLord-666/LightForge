@@ -118,25 +118,77 @@ async function refineBoundaries(reader,config,result,extractor,options){
  // continuous across ten-second reads. Audio is never retained track-wide.
  const events=result.notes.flatMap(note=>[{note,kind:'start',time:note.start},{note,kind:'end',time:note.end}]).sort((a,b)=>a.time-b.time),chunkSeconds=10,groups=new Map();
  for(const event of events){const key=Math.floor(event.time/chunkSeconds);if(!groups.has(key))groups.set(key,[]);groups.get(key).push(event);}
- let done=0;for(const [key,group]of groups){abort(options.signal);const start=Math.floor((key*chunkSeconds-1)*RATE),count=(chunkSeconds+2)*RATE+1,samples=await reader.mono22050(start,count,config),{pcm,base}=extractor.decimate(samples,start);
+ let done=0;for(const [key,group]of groups){abort(options.signal);const start=Math.floor((key*chunkSeconds-1)*RATE),count=(chunkSeconds+2)*RATE+1,samples=await reader.mono22050(start,count,config);abort(options.signal);const {pcm,base}=extractor.decimate(samples,start);
   for(const event of group){const value=harmonicBoundary(pcm,base,event.note,event.kind,reader.duration,options.telemetry);event.note[event.kind==='start'?'refinedStart':'refinedEnd']=value;}
-  options.onProgress?.(.7+.3*(++done)/groups.size);
+  options.onProgress?.(.7+.2*(++done)/groups.size);
  }
  for(const note of result.notes){note.start=note.refinedStart??note.start;note.end=note.refinedEnd??note.end;note.time=note.start;delete note.refinedStart;delete note.refinedEnd;}
  result.notes.sort((a,b)=>a.start-b.start);for(let i=0;i<result.notes.length-1;i++)if(result.notes[i].end>result.notes[i+1].start)result.notes[i].end=result.notes[i+1].start;
  result.notes=result.notes.filter(n=>n.end-n.start>=.12);
+}
+function articulationBoundary(pcm,base,note,time,telemetry){
+ // A short low-band dip only nominates a location. The note's own harmonics
+ // must fall and restart rapidly; a louder nearby kick is not an articulation.
+ const step=.005,window=256,begin=time-.22,weights=Float64Array.from({length:window},(_,i)=>.5-.5*Math.cos(2*Math.PI*i/(window-1))),coefficients=Array.from({length:4},(_,i)=>2*Math.cos(2*Math.PI*note.frequency*(i+1)/SR)),amps=[];
+ measure(telemetry,'feature_generation',()=>{for(let k=0;k<=72;k++){const first=Math.round((begin+k*step)*SR-base-window/2),value=[];for(const coefficient of coefficients){let x1=0,x2=0;for(let j=0;j<window;j++){const x=(pcm[first+j]||0)*weights[j]+coefficient*x1-x2;x2=x1;x1=x;}value.push(Math.sqrt(Math.max(0,x1*x1+x2*x2-coefficient*x1*x2)));}amps.push(value);}});
+ const reference=coefficients.map((_,h)=>quantile(amps.slice(49,63).map(a=>a[h]),.8)),maximum=Math.max(...reference),selected=[];
+ if(maximum<.005)return null;
+ for(let h=1;h<4;h++)if(reference[h]>maximum*.085)selected.push(h);if(selected.length<2){selected.length=0;selected.push(0);}
+ const score=amps.map(a=>quantile(selected.map(h=>a[h]/Math.max(reference[h],.00001)),.5));
+ for(let low=35;low<=47;low++){
+  if(score[low]>.12||score[low-1]>.2||score[low+1]<=.12)continue;
+  // Smooth tremolo has a gradual recovery. Require the deep trough to reach
+  // the new harmonic plateau within 30 ms, independently of the beat grid.
+  let high=low+1;while(high<=low+6&&score[high]<.8)high++;if(high>low+6)continue;
+  const before=quantile(score.slice(low-30,low-12),.8);let trough=low;for(let i=low-8;i<low;i++)if(score[i]<score[trough])trough=i;
+  if(before<.06||score[trough]>.04||score[trough]>.45*before||Math.min(score[trough-1],score[trough+1])>.05)continue;
+  let onset=low+1;while(onset<high&&score[onset]<.5)onset++;
+  let end=trough;while(end>low-30&&score[end]<before*.5)end--;
+  const startTime=Math.round((begin+onset*step)*1000)/1000,endTime=Math.round((begin+end*step)*1000)/1000;
+  if(endTime-note.start<.14||note.end-startTime<.14||endTime>startTime)continue;
+  return {start:startTime,end:endTime};
+ }
+ return null;
+}
+async function splitArticulations(reader,config,result,extractor,frames,options){
+ const groups=new Map(),energy=frames.energy,candidates=[];
+ for(const note of result.notes){let last=-Infinity;for(let i=Math.max(10,Math.ceil((note.start+.14)/STEP));i<Math.min(energy.length-4,Math.floor((note.end-.14)/STEP));i++){
+  let after=0,before=0,low=Infinity;for(let j=i;j<i+4;j++)after=Math.max(after,energy[j]);for(let j=i-10;j<i-3;j++)before=Math.max(before,energy[j]);for(let j=i-3;j<i;j++)low=Math.min(low,energy[j]);
+  if(after<.00015||low>Math.min(before,after)*.45||energy[i]-energy[i-1]<after*.18||i-last<4)continue;
+  last=i;candidates.push({note,time:i*STEP,priority:(after-low)/Math.max(after,.000001)});
+ }}
+ // Exact-frequency confirmation is intentionally capped. Rank candidates by
+ // supported restart strength, retain at most eight per coarse note, then cap
+ // the complete track so adversarial tremolo cannot dominate analysis time.
+ const perNote=new Map(),selected=[];
+ for(const candidate of candidates.sort((a,b)=>b.priority-a.priority||a.time-b.time)){
+  const count=perNote.get(candidate.note)||0;if(count>=8||selected.length>=512)continue;
+  perNote.set(candidate.note,count+1);selected.push(candidate);
+ }
+ for(const candidate of selected.sort((a,b)=>a.time-b.time)){const key=Math.floor(candidate.time/10);if(!groups.has(key))groups.set(key,[]);groups.get(key).push(candidate);}
+ const boundaries=new Map();let done=0;for(const [key,events]of groups){abort(options.signal);const first=Math.floor((key*10-1)*RATE),samples=await reader.mono22050(first,12*RATE+1,config);abort(options.signal);const {pcm,base}=extractor.decimate(samples,first);
+  for(const {note,time}of events){abort(options.signal);const boundary=articulationBoundary(pcm,base,note,time,options.telemetry);if(!boundary)continue;if(!boundaries.has(note))boundaries.set(note,[]);boundaries.get(note).push(boundary);}
+  options.onProgress?.(.9+.1*(++done)/groups.size);
+ }
+ const notes=[],norm=boundaries.size?(quantile(energy,.95)||1):1;let added=0;for(const note of result.notes){let start=note.start;const children=[];for(const boundary of (boundaries.get(note)||[]).sort((a,b)=>a.start-b.start)){
+  if(boundary.end-start<.14||note.end-boundary.start<.14)continue;
+  children.push({...note,start,time:start,end:boundary.end});start=boundary.start;added++;
+ }if(!children.length){notes.push(note);continue;}children.push({...note,start,time:start});for(const child of children){let peak=0;for(let i=Math.max(0,Math.ceil(child.start/STEP));i<Math.min(energy.length,Math.ceil(child.end/STEP));i++)peak=Math.max(peak,energy[i]);child.strength=Math.round(clamp(peak/norm)*1000)/1000;notes.push(child);}}
+ result.notes=notes;result.diagnostics.repeatedArticulations=added;
+ result.diagnostics.articulationMethod='Rapid harmonic restart after a supported deep trough';
+ result.diagnostics.articulationCandidates={nominated:candidates.length,checked:selected.length,perNoteLimit:8,trackLimit:512};
 }
 async function analyze(reader,config,options={}){
  const duration=Number(reader.duration)||0;if(!Number.isFinite(duration)||duration<0||duration>14400.05)throw new Error('Bass analysis supports audio up to four hours.');
  const count=Math.ceil(duration/STEP),extractor=new Extractor(options.telemetry),keys=['frequency','confidence','harmonics','energy'],frames={length:count},chunk=Math.max(1,Math.min(1000,Math.floor(options.chunkFrames||500))),halo=FFT_SIZE*DECIMATE/2+64*DECIMATE+64;
  for(const key of keys)frames[key]=new Float32Array(count);
  for(let first=0;first<count;first+=chunk){abort(options.signal);const n=Math.min(chunk,count-first),start=first*HOP-halo,samples=await reader.mono22050(start,(n-1)*HOP+2*halo+1,config),part=extractor.chunk(samples,start,first,n);for(let i=0;i<n;i++)for(const key of keys)frames[key][first+i]=part[i][key];options.onProgress?.(.7*(first+n)/count);}
- abort(options.signal);const result=summarize(frames,duration);await refineBoundaries(reader,config,result,extractor,options);
+ abort(options.signal);const result=summarize(frames,duration);await refineBoundaries(reader,config,result,extractor,options);await splitArticulations(reader,config,result,extractor,frames,options);
  // Refinement may extend a recovered onset beyond the initial coarse window.
  const norm=quantile(frames.energy,.95)||1;result.envelope.fill(0);
  for(const n of result.notes)for(let i=Math.max(0,Math.floor(n.start/STEP));i<Math.min(count,Math.ceil(n.end/STEP));i++)result.envelope[i]=Math.round(clamp(frames.energy[i]/norm)*n.confidence*1000)/1000;
  result.phrases=[];for(const n of result.notes){const p=result.phrases[result.phrases.length-1];if(p&&n.start-p.end<=.65&&n.end-p.start<=16){p.end=n.end;p.confidence=Math.round((p.confidence*p.notes+n.confidence)/(p.notes+1)*1000)/1000;p.notes++;if(n.strength>p.strength){p.strength=n.strength;p.accentTime=n.start;}}else result.phrases.push({start:n.start,end:n.end,confidence:n.confidence,strength:n.strength,accentTime:n.start,notes:1});}
  result.diagnostics.boundaryMethod='Exact-frequency harmonic amplitudes in local PCM';result.diagnostics.boundaryGridMs=5;result.diagnostics.boundaryWindowMs=Math.round(256/SR*1000);result.diagnostics.boundaryGridIsAccuracy=false;result.diagnostics.notes=result.notes.length;options.onProgress?.(1);return result;
 }
-scope.LightForgeBass={analyze,Extractor,summarize,version:'1.0.0'};
+scope.LightForgeBass={analyze,Extractor,summarize,version:'1.1.0'};
 })(typeof self!=='undefined'?self:globalThis);

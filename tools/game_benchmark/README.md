@@ -19,6 +19,24 @@ uses the repository's actual bundled ORT-Web version; its receipt records that
 version rather than implying the backends run the same runtime build. This
 prototype needs JDK 17 and the repository's existing `org.json` test dependency.
 
+`benchmark_wasm_batch.py` separately tests whether fixing only GAME's symbolic
+batch dimension `B` to the production value of one improves the shipped WASM
+backend. It first inspects all five original ONNX graphs and binds their hashes
+and symbolic dimensions, then runs one alternating warmup pair and at least
+three measured pairs in fresh processes. Every graph output is checked finite
+and hashed on every run; the first pair also compares every raw tensor byte and
+unrounded note. The candidate keeps time and note dimensions dynamic.
+
+```sh
+python3 tools/game_benchmark/benchmark_wasm_batch.py \
+  --models web/analysis/models/game \
+  --input ../passage.f32 \
+  --output ../game-wasm-batch-comparison
+```
+
+A result is useful only when exact output parity passes. Timing remains a host
+observation; a slower or inconsistent candidate must not be enabled in the app.
+
 ```sh
 mkdir -p ../game-benchmark/classes
 javac -cp "$ORT_JAR:$JSON_JAR" -d ../game-benchmark/classes tools/game_benchmark/NativeGameBenchmark.java

@@ -6,7 +6,8 @@ for ownership contracts and [VALIDATION.md](../VALIDATION.md) for exact publishe
 release evidence. Source history belongs in Git rather than a manually maintained
 "current assembly parent" paragraph.
 
-The published 2.2.5 release and 2.3.0 source use version-scoped automated-verification policies.
+The published 2.2.5 and 2.3.0 releases and the 2.3.1 source use version-scoped
+automated-verification policies.
 The strict comparative qualification described below remains necessary for the
 corresponding quality/performance claims, but external corpus, human-review and
 hardware measurements are not prerequisites for publishing those versions.
@@ -62,7 +63,7 @@ audio.
 | Perceptual timing | `vehicle-profile.js`, `movement-planner.js`, `sync-review.js` | An explicit local timing-calibration record can carry output latency, minimum duration, repeat interval, and conservative travel-envelope information. Movement planning records target/command/arrival intent. | No calibration is assumed by default. Light/RGB timing metadata is retained as evidence until an output-specific realization path consumes it; this revision does not establish real-vehicle perceptual synchronization. |
 | Cache and recovery | `work-store.js`, `stem-cache.js`, `feature-store.js`, `analyzer.js` | OPFS-backed stage/passages checkpoints, atomic writes, checksums, cancellation, and resumable staged analysis are enabled. Stem completion markers protect restoration before downstream use; the FeatureStore separately fences reusable rhythm features by content identity. | Cache is disposable and cannot be the export source of truth. A cache hit is not a speed claim; cache equivalence and cost still need controlled measurement. |
 | Analysis scheduling | `scheduler.js`, `analyzer.js` | FIFO admission permits one heavy analysis pipeline in a document, with an optional origin-wide Web Locks lease and cancellation-safe release. | This is a deliberate capacity-one safety coordinator, not a measured CPU/GPU/RAM-aware parallel DAG scheduler. It does not claim concurrent model execution or lower end-to-end runtime. |
-| Diagnostics, benchmark, and gate | `telemetry.js`, `analysis-performance.cjs`, `analysis_benchmark_contract.py`, `locked_benchmark_runner.py`, `performance_quality_gate.py`, `differential_analysis.py`, release evidence verifiers | Machine-readable stage diagnostics, a bounded `analysis.performance` receipt projection (per-stage timing/restoration, cache/profile summaries, total wall time), contract validation, locked-corpus aggregation, baseline/candidate pairing, and differential tooling exist. Release verification supports immutable local receipt pins and a CI-only nonce-bound regeneration path for MDX/downstream/profile evidence. | The timing projection is measurement only: it has no performance threshold and a single CI observation is not a baseline/candidate result. The committed policy contains `__configure_locked_corpus__`; it is intentionally not release evidence. A redacted template and passing unit tests do not equal a licensed corpus, a benchmark result, or a quality pass. |
+| Diagnostics, benchmark, and gate | `telemetry.js`, `analysis-performance.cjs`, `analysis_benchmark_contract.py`, `locked_benchmark_runner.py`, `performance_quality_gate.py`, `differential_analysis.py`, release evidence verifiers | Machine-readable stage diagnostics, a bounded `analysis.performance` receipt projection (per-stage timing/restoration, cache/profile summaries, total wall time), contract validation, locked-corpus aggregation, baseline/candidate pairing, and differential tooling exist. Current release verification requires nonce-bound regeneration of MDX, downstream, profile, browser, source-clock, background, and restore evidence; immutable older receipts remain historical context only. | The timing projection is measurement only: it has no performance threshold and a single CI observation is not a baseline/candidate result. The committed policy contains `__configure_locked_corpus__`; it is intentionally not release evidence. A redacted template and passing unit tests do not equal a licensed corpus, a benchmark result, or a quality pass. |
 
 ## Trust boundaries
 
@@ -173,10 +174,11 @@ under its separate publication policy.
    separation, or profile sources change, the release job must mint one
    `LIGHTFORGE_EVIDENCE_SESSION`, run native MDX comparison before downstream
    analysis, run the profile proof, and verify all three generated receipts
-   under that same nonce. A local/no-session check retains immutable MDX and
-   downstream pins; a changed native profile requires its complete paired
-   proof. Historical timestamps or receipt hashes must never be rewritten as
-   a substitute for the fresh run.
+   under that same nonce. Current release approval requires the complete fresh
+   session; immutable older MDX and downstream receipts are historical context
+   only. A changed native profile requires its complete paired proof.
+   Historical timestamps or receipt hashes must never be rewritten as a
+   substitute for the fresh run.
 
 ## Release and claim boundary
 
