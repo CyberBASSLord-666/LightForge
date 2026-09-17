@@ -2,181 +2,161 @@
   "android_emulator_install_and_lifecycle": "passed; exact candidate, not physical-device evidence",
   "blinded_perceptual_review": "unverified; optional",
   "candidate": {
-    "artifact_digest": "182df16781d68c2301668fd9f5a205cb889a94f09ad3ca446159c4f7b8c2eaa4",
-    "artifact_id": 10474588050,
+    "artifact_digest": "e38aff5841020bd9bd804177612684230cd657f73230d370488276bad663c9d3",
+    "artifact_id": 10505643900,
     "files": {
-      "LightForge-2.3.0.apk": {
+      "LightForge-2.3.1.apk": {
         "bytes": 1205112862,
-        "sha256": "3d41fc906fdc10a9ca8645210e8751cab1a9dc9d82c650325cc383471f9153aa"
+        "sha256": "10365f2236a15c85a6626a9b1879aa02ae029b282d4a4721fbccbbf402bc05a6"
       },
-      "LightForge-2.3.0.apk.json": {
+      "LightForge-2.3.1.apk.json": {
         "bytes": 460,
-        "sha256": "c9b9e94bbaeda0a2bef6861a5c491d7d674f42f6b6f3a34a7f755e30c0438f2d"
+        "sha256": "a88d29e87f1ab1d4f8708f3979b9025e5d869cad690f3e46a1b877770caf5f1c"
       },
-      "LightForge-2.3.0.apk.sha256": {
+      "LightForge-2.3.1.apk.sha256": {
         "bytes": 87,
-        "sha256": "835b142b8169af12c756c4ec904d65acefd247540fcf3c21620fbfd206164ae2"
+        "sha256": "2bc751d884a62953936f4405467e8d63d9e28008ec049cb59e2162e4e49b9281"
       },
       "background-tests.apk": {
         "bytes": 98707,
-        "sha256": "aa715c04e25ba4a7384b930aac132c844712526c92637d024b9708f831ce01aa"
+        "sha256": "53771152b2d98b6a538cfeef836d17d9b7ec636bf8edc6cd734a069658ea3c96"
       },
       "diagnostics-tests.apk": {
         "bytes": 49555,
-        "sha256": "17b0a85df5b35307ff6c716bc653a925887b57e447b820b1beb44e76cb27a3d2"
+        "sha256": "00b8cc39860b2508032f16ea1bca0ffae9662e4b5fd255b6e1a3b71c5bc89dba"
       }
     },
-    "identity_sha256": "ef82e44ca89576246ef673b753994aa96a94cdfe0576b74c38f8399ea18937f8",
+    "identity_sha256": "b598ee68c472d7828a3566889af0f48bf0bf02e08bb04013c74ace8b6a30e1bf",
     "pipeline": {
-      "evidence_session": "6f275bc11067762c71f461b05070def129906f298cf01e3ad474de81e6e681ed",
+      "evidence_session": "304be3c92fa972c738f1d97c5104c4bf0c195d57b6a5de651253673dba2a4936",
       "run_attempt": 1,
-      "run_id": 35165237293
+      "run_id": 35240019799
     },
     "source": {
-      "commit": "086ebc86869b48cdb0a5792b8d7473ab1da6dfb7",
-      "tree_sha": "fb113ce1c8be7e41a67363d5e8c7e5db90536b43"
+      "commit": "51d40b0cea41d24f0f3e29c9b35db362757754e4",
+      "tree_sha": "7d2d9191650ae63cac1d8f4577a9420419e4d666"
     }
   },
   "current_release_receipts": {
     "analysis-browser-verification.json": {
-      "artifact_id": 10475013044,
-      "bytes": 136501,
+      "artifact_id": 10505768324,
+      "bytes": 136439,
       "passed": true,
       "path": "receipts/analysis-browser-verification.json",
-      "release": "2.3.0",
-      "session_evidence": {
-        "evidenceSession": "6f275bc11067762c71f461b05070def129906f298cf01e3ad474de81e6e681ed",
-        "evidenceSessionSchema": "lightforge.evidence-session.v1"
-      },
-      "sha256": "4e4a56a0cb95441f600249c9800e2fe8bbf6527257735ef9bc00ff7b834562ea",
-      "source_hashes_sha256": "9770c4500e8cde83f75bc9370bcc5b19ba36d577482777b36cfa7970fbbc7ae0"
+      "release": "2.3.1",
+      "sha256": "c942028312603ce3def4733e0ac7052ae8c80870a0f81d0c066802af67df11fe",
+      "source_hashes_sha256": "1b05d8fb811ffa5f4839e069279dca364a5c1d8b1eaea261186275bab6e34327"
     },
     "analysis-verification.json": {
-      "artifact_id": 10475013044,
-      "bytes": 57116,
+      "artifact_id": 10505768324,
+      "bytes": 57110,
       "passed": true,
       "path": "receipts/analysis-verification.json",
-      "release": "2.3.0",
-      "session_evidence": {
-        "evidence_session": "6f275bc11067762c71f461b05070def129906f298cf01e3ad474de81e6e681ed"
-      },
-      "sha256": "458fc74c7ef640dac64a42da1e78599cc53f10f99798e3344d0f28678ea5a9a0",
-      "source_hashes_sha256": "fb71f229adbf07a1d782514419e8d0ba3f58de30e51d6855cdb7bfc2bbf12057"
-    },
-    "android-background-verification.json": {
-      "artifact_id": 10475680068,
-      "bytes": 127462,
-      "passed": true,
-      "path": "receipts/android-background-verification.json",
-      "release": "2.3.0",
-      "sha256": "c3b340bbcd96a07affb6dc0a4acc7f79d5e0937dc24643e52eeab443e601cd19",
-      "source_hashes_sha256": "622098924dc1a862ec06397946c4e02cdd9f8e78f029a12feebecc9c992e0279"
-    },
-    "android-diagnostics-verification.json": {
-      "artifact_id": 10475680068,
-      "bytes": 102459,
-      "passed": true,
-      "path": "receipts/android-diagnostics-verification.json",
-      "release": "2.3.0",
-      "sha256": "b6fca937bef36cfe3e01e6580145db1dbcdb927241b55a157a4e8bd546b1be12",
-      "source_hashes_sha256": "622098924dc1a862ec06397946c4e02cdd9f8e78f029a12feebecc9c992e0279"
+      "release": "2.3.1",
+      "sha256": "07e63387b0b63899c66e52a6b15b0c5349f585ebecb6f180ad58776c9fd84634",
+      "source_hashes_sha256": "b485c7d1fbbb7c62a5fecfc9ae728868714f4a33212cddacb80be00fd6503649"
     },
     "background-ui-verification.json": {
-      "artifact_id": 10475013044,
-      "bytes": 2235,
+      "artifact_id": 10505768324,
+      "bytes": 5908,
       "passed": true,
       "path": "receipts/background-ui-verification.json",
-      "release": "2.3.0",
-      "session_evidence": {
-        "evidenceSession": "6f275bc11067762c71f461b05070def129906f298cf01e3ad474de81e6e681ed",
-        "evidenceSessionSchema": "lightforge.evidence-session.v1"
-      },
-      "sha256": "56b8867f2345db75508f0c30d30b61db44eb5f2622b4041449642680219bba46",
-      "source_hashes_sha256": "3f930729f5279d3d57e3876cfc2b2cd27e5247e0bda681e4b51863f5ff640ae0"
+      "release": "2.3.1",
+      "sha256": "ba2ce41435940c59b26f4d162809616cf1fc4affa9d73657a670e479982e0a41",
+      "source_hashes_sha256": "abdf78172972b7b0839948f941df112b47f74bcae0c52f4b2e5dd69f7d568492"
     },
     "browser-verification.json": {
-      "artifact_id": 10475013044,
+      "artifact_id": 10505768324,
       "bytes": 6055,
       "passed": true,
       "path": "receipts/browser-verification.json",
-      "release": "2.3.0",
-      "session_evidence": {
-        "evidenceSession": "6f275bc11067762c71f461b05070def129906f298cf01e3ad474de81e6e681ed",
-        "evidenceSessionSchema": "lightforge.evidence-session.v1"
-      },
-      "sha256": "5d98fb98f15d6dbb44e28a352ed18f0b7e781c94273293a8b6bf64c9c4bf9fb8",
-      "source_hashes_sha256": "7edffed94f4eaafbfc194e692e6f4a2883182f079eaa404b6eeaab54065b9614"
+      "release": "2.3.1",
+      "sha256": "b9f3b833354d1d48315b931ddfe01dc370fd14dc738a2c806e6ef1cd3e881a4b",
+      "source_hashes_sha256": "e6484312f9f82440017e48244b5a3513ce44142b7bebb48dacd11f52218607ad"
     },
     "native-verification.json": {
-      "artifact_id": 10475013044,
+      "artifact_id": 10505768324,
       "bytes": 10810,
       "passed": true,
       "path": "receipts/native-verification.json",
-      "release": "2.3.0",
-      "session_evidence": {},
-      "sha256": "2c156a2bfe23e43269732da7cedb2790c68210c0afefe9657b94cdddcc969885",
+      "release": "2.3.1",
+      "sha256": "d4432fcc77deff546c8d11709c82774da150ad3cc81c8cbe48b1744f4ef37e76",
       "source_hashes_sha256": "cf8bda8e015090ec9a9ff806f3f28c7b37a7bdd582c9bba247796087f910c47d"
     },
     "regression-verification.json": {
-      "artifact_id": 10475013044,
-      "bytes": 100723,
+      "artifact_id": 10505768324,
+      "bytes": 101579,
       "passed": true,
       "path": "receipts/regression-verification.json",
-      "release": "2.3.0",
-      "session_evidence": {},
-      "sha256": "b34ec086feca92113843a3f907c1877b2e2e155868ad38b08c1a3485de9938ee",
-      "source_hashes_sha256": "9f46cb16cf1d0327caba568cad315fbe0c94e5651c8ee7ddbc4ca32205551e1c"
+      "release": "2.3.1",
+      "sha256": "ff758d38f1d7ac741e7368a3ef0e90258fb700d233c4e6b945c846b032f17ffb",
+      "source_hashes_sha256": "69c462b8da33f9b5eb9bb029c7bb3a32013e9c649b08605291ad4bbc4ff26591"
     },
     "restore-preview-verification.json": {
-      "artifact_id": 10475013044,
+      "artifact_id": 10505768324,
       "bytes": 7844,
       "passed": true,
       "path": "receipts/restore-preview-verification.json",
-      "release": "2.3.0",
-      "session_evidence": {
-        "evidenceSession": "6f275bc11067762c71f461b05070def129906f298cf01e3ad474de81e6e681ed",
-        "evidenceSessionSchema": "lightforge.evidence-session.v1"
-      },
-      "sha256": "c56f3053c1e9389b4d9f23307b3be1a74d34f4e31b6894680383e1b13f2ec3b9",
-      "source_hashes_sha256": "b684f0562d4117badcaac4e32ef7ddde65036d7c3b383dd43051d1925786d6ba"
+      "release": "2.3.1",
+      "sha256": "f5812511cf618f14b692b6f9fc2f87bd14df80a3db14f93aba7bf9d88dbc4e7d",
+      "source_hashes_sha256": "876f8b8e6f1ed22676e49d80d2012db2f25af9a42e7df2de5d240367aac391a6"
+    },
+    "android-background-verification.json": {
+      "artifact_id": 10508825880,
+      "bytes": 127948,
+      "passed": true,
+      "path": "receipts/android-background-verification.json",
+      "release": "2.3.1",
+      "sha256": "10ca8e37f26dbf63720848275ee240e89390ac06a4a2cb1a4c7bc6438a261112",
+      "source_hashes_sha256": "b599c5d3c3bf0b30c7967f0bc2018950172ab27a35fbcfc2907d176c3f5235f8"
+    },
+    "android-diagnostics-verification.json": {
+      "artifact_id": 10508825880,
+      "bytes": 102933,
+      "passed": true,
+      "path": "receipts/android-diagnostics-verification.json",
+      "release": "2.3.1",
+      "sha256": "a0718a56091e7d068b42f4d1d973935e86d6162220b8f74e1e1b16c1e2668050",
+      "source_hashes_sha256": "b599c5d3c3bf0b30c7967f0bc2018950172ab27a35fbcfc2907d176c3f5235f8"
     }
   },
-  "evidence_scope": "Nine fresh success-only receipts from the exact candidate session. Summaries below retain sealed receipt hashes; full source-bound evidence is retained in the linked qualifying run artifacts. Publisher independently revalidates the original sealed evidence before publication.",
+  "evidence_scope": "Nine fresh success-only receipts from the exact candidate run. Seven non-Android receipts were sealed in attempt 1; the Android background and diagnostics receipts were freshly sealed in attempt 2 against the same candidate, source commit and source tree. Full source-bound evidence is retained in the qualifying run artifacts and independently revalidated by the publisher.",
   "general_comparative_musical_quality": "unverified",
   "hardware_energy_thermal": "unverified; optional",
   "payload_equivalence": {
-    "delta_reconstruction": "Byte-for-byte identical to the locally signed APK.",
+    "delta_reconstruction": "Byte-for-byte identical to the locally original-key-signed APK.",
     "passed": true,
-    "scope": "Every application ZIP entry is byte-identical to the verified CI candidate. Only signature and ZIP metadata changed."
+    "scope": "Every application ZIP entry is byte-identical to the verified CI candidate. Only signature records and ZIP metadata changed."
   },
   "physical_android_device_install_and_launch": "unverified; optional",
   "pipeline": {
-    "evidence_session": "6f275bc11067762c71f461b05070def129906f298cf01e3ad474de81e6e681ed",
-    "head_sha": "086ebc86869b48cdb0a5792b8d7473ab1da6dfb7",
-    "run_attempt": 1,
-    "run_id": 35165237293,
-    "tree_sha": "fb113ce1c8be7e41a67363d5e8c7e5db90536b43",
+    "android_evidence_session": "0ce851a80072783b55404bb48287355c352d1780a4205659204d0c4fe6cef6a3",
+    "evidence_session": "304be3c92fa972c738f1d97c5104c4bf0c195d57b6a5de651253673dba2a4936",
+    "head_sha": "51d40b0cea41d24f0f3e29c9b35db362757754e4",
+    "run_attempt": 2,
+    "run_id": 35240019799,
+    "tree_sha": "7d2d9191650ae63cac1d8f4577a9420419e4d666",
     "workflow": ".github/workflows/verify-v2.yml"
   },
-  "qualifying_run_url": "https://github.com/CyberBASSLord-666/LightForge/actions/runs/35165237293",
+  "qualifying_run_url": "https://github.com/CyberBASSLord-666/LightForge/actions/runs/35240019799",
   "release": {
     "alignment": "passed",
-    "apk": "LightForge-2.3.0.apk",
+    "apk": "LightForge-2.3.1.apk",
     "bytes": 1205116958,
     "min_sdk": 26,
-    "sha256": "41db951055b4441988badbb4ca3c14db3cf203640ef5e155b9bab5a329298f62",
+    "sha256": "af83bf403875c55d42fd695d43f6e193114899c1324fbaeaffd6c02d299d882f",
     "signature": "verified",
     "signing_certificate_sha256": "7187d6aa935d5b7d2d656cb87913af95fe1ca3a4b1653036d1d8d890e2016c6b",
     "target_sdk": 35,
     "update_compatible": true,
-    "version_code": 20300,
-    "version_name": "2.3.0",
+    "version_code": 20301,
+    "version_name": "2.3.1",
     "zip_integrity": "passed"
   },
   "signing_certificate_sha256": "7187d6aa935d5b7d2d656cb87913af95fe1ca3a4b1653036d1d8d890e2016c6b",
   "source": {
-    "commit": "086ebc86869b48cdb0a5792b8d7473ab1da6dfb7",
-    "tree_sha": "fb113ce1c8be7e41a67363d5e8c7e5db90536b43"
+    "commit": "51d40b0cea41d24f0f3e29c9b35db362757754e4",
+    "tree_sha": "7d2d9191650ae63cac1d8f4577a9420419e4d666"
   },
   "vehicle_test": "unverified; optional",
   "whole_analysis_75_percent_speedup": "unverified; not claimed"
