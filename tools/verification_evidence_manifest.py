@@ -279,7 +279,7 @@ def _runtime_evidence_materials(release: str) -> frozenset[str]:
     are copied into the sealed content artifact instead.
     """
     root = "qa/release-" + _release(release, "Evidence release is invalid") + "/"
-    return frozenset(root + name for name in {
+    names = {
         "analysis-browser-verification.json",
         "background-ui-verification.json",
         "browser-verification.json",
@@ -290,7 +290,11 @@ def _runtime_evidence_materials(release: str) -> frozenset[str]:
         "native-mdx-downstream-verification.json",
         "native-mdx-downstream-wasm.json",
         "source-clock-verification.json",
-    })
+    }
+    if release == "2.3.2":
+        names.update({"native-game-verification.json", "native-game-demo-output.json",
+                      "native-game-falcon-output.json"})
+    return frozenset(root + name for name in names)
 
 
 def _material_path(relative: str) -> str:

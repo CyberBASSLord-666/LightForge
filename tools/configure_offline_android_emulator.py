@@ -101,6 +101,7 @@ class OfflineEmulator:
             args[:4] == ("shell", "cmd", "connectivity", "airplane-mode") and len(args) == 5
             or args[:4] == ("shell", "cmd", "wifi", "set-wifi-enabled")
             or args[:4] == ("shell", "cmd", "phone", "data")
+            or args == ("shell", "settings", "put", "global", "mobile_data", "0")
         )
         if mutation:
             if result.stdout.strip() or result.stderr.strip():
@@ -198,6 +199,16 @@ class OfflineEmulator:
                     self.command("shell", "cmd", "phone", "data", "disable", deadline=deadline)
             verified = self.observe(deadline)
             state = self.receipt["observed_state"]
+            if phase == "disable-radios" and state["mobile_data_setting"] == "1":
+                # Android 15 TelephonyShellCommand discards the boolean from
+                # PhoneInterfaceManager.disableDataConnectivity(): a missing
+                # default-subscription Phone silently leaves this preference
+                # enabled. Only on our verified single-SIM disposable emulator,
+                # set the desired preference explicitly after observing that
+                # no-op. This is not proof of disconnection: the next observations
+                # must still confirm every radio/setting and no default network.
+                self.command("shell", "settings", "put", "global", "mobile_data", "0", deadline=deadline)
+                self.receipt["mobile_data_preference_fallback"] = True
             radios_disabled = state["wifi"] == "disabled" and state["wifi_setting"] == "0" and state["mobile_data_setting"] == "0"
             if phase == "disable-radios" and radios_disabled:
                 self.command("shell", "cmd", "connectivity", "airplane-mode", "enable", deadline=deadline)

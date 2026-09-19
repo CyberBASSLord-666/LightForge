@@ -145,6 +145,9 @@ public final class BackgroundInstrumentation extends Instrumentation {
         Field field=(object instanceof Class?(Class<?>)object:object.getClass()).getDeclaredField(name);field.setAccessible(true);
         return field.get(object instanceof Class?null:object);
     }
+    private void testField(Object object,String name,Object value)throws Exception{
+        Field field=object.getClass().getDeclaredField(name);field.setAccessible(true);field.set(object,value);
+    }
     private MainActivity.Bridge bridge()throws Exception{
         return activity.new Bridge((WebView)field(activity,"web"),(Long)field(activity,"previewGeneration"));
     }
@@ -969,11 +972,178 @@ public final class BackgroundInstrumentation extends Instrumentation {
         pass("Frozen Balanced request allocated native MDX and completed both polarity-ensemble passes on Android. The complete show finished with the Activity destroyed and screen off under Doze; model/tensor buffers were released before voice/GAME, preserving 132300 source samples, 66150 stem samples, the eight-step transcription setting and 150 saved choreography frames.");
         return observation;
     }
+    /**
+     * Isolated, real Android/JNI task/JobBridge exercise, not an OS service-start
+     * surrogate. The full foreground-service/Doze cases below remain separate.
+     * All fixture ownership injection is confined to this same-signed test APK.
+     */
+    private JSONObject nativeGameAndroid()throws Exception{
+        phase("native-game-android-bridge");
+        check(!AnalysisService.alive(),"Native GAME fixture requires no active foreground analysis");
+        final String id=java.util.UUID.randomUUID().toString(),foreign=java.util.UUID.randomUUID().toString();
+        AnalysisService owner=new AnalysisService();
+        java.lang.reflect.Method attach=ContextWrapper.class.getDeclaredMethod("attachBaseContext",Context.class);
+        attach.setAccessible(true);attach.invoke(owner,getTargetContext());
+        testField(owner,"jobId",id);testField(owner,"engineGeneration",1L);
+        NativeGameTask task=new NativeGameTask(getTargetContext(),id);
+        AnalysisService.JobBridge bridge=owner.new JobBridge(id,1L,null,null,task);
+        AnalysisService.JobBridge stale=owner.new JobBridge(id,0L,null,null,task);
+        AnalysisService.JobBridge legacy=owner.new JobBridge(id,1L,null,null);
+        JSONObject evidence=new JSONObject();
+        try{
+            JSONObject availability=gameResponse(bridge.nativeGameAvailability(id));
+            check(availability.optBoolean("available")&&"1.25.1".equals(availability.optString("runtime"))
+                &&availability.optInt("sampleRate")==44100&&availability.optInt("steps")==8,
+                "Android native GAME runtime was not available");
+            gameDenied(bridge.nativeGameBegin(foreign,4,0,2025),"Foreign job began a GAME upload");
+            gameDenied(stale.nativeGameBegin(id,4,0,2025),"Retired generation began a GAME upload");
+            gameDenied(legacy.nativeGameAvailability(id),"Legacy four-argument bridge unexpectedly owns GAME");
+            for(long invalid:new long[]{0,3,705600L*4+4})gameDenied(bridge.nativeGameBegin(id,invalid,0,2025),"Unbounded GAME input accepted");
+            gameDenied(bridge.nativeGameBegin(id,4,5,2025),"Invalid GAME language accepted");
+            gameDenied(bridge.nativeGameBegin(id,4,0,0x100000000L),"Invalid GAME seed accepted");
+
+            String upload=gameResponse(bridge.nativeGameBegin(id,8,0,2025)).getString("token");
+            gameDenied(bridge.nativeGameRelease(id),"Uploading GAME input was released without cancellation");
+            gameDenied(bridge.nativeGameAppend(id,foreign,"AAAAAA=="),"Stale token appended GAME input");
+            gameDenied(bridge.nativeGameStatus(id,foreign),"Stale token read GAME input");
+            gameDenied(bridge.nativeGameRun(id,foreign),"Stale token ran GAME inference");
+            gameDenied(bridge.nativeGameRun(id,upload),"Incomplete GAME input ran inference");
+            byte[] oversized=new byte[65537];
+            gameDenied(bridge.nativeGameAppend(id,upload,android.util.Base64.encodeToString(oversized,android.util.Base64.NO_WRAP)),"Oversized GAME chunk accepted");
+            bridge.nativeGameCancel(foreign,upload);stale.nativeGameCancel(id,upload);bridge.nativeGameCancel(id,foreign);
+            check("uploading".equals(gameResponse(bridge.nativeGameStatus(id,upload)).optString("state")),"Foreign cancellation changed owned GAME input");
+            bridge.nativeGameCancel(id,upload);
+            check("cancelled".equals(gameResponse(bridge.nativeGameStatus(id,upload)).optString("state")),"GAME upload cancellation failed");
+            check(field(task,"input")==null&&field(task,"engine")==null&&!(Boolean)field(task,"workerActive"),"Cancelled GAME upload retained input or native work");
+            gameResponse(bridge.nativeGameRelease(id));
+            gameDenied(bridge.nativeGameStatus(id,upload),"Released GAME token still returned status");
+            evidence.put("ownershipChecks",true).put("boundedUploadChecked",true).put("uploadCancelChecked",true);
+
+            byte[] pcm=gameDemoPcm();String pcmSha=gameHash(pcm);
+            check("6724721e8c1c4ac9ce532d46697393f8fafe81e7935f88399f05bc341115cedd".equals(pcmSha),"Bundled GAME fixture PCM changed");
+            String completeToken=gameUpload(bridge,id,pcm);
+            JSONObject started=gameResponse(bridge.nativeGameRun(id,completeToken));
+            check("running".equals(started.optString("state")),"GAME did not enter its leased worker");
+            gameDenied(bridge.nativeGameRelease(id),"Running GAME inference was released");
+            JSONObject complete=gameTerminal(bridge,id,completeToken,10*60*1000L);
+            check("completed".equals(complete.optString("state")),"Actual Android GAME inference did not complete: "+complete.optString("state"));
+            check(complete.getInt("samples")==705600&&complete.getInt("sampleRate")==44100&&complete.getInt("language")==0
+                &&complete.getLong("seed")==2025&&complete.getInt("steps")==8&&NativeGame.MODEL_ID.equals(complete.getString("model"))
+                &&complete.getInt("completedPasses")==1,"Android GAME result changed its input/model identity");
+            JSONArray notes=complete.getJSONArray("notes");check(notes.length()>0&&notes.length()<=1601,"Public GAME fixture returned no bounded notes");
+            double previous=0;boolean unrounded=false;
+            for(int i=0;i<notes.length();i++){
+                JSONObject note=notes.getJSONObject(i);double start=note.getDouble("start"),end=note.getDouble("end"),midi=note.getDouble("midi");
+                check(note.length()==3&&Double.isFinite(start)&&Double.isFinite(end)&&Double.isFinite(midi)
+                    &&start>=0&&start>=previous-1e-6&&end-start>=.06-1e-6&&end<=16.001&&midi>=0&&midi<=127,
+                    "Android GAME returned invalid unrounded notes");
+                check(midi==(double)(float)midi,"Android GAME pitch no longer preserves original float32 output");
+                if(Math.abs(midi-Math.round(midi*100)/100.0)>1e-7)unrounded=true;
+                previous=end;
+            }
+            check(unrounded,"Android GAME bridge rounded every pitch before JavaScript processing");
+            gameRetired(task,"Completed GAME inference");
+            gameResponse(bridge.nativeGameRelease(id));
+            gameDenied(bridge.nativeGameStatus(id,completeToken),"Completed GAME token survived release");
+            evidence.put("fixture","bundled-demo-first16s-stereo16-mono-average").put("pcmSHA256",pcmSha)
+                .put("sampleRate",44100).put("samples",705600).put("language",0).put("seed",2025).put("steps",8)
+                .put("model",NativeGame.MODEL_ID).put("completedPasses",1).put("noteCount",notes.length())
+                .put("unroundedNotesObserved",true).put("notesSHA256",gameHash(notes.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8)))
+                .put("completedRetired",true);
+            pass("Actual Android GAME JNI completed the bounded public 16-second demo through production NativeGameTask and JobBridge, preserving original graph identity, eight steps, float32 pitch and unrounded note timing; terminal status followed model, input, gate and crash-lease retirement.");
+
+            phase("native-game-android-live-cancel");
+            String cancelToken=gameUpload(bridge,id,pcm);gameResponse(bridge.nativeGameRun(id,cancelToken));
+            long until=SystemClock.elapsedRealtime()+10*60*1000L;boolean observed=false;double cancelProgress=0;
+            while(SystemClock.elapsedRealtime()<until){
+                snapshot(false);JSONObject state=gameResponse(bridge.nativeGameStatus(id,cancelToken));
+                check("running".equals(state.optString("state")),"GAME finished before live cancellation could be exercised");
+                // .18 means the real encoder has completed and the eight-step
+                // diffusion path is active, not merely queued model loading.
+                double progress=state.optDouble("progress");
+                if(progress>=.18&&progress<.82){
+                    NativeGame engine=(NativeGame)field(task,"engine");
+                    if(engine!=null)synchronized(field(engine,"lifecycle")){observed=field(engine,"activeRun")!=null;}
+                    if(observed){cancelProgress=progress;break;}
+                }
+                SystemClock.sleep(25);
+            }
+            check(observed,"No real GAME native execution observed before cancellation");
+            check(((NativeRuntimeGuard)field(task,"runtimeGuard")).state()!=null&&NativeDeux.INFERENCE_GATE.availablePermits()==0,
+                "Live GAME inference did not retain its native crash lease and process gate");
+            bridge.nativeGameCancel(id,cancelToken);
+            JSONObject cancelled=gameTerminal(bridge,id,cancelToken,60000);
+            check("cancelled".equals(cancelled.optString("state"))&&!cancelled.has("notes")&&cancelled.getInt("completedPasses")==1,
+                "Cancelled GAME passage was incorrectly exposed as completed");
+            gameRetired(task,"Cancelled GAME inference");gameResponse(bridge.nativeGameRelease(id));
+            task.close();
+            java.util.concurrent.ExecutorService executor=(java.util.concurrent.ExecutorService)field(task,"executor");
+            check(executor.awaitTermination(15,java.util.concurrent.TimeUnit.SECONDS)&&task.isRetired(),"Android GAME executor did not retire");
+            gameDenied(bridge.nativeGameBegin(id,4,0,2025),"Closed GAME task accepted a replacement passage");
+            testField(owner,"engineGeneration",2L);
+            gameDenied(bridge.nativeGameStatus(id,cancelToken),"Retired GAME bridge retained authority");
+            evidence.put("liveNativeCancellationObserved",true).put("cancellationProgress",cancelProgress).put("cancelledState","cancelled").put("cancelledRetired",true)
+                .put("executorRetired",true).put("scope","Android emulator: isolated real production NativeGameTask/JobBridge with bundled GAME JNI; test-only service-owner attachment, not an OS service-start, comparative-quality, speedup or physical-device claim.");
+            pass("Actual Android GAME cancellation interrupted the live eight-step JNI path and withheld terminal status until native/input/gate/lease retirement; bounded upload, foreign job, stale token/generation, legacy bridge and closed-task isolation checks also passed.");
+            return evidence;
+        }finally{
+            task.close();
+            java.util.concurrent.ExecutorService executor=(java.util.concurrent.ExecutorService)field(task,"executor");
+            check(executor.awaitTermination(60,java.util.concurrent.TimeUnit.SECONDS),"GAME fixture left native execution active");
+        }
+    }
+    private JSONObject gameResponse(String raw)throws Exception{
+        JSONObject result=new JSONObject(raw);check(!result.has("error"),"Native GAME bridge rejected its fixture request: "+result.optString("error"));return result;
+    }
+    private void gameDenied(String raw,String failure)throws Exception{check(new JSONObject(raw).has("error"),failure);}
+    private String gameUpload(AnalysisService.JobBridge bridge,String id,byte[] bytes)throws Exception{
+        JSONObject begun=gameResponse(bridge.nativeGameBegin(id,bytes.length,0,2025));String token=begun.getString("token");
+        check(token.matches("[a-f0-9-]{36}")&&"uploading".equals(begun.getString("state")),"Invalid GAME upload token/state");
+        for(int first=0;first<bytes.length;first+=48*1024){
+            int count=Math.min(48*1024,bytes.length-first);
+            String encoded=android.util.Base64.encodeToString(bytes,first,count,android.util.Base64.NO_WRAP);
+            JSONObject state=gameResponse(bridge.nativeGameAppend(id,token,encoded));
+            check(token.equals(state.optString("token"))&&"uploading".equals(state.optString("state")),"GAME upload lost passage ownership");
+        }
+        return token;
+    }
+    private JSONObject gameTerminal(AnalysisService.JobBridge bridge,String id,String token,long timeout)throws Exception{
+        long until=SystemClock.elapsedRealtime()+timeout;
+        while(SystemClock.elapsedRealtime()<until){
+            snapshot(false);JSONObject state=gameResponse(bridge.nativeGameStatus(id,token));
+            check(token.equals(state.optString("token")),"GAME status substituted another passage");
+            if(!"running".equals(state.optString("state")))return state;
+            SystemClock.sleep(100);
+        }
+        throw new AssertionError("Android GAME inference exceeded its bounded fixture timeout");
+    }
+    private void gameRetired(NativeGameTask task,String label)throws Exception{
+        synchronized(task){check(field(task,"engine")==null&&!(Boolean)field(task,"workerActive")&&field(task,"input")==null,label+" retained resources at terminal status");}
+        check(((NativeRuntimeGuard)field(task,"runtimeGuard")).state()==null,label+" retained its durable native lease");
+        check(NativeDeux.INFERENCE_GATE.availablePermits()==1,label+" retained the process inference gate");
+    }
+    private byte[] gameDemoPcm()throws Exception{
+        try(DataInputStream in=new DataInputStream(getTargetContext().getAssets().open("demo/glass-castle.wav"))){
+            byte[] header=new byte[44];in.readFully(header);java.nio.ByteBuffer wav=java.nio.ByteBuffer.wrap(header).order(java.nio.ByteOrder.LITTLE_ENDIAN);
+            check("RIFF".equals(new String(header,0,4,"US-ASCII"))&&"WAVEfmt ".equals(new String(header,8,8,"US-ASCII"))
+                &&wav.getInt(16)==16&&wav.getShort(20)==1&&wav.getShort(22)==2&&wav.getInt(24)==44100
+                &&wav.getShort(32)==4&&wav.getShort(34)==16&&"data".equals(new String(header,36,4,"US-ASCII"))
+                &&wav.getInt(40)>=705600*4,"Bundled GAME fixture must remain 44.1 kHz stereo PCM16 WAVE");
+            byte[] source=new byte[705600*4],mono=new byte[705600*4];in.readFully(source);
+            java.nio.ByteBuffer input=java.nio.ByteBuffer.wrap(source).order(java.nio.ByteOrder.LITTLE_ENDIAN),output=java.nio.ByteBuffer.wrap(mono).order(java.nio.ByteOrder.LITTLE_ENDIAN);
+            for(int i=0;i<705600;i++)output.putFloat((input.getShort()+input.getShort())/65536f);
+            return mono;
+        }
+    }
+    private static String gameHash(byte[] bytes)throws Exception{
+        byte[] digest=java.security.MessageDigest.getInstance("SHA-256").digest(bytes);StringBuilder text=new StringBuilder();
+        for(byte value:digest)text.append(Character.forDigit((value>>>4)&15,16)).append(Character.forDigit(value&15,16));return text.toString();
+    }
     @Override public void onCreate(Bundle arguments){super.onCreate(arguments);start();}
     @Override public void onStart(){
         JSONObject receipt=new JSONObject();Bundle output=new Bundle();
         try{
-            files=getTargetContext().getFilesDir();startMainWatchdog();phase("completed-restore-monitor-contract");completedRestoreMonitorContract();phase("first-screen-off-analysis");launch();String id=fixture("Background audio");JSONObject job=start(id);double sourceDuration=AnalysisJobStore.request(files,job.getString("id")).getDouble("duration");
+            files=getTargetContext().getFilesDir();startMainWatchdog();phase("completed-restore-monitor-contract");completedRestoreMonitorContract();receipt.put("nativeGame",nativeGameAndroid());phase("first-screen-off-analysis");launch();String id=fixture("Background audio");JSONObject job=start(id);double sourceDuration=AnalysisJobStore.request(files,job.getString("id")).getDouble("duration");
             check(field(service(),"nativeMdx")==null,"Precision Studio allocated the Balanced-only accelerator");
             long backgroundAt=System.currentTimeMillis();backgroundAndDoze();
             JSONObject completed=waitTerminal(15*60*1000L);
@@ -1036,7 +1206,7 @@ public final class BackgroundInstrumentation extends Instrumentation {
             check(beforeTimeout.equals(AnalysisJobStore.hash(timeoutProject)),"Timeout replaced saved project");
             pass("Android media-processing timeout callback stops promptly and leaves a retryable job with the previous show intact.");
             phase("completed");
-            receipt.put("passed",true).put("checks",checks).put("uiReadiness",uiReadinessChecks).put("sdk",Build.VERSION.SDK_INT).put("scope","Android emulator with initialized hardware-accelerated WebView and committed visible frames before lifecycle actions, actual foreground service, native CPU Studio separation and two-pass Balanced MDX, frozen-request routing and live model/tensor release before WebView/WASM voice/GAME, screen-off/Doze execution, live native cancellation, partial-passage resume and timeout callback; not a physical phone or Tesla.");
+            receipt.put("passed",true).put("checks",checks).put("uiReadiness",uiReadinessChecks).put("sdk",Build.VERSION.SDK_INT).put("scope","Android emulator with initialized hardware-accelerated WebView and committed visible frames before lifecycle actions, actual foreground service, native CPU Studio separation and two-pass Balanced MDX, frozen-request routing and separation-buffer release before voice/transcription, isolated real GAME JNI task/bridge completion and cancellation, screen-off/Doze execution, live native cancellation, partial-passage resume and timeout callback; not a physical phone or Tesla.");
             output.putString("stream","BACKGROUND_ANDROID_PASS\n"+receipt.toString()+"\n");finish(Activity.RESULT_OK,output);
         }catch(Throwable error){
             try{snapshot(true);}catch(Exception ignored){}

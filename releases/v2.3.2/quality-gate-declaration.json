@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "release": {
+    "name": "2.3.2",
+    "code": 20302
+  },
+  "requirement": "performance_quality_gate",
+  "classification": "performance",
+  "reason": "Candidate 2.3.2 / 20302 implements authorized inference-speed work: per-graph Deux allocation reuse and native execution of the original five GAME graphs, retaining Float32 precision, contexts, eight diffusion steps and deterministic seeds. Fresh full production, actual-model transcription and Android lifecycle verification remain mandatory. The existing automated-verification-only authorization lists versions through 2.3.1, not this version; this declaration does not extend that authority or waive the separate strict gate. Publication remains blocked until applicable source-bound qualification or explicit owner approval of a version-specific publication policy. Original signing identity, exact-candidate payload and package integrity remain mandatory. Host experiments do not establish a 75% whole-analysis reduction, general musical-quality non-regression or physical phone/Tesla performance, energy or thermal behavior."
+}

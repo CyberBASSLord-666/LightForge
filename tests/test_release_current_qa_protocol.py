@@ -218,6 +218,7 @@ class CurrentReleaseQaProtocolTest(TestCase):
             'compare-mdx-wasm.cjs', 'compare-native-mdx.py', 'mdx-downstream-compare.cjs',
             'mdx_numeric.py', 'test-source-clock.cjs', 'verify-analysis.py',
             'verify-mdx-downstream.cjs', 'verify-native-inference-profile.py',
+            'native_game_evidence.py', 'prepare-game-input.cjs', 'verify-native-game.py',
         }
         tracked = set(subprocess.check_output(
             ['git', 'ls-files', '--', VERIFY.OUT], cwd=ROOT, text=True).splitlines())

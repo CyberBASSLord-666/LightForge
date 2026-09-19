@@ -151,9 +151,16 @@ public final class AnalysisRendererRecoveryTest {
         AnalysisRendererRecovery.reserve(fresh.files,fresh.id,false);
         AnalysisRendererRecovery.restoreRequest(fresh.files,fresh.id);
         JSONObject restored=AnalysisJobStore.request(fresh.files,fresh.id);
-        for(String key:new String[]{"analysisJobId","analysisIdentity","analysisExecutionMode","analysisRefreshEpoch","analysisEffectiveExecution","analysisNativeFallbackReason","analysisAppVersion"})
+        for(String key:new String[]{"analysisJobId","analysisIdentity","analysisExecutionMode","analysisRefreshEpoch","analysisEffectiveExecution","analysisNativeFallbackReason","analysisNativeAttemptedExecution","analysisAppVersion"})
             check(original.getString(key).equals(restored.getString(key)),"Recovery changed lineage: "+key);
         check(original.getJSONObject("settings").toString().equals(restored.getJSONObject("settings").toString()),"Recovery changed quality/settings");
+        Fixture combined=new Fixture(root,"combined-native-game",true);
+        AnalysisJobStore.markAnalysisWasmFallback(combined.files,combined.id,"native-game-fallback","native-deux-v1+native-game-v1");
+        String combinedHash=AnalysisJobStore.hash(combined.frozen());
+        AnalysisRendererRecovery.reserve(combined.files,combined.id,false);
+        AnalysisRendererRecovery.restoreRequest(combined.files,combined.id);
+        check(combinedHash.equals(AnalysisJobStore.hash(combined.frozen()))
+            &&"native-deux-v1+native-game-v1".equals(AnalysisJobStore.request(combined.files,combined.id).getString("analysisNativeAttemptedExecution")),"Renderer recovery changed combined native GAME fallback lineage");
 
         Fixture changed=new Fixture(root,"changed-project",false);
         JSONObject changedSource=AnalysisJobStore.read(new File(changed.project,"project.json"),ProjectStore.MAX_PROJECT_BYTES).put("name","New edit");
