@@ -237,7 +237,84 @@ public final class AnalysisJobStoreTest {
         AnalysisJobStore.write(new File(AnalysisJobStore.directory(files),"request.json"),tamperedRequest,ProjectStore.MAX_PROJECT_BYTES);
         reject(()->AnalysisJobStore.request(files,strictResume.getString("id")));
         AnalysisJobStore.finish(files,strictResume.getString("id"),"cancelled","Finished execution-lineage tests");
+        nativeGameFallbackLineage(files,projects,projectId,saved);
         System.out.println("PASS: job ownership, monotonic progress, checkpoint reuse, cancellation, conflict preservation, durable completion, damaged checkpoint recovery, version/audio/settings identity, structured progress, crash recovery and stale observation cleanup");
     }
-}
 
+    static void nativeGameFallbackLineage(File files,File projects,String projectId,File saved)throws Exception{
+        final String version="native-game-lineage-test";
+        File frozen=new File(AnalysisJobStore.directory(files),"request.json");
+        String[][] valid={
+            {"precision","native-deux-fallback","native-deux-v1"},
+            {"balanced","native-mdx-fallback","native-mdx-v1"},
+            {"precision","native-game-fallback","native-game-v1"},
+            {"balanced","native-game-fallback","native-game-v1"},
+            {"precision","native-game-fallback","native-deux-v1+native-game-v1"},
+            {"precision","native-deux-fallback","native-deux-v1+native-game-v1"},
+            {"balanced","native-game-fallback","native-mdx-v1+native-game-v1"},
+            {"balanced","native-mdx-fallback","native-mdx-v1+native-game-v1"}
+        };
+        for(String[] row:valid){
+            JSONObject project=read(saved),settings=project.optJSONObject("settings");if(settings==null)settings=new JSONObject();
+            settings.put("analysisQuality",row[0]);
+            ProjectStore.save(projects,projectId,project.put("settings",settings).put("needAnalysis",true)
+                .put("analysisNativeAttemptedExecution","untrusted-project-value"));
+            JSONObject job=AnalysisJobStore.prepare(files,projectId,version,true);String id=job.getString("id");
+            check(!AnalysisJobStore.request(files,id).has("analysisNativeAttemptedExecution"),"Project selected native attempt identity");
+            check(AnalysisJobStore.markAnalysisWasmFallback(files,id,row[1],row[2]),"Exact native fallback was not persisted");
+            JSONObject request=AnalysisJobStore.request(files,id);
+            check(row[2].equals(request.getString("analysisNativeAttemptedExecution"))
+                &&row[2].equals(AnalysisJobStore.status(files).getString("analysisNativeAttemptedExecution")),"Exact native attempt not bound to both records");
+            check(AnalysisJobStore.markAnalysisWasmFallback(files,id,row[1],row[2]),"Exact native fallback retry was not idempotent");
+            final String different="native-game-v1".equals(row[2])?("balanced".equals(row[0])?"native-mdx-v1+native-game-v1":"native-deux-v1+native-game-v1"):"native-game-v1";
+            reject(()->AnalysisJobStore.markAnalysisWasmFallback(files,id,"native-game-fallback",different));
+            AnalysisJobStore.finish(files,id,"interrupted","Exact fallback resume test");
+            JSONObject resume=AnalysisJobStore.prepare(files,projectId,version);String resumedId=resume.getString("id");
+            check(row[2].equals(AnalysisJobStore.request(files,resumedId).getString("analysisNativeAttemptedExecution")),"Resume lost exact native attempt identity");
+            AnalysisJobStore.finish(files,resumedId,"cancelled","Exact fallback fresh test");
+            JSONObject fresh=AnalysisJobStore.prepare(files,projectId,version,true);String freshId=fresh.getString("id");
+            check(!fresh.has("analysisEffectiveExecution")&&!fresh.has("analysisNativeFallbackReason")&&!fresh.has("analysisNativeAttemptedExecution"),"Fresh job kept a prior fallback");
+            JSONObject clean=AnalysisJobStore.request(files,freshId);
+            check(!clean.has("analysisEffectiveExecution")&&!clean.has("analysisNativeFallbackReason")&&!clean.has("analysisNativeAttemptedExecution"),"Fresh request kept a prior fallback");
+            AnalysisJobStore.finish(files,freshId,"cancelled","Finished native attempt fixture");
+        }
+        JSONObject project=read(saved);project.getJSONObject("settings").put("analysisQuality","precision");
+        ProjectStore.save(projects,projectId,project);
+        JSONObject job=AnalysisJobStore.prepare(files,projectId,version,true);final String id=job.getString("id");
+        for(String[] invalid:new String[][]{
+            {"native-game-fallback","wasm-v1"},{"native-game-fallback","native-deux-v1"},
+            {"native-deux-fallback","native-game-v1"},{"native-mdx-fallback","native-deux-v1+native-game-v1"},
+            {"native-game-fallback","native-mdx-v1+native-game-v1"},{"native-mdx-fallback","native-mdx-v1"},
+            {"unknown","native-game-v1"},{"native-game-fallback","native-game-v1+native-deux-v1"}
+        })reject(()->AnalysisJobStore.markAnalysisWasmFallback(files,id,invalid[0],invalid[1]));
+        reject(()->AnalysisJobStore.markAnalysisWasmFallback(files,id,"native-game-fallback"));
+        reject(()->AnalysisJobStore.markAnalysisWasmFallback(files,id,"native-game-fallback",null));
+        JSONObject pristine=AnalysisJobStore.request(files,id);
+        AnalysisJobStore.write(frozen,new JSONObject(pristine.toString()).put("analysisNativeAttemptedExecution","native-game-v1"),ProjectStore.MAX_PROJECT_BYTES);
+        reject(()->AnalysisJobStore.request(files,id));
+        AnalysisJobStore.write(frozen,pristine,ProjectStore.MAX_PROJECT_BYTES);
+        AnalysisJobStore.markAnalysisWasmFallback(files,id,"native-game-fallback","native-deux-v1+native-game-v1");
+        JSONObject bound=AnalysisJobStore.request(files,id);
+        JSONObject partial=new JSONObject(bound.toString());partial.remove("analysisNativeAttemptedExecution");
+        AnalysisJobStore.write(frozen,partial,ProjectStore.MAX_PROJECT_BYTES);reject(()->AnalysisJobStore.request(files,id));
+        AnalysisJobStore.write(frozen,new JSONObject(bound.toString()).put("analysisNativeAttemptedExecution","native-game-v1"),ProjectStore.MAX_PROJECT_BYTES);reject(()->AnalysisJobStore.request(files,id));
+        AnalysisJobStore.write(frozen,new JSONObject(bound.toString()).put("analysisNativeFallbackReason","native-deux-fallback"),ProjectStore.MAX_PROJECT_BYTES);reject(()->AnalysisJobStore.request(files,id));
+        // A job-first crash must not run with a partial request, but prepare can
+        // reconstruct the exact trusted job marker after interruption.
+        AnalysisJobStore.write(frozen,pristine,ProjectStore.MAX_PROJECT_BYTES);reject(()->AnalysisJobStore.request(files,id));
+        AnalysisJobStore.finish(files,id,"interrupted","Native fallback publication boundary");
+        JSONObject restored=AnalysisJobStore.prepare(files,projectId,version);String restoredId=restored.getString("id");
+        check("native-deux-v1+native-game-v1".equals(AnalysisJobStore.request(files,restoredId).getString("analysisNativeAttemptedExecution")),"Partial-write recovery changed native execution");
+        AnalysisJobStore.finish(files,restoredId,"cancelled","Legacy fallback test");
+        JSONObject legacy=AnalysisJobStore.prepare(files,projectId,version,true);String legacyId=legacy.getString("id");
+        AnalysisJobStore.markAnalysisWasmFallback(files,legacyId,"native-deux-fallback");
+        JSONObject legacyJob=AnalysisJobStore.status(files),legacyRequest=read(frozen);
+        legacyJob.remove("analysisNativeAttemptedExecution");legacyRequest.remove("analysisNativeAttemptedExecution");
+        AnalysisJobStore.persist(files,legacyJob);AnalysisJobStore.write(frozen,legacyRequest,ProjectStore.MAX_PROJECT_BYTES);
+        check(!AnalysisJobStore.request(files,legacyId).has("analysisNativeAttemptedExecution"),"Legacy separator fallback stopped being readable");
+        AnalysisJobStore.finish(files,legacyId,"interrupted","Legacy fallback normalization");
+        JSONObject normalized=AnalysisJobStore.prepare(files,projectId,version);String normalizedId=normalized.getString("id");
+        check("native-deux-v1".equals(AnalysisJobStore.request(files,normalizedId).getString("analysisNativeAttemptedExecution")),"Legacy separator fallback did not normalize correctly");
+        AnalysisJobStore.finish(files,normalizedId,"cancelled","Completed native GAME fallback lineage tests");
+    }
+}

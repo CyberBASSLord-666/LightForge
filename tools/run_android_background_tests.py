@@ -2,7 +2,7 @@
 """Install CI APKs and retain a source-bound Android background lifecycle receipt."""
 import argparse,datetime,hashlib,json,os,selectors,subprocess,time
 from pathlib import Path
-from android_evidence_manifest import _atomic_json, candidate_binding
+from android_evidence_manifest import _atomic_json, candidate_binding, validate_native_game_device
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--candidate-dir',type=Path,required=True)
 parser.add_argument('--output-dir',type=Path,required=True)
@@ -29,7 +29,7 @@ ci={'run_id':args.run_id,'run_attempt':args.run_attempt,'head_sha':args.head_sha
 sdk=Path(os.environ['ANDROID_HOME']);adb=sdk/'platform-tools/adb'
 sources=[*sorted((ROOT/'android').rglob('*.java')),*sorted((ROOT/'android').rglob('*.xml')),*sorted((ROOT/'web/background').rglob('*')),*sorted((ROOT/'web/analysis').glob('*.js')),*sorted((ROOT/'web/engine').glob('*.js')),ROOT/'web/app.js',ROOT/'web/index.html',ROOT/'tests/android/BackgroundInstrumentation.java',ROOT/'tools/run_android_background_tests.py',ROOT/'tools/build_android_tests.py',ROOT/'android/native-runtime.json',ROOT/'web/analysis/ASSET_MANIFEST.json',ROOT/'tools/android_evidence_manifest.py']
 hashes={str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sources if p.is_file()}
-receipt={'release':version,'passed':False,'checks':[],'errors':[],'source_hashes':candidate['source_hashes'],'instrumentation_source_hashes':hashes,'scope':'Android API 35 emulator lifecycle test using the production service, native CPU Studio and two-pass Balanced MDX separation, frozen-request routing, live model/tensor release before WebView/WASM voice/GAME, screen-off completion, live inference cancellation, verified passage resume and compilation. Not a physical phone or Tesla test.','ci':ci,'candidate':candidate}
+receipt={'release':version,'passed':False,'checks':[],'errors':[],'source_hashes':candidate['source_hashes'],'instrumentation_source_hashes':hashes,'scope':'Android API 35 emulator lifecycle test using the production service, native CPU Studio and two-pass Balanced MDX separation, frozen-request routing, separation-buffer release before voice/transcription, isolated production GAME task/JobBridge JNI completion and live cancellation with a test-only attached service owner, screen-off completion, live inference cancellation, verified passage resume and compilation. Not a comparative-quality, speedup, physical phone or Tesla claim.','ci':ci,'candidate':candidate}
 def run(*args,timeout=120):
     return subprocess.run([str(adb),*args],text=True,capture_output=True,timeout=timeout,check=True).stdout
 INSTRUMENT_TIMEOUT_SECONDS=3000
@@ -141,6 +141,8 @@ try:
             and balanced.get('stemSamples')==66150 and balanced.get('separation',{}).get('denoise') is True
             and balanced.get('separation',{}).get('modelPasses')==2 and balanced.get('separation',{}).get('chunks')==1):
         raise RuntimeError('Android Balanced native lifecycle evidence is incomplete')
+    if version=='2.3.2':
+        validate_native_game_device(receipt.get('device'))
     assert hashes=={str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sources if p.is_file()}, 'Android source changed during lifecycle verification.'
     receipt['passed']=True
 except Exception as error:

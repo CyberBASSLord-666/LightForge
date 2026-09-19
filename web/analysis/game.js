@@ -8,11 +8,15 @@ const RATE=44100,CORE=12,HALO=2,STEPS=8;
 const round=n=>Math.round(n*1000)/1000;
 function noise(length,seed){const out=new Float32Array(length);let x=seed>>>0;for(let i=0;i<length;i++){x^=x<<13;x^=x>>>17;x^=x<<5;out[i]=((x>>>0)+.5)/4294967296;}return out;}
 function free(out){if(out)for(const t of Object.values(out))t.dispose?.();}
-async function create({ort,baseUrl,onProgress=()=>{},checkpoint,telemetry}){
+function validNotes(notes,samples){
+ return Array.isArray(notes)&&notes.length<=Math.ceil(samples/RATE/.06)&&notes.every((n,i)=>n&&Number.isFinite(n.start)&&Number.isFinite(n.end)&&Number.isFinite(n.midi)&&n.midi>=0&&n.midi<=127&&n.start>=0&&n.end-n.start>=.06-1e-6&&n.end<=samples/RATE+.001&&(!i||n.start>=notes[i-1].end-1e-6));
+}
+function nativeFailure(cause){if(cause?.name==='AbortError'||cause?.code==='native-game-fallback'||cause?.code==='native-game-retirement-pending'||cause?.code==='native-game-fence-failed')return cause;const error=new Error('Native singing transcription requested a verified WASM restart.');error.code='native-game-fallback';return error;}
+async function create({ort,baseUrl,onProgress=()=>{},checkpoint,telemetry,nativeInfer}){
  // These disjoint spans measure local work only; native bridge waits are not model inference.
  const timed=(name,fn)=>telemetry?.measure?telemetry.measure('performance.'+name,fn,{component:'game'}):fn();
  const timedAsync=(name,fn)=>telemetry?.measureAsync?telemetry.measureAsync('performance.'+name,fn,{component:'game',runtime:'onnxruntime-web-wasm'}):fn();
- const sessions={},manifest=await(await fetch(new URL('manifest.json',baseUrl))).json();let loaded=false,released=false;
+ const sessions={},manifest=await(await fetch(new URL('manifest.json',baseUrl))).json(),native=typeof nativeInfer==='function',execution=native?'native-game-v1':'wasm-v1';let loaded=false,released=false;
  async function load(){
   if(released)throw Error('Singing transcription is closed.');if(loaded)return;
   try{for(const name of ['encoder','dur2bd','segmenter','bd2dur','estimator']){onProgress('Loading '+name);sessions[name]=await timedAsync('model_initialization',()=>ort.InferenceSession.create(new URL(name+'.onnx',baseUrl).href,{executionProviders:['wasm'],graphOptimizationLevel:'all',enableCpuMemArena:false,enableMemPattern:false}));}loaded=true;}
@@ -25,6 +29,16 @@ async function create({ort,baseUrl,onProgress=()=>{},checkpoint,telemetry}){
  const tensor=(type,data,dims)=>new ort.Tensor(type,data,dims);
  const run=(name,feeds)=>timedAsync('model_inference',()=>sessions[name].run(feeds));
  async function infer(pcm,language,seed,onStep=()=>{}){
+  if(released)throw Error('Singing transcription is closed.');
+  if(native){
+   if(!(pcm instanceof Float32Array)||pcm.length<1||pcm.length>RATE*(CORE+2*HALO)||![0,1,2,3,4].includes(language)||!Number.isInteger(seed)||seed<0||seed>0xffffffff||!pcm.every(Number.isFinite))throw nativeFailure();
+   try{
+    // Bridge transport/session waits are not graph-inference measurements.
+    const invoke=()=>nativeInfer(pcm,language,seed,onStep),notes=await (telemetry?.measureAsync?telemetry.measureAsync('native.game.wait',invoke,{component:'game',runtime:'onnxruntime-android-cpu'}):invoke());
+    if(!validNotes(notes,pcm.length))throw nativeFailure();
+    return notes.map(n=>({start:n.start,end:n.end,midi:n.midi}));
+   }catch(error){throw nativeFailure(error);}
+  }
   await load();
   const owned=[],own=t=>(owned.push(t),t);let encoded,known,previous,timing,estimated;
   try{
@@ -50,14 +64,14 @@ async function create({ort,baseUrl,onProgress=()=>{},checkpoint,telemetry}){
   for(let i=0;i<chunks;i++){
    const coreStart=i*CORE,coreEnd=Math.min(duration,coreStart+CORE),start=Math.max(0,coreStart-HALO),end=Math.min(duration,coreEnd+HALO),first=Math.round(start*RATE),last=Math.min(total,Math.round(end*RATE));
    const key='game-'+language+'-'+i,stored=await checkpoint?.read(key);
-   const restored=stored&&stored.model===manifest.id&&stored.steps===STEPS&&stored.first===first&&stored.last===last&&Array.isArray(stored.notes)&&stored.notes.every((n,j)=>Number.isFinite(n.start)&&Number.isFinite(n.end)&&Number.isFinite(n.midi)&&n.midi>=0&&n.midi<=127&&n.start>=0&&n.end-n.start>=.06-1e-6&&n.end<=(last-first)/RATE+.001&&(!j||n.start>=stored.notes[j-1].end-1e-6));
+   const restored=stored&&stored.model===manifest.id&&stored.steps===STEPS&&stored.first===first&&stored.last===last&&(stored.execution||'wasm-v1')===execution&&validNotes(stored.notes,last-first);
    let candidates;
    onProgress(i/chunks,{passageIndex:i+1,passageCount:chunks,passagesCompleted:i,restoredPassages});
    if(restored){candidates=stored.notes;restoredPassages++;}
    else{
     const pcm=await read(first,last-first);if(!(pcm instanceof Float32Array)||pcm.length!==last-first)throw Error('Singing audio clock is incomplete.');
     const peak=timed('preprocessing',()=>{let peak=0;for(const x of pcm){if(!Number.isFinite(x))throw Error('Singing audio contains invalid samples.');peak=Math.max(peak,Math.abs(x));}return peak;});
-    candidates=peak>1e-5?await infer(pcm,language,(2025+i*104729)>>>0,p=>onProgress((i+p)/chunks,{passageIndex:i+1,passageCount:chunks,passagesCompleted:i,restoredPassages})):[];await checkpoint?.write(key,{first,last,model:manifest.id,steps:STEPS,notes:candidates});
+    candidates=peak>1e-5?await infer(pcm,language,(2025+i*104729)>>>0,p=>onProgress((i+p)/chunks,{passageIndex:i+1,passageCount:chunks,passagesCompleted:i,restoredPassages})):[];await checkpoint?.write(key,{first,last,model:manifest.id,steps:STEPS,notes:candidates,...(native?{execution}:{})});
    }
    timed('postprocessing',()=>{for(const n of candidates){
     const a=start+n.start,b=Math.min(duration,start+n.end);
@@ -78,7 +92,7 @@ async function create({ort,baseUrl,onProgress=()=>{},checkpoint,telemetry}){
    if((i+1)%4===0&&i+1<chunks){onProgress((i+1)/chunks,{passageIndex:i+1,passageCount:chunks,passagesCompleted:i+1,restoredPassages,sessionReset:true});await reset();}
   }
   const filtered=timed('postprocessing',()=>{notes.sort((a,b)=>a.start-b.start);for(let i=0;i<notes.length-1;i++)notes[i].end=Math.min(notes[i].end,notes[i+1].start);return notes.filter(n=>n.end-n.start>=.06-1e-6);});
-  return {notes:filtered,model:manifest.id,frameSeconds:.01,steps:STEPS,language,sourceClock:'Original decoded PCM',lyricsAligned:false,confidenceIsProbability:false};
+  return {notes:filtered,model:manifest.id,frameSeconds:.01,steps:STEPS,language,sourceClock:'Original decoded PCM',lyricsAligned:false,confidenceIsProbability:false,...(native?{runtime:'onnxruntime-android-cpu'}:{})};
  },async release(){if(released)return;released=true;await reset();}};
 }
 function fuse(detail,transcription){
@@ -101,6 +115,6 @@ function fuse(detail,transcription){
  for(const a of detail.accents)if(a.kind!=='entrance'&&!accents.some(b=>Math.abs(a.time-b.time)<.08))accents.push(a);
  return {...detail,notes,accents:accents.sort((a,b)=>a.time-b.time),pitchContour:contour,transcription,method:'GAME Large neural sung-note boundaries and pitches, with separated-source expression and singing/speech evidence',timing:{...detail.timing,pitchFrameMs:10,alignment:'Neural note boundaries on the source PCM clock, gated by separated voice evidence; no word alignment'},diagnostics:{...detail.diagnostics,version:2,noteModel:transcription.model,notes:notes.length,heldNotes:notes.filter(n=>n.type==='held-note').length,neuralCandidates:transcription.notes.length,neuralRejected:transcription.notes.length-notes.length,confidenceMeaning:'Containing voice phrase evidence, not a calibrated GAME note probability'}};
 }
-root.LightForgeGAME={create,fuse,noise};
+root.LightForgeGAME={create,fuse,noise,validNotes};
 if(typeof module!=='undefined'&&module.exports)module.exports=root.LightForgeGAME;
 })(typeof self!=='undefined'?self:globalThis);

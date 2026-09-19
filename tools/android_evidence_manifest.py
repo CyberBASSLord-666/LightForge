@@ -10,6 +10,7 @@ have been checked.
 import argparse
 import hashlib
 import json
+import math
 import os
 from pathlib import Path, PurePosixPath
 import re
@@ -293,6 +294,43 @@ def validate_source_hashes(source_hashes, source_root):
     return hashes
 
 
+def validate_native_game_device(value):
+    """Require the 2.3.2 Android GAME exercise, within its sealed CI receipt.
+
+    This validates observed fields, not a standalone attestation. The caller
+    must retain the existing exact candidate/source/run/session bindings.
+    """
+    require(isinstance(value, dict), 'Android native GAME device evidence is missing')
+    game = value.get('nativeGame')
+    require(isinstance(game, dict), 'Android native GAME evidence is missing')
+    for field, expected in {'sampleRate': 44100, 'samples': 705600, 'language': 0,
+                            'seed': 2025, 'steps': 8, 'completedPasses': 1}.items():
+        require(type(game.get(field)) is int and game[field] == expected,
+                'Android native GAME integer identity differs: ' + field)
+    for field, expected in {
+        'model': 'game-large-1.0.3-lightforge-1',
+        'fixture': 'bundled-demo-first16s-stereo16-mono-average',
+        'pcmSHA256': '6724721e8c1c4ac9ce532d46697393f8fafe81e7935f88399f05bc341115cedd',
+        'cancelledState': 'cancelled',
+    }.items():
+        require(game.get(field) == expected, 'Android native GAME identity differs: ' + field)
+    count = game.get('noteCount')
+    require(type(count) is int and 1 <= count <= 1601, 'Android native GAME note count is invalid')
+    for field in ('unroundedNotesObserved', 'completedRetired', 'ownershipChecks',
+                  'boundedUploadChecked', 'uploadCancelChecked', 'liveNativeCancellationObserved',
+                  'cancelledRetired', 'executorRetired'):
+        require(game.get(field) is True, 'Android native GAME proof is missing: ' + field)
+    progress = game.get('cancellationProgress')
+    require(type(progress) in (int, float) and .18 <= progress < .82 and math.isfinite(progress),
+            'Android native GAME live cancellation progress is invalid')
+    _sha(game.get('notesSHA256'), 'Android native GAME notes digest is invalid')
+    require(game.get('scope') ==
+            'Android emulator: isolated real production NativeGameTask/JobBridge with bundled GAME JNI; '
+            'test-only service-owner attachment, not an OS service-start, comparative-quality, speedup or physical-device claim.',
+            'Android native GAME evidence scope is invalid')
+    return game
+
+
 def _receipt(receipt, name, *, release, run_id, run_attempt, head_sha, session, candidate):
     require(receipt.get('passed') is True and receipt.get('errors') == [], 'Android receipt did not pass: ' + name)
     require(receipt.get('release') == release, 'Android receipt release differs: ' + name)
@@ -308,6 +346,8 @@ def _receipt(receipt, name, *, release, run_id, run_attempt, head_sha, session, 
     require(ci == {'run_id': run_id, 'run_attempt': run_attempt, 'head_sha': head_sha, 'evidence_session': session},
             'Android receipt CI binding differs: ' + name)
     require(receipt.get('candidate') == candidate, 'Android receipt candidate binding differs: ' + name)
+    if release == '2.3.2' and name == 'android-background-verification.json':
+        validate_native_game_device(receipt.get('device'))
     return {'passed': True, 'release': release, 'source_hashes_sha256': canonical_sha256(hashes)}
 
 

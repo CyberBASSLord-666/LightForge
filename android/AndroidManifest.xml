@@ -6,7 +6,7 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <application android:theme="@style/AppTheme" android:label="LightForge" android:icon="@drawable/ic_launcher" android:allowBackup="false" android:supportsRtl="true" android:usesCleartextTraffic="false" android:largeHeap="true">
+    <application android:name=".LightForgeApplication" android:theme="@style/AppTheme" android:label="LightForge" android:icon="@drawable/ic_launcher" android:allowBackup="false" android:supportsRtl="true" android:usesCleartextTraffic="false" android:largeHeap="true">
         <service android:name=".AnalysisService" android:exported="false" android:stopWithTask="false" android:foregroundServiceType="mediaProcessing|dataSync" />
         <activity android:name=".MainActivity" android:exported="true" android:enableOnBackInvokedCallback="false" android:configChanges="orientation|screenSize|smallestScreenSize|keyboardHidden|uiMode" android:windowSoftInputMode="adjustResize">
             <intent-filter>
