@@ -6,6 +6,25 @@ A source version or an entry here does not itself establish publication. The
 [pre-cleanup changelog](https://github.com/CyberBASSLord-666/LightForge/blob/07511f5544b688c657773dce8a29d8d31ba68cb1/CHANGELOG.md)
 retains detailed historical development notes and their original limitations.
 
+## 2.3.2 — native transcription and inference allocation reuse
+
+Run the original five Float32 GAME graphs through Android's native ONNX Runtime
+CPU backend, retaining all eight diffusion steps, contexts, thresholds, language
+and deterministic seeds. Keep final stitching and rounding in the shared
+pipeline. Add bounded PCM transport, execution-specific checkpoints, confirmed
+native retirement before WASM fallback, and safe orphaned-passage cleanup.
+
+Enable native Deux's per-session CPU arena and memory-pattern optimization
+without changing its 27 graphs or 335 inference calls. Controlled host passage
+comparisons showed lower wall time with byte-identical outputs and slightly
+higher peak memory; these are not whole-app or physical-device measurements.
+
+Add source-bound actual native/WASM transcription and checkpoint comparisons,
+plus Android JNI completion, ownership and cancellation verification. The
+version-specific owner-approved policy makes external measurements optional;
+full production/Android checks, original signing and exact payload integrity
+remain mandatory. No 75% speedup or general quality improvement is established.
+
 ## 2.3.1 — repeated bass articulation and inference experiments
 
 Recover repeated same-pitch bass attacks from short-window harmonic trough and

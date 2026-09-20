@@ -49,7 +49,7 @@ mixing native and WASM evidence. Cancellation is not a fallback success.
 
 | Observation | What it establishes | What it does not establish |
 | --- | --- | --- |
-| Public 64-second demo: 98 identical final stitched notes; licensed vocal excerpt: 11 identical final stitched notes | Exact final transcription equality for those exercised inputs and production window/seed plans | General musical quality, lyric alignment, complete-analysis equivalence or physical-device behavior |
+| Production-engine comparison: public 64-second demo, 98 identical final stitched notes; licensed Falcon mixture excerpt, 5 identical final stitched notes; checkpoint replay also matches | Exact final transcription equality for those exercised inputs and production window/seed plans | General musical quality, lyric alignment, complete-analysis equivalence or physical-device behavior |
 | Small raw pitch/feature Float32 differences across native and WASM backends | Raw numerical equality is not claimed, even when the shared final rounding yields identical notes | Automatic quality approval or permission to discard numerical differences |
 | Three measured paired Deux host passage comparisons: approximately 11.8%, 11.0% and 17.3% lower wall time; approximately 1.6% higher median peak RSS | A measured host allocation tradeoff for the tested unchanged passage computation | Android speed, whole-song/app latency, battery use, thermal behavior or a 75% speedup |
 | Earlier GAME prototype graph-inference timing observations | Feasibility evidence for moving the unchanged graph work to the native backend | A repeated production-engine or whole-application performance benchmark |
@@ -71,6 +71,8 @@ The [build and release process](../BUILD.md), current full production and Androi
 verification, exact-candidate integrity checks and original signing identity
 remain required. This execution change does not weaken protected rules, replace
 an already published version, or make an ephemeral CI signature publishable.
-External-measurement exceptions apply only where the source-bound approved
-release policy explicitly permits them; this document creates no new exception
-or additional performance publication prerequisite. **2.3.2 is not yet released.**
+The owner-approved [2.3.2 / 20302 declaration](../releases/v2.3.2/quality-gate-declaration.json)
+makes external corpus measurements, blinded human review and physical-device
+observations optional for this version. It does not create PASS_TARGET evidence,
+waive any automated, signing or package-integrity check, or extend authority to
+future versions. **2.3.2 is not yet released.**

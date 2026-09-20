@@ -1,21 +1,21 @@
-# LightForge 2.3.1
+# LightForge 2.3.2
 
-Android version code: **20301**. Install the original-signed release APK over the existing app to retain private projects.
+Android version code: **20302**. Install the original-signed release APK over the existing app to retain private projects.
 
 ## Changes
 
-- Preserve repeated bass attacks at the same pitch instead of collapsing them into one long held note. The detector requires a measured low-band dip followed by a rapid restart in the note's own harmonics, and it keeps the original audio clock and accompaniment-mixture labels.
-- Rebuild bass phrases, strengths and semantic events from the recovered note boundaries. Smooth tremolo, continuous sub-bass, broadband noise and kick-only fixtures remain guarded against invented rearticulations.
-- Add a reproducible WASM inference experiment that binds the original GAME graphs, checks every intermediate tensor and unrounded note, and measures fresh alternating runs. The tested batch-one specialization preserved exact output but was slower and remains disabled.
-- Retain original model weights, Float32 precision, source clocks, passage context, thread settings and all eight GAME transcription steps.
+- Run singing transcription through Android's native ONNX Runtime CPU backend using the original five GAME models. Preserve Float32 precision, all eight diffusion steps, language, deterministic seeds, context and final note stitching.
+- Reuse native Deux graph-session allocations while preserving the original 27 models and all 335 inference calls. Controlled host passage tests showed approximately 11–17% lower wall time with byte-identical outputs and approximately 1.6% higher median peak memory; Android and whole-analysis gains are not measured.
+- Keep native transcription input bounded, separate execution-specific checkpoints, and require confirmed native cleanup before compatibility fallback. Stop safely if resource retirement cannot be confirmed.
+- Reclaim identifiable orphaned transcription cache files after process restart without following symlinks or removing unrelated files. Audio processing remains on the device.
 
 ## Verification and limits
 
 The source-bound production workflow covers host regression, actual bundled-model execution, browser persistence and rendering, and Android emulator lifecycle and diagnostic scenarios. Publication requires a successful run for the exact source, sealed evidence, the original signing certificate, unchanged candidate payload and a matching uploaded-APK digest. The accompanying `release-verification.json` identifies the qualifying source, run and artifact.
 
-Controlled fixtures recovered five repeated 55 Hz and 110 Hz notes that the previous detector merged into one, while the stated negative controls remained stable. These fixtures do not establish general detection accuracy or listener preference. Host inference observations are not measurements of the user's phone or a complete song.
+The production-engine comparisons exercise the complete 64-second public demo (98 final notes) and licensed Falcon mixture excerpt (five final notes), including native checkpoint replay. Final notes match the shared WASM pipeline on these inputs; small raw Float32 differences are retained in the evidence. Android instrumentation exercises native completion, ownership, cancellation and retirement. These tests do not establish general transcription quality or physical-device performance.
 
-The owner-approved publication policy makes external corpus benchmarks, human perceptual review and hardware energy/thermal observations optional. The 75% whole-analysis target, general comparative musical quality, blinded perceptual review and physical phone/Tesla behavior remain **unverified**. The separate strict performance-quality workflow retains its existing acceptance requirements.
+The owner-approved 2.3.2 / 20302 publication policy makes external corpus benchmarks, human perceptual review and hardware energy/thermal observations optional for this version. The 75% whole-analysis target, general comparative musical quality, blinded perceptual review and physical phone/Tesla behavior remain **unverified**. The separate strict performance-quality workflow retains its existing acceptance requirements.
 
 ## History
 
