@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "release": {
+    "name": "2.3.2",
+    "code": 20302
+  },
+  "requirement": "automated_verification_only",
+  "classification": "performance",
+  "reason": "The owner approved continuing 2.3.2 / 20302 through publication under the previous automated-verification-only policy. This version runs the original five GAME graphs natively and reuses Deux graph-session allocations, retaining Float32 precision, contexts, eight steps and deterministic seeds. External corpus measurements, blinded human review and physical-device observations are optional for this version only. Fresh source-bound full production, actual-model and Android verification, the original signing identity, unchanged qualified application payload and package integrity remain mandatory. This policy creates no PASS_TARGET provenance and does not relax the separate strict performance-quality gate. A 75% whole-analysis reduction, general musical-quality non-regression and physical phone/Tesla performance, energy and thermal behavior remain unverified."
+}

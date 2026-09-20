@@ -128,9 +128,9 @@ Do not republish or overwrite a released version to deliver changed application
 bytes. Update the version deliberately, produce a new successful source-bound
 verification run and qualify that exact candidate under the applicable policy.
 
-For **2.2.5 / 20205, 2.3.0 / 20300 and 2.3.1 / 20301**, the owner-approved
+For **2.2.5 / 20205, 2.3.0 / 20300, 2.3.1 / 20301 and 2.3.2 / 20302**, the owner-approved
 `automated_verification_only` policy makes external corpus benchmarks, human perceptual review and hardware
-energy/thermal observations optional. The 2.3.0 and 2.3.1 declarations follow
+energy/thermal observations optional. The 2.3.0, 2.3.1 and 2.3.2 declarations follow
 the owner's explicit requests to develop and continue these improvements and
 publish when ready without user-supplied measurements. This exception is
 version-scoped; it is not a blanket policy for future releases or a `PASS_TARGET` result. The separate

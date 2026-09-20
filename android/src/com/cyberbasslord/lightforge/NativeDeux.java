@@ -265,7 +265,7 @@ public final class NativeDeux implements AutoCloseable {
             options.setInterOpNumThreads(1);
             options.setExecutionMode(OrtSession.SessionOptions.ExecutionMode.SEQUENTIAL);
             options.setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT);
-            options.setCPUArenaAllocator(false);options.setMemoryPatternOptimization(false);
+            options.setCPUArenaAllocator(true);options.setMemoryPatternOptimization(true);
             options.addConfigEntry("session.intra_op.allow_spinning","0");
             OrtSession session=environment.createSession(model.getAbsolutePath(),options);
             if(profile!=null){profile.addSessionInit(name,NativeInferenceProfile.elapsed(sessionStarted));recorded=true;}

@@ -1,6 +1,6 @@
 /* The service performs native CPU inference; audio remains in private app storage. */
 (function(root){'use strict';
- const ANALYSIS_CACHE_PROFILE='native-deux-onnxruntime-android-1.25.1-v1';
+ const ANALYSIS_CACHE_PROFILE='native-deux-onnxruntime-android-1.25.1-v2';
  const abortError=()=>new DOMException('Analysis cancelled','AbortError');
  function create(bridge,jobId,onCompatibility=()=>{}){
   if(!bridge||typeof bridge.nativeDeuxStart!=='function')return undefined;

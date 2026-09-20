@@ -17,7 +17,7 @@ test('guard identity follows the pinned native runtime version',()=>{
 });
 test('native cache profiles are revision-bound and only attached to admitted predictors',async()=>{
  const runtime=JSON.parse(fs.readFileSync(path.join(__dirname,'../android/native-runtime.json'),'utf8')),mdx=fs.readFileSync(path.join(__dirname,'../web/background/native-mdx.js'),'utf8');
- const {create,profile}=adapter();assert.equal(profile,'native-deux-onnxruntime-android-'+runtime.version+'-v1');
+ const {create,profile}=adapter();assert.equal(profile,'native-deux-onnxruntime-android-'+runtime.version+'-v2');
  assert.match(mdx,new RegExp("native-mdx-onnxruntime-android-"+runtime.version.replace(/\./g,'\\.')+"-v1"));
  const unavailable=create({nativeDeuxAvailability(){return JSON.stringify({available:false});}},'job');
  assert.equal(unavailable,undefined,'a fallback predictor was incorrectly admitted');

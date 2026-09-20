@@ -27,12 +27,16 @@
   const wasm=execution==='wasm-v1'&&profile==='wasm';
   const studio=quality==='precision'&&execution==='native-deux-v1'&&profile===root.LightForgeNativeDeux?.analysisCacheProfile;
   const balanced=quality==='balanced'&&execution==='native-mdx-v1'&&profile===root.LightForgeNativeMdx?.analysisCacheProfile;
+  const gameProfile=root.LightForgeNativeGame?.analysisCacheProfile;
+  const game=!!gameProfile&&execution==='native-game-v1'&&profile===gameProfile;
+  const studioGame=!!gameProfile&&quality==='precision'&&execution==='native-deux-v1+native-game-v1'&&profile===root.LightForgeNativeDeux?.analysisCacheProfile+'+'+gameProfile;
+  const balancedGame=!!gameProfile&&quality==='balanced'&&execution==='native-mdx-v1+native-game-v1'&&profile===root.LightForgeNativeMdx?.analysisCacheProfile+'+'+gameProfile;
   // A persisted native failure is an execution fence, not a performance hint:
   // its next result must be derived solely from the WASM namespace. Never
   // admit an old native completed identity after that fence survived a process
   // death.
   if(forceWasm&&!wasm)return null;
-  if(!wasm&&!studio&&!balanced)return null;
+  if(!wasm&&!studio&&!balanced&&!game&&!studioGame&&!balancedGame)return null;
   return {cacheIdentityQuery:true,cacheIdentityExecution:execution,cacheIdentityNativeRuntimeProfile:profile,...(savedEpoch?{cacheIdentityRefreshEpoch:savedEpoch}:{})};
  }
  function currentAnalysisCache(music,expected,forceWasm=false){
@@ -153,8 +157,12 @@
    if(!executionContract)throw Error('The frozen analysis execution contract is invalid. Start a fresh analysis again.');
    if(hasEffectiveExecution&&!forceWasm)throw Error('The frozen effective analysis runtime is invalid. Start a fresh analysis again.');
    const fallbackReason=request.analysisNativeFallbackReason;
-   const attemptedExecution=fallbackReason==='native-deux-fallback'?'native-deux-v1':fallbackReason==='native-mdx-fallback'?'native-mdx-v1':null;
-   if(forceWasm&&!attemptedExecution)throw Error('The persisted native fallback lineage is invalid. Start a fresh analysis again.');
+   const legacyAttempt=fallbackReason==='native-deux-fallback'?'native-deux-v1':fallbackReason==='native-mdx-fallback'?'native-mdx-v1':null;
+   const attemptedExecution=request.analysisNativeAttemptedExecution??legacyAttempt;
+   const validAttempt=typeof attemptedExecution==='string'&&['native-deux-v1','native-mdx-v1','native-game-v1','native-deux-v1+native-game-v1','native-mdx-v1+native-game-v1'].includes(attemptedExecution)
+    &&(!attemptedExecution.includes('native-deux-v1')||quality==='precision')&&(!attemptedExecution.includes('native-mdx-v1')||quality==='balanced')
+    &&((fallbackReason==='native-game-fallback'&&attemptedExecution.includes('native-game-v1'))||(fallbackReason==='native-deux-fallback'&&attemptedExecution.includes('native-deux-v1'))||(fallbackReason==='native-mdx-fallback'&&attemptedExecution.includes('native-mdx-v1')));
+   if(forceWasm&&!validAttempt)throw Error('The persisted native fallback lineage is invalid. Start a fresh analysis again.');
    const baseAnalysisOptions={projectId,analysisIdentity:request.analysisIdentity,analysisUrl:new URL(base+'analysis.wav',location.href).href,sensitivity:settings.sensitivity,
     bpmOverride:settings.bpmOverride||undefined,analysisQuality:settings.analysisQuality,
     vocalSemanticEnrichment:settings.vocalSemanticEnrichment===true,recurrenceAnalysis:settings.recurrenceAnalysis===true};
@@ -172,31 +180,40 @@
    if(needsAnalysis||!currentAnalysisCache(music,expectedCacheIdentity,forceWasm)){
     if(music&&!needsAnalysis)root.LightForgeDiagnostics?.log('info','analysis-cache-identity','Completed music analysis cache identity changed; rebuilding evidence.');
     if(typeof BackgroundJob.clearRunObservation!=='function'||BackgroundJob.clearRunObservation(id)!==true)throw Error('The prior analysis observation could not be cleared.');
-    let nativePredict,nativeMdx;
+    let nativePredict,nativeMdx,nativeGame;
     if(forceWasm){
      compatibility=true;
      report(0,'Resuming the verified WebAssembly retry after native separation fallback.',{stage:'compatibility'});
     }else try{
      if(quality==='precision')nativePredict=root.LightForgeNativeDeux?.create(BackgroundJob,id,message=>{compatibility=true;report(0,message,{stage:'compatibility'});});
      else nativeMdx=root.LightForgeNativeMdx?.create(BackgroundJob,id,message=>{compatibility=true;report(0,message,{stage:'compatibility'});});
+     nativeGame=root.LightForgeNativeGame?.create(BackgroundJob,id,message=>{compatibility=true;report(0,message,{stage:'compatibility'});});
+     for(const [predictor,api] of [[nativePredict,root.LightForgeNativeDeux],[nativeMdx,root.LightForgeNativeMdx],[nativeGame,root.LightForgeNativeGame]]){
+      if(typeof predictor==='function'&&(typeof api?.analysisCacheProfile!=='string'||!/^[A-Za-z0-9._:-]{1,80}$/.test(api.analysisCacheProfile)||predictor.analysisCacheProfile!==api.analysisCacheProfile))throw Error('The native execution profile could not be verified.');
+     }
     }catch(error){
      // A bridge availability query is an optimization only. A failed query may
      // never block a verified cached result or silently alter its identity.
-     compatibility=true;nativePredict=undefined;nativeMdx=undefined;
+     compatibility=true;nativePredict=undefined;nativeMdx=undefined;nativeGame=undefined;
      root.LightForgeDiagnostics?.log('warn','analysis-native-compatibility',error);
      report(0,'Native acceleration is unavailable; using verified WebAssembly.',{stage:'compatibility'});
     }
     // Only a predictor that was actually admitted may label the run native.
     // Compatibility fallbacks therefore retain the wasm cache namespace.
-    const nativeRuntimeProfile=typeof nativePredict==='function'?nativePredict.analysisCacheProfile:typeof nativeMdx==='function'?nativeMdx.analysisCacheProfile:undefined;
+    const nativeRuntimeProfile=[typeof nativePredict==='function'?nativePredict.analysisCacheProfile:typeof nativeMdx==='function'?nativeMdx.analysisCacheProfile:null,typeof nativeGame==='function'?nativeGame.analysisCacheProfile:null].filter(Boolean).join('+')||undefined;
     // Use only the trusted frozen contract. A saved completed epoch is valid
     // for a probe, never as an implicit rebuild namespace.
     const persistNativeFallback=async fallback=>{
      const reason=fallback?.reason;
+     if(typeof BackgroundJob.markAnalysisWasmFallbackWithExecution==='function'){
+      if(BackgroundJob.markAnalysisWasmFallbackWithExecution(id,reason,fallback.attemptedExecution)!==true)throw Error('The native fallback execution checkpoint could not be persisted safely.');
+      return true;
+     }
+     if(fallback?.attemptedExecution?.includes('native-game-v1'))throw Error('The native singing fallback execution checkpoint is unavailable.');
      if(typeof BackgroundJob.markAnalysisWasmFallback!=='function'||BackgroundJob.markAnalysisWasmFallback(id,reason)!==true)throw Error('The native fallback checkpoint could not be persisted safely.');
      return true;
     };
-    const analysisOptions={...baseAnalysisOptions,nativePredict,nativeMdx,nativeRuntimeProfile,...(executionContract.refreshEpoch?{analysisRefreshEpoch:executionContract.refreshEpoch}:{}),...(forceWasm?{analysisNativeFallback:{attemptedExecution,reason:fallbackReason}}:{}),...((typeof nativePredict==='function'||typeof nativeMdx==='function')?{onNativeFallback:persistNativeFallback}:{})};
+    const analysisOptions={...baseAnalysisOptions,nativePredict,nativeMdx,nativeGame,nativeRuntimeProfile,...(executionContract.refreshEpoch?{analysisRefreshEpoch:executionContract.refreshEpoch}:{}),...(forceWasm?{analysisNativeFallback:{attemptedExecution,reason:fallbackReason}}:{}),...((typeof nativePredict==='function'||typeof nativeMdx==='function'||typeof nativeGame==='function')?{onNativeFallback:persistNativeFallback}:{})};
     analysisPerformed=true;const analysisStarted=observationMark(clock);
     music=await MusicAnalyzer.analyze(new URL(base+'audio.wav',location.href).href,analysisOptions,p=>report(.96*Math.max(0,Math.min(1,Number(p.progress)||0)),(compatibility?'Compatibility · ':'')+(p.detail||p.message||p.stage||'Analyzing music'),p),controller.signal);
     analysisTiming=observationMeasure(clock,analysisStarted);

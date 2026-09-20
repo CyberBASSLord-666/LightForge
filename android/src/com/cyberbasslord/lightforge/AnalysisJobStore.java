@@ -46,6 +46,7 @@ final class AnalysisJobStore {
         request.remove("analysisRefreshEpoch");
         request.remove("analysisEffectiveExecution");
         request.remove("analysisNativeFallbackReason");
+        request.remove("analysisNativeAttemptedExecution");
         request.remove("analysisJobId");
         request.remove("forceFreshAnalysis");
         if(!new File(dir,"audio.wav").isFile())throw new IOException("This project's audio is missing.");
@@ -79,8 +80,7 @@ final class AnalysisJobStore {
         // remains deterministic across process death.
         boolean forceWasm=!requestFresh&&matchingPrior&&priorMode!=null&&"wasm-v1".equals(old.optString("analysisEffectiveExecution"));
         String nativeFallbackReason=forceWasm?old.optString("analysisNativeFallbackReason"):null;
-        if(forceWasm&&!validNativeFallbackReason(nativeFallbackReason))
-            throw new IOException("The persisted native fallback lineage is invalid.");
+        String nativeAttemptedExecution=!requestFresh&&matchingPrior?nativeFallbackExecution(old,request):null;
         if("fresh".equals(executionMode)){
             // Project.json is not the fresh request; always rebuild unless a
             // matching validated Java checkpoint is restored below.
@@ -88,7 +88,8 @@ final class AnalysisJobStore {
         }
         request.put("analysisExecutionMode",executionMode);
         if(refreshEpoch!=null)request.put("analysisRefreshEpoch",refreshEpoch);else request.remove("analysisRefreshEpoch");
-        if(forceWasm)request.put("analysisEffectiveExecution","wasm-v1").put("analysisNativeFallbackReason",nativeFallbackReason);
+        if(forceWasm)request.put("analysisEffectiveExecution","wasm-v1").put("analysisNativeFallbackReason",nativeFallbackReason)
+            .put("analysisNativeAttemptedExecution",nativeAttemptedExecution);
         boolean reuse=!requestFresh&&priorMode!=null&&matchingPrior&&checkpoint.isFile();
         if(reuse){
             try{
@@ -108,7 +109,8 @@ final class AnalysisJobStore {
             .put("createdAt",System.currentTimeMillis()).put("updatedAt",System.currentTimeMillis()).put("hasCheckpoint",reuse)
             .put("resumeAvailable",reuse||(matchingPrior&&priorMode!=null));
         if(refreshEpoch!=null)job.put("analysisRefreshEpoch",refreshEpoch);
-        if(forceWasm)job.put("analysisEffectiveExecution","wasm-v1").put("analysisNativeFallbackReason",nativeFallbackReason);
+        if(forceWasm)job.put("analysisEffectiveExecution","wasm-v1").put("analysisNativeFallbackReason",nativeFallbackReason)
+            .put("analysisNativeAttemptedExecution",nativeAttemptedExecution);
         if(reuse)job.put("checkpointSHA256",old.getString("checkpointSHA256"));
         // No service can start until this method returns. Persist lineage before
         // publishing its frozen request, then atomically expose the queued job.
@@ -138,7 +140,34 @@ final class AnalysisJobStore {
         return value!=null&&value.matches("^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89aAbB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$");
     }
     private static boolean validNativeFallbackReason(String value){
-        return "native-deux-fallback".equals(value)||"native-mdx-fallback".equals(value);
+        return "native-deux-fallback".equals(value)||"native-mdx-fallback".equals(value)||"native-game-fallback".equals(value);
+    }
+    private static String legacyNativeExecution(String reason){
+        return "native-deux-fallback".equals(reason)?"native-deux-v1":"native-mdx-fallback".equals(reason)?"native-mdx-v1":null;
+    }
+    private static void validateNativeAttempt(String reason,String execution,JSONObject request)throws IOException{
+        if(!validNativeFallbackReason(reason)||execution==null)throw new IOException("Invalid native fallback lineage.");
+        boolean deux="native-deux-v1".equals(execution)||"native-deux-v1+native-game-v1".equals(execution);
+        boolean mdx="native-mdx-v1".equals(execution)||"native-mdx-v1+native-game-v1".equals(execution);
+        boolean game="native-game-v1".equals(execution)||"native-deux-v1+native-game-v1".equals(execution)||"native-mdx-v1+native-game-v1".equals(execution);
+        JSONObject settings=request.optJSONObject("settings");
+        boolean balanced=settings!=null&&"balanced".equals(settings.optString("analysisQuality"));
+        if((!deux&&!mdx&&!game)||(deux&&balanced)||(mdx&&!balanced)
+            ||("native-deux-fallback".equals(reason)&&!deux)||("native-mdx-fallback".equals(reason)&&!mdx)
+            ||("native-game-fallback".equals(reason)&&!game))throw new IOException("Native fallback does not match its execution or quality mode.");
+    }
+    /** Validate every field; only old separator-only records may omit the attempted execution. */
+    private static String nativeFallbackExecution(JSONObject lineage,JSONObject request)throws IOException{
+        boolean effective=lineage.has("analysisEffectiveExecution"),reason=lineage.has("analysisNativeFallbackReason"),attempted=lineage.has("analysisNativeAttemptedExecution");
+        if(!effective&&!reason&&!attempted)return null;
+        if(!effective||!reason||!"wasm-v1".equals(lineage.opt("analysisEffectiveExecution"))
+            ||!(lineage.opt("analysisNativeFallbackReason") instanceof String)
+            ||(attempted&&!(lineage.opt("analysisNativeAttemptedExecution") instanceof String)))
+            throw new IOException("The persisted native fallback lineage is incomplete.");
+        String fallbackReason=lineage.optString("analysisNativeFallbackReason");
+        String execution=attempted?lineage.optString("analysisNativeAttemptedExecution"):legacyNativeExecution(fallbackReason);
+        validateNativeAttempt(fallbackReason,execution,request);
+        return execution;
     }
         static String analysisIdentity(File dir,String projectId,JSONObject request)throws Exception {
         JSONObject settings=request.optJSONObject("settings");if(settings==null)settings=new JSONObject();
@@ -163,9 +192,10 @@ final class AnalysisJobStore {
             throw new IOException("The analysis request lineage is invalid.");
         if("fresh".equals(jobMode)&&!canonicalRefreshEpoch(job.optString("analysisRefreshEpoch")).equals(canonicalRefreshEpoch(request.optString("analysisRefreshEpoch"))))
             throw new IOException("The analysis refresh epoch does not match its job.");
-        boolean jobWasm="wasm-v1".equals(job.optString("analysisEffectiveExecution")),requestWasm="wasm-v1".equals(request.optString("analysisEffectiveExecution"));
-        if(jobWasm!=requestWasm)throw new IOException("The effective analysis runtime does not match its job.");
-        if(jobWasm&&(!validNativeFallbackReason(job.optString("analysisNativeFallbackReason"))
+        String jobAttempt=nativeFallbackExecution(job,request),requestAttempt=nativeFallbackExecution(request,request);
+        if((jobAttempt==null)!=(requestAttempt==null))throw new IOException("The effective analysis runtime does not match its job.");
+        if(jobAttempt!=null&&(!jobAttempt.equals(requestAttempt)
+            ||job.has("analysisNativeAttemptedExecution")!=request.has("analysisNativeAttemptedExecution")
             ||!job.optString("analysisNativeFallbackReason").equals(request.optString("analysisNativeFallbackReason"))))
             throw new IOException("The native fallback lineage does not match its job.");
         return request;
@@ -203,14 +233,24 @@ final class AnalysisJobStore {
         persist(files,job);return job;
     }
     static synchronized boolean markAnalysisWasmFallback(File files,String id,String reason) throws Exception {
-        if(!validNativeFallbackReason(reason))throw new IOException("Invalid native fallback reason.");
+        String execution=legacyNativeExecution(reason);
+        if(execution==null)throw new IOException("An exact attempted execution is required for this native fallback.");
+        return markAnalysisWasmFallback(files,id,reason,execution);
+    }
+    static synchronized boolean markAnalysisWasmFallback(File files,String id,String reason,String attemptedExecution) throws Exception {
         JSONObject job=matching(files,id,true),request=request(files,id);
+        validateNativeAttempt(reason,attemptedExecution,request);
+        String prior=nativeFallbackExecution(job,request);
+        if(prior!=null&&(!prior.equals(attemptedExecution)||!reason.equals(job.optString("analysisNativeFallbackReason"))))
+            throw new IOException("A conflicting native fallback was already persisted.");
         // Persist the job lineage first. A crash before the frozen request is
         // republished is still recoverable: prepare() reconstructs this marker
         // from the matching nonterminal job before any runner can start.
-        job.put("analysisEffectiveExecution","wasm-v1").put("analysisNativeFallbackReason",reason);
+        job.put("analysisEffectiveExecution","wasm-v1").put("analysisNativeFallbackReason",reason)
+            .put("analysisNativeAttemptedExecution",attemptedExecution);
         persist(files,job);
-        request.put("analysisEffectiveExecution","wasm-v1").put("analysisNativeFallbackReason",reason);
+        request.put("analysisEffectiveExecution","wasm-v1").put("analysisNativeFallbackReason",reason)
+            .put("analysisNativeAttemptedExecution",attemptedExecution);
         write(new File(directory(files),"request.json"),request,ProjectStore.MAX_PROJECT_BYTES);
         return true;
     }

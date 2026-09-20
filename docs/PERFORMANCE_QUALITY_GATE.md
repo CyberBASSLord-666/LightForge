@@ -1,6 +1,6 @@
 # Performance quality gate
 
-**Publication policies for 2.2.5 / code 20205, 2.3.0 / code 20300 and 2.3.1 / code 20301:** the owner explicitly removed external corpus, human-review and hardware-measurement inputs as prerequisites. Each source-pinned `automated_verification_only` declaration permits publication after the existing automated host/Android, signature and integrity checks, with comparative performance and quality recorded as unverified. Each is an explicitly authorized version-specific publication decision, not a `PASS_TARGET` result or a non-performance classification. The strict comparison described below is unchanged and remains available for a later, separately evidenced qualification.
+**Publication policies for 2.2.5 / code 20205, 2.3.0 / code 20300, 2.3.1 / code 20301 and 2.3.2 / code 20302:** the owner explicitly removed external corpus, human-review and hardware-measurement inputs as prerequisites. Each source-pinned `automated_verification_only` declaration permits publication after the existing automated host/Android, signature and integrity checks, with comparative performance and quality recorded as unverified. Each is an explicitly authorized version-specific publication decision, not a `PASS_TARGET` result or a non-performance classification. The strict comparison described below is unchanged and remains available for a later, separately evidenced qualification.
 
 `tools/performance_quality_gate.py` compares paired baseline and candidate
 analysis reports. It is a fail-closed release gate: a faster run is never

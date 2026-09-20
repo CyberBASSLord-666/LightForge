@@ -217,14 +217,16 @@ function normalizeBassProvenance(result){
 }
 let nativeSequence=0;const nativeRequests=new Map();
 let nativeMdxSequence=0;const nativeMdxRequests=new Map();
-const NATIVE_DEUX_FALLBACK_CODE='native-deux-fallback',NATIVE_MDX_FALLBACK_CODE='native-mdx-fallback';
+let nativeGameSequence=0;const nativeGameRequests=new Map();
+const NATIVE_DEUX_FALLBACK_CODE='native-deux-fallback',NATIVE_MDX_FALLBACK_CODE='native-mdx-fallback',NATIVE_GAME_FALLBACK_CODE='native-game-fallback';
 function nativeFallbackError(code,cause){const detail=typeof cause?.message==='string'?cause.message.replace(/[\r\n\t]+/g,' ').trim().slice(0,320):'';const error=new Error('Native separation requested a verified WASM restart.'+(detail?' '+detail:''));error.code=code;return error;}
 function nativeDeuxFallbackError(cause){return nativeFallbackError(NATIVE_DEUX_FALLBACK_CODE,cause);}
 function nativeMdxFallbackError(cause){return nativeFallbackError(NATIVE_MDX_FALLBACK_CODE,cause);}
+function nativeGameFallbackError(cause){return nativeFallbackError(NATIVE_GAME_FALLBACK_CODE,cause);}
 function nativeTransportError(detail){return new Error(typeof detail==='string'&&detail.trim()?detail.slice(0,320):'Native runtime output is unavailable.');}
 function nativeAbortError(message){try{return new DOMException(message||'Analysis cancelled','AbortError');}catch(_){const error=new Error(message||'Analysis cancelled');error.name='AbortError';return error;}}
 async function normalizeNativeFailure(error,onFallback,fallback){
- if(error?.name==='AbortError')throw error;
+ if(error?.name==='AbortError'||error?.code==='native-game-retirement-pending')throw error;
  if(error?.code===fallback().code)throw error;
  await onFallback();throw fallback(error);
 }
@@ -237,6 +239,16 @@ function nativePredict(startSample,onProgress=()=>{},onFallback=()=>{}){return n
 function nativeMdxPredict(encoded,onProgress=()=>{},onFallback=()=>{}){
  const payload=encoded.slice();
  return new Promise((resolve,reject)=>{const requestId=++nativeMdxSequence,expectedBytes=payload.byteLength;nativeMdxRequests.set(requestId,{resolve,reject,onProgress,onFallback,expectedBytes});try{postMessage({type:'native-mdx',requestId,buffer:payload.buffer},[payload.buffer]);}catch(error){nativeMdxRequests.delete(requestId);reject(error);}}).catch(error=>normalizeNativeFailure(error,onFallback,nativeMdxFallbackError));
+}
+function nativeGameInfer(pcm,language,seed,onProgress=()=>{},onFallback=()=>{}){
+ // Do not detach the adapter's source PCM: it still validates the returned
+ // note clock against this exact passage after the transport completes.
+ const payload=pcm.slice();
+ return new Promise((resolve,reject)=>{const requestId=++nativeGameSequence;nativeGameRequests.set(requestId,{resolve,reject,onProgress,samples:pcm.length});try{postMessage({type:'native-game',requestId,buffer:payload.buffer,language,seed},[payload.buffer]);}catch(error){nativeGameRequests.delete(requestId);reject(error);}}).catch(async error=>{
+  if(error?.name==='AbortError'||error?.code==='native-game-retirement-pending')throw error;
+  try{await onFallback();}catch(fenceError){fenceError.code='native-game-fence-failed';throw fenceError;}
+  throw nativeGameFallbackError(error);
+ });
 }
 function separationStoragePlan(total,quality){
  const samples=quality==='precision'?573300:LightForgeMdxSeparator.constants.INPUT_LENGTH;
@@ -331,6 +343,16 @@ self.onmessage=async e=>{
   if(e.data.aborted){pending.reject(nativeAbortError(e.data.message));return;}
   if(e.data.fallback||e.data.error||!(e.data.buffer instanceof ArrayBuffer)||e.data.buffer.byteLength!==pending.expectedBytes||e.data.buffer.byteLength%Float32Array.BYTES_PER_ELEMENT!==0)Promise.resolve().then(()=>pending.onFallback()).then(()=>pending.reject(nativeMdxFallbackError(nativeTransportError(e.data.message||e.data.error))),error=>pending.reject(error));
   else pending.resolve(new Float32Array(e.data.buffer));
+  return;
+ }
+ if(e.data?.type==='native-game-result'||e.data?.type==='native-game-progress'){
+  const pending=nativeGameRequests.get(e.data.requestId);if(!pending)return;
+  if(e.data.type==='native-game-progress'){if(Number.isFinite(e.data.value?.progress))pending.onProgress(e.data.value.progress);return;}
+  nativeGameRequests.delete(e.data.requestId);
+  if(e.data.aborted){pending.reject(nativeAbortError(e.data.message));return;}
+  if(e.data.code==='native-game-retirement-pending'){const error=nativeTransportError(e.data.message);error.code=e.data.code;pending.reject(error);return;}
+  if(e.data.fallback||e.data.error||!LightForgeGAME.validNotes(e.data.notes,pending.samples))pending.reject(nativeTransportError(e.data.message||e.data.error));
+  else pending.resolve(e.data.notes);
   return;
  }
  let session,melSession,separator,game,cacheWriter;let nativeMdxFallback=false,nativeDeuxFallback=false,nativeMdxFencing=false,nativeDeuxFencing=false,nativeMdxFence=null,nativeDeuxFence=null;const workerClock=createDiagnosticClock(),started=workerClock.mark();try{
@@ -511,8 +533,18 @@ self.onmessage=async e=>{
  const detailExtractor=new LightForgeVocalDetail.Extractor({sampleRate:22050,duration:sourceClock.duration}),detailCount=result.stemCache.samples,detailChunk=22050*8;
  for(let start=0;start<detailCount;start+=detailChunk){const count=Math.min(detailChunk,detailCount-start),voice=await stems.vocals.mono22050(start,count,config),backing=await stems.accompaniment.mono22050(start,count,config);telemetry.measure('performance.feature_generation',()=>detailExtractor.push(voice,start,backing),{scope:'vocal-detail-features'});report(.905+.035*(start+count)/detailCount,'Following vocal expression','Measuring entrances, syllabic attacks, held notes and pauses');}
  report(.942,'Transcribing sung notes','GAME Large • identifying entrances, pitch changes and held notes');
- game=await LightForgeGAME.create({ort,telemetry,baseUrl:new URL('models/game/',self.location.href).href,onProgress:detail=>report(.942,'Loading singing transcription',detail),checkpoint:store});
- const transcription=await game.process(fullVoice,sourceClock.samples,{onProgress:(p,info)=>report(.945+.04*p,'Transcribing sung notes','GAME Large • '+Math.round(p*100)+'%',info)});
+ let nativeGameFence=null;
+ const markNativeGameFallback=()=>{
+  // No native note passage or derived complete voice/bass/timeline may be
+  // reused by the all-WASM restart, even when a later passage fails.
+  if(!nativeGameFence)nativeGameFence=Promise.resolve().then(()=>store.invalidate(['voice','vocal-semantics','game','bass','recurrence']));
+  return nativeGameFence;
+ };
+ const nativeSingingInfer=options.supportsNativeGame?(pcm,language,seed,onProgress)=>nativeGameInfer(pcm,language,seed,onProgress,markNativeGameFallback):undefined;
+ game=await LightForgeGAME.create({ort,telemetry,baseUrl:new URL('models/game/',self.location.href).href,onProgress:detail=>report(.942,'Loading singing transcription',detail),checkpoint:store,nativeInfer:nativeSingingInfer});
+ let transcription;
+ try{transcription=await game.process(fullVoice,sourceClock.samples,{onProgress:(p,info)=>report(.945+.04*p,'Transcribing sung notes','GAME Large • '+Math.round(p*100)+'%',info)});}
+ catch(error){if(error?.code===NATIVE_GAME_FALLBACK_CODE)await markNativeGameFallback();throw error;}
  result.vocals=telemetry.measure('performance.postprocessing',()=>LightForgeGAME.fuse(detailExtractor.finish({classifier:classified.classifier,model:classified.model,transcription}),transcription),{scope:'vocal-detail-finalization-and-game-fusion'});classified.classifier=null;await game.release();game=null;
  await ensureVocalSemantics(result,options,store,telemetry);
 
@@ -528,7 +560,7 @@ self.onmessage=async e=>{
  result.roleAnalysis={version:5,clock:'Original decoded audio',vocalSource:'Separated vocal waveform with singing and speech evidence',bassSource:'Low-register harmonics in a vocal-separated accompaniment mixture; not an isolated bass stem',bassInputStem:'accompaniment',accompanimentStemSeparated:true,bassInstrumentSeparated:false,sourceSeparated:true,lyricsAligned:false};
  for(const warning of [...(result.vocals.warnings||[]),...(result.separation.limitations||[])])if(!result.warnings.includes(warning))result.warnings.push(warning);
   const engineTiming=workerClock.measure(started);
-  result.engine={name:'Beat This! '+(quality==='precision'?'full + Deux':'compact + MDX')+' + GAME Large',neural:true,detail:'Bundled pretrained rhythm transformer, stereo vocal separation, isolated-voice singing and speech classification, GAME Large neural sung-note transcription, measured source expression, and independent accompaniment bass tracking. All audio stays on this device.',model:selected.model,modelId:selected.id,modelSha256:selected.sha256,frontendSha256:models.frontend.sha256,vocalModel:result.vocals.model,noteModel:result.vocals.transcription.model,separationModel:result.separation,bassMethod:result.bassAnalysis.method,quality,runtime:(result.separation.nativeModelPasses>0||result.separation.runtime==='onnxruntime-android-cpu')?'ONNX Runtime Android CPU + ONNX Runtime Web 1.20.1':'ONNX Runtime Web 1.20.1',analysisSeconds:Math.round(workerTimingSeconds(engineTiming)*10)/10};
+  result.engine={name:'Beat This! '+(quality==='precision'?'full + Deux':'compact + MDX')+' + GAME Large',neural:true,detail:'Bundled pretrained rhythm transformer, stereo vocal separation, isolated-voice singing and speech classification, GAME Large neural sung-note transcription, measured source expression, and independent accompaniment bass tracking. All audio stays on this device.',model:selected.model,modelId:selected.id,modelSha256:selected.sha256,frontendSha256:models.frontend.sha256,vocalModel:result.vocals.model,noteModel:result.vocals.transcription.model,separationModel:result.separation,bassMethod:result.bassAnalysis.method,quality,runtime:(result.separation.nativeModelPasses>0||result.separation.runtime==='onnxruntime-android-cpu'||result.vocals.transcription.runtime==='onnxruntime-android-cpu')?'ONNX Runtime Android CPU + ONNX Runtime Web 1.20.1':'ONNX Runtime Web 1.20.1',analysisSeconds:Math.round(workerTimingSeconds(engineTiming)*10)/10};
  const vocalSemantics=await ensureVocalSemantics(result,options,store,telemetry);
  const stemRoutingPhase=telemetry.begin('stem.routing');
  const stemRouting=ensureStemRouting(result);

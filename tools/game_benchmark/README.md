@@ -37,6 +37,64 @@ python3 tools/game_benchmark/benchmark_wasm_batch.py \
 A result is useful only when exact output parity passes. Timing remains a host
 observation; a slower or inconsistent candidate must not be enabled in the app.
 
+## Production-context native feasibility
+
+`benchmark_native_process.py` goes beyond a manually selected passage: it uses
+the production 12-second cores, two-second context, per-passage seeds, and the
+actual `game.js.process()` checkpoint/stitching path. Supply the complete source
+as mono Float32 little-endian PCM at 44.1 kHz (up to ten minutes for this development
+harness). Do not trim, repeat, or pad it to obtain a favorable timing result.
+
+```sh
+python3 tools/game_benchmark/benchmark_native_process.py \
+  --input /private/complete-source.f32 \
+  --models /private/original-game-models \
+  --input-provenance /private/source-provenance.json \
+  --output /private/new-native-process-comparison
+node --test tools/game_benchmark/tests/process_capture.test.cjs
+python3 -m unittest discover -s tools/game_benchmark/tests -p 'test_*.py'
+```
+
+This records one captured WASM/native pair per passage, retains every raw tensor
+and numerical difference, and replays the captured unrounded notes through the
+unchanged production validator, continuation handling, clipping, sorting and
+rounding. The derived passage plan must first be accepted by the actual adapter;
+missing passages, altered seeds, mismatched PCM/model hashes or invalid checkpoint
+notes fail. Sources, runtime dependencies, inputs and partial completed passages
+are hash-bound so an interrupted run cannot look like a complete song result.
+
+Raw parity and final-transcription equality are **separate observations**. A
+numeric difference never becomes automatic quality approval just because notes
+round identically. Conversely, this diagnostic does not redefine all cross-runtime
+Float32 differences as musical errors. It leaves full-analysis quality, Android
+integration and performance-target approval explicitly false. Source separation,
+vocal fusion, show generation and native task lifecycle still need their own checks.
+Both runners time `session.run`; their broader wall-time scopes differ, so this
+tool does not report a comparable whole-pipeline wall-time speedup. Distinct source
+passages are not repeated timing pairs or a statistical performance experiment.
+
+Add `--production-engine` to compile and execute the actual Android
+`NativeGame.java` engine (on the host JVM) instead of the historical prototype.
+This mode retains WASM raw tensors, both unrounded note lists and numeric note
+differences. It does **not** claim native raw-tensor parity: the production engine
+has no tensor-capture observer. It then exercises the actual optional `nativeInfer`
+adapter with the verified PCM windows, validates native checkpoint identity/resume,
+and compares final transcription payloads, excluding only the explicitly checked
+native-runtime provenance field. No production model or rounding rule is modified.
+
+For an independently source-bound verification artifact that retains JSON receipts
+but not audio, rederive note stitching and native checkpoint restore with:
+
+```sh
+node tools/game_benchmark/process_capture.cjs --production-receipts \
+  /private/evidence/capture-input.json /private/new-receipt-replay.json
+```
+
+This second mode clearly reports `receipt-only-checkpoint-replay` and
+`freshNativeCallbackInputsRevalidated: false`: it does not reobserve the audio,
+JNI inference, or native callback PCM. Fresh capture remains required to establish
+those bindings. These are evidence tools, not standalone publication authority.
+
 ```sh
 mkdir -p ../game-benchmark/classes
 javac -cp "$ORT_JAR:$JSON_JAR" -d ../game-benchmark/classes tools/game_benchmark/NativeGameBenchmark.java

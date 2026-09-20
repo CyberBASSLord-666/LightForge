@@ -28,6 +28,7 @@ public final class AnalysisService extends Service {
     private long lastDiagnosticProgress;
     private volatile NativePassageTask nativePassage;
     private volatile NativeMdxTask nativeMdx;
+    private volatile NativeGameTask nativeGame;
     private final Object engineOwnership=new Object();
     private volatile long engineGeneration;
     private volatile Thread recoveryThread;
@@ -63,6 +64,10 @@ public final class AnalysisService extends Service {
         return START_NOT_STICKY;
     }
     private void startEngine(JSONObject job) throws Exception {
+        // Unknown native destruction is process-wide, not an optional backend
+        // failure. Even a fresh force-WASM job must wait for a process restart.
+        if(!NativeGameTask.runtimeRetirementConfirmed())
+            throw new IOException("Native singing cleanup could not be confirmed. Restart LightForge before resuming analysis.");
         final long ownedGeneration;
         synchronized(engineOwnership){ownedGeneration=++engineGeneration;}
         // The status record intentionally contains only bounded notification
@@ -84,7 +89,6 @@ public final class AnalysisService extends Service {
             forceWasm=true;
         }
         nativePassage=passage;
-        final NativePassageTask ownedPassage=passage;
         NativeMdxTask mdx=null;
         if(balanced&&!forceWasm)try{mdx=new NativeMdxTask(this,jobId);}catch(Exception error){
             // Balanced analysis remains fully functional on devices where the
@@ -96,7 +100,23 @@ public final class AnalysisService extends Service {
             forceWasm=true;
         }
         nativeMdx=mdx;
+        NativeGameTask game=null;
+        // GAME is shared by both quality modes. Construct only the bounded
+        // task/guard here; model extraction and ORT initialization belong to
+        // its leased background executor, never the service/UI thread.
+        if(!forceWasm)try{game=new NativeGameTask(this,jobId);}catch(Exception error){
+            AppDiagnostics.record(this,"native-game-compatibility",error);
+            request=persistNativeFallback(jobId,"native-game-fallback",balanced?"native-mdx-v1+native-game-v1":"native-deux-v1+native-game-v1");
+            forceWasm=true;
+            if(passage!=null){passage.close();passage=null;}
+            if(mdx!=null){mdx.close();mdx=null;}
+        }
+        nativePassage=passage;
+        final NativePassageTask ownedPassage=passage;
+        nativeMdx=mdx;
         final NativeMdxTask ownedMdx=mdx;
+        nativeGame=game;
+        final NativeGameTask ownedGame=game;
         final String ownedJobId=jobId;
         engine=new WebView(getApplicationContext());
         WebSettings settings=engine.getSettings();settings.setJavaScriptEnabled(true);settings.setDomStorageEnabled(true);
@@ -105,7 +125,7 @@ public final class AnalysisService extends Service {
         // Keep the out-of-process WASM renderer protected while the service runs,
         // including when no Activity is visible. No screen-on flag or fake media.
         engine.setRendererPriorityPolicy(WebView.RENDERER_PRIORITY_IMPORTANT,false);
-        engine.addJavascriptInterface(new JobBridge(ownedJobId,ownedGeneration,ownedPassage,ownedMdx),"BackgroundJob");
+        engine.addJavascriptInterface(new JobBridge(ownedJobId,ownedGeneration,ownedPassage,ownedMdx,ownedGame),"BackgroundJob");
         engine.setWebChromeClient(new WebChromeClient(){
             @Override public boolean onConsoleMessage(ConsoleMessage message){
                 if(message.messageLevel()==ConsoleMessage.MessageLevel.ERROR||message.messageLevel()==ConsoleMessage.MessageLevel.WARNING)
@@ -169,9 +189,11 @@ public final class AnalysisService extends Service {
         if(!current||stopped)return;
         final NativePassageTask retiredPassage=nativePassage;nativePassage=null;
         final NativeMdxTask retiredMdx=nativeMdx;nativeMdx=null;
+        final NativeGameTask retiredGame=nativeGame;nativeGame=null;
         try{
             if(retiredPassage!=null)retiredPassage.close();
             if(retiredMdx!=null)retiredMdx.close();
+            if(retiredGame!=null)retiredGame.close();
             JSONObject job=AnalysisRendererRecovery.reserve(getFilesDir(),owner,crashed);
             if(job==null){finish("interrupted",crashed
                 ?"The analysis engine stopped unexpectedly. Resume checks saved passages and continues from verified progress. Your saved show is intact."
@@ -188,7 +210,7 @@ public final class AnalysisService extends Service {
                         long elapsed=SystemClock.elapsedRealtime()-began;
                         if(elapsed>=AnalysisRendererRecovery.MAX_WAIT_MS)throw new IOException("Android still needs memory or the old native task has not retired. Resume saved analysis when ready.");
                         ActivityManager.MemoryInfo memory=new ActivityManager.MemoryInfo();manager.getMemoryInfo(memory);
-                        boolean retired=(retiredPassage==null||retiredPassage.isRetired())&&(retiredMdx==null||retiredMdx.isRetired());
+                        boolean retired=(retiredPassage==null||retiredPassage.isRetired())&&(retiredMdx==null||retiredMdx.isRetired())&&(retiredGame==null||retiredGame.isRetired());
                         if(AnalysisRendererRecovery.ready(elapsed,attempt,retired,memory.lowMemory))break;
                         Thread.sleep(250);
                     }
@@ -211,8 +233,16 @@ public final class AnalysisService extends Service {
     }
     private JSONObject persistNativeFallback(String id,String reason)throws Exception{
         if(!AnalysisJobStore.markAnalysisWasmFallback(getFilesDir(),id,reason))throw new IOException("Could not persist native fallback.");
+        return checkedNativeFallback(id,reason,null);
+    }
+    private JSONObject persistNativeFallback(String id,String reason,String attemptedExecution)throws Exception{
+        if(!AnalysisJobStore.markAnalysisWasmFallback(getFilesDir(),id,reason,attemptedExecution))throw new IOException("Could not persist native fallback.");
+        return checkedNativeFallback(id,reason,attemptedExecution);
+    }
+    private JSONObject checkedNativeFallback(String id,String reason,String attemptedExecution)throws Exception{
         JSONObject frozen=AnalysisJobStore.request(getFilesDir(),id);
-        if(!"wasm-v1".equals(frozen.optString("analysisEffectiveExecution"))||!reason.equals(frozen.optString("analysisNativeFallbackReason")))
+        if(!"wasm-v1".equals(frozen.optString("analysisEffectiveExecution"))||!reason.equals(frozen.optString("analysisNativeFallbackReason"))
+            ||(attemptedExecution!=null&&!attemptedExecution.equals(frozen.optString("analysisNativeAttemptedExecution"))))
             throw new IOException("Native fallback execution fence was not durable.");
         return frozen;
     }
@@ -221,7 +251,9 @@ public final class AnalysisService extends Service {
         private final long ownerGeneration;
         private final NativePassageTask ownerTask;
         private final NativeMdxTask ownerMdx;
-        JobBridge(String ownerJobId,long ownerGeneration,NativePassageTask ownerTask,NativeMdxTask ownerMdx){this.ownerJobId=ownerJobId;this.ownerGeneration=ownerGeneration;this.ownerTask=ownerTask;this.ownerMdx=ownerMdx;}
+        private final NativeGameTask ownerGame;
+        JobBridge(String ownerJobId,long ownerGeneration,NativePassageTask ownerTask,NativeMdxTask ownerMdx){this(ownerJobId,ownerGeneration,ownerTask,ownerMdx,null);}
+        JobBridge(String ownerJobId,long ownerGeneration,NativePassageTask ownerTask,NativeMdxTask ownerMdx,NativeGameTask ownerGame){this.ownerJobId=ownerJobId;this.ownerGeneration=ownerGeneration;this.ownerTask=ownerTask;this.ownerMdx=ownerMdx;this.ownerGame=ownerGame;}
         private boolean owns(String id){return ownerJobId.equals(id)&&ownsEngine(ownerJobId,ownerGeneration);}
         @JavascriptInterface public void logDiagnostic(String level,String source,String message){if(owns(ownerJobId))AppDiagnostics.log(AnalysisService.this,level,source,message);}
         @JavascriptInterface public String nativeDeuxAvailability(String id){
@@ -266,6 +298,31 @@ public final class AnalysisService extends Service {
             try{if(ownerMdx==null||!owns(id))throw new IOException("Native balanced analysis is unavailable.");return ownerMdx.releaseIdle(id);}
             catch(Exception error){return bridgeError(error);}
         }
+        @JavascriptInterface public String nativeGameAvailability(String id){
+            try{if(ownerGame==null||!owns(id))throw new IOException("Native transcription is unavailable.");return ownerGame.availability(id);}
+            catch(Exception error){AppDiagnostics.record(AnalysisService.this,"native-game-compatibility",error);return bridgeError(error);}
+        }
+        @JavascriptInterface public String nativeGameBegin(String id,long bytes,int language,long seed){
+            try{if(ownerGame==null||!owns(id))throw new IOException("Native transcription is unavailable.");return ownerGame.begin(id,bytes,language,seed);}
+            catch(Exception error){AppDiagnostics.record(AnalysisService.this,"native-game-begin",error);return bridgeError(error);}
+        }
+        @JavascriptInterface public String nativeGameAppend(String id,String token,String chunk){
+            try{if(ownerGame==null||!owns(id))throw new IOException("Native transcription is unavailable.");return ownerGame.append(id,token,chunk);}
+            catch(Exception error){AppDiagnostics.record(AnalysisService.this,"native-game-append",error);return bridgeError(error);}
+        }
+        @JavascriptInterface public String nativeGameRun(String id,String token){
+            try{if(ownerGame==null||!owns(id))throw new IOException("Native transcription is unavailable.");return ownerGame.run(id,token);}
+            catch(Exception error){AppDiagnostics.record(AnalysisService.this,"native-game-run",error);return bridgeError(error);}
+        }
+        @JavascriptInterface public String nativeGameStatus(String id,String token){
+            try{if(ownerGame==null||!owns(id))throw new IOException("Native transcription is unavailable.");return ownerGame.status(id,token);}
+            catch(Exception error){return bridgeError(error);}
+        }
+        @JavascriptInterface public void nativeGameCancel(String id,String token){if(ownerGame!=null&&owns(id))ownerGame.cancel(id,token);}
+        @JavascriptInterface public String nativeGameRelease(String id){
+            try{if(ownerGame==null||!owns(id))throw new IOException("Native transcription is unavailable.");return ownerGame.releaseIdle(id);}
+            catch(Exception error){return bridgeError(error);}
+        }
         @JavascriptInterface public void progress(String id,double value,String stage){
             progressInfo(id,value,stage,"{}");
         }
@@ -289,6 +346,13 @@ public final class AnalysisService extends Service {
             synchronized(engineOwnership){
             if(!owns(id))return false;
             try{return AnalysisJobStore.markAnalysisWasmFallback(getFilesDir(),id,reason);}
+            catch(Exception error){AppDiagnostics.record(AnalysisService.this,"analysis-native-fallback",error);main.post(()->{if(owns(id))finish("failed",message(error));});return false;}
+            }
+        }
+        @JavascriptInterface public boolean markAnalysisWasmFallbackWithExecution(String id,String reason,String attemptedExecution){
+            synchronized(engineOwnership){
+            if(!owns(id))return false;
+            try{return AnalysisJobStore.markAnalysisWasmFallback(getFilesDir(),id,reason,attemptedExecution);}
             catch(Exception error){AppDiagnostics.record(AnalysisService.this,"analysis-native-fallback",error);main.post(()->{if(owns(id))finish("failed",message(error));});return false;}
             }
         }
@@ -349,6 +413,8 @@ public final class AnalysisService extends Service {
         try{if(previousTask!=null)previousTask.close();}catch(RuntimeException error){AppDiagnostics.record(this,"native-shutdown",error);}
         NativeMdxTask previousMdx=nativeMdx;nativeMdx=null;
         try{if(previousMdx!=null)previousMdx.close();}catch(RuntimeException error){AppDiagnostics.record(this,"native-mdx-shutdown",error);}
+        NativeGameTask previousGame=nativeGame;nativeGame=null;
+        try{if(previousGame!=null)previousGame.close();}catch(RuntimeException error){AppDiagnostics.record(this,"native-game-shutdown",error);}
         WebView previous=engine;engine=null;releaseEngine(previous);
         try{if(wakeLock!=null&&wakeLock.isHeld())wakeLock.release();}catch(RuntimeException error){AppDiagnostics.record(this,"wake-lock-release",error);}finally{wakeLock=null;}
         stopForeground(STOP_FOREGROUND_REMOVE);signal();
