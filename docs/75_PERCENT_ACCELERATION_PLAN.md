@@ -168,8 +168,10 @@ Only that full stage can establish the V factor in the analysis budget.
 ## Available execution and next evidence
 
 The current research environment has an eight-core CPU quota and 20 GiB memory,
-but no GPU device. The connected Hugging Face account does not have the plan
-required for GPU Jobs. Original models and the public demo have been recovered
+but no GPU device. Current Hugging Face Jobs pricing documentation permits any
+account with a positive credit balance; a Pro subscription is not required. The
+earlier account-plan check did not establish ineligibility. Available credit and
+execution access have not been verified. Original models and the public demo have been recovered
 from the published 2.3.1 APK and independently checked against their manifests.
 The local operator profiler completed a fresh public-demo passage with all 27
 graphs and 335 calls. Instrumented and uninstrumented outputs were byte-identical
@@ -253,6 +255,7 @@ grants a whole-song, Android, musical-quality or `PASS_TARGET` conclusion.
 - [ORT XNNPACK coverage](https://onnxruntime.ai/docs/execution-providers/Xnnpack-ExecutionProvider.html)
 - [Android NNAPI deprecation](https://developer.android.com/ndk/guides/neuralnetworks)
 - [ORT QNN support](https://onnxruntime.ai/docs/execution-providers/QNN-ExecutionProvider.html)
+- [Hugging Face Jobs access and pricing](https://huggingface.co/docs/hub/en/jobs-pricing)
 
 These documents were checked September 20, 2026. Current online documentation
 can describe newer releases; qualification must inspect the pinned runtime and
