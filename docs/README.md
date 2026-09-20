@@ -48,6 +48,7 @@ thresholds or establish comparative quality, speed or physical behavior.
 | [Physical attestation](PHYSICAL_VALIDATION_ATTESTATION.md) | Optional phone/Tesla observations |
 | [Timing probes](PERFORMANCE_TIMING_PROBES.md) | Bounded timing observations, not speed claims |
 | [Native inference profiling](NATIVE_INFERENCE_PROFILING.md) | Native-call timing and unchanged-output checks |
+| [Inference execution placement](EXECUTION_PLACEMENT.md) | Device, hybrid and remote research options; untrusted evidence lint, not admission |
 | [Native execution benchmark](NATIVE_EXECUTION_BENCHMARK.md) | Repeated full-passage execution comparisons with exact-output checks |
 | [GAME backend experiment](../tools/game_benchmark/README.md) | Development-only stage comparisons before a native transcription rollout |
 | [Resource diagnostics](RESOURCE_DIAGNOSTICS.md) | Runtime resource reporting |

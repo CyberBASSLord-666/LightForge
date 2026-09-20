@@ -39,6 +39,7 @@ class FakeAdb:
             ("shell", "cmd", "connectivity", "airplane-mode", "disable"): "",
             ("shell", "cmd", "wifi", "set-wifi-enabled", "disabled"): "",
             ("shell", "cmd", "phone", "data", "disable"): "",
+            ("shell", "settings", "put", "global", "mobile_data", "0"): "",
             ("shell", "cmd", "connectivity", "airplane-mode"): "enabled\n",
             ("shell", "settings", "get", "global", "airplane_mode_on"): "1\n",
             ("shell", "cmd", "wifi", "status"): "Wifi is disabled\nWifi scanning is always available\n",
@@ -70,7 +71,8 @@ class FakeAdb:
         return subprocess.CompletedProcess(command, code, stdout, stderr)
 
     def mutations(self):
-        return [call for call in self.calls if call[-1] in {"enable", "disable", "disabled"}]
+        return [call for call in self.calls if call[-1] in {"enable", "disable", "disabled"}
+                or call[3:6] == ["shell", "settings", "put"]]
 
 
 class OfflineEmulatorTests(unittest.TestCase):
@@ -131,9 +133,12 @@ class OfflineEmulatorTests(unittest.TestCase):
             ("shell", "cmd", "connectivity", "airplane-mode", "enable"),
             ("shell", "cmd", "wifi", "set-wifi-enabled", "disabled"),
             ("shell", "cmd", "phone", "data", "disable"),
+            ("shell", "settings", "put", "global", "mobile_data", "0"),
         ]:
             with self.subTest(command=command):
                 self.setUp()
+                if command[1] == "settings":
+                    self.adb.overrides[("shell", "settings", "get", "global", "mobile_data")] = "1"
                 self.adb.overrides[command] = (1, "")
                 with self.assertRaisesRegex(offline.SetupError, "command failed"):
                     self.fixture.configure()
@@ -193,12 +198,64 @@ class OfflineEmulatorTests(unittest.TestCase):
         self.assertEqual([call[3:] for call in self.adb.mutations()], [
             ["shell", "cmd", "wifi", "set-wifi-enabled", "disabled"],
             ["shell", "cmd", "phone", "data", "disable"],
+            ["shell", "settings", "put", "global", "mobile_data", "0"],
             ["shell", "cmd", "wifi", "set-wifi-enabled", "disabled"],
             ["shell", "cmd", "phone", "data", "disable"],
             ["shell", "cmd", "connectivity", "airplane-mode", "enable"],
         ])
         self.assertEqual(self.receipt["state_history"][0]["wifi_setting"], "2")
         self.assertEqual(self.receipt["state_history"][-1]["default_network"], "none")
+
+    def test_default_phone_noop_uses_preference_then_observed_airplane_and_network_state(self):
+        # The failed CI helper called cmd phone data disable 101 times with a
+        # zero exit and empty output while mobile_data remained 1. AOSP ignores
+        # the binder's false return when no default-subscription Phone exists.
+        self.adb.overrides.update({
+            ("shell", "cmd", "connectivity", "airplane-mode"): ["disabled", "disabled", "disabled", "enabled"],
+            ("shell", "settings", "get", "global", "airplane_mode_on"): ["0", "0", "1"],
+            ("shell", "settings", "get", "global", "mobile_data"): ["1", "0", "0"],
+        })
+        self.fixture.configure()
+        self.assertTrue(self.receipt["mobile_data_preference_fallback"])
+        self.assertEqual(self.receipt["observed_state"], {
+            "airplane_mode": "enabled", "airplane_mode_setting": "1",
+            "wifi": "disabled", "wifi_setting": "0", "mobile_data_setting": "0",
+            "default_network": "none",
+        })
+        mutations = [call[3:] for call in self.adb.mutations()]
+        preference = mutations.index(["shell", "settings", "put", "global", "mobile_data", "0"])
+        airplane = mutations.index(["shell", "cmd", "connectivity", "airplane-mode", "enable"])
+        self.assertLess(preference, airplane)
+
+    def test_preference_repair_does_not_replace_effective_offline_verification(self):
+        for command, response in [
+            (("shell", "cmd", "connectivity", "airplane-mode"), "disabled"),
+            (("shell", "cmd", "wifi", "status"), "Wifi is enabled"),
+            (("shell", "dumpsys", "connectivity"), "Active default network: 100"),
+        ]:
+            with self.subTest(command=command):
+                self.setUp()
+                self.adb.overrides[("shell", "settings", "get", "global", "mobile_data")] = "1"
+                self.adb.overrides[command] = response
+                original = self.adb.__call__
+                def settle_preference(arguments, **kwargs):
+                    result = original(arguments, **kwargs)
+                    if arguments[3:] == ["shell", "settings", "put", "global", "mobile_data", "0"]:
+                        self.adb.overrides[("shell", "settings", "get", "global", "mobile_data")] = "0"
+                    return result
+                self.fixture.run = settle_preference
+                with mock.patch.object(offline, "STATE_TIMEOUT_SECONDS", 2), self.assertRaisesRegex(offline.SetupError, "deadline"):
+                    self.fixture.configure()
+                self.assertTrue(self.receipt["mobile_data_preference_fallback"])
+                self.assertNotEqual(self.receipt.get("status"), "verified-offline")
+
+    def test_preference_repair_error_output_is_not_accepted(self):
+        self.adb.overrides[("shell", "settings", "get", "global", "mobile_data")] = "1"
+        self.adb.overrides[("shell", "settings", "put", "global", "mobile_data", "0")] = (0, "", "Permission denial: private-account")
+        with self.assertRaisesRegex(offline.SetupError, "unexpected mutation output"):
+            self.fixture.configure()
+        self.assertEqual(self.receipt["commands"][-1]["status"], "reported-error")
+        self.assertNotIn("private-account", json.dumps(self.receipt))
 
     def test_radio_callback_after_airplane_transition_restarts_radio_settlement(self):
         self.adb.overrides.update({
