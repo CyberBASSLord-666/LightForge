@@ -167,6 +167,14 @@ Only that full stage can establish the V factor in the analysis budget.
 
 ## Available execution and next evidence
 
+The first free Colab T4 experiment has now completed all eight diagnostic passes.
+All 27 graphs executed CUDA arithmetic; the full source/model/audio integrity
+recheck passed. Numerical equivalence remains unproven, so repeated timing was
+withheld. See the [source-bound results and notebook](../research/performance/2026-09-20/colab-t4/README.md).
+Use this free notebook path for the next public-demo quality experiment; Kaggle
+can import the same notebook as an alternative. Neither service is being used
+as an always-on app server.
+
 The current research environment has an eight-core CPU quota and 20 GiB memory,
 but no GPU device. Current Hugging Face Jobs pricing documentation permits any
 account with a positive credit balance; a Pro subscription is not required. The
