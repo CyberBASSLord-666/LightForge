@@ -63,6 +63,31 @@ all output differences, model/runtime/source hashes and diagnostic wall times.
 It must retain CPU fallback and any failures. GAME-only timing does not measure
 the complete vocal stage, network overhead or the 75% complete-analysis target.
 
+## Fresh retained CPU verification
+
+A new six-pass CPU run completed on September 21 after restoring the pinned
+public inputs. This is new evidence, separate from the lost run above.
+
+- [Readable summary](game-cpu/qualification-summary.json)
+- [Complete, unmodified receipt, gzip](game-cpu/qualification-receipt.json.gz)
+- [Input provenance](game-cpu/input-provenance.json)
+- [Runnable Colab/Kaggle GAME notebook](../../../notebooks/LightForge_Colab_Kaggle_GAME_GPU_Qualification.ipynb)
+
+All ten bound source files match commit
+`d9b42bb79145cfe81367fd70e2ca0ff7f4d52c12`. Both CPU observer triples passed;
+all 140 retained artifact hashes and the final input/model/runtime checks passed.
+CPU ALL and BASIC again produced 21 notes with identical boundaries and maximum
+unrounded pitch difference `7.62939453125e-6` semitones. Status remains
+`NUMERICAL_EQUIVALENCE_UNPROVEN`; no speed ratio or quality approval is inferred.
+The primary receipt is 129,162 bytes, SHA-256
+`140b3d12619ed10c56fa70b9dd236f4484721a9162e8df7473c18fbdabc453ed`.
+
+The notebook pins that exact source, downloads only public original models and
+the demo, and proves its 14-second mono Float32 input against the actual
+production WAV reader. It also checks the original six-window GAME schedule and
+seeds. Its input is the public mixture, explicitly not a completed separated
+vocal stage. No manual host file upload, private audio or Drive mount is needed.
+
 ## Reproduction
 
 ```sh

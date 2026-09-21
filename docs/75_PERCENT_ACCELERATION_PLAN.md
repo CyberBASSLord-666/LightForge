@@ -1,6 +1,6 @@
 # Path to a 75% reduction in complete analysis time
 
-Status: development research, September 20, 2026. No 75% speedup, GPU quality
+Status: development research, September 21, 2026. No 75% speedup, GPU quality
 qualification, Android speed result or release authorization is established by
 this document. The 2.3.2 release candidate remains separate and unchanged.
 
@@ -166,6 +166,16 @@ extraction, full-rate GAME, detail fusion, optional semantics and saved voice.
 Only that full stage can establish the V factor in the analysis budget.
 
 ## Available execution and next evidence
+
+The [September 21 continuation](../research/performance/2026-09-21/README.md)
+adds an original-consumer Deux downstream test and a source-bound GAME CUDA
+harness. The five-second downstream comparison passed during execution, but
+its detailed uncommitted evidence was lost in a workspace reset; this observation
+is not a retained approval input. The test source is preserved for a fresh run.
+The GAME harness has fresh, retained six-pass CPU evidence and a pinned
+Colab/Kaggle notebook. GAME GPU inference still awaits renewed Colab sign-in.
+The new notebook derives its public input inside the runtime, avoiding the
+manual file transfer that stalled during the continuation.
 
 The first free Colab T4 experiment has now completed all eight diagnostic passes.
 All 27 graphs executed CUDA arithmetic; the full source/model/audio integrity
