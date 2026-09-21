@@ -1,0 +1,178 @@
+{
+  "schema": "lightforge.public-research-input-recovery.v1",
+  "createdUtc": "2026-09-21T04:47:20Z",
+  "repositoryCommit": "df47d213a0bb69fed648841f4a2f6760176d3c7b",
+  "downloads": {
+    "/tmp/lightforge-performance-assets/LightForge-2.3.1.apk": {
+      "url": "https://github.com/CyberBASSLord-666/LightForge/releases/download/v2.3.1/LightForge-2.3.1.apk",
+      "bytes": 1205116958,
+      "sha256": "af83bf403875c55d42fd695d43f6e193114899c1324fbaeaffd6c02d299d882f"
+    },
+    "/tmp/lightforge-publication-toolchain/onnx/onnxruntime-1.25.1.jar": {
+      "url": "https://repo.maven.apache.org/maven2/com/microsoft/onnxruntime/onnxruntime/1.25.1/onnxruntime-1.25.1.jar",
+      "bytes": 41804437,
+      "sha256": "749793ebed63743fec853d093da7987a86ea5cd592d54fba898cd3233100c381"
+    },
+    "/tmp/lightforge-publication-toolchain/onnx/onnxruntime_gpu-1.25.1.jar": {
+      "url": "https://repo.maven.apache.org/maven2/com/microsoft/onnxruntime/onnxruntime_gpu/1.25.1/onnxruntime_gpu-1.25.1.jar",
+      "bytes": 397558371,
+      "sha256": "0a22d140ee2a064944b7ee45b7f7a8deb113f58e9be514da85c6dfbe85262649"
+    },
+    "/tmp/lightforge-publication-toolchain/test-json.jar": {
+      "url": "https://repo.maven.apache.org/maven2/org/json/json/20260719/json-20260719.jar",
+      "bytes": 90031,
+      "sha256": "c243f45f9590c12694a4142ed3f07fc70dfb71e4daebd05ae234bf92a2da92a6"
+    },
+    "/tmp/lightforge-publication-toolchain/downloads/platform-35_r02.zip": {
+      "url": "https://dl.google.com/android/repository/platform-35_r02.zip",
+      "bytes": 64273788,
+      "sha256": "0988cacad01b38a18a47bac14a0695f246bc76c1b06c0eeb8eb0dc825ab0c8e0"
+    },
+    "/tmp/lightforge-publication-toolchain/downloads/jdk17.tar.gz": {
+      "url": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.20.1%2B1/OpenJDK17U-jdk_x64_linux_hotspot_17.0.20.1_1.tar.gz",
+      "bytes": 193252603,
+      "sha256": "3808d1d15e3ec6bd5b84057fb5d84c33d8a1536a258146bcea2e603fc726e08e"
+    }
+  },
+  "recoveredAssets": {
+    "/tmp/lightforge-performance-assets/game/bd2dur.onnx": {
+      "bytes": 4569,
+      "sha256": "6672d56b00f27a20e9bfaa92801c15e394bb520e49031d3ed2515b0a6cf27402"
+    },
+    "/tmp/lightforge-performance-assets/game/config.json": {
+      "bytes": 198,
+      "sha256": "4d62b6d058a820e981184ea6f04605d37659c4331ee01979eb14a14be08af890"
+    },
+    "/tmp/lightforge-performance-assets/game/dur2bd.onnx": {
+      "bytes": 2632,
+      "sha256": "49d10d1ea186e43c51fd2c51cedb01a3852d363f1c7056ae77df50f7e8dd0996"
+    },
+    "/tmp/lightforge-performance-assets/game/encoder.onnx": {
+      "bytes": 80398908,
+      "sha256": "fbda7df8791d5cafd02ed33c65f9926c5514c750278c27fb8a59259b4c1d7464"
+    },
+    "/tmp/lightforge-performance-assets/game/estimator.onnx": {
+      "bytes": 153459702,
+      "sha256": "0d4a6e13bf475f79967e252b401bb5f317aa6b96bbe6665d5f8b14b42b179926"
+    },
+    "/tmp/lightforge-performance-assets/game/segmenter.onnx": {
+      "bytes": 159935846,
+      "sha256": "9db605a2ad3c179e9c4e4ae5b970727006020c65936773c26b2cbc27d8ef892f"
+    },
+    "/tmp/lightforge-performance-assets/deux/block-00-frequency.onnx": {
+      "bytes": 6422928,
+      "sha256": "361ff85e20567a74c076fab06ddfa87dd8c58108cbfc72340fafa8ae92a239b6"
+    },
+    "/tmp/lightforge-performance-assets/deux/block-00-time.onnx": {
+      "bytes": 6449892,
+      "sha256": "688feca1115d610e9bc9d15ac9dac6e33c4cf0a03966d9effe8974d2674ae924"
+    },
+    "/tmp/lightforge-performance-assets/deux/block-01-frequency.onnx": {
+      "bytes": 6351205,
+      "sha256": "fdcf43737acdaa452af52f57eb4a46659b16479bd21bd25ce15edf4c242c0b79"
+    },
+    "/tmp/lightforge-performance-assets/deux/block-01-time.onnx": {
+      "bytes": 6378169,
+      "sha256": "af09b80e7d365402f98ddea310d5de5fa469397389bb00f6812b9ad4afded96f"
+    },
+    "/tmp/lightforge-performance-assets/deux/block-02-frequency.onnx": {
+      "bytes": 6351205,
+      "sha256": "5e37f7dfadb785dcf1b4b4f688437506db621ebf42fe1ed573c080d42ec80d73"
+    },
+    "/tmp/lightforge-performance-assets/deux/block-02-time.onnx": {
+      "bytes": 6378169,
+      "sha256": "1822e5f163c9d5596ecf4463970dee6a873c9d5ecc625ab018000f1ac5708788"
+    },
+    "/tmp/lightforge-performance-assets/deux/block-03-frequency.onnx": {
+      "bytes": 6351205,
+      "sha256": "4e8a32b3324465a14d8675550fba44e0a65c80625f670647c060efd2120a17f7"
+    },
+    "/tmp/lightforge-performance-assets/deux/block-03-time.onnx": {
+      "bytes": 6378169,
+      "sha256": "4832532d1fcb067413adb1f51e3a90af94cbcd8c40c9be5e8640c33b3a38d731"
+    },
+    "/tmp/lightforge-performance-assets/deux/block-04-frequency.onnx": {
+      "bytes": 6351205,
+      "sha256": "dd64feabf8f4cb9052a782d94279e17285e0ad69b740c1a91a6e0257eb3b3206"
+    },
+    "/tmp/lightforge-performance-assets/deux/block-04-time.onnx": {
+      "bytes": 6378169,
+      "sha256": "f5c58deab56f5669691d6b38844ef63dc2f3606ea2fe6993a895c36ca881e95b"
+    },
+    "/tmp/lightforge-performance-assets/deux/block-05-frequency.onnx": {
+      "bytes": 6351205,
+      "sha256": "e8c2cdc608270649b4e198663701e361f6ee1786c11fd846d56bd7684cb0cc4c"
+    },
+    "/tmp/lightforge-performance-assets/deux/block-05-time.onnx": {
+      "bytes": 6378169,
+      "sha256": "648dc03432489c44f08eb610eb7c079941ce0d5fbfc0d59275d39f837d495bbc"
+    },
+    "/tmp/lightforge-performance-assets/deux/block-06-frequency.onnx": {
+      "bytes": 6351205,
+      "sha256": "1a7006f146070693e8c8b2ad6a7ec1dd27c1cc4e1b3f8308dad0b31b41032504"
+    },
+    "/tmp/lightforge-performance-assets/deux/block-06-time.onnx": {
+      "bytes": 6378169,
+      "sha256": "eab3fd6652bd41198dc8920ce2b89f30a4e3ae7bdca3049c6ffd93cfe2c63245"
+    },
+    "/tmp/lightforge-performance-assets/deux/block-07-frequency.onnx": {
+      "bytes": 6351205,
+      "sha256": "1d5144c390d023660b8441256eb6bd18e778181b0c79fa5f95bbf2eda88c1b1f"
+    },
+    "/tmp/lightforge-performance-assets/deux/block-07-time.onnx": {
+      "bytes": 6378169,
+      "sha256": "87e6c0b57591fc145eb43924ed0998a77eed0b24b9fbb91fe52a5c5dcec05353"
+    },
+    "/tmp/lightforge-performance-assets/deux/block-08-frequency.onnx": {
+      "bytes": 6351205,
+      "sha256": "f77a0fa744adfd0bdf2aa93b34664cb7c245c3a9f325e6f799695ea2a78ea7ca"
+    },
+    "/tmp/lightforge-performance-assets/deux/block-08-time.onnx": {
+      "bytes": 6378169,
+      "sha256": "0f55a98b1876a9d96ad63e0cf89d7f52a76e9c124bee6e6281fc93b422b03107"
+    },
+    "/tmp/lightforge-performance-assets/deux/block-09-frequency.onnx": {
+      "bytes": 6351205,
+      "sha256": "8d647c15bb2ddbec51e392a5045cfd10e8ef8745af1242e1923a12d98c611899"
+    },
+    "/tmp/lightforge-performance-assets/deux/block-09-time.onnx": {
+      "bytes": 6378169,
+      "sha256": "1499ace8b7683ce31d7af60a5dfa649a4834f32469f5fa161cb06453a91eb958"
+    },
+    "/tmp/lightforge-performance-assets/deux/block-10-frequency.onnx": {
+      "bytes": 6351205,
+      "sha256": "1dd6b316eee0f9a312d2b1752a8f0d1051c5265ea6ab6361e64b386685824a34"
+    },
+    "/tmp/lightforge-performance-assets/deux/block-10-time.onnx": {
+      "bytes": 6378169,
+      "sha256": "3c70c547ff304f7ba369eed6c8180eb23bfcd6246b72a6e66fd683b2aaa36c47"
+    },
+    "/tmp/lightforge-performance-assets/deux/block-11-frequency.onnx": {
+      "bytes": 6351205,
+      "sha256": "1ac019e6270d55218d5809a7cbc10dff238d0bb0d14738ee76e54227306f55a1"
+    },
+    "/tmp/lightforge-performance-assets/deux/block-11-time.onnx": {
+      "bytes": 6378169,
+      "sha256": "31a94b200d07dcde3c8fc4b4846c46f64ad8f44c084a73c6a5bf05f54ed81397"
+    },
+    "/tmp/lightforge-performance-assets/deux/front.onnx": {
+      "bytes": 8377493,
+      "sha256": "7906638e713a517297de6cbb758551e5f86fe4a01d19c45f3e1eac28953bcb0e"
+    },
+    "/tmp/lightforge-performance-assets/deux/head-0.onnx": {
+      "bytes": 380136983,
+      "sha256": "9f8253c46c48f700e6682faf9c22a03b662a65941862414d649a94c38940d0bb"
+    },
+    "/tmp/lightforge-performance-assets/deux/head-1.onnx": {
+      "bytes": 380136983,
+      "sha256": "343131b2c6c8dda367d720c0d42b933dacaa131f433e942258ef7aaa41c2471f"
+    },
+    "/tmp/lightforge-performance-assets/glass-castle.wav": {
+      "bytes": 11289644,
+      "sha256": "33f07d502ba19832b62b97d8fb4a11354e81310264bd885d7a06438228773650"
+    }
+  },
+  "priorMeasurementReceiptsRestored": false,
+  "qualityApproved": false,
+  "releaseAuthorized": false
+}
