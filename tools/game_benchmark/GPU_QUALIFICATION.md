@@ -21,6 +21,25 @@ The flags may be combined. `--gpu-runtime` optionally locates the already pinned
 GPU JAR. Output directories must be new. This command does not download assets,
 submit jobs, upload audio, or select a paid GPU.
 
+For the explicit alternative provider policy, add `--cuda-heavy-only`. This
+requests CUDA only for `encoder`, `segmenter` and `estimator`; the original
+`dur2bd` and `bd2dur` graphs execute on CPU. The receipt binds the flag and each
+control's requested provider for every graph. Traces must confirm CPU-only
+conversion graphs and substantive CUDA arithmetic in all three heavy graphs.
+The three CPU controls, four-control/twelve-pass design, models, inputs, eight
+segmenter steps, unrounded comparisons and quality gates are unchanged. This
+flag cannot be combined with `--cpu-control-only`.
+
+The flag addresses the September 24 T4 diagnostic failure: the original
+all-graphs CUDA request reached `dur2bd`, where CUDA `ReduceSum` rejected a
+`[1, 1400, 0]` intermediate with `keepdims=false`. That run stopped after nine
+CPU control passes and remains `BLOCKED_OR_REJECTED`. CPU conversion preserves
+the original graph computation; it does not synthesize boundaries, pad the
+input, rewrite the graph or catch an inference failure and switch providers.
+The default still requests CUDA for all five graphs so the failed experiment
+remains reproducible. Use a new evidence directory and rerun all twelve passes
+for the alternative policy; do not combine partial old runs with new runs.
+
 The input is one original `game.js` passage: a 12-second core with up to two
 seconds of real source context on either side, truncated only at the actual
 source boundaries. Preserve the full source sample clock and original per-window

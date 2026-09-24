@@ -42,6 +42,21 @@ class GameAcceleratorTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             game.variant_source(source + game.OPT_ANCHOR, 'cuda_basic')
 
+    def test_heavy_only_preserves_all_cpu_controls_and_original_inference(self):
+        source = game.SOURCE.read_text()
+        for variant in game.VARIANTS[:3]:
+            self.assertEqual(game.variant_source(source, variant, True), game.variant_source(source, variant))
+            self.assertEqual(set(game.requested_graph_providers(variant, True).values()), {'CPUExecutionProvider'})
+        cuda = game.variant_source(source, 'cuda_basic', True)
+        original_cuda = game.variant_source(source, 'cuda_basic')
+        self.assertIn('if("encoder".equals(GRAPHS[i])||"segmenter".equals(GRAPHS[i])||"estimator".equals(GRAPHS[i])){', cuda)
+        self.assertNotIn('if("encoder".equals(GRAPHS[i])', original_cuda)
+        self.assertEqual(cuda.split('    private JSONArray infer(', 1)[1], source.split('    private JSONArray infer(', 1)[1])
+        self.assertEqual(game.requested_graph_providers('cuda_basic', True), {
+            'encoder':'CUDAExecutionProvider', 'dur2bd':'CPUExecutionProvider',
+            'segmenter':'CUDAExecutionProvider', 'bd2dur':'CPUExecutionProvider', 'estimator':'CUDAExecutionProvider'})
+        self.assertEqual(set(game.requested_graph_providers('cuda_basic').values()), {'CUDAExecutionProvider'})
+
     def fixture(self, directory, total=20*44100, index=1):
         first, last = max(0,(index*12-2)*44100), min(total,((index+1)*12+2)*44100)
         pcm = directory / 'pcm.f32'
@@ -123,6 +138,22 @@ class GameAcceleratorTest(unittest.TestCase):
             path=directory/'segmenter_trace.json'; data=json.loads(path.read_text());data.pop(0);path.write_text(json.dumps(data))
             with self.assertRaisesRegex(ValueError,'Incomplete GAME'):
                 game.summarize_traces(directory)
+
+    def test_heavy_only_rejects_cuda_conversion_and_heavy_cpu_substitution(self):
+        placement = game.validate_placement(self.summary(), 'cuda_basic', True)
+        self.assertTrue(placement['durationBoundaryGraphsRequiredOnCpu'])
+        for name in set(game.GRAPHS) - game.HEAVY_GRAPHS:
+            changed = self.summary()
+            next(g for g in changed['graphs'] if g['graph'] == name)['operators'][0]['provider'] = 'CUDAExecutionProvider'
+            # The old policy remains reproducible; the new request requires CPU conversions.
+            game.validate_placement(changed, 'cuda_basic')
+            with self.assertRaisesRegex(ValueError, 'Conversion graph must execute only on CPU'):
+                game.validate_placement(changed, 'cuda_basic', True)
+        for name in game.HEAVY_GRAPHS:
+            changed = self.summary()
+            next(g for g in changed['graphs'] if g['graph'] == name)['operators'][0]['provider'] = 'CPUExecutionProvider'
+            with self.assertRaisesRegex(ValueError, 'No substantive CUDA'):
+                game.validate_placement(changed, 'cuda_basic', True)
 
     def test_observer_note_and_raw_differences_are_never_quality_approval(self):
         valid=[dict(kind='plain-vs-capture',unroundedNotesIdentical=True,rawTensorsByteIdentical=None),

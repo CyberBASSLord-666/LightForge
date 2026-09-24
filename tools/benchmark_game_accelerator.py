@@ -58,7 +58,14 @@ RETURN_ANCHOR = '        try{check(cancellation);return result;}catch(Exception|
 MODES = ('plain', 'captured', 'profiled')
 
 
-def variant_source(source, variant):
+def requested_graph_providers(variant, cuda_heavy_only=False):
+    require(variant in VARIANTS, 'Unknown GAME variant.')
+    return {graph: ('CUDAExecutionProvider' if variant == 'cuda_basic' and
+                   (not cuda_heavy_only or graph in HEAVY_GRAPHS) else 'CPUExecutionProvider')
+            for graph in GRAPHS}
+
+
+def variant_source(source, variant, cuda_heavy_only=False):
     require(variant in VARIANTS, 'Unknown GAME variant.')
     require(source.count(OPT_ANCHOR) == 1 and source.count(CREATE_ANCHOR) == 1,
             'Production GAME session anchors changed; review the experiment.')
@@ -74,6 +81,13 @@ def variant_source(source, variant):
                     '                        throw new IllegalStateException("CUDA unavailable; no CPU substitution");\n'
                     '                    try(ai.onnxruntime.providers.OrtCUDAProviderOptions cuda=new ai.onnxruntime.providers.OrtCUDAProviderOptions(0)){\n'
                     + options + '                        options.addCUDA(cuda);\n                    }\n')
+        if cuda_heavy_only:
+            selected = requested_graph_providers(variant, cuda_heavy_only)
+            condition = '||'.join(json.dumps(graph) + '.equals(GRAPHS[i])' for graph in GRAPHS
+                                 if selected[graph] == 'CUDAExecutionProvider')
+            injected = ('                    if(' + condition + '){\n' +
+                        ''.join('    ' + line for line in injected.splitlines(keepends=True)) +
+                        '                    }\n')
         changed = changed.replace(CREATE_ANCHOR, injected + CREATE_ANCHOR)
     return changed
 
@@ -176,7 +190,7 @@ def summarize_traces(directory):
                 durationMeaning='ORT host kernel-event duration including dispatch/scheduling; not GPU device time or wall-time speedup.')
 
 
-def validate_placement(summary, variant):
+def validate_placement(summary, variant, cuda_heavy_only=False):
     require(summary.get('graphCount') == 5 and summary.get('modelRuns') == 12 and
             {row['graph'] for row in summary['graphs']} == set(GRAPHS), 'Complete 5-graph/12-call GAME traces required.')
     rows = [item for graph in summary['graphs'] for item in graph['operators']]
@@ -189,11 +203,18 @@ def validate_placement(summary, variant):
                 require(any(row['provider'] == 'CUDAExecutionProvider' and row['operator'] in accel.HEAVY_OPERATORS and
                             row['calls'] > 0 and row['durationUs'] > 0 for row in graph['operators']),
                         'No substantive CUDA arithmetic for GAME ' + graph['graph'])
-    return dict(observedProviders=sorted(providers),
+            elif cuda_heavy_only:
+                require(graph['operators'] and all(row['provider'] == 'CPUExecutionProvider'
+                        for row in graph['operators']),
+                        'Conversion graph must execute only on CPU: ' + graph['graph'])
+    placement = dict(observedProviders=sorted(providers),
                 heavyGraphsExecuteCudaArithmetic=variant == 'cuda_basic',
                 cpuFallbackKernelEvents=sum(row['calls'] for row in rows if row['provider'] == 'CPUExecutionProvider')
                     if variant == 'cuda_basic' else 0,
                 durationBoundaryGraphsMayRemainOnCpu=True, timingMeaning=summary['durationMeaning'])
+    if cuda_heavy_only:
+        placement['durationBoundaryGraphsRequiredOnCpu'] = True
+    return placement
 
 
 def compile_snapshot(directory, source, java, dependencies):
@@ -288,6 +309,8 @@ def execute(args, receipt):
         sourceHashes={str(path.relative_to(ROOT)): hashes[path] for path in bound_source},
         dependencyHashes={path.name: hashes[path] for path in [*shared, host, *([] if args.cpu_control_only else [gpu])]},
         variants=list(variants), modes=list(MODES), cudaOptions=accel.CUDA_OPTIONS,
+        cudaHeavyOnly=args.cuda_heavy_only,
+        requestedGraphProviders={name: requested_graph_providers(name, args.cuda_heavy_only) for name in variants},
         cublasWorkspaceConfig=':4096:8', nvidiaTf32Override='0',
         deterministicCompute='Runtime default; no guarantee that all CUDA kernels are deterministic.',
         requestedCudaLogicalDevice=0,
@@ -311,7 +334,7 @@ def execute(args, receipt):
         mode_receipts = {}
         for mode in MODES:
             directory = args.output / (variant + '_' + mode)
-            snapshot = variant_source(source, variant)
+            snapshot = variant_source(source, variant, args.cuda_heavy_only)
             trace_dir = args.output / (variant + '_traces')
             if mode == 'profiled':
                 trace_dir.mkdir()
@@ -335,7 +358,7 @@ def execute(args, receipt):
                  unroundedNotesIdentical=observed['unroundedNotesIdentical'], rawComparison=observed)])
         summary = summarize_traces(trace_dir)
         receipt['providerTraces'][variant] = summary
-        receipt['placement'][variant] = validate_placement(summary, variant)
+        receipt['placement'][variant] = validate_placement(summary, variant, args.cuda_heavy_only)
         for path in trace_dir.iterdir():
             hashes[path] = sha(path)
         if variant == 'cuda_basic':
@@ -373,7 +396,11 @@ def main():
     parser.add_argument('--gpu-runtime', type=Path)
     parser.add_argument('--check-readiness', action='store_true')
     parser.add_argument('--cpu-control-only', action='store_true')
+    parser.add_argument('--cuda-heavy-only', action='store_true',
+                        help='Request CUDA only for encoder/segmenter/estimator; run the unchanged conversion graphs on CPU.')
     args = parser.parse_args()
+    if args.cuda_heavy_only and args.cpu_control_only:
+        parser.error('--cuda-heavy-only requires the full CUDA controls, not --cpu-control-only.')
     for field in ('models', 'input', 'input_provenance', 'output', 'toolchain'):
         setattr(args, field, getattr(args, field).resolve())
     if args.gpu_runtime:
