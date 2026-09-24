@@ -40,6 +40,25 @@ The default still requests CUDA for all five graphs so the failed experiment
 remains reproducible. Use a new evidence directory and rerun all twelve passes
 for the alternative policy; do not combine partial old runs with new runs.
 
+The optional research candidate `--cuda-heavy-only --cuda-deterministic` adds
+`options.setDeterministicCompute(true)` immediately before CUDA registration
+inside the existing heavy-graph selector. It leaves the three CPU controls and
+the CPU conversion graphs unchanged. The flag requires `--cuda-heavy-only` and
+cannot be combined with `--cpu-control-only`. Omitting it preserves both the
+default and heavy-only generated snapshots. The receipt records
+`cudaDeterministicCompute` and the requested scope. ORT documents this setting
+as enabling deterministic GPU computation where possible, with a likely
+performance cost; it does not guarantee that every GPU kernel is deterministic
+([ORT Java SessionOptions documentation](https://onnxruntime.ai/docs/api/java/ai/onnxruntime/OrtSession.SessionOptions.html#setDeterministicCompute(boolean))).
+
+A bounded, predeclared six-run repeatability screen motivates this candidate;
+that screen is not qualification. A fresh complete four-control/twelve-pass run
+in a new evidence directory is required, with the same exact observer, source,
+model, input, native-library and placement gates. Do not combine the screen or
+partial prior runs with that evidence. No model, precision, math, passage,
+window, seed or comparison tolerance changes accompany the flag. Musical
+quality, numerical equivalence, performance and the 75% target remain unproven.
+
 The input is one original `game.js` passage: a 12-second core with up to two
 seconds of real source context on either side, truncated only at the actual
 source boundaries. Preserve the full source sample clock and original per-window

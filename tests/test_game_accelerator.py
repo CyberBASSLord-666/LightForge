@@ -1,5 +1,6 @@
 """GAME GPU diagnostics must preserve full passage geometry and useful evidence."""
 import importlib.util
+import io
 import json
 from pathlib import Path
 import struct
@@ -56,6 +57,60 @@ class GameAcceleratorTest(unittest.TestCase):
             'encoder':'CUDAExecutionProvider', 'dur2bd':'CPUExecutionProvider',
             'segmenter':'CUDAExecutionProvider', 'bd2dur':'CPUExecutionProvider', 'estimator':'CUDAExecutionProvider'})
         self.assertEqual(set(game.requested_graph_providers('cuda_basic').values()), {'CUDAExecutionProvider'})
+
+    def test_deterministic_false_preserves_every_default_and_heavy_only_snapshot(self):
+        source = game.SOURCE.read_text()
+        for variant in game.VARIANTS:
+            for heavy_only in (False, True):
+                baseline = game.variant_source(source, variant, heavy_only)
+                explicit = game.variant_source(source, variant, heavy_only, False)
+                self.assertEqual(explicit, baseline)
+                self.assertNotIn('setDeterministicCompute', baseline)
+                for trace_directory in (None, Path('/tmp/game-deterministic-trace')):
+                    self.assertEqual(game.observed_source(explicit, trace_directory),
+                                     game.observed_source(baseline, trace_directory))
+
+    def test_deterministic_candidate_is_one_cuda_heavy_only_line(self):
+        source = game.SOURCE.read_text()
+        for variant in game.VARIANTS[:3]:
+            baseline = game.variant_source(source, variant)
+            candidate = game.variant_source(source, variant, True, True)
+            self.assertEqual(candidate, baseline)
+            for trace_directory in (None, Path('/tmp/game-deterministic-trace')):
+                self.assertEqual(game.observed_source(candidate, trace_directory),
+                                 game.observed_source(baseline, trace_directory))
+        baseline = game.variant_source(source, 'cuda_basic', True)
+        candidate = game.variant_source(source, 'cuda_basic', True, True)
+        line = '                            options.setDeterministicCompute(true);\n'
+        self.assertEqual(candidate.count(line), 1)
+        self.assertIn(line + '                            options.addCUDA(cuda);\n', candidate)
+        self.assertEqual(candidate.replace(line, ''), baseline)
+        self.assertEqual(candidate.split('    private JSONArray infer(', 1)[1],
+                         source.split('    private JSONArray infer(', 1)[1])
+        for trace_directory in (None, Path('/tmp/game-deterministic-trace')):
+            self.assertEqual(game.observed_source(candidate, trace_directory).replace(line, ''),
+                             game.observed_source(baseline, trace_directory))
+        with self.assertRaisesRegex(ValueError, 'requires --cuda-heavy-only'):
+            game.variant_source(source, 'cuda_basic', False, True)
+
+    def test_invalid_deterministic_flags_are_rejected_before_output_or_execution(self):
+        combinations = [('--cuda-deterministic',),
+                        ('--cuda-deterministic', '--cpu-control-only'),
+                        ('--cuda-deterministic', '--cuda-heavy-only', '--cpu-control-only'),
+                        ('--cuda-heavy-only', '--cpu-control-only')]
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            output = root / 'output'
+            required = ['--models', str(root / 'models'), '--input', str(root / 'pcm.f32'),
+                        '--input-provenance', str(root / 'provenance.json'), '--output', str(output)]
+            for flags in combinations:
+                with self.subTest(flags=flags), patch.object(game.sys, 'argv', ['benchmark_game_accelerator.py', *required, *flags]), \
+                        patch.object(game.sys, 'stderr', io.StringIO()), patch.object(game, 'execute') as execute:
+                    with self.assertRaises(SystemExit) as error:
+                        game.main()
+                    self.assertEqual(error.exception.code, 2)
+                    execute.assert_not_called()
+                    self.assertFalse(output.exists())
 
     def fixture(self, directory, total=20*44100, index=1):
         first, last = max(0,(index*12-2)*44100), min(total,((index+1)*12+2)*44100)

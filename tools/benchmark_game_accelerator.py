@@ -65,8 +65,9 @@ def requested_graph_providers(variant, cuda_heavy_only=False):
             for graph in GRAPHS}
 
 
-def variant_source(source, variant, cuda_heavy_only=False):
+def variant_source(source, variant, cuda_heavy_only=False, cuda_deterministic=False):
     require(variant in VARIANTS, 'Unknown GAME variant.')
+    require(not cuda_deterministic or cuda_heavy_only, '--cuda-deterministic requires --cuda-heavy-only.')
     require(source.count(OPT_ANCHOR) == 1 and source.count(CREATE_ANCHOR) == 1,
             'Production GAME session anchors changed; review the experiment.')
     require('addCUDA(' not in source and 'enableProfiling(' not in source and
@@ -77,6 +78,8 @@ def variant_source(source, variant, cuda_heavy_only=False):
     if variant == 'cuda_basic':
         options = ''.join('                        cuda.add(' + json.dumps(key) + ',' + json.dumps(value) + ');\n'
                           for key, value in accel.CUDA_OPTIONS.items())
+        if cuda_deterministic:
+            options += '                        options.setDeterministicCompute(true);\n'
         injected = ('                    if(!OrtEnvironment.getAvailableProviders().contains(ai.onnxruntime.OrtProvider.CUDA))\n'
                     '                        throw new IllegalStateException("CUDA unavailable; no CPU substitution");\n'
                     '                    try(ai.onnxruntime.providers.OrtCUDAProviderOptions cuda=new ai.onnxruntime.providers.OrtCUDAProviderOptions(0)){\n'
@@ -309,10 +312,12 @@ def execute(args, receipt):
         sourceHashes={str(path.relative_to(ROOT)): hashes[path] for path in bound_source},
         dependencyHashes={path.name: hashes[path] for path in [*shared, host, *([] if args.cpu_control_only else [gpu])]},
         variants=list(variants), modes=list(MODES), cudaOptions=accel.CUDA_OPTIONS,
-        cudaHeavyOnly=args.cuda_heavy_only,
+        cudaHeavyOnly=args.cuda_heavy_only, cudaDeterministicCompute=args.cuda_deterministic,
         requestedGraphProviders={name: requested_graph_providers(name, args.cuda_heavy_only) for name in variants},
         cublasWorkspaceConfig=':4096:8', nvidiaTf32Override='0',
-        deterministicCompute='Runtime default; no guarantee that all CUDA kernels are deterministic.',
+        deterministicCompute=('Requested for CUDA heavy-graph sessions only; deterministic GPU kernels where possible, '
+                              'not a universal guarantee; may cost performance.' if args.cuda_deterministic else
+                              'Runtime default; no guarantee that all CUDA kernels are deterministic.'),
         requestedCudaLogicalDevice=0,
         cudaVisibility={key: os.environ.get(key) for key in ('CUDA_VISIBLE_DEVICES', 'CUDA_DEVICE_ORDER')},
         gpuMappingNote='Physical inventory does not independently establish logical device 0 mapping.',
@@ -334,7 +339,7 @@ def execute(args, receipt):
         mode_receipts = {}
         for mode in MODES:
             directory = args.output / (variant + '_' + mode)
-            snapshot = variant_source(source, variant, args.cuda_heavy_only)
+            snapshot = variant_source(source, variant, args.cuda_heavy_only, args.cuda_deterministic)
             trace_dir = args.output / (variant + '_traces')
             if mode == 'profiled':
                 trace_dir.mkdir()
@@ -398,7 +403,11 @@ def main():
     parser.add_argument('--cpu-control-only', action='store_true')
     parser.add_argument('--cuda-heavy-only', action='store_true',
                         help='Request CUDA only for encoder/segmenter/estimator; run the unchanged conversion graphs on CPU.')
+    parser.add_argument('--cuda-deterministic', action='store_true',
+                        help='Request deterministic GPU kernels where possible; requires --cuda-heavy-only and all CUDA controls.')
     args = parser.parse_args()
+    if args.cuda_deterministic and (not args.cuda_heavy_only or args.cpu_control_only):
+        parser.error('--cuda-deterministic requires --cuda-heavy-only and the full CUDA controls, not --cpu-control-only.')
     if args.cuda_heavy_only and args.cpu_control_only:
         parser.error('--cuda-heavy-only requires the full CUDA controls, not --cpu-control-only.')
     for field in ('models', 'input', 'input_provenance', 'output', 'toolchain'):
