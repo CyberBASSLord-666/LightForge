@@ -40,6 +40,21 @@ active owner's listener leaves destruction to the active prediction's `finally`.
 Every retained session gets a close attempt even if another destructor fails;
 failed retirement permanently prevents `isRetired()` from returning true.
 
+Retirement also requires an explicit lifecycle-protected resource state. An idle
+engine with cached sessions remains unretired after `close()` sets its flag and
+through every destructor; only a fully completed successful drain can mark the
+resources retired. Unexpected drain exceptions leave retirement unconfirmed.
+`isRetired()` does not inspect the session map under the lifecycle lock. A
+separate drain-in-progress flag also prevents reentrant cleanup from attempting
+to destroy the same resources twice.
+
+Java's synchronized predictor is reentrant, so owner-thread callbacks are
+explicitly forbidden from starting nested predictions. The guard runs before
+the nested call claims `running`, changes a RunOptions owner, or enters a
+cleanup scope. Reentry marks the engine cancelled and requests termination;
+the outer prediction alone retains cleanup ownership. This applies to listener
+and cancellation callbacks, including nested calls with invalid inputs.
+
 **`cancel()` and `close()` may block in this candidate. It is unacceptable for
 the Android app or UI/lifecycle threads.** This is only a separate bounded CLI
 worker experiment. The parent process must retain its timeout and process-group
@@ -68,7 +83,11 @@ gate; successful host inference cannot satisfy that gate.
 5. Fault-test initial/partial session creation, invalid input, inference failure,
    per-call `RunOptions` retirement failure, session retirement failure,
    cross-thread cancellation, reentrant listener cancellation, idle cancellation
-   and final close. Assert every owner is retired or retirement is explicitly
+   and final close. Pause an idle destructor and query retirement concurrently;
+   inject failed and unexpectedly throwing drains; attempt nested predictions
+   from both listener and cancellation callbacks. Assert the outer RunOptions
+   remains owned until outer cleanup and each session is drained once. Assert
+   every owner is retired or retirement is explicitly
    unconfirmed, no retired object is reused, and a fresh engine restores the
    original empty state. Source-level tests alone do not prove JNI behavior.
 6. Only after within-provider observer and default/reuse equivalence gates pass

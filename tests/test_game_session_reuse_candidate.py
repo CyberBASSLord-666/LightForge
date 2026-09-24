@@ -74,10 +74,39 @@ class GameSessionReuseCandidateTest(unittest.TestCase):
         # monitor: cancellation cannot wait while blocking run-handle detachment.
         self.assertIn('        }\n        researchDrainWhenIdle();', cancel)
         self.assertIn('private synchronized void researchDrainWhenIdle()', candidate)
-        self.assertIn('if(running)return;', candidate)
+        self.assertIn('if(running||researchDraining)return;', candidate)
         self.assertIn('if(failure!=null||cancelled||closed||retirement!=null)', candidate)
-        self.assertIn('if(retirement!=null){retirementUnconfirmed=true;cancelled=true;}', candidate)
+        self.assertIn('if(!cleanupConfirmed){researchResourcesRetired=false;retirementUnconfirmed=true;cancelled=true;}', candidate)
         self.assertIn('public void close(){synchronized(lifecycle){closed=true;}cancel();}', candidate)
+
+    def test_retirement_requires_explicit_completed_drain_not_only_idle_state(self):
+        candidate = self.candidate()
+        self.assertIn('private boolean researchResourcesRetired=true,researchDraining;', candidate)
+        self.assertIn('running=true;researchResourcesRetired=false;', candidate)
+        query = candidate.split('    public boolean isRetired()', 1)[1].split('\n\n', 1)[0]
+        self.assertIn('synchronized(lifecycle)', query)
+        self.assertIn('closed&&!running&&!researchDraining&&researchResourcesRetired&&!retirementUnconfirmed', query)
+        self.assertNotIn('sessions.', query)
+        drain = candidate.split('    private synchronized void researchDrainWhenIdle()', 1)[1].split('    /** False after', 1)[0]
+        self.assertLess(drain.index('researchDraining=true;researchResourcesRetired=false;'), drain.index('researchRetireSessions(null)'))
+        self.assertIn('boolean cleanupConfirmed=false;', drain)
+        self.assertIn('try{cleanupConfirmed=researchRetireSessions(null)==null;}', drain)
+        self.assertIn('researchResourcesRetired=cleanupConfirmed&&activeRun==null&&!retirementUnconfirmed;', drain)
+        self.assertIn('if(!cleanupConfirmed){retirementUnconfirmed=true;cancelled=true;}', drain)
+        self.assertIn('else if(sessionsDrained)researchResourcesRetired=activeRun==null&&!retirementUnconfirmed;', candidate)
+
+    def test_reentrant_predict_rejects_before_claiming_outer_ownership(self):
+        candidate = self.candidate()
+        begin = candidate.split('public synchronized JSONArray predict(', 1)[1].split('            prepareModels(cancellation);', 1)[0]
+        guard = begin.split('if(running||researchDraining){', 1)[1].split('            running=true;', 1)[0]
+        self.assertIn('cancelled=true;', guard)
+        self.assertIn('activeRun.setTerminate(true)', guard)
+        self.assertIn('throw new IOException("Reentrant prediction forbidden; outer owner retains cleanup")', guard)
+        self.assertNotIn('researchRetireSessions', guard)
+        self.assertNotIn('activeRun=', guard)
+        self.assertNotIn('running=', guard)
+        self.assertLess(begin.index('Reentrant prediction forbidden'), begin.index('Throwable failure=null;'))
+        self.assertLess(begin.index('Reentrant prediction forbidden'), begin.index('check(cancellation);'))
 
     def test_invalid_inputs_fail_within_terminal_cleanup_scope(self):
         candidate = self.candidate()

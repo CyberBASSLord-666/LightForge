@@ -62,17 +62,21 @@ ORIGINAL_FINALLY = '''            // No JNI close holds lifecycle: cancel/close 
 
 REUSE_FINALLY = '''            // HOST RESEARCH ONLY: preserve sessions only after a successful passage.
             // A fresh per-call RunOptions is always detached and retired here.
-            Throwable retirement=null;
+            Throwable retirement=null;boolean cleanupConfirmed=false,sessionsDrained=false;
             try {
                 OrtSession.RunOptions retiringRun;
                 synchronized(lifecycle) {retiringRun=activeRun;activeRun=null;}
                 if(retiringRun!=null)try{retire(retiringRun);}catch(Throwable error){retirement=error;}
-                if(failure!=null||cancelled||closed||retirement!=null)
+                if(failure!=null||cancelled||closed||retirement!=null){
                     retirement=researchRetireSessions(retirement);
+                    sessionsDrained=true;
+                }
+                cleanupConfirmed=retirement==null;
             } finally {
                 synchronized(lifecycle){
                     running=false;
-                    if(retirement!=null){retirementUnconfirmed=true;cancelled=true;}
+                    if(!cleanupConfirmed){researchResourcesRetired=false;retirementUnconfirmed=true;cancelled=true;}
+                    else if(sessionsDrained)researchResourcesRetired=activeRun==null&&!retirementUnconfirmed;
                 }
             }
             if(retirement!=null) {
@@ -113,9 +117,17 @@ REUSE_CANCEL_CLOSE = '''    /** HOST RESEARCH ONLY: requests termination immedia
     private synchronized void researchDrainWhenIdle() {
         // A listener can reenter cancel/close on the owner thread. The active
         // predict finally owns its resources; never destroy a running session.
-        if(running)return;
-        Throwable failure=researchRetireSessions(null);
-        if(failure!=null)synchronized(lifecycle){retirementUnconfirmed=true;cancelled=true;}
+        synchronized(lifecycle){
+            if(running||researchDraining)return;
+            researchDraining=true;researchResourcesRetired=false;
+        }
+        boolean cleanupConfirmed=false;
+        try{cleanupConfirmed=researchRetireSessions(null)==null;}
+        finally{synchronized(lifecycle){
+            researchDraining=false;
+            researchResourcesRetired=cleanupConfirmed&&activeRun==null&&!retirementUnconfirmed;
+            if(!cleanupConfirmed){retirementUnconfirmed=true;cancelled=true;}
+        }}
     }'''
 
 
@@ -136,11 +148,22 @@ def generate(original, variant, *, source_samples, language=0):
         '    // ISOLATED HOST RESEARCH: never compile this snapshot into the Android app.\n'
         f'    private static final int RESEARCH_SOURCE_SAMPLES={source_samples}, RESEARCH_LANGUAGE={language};\n'
         '    private final Thread researchOwner=Thread.currentThread();\n'
-        '    private int researchPassagesStarted;')
+        '    private int researchPassagesStarted;\n'
+        '    // Guarded only by lifecycle; never infer resource retirement from running alone.\n'
+        '    private boolean researchResourcesRetired=true,researchDraining;')
     source = replace_once(source, '        this.context=context;',
         '        if(context!=null)throw new IOException("Session reuse candidate is host research only; Android forbidden");\n'
         '        this.context=context;')
-    source = replace_once(source, PREFIX, '''        synchronized(lifecycle){running=true;}
+    source = replace_once(source, PREFIX, '''        synchronized(lifecycle){
+            // synchronized methods are reentrant: reject before claiming or cleaning
+            // the outer call's resources, including Cancellation callback reentry.
+            if(running||researchDraining){
+                cancelled=true;
+                if(activeRun!=null)try{activeRun.setTerminate(true);}catch(OrtException ignored){/* outer check observes cancellation */}
+                throw new IOException("Reentrant prediction forbidden; outer owner retains cleanup");
+            }
+            running=true;researchResourcesRetired=false;
+        }
         Throwable failure=null;
         try {
             check(cancellation);
@@ -162,6 +185,9 @@ def generate(original, variant, *, source_samples, language=0):
         '            }\n            JSONArray notes=infer(environment,samples,language,seed,listener,cancellation);')
     source = replace_once(source, ORIGINAL_FINALLY, REUSE_FINALLY)
     source = replace_once(source, ORIGINAL_CANCEL_CLOSE, REUSE_CANCEL_CLOSE)
+    source = replace_once(source,
+        '    public boolean isRetired(){synchronized(lifecycle){return closed&&!running&&!retirementUnconfirmed;}}',
+        '    public boolean isRetired(){synchronized(lifecycle){return closed&&!running&&!researchDraining&&researchResourcesRetired&&!retirementUnconfirmed;}}')
     # The numerical engine, tensor handling, note filtering and diffusion loop
     # must remain byte-identical, independently of the complete-source wrapper.
     for start, end in [('    private JSONArray infer(', '    /** HOST RESEARCH ONLY: requests termination'),
