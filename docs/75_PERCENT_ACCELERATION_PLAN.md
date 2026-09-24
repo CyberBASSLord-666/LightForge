@@ -197,8 +197,16 @@ The first free Colab T4 experiment has now completed all eight diagnostic passes
 All 27 graphs executed CUDA arithmetic; the full source/model/audio integrity
 recheck passed. Numerical equivalence remains unproven, so repeated timing was
 withheld. See the [source-bound results and notebook](../research/performance/2026-09-20/colab-t4/README.md).
-Use this free notebook path for the next public-demo quality experiment; Kaggle
-can import the same notebook as an alternative. Neither service is being used
+A fresh [September 24 separation run](../research/performance/2026-09-24/deux-t4/README.md)
+repeated all eight controls and retained its complete output/trace archive. All
+four observer waveform comparisons are byte-exact; all 27 graphs execute CUDA.
+The [unchanged downstream replay](../research/performance/2026-09-24/deux-downstream/README.md)
+then passed its five-second excerpt contract: final transcription and fused
+vocals match exactly across the two separation inputs. Raw checkpoints still
+differ, and this narrow sensitivity result grants no general quality approval
+or accepted speed ratio. Both archives and independent audits are preserved.
+Use this free notebook path for continued public-demo research; Kaggle can
+import the same notebook as an alternative. Neither service is being used
 as an always-on app server.
 
 The current research environment has an eight-core CPU quota and 20 GiB memory,

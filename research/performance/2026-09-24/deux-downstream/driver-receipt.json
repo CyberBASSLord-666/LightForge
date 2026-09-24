@@ -1,0 +1,218 @@
+{
+  "schema": "lightforge.deux-downstream-driver.v1",
+  "status": "DIAGNOSTIC_COMPLETED",
+  "upstreamEvidencePath": "/content/lightforge-game-gpu-qualification/evidence/20260924T020341Z-deux-a6f78d49/qualification",
+  "createdUtc": "2026-09-24T02:21:32.817746+00:00",
+  "sensitivityPassed": true,
+  "inputsRecheckedAfterComparison": true,
+  "errors": [],
+  "qualityApproved": false,
+  "target75Proven": false,
+  "releaseAuthorized": false,
+  "benchmarkTimingAdmitted": false,
+  "comparatorStatus": "EXCERPT_SENSITIVITY_PASS",
+  "returnCode": 0,
+  "comparatorReceipt": {
+    "bytes": 80063,
+    "sha256": "5e9524d73c4b8c063977b0058132195ee0d769faf46a48ee9c8d2d933e128323"
+  },
+  "driverLog": {
+    "bytes": 671,
+    "sha256": "7a3f553862e135c43b816c43a8a6a186f5dca501f4279cbb83fdcb38ca6f6be6"
+  },
+  "completedUtc": "2026-09-24T02:24:15.339849+00:00",
+  "artifactHashes": {
+    "bound-source/android/native-runtime.json": {
+      "bytes": 2123,
+      "sha256": "e3ea568b3a8485235f23a59cd787466cdcbbfcaa54ac56df3ce040d29fcb2a94"
+    },
+    "bound-source/android/src/com/cyberbasslord/lightforge/NativeDeux.java": {
+      "bytes": 28016,
+      "sha256": "084fec27d1fad0b10db01a960c614d333bb8c049e712c3fc4524d66e6dc3dd37"
+    },
+    "bound-source/android/src/com/cyberbasslord/lightforge/NativeDeuxTransform.java": {
+      "bytes": 7163,
+      "sha256": "991b06501cfb88b904d0b714a525c389f169f00c231248b0e961b70f257e90b5"
+    },
+    "bound-source/android/src/com/cyberbasslord/lightforge/NativeInferenceProfile.java": {
+      "bytes": 21854,
+      "sha256": "aa1d6bd370d88a774792cb76b4a18604d3ab2bffba58ab382e9045cad071acc1"
+    },
+    "bound-source/qa/release-2.3.2/mdx-downstream-compare.cjs": {
+      "bytes": 12281,
+      "sha256": "c17e44bcc89ca3f2e257abb1c065369a1747d8bef2541d0cd00f36bc5c284605"
+    },
+    "bound-source/tests/NativeDeuxExecutionBenchmark.java": {
+      "bytes": 1820,
+      "sha256": "70eab8091070904493493bd94e7a6467a031628e0feb432055942cdd1bd1b0bb"
+    },
+    "bound-source/tools/benchmark_deux_accelerator.py": {
+      "bytes": 31178,
+      "sha256": "0c19caa398c6fb1e1be121d359219074e71879979105d4172fbcf360906c9f0a"
+    },
+    "bound-source/tools/benchmark_deux_execution.py": {
+      "bytes": 13876,
+      "sha256": "2fdeceb1fd4fd275b31338aeff6be6a5e53afb741c15de5dc020f65cbed72f3f"
+    },
+    "bound-source/tools/compare_deux_downstream.cjs": {
+      "bytes": 22492,
+      "sha256": "d1a4bf073d946d3f81d7d79e32842ec138c5c4510b809ddf6405ebc4307cb2ad"
+    },
+    "bound-source/tools/profile_deux_operators.py": {
+      "bytes": 14061,
+      "sha256": "9a4e189d899a2f5c3c0e92df64ef4e1f3316ef422d53216d92b983e221c235d6"
+    },
+    "bound-source/web/analysis/ASSET_MANIFEST.json": {
+      "bytes": 11812,
+      "sha256": "c0dc1d56b53cf7f316697d45f0a2cb5a63c4bf7068ba89829619cadfe46ff790"
+    },
+    "bound-source/web/analysis/dsp.js": {
+      "bytes": 40471,
+      "sha256": "f95357f71693a5df05e47c5baed5a15cca88bf5371d4b20dc51b3dbb6624fc06"
+    },
+    "bound-source/web/analysis/game.js": {
+      "bytes": 12228,
+      "sha256": "a4225b832bb8cee4d382b01b8753266b426d2a75be49515dc58bbb12e5a03b75"
+    },
+    "bound-source/web/analysis/models/deux/manifest.json": {
+      "bytes": 50401,
+      "sha256": "6aebf45e6e7f6fa974f14fe47a252fc01f48da4815f40a1fdf10641a432529a9"
+    },
+    "bound-source/web/analysis/models/features.json": {
+      "bytes": 32062,
+      "sha256": "8a9fb3bc88c3e2f35934dd0024f22458aa8d357e3e3946a6e2c6230d3886e278"
+    },
+    "bound-source/web/analysis/models/game/config.json": {
+      "bytes": 198,
+      "sha256": "4d62b6d058a820e981184ea6f04605d37659c4331ee01979eb14a14be08af890"
+    },
+    "bound-source/web/analysis/models/game/manifest.json": {
+      "bytes": 1532,
+      "sha256": "51e172cfaa967d9e2518f01f508a64d49cd283d23ae8e8456af9c6e76eeb4f97"
+    },
+    "bound-source/web/analysis/models/vocal-frontend.json": {
+      "bytes": 19110,
+      "sha256": "72bdffced29bfdd6d1da77a4da2a2a4af1b2f839c71131d19dc9423db3d4732f"
+    },
+    "bound-source/web/analysis/models/vocal-model.json": {
+      "bytes": 9916,
+      "sha256": "52093f26d0bfe3f04bbb1563b287fafe5e61aa57a61391ea643b04d97838ca7e"
+    },
+    "bound-source/web/analysis/separator-deux.js": {
+      "bytes": 12488,
+      "sha256": "6a37acd3fd3923f32249d9640462cc06768c41901ee000837e17f21205d22867"
+    },
+    "bound-source/web/analysis/stem-cache.js": {
+      "bytes": 18096,
+      "sha256": "d464a6759188c19e83e9ea7b22fdcbfcdaaca99c06fea930f2fbe9306dcdd5fd"
+    },
+    "bound-source/web/analysis/vocal-detail.js": {
+      "bytes": 22476,
+      "sha256": "cd760d7a766d9a4ab0ac3a252a10f17a16a797b38e50b2d6712bc6adcd42713f"
+    },
+    "bound-source/web/analysis/vocal.js": {
+      "bytes": 10497,
+      "sha256": "3f4be80b6b3747a733fcddce1257e332fe20bde70f29fa8c6be0ef076a9bf72d"
+    },
+    "bound-source/web/analysis/wav-reader.js": {
+      "bytes": 8035,
+      "sha256": "6cd0a40392617cc020f2ec4f87952f165e070c8c17bc4aa3b36b212823d897d4"
+    },
+    "bound-source/web/analysis/worker.js": {
+      "bytes": 53455,
+      "sha256": "0660d76f5e030e808cfafa2f987f6da4197f45e2415c3586f9a2313c5faab655"
+    },
+    "captured-inputs/cpu_all/qualification-0.f32": {
+      "bytes": 4586400,
+      "sha256": "b5db5b5f8bcc576e1af22b0a9fca837dc9e809195ada006af1581458283578b7"
+    },
+    "captured-inputs/cpu_all_profiled/diagnostic-0.f32": {
+      "bytes": 4586400,
+      "sha256": "b5db5b5f8bcc576e1af22b0a9fca837dc9e809195ada006af1581458283578b7"
+    },
+    "captured-inputs/cuda_basic/qualification-0.f32": {
+      "bytes": 4586400,
+      "sha256": "d666eca46114144ea4445947b5699916a068fe2402e68183e7ab7a5151a6d98e"
+    },
+    "captured-inputs/cuda_basic_profiled/diagnostic-0.f32": {
+      "bytes": 4586400,
+      "sha256": "d666eca46114144ea4445947b5699916a068fe2402e68183e7ab7a5151a6d98e"
+    },
+    "captured-inputs/receipt.json": {
+      "bytes": 570008,
+      "sha256": "c69c686bfc312cb77443c70fd2ebb957ce668b781f543cf7bd3debafd6e6c025"
+    },
+    "command.json": {
+      "bytes": 587,
+      "sha256": "53d35c781c7ae216e67d8b531a33fc16c6d42058acdb053842890d20ed953a19"
+    },
+    "comparison/cpu_all/accompaniment-22050.wav": {
+      "bytes": 441044,
+      "sha256": "791ee35755da496155805e1cac5666a60e84e53463cda5ac296c8d2097a60267"
+    },
+    "comparison/cpu_all/downstream.json": {
+      "bytes": 130143,
+      "sha256": "129445efd6758168998b32c3c7625c6ef1045355639f331fabd76f47f0fedc7b"
+    },
+    "comparison/cpu_all/vocals-22050.wav": {
+      "bytes": 441044,
+      "sha256": "8f7a2bc9509be50b746406172f029bc88fb7ce79698713eeafe5f65950b0cbd0"
+    },
+    "comparison/cpu_all-input-recheck.json": {
+      "bytes": 91,
+      "sha256": "7ee1122719a3fe12ed14f1313a79dc2428e1cfd668959f1b9f917268d4d2a2db"
+    },
+    "comparison/cpu_all.log": {
+      "bytes": 258,
+      "sha256": "50474c31e7c713e9c479d5382dd7224d7e5276002db7e2faae65c1b1e3731d4f"
+    },
+    "comparison/cuda_basic/accompaniment-22050.wav": {
+      "bytes": 441044,
+      "sha256": "c5e1375e6481eccf80e9b29933f68ab86dd5da8c5ddb77a9eabffd974159c2d7"
+    },
+    "comparison/cuda_basic/downstream.json": {
+      "bytes": 130106,
+      "sha256": "5c1743b15dcedd2fa2e680d464c3324a09b67c07642c3d4a841f4bb6afef578f"
+    },
+    "comparison/cuda_basic/vocals-22050.wav": {
+      "bytes": 441044,
+      "sha256": "1ccfce981d6bba9491ff7dfed0d95b06864a021f8aa37636494e9c75b646643b"
+    },
+    "comparison/cuda_basic-input-recheck.json": {
+      "bytes": 94,
+      "sha256": "3ce822712203072944b2a694610acd92243f22cb2102fbe7d14c96ee626fbcb5"
+    },
+    "comparison/cuda_basic.log": {
+      "bytes": 267,
+      "sha256": "f4480da21e40126648a6dd8b855e4d70cce06bf702309fc79e6cff075f74b6b9"
+    },
+    "comparison/declared-contract.json": {
+      "bytes": 8843,
+      "sha256": "f23cd9d2339324f92433d5c821bd56dbf0cf20b259db2ada146a954f1e0a65f8"
+    },
+    "comparison/receipt.json": {
+      "bytes": 80063,
+      "sha256": "5e9524d73c4b8c063977b0058132195ee0d769faf46a48ee9c8d2d933e128323"
+    },
+    "driver.log": {
+      "bytes": 671,
+      "sha256": "7a3f553862e135c43b816c43a8a6a186f5dca501f4279cbb83fdcb38ca6f6be6"
+    },
+    "parent-binding.json": {
+      "bytes": 785,
+      "sha256": "a010c829133fa858253911f2558a369ab4043894b24eb6ccf6783108935b7107"
+    },
+    "parent-qualification-process.json": {
+      "bytes": 740,
+      "sha256": "46cec9f8a8d527dad851f7c57ae100437f2c9efb62666db2db414f7540ee4bcc"
+    },
+    "parent-setup-receipt.json": {
+      "bytes": 12392,
+      "sha256": "9702c5d5984059aba47f90337f18e5f631fdea20a3feef5954a33dbe4510c428"
+    },
+    "setup-receipt.json": {
+      "bytes": 6380,
+      "sha256": "7e3491ca1afa1fdb2a74a651b61a011a27a735d28e016cd8f07e87f3909de1cc"
+    }
+  }
+}
