@@ -1,6 +1,6 @@
 # Path to a 75% reduction in complete analysis time
 
-Status: development research, September 21, 2026. No 75% speedup, GPU quality
+Status: development research, September 24, 2026. No 75% speedup, GPU quality
 qualification, Android speed result or release authorization is established by
 this document. The 2.3.2 release candidate remains separate and unchanged.
 
@@ -172,10 +172,16 @@ adds an original-consumer Deux downstream test and a source-bound GAME CUDA
 harness. The five-second downstream comparison passed during execution, but
 its detailed uncommitted evidence was lost in a workspace reset; this observation
 is not a retained approval input. The test source is preserved for a fresh run.
-The GAME harness has fresh, retained six-pass CPU evidence and a pinned
-Colab/Kaggle notebook. GAME GPU inference still awaits renewed Colab sign-in.
-The new notebook derives its public input inside the runtime, avoiding the
-manual file transfer that stalled during the continuation.
+The GAME harness has retained six-pass CPU evidence and a pinned Colab/Kaggle
+notebook. Colab sign-in was restored September 24. The first GAME CUDA attempt
+failed in a small duration conversion graph. An explicit research option keeps
+both original conversion graphs on CPU while still requiring substantive CUDA
+arithmetic in encoder, segmenter and estimator. All twelve passes then executed,
+but the exact observer gate rejected estimator pitch differences. The remaining
+fifteen captured tensors matched; this is not musical-quality approval.
+The [complete rejected evidence and audit](../research/performance/2026-09-24/game-heavy-only/README.md)
+are retained in the research branch. Repeatability and a separately bound
+deterministic-compute setting are the next diagnostic; no tolerance was relaxed.
 
 The first free Colab T4 experiment has now completed all eight diagnostic passes.
 All 27 graphs executed CUDA arithmetic; the full source/model/audio integrity

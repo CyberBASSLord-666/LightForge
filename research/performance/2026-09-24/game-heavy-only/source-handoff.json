@@ -1,0 +1,16 @@
+{
+  "schema": "lightforge.game-heavy-only-handoff.v1",
+  "executionSourceCommit": "8590ac4a67de4340857a96ffe38bae53d7d902b8",
+  "executionSourceTree": "c841bf18f91d3d04dd6daf7e886e2aa473ab8c70",
+  "inputDerivationSourceCommit": "d9b42bb79145cfe81367fd70e2ca0ff7f4d52c12",
+  "parentSetupSha256": "a92e864c73f5da16c9103291bc6057d73fd80dd1c70773c21220cf82f14b3926",
+  "setupReceiptSha256": "74900ec6dc94d27de5487efee2cc2a045e9c5d25170ead5357c76b2abe292aca",
+  "inputProvenanceSha256": "3bd1db1265dfd30a31bdc0fe4b92e5fe428404ccd45b2453a8221a1031760ffb",
+  "inputSourceProofSha256": "075a6cf2ae0c884ac14c8b9a5e6e67fb3f248091c043bb45468e0e34192ea8a9",
+  "harnessSha256": "0305734ab3102b375ae80b5d090cadaf68068541b84ced58cbf5466cd89403d9",
+  "cudaHeavyOnly": true,
+  "createdUtc": "2026-09-24T01:17:33.596717+00:00",
+  "qualityApproved": false,
+  "target75Proven": false,
+  "releaseAuthorized": false
+}
