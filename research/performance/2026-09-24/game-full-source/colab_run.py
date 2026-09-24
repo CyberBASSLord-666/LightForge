@@ -78,8 +78,13 @@ const manifest=JSON.parse(fs.readFileSync(path.join(root,'web/analysis/models/ga
  };
  const reader=new WavReader('https://lightforge-public-fixture.invalid/demo.wav');await reader.open();
  assert.equal(reader.rate,44100);assert.equal(reader.samples,2822400);
- const stereo=await reader.stereo44100(0,reader.samples),mono=new Float32Array(stereo[0].length);
- for(let i=0;i<mono.length;i++)mono[i]=(stereo[0][i]+stereo[1][i])*.5;
+ const mono=new Float32Array(reader.samples),productionReaderCalls=[];
+ for(let first=0;first<reader.samples;first+=32*44100){
+  const count=Math.min(32*44100,reader.samples-first);
+  const stereo=await reader.stereo44100(first,count);
+  productionReaderCalls.push({first,count});
+  for(let i=0;i<count;i++)mono[first+i]=(stereo[0][i]+stereo[1][i])*.5;
+ }
  const bytes=Buffer.alloc(mono.length*4);for(let i=0;i<mono.length;i++)bytes.writeFloatLE(mono[i],i*4);
  assert(bytes.equals(fs.readFileSync(pcmPath)),'Full Python PCM differs from actual production WavReader mix');
  const observed=[],reads=[];
@@ -89,7 +94,7 @@ const manifest=JSON.parse(fs.readFileSync(path.join(root,'web/analysis/models/ga
  assert.equal(reads.length,observed.length);
  const plan=observed.map((value,index)=>({index,...reads[index],...value}));
  fs.writeFileSync(proofPath,JSON.stringify({schema:'lightforge.game-source-input-proof.v1',publicAudioSha256:hash(audio),pcmSha256:hash(bytes),
-  totalSamples:reader.samples,sampleRate:44100,byteIdenticalToProductionReaderMix:true,plan,
+  totalSamples:reader.samples,sampleRate:44100,byteIdenticalToProductionReaderMix:true,productionReaderCalls,plan,
   scheduleProbeUsesSyntheticNonSilentPCM:true,planOnly:true,modelInferenceExecuted:false,qualityApproved:false,
   sourceHashes:Object.fromEntries(['web/analysis/wav-reader.js','web/analysis/game.js'].map(name=>[name,hash(fs.readFileSync(path.join(root,name)))]))},null,2)+'\n',{flag:'wx'});
 })().catch(error=>{console.error(error);process.exitCode=1;});"""
@@ -277,6 +282,7 @@ def execute(args, run, receipt):
                  seed=(2025+i*104729)&0xffffffff) for i in range(6)]
     assert actual_proof["plan"] == plan and actual_proof["byteIdenticalToProductionReaderMix"] is True
     assert actual_proof["pcmSha256"] == digest(pcm) and actual_proof["publicAudioSha256"] == AUDIO_SHA
+    assert actual_proof["productionReaderCalls"] == [dict(first=0, count=32*44100), dict(first=32*44100, count=32*44100)]
     provenance = run / "input-provenance.json"
     write_json(provenance, dict(schema="lightforge.game-source-input.v1", sourceCommit=args.source_commit,
         sourceTree=args.source_tree, sourceKind="public-mixture", separatedVocals=False,
@@ -284,7 +290,7 @@ def execute(args, run, receipt):
         apkSha256=APK_SHA, audioMember="assets/demo/glass-castle.wav", sampleRate=44100, sourceSamples=2822400,
         channels=1, encoding="float32-le", language=0, pcmSHA256=digest(pcm), sourceSHA256=AUDIO_SHA,
         inputSourceProofSha256=digest(proof), qualityApproved=False, target75Proven=False,
-        derivation="All 2822400 frames of the hash-pinned public 64-second glass-castle.wav are retained. PCM16 left/right samples are divided by 32768, averaged in double precision and rounded once to Float32. Complete bytes match actual production WavReader.stereo44100 plus JavaScript scalar averaging. This is mixed audio, not separated vocals."))
+        derivation="All 2822400 frames of the hash-pinned public 64-second glass-castle.wav are retained. PCM16 left/right samples are divided by 32768, averaged in double precision and rounded once to Float32. Complete bytes match two consecutive 32-second reads through actual production WavReader.stereo44100 plus JavaScript scalar averaging, within its unchanged 40-second per-read bound. This is mixed audio, not separated vocals."))
     source_copy = run / "execution-source"
     source_copy.mkdir()
     source_pins = {}
