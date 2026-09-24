@@ -1,0 +1,14 @@
+{
+  "schema": "lightforge.game-screen-driver-exit.v1",
+  "returncode": 0,
+  "status": "REPEATABILITY_SCREEN_COMPLETE",
+  "driverLogSha256": "7b7c8e89e39563d4b65996ba0d55ebc5c54d213ca6107a8746742853c9647f27",
+  "driverLogBytes": 642,
+  "receiptSha256": "08ac226729ce9c83f66fa083db6bde7490d589c44a9799e067f00e70d90c943a",
+  "metadataGuardPassed": true,
+  "metadataGuardErrors": [],
+  "qualityApproved": false,
+  "target75Proven": false,
+  "measured": false,
+  "releaseAuthorized": false
+}

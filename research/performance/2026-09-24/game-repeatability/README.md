@@ -1,29 +1,48 @@
-# Bounded GAME CUDA repeatability screen
+# GAME CUDA repeatability screen — September 24, 2026
 
-This procedure follows the preserved twelve-pass heavy-only CUDA run that
-failed its exact observer check. It uses its pinned source, original models,
-input, runtime and hashes. It does not edit application code or the previous
-evidence, relax tolerances, or grant quality, speed or release approval.
+The default CUDA configuration varied between two otherwise identical captured
+runs. Requesting deterministic computation produced exact results in this bounded
+screen and is a candidate for a fresh full qualification. No musical-quality,
+complete-analysis speedup or release approval is established.
 
-The fixed six-run order is A1 captured, B1 captured, A2 captured, B2 captured,
-B plain, B profiled. Every run uses a fresh JVM. A is the existing heavy-only
-configuration. B adds only `options.setDeterministicCompute(true)` before CUDA
-registration inside the heavy-graph selector; CPU conversion graphs remain
-unchanged. Both full source snapshots and compiled artifacts are retained.
+The fixed order was A1 captured, B1 captured, A2 captured, B2 captured, B plain,
+B profiled, each in a fresh JVM. A used the original heavy-only CUDA configuration.
+B added only `options.setDeterministicCompute(true)` immediately before CUDA
+registration for encoder, segmenter and estimator. Both original conversion
+graphs remained on CPU. Source commit
+`8590ac4a67de4340857a96ffe38bae53d7d902b8`, original Float32 models, input,
+eight steps, seeds, thresholds and runtime remained bound to the evidence.
 
-The driver compares A1/A2, B1/B2 and B1/B-profiled raw tensors and notes;
-B-plain/B1 compares unrounded notes. It also retains the A1/B1 difference.
-All sixteen captured outputs, profile traces, actual mapped libraries and
-before/after file checks remain in evidence. Any process failure or integrity
-mismatch is retained. The outer process group is retired on interruption and
-the final closed log receives a separate digest.
+| Comparison | Observed result |
+| --- | --- |
+| A1 / A2 | Only estimator scores differ: 10 of 22 values; maximum absolute difference `1.1444091796875e-5`, RMS `3.98432134908366e-6`. |
+| B1 / B2 | All 16 tensors and unrounded notes match exactly. |
+| B1 / B profiled | All 16 tensors and unrounded notes match exactly. |
+| B plain / B1 | Unrounded notes match exactly; plain tensors are unobserved. |
 
-Within-mode variation demonstrates run variability under that mode. Two
-matching repeats do not prove universal determinism. A stable B is only a
-candidate for a fresh full qualification, not a passed observer or musical
-quality gate. No causal mechanism or timing ratio follows from this screen.
+All six runs produced 21 notes with identical boundaries. The default repeats
+have 10 pitch differences. Changing configuration also changes some encoder
+outputs and pitches; deterministic execution does not imply CPU equivalence.
+Two matching repeats do not prove universal determinism, and this screen does
+not establish that instrumentation caused the previous observer mismatch.
 
-Run `game_repeatability.py` in the already prepared Colab notebook after the
-heavy-only experiment has finished; its exact parent hashes are required.
-Then run `export_game_repeatability.py` to preserve all evidence. The embedded
-driver is also available as `game_repeatability_driver.py` for review.
+[Independent audit](independent-audit.json) verifies 183 archive members and CRCs,
+180 artifact hashes, all 53 recorded input/source/runtime bindings, the exact
+six-arm matrix and source insertion, six run receipts, 80 captured tensors,
+five provider traces, ten mapped native-library bindings, and the final closed
+log/exit guard. Every quality, measured-performance and release flag stays false.
+
+The [complete receipt](screen-receipt.json.gz) is preserved without modification:
+127,127 decompressed bytes, SHA256
+`08ac226729ce9c83f66fa083db6bde7490d589c44a9799e067f00e70d90c943a`.
+The full ZIP is preserved in 23 digest-bound parts under [raw/](raw/manifest.json):
+16,860,558 bytes, SHA256
+`e0c8d239a91286aa8c7247efe4e99d2b43f2ea3bc9f61517146c96dd437cb50a`.
+All parts were independently checked to reconstruct that exact archive.
+Use `reconstruct_archive.py` with a new destination to recover it.
+
+The original [Colab cell](game_repeatability.py), [embedded driver](game_repeatability_driver.py),
+[export cell](export_game_repeatability.py), [plan](plan.json),
+[installed API inspection](deterministic-api.txt) and [closed-log guard](driver-exit.json)
+remain available for review. Do not combine these six runs with another
+qualification or relabel the earlier rejected run as passed.
