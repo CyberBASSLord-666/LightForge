@@ -1,0 +1,4030 @@
+{
+  "schema": "lightforge.game-full-source-verification.v1",
+  "archiveIntegrityVerified": true,
+  "evidenceVerificationPassed": true,
+  "completeDiagnosticVerified": true,
+  "evidenceStatus": "VERIFIED_COMPLETE_DIAGNOSTIC",
+  "sourceCommit": "3797783e703738d28af1df9b722f5f4e886b99f2",
+  "sourceTree": "47fa69218b35ff8e1644e123ee8170983a884f8b",
+  "archiveInventory": {
+    "fileCount": 719,
+    "archiveManifestSha256": "7da91d2da3abfc8d1ac799b080037c08424c436d8dc2396168086ae9e1186d06"
+  },
+  "driverStatus": "COMPLETE_DIAGNOSTIC",
+  "recordedFailure": null,
+  "qualityApproved": false,
+  "target75Proven": false,
+  "measuredSpeedupApproved": false,
+  "releaseAuthorized": false,
+  "modelInferenceExecuted": false,
+  "driverScriptVerifiedAgainstReviewedGitBlob": true,
+  "sourceSnapshotFilesVerified": 55,
+  "fullPcmSha256": "298f7a549c4bb8dfc53c47d1078cea842c5e818a3e7c82bf289bffcec0ba30c2",
+  "totalSamples": 2822400,
+  "canonicalPassageCount": 6,
+  "inputProofRecordedAndBound": true,
+  "fullPcmIndependentlyDerivedFromPinnedPublicWav": true,
+  "sourceAudioAndModelWeightsIncluded": false,
+  "stageExitCodes": {
+    "readiness": 0,
+    "qualification": 0,
+    "replay": 0
+  },
+  "readinessArtifactsVerified": 60,
+  "collector": {
+    "present": true,
+    "status": "NUMERICAL_EQUIVALENCE_UNPROVEN",
+    "receiptSha256": "259199eb3c3d8129bce2fe3c6f7f09c1b24ef1b2ba554f68db65d2674c8c2df0",
+    "completedRunCount": 6,
+    "completeDiagnosticVerified": true,
+    "boundArtifactCount": 547,
+    "observerComparisonsIndependentlyRecomputed": 24,
+    "observerComparisonsPassed": true,
+    "crossVariantComparisons": [
+      {
+        "passageIndex": 0,
+        "reference": "cpu_all",
+        "candidate": "cuda_basic",
+        "qualityApproved": false,
+        "tolerance": null,
+        "schema": "lightforge-game-comparison-1",
+        "exactParity": false,
+        "leftRuntime": "onnxruntime-java-1.25.1",
+        "rightRuntime": "onnxruntime-java-1.25.1",
+        "pcmSHA256": "a75b3b8d59c87d428e38e45db5f54ad8d2b1613fe79ee07c2595fecbf9215274",
+        "unroundedNotesIdentical": false,
+        "leftNoteCount": 21,
+        "rightNoteCount": 21,
+        "noteDiagnostics": {
+          "sameCount": true,
+          "boundariesIdentical": true,
+          "maxAcceptedPitchDifferenceMidi": 7.62939453125e-06
+        },
+        "tensors": [
+          {
+            "tensor": "encoder/x_seg",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": false,
+            "elements": 358400,
+            "unequalElements": 335543,
+            "maxAbsoluteDifference": 6.198883056640625e-06,
+            "rmsDifference": 7.176416868025957e-07
+          },
+          {
+            "tensor": "encoder/x_est",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": false,
+            "elements": 358400,
+            "unequalElements": 337340,
+            "maxAbsoluteDifference": 4.291534423828125e-06,
+            "rmsDifference": 4.6273662963080463e-07
+          },
+          {
+            "tensor": "encoder/maskT",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "dur2bd/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-0/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-1/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-2/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-3/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-4/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-5/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-6/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-7/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "bd2dur/durations",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 22,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "bd2dur/maskN",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 22,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "estimator/presence",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 22,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "estimator/scores",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": false,
+            "elements": 22,
+            "unequalElements": 10,
+            "maxAbsoluteDifference": 7.62939453125e-06,
+            "rmsDifference": 3.814697265625e-06
+          }
+        ],
+        "interpretation": "Exact parity is required here; numeric differences are diagnostic, never automatic quality approval."
+      },
+      {
+        "passageIndex": 1,
+        "reference": "cpu_all",
+        "candidate": "cuda_basic",
+        "qualityApproved": false,
+        "tolerance": null,
+        "schema": "lightforge-game-comparison-1",
+        "exactParity": false,
+        "leftRuntime": "onnxruntime-java-1.25.1",
+        "rightRuntime": "onnxruntime-java-1.25.1",
+        "pcmSHA256": "b3ffbfa922ac74e2f1b75d9f55534de81a9379f6e2c01725cfb7c6ef75a19e57",
+        "unroundedNotesIdentical": false,
+        "leftNoteCount": 31,
+        "rightNoteCount": 31,
+        "noteDiagnostics": {
+          "sameCount": true,
+          "boundariesIdentical": true,
+          "maxAcceptedPitchDifferenceMidi": 1.1444091796875e-05
+        },
+        "tensors": [
+          {
+            "tensor": "encoder/x_seg",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": false,
+            "elements": 409600,
+            "unequalElements": 385958,
+            "maxAbsoluteDifference": 5.7220458984375e-06,
+            "rmsDifference": 8.257197584048808e-07
+          },
+          {
+            "tensor": "encoder/x_est",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": false,
+            "elements": 409600,
+            "unequalElements": 387522,
+            "maxAbsoluteDifference": 4.0531158447265625e-06,
+            "rmsDifference": 5.186774707618483e-07
+          },
+          {
+            "tensor": "encoder/maskT",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "dur2bd/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-0/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-1/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-2/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-3/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-4/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-5/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-6/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-7/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "bd2dur/durations",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 31,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "bd2dur/maskN",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 31,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "estimator/presence",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 31,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "estimator/scores",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": false,
+            "elements": 31,
+            "unequalElements": 15,
+            "maxAbsoluteDifference": 1.1444091796875e-05,
+            "rmsDifference": 4.053342042000212e-06
+          }
+        ],
+        "interpretation": "Exact parity is required here; numeric differences are diagnostic, never automatic quality approval."
+      },
+      {
+        "passageIndex": 2,
+        "reference": "cpu_all",
+        "candidate": "cuda_basic",
+        "qualityApproved": false,
+        "tolerance": null,
+        "schema": "lightforge-game-comparison-1",
+        "exactParity": false,
+        "leftRuntime": "onnxruntime-java-1.25.1",
+        "rightRuntime": "onnxruntime-java-1.25.1",
+        "pcmSHA256": "5827e052673547aa38b6b3eed9c38247cc0196ecb1b3c49a8ebcb62a4c81d581",
+        "unroundedNotesIdentical": false,
+        "leftNoteCount": 22,
+        "rightNoteCount": 22,
+        "noteDiagnostics": {
+          "sameCount": true,
+          "boundariesIdentical": true,
+          "maxAcceptedPitchDifferenceMidi": 7.62939453125e-06
+        },
+        "tensors": [
+          {
+            "tensor": "encoder/x_seg",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": false,
+            "elements": 409600,
+            "unequalElements": 386655,
+            "maxAbsoluteDifference": 6.198883056640625e-06,
+            "rmsDifference": 8.442749941704492e-07
+          },
+          {
+            "tensor": "encoder/x_est",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": false,
+            "elements": 409600,
+            "unequalElements": 387345,
+            "maxAbsoluteDifference": 3.5762786865234375e-06,
+            "rmsDifference": 5.146828793010554e-07
+          },
+          {
+            "tensor": "encoder/maskT",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "dur2bd/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-0/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-1/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-2/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-3/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-4/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-5/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-6/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-7/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "bd2dur/durations",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 24,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "bd2dur/maskN",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 24,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "estimator/presence",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 24,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "estimator/scores",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": false,
+            "elements": 24,
+            "unequalElements": 11,
+            "maxAbsoluteDifference": 7.62939453125e-06,
+            "rmsDifference": 4.985932395095228e-06
+          }
+        ],
+        "interpretation": "Exact parity is required here; numeric differences are diagnostic, never automatic quality approval."
+      },
+      {
+        "passageIndex": 3,
+        "reference": "cpu_all",
+        "candidate": "cuda_basic",
+        "qualityApproved": false,
+        "tolerance": null,
+        "schema": "lightforge-game-comparison-1",
+        "exactParity": false,
+        "leftRuntime": "onnxruntime-java-1.25.1",
+        "rightRuntime": "onnxruntime-java-1.25.1",
+        "pcmSHA256": "2c19637f140af4a0be5a65fb39cdb742f0ec088bb16e17293f55ce6c6786eb5d",
+        "unroundedNotesIdentical": false,
+        "leftNoteCount": 23,
+        "rightNoteCount": 23,
+        "noteDiagnostics": {
+          "sameCount": true,
+          "boundariesIdentical": true,
+          "maxAcceptedPitchDifferenceMidi": 1.52587890625e-05
+        },
+        "tensors": [
+          {
+            "tensor": "encoder/x_seg",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": false,
+            "elements": 409600,
+            "unequalElements": 386987,
+            "maxAbsoluteDifference": 6.67572021484375e-06,
+            "rmsDifference": 8.501054534172341e-07
+          },
+          {
+            "tensor": "encoder/x_est",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": false,
+            "elements": 409600,
+            "unequalElements": 388290,
+            "maxAbsoluteDifference": 4.0531158447265625e-06,
+            "rmsDifference": 5.330701446526961e-07
+          },
+          {
+            "tensor": "encoder/maskT",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "dur2bd/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-0/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-1/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-2/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-3/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-4/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-5/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-6/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-7/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "bd2dur/durations",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 24,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "bd2dur/maskN",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 24,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "estimator/presence",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 24,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "estimator/scores",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": false,
+            "elements": 24,
+            "unequalElements": 12,
+            "maxAbsoluteDifference": 1.52587890625e-05,
+            "rmsDifference": 6.325959759436416e-06
+          }
+        ],
+        "interpretation": "Exact parity is required here; numeric differences are diagnostic, never automatic quality approval."
+      },
+      {
+        "passageIndex": 4,
+        "reference": "cpu_all",
+        "candidate": "cuda_basic",
+        "qualityApproved": false,
+        "tolerance": null,
+        "schema": "lightforge-game-comparison-1",
+        "exactParity": false,
+        "leftRuntime": "onnxruntime-java-1.25.1",
+        "rightRuntime": "onnxruntime-java-1.25.1",
+        "pcmSHA256": "b8f4137f3e7695e6a63b07616109eab60aa1591f1d310b0a4e22f9c1f3248044",
+        "unroundedNotesIdentical": false,
+        "leftNoteCount": 27,
+        "rightNoteCount": 27,
+        "noteDiagnostics": {
+          "sameCount": true,
+          "boundariesIdentical": true,
+          "maxAcceptedPitchDifferenceMidi": 1.1444091796875e-05
+        },
+        "tensors": [
+          {
+            "tensor": "encoder/x_seg",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": false,
+            "elements": 409600,
+            "unequalElements": 386549,
+            "maxAbsoluteDifference": 8.344650268554688e-06,
+            "rmsDifference": 8.106772957217677e-07
+          },
+          {
+            "tensor": "encoder/x_est",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": false,
+            "elements": 409600,
+            "unequalElements": 387081,
+            "maxAbsoluteDifference": 4.604458808898926e-06,
+            "rmsDifference": 5.069971042108382e-07
+          },
+          {
+            "tensor": "encoder/maskT",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "dur2bd/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-0/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-1/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-2/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-3/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-4/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-5/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-6/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-7/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "bd2dur/durations",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 29,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "bd2dur/maskN",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 29,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "estimator/presence",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 29,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "estimator/scores",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": false,
+            "elements": 29,
+            "unequalElements": 14,
+            "maxAbsoluteDifference": 6.866455078125e-05,
+            "rmsDifference": 1.344040419421471e-05
+          }
+        ],
+        "interpretation": "Exact parity is required here; numeric differences are diagnostic, never automatic quality approval."
+      },
+      {
+        "passageIndex": 5,
+        "reference": "cpu_all",
+        "candidate": "cuda_basic",
+        "qualityApproved": false,
+        "tolerance": null,
+        "schema": "lightforge-game-comparison-1",
+        "exactParity": false,
+        "leftRuntime": "onnxruntime-java-1.25.1",
+        "rightRuntime": "onnxruntime-java-1.25.1",
+        "pcmSHA256": "dada3d27b04bec8f29ceeac5dc1b9e309b19147b1fbc83986bd91b38f8350c42",
+        "unroundedNotesIdentical": false,
+        "leftNoteCount": 6,
+        "rightNoteCount": 6,
+        "noteDiagnostics": {
+          "sameCount": true,
+          "boundariesIdentical": true,
+          "maxAcceptedPitchDifferenceMidi": 7.62939453125e-06
+        },
+        "tensors": [
+          {
+            "tensor": "encoder/x_seg",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": false,
+            "elements": 153600,
+            "unequalElements": 140728,
+            "maxAbsoluteDifference": 3.814697265625e-06,
+            "rmsDifference": 5.493725731360176e-07
+          },
+          {
+            "tensor": "encoder/x_est",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": false,
+            "elements": 153600,
+            "unequalElements": 141946,
+            "maxAbsoluteDifference": 2.6226043701171875e-06,
+            "rmsDifference": 3.7516114559657293e-07
+          },
+          {
+            "tensor": "encoder/maskT",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "dur2bd/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-0/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-1/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-2/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-3/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-4/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-5/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-6/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-7/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 600,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "bd2dur/durations",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 8,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "bd2dur/maskN",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 8,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "estimator/presence",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 8,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "estimator/scores",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": false,
+            "elements": 8,
+            "unequalElements": 6,
+            "maxAbsoluteDifference": 5.7220458984375e-05,
+            "rmsDifference": 2.1367413046272353e-05
+          }
+        ],
+        "interpretation": "Exact parity is required here; numeric differences are diagnostic, never automatic quality approval."
+      }
+    ],
+    "providerPlacementIndependentlyRecomputed": {
+      "cpu_all": [
+        {
+          "passageIndex": 0,
+          "observedProviders": [
+            "CPUExecutionProvider"
+          ],
+          "heavyGraphsExecuteCudaArithmetic": false,
+          "cpuFallbackKernelEvents": 0,
+          "durationBoundaryGraphsMayRemainOnCpu": true,
+          "timingMeaning": "ORT host kernel-event duration including dispatch/scheduling; not GPU device time or wall-time speedup.",
+          "durationBoundaryGraphsRequiredOnCpu": true
+        },
+        {
+          "passageIndex": 1,
+          "observedProviders": [
+            "CPUExecutionProvider"
+          ],
+          "heavyGraphsExecuteCudaArithmetic": false,
+          "cpuFallbackKernelEvents": 0,
+          "durationBoundaryGraphsMayRemainOnCpu": true,
+          "timingMeaning": "ORT host kernel-event duration including dispatch/scheduling; not GPU device time or wall-time speedup.",
+          "durationBoundaryGraphsRequiredOnCpu": true
+        },
+        {
+          "passageIndex": 2,
+          "observedProviders": [
+            "CPUExecutionProvider"
+          ],
+          "heavyGraphsExecuteCudaArithmetic": false,
+          "cpuFallbackKernelEvents": 0,
+          "durationBoundaryGraphsMayRemainOnCpu": true,
+          "timingMeaning": "ORT host kernel-event duration including dispatch/scheduling; not GPU device time or wall-time speedup.",
+          "durationBoundaryGraphsRequiredOnCpu": true
+        },
+        {
+          "passageIndex": 3,
+          "observedProviders": [
+            "CPUExecutionProvider"
+          ],
+          "heavyGraphsExecuteCudaArithmetic": false,
+          "cpuFallbackKernelEvents": 0,
+          "durationBoundaryGraphsMayRemainOnCpu": true,
+          "timingMeaning": "ORT host kernel-event duration including dispatch/scheduling; not GPU device time or wall-time speedup.",
+          "durationBoundaryGraphsRequiredOnCpu": true
+        },
+        {
+          "passageIndex": 4,
+          "observedProviders": [
+            "CPUExecutionProvider"
+          ],
+          "heavyGraphsExecuteCudaArithmetic": false,
+          "cpuFallbackKernelEvents": 0,
+          "durationBoundaryGraphsMayRemainOnCpu": true,
+          "timingMeaning": "ORT host kernel-event duration including dispatch/scheduling; not GPU device time or wall-time speedup.",
+          "durationBoundaryGraphsRequiredOnCpu": true
+        },
+        {
+          "passageIndex": 5,
+          "observedProviders": [
+            "CPUExecutionProvider"
+          ],
+          "heavyGraphsExecuteCudaArithmetic": false,
+          "cpuFallbackKernelEvents": 0,
+          "durationBoundaryGraphsMayRemainOnCpu": true,
+          "timingMeaning": "ORT host kernel-event duration including dispatch/scheduling; not GPU device time or wall-time speedup.",
+          "durationBoundaryGraphsRequiredOnCpu": true
+        }
+      ],
+      "cuda_basic": [
+        {
+          "passageIndex": 0,
+          "observedProviders": [
+            "CPUExecutionProvider",
+            "CUDAExecutionProvider"
+          ],
+          "heavyGraphsExecuteCudaArithmetic": true,
+          "cpuFallbackKernelEvents": 2804,
+          "durationBoundaryGraphsMayRemainOnCpu": true,
+          "timingMeaning": "ORT host kernel-event duration including dispatch/scheduling; not GPU device time or wall-time speedup.",
+          "durationBoundaryGraphsRequiredOnCpu": true
+        },
+        {
+          "passageIndex": 1,
+          "observedProviders": [
+            "CPUExecutionProvider",
+            "CUDAExecutionProvider"
+          ],
+          "heavyGraphsExecuteCudaArithmetic": true,
+          "cpuFallbackKernelEvents": 2804,
+          "durationBoundaryGraphsMayRemainOnCpu": true,
+          "timingMeaning": "ORT host kernel-event duration including dispatch/scheduling; not GPU device time or wall-time speedup.",
+          "durationBoundaryGraphsRequiredOnCpu": true
+        },
+        {
+          "passageIndex": 2,
+          "observedProviders": [
+            "CPUExecutionProvider",
+            "CUDAExecutionProvider"
+          ],
+          "heavyGraphsExecuteCudaArithmetic": true,
+          "cpuFallbackKernelEvents": 2804,
+          "durationBoundaryGraphsMayRemainOnCpu": true,
+          "timingMeaning": "ORT host kernel-event duration including dispatch/scheduling; not GPU device time or wall-time speedup.",
+          "durationBoundaryGraphsRequiredOnCpu": true
+        },
+        {
+          "passageIndex": 3,
+          "observedProviders": [
+            "CPUExecutionProvider",
+            "CUDAExecutionProvider"
+          ],
+          "heavyGraphsExecuteCudaArithmetic": true,
+          "cpuFallbackKernelEvents": 2804,
+          "durationBoundaryGraphsMayRemainOnCpu": true,
+          "timingMeaning": "ORT host kernel-event duration including dispatch/scheduling; not GPU device time or wall-time speedup.",
+          "durationBoundaryGraphsRequiredOnCpu": true
+        },
+        {
+          "passageIndex": 4,
+          "observedProviders": [
+            "CPUExecutionProvider",
+            "CUDAExecutionProvider"
+          ],
+          "heavyGraphsExecuteCudaArithmetic": true,
+          "cpuFallbackKernelEvents": 2804,
+          "durationBoundaryGraphsMayRemainOnCpu": true,
+          "timingMeaning": "ORT host kernel-event duration including dispatch/scheduling; not GPU device time or wall-time speedup.",
+          "durationBoundaryGraphsRequiredOnCpu": true
+        },
+        {
+          "passageIndex": 5,
+          "observedProviders": [
+            "CPUExecutionProvider",
+            "CUDAExecutionProvider"
+          ],
+          "heavyGraphsExecuteCudaArithmetic": true,
+          "cpuFallbackKernelEvents": 2804,
+          "durationBoundaryGraphsMayRemainOnCpu": true,
+          "timingMeaning": "ORT host kernel-event duration including dispatch/scheduling; not GPU device time or wall-time speedup.",
+          "durationBoundaryGraphsRequiredOnCpu": true
+        }
+      ]
+    },
+    "nativeLibraryEvidence": {
+      "mappedLibraryCount": 10,
+      "recordedVersions": {
+        "cudaRuntimeVersion": 12090,
+        "cudnnVersion": 91002,
+        "cublasVersion": [
+          12,
+          9,
+          1
+        ]
+      },
+      "originalWheelPinsVerified": true,
+      "actualLibraryBytesIncluded": false
+    },
+    "recordedFailure": null
+  },
+  "replay": {
+    "actualProductionReplayReexecuted": true,
+    "archivedComparisonExactlyReproduced": true,
+    "originalComparisonSha256": "0f851f582eb2ea651825643b0cea2a7de90ec4b1a6a7eb3430abfff980cb6a53",
+    "recomputedComparisonSha256": "0f851f582eb2ea651825643b0cea2a7de90ec4b1a6a7eb3430abfff980cb6a53",
+    "nodeVersion": "v24.19.0",
+    "passageCount": 6,
+    "productionTranscriptionIdentical": true,
+    "nativeCheckpointResumeIdentical": true,
+    "exactRuntimeObjectsPreserved": true,
+    "replayDoesNotExecuteModelInference": true,
+    "rawNoteDiagnostics": [
+      {
+        "index": 0,
+        "noteCounts": [
+          21,
+          21
+        ],
+        "unroundedNotesExactlyIdentical": false,
+        "boundariesExactlyIdentical": true,
+        "maxAbsoluteStartDifferenceSeconds": 0,
+        "maxAbsoluteEndDifferenceSeconds": 0,
+        "maxAbsolutePitchDifferenceMidi": 7.62939453125e-06,
+        "indexAlignedDifferences": [
+          {
+            "index": 0,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 1,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 2,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 3,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 4,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": -3.814697265625e-06
+          },
+          {
+            "index": 5,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 6,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 7,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": -3.814697265625e-06
+          },
+          {
+            "index": 8,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 9,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 10,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": -7.62939453125e-06
+          },
+          {
+            "index": 11,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 12,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": -7.62939453125e-06
+          },
+          {
+            "index": 13,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": -3.814697265625e-06
+          },
+          {
+            "index": 14,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": -7.62939453125e-06
+          },
+          {
+            "index": 15,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 16,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 17,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 7.62939453125e-06
+          },
+          {
+            "index": 18,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": -3.814697265625e-06
+          },
+          {
+            "index": 19,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 3.814697265625e-06
+          },
+          {
+            "index": 20,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          }
+        ],
+        "comparisonRule": "Exact numeric equality; index-aligned deltas only when counts agree. No pitch or timing tolerance.",
+        "cpuUnroundedNotes": [
+          {
+            "midi": 57.63533401489258,
+            "start": 0.019999999552965164,
+            "end": 0.9699999876320362
+          },
+          {
+            "midi": 57.87495803833008,
+            "start": 0.9699999876320362,
+            "end": 1.1399999894201756
+          },
+          {
+            "midi": 57.975120544433594,
+            "start": 1.1399999894201756,
+            "end": 1.309999991208315
+          },
+          {
+            "midi": 57.519493103027344,
+            "start": 1.309999991208315,
+            "end": 1.4799999929964542
+          },
+          {
+            "midi": 57.852691650390625,
+            "start": 1.4799999929964542,
+            "end": 2.909999940544367
+          },
+          {
+            "midi": 55.568748474121094,
+            "start": 2.909999940544367,
+            "end": 3.099999938160181
+          },
+          {
+            "midi": 57.563106536865234,
+            "start": 3.099999938160181,
+            "end": 3.3899999298155308
+          },
+          {
+            "midi": 57.926631927490234,
+            "start": 3.3899999298155308,
+            "end": 3.7199999131262302
+          },
+          {
+            "midi": 57.91849899291992,
+            "start": 3.7199999131262302,
+            "end": 4.039999905973673
+          },
+          {
+            "midi": 56.55994415283203,
+            "start": 4.039999905973673,
+            "end": 4.3599998988211155
+          },
+          {
+            "midi": 57.593780517578125,
+            "start": 4.3599998988211155,
+            "end": 4.679999891668558
+          },
+          {
+            "midi": 57.84975051879883,
+            "start": 4.679999891668558,
+            "end": 4.999999884516001
+          },
+          {
+            "midi": 57.85761260986328,
+            "start": 4.999999884516001,
+            "end": 5.479999873787165
+          },
+          {
+            "midi": 59.899044036865234,
+            "start": 5.479999873787165,
+            "end": 5.649999875575304
+          },
+          {
+            "midi": 57.63508987426758,
+            "start": 5.649999875575304,
+            "end": 5.969999868422747
+          },
+          {
+            "midi": 57.959590911865234,
+            "start": 5.969999868422747,
+            "end": 8.229999858886003
+          },
+          {
+            "midi": 57.595462799072266,
+            "start": 8.229999858886003,
+            "end": 8.849999863654375
+          },
+          {
+            "midi": 57.9129753112793,
+            "start": 8.849999863654375,
+            "end": 9.019999865442514
+          },
+          {
+            "midi": 56.163291931152344,
+            "start": 9.019999865442514,
+            "end": 10.169999841600657
+          },
+          {
+            "midi": 56.026729583740234,
+            "start": 10.169999841600657,
+            "end": 10.809999827295542
+          },
+          {
+            "midi": 56.574180603027344,
+            "start": 10.809999827295542,
+            "end": 13.999999646097422
+          }
+        ],
+        "cudaUnroundedNotes": [
+          {
+            "midi": 57.63533401489258,
+            "start": 0.019999999552965164,
+            "end": 0.9699999876320362
+          },
+          {
+            "midi": 57.87495803833008,
+            "start": 0.9699999876320362,
+            "end": 1.1399999894201756
+          },
+          {
+            "midi": 57.975120544433594,
+            "start": 1.1399999894201756,
+            "end": 1.309999991208315
+          },
+          {
+            "midi": 57.519493103027344,
+            "start": 1.309999991208315,
+            "end": 1.4799999929964542
+          },
+          {
+            "midi": 57.85268783569336,
+            "start": 1.4799999929964542,
+            "end": 2.909999940544367
+          },
+          {
+            "midi": 55.568748474121094,
+            "start": 2.909999940544367,
+            "end": 3.099999938160181
+          },
+          {
+            "midi": 57.563106536865234,
+            "start": 3.099999938160181,
+            "end": 3.3899999298155308
+          },
+          {
+            "midi": 57.92662811279297,
+            "start": 3.3899999298155308,
+            "end": 3.7199999131262302
+          },
+          {
+            "midi": 57.91849899291992,
+            "start": 3.7199999131262302,
+            "end": 4.039999905973673
+          },
+          {
+            "midi": 56.55994415283203,
+            "start": 4.039999905973673,
+            "end": 4.3599998988211155
+          },
+          {
+            "midi": 57.593772888183594,
+            "start": 4.3599998988211155,
+            "end": 4.679999891668558
+          },
+          {
+            "midi": 57.84975051879883,
+            "start": 4.679999891668558,
+            "end": 4.999999884516001
+          },
+          {
+            "midi": 57.85760498046875,
+            "start": 4.999999884516001,
+            "end": 5.479999873787165
+          },
+          {
+            "midi": 59.89904022216797,
+            "start": 5.479999873787165,
+            "end": 5.649999875575304
+          },
+          {
+            "midi": 57.63508224487305,
+            "start": 5.649999875575304,
+            "end": 5.969999868422747
+          },
+          {
+            "midi": 57.959590911865234,
+            "start": 5.969999868422747,
+            "end": 8.229999858886003
+          },
+          {
+            "midi": 57.595462799072266,
+            "start": 8.229999858886003,
+            "end": 8.849999863654375
+          },
+          {
+            "midi": 57.91298294067383,
+            "start": 8.849999863654375,
+            "end": 9.019999865442514
+          },
+          {
+            "midi": 56.16328811645508,
+            "start": 9.019999865442514,
+            "end": 10.169999841600657
+          },
+          {
+            "midi": 56.0267333984375,
+            "start": 10.169999841600657,
+            "end": 10.809999827295542
+          },
+          {
+            "midi": 56.574180603027344,
+            "start": 10.809999827295542,
+            "end": 13.999999646097422
+          }
+        ]
+      },
+      {
+        "index": 1,
+        "noteCounts": [
+          31,
+          31
+        ],
+        "unroundedNotesExactlyIdentical": false,
+        "boundariesExactlyIdentical": true,
+        "maxAbsoluteStartDifferenceSeconds": 0,
+        "maxAbsoluteEndDifferenceSeconds": 0,
+        "maxAbsolutePitchDifferenceMidi": 1.1444091796875e-05,
+        "indexAlignedDifferences": [
+          {
+            "index": 0,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 1,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 2,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": -3.814697265625e-06
+          },
+          {
+            "index": 3,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 3.814697265625e-06
+          },
+          {
+            "index": 4,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": -3.814697265625e-06
+          },
+          {
+            "index": 5,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 7.62939453125e-06
+          },
+          {
+            "index": 6,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 7,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 8,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 9,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 7.62939453125e-06
+          },
+          {
+            "index": 10,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 11,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 12,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 13,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 14,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 3.814697265625e-06
+          },
+          {
+            "index": 15,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 3.814697265625e-06
+          },
+          {
+            "index": 16,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 17,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": -3.814697265625e-06
+          },
+          {
+            "index": 18,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 1.1444091796875e-05
+          },
+          {
+            "index": 19,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": -3.814697265625e-06
+          },
+          {
+            "index": 20,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 21,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 22,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 3.814697265625e-06
+          },
+          {
+            "index": 23,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 24,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": -7.62939453125e-06
+          },
+          {
+            "index": 25,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 7.62939453125e-06
+          },
+          {
+            "index": 26,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": -3.814697265625e-06
+          },
+          {
+            "index": 27,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 28,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": -3.814697265625e-06
+          },
+          {
+            "index": 29,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 30,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          }
+        ],
+        "comparisonRule": "Exact numeric equality; index-aligned deltas only when counts agree. No pitch or timing tolerance.",
+        "cpuUnroundedNotes": [
+          {
+            "midi": 56.96540451049805,
+            "start": 0,
+            "end": 0.17000000178813934
+          },
+          {
+            "midi": 56.0250244140625,
+            "start": 0.17000000178813934,
+            "end": 0.5400000065565109
+          },
+          {
+            "midi": 55.9087028503418,
+            "start": 0.5400000065565109,
+            "end": 0.8200000077486038
+          },
+          {
+            "midi": 57.03565216064453,
+            "start": 0.8200000077486038,
+            "end": 1.290000006556511
+          },
+          {
+            "midi": 58.14236068725586,
+            "start": 1.290000006556511,
+            "end": 1.4500000029802322
+          },
+          {
+            "midi": 57.951629638671875,
+            "start": 1.4500000029802322,
+            "end": 1.6099999994039536
+          },
+          {
+            "midi": 55.952606201171875,
+            "start": 1.6099999994039536,
+            "end": 1.7599999904632568
+          },
+          {
+            "midi": 57.85213851928711,
+            "start": 1.7599999904632568,
+            "end": 1.939999982714653
+          },
+          {
+            "midi": 56.95403289794922,
+            "start": 1.939999982714653,
+            "end": 2.40999998152256
+          },
+          {
+            "midi": 57.5650749206543,
+            "start": 2.40999998152256,
+            "end": 4.029999986290932
+          },
+          {
+            "midi": 55.5760383605957,
+            "start": 4.029999986290932,
+            "end": 4.349999979138374
+          },
+          {
+            "midi": 57.656105041503906,
+            "start": 4.349999979138374,
+            "end": 4.709999963641167
+          },
+          {
+            "midi": 57.837825775146484,
+            "start": 4.709999963641167,
+            "end": 4.999999955296516
+          },
+          {
+            "midi": 57.869384765625,
+            "start": 4.999999955296516,
+            "end": 5.749999955296516
+          },
+          {
+            "midi": 57.92030334472656,
+            "start": 5.749999955296516,
+            "end": 6.939999893307686
+          },
+          {
+            "midi": 57.857025146484375,
+            "start": 6.939999893307686,
+            "end": 7.289999887347221
+          },
+          {
+            "midi": 57.96430206298828,
+            "start": 7.289999887347221,
+            "end": 7.579999879002571
+          },
+          {
+            "midi": 57.832664489746094,
+            "start": 7.579999879002571,
+            "end": 7.929999873042107
+          },
+          {
+            "midi": 55.987525939941406,
+            "start": 7.929999873042107,
+            "end": 8.259999856352806
+          },
+          {
+            "midi": 57.892826080322266,
+            "start": 8.259999856352806,
+            "end": 9.519999846816063
+          },
+          {
+            "midi": 57.66058349609375,
+            "start": 9.519999846816063,
+            "end": 9.859999850392342
+          },
+          {
+            "midi": 57.86357116699219,
+            "start": 9.859999850392342,
+            "end": 10.159999832510948
+          },
+          {
+            "midi": 57.977294921875,
+            "start": 10.159999832510948,
+            "end": 10.799999818205833
+          },
+          {
+            "midi": 57.90401840209961,
+            "start": 10.799999818205833,
+            "end": 11.139999821782112
+          },
+          {
+            "midi": 57.92075729370117,
+            "start": 11.139999821782112,
+            "end": 11.829999819397926
+          },
+          {
+            "midi": 55.93043518066406,
+            "start": 11.829999819397926,
+            "end": 12.119999811053276
+          },
+          {
+            "midi": 57.81352996826172,
+            "start": 12.119999811053276,
+            "end": 14.689999744296074
+          },
+          {
+            "midi": 59.93946838378906,
+            "start": 14.689999744296074,
+            "end": 15.03999973833561
+          },
+          {
+            "midi": 56.00883102416992,
+            "start": 15.03999973833561,
+            "end": 15.339999720454216
+          },
+          {
+            "midi": 55.98811721801758,
+            "start": 15.339999720454216,
+            "end": 15.669999703764915
+          },
+          {
+            "midi": 57.94719696044922,
+            "start": 15.669999703764915,
+            "end": 15.999999687075615
+          }
+        ],
+        "cudaUnroundedNotes": [
+          {
+            "midi": 56.96540451049805,
+            "start": 0,
+            "end": 0.17000000178813934
+          },
+          {
+            "midi": 56.0250244140625,
+            "start": 0.17000000178813934,
+            "end": 0.5400000065565109
+          },
+          {
+            "midi": 55.90869903564453,
+            "start": 0.5400000065565109,
+            "end": 0.8200000077486038
+          },
+          {
+            "midi": 57.0356559753418,
+            "start": 0.8200000077486038,
+            "end": 1.290000006556511
+          },
+          {
+            "midi": 58.142356872558594,
+            "start": 1.290000006556511,
+            "end": 1.4500000029802322
+          },
+          {
+            "midi": 57.951637268066406,
+            "start": 1.4500000029802322,
+            "end": 1.6099999994039536
+          },
+          {
+            "midi": 55.952606201171875,
+            "start": 1.6099999994039536,
+            "end": 1.7599999904632568
+          },
+          {
+            "midi": 57.85213851928711,
+            "start": 1.7599999904632568,
+            "end": 1.939999982714653
+          },
+          {
+            "midi": 56.95403289794922,
+            "start": 1.939999982714653,
+            "end": 2.40999998152256
+          },
+          {
+            "midi": 57.56508255004883,
+            "start": 2.40999998152256,
+            "end": 4.029999986290932
+          },
+          {
+            "midi": 55.5760383605957,
+            "start": 4.029999986290932,
+            "end": 4.349999979138374
+          },
+          {
+            "midi": 57.656105041503906,
+            "start": 4.349999979138374,
+            "end": 4.709999963641167
+          },
+          {
+            "midi": 57.837825775146484,
+            "start": 4.709999963641167,
+            "end": 4.999999955296516
+          },
+          {
+            "midi": 57.869384765625,
+            "start": 4.999999955296516,
+            "end": 5.749999955296516
+          },
+          {
+            "midi": 57.92030715942383,
+            "start": 5.749999955296516,
+            "end": 6.939999893307686
+          },
+          {
+            "midi": 57.85702896118164,
+            "start": 6.939999893307686,
+            "end": 7.289999887347221
+          },
+          {
+            "midi": 57.96430206298828,
+            "start": 7.289999887347221,
+            "end": 7.579999879002571
+          },
+          {
+            "midi": 57.83266067504883,
+            "start": 7.579999879002571,
+            "end": 7.929999873042107
+          },
+          {
+            "midi": 55.9875373840332,
+            "start": 7.929999873042107,
+            "end": 8.259999856352806
+          },
+          {
+            "midi": 57.892822265625,
+            "start": 8.259999856352806,
+            "end": 9.519999846816063
+          },
+          {
+            "midi": 57.66058349609375,
+            "start": 9.519999846816063,
+            "end": 9.859999850392342
+          },
+          {
+            "midi": 57.86357116699219,
+            "start": 9.859999850392342,
+            "end": 10.159999832510948
+          },
+          {
+            "midi": 57.977298736572266,
+            "start": 10.159999832510948,
+            "end": 10.799999818205833
+          },
+          {
+            "midi": 57.90401840209961,
+            "start": 10.799999818205833,
+            "end": 11.139999821782112
+          },
+          {
+            "midi": 57.92074966430664,
+            "start": 11.139999821782112,
+            "end": 11.829999819397926
+          },
+          {
+            "midi": 55.930442810058594,
+            "start": 11.829999819397926,
+            "end": 12.119999811053276
+          },
+          {
+            "midi": 57.81352615356445,
+            "start": 12.119999811053276,
+            "end": 14.689999744296074
+          },
+          {
+            "midi": 59.93946838378906,
+            "start": 14.689999744296074,
+            "end": 15.03999973833561
+          },
+          {
+            "midi": 56.008827209472656,
+            "start": 15.03999973833561,
+            "end": 15.339999720454216
+          },
+          {
+            "midi": 55.98811721801758,
+            "start": 15.339999720454216,
+            "end": 15.669999703764915
+          },
+          {
+            "midi": 57.94719696044922,
+            "start": 15.669999703764915,
+            "end": 15.999999687075615
+          }
+        ]
+      },
+      {
+        "index": 2,
+        "noteCounts": [
+          22,
+          22
+        ],
+        "unroundedNotesExactlyIdentical": false,
+        "boundariesExactlyIdentical": true,
+        "maxAbsoluteStartDifferenceSeconds": 0,
+        "maxAbsoluteEndDifferenceSeconds": 0,
+        "maxAbsolutePitchDifferenceMidi": 7.62939453125e-06,
+        "indexAlignedDifferences": [
+          {
+            "index": 0,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 1,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 2,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 3,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 4,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 7.62939453125e-06
+          },
+          {
+            "index": 5,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": -3.814697265625e-06
+          },
+          {
+            "index": 6,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 7,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 7.62939453125e-06
+          },
+          {
+            "index": 8,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 9,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 10,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 7.62939453125e-06
+          },
+          {
+            "index": 11,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": -7.62939453125e-06
+          },
+          {
+            "index": 12,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 13,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 14,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 7.62939453125e-06
+          },
+          {
+            "index": 15,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 16,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 17,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": -7.62939453125e-06
+          },
+          {
+            "index": 18,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": -7.62939453125e-06
+          },
+          {
+            "index": 19,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 7.62939453125e-06
+          },
+          {
+            "index": 20,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": -7.62939453125e-06
+          },
+          {
+            "index": 21,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          }
+        ],
+        "comparisonRule": "Exact numeric equality; index-aligned deltas only when counts agree. No pitch or timing tolerance.",
+        "cpuUnroundedNotes": [
+          {
+            "midi": 57.875789642333984,
+            "start": 0.11999999731779099,
+            "end": 1.4099999591708183
+          },
+          {
+            "midi": 50.10984802246094,
+            "start": 2.3599999472498894,
+            "end": 2.689999930560589
+          },
+          {
+            "midi": 59.9613037109375,
+            "start": 2.689999930560589,
+            "end": 3.339999906718731
+          },
+          {
+            "midi": 56.03254318237305,
+            "start": 3.339999906718731,
+            "end": 3.6799999102950096
+          },
+          {
+            "midi": 57.923824310302734,
+            "start": 3.6799999102950096,
+            "end": 4.919999919831753
+          },
+          {
+            "midi": 56.07551193237305,
+            "start": 4.919999919831753,
+            "end": 5.269999913871288
+          },
+          {
+            "midi": 59.91669845581055,
+            "start": 5.269999913871288,
+            "end": 5.609999917447567
+          },
+          {
+            "midi": 56.02433776855469,
+            "start": 5.609999917447567,
+            "end": 5.92999991029501
+          },
+          {
+            "midi": 55.10621643066406,
+            "start": 5.92999991029501,
+            "end": 7.4999998435378075
+          },
+          {
+            "midi": 52.603981018066406,
+            "start": 7.4999998435378075,
+            "end": 7.849999837577343
+          },
+          {
+            "midi": 59.96424102783203,
+            "start": 7.849999837577343,
+            "end": 8.189999841153622
+          },
+          {
+            "midi": 56.052974700927734,
+            "start": 8.189999841153622,
+            "end": 8.449999831616879
+          },
+          {
+            "midi": 56.05967330932617,
+            "start": 8.449999831616879,
+            "end": 8.829999826848507
+          },
+          {
+            "midi": 57.920692443847656,
+            "start": 8.829999826848507,
+            "end": 10.409999750554562
+          },
+          {
+            "midi": 67.9876480102539,
+            "start": 10.409999750554562,
+            "end": 10.929999731481075
+          },
+          {
+            "midi": 67.0703353881836,
+            "start": 10.929999731481075,
+            "end": 11.399999730288982
+          },
+          {
+            "midi": 67.95076751708984,
+            "start": 11.399999730288982,
+            "end": 12.49999975413084
+          },
+          {
+            "midi": 64.99297332763672,
+            "start": 12.49999975413084,
+            "end": 12.979999743402004
+          },
+          {
+            "midi": 68.10589599609375,
+            "start": 12.979999743402004,
+            "end": 14.61999972909689
+          },
+          {
+            "midi": 67.01190948486328,
+            "start": 14.61999972909689,
+            "end": 14.849999718368053
+          },
+          {
+            "midi": 66.99381256103516,
+            "start": 14.849999718368053,
+            "end": 15.589999727904797
+          },
+          {
+            "midi": 66.97991180419922,
+            "start": 15.589999727904797,
+            "end": 15.999999724328518
+          }
+        ],
+        "cudaUnroundedNotes": [
+          {
+            "midi": 57.875789642333984,
+            "start": 0.11999999731779099,
+            "end": 1.4099999591708183
+          },
+          {
+            "midi": 50.10984802246094,
+            "start": 2.3599999472498894,
+            "end": 2.689999930560589
+          },
+          {
+            "midi": 59.9613037109375,
+            "start": 2.689999930560589,
+            "end": 3.339999906718731
+          },
+          {
+            "midi": 56.03254318237305,
+            "start": 3.339999906718731,
+            "end": 3.6799999102950096
+          },
+          {
+            "midi": 57.923831939697266,
+            "start": 3.6799999102950096,
+            "end": 4.919999919831753
+          },
+          {
+            "midi": 56.07550811767578,
+            "start": 4.919999919831753,
+            "end": 5.269999913871288
+          },
+          {
+            "midi": 59.91669845581055,
+            "start": 5.269999913871288,
+            "end": 5.609999917447567
+          },
+          {
+            "midi": 56.02434539794922,
+            "start": 5.609999917447567,
+            "end": 5.92999991029501
+          },
+          {
+            "midi": 55.10621643066406,
+            "start": 5.92999991029501,
+            "end": 7.4999998435378075
+          },
+          {
+            "midi": 52.603981018066406,
+            "start": 7.4999998435378075,
+            "end": 7.849999837577343
+          },
+          {
+            "midi": 59.96424865722656,
+            "start": 7.849999837577343,
+            "end": 8.189999841153622
+          },
+          {
+            "midi": 56.0529670715332,
+            "start": 8.189999841153622,
+            "end": 8.449999831616879
+          },
+          {
+            "midi": 56.05967330932617,
+            "start": 8.449999831616879,
+            "end": 8.829999826848507
+          },
+          {
+            "midi": 57.920692443847656,
+            "start": 8.829999826848507,
+            "end": 10.409999750554562
+          },
+          {
+            "midi": 67.98765563964844,
+            "start": 10.409999750554562,
+            "end": 10.929999731481075
+          },
+          {
+            "midi": 67.0703353881836,
+            "start": 10.929999731481075,
+            "end": 11.399999730288982
+          },
+          {
+            "midi": 67.95076751708984,
+            "start": 11.399999730288982,
+            "end": 12.49999975413084
+          },
+          {
+            "midi": 64.99296569824219,
+            "start": 12.49999975413084,
+            "end": 12.979999743402004
+          },
+          {
+            "midi": 68.10588836669922,
+            "start": 12.979999743402004,
+            "end": 14.61999972909689
+          },
+          {
+            "midi": 67.01191711425781,
+            "start": 14.61999972909689,
+            "end": 14.849999718368053
+          },
+          {
+            "midi": 66.99380493164062,
+            "start": 14.849999718368053,
+            "end": 15.589999727904797
+          },
+          {
+            "midi": 66.97991180419922,
+            "start": 15.589999727904797,
+            "end": 15.999999724328518
+          }
+        ]
+      },
+      {
+        "index": 3,
+        "noteCounts": [
+          23,
+          23
+        ],
+        "unroundedNotesExactlyIdentical": false,
+        "boundariesExactlyIdentical": true,
+        "maxAbsoluteStartDifferenceSeconds": 0,
+        "maxAbsoluteEndDifferenceSeconds": 0,
+        "maxAbsolutePitchDifferenceMidi": 1.52587890625e-05,
+        "indexAlignedDifferences": [
+          {
+            "index": 0,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 1,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": -1.52587890625e-05
+          },
+          {
+            "index": 2,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 7.62939453125e-06
+          },
+          {
+            "index": 3,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": -7.62939453125e-06
+          },
+          {
+            "index": 4,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 5,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 6,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 7,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 7.62939453125e-06
+          },
+          {
+            "index": 8,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 7.62939453125e-06
+          },
+          {
+            "index": 9,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 10,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 11,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": -7.62939453125e-06
+          },
+          {
+            "index": 12,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 13,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 14,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": -3.814697265625e-06
+          },
+          {
+            "index": 15,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 16,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 7.62939453125e-06
+          },
+          {
+            "index": 17,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 3.814697265625e-06
+          },
+          {
+            "index": 18,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 19,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 20,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": -7.62939453125e-06
+          },
+          {
+            "index": 21,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": -7.62939453125e-06
+          },
+          {
+            "index": 22,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          }
+        ],
+        "comparisonRule": "Exact numeric equality; index-aligned deltas only when counts agree. No pitch or timing tolerance.",
+        "cpuUnroundedNotes": [
+          {
+            "midi": 68.10606384277344,
+            "start": 0.949999988079071,
+            "end": 2.619999945163727
+          },
+          {
+            "midi": 67.01651763916016,
+            "start": 2.619999945163727,
+            "end": 3.5799999237060547
+          },
+          {
+            "midi": 66.95736694335938,
+            "start": 3.5799999237060547,
+            "end": 4.769999861717224
+          },
+          {
+            "midi": 65.03691864013672,
+            "start": 4.769999861717224,
+            "end": 5.189999848604202
+          },
+          {
+            "midi": 63.049564361572266,
+            "start": 5.189999848604202,
+            "end": 5.409999847412109
+          },
+          {
+            "midi": 65.22168731689453,
+            "start": 5.409999847412109,
+            "end": 6.169999837875366
+          },
+          {
+            "midi": 68.000244140625,
+            "start": 6.169999837875366,
+            "end": 7.139999806880951
+          },
+          {
+            "midi": 69.94859313964844,
+            "start": 7.139999806880951,
+            "end": 7.4899998009204865
+          },
+          {
+            "midi": 67.23603820800781,
+            "start": 7.4899998009204865,
+            "end": 8.389999777078629
+          },
+          {
+            "midi": 66.9944839477539,
+            "start": 8.389999777078629,
+            "end": 9.389999777078629
+          },
+          {
+            "midi": 66.99042510986328,
+            "start": 9.389999777078629,
+            "end": 9.909999758005142
+          },
+          {
+            "midi": 67.00460052490234,
+            "start": 9.909999758005142,
+            "end": 10.359999746084213
+          },
+          {
+            "midi": 67.9375228881836,
+            "start": 10.359999746084213,
+            "end": 11.319999724626541
+          },
+          {
+            "midi": 59.99970245361328,
+            "start": 11.319999724626541,
+            "end": 11.969999700784683
+          },
+          {
+            "midi": 60.089927673339844,
+            "start": 11.969999700784683,
+            "end": 12.309999704360962
+          },
+          {
+            "midi": 62.91133499145508,
+            "start": 12.309999704360962,
+            "end": 12.639999687671661
+          },
+          {
+            "midi": 62.98426055908203,
+            "start": 12.639999687671661,
+            "end": 12.959999680519104
+          },
+          {
+            "midi": 58.02345657348633,
+            "start": 12.959999680519104,
+            "end": 13.249999672174454
+          },
+          {
+            "midi": 57.515140533447266,
+            "start": 13.249999672174454,
+            "end": 13.91999962925911
+          },
+          {
+            "midi": 58.033897399902344,
+            "start": 13.91999962925911,
+            "end": 14.259999632835388
+          },
+          {
+            "midi": 57.98382568359375,
+            "start": 14.259999632835388,
+            "end": 14.609999626874924
+          },
+          {
+            "midi": 60.94422149658203,
+            "start": 14.609999626874924,
+            "end": 15.069999605417252
+          },
+          {
+            "midi": 60.12367248535156,
+            "start": 15.069999605417252,
+            "end": 15.999999612569809
+          }
+        ],
+        "cudaUnroundedNotes": [
+          {
+            "midi": 68.10606384277344,
+            "start": 0.949999988079071,
+            "end": 2.619999945163727
+          },
+          {
+            "midi": 67.0165023803711,
+            "start": 2.619999945163727,
+            "end": 3.5799999237060547
+          },
+          {
+            "midi": 66.9573745727539,
+            "start": 3.5799999237060547,
+            "end": 4.769999861717224
+          },
+          {
+            "midi": 65.03691101074219,
+            "start": 4.769999861717224,
+            "end": 5.189999848604202
+          },
+          {
+            "midi": 63.049564361572266,
+            "start": 5.189999848604202,
+            "end": 5.409999847412109
+          },
+          {
+            "midi": 65.22168731689453,
+            "start": 5.409999847412109,
+            "end": 6.169999837875366
+          },
+          {
+            "midi": 68.000244140625,
+            "start": 6.169999837875366,
+            "end": 7.139999806880951
+          },
+          {
+            "midi": 69.94860076904297,
+            "start": 7.139999806880951,
+            "end": 7.4899998009204865
+          },
+          {
+            "midi": 67.23604583740234,
+            "start": 7.4899998009204865,
+            "end": 8.389999777078629
+          },
+          {
+            "midi": 66.9944839477539,
+            "start": 8.389999777078629,
+            "end": 9.389999777078629
+          },
+          {
+            "midi": 66.99042510986328,
+            "start": 9.389999777078629,
+            "end": 9.909999758005142
+          },
+          {
+            "midi": 67.00459289550781,
+            "start": 9.909999758005142,
+            "end": 10.359999746084213
+          },
+          {
+            "midi": 67.9375228881836,
+            "start": 10.359999746084213,
+            "end": 11.319999724626541
+          },
+          {
+            "midi": 59.99970245361328,
+            "start": 11.319999724626541,
+            "end": 11.969999700784683
+          },
+          {
+            "midi": 60.08992385864258,
+            "start": 11.969999700784683,
+            "end": 12.309999704360962
+          },
+          {
+            "midi": 62.91133499145508,
+            "start": 12.309999704360962,
+            "end": 12.639999687671661
+          },
+          {
+            "midi": 62.98426818847656,
+            "start": 12.639999687671661,
+            "end": 12.959999680519104
+          },
+          {
+            "midi": 58.023460388183594,
+            "start": 12.959999680519104,
+            "end": 13.249999672174454
+          },
+          {
+            "midi": 57.515140533447266,
+            "start": 13.249999672174454,
+            "end": 13.91999962925911
+          },
+          {
+            "midi": 58.033897399902344,
+            "start": 13.91999962925911,
+            "end": 14.259999632835388
+          },
+          {
+            "midi": 57.98381805419922,
+            "start": 14.259999632835388,
+            "end": 14.609999626874924
+          },
+          {
+            "midi": 60.9442138671875,
+            "start": 14.609999626874924,
+            "end": 15.069999605417252
+          },
+          {
+            "midi": 60.12367248535156,
+            "start": 15.069999605417252,
+            "end": 15.999999612569809
+          }
+        ]
+      },
+      {
+        "index": 4,
+        "noteCounts": [
+          27,
+          27
+        ],
+        "unroundedNotesExactlyIdentical": false,
+        "boundariesExactlyIdentical": true,
+        "maxAbsoluteStartDifferenceSeconds": 0,
+        "maxAbsoluteEndDifferenceSeconds": 0,
+        "maxAbsolutePitchDifferenceMidi": 1.1444091796875e-05,
+        "indexAlignedDifferences": [
+          {
+            "index": 0,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 1,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 2,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 3,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 3.814697265625e-06
+          },
+          {
+            "index": 4,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": -1.1444091796875e-05
+          },
+          {
+            "index": 5,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": -3.814697265625e-06
+          },
+          {
+            "index": 6,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 7,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": -3.814697265625e-06
+          },
+          {
+            "index": 8,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": -7.62939453125e-06
+          },
+          {
+            "index": 9,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": -3.814697265625e-06
+          },
+          {
+            "index": 10,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": -3.814697265625e-06
+          },
+          {
+            "index": 11,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 12,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 7.62939453125e-06
+          },
+          {
+            "index": 13,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 14,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 15,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 16,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 17,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 18,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 7.62939453125e-06
+          },
+          {
+            "index": 19,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 7.62939453125e-06
+          },
+          {
+            "index": 20,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": -7.62939453125e-06
+          },
+          {
+            "index": 21,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 22,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 23,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 24,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 25,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 26,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 3.814697265625e-06
+          }
+        ],
+        "comparisonRule": "Exact numeric equality; index-aligned deltas only when counts agree. No pitch or timing tolerance.",
+        "cpuUnroundedNotes": [
+          {
+            "midi": 60.136619567871094,
+            "start": 0.019999999552965164,
+            "end": 0.3099999912083149
+          },
+          {
+            "midi": 63.00547790527344,
+            "start": 0.3099999912083149,
+            "end": 0.6299999840557575
+          },
+          {
+            "midi": 62.99760055541992,
+            "start": 0.6299999840557575,
+            "end": 0.959999967366457
+          },
+          {
+            "midi": 58.04618453979492,
+            "start": 0.959999967366457,
+            "end": 1.209999967366457
+          },
+          {
+            "midi": 57.96426773071289,
+            "start": 1.209999967366457,
+            "end": 1.6199999637901783
+          },
+          {
+            "midi": 55.9930534362793,
+            "start": 1.6199999637901783,
+            "end": 1.9199999459087849
+          },
+          {
+            "midi": 58.032814025878906,
+            "start": 1.9199999459087849,
+            "end": 2.2599999494850636
+          },
+          {
+            "midi": 57.997432708740234,
+            "start": 2.2599999494850636,
+            "end": 2.609999943524599
+          },
+          {
+            "midi": 60.945438385009766,
+            "start": 2.609999943524599,
+            "end": 3.069999922066927
+          },
+          {
+            "midi": 60.49848556518555,
+            "start": 3.069999922066927,
+            "end": 3.529999900609255
+          },
+          {
+            "midi": 58.088016510009766,
+            "start": 3.529999900609255,
+            "end": 4.4999998696148396
+          },
+          {
+            "midi": 67.91954803466797,
+            "start": 4.4999998696148396,
+            "end": 4.839999873191118
+          },
+          {
+            "midi": 68.00183868408203,
+            "start": 4.839999873191118,
+            "end": 5.119999874383211
+          },
+          {
+            "midi": 68.02669525146484,
+            "start": 5.119999874383211,
+            "end": 5.469999868422747
+          },
+          {
+            "midi": 69.96121215820312,
+            "start": 5.469999868422747,
+            "end": 5.909999866038561
+          },
+          {
+            "midi": 69.52295684814453,
+            "start": 5.909999866038561,
+            "end": 6.11999985948205
+          },
+          {
+            "midi": 67.0010757446289,
+            "start": 6.11999985948205,
+            "end": 6.4099998511374
+          },
+          {
+            "midi": 67.01335144042969,
+            "start": 6.4099998511374,
+            "end": 6.779999855905771
+          },
+          {
+            "midi": 67.05996704101562,
+            "start": 6.779999855905771,
+            "end": 7.079999838024378
+          },
+          {
+            "midi": 67.01380157470703,
+            "start": 7.079999838024378,
+            "end": 8.029999826103449
+          },
+          {
+            "midi": 67.87474822998047,
+            "start": 8.029999826103449,
+            "end": 11.569999787956476
+          },
+          {
+            "midi": 67.62156677246094,
+            "start": 11.569999787956476,
+            "end": 11.909999791532755
+          },
+          {
+            "midi": 57.98530960083008,
+            "start": 11.909999791532755,
+            "end": 12.199999783188105
+          },
+          {
+            "midi": 58.00924301147461,
+            "start": 12.199999783188105,
+            "end": 12.54999977722764
+          },
+          {
+            "midi": 57.99437713623047,
+            "start": 12.54999977722764,
+            "end": 12.869999770075083
+          },
+          {
+            "midi": 58.02769470214844,
+            "start": 12.869999770075083,
+            "end": 13.209999773651361
+          },
+          {
+            "midi": 58.0607795715332,
+            "start": 13.209999773651361,
+            "end": 13.849999759346247
+          }
+        ],
+        "cudaUnroundedNotes": [
+          {
+            "midi": 60.136619567871094,
+            "start": 0.019999999552965164,
+            "end": 0.3099999912083149
+          },
+          {
+            "midi": 63.00547790527344,
+            "start": 0.3099999912083149,
+            "end": 0.6299999840557575
+          },
+          {
+            "midi": 62.99760055541992,
+            "start": 0.6299999840557575,
+            "end": 0.959999967366457
+          },
+          {
+            "midi": 58.04618835449219,
+            "start": 0.959999967366457,
+            "end": 1.209999967366457
+          },
+          {
+            "midi": 57.964256286621094,
+            "start": 1.209999967366457,
+            "end": 1.6199999637901783
+          },
+          {
+            "midi": 55.99304962158203,
+            "start": 1.6199999637901783,
+            "end": 1.9199999459087849
+          },
+          {
+            "midi": 58.032814025878906,
+            "start": 1.9199999459087849,
+            "end": 2.2599999494850636
+          },
+          {
+            "midi": 57.99742889404297,
+            "start": 2.2599999494850636,
+            "end": 2.609999943524599
+          },
+          {
+            "midi": 60.945430755615234,
+            "start": 2.609999943524599,
+            "end": 3.069999922066927
+          },
+          {
+            "midi": 60.49848175048828,
+            "start": 3.069999922066927,
+            "end": 3.529999900609255
+          },
+          {
+            "midi": 58.0880126953125,
+            "start": 3.529999900609255,
+            "end": 4.4999998696148396
+          },
+          {
+            "midi": 67.91954803466797,
+            "start": 4.4999998696148396,
+            "end": 4.839999873191118
+          },
+          {
+            "midi": 68.00184631347656,
+            "start": 4.839999873191118,
+            "end": 5.119999874383211
+          },
+          {
+            "midi": 68.02669525146484,
+            "start": 5.119999874383211,
+            "end": 5.469999868422747
+          },
+          {
+            "midi": 69.96121215820312,
+            "start": 5.469999868422747,
+            "end": 5.909999866038561
+          },
+          {
+            "midi": 69.52295684814453,
+            "start": 5.909999866038561,
+            "end": 6.11999985948205
+          },
+          {
+            "midi": 67.0010757446289,
+            "start": 6.11999985948205,
+            "end": 6.4099998511374
+          },
+          {
+            "midi": 67.01335144042969,
+            "start": 6.4099998511374,
+            "end": 6.779999855905771
+          },
+          {
+            "midi": 67.05997467041016,
+            "start": 6.779999855905771,
+            "end": 7.079999838024378
+          },
+          {
+            "midi": 67.01380920410156,
+            "start": 7.079999838024378,
+            "end": 8.029999826103449
+          },
+          {
+            "midi": 67.87474060058594,
+            "start": 8.029999826103449,
+            "end": 11.569999787956476
+          },
+          {
+            "midi": 67.62156677246094,
+            "start": 11.569999787956476,
+            "end": 11.909999791532755
+          },
+          {
+            "midi": 57.98530960083008,
+            "start": 11.909999791532755,
+            "end": 12.199999783188105
+          },
+          {
+            "midi": 58.00924301147461,
+            "start": 12.199999783188105,
+            "end": 12.54999977722764
+          },
+          {
+            "midi": 57.99437713623047,
+            "start": 12.54999977722764,
+            "end": 12.869999770075083
+          },
+          {
+            "midi": 58.02769470214844,
+            "start": 12.869999770075083,
+            "end": 13.209999773651361
+          },
+          {
+            "midi": 58.06078338623047,
+            "start": 13.209999773651361,
+            "end": 13.849999759346247
+          }
+        ]
+      },
+      {
+        "index": 5,
+        "noteCounts": [
+          6,
+          6
+        ],
+        "unroundedNotesExactlyIdentical": false,
+        "boundariesExactlyIdentical": true,
+        "maxAbsoluteStartDifferenceSeconds": 0,
+        "maxAbsoluteEndDifferenceSeconds": 0,
+        "maxAbsolutePitchDifferenceMidi": 7.62939453125e-06,
+        "indexAlignedDifferences": [
+          {
+            "index": 0,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 7.62939453125e-06
+          },
+          {
+            "index": 1,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 3.814697265625e-06
+          },
+          {
+            "index": 2,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": -3.814697265625e-06
+          },
+          {
+            "index": 3,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 7.62939453125e-06
+          },
+          {
+            "index": 4,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          },
+          {
+            "index": 5,
+            "startDifferenceSeconds": 0,
+            "endDifferenceSeconds": 0,
+            "pitchDifferenceMidi": 0
+          }
+        ],
+        "comparisonRule": "Exact numeric equality; index-aligned deltas only when counts agree. No pitch or timing tolerance.",
+        "cpuUnroundedNotes": [
+          {
+            "midi": 58.01082229614258,
+            "start": 0.019999999552965164,
+            "end": 0.19999999180436134
+          },
+          {
+            "midi": 58.02419662475586,
+            "start": 0.19999999180436134,
+            "end": 0.8699999488890171
+          },
+          {
+            "midi": 58.029624938964844,
+            "start": 0.8699999488890171,
+            "end": 1.2199999429285526
+          },
+          {
+            "midi": 58.10413360595703,
+            "start": 1.2199999429285526,
+            "end": 1.849999938160181
+          },
+          {
+            "midi": 59.9537467956543,
+            "start": 1.849999938160181,
+            "end": 2.2599999345839024
+          },
+          {
+            "midi": 55.14202117919922,
+            "start": 5.709999743849039,
+            "end": 5.999999735504389
+          }
+        ],
+        "cudaUnroundedNotes": [
+          {
+            "midi": 58.01082992553711,
+            "start": 0.019999999552965164,
+            "end": 0.19999999180436134
+          },
+          {
+            "midi": 58.024200439453125,
+            "start": 0.19999999180436134,
+            "end": 0.8699999488890171
+          },
+          {
+            "midi": 58.02962112426758,
+            "start": 0.8699999488890171,
+            "end": 1.2199999429285526
+          },
+          {
+            "midi": 58.10414123535156,
+            "start": 1.2199999429285526,
+            "end": 1.849999938160181
+          },
+          {
+            "midi": 59.9537467956543,
+            "start": 1.849999938160181,
+            "end": 2.2599999345839024
+          },
+          {
+            "midi": 55.14202117919922,
+            "start": 5.709999743849039,
+            "end": 5.999999735504389
+          }
+        ]
+      }
+    ],
+    "finalTranscriptionDiagnostics": {
+      "noteCounts": [
+        98,
+        98
+      ],
+      "productionRoundedNotesExactlyIdentical": true,
+      "boundariesExactlyIdentical": true,
+      "maxAbsoluteStartDifferenceSeconds": 0,
+      "maxAbsoluteEndDifferenceSeconds": 0,
+      "maxAbsolutePitchDifferenceMidi": 0,
+      "indexAlignedDifferences": [
+        {
+          "index": 0,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 1,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 2,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 3,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 4,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 5,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 6,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 7,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 8,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 9,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 10,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 11,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 12,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 13,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 14,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 15,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 16,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 17,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 18,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 19,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 20,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 21,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 22,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 23,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 24,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 25,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 26,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 27,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 28,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 29,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 30,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 31,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 32,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 33,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 34,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 35,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 36,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 37,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 38,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 39,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 40,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 41,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 42,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 43,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 44,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 45,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 46,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 47,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 48,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 49,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 50,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 51,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 52,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 53,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 54,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 55,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 56,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 57,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 58,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 59,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 60,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 61,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 62,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 63,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 64,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 65,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 66,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 67,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 68,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 69,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 70,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 71,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 72,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 73,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 74,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 75,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 76,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 77,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 78,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 79,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 80,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 81,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 82,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 83,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 84,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 85,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 86,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 87,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 88,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 89,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 90,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 91,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 92,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 93,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 94,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 95,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 96,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        },
+        {
+          "index": 97,
+          "startDifferenceSeconds": 0,
+          "endDifferenceSeconds": 0,
+          "pitchDifferenceMidi": 0
+        }
+      ],
+      "comparisonRule": "Exact numeric equality; index-aligned deltas only when counts agree. No pitch or timing tolerance."
+    }
+  },
+  "limitations": [
+    "Complete 64-second public mixture GAME diagnostic; not complete separated-vocal or full-analysis quality evidence.",
+    "Exact source snapshots, complete public PCM, raw tensors and raw traces are rechecked locally; full PCM is independently rederived from the pinned public WAV Git blob. Model weights and runtime binaries are absent; their pinned identity and runtime rehash are recorded by the bound collector/setup.",
+    "Production runtime labels are preserved as adapter labels; CPU/CUDA research identities are reported separately.",
+    "No GPU/model execution, timing ratio, fitted tolerance, 75% target approval, Android approval or publication authorization is produced."
+  ],
+  "archive": {
+    "bytes": 91197345,
+    "sha256": "01a45c1ee5eeb7b63e26b316589673903bf362ccf99863b156f726c8543e1670",
+    "members": 720,
+    "uncompressedBytes": 291258944,
+    "allMemberCrcsVerified": true
+  }
+}

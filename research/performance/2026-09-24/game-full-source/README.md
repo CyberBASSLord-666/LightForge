@@ -80,5 +80,6 @@ credentials and private audio. `archive-manifest.json` inventories the bytes and
 SHA-256 of every member except itself. The exporter verifies ZIP CRCs and prints
 the final archive size and SHA-256. Failed runs remain marked failed.
 
-No experiment result is asserted by this README. Read an independently verified
-run receipt before drawing conclusions.
+The September 24 execution and independent archive verification are recorded in
+[RESULTS.md](RESULTS.md). The earlier blocked input-proof attempt is retained
+separately from the completed run. Neither changes the limits above.

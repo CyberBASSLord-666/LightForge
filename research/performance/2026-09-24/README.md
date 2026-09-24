@@ -7,6 +7,7 @@ Application payload, release policy and signing identity were not changed.
 
 | Experiment | Verified result | Limit |
 | --- | --- | --- |
+| [Complete 64-second GAME source](game-full-source/RESULTS.md) | Six complete passes; 24 exact observer comparisons; all 98 final production notes match and checkpoint resume reproduces them | Public mixture, GAME only; raw CPU/GPU tensors and unrounded pitches differ; no admitted speed ratio |
 | [GAME deterministic CUDA](game-deterministic/README.md) | Twelve complete passes; all eight exact observer checks pass; heavy CUDA computation confirmed | One 14-second mixture passage; CPU/GPU raw outputs differ |
 | [Deux separation](deux-t4/README.md) | Eight complete passes; four exact observer checks; all 27 graphs compute on CUDA | One original separation passage; CPU/GPU waveform bytes differ |
 | [Downstream replay](deux-downstream/README.md) | Existing five-second sensitivity rules pass; final transcription and fused vocals match exactly | Raw checkpoints differ; this does not test CUDA GAME inside the complete vocal stage |
@@ -23,6 +24,15 @@ nor a 75% reduction in complete analysis time. Repeated benchmark ratios remain
 withheld under the unchanged experiment gates. Full-song consumer integration,
 representative source-bound quality evaluation and complete elapsed-time
 measurement—including transfer and startup—remain necessary.
+
+The full-source run is independently verified from its downloaded raw archive,
+including all six passage windows and actual production stitching. The
+[setup-cost analysis](session-overhead/README.md) motivates a bounded
+[session reuse candidate](session-overhead/GAME_SESSION_REUSE.md); it has source
+tests and lifecycle review but has **not** been executed or qualified. The
+[integration handoff](game-full-source/NEXT_INTEGRATED_STAGE.md) identifies the
+remaining complete separation-to-vocal pipeline and the first-passage evidence
+that can be reused without pretending it covers the missing passages.
 
 The [next quality-gate document](NEXT_QUALITY_GATE.md) identifies the approved
 corpus/policy bundle that is missing from this checkout and the public assets
