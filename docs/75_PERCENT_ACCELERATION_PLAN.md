@@ -180,8 +180,18 @@ arithmetic in encoder, segmenter and estimator. All twelve passes then executed,
 but the exact observer gate rejected estimator pitch differences. The remaining
 fifteen captured tensors matched; this is not musical-quality approval.
 The [complete rejected evidence and audit](../research/performance/2026-09-24/game-heavy-only/README.md)
-are retained in the research branch. Repeatability and a separately bound
-deterministic-compute setting are the next diagnostic; no tolerance was relaxed.
+are retained in the research branch. A predeclared six-run repeatability screen
+found run variability under the default setting and exact tested repeats with
+deterministic compute requested. The separately source-bound deterministic
+candidate then completed a fresh twelve-pass qualification: all eight exact
+observer comparisons and all integrity/placement checks passed. CPU/ALL versus
+CUDA retained 21 notes with identical start/end times; nine unrounded pitches
+and three captured tensors differed. See the [full evidence and independent
+verification](../research/performance/2026-09-24/game-deterministic/README.md).
+Numerical equivalence remains unproven; no tolerance was relaxed or benchmark
+ratio admitted. The [next quality-gate prerequisites](../research/performance/2026-09-24/NEXT_QUALITY_GATE.md)
+distinguish executable public-fixture sensitivity work from the approved locked
+corpus and attestation bundle absent from this checkout.
 
 The first free Colab T4 experiment has now completed all eight diagnostic passes.
 All 27 graphs executed CUDA arithmetic; the full source/model/audio integrity
@@ -224,7 +234,7 @@ sample amplitude (RMSE `3.061769232727322e-8`); this is a numerical observation,
 not an audible-quality finding or an accepted tolerance. The tool retained all
 outputs and reported numerical equivalence unproven without performance ratios.
 
-A real CUDA result still requires a suitable GPU runner. No paid job,
+The free Colab T4 supplies the current research GPU. No paid job,
 private-audio upload or hosted deployment has been started.
 
 ## Running the prepared experiment
