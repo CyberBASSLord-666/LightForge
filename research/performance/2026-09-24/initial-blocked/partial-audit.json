@@ -1,0 +1,4863 @@
+{
+  "schema": "lightforge.game-partial-evidence-audit.v1",
+  "partialAuditPassed": true,
+  "completeQualificationVerified": false,
+  "originalStatus": "BLOCKED_OR_REJECTED",
+  "originalFailure": "GAME inference failed: /content/lightforge-game-gpu-qualification/evidence/20260924T002309Z-a1541ba3/qualification/cuda_basic_plain/run.log",
+  "archive": {
+    "bytes": 23374358,
+    "sha256": "154d5bd74232be0833ba7131fa3917ccaeb00ddae59ba97cff9b0f1f2de765aa",
+    "members": 272,
+    "uncompressedBytes": 74357962,
+    "crcChecked": true
+  },
+  "sourceCommit": "d9b42bb79145cfe81367fd70e2ca0ff7f4d52c12",
+  "sourceHashCount": 10,
+  "sourceHashesVerified": {
+    "android/src/com/cyberbasslord/lightforge/NativeGame.java": "a1bb68a4930b5acd74f7fdc2d1d105f1d7f5c9974f11514872f47672b8736369",
+    "tools/game_benchmark/GameAcceleratorCapture.java": "85e88098fe1521a32911fd4a07e402ad35521ad926c9f7b26c4365f9b6899ca2",
+    "tools/game_benchmark/GameAcceleratorRunner.java": "5a017de62d00fd8f08999542c3df34e3cc3a8e07712fdaf7de94343fe56c786c",
+    "tools/benchmark_game_accelerator.py": "3e4c6f5b7fc36205daa70052223f202d8fffeba466cc726e0cebfba4bacbdd50",
+    "tools/game_benchmark/compare.py": "921d785a9d185f449e88998f119c8a083433039adc62aee7d516e24f648c1b4b",
+    "tools/benchmark_deux_accelerator.py": "0c19caa398c6fb1e1be121d359219074e71879979105d4172fbcf360906c9f0a",
+    "tools/profile_deux_operators.py": "9a4e189d899a2f5c3c0e92df64ef4e1f3316ef422d53216d92b983e221c235d6",
+    "tools/benchmark_deux_execution.py": "2fdeceb1fd4fd275b31338aeff6be6a5e53afb741c15de5dc020f65cbed72f3f",
+    "android/native-runtime.json": "e3ea568b3a8485235f23a59cd787466cdcbbfcaa54ac56df3ce040d29fcb2a94",
+    "web/analysis/models/game/manifest.json": "51e172cfaa967d9e2518f01f508a64d49cd283d23ae8e8456af9c6e76eeb4f97"
+  },
+  "receiptSha256": "12c52c46b43d93d044bc50224edfc972fa046ecc08ed036ba866022fd8bd083d",
+  "receiptBytes": 156152,
+  "completedRunCount": 9,
+  "completedVariants": [
+    "cpu_all",
+    "cpu_basic",
+    "gpu_package_cpu_basic"
+  ],
+  "completedModes": [
+    "plain",
+    "captured",
+    "profiled"
+  ],
+  "runReceiptHashes": {
+    "cpu_all_plain/output/receipt.json": "74e73d43d313e12b88e74934ef858b41cd6ee23a1506bcdc46e7e249fb99519f",
+    "cpu_all_captured/output/receipt.json": "9dfe1a2cab1a3d5c4221251b6e4c57ec4407005cab83d06a74e934911009b52d",
+    "cpu_all_profiled/output/receipt.json": "f82d1913176539669a17523c94179dc6bc9cf3a7e959d6afd0d1ea7bc7de848c",
+    "cpu_basic_plain/output/receipt.json": "8b495bcec556b628c961ce9be9afa00ca51efd97ac65f39c930f35688c298d1c",
+    "cpu_basic_captured/output/receipt.json": "441456ef0adfee02d20ee56d789036f7cd2f90f3f9890f24a0a3c52ab6b7f80e",
+    "cpu_basic_profiled/output/receipt.json": "15f64857440197256ea835bffd3bc154dcebe24bb94f3a7e3079e6e6ecfe9aec",
+    "gpu_package_cpu_basic_plain/output/receipt.json": "12573cca1094b59a8d169416a9fa33ac61284863253155b1b8d66b49e4ef605e",
+    "gpu_package_cpu_basic_captured/output/receipt.json": "0708211b6614233410e3ce52ee3d4fed0d4663d5a9c220ba5c367f9ca6eb58c5",
+    "gpu_package_cpu_basic_profiled/output/receipt.json": "f987fdc8f3f99fb291505d13bbf971939bb460810fd0b1e431c3bd1b42472265"
+  },
+  "capturedRunCount": 6,
+  "capturedTensorCount": 96,
+  "capturedTensorCounts": {
+    "cpu_all_captured": 16,
+    "cpu_all_profiled": 16,
+    "cpu_basic_captured": 16,
+    "cpu_basic_profiled": 16,
+    "gpu_package_cpu_basic_captured": 16,
+    "gpu_package_cpu_basic_profiled": 16
+  },
+  "observerComparisonCount": 6,
+  "observerComparisons": [
+    {
+      "variant": "cpu_all",
+      "kind": "plain-vs-capture",
+      "rawTensorsByteIdentical": null,
+      "unroundedNotesIdentical": true
+    },
+    {
+      "variant": "cpu_all",
+      "kind": "capture-vs-profile",
+      "rawTensorsByteIdentical": true,
+      "unroundedNotesIdentical": true,
+      "rawComparison": {
+        "schema": "lightforge-game-comparison-1",
+        "exactParity": true,
+        "leftRuntime": "onnxruntime-java-1.25.1",
+        "rightRuntime": "onnxruntime-java-1.25.1",
+        "pcmSHA256": "a75b3b8d59c87d428e38e45db5f54ad8d2b1613fe79ee07c2595fecbf9215274",
+        "unroundedNotesIdentical": true,
+        "leftNoteCount": 21,
+        "rightNoteCount": 21,
+        "noteDiagnostics": {
+          "sameCount": true,
+          "boundariesIdentical": true,
+          "maxAcceptedPitchDifferenceMidi": 0.0
+        },
+        "tensors": [
+          {
+            "tensor": "encoder/x_seg",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 358400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "encoder/x_est",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 358400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "encoder/maskT",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "dur2bd/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-0/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-1/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-2/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-3/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-4/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-5/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-6/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-7/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "bd2dur/durations",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 22,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "bd2dur/maskN",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 22,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "estimator/presence",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 22,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "estimator/scores",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 22,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          }
+        ],
+        "interpretation": "Exact parity is required here; numeric differences are diagnostic, never automatic quality approval."
+      }
+    },
+    {
+      "variant": "cpu_basic",
+      "kind": "plain-vs-capture",
+      "rawTensorsByteIdentical": null,
+      "unroundedNotesIdentical": true
+    },
+    {
+      "variant": "cpu_basic",
+      "kind": "capture-vs-profile",
+      "rawTensorsByteIdentical": true,
+      "unroundedNotesIdentical": true,
+      "rawComparison": {
+        "schema": "lightforge-game-comparison-1",
+        "exactParity": true,
+        "leftRuntime": "onnxruntime-java-1.25.1",
+        "rightRuntime": "onnxruntime-java-1.25.1",
+        "pcmSHA256": "a75b3b8d59c87d428e38e45db5f54ad8d2b1613fe79ee07c2595fecbf9215274",
+        "unroundedNotesIdentical": true,
+        "leftNoteCount": 21,
+        "rightNoteCount": 21,
+        "noteDiagnostics": {
+          "sameCount": true,
+          "boundariesIdentical": true,
+          "maxAcceptedPitchDifferenceMidi": 0.0
+        },
+        "tensors": [
+          {
+            "tensor": "encoder/x_seg",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 358400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "encoder/x_est",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 358400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "encoder/maskT",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "dur2bd/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-0/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-1/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-2/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-3/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-4/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-5/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-6/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-7/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "bd2dur/durations",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 22,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "bd2dur/maskN",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 22,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "estimator/presence",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 22,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "estimator/scores",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 22,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          }
+        ],
+        "interpretation": "Exact parity is required here; numeric differences are diagnostic, never automatic quality approval."
+      }
+    },
+    {
+      "variant": "gpu_package_cpu_basic",
+      "kind": "plain-vs-capture",
+      "rawTensorsByteIdentical": null,
+      "unroundedNotesIdentical": true
+    },
+    {
+      "variant": "gpu_package_cpu_basic",
+      "kind": "capture-vs-profile",
+      "rawTensorsByteIdentical": true,
+      "unroundedNotesIdentical": true,
+      "rawComparison": {
+        "schema": "lightforge-game-comparison-1",
+        "exactParity": true,
+        "leftRuntime": "onnxruntime-java-1.25.1",
+        "rightRuntime": "onnxruntime-java-1.25.1",
+        "pcmSHA256": "a75b3b8d59c87d428e38e45db5f54ad8d2b1613fe79ee07c2595fecbf9215274",
+        "unroundedNotesIdentical": true,
+        "leftNoteCount": 21,
+        "rightNoteCount": 21,
+        "noteDiagnostics": {
+          "sameCount": true,
+          "boundariesIdentical": true,
+          "maxAcceptedPitchDifferenceMidi": 0.0
+        },
+        "tensors": [
+          {
+            "tensor": "encoder/x_seg",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 358400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "encoder/x_est",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 358400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "encoder/maskT",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "dur2bd/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-0/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-1/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-2/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-3/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-4/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-5/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-6/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "segmenter-7/boundaries",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 1400,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "bd2dur/durations",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 22,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "bd2dur/maskN",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 22,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "estimator/presence",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 22,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          },
+          {
+            "tensor": "estimator/scores",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": true,
+            "elements": 22,
+            "unequalElements": 0,
+            "maxAbsoluteDifference": 0.0,
+            "rmsDifference": 0.0
+          }
+        ],
+        "interpretation": "Exact parity is required here; numeric differences are diagnostic, never automatic quality approval."
+      }
+    }
+  ],
+  "traceSetCount": 3,
+  "retainedTraceFileCount": 15,
+  "placement": {
+    "cpu_all": {
+      "observedProviders": [
+        "CPUExecutionProvider"
+      ],
+      "heavyGraphsExecuteCudaArithmetic": false,
+      "cpuFallbackKernelEvents": 0,
+      "durationBoundaryGraphsMayRemainOnCpu": true,
+      "timingMeaning": "ORT host kernel-event duration including dispatch/scheduling; not GPU device time or wall-time speedup."
+    },
+    "cpu_basic": {
+      "observedProviders": [
+        "CPUExecutionProvider"
+      ],
+      "heavyGraphsExecuteCudaArithmetic": false,
+      "cpuFallbackKernelEvents": 0,
+      "durationBoundaryGraphsMayRemainOnCpu": true,
+      "timingMeaning": "ORT host kernel-event duration including dispatch/scheduling; not GPU device time or wall-time speedup."
+    },
+    "gpu_package_cpu_basic": {
+      "observedProviders": [
+        "CPUExecutionProvider"
+      ],
+      "heavyGraphsExecuteCudaArithmetic": false,
+      "cpuFallbackKernelEvents": 0,
+      "durationBoundaryGraphsMayRemainOnCpu": true,
+      "timingMeaning": "ORT host kernel-event duration including dispatch/scheduling; not GPU device time or wall-time speedup."
+    }
+  },
+  "providerTraces": {
+    "cpu_all": {
+      "graphs": [
+        {
+          "graph": "encoder",
+          "modelRuns": 1,
+          "traceSha256": "a9299c77e0997c6edf80c760f9b428e19f1dc8db4eb0035603d4e42eb71bb5f1",
+          "traceBytes": 991184,
+          "traceFile": "encoder_2026-09-24_00-55-37_046.json",
+          "operators": [
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "MatMul",
+              "calls": 83,
+              "durationUs": 938392
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "STFT",
+              "calls": 1,
+              "durationUs": 189032
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Add",
+              "calls": 155,
+              "durationUs": 103741
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Conv",
+              "calls": 32,
+              "durationUs": 102655
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Softmax",
+              "calls": 8,
+              "durationUs": 77550
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Transpose",
+              "calls": 90,
+              "durationUs": 48536
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Mul",
+              "calls": 200,
+              "durationUs": 47091
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Slice",
+              "calls": 88,
+              "durationUs": 43426
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Gelu",
+              "calls": 32,
+              "durationUs": 32100
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ReduceSum",
+              "calls": 1,
+              "durationUs": 16059
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Where",
+              "calls": 32,
+              "durationUs": 11942
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Pow",
+              "calls": 9,
+              "durationUs": 11837
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Concat",
+              "calls": 64,
+              "durationUs": 11136
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "SimplifiedLayerNormalization",
+              "calls": 25,
+              "durationUs": 10215
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Split",
+              "calls": 17,
+              "durationUs": 8388
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Sub",
+              "calls": 16,
+              "durationUs": 3419
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Cos",
+              "calls": 16,
+              "durationUs": 3055
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Sin",
+              "calls": 16,
+              "durationUs": 3001
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Div",
+              "calls": 49,
+              "durationUs": 1613
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Pad",
+              "calls": 1,
+              "durationUs": 1525
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Einsum",
+              "calls": 16,
+              "durationUs": 1453
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Shape",
+              "calls": 81,
+              "durationUs": 1231
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "FusedMatMul",
+              "calls": 1,
+              "durationUs": 1185
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Reshape",
+              "calls": 96,
+              "durationUs": 1182
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Gather",
+              "calls": 89,
+              "durationUs": 1068
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ReduceMean",
+              "calls": 8,
+              "durationUs": 885
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Sqrt",
+              "calls": 25,
+              "durationUs": 885
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Unsqueeze",
+              "calls": 75,
+              "durationUs": 819
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Squeeze",
+              "calls": 32,
+              "durationUs": 614
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Log",
+              "calls": 1,
+              "durationUs": 595
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Range",
+              "calls": 17,
+              "durationUs": 210
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Cast",
+              "calls": 25,
+              "durationUs": 171
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Clip",
+              "calls": 1,
+              "durationUs": 109
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Less",
+              "calls": 1,
+              "durationUs": 19
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Round",
+              "calls": 1,
+              "durationUs": 11
+            }
+          ]
+        },
+        {
+          "graph": "dur2bd",
+          "modelRuns": 1,
+          "traceSha256": "22fd128f14849b1b138e27ad1b4d130afa724b556222d1684dcc294e693892aa",
+          "traceBytes": 9693,
+          "traceFile": "dur2bd_2026-09-24_00-55-37_482.json",
+          "operators": [
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "CumSum",
+              "calls": 1,
+              "durationUs": 45
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ReduceSum",
+              "calls": 1,
+              "durationUs": 28
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Round",
+              "calls": 1,
+              "durationUs": 28
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Unsqueeze",
+              "calls": 2,
+              "durationUs": 25
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Cast",
+              "calls": 2,
+              "durationUs": 23
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Slice",
+              "calls": 1,
+              "durationUs": 21
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Div",
+              "calls": 1,
+              "durationUs": 19
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Greater",
+              "calls": 1,
+              "durationUs": 18
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Range",
+              "calls": 1,
+              "durationUs": 18
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Gather",
+              "calls": 1,
+              "durationUs": 14
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Equal",
+              "calls": 1,
+              "durationUs": 12
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Shape",
+              "calls": 1,
+              "durationUs": 10
+            }
+          ]
+        },
+        {
+          "graph": "segmenter",
+          "modelRuns": 8,
+          "traceSha256": "2afc8190f767bab8bd5a7029a314adf0f4a4989fd998b1c6a1abfb5838f590ff",
+          "traceBytes": 12833030,
+          "traceFile": "segmenter_2026-09-24_00-55-37_484.json",
+          "operators": [
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "MatMul",
+              "calls": 1184,
+              "durationUs": 10467205
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "FusedMatMul",
+              "calls": 128,
+              "durationUs": 3136719
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Conv",
+              "calls": 512,
+              "durationUs": 1954991
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Softmax",
+              "calls": 128,
+              "durationUs": 1327397
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Add",
+              "calls": 2136,
+              "durationUs": 1025576
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Split",
+              "calls": 768,
+              "durationUs": 772503
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Mul",
+              "calls": 2464,
+              "durationUs": 711392
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Transpose",
+              "calls": 1032,
+              "durationUs": 599811
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Gelu",
+              "calls": 512,
+              "durationUs": 577322
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Concat",
+              "calls": 800,
+              "durationUs": 259278
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Where",
+              "calls": 544,
+              "durationUs": 241876
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "SimplifiedLayerNormalization",
+              "calls": 264,
+              "durationUs": 121736
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Pow",
+              "calls": 256,
+              "durationUs": 119588
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ReduceMean",
+              "calls": 256,
+              "durationUs": 73431
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Sub",
+              "calls": 264,
+              "durationUs": 62948
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Cos",
+              "calls": 264,
+              "durationUs": 54277
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Sin",
+              "calls": 256,
+              "durationUs": 50967
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Div",
+              "calls": 272,
+              "durationUs": 46201
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Einsum",
+              "calls": 256,
+              "durationUs": 26506
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Reshape",
+              "calls": 1560,
+              "durationUs": 22517
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Gather",
+              "calls": 800,
+              "durationUs": 13220
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Unsqueeze",
+              "calls": 848,
+              "durationUs": 12295
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Shape",
+              "calls": 648,
+              "durationUs": 9848
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Squeeze",
+              "calls": 520,
+              "durationUs": 8923
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Expand",
+              "calls": 16,
+              "durationUs": 7787
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Slice",
+              "calls": 264,
+              "durationUs": 5421
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Range",
+              "calls": 272,
+              "durationUs": 3482
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Cast",
+              "calls": 288,
+              "durationUs": 2618
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Sqrt",
+              "calls": 256,
+              "durationUs": 2492
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "GatherElements",
+              "calls": 8,
+              "durationUs": 1230
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "And",
+              "calls": 32,
+              "durationUs": 352
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ArgMax",
+              "calls": 8,
+              "durationUs": 279
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Mod",
+              "calls": 8,
+              "durationUs": 237
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "BiasGelu",
+              "calls": 8,
+              "durationUs": 223
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ReduceSum",
+              "calls": 16,
+              "durationUs": 183
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "CumSum",
+              "calls": 8,
+              "durationUs": 134
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Pad",
+              "calls": 8,
+              "durationUs": 130
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Equal",
+              "calls": 8,
+              "durationUs": 116
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "LessOrEqual",
+              "calls": 8,
+              "durationUs": 102
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Not",
+              "calls": 8,
+              "durationUs": 86
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "GreaterOrEqual",
+              "calls": 8,
+              "durationUs": 83
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Or",
+              "calls": 8,
+              "durationUs": 83
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Sigmoid",
+              "calls": 8,
+              "durationUs": 76
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Clip",
+              "calls": 8,
+              "durationUs": 64
+            }
+          ]
+        },
+        {
+          "graph": "bd2dur",
+          "modelRuns": 1,
+          "traceSha256": "f97247104fabc9c480870a345e0580ad4d5858780a5638edc5668db595810915",
+          "traceBytes": 15668,
+          "traceFile": "bd2dur_2026-09-24_00-55-38_235.json",
+          "operators": [
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Cast",
+              "calls": 3,
+              "durationUs": 71
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ScatterElements",
+              "calls": 1,
+              "durationUs": 62
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Unsqueeze",
+              "calls": 3,
+              "durationUs": 47
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ReduceMax",
+              "calls": 2,
+              "durationUs": 46
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Add",
+              "calls": 2,
+              "durationUs": 33
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Slice",
+              "calls": 2,
+              "durationUs": 33
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Mul",
+              "calls": 2,
+              "durationUs": 32
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "CumSum",
+              "calls": 1,
+              "durationUs": 25
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Gather",
+              "calls": 1,
+              "durationUs": 25
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ConstantOfShape",
+              "calls": 2,
+              "durationUs": 19
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Concat",
+              "calls": 1,
+              "durationUs": 12
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Less",
+              "calls": 1,
+              "durationUs": 12
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Range",
+              "calls": 1,
+              "durationUs": 10
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Shape",
+              "calls": 1,
+              "durationUs": 10
+            }
+          ]
+        },
+        {
+          "graph": "estimator",
+          "modelRuns": 1,
+          "traceSha256": "0d497ea888bb60ac32b80f49773032be5d3922e0437048d9607a02418342b9a7",
+          "traceBytes": 1711957,
+          "traceFile": "estimator_2026-09-24_00-55-38_237.json",
+          "operators": [
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "MatMul",
+              "calls": 126,
+              "durationUs": 1522001
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Add",
+              "calls": 249,
+              "durationUs": 463306
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Conv",
+              "calls": 60,
+              "durationUs": 170031
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Softmax",
+              "calls": 8,
+              "durationUs": 149149
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Split",
+              "calls": 110,
+              "durationUs": 80632
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Mul",
+              "calls": 335,
+              "durationUs": 65821
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Gelu",
+              "calls": 61,
+              "durationUs": 54483
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "SimplifiedLayerNormalization",
+              "calls": 65,
+              "durationUs": 44632
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Transpose",
+              "calls": 123,
+              "durationUs": 40547
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Concat",
+              "calls": 194,
+              "durationUs": 36289
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Where",
+              "calls": 77,
+              "durationUs": 32754
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ReduceSum",
+              "calls": 3,
+              "durationUs": 11826
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Pow",
+              "calls": 30,
+              "durationUs": 9730
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ReduceMean",
+              "calls": 30,
+              "durationUs": 5995
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Sub",
+              "calls": 34,
+              "durationUs": 4867
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Slice",
+              "calls": 56,
+              "durationUs": 4239
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Reshape",
+              "calls": 165,
+              "durationUs": 4186
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Cast",
+              "calls": 43,
+              "durationUs": 3886
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Div",
+              "calls": 47,
+              "durationUs": 3360
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Unsqueeze",
+              "calls": 189,
+              "durationUs": 2601
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Equal",
+              "calls": 23,
+              "durationUs": 2226
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "And",
+              "calls": 6,
+              "durationUs": 1595
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Gather",
+              "calls": 99,
+              "durationUs": 1425
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Sin",
+              "calls": 9,
+              "durationUs": 1172
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Shape",
+              "calls": 84,
+              "durationUs": 1141
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Cos",
+              "calls": 9,
+              "durationUs": 1073
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Squeeze",
+              "calls": 64,
+              "durationUs": 992
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Sqrt",
+              "calls": 46,
+              "durationUs": 565
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Expand",
+              "calls": 28,
+              "durationUs": 443
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Or",
+              "calls": 1,
+              "durationUs": 409
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ConstantOfShape",
+              "calls": 6,
+              "durationUs": 61
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "CumSum",
+              "calls": 3,
+              "durationUs": 56
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Greater",
+              "calls": 2,
+              "durationUs": 53
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Range",
+              "calls": 3,
+              "durationUs": 49
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Mod",
+              "calls": 1,
+              "durationUs": 48
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ArgMax",
+              "calls": 1,
+              "durationUs": 42
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ScatterElements",
+              "calls": 1,
+              "durationUs": 42
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "GreaterOrEqual",
+              "calls": 2,
+              "durationUs": 35
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Not",
+              "calls": 2,
+              "durationUs": 29
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Clip",
+              "calls": 2,
+              "durationUs": 25
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Pad",
+              "calls": 1,
+              "durationUs": 24
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Less",
+              "calls": 1,
+              "durationUs": 22
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Sigmoid",
+              "calls": 1,
+              "durationUs": 18
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "GatherElements",
+              "calls": 1,
+              "durationUs": 14
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ReduceMax",
+              "calls": 1,
+              "durationUs": 13
+            }
+          ]
+        }
+      ],
+      "graphCount": 5,
+      "modelRuns": 12,
+      "operators": [
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "MatMul",
+          "calls": 1393,
+          "durationUs": 12927598
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "FusedMatMul",
+          "calls": 129,
+          "durationUs": 3137904
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Conv",
+          "calls": 604,
+          "durationUs": 2227677
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Add",
+          "calls": 2542,
+          "durationUs": 1592656
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Softmax",
+          "calls": 144,
+          "durationUs": 1554096
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Split",
+          "calls": 895,
+          "durationUs": 861523
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Mul",
+          "calls": 3001,
+          "durationUs": 824336
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Transpose",
+          "calls": 1245,
+          "durationUs": 688894
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Gelu",
+          "calls": 605,
+          "durationUs": 663905
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Concat",
+          "calls": 1059,
+          "durationUs": 306715
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Where",
+          "calls": 653,
+          "durationUs": 286572
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "STFT",
+          "calls": 1,
+          "durationUs": 189032
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "SimplifiedLayerNormalization",
+          "calls": 354,
+          "durationUs": 176583
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Pow",
+          "calls": 295,
+          "durationUs": 141155
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "ReduceMean",
+          "calls": 294,
+          "durationUs": 80311
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Sub",
+          "calls": 314,
+          "durationUs": 71234
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Cos",
+          "calls": 289,
+          "durationUs": 58405
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Sin",
+          "calls": 281,
+          "durationUs": 55140
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Slice",
+          "calls": 411,
+          "durationUs": 53140
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Div",
+          "calls": 369,
+          "durationUs": 51193
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "ReduceSum",
+          "calls": 21,
+          "durationUs": 28096
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Einsum",
+          "calls": 272,
+          "durationUs": 27959
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Reshape",
+          "calls": 1821,
+          "durationUs": 27885
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Unsqueeze",
+          "calls": 1117,
+          "durationUs": 15787
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Gather",
+          "calls": 990,
+          "durationUs": 15752
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Shape",
+          "calls": 815,
+          "durationUs": 12240
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Squeeze",
+          "calls": 616,
+          "durationUs": 10529
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Expand",
+          "calls": 44,
+          "durationUs": 8230
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Cast",
+          "calls": 361,
+          "durationUs": 6769
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Sqrt",
+          "calls": 327,
+          "durationUs": 3942
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Range",
+          "calls": 294,
+          "durationUs": 3769
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Equal",
+          "calls": 32,
+          "durationUs": 2354
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "And",
+          "calls": 38,
+          "durationUs": 1947
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Pad",
+          "calls": 10,
+          "durationUs": 1679
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "GatherElements",
+          "calls": 9,
+          "durationUs": 1244
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Log",
+          "calls": 1,
+          "durationUs": 595
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Or",
+          "calls": 9,
+          "durationUs": 492
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "ArgMax",
+          "calls": 9,
+          "durationUs": 321
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Mod",
+          "calls": 9,
+          "durationUs": 285
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "CumSum",
+          "calls": 13,
+          "durationUs": 260
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "BiasGelu",
+          "calls": 8,
+          "durationUs": 223
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Clip",
+          "calls": 11,
+          "durationUs": 198
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "GreaterOrEqual",
+          "calls": 10,
+          "durationUs": 118
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Not",
+          "calls": 10,
+          "durationUs": 115
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "ScatterElements",
+          "calls": 2,
+          "durationUs": 104
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "LessOrEqual",
+          "calls": 8,
+          "durationUs": 102
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Sigmoid",
+          "calls": 9,
+          "durationUs": 94
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "ConstantOfShape",
+          "calls": 8,
+          "durationUs": 80
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Greater",
+          "calls": 3,
+          "durationUs": 71
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "ReduceMax",
+          "calls": 3,
+          "durationUs": 59
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Less",
+          "calls": 3,
+          "durationUs": 53
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Round",
+          "calls": 2,
+          "durationUs": 39
+        }
+      ],
+      "durationMeaning": "ORT host kernel-event duration including dispatch/scheduling; not GPU device time or wall-time speedup."
+    },
+    "cpu_basic": {
+      "graphs": [
+        {
+          "graph": "encoder",
+          "modelRuns": 1,
+          "traceSha256": "432e2e2a4a905f4abb64fa091545dd3b19148895616f551c2f067ef3e017cd5c",
+          "traceBytes": 1157160,
+          "traceFile": "encoder_2026-09-24_00-57-32_159.json",
+          "operators": [
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "MatMul",
+              "calls": 84,
+              "durationUs": 939179
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Gather",
+              "calls": 121,
+              "durationUs": 148426
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Add",
+              "calls": 212,
+              "durationUs": 125614
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "STFT",
+              "calls": 1,
+              "durationUs": 121012
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Conv",
+              "calls": 32,
+              "durationUs": 110250
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Mul",
+              "calls": 289,
+              "durationUs": 81626
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Softmax",
+              "calls": 8,
+              "durationUs": 74217
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Transpose",
+              "calls": 90,
+              "durationUs": 43706
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Slice",
+              "calls": 88,
+              "durationUs": 39654
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Erf",
+              "calls": 32,
+              "durationUs": 36038
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Div",
+              "calls": 106,
+              "durationUs": 21729
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Pow",
+              "calls": 34,
+              "durationUs": 19313
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Concat",
+              "calls": 64,
+              "durationUs": 11869
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Where",
+              "calls": 32,
+              "durationUs": 11648
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ReduceSum",
+              "calls": 1,
+              "durationUs": 9158
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ReduceMean",
+              "calls": 33,
+              "durationUs": 3452
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Cos",
+              "calls": 16,
+              "durationUs": 3351
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Sub",
+              "calls": 16,
+              "durationUs": 3222
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Sin",
+              "calls": 16,
+              "durationUs": 3058
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Einsum",
+              "calls": 16,
+              "durationUs": 1441
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Pad",
+              "calls": 1,
+              "durationUs": 1304
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Shape",
+              "calls": 81,
+              "durationUs": 1255
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Reshape",
+              "calls": 96,
+              "durationUs": 1173
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Sqrt",
+              "calls": 50,
+              "durationUs": 937
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Unsqueeze",
+              "calls": 75,
+              "durationUs": 762
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Log",
+              "calls": 1,
+              "durationUs": 392
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Split",
+              "calls": 1,
+              "durationUs": 344
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Range",
+              "calls": 17,
+              "durationUs": 241
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Cast",
+              "calls": 25,
+              "durationUs": 190
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Clip",
+              "calls": 1,
+              "durationUs": 161
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Less",
+              "calls": 1,
+              "durationUs": 11
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Round",
+              "calls": 1,
+              "durationUs": 6
+            }
+          ]
+        },
+        {
+          "graph": "dur2bd",
+          "modelRuns": 1,
+          "traceSha256": "bc9b3754f995b1eef03f2d4c94714df2044a73c88e627dfdf4f80ec7de4dc5f3",
+          "traceBytes": 9694,
+          "traceFile": "dur2bd_2026-09-24_00-57-32_569.json",
+          "operators": [
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "CumSum",
+              "calls": 1,
+              "durationUs": 42
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Cast",
+              "calls": 2,
+              "durationUs": 31
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Greater",
+              "calls": 1,
+              "durationUs": 28
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Unsqueeze",
+              "calls": 2,
+              "durationUs": 23
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Slice",
+              "calls": 1,
+              "durationUs": 21
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Div",
+              "calls": 1,
+              "durationUs": 18
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Range",
+              "calls": 1,
+              "durationUs": 18
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ReduceSum",
+              "calls": 1,
+              "durationUs": 15
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Gather",
+              "calls": 1,
+              "durationUs": 13
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Equal",
+              "calls": 1,
+              "durationUs": 12
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Round",
+              "calls": 1,
+              "durationUs": 11
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Shape",
+              "calls": 1,
+              "durationUs": 9
+            }
+          ]
+        },
+        {
+          "graph": "segmenter",
+          "modelRuns": 8,
+          "traceSha256": "928328951e527b99dba0393cc07144ddfea3dc026ee97bb2dc51faa95385eb3c",
+          "traceBytes": 15699043,
+          "traceFile": "segmenter_2026-09-24_00-57-32_572.json",
+          "operators": [
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "MatMul",
+              "calls": 1312,
+              "durationUs": 13838957
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Gather",
+              "calls": 1312,
+              "durationUs": 2597434
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Conv",
+              "calls": 512,
+              "durationUs": 2005353
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Softmax",
+              "calls": 128,
+              "durationUs": 1346976
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Add",
+              "calls": 2928,
+              "durationUs": 1272052
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Mul",
+              "calls": 4024,
+              "durationUs": 1266982
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Slice",
+              "calls": 1288,
+              "durationUs": 685306
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Transpose",
+              "calls": 1160,
+              "durationUs": 643958
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Erf",
+              "calls": 520,
+              "durationUs": 612489
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Div",
+              "calls": 1056,
+              "durationUs": 369893
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Where",
+              "calls": 544,
+              "durationUs": 249293
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Pow",
+              "calls": 520,
+              "durationUs": 245298
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Concat",
+              "calls": 800,
+              "durationUs": 244264
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ReduceMean",
+              "calls": 520,
+              "durationUs": 100056
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Cos",
+              "calls": 264,
+              "durationUs": 55827
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Sub",
+              "calls": 264,
+              "durationUs": 52501
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Sin",
+              "calls": 256,
+              "durationUs": 50534
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Einsum",
+              "calls": 256,
+              "durationUs": 26117
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Reshape",
+              "calls": 1560,
+              "durationUs": 21026
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Unsqueeze",
+              "calls": 848,
+              "durationUs": 11323
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Shape",
+              "calls": 648,
+              "durationUs": 9331
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Expand",
+              "calls": 16,
+              "durationUs": 8761
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Sqrt",
+              "calls": 520,
+              "durationUs": 4373
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Range",
+              "calls": 272,
+              "durationUs": 4078
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Cast",
+              "calls": 288,
+              "durationUs": 2733
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "GatherElements",
+              "calls": 8,
+              "durationUs": 1072
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "And",
+              "calls": 32,
+              "durationUs": 343
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Mod",
+              "calls": 8,
+              "durationUs": 256
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ArgMax",
+              "calls": 8,
+              "durationUs": 221
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ReduceSum",
+              "calls": 16,
+              "durationUs": 177
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "CumSum",
+              "calls": 8,
+              "durationUs": 130
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Pad",
+              "calls": 8,
+              "durationUs": 130
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Squeeze",
+              "calls": 8,
+              "durationUs": 103
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "LessOrEqual",
+              "calls": 8,
+              "durationUs": 99
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Not",
+              "calls": 8,
+              "durationUs": 93
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Equal",
+              "calls": 8,
+              "durationUs": 87
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Sigmoid",
+              "calls": 8,
+              "durationUs": 84
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Clip",
+              "calls": 8,
+              "durationUs": 72
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "GreaterOrEqual",
+              "calls": 8,
+              "durationUs": 72
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Or",
+              "calls": 8,
+              "durationUs": 70
+            }
+          ]
+        },
+        {
+          "graph": "bd2dur",
+          "modelRuns": 1,
+          "traceSha256": "2f01fe2363fccdb86c28ba0144d58d15b727c72ea2357a2654c3da2376d73c03",
+          "traceBytes": 15667,
+          "traceFile": "bd2dur_2026-09-24_00-57-33_146.json",
+          "operators": [
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Cast",
+              "calls": 3,
+              "durationUs": 51
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Add",
+              "calls": 2,
+              "durationUs": 44
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ScatterElements",
+              "calls": 1,
+              "durationUs": 42
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ReduceMax",
+              "calls": 2,
+              "durationUs": 41
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Slice",
+              "calls": 2,
+              "durationUs": 34
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Mul",
+              "calls": 2,
+              "durationUs": 29
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Unsqueeze",
+              "calls": 3,
+              "durationUs": 29
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "CumSum",
+              "calls": 1,
+              "durationUs": 20
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ConstantOfShape",
+              "calls": 2,
+              "durationUs": 19
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Concat",
+              "calls": 1,
+              "durationUs": 13
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Gather",
+              "calls": 1,
+              "durationUs": 13
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Less",
+              "calls": 1,
+              "durationUs": 12
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Range",
+              "calls": 1,
+              "durationUs": 11
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Shape",
+              "calls": 1,
+              "durationUs": 9
+            }
+          ]
+        },
+        {
+          "graph": "estimator",
+          "modelRuns": 1,
+          "traceSha256": "259966182ebd05e94c1cdb2a93b20816bd13d086cb10154962897849df4bedaa",
+          "traceBytes": 2157527,
+          "traceFile": "estimator_2026-09-24_00-57-33_148.json",
+          "operators": [
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "MatMul",
+              "calls": 126,
+              "durationUs": 1104109
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Add",
+              "calls": 375,
+              "durationUs": 388248
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Gather",
+              "calls": 163,
+              "durationUs": 186669
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Conv",
+              "calls": 60,
+              "durationUs": 112319
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Softmax",
+              "calls": 8,
+              "durationUs": 108484
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Mul",
+              "calls": 522,
+              "durationUs": 88687
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Slice",
+              "calls": 228,
+              "durationUs": 59572
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Erf",
+              "calls": 61,
+              "durationUs": 40421
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Transpose",
+              "calls": 123,
+              "durationUs": 34879
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Pow",
+              "calls": 95,
+              "durationUs": 31061
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Concat",
+              "calls": 194,
+              "durationUs": 30308
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Div",
+              "calls": 173,
+              "durationUs": 29619
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Where",
+              "calls": 77,
+              "durationUs": 25332
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ReduceSum",
+              "calls": 3,
+              "durationUs": 16090
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ReduceMean",
+              "calls": 95,
+              "durationUs": 9740
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Cast",
+              "calls": 43,
+              "durationUs": 7278
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Sub",
+              "calls": 34,
+              "durationUs": 3842
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Unsqueeze",
+              "calls": 189,
+              "durationUs": 2041
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Reshape",
+              "calls": 165,
+              "durationUs": 1756
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Equal",
+              "calls": 23,
+              "durationUs": 1470
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "And",
+              "calls": 6,
+              "durationUs": 1192
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Shape",
+              "calls": 84,
+              "durationUs": 1035
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Sqrt",
+              "calls": 111,
+              "durationUs": 980
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Sin",
+              "calls": 9,
+              "durationUs": 950
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Cos",
+              "calls": 9,
+              "durationUs": 891
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Expand",
+              "calls": 28,
+              "durationUs": 366
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Or",
+              "calls": 1,
+              "durationUs": 295
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Mod",
+              "calls": 1,
+              "durationUs": 48
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "CumSum",
+              "calls": 3,
+              "durationUs": 46
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Greater",
+              "calls": 2,
+              "durationUs": 42
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ConstantOfShape",
+              "calls": 6,
+              "durationUs": 40
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "GreaterOrEqual",
+              "calls": 2,
+              "durationUs": 38
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Range",
+              "calls": 3,
+              "durationUs": 31
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ArgMax",
+              "calls": 1,
+              "durationUs": 29
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ScatterElements",
+              "calls": 1,
+              "durationUs": 28
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Clip",
+              "calls": 2,
+              "durationUs": 27
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "GatherElements",
+              "calls": 1,
+              "durationUs": 26
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Less",
+              "calls": 1,
+              "durationUs": 26
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Not",
+              "calls": 2,
+              "durationUs": 20
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Pad",
+              "calls": 1,
+              "durationUs": 18
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Sigmoid",
+              "calls": 1,
+              "durationUs": 18
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ReduceMax",
+              "calls": 1,
+              "durationUs": 14
+            }
+          ]
+        }
+      ],
+      "graphCount": 5,
+      "modelRuns": 12,
+      "operators": [
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "MatMul",
+          "calls": 1522,
+          "durationUs": 15882245
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Gather",
+          "calls": 1598,
+          "durationUs": 2932555
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Conv",
+          "calls": 604,
+          "durationUs": 2227922
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Add",
+          "calls": 3517,
+          "durationUs": 1785958
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Softmax",
+          "calls": 144,
+          "durationUs": 1529677
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Mul",
+          "calls": 4837,
+          "durationUs": 1437324
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Slice",
+          "calls": 1607,
+          "durationUs": 784587
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Transpose",
+          "calls": 1373,
+          "durationUs": 722543
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Erf",
+          "calls": 613,
+          "durationUs": 688948
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Div",
+          "calls": 1336,
+          "durationUs": 421259
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Pow",
+          "calls": 649,
+          "durationUs": 295672
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Concat",
+          "calls": 1059,
+          "durationUs": 286454
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Where",
+          "calls": 653,
+          "durationUs": 286273
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "STFT",
+          "calls": 1,
+          "durationUs": 121012
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "ReduceMean",
+          "calls": 648,
+          "durationUs": 113248
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Cos",
+          "calls": 289,
+          "durationUs": 60069
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Sub",
+          "calls": 314,
+          "durationUs": 59565
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Sin",
+          "calls": 281,
+          "durationUs": 54542
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Einsum",
+          "calls": 272,
+          "durationUs": 27558
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "ReduceSum",
+          "calls": 21,
+          "durationUs": 25440
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Reshape",
+          "calls": 1821,
+          "durationUs": 23955
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Unsqueeze",
+          "calls": 1117,
+          "durationUs": 14178
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Shape",
+          "calls": 815,
+          "durationUs": 11639
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Cast",
+          "calls": 361,
+          "durationUs": 10283
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Expand",
+          "calls": 44,
+          "durationUs": 9127
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Sqrt",
+          "calls": 681,
+          "durationUs": 6290
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Range",
+          "calls": 294,
+          "durationUs": 4379
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Equal",
+          "calls": 32,
+          "durationUs": 1569
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "And",
+          "calls": 38,
+          "durationUs": 1535
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Pad",
+          "calls": 10,
+          "durationUs": 1452
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "GatherElements",
+          "calls": 9,
+          "durationUs": 1098
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Log",
+          "calls": 1,
+          "durationUs": 392
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Or",
+          "calls": 9,
+          "durationUs": 365
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Split",
+          "calls": 1,
+          "durationUs": 344
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Mod",
+          "calls": 9,
+          "durationUs": 304
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Clip",
+          "calls": 11,
+          "durationUs": 260
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "ArgMax",
+          "calls": 9,
+          "durationUs": 250
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "CumSum",
+          "calls": 13,
+          "durationUs": 238
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Not",
+          "calls": 10,
+          "durationUs": 113
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "GreaterOrEqual",
+          "calls": 10,
+          "durationUs": 110
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Squeeze",
+          "calls": 8,
+          "durationUs": 103
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Sigmoid",
+          "calls": 9,
+          "durationUs": 102
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "LessOrEqual",
+          "calls": 8,
+          "durationUs": 99
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Greater",
+          "calls": 3,
+          "durationUs": 70
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "ScatterElements",
+          "calls": 2,
+          "durationUs": 70
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "ConstantOfShape",
+          "calls": 8,
+          "durationUs": 59
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "ReduceMax",
+          "calls": 3,
+          "durationUs": 55
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Less",
+          "calls": 3,
+          "durationUs": 49
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Round",
+          "calls": 2,
+          "durationUs": 17
+        }
+      ],
+      "durationMeaning": "ORT host kernel-event duration including dispatch/scheduling; not GPU device time or wall-time speedup."
+    },
+    "gpu_package_cpu_basic": {
+      "graphs": [
+        {
+          "graph": "encoder",
+          "modelRuns": 1,
+          "traceSha256": "8e566955f7f893fc6ade4942b2e4c384802a7bde26f6e0dd61972562f1056080",
+          "traceBytes": 1157169,
+          "traceFile": "encoder_2026-09-24_00-59-28_265.json",
+          "operators": [
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "MatMul",
+              "calls": 84,
+              "durationUs": 959431
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Gather",
+              "calls": 121,
+              "durationUs": 138642
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Add",
+              "calls": 212,
+              "durationUs": 126865
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Conv",
+              "calls": 32,
+              "durationUs": 118860
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "STFT",
+              "calls": 1,
+              "durationUs": 116635
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Mul",
+              "calls": 289,
+              "durationUs": 78006
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Softmax",
+              "calls": 8,
+              "durationUs": 77783
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Transpose",
+              "calls": 90,
+              "durationUs": 44961
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Slice",
+              "calls": 88,
+              "durationUs": 39835
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Erf",
+              "calls": 32,
+              "durationUs": 37877
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Div",
+              "calls": 106,
+              "durationUs": 23370
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Pow",
+              "calls": 34,
+              "durationUs": 19566
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Where",
+              "calls": 32,
+              "durationUs": 11726
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Concat",
+              "calls": 64,
+              "durationUs": 11137
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ReduceSum",
+              "calls": 1,
+              "durationUs": 9408
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ReduceMean",
+              "calls": 33,
+              "durationUs": 3480
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Sub",
+              "calls": 16,
+              "durationUs": 3251
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Sin",
+              "calls": 16,
+              "durationUs": 3138
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Cos",
+              "calls": 16,
+              "durationUs": 2999
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Einsum",
+              "calls": 16,
+              "durationUs": 1400
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Pad",
+              "calls": 1,
+              "durationUs": 1359
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Shape",
+              "calls": 81,
+              "durationUs": 1152
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Reshape",
+              "calls": 96,
+              "durationUs": 1142
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Sqrt",
+              "calls": 50,
+              "durationUs": 915
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Unsqueeze",
+              "calls": 75,
+              "durationUs": 864
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Log",
+              "calls": 1,
+              "durationUs": 492
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Split",
+              "calls": 1,
+              "durationUs": 356
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Range",
+              "calls": 17,
+              "durationUs": 290
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Cast",
+              "calls": 25,
+              "durationUs": 235
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Clip",
+              "calls": 1,
+              "durationUs": 101
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Less",
+              "calls": 1,
+              "durationUs": 13
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Round",
+              "calls": 1,
+              "durationUs": 7
+            }
+          ]
+        },
+        {
+          "graph": "dur2bd",
+          "modelRuns": 1,
+          "traceSha256": "28afe2baa2e25a1b9921fc16fc1ad18c11df1eb84d7aa436c444833b666c1b19",
+          "traceBytes": 9693,
+          "traceFile": "dur2bd_2026-09-24_00-59-28_646.json",
+          "operators": [
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "CumSum",
+              "calls": 1,
+              "durationUs": 42
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Unsqueeze",
+              "calls": 2,
+              "durationUs": 25
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Cast",
+              "calls": 2,
+              "durationUs": 24
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Div",
+              "calls": 1,
+              "durationUs": 21
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Slice",
+              "calls": 1,
+              "durationUs": 20
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ReduceSum",
+              "calls": 1,
+              "durationUs": 19
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Greater",
+              "calls": 1,
+              "durationUs": 18
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Range",
+              "calls": 1,
+              "durationUs": 16
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Gather",
+              "calls": 1,
+              "durationUs": 14
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Equal",
+              "calls": 1,
+              "durationUs": 12
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Round",
+              "calls": 1,
+              "durationUs": 11
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Shape",
+              "calls": 1,
+              "durationUs": 10
+            }
+          ]
+        },
+        {
+          "graph": "segmenter",
+          "modelRuns": 8,
+          "traceSha256": "773d1450efe137bc0db964f1eeae12714de495867f9d0d7870110b4d58cc1d6a",
+          "traceBytes": 15699117,
+          "traceFile": "segmenter_2026-09-24_00-59-28_648.json",
+          "operators": [
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "MatMul",
+              "calls": 1312,
+              "durationUs": 13839105
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Gather",
+              "calls": 1312,
+              "durationUs": 2527153
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Conv",
+              "calls": 512,
+              "durationUs": 1983205
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Softmax",
+              "calls": 128,
+              "durationUs": 1333072
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Add",
+              "calls": 2928,
+              "durationUs": 1262958
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Mul",
+              "calls": 4024,
+              "durationUs": 1242440
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Slice",
+              "calls": 1288,
+              "durationUs": 677147
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Transpose",
+              "calls": 1160,
+              "durationUs": 642080
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Erf",
+              "calls": 520,
+              "durationUs": 591511
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Div",
+              "calls": 1056,
+              "durationUs": 361888
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Concat",
+              "calls": 800,
+              "durationUs": 240590
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Where",
+              "calls": 544,
+              "durationUs": 237773
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Pow",
+              "calls": 520,
+              "durationUs": 237459
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ReduceMean",
+              "calls": 520,
+              "durationUs": 97990
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Cos",
+              "calls": 264,
+              "durationUs": 53811
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Sub",
+              "calls": 264,
+              "durationUs": 52952
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Sin",
+              "calls": 256,
+              "durationUs": 49424
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Einsum",
+              "calls": 256,
+              "durationUs": 25565
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Reshape",
+              "calls": 1560,
+              "durationUs": 20133
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Unsqueeze",
+              "calls": 848,
+              "durationUs": 10999
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Shape",
+              "calls": 648,
+              "durationUs": 9687
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Expand",
+              "calls": 16,
+              "durationUs": 9123
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Range",
+              "calls": 272,
+              "durationUs": 4865
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Sqrt",
+              "calls": 520,
+              "durationUs": 4092
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Cast",
+              "calls": 288,
+              "durationUs": 3009
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "GatherElements",
+              "calls": 8,
+              "durationUs": 1206
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "And",
+              "calls": 32,
+              "durationUs": 346
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ArgMax",
+              "calls": 8,
+              "durationUs": 262
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Mod",
+              "calls": 8,
+              "durationUs": 254
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ReduceSum",
+              "calls": 16,
+              "durationUs": 235
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Pad",
+              "calls": 8,
+              "durationUs": 135
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "CumSum",
+              "calls": 8,
+              "durationUs": 124
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "LessOrEqual",
+              "calls": 8,
+              "durationUs": 115
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Sigmoid",
+              "calls": 8,
+              "durationUs": 105
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Squeeze",
+              "calls": 8,
+              "durationUs": 100
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Equal",
+              "calls": 8,
+              "durationUs": 88
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Not",
+              "calls": 8,
+              "durationUs": 77
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "GreaterOrEqual",
+              "calls": 8,
+              "durationUs": 76
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Or",
+              "calls": 8,
+              "durationUs": 70
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Clip",
+              "calls": 8,
+              "durationUs": 65
+            }
+          ]
+        },
+        {
+          "graph": "bd2dur",
+          "modelRuns": 1,
+          "traceSha256": "efc078c9083da3ff26745d21c008e49c548cedce46b25248e48472ac04a8080c",
+          "traceBytes": 15665,
+          "traceFile": "bd2dur_2026-09-24_00-59-29_237.json",
+          "operators": [
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Cast",
+              "calls": 3,
+              "durationUs": 49
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Mul",
+              "calls": 2,
+              "durationUs": 35
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ScatterElements",
+              "calls": 1,
+              "durationUs": 32
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Slice",
+              "calls": 2,
+              "durationUs": 30
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ReduceMax",
+              "calls": 2,
+              "durationUs": 26
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Unsqueeze",
+              "calls": 3,
+              "durationUs": 26
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Add",
+              "calls": 2,
+              "durationUs": 24
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ConstantOfShape",
+              "calls": 2,
+              "durationUs": 19
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "CumSum",
+              "calls": 1,
+              "durationUs": 17
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Concat",
+              "calls": 1,
+              "durationUs": 12
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Gather",
+              "calls": 1,
+              "durationUs": 10
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Less",
+              "calls": 1,
+              "durationUs": 10
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Range",
+              "calls": 1,
+              "durationUs": 9
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Shape",
+              "calls": 1,
+              "durationUs": 7
+            }
+          ]
+        },
+        {
+          "graph": "estimator",
+          "modelRuns": 1,
+          "traceSha256": "bfc9ab09b0b467440e6cab74c09856df545220a4d436c2093a61fb9df470222c",
+          "traceBytes": 2157302,
+          "traceFile": "estimator_2026-09-24_00-59-29_239.json",
+          "operators": [
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "MatMul",
+              "calls": 126,
+              "durationUs": 933761
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Add",
+              "calls": 375,
+              "durationUs": 319275
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Gather",
+              "calls": 163,
+              "durationUs": 148073
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Conv",
+              "calls": 60,
+              "durationUs": 95368
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Softmax",
+              "calls": 8,
+              "durationUs": 94912
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Mul",
+              "calls": 522,
+              "durationUs": 79661
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Slice",
+              "calls": 228,
+              "durationUs": 54874
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Erf",
+              "calls": 61,
+              "durationUs": 31325
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Transpose",
+              "calls": 123,
+              "durationUs": 29346
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Concat",
+              "calls": 194,
+              "durationUs": 28486
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Pow",
+              "calls": 95,
+              "durationUs": 27516
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Div",
+              "calls": 173,
+              "durationUs": 26541
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Where",
+              "calls": 77,
+              "durationUs": 22655
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ReduceSum",
+              "calls": 3,
+              "durationUs": 16799
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ReduceMean",
+              "calls": 95,
+              "durationUs": 8597
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Sub",
+              "calls": 34,
+              "durationUs": 3766
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Cast",
+              "calls": 43,
+              "durationUs": 2281
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Unsqueeze",
+              "calls": 189,
+              "durationUs": 2072
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Reshape",
+              "calls": 165,
+              "durationUs": 1499
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Equal",
+              "calls": 23,
+              "durationUs": 1458
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "And",
+              "calls": 6,
+              "durationUs": 1281
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Sin",
+              "calls": 9,
+              "durationUs": 1045
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Sqrt",
+              "calls": 111,
+              "durationUs": 945
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Shape",
+              "calls": 84,
+              "durationUs": 907
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Cos",
+              "calls": 9,
+              "durationUs": 802
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Expand",
+              "calls": 28,
+              "durationUs": 332
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Or",
+              "calls": 1,
+              "durationUs": 292
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Mod",
+              "calls": 1,
+              "durationUs": 52
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "GatherElements",
+              "calls": 1,
+              "durationUs": 47
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "CumSum",
+              "calls": 3,
+              "durationUs": 46
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ConstantOfShape",
+              "calls": 6,
+              "durationUs": 40
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "GreaterOrEqual",
+              "calls": 2,
+              "durationUs": 33
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Greater",
+              "calls": 2,
+              "durationUs": 30
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ScatterElements",
+              "calls": 1,
+              "durationUs": 27
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ArgMax",
+              "calls": 1,
+              "durationUs": 26
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Range",
+              "calls": 3,
+              "durationUs": 26
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Clip",
+              "calls": 2,
+              "durationUs": 20
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Not",
+              "calls": 2,
+              "durationUs": 20
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Pad",
+              "calls": 1,
+              "durationUs": 20
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Less",
+              "calls": 1,
+              "durationUs": 19
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Sigmoid",
+              "calls": 1,
+              "durationUs": 15
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ReduceMax",
+              "calls": 1,
+              "durationUs": 10
+            }
+          ]
+        }
+      ],
+      "graphCount": 5,
+      "modelRuns": 12,
+      "operators": [
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "MatMul",
+          "calls": 1522,
+          "durationUs": 15732297
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Gather",
+          "calls": 1598,
+          "durationUs": 2813892
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Conv",
+          "calls": 604,
+          "durationUs": 2197433
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Add",
+          "calls": 3517,
+          "durationUs": 1709122
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Softmax",
+          "calls": 144,
+          "durationUs": 1505767
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Mul",
+          "calls": 4837,
+          "durationUs": 1400142
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Slice",
+          "calls": 1607,
+          "durationUs": 771906
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Transpose",
+          "calls": 1373,
+          "durationUs": 716387
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Erf",
+          "calls": 613,
+          "durationUs": 660713
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Div",
+          "calls": 1336,
+          "durationUs": 411820
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Pow",
+          "calls": 649,
+          "durationUs": 284541
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Concat",
+          "calls": 1059,
+          "durationUs": 280225
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Where",
+          "calls": 653,
+          "durationUs": 272154
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "STFT",
+          "calls": 1,
+          "durationUs": 116635
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "ReduceMean",
+          "calls": 648,
+          "durationUs": 110067
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Sub",
+          "calls": 314,
+          "durationUs": 59969
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Cos",
+          "calls": 289,
+          "durationUs": 57612
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Sin",
+          "calls": 281,
+          "durationUs": 53607
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Einsum",
+          "calls": 272,
+          "durationUs": 26965
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "ReduceSum",
+          "calls": 21,
+          "durationUs": 26461
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Reshape",
+          "calls": 1821,
+          "durationUs": 22774
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Unsqueeze",
+          "calls": 1117,
+          "durationUs": 13986
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Shape",
+          "calls": 815,
+          "durationUs": 11763
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Expand",
+          "calls": 44,
+          "durationUs": 9455
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Sqrt",
+          "calls": 681,
+          "durationUs": 5952
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Cast",
+          "calls": 361,
+          "durationUs": 5598
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Range",
+          "calls": 294,
+          "durationUs": 5206
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "And",
+          "calls": 38,
+          "durationUs": 1627
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Equal",
+          "calls": 32,
+          "durationUs": 1558
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Pad",
+          "calls": 10,
+          "durationUs": 1514
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "GatherElements",
+          "calls": 9,
+          "durationUs": 1253
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Log",
+          "calls": 1,
+          "durationUs": 492
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Or",
+          "calls": 9,
+          "durationUs": 362
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Split",
+          "calls": 1,
+          "durationUs": 356
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Mod",
+          "calls": 9,
+          "durationUs": 306
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "ArgMax",
+          "calls": 9,
+          "durationUs": 288
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "CumSum",
+          "calls": 13,
+          "durationUs": 229
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Clip",
+          "calls": 11,
+          "durationUs": 186
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Sigmoid",
+          "calls": 9,
+          "durationUs": 120
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "LessOrEqual",
+          "calls": 8,
+          "durationUs": 115
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "GreaterOrEqual",
+          "calls": 10,
+          "durationUs": 109
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Squeeze",
+          "calls": 8,
+          "durationUs": 100
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Not",
+          "calls": 10,
+          "durationUs": 97
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "ConstantOfShape",
+          "calls": 8,
+          "durationUs": 59
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "ScatterElements",
+          "calls": 2,
+          "durationUs": 59
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Greater",
+          "calls": 3,
+          "durationUs": 48
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Less",
+          "calls": 3,
+          "durationUs": 42
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "ReduceMax",
+          "calls": 3,
+          "durationUs": 36
+        },
+        {
+          "provider": "CPUExecutionProvider",
+          "operator": "Round",
+          "calls": 2,
+          "durationUs": 18
+        }
+      ],
+      "durationMeaning": "ORT host kernel-event duration including dispatch/scheduling; not GPU device time or wall-time speedup."
+    }
+  },
+  "sourceSnapshotCount": 10,
+  "sourceSnapshotFileCount": 30,
+  "sourceSnapshotHashes": {
+    "cpu_all_plain/NativeGame.java": "a1bb68a4930b5acd74f7fdc2d1d105f1d7f5c9974f11514872f47672b8736369",
+    "cpu_all_plain/GameAcceleratorCapture.java": "85e88098fe1521a32911fd4a07e402ad35521ad926c9f7b26c4365f9b6899ca2",
+    "cpu_all_plain/GameAcceleratorRunner.java": "5a017de62d00fd8f08999542c3df34e3cc3a8e07712fdaf7de94343fe56c786c",
+    "cpu_all_captured/NativeGame.java": "0290a334c06eeca49111e1991af868acb82f49b79af269aa4afc86784a03b227",
+    "cpu_all_captured/GameAcceleratorCapture.java": "85e88098fe1521a32911fd4a07e402ad35521ad926c9f7b26c4365f9b6899ca2",
+    "cpu_all_captured/GameAcceleratorRunner.java": "5a017de62d00fd8f08999542c3df34e3cc3a8e07712fdaf7de94343fe56c786c",
+    "cpu_all_profiled/NativeGame.java": "1d3d53523af7ab30e507c9ff390faeea752e92b5acb24abc1bdd5903be4f6713",
+    "cpu_all_profiled/GameAcceleratorCapture.java": "85e88098fe1521a32911fd4a07e402ad35521ad926c9f7b26c4365f9b6899ca2",
+    "cpu_all_profiled/GameAcceleratorRunner.java": "5a017de62d00fd8f08999542c3df34e3cc3a8e07712fdaf7de94343fe56c786c",
+    "cpu_basic_plain/NativeGame.java": "c5211f354a7ad8310728623d7a5b2873ff0b06355ead3d96d78cebca66c5c628",
+    "cpu_basic_plain/GameAcceleratorCapture.java": "85e88098fe1521a32911fd4a07e402ad35521ad926c9f7b26c4365f9b6899ca2",
+    "cpu_basic_plain/GameAcceleratorRunner.java": "5a017de62d00fd8f08999542c3df34e3cc3a8e07712fdaf7de94343fe56c786c",
+    "cpu_basic_captured/NativeGame.java": "94da69917c569620b28e11a36d8f582066ec1df8fff6a437395a2e4c41e62a49",
+    "cpu_basic_captured/GameAcceleratorCapture.java": "85e88098fe1521a32911fd4a07e402ad35521ad926c9f7b26c4365f9b6899ca2",
+    "cpu_basic_captured/GameAcceleratorRunner.java": "5a017de62d00fd8f08999542c3df34e3cc3a8e07712fdaf7de94343fe56c786c",
+    "cpu_basic_profiled/NativeGame.java": "8376d7a712f2f4f5853b21250dab0dd2c750625cbfdce9443640ad504a2ac5c0",
+    "cpu_basic_profiled/GameAcceleratorCapture.java": "85e88098fe1521a32911fd4a07e402ad35521ad926c9f7b26c4365f9b6899ca2",
+    "cpu_basic_profiled/GameAcceleratorRunner.java": "5a017de62d00fd8f08999542c3df34e3cc3a8e07712fdaf7de94343fe56c786c",
+    "gpu_package_cpu_basic_plain/NativeGame.java": "c5211f354a7ad8310728623d7a5b2873ff0b06355ead3d96d78cebca66c5c628",
+    "gpu_package_cpu_basic_plain/GameAcceleratorCapture.java": "85e88098fe1521a32911fd4a07e402ad35521ad926c9f7b26c4365f9b6899ca2",
+    "gpu_package_cpu_basic_plain/GameAcceleratorRunner.java": "5a017de62d00fd8f08999542c3df34e3cc3a8e07712fdaf7de94343fe56c786c",
+    "gpu_package_cpu_basic_captured/NativeGame.java": "94da69917c569620b28e11a36d8f582066ec1df8fff6a437395a2e4c41e62a49",
+    "gpu_package_cpu_basic_captured/GameAcceleratorCapture.java": "85e88098fe1521a32911fd4a07e402ad35521ad926c9f7b26c4365f9b6899ca2",
+    "gpu_package_cpu_basic_captured/GameAcceleratorRunner.java": "5a017de62d00fd8f08999542c3df34e3cc3a8e07712fdaf7de94343fe56c786c",
+    "gpu_package_cpu_basic_profiled/NativeGame.java": "f879c6ee3eff26b2261b5c2e84d6bfb1b19c9d6ac74021dbd409abe2a69921b2",
+    "gpu_package_cpu_basic_profiled/GameAcceleratorCapture.java": "85e88098fe1521a32911fd4a07e402ad35521ad926c9f7b26c4365f9b6899ca2",
+    "gpu_package_cpu_basic_profiled/GameAcceleratorRunner.java": "5a017de62d00fd8f08999542c3df34e3cc3a8e07712fdaf7de94343fe56c786c",
+    "cuda_basic_plain/NativeGame.java": "782c39fe4ce85eef5392e6199f8d299456962be948b8a0a0279d15419b7de137",
+    "cuda_basic_plain/GameAcceleratorCapture.java": "85e88098fe1521a32911fd4a07e402ad35521ad926c9f7b26c4365f9b6899ca2",
+    "cuda_basic_plain/GameAcceleratorRunner.java": "5a017de62d00fd8f08999542c3df34e3cc3a8e07712fdaf7de94343fe56c786c"
+  },
+  "compiledClassInventoryCount": 70,
+  "sourceSnapshotScope": "Nine completed CPU runs and one attempted CUDA plain snapshot; classes inspected for inventory only.",
+  "crossVariantComparisonsRecomputedByAudit": [
+    {
+      "schema": "lightforge-game-comparison-1",
+      "exactParity": false,
+      "leftRuntime": "onnxruntime-java-1.25.1",
+      "rightRuntime": "onnxruntime-java-1.25.1",
+      "pcmSHA256": "a75b3b8d59c87d428e38e45db5f54ad8d2b1613fe79ee07c2595fecbf9215274",
+      "unroundedNotesIdentical": false,
+      "leftNoteCount": 21,
+      "rightNoteCount": 21,
+      "noteDiagnostics": {
+        "sameCount": true,
+        "boundariesIdentical": true,
+        "maxAcceptedPitchDifferenceMidi": 7.62939453125e-06
+      },
+      "tensors": [
+        {
+          "tensor": "encoder/x_seg",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": false,
+          "elements": 358400,
+          "unequalElements": 319824,
+          "maxAbsoluteDifference": 3.0994415283203125e-06,
+          "rmsDifference": 4.3195784049921555e-07
+        },
+        {
+          "tensor": "encoder/x_est",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": false,
+          "elements": 358400,
+          "unequalElements": 326252,
+          "maxAbsoluteDifference": 2.86102294921875e-06,
+          "rmsDifference": 3.037444845480129e-07
+        },
+        {
+          "tensor": "encoder/maskT",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "dur2bd/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-0/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-1/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-2/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-3/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-4/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-5/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-6/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-7/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "bd2dur/durations",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 22,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "bd2dur/maskN",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 22,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "estimator/presence",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 22,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "estimator/scores",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": false,
+          "elements": 22,
+          "unequalElements": 12,
+          "maxAbsoluteDifference": 7.62939453125e-06,
+          "rmsDifference": 4.226010966545084e-06
+        }
+      ],
+      "interpretation": "Exact parity is required here; numeric differences are diagnostic, never automatic quality approval.",
+      "reference": "cpu_all",
+      "candidate": "cpu_basic",
+      "auditRecomputed": true,
+      "qualityApproved": false,
+      "tolerance": null
+    },
+    {
+      "schema": "lightforge-game-comparison-1",
+      "exactParity": true,
+      "leftRuntime": "onnxruntime-java-1.25.1",
+      "rightRuntime": "onnxruntime-java-1.25.1",
+      "pcmSHA256": "a75b3b8d59c87d428e38e45db5f54ad8d2b1613fe79ee07c2595fecbf9215274",
+      "unroundedNotesIdentical": true,
+      "leftNoteCount": 21,
+      "rightNoteCount": 21,
+      "noteDiagnostics": {
+        "sameCount": true,
+        "boundariesIdentical": true,
+        "maxAcceptedPitchDifferenceMidi": 0.0
+      },
+      "tensors": [
+        {
+          "tensor": "encoder/x_seg",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 358400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "encoder/x_est",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 358400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "encoder/maskT",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "dur2bd/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-0/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-1/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-2/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-3/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-4/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-5/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-6/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-7/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "bd2dur/durations",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 22,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "bd2dur/maskN",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 22,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "estimator/presence",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 22,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "estimator/scores",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 22,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        }
+      ],
+      "interpretation": "Exact parity is required here; numeric differences are diagnostic, never automatic quality approval.",
+      "reference": "cpu_basic",
+      "candidate": "gpu_package_cpu_basic",
+      "auditRecomputed": true,
+      "qualityApproved": false,
+      "tolerance": null
+    },
+    {
+      "schema": "lightforge-game-comparison-1",
+      "exactParity": false,
+      "leftRuntime": "onnxruntime-java-1.25.1",
+      "rightRuntime": "onnxruntime-java-1.25.1",
+      "pcmSHA256": "a75b3b8d59c87d428e38e45db5f54ad8d2b1613fe79ee07c2595fecbf9215274",
+      "unroundedNotesIdentical": false,
+      "leftNoteCount": 21,
+      "rightNoteCount": 21,
+      "noteDiagnostics": {
+        "sameCount": true,
+        "boundariesIdentical": true,
+        "maxAcceptedPitchDifferenceMidi": 7.62939453125e-06
+      },
+      "tensors": [
+        {
+          "tensor": "encoder/x_seg",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": false,
+          "elements": 358400,
+          "unequalElements": 319824,
+          "maxAbsoluteDifference": 3.0994415283203125e-06,
+          "rmsDifference": 4.3195784049921555e-07
+        },
+        {
+          "tensor": "encoder/x_est",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": false,
+          "elements": 358400,
+          "unequalElements": 326252,
+          "maxAbsoluteDifference": 2.86102294921875e-06,
+          "rmsDifference": 3.037444845480129e-07
+        },
+        {
+          "tensor": "encoder/maskT",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "dur2bd/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-0/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-1/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-2/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-3/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-4/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-5/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-6/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-7/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "bd2dur/durations",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 22,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "bd2dur/maskN",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 22,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "estimator/presence",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 22,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "estimator/scores",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": false,
+          "elements": 22,
+          "unequalElements": 12,
+          "maxAbsoluteDifference": 7.62939453125e-06,
+          "rmsDifference": 4.226010966545084e-06
+        }
+      ],
+      "interpretation": "Exact parity is required here; numeric differences are diagnostic, never automatic quality approval.",
+      "reference": "cpu_all",
+      "candidate": "gpu_package_cpu_basic",
+      "auditRecomputed": true,
+      "qualityApproved": false,
+      "tolerance": null
+    }
+  ],
+  "noteDiagnostics": [
+    {
+      "reference": "cpu_all",
+      "candidate": "cpu_basic",
+      "exactParity": false,
+      "unroundedNotesIdentical": false,
+      "leftNoteCount": 21,
+      "rightNoteCount": 21,
+      "noteDiagnostics": {
+        "sameCount": true,
+        "boundariesIdentical": true,
+        "maxAcceptedPitchDifferenceMidi": 7.62939453125e-06
+      },
+      "unequalTensorCount": 3,
+      "maxTensorAbsoluteDifference": 7.62939453125e-06
+    },
+    {
+      "reference": "cpu_basic",
+      "candidate": "gpu_package_cpu_basic",
+      "exactParity": true,
+      "unroundedNotesIdentical": true,
+      "leftNoteCount": 21,
+      "rightNoteCount": 21,
+      "noteDiagnostics": {
+        "sameCount": true,
+        "boundariesIdentical": true,
+        "maxAcceptedPitchDifferenceMidi": 0.0
+      },
+      "unequalTensorCount": 0,
+      "maxTensorAbsoluteDifference": 0.0
+    },
+    {
+      "reference": "cpu_all",
+      "candidate": "gpu_package_cpu_basic",
+      "exactParity": false,
+      "unroundedNotesIdentical": false,
+      "leftNoteCount": 21,
+      "rightNoteCount": 21,
+      "noteDiagnostics": {
+        "sameCount": true,
+        "boundariesIdentical": true,
+        "maxAcceptedPitchDifferenceMidi": 7.62939453125e-06
+      },
+      "unequalTensorCount": 3,
+      "maxTensorAbsoluteDifference": 7.62939453125e-06
+    }
+  ],
+  "missingTerminalBindings": [
+    "compiledSnapshotHashes",
+    "inputsRecheckedAfterQualification",
+    "observerComparisonsPassed",
+    "rawOutputsByteIdenticalAcrossVariants",
+    "gpuNativeLibraries",
+    "gpuNativeLibraryVersions"
+  ],
+  "limitation": "Qualification aborted before CUDA completion and final input/source/runtime rehash. No final compiledSnapshotHashes inventory exists. This audit binds retained files through supplied ZIP SHA256, run receipt hashes, tensor receipt hashes and trace receipt hashes. It does not establish final runtime rehash, GPU library bindings, CUDA observer parity, CUDA placement, complete qualification or quality/performance/release approval.",
+  "qualityApproved": false,
+  "target75Proven": false,
+  "measuredSpeedupApproved": false,
+  "releaseAuthorized": false,
+  "noBenchmarksExecuted": true,
+  "repositoryModified": false
+}
