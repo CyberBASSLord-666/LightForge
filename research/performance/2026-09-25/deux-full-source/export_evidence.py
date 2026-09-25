@@ -41,7 +41,7 @@ def allowed(relative, sources):
         return True
     if re.fullmatch(stage + r'/cpu_all-runtime-probe/(?:RuntimeProbe\.(?:java|class)|compile\.log|probe\.log)', name):
         return True
-    if re.fullmatch(stage + r'/snapshots/cpu_all_(?:plain|profiled)/(?:NativeDeux|AppDiagnostics|DeuxSourceRunner|NativeDeuxTransform|NativeInferenceProfile)\.java', name):
+    if re.fullmatch(stage + r'/snapshots/cpu_all_(?:plain|profiled)/(?:NativeDeux|AppDiagnostics|DeuxSourceRunner|DeuxSourceTrace|NativeDeuxTransform|NativeInferenceProfile)\.java', name):
         return True
     if re.fullmatch(stage + r'/snapshots/cpu_all_(?:plain|profiled)/(?:compile|run)\.log', name):
         return True

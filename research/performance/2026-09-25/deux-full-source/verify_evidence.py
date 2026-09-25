@@ -249,6 +249,7 @@ def verify_snapshots(directory, receipt, source, collector):
         traces = None
         if mode == 'profiled':
             matches = re.findall(r'options\.enableProfiling\(new File\(("(?:[^"\\]|\\.)*"),name\)\.getAbsolutePath\(\)\);', observed)
+            matches += re.findall(r'options\.enableProfiling\(DeuxSourceTrace\.prefix\(name,("(?:[^"\\]|\\.)*")\)\);', observed)
             require(len(matches) == 1, 'Missing or ambiguous generated trace destination.')
             traces = Path(json.loads(matches[0]))
             require(traces.is_absolute() and traces.name == 'cpu_all_profiled_active_traces' and
@@ -259,6 +260,9 @@ def verify_snapshots(directory, receipt, source, collector):
             ('NativeDeuxTransform.java', 'android/src/com/cyberbasslord/lightforge/NativeDeuxTransform.java'),
             ('NativeInferenceProfile.java', 'android/src/com/cyberbasslord/lightforge/NativeInferenceProfile.java')):
             require(safe_file(snapshot, filename).read_bytes() == safe_file(source, relative).read_bytes(), 'Copied Java source differs.')
+        if 'tools/deux_benchmark/DeuxSourceTrace.java' in collector.SOURCE_BINDINGS:
+            require(safe_file(snapshot, 'DeuxSourceTrace.java').read_bytes() ==
+                    safe_file(source, 'tools/deux_benchmark/DeuxSourceTrace.java').read_bytes(), 'Copied trace-ownership helper differs.')
         stub = 'package com.cyberbasslord.lightforge; public final class AppDiagnostics {' \
                'public static void log(android.content.Context c,String l,String s,String m){}' \
                'public static boolean flush(long timeout){return true;}}\n'

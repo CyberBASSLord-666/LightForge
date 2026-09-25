@@ -23,26 +23,6 @@ public final class DeuxSourceRunner {
         Files.write(temporary,(value.toString(2)+"\n").getBytes(StandardCharsets.UTF_8),StandardOpenOption.CREATE_NEW);
         Files.move(temporary,path); // Fresh evidence only; never replace a result.
     }
-    private static Set<String> graphs(){
-        Set<String> names=new TreeSet<>(Arrays.asList("front","head-0","head-1"));
-        for(int i=0;i<12;i++)for(String axis:Arrays.asList("time","frequency"))
-            names.add(String.format(Locale.ROOT,"block-%02d-%s",i,axis));
-        return names;
-    }
-    private static void moveTraces(Path source,Path destination)throws Exception {
-        Files.createDirectory(destination);List<Path> paths=new ArrayList<>();
-        try(DirectoryStream<Path> stream=Files.newDirectoryStream(source)){for(Path path:stream)paths.add(path);}
-        if(paths.size()!=27)throw new IOException("Exactly 27 completed passage traces required");
-        for(String graph:graphs()){
-            Path found=null;
-            for(Path path:paths)if(path.getFileName().toString().startsWith(graph+"_")&&path.toString().endsWith(".json")){
-                if(found!=null||Files.isSymbolicLink(path)||!Files.isRegularFile(path))throw new IOException("Invalid graph trace");
-                found=path;
-            }
-            if(found==null)throw new IOException("Missing graph trace: "+graph);
-            Files.move(found,destination.resolve(found.getFileName()));
-        }
-    }
     private static String inputProof(File audio,long start)throws Exception {
         // This extra diagnostic read uses the actual production PCM reader. It is
         // outside predict timing, and is not a replacement for its own source read.
@@ -86,18 +66,22 @@ public final class DeuxSourceRunner {
                 if(!readSha.equals(expected.getString("inputStereoSha256")))throw new IOException("Production input read differs from independent PCM proof");
                 Path directory=output.resolve(String.format(Locale.ROOT,"passage-%03d",index));Files.createDirectory(directory);
                 Path stems=directory.resolve("stems.f32"),profilePath=directory.resolve("profile.txt");
+                if(traces!=null)DeuxSourceTrace.begin(traces,directory);
                 NativeInferenceProfile profile=new NativeInferenceProfile();profile.captureStartMemory();long started=System.nanoTime();
-                engine.predict(audio.toFile(),start,stems.toFile(),null,()->false,null,profile);
+                try { engine.predict(audio.toFile(),start,stems.toFile(),null,()->false,null,profile); }
+                finally { if(traces!=null)DeuxSourceTrace.end(); }
                 long elapsed=System.nanoTime()-started;
                 NativeInferenceProfile.Snapshot snapshot=profile.finish("completed");
                 Files.write(profilePath,Arrays.asList(snapshot.records()),StandardCharsets.UTF_8,StandardOpenOption.CREATE_NEW);
-                if(traces!=null)moveTraces(traces,directory.resolve("traces"));
+                JSONObject traceFiles=traces==null?null:DeuxSourceTrace.inventory(directory.resolve("traces"));
                 JSONObject receipt=new JSONObject().put("schema","lightforge-deux-source-passage-1")
                     .put("index",index).put("startSample",start).put("outputOffset",offset).put("emitSamples",emit)
                     .put("sampleRate",RATE).put("samplesPerStem",SAMPLES).put("sourceSamples",total).put("sourceSha256",inputSha)
                     .put("inputStereoSha256",readSha).put("outputFile",String.format(Locale.ROOT,"passage-%03d/stems.f32",index))
                     .put("outputBytes",Files.size(stems)).put("outputSha256",outputProof(stems))
                     .put("profileSha256",hashFile(profilePath)).put("profiled",traces!=null).put("wallNanos",elapsed)
+                    .put("traceLayout",traces==null?JSONObject.NULL:DeuxSourceTrace.LAYOUT)
+                    .put("traceFiles",traceFiles==null?JSONObject.NULL:traceFiles)
                     .put("predictReturned",true).put("benchmarkTimingAdmitted",false);
                 write(directory.resolve("receipt.json"),receipt);passages.put(receipt);
                 System.out.println(new JSONObject().put("passageIndex",index).put("passageCount",count).toString());
@@ -110,6 +94,7 @@ public final class DeuxSourceRunner {
             .put("sampleRate",RATE).put("audioFrames",total).put("audioSha256",inputSha)
             .put("modelFiles",manifest.getJSONObject("files")).put("passageCount",count).put("passages",passages)
             .put("profiled",traces!=null).put("engineObjects",1).put("engineCloseReturned",true).put("allPredictionsReturned",true)
+            .put("traceLayout",traces==null?JSONObject.NULL:DeuxSourceTrace.LAYOUT)
             .put("sessionLifecycle","Original NativeDeux closes all graph sessions per predict; same object retains production buffers and verification cache")
             .put("wallNanos",elapsed).put("wallIncludesInputProofAndEvidenceWrites",true)
             .put("benchmarkTimingAdmitted",false).put("qualityApproved",false).put("target75Proven",false).put("releaseAuthorized",false);

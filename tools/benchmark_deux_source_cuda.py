@@ -34,8 +34,11 @@ require, sha, write_json = accel.require, accel.sha, accel.write_json
 RATE, SAMPLES, HALO, CORE, STRIDE, MAX_SAMPLES = 44100, 573300, 66150, 441000, 220500, 64 * 44100
 VARIANTS, MODES = ('cpu_all', 'cuda_basic'), ('plain', 'profiled')
 RUNNER = ROOT / 'tools/deux_benchmark/DeuxSourceRunner.java'
+TRACE = ROOT / 'tools/deux_benchmark/DeuxSourceTrace.java'
+TRACE_LAYOUT = 'passage-owned-no-move-v1'
 SOURCE_BINDINGS = (
     'tools/benchmark_deux_source_cuda.py', 'tools/deux_benchmark/DeuxSourceRunner.java',
+    'tools/deux_benchmark/DeuxSourceTrace.java',
     'tools/benchmark_deux_accelerator.py', 'tools/profile_deux_operators.py',
     'tools/benchmark_deux_execution.py', 'android/native-runtime.json',
     'android/src/com/cyberbasslord/lightforge/NativeDeux.java',
@@ -140,6 +143,10 @@ def source_snapshot(original, variant, mode, traces=None, maps=None):
     source = accel.variant_source(original, variant)
     if traces is not None:
         source = profiler.instrument_source(source, traces)
+        anchor = 'options.enableProfiling(new File(' + json.dumps(str(traces), ensure_ascii=True) + ',name).getAbsolutePath());'
+        require(source.count(anchor) == 1, 'Exact profiling observer anchor changed.')
+        source = source.replace(anchor, 'options.enableProfiling(DeuxSourceTrace.prefix(name,' +
+                                json.dumps(str(traces), ensure_ascii=True) + '));')
     if maps is not None:
         source = accel.capture_library_maps(source, maps)
     return source
@@ -154,7 +161,7 @@ def compile_snapshot(directory, source, java, dependencies):
                     'public static void log(android.content.Context c,String l,String s,String m){}'
                     'public static boolean flush(long timeout){return true;}}\n')
     sources = [snapshot, stub]
-    for helper in (RUNNER, accel.SOURCE / 'NativeDeuxTransform.java', accel.SOURCE / 'NativeInferenceProfile.java'):
+    for helper in (RUNNER, TRACE, accel.SOURCE / 'NativeDeuxTransform.java', accel.SOURCE / 'NativeInferenceProfile.java'):
         target = directory / helper.name
         shutil.copyfile(helper, target)
         require(sha(target) == sha(helper), 'Copied original/research helper changed.')
@@ -191,12 +198,15 @@ def validate_run(directory, mode, provenance, plan, manifest):
             receipt.get('audioFrames') == provenance['sourceSamples'] and receipt.get('audioSha256') == provenance['audioSha256'] and
             receipt.get('modelFiles') == manifest['files'] and receipt.get('profiled') is (mode == 'profiled') and
             receipt.get('engineObjects') == 1 and receipt.get('engineCloseReturned') is True and
+            receipt.get('traceLayout') == (TRACE_LAYOUT if mode == 'profiled' else None) and
             receipt.get('allPredictionsReturned') is True and receipt.get('passageCount') == len(plan) and
             type(receipt.get('wallNanos')) is int and receipt['wallNanos'] > 0,
             'Invalid complete-source execution receipt.')
     require(all(receipt.get(key) is False for key in ('qualityApproved', 'benchmarkTimingAdmitted', 'target75Proven', 'releaseAuthorized')),
             'Unexpected approval in a diagnostic run.')
     require(isinstance(receipt.get('passages'), list) and len(receipt['passages']) == len(plan), 'Incomplete passage receipts.')
+    require({path.name for path in directory.iterdir()} == {'receipt.json', *(f"passage-{row['index']:03d}" for row in plan)},
+            'Unexpected complete-source output member.')
     for row, nested in zip(plan, receipt['passages']):
         path = directory / f"passage-{row['index']:03d}"
         item = profiler.strict_json(path / 'receipt.json')
@@ -205,13 +215,35 @@ def validate_run(directory, mode, provenance, plan, manifest):
             outputFile=f"passage-{row['index']:03d}/stems.f32", outputBytes=2 * SAMPLES * 4)
         require(item == nested and all(item.get(key) == value for key, value in expected.items()) and
                 item.get('profiled') is (mode == 'profiled') and item.get('predictReturned') is True and
+                item.get('traceLayout') == (TRACE_LAYOUT if mode == 'profiled' else None) and
                 item.get('benchmarkTimingAdmitted') is False and type(item.get('wallNanos')) is int and item['wallNanos'] > 0,
                 'Invalid source-bound passage receipt: ' + str(row['index']))
         require(benchmark.read_output(path / 'stems.f32') == item.get('outputSha256') and
                 sha(path / 'profile.txt') == item.get('profileSha256'), 'Passage output/profile digest mismatch.')
         benchmark.profile_fields(path / 'profile.txt')
         require((path / 'traces').is_dir() is (mode == 'profiled'), 'Unexpected or absent ORT trace observer.')
+        require({child.name for child in path.iterdir()} ==
+                {'receipt.json', 'profile.txt', 'stems.f32', *(['traces'] if mode == 'profiled' else [])},
+                'Unexpected passage output member.')
+        if mode == 'profiled':
+            verify_trace_inventory(path / 'traces', item.get('traceFiles'))
+        else:
+            require(item.get('traceFiles') is None, 'Plain passage contains trace inventory.')
     return receipt
+
+
+def verify_trace_inventory(directory, expected):
+    require(isinstance(expected, dict) and len(expected) == 27, 'Exactly 27 receipt-bound passage traces required.')
+    actual = list(directory.iterdir())
+    require(len(actual) == 27 and all(path.is_file() and not path.is_symlink() for path in actual),
+            'Exactly 27 regular owned passage traces required.')
+    require({path.name: sha(path) for path in actual} == expected, 'Passage trace inventory changed after prediction.')
+    graphs = []
+    for path in actual:
+        matches = [name for name in profiler.GRAPH_NAMES if path.name.startswith(name + '_') and path.suffix == '.json']
+        require(len(matches) == 1, 'Unknown graph trace filename.')
+        graphs.extend(matches)
+    require(set(graphs) == profiler.GRAPH_NAMES and len(graphs) == len(set(graphs)), 'Missing or duplicate owned graph trace.')
 
 
 def compare_observers(outputs, plan, variants=VARIANTS):

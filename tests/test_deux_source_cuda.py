@@ -3,6 +3,7 @@ import copy
 import hashlib
 import importlib.util
 import json
+import os
 from pathlib import Path
 import signal
 import struct
@@ -99,6 +100,8 @@ class DeuxSourceCudaTest(unittest.TestCase):
             traces = Path('/tmp/deux-source-traces')
             maps = Path('/tmp/deux-source-maps') if variant == 'cuda_basic' else None
             expected = source.profiler.instrument_source(qualified, traces)
+            expected = expected.replace('options.enableProfiling(new File(' + json.dumps(str(traces)) + ',name).getAbsolutePath());',
+                'options.enableProfiling(DeuxSourceTrace.prefix(name,' + json.dumps(str(traces)) + '));')
             if maps is not None:
                 expected = source.accel.capture_library_maps(expected, maps)
             self.assertEqual(source.source_snapshot(original, variant, 'profiled', traces, maps), expected)
@@ -120,6 +123,72 @@ class DeuxSourceCudaTest(unittest.TestCase):
             with self.assertRaises(source.accel.InvalidObserver):
                 source.validate_observers(invalid, plan)
 
+    def test_owned_trace_inventory_never_absorbs_late_prior_passage_files(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            first, second = root / 'passage-000/traces', root / 'passage-001/traces'
+            inventories = []
+            for directory in (first, second):
+                directory.mkdir(parents=True)
+                for graph in source.profiler.GRAPH_NAMES:
+                    (directory / (graph + '_stamp.json')).write_text(json.dumps([{'graph': graph, 'passage': directory.parent.name}]))
+                inventories.append({path.name: source.sha(path) for path in directory.iterdir()})
+            # A late rewrite belongs to its original passage and cannot pollute
+            # the next passage's 27-file directory. No file is filtered/moved.
+            prior = first / 'front_stamp.json'
+            original = prior.read_bytes(); prior.write_bytes(original)
+            source.verify_trace_inventory(first, inventories[0])
+            source.verify_trace_inventory(second, inventories[1])
+            (first / 'front_late_duplicate.json').write_bytes(original)
+            with self.assertRaisesRegex(ValueError, 'Exactly 27'):
+                source.verify_trace_inventory(first, inventories[0])
+            source.verify_trace_inventory(second, inventories[1])
+            (first / 'front_late_duplicate.json').unlink()
+            prior.write_bytes(b'changed old trace')
+            with self.assertRaisesRegex(ValueError, 'changed after prediction'):
+                source.verify_trace_inventory(first, inventories[0])
+
+    def test_actual_java_trace_prefix_owns_passage_paths_and_rejects_duplicates(self):
+        toolchain = Path(os.environ.get('LIGHTFORGE_HOST_TOOLCHAIN', str(ROOT.parent / 'lightforge-host-research-toolchain')))
+        java, jar = toolchain / 'jdk17/bin', toolchain / 'test-json.jar'
+        if not (java / 'javac').is_file() or not jar.is_file():
+            self.skipTest('Requires the separately pinned host JDK and org.json dependency.')
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary); classes = root / 'classes'; classes.mkdir()
+            harness = root / 'TraceOwnershipTest.java'
+            harness.write_text('''import com.cyberbasslord.lightforge.DeuxSourceTrace;
+import java.nio.file.*; import java.util.*; import org.json.JSONObject;
+public class TraceOwnershipTest {
+  static void check(boolean value) {if(!value)throw new AssertionError();}
+  public static void main(String[] args)throws Exception {
+    Path root=Paths.get(args[0]).toAbsolutePath(), control=root.resolve("control");Files.createDirectory(control);
+    Set<String> graphs=new TreeSet<>(Arrays.asList("front","head-0","head-1"));
+    for(int i=0;i<12;i++)for(String axis:Arrays.asList("time","frequency"))graphs.add(String.format("block-%02d-%s",i,axis));
+    Path previous=null; JSONObject previousInventory=null;
+    for(int pass=0;pass<2;pass++){
+      Path passage=root.resolve("passage-00"+pass);Files.createDirectory(passage);DeuxSourceTrace.begin(control,passage);
+      if(previous!=null){Path old=previous.resolve("front_stamp.json");Files.write(old,Files.readAllBytes(old));}
+      for(String graph:graphs){Path prefix=Paths.get(DeuxSourceTrace.prefix(graph,control.toString()));
+        check(prefix.getParent().equals(passage.resolve("traces")));
+        Files.write(prefix.resolveSibling(graph+"_stamp.json"),("pass="+pass+" graph="+graph).getBytes("UTF-8"));}
+      boolean rejected=false;try{DeuxSourceTrace.prefix("front",control.toString());}catch(Exception expected){rejected=true;}check(rejected);
+      DeuxSourceTrace.end();JSONObject current=DeuxSourceTrace.inventory(passage.resolve("traces"));check(current.length()==27);
+      if(previous!=null){JSONObject prior=DeuxSourceTrace.inventory(previous);check(prior.toMap().equals(previousInventory.toMap()));}
+      previous=passage.resolve("traces");previousInventory=current;
+    }
+    boolean rejected=false;try{DeuxSourceTrace.prefix("front",control.toString());}catch(Exception expected){rejected=true;}check(rejected);
+    Files.write(previous.resolve("front_extra.json"),new byte[]{1});rejected=false;
+    try{DeuxSourceTrace.inventory(previous);}catch(Exception expected){rejected=true;}check(rejected);
+    System.out.println("TRACE_OWNERSHIP_PASS");
+  }
+}''')
+            compile_result = subprocess.run([str(java / 'javac'), '--release', '8', '-cp', str(jar), '-d', str(classes),
+                str(source.TRACE), str(harness)], capture_output=True, text=True, timeout=30)
+            self.assertEqual(compile_result.returncode, 0, compile_result.stdout + compile_result.stderr)
+            run = subprocess.run([str(java / 'java'), '-cp', os.pathsep.join(map(str, (classes, jar))),
+                'TraceOwnershipTest', str(root)], capture_output=True, text=True, timeout=30)
+            self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+            self.assertEqual(run.stdout.strip(), 'TRACE_OWNERSHIP_PASS')
     def test_same_numeric_values_with_different_bits_still_fail_observer(self):
         with tempfile.TemporaryDirectory() as directory, patch.object(source.benchmark, 'SAMPLES', 2):
             root = Path(directory)
