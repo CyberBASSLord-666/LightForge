@@ -1,0 +1,293 @@
+{
+  "rows": [
+    {
+      "root": "/workspace/scratch/b9f08ad0c73c/move-probe-c02f7d3d63",
+      "phase": "created",
+      "index": 0,
+      "timeNs": 1790354771520438029,
+      "files": {
+        "sample-0.partial": {
+          "bytes": 1000003,
+          "sha256": "c9a3e84c2ce7c82010baa175ea93377234d51e8fea7ca19ebd7bd121885cfce6"
+        }
+      }
+    },
+    {
+      "root": "/tmp/lightforge-move-probe-c02f7d3d63",
+      "phase": "created",
+      "index": 0,
+      "timeNs": 1790354771521389687,
+      "files": {
+        "sample-0.partial": {
+          "bytes": 1000003,
+          "sha256": "c9a3e84c2ce7c82010baa175ea93377234d51e8fea7ca19ebd7bd121885cfce6"
+        }
+      }
+    },
+    {
+      "root": "/workspace/scratch/b9f08ad0c73c/move-probe-c02f7d3d63",
+      "phase": "immediately_after_replace",
+      "index": 0,
+      "timeNs": 1790354776522601221,
+      "files": {
+        "sample-0.bin": {
+          "bytes": 1000003,
+          "sha256": "c9a3e84c2ce7c82010baa175ea93377234d51e8fea7ca19ebd7bd121885cfce6"
+        }
+      }
+    },
+    {
+      "root": "/tmp/lightforge-move-probe-c02f7d3d63",
+      "phase": "immediately_after_replace",
+      "index": 0,
+      "timeNs": 1790354776523362824,
+      "files": {
+        "sample-0.bin": {
+          "bytes": 1000003,
+          "sha256": "c9a3e84c2ce7c82010baa175ea93377234d51e8fea7ca19ebd7bd121885cfce6"
+        }
+      }
+    },
+    {
+      "root": "/workspace/scratch/b9f08ad0c73c/move-probe-c02f7d3d63",
+      "phase": "ten_seconds_after_replace",
+      "index": 0,
+      "timeNs": 1790354786524324707,
+      "files": {
+        "sample-0.bin": {
+          "bytes": 1000003,
+          "sha256": "c9a3e84c2ce7c82010baa175ea93377234d51e8fea7ca19ebd7bd121885cfce6"
+        }
+      }
+    },
+    {
+      "root": "/tmp/lightforge-move-probe-c02f7d3d63",
+      "phase": "ten_seconds_after_replace",
+      "index": 0,
+      "timeNs": 1790354786525109634,
+      "files": {
+        "sample-0.bin": {
+          "bytes": 1000003,
+          "sha256": "c9a3e84c2ce7c82010baa175ea93377234d51e8fea7ca19ebd7bd121885cfce6"
+        }
+      }
+    },
+    {
+      "root": "/workspace/scratch/b9f08ad0c73c/move-probe-c02f7d3d63",
+      "phase": "created",
+      "index": 1,
+      "timeNs": 1790354786527307236,
+      "files": {
+        "sample-1.partial": {
+          "bytes": 1000003,
+          "sha256": "08518a0cac33f0adb8612fc9e94a0a1bfb406d17df914ba8d8c6a4b08f3d25ca"
+        },
+        "sample-0.bin": {
+          "bytes": 1000003,
+          "sha256": "c9a3e84c2ce7c82010baa175ea93377234d51e8fea7ca19ebd7bd121885cfce6"
+        }
+      }
+    },
+    {
+      "root": "/tmp/lightforge-move-probe-c02f7d3d63",
+      "phase": "created",
+      "index": 1,
+      "timeNs": 1790354786530328418,
+      "files": {
+        "sample-1.partial": {
+          "bytes": 1000003,
+          "sha256": "08518a0cac33f0adb8612fc9e94a0a1bfb406d17df914ba8d8c6a4b08f3d25ca"
+        },
+        "sample-0.bin": {
+          "bytes": 1000003,
+          "sha256": "c9a3e84c2ce7c82010baa175ea93377234d51e8fea7ca19ebd7bd121885cfce6"
+        }
+      }
+    },
+    {
+      "root": "/workspace/scratch/b9f08ad0c73c/move-probe-c02f7d3d63",
+      "phase": "immediately_after_replace",
+      "index": 1,
+      "timeNs": 1790354791532196529,
+      "files": {
+        "sample-0.bin": {
+          "bytes": 1000003,
+          "sha256": "c9a3e84c2ce7c82010baa175ea93377234d51e8fea7ca19ebd7bd121885cfce6"
+        },
+        "sample-1.bin": {
+          "bytes": 1000003,
+          "sha256": "08518a0cac33f0adb8612fc9e94a0a1bfb406d17df914ba8d8c6a4b08f3d25ca"
+        }
+      }
+    },
+    {
+      "root": "/tmp/lightforge-move-probe-c02f7d3d63",
+      "phase": "immediately_after_replace",
+      "index": 1,
+      "timeNs": 1790354791533788538,
+      "files": {
+        "sample-0.bin": {
+          "bytes": 1000003,
+          "sha256": "c9a3e84c2ce7c82010baa175ea93377234d51e8fea7ca19ebd7bd121885cfce6"
+        },
+        "sample-1.bin": {
+          "bytes": 1000003,
+          "sha256": "08518a0cac33f0adb8612fc9e94a0a1bfb406d17df914ba8d8c6a4b08f3d25ca"
+        }
+      }
+    },
+    {
+      "root": "/workspace/scratch/b9f08ad0c73c/move-probe-c02f7d3d63",
+      "phase": "ten_seconds_after_replace",
+      "index": 1,
+      "timeNs": 1790354801535584293,
+      "files": {
+        "sample-0.bin": {
+          "bytes": 1000003,
+          "sha256": "c9a3e84c2ce7c82010baa175ea93377234d51e8fea7ca19ebd7bd121885cfce6"
+        },
+        "sample-1.bin": {
+          "bytes": 1000003,
+          "sha256": "08518a0cac33f0adb8612fc9e94a0a1bfb406d17df914ba8d8c6a4b08f3d25ca"
+        }
+      }
+    },
+    {
+      "root": "/tmp/lightforge-move-probe-c02f7d3d63",
+      "phase": "ten_seconds_after_replace",
+      "index": 1,
+      "timeNs": 1790354801537808269,
+      "files": {
+        "sample-0.bin": {
+          "bytes": 1000003,
+          "sha256": "c9a3e84c2ce7c82010baa175ea93377234d51e8fea7ca19ebd7bd121885cfce6"
+        },
+        "sample-1.bin": {
+          "bytes": 1000003,
+          "sha256": "08518a0cac33f0adb8612fc9e94a0a1bfb406d17df914ba8d8c6a4b08f3d25ca"
+        }
+      }
+    },
+    {
+      "root": "/workspace/scratch/b9f08ad0c73c/move-probe-c02f7d3d63",
+      "phase": "created",
+      "index": 2,
+      "timeNs": 1790354801542085867,
+      "files": {
+        "sample-2.partial": {
+          "bytes": 1000003,
+          "sha256": "64f6b644806281162f6f3366ca90bafae08734e4c4de3584f02f752bb5991683"
+        },
+        "sample-0.bin": {
+          "bytes": 1000003,
+          "sha256": "c9a3e84c2ce7c82010baa175ea93377234d51e8fea7ca19ebd7bd121885cfce6"
+        },
+        "sample-1.bin": {
+          "bytes": 1000003,
+          "sha256": "08518a0cac33f0adb8612fc9e94a0a1bfb406d17df914ba8d8c6a4b08f3d25ca"
+        }
+      }
+    },
+    {
+      "root": "/tmp/lightforge-move-probe-c02f7d3d63",
+      "phase": "created",
+      "index": 2,
+      "timeNs": 1790354801545163800,
+      "files": {
+        "sample-2.partial": {
+          "bytes": 1000003,
+          "sha256": "64f6b644806281162f6f3366ca90bafae08734e4c4de3584f02f752bb5991683"
+        },
+        "sample-0.bin": {
+          "bytes": 1000003,
+          "sha256": "c9a3e84c2ce7c82010baa175ea93377234d51e8fea7ca19ebd7bd121885cfce6"
+        },
+        "sample-1.bin": {
+          "bytes": 1000003,
+          "sha256": "08518a0cac33f0adb8612fc9e94a0a1bfb406d17df914ba8d8c6a4b08f3d25ca"
+        }
+      }
+    },
+    {
+      "root": "/workspace/scratch/b9f08ad0c73c/move-probe-c02f7d3d63",
+      "phase": "immediately_after_replace",
+      "index": 2,
+      "timeNs": 1790354806548335536,
+      "files": {
+        "sample-0.bin": {
+          "bytes": 1000003,
+          "sha256": "c9a3e84c2ce7c82010baa175ea93377234d51e8fea7ca19ebd7bd121885cfce6"
+        },
+        "sample-1.bin": {
+          "bytes": 1000003,
+          "sha256": "08518a0cac33f0adb8612fc9e94a0a1bfb406d17df914ba8d8c6a4b08f3d25ca"
+        },
+        "sample-2.bin": {
+          "bytes": 1000003,
+          "sha256": "64f6b644806281162f6f3366ca90bafae08734e4c4de3584f02f752bb5991683"
+        }
+      }
+    },
+    {
+      "root": "/tmp/lightforge-move-probe-c02f7d3d63",
+      "phase": "immediately_after_replace",
+      "index": 2,
+      "timeNs": 1790354806551112693,
+      "files": {
+        "sample-0.bin": {
+          "bytes": 1000003,
+          "sha256": "c9a3e84c2ce7c82010baa175ea93377234d51e8fea7ca19ebd7bd121885cfce6"
+        },
+        "sample-1.bin": {
+          "bytes": 1000003,
+          "sha256": "08518a0cac33f0adb8612fc9e94a0a1bfb406d17df914ba8d8c6a4b08f3d25ca"
+        },
+        "sample-2.bin": {
+          "bytes": 1000003,
+          "sha256": "64f6b644806281162f6f3366ca90bafae08734e4c4de3584f02f752bb5991683"
+        }
+      }
+    },
+    {
+      "root": "/workspace/scratch/b9f08ad0c73c/move-probe-c02f7d3d63",
+      "phase": "ten_seconds_after_replace",
+      "index": 2,
+      "timeNs": 1790354816553581680,
+      "files": {
+        "sample-0.bin": {
+          "bytes": 1000003,
+          "sha256": "c9a3e84c2ce7c82010baa175ea93377234d51e8fea7ca19ebd7bd121885cfce6"
+        },
+        "sample-1.bin": {
+          "bytes": 1000003,
+          "sha256": "08518a0cac33f0adb8612fc9e94a0a1bfb406d17df914ba8d8c6a4b08f3d25ca"
+        },
+        "sample-2.bin": {
+          "bytes": 1000003,
+          "sha256": "64f6b644806281162f6f3366ca90bafae08734e4c4de3584f02f752bb5991683"
+        }
+      }
+    },
+    {
+      "root": "/tmp/lightforge-move-probe-c02f7d3d63",
+      "phase": "ten_seconds_after_replace",
+      "index": 2,
+      "timeNs": 1790354816555707409,
+      "files": {
+        "sample-0.bin": {
+          "bytes": 1000003,
+          "sha256": "c9a3e84c2ce7c82010baa175ea93377234d51e8fea7ca19ebd7bd121885cfce6"
+        },
+        "sample-1.bin": {
+          "bytes": 1000003,
+          "sha256": "08518a0cac33f0adb8612fc9e94a0a1bfb406d17df914ba8d8c6a4b08f3d25ca"
+        },
+        "sample-2.bin": {
+          "bytes": 1000003,
+          "sha256": "64f6b644806281162f6f3366ca90bafae08734e4c4de3584f02f752bb5991683"
+        }
+      }
+    }
+  ],
+  "modelInferenceExecuted": false
+}
