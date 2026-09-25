@@ -1,0 +1,100 @@
+{
+  "schema": "lightforge.deux-retry02-blocked-preservation.v1",
+  "status": "VERIFIED_INTEGRITY_BLOCKED",
+  "archive": {
+    "bytes": 81825943,
+    "sha256": "26562c5287f83f252c7cb5f4139ba9bd87c006fccf632a4d662324dab3e635cd"
+  },
+  "memberCount": 182,
+  "originalFiles": 181,
+  "allMemberCrcsAndPinsVerified": true,
+  "executionSourceCommit": "925fc91ecb198141901ef62eb55feb7d7e43c3a0",
+  "executionSourceTree": "8d2160d126bf0adb5698a94471c44cd09b8df36b",
+  "exactGitSourceFiles": 22,
+  "completedPassageReceipts": {
+    "cpu_all_plain": 12,
+    "cpu_all_profiled": 0
+  },
+  "acceptedCollectorRuns": 0,
+  "failure": "ValueError: Unexpected passage output member.",
+  "retainedPartials": [
+    {
+      "path": "qualification/cpu_all_plain/passage-000/.native-deux-961047265695557895.partial",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "exactOutputPrefix": true
+    },
+    {
+      "path": "qualification/cpu_all_plain/passage-002/.native-deux-10128550518316108907.partial",
+      "bytes": 2293200,
+      "sha256": "1156148acfeab142db3126ec27639e1107ae9cbb989a10dae75bd7ea60bd6b49",
+      "exactOutputPrefix": true
+    },
+    {
+      "path": "qualification/cpu_all_plain/passage-003/.native-deux-2177907983668743797.partial",
+      "bytes": 2293200,
+      "sha256": "e07237dca735545e6fb293bc123ffb12bd80f863eac76eaaa3798a22d56b575a",
+      "exactOutputPrefix": true
+    },
+    {
+      "path": "qualification/cpu_all_plain/passage-004/.native-deux-15953821091634366801.partial",
+      "bytes": 2293200,
+      "sha256": "0535d289dbea352a0fdeecf2edc89be7c9f025faa0bcd0eac7b0f31c17c8c92d",
+      "exactOutputPrefix": true
+    },
+    {
+      "path": "qualification/cpu_all_plain/passage-005/.native-deux-8856773804833584845.partial",
+      "bytes": 2293200,
+      "sha256": "b549f9036ef3fd3217478ea4574cd02de08acfbc7e552de9bc8a1f53e02bf799",
+      "exactOutputPrefix": true
+    },
+    {
+      "path": "qualification/cpu_all_plain/passage-006/.native-deux-14319224421846197689.partial",
+      "bytes": 2293200,
+      "sha256": "8991254c3e6e8994768f78671efeb0bfdafc8bd73af69ef4dc114df1ac2311af",
+      "exactOutputPrefix": true
+    },
+    {
+      "path": "qualification/cpu_all_plain/passage-007/.native-deux-13641970490526581596.partial",
+      "bytes": 2293200,
+      "sha256": "0af02e30a03e8f47330f68d7e20182fa281374ef9b241b5ebeaaa84d64cecb53",
+      "exactOutputPrefix": true
+    },
+    {
+      "path": "qualification/cpu_all_plain/passage-008/.native-deux-10640108613555596168.partial",
+      "bytes": 2293200,
+      "sha256": "038c0d93595a5ad78c304ede3579cbae5203ab75748bbc387a933c6bd3bc9726",
+      "exactOutputPrefix": true
+    },
+    {
+      "path": "qualification/cpu_all_plain/passage-009/.native-deux-17481559955349493939.partial",
+      "bytes": 2293200,
+      "sha256": "9f8d02827d3714070458b2f19bcc492f5b9941a41b26c6164e51fecfa5dfbdf7",
+      "exactOutputPrefix": true
+    },
+    {
+      "path": "qualification/cpu_all_plain/passage-010/.native-deux-12534157497998493400.partial",
+      "bytes": 2293200,
+      "sha256": "13f3cfca3fe7bcb1d32f73e346f77f350993770fab6e30755b66280d327ff6d8",
+      "exactOutputPrefix": true
+    },
+    {
+      "path": "qualification/cpu_all_plain/passage-011/.native-deux-3400711517749854299.partial",
+      "bytes": 2293200,
+      "sha256": "5c12a6c84a82302f809c7e95cfccb9e3e913a63197941eccb757abf23b122d55",
+      "exactOutputPrefix": true
+    }
+  ],
+  "partialCauseAttribution": "The actor or mechanism responsible for the remaining or reappeared temporary files is not established.",
+  "originalFailedEvidenceChanged": false,
+  "completeDiagnosticVerified": false,
+  "modelInferenceExecuted": false,
+  "cudaExecuted": false,
+  "fullVocalStageExecuted": false,
+  "qualityApproved": false,
+  "target75Proven": false,
+  "benchmarkTimingAdmitted": false,
+  "releaseAuthorized": false,
+  "frozenExporterSha256": "de5999554d55995ddce68ce8c29ec6e21f27f58eaef08c774f310462af427c6c",
+  "preservationHelperSha256": "e8e91d687dc37eb17dd5e459a519a28522d56e7e3bd6acc529f0457d43a1a8dd"
+}

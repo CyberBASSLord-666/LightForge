@@ -1,0 +1,1089 @@
+{
+  "schema": "lightforge.game-repeatability-independent-audit.v1",
+  "verificationPassed": true,
+  "scope": "Independent verification of the six-arm diagnostic screen only; not full qualification.",
+  "archive": {
+    "bytes": 16860558,
+    "sha256": "e0c8d239a91286aa8c7247efe4e99d2b43f2ea3bc9f61517146c96dd437cb50a",
+    "members": 183,
+    "uncompressedBytes": 36939856,
+    "crcChecked": true
+  },
+  "sourceCommit": "8590ac4a67de4340857a96ffe38bae53d7d902b8",
+  "screenCommit": "c3e655035f2abf70cd27b10fcc98fc62a192735f",
+  "screenSourceSha256": "2c0fd50fb1fd33bb95edcff059a952e6b6503c25f9fed89d0cf8a9cab68b5cc8",
+  "standaloneDriverSha256": "fdf85161729085f4818dd8ebc36ace1e9089a51400df55f49075ba31e72d831f",
+  "embeddedDriverSha256": "d2e9cd324997249c5d9f4a24bf490f24bf0146fae1e9a645aa655f099f84eb95",
+  "receiptSha256": "08ac226729ce9c83f66fa083db6bde7490d589c44a9799e067f00e70d90c943a",
+  "receiptBytes": 127127,
+  "driverExitSha256": "4de4db115281e324d9d5bc8de120860dba169622370494f626c27d3d772a4356",
+  "closedLogGuardVerified": true,
+  "artifactHashCount": 180,
+  "artifactsFullyCoveredByReceiptExitAndZip": true,
+  "sourceHashCount": 10,
+  "beforeBindingCount": 53,
+  "parentArtifactPinCount": 7,
+  "sourceHandoff": {
+    "schema": "lightforge.game-heavy-only-handoff.v1",
+    "sha256": "83b5f5c7805c2542051b3df49f95b51d5da531f7f9cffeb75ff5bc784e65b537",
+    "executionSourceCommit": "8590ac4a67de4340857a96ffe38bae53d7d902b8",
+    "executionSourceTree": "c841bf18f91d3d04dd6daf7e886e2aa473ab8c70",
+    "inputDerivationSourceCommit": "d9b42bb79145cfe81367fd70e2ca0ff7f4d52c12",
+    "parentSetupSha256": "a92e864c73f5da16c9103291bc6057d73fd80dd1c70773c21220cf82f14b3926",
+    "setupReceiptSha256": "74900ec6dc94d27de5487efee2cc2a045e9c5d25170ead5357c76b2abe292aca",
+    "retainedDerivationUnchanged": true
+  },
+  "runCount": 6,
+  "matrix": [
+    {
+      "label": "A1",
+      "mode": "captured",
+      "deterministicCompute": false
+    },
+    {
+      "label": "B1",
+      "mode": "captured",
+      "deterministicCompute": true
+    },
+    {
+      "label": "A2",
+      "mode": "captured",
+      "deterministicCompute": false
+    },
+    {
+      "label": "B2",
+      "mode": "captured",
+      "deterministicCompute": true
+    },
+    {
+      "label": "Bplain",
+      "mode": "plain",
+      "deterministicCompute": true
+    },
+    {
+      "label": "Bprofiled",
+      "mode": "profiled",
+      "deterministicCompute": true
+    }
+  ],
+  "runReceiptHashes": {
+    "A1": "f9c273d4dc7ce174948cc452173e3064392e527cec97870c714af9235ae68cac",
+    "B1": "78b930181ac100b65c9e80c24ff67901151538d5568d45e4b7e654a1af10ffa7",
+    "A2": "0f1becd1aea8ddd7ca5d9cba4c41e451dcd1f785b6db5b975dfcf39086743b91",
+    "B2": "83c0694e12c9de97ef96dd42d6cca9ffd20edbb1c7f8a5405ccd8f49e0050392",
+    "Bplain": "74ad6a9d562a1aadb193eb0cba28f5dc40e60efe1835f07e7b12044f38c1883b",
+    "Bprofiled": "4d1bdd593dc1b9e14eff96c124a4a2b473c32c832d469ac072dd6cfba12e14c1"
+  },
+  "capturedRunCount": 5,
+  "capturedTensorCount": 80,
+  "javaSourceSnapshotCount": 18,
+  "compiledClassCount": 42,
+  "sourceDeltaVerified": true,
+  "traceCount": 5,
+  "profilePlacement": {
+    "observedProviders": [
+      "CPUExecutionProvider",
+      "CUDAExecutionProvider"
+    ],
+    "heavyGraphsExecuteCudaArithmetic": true,
+    "cpuFallbackKernelEvents": 2804,
+    "durationBoundaryGraphsMayRemainOnCpu": true,
+    "timingMeaning": "ORT host kernel-event duration including dispatch/scheduling; not GPU device time or wall-time speedup.",
+    "durationBoundaryGraphsRequiredOnCpu": true
+  },
+  "nativeMappedLibraryCount": 10,
+  "extractedNativeLibraryBindingCount": 20,
+  "nativeVersions": {
+    "cudaRuntimeVersion": 12090,
+    "cudnnVersion": 91002,
+    "cublasVersion": [
+      12,
+      9,
+      1
+    ]
+  },
+  "defaultCapturedRepeatExact": false,
+  "deterministicScreenStable": true,
+  "nextFullQualificationCandidate": true,
+  "comparisons": {
+    "defaultCapturedRepeat": {
+      "schema": "lightforge-game-comparison-1",
+      "exactParity": false,
+      "leftRuntime": "onnxruntime-java-1.25.1",
+      "rightRuntime": "onnxruntime-java-1.25.1",
+      "pcmSHA256": "a75b3b8d59c87d428e38e45db5f54ad8d2b1613fe79ee07c2595fecbf9215274",
+      "unroundedNotesIdentical": false,
+      "leftNoteCount": 21,
+      "rightNoteCount": 21,
+      "noteDiagnostics": {
+        "sameCount": true,
+        "boundariesIdentical": true,
+        "maxAcceptedPitchDifferenceMidi": 1.1444091796875e-05
+      },
+      "tensors": [
+        {
+          "tensor": "encoder/x_seg",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 358400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "encoder/x_est",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 358400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "encoder/maskT",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "dur2bd/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-0/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-1/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-2/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-3/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-4/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-5/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-6/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-7/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "bd2dur/durations",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 22,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "bd2dur/maskN",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 22,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "estimator/presence",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 22,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "estimator/scores",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": false,
+          "elements": 22,
+          "unequalElements": 10,
+          "maxAbsoluteDifference": 1.1444091796875e-05,
+          "rmsDifference": 3.98432134908366e-06
+        }
+      ],
+      "interpretation": "Exact parity is required here; numeric differences are diagnostic, never automatic quality approval."
+    },
+    "deterministicCapturedRepeat": {
+      "schema": "lightforge-game-comparison-1",
+      "exactParity": true,
+      "leftRuntime": "onnxruntime-java-1.25.1",
+      "rightRuntime": "onnxruntime-java-1.25.1",
+      "pcmSHA256": "a75b3b8d59c87d428e38e45db5f54ad8d2b1613fe79ee07c2595fecbf9215274",
+      "unroundedNotesIdentical": true,
+      "leftNoteCount": 21,
+      "rightNoteCount": 21,
+      "noteDiagnostics": {
+        "sameCount": true,
+        "boundariesIdentical": true,
+        "maxAcceptedPitchDifferenceMidi": 0.0
+      },
+      "tensors": [
+        {
+          "tensor": "encoder/x_seg",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 358400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "encoder/x_est",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 358400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "encoder/maskT",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "dur2bd/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-0/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-1/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-2/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-3/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-4/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-5/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-6/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-7/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "bd2dur/durations",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 22,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "bd2dur/maskN",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 22,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "estimator/presence",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 22,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "estimator/scores",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 22,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        }
+      ],
+      "interpretation": "Exact parity is required here; numeric differences are diagnostic, never automatic quality approval."
+    },
+    "deterministicCaptureProfile": {
+      "schema": "lightforge-game-comparison-1",
+      "exactParity": true,
+      "leftRuntime": "onnxruntime-java-1.25.1",
+      "rightRuntime": "onnxruntime-java-1.25.1",
+      "pcmSHA256": "a75b3b8d59c87d428e38e45db5f54ad8d2b1613fe79ee07c2595fecbf9215274",
+      "unroundedNotesIdentical": true,
+      "leftNoteCount": 21,
+      "rightNoteCount": 21,
+      "noteDiagnostics": {
+        "sameCount": true,
+        "boundariesIdentical": true,
+        "maxAcceptedPitchDifferenceMidi": 0.0
+      },
+      "tensors": [
+        {
+          "tensor": "encoder/x_seg",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 358400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "encoder/x_est",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 358400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "encoder/maskT",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "dur2bd/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-0/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-1/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-2/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-3/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-4/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-5/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-6/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-7/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "bd2dur/durations",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 22,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "bd2dur/maskN",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 22,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "estimator/presence",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 22,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "estimator/scores",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 22,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        }
+      ],
+      "interpretation": "Exact parity is required here; numeric differences are diagnostic, never automatic quality approval."
+    },
+    "configurationDifference": {
+      "schema": "lightforge-game-comparison-1",
+      "exactParity": false,
+      "leftRuntime": "onnxruntime-java-1.25.1",
+      "rightRuntime": "onnxruntime-java-1.25.1",
+      "pcmSHA256": "a75b3b8d59c87d428e38e45db5f54ad8d2b1613fe79ee07c2595fecbf9215274",
+      "unroundedNotesIdentical": false,
+      "leftNoteCount": 21,
+      "rightNoteCount": 21,
+      "noteDiagnostics": {
+        "sameCount": true,
+        "boundariesIdentical": true,
+        "maxAcceptedPitchDifferenceMidi": 7.62939453125e-06
+      },
+      "tensors": [
+        {
+          "tensor": "encoder/x_seg",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": false,
+          "elements": 358400,
+          "unequalElements": 294402,
+          "maxAbsoluteDifference": 2.1457672119140625e-06,
+          "rmsDifference": 2.9309276038228507e-07
+        },
+        {
+          "tensor": "encoder/x_est",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": false,
+          "elements": 358400,
+          "unequalElements": 307811,
+          "maxAbsoluteDifference": 1.430511474609375e-06,
+          "rmsDifference": 2.1996993145356742e-07
+        },
+        {
+          "tensor": "encoder/maskT",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "dur2bd/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-0/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-1/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-2/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-3/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-4/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-5/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-6/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "segmenter-7/boundaries",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 1400,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "bd2dur/durations",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 22,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "bd2dur/maskN",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 22,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "estimator/presence",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": true,
+          "elements": 22,
+          "unequalElements": 0,
+          "maxAbsoluteDifference": 0.0,
+          "rmsDifference": 0.0
+        },
+        {
+          "tensor": "estimator/scores",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": false,
+          "elements": 22,
+          "unequalElements": 10,
+          "maxAbsoluteDifference": 7.62939453125e-06,
+          "rmsDifference": 3.5450759021171004e-06
+        }
+      ],
+      "interpretation": "Exact parity is required here; numeric differences are diagnostic, never automatic quality approval."
+    },
+    "deterministicPlainCapture": {
+      "unroundedNotesIdentical": true,
+      "leftNoteCount": 21,
+      "rightNoteCount": 21,
+      "boundariesIdentical": true,
+      "maxPitchDifferenceMidi": 0.0,
+      "leftNotes": [
+        {
+          "midi": 57.63533401489258,
+          "start": 0.019999999552965164,
+          "end": 0.9699999876320362
+        },
+        {
+          "midi": 57.87495803833008,
+          "start": 0.9699999876320362,
+          "end": 1.1399999894201756
+        },
+        {
+          "midi": 57.975120544433594,
+          "start": 1.1399999894201756,
+          "end": 1.309999991208315
+        },
+        {
+          "midi": 57.519493103027344,
+          "start": 1.309999991208315,
+          "end": 1.4799999929964542
+        },
+        {
+          "midi": 57.85268783569336,
+          "start": 1.4799999929964542,
+          "end": 2.909999940544367
+        },
+        {
+          "midi": 55.568748474121094,
+          "start": 2.909999940544367,
+          "end": 3.099999938160181
+        },
+        {
+          "midi": 57.563106536865234,
+          "start": 3.099999938160181,
+          "end": 3.3899999298155308
+        },
+        {
+          "midi": 57.92662811279297,
+          "start": 3.3899999298155308,
+          "end": 3.7199999131262302
+        },
+        {
+          "midi": 57.91849899291992,
+          "start": 3.7199999131262302,
+          "end": 4.039999905973673
+        },
+        {
+          "midi": 56.55994415283203,
+          "start": 4.039999905973673,
+          "end": 4.3599998988211155
+        },
+        {
+          "midi": 57.593772888183594,
+          "start": 4.3599998988211155,
+          "end": 4.679999891668558
+        },
+        {
+          "midi": 57.84975051879883,
+          "start": 4.679999891668558,
+          "end": 4.999999884516001
+        },
+        {
+          "midi": 57.85760498046875,
+          "start": 4.999999884516001,
+          "end": 5.479999873787165
+        },
+        {
+          "midi": 59.89904022216797,
+          "start": 5.479999873787165,
+          "end": 5.649999875575304
+        },
+        {
+          "midi": 57.63508224487305,
+          "start": 5.649999875575304,
+          "end": 5.969999868422747
+        },
+        {
+          "midi": 57.959590911865234,
+          "start": 5.969999868422747,
+          "end": 8.229999858886003
+        },
+        {
+          "midi": 57.595462799072266,
+          "start": 8.229999858886003,
+          "end": 8.849999863654375
+        },
+        {
+          "midi": 57.91298294067383,
+          "start": 8.849999863654375,
+          "end": 9.019999865442514
+        },
+        {
+          "midi": 56.16328811645508,
+          "start": 9.019999865442514,
+          "end": 10.169999841600657
+        },
+        {
+          "midi": 56.0267333984375,
+          "start": 10.169999841600657,
+          "end": 10.809999827295542
+        },
+        {
+          "midi": 56.574180603027344,
+          "start": 10.809999827295542,
+          "end": 13.999999646097422
+        }
+      ],
+      "rightNotes": [
+        {
+          "midi": 57.63533401489258,
+          "start": 0.019999999552965164,
+          "end": 0.9699999876320362
+        },
+        {
+          "midi": 57.87495803833008,
+          "start": 0.9699999876320362,
+          "end": 1.1399999894201756
+        },
+        {
+          "midi": 57.975120544433594,
+          "start": 1.1399999894201756,
+          "end": 1.309999991208315
+        },
+        {
+          "midi": 57.519493103027344,
+          "start": 1.309999991208315,
+          "end": 1.4799999929964542
+        },
+        {
+          "midi": 57.85268783569336,
+          "start": 1.4799999929964542,
+          "end": 2.909999940544367
+        },
+        {
+          "midi": 55.568748474121094,
+          "start": 2.909999940544367,
+          "end": 3.099999938160181
+        },
+        {
+          "midi": 57.563106536865234,
+          "start": 3.099999938160181,
+          "end": 3.3899999298155308
+        },
+        {
+          "midi": 57.92662811279297,
+          "start": 3.3899999298155308,
+          "end": 3.7199999131262302
+        },
+        {
+          "midi": 57.91849899291992,
+          "start": 3.7199999131262302,
+          "end": 4.039999905973673
+        },
+        {
+          "midi": 56.55994415283203,
+          "start": 4.039999905973673,
+          "end": 4.3599998988211155
+        },
+        {
+          "midi": 57.593772888183594,
+          "start": 4.3599998988211155,
+          "end": 4.679999891668558
+        },
+        {
+          "midi": 57.84975051879883,
+          "start": 4.679999891668558,
+          "end": 4.999999884516001
+        },
+        {
+          "midi": 57.85760498046875,
+          "start": 4.999999884516001,
+          "end": 5.479999873787165
+        },
+        {
+          "midi": 59.89904022216797,
+          "start": 5.479999873787165,
+          "end": 5.649999875575304
+        },
+        {
+          "midi": 57.63508224487305,
+          "start": 5.649999875575304,
+          "end": 5.969999868422747
+        },
+        {
+          "midi": 57.959590911865234,
+          "start": 5.969999868422747,
+          "end": 8.229999858886003
+        },
+        {
+          "midi": 57.595462799072266,
+          "start": 8.229999858886003,
+          "end": 8.849999863654375
+        },
+        {
+          "midi": 57.91298294067383,
+          "start": 8.849999863654375,
+          "end": 9.019999865442514
+        },
+        {
+          "midi": 56.16328811645508,
+          "start": 9.019999865442514,
+          "end": 10.169999841600657
+        },
+        {
+          "midi": 56.0267333984375,
+          "start": 10.169999841600657,
+          "end": 10.809999827295542
+        },
+        {
+          "midi": 56.574180603027344,
+          "start": 10.809999827295542,
+          "end": 13.999999646097422
+        }
+      ],
+      "rawTensorsUnobservedInPlain": true
+    }
+  },
+  "numericSummary": {
+    "defaultCapturedRepeat": {
+      "left": "A1",
+      "right": "A2",
+      "leftNoteCount": 21,
+      "rightNoteCount": 21,
+      "changedAcceptedPitches": 10,
+      "noteDiagnostics": {
+        "sameCount": true,
+        "boundariesIdentical": true,
+        "maxAcceptedPitchDifferenceMidi": 1.1444091796875e-05
+      },
+      "exactParity": false,
+      "differingTensors": [
+        {
+          "tensor": "estimator/scores",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": false,
+          "elements": 22,
+          "unequalElements": 10,
+          "maxAbsoluteDifference": 1.1444091796875e-05,
+          "rmsDifference": 3.98432134908366e-06
+        }
+      ]
+    },
+    "deterministicCapturedRepeat": {
+      "left": "B1",
+      "right": "B2",
+      "leftNoteCount": 21,
+      "rightNoteCount": 21,
+      "changedAcceptedPitches": 0,
+      "noteDiagnostics": {
+        "sameCount": true,
+        "boundariesIdentical": true,
+        "maxAcceptedPitchDifferenceMidi": 0.0
+      },
+      "exactParity": true,
+      "differingTensors": []
+    },
+    "deterministicCaptureProfile": {
+      "left": "B1",
+      "right": "Bprofiled",
+      "leftNoteCount": 21,
+      "rightNoteCount": 21,
+      "changedAcceptedPitches": 0,
+      "noteDiagnostics": {
+        "sameCount": true,
+        "boundariesIdentical": true,
+        "maxAcceptedPitchDifferenceMidi": 0.0
+      },
+      "exactParity": true,
+      "differingTensors": []
+    },
+    "configurationDifference": {
+      "left": "A1",
+      "right": "B1",
+      "leftNoteCount": 21,
+      "rightNoteCount": 21,
+      "changedAcceptedPitches": 10,
+      "noteDiagnostics": {
+        "sameCount": true,
+        "boundariesIdentical": true,
+        "maxAcceptedPitchDifferenceMidi": 7.62939453125e-06
+      },
+      "exactParity": false,
+      "differingTensors": [
+        {
+          "tensor": "encoder/x_seg",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": false,
+          "elements": 358400,
+          "unequalElements": 294402,
+          "maxAbsoluteDifference": 2.1457672119140625e-06,
+          "rmsDifference": 2.9309276038228507e-07
+        },
+        {
+          "tensor": "encoder/x_est",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": false,
+          "elements": 358400,
+          "unequalElements": 307811,
+          "maxAbsoluteDifference": 1.430511474609375e-06,
+          "rmsDifference": 2.1996993145356742e-07
+        },
+        {
+          "tensor": "estimator/scores",
+          "shapeAndTypeMatch": true,
+          "byteIdentical": false,
+          "elements": 22,
+          "unequalElements": 10,
+          "maxAbsoluteDifference": 7.62939453125e-06,
+          "rmsDifference": 3.5450759021171004e-06
+        }
+      ]
+    }
+  },
+  "bindingsRecheckedAfterScreenRecorded": true,
+  "qualityApproved": false,
+  "target75Proven": false,
+  "measured": false,
+  "releaseAuthorized": false,
+  "limitations": [
+    "Two deterministic captured repeats plus one plain and one profiled run do not prove universal determinism.",
+    "Model, dependency and native-library bytes remain in Colab; this audit checks immutable manifests, receipt bindings, mapped paths, and the frozen driver's recorded before/after rehash.",
+    "Native-library mapping and provider traces are retained only for Bprofiled; plain mode has no raw tensors.",
+    "A stable B screen is only a candidate for a separate full twelve-run qualification."
+  ],
+  "noInferenceExecuted": true,
+  "repositoryModified": false
+}

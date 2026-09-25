@@ -1,0 +1,469 @@
+{
+  "schema": "lightforge.game-session-reuse-mock-lifecycle.v1",
+  "cases": [
+    {
+      "terminationRequests": 0,
+      "sessionAttempts": 5,
+      "runCalls": 24,
+      "passed": true,
+      "case": "two_passages_reuse_five_sessions_and_fresh_run_options",
+      "sessionsCreated": 5,
+      "sessionsCloseAttempts": 5
+    },
+    {
+      "terminationRequests": 0,
+      "sessionAttempts": 0,
+      "runCalls": 0,
+      "passed": true,
+      "case": "empty_close_idempotent",
+      "sessionsCreated": 0,
+      "sessionsCloseAttempts": 0
+    },
+    {
+      "terminationRequests": 0,
+      "sessionAttempts": 0,
+      "runCalls": 0,
+      "passed": true,
+      "case": "android_constructor_forbidden",
+      "sessionsCreated": 0,
+      "sessionsCloseAttempts": 0
+    },
+    {
+      "terminationRequests": 0,
+      "sessionAttempts": 1,
+      "runCalls": 0,
+      "passed": true,
+      "case": "session_constructor_failure_1",
+      "sessionsCreated": 0,
+      "sessionsCloseAttempts": 0
+    },
+    {
+      "terminationRequests": 0,
+      "sessionAttempts": 2,
+      "runCalls": 0,
+      "passed": true,
+      "case": "session_constructor_failure_2",
+      "sessionsCreated": 1,
+      "sessionsCloseAttempts": 1
+    },
+    {
+      "terminationRequests": 0,
+      "sessionAttempts": 3,
+      "runCalls": 0,
+      "passed": true,
+      "case": "session_constructor_failure_3",
+      "sessionsCreated": 2,
+      "sessionsCloseAttempts": 2
+    },
+    {
+      "terminationRequests": 0,
+      "sessionAttempts": 4,
+      "runCalls": 0,
+      "passed": true,
+      "case": "session_constructor_failure_4",
+      "sessionsCreated": 3,
+      "sessionsCloseAttempts": 3
+    },
+    {
+      "terminationRequests": 0,
+      "sessionAttempts": 5,
+      "runCalls": 0,
+      "passed": true,
+      "case": "session_constructor_failure_5",
+      "sessionsCreated": 4,
+      "sessionsCloseAttempts": 4
+    },
+    {
+      "terminationRequests": 0,
+      "sessionAttempts": 5,
+      "runCalls": 1,
+      "passed": true,
+      "case": "inference_call_failure_1",
+      "sessionsCreated": 5,
+      "sessionsCloseAttempts": 5
+    },
+    {
+      "terminationRequests": 0,
+      "sessionAttempts": 5,
+      "runCalls": 2,
+      "passed": true,
+      "case": "inference_call_failure_2",
+      "sessionsCreated": 5,
+      "sessionsCloseAttempts": 5
+    },
+    {
+      "terminationRequests": 0,
+      "sessionAttempts": 5,
+      "runCalls": 3,
+      "passed": true,
+      "case": "inference_call_failure_3",
+      "sessionsCreated": 5,
+      "sessionsCloseAttempts": 5
+    },
+    {
+      "terminationRequests": 0,
+      "sessionAttempts": 5,
+      "runCalls": 4,
+      "passed": true,
+      "case": "inference_call_failure_4",
+      "sessionsCreated": 5,
+      "sessionsCloseAttempts": 5
+    },
+    {
+      "terminationRequests": 0,
+      "sessionAttempts": 5,
+      "runCalls": 5,
+      "passed": true,
+      "case": "inference_call_failure_5",
+      "sessionsCreated": 5,
+      "sessionsCloseAttempts": 5
+    },
+    {
+      "terminationRequests": 0,
+      "sessionAttempts": 5,
+      "runCalls": 6,
+      "passed": true,
+      "case": "inference_call_failure_6",
+      "sessionsCreated": 5,
+      "sessionsCloseAttempts": 5
+    },
+    {
+      "terminationRequests": 0,
+      "sessionAttempts": 5,
+      "runCalls": 7,
+      "passed": true,
+      "case": "inference_call_failure_7",
+      "sessionsCreated": 5,
+      "sessionsCloseAttempts": 5
+    },
+    {
+      "terminationRequests": 0,
+      "sessionAttempts": 5,
+      "runCalls": 8,
+      "passed": true,
+      "case": "inference_call_failure_8",
+      "sessionsCreated": 5,
+      "sessionsCloseAttempts": 5
+    },
+    {
+      "terminationRequests": 0,
+      "sessionAttempts": 5,
+      "runCalls": 9,
+      "passed": true,
+      "case": "inference_call_failure_9",
+      "sessionsCreated": 5,
+      "sessionsCloseAttempts": 5
+    },
+    {
+      "terminationRequests": 0,
+      "sessionAttempts": 5,
+      "runCalls": 10,
+      "passed": true,
+      "case": "inference_call_failure_10",
+      "sessionsCreated": 5,
+      "sessionsCloseAttempts": 5
+    },
+    {
+      "terminationRequests": 0,
+      "sessionAttempts": 5,
+      "runCalls": 11,
+      "passed": true,
+      "case": "inference_call_failure_11",
+      "sessionsCreated": 5,
+      "sessionsCloseAttempts": 5
+    },
+    {
+      "terminationRequests": 0,
+      "sessionAttempts": 5,
+      "runCalls": 12,
+      "passed": true,
+      "case": "inference_call_failure_12",
+      "sessionsCreated": 5,
+      "sessionsCloseAttempts": 5
+    },
+    {
+      "terminationRequests": 0,
+      "sessionAttempts": 5,
+      "runCalls": 12,
+      "passed": true,
+      "case": "second_passage_preparation_failure_drains_cached_sessions",
+      "sessionsCreated": 5,
+      "sessionsCloseAttempts": 5
+    },
+    {
+      "terminationRequests": 0,
+      "sessionAttempts": 5,
+      "runCalls": 12,
+      "passed": true,
+      "case": "runOptions_retirement_exception",
+      "sessionsCreated": 5,
+      "sessionsCloseAttempts": 5
+    },
+    {
+      "terminationRequests": 0,
+      "sessionAttempts": 5,
+      "runCalls": 12,
+      "passed": true,
+      "case": "runOptions_retirement_error",
+      "sessionsCreated": 5,
+      "sessionsCloseAttempts": 5
+    },
+    {
+      "terminationRequests": 0,
+      "sessionAttempts": 1,
+      "runCalls": 0,
+      "passed": true,
+      "case": "sessionOptions_retirement_exception",
+      "sessionsCreated": 1,
+      "sessionsCloseAttempts": 1
+    },
+    {
+      "terminationRequests": 0,
+      "sessionAttempts": 1,
+      "runCalls": 0,
+      "passed": true,
+      "case": "sessionOptions_retirement_error",
+      "sessionsCreated": 1,
+      "sessionsCloseAttempts": 1
+    },
+    {
+      "terminationRequests": 0,
+      "sessionAttempts": 5,
+      "runCalls": 12,
+      "passed": true,
+      "case": "tensor_retirement_exception",
+      "sessionsCreated": 5,
+      "sessionsCloseAttempts": 5
+    },
+    {
+      "terminationRequests": 0,
+      "sessionAttempts": 5,
+      "runCalls": 12,
+      "passed": true,
+      "case": "tensor_retirement_error",
+      "sessionsCreated": 5,
+      "sessionsCloseAttempts": 5
+    },
+    {
+      "terminationRequests": 0,
+      "sessionAttempts": 5,
+      "runCalls": 12,
+      "passed": true,
+      "case": "result_retirement_exception",
+      "sessionsCreated": 5,
+      "sessionsCloseAttempts": 5
+    },
+    {
+      "terminationRequests": 0,
+      "sessionAttempts": 5,
+      "runCalls": 12,
+      "passed": true,
+      "case": "result_retirement_error",
+      "sessionsCreated": 5,
+      "sessionsCloseAttempts": 5
+    },
+    {
+      "terminationRequests": 0,
+      "sessionAttempts": 5,
+      "runCalls": 12,
+      "passed": true,
+      "case": "session_retirement_exception",
+      "sessionsCreated": 5,
+      "sessionsCloseAttempts": 5
+    },
+    {
+      "terminationRequests": 0,
+      "sessionAttempts": 5,
+      "runCalls": 12,
+      "passed": true,
+      "case": "session_retirement_error",
+      "sessionsCreated": 5,
+      "sessionsCloseAttempts": 5
+    },
+    {
+      "terminationRequests": 0,
+      "sessionAttempts": 5,
+      "runCalls": 12,
+      "passed": true,
+      "case": "invalid_second_passage_drains_cached_sessions",
+      "sessionsCreated": 5,
+      "sessionsCloseAttempts": 5
+    },
+    {
+      "terminationRequests": 0,
+      "sessionAttempts": 5,
+      "runCalls": 24,
+      "passed": true,
+      "case": "source_passage_count_bound",
+      "sessionsCreated": 5,
+      "sessionsCloseAttempts": 5
+    },
+    {
+      "terminationRequests": 0,
+      "sessionAttempts": 5,
+      "runCalls": 12,
+      "passed": true,
+      "case": "wrong_owner_thread_drains_cached_sessions",
+      "sessionsCreated": 5,
+      "sessionsCloseAttempts": 5
+    },
+    {
+      "terminationRequests": 0,
+      "sessionAttempts": 0,
+      "runCalls": 0,
+      "passed": true,
+      "case": "cancel_before_first_prediction",
+      "sessionsCreated": 0,
+      "sessionsCloseAttempts": 0
+    },
+    {
+      "terminationRequests": 0,
+      "sessionAttempts": 5,
+      "runCalls": 12,
+      "passed": true,
+      "case": "idle_cancel_drains_five_sessions",
+      "sessionsCreated": 5,
+      "sessionsCloseAttempts": 5
+    },
+    {
+      "terminationRequests": 1,
+      "sessionAttempts": 5,
+      "runCalls": 1,
+      "passed": true,
+      "case": "cross_thread_cancel_during_run",
+      "sessionsCreated": 5,
+      "sessionsCloseAttempts": 5
+    },
+    {
+      "terminationRequests": 1,
+      "sessionAttempts": 5,
+      "runCalls": 1,
+      "passed": true,
+      "case": "cross_thread_close_during_run",
+      "sessionsCreated": 5,
+      "sessionsCloseAttempts": 5
+    },
+    {
+      "terminationRequests": 1,
+      "sessionAttempts": 5,
+      "runCalls": 1,
+      "passed": true,
+      "case": "reentrant_listener_cancel",
+      "sessionsCreated": 5,
+      "sessionsCloseAttempts": 5
+    },
+    {
+      "terminationRequests": 1,
+      "sessionAttempts": 5,
+      "runCalls": 1,
+      "passed": true,
+      "case": "reentrant_listener_close",
+      "sessionsCreated": 5,
+      "sessionsCloseAttempts": 5
+    },
+    {
+      "terminationRequests": 1,
+      "sessionAttempts": 5,
+      "runCalls": 1,
+      "passed": true,
+      "case": "reentrant_prediction_from_listener_keeps_outer_handle",
+      "sessionsCreated": 5,
+      "sessionsCloseAttempts": 5
+    },
+    {
+      "terminationRequests": 1,
+      "sessionAttempts": 1,
+      "runCalls": 0,
+      "passed": true,
+      "case": "reentrant_prediction_from_cancellation_keeps_outer_handle",
+      "sessionsCreated": 1,
+      "sessionsCloseAttempts": 1
+    },
+    {
+      "terminationRequests": 0,
+      "sessionAttempts": 5,
+      "runCalls": 1,
+      "passed": true,
+      "case": "listener_exception_drains_sessions",
+      "sessionsCreated": 5,
+      "sessionsCloseAttempts": 5
+    },
+    {
+      "terminationRequests": 0,
+      "sessionAttempts": 5,
+      "runCalls": 12,
+      "passed": true,
+      "case": "cancellation_callback_exception_drains_retained_sessions",
+      "sessionsCreated": 5,
+      "sessionsCloseAttempts": 5
+    },
+    {
+      "terminationRequests": 1,
+      "sessionAttempts": 3,
+      "runCalls": 0,
+      "passed": true,
+      "case": "cancel_during_partial_constructor_retires_returned_handle",
+      "sessionsCreated": 3,
+      "sessionsCloseAttempts": 3
+    },
+    {
+      "terminationRequests": 0,
+      "sessionAttempts": 5,
+      "runCalls": 12,
+      "passed": true,
+      "case": "idle_destructor_blocks_close_but_not_retirement_query",
+      "sessionsCreated": 5,
+      "sessionsCloseAttempts": 5
+    },
+    {
+      "terminationRequests": 0,
+      "sessionAttempts": 5,
+      "runCalls": 12,
+      "passed": true,
+      "case": "reentrant_idle_destructor_close_is_not_double_drain",
+      "sessionsCreated": 5,
+      "sessionsCloseAttempts": 5
+    },
+    {
+      "terminationRequests": 0,
+      "sessionAttempts": 5,
+      "runCalls": 12,
+      "passed": true,
+      "case": "reentrant_run_destructor_cancellation_does_not_terminate_retiring_handle",
+      "sessionsCreated": 5,
+      "sessionsCloseAttempts": 5
+    },
+    {
+      "terminationRequests": 0,
+      "sessionAttempts": 5,
+      "runCalls": 12,
+      "passed": true,
+      "case": "unexpected_drain_iteration_error_is_unconfirmed",
+      "sessionsCreated": 5,
+      "sessionsCloseAttempts": 0
+    },
+    {
+      "terminationRequests": 0,
+      "sessionAttempts": 5,
+      "runCalls": 12,
+      "passed": true,
+      "case": "unexpected_drain_clear_error_is_unconfirmed",
+      "sessionsCreated": 5,
+      "sessionsCloseAttempts": 5
+    }
+  ],
+  "syntheticOrtBoundaries": true,
+  "target75Proven": false,
+  "cudaExecuted": false,
+  "modelPreparationSubstituted": true,
+  "withinProviderParityProven": false,
+  "caseCount": 50,
+  "generatedLifecycleExecuted": true,
+  "nativeJniLifecycleQualified": false,
+  "releaseAuthorized": false,
+  "qualityApproved": false,
+  "benchmarkTimingAdmitted": false,
+  "actualJvmExecution": true,
+  "appLifecycleEquivalent": false,
+  "status": "MOCK_BOUNDARIES_PASSED"
+}

@@ -1,0 +1,21 @@
+{
+  "arguments": [
+    "/usr/bin/python3",
+    "/content/lightforge-game-gpu-qualification/source-heavy-only-8590ac4/tools/benchmark_deux_accelerator.py",
+    "--toolchain",
+    "/content/lightforge-game-gpu-qualification/toolchain",
+    "--models",
+    "/content/lightforge-game-gpu-qualification/assets/original-20260924T020341Z-deux-a6f78d49",
+    "--audio",
+    "/content/lightforge-game-gpu-qualification/assets/glass-castle.wav",
+    "--start-sample",
+    "-66150",
+    "--output",
+    "/content/lightforge-game-gpu-qualification/evidence/20260924T020341Z-deux-a6f78d49/qualification"
+  ],
+  "status": "PROCESS_EXITED",
+  "returnCode": 1,
+  "pid": 34977,
+  "processGroup": 34977,
+  "receiptStatus": "NUMERICAL_EQUIVALENCE_UNPROVEN"
+}

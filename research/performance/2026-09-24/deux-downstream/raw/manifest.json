@@ -1,0 +1,127 @@
+{
+  "schema": "lightforge.evidence-archive-parts.v1",
+  "archiveName": "LightForge-Deux-downstream-evidence-2026-09-24.zip",
+  "archiveBytes": 17147976,
+  "archiveSha256": "310cc5697489fd89fe2a34afa7bb50678e515001add74784604eb1aaa3b4b06f",
+  "status": "EXCERPT_SENSITIVITY_PASS",
+  "publicFixtureOnly": true,
+  "qualityApproved": false,
+  "target75Proven": false,
+  "parts": [
+    {
+      "file": "evidence.zip.part000",
+      "bytes": 750000,
+      "sha256": "8f3c11e28bf8cf470d0cbb7504074e29842e5e6cdc84f15f934d9534c8365b61"
+    },
+    {
+      "file": "evidence.zip.part001",
+      "bytes": 750000,
+      "sha256": "ae82dfa8987e71ac5692189d9e87128ce8729f2c158b2428a491c811df8a4c7c"
+    },
+    {
+      "file": "evidence.zip.part002",
+      "bytes": 750000,
+      "sha256": "4145859da3558ef11dd06832d2afbff2f5397662a978775d2d7811982135b4b7"
+    },
+    {
+      "file": "evidence.zip.part003",
+      "bytes": 750000,
+      "sha256": "f4039bbfc7155a03c8dd5628a6e676b13c36fff83eaef63b9104e37b6464ef2e"
+    },
+    {
+      "file": "evidence.zip.part004",
+      "bytes": 750000,
+      "sha256": "63916759c98d9341f2330686e9de5678175a7a00c6fc62fbedea39897645d91a"
+    },
+    {
+      "file": "evidence.zip.part005",
+      "bytes": 750000,
+      "sha256": "dfdb3d348f839ef56b7d1c14f87cf2ceb328c1f89cc2abfdc30b2b1605d06ce9"
+    },
+    {
+      "file": "evidence.zip.part006",
+      "bytes": 750000,
+      "sha256": "843cf0028534155d28d2b18db157bb66cecf110eefd47082a418aa6afa3db0af"
+    },
+    {
+      "file": "evidence.zip.part007",
+      "bytes": 750000,
+      "sha256": "379657b0ce34438e62c9eaf10b31b8340e9ea12143394787fb86dee695d28624"
+    },
+    {
+      "file": "evidence.zip.part008",
+      "bytes": 750000,
+      "sha256": "2ffc5f1cf8677cae23f7cca8b43326a9206d1e50747f460884dc8d13a47673c1"
+    },
+    {
+      "file": "evidence.zip.part009",
+      "bytes": 750000,
+      "sha256": "3785f0fb2e0a683cd850ce43c5912ab62f49680ff4f1581e2a6fd13b3b31b989"
+    },
+    {
+      "file": "evidence.zip.part010",
+      "bytes": 750000,
+      "sha256": "b00efe8041ae8fbcd6843a25f58623bb83baad0c4cfa4a3ea3519ee9f8f0fc13"
+    },
+    {
+      "file": "evidence.zip.part011",
+      "bytes": 750000,
+      "sha256": "3eb6c097604a1f3728dba27b664f88cfbfacb1ae74b8cbc9000146dda6ddaba3"
+    },
+    {
+      "file": "evidence.zip.part012",
+      "bytes": 750000,
+      "sha256": "77389286ee794914f4456ca661fe4d944627b855e6969f2b8517a66138077aff"
+    },
+    {
+      "file": "evidence.zip.part013",
+      "bytes": 750000,
+      "sha256": "94841dece4f58114b9b9f2ec70d17752439eaba46cd173317c711d22e076a5bc"
+    },
+    {
+      "file": "evidence.zip.part014",
+      "bytes": 750000,
+      "sha256": "5fb66fc3e1f539b3e616a8d52aabaf96f6b2e5767a6892711dbeca7056458ed8"
+    },
+    {
+      "file": "evidence.zip.part015",
+      "bytes": 750000,
+      "sha256": "98c0b3371761e775c4834487a7be7aa598aca3f26f273713e5e0e8d7a77210e1"
+    },
+    {
+      "file": "evidence.zip.part016",
+      "bytes": 750000,
+      "sha256": "6565913c3bfc58be8476fcfd0d91597a4d27562bed76220161fb90cc935d23b8"
+    },
+    {
+      "file": "evidence.zip.part017",
+      "bytes": 750000,
+      "sha256": "3c41ebb2698d454b3585d48d8f66c3e18714fe99695907e4c1777f5a0c4af206"
+    },
+    {
+      "file": "evidence.zip.part018",
+      "bytes": 750000,
+      "sha256": "38f8952b9f7b6e0d4207fb38ac6b0aad77f8ad564326c147bcfcc96065cb553f"
+    },
+    {
+      "file": "evidence.zip.part019",
+      "bytes": 750000,
+      "sha256": "85c628eca9272e5f23d6821d3750bf8266b1a56559a1567e32c12617ce1b4675"
+    },
+    {
+      "file": "evidence.zip.part020",
+      "bytes": 750000,
+      "sha256": "4e724662655483e57e5eb0420644b928e247d235ec1851a46e034052af5ead0f"
+    },
+    {
+      "file": "evidence.zip.part021",
+      "bytes": 750000,
+      "sha256": "9cbd23bfad377f551a7d16f0eba9bf03a17408b5d53d980594fa481f49fb3a5d"
+    },
+    {
+      "file": "evidence.zip.part022",
+      "bytes": 647976,
+      "sha256": "e1176e1f7a8e4c1ba36ede9059ad867f707ee58b0bd7a04da929e145a391be27"
+    }
+  ]
+}

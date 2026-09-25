@@ -1,0 +1,338 @@
+{
+  "schema": "lightforge.game-full-source-derived-metrics.v1",
+  "sourceCommit": "3797783e703738d28af1df9b722f5f4e886b99f2",
+  "sourceTree": "47fa69218b35ff8e1644e123ee8170983a884f8b",
+  "archive": {
+    "bytes": 91197345,
+    "sha256": "01a45c1ee5eeb7b63e26b316589673903bf362ccf99863b156f726c8543e1670",
+    "members": 720,
+    "uncompressedBytes": 291258944
+  },
+  "verificationReceiptSha256": "6590f6ddec2bae5d8406fb032f2ac8bc52cc1a9ac7d0d208664ebf9bf51acf75",
+  "qualificationReceiptSha256": "259199eb3c3d8129bce2fe3c6f7f09c1b24ef1b2ba554f68db65d2674c8c2df0",
+  "replayReceiptSha256": "0f851f582eb2ea651825643b0cea2a7de90ec4b1a6a7eb3430abfff980cb6a53",
+  "recomputedReplayReceiptSha256": "0f851f582eb2ea651825643b0cea2a7de90ec4b1a6a7eb3430abfff980cb6a53",
+  "inputProvenanceSha256": "0c6a7a647083296d91f4f07cb52b2c81178bc8f482a2916b233f33c3594f8b82",
+  "fullPcmSha256": "298f7a549c4bb8dfc53c47d1078cea842c5e818a3e7c82bf289bffcec0ba30c2",
+  "sourceKind": "public-mixture",
+  "sourceSamples": 2822400,
+  "sourceSeconds": 64.0,
+  "passageCount": 6,
+  "completedJvmRuns": 6,
+  "qualificationStatus": "NUMERICAL_EQUIVALENCE_UNPROVEN",
+  "independentVerification": {
+    "status": "VERIFIED_COMPLETE_DIAGNOSTIC",
+    "sourceFiles": 55,
+    "readinessArtifacts": 60,
+    "boundQualificationArtifacts": 547,
+    "fullPcmIndependentlyRederived": true,
+    "actualProductionReplayExactlyReproduced": true,
+    "modelInferenceExecutedByVerifier": false,
+    "modelInferenceExecutedByCollector": true
+  },
+  "observerComparisons": {
+    "total": 24,
+    "plainVsCapture": 12,
+    "captureVsProfile": 12,
+    "allExact": true,
+    "rawTensorPairsCompared": 192,
+    "rawTensorArtifactsVerified": 384
+  },
+  "cpuCudaRawComparison": {
+    "tensorPairs": 96,
+    "byteIdenticalTensorPairs": 78,
+    "differentTensorPairs": 18,
+    "differingTensorNames": [
+      "encoder/x_est",
+      "encoder/x_seg",
+      "estimator/scores"
+    ],
+    "allShapesAndTypesIdentical": true,
+    "maximumRawTensorAbsoluteDifference": 6.866455078125e-05,
+    "maximumRawAcceptedNotePitchDifferenceMidi": 1.52587890625e-05,
+    "rawAcceptedNoteCountsPerArm": 130,
+    "allPassageNoteCountsAndBoundariesIdentical": true,
+    "unroundedPitchDifferentAcceptedNotes": 61,
+    "passages": [
+      {
+        "index": 0,
+        "noteCounts": [
+          21,
+          21
+        ],
+        "unroundedNotesExactlyIdentical": false,
+        "boundariesExactlyIdentical": true,
+        "maxAbsoluteStartDifferenceSeconds": 0,
+        "maxAbsoluteEndDifferenceSeconds": 0,
+        "maxAbsolutePitchDifferenceMidi": 7.62939453125e-06
+      },
+      {
+        "index": 1,
+        "noteCounts": [
+          31,
+          31
+        ],
+        "unroundedNotesExactlyIdentical": false,
+        "boundariesExactlyIdentical": true,
+        "maxAbsoluteStartDifferenceSeconds": 0,
+        "maxAbsoluteEndDifferenceSeconds": 0,
+        "maxAbsolutePitchDifferenceMidi": 1.1444091796875e-05
+      },
+      {
+        "index": 2,
+        "noteCounts": [
+          22,
+          22
+        ],
+        "unroundedNotesExactlyIdentical": false,
+        "boundariesExactlyIdentical": true,
+        "maxAbsoluteStartDifferenceSeconds": 0,
+        "maxAbsoluteEndDifferenceSeconds": 0,
+        "maxAbsolutePitchDifferenceMidi": 7.62939453125e-06
+      },
+      {
+        "index": 3,
+        "noteCounts": [
+          23,
+          23
+        ],
+        "unroundedNotesExactlyIdentical": false,
+        "boundariesExactlyIdentical": true,
+        "maxAbsoluteStartDifferenceSeconds": 0,
+        "maxAbsoluteEndDifferenceSeconds": 0,
+        "maxAbsolutePitchDifferenceMidi": 1.52587890625e-05
+      },
+      {
+        "index": 4,
+        "noteCounts": [
+          27,
+          27
+        ],
+        "unroundedNotesExactlyIdentical": false,
+        "boundariesExactlyIdentical": true,
+        "maxAbsoluteStartDifferenceSeconds": 0,
+        "maxAbsoluteEndDifferenceSeconds": 0,
+        "maxAbsolutePitchDifferenceMidi": 1.1444091796875e-05
+      },
+      {
+        "index": 5,
+        "noteCounts": [
+          6,
+          6
+        ],
+        "unroundedNotesExactlyIdentical": false,
+        "boundariesExactlyIdentical": true,
+        "maxAbsoluteStartDifferenceSeconds": 0,
+        "maxAbsoluteEndDifferenceSeconds": 0,
+        "maxAbsolutePitchDifferenceMidi": 7.62939453125e-06
+      }
+    ],
+    "tolerance": null
+  },
+  "productionReplay": {
+    "finalNoteCounts": {
+      "cpu": 98,
+      "cuda": 98
+    },
+    "finalTranscriptionExactlyIdentical": true,
+    "checkpointResumeExactlyIdentical": true,
+    "nativeCallbackCounts": {
+      "cpu": 6,
+      "cuda": 6
+    },
+    "roundedPitchAndBoundaryDifferencesZero": true,
+    "productionRuntimeLabel": "onnxruntime-android-cpu",
+    "productionRuntimeLabelMeaning": "Unchanged production native adapter label only; actual research arms are Java CPU and CUDA as separately bound."
+  },
+  "cudaProviderEvidence": {
+    "independentlyRecomputedFromRawTraces": true,
+    "graphSessions": 30,
+    "graphModelRunCalls": 72,
+    "callsByGraph": {
+      "encoder": 6,
+      "dur2bd": 6,
+      "segmenter": 48,
+      "bd2dur": 6,
+      "estimator": 6
+    },
+    "heavyGraphsWithSubstantiveCudaArithmetic": 18,
+    "conversionGraphsOnCpu": 12,
+    "cpuKernelEvents": 16824,
+    "mappedNativeLibraries": 10,
+    "loadedNativeVersions": {
+      "cudaRuntimeVersion": 12090,
+      "cudnnVersion": 91002,
+      "cublasVersion": [
+        12,
+        9,
+        1
+      ]
+    }
+  },
+  "coldDiagnosticObservations": {
+    "cpu": {
+      "researchExecutionIdentity": {
+        "runtime": "onnxruntime-java-1.25.1",
+        "package": "cpu",
+        "provider": "CPUExecutionProvider",
+        "optimization": "ALL_OPT",
+        "cudaHeavyOnly": false,
+        "cudaDeterministicCompute": false
+      },
+      "runs": [
+        {
+          "mode": "plain",
+          "receiptPath": "qualification/cpu_all_plain/output/receipt.json",
+          "receiptSha256": "293d071d694a1d0d5d5cc0986a7d7a373d793f7fd6d00b2aab6b139cb1e245d7",
+          "fullSourceWallSeconds": 182.560605972,
+          "passageWallSeconds": [
+            30.754096625,
+            34.46219132,
+            35.280548451,
+            35.258454499,
+            33.907775892,
+            12.430163636
+          ],
+          "timingEligible": false
+        },
+        {
+          "mode": "captured",
+          "receiptPath": "qualification/cpu_all_captured/output/receipt.json",
+          "receiptSha256": "aae501e88ed9c7628eb6636199b86c9c9f5148c5e9e5b4497dd161d71b7fd682",
+          "fullSourceWallSeconds": 182.830934869,
+          "passageWallSeconds": [
+            30.030679947,
+            35.055664494,
+            34.44345229,
+            34.614474194,
+            35.312061976,
+            12.857386953
+          ],
+          "timingEligible": false,
+          "capturedGraphRunSeconds": 153.17463799099994,
+          "capturedGraphRunSecondsByGraph": {
+            "encoder": 9.545899278,
+            "dur2bd": 0.001808175,
+            "segmenter": 131.25620994099995,
+            "bd2dur": 0.002786379,
+            "estimator": 12.367934217999998
+          },
+          "outsideCapturedGraphRunSeconds": 29.656296878000063
+        },
+        {
+          "mode": "profiled",
+          "receiptPath": "qualification/cpu_all_profiled/output/receipt.json",
+          "receiptSha256": "cd00547b33fba93322dafafc65892657816312987273b05dc9b6bbde45dd9fda",
+          "fullSourceWallSeconds": 183.404272893,
+          "passageWallSeconds": [
+            30.40718225,
+            35.217510247,
+            35.681773073,
+            33.807924895,
+            34.480386075,
+            13.379690127
+          ],
+          "timingEligible": false,
+          "capturedGraphRunSeconds": 152.60868984400003,
+          "capturedGraphRunSecondsByGraph": {
+            "encoder": 10.171603737,
+            "dur2bd": 0.0029517719999999996,
+            "segmenter": 131.11375991000003,
+            "bd2dur": 0.004268521,
+            "estimator": 11.316105903999999
+          },
+          "outsideCapturedGraphRunSeconds": 30.795583048999987
+        }
+      ],
+      "originalEngineObjectsPerRun": 1,
+      "originalSessionRetirementPerPassage": true,
+      "persistentSessionOptimizationExecuted": false
+    },
+    "cuda": {
+      "researchExecutionIdentity": {
+        "runtime": "onnxruntime-java-1.25.1",
+        "package": "gpu",
+        "provider": "CUDAExecutionProvider",
+        "optimization": "BASIC_OPT",
+        "cudaHeavyOnly": true,
+        "cudaDeterministicCompute": true
+      },
+      "runs": [
+        {
+          "mode": "plain",
+          "receiptPath": "qualification/cuda_basic_plain/output/receipt.json",
+          "receiptSha256": "ffb5b295c9d8c58ebb6ddb3319e9e982ac2cef18257f7c1fbfcc91fe551a05b7",
+          "fullSourceWallSeconds": 42.357846625,
+          "passageWallSeconds": [
+            9.943987347,
+            7.053809027,
+            6.755426422,
+            6.115762937,
+            6.751431607,
+            5.250570033
+          ],
+          "timingEligible": false
+        },
+        {
+          "mode": "captured",
+          "receiptPath": "qualification/cuda_basic_captured/output/receipt.json",
+          "receiptSha256": "d5e4c15ba6343a24c5494455b2913698634bc9d913b8959f773b76cac9ee3c7d",
+          "fullSourceWallSeconds": 44.215733674,
+          "passageWallSeconds": [
+            10.471305828,
+            7.404861787,
+            6.587343598,
+            7.027882914,
+            6.158332563,
+            6.121987517
+          ],
+          "timingEligible": false,
+          "capturedGraphRunSeconds": 7.121475255,
+          "capturedGraphRunSecondsByGraph": {
+            "encoder": 1.415875317,
+            "dur2bd": 0.001307437,
+            "segmenter": 5.220374013,
+            "bd2dur": 0.001560315,
+            "estimator": 0.48235817300000006
+          },
+          "outsideCapturedGraphRunSeconds": 37.094258419
+        },
+        {
+          "mode": "profiled",
+          "receiptPath": "qualification/cuda_basic_profiled/output/receipt.json",
+          "receiptSha256": "faef92f94a7d274ae69621c26d49897d5354ff7268ead55556e6e15731992da4",
+          "fullSourceWallSeconds": 44.885801458,
+          "passageWallSeconds": [
+            10.746488248,
+            6.781076995,
+            7.180725122,
+            7.007761746,
+            6.217988997,
+            6.411931682
+          ],
+          "timingEligible": false,
+          "capturedGraphRunSeconds": 7.496108434,
+          "capturedGraphRunSecondsByGraph": {
+            "encoder": 1.497870608,
+            "dur2bd": 0.002401674,
+            "segmenter": 5.361716959,
+            "bd2dur": 0.005353633,
+            "estimator": 0.62876556
+          },
+          "outsideCapturedGraphRunSeconds": 37.389693024
+        }
+      ],
+      "originalEngineObjectsPerRun": 1,
+      "originalSessionRetirementPerPassage": true,
+      "persistentSessionOptimizationExecuted": false
+    }
+  },
+  "timingInterpretation": "One cold complete public source per arm/mode; CPU then CUDA, not alternating repeated timing. Wall times include original graph verification/loading and retirement. Captured graph-run spans and residuals contain different instrumentation costs. These are diagnostic observations, not admitted benchmark measurements; no speed ratio is calculated.",
+  "qualityApproved": false,
+  "target75Proven": false,
+  "benchmarkTimingAdmitted": false,
+  "measuredSpeedupApproved": false,
+  "wholeSongSpeedupProven": false,
+  "completeVocalStageMeasured": false,
+  "releaseAuthorized": false
+}

@@ -1,0 +1,28 @@
+{
+  "schema": "lightforge.deux-blocked-archive-integrity.v1",
+  "status": "VERIFIED_INTEGRITY_BLOCKED",
+  "archive": {
+    "bytes": 132558003,
+    "sha256": "41d0ca6a25ddfa80a325ae71d5ad9930cf6d9a78480d6c63461c6abe3a14f624"
+  },
+  "memberCount": 383,
+  "allMemberCrcsAndPinsVerified": true,
+  "executionSourceCommit": "85bca325b65f93790a17bfd9142dad80162384b2",
+  "executionSourceTree": "b703f823fb7da8f36eb4461c4f139ddda0df2038",
+  "exactGitSourceFiles": 21,
+  "completedPassageReceipts": {
+    "cpu_all_plain": 12,
+    "cpu_all_profiled": 4
+  },
+  "activeTraceFiles": 54,
+  "previousPassageTracesReappearedByteIdentically": 27,
+  "causeAttribution": "Reappeared prior-passage bytes confirmed; the actor or mechanism that recreated them is not established.",
+  "completeDiagnosticVerified": false,
+  "modelInferenceExecuted": false,
+  "cudaExecuted": false,
+  "qualityApproved": false,
+  "target75Proven": false,
+  "benchmarkTimingAdmitted": false,
+  "releaseAuthorized": false,
+  "verifierSha256": "619afcb73ce2d866fc8e55bddc93f6d6351a1fb7048a469b647eb28fe106adc6"
+}

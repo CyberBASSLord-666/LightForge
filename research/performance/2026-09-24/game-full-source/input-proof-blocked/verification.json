@@ -1,0 +1,28 @@
+{
+  "schema": "lightforge.game-full-source-verification.v1",
+  "archiveIntegrityVerified": true,
+  "evidenceVerificationPassed": true,
+  "completeDiagnosticVerified": false,
+  "evidenceStatus": "VERIFIED_PARTIAL",
+  "sourceCommit": "3797783e703738d28af1df9b722f5f4e886b99f2",
+  "sourceTree": "47fa69218b35ff8e1644e123ee8170983a884f8b",
+  "archiveInventory": {
+    "fileCount": 9,
+    "archiveManifestSha256": "749377a84aa8d9651ae9b187fd305a1758efbeff4e58cabc3332f29debbe27db"
+  },
+  "driverStatus": "BLOCKED_OR_REJECTED",
+  "recordedFailure": "Command '['/content/lightforge-game-gpu-qualification/toolchain/full-source-node-20260924T042656Z-game-full-source-952fe51b/node', '-e', \"const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto'),assert=require('node:assert/strict');\\nconst [root,audioPath,pcmPath,proofPath]=process.argv.slice(1);\\nconst WavReader=require(path.join(root,'web/analysis/wav-reader.js'));\\nconst GAME=require(path.join(root,'web/analysis/game.js'));\\nconst audio=fs.readFileSync(audioPath),hash=b=>crypto.createHash('sha256').update(b).digest('hex');\\nconst manifest=JSON.parse(fs.readFileSync(path.join(root,'web/analysis/models/game/manifest.json')));\\n(async()=>{\\n globalThis.fetch=async(url,options={})=>{\\n  if(String(url)==='https://lightforge-public-fixture.invalid/manifest.json')return{json:async()=>manifest};\\n  assert.equal(String(url),'https://lightforge-public-fixture.invalid/demo.wav');\\n  const match=/^bytes=(\\\\d+)-(\\\\d+)$/.exec(options.headers.Range);assert(match);\\n  const first=Number(match[1]),last=Math.min(Number(match[2]),audio.length-1);\\n  return new Response(audio.subarray(first,last+1),{status:206,headers:{'Content-Length':String(last-first+1),'Content-Range':`bytes ${first}-${last}/${audio.length}`}});\\n };\\n const reader=new WavReader('https://lightforge-public-fixture.invalid/demo.wav');await reader.open();\\n assert.equal(reader.rate,44100);assert.equal(reader.samples,2822400);\\n const stereo=await reader.stereo44100(0,reader.samples),mono=new Float32Array(stereo[0].length);\\n for(let i=0;i<mono.length;i++)mono[i]=(stereo[0][i]+stereo[1][i])*.5;\\n const bytes=Buffer.alloc(mono.length*4);for(let i=0;i<mono.length;i++)bytes.writeFloatLE(mono[i],i*4);\\n assert(bytes.equals(fs.readFileSync(pcmPath)),'Full Python PCM differs from actual production WavReader mix');\\n const observed=[],reads=[];\\n const adapter=await GAME.create({baseUrl:'https://lightforge-public-fixture.invalid/',nativeInfer:async(pcm,language,seed)=>{observed.push({samples:pcm.length,language,seed});return[];}});\\n try{await adapter.process(async(first,count)=>{reads.push({first,last:first+count});return new Float32Array(count).fill(.125);},reader.samples,{language:0});}\\n finally{await adapter.release();}\\n assert.equal(reads.length,observed.length);\\n const plan=observed.map((value,index)=>({index,...reads[index],...value}));\\n fs.writeFileSync(proofPath,JSON.stringify({schema:'lightforge.game-source-input-proof.v1',publicAudioSha256:hash(audio),pcmSha256:hash(bytes),\\n  totalSamples:reader.samples,sampleRate:44100,byteIdenticalToProductionReaderMix:true,plan,\\n  scheduleProbeUsesSyntheticNonSilentPCM:true,planOnly:true,modelInferenceExecuted:false,qualityApproved:false,\\n  sourceHashes:Object.fromEntries(['web/analysis/wav-reader.js','web/analysis/game.js'].map(name=>[name,hash(fs.readFileSync(path.join(root,name)))]))},null,2)+'\\\\n',{flag:'wx'});\\n})().catch(error=>{console.error(error);process.exitCode=1;});\", '/content/lightforge-game-gpu-qualification/source-full-3797783e7037-4c0ecf96', '/content/lightforge-game-gpu-qualification/assets/glass-castle.wav', '/content/lightforge-game-gpu-qualification/evidence/20260924T042656Z-game-full-source-952fe51b/public-demo-mixture-full64s.f32', '/content/lightforge-game-gpu-qualification/evidence/20260924T042656Z-game-full-source-952fe51b/input-source-proof.json']' returned non-zero exit status 1.",
+  "qualityApproved": false,
+  "target75Proven": false,
+  "measuredSpeedupApproved": false,
+  "releaseAuthorized": false,
+  "modelInferenceExecuted": false,
+  "limitation": "Driver stopped before a complete frozen source/input handoff; only archived file integrity verified.",
+  "archive": {
+    "bytes": 7709572,
+    "sha256": "c31fc60e69f173bce2052666a7db883482fa63ad828aeb9c0515fc15f83109b5",
+    "members": 10,
+    "uncompressedBytes": 11328320,
+    "allMemberCrcsVerified": true
+  }
+}

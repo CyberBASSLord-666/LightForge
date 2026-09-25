@@ -1,0 +1,21 @@
+{
+  "schema": "lightforge.game-source-input.v1",
+  "sourceCommit": "3797783e703738d28af1df9b722f5f4e886b99f2",
+  "sourceTree": "47fa69218b35ff8e1644e123ee8170983a884f8b",
+  "sourceKind": "public-mixture",
+  "separatedVocals": false,
+  "publicRelease": "https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.3.1",
+  "apkSha256": "af83bf403875c55d42fd695d43f6e193114899c1324fbaeaffd6c02d299d882f",
+  "audioMember": "assets/demo/glass-castle.wav",
+  "sampleRate": 44100,
+  "sourceSamples": 2822400,
+  "channels": 1,
+  "encoding": "float32-le",
+  "language": 0,
+  "pcmSHA256": "298f7a549c4bb8dfc53c47d1078cea842c5e818a3e7c82bf289bffcec0ba30c2",
+  "sourceSHA256": "33f07d502ba19832b62b97d8fb4a11354e81310264bd885d7a06438228773650",
+  "inputSourceProofSha256": "9267f8f12e4cc5f07346b00c1414a17ab4e16830b94dd423cec3e5048aa5ffb6",
+  "qualityApproved": false,
+  "target75Proven": false,
+  "derivation": "All 2822400 frames of the hash-pinned public 64-second glass-castle.wav are retained. PCM16 left/right samples are divided by 32768, averaged in double precision and rounded once to Float32. Complete bytes match two consecutive 32-second reads through actual production WavReader.stereo44100 plus JavaScript scalar averaging, within its unchanged 40-second per-read bound. This is mixed audio, not separated vocals."
+}

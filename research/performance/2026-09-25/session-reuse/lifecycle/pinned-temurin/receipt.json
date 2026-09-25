@@ -1,0 +1,98 @@
+{
+  "actualNativeExecution": false,
+  "appLifecycleEquivalent": false,
+  "benchmarkTimingAdmitted": false,
+  "casesPerVariant": {
+    "cpu_all": 50,
+    "cuda_basic": 50
+  },
+  "compiledClassCount": 64,
+  "compiledClassesDigest": "d2771d3cc18f9a89540466f36108f9712334d862c7c6f7f149640c167182d314",
+  "completeScratchReceiptSha256": "4c413da161770feefe5c8c3bb7b9a48eb2ab906427e982ad19ae5a0ad246bcaf",
+  "cudaExecuted": false,
+  "dependencies": {
+    "onnxruntime-1.25.1.jar": {
+      "bytes": 41804437,
+      "sha256": "749793ebed63743fec853d093da7987a86ea5cd592d54fba898cd3233100c381"
+    },
+    "test-json.jar": {
+      "bytes": 90031,
+      "sha256": "c243f45f9590c12694a4142ed3f07fc70dfb71e4daebd05ae234bf92a2da92a6"
+    }
+  },
+  "limitations": [
+    "ORT handles, kernels, tensor values and destructor behavior are Java controls, not JNI.",
+    "Fixture substitutes model preparation; no real graph files are loaded or model hashes tested.",
+    "Exact generated candidates compile against pinned real ORT API; execution uses a separate mock classpath.",
+    "No Android lifecycle, native fault semantics, GPU execution, numerical equivalence or timing qualification."
+  ],
+  "modelPreparationSubstituted": true,
+  "nativeJniLifecycleQualified": false,
+  "originalSourceSha256": "a1bb68a4930b5acd74f7fdc2d1d105f1d7f5c9974f11514872f47672b8736369",
+  "preservation": "Condensed receipt: source bindings and complete compilation/execution logs retained; generated Java and class inventories are reproducible using bound generator, controls and pinned dependencies. Full scratch receipt SHA binds the original uncondensed inventory.",
+  "qualityApproved": false,
+  "realOrtApiCompiled": true,
+  "recordedNonClassOutputBindings": {
+    "compiler-version.log": "fc1904a51a7019658c64e5d4870c6640cb45d29f50e02643a0f045af6fd0b15c",
+    "cpu_all/exact-api/NativeGame.java": "34104677ce1d954dd9c4fd956f64a219bf5d3349c00e8886be475d1d6cee7e62",
+    "cpu_all/exact-api/compile.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cpu_all/mock-execution/NativeGame.java": "a0327183c6e2050634313f8c8fad4941a7db979b33e3c95790c82dc5e85fac3c",
+    "cpu_all/mock-execution/compile.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cpu_all/mock-execution/models/manifest.json": "51e172cfaa967d9e2518f01f508a64d49cd283d23ae8e8456af9c6e76eeb4f97",
+    "cpu_all/mock-execution/result.json": "897963a89ac2b571a5d266ec54e4bc492925eaecb09baf4463dce823ec6fff8e",
+    "cpu_all/mock-execution/run.log": "fcddaee84f67ed52d352ee5219532dc79f4f007eadb493c357f43fcb450b78e0",
+    "cuda_basic/exact-api/NativeGame.java": "c662dc0beb12acbf6a5984afee7e35d3b67c34845c59b9aa1fc911e9e2acfe3a",
+    "cuda_basic/exact-api/compile.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cuda_basic/mock-execution/NativeGame.java": "830a302330ea62c6d5827ccfcbe48bf52050a19f9b3f6f4d1bd729d8d3fcef62",
+    "cuda_basic/mock-execution/compile.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cuda_basic/mock-execution/models/manifest.json": "51e172cfaa967d9e2518f01f508a64d49cd283d23ae8e8456af9c6e76eeb4f97",
+    "cuda_basic/mock-execution/result.json": "897963a89ac2b571a5d266ec54e4bc492925eaecb09baf4463dce823ec6fff8e",
+    "cuda_basic/mock-execution/run.log": "fcddaee84f67ed52d352ee5219532dc79f4f007eadb493c357f43fcb450b78e0",
+    "java-version.log": "8ffd2d05de22acb2a1f82845905d499e807c7595cf7c3e7f2a2cab7e576a26de"
+  },
+  "releaseAuthorized": false,
+  "runtime": {
+    "compilerCommand": [
+      "/workspace/scratch/b9f08ad0c73c/lightforge-host-research-toolchain/jdk17/bin/javac"
+    ],
+    "java": "/workspace/scratch/b9f08ad0c73c/lightforge-host-research-toolchain/jdk17/bin/java",
+    "javaSha256": "f5aed21d3a0b0f4b05d3a3f9fe71263916d5bc0d47b53aa52a3340b90f0b4805",
+    "modulesSha256": "6a1b657bd845397ab30fe2d4d78d80c4fdc05107182843669fc928655c227241"
+  },
+  "schema": "lightforge.game-session-reuse-lifecycle-suite.v1",
+  "sourceBindings": {
+    "android/src/com/cyberbasslord/lightforge/NativeGame.java": "a1bb68a4930b5acd74f7fdc2d1d105f1d7f5c9974f11514872f47672b8736369",
+    "tools/benchmark_game_accelerator.py": "d67fa0fe0d75bba041a1b9cf00a55a58d65fc81c93f25b9d76247d62c4bab527",
+    "tools/game_benchmark/session_reuse_candidate.py": "2b0e886b605e3a039049e77183c39e45dfa3c1192c4ac15a86a3fb1743568613",
+    "tools/game_benchmark/session_reuse_lifecycle/ai/onnxruntime/Control.java": "8c00215ee1c2961fcf93203a368b130a8295668e72616c240d4774cfeacf8392",
+    "tools/game_benchmark/session_reuse_lifecycle/ai/onnxruntime/OnnxJavaType.java": "937f7be2b2f8a8cfd905823ca2d8345a2e0fae7a7d8837e1e4e6837ec1e10e59",
+    "tools/game_benchmark/session_reuse_lifecycle/ai/onnxruntime/OnnxTensor.java": "e21e7bb66cd3cf44fb1ecd3a11c3632040e75c8138017af0969ebbffbec22cce",
+    "tools/game_benchmark/session_reuse_lifecycle/ai/onnxruntime/OnnxValue.java": "f8fcf12391a843accf0f25582d847b2ae3c9f6c488d7bd761e7a1d60a61e427d",
+    "tools/game_benchmark/session_reuse_lifecycle/ai/onnxruntime/OrtEnvironment.java": "a1b0455bceeb42e16e3b948314d45d8c7fd4d65f9d55aa06540ed5695d0fb90e",
+    "tools/game_benchmark/session_reuse_lifecycle/ai/onnxruntime/OrtException.java": "80498818a0f879334232859d936c423664b8b696f3f82c20e107dc0f688f08ab",
+    "tools/game_benchmark/session_reuse_lifecycle/ai/onnxruntime/OrtProvider.java": "fe677c7e576553aa94ee28f7d3b9ae1bd8c381d42057ac3462b0b0239760b279",
+    "tools/game_benchmark/session_reuse_lifecycle/ai/onnxruntime/OrtSession.java": "d7f25adf636c4c1b54cc6785bbd7dc9dfcb350b7b34933ce652e9e2fc4319b4f",
+    "tools/game_benchmark/session_reuse_lifecycle/ai/onnxruntime/TensorInfo.java": "47bef19938327e525eeff343fdb1842f7c3f271459c9a393afb1330977288109",
+    "tools/game_benchmark/session_reuse_lifecycle/ai/onnxruntime/providers/OrtCUDAProviderOptions.java": "0b76119e777ba80b049a3be082490a1c554799f24640e32a4b5367a58584e223",
+    "tools/game_benchmark/session_reuse_lifecycle/android/content/Context.java": "1d384587ec75eb32c1fea55e489873190e30d62dd2a25d1f43872bb3ada71c9a",
+    "tools/game_benchmark/session_reuse_lifecycle/android/content/res/AssetManager.java": "f93376eba9de2217dbef38b6a6be3bd68f2425056c43af66197b2321d2c13f21",
+    "tools/game_benchmark/session_reuse_lifecycle/com/cyberbasslord/lightforge/GameReuseLifecycleTest.java": "809f8986ea93a43aa1127f2b3ed67433af3b29488244d4bf1b2e4db2b3230889",
+    "tools/game_benchmark/session_reuse_lifecycle/run.py": "5015ef8e9a2ef76495dbf369389ea2435991fbe037871d359e8c25a4e64d97ff"
+  },
+  "sourceSamples": 1058400,
+  "status": "PASSED_MOCK_LIFECYCLE_AND_REAL_API_COMPILATION",
+  "target75Proven": false,
+  "variants": {
+    "cpu_all": {
+      "candidateSha256": "34104677ce1d954dd9c4fd956f64a219bf5d3349c00e8886be475d1d6cee7e62",
+      "fixtureSha256": "a0327183c6e2050634313f8c8fad4941a7db979b33e3c95790c82dc5e85fac3c",
+      "resultSha256": "897963a89ac2b571a5d266ec54e4bc492925eaecb09baf4463dce823ec6fff8e"
+    },
+    "cuda_basic": {
+      "candidateSha256": "c662dc0beb12acbf6a5984afee7e35d3b67c34845c59b9aa1fc911e9e2acfe3a",
+      "fixtureSha256": "830a302330ea62c6d5827ccfcbe48bf52050a19f9b3f6f4d1bd729d8d3fcef62",
+      "resultSha256": "897963a89ac2b571a5d266ec54e4bc492925eaecb09baf4463dce823ec6fff8e"
+    }
+  },
+  "withinProviderParityProven": false
+}

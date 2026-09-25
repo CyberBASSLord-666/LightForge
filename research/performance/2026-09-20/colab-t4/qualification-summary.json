@@ -1,0 +1,391 @@
+{
+  "schema": "lightforge.deux-accelerator-experiment.v1",
+  "status": "NUMERICAL_EQUIVALENCE_UNPROVEN",
+  "measured": false,
+  "qualityApproved": false,
+  "target75Proven": false,
+  "wholeSongSpeedupProven": false,
+  "androidSpeedupProven": false,
+  "releaseAuthorized": false,
+  "inputsRecheckedAfterQualification": true,
+  "outputBytesQualifiedForTiming": false,
+  "failure": "Numerical equivalence is unproven; repeated performance measurement is prohibited by this experiment. Inspect retained raw outputs. Different bits alone do not prove audible degradation. This research experiment does not decide publication readiness.",
+  "host": {
+    "platform": "Linux-6.6.122+-x86_64-with-glibc2.39",
+    "machine": "x86_64",
+    "cpuCount": 2,
+    "cpuAffinity": [
+      0,
+      1
+    ],
+    "cpuQuota": "max 100000",
+    "memoryLimit": "max",
+    "cpuModel": "Intel(R) Xeon(R) CPU @ 2.00GHz"
+  },
+  "audioSha256": "33f07d502ba19832b62b97d8fb4a11354e81310264bd885d7a06438228773650",
+  "startSample": -66150,
+  "samplesPerStem": 573300,
+  "runtimeVersion": "1.25.1",
+  "sourceHashes": {
+    "android/src/com/cyberbasslord/lightforge/NativeDeux.java": "084fec27d1fad0b10db01a960c614d333bb8c049e712c3fc4524d66e6dc3dd37",
+    "android/src/com/cyberbasslord/lightforge/NativeDeuxTransform.java": "991b06501cfb88b904d0b714a525c389f169f00c231248b0e961b70f257e90b5",
+    "android/src/com/cyberbasslord/lightforge/NativeInferenceProfile.java": "aa1d6bd370d88a774792cb76b4a18604d3ab2bffba58ab382e9045cad071acc1",
+    "tests/NativeDeuxExecutionBenchmark.java": "70eab8091070904493493bd94e7a6467a031628e0feb432055942cdd1bd1b0bb",
+    "tools/benchmark_deux_execution.py": "2fdeceb1fd4fd275b31338aeff6be6a5e53afb741c15de5dc020f65cbed72f3f",
+    "tools/profile_deux_operators.py": "9a4e189d899a2f5c3c0e92df64ef4e1f3316ef422d53216d92b983e221c235d6",
+    "android/native-runtime.json": "e3ea568b3a8485235f23a59cd787466cdcbbfcaa54ac56df3ce040d29fcb2a94",
+    "web/analysis/models/deux/manifest.json": "6aebf45e6e7f6fa974f14fe47a252fc01f48da4815f40a1fdf10641a432529a9",
+    "tools/benchmark_deux_accelerator.py": "0c19caa398c6fb1e1be121d359219074e71879979105d4172fbcf360906c9f0a"
+  },
+  "dependencyHashes": {
+    "test-json.jar": "c243f45f9590c12694a4142ed3f07fc70dfb71e4daebd05ae234bf92a2da92a6",
+    "onnxruntime_gpu-1.25.1.jar": "0a22d140ee2a064944b7ee45b7f7a8deb113f58e9be514da85c6dfbe85262649",
+    "onnxruntime-1.25.1.jar": "749793ebed63743fec853d093da7987a86ea5cd592d54fba898cd3233100c381",
+    "android.jar": "4566663c3876e022b4fa4ced8c8697c4ab1688267f090114fd92d027b32e619b"
+  },
+  "modelManifestSha256": "6aebf45e6e7f6fa974f14fe47a252fc01f48da4815f40a1fdf10641a432529a9",
+  "modelHashes": {
+    "block-00-frequency.onnx": "361ff85e20567a74c076fab06ddfa87dd8c58108cbfc72340fafa8ae92a239b6",
+    "block-00-time.onnx": "688feca1115d610e9bc9d15ac9dac6e33c4cf0a03966d9effe8974d2674ae924",
+    "block-01-frequency.onnx": "fdcf43737acdaa452af52f57eb4a46659b16479bd21bd25ce15edf4c242c0b79",
+    "block-01-time.onnx": "af09b80e7d365402f98ddea310d5de5fa469397389bb00f6812b9ad4afded96f",
+    "block-02-frequency.onnx": "5e37f7dfadb785dcf1b4b4f688437506db621ebf42fe1ed573c080d42ec80d73",
+    "block-02-time.onnx": "1822e5f163c9d5596ecf4463970dee6a873c9d5ecc625ab018000f1ac5708788",
+    "block-03-frequency.onnx": "4e8a32b3324465a14d8675550fba44e0a65c80625f670647c060efd2120a17f7",
+    "block-03-time.onnx": "4832532d1fcb067413adb1f51e3a90af94cbcd8c40c9be5e8640c33b3a38d731",
+    "block-04-frequency.onnx": "dd64feabf8f4cb9052a782d94279e17285e0ad69b740c1a91a6e0257eb3b3206",
+    "block-04-time.onnx": "f5c58deab56f5669691d6b38844ef63dc2f3606ea2fe6993a895c36ca881e95b",
+    "block-05-frequency.onnx": "e8c2cdc608270649b4e198663701e361f6ee1786c11fd846d56bd7684cb0cc4c",
+    "block-05-time.onnx": "648dc03432489c44f08eb610eb7c079941ce0d5fbfc0d59275d39f837d495bbc",
+    "block-06-frequency.onnx": "1a7006f146070693e8c8b2ad6a7ec1dd27c1cc4e1b3f8308dad0b31b41032504",
+    "block-06-time.onnx": "eab3fd6652bd41198dc8920ce2b89f30a4e3ae7bdca3049c6ffd93cfe2c63245",
+    "block-07-frequency.onnx": "1d5144c390d023660b8441256eb6bd18e778181b0c79fa5f95bbf2eda88c1b1f",
+    "block-07-time.onnx": "87e6c0b57591fc145eb43924ed0998a77eed0b24b9fbb91fe52a5c5dcec05353",
+    "block-08-frequency.onnx": "f77a0fa744adfd0bdf2aa93b34664cb7c245c3a9f325e6f799695ea2a78ea7ca",
+    "block-08-time.onnx": "0f55a98b1876a9d96ad63e0cf89d7f52a76e9c124bee6e6281fc93b422b03107",
+    "block-09-frequency.onnx": "8d647c15bb2ddbec51e392a5045cfd10e8ef8745af1242e1923a12d98c611899",
+    "block-09-time.onnx": "1499ace8b7683ce31d7af60a5dfa649a4834f32469f5fa161cb06453a91eb958",
+    "block-10-frequency.onnx": "1dd6b316eee0f9a312d2b1752a8f0d1051c5265ea6ab6361e64b386685824a34",
+    "block-10-time.onnx": "3c70c547ff304f7ba369eed6c8180eb23bfcd6246b72a6e66fd683b2aaa36c47",
+    "block-11-frequency.onnx": "1ac019e6270d55218d5809a7cbc10dff238d0bb0d14738ee76e54227306f55a1",
+    "block-11-time.onnx": "31a94b200d07dcde3c8fc4b4846c46f64ad8f44c084a73c6a5bf05f54ed81397",
+    "front.onnx": "7906638e713a517297de6cbb758551e5f86fe4a01d19c45f3e1eac28953bcb0e",
+    "head-0.onnx": "9f8253c46c48f700e6682faf9c22a03b662a65941862414d649a94c38940d0bb",
+    "head-1.onnx": "343131b2c6c8dda367d720c0d42b933dacaa131f433e942258ef7aaa41c2471f"
+  },
+  "cudaOptions": {
+    "use_tf32": "0",
+    "do_copy_in_default_stream": "1",
+    "enable_cuda_graph": "0",
+    "enable_skip_layer_norm_strict_mode": "1"
+  },
+  "gpuInventory": {
+    "nameUuidPciDriverMemoryRows": [
+      "Tesla T4, GPU-a500e342-3d92-266b-3a0e-cc1765746df5, 00000000:00:04.0, 580.82.07, 15360"
+    ],
+    "computeCapabilityRows": [
+      "7.5"
+    ],
+    "computeCapabilityAvailable": true,
+    "driverIsNotCudaRuntimeVersion": true
+  },
+  "gpuNativeLibraryVersions": {
+    "cudaRuntimeVersion": 12090,
+    "cudnnVersion": 91002,
+    "cublasVersion": [
+      12,
+      9,
+      1
+    ]
+  },
+  "comparisons": [
+    {
+      "referenceSha256": "b5db5b5f8bcc576e1af22b0a9fca837dc9e809195ada006af1581458283578b7",
+      "candidateSha256": "b5db5b5f8bcc576e1af22b0a9fca837dc9e809195ada006af1581458283578b7",
+      "byteIdentical": true,
+      "samples": 1146600,
+      "numericallyUnequalSamples": 0,
+      "maximumAbsoluteError": 0.0,
+      "meanAbsoluteError": 0.0,
+      "rootMeanSquaredError": 0.0,
+      "tolerance": null,
+      "qualityApproved": false,
+      "interpretation": "Raw Float32 differences only; no tolerance or musical-quality approval is inferred.",
+      "reference": "cpu_all",
+      "candidate": "cpu_all_profiled"
+    },
+    {
+      "referenceSha256": "c3e83ccaf95b1f749185fdf6cfab38b6bf7a990098d35c8361530491d5ef8a89",
+      "candidateSha256": "c3e83ccaf95b1f749185fdf6cfab38b6bf7a990098d35c8361530491d5ef8a89",
+      "byteIdentical": true,
+      "samples": 1146600,
+      "numericallyUnequalSamples": 0,
+      "maximumAbsoluteError": 0.0,
+      "meanAbsoluteError": 0.0,
+      "rootMeanSquaredError": 0.0,
+      "tolerance": null,
+      "qualityApproved": false,
+      "interpretation": "Raw Float32 differences only; no tolerance or musical-quality approval is inferred.",
+      "reference": "cpu_basic",
+      "candidate": "cpu_basic_profiled"
+    },
+    {
+      "referenceSha256": "c3e83ccaf95b1f749185fdf6cfab38b6bf7a990098d35c8361530491d5ef8a89",
+      "candidateSha256": "c3e83ccaf95b1f749185fdf6cfab38b6bf7a990098d35c8361530491d5ef8a89",
+      "byteIdentical": true,
+      "samples": 1146600,
+      "numericallyUnequalSamples": 0,
+      "maximumAbsoluteError": 0.0,
+      "meanAbsoluteError": 0.0,
+      "rootMeanSquaredError": 0.0,
+      "tolerance": null,
+      "qualityApproved": false,
+      "interpretation": "Raw Float32 differences only; no tolerance or musical-quality approval is inferred.",
+      "reference": "gpu_package_cpu_basic",
+      "candidate": "gpu_package_cpu_basic_profiled"
+    },
+    {
+      "referenceSha256": "d666eca46114144ea4445947b5699916a068fe2402e68183e7ab7a5151a6d98e",
+      "candidateSha256": "d666eca46114144ea4445947b5699916a068fe2402e68183e7ab7a5151a6d98e",
+      "byteIdentical": true,
+      "samples": 1146600,
+      "numericallyUnequalSamples": 0,
+      "maximumAbsoluteError": 0.0,
+      "meanAbsoluteError": 0.0,
+      "rootMeanSquaredError": 0.0,
+      "tolerance": null,
+      "qualityApproved": false,
+      "interpretation": "Raw Float32 differences only; no tolerance or musical-quality approval is inferred.",
+      "reference": "cuda_basic",
+      "candidate": "cuda_basic_profiled"
+    },
+    {
+      "referenceSha256": "b5db5b5f8bcc576e1af22b0a9fca837dc9e809195ada006af1581458283578b7",
+      "candidateSha256": "c3e83ccaf95b1f749185fdf6cfab38b6bf7a990098d35c8361530491d5ef8a89",
+      "byteIdentical": false,
+      "samples": 1146600,
+      "numericallyUnequalSamples": 911769,
+      "maximumAbsoluteError": 3.5762786865234375e-07,
+      "meanAbsoluteError": 2.1038047365183956e-08,
+      "rootMeanSquaredError": 3.061769232727322e-08,
+      "tolerance": null,
+      "qualityApproved": false,
+      "interpretation": "Raw Float32 differences only; no tolerance or musical-quality approval is inferred.",
+      "reference": "cpu_all",
+      "candidate": "cpu_basic"
+    },
+    {
+      "referenceSha256": "c3e83ccaf95b1f749185fdf6cfab38b6bf7a990098d35c8361530491d5ef8a89",
+      "candidateSha256": "c3e83ccaf95b1f749185fdf6cfab38b6bf7a990098d35c8361530491d5ef8a89",
+      "byteIdentical": true,
+      "samples": 1146600,
+      "numericallyUnequalSamples": 0,
+      "maximumAbsoluteError": 0.0,
+      "meanAbsoluteError": 0.0,
+      "rootMeanSquaredError": 0.0,
+      "tolerance": null,
+      "qualityApproved": false,
+      "interpretation": "Raw Float32 differences only; no tolerance or musical-quality approval is inferred.",
+      "reference": "cpu_basic",
+      "candidate": "gpu_package_cpu_basic"
+    },
+    {
+      "referenceSha256": "c3e83ccaf95b1f749185fdf6cfab38b6bf7a990098d35c8361530491d5ef8a89",
+      "candidateSha256": "d666eca46114144ea4445947b5699916a068fe2402e68183e7ab7a5151a6d98e",
+      "byteIdentical": false,
+      "samples": 1146600,
+      "numericallyUnequalSamples": 938567,
+      "maximumAbsoluteError": 4.470348358154297e-07,
+      "meanAbsoluteError": 2.903518385632163e-08,
+      "rootMeanSquaredError": 4.312747619637911e-08,
+      "tolerance": null,
+      "qualityApproved": false,
+      "interpretation": "Raw Float32 differences only; no tolerance or musical-quality approval is inferred.",
+      "reference": "gpu_package_cpu_basic",
+      "candidate": "cuda_basic"
+    }
+  ],
+  "runs": [
+    {
+      "wallNanos": 135619031484,
+      "processCpuNanos": 219390000000,
+      "peakRssBytes": 875106304,
+      "variant": "cpu_all",
+      "round": 0,
+      "phase": "qualification",
+      "outputSha256": "b5db5b5f8bcc576e1af22b0a9fca837dc9e809195ada006af1581458283578b7",
+      "outputBytes": 4586400,
+      "inferenceMillis": 126530.0,
+      "modelInitMillis": 2727.0,
+      "profileSha256": "35a010f3d3bfd8815fb60b84d22a9c2b5e0ce1a39517ab00620d92d02a572597",
+      "processWallIncludingStartupAndInspectionNanos": 135929341303,
+      "timingEligible": false
+    },
+    {
+      "wallNanos": 140680059806,
+      "processCpuNanos": 225620000000,
+      "peakRssBytes": 880160768,
+      "variant": "cpu_all_profiled",
+      "round": 0,
+      "phase": "diagnostic",
+      "outputSha256": "b5db5b5f8bcc576e1af22b0a9fca837dc9e809195ada006af1581458283578b7",
+      "outputBytes": 4586400,
+      "inferenceMillis": 130765.0,
+      "modelInitMillis": 2530.0,
+      "profileSha256": "908c72f26367f68762820099487053b438db1c9bd12a3e4fe5f84e53263db022",
+      "processWallIncludingStartupAndInspectionNanos": 141033212106,
+      "timingEligible": false
+    },
+    {
+      "wallNanos": 140361540099,
+      "processCpuNanos": 227630000000,
+      "peakRssBytes": 841080832,
+      "variant": "cpu_basic",
+      "round": 0,
+      "phase": "qualification",
+      "outputSha256": "c3e83ccaf95b1f749185fdf6cfab38b6bf7a990098d35c8361530491d5ef8a89",
+      "outputBytes": 4586400,
+      "inferenceMillis": 130053.0,
+      "modelInitMillis": 2372.0,
+      "profileSha256": "ebbe32f63144c409cbaf09327f91b97e72e24286e6e43d4ae99a358fa3a6c833",
+      "processWallIncludingStartupAndInspectionNanos": 140645066092,
+      "timingEligible": false
+    },
+    {
+      "wallNanos": 143107767458,
+      "processCpuNanos": 229470000000,
+      "peakRssBytes": 863297536,
+      "variant": "cpu_basic_profiled",
+      "round": 0,
+      "phase": "diagnostic",
+      "outputSha256": "c3e83ccaf95b1f749185fdf6cfab38b6bf7a990098d35c8361530491d5ef8a89",
+      "outputBytes": 4586400,
+      "inferenceMillis": 133300.0,
+      "modelInitMillis": 2429.0,
+      "profileSha256": "eef64e1c1da70c7cfc3bd295fab9e983acbfeb5cf3f977a592a5e6654d443852",
+      "processWallIncludingStartupAndInspectionNanos": 143389912361,
+      "timingEligible": false
+    },
+    {
+      "wallNanos": 141188107952,
+      "processCpuNanos": 228710000000,
+      "peakRssBytes": 862179328,
+      "variant": "gpu_package_cpu_basic",
+      "round": 0,
+      "phase": "qualification",
+      "outputSha256": "c3e83ccaf95b1f749185fdf6cfab38b6bf7a990098d35c8361530491d5ef8a89",
+      "outputBytes": 4586400,
+      "inferenceMillis": 130797.0,
+      "modelInitMillis": 2459.0,
+      "profileSha256": "c7990c5ab5e7e22bbaaf84d8252f5c15d8af900998026f5b874c88139bd9ee39",
+      "processWallIncludingStartupAndInspectionNanos": 141466766796,
+      "timingEligible": false
+    },
+    {
+      "wallNanos": 140110099914,
+      "processCpuNanos": 225880000000,
+      "peakRssBytes": 855576576,
+      "variant": "gpu_package_cpu_basic_profiled",
+      "round": 0,
+      "phase": "diagnostic",
+      "outputSha256": "c3e83ccaf95b1f749185fdf6cfab38b6bf7a990098d35c8361530491d5ef8a89",
+      "outputBytes": 4586400,
+      "inferenceMillis": 129816.0,
+      "modelInitMillis": 2554.0,
+      "profileSha256": "d3d2bc807ae7643be143a45cc21cabdaa756617cc8540710065b6f25c9222686",
+      "processWallIncludingStartupAndInspectionNanos": 140408729961,
+      "timingEligible": false
+    },
+    {
+      "wallNanos": 20395031596,
+      "processCpuNanos": 21200000000,
+      "peakRssBytes": 1191411712,
+      "variant": "cuda_basic",
+      "round": 0,
+      "phase": "qualification",
+      "outputSha256": "d666eca46114144ea4445947b5699916a068fe2402e68183e7ab7a5151a6d98e",
+      "outputBytes": 4586400,
+      "inferenceMillis": 6118.0,
+      "modelInitMillis": 7084.0,
+      "profileSha256": "fe76468147b0ceee0122ea811ed42da9629b423521e31668d6f2d2d58baab109",
+      "processWallIncludingStartupAndInspectionNanos": 22293132617,
+      "timingEligible": false
+    },
+    {
+      "wallNanos": 19381449865,
+      "processCpuNanos": 21590000000,
+      "peakRssBytes": 1228365824,
+      "variant": "cuda_basic_profiled",
+      "round": 0,
+      "phase": "diagnostic",
+      "outputSha256": "d666eca46114144ea4445947b5699916a068fe2402e68183e7ab7a5151a6d98e",
+      "outputBytes": 4586400,
+      "inferenceMillis": 6355.0,
+      "modelInitMillis": 5973.0,
+      "profileSha256": "2cbe1e53912dd4921820ba7ff1c918493c0624fc3a5c8d7cfb41e7f04501a00b",
+      "processWallIncludingStartupAndInspectionNanos": 20117601318,
+      "timingEligible": false
+    }
+  ],
+  "placement": {
+    "cpu_all": {
+      "observedProviders": [
+        "CPUExecutionProvider"
+      ],
+      "cpuFallbackKernelEvents": 0,
+      "allGraphsExecuteCudaArithmetic": false,
+      "timingMeaning": "ORT host kernel-event durations, including dispatch/scheduling overhead; not GPU device kernel time, critical-path wall time or measured speedup."
+    },
+    "cpu_basic": {
+      "observedProviders": [
+        "CPUExecutionProvider"
+      ],
+      "cpuFallbackKernelEvents": 0,
+      "allGraphsExecuteCudaArithmetic": false,
+      "timingMeaning": "ORT host kernel-event durations, including dispatch/scheduling overhead; not GPU device kernel time, critical-path wall time or measured speedup."
+    },
+    "gpu_package_cpu_basic": {
+      "observedProviders": [
+        "CPUExecutionProvider"
+      ],
+      "cpuFallbackKernelEvents": 0,
+      "allGraphsExecuteCudaArithmetic": false,
+      "timingMeaning": "ORT host kernel-event durations, including dispatch/scheduling overhead; not GPU device kernel time, critical-path wall time or measured speedup."
+    },
+    "cuda_basic": {
+      "observedProviders": [
+        "CPUExecutionProvider",
+        "CUDAExecutionProvider"
+      ],
+      "cpuFallbackKernelEvents": 10232,
+      "allGraphsExecuteCudaArithmetic": true,
+      "timingMeaning": "ORT host kernel-event durations, including dispatch/scheduling overhead; not GPU device kernel time, critical-path wall time or measured speedup."
+    }
+  },
+  "scope": "Single 13-second original-model passage on Colab T4; raw diagnostic observations, no accepted performance ratio or quality approval.",
+  "fullReceiptSha256": "83bc446d518375e18cc47a17ff732e1a7320cdece4c5cc874ca0208b7f82190c",
+  "evidenceZipSha256": "657e0089895f377d34deb77a5a25c9d3a51dbee0dbe503e283993285484163c4",
+  "evidenceZipBytes": 50821544,
+  "sourceCommit": "1c7a7d2d3bc0a9eab94bbcb8266710ea7f8ded0b",
+  "cudaCoverage": {
+    "graphCount": 27,
+    "modelRuns": 335,
+    "kernelEvents": 79047,
+    "durationMeaning": "ORT host kernel-event durations, including dispatch/scheduling overhead; not GPU device kernel time, critical-path wall time or measured speedup."
+  },
+  "additionalProductionComparison": {
+    "referenceSha256": "b5db5b5f8bcc576e1af22b0a9fca837dc9e809195ada006af1581458283578b7",
+    "candidateSha256": "d666eca46114144ea4445947b5699916a068fe2402e68183e7ab7a5151a6d98e",
+    "byteIdentical": false,
+    "samples": 1146600,
+    "numericallyUnequalSamples": 939514,
+    "maximumAbsoluteError": 3.725290298461914e-07,
+    "meanAbsoluteError": 2.9385464484248085e-08,
+    "rootMeanSquaredError": 4.367128794262616e-08,
+    "tolerance": null,
+    "qualityApproved": false,
+    "interpretation": "Raw Float32 differences only; no tolerance or musical-quality approval is inferred.",
+    "reference": "cpu_all",
+    "candidate": "cuda_basic"
+  }
+}

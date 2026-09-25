@@ -1,0 +1,16 @@
+{
+  "schema": "lightforge.game-passage-input.v1",
+  "pcmSHA256": "a75b3b8d59c87d428e38e45db5f54ad8d2b1613fe79ee07c2595fecbf9215274",
+  "sourceSHA256": "33f07d502ba19832b62b97d8fb4a11354e81310264bd885d7a06438228773650",
+  "sourceSamples": 2822400,
+  "passageIndex": 0,
+  "firstSample": 0,
+  "lastSample": 617400,
+  "sampleRate": 44100,
+  "seed": 2025,
+  "language": 0,
+  "derivation": "First production GAME core/context window of the entire shipped public demo; original wav-reader stereo44100 then Float32 channel mean, without normalization. Mixed audio, not a separated vocal stem.",
+  "sourceFile": "glass-castle.wav",
+  "separationApplied": false,
+  "wavReaderSha256": "6cd0a40392617cc020f2ec4f87952f165e070c8c17bc4aa3b36b212823d897d4"
+}
