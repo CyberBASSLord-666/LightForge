@@ -1,0 +1,1357 @@
+{
+  "schema": "lightforge.game-session-reuse-runtime-bindings.v1",
+  "sourceCommit": "ae7ed37ad7539b71ea84f783470c174f1297346e",
+  "sourceTree": "4809b69ac830a454832b9414f0dd949e29301011",
+  "models": {
+    "manifest.json": {
+      "bytes": 1532,
+      "sha256": "51e172cfaa967d9e2518f01f508a64d49cd283d23ae8e8456af9c6e76eeb4f97"
+    },
+    "bd2dur.onnx": {
+      "bytes": 4569,
+      "sha256": "6672d56b00f27a20e9bfaa92801c15e394bb520e49031d3ed2515b0a6cf27402"
+    },
+    "config.json": {
+      "bytes": 198,
+      "sha256": "4d62b6d058a820e981184ea6f04605d37659c4331ee01979eb14a14be08af890"
+    },
+    "dur2bd.onnx": {
+      "bytes": 2632,
+      "sha256": "49d10d1ea186e43c51fd2c51cedb01a3852d363f1c7056ae77df50f7e8dd0996"
+    },
+    "encoder.onnx": {
+      "bytes": 80398908,
+      "sha256": "fbda7df8791d5cafd02ed33c65f9926c5514c750278c27fb8a59259b4c1d7464"
+    },
+    "estimator.onnx": {
+      "bytes": 153459702,
+      "sha256": "0d4a6e13bf475f79967e252b401bb5f317aa6b96bbe6665d5f8b14b42b179926"
+    },
+    "segmenter.onnx": {
+      "bytes": 159935846,
+      "sha256": "9db605a2ad3c179e9c4e4ae5b970727006020c65936773c26b2cbc27d8ef892f"
+    }
+  },
+  "dependencies": {
+    "test-json.jar": {
+      "bytes": 90031,
+      "sha256": "c243f45f9590c12694a4142ed3f07fc70dfb71e4daebd05ae234bf92a2da92a6"
+    },
+    "android.jar": {
+      "bytes": 27092450,
+      "sha256": "4566663c3876e022b4fa4ced8c8697c4ab1688267f090114fd92d027b32e619b"
+    },
+    "onnxruntime-1.25.1.jar": {
+      "bytes": 41804437,
+      "sha256": "749793ebed63743fec853d093da7987a86ea5cd592d54fba898cd3233100c381"
+    }
+  },
+  "jdk": {
+    "NOTICE": {
+      "bytes": 2400,
+      "sha256": "c02756bcd9fa8191bf0fda4451bc018414dd44ee35bf09922c24377a475e4b5a"
+    },
+    "bin/jar": {
+      "bytes": 16336,
+      "sha256": "368f155e363dae619e6fe6456140d910342198e5bef6d1d0709853dcf93b70bc"
+    },
+    "bin/jarsigner": {
+      "bytes": 16336,
+      "sha256": "9e0e4046b87bc38a8c8c2a705264e56870a10b1ba9e1164ba8a37e2ae53a8e3e"
+    },
+    "bin/java": {
+      "bytes": 16320,
+      "sha256": "f5aed21d3a0b0f4b05d3a3f9fe71263916d5bc0d47b53aa52a3340b90f0b4805"
+    },
+    "bin/javac": {
+      "bytes": 16368,
+      "sha256": "50d09f424b513525af1f0b05cd948ed7890a8d60fef7f7797e20892705b0067d"
+    },
+    "bin/javadoc": {
+      "bytes": 16368,
+      "sha256": "dd3da9adf301f294fc5deb8ae2752d508c30a3744e81029da617fd406b44a414"
+    },
+    "bin/javap": {
+      "bytes": 16336,
+      "sha256": "f90ade56cebc2168984c1b0011b5325326953c05b4315074a2a434e4ba12add9"
+    },
+    "bin/jcmd": {
+      "bytes": 16336,
+      "sha256": "ea04e2bb7927848be7512e313d04fc831cd8a63b7cf31a4b3b401fa4027168ff"
+    },
+    "bin/jconsole": {
+      "bytes": 16400,
+      "sha256": "f988bb74c7308ff9f399748a81c05cab583c3013f99f4ad6490b1e2a4a3602ed"
+    },
+    "bin/jdb": {
+      "bytes": 16336,
+      "sha256": "d8cecb8f4910cd99c923da9cd0dff35a6f40ee986ce09e44a7a9023a3ea9b836"
+    },
+    "bin/jdeprscan": {
+      "bytes": 16336,
+      "sha256": "0a96ef58b9da87fc721544a31b706e3108e69b8b31f62806deab87312d638724"
+    },
+    "bin/jdeps": {
+      "bytes": 16336,
+      "sha256": "27101717d82ab95028f5a7aa60c2243bfcc7d4fedbebe90cd07dcd87ea3b258b"
+    },
+    "bin/jfr": {
+      "bytes": 16336,
+      "sha256": "12ab1ae196e3a3277ef8159c5d57d35eace98b9e48ac8e5fc50f9b57c9a123d6"
+    },
+    "bin/jhsdb": {
+      "bytes": 16336,
+      "sha256": "33869625cd4f18c0093e2b1d5cade868ed80241bffa0f303e3757e3c18973432"
+    },
+    "bin/jimage": {
+      "bytes": 16336,
+      "sha256": "8977b5ba5b13584eb69a7efaf12ffa2bcddebf1ce916f8cdf599a98837713c82"
+    },
+    "bin/jinfo": {
+      "bytes": 16368,
+      "sha256": "6711f04f1422d51244e0d37e8919bcfab6c49d240cfc1de2643305580992d7a4"
+    },
+    "bin/jlink": {
+      "bytes": 16368,
+      "sha256": "70d890bc362b8ac9fba7bc02086d3576ea1b8e3327d92df143a3439bd12cb80d"
+    },
+    "bin/jmap": {
+      "bytes": 16368,
+      "sha256": "cfeb61f581715fee9ee45e172837ae41283df8f655228cba696dbfc31864d9fa"
+    },
+    "bin/jmod": {
+      "bytes": 16336,
+      "sha256": "24ce43a0959bf284cc8e46d67b85793732e700ec9a1660808e4b2b9eb0dbf037"
+    },
+    "bin/jpackage": {
+      "bytes": 16336,
+      "sha256": "69c6d00b863393b97d725666bc314650a0bc73723661c9899bf1dfd6b59ae892"
+    },
+    "bin/jps": {
+      "bytes": 16336,
+      "sha256": "f410b95c72a887769584ce6245a4f6a88677bf6cc4046573b4f4e902ca52e28d"
+    },
+    "bin/jrunscript": {
+      "bytes": 16376,
+      "sha256": "e20829d75603e0111685b2bdf83b865f6bcd396b7ea19931a86c0c3f304ab5ce"
+    },
+    "bin/jshell": {
+      "bytes": 16336,
+      "sha256": "6119775130308b6e670743db1fa940ca18946d19317e7f55ac741fd6b2239030"
+    },
+    "bin/jstack": {
+      "bytes": 16368,
+      "sha256": "78a0b60244493fc088500e4f475a073ea52930cd74982cd0642f84b691d5e957"
+    },
+    "bin/jstat": {
+      "bytes": 16336,
+      "sha256": "306a4cd4d3477bb9eda87eaa9fe2a86feaa71a223d69f43aef73eef9e9aa80e2"
+    },
+    "bin/jstatd": {
+      "bytes": 16336,
+      "sha256": "fdb09e887fae72d1c7c1a1fa5f63104df0521cef0f1c0eec185b687a895f571a"
+    },
+    "bin/keytool": {
+      "bytes": 16336,
+      "sha256": "f75eaf6dd6c5f011244f4db01f5713aeb68ca9bc853417a622bac759f5120ac7"
+    },
+    "bin/rmiregistry": {
+      "bytes": 16344,
+      "sha256": "3bd003a87d050eb6191d3c152780d1a44a8277be7b0ae5736260dc6a4e57be60"
+    },
+    "bin/serialver": {
+      "bytes": 16336,
+      "sha256": "85ccc16758db30646ad12652b689f84915dee1f197fbf8327c7af75f0a83380f"
+    },
+    "conf/logging.properties": {
+      "bytes": 2732,
+      "sha256": "b62d2733ab99556b108a1951d894c5a8d76b1ac7a00c02c388f9eb9be046c56f"
+    },
+    "conf/management/jmxremote.access": {
+      "bytes": 3997,
+      "sha256": "0c25d26ee212ca1e8c33f67c3c460d43fe849c3a1d23dbe341148517602b280c"
+    },
+    "conf/management/jmxremote.password.template": {
+      "bytes": 5690,
+      "sha256": "0273b6a6b9e20e6ce54c5aee70164028e0395063b2b7d39060a40b6495543dbf"
+    },
+    "conf/management/management.properties": {
+      "bytes": 14410,
+      "sha256": "f80096ec028dcb71625c398ec16d12023cafc6a1c055aceaed07d02e8d56f637"
+    },
+    "conf/net.properties": {
+      "bytes": 7441,
+      "sha256": "2e070ed1d97052f0ce8771ed2ef74a38d7c260a45fde7a3682c8844e5fdf58a4"
+    },
+    "conf/sdp/sdp.conf.template": {
+      "bytes": 1455,
+      "sha256": "e9441e51f0d29e25313d33a9005640f11ad93c27f01bc46a34bf02f2a98ffd6b"
+    },
+    "conf/security/java.policy": {
+      "bytes": 2293,
+      "sha256": "1224c11b69032c80e1493416641c82a37e558913a41f959f83ab2f96f097d6c0"
+    },
+    "conf/security/java.security": {
+      "bytes": 68090,
+      "sha256": "3b79c6e4386d29c6378a62e69d7a5220a3e8fb07a713f765dbf2874515bcfd70"
+    },
+    "conf/security/policy/README.txt": {
+      "bytes": 2390,
+      "sha256": "6da0747334b0fea7592fd92614b2bbc8b126535e129b1fee483774d914e98eb5"
+    },
+    "conf/security/policy/limited/default_US_export.policy": {
+      "bytes": 146,
+      "sha256": "758b930a526fc670ab7537f8c26321527050a31f5f42149a2dda623c56a0a1a9"
+    },
+    "conf/security/policy/limited/default_local.policy": {
+      "bytes": 647,
+      "sha256": "2b2627548e61316150d47ffc3e6cad465ca05b3cccd4785eb7d21aa7baa0f441"
+    },
+    "conf/security/policy/limited/exempt_local.policy": {
+      "bytes": 566,
+      "sha256": "8c3d7648abcd95a272ce12db870082937f4d7f6878d730d83cb7fbb31eb8b2c9"
+    },
+    "conf/security/policy/unlimited/default_US_export.policy": {
+      "bytes": 146,
+      "sha256": "758b930a526fc670ab7537f8c26321527050a31f5f42149a2dda623c56a0a1a9"
+    },
+    "conf/security/policy/unlimited/default_local.policy": {
+      "bytes": 193,
+      "sha256": "8d8a318e6d90dfd7e26612d2b6385aa704f686ca6134c551f8928418d92b851a"
+    },
+    "conf/sound.properties": {
+      "bytes": 1210,
+      "sha256": "299c2360b6155eb28990ec49cd21753f97e43442fe8fab03e04f3e213df43a66"
+    },
+    "include/classfile_constants.h": {
+      "bytes": 22155,
+      "sha256": "389445772f7783f5329d1666621b95cb33f3eb30b336bd47fe07abb0e1f47ad8"
+    },
+    "include/jawt.h": {
+      "bytes": 12458,
+      "sha256": "85101d07928a589accfef9d7c261850faa8d5afc8ef262af7ec9734008f6f2f5"
+    },
+    "include/jdwpTransport.h": {
+      "bytes": 8151,
+      "sha256": "9b8ccbb57e08fa10c0c183843eca4e57267f4cf65ba3c44f8bfbe694385f0a5a"
+    },
+    "include/jni.h": {
+      "bytes": 75678,
+      "sha256": "1266aea5b9f5d5db1cb6f8e5c6c43cfa7f80bc4f72d7fe42c6131bb939dc70f4"
+    },
+    "include/jvmti.h": {
+      "bytes": 81725,
+      "sha256": "95b20c58ca3b96bf6a28c13632f671b3f87d5923c0338012e0d90ba4cf157e29"
+    },
+    "include/jvmticmlr.h": {
+      "bytes": 4771,
+      "sha256": "6ee3e52d24bdb4f4d0312dfbab3d47bd524cbdac5540a4d790cac0620c59b3c8"
+    },
+    "include/linux/jawt_md.h": {
+      "bytes": 1965,
+      "sha256": "656d0a92cd0774facb79662a261ec96043f284e145ce4f8fde1e08e8e28775d2"
+    },
+    "include/linux/jni_md.h": {
+      "bytes": 2208,
+      "sha256": "88cb5c33e306900dd35a78d5a439087123b8e91b0986bb5acb42cc9bd2fcc42e"
+    },
+    "jmods/java.base.jmod": {
+      "bytes": 22282336,
+      "sha256": "16a9a576bb6cd9cf3860ac7502eb2b923f60402479f198592bd39c99b892cd35"
+    },
+    "jmods/java.compiler.jmod": {
+      "bytes": 130711,
+      "sha256": "bded7c9befc90848e2d177a1ce46fa1ff8f2e6acf550603765caf163bac4e3c0"
+    },
+    "jmods/java.datatransfer.jmod": {
+      "bytes": 59142,
+      "sha256": "a0fc43509d19c28826220fbeaae2ed5acd90d5bb3e2055d98751e433f8051d6d"
+    },
+    "jmods/java.desktop.jmod": {
+      "bytes": 14204133,
+      "sha256": "20bb293a682082799f14c298dd720f157cf5284d2370fdd3c9ff95b6722703fd"
+    },
+    "jmods/java.instrument.jmod": {
+      "bytes": 46560,
+      "sha256": "f2a07bef0a7facdee07a89db3965be07a24008d5af1fb8ad0774f330d4c7bca8"
+    },
+    "jmods/java.logging.jmod": {
+      "bytes": 128180,
+      "sha256": "bb5215b3dfad9edda42f599a4eb6b0b06a65a180ddc0d4bd19d1c7109aa0cb77"
+    },
+    "jmods/java.management.jmod": {
+      "bytes": 904311,
+      "sha256": "24ecf49d8e729b31d7311cfc1c037213f7e7e9ee78fd197d6dfbf0c6fe6912f3"
+    },
+    "jmods/java.management.rmi.jmod": {
+      "bytes": 99522,
+      "sha256": "e787d15ad41464c82852ddf1a43bdab5f47d6661f734687f992adbe6d2f17c31"
+    },
+    "jmods/java.naming.jmod": {
+      "bytes": 483330,
+      "sha256": "fca199a12f92b63615bfc22a7f6482f64bf5b366cafa6f740a94c31fe0744f98"
+    },
+    "jmods/java.net.http.jmod": {
+      "bytes": 780867,
+      "sha256": "68fda37b80eaf81e04921b42f69b90b9e1d75c043c699c87fae443fe49965502"
+    },
+    "jmods/java.prefs.jmod": {
+      "bytes": 69447,
+      "sha256": "8d7b1ed9b7cf0c352ee73e4d1994263452467bd6ae2aae1fc12deb4065340e0b"
+    },
+    "jmods/java.rmi.jmod": {
+      "bytes": 272944,
+      "sha256": "0ffd60b6208714faa1a08b0e1beb7aa9cda3c69661319636d0c33862d817fb4a"
+    },
+    "jmods/java.scripting.jmod": {
+      "bytes": 48086,
+      "sha256": "43209bff2931de9d3bb11e9d381d2428923d93b19b934f50f4025350ef575a25"
+    },
+    "jmods/java.se.jmod": {
+      "bytes": 9860,
+      "sha256": "c0f05998def78df0a4b745d4b09ac2edad5b73976f2e0c6d8cc1b8e951250726"
+    },
+    "jmods/java.security.jgss.jmod": {
+      "bytes": 618880,
+      "sha256": "7b289ccfd496eecb1e8dcf4145d98437a95f457c94d3784194419c1d736f5245"
+    },
+    "jmods/java.security.sasl.jmod": {
+      "bytes": 89370,
+      "sha256": "f45431ab1651ed5ed61f6ea4d8fc48c41283f471a15ede5b4058b9330e90d4a2"
+    },
+    "jmods/java.smartcardio.jmod": {
+      "bytes": 63341,
+      "sha256": "0279db18303ce56b2e0f4894e66fe15da751dde0e9d59dac1e867ce2ca1e405e"
+    },
+    "jmods/java.sql.jmod": {
+      "bytes": 83694,
+      "sha256": "453272e0b8eccd315da438f0a9c0f1c171c4857fc528f96d575b1b1a1685b4b2"
+    },
+    "jmods/java.sql.rowset.jmod": {
+      "bytes": 221190,
+      "sha256": "69df6bde1d03fa6c2706c0aca117b5a188c5f3d2d38e895ffe76d9f80b4e79e3"
+    },
+    "jmods/java.transaction.xa.jmod": {
+      "bytes": 11689,
+      "sha256": "ffd85e2ffc61d0eb08488e9c744476c20b107cb4ea123151639dba92533e3c01"
+    },
+    "jmods/java.xml.crypto.jmod": {
+      "bytes": 706480,
+      "sha256": "a6ac7c306b81b5253d78a6776ee96bfc959eeb7a13663501603ecfe734e885b9"
+    },
+    "jmods/java.xml.jmod": {
+      "bytes": 5235161,
+      "sha256": "1c868f4b4c74bb1fd229e7b049de0e46b54e246c3fbbec9b37981ae851d58f91"
+    },
+    "jmods/jdk.accessibility.jmod": {
+      "bytes": 58052,
+      "sha256": "747ed3ca9ab91125209974de771e787cc704d09da9af48b59e839cf23b02fffd"
+    },
+    "jmods/jdk.attach.jmod": {
+      "bytes": 38477,
+      "sha256": "601d4673016027363d2bce515d35dcb120979cadb6625722db27a194ad2c2d3f"
+    },
+    "jmods/jdk.charsets.jmod": {
+      "bytes": 1197718,
+      "sha256": "88381f957add699985e4582a925d3b0b78c6e8e92f875c95508983b54faface7"
+    },
+    "jmods/jdk.compiler.jmod": {
+      "bytes": 9256816,
+      "sha256": "fb1534323dac130472f2d14e742938bc26c45e69c7e2ba3689305d68850de3ba"
+    },
+    "jmods/jdk.crypto.cryptoki.jmod": {
+      "bytes": 389733,
+      "sha256": "7099321c64c46b5e54082d68ef7e1ef5bf34a5e7bd032d32b75dd536dc4e6250"
+    },
+    "jmods/jdk.crypto.ec.jmod": {
+      "bytes": 139833,
+      "sha256": "78f67c2ce3aeaced3d48e5502aed5eb0cd412a407ea1bfd2dfbd1ea0289c12c2"
+    },
+    "jmods/jdk.dynalink.jmod": {
+      "bytes": 166027,
+      "sha256": "a63cb7c26cdedf67b25a3dbd7b0dc459928485beabf28ed1e80fb97673a2386b"
+    },
+    "jmods/jdk.editpad.jmod": {
+      "bytes": 15300,
+      "sha256": "19a25e1cd359ea89395078261090a0d8fc29016bf8a0f7ac75e5208c7706bbce"
+    },
+    "jmods/jdk.hotspot.agent.jmod": {
+      "bytes": 2337250,
+      "sha256": "7c77f5769119c8b0e48e89a91eb93a67313949553155e5e3b5f46e6f33755569"
+    },
+    "jmods/jdk.httpserver.jmod": {
+      "bytes": 117549,
+      "sha256": "fad51b6f005fcf9ffc0f9594462fe9d937590c227e602b4b0662ca9d7d4e6d09"
+    },
+    "jmods/jdk.incubator.foreign.jmod": {
+      "bytes": 325883,
+      "sha256": "708c5287eb38d221be7b554c4daf9c6a21c033f6feac2ef1a7722f31889311d4"
+    },
+    "jmods/jdk.incubator.vector.jmod": {
+      "bytes": 1071014,
+      "sha256": "502fa35aeaf3d433a6f5e918bb935a7799fcb16b09a057ab639068eb1052965a"
+    },
+    "jmods/jdk.internal.ed.jmod": {
+      "bytes": 15169,
+      "sha256": "ff79d4652c667464367cb5b19d912f4002bec3b9c65e052bb7906a8256f18c01"
+    },
+    "jmods/jdk.internal.jvmstat.jmod": {
+      "bytes": 102506,
+      "sha256": "7835ad855bb928d5a4be12af7e0f486e0931bfce76f5a1a9738b56deb20e1b88"
+    },
+    "jmods/jdk.internal.le.jmod": {
+      "bytes": 465317,
+      "sha256": "cccbb2d79b9619c6bb8e4d5d1a3c553dd1836500f92dfdc65749129fbb4fb4f2"
+    },
+    "jmods/jdk.internal.opt.jmod": {
+      "bytes": 90620,
+      "sha256": "e58b299d1b1062f23932f395ed200f176ee332e9a68b646fecb9949fe59d7ff5"
+    },
+    "jmods/jdk.internal.vm.ci.jmod": {
+      "bytes": 454064,
+      "sha256": "d272f47db608232280e2f994c8f2562936a820c6d7a20ddb219e120c06dc5a3e"
+    },
+    "jmods/jdk.internal.vm.compiler.jmod": {
+      "bytes": 9649,
+      "sha256": "12f735bfac019fa3e43bcd65a6f1387af80954f0d4c07735765f3ec930fb3d9e"
+    },
+    "jmods/jdk.internal.vm.compiler.management.jmod": {
+      "bytes": 9654,
+      "sha256": "ad01d65274aad346ca7a42935a1c5fcfa089afc51c937259601d83b4d54b9a4c"
+    },
+    "jmods/jdk.jartool.jmod": {
+      "bytes": 272261,
+      "sha256": "0b74fc208494934f68dbdf3b9585929854283ba5a214f7a16e67e757c6982cd4"
+    },
+    "jmods/jdk.javadoc.jmod": {
+      "bytes": 1385203,
+      "sha256": "4fd0541eb01b08f79a280484ec11569d87cebdf2b90a5e5b4bff695732d049ea"
+    },
+    "jmods/jdk.jcmd.jmod": {
+      "bytes": 139226,
+      "sha256": "2e0baacc8236d0546370af2bf4a82fdb82d8200c6063c056784d712fa2ec49e8"
+    },
+    "jmods/jdk.jconsole.jmod": {
+      "bytes": 477932,
+      "sha256": "7a1f129ad240e983d9d04f1a86adfca4947a2431b2ed77c32671a059b1f8f8b0"
+    },
+    "jmods/jdk.jdeps.jmod": {
+      "bytes": 746684,
+      "sha256": "395b13206b68624b86c3f16a87d8bc53025b348fdefa2f2bdee272b63a14df87"
+    },
+    "jmods/jdk.jdi.jmod": {
+      "bytes": 850915,
+      "sha256": "41760248b7b910223f6ed5b391adbfbe8d8d97dbeee8c08920020b41cc5462fd"
+    },
+    "jmods/jdk.jdwp.agent.jmod": {
+      "bytes": 151294,
+      "sha256": "4f9c6071dc01f6d5c3fbf55438bb5696592b61cec5597ebd75340f8a889163c6"
+    },
+    "jmods/jdk.jfr.jmod": {
+      "bytes": 648478,
+      "sha256": "d636e0ff4f3b3fa516a03c427d1c52817395d1baa7ad739b470134ae561a4861"
+    },
+    "jmods/jdk.jlink.jmod": {
+      "bytes": 423941,
+      "sha256": "8cc6673a66aabad909347dafc54627b550e0b5015ac1e47a284776606a61f046"
+    },
+    "jmods/jdk.jpackage.jmod": {
+      "bytes": 743308,
+      "sha256": "5fc3cd931fd77a1d3b8344c863e323dc19b543bcd266109f092fffb0b9e0f37a"
+    },
+    "jmods/jdk.jshell.jmod": {
+      "bytes": 686608,
+      "sha256": "294c2b459d2cb76f393feae26b55d3555723cee8af0336b8b9092b0b36ad4939"
+    },
+    "jmods/jdk.jsobject.jmod": {
+      "bytes": 10753,
+      "sha256": "574ca137bbb27d25519387f92cbffabd871450b55218ade56ea36cda3201d6db"
+    },
+    "jmods/jdk.jstatd.jmod": {
+      "bytes": 37632,
+      "sha256": "ce27088e91fe6c597c016cb3868cb7d481c58bca8d828af522b0fb3335c100c1"
+    },
+    "jmods/jdk.localedata.jmod": {
+      "bytes": 10252728,
+      "sha256": "766a5a0f4de54dc5fb30ee92fc441e7612e081feee0cd8c4c92b4341a84d9391"
+    },
+    "jmods/jdk.management.agent.jmod": {
+      "bytes": 97400,
+      "sha256": "8c7c796272724f6bccaf6ecd8fd1a85c4806c8e9e0a8f0986e89cfdb035311e5"
+    },
+    "jmods/jdk.management.jfr.jmod": {
+      "bytes": 62411,
+      "sha256": "ae3a69cf27502f8afb57c7de9c6b4855da78f49281a71eb63beb2fc73e1d06e5"
+    },
+    "jmods/jdk.management.jmod": {
+      "bytes": 77791,
+      "sha256": "c13380b63c135ed4eca477c99582f6b72dbc6b6b6a2d2c82d78f0e43afa7a6f2"
+    },
+    "jmods/jdk.naming.dns.jmod": {
+      "bytes": 69881,
+      "sha256": "933b3666b1f7c767637ed629a7be78e5ce4298899795f7673482076e6badebb0"
+    },
+    "jmods/jdk.naming.rmi.jmod": {
+      "bytes": 30995,
+      "sha256": "25ac199bd2e9600636bf27cdc32a4c8c6525aa852ead366c8871a097c55981cd"
+    },
+    "jmods/jdk.net.jmod": {
+      "bytes": 31438,
+      "sha256": "9a0cf54b66d614cf32349e58763d074f2db408cdcfc1df9c05c5fa854eef98ee"
+    },
+    "jmods/jdk.nio.mapmode.jmod": {
+      "bytes": 10225,
+      "sha256": "91b2f8803c249c2ba248dab6384184cfdbec4317f44c2cc41569cf1ea5ce9280"
+    },
+    "jmods/jdk.random.jmod": {
+      "bytes": 29530,
+      "sha256": "b13c7458e117e0ebf4e50cdb2fbb1f5ee8aae729fc6f2dcf46fe5842eaece5c6"
+    },
+    "jmods/jdk.sctp.jmod": {
+      "bytes": 93692,
+      "sha256": "2c31a28264cd1c5d9b7d3d67886591a4d649d7a91a3b985111849a9e9213ff7c"
+    },
+    "jmods/jdk.security.auth.jmod": {
+      "bytes": 75049,
+      "sha256": "c457b489d93d3f31e1ca5b60f002e01fbd9115eeb03f5a4ff34ae61054572ade"
+    },
+    "jmods/jdk.security.jgss.jmod": {
+      "bytes": 32855,
+      "sha256": "a3ea8fc8ef8050e17501705902e1c9c2ec1d15b68988beb6fb498a415dd2ff22"
+    },
+    "jmods/jdk.unsupported.desktop.jmod": {
+      "bytes": 21631,
+      "sha256": "0a4b24b3f118681ac27eeeb55a699309474d29d3cebd8cfd9cd28255a45695b5"
+    },
+    "jmods/jdk.unsupported.jmod": {
+      "bytes": 25015,
+      "sha256": "baf0705ad07420f3a45d983991deb3a2df588d60390e0448e1b2738d73276355"
+    },
+    "jmods/jdk.xml.dom.jmod": {
+      "bytes": 49992,
+      "sha256": "aa9078d617518cb59cfbe1a623925a759779b141a62c626ee513622d29cc3156"
+    },
+    "jmods/jdk.zipfs.jmod": {
+      "bytes": 112825,
+      "sha256": "fd061c35973145bb0a2d54789274b510b273df457fb1827d687ad0717232abab"
+    },
+    "legal/java.base/ADDITIONAL_LICENSE_INFO": {
+      "bytes": 2114,
+      "sha256": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+    },
+    "legal/java.base/ASSEMBLY_EXCEPTION": {
+      "bytes": 1522,
+      "sha256": "a44eb7b5caf5534c6ef536b21edb40b4d6babf91bf97d9d45596868618b2c6fb"
+    },
+    "legal/java.base/LICENSE": {
+      "bytes": 19274,
+      "sha256": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+    },
+    "legal/java.base/aes.md": {
+      "bytes": 1444,
+      "sha256": "45c6d4da48325edfbff3dcf71c704e504c057904435ed23c6d57046d551eb69d"
+    },
+    "legal/java.base/asm.md": {
+      "bytes": 1584,
+      "sha256": "1ff912740e84e024711def5fa482ffbb46eff64559760c467352dfa7c39a3307"
+    },
+    "legal/java.base/c-libutl.md": {
+      "bytes": 1556,
+      "sha256": "bef40679922d6fdfb7e4ddb223ad6722300f6054ba737bbf6188d60fcec517f9"
+    },
+    "legal/java.base/cldr.md": {
+      "bytes": 9130,
+      "sha256": "f2bd33ded550a05d59e8f659416ef382490504548d846e6388b1dffd273aa077"
+    },
+    "legal/java.base/gcc.md": {
+      "bytes": 128099,
+      "sha256": "589e34f142cdf7d1430daa573e61c2e3dd0330c9eb5a2c00d4a98b3a4450810b"
+    },
+    "legal/java.base/icu.md": {
+      "bytes": 11086,
+      "sha256": "af0057e8553906083f69c2fb9fe9ed4ae8bc2340a0b1e376a424702f00300b29"
+    },
+    "legal/java.base/public_suffix.md": {
+      "bytes": 17785,
+      "sha256": "e7705b408e894e91c93968640773b1532cd9927f8a7f178020aa3c3f38c8b363"
+    },
+    "legal/java.base/siphash.md": {
+      "bytes": 8256,
+      "sha256": "5a792b5a74ad2a5f3d6a7ad8b7a841116e58a772c18bc6e392320a365b222c76"
+    },
+    "legal/java.base/unicode.md": {
+      "bytes": 2384,
+      "sha256": "5e4e6623a21a63f9bc16ea54af4133b8038e490c0d499a74676f9e5a61b9c5b2"
+    },
+    "legal/java.base/zlib.md": {
+      "bytes": 1010,
+      "sha256": "c9c70c36a1f0325e8788771906202d42ba6ab4205caca44ec0f665707e83226b"
+    },
+    "legal/java.desktop/colorimaging.md": {
+      "bytes": 167,
+      "sha256": "04d61e3e8e71dd452ebe52008af5378d9f6640d14578aeb515dc5375973b0189"
+    },
+    "legal/java.desktop/freetype.md": {
+      "bytes": 30465,
+      "sha256": "553e804baecb7de7129d77c7259a6b70037d1893f1c600b41b35201695fb7758"
+    },
+    "legal/java.desktop/giflib.md": {
+      "bytes": 1689,
+      "sha256": "206aab89ec75968e48a6a1ed6df7d8b9bfb7aea12cbe4c9345d93e5d97460a25"
+    },
+    "legal/java.desktop/harfbuzz.md": {
+      "bytes": 3629,
+      "sha256": "5ec7cba7f8e7fc3a089213140aab6fa1b3bd5bf8a91bf8bddb3b8d315fc5f7d0"
+    },
+    "legal/java.desktop/jpeg.md": {
+      "bytes": 3475,
+      "sha256": "580be596216ee11e2554b24ce944973acaede2ebf5ffba34a6bd8cc441c05043"
+    },
+    "legal/java.desktop/lcms.md": {
+      "bytes": 2654,
+      "sha256": "843f9f6fa9c3f8109fcf4d5fe74caf7f2ae8e9bcd92238e4aff2d428c932b24b"
+    },
+    "legal/java.desktop/libpng.md": {
+      "bytes": 7519,
+      "sha256": "f73afb394792f3aeecd959e89487603677a430e56b44eba596d8b572accfd540"
+    },
+    "legal/java.desktop/mesa3d.md": {
+      "bytes": 5732,
+      "sha256": "63f4e6f75caebbccb95d903fb43e46ac7111b3624d0a34f146b276d7d9e7b152"
+    },
+    "legal/java.desktop/pipewire.md": {
+      "bytes": 1479,
+      "sha256": "56a8fb1652c70ac204d13bb52ca4d678162e7d21a97d10209c2a633de8082de0"
+    },
+    "legal/java.desktop/xwd.md": {
+      "bytes": 1348,
+      "sha256": "1d4ffa93c87f35084b02a7aa90a21084b4019db4fe1003c2e5ce775b4a384f59"
+    },
+    "legal/java.smartcardio/pcsclite.md": {
+      "bytes": 2155,
+      "sha256": "b39ce363c281ed36e937f9e6c03311d7dbf0b20d3614dde084130c2a10909692"
+    },
+    "legal/java.xml/bcel.md": {
+      "bytes": 11196,
+      "sha256": "cd578186ad93de46cca29ec8ace2b11f9da751987f3f140e6095c528596cc8c1"
+    },
+    "legal/java.xml/dom.md": {
+      "bytes": 3761,
+      "sha256": "6686e8877667584a3a7c07344baadca1a03e29f677162d87c3c0811e990d1148"
+    },
+    "legal/java.xml/jcup.md": {
+      "bytes": 1448,
+      "sha256": "8d5dcfdf50455a3c34c753a98f21e953248af200415a9084e3f102cb6c43b8bf"
+    },
+    "legal/java.xml/xalan.md": {
+      "bytes": 13494,
+      "sha256": "ea67226be5cfe19c7e79725c2c24a16676323264d69f9747c528de0b44541b03"
+    },
+    "legal/java.xml/xerces.md": {
+      "bytes": 11852,
+      "sha256": "472224f99de833f4f4c19f2f8a0317f22114e1c641f5d77ffa3a4280a1b80176"
+    },
+    "legal/java.xml.crypto/santuario.md": {
+      "bytes": 11505,
+      "sha256": "d08690d25f660f145c73365d260ed522cd0aace8a0e1396706551b7a1ae8c9a3"
+    },
+    "legal/jdk.crypto.cryptoki/pkcs11cryptotoken.md": {
+      "bytes": 4095,
+      "sha256": "1f36ff1342a581142c858f90064e20633d43529ac82adb85345bd902a14e18b2"
+    },
+    "legal/jdk.crypto.cryptoki/pkcs11wrapper.md": {
+      "bytes": 2131,
+      "sha256": "371974b1fca3744a3892c7ee1fcc593b8b4281fc218f4cafd2f709e9df5fd81d"
+    },
+    "legal/jdk.dynalink/dynalink.md": {
+      "bytes": 1502,
+      "sha256": "17312591cabee3ef6c34ed8897d92e4e361ba9cea41ec00dcd61a322a8fc2cdb"
+    },
+    "legal/jdk.internal.le/jline.md": {
+      "bytes": 1579,
+      "sha256": "a6fb63a226b77b03cbd7559cce6cdc3e1ea8563af960b1dce2330c8e1dce1abf"
+    },
+    "legal/jdk.internal.opt/jopt-simple.md": {
+      "bytes": 1122,
+      "sha256": "99bc67f93cf57d6d20e6047731c93fbb267d70fbdd4115d119e0f85c6efe5c05"
+    },
+    "legal/jdk.javadoc/jquery.md": {
+      "bytes": 1157,
+      "sha256": "b68f454c2bd58959c862d94bf0f16c3f78a2d537388ca060d354344db80ee695"
+    },
+    "legal/jdk.javadoc/jqueryUI.md": {
+      "bytes": 1871,
+      "sha256": "7854d2d568992ae25ff65867bd9021d655f70670142f0796b29a3b0621f19530"
+    },
+    "legal/jdk.localedata/thaidict.md": {
+      "bytes": 1346,
+      "sha256": "c326144a2351c9608fa708b5d7d3c5a3da03e82b66479b128e9db4969539824a"
+    },
+    "lib/classlist": {
+      "bytes": 71272,
+      "sha256": "64c6dce56c28cb9f677f6aef4bb911abfbb2e323eebc449ff79fc0882dddb550"
+    },
+    "lib/ct.sym": {
+      "bytes": 8301486,
+      "sha256": "2cd07aee601ffb8e840f5f131750ca8b79d9eb5e4313b8c98a808a79ae37eda3"
+    },
+    "lib/jexec": {
+      "bytes": 16584,
+      "sha256": "fc6546c54a8230d00588d49cfad44a39c76debacb4123131bb1372c2c722ed2a"
+    },
+    "lib/jfr/default.jfc": {
+      "bytes": 35918,
+      "sha256": "51099f07cbdafe8c9e12e94ea74db1c92c3e1ae950679ebf6d37a9b4be4f7634"
+    },
+    "lib/jfr/profile.jfc": {
+      "bytes": 35871,
+      "sha256": "9da7ab71c763344677cabe8898496b0aad1fb42fe49363d5e1ae00df8a1baded"
+    },
+    "lib/jrt-fs.jar": {
+      "bytes": 110513,
+      "sha256": "724cfd249175c186391ef9bd4322283dae28db4b96b45f74f9fcd76f5b13328c"
+    },
+    "lib/jspawnhelper": {
+      "bytes": 21984,
+      "sha256": "bab18f34d5991464be6ef1f392ae9a91364988c35241c310c31223be04636dd6"
+    },
+    "lib/jvm.cfg": {
+      "bytes": 29,
+      "sha256": "aa9efb969444c1484e29adecab55a122458090616e766b2f1230ef05bc3867e0"
+    },
+    "lib/libattach.so": {
+      "bytes": 16776,
+      "sha256": "487f567d6c0039049a9726a75a993e8fd5b9db3fd1cd430835750a3ed85e4447"
+    },
+    "lib/libawt.so": {
+      "bytes": 875416,
+      "sha256": "35d421e1c6f50e1063e93b02a8ee99079069b45f13cdc2ecf11085b2b3970828"
+    },
+    "lib/libawt_headless.so": {
+      "bytes": 46504,
+      "sha256": "26eef0fa30d725309c467cf2ef9e04b153916599ac31bde265ca65848c455251"
+    },
+    "lib/libawt_xawt.so": {
+      "bytes": 604208,
+      "sha256": "9f0e792a1a07e9cf9c77568dc0424592e93eaf486d2cf27ef033d6a54e0fe9f4"
+    },
+    "lib/libdt_socket.so": {
+      "bytes": 35928,
+      "sha256": "2fcb851110d30c4320f65fb8c61ef3b6dcdb0602a3f87037053db0ea6f73b886"
+    },
+    "lib/libextnet.so": {
+      "bytes": 16624,
+      "sha256": "8c754a4b4ffe7f8988a9d4e739d1b8c69d03116973ef3d3b54ed93057194ed50"
+    },
+    "lib/libfontmanager.so": {
+      "bytes": 1947488,
+      "sha256": "cd38181a8beacfaa585b32783647be8b22eaadff62d9430df488033f20a46368"
+    },
+    "lib/libfreetype.so": {
+      "bytes": 776096,
+      "sha256": "fd0bf64d6b745ca1503f4ac010df38f1fc097b2689da400d535c0b642e8e8944"
+    },
+    "lib/libinstrument.so": {
+      "bytes": 54304,
+      "sha256": "7df777bb429f66a071036a24fb595f3d39df43cec1d305c1e5ce26f4ab4d21ee"
+    },
+    "lib/libj2gss.so": {
+      "bytes": 50944,
+      "sha256": "49c3162900dafae50baffb45956627e4e00de8eda45c9e866814e03787f3865e"
+    },
+    "lib/libj2pcsc.so": {
+      "bytes": 21488,
+      "sha256": "7adfc3298b264babd5e11d9ad65f4713d2b353440c0335c193aadd27114728c3"
+    },
+    "lib/libj2pkcs11.so": {
+      "bytes": 100512,
+      "sha256": "7b7b0b9a586e5092ae4c2a9a885ae1597c96cbc6ec06c2eac3cf263461455348"
+    },
+    "lib/libjaas.so": {
+      "bytes": 15616,
+      "sha256": "6437c4e9c98ceb1f22fd01cce8b2a25b6a1a71e418c61152700716cd0e49e79e"
+    },
+    "lib/libjava.so": {
+      "bytes": 201616,
+      "sha256": "180b9143f1b0889e492f21aecbcc4917c2fe168498d5f2589ad6b9403ef26026"
+    },
+    "lib/libjavajpeg.so": {
+      "bytes": 239712,
+      "sha256": "9c2ee6b50e3d2a8d7be175b244fbca6b897f167d9e5467dd1ff7d338f3e68124"
+    },
+    "lib/libjawt.so": {
+      "bytes": 15600,
+      "sha256": "9f7954bf6d394512a94d3dad548aea888ba11a2fbf9ebd077af91c5d47416367"
+    },
+    "lib/libjdwp.so": {
+      "bytes": 294112,
+      "sha256": "a58dc6f6c44bd61f8ba4b03ccbed819c940eeb1b3ea8f9f50b47c43c82d3e78b"
+    },
+    "lib/libjimage.so": {
+      "bytes": 149520,
+      "sha256": "c1e5b1fe649e244e5f45ad4ab379b51fc0d17b2654dd0897fd2fc00266dd8c4c"
+    },
+    "lib/libjli.so": {
+      "bytes": 120328,
+      "sha256": "4fd016cb1b0b12fa46a943a7b366e3dab8f9925d070abd1d140eed7c35a83d7f"
+    },
+    "lib/libjsig.so": {
+      "bytes": 16648,
+      "sha256": "0784255cf2d38c70dddf2e154bb265d87ce46dfb8d4778e881fe762f4d30e137"
+    },
+    "lib/libjsound.so": {
+      "bytes": 85368,
+      "sha256": "8155a41550ee6485a97fc4bb5dbfb6ff3e3949fc2dc8acce3650cf30ca3c3b47"
+    },
+    "lib/libjsvml.so": {
+      "bytes": 871040,
+      "sha256": "01fee134b17b9fc4a09324abb53a9d79436582fd3669d495126711ddeea1777d"
+    },
+    "lib/liblcms.so": {
+      "bytes": 607672,
+      "sha256": "809524e3f8fef6268387a8d2d43b733bd43da7dccba6261b785fffa3ce9cd725"
+    },
+    "lib/libmanagement.so": {
+      "bytes": 29384,
+      "sha256": "d726e6d23331060d20435e24f56d248abc320f62999aa90b4782e90bcba35c32"
+    },
+    "lib/libmanagement_agent.so": {
+      "bytes": 15608,
+      "sha256": "f41ddc321a6be2860eeec89fbcef17e420f255a12bf0f1fc007437b174687ffe"
+    },
+    "lib/libmanagement_ext.so": {
+      "bytes": 37016,
+      "sha256": "39c7484bc7394302c26996e69bb872311e1cdd00f281143354919ac2efe674a3"
+    },
+    "lib/libmlib_image.so": {
+      "bytes": 606952,
+      "sha256": "bce5314783219db1baedab1d29d7a70755cd33062f91a1a90125beb87697d0c7"
+    },
+    "lib/libnet.so": {
+      "bytes": 108896,
+      "sha256": "422dc4462ab8b1423a789e62a3721350bb99e850578ac3ff6628d589115decef"
+    },
+    "lib/libnio.so": {
+      "bytes": 109472,
+      "sha256": "b7790f0dbae6bf8d70a516f895c692eddadcd4b5b579361a54644008b882b2f3"
+    },
+    "lib/libprefs.so": {
+      "bytes": 15784,
+      "sha256": "1b87f8f8ac15842077f309a1ebd4c72461b02afffe17cc20a3f8d6791e96071f"
+    },
+    "lib/librmi.so": {
+      "bytes": 15328,
+      "sha256": "373ce66fa4d95382cfdd7f8ad671bb7110da72b5f81706e5c6960b530d35c70c"
+    },
+    "lib/libsaproc.so": {
+      "bytes": 184576,
+      "sha256": "6f64f0e173db28958a307c8f5c96a2d9145ebd71b529aa7b2d62ed4dbe0c0ce8"
+    },
+    "lib/libsctp.so": {
+      "bytes": 36016,
+      "sha256": "e9e8a115f972cdb5452c2303c579cb7a8db84dbad9283db1ebde28d27ff3479a"
+    },
+    "lib/libsplashscreen.so": {
+      "bytes": 452024,
+      "sha256": "ecdaad070b33eb91b144b0a03630a2852aa5dcdcdb96ef56897ede0b8f5912a2"
+    },
+    "lib/libsyslookup.so": {
+      "bytes": 15232,
+      "sha256": "9a5f5a10aedbf2ea47ab048451905f63e03a113ee503070c11d67bfceb3c7c4e"
+    },
+    "lib/libverify.so": {
+      "bytes": 64336,
+      "sha256": "db6031e5a9748fb1962e2580c1f6fcbcc3db4db15a1d0f1ec13ee2ca0a5985cc"
+    },
+    "lib/libzip.so": {
+      "bytes": 132728,
+      "sha256": "2fa6bbb7398d28cce31a04b47c541d515b72297206b0b0c92530810fce606f77"
+    },
+    "lib/modules": {
+      "bytes": 130284046,
+      "sha256": "6a1b657bd845397ab30fe2d4d78d80c4fdc05107182843669fc928655c227241"
+    },
+    "lib/psfont.properties.ja": {
+      "bytes": 3793,
+      "sha256": "5a4bd51b969bf187ff86d94f4a71fdfbfa602762975fa3c73d264b4575f7c78f"
+    },
+    "lib/psfontj2d.properties": {
+      "bytes": 11390,
+      "sha256": "780c565d5af3ee6f68b887b75c041cdf46a0592f67012f12eeb691283e92630a"
+    },
+    "lib/security/blocked.certs": {
+      "bytes": 2488,
+      "sha256": "96572f243f31c2ef81a6e627542e596f6a9295cff3c7ae095c1b595cb1457ded"
+    },
+    "lib/security/cacerts": {
+      "bytes": 137281,
+      "sha256": "229eba133aba1e538de07e695155d1c3443059d298d3a1de02d7818887ff9043"
+    },
+    "lib/security/default.policy": {
+      "bytes": 10213,
+      "sha256": "84d5057b12f2ed66aaa7c2027a5f06b461416eee879c1f4d242ff19dab9f400c"
+    },
+    "lib/security/public_suffix_list.dat": {
+      "bytes": 227396,
+      "sha256": "16b42002aa6f83a7763c4cdbd399ecf738460377d447e362884495545afd60a3"
+    },
+    "lib/server/classes.jsa": {
+      "bytes": 13549568,
+      "sha256": "3d76036a15293f0722acc9da1e6e39d9cbfbcc4f66d9d54c7f1ed87c3b213fbc"
+    },
+    "lib/server/classes_nocoops.jsa": {
+      "bytes": 12382208,
+      "sha256": "f57c38289e7ab7e5d3cb8e965003499d1f47907dae3bfc0e1065ffdbd2de90bf"
+    },
+    "lib/server/libjsig.so": {
+      "bytes": 16648,
+      "sha256": "0784255cf2d38c70dddf2e154bb265d87ce46dfb8d4778e881fe762f4d30e137"
+    },
+    "lib/server/libjvm.so": {
+      "bytes": 24029024,
+      "sha256": "11e5d09f442e42bddc4619b6eed829eaf3952158a5f77c797a58d558fae21738"
+    },
+    "lib/src.zip": {
+      "bytes": 51460942,
+      "sha256": "cbc429f64abf85ca18f38a95007b8c6ebbd96642650db0c8ca17461ca8e8cbda"
+    },
+    "lib/tzdb.dat": {
+      "bytes": 102956,
+      "sha256": "5906b44e25a8a730131d7ba1beb5d15af27043f6536f1a169ca8a5d8b8bed8f8"
+    },
+    "man/man1/jar.1": {
+      "bytes": 12042,
+      "sha256": "505f5e07bcbe31647f47867e563ae38b8ec979dcd7782659e205461b56d678b9"
+    },
+    "man/man1/jarsigner.1": {
+      "bytes": 56149,
+      "sha256": "79f194b91f9d216559e79811dcc13d52b8da5a8acd6994cf4d565808a8433ef8"
+    },
+    "man/man1/java.1": {
+      "bytes": 188903,
+      "sha256": "46c6683098d28b637cb032b380d0e863192a7f09df0bb64c2b7a95761c181ef2"
+    },
+    "man/man1/javac.1": {
+      "bytes": 85114,
+      "sha256": "4b78217890e8c0397fac823ec533e6f5ebb9f2ed8905a6b6a90c570055c9ab67"
+    },
+    "man/man1/javadoc.1": {
+      "bytes": 46666,
+      "sha256": "5d9f6c921e81a9449aea42b4956935e9beea26ab837e6f547540a246b7ece75f"
+    },
+    "man/man1/javap.1": {
+      "bytes": 7816,
+      "sha256": "c3282927eb4823c3daa3d9735d96e39325386668fd97549d009848257ca852b5"
+    },
+    "man/man1/jcmd.1": {
+      "bytes": 35306,
+      "sha256": "ab6dd6a36f58fd8bd4fee1fcc9f97b4a83e14cb5651dabcdd830d08831316cd1"
+    },
+    "man/man1/jconsole.1": {
+      "bytes": 3670,
+      "sha256": "61c2da7ebbb7eebcdddb0de7da290440c59f08f69bcc2b17a548ec4ccf873702"
+    },
+    "man/man1/jdb.1": {
+      "bytes": 8902,
+      "sha256": "133a79cc6534c8633b8460333986b3c93cbfd73a0466516aa88c75ee7576d735"
+    },
+    "man/man1/jdeprscan.1": {
+      "bytes": 8143,
+      "sha256": "825ac7aecf2f2f43404c3693315bdde8c6118570880eaea4cfb1e339630d3784"
+    },
+    "man/man1/jdeps.1": {
+      "bytes": 12251,
+      "sha256": "0eeee55fce30e051252642873e928010afd8cde2666c1decde058159269b037e"
+    },
+    "man/man1/jfr.1": {
+      "bytes": 9032,
+      "sha256": "50f936074ff91f69501480530d1c3349827d91f938ea93a839e350ddbf0fce80"
+    },
+    "man/man1/jhsdb.1": {
+      "bytes": 7342,
+      "sha256": "a90dc8e7489309122b2565e94997eaf8eb9fb27e295b03c1a84da92ce5d3c0a7"
+    },
+    "man/man1/jinfo.1": {
+      "bytes": 3501,
+      "sha256": "bdddd3042a4517fef322647f20b8219d4aa9e77433de7b5dfb35ca53ded9139d"
+    },
+    "man/man1/jlink.1": {
+      "bytes": 11942,
+      "sha256": "dca9af6240c134b51d31fb0cdf538d30f007aa44c15aa69928383d9dd3091c80"
+    },
+    "man/man1/jmap.1": {
+      "bytes": 3490,
+      "sha256": "1e31c1c308aaddd382f9f1d1e9d01a346bc5e3c4d45557f48a61395fe8e89a11"
+    },
+    "man/man1/jmod.1": {
+      "bytes": 12114,
+      "sha256": "3177e4957204312e94105c16dca325ecd9eb630f6527740e2720688cfdac3189"
+    },
+    "man/man1/jpackage.1": {
+      "bytes": 14800,
+      "sha256": "8c82f2abe470c11862e260129e68668820b213ce6d3a43879780bd2c78094933"
+    },
+    "man/man1/jps.1": {
+      "bytes": 8458,
+      "sha256": "3c2ef81040862deed515d38c35f83f378d3d6d2d3e5d1865fe701deb6b6e38a8"
+    },
+    "man/man1/jrunscript.1": {
+      "bytes": 5281,
+      "sha256": "941daed6835f796f40c831e025af46e7c2bfcce0d180033b6d2eb5b413a0e830"
+    },
+    "man/man1/jshell.1": {
+      "bytes": 43679,
+      "sha256": "38ccfd67e8ebebbf397a15b8315d7a0c003a1fd67107de3da9201a1198901c89"
+    },
+    "man/man1/jstack.1": {
+      "bytes": 3050,
+      "sha256": "c9afc3c31a72143138a766ebceae41fc1f5e260761c80b0961666c8f2d754702"
+    },
+    "man/man1/jstat.1": {
+      "bytes": 24104,
+      "sha256": "8b7a11d13aeb3672db5f09703946902f7aee25b23776ae4b5a67a286525cf505"
+    },
+    "man/man1/jstatd.1": {
+      "bytes": 7877,
+      "sha256": "2c21dfc8d10627ae68908913140d55bda1f366bb22a68af5e23998b353eb02d3"
+    },
+    "man/man1/keytool.1": {
+      "bytes": 111869,
+      "sha256": "473ac4a60623c45e5a48fbb2bcf7075b5813b686f859e1ab9034d75fad21737a"
+    },
+    "man/man1/rmiregistry.1": {
+      "bytes": 3258,
+      "sha256": "4d3141d417d647f980ad901a745f8984275b64d6629590b58b3107706f3e3025"
+    },
+    "man/man1/serialver.1": {
+      "bytes": 2913,
+      "sha256": "91fc7115a53798970c145abfc7a746e31c4121f49adcce57af6051c3b19099a6"
+    },
+    "release": {
+      "bytes": 1638,
+      "sha256": "973f28729da43962dfba2e39b2a27ab736122f3a1bf829e06abfbde2a731c711"
+    }
+  },
+  "jdkSymlinks": {
+    "legal/java.compiler/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/java.compiler/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/java.compiler/LICENSE": "../java.base/LICENSE",
+    "legal/java.datatransfer/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/java.datatransfer/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/java.datatransfer/LICENSE": "../java.base/LICENSE",
+    "legal/java.desktop/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/java.desktop/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/java.desktop/LICENSE": "../java.base/LICENSE",
+    "legal/java.instrument/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/java.instrument/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/java.instrument/LICENSE": "../java.base/LICENSE",
+    "legal/java.logging/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/java.logging/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/java.logging/LICENSE": "../java.base/LICENSE",
+    "legal/java.management/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/java.management/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/java.management/LICENSE": "../java.base/LICENSE",
+    "legal/java.management.rmi/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/java.management.rmi/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/java.management.rmi/LICENSE": "../java.base/LICENSE",
+    "legal/java.naming/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/java.naming/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/java.naming/LICENSE": "../java.base/LICENSE",
+    "legal/java.net.http/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/java.net.http/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/java.net.http/LICENSE": "../java.base/LICENSE",
+    "legal/java.prefs/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/java.prefs/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/java.prefs/LICENSE": "../java.base/LICENSE",
+    "legal/java.rmi/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/java.rmi/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/java.rmi/LICENSE": "../java.base/LICENSE",
+    "legal/java.scripting/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/java.scripting/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/java.scripting/LICENSE": "../java.base/LICENSE",
+    "legal/java.se/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/java.se/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/java.se/LICENSE": "../java.base/LICENSE",
+    "legal/java.security.jgss/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/java.security.jgss/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/java.security.jgss/LICENSE": "../java.base/LICENSE",
+    "legal/java.security.sasl/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/java.security.sasl/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/java.security.sasl/LICENSE": "../java.base/LICENSE",
+    "legal/java.smartcardio/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/java.smartcardio/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/java.smartcardio/LICENSE": "../java.base/LICENSE",
+    "legal/java.sql/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/java.sql/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/java.sql/LICENSE": "../java.base/LICENSE",
+    "legal/java.sql.rowset/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/java.sql.rowset/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/java.sql.rowset/LICENSE": "../java.base/LICENSE",
+    "legal/java.transaction.xa/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/java.transaction.xa/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/java.transaction.xa/LICENSE": "../java.base/LICENSE",
+    "legal/java.xml/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/java.xml/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/java.xml/LICENSE": "../java.base/LICENSE",
+    "legal/java.xml.crypto/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/java.xml.crypto/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/java.xml.crypto/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.accessibility/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.accessibility/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.accessibility/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.attach/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.attach/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.attach/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.charsets/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.charsets/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.charsets/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.compiler/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.compiler/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.compiler/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.crypto.cryptoki/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.crypto.cryptoki/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.crypto.cryptoki/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.crypto.ec/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.crypto.ec/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.crypto.ec/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.dynalink/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.dynalink/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.dynalink/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.editpad/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.editpad/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.editpad/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.hotspot.agent/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.hotspot.agent/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.hotspot.agent/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.httpserver/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.httpserver/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.httpserver/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.incubator.foreign/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.incubator.foreign/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.incubator.foreign/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.incubator.vector/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.incubator.vector/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.incubator.vector/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.internal.ed/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.internal.ed/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.internal.ed/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.internal.jvmstat/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.internal.jvmstat/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.internal.jvmstat/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.internal.le/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.internal.le/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.internal.le/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.internal.opt/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.internal.opt/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.internal.opt/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.internal.vm.ci/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.internal.vm.ci/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.internal.vm.ci/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.internal.vm.compiler/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.internal.vm.compiler/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.internal.vm.compiler/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.internal.vm.compiler.management/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.internal.vm.compiler.management/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.internal.vm.compiler.management/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.jartool/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.jartool/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.jartool/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.javadoc/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.javadoc/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.javadoc/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.jcmd/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.jcmd/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.jcmd/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.jconsole/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.jconsole/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.jconsole/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.jdeps/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.jdeps/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.jdeps/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.jdi/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.jdi/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.jdi/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.jdwp.agent/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.jdwp.agent/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.jdwp.agent/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.jfr/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.jfr/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.jfr/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.jlink/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.jlink/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.jlink/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.jpackage/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.jpackage/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.jpackage/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.jshell/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.jshell/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.jshell/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.jsobject/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.jsobject/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.jsobject/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.jstatd/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.jstatd/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.jstatd/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.localedata/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.localedata/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.localedata/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.localedata/cldr.md": "../java.base/cldr.md",
+    "legal/jdk.management/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.management/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.management/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.management.agent/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.management.agent/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.management.agent/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.management.jfr/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.management.jfr/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.management.jfr/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.naming.dns/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.naming.dns/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.naming.dns/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.naming.rmi/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.naming.rmi/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.naming.rmi/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.net/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.net/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.net/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.nio.mapmode/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.nio.mapmode/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.nio.mapmode/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.random/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.random/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.random/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.sctp/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.sctp/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.sctp/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.security.auth/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.security.auth/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.security.auth/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.security.jgss/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.security.jgss/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.security.jgss/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.unsupported/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.unsupported/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.unsupported/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.unsupported.desktop/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.unsupported.desktop/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.unsupported.desktop/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.xml.dom/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.xml.dom/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.xml.dom/LICENSE": "../java.base/LICENSE",
+    "legal/jdk.zipfs/ADDITIONAL_LICENSE_INFO": "../java.base/ADDITIONAL_LICENSE_INFO",
+    "legal/jdk.zipfs/ASSEMBLY_EXCEPTION": "../java.base/ASSEMBLY_EXCEPTION",
+    "legal/jdk.zipfs/LICENSE": "../java.base/LICENSE"
+  },
+  "jdkArchive": {
+    "bytes": 193252603,
+    "sha256": "3808d1d15e3ec6bd5b84057fb5d84c33d8a1536a258146bcea2e603fc726e08e"
+  },
+  "publicWav": {
+    "bytes": 11289644,
+    "sha256": "33f07d502ba19832b62b97d8fb4a11354e81310264bd885d7a06438228773650"
+  },
+  "fullPcm": {
+    "bytes": 11289600,
+    "sha256": "298f7a549c4bb8dfc53c47d1078cea842c5e818a3e7c82bf289bffcec0ba30c2"
+  },
+  "sources": {
+    "android/native-runtime.json": {
+      "bytes": 2123,
+      "sha256": "e3ea568b3a8485235f23a59cd787466cdcbbfcaa54ac56df3ce040d29fcb2a94"
+    },
+    "android/src/com/cyberbasslord/lightforge/NativeGame.java": {
+      "bytes": 23209,
+      "sha256": "a1bb68a4930b5acd74f7fdc2d1d105f1d7f5c9974f11514872f47672b8736369"
+    },
+    "research/performance/2026-09-24/game-full-source/colab_run.py": {
+      "bytes": 23024,
+      "sha256": "a39b14d34833bbbde69ea96f076a0d6981f15f1f5682fdd84551011e49cfa36a"
+    },
+    "research/performance/2026-09-25/session-reuse/run_local.py": {
+      "bytes": 9897,
+      "sha256": "8c4c50aecae27d9f504a235187311f3e6f78a4162b8dbd99add60d4f2efea2d0"
+    },
+    "tools/benchmark_deux_accelerator.py": {
+      "bytes": 31178,
+      "sha256": "0c19caa398c6fb1e1be121d359219074e71879979105d4172fbcf360906c9f0a"
+    },
+    "tools/benchmark_deux_execution.py": {
+      "bytes": 13876,
+      "sha256": "2fdeceb1fd4fd275b31338aeff6be6a5e53afb741c15de5dc020f65cbed72f3f"
+    },
+    "tools/benchmark_game_accelerator.py": {
+      "bytes": 28532,
+      "sha256": "d67fa0fe0d75bba041a1b9cf00a55a58d65fc81c93f25b9d76247d62c4bab527"
+    },
+    "tools/benchmark_game_session_reuse.py": {
+      "bytes": 29893,
+      "sha256": "23f8fb4b1cde447045652fd2e8da2415441dcb8a028297e0a04bafd25e3a0c03"
+    },
+    "tools/benchmark_game_source_cuda.py": {
+      "bytes": 24945,
+      "sha256": "a75b75aecca793622f2eb8874fd1aef1ac133146b90387b3c36c276adc927959"
+    },
+    "tools/game_benchmark/GameAcceleratorCapture.java": {
+      "bytes": 3062,
+      "sha256": "85e88098fe1521a32911fd4a07e402ad35521ad926c9f7b26c4365f9b6899ca2"
+    },
+    "tools/game_benchmark/GameSessionReuseRunner.java": {
+      "bytes": 8527,
+      "sha256": "118e3d3251898f017e11cb0fc2537be265cf0cd7f4b5993b0d0e35354c327145"
+    },
+    "tools/game_benchmark/GameSessionReuseTrace.java": {
+      "bytes": 4741,
+      "sha256": "9232fa854eb9b29155c273a69431406726890a4533d22012e3162fc4151cdf2a"
+    },
+    "tools/game_benchmark/GameSourceRunner.java": {
+      "bytes": 8771,
+      "sha256": "cd1c1c31274c2bb238922354dc89fb851904aeb1fc3ccce0ee369107741b30a9"
+    },
+    "tools/game_benchmark/compare.py": {
+      "bytes": 5245,
+      "sha256": "921d785a9d185f449e88998f119c8a083433039adc62aee7d516e24f648c1b4b"
+    },
+    "tools/game_benchmark/process_capture.cjs": {
+      "bytes": 16176,
+      "sha256": "11ca1ded1301705d3afe364410e6b3e9817ff34eea6fc5ab7fe4d9b05e509179"
+    },
+    "tools/game_benchmark/replay_cuda_source.cjs": {
+      "bytes": 23578,
+      "sha256": "49c287ae35b9ec816011a314ea6a7cdb706cbc043f3f203ad70b23a73072e74a"
+    },
+    "tools/game_benchmark/session_reuse_candidate.py": {
+      "bytes": 14203,
+      "sha256": "2b0e886b605e3a039049e77183c39e45dfa3c1192c4ac15a86a3fb1743568613"
+    },
+    "tools/game_benchmark/verify_session_reuse_evidence.py": {
+      "bytes": 33173,
+      "sha256": "86be7e14c75cfe0ab9a1df5631ec5e79708232293816e21be6503f69332bce18"
+    },
+    "tools/profile_deux_operators.py": {
+      "bytes": 14061,
+      "sha256": "9a4e189d899a2f5c3c0e92df64ef4e1f3316ef422d53216d92b983e221c235d6"
+    },
+    "web/analysis/game.js": {
+      "bytes": 12228,
+      "sha256": "a4225b832bb8cee4d382b01b8753266b426d2a75be49515dc58bbb12e5a03b75"
+    },
+    "web/analysis/models/game/config.json": {
+      "bytes": 198,
+      "sha256": "4d62b6d058a820e981184ea6f04605d37659c4331ee01979eb14a14be08af890"
+    },
+    "web/analysis/models/game/manifest.json": {
+      "bytes": 1532,
+      "sha256": "51e172cfaa967d9e2518f01f508a64d49cd283d23ae8e8456af9c6e76eeb4f97"
+    },
+    "web/analysis/wav-reader.js": {
+      "bytes": 8035,
+      "sha256": "6cd0a40392617cc020f2ec4f87952f165e070c8c17bc4aa3b36b212823d897d4"
+    }
+  },
+  "variants": [
+    "cpu_all"
+  ],
+  "cudaExecuted": false,
+  "qualityApproved": false,
+  "target75Proven": false
+}

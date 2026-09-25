@@ -1,0 +1,1772 @@
+{
+  "schema": "lightforge.game-session-reuse-production-replay.v1",
+  "status": "COMPLETE_DIAGNOSTIC",
+  "executionSourceCommit": "ae7ed37ad7539b71ea84f783470c174f1297346e",
+  "executionSourceTree": "4809b69ac830a454832b9414f0dd949e29301011",
+  "verificationSourceCommit": "85bca325b65f93790a17bfd9142dad80162384b2",
+  "verificationSourceTree": "b703f823fb7da8f36eb4461c4f139ddda0df2038",
+  "verificationSource": {
+    "path": "tools/game_benchmark/verify_session_reuse_evidence.py",
+    "bytes": 33169,
+    "sha256": "085df8cab6c3842807b24ea982edf5cab5b0def96034edba9cd4bf3ca1d3f308"
+  },
+  "inputRunDirectory": "/workspace/scratch/b9f08ad0c73c/game-session-reuse-cpu-20260925-02",
+  "inputVerification": {
+    "bytes": 42608,
+    "sha256": "1e04758229e5317cd8ed782e27818874c5eff8ede28240736c2cbb00f6b8206d"
+  },
+  "replayAdapter": {
+    "bytes": 17224,
+    "sha256": "3f231e53669c9e2b656faf7bbdfc5b318e8d3b43a9a5c72fdbb537a86ef6c105"
+  },
+  "nodeVersion": "v24.19.0",
+  "sourceBindings": {
+    "tools/game_benchmark/verify_session_reuse_evidence.py": {
+      "bytes": 33173,
+      "sha256": "86be7e14c75cfe0ab9a1df5631ec5e79708232293816e21be6503f69332bce18"
+    },
+    "tools/game_benchmark/process_capture.cjs": {
+      "bytes": 16176,
+      "sha256": "11ca1ded1301705d3afe364410e6b3e9817ff34eea6fc5ab7fe4d9b05e509179"
+    },
+    "web/analysis/game.js": {
+      "bytes": 12228,
+      "sha256": "a4225b832bb8cee4d382b01b8753266b426d2a75be49515dc58bbb12e5a03b75"
+    },
+    "web/analysis/models/game/manifest.json": {
+      "bytes": 1532,
+      "sha256": "51e172cfaa967d9e2518f01f508a64d49cd283d23ae8e8456af9c6e76eeb4f97"
+    }
+  },
+  "cpuInferenceCapturedPreviously": true,
+  "modelInferenceExecuted": false,
+  "cudaExecuted": false,
+  "measured": false,
+  "benchmarkTimingAdmitted": false,
+  "qualityApproved": false,
+  "target75Proven": false,
+  "androidLifecycleQualified": false,
+  "releaseAuthorized": false,
+  "wholeSongSpeedupProven": false,
+  "fullVocalStageSpeedupProven": false,
+  "androidSpeedupProven": false,
+  "appLifecycleEquivalent": false,
+  "freshVerification": {
+    "bytes": 42608,
+    "sha256": "1e04758229e5317cd8ed782e27818874c5eff8ede28240736c2cbb00f6b8206d"
+  },
+  "qualificationReceipt": {
+    "bytes": 685840,
+    "sha256": "ab48ac8c778fe2a6f77bcb00c95c07f84762d2ae0aea98a35338561a1564b14d"
+  },
+  "driverReceipt": {
+    "bytes": 1184,
+    "sha256": "71f3032110e5afb3167eff9c7ad240d84a16b97eca5c957af70294ff918201c5"
+  },
+  "inputPcm": {
+    "bytes": 11289600,
+    "sha256": "298f7a549c4bb8dfc53c47d1078cea842c5e818a3e7c82bf289bffcec0ba30c2"
+  },
+  "passageCount": 6,
+  "passageBindings": [
+    {
+      "arm": "default",
+      "index": 0,
+      "receipt": "cpu_all_default_captured/output/passage-000/receipt.json",
+      "bytes": 10670,
+      "sha256": "047a6b7e86546556bba81d8f4e60e4a906b2f65da9a761d733c2cb26f1f50dc1"
+    },
+    {
+      "arm": "reuse",
+      "index": 0,
+      "receipt": "cpu_all_reuse_captured/output/passage-000/receipt.json",
+      "bytes": 10672,
+      "sha256": "468f50f9b85ce8cb82ca361e8fa46c3556762bc32c1c7b5d18cccf4ec52fe8c5"
+    },
+    {
+      "arm": "default",
+      "index": 1,
+      "receipt": "cpu_all_default_captured/output/passage-001/receipt.json",
+      "bytes": 11779,
+      "sha256": "9d614acc0baae7a80a5aa3a006c2e69990e8ac062d3a1e5a5440fcc74cb5e73f"
+    },
+    {
+      "arm": "reuse",
+      "index": 1,
+      "receipt": "cpu_all_reuse_captured/output/passage-001/receipt.json",
+      "bytes": 11779,
+      "sha256": "5659a748194674c533c81483d457fd35792611e2496a4f165b663187eda72a9d"
+    },
+    {
+      "arm": "default",
+      "index": 2,
+      "receipt": "cpu_all_default_captured/output/passage-002/receipt.json",
+      "bytes": 10795,
+      "sha256": "a4b219f6300343350948eab4703f53697554e91e3779f34390212e0988605712"
+    },
+    {
+      "arm": "reuse",
+      "index": 2,
+      "receipt": "cpu_all_reuse_captured/output/passage-002/receipt.json",
+      "bytes": 10791,
+      "sha256": "4a19c923896e6c393bce97f1f828611f213dd5369b100127f8598f53a60877c2"
+    },
+    {
+      "arm": "default",
+      "index": 3,
+      "receipt": "cpu_all_default_captured/output/passage-003/receipt.json",
+      "bytes": 10907,
+      "sha256": "e39f310b2e5e6c5ff1e12682b4a01624685e69079765c9c1a79703aa9ea2caa1"
+    },
+    {
+      "arm": "reuse",
+      "index": 3,
+      "receipt": "cpu_all_reuse_captured/output/passage-003/receipt.json",
+      "bytes": 10912,
+      "sha256": "ca4eb173caabc21650a32fe5ef5e15b3d5d1852c835e2b722a89c6cb0a5ca88e"
+    },
+    {
+      "arm": "default",
+      "index": 4,
+      "receipt": "cpu_all_default_captured/output/passage-004/receipt.json",
+      "bytes": 11350,
+      "sha256": "a0f2e451d1d88746a25d6421cd564a5121be3a1a31c66e967dca732d0a9920f5"
+    },
+    {
+      "arm": "reuse",
+      "index": 4,
+      "receipt": "cpu_all_reuse_captured/output/passage-004/receipt.json",
+      "bytes": 11350,
+      "sha256": "2036981821419d2c1a654c71ab0a2f1c6e1bbb72fd9a25d6fd169121636a7ea4"
+    },
+    {
+      "arm": "default",
+      "index": 5,
+      "receipt": "cpu_all_default_captured/output/passage-005/receipt.json",
+      "bytes": 8973,
+      "sha256": "afc21c16fa9727d7c18031e2ca8a898a0284e7e80af50b3a963f0f78aee34754"
+    },
+    {
+      "arm": "reuse",
+      "index": 5,
+      "receipt": "cpu_all_reuse_captured/output/passage-005/receipt.json",
+      "bytes": 8973,
+      "sha256": "9537e9520e8d63892e918011affbec8d3c0bc2205aa25885a8d4b04b27de82f3"
+    }
+  ],
+  "rawTensorPairsByteIdentical": 96,
+  "unroundedDefaultReuseNotesIdentical": true,
+  "productionTranscriptionsIdentical": true,
+  "freshNativeCallbackInputsRevalidated": true,
+  "arms": {
+    "default": {
+      "transcription": {
+        "notes": [
+          {
+            "start": 0.02,
+            "end": 0.97,
+            "midi": 57.64,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 0.97,
+            "end": 1.14,
+            "midi": 57.87,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 1.14,
+            "end": 1.31,
+            "midi": 57.98,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 1.31,
+            "end": 1.48,
+            "midi": 57.52,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 1.48,
+            "end": 2.91,
+            "midi": 57.85,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 2.91,
+            "end": 3.1,
+            "midi": 55.57,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 3.1,
+            "end": 3.39,
+            "midi": 57.56,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 3.39,
+            "end": 3.72,
+            "midi": 57.93,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 3.72,
+            "end": 4.04,
+            "midi": 57.92,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 4.04,
+            "end": 4.36,
+            "midi": 56.56,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 4.36,
+            "end": 4.68,
+            "midi": 57.59,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 4.68,
+            "end": 5,
+            "midi": 57.85,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 5,
+            "end": 5.48,
+            "midi": 57.86,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 5.48,
+            "end": 5.65,
+            "midi": 59.9,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 5.65,
+            "end": 5.97,
+            "midi": 57.64,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 5.97,
+            "end": 8.23,
+            "midi": 57.96,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 8.23,
+            "end": 8.85,
+            "midi": 57.6,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 8.85,
+            "end": 9.02,
+            "midi": 57.91,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 9.02,
+            "end": 10.17,
+            "midi": 56.16,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 10.17,
+            "end": 10.81,
+            "midi": 56.03,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 10.81,
+            "end": 12.41,
+            "midi": 56.57,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 12.41,
+            "end": 14.03,
+            "midi": 57.57,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 14.03,
+            "end": 14.35,
+            "midi": 55.58,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 14.35,
+            "end": 14.71,
+            "midi": 57.66,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 14.71,
+            "end": 15,
+            "midi": 57.84,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 15,
+            "end": 15.75,
+            "midi": 57.87,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 15.75,
+            "end": 16.94,
+            "midi": 57.92,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 16.94,
+            "end": 17.29,
+            "midi": 57.86,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 17.29,
+            "end": 17.58,
+            "midi": 57.96,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 17.58,
+            "end": 17.93,
+            "midi": 57.83,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 17.93,
+            "end": 18.26,
+            "midi": 55.99,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 18.26,
+            "end": 19.52,
+            "midi": 57.89,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 19.52,
+            "end": 19.86,
+            "midi": 57.66,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 19.86,
+            "end": 20.16,
+            "midi": 57.86,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 20.16,
+            "end": 20.8,
+            "midi": 57.98,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 20.8,
+            "end": 21.14,
+            "midi": 57.9,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 21.14,
+            "end": 21.83,
+            "midi": 57.92,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 21.83,
+            "end": 22.12,
+            "midi": 55.93,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 22.12,
+            "end": 24,
+            "midi": 57.81,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 24.36,
+            "end": 24.69,
+            "midi": 50.11,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 24.69,
+            "end": 25.34,
+            "midi": 59.96,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 25.34,
+            "end": 25.68,
+            "midi": 56.03,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 25.68,
+            "end": 26.92,
+            "midi": 57.92,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 26.92,
+            "end": 27.27,
+            "midi": 56.08,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 27.27,
+            "end": 27.61,
+            "midi": 59.92,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 27.61,
+            "end": 27.93,
+            "midi": 56.02,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 27.93,
+            "end": 29.5,
+            "midi": 55.11,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 29.5,
+            "end": 29.85,
+            "midi": 52.6,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 29.85,
+            "end": 30.19,
+            "midi": 59.96,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 30.19,
+            "end": 30.45,
+            "midi": 56.05,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 30.45,
+            "end": 30.83,
+            "midi": 56.06,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 30.83,
+            "end": 32.41,
+            "midi": 57.92,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 32.41,
+            "end": 32.93,
+            "midi": 67.99,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 32.93,
+            "end": 33.4,
+            "midi": 67.07,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 33.4,
+            "end": 34.5,
+            "midi": 67.95,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 34.5,
+            "end": 34.98,
+            "midi": 64.99,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 34.98,
+            "end": 36.62,
+            "midi": 68.11,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 36.62,
+            "end": 37.58,
+            "midi": 67.02,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 37.58,
+            "end": 38.77,
+            "midi": 66.96,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 38.77,
+            "end": 39.19,
+            "midi": 65.04,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 39.19,
+            "end": 39.41,
+            "midi": 63.05,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 39.41,
+            "end": 40.17,
+            "midi": 65.22,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 40.17,
+            "end": 41.14,
+            "midi": 68,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 41.14,
+            "end": 41.49,
+            "midi": 69.95,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 41.49,
+            "end": 42.39,
+            "midi": 67.24,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 42.39,
+            "end": 43.39,
+            "midi": 66.99,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 43.39,
+            "end": 43.91,
+            "midi": 66.99,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 43.91,
+            "end": 44.36,
+            "midi": 67,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 44.36,
+            "end": 45.32,
+            "midi": 67.94,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 45.32,
+            "end": 45.97,
+            "midi": 60,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 45.97,
+            "end": 46.31,
+            "midi": 60.09,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 46.31,
+            "end": 46.64,
+            "midi": 62.91,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 46.64,
+            "end": 46.96,
+            "midi": 62.98,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 46.96,
+            "end": 47.25,
+            "midi": 58.02,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 47.25,
+            "end": 47.92,
+            "midi": 57.52,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 47.92,
+            "end": 48.26,
+            "midi": 58.03,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 48.26,
+            "end": 48.61,
+            "midi": 58,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 48.61,
+            "end": 49.07,
+            "midi": 60.95,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 49.07,
+            "end": 49.53,
+            "midi": 60.5,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 49.53,
+            "end": 50.5,
+            "midi": 58.09,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 50.5,
+            "end": 50.84,
+            "midi": 67.92,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 50.84,
+            "end": 51.12,
+            "midi": 68,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 51.12,
+            "end": 51.47,
+            "midi": 68.03,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 51.47,
+            "end": 51.91,
+            "midi": 69.96,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 51.91,
+            "end": 52.12,
+            "midi": 69.52,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 52.12,
+            "end": 52.41,
+            "midi": 67,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 52.41,
+            "end": 52.78,
+            "midi": 67.01,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 52.78,
+            "end": 53.08,
+            "midi": 67.06,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 53.08,
+            "end": 54.03,
+            "midi": 67.01,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 54.03,
+            "end": 57.57,
+            "midi": 67.87,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 57.57,
+            "end": 57.91,
+            "midi": 67.62,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 57.91,
+            "end": 58.2,
+            "midi": 57.99,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 58.2,
+            "end": 58.55,
+            "midi": 58.01,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 58.55,
+            "end": 58.87,
+            "midi": 57.99,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 58.87,
+            "end": 59.21,
+            "midi": 58.03,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 59.21,
+            "end": 59.85,
+            "midi": 58.06,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 60,
+            "end": 60.26,
+            "midi": 59.95,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": true
+          },
+          {
+            "start": 63.71,
+            "end": 64,
+            "midi": 55.14,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          }
+        ],
+        "model": "game-large-1.0.3-lightforge-1",
+        "frameSeconds": 0.01,
+        "steps": 8,
+        "language": 0,
+        "sourceClock": "Original decoded PCM",
+        "lyricsAligned": false,
+        "confidenceIsProbability": false,
+        "runtime": "onnxruntime-android-cpu"
+      },
+      "nativeCalls": 6,
+      "nativeCheckpointResumeIdentical": true,
+      "independentCheckpointRestoreIdentical": true
+    },
+    "reuse": {
+      "transcription": {
+        "notes": [
+          {
+            "start": 0.02,
+            "end": 0.97,
+            "midi": 57.64,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 0.97,
+            "end": 1.14,
+            "midi": 57.87,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 1.14,
+            "end": 1.31,
+            "midi": 57.98,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 1.31,
+            "end": 1.48,
+            "midi": 57.52,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 1.48,
+            "end": 2.91,
+            "midi": 57.85,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 2.91,
+            "end": 3.1,
+            "midi": 55.57,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 3.1,
+            "end": 3.39,
+            "midi": 57.56,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 3.39,
+            "end": 3.72,
+            "midi": 57.93,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 3.72,
+            "end": 4.04,
+            "midi": 57.92,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 4.04,
+            "end": 4.36,
+            "midi": 56.56,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 4.36,
+            "end": 4.68,
+            "midi": 57.59,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 4.68,
+            "end": 5,
+            "midi": 57.85,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 5,
+            "end": 5.48,
+            "midi": 57.86,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 5.48,
+            "end": 5.65,
+            "midi": 59.9,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 5.65,
+            "end": 5.97,
+            "midi": 57.64,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 5.97,
+            "end": 8.23,
+            "midi": 57.96,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 8.23,
+            "end": 8.85,
+            "midi": 57.6,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 8.85,
+            "end": 9.02,
+            "midi": 57.91,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 9.02,
+            "end": 10.17,
+            "midi": 56.16,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 10.17,
+            "end": 10.81,
+            "midi": 56.03,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 10.81,
+            "end": 12.41,
+            "midi": 56.57,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 12.41,
+            "end": 14.03,
+            "midi": 57.57,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 14.03,
+            "end": 14.35,
+            "midi": 55.58,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 14.35,
+            "end": 14.71,
+            "midi": 57.66,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 14.71,
+            "end": 15,
+            "midi": 57.84,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 15,
+            "end": 15.75,
+            "midi": 57.87,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 15.75,
+            "end": 16.94,
+            "midi": 57.92,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 16.94,
+            "end": 17.29,
+            "midi": 57.86,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 17.29,
+            "end": 17.58,
+            "midi": 57.96,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 17.58,
+            "end": 17.93,
+            "midi": 57.83,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 17.93,
+            "end": 18.26,
+            "midi": 55.99,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 18.26,
+            "end": 19.52,
+            "midi": 57.89,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 19.52,
+            "end": 19.86,
+            "midi": 57.66,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 19.86,
+            "end": 20.16,
+            "midi": 57.86,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 20.16,
+            "end": 20.8,
+            "midi": 57.98,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 20.8,
+            "end": 21.14,
+            "midi": 57.9,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 21.14,
+            "end": 21.83,
+            "midi": 57.92,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 21.83,
+            "end": 22.12,
+            "midi": 55.93,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 22.12,
+            "end": 24,
+            "midi": 57.81,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 24.36,
+            "end": 24.69,
+            "midi": 50.11,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 24.69,
+            "end": 25.34,
+            "midi": 59.96,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 25.34,
+            "end": 25.68,
+            "midi": 56.03,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 25.68,
+            "end": 26.92,
+            "midi": 57.92,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 26.92,
+            "end": 27.27,
+            "midi": 56.08,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 27.27,
+            "end": 27.61,
+            "midi": 59.92,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 27.61,
+            "end": 27.93,
+            "midi": 56.02,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 27.93,
+            "end": 29.5,
+            "midi": 55.11,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 29.5,
+            "end": 29.85,
+            "midi": 52.6,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 29.85,
+            "end": 30.19,
+            "midi": 59.96,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 30.19,
+            "end": 30.45,
+            "midi": 56.05,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 30.45,
+            "end": 30.83,
+            "midi": 56.06,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 30.83,
+            "end": 32.41,
+            "midi": 57.92,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 32.41,
+            "end": 32.93,
+            "midi": 67.99,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 32.93,
+            "end": 33.4,
+            "midi": 67.07,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 33.4,
+            "end": 34.5,
+            "midi": 67.95,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 34.5,
+            "end": 34.98,
+            "midi": 64.99,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 34.98,
+            "end": 36.62,
+            "midi": 68.11,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 36.62,
+            "end": 37.58,
+            "midi": 67.02,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 37.58,
+            "end": 38.77,
+            "midi": 66.96,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 38.77,
+            "end": 39.19,
+            "midi": 65.04,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 39.19,
+            "end": 39.41,
+            "midi": 63.05,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 39.41,
+            "end": 40.17,
+            "midi": 65.22,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 40.17,
+            "end": 41.14,
+            "midi": 68,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 41.14,
+            "end": 41.49,
+            "midi": 69.95,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 41.49,
+            "end": 42.39,
+            "midi": 67.24,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 42.39,
+            "end": 43.39,
+            "midi": 66.99,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 43.39,
+            "end": 43.91,
+            "midi": 66.99,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 43.91,
+            "end": 44.36,
+            "midi": 67,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 44.36,
+            "end": 45.32,
+            "midi": 67.94,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 45.32,
+            "end": 45.97,
+            "midi": 60,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 45.97,
+            "end": 46.31,
+            "midi": 60.09,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 46.31,
+            "end": 46.64,
+            "midi": 62.91,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 46.64,
+            "end": 46.96,
+            "midi": 62.98,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 46.96,
+            "end": 47.25,
+            "midi": 58.02,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 47.25,
+            "end": 47.92,
+            "midi": 57.52,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 47.92,
+            "end": 48.26,
+            "midi": 58.03,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 48.26,
+            "end": 48.61,
+            "midi": 58,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 48.61,
+            "end": 49.07,
+            "midi": 60.95,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 49.07,
+            "end": 49.53,
+            "midi": 60.5,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 49.53,
+            "end": 50.5,
+            "midi": 58.09,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 50.5,
+            "end": 50.84,
+            "midi": 67.92,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 50.84,
+            "end": 51.12,
+            "midi": 68,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 51.12,
+            "end": 51.47,
+            "midi": 68.03,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 51.47,
+            "end": 51.91,
+            "midi": 69.96,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 51.91,
+            "end": 52.12,
+            "midi": 69.52,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 52.12,
+            "end": 52.41,
+            "midi": 67,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 52.41,
+            "end": 52.78,
+            "midi": 67.01,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 52.78,
+            "end": 53.08,
+            "midi": 67.06,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 53.08,
+            "end": 54.03,
+            "midi": 67.01,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 54.03,
+            "end": 57.57,
+            "midi": 67.87,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 57.57,
+            "end": 57.91,
+            "midi": 67.62,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 57.91,
+            "end": 58.2,
+            "midi": 57.99,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 58.2,
+            "end": 58.55,
+            "midi": 58.01,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 58.55,
+            "end": 58.87,
+            "midi": 57.99,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 58.87,
+            "end": 59.21,
+            "midi": 58.03,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 59.21,
+            "end": 59.85,
+            "midi": 58.06,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          },
+          {
+            "start": 60,
+            "end": 60.26,
+            "midi": 59.95,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": true
+          },
+          {
+            "start": 63.71,
+            "end": 64,
+            "midi": 55.14,
+            "source": "game-large",
+            "estimated": true,
+            "continuation": false
+          }
+        ],
+        "model": "game-large-1.0.3-lightforge-1",
+        "frameSeconds": 0.01,
+        "steps": 8,
+        "language": 0,
+        "sourceClock": "Original decoded PCM",
+        "lyricsAligned": false,
+        "confidenceIsProbability": false,
+        "runtime": "onnxruntime-android-cpu"
+      },
+      "nativeCalls": 6,
+      "nativeCheckpointResumeIdentical": true,
+      "independentCheckpointRestoreIdentical": true
+    }
+  },
+  "scope": "Unchanged production GAME clipping, continuation, stitching, sorting, rounding and native checkpoint validation over six already captured CPU default/reuse passages.",
+  "limitations": [
+    "The public input is a mixture, not a separated vocal stem.",
+    "The native callback returns existing captured notes. This replay performs no model inference.",
+    "Production runtime labels are retained as data; no Android runtime, lifecycle, device or CUDA execution is established.",
+    "Source separation, vocal fusion, show generation and complete analysis timing remain outside this replay."
+  ]
+}

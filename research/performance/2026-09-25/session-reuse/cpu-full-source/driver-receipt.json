@@ -1,0 +1,38 @@
+{
+  "schema": "lightforge.game-session-reuse-driver.v1",
+  "status": "COMPLETE_DIAGNOSTIC",
+  "createdUtc": "2026-09-25T15:57:55.374322+00:00",
+  "executionSourceCommit": "ae7ed37ad7539b71ea84f783470c174f1297346e",
+  "executionSourceTree": "4809b69ac830a454832b9414f0dd949e29301011",
+  "variants": [
+    "cpu_all"
+  ],
+  "cudaExecuted": false,
+  "qualityApproved": false,
+  "target75Proven": false,
+  "benchmarkTimingAdmitted": false,
+  "releaseAuthorized": false,
+  "hostPreparationReceipt": {
+    "bytes": 56735,
+    "sha256": "e8aa5de595cfce656237be9024adde5424bba22c67b7d3e285e17bc6f4425a54"
+  },
+  "stageLogs": {
+    "readiness": {
+      "bytes": 115,
+      "sha256": "5db56654de57fc0287e4f18a2ab4c990fe36b0e33c6995ff073d7bff2a368841"
+    },
+    "qualification": {
+      "bytes": 425,
+      "sha256": "b6df52dc047915c3e50f9ec58a3ca05faced45819bd910e2cf7c907d0a8fe83b"
+    }
+  },
+  "readinessExitCode": 0,
+  "qualificationExitCode": 0,
+  "qualificationStatus": "COMPLETE_DIAGNOSTIC",
+  "completedJvmRuns": 6,
+  "allBoundInputsRechecked": true,
+  "qualificationReceipt": {
+    "bytes": 685840,
+    "sha256": "ab48ac8c778fe2a6f77bcb00c95c07f84762d2ae0aea98a35338561a1564b14d"
+  }
+}
