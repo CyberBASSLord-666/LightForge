@@ -53,7 +53,9 @@ passed; actual inference remains pending upstream qualification.
 ## GPU continuation
 
 Colab sign-in initially returned HTTP 502. A later browser reload reached
-Google's account chooser; authentication is not yet verified. No available
+Google's account chooser. Before the secure account-selection request could be
+issued, the browser inspection timed out; one lighter recovery check also timed
+out. No secure request was submitted and authentication is not verified. No available
 Colab/Kaggle plugin was found in the current plugin-directory search. No new
 GPU inference was performed in this checkpoint.
 
