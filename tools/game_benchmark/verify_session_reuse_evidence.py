@@ -271,7 +271,7 @@ def verify_inputs_before_import(root, source, repo, commit, tree):
     java_inputs = {Path(r['path']).name: {k: r[k] for k in ('bytes', 'sha256')} for r in preparation['javaInputs']}
     require(all(java_inputs.get(name) == pin for name, pin in expected_dependencies.items()), 'Host preparation dependencies differ')
     jdk = bindings.get('jdk', {})
-    essential = {'bin/java', 'bin/javac', 'lib/modules', 'lib/server/libjvm.so', 'lib/jli/libjli.so'}
+    essential = {'bin/java', 'bin/javac', 'lib/modules', 'lib/server/libjvm.so', 'lib/libjli.so'}
     require(isinstance(jdk, dict) and essential <= set(jdk), 'Essential JDK runtime libraries unbound')
     for name, pin in jdk.items():
         safe_relative(name)
