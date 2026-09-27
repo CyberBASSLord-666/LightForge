@@ -1,0 +1,159 @@
+{
+  "schema": "lightforge.choreography-quality-benchmark.v1",
+  "completedAt": "2026-09-27T21:45:56.211Z",
+  "scope": "Paired alternating Node host quality-diagnostics stage only. Not neural analysis, whole-song generation, Android or physical vehicle performance.",
+  "runtime": "v24.19.0",
+  "baselineRef": "1cdc96773b2a5c54411d2a7170a799dd19efd7ea",
+  "sourceHashes": {
+    "baseline": "5bc33be331228ce1fa2299c360622dd7a6cd507aae9dcc0b2e010af6034987e7",
+    "candidate": "c0a147d6709a85f3271bd21453901224c4d4b7b80ba3ec2e6545282337dc275d"
+  },
+  "warmups": 3,
+  "measurements": 9,
+  "cases": [
+    {
+      "name": "recorded-analysis-64s",
+      "configuration": "default",
+      "frameCount": 3200,
+      "frameSha256": "675290f37d05e22822ac19b53e9aebe2337e9c0ccd2693ec5620b3ea7e25840c",
+      "reportSha256": "390967238eb00f8623b81f1917c9749b276b4539c1d8bc3833519e468e8b905d",
+      "baselineMs": 9.323223999999982,
+      "candidateMs": 6.710122999999953,
+      "reductionPercent": 28.027868900286357,
+      "timingsMs": {
+        "baseline": [
+          7.787816000000021,
+          9.543091000000004,
+          7.185668999999962,
+          9.791462000000024,
+          9.323223999999982,
+          6.706086999999911,
+          9.819443000000092,
+          6.5827039999999215,
+          13.88214199999993
+        ],
+        "candidate": [
+          6.395709000000011,
+          12.787997000000018,
+          11.174638999999956,
+          7.196354000000042,
+          6.710122999999953,
+          6.009117999999944,
+          9.56878800000004,
+          6.010976999999912,
+          5.75555200000008
+        ]
+      },
+      "exactReports": true,
+      "unchangedFrames": true
+    },
+    {
+      "name": "recorded-analysis-64s",
+      "configuration": "all-output-duration-checks",
+      "frameCount": 3200,
+      "frameSha256": "675290f37d05e22822ac19b53e9aebe2337e9c0ccd2693ec5620b3ea7e25840c",
+      "reportSha256": "45ca25519fec295bb0468ae6241406ed131651729dd2441561b3ab03d3fd5e10",
+      "baselineMs": 30.44443999999976,
+      "candidateMs": 27.153451000000132,
+      "reductionPercent": 10.809819461286374,
+      "timingsMs": {
+        "baseline": [
+          39.35497099999998,
+          40.73005499999999,
+          35.93890899999997,
+          30.44443999999976,
+          27.080393999999615,
+          24.37128100000018,
+          26.09352200000012,
+          25.48766599999999,
+          39.093417000000045
+        ],
+        "candidate": [
+          39.8788219999999,
+          29.214603000000125,
+          39.59541899999999,
+          29.15329299999985,
+          13.87150500000007,
+          13.288174999999683,
+          14.791481000000203,
+          27.153451000000132,
+          25.823091000000204
+        ]
+      },
+      "exactReports": true,
+      "unchangedFrames": true
+    },
+    {
+      "name": "synthetic-240s",
+      "configuration": "default",
+      "frameCount": 12000,
+      "frameSha256": "8c811e808712e8f1a095d715143137d834e3f4240bbb7decfd900a67de23a85f",
+      "reportSha256": "2908ad86349300f207da48e5528081466f7776363600194de9c7df046d19deb7",
+      "baselineMs": 22.456331999999747,
+      "candidateMs": 18.519667000000027,
+      "reductionPercent": 17.530311717869886,
+      "timingsMs": {
+        "baseline": [
+          22.271314000000075,
+          22.65934100000004,
+          24.021778000000268,
+          22.456331999999747,
+          22.233730999999807,
+          24.406513999999788,
+          22.199443999999858,
+          22.352496999999858,
+          22.983332000000246
+        ],
+        "candidate": [
+          19.207894000000124,
+          20.26181299999962,
+          18.785085999999865,
+          18.543719999999666,
+          17.523585999999796,
+          17.84562199999982,
+          17.989604000000327,
+          18.519667000000027,
+          17.133368999999675
+        ]
+      },
+      "exactReports": true,
+      "unchangedFrames": true
+    },
+    {
+      "name": "synthetic-240s",
+      "configuration": "all-output-duration-checks",
+      "frameCount": 12000,
+      "frameSha256": "8c811e808712e8f1a095d715143137d834e3f4240bbb7decfd900a67de23a85f",
+      "reportSha256": "2b82d121dbfe59b8d236ca0b4c243e432ecaedce8c65f04858fbdc6e97b78743",
+      "baselineMs": 135.3945760000006,
+      "candidateMs": 59.72069399999964,
+      "reductionPercent": 55.891368942283634,
+      "timingsMs": {
+        "baseline": [
+          135.3945760000006,
+          152.93318,
+          155.29762699999992,
+          166.08075400000052,
+          214.98164600000018,
+          107.04210700000021,
+          99.30325799999991,
+          97.99991300000056,
+          111.75295099999948
+        ],
+        "candidate": [
+          58.96497499999987,
+          122.72723000000042,
+          113.42464599999948,
+          120.96835400000055,
+          116.93775900000037,
+          59.72069399999964,
+          50.69031099999938,
+          50.95403900000019,
+          52.50029199999972
+        ]
+      },
+      "exactReports": true,
+      "unchangedFrames": true
+    }
+  ]
+}

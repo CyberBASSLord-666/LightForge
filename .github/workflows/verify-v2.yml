@@ -48,6 +48,7 @@ jobs:
             releases
             research/model-source
             research/evaluation-1.6
+            research/hardware-1.2.0
             research/upstream/deux
       - name: Read current release version
         run: |
@@ -77,6 +78,7 @@ jobs:
           rm -f -- \
             "$receipt_root/regression-verification.json" \
             "$receipt_root/browser-verification.json" \
+            "$receipt_root/preview-verification.json" \
             "$receipt_root/background-ui-verification.json" \
             "$receipt_root/restore-preview-verification.json" \
             "$receipt_root/analysis-browser-verification.json" \
@@ -131,6 +133,8 @@ jobs:
           python3 qa/release-1.6.0/prepare-musdb-fixtures.py
       - run: npx playwright install --with-deps chromium
       - run: node qa/release-${{ env.LIGHTFORGE_RELEASE }}/browser.cjs
+      - name: Actual Highland optics, clock and graphics recovery
+        run: node tools/verify_preview_browser.cjs
       - run: node qa/release-${{ env.LIGHTFORGE_RELEASE }}/background-ui.cjs
       - name: Foreground-resume restore preview proof
         run: |

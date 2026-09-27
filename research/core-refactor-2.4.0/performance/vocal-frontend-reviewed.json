@@ -1,0 +1,163 @@
+{
+  "schemaVersion": 1,
+  "kind": "vocal-frontend-exact-equivalence-benchmark",
+  "createdAt": "2026-09-27T21:48:03.989Z",
+  "scope": "Every original Frame-MN10 log-mel window of the complete public demo; prepared 16 kHz PCM input; model inference, resampling, reader IO, and whole-analysis time excluded.",
+  "baselineCommit": "1cdc96773b2a5c54411d2a7170a799dd19efd7ea",
+  "runtime": {
+    "node": "v24.19.0",
+    "v8": "13.6.233.17-node.51",
+    "platform": "linux",
+    "architecture": "x64",
+    "cpuModel": "Intel(R) Xeon(R) Platinum 8370C CPU @ 2.80GHz",
+    "logicalCpus": 9,
+    "gcBeforeEachTrial": true
+  },
+  "fixture": {
+    "path": "web/demo/glass-castle.wav",
+    "bytes": 11289644,
+    "sha256": "33f07d502ba19832b62b97d8fb4a11354e81310264bd885d7a06438228773650",
+    "seconds": 64,
+    "windows": 10,
+    "sampleStarts": [
+      0,
+      96000,
+      192000,
+      288000,
+      384000,
+      480000,
+      576000,
+      672000,
+      768000,
+      864000
+    ]
+  },
+  "method": {
+    "warmupsPerVariant": 2,
+    "measuredRounds": 7,
+    "orders": [
+      [
+        "released-2.3.2",
+        "fixed-twiddles",
+        "fixed-twiddles-and-overlap"
+      ],
+      [
+        "fixed-twiddles",
+        "fixed-twiddles-and-overlap",
+        "released-2.3.2"
+      ],
+      [
+        "fixed-twiddles-and-overlap",
+        "released-2.3.2",
+        "fixed-twiddles"
+      ],
+      [
+        "released-2.3.2",
+        "fixed-twiddles",
+        "fixed-twiddles-and-overlap"
+      ],
+      [
+        "fixed-twiddles",
+        "fixed-twiddles-and-overlap",
+        "released-2.3.2"
+      ],
+      [
+        "fixed-twiddles-and-overlap",
+        "released-2.3.2",
+        "fixed-twiddles"
+      ],
+      [
+        "released-2.3.2",
+        "fixed-twiddles",
+        "fixed-twiddles-and-overlap"
+      ]
+    ],
+    "comparison": "All Float32 feature bytes compared after every warmup and measured trial; any mismatch aborts without a receipt."
+  },
+  "equivalence": {
+    "allFeatureBytesIdentical": true,
+    "featuresSHA256": "e31b1590a5172dac9f9257ad4608c0dc90241f79cd1b01e3180fbc98aa4a2981",
+    "float32ValuesPerTrial": 1280000,
+    "computedFrames": 6427,
+    "reusedFrames": 3573,
+    "retainedCacheBytes": 1152000
+  },
+  "measurements": {
+    "released-2.3.2": {
+      "medianWallMs": 421.17072800000005,
+      "minWallMs": 396.3209849999985,
+      "maxWallMs": 460.032201,
+      "samplesWallMs": [
+        460.032201,
+        421.17072800000005,
+        409.5117450000007,
+        434.2547889999996,
+        417.1497129999989,
+        396.3209849999985,
+        438.4463790000009
+      ]
+    },
+    "fixed-twiddles": {
+      "medianWallMs": 298.1625700000004,
+      "minWallMs": 254.56633200000033,
+      "maxWallMs": 417.23545100000047,
+      "samplesWallMs": [
+        261.9818230000001,
+        298.1625700000004,
+        417.23545100000047,
+        344.0647940000008,
+        278.45867499999986,
+        360.82171799999924,
+        254.56633200000033
+      ],
+      "medianWallReductionPercent": 29.206245786387985
+    },
+    "fixed-twiddles-and-overlap": {
+      "medianWallMs": 308.35718500000075,
+      "minWallMs": 200.02692299999944,
+      "maxWallMs": 393.79156199999943,
+      "samplesWallMs": [
+        355.4926059999998,
+        204.96906000000035,
+        393.79156199999943,
+        358.9984779999995,
+        206.23254400000042,
+        200.02692299999944,
+        308.35718500000075
+      ],
+      "medianWallReductionPercent": 26.785703635129956
+    }
+  },
+  "sources": {
+    "tests/fixtures/performance/vocal-frontend-2.3.2.cjs": {
+      "bytes": 1761,
+      "sha256": "a996215ff08c13c6591ac25b80cd29ddc922d82b44a13d249f8ee65ed1657283"
+    },
+    "web/analysis/vocal.js": {
+      "bytes": 13356,
+      "sha256": "bacf90472f06611526fd8dac49b32775f4a32f62bf40b409fd1ce892feff09f0"
+    },
+    "web/analysis/models/features.json": {
+      "bytes": 32062,
+      "sha256": "8a9fb3bc88c3e2f35934dd0024f22458aa8d357e3e3946a6e2c6230d3886e278"
+    },
+    "web/analysis/models/vocal-frontend.json": {
+      "bytes": 19110,
+      "sha256": "72bdffced29bfdd6d1da77a4da2a2a4af1b2f839c71131d19dc9423db3d4732f"
+    },
+    "web/analysis/wav-reader.js": {
+      "bytes": 8035,
+      "sha256": "6cd0a40392617cc020f2ec4f87952f165e070c8c17bc4aa3b36b212823d897d4"
+    },
+    "tools/benchmark_vocal_frontend.cjs": {
+      "bytes": 5742,
+      "sha256": "7f6562f8470a5475ce7e255ee0b917c7ce663307537c894e1104ee30e40d09f5"
+    }
+  },
+  "limitations": [
+    "Host JavaScript frontend timing only; not Android, neural inference or end-to-end speedup.",
+    "Single public fixture; no general musical-quality claim.",
+    "Retained cache bytes are the explicit arrays, not measured peak application memory.",
+    "The 75 percent complete-analysis target remains unmeasured."
+  ]
+}

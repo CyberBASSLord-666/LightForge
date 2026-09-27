@@ -42,6 +42,7 @@ function studio() {
     constructor() { this.paused = false; this.draws = 0; this.pauseChanges = []; }
     setPaused(value) { this.paused = !!value; this.pauseChanges.push(this.paused); }
     render() { if (!this.paused) this.draws++; }
+    setStateSource(source) { this.stateSource=source; }
     setCamera() {} setStage() {} setQuality() {} resize() {}
   };
   w.LightForgeVersion = require('../web/version.js');
@@ -262,4 +263,77 @@ test('offline preview bundle preserves the deferred-load contract used by the St
  assert.match(source,/constructor\(canvas,onViewChange,\{deferLoad=false\}=\{\}\)/);
  assert.match(source,/setLoadDeferred\(deferred\)/);
  assert.match(bundle,/setLoadDeferred\(e\)/,'The Android-loaded offline bundle must not drop the source deferred-load contract');
+});
+
+test('GPU submission samples exported commands at current media time after delayed RAF, seeks and recovery', () => {
+  const t=renderer(),p=t.preview,Engine=require('../web/engine/show-engine.js');
+  const show={frames:new Uint8Array(100*200),frameCount:100,channels:200,stepMs:20,duration:2,sections:[]};
+  show.frames[2*200+4]=255;show.frames[2*200+175]=96;
+  const exported=Buffer.from(Engine.fseq(show)),offset=exported.readUInt16LE(4);
+  let mediaTime=0,reads=0;
+  const submissions=[],rigFrames=[];p.rig={update(data){rigFrames.push(data.frame);return false;}};
+  p.setStateSource(()=>{reads++;return {data:Engine.stateAt(show,mediaTime),time:mediaTime,clock:'media-current-time'};});
+  p.composer.render=()=>submissions.push({frame:p.last[0].frame,time:p.last[1],raw:Buffer.from(p.last[0].raw),lights:Array.from(p.last[0].lights),interior:p.last[0].interior});
+  p.render(Engine.stateAt(show,0),0);
+  p.render(Engine.stateAt(show,.02),.02);
+  assert.deepEqual(rigFrames,[],'Queued updates must coalesce before geometry and material work');
+  mediaTime=.052;t.raf.flush(100);
+  assert.deepEqual(rigFrames,[2],'Only the latest authoritative frame updates the physical rig');
+  assert.equal(submissions[0].frame,2,'Queued frame zero must not be presented after audio advances');
+  assert.deepEqual(submissions[0].raw,exported.subarray(offset+400,offset+600));
+  assert.equal(submissions[0].lights[4],1);assert.equal(submissions[0].interior[0][0],96);
+  assert.equal(t.raf.pending.size,0,'Clock refresh must not create an extra continuous RAF chain');
+  p.requestDraw();mediaTime=.012;t.raf.flush(90000);
+  assert.equal(submissions[1].frame,0,'A seek immediately before GPU submission must replace queued data');
+  assert.equal(submissions[1].lights[4],0);
+  p.requestDraw();t.raf.flush(180000);
+  assert.equal(submissions[2].time,.012,'Paused media time must not extrapolate from elapsed wall time');
+  p.setPaused(true);mediaTime=.052;p.requestDraw();t.raf.flush(190000);
+  assert.equal(reads,3,'Native pause must not sample or render');
+  p.setPaused(false);t.raf.flush(200000);
+  assert.equal(submissions[3].frame,2,'Resume must read the current media frame');
+  p._restorePending=true;p.createEnvironment=()=>{mediaTime=.032;p.environment={};};
+  p.composer.reset=()=>{};p.applyQuality=()=>{};p.setStatus=()=>{};
+  p.requestDraw();t.raf.flush(210000);
+  assert.equal(submissions[4].frame,1,'Clock is sampled after context recovery work');
+  assert.equal(p._presented.time,.032);assert.equal(p._presented.frame,1);
+  assert.equal(p._presented.clock,'media-current-time');
+  p.setStateSource(null);p.render(Engine.stateAt(show,.012),.012);t.raf.flush(220000);
+  assert.equal(p._presented.clock,'explicit-show-time');assert.equal(p._presented.time,.012);
+});
+
+test('environment light spill follows all physical main beams and reverse without activating absent fog', () => {
+  const t=renderer(),p=t.preview,lights=new Float64Array(30);
+  p.headlights=[{intensity:0},{intensity:0}];p.tailSpill=[{intensity:0},{intensity:0}];p.reverseSpill=[{intensity:0},{intensity:0}];
+  lights[6]=.5;lights[9]=.25;lights[27]=1;
+  p.render({lights},0);t.raf.flush();
+  assert.deepEqual(p.headlights.map(x=>x.intensity),[4,2]);
+  assert.deepEqual(p.reverseSpill.map(x=>x.intensity),[1.5,1.5]);
+  assert.deepEqual(p.tailSpill.map(x=>x.intensity),[0,0],'Reverse light must not generate red tail spill');
+  lights[25]=1;p.render({lights},0);t.raf.flush();
+  assert.deepEqual(p.tailSpill.map(x=>x.intensity),[.35,0],'Left tail must not illuminate the right tail');
+  lights[24]=1;p.render({lights},0);t.raf.flush();
+  assert.deepEqual(p.tailSpill.map(x=>x.intensity),[.35,.35],'Brake command must illuminate both tails');
+  lights.fill(0);lights[14]=lights[15]=1;
+  p.render({lights},0);t.raf.flush();
+  assert.deepEqual(p.headlights.map(x=>x.intensity),[0,0]);
+  assert.deepEqual(p.reverseSpill.map(x=>x.intensity),[0,0]);
+});
+
+
+test('Studio preview state source follows the selected show and media seek without an independent timer', () => {
+  const t=studio();
+  try {
+    const audio=t.d.getElementById('audio');
+    const show={frames:new t.w.Uint8Array(100*200),frameCount:100,channels:200,stepMs:20,duration:2,sections:[]};
+    show.frames[4*200+4]=255;t.app.state.show=show;
+    audio.currentTime=.092;const current=t.preview.stateSource();
+    assert.equal(current.clock,'media-current-time');assert.equal(current.time,.092);
+    assert.equal(current.data.frame,4);assert.equal(current.data.raw[4],255);
+    audio.currentTime=.012;const rewound=t.preview.stateSource();
+    assert.equal(rewound.data.frame,0);assert.equal(rewound.data.raw[4],0);
+    t.app.state.show=null;const cleared=t.preview.stateSource();
+    assert.equal(cleared.data,null,'Removing the show must clear renderer outputs');
+    assert.equal(cleared.time,.012);
+  } finally { t.close(); }
 });

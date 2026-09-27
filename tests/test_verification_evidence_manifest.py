@@ -77,6 +77,17 @@ def receipt(name, session=SESSION):
 
 
 class VerificationEvidenceManifestTest(unittest.TestCase):
+    def test_native_game_runtime_materials_remain_sealed_for_current_release(self):
+        current = json.loads((ROOT / 'version.json').read_text())['name']
+        names = {'native-game-verification.json', 'native-game-demo-output.json',
+                 'native-game-falcon-output.json'}
+        for release in ('2.3.2', current):
+            with self.subTest(release=release):
+                expected = {f'qa/release-{release}/{name}' for name in names}
+                self.assertTrue(expected <= evidence._runtime_evidence_materials(release))
+        self.assertFalse(any('native-game-' in name
+                             for name in evidence._runtime_evidence_materials('2.3.1')))
+
     def _make_content(self, root: Path, attempt=1):
         candidate = root / "candidate-manifest.json"
         identity = candidate_manifest(candidate, attempt)

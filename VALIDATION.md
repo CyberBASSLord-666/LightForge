@@ -4,26 +4,31 @@ A repository test, an APK build, a published release and a performance claim are
 different results. Each must identify the source and evidence it actually covers.
 This page is an index, not a replacement for source-bound receipts.
 
-## Published 2.2.5 record
+## Published 2.3.2 record
 
-LightForge **2.2.5 / Android version code 20205** was published on
-**September 16, 2026**. Its immutable release source is
-`9ad78719179a6502adab50a92216ddc74d5dd261`; all nine host/Android verification
-gates passed in [production run 35038907453](https://github.com/CyberBASSLord-666/LightForge/actions/runs/35038907453).
-The [public release](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.2.5)
+LightForge **2.3.2 / Android version code 20302** was published on
+**September 27, 2026**. Its qualified application source is
+`c38be4e7f1079a4897d8340875d4da2fe8d4cd57`; full host/Android verification
+passed in [production run 35493931933](https://github.com/CyberBASSLord-666/LightForge/actions/runs/35493931933).
+The [public release](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.3.2)
 contains the original-signed APK, checksum, notes and verification report.
+[Publication run 36289930324](https://github.com/CyberBASSLord-666/LightForge/actions/runs/36289930324)
+verified the exact qualified payload and original signing certificate.
 
-Coverage includes completed-project preview restoration, background analysis and
-durable saving, cancellation/resume, and diagnostic export/recovery. Android
-results are emulator observations, not physical-phone or Tesla tests. Original
-signing identity, unchanged application payload and uploaded-APK digest are
-separate publication checks.
+Coverage includes native GAME/WASM output and checkpoint comparisons,
+completed-project preview restoration, background analysis and durable saving,
+cancellation/resume, and diagnostic recovery. Android results are emulator
+observations, not physical-phone or Tesla tests.
 
 The version-scoped `automated_verification_only` policy did not require an
 external corpus, human perceptual review or energy/thermal observations. Their
 absence remains disclosed. It did **not** establish comparative musical quality,
 zero regression across arbitrary songs or a 75% runtime reduction. The strict
 optional performance-quality workflow was not weakened.
+
+The 2.4.0 core refactor requires its own new evidence. The vehicle research is
+recorded in [the hardware evidence review](docs/VEHICLE_HARDWARE_EVIDENCE.md);
+it distinguishes VIN-confirmed traits from configuration and estimated optics.
 
 ## Current source versus release evidence
 

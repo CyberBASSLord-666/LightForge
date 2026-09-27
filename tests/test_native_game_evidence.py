@@ -8,7 +8,8 @@ import unittest
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
-PATH = ROOT / 'qa/release-2.3.2/native_game_evidence.py'
+RELEASE = json.loads((ROOT / 'version.json').read_text())['name']
+PATH = ROOT / f'qa/release-{RELEASE}/native_game_evidence.py'
 SPEC = importlib.util.spec_from_file_location('native_game_release_evidence', PATH)
 MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)
@@ -142,7 +143,7 @@ class NativeGameEvidenceTest(unittest.TestCase):
         self.assertIn('"$receipt_root/native-game-verification.json"', text)
 
     def test_current_analysis_gate_cannot_omit_native_game(self):
-        text = (ROOT / 'qa/release-2.3.2/verify-analysis.py').read_text()
+        text = (ROOT / f'qa/release-{RELEASE}/verify-analysis.py').read_text()
         self.assertIn('native_game = verify_native_game(root, hashes, evidence_session)', text)
         self.assertIn('verifier.verify_receipt(root, receipt, evidence_session, hashes)', text)
         self.assertIn("'fresh_native_game'", text)

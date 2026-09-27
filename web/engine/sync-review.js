@@ -161,9 +161,19 @@
       if(!target||!roles[target.role]||!finite(target.time))continue;
       const targetKey=key(target);if(seen.has(targetKey))continue;seen.add(targetKey);
       const role=roles[target.role],expected=target.time+(finite(show.settings&&show.settings.offsetMs)?show.settings.offsetMs:0)/1000,frame=Math.round(expected/step);
-      let status='suppressed',errorMs=null,output=null,actualCommandTime=null,manualOverrideObserved=false;
+      let status='suppressed',errorMs=null,output=null,actualCommandTime=null,manualOverrideObserved=false,boundaryClip=null;
       for(const event of events.get(targetKey)||[]){
         const actual=Math.round(event.actualStart/step),candidate=byId.get(event.id);
+        if(candidate&&event.boundaryClip&&finite(event.boundaryClip.requestedStart)&&finite(event.boundaryClip.requestedEnd)){
+          const clip=event.boundaryClip;
+          if(!boundaryClip)boundaryClip={...clip,continuationObserved:false};
+          if(clip.start&&expected<0&&actual===0){
+            // Starting an already-sounding source at the export boundary is
+            // useful continuation, never proof of its pre-show attack time.
+            if(enabled(show,candidate)&&!manualAt(show,event.id,0)&&frameState(show,candidate,0).active){boundaryClip.continuationObserved=true;output=event.id;actualCommandTime=0;}
+            continue;
+          }
+        }
         if(!candidate||Math.abs(actual*step-expected)>step/2+1e-7)continue;
         // applyManualCues overwrites final frame bytes while preserving the
         // original automatic light-event metadata.  Never let that manual
@@ -173,7 +183,7 @@
         if(state.attack){status='matched';actualCommandTime=actual*step;errorMs=(actualCommandTime-expected)*1000;output=event.id;break;}
         if(state.active)status='heldWithoutAttack';
       }
-      const realizationStatus=status==='suppressed'?(manualOverrideObserved?'manualOverride':frame<0||frame>=show.frameCount-1?'outsideExport':targetLoss(show,byId,target,expected)):status;
+      const realizationStatus=status==='suppressed'?(expected<0||frame>=show.frameCount-1?'outsideExport':manualOverrideObserved?'manualOverride':targetLoss(show,byId,target,expected)):status;
       // Keep the v1 per-role and manual row vocabulary stable.  The new
       // realizationStatus carries the more precise cause without redefining a
       // manual override as a successful automatic musical attack.
@@ -181,10 +191,10 @@
       if(isHighSalience(target))targetAggregate.highSalienceSelected++;
       updateAggregate(targetAggregate,realizationStatus,target);
       if(errorMs!==null)lightErrors.push(errorMs);
-      const row={role:target.role,time:target.time,end:number(target.end),kind:target.kind,cueId:target.cueId||null,status,realizationStatus,output,errorMs,desiredPerceptualTime:expected};
-      recordEvidence(realizationEvidence(target.role,target,expected,realizationStatus,actualCommandTime,null,'sync-review-lighting'));
+      const row={role:target.role,time:target.time,end:number(target.end),kind:target.kind,cueId:target.cueId||null,status,realizationStatus,output,errorMs,desiredPerceptualTime:expected,...(boundaryClip?{boundaryClip}:{})};
+      recordEvidence({...realizationEvidence(target.role,target,expected,realizationStatus,actualCommandTime,null,'sync-review-lighting'),...(boundaryClip?{boundaryClip}:{})});
       if(target.cueId)manual.push(row);
-      if(status!=='matched'&&issues.length<200)issues.push({...row,reason:realizationStatus==='outsideExport'?'Outside exportable frames':realizationStatus==='heldWithoutAttack'?'Output was already active':realizationStatus==='manualOverride'?'Manual output override':realizationStatus==='disabled'?'All eligible outputs are disabled':realizationStatus==='unrouted'?'No eligible output route was recorded':'No eligible final output attack'});
+      if(status!=='matched'&&issues.length<200)issues.push({...row,reason:realizationStatus==='outsideExport'?(boundaryClip?.continuationObserved?'Attack precedes export; held source continues from frame zero':'Outside exportable frames'):realizationStatus==='heldWithoutAttack'?'Output was already active':realizationStatus==='manualOverride'?'Manual output override':realizationStatus==='disabled'?'All eligible outputs are disabled':realizationStatus==='unrouted'?'No eligible output route was recorded':'No eligible final output attack'});
     }
     const mechanical={selected:0,matched:0,suppressed:0,heldWithoutAttack:0,manualOverride:0,disabled:0,unrouted:0,outsideExport:0,collisionLoss:0,highSalienceSelected:0,highSalienceCollisionLoss:0};
     const mechanicalIssues=[],commandErrors=[],perceptualErrors=[],movementSeen=new Set();

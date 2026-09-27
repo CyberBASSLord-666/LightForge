@@ -552,6 +552,15 @@ const startupPreviewBootstrap=(()=>{try{return native()?parse(window.Android?.ge
 const startupPreviewDeferred=completedRestoreNeedsPreviewDeferral(startupPreviewBootstrap?.backgroundJob);
 state.completedRestorePreviewDeferred=startupPreviewDeferred;
 const vehiclePreview=new VehiclePreview($('carCanvas'),(view,label)=>{text($('cameraLabel'),label);document.querySelectorAll('[data-camera]').forEach(el=>{const selected=el.dataset.camera===view;el.classList.toggle('selected',selected);el.setAttribute('aria-pressed',String(selected));});},{deferLoad:startupPreviewDeferred});
+// The renderer samples this source immediately before GPU submission. Media
+// time remains the only playback clock: pauses, seeks and rate changes never
+// accumulate a second timer or speculative device-latency compensation.
+vehiclePreview.setStateSource?.(()=>{
+ if(state.soloPreview){const solo=state.soloPreview,time=Math.min(solo.duration,solo.offset+(performance.now()-solo.started)/1000);return {data:ShowEngine.stateAt(solo.show,time),time,clock:'inspection-time'};}
+ const time=audio.currentTime||0;let data=null;
+ try{data=state.show?ShowEngine.stateAt(state.show,time):null;}catch(error){text($('previewBadge'),'PREVIEW UNAVAILABLE');}
+ return {data,time,clock:'media-current-time'};
+});
 const monitorGroups=VehicleProfile.outputs.filter(o=>o.available&&o.kind==='light').map(o=>[o.name,o.channels]);
 for(const [name,channels] of monitorGroups){const cell=document.createElement('span');cell.className='lamp-cell';cell.dataset.channels=channels.join(',');const dot=document.createElement('i'),label=document.createElement('span'),value=document.createElement('b');text(label,name);text(value,'0%');cell.append(dot,label,value);$('lampMonitor').appendChild(cell);}
 const rgbLabels=['Display','R rear cabin','R front cabin','Dashboard','L front cabin','L rear cabin'];for(let i=0;i<rgbLabels.length;i++){const cell=document.createElement('span');cell.className='lamp-cell';cell.dataset.rgb=i;const dot=document.createElement('i'),label=document.createElement('span'),value=document.createElement('b');text(label,rgbLabels[i]);text(value,'#000000');cell.append(dot,label,value);$('lampMonitor').appendChild(cell);}
