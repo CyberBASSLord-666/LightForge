@@ -9,6 +9,27 @@ function near(actual,expected,epsilon=1e-8){assert.ok(Math.abs(actual-expected)<
 function lamp(show,ch,t){return Engine.stateAt(show,t).lights[ch-1];}
 function part(show,key,t){return Engine.stateAt(show,t).closureState[key];}
 
+test('raw sampling and physical preview share the exported frame at exact audio-clock boundaries',()=>{
+  for(const stepMs of [15,20]){
+    const show=blank(150,stepMs);
+    for(let f=0;f<show.frameCount;f++)show.frames[f*200+175]=f%256;
+    for(let f=1;f<show.frameCount;f++){
+      const time=f*stepMs/1000,state=Engine.stateAt(show,time),raw=Engine.frameAt(show,time);
+      assert.equal(raw[175],f%256,`${stepMs} ms raw frame ${f}`);
+      assert.equal(state.frame,f,`${stepMs} ms preview frame ${f}`);
+      assert.deepEqual(raw,state.raw);
+      assert.equal(Engine.frameAt(show,time-1e-7)[175],(f-1)%256,'a genuinely earlier audio time stays in the preceding frame');
+    }
+    for(const time of [NaN,Infinity,-Infinity,undefined,-1,-Number.MAX_VALUE,Number.MAX_VALUE]){
+      assert.deepEqual(Engine.frameAt(show,time),Engine.stateAt(show,time).raw);
+      assert.equal(Engine.frameAt(show,time).length,200);
+    }
+    assert.deepEqual(Engine.frameAt(show,-Number.MAX_VALUE),show.frames.subarray(0,200));
+    assert.deepEqual(Engine.frameAt(show,Number.MAX_VALUE),show.frames.subarray(-200));
+    assert.deepEqual(Engine.frameAt(show,show.duration+60),show.frames.subarray(-200));
+  }
+});
+
 test('all ramp durations begin at zero at the exact frame boundary and advance continuously',()=>{
   for(const stepMs of [15,20])for(const [on,off,seconds] of [[178,26,.5],[204,51,1],[230,77,2]]){
     const show=blank(12,stepMs),start=.6;

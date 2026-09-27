@@ -19,7 +19,8 @@ TESTS=['analysis-timing-wiring.test.cjs','compiler-timing.test.cjs','analysis-ds
        'native-fallback-fence.test.cjs','native-mdx-fence.test.cjs',
        'completed-restore-preview-start.test.cjs','preview-environment.test.cjs',
        'musical-structure.test.cjs','musical-expression.test.cjs',
-       'native-game-bridge.test.cjs','native-game-service-contract.test.cjs','native-game-pipeline.test.cjs','native-game-runner.test.cjs']
+       'native-game-bridge.test.cjs','native-game-service-contract.test.cjs','native-game-pipeline.test.cjs','native-game-runner.test.cjs',
+       'musical-scheduling.test.cjs','quality-run-scanning.test.cjs','vocal-frontend-reuse.test.cjs']
 # The 2.2.2 adapter-retention contract freezes its then-current analysis
 # manifest, and the 2.2.3 native/runtime source-clock contract freezes its
 # measured source hashes. Both intentionally reject later release transitions.
@@ -53,6 +54,7 @@ GENERATED_RUNTIME_REPORTS=frozenset({
     'analysis-verification.json',
     'background-ui-verification.json',
     'browser-verification.json',
+    'preview-verification.json',
     'composer-verification.json',
     'light-verification.json',
     'movement-verification.json',

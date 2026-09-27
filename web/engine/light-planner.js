@@ -15,10 +15,18 @@
   const WHITE=FRONT.concat(REAR,['left-signature','right-signature']);
   const AMBER_L=['left-front-turn','left-repeater','left-rear-turn'];
   const AMBER_R=['right-front-turn','right-repeater','right-rear-turn'];
+  const mirror=id=>id.startsWith('left-')?'right-'+id.slice(5):id.startsWith('right-')?'left-'+id.slice(6):null;
   const sourceLed=(voice,phrase)=>voice?.sourceSeparated===true&&voice.source==='separated-vocals'&&phrase.evidenceMode==='separation-led'&&phrase.kind==='vocal'&&phrase.stemEnergyRatio>=.025;
   function context(m){
     const sections=m.sections,beats=m.beats,down=m.downbeats,meter=m.meter===3?3:4;
-    const ranges=Array.isArray(m.activityRanges)?m.activityRanges:null;
+    // Activity regions can overlap after edits or source fusion. The previous
+    // predecessor-only lookup mistook the end of a nested span for silence.
+    const ranges=Array.isArray(m.activityRanges)?[]:null;
+    if(ranges)for(const span of m.activityRanges.slice().sort((a,b)=>a.start-b.start)){
+      const previous=ranges[ranges.length-1];
+      if(previous&&span.start<=previous.end)previous.end=Math.max(previous.end,span.end);
+      else ranges.push({start:span.start,end:span.end});
+    }
     const sectionAt=t=>sections[Math.max(0,lower(sections,t+1e-8,'start')-1)];
     const active=t=>{
       if(t<0||t>=m.duration||m.silent)return false;
@@ -41,9 +49,13 @@
     };
     const phraseAt=t=>m.phrases?.length?Math.max(0,lower(m.phrases,t+1e-8,'start')-1):Math.floor(Math.max(0,lower(down,t+1e-8)-1)/4);
     const vocalPhrases=m.vocals?.available&&m.vocals.presence!=='not_detected'?(m.vocals.phrases||[]).filter(p=>p.confidence>=(sourceLed(m.vocals,p)?.38:m.vocals.sourceSeparated?.45:.55)):[],vocalNotes=(m.vocals?.notes||[]).filter(p=>p.confidence>=.45),bassNotes=(m.bassNotes||[]).filter(p=>p.confidence>=.5);
-    const roleAt=(events,t)=>{const i=lower(events,t+1e-8,'start')-1;return i>=0&&events[i].end>t?events[i]:null;};
+    const roleIndex=events=>{let end=-Infinity;return {events,ends:events.map(event=>end=Math.max(end,event.end))};};
+    const voiceIndex=roleIndex(vocalPhrases),noteIndex=roleIndex(vocalNotes),bassIndex=roleIndex(bassNotes);
+    // The most recent note may end before an overlapping sustained note. A
+    // prefix end index lets the held source resume without scanning its history.
+    const roleAt=({events,ends},t)=>{let i=lower(events,t+1e-8,'start')-1;while(i>=0&&ends[i]>t){if(events[i].end>t)return events[i];i--;}return null;};
     const roleEnvelope=(role,t,fallback)=>{if(!role.envelope?.length||!(role.envelopeStep>0))return clamp(fallback);const x=clamp((t-(role.envelopeOffset||0))/role.envelopeStep,0,role.envelope.length-1),i=Math.floor(x),f=x-i;return clamp(role.envelope[i]*(1-f)+(role.envelope[Math.min(i+1,role.envelope.length-1)]||0)*f);};
-    return {active,energyAt,sectionAt,periodAt,beatInfo,phraseAt,meter,vocalAt:t=>roleAt(vocalPhrases,t),vocalNoteAt:t=>roleAt(vocalNotes,t),bassAt:t=>roleAt(bassNotes,t),roleEnvelope};
+    return {active,energyAt,sectionAt,periodAt,beatInfo,phraseAt,meter,vocalAt:t=>roleAt(voiceIndex,t),vocalNoteAt:t=>roleAt(noteIndex,t),bassAt:t=>roleAt(bassIndex,t),roleEnvelope};
   }
   function compose(show,m,s,movement={accents:[]},semanticStrategy=null,options={},vocalStrategy=null){
     const timing=options?.timing;
@@ -51,7 +63,8 @@
     try{
     const ctx=context(m),step=s.stepMs/1000,shift=s.offsetMs/1000,end=show.frameCount*step-step;
     const outputs=PROFILE.outputs.filter(o=>o.available&&o.kind==='light'),byId=new Map(outputs.map(o=>[o.id,o]));
-    const candidates=[],accepted=[],lanes=new Map(outputs.map(o=>[o.id,[]]));let serial=0;
+    const candidates=[],accepted=[],lanes=new Map(outputs.map(o=>[o.id,[]]));let serial=0,gestureSerial=0;
+    const symmetry={requestedPairs:0,reservationSuppressedPairs:0,acceptedPairs:0,collisionSuppressedPairs:0,filteredPairs:0};
     const enabled=id=>byId.has(id)&&s.outputEnabled[id]!==false;
     const route=(ids)=>ids.find(enabled);
     const voicePair=[route(['left-signature','left-inner','left-combined']),route(['right-signature','right-inner','right-combined'])].filter(Boolean);
@@ -146,12 +159,28 @@
     }
     function add(ids,t,duration,priority,kind,strength=1,fade=0,absolute=false,details={}){
       const musicTime=absolute?t-shift:t;if(!ctx.active(musicTime))return;
-      const section=ctx.sectionAt(musicTime),start=(absolute?t:t+shift),stop=Math.min(end,start+duration,details.preserveSpan?end:section.end+shift);
+      const section=ctx.sectionAt(musicTime),requestedStart=absolute?t:t+shift,requestedEnd=requestedStart+duration;
+      const start=details.preserveSpan?Math.max(0,requestedStart):requestedStart,stop=Math.min(end,requestedEnd,details.preserveSpan?end:section.end+shift);
       if(start<0||stop-start<step)return;
-      for(const id of new Set(ids)){
-        const o=byId.get(id);if(!o||s.outputEnabled[id]===false||!details.role&&reserved(id,start,stop))continue;
+      const boundaryClip=details.preserveSpan&&(requestedStart<0||requestedEnd>end)?{start:requestedStart<0,end:requestedEnd>end,requestedStart,requestedEnd,realizedStart:start,realizedEnd:stop}:null;
+      const requested=new Set(ids.filter(enabled)),suppressed=new Set(),pairs=new Map(),gestureId=gestureSerial++;
+      // A requested bilateral gesture is a single spatial decision. Reserve
+      // and allocate both lamps together, while deliberate one-sided motifs
+      // and a user's disabled fixture remain valid independent choices.
+      for(const id of requested){
+        const other=mirror(id);if(!other||!requested.has(other)||pairs.has(id))continue;
+        const key=gestureId+':'+[id,other].sort()[0];pairs.set(id,key);pairs.set(other,key);symmetry.requestedPairs++;
+        if(!details.role&&(reserved(id,start,stop)||reserved(other,start,stop))){suppressed.add(id);suppressed.add(other);symmetry.reservationSuppressedPairs++;}
+      }
+      for(const id of requested){
+        const o=byId.get(id);if(suppressed.has(id)||!details.role&&reserved(id,start,stop))continue;
         const supports=o.mode==='ramp'||s.outerBeamRamping&&o.optionalMode==='ramp';
-        let candidate={...details,id,start,end:stop,sectionIndex:section.index,priority,kind,strength,fade:supports?fade:0,release:supports&&details.release?details.release:0,serial:serial++,target:start+(supports?fade:0)};
+        // Export clipping must not pull a source's release earlier. If its
+        // release already began before the first frame, use a legal hold/off
+        // for the surviving tail: a ramp-down command cannot initialize a
+        // partially lit fixture at time zero.
+        const releaseStart=(details.preserveSpan?requestedEnd:stop)-(details.release||0),release=supports&&details.release&&releaseStart>=start+step-1e-8?details.release:0;
+        let candidate={...details,id,start,end:stop,sectionIndex:section.index,priority,kind,strength,fade:supports?fade:0,release,releaseStart,serial:serial++,target:requestedStart+(supports?fade:0),...(boundaryClip?{boundaryClip:{...boundaryClip},releaseOmittedForBoundary:!!(supports&&details.release&&!release)}:{}),...(pairs.has(id)?{bilateralGroup:pairs.get(id)}:{})};
         if(vocalStrategy&&typeof vocalStrategy.classifyCandidate==='function'){
           candidate=vocalStrategy.classifyCandidate(Object.assign({},candidate,{musicTime}))||candidate;
         }
@@ -171,9 +200,9 @@
         add(cue.ids,cue.start,length,100,'user '+cue.role+' '+cue.action,cue.strength,0,false,{role:cue.role,cueId:cue.id,manual:true,preserveSpan:true,sourceStart:cue.start,sourceEnd:cue.end,sourceEventTime:cue.start,sourceConfidence:1,release:cue.action==='hold'&&length>=.75?.5:0,midi:cue.midi});
       }
       for(const cue of detailedVoice){
-        for(const sec of m.sections){const start=Math.max(cue.time,sec.start),stop=Math.min(cue.time+cue.length,sec.end);if(stop-start<.10)continue;
-          add(cue.ids,start,stop-start,69+cue.confidence*3,'vocal '+cue.kind,cue.strength,0,false,{role:'vocals',release:stop-start>=.75?cue.release:0,sourceStart:cue.p.start,sourceEnd:cue.p.end,sourceConfidence:cue.confidence,sourceEventTime:cue.time,articulation:cue.kind==='articulation',vocalNote:cue.kind==='note',sourceSeparated:true,evidenceMode:cue.uncertainSource?'separation-led':'classifier-supported',midi:cue.note?.midi,manual:cue.p.manual===true,vocalDirection:cue.vocalDirection?.direction});
-        }
+        // Arrangement boundaries do not retrigger measured notes or syllables.
+        // Their original attack and release own this entire source span.
+        add(cue.ids,cue.time,cue.length,69+cue.confidence*3,'vocal '+cue.kind,cue.strength,0,false,{role:'vocals',preserveSpan:true,release:cue.length>=.75?cue.release:0,sourceStart:cue.p.start,sourceEnd:cue.p.end,sourceConfidence:cue.confidence,sourceEventTime:cue.time,articulation:cue.kind==='articulation',vocalNote:cue.kind==='note',sourceSeparated:true,evidenceMode:cue.uncertainSource?'separation-led':'classifier-supported',midi:cue.note?.midi,manual:cue.p.manual===true,vocalDirection:cue.vocalDirection?.direction});
       }
       for(const {p,ids,length}of voiceRoutes){
         // A singing estimate controls phrase-scale holds. Its entrance is not
@@ -187,16 +216,14 @@
         // singing, not isolated voice attacks. Legal releases provide contrast
         // before those points; there is no invented word or syllable timeline.
         const points=[{time:p.start},...selected.sort((a,b)=>a.time-b.time)];
-        for(let i=0;i<points.length;i++)for(const sec of m.sections){
-          const start=Math.max(points[i].time,sec.start),stop=Math.min(i+1<points.length?points[i+1].time-.08:finish,sec.end);if(stop-start<.1)continue;
+        for(let i=0;i<points.length;i++){
+          const start=points[i].time,stop=i+1<points.length?points[i+1].time-.08:finish;if(stop-start<.1)continue;
           const release=vocalFocus>=.55&&stop-start>=.75?.5:0,accent=i>0&&start===points[i].time;
-          add(ids,start,stop-start,64+vocalFocus*5,accent?'estimated vocal-region accent':'estimated vocal '+(release?'sustain':'entrance'),p.strength,0,false,{role:'vocals',release,sourceStart:p.start,sourceEnd:p.end,sourceConfidence:p.confidence,sourceEventTime:points[i].time,estimatedAccent:accent});
+          add(ids,start,stop-start,64+vocalFocus*5,accent?'estimated vocal-region accent':'estimated vocal '+(release?'sustain':'entrance'),p.strength,0,false,{role:'vocals',preserveSpan:true,release,sourceStart:p.start,sourceEnd:p.end,sourceConfidence:p.confidence,sourceEventTime:points[i].time,estimatedAccent:accent});
         }
       }
       for(const {p,ids,length}of bassRoutes){
-        for(const sec of m.sections){const start=Math.max(p.start,sec.start),stop=Math.min(p.start+length,sec.end);if(stop-start<.1)continue;
-          add(ids,start,stop-start,62+bassFocus*5+p.strength*2,'pitched bass note',p.strength,0,false,{role:'bass',sourceStart:p.originalStart??p.start,sourceEnd:p.end,sourceConfidence:p.confidence,midi:p.midi,frequency:p.frequency});
-        }
+        if(length>=.1)add(ids,p.start,length,62+bassFocus*5+p.strength*2,'pitched bass note',p.strength,0,false,{role:'bass',preserveSpan:true,sourceStart:p.originalStart??p.start,sourceEnd:p.end,sourceEventTime:p.start,sourceConfidence:p.confidence,midi:p.midi,frequency:p.frequency});
       }
       // Motifs repeat over phrases. Meter, phase and beat spacing come from the
       // analysis, rather than a hard-coded four-beat clock or average BPM.
@@ -249,17 +276,29 @@
       }
       // Actual attacks remain useful with a weak or unusual beat grid. Keep
       // each frequency band's role and prevent dense spectral peaks becoming noise.
-      const last={bass:-10,mid:-10,high:-10};
+      const onsetPool=[];
       for(const o of m.onsets){
         if(!ctx.active(o.time)||ctx.energyAt(o.time)<.15)continue;
         const scene=sceneAt(o.time),threshold=(scene.style==='cinematic'?.79:.91)-s.sensitivity*.35;
         const spacing=scene.style==='cinematic'?.5:.22;
-        if(o.strength<threshold||o.time-last[o.band]<spacing)continue;
+        if(o.strength<threshold)continue;
         const bi=lower(m.beats,o.time),near=Math.min(Math.abs((m.beats[bi]??Infinity)-o.time),Math.abs((m.beats[bi-1]??-Infinity)-o.time));
         if(near<.065&&m.beatConfidence>=.4)continue;
+        onsetPool.push({o,scene,spacing});
+      }
+      // Select local maxima before scheduling. Chronological thinning let a
+      // weaker precursor erase a stronger measured attack a few ms later.
+      const onsetBins={bass:new Map(),mid:new Map(),high:new Map()},selectedOnsets=[];
+      for(const item of onsetPool.sort((a,b)=>b.o.strength-a.o.strength||a.o.time-b.o.time)){
+        const {o,spacing}=item,bins=onsetBins[o.band],bin=Math.floor(o.time/.5);let collision=false;
+        for(let i=bin-1;i<=bin+1&&!collision;i++)collision=(bins.get(i)||[]).some(other=>Math.abs(o.time-other.o.time)<Math.max(spacing,other.spacing)-1e-8);
+        if(collision)continue;
+        const bucket=bins.get(bin)||[];bucket.push(item);bins.set(bin,bucket);selectedOnsets.push(item);
+      }
+      for(const {o,scene}of selectedOnsets.sort((a,b)=>a.o.time-b.o.time)){
         const left=hash(Math.floor((o.time-ctx.sectionAt(o.time).start)*2),scene.seed)%2===0;
         const route=o.band==='bass'?['left-outer','right-outer','brakes']:o.band==='mid'?['left-inner','right-inner','left-tail','right-tail']:(left?AMBER_L:AMBER_R);
-        flash(route,o.time,.1+scene.intensity*.05,24+o.strength*10,'detected '+o.band+' attack',o.strength);last[o.band]=o.time;
+        flash(route,o.time,.1+scene.intensity*.05,24+o.strength*10,'detected '+o.band+' attack',o.strength);
       }
       // Reserve whole-car accents for selected structural moments. Rank first,
       // then suppress neighboring candidates, rather than accepting first-in-time.
@@ -320,20 +359,34 @@
       if(b<=a)return {ok:false,reason:'duration'};
       const lane=lanes.get(cue.id);if(!lane)return {ok:false,reason:'unavailable'};
       const index=lower(lane,a,'a'),gap=Math.ceil(.08/step-1e-9);
-      if(index>0&&lane[index-1].b+(lane[index-1].sectionIndex===cue.sectionIndex?gap:0)>a||index<lane.length&&b+(lane[index].sectionIndex===cue.sectionIndex?gap:0)>lane[index].a)return {ok:false,reason:'collision'};
+      // A section boundary changes the arrangement, not the lamp's recovery
+      // time. Independent attacks need the same dark gap on either side of it.
+      if(index>0&&lane[index-1].b+gap>a||index<lane.length&&b+gap>lane[index].a)return {ok:false,reason:'collision'};
       return {ok:true,a,b,lane,index};
     }
     function accept(cue,slot){
-      const item={...cue,a:slot.a,b:slot.b,actualStart:slot.a*step,actualEnd:slot.b*step};
+      const item={...cue,a:slot.a,b:slot.b,actualStart:slot.a*step,actualEnd:slot.b*step,...(cue.boundaryClip?{boundaryClip:{...cue.boundaryClip,realizedStart:slot.a*step,realizedEnd:slot.b*step}}:{})};
       slot.lane.splice(slot.index,0,item);accepted.push(item);
       const group=groupBySerial.get(cue.serial);if(group)group.accepted++;
       return item;
     }
-    let rejected=0;
+    const bilateralGroups=new Map();
+    for(const cue of scheduledCandidates)if(cue.bilateralGroup){const pair=bilateralGroups.get(cue.bilateralGroup)||[];pair.push(cue);bilateralGroups.set(cue.bilateralGroup,pair);}
+    const scheduledPairs=new Set();let rejected=0;
     for(const cue of scheduledCandidates){
-      const slot=placement(cue);
-      if(!slot.ok){rejected++;if(slot.reason==='collision'){const group=groupBySerial.get(cue.serial);if(group)group.collided++;}continue;}
-      accept(cue,slot);
+      if(cue.bilateralGroup&&scheduledPairs.has(cue.bilateralGroup))continue;
+      const pair=cue.bilateralGroup?bilateralGroups.get(cue.bilateralGroup):[cue];
+      if(cue.bilateralGroup)scheduledPairs.add(cue.bilateralGroup);
+      const staged=pair.map(candidate=>({cue:candidate,slot:placement(candidate)}));
+      const incomplete=cue.bilateralGroup&&pair.length!==2,failed=staged.find(entry=>!entry.slot.ok);
+      if(incomplete||failed){
+        rejected+=pair.length;
+        if(cue.bilateralGroup){if(incomplete)symmetry.filteredPairs++;else symmetry.collisionSuppressedPairs++;}
+        if(failed?.slot.reason==='collision')for(const entry of staged){const group=groupBySerial.get(entry.cue.serial);if(group)group.collided++;}
+        continue;
+      }
+      for(const entry of staged)accept(entry.cue,entry.slot);
+      if(cue.bilateralGroup)symmetry.acceptedPairs++;
     }
     // Full event loss is evaluated at the logical-cue level, not by counting
     // rejected per-output candidates. Only structural impacts and strong
@@ -459,12 +512,12 @@
       const pivot=Math.round((cue.start+cue.fade+.04)/step);
       for(let f=cue.a;f<cue.b;f++){
         if(!ctx.active((f+.5)*step-shift))continue;
-        const releaseAt=Math.round((cue.end-cue.release)/step),value=cue.release&&f>=releaseAt?26:cue.fade?(f<pivot?up:down):255;
+        const releaseAt=Math.round((cue.releaseStart??cue.end-cue.release)/step),value=cue.release&&f>=releaseAt?26:cue.fade?(f<pivot?up:down):255;
         for(const ch of o.channels)frames[f*200+ch-1]=value;
       }
     }
     timing?.end(token,{scope});scope='light-planning-diagnostics';token=timing?.begin('performance.choreography_planning');
-    const errors=accepted.map(c=>Math.abs(c.actualStart-c.start)*1000);
+    const errors=accepted.filter(c=>!c.boundaryClip?.start).map(c=>Math.abs(c.actualStart-c.start)*1000);
     return {context:ctx,targets,events:accepted.sort((a,b)=>a.start-b.start||a.serial-b.serial),diagnostics:{
       candidateCues:scheduledCandidates.length,generatedCandidateCues:candidates.length,acceptedCues:accepted.length,suppressedCollisions:rejected,rescuedCollisions,unresolvedHighSalienceCollisions,collisionResolutions:reportedCollisionResolutions,collisionResolutionTruncated:Math.max(0,collisionResolutions.length-reportedCollisionResolutions.length),
       ...(semanticDecision&&semanticDecision.diagnostics?{semanticStrategy:semanticDecision.diagnostics}:{}),
@@ -473,7 +526,9 @@
       impactCues:accepted.filter(c=>c.kind==='musical impact').length,
       quantizationMaxMs:errors.reduce((a,b)=>Math.max(a,b),0),quantizationMedianMs:median(errors),
       roles:{vocals:{available:m.vocals?.available===true,presence:m.vocals?.presence||'uncertain',sourceSeparated:separatedVoice,eligibleEvents:vocalPhrases.length,acceptedEvents:new Set(accepted.filter(c=>c.role==='vocals').map(c=>c.sourceStart)).size,accentCues:new Set(accepted.filter(c=>c.estimatedAccent||c.articulation).map(c=>c.sourceEventTime)).size,noteCues:new Set(accepted.filter(c=>c.vocalNote).map(c=>c.sourceEventTime)).size,confidence:m.vocals?.confidence||0,focus:vocalFocus},bass:{eligibleEvents:bassNotes.length,acceptedEvents:new Set(accepted.filter(c=>c.role==='bass').map(c=>c.sourceStart)).size,confidence:m.bassAnalysis?.confidence||0,focus:bassFocus},percussion:{acceptedCues:accepted.filter(c=>c.kind==='offbeat detail'||c.kind==='detected high attack'||c.kind==='detected bass attack').length},arrangement:{acceptedCues:accepted.filter(c=>!c.role&&!['offbeat detail','detected high attack','detected bass attack'].includes(c.kind)).length}},
-      meter:ctx.meter,recurringMotifGroups:Array.from(new Set(show.sections.filter(x=>x.recurrenceGroup).map(x=>x.recurrenceGroup))).length,lockedSections:show.sections.filter(x=>x.locked).length,timingScope:'Command placement within half a frame of the selected musical target. Audio detection and vehicle response are separate estimates.',
+      meter:ctx.meter,recurringMotifGroups:Array.from(new Set(show.sections.filter(x=>x.recurrenceGroup).map(x=>x.recurrenceGroup))).length,lockedSections:show.sections.filter(x=>x.locked).length,timingScope:'Command placement within half a frame of an in-range selected musical target. Boundary continuations are excluded; audio detection and vehicle response are separate estimates.',
+      symmetry:{...symmetry,policy:'Requested left/right pairs are allocated atomically; intentional alternating detail and disabled outputs stay independent.'},
+      boundaryClipping:{startClippedOutputCues:accepted.filter(c=>c.boundaryClip?.start).length,endClippedOutputCues:accepted.filter(c=>c.boundaryClip?.end).length,releaseOmittedOutputCues:accepted.filter(c=>c.releaseOmittedForBoundary).length,scope:'Source spans intersect the export interval; pre-show attacks are not retimed or credited as synchronized attacks.'},
       ...(semanticTargetAllocation?{semanticTargetAllocation}:{})
     }};
     }finally{timing?.end(token,{scope});}

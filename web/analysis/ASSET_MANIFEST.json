@@ -316,16 +316,16 @@
     "sha256": "e66568724f8848e57cc2a56e4bea3a5b86ce3ff81b2da11eac8ed7ab02b27bd4"
   },
   "vocal-detail.js": {
-    "bytes": 22476,
-    "sha256": "cd760d7a766d9a4ab0ac3a252a10f17a16a797b38e50b2d6712bc6adcd42713f"
+    "bytes": 22372,
+    "sha256": "110af1acc77508f95ba4a9cc44b7a1b08806a6d1094d786f30281f7cd07d4778"
   },
   "vocal-semantics.js": {
     "bytes": 24223,
     "sha256": "e169e7deb15be7c4a778ef8623decb7a46800fc7633acbab8c6caa51e3ee059c"
   },
   "vocal.js": {
-    "bytes": 10497,
-    "sha256": "3f4be80b6b3747a733fcddce1257e332fe20bde70f29fa8c6be0ef076a9bf72d"
+    "bytes": 13356,
+    "sha256": "bacf90472f06611526fd8dac49b32775f4a32f62bf40b409fd1ce892feff09f0"
   },
   "wav-reader.js": {
     "bytes": 8035,

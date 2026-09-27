@@ -749,8 +749,21 @@
     const h=((elapsed*.28)%1+1)%1*6,x=1-Math.abs(h%2-1),rgb=h<1?[1,x,0]:h<2?[x,1,0]:h<3?[0,1,x]:h<4?[0,x,1]:h<5?[x,0,1]:[1,0,x];
     return rgb.map(v=>Math.round(v*255));
   }
+  function frameIndexAt(show,time){
+    const t=clamp(finite(time)?time:0,0,show.frameCount*show.stepMs/1000),position=t*1000/show.stepMs;
+    // Audio clocks and decimal frame times can land a few floating-point ULPs
+    // below an integer (4.02 s / 20 ms, for example). Snap only that numerical
+    // noise, so both raw commands and the physical preview select the same
+    // exported frame without advancing genuinely earlier audio timestamps.
+    const tolerance=Number.EPSILON*Math.max(1,Math.abs(position))*4;
+    return clamp(Math.floor(position+tolerance),0,show.frameCount-1);
+  }
+  function frameAt(show,time){
+    const offset=frameIndexAt(show,time)*CHANNELS;
+    return show.frames.subarray(offset,offset+CHANNELS);
+  }
   function stateAt(show,time){
-    const step=show.stepMs/1000,t=clamp(finite(time)?time:0,0,show.frameCount*step),frame=clamp(Math.floor(t/step+1e-9),0,show.frameCount-1),frameTime=frame*step;
+    const step=show.stepMs/1000,t=clamp(finite(time)?time:0,0,show.frameCount*step),frame=frameIndexAt(show,t),frameTime=frame*step;
     const cache=preparePreview(show),lights=new Float64Array(30);
     for(const lane of cache.lights){
       const c=lane.channel,i=Math.max(0,lowerBound(lane.times,t+1e-10)-1),ramp=RAMP.has(c+1)||show.settings&&show.settings.outerBeamRamping&&c<2;
@@ -771,6 +784,6 @@
     const sections=show.sections||[],section=sections[Math.max(0,lowerBound(sections,t+1e-10,'start')-1)];
     return {frame,time:t,frameTime,raw,lights,interior,closures,closureState:Object.fromEntries(closures.map(c=>[c.key,c])),section,positionAccuracy:'estimated',lightAccuracy:'command-timed'};
   }
-  const api={version:VERSION,getCapabilities:()=>PROFILE,normalizeSettings,generate,validate,fseq,fseqHeader,preparePreview,stateAt,frameAt:(show,time)=>show.frames.subarray(clamp(Math.floor(time*1000/show.stepMs),0,show.frameCount-1)*200,clamp(Math.floor(time*1000/show.stepMs),0,show.frameCount-1)*200+200),channelMap,groups,COMMAND,palettes:Object.keys(PALETTES),invalidatePreview:show=>{delete show.previewIndex;return previewCache.delete(show);}};
+  const api={version:VERSION,getCapabilities:()=>PROFILE,normalizeSettings,generate,validate,fseq,fseqHeader,preparePreview,stateAt,frameAt,channelMap,groups,COMMAND,palettes:Object.keys(PALETTES),invalidatePreview:show=>{delete show.previewIndex;return previewCache.delete(show);}};
   root.ShowEngine=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);

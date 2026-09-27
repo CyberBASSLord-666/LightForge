@@ -51,10 +51,10 @@ signing credentials to this repository.
 
 [Validation](VALIDATION.md) distinguishes published-release evidence from current
 source checks, historical numerical tests and optional physical observations.
-The published 2.2.5 release passed its nine source-bound host/Android gates, but
+The published 2.3.2 release passed its source-bound host/Android gates, but
 **comparative musical quality, a 75% analysis-time reduction, and physical
 phone/Tesla performance are not established by those tests**. See its
-[release record](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.2.5)
+[release record](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.3.2)
 for the signed APK and verification report. Later commits require their own
 verification; old receipts must not be relabelled as current results.
 

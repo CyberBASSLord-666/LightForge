@@ -8,19 +8,50 @@
 const RATE=16000,FFT=512,WIN=400,HOP=160,BANDS=128,CONTEXT=160000,FRAMES=1000,OUTPUT=250;
 const clamp=(n,a=0,b=1)=>Math.min(b,Math.max(a,n));
 const reverse=Uint16Array.from({length:FFT},(_,i)=>{let r=0;for(let b=0;b<9;b++){r=(r<<1)|(i&1);i>>=1;}return r;});
+// Compute each original twiddle expression once. The butterfly order and
+// Float64 intermediates stay identical to the reference frontend.
+const twiddles=Array.from({length:9},(_,stage)=>{const len=2**(stage+1),cos=new Float64Array(len/2),sin=new Float64Array(len/2);for(let j=0;j<len/2;j++){cos[j]=Math.cos(-2*Math.PI*j/len);sin[j]=Math.sin(-2*Math.PI*j/len);}return {cos,sin};});
 function reflect(i,n){if(n<=1)return 0;while(i<0||i>=n)i=i<0?-i:2*n-2-i;return i;}
-function logMel(pcm,frontend){
+function logMel(pcm,frontend,reuse){
  const frames=Math.floor((pcm.length-1)/HOP)+1,out=new Float32Array(frames*BANDS),re=new Float64Array(FFT),im=new Float64Array(FFT),power=new Float64Array(257),preamp=new Float32Array(Math.max(1,pcm.length-1));
  // Author's Conv1D [-.97, 1] shortens by one sample. torch.stft centers
  // the 400-point nonperiodic Hann in a 512-point FFT, reflect-padding PCM.
  for(let i=0;i<pcm.length-1;i++)preamp[i]=pcm[i+1]-.97*pcm[i];
  for(let f=0;f<frames;f++){
+  if(reuse&&f>=reuse.first&&f<reuse.last){for(let b=0;b<BANDS;b++)out[b*frames+f]=reuse.features[b*reuse.frames+f+reuse.offset];continue;}
   re.fill(0);im.fill(0);for(let i=0;i<WIN;i++)re[reverse[56+i]]=preamp[reflect(f*HOP-200+i,preamp.length)]*frontend.windowValues[i];
-  for(let len=2;len<=FFT;len*=2){const half=len/2;for(let j=0;j<half;j++){const c=Math.cos(-2*Math.PI*j/len),s=Math.sin(-2*Math.PI*j/len);for(let i=j;i<FFT;i+=len){const k=i+half,r=re[k]*c-im[k]*s,t=re[k]*s+im[k]*c;re[k]=re[i]-r;im[k]=im[i]-t;re[i]+=r;im[i]+=t;}}}
+  for(let len=2,stage=0;len<=FFT;len*=2,stage++){const half=len/2,{cos,sin}=twiddles[stage];for(let j=0;j<half;j++){const c=cos[j],s=sin[j];for(let i=j;i<FFT;i+=len){const k=i+half,r=re[k]*c-im[k]*s,t=re[k]*s+im[k]*c;re[k]=re[i]-r;im[k]=im[i]-t;re[i]+=r;im[i]+=t;}}}
   for(let k=0;k<=256;k++)power[k]=re[k]*re[k]+im[k]*im[k];
   for(let b=0;b<BANDS;b++){let sum=0;for(const [k,w] of frontend.melWeights[b])sum+=power[k]*w;out[b*frames+f]=(Math.log(Math.max(1e-7,sum))+4.5)/5;}
  }
  return out;
+}
+class MelFrontend {
+ constructor(frontend){this.frontend={windowValues:Float64Array.from(frontend.windowValues),melWeights:frontend.melWeights.map(band=>band.map(([k,w])=>[k,w]))};this.previous=null;this.reusedFrames=0;this.computedFrames=0;}
+ extract(pcm,start){
+  const previous=this.previous,frames=Math.floor((pcm.length-1)/HOP)+1;let reuse=null;
+  // The bitwise cache key is defined only for the production Float32 PCM.
+  // Preserve the standalone frontend's wider input support without reusing
+  // partially viewed Float64 buffers or ordinary JavaScript arrays.
+  if(!(pcm instanceof Float32Array)){this.clear();this.reusedFrames=0;this.computedFrames=frames;return logMel(pcm,this.frontend);}
+  // Only interior STFT windows can be reused: reflected context at either
+  // passage edge differs. Integer absolute PCM coordinates preserve the
+  // original pre-emphasis phase, including the irregular final passage.
+  if(previous&&Number.isSafeInteger(start)&&Number.isSafeInteger(previous.start)){
+   const offset=(start-previous.start)/HOP,first=Math.max(2,2-offset),last=Math.min(Math.floor((pcm.length-201)/HOP)+1,Math.floor((previous.pcm.length-201)/HOP)+1-offset);
+   if(Number.isInteger(offset)&&first<last){
+    const currentBits=new Uint32Array(pcm.buffer,pcm.byteOffset,pcm.length),previousBits=new Uint32Array(previous.pcm.buffer,previous.pcm.byteOffset,previous.pcm.length),shift=start-previous.start;
+    let same=true;for(let i=first*HOP-200;i<=(last-1)*HOP+200;i++)if(currentBits[i]!==previousBits[i+shift]){same=false;break;}
+    if(same)reuse={first,last,offset,frames:previous.frames,features:previous.features};
+   }
+  }
+  const features=logMel(pcm,this.frontend,reuse);this.reusedFrames=reuse?reuse.last-reuse.first:0;this.computedFrames=frames-this.reusedFrames;
+  // Keep exactly one bounded window; snapshots prevent a later caller/model
+  // mutation from turning cached evidence into unrelated feature values.
+  this.previous=pcm.length<=CONTEXT?{pcm:pcm.slice(),features:features.slice(),frames,start}:null;
+  return features;
+ }
+ clear(){this.previous=null;}
 }
 // Windowed-sinc 22.05 -> 16 kHz resampling with 64 taps and global rational
 // coordinates. All chunk boundaries read the same source halo (no phase reset).
@@ -65,13 +96,15 @@ async function analyze(reader,config,options={}){
  // These disjoint spans measure local work only; native bridge waits are not model inference.
  const timed=(name,fn)=>options.telemetry?.measure?options.telemetry.measure('performance.'+name,fn,{component:'vocal'}):fn();
  const timedAsync=(name,fn)=>options.telemetry?.measureAsync?options.telemetry.measureAsync('performance.'+name,fn,{component:'vocal',runtime:'onnxruntime-web-wasm'}):fn();
- const runtime=options.ort||root.ort,report=options.report||(()=>{}),model=options.model||await(await fetch('models/vocal-model.json')).json(),frontend=options.frontend||await(await fetch('models/vocal-frontend.json')).json(),n=Math.ceil(reader.duration/.04),scores=new Float32Array(n),speechScores=new Float32Array(n),weights=new Float32Array(n),detail=new Float32Array(Math.ceil(reader.duration/.02)),starts=chunkStarts(reader.duration);let session;
+ const runtime=options.ort||root.ort,report=options.report||(()=>{}),model=options.model||await(await fetch('models/vocal-model.json')).json(),frontend=options.frontend||await(await fetch('models/vocal-frontend.json')).json(),mel=new MelFrontend(frontend),n=Math.ceil(reader.duration/.04),scores=new Float32Array(n),speechScores=new Float32Array(n),weights=new Float32Array(n),detail=new Float32Array(Math.ceil(reader.duration/.02)),starts=chunkStarts(reader.duration);let session;
  try{
   report(0,'Listening for singing','Frame-MN10 • trained on timed sound events • entirely on this device');
   for(let k=0;k<starts.length;k++){
    const first=starts[k],pcm=await pcm16000(reader,first*640,CONTEXT,config,options.telemetry);const peak=timed('preprocessing',()=>{let peak=0;for(const x of pcm)peak=Math.max(peak,Math.abs(x));return peak;});
    if(peak>1e-7){
-    const features=timed('feature_generation',()=>logMel(pcm,frontend));
+    const features=timed('feature_generation',()=>mel.extract(pcm,first*640));
+    options.telemetry?.increment?.('vocal.frontend.reusedFrames',mel.reusedFrames);
+    options.telemetry?.increment?.('vocal.frontend.computedFrames',mel.computedFrames);
     // Supporting mixture detail is admitted only where real singing evidence
     // exists. It is never represented as a separated voice or sung note.
     timed('feature_generation',()=>{for(let f=0;f<FRAMES;f+=2){const at=first*2+f/2;if(at>=detail.length)break;let sum=0;for(let b=40;b<105;b++)sum+=Math.exp((features[b*FRAMES+f]*5-4.5)/2);let energy=0;for(let j=f*HOP;j<Math.min(pcm.length,(f+2)*HOP);j++)energy+=pcm[j]*pcm[j];if(energy/320>1e-12)detail[at]=Math.max(detail[at],sum/65);}});
@@ -83,8 +116,8 @@ async function analyze(reader,config,options={}){
   }
   const result=timed('postprocessing',()=>{for(let i=0;i<n;i++){scores[i]/=weights[i]||1;speechScores[i]/=weights[i]||1;}
   return summarize(scores,detail,reader.duration,model);});if(options.includeDiagnostics)result.classifierScores=Array.from(scores);if(options.includeClassifierScores)result.classifier={singingScores:scores,speechScores,frameStep:.04,model:result.model};return result;
- }finally{if(session)await session.release();}
+ }finally{mel.clear();if(session)await session.release();}
 }
-root.LightForgeVocals={analyze,logMel,pcm16000,summarize,chunkStarts};
+root.LightForgeVocals={analyze,logMel,MelFrontend,pcm16000,summarize,chunkStarts};
 if(typeof module!=='undefined'&&module.exports)module.exports=root.LightForgeVocals;
 })(typeof self!=='undefined'?self:globalThis);

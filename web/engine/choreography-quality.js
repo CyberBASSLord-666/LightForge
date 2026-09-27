@@ -88,14 +88,6 @@
     }
     return result.sort((a,b)=>a.id.localeCompare(b.id));
   }
-  function rawKey(show,track,frame){
-    const offset=frame*(show.channels||show.channelCount||200);
-    return track.channels.map(channel=>show.frames[offset+channel-1]).join(',');
-  }
-  function rawActive(show,track,frame){
-    const offset=frame*(show.channels||show.channelCount||200);
-    return track.channels.some(channel=>show.frames[offset+channel-1]!==0);
-  }
   function visualTrack(track,options){
     if(track.kind==='closure')return false;
     return track.kind!=='unknown'||!(options&&options.includeUnknownVisual===false);
@@ -115,15 +107,27 @@
     return track.channels.some(channel=>show.frames[offset+channel-1]!==0)?1:0;
   }
   function exactRuns(show,track){
-    const runs=[];
-    let start=0,previous=rawKey(show,track,0);
+    // Compare bytes in place. Building an array and a comma-separated key for
+    // every unchanged frame made long, mostly-idle closure tracks expensive.
+    // Serialize only when a nonzero run actually ends; preserve its exact
+    // multi-channel state and duration (including the final frame).
+    const runs=[],width=show.channels||show.channelCount||200,channels=track.channels,frames=show.frames;
+    let start=0;
     for(let frame=1;frame<=show.frameCount;frame++){
-      const next=frame<show.frameCount?rawKey(show,track,frame):null;
-      if(next===previous)continue;
-      if(previous&&previous.split(',').some(value=>Number(value)!==0)){
-        runs.push({startFrame:start,endFrame:frame,start:start*show.stepMs/1000,end:frame*show.stepMs/1000,state:previous});
+      let changed=frame===show.frameCount;
+      const previousOffset=start*width,nextOffset=frame*width;
+      for(let index=0;!changed&&index<channels.length;index++){
+        const channel=channels[index]-1;
+        if(frames[previousOffset+channel]!==frames[nextOffset+channel])changed=true;
       }
-      start=frame;previous=next;
+      if(!changed)continue;
+      let active=false;
+      for(let index=0;!active&&index<channels.length;index++)active=frames[previousOffset+channels[index]-1]!==0;
+      if(active){
+        const state=channels.map(channel=>frames[previousOffset+channel-1]).join(',');
+        runs.push({startFrame:start,endFrame:frame,start:start*show.stepMs/1000,end:frame*show.stepMs/1000,state});
+      }
+      start=frame;
     }
     return runs;
   }

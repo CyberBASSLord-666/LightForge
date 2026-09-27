@@ -76,9 +76,9 @@ export function buildHighlandRig(source){
   addLamp(innerChannels,[inner],d=>Math.max(light(d,innerChannels[0]),light(d,innerChannels[1]),light(d,innerChannels[2]),light(d,innerChannels[3])),0xe7f5ff,[0,0,-1],true);
   // Use the actual J-shaped signature diffuser, without a duplicate tube.
   addLamp(left?5:6,left?[node(10,8),node(10,11)]:[node(10,7),node(10,29)],d=>light(d,left?5:6),0xe7f5ff,[0,0,-1],true);
-  // The front turn is a separate lower diffuser. It must never turn white or
-  // respond to the unrelated combined headlight 4-6 requests.
-  addLamp(left?13:14,[node(15,left?0:3),node(10,left?10:23)],d=>light(d,left?13:14),0xff9214);
+  // Estimated front-turn allocation uses the lower diffuser. It stays amber
+  // and does not respond to the unrelated combined headlight 4-6 requests.
+  addLamp(left?13:14,[node(15,left?0:3),node(10,left?10:23)],d=>light(d,left?13:14),0xff9214,[0,0,-1],true);
   // No lower front-fog/aux-park assembly is installed on Highland. Its North
   // American side-marker lens sits at the outer headlamp corner. This small
   // lens adaptation is fitted inside that existing housing, not on the fender.
@@ -90,15 +90,16 @@ export function buildHighlandRig(source){
   const tailNodes=nodes.filter(o=>o.userData.sourceMesh===14&&[0,1,2,3,6,7,8].includes(o.userData.sourceComponent)&&(o.userData.normalizedBounds.center[0]<0)===left);
   brakeEmitters.push(...tailNodes);
   addLamp(left?26:27,tailNodes,d=>Math.max(light(d,left?26:27),light(d,25)),0xff0205,[0,0,1],true);
-  addLamp(left?23:24,[node(15,left?2:5)],d=>light(d,left?23:24),0xff9116,[0,0,1]);
+  addLamp(left?23:24,[node(15,left?2:5)],d=>light(d,left?23:24),0xff9116,[0,0,1],true);
  }
- addLamp(28,[node(10,4),node(10,5),node(10,6)],d=>light(d,28),0xe8f4ff,[0,0,1]);
+ addLamp(28,[node(10,4),node(10,5),node(10,6)],d=>light(d,28),0xe8f4ff,[0,0,1],true);
  const brake=addLamp(25,[node(10,9),node(10,12)],d=>light(d,25),0xff0103,[0,0,1],true);
  // Report every physical surface responding to the brake channel. Tail drivers
  // above combine stop/tail values without a later driver overwriting them.
  if(brake)brake.objects=brake.objects.concat(brakeEmitters);
- // North American Highland has no rear-fog output. The lower red reflector
- // surfaces remain reflective and never become emissive.
+ // No supported North American rear-fog show output. The lower red surfaces
+ // retain their base material: shared fascia Tail/Turn/Fog circuit names do
+ // not establish light-show sub-lens allocation or any lid-open fallback.
  // The plate and plate lights move with the powered trunk.
  const plate=new THREE.Mesh(new THREE.PlaneGeometry(.38,.115),new THREE.MeshStandardMaterial({color:0x78828a,metalness:0,roughness:.55}));plate.name='Rear_plate';plate.position.set(0,.715,2.302);root.add(plate);attach(plate,trunk);
  const plateLamps=[-1,1].map(side=>{const lamp=new THREE.Mesh(new THREE.BoxGeometry(.043,.008,.021),new THREE.MeshStandardMaterial({color:0x697077,emissive:0,roughness:.3}));lamp.name='License_plate_lamp_'+(side<0?'L':'R');lamp.position.set(side*.115,.788,2.302);root.add(lamp);attach(lamp,trunk);return lamp;});
@@ -127,9 +128,14 @@ export function buildHighlandRig(source){
  for(const list of buckets.values()){if(list.length<2)continue;const geometries=list.map(o=>o.geometry.clone().applyMatrix4(o.matrixWorld));const merged=mergeGeometries(geometries,false);geometries.forEach(g=>g.dispose());if(!merged)continue;const mesh=new THREE.Mesh(merged,list[0].material);mesh.name='Static_'+list[0].material.name;mesh.castShadow=list[0].castShadow;mesh.receiveShadow=true;root.add(mesh);list.forEach(o=>o.removeFromParent());}
  root.updateMatrixWorld(true);const fitPoints=[];
  root.traverse(o=>{if(!o.isMesh)return;const a=o.geometry.attributes.position,step=Math.max(1,Math.ceil(a.count/240));for(let i=0;i<a.count;i+=step){const p=new THREE.Vector3().fromBufferAttribute(a,i).applyMatrix4(o.matrixWorld);fitPoints.push(p);if(o.userData.rigPart==='trunk')for(const angle of [.75,1.55])fitPoints.push(p.clone().sub(trunk.position).applyAxisAngle(new THREE.Vector3(1,0,0),-angle).add(trunk.position));}});
+ // Environmental spill originates at the same physical optic surfaces as the
+ // visible emitters. Fascia reverse lamps stay body-fixed when the lid opens.
+ const opticCenter=objects=>{const bounds=new THREE.Box3();for(const o of objects)bounds.expandByObject(o);return bounds.getCenter(new THREE.Vector3());};
+ const reverseObjects=lamps.find(l=>l.id===28)?.objects||[];
+ const lightingAnchors={tail:[26,27].map(id=>opticCenter(lamps.find(l=>l.id===id)?.objects||[])),headlights:[1,2].map(id=>opticCenter(lamps.find(l=>l.id===id)?.objects||[])),reverse:[-1,1].map(side=>opticCenter(reverseObjects.filter(o=>Math.sign(o.userData.normalizedBounds.center[0])===side)))};
  const positions=new Float64Array(47),lastPositions=new Float64Array(47);lastPositions.fill(NaN);
  const usedClosures=[35,36,37,38,39,40,41,46];
- return {root,lamps,parts,chargeLED,fitPoints,
+ return {root,lamps,parts,chargeLED,fitPoints,lightingAnchors,
   update(data){
    positions.fill(0);positions[35]=positions[36]=1;
    for(const c of data?.closures||[]){if(c.channel>=0&&c.channel<positions.length)positions[c.channel]=clamp(c.openFraction??c.estimatedPosition??positions[c.channel]);}

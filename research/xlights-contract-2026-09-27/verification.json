@@ -1,0 +1,47 @@
+{
+  "xlightsCommit": "a1a20e4facd5113c5afc5768ac3cb0b43acd81d5",
+  "readerSources": {
+    "FSEQFile.cpp": "ca92d3b91e663d9141214560f026817a15db0825416d25e1a76d9949ea636817",
+    "FSEQFile.h": "2dfef6684e8fdf79042f80010657ce51ac61c13fd48af8dfe0a91208b2135136",
+    "License.txt": "800feca4c833ea883e05404d6993e6b08a77e01fa685a6020e59ad164cb6d7b8"
+  },
+  "buildFlags": [
+    "-std=c++17",
+    "-O2",
+    "-DNO_ZSTD",
+    "-lz"
+  ],
+  "checks": [
+    {
+      "version": "2.0",
+      "channels": 200,
+      "frames": 15870,
+      "stepMs": 15,
+      "media": "contract.wav",
+      "payloadBytes": 3174000,
+      "payloadByteIdentical": true,
+      "fseqSha256": "fa103675b9487a9ad5bdc326eadc2f83682595cbb4917ed1c16eaded97239425",
+      "payloadSha256": "b2ed2aff758e52174a5a63bf4d55b0324978214c40ad1eda5864138f12939da1"
+    },
+    {
+      "version": "2.0",
+      "channels": 200,
+      "frames": 11902,
+      "stepMs": 20,
+      "media": "contract.wav",
+      "payloadBytes": 2380400,
+      "payloadByteIdentical": true,
+      "fseqSha256": "c7b0e90034396e584fd7d3203ca33b80fbfa881cefcd7a5210875bd8d0629780",
+      "payloadSha256": "6709e0f21f4c822e7e63fdf4de64fec4db374a64bd0518dda64685357125460a"
+    }
+  ],
+  "scope": "External upstream reader interoperability audit of generated synthetic-feature fixture sequences; not vehicle firmware playback, music-quality or production APK evidence.",
+  "fixture": "tests/engine-glass-castle.json",
+  "fixtureSha256": "a7347593e7d33354c13315b4245433fd0a69eae067b88a1255e5a419e4a7de9a",
+  "date": "2026-09-27",
+  "appVersionAtAudit": "2.4.0",
+  "teslaCommit": "9f949512146d881b6eb66d042b22ee3f9e115afb",
+  "readerHarness": "reader.cpp",
+  "readerHarnessSha256": "a97ee2481898b20917bbe502b28be344f1c872cb82e4f264506d49eb5c975da6",
+  "teslaReferenceFixtures": "research/hardware-1.2.0"
+}

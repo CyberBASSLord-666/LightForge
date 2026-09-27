@@ -1,4 +1,4 @@
-/* LightForge 1.4 — offline WebGL2 studio. Geometry provenance in MODEL-CREDITS.md.
+/* LightForge — offline WebGL2 studio. Geometry provenance in models/CREDITS.md.
  * Rendering is observational: only ShowEngine.stateAt() changes vehicle outputs.
  */
 import * as THREE from 'three';
@@ -20,7 +20,7 @@ const startupPhases=new Set(['graphics-initialized','gltf-loaded','atlas-loaded'
 class VehiclePreview {
  constructor(canvas,onViewChange,{deferLoad=false}={}){
   this._startupBegan=performance.now();this._startupMarks=new Set();
-  this.canvas=canvas;this.onViewChange=onViewChange;this.view='front';this.stage='studio';this.yaw=-.70;this.pitch=.24;this.zoom=1;this.last=[null,0];this.snapshot=null;this.loaded=false;this.lost=false;this.animating=false;this._raf=0;this.tween=null;this.renderCount=0;this._snapshotDirty=true;this._intersecting=true;this._hasSize=false;this._disposed=false;this._paused=false;this._restorePending=false;this._loadDeferred=!!deferLoad;this._loadStarted=false;this._readyResolve=null;this._lastRenderAt=0;this._sampleCount=0;this._slowSamples=0;this._fastSamples=0;this._warmupFrames=5;this._renderCpuMs=0;this._frameIntervalMs=0;this._lastQualityChange=0;this.quality='auto';this.effectiveQuality='high';this.adaptationReason='Automatic quality starts at high detail.';
+  this.canvas=canvas;this.onViewChange=onViewChange;this.view='front';this.stage='studio';this.yaw=-.70;this.pitch=.24;this.zoom=1;this.last=[null,0];this.snapshot=null;this._stateSource=null;this._stateDirty=false;this._clockSource='explicit-show-time';this._presented=null;this.loaded=false;this.lost=false;this.animating=false;this._raf=0;this.tween=null;this.renderCount=0;this._snapshotDirty=true;this._intersecting=true;this._hasSize=false;this._disposed=false;this._paused=false;this._restorePending=false;this._loadDeferred=!!deferLoad;this._loadStarted=false;this._readyResolve=null;this._lastRenderAt=0;this._sampleCount=0;this._slowSamples=0;this._fastSamples=0;this._warmupFrames=5;this._renderCpuMs=0;this._frameIntervalMs=0;this._lastQualityChange=0;this.quality='auto';this.effectiveQuality='high';this.adaptationReason='Automatic quality starts at high detail.';
   try{const saved=localStorage.getItem('lightforge-preview-quality');if(saved==='auto'||qualityPresets[saved])this.quality=saved;}catch{}
   this.effectiveQuality=this.quality==='auto'?((navigator.deviceMemory||8)<=4?'balanced':'high'):this.quality;this.adaptationReason=this.quality==='auto'?'Automatic quality starts at '+this.effectiveQuality+' detail.':'Quality selected by you.';
   this._snapshotPosition=new THREE.Vector3();this._snapshotNormal=new THREE.Vector3();this._snapshotDirection=new THREE.Vector3();
@@ -63,7 +63,9 @@ class VehiclePreview {
  init(){
   this.renderer=new THREE.WebGLRenderer({canvas:this.canvas,antialias:true,alpha:false,powerPreference:'high-performance',stencil:false});
   this.renderer.setPixelRatio(Math.min(devicePixelRatio||1,qualityPresets[this.effectiveQuality].pixelRatio));this.renderer.info.autoReset=false;this.renderer.outputColorSpace=THREE.SRGBColorSpace;
-  this.renderer.toneMapping=THREE.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.08;
+  // Keep red brake lights distinct from amber turns at high emissive levels.
+  // Cinematic ACES highlight desaturation made saturated stop lamps look amber.
+  this.renderer.toneMapping=THREE.ReinhardToneMapping;this.renderer.toneMappingExposure=1.08;
   this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.autoUpdate=false;this.renderer.shadowMap.needsUpdate=true;this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;
   this.scene=new THREE.Scene();this.scene.background=new THREE.Color('#10171e');this.scene.fog=new THREE.Fog('#10171e',14,36);
   this.camera=new THREE.PerspectiveCamera(32,1,.08,60);this.camera.position.set(-5,2.7,-6);
@@ -81,7 +83,10 @@ class VehiclePreview {
   const cv=document.createElement('canvas');cv.width=cv.height=128;const cx=cv.getContext('2d');const gr=cx.createRadialGradient(64,64,8,64,64,64);gr.addColorStop(0,'rgba(0,0,0,.80)');gr.addColorStop(.52,'rgba(0,0,0,.50)');gr.addColorStop(1,'rgba(0,0,0,0)');cx.fillStyle=gr;cx.fillRect(0,0,128,128);
   const shadow=new THREE.Mesh(new THREE.PlaneGeometry(3.1,6.1),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(cv),transparent:true,depthWrite:false,opacity:.75}));shadow.rotation.x=-Math.PI/2;shadow.position.y=-.012;this.scene.add(shadow);
   this.headlights=[];for(const side of [-1,1]){const spot=new THREE.SpotLight(0xd5eaff,0,12,.37,.78,1.8);spot.position.set(side*.65,.68,-2.1);spot.target.position.set(side*.7,.03,-6.7);this.scene.add(spot,spot.target);this.headlights.push(spot);}
-  this.rearSpill=new THREE.PointLight(0xff1d22,0,3.4,2);this.rearSpill.position.set(0,.23,2.7);this.scene.add(this.rearSpill);
+  // Reverse lamps illuminate the ground behind the car independently of the
+  // red stop/tail spill. These artistic light distributions are not photometry.
+  this.reverseSpill=[];for(const side of [-1,1]){const spot=new THREE.SpotLight(0xe8f4ff,0,5,.68,.85,2);spot.position.set(side*.55,.55,2.12);spot.target.position.set(side*.6,.02,4.1);this.scene.add(spot,spot.target);this.reverseSpill.push(spot);}
+  this.tailSpill=[];for(const side of [-1,1]){const spot=new THREE.SpotLight(0xff0205,0,3.4,.9,.85,2);spot.position.set(side*.6,.86,2.13);spot.target.position.set(side*.6,.02,3.9);this.scene.add(spot,spot.target);this.tailSpill.push(spot);}
   const target=new THREE.WebGLRenderTarget(1,1,{type:THREE.HalfFloatType});target.samples=qualityPresets[this.effectiveQuality].samples;
   this.composer=new EffectComposer(this.renderer,target);this.composer.addPass(new RenderPass(this.scene,this.camera));
   this.bloom=new UnrealBloomPass(new THREE.Vector2(1,1),.28,.40,2.3);this.composer.addPass(this.bloom);this.composer.addPass(new OutputPass());
@@ -100,7 +105,7 @@ class VehiclePreview {
   this.environment?.dispose();this.environment=createStudioEnvironmentTexture(this._environmentData);this.scene.environment=this.environment;this.scene.environmentIntensity=this.stage==='night'?.25:.9;
  }
  async load(){
-  try {const loadStarted=performance.now();const [gltf,environmentData]=await Promise.all([new GLTFLoader().loadAsync('preview/models/highland.glb').then(value=>{this.markStartup('gltf-loaded',loadStarted);return value;}),loadStudioEnvironment().then(value=>{this.markStartup('atlas-loaded',loadStarted);return value;})]);if(this._disposed)return false;this._environmentData=environmentData;const rigStarted=performance.now();this.rig=buildHighlandRig(gltf.scene);this.markStartup('rig-built',rigStarted);this.scene.add(this.rig.root);this.rig.setCutaway(this.view==='cabin');this.renderer.shadowMap.needsUpdate=true;if(this.view!=='custom'){this.positionCamera(this.yaw,this.pitch);this.controls.update();}this.loaded=true;this.setStatus('3D · Highland','ready');this.render(...this.last);this.canvas.dispatchEvent(new CustomEvent('previewready'));return true;}catch(e){this.fail(e);return false;}
+  try {const loadStarted=performance.now();const [gltf,environmentData]=await Promise.all([new GLTFLoader().loadAsync('preview/models/highland.glb').then(value=>{this.markStartup('gltf-loaded',loadStarted);return value;}),loadStudioEnvironment().then(value=>{this.markStartup('atlas-loaded',loadStarted);return value;})]);if(this._disposed)return false;this._environmentData=environmentData;const rigStarted=performance.now();this.rig=buildHighlandRig(gltf.scene);this.markStartup('rig-built',rigStarted);this.scene.add(this.rig.root);for(let i=0;i<2;i++){const anchors=this.rig.lightingAnchors;this.headlights[i].position.copy(anchors.headlights[i]);this.headlights[i].position.z-=.015;this.reverseSpill[i].position.copy(anchors.reverse[i]);this.reverseSpill[i].position.z+=.015;this.reverseSpill[i].target.position.set(anchors.reverse[i].x,.02,anchors.reverse[i].z+2);this.tailSpill[i].position.copy(anchors.tail[i]);this.tailSpill[i].position.z+=.015;this.tailSpill[i].target.position.set(anchors.tail[i].x,.02,anchors.tail[i].z+1.8);this.rig.parts.trunk.attach(this.tailSpill[i]);this.rig.parts.trunk.attach(this.tailSpill[i].target);}this.rig.setCutaway(this.view==='cabin');this.renderer.shadowMap.needsUpdate=true;if(this.view!=='custom'){this.positionCamera(this.yaw,this.pitch);this.controls.update();}this.loaded=true;this.setStatus('3D · Highland','ready');this.render(...this.last);this.canvas.dispatchEvent(new CustomEvent('previewready'));return true;}catch(e){this.fail(e);return false;}
  }
  setStage(stage){this.stage=stage==='night'?'night':'studio';this._snapshotDirty=true;const night=this.stage==='night';if(this.scene){
   this.scene.background.set(night?'#050a10':'#10171e');this.scene.fog.color.copy(this.scene.background);this.scene.environmentIntensity=night?.25:.9;this.ambient.intensity=night?.18:.65;this.key.intensity=night?.35:1.25;this.rim.intensity=night?.25:.85;this.ground.material.color.set(night?0x0b1019:0x171c23);this.bloom.strength=night?.42:.28;}
@@ -121,13 +126,15 @@ class VehiclePreview {
  positionCamera(yaw,pitch,distance=this.distance()){this.camera.position.set(distance*Math.sin(yaw)*Math.cos(pitch),.72+distance*Math.sin(pitch),-distance*Math.cos(yaw)*Math.cos(pitch));this.camera.lookAt(this.controls.target);}
  setView(view){if(!presets[view]&&view!=='orbit')return;this.view=view;const [yaw,pitch]=presets[view]||[-.7,.28];this.yaw=yaw;this.pitch=pitch;this.zoom=view==='cabin'?1.12:1;this.onViewChange?.(view,labels[view]);if(!this.camera)return;const from=this.camera.position.clone();this.positionCamera(yaw,pitch);const to=this.camera.position.clone();this.camera.position.copy(from);this.tween={from,to,start:performance.now(),duration:this.reducedMotion.matches?0:460};this.rig?.setCutaway(view==='cabin');this.renderer.shadowMap.needsUpdate=true;this._snapshotDirty=true;this.requestDraw();}
  setZoom(z){this._snapshotDirty=true;this.zoom=clamp(z,.8,1.7);if(this.camera){this.positionCamera(this.yaw,this.pitch);this.requestDraw();}}
- render(data,time=0){this.last[0]=data;this.last[1]=time;this._snapshotDirty=true;if(!this.renderer)return;if(this.rig?.update(data))this.renderer.shadowMap.needsUpdate=true;
-  if(this.headlights){const l=data?.lights||[];for(let i=0;i<2;i++)this.headlights[i].intensity=8*Math.max(l[i]||0,l[i+2]||0);this.rearSpill.intensity=.35*Math.max(l[24]||0,l[25]||0,l[26]||0);}
+ setStateSource(source){if(source!==null&&typeof source!=='function')throw new TypeError('Preview state source must be a function or null.');this._stateSource=source;if(source===null)this._clockSource='explicit-show-time';}
+ render(data,time=0){this.last[0]=data;this.last[1]=time;this._stateDirty=true;this._snapshotDirty=true;this.requestDraw();}
+ applyState(data,time=0){this.last[0]=data;this.last[1]=time;this._stateDirty=false;this._snapshotDirty=true;if(!this.renderer)return;if(this.rig?.update(data))this.renderer.shadowMap.needsUpdate=true;
+  if(this.headlights){const l=data?.lights||[];for(let i=0;i<2;i++)this.headlights[i].intensity=8*Math.max(l[i]||0,l[i+2]||0,l[i+6]||0,l[i+8]||0,l[i+10]||0);for(let i=0;i<(this.tailSpill?.length||0);i++)this.tailSpill[i].intensity=.35*Math.max(l[24]||0,l[25+i]||0);for(const spot of this.reverseSpill||[])spot.intensity=1.5*(l[27]||0);}
   if(this.view==='orbit'&&!this.tween){this.yaw=-.7+time*.12;this.positionCamera(this.yaw,.28);}
-  this.canvas.dataset.frame=String(data?.frame??'');this.canvas.dataset.time=Number(data?.time??time).toFixed(4);this.canvas.dataset.view=this.view;this.requestDraw();
+  this.canvas.dataset.frame=String(data?.frame??'');this.canvas.dataset.time=Number(data?.time??time).toFixed(4);this.canvas.dataset.view=this.view;
  }
  updateSnapshot(){
-  if(!this.scene)return;const [data,time]=this.last;this.scene.updateMatrixWorld(true);this.camera.updateMatrixWorld();
+  if(!this.scene)return;if(this._stateDirty)this.applyState(...this.last);const [data,time]=this.last;this.scene.updateMatrixWorld(true);this.camera.updateMatrixWorld();
   const lamps=(this.rig?.lamps||[]).map(l=>{if(!l.object.geometry.boundingSphere)l.object.geometry.computeBoundingSphere();const pos=this._snapshotPosition.copy(l.object.geometry.boundingSphere.center).applyMatrix4(l.object.matrixWorld);const normal=this._snapshotNormal.copy(l.normal).transformDirection(l.object.matrixWorld);const visible=normal.dot(this._snapshotDirection.copy(this.camera.position).sub(pos))>0;pos.project(this.camera);
    // Geometry provenance is immutable; cache it once instead of rebuilding it on
    // every playback frame. Snapshot projection itself is demand-driven by QA/UI.
@@ -154,7 +161,7 @@ class VehiclePreview {
   }
   this.reportPerformance();this.requestDraw();
  }
- getPerformance(){return {quality:this.quality,effectiveQuality:this.effectiveQuality,pixelRatio:this.renderer?.getPixelRatio()||0,shadowSize:qualityPresets[this.effectiveQuality].shadowSize,bloomEnabled:!!this.bloom?.enabled,renderCpuMs:Number(this._renderCpuMs.toFixed(2)),frameIntervalMs:Number(this._frameIntervalMs.toFixed(2)),measurement:'CPU submission and continuous visible render intervals; not GPU or vehicle latency',framesRendered:this.renderCount,samples:this._sampleCount,visible:this.isVisible(),contextLost:this.lost,adaptationReason:this.adaptationReason};}
+ getPerformance(){return {quality:this.quality,effectiveQuality:this.effectiveQuality,pixelRatio:this.renderer?.getPixelRatio()||0,shadowSize:qualityPresets[this.effectiveQuality].shadowSize,bloomEnabled:!!this.bloom?.enabled,renderCpuMs:Number(this._renderCpuMs.toFixed(2)),frameIntervalMs:Number(this._frameIntervalMs.toFixed(2)),measurement:'CPU submission and continuous visible render intervals; not GPU or vehicle latency',presentation:this._presented?{...this._presented}:null,framesRendered:this.renderCount,samples:this._sampleCount,visible:this.isVisible(),contextLost:this.lost,adaptationReason:this.adaptationReason};}
  reportPerformance(){this.canvas.dataset.quality=this.quality;this.canvas.dataset.effectiveQuality=this.effectiveQuality;this.canvas.dispatchEvent(new CustomEvent('previewperformance',{detail:this.getPerformance()}));}
  recordPerformance(now,cpuMs){
   const interval=this._lastRenderAt?now-this._lastRenderAt:0;this._lastRenderAt=now;
@@ -172,13 +179,17 @@ class VehiclePreview {
   this._drawing=true;let animate=false;const start=performance.now();
   try{if(this._restorePending){this._restorePending=false;this.createEnvironment();this.composer.reset();this.applyQuality(this.effectiveQuality,'Graphics recovered; keeping your selected quality.',true);this.renderer.shadowMap.needsUpdate=true;this.resize();this.setStatus('3D · Highland','ready');}
    else if(!this.environment)this.createEnvironment();
+   // Read the authoritative clock at submission, after environment recovery.
+   // The app may have queued this draw one refresh earlier; reusing that old
+   // sample would introduce avoidable audio-to-light delay and stale seeks.
+   const sample=this._stateSource?.();if(sample){if(!Number.isFinite(sample.time))throw new TypeError('Preview clock must be finite.');this._clockSource=sample.clock||'external-show-time';this.applyState(sample.data,sample.time);}else if(this._stateDirty)this.applyState(...this.last);
    if(this.tween){const u=this.tween.duration?clamp((now-this.tween.start)/this.tween.duration):1;this.camera.position.lerpVectors(this.tween.from,this.tween.to,1-Math.pow(1-u,3));this._snapshotDirty=true;if(u>=1)this.tween=null;else animate=true;}
-   if(this.controls.update()){animate=true;this._snapshotDirty=true;}this.renderer.info.reset();const firstComposer=this.renderCount===0,composerStarted=firstComposer?performance.now():0;if(firstComposer)this.markStartup('first-composer-start');this.composer.render();this.renderCount++;if(firstComposer)this.markStartup('first-composer-end',composerStarted);
+   if(this.controls.update()){animate=true;this._snapshotDirty=true;}this.renderer.info.reset();const firstComposer=this.renderCount===0,composerStarted=firstComposer?performance.now():0;if(firstComposer)this.markStartup('first-composer-start');this.composer.render();this._presented={time:Number(this.last[0]?.time??this.last[1]),frame:this.last[0]?.frame??null,clock:this._clockSource||'explicit-show-time'};this.renderCount++;if(firstComposer)this.markStartup('first-composer-end',composerStarted);
   }finally{this._drawing=false;}
   this.recordPerformance(now,performance.now()-start);if(animate)this.requestDraw();
  }
  redraw(){this.render(...this.last);}
  getSnapshot(){if(this._snapshotDirty)this.updateSnapshot();return this.snapshot;}
- dispose(){if(this._disposed)return;this._disposed=true;this._readyResolve?.(false);this._readyResolve=null;cancelAnimationFrame(this._raf);this._raf=0;this._resizeObserver?.disconnect();this._intersectionObserver?.disconnect();document.removeEventListener('visibilitychange',this._onVisibility);this.canvas.removeEventListener('webglcontextlost',this._onContextLost);this.canvas.removeEventListener('webglcontextrestored',this._onContextRestored);this.controls?.dispose();this.composer?.dispose();this.bloom?.dispose();this.environment?.dispose();const geometries=new Set(),materials=new Set();this.scene?.traverse(o=>{if(o.geometry)geometries.add(o.geometry);if(o.material)for(const m of Array.isArray(o.material)?o.material:[o.material])materials.add(m);});for(const g of geometries)g.dispose();for(const m of materials)m.dispose();this.renderer?.dispose();}
+ dispose(){if(this._disposed)return;this._disposed=true;this._stateSource=null;this._readyResolve?.(false);this._readyResolve=null;cancelAnimationFrame(this._raf);this._raf=0;this._resizeObserver?.disconnect();this._intersectionObserver?.disconnect();document.removeEventListener('visibilitychange',this._onVisibility);this.canvas.removeEventListener('webglcontextlost',this._onContextLost);this.canvas.removeEventListener('webglcontextrestored',this._onContextRestored);this.controls?.dispose();this.composer?.dispose();this.bloom?.dispose();this.environment?.dispose();const geometries=new Set(),materials=new Set();this.scene?.traverse(o=>{if(o.geometry)geometries.add(o.geometry);if(o.material)for(const m of Array.isArray(o.material)?o.material:[o.material])materials.add(m);});for(const g of geometries)g.dispose();for(const m of materials)m.dispose();this.renderer?.dispose();}
 }
 window.VehiclePreview=VehiclePreview;

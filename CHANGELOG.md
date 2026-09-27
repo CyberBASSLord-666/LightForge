@@ -6,6 +6,26 @@ A source version or an entry here does not itself establish publication. The
 [pre-cleanup changelog](https://github.com/CyberBASSLord-666/LightForge/blob/07511f5544b688c657773dce8a29d8d31ba68cb1/CHANGELOG.md)
 retains detailed historical development notes and their original limitations.
 
+## 2.4.0 — source timing, bilateral gestures and physical preview
+
+Keep measured vocal and bass spans continuous across arrangement boundaries;
+allocate requested bilateral gestures together; prioritize stronger observed
+attacks when nearby candidates compete. Preserve intentional alternating detail,
+manual edits, disabled outputs and original source timestamps. Normalize nested
+activity ranges and retain overlapping held-note state.
+
+Use one numerical frame-clock rule for raw commands and preview state, and sample
+the audio clock immediately before WebGL submission. Correct combined-headlamp
+and reverse ground illumination and light diffusion. Add privacy-safe,
+source-backed vehicle identity and approximate dimensions, with unknown fixture
+parts, optical behavior and physical timing explicitly identified.
+
+Remove repeated DSP and diagnostic work while preserving original inference
+models and output fidelity. Validate Tesla xLights channel/format compatibility
+against its official fixtures. Direct GPL desktop-engine code is not bundled.
+Source-bound automatic production, model and Android checks remain mandatory;
+75% total analysis speedup and exact physical-car reproduction are not claimed.
+
 ## 2.3.2 — native transcription and inference allocation reuse
 
 Run the original five Float32 GAME graphs through Android's native ONNX Runtime

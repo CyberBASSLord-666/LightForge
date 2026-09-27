@@ -14,8 +14,45 @@
     {id:'highland-headlight',title:'Highland SAE headlight assembly',url:MANUAL+'GUID-AC157E1C-9441-4687-AAD9-0CF4A69B166E.html'},
     {id:'highland-rear-fascia',title:'Highland rear fascia light assembly',url:MANUAL+'GUID-7E6EE2BC-38C5-4EEB-829E-C1020819F471.html'},
     {id:'highland-trunk-light',title:'Highland trunk lid light assembly',url:MANUAL+'GUID-D88A21D6-BA20-4743-90B8-87AE67886BD3.html'},
-    {id:'highland-plate',title:'Highland license plate lights',url:MANUAL+'GUID-3723453A-1326-47E8-A7B5-59574E57DC57.html'}
+    {id:'highland-plate',title:'Highland license plate lights',url:MANUAL+'GUID-3723453A-1326-47E8-A7B5-59574E57DC57.html'},
+    {id:'highland-vin',title:'Tesla Model 3 VIN definitions',url:MANUAL+'GUID-B7B9507C-C984-41F2-89EE-D23CA4E682ED.html'},
+    {id:'nhtsa-vpic',title:'NHTSA manufacturer-reported VIN decoder',url:'https://vpic.nhtsa.dot.gov/api/'},
+    {id:'tesla-original-fitment',title:'Tesla parts catalog original-fitment lookup',url:'https://parts.tesla.com/en-US/landingpage'},
+    {id:'highland-electrical',title:'Model 3 SOP8 exterior-light circuits',url:'https://service.tesla.com/docs/Model3/ElectricalReference/prog-233/interactive/html/index.html?page=36'},
+    {id:'highland-dimensions',title:'Model 3 RWD / Long Range dimensions',url:'https://www.tesla.com/ownersmanual/model3/en_us/GUID-56562137-FC31-4110-A13C-9A9FC6657BF0.html'}
   ]);
+  // The supplied vehicle's VIN was checked against NHTSA and Tesla on this
+  // date. Retain only non-unique traits; never ship the VIN or serial number.
+  // A valid decode is not a build sheet or a measurement of installed lamps.
+  const vehicleEvidence=Object.freeze({
+    reviewedAt:'2026-09-27',
+    identityStatus:'vin-decoder-and-original-fitment-catalog',
+    confirmed:Object.freeze({make:'Tesla',model:'Model 3',modelYear:2025,body:'four-door sedan',steering:'left',motorCount:1,plant:'Fremont, California, USA',lowBeamSource:'LED'}),
+    configured:Object.freeze({trim:'Long Range RWD',market:'North America'}),
+    // Tesla's VIN-filtered "Original Fitment" list is evidence for assembly
+    // selection, not a claim that replacement history or current firmware is
+    // known. Its wheel/actuator lists can contain multiple alternatives.
+    originalFitment:Object.freeze({
+      status:'tesla-catalog-original-vin-part-label',catalog:'8d917dc8-c246-44ab-9a0b-069127b4262c',
+      headlampLH:'1694086-00-H',headlampRH:'1694087-00-H',headlampStandard:'SAE',
+      sideRepeaterLH:'1820734-00-D',sideRepeaterRH:'1820735-00-D',
+      decklidLampLH:'1691498-00-F',decklidLampRH:'1691500-00-F',
+      rearFasciaLampLH:'1712513-00-E',rearFasciaLampRH:'1712514-00-E',
+      licensePlateLamp:'1713282-00-A',chargePort:'1490374-10-E',chargePortDoor:'1715102-10-C',chargePortRegion:'North America'
+    }),
+    notEstablished:Object.freeze(['retail trim','paint','current wheel design','replacement-part history','firmware version','optical intensity','actuator timing','Highland FSEQ sub-lens mapping']),
+    sources:Object.freeze(['highland-vin','nhtsa-vpic','tesla-original-fitment','highland-electrical']),
+    fixtureMappingStatus:'public-channel-contract-with-estimated-sub-lens-allocation',
+    physicalTimingStatus:'unmeasured-until-calibrated'
+  });
+  // Tesla labels these approximate RWD / Long Range dimensions. They constrain
+  // preview proportions, but do not certify the reference mesh as a car scan.
+  const dimensionsMeters=Object.freeze({
+    length:4.720,bodyWidth:1.850,mirrorsWidth:2.089,foldedMirrorsWidth:1.933,
+    height:1.440,wheelbase:2.875,frontOverhang:.868,rearOverhang:.977,
+    frontTrack:1.584,rearTrack:1.584,groundClearance:.138,
+    evidence:'manufacturer-approximate',source:'highland-dimensions'
+  });
   const outputs=[];
   const light=(id,name,channels,mode,camera,note,available=true)=>outputs.push({id,name,kind:'light',channels,mode,available,camera,note,source:GUIDE+'#light-channel-mapping-details'});
   for(const [side,label,offset] of [['left','Left',0],['right','Right',1]]){
@@ -181,10 +218,10 @@
     });
   }
   for(const output of outputs){Object.freeze(output.channels);if(output.commands)Object.freeze(output.commands);Object.freeze(output);}
-  const profile=Object.freeze({id:'model3-highland-2025-na',version:'1.5.0',name:'2025 Model 3 Long Range RWD · North America',channels:200,
-    outputs:Object.freeze(outputs),sources,closureSpecifications,perceptualTiming,normalizePerceptualCalibration,resolvePerceptualTiming,
+  const profile=Object.freeze({id:'model3-highland-2025-na',version:'1.6.0',name:'2025 Model 3 Long Range RWD · North America',channels:200,
+    outputs:Object.freeze(outputs),sources,vehicleEvidence,dimensionsMeters,closureSpecifications,perceptualTiming,normalizePerceptualCalibration,resolvePerceptualTiming,
     frameIntervals:Object.freeze([15,20]),recommendedFrameInterval:20,
-    lightAccuracy:'Command timing and public channel groups; Highland headlamp sub-lens allocation remains estimated.',
+    lightAccuracy:'Tesla command timing and public channel groups; Highland per-lens allocation and optical brightness remain estimated.',
     movementAccuracy:'Vehicle-command simulation. Motor travel, oscillation endpoints and thermal behavior vary; positions are estimated.',
     unavailableFeatures:Object.freeze([
       'Individual matrix-headlight pixels, text and image projection',
