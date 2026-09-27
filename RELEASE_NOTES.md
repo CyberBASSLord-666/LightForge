@@ -15,7 +15,7 @@ The source-bound production workflow covers host regression, actual bundled-mode
 
 The production-engine comparisons exercise the complete 64-second public demo (98 final notes) and licensed Falcon mixture excerpt (five final notes), including native checkpoint replay. Final notes match the shared WASM pipeline on these inputs; small raw Float32 differences are retained in the evidence. Android instrumentation exercises native completion, ownership, cancellation and retirement. These tests do not establish general transcription quality or physical-device performance.
 
-The owner-approved 2.3.2 / 20302 publication policy makes external corpus benchmarks, human perceptual review and hardware energy/thermal observations optional for this version. The 75% whole-analysis target, general comparative musical quality, blinded perceptual review and physical phone/Tesla behavior remain **unverified**. The separate strict performance-quality workflow retains its existing acceptance requirements.
+The owner-approved 2.3.2 / 20302 publication policy makes external corpus benchmarks, human perceptual review and hardware energy/thermal observations optional for this version. The owner confirmed on September 26, 2026 that the 75% whole-analysis speedup is an aspirational goal, not a publication requirement; quality remains the priority. A 75% whole-analysis reduction, general comparative musical quality, blinded perceptual review and physical phone/Tesla behavior remain **unverified**. The separate strict performance-quality workflow retains its existing acceptance requirements.
 
 ## History
 
