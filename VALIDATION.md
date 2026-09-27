@@ -4,7 +4,27 @@ A repository test, an APK build, a published release and a performance claim are
 different results. Each must identify the source and evidence it actually covers.
 This page is an index, not a replacement for source-bound receipts.
 
-## Published 2.3.2 record
+## Published 2.4.0 record
+
+The [LightForge 2.4.0 release](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.4.0)
+uses Android version code **20400** and qualified source
+`1ca3b8f6a70c84e5ec72e1599fc4e90088aee2f1`.
+Its full source-bound host, actual-model, browser and Android emulator checks
+passed in [production run 36354221023](https://github.com/CyberBASSLord-666/LightForge/actions/runs/36354221023).
+The public release contains the original-signed APK, checksum, release notes and
+verification report for that exact qualified application payload.
+
+The [recorded vocal frontend host benchmark](docs/VOCAL_FRONTEND_OPTIMIZATION.md)
+measured about **27% less median frontend processing time**, with byte-identical
+Float32 feature values for the exercised inputs. It excludes resampling, model
+inference and total analysis time. A 75% whole-analysis reduction, general
+musical-quality non-regression and physical phone/Tesla behavior remain
+unverified under the version-specific automated-verification-only policy.
+
+The vehicle research is recorded in [the hardware evidence review](docs/VEHICLE_HARDWARE_EVIDENCE.md);
+it distinguishes VIN-confirmed traits from configuration and estimated optics.
+
+## Historical published 2.3.2 record
 
 LightForge **2.3.2 / Android version code 20302** was published on
 **September 27, 2026**. Its qualified application source is
@@ -25,10 +45,6 @@ external corpus, human perceptual review or energy/thermal observations. Their
 absence remains disclosed. It did **not** establish comparative musical quality,
 zero regression across arbitrary songs or a 75% runtime reduction. The strict
 optional performance-quality workflow was not weakened.
-
-The 2.4.0 core refactor requires its own new evidence. The vehicle research is
-recorded in [the hardware evidence review](docs/VEHICLE_HARDWARE_EVIDENCE.md);
-it distinguishes VIN-confirmed traits from configuration and estimated optics.
 
 ## Current source versus release evidence
 
