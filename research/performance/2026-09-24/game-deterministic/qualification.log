@@ -1,0 +1,13 @@
+cpu_all plain
+cpu_all captured
+cpu_all profiled
+cpu_basic plain
+cpu_basic captured
+cpu_basic profiled
+gpu_package_cpu_basic plain
+gpu_package_cpu_basic captured
+gpu_package_cpu_basic profiled
+cuda_basic plain
+cuda_basic captured
+cuda_basic profiled
+{"status": "NUMERICAL_EQUIVALENCE_UNPROVEN", "measured": false, "qualityApproved": false, "target75Proven": false}

@@ -1,0 +1,122 @@
+{
+  "schema": "lightforge.deux-retry02-partial-observations.v1",
+  "status": "BLOCKED_OR_REJECTED",
+  "failedRun": "deux-full-source-cpu-20260925-02",
+  "files": [
+    {
+      "path": "qualification/cpu_all_plain/passage-000/.native-deux-961047265695557895.partial",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "exactOutputPrefix": true,
+      "partialMtimeNs": 1790354083587517585,
+      "partialCtimeNs": 1790354088025846809,
+      "finalStemMtimeNs": 1790354087961845765,
+      "finalStemCtimeNs": 1790354087966618975
+    },
+    {
+      "path": "qualification/cpu_all_plain/passage-002/.native-deux-10128550518316108907.partial",
+      "bytes": 2293200,
+      "sha256": "1156148acfeab142db3126ec27639e1107ae9cbb989a10dae75bd7ea60bd6b49",
+      "exactOutputPrefix": true,
+      "partialMtimeNs": 1790354190051510023,
+      "partialCtimeNs": 1790354192431548840,
+      "finalStemMtimeNs": 1790354191899540163,
+      "finalStemCtimeNs": 1790354191903540229
+    },
+    {
+      "path": "qualification/cpu_all_plain/passage-003/.native-deux-2177907983668743797.partial",
+      "bytes": 2293200,
+      "sha256": "e07237dca735545e6fb293bc123ffb12bd80f863eac76eaaa3798a22d56b575a",
+      "exactOutputPrefix": true,
+      "partialMtimeNs": 1790354239388316687,
+      "partialCtimeNs": 1790354242107791192,
+      "finalStemMtimeNs": 1790354241096344541,
+      "finalStemCtimeNs": 1790354241100192180
+    },
+    {
+      "path": "qualification/cpu_all_plain/passage-004/.native-deux-15953821091634366801.partial",
+      "bytes": 2293200,
+      "sha256": "0535d289dbea352a0fdeecf2edc89be7c9f025faa0bcd0eac7b0f31c17c8c92d",
+      "exactOutputPrefix": true,
+      "partialMtimeNs": 1790354290373158659,
+      "partialCtimeNs": 1790354292853199134,
+      "finalStemMtimeNs": 1790354292325190545,
+      "finalStemCtimeNs": 1790354292326430218
+    },
+    {
+      "path": "qualification/cpu_all_plain/passage-005/.native-deux-8856773804833584845.partial",
+      "bytes": 2293200,
+      "sha256": "b549f9036ef3fd3217478ea4574cd02de08acfbc7e552de9bc8a1f53e02bf799",
+      "exactOutputPrefix": true,
+      "partialMtimeNs": 1790354336813942683,
+      "partialCtimeNs": 1790354339563507127,
+      "finalStemMtimeNs": 1790354338781974975,
+      "finalStemCtimeNs": 1790354338787364824
+    },
+    {
+      "path": "qualification/cpu_all_plain/passage-006/.native-deux-14319224421846197689.partial",
+      "bytes": 2293200,
+      "sha256": "8991254c3e6e8994768f78671efeb0bfdafc8bd73af69ef4dc114df1ac2311af",
+      "exactOutputPrefix": true,
+      "partialMtimeNs": 1790354384670719466,
+      "partialCtimeNs": 1790354387094758779,
+      "finalStemMtimeNs": 1790354386482748831,
+      "finalStemCtimeNs": 1790354386486616940
+    },
+    {
+      "path": "qualification/cpu_all_plain/passage-007/.native-deux-13641970490526581596.partial",
+      "bytes": 2293200,
+      "sha256": "0af02e30a03e8f47330f68d7e20182fa281374ef9b241b5ebeaaa84d64cecb53",
+      "exactOutputPrefix": true,
+      "partialMtimeNs": 1790354432503495781,
+      "partialCtimeNs": 1790354435287541393,
+      "finalStemMtimeNs": 1790354434391526713,
+      "finalStemCtimeNs": 1790354434395876914
+    },
+    {
+      "path": "qualification/cpu_all_plain/passage-008/.native-deux-10640108613555596168.partial",
+      "bytes": 2293200,
+      "sha256": "038c0d93595a5ad78c304ede3579cbae5203ab75748bbc387a933c6bd3bc9726",
+      "exactOutputPrefix": true,
+      "partialMtimeNs": 1790354481956303410,
+      "partialCtimeNs": 1790354484664347588,
+      "finalStemMtimeNs": 1790354483688331694,
+      "finalStemCtimeNs": 1790354483691005384
+    },
+    {
+      "path": "qualification/cpu_all_plain/passage-009/.native-deux-17481559955349493939.partial",
+      "bytes": 2293200,
+      "sha256": "9f8d02827d3714070458b2f19bcc492f5b9941a41b26c6164e51fecfa5dfbdf7",
+      "exactOutputPrefix": true,
+      "partialMtimeNs": 1790354529009069674,
+      "partialCtimeNs": 1790354531825115564,
+      "finalStemMtimeNs": 1790354531169104882,
+      "finalStemCtimeNs": 1790354531172564667
+    },
+    {
+      "path": "qualification/cpu_all_plain/passage-010/.native-deux-12534157497998493400.partial",
+      "bytes": 2293200,
+      "sha256": "13f3cfca3fe7bcb1d32f73e346f77f350993770fab6e30755b66280d327ff6d8",
+      "exactOutputPrefix": true,
+      "partialMtimeNs": 1790354580333907484,
+      "partialCtimeNs": 1790354582685945875,
+      "finalStemMtimeNs": 1790354582149937126,
+      "finalStemCtimeNs": 1790354582153937191
+    },
+    {
+      "path": "qualification/cpu_all_plain/passage-011/.native-deux-3400711517749854299.partial",
+      "bytes": 2293200,
+      "sha256": "5c12a6c84a82302f809c7e95cfccb9e3e913a63197941eccb757abf23b122d55",
+      "exactOutputPrefix": true,
+      "partialMtimeNs": 1790354628854699652,
+      "partialCtimeNs": 1790354631686745906,
+      "finalStemMtimeNs": 1790354630870732578,
+      "finalStemCtimeNs": 1790354630875138121
+    }
+  ],
+  "causeAttribution": "The actor or mechanism responsible for these temporary files is not established.",
+  "failedEvidenceChanged": false,
+  "modelInferenceExecuted": false,
+  "qualityApproved": false,
+  "target75Proven": false
+}

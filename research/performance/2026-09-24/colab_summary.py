@@ -1,0 +1,16 @@
+# Display the completed source-bound experiments; never grants approval.
+import json as report_json
+report_game = report_json.loads((DT_RUN / "qualification/receipt.json").read_text())
+report_deux = report_json.loads((DX_RUN / "qualification/receipt.json").read_text())
+report_downstream = report_json.loads((DS_RUN / "comparison/receipt.json").read_text())
+print("LIGHTFORGE — COLAB T4 RESEARCH — 24 SEPTEMBER 2026")
+print("GAME diagnostic passes:", len(report_game["runs"]), "/ 12")
+print("GAME exact observer checks:", report_game["observerComparisonsPassed"])
+print("GAME heavy graphs execute CUDA:", report_game["placement"]["cuda_basic"]["heavyGraphsExecuteCudaArithmetic"])
+print("Separation diagnostic passes:", len(report_deux["runs"]), "/ 8")
+print("Separation: all 27 graphs execute CUDA:", report_deux["placement"]["cuda_basic"]["allGraphsExecuteCudaArithmetic"])
+print("Five-second downstream result:", report_downstream["status"])
+print("CPU/GPU numerical status:", report_game["status"])
+print("Quality approved:", report_downstream["qualityApproved"])
+print("75% total reduction proven:", report_downstream["target75Proven"])
+print("Original models and full evidence retained; public demo only.")

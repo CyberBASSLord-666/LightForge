@@ -1,0 +1,142 @@
+{
+  "schema": "lightforge.deux-downstream-independent-audit.v1",
+  "status": "ARCHIVE_AND_RECORDED_DIAGNOSTIC_VERIFIED",
+  "archive": {
+    "bytes": 17147976,
+    "sha256": "310cc5697489fd89fe2a34afa7bb50678e515001add74784604eb1aaa3b4b06f",
+    "members": 49,
+    "uncompressedBytes": 21517511,
+    "crcChecked": true
+  },
+  "evidenceRoot": "20260924T022132Z-deux-downstream-6d762cd1",
+  "sourceCommit": "8590ac4a67de4340857a96ffe38bae53d7d902b8",
+  "sourceTree": "c841bf18f91d3d04dd6daf7e886e2aa473ab8c70",
+  "artifactFilesVerified": 48,
+  "strictJsonFilesVerified": 21,
+  "frozenSourceFilesVerified": 25,
+  "actualCapturedAndProfiledWaveformsVerified": 4,
+  "upstreamStatus": "NUMERICAL_EQUIVALENCE_UNPROVEN",
+  "comparatorStatus": "EXCERPT_SENSITIVITY_PASS",
+  "independentReplay": {
+    "comparisonReproduced": true,
+    "consumerReplayReproduced": true,
+    "resampledWavsReproduced": 4,
+    "sensitivityPassed": true,
+    "errors": [],
+    "coverage": {
+      "native": {
+        "rawGameNotes": 25,
+        "fusedNotes": 25,
+        "fusedNoteSeconds": 4.72,
+        "nonspeechPhrases": 1,
+        "maximumSingingScore": 0.4059354364871979,
+        "passed": true
+      },
+      "reference": {
+        "rawGameNotes": 25,
+        "fusedNotes": 25,
+        "fusedNoteSeconds": 4.72,
+        "nonspeechPhrases": 1,
+        "maximumSingingScore": 0.40593576431274414,
+        "passed": true
+      }
+    },
+    "arrays": {
+      "classified.envelope": {
+        "samples": 250,
+        "maxAbsoluteError": 0,
+        "rmse": 0,
+        "violations": 0,
+        "nonfinite": 0,
+        "passed": true
+      },
+      "classified.classifier.singingScores": {
+        "samples": 125,
+        "maxAbsoluteError": 6.556510925292969e-07,
+        "rmse": 2.7418136596679685e-07,
+        "violations": 0,
+        "nonfinite": 0,
+        "passed": true
+      },
+      "classified.classifier.speechScores": {
+        "samples": 125,
+        "maxAbsoluteError": 1.043081283569336e-06,
+        "rmse": 5.648403035743168e-07,
+        "violations": 0,
+        "nonfinite": 0,
+        "passed": true
+      },
+      "features.fineEnergy": {
+        "samples": 1000,
+        "maxAbsoluteError": 7.82310962677002e-08,
+        "rmse": 1.4067297237657182e-08,
+        "violations": 0,
+        "nonfinite": 0,
+        "passed": true
+      },
+      "features.residualEnergy": {
+        "samples": 1000,
+        "maxAbsoluteError": 8.940696716308594e-08,
+        "rmse": 1.4103474806399087e-08,
+        "violations": 0,
+        "nonfinite": 0,
+        "passed": true
+      },
+      "features.frequency": {
+        "samples": 250,
+        "maxAbsoluteError": 1.52587890625e-05,
+        "rmse": 2.5532837723818223e-06,
+        "violations": 0,
+        "nonfinite": 0,
+        "passed": true
+      },
+      "features.periodicity": {
+        "samples": 250,
+        "maxAbsoluteError": 5.960464477539062e-07,
+        "rmse": 1.3696104637475081e-07,
+        "violations": 0,
+        "nonfinite": 0,
+        "passed": true
+      },
+      "vocals.envelope": {
+        "samples": 250,
+        "maxAbsoluteError": 0,
+        "rmse": 0,
+        "violations": 0,
+        "nonfinite": 0,
+        "passed": true
+      },
+      "vocals.pitchContour.midi": {
+        "samples": 125,
+        "maxAbsoluteError": 0,
+        "rmse": 0,
+        "violations": 0,
+        "nonfinite": 0,
+        "passed": true
+      },
+      "vocals.pitchContour.confidence": {
+        "samples": 125,
+        "maxAbsoluteError": 0,
+        "rmse": 0,
+        "violations": 0,
+        "nonfinite": 0,
+        "passed": true
+      }
+    },
+    "rawGameCheckpointsByteIdentical": false,
+    "transcriptionExact": true,
+    "fusedVocalsExact": true,
+    "localAuditNode": "v24.19.0",
+    "modelInferencePerformed": false
+  },
+  "qualityApproved": false,
+  "target75Proven": false,
+  "releaseAuthorized": false,
+  "benchmarkTimingAdmitted": false,
+  "limits": [
+    "This independently checks archived bytes, captured/profiled waveform identity, the consumer replay/resampling and the existing pure comparison.",
+    "Model inference is not repeated by this auditor. Absent model/Node binaries are checked against recorded immutable pins, not rehashed here.",
+    "The complete upstream accelerator archive remains necessary for compiled snapshots, native library and CUDA placement evidence.",
+    "One five-second bounded excerpt does not establish full-song quality, second-passage overlap-add, Android behavior, or admitted benchmark ratios."
+  ]
+}

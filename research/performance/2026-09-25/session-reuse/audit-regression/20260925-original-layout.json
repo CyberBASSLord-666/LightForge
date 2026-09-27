@@ -1,0 +1,87 @@
+{
+  "schema": "lightforge.game-session-reuse-jdk-gate-regression.v1",
+  "createdUtc": "2026-09-25T16:07:45.301012+00:00",
+  "status": "REGRESSION_PASSED",
+  "executionSourceCommit": "ae7ed37ad7539b71ea84f783470c174f1297346e",
+  "executionSourceTree": "4809b69ac830a454832b9414f0dd949e29301011",
+  "verifier": {
+    "bytes": 33169,
+    "sha256": "085df8cab6c3842807b24ea982edf5cab5b0def96034edba9cd4bf3ca1d3f308"
+  },
+  "archivedVerifier": {
+    "bytes": 33173,
+    "sha256": "86be7e14c75cfe0ab9a1df5631ec5e79708232293816e21be6503f69332bce18"
+  },
+  "regressionScript": {
+    "bytes": 7025,
+    "sha256": "c5d1ab4f6f6427a60034e310d4b2b518b9087a63b0f062c977eaebf6128fd33d"
+  },
+  "originalDriverReceipt": {
+    "bytes": 1184,
+    "sha256": "71f3032110e5afb3167eff9c7ad240d84a16b97eca5c957af70294ff918201c5"
+  },
+  "originalRuntimeBindings": {
+    "bytes": 57367,
+    "sha256": "260c880b093abe1726391f44039f51d3355d0a28093877c84e0987ac3643902a"
+  },
+  "originalPreparationReceipt": {
+    "bytes": 56735,
+    "sha256": "e8aa5de595cfce656237be9024adde5424bba22c67b7d3e285e17bc6f4425a54"
+  },
+  "originalEvidenceBefore": {
+    "files": 679,
+    "bytes": 294483247,
+    "canonicalInventorySha256": "6a4685d1baab2dceb0373028e7cd6ab249d658519ab5ec4b599cb31e48fa28f4"
+  },
+  "executionSourceInventory": {
+    "files": 23,
+    "bytes": 340207,
+    "canonicalInventorySha256": "78944740dd6798fb608512cee0036faa4d2e97917bd4ca16d4f8b48907cf2450"
+  },
+  "actualOriginalJdkMember": {
+    "path": "lib/libjli.so",
+    "bytes": 120328,
+    "sha256": "4fd016cb1b0b12fa46a943a7b366e3dab8f9925d070abd1d140eed7c35a83d7f"
+  },
+  "mutationsOnlyInTemporaryCopies": true,
+  "modelInferenceExecuted": false,
+  "nativeExecutionPerformed": false,
+  "modelBytesCopied": false,
+  "runtimeBytesCopied": false,
+  "qualityApproved": false,
+  "target75Proven": false,
+  "benchmarkTimingAdmitted": false,
+  "releaseAuthorized": false,
+  "cases": [
+    {
+      "name": "missing_original_jli_member",
+      "rejected": true,
+      "rejection": "Essential JDK runtime libraries unbound",
+      "mutatedBindings": {
+        "bytes": 57231,
+        "sha256": "8e62083fb0b0f36279f721a4ce14d9b60cacf51e2bc8447505f24b4eed273270"
+      },
+      "removedMember": "lib/libjli.so",
+      "misplacedMember": null
+    },
+    {
+      "name": "misplaced_legacy_jli_member",
+      "rejected": true,
+      "rejection": "Essential JDK runtime libraries unbound",
+      "mutatedBindings": {
+        "bytes": 57371,
+        "sha256": "28179e6b8ed778518be464f165c601e11c04ea8173d4f1632833864602230287"
+      },
+      "removedMember": "lib/libjli.so",
+      "misplacedMember": "lib/jli/libjli.so"
+    }
+  ],
+  "positiveOriginalInputsAccepted": true,
+  "originalEvidenceAfter": {
+    "files": 679,
+    "bytes": 294483247,
+    "canonicalInventorySha256": "6a4685d1baab2dceb0373028e7cd6ab249d658519ab5ec4b599cb31e48fa28f4"
+  },
+  "originalEvidenceUnchanged": true,
+  "verifierUnchanged": true
+}

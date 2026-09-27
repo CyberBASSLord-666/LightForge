@@ -1,0 +1,16 @@
+cpu_all: Frame-MN10 on exact first committed five-second chunk
+cpu_all: GAME Large, eight diffusion steps
+{"variant":"cpu_all","notes":25,"fusedNotes":25,"phrases":1,"executions":{"frameMn10":1,"encoder":1,"dur2bd":1,"segmenter":8,"bd2dur":1,"estimator":1}}
+
+cuda_basic: Frame-MN10 on exact first committed five-second chunk
+cuda_basic: GAME Large, eight diffusion steps
+{"variant":"cuda_basic","notes":25,"fusedNotes":25,"phrases":1,"executions":{"frameMn10":1,"encoder":1,"dur2bd":1,"segmenter":8,"bd2dur":1,"estimator":1}}
+
+{
+  "status": "EXCERPT_SENSITIVITY_PASS",
+  "sensitivityPassed": true,
+  "qualityApproved": false,
+  "target75Proven": false,
+  "errors": []
+}
+

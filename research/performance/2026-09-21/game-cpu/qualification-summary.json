@@ -1,0 +1,153 @@
+{
+  "schema": "lightforge.game-accelerator-experiment.v1",
+  "createdUtc": "2026-09-21T04:50:57.247583+00:00",
+  "status": "NUMERICAL_EQUIVALENCE_UNPROVEN",
+  "measured": false,
+  "qualityApproved": false,
+  "target75Proven": false,
+  "wholeSongSpeedupProven": false,
+  "fullVocalStageSpeedupProven": false,
+  "androidSpeedupProven": false,
+  "releaseAuthorized": false,
+  "scope": "One source-bound original GAME passage; single diagnostic observations only; excludes classification, vocal detail/fusion, network, queueing and Android.",
+  "inputProvenance": {
+    "schema": "lightforge.game-passage-input.v1",
+    "pcmSHA256": "a75b3b8d59c87d428e38e45db5f54ad8d2b1613fe79ee07c2595fecbf9215274",
+    "sourceSHA256": "33f07d502ba19832b62b97d8fb4a11354e81310264bd885d7a06438228773650",
+    "sourceSamples": 2822400,
+    "passageIndex": 0,
+    "firstSample": 0,
+    "lastSample": 617400,
+    "sampleRate": 44100,
+    "seed": 2025,
+    "language": 0,
+    "derivation": "First production GAME core/context window of the entire shipped public demo; original wav-reader stereo44100 then Float32 channel mean, without normalization. Mixed audio, not a separated vocal stem.",
+    "sourceFile": "glass-castle.wav",
+    "separationApplied": false,
+    "wavReaderSha256": "6cd0a40392617cc020f2ec4f87952f165e070c8c17bc4aa3b36b212823d897d4"
+  },
+  "inputProvenanceSha256": "a51364851b6e1fc02492104f19cbee203434555a548b160889ac7583cd05d8da",
+  "modelManifestSha256": "51e172cfaa967d9e2518f01f508a64d49cd283d23ae8e8456af9c6e76eeb4f97",
+  "sourceHashes": {
+    "android/src/com/cyberbasslord/lightforge/NativeGame.java": "a1bb68a4930b5acd74f7fdc2d1d105f1d7f5c9974f11514872f47672b8736369",
+    "tools/game_benchmark/GameAcceleratorCapture.java": "85e88098fe1521a32911fd4a07e402ad35521ad926c9f7b26c4365f9b6899ca2",
+    "tools/game_benchmark/GameAcceleratorRunner.java": "5a017de62d00fd8f08999542c3df34e3cc3a8e07712fdaf7de94343fe56c786c",
+    "tools/benchmark_game_accelerator.py": "3e4c6f5b7fc36205daa70052223f202d8fffeba466cc726e0cebfba4bacbdd50",
+    "tools/game_benchmark/compare.py": "921d785a9d185f449e88998f119c8a083433039adc62aee7d516e24f648c1b4b",
+    "tools/benchmark_deux_accelerator.py": "0c19caa398c6fb1e1be121d359219074e71879979105d4172fbcf360906c9f0a",
+    "tools/profile_deux_operators.py": "9a4e189d899a2f5c3c0e92df64ef4e1f3316ef422d53216d92b983e221c235d6",
+    "tools/benchmark_deux_execution.py": "2fdeceb1fd4fd275b31338aeff6be6a5e53afb741c15de5dc020f65cbed72f3f",
+    "android/native-runtime.json": "e3ea568b3a8485235f23a59cd787466cdcbbfcaa54ac56df3ce040d29fcb2a94",
+    "web/analysis/models/game/manifest.json": "51e172cfaa967d9e2518f01f508a64d49cd283d23ae8e8456af9c6e76eeb4f97"
+  },
+  "dependencyHashes": {
+    "test-json.jar": "c243f45f9590c12694a4142ed3f07fc70dfb71e4daebd05ae234bf92a2da92a6",
+    "android.jar": "4566663c3876e022b4fa4ced8c8697c4ab1688267f090114fd92d027b32e619b",
+    "onnxruntime-1.25.1.jar": "749793ebed63743fec853d093da7987a86ea5cd592d54fba898cd3233100c381"
+  },
+  "variants": [
+    "cpu_all",
+    "cpu_basic"
+  ],
+  "modes": [
+    "plain",
+    "captured",
+    "profiled"
+  ],
+  "cudaOptions": {
+    "use_tf32": "0",
+    "do_copy_in_default_stream": "1",
+    "enable_cuda_graph": "0",
+    "enable_skip_layer_norm_strict_mode": "1"
+  },
+  "observerComparisonsPassed": true,
+  "inputsRecheckedAfterQualification": true,
+  "rawOutputsByteIdenticalAcrossVariants": false,
+  "observerScope": "Plain/capture compares final unrounded notes; capture/profile compares every raw tensor and final note. Raw tensors are unobserved in plain production snapshots.",
+  "sourceCommitVerifiedAgainstAllBoundFiles": "d9b42bb79145cfe81367fd70e2ca0ff7f4d52c12",
+  "primaryReceiptBytes": 129162,
+  "primaryReceiptSha256": "140b3d12619ed10c56fa70b9dd236f4484721a9162e8df7473c18fbdabc453ed",
+  "compiledAndOutputArtifactsRechecked": 140,
+  "runs": [
+    {
+      "variant": "cpu_all",
+      "mode": "plain",
+      "receipt": "cpu_all_plain/output/receipt.json",
+      "receiptSha256": "1d7c96eb8beff3e31fb49d9dbf61e2c995e6863532a71000700c0bac2e3c5391",
+      "wallNanos": 12745632280,
+      "capturedGraphInferenceSeconds": null,
+      "processWallIncludingStartupAndInspectionNanos": 12814952393,
+      "timingEligible": false,
+      "noteCount": 21
+    },
+    {
+      "variant": "cpu_all",
+      "mode": "captured",
+      "receipt": "cpu_all_captured/output/receipt.json",
+      "receiptSha256": "2149324d82f860d3b335f31200d555f3f9512af0398122c858258cc736e1e179",
+      "wallNanos": 12249681372,
+      "capturedGraphInferenceSeconds": 9.05504387,
+      "processWallIncludingStartupAndInspectionNanos": 12327365398,
+      "timingEligible": false,
+      "noteCount": 21
+    },
+    {
+      "variant": "cpu_all",
+      "mode": "profiled",
+      "receipt": "cpu_all_profiled/output/receipt.json",
+      "receiptSha256": "b9e3b2a23741aeac2d8c89c67f4a1d28c6fffe7a7c8e5d5fcfb4332c1fb421e3",
+      "wallNanos": 11570779483,
+      "capturedGraphInferenceSeconds": 8.83915187,
+      "processWallIncludingStartupAndInspectionNanos": 11643868033,
+      "timingEligible": false,
+      "noteCount": 21
+    },
+    {
+      "variant": "cpu_basic",
+      "mode": "plain",
+      "receipt": "cpu_basic_plain/output/receipt.json",
+      "receiptSha256": "d63e335c4dd4a5955860fad37cca25caa9c23da2da50d816344e3a9c13d50833",
+      "wallNanos": 13118278000,
+      "capturedGraphInferenceSeconds": null,
+      "processWallIncludingStartupAndInspectionNanos": 13185837092,
+      "timingEligible": false,
+      "noteCount": 21
+    },
+    {
+      "variant": "cpu_basic",
+      "mode": "captured",
+      "receipt": "cpu_basic_captured/output/receipt.json",
+      "receiptSha256": "ed09a09b187077315e9cfa5e82d09e20e3eebadd8052751ac5d70a6bcf2066fc",
+      "wallNanos": 12765739111,
+      "capturedGraphInferenceSeconds": 10.185883111999999,
+      "processWallIncludingStartupAndInspectionNanos": 12854564540,
+      "timingEligible": false,
+      "noteCount": 21
+    },
+    {
+      "variant": "cpu_basic",
+      "mode": "profiled",
+      "receipt": "cpu_basic_profiled/output/receipt.json",
+      "receiptSha256": "5c53cce37260ae33851857508cb08f9942153d5dafcc3ed854694d109e3d5342",
+      "wallNanos": 13114196741,
+      "capturedGraphInferenceSeconds": 10.319936087,
+      "processWallIncludingStartupAndInspectionNanos": 13180688087,
+      "timingEligible": false,
+      "noteCount": 21
+    }
+  ],
+  "crossVariantNoteDiagnostics": [
+    {
+      "reference": "cpu_all",
+      "candidate": "cpu_basic",
+      "exactParity": false,
+      "unroundedNotesIdentical": false,
+      "noteDiagnostics": {
+        "sameCount": true,
+        "boundariesIdentical": true,
+        "maxAcceptedPitchDifferenceMidi": 7.62939453125e-06
+      }
+    }
+  ],
+  "gpuInferenceExecuted": false
+}

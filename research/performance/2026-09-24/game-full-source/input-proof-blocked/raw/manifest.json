@@ -1,0 +1,72 @@
+{
+  "schema": "lightforge.evidence-archive-parts.v1",
+  "archiveName": "20260924T042656Z-game-full-source-952fe51b.zip",
+  "archiveBytes": 7709572,
+  "archiveSha256": "c31fc60e69f173bce2052666a7db883482fa63ad828aeb9c0515fc15f83109b5",
+  "status": "BLOCKED_OR_REJECTED",
+  "driverStatus": "BLOCKED_OR_REJECTED",
+  "publicFixtureOnly": true,
+  "qualityApproved": false,
+  "target75Proven": false,
+  "benchmarkTimingAdmitted": false,
+  "releaseAuthorized": false,
+  "executionSourceCommit": "3797783e703738d28af1df9b722f5f4e886b99f2",
+  "executionSourceTree": "47fa69218b35ff8e1644e123ee8170983a884f8b",
+  "parts": [
+    {
+      "file": "evidence.zip.part000",
+      "bytes": 750000,
+      "sha256": "c97470c68c53fbf5ec7df92451f89c21e346b5d0659fbe14f3b2e9e623b42a28"
+    },
+    {
+      "file": "evidence.zip.part001",
+      "bytes": 750000,
+      "sha256": "c551ba02f92e770b12610ab3624055bb99aa83c39dc8db4099d0be6ac042a631"
+    },
+    {
+      "file": "evidence.zip.part002",
+      "bytes": 750000,
+      "sha256": "82375aebbac624fb8868c2961fd8924110f9aaa92d81c5ae33661302b92c787c"
+    },
+    {
+      "file": "evidence.zip.part003",
+      "bytes": 750000,
+      "sha256": "465d4df88cefb7db6249326fb16cb355e8205c246ecc17caca6611f2d39d85f0"
+    },
+    {
+      "file": "evidence.zip.part004",
+      "bytes": 750000,
+      "sha256": "7a710472472a922fd054207781c7fb0f17024f54f9d1893d3cca81aea1ae1dd9"
+    },
+    {
+      "file": "evidence.zip.part005",
+      "bytes": 750000,
+      "sha256": "d083ea0f4c2fe9d809a2353c3a33cc32d485cb9715e15e6dae0f885e2bac3493"
+    },
+    {
+      "file": "evidence.zip.part006",
+      "bytes": 750000,
+      "sha256": "2e7e6b235ee32e092ceb4b88a5eab9461cdfd029e802f89d0db8f5a152ddcf5e"
+    },
+    {
+      "file": "evidence.zip.part007",
+      "bytes": 750000,
+      "sha256": "0d9417587017922aa0ae3182a8f3075a5b03233f03a07e0233dc5150c983a132"
+    },
+    {
+      "file": "evidence.zip.part008",
+      "bytes": 750000,
+      "sha256": "6b21cec30c9ead5f9fe457743360cafa937712be4ad27603731189ba21de4711"
+    },
+    {
+      "file": "evidence.zip.part009",
+      "bytes": 750000,
+      "sha256": "ab9aeb89f73ae56eabc1def868ec68d4e38dd6d9cccc102bf6d2b395a99e7bf6"
+    },
+    {
+      "file": "evidence.zip.part010",
+      "bytes": 209572,
+      "sha256": "3e653b1740e2c391b92d9009936a853018b46553eadc28554158ec4ce7aba947"
+    }
+  ]
+}

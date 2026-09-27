@@ -1,0 +1,127 @@
+{
+  "schema": "lightforge.evidence-archive-parts.v1",
+  "archiveName": "LightForge-GAME-T4-repeatability-evidence-2026-09-24.zip",
+  "archiveBytes": 16860558,
+  "archiveSha256": "e0c8d239a91286aa8c7247efe4e99d2b43f2ea3bc9f61517146c96dd437cb50a",
+  "status": "REPEATABILITY_SCREEN_COMPLETE",
+  "publicFixtureOnly": true,
+  "qualityApproved": false,
+  "target75Proven": false,
+  "parts": [
+    {
+      "file": "evidence.zip.part000",
+      "bytes": 750000,
+      "sha256": "cda62626f82b692ca8a39038e46e0248b163c91be4551e17002a507d2491d754"
+    },
+    {
+      "file": "evidence.zip.part001",
+      "bytes": 750000,
+      "sha256": "b3b78c23e7de28b3af104a47d3120813cc9da82afebf88e7fc44810197bdff25"
+    },
+    {
+      "file": "evidence.zip.part002",
+      "bytes": 750000,
+      "sha256": "1c053467558f52dcde58e85bcef3fa862683668dcf5664746f51ffdbd4daf80e"
+    },
+    {
+      "file": "evidence.zip.part003",
+      "bytes": 750000,
+      "sha256": "a516939dd467e9f978e720846754189de84b07032b4e89960f707ef828d1de15"
+    },
+    {
+      "file": "evidence.zip.part004",
+      "bytes": 750000,
+      "sha256": "60a13855575daa17bf40ca418c3b834986080f80df62c9e005729553cd56664f"
+    },
+    {
+      "file": "evidence.zip.part005",
+      "bytes": 750000,
+      "sha256": "fe29e28ed195ec894b094a1971f5782a31ff902ffc956b1b7fefc038dbed7a77"
+    },
+    {
+      "file": "evidence.zip.part006",
+      "bytes": 750000,
+      "sha256": "c2afa04e73dfa10c2634766c720134f30b598dda64f94a1d847b5ebfc6e68121"
+    },
+    {
+      "file": "evidence.zip.part007",
+      "bytes": 750000,
+      "sha256": "0f189fd31d6bb7b06ae9d832f74c248342749935b14d6cabd705ac6102c873c1"
+    },
+    {
+      "file": "evidence.zip.part008",
+      "bytes": 750000,
+      "sha256": "3ab2ca774992f6d20469a2bcf73af2603c6fbace6ede128979bee33fb23f94f0"
+    },
+    {
+      "file": "evidence.zip.part009",
+      "bytes": 750000,
+      "sha256": "9e876f6e69bc7fc7f4ce583b2ac7004010bdcbb39c29cc7528b9d6db6dace680"
+    },
+    {
+      "file": "evidence.zip.part010",
+      "bytes": 750000,
+      "sha256": "434531075d85059d8881d5f46ba6b3b6b4044081776b6584f43d016292687928"
+    },
+    {
+      "file": "evidence.zip.part011",
+      "bytes": 750000,
+      "sha256": "49936df79b420c2dc9ba337620a750b4d30f91a0b59deae13747cb1d2f5bf7da"
+    },
+    {
+      "file": "evidence.zip.part012",
+      "bytes": 750000,
+      "sha256": "0f066759ff131208a5585f6ec07eb3cb887b43ae76337847b748b12954027de9"
+    },
+    {
+      "file": "evidence.zip.part013",
+      "bytes": 750000,
+      "sha256": "3ecc63354192a6e5aebeb2a7b3da7162d9ab90fa9a5dca6dd69b2b1d5957b151"
+    },
+    {
+      "file": "evidence.zip.part014",
+      "bytes": 750000,
+      "sha256": "8b21aa5dc1d29f99bd9f8201c8f1a6dc47c02aa2768acb0959b44add4fce654e"
+    },
+    {
+      "file": "evidence.zip.part015",
+      "bytes": 750000,
+      "sha256": "da10144836830a58b957fa2e6b954872642fb821b3e969afefb7a72577d8c286"
+    },
+    {
+      "file": "evidence.zip.part016",
+      "bytes": 750000,
+      "sha256": "29e034a5cfc1d54720fe27c3d3a9c52e4a77f53510e4faa714a253cf0dcaf539"
+    },
+    {
+      "file": "evidence.zip.part017",
+      "bytes": 750000,
+      "sha256": "9b55d2a866aa018cc8fbe33bfc80f3a6ab2ff7f59fd8a4c42abd0052b6b9f55a"
+    },
+    {
+      "file": "evidence.zip.part018",
+      "bytes": 750000,
+      "sha256": "e67120412c3ffe0283d009dcc08c5ec0207f3cae4cde183db47dc24d8cffdcb2"
+    },
+    {
+      "file": "evidence.zip.part019",
+      "bytes": 750000,
+      "sha256": "b0b3ad2c7905b818d044bafbbda95ed53bbc4162e1b91b31a3f072221cb64dac"
+    },
+    {
+      "file": "evidence.zip.part020",
+      "bytes": 750000,
+      "sha256": "9eb54a026422a22acd3287111b8dcdfccd828ebc317a8184cb45e2afdb12485b"
+    },
+    {
+      "file": "evidence.zip.part021",
+      "bytes": 750000,
+      "sha256": "e55ce0c7b77b28d320c374348ba047dcb16dac3f71869161bc1a7cae8bd3aa51"
+    },
+    {
+      "file": "evidence.zip.part022",
+      "bytes": 360558,
+      "sha256": "d400fd4ac18cd3b35d74c17d8815bfc79c8b3129d17e6a98a44ca62c158632e5"
+    }
+  ]
+}

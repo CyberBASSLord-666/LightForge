@@ -1,0 +1,209 @@
+{
+  "rows": [
+    {
+      "root": "/workspace/scratch/b9f08ad0c73c/move-probe-c02f7d3d63/two-part",
+      "phase": "first_half_written_open",
+      "index": 0,
+      "timeNs": 1790354843916112064,
+      "files": {
+        "sample-0.partial": {
+          "bytes": 2293200,
+          "sha256": "ba1c520135dc123aca2f52410285e1c28044fc02e723c4837bb749c32fbd5928",
+          "mtimeNs": 1790354843907317941,
+          "ctimeNs": 1790354843907317941
+        }
+      }
+    },
+    {
+      "root": "/tmp/lightforge-move-probe-c02f7d3d63/two-part",
+      "phase": "first_half_written_open",
+      "index": 0,
+      "timeNs": 1790354843923343674,
+      "files": {
+        "sample-0.partial": {
+          "bytes": 2293200,
+          "sha256": "ba1c520135dc123aca2f52410285e1c28044fc02e723c4837bb749c32fbd5928",
+          "mtimeNs": 1790354843916260126,
+          "ctimeNs": 1790354843916260126
+        }
+      }
+    },
+    {
+      "root": "/workspace/scratch/b9f08ad0c73c/move-probe-c02f7d3d63/two-part",
+      "phase": "immediately_after_replace",
+      "index": 0,
+      "timeNs": 1790354853929425025,
+      "files": {
+        "sample-0.bin": {
+          "bytes": 4586400,
+          "sha256": "95a239cb564bb209191e6cb8bd7a325065a2bd9850f11fed6ab02741e38f53d4",
+          "mtimeNs": 1790354853922375262,
+          "ctimeNs": 1790354853922375262
+        }
+      }
+    },
+    {
+      "root": "/tmp/lightforge-move-probe-c02f7d3d63/two-part",
+      "phase": "immediately_after_replace",
+      "index": 0,
+      "timeNs": 1790354853933852618,
+      "files": {
+        "sample-0.bin": {
+          "bytes": 4586400,
+          "sha256": "95a239cb564bb209191e6cb8bd7a325065a2bd9850f11fed6ab02741e38f53d4",
+          "mtimeNs": 1790354853926375327,
+          "ctimeNs": 1790354853926375327
+        }
+      }
+    },
+    {
+      "root": "/workspace/scratch/b9f08ad0c73c/move-probe-c02f7d3d63/two-part",
+      "phase": "ten_seconds_after_replace",
+      "index": 0,
+      "timeNs": 1790354863937687898,
+      "files": {
+        "sample-0.bin": {
+          "bytes": 4586400,
+          "sha256": "95a239cb564bb209191e6cb8bd7a325065a2bd9850f11fed6ab02741e38f53d4",
+          "mtimeNs": 1790354853922375262,
+          "ctimeNs": 1790354853922375262
+        }
+      }
+    },
+    {
+      "root": "/tmp/lightforge-move-probe-c02f7d3d63/two-part",
+      "phase": "ten_seconds_after_replace",
+      "index": 0,
+      "timeNs": 1790354863940899366,
+      "files": {
+        "sample-0.bin": {
+          "bytes": 4586400,
+          "sha256": "95a239cb564bb209191e6cb8bd7a325065a2bd9850f11fed6ab02741e38f53d4",
+          "mtimeNs": 1790354853926375327,
+          "ctimeNs": 1790354853926375327
+        }
+      }
+    },
+    {
+      "root": "/workspace/scratch/b9f08ad0c73c/move-probe-c02f7d3d63/two-part",
+      "phase": "first_half_written_open",
+      "index": 1,
+      "timeNs": 1790354863951725346,
+      "files": {
+        "sample-1.partial": {
+          "bytes": 2293200,
+          "sha256": "75cbed1d645302c28f66ebabfc2f66bd537edb81cdfb246546e36cf79e920c6e",
+          "mtimeNs": 1790354863941102010,
+          "ctimeNs": 1790354863941102010
+        },
+        "sample-0.bin": {
+          "bytes": 4586400,
+          "sha256": "95a239cb564bb209191e6cb8bd7a325065a2bd9850f11fed6ab02741e38f53d4",
+          "mtimeNs": 1790354853922375262,
+          "ctimeNs": 1790354853922375262
+        }
+      }
+    },
+    {
+      "root": "/tmp/lightforge-move-probe-c02f7d3d63/two-part",
+      "phase": "first_half_written_open",
+      "index": 1,
+      "timeNs": 1790354863962681032,
+      "files": {
+        "sample-1.partial": {
+          "bytes": 2293200,
+          "sha256": "75cbed1d645302c28f66ebabfc2f66bd537edb81cdfb246546e36cf79e920c6e",
+          "mtimeNs": 1790354863951877635,
+          "ctimeNs": 1790354863951877635
+        },
+        "sample-0.bin": {
+          "bytes": 4586400,
+          "sha256": "95a239cb564bb209191e6cb8bd7a325065a2bd9850f11fed6ab02741e38f53d4",
+          "mtimeNs": 1790354853926375327,
+          "ctimeNs": 1790354853926375327
+        }
+      }
+    },
+    {
+      "root": "/workspace/scratch/b9f08ad0c73c/move-probe-c02f7d3d63/two-part",
+      "phase": "immediately_after_replace",
+      "index": 1,
+      "timeNs": 1790354873970137599,
+      "files": {
+        "sample-0.bin": {
+          "bytes": 4586400,
+          "sha256": "95a239cb564bb209191e6cb8bd7a325065a2bd9850f11fed6ab02741e38f53d4",
+          "mtimeNs": 1790354853922375262,
+          "ctimeNs": 1790354853922375262
+        },
+        "sample-1.bin": {
+          "bytes": 4586400,
+          "sha256": "faa13e325f654df59b180158bdd4fc419046bb1dd56c65ef272b44bc81fe4273",
+          "mtimeNs": 1790354873962702238,
+          "ctimeNs": 1790354873962702238
+        }
+      }
+    },
+    {
+      "root": "/tmp/lightforge-move-probe-c02f7d3d63/two-part",
+      "phase": "immediately_after_replace",
+      "index": 1,
+      "timeNs": 1790354873977906044,
+      "files": {
+        "sample-0.bin": {
+          "bytes": 4586400,
+          "sha256": "95a239cb564bb209191e6cb8bd7a325065a2bd9850f11fed6ab02741e38f53d4",
+          "mtimeNs": 1790354853926375327,
+          "ctimeNs": 1790354853926375327
+        },
+        "sample-1.bin": {
+          "bytes": 4586400,
+          "sha256": "faa13e325f654df59b180158bdd4fc419046bb1dd56c65ef272b44bc81fe4273",
+          "mtimeNs": 1790354873966702304,
+          "ctimeNs": 1790354873966702304
+        }
+      }
+    },
+    {
+      "root": "/workspace/scratch/b9f08ad0c73c/move-probe-c02f7d3d63/two-part",
+      "phase": "ten_seconds_after_replace",
+      "index": 1,
+      "timeNs": 1790354883985135494,
+      "files": {
+        "sample-0.bin": {
+          "bytes": 4586400,
+          "sha256": "95a239cb564bb209191e6cb8bd7a325065a2bd9850f11fed6ab02741e38f53d4",
+          "mtimeNs": 1790354853922375262,
+          "ctimeNs": 1790354853922375262
+        },
+        "sample-1.bin": {
+          "bytes": 4586400,
+          "sha256": "faa13e325f654df59b180158bdd4fc419046bb1dd56c65ef272b44bc81fe4273",
+          "mtimeNs": 1790354873962702238,
+          "ctimeNs": 1790354873962702238
+        }
+      }
+    },
+    {
+      "root": "/tmp/lightforge-move-probe-c02f7d3d63/two-part",
+      "phase": "ten_seconds_after_replace",
+      "index": 1,
+      "timeNs": 1790354883991483187,
+      "files": {
+        "sample-0.bin": {
+          "bytes": 4586400,
+          "sha256": "95a239cb564bb209191e6cb8bd7a325065a2bd9850f11fed6ab02741e38f53d4",
+          "mtimeNs": 1790354853926375327,
+          "ctimeNs": 1790354853926375327
+        },
+        "sample-1.bin": {
+          "bytes": 4586400,
+          "sha256": "faa13e325f654df59b180158bdd4fc419046bb1dd56c65ef272b44bc81fe4273",
+          "mtimeNs": 1790354873966702304,
+          "ctimeNs": 1790354873966702304
+        }
+      }
+    }
+  ],
+  "modelInferenceExecuted": false
+}

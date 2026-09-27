@@ -1,0 +1,66 @@
+{
+  "schema": "lightforge.game-notebook-input-proof.v1",
+  "publicAudioSha256": "33f07d502ba19832b62b97d8fb4a11354e81310264bd885d7a06438228773650",
+  "pcmSha256": "a75b3b8d59c87d428e38e45db5f54ad8d2b1613fe79ee07c2595fecbf9215274",
+  "totalSamples": 2822400,
+  "sampleRate": 44100,
+  "selectedPassage": 0,
+  "byteIdenticalToProductionReaderMix": true,
+  "plan": [
+    {
+      "index": 0,
+      "first": 0,
+      "last": 617400,
+      "samples": 617400,
+      "language": 0,
+      "seed": 2025
+    },
+    {
+      "index": 1,
+      "first": 441000,
+      "last": 1146600,
+      "samples": 705600,
+      "language": 0,
+      "seed": 106754
+    },
+    {
+      "index": 2,
+      "first": 970200,
+      "last": 1675800,
+      "samples": 705600,
+      "language": 0,
+      "seed": 211483
+    },
+    {
+      "index": 3,
+      "first": 1499400,
+      "last": 2205000,
+      "samples": 705600,
+      "language": 0,
+      "seed": 316212
+    },
+    {
+      "index": 4,
+      "first": 2028600,
+      "last": 2734200,
+      "samples": 705600,
+      "language": 0,
+      "seed": 420941
+    },
+    {
+      "index": 5,
+      "first": 2557800,
+      "last": 2822400,
+      "samples": 264600,
+      "language": 0,
+      "seed": 525670
+    }
+  ],
+  "planOnly": true,
+  "modelInferenceExecuted": false,
+  "qualityApproved": false,
+  "sourceHashes": {
+    "web/analysis/wav-reader.js": "6cd0a40392617cc020f2ec4f87952f165e070c8c17bc4aa3b36b212823d897d4",
+    "web/analysis/game.js": "a4225b832bb8cee4d382b01b8753266b426d2a75be49515dc58bbb12e5a03b75"
+  }
+}

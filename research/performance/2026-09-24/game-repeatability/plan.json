@@ -1,0 +1,57 @@
+{
+  "schema": "lightforge.game-repeatability-plan.v1",
+  "sourceCommit": "8590ac4a67de4340857a96ffe38bae53d7d902b8",
+  "sourceTree": "c841bf18f91d3d04dd6daf7e886e2aa473ab8c70",
+  "harnessSha256": "0305734ab3102b375ae80b5d090cadaf68068541b84ced58cbf5466cd89403d9",
+  "createdUtc": "2026-09-24T01:42:43.941384+00:00",
+  "repo": "/content/lightforge-game-gpu-qualification/source-heavy-only-8590ac4",
+  "toolchain": "/content/lightforge-game-gpu-qualification/toolchain",
+  "models": "/content/lightforge-game-gpu-qualification/assets/game",
+  "cudaRoot": "/content/lightforge-game-gpu-qualification/toolchain/cuda-wheels",
+  "parentArtifactPins": {
+    "setup-receipt.json": "74900ec6dc94d27de5487efee2cc2a045e9c5d25170ead5357c76b2abe292aca",
+    "source-handoff.json": "83b5f5c7805c2542051b3df49f95b51d5da531f7f9cffeb75ff5bc784e65b537",
+    "parent-setup-receipt.json": "a92e864c73f5da16c9103291bc6057d73fd80dd1c70773c21220cf82f14b3926",
+    "input-provenance.json": "3bd1db1265dfd30a31bdc0fe4b92e5fe428404ccd45b2453a8221a1031760ffb",
+    "input-source-proof.json": "075a6cf2ae0c884ac14c8b9a5e6e67fb3f248091c043bb45468e0e34192ea8a9",
+    "public-demo-mixture-first14s.f32": "a75b3b8d59c87d428e38e45db5f54ad8d2b1613fe79ee07c2595fecbf9215274",
+    "parent-qualification-receipt.json": "ccd535a3b91715b47916ef10cf078701deb10e7809e83f5a2af5372115bdb418"
+  },
+  "matrix": [
+    {
+      "label": "A1",
+      "mode": "captured",
+      "deterministicCompute": false
+    },
+    {
+      "label": "B1",
+      "mode": "captured",
+      "deterministicCompute": true
+    },
+    {
+      "label": "A2",
+      "mode": "captured",
+      "deterministicCompute": false
+    },
+    {
+      "label": "B2",
+      "mode": "captured",
+      "deterministicCompute": true
+    },
+    {
+      "label": "Bplain",
+      "mode": "plain",
+      "deterministicCompute": true
+    },
+    {
+      "label": "Bprofiled",
+      "mode": "profiled",
+      "deterministicCompute": true
+    }
+  ],
+  "outerTimeoutSeconds": 600,
+  "qualityApproved": false,
+  "target75Proven": false,
+  "measured": false,
+  "releaseAuthorized": false
+}

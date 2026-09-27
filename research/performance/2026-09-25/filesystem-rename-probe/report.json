@@ -1,0 +1,126 @@
+{
+  "schema": "lightforge.filesystem-rename-probe.v1",
+  "createdUtc": "2026-09-25T16:48:51.917773+00:00",
+  "result": "PARTIAL_RESURRECTION_NOT_REPRODUCED",
+  "workspaceRoot": "/workspace/scratch/b9f08ad0c73c/move-probe-c02f7d3d63",
+  "tmpRoot": "/tmp/lightforge-move-probe-c02f7d3d63",
+  "tmpPersistedAcrossDistinctExecCalls": true,
+  "tmpVisibleToConcurrentExec": true,
+  "workspaceAndTmpSameObservedDevice": true,
+  "singleWriteRoundsPerRoot": 3,
+  "singleWritePayloadBytes": 1000003,
+  "twoPartRoundsPerRoot": 2,
+  "twoPartChunkBytes": 2293200,
+  "twoPartFinalBytes": 4586400,
+  "singleWriteSequence": "Create/write/flush/fsync; five-second pause; os.replace; ten-second observation pause.",
+  "twoPartSequence": "Create/write first chunk/flush; keep handle open for ten seconds; write second chunk/flush/fsync/close; os.replace; observe after ten seconds.",
+  "concurrentInspectionScope": "Separate exec calls observed both roots while the writer was running. The two-part inspection observed an open first-half partial for round 1 in both roots, before its later move. Inspection output remained tool output; retained writer receipts capture all immediate and ten-second states.",
+  "concurrentFirstHalfObservation": {
+    "round": 1,
+    "bytes": 2293200,
+    "sha256": "75cbed1d645302c28f66ebabfc2f66bd537edb81cdfb246546e36cf79e920c6e",
+    "workspaceObservedTimeNs": 1790354864569920531,
+    "tmpObservedTimeNs": 1790354864574813812
+  },
+  "finalInspection": [
+    {
+      "root": "/workspace/scratch/b9f08ad0c73c/move-probe-c02f7d3d63",
+      "device": 28,
+      "files": {
+        "sample-0.bin": {
+          "bytes": 1000003,
+          "sha256": "c9a3e84c2ce7c82010baa175ea93377234d51e8fea7ca19ebd7bd121885cfce6"
+        },
+        "sample-1.bin": {
+          "bytes": 1000003,
+          "sha256": "08518a0cac33f0adb8612fc9e94a0a1bfb406d17df914ba8d8c6a4b08f3d25ca"
+        },
+        "sample-2.bin": {
+          "bytes": 1000003,
+          "sha256": "64f6b644806281162f6f3366ca90bafae08734e4c4de3584f02f752bb5991683"
+        }
+      },
+      "partialFiles": []
+    },
+    {
+      "root": "/tmp/lightforge-move-probe-c02f7d3d63",
+      "device": 28,
+      "files": {
+        "sample-0.bin": {
+          "bytes": 1000003,
+          "sha256": "c9a3e84c2ce7c82010baa175ea93377234d51e8fea7ca19ebd7bd121885cfce6"
+        },
+        "sample-1.bin": {
+          "bytes": 1000003,
+          "sha256": "08518a0cac33f0adb8612fc9e94a0a1bfb406d17df914ba8d8c6a4b08f3d25ca"
+        },
+        "sample-2.bin": {
+          "bytes": 1000003,
+          "sha256": "64f6b644806281162f6f3366ca90bafae08734e4c4de3584f02f752bb5991683"
+        }
+      },
+      "partialFiles": []
+    },
+    {
+      "root": "/workspace/scratch/b9f08ad0c73c/move-probe-c02f7d3d63/two-part",
+      "device": 28,
+      "files": {
+        "sample-0.bin": {
+          "bytes": 4586400,
+          "sha256": "95a239cb564bb209191e6cb8bd7a325065a2bd9850f11fed6ab02741e38f53d4"
+        },
+        "sample-1.bin": {
+          "bytes": 4586400,
+          "sha256": "faa13e325f654df59b180158bdd4fc419046bb1dd56c65ef272b44bc81fe4273"
+        }
+      },
+      "partialFiles": []
+    },
+    {
+      "root": "/tmp/lightforge-move-probe-c02f7d3d63/two-part",
+      "device": 28,
+      "files": {
+        "sample-0.bin": {
+          "bytes": 4586400,
+          "sha256": "95a239cb564bb209191e6cb8bd7a325065a2bd9850f11fed6ab02741e38f53d4"
+        },
+        "sample-1.bin": {
+          "bytes": 4586400,
+          "sha256": "faa13e325f654df59b180158bdd4fc419046bb1dd56c65ef272b44bc81fe4273"
+        }
+      },
+      "partialFiles": []
+    }
+  ],
+  "retainedArtifacts": {
+    "single-write-observations.json": {
+      "bytes": 9023,
+      "sha256": "3c3f6a077f03d7f1213288e31b9eb2686b6d0cc4282a0ba92e288a3270c1e48d"
+    },
+    "single_write_probe.py": {
+      "bytes": 1235,
+      "sha256": "56de1be4f427b4b5845037c734d02562a8a5abd70066e65cb2bc47ff0ee4555a"
+    },
+    "two-part-observations.json": {
+      "bytes": 6805,
+      "sha256": "9700afedbb32385cb0c225c43c990cf27ae35d9edd04bdb87b3b742621623145"
+    },
+    "two_part_probe.py": {
+      "bytes": 1334,
+      "sha256": "78b724caa0766396404d6ad1741d2e463fe079ebb668e660b0344e8e8c93c29f"
+    }
+  },
+  "provedWorkaround": null,
+  "safeConclusion": "Do not treat /tmp as isolated per-exec storage. The bounded probes do not reproduce or explain the failed Deux evidence; no gate may be relaxed. A location-only change is not a proven remedy.",
+  "limitations": [
+    "Python os.replace was exercised, not Java Files.move or native model execution.",
+    "Only five small moves per root were tested; long-running inference and all workspace synchronization conditions were not replicated.",
+    "Cross-call persistence and equal device identifiers do not characterize every filesystem synchronization mechanism."
+  ],
+  "applicationSourcesChanged": false,
+  "failedInferenceEvidenceChanged": false,
+  "modelInferenceExecuted": false,
+  "qualityApproved": false,
+  "target75Proven": false,
+  "releaseAuthorized": false
+}

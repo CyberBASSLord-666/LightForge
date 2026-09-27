@@ -1,0 +1,119 @@
+{
+  "schema": "lightforge.deux-downstream-setup.v1",
+  "sourceCommit": "8590ac4a67de4340857a96ffe38bae53d7d902b8",
+  "sourceTree": "c841bf18f91d3d04dd6daf7e886e2aa473ab8c70",
+  "bindings": {
+    "receipt": {
+      "bytes": 570008,
+      "sha256": "c69c686bfc312cb77443c70fd2ebb957ce668b781f543cf7bd3debafd6e6c025"
+    },
+    "outputs": {
+      "cpu_all": {
+        "bytes": 4586400,
+        "sha256": "b5db5b5f8bcc576e1af22b0a9fca837dc9e809195ada006af1581458283578b7"
+      },
+      "cuda_basic": {
+        "bytes": 4586400,
+        "sha256": "d666eca46114144ea4445947b5699916a068fe2402e68183e7ab7a5151a6d98e"
+      }
+    },
+    "audio": {
+      "bytes": 11289644,
+      "sha256": "33f07d502ba19832b62b97d8fb4a11354e81310264bd885d7a06438228773650"
+    },
+    "upstreamSetup": {
+      "bytes": 12392,
+      "sha256": "9702c5d5984059aba47f90337f18e5f631fdea20a3feef5954a33dbe4510c428"
+    },
+    "upstreamProcess": {
+      "bytes": 740,
+      "sha256": "46cec9f8a8d527dad851f7c57ae100437f2c9efb62666db2db414f7540ee4bcc"
+    },
+    "sourceSnapshot": {
+      "tools/compare_deux_downstream.cjs": "d1a4bf073d946d3f81d7d79e32842ec138c5c4510b809ddf6405ebc4307cb2ad",
+      "qa/release-2.3.2/mdx-downstream-compare.cjs": "c17e44bcc89ca3f2e257abb1c065369a1747d8bef2541d0cd00f36bc5c284605",
+      "web/analysis/ASSET_MANIFEST.json": "c0dc1d56b53cf7f316697d45f0a2cb5a63c4bf7068ba89829619cadfe46ff790",
+      "web/analysis/separator-deux.js": "6a37acd3fd3923f32249d9640462cc06768c41901ee000837e17f21205d22867",
+      "web/analysis/dsp.js": "f95357f71693a5df05e47c5baed5a15cca88bf5371d4b20dc51b3dbb6624fc06",
+      "web/analysis/stem-cache.js": "d464a6759188c19e83e9ea7b22fdcbfcdaaca99c06fea930f2fbe9306dcdd5fd",
+      "web/analysis/wav-reader.js": "6cd0a40392617cc020f2ec4f87952f165e070c8c17bc4aa3b36b212823d897d4",
+      "web/analysis/vocal.js": "3f4be80b6b3747a733fcddce1257e332fe20bde70f29fa8c6be0ef076a9bf72d",
+      "web/analysis/vocal-detail.js": "cd760d7a766d9a4ab0ac3a252a10f17a16a797b38e50b2d6712bc6adcd42713f",
+      "web/analysis/game.js": "a4225b832bb8cee4d382b01b8753266b426d2a75be49515dc58bbb12e5a03b75",
+      "web/analysis/worker.js": "0660d76f5e030e808cfafa2f987f6da4197f45e2415c3586f9a2313c5faab655",
+      "web/analysis/models/features.json": "8a9fb3bc88c3e2f35934dd0024f22458aa8d357e3e3946a6e2c6230d3886e278",
+      "web/analysis/models/vocal-model.json": "52093f26d0bfe3f04bbb1563b287fafe5e61aa57a61391ea643b04d97838ca7e",
+      "web/analysis/models/vocal-frontend.json": "72bdffced29bfdd6d1da77a4da2a2a4af1b2f839c71131d19dc9423db3d4732f",
+      "web/analysis/models/game/manifest.json": "51e172cfaa967d9e2518f01f508a64d49cd283d23ae8e8456af9c6e76eeb4f97",
+      "web/analysis/models/game/config.json": "4d62b6d058a820e981184ea6f04605d37659c4331ee01979eb14a14be08af890",
+      "web/analysis/models/deux/manifest.json": "6aebf45e6e7f6fa974f14fe47a252fc01f48da4815f40a1fdf10641a432529a9",
+      "tools/benchmark_deux_accelerator.py": "0c19caa398c6fb1e1be121d359219074e71879979105d4172fbcf360906c9f0a",
+      "tools/profile_deux_operators.py": "9a4e189d899a2f5c3c0e92df64ef4e1f3316ef422d53216d92b983e221c235d6",
+      "tools/benchmark_deux_execution.py": "2fdeceb1fd4fd275b31338aeff6be6a5e53afb741c15de5dc020f65cbed72f3f",
+      "tests/NativeDeuxExecutionBenchmark.java": "70eab8091070904493493bd94e7a6467a031628e0feb432055942cdd1bd1b0bb",
+      "android/src/com/cyberbasslord/lightforge/NativeDeux.java": "084fec27d1fad0b10db01a960c614d333bb8c049e712c3fc4524d66e6dc3dd37",
+      "android/src/com/cyberbasslord/lightforge/NativeDeuxTransform.java": "991b06501cfb88b904d0b714a525c389f169f00c231248b0e961b70f257e90b5",
+      "android/src/com/cyberbasslord/lightforge/NativeInferenceProfile.java": "aa1d6bd370d88a774792cb76b4a18604d3ab2bffba58ab382e9045cad071acc1",
+      "android/native-runtime.json": "e3ea568b3a8485235f23a59cd787466cdcbbfcaa54ac56df3ce040d29fcb2a94"
+    },
+    "assets": {
+      "web/analysis/models/game/bd2dur.onnx": {
+        "bytes": 4569,
+        "sha256": "6672d56b00f27a20e9bfaa92801c15e394bb520e49031d3ed2515b0a6cf27402"
+      },
+      "web/analysis/models/game/config.json": {
+        "bytes": 198,
+        "sha256": "4d62b6d058a820e981184ea6f04605d37659c4331ee01979eb14a14be08af890"
+      },
+      "web/analysis/models/game/dur2bd.onnx": {
+        "bytes": 2632,
+        "sha256": "49d10d1ea186e43c51fd2c51cedb01a3852d363f1c7056ae77df50f7e8dd0996"
+      },
+      "web/analysis/models/game/encoder.onnx": {
+        "bytes": 80398908,
+        "sha256": "fbda7df8791d5cafd02ed33c65f9926c5514c750278c27fb8a59259b4c1d7464"
+      },
+      "web/analysis/models/game/estimator.onnx": {
+        "bytes": 153459702,
+        "sha256": "0d4a6e13bf475f79967e252b401bb5f317aa6b96bbe6665d5f8b14b42b179926"
+      },
+      "web/analysis/models/game/segmenter.onnx": {
+        "bytes": 159935846,
+        "sha256": "9db605a2ad3c179e9c4e4ae5b970727006020c65936773c26b2cbc27d8ef892f"
+      },
+      "web/analysis/models/frame-mn10-singing.onnx": {
+        "bytes": 13620408,
+        "sha256": "edffe9cb2b1b9a540037063ac155a54a140d85177565c8b0d734fcfe17a1a88a"
+      },
+      "web/analysis/vendor/ort.wasm.min.js": {
+        "bytes": 49026,
+        "sha256": "e66568724f8848e57cc2a56e4bea3a5b86ce3ff81b2da11eac8ed7ab02b27bd4"
+      },
+      "web/analysis/vendor/ort-wasm-simd-threaded.wasm": {
+        "bytes": 11246032,
+        "sha256": "207d02be4591c156b0a98f024f3d58005b5b04c92274d759fb390338c63559ea"
+      },
+      "web/analysis/vendor/ort-wasm-simd-threaded.mjs": {
+        "bytes": 24618,
+        "sha256": "745eb7c0ce6f18a6aa521971b2877babc7ffb27eecb58ab3bc6e5ef4692672e8"
+      }
+    },
+    "node": {
+      "bytes": 121674800,
+      "sha256": "596b5144ff242737f1c1be6a5f0ccb3907dbba2482344143cb1a6898633402a9"
+    },
+    "nodeArchive": {
+      "sha256": "c0649af18e6a24f6fe5535a3e86b341dd49a8e71117c8b68bde973ef834f16f2",
+      "url": "https://nodejs.org/dist/v22.19.0/node-v22.19.0-linux-x64.tar.xz",
+      "checksumSource": "https://nodejs.org/en/blog/release/v22.19.0",
+      "version": "v22.19.0"
+    }
+  },
+  "immutableSnapshotPath": "/content/lightforge-game-gpu-qualification/source-20260924T022132Z-deux-downstream-6d762cd1",
+  "originalSourceUntouched": true,
+  "thresholdSource": "qa/release-2.3.2/mdx-downstream-compare.cjs",
+  "qualityApproved": false,
+  "target75Proven": false,
+  "releaseAuthorized": false,
+  "benchmarkTimingAdmitted": false
+}

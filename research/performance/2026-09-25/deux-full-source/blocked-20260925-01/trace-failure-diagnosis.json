@@ -1,0 +1,286 @@
+{
+  "schema": "lightforge.deux-trace-pool-failure-diagnosis.v1",
+  "failedRun": "deux-full-source-cpu-20260925-01",
+  "failurePassageIndex": 4,
+  "activeFileCount": 54,
+  "priorPassageIndex": 3,
+  "duplicatedPriorFiles": [
+    {
+      "name": "block-00-frequency_2026-09-25_10-20-36_894.json",
+      "bytes": 1335791,
+      "sha256": "e6874f9f7de4f9aeafea6e9e49966eeaee7de50ee4cdb5fe176f4f0ba33f2ad4",
+      "byteIdentical": true,
+      "originalMtimeNs": 1790353238247968413,
+      "duplicateMtimeNs": 1790353238247968413,
+      "duplicateCtimeNs": 1790353286052806791
+    },
+    {
+      "name": "block-00-time_2026-09-25_10-20-34_505.json",
+      "bytes": 2799260,
+      "sha256": "38425419ed91a83317d920c2954cb6f5970b6576b0dca9bf33063cc240dc3d0b",
+      "byteIdentical": true,
+      "originalMtimeNs": 1790353236883946352,
+      "duplicateMtimeNs": 1790353236883946352,
+      "duplicateCtimeNs": 1790353286052806791
+    },
+    {
+      "name": "block-01-frequency_2026-09-25_10-20-40_821.json",
+      "bytes": 1175469,
+      "sha256": "0234948d96b852b7eeb42246c2108d9cfe13eda3cca9e8d2484161e2b24294f7",
+      "byteIdentical": true,
+      "originalMtimeNs": 1790353242092030520,
+      "duplicateMtimeNs": 1790353242092030520,
+      "duplicateCtimeNs": 1790353286052806791
+    },
+    {
+      "name": "block-01-time_2026-09-25_10-20-38_261.json",
+      "bytes": 2580227,
+      "sha256": "ca49efe968e830e46274b966c525d74f50e2e0691139edc91ea39e74c3b1b0be",
+      "byteIdentical": true,
+      "originalMtimeNs": 1790353240812009822,
+      "duplicateMtimeNs": 1790353240812009822,
+      "duplicateCtimeNs": 1790353286052806791
+    },
+    {
+      "name": "block-02-frequency_2026-09-25_10-20-44_637.json",
+      "bytes": 1175315,
+      "sha256": "3d0ab63b7727cb3c134c45668d5080b03877d9b8ebc7bf29ee2fbca67276b599",
+      "byteIdentical": true,
+      "originalMtimeNs": 1790353245960093076,
+      "duplicateMtimeNs": 1790353245960093076,
+      "duplicateCtimeNs": 1790353286052806791
+    },
+    {
+      "name": "block-02-time_2026-09-25_10-20-42_103.json",
+      "bytes": 2580236,
+      "sha256": "041b031a4d138b6e3754e4e42d1014142ae3c26f9bf6806a03d89561f03de8a3",
+      "byteIdentical": true,
+      "originalMtimeNs": 1790353244628071533,
+      "duplicateMtimeNs": 1790353244628071533,
+      "duplicateCtimeNs": 1790353286052806791
+    },
+    {
+      "name": "block-03-frequency_2026-09-25_10-20-48_341.json",
+      "bytes": 1174859,
+      "sha256": "30a144b5cfbbe8e7e6bdf11ba2815b4daeac86628c075c43b991b671fa32b368",
+      "byteIdentical": true,
+      "originalMtimeNs": 1790353249524150825,
+      "duplicateMtimeNs": 1790353249524150825,
+      "duplicateCtimeNs": 1790353286052806791
+    },
+    {
+      "name": "block-03-time_2026-09-25_10-20-45_971.json",
+      "bytes": 2579644,
+      "sha256": "f70f36b1006a17a8966cdcc6712f6cadf9abc3cebf8239230cda18774b60a988",
+      "byteIdentical": true,
+      "originalMtimeNs": 1790353248332131436,
+      "duplicateMtimeNs": 1790353248332131436,
+      "duplicateCtimeNs": 1790353286052806791
+    },
+    {
+      "name": "block-04-frequency_2026-09-25_10-20-51_944.json",
+      "bytes": 1176117,
+      "sha256": "1c1371167c18c8cd4d8e61fb8d8e833eaa2a32e7bfe95f0ed9d28dd6b506da00",
+      "byteIdentical": true,
+      "originalMtimeNs": 1790353253484215678,
+      "duplicateMtimeNs": 1790353253484215678,
+      "duplicateCtimeNs": 1790353286052806791
+    },
+    {
+      "name": "block-04-time_2026-09-25_10-20-49_536.json",
+      "bytes": 2579971,
+      "sha256": "70a8aa713cc68f4b2678553dc778f3b0b08b4276b841b174b958a7c995315f83",
+      "byteIdentical": true,
+      "originalMtimeNs": 1790353251936190383,
+      "duplicateMtimeNs": 1790353251936190383,
+      "duplicateCtimeNs": 1790353286052806791
+    },
+    {
+      "name": "block-05-frequency_2026-09-25_10-20-55_934.json",
+      "bytes": 1175527,
+      "sha256": "fcd8c3aeca9a91ec4661a9ad32ea8422cd6475a0fed08815ab186e081518d887",
+      "byteIdentical": true,
+      "originalMtimeNs": 1790353257256276683,
+      "duplicateMtimeNs": 1790353257256276683,
+      "duplicateCtimeNs": 1790353286052806791
+    },
+    {
+      "name": "block-05-time_2026-09-25_10-20-53_494.json",
+      "bytes": 2579703,
+      "sha256": "06e04233bd7dca799915004a6a4a553a1e34a618e707446fb50a79db7136a796",
+      "byteIdentical": true,
+      "originalMtimeNs": 1790353255924255110,
+      "duplicateMtimeNs": 1790353255924255110,
+      "duplicateCtimeNs": 1790353286052806791
+    },
+    {
+      "name": "block-06-frequency_2026-09-25_10-20-59_833.json",
+      "bytes": 1175626,
+      "sha256": "58cfd36dfcab90b4dc3b48e4fe6b44cff5518e98f85017555ab8d5351bf07407",
+      "byteIdentical": true,
+      "originalMtimeNs": 1790353261184340897,
+      "duplicateMtimeNs": 1790353261184340897,
+      "duplicateCtimeNs": 1790353286052806791
+    },
+    {
+      "name": "block-06-time_2026-09-25_10-20-57_267.json",
+      "bytes": 2580177,
+      "sha256": "dea672091936c3ad7f027ae14f3fde5f8427ce2d97ec2518cf6b8691300f7437",
+      "byteIdentical": true,
+      "originalMtimeNs": 1790353259824318664,
+      "duplicateMtimeNs": 1790353259824318664,
+      "duplicateCtimeNs": 1790353286052806791
+    },
+    {
+      "name": "block-07-frequency_2026-09-25_10-21-03_445.json",
+      "bytes": 1175236,
+      "sha256": "6461d9c14270f6711c640e04ef0462a8757027e123f9b773db468041d3b4553d",
+      "byteIdentical": true,
+      "originalMtimeNs": 1790353264696397794,
+      "duplicateMtimeNs": 1790353264696397794,
+      "duplicateCtimeNs": 1790353286052806791
+    },
+    {
+      "name": "block-07-time_2026-09-25_10-21-01_196.json",
+      "bytes": 2579087,
+      "sha256": "9b78567c216d2b86d586d10a89af3a358f8460337d4025fdd2bc2cd322c85cd9",
+      "byteIdentical": true,
+      "originalMtimeNs": 1790353263436377400,
+      "duplicateMtimeNs": 1790353263436377400,
+      "duplicateCtimeNs": 1790353286052806791
+    },
+    {
+      "name": "block-08-frequency_2026-09-25_10-21-07_300.json",
+      "bytes": 1177114,
+      "sha256": "593bea5fc5ae29052ed472c030faf3b370af0ea41c2342da943cb5f3cdfe06b1",
+      "byteIdentical": true,
+      "originalMtimeNs": 1790353268656461943,
+      "duplicateMtimeNs": 1790353268656461943,
+      "duplicateCtimeNs": 1790353286052806791
+    },
+    {
+      "name": "block-08-time_2026-09-25_10-21-04_708.json",
+      "bytes": 2580326,
+      "sha256": "8c7a12c24bbb26dda7bec471b4d913c42d2e2abf04c132d4fc2fd6078e9c21a7",
+      "byteIdentical": true,
+      "originalMtimeNs": 1790353267288439780,
+      "duplicateMtimeNs": 1790353267288439780,
+      "duplicateCtimeNs": 1790353286052806791
+    },
+    {
+      "name": "block-09-frequency_2026-09-25_10-21-10_920.json",
+      "bytes": 1176882,
+      "sha256": "68aec7eb4e7eb3b7904168fc8c1d90cb0066382bc9b656685a44e312a1d38223",
+      "byteIdentical": true,
+      "originalMtimeNs": 1790353272244520070,
+      "duplicateMtimeNs": 1790353272244520070,
+      "duplicateCtimeNs": 1790353286052806791
+    },
+    {
+      "name": "block-09-time_2026-09-25_10-21-08_666.json",
+      "bytes": 2582605,
+      "sha256": "6387d48fd73b51b7155959791bc7da729502128a07238b6e03fc43b544026cae",
+      "byteIdentical": true,
+      "originalMtimeNs": 1790353270912498491,
+      "duplicateMtimeNs": 1790353270912498491,
+      "duplicateCtimeNs": 1790353286052806791
+    },
+    {
+      "name": "block-10-frequency_2026-09-25_10-21-14_595.json",
+      "bytes": 1176725,
+      "sha256": "2573218670fcb29e5269f5dac18ee2ecef68ddc978cbfe73aa83e278c831ccb5",
+      "byteIdentical": true,
+      "originalMtimeNs": 1790353275856578438,
+      "duplicateMtimeNs": 1790353275856578438,
+      "duplicateCtimeNs": 1790353286052806791
+    },
+    {
+      "name": "block-10-time_2026-09-25_10-21-12_255.json",
+      "bytes": 2582708,
+      "sha256": "779f23010e9e990638f7612dfe098ff81990e9c190840e7eceee340b3f3e43f7",
+      "byteIdentical": true,
+      "originalMtimeNs": 1790353274584557898,
+      "duplicateMtimeNs": 1790353274584557898,
+      "duplicateCtimeNs": 1790353286052806791
+    },
+    {
+      "name": "block-11-frequency_2026-09-25_10-21-18_103.json",
+      "bytes": 1177255,
+      "sha256": "b0536b3d68df0866f171efa9c34398e8778ce3d13f70527ce1ab9c689f1d5f79",
+      "byteIdentical": true,
+      "originalMtimeNs": 1790353279508637411,
+      "duplicateMtimeNs": 1790353279508637411,
+      "duplicateCtimeNs": 1790353286052806791
+    },
+    {
+      "name": "block-11-time_2026-09-25_10-21-15_866.json",
+      "bytes": 2582347,
+      "sha256": "fc4d843e94ca8ad72d8ce2830b2a24beb889b6176254efabda0612f87bc31df3",
+      "byteIdentical": true,
+      "originalMtimeNs": 1790353278092614545,
+      "duplicateMtimeNs": 1790353278092614545,
+      "duplicateCtimeNs": 1790353286052806791
+    },
+    {
+      "name": "front_2026-09-25_10-20-34_364.json",
+      "bytes": 441640,
+      "sha256": "e84e1c93f50a087280b7b9722c17bfb139b8d829e35bda5f081f9510ad98e81b",
+      "byteIdentical": true,
+      "originalMtimeNs": 1790353234495907650,
+      "duplicateMtimeNs": 1790353234359905446,
+      "duplicateCtimeNs": 1790353286052806791
+    },
+    {
+      "name": "head-0_2026-09-25_10-21-19_520.json",
+      "bytes": 6496253,
+      "sha256": "f0fd342c2747c9fa4a428e75aa40732665dd66389de6d9c4f8c6e9045b9b5dc2",
+      "byteIdentical": true,
+      "originalMtimeNs": 1790353281520669887,
+      "duplicateMtimeNs": 1790353281520669887,
+      "duplicateCtimeNs": 1790353286052806791
+    },
+    {
+      "name": "head-1_2026-09-25_10-21-21_696.json",
+      "bytes": 6496623,
+      "sha256": "934bcea1cbee1bf0587b0c69648ea7babe0654c66e472804e72ee8ecbf58a60c",
+      "byteIdentical": true,
+      "originalMtimeNs": 1790353283776706251,
+      "duplicateMtimeNs": 1790353281692672659,
+      "duplicateCtimeNs": 1790353286052806791
+    }
+  ],
+  "newCurrentFiles": [
+    "block-00-frequency_2026-09-25_10-21-26_798.json",
+    "block-00-time_2026-09-25_10-21-24_233.json",
+    "block-01-frequency_2026-09-25_10-21-30_660.json",
+    "block-01-time_2026-09-25_10-21-28_129.json",
+    "block-02-frequency_2026-09-25_10-21-34_502.json",
+    "block-02-time_2026-09-25_10-21-32_026.json",
+    "block-03-frequency_2026-09-25_10-21-38_191.json",
+    "block-03-time_2026-09-25_10-21-35_796.json",
+    "block-04-frequency_2026-09-25_10-21-41_886.json",
+    "block-04-time_2026-09-25_10-21-39_498.json",
+    "block-05-frequency_2026-09-25_10-21-45_981.json",
+    "block-05-time_2026-09-25_10-21-43_343.json",
+    "block-06-frequency_2026-09-25_10-21-49_893.json",
+    "block-06-time_2026-09-25_10-21-47_284.json",
+    "block-07-frequency_2026-09-25_10-21-53_534.json",
+    "block-07-time_2026-09-25_10-21-51_163.json",
+    "block-08-frequency_2026-09-25_10-21-57_060.json",
+    "block-08-time_2026-09-25_10-21-54_725.json",
+    "block-09-frequency_2026-09-25_10-22-00_812.json",
+    "block-09-time_2026-09-25_10-21-58_397.json",
+    "block-10-frequency_2026-09-25_10-22-04_663.json",
+    "block-10-time_2026-09-25_10-22-02_179.json",
+    "block-11-frequency_2026-09-25_10-22-08_316.json",
+    "block-11-time_2026-09-25_10-22-05_918.json",
+    "front_2026-09-25_10-21-24_083.json",
+    "head-0_2026-09-25_10-22-09_795.json",
+    "head-1_2026-09-25_10-22-11_913.json"
+  ],
+  "observation": "Active pool contains 27 byte-identical copies of previously committed passage-003 traces plus 27 current passage-004 traces. 25 of the prior-file copies retain their original nanosecond mtime; all copied prior files share one later ctime. Origin of the copied files is not established.",
+  "failedEvidenceChanged": false,
+  "modelInferenceExecuted": false,
+  "qualityApproved": false,
+  "target75Proven": false
+}

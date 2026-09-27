@@ -1,0 +1,3147 @@
+{
+  "schema": "lightforge.cold-session-overhead-analysis.v1",
+  "evidenceCommit": "d1c6a853fb5ee6df7cb4fa6f751988c66b5158a8",
+  "method": "Re-read digest-pinned preserved ZIPs and primary receipts; recompute named host events from every profile trace.",
+  "experiments": [
+    {
+      "experiment": "game-deterministic",
+      "pins": {
+        "archiveBytes": 30318186,
+        "archiveSha256": "7824b02e6f91c36574c27ff9dc7d34d8c0230cd47a88db96c00acf59d4aac66a",
+        "receiptSha256": "d4a144b779b886a3b675ae0dfbf3e43160d6b5a4a7da9084951c42a016a2dc33",
+        "sourceCommit": "9ca73bb8681434f6f2dc9ce1a00ce33531a04379",
+        "graphs": 5,
+        "calls": 12
+      },
+      "variants": [
+        {
+          "variant": "cpu_all",
+          "profiledPassageWallNanos": 31509314689,
+          "profiledProcessWallNanos": 31640650202,
+          "graphCount": 5,
+          "modelRunCount": 12,
+          "ortHostDurationUs": {
+            "model_loading_uri": 389688,
+            "session_initialization": 2923069,
+            "model_run": 26183781,
+            "SequentialExecutor::Execute": 26169829
+          },
+          "graphs": [
+            {
+              "graph": "bd2dur",
+              "traceFile": "20260924T015459Z-deterministic-3104f6fd/qualification/cpu_all_traces/bd2dur_2026-09-24_01-56-33_223.json",
+              "traceSha256": "6da1dff9319ae024c3d37a114d0d3f3f10aa396c39a372172acec2ce44c00fcd",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 1,
+                "model_run": 1
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 850,
+                "session_initialization": 1146,
+                "SequentialExecutor::Execute": 427,
+                "model_run": 455
+              }
+            },
+            {
+              "graph": "dur2bd",
+              "traceFile": "20260924T015459Z-deterministic-3104f6fd/qualification/cpu_all_traces/dur2bd_2026-09-24_01-56-32_500.json",
+              "traceSha256": "6114f3ec70d7c1336d6626898237b3aec1ac4559b7b7590bcd9573263885bf7e",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 1,
+                "model_run": 1
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 544,
+                "session_initialization": 837,
+                "SequentialExecutor::Execute": 333,
+                "model_run": 369
+              }
+            },
+            {
+              "graph": "encoder",
+              "traceFile": "20260924T015459Z-deterministic-3104f6fd/qualification/cpu_all_traces/encoder_2026-09-24_01-56-32_061.json",
+              "traceSha256": "6c21c1ce90a54ab8e293f8b51d6b4021ceef78baeaa6a62658ff8d69e613596b",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 1,
+                "model_run": 1
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 86717,
+                "session_initialization": 351496,
+                "SequentialExecutor::Execute": 2017418,
+                "model_run": 2017813
+              }
+            },
+            {
+              "graph": "estimator",
+              "traceFile": "20260924T015459Z-deterministic-3104f6fd/qualification/cpu_all_traces/estimator_2026-09-24_01-56-33_226.json",
+              "traceSha256": "295796dd8d9aa84f75b2e4f6f01cea35aa25863b1d9fbf6cd33b0e2a9ce337b8",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 1,
+                "model_run": 1
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 152953,
+                "session_initialization": 1996933,
+                "SequentialExecutor::Execute": 1813034,
+                "model_run": 1813766
+              }
+            },
+            {
+              "graph": "segmenter",
+              "traceFile": "20260924T015459Z-deterministic-3104f6fd/qualification/cpu_all_traces/segmenter_2026-09-24_01-56-32_501.json",
+              "traceSha256": "a7b5a238223a030fa935a296cb59ba189fc9912a48b1d33ec340954fbbd65804",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 8,
+                "model_run": 8
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 148624,
+                "session_initialization": 572657,
+                "SequentialExecutor::Execute": 22338617,
+                "model_run": 22351378
+              }
+            }
+          ],
+          "topHostKernelEvents": [
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "MatMul",
+              "calls": 1393,
+              "hostDurationUs": 12873869
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "FusedMatMul",
+              "calls": 129,
+              "hostDurationUs": 3141749
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Conv",
+              "calls": 604,
+              "hostDurationUs": 2289839
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Softmax",
+              "calls": 144,
+              "hostDurationUs": 1538979
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Add",
+              "calls": 2542,
+              "hostDurationUs": 1498339
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Split",
+              "calls": 895,
+              "hostDurationUs": 853491
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Mul",
+              "calls": 3001,
+              "hostDurationUs": 808122
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Transpose",
+              "calls": 1245,
+              "hostDurationUs": 699374
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Gelu",
+              "calls": 605,
+              "hostDurationUs": 688026
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Concat",
+              "calls": 1059,
+              "hostDurationUs": 305631
+            }
+          ],
+          "explicitHostCopyEvents": [],
+          "capturedJavaRunSeconds": 26.190086256999997
+        },
+        {
+          "variant": "cpu_basic",
+          "profiledPassageWallNanos": 36043606204,
+          "profiledProcessWallNanos": 36173244364,
+          "graphCount": 5,
+          "modelRunCount": 12,
+          "ortHostDurationUs": {
+            "model_loading_uri": 483170,
+            "session_initialization": 3294008,
+            "model_run": 29739156,
+            "SequentialExecutor::Execute": 29724935
+          },
+          "graphs": [
+            {
+              "graph": "bd2dur",
+              "traceFile": "20260924T015459Z-deterministic-3104f6fd/qualification/cpu_basic_traces/bd2dur_2026-09-24_01-58-24_458.json",
+              "traceSha256": "4489fc67012163b55ecd4ef35ac7accb9f13009e873571d132247ce1fdac461c",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 1,
+                "model_run": 1
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 943,
+                "session_initialization": 1343,
+                "SequentialExecutor::Execute": 487,
+                "model_run": 518
+              }
+            },
+            {
+              "graph": "dur2bd",
+              "traceFile": "20260924T015459Z-deterministic-3104f6fd/qualification/cpu_basic_traces/dur2bd_2026-09-24_01-58-23_682.json",
+              "traceSha256": "99f2c3661bc0d8a983cf50292dc4668fe90d7a68ba434730b3039018fb2f2eac",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 1,
+                "model_run": 1
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 715,
+                "session_initialization": 977,
+                "SequentialExecutor::Execute": 294,
+                "model_run": 327
+              }
+            },
+            {
+              "graph": "encoder",
+              "traceFile": "20260924T015459Z-deterministic-3104f6fd/qualification/cpu_basic_traces/encoder_2026-09-24_01-58-23_104.json",
+              "traceSha256": "1e36506b26b70d68e2d3edd1eb23e32e867de9a362cfdc03b270b2e34e96667e",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 1,
+                "model_run": 1
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 116573,
+                "session_initialization": 459353,
+                "SequentialExecutor::Execute": 1849486,
+                "model_run": 1849829
+              }
+            },
+            {
+              "graph": "estimator",
+              "traceFile": "20260924T015459Z-deterministic-3104f6fd/qualification/cpu_basic_traces/estimator_2026-09-24_01-58-24_461.json",
+              "traceSha256": "387416199a4ba4972f6a12e194997c8822363747918ac71f592c77c9a3e4d2dc",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 1,
+                "model_run": 1
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 157118,
+                "session_initialization": 2266228,
+                "SequentialExecutor::Execute": 2056884,
+                "model_run": 2057760
+              }
+            },
+            {
+              "graph": "segmenter",
+              "traceFile": "20260924T015459Z-deterministic-3104f6fd/qualification/cpu_basic_traces/segmenter_2026-09-24_01-58-23_684.json",
+              "traceSha256": "0958dc791f6a378f045fdcc5d60b9b9dcb57aab146bb0f1d1feedeca8c6689bb",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 8,
+                "model_run": 8
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 207821,
+                "session_initialization": 566107,
+                "SequentialExecutor::Execute": 25817784,
+                "model_run": 25830722
+              }
+            }
+          ],
+          "topHostKernelEvents": [
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "MatMul",
+              "calls": 1522,
+              "hostDurationUs": 15720629
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Gather",
+              "calls": 1598,
+              "hostDurationUs": 2834273
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Conv",
+              "calls": 604,
+              "hostDurationUs": 2232919
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Add",
+              "calls": 3517,
+              "hostDurationUs": 1722792
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Softmax",
+              "calls": 144,
+              "hostDurationUs": 1524499
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Mul",
+              "calls": 4837,
+              "hostDurationUs": 1423025
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Slice",
+              "calls": 1607,
+              "hostDurationUs": 793009
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Transpose",
+              "calls": 1373,
+              "hostDurationUs": 727167
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Erf",
+              "calls": 613,
+              "hostDurationUs": 669118
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Div",
+              "calls": 1336,
+              "hostDurationUs": 423984
+            }
+          ],
+          "explicitHostCopyEvents": [],
+          "capturedJavaRunSeconds": 29.744945348
+        },
+        {
+          "variant": "gpu_package_cpu_basic",
+          "profiledPassageWallNanos": 35621627851,
+          "profiledProcessWallNanos": 35765717796,
+          "graphCount": 5,
+          "modelRunCount": 12,
+          "ortHostDurationUs": {
+            "model_loading_uri": 395742,
+            "session_initialization": 4029983,
+            "model_run": 29190843,
+            "SequentialExecutor::Execute": 29177202
+          },
+          "graphs": [
+            {
+              "graph": "bd2dur",
+              "traceFile": "20260924T015459Z-deterministic-3104f6fd/qualification/gpu_package_cpu_basic_traces/bd2dur_2026-09-24_02-00-17_837.json",
+              "traceSha256": "487400f57426c2bd6fa2ef1818b840ec0fc3524a8343b460e6fd9e4ac9974f3b",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 1,
+                "model_run": 1
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 799,
+                "session_initialization": 861,
+                "SequentialExecutor::Execute": 426,
+                "model_run": 455
+              }
+            },
+            {
+              "graph": "dur2bd",
+              "traceFile": "20260924T015459Z-deterministic-3104f6fd/qualification/gpu_package_cpu_basic_traces/dur2bd_2026-09-24_02-00-17_269.json",
+              "traceSha256": "860701f3a36a60bd3f1becd5a0df33681d81f8f4fd9382fc62529a9345f8e1bb",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 1,
+                "model_run": 1
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 468,
+                "session_initialization": 757,
+                "SequentialExecutor::Execute": 272,
+                "model_run": 304
+              }
+            },
+            {
+              "graph": "encoder",
+              "traceFile": "20260924T015459Z-deterministic-3104f6fd/qualification/gpu_package_cpu_basic_traces/encoder_2026-09-24_02-00-16_881.json",
+              "traceSha256": "37be8f941fdbcf05300488d42b2aeed45f2dd7e7e77fc3085962be21c2963648",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 1,
+                "model_run": 1
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 89556,
+                "session_initialization": 297801,
+                "SequentialExecutor::Execute": 1890505,
+                "model_run": 1890873
+              }
+            },
+            {
+              "graph": "estimator",
+              "traceFile": "20260924T015459Z-deterministic-3104f6fd/qualification/gpu_package_cpu_basic_traces/estimator_2026-09-24_02-00-17_839.json",
+              "traceSha256": "d85baae4973a141b69bca4c69086e794f4de7e7233f7d01c679c3d34e0ff9a9d",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 1,
+                "model_run": 1
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 154163,
+                "session_initialization": 3315369,
+                "SequentialExecutor::Execute": 2002383,
+                "model_run": 2003398
+              }
+            },
+            {
+              "graph": "segmenter",
+              "traceFile": "20260924T015459Z-deterministic-3104f6fd/qualification/gpu_package_cpu_basic_traces/segmenter_2026-09-24_02-00-17_271.json",
+              "traceSha256": "ab10d054d9ef359954ccefb25926f6247c9717afe6a4e4bdd096a3648eff9476",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 8,
+                "model_run": 8
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 150756,
+                "session_initialization": 415195,
+                "SequentialExecutor::Execute": 25283616,
+                "model_run": 25295813
+              }
+            }
+          ],
+          "topHostKernelEvents": [
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "MatMul",
+              "calls": 1522,
+              "hostDurationUs": 15361310
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Gather",
+              "calls": 1598,
+              "hostDurationUs": 2777187
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Conv",
+              "calls": 604,
+              "hostDurationUs": 2186651
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Add",
+              "calls": 3517,
+              "hostDurationUs": 1698713
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Softmax",
+              "calls": 144,
+              "hostDurationUs": 1492596
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Mul",
+              "calls": 4837,
+              "hostDurationUs": 1424618
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Slice",
+              "calls": 1607,
+              "hostDurationUs": 775689
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Transpose",
+              "calls": 1373,
+              "hostDurationUs": 716977
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Erf",
+              "calls": 613,
+              "hostDurationUs": 667963
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Div",
+              "calls": 1336,
+              "hostDurationUs": 413779
+            }
+          ],
+          "explicitHostCopyEvents": [],
+          "capturedJavaRunSeconds": 29.197485554
+        },
+        {
+          "variant": "cuda_basic",
+          "profiledPassageWallNanos": 10951721589,
+          "profiledProcessWallNanos": 11293252555,
+          "graphCount": 5,
+          "modelRunCount": 12,
+          "ortHostDurationUs": {
+            "model_loading_uri": 360715,
+            "session_initialization": 3215732,
+            "model_run": 1467684,
+            "SequentialExecutor::Execute": 1432151
+          },
+          "graphs": [
+            {
+              "graph": "bd2dur",
+              "traceFile": "20260924T015459Z-deterministic-3104f6fd/qualification/cuda_basic_traces/bd2dur_2026-09-24_02-01-26_511.json",
+              "traceSha256": "3d68bb8f07717820762a2d9b828c7369099cd909699643c6e46ff76700295663",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 1,
+                "model_run": 1
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 765,
+                "session_initialization": 1293,
+                "SequentialExecutor::Execute": 512,
+                "model_run": 538
+              }
+            },
+            {
+              "graph": "dur2bd",
+              "traceFile": "20260924T015459Z-deterministic-3104f6fd/qualification/cuda_basic_traces/dur2bd_2026-09-24_02-01-25_841.json",
+              "traceSha256": "f12cddedf1b12e1a8a6cf2f292c78ba97296d838259e08d41d6d948050f15d02",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 1,
+                "model_run": 1
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 476,
+                "session_initialization": 565,
+                "SequentialExecutor::Execute": 287,
+                "model_run": 316
+              }
+            },
+            {
+              "graph": "encoder",
+              "traceFile": "20260924T015459Z-deterministic-3104f6fd/qualification/cuda_basic_traces/encoder_2026-09-24_02-01-25_397.json",
+              "traceSha256": "11c7f694747c7577d2697fbf8f431211e5eb3a427e950e95e59c5babd96e3deb",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 1,
+                "model_run": 1
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 82234,
+                "session_initialization": 358527,
+                "SequentialExecutor::Execute": 433709,
+                "model_run": 441908
+              }
+            },
+            {
+              "graph": "estimator",
+              "traceFile": "20260924T015459Z-deterministic-3104f6fd/qualification/cuda_basic_traces/estimator_2026-09-24_02-01-26_514.json",
+              "traceSha256": "7536215a16bd915d92013f5592fb6493d68dcf1a601ddbcfc97c0dbfa3d7119e",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 1,
+                "model_run": 1
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 134541,
+                "session_initialization": 2331143,
+                "SequentialExecutor::Execute": 119529,
+                "model_run": 124465
+              }
+            },
+            {
+              "graph": "segmenter",
+              "traceFile": "20260924T015459Z-deterministic-3104f6fd/qualification/cuda_basic_traces/segmenter_2026-09-24_02-01-25_842.json",
+              "traceSha256": "251b97d35ff5b6cd3cb20c5cfc2eece0b37bb9eb3f2025f7f6b6729ca8fa892f",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 8,
+                "model_run": 8
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 142699,
+                "session_initialization": 524204,
+                "SequentialExecutor::Execute": 878114,
+                "model_run": 900457
+              }
+            }
+          ],
+          "topHostKernelEvents": [
+            {
+              "provider": "CUDAExecutionProvider",
+              "operator": "Conv",
+              "calls": 604,
+              "hostDurationUs": 296484
+            },
+            {
+              "provider": "CUDAExecutionProvider",
+              "operator": "MatMul",
+              "calls": 1522,
+              "hostDurationUs": 121610
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "STFT",
+              "calls": 1,
+              "hostDurationUs": 119470
+            },
+            {
+              "provider": "CUDAExecutionProvider",
+              "operator": "Pow",
+              "calls": 649,
+              "hostDurationUs": 71328
+            },
+            {
+              "provider": "CUDAExecutionProvider",
+              "operator": "Add",
+              "calls": 3481,
+              "hostDurationUs": 66807
+            },
+            {
+              "provider": "CUDAExecutionProvider",
+              "operator": "Mul",
+              "calls": 4772,
+              "hostDurationUs": 60589
+            },
+            {
+              "provider": "CUDAExecutionProvider",
+              "operator": "ReduceMean",
+              "calls": 648,
+              "hostDurationUs": 36116
+            },
+            {
+              "provider": "CUDAExecutionProvider",
+              "operator": "Einsum",
+              "calls": 272,
+              "hostDurationUs": 25466
+            },
+            {
+              "provider": "CUDAExecutionProvider",
+              "operator": "Slice",
+              "calls": 1284,
+              "hostDurationUs": 23537
+            },
+            {
+              "provider": "CUDAExecutionProvider",
+              "operator": "Transpose",
+              "calls": 1373,
+              "hostDurationUs": 20982
+            }
+          ],
+          "explicitHostCopyEvents": [
+            {
+              "provider": "CUDAExecutionProvider",
+              "operator": "MemcpyFromHost",
+              "calls": 18,
+              "hostDurationUs": 2844
+            },
+            {
+              "provider": "CUDAExecutionProvider",
+              "operator": "MemcpyToHost",
+              "calls": 18,
+              "hostDurationUs": 2704
+            }
+          ],
+          "capturedJavaRunSeconds": 1.471145167
+        }
+      ]
+    },
+    {
+      "experiment": "deux-t4",
+      "pins": {
+        "archiveBytes": 50841267,
+        "archiveSha256": "87e4e7010c62db52b30ea881d18b62ae3e5c93a415db618ca184ddab6041be47",
+        "receiptSha256": "c69c686bfc312cb77443c70fd2ebb957ce668b781f543cf7bd3debafd6e6c025",
+        "sourceCommit": "8590ac4a67de4340857a96ffe38bae53d7d902b8",
+        "graphs": 27,
+        "calls": 335
+      },
+      "variants": [
+        {
+          "variant": "cpu_all",
+          "profiledPassageWallNanos": 135371717036,
+          "profiledProcessWallNanos": 135657807099,
+          "graphCount": 27,
+          "modelRunCount": 335,
+          "ortHostDurationUs": {
+            "model_loading_uri": 661777,
+            "session_initialization": 1758831,
+            "model_run": 125198879,
+            "SequentialExecutor::Execute": 125104764
+          },
+          "graphs": [
+            {
+              "graph": "block-00-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_all_profiled_traces/block-00-frequency_2026-09-24_02-06-56_797.json",
+              "traceSha256": "91d300bc58e50987912a2ee9b57dea427658b5c43715384335e0d01e2b7c8435",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 6977,
+                "session_initialization": 24642,
+                "SequentialExecutor::Execute": 4042817,
+                "model_run": 4046072
+              }
+            },
+            {
+              "graph": "block-00-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_all_profiled_traces/block-00-time_2026-09-24_02-06-50_397.json",
+              "traceSha256": "aa3f5d43b511f7add75fdce473152cd117a0a96f259307885231972b7fa947f4",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 9388,
+                "session_initialization": 50373,
+                "SequentialExecutor::Execute": 6230244,
+                "model_run": 6234651
+              }
+            },
+            {
+              "graph": "block-01-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_all_profiled_traces/block-01-frequency_2026-09-24_02-07-07_065.json",
+              "traceSha256": "dd7c31221cb32f2f07fb111461a059f6f185277616d8ea37f3e919275169fb85",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 7841,
+                "session_initialization": 20192,
+                "SequentialExecutor::Execute": 2864708,
+                "model_run": 2867806
+              }
+            },
+            {
+              "graph": "block-01-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_all_profiled_traces/block-01-time_2026-09-24_02-07-00_919.json",
+              "traceSha256": "b92cb8e4413e7a5129e6852fa6b7acb70856895dcb9a87accd3ac0d9e0e02e16",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 10406,
+                "session_initialization": 56337,
+                "SequentialExecutor::Execute": 5994469,
+                "model_run": 5997955
+              }
+            },
+            {
+              "graph": "block-02-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_all_profiled_traces/block-02-frequency_2026-09-24_02-07-17_323.json",
+              "traceSha256": "5c1966c8db3877372cac04cf37fb6a5b3469b9ebd07651059334a9ce41816469",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 7816,
+                "session_initialization": 20641,
+                "SequentialExecutor::Execute": 2850418,
+                "model_run": 2853350
+              }
+            },
+            {
+              "graph": "block-02-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_all_profiled_traces/block-02-time_2026-09-24_02-07-10_008.json",
+              "traceSha256": "e1fde0fa3dcd0b6d14d403225b524e5773901ce826d91ed2a92fc196557a886f",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 10302,
+                "session_initialization": 43420,
+                "SequentialExecutor::Execute": 7177347,
+                "model_run": 7180834
+              }
+            },
+            {
+              "graph": "block-03-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_all_profiled_traces/block-03-frequency_2026-09-24_02-07-27_591.json",
+              "traceSha256": "1b623ba46a7c0bbeb507ec1ee54e449d556dd69355cdee6df09e30e4d53a212b",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 7849,
+                "session_initialization": 20362,
+                "SequentialExecutor::Execute": 2829978,
+                "model_run": 2833195
+              }
+            },
+            {
+              "graph": "block-03-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_all_profiled_traces/block-03-time_2026-09-24_02-07-20_244.json",
+              "traceSha256": "a96ccc5f0f03987ee38f56abbc2199c89e407e968e1d5fa328d7ef3a552960e6",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 10059,
+                "session_initialization": 42674,
+                "SequentialExecutor::Execute": 7210520,
+                "model_run": 7214014
+              }
+            },
+            {
+              "graph": "block-04-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_all_profiled_traces/block-04-frequency_2026-09-24_02-07-36_619.json",
+              "traceSha256": "dc8a2c4f04f403c29266da1382efaf457bcbf978ddf3b767bce268b8779d85f2",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 8011,
+                "session_initialization": 20131,
+                "SequentialExecutor::Execute": 4010526,
+                "model_run": 4013564
+              }
+            },
+            {
+              "graph": "block-04-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_all_profiled_traces/block-04-time_2026-09-24_02-07-30_492.json",
+              "traceSha256": "2e7b148510d41551a5213958d860dbec245083a82163620c89d01995a604638d",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 9566,
+                "session_initialization": 42764,
+                "SequentialExecutor::Execute": 5991891,
+                "model_run": 5995369
+              }
+            },
+            {
+              "graph": "block-05-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_all_profiled_traces/block-05-frequency_2026-09-24_02-07-46_758.json",
+              "traceSha256": "9d763ac042efbd8d205ab83d7147deff6be6e26076967464d8cd6f7801fd4ffa",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 7935,
+                "session_initialization": 20365,
+                "SequentialExecutor::Execute": 2931652,
+                "model_run": 2934637
+              }
+            },
+            {
+              "graph": "block-05-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_all_profiled_traces/block-05-time_2026-09-24_02-07-40_703.json",
+              "traceSha256": "db542530475e45854a4902f3852f20aeaa4533f9113f0a5a8347cc4e0a8f5611",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 9287,
+                "session_initialization": 41820,
+                "SequentialExecutor::Execute": 5925438,
+                "model_run": 5928850
+              }
+            },
+            {
+              "graph": "block-06-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_all_profiled_traces/block-06-frequency_2026-09-24_02-07-57_260.json",
+              "traceSha256": "ba068e40eb207b0de0c0d4fdad6d1813a6c6f422d24641621e58cef525c2920b",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 7811,
+                "session_initialization": 20190,
+                "SequentialExecutor::Execute": 2857435,
+                "model_run": 2860485
+              }
+            },
+            {
+              "graph": "block-06-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_all_profiled_traces/block-06-time_2026-09-24_02-07-49_759.json",
+              "traceSha256": "da8d08c5808bd3e83f2cde2063fba2520731c37167d2eec6b4f6e8fe34fd94a3",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 10037,
+                "session_initialization": 42788,
+                "SequentialExecutor::Execute": 7365778,
+                "model_run": 7369516
+              }
+            },
+            {
+              "graph": "block-07-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_all_profiled_traces/block-07-frequency_2026-09-24_02-08-07_494.json",
+              "traceSha256": "a4b7f879e58a9859005eda368cda50b08152c8ddf8b595e6cd91a6c555c74a02",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 8102,
+                "session_initialization": 20481,
+                "SequentialExecutor::Execute": 2847488,
+                "model_run": 2851877
+              }
+            },
+            {
+              "graph": "block-07-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_all_profiled_traces/block-07-time_2026-09-24_02-08-00_189.json",
+              "traceSha256": "c1d5657293349834a76309a2935a6b00c98d4323028aa93dc1457ee12c099ff4",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 9938,
+                "session_initialization": 45745,
+                "SequentialExecutor::Execute": 7162412,
+                "model_run": 7165834
+              }
+            },
+            {
+              "graph": "block-08-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_all_profiled_traces/block-08-frequency_2026-09-24_02-08-16_387.json",
+              "traceSha256": "fa6695bc02c1a909b6f03fa4e53a03266f7d32a89a4096630cbe531c0d32c231",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 7862,
+                "session_initialization": 19537,
+                "SequentialExecutor::Execute": 3923638,
+                "model_run": 3927347
+              }
+            },
+            {
+              "graph": "block-08-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_all_profiled_traces/block-08-time_2026-09-24_02-08-10_416.json",
+              "traceSha256": "678244765316af20fbf2917b9f5f2e5dcd373d8319c3936865a5bad7e1a8e8bd",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 9536,
+                "session_initialization": 41915,
+                "SequentialExecutor::Execute": 5842156,
+                "model_run": 5845562
+              }
+            },
+            {
+              "graph": "block-09-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_all_profiled_traces/block-09-frequency_2026-09-24_02-08-26_536.json",
+              "traceSha256": "fe7211679663e7110f701c621d6946ba9937291288e24832c080c633d261fe2e",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 7905,
+                "session_initialization": 20734,
+                "SequentialExecutor::Execute": 2941938,
+                "model_run": 2945030
+              }
+            },
+            {
+              "graph": "block-09-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_all_profiled_traces/block-09-time_2026-09-24_02-08-20_386.json",
+              "traceSha256": "f9cd5a3e748f1bbe87381c51e5a0cb1bafac896291dd57a15e5a756a9c6d0712",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 10662,
+                "session_initialization": 46001,
+                "SequentialExecutor::Execute": 6011551,
+                "model_run": 6015075
+              }
+            },
+            {
+              "graph": "block-10-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_all_profiled_traces/block-10-frequency_2026-09-24_02-08-36_850.json",
+              "traceSha256": "8ef896bab424bf00bca93aef57facc40c136165980953417e22abe143325c4fb",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 8438,
+                "session_initialization": 21390,
+                "SequentialExecutor::Execute": 2864970,
+                "model_run": 2868083
+              }
+            },
+            {
+              "graph": "block-10-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_all_profiled_traces/block-10-time_2026-09-24_02-08-29_569.json",
+              "traceSha256": "2dc02a0e4a6be8a4bb1268fc0b516b719e0acedd9ccf2dc8777ea1cf4ea47c42",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 14033,
+                "session_initialization": 88752,
+                "SequentialExecutor::Execute": 7087721,
+                "model_run": 7094085
+              }
+            },
+            {
+              "graph": "block-11-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_all_profiled_traces/block-11-frequency_2026-09-24_02-08-47_222.json",
+              "traceSha256": "1e6f811661dd4979653d96efe58c7721cf9a1fce8511e1af865155f538db7e87",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 8323,
+                "session_initialization": 20726,
+                "SequentialExecutor::Execute": 2873149,
+                "model_run": 2876360
+              }
+            },
+            {
+              "graph": "block-11-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_all_profiled_traces/block-11-time_2026-09-24_02-08-39_787.json",
+              "traceSha256": "8021d132e136e8e31604cc7fbbe16051d8230b9e4ecde8f97a8096d9dca19e8d",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 9586,
+                "session_initialization": 42550,
+                "SequentialExecutor::Execute": 7300099,
+                "model_run": 7303508
+              }
+            },
+            {
+              "graph": "front",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_all_profiled_traces/front_2026-09-24_02-06-50_077.json",
+              "traceSha256": "6fddcddf46195b9952b338028b1b6f6332a4f4e5c7334be882e22c0e1c2b8d71",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 1,
+                "model_run": 1
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 18001,
+                "session_initialization": 68805,
+                "SequentialExecutor::Execute": 210520,
+                "model_run": 210735
+              }
+            },
+            {
+              "graph": "head-0",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_all_profiled_traces/head-0_2026-09-24_02-08-50_168.json",
+              "traceSha256": "60d262ebc717f4fd26b96f75f5917e3440ec85d3a67b8bd43f86b486cedd05d3",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 285342,
+                "session_initialization": 422887,
+                "SequentialExecutor::Execute": 3152695,
+                "model_run": 3157080
+              }
+            },
+            {
+              "graph": "head-1",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_all_profiled_traces/head-1_2026-09-24_02-08-54_709.json",
+              "traceSha256": "e4b3935708fa3ff95fb81fc1b669ec55d2674b9ed24b8b4e8d6cab31f0e20533",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 140764,
+                "session_initialization": 432609,
+                "SequentialExecutor::Execute": 4603206,
+                "model_run": 4608005
+              }
+            }
+          ],
+          "topHostKernelEvents": [
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "MatMul",
+              "calls": 13344,
+              "hostDurationUs": 81587655
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Mul",
+              "calls": 9122,
+              "hostDurationUs": 8898797
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Softmax",
+              "calls": 3912,
+              "hostDurationUs": 7214044
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Transpose",
+              "calls": 2831,
+              "hostDurationUs": 5391500
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Split",
+              "calls": 2459,
+              "hostDurationUs": 4826290
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "BiasGelu",
+              "calls": 312,
+              "hostDurationUs": 4145241
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Concat",
+              "calls": 2255,
+              "hostDurationUs": 3399149
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Add",
+              "calls": 5832,
+              "hostDurationUs": 2721598
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Slice",
+              "calls": 3278,
+              "hostDurationUs": 1632726
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "ReduceL2",
+              "calls": 996,
+              "hostDurationUs": 1301055
+            }
+          ],
+          "explicitHostCopyEvents": [],
+          "javaProfileSha256": "187d19f9391a260b84d9253a048b853d65a2aca91717bdb20186035c792da9d8",
+          "javaStageWallMs": {
+            "inference-gate-wait": {
+              "samples": 1,
+              "wallMs": 0
+            },
+            "cache-preflight": {
+              "samples": 1,
+              "wallMs": 4442
+            },
+            "buffer-init": {
+              "samples": 1,
+              "wallMs": 99
+            },
+            "runtime-setup": {
+              "samples": 1,
+              "wallMs": 168
+            },
+            "pcm-read": {
+              "samples": 1,
+              "wallMs": 24
+            },
+            "feature-encode": {
+              "samples": 1,
+              "wallMs": 365
+            },
+            "model-init": {
+              "samples": 54,
+              "wallMs": 2448
+            },
+            "tensor-bind": {
+              "samples": 335,
+              "wallMs": 21
+            },
+            "inference": {
+              "samples": 335,
+              "wallMs": 125243
+            },
+            "pack": {
+              "samples": 180,
+              "wallMs": 298
+            },
+            "scatter": {
+              "samples": 334,
+              "wallMs": 489
+            },
+            "decode": {
+              "samples": 2,
+              "wallMs": 871
+            },
+            "output-write": {
+              "samples": 2,
+              "wallMs": 22
+            },
+            "output-flush": {
+              "samples": 1,
+              "wallMs": 11
+            },
+            "output-commit": {
+              "samples": 1,
+              "wallMs": 1
+            }
+          },
+          "javaGraphSumsTruncatedWallMs": {
+            "modelPrepareWallMs": 1,
+            "sessionInitWallMs": 2428,
+            "tensorBindWallMs": 7,
+            "runWallMs": 125230
+          }
+        },
+        {
+          "variant": "cpu_basic",
+          "profiledPassageWallNanos": 138522196147,
+          "profiledProcessWallNanos": 138869828160,
+          "graphCount": 27,
+          "modelRunCount": 335,
+          "ortHostDurationUs": {
+            "model_loading_uri": 662936,
+            "session_initialization": 1661685,
+            "model_run": 128730413,
+            "SequentialExecutor::Execute": 128631040
+          },
+          "graphs": [
+            {
+              "graph": "block-00-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_basic_profiled_traces/block-00-frequency_2026-09-24_02-11-32_906.json",
+              "traceSha256": "756591fbba8dad9d4374612f3dfeba994439415512e7d2bc2a1d04361cdf6427",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 9534,
+                "session_initialization": 34240,
+                "SequentialExecutor::Execute": 4018982,
+                "model_run": 4022909
+              }
+            },
+            {
+              "graph": "block-00-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_basic_profiled_traces/block-00-time_2026-09-24_02-11-26_241.json",
+              "traceSha256": "74b579548ca574249f4776d1047969a9fce16137f7b810caba8ebe26c225e98a",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 8652,
+                "session_initialization": 44786,
+                "SequentialExecutor::Execute": 6482829,
+                "model_run": 6487177
+              }
+            },
+            {
+              "graph": "block-01-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_basic_profiled_traces/block-01-frequency_2026-09-24_02-11-43_235.json",
+              "traceSha256": "4bfff4fa1471758865d7d54d24bc333a24c9f2b535b39c85103ba7ed813d1ac7",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 7783,
+                "session_initialization": 16500,
+                "SequentialExecutor::Execute": 3468265,
+                "model_run": 3471556
+              }
+            },
+            {
+              "graph": "block-01-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_basic_profiled_traces/block-01-time_2026-09-24_02-11-37_020.json",
+              "traceSha256": "05a3542ebbbaa75788513d3cb197181050b4f761e79cda43c1f31b5c0c61995c",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 9707,
+                "session_initialization": 38923,
+                "SequentialExecutor::Execute": 6077828,
+                "model_run": 6081649
+              }
+            },
+            {
+              "graph": "block-02-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_basic_profiled_traces/block-02-frequency_2026-09-24_02-11-53_745.json",
+              "traceSha256": "c250070d613583f84162a4d5c9e4f44f32db776f8eb4c88382972ee693f6f693",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 7382,
+                "session_initialization": 16839,
+                "SequentialExecutor::Execute": 3031637,
+                "model_run": 3034811
+              }
+            },
+            {
+              "graph": "block-02-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_basic_profiled_traces/block-02-time_2026-09-24_02-11-46_783.json",
+              "traceSha256": "0e18bed5c3f92ec85ee6a2f2ba3a41a8fb27a0ac362fa7dac3e59b1422940795",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 12511,
+                "session_initialization": 62836,
+                "SequentialExecutor::Execute": 6800300,
+                "model_run": 6804377
+              }
+            },
+            {
+              "graph": "block-03-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_basic_profiled_traces/block-03-frequency_2026-09-24_02-12-04_204.json",
+              "traceSha256": "1ea2f631eb0ddff1098b06ef48f302ac23e8f36219a0fb868f444dfba46a0ca1",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 7568,
+                "session_initialization": 19113,
+                "SequentialExecutor::Execute": 3011781,
+                "model_run": 3014989
+              }
+            },
+            {
+              "graph": "block-03-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_basic_profiled_traces/block-03-time_2026-09-24_02-11-56_846.json",
+              "traceSha256": "85de0400a04a187b9ce5cf870842271065ed73771d74d2d586b6852c3ff55d06",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 10299,
+                "session_initialization": 38013,
+                "SequentialExecutor::Execute": 7224675,
+                "model_run": 7228657
+              }
+            },
+            {
+              "graph": "block-04-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_basic_profiled_traces/block-04-frequency_2026-09-24_02-12-14_571.json",
+              "traceSha256": "34cab3214801a84bed713aefee9c43cb44a1a01da60e7b44d3d4cc879ab36bff",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 15319,
+                "session_initialization": 32710,
+                "SequentialExecutor::Execute": 3024364,
+                "model_run": 3027582
+              }
+            },
+            {
+              "graph": "block-04-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_basic_profiled_traces/block-04-time_2026-09-24_02-12-07_286.json",
+              "traceSha256": "defb5bd610eec229928e929d7314b242a15f0adb9bee0285ce09d7b10d17f926",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 9471,
+                "session_initialization": 36772,
+                "SequentialExecutor::Execute": 7134067,
+                "model_run": 7137712
+              }
+            },
+            {
+              "graph": "block-05-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_basic_profiled_traces/block-05-frequency_2026-09-24_02-12-23_907.json",
+              "traceSha256": "a90647b4960fee99200f1cf0c2606ddf083baa09c4e34762324ee02080d56bef",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 7911,
+                "session_initialization": 17845,
+                "SequentialExecutor::Execute": 4178192,
+                "model_run": 4181286
+              }
+            },
+            {
+              "graph": "block-05-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_basic_profiled_traces/block-05-time_2026-09-24_02-12-17_687.json",
+              "traceSha256": "1cb9240a995c65b70c1c82f0d9e06932647ffd0ac4e6beee9095216804e99414",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 9605,
+                "session_initialization": 36206,
+                "SequentialExecutor::Execute": 6090295,
+                "model_run": 6094065
+              }
+            },
+            {
+              "graph": "block-06-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_basic_profiled_traces/block-06-frequency_2026-09-24_02-12-34_362.json",
+              "traceSha256": "18a4daba00a100d2cf3befe864df0eb5de27eb1a228e1b5296a27058a1a62f4a",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 7958,
+                "session_initialization": 16820,
+                "SequentialExecutor::Execute": 3024188,
+                "model_run": 3027245
+              }
+            },
+            {
+              "graph": "block-06-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_basic_profiled_traces/block-06-time_2026-09-24_02-12-28_155.json",
+              "traceSha256": "828e4f62694f516abfdb8e513ca46e48480c614216f5acd3718fe6451fe2c3ec",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 9712,
+                "session_initialization": 36971,
+                "SequentialExecutor::Execute": 6078631,
+                "model_run": 6082233
+              }
+            },
+            {
+              "graph": "block-07-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_basic_profiled_traces/block-07-frequency_2026-09-24_02-12-44_982.json",
+              "traceSha256": "f40fa0605264598b09866362ef14843d682802200271b0b25f83ec564b04deec",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 7984,
+                "session_initialization": 16913,
+                "SequentialExecutor::Execute": 3035464,
+                "model_run": 3039206
+              }
+            },
+            {
+              "graph": "block-07-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_basic_profiled_traces/block-07-time_2026-09-24_02-12-37_455.json",
+              "traceSha256": "dea7c59706ca4d61e3574a58dc6fcae59bb23ffb132af1109382c1972cf0e802",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 9739,
+                "session_initialization": 37974,
+                "SequentialExecutor::Execute": 7388680,
+                "model_run": 7392871
+              }
+            },
+            {
+              "graph": "block-08-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_basic_profiled_traces/block-08-frequency_2026-09-24_02-12-55_632.json",
+              "traceSha256": "7f0ff45298eebef0e45ee0a966b772a9607d589325368c23dc7438328ecf7246",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 7909,
+                "session_initialization": 16422,
+                "SequentialExecutor::Execute": 3077539,
+                "model_run": 3081234
+              }
+            },
+            {
+              "graph": "block-08-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_basic_profiled_traces/block-08-time_2026-09-24_02-12-48_089.json",
+              "traceSha256": "11a86190ff5083ccc7956a8c978ecd0cd6282f698ebd9ab2814952bf3309bd69",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 9882,
+                "session_initialization": 36197,
+                "SequentialExecutor::Execute": 7408793,
+                "model_run": 7412940
+              }
+            },
+            {
+              "graph": "block-09-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_basic_profiled_traces/block-09-frequency_2026-09-24_02-13-05_668.json",
+              "traceSha256": "008bb81e57ac02bc49c2e8d05ac60485574e82b893c0549e262cd462e933c64c",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 10917,
+                "session_initialization": 26876,
+                "SequentialExecutor::Execute": 3700091,
+                "model_run": 3704034
+              }
+            },
+            {
+              "graph": "block-09-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_basic_profiled_traces/block-09-time_2026-09-24_02-12-58_777.json",
+              "traceSha256": "88a5c77861734e2839f01dad039ff92ecfc2ca2273fc4f245b755edc4cdac94e",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 9493,
+                "session_initialization": 37379,
+                "SequentialExecutor::Execute": 6742205,
+                "model_run": 6746014
+              }
+            },
+            {
+              "graph": "block-10-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_basic_profiled_traces/block-10-frequency_2026-09-24_02-13-15_811.json",
+              "traceSha256": "8ef43bed7ee2519bf71fd607a5dd8deafa6490fdc64dbb09b0248c562963db41",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 7441,
+                "session_initialization": 18041,
+                "SequentialExecutor::Execute": 3936208,
+                "model_run": 3941039
+              }
+            },
+            {
+              "graph": "block-10-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_basic_profiled_traces/block-10-time_2026-09-24_02-13-09_467.json",
+              "traceSha256": "ebc15b9a94dd26e4bad1e3b65b1d8f3b07114ae0d7f2192a9a7d2e64a1bc40eb",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 9974,
+                "session_initialization": 38247,
+                "SequentialExecutor::Execute": 6213703,
+                "model_run": 6217327
+              }
+            },
+            {
+              "graph": "block-11-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_basic_profiled_traces/block-11-frequency_2026-09-24_02-13-26_405.json",
+              "traceSha256": "4a109435cd7ceddf67d6d90f886f1bc7ea67f912efa0e70143a5dae945374d5b",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 8073,
+                "session_initialization": 16989,
+                "SequentialExecutor::Execute": 3066413,
+                "model_run": 3069755
+              }
+            },
+            {
+              "graph": "block-11-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_basic_profiled_traces/block-11-time_2026-09-24_02-13-19_832.json",
+              "traceSha256": "342567bfa6fad81cb19d81cccb05be29ed6c481d8b01d147cf80075ef320efeb",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 13084,
+                "session_initialization": 66234,
+                "SequentialExecutor::Execute": 6408013,
+                "model_run": 6412005
+              }
+            },
+            {
+              "graph": "front",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_basic_profiled_traces/front_2026-09-24_02-11-25_936.json",
+              "traceSha256": "dd63aa341ef6308e34d68c6ff85f0961b47cfcde3bb71f1f009361a762c07c00",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 1,
+                "model_run": 1
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 17601,
+                "session_initialization": 64738,
+                "SequentialExecutor::Execute": 199138,
+                "model_run": 199420
+              }
+            },
+            {
+              "graph": "head-0",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_basic_profiled_traces/head-0_2026-09-24_02-13-29_542.json",
+              "traceSha256": "eaa15c7769082480128c6c3a3453fd58aa282060e46edf41e919f6b9ba30f71c",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 277580,
+                "session_initialization": 429739,
+                "SequentialExecutor::Execute": 4409157,
+                "model_run": 4414279
+              }
+            },
+            {
+              "graph": "head-1",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cpu_basic_profiled_traces/head-1_2026-09-24_02-13-35_352.json",
+              "traceSha256": "afaba7b1d7ac3a9c48f349f80f68c77d338e2cf277694fe05d57fc66e80654fb",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 139847,
+                "session_initialization": 407362,
+                "SequentialExecutor::Execute": 3399602,
+                "model_run": 3404041
+              }
+            }
+          ],
+          "topHostKernelEvents": [
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "MatMul",
+              "calls": 13344,
+              "hostDurationUs": 81426472
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Mul",
+              "calls": 9746,
+              "hostDurationUs": 11474237
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Softmax",
+              "calls": 3912,
+              "hostDurationUs": 7182945
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Transpose",
+              "calls": 2831,
+              "hostDurationUs": 5063709
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Add",
+              "calls": 6456,
+              "hostDurationUs": 4799100
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Split",
+              "calls": 2279,
+              "hostDurationUs": 4420088
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Concat",
+              "calls": 2255,
+              "hostDurationUs": 3434772
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Slice",
+              "calls": 7058,
+              "hostDurationUs": 2196559
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Erf",
+              "calls": 312,
+              "hostDurationUs": 2178823
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Div",
+              "calls": 1308,
+              "hostDurationUs": 2154128
+            }
+          ],
+          "explicitHostCopyEvents": [],
+          "javaProfileSha256": "e8b6f9394ea8d70971045d8b26f4cc020133e1faf5135b4f76a8185fcf98d764",
+          "javaStageWallMs": {
+            "inference-gate-wait": {
+              "samples": 1,
+              "wallMs": 2
+            },
+            "cache-preflight": {
+              "samples": 1,
+              "wallMs": 3888
+            },
+            "buffer-init": {
+              "samples": 1,
+              "wallMs": 101
+            },
+            "runtime-setup": {
+              "samples": 1,
+              "wallMs": 183
+            },
+            "pcm-read": {
+              "samples": 1,
+              "wallMs": 25
+            },
+            "feature-encode": {
+              "samples": 1,
+              "wallMs": 390
+            },
+            "model-init": {
+              "samples": 54,
+              "wallMs": 2351
+            },
+            "tensor-bind": {
+              "samples": 335,
+              "wallMs": 21
+            },
+            "inference": {
+              "samples": 335,
+              "wallMs": 128773
+            },
+            "pack": {
+              "samples": 180,
+              "wallMs": 298
+            },
+            "scatter": {
+              "samples": 334,
+              "wallMs": 506
+            },
+            "decode": {
+              "samples": 2,
+              "wallMs": 924
+            },
+            "output-write": {
+              "samples": 2,
+              "wallMs": 21
+            },
+            "output-flush": {
+              "samples": 1,
+              "wallMs": 11
+            },
+            "output-commit": {
+              "samples": 1,
+              "wallMs": 0
+            }
+          },
+          "javaGraphSumsTruncatedWallMs": {
+            "modelPrepareWallMs": 0,
+            "sessionInitWallMs": 2330,
+            "tensorBindWallMs": 6,
+            "runWallMs": 128757
+          }
+        },
+        {
+          "variant": "gpu_package_cpu_basic",
+          "profiledPassageWallNanos": 139871176984,
+          "profiledProcessWallNanos": 140168591571,
+          "graphCount": 27,
+          "modelRunCount": 335,
+          "ortHostDurationUs": {
+            "model_loading_uri": 656399,
+            "session_initialization": 1642592,
+            "model_run": 130668078,
+            "SequentialExecutor::Execute": 130568508
+          },
+          "graphs": [
+            {
+              "graph": "block-00-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/gpu_package_cpu_basic_profiled_traces/block-00-frequency_2026-09-24_02-16-14_629.json",
+              "traceSha256": "468ea5e0a51d0fc6a51ba42f5ae85b23ed9fcdf53d64927feb25ae2404c53bb1",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 6989,
+                "session_initialization": 21544,
+                "SequentialExecutor::Execute": 3026133,
+                "model_run": 3029594
+              }
+            },
+            {
+              "graph": "block-00-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/gpu_package_cpu_basic_profiled_traces/block-00-time_2026-09-24_02-16-06_852.json",
+              "traceSha256": "28ad4241fb6e2a103cc61e2742857f55c9e094377530c6db78f847b7842b719c",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 9103,
+                "session_initialization": 44590,
+                "SequentialExecutor::Execute": 7605908,
+                "model_run": 7610152
+              }
+            },
+            {
+              "graph": "block-01-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/gpu_package_cpu_basic_profiled_traces/block-01-frequency_2026-09-24_02-16-25_288.json",
+              "traceSha256": "d9b7434f410d73d8a094c768e21d03fc7a0ed23ed866c7a721da3bb184af1d5b",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 7943,
+                "session_initialization": 17553,
+                "SequentialExecutor::Execute": 3058983,
+                "model_run": 3062147
+              }
+            },
+            {
+              "graph": "block-01-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/gpu_package_cpu_basic_profiled_traces/block-01-time_2026-09-24_02-16-17_733.json",
+              "traceSha256": "85b998fcccc85f499ed2d75eda7aec27948397c4c9df1861d65b792ff296e0a5",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 9634,
+                "session_initialization": 37532,
+                "SequentialExecutor::Execute": 7413290,
+                "model_run": 7417155
+              }
+            },
+            {
+              "graph": "block-02-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/gpu_package_cpu_basic_profiled_traces/block-02-frequency_2026-09-24_02-16-35_857.json",
+              "traceSha256": "869c7c6db8472496c6b950fcc062517d704f448c7dfec4cf6669c7841e98f721",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 10562,
+                "session_initialization": 29395,
+                "SequentialExecutor::Execute": 3083568,
+                "model_run": 3086855
+              }
+            },
+            {
+              "graph": "block-02-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/gpu_package_cpu_basic_profiled_traces/block-02-time_2026-09-24_02-16-28_422.json",
+              "traceSha256": "d800794008dc0445cdf77053639efd7a4dbd7aa0005f443a12287df532b940f9",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 9240,
+                "session_initialization": 39197,
+                "SequentialExecutor::Execute": 7277491,
+                "model_run": 7281359
+              }
+            },
+            {
+              "graph": "block-03-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/gpu_package_cpu_basic_profiled_traces/block-03-frequency_2026-09-24_02-16-45_272.json",
+              "traceSha256": "9b2d1cfe85af40319dc0bb7b7a3f07a5a043b7385b61c1e4e6210e7613f94168",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 7911,
+                "session_initialization": 17667,
+                "SequentialExecutor::Execute": 4142903,
+                "model_run": 4146110
+              }
+            },
+            {
+              "graph": "block-03-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/gpu_package_cpu_basic_profiled_traces/block-03-time_2026-09-24_02-16-39_028.json",
+              "traceSha256": "3b23430973d8b08d6189b86ed614219d55b1a5a473af547583b57ff1c64005d7",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 10924,
+                "session_initialization": 37140,
+                "SequentialExecutor::Execute": 6110344,
+                "model_run": 6114237
+              }
+            },
+            {
+              "graph": "block-04-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/gpu_package_cpu_basic_profiled_traces/block-04-frequency_2026-09-24_02-16-55_794.json",
+              "traceSha256": "826d8f7fc0430f709b611df3978f74718594e7113f11da34deaf99a4d31286b3",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 7769,
+                "session_initialization": 17136,
+                "SequentialExecutor::Execute": 3052068,
+                "model_run": 3055245
+              }
+            },
+            {
+              "graph": "block-04-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/gpu_package_cpu_basic_profiled_traces/block-04-time_2026-09-24_02-16-49_487.json",
+              "traceSha256": "c7e3415191ff375d250a9ae0756f73a7317c05875bf3cfde93d4345399d06f81",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 9938,
+                "session_initialization": 36907,
+                "SequentialExecutor::Execute": 6176731,
+                "model_run": 6180425
+              }
+            },
+            {
+              "graph": "block-05-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/gpu_package_cpu_basic_profiled_traces/block-05-frequency_2026-09-24_02-17-06_402.json",
+              "traceSha256": "5660986ffdba0f4282c8e647d133ad3dd1bc691a589740648756a36e43300877",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 7422,
+                "session_initialization": 19092,
+                "SequentialExecutor::Execute": 3055272,
+                "model_run": 3058430
+              }
+            },
+            {
+              "graph": "block-05-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/gpu_package_cpu_basic_profiled_traces/block-05-time_2026-09-24_02-16-58_915.json",
+              "traceSha256": "25949f8bf4b2279d67879ab8f7bd77f06b7bb932aa1ec50f62b702cd6a8eb44c",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 9209,
+                "session_initialization": 36767,
+                "SequentialExecutor::Execute": 7351836,
+                "model_run": 7358139
+              }
+            },
+            {
+              "graph": "block-06-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/gpu_package_cpu_basic_profiled_traces/block-06-frequency_2026-09-24_02-17-16_926.json",
+              "traceSha256": "c9cd77aa587de891e6c399b966b1ecbb70dab6da61ee5921203ac1e1e96d7361",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 7526,
+                "session_initialization": 16808,
+                "SequentialExecutor::Execute": 3003849,
+                "model_run": 3006971
+              }
+            },
+            {
+              "graph": "block-06-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/gpu_package_cpu_basic_profiled_traces/block-06-time_2026-09-24_02-17-09_528.json",
+              "traceSha256": "006b2efab2b228ce0d73b0da90be107b4a3689fbbdc7aff7cd8cbb1aae8f7d77",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 9844,
+                "session_initialization": 37756,
+                "SequentialExecutor::Execute": 7261936,
+                "model_run": 7266365
+              }
+            },
+            {
+              "graph": "block-07-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/gpu_package_cpu_basic_profiled_traces/block-07-frequency_2026-09-24_02-17-26_937.json",
+              "traceSha256": "6866c7974572540d2a06d6239d3439ced6c7f2e6dc8e5010dd21d893d9b26c25",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 12724,
+                "session_initialization": 28462,
+                "SequentialExecutor::Execute": 3655389,
+                "model_run": 3659620
+              }
+            },
+            {
+              "graph": "block-07-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/gpu_package_cpu_basic_profiled_traces/block-07-time_2026-09-24_02-17-20_000.json",
+              "traceSha256": "6cd147a7bdf3dc1c77a5c29c00e81aae5b51a7a2f0a160fed7c6218c2246bfc7",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 10888,
+                "session_initialization": 36913,
+                "SequentialExecutor::Execute": 6774121,
+                "model_run": 6777831
+              }
+            },
+            {
+              "graph": "block-08-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/gpu_package_cpu_basic_profiled_traces/block-08-frequency_2026-09-24_02-17-37_216.json",
+              "traceSha256": "993216ceae5eb446dbfe8ccedc8e62b91fca29db4ea97b692cbbe53ab4b94be4",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 8389,
+                "session_initialization": 19530,
+                "SequentialExecutor::Execute": 4201460,
+                "model_run": 4205094
+              }
+            },
+            {
+              "graph": "block-08-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/gpu_package_cpu_basic_profiled_traces/block-08-time_2026-09-24_02-17-30_686.json",
+              "traceSha256": "9459cbc2729b829e62ab0990959ba2823d82f02976581c89a95f759e1ecc8395",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 9746,
+                "session_initialization": 38362,
+                "SequentialExecutor::Execute": 6392917,
+                "model_run": 6396623
+              }
+            },
+            {
+              "graph": "block-09-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/gpu_package_cpu_basic_profiled_traces/block-09-frequency_2026-09-24_02-17-48_064.json",
+              "traceSha256": "551efcbaed3b3b7c5720ffe4ef16a82eefee96fa571d47ed372ff3379eaf207d",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 7692,
+                "session_initialization": 17198,
+                "SequentialExecutor::Execute": 3070279,
+                "model_run": 3073751
+              }
+            },
+            {
+              "graph": "block-09-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/gpu_package_cpu_basic_profiled_traces/block-09-time_2026-09-24_02-17-41_504.json",
+              "traceSha256": "17bb6831bd5d174f445b7d1fd0b0ee58b00646abb086331a2dd9c110a755c124",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 13904,
+                "session_initialization": 66292,
+                "SequentialExecutor::Execute": 6394438,
+                "model_run": 6398259
+              }
+            },
+            {
+              "graph": "block-10-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/gpu_package_cpu_basic_profiled_traces/block-10-frequency_2026-09-24_02-17-58_653.json",
+              "traceSha256": "1bd35c5f86e0423a0d31820bd163e49f91efe6c30b6777035e7b37ce0d6beb3d",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 7652,
+                "session_initialization": 17091,
+                "SequentialExecutor::Execute": 3032935,
+                "model_run": 3036232
+              }
+            },
+            {
+              "graph": "block-10-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/gpu_package_cpu_basic_profiled_traces/block-10-time_2026-09-24_02-17-51_217.json",
+              "traceSha256": "996ab82547d31bda72b2b4d32c50b1becaad8f935e3408ab5820f10562dc649d",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 9267,
+                "session_initialization": 37443,
+                "SequentialExecutor::Execute": 7300236,
+                "model_run": 7304807
+              }
+            },
+            {
+              "graph": "block-11-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/gpu_package_cpu_basic_profiled_traces/block-11-frequency_2026-09-24_02-18-09_301.json",
+              "traceSha256": "e2a98a58ed727e5772097f812f3bf3ebea4a3f60b9b29900af8b9ff70a5f0b73",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 8068,
+                "session_initialization": 17354,
+                "SequentialExecutor::Execute": 3033438,
+                "model_run": 3036482
+              }
+            },
+            {
+              "graph": "block-11-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/gpu_package_cpu_basic_profiled_traces/block-11-time_2026-09-24_02-18-01_754.json",
+              "traceSha256": "31bb8c19316cedefbc6252e51c4f7b2c6b4ce0443a93408d44991b1cb2b59289",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 9740,
+                "session_initialization": 37624,
+                "SequentialExecutor::Execute": 7412976,
+                "model_run": 7416789
+              }
+            },
+            {
+              "graph": "front",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/gpu_package_cpu_basic_profiled_traces/front_2026-09-24_02-16-06_538.json",
+              "traceSha256": "a8b7e0772b039d6278c7b99657baa7e3320d6210b23fea34c6a7205fd41f83a9",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 1,
+                "model_run": 1
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 17248,
+                "session_initialization": 62639,
+                "SequentialExecutor::Execute": 210816,
+                "model_run": 211048
+              }
+            },
+            {
+              "graph": "head-0",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/gpu_package_cpu_basic_profiled_traces/head-0_2026-09-24_02-18-12_404.json",
+              "traceSha256": "56071fbd2459fbad1a36b2ab81da754205b6c38c44e305ff09d21e382ad550e3",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 274397,
+                "session_initialization": 435984,
+                "SequentialExecutor::Execute": 3089718,
+                "model_run": 3094024
+              }
+            },
+            {
+              "graph": "head-1",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/gpu_package_cpu_basic_profiled_traces/head-1_2026-09-24_02-18-16_931.json",
+              "traceSha256": "7ea107009c7c458759a8ffe1d7f2504b7da524351beb28194acf135b5fe26339",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 142670,
+                "session_initialization": 418616,
+                "SequentialExecutor::Execute": 4379473,
+                "model_run": 4384334
+              }
+            }
+          ],
+          "topHostKernelEvents": [
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "MatMul",
+              "calls": 13344,
+              "hostDurationUs": 82870094
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Mul",
+              "calls": 9746,
+              "hostDurationUs": 11615442
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Softmax",
+              "calls": 3912,
+              "hostDurationUs": 7394367
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Transpose",
+              "calls": 2831,
+              "hostDurationUs": 5147204
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Add",
+              "calls": 6456,
+              "hostDurationUs": 4808627
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Split",
+              "calls": 2279,
+              "hostDurationUs": 4489466
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Concat",
+              "calls": 2255,
+              "hostDurationUs": 3424831
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Slice",
+              "calls": 7058,
+              "hostDurationUs": 2218309
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Erf",
+              "calls": 312,
+              "hostDurationUs": 2164726
+            },
+            {
+              "provider": "CPUExecutionProvider",
+              "operator": "Div",
+              "calls": 1308,
+              "hostDurationUs": 2141458
+            }
+          ],
+          "explicitHostCopyEvents": [],
+          "javaProfileSha256": "e24e4595154bd2f86aaf05b34ddefc6cc9f5896d88971dd42a0c7884d1eab1d8",
+          "javaStageWallMs": {
+            "inference-gate-wait": {
+              "samples": 1,
+              "wallMs": 0
+            },
+            "cache-preflight": {
+              "samples": 1,
+              "wallMs": 3352
+            },
+            "buffer-init": {
+              "samples": 1,
+              "wallMs": 106
+            },
+            "runtime-setup": {
+              "samples": 1,
+              "wallMs": 198
+            },
+            "pcm-read": {
+              "samples": 1,
+              "wallMs": 24
+            },
+            "feature-encode": {
+              "samples": 1,
+              "wallMs": 361
+            },
+            "model-init": {
+              "samples": 54,
+              "wallMs": 2326
+            },
+            "tensor-bind": {
+              "samples": 335,
+              "wallMs": 21
+            },
+            "inference": {
+              "samples": 335,
+              "wallMs": 130712
+            },
+            "pack": {
+              "samples": 180,
+              "wallMs": 312
+            },
+            "scatter": {
+              "samples": 334,
+              "wallMs": 522
+            },
+            "decode": {
+              "samples": 2,
+              "wallMs": 951
+            },
+            "output-write": {
+              "samples": 2,
+              "wallMs": 21
+            },
+            "output-flush": {
+              "samples": 1,
+              "wallMs": 11
+            },
+            "output-commit": {
+              "samples": 1,
+              "wallMs": 0
+            }
+          },
+          "javaGraphSumsTruncatedWallMs": {
+            "modelPrepareWallMs": 0,
+            "sessionInitWallMs": 2308,
+            "tensorBindWallMs": 7,
+            "runWallMs": 130702
+          }
+        },
+        {
+          "variant": "cuda_basic",
+          "profiledPassageWallNanos": 18617820012,
+          "profiledProcessWallNanos": 19157037937,
+          "graphCount": 27,
+          "modelRunCount": 335,
+          "ortHostDurationUs": {
+            "model_loading_uri": 666890,
+            "session_initialization": 1827860,
+            "model_run": 6064821,
+            "SequentialExecutor::Execute": 1547877
+          },
+          "graphs": [
+            {
+              "graph": "block-00-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cuda_basic_profiled_traces/block-00-frequency_2026-09-24_02-18-55_460.json",
+              "traceSha256": "3a0b80b89b2fbb07189fe870209b0b60d02be1ae988a452b04ae866d5042ff45",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 10174,
+                "session_initialization": 48336,
+                "SequentialExecutor::Execute": 29268,
+                "model_run": 149622
+              }
+            },
+            {
+              "graph": "block-00-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cuda_basic_profiled_traces/block-00-time_2026-09-24_02-18-54_868.json",
+              "traceSha256": "d5929632a9f702dd6d504995cbac590db54a9c1f88eb7153f0660364aa49638b",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 9401,
+                "session_initialization": 63728,
+                "SequentialExecutor::Execute": 103708,
+                "model_run": 361867
+              }
+            },
+            {
+              "graph": "block-01-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cuda_basic_profiled_traces/block-01-frequency_2026-09-24_02-18-56_204.json",
+              "traceSha256": "e0014099d0410d054bac56c7e4fe9ab749b1f7be9a7c13b2632e4ad3b5b8600b",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 7131,
+                "session_initialization": 27632,
+                "SequentialExecutor::Execute": 23519,
+                "model_run": 149106
+              }
+            },
+            {
+              "graph": "block-01-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cuda_basic_profiled_traces/block-01-time_2026-09-24_02-18-55_718.json",
+              "traceSha256": "bfbb23e1a35e6fe05002420c3b3417b5e4c640a6761e7eb4ae8cec86b9d1b346",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 8153,
+                "session_initialization": 57240,
+                "SequentialExecutor::Execute": 74038,
+                "model_run": 316353
+              }
+            },
+            {
+              "graph": "block-02-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cuda_basic_profiled_traces/block-02-frequency_2026-09-24_02-18-56_968.json",
+              "traceSha256": "99a79b28d71feb9fc196ee766c2ccb5791f57a6188abc6792e28df07e5c8ebae",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 8355,
+                "session_initialization": 39006,
+                "SequentialExecutor::Execute": 31410,
+                "model_run": 148490
+              }
+            },
+            {
+              "graph": "block-02-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cuda_basic_profiled_traces/block-02-time_2026-09-24_02-18-56_438.json",
+              "traceSha256": "6271555c61c0431f39f35fa9723fe7e57c40e133a2c64f57c54feb8f10671318",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 11618,
+                "session_initialization": 94143,
+                "SequentialExecutor::Execute": 83020,
+                "model_run": 308903
+              }
+            },
+            {
+              "graph": "block-03-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cuda_basic_profiled_traces/block-03-frequency_2026-09-24_02-18-57_712.json",
+              "traceSha256": "2feee2b693ee883c41c886353ccfff010883bc8970c4ac033b84512d14b9a365",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 8436,
+                "session_initialization": 39702,
+                "SequentialExecutor::Execute": 34301,
+                "model_run": 158713
+              }
+            },
+            {
+              "graph": "block-03-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cuda_basic_profiled_traces/block-03-time_2026-09-24_02-18-57_213.json",
+              "traceSha256": "500fb025267dc4557a11876e7e03f6a9ed9b5a4fb148125e06f51d6e809857e5",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 10750,
+                "session_initialization": 80977,
+                "SequentialExecutor::Execute": 72664,
+                "model_run": 306546
+              }
+            },
+            {
+              "graph": "block-04-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cuda_basic_profiled_traces/block-04-frequency_2026-09-24_02-18-58_493.json",
+              "traceSha256": "1a667a1860d3f742746efbab05f54fa7edc1050f87078fadf9e864cbe76878bd",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 12391,
+                "session_initialization": 40552,
+                "SequentialExecutor::Execute": 34872,
+                "model_run": 158782
+              }
+            },
+            {
+              "graph": "block-04-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cuda_basic_profiled_traces/block-04-time_2026-09-24_02-18-57_973.json",
+              "traceSha256": "34dfa5de07ce5c00e7bce3bbb75403a759b25214dcbe6670962df8b939a93330",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 13023,
+                "session_initialization": 82418,
+                "SequentialExecutor::Execute": 88689,
+                "model_run": 309100
+              }
+            },
+            {
+              "graph": "block-05-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cuda_basic_profiled_traces/block-05-frequency_2026-09-24_02-18-59_247.json",
+              "traceSha256": "42bea1155651a8de1cd26b2d3fb984cd08f0d4a347f2235a352bd52a2d9c5460",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 6674,
+                "session_initialization": 27536,
+                "SequentialExecutor::Execute": 20848,
+                "model_run": 145968
+              }
+            },
+            {
+              "graph": "block-05-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cuda_basic_profiled_traces/block-05-time_2026-09-24_02-18-58_761.json",
+              "traceSha256": "f0db0ce7f9d20b9612ad2e427bf9438848dce6dd1c3f286512e7dc9456327af3",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 11181,
+                "session_initialization": 81902,
+                "SequentialExecutor::Execute": 64561,
+                "model_run": 305856
+              }
+            },
+            {
+              "graph": "block-06-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cuda_basic_profiled_traces/block-06-frequency_2026-09-24_02-18-59_909.json",
+              "traceSha256": "b95abd6fd6c3990e12d8e99e8f058052cdad0aa9d7e17b9e2368b0f5e0916439",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 6246,
+                "session_initialization": 25266,
+                "SequentialExecutor::Execute": 23580,
+                "model_run": 147124
+              }
+            },
+            {
+              "graph": "block-06-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cuda_basic_profiled_traces/block-06-time_2026-09-24_02-18-59_470.json",
+              "traceSha256": "fbffc099ef8e78395be6748e14642dd263ce7495c48082c35a50d97ce2f6f7e9",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 8452,
+                "session_initialization": 49419,
+                "SequentialExecutor::Execute": 49879,
+                "model_run": 303018
+              }
+            },
+            {
+              "graph": "block-07-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cuda_basic_profiled_traces/block-07-frequency_2026-09-24_02-19-00_571.json",
+              "traceSha256": "e86a49a05d8903520655f823a3a58cbdfe9d0878e17b93c00612d0dd86c88ca6",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 6730,
+                "session_initialization": 25043,
+                "SequentialExecutor::Execute": 23836,
+                "model_run": 146217
+              }
+            },
+            {
+              "graph": "block-07-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cuda_basic_profiled_traces/block-07-time_2026-09-24_02-19-00_129.json",
+              "traceSha256": "c8c647de5920a4f66f867eabbd89a12085ad065776841fd0b52d9333436b2c0f",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 7966,
+                "session_initialization": 48426,
+                "SequentialExecutor::Execute": 50953,
+                "model_run": 302778
+              }
+            },
+            {
+              "graph": "block-08-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cuda_basic_profiled_traces/block-08-frequency_2026-09-24_02-19-01_233.json",
+              "traceSha256": "ae211218f2d8fa537ae1ccae59cb4e3fd142224b9782301ff2eb7ab4d49c2db6",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 6333,
+                "session_initialization": 25498,
+                "SequentialExecutor::Execute": 24752,
+                "model_run": 147365
+              }
+            },
+            {
+              "graph": "block-08-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cuda_basic_profiled_traces/block-08-time_2026-09-24_02-19-00_791.json",
+              "traceSha256": "4d0542e2f2b3488cac191601eb66782b957c653fa86546889320a7e6019e2da0",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 8324,
+                "session_initialization": 50239,
+                "SequentialExecutor::Execute": 52797,
+                "model_run": 304518
+              }
+            },
+            {
+              "graph": "block-09-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cuda_basic_profiled_traces/block-09-frequency_2026-09-24_02-19-01_892.json",
+              "traceSha256": "dc071c55caa1bb3b86afd3579b47e98b1ce33cf04c4798dacf30bd3050692b31",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 6284,
+                "session_initialization": 25292,
+                "SequentialExecutor::Execute": 24269,
+                "model_run": 146899
+              }
+            },
+            {
+              "graph": "block-09-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cuda_basic_profiled_traces/block-09-time_2026-09-24_02-19-01_454.json",
+              "traceSha256": "406b637953980048510e0d20fa9b933e64858dd3f0807fd3c27465bad8de4dc5",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 8150,
+                "session_initialization": 49705,
+                "SequentialExecutor::Execute": 50157,
+                "model_run": 302559
+              }
+            },
+            {
+              "graph": "block-10-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cuda_basic_profiled_traces/block-10-frequency_2026-09-24_02-19-02_575.json",
+              "traceSha256": "daeb5331f512b98bc56117b6cdfe0205404b8a182b8b2ac4fa5e461774b2f94d",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 6229,
+                "session_initialization": 25541,
+                "SequentialExecutor::Execute": 21970,
+                "model_run": 145322
+              }
+            },
+            {
+              "graph": "block-10-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cuda_basic_profiled_traces/block-10-time_2026-09-24_02-19-02_113.json",
+              "traceSha256": "d27ae1487ac90cc1da9c54edcb3183992ab6ffc9632701c4e9678aec4374c56b",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 11514,
+                "session_initialization": 70915,
+                "SequentialExecutor::Execute": 52662,
+                "model_run": 303531
+              }
+            },
+            {
+              "graph": "block-11-frequency",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cuda_basic_profiled_traces/block-11-frequency_2026-09-24_02-19-03_228.json",
+              "traceSha256": "b9e8c4cbc26a8db9028b170da02f73e8e155146e85a03cd68b91f9ffd5ff251b",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 6299,
+                "session_initialization": 26550,
+                "SequentialExecutor::Execute": 20918,
+                "model_run": 145266
+              }
+            },
+            {
+              "graph": "block-11-time",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cuda_basic_profiled_traces/block-11-time_2026-09-24_02-19-02_791.json",
+              "traceSha256": "142fa1c23c67a59d0af1e8b9be5375b9ca0941eff92ddcd9496d641f29ebc658",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 15,
+                "model_run": 15
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 8020,
+                "session_initialization": 48407,
+                "SequentialExecutor::Execute": 54182,
+                "model_run": 302513
+              }
+            },
+            {
+              "graph": "front",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cuda_basic_profiled_traces/front_2026-09-24_02-18-54_562.json",
+              "traceSha256": "83e7ad09797a6f28d0b2f1b578b311a50378b45455b9e2debf35c45445c7aee8",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 1,
+                "model_run": 1
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 17231,
+                "session_initialization": 111144,
+                "SequentialExecutor::Execute": 110965,
+                "model_run": 139175
+              }
+            },
+            {
+              "graph": "head-0",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cuda_basic_profiled_traces/head-0_2026-09-24_02-19-03_447.json",
+              "traceSha256": "9919aa1d681b81ddbbe648b222a6340795325a1fb35478a7f37a77782bb7baac",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 287884,
+                "session_initialization": 279490,
+                "SequentialExecutor::Execute": 155464,
+                "model_run": 194131
+              }
+            },
+            {
+              "graph": "head-1",
+              "traceFile": "20260924T020341Z-deux-a6f78d49/qualification/cuda_basic_profiled_traces/head-1_2026-09-24_02-19-04_822.json",
+              "traceSha256": "aaba310728c44b98bb5db7f750035b3eba1039493f7f9518d9c7947c931682fa",
+              "counts": {
+                "model_loading_uri": 1,
+                "session_initialization": 1,
+                "SequentialExecutor::Execute": 11,
+                "model_run": 11
+              },
+              "hostDurationUs": {
+                "model_loading_uri": 153941,
+                "session_initialization": 283753,
+                "SequentialExecutor::Execute": 170595,
+                "model_run": 215099
+              }
+            }
+          ],
+          "topHostKernelEvents": [
+            {
+              "provider": "CUDAExecutionProvider",
+              "operator": "MatMul",
+              "calls": 13344,
+              "hostDurationUs": 326865
+            },
+            {
+              "provider": "CUDAExecutionProvider",
+              "operator": "Mul",
+              "calls": 9408,
+              "hostDurationUs": 120263
+            },
+            {
+              "provider": "CUDAExecutionProvider",
+              "operator": "Slice",
+              "calls": 7058,
+              "hostDurationUs": 100111
+            },
+            {
+              "provider": "CUDAExecutionProvider",
+              "operator": "Div",
+              "calls": 1308,
+              "hostDurationUs": 93287
+            },
+            {
+              "provider": "CUDAExecutionProvider",
+              "operator": "Add",
+              "calls": 6456,
+              "hostDurationUs": 89108
+            },
+            {
+              "provider": "CUDAExecutionProvider",
+              "operator": "Split",
+              "calls": 2279,
+              "hostDurationUs": 57840
+            },
+            {
+              "provider": "CUDAExecutionProvider",
+              "operator": "Concat",
+              "calls": 1583,
+              "hostDurationUs": 56592
+            },
+            {
+              "provider": "CUDAExecutionProvider",
+              "operator": "ReduceL2",
+              "calls": 996,
+              "hostDurationUs": 54447
+            },
+            {
+              "provider": "CUDAExecutionProvider",
+              "operator": "Softmax",
+              "calls": 3912,
+              "hostDurationUs": 48459
+            },
+            {
+              "provider": "CUDAExecutionProvider",
+              "operator": "Transpose",
+              "calls": 2831,
+              "hostDurationUs": 40680
+            }
+          ],
+          "explicitHostCopyEvents": [
+            {
+              "provider": "CUDAExecutionProvider",
+              "operator": "MemcpyFromHost",
+              "calls": 312,
+              "hostDurationUs": 4270
+            }
+          ],
+          "javaProfileSha256": "809ba3839b6b748fd262d04338ef0bf16276d6e672698164e16199c4f504798e",
+          "javaStageWallMs": {
+            "inference-gate-wait": {
+              "samples": 1,
+              "wallMs": 0
+            },
+            "cache-preflight": {
+              "samples": 1,
+              "wallMs": 3267
+            },
+            "buffer-init": {
+              "samples": 1,
+              "wallMs": 103
+            },
+            "runtime-setup": {
+              "samples": 1,
+              "wallMs": 186
+            },
+            "pcm-read": {
+              "samples": 1,
+              "wallMs": 25
+            },
+            "feature-encode": {
+              "samples": 1,
+              "wallMs": 364
+            },
+            "model-init": {
+              "samples": 54,
+              "wallMs": 5719
+            },
+            "tensor-bind": {
+              "samples": 335,
+              "wallMs": 17
+            },
+            "inference": {
+              "samples": 335,
+              "wallMs": 6378
+            },
+            "pack": {
+              "samples": 180,
+              "wallMs": 285
+            },
+            "scatter": {
+              "samples": 334,
+              "wallMs": 486
+            },
+            "decode": {
+              "samples": 2,
+              "wallMs": 911
+            },
+            "output-write": {
+              "samples": 2,
+              "wallMs": 23
+            },
+            "output-flush": {
+              "samples": 1,
+              "wallMs": 9
+            },
+            "output-commit": {
+              "samples": 1,
+              "wallMs": 1
+            }
+          },
+          "javaGraphSumsTruncatedWallMs": {
+            "modelPrepareWallMs": 0,
+            "sessionInitWallMs": 5700,
+            "tensorBindWallMs": 7,
+            "runWallMs": 6367
+          }
+        }
+      ]
+    }
+  ],
+  "measuredSteadyState": false,
+  "qualityApproved": false,
+  "target75Proven": false,
+  "limitations": [
+    "One profiled cold passage per control; no repeated uninstrumented timing or accepted speed ratio.",
+    "ORT event durations are host observations, not CUDA device timings or removable critical-path costs.",
+    "Each graph trace has its own timestamp origin. Cross-file intervals are not merged into a global timeline.",
+    "model_run contains SequentialExecutor and kernel events; these totals must not be added.",
+    "Java model-init/run spans enclose ORT spans; Java and ORT totals must not be added.",
+    "The Java profile reports truncated milliseconds; sums of per-graph values can differ from aggregate stage values.",
+    "Explicit copy nodes do not account for every transfer, synchronization, allocator, or output-binding cost.",
+    "Model/session persistence would require new lifecycle and resource qualification; no measured savings are inferred.",
+    "Public mixture GAME and one Deux passage do not establish full-song quality or whole-vocal-stage performance."
+  ]
+}

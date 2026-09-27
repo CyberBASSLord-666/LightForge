@@ -1,0 +1,28 @@
+{
+  "receipt": {
+    "bytes": 570008,
+    "sha256": "c69c686bfc312cb77443c70fd2ebb957ce668b781f543cf7bd3debafd6e6c025"
+  },
+  "outputs": {
+    "cpu_all": {
+      "bytes": 4586400,
+      "sha256": "b5db5b5f8bcc576e1af22b0a9fca837dc9e809195ada006af1581458283578b7"
+    },
+    "cuda_basic": {
+      "bytes": 4586400,
+      "sha256": "d666eca46114144ea4445947b5699916a068fe2402e68183e7ab7a5151a6d98e"
+    }
+  },
+  "audio": {
+    "bytes": 11289644,
+    "sha256": "33f07d502ba19832b62b97d8fb4a11354e81310264bd885d7a06438228773650"
+  },
+  "upstreamSetup": {
+    "bytes": 12392,
+    "sha256": "9702c5d5984059aba47f90337f18e5f631fdea20a3feef5954a33dbe4510c428"
+  },
+  "upstreamProcess": {
+    "bytes": 740,
+    "sha256": "46cec9f8a8d527dad851f7c57ae100437f2c9efb62666db2db414f7540ee4bcc"
+  }
+}

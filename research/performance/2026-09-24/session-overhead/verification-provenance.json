@@ -1,0 +1,71 @@
+{
+  "schema": "lightforge.cold-session-readonly-verification.v1",
+  "evidenceCommit": "d1c6a853fb5ee6df7cb4fa6f751988c66b5158a8",
+  "archives": [
+    {
+      "experiment": "game-deterministic",
+      "command": [
+        "python3",
+        "/workspace/scratch/b9f08ad0c73c/LightForge-performance-lab/research/performance/2026-09-24/game-deterministic/verify_evidence.py",
+        "--zip",
+        "/workspace/scratch/b9f08ad0c73c/session-overhead-analysis/game-deterministic.zip",
+        "--expected-size",
+        "30318186",
+        "--expected-sha256",
+        "7824b02e6f91c36574c27ff9dc7d34d8c0230cd47a88db96c00acf59d4aac66a",
+        "--output-dir",
+        "/workspace/scratch/b9f08ad0c73c/session-overhead-analysis/game-deterministic-verified",
+        "--repo",
+        "/workspace/scratch/b9f08ad0c73c/LightForge-performance-lab"
+      ],
+      "exitCode": 0,
+      "verificationPassed": true,
+      "diagnosticStatus": "NUMERICAL_EQUIVALENCE_UNPROVEN",
+      "verifierSha256": "39a3cb2a41dd780e76f6852da809b8ee63e4aed5ab80af0dee67476ae433ee1b",
+      "verificationOutputSha256": "9ce4db93e789ca5aaa1bcfa6cea1332e45ec63827e945bda5b34bf6881fd1aea",
+      "verificationOutputBytes": 26832
+    },
+    {
+      "experiment": "deux-t4",
+      "command": [
+        "python3",
+        "/workspace/scratch/b9f08ad0c73c/LightForge-performance-lab/research/performance/2026-09-24/deux-t4/verify_evidence.py",
+        "--zip",
+        "/workspace/scratch/b9f08ad0c73c/session-overhead-analysis/deux-t4.zip",
+        "--expected-size",
+        "50841267",
+        "--expected-sha256",
+        "87e4e7010c62db52b30ea881d18b62ae3e5c93a415db618ca184ddab6041be47",
+        "--output-dir",
+        "/workspace/scratch/b9f08ad0c73c/session-overhead-analysis/deux-t4-verified",
+        "--repo",
+        "/workspace/scratch/b9f08ad0c73c/LightForge-performance-lab"
+      ],
+      "exitCode": 0,
+      "verificationPassed": true,
+      "diagnosticStatus": "NUMERICAL_EQUIVALENCE_UNPROVEN",
+      "verifierSha256": "ab94d8abf9955fe72e24605c5f28cb0773b7a65c488e6dcfed64b279c2fd09cd",
+      "verificationOutputSha256": "cd524fb4ce7829b7641a4f5a9d1533936b56f269b6cd8c6b75a88b103e87bc2b",
+      "verificationOutputBytes": 12068
+    }
+  ],
+  "lifecycleSourceBindings": [
+    {
+      "sourceCommit": "9ca73bb8681434f6f2dc9ce1a00ce33531a04379",
+      "file": "android/src/com/cyberbasslord/lightforge/NativeGame.java",
+      "bytes": 23209,
+      "sha256": "a1bb68a4930b5acd74f7fdc2d1d105f1d7f5c9974f11514872f47672b8736369",
+      "inspectedWorkingFileMatchesPinnedSource": true
+    },
+    {
+      "sourceCommit": "8590ac4a67de4340857a96ffe38bae53d7d902b8",
+      "file": "android/src/com/cyberbasslord/lightforge/NativeDeux.java",
+      "bytes": 28016,
+      "sha256": "084fec27d1fad0b10db01a960c614d333bb8c049e712c3fc4524d66e6dc3dd37",
+      "inspectedWorkingFileMatchesPinnedSource": true
+    }
+  ],
+  "inferenceExecuted": false,
+  "qualityApproved": false,
+  "target75Proven": false
+}

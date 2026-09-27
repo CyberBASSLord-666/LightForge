@@ -1,0 +1,17 @@
+{
+  "schema": "lightforge.game-deterministic-handoff.v1",
+  "executionSourceCommit": "9ca73bb8681434f6f2dc9ce1a00ce33531a04379",
+  "executionSourceTree": "a5a7071ce9252608bcb7b5d57126396669bd7abe",
+  "inputDerivationSourceCommit": "d9b42bb79145cfe81367fd70e2ca0ff7f4d52c12",
+  "parentSetupSha256": "a92e864c73f5da16c9103291bc6057d73fd80dd1c70773c21220cf82f14b3926",
+  "setupReceiptSha256": "1ce05c5d39c0bd404c74453e5614c34137c3a2199c2997a0466eb2d56bf750ce",
+  "inputProvenanceSha256": "3bd1db1265dfd30a31bdc0fe4b92e5fe428404ccd45b2453a8221a1031760ffb",
+  "inputSourceProofSha256": "075a6cf2ae0c884ac14c8b9a5e6e67fb3f248091c043bb45468e0e34192ea8a9",
+  "harnessSha256": "d67fa0fe0d75bba041a1b9cf00a55a58d65fc81c93f25b9d76247d62c4bab527",
+  "cudaHeavyOnly": true,
+  "cudaDeterministicCompute": true,
+  "createdUtc": "2026-09-24T01:54:59.101786+00:00",
+  "qualityApproved": false,
+  "target75Proven": false,
+  "releaseAuthorized": false
+}

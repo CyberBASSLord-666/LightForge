@@ -1,0 +1,9 @@
+qualification 0 cpu_all
+diagnostic 0 cpu_all_profiled
+qualification 0 cpu_basic
+diagnostic 0 cpu_basic_profiled
+qualification 0 gpu_package_cpu_basic
+diagnostic 0 gpu_package_cpu_basic_profiled
+qualification 0 cuda_basic
+diagnostic 0 cuda_basic_profiled
+Numerical equivalence is unproven; repeated performance measurement is prohibited by this experiment. Inspect retained raw outputs. Different bits alone do not prove audible degradation. This research experiment does not decide publication readiness.

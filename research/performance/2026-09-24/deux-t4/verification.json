@@ -1,0 +1,314 @@
+{
+  "schema": "lightforge.deux-continuation-independent-audit.v1",
+  "verificationPassed": true,
+  "verificationMeaning": "Integrity and unchanged-policy diagnostic status verified; no quality or timing admission.",
+  "sourceCommit": "8590ac4a67de4340857a96ffe38bae53d7d902b8",
+  "sourceTree": "c841bf18f91d3d04dd6daf7e886e2aa473ab8c70",
+  "receiptSha256": "c69c686bfc312cb77443c70fd2ebb957ce668b781f543cf7bd3debafd6e6c025",
+  "receiptBytes": 570008,
+  "diagnosticStatus": "NUMERICAL_EQUIVALENCE_UNPROVEN",
+  "qualificationExitCode": 1,
+  "sourceHashCount": 9,
+  "modelBindingCount": 27,
+  "dependencyHashCount": 4,
+  "boundCompiledArtifactCount": 193,
+  "runCount": 8,
+  "rawOutputBytes": 36691200,
+  "rawFloat32SamplesPerRun": 1146600,
+  "nativeProfileCount": 8,
+  "graphsPerPass": 27,
+  "graphCallsPerPass": 335,
+  "providerTraceFiles": 108,
+  "observerComparisonsPassed": true,
+  "observerComparisons": [
+    {
+      "referenceSha256": "b5db5b5f8bcc576e1af22b0a9fca837dc9e809195ada006af1581458283578b7",
+      "candidateSha256": "b5db5b5f8bcc576e1af22b0a9fca837dc9e809195ada006af1581458283578b7",
+      "byteIdentical": true,
+      "samples": 1146600,
+      "numericallyUnequalSamples": 0,
+      "maximumAbsoluteError": 0.0,
+      "meanAbsoluteError": 0.0,
+      "rootMeanSquaredError": 0.0,
+      "tolerance": null,
+      "qualityApproved": false,
+      "interpretation": "Raw Float32 differences only; no tolerance or musical-quality approval is inferred.",
+      "reference": "cpu_all",
+      "candidate": "cpu_all_profiled"
+    },
+    {
+      "referenceSha256": "c3e83ccaf95b1f749185fdf6cfab38b6bf7a990098d35c8361530491d5ef8a89",
+      "candidateSha256": "c3e83ccaf95b1f749185fdf6cfab38b6bf7a990098d35c8361530491d5ef8a89",
+      "byteIdentical": true,
+      "samples": 1146600,
+      "numericallyUnequalSamples": 0,
+      "maximumAbsoluteError": 0.0,
+      "meanAbsoluteError": 0.0,
+      "rootMeanSquaredError": 0.0,
+      "tolerance": null,
+      "qualityApproved": false,
+      "interpretation": "Raw Float32 differences only; no tolerance or musical-quality approval is inferred.",
+      "reference": "cpu_basic",
+      "candidate": "cpu_basic_profiled"
+    },
+    {
+      "referenceSha256": "c3e83ccaf95b1f749185fdf6cfab38b6bf7a990098d35c8361530491d5ef8a89",
+      "candidateSha256": "c3e83ccaf95b1f749185fdf6cfab38b6bf7a990098d35c8361530491d5ef8a89",
+      "byteIdentical": true,
+      "samples": 1146600,
+      "numericallyUnequalSamples": 0,
+      "maximumAbsoluteError": 0.0,
+      "meanAbsoluteError": 0.0,
+      "rootMeanSquaredError": 0.0,
+      "tolerance": null,
+      "qualityApproved": false,
+      "interpretation": "Raw Float32 differences only; no tolerance or musical-quality approval is inferred.",
+      "reference": "gpu_package_cpu_basic",
+      "candidate": "gpu_package_cpu_basic_profiled"
+    },
+    {
+      "referenceSha256": "d666eca46114144ea4445947b5699916a068fe2402e68183e7ab7a5151a6d98e",
+      "candidateSha256": "d666eca46114144ea4445947b5699916a068fe2402e68183e7ab7a5151a6d98e",
+      "byteIdentical": true,
+      "samples": 1146600,
+      "numericallyUnequalSamples": 0,
+      "maximumAbsoluteError": 0.0,
+      "meanAbsoluteError": 0.0,
+      "rootMeanSquaredError": 0.0,
+      "tolerance": null,
+      "qualityApproved": false,
+      "interpretation": "Raw Float32 differences only; no tolerance or musical-quality approval is inferred.",
+      "reference": "cuda_basic",
+      "candidate": "cuda_basic_profiled"
+    }
+  ],
+  "crossVariantComparisons": [
+    {
+      "referenceSha256": "b5db5b5f8bcc576e1af22b0a9fca837dc9e809195ada006af1581458283578b7",
+      "candidateSha256": "c3e83ccaf95b1f749185fdf6cfab38b6bf7a990098d35c8361530491d5ef8a89",
+      "byteIdentical": false,
+      "samples": 1146600,
+      "numericallyUnequalSamples": 911769,
+      "maximumAbsoluteError": 3.5762786865234375e-07,
+      "meanAbsoluteError": 2.1038047365183956e-08,
+      "rootMeanSquaredError": 3.061769232727322e-08,
+      "tolerance": null,
+      "qualityApproved": false,
+      "interpretation": "Raw Float32 differences only; no tolerance or musical-quality approval is inferred.",
+      "reference": "cpu_all",
+      "candidate": "cpu_basic"
+    },
+    {
+      "referenceSha256": "c3e83ccaf95b1f749185fdf6cfab38b6bf7a990098d35c8361530491d5ef8a89",
+      "candidateSha256": "c3e83ccaf95b1f749185fdf6cfab38b6bf7a990098d35c8361530491d5ef8a89",
+      "byteIdentical": true,
+      "samples": 1146600,
+      "numericallyUnequalSamples": 0,
+      "maximumAbsoluteError": 0.0,
+      "meanAbsoluteError": 0.0,
+      "rootMeanSquaredError": 0.0,
+      "tolerance": null,
+      "qualityApproved": false,
+      "interpretation": "Raw Float32 differences only; no tolerance or musical-quality approval is inferred.",
+      "reference": "cpu_basic",
+      "candidate": "gpu_package_cpu_basic"
+    },
+    {
+      "referenceSha256": "c3e83ccaf95b1f749185fdf6cfab38b6bf7a990098d35c8361530491d5ef8a89",
+      "candidateSha256": "d666eca46114144ea4445947b5699916a068fe2402e68183e7ab7a5151a6d98e",
+      "byteIdentical": false,
+      "samples": 1146600,
+      "numericallyUnequalSamples": 938567,
+      "maximumAbsoluteError": 4.470348358154297e-07,
+      "meanAbsoluteError": 2.903518385632163e-08,
+      "rootMeanSquaredError": 4.312747619637911e-08,
+      "tolerance": null,
+      "qualityApproved": false,
+      "interpretation": "Raw Float32 differences only; no tolerance or musical-quality approval is inferred.",
+      "reference": "gpu_package_cpu_basic",
+      "candidate": "cuda_basic"
+    }
+  ],
+  "cpuAllVersusCuda": {
+    "referenceSha256": "b5db5b5f8bcc576e1af22b0a9fca837dc9e809195ada006af1581458283578b7",
+    "candidateSha256": "d666eca46114144ea4445947b5699916a068fe2402e68183e7ab7a5151a6d98e",
+    "byteIdentical": false,
+    "samples": 1146600,
+    "numericallyUnequalSamples": 939514,
+    "maximumAbsoluteError": 3.725290298461914e-07,
+    "meanAbsoluteError": 2.9385464484248085e-08,
+    "rootMeanSquaredError": 4.367128794262616e-08,
+    "tolerance": null,
+    "qualityApproved": false,
+    "interpretation": "Raw Float32 differences only; no tolerance or musical-quality approval is inferred.",
+    "reference": "cpu_all",
+    "candidate": "cuda_basic",
+    "additionalIndependentComparison": true
+  },
+  "placement": {
+    "cpu_all": {
+      "observedProviders": [
+        "CPUExecutionProvider"
+      ],
+      "cpuFallbackKernelEvents": 0,
+      "allGraphsExecuteCudaArithmetic": false,
+      "timingMeaning": "ORT host kernel-event durations, including dispatch/scheduling overhead; not GPU device kernel time, critical-path wall time or measured speedup."
+    },
+    "cpu_basic": {
+      "observedProviders": [
+        "CPUExecutionProvider"
+      ],
+      "cpuFallbackKernelEvents": 0,
+      "allGraphsExecuteCudaArithmetic": false,
+      "timingMeaning": "ORT host kernel-event durations, including dispatch/scheduling overhead; not GPU device kernel time, critical-path wall time or measured speedup."
+    },
+    "gpu_package_cpu_basic": {
+      "observedProviders": [
+        "CPUExecutionProvider"
+      ],
+      "cpuFallbackKernelEvents": 0,
+      "allGraphsExecuteCudaArithmetic": false,
+      "timingMeaning": "ORT host kernel-event durations, including dispatch/scheduling overhead; not GPU device kernel time, critical-path wall time or measured speedup."
+    },
+    "cuda_basic": {
+      "observedProviders": [
+        "CPUExecutionProvider",
+        "CUDAExecutionProvider"
+      ],
+      "cpuFallbackKernelEvents": 10232,
+      "allGraphsExecuteCudaArithmetic": true,
+      "timingMeaning": "ORT host kernel-event durations, including dispatch/scheduling overhead; not GPU device kernel time, critical-path wall time or measured speedup."
+    }
+  },
+  "nativeLibraries": {
+    "mappedLibraryCount": 7,
+    "versions": {
+      "cudaRuntimeVersion": 12090,
+      "cudnnVersion": 91002,
+      "cublasVersion": [
+        12,
+        9,
+        1
+      ]
+    },
+    "fullPathsVerified": true,
+    "wheelHashBindingsMatch": true,
+    "actualLibraryBytesIncluded": false
+  },
+  "allFinalInputHashesRecheckedByFrozenHarness": true,
+  "diagnosticTimings": [
+    {
+      "variant": "cpu_all",
+      "phase": "qualification",
+      "wallNanos": 132229729504,
+      "processCpuNanos": 217300000000,
+      "peakRssBytes": 866385920,
+      "inferenceMillis": 122882.0,
+      "modelInitMillis": 2854.0,
+      "processWallIncludingStartupAndInspectionNanos": 132534797027,
+      "timingEligible": false
+    },
+    {
+      "variant": "cpu_all_profiled",
+      "phase": "diagnostic",
+      "wallNanos": 135371717036,
+      "processCpuNanos": 220010000000,
+      "peakRssBytes": 885370880,
+      "inferenceMillis": 125243.0,
+      "modelInitMillis": 2448.0,
+      "processWallIncludingStartupAndInspectionNanos": 135657807099,
+      "timingEligible": false
+    },
+    {
+      "variant": "cpu_basic",
+      "phase": "qualification",
+      "wallNanos": 135465903695,
+      "processCpuNanos": 222420000000,
+      "peakRssBytes": 869761024,
+      "inferenceMillis": 126795.0,
+      "modelInitMillis": 2251.0,
+      "processWallIncludingStartupAndInspectionNanos": 135764834066,
+      "timingEligible": false
+    },
+    {
+      "variant": "cpu_basic_profiled",
+      "phase": "diagnostic",
+      "wallNanos": 138522196147,
+      "processCpuNanos": 226290000000,
+      "peakRssBytes": 863502336,
+      "inferenceMillis": 128773.0,
+      "modelInitMillis": 2351.0,
+      "processWallIncludingStartupAndInspectionNanos": 138869828160,
+      "timingEligible": false
+    },
+    {
+      "variant": "gpu_package_cpu_basic",
+      "phase": "qualification",
+      "wallNanos": 137445499368,
+      "processCpuNanos": 226340000000,
+      "peakRssBytes": 853966848,
+      "inferenceMillis": 127030.0,
+      "modelInitMillis": 2670.0,
+      "processWallIncludingStartupAndInspectionNanos": 137736298817,
+      "timingEligible": false
+    },
+    {
+      "variant": "gpu_package_cpu_basic_profiled",
+      "phase": "diagnostic",
+      "wallNanos": 139871176984,
+      "processCpuNanos": 227310000000,
+      "peakRssBytes": 860192768,
+      "inferenceMillis": 130712.0,
+      "modelInitMillis": 2326.0,
+      "processWallIncludingStartupAndInspectionNanos": 140168591571,
+      "timingEligible": false
+    },
+    {
+      "variant": "cuda_basic",
+      "phase": "qualification",
+      "wallNanos": 18652717925,
+      "processCpuNanos": 20320000000,
+      "peakRssBytes": 1180590080,
+      "inferenceMillis": 5931.0,
+      "modelInitMillis": 6179.0,
+      "processWallIncludingStartupAndInspectionNanos": 19319196794,
+      "timingEligible": false
+    },
+    {
+      "variant": "cuda_basic_profiled",
+      "phase": "diagnostic",
+      "wallNanos": 18617820012,
+      "processCpuNanos": 20990000000,
+      "peakRssBytes": 1213923328,
+      "inferenceMillis": 6378.0,
+      "modelInitMillis": 5719.0,
+      "processWallIncludingStartupAndInspectionNanos": 19157037937,
+      "timingEligible": false
+    }
+  ],
+  "measured": false,
+  "qualityApproved": false,
+  "target75Proven": false,
+  "releaseAuthorized": false,
+  "limitations": [
+    "Input audio, model, runtime and native-library bytes are not included in this ZIP; their immutable receipt bindings and frozen-harness before/after rehash attestations are verified.",
+    "The full APK is not included; its pinned hash was checked once by the continuation setup before extracting the 27 graphs. The inference harness does not rehash the full APK afterward.",
+    "Closed process logs are bound by the confirmed archive digest, not by separate log-hash exit receipts.",
+    "Single diagnostic timings are not repeated speed measurements or accepted performance ratios.",
+    "Different Float32 bytes do not by themselves prove perceptual degradation; no tolerance or quality approval is inferred."
+  ],
+  "archive": {
+    "bytes": 50841267,
+    "sha256": "87e4e7010c62db52b30ea881d18b62ae3e5c93a415db618ca184ddab6041be47",
+    "members": 375,
+    "uncompressedBytes": 259834825,
+    "crcChecked": true
+  },
+  "verifierSha256": "ab94d8abf9955fe72e24605c5f28cb0773b7a65c488e6dcfed64b279c2fd09cd",
+  "durableArchivePartsVerified": {
+    "parts": 68,
+    "bytes": 50841267,
+    "sha256": "87e4e7010c62db52b30ea881d18b62ae3e5c93a415db618ca184ddab6041be47"
+  },
+  "retainedPrimaryReceiptGzipMatches": true
+}
