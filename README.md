@@ -51,12 +51,15 @@ signing credentials to this repository.
 
 [Validation](VALIDATION.md) distinguishes published-release evidence from current
 source checks, historical numerical tests and optional physical observations.
-The published 2.3.2 release passed its source-bound host/Android gates, but
+The published 2.4.0 release passed its source-bound host/Android gates, but
 **comparative musical quality, a 75% analysis-time reduction, and physical
 phone/Tesla performance are not established by those tests**. See its
-[release record](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.3.2)
-for the signed APK and verification report. Later commits require their own
-verification; old receipts must not be relabelled as current results.
+[release record](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.4.0)
+for the signed APK and verification report. The recorded
+[vocal frontend host benchmark](docs/VOCAL_FRONTEND_OPTIMIZATION.md) measured
+about **27% less frontend processing time**, excluding model inference and
+complete analysis time. Later commits require their own verification; old
+receipts must not be relabelled as current results.
 
 ## Development
 
