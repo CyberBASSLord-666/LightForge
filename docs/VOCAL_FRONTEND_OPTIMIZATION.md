@@ -16,7 +16,7 @@ snapshots of one ten-second window and its features, retaining 1,152,000 bytes
 of arrays. This is an explicit cache budget, not a peak application memory
 measurement. The original audio and model clocks remain unchanged.
 
-The [recorded host benchmark](../qa/release-2.4.0/performance/vocal-frontend-reviewed.json)
+The [recorded host benchmark](../research/core-refactor-2.4.0/performance/vocal-frontend-reviewed.json)
 processes all ten original windows of the complete public 64-second demo. Two
 warmups and seven measured rounds per variant use rotating execution order.
 Every trial compares all 1,280,000 Float32 feature values byte for byte against

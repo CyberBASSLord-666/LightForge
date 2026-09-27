@@ -42,7 +42,7 @@ The read-only choreography diagnostic scanner also avoids per-frame string
 allocation. Paired host cases retained identical complete reports and FSEQ
 bytes; median stage reductions ranged from 11% to 56% across the recorded and
 synthetic configurations. Timing samples and their variability are retained in
-`qa/release-2.4.0/performance/`.
+`research/core-refactor-2.4.0/performance/`.
 
 Original model weights, Float32 precision, inference steps, contexts, thresholds
 and model-call counts are preserved. The **75% total-analysis speedup remains an
