@@ -1,0 +1,15 @@
+{
+  "version": {
+    "name": "2.3.2",
+    "code": 20302
+  },
+  "run_id": 35493931933,
+  "source_commit": "c38be4e7f1079a4897d8340875d4da2fe8d4cd57",
+  "delta_sha256": "a2601e94be13cf719ef2a34be8ec8eed3133ad5ca98f628c4f2df821f603ba86",
+  "quality_gate_policy": {
+    "schema_version": 1,
+    "source_commit": "c38be4e7f1079a4897d8340875d4da2fe8d4cd57",
+    "source_tree_sha": "eeaa764092a4fbf5ef685598d8f583e40461a34a",
+    "declaration_sha256": "2a4f14ca0e1bcf5097a38ccb3d66fef36e3c130351a44890477d739f05d31ee0"
+  }
+}
