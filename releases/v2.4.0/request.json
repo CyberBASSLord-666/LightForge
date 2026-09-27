@@ -1,0 +1,15 @@
+{
+  "delta_sha256": "96cab188106feb075242c1872c369c2ea75ce6c9b24918fdacb02abc123c8e73",
+  "quality_gate_policy": {
+    "declaration_sha256": "bf67ab79a73b1f3474a852aa8cf8d62fb0da2be5c6e887b8af20d11521d5a83c",
+    "schema_version": 1,
+    "source_commit": "1ca3b8f6a70c84e5ec72e1599fc4e90088aee2f1",
+    "source_tree_sha": "3a9cd33aafef24933b4d705823df456195baad65"
+  },
+  "run_id": 36354221023,
+  "source_commit": "1ca3b8f6a70c84e5ec72e1599fc4e90088aee2f1",
+  "version": {
+    "code": 20400,
+    "name": "2.4.0"
+  }
+}
