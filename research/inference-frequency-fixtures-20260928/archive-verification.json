@@ -1,0 +1,250 @@
+{
+  "schema": "lightforge.independent-fixture-quality-archive.v1",
+  "createdAt": "2026-09-28T22:42:53.444919+00:00",
+  "scope": "Read-only archival and hash verification of completed original-model host quality runs. Four/eight-worker output equivalence on two licensed inputs; no new inference, audio/PCM/model/class copies, phone or performance qualification.",
+  "cases": {
+    "falcon": {
+      "originalRunDirectory": "/dev/shm/lightforge-frequency-falcon-quality-20260928-01",
+      "receiptSha256": "24e755b1629b821bba4b0ef32533f198a7098b5024c471d95d9a4c28a1891271",
+      "sourceBindingsUnchanged": true,
+      "currentSourceHashesMatch": true,
+      "compiledClassHashCount": 51,
+      "compiledClassHashesMatch": true,
+      "inputSha256": "0d0bf21401ad0dbb8a49aae581a16f9a00cadca41e116b5a4dc27eaaa3625648",
+      "outputHashesVerified": true,
+      "outputs": {
+        "candidate4": {
+          "sha256": "e376591b6b588fc10a9661a6fb298d6acd020be7a3cb12528891908083ded835",
+          "bytes": 4586400,
+          "finite": true,
+          "inferenceCalls": 1727
+        },
+        "candidate": {
+          "sha256": "e376591b6b588fc10a9661a6fb298d6acd020be7a3cb12528891908083ded835",
+          "bytes": 4586400,
+          "finite": true,
+          "inferenceCalls": 1727
+        }
+      }
+    },
+    "stella": {
+      "originalRunDirectory": "/dev/shm/lightforge-frequency-stella-quality-20260928-01",
+      "receiptSha256": "bf4184eb58ba2c1de7eeee3330820b03af84dc8dd6468306b8d9b4a367e7c434",
+      "sourceBindingsUnchanged": true,
+      "currentSourceHashesMatch": true,
+      "compiledClassHashCount": 51,
+      "compiledClassHashesMatch": true,
+      "inputSha256": "331b03c1f07e2672854bb53f56e7110ce58c0e7ef7be945d828fe9589af8bdd9",
+      "outputHashesVerified": true,
+      "outputs": {
+        "candidate4": {
+          "sha256": "1e3f2b6d3081adaae9855eced53a69f5b3babc381b965ccff977038383f204c3",
+          "bytes": 4586400,
+          "finite": true,
+          "inferenceCalls": 1727
+        },
+        "candidate": {
+          "sha256": "1e3f2b6d3081adaae9855eced53a69f5b3babc381b965ccff977038383f204c3",
+          "bytes": 4586400,
+          "finite": true,
+          "inferenceCalls": 1727
+        }
+      }
+    }
+  },
+  "files": {
+    "falcon/receipt.json": {
+      "sha256": "24e755b1629b821bba4b0ef32533f198a7098b5024c471d95d9a4c28a1891271",
+      "bytes": 25446
+    },
+    "falcon/compile.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "falcon/candidate-process.log": {
+      "sha256": "5739783a22c759128e97dd940becd043e30d6d56e23fa84ba5bad01295a106d7",
+      "bytes": 131
+    },
+    "falcon/candidate4-process.log": {
+      "sha256": "9c81f5fc7a10756ce1542526349abddee17b4cc8edf18a7a0e078bd9859c041a",
+      "bytes": 130
+    },
+    "falcon/candidate4/quality-0.log": {
+      "sha256": "9c81f5fc7a10756ce1542526349abddee17b4cc8edf18a7a0e078bd9859c041a",
+      "bytes": 130
+    },
+    "falcon/candidate4/quality-0.profile.txt": {
+      "sha256": "837bc9d29cd30c664744cf3a4c730e12a92de0314f7ce21f69f28e52fc2dcae1",
+      "bytes": 32830
+    },
+    "falcon/candidate/quality-0.log": {
+      "sha256": "5739783a22c759128e97dd940becd043e30d6d56e23fa84ba5bad01295a106d7",
+      "bytes": 131
+    },
+    "falcon/candidate/quality-0.profile.txt": {
+      "sha256": "7db0fff64fee0f1b50034c3b8194386cde11712f45a74d26b73859f5638bff03",
+      "bytes": 32843
+    },
+    "falcon/source-snapshots/AppDiagnostics.java": {
+      "sha256": "fa360742193c650b4b20a4ec3b7d57dfe9bbceeea503315d6196183f3f1197df",
+      "bytes": 208
+    },
+    "falcon/source-snapshots/android/native-runtime.json": {
+      "sha256": "e3ea568b3a8485235f23a59cd787466cdcbbfcaa54ac56df3ce040d29fcb2a94",
+      "bytes": 2123
+    },
+    "falcon/source-snapshots/android/src/com/cyberbasslord/lightforge/NativeDeux.java": {
+      "sha256": "314a395c8bd28c8841d5a2afefdb03779b1929f9beac3b1200dde7d03ee996d6",
+      "bytes": 74629
+    },
+    "falcon/source-snapshots/android/src/com/cyberbasslord/lightforge/NativeDeuxTransform.java": {
+      "sha256": "991b06501cfb88b904d0b714a525c389f169f00c231248b0e961b70f257e90b5",
+      "bytes": 7163
+    },
+    "falcon/source-snapshots/android/src/com/cyberbasslord/lightforge/NativeExecutionPolicy.java": {
+      "sha256": "35e5ca193c8ba46157e79a5caa9997370eec1a3fdabc9670bf0d4f8616b62702",
+      "bytes": 17582
+    },
+    "falcon/source-snapshots/android/src/com/cyberbasslord/lightforge/NativeInferenceProfile.java": {
+      "sha256": "059e3ac51a8a935b2af1cc507f9985e6da1ba7c6fcef4d8a0f20ca44d1c7f88d",
+      "bytes": 43277
+    },
+    "falcon/source-snapshots/android/src/com/cyberbasslord/lightforge/NativePassagePolicy.java": {
+      "sha256": "f30b21b801f991bf09e07b737cde4117baf77110afbbada4bcc691137e1f2daa",
+      "bytes": 25653
+    },
+    "falcon/source-snapshots/qa/release-2.4.1/verify-analysis.py": {
+      "sha256": "b3fad7de6e3dd63ceff4268a9d5c37fda852eebf3d6a411b1724893303c553b9",
+      "bytes": 76081
+    },
+    "falcon/source-snapshots/tests/NativeDeuxCalibrationTest.java": {
+      "sha256": "890270d2b1ce32111d4258aa9dd36e174b2d03b54098e12753b8c9bdd55dd39c",
+      "bytes": 32456
+    },
+    "falcon/source-snapshots/tests/NativeDeuxParallelBenchmark.java": {
+      "sha256": "96d04a566a561611cc40dea70bed3c0f916025a2741c8b91a393384a902ef040",
+      "bytes": 4169
+    },
+    "falcon/source-snapshots/tests/test_deux_passage_process_receipt.py": {
+      "sha256": "85688e81ad1e299a6a4161d91c6e5ec2c77494593f506ab4cd290c848163d180",
+      "bytes": 4105
+    },
+    "falcon/source-snapshots/tests/test_native_baseline_cancellation_evidence.py": {
+      "sha256": "49542dff70bf82753a36f3582cbd88cd29e0ead2f07c2d9aaec80d4ed430cb61",
+      "bytes": 4402
+    },
+    "falcon/source-snapshots/tests/test_native_scheduler_evidence.py": {
+      "sha256": "c30c143b547ce1ab6caa0444f882daac63fb931b1311bfd647315ed7e14ff824",
+      "bytes": 23549
+    },
+    "falcon/source-snapshots/tools/benchmark_deux_execution.py": {
+      "sha256": "fb124437361b8e7eb9ff23de5906db6824b049c7b51bd0f2f2d2e0720bc3848c",
+      "bytes": 16195
+    },
+    "falcon/source-snapshots/tools/benchmark_deux_parallel.py": {
+      "sha256": "15dacf8cb0aa6a4afe88347ad7586a7709902e4718bedb5dac10d8e17d91c068",
+      "bytes": 18499
+    },
+    "falcon/source-snapshots/tools/verify_deux_passage.py": {
+      "sha256": "1412e4706b2dbd9cb2513011b11dad96e561b735fd8b86dd2d5eb390066c9674",
+      "bytes": 16184
+    },
+    "stella/receipt.json": {
+      "sha256": "bf4184eb58ba2c1de7eeee3330820b03af84dc8dd6468306b8d9b4a367e7c434",
+      "bytes": 25433
+    },
+    "stella/compile.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "stella/candidate-process.log": {
+      "sha256": "d4239fe261f24068431a81e2e23104e06511a97dc176a178912333993b89b67a",
+      "bytes": 131
+    },
+    "stella/candidate4-process.log": {
+      "sha256": "12137c1818e13fe3f2432923ee32c09160242fe4fdcf146acb17f3a7bb2d3fe5",
+      "bytes": 130
+    },
+    "stella/candidate4/quality-0.log": {
+      "sha256": "12137c1818e13fe3f2432923ee32c09160242fe4fdcf146acb17f3a7bb2d3fe5",
+      "bytes": 130
+    },
+    "stella/candidate4/quality-0.profile.txt": {
+      "sha256": "eef1e726ac7b67b30c401c563bf4d69716be4cb6cb3aa7ac178e7bc1ca21a06e",
+      "bytes": 32832
+    },
+    "stella/candidate/quality-0.log": {
+      "sha256": "d4239fe261f24068431a81e2e23104e06511a97dc176a178912333993b89b67a",
+      "bytes": 131
+    },
+    "stella/candidate/quality-0.profile.txt": {
+      "sha256": "c246ece200f3234c69313ec87565bd276ffd9108402a0149acf943e4f47d7a8e",
+      "bytes": 32839
+    },
+    "stella/source-snapshots/AppDiagnostics.java": {
+      "sha256": "fa360742193c650b4b20a4ec3b7d57dfe9bbceeea503315d6196183f3f1197df",
+      "bytes": 208
+    },
+    "stella/source-snapshots/android/native-runtime.json": {
+      "sha256": "e3ea568b3a8485235f23a59cd787466cdcbbfcaa54ac56df3ce040d29fcb2a94",
+      "bytes": 2123
+    },
+    "stella/source-snapshots/android/src/com/cyberbasslord/lightforge/NativeDeux.java": {
+      "sha256": "314a395c8bd28c8841d5a2afefdb03779b1929f9beac3b1200dde7d03ee996d6",
+      "bytes": 74629
+    },
+    "stella/source-snapshots/android/src/com/cyberbasslord/lightforge/NativeDeuxTransform.java": {
+      "sha256": "991b06501cfb88b904d0b714a525c389f169f00c231248b0e961b70f257e90b5",
+      "bytes": 7163
+    },
+    "stella/source-snapshots/android/src/com/cyberbasslord/lightforge/NativeExecutionPolicy.java": {
+      "sha256": "35e5ca193c8ba46157e79a5caa9997370eec1a3fdabc9670bf0d4f8616b62702",
+      "bytes": 17582
+    },
+    "stella/source-snapshots/android/src/com/cyberbasslord/lightforge/NativeInferenceProfile.java": {
+      "sha256": "059e3ac51a8a935b2af1cc507f9985e6da1ba7c6fcef4d8a0f20ca44d1c7f88d",
+      "bytes": 43277
+    },
+    "stella/source-snapshots/android/src/com/cyberbasslord/lightforge/NativePassagePolicy.java": {
+      "sha256": "f30b21b801f991bf09e07b737cde4117baf77110afbbada4bcc691137e1f2daa",
+      "bytes": 25653
+    },
+    "stella/source-snapshots/qa/release-2.4.1/verify-analysis.py": {
+      "sha256": "b3fad7de6e3dd63ceff4268a9d5c37fda852eebf3d6a411b1724893303c553b9",
+      "bytes": 76081
+    },
+    "stella/source-snapshots/tests/NativeDeuxCalibrationTest.java": {
+      "sha256": "890270d2b1ce32111d4258aa9dd36e174b2d03b54098e12753b8c9bdd55dd39c",
+      "bytes": 32456
+    },
+    "stella/source-snapshots/tests/NativeDeuxParallelBenchmark.java": {
+      "sha256": "96d04a566a561611cc40dea70bed3c0f916025a2741c8b91a393384a902ef040",
+      "bytes": 4169
+    },
+    "stella/source-snapshots/tests/test_deux_passage_process_receipt.py": {
+      "sha256": "85688e81ad1e299a6a4161d91c6e5ec2c77494593f506ab4cd290c848163d180",
+      "bytes": 4105
+    },
+    "stella/source-snapshots/tests/test_native_baseline_cancellation_evidence.py": {
+      "sha256": "49542dff70bf82753a36f3582cbd88cd29e0ead2f07c2d9aaec80d4ed430cb61",
+      "bytes": 4402
+    },
+    "stella/source-snapshots/tests/test_native_scheduler_evidence.py": {
+      "sha256": "c30c143b547ce1ab6caa0444f882daac63fb931b1311bfd647315ed7e14ff824",
+      "bytes": 23549
+    },
+    "stella/source-snapshots/tools/benchmark_deux_execution.py": {
+      "sha256": "fb124437361b8e7eb9ff23de5906db6824b049c7b51bd0f2f2d2e0720bc3848c",
+      "bytes": 16195
+    },
+    "stella/source-snapshots/tools/benchmark_deux_parallel.py": {
+      "sha256": "15dacf8cb0aa6a4afe88347ad7586a7709902e4718bedb5dac10d8e17d91c068",
+      "bytes": 18499
+    },
+    "stella/source-snapshots/tools/verify_deux_passage.py": {
+      "sha256": "1412e4706b2dbd9cb2513011b11dad96e561b735fd8b86dd2d5eb390066c9674",
+      "bytes": 16184
+    }
+  },
+  "passed": true
+}

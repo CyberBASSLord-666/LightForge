@@ -1,17 +1,41 @@
 # Isolated Android inference diagnostic
 
 This is a development companion for measuring the corrected `NativeDeux` on a
-physical Android device. The diagnostic APK has been **built and structurally
-verified, but has not been installed or run**. A completed probe is evidence for
+physical Android device. The current **version 2 / probe-2** artifact is
+`build/inference-device-probe/run-jipwai4p/LightForge-inference-probe.apk`
+(113,915,300 bytes), SHA-256
+`79dba57cc55d0fc61e42aa245f0f94c7a1d826aa184bb6be08026ff931712429`.
+Its source-receipt SHA-256 is
+`b9b5991ab8746e96ef28675f23d6309ce5f985003df4d6f12ee4d5360d52d83b`.
+The [new artifact archive](../../research/inference-device-regression-20260928/device-probe-v2-79dba57cc55d/README.md)
+retains the build/source receipts, hashes for all 15 compiled source files and
+75 classes, build log and independent APK verification. Signature, version,
+16 KiB alignment, assets, pinned runtime and current-source binding passed.
+This artifact record contains no version 2 phone run or production release.
+
+Version 2 has a different development signer from the old companion. Preserve
+the old companion's exported receipts, then remove **only LightForge inference
+probe — DEVELOPMENT** before installing it. Do not uninstall installed
+LightForge; version 2 cannot update either application's existing signing identity.
+
+The historical **version 1** diagnostic APK was built, structurally
+verified, installed and run. [Run01's archived findings](../../research/inference-device-regression-20260928/device-probe-4a25e06032a3-run01.md)
+record four completed passages before operator cancellation during passage five.
+One exact-output pair had 24.56% lower candidate arm wall time, confounded by
+model-file preparation charged to the baseline. This does not isolate a scheduling
+gain or establish sustained qualification. A completed probe is evidence for
 review, not production release approval.
 
-The verified build is `build/inference-device-probe/run-w6e3elh2/LightForge-inference-probe.apk`
+That historical build is `build/inference-device-probe/run-w6e3elh2/LightForge-inference-probe.apk`
 (113,898,916 bytes), SHA-256
 `a68ab0690f0ade0153fd7edb21e4b86c86cbe0eccbceb98d339162d1dd71d274`.
 Its companion receipt confirms APK signature, ZIP integrity, and alignment
 checks, a separate development signer, `releaseArtifact: false`, and
-`executionPerformed: false`. These build checks do not establish Android
-runtime behavior or a performance improvement.
+`executionPerformed: false`. That field records the builder's actions, not the
+later phone run. Build checks do not establish runtime behavior or performance.
+Its frozen source receipt remains historical; current production changes are not
+covered by this APK or run01. The archived analysis passes frozen-artifact binding
+and fails the current-source binding gate.
 
 The companion uses application ID
 `com.cyberbasslord.lightforge.inferenceprobe`. It does not update, launch, stop,
@@ -118,9 +142,10 @@ to return at an exact deadline.
 
 ## Limits and review gates
 
-- Cross-package asset access is based on documented public APIs but still needs
-  verification on the actual device. Missing package/resources or any identity
-  mismatch fail visibly before inference. No weaker fallback is used.
+- Cross-package asset access and the installed package/model identity checks
+  succeeded during run01 on the observed phone. This does not establish support
+  on other devices. Missing package/resources or any identity mismatch fail
+  visibly before inference. No weaker fallback is used.
 - This validates the corrected engine and its real Android admission policy in
   a separate process. It does not validate LightForge's foreground service,
   lifecycle, wakelock, audio import, output assembly, sequencing, or full-song
@@ -128,8 +153,11 @@ to return at an exact deadline.
 - Thirty-five jobs may include substantial qualification overhead; inspect
   admission, every paired result, ordinary calls, calibration cost, and total
   elapsed time. A complete run is not automatically a useful speedup.
-- APK build success cannot establish runtime asset access, output correctness,
-  cancellation, or performance. No device success is currently claimed.
+- Run01's four full outputs and one matching pair do not establish a completed
+  35-passage run, controlled scheduling improvement or net benefit. Cancellation
+  returned the coordinator and engine close but conservatively marked native
+  cleanup unconfirmed and retained the cache. Source corrections require new
+  evidence; APK build success alone cannot supply it.
 
 ## Fixture attribution and source references
 

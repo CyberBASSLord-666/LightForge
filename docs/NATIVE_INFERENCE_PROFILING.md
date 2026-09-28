@@ -31,8 +31,8 @@ The legacy `*CpuMs` fields are explicitly labeled `cpuScope=calling-thread`.
 `inferenceProcessCpuMs` uses Android `Process.getElapsedCpuTime()` (or the host
 operating-system bean's real process CPU clock). Concurrent calls contribute
 actual graph-call counts and aggregate call durations. A wave contributes one
-coordinator measurement after its workers retire. The temporal refill pipeline
-instead contributes one interval per temporal graph, starting before initial
+coordinator measurement after its workers retire. The temporal and frequency refill pipelines
+instead contribute one interval per parallel graph, starting before initial
 packing and ending after every worker retires. Its
 `inferenceWorkScope=run-and-pipeline-coordination` explicitly includes packing,
 refill, scattering and coordination as well as concurrent native execution.
@@ -59,9 +59,10 @@ summary-only `schedulerCalibrationWallMs` and `schedulerCalibrationCount`; they
 never inflate production graph-call counts or add stage records.
 Complete-passage comparisons use separate, equivalent probe collectors. The
 outer passage `wallMs` still includes that extra work; calibration cost must not
-be added to it again. Temporal baseline/four-worker/eight-worker/unobserved
-session counts are labeled `temporalConfigCountScope=session-init-attempts`.
-They count the configuration at each temporal session initialization, including
+be added to it again. Both families retain baseline/four-worker/eight-worker/unobserved
+session counts, labeled `temporalConfigCountScope=session-init-attempts` and
+`frequencyConfigCountScope=session-init-attempts`.
+They count the configuration at each corresponding session initialization, including
 failed initialization attempts, rather than counting initial announcements or
 claiming the final configuration describes the entire passage.
 Heap values are Java-heap observations only, marked `unavailable` (including
@@ -70,6 +71,18 @@ values use the same rule. The CPU-only Deux path always reports
 `acceleratorTelemetry=unavailable`; it does not invent GPU/NPU utilization or
 accelerator-memory numbers. Cache counters are observed from the verified
 preflight model inventory and remain unavailable if that stage was not reached.
+Common `preflightWallMs` includes materializing all missing original graphs after
+inventory/checksum/storage checks, before nomination or complete-passage timers.
+Cache hit/miss counts describe the initial inventory once. Extraction is not
+counted again as graph preparation or scheduler calibration; subsequent graph
+preparation measures lookup of verified cache files.
+
+The separate diagnostic companion can opt into one auxiliary candidate profile
+per paired passage, bounded to three per fresh 35-passage run. It never joins
+production records or totals. Its collector lifetime is not an arm timer;
+completed arm clocks come from the actual returned attempts. Direct extraction
+and checksum counters show in-arm model-file preparation without additional
+file reads. Prepared files do not establish equal OS cache, thermal or CPU state.
 
 Records are created in memory and emitted once through `AppDiagnostics` after a
 passage completes, fails, is cancelled, or is released before completion. They
@@ -82,11 +95,17 @@ See [diagnostic evidence](DIAGNOSTIC_EVIDENCE.md) for retention and recovery sco
 `notePassagePolicy` copies the controller's bounded evidence snapshot into the
 terminal receipt and compact summary. It retains complete-passage baseline and
 candidate times, pair order, output digest, exactness/geometry checks, reason,
-extra-work cost and lease state. Projected accrued savings remain explicitly
+extra-work cost and lease state. Initial exact pairs use ordinals 0/1/2. The
+latest useful baseline control is separate: `native-passage-control-v1` records
+its baseline bracket, the maximum of three recent candidate times and the
+accept/reject decision with `comparisonScope=unmatched-inputs`. It is not a
+same-input speedup or output-equivalence comparison. Controls are production
+work; they do not replay a candidate or add scheduler-probe cost.
+Projected accrued savings remain explicitly
 `projected-not-measured`; they are not a measured whole-job comparison. Unknown
 fields, unsafe strings, incomplete snapshots and invalid bounds cannot overwrite
 the last accepted evidence. The [execution contract](NATIVE_EXECUTION_CALIBRATION.md)
-defines admission, fresh cached-policy checks and sustained rechecks.
+defines admission, fresh cached-policy pairs and sustained baseline controls.
 
 The profiling path is guarded by a full-passage host observer-equivalence test.
 In one fresh JVM/runtime it runs the fixed `startSample=-66150` passage first
@@ -115,7 +134,8 @@ performance claim or a substitute for device profiling.
 Do not use a profile to justify session pooling, lower precision, reduced
 context, or any model change. Those changes require separate baseline/candidate
 quality evidence and the performance-quality gate. Profiling itself does not select a model, change precision or alter tensors.
-The parallel temporal runner changes batch geometry and execution scheduling;
-its observed 875 calls must not be labeled as the reference path's 335 calls.
+Parallel execution changes batch geometry and scheduling. The historical
+temporal-only candidate used 875 calls; the combined temporal B1/frequency B16
+candidate uses 1,727. Neither is the reference path's 335 calls.
 The historical host qualification does not authorize the unreleased device
 policy. See the [execution contract](NATIVE_EXECUTION_CALIBRATION.md).

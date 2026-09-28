@@ -26,6 +26,10 @@ TEMPORAL_SESSION_METRICS = (
     "temporalBaselineSessionCount", "temporalFourWorkerSessionCount",
     "temporalEightWorkerSessionCount", "temporalUnobservedSessionCount",
 )
+FREQUENCY_SESSION_METRICS = (
+    "frequencyBaselineSessionCount", "frequencyFourWorkerSessionCount",
+    "frequencyEightWorkerSessionCount", "frequencyUnobservedSessionCount",
+)
 SUMMARY_METRICS = (
     "wallMs", "instrumentedCpuMs", "waitWallMs", "waitCpuMs", "engineInitWallMs",
     "preflightWallMs", "bufferInitWallMs", "runtimeInitWallMs", "preprocessWallMs",
@@ -35,8 +39,9 @@ SUMMARY_METRICS = (
     "inferenceThreadCpuMs", "inferenceProcessCpuMs", "inferenceCount", "sessionInitCount",
     "inferenceWorkerThreadCpuMs", "inferenceWorkerRunCount",
     "schedulerCalibrationWallMs", "schedulerCalibrationCount",
-) + TEMPORAL_SESSION_METRICS
-GRAPH_METRICS = ("runCount", "runWallMs", "runCpuMs", "runProcessCpuMs", "sessionInitWallMs",
+) + TEMPORAL_SESSION_METRICS + FREQUENCY_SESSION_METRICS
+GRAPH_METRICS = ("runCount", "runWallMs", "runCpuMs", "runProcessCpuMs", "sessionInitCount", "sessionInitWallMs",
+                 "modelPrepareCount", "modelPrepareWallMs", "tensorBindCount", "tensorBindWallMs",
                  "packWallMs", "packCpuMs", "packProcessCpuMs", "scatterWallMs", "scatterCpuMs", "scatterProcessCpuMs")
 TELEMETRY = ("cpuTelemetry", "memoryTelemetry", "acceleratorTelemetry", "directBufferTelemetry", "cacheTelemetry", "inferenceWorkerCpuTelemetry")
 SUMMARY_SCOPES = {
@@ -47,6 +52,7 @@ SUMMARY_SCOPES = {
     "inferenceWorkScope": {"run-and-wave-coordination", "run-and-pipeline-coordination"},
     "instrumentedCpuScope": {"nonoverlapping-calling-thread"},
     "temporalConfigCountScope": {"session-init-attempts"},
+    "frequencyConfigCountScope": {"session-init-attempts"},
 }
 COPY_INTERVAL_SCOPES = {"sequential-intervals", "nested-in-inference-pipeline", "mixed-nested-and-sequential-intervals", "unavailable"}
 COPY_PROCESS_SCOPES = {"all-app-threads", "unavailable-overlapping-intervals", "unavailable"}
@@ -71,11 +77,15 @@ POLICY_REASONS = frozenset((
     "median-regression", "invalid-timing", "probe-aborted", "external-baseline", "cancelled",
     "memory-fallback", "thermal-guard", "output-mismatch", "memory-pressure", "screen-budget",
     "screen-no-win", "runtime-rejected", "unknown-work",
+    "control-required", "slow-passage-control", "control-accepted", "control-regression",
+    "control-incomplete", "unfinished-control",
 ))
 POLICY_SCHEMA = "native-passage-policy-v1"
 PAIR_SCHEMA = "native-passage-pair-v1"
-POLICY_SCHEMAS = {POLICY_SCHEMA, PAIR_SCHEMA}
+CONTROL_SCHEMA = "native-passage-control-v1"
+POLICY_SCHEMAS = {POLICY_SCHEMA, PAIR_SCHEMA, CONTROL_SCHEMA}
 PAIR_NANOS = ("baselineNanos", "candidateNanos", "extraNanos")
+CONTROL_NANOS = ("baselineNanos", "previousBaselineNanos", "candidateMaxNanos")
 
 
 def _policy_record(raw):
@@ -90,13 +100,17 @@ def _policy_record(raw):
         re.fullmatch(r"[A-Za-z][A-Za-z0-9]*=[^\s;=]+", token) for token in tokens)
     enums = ({"state": {"baseline", "qualified", "provisional"}, "workers": {"0", "4", "8"},
               "reason": POLICY_REASONS, "paybackScope": {"projected-not-measured"}}
-             if schema == POLICY_SCHEMA else {"role": {"qualification", "recheck"}, "workers": {"4", "8"}})
+             if schema == POLICY_SCHEMA else {"role": {"qualification", "recheck"}, "workers": {"4", "8"}}
+             if schema == PAIR_SCHEMA else {"comparisonScope": {"unmatched-inputs"}})
     numbers = ({"extraNanos": 2**63 - 1, "extraCapNanos": 360_000_000_000,
                 "projectedAccruedSavingsNanos": 2**63 - 1, "qualificationPairs": 3,
                 "currentJobPairs": 4096, "activePassages": 4096, "leasePassages": 12}
                if schema == POLICY_SCHEMA else {"index": 2, "ordinal": 4095,
-                                                **{key: 2**63 - 1 for key in PAIR_NANOS}})
-    booleans = ("seeded",) if schema == POLICY_SCHEMA else ("candidateFirst", "finite", "exact", "fullGeometry", "coldSessions")
+                                                **{key: 2**63 - 1 for key in PAIR_NANOS}}
+               if schema == PAIR_SCHEMA else {"ordinal": 4095, "candidateSamples": 3,
+                                               **{key: 3_600_000_000_000 for key in CONTROL_NANOS}})
+    booleans = (("seeded",) if schema == POLICY_SCHEMA else
+                ("candidateFirst", "finite", "exact", "fullGeometry", "coldSessions") if schema == PAIR_SCHEMA else ("accepted",))
     allowed = {"schema"} | set(enums) | set(numbers) | set(booleans)
     if schema == PAIR_SCHEMA:
         allowed.add("outputSha256")
@@ -115,6 +129,10 @@ def _policy_record(raw):
             good &= value == 360_000_000_000
         elif key == "leasePassages":
             good &= value in (8, 12)
+        elif schema == CONTROL_SCHEMA and key in CONTROL_NANOS:
+            good &= value is not None and value > 0
+        elif schema == CONTROL_SCHEMA and key == "candidateSamples":
+            good &= value == 3
         result[key] = {"status": "observed" if good else "unavailable", "value": value if good else None}
         valid &= good
     for key in booleans:
@@ -131,7 +149,8 @@ def _passage_policy(records=(), encoded=None, *, source):
     result = {"status": "unavailable", "source": source,
               "scope": "controller-evidence-snapshot-not-additional-passages",
               "qualification_status": "not-independently-evaluated", "timing_units": "nanoseconds",
-              "payback_scope": "projected-not-measured", "controller": None, "pairs": []}
+              "payback_scope": "projected-not-measured", "controller": None, "pairs": [], "controls": [],
+              "control_scope": "unmatched-input-timing-guard-not-same-input-equality-or-speedup-proof"}
     decoded = None
     if encoded is not None:
         if not isinstance(encoded, str) or len(encoded) > 8 * 513:
@@ -150,12 +169,18 @@ def _passage_policy(records=(), encoded=None, *, source):
         valid &= rows == decoded
     if parsed[0].get("schema") == POLICY_SCHEMA:
         result["controller"] = parsed[0]
-    qualification, rechecks = 0, 0
+    qualification, rechecks, controls = 0, 0, 0
     for row in parsed[1:]:
+        if row.get("schema") == CONTROL_SCHEMA:
+            result["controls"].append(row)
+            controls += 1
+            valid &= controls == 1
+            continue
         if row.get("schema") != PAIR_SCHEMA:
             valid = False
             continue
         result["pairs"].append(row)
+        valid &= controls == 0
         if row.get("role") == "qualification":
             valid &= rechecks == 0 and qualification < 3 and row["index"]["value"] == qualification
             qualification += 1
@@ -180,6 +205,8 @@ def _scheduler_configuration(raw, *, temporal):
     if re.fullmatch(r"cpu-i[1-6]-j1-d(?:0|4)-sequential", raw):
         return raw
     if temporal and re.fullmatch(r"cpu-i1-j1-d0-sequential-w(?:4|8)-b1", raw):
+        return raw
+    if not temporal and re.fullmatch(r"cpu-i1-j1-d0-sequential-w(?:4|8)-b16", raw):
         return raw
     return None
 
@@ -293,6 +320,7 @@ def _profile_totals(profiles):
         "telemetry": telemetry,
         "measurement_scopes": _scope_counts(fields, SUMMARY_SCOPES),
         "temporal_configuration_count_scope": "session-init-attempts-not-successful-runs",
+        "frequency_configuration_count_scope": "session-init-attempts-not-successful-runs",
         "passage_policy_snapshots": [
             {"summary_line": profile["line"], **_passage_policy(
                 profile.get("policy_records", ()), profile["fields"].get("passagePolicy"),
@@ -310,7 +338,7 @@ DURABLE_METRICS = (
     "wallMs", "modelInitWallMs", "inferenceWallMs", "inferenceCount", "sessionInitCount",
     "inferenceThreadCpuMs", "inferenceProcessCpuMs", "cacheModelHits", "cacheModelMisses",
     "schedulerCalibrationWallMs", "schedulerCalibrationCount",
-) + TEMPORAL_SESSION_METRICS
+) + TEMPORAL_SESSION_METRICS + FREQUENCY_SESSION_METRICS
 
 
 def _durable_summaries(header, current_reference):
@@ -348,6 +376,7 @@ def _durable_summaries(header, current_reference):
                 for key in ("lastTemporalConfig", "lastFrequencyConfig")
             }
             route["temporal_configuration_count_scope"] = "session-init-attempts-not-successful-runs"
+            route["frequency_configuration_count_scope"] = "session-init-attempts-not-successful-runs"
             route["last_configuration_scope"] = "last-observed-configuration-not-entire-passage-or-job"
             route["_policy_records"] = []
             route["metrics"] = {}
@@ -627,7 +656,7 @@ def summarize(report):
             "Inclusive stage, passage and profile timings overlap; never add them together as total analysis time.",
             "Profile bundles with missing detail records or non-completed outcomes are separate from completed complete bundles.",
             "Absent, invalid or unavailable telemetry does not establish zero usage or zero cost.",
-            "Temporal configuration counts are session initialization attempts, including failed initialization; the final configuration cannot describe mixed passages.",
+            "Temporal and frequency configuration counts are session initialization attempts, including failed initialization; the final configuration cannot describe mixed passages.",
             "Passage policy snapshots repeat controller history; do not add their pair counts, overhead or projected accrued savings across snapshots or to production graph totals.",
             "Policy pair timings use nanoseconds; projected payback is not measured whole-job savings, and reported qualification is not independently re-evaluated here.",
         ],

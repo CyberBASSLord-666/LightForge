@@ -25,33 +25,28 @@ public final class NativePassagePolicyTest {
     private static NativePassagePolicy.Pair pair(int ordinal,boolean first,long baseline,long candidate,long extra){
         return new NativePassagePolicy.Pair(ordinal,first,baseline,candidate,extra,HASH,true,true,true,true,4);
     }
-    private static NativePassagePolicy.Pair good(int ordinal){return pair(ordinal,ordinal==4,BASE,FAST,FAST);}
+    private static NativePassagePolicy.Pair good(int ordinal){return pair(ordinal,ordinal==1,BASE,FAST,FAST);}
     private static boolean reason(NativePassagePolicy p,String reason){return p.evidenceRecords()[0].contains("reason="+reason+" ");}
     private static void baseline(NativePassagePolicy p,int ordinal,int remaining,String message){
         require(plan(p,ordinal,remaining).action==NativePassagePolicy.Action.BASELINE,message);
     }
     private static NativePassagePolicy qualified(){
         NativePassagePolicy p=policy();
-        for(int ordinal=0;ordinal<=8;ordinal++){
+        for(int ordinal=0;ordinal<3;ordinal++){
             NativePassagePolicy.Plan selected=plan(p,ordinal,35-ordinal);
-            if(ordinal%4==0){
-                require(selected.action==NativePassagePolicy.Action.PAIR,"complete pair at ordinal "+ordinal);
-                require(selected.candidateFirst==(ordinal==4),"orders alternate AB/BA/AB");
-                p.recordPair(good(ordinal),34-ordinal);
-            }else{
-                require(selected.action==NativePassagePolicy.Action.BASELINE,"no provisional candidate lease");p.recordOrdinary(BASE);
-            }
+            require(selected.action==NativePassagePolicy.Action.PAIR,"complete pair at ordinal "+ordinal);
+            require(selected.candidateFirst==(ordinal==1),"orders alternate AB/BA/AB without six unused baseline passages");
+            p.recordPair(good(ordinal),34-ordinal);
+            if(ordinal<2)require(p.qualifiedSeed()==null,"one or two pairs cannot create a complete seed");
         }
         require(p.qualifiedSeed()!=null,"three cold complete pairs qualify");compatible(p);return p;
     }
     private static NativePassagePolicy scenario(long baseline,long candidate,long screening){
         NativePassagePolicy p=new NativePassagePolicy(ID,null);p.nominate(4,screening);
-        for(int ordinal=0;ordinal<=8;ordinal++){
+        for(int ordinal=0;ordinal<3;ordinal++){
             NativePassagePolicy.Plan action=plan(p,ordinal,35-ordinal);
-            if(ordinal%4==0){
-                if(action.action!=NativePassagePolicy.Action.PAIR)break;
-                p.recordPair(pair(ordinal,ordinal==4,baseline,candidate,candidate),34-ordinal);
-            }else p.recordOrdinary(baseline);
+            if(action.action!=NativePassagePolicy.Action.PAIR)break;
+            p.recordPair(pair(ordinal,ordinal==1,baseline,candidate,candidate),34-ordinal);
         }
         compatible(p);return p;
     }
@@ -115,8 +110,24 @@ public final class NativePassagePolicyTest {
         require(reason(poorPayback,"payback-unavailable"),"kernel win cannot hide whole-job probe overhead");
         NativePassagePolicy representative=scenario(65*SECOND,44*SECOND,10*SECOND);
         require(representative.qualifiedSeed()!=null,"representative32 percent full-passage gain repays real candidate replay and screening");
-        NativePassagePolicy expensive=scenario(100*SECOND,70*SECOND,20*SECOND);
-        require(expensive.qualifiedSeed()==null&&reason(expensive,"payback-unavailable"),"insufficient360second lease horizon rejects projected whole-job payback");
+        NativePassagePolicy moderate=scenario(100*SECOND,70*SECOND,20*SECOND);
+        require(moderate.qualifiedSeed()!=null,"removing repeated comparisons allows30 percent gross gain to repay real overhead");
+        NativePassagePolicy expensive=scenario(150*SECOND,110*SECOND,20*SECOND);
+        require(expensive.qualifiedSeed()==null&&reason(expensive,"payback-unavailable"),"three projected comparisons still must fit360second cap");
+        // Historical run01 arm clocks include baseline-only model extraction. They are
+        // cache-confounded arithmetic fixtures, not evidence of matched scheduling gain.
+        long phoneBase=64104899455L,phoneCandidate=48358257794L,phoneScreen=4849516873L,phoneExtra=48372028159L;
+        NativePassagePolicy phone=new NativePassagePolicy(ID,null);phone.nominate(4,phoneScreen);
+        require(plan(phone,0,35).action==NativePassagePolicy.Action.PAIR,"historical phone arithmetic fixture starts with a requested pair");
+        phone.recordPair(pair(0,false,phoneBase,phoneCandidate,phoneExtra),34);
+        require(reason(phone,"qualification-pending")&&phone.qualifiedSeed()==null,"historical cache-confounded24.56percent arm reduction only tests projected affordability and never immediately authorizes a candidate");
+        require(plan(phone,1,34).action==NativePassagePolicy.Action.PAIR,"removed replay work permits further qualification under these hypothetical matched timing assumptions");
+        phone.recordPair(pair(1,true,57*SECOND,phoneCandidate,phoneExtra),33);
+        require(reason(phone,"payback-unavailable")&&phone.qualifiedSeed()==null,"a57second paired baseline must still reject unproven10 percent net savings");
+        NativePassagePolicy stablePhone=scenario(phoneBase,phoneCandidate,phoneScreen);
+        require(stablePhone.qualifiedSeed()!=null,"three hypothetical stable measured gains would repay consecutive qualification and useful controls");
+        NativePassagePolicy conservativePhone=scenario(57*SECOND,48*SECOND,phoneScreen);
+        require(reason(conservativePhone,"payback-unavailable")&&conservativePhone.qualifiedSeed()==null,"57to48 does not bypass retained10 percent economic margin");
         NativePassagePolicy overhead=policy();plan(overhead,0,35);
         overhead.recordPair(pair(0,false,BASE,FAST,300*SECOND),34);
         require(reason(overhead,"payback-unavailable"),"future qualification must fit remaining fixed extra budget");
@@ -141,48 +152,81 @@ public final class NativePassagePolicyTest {
         NativePassagePolicy hugeOrdinal=policy();baseline(hugeOrdinal,Integer.MAX_VALUE,35,"unbounded ordinal is rejected");
 
         NativePassagePolicy p=qualified();
-        for(int ordinal=9;ordinal<=16;ordinal++){
+        for(int ordinal=3;ordinal<=10;ordinal++){
             require(plan(p,ordinal,35-ordinal).action==NativePassagePolicy.Action.CANDIDATE,"first complete lease has eight passages");p.recordOrdinary(FAST);
         }
-        NativePassagePolicy.Plan renewal=plan(p,17,18);
-        require(renewal.action==NativePassagePolicy.Action.PAIR&&renewal.candidateFirst,"eight-passage lease requires reversed-order full recheck");
-        require(p.qualifiedSeed()==null,"unfinished renewal cannot publish positive current-job evidence");
-        p.recordPair(pair(17,true,BASE,BASE,BASE),17);
-        require(reason(p,"pair-regression")&&p.qualifiedSeed()==null,"sustained measured regression revokes the positive seed");
-        baseline(p,18,17,"successful first three pairs never authorize indefinite execution");
+        NativePassagePolicy.Plan renewal=plan(p,11,24);
+        require(renewal.action==NativePassagePolicy.Action.CONTROL&&renewal.workers==0&&renewal.probeBudgetNanos==0,"eight-passage lease requires one useful baseline control without replay");
+        p.recordControl(40*SECOND);
+        require(reason(p,"control-regression")&&p.qualifiedSeed()==null,"candidate no longer faster than current baseline revokes the positive seed");
+        compatible(p);
+        require(p.evidenceRecords()[4].contains("accepted=false")&&p.evidenceRecords()[4].contains("comparisonScope=unmatched-inputs"),"control regression retained without claiming paired proof");
+        baseline(p,12,23,"successful first three pairs never authorize indefinite execution");
 
         NativePassagePolicy spike=qualified();
-        for(int ordinal=9;ordinal<=11;ordinal++){
+        for(int ordinal=3;ordinal<=10;ordinal++){plan(spike,ordinal,35-ordinal);spike.recordOrdinary(FAST);}
+        require(plan(spike,11,24).action==NativePassagePolicy.Action.CONTROL,"first lease funds initial control");spike.recordControl(BASE);
+        for(int ordinal=12;ordinal<=14;ordinal++){
             require(plan(spike,ordinal,35-ordinal).action==NativePassagePolicy.Action.CANDIDATE,"guard waits for ordinary samples");
-            spike.recordOrdinary(ordinal==10?FAST:51*SECOND);
+            spike.recordOrdinary(ordinal==13?FAST:51*SECOND);
         }
-        NativePassagePolicy.Plan triggered=plan(spike,12,23);
-        require(triggered.action==NativePassagePolicy.Action.PAIR&&"slow-passage-recheck".equals(triggered.reason),"two of last three >125 percent trigger actual paired comparison");
-        spike.recordPair(pair(12,true,BASE,FAST,BASE),22);
+        NativePassagePolicy.Plan triggered=plan(spike,15,20);
+        require(triggered.action==NativePassagePolicy.Action.CONTROL&&"slow-passage-control".equals(triggered.reason),"two of last three >125 percent trigger an actual useful baseline control");
+        spike.recordControl(BASE);compatible(spike);
         require(spike.qualifiedSeed()!=null,"absolute slowdown alone does not fabricate a regression");
-        require(plan(spike,13,22).action==NativePassagePolicy.Action.CANDIDATE,"successful actual recheck renews the lease");
+        require(plan(spike,16,19).action==NativePassagePolicy.Action.CANDIDATE,"conservatively accepted control renews the lease");
         spike.recordOrdinary(FAST);
-        spike.forceBaseline("memory-fallback");baseline(spike,14,21,"one production memory fallback latches baseline");
+        spike.forceBaseline("memory-fallback");baseline(spike,17,18,"one production memory fallback latches baseline");
+
+        NativePassagePolicy earlySlow=qualified();
+        for(int ordinal=3;ordinal<=5;ordinal++){plan(earlySlow,ordinal,35-ordinal);earlySlow.recordOrdinary(51*SECOND);}
+        baseline(earlySlow,6,29,"recent slowdown must lower projected future saving before an otherwise useful control");
+        require(reason(earlySlow,"payback-unavailable")&&earlySlow.qualifiedSeed()!=null,"economic failure preserves matched evidence without pretending that projected20second savings persist");
+        NativePassagePolicy cheaperBaseline=qualified();
+        for(int ordinal=3;ordinal<=10;ordinal++){plan(cheaperBaseline,ordinal,35-ordinal);cheaperBaseline.recordOrdinary(FAST);}
+        require(plan(cheaperBaseline,11,24).action==NativePassagePolicy.Action.CONTROL,"new baseline timing is observed as useful work");
+        cheaperBaseline.recordControl(43*SECOND);compatible(cheaperBaseline);
+        require(cheaperBaseline.evidenceRecords()[4].contains("accepted=true")&&reason(cheaperBaseline,"payback-unavailable"),"timing acceptance alone cannot override newly unprofitable projected saving");
+        baseline(cheaperBaseline,12,23,"new lower baseline brackets cap future saving without another replay");
 
         NativePassagePolicy oneSpike=qualified();
-        for(int ordinal=9;ordinal<=11;ordinal++){plan(oneSpike,ordinal,35-ordinal);oneSpike.recordOrdinary(ordinal==9?51*SECOND:50*SECOND);}
-        require(plan(oneSpike,12,23).action==NativePassagePolicy.Action.CANDIDATE,"one spike and exactly125 percent do not trigger two-of-three guard");
+        for(int ordinal=3;ordinal<=5;ordinal++){plan(oneSpike,ordinal,35-ordinal);oneSpike.recordOrdinary(ordinal==3?51*SECOND:50*SECOND);}
+        require(plan(oneSpike,6,29).action==NativePassagePolicy.Action.CANDIDATE,"one spike and exactly125 percent do not trigger two-of-three guard");
+        NativePassagePolicy warming=qualified();
+        for(int ordinal=3;ordinal<=10;ordinal++){plan(warming,ordinal,35-ordinal);warming.recordOrdinary(FAST);}
+        require(plan(warming,11,24).action==NativePassagePolicy.Action.CONTROL,"warming fixture begins with a valid first lease");warming.recordControl(BASE);
+        for(int ordinal=12;ordinal<=23;ordinal++){plan(warming,ordinal,35-ordinal);warming.recordOrdinary((ordinal<22?40:58)*SECOND);}
+        require(plan(warming,24,11).action==NativePassagePolicy.Action.CONTROL,"warming causes a control observation after earlier savings cover economics");
+        warming.recordControl(100*SECOND);
+        require(reason(warming,"control-regression"),"a newly slower baseline cannot bless candidate regression against the previous baseline bracket");
+        NativePassagePolicy incompleteControl=qualified();incompleteControl.recordControl(BASE);
+        require(reason(incompleteControl,"control-incomplete")&&incompleteControl.qualifiedSeed()==null,"unrequested control cannot renew or retain current evidence");
+        NativePassagePolicy unfinishedControl=qualified();
+        for(int ordinal=3;ordinal<=10;ordinal++){plan(unfinishedControl,ordinal,35-ordinal);unfinishedControl.recordOrdinary(FAST);}
+        require(plan(unfinishedControl,11,24).action==NativePassagePolicy.Action.CONTROL,"control requested before unfinished test");
+        baseline(unfinishedControl,12,23,"missing control observation cannot silently extend lease");
+        require(reason(unfinishedControl,"unfinished-control"),"unfinished control cause retained");
         NativePassagePolicy shortRenewal=qualified();
-        for(int ordinal=9;ordinal<=16;ordinal++){plan(shortRenewal,ordinal,35-ordinal);shortRenewal.recordOrdinary(FAST);}
-        baseline(shortRenewal,17,3,"short remaining tail cannot buy an unrepayable renewal");
-        NativePassagePolicy budget=scenario(90*SECOND,5*SECOND,200*SECOND);
-        require(budget.qualifiedSeed()!=null,"large measured gain can repay fully counted screening");
-        for(int ordinal=9;ordinal<=16;ordinal++){plan(budget,ordinal,35-ordinal);budget.recordOrdinary(5*SECOND);}
-        require(plan(budget,17,18).action==NativePassagePolicy.Action.PAIR,"funded renewal remains available");
-        budget.recordPair(pair(17,true,90*SECOND,5*SECOND,145*SECOND),17);
-        require(budget.qualifiedSeed()!=null,"a completed funded renewal may consume exactly its extra budget");
-        for(int ordinal=18;ordinal<=29;ordinal++){
-            require(plan(budget,ordinal,35-ordinal).action==NativePassagePolicy.Action.CANDIDATE,"existing bounded lease remains useful at the probe cap");budget.recordOrdinary(5*SECOND);
+        for(int ordinal=3;ordinal<=10;ordinal++){plan(shortRenewal,ordinal,35-ordinal);shortRenewal.recordOrdinary(FAST);}
+        baseline(shortRenewal,11,3,"short remaining tail stays on baseline without a renewal");
+        require(shortRenewal.qualifiedSeed()!=null,"short tail does not erase completed exact qualification for future fresh validation");
+        NativePassagePolicy budget=new NativePassagePolicy(ID,null);budget.nominate(4,200*SECOND);
+        for(int ordinal=0;ordinal<3;ordinal++){
+            require(plan(budget,ordinal,35-ordinal).action==NativePassagePolicy.Action.PAIR,"large gain qualification remains funded");
+            budget.recordPair(pair(ordinal,ordinal==1,90*SECOND,5*SECOND,(ordinal==2?150:5)*SECOND),34-ordinal);
         }
-        baseline(budget,30,5,"unaffordable mandatory renewal latches baseline instead of silently extending lease");
-        require(reason(budget,"probe-budget"),"extra budget exhaustion has a retained reason");
-        NativePassagePolicy invalidClock=qualified();plan(invalidClock,9,26);invalidClock.recordOrdinary(Long.MAX_VALUE);
-        baseline(invalidClock,10,25,"invalid ordinary clock cannot evade sustained guard");
+        require(budget.qualifiedSeed()!=null,"large measured gain can repay fully counted screening");
+        for(int ordinal=3;ordinal<=10;ordinal++){plan(budget,ordinal,35-ordinal);budget.recordOrdinary(5*SECOND);}
+        require(plan(budget,11,24).action==NativePassagePolicy.Action.CONTROL,"useful baseline control requires no extra budget even at360second cap");
+        budget.recordControl(90*SECOND);
+        require(budget.evidenceRecords()[0].contains("extraNanos=360000000000 "),"baseline control does not masquerade as extra replay work");
+        for(int ordinal=12;ordinal<=23;ordinal++){
+            require(plan(budget,ordinal,35-ordinal).action==NativePassagePolicy.Action.CANDIDATE,"renewed bounded lease remains useful at the probe cap");budget.recordOrdinary(5*SECOND);
+        }
+        require(plan(budget,24,11).action==NativePassagePolicy.Action.CONTROL,"second12passage lease ends with another useful baseline control");
+        budget.recordControl(90*SECOND);compatible(budget);
+        NativePassagePolicy invalidClock=qualified();plan(invalidClock,3,32);invalidClock.recordOrdinary(Long.MAX_VALUE);
+        baseline(invalidClock,4,31,"invalid ordinary clock cannot evade sustained guard");
         NativePassagePolicy positive=qualified();
         for(String record:positive.evidenceRecords()){
             require(record.length()<=512&&record.matches("[ -~]+"),"durable records stay bounded ASCII without free text");
@@ -200,33 +244,57 @@ public final class NativePassagePolicyTest {
             require(NativePassagePolicy.load(file,repeat('2'))==null,"identity change invalidates old seed");
             require(NativePassagePolicy.load(file,"raw-model-id")==null,"raw identity never matches a cache");
             NativePassagePolicy seeded=new NativePassagePolicy(ID,seed);
-            require(seeded.qualifiedSeed()==null,"positive cache is not current-job authority");
+            require(seeded.qualifiedSeed()!=null&&seeded.evidenceRecords()[0].contains("state=provisional"),"retained complete seed is distinct from current-job authority");
             NativePassagePolicy.Plan first=plan(seeded,0,35);
             require(first.action==NativePassagePolicy.Action.PAIR&&first.candidateFirst,"positive cache must earn a fresh opposite-order complete pair");
             seeded.recordPair(pair(0,true,BASE,FAST,BASE),34);
             require(seeded.qualifiedSeed()!=null,"fresh exact measured pair renews complete historical qualification");
             for(int ordinal=1;ordinal<=8;ordinal++){require(plan(seeded,ordinal,35-ordinal).action==NativePassagePolicy.Action.CANDIDATE,"cached job starts with an eight-passage lease");seeded.recordOrdinary(FAST);}
-            require(plan(seeded,9,26).action==NativePassagePolicy.Action.PAIR,"cached qualification still requires sustained recheck");
-            seeded.recordPair(pair(9,false,BASE,FAST,BASE),25);
+            require(plan(seeded,9,26).action==NativePassagePolicy.Action.CONTROL,"cached qualification still requires a useful sustained baseline control");
+            seeded.recordControl(BASE);
             compatible(seeded);
-            require(seeded.evidenceRecords().length==5,"only last recheck plus original3 pairs are retained");
+            require(seeded.evidenceRecords().length==6,"retain3qualificationpairs,lastfreshpair andlastunmatchedcontrol separately");
             for(int ordinal=10;ordinal<=21;ordinal++){require(plan(seeded,ordinal,35-ordinal).action==NativePassagePolicy.Action.CANDIDATE,"subsequent lease lasts12 passages");seeded.recordOrdinary(FAST);}
-            require(plan(seeded,22,13).action==NativePassagePolicy.Action.PAIR,"renewed twelve-passage lease also expires");
-            seeded.recordPair(pair(22,true,BASE,FAST,BASE),12);
+            require(plan(seeded,22,13).action==NativePassagePolicy.Action.CONTROL,"renewed twelve-passage lease also expires");
+            seeded.recordControl(BASE);
             require(seeded.qualifiedSeed()!=null,"bounded further renewal retains qualification");
             NativePassagePolicy.save(file,ID,seeded.qualifiedSeed());
-            require(NativePassagePolicy.load(file,ID)!=null,"last sustained recheck survives persistence");
+            require(NativePassagePolicy.load(file,ID)!=null,"complete matched qualification survives persistence independently of unmatched controls");
+            NativePassagePolicy nextCached=new NativePassagePolicy(ID,NativePassagePolicy.load(file,ID));
+            NativePassagePolicy.Plan nextFresh=plan(nextCached,0,35);
+            require(nextFresh.action==NativePassagePolicy.Action.PAIR&&!nextFresh.candidateFirst,"persisted fresh BA pair requires next job AB regardless of intervening controls");
+            nextCached.recordPair(pair(0,false,BASE,FAST,FAST),34);
+            NativePassagePolicy thirdCached=new NativePassagePolicy(ID,nextCached.qualifiedSeed());
+            require(plan(thirdCached,0,35).candidateFirst,"successive fresh job order alternates again");
             NativePassagePolicy stale=new NativePassagePolicy(ID,seed);baseline(stale,0,7,"cached seed cannot trigger costly short-job comparison");
+            require(stale.qualifiedSeed()!=null&&stale.evidenceRecords()[0].contains("extraNanos=0 "),"short job preserves prior evidence without spending extra or authorizing a candidate");
+            NativePassagePolicy laterLong=new NativePassagePolicy(ID,stale.qualifiedSeed());
+            require(plan(laterLong,0,35).action==NativePassagePolicy.Action.PAIR,"next long job must still earn a fresh complete pair from preserved seed");
+            laterLong.recordPair(pair(0,true,BASE,FAST,FAST),34);
+            require(plan(laterLong,1,34).action==NativePassagePolicy.Action.CANDIDATE,"fresh memory,pair andpayback checks authorize the later job");
+            for(String economic:new String[]{"short-renewal","payback-unavailable","probe-budget","unknown-work"}){
+                NativePassagePolicy keep=new NativePassagePolicy(ID,seed);keep.forceBaseline(economic);
+                require(keep.qualifiedSeed()!=null,"economic state retains complete evidence: "+economic);
+                baseline(keep,0,35,"retained evidence never overrides current-job baseline latch");
+            }
+            for(String unsafe:new String[]{"runtime-rejected","invalid-pair","pair-regression","control-regression","output-mismatch","memory-pressure","cancelled","memory-fallback","memory-ineligible","thermal-guard"}){
+                NativePassagePolicy discard=new NativePassagePolicy(ID,seed);discard.forceBaseline(unsafe);
+                require(discard.qualifiedSeed()==null,"quality,regression,invalid orruntime failure clears prior evidence: "+unsafe);
+            }
             NativePassagePolicy foreign=new NativePassagePolicy(repeat('3'),seed);baseline(foreign,0,35,"seed cannot cross runtime/model/OS identity");
             NativePassagePolicy failedFresh=new NativePassagePolicy(ID,seed);plan(failedFresh,0,35);
             failedFresh.recordPair(pair(0,true,BASE,BASE,BASE),34);
             baseline(failedFresh,1,34,"stale historical speedup cannot override a current regression");
+            require(failedFresh.qualifiedSeed()==null,"fresh paired regression discards the historical seed");
             byte[] corrupt=original.clone();corrupt[corrupt.length-1]^=1;Files.write(file.toPath(),corrupt);
             require(NativePassagePolicy.load(file,ID)==null,"corrupt CRC rejects seed");
-            forged(file,original,15,2,"unknown passage policy schema rejected even with repaired CRC");
+            forged(file,original,15,1,"previous passage policy schema rejected even with repaired CRC");
+            forged(file,original,15,3,"unknown passage policy schema rejected even with repaired CRC");
             forged(file,original,8,0,"old graph-policy magic cannot enter passage cache");
             forged(file,original,89,2,"partial qualification count cannot qualify with repaired CRC");
             forged(file,original,94,1,"nonalternating complete qualification rejected with repaired CRC");
+            byte[] spaced=original.clone();writeInt(spaced,193,4);writeInt(spaced,296,8);crc(spaced);Files.write(file.toPath(),spaced);
+            require(NativePassagePolicy.load(file,ID)==null,"old spaced qualification cannot enter new cache even after schema/CRC forgery");
             for(int offset:new int[]{185,186,187,188})forged(file,original,offset,0,"nonfinite/inexact/partial/warm-only cache rejected at"+offset);
             forged(file,original,192,8,"different candidate worker geometry rejected");
             byte[] weak=original.clone();writeLong(weak,103,BASE);crc(weak);Files.write(file.toPath(),weak);

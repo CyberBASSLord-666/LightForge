@@ -1,0 +1,13 @@
+warmup 0 baseline
+warmup 0 candidate
+{"phase": "warmup", "pairIndex": 0, "baselineSeconds": 48.542703929, "candidateSeconds": 22.127760892, "exact": true}
+measurement 0 baseline
+measurement 0 candidate
+{"phase": "measurement", "pairIndex": 0, "baselineSeconds": 52.380912395, "candidateSeconds": 22.317159903, "exact": true}
+measurement 1 candidate
+measurement 1 baseline
+{"phase": "measurement", "pairIndex": 1, "baselineSeconds": 47.838871175, "candidateSeconds": 23.259246906, "exact": true}
+measurement 2 baseline
+measurement 2 candidate
+{"phase": "measurement", "pairIndex": 2, "baselineSeconds": 46.912425317, "candidateSeconds": 22.687393368, "exact": true}
+{"passed": true, "medianWallReductionPercent": 52.57539985630733, "pairedReductions": [{"pairIndex": 0, "baselineWallNanos": 52380912395, "candidateWallNanos": 22317159903, "wallReductionPercent": 57.3944803887565}, {"pairIndex": 1, "baselineWallNanos": 47838871175, "candidateWallNanos": 23259246906, "wallReductionPercent": 51.38002562620041}, {"pairIndex": 2, "baselineWallNanos": 46912425317, "candidateWallNanos": 22687393368, "wallReductionPercent": 51.63883935930593}]}

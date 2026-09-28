@@ -28,13 +28,13 @@ CLASSES.mkdir(exist_ok=True)
 # Each run owns fresh fixtures, including after an interrupted/repeated local run.
 FIXTURES = Path(tempfile.mkdtemp(prefix="native-fixtures-", dir=OUT))
 sources = sorted((ROOT / 'android/src').rglob('*.java'))
-names = ['NativeRecoveryTest', 'ProjectStoreTest', 'NativeHardwareTest', 'NativeAudioTest', 'WebViewTransportTest', 'ProjectPreviewTest', 'AnalysisJobStoreTest', 'AnalysisProgressThrottleTest', 'AnalysisRendererRecoveryTest', 'BackgroundObserverStopTest', 'NativeDeuxTest', 'NativeInferenceProfileTest', 'NativeInferenceProfilePairComparisonTest', 'DiagnosticLogTest', 'DiagnosticJobSummaryTest', 'NativeCrashTraceTest', 'NativeRuntimeGuardTest']
+names = ['NativeRecoveryTest', 'ProjectStoreTest', 'NativeHardwareTest', 'NativeAudioTest', 'WebViewTransportTest', 'ProjectPreviewTest', 'AnalysisJobStoreTest', 'AnalysisProgressThrottleTest', 'AnalysisRendererRecoveryTest', 'BackgroundObserverStopTest', 'NativeDeuxTest', 'NativeDeuxFailureRetirementTest', 'NativeInferenceProfileTest', 'NativeInferenceProfilePairComparisonTest', 'DiagnosticLogTest', 'DiagnosticJobSummaryTest', 'NativeCrashTraceTest', 'NativeRuntimeGuardTest']
 tests = [ROOT / f'tests/{name}.java' for name in names + ['WebViewTransportServer']] + [ROOT/'tests/android/BackgroundInstrumentation.java']
 observer_host_stubs = sorted((ROOT/'tests/android-observer-host').rglob('*.java'))
 passage_lifecycle_sources = [ROOT/'tests/test_native_passage_lifecycle.py', ROOT/'tests/NativePassageLifecycleTest.java',
                              ROOT/'tests/native-mdx-host/com/cyberbasslord/lightforge/AnalysisJobStore.java',
                              *sorted((ROOT/'tests/native-mdx-host/android').rglob('*.java'))]
-bound_sources = sources + tests + observer_host_stubs + passage_lifecycle_sources + [ROOT/'android/native-runtime.json', ROOT/'tests/verify_native_release.py']
+bound_sources = sources + tests + observer_host_stubs + passage_lifecycle_sources + [ROOT/'android/native-runtime.json', ROOT/'tests/verify_native_release.py', ROOT/'tests/test_native_deux_failure_retirement.py']
 receipt = dict(release=args.release, passed=False, scope='Fresh production Java compilation and host JVM tests; no Android Activity/device/document-provider or physical Tesla execution.',
                source_hashes={str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in bound_sources}, checks=[], errors=[])
 
@@ -96,6 +96,8 @@ try:
     receipt['checks'].append('Actual Android instrumentation observer stop method, executed with constructor-only host Android stubs, lets an in-flight real NIO read finish without interrupting it, preserves existing I/O/assertion/interruption failures, and retains its five-second timeout for a stuck observer. This is host synchronization coverage, not an Android lifecycle or model claim.')
     assert 'cancellation checks passed.' in run('NativeDeuxTest')
     receipt['checks'].append('Native Studio transform retains exact source-clock samples and stereo averaging; WAVE padding, malformed input and cancellation regressions passed without neural-model inference.')
+    assert 'PASS: production temporal retirement preserves every failure' in run('NativeDeuxFailureRetirementTest')
+    receipt['checks'].append('Actual production temporal retirement retains the initiating failure and every secondary task/worker retirement failure under cancellation and interruption without neural-model inference.')
     assert 'NativeInferenceProfile:' in run('NativeInferenceProfileTest')
     receipt['checks'].append('Native inference profiling keeps one immutable summary plus bounded stage/graph records, reports available CPU/heap/cache evidence without fabricated accelerator values, avoids per-run logs and retains no quoted/private fields.')
     assert 'paired equivalence:' in run('NativeInferenceProfilePairComparisonTest')

@@ -12,11 +12,12 @@ import java.util.zip.CRC32;
 /** Fixed-schema job receipts, independent of the rotating verbose trace. No Android dependency. */
 final class DiagnosticJobSummary {
     static final int MAX_JOBS = 3, MAX_BYTES = 32768;
-    private static final int LEGACY_MAGIC = 0x4c464a31, MAGIC = 0x4c464a32, LEGACY_METRIC_COUNT = 11;
+    private static final int LEGACY_MAGIC = 0x4c464a31, TEMPORAL_MAGIC = 0x4c464a32, MAGIC = 0x4c464a33;
+    private static final int LEGACY_METRIC_COUNT = 11, TEMPORAL_METRIC_COUNT = 15;
     private static final String[] STAGES = {"preparing", "compatibility", "rhythm", "separation", "voice", "bass", "recurrence", "generate", "save", "other"};
     private static final String[] STATES = {"preparing", "queued", "running", "cancelling", "completed", "failed", "cancelled", "interrupted", "unknown"};
     private static final String[] ROUTES = {"native-deux-v1", "native-mdx-v1", "native-game-v1"};
-    private static final String[] METRICS = {"wallMs", "modelInitWallMs", "inferenceWallMs", "inferenceCount", "sessionInitCount", "inferenceThreadCpuMs", "inferenceProcessCpuMs", "cacheModelHits", "cacheModelMisses", "schedulerCalibrationWallMs", "schedulerCalibrationCount", "temporalBaselineSessionCount", "temporalFourWorkerSessionCount", "temporalEightWorkerSessionCount", "temporalUnobservedSessionCount"};
+    private static final String[] METRICS = {"wallMs", "modelInitWallMs", "inferenceWallMs", "inferenceCount", "sessionInitCount", "inferenceThreadCpuMs", "inferenceProcessCpuMs", "cacheModelHits", "cacheModelMisses", "schedulerCalibrationWallMs", "schedulerCalibrationCount", "temporalBaselineSessionCount", "temporalFourWorkerSessionCount", "temporalEightWorkerSessionCount", "temporalUnobservedSessionCount", "frequencyBaselineSessionCount", "frequencyFourWorkerSessionCount", "frequencyEightWorkerSessionCount", "frequencyUnobservedSessionCount"};
     private static DiagnosticJobSummary shared;
     private final File directory;
     private final ArrayList<Job> jobs = new ArrayList<Job>();
@@ -107,7 +108,7 @@ final class DiagnosticJobSummary {
             " recovery=" + (corruptRecovery ? "invalid-prior-summary-discarded" : "normal") + "\n");
         out.append("Stage durations use observed monotonic intervals; restart gaps are excluded. Lifecycle elapsed uses the job wall clock, includes save and can include interruptions.\n");
         out.append("Native receipts count attempted passages, including retries/failures. Thread CPU is the calling thread; process CPU includes all app threads. Missing metrics remain unavailable.\n");
-        out.append("Temporal configuration counts describe session initialization attempts; the last configuration alone does not describe mixed passages. Passage policy records are the latest complete controller evidence, not additional passages.\n");
+        out.append("Temporal and frequency configuration counts describe session initialization attempts; the last configuration alone does not describe mixed passages. Passage policy records are the latest complete controller evidence, not additional passages.\n");
         if (jobs.isEmpty()) out.append("No job summaries have been recorded by this app version.\n");
         for (Job job : jobs) {
             out.append("jobRef=").append(job.reference).append(" state=").append(STATES[job.state])
@@ -156,7 +157,7 @@ final class DiagnosticJobSummary {
     }
     private static boolean configuration(String value, boolean temporal) {
         return value != null && (value.matches("cpu-i[1-6]-j1-d(?:0|4)-sequential") ||
-            (temporal && value.matches("cpu-i1-j1-d0-sequential-w(?:4|8)-b1")));
+            value.matches("cpu-i1-j1-d0-sequential-w(?:4|8)-b" + (temporal ? "1" : "16")));
     }
     private static String readConfiguration(DataInputStream in, boolean temporal) throws IOException {
         String value = in.readUTF();
@@ -178,7 +179,8 @@ final class DiagnosticJobSummary {
             DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes));
             long checksum = in.readLong(); CRC32 crc = new CRC32(); crc.update(bytes, 8, bytes.length - 8);
             int format = in.readInt();
-            if (checksum != crc.getValue() || (format != MAGIC && format != LEGACY_MAGIC)) throw new IOException("Invalid summary checksum.");
+            if (checksum != crc.getValue() || (format != MAGIC && format != TEMPORAL_MAGIC && format != LEGACY_MAGIC)) throw new IOException("Invalid summary checksum.");
+            int metricCount = format == LEGACY_MAGIC ? LEGACY_METRIC_COUNT : format == TEMPORAL_MAGIC ? TEMPORAL_METRIC_COUNT : METRICS.length;
             int count = in.readInt(); if (count < 0 || count > MAX_JOBS) throw new IOException("Invalid summary count.");
             for (int n = 0; n < count; n++) {
                 String reference = in.readUTF(); if (!reference.matches("[a-f0-9]{16}") || find(reference) != null) throw new IOException("Invalid summary reference.");
@@ -194,8 +196,8 @@ final class DiagnosticJobSummary {
                     NativeTotals totals = job.routes[route];
                     totals.passages = number(in); totals.completed = number(in); totals.cancelled = number(in); totals.other = number(in);
                     totals.temporalConfig = readConfiguration(in, true); totals.frequencyConfig = readConfiguration(in, false);
-                    for (int i = 0; i < (format == LEGACY_MAGIC ? LEGACY_METRIC_COUNT : METRICS.length); i++) { totals.values[i] = number(in); totals.samples[i] = number(in); if (totals.samples[i] > totals.passages) throw new IOException("Invalid measurement count."); }
-                    if (format == MAGIC) {
+                    for (int i = 0; i < metricCount; i++) { totals.values[i] = number(in); totals.samples[i] = number(in); if (totals.samples[i] > totals.passages) throw new IOException("Invalid measurement count."); }
+                    if (format != LEGACY_MAGIC) {
                         String encoded = in.readUTF();
                         String[] evidence = NativeInferenceProfile.decodePassagePolicy(encoded);
                         if (evidence == null || (route != 0 && evidence.length != 0)) throw new IOException("Invalid passage policy evidence.");

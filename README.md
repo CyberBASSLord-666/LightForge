@@ -51,8 +51,10 @@ Published 2.4.1 used warm-graph device calibration. Its historical host
 [qualification](research/inference-2.4.1/DEUX_PARALLEL_B1.md) measured **32.6%
 lower median native passage time** with byte-identical outputs, but a later
 phone run was slower. The [unreleased correction](research/inference-device-regression-20260928/README.md)
-requires complete cold-session passage comparisons, bounded extra work and
-sustained rechecks; durable diagnostics preserve the deciding evidence.
+requires three exact cold-session comparisons at passages 0/1/2, bounded extra
+work and sustained checks using useful baseline passages. Those later controls
+use different inputs and cannot establish a paired speedup; durable diagnostics
+preserve both kinds of evidence.
 See [the calibration contract](docs/NATIVE_EXECUTION_CALIBRATION.md). No new
 phone or whole-analysis speedup is claimed, and the published APK is unchanged.
 

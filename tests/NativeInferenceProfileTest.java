@@ -116,6 +116,8 @@ public final class NativeInferenceProfileTest {
             "temporalConfig=cpu-i1-j1-d0-sequential-w8-b1 frequencyConfig=cpu-i4-j1-d0-sequential"),
             "only supported parallel temporal configurations are observable");
         checkConfigurationCounts();
+        checkFrequencyConfigurationCounts();
+        checkCandidateEvidenceIsolation();
         checkPassagePolicy();
         if (args.length > 0 && "require-process-clock".equals(args[0])) {
             NativeInferenceProfile.Timing realClock = NativeInferenceProfile.started();
@@ -143,6 +145,55 @@ public final class NativeInferenceProfileTest {
         unobserved.addSessionInit("block-00-time", ms(1, 1, 1));
         require(unobserved.finish("failed").record(0).contains("temporalUnobservedSessionCount=2"),
             "missing configuration remains explicitly unobserved and repeated initialization attempts are counted");
+    }
+    private static void checkFrequencyConfigurationCounts() {
+        NativeInferenceProfile profile = new NativeInferenceProfile();
+        profile.addSessionInit("block-00-frequency", ms(1, 1, 1));
+        profile.noteSchedulerConfiguration("frequency", "cpu-i4-j1-d0-sequential");
+        profile.addSessionInit("block-01-frequency", ms(1, 1, 1));
+        profile.noteSchedulerConfiguration("frequency", "cpu-i1-j1-d0-sequential-w4-b16");
+        profile.addSessionInit("block-02-frequency", ms(1, 1, 1));
+        profile.noteSchedulerConfiguration("frequency", "cpu-i1-j1-d0-sequential-w8-b16");
+        profile.addSessionInit("block-03-frequency", ms(1, 1, 1));
+        profile.noteSchedulerConfiguration("frequency", "cpu-i1-j1-d0-sequential-w4-b1");
+        profile.noteSchedulerConfiguration("temporal", "cpu-i1-j1-d0-sequential-w8-b16");
+        profile.addSessionInit("block-04-frequency", ms(1, 1, 1));
+        profile.addSessionInit("block-00-time", ms(1, 1, 1));
+        String record = profile.finish("failed").record(0);
+        require(record.contains("frequencyConfig=cpu-i1-j1-d0-sequential-w8-b16") && record.contains("temporalConfig=unavailable"),
+            "frequency B16 and temporal B1 configuration identities cannot cross families");
+        require(record.contains("frequencyConfigCountScope=session-init-attempts frequencyBaselineSessionCount=1 frequencyFourWorkerSessionCount=1 frequencyEightWorkerSessionCount=2 frequencyUnobservedSessionCount=1"),
+            "actual mixed frequency session attempts remain visible when the final configuration changes");
+        require(record.contains("temporalUnobservedSessionCount=1"), "unknown temporal configuration is not fabricated by a frequency observation");
+    }
+    private static void checkCandidateEvidenceIsolation() {
+        NativeInferenceProfile candidate = new NativeInferenceProfile();
+        candidate.noteSchedulerConfiguration("temporal", "cpu-i1-j1-d0-sequential-w4-b1");
+        candidate.addRun("front", ms(7, 2, 5));
+        NativeInferenceProfile.ModelSetup setup = new NativeInferenceProfile.ModelSetup(27, 27, 1000, 0, 0);
+        NativeInferenceProfile.ArmEvidence arm = new NativeInferenceProfile.ArmEvidence("completed", 123, setup, setup);
+        NativeInferenceProfile.CandidateEvidence evidence = new NativeInferenceProfile.CandidateEvidence(0, 4, false, 27, arm, arm, candidate.finish("completed"));
+        NativeInferenceProfile ordinary = new NativeInferenceProfile();
+        ordinary.noteCandidateEvidence(evidence);
+        require(ordinary.candidateEvidence() == null, "production profiles do not retain auxiliary evidence without opt-in");
+        NativeInferenceProfile observed = new NativeInferenceProfile(); observed.enableCandidateEvidence();
+        observed.addRun("front", ms(3, 1, 2)); observed.noteCandidateEvidence(evidence);
+        NativeInferenceProfile.Snapshot production = observed.finish("completed");
+        require(production.recordCount() == 3 && production.record(0).contains("inferenceCount=1 sessionInitCount=0") &&
+            production.record(0).contains("inferenceWallMs=3"), "candidate graph work never enters production records or totals");
+        require(observed.candidateEvidence() == evidence && evidence.candidate.armWallNanos == 123,
+            "completed arm clock is separately retained without using collector wall time");
+        String before = evidence.profile.record(0); String[] returned = evidence.profile.records(); returned[0] = "private mutation";
+        require(before.equals(evidence.profile.record(0)), "auxiliary snapshots cannot be mutated by callers");
+        observed.noteCandidateEvidence(null); require(observed.candidateEvidence() == evidence, "terminal auxiliary snapshot is immutable");
+        NativeInferenceProfile.ArmEvidence partial = new NativeInferenceProfile.ArmEvidence("cancelled", -1, setup, setup);
+        require(partial.armWallNanos == -1, "incomplete attempts have no completed arm clock");
+        for (String outcome : new String[]{"completed", "private"}) {
+            boolean rejected = false;
+            try { new NativeInferenceProfile.ArmEvidence(outcome, -1, setup, setup); }
+            catch (IllegalArgumentException expected) { rejected = true; }
+            require(rejected, "missing completion clocks and unbounded outcome text are rejected");
+        }
     }
     static String[] policyEvidence() {
         String[] records = new String[5];
@@ -183,6 +234,26 @@ public final class NativeInferenceProfileTest {
         require(result.record(0).equals(profile.finish("failed").record(0)), "terminal policy evidence is immutable");
         String[] returned = result.records(); returned[1] = "changed";
         require(result.record(1).equals(policyEvidence()[0]), "callers cannot mutate exported policy snapshots");
+        String[] controlled = controlEvidence();
+        String controlEncoded = NativeInferenceProfile.encodePassagePolicy(controlled);
+        require(java.util.Arrays.equals(controlled, NativeInferenceProfile.decodePassagePolicy(controlEncoded)),
+            "one latest unmatched-input control is retained separately from pair history");
+        for (String invalid : new String[]{controlEncoded + "|" + controlled[5].replace(' ', ','),
+                controlEncoded.replace("candidateSamples=3", "candidateSamples=2"),
+                controlEncoded.replace("comparisonScope=unmatched-inputs", "comparisonScope=same-input"),
+                controlEncoded.replace("candidateMaxNanos=50000000000", "candidateMaxNanos=0"),
+                controlEncoded.replace("previousBaselineNanos=75000000000", "previousBaselineNanos=3600000000001"),
+                controlEncoded.replace("accepted=true", "accepted=PRIVATE"),
+                controlEncoded + "|" + policyEvidence()[4].replace(' ', ',')})
+            require(NativeInferenceProfile.decodePassagePolicy(invalid) == null, "invalid/duplicate/misordered controls cannot become durable evidence");
+        require(NativeInferenceProfile.decodePassagePolicy(controlEncoded.replace("accepted=true", "accepted=false")) != null,
+            "a rejected valid control remains an observation");
+    }
+    static String[] controlEvidence() {
+        String[] evidence = java.util.Arrays.copyOf(policyEvidence(), 6);
+        evidence[0] = evidence[0].replace("reason=measured-passage-improvement", "reason=control-accepted");
+        evidence[5] = "schema=native-passage-control-v1 ordinal=20 baselineNanos=75000000000 previousBaselineNanos=75000000000 candidateMaxNanos=50000000000 candidateSamples=3 accepted=true comparisonScope=unmatched-inputs";
+        return evidence;
     }
     private static NativeInferenceProfile.Measurement ms(long wall, long thread, long process) {
         return new NativeInferenceProfile.Measurement(wall * 1000000L, thread < 0 ? -1 : thread * 1000000L,

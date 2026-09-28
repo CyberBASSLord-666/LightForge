@@ -1,0 +1,69 @@
+{
+  "archiveReceipts": {
+    "AndroidManifest.xml": "96f81478a0f590d217cbe0edda4b53070a3a0b6aba90cf70b56635fb80836bc9",
+    "build.json": "2ec9d88783e89aa147540837fbf7d6624133e6c64c1af497d1e090a20f5c309d",
+    "build.log": "87620f5628b9fb04b40797ba6cd607728f4801d04a813f9a8fc91547d0e823ba",
+    "source-receipt.json": "b9b5991ab8746e96ef28675f23d6309ce5f985003df4d6f12ee4d5360d52d83b"
+  },
+  "artifact": {
+    "alignmentVerified": true,
+    "apk": "LightForge-inference-probe.apk",
+    "bytes": 113915300,
+    "executionPerformed": false,
+    "packageName": "com.cyberbasslord.lightforge.inferenceprobe",
+    "releaseArtifact": false,
+    "runtimeVersion": "1.25.1",
+    "sha256": "79dba57cc55d0fc61e42aa245f0f94c7a1d826aa184bb6be08026ff931712429",
+    "signatureVerified": true,
+    "signerSha256": "94e416fd28a1b3a7c177c0cb52acbe014556dc241c12d855cbf1c5c74b289ad8",
+    "sourceReceiptSha256": "b9b5991ab8746e96ef28675f23d6309ce5f985003df4d6f12ee4d5360d52d83b",
+    "updateCompatibleWithLightForge": false,
+    "zipVerified": true
+  },
+  "checks": {
+    "aligned16KiB": true,
+    "apkSignatureV2V3": true,
+    "compiledJarClassHashesMatch": true,
+    "currentSourceBinding": true,
+    "exactAssetInventoryAndBytes": true,
+    "exactDexInventoryAndBytes": true,
+    "exactPinnedNativeLibraryInventoryAndBytes": true,
+    "noAndroidPermissions": true,
+    "preparedUploadCopyByteIdentical": true,
+    "priorCompanionSignerDifferent": true,
+    "productionSigningIdentityExcluded": true
+  },
+  "compiledClassCount": 75,
+  "compiledJarSha256": "37369d75043c607b5d7835bae1b2c160f8e8fba991cd977126920d32b5aed38e",
+  "compiledSourceFileCount": 15,
+  "dexHashes": {
+    "classes.dex": "5f132784142071067f819c8ef51ad1a8a02c3b65eca675d0f3dc1027db68d973"
+  },
+  "frozenBuildDirectory": "build/inference-device-probe/run-jipwai4p",
+  "oldBuildAndRun01Retained": true,
+  "phoneExecutionPerformed": false,
+  "productionReleaseArtifact": false,
+  "schema": "lightforge.inference-device-probe-artifact-audit.v1",
+  "scope": "Independent APK/source closure inspection; no installation, device inference or production release qualification.",
+  "sourceBinding": {
+    "apk_sha256": "79dba57cc55d0fc61e42aa245f0f94c7a1d826aa184bb6be08026ff931712429",
+    "current_source_binding_passed": true,
+    "current_source_mismatches": [],
+    "declared_model_bytes": 921547393,
+    "fixture_pcm16_sha256": "0d0bf21401ad0dbb8a49aae581a16f9a00cadca41e116b5a4dc27eaaa3625648",
+    "historical_binding_passed": true,
+    "historical_compiled_classes_verified": 75,
+    "historical_source_files_verified": 15,
+    "model_manifest_sha256": "6aebf45e6e7f6fa974f14fe47a252fc01f48da4815f40a1fdf10641a432529a9",
+    "qualification_ordinals": [
+      0,
+      1,
+      2
+    ],
+    "repository_source_files_verified": 15,
+    "scope": "frozen-artifact-and-build-receipt-binding-not-device-attestation",
+    "source_reference_sha256": "b9b5991ab8746e96ef28675f23d6309ce5f985003df4d6f12ee4d5360d52d83b"
+  },
+  "versionCode": 2,
+  "versionName": "probe-2"
+}

@@ -1,0 +1,7 @@
+# Current B16 native compile verification
+
+The current native-profile CI source set, plus the failure-retirement helper and parallel benchmark, compiles with both Android-first and host-JSON-first dependency orders. Each order produced 61 classes from the same eleven tracked Java sources plus the unchanged CI diagnostics stub, with no diagnostics. Source hashes remained unchanged throughout both compilations. The adjacent JSON receipt records the exact source and dependency hashes and is an unchanged copy of the successful scratch receipt.
+
+This source snapshot includes B16 frequency execution, complete-output v4 integration assertions, candidate profile/cache-setup assertions, temporal cancellation and interruption, and the third actual-frequency cancellation test followed by shared complete recovery. Compilation does not establish that those runtime assertions passed; actual JNI validation is a separate gate. No model inference or APK build was performed by this compile check.
+
+The cache test uses a dedicated concrete Android Context host fixture, so its own portable Python wrapper supplies that environment. Including that test directly against the Android SDK API jar correctly failed compilation because SDK Context is abstract; the failed attempt remains separately recorded in scratch `ci-json-portability-frequency-01`. It is excluded from this CI source compilation, not from portable regression execution.

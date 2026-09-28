@@ -337,8 +337,8 @@ def build(toolchain: Path) -> Path:
         "--output", dex, compiled_jar, output / "runtime/classes.jar")
     unsigned = output / "unsigned.apk"
     run(build_tools / "aapt2", "link", "-o", unsigned, "-I", android, "--manifest", manifest,
-        "--min-sdk-version", "26", "--target-sdk-version", "35", "--version-code", "1",
-        "--version-name", "probe", "--replace-version", "-A", assets)
+        "--min-sdk-version", "26", "--target-sdk-version", "35", "--version-code", "2",
+        "--version-name", "probe-2", "--replace-version", "-A", assets)
     with zipfile.ZipFile(unsigned, "a") as archive:
         for path in sorted(dex.glob("*.dex")):
             archive.write(path, path.name, compress_type=zipfile.ZIP_STORED)

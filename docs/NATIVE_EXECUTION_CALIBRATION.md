@@ -21,25 +21,46 @@ All 27 original Float32 graphs, trained weights, 60 bands, 1,301 frames and the
 complete 13-second context remain intact. The reference uses four-band calls,
 up to four intra-operator threads, sequential graph execution and disabled
 spinning. Parallel temporal execution uses four or eight independent one-band
-calls, private pinned buffers, and one intra-operator thread per call. A full
-parallel passage has 875 graph calls; the reference has 335. Neither count means
-less model work. Front, frequency and mask-head scheduling remain at the reference
-configuration in the correction.
+calls, private pinned buffers, and one intra-operator thread per call. The same
+candidate workers now execute frequency graphs in batches of 16 independent
+frames instead of the reference batch of 128. All 1,301 frames are evaluated:
+each frequency layer has 81 full batches and one final five-frame batch. This
+does not shorten the temporal context or remove any model computation.
+
+The combined candidate has 1,727 graph calls per complete passage: 720 temporal,
+984 frequency, 22 front and one mask head. The reference remains at 335 calls;
+the earlier temporal-only candidate had 875. More calls describe different
+batching, not less model work. Front and mask-head scheduling remain at the
+reference configuration. Frequency diagnostics identify the companion geometry
+as `cpu-i1-j1-d0-sequential-w4-b16` or `cpu-i1-j1-d0-sequential-w8-b16`.
 
 Only one graph is resident at a time. Completed worker slots receive the next
 independent band; the coordinator alone packs inputs and scatters outputs. Every
 worker retires before tensors, sessions, run options, crash lease or inference
 gate are released. Cancellation and output publication keep that ownership order.
+A native `Run` rejection is classified as cancellation only when the caller's
+cancellation check confirms it; the original ORT cause is retained. Annotated
+native failures and resource-close failures remain errors, not optional probe
+failures. The baseline JNI test requires an observed native owner, active run
+options, exclusive gate ownership, clean retirement and exact full recovery.
 
 ## Complete-passage admission
 
-A bounded cold-graph screen can nominate one four- or eight-worker candidate;
-it cannot authorize accelerated production. New qualification requires three
-alternating baseline/candidate pairs at useful native-passage ordinals **0, 4
-and 8**. Each arm creates fresh original sessions for all 27 graphs and performs
+A bounded cold temporal-graph screen can nominate one four- or eight-worker
+candidate; it cannot authorize accelerated production or establish frequency
+performance. Complete-passage pairs qualify the combined temporal and frequency
+configuration. Host frequency-graph observations do not establish improved phone
+performance. New qualification requires three
+alternating baseline/candidate pairs at useful native-passage ordinals **0, 1
+and 2** (baseline first, candidate first, baseline first). Each arm creates fresh
+original sessions for all 27 graphs and performs
 the complete read, transform, inference and two-stem reconstruction with matching
-observer settings. Shared model-cache preflight/buffer preparation precede the
-pair. Output hashing follows the timed attempts, and only the baseline result
+observer settings. Shared model-cache preparation precedes both nomination and
+pair timers: inventory, checksum and storage checks finish first, then every
+missing graph is extracted and verified. Its cost belongs to common preflight;
+neither timed arm pays first-use extraction, and subsequent graph preparation
+only resolves verified cache files. Buffer preparation is also shared.
+Output hashing follows the timed attempts, and only the baseline result
 is published for a paired passage.
 
 Both complete outputs must be finite and byte-identical. Every pair must reduce
@@ -56,31 +77,48 @@ operation can overrun a checkpoint before retiring. They are not promises of
 instantaneous kernel interruption. Necessary baseline work is not abandoned
 when an optional probe exhausts its budget.
 
-A conservative payback projection includes remaining qualification, later
-rechecks and a 10% margin. It is labeled `projected-not-measured`: a paired rate
+A conservative payback projection includes remaining qualification, a fresh
+cached-policy pair when required, useful baseline control slots and a 10% margin.
+Control slots advance the song but earn no projected candidate acceleration.
+The projection is labeled `projected-not-measured`: a paired rate
 does not establish whole-job net savings. The separator first scans verified
 checkpoints and non-silent input with one passage live at a time and a bounded
 passage bitmap. It passes a checked remaining-useful count; unknown or short
 work cannot finance speculative qualification. Normal processing rechecks the
 input and checkpoint, so the scan never substitutes for recovery validation.
 
-## Rechecks, persistence and evidence
+## Sustained controls, persistence and evidence
 
-A qualified candidate receives an eight-passage lease; a successful renewal
-receives twelve. Two of the last three ordinary candidate passages exceeding
-125% of the paired candidate reference trigger an earlier comparison. That
-observation requests a recheck; it does not identify thermal throttling or prove
-a regression against a contemporaneous baseline. An unaffordable or failed
-recheck returns the job to baseline.
+A qualified candidate receives an eight-passage lease, followed by an ordinary
+baseline passage that produces useful song output without a replay. Two of the
+last three candidate passages exceeding 125% of the paired candidate reference
+request an earlier control. Renewal requires the slowest of those three candidate
+times to be at most 95% of the faster of the preceding baseline bracket and the
+new baseline control. Passing that timing guard and the revised payback check
+renews a twelve-passage candidate lease; an incomplete, unaffordable or failed
+control returns the job to baseline. The control record's `accepted=true` means
+only that its timing inequality passed; the policy header governs admission.
 
-The new `passage-policy-v1.bin` identity binds the original model, runtime,
-complete-passage scheduler, OS/device identity digest and processor count.
-The old warm-graph decision file cannot authorize this path. Even a valid saved
+These control inputs differ. Their explicit `comparisonScope=unmatched-inputs`
+is a conservative regression guard, not a paired speedup or output-equivalence
+measurement, and cannot identify thermal throttling. Initial qualification and
+the fresh check for a saved policy still require exact same-input pairs.
+
+The new `passage-policy-v3.bin` uses the
+`complete-passage-v3-frequency-b16-useful-controls` execution identity. It binds
+the original model, runtime, combined complete-passage scheduler, OS/device
+identity digest and processor count. The binary cache schema remains version 2;
+the changed execution identity and filename prevent temporal-only qualification
+from authorizing the combined candidate.
+Old warm-graph and prior passage-policy decisions cannot authorize this path. Even a valid saved
 qualification requires a fresh complete pair before another job uses it.
-Invalid or incomplete cached evidence cannot enable acceleration.
+Invalid or incomplete cached evidence cannot enable acceleration. A short job or
+failed payback projection can retain complete past evidence for another job, but
+cannot bypass that job's fresh pair, memory checks or payback requirement.
 
 [Durable diagnostics](DIAGNOSTIC_EVIDENCE.md) retain the raw qualification/recheck
-pairs, output digest, decision, extra-work cost and projected payback. Mixed
+pairs, the latest unmatched control, output digest, decision, extra-work cost and
+projected payback. Mixed
 temporal session counts supplement the last configuration. Probe observations
 stay separate from production graph totals; [profiling scopes](NATIVE_INFERENCE_PROFILING.md)
 prevent overlapping worker durations from masquerading as elapsed passage time.

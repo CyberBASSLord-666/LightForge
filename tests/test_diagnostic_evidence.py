@@ -71,6 +71,31 @@ def policy_records(*, pairs=3, seeded=False, recheck=False):
 
 
 class DiagnosticEvidenceTest(unittest.TestCase):
+    def test_unmatched_controls_remain_distinct_from_same_input_pairs(self):
+        control = ("schema=native-passage-control-v1 ordinal=20 baselineNanos=75000000000 "
+                   "previousBaselineNanos=75000000000 candidateMaxNanos=50000000000 candidateSamples=3 "
+                   "accepted=true comparisonScope=unmatched-inputs")
+        records = policy_records(recheck=True) + [control]
+        records[0] = records[0].replace("reason=measured-passage-improvement", "reason=control-accepted")
+        parsed = EVIDENCE._passage_policy(records, source="test")
+        self.assertEqual(parsed["status"], "observed")
+        self.assertEqual(len(parsed["pairs"]), 4)
+        self.assertEqual(len(parsed["controls"]), 1)
+        self.assertEqual(parsed["controls"][0]["candidateSamples"]["value"], 3)
+        self.assertEqual(parsed["controls"][0]["comparisonScope"], "unmatched-inputs")
+        self.assertIn("not-same-input", parsed["control_scope"])
+        rejected = EVIDENCE._passage_policy(records[:-1] + [control.replace("accepted=true", "accepted=false")], source="test")
+        self.assertEqual(rejected["status"], "observed")
+        self.assertFalse(rejected["controls"][0]["accepted"])
+        for broken in (records + [control], records + [records[-2]],
+                       records[:-1] + [control.replace("candidateSamples=3", "candidateSamples=2")],
+                       records[:-1] + [control.replace("baselineNanos=75000000000", "baselineNanos=0")],
+                       records[:-1] + [control.replace("candidateMaxNanos=50000000000", "candidateMaxNanos=3600000000001")],
+                       records[:-1] + [control.replace("comparisonScope=unmatched-inputs", "comparisonScope=PRIVATE")]):
+            invalid = EVIDENCE._passage_policy(broken, source="test")
+            self.assertEqual(invalid["status"], "invalid-or-incomplete")
+            self.assertNotIn("PRIVATE", json.dumps(invalid))
+
     def test_v2_durable_mixed_session_counts_and_policy_keep_distinct_scopes(self):
         records = policy_records(seeded=True, recheck=True)
         text = report().replace("jobRef=PRIVATE_JOB_IDENTIFIER", "jobRef=1234567890abcdef")
@@ -177,6 +202,19 @@ class DiagnosticEvidenceTest(unittest.TestCase):
         self.assertEqual(totals["metrics"]["temporalEightWorkerSessionCount"]["status"], "unavailable")
         self.assertEqual([row["status"] for row in totals["passage_policy_snapshots"]], ["unavailable", "unavailable"])
 
+    def test_frequency_counts_preserve_missing_history_and_binding_metrics(self):
+        events = profile(0) + profile(1)
+        events[0] += (" frequencyConfigCountScope=session-init-attempts frequencyBaselineSessionCount=5"
+                      " frequencyFourWorkerSessionCount=7 frequencyEightWorkerSessionCount=0 frequencyUnobservedSessionCount=0")
+        events[2] += " tensorBindCount=1 tensorBindWallMs=2 sessionInitCount=1 modelPrepareCount=1 modelPrepareWallMs=3"
+        totals = EVIDENCE.summarize(report(*events))["attempts"][0]["native_profiles"]["completed_complete_bundles"]
+        self.assertEqual(totals["metrics"]["frequencyFourWorkerSessionCount"]["status"], "partial")
+        self.assertIsNone(totals["metrics"]["frequencyFourWorkerSessionCount"]["value"])
+        self.assertEqual(totals["metrics"]["frequencyFourWorkerSessionCount"]["observed_subtotal"], 7)
+        self.assertEqual(totals["measurement_scopes"]["frequencyConfigCountScope"], {"session-init-attempts": 1, "missing-or-unknown": 1})
+        self.assertEqual(totals["graphs"]["front"]["tensorBindCount"]["observed_subtotal"], 1)
+        self.assertEqual(totals["graphs"]["front"]["modelPrepareWallMs"]["observed_subtotal"], 3)
+
     def test_parallel_profile_preserves_critical_path_and_worker_scopes(self):
         events = (
             event(0, "native-inference-profile",
@@ -214,11 +252,16 @@ class DiagnosticEvidenceTest(unittest.TestCase):
         unknown = sanitized["attempts"][0]["native_profiles"]["completed_complete_bundles"]
         self.assertEqual(unknown["measurement_scopes"]["inferenceThreadCpuScope"], {"missing-or-unknown": 1})
 
-    def test_parallel_scheduler_configuration_is_allowlisted_for_temporal_only(self):
+    def test_parallel_scheduler_configurations_are_strictly_family_specific(self):
         for workers in (4, 8):
             raw = f"cpu-i1-j1-d0-sequential-w{workers}-b1"
             self.assertEqual(EVIDENCE._scheduler_configuration(raw, temporal=True), raw)
             self.assertIsNone(EVIDENCE._scheduler_configuration(raw, temporal=False))
+            frequency = f"cpu-i1-j1-d0-sequential-w{workers}-b16"
+            self.assertEqual(EVIDENCE._scheduler_configuration(frequency, temporal=False), frequency)
+            self.assertIsNone(EVIDENCE._scheduler_configuration(frequency, temporal=True))
+        for invalid in ("cpu-i1-j1-d0-sequential-w4-b1", "cpu-i1-j1-d0-sequential-w16-b16", "cpu-i2-j1-d0-sequential-w4-b16"):
+            self.assertIsNone(EVIDENCE._scheduler_configuration(invalid, temporal=False))
         for invalid in ("cpu-i1-j1-d0-sequential-w16-b1", "cpu-i1-j1-d0-sequential-w8-b4",
                         "cpu-i2-j1-d0-sequential-w8-b1", "cpu-i1-j1-d4-sequential-w8-b1", "PRIVATE_CONFIGURATION"):
             self.assertIsNone(EVIDENCE._scheduler_configuration(invalid, temporal=True))

@@ -57,21 +57,27 @@ synthetic zero. Retries and failed attempts remain included as work. Thread CPU
 means the calling thread; process CPU covers all app threads.
 
 The correction's `diagnostic-job-summary-v2` preserves the latest complete
-controller snapshot: raw qualification/recheck pairs, complete output digest,
+controller snapshot: raw qualification/fresh-check pairs, complete output digest,
 finite/exact/geometry checks, decision reasons, extra-work cost and lease state.
+It also retains the latest useful baseline control with its preceding baseline
+bracket, maximum of three candidate times and acceptance decision. Controls
+declare `comparisonScope=unmatched-inputs`; they are neither same-input paired
+speedup evidence nor output-equivalence evidence. Their useful production work
+is not counted as a candidate replay or optional-probe cost.
 `projectedAccruedSavingsNanos` is a conservative payback projection labeled
 `projected-not-measured`, never a measured whole-job saving. Mixed baseline,
-four-worker, eight-worker and unobserved temporal session counts describe
+four-worker, eight-worker and unobserved temporal and frequency session counts describe
 initialization attempts; the last configuration alone cannot describe a mixed
 passage. Candidate probe costs remain separate from production graph totals.
-The binary reader accepts the previous summary format and upgrades it atomically
+The binary v3 reader accepts v1 and v2 summaries and upgrades them atomically
 without inventing missing historical counts. The three-job, 32 KiB storage bound
 and privacy restrictions remain unchanged.
 
 The offline extractor supports both summary versions as `durable_job_summaries`,
 removes job references and absolute timestamps, and retains only a boolean
 association to the current job. It accepts readable and encoded policy snapshots
-without counting them as additional passages. Failed-pair flags remain observations;
+without counting them as additional passages. Failed-pair flags and unmatched
+control decisions remain observations;
 the extractor does not qualify a schedule. Duplicate, inconsistent, truncated or
 unsafe records cannot become valid evidence, and orphan records after trace
 rotation are not assigned to an invented passage. Missing mixed-session metrics

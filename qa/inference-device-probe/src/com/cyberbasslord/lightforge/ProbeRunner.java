@@ -138,7 +138,7 @@ final class ProbeRunner {
                 JSONObject passage = new JSONObject().put("ordinal", i).put("remainingUseful", PASSAGES-i)
                     .put("startSample", STARTS[i % STARTS.length]).put("before", observations()).put("outcome", "running");
                 passages.put(passage); persist(report, id);
-                NativeInferenceProfile profile = new NativeInferenceProfile(); profile.captureStartMemory();
+                NativeInferenceProfile profile = new NativeInferenceProfile(); profile.enableCandidateEvidence(); profile.captureStartMemory();
                 File output = new File(cache, "passage-" + i + ".f32");
                 final int ordinal = i;
                 long at = SystemClock.elapsedRealtimeNanos(), cpu = android.os.Process.getElapsedCpuTime();
@@ -152,13 +152,13 @@ final class ProbeRunner {
                 } catch (Throwable failure) {
                     // The production runner joins workers before throwing. A native/resource
                     // failure can still mean close failed: preserve its cache for diagnosis.
-                    if (!(failure instanceof InterruptedIOException) || failure.getSuppressed().length != 0)
-                        uncertainNativeCleanup = true;
+                    if (!NativeDeux.cleanCancellation(failure)) uncertainNativeCleanup = true;
                     passage.put("predictWallNanos", SystemClock.elapsedRealtimeNanos()-at)
                         .put("predictProcessCpuMillis", android.os.Process.getElapsedCpuTime()-cpu)
                         .put("outcome", cancelled ? "cancelled" : "failed").put("failureClass", failure.getClass().getSimpleName());
                     throw failure;
                 } finally {
+                    appendCandidateEvidence(passages, passage, profile.candidateEvidence());
                     passage.put("profile", new JSONArray(java.util.Arrays.asList(profile.finish(passage.getString("outcome")).records())))
                         .put("after", observations());
                     if (output.exists() && !output.delete()) passage.put("outputCleanupFailed", true);
@@ -235,6 +235,44 @@ final class ProbeRunner {
         byte[] bytes=report.toString(2).getBytes(StandardCharsets.UTF_8); if(bytes.length>RECEIPT_LIMIT)throw new IOException("Receipt size bound exceeded");
         if(!receiptDirectory.isDirectory()&&!receiptDirectory.mkdirs())throw new IOException("Cannot create receipt directory");
         atomic(new File(receiptDirectory,id+".json"),bytes); atomic(new File(receiptDirectory,"latest.json"),bytes); latest=new String(bytes,StandardCharsets.UTF_8);
+    }
+    /** One bounded auxiliary profile per paired passage; never merge it into production totals. */
+    static void appendCandidateEvidence(JSONArray passages,JSONObject passage,NativeInferenceProfile.CandidateEvidence evidence)throws Exception {
+        if(evidence==null)return;
+        int retained=0;
+        for(int i=0;i<passages.length();i++)if(passages.getJSONObject(i).has("candidateEvidence"))retained++;
+        if(retained>=3||passages.length()>PASSAGES||passage.has("candidateEvidence")||
+            passage.getInt("ordinal")!=evidence.ordinal||evidence.ordinal>=PASSAGES)
+            throw new IOException("Candidate evidence bounds exceeded");
+        passage.put("candidateEvidence",candidateEvidenceJson(evidence));
+    }
+    static JSONObject candidateEvidenceJson(NativeInferenceProfile.CandidateEvidence evidence)throws Exception {
+        if(evidence.profile.recordCount()>NativeInferenceProfile.MAX_RECORDS)throw new IOException("Candidate profile exceeds record bound");
+        int graphs=0;
+        for(String record:evidence.profile.records()){
+            if(record==null||record.length()>8192)throw new IOException("Candidate profile exceeds record length bound");
+            if(record.startsWith("schema=native-inference-graph-v2 "))graphs++;
+        }
+        if(graphs>NativeInferenceProfile.MAX_GRAPH_RECORDS)throw new IOException("Candidate graph bound exceeded");
+        return new JSONObject().put("schema","native-passage-candidate-evidence-v1")
+            .put("ordinal",evidence.ordinal).put("workers",evidence.workers).put("candidateFirst",evidence.candidateFirst)
+            .put("commonPreflightVerifiedModelCount",evidence.commonPreflightVerifiedModelCount)
+            .put("profileWallScope","collector-lifetime-not-arm-clock")
+            .put("comparisonScope","same-input-paired-attempts")
+            .put("modelSetupScope","observed-file-preparation-not-os-cache-equivalence")
+            .put("baseline",armEvidenceJson(evidence.baseline)).put("candidate",armEvidenceJson(evidence.candidate))
+            .put("profile",new JSONArray(java.util.Arrays.asList(evidence.profile.records())));
+    }
+    private static Object armEvidenceJson(NativeInferenceProfile.ArmEvidence arm)throws Exception {
+        if(arm==null)return JSONObject.NULL;
+        NativeInferenceProfile.ModelSetup before=arm.before,after=arm.after;
+        return new JSONObject().put("outcome",arm.outcome)
+            .put("armWallNanos",arm.armWallNanos<0?JSONObject.NULL:Long.valueOf(arm.armWallNanos))
+            .put("modelSetup",new JSONObject().put("verifiedModelsBefore",before.verifiedModels).put("verifiedModelsAfter",after.verifiedModels)
+                .put("extractionAttempts",after.extractionAttempts-before.extractionAttempts)
+                .put("extractionBytesRead",after.extractionBytesRead-before.extractionBytesRead)
+                .put("existingFileChecksumAttempts",after.existingFileChecksumAttempts-before.existingFileChecksumAttempts)
+                .put("existingFileChecksumBytesRead",after.existingFileChecksumBytesRead-before.existingFileChecksumBytesRead));
     }
     private static void atomic(File target,byte[] bytes)throws Exception {
         File temporary=new File(target.getParentFile(),target.getName()+".partial");
