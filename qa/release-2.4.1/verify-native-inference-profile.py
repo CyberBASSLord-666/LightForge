@@ -48,6 +48,7 @@ EXPECTED_GRAPHS = sorted(['front', 'head-0', 'head-1'] + [
 ])
 SOURCE_NAMES = (
     'android/src/com/cyberbasslord/lightforge/NativeExecutionPolicy.java',
+    'android/src/com/cyberbasslord/lightforge/NativePassagePolicy.java',
     'tests/NativeDeuxCalibrationTest.java',
     'tests/NativeExecutionPolicyTest.java',
     'tests/test_native_execution_policy.py',
@@ -282,6 +283,7 @@ def _run(output, evidence_session):
             sources = [
                 ROOT / 'android/src/com/cyberbasslord/lightforge/NativeDeux.java',
                 ROOT / 'android/src/com/cyberbasslord/lightforge/NativeExecutionPolicy.java',
+                ROOT / 'android/src/com/cyberbasslord/lightforge/NativePassagePolicy.java',
                 ROOT / 'tests/NativeDeuxCalibrationTest.java',
                 ROOT / 'android/src/com/cyberbasslord/lightforge/NativeDeuxTransform.java',
                 ROOT / 'android/src/com/cyberbasslord/lightforge/NativeInferenceProfile.java',
@@ -320,7 +322,7 @@ def _run(output, evidence_session):
             for line in calibrated.stdout.splitlines():
                 if line.startswith('{'):
                     parsed = json.loads(line)
-                    if parsed.get('schema') == 'lightforge.native-scheduler-calibration.v2':
+                    if parsed.get('schema') == 'lightforge.native-scheduler-calibration.v3':
                         calibration_rows.append(parsed)
             require(len(calibration_rows) == 1, 'Expected exactly one complete scheduler calibration result.')
             spec = importlib.util.spec_from_file_location('scheduler_release_gate', OUT / 'verify-analysis.py')
@@ -338,7 +340,8 @@ def _run(output, evidence_session):
             'The complete fixed passage ran once unprofiled and once with NativeInferenceProfile in the same JVM/runtime; both float outputs are complete, finite and byte-identical with zero max/RMS/relative error.',
             'The canonical full profile record stream is SHA-256-bound and has one summary, 15 host-observable stages and exactly 27 executed graph records; no graph was dropped.',
             'The historical current-runtime digest is retained as context only; it is not required to match either fresh paired output.',
-            'Original reference, calibrated, cached, forced four-worker and recovered eight-worker passages preserve every finite Float32 output byte; each graph covers all original bands/frames with the actual 335/875 or complete mixed-fallback native-call geometry.',
+            'Original reference, unknown-work, short-work, automatic first-passage, forced four-worker and recovered eight-worker passages preserve every finite Float32 output byte and cover all original bands/frames with the actual 335/875 native-call geometry.',
+            'Unknown and short work finance no optional probes; a synthetic valid old graph-only cache cannot admit new execution. Automatic first-passage screening retains its decision and any complete cold-session pair without claiming that a single pair qualifies a schedule.',
             'Each forced temporal graph executes all 60 original bands through exactly four or eight persistent tensor bindings; nested packing/scattering is labeled within the enclosing pipeline and overlapping process CPU is unavailable rather than counted twice.',
             'Both explicit cancellation and owner interruption occur after two or more observed concurrent native Run stacks; all captured workers and the owner retire, no output commits, the process gate is released, and the owner interrupt flag is preserved.',
         ])

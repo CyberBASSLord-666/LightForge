@@ -51,7 +51,132 @@ def profile(seconds, *, wall="100", inference="90", outcome="completed", graph_c
     return lines
 
 
+def policy_records(*, pairs=3, seeded=False, recheck=False):
+    records = [
+        "schema=native-passage-policy-v1 state=qualified workers=4 reason=measured-passage-improvement "
+        "extraNanos=22000000000 extraCapNanos=360000000000 projectedAccruedSavingsNanos=123000000000 "
+        f"qualificationPairs={pairs} currentJobPairs={0 if seeded else pairs} seeded={str(seeded).lower()} "
+        "activePassages=7 leasePassages=8 paybackScope=projected-not-measured"
+    ]
+    for index in range(pairs + int(recheck)):
+        repeated = index == pairs
+        records.append(
+            "schema=native-passage-pair-v1 "
+            f"role={'recheck' if repeated else 'qualification'} index={0 if repeated else index} ordinal={index + 1} "
+            f"candidateFirst={str(index % 2 == 0).lower()} workers=4 baselineNanos=10000000000 "
+            "candidateNanos=8000000000 extraNanos=9007199254740993 outputSha256=" + "a" * 64 +
+            " finite=true exact=true fullGeometry=true coldSessions=true"
+        )
+    return records
+
+
 class DiagnosticEvidenceTest(unittest.TestCase):
+    def test_v2_durable_mixed_session_counts_and_policy_keep_distinct_scopes(self):
+        records = policy_records(seeded=True, recheck=True)
+        text = report().replace("jobRef=PRIVATE_JOB_IDENTIFIER", "jobRef=1234567890abcdef")
+        text = text.replace("ANDROID PREVIOUS PROCESS EXITS", "\n".join((
+            "DURABLE ANALYSIS SUMMARIES (independent of trace rotation)",
+            "schema=diagnostic-job-summary-v2 retentionJobs=3 storageBoundBytes=32768 recovery=normal",
+            "jobRef=1234567890abcdef state=completed lifecycleElapsedMs=12345 durationMs=177000 analysisQuality=precision",
+            " route=native-deux-v1 passages=2 completed=2 cancelled=0 otherOutcomes=0 lastTemporalConfig=cpu-i1-j1-d0-sequential-w8-b1 "
+            "temporalBaselineSessionCount=3 temporalBaselineSessionCountMeasuredPassages=2 "
+            "temporalFourWorkerSessionCount=0 temporalFourWorkerSessionCountMeasuredPassages=2 "
+            "temporalEightWorkerSessionCount=21 temporalEightWorkerSessionCountMeasuredPassages=2 "
+            "temporalUnobservedSessionCount=unavailable temporalUnobservedSessionCountMeasuredPassages=0",
+            *(" " + row for row in records),
+            "ANDROID PREVIOUS PROCESS EXITS",
+        )))
+        result = EVIDENCE.summarize(text)
+        job = result["durable_job_summaries"][0]
+        self.assertEqual(job["summary_schema"], "diagnostic-job-summary-v2")
+        self.assertTrue(job["matches_current_job"])
+        route = job["native_routes"]["native-deux-v1"]
+        self.assertEqual(route["passages"]["value"], 2)
+        self.assertEqual(route["metrics"]["temporalBaselineSessionCount"]["value"], 3)
+        self.assertEqual(route["metrics"]["temporalFourWorkerSessionCount"]["value"], 0)
+        self.assertIsNone(route["metrics"]["temporalUnobservedSessionCount"]["value"])
+        self.assertEqual(route["temporal_configuration_count_scope"], "session-init-attempts-not-successful-runs")
+        policy = route["passage_policy"]
+        self.assertEqual(policy["status"], "observed")
+        self.assertEqual(policy["timing_units"], "nanoseconds")
+        self.assertEqual(policy["payback_scope"], "projected-not-measured")
+        self.assertEqual(policy["controller"]["currentJobPairs"]["value"], 0)
+        self.assertTrue(policy["controller"]["seeded"])
+        self.assertEqual(len(policy["pairs"]), 4)
+        self.assertEqual(policy["pairs"][0]["extraNanos"]["value"], 9007199254740993)
+        self.assertEqual(result["qualification_status"], "not-evaluated")
+        self.assertIsNone(result["full_song_runtime_ms"]["value"])
+        future = text.replace("diagnostic-job-summary-v2", "diagnostic-job-summary-v3")
+        self.assertEqual(EVIDENCE.summarize(future)["durable_job_summaries"], [])
+
+    def test_policy_profile_readable_and_encoded_snapshots_are_not_extra_bundles(self):
+        records = policy_records()
+        encoded = "|".join(row.replace(" ", ",") for row in records)
+        events = profile(0)
+        events[0] += (" temporalConfigCountScope=session-init-attempts temporalBaselineSessionCount=3 "
+                      "temporalFourWorkerSessionCount=9 temporalEightWorkerSessionCount=0 temporalUnobservedSessionCount=0 "
+                      "passagePolicy=" + encoded)
+        events.extend(event(.01 + index * .001, "native-inference-profile", row) for index, row in enumerate(records))
+        result = EVIDENCE.summarize(report(*events))
+        totals = result["attempts"][0]["native_profiles"]["completed_complete_bundles"]
+        self.assertEqual(totals["count"], 1)
+        self.assertEqual(totals["metrics"]["wallMs"]["value"], 100)
+        self.assertEqual(totals["metrics"]["temporalFourWorkerSessionCount"]["value"], 9)
+        self.assertEqual(totals["measurement_scopes"]["temporalConfigCountScope"], {"session-init-attempts": 1})
+        self.assertEqual(len(totals["passage_policy_snapshots"]), 1)
+        self.assertEqual(totals["passage_policy_snapshots"][0]["status"], "observed")
+        encoded_only = EVIDENCE.summarize(report(*events[:3]))
+        snapshot = encoded_only["attempts"][0]["native_profiles"]["completed_complete_bundles"]["passage_policy_snapshots"][0]
+        self.assertEqual(snapshot["status"], "observed")
+        # Readable and encoded copies disagree: retain observations, never bless the bundle.
+        events[-1] = events[-1].replace("candidateNanos=8000000000", "candidateNanos=9000000000")
+        conflict = EVIDENCE.summarize(report(*events))["attempts"][0]["native_profiles"]["completed_complete_bundles"]
+        self.assertEqual(conflict["passage_policy_snapshots"][0]["status"], "invalid-or-incomplete")
+
+    def test_failed_pairs_remain_observations_and_orphan_records_stay_unbound(self):
+        records = policy_records(recheck=True)
+        records[-1] = records[-1].replace("finite=true exact=true", "finite=false exact=false")
+        snapshot = EVIDENCE._passage_policy(records, source="test")
+        self.assertEqual(snapshot["status"], "observed")
+        self.assertFalse(snapshot["pairs"][-1]["finite"])
+        self.assertFalse(snapshot["pairs"][-1]["exact"])
+        self.assertEqual(snapshot["qualification_status"], "not-independently-evaluated")
+        result = EVIDENCE.summarize(report(event(0, "native-inference-profile", records[-1])))
+        orphan = result["source"]["unassociated_passage_policy_records"]
+        self.assertEqual(len(orphan), 1)
+        self.assertEqual(orphan[0]["record"]["role"], "recheck")
+        self.assertEqual(result["attempts"][0]["native_profiles"]["completed_complete_bundles"]["count"], 0)
+
+    def test_policy_validation_is_bounded_private_and_keeps_missing_unknown(self):
+        records = policy_records()
+        for broken in (
+            records[:-1], [records[0], records[2], records[1], records[3]],
+            [records[0].replace("currentJobPairs=3", "currentJobPairs=4097"), *records[1:]],
+            [records[0].replace("extraNanos=22000000000", "extraNanos=9223372036854775808"), *records[1:]],
+            [records[0].replace("reason=measured-passage-improvement", "reason=PRIVATE_REASON"), *records[1:]],
+            [records[0] + " PRIVATE_FIELD=PRIVATE_TEXT", *records[1:]],
+            [records[0] + " state=qualified", *records[1:]],
+            [records[0].replace(" projectedAccruedSavingsNanos=123000000000", ""), *records[1:]],
+        ):
+            parsed = EVIDENCE._passage_policy(broken, source="test")
+            self.assertEqual(parsed["status"], "invalid-or-incomplete")
+            self.assertNotIn("PRIVATE", json.dumps(parsed))
+        for encoded in ("x" * 4105, "|".join([records[0].replace(" ", ",")] * 9)):
+            self.assertEqual(EVIDENCE._passage_policy(encoded=encoded, source="test")["status"], "invalid")
+        self.assertEqual(EVIDENCE._passage_policy(source="test")["status"], "unavailable")
+        partial = EVIDENCE._policy_record(records[0].replace(" projectedAccruedSavingsNanos=123000000000", ""))
+        self.assertIsNone(partial["projectedAccruedSavingsNanos"]["value"])
+
+    def test_v1_and_partial_mixed_counts_are_never_inferred_as_zero(self):
+        events = profile(0) + profile(1)
+        events[0] += " temporalBaselineSessionCount=12 temporalFourWorkerSessionCount=0"
+        totals = EVIDENCE.summarize(report(*events))["attempts"][0]["native_profiles"]["completed_complete_bundles"]
+        self.assertEqual(totals["metrics"]["temporalBaselineSessionCount"]["status"], "partial")
+        self.assertIsNone(totals["metrics"]["temporalBaselineSessionCount"]["value"])
+        self.assertEqual(totals["metrics"]["temporalBaselineSessionCount"]["observed_subtotal"], 12)
+        self.assertEqual(totals["metrics"]["temporalEightWorkerSessionCount"]["status"], "unavailable")
+        self.assertEqual([row["status"] for row in totals["passage_policy_snapshots"]], ["unavailable", "unavailable"])
+
     def test_parallel_profile_preserves_critical_path_and_worker_scopes(self):
         events = (
             event(0, "native-inference-profile",

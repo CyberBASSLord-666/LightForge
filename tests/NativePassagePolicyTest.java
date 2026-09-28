@@ -1,0 +1,257 @@
+package com.cyberbasslord.lightforge;
+
+import java.io.*;
+import java.nio.file.Files;
+import java.util.Arrays;
+import java.util.zip.CRC32;
+
+/** Deterministic adversarial admission, bounded-work, sustained-regression and cache tests. */
+public final class NativePassagePolicyTest {
+    private static final long SECOND=1000000000L, BASE=60*SECOND, FAST=40*SECOND;
+    private static final String ID=repeat('1'), HASH=repeat('b');
+    private static int checks;
+    private static String repeat(char value){char[] chars=new char[64];Arrays.fill(chars,value);return new String(chars);}
+    private static void require(boolean ok,String message){checks++;if(!ok)throw new AssertionError(message);}
+    private static NativePassagePolicy policy(){NativePassagePolicy p=new NativePassagePolicy(ID,null);p.nominate(4,0);return p;}
+    private static NativePassagePolicy.Plan plan(NativePassagePolicy p,int ordinal,int remaining){
+        NativePassagePolicy.Plan plan=p.plan(ordinal,remaining,Long.MAX_VALUE,8);compatible(p);return plan;
+    }
+    private static void compatible(NativePassagePolicy p){
+        String[] records=p.evidenceRecords();
+        require(Arrays.equals(records,NativeInferenceProfile.decodePassagePolicy(NativeInferenceProfile.encodePassagePolicy(records))),"actual policy evidence survives strict profile roundtrip");
+        NativeInferenceProfile profile=new NativeInferenceProfile();profile.notePassagePolicy(records);
+        require(profile.finish("completed").records().length==1+records.length,"terminal profile preserves every actual policy record");
+    }
+    private static NativePassagePolicy.Pair pair(int ordinal,boolean first,long baseline,long candidate,long extra){
+        return new NativePassagePolicy.Pair(ordinal,first,baseline,candidate,extra,HASH,true,true,true,true,4);
+    }
+    private static NativePassagePolicy.Pair good(int ordinal){return pair(ordinal,ordinal==4,BASE,FAST,FAST);}
+    private static boolean reason(NativePassagePolicy p,String reason){return p.evidenceRecords()[0].contains("reason="+reason+" ");}
+    private static void baseline(NativePassagePolicy p,int ordinal,int remaining,String message){
+        require(plan(p,ordinal,remaining).action==NativePassagePolicy.Action.BASELINE,message);
+    }
+    private static NativePassagePolicy qualified(){
+        NativePassagePolicy p=policy();
+        for(int ordinal=0;ordinal<=8;ordinal++){
+            NativePassagePolicy.Plan selected=plan(p,ordinal,35-ordinal);
+            if(ordinal%4==0){
+                require(selected.action==NativePassagePolicy.Action.PAIR,"complete pair at ordinal "+ordinal);
+                require(selected.candidateFirst==(ordinal==4),"orders alternate AB/BA/AB");
+                p.recordPair(good(ordinal),34-ordinal);
+            }else{
+                require(selected.action==NativePassagePolicy.Action.BASELINE,"no provisional candidate lease");p.recordOrdinary(BASE);
+            }
+        }
+        require(p.qualifiedSeed()!=null,"three cold complete pairs qualify");compatible(p);return p;
+    }
+    private static NativePassagePolicy scenario(long baseline,long candidate,long screening){
+        NativePassagePolicy p=new NativePassagePolicy(ID,null);p.nominate(4,screening);
+        for(int ordinal=0;ordinal<=8;ordinal++){
+            NativePassagePolicy.Plan action=plan(p,ordinal,35-ordinal);
+            if(ordinal%4==0){
+                if(action.action!=NativePassagePolicy.Action.PAIR)break;
+                p.recordPair(pair(ordinal,ordinal==4,baseline,candidate,candidate),34-ordinal);
+            }else p.recordOrdinary(baseline);
+        }
+        compatible(p);return p;
+    }
+    private static void writeInt(byte[] bytes,int offset,int value){for(int i=3;i>=0;i--){bytes[offset+i]=(byte)value;value>>>=8;}}
+    private static void writeLong(byte[] bytes,int offset,long value){for(int i=7;i>=0;i--){bytes[offset+i]=(byte)value;value>>>=8;}}
+    private static void crc(byte[] bytes){CRC32 crc=new CRC32();crc.update(bytes,8,bytes.length-8);writeLong(bytes,0,crc.getValue());}
+    private static void forged(File file,byte[] original,int offset,int value,String message)throws Exception{
+        byte[] bytes=original.clone();bytes[offset]=(byte)value;crc(bytes);Files.write(file.toPath(),bytes);
+        require(NativePassagePolicy.load(file,ID)==null,message);
+    }
+    public static void main(String[] args)throws Exception{
+        try{new NativePassagePolicy("raw-device-name",null);throw new AssertionError("raw identity accepted");}
+        catch(IllegalArgumentException expected){checks++;}
+        NativePassagePolicy missing=new NativePassagePolicy(ID,null);
+        baseline(missing,0,35,"missing screening cannot nominate a schedule");
+        require(missing.qualifiedSeed()==null,"missing evidence cannot seed");
+        for(int remaining:new int[]{0,1,23}){
+            NativePassagePolicy p=policy();baseline(p,0,remaining,"unknown and short work skip initial probes");
+            require(reason(p,"short-job"),"short work reason survives");
+        }
+        NativePassagePolicy unknown=policy();baseline(unknown,0,-1,"unknown work skips all probe spending");
+        require(reason(unknown,"unknown-work"),"unknown work has a distinct bounded reason");
+        NativePassagePolicy late=policy();baseline(late,1,35,"qualification cannot start at a fabricated later ordinal");
+        NativePassagePolicy screen=new NativePassagePolicy(ID,null);screen.nominate(8,SECOND);
+        require(screen.qualifiedSeed()==null,"screening never qualifies a schedule");
+        NativePassagePolicy.Plan screenPlan=screen.plan(0,35,NativePassagePolicy.EIGHT_WORKER_HEADROOM,8);
+        require(screenPlan.action==NativePassagePolicy.Action.PAIR&&screenPlan.workers==8,"eligible nomination only requests a full pair");
+        require(screenPlan.probeBudgetNanos==NativePassagePolicy.EXTRA_CAP_NANOS-SECOND,"screening spends hard budget");
+        for(long memory:new long[]{-1,0,NativePassagePolicy.FOUR_WORKER_HEADROOM-1}){
+            NativePassagePolicy p=policy();require(p.plan(0,35,memory,8).action==NativePassagePolicy.Action.BASELINE,"insufficient memory blocks any candidate");
+            baseline(p,1,34,"memory rejection latches baseline after pressure clears");
+        }
+        NativePassagePolicy lowCores=policy();require(lowCores.plan(0,35,Long.MAX_VALUE,3).action==NativePassagePolicy.Action.BASELINE,"no outer workers beyond available cores");
+        NativePassagePolicy eightLow=new NativePassagePolicy(ID,null);eightLow.nominate(8,0);
+        require(eightLow.plan(0,35,NativePassagePolicy.EIGHT_WORKER_HEADROOM-1,8).action==NativePassagePolicy.Action.BASELINE,"eight workers require complete native headroom");
+        NativePassagePolicy wrongWorkers=new NativePassagePolicy(ID,null);wrongWorkers.nominate(6,0);
+        baseline(wrongWorkers,0,35,"unreviewed geometry is never nominated");
+        NativePassagePolicy overscreen=new NativePassagePolicy(ID,null);overscreen.nominate(4,NativePassagePolicy.EXTRA_CAP_NANOS+1);
+        baseline(overscreen,0,35,"screening cannot exceed total extra cap");
+        NativePassagePolicy negativescreen=new NativePassagePolicy(ID,null);negativescreen.nominate(4,-1);
+        baseline(negativescreen,0,35,"negative screening time is invalid");
+
+        for(int flaw=0;flaw<9;flaw++){
+            NativePassagePolicy p=policy();require(plan(p,0,35).action==NativePassagePolicy.Action.PAIR,"first trial requested");
+            NativePassagePolicy.Pair bad=new NativePassagePolicy.Pair(0,false,flaw==4?0:BASE,flaw==5?Long.MAX_VALUE:FAST,
+                flaw==6?0:BASE,flaw==7?"bad":HASH,flaw!=0,flaw!=1,flaw!=2,flaw!=3,flaw==8?8:4);
+            p.recordPair(bad,34);require(p.qualifiedSeed()==null,"bad full-passage evidence cannot qualify: "+flaw);
+            baseline(p,1,34,"bad pair latches baseline: "+flaw);
+        }
+        NativePassagePolicy mismatch=policy();plan(mismatch,0,35);
+        mismatch.recordPair(new NativePassagePolicy.Pair(0,false,BASE,FAST,BASE,HASH,true,false,true,true,4),34);
+        require(mismatch.evidenceRecords().length==2&&mismatch.evidenceRecords()[1].contains("exact=false"),"failed exact-output comparison survives outside the rotating trace");
+        NativePassagePolicy slow=policy();plan(slow,0,35);slow.recordPair(pair(0,false,BASE,BASE,BASE),34);
+        require(reason(slow,"pair-regression"),"equal complete timing rejects fast microbenchmark nomination");
+        NativePassagePolicy boundary=policy();plan(boundary,0,35);boundary.recordPair(pair(0,false,1000,950,1000),34);
+        require(!reason(boundary,"pair-regression"),"5 percent pair floor is inclusive (payback remains separate)");
+        NativePassagePolicy below=policy();plan(below,0,35);below.recordPair(pair(0,false,1000,951,1000),34);
+        require(reason(below,"pair-regression"),"under 5 percent pair gain rejects");
+        NativePassagePolicy poorPayback=policy();plan(poorPayback,0,35);
+        poorPayback.recordPair(pair(0,false,BASE,54*SECOND,BASE),34);
+        require(reason(poorPayback,"payback-unavailable"),"kernel win cannot hide whole-job probe overhead");
+        NativePassagePolicy representative=scenario(65*SECOND,44*SECOND,10*SECOND);
+        require(representative.qualifiedSeed()!=null,"representative32 percent full-passage gain repays real candidate replay and screening");
+        NativePassagePolicy expensive=scenario(100*SECOND,70*SECOND,20*SECOND);
+        require(expensive.qualifiedSeed()==null&&reason(expensive,"payback-unavailable"),"insufficient360second lease horizon rejects projected whole-job payback");
+        NativePassagePolicy overhead=policy();plan(overhead,0,35);
+        overhead.recordPair(pair(0,false,BASE,FAST,300*SECOND),34);
+        require(reason(overhead,"payback-unavailable"),"future qualification must fit remaining fixed extra budget");
+        NativePassagePolicy unfinished=policy();plan(unfinished,0,35);baseline(unfinished,1,34,"new passage cannot conceal unfinished pair");
+        NativePassagePolicy outOfOrder=policy();plan(outOfOrder,0,35);outOfOrder.recordPair(good(4),34);
+        baseline(outOfOrder,1,34,"unrequested ordinal cannot inject a completed pair");
+        NativePassagePolicy reversed=policy();plan(reversed,0,35);reversed.recordPair(pair(0,true,BASE,FAST,BASE),34);
+        baseline(reversed,1,34,"unrequested trial order cannot inject a completed pair");
+        NativePassagePolicy missed=policy();plan(missed,0,35);missed.recordPair(good(0),34);
+        baseline(missed,5,30,"missed scheduled pair cannot silently become sustained evidence");
+        NativePassagePolicy abort=policy();plan(abort,0,35);abort.probeAborted("/private/music-title\nsecret",SECOND);
+        require(reason(abort,"probe-aborted")&&!Arrays.toString(abort.evidenceRecords()).contains("secret"),"abort reasons never retain user text");
+        baseline(abort,1,34,"aborted probe does not retry indefinitely");
+        require(abort.qualifiedSeed()==null,"cancelled or partial evidence cannot seed");
+        for(String reason:new String[]{"memory-pressure","screen-budget","screen-no-win","runtime-rejected"}){
+            NativePassagePolicy rejected=policy();rejected.forceBaseline(reason);require(reason(rejected,reason),"integration reason retained: "+reason);compatible(rejected);
+        }
+        NativePassagePolicy overflow=policy();overflow.probeAborted("cancelled",Long.MAX_VALUE);overflow.probeAborted("cancelled",Long.MAX_VALUE);
+        require(overflow.evidenceRecords()[0].contains("extraNanos="+Long.MAX_VALUE+" "),"extra ledger saturates without arithmetic wrap");
+        baseline(overflow,0,35,"overflow cannot reopen a probe budget");
+        NativePassagePolicy hugeWork=policy();baseline(hugeWork,0,Integer.MAX_VALUE,"unbounded work count is rejected before multiplication");
+        NativePassagePolicy hugeOrdinal=policy();baseline(hugeOrdinal,Integer.MAX_VALUE,35,"unbounded ordinal is rejected");
+
+        NativePassagePolicy p=qualified();
+        for(int ordinal=9;ordinal<=16;ordinal++){
+            require(plan(p,ordinal,35-ordinal).action==NativePassagePolicy.Action.CANDIDATE,"first complete lease has eight passages");p.recordOrdinary(FAST);
+        }
+        NativePassagePolicy.Plan renewal=plan(p,17,18);
+        require(renewal.action==NativePassagePolicy.Action.PAIR&&renewal.candidateFirst,"eight-passage lease requires reversed-order full recheck");
+        require(p.qualifiedSeed()==null,"unfinished renewal cannot publish positive current-job evidence");
+        p.recordPair(pair(17,true,BASE,BASE,BASE),17);
+        require(reason(p,"pair-regression")&&p.qualifiedSeed()==null,"sustained measured regression revokes the positive seed");
+        baseline(p,18,17,"successful first three pairs never authorize indefinite execution");
+
+        NativePassagePolicy spike=qualified();
+        for(int ordinal=9;ordinal<=11;ordinal++){
+            require(plan(spike,ordinal,35-ordinal).action==NativePassagePolicy.Action.CANDIDATE,"guard waits for ordinary samples");
+            spike.recordOrdinary(ordinal==10?FAST:51*SECOND);
+        }
+        NativePassagePolicy.Plan triggered=plan(spike,12,23);
+        require(triggered.action==NativePassagePolicy.Action.PAIR&&"slow-passage-recheck".equals(triggered.reason),"two of last three >125 percent trigger actual paired comparison");
+        spike.recordPair(pair(12,true,BASE,FAST,BASE),22);
+        require(spike.qualifiedSeed()!=null,"absolute slowdown alone does not fabricate a regression");
+        require(plan(spike,13,22).action==NativePassagePolicy.Action.CANDIDATE,"successful actual recheck renews the lease");
+        spike.recordOrdinary(FAST);
+        spike.forceBaseline("memory-fallback");baseline(spike,14,21,"one production memory fallback latches baseline");
+
+        NativePassagePolicy oneSpike=qualified();
+        for(int ordinal=9;ordinal<=11;ordinal++){plan(oneSpike,ordinal,35-ordinal);oneSpike.recordOrdinary(ordinal==9?51*SECOND:50*SECOND);}
+        require(plan(oneSpike,12,23).action==NativePassagePolicy.Action.CANDIDATE,"one spike and exactly125 percent do not trigger two-of-three guard");
+        NativePassagePolicy shortRenewal=qualified();
+        for(int ordinal=9;ordinal<=16;ordinal++){plan(shortRenewal,ordinal,35-ordinal);shortRenewal.recordOrdinary(FAST);}
+        baseline(shortRenewal,17,3,"short remaining tail cannot buy an unrepayable renewal");
+        NativePassagePolicy budget=scenario(90*SECOND,5*SECOND,200*SECOND);
+        require(budget.qualifiedSeed()!=null,"large measured gain can repay fully counted screening");
+        for(int ordinal=9;ordinal<=16;ordinal++){plan(budget,ordinal,35-ordinal);budget.recordOrdinary(5*SECOND);}
+        require(plan(budget,17,18).action==NativePassagePolicy.Action.PAIR,"funded renewal remains available");
+        budget.recordPair(pair(17,true,90*SECOND,5*SECOND,145*SECOND),17);
+        require(budget.qualifiedSeed()!=null,"a completed funded renewal may consume exactly its extra budget");
+        for(int ordinal=18;ordinal<=29;ordinal++){
+            require(plan(budget,ordinal,35-ordinal).action==NativePassagePolicy.Action.CANDIDATE,"existing bounded lease remains useful at the probe cap");budget.recordOrdinary(5*SECOND);
+        }
+        baseline(budget,30,5,"unaffordable mandatory renewal latches baseline instead of silently extending lease");
+        require(reason(budget,"probe-budget"),"extra budget exhaustion has a retained reason");
+        NativePassagePolicy invalidClock=qualified();plan(invalidClock,9,26);invalidClock.recordOrdinary(Long.MAX_VALUE);
+        baseline(invalidClock,10,25,"invalid ordinary clock cannot evade sustained guard");
+        NativePassagePolicy positive=qualified();
+        for(String record:positive.evidenceRecords()){
+            require(record.length()<=512&&record.matches("[ -~]+"),"durable records stay bounded ASCII without free text");
+        }
+        require(positive.evidenceRecords().length==4,"retain all three decisive raw pairs");
+        require(positive.evidenceRecords()[0].contains("paybackScope=projected-not-measured"),"net payback estimate is never called measured improvement");
+
+        File directory=Files.createTempDirectory("lightforge-passage-policy-").toFile(),file=new File(directory,"policy.bin");
+        try{
+            require(NativePassagePolicy.load(file,ID)==null,"missing cache is unqualified");
+            try{NativePassagePolicy.save(file,ID,null);throw new AssertionError("provisional saved");}catch(IOException expected){checks++;}
+            NativePassagePolicy.save(file,ID,positive.qualifiedSeed());byte[] original=Files.readAllBytes(file.toPath());
+            require(original.length<NativePassagePolicy.MAX_BYTES,"qualified cache is bounded below16KiB");
+            NativePassagePolicy.Seed seed=NativePassagePolicy.load(file,ID);require(seed!=null&&seed.workers==4,"complete evidence reconstructs the same candidate");
+            require(NativePassagePolicy.load(file,repeat('2'))==null,"identity change invalidates old seed");
+            require(NativePassagePolicy.load(file,"raw-model-id")==null,"raw identity never matches a cache");
+            NativePassagePolicy seeded=new NativePassagePolicy(ID,seed);
+            require(seeded.qualifiedSeed()==null,"positive cache is not current-job authority");
+            NativePassagePolicy.Plan first=plan(seeded,0,35);
+            require(first.action==NativePassagePolicy.Action.PAIR&&first.candidateFirst,"positive cache must earn a fresh opposite-order complete pair");
+            seeded.recordPair(pair(0,true,BASE,FAST,BASE),34);
+            require(seeded.qualifiedSeed()!=null,"fresh exact measured pair renews complete historical qualification");
+            for(int ordinal=1;ordinal<=8;ordinal++){require(plan(seeded,ordinal,35-ordinal).action==NativePassagePolicy.Action.CANDIDATE,"cached job starts with an eight-passage lease");seeded.recordOrdinary(FAST);}
+            require(plan(seeded,9,26).action==NativePassagePolicy.Action.PAIR,"cached qualification still requires sustained recheck");
+            seeded.recordPair(pair(9,false,BASE,FAST,BASE),25);
+            compatible(seeded);
+            require(seeded.evidenceRecords().length==5,"only last recheck plus original3 pairs are retained");
+            for(int ordinal=10;ordinal<=21;ordinal++){require(plan(seeded,ordinal,35-ordinal).action==NativePassagePolicy.Action.CANDIDATE,"subsequent lease lasts12 passages");seeded.recordOrdinary(FAST);}
+            require(plan(seeded,22,13).action==NativePassagePolicy.Action.PAIR,"renewed twelve-passage lease also expires");
+            seeded.recordPair(pair(22,true,BASE,FAST,BASE),12);
+            require(seeded.qualifiedSeed()!=null,"bounded further renewal retains qualification");
+            NativePassagePolicy.save(file,ID,seeded.qualifiedSeed());
+            require(NativePassagePolicy.load(file,ID)!=null,"last sustained recheck survives persistence");
+            NativePassagePolicy stale=new NativePassagePolicy(ID,seed);baseline(stale,0,7,"cached seed cannot trigger costly short-job comparison");
+            NativePassagePolicy foreign=new NativePassagePolicy(repeat('3'),seed);baseline(foreign,0,35,"seed cannot cross runtime/model/OS identity");
+            NativePassagePolicy failedFresh=new NativePassagePolicy(ID,seed);plan(failedFresh,0,35);
+            failedFresh.recordPair(pair(0,true,BASE,BASE,BASE),34);
+            baseline(failedFresh,1,34,"stale historical speedup cannot override a current regression");
+            byte[] corrupt=original.clone();corrupt[corrupt.length-1]^=1;Files.write(file.toPath(),corrupt);
+            require(NativePassagePolicy.load(file,ID)==null,"corrupt CRC rejects seed");
+            forged(file,original,15,2,"unknown passage policy schema rejected even with repaired CRC");
+            forged(file,original,8,0,"old graph-policy magic cannot enter passage cache");
+            forged(file,original,89,2,"partial qualification count cannot qualify with repaired CRC");
+            forged(file,original,94,1,"nonalternating complete qualification rejected with repaired CRC");
+            for(int offset:new int[]{185,186,187,188})forged(file,original,offset,0,"nonfinite/inexact/partial/warm-only cache rejected at"+offset);
+            forged(file,original,192,8,"different candidate worker geometry rejected");
+            byte[] weak=original.clone();writeLong(weak,103,BASE);crc(weak);Files.write(file.toPath(),weak);
+            require(NativePassagePolicy.load(file,ID)==null,"reload recomputes every paired performance floor");
+            byte[] fakeCost=original.clone();writeLong(fakeCost,111,0);crc(fakeCost);Files.write(file.toPath(),fakeCost);
+            require(NativePassagePolicy.load(file,ID)==null,"zero-cost full duplicate cannot forge affordable evidence");
+            byte[] excessiveCost=original.clone();for(int offset:new int[]{111,214,317})writeLong(excessiveCost,offset,150*SECOND);crc(excessiveCost);Files.write(file.toPath(),excessiveCost);
+            require(NativePassagePolicy.load(file,ID)==null,"three qualification costs cannot exceed their shared job cap even with a valid CRC");
+            byte[] badClock=original.clone();writeLong(badClock,95,Long.MAX_VALUE);crc(badClock);Files.write(file.toPath(),badClock);
+            require(NativePassagePolicy.load(file,ID)==null,"oversized cache clocks cannot overflow percentage tests");
+            byte[] median=original.clone();for(int offset:new int[]{103,206,309})writeLong(median,offset,54*SECOND);crc(median);Files.write(file.toPath(),median);
+            require(NativePassagePolicy.load(file,ID)==null,"reload recomputes15 percent qualification median");
+            byte[] trailing=Arrays.copyOf(original,original.length+1);crc(trailing);Files.write(file.toPath(),trailing);
+            require(NativePassagePolicy.load(file,ID)==null,"trailing payload rejected even with repaired CRC");
+            Files.write(file.toPath(),new byte[NativePassagePolicy.MAX_BYTES+1]);require(NativePassagePolicy.load(file,ID)==null,"oversized cache is not parsed");
+            Files.write(file.toPath(),Arrays.copyOf(original,70));require(NativePassagePolicy.load(file,ID)==null,"truncated cache defaults to baseline");
+            Files.write(new File(file.getPath()+".tmp").toPath(),new byte[]{1});NativePassagePolicy.save(file,ID,positive.qualifiedSeed());
+            require(!new File(file.getPath()+".tmp").exists()&&NativePassagePolicy.load(file,ID)!=null,"atomic save retires temporary data");
+            byte[] before=Files.readAllBytes(file.toPath());
+            try{NativePassagePolicy.save(file,repeat('4'),positive.qualifiedSeed());throw new AssertionError("foreign save accepted");}catch(IOException expected){checks++;}
+            require(Arrays.equals(before,Files.readAllBytes(file.toPath())),"rejected save preserves prior qualified bytes");
+            File link=new File(directory,"link");Files.createSymbolicLink(link.toPath(),file.toPath());
+            require(NativePassagePolicy.load(link,ID)==null,"cache symlink is never followed");
+            try{NativePassagePolicy.save(link,ID,positive.qualifiedSeed());throw new AssertionError("symlink written");}catch(IOException expected){checks++;}
+        }finally{for(File child:directory.listFiles())Files.deleteIfExists(child.toPath());Files.deleteIfExists(directory.toPath());}
+        System.out.println("PASS: "+checks+" bounded complete-passage policy checks");
+    }
+}

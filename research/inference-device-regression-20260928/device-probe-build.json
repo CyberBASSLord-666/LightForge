@@ -1,0 +1,15 @@
+{
+  "alignmentVerified": true,
+  "apk": "LightForge-inference-probe.apk",
+  "bytes": 113898916,
+  "executionPerformed": false,
+  "packageName": "com.cyberbasslord.lightforge.inferenceprobe",
+  "releaseArtifact": false,
+  "runtimeVersion": "1.25.1",
+  "sha256": "a68ab0690f0ade0153fd7edb21e4b86c86cbe0eccbceb98d339162d1dd71d274",
+  "signatureVerified": true,
+  "signerSha256": "a06c0355ce993c2f4645d980d9b7d087784f063ec53a5f56fdf5eb56d39fcf68",
+  "sourceReceiptSha256": "4a25e06032a364f85e89ad5c5511d5a047dbc9b3ab964f31bc6c96804440d12a",
+  "updateCompatibleWithLightForge": false,
+  "zipVerified": true
+}

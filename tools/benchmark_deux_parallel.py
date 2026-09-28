@@ -26,7 +26,7 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE_PATHS = {
     'android/src/com/cyberbasslord/lightforge/' + name + '.java'
-    for name in ('NativeDeux', 'NativeDeuxTransform', 'NativeInferenceProfile', 'NativeExecutionPolicy')
+    for name in ('NativeDeux', 'NativeDeuxTransform', 'NativeInferenceProfile', 'NativeExecutionPolicy', 'NativePassagePolicy')
 } | {'android/native-runtime.json', 'tests/NativeDeuxParallelBenchmark.java',
      'tools/benchmark_deux_parallel.py', 'tools/benchmark_deux_execution.py'}
 GEOMETRY = dict(graphCount=27, stageCount=15, bands=60, frames=1301, samplesPerStem=573300,

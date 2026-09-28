@@ -86,19 +86,51 @@ async function create({ort,baseUrl,onProgress=()=>{},checkpoint,nativePredict,te
    await releaseStage();out[role===0?'vocals':'accompaniment']=timed('postprocessing',()=>transform.decode(spectrum,mask,manifest));
   }return out;}finally{await releaseStage();}
  }
+ const validCheckpoint=cached=>cached?.length===2&&cached.every(a=>a instanceof Float32Array&&a.length===SAMPLES&&a.every(Number.isFinite));
+ function passagePeak(stereo){
+  if(!Array.isArray(stereo)||stereo.length!==2||stereo.some(x=>!(x instanceof Float32Array)||x.length!==SAMPLES))throw Error('Studio separation requires complete stereo chunks.');
+  return timed('preprocessing',()=>{let peak=0;for(const channel of stereo)for(const x of channel)peak=Math.max(peak,Math.abs(x));return peak;});
+ }
+ async function usefulPassages(read,passageCount,onProgress){
+  // Budget calibration only against verified uncached, non-silent work. Keep
+  // one bounded passage live at a time; audio and checkpoints are not retained.
+  // Processing still rechecks both, so this scan never substitutes for recovery.
+  const useful=new Uint8Array(passageCount);let remaining=0;
+  for(let index=0;index<passageCount;index++){
+   try{
+    if(closed)throw Error('Studio separation is closed.');
+    const start=index*STRIDE,cached=await checkpoint?.readFloats('deux-'+start);
+    if(closed)throw Error('Studio separation is closed.');
+    if(!validCheckpoint(cached)){
+     const stereo=await read(start-HALO,SAMPLES);
+     if(closed)throw Error('Studio separation is closed.');
+     if(passagePeak(stereo)>=1e-7){useful[index]=1;remaining++;}
+    }
+   }catch(error){
+    if(closed||error?.name==='AbortError')throw error;
+    // A budget is optional. A failed look-ahead must not spend calibration on
+    // unknown work or prevent normal processing from saving earlier passages.
+    return null;
+   }
+   onProgress({progress:0,processedSeconds:0,passageCount,passagesCompleted:0,restoredPassages:0,checkpointSaved:false,message:'Checking upcoming passages '+(index+1)+' of '+passageCount});
+  }
+  return {useful,remaining};
+ }
  return {manifest,predict,async process(read,total,onChunk,onProgress=()=>{}){
   if(!Number.isSafeInteger(total)||total<1||total>RATE*14401)throw Error('Invalid studio separation length.');
   let pending=null,emitted=0,chunks=0,restoredPassages=0;const timing=stageClock(),passageCount=1+Math.max(0,Math.ceil((total-CORE)/STRIDE));
+  const usefulPlan=nativePredict?await usefulPassages(read,passageCount,onProgress):null;
   for(let start=0;start<total;start+=STRIDE){
    if(closed)throw Error('Studio separation is closed.');
    const keep=Math.min(CORE,total-start),last=start+CORE>=total,stereo=await read(start-HALO,SAMPLES);
-   if(!Array.isArray(stereo)||stereo.length!==2||stereo.some(x=>!(x instanceof Float32Array)||x.length!==SAMPLES))throw Error('Studio separation requires complete stereo chunks.');
-   const peak=timed('preprocessing',()=>{let peak=0;for(const channel of stereo)for(const x of channel)peak=Math.max(peak,Math.abs(x));return peak;});
+   const peak=passagePeak(stereo);
    const key='deux-'+start,cached=await checkpoint?.readFloats(key);
-   const restored=cached?.length===2&&cached.every(a=>a instanceof Float32Array&&a.length===SAMPLES&&a.every(Number.isFinite));
+   const restored=validCheckpoint(cached);
+   const usefulAfterCurrent=usefulPlan?usefulPlan.remaining-usefulPlan.useful[chunks]:-1;
    const report=(p,extra={})=>onProgress({progress:Math.min(1,(start+(last?keep:STRIDE)*p)/total),processedSeconds:start/RATE,passageIndex:chunks+1,passageCount,passagesCompleted:chunks,restoredPassages,checkpointSaved:false,message:'Studio · passage '+(chunks+1)+' of '+passageCount+' · '+Math.round(p*100)+'%',...extra});
    report(0);
-   const estimated=restored?{vocals:cached[0],accompaniment:cached[1]}:peak<1e-7?{vocals:new Float32Array(SAMPLES),accompaniment:new Float32Array(SAMPLES)}:nativePredict?await nativePredict(start-HALO,p=>report(p)):await predict(stereo,p=>report(p));
+   const estimated=restored?{vocals:cached[0],accompaniment:cached[1]}:peak<1e-7?{vocals:new Float32Array(SAMPLES),accompaniment:new Float32Array(SAMPLES)}:nativePredict?await nativePredict(start-HALO,p=>report(p),usefulPlan?usefulAfterCurrent+1:-1):await predict(stereo,p=>report(p));
+   if(usefulPlan)usefulPlan.remaining=usefulAfterCurrent;
    if(['vocals','accompaniment'].some(role=>!(estimated?.[role] instanceof Float32Array)||estimated[role].length!==SAMPLES||!estimated[role].every(Number.isFinite)))throw Error('Studio separation returned invalid passage audio.');
    let checkpointSaved=restored;
    if(restored)restoredPassages++;

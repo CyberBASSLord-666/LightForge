@@ -86,7 +86,8 @@ def compile_variant(name, source, work, java, dependencies):
                     'public static void log(android.content.Context c,String l,String s,String m){}'
                     'public static boolean flush(long timeout){return true;}}\n')
     sources = [snapshot, SOURCE / 'NativeDeuxTransform.java', SOURCE / 'NativeInferenceProfile.java',
-               SOURCE / 'NativeExecutionPolicy.java', ROOT / 'tests/NativeDeuxExecutionBenchmark.java', stub]
+               SOURCE / 'NativeExecutionPolicy.java', SOURCE / 'NativePassagePolicy.java',
+               ROOT / 'tests/NativeDeuxExecutionBenchmark.java', stub]
     command = [str(java / 'javac'), '--release', '8', '-encoding', 'UTF-8', '-cp',
                os.pathsep.join(map(str, dependencies)), '-d', str(classes), *map(str, sources)]
     result = subprocess.run(command, capture_output=True, text=True, timeout=90)
@@ -252,7 +253,7 @@ def main():
                'runtimeSha256': sha(host), 'audioSha256': sha(args.audio), 'modelManifestSha256': sha(manifest_path),
                'modelHashes': {name: entry['sha256'] for name, entry in manifest['files'].items()},
                'sharedSourceHashes': {str(p.relative_to(ROOT)): sha(p) for p in [SOURCE / 'NativeDeuxTransform.java',
-                    SOURCE / 'NativeInferenceProfile.java', SOURCE / 'NativeExecutionPolicy.java',
+                    SOURCE / 'NativeInferenceProfile.java', SOURCE / 'NativeExecutionPolicy.java', SOURCE / 'NativePassagePolicy.java',
                     ROOT / 'tests/NativeDeuxExecutionBenchmark.java', Path(__file__)]},
                'dependencyHashes': {p.name: sha(p) for p in dependencies}, 'sourceHashes': {}, 'runs': []}
     classes = {}

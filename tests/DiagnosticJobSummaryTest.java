@@ -2,8 +2,10 @@ package com.cyberbasslord.lightforge;
 
 import java.io.File;
 import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.zip.CRC32;
 
 /** Exercise actual persistence, process restart and trace rotation with deterministic clocks. */
 public final class DiagnosticJobSummaryTest {
@@ -86,6 +88,8 @@ public final class DiagnosticJobSummaryTest {
         require(new DiagnosticJobSummary(parallelDirectory).snapshot().contains(
             "lastTemporalConfig=cpu-i1-j1-d0-sequential-w8-b1 lastFrequencyConfig=cpu-i4-j1-d0-sequential"),
             "unsupported worker geometry and frequency parallelism cannot replace the last observed valid configuration");
+        checkPolicyPersistence(root);
+        checkLegacyMigration(root);
 
         for (int i = 2; i <= 6; i++) {
             String id = i + "1111111-1111-4111-8111-111111111111";
@@ -106,5 +110,76 @@ public final class DiagnosticJobSummaryTest {
         String corrupt = new DiagnosticJobSummary(directory).snapshot();
         require(corrupt.contains("recovery=invalid-prior-summary-discarded") && !corrupt.contains("jobRef="), "checksum failure cannot export invented receipt values");
         System.out.println("PASS: " + checks + " durable summary checks; stage/save clocks, scope, restarts, privacy and trace-independent bounded persistence.");
+    }
+    private static void checkPolicyPersistence(File root) throws Exception {
+        File directory = new File(root, "passage-policy");
+        DiagnosticJobSummary store = new DiagnosticJobSummary(directory);
+        for (int job = 1; job <= DiagnosticJobSummary.MAX_JOBS; job++) {
+            String id = job + "1111111-1111-4111-8111-111111111111";
+            store.observe(id, 1000, 1000, 100, "running", "separation", 0, 0, 177, "precision");
+            NativeInferenceProfile profile = new NativeInferenceProfile();
+            profile.notePassagePolicy(NativeInferenceProfileTest.policyEvidence());
+            profile.noteSchedulerConfiguration("temporal", "cpu-i4-j1-d0-sequential");
+            profile.addSessionInit("block-00-time", 1000000L);
+            profile.noteSchedulerConfiguration("temporal", "cpu-i1-j1-d0-sequential-w4-b1");
+            profile.addSessionInit("block-01-time", 1000000L);
+            profile.noteSchedulerConfiguration("temporal", "cpu-i1-j1-d0-sequential-w8-b1");
+            profile.addSessionInit("block-02-time", 1000000L);
+            store.profile(id, "native-deux-v1", profile.finish("completed").record(0));
+        }
+        String report = store.snapshot();
+        require(report.split("schema=native-passage-policy-v1", -1).length - 1 == 3 &&
+            report.split("schema=native-passage-pair-v1", -1).length - 1 == 12,
+            "all three retained jobs preserve complete qualification and recheck evidence");
+        require(report.contains("temporalBaselineSessionCount=1 temporalBaselineSessionCountMeasuredPassages=1") &&
+            report.contains("temporalFourWorkerSessionCount=1 temporalFourWorkerSessionCountMeasuredPassages=1") &&
+            report.contains("temporalEightWorkerSessionCount=1 temporalEightWorkerSessionCountMeasuredPassages=1"),
+            "mixed session counts reach the durable job summary independently of last configuration");
+        DiagnosticLog log = new DiagnosticLog(directory, 1024, 2);
+        log.append("INFO", "native-scheduler", "original qualification evidence");
+        for (int i = 0; i < 200; i++) log.append("INFO", "native-phase", "repeated graph telemetry " + i);
+        ByteArrayOutputStream trace = new ByteArrayOutputStream(); log.snapshot(trace);
+        require(!trace.toString("UTF-8").contains("original qualification evidence"), "policy fixture actually rotates early trace");
+        require(report.equals(new DiagnosticJobSummary(directory).snapshot()), "policy evidence survives rotation and process restart exactly");
+        require(new File(directory, "job-summary.bin").length() < DiagnosticJobSummary.MAX_BYTES,
+            "three complete policy histories and route totals fit the existing storage bound");
+        store.profile(ID, "native-deux-v1", "outcome=failed passagePolicy=schema=native-passage-policy-v1,title=private-song-name");
+        String retained = new DiagnosticJobSummary(directory).snapshot();
+        require(retained.split("schema=native-passage-policy-v1", -1).length - 1 == 3 && !retained.contains("private-song-name"),
+            "invalid later policy cannot replace complete durable evidence or introduce private text");
+        store.profile(ID, "native-game-v1", "outcome=completed passagePolicy=" +
+            NativeInferenceProfile.encodePassagePolicy(NativeInferenceProfileTest.policyEvidence()));
+        require(store.snapshot().split("schema=native-passage-policy-v1", -1).length - 1 == 3,
+            "other native routes cannot claim Deux qualification evidence");
+    }
+    private static void checkLegacyMigration(File root) throws Exception {
+        File directory = new File(root, "legacy-summary"); require(directory.mkdir(), "legacy fixture directory created");
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream(); DataOutputStream out = new DataOutputStream(bytes);
+        out.writeLong(0); out.writeInt(0x4c464a31); out.writeInt(1);
+        out.writeUTF(DiagnosticJobSummary.reference(ID)); out.writeLong(1000); out.writeLong(2000); out.writeLong(1000);
+        out.writeLong(177000); out.writeInt(1); out.writeInt(4); out.writeInt(8);
+        out.writeLong(0); out.writeInt(4); out.writeInt(0);
+        for (int i = 0; i < 10; i++) out.writeLong(i == 3 ? 900 : i == 8 ? 100 : 0);
+        for (int route = 0; route < 3; route++) {
+            out.writeLong(route == 0 ? 1 : 0); out.writeLong(route == 0 ? 1 : 0); out.writeLong(0); out.writeLong(0);
+            out.writeUTF(route == 0 ? "cpu-i4-j1-d0-sequential" : "unavailable");
+            out.writeUTF(route == 0 ? "cpu-i4-j1-d0-sequential" : "unavailable");
+            for (int metric = 0; metric < 11; metric++) {
+                out.writeLong(route == 0 && metric == 0 ? 800 : 0); out.writeLong(route == 0 && metric == 0 ? 1 : 0);
+            }
+        }
+        out.flush(); byte[] payload = bytes.toByteArray(); CRC32 crc = new CRC32(); crc.update(payload, 8, payload.length - 8);
+        long checksum = crc.getValue(); for (int i = 7; i >= 0; i--) { payload[i] = (byte)checksum; checksum >>>= 8; }
+        Files.write(new File(directory, "job-summary.bin").toPath(), payload);
+        DiagnosticJobSummary store = new DiagnosticJobSummary(directory);
+        String legacy = store.snapshot();
+        require(legacy.contains("recovery=normal") && legacy.contains("wallMs=800 wallMsMeasuredPassages=1") &&
+            legacy.contains("temporalBaselineSessionCount=unavailable"),
+            "previous-release receipt migrates without invented configuration counts or losing timings");
+        store.profile(ID, "native-deux-v1", "outcome=completed wallMs=100 temporalBaselineSessionCount=12 temporalFourWorkerSessionCount=0 temporalEightWorkerSessionCount=0 temporalUnobservedSessionCount=0");
+        String migrated = new DiagnosticJobSummary(directory).snapshot();
+        require(migrated.contains("passages=2 completed=2") && migrated.contains("wallMs=900 wallMsMeasuredPassages=2") &&
+            migrated.contains("temporalBaselineSessionCount=12 temporalBaselineSessionCountMeasuredPassages=1"),
+            "atomic format upgrade preserves legacy sums and accurately scopes new measurement coverage");
     }
 }

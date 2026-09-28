@@ -22,6 +22,10 @@ NATIVE_STAGES = frozenset((
 NATIVE_GRAPHS = frozenset(("front", "head-0", "head-1")) | frozenset(
     f"block-{index:02d}-{axis}" for index in range(12) for axis in ("time", "frequency")
 )
+TEMPORAL_SESSION_METRICS = (
+    "temporalBaselineSessionCount", "temporalFourWorkerSessionCount",
+    "temporalEightWorkerSessionCount", "temporalUnobservedSessionCount",
+)
 SUMMARY_METRICS = (
     "wallMs", "instrumentedCpuMs", "waitWallMs", "waitCpuMs", "engineInitWallMs",
     "preflightWallMs", "bufferInitWallMs", "runtimeInitWallMs", "preprocessWallMs",
@@ -31,7 +35,7 @@ SUMMARY_METRICS = (
     "inferenceThreadCpuMs", "inferenceProcessCpuMs", "inferenceCount", "sessionInitCount",
     "inferenceWorkerThreadCpuMs", "inferenceWorkerRunCount",
     "schedulerCalibrationWallMs", "schedulerCalibrationCount",
-)
+) + TEMPORAL_SESSION_METRICS
 GRAPH_METRICS = ("runCount", "runWallMs", "runCpuMs", "runProcessCpuMs", "sessionInitWallMs",
                  "packWallMs", "packCpuMs", "packProcessCpuMs", "scatterWallMs", "scatterCpuMs", "scatterProcessCpuMs")
 TELEMETRY = ("cpuTelemetry", "memoryTelemetry", "acceleratorTelemetry", "directBufferTelemetry", "cacheTelemetry", "inferenceWorkerCpuTelemetry")
@@ -42,6 +46,7 @@ SUMMARY_SCOPES = {
     "inferenceWorkerThreadCpuScope": {"sum-run-calling-threads"},
     "inferenceWorkScope": {"run-and-wave-coordination", "run-and-pipeline-coordination"},
     "instrumentedCpuScope": {"nonoverlapping-calling-thread"},
+    "temporalConfigCountScope": {"session-init-attempts"},
 }
 COPY_INTERVAL_SCOPES = {"sequential-intervals", "nested-in-inference-pipeline", "mixed-nested-and-sequential-intervals", "unavailable"}
 COPY_PROCESS_SCOPES = {"all-app-threads", "unavailable-overlapping-intervals", "unavailable"}
@@ -57,6 +62,110 @@ GRAPH_SCOPES = {
     "packWallScope": COPY_INTERVAL_SCOPES, "scatterWallScope": COPY_INTERVAL_SCOPES,
     "packProcessCpuScope": COPY_PROCESS_SCOPES, "scatterProcessCpuScope": COPY_PROCESS_SCOPES,
 }
+POLICY_REASONS = frozenset((
+    "unmeasured", "fresh-pair-required", "nominated", "initial-pair", "qualification-wait",
+    "qualification-pair", "slow-passage-recheck", "lease-recheck", "qualified-lease",
+    "measured-passage-improvement", "qualification-pending", "invalid-nomination", "unfinished-pair",
+    "invalid-plan", "memory-ineligible", "short-job", "probe-budget", "missed-qualification",
+    "payback-unavailable", "short-renewal", "invalid-pair", "pair-regression", "invalid-pair-order",
+    "median-regression", "invalid-timing", "probe-aborted", "external-baseline", "cancelled",
+    "memory-fallback", "thermal-guard", "output-mismatch", "memory-pressure", "screen-budget",
+    "screen-no-win", "runtime-rejected", "unknown-work",
+))
+POLICY_SCHEMA = "native-passage-policy-v1"
+PAIR_SCHEMA = "native-passage-pair-v1"
+POLICY_SCHEMAS = {POLICY_SCHEMA, PAIR_SCHEMA}
+PAIR_NANOS = ("baselineNanos", "candidateNanos", "extraNanos")
+
+
+def _policy_record(raw):
+    """Parse only the bounded exporter vocabulary; nanoseconds retain integer precision."""
+    tokens = raw.split(" ") if isinstance(raw, str) and len(raw) <= 512 else []
+    fields = dict(FIELD.findall(raw)) if tokens else {}
+    schema = fields.get("schema")
+    if schema not in POLICY_SCHEMAS:
+        return {"status": "invalid", "schema": None}
+    result = {"status": "observed", "schema": schema}
+    valid = bool(tokens) and len(fields) == len(tokens) and all(
+        re.fullmatch(r"[A-Za-z][A-Za-z0-9]*=[^\s;=]+", token) for token in tokens)
+    enums = ({"state": {"baseline", "qualified", "provisional"}, "workers": {"0", "4", "8"},
+              "reason": POLICY_REASONS, "paybackScope": {"projected-not-measured"}}
+             if schema == POLICY_SCHEMA else {"role": {"qualification", "recheck"}, "workers": {"4", "8"}})
+    numbers = ({"extraNanos": 2**63 - 1, "extraCapNanos": 360_000_000_000,
+                "projectedAccruedSavingsNanos": 2**63 - 1, "qualificationPairs": 3,
+                "currentJobPairs": 4096, "activePassages": 4096, "leasePassages": 12}
+               if schema == POLICY_SCHEMA else {"index": 2, "ordinal": 4095,
+                                                **{key: 2**63 - 1 for key in PAIR_NANOS}})
+    booleans = ("seeded",) if schema == POLICY_SCHEMA else ("candidateFirst", "finite", "exact", "fullGeometry", "coldSessions")
+    allowed = {"schema"} | set(enums) | set(numbers) | set(booleans)
+    if schema == PAIR_SCHEMA:
+        allowed.add("outputSha256")
+        digest = fields.get("outputSha256", "")
+        result["outputSha256"] = digest if re.fullmatch(r"[a-f0-9]{64}", digest) else None
+        valid &= result["outputSha256"] is not None
+    valid &= set(fields) == allowed
+    for key, vocabulary in enums.items():
+        result[key] = fields.get(key) if fields.get(key) in vocabulary else None
+        valid &= result[key] is not None
+    for key, maximum in numbers.items():
+        raw_value = fields.get(key, "")
+        value = int(raw_value) if re.fullmatch(r"[0-9]{1,19}", raw_value) else None
+        good = value is not None and value <= maximum
+        if key == "extraCapNanos":
+            good &= value == 360_000_000_000
+        elif key == "leasePassages":
+            good &= value in (8, 12)
+        result[key] = {"status": "observed" if good else "unavailable", "value": value if good else None}
+        valid &= good
+    for key in booleans:
+        result[key] = fields.get(key) == "true" if fields.get(key) in ("true", "false") else None
+        valid &= result[key] is not None
+    if schema == PAIR_SCHEMA and result["role"] == "recheck":
+        valid &= result["index"]["value"] == 0
+    result["status"] = "observed" if valid else "invalid"
+    return result
+
+
+def _passage_policy(records=(), encoded=None, *, source):
+    """Snapshots repeat history: neither pairs nor projected savings are additive."""
+    result = {"status": "unavailable", "source": source,
+              "scope": "controller-evidence-snapshot-not-additional-passages",
+              "qualification_status": "not-independently-evaluated", "timing_units": "nanoseconds",
+              "payback_scope": "projected-not-measured", "controller": None, "pairs": []}
+    decoded = None
+    if encoded is not None:
+        if not isinstance(encoded, str) or len(encoded) > 8 * 513:
+            result["status"] = "invalid"
+            return result
+        decoded = [row.replace(",", " ") for row in encoded.split("|")] if encoded else []
+    rows = list(records) if records else decoded or []
+    if not rows:
+        return result
+    if len(rows) > 8:
+        result["status"] = "invalid"
+        return result
+    parsed = [_policy_record(row) for row in rows]
+    valid = parsed[0].get("schema") == POLICY_SCHEMA and all(row["status"] == "observed" for row in parsed)
+    if decoded is not None and records:
+        valid &= rows == decoded
+    if parsed[0].get("schema") == POLICY_SCHEMA:
+        result["controller"] = parsed[0]
+    qualification, rechecks = 0, 0
+    for row in parsed[1:]:
+        if row.get("schema") != PAIR_SCHEMA:
+            valid = False
+            continue
+        result["pairs"].append(row)
+        if row.get("role") == "qualification":
+            valid &= rechecks == 0 and qualification < 3 and row["index"]["value"] == qualification
+            qualification += 1
+        elif row.get("role") == "recheck":
+            rechecks += 1
+            valid &= rechecks <= 1 and row["index"]["value"] == 0
+    if result["controller"] is not None:
+        valid &= result["controller"]["qualificationPairs"]["value"] == qualification
+    result["status"] = "observed" if valid else "invalid-or-incomplete"
+    return result
 
 
 def _scope_counts(rows, vocabulary):
@@ -183,6 +292,13 @@ def _profile_totals(profiles):
         "metrics": {key: aggregate(fields, key) for key in SUMMARY_METRICS},
         "telemetry": telemetry,
         "measurement_scopes": _scope_counts(fields, SUMMARY_SCOPES),
+        "temporal_configuration_count_scope": "session-init-attempts-not-successful-runs",
+        "passage_policy_snapshots": [
+            {"summary_line": profile["line"], **_passage_policy(
+                profile.get("policy_records", ()), profile["fields"].get("passagePolicy"),
+                source="retained-profile")}
+            for profile in profiles
+        ],
         "stages": {name: {**{key: aggregate(rows, key) for key in ("samples", "wallMs", "cpuMs", "processCpuMs")},
                           "measurement_scopes": _scope_counts(rows, STAGE_SCOPES)} for name, rows in sorted(stage_rows.items())},
         "graphs": {name: {**{key: aggregate(rows, key) for key in GRAPH_METRICS},
@@ -194,21 +310,23 @@ DURABLE_METRICS = (
     "wallMs", "modelInitWallMs", "inferenceWallMs", "inferenceCount", "sessionInitCount",
     "inferenceThreadCpuMs", "inferenceProcessCpuMs", "cacheModelHits", "cacheModelMisses",
     "schedulerCalibrationWallMs", "schedulerCalibrationCount",
-)
+) + TEMPORAL_SESSION_METRICS
 
 
 def _durable_summaries(header, current_reference):
     section = header.partition("DURABLE ANALYSIS SUMMARIES")[2].partition("ANDROID PREVIOUS PROCESS EXITS")[0]
-    if "schema=diagnostic-job-summary-v1" not in section:
+    schema = re.search(r"^schema=(diagnostic-job-summary-v[12])(?: |$)", section, re.M)
+    if schema is None:
         return []
-    jobs, current = [], None
+    jobs, current, current_route = [], None, None
     for line in section.splitlines():
         fields = dict(FIELD.findall(line))
         if line.startswith("jobRef="):
-            current = None
+            current, current_route = None, None
             if len(jobs) >= 3 or not re.fullmatch(r"[a-f0-9]{16}", fields.get("jobRef", "")):
                 continue
             current = {"ordinal": len(jobs) + 1, "matches_current_job": fields["jobRef"] == current_reference,
+                       "summary_schema": schema[1],
                        "scope": "durable-observation-not-controlled-benchmark",
                        "state": fields.get("state") if fields.get("state") in {"preparing", "queued", "running", "cancelling", "completed", "failed", "cancelled", "interrupted"} else None,
                        "analysisQuality": fields.get("analysisQuality") if fields.get("analysisQuality") in {"precision", "balanced"} else None,
@@ -217,14 +335,21 @@ def _durable_summaries(header, current_reference):
                 current[key] = number(fields.get(key))
             jobs.append(current)
         elif current is not None and line.startswith(" stage=") and fields.get("stage") in STAGES | {"preparing", "compatibility", "generate", "save", "other"}:
+            current_route = None
             current["stages"][fields["stage"]] = {"observed_wall_ms": number(fields.get("observedWallMs")), "clock": "monotonic-observed-intervals-restart-gaps-excluded"}
-        elif current is not None and line.startswith(" route=") and fields.get("route") in {"native-deux-v1", "native-mdx-v1", "native-game-v1"}:
+        elif current is not None and line.startswith(" route="):
+            current_route = None
+            if fields.get("route") not in {"native-deux-v1", "native-mdx-v1", "native-game-v1"}:
+                continue
             route = {key: number(fields.get(key)) for key in ("passages", "completed", "cancelled", "otherOutcomes")}
             route["cpu_scopes"] = {"thread": "calling-thread", "process": "all-app-threads"}
             route["last_scheduling_configuration"] = {
                 key: _scheduler_configuration(fields.get(key), temporal=key == "lastTemporalConfig")
                 for key in ("lastTemporalConfig", "lastFrequencyConfig")
             }
+            route["temporal_configuration_count_scope"] = "session-init-attempts-not-successful-runs"
+            route["last_configuration_scope"] = "last-observed-configuration-not-entire-passage-or-job"
+            route["_policy_records"] = []
             route["metrics"] = {}
             population = _integer(fields, "passages")
             for key in DURABLE_METRICS:
@@ -236,6 +361,13 @@ def _durable_summaries(header, current_reference):
                                           "observed_subtotal": measurement["value"] if valid else None,
                                           "observed_count": count, "population_count": population}
             current["native_routes"][fields["route"]] = route
+            if schema[1] == "diagnostic-job-summary-v2" and fields["route"] == "native-deux-v1":
+                current_route = route
+        elif current_route is not None and fields.get("schema") in POLICY_SCHEMAS:
+            current_route["_policy_records"].append(line.strip())
+    for job in jobs:
+        for route in job["native_routes"].values():
+            route["passage_policy"] = _passage_policy(route.pop("_policy_records"), source="durable-route-latest-snapshot")
     return jobs
 
 
@@ -275,7 +407,7 @@ def summarize(report):
     snapshot["analysisQuality"] = snapshot_fields.get("analysisQuality") if snapshot_fields.get("analysisQuality") in ("precision", "balanced", "fast", "studio") else None
     attempts, current, pending_profile = [], None, None
     gaps, preview_intervals, preview_pending = [], [], {}
-    orphan_profiles, renderer_events, runtime_versions = [], [], set()
+    orphan_profiles, orphan_policies, renderer_events, runtime_versions = [], [], [], set()
 
     def new_attempt(event, explicit):
         attempt = {
@@ -344,13 +476,19 @@ def summarize(report):
         if is_profile:
             schema = fields.get("schema")
             if schema == "native-inference-profile-v2":
-                pending_profile = {"line": event["line"], "fields": fields, "stages": [], "graphs": []}
+                pending_profile = {"line": event["line"], "fields": fields, "stages": [], "graphs": [], "policy_records": []}
                 current["profiles"].append(pending_profile)
             elif schema in ("native-inference-stage-v1", "native-inference-graph-v2"):
                 if pending_profile is None:
                     orphan_profiles.append(event["line"])
                 else:
                     pending_profile["stages" if schema == "native-inference-stage-v1" else "graphs"].append(fields)
+            elif schema in POLICY_SCHEMAS:
+                if pending_profile is None:
+                    orphan_policies.append({"line": event["line"], "scope": "unbound-controller-record-not-a-passage",
+                                            "record": _policy_record(message)})
+                else:
+                    pending_profile["policy_records"].append(message)
 
         if tag == "analysis-worker":
             match = re.fullmatch(r"Stage (started|completed): ([a-z]+)", message)
@@ -473,7 +611,8 @@ def summarize(report):
     return {
         "schema": "lightforge.diagnostic-evidence.v1", "qualification_status": "not-evaluated",
         "source": {"line_count": len(lines), "retained_event_count": len(events), "malformed_event_lines": malformed,
-                   "absolute_timestamps_omitted": True, "unassociated_profile_detail_lines": orphan_profiles},
+                   "absolute_timestamps_omitted": True, "unassociated_profile_detail_lines": orphan_profiles,
+                   "unassociated_passage_policy_records": orphan_policies},
         "current_environment": _environment(header.partition("CURRENT ANALYSIS JOB")[0]),
         "current_job_snapshot": snapshot, "observed_native_runtime_versions": sorted(runtime_versions),
         "durable_job_summaries": _durable_summaries(header, snapshot_fields.get("jobRef")),
@@ -488,6 +627,9 @@ def summarize(report):
             "Inclusive stage, passage and profile timings overlap; never add them together as total analysis time.",
             "Profile bundles with missing detail records or non-completed outcomes are separate from completed complete bundles.",
             "Absent, invalid or unavailable telemetry does not establish zero usage or zero cost.",
+            "Temporal configuration counts are session initialization attempts, including failed initialization; the final configuration cannot describe mixed passages.",
+            "Passage policy snapshots repeat controller history; do not add their pair counts, overhead or projected accrued savings across snapshots or to production graph totals.",
+            "Policy pair timings use nanoseconds; projected payback is not measured whole-job savings, and reported qualification is not independently re-evaluated here.",
         ],
     }
 

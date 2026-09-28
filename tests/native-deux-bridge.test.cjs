@@ -25,3 +25,17 @@ test('invalid source position is rejected before starting native work',async()=>
  const b=bridge([]);for(const position of [NaN,Infinity,1.2,-66151,44100*14400+1])await assert.rejects(load().create(b,'job')(position),/Invalid native passage position/);
  assert.equal(b.calls.length,0);
 });
+test('useful passage budget reaches new Android bridge and older bridges remain compatible',async()=>{
+ const url='https://appassets.androidplatform.net/background/native/'+token+'.bin';
+ for(const budget of [undefined,-1,1,2880]){
+  const b=bridge([]);b.nativeDeuxStartWithBudget=(id,start,count)=>{b.calls.push(['budget',id,start,count]);return JSON.stringify({token,state:'completed',url});};
+  await load().create(b,'job')(-66150,undefined,()=>{},budget);
+  assert.deepEqual(b.calls,[['budget','job',-66150,budget===undefined?-1:budget]]);
+ }
+ const legacy=bridge([{state:'completed',url}]);await load().create(legacy,'job')(-66150,undefined,()=>{},3);assert.deepEqual(legacy.calls[0],['start','job',-66150]);
+});
+test('invalid native budget is rejected before old or new Android execution',async()=>{
+ const b=bridge([]);b.nativeDeuxStartWithBudget=()=>assert.fail('Invalid budget reached Android');
+ for(const budget of [null,0,-2,2881,.5,NaN,Infinity,'2'])await assert.rejects(load().create(b,'job')(0,undefined,()=>{},budget),/Invalid native passage budget/);
+ assert.equal(b.calls.length,0);
+});

@@ -1,0 +1,13 @@
+{
+  "schema": "lightforge.portable-javascript-result.v1",
+  "scope": "Current portable JavaScript test run; no device, model timing or release qualification.",
+  "passed": true,
+  "tests": 702,
+  "failures": 0,
+  "cancelled": 0,
+  "skipped": 0,
+  "durationMs": 18755.102967,
+  "log": "portable-javascript-tests.log",
+  "logSha256": "2e5e4a093a8899d27e637d34e11d90b6ce216743a1d8dc20aca8306571dd289f",
+  "commandDefinition": "node --test over tools/verify_v2.py TESTS"
+}

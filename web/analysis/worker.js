@@ -230,7 +230,7 @@ async function normalizeNativeFailure(error,onFallback,fallback){
  if(error?.code===fallback().code)throw error;
  await onFallback();throw fallback(error);
 }
-function nativePredict(startSample,onProgress=()=>{},onFallback=()=>{}){return new Promise((resolve,reject)=>{const requestId=++nativeSequence;nativeRequests.set(requestId,{resolve,reject,onProgress,onFallback});try{postMessage({type:'native-deux',requestId,startSample});}catch(error){nativeRequests.delete(requestId);reject(error);}}).then(async url=>{
+function nativePredict(startSample,onProgress=()=>{},onFallback=()=>{},remainingUseful=-1){return new Promise((resolve,reject)=>{const requestId=++nativeSequence;nativeRequests.set(requestId,{resolve,reject,onProgress,onFallback});try{postMessage({type:'native-deux',requestId,startSample,remainingUseful});}catch(error){nativeRequests.delete(requestId);reject(error);}}).then(async url=>{
  if(typeof url!=='string')throw Error('Native studio audio is unavailable.');
  const response=await fetch(url);if(!response.ok)throw Error('Native studio audio could not be read.');const bytes=await response.arrayBuffer(),samples=573300;
  if(bytes.byteLength!==samples*8)throw Error('Native studio audio is incomplete.');const view=new DataView(bytes),result={};let at=0;
@@ -511,7 +511,7 @@ self.onmessage=async e=>{
   nativeMdxFence=Promise.resolve().then(()=>store.invalidate(['separation','mdx','voice','vocal-semantics','game','bass','recurrence'])).then(()=>{nativeMdxFallback=true;});
   return nativeMdxFence;
  };
- const nativeStudioPredict=quality==='precision'&&options.supportsNativeDeux?(start,onProgress)=>nativePredict(start,onProgress,markNativeDeuxFallback):undefined;
+ const nativeStudioPredict=quality==='precision'&&options.supportsNativeDeux?(start,onProgress,remainingUseful)=>nativePredict(start,onProgress,markNativeDeuxFallback,remainingUseful):undefined;
  const nativeBalancedPredict=quality==='balanced'&&options.supportsNativeMdx?(encoded,onProgress)=>nativeMdxPredict(encoded,onProgress,markNativeMdxFallback):undefined;
  separator=await (quality==='precision'?LightForgeDeux:LightForgeMdxSeparator).create({ort,telemetry,baseUrl:new URL(quality==='precision'?'models/deux/':'models/',self.location.href).href,onProgress:p=>report(.41,'Loading studio vocal separation',p.message),checkpoint:store,nativePredict:nativeStudioPredict||nativeBalancedPredict});
  result.separation=await separator.process((start,count)=>sourceReader.stereo44100(start,count),sourceReader.samples,chunk=>{

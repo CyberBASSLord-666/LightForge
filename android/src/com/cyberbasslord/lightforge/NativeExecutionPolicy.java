@@ -61,6 +61,7 @@ final class NativeExecutionPolicy {
     static final class Key {
         final int cores;
         private final byte[] fingerprint;
+        String identity(){StringBuilder value=new StringBuilder(64);for(byte b:fingerprint)value.append(String.format(java.util.Locale.ROOT,"%02x",b&255));return value.toString();}
         Key(String modelId,String runtimeId,String osIdentity,String deviceIdentity,int cores){
             this.cores=Math.max(1,cores);
             try{

@@ -1,103 +1,89 @@
 # Native separation scheduling
 
-The 2.4.1 native Deux implementation retains all 27 original Float32
-graphs, trained weights, 60 bands and the complete 13-second context. Temporal
-bands are independent: the optimized path runs one band per call, with four or
-eight concurrent calls sharing a CPU session. Frequency, front and mask-head
-geometry remains unchanged. A complete parallel passage has 875 graph calls;
-the reference four-band path has 335. Neither count means less model work.
+## Published 2.4.1 and current unreleased work
 
-The final production implementation passed the owner's pre-build improvement
-requirement: the source-bound host comparison measured 32.6% lower median
-complete-passage time with identical outputs. The [published 2.4.1 record](../VALIDATION.md)
-includes passing production and Android emulator release gates; later source
-changes require fresh verification. Host results do not establish physical
-Android performance or a whole-song speedup.
+The published 2.4.1 release qualified its final source on the host with **32.6%
+lower median complete-passage time** and byte-identical outputs. That historical
+[proof](../research/inference-2.4.1/DEUX_PARALLEL_B1.md) remains unchanged. Its
+device policy measured warmed executions of the first temporal graph, then
+reused the chosen schedule across later layers and passages. It did not qualify
+complete cold-session passages or sustained phone behavior.
 
-## Device admission
+The subsequent phone run was slower. The [device regression record](../research/inference-device-regression-20260928/README.md)
+separates the observed timings from uncontrolled phone conditions and describes
+the **unreleased** correction. Neither the earlier host proof nor the correction's
+implementation establishes improved phone or whole-song performance. Changed
+sources require fresh evidence before another production release.
 
-The reference uses up to four intra-operator threads, sequential graph execution
-and disabled spinning. Concurrent temporal calls use one intra-operator thread
-and private input/output buffers. Only one model graph is resident at a time.
-Each completed temporal worker slot immediately receives the next independent
-band. The coordinator alone packs inputs and scatters completed outputs; it
-never overwrites a band that another worker still needs. Pinned tensors are
-bound once per slot for each temporal graph and reused only after its native
-call has returned.
-Front and mask-head scheduling stays at the reference configuration. Frequency
-scheduling retains its independent, exact-output admission check.
+## Preserved execution
 
-Temporal calibration compares the complete first temporal graph over all 60
-real input bands. It leaves the original activations unchanged. Every eligible
-configuration receives three alternating reference/candidate pairs, each with
-a warmup. Warmup and measured results must be finite and match the reference
-raw Float32 digest of the complete activation tensor. Trials use a bounded
-working copy so the original input stays unchanged. Each measured call follows
-the production packing, inference and scattering path, including tensor binding
-and worker setup and retirement. Complete output validation happens after its
-timer stops; input restoration and hashing cannot create an apparent inference
-gain. These extra calibration costs remain in the separate calibration total.
-A candidate must reduce median
-time by at least 10%, with at least 5% improvement in every pair. These local
-admission thresholds do not by themselves qualify the release.
-The temporary working tensor occupies 79,933,440 bytes, remains within the
-reserved memory margin, and contributes to observed peak direct-buffer usage.
-It is released from the runner's references when temporal calibration finishes.
+All 27 original Float32 graphs, trained weights, 60 bands, 1,301 frames and the
+complete 13-second context remain intact. The reference uses four-band calls,
+up to four intra-operator threads, sequential graph execution and disabled
+spinning. Parallel temporal execution uses four or eight independent one-band
+calls, private pinned buffers, and one intra-operator thread per call. A full
+parallel passage has 875 graph calls; the reference has 335. Neither count means
+less model work. Front, frequency and mask-head scheduling remain at the reference
+configuration in the correction.
 
-The candidate shortlist is bounded by available processors and native memory
-headroom, using Android's system memory observation rather than Java heap free
-space. Memory is checked again before cached parallel execution. Temporary
-memory pressure retains the reference path without permanently recording a
-low-memory observation as a completed calibration. If a completed four-worker
-shortlist later gains enough headroom for eight workers, a later passage tests
-the expanded shortlist. The prior measured decision remains available until
-that replacement completes.
+Only one graph is resident at a time. Completed worker slots receive the next
+independent band; the coordinator alone packs inputs and scatters outputs. Every
+worker retires before tensors, sessions, run options, crash lease or inference
+gate are released. Cancellation and output publication keep that ownership order.
 
-All workers retire before their tensors, shared session or process inference
-gate are released. Cancellation terminates their shared runtime RunOptions;
-interrupts are restored after native retirement. Output is committed only after
-the complete original two-stem reconstruction succeeds.
+## Complete-passage admission
 
-## Persistence and evidence
+A bounded cold-graph screen can nominate one four- or eight-worker candidate;
+it cannot authorize accelerated production. New qualification requires three
+alternating baseline/candidate pairs at useful native-passage ordinals **0, 4
+and 8**. Each arm creates fresh original sessions for all 27 graphs and performs
+the complete read, transform, inference and two-stem reconstruction with matching
+observer settings. Shared model-cache preflight/buffer preparation precede the
+pair. Output hashing follows the timed attempts, and only the baseline result
+is published for a paired passage.
 
-Both graph-family decisions must complete before an atomic bounded policy file
-is committed. The cache identity binds the model manifest, runtime and scheduler
-revision, OS build, device family/ABI and available processor count. Only the
-identity digest, allowlisted configurations and numerical evidence are stored.
-No audio, notes, job identifier or raw device identity enters this file.
+Both complete outputs must be finite and byte-identical. Every pair must reduce
+candidate time by at least 5%, and the three-pair median by at least 15%. Until
+qualification succeeds, ordinary passages use the baseline. A mismatch, failed
+comparison or unavailable memory keeps the baseline for the rest of that job.
+Core count and current native memory headroom remain admission constraints;
+Java heap free space is not a native-memory signal.
 
-Invalid, outdated, corrupt, truncated or incomplete records cannot enable an
-optimization. Calibration overhead is recorded separately from production
-inference. Parallel graph-call elapsed times overlap and are labeled aggregate
-call time. Parallel inference wall/process CPU time is measured once around
-each complete temporal pipeline, including its overlapping coordinator copies.
-Those copies remain visible as nested observations and are not added again to
-instrumented CPU totals. Worker thread CPU is a separate observation. The
-inference count remains the actual number of graph calls.
+Screening, candidate replays, output checks and interrupted probes consume a
+**360-second extra-work budget**. The screen has its own 60-second checkpoint.
+These limits are checked at existing safe native boundaries; an in-flight native
+operation can overrun a checkpoint before retiring. They are not promises of
+instantaneous kernel interruption. Necessary baseline work is not abandoned
+when an optional probe exhausts its budget.
 
-The analysis execution identity is
-`native-deux-onnxruntime-android-1.25.1-v3`. Prior execution evidence is not
-silently relabeled. Runtime 1.25.1 and original model assets remain pinned.
+A conservative payback projection includes remaining qualification, later
+rechecks and a 10% margin. It is labeled `projected-not-measured`: a paired rate
+does not establish whole-job net savings. The separator first scans verified
+checkpoints and non-silent input with one passage live at a time and a bounded
+passage bitmap. It passes a checked remaining-useful count; unknown or short
+work cannot finance speculative qualification. Normal processing rechecks the
+input and checkpoint, so the scan never substitutes for recovery validation.
 
-## Verification
+## Rechecks, persistence and evidence
 
-Pure policy checks cover complete alternating trials, exact finite outputs,
-weak timing, memory eligibility, family-specific configurations and persistence.
-Actual-model verification covers the complete reference output, fresh and cached
-calibration, forced host fixtures for both parallel geometries, cancellation,
-interrupt retirement and subsequent recovery. Fixture selection exercises the
-production runner independently of host device admission; it is not a device
-performance result.
+A qualified candidate receives an eight-passage lease; a successful renewal
+receives twelve. Two of the last three ordinary candidate passages exceeding
+125% of the paired candidate reference trigger an earlier comparison. That
+observation requests a recheck; it does not identify thermal throttling or prove
+a regression against a contemporaneous baseline. An unaffordable or failed
+recheck returns the job to baseline.
 
-Release performance qualification separately compares the final production
-source against its reference path in repeated full-passage runs. It must retain
-complete finite outputs and publish time, CPU and peak memory observations.
-Every compared host JVM receives the same seven-CPU affinity, leaving at least
-one CPU of cgroup quota for platform work, and records its observed CPU affinity
-and processor count. The host fixture explicitly exercises eight worker slots
-on those seven CPUs; it does not assert that device admission would choose eight
-workers on a seven-core phone. Android admission remains separate and requires
-eight reported processors for that choice. Failed attempts remain preserved;
-a passing median cannot hide a weak measured pair or a resource-guard failure.
-Physical phone energy, thermal behavior and speed remain unmeasured without
-corresponding device observations.
+The new `passage-policy-v1.bin` identity binds the original model, runtime,
+complete-passage scheduler, OS/device identity digest and processor count.
+The old warm-graph decision file cannot authorize this path. Even a valid saved
+qualification requires a fresh complete pair before another job uses it.
+Invalid or incomplete cached evidence cannot enable acceleration.
+
+[Durable diagnostics](DIAGNOSTIC_EVIDENCE.md) retain the raw qualification/recheck
+pairs, output digest, decision, extra-work cost and projected payback. Mixed
+temporal session counts supplement the last configuration. Probe observations
+stay separate from production graph totals; [profiling scopes](NATIVE_INFERENCE_PROFILING.md)
+prevent overlapping worker durations from masquerading as elapsed passage time.
+Runtime 1.25.1, model assets, precision, context and output length are unchanged.
+Host correctness and scheduling tests do not substitute for fresh performance
+qualification or controlled physical-device observations.

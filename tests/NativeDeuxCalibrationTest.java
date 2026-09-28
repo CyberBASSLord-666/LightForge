@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-/** Actual original graphs: complete outputs, admitted/cache paths and parallel JNI retirement. */
+/** Actual original graphs: unfunded work stays baseline, old graph caches are ignored, JNI retires. */
 public final class NativeDeuxCalibrationTest {
     private static final int SAMPLES=573300, OUTPUT_BYTES=2*SAMPLES*4;
     private static void require(boolean value,String message){if(!value)throw new AssertionError(message);}
@@ -38,8 +38,14 @@ public final class NativeDeuxCalibrationTest {
         throw new AssertionError("Missing explicitly reviewed host parallel configuration: "+workers);
     }
     private static JSONObject run(NativeDeux runner,File audio,long start,File output,int expectedTemporalCalls)throws Exception {
+        return run(runner,audio,start,output,expectedTemporalCalls,-1,false);
+    }
+    private static JSONObject run(NativeDeux runner,File audio,long start,File output,int expectedTemporalCalls,int remainingUseful,boolean policyExpected)throws Exception {
         NativeInferenceProfile profile=new NativeInferenceProfile();profile.captureStartMemory();
-        try(NativeDeux owned=runner){owned.predict(audio,start,output,null,()->false,null,profile);}
+        try(NativeDeux owned=runner){
+            if(remainingUseful<0)owned.predict(audio,start,output,null,()->false,null,profile);
+            else owned.predict(audio,start,output,null,()->false,null,profile,remainingUseful);
+        }
         NativeInferenceProfile.Snapshot snapshot=profile.finish("completed");
         require("27".equals(summary(snapshot,"graphRecords")),"Original graph inventory changed");
         require("0".equals(summary(snapshot,"droppedGraphRecords")),"Graph observations were dropped");
@@ -76,10 +82,57 @@ public final class NativeDeuxCalibrationTest {
             require(Integer.parseInt(field(record,"samples"))==335-14*pipelines,"Pipeline coordinator intervals were counted as old waves or native Runs");
         }
         require(foundInference,"The complete inference critical-path stage was not observed");
-        require(snapshot.recordCount()==43,"Full-passage profile topology changed");
+        boolean automatic=remainingUseful==35;
+        int policyRecords=0,pairRecords=0;
+        for(String record:snapshot.records())if(record.startsWith("schema=native-passage-policy-v1 ")){
+            policyRecords++;
+            if(!automatic)require("0".equals(field(record,"extraNanos"))&&"0".equals(field(record,"qualificationPairs"))
+                    &&"0".equals(field(record,"currentJobPairs"))&&"false".equals(field(record,"seeded")),
+                    "Unknown or short work financed probes or reused an old graph-only decision");
+            else require(Long.parseLong(field(record,"extraNanos"))>0
+                    &&Long.parseLong(field(record,"extraNanos"))<=NativePassagePolicy.EXTRA_CAP_NANOS,
+                    "Automatic first-passage qualification exceeded its extra-work bound");
+            require(!"qualified".equals(field(record,"state")),"One or zero pairs were admitted as complete qualification");
+        }else if(record.startsWith("schema=native-passage-pair-v1 ")){
+            pairRecords++;
+            require(automatic&&"0".equals(field(record,"ordinal"))&&"false".equals(field(record,"candidateFirst")),
+                "Automatic initial pair order changed");
+            for(String key:new String[]{"finite","exact","fullGeometry","coldSessions"})
+                require("true".equals(field(record,key)),"Automatic pair did not preserve "+key);
+            require(hash(output).equals(field(record,"outputSha256")),"Automatic pair was not bound to the useful output");
+        }
+        require(pairRecords<2&&policyRecords==(policyExpected?1:0)&&snapshot.recordCount()==43+policyRecords+pairRecords,
+            "Full-passage profile topology changed");
+        if(!automatic)require("unavailable".equals(summary(snapshot,"schedulerCalibrationCount"))
+                &&"unavailable".equals(summary(snapshot,"schedulerCalibrationWallMs")),"Unfunded or forced work ran optional probes");
+        else require(("1".equals(summary(snapshot,"schedulerCalibrationCount"))||"2".equals(summary(snapshot,"schedulerCalibrationCount")))
+                &&Double.parseDouble(summary(snapshot,"schedulerCalibrationWallMs"))>0,
+                "Automatic nomination and optional first pair were not measured");
         fullOutput(output);
         return new JSONObject().put("outputSha256",hash(output)).put("outputBytes",output.length()).put("finite",true)
             .put("inferenceCalls",calls).put("profileRecords",new JSONArray(Arrays.asList(snapshot.records())));
+    }
+    /** Synthetic timings create an old-format positive cache only; they never qualify new execution. */
+    private static int legacyWarmCache(File models,File cache)throws Exception {
+        NativeExecutionPolicy.Key key=new NativeExecutionPolicy.Key(hash(new File(models,"manifest.json")),
+            "native-deux-1.25.1-parallel-b1-v3",System.getProperty("os.name")+":"+System.getProperty("os.version"),
+            System.getProperty("os.arch"),Runtime.getRuntime().availableProcessors());
+        NativeExecutionPolicy.Config[] temporal=NativeExecutionPolicy.temporalCandidates(key,Long.MAX_VALUE);
+        NativeExecutionPolicy.Candidate[] timeTrials=new NativeExecutionPolicy.Candidate[temporal.length];
+        for(int i=0;i<temporal.length;i++)timeTrials[i]=new NativeExecutionPolicy.Candidate(temporal[i],legacySamples(true));
+        NativeExecutionPolicy.Config[] frequency=NativeExecutionPolicy.candidates(key.cores);
+        NativeExecutionPolicy.Candidate[] frequencyTrials=new NativeExecutionPolicy.Candidate[frequency.length];
+        for(int i=0;i<frequency.length;i++)frequencyTrials[i]=new NativeExecutionPolicy.Candidate(frequency[i],legacySamples(false));
+        NativeExecutionPolicy.save(cache,key,new NativeExecutionPolicy.Calibration(
+            NativeExecutionPolicy.selectTemporal(key,Long.MAX_VALUE,temporal,timeTrials),NativeExecutionPolicy.select(key,frequencyTrials)));
+        require(NativeExecutionPolicy.load(cache,key).complete(),"Old-format fixture is not a complete valid cache");
+        return Math.toIntExact(cache.length());
+    }
+    private static NativeExecutionPolicy.Sample[] legacySamples(boolean temporal){
+        NativeExecutionPolicy.Sample[] samples=new NativeExecutionPolicy.Sample[3];
+        for(int i=0;i<samples.length;i++)samples[i]=new NativeExecutionPolicy.Sample(1000000000L,400000000L,
+            (i&1)!=0,true,true,temporal?60:0);
+        return samples;
     }
     private static boolean insideNativeRun(Thread worker){
         if(!worker.isAlive())return false;
@@ -136,17 +189,20 @@ public final class NativeDeuxCalibrationTest {
         JSONObject runs=new JSONObject();
         JSONObject reference=run(new NativeDeux(models),audio,startSample,new File(directory,"reference.f32"),15);
         runs.put("reference",reference);
-        JSONObject calibrated=run(new NativeDeux(models,cache,()->Long.MAX_VALUE),audio,startSample,new File(directory,"calibrated.f32"),0);
-        runs.put("calibrated",calibrated);
+        int legacyCacheBytes=legacyWarmCache(models,cache);
+        JSONObject unknown=run(new NativeDeux(models,cache,()->Long.MAX_VALUE),audio,startSample,new File(directory,"unknown.f32"),15,-1,true);
+        runs.put("unknownWork",unknown);
         int cores=Runtime.getRuntime().availableProcessors();
-        require(Integer.toString(cores>=4?2:1).equals(field(calibrated.getJSONArray("profileRecords").getString(0),"schedulerCalibrationCount")),"Calibration probes did not cover each eligible graph family");
-        require(cache.isFile()&&cache.length()<NativeExecutionPolicy.MAX_BYTES,"Complete device decision was not persisted");
-        byte[] committed=Files.readAllBytes(cache.toPath());
-        JSONObject cached=run(new NativeDeux(models,cache,()->Long.MAX_VALUE),audio,startSample,new File(directory,"cached.f32"),0);
-        runs.put("cached",cached);
-        require("unavailable".equals(field(cached.getJSONArray("profileRecords").getString(0),"schedulerCalibrationWallMs")),"Cached decision repeated calibration");
-        require(Arrays.equals(committed,Files.readAllBytes(cache.toPath())),"Cached execution rewrote the decision");
-        require(calibrated.getInt("inferenceCalls")==cached.getInt("inferenceCalls"),"Unchanged headroom did not reuse the calibrated geometry");
+        require(!cache.exists(),"Graph-only legacy cache survived as a complete-passage decision");
+        JSONObject shortWork=run(new NativeDeux(models,cache,()->Long.MAX_VALUE),audio,startSample,new File(directory,"short.f32"),15,1,true);
+        runs.put("shortWork",shortWork);
+        require(!cache.exists(),"One useful passage created an unqualified cache");
+        JSONObject automatic=run(new NativeDeux(models,cache,()->Long.MAX_VALUE),audio,startSample,new File(directory,"automatic.f32"),15,35,true);
+        runs.put("automaticFirstPassage",automatic);
+        require(!cache.exists(),"One automatic pair created a fully qualified cache");
+        boolean automaticPairObserved=false;
+        for(Object record:automatic.getJSONArray("profileRecords"))
+            if(record.toString().startsWith("schema=native-passage-pair-v1 "))automaticPairObserved=true;
         JSONObject four=run(new NativeDeux(models,parallel(4),null),audio,startSample,new File(directory,"four.f32"),60);
         require(parallel(4).id().equals(field(four.getJSONArray("profileRecords").getString(0),"temporalConfig")),"Four-worker host fixture was not executed");
         runs.put("forcedFour",four);
@@ -157,20 +213,25 @@ public final class NativeDeuxCalibrationTest {
         require(parallel(8).id().equals(field(eight.getJSONArray("profileRecords").getString(0),"temporalConfig")),"Eight-worker recovery fixture was not executed");
         runs.put("recoveredEight",eight);
         String expected=reference.getString("outputSha256");
-        for(String name:new String[]{"calibrated","cached","forcedFour","recoveredEight"})
+        for(String name:new String[]{"unknownWork","shortWork","automaticFirstPassage","forcedFour","recoveredEight"})
             require(expected.equals(runs.getJSONObject(name).getString("outputSha256")),"Full finite Float32 output changed for "+name);
-        File cancelledCache=new File(directory,"cancelled-policy.bin"),cancelledOutput=new File(directory,"cancelled-calibration.f32");
+        File cancelledCache=new File(directory,"cancelled-policy.bin"),cancelledOutput=new File(directory,"cancelled-passage.f32");
         AtomicBoolean cancel=new AtomicBoolean();boolean stopped=false;
         try(NativeDeux runner=new NativeDeux(models,cancelledCache,()->Long.MAX_VALUE)){
-            runner.predict(audio,startSample,cancelledOutput,(progress,message)->{if(message.startsWith("Optimizing"))cancel.set(true);},cancel::get);
+            runner.predict(audio,startSample,cancelledOutput,(progress,message)->{if(message.equals("Reading the studio passage"))cancel.set(true);},cancel::get);
         }catch(InterruptedIOException expectedCancellation){stopped=true;}
-        require(stopped&&!cancelledCache.exists()&&!cancelledOutput.exists(),"Early calibration cancellation committed partial state");
-        require(NativeDeux.INFERENCE_GATE.availablePermits()==1,"Cancelled calibration leaked the process gate");
-        JSONObject result=new JSONObject().put("schema","lightforge.native-scheduler-calibration.v2").put("passed",true)
+        require(stopped&&!cancelledCache.exists()&&!cancelledOutput.exists(),"Early passage cancellation committed partial state");
+        require(NativeDeux.INFERENCE_GATE.availablePermits()==1,"Cancelled passage leaked the process gate");
+        File[] leftovers=directory.listFiles((parent,name)->name.endsWith(".partial")||name.endsWith(".tmp"));
+        require(leftovers!=null&&leftovers.length==0,"Cancelled or completed attempt leaked a temporary output");
+        JSONObject result=new JSONObject().put("schema","lightforge.native-scheduler-calibration.v3").put("passed",true)
             .put("samplesPerStem",SAMPLES).put("outputBytes",OUTPUT_BYTES).put("startSample",startSample)
             .put("availableProcessors",cores)
             .put("runs",runs).put("forcedWorkers",new JSONArray(Arrays.asList(4,8))).put("forcedTimeBatch",1)
-            .put("cacheReused",true).put("cacheBytes",committed.length).put("cancelledCalibrationIsolated",true)
+            .put("unknownWorkNoProbe",true).put("shortWorkNoProbe",true).put("legacyPolicyIgnored",true)
+            .put("legacyCacheFixture","synthetic-v2-warmgraph").put("legacyCacheBytes",legacyCacheBytes)
+            .put("automaticRemainingUseful",35).put("automaticPairObserved",automaticPairObserved).put("automaticCacheNotQualified",true)
+            .put("cancelledPassageIsolated",true).put("noPartialOutputs",true)
             .put("duringNativeCancellation",cancellation).put("finite",true).put("byteIdentical",true);
         System.out.println(result.toString());
     }
