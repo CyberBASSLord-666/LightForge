@@ -922,14 +922,16 @@ public final class BackgroundInstrumentation extends Instrumentation {
                     }
                     Thread.sleep(25);
                 }
-            }catch(InterruptedException stopped){Thread.currentThread().interrupt();}
+            }catch(InterruptedException stopped){balancedObservationFailure=stopped;Thread.currentThread().interrupt();}
             catch(Throwable error){balancedObservationFailure=error;}
         },"LightForge-balanced-observer");
         balancedObserver.setDaemon(true);balancedObserver.start();
     }
     private void stopBalancedObserver()throws Exception{
         balancedObserverStopped=true;
-        if(balancedObserver!=null){balancedObserver.interrupt();balancedObserver.join(5000);check(!balancedObserver.isAlive(),"Balanced observation thread did not stop");}
+        // Let an in-flight status read finish. Interrupting Files.readAllBytes
+        // can manufacture ClosedByInterruptException after a successful job.
+        if(balancedObserver!=null){balancedObserver.join(5000);check(!balancedObserver.isAlive(),"Balanced observation thread did not stop");}
         if(balancedObservationFailure!=null)throw new AssertionError("Balanced live lifecycle observation failed",balancedObservationFailure);
     }
     private JSONObject balancedScreenOff()throws Exception{
