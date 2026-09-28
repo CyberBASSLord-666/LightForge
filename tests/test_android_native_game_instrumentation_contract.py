@@ -21,6 +21,28 @@ class AndroidNativeGameInstrumentationContractTest(unittest.TestCase):
         self.assertIn('receipt.put("nativeGame",nativeGameAndroid())', self.source)
         self.assertNotIn('Mock', self.game)
 
+    def test_real_application_startup_finishes_before_any_fixture(self):
+        start = self.source[self.source.index('@Override public void onStart()'):]
+        barrier = start.index('receipt.put("applicationStartup",awaitApplicationStartup());')
+        for operation in ('files=getTargetContext().getFilesDir()', 'completedRestoreMonitorContract();',
+                          'nativeGameAndroid()', 'launch();', 'fixture("Background audio")'):
+            self.assertLess(barrier, start.index(operation))
+
+    def test_startup_barrier_observes_real_recovery_without_replaying_lifecycle(self):
+        barrier = self.source[self.source.index('private JSONObject awaitApplicationStartup()'):
+                              self.source.index('@Override public void onCreate(Bundle arguments)')]
+        self.assertIn('Looper.myLooper()!=Looper.getMainLooper()', barrier)
+        self.assertLess(barrier.index('waitForIdleSync();'),
+                        barrier.index('getTargetContext().getApplicationContext()'))
+        self.assertIn('application instanceof LightForgeApplication', barrier)
+        self.assertIn('synchronized(LightForgeApplication.class)', barrier)
+        self.assertIn('check((Boolean)field(LightForgeApplication.class,"passageRecoveryAttempted")', barrier)
+        for fact in ('mainThreadIdleObserved', 'targetApplicationVerified', 'processRecoveryCompleted'):
+            self.assertIn('.put("'+fact+'",true)', barrier)
+        for forbidden in ('callApplicationOnCreate(', '.onCreate(', 'testField(', '.setAccessible(',
+                          'NativeGamePassageCleanup.recover(', 'recoverPassagesAtProcessStart('):
+            self.assertNotIn(forbidden, barrier)
+
     def test_original_bundled_pcm_is_bounded_and_hash_bound(self):
         self.assertIn('getAssets().open("demo/glass-castle.wav")', self.source)
         self.assertIn('input.getShort()+input.getShort())/65536f', self.source)
