@@ -26,7 +26,7 @@ HISTORICAL_OUT = 'qa/release-2.2.4/'
 COMPARISON_SHA256 = 'e74c12ca08132182f7cb971a98a6280401fcbfb5220a403e690e276c21c91712'
 # Reviewed 2.4.1 inventory: the exact complete asset manifest remains pinned.
 # Original model/runtime assets and all source-bound verification gates remain mandatory.
-ASSET_MANIFEST_SHA256 = 'e32976c929a9855fb1c56f5aa2ee8734e333ec5da8eddccd0df91c76753c4a4d'
+ASSET_MANIFEST_SHA256 = '0216156d333f979ed3bf3416bca4eca1c596b3a5c6e5faea44587fa5872262e9'
 ASSET_MANIFEST_ENTRY_COUNT = 85
 OLD_RUNTIME_SHA256 = 'e0ab4a1af57d2da09097202f2dfd691e390c82e81183314788ccde4cf7c3cc38'
 NEW_RUNTIME_SHA256 = '749793ebed63743fec853d093da7987a86ea5cd592d54fba898cd3233100c381'

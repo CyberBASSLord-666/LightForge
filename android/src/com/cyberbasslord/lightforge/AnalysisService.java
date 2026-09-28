@@ -24,8 +24,7 @@ public final class AnalysisService extends Service {
     private PowerManager.WakeLock wakeLock;
     private volatile String jobId;
     private volatile boolean stopped;
-    private long lastProgress;
-    private long lastDiagnosticProgress;
+    private final ProgressThrottle progressThrottle=new ProgressThrottle();
     private volatile NativePassageTask nativePassage;
     private volatile NativeMdxTask nativeMdx;
     private volatile NativeGameTask nativeGame;
@@ -37,7 +36,22 @@ public final class AnalysisService extends Service {
     static void recoverIfStopped(Context context) throws Exception {
         if(!alive())AnalysisJobStore.recover(context.getFilesDir());
     }
-    private String lastProfileStage="";
+    /** Per-job admission state; renderer recovery preserves the current job's phase. */
+    static final class ProgressThrottle {
+        private long lastProgress=-1,lastDiagnosticProgress=-1;
+        private String lastProfileStage="";
+        void beginJob(){lastProgress=-1;lastDiagnosticProgress=-1;lastProfileStage="";}
+        void resumeRenderer(){lastProgress=-1;}
+        boolean admit(long now,double value,String stage,boolean checkpoint){
+            String nextStage=stage==null||stage.isEmpty()?lastProfileStage:stage;
+            if(lastProgress>=0&&now-lastProgress<1000&&value<.96&&!checkpoint&&nextStage.equals(lastProfileStage))return false;
+            lastProgress=now;lastProfileStage=nextStage;return true;
+        }
+        boolean diagnostic(long now,boolean checkpoint){
+            if(lastDiagnosticProgress>=0&&now-lastDiagnosticProgress<15000&&!checkpoint)return false;
+            lastDiagnosticProgress=now;return true;
+        }
+    }
     @Override public void onCreate(){super.onCreate();AppDiagnostics.initialize(this);AppDiagnostics.log(this,"INFO","analysis-service","created");instance=this;createChannel();}
     @Override public IBinder onBind(Intent intent){return null;}
     @Override public int onStartCommand(Intent intent,int flags,int startId) {
@@ -47,8 +61,9 @@ public final class AnalysisService extends Service {
         if(!ACTION_START.equals(intent.getAction())){stopSelf();return START_NOT_STICKY;}
         // A retry can arrive between stopSelf and onDestroy. Android may reuse
         // this service instance for the newer start command.
-        if(stopped){stopped=false;jobId=null;lastProgress=0;instance=this;}
+        if(stopped){stopped=false;jobId=null;instance=this;}
         if(jobId!=null){if(!jobId.equals(id))signal();return START_NOT_STICKY;}
+        progressThrottle.beginJob();
         jobId=id;
         AppDiagnostics.log(this,"INFO","analysis-service","starting job="+jobId);
         try {
@@ -221,7 +236,7 @@ public final class AnalysisService extends Service {
                         if(!ownsEngine(owner,generation))return;
                         try{
                             JSONObject resumed=AnalysisJobStore.matching(getFilesDir(),owner,true);
-                            lastProgress=0;
+                            progressThrottle.resumeRenderer();
                             AppDiagnostics.log(this,"INFO","analysis-renderer-recovery","restarting; job="+owner+"; attempt="+attempt);
                             startEngine(resumed);
                         }catch(Exception error){AppDiagnostics.record(this,"analysis-renderer-recovery",error);finish("interrupted",message(error));}
@@ -333,11 +348,11 @@ public final class AnalysisService extends Service {
             try{
                 if(details==null||details.length()>4096)return;
                 JSONObject info=new JSONObject(details);
-                String nextStage=info.optString("stage");
-                long now=SystemClock.elapsedRealtime();if(now-lastProgress<1000&&value<.96&&!info.optBoolean("checkpointSaved")&&nextStage.equals(lastProfileStage))return;lastProgress=now;lastProfileStage=nextStage;
+                String nextStage=AnalysisJobStore.analysisStage(info);
+                long now=SystemClock.elapsedRealtime();
+                if(!progressThrottle.admit(now,value,nextStage,info.optBoolean("checkpointSaved")))return;
                 JSONObject job=AnalysisJobStore.progress(getFilesDir(),id,value,stage,info);main.post(()->{if(owns(id)){notifyJob(job,false);signal();}});
-                if(now-lastDiagnosticProgress>=15000||info.optBoolean("checkpointSaved")){
-                    lastDiagnosticProgress=now;
+                if(progressThrottle.diagnostic(now,info.optBoolean("checkpointSaved"))){
                     AppDiagnostics.log(AnalysisService.this,"INFO","analysis-progress","job="+id+"; progress="+value+"; stage="+stage+"; checkpoint="+info.optBoolean("checkpointSaved")+"; passage="+info.optInt("passageIndex",-1)+"; completed="+info.optInt("passagesCompleted",-1));
                 }
             }

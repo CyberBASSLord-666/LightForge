@@ -208,3 +208,68 @@ Each retained all 875 calls and 1,146,600 finite output floats. The receipt
 inputs, runtime, models, classes, source and complete output hashes; its
 provenance companion preserves the quality helper and four complete profiles.
 These are numerical quality checks, and their times are not performance claims.
+
+## Reproduce independent inputs from a clean checkout
+
+The original helper depended on scratch receipts, old output tensors and a
+previously converted Stella file. That reproducibility defect was corrected.
+Its initial four-run receipt and helper/profile provenance remain archived as
+`production-parallel-independent-inputs-initial.json` and
+`production-parallel-independent-inputs-initial-provenance.json`. The current
+helper uses committed original full-output SHA-256 references in
+`separator-divergent-inputs.json`, verifies their baseline source snapshots and
+all original model hashes against `separator-scheduler-paired.json`, and checks
+fixture metadata against the committed MUSDB provenance. Historical output
+tensors and the historical build directories are no longer required.
+
+Prepare the original graphs using the model setup in `BUILD.md` and
+`tools/prepare_deux.py`. Use Linux with at least eight allowed CPUs and a finite
+cgroup quota of at least eight CPUs; the recorded qualification's parent
+affinity and quota must match because this helper retains the same host control.
+Place the pinned host dependencies in the sibling `../toolchain` directory:
+
+| Path inside toolchain | Required dependency |
+| --- | --- |
+| `jdk17/bin/java`, `jdk17/bin/javac` | Eclipse Temurin 17.0.20.1+1, the qualifying compiler/runtime |
+| `android-sdk/platforms/android-35/android.jar` | Android API 35; SHA-256 `4566663c3876e022b4fa4ced8c8697c4ab1688267f090114fd92d027b32e619b` |
+| `test-json.jar` | org.json 20260719; SHA-256 `c243f45f9590c12694a4142ed3f07fc70dfb71e4daebd05ae234bf92a2da92a6` |
+| `onnx/onnxruntime-1.25.1.jar` | The URL and SHA-256 in `android/native-runtime.json` |
+
+Install the model-preparation Python requirements, including NumPy and SciPy,
+and ffmpeg. Restore the licensed excerpts with the same commands used by CI:
+
+```sh
+mkdir -p qa/release-1.6.0/fixtures
+curl -fL --retry 3 \
+  https://github.com/sigsep/sigsep-mus-db/releases/download/v0.4.0/MUSDB18-7-STEMS.zip \
+  -o qa/release-1.6.0/fixtures/MUSDB18-7-STEMS.zip
+echo '365f66acffc57282e474a4c24b32afec3678258c50b8d45646ac849b0a287df3  qa/release-1.6.0/fixtures/MUSDB18-7-STEMS.zip' | sha256sum -c
+python qa/release-1.6.0/prepare-musdb-fixtures.py
+python tools/verify_deux_parallel_inputs.py \
+  --output build/deux-independent-reproduction \
+  --receipt build/deux-independent-reproduction-result.json
+```
+
+The output directory must be new. The helper checks both original Float32 WAV
+hashes before decoding, converts with round-to-nearest ties-to-even and clipping
+to signed PCM16, and requires the exact historical PCM16 WAV hashes. Generated
+inputs remain inside the requested scratch output directory. A changed decoder,
+wrong fixture or changed conversion fails instead of silently updating a golden
+hash. Audio remains QA-only and is excluded from the app and source package.
+
+By default this command compiles the unchanged qualified sources into the new
+output directory and requires all compiled class hashes to match the committed
+passing qualification. It does not rerun or replace performance qualification.
+The optional `--qualification-output` argument reuses a retained class set only
+if its receipt and class hashes match exactly. Both paths execute all four
+complete checks, using Falcon at sample −66150 and Stella at sample 0, with four
+and eight workers. The two baseline output hashes cover all 1,146,600 Float32
+values; finiteness and all 875 original graph calls are checked separately.
+
+The corrected default path was rerun on 2026-09-28 in a new output directory:
+both PCM16 files regenerated to the historical hashes, every freshly compiled
+class matched the qualified class inventory, and all four complete output
+comparisons passed. The refreshed v2 receipt and provenance record this replay;
+the earlier proof remains preserved separately. Five focused tests also check
+reference loading without a build tree and rejection of missing/wrong fixtures,
+changed original source/model provenance and incomplete golden output metadata.

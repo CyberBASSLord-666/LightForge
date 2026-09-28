@@ -1,15 +1,17 @@
 # Native separation scheduling
 
-The pending 2.4.1 native Deux implementation retains all 27 original Float32
+The 2.4.1 native Deux implementation retains all 27 original Float32
 graphs, trained weights, 60 bands and the complete 13-second context. Temporal
 bands are independent: the optimized path runs one band per call, with four or
 eight concurrent calls sharing a CPU session. Frequency, front and mask-head
 geometry remains unchanged. A complete parallel passage has 875 graph calls;
 the reference four-band path has 335. Neither count means less model work.
 
-This implementation is under qualification. The owner requires a noticeable,
-repeatable inference improvement before a release is built. Exploratory host
-results cannot establish physical Android performance or a whole-song speedup.
+The final production implementation passed the owner's pre-build improvement
+requirement: the source-bound host comparison measured 32.6% lower median
+complete-passage time with identical outputs. Fresh production and Android
+release verification remains required. Host results do not establish physical
+Android performance or a whole-song speedup.
 
 ## Device admission
 

@@ -211,6 +211,13 @@ final class AnalysisJobStore {
     static synchronized JSONObject progress(File files,String id,double progress,String stage) throws Exception {
         return progress(files,id,progress,stage,null);
     }
+    /** Separate the stable pipeline phase from localized or changing UI progress text. */
+    static String analysisStage(JSONObject info){
+        if(info==null)return "";
+        String stage=info.optString("analysisStage");
+        if(!stage.matches("preparing|compatibility|rhythm|separation|voice|bass|recurrence|generate|save"))stage=info.optString("stage");
+        return stage.matches("preparing|compatibility|rhythm|separation|voice|bass|recurrence|generate|save")?stage:"";
+    }
     static synchronized JSONObject progress(File files,String id,double progress,String stage,JSONObject info) throws Exception {
         JSONObject job=matching(files,id,true);
         if(!Double.isFinite(progress))throw new IOException("Invalid analysis progress.");
@@ -220,7 +227,8 @@ final class AnalysisJobStore {
             .put("stage",detail).put("elapsedMs",Math.max(0,now-job.optLong("createdAt",now)));
         if(info!=null){
             // Only bounded display facts cross the WebView bridge; never arbitrary job fields.
-            if(info.has("stage")&&!info.optString("stage").equals(job.optString("analysisStage"))){
+            String phase=analysisStage(info);
+            if(!phase.isEmpty()&&!phase.equals(job.optString("analysisStage"))){
                 for(String key:new String[]{"passageIndex","passageCount","passagesCompleted","restoredPassages"})job.remove(key);
             }
             for(String key:new String[]{"passageIndex","passageCount","passagesCompleted","restoredPassages","completedStages","restoredStages"}){
@@ -229,7 +237,7 @@ final class AnalysisJobStore {
                     job.put(key,(int)value);
                 }
             }
-            if(info.has("stage"))job.put("analysisStage",limited(info.optString("stage"),120));
+            if(!phase.isEmpty())job.put("analysisStage",phase);
             if(info.optBoolean("checkpointSaved")){job.put("resumeAvailable",true).put("checkpointAt",now);}
         }
         persist(files,job);return job;

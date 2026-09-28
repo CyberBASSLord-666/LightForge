@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
-"""Verify final production parallel classes on independent full-context inputs.
+"""Verify production parallel classes against committed original full-output hashes.
 
-Original baseline bytes were captured previously with the same pinned models and
-runtime. They are revalidated here; their historical times are not compared with
-these quality-only runs. Both four- and eight-worker production paths are tested.
+Restore the licensed MUSDB Float32 fixtures as documented in DEUX_PARALLEL_B1.md.
+This helper verifies their original hashes and converts them to exact PCM16
+inputs. No old build tree, baseline tensors or generated PCM16 files are needed.
+Without --qualification-output, unchanged qualified sources are recompiled and
+every class hash must match the committed passing host qualification.
+The four complete-output comparisons are quality checks, not timing evidence.
 """
 import argparse
 import datetime
@@ -11,13 +14,99 @@ import hashlib
 import importlib.util
 import json
 from pathlib import Path
+import re
+import warnings
+import wave
 
 ROOT = Path(__file__).resolve().parents[1]
+CASE_STARTS = {'falcon': -66150, 'stella': 0}
+
+
+def require(value, message):
+    if not value:
+        raise ValueError(message)
+
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def load_canonical(root, performance):
+    """Bind committed output hashes to original source, graphs and inputs."""
+    research = root / 'research/inference-2.4.1'
+    canonical_path = research / 'separator-divergent-inputs.json'
+    frozen_path = research / 'separator-scheduler-paired.json'
+    fixture_path = root / 'qa/release-1.6.0/musdb-fixture-provenance.json'
+    canonical = json.loads(canonical_path.read_text())
+    frozen = json.loads(frozen_path.read_text())
+    fixtures = json.loads(fixture_path.read_text())
+    require(canonical.get('schema') == 'lightforge.deux-divergent-input-parity.v1'
+            and canonical.get('passed') is True and canonical.get('runtimeVersion') == '1.25.1',
+            'Committed original output reference did not pass')
+    snapshots = frozen['frozenSourceSnapshots']
+    text_sha = lambda text: hashlib.sha256(text.encode('utf-8')).hexdigest()
+    require(text_sha(snapshots['baseline/NativeDeux.java']) == canonical['sourceHashes']['baseline']
+            == frozen['sourceHashes']['baseline'], 'Canonical original implementation provenance differs')
+    for name, expected in canonical['sharedSourceHashes'].items():
+        require(name in snapshots and text_sha(snapshots[name]) == expected
+                == frozen['sharedSourceHashes'][name], 'Canonical common source provenance differs: ' + name)
+    require(canonical['modelManifestSha256'] == frozen['modelManifestSha256'] == performance['models']['manifestSha256']
+            and frozen['modelHashes'] == performance['models']['graphHashes'], 'Canonical original graph provenance differs')
+    require(canonical['runtimeSha256'] == frozen['runtimeSha256'] == performance['runtime']['hostJarSha256'],
+            'Canonical pinned runtime provenance differs')
+    cases = canonical['cases']
+    require(len(cases) == 2 and {case['id'] for case in cases} == set(CASE_STARTS), 'Canonical input inventory differs')
+    for case in cases:
+        references = [run for run in case['runs'] if run['variant'] == 'baseline']
+        require(len(references) == 1 and case.get('byteIdentical') is True
+                and case['samplesPerStem'] == 573300 and case['startSample'] == CASE_STARTS[case['id']],
+                'Canonical original full-context reference is incomplete')
+        reference = references[0]
+        require(reference.get('outputBytes') == 4586400
+                and re.fullmatch('[0-9a-f]{64}', reference.get('outputSha256', '')) is not None,
+                'Canonical complete output hash or size is invalid')
+        track = next(track for track in fixtures['tracks'] if track['id'] == case['id'])
+        require(case['fixtureProvenance'] == track, 'Canonical fixture provenance differs')
+    return canonical, frozen, fixtures, {
+        'canonicalReferenceReceiptSha256': sha(canonical_path),
+        'canonicalFrozenSourcesReceiptSha256': sha(frozen_path),
+        'fixtureProvenanceReceiptSha256': sha(fixture_path),
+    }
+
+
+def prepare_fixture(case, directory, destination):
+    """Produce exact historical PCM16 bytes from verified original Float32."""
+    label = case['id']
+    name = label + '-mix.wav'
+    source = directory / name
+    require(source.is_file(), 'Missing licensed fixture ' + name
+            + '; restore MUSDB fixtures using the clean-checkout instructions in DEUX_PARALLEL_B1.md')
+    expected = case['fixtureProvenance']['pcmSHA256'][name]
+    require(sha(source) == expected, 'Original Float32 fixture hash differs: ' + name)
+    import numpy as np
+    from scipy.io import wavfile
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', wavfile.WavFileWarning)
+        rate, audio = wavfile.read(source)
+    require(rate == 44100 and audio.shape == (300032, 2) and audio.dtype == np.float32
+            and np.isfinite(audio).all(), 'Original fixture format or finite sample coverage differs: ' + name)
+    pcm = np.clip(np.rint(audio.astype(np.float64) * 32768), -32768, 32767).astype('<i2')
+    require(not destination.exists(), 'Existing PCM16 input must not be overwritten')
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    with wave.open(str(destination), 'wb') as stream:
+        stream.setparams((2, 2, rate, 0, 'NONE', 'not compressed'))
+        stream.writeframes(pcm.tobytes())
+    require(sha(destination) == case['audioSha256'], 'Deterministic PCM16 fixture hash differs: ' + label)
+    require(sha(source) == expected, 'Original Float32 fixture changed during conversion: ' + name)
+    return dict(sourceFixture=name, sourceFloat32Sha256=expected, pcm16Sha256=case['audioSha256'],
+                frames=300032, channels=2, sampleRate=44100,
+                conversion='Float32 to Float64, scale by32768, round nearest ties-to-even, clip[-32768,32767], little-endian PCM16 stereo WAV.')
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--qualification-output', type=Path, required=True)
+    parser.add_argument('--qualification-output', type=Path, help='Optional retained passing class set; default recompiles qualified sources')
+    parser.add_argument('--float-fixture-directory', type=Path, default=ROOT / 'qa/release-1.6.0/fixtures')
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--receipt', type=Path, default=ROOT / 'research/inference-2.4.1/production-parallel-independent-inputs.json')
     args = parser.parse_args()
@@ -25,34 +114,31 @@ def main():
     benchmark = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(benchmark)
     b = benchmark.b
-    work, qualification = args.output.resolve(), args.qualification_output.resolve()
+    work = args.output.resolve()
     b.require(not work.exists(), 'Use a fresh quality evidence directory')
-    work.mkdir(parents=True)
-    performance_path = qualification / 'receipt.json'
-    performance = json.loads(performance_path.read_text())
+    performance_path = ROOT / 'research/inference-2.4.1/production-parallel-qualification.json'
+    performance_bytes = performance_path.read_bytes()
+    performance_hash = hashlib.sha256(performance_bytes).hexdigest()
+    performance = json.loads(performance_bytes)
     b.require(performance.get('passed') is True and performance.get('schema') == 'lightforge.production-parallel-qualification.v3',
-              'A completed production qualification class set is required')
+              'The committed production qualification must pass')
     bindings = performance['sourceBindings']
     cpu_control = benchmark.child_cpu_control()
     b.require(cpu_control == performance['hostControls'], 'Quality child CPU control differs from qualified execution')
     b.require(benchmark.source_bindings() == bindings == performance['sourceBindingsAfter'],
               'Production sources differ from the qualified classes')
-    classes = qualification / 'classes'
-    b.require(benchmark.class_hashes(classes) == performance['compiledClassHashes'], 'Qualified classes changed')
-    canonical_path = ROOT / 'build/inference-screen/formal-six/divergent-inputs.json'
-    canonical = json.loads(canonical_path.read_text())
-    b.require(canonical.get('passed') is True and canonical['runtimeVersion'] == '1.25.1', 'Canonical reference failed')
-    frozen_path = ROOT / 'research/inference-2.4.1/separator-scheduler-paired.json'
-    frozen = json.loads(frozen_path.read_text())['frozenSourceSnapshots']
-    text_sha = lambda text: hashlib.sha256(text.encode('utf-8')).hexdigest()
-    b.require(text_sha(frozen['baseline/NativeDeux.java']) == canonical['sourceHashes']['baseline'],
-              'Canonical original implementation provenance differs')
-    for name, expected in canonical['sharedSourceHashes'].items():
-        b.require(name in frozen and text_sha(frozen[name]) == expected, 'Canonical common source provenance differs: ' + name)
+    canonical, frozen, fixture_provenance, canonical_bindings = load_canonical(ROOT, performance)
+    work.mkdir(parents=True)
+    prepared = {}
+    for case in canonical['cases']:
+        audio = work / 'fixtures' / (case['id'] + '-mix-pcm16.wav')
+        prepared[case['id']] = (audio, prepare_fixture(case, args.float_fixture_directory, audio))
     toolchain = ROOT.parent / 'toolchain'
     java = toolchain / 'jdk17/bin'
     dependencies = [toolchain / 'test-json.jar', toolchain / 'android-sdk/platforms/android-35/android.jar',
                     toolchain / 'onnx/onnxruntime-1.25.1.jar']
+    dependency_hashes = {path.name: b.sha(path) for path in dependencies}
+    b.require(dependency_hashes == frozen['dependencyHashes'], 'Pinned compilation/runtime dependency differs')
     models = ROOT / 'web/analysis/models/deux'
     b.require(b.sha(dependencies[-1]) == canonical['runtimeSha256'] == performance['runtime']['hostJarSha256'],
               'Pinned runtime differs from reference')
@@ -60,26 +146,32 @@ def main():
               'Original model manifest differs from reference')
     for name, expected in performance['models']['graphHashes'].items():
         b.require(b.sha(models / name) == expected, 'Original model graph changed: ' + name)
+    if args.qualification_output is not None:
+        qualification = args.qualification_output.resolve()
+        b.require(b.sha(qualification / 'receipt.json') == performance_hash, 'Retained qualification receipt differs')
+        classes = qualification / 'classes'
+        compilation = 'retained-qualified-class-set'
+    else:
+        classes = benchmark.compile_production(work, java, dependencies, bindings)
+        compilation = 'fresh-exact-class-hash-reproduction'
+    b.require(benchmark.class_hashes(classes) == performance['compiledClassHashes'],
+              'Recompiled or retained classes differ from the qualified class set; use the documented JDK17 toolchain')
     helper_hash = b.sha(Path(__file__))
-    report = dict(schema='lightforge.production-parallel-independent-inputs.v1',
+    report = dict(schema='lightforge.production-parallel-independent-inputs.v2',
                   createdAt=datetime.datetime.now(datetime.timezone.utc).isoformat(),
-                  scope='Quality-only complete finite Float32 comparisons; no timing or device speedup claim.',
-                  sourceBindings=bindings, compiledClassHashes=performance['compiledClassHashes'],
-                  qualificationReceiptSha256=b.sha(performance_path), executionHelperSha256=helper_hash,
-                  canonicalReferenceReceiptSha256=b.sha(canonical_path), canonicalReference=canonical,
-                  canonicalFrozenSourcesReceiptSha256=b.sha(frozen_path), runtime=performance['runtime'],
+                  scope='Quality-only complete finite Float32 comparisons against committed original full-output SHA256; no timing or device speedup claim.',
+                  sourceBindings=bindings, compiledClassHashes=performance['compiledClassHashes'], compilation=compilation,
+                  qualificationReceiptSha256=performance_hash, executionHelperSha256=helper_hash,
+                  canonicalReference=canonical, fixtureArchive=fixture_provenance['archive'], dependencyHashes=dependency_hashes,
+                  **canonical_bindings, runtime=performance['runtime'],
                   models=performance['models'], host=b.host_metadata(), hostControls=cpu_control, cases=[], passed=False)
     receipt = work / 'receipt.json'
-    fixtures = [('falcon', ROOT / 'qa/release-2.2.1/fixtures/falcon-mix-pcm16.wav', -66150),
-                ('stella', ROOT / 'build/inference-screen/fixtures/stella-mix-pcm16.wav', 0)]
-    for label, audio, start in fixtures:
+    for label in CASE_STARTS:
         reference_case = next(case for case in canonical['cases'] if case['id'] == label)
         reference = next(run for run in reference_case['runs'] if run['variant'] == 'baseline')
-        reference_output = ROOT / 'build/inference-screen/formal-six/baseline' / ('quality-' + label + '-0.f32')
-        b.require(b.read_output(reference_output) == reference['outputSha256'], 'Canonical full output bytes changed')
-        b.require(b.sha(audio) == reference_case['audioSha256'] and start == reference_case['startSample'],
-                  'Canonical test input changed')
-        case = dict(id=label, audioSha256=b.sha(audio), startSample=start,
+        audio, preparation = prepared[label]
+        start = reference_case['startSample']
+        case = dict(id=label, audioSha256=b.sha(audio), startSample=start, inputPreparation=preparation,
                     referenceOutputSha256=reference['outputSha256'], runs=[])
         report['cases'].append(case)
         for index, variant in enumerate(('candidate4', 'candidate')):
@@ -99,6 +191,10 @@ def main():
     b.require(b.sha(Path(__file__)) == helper_hash, 'Quality helper changed during qualification')
     for name, expected in performance['models']['graphHashes'].items():
         b.require(b.sha(models / name) == expected, 'Original model changed during quality proof')
+    b.require(b.sha(models / 'manifest.json') == canonical['modelManifestSha256'], 'Original model manifest changed during proof')
+    b.require(b.sha(performance_path) == performance_hash, 'Committed qualification receipt changed during proof')
+    b.require({path.name: b.sha(path) for path in dependencies} == dependency_hashes, 'Pinned dependencies changed during proof')
+    b.require(load_canonical(ROOT, performance)[3] == canonical_bindings, 'Committed original reference changed during proof')
     report.update(sourceBindingsAfter=benchmark.source_bindings(), finishedAt=datetime.datetime.now(datetime.timezone.utc).isoformat(),
                   passed=True)
     b.require(report['sourceBindingsAfter'] == bindings, 'Production source changed before quality receipt')

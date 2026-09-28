@@ -1,7 +1,7 @@
 {
-  "schema": "lightforge.production-parallel-independent-inputs.v2",
-  "createdAt": "2026-09-28T07:43:32.620777+00:00",
-  "scope": "Quality-only complete finite Float32 comparisons against committed original full-output SHA256; no timing or device speedup claim.",
+  "schema": "lightforge.production-parallel-independent-inputs.v1",
+  "createdAt": "2026-09-28T07:10:30.748558+00:00",
+  "scope": "Quality-only complete finite Float32 comparisons; no timing or device speedup claim.",
   "sourceBindings": {
     "android/native-runtime.json": "e3ea568b3a8485235f23a59cd787466cdcbbfcaa54ac56df3ce040d29fcb2a94",
     "android/src/com/cyberbasslord/lightforge/NativeDeux.java": "6bff37571e0e6d703d3ccd0e6c182c391d9661898c05750e7a8da7fc87a5e782",
@@ -51,9 +51,9 @@
     "com/cyberbasslord/lightforge/NativeInferenceProfile$Timing.class": "da6796001916b58c6a55fd7411bc7e5e027acf0428009f52280c5025d9c0c01d",
     "com/cyberbasslord/lightforge/NativeInferenceProfile.class": "f67e189b4e37db9c90f3be59f0b5f1497f5ae81c1f44d363ebde8ba6b8561be1"
   },
-  "compilation": "fresh-exact-class-hash-reproduction",
   "qualificationReceiptSha256": "9bcda1fa4f0288a34941cc4461a19e79089e55542b1fcb525f5ab196dba29d67",
-  "executionHelperSha256": "f868adbf5e176d337f3fc854eeefafe30467bac0ccc16d6d017cbb78c7ff2876",
+  "executionHelperSha256": "5ea071f9850182296fe667fbe87d81c4b5f3b5bffcc2caef4358fc20fbf4f695",
+  "canonicalReferenceReceiptSha256": "bbb26782564964ac6345d8cc24039cdc8f00ffb17ba9cb3e18ad6c87850acce1",
   "canonicalReference": {
     "schema": "lightforge.deux-divergent-input-parity.v1",
     "scope": "Additional original-model full-context exact Float32 output comparisons; single runs establish output equality, not performance.",
@@ -124,43 +124,7 @@
             "profileSha256": "16b539bfecbdff004d2b8f61bb955e343437a8541743f9b992f96d2a33710856"
           }
         ],
-        "byteIdentical": true,
-        "fixtureProvenance": {
-          "id": "falcon",
-          "title": "The Easton Ellises - Falcon 69",
-          "datasetSplit": "test",
-          "license": "CC BY-NC-SA 3.0",
-          "source": "C't Remix Comp.",
-          "duration": 6.8034467120181406,
-          "sampleRate": 44100,
-          "channels": 2,
-          "archiveMember": "test/The Easton Ellises - Falcon 69.stem.mp4",
-          "pcmSHA256": {
-            "falcon-bass.wav": "582bab04bcaeecd840d453e1eeeda781550c80fab79535a7ac11c512c8baff48",
-            "falcon-drums.wav": "4f06f5ca5e4a2aeb20d4a9bf5431fecad9e977bc280f04fe38082f4f4582955a",
-            "falcon-other.wav": "dc69b9846ef4c75815cbd55f7159d6c533e913b1f95d67f9d2f256fc97ea9584",
-            "falcon-controlled.wav": "751da6209ec77e97253746786069690f3d89e7e8eccbf666cfa23a17847037b1",
-            "falcon-vocals.wav": "b6f5116b626152669096edb4baeaa1e6ef5374c4f6b8f0d7ee7dc10df32f76f3",
-            "falcon-instrumental.wav": "ce2947a674a2be2a4305dd45ab273773973b80e355fd9bb8fe9395323e89bffe",
-            "falcon-mix.wav": "effbbe3e3c0df821bf3cfa6535360b18339ded8041992373b41f8344998dba99",
-            "falcon-controlled-vocals.wav": "94f01ba9d57cb8139e88cc0214123031cb95ef124870bbaeb227543a1aa84053"
-          },
-          "controlledEdit": {
-            "vocalWindows": [
-              [
-                1.25,
-                3.15
-              ],
-              [
-                4.2,
-                6.0
-              ]
-            ],
-            "edgeRampSeconds": 0.01,
-            "definition": "Original vocals gated in time and summed with original drums, bass and other stems; this does not assert continuous singing throughout either window."
-          }
-        },
-        "pcm16Conversion": "Float32 to signed PCM16, round nearest ties-to-even, clip [-32768,32767], interleaved stereo little-endian."
+        "byteIdentical": true
       },
       {
         "id": "stella",
@@ -195,69 +159,12 @@
             "profileSha256": "0314d79b50a1f9f6dc34121a350e7d1047b34664b3c72bc5accaac16712a539b"
           }
         ],
-        "byteIdentical": true,
-        "fixtureProvenance": {
-          "id": "stella",
-          "title": "Clara Berry And Wooldog - Stella",
-          "datasetSplit": "train",
-          "license": "CC BY-NC-SA",
-          "source": "MedleyDB",
-          "duration": 6.8034467120181406,
-          "sampleRate": 44100,
-          "channels": 2,
-          "archiveMember": "train/Clara Berry And Wooldog - Stella.stem.mp4",
-          "pcmSHA256": {
-            "stella-mix.wav": "e00acb12b494667eb9512056de6888912aea4e12db7451fa66c25d57304b8aae",
-            "stella-instrumental.wav": "bafc0fea24303526455995645b2bf8d7ba0de1ddae560e9f86b859ea0ae049ee",
-            "stella-controlled-vocals.wav": "9f76eb871e01d7a046858ef0f87b220023a603ca72cf3697aa0aa78a5939ec5c",
-            "stella-vocals.wav": "5af2b0f9ba35fe7cfd9af70b4463a7743998be531151182fd4b9a57289b5a4e9",
-            "stella-other.wav": "5058479c94c0c22d136132189063c41f51cd4183b5ee0689d8f57735a7878100",
-            "stella-drums.wav": "a9dc9cea13befb8cd380f7592ee8beb11d9510cfbfde762da02eb94572618703",
-            "stella-controlled.wav": "279e30947e27c33fe54e431ae3c15da2dffbd4336c01ff0298e384cbcc71f4bb",
-            "stella-bass.wav": "0c2bbc852925e660c00d8c069f88bc34a036ba73edbff9fb6510d8d2bd14fdab"
-          },
-          "controlledEdit": {
-            "vocalWindows": [
-              [
-                1.25,
-                3.15
-              ],
-              [
-                4.2,
-                6.0
-              ]
-            ],
-            "edgeRampSeconds": 0.01,
-            "definition": "Original vocals gated in time and summed with original drums, bass and other stems; this does not assert continuous singing throughout either window."
-          }
-        },
-        "pcm16Conversion": "Float32 to signed PCM16, round nearest ties-to-even, clip [-32768,32767], interleaved stereo little-endian.",
-        "conversionReceipt": {
-          "source": "qa/release-1.6.0/fixtures/stella-mix.wav",
-          "sourceSha256": "e00acb12b494667eb9512056de6888912aea4e12db7451fa66c25d57304b8aae",
-          "outputSha256": "331b03c1f07e2672854bb53f56e7110ce58c0e7ef7be945d828fe9589af8bdd9",
-          "samples": 300032,
-          "conversion": "Float32 to signed PCM16: round nearest ties-to-even, clip [-32768,32767], interleaved stereo little-endian."
-        }
+        "byteIdentical": true
       }
     ],
-    "passed": true,
-    "frozenSourcesReceipt": "separator-scheduler-paired.json",
-    "originalReceiptSha256": "bbb26782564964ac6345d8cc24039cdc8f00ffb17ba9cb3e18ad6c87850acce1"
+    "passed": true
   },
-  "fixtureArchive": {
-    "url": "https://github.com/sigsep/sigsep-mus-db/releases/download/v0.4.0/MUSDB18-7-STEMS.zip",
-    "sha256": "365f66acffc57282e474a4c24b32afec3678258c50b8d45646ac849b0a287df3",
-    "bytes": 147209385
-  },
-  "dependencyHashes": {
-    "test-json.jar": "c243f45f9590c12694a4142ed3f07fc70dfb71e4daebd05ae234bf92a2da92a6",
-    "android.jar": "4566663c3876e022b4fa4ced8c8697c4ab1688267f090114fd92d027b32e619b",
-    "onnxruntime-1.25.1.jar": "749793ebed63743fec853d093da7987a86ea5cd592d54fba898cd3233100c381"
-  },
-  "canonicalReferenceReceiptSha256": "5d95f043e7a7e2917c0a0ad411068e6d1a92e3d5f12d6890fd02fb93903623c2",
   "canonicalFrozenSourcesReceiptSha256": "ca5c28f54d651d05bcf69bff6552074d474aca360a65210027c9e85958fc0247",
-  "fixtureProvenanceReceiptSha256": "9844748c69c1c490544f99aee688522ea461c74de557e2f57d4115261d156096",
   "runtime": {
     "version": "1.25.1",
     "hostJarSha256": "749793ebed63743fec853d093da7987a86ea5cd592d54fba898cd3233100c381"
@@ -346,21 +253,12 @@
       "id": "falcon",
       "audioSha256": "0d0bf21401ad0dbb8a49aae581a16f9a00cadca41e116b5a4dc27eaaa3625648",
       "startSample": -66150,
-      "inputPreparation": {
-        "sourceFixture": "falcon-mix.wav",
-        "sourceFloat32Sha256": "effbbe3e3c0df821bf3cfa6535360b18339ded8041992373b41f8344998dba99",
-        "pcm16Sha256": "0d0bf21401ad0dbb8a49aae581a16f9a00cadca41e116b5a4dc27eaaa3625648",
-        "frames": 300032,
-        "channels": 2,
-        "sampleRate": 44100,
-        "conversion": "Float32 to Float64, scale by32768, round nearest ties-to-even, clip[-32768,32767], little-endian PCM16 stereo WAV."
-      },
       "referenceOutputSha256": "e376591b6b588fc10a9661a6fb298d6acd020be7a3cb12528891908083ded835",
       "runs": [
         {
-          "wallNanos": 65837542510,
-          "processCpuNanos": 177430000000,
-          "peakRssBytes": 957517824,
+          "wallNanos": 59139598319,
+          "processCpuNanos": 190730000000,
+          "peakRssBytes": 995393536,
           "phase": "quality-falcon",
           "pairIndex": 0,
           "orderInPair": 0,
@@ -405,79 +303,79 @@
               "head-1": 11
             }
           },
-          "profileSha256": "95912289b19216f4791bd3ce5655bb70cf010a1c870a6b9f66298bd41e82a6ca",
+          "profileSha256": "1e015cfaf3d465b8d32f526b81f4031a2b0d574cce62feaab871eb2c5e2696db",
           "hostCountersBefore": {
             "cgroupCpuStat": {
-              "usage_usec": 20070792667,
-              "user_usec": 18355219654,
-              "system_usec": 1715573012,
+              "usage_usec": 18994506533,
+              "user_usec": 17425059514,
+              "system_usec": 1569447019,
               "nice_usec": 0,
-              "nr_periods": 133757,
-              "nr_throttled": 1226,
-              "throttled_usec": 47295277,
+              "nr_periods": 123484,
+              "nr_throttled": 1077,
+              "throttled_usec": 39377597,
               "nr_bursts": 0,
               "burst_usec": 0
             },
             "cgroupMemoryEvents": {
               "low": 0,
               "high": 0,
-              "max": 26968,
+              "max": 24048,
               "oom": 0,
               "oom_kill": 0,
               "oom_group_kill": 0
             },
-            "cgroupMemoryCurrentBytes": 8094351360,
+            "cgroupMemoryCurrentBytes": 6693945344,
             "cgroupMemoryStat": {
-              "anon": 919175168,
-              "file": 6831915008,
-              "kernel": 342036480,
-              "file_dirty": 18755584,
+              "anon": 89149440,
+              "file": 6271655936,
+              "kernel": 331542528,
+              "file_dirty": 10113024,
               "file_writeback": 0,
-              "active_file": 4671422464,
-              "inactive_file": 2160492544,
-              "pgfault": 305821731,
-              "pgmajfault": 21,
-              "pgscan_direct": 1009660,
-              "pgsteal_direct": 1009599,
-              "workingset_refault_file": 41791
+              "active_file": 3316944896,
+              "inactive_file": 2954711040,
+              "pgfault": 283873112,
+              "pgmajfault": 19,
+              "pgscan_direct": 833446,
+              "pgsteal_direct": 833385,
+              "workingset_refault_file": 40752
             },
             "cgroupCpuPressure": null,
             "cgroupMemoryPressure": null
           },
           "hostCountersAfter": {
             "cgroupCpuStat": {
-              "usage_usec": 20444910327,
-              "user_usec": 18690079292,
-              "system_usec": 1754831035,
+              "usage_usec": 19190481202,
+              "user_usec": 17609201746,
+              "system_usec": 1581279455,
               "nice_usec": 0,
-              "nr_periods": 134418,
-              "nr_throttled": 1418,
-              "throttled_usec": 61478455,
+              "nr_periods": 124078,
+              "nr_throttled": 1077,
+              "throttled_usec": 39377597,
               "nr_bursts": 0,
               "burst_usec": 0
             },
             "cgroupMemoryEvents": {
               "low": 0,
               "high": 0,
-              "max": 29279,
+              "max": 24048,
               "oom": 0,
               "oom_kill": 0,
               "oom_group_kill": 0
             },
-            "cgroupMemoryCurrentBytes": 6660554752,
+            "cgroupMemoryCurrentBytes": 6680408064,
             "cgroupMemoryStat": {
-              "anon": 98164736,
-              "file": 6260346880,
-              "kernel": 301113344,
-              "file_dirty": 41959424,
+              "anon": 71200768,
+              "file": 6276689920,
+              "kernel": 331210752,
+              "file_dirty": 11591680,
               "file_writeback": 0,
-              "active_file": 4694659072,
-              "inactive_file": 1565679616,
-              "pgfault": 310826632,
-              "pgmajfault": 22,
-              "pgscan_direct": 1156734,
-              "pgsteal_direct": 1156673,
-              "workingset_refault_file": 41800
+              "active_file": 3317047296,
+              "inactive_file": 2959634432,
+              "pgfault": 285458066,
+              "pgmajfault": 19,
+              "pgscan_direct": 833446,
+              "pgsteal_direct": 833385,
+              "workingset_refault_file": 40752
             },
             "cgroupCpuPressure": null,
             "cgroupMemoryPressure": null
@@ -496,9 +394,9 @@
           }
         },
         {
-          "wallNanos": 43680821791,
-          "processCpuNanos": 180920000000,
-          "peakRssBytes": 1057263616,
+          "wallNanos": 46370547998,
+          "processCpuNanos": 184720000000,
+          "peakRssBytes": 1065533440,
           "phase": "quality-falcon",
           "pairIndex": 0,
           "orderInPair": 1,
@@ -543,79 +441,79 @@
               "head-1": 11
             }
           },
-          "profileSha256": "c25b128e2b9ecdd7033005fe4052f7dc77fbd1699b3e142bb9abccd8150e86b4",
+          "profileSha256": "a93e6b09a381811c258ed7d38c6385ca721d4f6bab43bcf82adfeb3f819221af",
           "hostCountersBefore": {
             "cgroupCpuStat": {
-              "usage_usec": 20444990625,
-              "user_usec": 18690156223,
-              "system_usec": 1754834401,
+              "usage_usec": 19190582830,
+              "user_usec": 17609283987,
+              "system_usec": 1581298843,
               "nice_usec": 0,
-              "nr_periods": 134419,
-              "nr_throttled": 1418,
-              "throttled_usec": 61478455,
+              "nr_periods": 124079,
+              "nr_throttled": 1077,
+              "throttled_usec": 39377597,
               "nr_bursts": 0,
               "burst_usec": 0
             },
             "cgroupMemoryEvents": {
               "low": 0,
               "high": 0,
-              "max": 29279,
+              "max": 24048,
               "oom": 0,
               "oom_kill": 0,
               "oom_group_kill": 0
             },
-            "cgroupMemoryCurrentBytes": 6663593984,
+            "cgroupMemoryCurrentBytes": 6683537408,
             "cgroupMemoryStat": {
-              "anon": 102621184,
-              "file": 6260379648,
-              "kernel": 299528192,
-              "file_dirty": 42000384,
+              "anon": 75653120,
+              "file": 6276714496,
+              "kernel": 329715712,
+              "file_dirty": 11616256,
               "file_writeback": 0,
-              "active_file": 4694683648,
-              "inactive_file": 1565683712,
-              "pgfault": 310828296,
-              "pgmajfault": 22,
-              "pgscan_direct": 1156734,
-              "pgsteal_direct": 1156673,
-              "workingset_refault_file": 41800
+              "active_file": 3317071872,
+              "inactive_file": 2959630336,
+              "pgfault": 285459505,
+              "pgmajfault": 19,
+              "pgscan_direct": 833446,
+              "pgsteal_direct": 833385,
+              "workingset_refault_file": 40752
             },
             "cgroupCpuPressure": null,
             "cgroupMemoryPressure": null
           },
           "hostCountersAfter": {
             "cgroupCpuStat": {
-              "usage_usec": 20629554068,
-              "user_usec": 18865471802,
-              "system_usec": 1764082266,
+              "usage_usec": 19380746753,
+              "user_usec": 17786686324,
+              "system_usec": 1594060429,
               "nice_usec": 0,
-              "nr_periods": 134858,
-              "nr_throttled": 1421,
-              "throttled_usec": 61619574,
+              "nr_periods": 124545,
+              "nr_throttled": 1080,
+              "throttled_usec": 39390586,
               "nr_bursts": 0,
               "burst_usec": 0
             },
             "cgroupMemoryEvents": {
               "low": 0,
               "high": 0,
-              "max": 29279,
+              "max": 24048,
               "oom": 0,
               "oom_kill": 0,
               "oom_group_kill": 0
             },
-            "cgroupMemoryCurrentBytes": 6667415552,
+            "cgroupMemoryCurrentBytes": 6690398208,
             "cgroupMemoryStat": {
-              "anon": 102404096,
-              "file": 6261448704,
-              "kernel": 302243840,
-              "file_dirty": 38199296,
+              "anon": 75735040,
+              "file": 6281338880,
+              "kernel": 332083200,
+              "file_dirty": 12271616,
               "file_writeback": 0,
-              "active_file": 4698038272,
-              "inactive_file": 1563402240,
-              "pgfault": 312685740,
-              "pgmajfault": 22,
-              "pgscan_direct": 1156734,
-              "pgsteal_direct": 1156673,
-              "workingset_refault_file": 41800
+              "active_file": 3322322944,
+              "inactive_file": 2959007744,
+              "pgfault": 287364019,
+              "pgmajfault": 19,
+              "pgscan_direct": 833446,
+              "pgsteal_direct": 833385,
+              "workingset_refault_file": 40752
             },
             "cgroupCpuPressure": null,
             "cgroupMemoryPressure": null
@@ -640,21 +538,12 @@
       "id": "stella",
       "audioSha256": "331b03c1f07e2672854bb53f56e7110ce58c0e7ef7be945d828fe9589af8bdd9",
       "startSample": 0,
-      "inputPreparation": {
-        "sourceFixture": "stella-mix.wav",
-        "sourceFloat32Sha256": "e00acb12b494667eb9512056de6888912aea4e12db7451fa66c25d57304b8aae",
-        "pcm16Sha256": "331b03c1f07e2672854bb53f56e7110ce58c0e7ef7be945d828fe9589af8bdd9",
-        "frames": 300032,
-        "channels": 2,
-        "sampleRate": 44100,
-        "conversion": "Float32 to Float64, scale by32768, round nearest ties-to-even, clip[-32768,32767], little-endian PCM16 stereo WAV."
-      },
       "referenceOutputSha256": "1e3f2b6d3081adaae9855eced53a69f5b3babc381b965ccff977038383f204c3",
       "runs": [
         {
-          "wallNanos": 64154986078,
-          "processCpuNanos": 166920000000,
-          "peakRssBytes": 974659584,
+          "wallNanos": 47659090416,
+          "processCpuNanos": 151240000000,
+          "peakRssBytes": 1025523712,
           "phase": "quality-stella",
           "pairIndex": 0,
           "orderInPair": 0,
@@ -699,79 +588,79 @@
               "head-1": 11
             }
           },
-          "profileSha256": "0490ba95ed5f936ce094460450fc6329d84da40fc43e9e4206edaa8bcdb373df",
+          "profileSha256": "8fb2e362b399e69e59a999b28eca74559298812250caa48c8f326a287fd9922c",
           "hostCountersBefore": {
             "cgroupCpuStat": {
-              "usage_usec": 20629642255,
-              "user_usec": 18865559863,
-              "system_usec": 1764082391,
+              "usage_usec": 19380923280,
+              "user_usec": 17786838012,
+              "system_usec": 1594085268,
               "nice_usec": 0,
-              "nr_periods": 134859,
-              "nr_throttled": 1421,
-              "throttled_usec": 61619574,
+              "nr_periods": 124547,
+              "nr_throttled": 1080,
+              "throttled_usec": 39390586,
               "nr_bursts": 0,
               "burst_usec": 0
             },
             "cgroupMemoryEvents": {
               "low": 0,
               "high": 0,
-              "max": 29279,
+              "max": 24048,
               "oom": 0,
               "oom_kill": 0,
               "oom_group_kill": 0
             },
-            "cgroupMemoryCurrentBytes": 6665175040,
+            "cgroupMemoryCurrentBytes": 6688403456,
             "cgroupMemoryStat": {
-              "anon": 102404096,
-              "file": 6261456896,
-              "kernel": 299638784,
-              "file_dirty": 38178816,
+              "anon": 75751424,
+              "file": 6281347072,
+              "kernel": 329879552,
+              "file_dirty": 12255232,
               "file_writeback": 0,
-              "active_file": 4698071040,
-              "inactive_file": 1563385856,
-              "pgfault": 312687325,
-              "pgmajfault": 22,
-              "pgscan_direct": 1156734,
-              "pgsteal_direct": 1156673,
-              "workingset_refault_file": 41800
+              "active_file": 3322347520,
+              "inactive_file": 2958991360,
+              "pgfault": 287365421,
+              "pgmajfault": 19,
+              "pgscan_direct": 833446,
+              "pgsteal_direct": 833385,
+              "workingset_refault_file": 40752
             },
             "cgroupCpuPressure": null,
             "cgroupMemoryPressure": null
           },
           "hostCountersAfter": {
             "cgroupCpuStat": {
-              "usage_usec": 21015621147,
-              "user_usec": 19222168469,
-              "system_usec": 1793452677,
+              "usage_usec": 19535955853,
+              "user_usec": 17934484955,
+              "system_usec": 1601470897,
               "nice_usec": 0,
-              "nr_periods": 135502,
-              "nr_throttled": 1705,
-              "throttled_usec": 79066845,
+              "nr_periods": 125026,
+              "nr_throttled": 1080,
+              "throttled_usec": 39390586,
               "nr_bursts": 0,
               "burst_usec": 0
             },
             "cgroupMemoryEvents": {
               "low": 0,
               "high": 0,
-              "max": 29547,
+              "max": 24048,
               "oom": 0,
               "oom_kill": 0,
               "oom_group_kill": 0
             },
-            "cgroupMemoryCurrentBytes": 6731386880,
+            "cgroupMemoryCurrentBytes": 6696013824,
             "cgroupMemoryStat": {
-              "anon": 229027840,
-              "file": 6197088256,
-              "kernel": 303886336,
-              "file_dirty": 17031168,
+              "anon": 75694080,
+              "file": 6286557184,
+              "kernel": 332279808,
+              "file_dirty": 15523840,
               "file_writeback": 0,
-              "active_file": 4702511104,
-              "inactive_file": 1494568960,
-              "pgfault": 317874140,
-              "pgmajfault": 22,
-              "pgscan_direct": 1173886,
-              "pgsteal_direct": 1173825,
-              "workingset_refault_file": 41800
+              "active_file": 3326935040,
+              "inactive_file": 2959613952,
+              "pgfault": 288822652,
+              "pgmajfault": 19,
+              "pgscan_direct": 833446,
+              "pgsteal_direct": 833385,
+              "workingset_refault_file": 40752
             },
             "cgroupCpuPressure": null,
             "cgroupMemoryPressure": null
@@ -790,9 +679,9 @@
           }
         },
         {
-          "wallNanos": 46023355929,
-          "processCpuNanos": 188170000000,
-          "peakRssBytes": 1068851200,
+          "wallNanos": 40425629195,
+          "processCpuNanos": 170060000000,
+          "peakRssBytes": 1048399872,
           "phase": "quality-stella",
           "pairIndex": 0,
           "orderInPair": 1,
@@ -837,79 +726,79 @@
               "head-1": 11
             }
           },
-          "profileSha256": "eb9bd75619dfb9e64c346b96936895c95edb80c6d1aa865d18c79985bb8c5e5b",
+          "profileSha256": "56d3a2b99f84d5a5f4baf8793234e8c52b6e73343e65d4fc74106ac1bdd0b020",
           "hostCountersBefore": {
             "cgroupCpuStat": {
-              "usage_usec": 21015800479,
-              "user_usec": 19222325484,
-              "system_usec": 1793474994,
+              "usage_usec": 19536034857,
+              "user_usec": 17934556623,
+              "system_usec": 1601478234,
               "nice_usec": 0,
-              "nr_periods": 135503,
-              "nr_throttled": 1705,
-              "throttled_usec": 79066845,
+              "nr_periods": 125027,
+              "nr_throttled": 1080,
+              "throttled_usec": 39390586,
               "nr_bursts": 0,
               "burst_usec": 0
             },
             "cgroupMemoryEvents": {
               "low": 0,
               "high": 0,
-              "max": 29547,
+              "max": 24048,
               "oom": 0,
               "oom_kill": 0,
               "oom_group_kill": 0
             },
-            "cgroupMemoryCurrentBytes": 6719434752,
+            "cgroupMemoryCurrentBytes": 6694109184,
             "cgroupMemoryStat": {
-              "anon": 218738688,
-              "file": 6197100544,
-              "kernel": 302387200,
-              "file_dirty": 17133568,
+              "anon": 75702272,
+              "file": 6286569472,
+              "kernel": 330166272,
+              "file_dirty": 15536128,
               "file_writeback": 0,
-              "active_file": 4702564352,
-              "inactive_file": 1494536192,
-              "pgfault": 317880776,
-              "pgmajfault": 22,
-              "pgscan_direct": 1173886,
-              "pgsteal_direct": 1173825,
-              "workingset_refault_file": 41800
+              "active_file": 3326959616,
+              "inactive_file": 2959601664,
+              "pgfault": 288824035,
+              "pgmajfault": 19,
+              "pgscan_direct": 833446,
+              "pgsteal_direct": 833385,
+              "workingset_refault_file": 40752
             },
             "cgroupCpuPressure": null,
             "cgroupMemoryPressure": null
           },
           "hostCountersAfter": {
             "cgroupCpuStat": {
-              "usage_usec": 21255294893,
-              "user_usec": 19444028675,
-              "system_usec": 1811266217,
+              "usage_usec": 19709638771,
+              "user_usec": 18100289614,
+              "system_usec": 1609349157,
               "nice_usec": 0,
-              "nr_periods": 135967,
-              "nr_throttled": 1774,
-              "throttled_usec": 81262198,
+              "nr_periods": 125433,
+              "nr_throttled": 1080,
+              "throttled_usec": 39390586,
               "nr_bursts": 0,
               "burst_usec": 0
             },
             "cgroupMemoryEvents": {
               "low": 0,
               "high": 0,
-              "max": 29547,
+              "max": 24048,
               "oom": 0,
               "oom_kill": 0,
               "oom_group_kill": 0
             },
-            "cgroupMemoryCurrentBytes": 6611824640,
+            "cgroupMemoryCurrentBytes": 6700511232,
             "cgroupMemoryStat": {
-              "anon": 107102208,
-              "file": 6202564608,
-              "kernel": 300462080,
-              "file_dirty": 15183872,
+              "anon": 75698176,
+              "file": 6291189760,
+              "kernel": 332050432,
+              "file_dirty": 15777792,
               "file_writeback": 0,
-              "active_file": 4707237888,
-              "inactive_file": 1495318528,
-              "pgfault": 320886136,
-              "pgmajfault": 22,
-              "pgscan_direct": 1173886,
-              "pgsteal_direct": 1173825,
-              "workingset_refault_file": 41800
+              "active_file": 3331547136,
+              "inactive_file": 2959638528,
+              "pgfault": 290609346,
+              "pgmajfault": 19,
+              "pgscan_direct": 833446,
+              "pgsteal_direct": 833385,
+              "workingset_refault_file": 40752
             },
             "cgroupCpuPressure": null,
             "cgroupMemoryPressure": null
@@ -942,5 +831,5 @@
     "tools/benchmark_deux_execution.py": "135dd27d1465b05170a12d40e73c3f144ad58b8c2ec08ef07bfdb3e129fd4a2a",
     "tools/benchmark_deux_parallel.py": "e90f8568f1e61e2ef02792eabbfa264f5b2bae3b4b31dfdb723fdf59a0a3bc40"
   },
-  "finishedAt": "2026-09-28T07:47:14.755483+00:00"
+  "finishedAt": "2026-09-28T07:13:47.047309+00:00"
 }
