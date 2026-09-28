@@ -27,7 +27,7 @@ class NativeInferenceProfileEvidenceTest(unittest.TestCase):
         self.assertIn('emitProfile(profile,"completed")', passage)
         self.assertIn('emitProfile(profile,outcome)', passage)
         self.assertIn('emitProfile(profile,"cancelled")', passage)
-        self.assertIn('AppDiagnostics.profile(context,snapshot)', passage)
+        self.assertIn('AppDiagnostics.profile(context,ownerJobId,snapshot)', passage)
         self.assertIn('public static void profile(Context context, NativeInferenceProfile.Snapshot profile)', diagnostics)
 
     def test_stage_telemetry_contract_is_bounded_and_marks_missing_metrics(self):
@@ -53,7 +53,7 @@ class NativeInferenceProfileEvidenceTest(unittest.TestCase):
         for stage in ['addGateWait', 'addPreflight', 'addBufferInit', 'addRuntimeInit', 'addRead',
                       'addEncode', 'addPack', 'addScatter', 'addDecode', 'addWrite', 'addFlush',
                       'addOutputCommit']:
-            self.assertIn('finally { if(profile!=null)profile.' + stage, deux)
+            self.assertRegex(deux, r'finally\s*\{\s*if\(profile!=null\)profile\.' + stage + r'\(')
         self.assertIn('NativeInferenceProfile.MAX_RECORDS', diagnostics)
         self.assertIn('BYTE_IDENTITY_REQUIRED = true', pair)
         self.assertIn('MAX_ABSOLUTE_ERROR = 0D', pair)

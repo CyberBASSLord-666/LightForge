@@ -16,6 +16,7 @@ VERSION="$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["name"
 VERSION_CODE="$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["code"])' "$ROOT/version.json")"
 APK_NAME="LightForge-$VERSION.apk"
 python3 "$ROOT/tools/sync_version.py" --check
+python3 "$ROOT/tools/verify_inference_improvement.py"
 python3 "$ROOT/tools/verify_analysis_assets.py"
 python3 "$ROOT/tools/bootstrap_native_runtime.py" --check
 ORT_JAR="$TOOLCHAIN/onnx/classes.jar"
@@ -49,6 +50,31 @@ cleanup_build() {
 }
 trap cleanup_build EXIT
 mkdir -p "$BUILD/classes" "$BUILD/dex" "$BUILD/generated"
+# Compile an immutable copy: edits during asset preparation cannot introduce an
+# inference implementation different from the one admitted by the timing gate.
+python3 - "$ROOT" "$BUILD/java-src" <<'PY'
+import hashlib,json,pathlib,shutil,sys
+root,destination=map(pathlib.Path,sys.argv[1:])
+sys.path.insert(0,str(root/'tools'))
+import verify_inference_improvement as gate
+version=json.loads((root/'version.json').read_text())
+if version['name']=='2.4.1':gate.verify(root)
+source=root/'android/src'
+paths=sorted(source.rglob('*.java'))
+if not paths or any(p.is_symlink() for p in paths):raise SystemExit('Invalid Java source inventory.')
+before={str(p.relative_to(source)):hashlib.sha256(p.read_bytes()).hexdigest() for p in paths}
+shutil.copytree(source,destination)
+copied={str(p.relative_to(destination)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(destination.rglob('*.java'))}
+after={str(p.relative_to(source)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(source.rglob('*.java'))}
+if before!=copied or copied!=after:raise SystemExit('Java sources changed while the build snapshot was prepared.')
+if version['name']=='2.4.1':
+    gate.verify(root)
+    evidence=json.loads((root/gate.RECEIPT).read_text())
+    prefix='android/src/'
+    for name,digest in evidence['sourceBindings'].items():
+        if name.startswith(prefix) and copied.get(name[len(prefix):])!=digest:
+            raise SystemExit('Frozen Java source lacks matching inference performance evidence: '+name)
+PY
 python3 "$ROOT/tools/bootstrap_native_runtime.py" --check --stage "$BUILD/native"
 if [[ ! -f "$KEY_DIR/lightforge-release.jks" ]]; then
     if [[ "${LIGHTFORGE_ALLOW_NEW_SIGNING:-0}" != "1" ]]; then
@@ -86,7 +112,7 @@ printf 'Compiling Android resources and bundling offline assets…\n'
 # aapt2's successful exit alone is insufficient: a truncated ZIP must stop here.
 python3 "$ROOT/tools/apk_archive.py" validate "$BUILD/resources.apk" "$BUILD/assets"
 printf 'Compiling Java and Android bytecode…\n'
-python3 - "$ROOT/android/src" "$BUILD/generated" "$BUILD/java-sources.txt" <<'PY'
+python3 - "$BUILD/java-src" "$BUILD/generated" "$BUILD/java-sources.txt" <<'PY'
 from pathlib import Path
 import sys
 files=sorted(p for folder in sys.argv[1:3] for p in Path(folder).rglob('*.java')
@@ -94,6 +120,7 @@ files=sorted(p for folder in sys.argv[1:3] for p in Path(folder).rglob('*.java')
 if not files:raise SystemExit('No Java sources were found.')
 Path(sys.argv[3]).write_text('\n'.join('"'+str(p).replace('\\','\\\\').replace('"','\\"')+'"' for p in files)+'\n')
 PY
+python3 "$ROOT/tools/verify_inference_improvement.py"
 "$JAVA_HOME/bin/javac" -encoding UTF-8 --release 8 \
     -classpath "$PLATFORM:$ORT_JAR" \
     -d "$BUILD/classes" "@$BUILD/java-sources.txt"
@@ -102,6 +129,7 @@ PY
 python3 "$ROOT/tools/apk_archive.py" assemble "$BUILD/resources.apk" "$BUILD/dex" "$BUILD/unsigned.apk" "$BUILD/assets" --native-directory "$BUILD/native" --native-manifest "$NATIVE_MANIFEST"
 rm -- "$BUILD/resources.apk"
 printf 'Aligning and signing APK…\n'
+python3 "$ROOT/tools/verify_inference_improvement.py"
 "$BUILD_TOOLS/zipalign" -P 16 -f 4 "$BUILD/unsigned.apk" "$BUILD/aligned.apk"
 rm -- "$BUILD/unsigned.apk"
 "$BUILD_TOOLS/apksigner" sign --ks "$KEY_DIR/lightforge-release.jks" --ks-key-alias lightforge \

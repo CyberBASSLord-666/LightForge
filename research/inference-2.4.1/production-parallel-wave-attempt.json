@@ -1,0 +1,1201 @@
+{
+  "schema": "lightforge.production-parallel-qualification.v1",
+  "createdAt": "2026-09-28T06:10:48.634908+00:00",
+  "host": {
+    "platform": "Linux-6.18.44-x86_64-with-glibc2.39",
+    "machine": "x86_64",
+    "cpuCount": 9,
+    "cpuAffinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "cpuQuota": "800000 100000",
+    "memoryLimit": "8589934592",
+    "cpuModel": "INTEL(R) XEON(R) PLATINUM 8573C"
+  },
+  "sourceBindings": {
+    "android/native-runtime.json": "e3ea568b3a8485235f23a59cd787466cdcbbfcaa54ac56df3ce040d29fcb2a94",
+    "android/src/com/cyberbasslord/lightforge/NativeDeux.java": "283f75fc3a9ca9dfd47a55e5766da7a8af8e38247b8c75f06760218c1b8b78a4",
+    "android/src/com/cyberbasslord/lightforge/NativeDeuxTransform.java": "991b06501cfb88b904d0b714a525c389f169f00c231248b0e961b70f257e90b5",
+    "android/src/com/cyberbasslord/lightforge/NativeExecutionPolicy.java": "9499358bc3ff41da4b505949ebef8d4d75dafcd2178bc39b59988cba76352bb7",
+    "android/src/com/cyberbasslord/lightforge/NativeInferenceProfile.java": "82d587dd460b77759fd4bcd6169d4eb30aa95ffe24b696b01c3e9c965915f82f",
+    "tests/NativeDeuxParallelBenchmark.java": "85992a6ddae1201bb06254561d284f64c3c1de6badaf0e83259d4a85cf245d8d",
+    "tools/benchmark_deux_execution.py": "135dd27d1465b05170a12d40e73c3f144ad58b8c2ec08ef07bfdb3e129fd4a2a",
+    "tools/benchmark_deux_parallel.py": "52eedf59d9ce52555999f162d24c08c1b4cb5594763a0e0129a87c7bc0056d0f"
+  },
+  "runtime": {
+    "version": "1.25.1",
+    "hostJarSha256": "749793ebed63743fec853d093da7987a86ea5cd592d54fba898cd3233100c381"
+  },
+  "models": {
+    "manifestSha256": "6aebf45e6e7f6fa974f14fe47a252fc01f48da4815f40a1fdf10641a432529a9",
+    "graphHashes": {
+      "block-00-frequency.onnx": "361ff85e20567a74c076fab06ddfa87dd8c58108cbfc72340fafa8ae92a239b6",
+      "block-00-time.onnx": "688feca1115d610e9bc9d15ac9dac6e33c4cf0a03966d9effe8974d2674ae924",
+      "block-01-frequency.onnx": "fdcf43737acdaa452af52f57eb4a46659b16479bd21bd25ce15edf4c242c0b79",
+      "block-01-time.onnx": "af09b80e7d365402f98ddea310d5de5fa469397389bb00f6812b9ad4afded96f",
+      "block-02-frequency.onnx": "5e37f7dfadb785dcf1b4b4f688437506db621ebf42fe1ed573c080d42ec80d73",
+      "block-02-time.onnx": "1822e5f163c9d5596ecf4463970dee6a873c9d5ecc625ab018000f1ac5708788",
+      "block-03-frequency.onnx": "4e8a32b3324465a14d8675550fba44e0a65c80625f670647c060efd2120a17f7",
+      "block-03-time.onnx": "4832532d1fcb067413adb1f51e3a90af94cbcd8c40c9be5e8640c33b3a38d731",
+      "block-04-frequency.onnx": "dd64feabf8f4cb9052a782d94279e17285e0ad69b740c1a91a6e0257eb3b3206",
+      "block-04-time.onnx": "f5c58deab56f5669691d6b38844ef63dc2f3606ea2fe6993a895c36ca881e95b",
+      "block-05-frequency.onnx": "e8c2cdc608270649b4e198663701e361f6ee1786c11fd846d56bd7684cb0cc4c",
+      "block-05-time.onnx": "648dc03432489c44f08eb610eb7c079941ce0d5fbfc0d59275d39f837d495bbc",
+      "block-06-frequency.onnx": "1a7006f146070693e8c8b2ad6a7ec1dd27c1cc4e1b3f8308dad0b31b41032504",
+      "block-06-time.onnx": "eab3fd6652bd41198dc8920ce2b89f30a4e3ae7bdca3049c6ffd93cfe2c63245",
+      "block-07-frequency.onnx": "1d5144c390d023660b8441256eb6bd18e778181b0c79fa5f95bbf2eda88c1b1f",
+      "block-07-time.onnx": "87e6c0b57591fc145eb43924ed0998a77eed0b24b9fbb91fe52a5c5dcec05353",
+      "block-08-frequency.onnx": "f77a0fa744adfd0bdf2aa93b34664cb7c245c3a9f325e6f799695ea2a78ea7ca",
+      "block-08-time.onnx": "0f55a98b1876a9d96ad63e0cf89d7f52a76e9c124bee6e6281fc93b422b03107",
+      "block-09-frequency.onnx": "8d647c15bb2ddbec51e392a5045cfd10e8ef8745af1242e1923a12d98c611899",
+      "block-09-time.onnx": "1499ace8b7683ce31d7af60a5dfa649a4834f32469f5fa161cb06453a91eb958",
+      "block-10-frequency.onnx": "1dd6b316eee0f9a312d2b1752a8f0d1051c5265ea6ab6361e64b386685824a34",
+      "block-10-time.onnx": "3c70c547ff304f7ba369eed6c8180eb23bfcd6246b72a6e66fd683b2aaa36c47",
+      "block-11-frequency.onnx": "1ac019e6270d55218d5809a7cbc10dff238d0bb0d14738ee76e54227306f55a1",
+      "block-11-time.onnx": "31a94b200d07dcde3c8fc4b4846c46f64ad8f44c084a73c6a5bf05f54ed81397",
+      "front.onnx": "7906638e713a517297de6cbb758551e5f86fe4a01d19c45f3e1eac28953bcb0e",
+      "head-0.onnx": "9f8253c46c48f700e6682faf9c22a03b662a65941862414d649a94c38940d0bb",
+      "head-1.onnx": "343131b2c6c8dda367d720c0d42b933dacaa131f433e942258ef7aaa41c2471f"
+    }
+  },
+  "audio": {
+    "sha256": "33f07d502ba19832b62b97d8fb4a11354e81310264bd885d7a06438228773650",
+    "startSample": 661500
+  },
+  "geometry": {
+    "graphCount": 27,
+    "stageCount": 15,
+    "bands": 60,
+    "frames": 1301,
+    "samplesPerStem": 573300,
+    "baseline": {
+      "workers": 1,
+      "timeBatch": 4,
+      "inferenceCalls": 335
+    },
+    "candidate": {
+      "workers": 8,
+      "timeBatch": 1,
+      "inferenceCalls": 875
+    }
+  },
+  "criteria": {
+    "measuredPairs": 3,
+    "minMedianWallReductionPercent": 15,
+    "minEachPairWallReductionPercent": 5
+  },
+  "maxAllowedThrottleToWallRatio": 0.05,
+  "runs": [
+    {
+      "wallNanos": 53697536721,
+      "processCpuNanos": 148910000000,
+      "peakRssBytes": 848654336,
+      "phase": "warmup",
+      "pairIndex": 0,
+      "orderInPair": 0,
+      "variant": "baseline",
+      "output": {
+        "sha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+        "bytes": 4586400,
+        "floats": 1146600,
+        "finite": true
+      },
+      "coverage": {
+        "graphCount": 27,
+        "stageCount": 15,
+        "inferenceCalls": 335,
+        "graphRunCounts": {
+          "front": 1,
+          "block-00-time": 15,
+          "block-00-frequency": 11,
+          "block-01-time": 15,
+          "block-01-frequency": 11,
+          "block-02-time": 15,
+          "block-02-frequency": 11,
+          "block-03-time": 15,
+          "block-03-frequency": 11,
+          "block-04-time": 15,
+          "block-04-frequency": 11,
+          "block-05-time": 15,
+          "block-05-frequency": 11,
+          "block-06-time": 15,
+          "block-06-frequency": 11,
+          "block-07-time": 15,
+          "block-07-frequency": 11,
+          "block-08-time": 15,
+          "block-08-frequency": 11,
+          "block-09-time": 15,
+          "block-09-frequency": 11,
+          "block-10-time": 15,
+          "block-10-frequency": 11,
+          "block-11-time": 15,
+          "block-11-frequency": 11,
+          "head-0": 11,
+          "head-1": 11
+        }
+      },
+      "profileSha256": "f193847176b8891c1a9d3d98247b5b82d126d440dff5077d5270f1c6aac44b8d",
+      "hostCountersBefore": {
+        "cgroupCpuStat": {
+          "usage_usec": 11737759057,
+          "user_usec": 10631909271,
+          "system_usec": 1105849786,
+          "nice_usec": 0,
+          "nr_periods": 96897,
+          "nr_throttled": 366,
+          "throttled_usec": 15888431,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        },
+        "cgroupMemoryEvents": {
+          "low": 0,
+          "high": 0,
+          "max": 24048,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "cgroupMemoryCurrentBytes": 6497701888,
+        "cgroupMemoryStat": {
+          "anon": 76288000,
+          "file": 6096064512,
+          "kernel": 323772416,
+          "file_dirty": 1662976,
+          "file_writeback": 0,
+          "active_file": 3154518016,
+          "inactive_file": 2941542400,
+          "pgfault": 198370915,
+          "pgmajfault": 19,
+          "pgscan_direct": 833446,
+          "pgsteal_direct": 833385,
+          "workingset_refault_file": 40750
+        },
+        "cgroupCpuPressure": null,
+        "cgroupMemoryPressure": null
+      },
+      "hostCountersAfter": {
+        "cgroupCpuStat": {
+          "usage_usec": 11890873021,
+          "user_usec": 10775664996,
+          "system_usec": 1115208024,
+          "nice_usec": 0,
+          "nr_periods": 97436,
+          "nr_throttled": 366,
+          "throttled_usec": 15888431,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        },
+        "cgroupMemoryEvents": {
+          "low": 0,
+          "high": 0,
+          "max": 24048,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "cgroupMemoryCurrentBytes": 6497480704,
+        "cgroupMemoryStat": {
+          "anon": 70885376,
+          "file": 6100680704,
+          "kernel": 324116480,
+          "file_dirty": 7090176,
+          "file_writeback": 0,
+          "active_file": 3154563072,
+          "inactive_file": 2946121728,
+          "pgfault": 200183376,
+          "pgmajfault": 19,
+          "pgscan_direct": 833446,
+          "pgsteal_direct": 833385,
+          "workingset_refault_file": 40750
+        },
+        "cgroupCpuPressure": null,
+        "cgroupMemoryPressure": null
+      }
+    },
+    {
+      "wallNanos": 39431089901,
+      "processCpuNanos": 160180000000,
+      "peakRssBytes": 1050411008,
+      "phase": "warmup",
+      "pairIndex": 0,
+      "orderInPair": 1,
+      "variant": "candidate",
+      "output": {
+        "sha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+        "bytes": 4586400,
+        "floats": 1146600,
+        "finite": true
+      },
+      "coverage": {
+        "graphCount": 27,
+        "stageCount": 15,
+        "inferenceCalls": 875,
+        "graphRunCounts": {
+          "front": 1,
+          "block-00-time": 60,
+          "block-00-frequency": 11,
+          "block-01-time": 60,
+          "block-01-frequency": 11,
+          "block-02-time": 60,
+          "block-02-frequency": 11,
+          "block-03-time": 60,
+          "block-03-frequency": 11,
+          "block-04-time": 60,
+          "block-04-frequency": 11,
+          "block-05-time": 60,
+          "block-05-frequency": 11,
+          "block-06-time": 60,
+          "block-06-frequency": 11,
+          "block-07-time": 60,
+          "block-07-frequency": 11,
+          "block-08-time": 60,
+          "block-08-frequency": 11,
+          "block-09-time": 60,
+          "block-09-frequency": 11,
+          "block-10-time": 60,
+          "block-10-frequency": 11,
+          "block-11-time": 60,
+          "block-11-frequency": 11,
+          "head-0": 11,
+          "head-1": 11
+        }
+      },
+      "profileSha256": "bea20eefcaffc96d4a2ab22872b5b858204cac484e8dbd8e258ca05e00a904b5",
+      "hostCountersBefore": {
+        "cgroupCpuStat": {
+          "usage_usec": 11890948742,
+          "user_usec": 10775740717,
+          "system_usec": 1115208024,
+          "nice_usec": 0,
+          "nr_periods": 97437,
+          "nr_throttled": 366,
+          "throttled_usec": 15888431,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        },
+        "cgroupMemoryEvents": {
+          "low": 0,
+          "high": 0,
+          "max": 24048,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "cgroupMemoryCurrentBytes": 6496210944,
+        "cgroupMemoryStat": {
+          "anon": 71016448,
+          "file": 6100688896,
+          "kernel": 322871296,
+          "file_dirty": 7086080,
+          "file_writeback": 0,
+          "active_file": 3154587648,
+          "inactive_file": 2946105344,
+          "pgfault": 200184533,
+          "pgmajfault": 19,
+          "pgscan_direct": 833446,
+          "pgsteal_direct": 833385,
+          "workingset_refault_file": 40750
+        },
+        "cgroupCpuPressure": null,
+        "cgroupMemoryPressure": null
+      },
+      "hostCountersAfter": {
+        "cgroupCpuStat": {
+          "usage_usec": 12054018936,
+          "user_usec": 10932181804,
+          "system_usec": 1121837132,
+          "nice_usec": 0,
+          "nr_periods": 97833,
+          "nr_throttled": 379,
+          "throttled_usec": 16191370,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        },
+        "cgroupMemoryEvents": {
+          "low": 0,
+          "high": 0,
+          "max": 24048,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "cgroupMemoryCurrentBytes": 6503415808,
+        "cgroupMemoryStat": {
+          "anon": 71061504,
+          "file": 6105305088,
+          "kernel": 325541888,
+          "file_dirty": 9379840,
+          "file_writeback": 0,
+          "active_file": 3159175168,
+          "inactive_file": 2946129920,
+          "pgfault": 201856607,
+          "pgmajfault": 19,
+          "pgscan_direct": 833446,
+          "pgsteal_direct": 833385,
+          "workingset_refault_file": 40750
+        },
+        "cgroupCpuPressure": null,
+        "cgroupMemoryPressure": null
+      }
+    },
+    {
+      "wallNanos": 52010169414,
+      "processCpuNanos": 153830000000,
+      "peakRssBytes": 855269376,
+      "phase": "measurement",
+      "pairIndex": 0,
+      "orderInPair": 0,
+      "variant": "baseline",
+      "output": {
+        "sha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+        "bytes": 4586400,
+        "floats": 1146600,
+        "finite": true
+      },
+      "coverage": {
+        "graphCount": 27,
+        "stageCount": 15,
+        "inferenceCalls": 335,
+        "graphRunCounts": {
+          "front": 1,
+          "block-00-time": 15,
+          "block-00-frequency": 11,
+          "block-01-time": 15,
+          "block-01-frequency": 11,
+          "block-02-time": 15,
+          "block-02-frequency": 11,
+          "block-03-time": 15,
+          "block-03-frequency": 11,
+          "block-04-time": 15,
+          "block-04-frequency": 11,
+          "block-05-time": 15,
+          "block-05-frequency": 11,
+          "block-06-time": 15,
+          "block-06-frequency": 11,
+          "block-07-time": 15,
+          "block-07-frequency": 11,
+          "block-08-time": 15,
+          "block-08-frequency": 11,
+          "block-09-time": 15,
+          "block-09-frequency": 11,
+          "block-10-time": 15,
+          "block-10-frequency": 11,
+          "block-11-time": 15,
+          "block-11-frequency": 11,
+          "head-0": 11,
+          "head-1": 11
+        }
+      },
+      "profileSha256": "0d8432e913a7c89a3205f187d02fbfe93e4ae5f82960f47940df8a2518ebe773",
+      "hostCountersBefore": {
+        "cgroupCpuStat": {
+          "usage_usec": 12054120854,
+          "user_usec": 10932271486,
+          "system_usec": 1121849368,
+          "nice_usec": 0,
+          "nr_periods": 97833,
+          "nr_throttled": 379,
+          "throttled_usec": 16191370,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        },
+        "cgroupMemoryEvents": {
+          "low": 0,
+          "high": 0,
+          "max": 24048,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "cgroupMemoryCurrentBytes": 6505775104,
+        "cgroupMemoryStat": {
+          "anon": 75694080,
+          "file": 6105313280,
+          "kernel": 323321856,
+          "file_dirty": 9388032,
+          "file_writeback": 0,
+          "active_file": 3161497600,
+          "inactive_file": 2943815680,
+          "pgfault": 201860865,
+          "pgmajfault": 19,
+          "pgscan_direct": 833446,
+          "pgsteal_direct": 833385,
+          "workingset_refault_file": 40750
+        },
+        "cgroupCpuPressure": null,
+        "cgroupMemoryPressure": null
+      },
+      "hostCountersAfter": {
+        "cgroupCpuStat": {
+          "usage_usec": 12211028332,
+          "user_usec": 11080954858,
+          "system_usec": 1130073473,
+          "nice_usec": 0,
+          "nr_periods": 98355,
+          "nr_throttled": 379,
+          "throttled_usec": 16191370,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        },
+        "cgroupMemoryEvents": {
+          "low": 0,
+          "high": 0,
+          "max": 24048,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "cgroupMemoryCurrentBytes": 6519349248,
+        "cgroupMemoryStat": {
+          "anon": 79810560,
+          "file": 6112223232,
+          "kernel": 325865472,
+          "file_dirty": 11853824,
+          "file_writeback": 0,
+          "active_file": 3163791360,
+          "inactive_file": 2948431872,
+          "pgfault": 203699969,
+          "pgmajfault": 19,
+          "pgscan_direct": 833446,
+          "pgsteal_direct": 833385,
+          "workingset_refault_file": 40750
+        },
+        "cgroupCpuPressure": null,
+        "cgroupMemoryPressure": null
+      }
+    },
+    {
+      "wallNanos": 38569290179,
+      "processCpuNanos": 158590000000,
+      "peakRssBytes": 1068691456,
+      "phase": "measurement",
+      "pairIndex": 0,
+      "orderInPair": 1,
+      "variant": "candidate",
+      "output": {
+        "sha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+        "bytes": 4586400,
+        "floats": 1146600,
+        "finite": true
+      },
+      "coverage": {
+        "graphCount": 27,
+        "stageCount": 15,
+        "inferenceCalls": 875,
+        "graphRunCounts": {
+          "front": 1,
+          "block-00-time": 60,
+          "block-00-frequency": 11,
+          "block-01-time": 60,
+          "block-01-frequency": 11,
+          "block-02-time": 60,
+          "block-02-frequency": 11,
+          "block-03-time": 60,
+          "block-03-frequency": 11,
+          "block-04-time": 60,
+          "block-04-frequency": 11,
+          "block-05-time": 60,
+          "block-05-frequency": 11,
+          "block-06-time": 60,
+          "block-06-frequency": 11,
+          "block-07-time": 60,
+          "block-07-frequency": 11,
+          "block-08-time": 60,
+          "block-08-frequency": 11,
+          "block-09-time": 60,
+          "block-09-frequency": 11,
+          "block-10-time": 60,
+          "block-10-frequency": 11,
+          "block-11-time": 60,
+          "block-11-frequency": 11,
+          "head-0": 11,
+          "head-1": 11
+        }
+      },
+      "profileSha256": "a9acf2576ebf043de48442688b2cea69ccfefc27d7b5bc1f03014508332819d3",
+      "hostCountersBefore": {
+        "cgroupCpuStat": {
+          "usage_usec": 12211145518,
+          "user_usec": 11081068814,
+          "system_usec": 1130076703,
+          "nice_usec": 0,
+          "nr_periods": 98356,
+          "nr_throttled": 379,
+          "throttled_usec": 16191370,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        },
+        "cgroupMemoryEvents": {
+          "low": 0,
+          "high": 0,
+          "max": 24048,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "cgroupMemoryCurrentBytes": 6517493760,
+        "cgroupMemoryStat": {
+          "anon": 80015360,
+          "file": 6112231424,
+          "kernel": 323493888,
+          "file_dirty": 11857920,
+          "file_writeback": 0,
+          "active_file": 3166113792,
+          "inactive_file": 2946117632,
+          "pgfault": 203700118,
+          "pgmajfault": 19,
+          "pgscan_direct": 833446,
+          "pgsteal_direct": 833385,
+          "workingset_refault_file": 40750
+        },
+        "cgroupCpuPressure": null,
+        "cgroupMemoryPressure": null
+      },
+      "hostCountersAfter": {
+        "cgroupCpuStat": {
+          "usage_usec": 12372712786,
+          "user_usec": 11235194381,
+          "system_usec": 1137518405,
+          "nice_usec": 0,
+          "nr_periods": 98743,
+          "nr_throttled": 381,
+          "throttled_usec": 16196230,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        },
+        "cgroupMemoryEvents": {
+          "low": 0,
+          "high": 0,
+          "max": 24048,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "cgroupMemoryCurrentBytes": 6521257984,
+        "cgroupMemoryStat": {
+          "anon": 75464704,
+          "file": 6119141376,
+          "kernel": 325128192,
+          "file_dirty": 14864384,
+          "file_writeback": 0,
+          "active_file": 3168407552,
+          "inactive_file": 2950733824,
+          "pgfault": 205395472,
+          "pgmajfault": 19,
+          "pgscan_direct": 833446,
+          "pgsteal_direct": 833385,
+          "workingset_refault_file": 40750
+        },
+        "cgroupCpuPressure": null,
+        "cgroupMemoryPressure": null
+      }
+    },
+    {
+      "wallNanos": 46023953569,
+      "processCpuNanos": 172630000000,
+      "peakRssBytes": 1057562624,
+      "phase": "measurement",
+      "pairIndex": 1,
+      "orderInPair": 0,
+      "variant": "candidate",
+      "output": {
+        "sha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+        "bytes": 4586400,
+        "floats": 1146600,
+        "finite": true
+      },
+      "coverage": {
+        "graphCount": 27,
+        "stageCount": 15,
+        "inferenceCalls": 875,
+        "graphRunCounts": {
+          "front": 1,
+          "block-00-time": 60,
+          "block-00-frequency": 11,
+          "block-01-time": 60,
+          "block-01-frequency": 11,
+          "block-02-time": 60,
+          "block-02-frequency": 11,
+          "block-03-time": 60,
+          "block-03-frequency": 11,
+          "block-04-time": 60,
+          "block-04-frequency": 11,
+          "block-05-time": 60,
+          "block-05-frequency": 11,
+          "block-06-time": 60,
+          "block-06-frequency": 11,
+          "block-07-time": 60,
+          "block-07-frequency": 11,
+          "block-08-time": 60,
+          "block-08-frequency": 11,
+          "block-09-time": 60,
+          "block-09-frequency": 11,
+          "block-10-time": 60,
+          "block-10-frequency": 11,
+          "block-11-time": 60,
+          "block-11-frequency": 11,
+          "head-0": 11,
+          "head-1": 11
+        }
+      },
+      "profileSha256": "4f965fd5befc5deb931d9bd1c8b9e46e7bf388253868226664964a1274c1998e",
+      "hostCountersBefore": {
+        "cgroupCpuStat": {
+          "usage_usec": 12372817702,
+          "user_usec": 11235274065,
+          "system_usec": 1137543636,
+          "nice_usec": 0,
+          "nr_periods": 98744,
+          "nr_throttled": 381,
+          "throttled_usec": 16196230,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        },
+        "cgroupMemoryEvents": {
+          "low": 0,
+          "high": 0,
+          "max": 24048,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "cgroupMemoryCurrentBytes": 6521004032,
+        "cgroupMemoryStat": {
+          "anon": 75513856,
+          "file": 6119149568,
+          "kernel": 324722688,
+          "file_dirty": 14868480,
+          "file_writeback": 0,
+          "active_file": 3168436224,
+          "inactive_file": 2950713344,
+          "pgfault": 205398034,
+          "pgmajfault": 19,
+          "pgscan_direct": 833446,
+          "pgsteal_direct": 833385,
+          "workingset_refault_file": 40750
+        },
+        "cgroupCpuPressure": null,
+        "cgroupMemoryPressure": null
+      },
+      "hostCountersAfter": {
+        "cgroupCpuStat": {
+          "usage_usec": 12548743477,
+          "user_usec": 11402107064,
+          "system_usec": 1146636413,
+          "nice_usec": 0,
+          "nr_periods": 99206,
+          "nr_throttled": 385,
+          "throttled_usec": 16287526,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        },
+        "cgroupMemoryEvents": {
+          "low": 0,
+          "high": 0,
+          "max": 24048,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "cgroupMemoryCurrentBytes": 6522920960,
+        "cgroupMemoryStat": {
+          "anon": 75333632,
+          "file": 6120198144,
+          "kernel": 326074368,
+          "file_dirty": 15216640,
+          "file_writeback": 0,
+          "active_file": 3171635200,
+          "inactive_file": 2948558848,
+          "pgfault": 207193846,
+          "pgmajfault": 19,
+          "pgscan_direct": 833446,
+          "pgsteal_direct": 833385,
+          "workingset_refault_file": 40750
+        },
+        "cgroupCpuPressure": null,
+        "cgroupMemoryPressure": null
+      }
+    },
+    {
+      "wallNanos": 46569917466,
+      "processCpuNanos": 129190000000,
+      "peakRssBytes": 883130368,
+      "phase": "measurement",
+      "pairIndex": 1,
+      "orderInPair": 1,
+      "variant": "baseline",
+      "output": {
+        "sha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+        "bytes": 4586400,
+        "floats": 1146600,
+        "finite": true
+      },
+      "coverage": {
+        "graphCount": 27,
+        "stageCount": 15,
+        "inferenceCalls": 335,
+        "graphRunCounts": {
+          "front": 1,
+          "block-00-time": 15,
+          "block-00-frequency": 11,
+          "block-01-time": 15,
+          "block-01-frequency": 11,
+          "block-02-time": 15,
+          "block-02-frequency": 11,
+          "block-03-time": 15,
+          "block-03-frequency": 11,
+          "block-04-time": 15,
+          "block-04-frequency": 11,
+          "block-05-time": 15,
+          "block-05-frequency": 11,
+          "block-06-time": 15,
+          "block-06-frequency": 11,
+          "block-07-time": 15,
+          "block-07-frequency": 11,
+          "block-08-time": 15,
+          "block-08-frequency": 11,
+          "block-09-time": 15,
+          "block-09-frequency": 11,
+          "block-10-time": 15,
+          "block-10-frequency": 11,
+          "block-11-time": 15,
+          "block-11-frequency": 11,
+          "head-0": 11,
+          "head-1": 11
+        }
+      },
+      "profileSha256": "31e8990aa4850a2d0645835d9bbcd64abbb082b144bf2e4b3c346d5bcf5ea800",
+      "hostCountersBefore": {
+        "cgroupCpuStat": {
+          "usage_usec": 12548876878,
+          "user_usec": 11402232354,
+          "system_usec": 1146644523,
+          "nice_usec": 0,
+          "nr_periods": 99207,
+          "nr_throttled": 385,
+          "throttled_usec": 16287526,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        },
+        "cgroupMemoryEvents": {
+          "low": 0,
+          "high": 0,
+          "max": 24048,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "cgroupMemoryCurrentBytes": 6520778752,
+        "cgroupMemoryStat": {
+          "anon": 75358208,
+          "file": 6120206336,
+          "kernel": 323702784,
+          "file_dirty": 15220736,
+          "file_writeback": 0,
+          "active_file": 3171663872,
+          "inactive_file": 2948542464,
+          "pgfault": 207196604,
+          "pgmajfault": 19,
+          "pgscan_direct": 833446,
+          "pgsteal_direct": 833385,
+          "workingset_refault_file": 40750
+        },
+        "cgroupCpuPressure": null,
+        "cgroupMemoryPressure": null
+      },
+      "hostCountersAfter": {
+        "cgroupCpuStat": {
+          "usage_usec": 12680865134,
+          "user_usec": 11525887371,
+          "system_usec": 1154977762,
+          "nice_usec": 0,
+          "nr_periods": 99675,
+          "nr_throttled": 385,
+          "throttled_usec": 16287526,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        },
+        "cgroupMemoryEvents": {
+          "low": 0,
+          "high": 0,
+          "max": 24048,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "cgroupMemoryCurrentBytes": 6532603904,
+        "cgroupMemoryStat": {
+          "anon": 79646720,
+          "file": 6125465600,
+          "kernel": 325926912,
+          "file_dirty": 20492288,
+          "file_writeback": 0,
+          "active_file": 3176251392,
+          "inactive_file": 2949214208,
+          "pgfault": 208905264,
+          "pgmajfault": 19,
+          "pgscan_direct": 833446,
+          "pgsteal_direct": 833385,
+          "workingset_refault_file": 40750
+        },
+        "cgroupCpuPressure": null,
+        "cgroupMemoryPressure": null
+      }
+    },
+    {
+      "wallNanos": 55000228824,
+      "processCpuNanos": 151900000000,
+      "peakRssBytes": 835989504,
+      "phase": "measurement",
+      "pairIndex": 2,
+      "orderInPair": 0,
+      "variant": "baseline",
+      "output": {
+        "sha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+        "bytes": 4586400,
+        "floats": 1146600,
+        "finite": true
+      },
+      "coverage": {
+        "graphCount": 27,
+        "stageCount": 15,
+        "inferenceCalls": 335,
+        "graphRunCounts": {
+          "front": 1,
+          "block-00-time": 15,
+          "block-00-frequency": 11,
+          "block-01-time": 15,
+          "block-01-frequency": 11,
+          "block-02-time": 15,
+          "block-02-frequency": 11,
+          "block-03-time": 15,
+          "block-03-frequency": 11,
+          "block-04-time": 15,
+          "block-04-frequency": 11,
+          "block-05-time": 15,
+          "block-05-frequency": 11,
+          "block-06-time": 15,
+          "block-06-frequency": 11,
+          "block-07-time": 15,
+          "block-07-frequency": 11,
+          "block-08-time": 15,
+          "block-08-frequency": 11,
+          "block-09-time": 15,
+          "block-09-frequency": 11,
+          "block-10-time": 15,
+          "block-10-frequency": 11,
+          "block-11-time": 15,
+          "block-11-frequency": 11,
+          "head-0": 11,
+          "head-1": 11
+        }
+      },
+      "profileSha256": "1a84a564dc2470b08578e6548c5faed1d83b639c234fc385414b4c38f19742b6",
+      "hostCountersBefore": {
+        "cgroupCpuStat": {
+          "usage_usec": 12681007270,
+          "user_usec": 11526016624,
+          "system_usec": 1154990646,
+          "nice_usec": 0,
+          "nr_periods": 99676,
+          "nr_throttled": 385,
+          "throttled_usec": 16287526,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        },
+        "cgroupMemoryEvents": {
+          "low": 0,
+          "high": 0,
+          "max": 24048,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "cgroupMemoryCurrentBytes": 6530625536,
+        "cgroupMemoryStat": {
+          "anon": 80101376,
+          "file": 6125473792,
+          "kernel": 323796992,
+          "file_dirty": 20496384,
+          "file_writeback": 0,
+          "active_file": 3176280064,
+          "inactive_file": 2949193728,
+          "pgfault": 208905378,
+          "pgmajfault": 19,
+          "pgscan_direct": 833446,
+          "pgsteal_direct": 833385,
+          "workingset_refault_file": 40750
+        },
+        "cgroupCpuPressure": null,
+        "cgroupMemoryPressure": null
+      },
+      "hostCountersAfter": {
+        "cgroupCpuStat": {
+          "usage_usec": 12836514610,
+          "user_usec": 11670832834,
+          "system_usec": 1165681776,
+          "nice_usec": 0,
+          "nr_periods": 100228,
+          "nr_throttled": 385,
+          "throttled_usec": 16287526,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        },
+        "cgroupMemoryEvents": {
+          "low": 0,
+          "high": 0,
+          "max": 24048,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "cgroupMemoryCurrentBytes": 6535008256,
+        "cgroupMemoryStat": {
+          "anon": 75395072,
+          "file": 6131056640,
+          "kernel": 327241728,
+          "file_dirty": 14110720,
+          "file_writeback": 0,
+          "active_file": 3180867584,
+          "inactive_file": 2950189056,
+          "pgfault": 210650060,
+          "pgmajfault": 19,
+          "pgscan_direct": 833446,
+          "pgsteal_direct": 833385,
+          "workingset_refault_file": 40750
+        },
+        "cgroupCpuPressure": null,
+        "cgroupMemoryPressure": null
+      }
+    },
+    {
+      "wallNanos": 39880247293,
+      "processCpuNanos": 160870000000,
+      "peakRssBytes": 1062682624,
+      "phase": "measurement",
+      "pairIndex": 2,
+      "orderInPair": 1,
+      "variant": "candidate",
+      "output": {
+        "sha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+        "bytes": 4586400,
+        "floats": 1146600,
+        "finite": true
+      },
+      "coverage": {
+        "graphCount": 27,
+        "stageCount": 15,
+        "inferenceCalls": 875,
+        "graphRunCounts": {
+          "front": 1,
+          "block-00-time": 60,
+          "block-00-frequency": 11,
+          "block-01-time": 60,
+          "block-01-frequency": 11,
+          "block-02-time": 60,
+          "block-02-frequency": 11,
+          "block-03-time": 60,
+          "block-03-frequency": 11,
+          "block-04-time": 60,
+          "block-04-frequency": 11,
+          "block-05-time": 60,
+          "block-05-frequency": 11,
+          "block-06-time": 60,
+          "block-06-frequency": 11,
+          "block-07-time": 60,
+          "block-07-frequency": 11,
+          "block-08-time": 60,
+          "block-08-frequency": 11,
+          "block-09-time": 60,
+          "block-09-frequency": 11,
+          "block-10-time": 60,
+          "block-10-frequency": 11,
+          "block-11-time": 60,
+          "block-11-frequency": 11,
+          "head-0": 11,
+          "head-1": 11
+        }
+      },
+      "profileSha256": "fbd0329102a27c4d604a5f6e32af92e0e41a69ef176ed3ef116d294279cfd6a0",
+      "hostCountersBefore": {
+        "cgroupCpuStat": {
+          "usage_usec": 12836587709,
+          "user_usec": 11670897775,
+          "system_usec": 1165689934,
+          "nice_usec": 0,
+          "nr_periods": 100229,
+          "nr_throttled": 385,
+          "throttled_usec": 16287526,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        },
+        "cgroupMemoryEvents": {
+          "low": 0,
+          "high": 0,
+          "max": 24048,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "cgroupMemoryCurrentBytes": 6531948544,
+        "cgroupMemoryStat": {
+          "anon": 75419648,
+          "file": 6131064832,
+          "kernel": 323895296,
+          "file_dirty": 14114816,
+          "file_writeback": 0,
+          "active_file": 3180896256,
+          "inactive_file": 2950168576,
+          "pgfault": 210650066,
+          "pgmajfault": 19,
+          "pgscan_direct": 833446,
+          "pgsteal_direct": 833385,
+          "workingset_refault_file": 40750
+        },
+        "cgroupCpuPressure": null,
+        "cgroupMemoryPressure": null
+      },
+      "hostCountersAfter": {
+        "cgroupCpuStat": {
+          "usage_usec": 13000475326,
+          "user_usec": 11827953798,
+          "system_usec": 1172521527,
+          "nice_usec": 0,
+          "nr_periods": 100629,
+          "nr_throttled": 393,
+          "throttled_usec": 16877135,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        },
+        "cgroupMemoryEvents": {
+          "low": 0,
+          "high": 0,
+          "max": 24048,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "cgroupMemoryCurrentBytes": 6539067392,
+        "cgroupMemoryStat": {
+          "anon": 75403264,
+          "file": 6136320000,
+          "kernel": 326107136,
+          "file_dirty": 14778368,
+          "file_writeback": 0,
+          "active_file": 3185483776,
+          "inactive_file": 2950832128,
+          "pgfault": 212383463,
+          "pgmajfault": 19,
+          "pgscan_direct": 833446,
+          "pgsteal_direct": 833385,
+          "workingset_refault_file": 40750
+        },
+        "cgroupCpuPressure": null,
+        "cgroupMemoryPressure": null
+      }
+    }
+  ],
+  "passed": false,
+  "androidSpeedupProven": false,
+  "wholeAnalysisSpeedupProven": false,
+  "compiledClassHashes": {
+    "com/cyberbasslord/lightforge/AppDiagnostics.class": "5af8c3bded90340e7095c2bd99391dbaf1de68f99e3c3d8d4f8b95e5f9ab8bbe",
+    "com/cyberbasslord/lightforge/NativeDeux$1.class": "9721bf3095458a79ee903cfdb7193ad0d5cbd07ee9a7ede747a2147cb7ed3107",
+    "com/cyberbasslord/lightforge/NativeDeux$BoundTemporalRun.class": "a8777c04f9f46644000b3e7dabd1df3cf2b028db542e01aab02dc1f3e852176b",
+    "com/cyberbasslord/lightforge/NativeDeux$CalibrationTrial.class": "be20884eaf1b869ade6381a07086bd4f7eece2f43cc273099e52b6dd4dce9854",
+    "com/cyberbasslord/lightforge/NativeDeux$CalibrationUnavailable.class": "ee7530c653cbc78f9cf9187b79434ce720661fd7782d5ddb57858289c7f452a6",
+    "com/cyberbasslord/lightforge/NativeDeux$Cancellation.class": "48fad6bf46129580f5dc0adae05fb078740b806f93e72d00846bc07f9716a5d3",
+    "com/cyberbasslord/lightforge/NativeDeux$ExecutionScope.class": "95a8d92b5bdd0602f4de03c4eeddbc4c1a45f17d9fa183af60c22ef06d97b855",
+    "com/cyberbasslord/lightforge/NativeDeux$Listener.class": "de203d4a4cf9f1c30e94368229dc2aacc841463b88d47fd2ec9c2f035d32bd2c",
+    "com/cyberbasslord/lightforge/NativeDeux$TemporalMemoryUnavailable.class": "057a983d29b27794dceb78ccfbbe245650942146f548c076cf5b8570641cc1b5",
+    "com/cyberbasslord/lightforge/NativeDeux$TemporalPass.class": "5e6259d3aee5dcb2690de8426a2af44fb0a1f48a7f134031f31abf783c4f2c01",
+    "com/cyberbasslord/lightforge/NativeDeux$TensorHasher.class": "077e93e4164d6855931eb42a0f846ecc9e1156746a15c5bc96d83d7334974e18",
+    "com/cyberbasslord/lightforge/NativeDeux.class": "07c40f2ef430a035d96b862c8c3c3cdf839a1d95024a1ceae928129fa196d90e",
+    "com/cyberbasslord/lightforge/NativeDeuxParallelBenchmark.class": "acf7081615d89b4c150d0d8db80abd2c2d38251ee935c807a0d82e91e7cbf801",
+    "com/cyberbasslord/lightforge/NativeDeuxTransform$Check.class": "2455372eebd4c168c1f32b08191eca57234e3898b1c63c505f77f355e62b56c9",
+    "com/cyberbasslord/lightforge/NativeDeuxTransform$FFT.class": "cf69f5ca8f31968599ea04196f0354fc82d4d28d590b45de25a97618f387146e",
+    "com/cyberbasslord/lightforge/NativeDeuxTransform.class": "e77f40de1c80acc393e6fdb11149e5a04686ee7012ec824ee73228add43d7ea5",
+    "com/cyberbasslord/lightforge/NativeExecutionPolicy$1.class": "aab2f7cc722a26bb96954e4749c7ae00c91dac4fbc121be839e47e13db9e9190",
+    "com/cyberbasslord/lightforge/NativeExecutionPolicy$Calibration.class": "631c3bf62b91fdeefe6d91e8bcef56292c5304897c5565932b5d317c1e5839a6",
+    "com/cyberbasslord/lightforge/NativeExecutionPolicy$Candidate.class": "5128f61f316dfae46056e849a01674c34063c7cd6bff3ac2f1d8838a318b5f44",
+    "com/cyberbasslord/lightforge/NativeExecutionPolicy$Config.class": "d9d56e102f01a7e1f9823be2445af1dbaa87c53f3bdb5787946ba2f2c20c9c70",
+    "com/cyberbasslord/lightforge/NativeExecutionPolicy$Decision.class": "ca16796999ba94deeb50c3e1195657a11cee0c5f122f897fc9bdd9723bbb2df9",
+    "com/cyberbasslord/lightforge/NativeExecutionPolicy$Key.class": "8b1e005c4c01538e6a7ea9e2ba11f66a44cc225facc145fbb582e05f7dbce308",
+    "com/cyberbasslord/lightforge/NativeExecutionPolicy$Sample.class": "bfa92d9d9c62f2050e7ca56e9f7efe5559420653250ebe89f75562a0372b3c28",
+    "com/cyberbasslord/lightforge/NativeExecutionPolicy.class": "0a2937b7b5cd5505414ab428c82b83a62e9f3ceeb50f012437f84250c9537765",
+    "com/cyberbasslord/lightforge/NativeInferenceProfile$1.class": "77d291bc02cfb2b46e5ca4cf2a35de369bb6ae1845cfa72e1558a4c86ebb7fcd",
+    "com/cyberbasslord/lightforge/NativeInferenceProfile$2.class": "43bbe536dddfce9c4b220629ee8367e78758e7412aa7d0fb9a37577a9978067d",
+    "com/cyberbasslord/lightforge/NativeInferenceProfile$3.class": "47e279422772584e2d75d14a3a900579016e7f088c593f4c4db1fed88b0938a9",
+    "com/cyberbasslord/lightforge/NativeInferenceProfile$4.class": "1c34a22e456ff139d253e9b86cd06f4d2518fe1b10128b32ad71567237849bfe",
+    "com/cyberbasslord/lightforge/NativeInferenceProfile$5.class": "1502251588bc27e71a92b2e7e1bfdb091bdbf38eb52d5ce66f4c46f473bbcd9b",
+    "com/cyberbasslord/lightforge/NativeInferenceProfile$6.class": "ea662c594e52c95287e110563857ec51cf5717d028ae6aef044f373b95877790",
+    "com/cyberbasslord/lightforge/NativeInferenceProfile$CpuClock.class": "6d7272ec7db5b6956ddc5624e65f0fc2802424b43a968e8bce36e81f4dcdc12a",
+    "com/cyberbasslord/lightforge/NativeInferenceProfile$Graph.class": "4fb718167e0f69daf5990f499bdf24de114555be00526e13f60fd97bcb668aba",
+    "com/cyberbasslord/lightforge/NativeInferenceProfile$Heap.class": "d07bc999f138b996f71ea977634a4a5bd274f9f01bb4b6ffa16286539630a2cd",
+    "com/cyberbasslord/lightforge/NativeInferenceProfile$Measurement.class": "056365db9ff35c612cd97c95fd0140cbc990767639fb0b69bdb5b2a0c3d7feb7",
+    "com/cyberbasslord/lightforge/NativeInferenceProfile$Metric.class": "712b71036587364276901c9f28f6293b11f55a4242e2aca875aec0d5c817ac99",
+    "com/cyberbasslord/lightforge/NativeInferenceProfile$Snapshot.class": "cf65d00f2ff43385f37369fe551f6235099c14d0e01a9ab5a8ac9f94fd01ec7c",
+    "com/cyberbasslord/lightforge/NativeInferenceProfile$Stage.class": "01ed2fda0a802dbcacec3a351a9f95d16367249fcd33c4768f90d8fc54ba0faa",
+    "com/cyberbasslord/lightforge/NativeInferenceProfile$Timing.class": "513c51ef1e576e597557e673b74d9794013f7bcefaf8c07723377ca99106030e",
+    "com/cyberbasslord/lightforge/NativeInferenceProfile.class": "7ddeececf427d3d088d6b3355d12b364972ad770727da0ef524179aa1efcf33a"
+  },
+  "sourceBindingsAfter": {
+    "android/native-runtime.json": "e3ea568b3a8485235f23a59cd787466cdcbbfcaa54ac56df3ce040d29fcb2a94",
+    "android/src/com/cyberbasslord/lightforge/NativeDeux.java": "283f75fc3a9ca9dfd47a55e5766da7a8af8e38247b8c75f06760218c1b8b78a4",
+    "android/src/com/cyberbasslord/lightforge/NativeDeuxTransform.java": "991b06501cfb88b904d0b714a525c389f169f00c231248b0e961b70f257e90b5",
+    "android/src/com/cyberbasslord/lightforge/NativeExecutionPolicy.java": "9499358bc3ff41da4b505949ebef8d4d75dafcd2178bc39b59988cba76352bb7",
+    "android/src/com/cyberbasslord/lightforge/NativeInferenceProfile.java": "82d587dd460b77759fd4bcd6169d4eb30aa95ffe24b696b01c3e9c965915f82f",
+    "tests/NativeDeuxParallelBenchmark.java": "85992a6ddae1201bb06254561d284f64c3c1de6badaf0e83259d4a85cf245d8d",
+    "tools/benchmark_deux_execution.py": "135dd27d1465b05170a12d40e73c3f144ad58b8c2ec08ef07bfdb3e129fd4a2a",
+    "tools/benchmark_deux_parallel.py": "52eedf59d9ce52555999f162d24c08c1b4cb5594763a0e0129a87c7bc0056d0f"
+  },
+  "pairedReductions": [
+    {
+      "pairIndex": 0,
+      "baselineWallNanos": 52010169414,
+      "candidateWallNanos": 38569290179,
+      "wallReductionPercent": 25.842790720427857
+    },
+    {
+      "pairIndex": 1,
+      "baselineWallNanos": 46569917466,
+      "candidateWallNanos": 46023953569,
+      "wallReductionPercent": 1.1723531556580458
+    },
+    {
+      "pairIndex": 2,
+      "baselineWallNanos": 55000228824,
+      "candidateWallNanos": 39880247293,
+      "wallReductionPercent": 27.490761137346787
+    }
+  ],
+  "medians": {
+    "baseline": {
+      "wallNanos": 52010169414,
+      "processCpuNanos": 151900000000,
+      "peakRssBytes": 855269376
+    },
+    "candidate": {
+      "wallNanos": 39880247293,
+      "processCpuNanos": 160870000000,
+      "peakRssBytes": 1062682624
+    }
+  },
+  "medianWallReductionPercent": 23.32221228592055,
+  "allOutputsByteIdentical": true,
+  "resources": {
+    "noOom": true,
+    "noMemoryLimitEvents": true,
+    "noDirectReclaim": true,
+    "maxThrottleToWallRatio": 0.014784487058672061
+  },
+  "finishedAt": "2026-09-28T06:17:04.397907+00:00"
+}

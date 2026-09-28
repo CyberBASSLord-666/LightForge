@@ -9,7 +9,7 @@ const {webcrypto}=require('node:crypto');
 const source=fs.readFileSync(process.env.LIGHTFORGE_ANALYZER_SOURCE||path.join(__dirname,'..','web/analysis/analyzer.js'),'utf8');
 const manifest=JSON.stringify({'analyzer.js':{bytes:1,sha256:'a'.repeat(64)},'worker.js':{bytes:1,sha256:'b'.repeat(64)},'models/features.json':{bytes:1,sha256:'c'.repeat(64)},'models/model-manifest.json':{bytes:1,sha256:'d'.repeat(64)}});
 
-function harness(){
+function harness({emitProgress=false}={}){
  const starts=[],events=[];let separationFailed=false;
  const context=vm.createContext({URL,crypto:webcrypto,TextEncoder,DOMException,AbortController,performance,setInterval,clearInterval,fetch:async()=>({ok:true,text:async()=>manifest}),
   LightForgeVersion:{name:'test'},document:{currentScript:{src:'https://app.test/analysis/analyzer.js'}},
@@ -23,6 +23,7 @@ function harness(){
   postMessage(message){starts.push(message);setImmediate(()=>{
    if(this.closed||!message.stage)return;
    if(message.stage==='separation'&&message.options.supportsNativeDeux&&!separationFailed){separationFailed=true;this.onmessage({data:{type:'error',message:'native separation failed',code:'native-deux-fallback'}});return;}
+   if(emitProgress)this.onmessage({data:{type:'progress',value:{stage:'Human '+message.stage,detail:'Detail '+message.stage,analysisStage:'incorrect-worker-phase',progress:.2,passageIndex:2}}});
    this.onmessage({data:{type:'result',value:{...message.value,engine:{name:'test'}},seconds:0,restored:false,profile:{schemaVersion:1,resources:{}}}});
   });}
  };
@@ -46,4 +47,15 @@ test('a failed persistence fence blocks the WASM retry',async()=>{
  const h=harness(),predict=async()=>{};predict.release=async()=>{};
  await assert.rejects(h.analyze('/song.wav',{analysisIdentity:'a'.repeat(64),nativePredict:predict,nativeRuntimeProfile:'native-deux-test-v1',onNativeFallback:async()=>false}),/fallback checkpoint/);
  assert.deepEqual(h.starts.map(start=>start.stage),['rhythm','separation']);
+});
+
+test('worker progress preserves human display text and adds the authoritative canonical phase',async()=>{
+ const h=harness({emitProgress:true}),progress=[];
+ await h.analyze('/song.wav',{analysisIdentity:'a'.repeat(64),recurrenceAnalysis:true},value=>progress.push(value));
+ assert.deepEqual(progress.map(value=>value.analysisStage),['rhythm','separation','voice','bass','recurrence']);
+ for(const value of progress){
+  assert.equal(value.stage,'Human '+value.analysisStage);
+  assert.equal(value.detail,'Detail '+value.analysisStage);
+  assert.equal(value.passageIndex,2);
+ }
 });

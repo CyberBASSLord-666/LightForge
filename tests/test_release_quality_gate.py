@@ -116,7 +116,8 @@ class ReleaseQualityGateTest(unittest.TestCase):
     def test_automated_only_policy_is_explicit_and_limited_to_authorized_releases(self):
         declaration = dict(self.declaration, requirement="automated_verification_only")
         self.assertEqual(gate.validate_release_declaration(declaration, version=self.version), declaration)
-        for next_version in ({"name": "2.3.2", "code": 20302}, {"name": "2.4.0", "code": 20400}):
+        for next_version in ({"name": "2.3.2", "code": 20302}, {"name": "2.4.0", "code": 20400},
+                             {"name": "2.4.1", "code": 20401}):
             next_declaration = dict(declaration, release=next_version)
             self.assertEqual(gate.validate_release_declaration(next_declaration, version=next_version), next_declaration)
         for version in (
@@ -128,7 +129,8 @@ class ReleaseQualityGateTest(unittest.TestCase):
             {"name": "2.3.2", "code": 20301},
             {"name": "2.3.3", "code": 20303},
             {"name": "2.4.0", "code": 20302},
-            {"name": "2.4.1", "code": 20401},
+            {"name": "2.4.1", "code": 20400},
+            {"name": "2.4.2", "code": 20402},
         ):
             with self.subTest(version=version):
                 with self.assertRaisesRegex(ValueError, "authorized only"):
@@ -151,7 +153,8 @@ class ReleaseQualityGateTest(unittest.TestCase):
     def test_automated_only_cannot_generate_a_pass_target_qualification_receipt(self):
         for version in ({"name": "2.2.5", "code": 20205}, {"name": "2.3.0", "code": 20300},
                         {"name": "2.3.1", "code": 20301}, {"name": "2.3.2", "code": 20302},
-                        {"name": "2.4.0", "code": 20400}):
+                        {"name": "2.4.0", "code": 20400},
+                        {"name": "2.4.1", "code": 20401}):
             with self.subTest(version=version):
                 self.version = version
                 self.declaration.update(release=version, requirement="automated_verification_only")

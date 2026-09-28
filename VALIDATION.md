@@ -4,6 +4,29 @@ A repository test, an APK build, a published release and a performance claim are
 different results. Each must identify the source and evidence it actually covers.
 This page is an index, not a replacement for source-bound receipts.
 
+## Current 2.4.1 qualification
+
+**Host inference prerequisite passed; release verification pending.** Final
+production source reduced median complete-passage time by 32.6%, from 65.3 to
+44.0 seconds. Every measured pair improved by 28–36%, all eight full outputs
+were byte-identical, and every resource guard passed. Earlier failed attempts
+remain in the [investigation record](research/inference-2.4.1/README.md).
+
+The next inference release adds device-local scheduling calibration and durable
+job/route measurements. [The calibration contract](docs/NATIVE_EXECUTION_CALIBRATION.md)
+requires repeated timing wins and unchanged finite output before selecting a
+candidate. Its current-release model gate executes reference, freshly calibrated
+and cached full passages, checks all original production calls, and verifies
+cancelled calibration cannot commit a partial result. Fresh/cached execution,
+forced four/eight-worker paths, real JNI cancellation and interrupt retirement,
+and exact recovery have passed on the final production source.
+
+[GAME option screening](research/inference-2.4.1/game-options-screen.json)
+rejected numerical differences and inconsistent performance; production GAME
+settings remain unchanged. The admitted host result does not establish physical
+phone or whole-analysis speed. Fresh production/browser/Android CI, exact
+candidate signing and publication are still required.
+
 ## Published 2.4.0 record
 
 The [LightForge 2.4.0 release](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.4.0)

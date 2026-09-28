@@ -28,9 +28,51 @@ SUMMARY_METRICS = (
     "preprocessCpuMs", "modelInitWallMs", "modelInitCpuMs", "inferenceWallMs",
     "inferenceCpuMs", "postprocessWallMs", "postprocessCpuMs", "cacheModelHits",
     "cacheModelMisses", "cacheHitBytes", "cacheMissBytes", "directBufferBytes",
+    "inferenceThreadCpuMs", "inferenceProcessCpuMs", "inferenceCount", "sessionInitCount",
+    "inferenceWorkerThreadCpuMs", "inferenceWorkerRunCount",
+    "schedulerCalibrationWallMs", "schedulerCalibrationCount",
 )
-GRAPH_METRICS = ("runCount", "runWallMs", "runCpuMs", "sessionInitWallMs", "packWallMs", "scatterWallMs")
-TELEMETRY = ("cpuTelemetry", "memoryTelemetry", "acceleratorTelemetry", "directBufferTelemetry", "cacheTelemetry")
+GRAPH_METRICS = ("runCount", "runWallMs", "runCpuMs", "runProcessCpuMs", "sessionInitWallMs",
+                 "packWallMs", "packCpuMs", "packProcessCpuMs", "scatterWallMs", "scatterCpuMs", "scatterProcessCpuMs")
+TELEMETRY = ("cpuTelemetry", "memoryTelemetry", "acceleratorTelemetry", "directBufferTelemetry", "cacheTelemetry", "inferenceWorkerCpuTelemetry")
+SUMMARY_SCOPES = {
+    "cpuScope": {"calling-thread"}, "processCpuScope": {"all-app-threads"},
+    "inferenceWallScope": {"critical-path"},
+    "inferenceThreadCpuScope": {"calling-thread", "coordinator"},
+    "inferenceWorkerThreadCpuScope": {"sum-run-calling-threads"},
+    "inferenceWorkScope": {"run-and-wave-coordination", "run-and-pipeline-coordination"},
+    "instrumentedCpuScope": {"nonoverlapping-calling-thread"},
+}
+COPY_INTERVAL_SCOPES = {"sequential-intervals", "nested-in-inference-pipeline", "mixed-nested-and-sequential-intervals", "unavailable"}
+COPY_PROCESS_SCOPES = {"all-app-threads", "unavailable-overlapping-intervals", "unavailable"}
+STAGE_SCOPES = {
+    "wallScope": {"critical-path"} | COPY_INTERVAL_SCOPES,
+    "workScope": {"run-and-wave-coordination", "run-and-pipeline-coordination"},
+    "cpuScope": {"calling-thread"}, "processCpuScope": COPY_PROCESS_SCOPES,
+}
+GRAPH_SCOPES = {
+    "graphWallScope": {"aggregate-call", "sequential-intervals"},
+    "runCpuScope": {"run-calling-threads", "calling-thread"},
+    "runProcessCpuScope": {"unavailable-overlapping-intervals", "all-app-threads"},
+    "packWallScope": COPY_INTERVAL_SCOPES, "scatterWallScope": COPY_INTERVAL_SCOPES,
+    "packProcessCpuScope": COPY_PROCESS_SCOPES, "scatterProcessCpuScope": COPY_PROCESS_SCOPES,
+}
+
+
+def _scope_counts(rows, vocabulary):
+    """Retain explicit timing semantics without exporting arbitrary diagnostic text."""
+    return {key: dict(Counter(row[key] if row.get(key) in allowed else "missing-or-unknown" for row in rows))
+            for key, allowed in vocabulary.items()}
+
+
+def _scheduler_configuration(raw, *, temporal):
+    if not isinstance(raw, str):
+        return None
+    if re.fullmatch(r"cpu-i[1-6]-j1-d(?:0|4)-sequential", raw):
+        return raw
+    if temporal and re.fullmatch(r"cpu-i1-j1-d0-sequential-w(?:4|8)-b1", raw):
+        return raw
+    return None
 
 
 def number(raw):
@@ -140,9 +182,61 @@ def _profile_totals(profiles):
         "outcomes": dict(Counter(row.get("outcome") if row.get("outcome") in {"completed", "released", "failed", "cancelled", "interrupted"} else "unknown" for row in fields)),
         "metrics": {key: aggregate(fields, key) for key in SUMMARY_METRICS},
         "telemetry": telemetry,
-        "stages": {name: {key: aggregate(rows, key) for key in ("samples", "wallMs", "cpuMs")} for name, rows in sorted(stage_rows.items())},
-        "graphs": {name: {key: aggregate(rows, key) for key in GRAPH_METRICS} for name, rows in sorted(graph_rows.items())},
+        "measurement_scopes": _scope_counts(fields, SUMMARY_SCOPES),
+        "stages": {name: {**{key: aggregate(rows, key) for key in ("samples", "wallMs", "cpuMs", "processCpuMs")},
+                          "measurement_scopes": _scope_counts(rows, STAGE_SCOPES)} for name, rows in sorted(stage_rows.items())},
+        "graphs": {name: {**{key: aggregate(rows, key) for key in GRAPH_METRICS},
+                          "measurement_scopes": _scope_counts(rows, GRAPH_SCOPES)} for name, rows in sorted(graph_rows.items())},
     }
+
+
+DURABLE_METRICS = (
+    "wallMs", "modelInitWallMs", "inferenceWallMs", "inferenceCount", "sessionInitCount",
+    "inferenceThreadCpuMs", "inferenceProcessCpuMs", "cacheModelHits", "cacheModelMisses",
+    "schedulerCalibrationWallMs", "schedulerCalibrationCount",
+)
+
+
+def _durable_summaries(header, current_reference):
+    section = header.partition("DURABLE ANALYSIS SUMMARIES")[2].partition("ANDROID PREVIOUS PROCESS EXITS")[0]
+    if "schema=diagnostic-job-summary-v1" not in section:
+        return []
+    jobs, current = [], None
+    for line in section.splitlines():
+        fields = dict(FIELD.findall(line))
+        if line.startswith("jobRef="):
+            current = None
+            if len(jobs) >= 3 or not re.fullmatch(r"[a-f0-9]{16}", fields.get("jobRef", "")):
+                continue
+            current = {"ordinal": len(jobs) + 1, "matches_current_job": fields["jobRef"] == current_reference,
+                       "scope": "durable-observation-not-controlled-benchmark",
+                       "state": fields.get("state") if fields.get("state") in {"preparing", "queued", "running", "cancelling", "completed", "failed", "cancelled", "interrupted"} else None,
+                       "analysisQuality": fields.get("analysisQuality") if fields.get("analysisQuality") in {"precision", "balanced"} else None,
+                       "stages": {}, "native_routes": {}}
+            for key in ("lifecycleElapsedMs", "durationMs", "recoveryGaps", "completedStages", "restoredStages"):
+                current[key] = number(fields.get(key))
+            jobs.append(current)
+        elif current is not None and line.startswith(" stage=") and fields.get("stage") in STAGES | {"preparing", "compatibility", "generate", "save", "other"}:
+            current["stages"][fields["stage"]] = {"observed_wall_ms": number(fields.get("observedWallMs")), "clock": "monotonic-observed-intervals-restart-gaps-excluded"}
+        elif current is not None and line.startswith(" route=") and fields.get("route") in {"native-deux-v1", "native-mdx-v1", "native-game-v1"}:
+            route = {key: number(fields.get(key)) for key in ("passages", "completed", "cancelled", "otherOutcomes")}
+            route["cpu_scopes"] = {"thread": "calling-thread", "process": "all-app-threads"}
+            route["last_scheduling_configuration"] = {
+                key: _scheduler_configuration(fields.get(key), temporal=key == "lastTemporalConfig")
+                for key in ("lastTemporalConfig", "lastFrequencyConfig")
+            }
+            route["metrics"] = {}
+            population = _integer(fields, "passages")
+            for key in DURABLE_METRICS:
+                measurement, count = number(fields.get(key)), _integer(fields, key + "MeasuredPassages")
+                valid = measurement["status"] == "observed" and count is not None and population is not None and 0 < count <= population
+                complete = valid and count == population
+                route["metrics"][key] = {"status": "observed" if complete else "partial" if valid else "unavailable",
+                                          "value": measurement["value"] if complete else None,
+                                          "observed_subtotal": measurement["value"] if valid else None,
+                                          "observed_count": count, "population_count": population}
+            current["native_routes"][fields["route"]] = route
+    return jobs
 
 
 def summarize(report):
@@ -172,7 +266,7 @@ def summarize(report):
     origin = events[0]["time"] if events else None
     offset = lambda stamp: round((stamp - origin).total_seconds() * 1000, 3) if stamp is not None and origin is not None else None
     header = "\n".join(lines[:marker])
-    snapshot_text = header.partition("CURRENT ANALYSIS JOB")[2].partition("ANDROID PREVIOUS PROCESS EXITS")[0]
+    snapshot_text = header.partition("CURRENT ANALYSIS JOB")[2].partition("DURABLE ANALYSIS SUMMARIES")[0].partition("ANDROID PREVIOUS PROCESS EXITS")[0]
     snapshot_fields = dict(FIELD.findall(snapshot_text.replace("\n", " ")))
     snapshot = {"scope": "reported-current-attempt-unbound-to-trace"}
     for key in ("elapsedMs", "completedStages", "restoredStages", "progress"):
@@ -382,6 +476,7 @@ def summarize(report):
                    "absolute_timestamps_omitted": True, "unassociated_profile_detail_lines": orphan_profiles},
         "current_environment": _environment(header.partition("CURRENT ANALYSIS JOB")[0]),
         "current_job_snapshot": snapshot, "observed_native_runtime_versions": sorted(runtime_versions),
+        "durable_job_summaries": _durable_summaries(header, snapshot_fields.get("jobRef")),
         "attempts": output_attempts, "interruption_gaps": gaps,
         "renderer_events": renderer_events, "completed_preview_restoration": preview_intervals,
         "full_song_runtime_ms": {"status": "unavailable", "value": None, "reason": "complete-job-lineage-and-workload-not-established"},

@@ -124,7 +124,7 @@ async function analyze(audioUrl,options={},onProgress=()=>{},signal){
    if(m.type==='progress'){
     progress=Math.max(progress,Math.min(1,Number(m.value.progress)||0));
     scope.LightForgeDiagnostics?.progress('analysis-worker',{...m.value,stage,progress});
-    try{onProgress({...m.value,progress,elapsedSeconds:clock.elapsed(started)/1000,completedStages:Object.keys(timings).length,restoredStages:Object.values(timings).filter(t=>t.restored).length});}catch(error){end(error);}return;
+    try{onProgress({...m.value,analysisStage:stage,progress,elapsedSeconds:clock.elapsed(started)/1000,completedStages:Object.keys(timings).length,restoredStages:Object.values(timings).filter(t=>t.restored).length});}catch(error){end(error);}return;
    }
    if(m.type==='native-deux'){
     if(stage!=='separation'||!hasNative||nativeActive||!Number.isSafeInteger(m.requestId)||!Number.isSafeInteger(m.startSample)){end(new Error('Invalid native studio request.'));return;}

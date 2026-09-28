@@ -47,6 +47,7 @@ jobs:
             qa
             releases
             research/model-source
+            research/inference-2.4.1
             research/evaluation-1.6
             research/hardware-1.2.0
             research/upstream/deux

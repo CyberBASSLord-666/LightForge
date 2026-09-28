@@ -21,3 +21,36 @@ The JSON contains:
 Native bundles accept the optional `engine-init` stage emitted during engine initialization. A producer's `cpuTelemetry=partial` remains a distinct telemetry observation; unavailable CPU totals are not filled from wall time or assumed to be zero.
 
 Stage, passage and native profile intervals overlap: do not add them together. These diagnostics cannot establish a controlled baseline, complete job lineage, a 75% speedup, or unchanged musical quality. Full-song runtime remains unavailable until those observations are collected separately. The tool intentionally does not change release policy or qualify a release.
+
+## Compact Android job summaries
+
+New diagnostic exports include `DURABLE ANALYSIS SUMMARIES`, independent of the
+1 MiB rotating event trace. A fixed-schema, checksum-checked atomic file retains
+the latest three jobs. Only a hashed job reference, fixed state/stage/route enums,
+creation/observation times, duration, analysis quality, restoration counts and
+numeric measurements are stored. The current-job header uses the same hashed
+reference; no media name, audio, transcript, path, VIN or raw job ID enters this
+store.
+
+Stage boundaries bypass ordinary progress throttling. Durations accumulate from
+observed monotonic intervals; a process restart increments `recoveryGaps` and
+excludes the unobserved interval from stage timing. `lifecycleElapsedMs` separately
+uses the job wall clock, includes final project saving and interruptions, and
+freezes at the first terminal observation. It can differ from summed stage time.
+Active progress is checkpointed at most every 30 seconds apart from stage
+changes and finalized native receipts. A crash can therefore lose the latest
+uncommitted progress interval or unfinished passage; this is not an exact record
+of an unobserved termination time.
+
+Native totals distinguish Deux and GAME, completed/cancelled/other outcomes,
+model/session preparation, production inference calls, and scheduler calibration
+cost. Every metric includes its measured-passage count. A subtotal with fewer
+measurements than attempted passages is partial, never a complete total or a
+synthetic zero. Retries and failed attempts remain included as work. Thread CPU
+means the calling thread; process CPU covers all app threads.
+
+The offline extractor returns these as `durable_job_summaries`, removes all job
+references and absolute timestamps, and retains only a boolean association to
+the current job. The legacy current snapshot and trace measurements remain
+separate; a compact receipt is observational evidence, not a controlled
+performance or quality qualification.

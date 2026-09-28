@@ -1,0 +1,36 @@
+{
+  "schema": "lightforge.host-inactive-cache-advice.v1",
+  "createdUtc": "2026-09-28T05:27:05.901564+00:00",
+  "scope": "POSIX_FADV_DONTNEED only on known inactive downloaded files. No byte changes, deletion, global cache operation or model/audio cache advice. All inference idle.",
+  "before": {
+    "memory.current": "7604781056\n",
+    "memory.events": "low 0\nhigh 0\nmax 23985\noom 0\noom_kill 0\noom_group_kill 0\n",
+    "memory.stat": "anon 94380032\nfile 7150825472\nkernel 358043648\nkernel_stack 1081344\npagetables 3244032\nsec_pagetables 0\npercpu 16148\nsock 0\nvmalloc 12288\nshmem 0\nfile_mapped 65536\nfile_dirty 7266304\nfile_writeback 0\nswapcached 0\nanon_thp 0\nfile_thp 1780482048\nshmem_thp 0\ninactive_anon 93941760\nactive_anon 151552\ninactive_file 2948648960\nactive_file 4202176512\nunevictable 0\nslab_reclaimable 351154360\nslab_unreclaimable 2483880\nslab 353638240\nworkingset_refault_anon 0\nworkingset_refault_file 8037\nworkingset_activate_anon 0\nworkingset_activate_file 8031\nworkingset_restore_anon 0\nworkingset_restore_file 0\nworkingset_nodereclaim 0\npgdemote_kswapd 0\npgdemote_direct 0\npgdemote_khugepaged 0\npgdemote_proactive 0\npgscan 831430\npgsteal 831369\npswpin 0\npswpout 0\npgscan_kswapd 0\npgscan_direct 831430\npgscan_khugepaged 0\npgscan_proactive 0\npgsteal_kswapd 0\npgsteal_direct 831369\npgsteal_khugepaged 0\npgsteal_proactive 0\npgfault 131568125\npgmajfault 18\npgrefill 544\npgactivate 1033726\npgdeactivate 544\npglazyfree 15\npglazyfreed 0\nswpin_zero 0\nswpout_zero 0\nthp_fault_alloc 155\nthp_collapse_alloc 0\nthp_swpout 0\nthp_swpout_fallback 0\n",
+    "cpu.stat": "usage_usec 6753729067\nuser_usec 6005307395\nsystem_usec 748421671\nnice_usec 0\nnr_periods 77576\nnr_throttled 39\nthrottled_usec 1513176\nnr_bursts 0\nburst_usec 0\n"
+  },
+  "files": [
+    {
+      "path": "LightForge-2.4.0.apk",
+      "bytes": 1205153900,
+      "advice": "POSIX_FADV_DONTNEED"
+    },
+    {
+      "path": "onnxruntime-1.30.0.jar",
+      "bytes": 55572031,
+      "advice": "POSIX_FADV_DONTNEED"
+    },
+    {
+      "path": "onnxruntime-android-1.30.0.aar",
+      "bytes": 53040218,
+      "advice": "POSIX_FADV_DONTNEED"
+    }
+  ],
+  "after": {
+    "memory.current": "6256160768\n",
+    "memory.events": "low 0\nhigh 0\nmax 23985\noom 0\noom_kill 0\noom_group_kill 0\n",
+    "memory.stat": "anon 94380032\nfile 5837049856\nkernel 323387392\nkernel_stack 1081344\npagetables 4423680\nsec_pagetables 0\npercpu 16852\nsock 0\nvmalloc 12288\nshmem 0\nfile_mapped 65536\nfile_dirty 7266304\nfile_writeback 0\nswapcached 0\nanon_thp 0\nfile_thp 1780482048\nshmem_thp 0\ninactive_anon 94154752\nactive_anon 151552\ninactive_file 2948648960\nactive_file 2888400896\nunevictable 0\nslab_reclaimable 315225976\nslab_unreclaimable 2592056\nslab 317818032\nworkingset_refault_anon 0\nworkingset_refault_file 8037\nworkingset_activate_anon 0\nworkingset_activate_file 8031\nworkingset_restore_anon 0\nworkingset_restore_file 0\nworkingset_nodereclaim 0\npgdemote_kswapd 0\npgdemote_direct 0\npgdemote_khugepaged 0\npgdemote_proactive 0\npgscan 831430\npgsteal 831369\npswpin 0\npswpout 0\npgscan_kswapd 0\npgscan_direct 831430\npgscan_khugepaged 0\npgscan_proactive 0\npgsteal_kswapd 0\npgsteal_direct 831369\npgsteal_khugepaged 0\npgsteal_proactive 0\npgfault 131570893\npgmajfault 18\npgrefill 544\npgactivate 1033726\npgdeactivate 544\npglazyfree 15\npglazyfreed 0\nswpin_zero 0\nswpout_zero 0\nthp_fault_alloc 155\nthp_collapse_alloc 0\nthp_swpout 0\nthp_swpout_fallback 0\n",
+    "cpu.stat": "usage_usec 6753927110\nuser_usec 6005307395\nsystem_usec 748619714\nnice_usec 0\nnr_periods 77578\nnr_throttled 39\nthrottled_usec 1513176\nnr_bursts 0\nburst_usec 0\n"
+  },
+  "archivalEdits": "Absolute scratch paths reduced to basenames; counters and advice observations unchanged.",
+  "originalReceiptSha256": "f9f7a4f818eed4e8b76e89c23d15ea197497d52e7c53b744e547653d651c00f2"
+}

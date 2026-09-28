@@ -151,17 +151,24 @@ final class NativeGameTask implements AutoCloseable {
 
     private void infer(String active){
         boolean acquired=false;String lease=null;NativeGame local=null;JSONArray completed=null;Throwable failure=null;
+        NativeGameProfile profile=new NativeGameProfile(Math.max(1,Math.min(4,Runtime.getRuntime().availableProcessors())));
         try{
             // Reject malformed or nonfinite PCM before touching the native runtime.
-            float[] pcm=readPcm();checkCancelled();
-            while(!NativeDeux.INFERENCE_GATE.tryAcquire(250,TimeUnit.MILLISECONDS))checkCancelled();
-            acquired=true;checkCancelled();
+            float[] pcm;NativeGameProfile.Stamp reading=profile.started();
+            try{pcm=readPcm();}finally{profile.addRead(reading);}
+            checkCancelled();
+            NativeGameProfile.Stamp waiting=profile.started();
+            try{while(!NativeDeux.INFERENCE_GATE.tryAcquire(250,TimeUnit.MILLISECONDS))checkCancelled();acquired=true;}
+            finally{profile.addWait(waiting);}
+            checkCancelled();
             // Covers library loading, session construction, inference and destruction.
             lease=runtimeGuard.begin(android.os.Process.myPid(),System.currentTimeMillis());
-            local=new NativeGame(context);engine=local;checkCancelled();
+            NativeGameProfile.Stamp constructing=profile.started();
+            try{local=new NativeGame(context);}finally{profile.addEngineInit(constructing);}
+            engine=local;checkCancelled();
             completed=local.predict(pcm,language,seed,(value,detail)->{
                 synchronized(this){if(active.equals(token)&&!cancelled&&!closed&&Double.isFinite(value))runningProgress=Math.max(runningProgress,Math.max(0,Math.min(1,value)));}
-            },()->cancelled||closed||Thread.currentThread().isInterrupted());
+            },()->cancelled||closed||Thread.currentThread().isInterrupted(),profile);
             checkCancelled();validateNotes(completed,pcm.length);
             completed=new JSONArray(completed.toString());
         }catch(Throwable error){failure=error;completed=null;}
@@ -180,6 +187,7 @@ final class NativeGameTask implements AutoCloseable {
                 if(acquired)NativeDeux.INFERENCE_GATE.release();
                 outstandingWorkers.decrementAndGet();
             }
+            String outcome;
             synchronized(this){
                 workerActive=false;
                 if(active.equals(token)){
@@ -187,8 +195,12 @@ final class NativeGameTask implements AutoCloseable {
                     else if(failure==null&&completed!=null&&!closed&&!cancelled){notes=completed;completedPasses++;state="completed";message="Singing analysis complete";}
                     else{notes=null;state=closed||cancelled?"cancelled":"failed";message=closed||cancelled?"Native singing analysis was cancelled.":"Native singing analysis failed. Retry in compatibility mode.";}
                 }
+                outcome=active.equals(token)?state:"cancelled";
                 if(closed)removeDirectory();
             }
+            String summary=profile.finish(outcome).summary();
+            AppDiagnostics.log(context,"INFO","native-game-profile",summary);
+            AppDiagnostics.profileSummary(context,ownerJobId,"native-game-v1",summary);
         }
     }
 

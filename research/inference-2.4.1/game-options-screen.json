@@ -1,0 +1,838 @@
+{
+  "schema": "lightforge-game-options-rejected-screen-1",
+  "scope": "Host-only configuration screening, no repeated paired qualification or Android speed/memory claim. No tested GAME option is promoted.",
+  "input": {
+    "source": "web/demo/glass-castle.wav",
+    "sourceSha256": "33f07d502ba19832b62b97d8fb4a11354e81310264bd885d7a06438228773650",
+    "samples": 2822400,
+    "sampleRate": 44100,
+    "derivation": "production-stereo44100-float32-mean-v1",
+    "separationApplied": false
+  },
+  "decisions": {
+    "dynamic4": "Rejected: every passage changes encoder tensors and unrounded notes; overall inference also slower.",
+    "arena": "Not promoted: all 96 tensor outputs and unrounded/stitched notes exact, but kernel time does not improve overall and two passage wall times regress; no reliable memory observation in this screen.",
+    "threads6-dynamic4": "Rejected: tensor/unrounded-note differences; single window also raises observed peak RSS by about 11.4%."
+  },
+  "fullPlan": {
+    "provenance": {
+      "schema": "lightforge-game-options-screen-1",
+      "sourceSha256": {
+        "android/src/com/cyberbasslord/lightforge/NativeGame.java": "2bbc6856229b4c4bd5c5cf49acfc54e7cc83a082d13c6d3e983a5c34091cf816",
+        "android/src/com/cyberbasslord/lightforge/NativeGameProfile.java": "84db2a7920651016e635db21eda6111f70e63b480de5586c823e9733630a8303",
+        "tools/game_benchmark/NativeGameExecutionBenchmark.java": "ec9030694f81050c6b4aa615b30ba89eabea1ab37322192907e09f90acee9a0e",
+        "tools/game_benchmark/benchmark_execution_options.py": "e08ab0cb8309ce243158793a04723c40314f503a8a3f87937f1043359a304665",
+        "tools/game_benchmark/compare.py": "921d785a9d185f449e88998f119c8a083433039adc62aee7d516e24f648c1b4b",
+        "tools/game_benchmark/process_capture.cjs": "11ca1ded1301705d3afe364410e6b3e9817ff34eea6fc5ab7fe4d9b05e509179",
+        "web/analysis/game.js": "a4225b832bb8cee4d382b01b8753266b426d2a75be49515dc58bbb12e5a03b75"
+      },
+      "inputSha256": "298f7a549c4bb8dfc53c47d1078cea842c5e818a3e7c82bf289bffcec0ba30c2",
+      "modelManifestSha256": "51e172cfaa967d9e2518f01f508a64d49cd283d23ae8e8456af9c6e76eeb4f97",
+      "dependencySha256": {
+        "onnxruntime-1.25.1.jar": "749793ebed63743fec853d093da7987a86ea5cd592d54fba898cd3233100c381",
+        "test-json.jar": "c243f45f9590c12694a4142ed3f07fc70dfb71e4daebd05ae234bf92a2da92a6",
+        "android.jar": "4566663c3876e022b4fa4ced8c8697c4ab1688267f090114fd92d027b32e619b"
+      },
+      "plan": [
+        {
+          "index": 0,
+          "key": "game-0-0",
+          "first": 0,
+          "last": 617400,
+          "seed": 2025
+        },
+        {
+          "index": 1,
+          "key": "game-0-1",
+          "first": 441000,
+          "last": 1146600,
+          "seed": 106754
+        },
+        {
+          "index": 2,
+          "key": "game-0-2",
+          "first": 970200,
+          "last": 1675800,
+          "seed": 211483
+        },
+        {
+          "index": 3,
+          "key": "game-0-3",
+          "first": 1499400,
+          "last": 2205000,
+          "seed": 316212
+        },
+        {
+          "index": 4,
+          "key": "game-0-4",
+          "first": 2028600,
+          "last": 2734200,
+          "seed": 420941
+        },
+        {
+          "index": 5,
+          "key": "game-0-5",
+          "first": 2557800,
+          "last": 2822400,
+          "seed": 525670
+        }
+      ],
+      "trials": 1,
+      "configs": [
+        "baseline",
+        "dynamic4",
+        "arena"
+      ],
+      "captureTiming": true,
+      "androidPerformanceMeasured": false,
+      "configScope": "Only reviewed option substitutions and a post-run tensor observer in isolated source copies",
+      "cpuAffinity": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "cpuQuota": "800000 100000"
+    },
+    "runs": [
+      {
+        "trial": 0,
+        "passage": 0,
+        "config": "baseline",
+        "processWallSeconds": 15.546343460999196,
+        "observedPeakRssKiB": null,
+        "observedVmHwmKiB": null,
+        "memoryScope": "/proc sampled every 50ms; last observed VmHWM may omit exit-adjacent peak",
+        "wallSeconds": 15.351551835,
+        "inferenceWallMs": 10511,
+        "modelInitWallMs": 3001,
+        "notes": 21,
+        "receiptSha256": "a238dd63b2b9767325bbe77a4d5d3c79276a61cd8e438e2a57d98fbd0bb631f0"
+      },
+      {
+        "trial": 0,
+        "passage": 0,
+        "config": "dynamic4",
+        "processWallSeconds": 14.322439686999132,
+        "observedPeakRssKiB": null,
+        "observedVmHwmKiB": null,
+        "memoryScope": "/proc sampled every 50ms; last observed VmHWM may omit exit-adjacent peak",
+        "wallSeconds": 14.127223221,
+        "inferenceWallMs": 10566,
+        "modelInitWallMs": 2764,
+        "notes": 21,
+        "receiptSha256": "7ecfe41ca28463037bd23ce07a651173da0eacee7121e828c158819378f0f619"
+      },
+      {
+        "trial": 0,
+        "passage": 0,
+        "config": "arena",
+        "processWallSeconds": 14.443277938000392,
+        "observedPeakRssKiB": null,
+        "observedVmHwmKiB": null,
+        "memoryScope": "/proc sampled every 50ms; last observed VmHWM may omit exit-adjacent peak",
+        "wallSeconds": 14.242471269,
+        "inferenceWallMs": 9714,
+        "modelInitWallMs": 3016,
+        "notes": 21,
+        "receiptSha256": "f376f81406db4ad73201816ae69b5947d11f0e1b4c92e69a4f9574630b4d8f0f"
+      },
+      {
+        "trial": 0,
+        "passage": 1,
+        "config": "baseline",
+        "processWallSeconds": 13.5692724310029,
+        "observedPeakRssKiB": null,
+        "observedVmHwmKiB": null,
+        "memoryScope": "/proc sampled every 50ms; last observed VmHWM may omit exit-adjacent peak",
+        "wallSeconds": 13.386277339,
+        "inferenceWallMs": 9266,
+        "modelInitWallMs": 3306,
+        "notes": 31,
+        "receiptSha256": "6bac7aa514453a463d1f3b6c11efe22ccd72785b054228f41c2d9569a2417114"
+      },
+      {
+        "trial": 0,
+        "passage": 1,
+        "config": "dynamic4",
+        "processWallSeconds": 17.534094728001946,
+        "observedPeakRssKiB": null,
+        "observedVmHwmKiB": null,
+        "memoryScope": "/proc sampled every 50ms; last observed VmHWM may omit exit-adjacent peak",
+        "wallSeconds": 17.32175716,
+        "inferenceWallMs": 13593,
+        "modelInitWallMs": 2900,
+        "notes": 31,
+        "receiptSha256": "faa5b49a9d1b915726773424f733963924bff979f1aa86cbf7806b65b440d3a6"
+      },
+      {
+        "trial": 0,
+        "passage": 1,
+        "config": "arena",
+        "processWallSeconds": 12.436046495000483,
+        "observedPeakRssKiB": null,
+        "observedVmHwmKiB": null,
+        "memoryScope": "/proc sampled every 50ms; last observed VmHWM may omit exit-adjacent peak",
+        "wallSeconds": 12.250183118,
+        "inferenceWallMs": 8649,
+        "modelInitWallMs": 2817,
+        "notes": 31,
+        "receiptSha256": "b3df7574d31733b9271993085dd4f6179f970c5f52e45be69adf8d244c8fd6e4"
+      },
+      {
+        "trial": 0,
+        "passage": 2,
+        "config": "baseline",
+        "processWallSeconds": 12.68405217200052,
+        "observedPeakRssKiB": null,
+        "observedVmHwmKiB": null,
+        "memoryScope": "/proc sampled every 50ms; last observed VmHWM may omit exit-adjacent peak",
+        "wallSeconds": 12.497340712,
+        "inferenceWallMs": 8842,
+        "modelInitWallMs": 2887,
+        "notes": 22,
+        "receiptSha256": "ed717e2f8fb883f2a63fe81cca6d9fcb3dbdb4fd2b565f7ea8a1e47bb1fb0ba2"
+      },
+      {
+        "trial": 0,
+        "passage": 2,
+        "config": "dynamic4",
+        "processWallSeconds": 16.11341048000031,
+        "observedPeakRssKiB": null,
+        "observedVmHwmKiB": null,
+        "memoryScope": "/proc sampled every 50ms; last observed VmHWM may omit exit-adjacent peak",
+        "wallSeconds": 15.941565154,
+        "inferenceWallMs": 12413,
+        "modelInitWallMs": 2735,
+        "notes": 22,
+        "receiptSha256": "f8838c0e7f7a6899eec3cdc8d1b8e62b623a642bbcca6863bda1c4ffea036e4d"
+      },
+      {
+        "trial": 0,
+        "passage": 2,
+        "config": "arena",
+        "processWallSeconds": 11.87139306699828,
+        "observedPeakRssKiB": null,
+        "observedVmHwmKiB": null,
+        "memoryScope": "/proc sampled every 50ms; last observed VmHWM may omit exit-adjacent peak",
+        "wallSeconds": 11.682833485,
+        "inferenceWallMs": 8331,
+        "modelInitWallMs": 2570,
+        "notes": 22,
+        "receiptSha256": "f42aba31f377c0e3f7ec6c69ed96c31aefef4502c2c75df1f814e6fe7bedcf27"
+      },
+      {
+        "trial": 0,
+        "passage": 3,
+        "config": "baseline",
+        "processWallSeconds": 16.455571304999467,
+        "observedPeakRssKiB": null,
+        "observedVmHwmKiB": null,
+        "memoryScope": "/proc sampled every 50ms; last observed VmHWM may omit exit-adjacent peak",
+        "wallSeconds": 16.26291781,
+        "inferenceWallMs": 12589,
+        "modelInitWallMs": 2884,
+        "notes": 23,
+        "receiptSha256": "39053588aa5e118a8ab290904638c0c619bde45654431bfbd3df629f2186981e"
+      },
+      {
+        "trial": 0,
+        "passage": 3,
+        "config": "dynamic4",
+        "processWallSeconds": 16.77020015799644,
+        "observedPeakRssKiB": null,
+        "observedVmHwmKiB": null,
+        "memoryScope": "/proc sampled every 50ms; last observed VmHWM may omit exit-adjacent peak",
+        "wallSeconds": 16.461375123,
+        "inferenceWallMs": 12738,
+        "modelInitWallMs": 2924,
+        "notes": 23,
+        "receiptSha256": "977cfcf765b65761b506969cddae91ff4639c7fa9c678a53f360a0a504393dd8"
+      },
+      {
+        "trial": 0,
+        "passage": 3,
+        "config": "arena",
+        "processWallSeconds": 16.200630852999893,
+        "observedPeakRssKiB": null,
+        "observedVmHwmKiB": null,
+        "memoryScope": "/proc sampled every 50ms; last observed VmHWM may omit exit-adjacent peak",
+        "wallSeconds": 15.933899959,
+        "inferenceWallMs": 12189,
+        "modelInitWallMs": 2903,
+        "notes": 23,
+        "receiptSha256": "810c9d55ef75baed9537cd0b9b3fa660b4648d0a158ad8b8738c17f9b8efb3c2"
+      },
+      {
+        "trial": 0,
+        "passage": 4,
+        "config": "baseline",
+        "processWallSeconds": 14.918908596999245,
+        "observedPeakRssKiB": null,
+        "observedVmHwmKiB": null,
+        "memoryScope": "/proc sampled every 50ms; last observed VmHWM may omit exit-adjacent peak",
+        "wallSeconds": 14.704291526,
+        "inferenceWallMs": 10365,
+        "modelInitWallMs": 3395,
+        "notes": 27,
+        "receiptSha256": "47b12da732214b35ae9cbb446354b6437b2b0b8bb0d223c51d55293ba66be264"
+      },
+      {
+        "trial": 0,
+        "passage": 4,
+        "config": "dynamic4",
+        "processWallSeconds": 13.809431393001432,
+        "observedPeakRssKiB": null,
+        "observedVmHwmKiB": null,
+        "memoryScope": "/proc sampled every 50ms; last observed VmHWM may omit exit-adjacent peak",
+        "wallSeconds": 13.641970229,
+        "inferenceWallMs": 10049,
+        "modelInitWallMs": 2793,
+        "notes": 27,
+        "receiptSha256": "400c98bfebb1076c17b71f1a1ca32664b2e83df8bcbad38ce44b00b687079a22"
+      },
+      {
+        "trial": 0,
+        "passage": 4,
+        "config": "arena",
+        "processWallSeconds": 16.032814999998664,
+        "observedPeakRssKiB": null,
+        "observedVmHwmKiB": null,
+        "memoryScope": "/proc sampled every 50ms; last observed VmHWM may omit exit-adjacent peak",
+        "wallSeconds": 15.818163557,
+        "inferenceWallMs": 12275,
+        "modelInitWallMs": 2763,
+        "notes": 27,
+        "receiptSha256": "5fcf9a2714a7c928fe74c2c06f9b4904bd6cf7b10fed42920dbfb86d69dc550e"
+      },
+      {
+        "trial": 0,
+        "passage": 5,
+        "config": "baseline",
+        "processWallSeconds": 7.453087006000715,
+        "observedPeakRssKiB": null,
+        "observedVmHwmKiB": null,
+        "memoryScope": "/proc sampled every 50ms; last observed VmHWM may omit exit-adjacent peak",
+        "wallSeconds": 7.275796011,
+        "inferenceWallMs": 3778,
+        "modelInitWallMs": 2723,
+        "notes": 6,
+        "receiptSha256": "6ecf687744a03785488ec3bae5675f2880336c140f296cb1ec18447436b32a8d"
+      },
+      {
+        "trial": 0,
+        "passage": 5,
+        "config": "dynamic4",
+        "processWallSeconds": 7.45709067700227,
+        "observedPeakRssKiB": null,
+        "observedVmHwmKiB": null,
+        "memoryScope": "/proc sampled every 50ms; last observed VmHWM may omit exit-adjacent peak",
+        "wallSeconds": 7.265601465,
+        "inferenceWallMs": 3748,
+        "modelInitWallMs": 2780,
+        "notes": 6,
+        "receiptSha256": "5fcc00646121ca500ccf022ec680a57d756f44c4177331e0c84a60fb7f76d360"
+      },
+      {
+        "trial": 0,
+        "passage": 5,
+        "config": "arena",
+        "processWallSeconds": 8.093706936000672,
+        "observedPeakRssKiB": null,
+        "observedVmHwmKiB": null,
+        "memoryScope": "/proc sampled every 50ms; last observed VmHWM may omit exit-adjacent peak",
+        "wallSeconds": 7.908032593,
+        "inferenceWallMs": 4403,
+        "modelInitWallMs": 2708,
+        "notes": 6,
+        "receiptSha256": "c2121cb00405731f7c7dff47bdb3e190fbe119d2b4e57b7695e0c075396e4bc6"
+      }
+    ],
+    "comparisons": [
+      {
+        "trial": 0,
+        "passage": 0,
+        "config": "dynamic4",
+        "exactParity": false,
+        "unroundedNotesIdentical": false,
+        "leftNoteCount": 21,
+        "rightNoteCount": 21,
+        "tensorPairs": 16,
+        "differentTensors": [
+          {
+            "tensor": "encoder/x_seg",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": false,
+            "elements": 358400,
+            "unequalElements": 307852,
+            "maxAbsoluteDifference": 2.384185791015625e-06,
+            "rmsDifference": 3.2698468899609713e-07
+          },
+          {
+            "tensor": "encoder/x_est",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": false,
+            "elements": 358400,
+            "unequalElements": 318704,
+            "maxAbsoluteDifference": 2.86102294921875e-06,
+            "rmsDifference": 2.481834518701574e-07
+          },
+          {
+            "tensor": "estimator/scores",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": false,
+            "elements": 22,
+            "unequalElements": 11,
+            "maxAbsoluteDifference": 7.62939453125e-06,
+            "rmsDifference": 4.147013141667244e-06
+          }
+        ]
+      },
+      {
+        "trial": 0,
+        "passage": 0,
+        "config": "arena",
+        "exactParity": true,
+        "unroundedNotesIdentical": true,
+        "leftNoteCount": 21,
+        "rightNoteCount": 21,
+        "tensorPairs": 16,
+        "differentTensors": []
+      },
+      {
+        "trial": 0,
+        "passage": 1,
+        "config": "dynamic4",
+        "exactParity": false,
+        "unroundedNotesIdentical": false,
+        "leftNoteCount": 31,
+        "rightNoteCount": 31,
+        "tensorPairs": 16,
+        "differentTensors": [
+          {
+            "tensor": "encoder/x_seg",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": false,
+            "elements": 409600,
+            "unequalElements": 349374,
+            "maxAbsoluteDifference": 2.384185791015625e-06,
+            "rmsDifference": 3.113822261859116e-07
+          },
+          {
+            "tensor": "encoder/x_est",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": false,
+            "elements": 409600,
+            "unequalElements": 362571,
+            "maxAbsoluteDifference": 2.384185791015625e-06,
+            "rmsDifference": 2.386839129160783e-07
+          },
+          {
+            "tensor": "estimator/scores",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": false,
+            "elements": 31,
+            "unequalElements": 14,
+            "maxAbsoluteDifference": 7.62939453125e-06,
+            "rmsDifference": 3.6895910325979293e-06
+          }
+        ]
+      },
+      {
+        "trial": 0,
+        "passage": 1,
+        "config": "arena",
+        "exactParity": true,
+        "unroundedNotesIdentical": true,
+        "leftNoteCount": 31,
+        "rightNoteCount": 31,
+        "tensorPairs": 16,
+        "differentTensors": []
+      },
+      {
+        "trial": 0,
+        "passage": 2,
+        "config": "dynamic4",
+        "exactParity": false,
+        "unroundedNotesIdentical": false,
+        "leftNoteCount": 22,
+        "rightNoteCount": 22,
+        "tensorPairs": 16,
+        "differentTensors": [
+          {
+            "tensor": "encoder/x_seg",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": false,
+            "elements": 409600,
+            "unequalElements": 349154,
+            "maxAbsoluteDifference": 2.86102294921875e-06,
+            "rmsDifference": 3.155716078874867e-07
+          },
+          {
+            "tensor": "encoder/x_est",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": false,
+            "elements": 409600,
+            "unequalElements": 361470,
+            "maxAbsoluteDifference": 2.384185791015625e-06,
+            "rmsDifference": 2.395026017934978e-07
+          },
+          {
+            "tensor": "estimator/scores",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": false,
+            "elements": 24,
+            "unequalElements": 11,
+            "maxAbsoluteDifference": 1.1444091796875e-05,
+            "rmsDifference": 4.924752993529532e-06
+          }
+        ]
+      },
+      {
+        "trial": 0,
+        "passage": 2,
+        "config": "arena",
+        "exactParity": true,
+        "unroundedNotesIdentical": true,
+        "leftNoteCount": 22,
+        "rightNoteCount": 22,
+        "tensorPairs": 16,
+        "differentTensors": []
+      },
+      {
+        "trial": 0,
+        "passage": 3,
+        "config": "dynamic4",
+        "exactParity": false,
+        "unroundedNotesIdentical": false,
+        "leftNoteCount": 23,
+        "rightNoteCount": 23,
+        "tensorPairs": 16,
+        "differentTensors": [
+          {
+            "tensor": "encoder/x_seg",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": false,
+            "elements": 409600,
+            "unequalElements": 352937,
+            "maxAbsoluteDifference": 3.337860107421875e-06,
+            "rmsDifference": 3.250353994354668e-07
+          },
+          {
+            "tensor": "encoder/x_est",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": false,
+            "elements": 409600,
+            "unequalElements": 363815,
+            "maxAbsoluteDifference": 1.9073486328125e-06,
+            "rmsDifference": 2.497607673230251e-07
+          },
+          {
+            "tensor": "estimator/scores",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": false,
+            "elements": 24,
+            "unequalElements": 12,
+            "maxAbsoluteDifference": 1.52587890625e-05,
+            "rmsDifference": 5.981091728918323e-06
+          }
+        ]
+      },
+      {
+        "trial": 0,
+        "passage": 3,
+        "config": "arena",
+        "exactParity": true,
+        "unroundedNotesIdentical": true,
+        "leftNoteCount": 23,
+        "rightNoteCount": 23,
+        "tensorPairs": 16,
+        "differentTensors": []
+      },
+      {
+        "trial": 0,
+        "passage": 4,
+        "config": "dynamic4",
+        "exactParity": false,
+        "unroundedNotesIdentical": false,
+        "leftNoteCount": 27,
+        "rightNoteCount": 27,
+        "tensorPairs": 16,
+        "differentTensors": [
+          {
+            "tensor": "encoder/x_seg",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": false,
+            "elements": 409600,
+            "unequalElements": 351215,
+            "maxAbsoluteDifference": 2.384185791015625e-06,
+            "rmsDifference": 3.152110443323922e-07
+          },
+          {
+            "tensor": "encoder/x_est",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": false,
+            "elements": 409600,
+            "unequalElements": 362548,
+            "maxAbsoluteDifference": 2.6226043701171875e-06,
+            "rmsDifference": 2.428557186835167e-07
+          },
+          {
+            "tensor": "estimator/scores",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": false,
+            "elements": 29,
+            "unequalElements": 13,
+            "maxAbsoluteDifference": 1.52587890625e-05,
+            "rmsDifference": 5.108139521880998e-06
+          }
+        ]
+      },
+      {
+        "trial": 0,
+        "passage": 4,
+        "config": "arena",
+        "exactParity": true,
+        "unroundedNotesIdentical": true,
+        "leftNoteCount": 27,
+        "rightNoteCount": 27,
+        "tensorPairs": 16,
+        "differentTensors": []
+      },
+      {
+        "trial": 0,
+        "passage": 5,
+        "config": "dynamic4",
+        "exactParity": false,
+        "unroundedNotesIdentical": false,
+        "leftNoteCount": 6,
+        "rightNoteCount": 6,
+        "tensorPairs": 16,
+        "differentTensors": [
+          {
+            "tensor": "encoder/x_seg",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": false,
+            "elements": 153600,
+            "unequalElements": 132120,
+            "maxAbsoluteDifference": 2.384185791015625e-06,
+            "rmsDifference": 3.2774098170538644e-07
+          },
+          {
+            "tensor": "encoder/x_est",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": false,
+            "elements": 153600,
+            "unequalElements": 136046,
+            "maxAbsoluteDifference": 1.9073486328125e-06,
+            "rmsDifference": 2.495141669083476e-07
+          },
+          {
+            "tensor": "estimator/scores",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": false,
+            "elements": 8,
+            "unequalElements": 5,
+            "maxAbsoluteDifference": 0.000110626220703125,
+            "rmsDifference": 3.934412259051565e-05
+          }
+        ]
+      },
+      {
+        "trial": 0,
+        "passage": 5,
+        "config": "arena",
+        "exactParity": true,
+        "unroundedNotesIdentical": true,
+        "leftNoteCount": 6,
+        "rightNoteCount": 6,
+        "tensorPairs": 16,
+        "differentTensors": []
+      }
+    ],
+    "exactParity": false,
+    "stitchedNotesIdentical": true,
+    "timing": {
+      "baseline": {
+        "sumPassageWallSeconds": 79.478175233,
+        "sumInferenceWallMs": 55351,
+        "medianPassageWallSeconds": 14.0452844325
+      },
+      "dynamic4": {
+        "sumPassageWallSeconds": 84.759492352,
+        "sumInferenceWallMs": 63107,
+        "medianPassageWallSeconds": 15.034394187499998
+      },
+      "arena": {
+        "sumPassageWallSeconds": 77.835583981,
+        "sumInferenceWallMs": 55561,
+        "medianPassageWallSeconds": 13.2463271935
+      }
+    },
+    "stitchedNoteCounts": {
+      "0:baseline": 98,
+      "0:dynamic4": 98,
+      "0:arena": 98
+    },
+    "checkpointReplayIdentical": true
+  },
+  "sixThreadWindow": {
+    "provenance": {
+      "schema": "lightforge-game-options-screen-1",
+      "sourceSha256": {
+        "android/src/com/cyberbasslord/lightforge/NativeGame.java": "2bbc6856229b4c4bd5c5cf49acfc54e7cc83a082d13c6d3e983a5c34091cf816",
+        "android/src/com/cyberbasslord/lightforge/NativeGameProfile.java": "a7b07e9673e880eb500fab49a16b70b58504863dc785459e8d841e57de85d3aa",
+        "tools/game_benchmark/NativeGameExecutionBenchmark.java": "e387935d39678d8bcef3621bfa641b0bb3ef4743d163b000f34d3bac0c099fd5",
+        "tools/game_benchmark/benchmark_execution_options.py": "a602c92b352ee5b93845c6dbe76b9de62a2e250bbc55d71f50943009e52e581d",
+        "tools/game_benchmark/compare.py": "921d785a9d185f449e88998f119c8a083433039adc62aee7d516e24f648c1b4b",
+        "tools/game_benchmark/process_capture.cjs": "11ca1ded1301705d3afe364410e6b3e9817ff34eea6fc5ab7fe4d9b05e509179",
+        "web/analysis/game.js": "a4225b832bb8cee4d382b01b8753266b426d2a75be49515dc58bbb12e5a03b75"
+      },
+      "inputSha256": "298f7a549c4bb8dfc53c47d1078cea842c5e818a3e7c82bf289bffcec0ba30c2",
+      "modelManifestSha256": "51e172cfaa967d9e2518f01f508a64d49cd283d23ae8e8456af9c6e76eeb4f97",
+      "dependencySha256": {
+        "onnxruntime-1.25.1.jar": "749793ebed63743fec853d093da7987a86ea5cd592d54fba898cd3233100c381",
+        "test-json.jar": "c243f45f9590c12694a4142ed3f07fc70dfb71e4daebd05ae234bf92a2da92a6",
+        "android.jar": "4566663c3876e022b4fa4ced8c8697c4ab1688267f090114fd92d027b32e619b"
+      },
+      "plan": [
+        {
+          "index": 2,
+          "key": "game-0-2",
+          "first": 970200,
+          "last": 1675800,
+          "seed": 211483
+        }
+      ],
+      "trials": 1,
+      "configs": [
+        "baseline",
+        "threads6-dynamic4"
+      ],
+      "captureTiming": true,
+      "androidPerformanceMeasured": false,
+      "completePassagePlan": false,
+      "configScope": "Only reviewed option substitutions and a post-run tensor observer in isolated source copies",
+      "cpuAffinity": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "cpuQuota": "800000 100000"
+    },
+    "runs": [
+      {
+        "trial": 0,
+        "passage": 2,
+        "config": "baseline",
+        "processWallSeconds": 15.944068880999112,
+        "observedPeakRssKiB": null,
+        "observedVmHwmKiB": null,
+        "memoryScope": "/proc sampled every 50ms; last observed VmHWM may omit exit-adjacent peak",
+        "processPeakRssKiB": 878764,
+        "wallSeconds": 15.759102072,
+        "inferenceWallMs": 12153,
+        "modelInitWallMs": 2825,
+        "notes": 22,
+        "receiptSha256": "7ae429562dcfbc58d8eaa7cc9afd8f94fa87de4d44edfc8941ebf6a9334b9931"
+      },
+      {
+        "trial": 0,
+        "passage": 2,
+        "config": "threads6-dynamic4",
+        "processWallSeconds": 14.49741445499967,
+        "observedPeakRssKiB": null,
+        "observedVmHwmKiB": null,
+        "memoryScope": "/proc sampled every 50ms; last observed VmHWM may omit exit-adjacent peak",
+        "processPeakRssKiB": 979280,
+        "wallSeconds": 14.316372291,
+        "inferenceWallMs": 10486,
+        "modelInitWallMs": 3055,
+        "notes": 22,
+        "receiptSha256": "fa2802446168298c2ef69c25980ba4f3e7f9ea956a982ef0903643e3c3a77f0b"
+      }
+    ],
+    "comparisons": [
+      {
+        "trial": 0,
+        "passage": 2,
+        "config": "threads6-dynamic4",
+        "exactParity": false,
+        "unroundedNotesIdentical": false,
+        "leftNoteCount": 22,
+        "rightNoteCount": 22,
+        "tensorPairs": 16,
+        "differentTensors": [
+          {
+            "tensor": "encoder/x_seg",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": false,
+            "elements": 409600,
+            "unequalElements": 350853,
+            "maxAbsoluteDifference": 3.0994415283203125e-06,
+            "rmsDifference": 3.1960944144311896e-07
+          },
+          {
+            "tensor": "encoder/x_est",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": false,
+            "elements": 409600,
+            "unequalElements": 362491,
+            "maxAbsoluteDifference": 1.9073486328125e-06,
+            "rmsDifference": 2.428092356310166e-07
+          },
+          {
+            "tensor": "estimator/scores",
+            "shapeAndTypeMatch": true,
+            "byteIdentical": false,
+            "elements": 24,
+            "unequalElements": 9,
+            "maxAbsoluteDifference": 2.288818359375e-05,
+            "rmsDifference": 6.561205368216926e-06
+          }
+        ]
+      }
+    ],
+    "exactParity": false,
+    "stitchedNotesIdentical": null,
+    "timing": {
+      "baseline": {
+        "sumPassageWallSeconds": 15.759102072,
+        "sumInferenceWallMs": 12153,
+        "medianPassageWallSeconds": 15.759102072
+      },
+      "threads6-dynamic4": {
+        "sumPassageWallSeconds": 14.316372291,
+        "sumInferenceWallMs": 10486,
+        "medianPassageWallSeconds": 14.316372291
+      }
+    }
+  },
+  "historicalObserverSnapshots": {
+    "NativeGameProfile.java": "research/inference-2.4.1/game-screen-observer-snapshot/NativeGameProfile.java",
+    "NativeGameExecutionBenchmark.java": "research/inference-2.4.1/game-screen-observer-snapshot/NativeGameExecutionBenchmark.java",
+    "benchmark_execution_options.py": "research/inference-2.4.1/game-screen-observer-snapshot/benchmark_execution_options.py"
+  },
+  "rawReportSha256": {
+    "fullPlan": "c0e60a9b9293076f0ecffc8095f60c29994171e9aa2217350fbe8c886eb7d3b3",
+    "sixThreadWindow": "4a73c96b43d367d3bfb0296fc4a7bd1215cc15c35e4dd000f5df238641c76ae4"
+  },
+  "limits": [
+    "Six paired windows are different passage inputs, not six repeated measurements of one workload.",
+    "Raw zero parent-PID RSS/HWM counters in the initial experiment are unavailable in this namespace; represented as null here.",
+    "Follow-up peakRSS is read inside the child JVM from /proc/self/status after native retirement.",
+    "Identical rounded/stitched notes do not override changed raw Float32 outputs or unrounded notes.",
+    "The current harness preserves production source and option-only isolated candidates; original changed observer sources are retained with their recorded hashes."
+  ]
+}

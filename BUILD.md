@@ -128,18 +128,26 @@ Do not republish or overwrite a released version to deliver changed application
 bytes. Update the version deliberately, produce a new successful source-bound
 verification run and qualify that exact candidate under the applicable policy.
 
-For **2.2.5 / 20205, 2.3.0 / 20300, 2.3.1 / 20301, 2.3.2 / 20302 and 2.4.0 / 20400**, the owner-approved
+For **2.2.5 / 20205, 2.3.0 / 20300, 2.3.1 / 20301, 2.3.2 / 20302, 2.4.0 / 20400 and 2.4.1 / 20401**, the owner-approved
 `automated_verification_only` policy makes external corpus benchmarks, human perceptual review and hardware
 energy/thermal observations optional. The 2.3.0, 2.3.1, 2.3.2 and 2.4.0 declarations follow
 the owner's explicit requests to develop and continue these improvements and
 publish when ready without user-supplied measurements. For the 2.4.0 core refactor,
 the owner explicitly reaffirmed that a 75% speedup is an aspirational objective.
-The [2.4.0 declaration](releases/v2.4.0/quality-gate-declaration.json) retains fresh
-production, actual-model and Android verification for the changed source. This exception is
+The [2.4.1 declaration](releases/v2.4.1/quality-gate-declaration.json) follows the
+owner's explicit request to implement inference improvements in the next release
+and retains fresh production, actual-model and Android verification for the changed source. This exception is
 version-scoped; it is not a blanket policy for future releases or a `PASS_TARGET` result. The separate
 strict [performance-quality gate](docs/PERFORMANCE_QUALITY_GATE.md) retains its
 thresholds. Physical phone/Tesla observations may be absent, but corresponding
 claims must remain explicitly unverified.
+
+For 2.4.1, `build.sh` additionally requires a passing final-source inference
+receipt before preparing assets or compiling an APK. It replays three alternating
+full-passage pairs, requires at least 15% lower median latency and 5% in every
+pair, verifies complete byte-identical output, and rejects memory pressure or
+unequal CPU controls. The frozen Java build input must match that measured source.
+The automated-verification policy does not bypass this release hold.
 
 The release path retains these controls:
 

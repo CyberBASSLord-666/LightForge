@@ -21,6 +21,7 @@ class NativeGameEngineTest(unittest.TestCase):
             classes.mkdir()
             classpath = os.pathsep.join(map(str, DEPENDENCIES))
             sources = [ROOT / 'android/src/com/cyberbasslord/lightforge/NativeGame.java',
+                       ROOT / 'android/src/com/cyberbasslord/lightforge/NativeGameProfile.java',
                        ROOT / 'tests/NativeGameTest.java']
             compiled = subprocess.run([str(JAVA / 'javac'), '--release', '8', '-encoding', 'UTF-8',
                                        '-cp', classpath, '-d', str(classes), *map(str, sources)],

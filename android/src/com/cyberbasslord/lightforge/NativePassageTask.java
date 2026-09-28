@@ -12,6 +12,7 @@ import java.util.concurrent.Executors;
 final class NativePassageTask implements AutoCloseable {
     private static final long OUTPUT_BYTES=573300L*2*4;
     private final Context context;
+    private final String ownerJobId;
     private final File audio,directory;
     private final NativeRuntimeGuard runtimeGuard;
     private final ExecutorService executor=Executors.newSingleThreadExecutor();
@@ -26,7 +27,7 @@ final class NativePassageTask implements AutoCloseable {
     private boolean profileEmitted;
 
     NativePassageTask(Context context,File audio,String jobId)throws IOException {
-        this.context=context.getApplicationContext();this.audio=audio;
+        this.context=context.getApplicationContext();this.audio=audio;this.ownerJobId=jobId;
         try{runtimeGuard=new NativeRuntimeGuard(new File(context.getFilesDir(),"diagnostics"),context.getPackageManager().getPackageInfo(context.getPackageName(),0).versionCode+"-"+NativeDeux.RUNTIME_VERSION);}
         catch(android.content.pm.PackageManager.NameNotFoundException error){throw new IOException("The native runtime identity could not be checked.",error);}
         if(!jobId.matches("[a-f0-9-]{36}"))throw new IOException("Invalid native job.");
@@ -150,7 +151,7 @@ final class NativePassageTask implements AutoCloseable {
         if(profile==null)return;
         NativeInferenceProfile.Snapshot snapshot=profile.finish(outcome);
         synchronized(this){if(profile!=inferenceProfile||profileEmitted)return;profileEmitted=true;}
-        AppDiagnostics.profile(context,snapshot);
+        AppDiagnostics.profile(context,ownerJobId,snapshot);
     }
     @Override public synchronized void close(){
         if(closed)return;closed=true;cancelled=true;

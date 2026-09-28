@@ -48,6 +48,7 @@ AUTOMATED_VERIFICATION_ONLY_RELEASES = frozenset({
     ("2.3.1", 20301),
     ("2.3.2", 20302),
     ("2.4.0", 20400),
+    ("2.4.1", 20401),
 })
 
 # A waiver is deliberately much narrower than "does not look like a model

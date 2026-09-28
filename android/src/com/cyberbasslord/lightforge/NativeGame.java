@@ -39,6 +39,9 @@ public final class NativeGame implements AutoCloseable {
     private final Map<String,OrtSession> sessions=new LinkedHashMap<>();
     private volatile boolean cancelled,closed,running,retirementUnconfirmed;
     private OrtSession.RunOptions activeRun;
+    private NativeGameProfile activeProfile;
+
+    static int inferenceThreads(){return Math.max(1,Math.min(4,Runtime.getRuntime().availableProcessors()));}
 
     public NativeGame(Context context) throws Exception { this(context.getApplicationContext(),null); }
     /** Host proof executes this same engine without calling Android runtime APIs. */
@@ -74,14 +77,22 @@ public final class NativeGame implements AutoCloseable {
     /** Returns unrounded passage-local {start,end,midi} notes. Seed is unsigned 32-bit. */
     public synchronized JSONArray predict(float[] pcm,int language,long seed,Listener listener,
             Cancellation cancellation) throws Exception {
+        return predict(pcm,language,seed,listener,cancellation,new NativeGameProfile(inferenceThreads()));
+    }
+
+    synchronized JSONArray predict(float[] pcm,int language,long seed,Listener listener,
+            Cancellation cancellation,NativeGameProfile profile) throws Exception {
         check(cancellation);
         float[] samples=validatedPcm(pcm,language,seed);
-        synchronized(lifecycle){check(cancellation);running=true;}
+        synchronized(lifecycle){check(cancellation);running=true;activeProfile=profile;}
         Throwable failure=null;
         try {
-            prepareModels(cancellation);
+            NativeGameProfile.Stamp preparation=profile.started();
+            try{prepareModels(cancellation);}finally{profile.addPrepare(preparation);}
             check(cancellation);
-            OrtEnvironment environment=OrtEnvironment.getEnvironment();
+            NativeGameProfile.Stamp runtime=profile.started();
+            OrtEnvironment environment;
+            try{environment=OrtEnvironment.getEnvironment();}finally{profile.addRuntimeInit(runtime);}
             if(!RUNTIME_VERSION.equals(environment.getVersion()))
                 throw new IOException("The singing inference runtime version is invalid.");
             synchronized(lifecycle) {
@@ -91,9 +102,10 @@ public final class NativeGame implements AutoCloseable {
             for(int i=0;i<GRAPHS.length;i++) {
                 check(cancellation);
                 progress(listener,0,"Loading singing model "+(i+1)+"/"+GRAPHS.length);
+                NativeGameProfile.Stamp initializing=profile.started();
                 try(Owned<OrtSession.SessionOptions> resource=owned(new OrtSession.SessionOptions())) {
                     OrtSession.SessionOptions options=resource.value;
-                    options.setIntraOpNumThreads(Math.max(1,Math.min(4,Runtime.getRuntime().availableProcessors())));
+                    options.setIntraOpNumThreads(inferenceThreads());
                     options.setInterOpNumThreads(1);
                     options.setExecutionMode(OrtSession.SessionOptions.ExecutionMode.SEQUENTIAL);
                     options.setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT);
@@ -104,7 +116,7 @@ public final class NativeGame implements AutoCloseable {
                     // returning after cancellation is retired by the worker.
                     sessions.put(GRAPHS[i],environment.createSession(
                             new File(modelDirectory,GRAPHS[i]+".onnx").getAbsolutePath(),options));
-                }
+                }finally{profile.addSessionInit(GRAPHS[i],initializing);}
                 check(cancellation);
             }
             JSONArray notes=infer(environment,samples,language,seed,listener,cancellation);
@@ -117,6 +129,7 @@ public final class NativeGame implements AutoCloseable {
         } finally {
             // No JNI close holds lifecycle: cancel/close must remain nonblocking.
             Throwable retirement=null;boolean cleanupConfirmed=false;
+            NativeGameProfile.Stamp cleanup=profile.started();
             try {
                 for(OrtSession session:sessions.values())try{retire(session);}catch(Throwable error){
                     if(retirement==null)retirement=error;
@@ -139,6 +152,8 @@ public final class NativeGame implements AutoCloseable {
                     // mistake an attempted destructor for confirmed retirement.
                     if(!cleanupConfirmed){retirementUnconfirmed=true;cancelled=true;}
                 }
+                activeProfile=null;
+                profile.addCleanup(cleanup);
             }
             if(retirement!=null) {
                 if(failure!=null)failure.addSuppressed(retirement);
@@ -229,7 +244,9 @@ public final class NativeGame implements AutoCloseable {
     }
     private OrtSession.Result run(String graph,Map<String,OnnxTensor> input,Cancellation cancellation) throws Exception {
         check(cancellation);
-        OrtSession.Result result=sessions.get(graph).run(input,activeRun);
+        NativeGameProfile.Stamp execution=activeProfile.started();
+        OrtSession.Result result;
+        try{result=sessions.get(graph).run(input,activeRun);}finally{activeProfile.addInference(graph,execution);}
         try{check(cancellation);return result;}catch(Exception|Error error){retire(result);throw error;}
     }
     /** Every JNI owner, including tensors and results, uses this tracked close. */
@@ -324,7 +341,8 @@ public final class NativeGame implements AutoCloseable {
         List<Integer> missing=new ArrayList<>();long missingBytes=0,largest=0;
         for(int i=0;i<GRAPHS.length;i++) {
             check(cancellation);File file=new File(modelDirectory,GRAPHS[i]+".onnx");
-            if(file.isFile() && file.length()==BYTES[i] && HASHES[i].equals(digest(file,cancellation)))continue;
+            if(file.isFile() && file.length()==BYTES[i] && HASHES[i].equals(digest(file,cancellation))){activeProfile.cache(true);continue;}
+            activeProfile.cache(false);
             if(context==null)throw new IOException("The singing model checksum does not match: "+GRAPHS[i]);
             missing.add(i);missingBytes+=BYTES[i];largest=Math.max(largest,BYTES[i]);
         }

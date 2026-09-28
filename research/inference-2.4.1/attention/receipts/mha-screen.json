@@ -1,0 +1,275 @@
+{
+  "runtime": "1.25.1",
+  "scope": "Single real-input block00 temporal graph host screening, not fullpassage or Android acceptance. Two sequential process orders, 1 warmup+3 timed graph calls each; isolated process peak RSS.",
+  "rows": [
+    {
+      "name": "baseline",
+      "rows": [
+        {
+          "run": 0,
+          "seconds": 0.4333054449998599,
+          "equal": true,
+          "finite": true,
+          "maxAbs": 0.0,
+          "rmse": 0.0
+        },
+        {
+          "run": 1,
+          "seconds": 0.42087069199988036,
+          "equal": true,
+          "finite": true,
+          "maxAbs": 0.0,
+          "rmse": 0.0
+        },
+        {
+          "run": 2,
+          "seconds": 0.36666250200141803,
+          "equal": true,
+          "finite": true,
+          "maxAbs": 0.0,
+          "rmse": 0.0
+        },
+        {
+          "run": 3,
+          "seconds": 0.4425926799995068,
+          "equal": true,
+          "finite": true,
+          "maxAbs": 0.0,
+          "rmse": 0.0
+        }
+      ],
+      "peakRss": 306794496,
+      "modelSha256": "688feca1115d610e9bc9d15ac9dac6e33c4cf0a03966d9effe8974d2674ae924",
+      "inputSha256": "2c2ee19d11fc269d5e0d7298a1b65bc661bf6fe9d980fe8bf67f04df2cbde7b5",
+      "referenceSha256": "721014fd26d883050283fb00d7b40470c72798cf93749fb12598c210e43425bc",
+      "outputSha256": "721014fd26d883050283fb00d7b40470c72798cf93749fb12598c210e43425bc"
+    },
+    {
+      "name": "nonflash",
+      "rows": [
+        {
+          "run": 0,
+          "seconds": 0.7744261250009004,
+          "equal": true,
+          "finite": true,
+          "maxAbs": 0.0,
+          "rmse": 0.0
+        },
+        {
+          "run": 1,
+          "seconds": 0.661399895001523,
+          "equal": true,
+          "finite": true,
+          "maxAbs": 0.0,
+          "rmse": 0.0
+        },
+        {
+          "run": 2,
+          "seconds": 0.6267737010020937,
+          "equal": true,
+          "finite": true,
+          "maxAbs": 0.0,
+          "rmse": 0.0
+        },
+        {
+          "run": 3,
+          "seconds": 0.6431418789979944,
+          "equal": true,
+          "finite": true,
+          "maxAbs": 0.0,
+          "rmse": 0.0
+        }
+      ],
+      "peakRss": 660692992,
+      "modelSha256": "09ea27ba6e4f38a557f0574f4355544828ab2a2a22d8adeea16b7a5a843cf688",
+      "inputSha256": "2c2ee19d11fc269d5e0d7298a1b65bc661bf6fe9d980fe8bf67f04df2cbde7b5",
+      "referenceSha256": "721014fd26d883050283fb00d7b40470c72798cf93749fb12598c210e43425bc",
+      "outputSha256": "721014fd26d883050283fb00d7b40470c72798cf93749fb12598c210e43425bc"
+    },
+    {
+      "name": "flash",
+      "rows": [
+        {
+          "run": 0,
+          "seconds": 0.24868286900164094,
+          "equal": false,
+          "finite": true,
+          "maxAbs": 1.430511474609375e-06,
+          "rmse": 1.3193034455191282e-07
+        },
+        {
+          "run": 1,
+          "seconds": 0.31844616400121595,
+          "equal": false,
+          "finite": true,
+          "maxAbs": 1.430511474609375e-06,
+          "rmse": 1.3193034455191282e-07
+        },
+        {
+          "run": 2,
+          "seconds": 0.2636935139998968,
+          "equal": false,
+          "finite": true,
+          "maxAbs": 1.430511474609375e-06,
+          "rmse": 1.3193034455191282e-07
+        },
+        {
+          "run": 3,
+          "seconds": 0.33603878899884876,
+          "equal": false,
+          "finite": true,
+          "maxAbs": 1.430511474609375e-06,
+          "rmse": 1.3193034455191282e-07
+        }
+      ],
+      "peakRss": 290287616,
+      "modelSha256": "0c69b615662a7cb88dbe481050aa635823b96fbcdd6208ec38255344267ca951",
+      "inputSha256": "2c2ee19d11fc269d5e0d7298a1b65bc661bf6fe9d980fe8bf67f04df2cbde7b5",
+      "referenceSha256": "721014fd26d883050283fb00d7b40470c72798cf93749fb12598c210e43425bc",
+      "outputSha256": "1678c362860e745e4c96158f7efa545876d16c235dce429966621afb94791392"
+    },
+    {
+      "name": "flash",
+      "rows": [
+        {
+          "run": 0,
+          "seconds": 0.3317158140016545,
+          "equal": false,
+          "finite": true,
+          "maxAbs": 1.430511474609375e-06,
+          "rmse": 1.3193034455191282e-07
+        },
+        {
+          "run": 1,
+          "seconds": 0.2640739290000056,
+          "equal": false,
+          "finite": true,
+          "maxAbs": 1.430511474609375e-06,
+          "rmse": 1.3193034455191282e-07
+        },
+        {
+          "run": 2,
+          "seconds": 0.2094044830009807,
+          "equal": false,
+          "finite": true,
+          "maxAbs": 1.430511474609375e-06,
+          "rmse": 1.3193034455191282e-07
+        },
+        {
+          "run": 3,
+          "seconds": 0.20164129600016167,
+          "equal": false,
+          "finite": true,
+          "maxAbs": 1.430511474609375e-06,
+          "rmse": 1.3193034455191282e-07
+        }
+      ],
+      "peakRss": 289566720,
+      "modelSha256": "0c69b615662a7cb88dbe481050aa635823b96fbcdd6208ec38255344267ca951",
+      "inputSha256": "2c2ee19d11fc269d5e0d7298a1b65bc661bf6fe9d980fe8bf67f04df2cbde7b5",
+      "referenceSha256": "721014fd26d883050283fb00d7b40470c72798cf93749fb12598c210e43425bc",
+      "outputSha256": "1678c362860e745e4c96158f7efa545876d16c235dce429966621afb94791392"
+    },
+    {
+      "name": "nonflash",
+      "rows": [
+        {
+          "run": 0,
+          "seconds": 0.42627824600276654,
+          "equal": true,
+          "finite": true,
+          "maxAbs": 0.0,
+          "rmse": 0.0
+        },
+        {
+          "run": 1,
+          "seconds": 0.4220182169992768,
+          "equal": true,
+          "finite": true,
+          "maxAbs": 0.0,
+          "rmse": 0.0
+        },
+        {
+          "run": 2,
+          "seconds": 0.2922196100007568,
+          "equal": true,
+          "finite": true,
+          "maxAbs": 0.0,
+          "rmse": 0.0
+        },
+        {
+          "run": 3,
+          "seconds": 0.27465105400187895,
+          "equal": true,
+          "finite": true,
+          "maxAbs": 0.0,
+          "rmse": 0.0
+        }
+      ],
+      "peakRss": 660865024,
+      "modelSha256": "09ea27ba6e4f38a557f0574f4355544828ab2a2a22d8adeea16b7a5a843cf688",
+      "inputSha256": "2c2ee19d11fc269d5e0d7298a1b65bc661bf6fe9d980fe8bf67f04df2cbde7b5",
+      "referenceSha256": "721014fd26d883050283fb00d7b40470c72798cf93749fb12598c210e43425bc",
+      "outputSha256": "721014fd26d883050283fb00d7b40470c72798cf93749fb12598c210e43425bc"
+    },
+    {
+      "name": "baseline",
+      "rows": [
+        {
+          "run": 0,
+          "seconds": 0.47193515300023137,
+          "equal": true,
+          "finite": true,
+          "maxAbs": 0.0,
+          "rmse": 0.0
+        },
+        {
+          "run": 1,
+          "seconds": 0.45935643799748505,
+          "equal": true,
+          "finite": true,
+          "maxAbs": 0.0,
+          "rmse": 0.0
+        },
+        {
+          "run": 2,
+          "seconds": 0.412757086000056,
+          "equal": true,
+          "finite": true,
+          "maxAbs": 0.0,
+          "rmse": 0.0
+        },
+        {
+          "run": 3,
+          "seconds": 0.42521725299957325,
+          "equal": true,
+          "finite": true,
+          "maxAbs": 0.0,
+          "rmse": 0.0
+        }
+      ],
+      "peakRss": 304607232,
+      "modelSha256": "688feca1115d610e9bc9d15ac9dac6e33c4cf0a03966d9effe8974d2674ae924",
+      "inputSha256": "2c2ee19d11fc269d5e0d7298a1b65bc661bf6fe9d980fe8bf67f04df2cbde7b5",
+      "referenceSha256": "721014fd26d883050283fb00d7b40470c72798cf93749fb12598c210e43425bc",
+      "outputSha256": "721014fd26d883050283fb00d7b40470c72798cf93749fb12598c210e43425bc"
+    }
+  ],
+  "summary": {
+    "baseline": {
+      "medianSeconds": 0.4230439724997268,
+      "allEqual": true,
+      "peakRss": 306794496
+    },
+    "nonflash": {
+      "medianSeconds": 0.5243959590006853,
+      "allEqual": true,
+      "peakRss": 660865024
+    },
+    "flash": {
+      "medianSeconds": 0.2638837214999512,
+      "allEqual": false,
+      "peakRss": 290287616
+    }
+  }
+}

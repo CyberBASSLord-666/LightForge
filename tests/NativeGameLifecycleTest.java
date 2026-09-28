@@ -106,6 +106,11 @@ public final class NativeGameLifecycleTest {
             require(NativeGame.constructed.get()==2&&NativeGame.closed.get()==2,"every passage owns a fresh retired engine");
             require(new JSONObject(task.status(JOB,second)).getInt("completedPasses")==2,"completed count survives idle release");
         }finally{stopped(task);}
+        require(AppDiagnostics.profileSummaries.size()==2,"each retired passage emits one durable summary");
+        for(String summary:AppDiagnostics.profileSummaries){
+            require(summary.startsWith("native-game-v1 schema=native-game-profile-v1")&&summary.contains("outcome=completed"),"completed native route remains explicit");
+            require(!summary.contains(JOB)&&!summary.contains("60.123")&&!summary.contains("seed="),"profile excludes owner identity, notes and seed");
+        }
     }
     private static void stalledConstruction()throws Exception {
         NativeGame.reset();NativeGame.blockCreate=true;NativeGameTask task=task("construct");leaseBoundaries(task);String token=start(task);
@@ -212,6 +217,7 @@ final class NativeGame implements AutoCloseable {
     static CountDownLatch createEntered,createAllowed,runEntered,runAllowed,closeEntered,closeAllowed;
     private volatile boolean cancelled,running;
     private boolean retired;
+    static int inferenceThreads(){return 4;}
     NativeGame(Context context)throws Exception {
         if(beforeConstruct!=null)beforeConstruct.run();constructed.incrementAndGet();createEntered.countDown();
         if(blockCreate)await(createAllowed);if(failCreate)throw new IOException("Controlled creation failure");live.incrementAndGet();
@@ -219,10 +225,11 @@ final class NativeGame implements AutoCloseable {
     static void reset(){
         if(live.get()!=0||NativeDeux.INFERENCE_GATE.availablePermits()!=1)throw new AssertionError("Previous native boundary leaked");
         constructed.set(0);runs.set(0);closed.set(0);cancellations.set(0);blockCreate=failCreate=blockRun=blockClose=failClose=unconfirmedClose=invalidNotes=closedDuringRun=false;
+        AppDiagnostics.profileSummaries.clear();
         beforeConstruct=beforeClose=null;createEntered=new CountDownLatch(1);createAllowed=new CountDownLatch(1);runEntered=new CountDownLatch(1);runAllowed=new CountDownLatch(1);closeEntered=new CountDownLatch(1);closeAllowed=new CountDownLatch(1);
     }
     static void await(CountDownLatch latch){try{if(!latch.await(10,TimeUnit.SECONDS))throw new AssertionError("Controlled native boundary timed out");}catch(InterruptedException error){Thread.currentThread().interrupt();throw new AssertionError(error);}}
-    JSONArray predict(float[] pcm,int language,long seed,Listener listener,Cancellation cancellation)throws Exception {
+    JSONArray predict(float[] pcm,int language,long seed,Listener listener,Cancellation cancellation,NativeGameProfile profile)throws Exception {
         running=true;runs.incrementAndGet();runEntered.countDown();
         try{while(blockRun&&!runAllowed.await(10,TimeUnit.MILLISECONDS)){if(cancelled||cancellation.cancelled())throw new InterruptedIOException("Controlled cancellation");}
             if(cancelled||cancellation.cancelled())throw new InterruptedIOException("Controlled cancellation");

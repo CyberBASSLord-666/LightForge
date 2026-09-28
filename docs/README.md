@@ -32,9 +32,9 @@
 ## Measurement and qualification
 
 These contracts define how to collect and evaluate evidence. Their presence is
-not a successful benchmark. The owner-approved external-input exception applies
-to **2.2.5 / 20205**, **2.3.0 / 20300** and **2.3.1 / 20301**; it does not
-weaken the separate strict qualification
+not a successful benchmark. The owner-approved external-input exceptions are
+version-scoped in [release-quality setup](RELEASE_QUALITY_SETUP.md), including
+**2.4.1 / 20401**; they do not weaken the separate strict qualification
 thresholds or establish comparative quality, speed or physical behavior.
 
 | Contract | Scope |
@@ -48,9 +48,12 @@ thresholds or establish comparative quality, speed or physical behavior.
 | [Physical attestation](PHYSICAL_VALIDATION_ATTESTATION.md) | Optional phone/Tesla observations |
 | [Timing probes](PERFORMANCE_TIMING_PROBES.md) | Bounded timing observations, not speed claims |
 | [Native inference profiling](NATIVE_INFERENCE_PROFILING.md) | Native-call timing and unchanged-output checks |
+| [Device execution calibration](NATIVE_EXECUTION_CALIBRATION.md) | Exact-output admission, repeated timing and private policy cache |
+| [Durable job diagnostics](DIAGNOSTIC_EVIDENCE.md) | Whole-job summaries that survive trace rotation |
+| [Native GAME profiling](NATIVE_GAME_PROFILING.md) | Transcription graph timing with explicit CPU scope |
 | [Inference execution placement](EXECUTION_PLACEMENT.md) | Device, hybrid and remote research options; untrusted evidence lint, not admission |
 | [Native execution benchmark](NATIVE_EXECUTION_BENCHMARK.md) | Repeated full-passage execution comparisons with exact-output checks |
-| [Native GAME and Deux execution](NATIVE_GAME_EXECUTION.md) | 2.3.2 candidate execution, fallback boundaries and limited host evidence |
+| [Native GAME and Deux execution](NATIVE_GAME_EXECUTION.md) | Published native execution, fallback boundaries and limited host evidence |
 | [GAME backend experiment](../tools/game_benchmark/README.md) | Development-only stage comparisons before a native transcription rollout |
 | [Resource diagnostics](RESOURCE_DIAGNOSTICS.md) | Runtime resource reporting |
 | [Process resource collection](PROCESS_RESOURCE_COLLECTION.md) | Explicit process-resource capture |

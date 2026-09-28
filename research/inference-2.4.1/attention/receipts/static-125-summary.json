@@ -1,0 +1,147 @@
+{
+  "runtime": "1.25.1",
+  "scope": "Diagnostic static-dimension screening only; simultaneous unrelated quality-only process means no performance-acceptance evidence.",
+  "rows": [
+    {
+      "round": 0,
+      "static": false,
+      "seconds": 0.14915373899930273,
+      "equal": true,
+      "finite": true
+    },
+    {
+      "round": 0,
+      "static": true,
+      "seconds": 0.20643871900028898,
+      "equal": false,
+      "finite": true
+    },
+    {
+      "round": 1,
+      "static": true,
+      "seconds": 0.2515275619989552,
+      "equal": false,
+      "finite": true
+    },
+    {
+      "round": 1,
+      "static": false,
+      "seconds": 0.1372185990003345,
+      "equal": true,
+      "finite": true
+    },
+    {
+      "round": 2,
+      "static": false,
+      "seconds": 0.17835720599759952,
+      "equal": true,
+      "finite": true
+    },
+    {
+      "round": 2,
+      "static": true,
+      "seconds": 0.16794000400113873,
+      "equal": false,
+      "finite": true
+    },
+    {
+      "round": 3,
+      "static": true,
+      "seconds": 0.17279185599909397,
+      "equal": false,
+      "finite": true
+    },
+    {
+      "round": 3,
+      "static": false,
+      "seconds": 0.11383063899847912,
+      "equal": true,
+      "finite": true
+    },
+    {
+      "round": 4,
+      "static": false,
+      "seconds": 0.15275649899922428,
+      "equal": true,
+      "finite": true
+    },
+    {
+      "round": 4,
+      "static": true,
+      "seconds": 0.25630547600303544,
+      "equal": false,
+      "finite": true
+    },
+    {
+      "round": 5,
+      "static": true,
+      "seconds": 0.16905937699993956,
+      "equal": false,
+      "finite": true
+    },
+    {
+      "round": 5,
+      "static": false,
+      "seconds": 0.1266361810012313,
+      "equal": true,
+      "finite": true
+    }
+  ],
+  "median": {
+    "False": 0.14318616899981862,
+    "True": 0.18961528749969148
+  },
+  "ops": {
+    "dynamic": {
+      "Shape": 12,
+      "ReduceL2": 3,
+      "Clip": 3,
+      "Expand": 5,
+      "Div": 3,
+      "Mul": 34,
+      "MatMul": 47,
+      "Add": 6,
+      "Gather": 15,
+      "Unsqueeze": 21,
+      "Concat": 8,
+      "Transpose": 9,
+      "Reshape": 9,
+      "Sigmoid": 1,
+      "Split": 4,
+      "Squeeze": 7,
+      "Neg": 4,
+      "Cast": 2,
+      "Range": 1,
+      "Einsum": 1,
+      "Slice": 11,
+      "Sin": 2,
+      "Cos": 2,
+      "ScatterND": 1,
+      "Pow": 1,
+      "Softmax": 21,
+      "BiasGelu": 1
+    },
+    "static": {
+      "ReduceL2": 3,
+      "Clip": 3,
+      "Expand": 3,
+      "Div": 3,
+      "Mul": 11,
+      "Reshape": 13,
+      "Gemm": 3,
+      "Transpose": 8,
+      "Sigmoid": 1,
+      "MatMul": 23,
+      "Split": 4,
+      "Squeeze": 7,
+      "Slice": 6,
+      "Unsqueeze": 4,
+      "Neg": 2,
+      "Concat": 5,
+      "Add": 4,
+      "FusedMatMul": 21,
+      "Softmax": 21,
+      "Gelu": 1
+    }
+  }
+}

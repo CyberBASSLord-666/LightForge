@@ -137,3 +137,39 @@ This writes the same Float32 byte sequence as `LightForgeGAME.noise(10000,2025)`
 The harness follows the official [Java session and result ownership API](https://onnxruntime.ai/docs/get-started/with-java.html),
 [typed tensor buffers](https://onnxruntime.ai/docs/api/java/ai/onnxruntime/OnnxTensor.html),
 and [ORT-Web runtime settings](https://onnxruntime.ai/docs/tutorials/web/env-flags-and-session-options.html).
+
+## Isolated production execution-option screen
+
+`benchmark_execution_options.py` copies the current production `NativeGame`
+source and adds a post-kernel tensor observer. Reviewed substitutions can enable
+dynamic block sizing, CPU arena/memory patterns, or a six-thread dynamic
+candidate. Production defaults are never edited by this script. The insertion
+and substitutions fail closed if their expected source locations change.
+
+```sh
+python3 tools/game_benchmark/benchmark_execution_options.py \
+  --input ../public-demo.f32 --output ../game-options-screen \
+  --configs baseline dynamic4 arena --trials 1
+```
+
+The input is the complete mono Float32 source. The harness uses the unchanged
+production window/seed plan and captures all 16 graph outputs per passage,
+including all eight segmenter steps. Comparisons require finite, byte-identical
+tensors and identical unrounded notes. Full-plan runs also exercise the actual
+native callback, context stitching and checkpoint replay. `--passage 2` screens
+only that original production window and explicitly omits a complete-song
+stitching claim. `--prepare-only` compiles the isolated candidates without
+performing inference.
+
+Repeated trials alternate candidate order and use fresh processes/sessions.
+Kernel timing excludes the tensor observer; passage timing includes it. Peak
+RSS comes from the child JVM's `/proc/self/status`; unavailable parent-PID
+measurements remain null. Source, model-manifest, dependency and input hashes
+are retained with source snapshots. Neither a fast single trial nor identical
+rounded notes authorizes a production option change.
+
+The [2.4.1 screening record](../../research/inference-2.4.1/game-options-screen.json)
+rejects dynamic scheduling changes because raw features and unrounded notes
+differ. Arena/memory patterns preserve the tested outputs but did not produce
+a consistent timing improvement. Native GAME retains its existing execution
+options; the new bounded profiler supplies the missing device measurements.

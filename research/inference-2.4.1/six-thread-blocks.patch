@@ -1,0 +1,12 @@
+--- a/NativeDeux.java
++++ b/NativeDeux.java
+@@ -261,7 +261,8 @@
+         phase("session-create-start; graph="+name);
+         NativeInferenceProfile.Timing sessionStarted=profile==null?null:NativeInferenceProfile.started();boolean recorded=false;
+         try(OrtSession.SessionOptions options=new OrtSession.SessionOptions()) {
+-            options.setIntraOpNumThreads(Math.max(1,Math.min(4,Runtime.getRuntime().availableProcessors())));
++            options.setIntraOpNumThreads(name.startsWith("block-")?Math.min(6,Runtime.getRuntime().availableProcessors()):Math.max(1,Math.min(4,Runtime.getRuntime().availableProcessors())));
++            if(name.startsWith("block-"))options.addConfigEntry("session.dynamic_block_base","4");
+             options.setInterOpNumThreads(1);
+             options.setExecutionMode(OrtSession.SessionOptions.ExecutionMode.SEQUENTIAL);
+             options.setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT);

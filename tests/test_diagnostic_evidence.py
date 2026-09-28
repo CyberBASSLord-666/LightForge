@@ -52,6 +52,133 @@ def profile(seconds, *, wall="100", inference="90", outcome="completed", graph_c
 
 
 class DiagnosticEvidenceTest(unittest.TestCase):
+    def test_parallel_profile_preserves_critical_path_and_worker_scopes(self):
+        events = (
+            event(0, "native-inference-profile",
+                  "schema=native-inference-profile-v2 outcome=completed wallMs=170 inferenceWallMs=160 "
+                  "inferenceThreadCpuMs=11 inferenceProcessCpuMs=212 inferenceCount=5 "
+                  "inferenceWorkerThreadCpuMs=160 inferenceWorkerRunCount=3 inferenceWorkerCpuTelemetry=available "
+                  "cpuScope=calling-thread processCpuScope=all-app-threads inferenceWallScope=critical-path "
+                  "inferenceThreadCpuScope=coordinator inferenceWorkerThreadCpuScope=sum-run-calling-threads "
+                  "stageRecords=1 graphRecords=1 droppedStageRecords=0 droppedGraphRecords=0"),
+            event(.001, "native-inference-profile",
+                  "schema=native-inference-stage-v1 stage=inference samples=4 wallMs=160 cpuMs=11 processCpuMs=212 "
+                  "wallScope=critical-path cpuScope=calling-thread processCpuScope=all-app-threads"),
+            event(.002, "native-inference-profile",
+                  "schema=native-inference-graph-v2 graph=block-00-time runCount=3 runWallMs=240 runCpuMs=160 "
+                  "runProcessCpuMs=unavailable graphWallScope=aggregate-call runCpuScope=run-calling-threads "
+                  "runProcessCpuScope=unavailable-overlapping-intervals"),
+        )
+        totals = EVIDENCE.summarize(report(*events))["attempts"][0]["native_profiles"]["completed_complete_bundles"]
+        self.assertEqual(totals["metrics"]["inferenceCount"]["value"], 5)
+        self.assertEqual(totals["metrics"]["inferenceWallMs"]["value"], 160)
+        self.assertEqual(totals["metrics"]["inferenceThreadCpuMs"]["value"], 11)
+        self.assertEqual(totals["metrics"]["inferenceWorkerThreadCpuMs"]["value"], 160)
+        self.assertEqual(totals["metrics"]["inferenceWorkerRunCount"]["value"], 3)
+        self.assertEqual(totals["measurement_scopes"]["inferenceThreadCpuScope"], {"coordinator": 1})
+        self.assertEqual(totals["stages"]["inference"]["measurement_scopes"]["wallScope"], {"critical-path": 1})
+        graph = totals["graphs"]["block-00-time"]
+        self.assertEqual(graph["runWallMs"]["value"], 240)
+        self.assertIsNone(graph["runProcessCpuMs"]["value"])
+        self.assertEqual(graph["measurement_scopes"]["graphWallScope"], {"aggregate-call": 1})
+        self.assertEqual(graph["measurement_scopes"]["runProcessCpuScope"], {"unavailable-overlapping-intervals": 1})
+        private = report(*events).replace("inferenceThreadCpuScope=coordinator", "inferenceThreadCpuScope=PRIVATE_SCOPE")
+        private = private.replace("graphWallScope=aggregate-call", "graphWallScope=PRIVATE_SCOPE")
+        sanitized = EVIDENCE.summarize(private)
+        self.assertNotIn("PRIVATE_SCOPE", json.dumps(sanitized))
+        unknown = sanitized["attempts"][0]["native_profiles"]["completed_complete_bundles"]
+        self.assertEqual(unknown["measurement_scopes"]["inferenceThreadCpuScope"], {"missing-or-unknown": 1})
+
+    def test_parallel_scheduler_configuration_is_allowlisted_for_temporal_only(self):
+        for workers in (4, 8):
+            raw = f"cpu-i1-j1-d0-sequential-w{workers}-b1"
+            self.assertEqual(EVIDENCE._scheduler_configuration(raw, temporal=True), raw)
+            self.assertIsNone(EVIDENCE._scheduler_configuration(raw, temporal=False))
+        for invalid in ("cpu-i1-j1-d0-sequential-w16-b1", "cpu-i1-j1-d0-sequential-w8-b4",
+                        "cpu-i2-j1-d0-sequential-w8-b1", "cpu-i1-j1-d4-sequential-w8-b1", "PRIVATE_CONFIGURATION"):
+            self.assertIsNone(EVIDENCE._scheduler_configuration(invalid, temporal=True))
+        self.assertEqual(EVIDENCE._scheduler_configuration("cpu-i6-j1-d4-sequential", temporal=False),
+                         "cpu-i6-j1-d4-sequential")
+
+    def test_pipeline_copy_scopes_preserve_overlap_and_do_not_reconstruct_totals(self):
+        events = (
+            event(0, "native-inference-profile",
+                  "schema=native-inference-profile-v2 outcome=completed wallMs=140 inferenceWallMs=120 "
+                  "instrumentedCpuMs=13 instrumentedCpuScope=nonoverlapping-calling-thread "
+                  "inferenceThreadCpuMs=12 inferenceProcessCpuMs=174 inferenceCount=3 "
+                  "inferenceWorkerThreadCpuMs=150 inferenceWorkerRunCount=2 inferenceWorkerCpuTelemetry=available "
+                  "inferenceWallScope=critical-path inferenceThreadCpuScope=coordinator "
+                  "inferenceWorkScope=run-and-pipeline-coordination "
+                  "stageRecords=3 graphRecords=2 droppedStageRecords=0 droppedGraphRecords=0"),
+            event(.001, "native-inference-profile",
+                  "schema=native-inference-stage-v1 stage=inference samples=2 wallMs=120 cpuMs=12 processCpuMs=174 "
+                  "wallScope=critical-path workScope=run-and-pipeline-coordination"),
+            event(.002, "native-inference-profile",
+                  "schema=native-inference-stage-v1 stage=pack samples=2 wallMs=9 cpuMs=4 processCpuMs=unavailable "
+                  "wallScope=mixed-nested-and-sequential-intervals processCpuScope=unavailable-overlapping-intervals"),
+            event(.003, "native-inference-profile",
+                  "schema=native-inference-stage-v1 stage=scatter samples=1 wallMs=7 cpuMs=2 processCpuMs=unavailable "
+                  "wallScope=nested-in-inference-pipeline processCpuScope=unavailable-overlapping-intervals"),
+            event(.004, "native-inference-profile",
+                  "schema=native-inference-graph-v2 graph=block-00-time runCount=2 runWallMs=180 runCpuMs=150 "
+                  "runProcessCpuMs=unavailable graphWallScope=aggregate-call "
+                  "packWallScope=nested-in-inference-pipeline scatterWallScope=nested-in-inference-pipeline "
+                  "packProcessCpuScope=unavailable-overlapping-intervals scatterProcessCpuScope=unavailable-overlapping-intervals "
+                  "packWallMs=5 packCpuMs=3 packProcessCpuMs=unavailable scatterWallMs=7 scatterCpuMs=2 scatterProcessCpuMs=unavailable"),
+            event(.005, "native-inference-profile",
+                  "schema=native-inference-graph-v2 graph=block-00-frequency runCount=1 runWallMs=20 runCpuMs=2 "
+                  "packWallScope=sequential-intervals scatterWallScope=unavailable packWallMs=4 packCpuMs=1 packProcessCpuMs=2"),
+        )
+        totals = EVIDENCE.summarize(report(*events))["attempts"][0]["native_profiles"]["completed_complete_bundles"]
+        self.assertEqual(totals["metrics"]["instrumentedCpuMs"]["value"], 13)
+        self.assertEqual(totals["metrics"]["inferenceWallMs"]["value"], 120)
+        self.assertEqual(totals["measurement_scopes"]["instrumentedCpuScope"], {"nonoverlapping-calling-thread": 1})
+        self.assertEqual(totals["measurement_scopes"]["inferenceWorkScope"], {"run-and-pipeline-coordination": 1})
+        self.assertEqual(totals["stages"]["pack"]["measurement_scopes"]["wallScope"], {"mixed-nested-and-sequential-intervals": 1})
+        self.assertEqual(totals["stages"]["scatter"]["measurement_scopes"]["wallScope"], {"nested-in-inference-pipeline": 1})
+        graph = totals["graphs"]["block-00-time"]
+        self.assertEqual(graph["packCpuMs"]["value"], 3)
+        self.assertIsNone(graph["packProcessCpuMs"]["value"])
+        self.assertEqual(graph["measurement_scopes"]["packWallScope"], {"nested-in-inference-pipeline": 1})
+        self.assertEqual(graph["measurement_scopes"]["scatterProcessCpuScope"], {"unavailable-overlapping-intervals": 1})
+        private = report(*events).replace("nested-in-inference-pipeline", "PRIVATE_SCOPE")
+        self.assertNotIn("PRIVATE_SCOPE", json.dumps(EVIDENCE.summarize(private)))
+
+    def test_durable_summary_does_not_override_current_job_and_keeps_partial_cpu_honest(self):
+        text = report().replace("jobRef=PRIVATE_JOB_IDENTIFIER", "jobRef=1234567890abcdef")
+        text = text.replace("ANDROID PREVIOUS PROCESS EXITS", "\n".join((
+            "DURABLE ANALYSIS SUMMARIES (independent of trace rotation)",
+            "schema=diagnostic-job-summary-v1 retentionJobs=3 storageBoundBytes=32768 recovery=normal",
+            "jobRef=1234567890abcdef state=completed lifecycleElapsedMs=12345 durationMs=177000 analysisQuality=precision recoveryGaps=0 completedStages=4 restoredStages=0 createdAt=PRIVATE_TIMESTAMP",
+            " stage=save observedWallMs=345",
+            " route=native-deux-v1 passages=2 completed=1 cancelled=1 otherOutcomes=0 inferenceWallMs=100 inferenceWallMsMeasuredPassages=2 inferenceProcessCpuMs=90 inferenceProcessCpuMsMeasuredPassages=1 inferenceThreadCpuMs=unavailable inferenceThreadCpuMsMeasuredPassages=0 lastTemporalConfig=cpu-i6-j1-d4-sequential lastFrequencyConfig=PRIVATE_CONFIGURATION PRIVATE_FIELD=PRIVATE_NAME",
+            "jobRef=abcdef1234567890 state=failed lifecycleElapsedMs=99 durationMs=9000 analysisQuality=balanced restoredStages=999",
+            " stage=PRIVATE_PATH observedWallMs=999",
+            "ANDROID PREVIOUS PROCESS EXITS",
+        )))
+        result = EVIDENCE.summarize(text)
+        self.assertEqual(result["current_job_snapshot"]["state"], "completed")
+        self.assertEqual(result["current_job_snapshot"]["analysisQuality"], "precision")
+        self.assertEqual(result["current_job_snapshot"]["restoredStages"]["value"], 2)
+        jobs = result["durable_job_summaries"]
+        self.assertEqual(len(jobs), 2)
+        self.assertTrue(jobs[0]["matches_current_job"])
+        self.assertFalse(jobs[1]["matches_current_job"])
+        self.assertEqual(jobs[0]["stages"]["save"]["observed_wall_ms"]["value"], 345)
+        config = jobs[0]["native_routes"]["native-deux-v1"]["last_scheduling_configuration"]
+        self.assertEqual(config["lastTemporalConfig"], "cpu-i6-j1-d4-sequential")
+        self.assertIsNone(config["lastFrequencyConfig"])
+        metrics = jobs[0]["native_routes"]["native-deux-v1"]["metrics"]
+        self.assertEqual(metrics["inferenceWallMs"]["value"], 100)
+        self.assertEqual(metrics["inferenceProcessCpuMs"]["status"], "partial")
+        self.assertIsNone(metrics["inferenceProcessCpuMs"]["value"])
+        self.assertEqual(metrics["inferenceProcessCpuMs"]["observed_subtotal"], 90)
+        self.assertEqual(metrics["inferenceThreadCpuMs"]["status"], "unavailable")
+        self.assertIsNone(result["full_song_runtime_ms"]["value"])
+        serialized = json.dumps(result)
+        for excluded in ("1234567890abcdef", "abcdef1234567890", "PRIVATE_TIMESTAMP", "PRIVATE_NAME", "PRIVATE_PATH", "PRIVATE_CONFIGURATION"):
+            self.assertNotIn(excluded, serialized)
+
     def test_rotated_start_is_partial_and_snapshot_is_not_full_runtime(self):
         result = EVIDENCE.summarize(report(
             event(0, "native-inference-profile", "schema=native-inference-graph-v2 graph=front runWallMs=999"),

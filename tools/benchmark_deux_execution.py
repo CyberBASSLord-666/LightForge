@@ -86,7 +86,7 @@ def compile_variant(name, source, work, java, dependencies):
                     'public static void log(android.content.Context c,String l,String s,String m){}'
                     'public static boolean flush(long timeout){return true;}}\n')
     sources = [snapshot, SOURCE / 'NativeDeuxTransform.java', SOURCE / 'NativeInferenceProfile.java',
-               ROOT / 'tests/NativeDeuxExecutionBenchmark.java', stub]
+               SOURCE / 'NativeExecutionPolicy.java', ROOT / 'tests/NativeDeuxExecutionBenchmark.java', stub]
     command = [str(java / 'javac'), '--release', '8', '-encoding', 'UTF-8', '-cp',
                os.pathsep.join(map(str, dependencies)), '-d', str(classes), *map(str, sources)]
     result = subprocess.run(command, capture_output=True, text=True, timeout=90)
@@ -104,7 +104,9 @@ def measure(name, round_number, phase, classes, work, java, dependencies, models
                'com.cyberbasslord.lightforge.NativeDeuxExecutionBenchmark', str(models), str(audio),
                str(output), str(start), str(profile)]
     print(phase + ' ' + str(round_number) + ' ' + name, flush=True)
+    host_before = host_counters()
     result = subprocess.run(command, capture_output=True, text=True, timeout=1200)
+    host_after = host_counters()
     (directory / (prefix + '.log')).write_text(result.stdout + result.stderr)
     require(result.returncode == 0, name + ' inference failed; see ' + prefix + '.log.')
     measurement = json.loads(result.stdout.strip().splitlines()[-1])
@@ -122,8 +124,47 @@ def measure(name, round_number, phase, classes, work, java, dependencies, models
                        outputSha256=read_output(output), outputBytes=output.stat().st_size,
                        inferenceMillis=float(fields['inferenceWallMs']),
                        modelInitMillis=float(fields['modelInitWallMs']),
-                       profileSha256=sha(profile))
+                       profileSha256=sha(profile),
+                       hostCountersBefore=host_before, hostCountersAfter=host_after)
     return measurement
+
+
+def host_counters():
+    """Observe shared host contention; these counters are not child CPU usage.
+
+    A run may overlap unrelated work outside the benchmark's control. Preserve
+    raw snapshots instead of declaring a speed win from a quiet-looking host,
+    or treating unavailable counters as zero throttling/pressure.
+    """
+    result = {}
+    for label, filename in [('cgroupCpuStat', '/sys/fs/cgroup/cpu.stat'),
+                            ('cgroupMemoryEvents', '/sys/fs/cgroup/memory.events')]:
+        try:
+            result[label] = {key: int(value) for key, value in
+                             (line.split() for line in Path(filename).read_text().splitlines())}
+        except (OSError, ValueError):
+            result[label] = None
+    try:
+        result['cgroupMemoryCurrentBytes'] = int(Path('/sys/fs/cgroup/memory.current').read_text())
+    except (OSError, ValueError):
+        result['cgroupMemoryCurrentBytes'] = None
+    try:
+        memory = dict(line.split() for line in Path('/sys/fs/cgroup/memory.stat').read_text().splitlines())
+        result['cgroupMemoryStat'] = {key: int(memory[key]) for key in
+            ('anon', 'file', 'kernel', 'file_dirty', 'file_writeback', 'active_file', 'inactive_file',
+             'pgfault', 'pgmajfault', 'pgscan_direct', 'pgsteal_direct', 'workingset_refault_file')
+            if key in memory}
+    except (OSError, ValueError):
+        result['cgroupMemoryStat'] = None
+    for label, filename in [('cgroupCpuPressure', '/sys/fs/cgroup/cpu.pressure'),
+                            ('cgroupMemoryPressure', '/sys/fs/cgroup/memory.pressure')]:
+        try:
+            result[label] = {line.split()[0]: int(next(field.split('=', 1)[1]
+                            for field in line.split()[1:] if field.startswith('total=')))
+                            for line in Path(filename).read_text().splitlines()}
+        except (OSError, ValueError, StopIteration):
+            result[label] = None
+    return result
 
 
 def summarize(runs):
@@ -211,7 +252,8 @@ def main():
                'runtimeSha256': sha(host), 'audioSha256': sha(args.audio), 'modelManifestSha256': sha(manifest_path),
                'modelHashes': {name: entry['sha256'] for name, entry in manifest['files'].items()},
                'sharedSourceHashes': {str(p.relative_to(ROOT)): sha(p) for p in [SOURCE / 'NativeDeuxTransform.java',
-                    SOURCE / 'NativeInferenceProfile.java', ROOT / 'tests/NativeDeuxExecutionBenchmark.java', Path(__file__)]},
+                    SOURCE / 'NativeInferenceProfile.java', SOURCE / 'NativeExecutionPolicy.java',
+                    ROOT / 'tests/NativeDeuxExecutionBenchmark.java', Path(__file__)]},
                'dependencyHashes': {p.name: sha(p) for p in dependencies}, 'sourceHashes': {}, 'runs': []}
     classes = {}
     for name, source in [('baseline', args.baseline_source), ('candidate', args.candidate_source)]:
