@@ -4,15 +4,24 @@ A repository test, an APK build, a published release and a performance claim are
 different results. Each must identify the source and evidence it actually covers.
 This page is an index, not a replacement for source-bound receipts.
 
-## Current 2.4.1 qualification
+## Published 2.4.1 record
 
-**Host inference prerequisite passed; release verification pending.** Final
-production source reduced median complete-passage time by 32.6%, from 65.3 to
+The [LightForge 2.4.1 release](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.4.1)
+uses Android version code **20401** and qualified source
+`1f43cfa5609ef8df28ebad3d947ad8c0510ec9e3`. Full source-bound host, actual-model,
+browser and Android emulator verification passed in
+[production run 36403187315](https://github.com/CyberBASSLord-666/LightForge/actions/runs/36403187315).
+[Publication run 36409699982](https://github.com/CyberBASSLord-666/LightForge/actions/runs/36409699982)
+verified the exact qualified payload and original signing certificate. The
+public release contains the signed APK, checksum, notes and verification report.
+
+Final production host qualification reduced median complete-passage time by
+32.6%, from 65.3 to
 44.0 seconds. Every measured pair improved by 28–36%, all eight full outputs
 were byte-identical, and every resource guard passed. Earlier failed attempts
 remain in the [investigation record](research/inference-2.4.1/README.md).
 
-The next inference release adds device-local scheduling calibration and durable
+This release adds device-local scheduling calibration and durable
 job/route measurements. [The calibration contract](docs/NATIVE_EXECUTION_CALIBRATION.md)
 requires repeated timing wins and unchanged finite output before selecting a
 candidate. Its current-release model gate executes reference, freshly calibrated
@@ -24,10 +33,10 @@ and exact recovery have passed on the final production source.
 [GAME option screening](research/inference-2.4.1/game-options-screen.json)
 rejected numerical differences and inconsistent performance; production GAME
 settings remain unchanged. The admitted host result does not establish physical
-phone or whole-analysis speed. Fresh production/browser/Android CI, exact
-candidate signing and publication are still required.
+phone or whole-analysis speed. Physical phone and Tesla observations remain
+unverified; later source changes require their own release verification.
 
-## Published 2.4.0 record
+## Historical published 2.4.0 record
 
 The [LightForge 2.4.0 release](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.4.0)
 uses Android version code **20400** and qualified source

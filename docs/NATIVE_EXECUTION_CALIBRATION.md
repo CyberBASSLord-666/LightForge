@@ -9,8 +9,9 @@ the reference four-band path has 335. Neither count means less model work.
 
 The final production implementation passed the owner's pre-build improvement
 requirement: the source-bound host comparison measured 32.6% lower median
-complete-passage time with identical outputs. Fresh production and Android
-release verification remains required. Host results do not establish physical
+complete-passage time with identical outputs. The [published 2.4.1 record](../VALIDATION.md)
+includes passing production and Android emulator release gates; later source
+changes require fresh verification. Host results do not establish physical
 Android performance or a whole-song speedup.
 
 ## Device admission

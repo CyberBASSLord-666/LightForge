@@ -27,8 +27,9 @@ profiling. GAME's tested tuning changes did not qualify and are not enabled.
 
 Keep ONNX Runtime 1.25.1, original model weights, precision and context. A newer
 runtime experiment was excluded after an unapproved telemetry connection.
-Fresh actual-model calibration/cache equivalence and production/Android gates
-remain required; no 75% whole-job or physical-device speedup is claimed.
+Actual-model calibration/cache equivalence and production/Android gates passed
+for the [published 2.4.1 release](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.4.1);
+no 75% whole-job or physical-device speedup is claimed.
 
 ## 2.4.0 — source timing, bilateral gestures and physical preview
 
