@@ -1139,10 +1139,29 @@ public final class BackgroundInstrumentation extends Instrumentation {
         byte[] digest=java.security.MessageDigest.getInstance("SHA-256").digest(bytes);StringBuilder text=new StringBuilder();
         for(byte value:digest)text.append(Character.forDigit((value>>>4)&15,16)).append(Character.forDigit(value&15,16));return text.toString();
     }
+    private JSONObject awaitApplicationStartup()throws Exception{
+        // Instrumentation.start() races the framework's later Application.onCreate.
+        // Match AOSP MonitoringInstrumentation: the first main-queue idle fences
+        // real application startup before any test-owned task can create PCM.
+        // https://android.googlesource.com/platform/frameworks/testing/+/master/support/src/android/support/test/runner/MonitoringInstrumentation.java
+        check(Looper.myLooper()!=Looper.getMainLooper(),"Application startup must be awaited off the main thread");
+        long started=SystemClock.elapsedRealtime();
+        waitForIdleSync();
+        Context application=getTargetContext().getApplicationContext();
+        check(application instanceof LightForgeApplication,"Instrumentation did not initialize the real target Application");
+        synchronized(LightForgeApplication.class){
+            check((Boolean)field(LightForgeApplication.class,"passageRecoveryAttempted"),
+                "Application process-start passage recovery did not finish before instrumentation fixtures");
+        }
+        return new JSONObject().put("mainThreadIdleObserved",true).put("targetApplicationVerified",true)
+            .put("processRecoveryCompleted",true).put("waitMs",SystemClock.elapsedRealtime()-started);
+    }
     @Override public void onCreate(Bundle arguments){super.onCreate(arguments);start();}
     @Override public void onStart(){
         JSONObject receipt=new JSONObject();Bundle output=new Bundle();
         try{
+            receipt.put("applicationStartup",awaitApplicationStartup());
+            pass("The real target Application completed process-start passage recovery before instrumentation created any native task or fixture; startup was observed through the main-thread idle barrier without invoking application lifecycle manually.");
             files=getTargetContext().getFilesDir();startMainWatchdog();phase("completed-restore-monitor-contract");completedRestoreMonitorContract();receipt.put("nativeGame",nativeGameAndroid());phase("first-screen-off-analysis");launch();String id=fixture("Background audio");JSONObject job=start(id);double sourceDuration=AnalysisJobStore.request(files,job.getString("id")).getDouble("duration");
             check(field(service(),"nativeMdx")==null,"Precision Studio allocated the Balanced-only accelerator");
             long backgroundAt=System.currentTimeMillis();backgroundAndDoze();
