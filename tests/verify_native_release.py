@@ -28,18 +28,19 @@ CLASSES.mkdir(exist_ok=True)
 # Each run owns fresh fixtures, including after an interrupted/repeated local run.
 FIXTURES = Path(tempfile.mkdtemp(prefix="native-fixtures-", dir=OUT))
 sources = sorted((ROOT / 'android/src').rglob('*.java'))
-names = ['NativeRecoveryTest', 'ProjectStoreTest', 'NativeHardwareTest', 'NativeAudioTest', 'WebViewTransportTest', 'ProjectPreviewTest', 'AnalysisJobStoreTest', 'AnalysisProgressThrottleTest', 'AnalysisRendererRecoveryTest', 'NativeDeuxTest', 'NativeInferenceProfileTest', 'NativeInferenceProfilePairComparisonTest', 'DiagnosticLogTest', 'DiagnosticJobSummaryTest', 'NativeCrashTraceTest', 'NativeRuntimeGuardTest']
-tests = [ROOT / f'tests/{name}.java' for name in names + ['WebViewTransportServer']]
+names = ['NativeRecoveryTest', 'ProjectStoreTest', 'NativeHardwareTest', 'NativeAudioTest', 'WebViewTransportTest', 'ProjectPreviewTest', 'AnalysisJobStoreTest', 'AnalysisProgressThrottleTest', 'AnalysisRendererRecoveryTest', 'BackgroundObserverStopTest', 'NativeDeuxTest', 'NativeInferenceProfileTest', 'NativeInferenceProfilePairComparisonTest', 'DiagnosticLogTest', 'DiagnosticJobSummaryTest', 'NativeCrashTraceTest', 'NativeRuntimeGuardTest']
+tests = [ROOT / f'tests/{name}.java' for name in names + ['WebViewTransportServer']] + [ROOT/'tests/android/BackgroundInstrumentation.java']
+observer_host_stubs = sorted((ROOT/'tests/android-observer-host').rglob('*.java'))
 passage_lifecycle_sources = [ROOT/'tests/test_native_passage_lifecycle.py', ROOT/'tests/NativePassageLifecycleTest.java',
                              ROOT/'tests/native-mdx-host/com/cyberbasslord/lightforge/AnalysisJobStore.java',
                              *sorted((ROOT/'tests/native-mdx-host/android').rglob('*.java'))]
-bound_sources = sources + tests + passage_lifecycle_sources + [ROOT/'android/native-runtime.json', ROOT/'tests/verify_native_release.py']
+bound_sources = sources + tests + observer_host_stubs + passage_lifecycle_sources + [ROOT/'android/native-runtime.json', ROOT/'tests/verify_native_release.py']
 receipt = dict(release=args.release, passed=False, scope='Fresh production Java compilation and host JVM tests; no Android Activity/device/document-provider or physical Tesla execution.',
                source_hashes={str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in bound_sources}, checks=[], errors=[])
 
-def run(name, *args):
-    p = subprocess.run([str(JAVA / 'java'), '-cp', ':'.join(map(str, [CLASSES, JSON, ANDROID, ORT_HOST])),
-                        'com.cyberbasslord.lightforge.' + name, *map(str, args)], cwd=ROOT, capture_output=True, text=True)
+def run(name, *args, prepend_classpath=(), timeout=None):
+    p = subprocess.run([str(JAVA / 'java'), '-cp', ':'.join(map(str, [*prepend_classpath, CLASSES, JSON, ANDROID, ORT_HOST])),
+                        'com.cyberbasslord.lightforge.' + name, *map(str, args)], cwd=ROOT, capture_output=True, text=True, timeout=timeout)
     (OUT / (name + '.txt')).write_text(p.stdout + p.stderr)
     p.check_returncode()
     return p.stdout
@@ -87,6 +88,12 @@ try:
     receipt['checks'].append('Actual service progress admission resets per new job, preserves same-job renderer recovery cadence, throttles changing human labels within a canonical phase, and admits phase boundaries, checkpoints and final progress. Real job transactions retain display labels, canonical phase timing and passage counters; source wiring keeps reset after active-job guards.')
     assert 'PASS:' in run('AnalysisRendererRecoveryTest', FIXTURES / 'native-renderer-recovery-fixtures')
     receipt['checks'].append('Reclaimed-renderer recovery preserves job/source/settings/fresh/runtime lineage and validated checkpoints, rejects crashes, cancellation, stale progress and damaged sources, and enforces backoff, memory/native-retirement conditions and the two-attempt cap on the host JVM.')
+    observer_classes = FIXTURES/'observer-host-classes'
+    observer_classes.mkdir()
+    subprocess.run([str(JAVA/'javac'), '--release', '8', '-encoding', 'UTF-8', '-d', str(observer_classes),
+                    *map(str, observer_host_stubs)], cwd=ROOT, check=True, capture_output=True, text=True)
+    assert 'actual instrumentation observer stop checks' in run('BackgroundObserverStopTest', prepend_classpath=[observer_classes], timeout=30)
+    receipt['checks'].append('Actual Android instrumentation observer stop method, executed with constructor-only host Android stubs, lets an in-flight real NIO read finish without interrupting it, preserves existing I/O/assertion/interruption failures, and retains its five-second timeout for a stuck observer. This is host synchronization coverage, not an Android lifecycle or model claim.')
     assert 'cancellation checks passed.' in run('NativeDeuxTest')
     receipt['checks'].append('Native Studio transform retains exact source-clock samples and stereo averaging; WAVE padding, malformed input and cancellation regressions passed without neural-model inference.')
     assert 'NativeInferenceProfile:' in run('NativeInferenceProfileTest')
