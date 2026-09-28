@@ -141,7 +141,7 @@ try:
             and balanced.get('stemSamples')==66150 and balanced.get('separation',{}).get('denoise') is True
             and balanced.get('separation',{}).get('modelPasses')==2 and balanced.get('separation',{}).get('chunks')==1):
         raise RuntimeError('Android Balanced native lifecycle evidence is incomplete')
-    if version in {'2.3.2', '2.4.0'}:
+    if version in {'2.3.2', '2.4.0', '2.4.1'}:
         validate_native_game_device(receipt.get('device'))
     assert hashes=={str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sources if p.is_file()}, 'Android source changed during lifecycle verification.'
     receipt['passed']=True

@@ -107,7 +107,9 @@ final class AnalysisJobStore {
             .put("analysisExecutionMode",executionMode).put("requestId",jobId).put("state","preparing")
             .put("stage",reuse?"Restoring completed analysis":"Preparing background analysis").put("progress",0)
             .put("createdAt",System.currentTimeMillis()).put("updatedAt",System.currentTimeMillis()).put("hasCheckpoint",reuse)
-            .put("resumeAvailable",reuse||(matchingPrior&&priorMode!=null));
+            .put("resumeAvailable",reuse||(matchingPrior&&priorMode!=null))
+            .put("durationSeconds",meta.getDouble("duration"))
+            .put("analysisQuality",request.optJSONObject("settings")!=null&&"balanced".equals(request.optJSONObject("settings").optString("analysisQuality"))?"balanced":"precision");
         if(refreshEpoch!=null)job.put("analysisRefreshEpoch",refreshEpoch);
         if(forceWasm)job.put("analysisEffectiveExecution","wasm-v1").put("analysisNativeFallbackReason",nativeFallbackReason)
             .put("analysisNativeAttemptedExecution",nativeAttemptedExecution);
@@ -386,7 +388,9 @@ final class AnalysisJobStore {
             throw new IOException("This project changed while analysis was running. Its newer edits were preserved.");
         value.put("backgroundJobId",id);
         ProjectStore.save(new File(files,"projects"),projectId,value);
-        job.put("state","completed").put("progress",1).put("stage","Your show is ready");persist(files,job);
+        long completedAt=System.currentTimeMillis();
+        job.put("state","completed").put("progress",1).put("stage","Your show is ready")
+            .put("elapsedMs",Math.max(0,completedAt-job.optLong("createdAt",completedAt)));persist(files,job);
         Files.deleteIfExists(new File(directory(files),"checkpoint.json").toPath());
         return job;
     }
@@ -420,7 +424,13 @@ final class AnalysisJobStore {
         return finish(files,job.getString("id"),"interrupted","Android stopped the previous analysis. Resume checks saved passages and continues from verified progress. Your saved show is intact.");
     }
     static void persist(File files,JSONObject job) throws Exception {
-        job.put("updatedAt",System.currentTimeMillis());write(new File(directory(files),"job.json"),job,32768);
+        long now=System.currentTimeMillis();
+        job.put("updatedAt",now);write(new File(directory(files),"job.json"),job,32768);
+        try {
+            DiagnosticJobSummary.forFiles(files).observe(job.optString("id"),job.optLong("createdAt",now),now,System.nanoTime()/1000000L,
+                job.optString("state"),job.optString("analysisStage"),job.optInt("completedStages"),job.optInt("restoredStages"),
+                job.optDouble("durationSeconds",Double.NaN),job.optString("analysisQuality"));
+        } catch(IOException ignored) { /* Diagnostics must never fail an otherwise committed job. */ }
     }
     static JSONObject parse(String text) throws Exception {
         if(text==null||text.length()>ProjectStore.MAX_PROJECT_BYTES)throw new IOException("Analysis metadata is too large.");

@@ -1,0 +1,191 @@
+{
+  "schema": "lightforge.deux-divergent-input-parity.v1",
+  "scope": "Additional original-model full-context exact Float32 output comparisons; single runs establish output equality, not performance.",
+  "runtimeVersion": "1.25.1",
+  "sourceHashes": {
+    "baseline": "084fec27d1fad0b10db01a960c614d333bb8c049e712c3fc4524d66e6dc3dd37",
+    "candidate": "21d5cc6bdfb01f02deaf0b7bc4ef0f12b4bd50d268f37bb49c2b7454fd79605f"
+  },
+  "sharedSourceHashes": {
+    "android/src/com/cyberbasslord/lightforge/NativeDeuxTransform.java": "991b06501cfb88b904d0b714a525c389f169f00c231248b0e961b70f257e90b5",
+    "android/src/com/cyberbasslord/lightforge/NativeInferenceProfile.java": "4cfa993d23b03c922601593dfe468603db310a1c44ff29712503b90500ac8a4c",
+    "android/src/com/cyberbasslord/lightforge/NativeExecutionPolicy.java": "03256613d400c080dae1727500bad977b6b5a80ffc555ef0ae6302880ee1e2e6",
+    "tests/NativeDeuxExecutionBenchmark.java": "70eab8091070904493493bd94e7a6467a031628e0feb432055942cdd1bd1b0bb",
+    "tools/benchmark_deux_execution.py": "8b6a269a6ce9e224cb8044616399889e354e983b741ebdc5ef54d0ea9942f901"
+  },
+  "modelManifestSha256": "6aebf45e6e7f6fa974f14fe47a252fc01f48da4815f40a1fdf10641a432529a9",
+  "runtimeSha256": "749793ebed63743fec853d093da7987a86ea5cd592d54fba898cd3233100c381",
+  "host": {
+    "platform": "Linux-6.18.44-x86_64-with-glibc2.39",
+    "machine": "x86_64",
+    "cpuCount": 9,
+    "cpuAffinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "cpuQuota": "800000 100000",
+    "memoryLimit": "8589934592",
+    "cpuModel": "INTEL(R) XEON(R) PLATINUM 8573C"
+  },
+  "cases": [
+    {
+      "id": "falcon",
+      "audioSha256": "0d0bf21401ad0dbb8a49aae581a16f9a00cadca41e116b5a4dc27eaaa3625648",
+      "startSample": -66150,
+      "samplesPerStem": 573300,
+      "runs": [
+        {
+          "wallNanos": 63927306079,
+          "processCpuNanos": 174980000000,
+          "peakRssBytes": 868708352,
+          "variant": "baseline",
+          "round": 0,
+          "phase": "quality-falcon",
+          "outputSha256": "e376591b6b588fc10a9661a6fb298d6acd020be7a3cb12528891908083ded835",
+          "outputBytes": 4586400,
+          "inferenceMillis": 57755.0,
+          "modelInitMillis": 2420.0,
+          "profileSha256": "620c2fa143d2d768985938e7c5b0af2d2ea882f997efcaa3e67706afa0bd2c5c"
+        },
+        {
+          "wallNanos": 59743733700,
+          "processCpuNanos": 183320000000,
+          "peakRssBytes": 875327488,
+          "variant": "candidate",
+          "round": 0,
+          "phase": "quality-falcon",
+          "outputSha256": "e376591b6b588fc10a9661a6fb298d6acd020be7a3cb12528891908083ded835",
+          "outputBytes": 4586400,
+          "inferenceMillis": 52459.0,
+          "modelInitMillis": 2901.0,
+          "profileSha256": "16b539bfecbdff004d2b8f61bb955e343437a8541743f9b992f96d2a33710856"
+        }
+      ],
+      "byteIdentical": true,
+      "fixtureProvenance": {
+        "id": "falcon",
+        "title": "The Easton Ellises - Falcon 69",
+        "datasetSplit": "test",
+        "license": "CC BY-NC-SA 3.0",
+        "source": "C't Remix Comp.",
+        "duration": 6.8034467120181406,
+        "sampleRate": 44100,
+        "channels": 2,
+        "archiveMember": "test/The Easton Ellises - Falcon 69.stem.mp4",
+        "pcmSHA256": {
+          "falcon-bass.wav": "582bab04bcaeecd840d453e1eeeda781550c80fab79535a7ac11c512c8baff48",
+          "falcon-drums.wav": "4f06f5ca5e4a2aeb20d4a9bf5431fecad9e977bc280f04fe38082f4f4582955a",
+          "falcon-other.wav": "dc69b9846ef4c75815cbd55f7159d6c533e913b1f95d67f9d2f256fc97ea9584",
+          "falcon-controlled.wav": "751da6209ec77e97253746786069690f3d89e7e8eccbf666cfa23a17847037b1",
+          "falcon-vocals.wav": "b6f5116b626152669096edb4baeaa1e6ef5374c4f6b8f0d7ee7dc10df32f76f3",
+          "falcon-instrumental.wav": "ce2947a674a2be2a4305dd45ab273773973b80e355fd9bb8fe9395323e89bffe",
+          "falcon-mix.wav": "effbbe3e3c0df821bf3cfa6535360b18339ded8041992373b41f8344998dba99",
+          "falcon-controlled-vocals.wav": "94f01ba9d57cb8139e88cc0214123031cb95ef124870bbaeb227543a1aa84053"
+        },
+        "controlledEdit": {
+          "vocalWindows": [
+            [
+              1.25,
+              3.15
+            ],
+            [
+              4.2,
+              6.0
+            ]
+          ],
+          "edgeRampSeconds": 0.01,
+          "definition": "Original vocals gated in time and summed with original drums, bass and other stems; this does not assert continuous singing throughout either window."
+        }
+      },
+      "pcm16Conversion": "Float32 to signed PCM16, round nearest ties-to-even, clip [-32768,32767], interleaved stereo little-endian."
+    },
+    {
+      "id": "stella",
+      "audioSha256": "331b03c1f07e2672854bb53f56e7110ce58c0e7ef7be945d828fe9589af8bdd9",
+      "startSample": 0,
+      "samplesPerStem": 573300,
+      "runs": [
+        {
+          "wallNanos": 55305668418,
+          "processCpuNanos": 151350000000,
+          "peakRssBytes": 848236544,
+          "variant": "baseline",
+          "round": 0,
+          "phase": "quality-stella",
+          "outputSha256": "1e3f2b6d3081adaae9855eced53a69f5b3babc381b965ccff977038383f204c3",
+          "outputBytes": 4586400,
+          "inferenceMillis": 48173.0,
+          "modelInitMillis": 2987.0,
+          "profileSha256": "0101d683e888b69c0073f21c0b7e2a3bd156b102e3c77fa4190a654ed0e7a206"
+        },
+        {
+          "wallNanos": 44147385407,
+          "processCpuNanos": 154650000000,
+          "peakRssBytes": 859648000,
+          "variant": "candidate",
+          "round": 0,
+          "phase": "quality-stella",
+          "outputSha256": "1e3f2b6d3081adaae9855eced53a69f5b3babc381b965ccff977038383f204c3",
+          "outputBytes": 4586400,
+          "inferenceMillis": 37817.0,
+          "modelInitMillis": 2417.0,
+          "profileSha256": "0314d79b50a1f9f6dc34121a350e7d1047b34664b3c72bc5accaac16712a539b"
+        }
+      ],
+      "byteIdentical": true,
+      "fixtureProvenance": {
+        "id": "stella",
+        "title": "Clara Berry And Wooldog - Stella",
+        "datasetSplit": "train",
+        "license": "CC BY-NC-SA",
+        "source": "MedleyDB",
+        "duration": 6.8034467120181406,
+        "sampleRate": 44100,
+        "channels": 2,
+        "archiveMember": "train/Clara Berry And Wooldog - Stella.stem.mp4",
+        "pcmSHA256": {
+          "stella-mix.wav": "e00acb12b494667eb9512056de6888912aea4e12db7451fa66c25d57304b8aae",
+          "stella-instrumental.wav": "bafc0fea24303526455995645b2bf8d7ba0de1ddae560e9f86b859ea0ae049ee",
+          "stella-controlled-vocals.wav": "9f76eb871e01d7a046858ef0f87b220023a603ca72cf3697aa0aa78a5939ec5c",
+          "stella-vocals.wav": "5af2b0f9ba35fe7cfd9af70b4463a7743998be531151182fd4b9a57289b5a4e9",
+          "stella-other.wav": "5058479c94c0c22d136132189063c41f51cd4183b5ee0689d8f57735a7878100",
+          "stella-drums.wav": "a9dc9cea13befb8cd380f7592ee8beb11d9510cfbfde762da02eb94572618703",
+          "stella-controlled.wav": "279e30947e27c33fe54e431ae3c15da2dffbd4336c01ff0298e384cbcc71f4bb",
+          "stella-bass.wav": "0c2bbc852925e660c00d8c069f88bc34a036ba73edbff9fb6510d8d2bd14fdab"
+        },
+        "controlledEdit": {
+          "vocalWindows": [
+            [
+              1.25,
+              3.15
+            ],
+            [
+              4.2,
+              6.0
+            ]
+          ],
+          "edgeRampSeconds": 0.01,
+          "definition": "Original vocals gated in time and summed with original drums, bass and other stems; this does not assert continuous singing throughout either window."
+        }
+      },
+      "pcm16Conversion": "Float32 to signed PCM16, round nearest ties-to-even, clip [-32768,32767], interleaved stereo little-endian.",
+      "conversionReceipt": {
+        "source": "qa/release-1.6.0/fixtures/stella-mix.wav",
+        "sourceSha256": "e00acb12b494667eb9512056de6888912aea4e12db7451fa66c25d57304b8aae",
+        "outputSha256": "331b03c1f07e2672854bb53f56e7110ce58c0e7ef7be945d828fe9589af8bdd9",
+        "samples": 300032,
+        "conversion": "Float32 to signed PCM16: round nearest ties-to-even, clip [-32768,32767], interleaved stereo little-endian."
+      }
+    }
+  ],
+  "passed": true,
+  "frozenSourcesReceipt": "separator-scheduler-paired.json",
+  "originalReceiptSha256": "bbb26782564964ac6345d8cc24039cdc8f00ffb17ba9cb3e18ad6c87850acce1"
+}

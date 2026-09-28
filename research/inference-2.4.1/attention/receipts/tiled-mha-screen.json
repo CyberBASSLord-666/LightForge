@@ -1,0 +1,341 @@
+{
+  "runtime": "1.25.1",
+  "scope": "Original block00 temporal graph real-input screening, not fullpassage/Android acceptance. Interleaved8pairs after both sessions warmup.",
+  "models": {
+    "baseline": "688feca1115d610e9bc9d15ac9dac6e33c4cf0a03966d9effe8974d2674ae924",
+    "tiled": "76886d77c2448a66518290ee47bba8e6f71ed5b4b221f85599376fcd221c9d4d"
+  },
+  "inputSha256": "2c2ee19d11fc269d5e0d7298a1b65bc661bf6fe9d980fe8bf67f04df2cbde7b5",
+  "rows": [
+    {
+      "repeat": 0,
+      "name": "baseline",
+      "seconds": 0.18686238800000865,
+      "cpuSeconds": 0.5962420000000002,
+      "equal": true,
+      "finite": true,
+      "maxAbs": 0.0,
+      "cgroupDelta": {
+        "cpu.stat/usage_usec": 599669,
+        "cpu.stat/nr_throttled": 0,
+        "cpu.stat/throttled_usec": 0,
+        "memory.events/max": 0,
+        "memory.events/oom": 0,
+        "memory.events/oom_kill": 0,
+        "memory.stat/workingset_refault_file": 0,
+        "memory.stat/pgscan": 0,
+        "memory.stat/pgsteal": 0
+      }
+    },
+    {
+      "repeat": 0,
+      "name": "tiled",
+      "seconds": 0.17353649199867505,
+      "cpuSeconds": 0.5435079999999997,
+      "equal": true,
+      "finite": true,
+      "maxAbs": 0.0,
+      "cgroupDelta": {
+        "cpu.stat/usage_usec": 546811,
+        "cpu.stat/nr_throttled": 0,
+        "cpu.stat/throttled_usec": 0,
+        "memory.events/max": 0,
+        "memory.events/oom": 0,
+        "memory.events/oom_kill": 0,
+        "memory.stat/workingset_refault_file": 0,
+        "memory.stat/pgscan": 0,
+        "memory.stat/pgsteal": 0
+      }
+    },
+    {
+      "repeat": 1,
+      "name": "tiled",
+      "seconds": 0.13832836599976872,
+      "cpuSeconds": 0.43737499999999985,
+      "equal": true,
+      "finite": true,
+      "maxAbs": 0.0,
+      "cgroupDelta": {
+        "cpu.stat/usage_usec": 451533,
+        "cpu.stat/nr_throttled": 0,
+        "cpu.stat/throttled_usec": 0,
+        "memory.events/max": 0,
+        "memory.events/oom": 0,
+        "memory.events/oom_kill": 0,
+        "memory.stat/workingset_refault_file": 0,
+        "memory.stat/pgscan": 0,
+        "memory.stat/pgsteal": 0
+      }
+    },
+    {
+      "repeat": 1,
+      "name": "baseline",
+      "seconds": 0.14489746800245484,
+      "cpuSeconds": 0.47258399999999945,
+      "equal": true,
+      "finite": true,
+      "maxAbs": 0.0,
+      "cgroupDelta": {
+        "cpu.stat/usage_usec": 476459,
+        "cpu.stat/nr_throttled": 0,
+        "cpu.stat/throttled_usec": 0,
+        "memory.events/max": 0,
+        "memory.events/oom": 0,
+        "memory.events/oom_kill": 0,
+        "memory.stat/workingset_refault_file": 0,
+        "memory.stat/pgscan": 0,
+        "memory.stat/pgsteal": 0
+      }
+    },
+    {
+      "repeat": 2,
+      "name": "baseline",
+      "seconds": 0.16729967499850318,
+      "cpuSeconds": 0.5246690000000003,
+      "equal": true,
+      "finite": true,
+      "maxAbs": 0.0,
+      "cgroupDelta": {
+        "cpu.stat/usage_usec": 526954,
+        "cpu.stat/nr_throttled": 0,
+        "cpu.stat/throttled_usec": 0,
+        "memory.events/max": 0,
+        "memory.events/oom": 0,
+        "memory.events/oom_kill": 0,
+        "memory.stat/workingset_refault_file": 0,
+        "memory.stat/pgscan": 0,
+        "memory.stat/pgsteal": 0
+      }
+    },
+    {
+      "repeat": 2,
+      "name": "tiled",
+      "seconds": 0.1477049299974169,
+      "cpuSeconds": 0.4640820000000012,
+      "equal": true,
+      "finite": true,
+      "maxAbs": 0.0,
+      "cgroupDelta": {
+        "cpu.stat/usage_usec": 465167,
+        "cpu.stat/nr_throttled": 0,
+        "cpu.stat/throttled_usec": 0,
+        "memory.events/max": 0,
+        "memory.events/oom": 0,
+        "memory.events/oom_kill": 0,
+        "memory.stat/workingset_refault_file": 0,
+        "memory.stat/pgscan": 0,
+        "memory.stat/pgsteal": 0
+      }
+    },
+    {
+      "repeat": 3,
+      "name": "tiled",
+      "seconds": 0.12815397599842981,
+      "cpuSeconds": 0.4211229999999997,
+      "equal": true,
+      "finite": true,
+      "maxAbs": 0.0,
+      "cgroupDelta": {
+        "cpu.stat/usage_usec": 422600,
+        "cpu.stat/nr_throttled": 0,
+        "cpu.stat/throttled_usec": 0,
+        "memory.events/max": 0,
+        "memory.events/oom": 0,
+        "memory.events/oom_kill": 0,
+        "memory.stat/workingset_refault_file": 0,
+        "memory.stat/pgscan": 0,
+        "memory.stat/pgsteal": 0
+      }
+    },
+    {
+      "repeat": 3,
+      "name": "baseline",
+      "seconds": 0.16013136699984898,
+      "cpuSeconds": 0.5148370000000009,
+      "equal": true,
+      "finite": true,
+      "maxAbs": 0.0,
+      "cgroupDelta": {
+        "cpu.stat/usage_usec": 554126,
+        "cpu.stat/nr_throttled": 0,
+        "cpu.stat/throttled_usec": 0,
+        "memory.events/max": 0,
+        "memory.events/oom": 0,
+        "memory.events/oom_kill": 0,
+        "memory.stat/workingset_refault_file": 0,
+        "memory.stat/pgscan": 0,
+        "memory.stat/pgsteal": 0
+      }
+    },
+    {
+      "repeat": 4,
+      "name": "baseline",
+      "seconds": 0.14595334799741977,
+      "cpuSeconds": 0.49678500000000003,
+      "equal": true,
+      "finite": true,
+      "maxAbs": 0.0,
+      "cgroupDelta": {
+        "cpu.stat/usage_usec": 645378,
+        "cpu.stat/nr_throttled": 0,
+        "cpu.stat/throttled_usec": 0,
+        "memory.events/max": 0,
+        "memory.events/oom": 0,
+        "memory.events/oom_kill": 0,
+        "memory.stat/workingset_refault_file": 0,
+        "memory.stat/pgscan": 0,
+        "memory.stat/pgsteal": 0
+      }
+    },
+    {
+      "repeat": 4,
+      "name": "tiled",
+      "seconds": 0.13236633199994685,
+      "cpuSeconds": 0.4315410000000002,
+      "equal": true,
+      "finite": true,
+      "maxAbs": 0.0,
+      "cgroupDelta": {
+        "cpu.stat/usage_usec": 514373,
+        "cpu.stat/nr_throttled": 0,
+        "cpu.stat/throttled_usec": 0,
+        "memory.events/max": 0,
+        "memory.events/oom": 0,
+        "memory.events/oom_kill": 0,
+        "memory.stat/workingset_refault_file": 0,
+        "memory.stat/pgscan": 0,
+        "memory.stat/pgsteal": 0
+      }
+    },
+    {
+      "repeat": 5,
+      "name": "tiled",
+      "seconds": 0.1460114910005359,
+      "cpuSeconds": 0.4499930000000001,
+      "equal": true,
+      "finite": true,
+      "maxAbs": 0.0,
+      "cgroupDelta": {
+        "cpu.stat/usage_usec": 452351,
+        "cpu.stat/nr_throttled": 0,
+        "cpu.stat/throttled_usec": 0,
+        "memory.events/max": 0,
+        "memory.events/oom": 0,
+        "memory.events/oom_kill": 0,
+        "memory.stat/workingset_refault_file": 0,
+        "memory.stat/pgscan": 0,
+        "memory.stat/pgsteal": 0
+      }
+    },
+    {
+      "repeat": 5,
+      "name": "baseline",
+      "seconds": 0.17481841900007566,
+      "cpuSeconds": 0.5449740000000007,
+      "equal": true,
+      "finite": true,
+      "maxAbs": 0.0,
+      "cgroupDelta": {
+        "cpu.stat/usage_usec": 557257,
+        "cpu.stat/nr_throttled": 0,
+        "cpu.stat/throttled_usec": 0,
+        "memory.events/max": 0,
+        "memory.events/oom": 0,
+        "memory.events/oom_kill": 0,
+        "memory.stat/workingset_refault_file": 0,
+        "memory.stat/pgscan": 0,
+        "memory.stat/pgsteal": 0
+      }
+    },
+    {
+      "repeat": 6,
+      "name": "baseline",
+      "seconds": 0.1384431480000785,
+      "cpuSeconds": 0.4622150000000005,
+      "equal": true,
+      "finite": true,
+      "maxAbs": 0.0,
+      "cgroupDelta": {
+        "cpu.stat/usage_usec": 465393,
+        "cpu.stat/nr_throttled": 0,
+        "cpu.stat/throttled_usec": 0,
+        "memory.events/max": 0,
+        "memory.events/oom": 0,
+        "memory.events/oom_kill": 0,
+        "memory.stat/workingset_refault_file": 0,
+        "memory.stat/pgscan": 0,
+        "memory.stat/pgsteal": 0
+      }
+    },
+    {
+      "repeat": 6,
+      "name": "tiled",
+      "seconds": 0.13630244199885055,
+      "cpuSeconds": 0.4385899999999996,
+      "equal": true,
+      "finite": true,
+      "maxAbs": 0.0,
+      "cgroupDelta": {
+        "cpu.stat/usage_usec": 474080,
+        "cpu.stat/nr_throttled": 0,
+        "cpu.stat/throttled_usec": 0,
+        "memory.events/max": 0,
+        "memory.events/oom": 0,
+        "memory.events/oom_kill": 0,
+        "memory.stat/workingset_refault_file": 0,
+        "memory.stat/pgscan": 0,
+        "memory.stat/pgsteal": 0
+      }
+    },
+    {
+      "repeat": 7,
+      "name": "tiled",
+      "seconds": 0.14360142499936046,
+      "cpuSeconds": 0.4456059999999997,
+      "equal": true,
+      "finite": true,
+      "maxAbs": 0.0,
+      "cgroupDelta": {
+        "cpu.stat/usage_usec": 592907,
+        "cpu.stat/nr_throttled": 0,
+        "cpu.stat/throttled_usec": 0,
+        "memory.events/max": 0,
+        "memory.events/oom": 0,
+        "memory.events/oom_kill": 0,
+        "memory.stat/workingset_refault_file": 0,
+        "memory.stat/pgscan": 0,
+        "memory.stat/pgsteal": 0
+      }
+    },
+    {
+      "repeat": 7,
+      "name": "baseline",
+      "seconds": 0.14881641400279477,
+      "cpuSeconds": 0.48650799999999883,
+      "equal": true,
+      "finite": true,
+      "maxAbs": 0.0,
+      "cgroupDelta": {
+        "cpu.stat/usage_usec": 528202,
+        "cpu.stat/nr_throttled": 0,
+        "cpu.stat/throttled_usec": 0,
+        "memory.events/max": 0,
+        "memory.events/oom": 0,
+        "memory.events/oom_kill": 0,
+        "memory.stat/workingset_refault_file": 0,
+        "memory.stat/pgscan": 0,
+        "memory.stat/pgsteal": 0
+      }
+    }
+  ],
+  "allEqual": true,
+  "median": {
+    "baseline": 0.15447389050132188,
+    "tiled": 0.1409648954995646
+  },
+  "medianCpu": {
+    "baseline": 0.5058110000000005,
+    "tiled": 0.44209799999999966
+  },
+  "processPeakRss": 483086336
+}

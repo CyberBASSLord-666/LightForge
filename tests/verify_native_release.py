@@ -28,7 +28,7 @@ CLASSES.mkdir(exist_ok=True)
 # Each run owns fresh fixtures, including after an interrupted/repeated local run.
 FIXTURES = Path(tempfile.mkdtemp(prefix="native-fixtures-", dir=OUT))
 sources = sorted((ROOT / 'android/src').rglob('*.java'))
-names = ['NativeRecoveryTest', 'ProjectStoreTest', 'NativeHardwareTest', 'NativeAudioTest', 'WebViewTransportTest', 'ProjectPreviewTest', 'AnalysisJobStoreTest', 'AnalysisRendererRecoveryTest', 'NativeDeuxTest', 'NativeInferenceProfileTest', 'NativeInferenceProfilePairComparisonTest', 'DiagnosticLogTest', 'NativeCrashTraceTest', 'NativeRuntimeGuardTest']
+names = ['NativeRecoveryTest', 'ProjectStoreTest', 'NativeHardwareTest', 'NativeAudioTest', 'WebViewTransportTest', 'ProjectPreviewTest', 'AnalysisJobStoreTest', 'AnalysisRendererRecoveryTest', 'NativeDeuxTest', 'NativeInferenceProfileTest', 'NativeInferenceProfilePairComparisonTest', 'DiagnosticLogTest', 'DiagnosticJobSummaryTest', 'NativeCrashTraceTest', 'NativeRuntimeGuardTest']
 tests = [ROOT / f'tests/{name}.java' for name in names + ['WebViewTransportServer']]
 passage_lifecycle_sources = [ROOT/'tests/test_native_passage_lifecycle.py', ROOT/'tests/NativePassageLifecycleTest.java',
                              ROOT/'tests/native-mdx-host/com/cyberbasslord/lightforge/AnalysisJobStore.java',
@@ -89,6 +89,8 @@ try:
     run('ProjectPreviewTest')
     assert 'PASS:' in run('DiagnosticLogTest', FIXTURES / 'native-diagnostic-fixtures')
     receipt['checks'].append('Persistent diagnostic rotation, bounded messages, concurrency and redaction passed on the host JVM.')
+    assert 'PASS:' in run('DiagnosticJobSummaryTest')
+    receipt['checks'].append('Compact per-job summaries preserve full stage/save timing, route totals, bounded recent history and explicit CPU scopes independently of trace rotation; atomic restart recovery, interrupted-clock gaps, stale ownership and privacy regressions passed on the host JVM.')
     assert 'PASS:' in run('NativeCrashTraceTest')
     receipt['checks'].append('Binary Android native tombstones retain only the crashing thread, signal, module basename, relative PC, symbol and build ID; unknown fields, privacy exclusions, malformed/truncated input and read/work/output bounds passed on synthetic fixtures.')
     assert 'PASS:' in run('NativeRuntimeGuardTest', OUT / 'native-runtime-guard-fixtures')

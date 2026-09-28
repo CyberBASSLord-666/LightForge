@@ -346,7 +346,7 @@ def _receipt(receipt, name, *, release, run_id, run_attempt, head_sha, session, 
     require(ci == {'run_id': run_id, 'run_attempt': run_attempt, 'head_sha': head_sha, 'evidence_session': session},
             'Android receipt CI binding differs: ' + name)
     require(receipt.get('candidate') == candidate, 'Android receipt candidate binding differs: ' + name)
-    if release in {'2.3.2', '2.4.0'} and name == 'android-background-verification.json':
+    if release in {'2.3.2', '2.4.0', '2.4.1'} and name == 'android-background-verification.json':
         validate_native_game_device(receipt.get('device'))
     return {'passed': True, 'release': release, 'source_hashes_sha256': canonical_sha256(hashes)}
 

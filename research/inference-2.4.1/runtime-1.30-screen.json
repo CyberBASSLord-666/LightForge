@@ -1,0 +1,16 @@
+{
+  "schema": "lightforge.deux-runtime-screen.v1",
+  "candidateRuntime": "1.30.0",
+  "hostJarSha256": "57d8cedf6f0c8fd6d50ed65c17bf9939f55a4512f4a1f3e732023d258f262ac6",
+  "status": "blocked-before-inference",
+  "adopted": false,
+  "reason": "Automatic approval review rejected unexpected external Microsoft telemetry during runtime environment initialization. The candidate was not retried.",
+  "evidence": {
+    "compiled": true,
+    "fullPassageStarted": false,
+    "pcmProduced": false,
+    "profileProduced": false,
+    "runtimeVersionProbeCompleted": false
+  },
+  "scope": "No quality or performance conclusion is available for this candidate. Production and paired benchmarks retain verified ONNX Runtime 1.25.1."
+}

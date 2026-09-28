@@ -1,0 +1,262 @@
+{
+  "schema": "lightforge.deux-parallel-b4-screen.v1",
+  "scope": "Exploratory host-only screen. Three candidates run once each after two recent baseline runs from the separate band-batch screen. No alternating repeated candidate comparison; no accepted speed claim or Android qualification.",
+  "runtimeVersion": "1.25.1",
+  "sourceReceipt": {
+    "path": "research/inference-2.4.1/separator-scheduler-paired.json",
+    "sha256": "ca5c28f54d651d05bcf69bff6552074d474aca360a65210027c9e85958fc0247"
+  },
+  "generator": {
+    "path": "research/inference-2.4.1/parallel_b4_probe_v1.py",
+    "sha256": "1c50678540708e9544434c212f290b5b87f4cb8059aef540f2d4fb9d41348225"
+  },
+  "geometry": {
+    "originalGraphCount": 27,
+    "timeBatch": 4,
+    "frequencyBatch": 128,
+    "headFrames": 128,
+    "contextFrames": 1301,
+    "samplesPerStem": 573300,
+    "timeCallsPerGraph": 15,
+    "originalInferenceCalls": 335
+  },
+  "candidateBoundary": "A single original temporal graph session, original B4 inputs, private tensors per concurrent call, complete wave join before scatter/session retirement; rejects Android Context. Frequency/head execution unchanged.",
+  "timingCaution": "inferenceMillis is the sum of overlapping call durations, not critical-path wall. Only enclosing wallNanos and processCpuNanos are comparable; peakRssBytes is whole-process VmHWM.",
+  "baselineContext": [
+    {
+      "wallNanos": 54114219023,
+      "processCpuNanos": 148710000000,
+      "peakRssBytes": 880373760,
+      "variant": "baseline",
+      "round": 0,
+      "phase": "screen",
+      "outputSha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+      "outputBytes": 4586400,
+      "inferenceMillis": 45245.0,
+      "modelInitMillis": 3504.0,
+      "profileSha256": "168267b438fd3592be1bcdbc0d51f10b177c2d9b04b25ede523d0ef4bf37ac2d"
+    },
+    {
+      "wallNanos": 54517737284,
+      "processCpuNanos": 144370000000,
+      "peakRssBytes": 872939520,
+      "variant": "baseline",
+      "round": 1,
+      "phase": "screen",
+      "outputSha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+      "outputBytes": 4586400,
+      "inferenceMillis": 47077.0,
+      "modelInitMillis": 3154.0,
+      "profileSha256": "873d5c1701ab208e2890b26bb6c417d5b77f5955e194278c0622774d5e4f2cb3"
+    }
+  ],
+  "runs": [
+    {
+      "wallNanos": 65610649195,
+      "processCpuNanos": 138870000000,
+      "peakRssBytes": 987746304,
+      "variant": "parallel-2-intra-1",
+      "round": 0,
+      "phase": "screen",
+      "outputSha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+      "outputBytes": 4586400,
+      "inferenceMillis": 96655.0,
+      "modelInitMillis": 2243.0,
+      "profileSha256": "26f17e5bad4ded6c6fbf6f75f4058132988bc8a0d62ea6d2303f9baa2ee2bcc4",
+      "scope": "host-only screen; inferenceMillis sums overlapping calls, not elapsed critical path",
+      "audioSHA256": "33f07d502ba19832b62b97d8fb4a11354e81310264bd885d7a06438228773650",
+      "startSample": 661500,
+      "sourceSHA256": "b6350db48c850067a754dbc571433be8d78c131c8362764e663f48898a21ab6f",
+      "sharedSourceHashes": {
+        "NativeExecutionPolicy.java": "03256613d400c080dae1727500bad977b6b5a80ffc555ef0ae6302880ee1e2e6",
+        "NativeDeuxTransform.java": "991b06501cfb88b904d0b714a525c389f169f00c231248b0e961b70f257e90b5",
+        "NativeInferenceProfile.java": "4cfa993d23b03c922601593dfe468603db310a1c44ff29712503b90500ac8a4c"
+      },
+      "runtimeSha256": "749793ebed63743fec853d093da7987a86ea5cd592d54fba898cd3233100c381",
+      "modelManifestSha256": "6aebf45e6e7f6fa974f14fe47a252fc01f48da4815f40a1fdf10641a432529a9",
+      "host": {
+        "platform": "Linux-6.18.44-x86_64-with-glibc2.39",
+        "machine": "x86_64",
+        "cpuCount": 9,
+        "cpuAffinity": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "cpuQuota": "800000 100000",
+        "memoryLimit": "8589934592",
+        "cpuModel": "INTEL(R) XEON(R) PLATINUM 8573C"
+      },
+      "sourceRelativePath": "build/inference-screen/parallel/parallel-2-intra-1/NativeDeux.java"
+    },
+    {
+      "wallNanos": 50047487851,
+      "processCpuNanos": 131940000000,
+      "peakRssBytes": 969900032,
+      "variant": "parallel-2-intra-2",
+      "round": 0,
+      "phase": "screen",
+      "outputSha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+      "outputBytes": 4586400,
+      "inferenceMillis": 68291.0,
+      "modelInitMillis": 2189.0,
+      "profileSha256": "56975cb0d9ebe0d54e0eda40054589abfeb2550a511ebcefc5679324d3e1969a",
+      "hostCountersBefore": {
+        "cgroupCpuStat": {
+          "usage_usec": 6459893754,
+          "user_usec": 5737339693,
+          "system_usec": 722554060,
+          "nice_usec": 0,
+          "nr_periods": 76109,
+          "nr_throttled": 39,
+          "throttled_usec": 1513176,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        },
+        "cgroupCpuPressure": null,
+        "cgroupMemoryPressure": null
+      },
+      "hostCountersAfter": {
+        "cgroupCpuStat": {
+          "usage_usec": 6599323742,
+          "user_usec": 5867872601,
+          "system_usec": 731451141,
+          "nice_usec": 0,
+          "nr_periods": 76611,
+          "nr_throttled": 39,
+          "throttled_usec": 1513176,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        },
+        "cgroupCpuPressure": null,
+        "cgroupMemoryPressure": null
+      },
+      "scope": "host-only screen; inferenceMillis sums overlapping calls, not elapsed critical path",
+      "audioSHA256": "33f07d502ba19832b62b97d8fb4a11354e81310264bd885d7a06438228773650",
+      "startSample": 661500,
+      "sourceSHA256": "7b686f7db1fa6c1f36a8ecf0ac620066883b652804c470ba3da3212718f1a4c1",
+      "sharedSourceHashes": {
+        "NativeExecutionPolicy.java": "03256613d400c080dae1727500bad977b6b5a80ffc555ef0ae6302880ee1e2e6",
+        "NativeDeuxTransform.java": "991b06501cfb88b904d0b714a525c389f169f00c231248b0e961b70f257e90b5",
+        "NativeInferenceProfile.java": "4cfa993d23b03c922601593dfe468603db310a1c44ff29712503b90500ac8a4c"
+      },
+      "runtimeSha256": "749793ebed63743fec853d093da7987a86ea5cd592d54fba898cd3233100c381",
+      "modelManifestSha256": "6aebf45e6e7f6fa974f14fe47a252fc01f48da4815f40a1fdf10641a432529a9",
+      "host": {
+        "platform": "Linux-6.18.44-x86_64-with-glibc2.39",
+        "machine": "x86_64",
+        "cpuCount": 9,
+        "cpuAffinity": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "cpuQuota": "800000 100000",
+        "memoryLimit": "8589934592",
+        "cpuModel": "INTEL(R) XEON(R) PLATINUM 8573C"
+      },
+      "cgroupCpuStatBefore": "usage_usec 6459893754\nuser_usec 5737339693\nsystem_usec 722554060\nnice_usec 0\nnr_periods 76109\nnr_throttled 39\nthrottled_usec 1513176\nnr_bursts 0\nburst_usec 0\n",
+      "cgroupCpuStatAfter": "usage_usec 6599451941\nuser_usec 5867992805\nsystem_usec 731459136\nnice_usec 0\nnr_periods 76613\nnr_throttled 39\nthrottled_usec 1513176\nnr_bursts 0\nburst_usec 0\n",
+      "sourceRelativePath": "build/inference-screen/parallel/parallel-2-intra-2/NativeDeux.java"
+    },
+    {
+      "wallNanos": 45813727681,
+      "processCpuNanos": 130470000000,
+      "peakRssBytes": 988389376,
+      "variant": "parallel-4-intra-1",
+      "round": 0,
+      "phase": "screen",
+      "outputSha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+      "outputBytes": 4586400,
+      "inferenceMillis": 93122.0,
+      "modelInitMillis": 2123.0,
+      "profileSha256": "8ac8115710adb10f6467fd94ab4267ed666d49e255e90193f39ccb655664736e",
+      "hostCountersBefore": {
+        "cgroupCpuStat": {
+          "usage_usec": 6613368125,
+          "user_usec": 5878525253,
+          "system_usec": 734842871,
+          "nice_usec": 0,
+          "nr_periods": 76854,
+          "nr_throttled": 39,
+          "throttled_usec": 1513176,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        },
+        "cgroupCpuPressure": null,
+        "cgroupMemoryPressure": null
+      },
+      "hostCountersAfter": {
+        "cgroupCpuStat": {
+          "usage_usec": 6749124751,
+          "user_usec": 6003779454,
+          "system_usec": 745345296,
+          "nice_usec": 0,
+          "nr_periods": 77314,
+          "nr_throttled": 39,
+          "throttled_usec": 1513176,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        },
+        "cgroupCpuPressure": null,
+        "cgroupMemoryPressure": null
+      },
+      "scope": "host-only screen; inferenceMillis sums overlapping calls, not elapsed critical path",
+      "audioSHA256": "33f07d502ba19832b62b97d8fb4a11354e81310264bd885d7a06438228773650",
+      "startSample": 661500,
+      "sourceSHA256": "e6c9e260afc20999bade4f2a437605cf726ff4bd50546c1af8d4254f0c86a33e",
+      "sharedSourceHashes": {
+        "NativeExecutionPolicy.java": "03256613d400c080dae1727500bad977b6b5a80ffc555ef0ae6302880ee1e2e6",
+        "NativeDeuxTransform.java": "991b06501cfb88b904d0b714a525c389f169f00c231248b0e961b70f257e90b5",
+        "NativeInferenceProfile.java": "4cfa993d23b03c922601593dfe468603db310a1c44ff29712503b90500ac8a4c"
+      },
+      "runtimeSha256": "749793ebed63743fec853d093da7987a86ea5cd592d54fba898cd3233100c381",
+      "modelManifestSha256": "6aebf45e6e7f6fa974f14fe47a252fc01f48da4815f40a1fdf10641a432529a9",
+      "host": {
+        "platform": "Linux-6.18.44-x86_64-with-glibc2.39",
+        "machine": "x86_64",
+        "cpuCount": 9,
+        "cpuAffinity": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "cpuQuota": "800000 100000",
+        "memoryLimit": "8589934592",
+        "cpuModel": "INTEL(R) XEON(R) PLATINUM 8573C"
+      },
+      "cgroupCpuStatBefore": "usage_usec 6613367887\nuser_usec 5878525042\nsystem_usec 734842845\nnice_usec 0\nnr_periods 76854\nnr_throttled 39\nthrottled_usec 1513176\nnr_bursts 0\nburst_usec 0\n",
+      "cgroupCpuStatAfter": "usage_usec 6749307737\nuser_usec 6003892587\nsystem_usec 745415149\nnice_usec 0\nnr_periods 77316\nnr_throttled 39\nthrottled_usec 1513176\nnr_bursts 0\nburst_usec 0\n",
+      "sourceRelativePath": "build/inference-screen/parallel/parallel-4-intra-1/NativeDeux.java"
+    }
+  ],
+  "allOutputsByteIdentical": true,
+  "fullOriginal335CallGeometryPassed": true,
+  "provenSpeedup": false,
+  "productionCandidateApproved": false,
+  "limitations": [
+    "One source passage at startSample661500, not a genre corpus or full song.",
+    "Temporal external parallelism has not been qualified on Android or under lifecycle faults.",
+    "Cgroup memory was observed near its8GiB limit late in the screen; shared pressure may confound timings.",
+    "Raw Float32 files remain under build/inference-screen/parallel and are not publication evidence."
+  ],
+  "nextDecision": "Four concurrent intra1 calls are worth repeated paired confirmation if no safer faster candidate qualifies. They show about15.6% reduction against the recent baseline context with about12% higher peak RSS; this is not an admitted benchmark ratio."
+}

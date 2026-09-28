@@ -101,7 +101,8 @@ def main():
                'tools/game_benchmark/capture_web.cjs', 'tools/game_benchmark/compare.py',
                'tools/game_benchmark/process_capture.cjs', 'tools/game_benchmark/benchmark_native_process.py']
     if args.production_engine:
-        sources.extend(['android/src/com/cyberbasslord/lightforge/NativeGame.java', 'tests/NativeGameTest.java'])
+        sources.extend(['android/src/com/cyberbasslord/lightforge/NativeGame.java',
+                        'android/src/com/cyberbasslord/lightforge/NativeGameProfile.java', 'tests/NativeGameTest.java'])
     provenance = {
         'schema': 'lightforge-game-native-process-experiment-1',
         'startedUtc': datetime.datetime.now(datetime.timezone.utc).isoformat(),
@@ -129,7 +130,8 @@ def main():
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(ROOT / name, destination)
     classpath = os.pathsep.join(map(str, dependencies))
-    compile_sources = ([ROOT / 'android/src/com/cyberbasslord/lightforge/NativeGame.java', ROOT / 'tests/NativeGameTest.java']
+    compile_sources = ([ROOT / 'android/src/com/cyberbasslord/lightforge/NativeGame.java',
+                        ROOT / 'android/src/com/cyberbasslord/lightforge/NativeGameProfile.java', ROOT / 'tests/NativeGameTest.java']
                        if args.production_engine else [TOOL / 'NativeGameBenchmark.java'])
     compile_options = ['--release', '8', '-encoding', 'UTF-8'] if args.production_engine else []
     run_logged([javac, *compile_options, '-cp', classpath, '-d', classes, *compile_sources], args.output / 'compile.log')

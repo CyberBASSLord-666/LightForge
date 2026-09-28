@@ -1,0 +1,52 @@
+{
+  "schema": "lightforge.parallel-host-admission-criteria.v1",
+  "declaredAt": "2026-09-28T05:53:41.848907+00:00",
+  "experimentStartedAt": "2026-09-28T05:50:33.814185+00:00",
+  "declarationTiming": "Criteria agreed while the run was in progress, after the warmup pair. At persistence the first measured pair had also completed; its exact metrics and completed progress are retained below. These thresholds were not preregistered before all measured work.",
+  "completedRunsAtDeclaration": [
+    {
+      "phase": "warmup",
+      "round": 0,
+      "variant": "baseline",
+      "wallNanos": 54658002175,
+      "outputSha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837"
+    },
+    {
+      "phase": "warmup",
+      "round": 0,
+      "variant": "candidate",
+      "wallNanos": 45095014980,
+      "outputSha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837"
+    },
+    {
+      "phase": "measurement",
+      "round": 0,
+      "variant": "baseline",
+      "wallNanos": 43211929588,
+      "outputSha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837"
+    },
+    {
+      "phase": "measurement",
+      "round": 0,
+      "variant": "candidate",
+      "wallNanos": 37595131415,
+      "outputSha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837"
+    }
+  ],
+  "requiredMeasuredPairs": 3,
+  "minimumMedianFullPassageWallReductionPercent": 15,
+  "minimumEachPairedFullPassageWallReductionPercent": 5,
+  "requiredFiniteByteIdenticalFullOutputs": true,
+  "originalGraphCount": 27,
+  "requiredFramesPerTemporalBand": 1301,
+  "requiredTemporalBandsPerGraph": 60,
+  "candidateTimeBatch": 1,
+  "candidateWorkers": 8,
+  "candidateInferenceCalls": 875,
+  "baselineInferenceCalls": 335,
+  "runtimeVersion": "1.25.1",
+  "resourceReviewRequired": "Report process CPU, peak RSS, CPU throttling, memory limit events, OOM and direct reclaim. Significant host contention or unsafe memory growth prevents clean host admission. Android memory admission is a separate production gate.",
+  "androidSpeedupProven": false,
+  "wholeAnalysisSpeedupProven": false,
+  "releaseAdmission": false
+}

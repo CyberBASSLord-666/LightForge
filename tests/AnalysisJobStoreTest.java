@@ -129,7 +129,13 @@ public final class AnalysisJobStoreTest {
         JSONObject finalJob=AnalysisJobStore.prepare(files,projectId,"2.2.1");String finalId=finalJob.getString("id");
         check(finalJob.getBoolean("hasCheckpoint"),"Renaming invalidated completed analysis");
         reject(()->AnalysisJobStore.complete(files,finalId,new JSONObject(result.toString()).put("projectId","other").toString()));
+        // The last progress elapsed excludes saving; completing must recompute from creation.
+        finalJob.put("createdAt",System.currentTimeMillis()-5000).put("elapsedMs",1);AnalysisJobStore.persist(files,finalJob);
         result.put("name","Newer edit");AnalysisJobStore.complete(files,finalId,result.toString());
+        check(AnalysisJobStore.status(files).getLong("elapsedMs")>=5000,"Completion retained pre-save progress time");
+        String compact=DiagnosticJobSummary.forFiles(files).snapshot();
+        check(compact.contains("jobRef="+DiagnosticJobSummary.reference(finalId)+" state=completed"),"Committed result missing from durable diagnostics");
+        check(compact.contains("durationMs=2000 analysisQuality=precision"),"Durable workload metadata missing");
         check(finalId.equals(read(saved).getString("backgroundJobId")),"Completion not durable");
         check("completed".equals(AnalysisJobStore.status(files).getString("state")),"Completion not terminal");
         reject(()->AnalysisJobStore.complete(files,finalId,result.toString()));

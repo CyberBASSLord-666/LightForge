@@ -37,6 +37,7 @@ public final class AnalysisService extends Service {
     static void recoverIfStopped(Context context) throws Exception {
         if(!alive())AnalysisJobStore.recover(context.getFilesDir());
     }
+    private String lastProfileStage="";
     @Override public void onCreate(){super.onCreate();AppDiagnostics.initialize(this);AppDiagnostics.log(this,"INFO","analysis-service","created");instance=this;createChannel();}
     @Override public IBinder onBind(Intent intent){return null;}
     @Override public int onStartCommand(Intent intent,int flags,int startId) {
@@ -332,7 +333,8 @@ public final class AnalysisService extends Service {
             try{
                 if(details==null||details.length()>4096)return;
                 JSONObject info=new JSONObject(details);
-                long now=SystemClock.elapsedRealtime();if(now-lastProgress<1000&&value<.96&&!info.optBoolean("checkpointSaved"))return;lastProgress=now;
+                String nextStage=info.optString("stage");
+                long now=SystemClock.elapsedRealtime();if(now-lastProgress<1000&&value<.96&&!info.optBoolean("checkpointSaved")&&nextStage.equals(lastProfileStage))return;lastProgress=now;lastProfileStage=nextStage;
                 JSONObject job=AnalysisJobStore.progress(getFilesDir(),id,value,stage,info);main.post(()->{if(owns(id)){notifyJob(job,false);signal();}});
                 if(now-lastDiagnosticProgress>=15000||info.optBoolean("checkpointSaved")){
                     lastDiagnosticProgress=now;

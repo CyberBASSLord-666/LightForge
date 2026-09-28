@@ -1,0 +1,213 @@
+{
+  "schemaVersion": 1,
+  "scope": "Historical graph-only research receipts and portable authored reproduction scripts; not production or complete-passage qualification. No inference was rerun to create this index.",
+  "runtime": "1.25.1",
+  "hashSemantics": {
+    "receiptAndScriptHashes": "SHA-256 of the retained text file bytes. Original script hashes identify the source snapshot before documented portability edits.",
+    "modelSha256": "Hash of actual ONNX model bytes recorded by the original probes, not recomputed for this archival index.",
+    "inputSha256": "Hash of the actual Float32 tensor data bytes used by a probe; not a hash of an NPY container or audio file.",
+    "outputSha256": "Only present when the original probe recorded a hash of actual same-runtime output tensor bytes. Missing hashes were not reconstructed from equality flags or supplied from another run."
+  },
+  "receipts": [
+    {
+      "file": "receipts/mha-screen.json",
+      "originalReceiptSha256": "60d601d3b6103e515b354c313d0aed3f0300bb3ce15d8da4464b4a7b2b0b7468",
+      "retainedReceiptSha256": "60d601d3b6103e515b354c313d0aed3f0300bb3ce15d8da4464b4a7b2b0b7468",
+      "archivalChanges": [],
+      "recordedHashFields": [
+        "rows[0].modelSha256",
+        "rows[0].inputSha256",
+        "rows[0].referenceSha256",
+        "rows[0].outputSha256",
+        "rows[1].modelSha256",
+        "rows[1].inputSha256",
+        "rows[1].referenceSha256",
+        "rows[1].outputSha256",
+        "rows[2].modelSha256",
+        "rows[2].inputSha256",
+        "rows[2].referenceSha256",
+        "rows[2].outputSha256",
+        "rows[3].modelSha256",
+        "rows[3].inputSha256",
+        "rows[3].referenceSha256",
+        "rows[3].outputSha256",
+        "rows[4].modelSha256",
+        "rows[4].inputSha256",
+        "rows[4].referenceSha256",
+        "rows[4].outputSha256",
+        "rows[5].modelSha256",
+        "rows[5].inputSha256",
+        "rows[5].referenceSha256",
+        "rows[5].outputSha256"
+      ],
+      "recordedOutputHash": true
+    },
+    {
+      "file": "receipts/profile-125-summary.json",
+      "originalReceiptSha256": "88fe441837f895d6c5d28ba617506e777f41884e060df88030f378c153c1973e",
+      "retainedReceiptSha256": "25285eaaa433274e414f63d8c6835eb821d7e58bf95e49813357fc1f1695805b",
+      "archivalChanges": [
+        "profilePath changed from local absolute path to the raw trace basename; all measured values and hashes retained."
+      ],
+      "recordedHashFields": [
+        "modelSha256",
+        "inputSha256",
+        "outputSha256"
+      ],
+      "recordedOutputHash": true
+    },
+    {
+      "file": "receipts/qkv-screen.json",
+      "originalReceiptSha256": "d749553769734a8df38d7993b0875f96228e42dc6de89be7f4b7411da9c12da1",
+      "retainedReceiptSha256": "d749553769734a8df38d7993b0875f96228e42dc6de89be7f4b7411da9c12da1",
+      "archivalChanges": [],
+      "recordedHashFields": [
+        "models.baseline",
+        "models.split",
+        "inputSha256"
+      ],
+      "recordedOutputHash": false,
+      "outputEvidence": "Original receipt records in-memory output equality/finite checks, but does not record an output tensor hash."
+    },
+    {
+      "file": "receipts/screen.json",
+      "originalReceiptSha256": "3a5588d23e875696aaac4317e0bc191d636d635358018002090092984cb8338e",
+      "retainedReceiptSha256": "3a5588d23e875696aaac4317e0bc191d636d635358018002090092984cb8338e",
+      "archivalChanges": [],
+      "recordedHashFields": [
+        "models.q64",
+        "models.q128",
+        "models.q256",
+        "inputSha256",
+        "runs[0].sha256",
+        "runs[1].sha256",
+        "runs[2].sha256",
+        "runs[3].sha256",
+        "runs[4].sha256",
+        "runs[5].sha256",
+        "runs[6].sha256",
+        "runs[7].sha256",
+        "runs[8].sha256",
+        "runs[9].sha256",
+        "runs[10].sha256",
+        "runs[11].sha256"
+      ],
+      "recordedOutputHash": false,
+      "outputEvidence": "Original receipt records in-memory output equality/finite checks, but does not record an output tensor hash."
+    },
+    {
+      "file": "receipts/static-125-summary.json",
+      "originalReceiptSha256": "588a0f2ffafec1fbd5e1dd768db3bea5f2d8f3e85442e81b485f39e20e23aabb",
+      "retainedReceiptSha256": "588a0f2ffafec1fbd5e1dd768db3bea5f2d8f3e85442e81b485f39e20e23aabb",
+      "archivalChanges": [],
+      "recordedHashFields": [],
+      "recordedOutputHash": false,
+      "outputEvidence": "Original receipt records in-memory output equality/finite checks, but does not record an output tensor hash.",
+      "provenanceLimit": "Original receipt did not record model/input/output hashes. The summary and retained source identify the intended input/model; they do not retroactively add a measured hash to this receipt."
+    },
+    {
+      "file": "receipts/tiled-mha-screen.json",
+      "originalReceiptSha256": "13eafb150475dede9ba10456ffefce22214f0ae5375df2a7045e9c58af9da8df",
+      "retainedReceiptSha256": "13eafb150475dede9ba10456ffefce22214f0ae5375df2a7045e9c58af9da8df",
+      "archivalChanges": [],
+      "recordedHashFields": [
+        "models.baseline",
+        "models.tiled",
+        "inputSha256"
+      ],
+      "recordedOutputHash": false,
+      "outputEvidence": "Original receipt records in-memory output equality/finite checks, but does not record an output tensor hash."
+    }
+  ],
+  "scripts": [
+    {
+      "file": "scripts/fuse_mha.py",
+      "retainedScriptSha256": "4c9cddfb3dd8d508958ca0947d678b1404ba9afb64b98582e054b5eff7df97d1",
+      "originalSourceSnapshotSha256": "7822ce58d775bc2f2d3bdf69ded900df647f0820d60b64f71edecaf96f75a0c8",
+      "archivalChanges": [
+        "Replaced workspace-specific paths with the shared research_paths module."
+      ]
+    },
+    {
+      "file": "scripts/fuse_tiled_mha.py",
+      "retainedScriptSha256": "0d7ceb1ba077e23b57973b34b2e18cd05c61be736cba02e799b0f81dcf7a5005",
+      "originalSourceSnapshotSha256": "545d189919ce9bbddc8ccdeb7c23905b9a89a7bb13def9b97e7d4c9a6811c3df",
+      "archivalChanges": [
+        "Replaced workspace-specific paths with the shared research_paths module."
+      ]
+    },
+    {
+      "file": "scripts/profile_125.py",
+      "retainedScriptSha256": "ab2e04de7c714d0296d6f75f2032c41feb70e116667a6e5f8dd791a2a0c28c6c",
+      "originalSourceSnapshotSha256": "0665dfa96fef904dcb312c9fd85e2457e6af8e3478f0b84a3555bab1043a9b2f",
+      "archivalChanges": [
+        "Replaced workspace-specific paths with the shared research_paths module.",
+        "New profile receipts use only the raw trace basename."
+      ]
+    },
+    {
+      "file": "scripts/research_paths.py",
+      "retainedScriptSha256": "2284f1161a7f20ed817580e193494582c8dfa96c872fc27860306514f8601e39",
+      "archivalChanges": [
+        "New path configuration helper; does not load a runtime or model."
+      ]
+    },
+    {
+      "file": "scripts/retile.py",
+      "retainedScriptSha256": "409b83b0b8b39f5dd7d11c93239719b5d69669491548cf6189117c6babcf1689",
+      "originalSourceSnapshotSha256": "fc7722ad1900bb21dae4e54c7229c54c33799cf0a361a57a83fa81864dbbff31",
+      "archivalChanges": [
+        "Replaced workspace-specific paths with the shared research_paths module."
+      ]
+    },
+    {
+      "file": "scripts/screen.py",
+      "retainedScriptSha256": "3b82e76898ef5b2eeece687e02d052391c7a37c33a8af2033ea54e717a2f58c3",
+      "originalSourceSnapshotSha256": "1c964428770166116b9fc7c4b48d880fb0a09d422c1d103bb3b3c5fca64dd704",
+      "archivalChanges": [
+        "Replaced workspace-specific paths with the shared research_paths module.",
+        "Added an explicit ONNX Runtime 1.25.1 assertion before inference."
+      ]
+    },
+    {
+      "file": "scripts/screen_mha.py",
+      "retainedScriptSha256": "33a9f85d3f143276abaf4489c2f6bd0168534d37fc4834c38e0fe8362091372a",
+      "originalSourceSnapshotSha256": "4151e83a08a00f849d57953afb4707f1d42039a6f34ad7f60012994bd9f2e2f1",
+      "archivalChanges": [
+        "Replaced workspace-specific paths with the shared research_paths module."
+      ]
+    },
+    {
+      "file": "scripts/screen_qkv.py",
+      "retainedScriptSha256": "6e3a00c1594314cb5c7a2c1b99e160b97cafa03da3d4c2f139a5763b884f66d3",
+      "originalSourceSnapshotSha256": "42db661ec2b0cf303bdf4ab716ae3ce7dc69e48a3ae0d95a6d55dbf245cb1c2a",
+      "archivalChanges": [
+        "Replaced workspace-specific paths with the shared research_paths module."
+      ]
+    },
+    {
+      "file": "scripts/screen_tiled_mha.py",
+      "retainedScriptSha256": "eb957a43bd17a1fb5c7c21e6bbd195e1cd4ad3547a67f9dc85df03db3c9a9e82",
+      "originalSourceSnapshotSha256": "41781c2e7d48fcfc94fd5b741a295097dd5174b438be7554998ff39a7c2d2a2a",
+      "archivalChanges": [
+        "Replaced workspace-specific paths with the shared research_paths module."
+      ]
+    },
+    {
+      "file": "scripts/split_qkv.py",
+      "retainedScriptSha256": "e5acd8c932ee48c87509b066987438736663a0c2e4cc31470d929a819f397117",
+      "originalSourceSnapshotSha256": "3fc51248942ec55af3b139d0a05c54c4de370946f9ceba3814bf42f1220dbddd",
+      "archivalChanges": [
+        "Replaced workspace-specific paths with the shared research_paths module."
+      ]
+    },
+    {
+      "file": "scripts/static_125.py",
+      "retainedScriptSha256": "b1d465d2e3d5a668ba78f10b4003160147e2245ead991c069b68c79f45396744",
+      "originalSourceSnapshotSha256": "aaf71400bc082e4150d4db0d2bb81dbb57ff5d1363841ffe8423a4c3289f908f",
+      "archivalChanges": [
+        "Replaced workspace-specific paths with the shared research_paths module."
+      ]
+    }
+  ]
+}

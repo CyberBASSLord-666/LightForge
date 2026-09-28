@@ -1,0 +1,681 @@
+{
+  "runtime": "1.25.1",
+  "scope": "Four representative original block00 temporal runs on real demo-derived input. Python FFT preprocessing, not full Java pipeline qualification. Timings are diagnostic while unrelated quality-only task runs.",
+  "profilePath": "ort125-temporal_2026-09-28_01-13-21_683.json",
+  "modelSha256": "688feca1115d610e9bc9d15ac9dac6e33c4cf0a03966d9effe8974d2674ae924",
+  "inputSha256": "2c2ee19d11fc269d5e0d7298a1b65bc661bf6fe9d980fe8bf67f04df2cbde7b5",
+  "inputShape": [
+    4,
+    1301,
+    256
+  ],
+  "outputSha256": "721014fd26d883050283fb00d7b40470c72798cf93749fb12598c210e43425bc",
+  "opMicroseconds": {
+    "MatMul": 589551,
+    "Mul": 76519,
+    "Split": 71612,
+    "Softmax": 61922,
+    "BiasGelu": 30719,
+    "Transpose": 30116,
+    "Concat": 21823,
+    "Expand": 16934,
+    "Slice": 16141,
+    "Add": 12787,
+    "Div": 11932,
+    "ReduceL2": 7463,
+    "Neg": 4571,
+    "Cos": 1684,
+    "Sin": 1461,
+    "ScatterND": 1368,
+    "Einsum": 673,
+    "Unsqueeze": 529,
+    "Gather": 463,
+    "Shape": 413,
+    "Reshape": 411,
+    "Squeeze": 260,
+    "Clip": 235,
+    "Sigmoid": 134,
+    "Pow": 111,
+    "Cast": 79,
+    "Range": 55
+  },
+  "topNodes": [
+    {
+      "name": "/layers.0.0/to_qkv/MatMul_kernel_time",
+      "microseconds": 188597,
+      "op": "MatMul",
+      "input": [
+        {
+          "float": [
+            4,
+            1301,
+            256
+          ]
+        }
+      ],
+      "output": [
+        {
+          "float": [
+            4,
+            1301,
+            1536
+          ]
+        }
+      ]
+    },
+    {
+      "name": "/layers.0.0/Split_kernel_time",
+      "microseconds": 58275,
+      "op": "Split",
+      "input": [
+        {
+          "float": [
+            4,
+            1301,
+            3,
+            8,
+            64
+          ]
+        },
+        {
+          "int64": [
+            3
+          ]
+        }
+      ],
+      "output": [
+        {
+          "float": [
+            4,
+            1301,
+            1,
+            8,
+            64
+          ]
+        },
+        {
+          "float": [
+            4,
+            1301,
+            1,
+            8,
+            64
+          ]
+        },
+        {
+          "float": [
+            4,
+            1301,
+            1,
+            8,
+            64
+          ]
+        }
+      ]
+    },
+    {
+      "name": "/layers.0.1/net/net.1/MatMul_kernel_time",
+      "microseconds": 52761,
+      "op": "MatMul",
+      "input": [
+        {
+          "float": [
+            4,
+            1301,
+            256
+          ]
+        }
+      ],
+      "output": [
+        {
+          "float": [
+            4,
+            1301,
+            1024
+          ]
+        }
+      ]
+    },
+    {
+      "name": "/layers.0.1/net/net.4/MatMul_kernel_time",
+      "microseconds": 43946,
+      "op": "MatMul",
+      "input": [
+        {
+          "float": [
+            4,
+            1301,
+            1024
+          ]
+        }
+      ],
+      "output": [
+        {
+          "float": [
+            4,
+            1301,
+            256
+          ]
+        }
+      ]
+    },
+    {
+      "name": "BiasGelu_kernel_time",
+      "microseconds": 30719,
+      "op": "BiasGelu",
+      "input": [
+        {
+          "float": [
+            4,
+            1301,
+            1024
+          ]
+        },
+        {
+          "float": [
+            1024
+          ]
+        }
+      ],
+      "output": [
+        {
+          "float": [
+            4,
+            1301,
+            1024
+          ]
+        }
+      ]
+    },
+    {
+      "name": "/layers.0.0/to_out/to_out.0/MatMul_kernel_time",
+      "microseconds": 22000,
+      "op": "MatMul",
+      "input": [
+        {
+          "float": [
+            4,
+            1301,
+            512
+          ]
+        }
+      ],
+      "output": [
+        {
+          "float": [
+            4,
+            1301,
+            256
+          ]
+        }
+      ]
+    },
+    {
+      "name": "/layers.0.0/Mul_7_kernel_time",
+      "microseconds": 10333,
+      "op": "Mul",
+      "input": [
+        {
+          "float": [
+            4,
+            8,
+            1301,
+            64
+          ]
+        },
+        {
+          "float": [
+            1301,
+            64
+          ]
+        }
+      ],
+      "output": [
+        {
+          "float": [
+            4,
+            8,
+            1301,
+            64
+          ]
+        }
+      ]
+    },
+    {
+      "name": "/layers.0.0/attend/MatMul_6_kernel_time",
+      "microseconds": 8813,
+      "op": "MatMul",
+      "input": [
+        {
+          "float": [
+            4,
+            8,
+            64,
+            64
+          ]
+        },
+        {
+          "float": [
+            4,
+            8,
+            64,
+            1301
+          ]
+        }
+      ],
+      "output": [
+        {
+          "float": [
+            4,
+            8,
+            64,
+            1301
+          ]
+        }
+      ]
+    },
+    {
+      "name": "/layers.0.0/attend/MatMul_30_kernel_time",
+      "microseconds": 8388,
+      "op": "MatMul",
+      "input": [
+        {
+          "float": [
+            4,
+            8,
+            64,
+            64
+          ]
+        },
+        {
+          "float": [
+            4,
+            8,
+            64,
+            1301
+          ]
+        }
+      ],
+      "output": [
+        {
+          "float": [
+            4,
+            8,
+            64,
+            1301
+          ]
+        }
+      ]
+    },
+    {
+      "name": "/layers.0.0/norm/Div_kernel_time",
+      "microseconds": 8128,
+      "op": "Div",
+      "input": [
+        {
+          "float": [
+            4,
+            1301,
+            256
+          ]
+        },
+        {
+          "float": [
+            4,
+            1301,
+            256
+          ]
+        }
+      ],
+      "output": [
+        {
+          "float": [
+            4,
+            1301,
+            256
+          ]
+        }
+      ]
+    },
+    {
+      "name": "/layers.0.0/attend/MatMul_33_kernel_time",
+      "microseconds": 8115,
+      "op": "MatMul",
+      "input": [
+        {
+          "float": [
+            4,
+            8,
+            64,
+            1301
+          ]
+        },
+        {
+          "float": [
+            4,
+            8,
+            1301,
+            64
+          ]
+        }
+      ],
+      "output": [
+        {
+          "float": [
+            4,
+            8,
+            64,
+            64
+          ]
+        }
+      ]
+    },
+    {
+      "name": "/layers.0.0/Slice_4_kernel_time",
+      "microseconds": 7738,
+      "op": "Slice",
+      "input": [
+        {
+          "float": [
+            4,
+            8,
+            1301,
+            64
+          ]
+        },
+        {
+          "int64": [
+            1
+          ]
+        },
+        {
+          "int64": [
+            1
+          ]
+        },
+        {
+          "int64": [
+            1
+          ]
+        },
+        {
+          "int64": [
+            1
+          ]
+        }
+      ],
+      "output": [
+        {
+          "float": [
+            4,
+            8,
+            1301,
+            64
+          ]
+        }
+      ]
+    },
+    {
+      "name": "/layers.0.0/attend/MatMul_4_kernel_time",
+      "microseconds": 7587,
+      "op": "MatMul",
+      "input": [
+        {
+          "float": [
+            4,
+            8,
+            64,
+            64
+          ]
+        },
+        {
+          "float": [
+            4,
+            8,
+            64,
+            1301
+          ]
+        }
+      ],
+      "output": [
+        {
+          "float": [
+            4,
+            8,
+            64,
+            1301
+          ]
+        }
+      ]
+    },
+    {
+      "name": "/layers.0.0/attend/MatMul_24_kernel_time",
+      "microseconds": 7308,
+      "op": "MatMul",
+      "input": [
+        {
+          "float": [
+            4,
+            8,
+            64,
+            64
+          ]
+        },
+        {
+          "float": [
+            4,
+            8,
+            64,
+            1301
+          ]
+        }
+      ],
+      "output": [
+        {
+          "float": [
+            4,
+            8,
+            64,
+            1301
+          ]
+        }
+      ]
+    },
+    {
+      "name": "/layers.0.0/norm/Expand_kernel_time",
+      "microseconds": 7282,
+      "op": "Expand",
+      "input": [
+        {
+          "float": [
+            4,
+            1301,
+            1
+          ]
+        },
+        {
+          "int64": [
+            3
+          ]
+        }
+      ],
+      "output": [
+        {
+          "float": [
+            4,
+            1301,
+            256
+          ]
+        }
+      ]
+    },
+    {
+      "name": "/layers.0.0/attend/MatMul_26_kernel_time",
+      "microseconds": 7281,
+      "op": "MatMul",
+      "input": [
+        {
+          "float": [
+            4,
+            8,
+            64,
+            64
+          ]
+        },
+        {
+          "float": [
+            4,
+            8,
+            64,
+            1301
+          ]
+        }
+      ],
+      "output": [
+        {
+          "float": [
+            4,
+            8,
+            64,
+            1301
+          ]
+        }
+      ]
+    },
+    {
+      "name": "/layers.0.0/Concat_4_kernel_time",
+      "microseconds": 7233,
+      "op": "Concat",
+      "input": [
+        {
+          "float": [
+            4,
+            8,
+            1301,
+            32,
+            1
+          ]
+        },
+        {
+          "float": [
+            4,
+            8,
+            1301,
+            32,
+            1
+          ]
+        }
+      ],
+      "output": [
+        {
+          "float": [
+            4,
+            8,
+            1301,
+            32,
+            2
+          ]
+        }
+      ]
+    },
+    {
+      "name": "/layers.0.0/attend/MatMul_28_kernel_time",
+      "microseconds": 7213,
+      "op": "MatMul",
+      "input": [
+        {
+          "float": [
+            4,
+            8,
+            64,
+            64
+          ]
+        },
+        {
+          "float": [
+            4,
+            8,
+            64,
+            1301
+          ]
+        }
+      ],
+      "output": [
+        {
+          "float": [
+            4,
+            8,
+            64,
+            1301
+          ]
+        }
+      ]
+    },
+    {
+      "name": "/layers.0.0/attend/MatMul_36_kernel_time",
+      "microseconds": 7106,
+      "op": "MatMul",
+      "input": [
+        {
+          "float": [
+            4,
+            8,
+            64,
+            64
+          ]
+        },
+        {
+          "float": [
+            4,
+            8,
+            64,
+            1301
+          ]
+        }
+      ],
+      "output": [
+        {
+          "float": [
+            4,
+            8,
+            64,
+            1301
+          ]
+        }
+      ]
+    },
+    {
+      "name": "/layers.0.0/attend/MatMul_38_kernel_time",
+      "microseconds": 7100,
+      "op": "MatMul",
+      "input": [
+        {
+          "float": [
+            4,
+            8,
+            64,
+            64
+          ]
+        },
+        {
+          "float": [
+            4,
+            8,
+            64,
+            1301
+          ]
+        }
+      ],
+      "output": [
+        {
+          "float": [
+            4,
+            8,
+            64,
+            1301
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,410 @@
+{
+  "scope": "Single-run host screening; not speedup evidence or a production acceptance report. Full original model and exact PCM parity required.",
+  "host": {
+    "platform": "Linux-6.18.44-x86_64-with-glibc2.39",
+    "machine": "x86_64",
+    "cpuCount": 9,
+    "cpuAffinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "cpuQuota": "800000 100000",
+    "memoryLimit": "8589934592",
+    "cpuModel": "INTEL(R) XEON(R) PLATINUM 8573C"
+  },
+  "audioSha256": "33f07d502ba19832b62b97d8fb4a11354e81310264bd885d7a06438228773650",
+  "runtimeSha256": "749793ebed63743fec853d093da7987a86ea5cd592d54fba898cd3233100c381",
+  "startSample": 661500,
+  "runs": [
+    {
+      "wallNanos": 55026350901,
+      "processCpuNanos": 154630000000,
+      "peakRssBytes": 874393600,
+      "variant": "baseline",
+      "round": 0,
+      "phase": "screen",
+      "outputSha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+      "outputBytes": 4586400,
+      "inferenceMillis": 48213.0,
+      "modelInitMillis": 2693.0,
+      "profileSha256": "6c84fce06bb329712874c88a57263b0c6ee02a5bd62f27669f9f49dea2b02bdc",
+      "sourceSha256": "084fec27d1fad0b10db01a960c614d333bb8c049e712c3fc4524d66e6dc3dd37",
+      "familyInferenceMillis": {
+        "time": 30728,
+        "frequency": 14677,
+        "heads": 2578,
+        "front": 217
+      },
+      "instrumentationBytecodeSha256": "9dc478ad35d9603cf3c8380cead52743901b3db1bbda14b972d8d0f279678567",
+      "sourcePatch": ""
+    },
+    {
+      "wallNanos": 50989180489,
+      "processCpuNanos": 145950000000,
+      "peakRssBytes": 878379008,
+      "variant": "threads-4-dynamic-4",
+      "round": 0,
+      "phase": "screen",
+      "outputSha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+      "outputBytes": 4586400,
+      "inferenceMillis": 45093.0,
+      "modelInitMillis": 2293.0,
+      "profileSha256": "5e8a27d7df712c8006e06470af1dc008498610e9186f42dceaa4c6d5aebda347",
+      "sourceSha256": "de7b8496d79ee7aa40ff8fc80e366a56b6534b7c074dee8db0aeb25ac6a2f886",
+      "familyInferenceMillis": {
+        "time": 27889,
+        "frequency": 14079,
+        "heads": 2942,
+        "front": 167
+      },
+      "instrumentationBytecodeSha256": "9dc478ad35d9603cf3c8380cead52743901b3db1bbda14b972d8d0f279678567",
+      "sourcePatch": "--- baseline/NativeDeux.java\n+++ threads-4-dynamic-4/NativeDeux.java\n@@ -261,7 +261,8 @@\n         phase(\"session-create-start; graph=\"+name);\n         NativeInferenceProfile.Timing sessionStarted=profile==null?null:NativeInferenceProfile.started();boolean recorded=false;\n         try(OrtSession.SessionOptions options=new OrtSession.SessionOptions()) {\n-            options.setIntraOpNumThreads(Math.max(1,Math.min(4,Runtime.getRuntime().availableProcessors())));\n+            options.setIntraOpNumThreads(4);\n+            options.addConfigEntry(\"session.dynamic_block_base\",\"4\");\n             options.setInterOpNumThreads(1);\n             options.setExecutionMode(OrtSession.SessionOptions.ExecutionMode.SEQUENTIAL);\n             options.setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT);\n"
+    },
+    {
+      "wallNanos": 111906867730,
+      "processCpuNanos": 113690000000,
+      "peakRssBytes": 872857600,
+      "variant": "threads-1-dynamic-0",
+      "round": 0,
+      "phase": "screen",
+      "outputSha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+      "outputBytes": 4586400,
+      "inferenceMillis": 104393.0,
+      "modelInitMillis": 3508.0,
+      "profileSha256": "9ef0ef7cdf5eba8a1e5033b29f173a984b8625c60a2c834368603130a365fd51",
+      "sourceSha256": "32cdd38cfaca443bef74f403bedcad1cbb99227b0f81210e4dd57a13fe138cd0",
+      "familyInferenceMillis": {
+        "time": 66996,
+        "frequency": 32269,
+        "heads": 4931,
+        "front": 184
+      },
+      "instrumentationBytecodeSha256": "9dc478ad35d9603cf3c8380cead52743901b3db1bbda14b972d8d0f279678567",
+      "sourcePatch": "--- baseline/NativeDeux.java\n+++ threads-1-dynamic-0/NativeDeux.java\n@@ -261,7 +261,7 @@\n         phase(\"session-create-start; graph=\"+name);\n         NativeInferenceProfile.Timing sessionStarted=profile==null?null:NativeInferenceProfile.started();boolean recorded=false;\n         try(OrtSession.SessionOptions options=new OrtSession.SessionOptions()) {\n-            options.setIntraOpNumThreads(Math.max(1,Math.min(4,Runtime.getRuntime().availableProcessors())));\n+            options.setIntraOpNumThreads(1);\n             options.setInterOpNumThreads(1);\n             options.setExecutionMode(OrtSession.SessionOptions.ExecutionMode.SEQUENTIAL);\n             options.setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT);\n"
+    },
+    {
+      "wallNanos": 67410408292,
+      "processCpuNanos": 119430000000,
+      "peakRssBytes": 856072192,
+      "variant": "threads-2-dynamic-0",
+      "round": 0,
+      "phase": "screen",
+      "outputSha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+      "outputBytes": 4586400,
+      "inferenceMillis": 61455.0,
+      "modelInitMillis": 2309.0,
+      "profileSha256": "8e2ab3d43319e5dfb1fd13592bdb5b1f76b2f9a99e76421ecb134d69ee42e20f",
+      "sourceSha256": "26a789c9c3bd628fc531fc0253a63a1e8c2e1d8690c500bdcadffc58535af792",
+      "familyInferenceMillis": {
+        "time": 39269,
+        "frequency": 18428,
+        "heads": 3587,
+        "front": 159
+      },
+      "instrumentationBytecodeSha256": "47d71f31cd24fe0bf769df4a4f9c1475cf28da1ce6cb0d5f0397588758f1b7cd",
+      "sourcePatch": "--- baseline/NativeDeux.java\n+++ threads-2-dynamic-0/NativeDeux.java\n@@ -261,7 +261,7 @@\n         phase(\"session-create-start; graph=\"+name);\n         NativeInferenceProfile.Timing sessionStarted=profile==null?null:NativeInferenceProfile.started();boolean recorded=false;\n         try(OrtSession.SessionOptions options=new OrtSession.SessionOptions()) {\n-            options.setIntraOpNumThreads(Math.max(1,Math.min(4,Runtime.getRuntime().availableProcessors())));\n+            options.setIntraOpNumThreads(2);\n             options.setInterOpNumThreads(1);\n             options.setExecutionMode(OrtSession.SessionOptions.ExecutionMode.SEQUENTIAL);\n             options.setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT);\n"
+    },
+    {
+      "wallNanos": 64657369605,
+      "processCpuNanos": 115320000000,
+      "peakRssBytes": 890179584,
+      "variant": "threads-2-dynamic-4",
+      "round": 0,
+      "phase": "screen",
+      "outputSha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+      "outputBytes": 4586400,
+      "inferenceMillis": 57938.0,
+      "modelInitMillis": 2954.0,
+      "profileSha256": "31c7fefe3f4bdb53e49f0032ddd36a94c01512bc59a5d4a17829501ca3c9a7a9",
+      "sourceSha256": "5dd0353cf0f726831ddb71787f41de164eeca38970947302251d87d861dee6cf",
+      "familyInferenceMillis": {
+        "time": 35681,
+        "frequency": 18955,
+        "heads": 3150,
+        "front": 139
+      },
+      "instrumentationBytecodeSha256": "47d71f31cd24fe0bf769df4a4f9c1475cf28da1ce6cb0d5f0397588758f1b7cd",
+      "sourcePatch": "--- baseline/NativeDeux.java\n+++ threads-2-dynamic-4/NativeDeux.java\n@@ -261,7 +261,8 @@\n         phase(\"session-create-start; graph=\"+name);\n         NativeInferenceProfile.Timing sessionStarted=profile==null?null:NativeInferenceProfile.started();boolean recorded=false;\n         try(OrtSession.SessionOptions options=new OrtSession.SessionOptions()) {\n-            options.setIntraOpNumThreads(Math.max(1,Math.min(4,Runtime.getRuntime().availableProcessors())));\n+            options.setIntraOpNumThreads(2);\n+            options.addConfigEntry(\"session.dynamic_block_base\",\"4\");\n             options.setInterOpNumThreads(1);\n             options.setExecutionMode(OrtSession.SessionOptions.ExecutionMode.SEQUENTIAL);\n             options.setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT);\n"
+    },
+    {
+      "wallNanos": 79977410458,
+      "processCpuNanos": 215460000000,
+      "peakRssBytes": 853811200,
+      "variant": "parallel-intra-2-inter-2",
+      "round": 0,
+      "phase": "screen",
+      "outputSha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+      "outputBytes": 4586400,
+      "inferenceMillis": 74390.0,
+      "modelInitMillis": 2071.0,
+      "profileSha256": "d7f392480453692d695c940d99179aec788d47b387c6f709b9aa35da984e7f6b",
+      "sourceSha256": "5d4a4dfa1ff4a0f86db35dc069f24e2444e684c093a48e5ce82fcb7cecf58dfc",
+      "familyInferenceMillis": {
+        "time": 44297,
+        "frequency": 25893,
+        "heads": 4014,
+        "front": 173
+      },
+      "instrumentationBytecodeSha256": "47d71f31cd24fe0bf769df4a4f9c1475cf28da1ce6cb0d5f0397588758f1b7cd",
+      "sourcePatch": "--- baseline/NativeDeux.java\n+++ parallel-intra-2-inter-2/NativeDeux.java\n@@ -261,12 +261,13 @@\n         phase(\"session-create-start; graph=\"+name);\n         NativeInferenceProfile.Timing sessionStarted=profile==null?null:NativeInferenceProfile.started();boolean recorded=false;\n         try(OrtSession.SessionOptions options=new OrtSession.SessionOptions()) {\n-            options.setIntraOpNumThreads(Math.max(1,Math.min(4,Runtime.getRuntime().availableProcessors())));\n-            options.setInterOpNumThreads(1);\n-            options.setExecutionMode(OrtSession.SessionOptions.ExecutionMode.SEQUENTIAL);\n+            options.setIntraOpNumThreads(2);\n+            options.setInterOpNumThreads(2);\n+            options.setExecutionMode(OrtSession.SessionOptions.ExecutionMode.PARALLEL);\n             options.setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT);\n             options.setCPUArenaAllocator(true);options.setMemoryPatternOptimization(true);\n             options.addConfigEntry(\"session.intra_op.allow_spinning\",\"0\");\n+            options.addConfigEntry(\"session.inter_op.allow_spinning\",\"0\");\n             OrtSession session=environment.createSession(model.getAbsolutePath(),options);\n             if(profile!=null){profile.addSessionInit(name,NativeInferenceProfile.elapsed(sessionStarted));recorded=true;}\n             activeGraph=name;firstGraphRun=true;phase(\"session-create-complete; graph=\"+name);\n"
+    },
+    {
+      "wallNanos": 114681800108,
+      "processCpuNanos": 223510000000,
+      "peakRssBytes": 880070656,
+      "variant": "parallel-intra-1-inter-4",
+      "round": 0,
+      "phase": "screen",
+      "outputSha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+      "outputBytes": 4586400,
+      "inferenceMillis": 107355.0,
+      "modelInitMillis": 3286.0,
+      "profileSha256": "0faa255862ec690e3d89498504a0e816c7ab1a445709a40d1474712383bc0633",
+      "sourceSha256": "1c91807b27704d3ab73f00be4dc9555c794beb43161f4630412eb3bd5c93ecc8",
+      "familyInferenceMillis": {
+        "time": 68114,
+        "frequency": 32972,
+        "heads": 6064,
+        "front": 192
+      },
+      "instrumentationBytecodeSha256": "47d71f31cd24fe0bf769df4a4f9c1475cf28da1ce6cb0d5f0397588758f1b7cd",
+      "sourcePatch": "--- baseline/NativeDeux.java\n+++ parallel-intra-1-inter-4/NativeDeux.java\n@@ -261,12 +261,13 @@\n         phase(\"session-create-start; graph=\"+name);\n         NativeInferenceProfile.Timing sessionStarted=profile==null?null:NativeInferenceProfile.started();boolean recorded=false;\n         try(OrtSession.SessionOptions options=new OrtSession.SessionOptions()) {\n-            options.setIntraOpNumThreads(Math.max(1,Math.min(4,Runtime.getRuntime().availableProcessors())));\n-            options.setInterOpNumThreads(1);\n-            options.setExecutionMode(OrtSession.SessionOptions.ExecutionMode.SEQUENTIAL);\n+            options.setIntraOpNumThreads(1);\n+            options.setInterOpNumThreads(4);\n+            options.setExecutionMode(OrtSession.SessionOptions.ExecutionMode.PARALLEL);\n             options.setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT);\n             options.setCPUArenaAllocator(true);options.setMemoryPatternOptimization(true);\n             options.addConfigEntry(\"session.intra_op.allow_spinning\",\"0\");\n+            options.addConfigEntry(\"session.inter_op.allow_spinning\",\"0\");\n             OrtSession session=environment.createSession(model.getAbsolutePath(),options);\n             if(profile!=null){profile.addSessionInit(name,NativeInferenceProfile.elapsed(sessionStarted));recorded=true;}\n             activeGraph=name;firstGraphRun=true;phase(\"session-create-complete; graph=\"+name);\n"
+    },
+    {
+      "wallNanos": 57096890788,
+      "processCpuNanos": 200710000000,
+      "peakRssBytes": 868515840,
+      "variant": "parallel-intra-4-inter-2",
+      "round": 0,
+      "phase": "screen",
+      "outputSha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+      "outputBytes": 4586400,
+      "inferenceMillis": 51932.0,
+      "modelInitMillis": 1837.0,
+      "profileSha256": "c7ba02c8f50c7d8fba744387b23b86e1b252cdab3c5c1159b8057f16b81475e3",
+      "sourceSha256": "c01dd715da02e6d911e4cfe12d6c194f8f3dc5f103b1f86a57827051f018a654",
+      "familyInferenceMillis": {
+        "time": 30702,
+        "frequency": 18495,
+        "heads": 2578,
+        "front": 146
+      },
+      "instrumentationBytecodeSha256": "f68c0e9c9d75eeda75f6c36a4ebdff9ee4477c5613348d83ce819899cc8ee2f7",
+      "sourcePatch": "--- baseline/NativeDeux.java\n+++ parallel-intra-4-inter-2/NativeDeux.java\n@@ -261,12 +261,13 @@\n         phase(\"session-create-start; graph=\"+name);\n         NativeInferenceProfile.Timing sessionStarted=profile==null?null:NativeInferenceProfile.started();boolean recorded=false;\n         try(OrtSession.SessionOptions options=new OrtSession.SessionOptions()) {\n-            options.setIntraOpNumThreads(Math.max(1,Math.min(4,Runtime.getRuntime().availableProcessors())));\n-            options.setInterOpNumThreads(1);\n-            options.setExecutionMode(OrtSession.SessionOptions.ExecutionMode.SEQUENTIAL);\n+            options.setIntraOpNumThreads(4);\n+            options.setInterOpNumThreads(2);\n+            options.setExecutionMode(OrtSession.SessionOptions.ExecutionMode.PARALLEL);\n             options.setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT);\n             options.setCPUArenaAllocator(true);options.setMemoryPatternOptimization(true);\n             options.addConfigEntry(\"session.intra_op.allow_spinning\",\"0\");\n+            options.addConfigEntry(\"session.inter_op.allow_spinning\",\"0\");\n             OrtSession session=environment.createSession(model.getAbsolutePath(),options);\n             if(profile!=null){profile.addSessionInit(name,NativeInferenceProfile.elapsed(sessionStarted));recorded=true;}\n             activeGraph=name;firstGraphRun=true;phase(\"session-create-complete; graph=\"+name);\n"
+    },
+    {
+      "wallNanos": 41547657135,
+      "processCpuNanos": 152530000000,
+      "peakRssBytes": 876687360,
+      "variant": "threads-6-dynamic-4",
+      "round": 0,
+      "phase": "screen",
+      "outputSha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+      "outputBytes": 4586400,
+      "inferenceMillis": 35662.0,
+      "modelInitMillis": 2178.0,
+      "profileSha256": "ed6620cadce68291f3e4aaeda151141ed9ea5b74c6fea32a0881158ddd3820b0",
+      "sourceSha256": "d666287c012dda3ecca7ee8e13d368c76edfa28c875611133a1a92a7e37e954e",
+      "familyInferenceMillis": {
+        "time": 21416,
+        "frequency": 11524,
+        "heads": 2602,
+        "front": 105
+      },
+      "instrumentationBytecodeSha256": "f68c0e9c9d75eeda75f6c36a4ebdff9ee4477c5613348d83ce819899cc8ee2f7",
+      "sourcePatch": "--- baseline/NativeDeux.java\n+++ threads-6-dynamic-4/NativeDeux.java\n@@ -261,7 +261,8 @@\n         phase(\"session-create-start; graph=\"+name);\n         NativeInferenceProfile.Timing sessionStarted=profile==null?null:NativeInferenceProfile.started();boolean recorded=false;\n         try(OrtSession.SessionOptions options=new OrtSession.SessionOptions()) {\n-            options.setIntraOpNumThreads(Math.max(1,Math.min(4,Runtime.getRuntime().availableProcessors())));\n+            options.setIntraOpNumThreads(6);\n+            options.addConfigEntry(\"session.dynamic_block_base\",\"4\");\n             options.setInterOpNumThreads(1);\n             options.setExecutionMode(OrtSession.SessionOptions.ExecutionMode.SEQUENTIAL);\n             options.setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT);\n"
+    },
+    {
+      "wallNanos": 39684560666,
+      "processCpuNanos": 166420000000,
+      "peakRssBytes": 885256192,
+      "variant": "threads-8-dynamic-4",
+      "round": 0,
+      "phase": "screen",
+      "outputSha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+      "outputBytes": 4586400,
+      "inferenceMillis": 33751.0,
+      "modelInitMillis": 2190.0,
+      "profileSha256": "5ebdb5eeb3948a732b09fc30834c27e01cda1b336595937de3a87848492d21e1",
+      "sourceSha256": "31d3a637a2eba51eb45885170db62b729b6bfdefbdceac67d3eaad279a52da19",
+      "familyInferenceMillis": {
+        "time": 20108,
+        "frequency": 10928,
+        "heads": 2568,
+        "front": 135
+      },
+      "instrumentationBytecodeSha256": "f68c0e9c9d75eeda75f6c36a4ebdff9ee4477c5613348d83ce819899cc8ee2f7",
+      "sourcePatch": "--- baseline/NativeDeux.java\n+++ threads-8-dynamic-4/NativeDeux.java\n@@ -261,7 +261,8 @@\n         phase(\"session-create-start; graph=\"+name);\n         NativeInferenceProfile.Timing sessionStarted=profile==null?null:NativeInferenceProfile.started();boolean recorded=false;\n         try(OrtSession.SessionOptions options=new OrtSession.SessionOptions()) {\n-            options.setIntraOpNumThreads(Math.max(1,Math.min(4,Runtime.getRuntime().availableProcessors())));\n+            options.setIntraOpNumThreads(8);\n+            options.addConfigEntry(\"session.dynamic_block_base\",\"4\");\n             options.setInterOpNumThreads(1);\n             options.setExecutionMode(OrtSession.SessionOptions.ExecutionMode.SEQUENTIAL);\n             options.setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT);\n"
+    },
+    {
+      "wallNanos": 48993061350,
+      "processCpuNanos": 185730000000,
+      "peakRssBytes": 859979776,
+      "variant": "threads-4-dynamic-0-spin-stop",
+      "round": 0,
+      "phase": "screen",
+      "outputSha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+      "outputBytes": 4586400,
+      "inferenceMillis": 43194.0,
+      "modelInitMillis": 2165.0,
+      "profileSha256": "8300d62f3f51f0bae0cf68f1dc94670b36ba52a8623bf905bcef0a5ae73d593e",
+      "sourceSha256": "6cd2ac30676fef78d68a259ab6ebdc87ef148ecb9ac7763d8ce5cd56867a73bb",
+      "familyInferenceMillis": {
+        "time": 26412,
+        "frequency": 14111,
+        "heads": 2542,
+        "front": 118
+      },
+      "instrumentationBytecodeSha256": "f68c0e9c9d75eeda75f6c36a4ebdff9ee4477c5613348d83ce819899cc8ee2f7",
+      "sourcePatch": "--- baseline/NativeDeux.java\n+++ threads-4-dynamic-0-spin-stop/NativeDeux.java\n@@ -266,7 +266,8 @@\n             options.setExecutionMode(OrtSession.SessionOptions.ExecutionMode.SEQUENTIAL);\n             options.setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT);\n             options.setCPUArenaAllocator(true);options.setMemoryPatternOptimization(true);\n-            options.addConfigEntry(\"session.intra_op.allow_spinning\",\"0\");\n+            options.addConfigEntry(\"session.intra_op.allow_spinning\",\"1\");\n+            options.addConfigEntry(\"session.force_spinning_stop\",\"1\");\n             OrtSession session=environment.createSession(model.getAbsolutePath(),options);\n             if(profile!=null){profile.addSessionInit(name,NativeInferenceProfile.elapsed(sessionStarted));recorded=true;}\n             activeGraph=name;firstGraphRun=true;phase(\"session-create-complete; graph=\"+name);\n"
+    },
+    {
+      "wallNanos": 46708611826,
+      "processCpuNanos": 177070000000,
+      "peakRssBytes": 884039680,
+      "variant": "threads-4-dynamic-4-spin-stop",
+      "round": 0,
+      "phase": "screen",
+      "outputSha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+      "outputBytes": 4586400,
+      "inferenceMillis": 40930.0,
+      "modelInitMillis": 2253.0,
+      "profileSha256": "8444281997d205146c29ad18f87a6b546962fd4cf570a64e5ca354f6f9532ef3",
+      "sourceSha256": "174ebc231f3283be5189b5cff7b7dcf532e1da678b5005701e0c9386b98aa67d",
+      "familyInferenceMillis": {
+        "time": 24921,
+        "frequency": 13554,
+        "heads": 2333,
+        "front": 109
+      },
+      "instrumentationBytecodeSha256": "f68c0e9c9d75eeda75f6c36a4ebdff9ee4477c5613348d83ce819899cc8ee2f7",
+      "sourcePatch": "--- baseline/NativeDeux.java\n+++ threads-4-dynamic-4-spin-stop/NativeDeux.java\n@@ -266,7 +266,9 @@\n             options.setExecutionMode(OrtSession.SessionOptions.ExecutionMode.SEQUENTIAL);\n             options.setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT);\n             options.setCPUArenaAllocator(true);options.setMemoryPatternOptimization(true);\n-            options.addConfigEntry(\"session.intra_op.allow_spinning\",\"0\");\n+            options.addConfigEntry(\"session.intra_op.allow_spinning\",\"1\");\n+            options.addConfigEntry(\"session.force_spinning_stop\",\"1\");\n+            options.addConfigEntry(\"session.dynamic_block_base\",\"4\");\n             OrtSession session=environment.createSession(model.getAbsolutePath(),options);\n             if(profile!=null){profile.addSessionInit(name,NativeInferenceProfile.elapsed(sessionStarted));recorded=true;}\n             activeGraph=name;firstGraphRun=true;phase(\"session-create-complete; graph=\"+name);\n"
+    }
+  ],
+  "schema": "lightforge.deux-scheduler-screen.v1",
+  "baselineRevision": "1cd53005e27aaa763f92aaa3df2f57fee3c9faec",
+  "modelManifestSha256": "6aebf45e6e7f6fa974f14fe47a252fc01f48da4815f40a1fdf10641a432529a9",
+  "modelHashes": {
+    "block-00-frequency.onnx": {
+      "bytes": 6422928,
+      "sha256": "361ff85e20567a74c076fab06ddfa87dd8c58108cbfc72340fafa8ae92a239b6"
+    },
+    "block-00-time.onnx": {
+      "bytes": 6449892,
+      "sha256": "688feca1115d610e9bc9d15ac9dac6e33c4cf0a03966d9effe8974d2674ae924"
+    },
+    "block-01-frequency.onnx": {
+      "bytes": 6351205,
+      "sha256": "fdcf43737acdaa452af52f57eb4a46659b16479bd21bd25ce15edf4c242c0b79"
+    },
+    "block-01-time.onnx": {
+      "bytes": 6378169,
+      "sha256": "af09b80e7d365402f98ddea310d5de5fa469397389bb00f6812b9ad4afded96f"
+    },
+    "block-02-frequency.onnx": {
+      "bytes": 6351205,
+      "sha256": "5e37f7dfadb785dcf1b4b4f688437506db621ebf42fe1ed573c080d42ec80d73"
+    },
+    "block-02-time.onnx": {
+      "bytes": 6378169,
+      "sha256": "1822e5f163c9d5596ecf4463970dee6a873c9d5ecc625ab018000f1ac5708788"
+    },
+    "block-03-frequency.onnx": {
+      "bytes": 6351205,
+      "sha256": "4e8a32b3324465a14d8675550fba44e0a65c80625f670647c060efd2120a17f7"
+    },
+    "block-03-time.onnx": {
+      "bytes": 6378169,
+      "sha256": "4832532d1fcb067413adb1f51e3a90af94cbcd8c40c9be5e8640c33b3a38d731"
+    },
+    "block-04-frequency.onnx": {
+      "bytes": 6351205,
+      "sha256": "dd64feabf8f4cb9052a782d94279e17285e0ad69b740c1a91a6e0257eb3b3206"
+    },
+    "block-04-time.onnx": {
+      "bytes": 6378169,
+      "sha256": "f5c58deab56f5669691d6b38844ef63dc2f3606ea2fe6993a895c36ca881e95b"
+    },
+    "block-05-frequency.onnx": {
+      "bytes": 6351205,
+      "sha256": "e8c2cdc608270649b4e198663701e361f6ee1786c11fd846d56bd7684cb0cc4c"
+    },
+    "block-05-time.onnx": {
+      "bytes": 6378169,
+      "sha256": "648dc03432489c44f08eb610eb7c079941ce0d5fbfc0d59275d39f837d495bbc"
+    },
+    "block-06-frequency.onnx": {
+      "bytes": 6351205,
+      "sha256": "1a7006f146070693e8c8b2ad6a7ec1dd27c1cc4e1b3f8308dad0b31b41032504"
+    },
+    "block-06-time.onnx": {
+      "bytes": 6378169,
+      "sha256": "eab3fd6652bd41198dc8920ce2b89f30a4e3ae7bdca3049c6ffd93cfe2c63245"
+    },
+    "block-07-frequency.onnx": {
+      "bytes": 6351205,
+      "sha256": "1d5144c390d023660b8441256eb6bd18e778181b0c79fa5f95bbf2eda88c1b1f"
+    },
+    "block-07-time.onnx": {
+      "bytes": 6378169,
+      "sha256": "87e6c0b57591fc145eb43924ed0998a77eed0b24b9fbb91fe52a5c5dcec05353"
+    },
+    "block-08-frequency.onnx": {
+      "bytes": 6351205,
+      "sha256": "f77a0fa744adfd0bdf2aa93b34664cb7c245c3a9f325e6f799695ea2a78ea7ca"
+    },
+    "block-08-time.onnx": {
+      "bytes": 6378169,
+      "sha256": "0f55a98b1876a9d96ad63e0cf89d7f52a76e9c124bee6e6281fc93b422b03107"
+    },
+    "block-09-frequency.onnx": {
+      "bytes": 6351205,
+      "sha256": "8d647c15bb2ddbec51e392a5045cfd10e8ef8745af1242e1923a12d98c611899"
+    },
+    "block-09-time.onnx": {
+      "bytes": 6378169,
+      "sha256": "1499ace8b7683ce31d7af60a5dfa649a4834f32469f5fa161cb06453a91eb958"
+    },
+    "block-10-frequency.onnx": {
+      "bytes": 6351205,
+      "sha256": "1dd6b316eee0f9a312d2b1752a8f0d1051c5265ea6ab6361e64b386685824a34"
+    },
+    "block-10-time.onnx": {
+      "bytes": 6378169,
+      "sha256": "3c70c547ff304f7ba369eed6c8180eb23bfcd6246b72a6e66fd683b2aaa36c47"
+    },
+    "block-11-frequency.onnx": {
+      "bytes": 6351205,
+      "sha256": "1ac019e6270d55218d5809a7cbc10dff238d0bb0d14738ee76e54227306f55a1"
+    },
+    "block-11-time.onnx": {
+      "bytes": 6378169,
+      "sha256": "31a94b200d07dcde3c8fc4b4846c46f64ad8f44c084a73c6a5bf05f54ed81397"
+    },
+    "front.onnx": {
+      "bytes": 8377493,
+      "sha256": "7906638e713a517297de6cbb758551e5f86fe4a01d19c45f3e1eac28953bcb0e"
+    },
+    "head-0.onnx": {
+      "bytes": 380136983,
+      "sha256": "9f8253c46c48f700e6682faf9c22a03b662a65941862414d649a94c38940d0bb"
+    },
+    "head-1.onnx": {
+      "bytes": 380136983,
+      "sha256": "343131b2c6c8dda367d720c0d42b933dacaa131f433e942258ef7aaa41c2471f"
+    }
+  },
+  "allOutputsByteIdentical": true,
+  "limitations": [
+    "One run per variant with fixed order; screening only, not paired performance acceptance.",
+    "Host x86_64 results do not establish Android or whole-song speed.",
+    "Profiling was updated during exploration; instrumentation class hashes identify each variant. Final paired evidence must freeze shared source."
+  ]
+}

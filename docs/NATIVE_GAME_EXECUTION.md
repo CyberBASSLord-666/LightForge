@@ -1,8 +1,10 @@
 # Native GAME execution and Deux allocation changes
 
-This documents the **2.3.2 candidate**, not a published release or a production
-qualification receipt. Publication still requires the current protected checks
-and a version-specific, exact-source release request.
+This documents the native GAME execution and Deux allocation behavior introduced
+for 2.3.2 and retained in the [published 2.4.0 release](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.4.0).
+The historical measurements below retain their original scope; they are not new
+qualification receipts for later changes. See [GAME passage profiling](NATIVE_GAME_PROFILING.md)
+for the next release's additional execution measurements.
 
 ## What changes
 
@@ -75,4 +77,5 @@ The owner-approved [2.3.2 / 20302 declaration](../releases/v2.3.2/quality-gate-d
 makes external corpus measurements, blinded human review and physical-device
 observations optional for this version. It does not create PASS_TARGET evidence,
 waive any automated, signing or package-integrity check, or extend authority to
-future versions. **2.3.2 is not yet released.**
+future versions. Each later release binds its own declaration and verified
+source; the published 2.4.0 record is linked above.

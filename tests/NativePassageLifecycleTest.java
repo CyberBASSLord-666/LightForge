@@ -133,5 +133,5 @@ final class AppDiagnostics {
     static void record(Context context,String source,Throwable failure){}
     static void log(Context context,String level,String source,String message){}
     static void sample(Context context,String event){}
-    static void profile(Context context,NativeInferenceProfile.Snapshot snapshot){}
+    static void profile(Context context,String jobId,NativeInferenceProfile.Snapshot snapshot){}
 }

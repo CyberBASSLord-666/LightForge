@@ -126,7 +126,7 @@ class NativeGameAndroidEvidenceTest(unittest.TestCase):
             evidence.validate_native_game_device(value)
 
     def test_background_receipt_enforces_each_required_field(self):
-        for release in ('2.3.2', '2.4.0'):
+        for release in ('2.3.2', '2.4.0', '2.4.1'):
             self.assertTrue(self.validate_receipt(receipt(release), release=release)['passed'])
             for field in device()['nativeGame']:
                 value = receipt(release)

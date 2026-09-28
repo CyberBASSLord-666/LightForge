@@ -120,7 +120,9 @@ public final class AppDiagnostics {
      * Emits a fixed, privacy-safe native-inference receipt as one queued operation. The profile
      * owns its schema and bounded stage/graph counts; diagnostics never inspect media or model paths.
      */
-    public static void profile(Context context, NativeInferenceProfile.Snapshot profile) {
+    public static void profile(Context context, NativeInferenceProfile.Snapshot profile) { profile(context, null, profile); }
+
+    public static void profile(Context context, String jobId, NativeInferenceProfile.Snapshot profile) {
         if (profile == null) return;
         try {
             initialize(context);
@@ -129,9 +131,29 @@ public final class AppDiagnostics {
                 writeFailures.incrementAndGet(); return;
             }
             enqueue(() -> {
+                if (jobId != null) persistProfile(jobId, "native-deux-v1", records[0]);
                 for (String record : records) append("INFO", "native-inference-profile", record, false);
             }, true);
         } catch (Throwable ignored) { writeFailures.incrementAndGet(); }
+    }
+
+    /** Fixed numeric fields only; callers supply the owning job, never a current-job guess. */
+    public static void profileSummary(Context context, String jobId, String route, String summaryRecord) {
+        try {
+            initialize(context);
+            enqueue(() -> persistProfile(jobId, route, summaryRecord), true);
+        } catch (Throwable ignored) { writeFailures.incrementAndGet(); }
+    }
+
+    private static void persistProfile(String jobId, String route, String summaryRecord) {
+        try {
+            if (application != null) DiagnosticJobSummary.forFiles(application.getFilesDir()).profile(jobId, route, summaryRecord);
+        } catch (Throwable ignored) { writeFailures.incrementAndGet(); }
+    }
+
+    private static String jobSummaries() {
+        try { return DiagnosticJobSummary.forFiles(application.getFilesDir()).snapshot(); }
+        catch (Exception unavailable) { return "Job summaries unavailable; diagnostic storage could not be read."; }
     }
 
     private static boolean enqueue(Runnable work, boolean important) {
@@ -245,6 +267,7 @@ public final class AppDiagnostics {
             "History bound: " + (DiagnosticLog.SEGMENT_BYTES * DiagnosticLog.SEGMENT_COUNT) + " bytes; oldest entries rotate.\n" +
             "Queue drained: " + drained + "; dropped events: " + dropped.get() + "; write failures: " + writeFailures.get() +
             "\n\nCURRENT ENVIRONMENT\n" + environment(application) + "\n\nCURRENT ANALYSIS JOB\n" + jobSnapshot(application) +
+            "\n\nDURABLE ANALYSIS SUMMARIES (independent of trace rotation)\n" + jobSummaries() +
             "\n\nANDROID PREVIOUS PROCESS EXITS\n" + previousExits(application, true) + "\n\nPERSISTENT EVENT TRACE (oldest to newest)\n";
         bytes.write(header.getBytes(StandardCharsets.UTF_8));
         current.snapshot(bytes);
@@ -309,7 +332,7 @@ public final class AppDiagnostics {
             JSONObject job = AnalysisJobStore.status(context.getFilesDir());
             if (job == null) return "No saved analysis job.";
             String id = job.optString("id");
-            if (id.matches("[a-fA-F0-9-]{36}")) out.append("jobRef=").append(id.substring(0, 8)).append('\n');
+            if (id.matches("[a-fA-F0-9-]{36}")) out.append("jobRef=").append(DiagnosticJobSummary.reference(id)).append('\n');
             for (String key : new String[]{"state", "stage", "lastStage", "analysisStage"}) {
                 if (job.has(key)) out.append(key).append('=').append(DiagnosticLog.sanitize(job.optString(key))).append('\n');
             }

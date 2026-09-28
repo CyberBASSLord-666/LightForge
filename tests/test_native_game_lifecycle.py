@@ -19,9 +19,10 @@ class NativeGameLifecycleTest(unittest.TestCase):
             classes = work / 'classes'
             classes.mkdir()
             sources = [ROOT / 'android/src/com/cyberbasslord/lightforge' / (name + '.java')
-                       for name in ('NativeGameTask', 'NativeRuntimeGuard')]
+                       for name in ('NativeGameTask', 'NativeRuntimeGuard', 'NativeGameProfile')]
             sources += sorted((ROOT / 'tests/native-mdx-host/android').rglob('*.java'))
             sources += [ROOT / 'tests/native-mdx-host/com/cyberbasslord/lightforge/NativeDeux.java',
+                        ROOT / 'tests/native-mdx-host/com/cyberbasslord/lightforge/AppDiagnostics.java',
                         ROOT / 'tests/NativeGameLifecycleTest.java']
             compiled = subprocess.run([str(JAVA / 'javac'), '--release', '8', '-encoding', 'UTF-8',
                                        '-cp', str(TOOLS / 'test-json.jar'), '-d', str(classes), *map(str, sources)],

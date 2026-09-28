@@ -1,0 +1,145 @@
+{
+  "runtime": "1.25.1",
+  "scope": "Original block00 temporal graph real-input screening, not fullpassage/Android acceptance. Interleaved8pairs, firstpairwarmup.",
+  "models": {
+    "baseline": "688feca1115d610e9bc9d15ac9dac6e33c4cf0a03966d9effe8974d2674ae924",
+    "split": "882145b3e71609b19ac7de1aa483d8792d514d9e8a2ae4dc085fdade7f029826"
+  },
+  "inputSha256": "2c2ee19d11fc269d5e0d7298a1b65bc661bf6fe9d980fe8bf67f04df2cbde7b5",
+  "rows": [
+    {
+      "repeat": 0,
+      "name": "baseline",
+      "seconds": 0.12676840399944922,
+      "equal": true,
+      "finite": true,
+      "maxAbs": 0.0
+    },
+    {
+      "repeat": 0,
+      "name": "split",
+      "seconds": 0.3358249369994155,
+      "equal": true,
+      "finite": true,
+      "maxAbs": 0.0
+    },
+    {
+      "repeat": 1,
+      "name": "split",
+      "seconds": 0.17481428400060395,
+      "equal": true,
+      "finite": true,
+      "maxAbs": 0.0
+    },
+    {
+      "repeat": 1,
+      "name": "baseline",
+      "seconds": 0.12009110700091696,
+      "equal": true,
+      "finite": true,
+      "maxAbs": 0.0
+    },
+    {
+      "repeat": 2,
+      "name": "baseline",
+      "seconds": 0.0997783150014584,
+      "equal": true,
+      "finite": true,
+      "maxAbs": 0.0
+    },
+    {
+      "repeat": 2,
+      "name": "split",
+      "seconds": 0.1400587509997422,
+      "equal": true,
+      "finite": true,
+      "maxAbs": 0.0
+    },
+    {
+      "repeat": 3,
+      "name": "split",
+      "seconds": 0.14131733300018823,
+      "equal": true,
+      "finite": true,
+      "maxAbs": 0.0
+    },
+    {
+      "repeat": 3,
+      "name": "baseline",
+      "seconds": 0.12495108100119978,
+      "equal": true,
+      "finite": true,
+      "maxAbs": 0.0
+    },
+    {
+      "repeat": 4,
+      "name": "baseline",
+      "seconds": 0.14488349100065534,
+      "equal": true,
+      "finite": true,
+      "maxAbs": 0.0
+    },
+    {
+      "repeat": 4,
+      "name": "split",
+      "seconds": 0.17523135300143622,
+      "equal": true,
+      "finite": true,
+      "maxAbs": 0.0
+    },
+    {
+      "repeat": 5,
+      "name": "split",
+      "seconds": 0.1499973259997205,
+      "equal": true,
+      "finite": true,
+      "maxAbs": 0.0
+    },
+    {
+      "repeat": 5,
+      "name": "baseline",
+      "seconds": 0.14495911199992406,
+      "equal": true,
+      "finite": true,
+      "maxAbs": 0.0
+    },
+    {
+      "repeat": 6,
+      "name": "baseline",
+      "seconds": 0.12244387899772846,
+      "equal": true,
+      "finite": true,
+      "maxAbs": 0.0
+    },
+    {
+      "repeat": 6,
+      "name": "split",
+      "seconds": 0.13952978899760637,
+      "equal": true,
+      "finite": true,
+      "maxAbs": 0.0
+    },
+    {
+      "repeat": 7,
+      "name": "split",
+      "seconds": 0.16555802199945902,
+      "equal": true,
+      "finite": true,
+      "maxAbs": 0.0
+    },
+    {
+      "repeat": 7,
+      "name": "baseline",
+      "seconds": 0.16815272999883746,
+      "equal": true,
+      "finite": true,
+      "maxAbs": 0.0
+    }
+  ],
+  "allEqual": true,
+  "median": {
+    "baseline": 0.12495108100119978,
+    "split": 0.1499973259997205
+  },
+  "processPeakRss": 482930688
+}

@@ -6,6 +6,30 @@ A source version or an entry here does not itself establish publication. The
 [pre-cleanup changelog](https://github.com/CyberBASSLord-666/LightForge/blob/07511f5544b688c657773dce8a29d8d31ba68cb1/CHANGELOG.md)
 retains detailed historical development notes and their original limitations.
 
+## 2.4.1 — measured native execution and durable diagnostics
+
+Run independent temporal bands concurrently with private buffers and the
+original graph, refilling each worker slot as its band finishes. Final production
+host qualification measured 32.6% lower median full-passage time, with 28–36%
+improvement in every pair and complete byte-identical output. This is not a
+physical-phone or whole-analysis measurement.
+
+Calibrate temporal and frequency scheduling on the actual device. Admit only repeated, consistent wins with identical finite
+Float32 output; retain the original configuration otherwise. Persist a bounded
+policy tied to the model, runtime, OS and device, and preserve cancellation,
+one-session ownership and all original model work. First-use calibration has
+an explicit, separately measured cost.
+
+Preserve complete job summaries independently of rotating trace logs, including
+final saving, restart gaps, native route totals and calibration overhead.
+Distinguish calling-thread CPU from process CPU and add per-graph native GAME
+profiling. GAME's tested tuning changes did not qualify and are not enabled.
+
+Keep ONNX Runtime 1.25.1, original model weights, precision and context. A newer
+runtime experiment was excluded after an unapproved telemetry connection.
+Fresh actual-model calibration/cache equivalence and production/Android gates
+remain required; no 75% whole-job or physical-device speedup is claimed.
+
 ## 2.4.0 — source timing, bilateral gestures and physical preview
 
 Keep measured vocal and bass spans continuous across arrangement boundaries;
