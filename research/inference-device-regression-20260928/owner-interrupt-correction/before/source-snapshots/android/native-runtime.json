@@ -1,0 +1,56 @@
+{
+  "name": "ONNX Runtime",
+  "version": "1.25.1",
+  "license": "MIT",
+  "source": "https://github.com/microsoft/onnxruntime/tree/v1.25.1",
+  "android": {
+    "name": "onnxruntime-android-1.25.1.aar",
+    "url": "https://repo.maven.apache.org/maven2/com/microsoft/onnxruntime/onnxruntime-android/1.25.1/onnxruntime-android-1.25.1.aar",
+    "bytes": 43116617,
+    "sha256": "08ccb60c93bd027843e8227743ddcb0275a00ee706cb0df4bae91cc1a21a55f5"
+  },
+  "host": {
+    "name": "onnxruntime-1.25.1.jar",
+    "url": "https://repo.maven.apache.org/maven2/com/microsoft/onnxruntime/onnxruntime/1.25.1/onnxruntime-1.25.1.jar",
+    "bytes": 41804437,
+    "sha256": "749793ebed63743fec853d093da7987a86ea5cd592d54fba898cd3233100c381"
+  },
+  "files": {
+    "classes.jar": {
+      "bytes": 121358,
+      "sha256": "3755d307aaa566daa1ebd4e9e792303fac78ea8517f29bfa49da5eb9a7a6051b"
+    },
+    "jni/arm64-v8a/libonnxruntime.so": {
+      "bytes": 27072384,
+      "sha256": "b87030d6d0876af371e00a99368f01a05ceb8ed36f88859e30ee8c3649811acd"
+    },
+    "jni/arm64-v8a/libonnxruntime4j_jni.so": {
+      "bytes": 111648,
+      "sha256": "cd11ea73f2e9b1d799b936d1dfc8a13719832a8244cd1b12d6f58bda1f2d1ddf"
+    },
+    "jni/armeabi-v7a/libonnxruntime.so": {
+      "bytes": 19255048,
+      "sha256": "570c8297cb166efec11f104351db2485a1405347ff22cc450d5979d1a9621357"
+    },
+    "jni/armeabi-v7a/libonnxruntime4j_jni.so": {
+      "bytes": 81536,
+      "sha256": "b1fc6e2246d56910a1630083bde01da386a07b581a5090a890ae31347dd0b357"
+    },
+    "jni/x86/libonnxruntime.so": {
+      "bytes": 32674464,
+      "sha256": "4328648196cbd9ac2fba41c67bea7f59e86f32a801bdbac8c60bcfa962e5509f"
+    },
+    "jni/x86/libonnxruntime4j_jni.so": {
+      "bytes": 93620,
+      "sha256": "9f0493e53ad77be7eef678971d62c1c053450cbe7d766869d66359e3f398ca96"
+    },
+    "jni/x86_64/libonnxruntime.so": {
+      "bytes": 32864824,
+      "sha256": "ef6c81cafbea375423b8b0ffb757288fdc6170901bb8d02999c758930d4d9306"
+    },
+    "jni/x86_64/libonnxruntime4j_jni.so": {
+      "bytes": 100016,
+      "sha256": "8fe536b92668ae3fca4719dce98bbbcf987c30264270d0268997df17d2a4a8ec"
+    }
+  }
+}

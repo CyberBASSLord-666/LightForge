@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/workspace/scratch/7031dc893b8d/LightForge/tools/verify_deux_passage.py", line 219, in <module>
+    main()
+  File "/workspace/scratch/7031dc893b8d/LightForge/tools/verify_deux_passage.py", line 170, in main
+    b.require(result.returncode == 0, 'Native integration failed; see integration.log')
+  File "/workspace/scratch/7031dc893b8d/LightForge/tools/benchmark_deux_execution.py", line 43, in require
+    raise ValueError(message)
+ValueError: Native integration failed; see integration.log

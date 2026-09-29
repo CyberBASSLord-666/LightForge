@@ -1,0 +1,94 @@
+{
+  "schema": "lightforge.focused-regression-check.v1",
+  "passed": true,
+  "checkedAt": "2026-09-29T01:53:22.940825+00:00",
+  "scope": "Focused regression tests; no performance or release qualification. Four reference tests skip because original frozen APK build directories are unavailable. Retained APK recovery tests run separately in the same suite.",
+  "runs": [
+    {
+      "name": "python",
+      "command": [
+        "python3",
+        "-m",
+        "unittest",
+        "-v",
+        "tests.test_native_execution_policy",
+        "tests.test_native_passage_policy",
+        "tests.test_native_deux_failure_retirement",
+        "tests.test_native_deux_cache",
+        "tests.test_native_passage_lifecycle",
+        "tests.test_native_baseline_cancellation_evidence",
+        "tests.test_device_probe_retained_apk",
+        "tests.test_analyze_inference_device_probe",
+        "tests.test_device_probe_reference"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "bridge",
+      "command": [
+        "node",
+        "--test",
+        "tests/native-deux-bridge.test.cjs"
+      ],
+      "exitCode": 0
+    }
+  ],
+  "sourceBindingsBefore": {
+    "tests/test_native_execution_policy.py": "b077848c5b880b28000d4955ec097e6c9f09e80c583658d7856b427c73360cc1",
+    "tests/test_native_passage_policy.py": "1477eb0d96cdfbcadc147d90097c09c6c5c56bef07b530cc654bd5d1a0d1f961",
+    "tests/test_native_deux_failure_retirement.py": "f9e32bf3aaf71349d212ceb85dd756089d2148097c63d2873e697f230437f01e",
+    "tests/test_native_deux_cache.py": "f2a529602427a29891c11546291e585015bd05d9f71ec0c6a170a9bb820e463f",
+    "tests/test_native_passage_lifecycle.py": "1ad8c4c04f8e2e71c0e8e29cf33fd6e1ab8fe4293978dc2e3f0e3a93dc950df5",
+    "tests/test_native_baseline_cancellation_evidence.py": "49542dff70bf82753a36f3582cbd88cd29e0ead2f07c2d9aaec80d4ed430cb61",
+    "tests/test_device_probe_retained_apk.py": "fe81afdd8887305c1a0cdc704c80bcabf4edbb7cc2510cc0941bcdb525944c25",
+    "tests/test_analyze_inference_device_probe.py": "900e3495d97df63c99922a740d19c22d7e216b88488c181f781ae1ce2f1945c1",
+    "tests/test_device_probe_reference.py": "a8fbddffe6e2cb8774efbde6c2f4f977aaa5fc3d30cab836674cb29db0e22ab3",
+    "tests/native-deux-bridge.test.cjs": "da42fe0b0ebb0b313cbb4a97c1e43e06e46451af8177144c13999f26a07e2c4f",
+    "android/src/com/cyberbasslord/lightforge/NativeInferenceProfile.java": "059e3ac51a8a935b2af1cc507f9985e6da1ba7c6fcef4d8a0f20ca44d1c7f88d",
+    "android/src/com/cyberbasslord/lightforge/NativeGameTask.java": "852b6e23c09b25cf6ccb9073b68536d1c27f7f0d3aa4183c89dff93a22ff3014",
+    "android/src/com/cyberbasslord/lightforge/NativeRuntimeGuard.java": "0ca218736d3006a2c67711ef4125eedfe79272cbf14924c8761ffa7eef36b28a",
+    "android/src/com/cyberbasslord/lightforge/NativeCrashTrace.java": "9a0a35aabe175d410a4cdd3dac7f4a53f5df79415ba6f12f13cd33ead9b079dd",
+    "android/src/com/cyberbasslord/lightforge/NativePassagePolicy.java": "f30b21b801f991bf09e07b737cde4117baf77110afbbada4bcc691137e1f2daa",
+    "android/src/com/cyberbasslord/lightforge/NativePassageTask.java": "c53b34b39d2e0f069cca47961ba48ea30b9b91a768d7964c185ce190414a46fd",
+    "android/src/com/cyberbasslord/lightforge/NativeExecutionPolicy.java": "35e5ca193c8ba46157e79a5caa9997370eec1a3fdabc9670bf0d4f8616b62702",
+    "android/src/com/cyberbasslord/lightforge/NativeInferenceProfileOutputComparison.java": "e47e1981dc06b20b39ff6a74307bb56024541c5bce9b08c2e2ee254a2a8070de",
+    "android/src/com/cyberbasslord/lightforge/NativeGame.java": "2bbc6856229b4c4bd5c5cf49acfc54e7cc83a082d13c6d3e983a5c34091cf816",
+    "android/src/com/cyberbasslord/lightforge/NativeDeux.java": "a5f798a19afc160407b0f1d06960a55120692a359bf9f7a4d3c5a28f471c1751",
+    "android/src/com/cyberbasslord/lightforge/NativeGamePassageCleanup.java": "06655abf27333b7c1f3d3cd6f1b330c1dceb46c78d5abbbd047f7d7329e32b1a",
+    "android/src/com/cyberbasslord/lightforge/NativeMdxTask.java": "c993effa07b717173665ac244d6cca4d57a7d3d573459e81d3aae210467044dd",
+    "android/src/com/cyberbasslord/lightforge/NativeGameProfile.java": "a7b07e9673e880eb500fab49a16b70b58504863dc785459e8d841e57de85d3aa",
+    "android/src/com/cyberbasslord/lightforge/NativeDeuxTransform.java": "991b06501cfb88b904d0b714a525c389f169f00c231248b0e961b70f257e90b5",
+    "tools/analyze_inference_device_probe.py": "d2419813bfd42da3fd524657249c99f7b843f9a385502d513d53702b04f9deb2"
+  },
+  "sourceBindingsAfter": {
+    "tests/test_native_execution_policy.py": "b077848c5b880b28000d4955ec097e6c9f09e80c583658d7856b427c73360cc1",
+    "tests/test_native_passage_policy.py": "1477eb0d96cdfbcadc147d90097c09c6c5c56bef07b530cc654bd5d1a0d1f961",
+    "tests/test_native_deux_failure_retirement.py": "f9e32bf3aaf71349d212ceb85dd756089d2148097c63d2873e697f230437f01e",
+    "tests/test_native_deux_cache.py": "f2a529602427a29891c11546291e585015bd05d9f71ec0c6a170a9bb820e463f",
+    "tests/test_native_passage_lifecycle.py": "1ad8c4c04f8e2e71c0e8e29cf33fd6e1ab8fe4293978dc2e3f0e3a93dc950df5",
+    "tests/test_native_baseline_cancellation_evidence.py": "49542dff70bf82753a36f3582cbd88cd29e0ead2f07c2d9aaec80d4ed430cb61",
+    "tests/test_device_probe_retained_apk.py": "fe81afdd8887305c1a0cdc704c80bcabf4edbb7cc2510cc0941bcdb525944c25",
+    "tests/test_analyze_inference_device_probe.py": "900e3495d97df63c99922a740d19c22d7e216b88488c181f781ae1ce2f1945c1",
+    "tests/test_device_probe_reference.py": "a8fbddffe6e2cb8774efbde6c2f4f977aaa5fc3d30cab836674cb29db0e22ab3",
+    "tests/native-deux-bridge.test.cjs": "da42fe0b0ebb0b313cbb4a97c1e43e06e46451af8177144c13999f26a07e2c4f",
+    "android/src/com/cyberbasslord/lightforge/NativeInferenceProfile.java": "059e3ac51a8a935b2af1cc507f9985e6da1ba7c6fcef4d8a0f20ca44d1c7f88d",
+    "android/src/com/cyberbasslord/lightforge/NativeGameTask.java": "852b6e23c09b25cf6ccb9073b68536d1c27f7f0d3aa4183c89dff93a22ff3014",
+    "android/src/com/cyberbasslord/lightforge/NativeRuntimeGuard.java": "0ca218736d3006a2c67711ef4125eedfe79272cbf14924c8761ffa7eef36b28a",
+    "android/src/com/cyberbasslord/lightforge/NativeCrashTrace.java": "9a0a35aabe175d410a4cdd3dac7f4a53f5df79415ba6f12f13cd33ead9b079dd",
+    "android/src/com/cyberbasslord/lightforge/NativePassagePolicy.java": "f30b21b801f991bf09e07b737cde4117baf77110afbbada4bcc691137e1f2daa",
+    "android/src/com/cyberbasslord/lightforge/NativePassageTask.java": "c53b34b39d2e0f069cca47961ba48ea30b9b91a768d7964c185ce190414a46fd",
+    "android/src/com/cyberbasslord/lightforge/NativeExecutionPolicy.java": "35e5ca193c8ba46157e79a5caa9997370eec1a3fdabc9670bf0d4f8616b62702",
+    "android/src/com/cyberbasslord/lightforge/NativeInferenceProfileOutputComparison.java": "e47e1981dc06b20b39ff6a74307bb56024541c5bce9b08c2e2ee254a2a8070de",
+    "android/src/com/cyberbasslord/lightforge/NativeGame.java": "2bbc6856229b4c4bd5c5cf49acfc54e7cc83a082d13c6d3e983a5c34091cf816",
+    "android/src/com/cyberbasslord/lightforge/NativeDeux.java": "a5f798a19afc160407b0f1d06960a55120692a359bf9f7a4d3c5a28f471c1751",
+    "android/src/com/cyberbasslord/lightforge/NativeGamePassageCleanup.java": "06655abf27333b7c1f3d3cd6f1b330c1dceb46c78d5abbbd047f7d7329e32b1a",
+    "android/src/com/cyberbasslord/lightforge/NativeMdxTask.java": "c993effa07b717173665ac244d6cca4d57a7d3d573459e81d3aae210467044dd",
+    "android/src/com/cyberbasslord/lightforge/NativeGameProfile.java": "a7b07e9673e880eb500fab49a16b70b58504863dc785459e8d841e57de85d3aa",
+    "android/src/com/cyberbasslord/lightforge/NativeDeuxTransform.java": "991b06501cfb88b904d0b714a525c389f169f00c231248b0e961b70f257e90b5",
+    "tools/analyze_inference_device_probe.py": "d2419813bfd42da3fd524657249c99f7b843f9a385502d513d53702b04f9deb2"
+  },
+  "logs": {
+    "python.log": "9cc12b380149a1175c0f5453458893b1f9e83bf2fb0856493b181620044b8fef",
+    "bridge.log": "d61ea59296fe76991c00a68127259c19e91e28c2efeca1724f6879bfe7bf2b06"
+  }
+}

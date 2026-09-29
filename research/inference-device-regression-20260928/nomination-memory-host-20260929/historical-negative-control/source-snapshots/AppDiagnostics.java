@@ -1,0 +1,1 @@
+package com.cyberbasslord.lightforge; public final class AppDiagnostics {public static void log(android.content.Context c,String l,String s,String m){}public static boolean flush(long t){return true;}}

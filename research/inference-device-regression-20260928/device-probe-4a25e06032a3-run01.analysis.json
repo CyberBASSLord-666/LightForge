@@ -1,0 +1,939 @@
+{
+  "schema": "lightforge.inference-device-probe-analysis.v1",
+  "qualification_status": "not-evaluated",
+  "integrity": {
+    "passed": true,
+    "errors": [],
+    "warnings": [],
+    "reference": {
+      "source_reference_sha256": "4a25e06032a364f85e89ad5c5511d5a047dbc9b3ab964f31bc6c96804440d12a",
+      "apk_sha256": "a68ab0690f0ade0153fd7edb21e4b86c86cbe0eccbceb98d339162d1dd71d274",
+      "historical_binding_passed": true,
+      "historical_source_files_verified": 15,
+      "historical_compiled_classes_verified": 67,
+      "repository_source_files_verified": 12,
+      "current_source_binding_passed": false,
+      "current_source_mismatches": [
+        {
+          "path": "android/src/com/cyberbasslord/lightforge/NativeDeux.java",
+          "expected_sha256": "74c12251b983f5888d33589c3d35841a895194994c146ee66be6c1bedc888c64",
+          "observed_sha256": "695b7d0f3ed736047082363a6fe997555efdcaf026584efaab0efa958dde1d10",
+          "reason": "sha256-mismatch"
+        },
+        {
+          "path": "android/src/com/cyberbasslord/lightforge/NativeInferenceProfile.java",
+          "expected_sha256": "e10a9ae3634be1e70d706b6be11a0ff927b6872c6c162a5b5a4a313754bf0052",
+          "observed_sha256": "95fe28edea0370d8d1ff5eab087f0a3fdbe108f08b33feb9e6d0df5191472aeb",
+          "reason": "sha256-mismatch"
+        },
+        {
+          "path": "android/src/com/cyberbasslord/lightforge/NativePassagePolicy.java",
+          "expected_sha256": "3dce4b9edf5f5afea7fb53a4c60051fd94a99995eb96f29a2753eae1a7c2d450",
+          "observed_sha256": "e042c13d4759eb8692ae80a0d8c87fb025b87d593721c0c5f7bb7b07d4331848",
+          "reason": "sha256-mismatch"
+        }
+      ],
+      "qualification_ordinals": [
+        0,
+        4,
+        8
+      ],
+      "model_manifest_sha256": "6aebf45e6e7f6fa974f14fe47a252fc01f48da4815f40a1fdf10641a432529a9",
+      "declared_model_bytes": 921547393,
+      "fixture_pcm16_sha256": "0d0bf21401ad0dbb8a49aae581a16f9a00cadca41e116b5a4dc27eaaa3625648",
+      "scope": "frozen-artifact-and-build-receipt-binding-not-device-attestation"
+    }
+  },
+  "run": {
+    "outcome": "cancelled",
+    "completed_passages": 4,
+    "observed_passages": 5,
+    "complete_35_passage_run": false,
+    "elapsed_millis": 320225,
+    "process_cpu_millis": 989505,
+    "failure_class": "OrtException",
+    "cancel_reason": "user-cancelled",
+    "terminal": true,
+    "coordinator_finished": true,
+    "engine_close_returned": true,
+    "cleanup_confirmed": false,
+    "temporary_cache_removed": false
+  },
+  "passages": [
+    {
+      "ordinal": 0,
+      "start_sample": -66150,
+      "outcome": "completed",
+      "failure_class": null,
+      "predict_wall_nanos": 117379361413,
+      "predict_process_cpu_millis": 360707,
+      "temporal_session_attempt_counts": {
+        "temporalBaselineSessionCount": 12,
+        "temporalFourWorkerSessionCount": 0,
+        "temporalEightWorkerSessionCount": 0,
+        "temporalUnobservedSessionCount": 0
+      },
+      "last_temporal_configuration": "cpu-i4-j1-d0-sequential",
+      "production_inference_wall_millis": 51560,
+      "reported_calibration_wall_millis": 53221,
+      "policy_snapshot": {
+        "status": "observed",
+        "source": "device-passage",
+        "scope": "controller-evidence-snapshot-not-additional-passages",
+        "qualification_status": "not-independently-evaluated",
+        "timing_units": "nanoseconds",
+        "payback_scope": "projected-not-measured",
+        "controller": {
+          "status": "observed",
+          "schema": "native-passage-policy-v1",
+          "state": "baseline",
+          "workers": "4",
+          "reason": "payback-unavailable",
+          "paybackScope": "projected-not-measured",
+          "extraNanos": {
+            "status": "observed",
+            "value": 53221545032
+          },
+          "extraCapNanos": {
+            "status": "observed",
+            "value": 360000000000
+          },
+          "projectedAccruedSavingsNanos": {
+            "status": "observed",
+            "value": 0
+          },
+          "qualificationPairs": {
+            "status": "observed",
+            "value": 1
+          },
+          "currentJobPairs": {
+            "status": "observed",
+            "value": 1
+          },
+          "activePassages": {
+            "status": "observed",
+            "value": 0
+          },
+          "leasePassages": {
+            "status": "observed",
+            "value": 8
+          },
+          "seeded": false
+        },
+        "pairs": [
+          {
+            "status": "observed",
+            "schema": "native-passage-pair-v1",
+            "outputSha256": "dce477d1d9ba897cd1e15e71be788977f183fc8feaec010226382a70d8c7bded",
+            "role": "qualification",
+            "workers": "4",
+            "index": {
+              "status": "observed",
+              "value": 0
+            },
+            "ordinal": {
+              "status": "observed",
+              "value": 0
+            },
+            "baselineNanos": {
+              "status": "observed",
+              "value": 64104899455
+            },
+            "candidateNanos": {
+              "status": "observed",
+              "value": 48358257794
+            },
+            "extraNanos": {
+              "status": "observed",
+              "value": 48372028159
+            },
+            "candidateFirst": false,
+            "finite": true,
+            "exact": true,
+            "fullGeometry": true,
+            "coldSessions": true
+          }
+        ],
+        "controls": [],
+        "control_scope": "unmatched-input-timing-guard-not-same-input-equality-or-speedup-proof"
+      }
+    },
+    {
+      "ordinal": 1,
+      "start_sample": 0,
+      "outcome": "completed",
+      "failure_class": null,
+      "predict_wall_nanos": 57465432478,
+      "predict_process_cpu_millis": 177832,
+      "temporal_session_attempt_counts": {
+        "temporalBaselineSessionCount": 12,
+        "temporalFourWorkerSessionCount": 0,
+        "temporalEightWorkerSessionCount": 0,
+        "temporalUnobservedSessionCount": 0
+      },
+      "last_temporal_configuration": "cpu-i4-j1-d0-sequential",
+      "production_inference_wall_millis": 51089,
+      "reported_calibration_wall_millis": null,
+      "policy_snapshot": {
+        "status": "observed",
+        "source": "device-passage",
+        "scope": "controller-evidence-snapshot-not-additional-passages",
+        "qualification_status": "not-independently-evaluated",
+        "timing_units": "nanoseconds",
+        "payback_scope": "projected-not-measured",
+        "controller": {
+          "status": "observed",
+          "schema": "native-passage-policy-v1",
+          "state": "baseline",
+          "workers": "4",
+          "reason": "payback-unavailable",
+          "paybackScope": "projected-not-measured",
+          "extraNanos": {
+            "status": "observed",
+            "value": 53221545032
+          },
+          "extraCapNanos": {
+            "status": "observed",
+            "value": 360000000000
+          },
+          "projectedAccruedSavingsNanos": {
+            "status": "observed",
+            "value": 0
+          },
+          "qualificationPairs": {
+            "status": "observed",
+            "value": 1
+          },
+          "currentJobPairs": {
+            "status": "observed",
+            "value": 1
+          },
+          "activePassages": {
+            "status": "observed",
+            "value": 0
+          },
+          "leasePassages": {
+            "status": "observed",
+            "value": 8
+          },
+          "seeded": false
+        },
+        "pairs": [
+          {
+            "status": "observed",
+            "schema": "native-passage-pair-v1",
+            "outputSha256": "dce477d1d9ba897cd1e15e71be788977f183fc8feaec010226382a70d8c7bded",
+            "role": "qualification",
+            "workers": "4",
+            "index": {
+              "status": "observed",
+              "value": 0
+            },
+            "ordinal": {
+              "status": "observed",
+              "value": 0
+            },
+            "baselineNanos": {
+              "status": "observed",
+              "value": 64104899455
+            },
+            "candidateNanos": {
+              "status": "observed",
+              "value": 48358257794
+            },
+            "extraNanos": {
+              "status": "observed",
+              "value": 48372028159
+            },
+            "candidateFirst": false,
+            "finite": true,
+            "exact": true,
+            "fullGeometry": true,
+            "coldSessions": true
+          }
+        ],
+        "controls": [],
+        "control_scope": "unmatched-input-timing-guard-not-same-input-equality-or-speedup-proof"
+      }
+    },
+    {
+      "ordinal": 2,
+      "start_sample": 22050,
+      "outcome": "completed",
+      "failure_class": null,
+      "predict_wall_nanos": 57262468103,
+      "predict_process_cpu_millis": 175972,
+      "temporal_session_attempt_counts": {
+        "temporalBaselineSessionCount": 12,
+        "temporalFourWorkerSessionCount": 0,
+        "temporalEightWorkerSessionCount": 0,
+        "temporalUnobservedSessionCount": 0
+      },
+      "last_temporal_configuration": "cpu-i4-j1-d0-sequential",
+      "production_inference_wall_millis": 50839,
+      "reported_calibration_wall_millis": null,
+      "policy_snapshot": {
+        "status": "observed",
+        "source": "device-passage",
+        "scope": "controller-evidence-snapshot-not-additional-passages",
+        "qualification_status": "not-independently-evaluated",
+        "timing_units": "nanoseconds",
+        "payback_scope": "projected-not-measured",
+        "controller": {
+          "status": "observed",
+          "schema": "native-passage-policy-v1",
+          "state": "baseline",
+          "workers": "4",
+          "reason": "payback-unavailable",
+          "paybackScope": "projected-not-measured",
+          "extraNanos": {
+            "status": "observed",
+            "value": 53221545032
+          },
+          "extraCapNanos": {
+            "status": "observed",
+            "value": 360000000000
+          },
+          "projectedAccruedSavingsNanos": {
+            "status": "observed",
+            "value": 0
+          },
+          "qualificationPairs": {
+            "status": "observed",
+            "value": 1
+          },
+          "currentJobPairs": {
+            "status": "observed",
+            "value": 1
+          },
+          "activePassages": {
+            "status": "observed",
+            "value": 0
+          },
+          "leasePassages": {
+            "status": "observed",
+            "value": 8
+          },
+          "seeded": false
+        },
+        "pairs": [
+          {
+            "status": "observed",
+            "schema": "native-passage-pair-v1",
+            "outputSha256": "dce477d1d9ba897cd1e15e71be788977f183fc8feaec010226382a70d8c7bded",
+            "role": "qualification",
+            "workers": "4",
+            "index": {
+              "status": "observed",
+              "value": 0
+            },
+            "ordinal": {
+              "status": "observed",
+              "value": 0
+            },
+            "baselineNanos": {
+              "status": "observed",
+              "value": 64104899455
+            },
+            "candidateNanos": {
+              "status": "observed",
+              "value": 48358257794
+            },
+            "extraNanos": {
+              "status": "observed",
+              "value": 48372028159
+            },
+            "candidateFirst": false,
+            "finite": true,
+            "exact": true,
+            "fullGeometry": true,
+            "coldSessions": true
+          }
+        ],
+        "controls": [],
+        "control_scope": "unmatched-input-timing-guard-not-same-input-equality-or-speedup-proof"
+      }
+    },
+    {
+      "ordinal": 3,
+      "start_sample": 44100,
+      "outcome": "completed",
+      "failure_class": null,
+      "predict_wall_nanos": 57733209509,
+      "predict_process_cpu_millis": 178260,
+      "temporal_session_attempt_counts": {
+        "temporalBaselineSessionCount": 12,
+        "temporalFourWorkerSessionCount": 0,
+        "temporalEightWorkerSessionCount": 0,
+        "temporalUnobservedSessionCount": 0
+      },
+      "last_temporal_configuration": "cpu-i4-j1-d0-sequential",
+      "production_inference_wall_millis": 51064,
+      "reported_calibration_wall_millis": null,
+      "policy_snapshot": {
+        "status": "observed",
+        "source": "device-passage",
+        "scope": "controller-evidence-snapshot-not-additional-passages",
+        "qualification_status": "not-independently-evaluated",
+        "timing_units": "nanoseconds",
+        "payback_scope": "projected-not-measured",
+        "controller": {
+          "status": "observed",
+          "schema": "native-passage-policy-v1",
+          "state": "baseline",
+          "workers": "4",
+          "reason": "payback-unavailable",
+          "paybackScope": "projected-not-measured",
+          "extraNanos": {
+            "status": "observed",
+            "value": 53221545032
+          },
+          "extraCapNanos": {
+            "status": "observed",
+            "value": 360000000000
+          },
+          "projectedAccruedSavingsNanos": {
+            "status": "observed",
+            "value": 0
+          },
+          "qualificationPairs": {
+            "status": "observed",
+            "value": 1
+          },
+          "currentJobPairs": {
+            "status": "observed",
+            "value": 1
+          },
+          "activePassages": {
+            "status": "observed",
+            "value": 0
+          },
+          "leasePassages": {
+            "status": "observed",
+            "value": 8
+          },
+          "seeded": false
+        },
+        "pairs": [
+          {
+            "status": "observed",
+            "schema": "native-passage-pair-v1",
+            "outputSha256": "dce477d1d9ba897cd1e15e71be788977f183fc8feaec010226382a70d8c7bded",
+            "role": "qualification",
+            "workers": "4",
+            "index": {
+              "status": "observed",
+              "value": 0
+            },
+            "ordinal": {
+              "status": "observed",
+              "value": 0
+            },
+            "baselineNanos": {
+              "status": "observed",
+              "value": 64104899455
+            },
+            "candidateNanos": {
+              "status": "observed",
+              "value": 48358257794
+            },
+            "extraNanos": {
+              "status": "observed",
+              "value": 48372028159
+            },
+            "candidateFirst": false,
+            "finite": true,
+            "exact": true,
+            "fullGeometry": true,
+            "coldSessions": true
+          }
+        ],
+        "controls": [],
+        "control_scope": "unmatched-input-timing-guard-not-same-input-equality-or-speedup-proof"
+      }
+    },
+    {
+      "ordinal": 4,
+      "start_sample": 88200,
+      "outcome": "cancelled",
+      "failure_class": "OrtException",
+      "predict_wall_nanos": 30264096447,
+      "predict_process_cpu_millis": 96620,
+      "temporal_session_attempt_counts": {
+        "temporalBaselineSessionCount": 7,
+        "temporalFourWorkerSessionCount": 0,
+        "temporalEightWorkerSessionCount": 0,
+        "temporalUnobservedSessionCount": 0
+      },
+      "last_temporal_configuration": "cpu-i4-j1-d0-sequential",
+      "production_inference_wall_millis": 28149,
+      "reported_calibration_wall_millis": null,
+      "policy_snapshot": {
+        "status": "observed",
+        "source": "device-passage",
+        "scope": "controller-evidence-snapshot-not-additional-passages",
+        "qualification_status": "not-independently-evaluated",
+        "timing_units": "nanoseconds",
+        "payback_scope": "projected-not-measured",
+        "controller": {
+          "status": "observed",
+          "schema": "native-passage-policy-v1",
+          "state": "baseline",
+          "workers": "4",
+          "reason": "payback-unavailable",
+          "paybackScope": "projected-not-measured",
+          "extraNanos": {
+            "status": "observed",
+            "value": 53221545032
+          },
+          "extraCapNanos": {
+            "status": "observed",
+            "value": 360000000000
+          },
+          "projectedAccruedSavingsNanos": {
+            "status": "observed",
+            "value": 0
+          },
+          "qualificationPairs": {
+            "status": "observed",
+            "value": 1
+          },
+          "currentJobPairs": {
+            "status": "observed",
+            "value": 1
+          },
+          "activePassages": {
+            "status": "observed",
+            "value": 0
+          },
+          "leasePassages": {
+            "status": "observed",
+            "value": 8
+          },
+          "seeded": false
+        },
+        "pairs": [
+          {
+            "status": "observed",
+            "schema": "native-passage-pair-v1",
+            "outputSha256": "dce477d1d9ba897cd1e15e71be788977f183fc8feaec010226382a70d8c7bded",
+            "role": "qualification",
+            "workers": "4",
+            "index": {
+              "status": "observed",
+              "value": 0
+            },
+            "ordinal": {
+              "status": "observed",
+              "value": 0
+            },
+            "baselineNanos": {
+              "status": "observed",
+              "value": 64104899455
+            },
+            "candidateNanos": {
+              "status": "observed",
+              "value": 48358257794
+            },
+            "extraNanos": {
+              "status": "observed",
+              "value": 48372028159
+            },
+            "candidateFirst": false,
+            "finite": true,
+            "exact": true,
+            "fullGeometry": true,
+            "coldSessions": true
+          }
+        ],
+        "controls": [],
+        "control_scope": "unmatched-input-timing-guard-not-same-input-equality-or-speedup-proof"
+      }
+    }
+  ],
+  "same_input_output_groups": [
+    {
+      "start_sample": -66150,
+      "passage_ordinals": [
+        0
+      ],
+      "sha256": [
+        "dce477d1d9ba897cd1e15e71be788977f183fc8feaec010226382a70d8c7bded"
+      ],
+      "comparison": "single-observation"
+    },
+    {
+      "start_sample": 0,
+      "passage_ordinals": [
+        1
+      ],
+      "sha256": [
+        "2dd62a26ec95d277f2712a1c61c8760b9e11936e398f2fd3115bb00b5079e70f"
+      ],
+      "comparison": "single-observation"
+    },
+    {
+      "start_sample": 22050,
+      "passage_ordinals": [
+        2
+      ],
+      "sha256": [
+        "3a2d28b981d6f516de51d35ac04fb6a69eecdad23f67d074542abd8db215cff7"
+      ],
+      "comparison": "single-observation"
+    },
+    {
+      "start_sample": 44100,
+      "passage_ordinals": [
+        3
+      ],
+      "sha256": [
+        "4debb4b4396f78217cb23bcbe774667dc938f5bcc2ea92913d657afa7d7a381d"
+      ],
+      "comparison": "single-observation"
+    }
+  ],
+  "unique_observed_pairs": [
+    {
+      "record": {
+        "status": "observed",
+        "schema": "native-passage-pair-v1",
+        "outputSha256": "dce477d1d9ba897cd1e15e71be788977f183fc8feaec010226382a70d8c7bded",
+        "role": "qualification",
+        "workers": "4",
+        "index": {
+          "status": "observed",
+          "value": 0
+        },
+        "ordinal": {
+          "status": "observed",
+          "value": 0
+        },
+        "baselineNanos": {
+          "status": "observed",
+          "value": 64104899455
+        },
+        "candidateNanos": {
+          "status": "observed",
+          "value": 48358257794
+        },
+        "extraNanos": {
+          "status": "observed",
+          "value": 48372028159
+        },
+        "candidateFirst": false,
+        "finite": true,
+        "exact": true,
+        "fullGeometry": true,
+        "coldSessions": true
+      },
+      "first_observed_after_passage": 0,
+      "comparison_scope": "same-input-complete-passage-arms-not-whole-job-savings",
+      "pair_checks_reported_passed": true,
+      "observed_arm_wall_reduction_percent": 24.56386609272157
+    }
+  ],
+  "unique_observed_controls": [],
+  "predict_wall_nanos": {
+    "scope": "all-observed-attempts-including-probes-and-cancelled-partial-work",
+    "observed_count": 5,
+    "population_count": 5,
+    "observed_sum": 320104567950,
+    "median": 57465432478,
+    "min": 30264096447,
+    "max": 117379361413
+  },
+  "prediction_wall_by_outcome_nanos": {
+    "cancelled": {
+      "observed_count": 1,
+      "population_count": 1,
+      "observed_sum": 30264096447,
+      "median": 30264096447,
+      "min": 30264096447,
+      "max": 30264096447
+    },
+    "completed": {
+      "observed_count": 4,
+      "population_count": 4,
+      "observed_sum": 289840471503,
+      "median": 57599320993.5,
+      "min": 57262468103,
+      "max": 117379361413
+    }
+  },
+  "policy_overhead": {
+    "latest_cumulative_extra_nanos": 53221545032,
+    "unique_recorded_pair_extra_nanos": 48372028159,
+    "other_charged_extra_nanos": 4849516873,
+    "other_cost_scope": "screening-or-unrecorded-probe-cost-not-independent-proof-of-its-cause",
+    "latest_projected_accrued_savings_nanos": 0,
+    "savings_scope": "projected-not-measured",
+    "extra_cost_already_in_prediction_wall": true
+  },
+  "boundary_observations": [
+    {
+      "location": "run-before",
+      "elapsedRealtimeMillis": 509552130,
+      "processCpuMillis": 186,
+      "availableProcessors": 8,
+      "availableMemoryBytes": 2817531904,
+      "memoryThresholdBytes": 226492416,
+      "processPeakRssBytes": 124682240,
+      "javaHeapUsedBytes": 2607664,
+      "nativeHeapAllocatedBytes": 11711312,
+      "thermalStatus": 1,
+      "batteryTemperatureTenthsC": 296,
+      "batteryLevel": 66,
+      "batteryScale": 100,
+      "plugged": 1,
+      "lowMemory": false,
+      "interactive": true,
+      "powerSave": false,
+      "deviceIdle": false
+    },
+    {
+      "location": "passage-0-before",
+      "elapsedRealtimeMillis": 509552151,
+      "processCpuMillis": 203,
+      "availableProcessors": 8,
+      "availableMemoryBytes": 2799435776,
+      "memoryThresholdBytes": 226492416,
+      "processPeakRssBytes": 133500928,
+      "javaHeapUsedBytes": 9584384,
+      "nativeHeapAllocatedBytes": 12265168,
+      "thermalStatus": 1,
+      "batteryTemperatureTenthsC": 296,
+      "batteryLevel": 66,
+      "batteryScale": 100,
+      "plugged": 1,
+      "lowMemory": false,
+      "interactive": true,
+      "powerSave": false,
+      "deviceIdle": false
+    },
+    {
+      "location": "passage-0-after",
+      "elapsedRealtimeMillis": 509669561,
+      "processCpuMillis": 360943,
+      "availableProcessors": 8,
+      "availableMemoryBytes": 2976284672,
+      "memoryThresholdBytes": 226492416,
+      "processPeakRssBytes": 861724672,
+      "javaHeapUsedBytes": 211578896,
+      "nativeHeapAllocatedBytes": 79954528,
+      "thermalStatus": 2,
+      "batteryTemperatureTenthsC": 296,
+      "batteryLevel": 66,
+      "batteryScale": 100,
+      "plugged": 1,
+      "lowMemory": false,
+      "interactive": true,
+      "powerSave": false,
+      "deviceIdle": false
+    },
+    {
+      "location": "passage-1-before",
+      "elapsedRealtimeMillis": 509669565,
+      "processCpuMillis": 360946,
+      "availableProcessors": 8,
+      "availableMemoryBytes": 2976284672,
+      "memoryThresholdBytes": 226492416,
+      "processPeakRssBytes": 861724672,
+      "javaHeapUsedBytes": 211939376,
+      "nativeHeapAllocatedBytes": 79957264,
+      "thermalStatus": 2,
+      "batteryTemperatureTenthsC": 296,
+      "batteryLevel": 66,
+      "batteryScale": 100,
+      "plugged": 1,
+      "lowMemory": false,
+      "interactive": true,
+      "powerSave": false,
+      "deviceIdle": false
+    },
+    {
+      "location": "passage-1-after",
+      "elapsedRealtimeMillis": 509727043,
+      "processCpuMillis": 538792,
+      "availableProcessors": 8,
+      "availableMemoryBytes": 2917785600,
+      "memoryThresholdBytes": 226492416,
+      "processPeakRssBytes": 861724672,
+      "javaHeapUsedBytes": 211083280,
+      "nativeHeapAllocatedBytes": 79967648,
+      "thermalStatus": 2,
+      "batteryTemperatureTenthsC": 308,
+      "batteryLevel": 66,
+      "batteryScale": 100,
+      "plugged": 1,
+      "lowMemory": false,
+      "interactive": true,
+      "powerSave": false,
+      "deviceIdle": false
+    },
+    {
+      "location": "passage-2-before",
+      "elapsedRealtimeMillis": 509727047,
+      "processCpuMillis": 538795,
+      "availableProcessors": 8,
+      "availableMemoryBytes": 2917785600,
+      "memoryThresholdBytes": 226492416,
+      "processPeakRssBytes": 861724672,
+      "javaHeapUsedBytes": 211730480,
+      "nativeHeapAllocatedBytes": 79970384,
+      "thermalStatus": 2,
+      "batteryTemperatureTenthsC": 308,
+      "batteryLevel": 66,
+      "batteryScale": 100,
+      "plugged": 1,
+      "lowMemory": false,
+      "interactive": true,
+      "powerSave": false,
+      "deviceIdle": false
+    },
+    {
+      "location": "passage-2-after",
+      "elapsedRealtimeMillis": 509784323,
+      "processCpuMillis": 714779,
+      "availableProcessors": 8,
+      "availableMemoryBytes": 2947301376,
+      "memoryThresholdBytes": 226492416,
+      "processPeakRssBytes": 861724672,
+      "javaHeapUsedBytes": 211095728,
+      "nativeHeapAllocatedBytes": 79969792,
+      "thermalStatus": 2,
+      "batteryTemperatureTenthsC": 308,
+      "batteryLevel": 66,
+      "batteryScale": 100,
+      "plugged": 1,
+      "lowMemory": false,
+      "interactive": true,
+      "powerSave": false,
+      "deviceIdle": false
+    },
+    {
+      "location": "passage-3-before",
+      "elapsedRealtimeMillis": 509784327,
+      "processCpuMillis": 714783,
+      "availableProcessors": 8,
+      "availableMemoryBytes": 2947301376,
+      "memoryThresholdBytes": 226492416,
+      "processPeakRssBytes": 861724672,
+      "javaHeapUsedBytes": 211841232,
+      "nativeHeapAllocatedBytes": 79972528,
+      "thermalStatus": 2,
+      "batteryTemperatureTenthsC": 308,
+      "batteryLevel": 66,
+      "batteryScale": 100,
+      "plugged": 1,
+      "lowMemory": false,
+      "interactive": true,
+      "powerSave": false,
+      "deviceIdle": false
+    },
+    {
+      "location": "passage-3-after",
+      "elapsedRealtimeMillis": 509842076,
+      "processCpuMillis": 893058,
+      "availableProcessors": 8,
+      "availableMemoryBytes": 2911440896,
+      "memoryThresholdBytes": 226492416,
+      "processPeakRssBytes": 861724672,
+      "javaHeapUsedBytes": 211325968,
+      "nativeHeapAllocatedBytes": 80073664,
+      "thermalStatus": 2,
+      "batteryTemperatureTenthsC": 308,
+      "batteryLevel": 66,
+      "batteryScale": 100,
+      "plugged": 1,
+      "lowMemory": false,
+      "interactive": true,
+      "powerSave": false,
+      "deviceIdle": false
+    },
+    {
+      "location": "passage-4-before",
+      "elapsedRealtimeMillis": 509842081,
+      "processCpuMillis": 893062,
+      "availableProcessors": 8,
+      "availableMemoryBytes": 2911440896,
+      "memoryThresholdBytes": 226492416,
+      "processPeakRssBytes": 861724672,
+      "javaHeapUsedBytes": 212489264,
+      "nativeHeapAllocatedBytes": 80076400,
+      "thermalStatus": 2,
+      "batteryTemperatureTenthsC": 308,
+      "batteryLevel": 66,
+      "batteryScale": 100,
+      "plugged": 1,
+      "lowMemory": false,
+      "interactive": true,
+      "powerSave": false,
+      "deviceIdle": false
+    },
+    {
+      "location": "passage-4-after",
+      "elapsedRealtimeMillis": 509872349,
+      "processCpuMillis": 989685,
+      "availableProcessors": 8,
+      "availableMemoryBytes": 2839502848,
+      "memoryThresholdBytes": 226492416,
+      "processPeakRssBytes": 861724672,
+      "javaHeapUsedBytes": 202123104,
+      "nativeHeapAllocatedBytes": 80136352,
+      "thermalStatus": 2,
+      "batteryTemperatureTenthsC": 308,
+      "batteryLevel": 66,
+      "batteryScale": 100,
+      "plugged": 1,
+      "lowMemory": false,
+      "interactive": true,
+      "powerSave": false,
+      "deviceIdle": false
+    },
+    {
+      "location": "run-after",
+      "elapsedRealtimeMillis": 509872355,
+      "processCpuMillis": 989690,
+      "availableProcessors": 8,
+      "availableMemoryBytes": 2839502848,
+      "memoryThresholdBytes": 226492416,
+      "processPeakRssBytes": 861724672,
+      "javaHeapUsedBytes": 203339648,
+      "nativeHeapAllocatedBytes": 80139088,
+      "thermalStatus": 2,
+      "batteryTemperatureTenthsC": 308,
+      "batteryLevel": 66,
+      "batteryScale": 100,
+      "plugged": 1,
+      "lowMemory": false,
+      "interactive": true,
+      "powerSave": false,
+      "deviceIdle": false
+    }
+  ],
+  "whole_job_speedup": {
+    "status": "unavailable",
+    "reason": "no-controlled-all-baseline-counterfactual-run"
+  },
+  "host_output_comparison": {
+    "status": "not-comparable",
+    "reason": "retained-host-integration-start-661500-differs-from-five-device-starts-and-runtime-platform"
+  },
+  "limitations": [
+    "Receipt assertions are source-bound observations, not cryptographic device attestation.",
+    "The five repeated short-fixture inputs are not 35 independent songs or full-song quality evidence.",
+    "Pair snapshots repeat history; unique pair timings exclude ordinary-passage counterfactuals and cannot establish whole-job savings.",
+    "Controls advance useful baseline work using unmatched inputs; they add no candidate replay but forgo unmeasured acceleration and cannot establish same-input speed or equality.",
+    "Cold sessions do not establish cold filesystem or runtime caches; a single baseline-first pair is not a repeated alternating-order qualification.",
+    "Prediction wall includes policy overhead; do not add calibration or cumulative extra cost again.",
+    "Thermal and memory values are boundary snapshots, not continuous maxima; battery temperature is not CPU temperature.",
+    "Process CPU includes every companion process thread; this is not installed-LightForge lifecycle or release qualification."
+  ],
+  "current_source_gate": {
+    "required": true,
+    "passed": false,
+    "scope": "source-binding-only-not-release-qualification"
+  },
+  "input_sha256": "3635d132c18e2dc87a99b7f94ead8ca3a537769bbee23f221d8c4afd17743276"
+}

@@ -48,6 +48,7 @@ jobs:
             releases
             research/model-source
             research/inference-2.4.1
+            research/inference-device-regression-20260928
             research/evaluation-1.6
             research/hardware-1.2.0
             research/upstream/deux

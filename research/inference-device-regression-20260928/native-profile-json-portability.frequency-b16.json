@@ -1,0 +1,66 @@
+{
+  "schema": "lightforge.native-json-dual-classpath.v1",
+  "scope": "Compile-only exact current native profile CI source set plus current failure-retirement and parallel benchmark tests, using unchanged CI AppDiagnostics host stub. No JNI/model inference, APK build, or production mutation.",
+  "createdAt": "2026-09-28T22:20:17.155864+00:00",
+  "sourceCount": 11,
+  "sourceHashes": {
+    "android/src/com/cyberbasslord/lightforge/NativeDeux.java": "d68334feeed3301cc667b4109f33d83a442cfdfccd83f016e4301a5cf070407b",
+    "android/src/com/cyberbasslord/lightforge/NativeExecutionPolicy.java": "35e5ca193c8ba46157e79a5caa9997370eec1a3fdabc9670bf0d4f8616b62702",
+    "android/src/com/cyberbasslord/lightforge/NativePassagePolicy.java": "f30b21b801f991bf09e07b737cde4117baf77110afbbada4bcc691137e1f2daa",
+    "android/src/com/cyberbasslord/lightforge/NativeDeuxTransform.java": "991b06501cfb88b904d0b714a525c389f169f00c231248b0e961b70f257e90b5",
+    "android/src/com/cyberbasslord/lightforge/NativeInferenceProfile.java": "059e3ac51a8a935b2af1cc507f9985e6da1ba7c6fcef4d8a0f20ca44d1c7f88d",
+    "android/src/com/cyberbasslord/lightforge/NativeInferenceProfileOutputComparison.java": "e47e1981dc06b20b39ff6a74307bb56024541c5bce9b08c2e2ee254a2a8070de",
+    "tests/NativeDeuxCalibrationTest.java": "3ed87da447966bad0e4786d5fcb5e6e7ed403ab8ac74bec074903369ae19e4e3",
+    "tests/NativeInferenceProfileEquivalenceTest.java": "cc1edd422202e1b9d40e0bf1cdb7a6f475883de4ec6fd684461eb1f4544014ba",
+    "tests/NativeInferenceProfilePairComparisonTest.java": "7b65a021c5cb872980c4a8c92fb6b17892b243d2dabdda3636ddf14dafe5c041",
+    "tests/NativeDeuxFailureRetirementTest.java": "935b2342da00dc9e949455ae46fddb6c174b297ce9d360628fd1d8bcd25eba4a",
+    "tests/NativeDeuxParallelBenchmark.java": "96d04a566a561611cc40dea70bed3c0f916025a2741c8b91a393384a902ef040"
+  },
+  "sourceHashesAfter": {
+    "android/src/com/cyberbasslord/lightforge/NativeDeux.java": "d68334feeed3301cc667b4109f33d83a442cfdfccd83f016e4301a5cf070407b",
+    "android/src/com/cyberbasslord/lightforge/NativeExecutionPolicy.java": "35e5ca193c8ba46157e79a5caa9997370eec1a3fdabc9670bf0d4f8616b62702",
+    "android/src/com/cyberbasslord/lightforge/NativePassagePolicy.java": "f30b21b801f991bf09e07b737cde4117baf77110afbbada4bcc691137e1f2daa",
+    "android/src/com/cyberbasslord/lightforge/NativeDeuxTransform.java": "991b06501cfb88b904d0b714a525c389f169f00c231248b0e961b70f257e90b5",
+    "android/src/com/cyberbasslord/lightforge/NativeInferenceProfile.java": "059e3ac51a8a935b2af1cc507f9985e6da1ba7c6fcef4d8a0f20ca44d1c7f88d",
+    "android/src/com/cyberbasslord/lightforge/NativeInferenceProfileOutputComparison.java": "e47e1981dc06b20b39ff6a74307bb56024541c5bce9b08c2e2ee254a2a8070de",
+    "tests/NativeDeuxCalibrationTest.java": "3ed87da447966bad0e4786d5fcb5e6e7ed403ab8ac74bec074903369ae19e4e3",
+    "tests/NativeInferenceProfileEquivalenceTest.java": "cc1edd422202e1b9d40e0bf1cdb7a6f475883de4ec6fd684461eb1f4544014ba",
+    "tests/NativeInferenceProfilePairComparisonTest.java": "7b65a021c5cb872980c4a8c92fb6b17892b243d2dabdda3636ddf14dafe5c041",
+    "tests/NativeDeuxFailureRetirementTest.java": "935b2342da00dc9e949455ae46fddb6c174b297ce9d360628fd1d8bcd25eba4a",
+    "tests/NativeDeuxParallelBenchmark.java": "96d04a566a561611cc40dea70bed3c0f916025a2741c8b91a393384a902ef040"
+  },
+  "sourcesUnchanged": true,
+  "stubSha256": "2c0940bbbde66f304be679417d05422c5a032304d1e68d18d18e84e4507cd8b8",
+  "dependencyHashes": {
+    "android.jar": "4566663c3876e022b4fa4ced8c8697c4ab1688267f090114fd92d027b32e619b",
+    "onnxruntime-1.25.1.jar": "749793ebed63743fec853d093da7987a86ea5cd592d54fba898cd3233100c381",
+    "test-json.jar": "c243f45f9590c12694a4142ed3f07fc70dfb71e4daebd05ae234bf92a2da92a6"
+  },
+  "variants": {
+    "android-first": {
+      "exitCode": 0,
+      "classCount": 61,
+      "classpath": [
+        "/workspace/scratch/7031dc893b8d/toolchain/android-sdk/platforms/android-35/android.jar",
+        "/workspace/scratch/7031dc893b8d/toolchain/onnx/onnxruntime-1.25.1.jar",
+        "/workspace/scratch/7031dc893b8d/toolchain/test-json.jar"
+      ],
+      "log": "android-first.log",
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "diagnostic": ""
+    },
+    "host-json-first": {
+      "exitCode": 0,
+      "classCount": 61,
+      "classpath": [
+        "/workspace/scratch/7031dc893b8d/toolchain/test-json.jar",
+        "/workspace/scratch/7031dc893b8d/toolchain/android-sdk/platforms/android-35/android.jar",
+        "/workspace/scratch/7031dc893b8d/toolchain/onnx/onnxruntime-1.25.1.jar"
+      ],
+      "log": "host-json-first.log",
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "diagnostic": ""
+    }
+  },
+  "passed": true
+}

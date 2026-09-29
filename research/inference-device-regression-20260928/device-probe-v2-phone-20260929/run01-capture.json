@@ -1,0 +1,26 @@
+{
+  "scope": "Operator capture of first v2 physical-phone attempt; no speedup or release qualification",
+  "runId": "33b35aa3-d65c-4c08-9172-8954c66c3b05",
+  "rawBytes": 37629,
+  "rawSha256": "91e2384e9347a7b5dc58d111e05c8cc7311d4470ca19d565e2dde6b1c665b29e",
+  "retrieval": {
+    "method": "Authorized Android text read, two sequential pages",
+    "lineCount": 385,
+    "exportedFileBytes": 37629,
+    "allLineNumbersContiguous": true,
+    "reconstructedBytesMatchExportedSize": true
+  },
+  "sourceCommit": "6a91949a060f7bb8543266242ca01f4d2904c069",
+  "outcome": "cancelled",
+  "cancelReason": "thermal-severe",
+  "completedPassages": 0,
+  "elapsedMillis": 20099,
+  "screeningExtraNanos": 5299625675,
+  "nativeResourceCleanupConfirmed": true,
+  "temporaryCacheRemoved": true,
+  "thermalStatusBefore": 0,
+  "thermalStatusAfter": 3,
+  "batteryTemperatureTenthsCBefore": 324,
+  "batteryTemperatureTenthsCAfter": 331,
+  "interpretation": "Thermal cancellation during baseline before any full comparison. No candidate performance measurement."
+}

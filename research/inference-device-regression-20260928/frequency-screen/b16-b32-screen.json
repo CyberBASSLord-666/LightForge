@@ -1,0 +1,571 @@
+{
+  "schema": "lightforge.original-frequency-screen.v1",
+  "createdUtc": "2026-09-28T22:08:10.781743+00:00",
+  "scope": "Host graph-only exploration, original first frequency graph, complete 1301 independent frames with original 60-band attention and Float32. Fresh session and complete call/worker retirement per arm. Timers exclude immutable input loading and output hashing. Not complete-passage, Android, sustained, or admission evidence.",
+  "baselineGeometry": {
+    "batch": 128,
+    "workers": 1,
+    "intraThreads": 4
+  },
+  "candidateGeometry": {
+    "batches": [
+      16,
+      32
+    ],
+    "workers": [
+      4,
+      8
+    ],
+    "intraThreads": 1
+  },
+  "sourceHashes": {
+    "research/inference-device-regression-20260928/frequency-screen/NativeFrequencyScreen.java": "235da4588b6a67d6a87c449defe6328fd9eaab593e8bda224a505449917b7d30",
+    "research/inference-device-regression-20260928/frequency-screen/run_screen.py": "2083a2767bcb70d84653a863ae389acc042fd5ac695beb28409da792e581aefa",
+    "android/src/com/cyberbasslord/lightforge/NativeDeuxTransform.java": "991b06501cfb88b904d0b714a525c389f169f00c231248b0e961b70f257e90b5",
+    "android/native-runtime.json": "e3ea568b3a8485235f23a59cd787466cdcbbfcaa54ac56df3ce040d29fcb2a94"
+  },
+  "runtimeSha256": "749793ebed63743fec853d093da7987a86ea5cd592d54fba898cd3233100c381",
+  "modelManifestSha256": "6aebf45e6e7f6fa974f14fe47a252fc01f48da4815f40a1fdf10641a432529a9",
+  "modelHashes": {
+    "front.onnx": "7906638e713a517297de6cbb758551e5f86fe4a01d19c45f3e1eac28953bcb0e",
+    "block-00-time.onnx": "688feca1115d610e9bc9d15ac9dac6e33c4cf0a03966d9effe8974d2674ae924",
+    "block-00-frequency.onnx": "361ff85e20567a74c076fab06ddfa87dd8c58108cbfc72340fafa8ae92a239b6"
+  },
+  "audioSha256": "33f07d502ba19832b62b97d8fb4a11354e81310264bd885d7a06438228773650",
+  "inputSha256": "5d77af0a6839ae3eaaccea74eb76a5d4869b7afa7d0679a78240334cf6b11210",
+  "prepare": {
+    "observation": {
+      "phase": "prepare",
+      "inputSha256": "5d77af0a6839ae3eaaccea74eb76a5d4869b7afa7d0679a78240334cf6b11210",
+      "bytes": 79933440
+    },
+    "wholeProcessWallNanos": 3414977260,
+    "countersBefore": {
+      "cpu.stat": "usage_usec 5494677059\nuser_usec 5194868877\nsystem_usec 299808182\nnice_usec 0\nnr_periods 38213\nnr_throttled 409\nthrottled_usec 14281977\nnr_bursts 0\nburst_usec 0\n",
+      "memory.events": "low 0\nhigh 0\nmax 5483\noom 0\noom_kill 0\noom_group_kill 0\n",
+      "memory.current": "7191367680\n"
+    },
+    "countersAfter": {
+      "cpu.stat": "usage_usec 5504599617\nuser_usec 5204332761\nsystem_usec 300266855\nnice_usec 0\nnr_periods 38247\nnr_throttled 409\nthrottled_usec 14281977\nnr_bursts 0\nburst_usec 0\n",
+      "memory.events": "low 0\nhigh 0\nmax 5483\noom 0\noom_kill 0\noom_group_kill 0\n",
+      "memory.current": "7271358464\n"
+    },
+    "stderr": ""
+  },
+  "childCpuAffinity": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "compiledClassHashes": {
+    "com/cyberbasslord/lightforge/NativeFrequencyScreen.class": "4c47883186c648e9ea77e670c17a4ed4b6e3bee2d16c3d4ab63bbab91f43ec0d",
+    "com/cyberbasslord/lightforge/NativeFrequencyScreen$Bound.class": "07cf3d725cf46078ac4f26d277872c49729b5c51cdda308d60fe217ff7882ce2",
+    "com/cyberbasslord/lightforge/NativeDeuxTransform.class": "101092134e3b9397d20d5382ba9b312b3092599ca1db900abf22737a53000187",
+    "com/cyberbasslord/lightforge/NativeDeuxTransform$FFT.class": "0b6dbb6ee14c8b72c8d2406b8b7e548945504e39b9ab3679c7389bac94fffc97",
+    "com/cyberbasslord/lightforge/NativeDeuxTransform$Check.class": "d2de3708296e0b581b7cbd12353093a3f5915bd20b58b049c8c8c936c287b8da"
+  },
+  "runs": [
+    {
+      "observation": {
+        "phase": "screen",
+        "round": 0,
+        "batch": 128,
+        "workers": 1,
+        "calls": 11,
+        "wallNanos": 1298294721,
+        "processCpuNanos": 3880000000,
+        "peakRssBytes": 499101696,
+        "outputSha256": "709a997e152921fa1ecb43ee9945156a1ad24820597b6bfe758a8e549ad8b9b8",
+        "finite": true
+      },
+      "wholeProcessWallNanos": 1755944789,
+      "countersBefore": {
+        "cpu.stat": "usage_usec 5504704554\nuser_usec 5204429744\nsystem_usec 300274809\nnice_usec 0\nnr_periods 38248\nnr_throttled 409\nthrottled_usec 14281977\nnr_bursts 0\nburst_usec 0\n",
+        "memory.events": "low 0\nhigh 0\nmax 5483\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "memory.current": "7270440960\n"
+      },
+      "countersAfter": {
+        "cpu.stat": "usage_usec 5509255746\nuser_usec 5208674645\nsystem_usec 300581101\nnice_usec 0\nnr_periods 38265\nnr_throttled 409\nthrottled_usec 14281977\nnr_bursts 0\nburst_usec 0\n",
+        "memory.events": "low 0\nhigh 0\nmax 5483\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "memory.current": "7269781504\n"
+      },
+      "stderr": "",
+      "pairKey": [
+        16,
+        4,
+        0
+      ]
+    },
+    {
+      "observation": {
+        "phase": "screen",
+        "round": 0,
+        "batch": 16,
+        "workers": 4,
+        "calls": 82,
+        "wallNanos": 748402312,
+        "processCpuNanos": 2740000000,
+        "peakRssBytes": 335785984,
+        "outputSha256": "709a997e152921fa1ecb43ee9945156a1ad24820597b6bfe758a8e549ad8b9b8",
+        "finite": true
+      },
+      "wholeProcessWallNanos": 1204922471,
+      "countersBefore": {
+        "cpu.stat": "usage_usec 5509255746\nuser_usec 5208674645\nsystem_usec 300581101\nnice_usec 0\nnr_periods 38265\nnr_throttled 409\nthrottled_usec 14281977\nnr_bursts 0\nburst_usec 0\n",
+        "memory.events": "low 0\nhigh 0\nmax 5483\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "memory.current": "7269777408\n"
+      },
+      "countersAfter": {
+        "cpu.stat": "usage_usec 5512869481\nuser_usec 5211959092\nsystem_usec 300910389\nnice_usec 0\nnr_periods 38278\nnr_throttled 409\nthrottled_usec 14281977\nnr_bursts 0\nburst_usec 0\n",
+        "memory.events": "low 0\nhigh 0\nmax 5483\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "memory.current": "7271645184\n"
+      },
+      "stderr": "",
+      "pairKey": [
+        16,
+        4,
+        0
+      ]
+    },
+    {
+      "observation": {
+        "phase": "screen",
+        "round": 1,
+        "batch": 16,
+        "workers": 4,
+        "calls": 82,
+        "wallNanos": 800631033,
+        "processCpuNanos": 2790000000,
+        "peakRssBytes": 339419136,
+        "outputSha256": "709a997e152921fa1ecb43ee9945156a1ad24820597b6bfe758a8e549ad8b9b8",
+        "finite": true
+      },
+      "wholeProcessWallNanos": 1291010075,
+      "countersBefore": {
+        "cpu.stat": "usage_usec 5512869481\nuser_usec 5211959092\nsystem_usec 300910389\nnice_usec 0\nnr_periods 38278\nnr_throttled 409\nthrottled_usec 14281977\nnr_bursts 0\nburst_usec 0\n",
+        "memory.events": "low 0\nhigh 0\nmax 5483\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "memory.current": "7271596032\n"
+      },
+      "countersAfter": {
+        "cpu.stat": "usage_usec 5516353791\nuser_usec 5215202201\nsystem_usec 301151590\nnice_usec 0\nnr_periods 38290\nnr_throttled 409\nthrottled_usec 14281977\nnr_bursts 0\nburst_usec 0\n",
+        "memory.events": "low 0\nhigh 0\nmax 5483\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "memory.current": "7269883904\n"
+      },
+      "stderr": "",
+      "pairKey": [
+        16,
+        4,
+        1
+      ]
+    },
+    {
+      "observation": {
+        "phase": "screen",
+        "round": 1,
+        "batch": 128,
+        "workers": 1,
+        "calls": 11,
+        "wallNanos": 1475641503,
+        "processCpuNanos": 4570000000,
+        "peakRssBytes": 498905088,
+        "outputSha256": "709a997e152921fa1ecb43ee9945156a1ad24820597b6bfe758a8e549ad8b9b8",
+        "finite": true
+      },
+      "wholeProcessWallNanos": 1917513627,
+      "countersBefore": {
+        "cpu.stat": "usage_usec 5516354193\nuser_usec 5215202201\nsystem_usec 301151992\nnice_usec 0\nnr_periods 38290\nnr_throttled 409\nthrottled_usec 14281977\nnr_bursts 0\nburst_usec 0\n",
+        "memory.events": "low 0\nhigh 0\nmax 5483\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "memory.current": "7269855232\n"
+      },
+      "countersAfter": {
+        "cpu.stat": "usage_usec 5521959684\nuser_usec 5220215578\nsystem_usec 301744105\nnice_usec 0\nnr_periods 38310\nnr_throttled 409\nthrottled_usec 14281977\nnr_bursts 0\nburst_usec 0\n",
+        "memory.events": "low 0\nhigh 0\nmax 5483\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "memory.current": "7272271872\n"
+      },
+      "stderr": "",
+      "pairKey": [
+        16,
+        4,
+        1
+      ]
+    },
+    {
+      "observation": {
+        "phase": "screen",
+        "round": 0,
+        "batch": 128,
+        "workers": 1,
+        "calls": 11,
+        "wallNanos": 1370563352,
+        "processCpuNanos": 4010000000,
+        "peakRssBytes": 499113984,
+        "outputSha256": "709a997e152921fa1ecb43ee9945156a1ad24820597b6bfe758a8e549ad8b9b8",
+        "finite": true
+      },
+      "wholeProcessWallNanos": 1830984431,
+      "countersBefore": {
+        "cpu.stat": "usage_usec 5521959684\nuser_usec 5220215578\nsystem_usec 301744105\nnice_usec 0\nnr_periods 38310\nnr_throttled 409\nthrottled_usec 14281977\nnr_bursts 0\nburst_usec 0\n",
+        "memory.events": "low 0\nhigh 0\nmax 5483\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "memory.current": "7272144896\n"
+      },
+      "countersAfter": {
+        "cpu.stat": "usage_usec 5526752560\nuser_usec 5224604349\nsystem_usec 302148211\nnice_usec 0\nnr_periods 38328\nnr_throttled 409\nthrottled_usec 14281977\nnr_bursts 0\nburst_usec 0\n",
+        "memory.events": "low 0\nhigh 0\nmax 5483\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "memory.current": "7270072320\n"
+      },
+      "stderr": "",
+      "pairKey": [
+        16,
+        8,
+        0
+      ]
+    },
+    {
+      "observation": {
+        "phase": "screen",
+        "round": 0,
+        "batch": 16,
+        "workers": 8,
+        "calls": 82,
+        "wallNanos": 538389716,
+        "processCpuNanos": 3190000000,
+        "peakRssBytes": 413814784,
+        "outputSha256": "709a997e152921fa1ecb43ee9945156a1ad24820597b6bfe758a8e549ad8b9b8",
+        "finite": true
+      },
+      "wholeProcessWallNanos": 997438129,
+      "countersBefore": {
+        "cpu.stat": "usage_usec 5526752560\nuser_usec 5224604349\nsystem_usec 302148211\nnice_usec 0\nnr_periods 38328\nnr_throttled 409\nthrottled_usec 14281977\nnr_bursts 0\nburst_usec 0\n",
+        "memory.events": "low 0\nhigh 0\nmax 5483\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "memory.current": "7269969920\n"
+      },
+      "countersAfter": {
+        "cpu.stat": "usage_usec 5530844571\nuser_usec 5228295100\nsystem_usec 302549470\nnice_usec 0\nnr_periods 38338\nnr_throttled 409\nthrottled_usec 14281977\nnr_bursts 0\nburst_usec 0\n",
+        "memory.events": "low 0\nhigh 0\nmax 5483\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "memory.current": "7271731200\n"
+      },
+      "stderr": "",
+      "pairKey": [
+        16,
+        8,
+        0
+      ]
+    },
+    {
+      "observation": {
+        "phase": "screen",
+        "round": 1,
+        "batch": 16,
+        "workers": 8,
+        "calls": 82,
+        "wallNanos": 529220862,
+        "processCpuNanos": 3150000000,
+        "peakRssBytes": 405409792,
+        "outputSha256": "709a997e152921fa1ecb43ee9945156a1ad24820597b6bfe758a8e549ad8b9b8",
+        "finite": true
+      },
+      "wholeProcessWallNanos": 964592525,
+      "countersBefore": {
+        "cpu.stat": "usage_usec 5530845078\nuser_usec 5228295607\nsystem_usec 302549470\nnice_usec 0\nnr_periods 38338\nnr_throttled 409\nthrottled_usec 14281977\nnr_bursts 0\nburst_usec 0\n",
+        "memory.events": "low 0\nhigh 0\nmax 5483\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "memory.current": "7271718912\n"
+      },
+      "countersAfter": {
+        "cpu.stat": "usage_usec 5534608194\nuser_usec 5231872472\nsystem_usec 302735721\nnice_usec 0\nnr_periods 38348\nnr_throttled 409\nthrottled_usec 14281977\nnr_bursts 0\nburst_usec 0\n",
+        "memory.events": "low 0\nhigh 0\nmax 5483\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "memory.current": "7269990400\n"
+      },
+      "stderr": "",
+      "pairKey": [
+        16,
+        8,
+        1
+      ]
+    },
+    {
+      "observation": {
+        "phase": "screen",
+        "round": 1,
+        "batch": 128,
+        "workers": 1,
+        "calls": 11,
+        "wallNanos": 1424530235,
+        "processCpuNanos": 4510000000,
+        "peakRssBytes": 499986432,
+        "outputSha256": "709a997e152921fa1ecb43ee9945156a1ad24820597b6bfe758a8e549ad8b9b8",
+        "finite": true
+      },
+      "wholeProcessWallNanos": 1863753371,
+      "countersBefore": {
+        "cpu.stat": "usage_usec 5534608194\nuser_usec 5231872472\nsystem_usec 302735721\nnice_usec 0\nnr_periods 38348\nnr_throttled 409\nthrottled_usec 14281977\nnr_bursts 0\nburst_usec 0\n",
+        "memory.events": "low 0\nhigh 0\nmax 5483\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "memory.current": "7269904384\n"
+      },
+      "countersAfter": {
+        "cpu.stat": "usage_usec 5540126270\nuser_usec 5236710064\nsystem_usec 303416205\nnice_usec 0\nnr_periods 38366\nnr_throttled 409\nthrottled_usec 14281977\nnr_bursts 0\nburst_usec 0\n",
+        "memory.events": "low 0\nhigh 0\nmax 5483\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "memory.current": "7271821312\n"
+      },
+      "stderr": "",
+      "pairKey": [
+        16,
+        8,
+        1
+      ]
+    },
+    {
+      "observation": {
+        "phase": "screen",
+        "round": 0,
+        "batch": 128,
+        "workers": 1,
+        "calls": 11,
+        "wallNanos": 1429195871,
+        "processCpuNanos": 4480000000,
+        "peakRssBytes": 500428800,
+        "outputSha256": "709a997e152921fa1ecb43ee9945156a1ad24820597b6bfe758a8e549ad8b9b8",
+        "finite": true
+      },
+      "wholeProcessWallNanos": 1884268321,
+      "countersBefore": {
+        "cpu.stat": "usage_usec 5540127021\nuser_usec 5236710774\nsystem_usec 303416246\nnice_usec 0\nnr_periods 38366\nnr_throttled 409\nthrottled_usec 14281977\nnr_bursts 0\nburst_usec 0\n",
+        "memory.events": "low 0\nhigh 0\nmax 5483\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "memory.current": "7269998592\n"
+      },
+      "countersAfter": {
+        "cpu.stat": "usage_usec 5545388280\nuser_usec 5241550483\nsystem_usec 303837797\nnice_usec 0\nnr_periods 38385\nnr_throttled 409\nthrottled_usec 14281977\nnr_bursts 0\nburst_usec 0\n",
+        "memory.events": "low 0\nhigh 0\nmax 5483\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "memory.current": "7269900288\n"
+      },
+      "stderr": "",
+      "pairKey": [
+        32,
+        4,
+        0
+      ]
+    },
+    {
+      "observation": {
+        "phase": "screen",
+        "round": 0,
+        "batch": 32,
+        "workers": 4,
+        "calls": 41,
+        "wallNanos": 852235396,
+        "processCpuNanos": 3160000000,
+        "peakRssBytes": 434266112,
+        "outputSha256": "709a997e152921fa1ecb43ee9945156a1ad24820597b6bfe758a8e549ad8b9b8",
+        "finite": true
+      },
+      "wholeProcessWallNanos": 1359901656,
+      "countersBefore": {
+        "cpu.stat": "usage_usec 5545389332\nuser_usec 5241551477\nsystem_usec 303837854\nnice_usec 0\nnr_periods 38385\nnr_throttled 409\nthrottled_usec 14281977\nnr_bursts 0\nburst_usec 0\n",
+        "memory.events": "low 0\nhigh 0\nmax 5483\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "memory.current": "7269781504\n"
+      },
+      "countersAfter": {
+        "cpu.stat": "usage_usec 5549554239\nuser_usec 5245300549\nsystem_usec 304253690\nnice_usec 0\nnr_periods 38399\nnr_throttled 409\nthrottled_usec 14281977\nnr_bursts 0\nburst_usec 0\n",
+        "memory.events": "low 0\nhigh 0\nmax 5483\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "memory.current": "7272181760\n"
+      },
+      "stderr": "",
+      "pairKey": [
+        32,
+        4,
+        0
+      ]
+    },
+    {
+      "observation": {
+        "phase": "screen",
+        "round": 1,
+        "batch": 32,
+        "workers": 4,
+        "calls": 41,
+        "wallNanos": 852106399,
+        "processCpuNanos": 3100000000,
+        "peakRssBytes": 413130752,
+        "outputSha256": "709a997e152921fa1ecb43ee9945156a1ad24820597b6bfe758a8e549ad8b9b8",
+        "finite": true
+      },
+      "wholeProcessWallNanos": 1340251210,
+      "countersBefore": {
+        "cpu.stat": "usage_usec 5549555388\nuser_usec 5245301635\nsystem_usec 304253753\nnice_usec 0\nnr_periods 38399\nnr_throttled 409\nthrottled_usec 14281977\nnr_bursts 0\nburst_usec 0\n",
+        "memory.events": "low 0\nhigh 0\nmax 5483\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "memory.current": "7270117376\n"
+      },
+      "countersAfter": {
+        "cpu.stat": "usage_usec 5553551731\nuser_usec 5249063991\nsystem_usec 304487740\nnice_usec 0\nnr_periods 38412\nnr_throttled 409\nthrottled_usec 14281977\nnr_bursts 0\nburst_usec 0\n",
+        "memory.events": "low 0\nhigh 0\nmax 5483\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "memory.current": "7273627648\n"
+      },
+      "stderr": "",
+      "pairKey": [
+        32,
+        4,
+        1
+      ]
+    },
+    {
+      "observation": {
+        "phase": "screen",
+        "round": 1,
+        "batch": 128,
+        "workers": 1,
+        "calls": 11,
+        "wallNanos": 1397364697,
+        "processCpuNanos": 4060000000,
+        "peakRssBytes": 499204096,
+        "outputSha256": "709a997e152921fa1ecb43ee9945156a1ad24820597b6bfe758a8e549ad8b9b8",
+        "finite": true
+      },
+      "wholeProcessWallNanos": 1886394317,
+      "countersBefore": {
+        "cpu.stat": "usage_usec 5553552718\nuser_usec 5249064923\nsystem_usec 304487794\nnice_usec 0\nnr_periods 38412\nnr_throttled 409\nthrottled_usec 14281977\nnr_bursts 0\nburst_usec 0\n",
+        "memory.events": "low 0\nhigh 0\nmax 5483\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "memory.current": "7273533440\n"
+      },
+      "countersAfter": {
+        "cpu.stat": "usage_usec 5558575434\nuser_usec 5253523868\nsystem_usec 305051566\nnice_usec 0\nnr_periods 38431\nnr_throttled 409\nthrottled_usec 14281977\nnr_bursts 0\nburst_usec 0\n",
+        "memory.events": "low 0\nhigh 0\nmax 5483\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "memory.current": "7271976960\n"
+      },
+      "stderr": "",
+      "pairKey": [
+        32,
+        4,
+        1
+      ]
+    },
+    {
+      "observation": {
+        "phase": "screen",
+        "round": 0,
+        "batch": 128,
+        "workers": 1,
+        "calls": 11,
+        "wallNanos": 1295026959,
+        "processCpuNanos": 3900000000,
+        "peakRssBytes": 499380224,
+        "outputSha256": "709a997e152921fa1ecb43ee9945156a1ad24820597b6bfe758a8e549ad8b9b8",
+        "finite": true
+      },
+      "wholeProcessWallNanos": 1734747805,
+      "countersBefore": {
+        "cpu.stat": "usage_usec 5558575536\nuser_usec 5253523964\nsystem_usec 305051572\nnice_usec 0\nnr_periods 38431\nnr_throttled 409\nthrottled_usec 14281977\nnr_bursts 0\nburst_usec 0\n",
+        "memory.events": "low 0\nhigh 0\nmax 5483\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "memory.current": "7271866368\n"
+      },
+      "countersAfter": {
+        "cpu.stat": "usage_usec 5563230932\nuser_usec 5257861007\nsystem_usec 305369924\nnice_usec 0\nnr_periods 38448\nnr_throttled 409\nthrottled_usec 14281977\nnr_bursts 0\nburst_usec 0\n",
+        "memory.events": "low 0\nhigh 0\nmax 5483\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "memory.current": "7269421056\n"
+      },
+      "stderr": "",
+      "pairKey": [
+        32,
+        8,
+        0
+      ]
+    },
+    {
+      "observation": {
+        "phase": "screen",
+        "round": 0,
+        "batch": 32,
+        "workers": 8,
+        "calls": 41,
+        "wallNanos": 686765214,
+        "processCpuNanos": 3860000000,
+        "peakRssBytes": 576679936,
+        "outputSha256": "709a997e152921fa1ecb43ee9945156a1ad24820597b6bfe758a8e549ad8b9b8",
+        "finite": true
+      },
+      "wholeProcessWallNanos": 1131624430,
+      "countersBefore": {
+        "cpu.stat": "usage_usec 5563231992\nuser_usec 5257862009\nsystem_usec 305369982\nnice_usec 0\nnr_periods 38448\nnr_throttled 409\nthrottled_usec 14281977\nnr_bursts 0\nburst_usec 0\n",
+        "memory.events": "low 0\nhigh 0\nmax 5483\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "memory.current": "7269371904\n"
+      },
+      "countersAfter": {
+        "cpu.stat": "usage_usec 5568014496\nuser_usec 5262147310\nsystem_usec 305867185\nnice_usec 0\nnr_periods 38460\nnr_throttled 409\nthrottled_usec 14281977\nnr_bursts 0\nburst_usec 0\n",
+        "memory.events": "low 0\nhigh 0\nmax 5483\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "memory.current": "7271854080\n"
+      },
+      "stderr": "",
+      "pairKey": [
+        32,
+        8,
+        0
+      ]
+    },
+    {
+      "observation": {
+        "phase": "screen",
+        "round": 1,
+        "batch": 32,
+        "workers": 8,
+        "calls": 41,
+        "wallNanos": 639681575,
+        "processCpuNanos": 3810000000,
+        "peakRssBytes": 577134592,
+        "outputSha256": "709a997e152921fa1ecb43ee9945156a1ad24820597b6bfe758a8e549ad8b9b8",
+        "finite": true
+      },
+      "wholeProcessWallNanos": 1087141854,
+      "countersBefore": {
+        "cpu.stat": "usage_usec 5568014496\nuser_usec 5262147310\nsystem_usec 305867185\nnice_usec 0\nnr_periods 38460\nnr_throttled 409\nthrottled_usec 14281977\nnr_bursts 0\nburst_usec 0\n",
+        "memory.events": "low 0\nhigh 0\nmax 5483\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "memory.current": "7271800832\n"
+      },
+      "countersAfter": {
+        "cpu.stat": "usage_usec 5572453889\nuser_usec 5266367130\nsystem_usec 306086758\nnice_usec 0\nnr_periods 38471\nnr_throttled 409\nthrottled_usec 14281977\nnr_bursts 0\nburst_usec 0\n",
+        "memory.events": "low 0\nhigh 0\nmax 5483\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "memory.current": "7269924864\n"
+      },
+      "stderr": "",
+      "pairKey": [
+        32,
+        8,
+        1
+      ]
+    },
+    {
+      "observation": {
+        "phase": "screen",
+        "round": 1,
+        "batch": 128,
+        "workers": 1,
+        "calls": 11,
+        "wallNanos": 1427232122,
+        "processCpuNanos": 4360000000,
+        "peakRssBytes": 500305920,
+        "outputSha256": "709a997e152921fa1ecb43ee9945156a1ad24820597b6bfe758a8e549ad8b9b8",
+        "finite": true
+      },
+      "wholeProcessWallNanos": 1872613736,
+      "countersBefore": {
+        "cpu.stat": "usage_usec 5572454746\nuser_usec 5266367940\nsystem_usec 306086805\nnice_usec 0\nnr_periods 38471\nnr_throttled 409\nthrottled_usec 14281977\nnr_bursts 0\nburst_usec 0\n",
+        "memory.events": "low 0\nhigh 0\nmax 5483\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "memory.current": "7269801984\n"
+      },
+      "countersAfter": {
+        "cpu.stat": "usage_usec 5577826755\nuser_usec 5271257595\nsystem_usec 306569159\nnice_usec 0\nnr_periods 38489\nnr_throttled 409\nthrottled_usec 14281977\nnr_bursts 0\nburst_usec 0\n",
+        "memory.events": "low 0\nhigh 0\nmax 5483\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "memory.current": "7272165376\n"
+      },
+      "stderr": "",
+      "pairKey": [
+        32,
+        8,
+        1
+      ]
+    }
+  ],
+  "allOutputsExact": true,
+  "sourceUnchanged": true
+}

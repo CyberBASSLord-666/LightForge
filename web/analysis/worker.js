@@ -230,7 +230,7 @@ async function normalizeNativeFailure(error,onFallback,fallback){
  if(error?.code===fallback().code)throw error;
  await onFallback();throw fallback(error);
 }
-function nativePredict(startSample,onProgress=()=>{},onFallback=()=>{}){return new Promise((resolve,reject)=>{const requestId=++nativeSequence;nativeRequests.set(requestId,{resolve,reject,onProgress,onFallback});try{postMessage({type:'native-deux',requestId,startSample});}catch(error){nativeRequests.delete(requestId);reject(error);}}).then(async url=>{
+function nativePredict(startSample,onProgress=()=>{},onFallback=()=>{},remainingUseful=-1){return new Promise((resolve,reject)=>{const requestId=++nativeSequence;nativeRequests.set(requestId,{resolve,reject,onProgress,onFallback});try{postMessage({type:'native-deux',requestId,startSample,remainingUseful});}catch(error){nativeRequests.delete(requestId);reject(error);}}).then(async url=>{
  if(typeof url!=='string')throw Error('Native studio audio is unavailable.');
  const response=await fetch(url);if(!response.ok)throw Error('Native studio audio could not be read.');const bytes=await response.arrayBuffer(),samples=573300;
  if(bytes.byteLength!==samples*8)throw Error('Native studio audio is incomplete.');const view=new DataView(bytes),result={};let at=0;
@@ -511,10 +511,14 @@ self.onmessage=async e=>{
   nativeMdxFence=Promise.resolve().then(()=>store.invalidate(['separation','mdx','voice','vocal-semantics','game','bass','recurrence'])).then(()=>{nativeMdxFallback=true;});
   return nativeMdxFence;
  };
- const nativeStudioPredict=quality==='precision'&&options.supportsNativeDeux?(start,onProgress)=>nativePredict(start,onProgress,markNativeDeuxFallback):undefined;
+ const nativeStudioPredict=quality==='precision'&&options.supportsNativeDeux?(start,onProgress,remainingUseful)=>nativePredict(start,onProgress,markNativeDeuxFallback,remainingUseful):undefined;
  const nativeBalancedPredict=quality==='balanced'&&options.supportsNativeMdx?(encoded,onProgress)=>nativeMdxPredict(encoded,onProgress,markNativeMdxFallback):undefined;
  separator=await (quality==='precision'?LightForgeDeux:LightForgeMdxSeparator).create({ort,telemetry,baseUrl:new URL(quality==='precision'?'models/deux/':'models/',self.location.href).href,onProgress:p=>report(.41,'Loading studio vocal separation',p.message),checkpoint:store,nativePredict:nativeStudioPredict||nativeBalancedPredict});
- result.separation=await separator.process((start,count)=>sourceReader.stereo44100(start,count),sourceReader.samples,chunk=>{
+ const readStudio=(start,count)=>sourceReader.stereo44100(start,count);
+ // Android hashes this private project audio into the analysis identity and
+ // blocks project imports/changes while its background job is active.
+ if(/^[a-f0-9]{64}$/i.test(options.analysisIdentity||'')&&/^https:\/\/appassets\.androidplatform\.net\/project\/[A-Za-z0-9_-]{1,80}\/audio\.wav$/.test(audioUrl))readStudio.immutableSource=true;
+ result.separation=await separator.process(readStudio,sourceReader.samples,chunk=>{
   if(nativeMdxFallback||nativeDeuxFallback||nativeMdxFencing||nativeDeuxFencing)return;
   return cacheWriter.append(chunk);
  },p=>report(.42+.40*p.progress,'Separating voice and instruments',`${p.message} • ${Math.min(sourceReader.duration,p.processedSeconds||0).toFixed(0)} / ${sourceReader.duration.toFixed(0)} seconds`,p));

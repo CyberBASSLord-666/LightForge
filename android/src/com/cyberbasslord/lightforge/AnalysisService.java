@@ -280,6 +280,10 @@ public final class AnalysisService extends Service {
             try{if(ownerTask==null||!owns(id))throw new IOException("Native analysis is unavailable.");return ownerTask.start(startSample);}
             catch(Exception error){AppDiagnostics.record(AnalysisService.this,"native-start",error);return bridgeError(error);}
         }
+        @JavascriptInterface public String nativeDeuxStartWithBudget(String id,long startSample,int remainingUseful){
+            try{if(ownerTask==null||!owns(id))throw new IOException("Native analysis is unavailable.");return ownerTask.start(startSample,remainingUseful);}
+            catch(Exception error){AppDiagnostics.record(AnalysisService.this,"native-start",error);return bridgeError(error);}
+        }
         @JavascriptInterface public String nativeDeuxStatus(String id,String token){
             try{if(ownerTask==null||!owns(id))throw new IOException("Native analysis is unavailable.");return ownerTask.status(token);}
             catch(Exception error){return bridgeError(error);}

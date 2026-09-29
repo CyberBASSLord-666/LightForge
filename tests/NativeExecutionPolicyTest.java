@@ -83,6 +83,20 @@ public final class NativeExecutionPolicyTest {
             NativeExecutionPolicy.Config[] both=NativeExecutionPolicy.temporalCandidates(key(8),eightMemory);
             require(both.length==2&&both[1].temporalWorkers==8&&both[1].intraThreads==1&&both[1].interThreads==1&&both[1].dynamicBlockBase==0&&!both[1].parallel&&both[1].timeBatch==1,"parallel geometry has no nested thread pools or altered ONNX execution mode");
             require("cpu-i1-j1-d0-sequential-w8-b1".equals(both[1].id()),"parallel diagnostic config identifies complete geometry");
+            for(int workers:new int[]{4,8}){
+                NativeExecutionPolicy.Config frequency=NativeExecutionPolicy.parallelFrequency(workers);
+                require(frequency.intraThreads==1&&frequency.interThreads==1&&frequency.dynamicBlockBase==0&&!frequency.parallel
+                    &&frequency.temporalWorkers==workers&&frequency.timeBatch==16,"frequency companion uses B16 independent frame batches without nested pools");
+                require(("cpu-i1-j1-d0-sequential-w"+workers+"-b16").equals(frequency.id()),"frequency profile identifies both worker count and frame batch");
+                require(frequency.equals(NativeExecutionPolicy.parallelFrequency(workers))&&frequency.hashCode()==NativeExecutionPolicy.parallelFrequency(workers).hashCode(),"frequency config retains value identity");
+                require(!frequency.equals(both[workers==4?0:1]),"frequency companion cannot alias B1 temporal geometry");
+                require(!NativeExecutionPolicy.temporalAllowed(frequency,key(8),Long.MAX_VALUE),"factory does not bypass temporal admission or expand the existing temporal shortlist");
+                require(!NativeExecutionPolicy.select(key,new NativeExecutionPolicy.Candidate[]{candidate(frequency,new long[]{500,500,500}),candidate(candidates[1],new long[]{500,500,500})}).complete,"legacy warmed frequency evidence cannot authorize the complete-passage companion");
+            }
+            for(int workers:new int[]{Integer.MIN_VALUE,-1,0,1,2,3,5,6,7,9,Integer.MAX_VALUE}){
+                try{NativeExecutionPolicy.parallelFrequency(workers);throw new AssertionError("unsupported frequency worker geometry accepted");}
+                catch(IllegalArgumentException expected){checks++;}
+            }
             require(!both[0].equals(both[1])&&both[0].hashCode()!=both[1].hashCode(),"outer-worker geometry participates in config identity");
             require(!NativeExecutionPolicy.temporalAllowed(both[1],key(8),eightMemory-1),"cached eight-worker config rejected when memory falls");
             require(NativeExecutionPolicy.temporalAllowed(both[0],key(8),eightMemory),"qualified four-worker config remains safe with extra headroom");

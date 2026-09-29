@@ -1,0 +1,244 @@
+{
+  "schema": "lightforge.passed-frequency-integration-archive.v1",
+  "archivedUtc": "2026-09-28T22:42:33.637341+00:00",
+  "scope": "Frozen-source host quality and cancellation integration evidence. No speedup, Android, whole-job or release qualification. Prior failed attempt01 remains independently archived.",
+  "verification": {
+    "originalReceiptPassed": true,
+    "bothNativeProcessesExitedZero": true,
+    "frozenSourceBindingsVerified": 15,
+    "compiledClassHashesVerified": 51,
+    "sourceBindingsBeforeAfterIdentical": true,
+    "strictCurrentSchedulerAndBaselineCancellationVerifiersPassed": true,
+    "completeOutputs": [
+      {
+        "name": "baseline-cancellation/recovery.f32",
+        "bytes": 4586400,
+        "sha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+        "finite": true,
+        "exactOriginal": true,
+        "pcmArchived": false
+      },
+      {
+        "name": "integration/automatic.f32",
+        "bytes": 4586400,
+        "sha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+        "finite": true,
+        "exactOriginal": true,
+        "pcmArchived": false
+      },
+      {
+        "name": "integration/four.f32",
+        "bytes": 4586400,
+        "sha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+        "finite": true,
+        "exactOriginal": true,
+        "pcmArchived": false
+      },
+      {
+        "name": "integration/recovered.f32",
+        "bytes": 4586400,
+        "sha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+        "finite": true,
+        "exactOriginal": true,
+        "pcmArchived": false
+      },
+      {
+        "name": "integration/reference.f32",
+        "bytes": 4586400,
+        "sha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+        "finite": true,
+        "exactOriginal": true,
+        "pcmArchived": false
+      },
+      {
+        "name": "integration/short.f32",
+        "bytes": 4586400,
+        "sha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+        "finite": true,
+        "exactOriginal": true,
+        "pcmArchived": false
+      },
+      {
+        "name": "integration/unknown.f32",
+        "bytes": 4586400,
+        "sha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+        "finite": true,
+        "exactOriginal": true,
+        "pcmArchived": false
+      }
+    ],
+    "profileGeometry": {
+      "reference": {
+        "graphRecords": 27,
+        "inferenceCalls": 335,
+        "frequencyConfig": "cpu-i4-j1-d0-sequential",
+        "temporalConfig": "cpu-i4-j1-d0-sequential",
+        "exactOriginal": true,
+        "finite": true
+      },
+      "unknownWork": {
+        "graphRecords": 27,
+        "inferenceCalls": 335,
+        "frequencyConfig": "cpu-i4-j1-d0-sequential",
+        "temporalConfig": "cpu-i4-j1-d0-sequential",
+        "exactOriginal": true,
+        "finite": true
+      },
+      "forcedFour": {
+        "graphRecords": 27,
+        "inferenceCalls": 1727,
+        "frequencyConfig": "cpu-i1-j1-d0-sequential-w4-b16",
+        "temporalConfig": "cpu-i1-j1-d0-sequential-w4-b1",
+        "exactOriginal": true,
+        "finite": true
+      },
+      "recoveredEight": {
+        "graphRecords": 27,
+        "inferenceCalls": 1727,
+        "frequencyConfig": "cpu-i1-j1-d0-sequential-w8-b16",
+        "temporalConfig": "cpu-i1-j1-d0-sequential-w8-b1",
+        "exactOriginal": true,
+        "finite": true
+      },
+      "shortWork": {
+        "graphRecords": 27,
+        "inferenceCalls": 335,
+        "frequencyConfig": "cpu-i4-j1-d0-sequential",
+        "temporalConfig": "cpu-i4-j1-d0-sequential",
+        "exactOriginal": true,
+        "finite": true
+      },
+      "automaticFirstPassage": {
+        "graphRecords": 27,
+        "inferenceCalls": 335,
+        "frequencyConfig": "cpu-i4-j1-d0-sequential",
+        "temporalConfig": "cpu-i4-j1-d0-sequential",
+        "exactOriginal": true,
+        "finite": true
+      },
+      "baselineCancellationRecovery": {
+        "graphRecords": 27,
+        "inferenceCalls": 335,
+        "frequencyConfig": "cpu-i4-j1-d0-sequential",
+        "temporalConfig": "cpu-i4-j1-d0-sequential",
+        "exactOriginal": true,
+        "finite": true
+      }
+    },
+    "cancellationModes": [
+      {
+        "mode": "runner-cancel",
+        "ownerRetired": true,
+        "allObservedWorkersRetired": true,
+        "observedNativeWorkers": 8,
+        "ownerInterruptPreserved": null,
+        "interruptionReported": true,
+        "noOutputCommitted": true,
+        "gateHeldWhileNative": true,
+        "gateReleased": true
+      },
+      {
+        "mode": "owner-interrupt",
+        "ownerRetired": true,
+        "allObservedWorkersRetired": true,
+        "observedNativeWorkers": 6,
+        "ownerInterruptPreserved": true,
+        "interruptionReported": true,
+        "noOutputCommitted": true,
+        "gateHeldWhileNative": true,
+        "gateReleased": true
+      },
+      {
+        "mode": "frequency-runner-cancel",
+        "ownerRetired": true,
+        "allObservedWorkersRetired": true,
+        "observedNativeWorkers": 7,
+        "observedGraph": "block-00-frequency",
+        "ownerInterruptPreserved": null,
+        "interruptionReported": true,
+        "noOutputCommitted": true,
+        "gateHeldWhileNative": true,
+        "gateReleased": true
+      }
+    ],
+    "baselineCancellation": {
+      "ownerRetired": true,
+      "exclusiveGate": true,
+      "activeRunOptionsObserved": true,
+      "noTemporaryOutputs": true,
+      "gateReleased": true,
+      "noSuppressedCleanupFailures": true,
+      "mode": "baseline-runner-cancel",
+      "observedNativeOwner": true,
+      "originalOrtCauseRetained": true,
+      "runOptionsClosed": true,
+      "interruptionReported": true,
+      "gateHeldWhileNative": true,
+      "noOutputCommitted": true
+    },
+    "noPartialOutputs": true,
+    "automaticFirstPairObserved": true,
+    "automaticOnePairNotQualified": true
+  },
+  "profilesNote": "Text files contain exact original receipt record strings, one per line. Original JSON and JVM logs remain unchanged.",
+  "omittedBinaries": [
+    "PCM output files",
+    "compiled class files",
+    "model files",
+    "runtime dependencies"
+  ],
+  "files": {
+    "baseline-cancellation.log": {
+      "sha256": "645cf21cbd8a92d2f8234079ae9b8ec7965edecd77511ec2aac60f42d73654ac",
+      "bytes": 31426
+    },
+    "compile.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "integration.log": {
+      "sha256": "6dcd2f6cab94471659a2d23fbbe58ab46bbb702e98f3dba156ac281f09828604",
+      "bytes": 193483
+    },
+    "profiles/automaticFirstPassage.txt": {
+      "sha256": "5026f026eba165d88c5327a7f8d748d653faf4fe03f5970e90f068aa1a3f7460",
+      "bytes": 31844
+    },
+    "profiles/baselineCancellationRecovery.txt": {
+      "sha256": "d4b91e45178c5c17b8b8ae2c048493cdf536eadfa946bdc12a03775558e690c7",
+      "bytes": 30666
+    },
+    "profiles/forcedFour.txt": {
+      "sha256": "a4dd267ea9cc62bd8b7ecfe8c9b76c8d8c7211581c1b0b8388f8524637fcca48",
+      "bytes": 32830
+    },
+    "profiles/recoveredEight.txt": {
+      "sha256": "9ec01c316a768d8e0e489ee0e3e9d8ba2bbb38e76831dffb98124fcaed8d80df",
+      "bytes": 32819
+    },
+    "profiles/reference.txt": {
+      "sha256": "5fcc2368498ea5968b9acc3bf61b77aef2d4e0553aa0da59e071ea25a9cf2ed1",
+      "bytes": 30672
+    },
+    "profiles/shortWork.txt": {
+      "sha256": "7595cf31db8b8da3dc3dcda90b11824e0d7e8500e308d13b450e9ad1ef7a5451",
+      "bytes": 31194
+    },
+    "profiles/unknownWork.txt": {
+      "sha256": "0789064a83b3d5935612e0d1358e40941361b23de12ba6cc7b9c7f174dac9bf9",
+      "bytes": 31195
+    },
+    "receipt.original.json": {
+      "sha256": "75b8033eea94ff6b36052995825294153b3a6545482f9e6d1bd5b1d8477f1d95",
+      "bytes": 246421
+    },
+    "source-snapshots.json": {
+      "sha256": "a546f001fbc87395f1aaef5fd896beee198cc132cc965c117cb563f2678374e1",
+      "bytes": 376697
+    },
+    "wrapper.log": {
+      "sha256": "eb0a6727227c9cad1aaae578e87899c03246ff722f8078cc206ec9a77ac0b7c5",
+      "bytes": 120
+    }
+  }
+}

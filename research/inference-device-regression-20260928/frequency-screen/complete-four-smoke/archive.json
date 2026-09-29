@@ -1,0 +1,44 @@
+{
+  "schema": "lightforge.frequency-complete-smoke-archive.v1",
+  "archivedUtc": "2026-09-28T22:17:51.213982+00:00",
+  "scope": "Historical exploratory four-worker combined temporal B1/frequency B16 complete-output check. One host run; no adjacent baseline, current-source timing qualification, Android, sustained, or release evidence. Raw original receipts remain unchanged.",
+  "verification": {
+    "compileReceiptLinkValid": true,
+    "frozenSourceBindingsVerified": 14,
+    "compiledClassHashesVerified": 48,
+    "outputBytesVerified": 4586400,
+    "outputSha256Verified": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+    "outputFinite": true,
+    "graphRecords": 27,
+    "runCalls": 1727,
+    "geometryVerified": true,
+    "pcmArchived": false
+  },
+  "files": {
+    "compile.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "compile.receipt.json": {
+      "sha256": "dc49a7ad8f39dbb6e8147c6e50c4fabce9f0e10fc8e36983c4caac40f2450a42",
+      "bytes": 8964
+    },
+    "smoke.profile.txt": {
+      "sha256": "e5c9c05cda7d4c06fc5a70732cd11a11aec0282d9e49ef7bfba444132b9e3904",
+      "bytes": 32655
+    },
+    "smoke.receipt.json": {
+      "sha256": "9fb8631e7c0e0066ae027a71b72a1f934ac7ebc7fc8f41ead5e755d14ed09d47",
+      "bytes": 1517
+    },
+    "smoke.run.log": {
+      "sha256": "c0c4ed8418a2423343e237b2799ffb50ce1b413b11071eb928b4dbd5751ae5cd",
+      "bytes": 130
+    },
+    "source-snapshots.json": {
+      "sha256": "ef7a5b2f6611cfc8c0971bafe7ef917d8130190fc2794597d28122d42820bc16",
+      "bytes": 347981
+    }
+  },
+  "compileReceiptNote": "compileOnly=true, inferencePerformed=false, passed=false are the original compiler-only receipt fields; the separate smoke receipt records the later successful exploratory JNI invocation."
+}

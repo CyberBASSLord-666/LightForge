@@ -1,0 +1,15 @@
+✔ native bridge exposes only complete audio from the matching private passage (6.687384ms)
+✔ abort cancels the native operation and never reports a result (2.994486ms)
+✔ a stale token or external result URL cannot become source audio (2.768603ms)
+✔ native failures remain actionable and do not silently switch the model (1.741725ms)
+✔ invalid source position is rejected before starting native work (3.028016ms)
+✔ useful passage budget reaches new Android bridge and older bridges remain compatible (3.419794ms)
+✔ invalid native budget is rejected before old or new Android execution (4.306054ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 93.611121
