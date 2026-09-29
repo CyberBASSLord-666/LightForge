@@ -235,9 +235,17 @@ public final class NativeDeuxCalibrationTest {
         if(!NativeDeux.cleanCancellation(failure.get()))
             throw new AssertionError("Native cancellation contained an unclassified cleanup failure",failure.get());
         require(!output.exists(),"Cancellation committed a stem output");
-        for(Thread worker:workers)require(!worker.isAlive(),"A parallel worker survived the prediction owner");
         synchronized(lifecycle){require(optionsField.get(runner)==null,"RunOptions did not close after native workers retired");}
         require(NativeDeux.INFERENCE_GATE.availablePermits()==1,"Cancellation released ownership before all workers retired");
+        for(Thread worker:workers){
+            // Pool termination and drained Futures prove all native tasks returned,
+            // but ThreadPoolExecutor can become TERMINATED before its last Java
+            // Thread leaves the worker-loop epilogue. Reject a surviving JNI Run
+            // immediately, then allow that bounded epilogue to finish.
+            require(!insideNativeRun(worker),"A parallel worker remained in native Run after the prediction owner retired");
+            if(worker.isAlive())worker.join(TimeUnit.SECONDS.toMillis(5));
+            require(!worker.isAlive(),"A parallel worker survived the prediction owner");
+        }
         require(!interrupt||interruptPreserved.get(),"Worker retirement consumed the owner's interrupt flag");
         JSONObject observation=new JSONObject().put("mode",targetGraph!=null?(interrupt?"frequency-owner-interrupt":"frequency-runner-cancel"):interrupt?"owner-interrupt":"runner-cancel")
             .put("observedNativeWorkers",observed).put("allObservedWorkersRetired",true).put("ownerRetired",true)
