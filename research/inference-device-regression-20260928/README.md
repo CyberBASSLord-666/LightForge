@@ -37,6 +37,17 @@ records 42 passing Python/JVM tests and seven passing bridge tests; four histori
 frozen-build checks skip because their original build directories are unavailable.
 The separate retained-APK verification tests pass. Production release remains held.
 
+The [fresh four-worker host comparison](host-four-worker-9435489/README.md)
+binds integrated source `9435489` after the scheduler nomination and source
+classification corrections. Eight complete original-model outputs are finite
+and byte-identical. Three alternating measured pairs reduce median passage
+wall time from **91.648495195 to 51.682151079 seconds, 43.6083%**. Each pair
+improves by 31.1723%, 40.3602%, and 45.1970%. The prior preliminary local
+four-worker run was lost in a scratch reset; its full receipt and logs were not
+retained and are not cited as evidence. This fresh result is fixed host geometry
+only. It does not establish physical-phone memory eligibility or admission,
+sustained scheduler policy, net qualification payback, or whole-analysis speed.
+
 ## Observed regression
 
 The retained 2.4.0 and 2.4.1 diagnostics describe the same phone model, Android
