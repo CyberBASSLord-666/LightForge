@@ -47,6 +47,7 @@ public final class NativeDeux implements AutoCloseable {
     // Avoid getValue()/getFloatBuffer(), which allocate another full output copy.
     private FloatBuffer spectrum,values,mask,summed,batchInput,batchOutput;
     private FloatBuffer[] parallelInputs,parallelOutputs;
+    private long calibrationBufferBytes;
     private NativeDeuxTransform transform;
     private String activeGraph;
     private boolean firstGraphRun;
@@ -604,7 +605,7 @@ public final class NativeDeux implements AutoCloseable {
         if(profile!=null){
             long floats=(long)spectrum.capacity()+summed.capacity()+values.capacity()+mask.capacity()+batchInput.capacity()+batchOutput.capacity();
             if(parallelInputs!=null)for(int i=1;i<parallelInputs.length;i++)floats+=(long)parallelInputs[i].capacity()+parallelOutputs[i].capacity();
-            profile.noteDirectBufferBytes(4L*floats);
+            profile.noteDirectBufferBytes(4L*floats+calibrationBufferBytes);
         }
     }
 
@@ -881,67 +882,47 @@ public final class NativeDeux implements AutoCloseable {
     private void nominate(File audio,long startSample,NativeDeuxTransform.Check outerCheck,NativeInferenceProfile profile)throws Exception{
         long started=System.nanoTime();
         NativeDeuxTransform.Check check=()->{outerCheck.check();if(System.nanoTime()-started>=60000000000L)throw new ProbeAborted("screen-budget");};
-        int winner=0;String rejection="screen-no-win";
-        PipelineFailures failures=new PipelineFailures(null);
+        FloatBuffer originalValues=values;int winner=0;long best=Long.MAX_VALUE;
         probing=true;
         try{
             NativeExecutionPolicy.Config[] configs=NativeExecutionPolicy.temporalCandidates(executionKey,availableMemory());
-            if(configs.length==0)rejection="memory-pressure";
-            else{
-                beginRun();
-                float[][] passage=NativeDeuxTransform.readStereo(audio,startSample,check);
-                transform.encode(passage,spectrum,check);passage=null;
-                OrtEnvironment environment=OrtEnvironment.getEnvironment();
-                NativeExecutionPolicy.Config[] screen=new NativeExecutionPolicy.Config[configs.length+1];
-                screen[0]=NativeExecutionPolicy.baseline(executionKey.cores);System.arraycopy(configs,0,screen,1,configs.length);
-                long[] exactFasterNanos=new long[screen.length];
-                byte[] reference=null;long baseline=0;boolean memorySkipped=false;
-                for(int i=0;i<screen.length;i++){
-                    NativeExecutionPolicy.Config config=screen[i];
-                    check.check();
-                    if(!NativeExecutionPolicy.temporalAllowed(config,executionKey,availableMemory())){memorySkipped=true;continue;}
-                    // Reconstruct the same original activation from the unchanged spectrum.
-                    // This removes the 79,933,440-byte screening copy. Front work is charged
-                    // to screening, outside each cold temporal session's trial clock.
-                    try(OrtSession session=open(environment,"front",check,null)){
-                        run(session,spectrum,new long[]{1,2050,FRAMES,2},values,new long[]{1,FRAMES,BANDS,FEATURES},check,null);
-                    }
-                    check.check();
-                    if(!NativeExecutionPolicy.temporalAllowed(config,executionKey,availableMemory())){memorySkipped=true;continue;}
-                    long trial=System.nanoTime();
-                    try(OrtSession session=openConfigured(environment,"block-00-time",check,null,config)){
-                        runTemporalGraph(session,"block-00-time",config,0,null,check,null);
-                    }
-                    long elapsed=System.nanoTime()-trial;byte[] hash=tensorHash(values,check);
-                    if(config.temporalWorkers==1){reference=hash;baseline=elapsed;}
-                    else if(reference!=null&&Arrays.equals(reference,hash)&&elapsed<baseline*.95)exactFasterNanos[i]=elapsed;
-                }
-                check.check();
-                long headroom=availableMemory(),best=Long.MAX_VALUE;
-                for(int i=1;i<screen.length;i++)if(exactFasterNanos[i]>0){
-                    if(!NativeExecutionPolicy.temporalAllowed(screen[i],executionKey,headroom)){memorySkipped=true;continue;}
-                    if(exactFasterNanos[i]<best){winner=screen[i].temporalWorkers;best=exactFasterNanos[i];}
-                }
-                if(winner==0&&memorySkipped)rejection="memory-pressure";
+            if(configs.length==0){passagePolicy.forceBaseline("memory-pressure");return;}
+            beginRun();
+            float[][] passage=NativeDeuxTransform.readStereo(audio,startSample,check);
+            transform.encode(passage,spectrum,check);passage=null;
+            OrtEnvironment environment=OrtEnvironment.getEnvironment();
+            try(OrtSession session=open(environment,"front",check,null)){
+                run(session,spectrum,new long[]{1,2050,FRAMES,2},values,new long[]{1,FRAMES,BANDS,FEATURES},check,null);
             }
+            values=direct(originalValues.capacity());calibrationBufferBytes=4L*originalValues.capacity();noteDirectBufferBytes(profile);
+            NativeExecutionPolicy.Config[] screen=new NativeExecutionPolicy.Config[configs.length+1];
+            screen[0]=NativeExecutionPolicy.baseline(executionKey.cores);System.arraycopy(configs,0,screen,1,configs.length);
+            byte[] reference=null;long baseline=0;
+            for(NativeExecutionPolicy.Config config:screen){
+                check.check();if(!NativeExecutionPolicy.temporalAllowed(config,executionKey,availableMemory()))throw new ProbeAborted("memory-pressure");
+                copy(originalValues,0,values,0,originalValues.capacity());
+                long trial=System.nanoTime();
+                try(OrtSession session=openConfigured(environment,"block-00-time",check,null,config)){
+                    runTemporalGraph(session,"block-00-time",config,0,null,check,null);
+                }
+                long elapsed=System.nanoTime()-trial;byte[] hash=tensorHash(values,check);
+                if(config.temporalWorkers==1){reference=hash;baseline=elapsed;}
+                else if(reference!=null&&Arrays.equals(reference,hash)&&elapsed<baseline*.95&&elapsed<best){winner=config.temporalWorkers;best=elapsed;}
+            }
+            if(winner==0)passagePolicy.forceBaseline("screen-no-win");
         }catch(ProbeAborted stopped){
-            winner=0;
-            if(!cleanProbeAbort(stopped))failures.add(stopped);
-            else try{outerCheck.check();rejection=stopped.reason;}catch(Throwable failure){failures.add(failure);}
-        }catch(Throwable failure){
-            winner=0;failures.add(failure);
+            if(!cleanProbeAbort(stopped))throw stopped;
+            outerCheck.check();passagePolicy.forceBaseline(stopped.reason);
         }finally{
-            failures.run(this::endRun);
-            failures.run(()->noteDirectBufferBytes(profile));
-            probing=false;
+            try{endRun();}
+            finally{
+                try{noteDirectBufferBytes(profile);}
+                finally{values=originalValues;calibrationBufferBytes=0;probing=false;}
+                long extra=System.nanoTime()-started;
+                if(winner!=0)passagePolicy.nominate(winner,extra);else passagePolicy.probeAborted("screen-no-win",extra);
+                if(profile!=null)profile.noteSchedulerCalibration(extra);
+            }
         }
-        long extra=System.nanoTime()-started;
-        if(profile!=null)failures.run(()->profile.noteSchedulerCalibration(extra));
-        if(failures.primary!=null){
-            passagePolicy.probeAborted(cleanCancellation(failures.primary)?"cancelled":"runtime-rejected",extra);
-            failures.rethrow();
-        }
-        if(winner!=0)passagePolicy.nominate(winner,extra);else passagePolicy.probeAborted(rejection,extra);
     }
 
     /** Hash raw Float32 bits in a bounded buffer; no duplicate multi-megabyte tensor allocation. */

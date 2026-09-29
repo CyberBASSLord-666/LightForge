@@ -14,7 +14,10 @@ import json
 import math
 from pathlib import Path, PurePosixPath
 import re
+import stat
 import statistics
+import struct
+import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 REFERENCE = "research/inference-device-regression-20260928/"
@@ -23,6 +26,20 @@ STARTS = (-66150, 0, 22050, 44100, 88200)
 OUTPUT_BYTES = 4586400
 PACKAGE = "com.cyberbasslord.lightforge.inferenceprobe"
 FIXTURE_SHA = "0d0bf21401ad0dbb8a49aae581a16f9a00cadca41e116b5a4dc27eaaa3625648"
+# Explicitly reviewed durable audit from commit 6a91949a060f7bb8543266242ca01f4d2904c069.
+# This allowlist is not populated from the APK, command line, or exported phone report.
+# A later artifact requires another independently reviewed audit before admission here.
+RETAINED_APK_AUDITS = {
+    "a8efbf9e208b022760878062bed8efc3559e1b61e7c0baee563a18ba1b83666b": {
+        "commit": "6a91949a060f7bb8543266242ca01f4d2904c069",
+        "apk_sha256": "79dba57cc55d0fc61e42aa245f0f94c7a1d826aa184bb6be08026ff931712429",
+        "apk_bytes": 113915300,
+        "source_sha256": "b9b5991ab8746e96ef28675f23d6309ce5f985003df4d6f12ee4d5360d52d83b",
+        "build_sha256": "2ec9d88783e89aa147540837fbf7d6624133e6c64c1af497d1e090a20f5c309d",
+    },
+}
+APK_LIMIT = 256 * 1024 * 1024
+APK_EXPANDED_LIMIT = 128 * 1024 * 1024
 SPEC = importlib.util.spec_from_file_location("probe_diagnostic_evidence", Path(__file__).with_name("diagnostic_evidence.py"))
 EVIDENCE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(EVIDENCE)
@@ -208,6 +225,225 @@ def verify_reference(source, build, source_sha, repo, frozen_dir=None):
             "qualification_ordinals": ordinals, "model_manifest_sha256": source["modelManifestSha256"],
             "declared_model_bytes": sum(sizes), "fixture_pcm16_sha256": FIXTURE_SHA,
             "scope": "frozen-artifact-and-build-receipt-binding-not-device-attestation"}
+
+
+def _apk_json(raw):
+    require(len(raw) <= LIMIT, "APK JSON exceeds 2 MiB")
+    def invalid_constant(_):
+        raise ValueError("Non-finite APK JSON number")
+    try:
+        value = json.loads(raw, object_pairs_hook=unique_object, parse_constant=invalid_constant)
+    except (UnicodeError, RecursionError) as error:
+        raise ValueError("Invalid bounded APK JSON") from error
+    require(isinstance(value, dict), "APK JSON must be an object")
+    return value
+
+
+def _apk_directory_bound(stream, size):
+    """Bound central-directory allocation before ZipFile parses any entries.
+
+    The reviewed APK is a single-disk, non-ZIP64 archive with no ZIP comment.
+    Signature blocks are inside the whole-file hash, outside ZIP member content.
+    """
+    require(22 <= size <= APK_LIMIT, "Retained APK size exceeds bounds")
+    stream.seek(size - 22)
+    end = stream.read(22)
+    signature, disk, directory_disk, entries_disk, entries, directory_size, offset, comment = struct.unpack("<4s4H2IH", end)
+    require(signature == b"PK\x05\x06" and disk == directory_disk == comment == 0
+            and entries_disk == entries and 0 < entries <= 64
+            and directory_size <= 128 * 1024 and offset + directory_size == size - 22,
+            "Unsupported or oversized APK central directory")
+    stream.seek(0)
+    return entries
+
+
+def _retained_apk_members(apk, expected_sha, expected_size, source, source_sha, source_size, audit):
+    """Hash every permitted member, without extraction or unbounded decompression."""
+    require(apk.is_file() and not any(path.is_symlink() for path in (apk, *apk.parents)),
+            "Missing or linked retained APK")
+    require(apk.stat().st_size == expected_size and 0 < expected_size <= APK_LIMIT,
+            "Retained APK byte count mismatch")
+    runtime = source["runtime"]
+    native = {"lib/" + name[len("jni/"):]: pin for name, pin in runtime["files"].items() if name.startswith("jni/")}
+    fixture = source["fixture"]
+    pins = {**native, **{"assets/probe/" + name: pin for name, pin in runtime["notices"].items()},
+            "assets/probe/source-receipt.json": {"sha256": source_sha, "bytes": source_size},
+            "assets/" + fixture["assetPath"]: {"sha256": fixture["pcm16Sha256"],
+                                                "bytes": 44 + fixture["samplesPerChannel"] * fixture["channels"] * 2}}
+    dex = audit["dexHashes"]
+    require(isinstance(dex, dict) and set(dex) == {"classes.dex"}, "Unexpected audited DEX inventory")
+    pins.update({name: {"sha256": sha} for name, sha in dex.items()})
+    json_names = {"assets/probe/source-receipt.json", "assets/probe/fixture-provenance.json"}
+    apk_bound_names = {"AndroidManifest.xml", "resources.arsc", "META-INF/PROBE.SF", "META-INF/PROBE.RSA", "META-INF/MANIFEST.MF"}
+    expected_names = set(pins) | json_names | apk_bound_names
+    require(len(expected_names) <= 64, "APK member inventory exceeds bounds")
+    for pin in pins.values():
+        require(isinstance(pin.get("sha256"), str) and re.fullmatch(r"[a-f0-9]{64}", pin["sha256"])
+                and ("bytes" not in pin or type(pin["bytes"]) is int and 0 < pin["bytes"] <= 64 * 1024 * 1024),
+                "Invalid APK member pin")
+    observed, documents = {}, {}
+    with apk.open("rb") as stream:
+        def full_hash():
+            stream.seek(0)
+            sha, count = hashlib.sha256(), 0
+            while True:
+                chunk = stream.read(1024 * 1024)
+                if not chunk:
+                    break
+                count += len(chunk)
+                require(count <= expected_size, "Retained APK grew during verification")
+                sha.update(chunk)
+            require(count == expected_size and sha.hexdigest() == expected_sha, "Retained APK hash mismatch")
+        full_hash()
+        entry_count = _apk_directory_bound(stream, expected_size)
+        try:
+            with zipfile.ZipFile(stream) as archive:
+                infos = archive.infolist()
+                names = [info.filename for info in infos]
+                require(len(infos) == entry_count and len(names) == len(set(names)), "Duplicate APK entries")
+                require(set(names) == expected_names, "Unexpected APK member inventory")
+                require(sum(info.file_size for info in infos) <= APK_EXPANDED_LIMIT, "APK expanded size exceeds bounds")
+                for info in infos:
+                    name = info.filename
+                    require(info.orig_filename == name and len(name) <= 512 and "\\" not in name and "\x00" not in name
+                            and not name.startswith("/") and all(part not in ("", ".", "..") for part in name.split("/"))
+                            and not info.is_dir(), "Unsafe APK member path")
+                    require(stat.S_IFMT(info.external_attr >> 16) in (0, stat.S_IFREG)
+                            and info.flag_bits & ~0x800 == 0
+                            and info.compress_type in (zipfile.ZIP_STORED, zipfile.ZIP_DEFLATED),
+                            "Unsupported APK member type or encoding")
+                    limit = 64 * 1024 * 1024 if name.startswith("lib/") else 16 * 1024 * 1024 if name.endswith(".dex") else LIMIT
+                    require(0 < info.file_size <= limit and 0 < info.compress_size <= expected_size
+                            and info.file_size <= info.compress_size * 200, "APK member size or compression exceeds bounds")
+                    sha, count, chunks = hashlib.sha256(), 0, []
+                    with archive.open(info) as member:
+                        while True:
+                            chunk = member.read(min(1024 * 1024, limit + 1 - count))
+                            if not chunk:
+                                break
+                            count += len(chunk)
+                            require(count <= limit and count <= info.file_size, "APK member expanded beyond its declared size")
+                            sha.update(chunk)
+                            if name in json_names:
+                                chunks.append(chunk)
+                    require(count == info.file_size, "APK member byte count mismatch")
+                    actual = {"bytes": count, "sha256": sha.hexdigest()}
+                    pin = pins.get(name)
+                    require(pin is None or all(actual.get(key) == value for key, value in pin.items()), "APK member pin mismatch: " + name)
+                    observed[name] = {**actual, "binding": "independent-member-pin-and-complete-apk" if pin else "complete-apk-hash"}
+                    if name in json_names:
+                        documents[name] = _apk_json(b"".join(chunks))
+                require(reference_json_equal(documents["assets/probe/source-receipt.json"], source), "APK embedded source receipt mismatch")
+                require(reference_json_equal(documents["assets/probe/fixture-provenance.json"], fixture), "APK fixture provenance mismatch")
+        except (zipfile.BadZipFile, NotImplementedError, RuntimeError, EOFError) as error:
+            raise ValueError("Invalid retained APK ZIP content") from error
+        # Recheck the same open file after member reads, detecting concurrent changes.
+        full_hash()
+    return observed
+
+
+def verify_retained_apk_reference(source, build, source_sha, repo, apk, audit_path):
+    """Bind a recovered APK to a reviewed durable audit, never pretend to restore a build.
+
+    Compiled classes/JAR, signature validity and manifest semantics were inspected
+    by the original audit. Their original bytes/tools are not reconstituted here.
+    This mode verifies APK identity/content and current source pins independently;
+    it is not a release gate, reproducible build, or cryptographic device attestation.
+    """
+    repo, apk, audit_path = Path(repo), Path(apk), Path(audit_path)
+    audit_file = safe_file(audit_path.parent, audit_path.name)
+    audit, audit_sha = load(audit_file)
+    require(audit_sha in RETAINED_APK_AUDITS, "Unreviewed retained APK audit")
+    approved = RETAINED_APK_AUDITS[audit_sha]
+    require(audit.get("schema") == "lightforge.inference-device-probe-artifact-audit.v1", "Unknown retained APK audit schema")
+    archive = audit_path.parent
+    archived_source = bound_file(archive, "source-receipt.json", approved["source_sha256"])
+    archived_build = bound_file(archive, "build.json", approved["build_sha256"])
+    original_source, _ = load(archived_source)
+    original_build, _ = load(archived_build)
+    require(source_sha == approved["source_sha256"] and reference_json_equal(source, original_source), "Claimed source differs from retained audit")
+    require(reference_json_equal(build, original_build) and reference_json_equal(audit.get("artifact"), build), "Claimed build differs from retained audit")
+    require(build.get("sha256") == approved["apk_sha256"] and type(build.get("bytes")) is int and build["bytes"] == approved["apk_bytes"]
+            and build.get("sourceReceiptSha256") == source_sha, "Retained build identity mismatch")
+    require(source.get("schema") == "lightforge-inference-device-probe-source-v1"
+            and source.get("packageName") == build.get("packageName") == PACKAGE
+            and source.get("runtimeVersion") == build.get("runtimeVersion") == "1.25.1", "Wrong retained companion identity")
+    require(source.get("releaseArtifact") is False and source.get("modelGraphsBundled") is False
+            and build.get("releaseArtifact") is False and build.get("updateCompatibleWithLightForge") is False
+            and build.get("executionPerformed") is False, "Retained artifact is not an isolated companion")
+    expected = source.get("expectedInstalledPackage", {})
+    require(expected.get("packageName") == "com.cyberbasslord.lightforge" and type(expected.get("versionCode")) is int
+            and expected["versionCode"] == 20401 and build.get("signerSha256") != expected.get("signerSha256"), "Wrong retained signing or asset identity")
+    require(all(build.get(key) is True for key in ("signatureVerified", "alignmentVerified", "zipVerified"))
+            and audit.get("phoneExecutionPerformed") is False and audit.get("productionReleaseArtifact") is False,
+            "Missing original artifact inspection")
+    checks = audit.get("checks", {})
+    require(all(checks.get(key) is True for key in ("apkSignatureV2V3", "aligned16KiB", "compiledJarClassHashesMatch",
+            "currentSourceBinding", "exactAssetInventoryAndBytes", "exactDexInventoryAndBytes", "exactPinnedNativeLibraryInventoryAndBytes",
+            "noAndroidPermissions", "productionSigningIdentityExcluded")), "Original audit lacks required checks")
+    archive_pins = audit.get("archiveReceipts", {})
+    require(archive_pins.get("source-receipt.json") == source_sha and archive_pins.get("build.json") == approved["build_sha256"]
+            and set(archive_pins) == {"AndroidManifest.xml", "build.json", "build.log", "source-receipt.json"}, "Unexpected audit receipt inventory")
+    for name, sha in archive_pins.items():
+        bound_file(archive, name, sha)
+    sources, compiled = source.get("sourceHashes", {}), source["build"]["compiledClassHashes"]
+    require(isinstance(sources, dict) and len(sources) == audit.get("compiledSourceFileCount")
+            and isinstance(compiled, dict) and len(compiled) == audit.get("compiledClassCount")
+            and source["build"]["compiledJarSha256"] == audit.get("compiledJarSha256"), "Original compiled closure audit mismatch")
+    for path, sha in sources.items():
+        require(isinstance(path, str) and re.fullmatch(r"(?:android|qa/inference-device-probe)/src/com/cyberbasslord/lightforge/[A-Za-z_$][A-Za-z0-9_$]*\.java", path)
+                and isinstance(sha, str) and re.fullmatch(r"[a-f0-9]{64}", sha), "Unsafe retained source pin")
+    fixture, runtime = source["fixture"], source["runtime"]
+    require(fixture.get("assetPath") == "probe/falcon-mix.wav" and fixture.get("pcm16Sha256") == FIXTURE_SHA
+            and all(type(fixture.get(key)) is int and fixture[key] == value for key, value in
+                    (("sampleRate", 44100), ("channels", 2), ("samplesPerChannel", 300032))), "Wrong retained fixture geometry")
+    native_names = {"jni/" + abi + "/" + name for abi in ("arm64-v8a", "armeabi-v7a", "x86", "x86_64")
+                    for name in ("libonnxruntime.so", "libonnxruntime4j_jni.so")}
+    require(set(runtime["files"]) == {"classes.jar"} | native_names
+            and set(runtime["notices"]) == {"onnxruntime-native-LICENSE.txt", "onnxruntime-native-ThirdPartyNotices.txt"},
+            "Wrong retained runtime inventory")
+    recorded = audit.get("sourceBinding", {})
+    require(recorded.get("historical_binding_passed") is True and recorded.get("current_source_binding_passed") is True
+            and recorded.get("source_reference_sha256") == source_sha and recorded.get("apk_sha256") == approved["apk_sha256"]
+            and recorded.get("model_manifest_sha256") == source["modelManifestSha256"]
+            and recorded.get("fixture_pcm16_sha256") == FIXTURE_SHA
+            and recorded.get("qualification_ordinals") == [0, 1, 2]
+            and type(recorded.get("declared_model_bytes")) is int and recorded["declared_model_bytes"] > 0,
+            "Original source binding audit mismatch")
+    members = _retained_apk_members(apk, approved["apk_sha256"], approved["apk_bytes"], source, source_sha, archived_source.stat().st_size, audit)
+    current_pins = {**sources,
+        "qa/inference-device-probe/build_probe.py": source["build"]["builder"]["sha256"],
+        "qa/inference-device-probe/AndroidManifest.xml": source["build"]["manifest"]["sha256"],
+        "android/native-runtime.json": runtime["manifest"]["sha256"],
+        "web/analysis/models/deux/manifest.json": source["modelManifestSha256"],
+        fixture["sourceProvenancePath"]: fixture["sourceProvenanceSha256"], fixture["sourcePath"]: fixture["sourceSha256"],
+    }
+    mismatches, verified = [], 0
+    for path, sha in current_pins.items():
+        try:
+            observed = digest(safe_file(repo, path))
+            reason = "sha256-mismatch" if observed != sha else None
+        except (OSError, ValueError):
+            observed, reason = None, "missing-or-unsafe-reference-file"
+        if reason:
+            mismatches.append({"path": path, "expected_sha256": sha, "observed_sha256": observed, "reason": reason})
+        elif path in sources:
+            verified += 1
+    return {"verification_mode": "retained-apk-and-reviewed-archive", "retained_apk_binding_passed": True,
+            "source_reference_sha256": source_sha, "apk_sha256": approved["apk_sha256"],
+            "audit_sha256": audit_sha, "audit_commit": approved["commit"],
+            "repository_source_files_verified": verified, "current_source_binding_passed": not mismatches,
+            "current_source_mismatches": mismatches, "qualification_ordinals": recorded["qualification_ordinals"],
+            "model_manifest_sha256": source["modelManifestSha256"], "declared_model_bytes": recorded["declared_model_bytes"],
+            "fixture_pcm16_sha256": FIXTURE_SHA, "newly_verified_apk_members": members,
+            "historical_only_checks": {"scope": "recorded-by-hash-bound-original-audit-not-reperformed",
+                "original_compiled_class_count": len(compiled), "original_compiled_jar_sha256": source["build"]["compiledJarSha256"],
+                "runtime_java_jar_sha256": runtime["files"]["classes.jar"]["sha256"],
+                "signature_and_signer": "original-v2-v3-signature-audit; complete-identical-apk-hash-verified-now",
+                "alignment_and_manifest_semantics": "original-audit; packaged-bytes-bound-to-identical-apk-now"},
+            "original_build_bytes_reconstructed": False, "signature_verification_performed_now": False,
+            "release_qualification_performed": False,
+            "scope": "retained-apk-and-reviewed-archive-binding-not-frozen-build-reconstruction-or-device-attestation"}
 
 
 def integer(value, minimum=0):
@@ -636,12 +872,20 @@ def main():
     parser.add_argument("--repo", type=Path, default=ROOT)
     parser.add_argument("--reference-source", type=Path)
     parser.add_argument("--reference-build", type=Path)
-    parser.add_argument("--frozen-build", type=Path, help="Frozen companion build directory whose artifacts produced the receipt")
+    reference_mode = parser.add_mutually_exclusive_group()
+    reference_mode.add_argument("--frozen-build", type=Path, help="Frozen companion build directory whose artifacts produced the receipt")
+    reference_mode.add_argument("--retained-apk", type=Path, help="Explicit recovery mode: exact retained APK bound to a reviewed durable audit; does not reconstruct original classes/JAR")
+    parser.add_argument("--reference-audit", type=Path, help="Reviewed verification.json; required only with --retained-apk")
     parser.add_argument("--require-current-source", action="store_true", help="Fail the source-binding gate if reviewed current sources differ from the historical companion")
     args = parser.parse_args()
+    if bool(args.retained_apk) != bool(args.reference_audit):
+        parser.error("--retained-apk and --reference-audit must be supplied together")
+    if args.retained_apk and (not args.reference_source or not args.reference_build):
+        parser.error("Retained APK recovery requires explicit --reference-source and --reference-build")
     source, source_sha = load(args.reference_source or args.repo / (REFERENCE + "device-probe-sources.json"))
     build, _ = load(args.reference_build or args.repo / (REFERENCE + "device-probe-build.json"))
-    identity = verify_reference(source, build, source_sha, args.repo, frozen_dir=args.frozen_build)
+    identity = (verify_retained_apk_reference(source, build, source_sha, args.repo, args.retained_apk, args.reference_audit)
+                if args.retained_apk else verify_reference(source, build, source_sha, args.repo, frozen_dir=args.frozen_build))
     report, report_sha = load(args.report)
     result = analyze(report, source, identity)
     result["current_source_gate"] = {"required": args.require_current_source,

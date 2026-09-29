@@ -1,7 +1,7 @@
 # Isolated Android inference diagnostic
 
-This is a development companion for measuring the corrected `NativeDeux` on a
-physical Android device. The current **version 2 / probe-2** artifact is
+This is a development companion for measuring `NativeDeux` on a physical Android
+device. The retained **version 2 / probe-2** artifact is
 `build/inference-device-probe/run-jipwai4p/LightForge-inference-probe.apk`
 (113,915,300 bytes), SHA-256
 `79dba57cc55d0fc61e42aa245f0f94c7a1d826aa184bb6be08026ff931712429`.
@@ -11,7 +11,10 @@ The [new artifact archive](../../research/inference-device-regression-20260928/d
 retains the build/source receipts, hashes for all 15 compiled source files and
 75 classes, build log and independent APK verification. Signature, version,
 16 KiB alignment, assets, pinned runtime and current-source binding passed.
-This artifact record contains no version 2 phone run or production release.
+The [version 2 phone attempts](../../research/inference-device-regression-20260928/device-probe-v2-phone-20260929/README.md)
+record two stopped runs without demonstrated phone acceleration. The artifact
+predates the subsequent screening-memory correction and does not validate that
+changed source. The build archive itself remains the original build-only record.
 
 Version 2 has a different development signer from the old companion. Preserve
 the old companion's exported receipts, then remove **only LightForge inference
@@ -158,6 +161,45 @@ to return at an exact deadline.
   returned the coordinator and engine close but conservatively marked native
   cleanup unconfirmed and retained the cache. Source corrections require new
   evidence; APK build success alone cannot supply it.
+
+## Analyzing an export after build-directory loss
+
+The analyzer's default frozen-build verification is unchanged and still requires
+the original source copies, compiled classes/JAR, runtime files, fixture and APK.
+If that temporary directory is unavailable, the explicit retained-APK mode can
+verify the exact saved version 2 APK against the independently reviewed audit
+committed in `6a91949a060f7bb8543266242ca01f4d2904c069`:
+
+```sh
+python3 tools/analyze_inference_device_probe.py \
+  --report /path/to/export.json --output /path/to/new-analysis.json \
+  --retained-apk /path/to/LightForge-inference-probe-2.apk \
+  --reference-audit research/inference-device-regression-20260928/device-probe-v2-79dba57cc55d/verification.json \
+  --reference-source research/inference-device-regression-20260928/device-probe-v2-79dba57cc55d/source-receipt.json \
+  --reference-build research/inference-device-regression-20260928/device-probe-v2-79dba57cc55d/build.json \
+  --require-current-source
+```
+
+The audit/APK/source/build hashes are an explicit reviewed allowlist in the
+analyzer. An APK or supplied receipt cannot authorize a different audit. This
+mode verifies the complete APK before and after bounded, read-only ZIP inspection,
+rejects duplicate or unexpected members, and checks DEX, all native libraries,
+fixture, source receipt and notices against their separate pins. Every member,
+including packaged manifest, resources and signature metadata, is bound to the
+complete identical APK. Current source, builder, manifest, runtime-manifest,
+model-manifest and original-fixture pins are checked separately; missing or
+changed files fail `--require-current-source`.
+
+The September 29 screening correction changes `NativeDeux.java`, so the retained
+version 2 APK now fails that current-source gate as intended. Historical analysis
+may omit the flag; the resulting failed current-source binding remains explicit.
+
+The resulting identity explicitly labels original class/JAR verification,
+signature validity, alignment and manifest semantics as **historical audit
+checks not reperformed**. It does not recreate original build bytes or claim a
+fresh signature/toolchain check. The retained APK mode is mutually exclusive
+with `--frozen-build` and does not change any production release gate, attest a
+phone, or convert projected savings into measured whole-job improvement.
 
 ## Fixture attribution and source references
 

@@ -6,6 +6,37 @@ The production version and release artifacts remain unchanged. The existing
 source-bound release prerequisite must continue to reject these changed sources
 until new evidence supports the next release.
 
+## September 29 follow-up
+
+The [version 2 phone attempts](device-probe-v2-phone-20260929/README.md) have not
+established acceleration. Run01 stopped at the severe-thermal guard before a
+complete passage. Run02's terminal UI reported six completed passages and clean
+native retirement; captured profiles show baseline execution after a
+memory-pressure screening abort. Only 400 of its 1,115 exported lines were
+retrieved before the phone connector failed, so its final cancellation reason
+remains unknown. Both attempts ran the source snapshot at `6a91949a`.
+
+The subsequent screening correction removes an unnecessary 79,933,440-byte
+activation copy, reconstructing the original front output into the existing
+buffer before each temporal trial. It also skips an ineligible larger screening
+option without discarding a measured smaller option that passes a fresh memory
+check. Runtime, budget, cancellation and retirement failures discard nominations.
+Memory thresholds, original graphs, precision, context and complete-passage
+qualification remain unchanged. This correction requires its own validation;
+the installed version 2 companion does not contain it.
+
+Fresh [original-model integration](nomination-integration-20260929/README.md)
+passes seven complete, finite outputs identical to the original reference and
+four observed native cancellation modes with recovery. The
+[focused screening checks](nomination-memory-host-20260929/README.md) pass seven
+real-JNI scenarios. Historical-source negative controls demonstrate an exact
+79,933,440-byte reduction in screening's measured direct-buffer growth. Synthetic
+headroom and disclosed timing delays test selection and abort behavior; they
+provide no speedup evidence. The [focused regression receipt](nomination-focused-tests-20260929/receipt.json)
+records 42 passing Python/JVM tests and seven passing bridge tests; four historical
+frozen-build checks skip because their original build directories are unavailable.
+The separate retained-APK verification tests pass. Production release remains held.
+
 ## Observed regression
 
 The retained 2.4.0 and 2.4.1 diagnostics describe the same phone model, Android
@@ -77,18 +108,18 @@ No graph, trained weight, precision, attention context, band/frame coverage,
 sample clock or output length is reduced. Historical 2.4.1 proof files remain
 historical and are not rewritten as evidence for this correction.
 
-## Validation status
+## Prior validation at `6a91949a`, before the screening correction
 
-The current owner-interrupt correction passes both Android-first and
+That owner-interrupt snapshot passes both Android-first and
 host-JSON-first Java compilation: 61 classes from the same eleven source files,
-with no compiler diagnostics. The [current compile receipt](native-profile-json-portability.owner-interrupt.json)
-binds that snapshot. The [current portable suite](portable-python-owner-interrupt-tests.json)
+with no compiler diagnostics. The [compile receipt](native-profile-json-portability.owner-interrupt.json)
+binds that snapshot. Its [portable suite](portable-python-owner-interrupt-tests.json)
 passes **642 tests**: 571 current Python/JVM tests plus 71 explicit quality-tool
 tests, with all 894 source hashes unchanged before and after execution. Exact
 logs are retained in `portable-python-owner-interrupt-logs/`. The existing
 exclusions for immutable 2.2.2/2.2.3 historical receipts remain unchanged.
 
-The [current original-model integration attempt 02](../frequency-integration-attempt-02-passed/README.md)
+The [original-model integration attempt 02](../frequency-integration-attempt-02-passed/README.md)
 passed both JNI processes and all seven complete-output checks. Four- and
 eight-worker candidates execute all 27 graphs with 1,727 calls; baseline paths
 retain 335. Every finite output is byte-identical to the original demo
@@ -101,7 +132,7 @@ The preceding failed attempt is retained separately; its owner-interrupt
 failure is not rewritten as a success.
 
 The [independent Falcon and Stella fixture checks](../inference-frequency-fixtures-20260928/README.md)
-also pass on the current four- and eight-worker candidates. All four complete
+also pass on that snapshot's four- and eight-worker candidates. All four complete
 outputs match their committed original hashes, with full B16/tail coverage.
 The archive retains exact receipts, profiles, logs and source snapshots, plus
 archive-time source/class/input/output hash checks. These and integration02
@@ -110,11 +141,10 @@ or sustained whole-job speedup.
 
 Earlier snapshots remain explicitly historical: 702 JavaScript tests,
 599 Python/quality-tool tests, the later 637-test snapshot, and their associated
-compile receipts are preserved. They do not replace the current 642-test
-source-bound result.
+compile receipts are preserved. Each result binds its own source snapshot.
 
-The current combined temporal B1 / frequency B16 implementation passed the
-[new controlled host qualification](frequency-complete-host-qualification.json).
+That combined temporal B1 / frequency B16 snapshot passed the
+[controlled host qualification](frequency-complete-host-qualification.json).
 All eight complete original-model outputs were finite and byte-identical.
 Three measured AB/BA/AB pairs reduced median passage wall time from
 **47.838871175 to 22.687393368 seconds, 52.575400%**. Each measured pair improved

@@ -28,7 +28,7 @@ each frequency layer has 81 full batches and one final five-frame batch. This
 does not shorten the temporal context or remove any model computation.
 
 The combined candidate has 1,727 graph calls per complete passage: 720 temporal,
-984 frequency, 22 front and one mask head. The reference remains at 335 calls;
+984 frequency, 22 mask-head calls and one front call. The reference remains at 335 calls;
 the earlier temporal-only candidate had 875. More calls describe different
 batching, not less model work. Front and mask-head scheduling remain at the
 reference configuration. Frequency diagnostics identify the companion geometry
@@ -69,6 +69,20 @@ qualification succeeds, ordinary passages use the baseline. A mismatch, failed
 comparison or unavailable memory keeps the baseline for the rest of that job.
 Core count and current native memory headroom remain admission constraints;
 Java heap free space is not a native-memory signal.
+
+Screening reuses the existing activation buffer. Before each temporal trial it
+recomputes the original front graph from the unchanged spectrum, avoiding a
+79,933,440-byte activation copy. That restoration is outside the cold temporal
+trial timer and inside the total screening budget. Memory is checked before and
+after restoration. An ineligible screening option is skipped; it cannot discard
+an independently exact, faster option that still meets a fresh final memory
+check. A runtime failure, cancellation, budget abort or retirement failure
+discards the nomination. The memory reserves and full-passage qualification
+requirements are unchanged.
+
+The [version 2 phone attempts](../research/inference-device-regression-20260928/device-probe-v2-phone-20260929/README.md)
+precede this screening correction and do not validate it. They have not
+established a phone speedup or removed the production release hold.
 
 Screening, candidate replays, output checks and interrupted probes consume a
 **360-second extra-work budget**. The screen has its own 60-second checkpoint.
