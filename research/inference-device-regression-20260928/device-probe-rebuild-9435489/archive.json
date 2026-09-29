@@ -1,0 +1,36 @@
+{
+  "apkSha256": "647c6e69fed382193e8400845a206bd41fa8bffa11b4490907995ed195aa99d1",
+  "inventory": {
+    "AndroidManifest.xml": {
+      "bytes": 1130,
+      "sha256": "96f81478a0f590d217cbe0edda4b53070a3a0b6aba90cf70b56635fb80836bc9"
+    },
+    "LightForge-inference-probe.apk.json": {
+      "bytes": 604,
+      "sha256": "ecf40a5562134aa76d0372c4fc58b16496bf241b082fbd38fda85950631df67c"
+    },
+    "LightForge-inference-probe.apk.sha256": {
+      "bytes": 97,
+      "sha256": "a09e7f1bdc1e42713873aaf044933355c1f69b2e31a4cf216166b78638752c8c"
+    },
+    "README.md": {
+      "bytes": 1582,
+      "sha256": "8d043dd7e024f1a518fcdebc8bc9b6ea2107f75f422bc1382e961358d16e3440"
+    },
+    "build_probe.py": {
+      "bytes": 23037,
+      "sha256": "5a2fb6bd4b93318acf78ec3f5d6a8e6d2dea23e7723ae2ee9af7ea565401de88"
+    },
+    "source-receipt.json": {
+      "bytes": 17181,
+      "sha256": "95c2ef317addf702cf3e6b9a6be2775c707bd6f369e6b2de87bd3427a38188e8"
+    },
+    "verification.json": {
+      "bytes": 1060,
+      "sha256": "08a4b15e9e92a4d09d1d2c0832b25fa833ba7ee58b8757ed1c8bb91af4ff493b"
+    }
+  },
+  "schema": "lightforge.probe-rebuild-archive.v1",
+  "sourceCommit": "9435489a20ed48dbc5950e0178af36d183f06c06",
+  "sourceReceiptSha256": "95c2ef317addf702cf3e6b9a6be2775c707bd6f369e6b2de87bd3427a38188e8"
+}

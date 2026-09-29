@@ -48,6 +48,11 @@ retained and are not cited as evidence. This fresh result is fixed host geometry
 only. It does not establish physical-phone memory eligibility or admission,
 sustained scheduler policy, net qualification payback, or whole-analysis speed.
 
+The [isolated diagnostic companion rebuild](device-probe-rebuild-9435489/README.md)
+binds the corrected inference sources at `9435489`. Its APK is separately signed,
+has no requested permissions, and remains a staged phone test artifact; it has
+not been installed or used to infer device performance.
+
 ## Observed regression
 
 The retained 2.4.0 and 2.4.1 diagnostics describe the same phone model, Android
@@ -86,8 +91,10 @@ call durations must not be summed as elapsed passage time.
 - Model-file extraction and verification occur in common preflight before either
   arm's timer. This cost remains in whole-passage/job time and is not attributed
   only to the first baseline. Fresh sessions do not imply cold filesystem caches.
-- Three alternating complete-passage comparisons use consecutive useful passage
-  ordinals 0, 1 and 2. Both arms use fresh original sessions, identical observer
+- Primary qualification uses three alternating complete-passage comparisons at
+  consecutive useful passage ordinals 0, 1 and 2. If the eight-worker trial at
+  ordinal 0 is rejected, bounded four-worker qualification may use ordinals
+  1, 2 and 3. Both arms use fresh original sessions, identical observer
   settings, Float32 outputs and full 27-graph geometry. Baseline output remains
   the useful output of a paired passage. Complete finite outputs must hash
   identically; every pair must improve by at least 5%, and the median by 15%.
