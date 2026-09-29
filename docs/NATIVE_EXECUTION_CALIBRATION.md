@@ -50,9 +50,11 @@ A bounded cold temporal-graph screen can nominate one four- or eight-worker
 candidate; it cannot authorize accelerated production or establish frequency
 performance. Complete-passage pairs qualify the combined temporal and frequency
 configuration. Host frequency-graph observations do not establish improved phone
-performance. New qualification requires three
+performance. Ordinary new qualification requires three
 alternating baseline/candidate pairs at useful native-passage ordinals **0, 1
-and 2** (baseline first, candidate first, baseline first). Each arm creates fresh
+and 2** (baseline first, candidate first, baseline first). The bounded alternate
+described below instead uses **1, 2 and 3** after a rejected eight-worker pair.
+Each arm creates fresh
 original sessions for all 27 graphs and performs
 the complete read, transform, inference and two-stem reconstruction with matching
 observer settings. Shared model-cache preparation precedes both nomination and
@@ -79,6 +81,19 @@ an independently exact, faster option that still meets a fresh final memory
 check. A runtime failure, cancellation, budget abort or retirement failure
 discards the nomination. The memory reserves and full-passage qualification
 requirements are unchanged.
+
+If eight workers win this temporal screen while four workers also pass its
+exact-output, timing and current-memory checks, the four-worker result remains
+an alternate. Only a completed, finite, byte-identical first full-passage pair
+showing that eight workers miss the 5% gain can trigger it. The eight-worker
+output is rejected and the useful baseline output advances the song. Four
+workers then need three new alternating complete pairs on useful passages
+1, 2 and 3, with fresh memory checks and the same shared 360-second extra-work
+cap and payback margin. Any output mismatch, runtime failure, cancellation,
+ineligible memory or unaffordable remaining work returns to baseline. Later
+eight-worker qualification failures do not restart another series. The rejected
+pair remains visible in the durable evidence; it does not count toward four
+workers' qualification.
 
 The [version 2 phone attempts](../research/inference-device-regression-20260928/device-probe-v2-phone-20260929/README.md)
 precede this screening correction and do not validate it. They have not
@@ -118,8 +133,8 @@ is a conservative regression guard, not a paired speedup or output-equivalence
 measurement, and cannot identify thermal throttling. Initial qualification and
 the fresh check for a saved policy still require exact same-input pairs.
 
-The new `passage-policy-v3.bin` uses the
-`complete-passage-v3-frequency-b16-useful-controls` execution identity. It binds
+This isolated candidate uses `passage-policy-v4.bin` and the
+`complete-passage-v4-frequency-b16-bounded-alternate` execution identity. It binds
 the original model, runtime, combined complete-passage scheduler, OS/device
 identity digest and processor count. The binary cache schema remains version 2;
 the changed execution identity and filename prevent temporal-only qualification

@@ -69,7 +69,7 @@ GRAPH_SCOPES = {
     "packProcessCpuScope": COPY_PROCESS_SCOPES, "scatterProcessCpuScope": COPY_PROCESS_SCOPES,
 }
 POLICY_REASONS = frozenset((
-    "unmeasured", "fresh-pair-required", "nominated", "initial-pair", "qualification-wait",
+    "unmeasured", "fresh-pair-required", "nominated", "initial-pair", "alternate-pending", "alternate-pair", "qualification-wait",
     "qualification-pair", "slow-passage-recheck", "lease-recheck", "qualified-lease",
     "measured-passage-improvement", "qualification-pending", "invalid-nomination", "unfinished-pair",
     "invalid-plan", "memory-ineligible", "short-job", "probe-budget", "missed-qualification",
@@ -100,7 +100,7 @@ def _policy_record(raw):
         re.fullmatch(r"[A-Za-z][A-Za-z0-9]*=[^\s;=]+", token) for token in tokens)
     enums = ({"state": {"baseline", "qualified", "provisional"}, "workers": {"0", "4", "8"},
               "reason": POLICY_REASONS, "paybackScope": {"projected-not-measured"}}
-             if schema == POLICY_SCHEMA else {"role": {"qualification", "recheck"}, "workers": {"4", "8"}}
+             if schema == POLICY_SCHEMA else {"role": {"qualification", "recheck", "rejected"}, "workers": {"4", "8"}}
              if schema == PAIR_SCHEMA else {"comparisonScope": {"unmatched-inputs"}})
     numbers = ({"extraNanos": 2**63 - 1, "extraCapNanos": 360_000_000_000,
                 "projectedAccruedSavingsNanos": 2**63 - 1, "qualificationPairs": 3,
@@ -169,7 +169,7 @@ def _passage_policy(records=(), encoded=None, *, source):
         valid &= rows == decoded
     if parsed[0].get("schema") == POLICY_SCHEMA:
         result["controller"] = parsed[0]
-    qualification, rechecks, controls = 0, 0, 0
+    qualification, rechecks, rejected, controls = 0, 0, 0, 0
     for row in parsed[1:]:
         if row.get("schema") == CONTROL_SCHEMA:
             result["controls"].append(row)
@@ -181,14 +181,43 @@ def _passage_policy(records=(), encoded=None, *, source):
             continue
         result["pairs"].append(row)
         valid &= controls == 0
-        if row.get("role") == "qualification":
+        if row.get("role") == "rejected":
+            rejected += 1
+            valid &= (rejected == 1 and qualification == rechecks == 0
+                      and row["index"]["value"] == row["ordinal"]["value"] == 0
+                      and row["workers"] == "8" and row["candidateFirst"] is False
+                      and all(row[flag] is True for flag in ("finite", "exact", "fullGeometry", "coldSessions")))
+            baseline, candidate, extra = (row[key]["value"] for key in PAIR_NANOS)
+            valid &= (baseline is not None and candidate is not None and extra is not None
+                      and 0 < baseline <= 3_600_000_000_000 and 0 < candidate <= 3_600_000_000_000
+                      and candidate * 100 > baseline * 95
+                      and min(baseline, candidate) <= extra <= 360_000_000_000)
+        elif row.get("role") == "qualification":
             valid &= rechecks == 0 and qualification < 3 and row["index"]["value"] == qualification
+            if rejected:
+                baseline, candidate = (row[key]["value"] for key in ("baselineNanos", "candidateNanos"))
+                valid &= (row["ordinal"]["value"] == qualification + 1 and row["workers"] == "4"
+                          and row["candidateFirst"] is (qualification % 2 == 1)
+                          and all(row[flag] is True for flag in ("finite", "exact", "fullGeometry", "coldSessions"))
+                          and baseline is not None and candidate is not None and baseline > 0
+                          and candidate * 100 <= baseline * 95)
             qualification += 1
         elif row.get("role") == "recheck":
             rechecks += 1
             valid &= rechecks <= 1 and row["index"]["value"] == 0
+            if rejected:
+                valid &= (row["ordinal"]["value"] == qualification + 1 and row["workers"] == "4"
+                          and row["candidateFirst"] is (qualification % 2 == 1))
     if result["controller"] is not None:
         valid &= result["controller"]["qualificationPairs"]["value"] == qualification
+        if rejected:
+            controller = result["controller"]
+            valid &= (controller["workers"] == "4" and controller["seeded"] is False
+                      and controller["currentJobPairs"]["value"] in
+                      ((1 + qualification,) if rechecks == 0 else (1 + qualification, 2 + qualification))
+                      and (controller["state"] != "qualified" or qualification == 3 and rechecks == 0)
+                      and (controller["reason"] != "alternate-pending" or qualification == rechecks == 0
+                           and controller["state"] == "provisional"))
     result["status"] = "observed" if valid else "invalid-or-incomplete"
     return result
 

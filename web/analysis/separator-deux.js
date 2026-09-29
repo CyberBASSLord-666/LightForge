@@ -93,9 +93,10 @@ async function create({ort,baseUrl,onProgress=()=>{},checkpoint,nativePredict,te
  }
  async function usefulPassages(read,passageCount,onProgress){
   // Budget calibration only against verified uncached, non-silent work. Keep
-  // one bounded passage live at a time; audio and checkpoints are not retained.
-  // Processing still rechecks both, so this scan never substitutes for recovery.
-  const useful=new Uint8Array(passageCount);let remaining=0;
+  // one bounded passage live at a time; retain only its presence classification.
+  // Processing rechecks checkpoints; a pinned source can reuse its classification
+  // without decoding the same passage twice.
+  const useful=new Uint8Array(passageCount),presence=new Uint8Array(passageCount);let remaining=0;
   for(let index=0;index<passageCount;index++){
    try{
     if(closed)throw Error('Studio separation is closed.');
@@ -104,7 +105,10 @@ async function create({ort,baseUrl,onProgress=()=>{},checkpoint,nativePredict,te
     if(!validCheckpoint(cached)){
      const stereo=await read(start-HALO,SAMPLES);
      if(closed)throw Error('Studio separation is closed.');
-     if(passagePeak(stereo)>=1e-7){useful[index]=1;remaining++;}
+     const peak=passagePeak(stereo);
+     if(peak>=1e-7){presence[index]=2;useful[index]=1;remaining++;}
+     else if(peak<1e-7)presence[index]=1;
+     else return null; // An indeterminate peak cannot calibrate native work.
     }
    }catch(error){
     if(closed||error?.name==='AbortError')throw error;
@@ -114,18 +118,28 @@ async function create({ort,baseUrl,onProgress=()=>{},checkpoint,nativePredict,te
    }
    onProgress({progress:0,processedSeconds:0,passageCount,passagesCompleted:0,restoredPassages:0,checkpointSaved:false,message:'Checking upcoming passages '+(index+1)+' of '+passageCount});
   }
-  return {useful,remaining};
+  return {useful,presence,remaining};
  }
  return {manifest,predict,async process(read,total,onChunk,onProgress=()=>{}){
   if(!Number.isSafeInteger(total)||total<1||total>RATE*14401)throw Error('Invalid studio separation length.');
+  // Only a caller with a pinned, immutable source may reuse pre-scan results.
+  // Generic readers can change between reads and keep the original recheck.
+  const immutableSource=read?.immutableSource===true;
   let pending=null,emitted=0,chunks=0,restoredPassages=0;const timing=stageClock(),passageCount=1+Math.max(0,Math.ceil((total-CORE)/STRIDE));
   const usefulPlan=nativePredict?await usefulPassages(read,passageCount,onProgress):null;
   for(let start=0;start<total;start+=STRIDE){
    if(closed)throw Error('Studio separation is closed.');
-   const keep=Math.min(CORE,total-start),last=start+CORE>=total,stereo=await read(start-HALO,SAMPLES);
-   const peak=passagePeak(stereo);
+   const keep=Math.min(CORE,total-start),last=start+CORE>=total;
+   let stereo,peak;
+   if(!immutableSource){stereo=await read(start-HALO,SAMPLES);peak=passagePeak(stereo);}
    const key='deux-'+start,cached=await checkpoint?.readFloats(key);
    const restored=validCheckpoint(cached);
+   if(immutableSource&&!restored){
+    const presence=nativePredict&&usefulPlan?.presence[chunks];
+    if(presence===1)peak=0;
+    else if(presence===2)peak=1e-7;
+    else{stereo=await read(start-HALO,SAMPLES);peak=passagePeak(stereo);}
+   }
    const usefulAfterCurrent=usefulPlan?usefulPlan.remaining-usefulPlan.useful[chunks]:-1;
    const report=(p,extra={})=>onProgress({progress:Math.min(1,(start+(last?keep:STRIDE)*p)/total),processedSeconds:start/RATE,passageIndex:chunks+1,passageCount,passagesCompleted:chunks,restoredPassages,checkpointSaved:false,message:'Studio · passage '+(chunks+1)+' of '+passageCount+' · '+Math.round(p*100)+'%',...extra});
    report(0);

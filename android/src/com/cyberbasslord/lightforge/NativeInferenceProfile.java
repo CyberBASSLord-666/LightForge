@@ -121,10 +121,10 @@ final class NativeInferenceProfile {
         if (accepted != null) passagePolicyRecords = accepted;
     }
 
-    private static final String POLICY_REASONS = "(?:unmeasured|fresh-pair-required|nominated|initial-pair|qualification-wait|qualification-pair|slow-passage-recheck|lease-recheck|qualified-lease|measured-passage-improvement|qualification-pending|invalid-nomination|unfinished-pair|invalid-plan|memory-ineligible|short-job|probe-budget|missed-qualification|payback-unavailable|short-renewal|invalid-pair|pair-regression|invalid-pair-order|median-regression|invalid-timing|probe-aborted|external-baseline|cancelled|memory-fallback|thermal-guard|output-mismatch|memory-pressure|screen-budget|screen-no-win|runtime-rejected|unknown-work|control-required|slow-passage-control|control-accepted|control-regression|control-incomplete|unfinished-control)";
+    private static final String POLICY_REASONS = "(?:unmeasured|fresh-pair-required|nominated|initial-pair|alternate-pending|alternate-pair|qualification-wait|qualification-pair|slow-passage-recheck|lease-recheck|qualified-lease|measured-passage-improvement|qualification-pending|invalid-nomination|unfinished-pair|invalid-plan|memory-ineligible|short-job|probe-budget|missed-qualification|payback-unavailable|short-renewal|invalid-pair|pair-regression|invalid-pair-order|median-regression|invalid-timing|probe-aborted|external-baseline|cancelled|memory-fallback|thermal-guard|output-mismatch|memory-pressure|screen-budget|screen-no-win|runtime-rejected|unknown-work|control-required|slow-passage-control|control-accepted|control-regression|control-incomplete|unfinished-control)";
     private static final String POLICY_HEADER = "schema=native-passage-policy-v1 state=(?:baseline|qualified|provisional) workers=(?:0|4|8) reason=" + POLICY_REASONS +
         " extraNanos=[0-9]{1,19} extraCapNanos=360000000000 projectedAccruedSavingsNanos=[0-9]{1,19} qualificationPairs=[0-3] currentJobPairs=[0-9]{1,4} seeded=(?:true|false) activePassages=[0-9]{1,4} leasePassages=(?:8|12) paybackScope=projected-not-measured";
-    private static final String POLICY_PAIR = "schema=native-passage-pair-v1 role=(?:qualification|recheck) index=[0-2] ordinal=[0-9]{1,4} candidateFirst=(?:true|false) workers=(?:4|8) baselineNanos=[0-9]{1,19} candidateNanos=[0-9]{1,19} extraNanos=[0-9]{1,19} outputSha256=[a-f0-9]{64} finite=(?:true|false) exact=(?:true|false) fullGeometry=(?:true|false) coldSessions=(?:true|false)";
+    private static final String POLICY_PAIR = "schema=native-passage-pair-v1 role=(?:qualification|recheck|rejected) index=[0-2] ordinal=[0-9]{1,4} candidateFirst=(?:true|false) workers=(?:4|8) baselineNanos=[0-9]{1,19} candidateNanos=[0-9]{1,19} extraNanos=[0-9]{1,19} outputSha256=[a-f0-9]{64} finite=(?:true|false) exact=(?:true|false) fullGeometry=(?:true|false) coldSessions=(?:true|false)";
     private static final String POLICY_CONTROL = "schema=native-passage-control-v1 ordinal=[0-9]{1,4} baselineNanos=[0-9]{1,19} previousBaselineNanos=[0-9]{1,19} candidateMaxNanos=[0-9]{1,19} candidateSamples=3 accepted=(?:true|false) comparisonScope=unmatched-inputs";
 
     /** Delimiters cannot occur in validated tokens. The durable summary needs no extra callback. */
@@ -148,7 +148,7 @@ final class NativeInferenceProfile {
     private static String[] validatedPassagePolicy(String[] records) {
         if (records.length > MAX_POLICY_RECORDS) return null;
         if (records.length == 0) return new String[0];
-        int qualification = 0, rechecks = 0, controls = 0;
+        int qualification = 0, rechecks = 0, rejected = 0, controls = 0;
         for (int i = 0; i < records.length; i++) {
             String record = records[i];
             if (record == null || record.length() > MAX_POLICY_RECORD_BYTES) return null;
@@ -169,7 +169,10 @@ final class NativeInferenceProfile {
             if (i > 0) {
                 if (control) { if (++controls > 1) return null; continue; }
                 if (controls != 0) return null;
-                if (record.contains(" role=qualification ")) {
+                if (record.contains(" role=rejected ")) {
+                    if (++rejected > 1 || qualification != 0 || rechecks != 0 || !record.contains(" index=0 ") ||
+                        !record.contains(" ordinal=0 ") || !record.contains(" workers=8 ")) return null;
+                } else if (record.contains(" role=qualification ")) {
                     if (rechecks != 0 || qualification >= 3 || !record.contains(" index=" + qualification + " ")) return null;
                     qualification++;
                 } else if (++rechecks > 1 || !record.contains(" index=0 ")) return null;

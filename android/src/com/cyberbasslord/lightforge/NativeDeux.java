@@ -116,11 +116,11 @@ public final class NativeDeux implements AutoCloseable {
         this.modelDirectory=context==null?directory.getCanonicalFile():new File(context.getCacheDir(),"native-deux/"+hex(MessageDigest.getInstance("SHA-256").digest(source)));
         if(!this.modelDirectory.isDirectory() && !this.modelDirectory.mkdirs())throw new IOException("Not enough storage to prepare studio analysis.");
         executionKey=new NativeExecutionPolicy.Key(hex(MessageDigest.getInstance("SHA-256").digest(source)),
-            "native-deux-"+RUNTIME_VERSION+"-complete-passage-v3-frequency-b16-useful-controls",
+            "native-deux-"+RUNTIME_VERSION+"-complete-passage-v4-frequency-b16-bounded-alternate",
             context==null?System.getProperty("os.name")+":"+System.getProperty("os.version"):android.os.Build.FINGERPRINT,
             context==null?System.getProperty("os.arch"):android.os.Build.MANUFACTURER+":"+android.os.Build.MODEL+":"+Arrays.toString(android.os.Build.SUPPORTED_ABIS),
             Runtime.getRuntime().availableProcessors());
-        executionPolicyFile=context==null?hostExecutionPolicyFile:new File(this.modelDirectory,"passage-policy-v3.bin");
+        executionPolicyFile=context==null?hostExecutionPolicyFile:new File(this.modelDirectory,"passage-policy-v4.bin");
         NativePassagePolicy.Seed seed=executionPolicyFile==null?null:NativePassagePolicy.load(executionPolicyFile,executionKey.identity());
         passagePolicy=new NativePassagePolicy(executionKey.identity(),seed);
         nominationAttempted=seed!=null;
@@ -881,7 +881,7 @@ public final class NativeDeux implements AutoCloseable {
     private void nominate(File audio,long startSample,NativeDeuxTransform.Check outerCheck,NativeInferenceProfile profile)throws Exception{
         long started=System.nanoTime();
         NativeDeuxTransform.Check check=()->{outerCheck.check();if(System.nanoTime()-started>=60000000000L)throw new ProbeAborted("screen-budget");};
-        int winner=0;String rejection="screen-no-win";
+        int winner=0,alternate=0;String rejection="screen-no-win";
         PipelineFailures failures=new PipelineFailures(null);
         probing=true;
         try{
@@ -922,6 +922,11 @@ public final class NativeDeux implements AutoCloseable {
                     if(!NativeExecutionPolicy.temporalAllowed(screen[i],executionKey,headroom)){memorySkipped=true;continue;}
                     if(exactFasterNanos[i]<best){winner=screen[i].temporalWorkers;best=exactFasterNanos[i];}
                 }
+                // Preserve the independently exact and memory-eligible smaller
+                // option if a faster eight-worker micro-screen loses its first
+                // complete-passage comparison. It still needs three full pairs.
+                if(winner==8&&screen.length>1&&screen[1].temporalWorkers==4&&exactFasterNanos[1]>0
+                        &&NativeExecutionPolicy.temporalAllowed(screen[1],executionKey,headroom))alternate=4;
                 if(winner==0&&memorySkipped)rejection="memory-pressure";
             }
         }catch(ProbeAborted stopped){
@@ -941,7 +946,7 @@ public final class NativeDeux implements AutoCloseable {
             passagePolicy.probeAborted(cleanCancellation(failures.primary)?"cancelled":"runtime-rejected",extra);
             failures.rethrow();
         }
-        if(winner!=0)passagePolicy.nominate(winner,extra);else passagePolicy.probeAborted(rejection,extra);
+        if(winner!=0)passagePolicy.nominate(winner,alternate,extra);else passagePolicy.probeAborted(rejection,extra);
     }
 
     /** Hash raw Float32 bits in a bounded buffer; no duplicate multi-megabyte tensor allocation. */

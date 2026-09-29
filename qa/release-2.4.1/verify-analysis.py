@@ -339,19 +339,23 @@ def verify_scheduler_calibration(value):
                     and all(policy[key] == expected for key, expected in fixed.items())
                     and policy['state'] in {'baseline', 'provisional'} and policy['workers'] in {'0', '4', '8'}
                     and policy['qualificationPairs'] in {'0', '1'} and policy['currentJobPairs'] in {'0', '1'}
-                    and policy['reason'] in {'qualification-pending', 'payback-unavailable', 'pair-regression',
+                    and policy['reason'] in {'qualification-pending', 'alternate-pending', 'payback-unavailable', 'pair-regression',
                          'screen-no-win', 'screen-budget', 'memory-pressure', 'memory-ineligible', 'runtime-rejected', 'probe-budget'}
                     and re.fullmatch('[0-9]{1,19}', policy['extraNanos'])
                     and 0 < int(policy['extraNanos']) <= 360000000000,
                     'Automatic first-passage decision is incomplete, over budget, or improperly qualified')
             if value['automaticPairObserved']:
                 pair = parsed_policy[1]
+                alternate_pending = policy['reason'] == 'alternate-pending'
                 fixed_pair = dict(schema='native-passage-pair-v1', index='0', ordinal='0', candidateFirst='false',
-                                  workers=policy['workers'], outputSha256=run['outputSha256'], finite='true', exact='true',
+                                  workers='8' if alternate_pending else policy['workers'], outputSha256=run['outputSha256'], finite='true', exact='true',
                                   fullGeometry='true', coldSessions='true')
                 require(set(pair) == set(fixed_pair) | {'role', 'baselineNanos', 'candidateNanos', 'extraNanos'}
                         and all(pair[key] == expected for key, expected in fixed_pair.items())
-                        and pair['role'] in {'qualification', 'recheck'} and pair['workers'] in {'4', '8'}
+                        and pair['role'] in ({'rejected'} if alternate_pending else {'qualification', 'recheck'})
+                        and (not alternate_pending or (policy['state'] == 'provisional' and policy['workers'] == '4'
+                            and int(pair['candidateNanos']) * 100 > int(pair['baselineNanos']) * 95))
+                        and pair['workers'] in {'4', '8'}
                         and all(re.fullmatch('[0-9]{1,19}', pair[key]) and 0 < int(pair[key]) <= 3600000000000
                                 for key in ['baselineNanos', 'candidateNanos', 'extraNanos'])
                         and min(int(pair['baselineNanos']), int(pair['candidateNanos'])) <= int(pair['extraNanos']) <= int(policy['extraNanos'])

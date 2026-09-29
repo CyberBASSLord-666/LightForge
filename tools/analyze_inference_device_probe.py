@@ -102,8 +102,8 @@ def bound_file(root, relative, sha, size=None):
     return path
 
 
-def bound_qualification_ordinals(policy_path):
-    """Recognize reviewed schedule forms in the hash-bound frozen policy only."""
+def bound_qualification_schedules(policy_path):
+    """Recognize reviewed schedules in the hash-bound frozen policy only."""
     policy = policy_path.read_text(encoding="utf-8")
     policy = re.sub(r"/\*.*?\*/|//[^\n]*", "", policy, flags=re.S)
     compact = re.sub(r"\s+", "", policy)
@@ -115,7 +115,18 @@ def bound_qualification_ordinals(policy_path):
         expression = "qualificationCount" + ("*" + match.group(1) if match.group(1) else "")
         require(spacing <= 16 and "pair.ordinal!=" + expression + "||" in compact,
                 "Frozen qualification schedule checks disagree")
-        return [0, spacing, 2 * spacing]
+        return [0, spacing, 2 * spacing], None
+    # Four workers start at ordinal one only after an exact first eight-worker
+    # pair loses. The seed validator must bind that shifted series too.
+    if "intdue=qualificationOrigin+qualificationCount;" in compact:
+        require(all(anchor in compact for anchor in (
+            "ordinal!=qualificationOrigin||remainingUseful<24",
+            "pair.ordinal!=qualificationOrigin+qualificationCount||",
+            "rejected=pair;workers=alternateWorkers;alternateWorkers=0;qualificationOrigin=1;",
+            "if(origin!=0&&(origin!=1||seed.workers!=4))returnfalse;",
+            "p.ordinal!=origin+i||p.candidateFirst!=((i&1)!=0)",
+        )), "Frozen alternate qualification schedule checks disagree")
+        return [0, 1, 2], [1, 2, 3]
     raise ValueError("Unrecognized frozen qualification schedule")
 
 
@@ -194,7 +205,8 @@ def verify_reference(source, build, source_sha, repo, frozen_dir=None):
     sizes = [row["bytes"] for row in manifest["files"].values()]
     require(sizes and all(type(size) is int and size > 0 for size in sizes), "Invalid model byte inventory")
     bound_file(frozen, build["apk"], build["sha256"], build["bytes"])
-    ordinals = bound_qualification_ordinals(safe_file(frozen, "java-src/com/cyberbasslord/lightforge/NativePassagePolicy.java"))
+    ordinals, alternate_ordinals = bound_qualification_schedules(
+        safe_file(frozen, "java-src/com/cyberbasslord/lightforge/NativePassagePolicy.java"))
 
     pins = {
         "qa/inference-device-probe/build_probe.py": build_source["builder"]["sha256"],
@@ -222,7 +234,8 @@ def verify_reference(source, build, source_sha, repo, frozen_dir=None):
             "historical_compiled_classes_verified": len(compiled),
             "repository_source_files_verified": verified_sources,
             "current_source_binding_passed": not current_mismatches, "current_source_mismatches": current_mismatches,
-            "qualification_ordinals": ordinals, "model_manifest_sha256": source["modelManifestSha256"],
+            "qualification_ordinals": ordinals, "alternate_qualification_ordinals": alternate_ordinals,
+            "model_manifest_sha256": source["modelManifestSha256"],
             "declared_model_bytes": sum(sizes), "fixture_pcm16_sha256": FIXTURE_SHA,
             "scope": "frozen-artifact-and-build-receipt-binding-not-device-attestation"}
 
@@ -722,9 +735,16 @@ def analyze(report, source, identity):
             if extra > controller["extraCapNanos"]["value"]:
                 warnings.append(prefix + "observed-extra-cost-exceeds-budget")
             qualification = [pair for pair in policy["pairs"] if pair["role"] == "qualification"]
+            rejected = [pair for pair in policy["pairs"] if pair["role"] == "rejected"]
+            if rejected:
+                check(identity.get("alternate_qualification_ordinals") == [1, 2, 3]
+                      and identity.get("qualification_ordinals") == [0, 1, 2],
+                      prefix + "alternate-not-supported-by-frozen-policy")
             if controller["state"] == "qualified":
-                ordinals = identity.get("qualification_ordinals")
-                known_schedule = ordinals in ([0, 4, 8], [0, 1, 2])
+                ordinals = (identity.get("alternate_qualification_ordinals") if rejected
+                            else identity.get("qualification_ordinals"))
+                known_schedule = (ordinals == [1, 2, 3] if rejected
+                                  else ordinals in ([0, 4, 8], [0, 1, 2]))
                 check(known_schedule, prefix + "unknown-frozen-qualification-schedule")
                 check(len(qualification) == 3 and all(
                     known_schedule and pair["ordinal"]["value"] == ordinals[number] and pair["candidateFirst"] == (number % 2 == 1)
@@ -758,7 +778,9 @@ def analyze(report, source, identity):
                                      "observed_arm_wall_reduction_percent": 100*(baseline-candidate)/baseline if flags and baseline > 0 else None}
             for control in policy.get("controls", []):
                 ordinal = control["ordinal"]["value"]
-                check(identity.get("qualification_ordinals") == [0, 1, 2], prefix + "control-not-supported-by-frozen-policy")
+                check(identity.get("qualification_ordinals") == [0, 1, 2]
+                      and (not rejected or identity.get("alternate_qualification_ordinals") == [1, 2, 3]),
+                      prefix + "control-not-supported-by-frozen-policy")
                 check(ordinal <= index and ordinal < len(passages), prefix + "control-from-unobserved-passage")
                 if ordinal in unique_controls:
                     check(unique_controls[ordinal]["record"] == control, prefix + "conflicting-repeated-control")

@@ -514,7 +514,11 @@ self.onmessage=async e=>{
  const nativeStudioPredict=quality==='precision'&&options.supportsNativeDeux?(start,onProgress,remainingUseful)=>nativePredict(start,onProgress,markNativeDeuxFallback,remainingUseful):undefined;
  const nativeBalancedPredict=quality==='balanced'&&options.supportsNativeMdx?(encoded,onProgress)=>nativeMdxPredict(encoded,onProgress,markNativeMdxFallback):undefined;
  separator=await (quality==='precision'?LightForgeDeux:LightForgeMdxSeparator).create({ort,telemetry,baseUrl:new URL(quality==='precision'?'models/deux/':'models/',self.location.href).href,onProgress:p=>report(.41,'Loading studio vocal separation',p.message),checkpoint:store,nativePredict:nativeStudioPredict||nativeBalancedPredict});
- result.separation=await separator.process((start,count)=>sourceReader.stereo44100(start,count),sourceReader.samples,chunk=>{
+ const readStudio=(start,count)=>sourceReader.stereo44100(start,count);
+ // Android hashes this private project audio into the analysis identity and
+ // blocks project imports/changes while its background job is active.
+ if(/^[a-f0-9]{64}$/i.test(options.analysisIdentity||'')&&/^https:\/\/appassets\.androidplatform\.net\/project\/[A-Za-z0-9_-]{1,80}\/audio\.wav$/.test(audioUrl))readStudio.immutableSource=true;
+ result.separation=await separator.process(readStudio,sourceReader.samples,chunk=>{
   if(nativeMdxFallback||nativeDeuxFallback||nativeMdxFencing||nativeDeuxFencing)return;
   return cacheWriter.append(chunk);
  },p=>report(.42+.40*p.progress,'Separating voice and instruments',`${p.message} • ${Math.min(sourceReader.duration,p.processedSeconds||0).toFixed(0)} / ${sourceReader.duration.toFixed(0)} seconds`,p));

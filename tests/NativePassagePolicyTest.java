@@ -25,6 +25,9 @@ public final class NativePassagePolicyTest {
     private static NativePassagePolicy.Pair pair(int ordinal,boolean first,long baseline,long candidate,long extra){
         return new NativePassagePolicy.Pair(ordinal,first,baseline,candidate,extra,HASH,true,true,true,true,4);
     }
+    private static NativePassagePolicy.Pair workersPair(int ordinal,boolean first,int workers,long baseline,long candidate,long extra){
+        return new NativePassagePolicy.Pair(ordinal,first,baseline,candidate,extra,HASH,true,true,true,true,workers);
+    }
     private static NativePassagePolicy.Pair good(int ordinal){return pair(ordinal,ordinal==1,BASE,FAST,FAST);}
     private static boolean reason(NativePassagePolicy p,String reason){return p.evidenceRecords()[0].contains("reason="+reason+" ");}
     private static void baseline(NativePassagePolicy p,int ordinal,int remaining,String message){
@@ -101,6 +104,55 @@ public final class NativePassagePolicyTest {
         require(mismatch.evidenceRecords().length==2&&mismatch.evidenceRecords()[1].contains("exact=false"),"failed exact-output comparison survives outside the rotating trace");
         NativePassagePolicy slow=policy();plan(slow,0,35);slow.recordPair(pair(0,false,BASE,BASE,BASE),34);
         require(reason(slow,"pair-regression"),"equal complete timing rejects fast microbenchmark nomination");
+        // Eight wins the temporal screen, but loses its complete passage.
+        // Four can be compared only because its own exact screen was eligible.
+        NativePassagePolicy alternate=new NativePassagePolicy(ID,null);alternate.nominate(8,4,5*SECOND);
+        require(plan(alternate,0,35).workers==8,"micro-screen winner first receives the full comparison");
+        alternate.recordPair(workersPair(0,false,8,BASE,65*SECOND,65*SECOND),34);
+        require(reason(alternate,"alternate-pending")&&alternate.qualifiedSeed()==null,
+            "eight-worker regression cannot qualify the screened four-worker alternate");
+        require(alternate.evidenceRecords().length==2&&alternate.evidenceRecords()[1].contains("role=rejected")
+            &&alternate.evidenceRecords()[1].contains("workers=8"),"losing full pair remains in bounded durable evidence");
+        String[] counterfeit=alternate.evidenceRecords();counterfeit[1]=counterfeit[1].replace("workers=8","workers=4");
+        require(NativeInferenceProfile.decodePassagePolicy(NativeInferenceProfile.encodePassagePolicy(counterfeit))==null,
+            "diagnostics reject a fabricated four-worker rejected-pair record");
+        for(int ordinal=1;ordinal<=3;ordinal++){
+            NativePassagePolicy.Plan selected=plan(alternate,ordinal,35-ordinal);
+            require(selected.action==NativePassagePolicy.Action.PAIR&&selected.workers==4
+                &&selected.candidateFirst==(ordinal==2),"alternate has consecutive, alternating full comparisons");
+            alternate.recordPair(workersPair(ordinal,ordinal==2,4,BASE,30*SECOND,30*SECOND),34-ordinal);
+            if(ordinal<3)require(alternate.qualifiedSeed()==null,
+                "one or two alternate pairs do not authorize production execution");
+        }
+        require(alternate.qualifiedSeed()!=null&&alternate.evidenceRecords()[0].contains("extraNanos=160000000000 "),
+            "all four candidate replays and screening share the original 360-second budget");
+        require(plan(alternate,4,31).action==NativePassagePolicy.Action.CANDIDATE,
+            "only the three exact four-worker full pairs start a candidate lease");
+        alternate.recordOrdinary(30*SECOND);
+        NativePassagePolicy noScreenedFour=new NativePassagePolicy(ID,null);noScreenedFour.nominate(8,5*SECOND);
+        plan(noScreenedFour,0,35);noScreenedFour.recordPair(workersPair(0,false,8,BASE,65*SECOND,65*SECOND),34);
+        baseline(noScreenedFour,1,34,"an unscreened alternate can never be tried");
+        NativePassagePolicy losingFour=new NativePassagePolicy(ID,null);losingFour.nominate(8,4,5*SECOND);
+        plan(losingFour,0,35);losingFour.recordPair(workersPair(0,false,8,BASE,65*SECOND,65*SECOND),34);
+        require(plan(losingFour,1,34).workers==4,"screened alternate receives one bounded comparison");
+        losingFour.recordPair(workersPair(1,false,4,BASE,BASE,BASE),33);
+        baseline(losingFour,2,33,"a losing alternate never cycles back to either candidate");
+        NativePassagePolicy noUnsafeSwitch=new NativePassagePolicy(ID,null);noUnsafeSwitch.nominate(8,4,5*SECOND);
+        plan(noUnsafeSwitch,0,35);
+        noUnsafeSwitch.recordPair(new NativePassagePolicy.Pair(0,false,BASE,65*SECOND,65*SECOND,HASH,
+            true,false,true,true,8),34);
+        baseline(noUnsafeSwitch,1,34,"an inexact eight-worker comparison cannot trigger the alternate");
+        NativePassagePolicy unaffordableAlternate=new NativePassagePolicy(ID,null);
+        unaffordableAlternate.nominate(8,4,250*SECOND);plan(unaffordableAlternate,0,35);
+        unaffordableAlternate.recordPair(workersPair(0,false,8,BASE,65*SECOND,65*SECOND),34);
+        baseline(unaffordableAlternate,1,34,
+            "alternate is skipped when even the first conservative replay cannot fit the shared cap");
+        NativePassagePolicy memoryAlternate=new NativePassagePolicy(ID,null);memoryAlternate.nominate(8,4,5*SECOND);
+        plan(memoryAlternate,0,35);memoryAlternate.recordPair(workersPair(0,false,8,BASE,65*SECOND,65*SECOND),34);
+        require(memoryAlternate.plan(1,34,NativePassagePolicy.FOUR_WORKER_HEADROOM-1,8).action==NativePassagePolicy.Action.BASELINE,
+            "fresh memory pressure blocks even a screened alternate");
+        NativePassagePolicy badAlternate=new NativePassagePolicy(ID,null);badAlternate.nominate(8,8,0);
+        baseline(badAlternate,0,35,"only an independently screened smaller geometry is eligible");
         NativePassagePolicy boundary=policy();plan(boundary,0,35);boundary.recordPair(pair(0,false,1000,950,1000),34);
         require(!reason(boundary,"pair-regression"),"5 percent pair floor is inclusive (payback remains separate)");
         NativePassagePolicy below=policy();plan(below,0,35);below.recordPair(pair(0,false,1000,951,1000),34);
@@ -240,6 +292,14 @@ public final class NativePassagePolicyTest {
             try{NativePassagePolicy.save(file,ID,null);throw new AssertionError("provisional saved");}catch(IOException expected){checks++;}
             NativePassagePolicy.save(file,ID,positive.qualifiedSeed());byte[] original=Files.readAllBytes(file.toPath());
             require(original.length<NativePassagePolicy.MAX_BYTES,"qualified cache is bounded below16KiB");
+            NativePassagePolicy.save(file,ID,alternate.qualifiedSeed());
+            NativePassagePolicy.Seed alternateSeed=NativePassagePolicy.load(file,ID);
+            require(alternateSeed!=null&&alternateSeed.workers==4,
+                "consecutive alternate qualification is independently revalidated on reload");
+            NativePassagePolicy alternateCached=new NativePassagePolicy(ID,alternateSeed);
+            require(plan(alternateCached,0,35).action==NativePassagePolicy.Action.PAIR
+                &&alternateCached.qualifiedSeed()!=null,"saved alternate still requires a fresh exact pair before use");
+            NativePassagePolicy.save(file,ID,positive.qualifiedSeed());
             NativePassagePolicy.Seed seed=NativePassagePolicy.load(file,ID);require(seed!=null&&seed.workers==4,"complete evidence reconstructs the same candidate");
             require(NativePassagePolicy.load(file,repeat('2'))==null,"identity change invalidates old seed");
             require(NativePassagePolicy.load(file,"raw-model-id")==null,"raw identity never matches a cache");

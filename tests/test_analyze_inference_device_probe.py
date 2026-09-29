@@ -37,6 +37,36 @@ def policies(index, paired=False):
     return rows
 
 
+def alternate_policies(index):
+    count = min(index, 3)
+    header = (f"schema=native-passage-policy-v1 state={'qualified' if count == 3 else 'provisional'} "
+              f"workers=4 reason={'measured-passage-improvement' if count == 3 else 'alternate-pending' if count == 0 else 'qualification-pending'} "
+              f"extraNanos={225000000 + 150000000 * count} extraCapNanos=360000000000 "
+              "projectedAccruedSavingsNanos=0 "
+              f"qualificationPairs={count} currentJobPairs={count + 1} seeded=false activePassages=0 "
+              "leasePassages=8 paybackScope=projected-not-measured")
+    records = [header, "schema=native-passage-pair-v1 role=rejected index=0 ordinal=0 candidateFirst=false "
+               "workers=8 baselineNanos=200000000 candidateNanos=220000000 extraNanos=220000000 "
+               f"outputSha256={output_hash(PROBE.STARTS[0])} finite=true exact=true fullGeometry=true coldSessions=true"]
+    for number in range(count):
+        ordinal = number + 1
+        records.append(f"schema=native-passage-pair-v1 role=qualification index={number} ordinal={ordinal} "
+                       f"candidateFirst={str(number == 1).lower()} workers=4 baselineNanos=200000000 "
+                       f"candidateNanos=150000000 extraNanos=150000000 outputSha256={output_hash(PROBE.STARTS[ordinal % 5])} "
+                       "finite=true exact=true fullGeometry=true coldSessions=true")
+    return records
+
+
+def alternate_receipt():
+    document = receipt()
+    for index, passage in enumerate(document["passages"]):
+        records = alternate_policies(index)
+        rows = profile(index)
+        rows[0] = rows[0].split(" passagePolicy=")[0] + " passagePolicy=" + "|".join(row.replace(" ", ",") for row in records)
+        passage["profile"] = rows[:29] + records
+    return document
+
+
 def profile(index, paired=False):
     policy = policies(index, paired)
     header = ("schema=native-inference-profile-v2 outcome=completed wallMs=1000 inferenceWallMs=900 inferenceCount=335 sessionInitCount=27 "
@@ -112,6 +142,49 @@ def candidate(index, *, frequency=12, paired=False):
 
 
 class DeviceProbeAnalysisTest(unittest.TestCase):
+    def test_frozen_schedule_reader_recognizes_only_bound_alternate_shift(self):
+        source = (ROOT / "android/src/com/cyberbasslord/lightforge/NativePassagePolicy.java").read_text()
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "NativePassagePolicy.java"
+            path.write_text(source)
+            self.assertEqual(PROBE.bound_qualification_schedules(path), ([0, 1, 2], [1, 2, 3]))
+            path.write_text(source.replace("qualificationOrigin=1;", "qualificationOrigin=2;"))
+            with self.assertRaises(ValueError):
+                PROBE.bound_qualification_schedules(path)
+            path.write_text("int due=qualificationCount; if(pair.ordinal!=qualificationCount||){}")
+            self.assertEqual(PROBE.bound_qualification_schedules(path), ([0, 1, 2], None))
+            path.write_text("int due=qualificationCount*4; if(pair.ordinal!=qualificationCount*4||){}")
+            self.assertEqual(PROBE.bound_qualification_schedules(path), ([0, 4, 8], None))
+
+    def test_rejected_eight_worker_pair_does_not_count_toward_alternate_qualification(self):
+        identity = {**IDENTITY, "qualification_ordinals": [0, 1, 2], "alternate_qualification_ordinals": [1, 2, 3]}
+        document = alternate_receipt()
+        result = PROBE.analyze(document, SOURCE, identity)
+        self.assertTrue(result["integrity"]["passed"], result["integrity"])
+        self.assertEqual(len(result["unique_observed_pairs"]), 4)
+        self.assertEqual(result["unique_observed_pairs"][0]["record"]["role"], "rejected")
+        self.assertEqual(result["unique_observed_pairs"][0]["observed_arm_wall_reduction_percent"], -10)
+        self.assertEqual(result["policy_overhead"]["unique_recorded_pair_extra_nanos"], 670000000)
+        self.assertFalse(PROBE.analyze(document, SOURCE, {**identity, "alternate_qualification_ordinals": None})["integrity"]["passed"])
+        self.assertFalse(PROBE.analyze(document, SOURCE, IDENTITY)["integrity"]["passed"])
+        for ordinal, old, new in ((0, "role=rejected", "role=qualification"),
+                                  (0, "workers=8", "workers=4"),
+                                  (0, "candidateNanos=220000000", "candidateNanos=150000000"),
+                                  (1, "ordinal=1", "ordinal=0"),
+                                  (2, "candidateFirst=true", "candidateFirst=false")):
+            forged = copy.deepcopy(document)
+            for passage in forged["passages"][ordinal:]:
+                passage["profile"] = [row.replace(old, new) for row in passage["profile"]]
+            self.assertFalse(PROBE.analyze(forged, SOURCE, identity)["integrity"]["passed"], (ordinal, old, new))
+        incomplete = copy.deepcopy(document)
+        for passage in incomplete["passages"][3:]:
+            records = alternate_policies(2)
+            records[0] = records[0].replace("state=provisional", "state=qualified")
+            rows = profile(3)
+            rows[0] = rows[0].split(" passagePolicy=")[0] + " passagePolicy=" + "|".join(row.replace(" ", ",") for row in records)
+            passage["profile"] = rows[:29] + records
+        self.assertFalse(PROBE.analyze(incomplete, SOURCE, identity)["integrity"]["passed"])
+
     @unittest.skipUnless((ROOT / "build/inference-device-probe/run-w6e3elh2").is_dir(), "Retained diagnostic build is not present")
     def test_reviewed_source_closure_matches_repository_without_building(self):
         result = PROBE.verify_reference(SOURCE, BUILD, SOURCE_SHA, ROOT)

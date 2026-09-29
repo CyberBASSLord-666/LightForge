@@ -62,11 +62,12 @@ final class NativePassagePolicy {
     private final String identity;
     private final Pair[] qualification=new Pair[3];
     private final long[] recent=new long[3];
-    private int workers,qualificationCount,lastOrdinal=-1,activePassages,lease=8,recentCount,pairCount,controlRemaining;
+    private int workers,alternateWorkers,qualificationOrigin,qualificationCount,lastOrdinal=-1,activePassages,lease=8,recentCount,pairCount,controlRemaining;
     private long extraNanos,projectedAccruedSavingsNanos,baselineBracket;
     private long projectedSavingLimit=Long.MAX_VALUE;
     private boolean seeded,freshRequired,qualified,latched,pending,controlPending,slow;
     private Pair recheck;
+    private Pair rejected;
     private Control control;
     private Seed retainedSeed;
     private Plan previous;
@@ -76,7 +77,8 @@ final class NativePassagePolicy {
         if(!digest(identity))throw new IllegalArgumentException("Invalid passage policy identity.");
         this.identity=identity;
         if(seed!=null&&identity.equals(seed.identity)&&validSeed(seed)){
-            workers=seed.workers;System.arraycopy(seed.qualification,0,qualification,0,3);qualificationCount=3;
+            workers=seed.workers;qualificationOrigin=seed.qualification[0].ordinal;
+            System.arraycopy(seed.qualification,0,qualification,0,3);qualificationCount=3;
             recheck=seed.recheck;seeded=true;freshRequired=true;reason="fresh-pair-required";
             retainedSeed=seed;
         }
@@ -84,12 +86,18 @@ final class NativePassagePolicy {
 
     /** Screening nominates one schedule and consumes budget; it cannot qualify a schedule. */
     void nominate(int workers,long screeningNanos){
+        nominate(workers,0,screeningNanos);
+    }
+
+    /** A screened four-worker alternate receives no authority until its own three full pairs. */
+    void nominate(int workers,int alternateWorkers,long screeningNanos){
         addExtra(screeningNanos);
         if(latched)return;
-        if(!workerCount(workers)||qualificationCount!=0||pending||lastOrdinal>=0||this.workers!=0){
+        if(!workerCount(workers)||(alternateWorkers!=0&&(workers!=8||alternateWorkers!=4))
+                ||qualificationCount!=0||pending||lastOrdinal>=0||this.workers!=0){
             forceBaseline("invalid-nomination");return;
         }
-        this.workers=workers;reason="nominated";
+        this.workers=workers;this.alternateWorkers=alternateWorkers;reason="nominated";
     }
 
     /** remainingUseful includes this passage; -1 means unknown and never permits a probe. */
@@ -113,10 +121,11 @@ final class NativePassagePolicy {
                 return pair(recheck==null?!qualification[2].candidateFirst:!recheck.candidateFirst,"fresh-pair-required");
             }
             if(qualificationCount==0){
-                if(ordinal!=0||remainingUseful<24){forceBaseline("short-job");return baseline();}
-                return pair(false,"initial-pair");
+                if(ordinal!=qualificationOrigin||remainingUseful<24){forceBaseline("short-job");return baseline();}
+                if(extraNanos>=EXTRA_CAP_NANOS){forceBaseline("probe-budget");return baseline();}
+                return pair(false,qualificationOrigin==0?"initial-pair":"alternate-pair");
             }
-            int due=qualificationCount;
+            int due=qualificationOrigin+qualificationCount;
             if(ordinal<due){reason="qualification-wait";return baseline();}
             if(ordinal!=due){forceBaseline("missed-qualification");return baseline();}
             if(!payback(remainingUseful,qualificationCount,lastOrdinal-1)||!canFundProbe()){
@@ -150,12 +159,21 @@ final class NativePassagePolicy {
             forceBaseline("invalid-pair");return;
         }
         pairCount++;
-        if(!faster(pair,95)){recheck=pair;forceBaseline("pair-regression");return;}
+        if(!faster(pair,95)){
+            if(alternateWorkers==4&&workers==8&&qualificationCount==0&&pair.ordinal==0
+                    &&remainingUseful>=24&&extraNanos<=EXTRA_CAP_NANOS-Math.min(pair.baselineNanos,pair.candidateNanos)){
+                // A single-graph eight-worker win cannot reject the independently
+                // screened four-worker geometry. The failed pair buys no authority.
+                rejected=pair;workers=alternateWorkers;alternateWorkers=0;qualificationOrigin=1;
+                reason="alternate-pending";return;
+            }
+            recheck=pair;forceBaseline("pair-regression");return;
+        }
         boolean newLease=!qualified;
         if(freshRequired){
             recheck=pair;freshRequired=false;qualified=true;
         }else if(!qualified){
-            if(pair.ordinal!=qualificationCount||pair.candidateFirst!=((qualificationCount&1)!=0)){
+            if(pair.ordinal!=qualificationOrigin+qualificationCount||pair.candidateFirst!=((qualificationCount&1)!=0)){
                 forceBaseline("invalid-pair-order");return;
             }
             qualification[qualificationCount++]=pair;
@@ -234,14 +252,15 @@ final class NativePassagePolicy {
     }
 
     String[] evidenceRecords(){
-        String[] records=new String[1+qualificationCount+(recheck==null?0:1)+(control==null?0:1)];
+        String[] records=new String[1+(rejected==null?0:1)+qualificationCount+(recheck==null?0:1)+(control==null?0:1)];
         records[0]="schema=native-passage-policy-v1 state="+(latched?"baseline":qualified?"qualified":"provisional")
             +" workers="+workers+" reason="+reason+" extraNanos="+extraNanos+" extraCapNanos="+EXTRA_CAP_NANOS
             +" projectedAccruedSavingsNanos="+projectedAccruedSavingsNanos
             +" qualificationPairs="+qualificationCount+" currentJobPairs="+pairCount+" seeded="+seeded
             +" activePassages="+activePassages+" leasePassages="+lease+" paybackScope=projected-not-measured";
-        for(int i=0;i<qualificationCount;i++)records[i+1]=record("qualification",i,qualification[i]);
-        int next=qualificationCount+1;
+        int next=1;
+        if(rejected!=null)records[next++]=record("rejected",0,rejected);
+        for(int i=0;i<qualificationCount;i++)records[next++]=record("qualification",i,qualification[i]);
         if(recheck!=null)records[next++]=record("recheck",0,recheck);
         if(control!=null)records[next]="schema=native-passage-control-v1 ordinal="+control.ordinal
             +" baselineNanos="+control.baselineNanos+" previousBaselineNanos="+control.previousBaselineNanos
@@ -347,10 +366,12 @@ final class NativePassagePolicy {
     private static long median(long[] values){if(values.length==0)return 0;Arrays.sort(values);return values[values.length/2];}
     private static boolean validSeed(Seed seed){
         if(seed==null||!digest(seed.identity)||!workerCount(seed.workers)||seed.qualification.length!=3)return false;
+        int origin=seed.qualification[0]==null?-1:seed.qualification[0].ordinal;
+        if(origin!=0&&(origin!=1||seed.workers!=4))return false;
         long qualificationExtra=0;
         for(int i=0;i<3;i++){
             Pair p=seed.qualification[i];
-            if(!validPair(p,seed.workers)||p.ordinal!=i||p.candidateFirst!=((i&1)!=0)||!faster(p,95))return false;
+            if(!validPair(p,seed.workers)||p.ordinal!=origin+i||p.candidateFirst!=((i&1)!=0)||!faster(p,95))return false;
             qualificationExtra+=p.extraNanos;
         }
         // All three qualification pairs belong to one job. A later cached-job recheck does not.
@@ -368,7 +389,7 @@ final class NativePassagePolicy {
             case "memory-pressure":case "screen-budget":case "screen-no-win":
             case "runtime-rejected":case "unknown-work":
             case "control-required":case "slow-passage-control":case "control-accepted":case "control-regression":
-            case "control-incomplete":case "unfinished-control":
+            case "control-incomplete":case "unfinished-control":case "alternate-pending":case "alternate-pair":
                 return value;
             default:return fallback;
         }

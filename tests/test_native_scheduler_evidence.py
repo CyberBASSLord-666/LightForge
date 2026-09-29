@@ -86,6 +86,28 @@ class SchedulerEvidenceTest(unittest.TestCase):
     def test_complete_unfunded_work_and_concurrent_retirement_contract(self):
         self.assertEqual(VERIFY.verify_scheduler_calibration(self.valid()), self.valid())
 
+    def test_first_passage_regression_can_preserve_screened_alternate_without_qualifying_it(self):
+        value = self.frequency_valid()
+        passage = value['runs']['automaticFirstPassage']
+        old_header, old_pair = passage['profileRecords'][-2:]
+        header = old_header.replace('workers=8 reason=qualification-pending',
+                                    'workers=4 reason=alternate-pending').replace(
+                                        'extraNanos=50000000000', 'extraNanos=80000000000').replace(
+                                            'qualificationPairs=1', 'qualificationPairs=0')
+        pair = old_pair.replace('role=qualification', 'role=rejected').replace(
+            'candidateNanos=40000000000', 'candidateNanos=65000000000').replace(
+                'extraNanos=41000000000', 'extraNanos=65000000000')
+        old_encoded = '|'.join(record.replace(' ', ',') for record in [old_header, old_pair])
+        new_encoded = '|'.join(record.replace(' ', ',') for record in [header, pair])
+        passage['profileRecords'][-2:] = [header, pair]
+        passage['profileRecords'][0] = passage['profileRecords'][0].replace(old_encoded, new_encoded)
+        self.assertEqual(VERIFY.verify_scheduler_calibration(value), value)
+        wrong_pair = pair.replace('workers=8', 'workers=4')
+        passage['profileRecords'][-1] = wrong_pair
+        passage['profileRecords'][0] = passage['profileRecords'][0].replace(
+            new_encoded, '|'.join(record.replace(' ', ',') for record in [header, wrong_pair]))
+        self.reject(value)
+
     def frequency_valid(self):
         value = self.valid()
         value.update(schema='lightforge.native-scheduler-calibration.v4', forcedFrequencyBatch=16)

@@ -70,7 +70,66 @@ def policy_records(*, pairs=3, seeded=False, recheck=False):
     return records
 
 
+def alternate_policy_records(pairs=3):
+    records = [
+        "schema=native-passage-policy-v1 "
+        f"state={'qualified' if pairs == 3 else 'provisional'} workers=4 "
+        f"reason={'measured-passage-improvement' if pairs == 3 else 'alternate-pending' if pairs == 0 else 'qualification-pending'} "
+        f"extraNanos={225000000 + pairs * 150000000} extraCapNanos=360000000000 "
+        "projectedAccruedSavingsNanos=0 "
+        f"qualificationPairs={pairs} currentJobPairs={pairs + 1} seeded=false "
+        "activePassages=0 leasePassages=8 paybackScope=projected-not-measured",
+        "schema=native-passage-pair-v1 role=rejected index=0 ordinal=0 candidateFirst=false "
+        "workers=8 baselineNanos=200000000 candidateNanos=220000000 extraNanos=220000000 "
+        "outputSha256=" + "a" * 64 + " finite=true exact=true fullGeometry=true coldSessions=true",
+    ]
+    for index in range(pairs):
+        records.append(
+            f"schema=native-passage-pair-v1 role=qualification index={index} ordinal={index + 1} "
+            f"candidateFirst={str(index == 1).lower()} workers=4 baselineNanos=200000000 "
+            "candidateNanos=150000000 extraNanos=150000000 outputSha256=" + "a" * 64 +
+            " finite=true exact=true fullGeometry=true coldSessions=true"
+        )
+    return records
+
+
 class DiagnosticEvidenceTest(unittest.TestCase):
+    def test_screened_alternate_has_distinct_rejected_and_qualified_evidence(self):
+        for count in range(4):
+            records = alternate_policy_records(count)
+            parsed = EVIDENCE._passage_policy(records, source="test")
+            self.assertEqual(parsed["status"], "observed")
+            self.assertEqual([pair["role"] for pair in parsed["pairs"]],
+                             ["rejected"] + ["qualification"] * count)
+            self.assertEqual(parsed["controller"]["qualificationPairs"]["value"], count)
+        records = alternate_policy_records(3)
+        encoded = "|".join(row.replace(" ", ",") for row in records)
+        self.assertEqual(EVIDENCE._passage_policy(records, encoded, source="test")["status"], "observed")
+        self.assertEqual(EVIDENCE._passage_policy(records, encoded.replace("workers=8", "workers=4"), source="test")["status"],
+                         "invalid-or-incomplete")
+        replacements = (
+            (1, "role=rejected", "role=qualification"), (1, "index=0", "index=1"),
+            (1, "ordinal=0", "ordinal=1"), (1, "candidateFirst=false", "candidateFirst=true"),
+            (1, "workers=8", "workers=4"), (1, "exact=true", "exact=false"),
+            (1, "candidateNanos=220000000", "candidateNanos=180000000"),
+            (1, "extraNanos=220000000", "extraNanos=100000000"),
+            (2, "ordinal=1", "ordinal=0"), (2, "workers=4", "workers=8"),
+            (3, "candidateFirst=true", "candidateFirst=false"),
+            (0, "currentJobPairs=4", "currentJobPairs=0"), (0, "seeded=false", "seeded=true"),
+        )
+        for index, old, new in replacements:
+            broken = records.copy()
+            self.assertIn(old, broken[index])
+            broken[index] = broken[index].replace(old, new)
+            self.assertEqual(EVIDENCE._passage_policy(broken, source="test")["status"],
+                             "invalid-or-incomplete", (index, old, new))
+        for broken in ([*records, records[1]],
+                       [records[0], records[2], records[1], *records[3:]],
+                       [records[0].replace("qualificationPairs=3", "qualificationPairs=2")
+                        .replace("currentJobPairs=4", "currentJobPairs=3"), *records[1:-1]]):
+            self.assertEqual(EVIDENCE._passage_policy(broken, source="test")["status"],
+                             "invalid-or-incomplete")
+
     def test_unmatched_controls_remain_distinct_from_same_input_pairs(self):
         control = ("schema=native-passage-control-v1 ordinal=20 baselineNanos=75000000000 "
                    "previousBaselineNanos=75000000000 candidateMaxNanos=50000000000 candidateSamples=3 "
