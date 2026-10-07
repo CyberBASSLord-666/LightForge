@@ -44,6 +44,26 @@ speedup, power or thermal behavior, or the project's 75% performance target.
 The release still requires its normal current-source regression and Android
 verification. Physical measurements are not required to run this experiment.
 
+## Current parallel qualifier
+
+`tools/benchmark_deux_parallel.py` is a different fixture from the baseline-shape
+source comparison above. It compiles one unchanged production implementation and
+selects fixed baseline or eight-worker construction. It preserves all 27 graphs,
+Float32 precision, 1,301-frame context, and full outputs, while deliberately
+changing execution batching:
+
+- Baseline: 15 calls per temporal graph and 11 per frequency graph, 335 total.
+- Parallel candidate: 60 calls per temporal graph and 82 per frequency graph
+  (B16 with a five-frame tail), 1,727 total. Output heads retain 11 calls each.
+
+The current build verifier checks this exact geometry, source closure, output
+identity, controlled CPU/resource observations, and the existing 15% median / 5%
+each-pair latency thresholds. Its receipt goes to
+`research/inference-current/production-parallel-qualification.json`; it must not
+replace the immutable published 2.4.1 receipt. A version change cannot bypass the
+prerequisite. This fixed host test does not prove adaptive device admission,
+qualification payback, frontend reuse performance, or whole-song improvement.
+
 ## Candidate selection
 
 The production runtime is pinned to ONNX Runtime 1.25.1. Its

@@ -49,6 +49,11 @@
       return frame>=start&&frame<end;
     });
   }
+  function manualClosureTrack(show,outputId){
+    // One manual closure cue replaces that output's entire automatic track,
+    // including times outside the cue's own interval.
+    return (show&&show.settings&&Array.isArray(show.settings.manualCues)?show.settings.manualCues:[]).some(cue=>cue&&cue.outputId===outputId&&finite(cue.start)&&finite(cue.end)&&cue.end>cue.start);
+  }
   function enabled(show,output){return !!(output&&output.available!==false&&!(show&&show.settings&&show.settings.outputEnabled&&show.settings.outputEnabled[output.id]===false));}
   function uniqueIds(ids){return Array.from(new Set((Array.isArray(ids)?ids:[]).filter(id=>typeof id==='string'&&id)));}
   function isHighSalience(target){
@@ -203,10 +208,11 @@
       const targetKey=[target.outputId,target.kind||'',Math.round(target.time*1e6)].join(':');if(movementSeen.has(targetKey))continue;movementSeen.add(targetKey);
       const output=byId.get(target.outputId),event=findMovement(show,target,step);
       let status='suppressed',commandErrorMs=null,predictedPerceptualErrorMs=null,actualCommandTime=null,predictedPerceptualTime=null;
-      if(event&&output){
+      const overridden=output&&output.kind==='closure'&&manualClosureTrack(show,target.outputId);
+      if(event&&output&&enabled(show,output)&&!overridden){
         const frame=Math.round(event.start/step),state=frameState(show,output,frame,event.value);
-        actualCommandTime=frame*step;
         if(state.attack){
+          actualCommandTime=frame*step;
           status='matched';commandErrorMs=(actualCommandTime-target.time)*1000;
           const intent=event.intent||{};
           // A command transition is observed in the final FSEQ, but it is not
@@ -221,9 +227,10 @@
         }else if(state.active)status='heldWithoutAttack';
       }
       if(status==='suppressed'){
-        if(!enabled(show,output))status='disabled';
-        else if(manualAt(show,target.outputId,target.time))status='manualOverride';
-        else if(!output)status='unrouted';
+        if(!output)status='unrouted';
+        else if(!enabled(show,output))status='disabled';
+        else if(overridden)status='manualOverride';
+        else if(target.time<0||Math.round(target.time/step)>=show.frameCount-1)status='outsideExport';
       }
       if(isHighSalience(target))mechanical.highSalienceSelected++;
       updateAggregate(mechanical,status,target);

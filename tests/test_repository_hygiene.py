@@ -105,7 +105,7 @@ class RepositoryHygieneTests(unittest.TestCase):
                 self.assertIsNotNone(hygiene.clutter_reason(path))
 
     def test_signing_and_personal_exports_are_rejected(self):
-        for path in ('signing/notes.txt', 'backup.jks', 'keys/keystore-password.txt', '.env.local', 'LightForge-diagnostics-private.txt', 'My-Private-Source.zip'):
+        for path in ('signing/notes.txt', 'backup.jks', 'keys/keystore-password.txt', '.env.local', 'LightForge-diagnostics-private.txt', 'My-Private-Source.zip', 'android/local.properties', '.pypirc', 'tools/.pypirc'):
             with self.subTest(path=path):
                 self.assertIsNotNone(hygiene.clutter_reason(path))
 

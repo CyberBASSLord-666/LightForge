@@ -20,8 +20,8 @@
     "sha256": "f95357f71693a5df05e47c5baed5a15cca88bf5371d4b20dc51b3dbb6624fc06"
   },
   "feature-store.js": {
-    "bytes": 7834,
-    "sha256": "a0495b99ace6248ea16646eed0b2509695c0f369ca7ae83aae19f72c82f82423"
+    "bytes": 11782,
+    "sha256": "283a37ba3ec9caa6566479c4ccb0f92b071481df46f171eac50b95cc55c84ec0"
   },
   "game.js": {
     "bytes": 12228,
@@ -280,8 +280,8 @@
     "sha256": "1928c13321c87e0cc1d4deb4b7e140027f9a4f502d14c36db45abd124dfc1c06"
   },
   "separator-deux.js": {
-    "bytes": 14192,
-    "sha256": "f2d72de9ebf1e80b741764c5d479d2dc48e290b0e943883292e6c6e02ed16898"
+    "bytes": 14935,
+    "sha256": "a7ec66d36fcda3fa655c6392ff18b00bf948310ef298adc2ad3bf22712be13a6"
   },
   "separator-mdx.js": {
     "bytes": 13749,
@@ -324,19 +324,19 @@
     "sha256": "e169e7deb15be7c4a778ef8623decb7a46800fc7633acbab8c6caa51e3ee059c"
   },
   "vocal.js": {
-    "bytes": 13356,
-    "sha256": "bacf90472f06611526fd8dac49b32775f4a32f62bf40b409fd1ce892feff09f0"
+    "bytes": 15899,
+    "sha256": "e6ad2b32659d136fc68282073e1e05018647a1a793f697152b3a33e151ecad61"
   },
   "wav-reader.js": {
     "bytes": 8035,
     "sha256": "6cd0a40392617cc020f2ec4f87952f165e070c8c17bc4aa3b36b212823d897d4"
   },
   "work-store.js": {
-    "bytes": 22780,
-    "sha256": "d509fbaeb9798d04abae4de06d17ef1548a5a1d16333271d21ee5a27785557ab"
+    "bytes": 23043,
+    "sha256": "14b223531da867df95e69d1f4e2a92f20cb881cbeec5645b150e462100262dd4"
   },
   "worker.js": {
-    "bytes": 53522,
-    "sha256": "0b44bf94810e8000ef473f8e4c9f906d17e8ed2c455df68b1724fbd57f3f9eaf"
+    "bytes": 55404,
+    "sha256": "e9b8dc9609e79f7539103c02de2376c7c3ef59975f89ce24ada877fa74104d30"
   }
 }

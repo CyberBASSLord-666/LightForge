@@ -76,12 +76,12 @@ class FrozenProbeReferenceTest(unittest.TestCase):
             for spacing, expected in (("*4", [0, 4, 8]), ("", [0, 1, 2])):
                 policy.write_text("int due=qualificationCount" + spacing + ";\n"
                                   "if(pair.ordinal!=qualificationCount" + spacing + "||bad){}")
-                self.assertEqual(PROBE.bound_qualification_ordinals(policy), expected)
+                self.assertEqual(PROBE.bound_qualification_schedules(policy), (expected, None))
             for code in ("int due=qualificationCount; if(pair.ordinal!=qualificationCount*4||bad){}",
                          "int due=somethingElse;"):
                 policy.write_text(code)
                 with self.assertRaises(ValueError):
-                    PROBE.bound_qualification_ordinals(policy)
+                    PROBE.bound_qualification_schedules(policy)
 
 
 if __name__ == "__main__":

@@ -4,6 +4,8 @@ import importlib.util
 import json
 from pathlib import Path
 import tempfile
+import subprocess
+import sys
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -25,7 +27,8 @@ def valid():
         for index in range(pairs):
             for order, variant in enumerate(('candidate', 'baseline') if index % 2 else ('baseline', 'candidate')):
                 count = 15 if variant == 'baseline' else 60
-                counts = {g: 1 if g == 'front' else count if g.endswith('-time') else 11 for g in GATE.GRAPH_NAMES}
+                frequency = 11 if variant == 'baseline' else 82
+                counts = {g: 1 if g == 'front' else count if g.endswith('-time') else frequency for g in GATE.GRAPH_NAMES}
                 counters = dict(cgroupMemoryEvents=dict(oom=0, oom_kill=0, max=0),
                                 cgroupMemoryStat=dict(pgscan_direct=0, pgsteal_direct=0),
                                 cgroupCpuStat=dict(throttled_usec=0))
@@ -46,6 +49,33 @@ def valid():
 
 
 class InferenceImprovementTest(unittest.TestCase):
+    def test_benchmark_and_verifier_contracts_match(self):
+        spec = importlib.util.spec_from_file_location('production_benchmark', ROOT / 'tools/benchmark_deux_parallel.py')
+        benchmark = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(benchmark)
+        self.assertEqual(GATE.SOURCE_PATHS, benchmark.SOURCE_PATHS)
+        self.assertEqual(GATE.GEOMETRY, benchmark.GEOMETRY)
+        self.assertEqual(GATE.CRITERIA, benchmark.CRITERIA)
+        benchmark_source = (ROOT / 'tools/benchmark_deux_parallel.py').read_text()
+        self.assertIn("default=ROOT / '" + GATE.RECEIPT + "'", benchmark_source)
+        self.assertNotIn('inference-2.4.1/', GATE.RECEIPT)
+        self.assertIn('android/src/com/cyberbasslord/lightforge/NativePassagePolicy.java', GATE.SOURCE_PATHS)
+
+    def test_version_change_cannot_bypass_missing_evidence(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for name in ('2.4.1', '2.4.2', '3.0.0', ''):
+                with self.subTest(version=name):
+                    (root / 'version.json').write_text(json.dumps({'name': name}))
+                    result = subprocess.run([sys.executable, str(ROOT / 'tools/verify_inference_improvement.py'),
+                                             '--root', str(root)], capture_output=True, text=True)
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn('Release held:', result.stderr)
+                    self.assertIn('evidence is missing', result.stderr)
+        source = (ROOT / 'build.sh').read_text()
+        self.assertNotIn("if version['name']=='2.4.1'", source)
+        self.assertEqual(source.count('gate.verify(root)'), 2)
+
     def test_complete_measurement(self):
         self.assertEqual(GATE.validate_measurements(valid()), 25.)
         value = valid()
@@ -131,9 +161,16 @@ class InferenceImprovementTest(unittest.TestCase):
             value['sourceBindingsAfter'] = dict(value['sourceBindings'])
             receipt = root / GATE.RECEIPT; receipt.parent.mkdir(parents=True); receipt.write_text(json.dumps(value))
             self.assertEqual(GATE.verify(root), 25.)
-            (root / 'android/src/com/cyberbasslord/lightforge/NativeDeux.java').write_text('changed engine')
-            with self.assertRaisesRegex(ValueError, 'source changed'):
-                GATE.verify(root)
+            for name in sorted(GATE.SOURCE_PATHS):
+                with self.subTest(source=name):
+                    path = root / name
+                    original = path.read_bytes()
+                    try:
+                        path.write_text('changed measured input')
+                        with self.assertRaisesRegex(ValueError, 'source changed'):
+                            GATE.verify(root)
+                    finally:
+                        path.write_bytes(original)
 
 
 if __name__ == '__main__':

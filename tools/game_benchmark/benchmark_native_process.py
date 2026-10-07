@@ -23,6 +23,16 @@ TOOL = ROOT / 'tools/game_benchmark'
 GRAPHS = ('encoder', 'dur2bd', 'segmenter', 'bd2dur', 'estimator')
 
 
+def evidence_notes(production_engine):
+    return [
+        'Single captured pair per production passage; kernel timings are diagnostic, not a controlled speedup result.',
+        ('Production native raw tensors are not captured; unrounded notes and final transcription are compared. Raw tensor parity is not asserted.'
+         if production_engine else
+         'Raw tensors are always retained and compared. Different floats are not auto-approved.'),
+        'Final transcription equality alone is not full musical-quality or Android integration approval.',
+    ]
+
+
 def digest(path):
     value = hashlib.sha256()
     with path.open('rb') as stream:
@@ -117,9 +127,7 @@ def main():
         'host': {'platform':platform.platform(), 'cpuAffinity':sorted(os.sched_getaffinity(0)) if hasattr(os,'sched_getaffinity') else None},
         'capturePairsPerPassage': 1, 'warmups': 0,
         'wholePipelineTimingComparable': False,
-        'notes': ['Single captured pair per production passage; kernel timings are diagnostic, not a controlled speedup result.',
-                  'Raw tensors are always retained and compared. Different floats are not auto-approved.',
-                  'Final transcription equality alone is not full musical-quality or Android integration approval.']
+        'notes': evidence_notes(args.production_engine)
     }
     for key, path in [('cpuMax', Path('/sys/fs/cgroup/cpu.max')), ('memoryMax', Path('/sys/fs/cgroup/memory.max'))]:
         provenance['host'][key] = path.read_text().strip() if path.exists() else None

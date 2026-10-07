@@ -10,8 +10,8 @@ final class AudioImporter {
     static double convert(File input,File audio,File analysis,Progress progress) throws Exception {
         Double direct=readWave(input,audio,analysis,progress);
         if(direct!=null) return direct;
-        MediaExtractor extractor=new MediaExtractor(); MediaCodec codec=null; WavConverter converter=null;
-        try {
+        try(DecoderResources resources=new DecoderResources()) {
+            MediaExtractor extractor=resources.extractor;
             extractor.setDataSource(input.getAbsolutePath());
             int track=-1; MediaFormat format=null;
             for(int i=0;i<extractor.getTrackCount();i++) {
@@ -26,8 +26,8 @@ final class AudioImporter {
             // output format. Preserve high resolution sources until the final
             // 16-bit Tesla WAV conversion when the device supports float output.
             format.setInteger(MediaFormat.KEY_PCM_ENCODING,4);
-            codec=MediaCodec.createDecoderByType(format.getString(MediaFormat.KEY_MIME));
-            codec.configure(format,null,null,0);codec.start();
+            resources.codec=MediaCodec.createDecoderByType(format.getString(MediaFormat.KEY_MIME));
+            resources.codec.configure(format,null,null,0);resources.codec.start();
             boolean inputEnd=false,outputEnd=false;
             int rate=format.getInteger(MediaFormat.KEY_SAMPLE_RATE),channels=format.getInteger(MediaFormat.KEY_CHANNEL_COUNT),encoding=2;
             if(channels<1 || channels>8) throw new IOException("This audio channel layout is not supported.");
@@ -36,24 +36,24 @@ final class AudioImporter {
             while(!outputEnd) {
                 progress.check();
                 if(!inputEnd) {
-                    int index=codec.dequeueInputBuffer(10000);
+                    int index=resources.codec.dequeueInputBuffer(10000);
                     if(index>=0) {
-                        ByteBuffer in=codec.getInputBuffer(index);
+                        ByteBuffer in=resources.codec.getInputBuffer(index);
                         if(in==null) throw new IOException("The device's audio decoder did not provide an input buffer.");
                         in.clear();
                         int sampleFlags=extractor.getSampleFlags();
                         if(sampleFlags>=0 && (sampleFlags&MediaExtractor.SAMPLE_FLAG_ENCRYPTED)!=0)
                             throw new IOException("This music is copy-protected. Choose an unprotected audio file.");
                         int size=extractor.readSampleData(in,0);
-                        if(size<0) {codec.queueInputBuffer(index,0,0,0,MediaCodec.BUFFER_FLAG_END_OF_STREAM);inputEnd=true;}
-                        else {codec.queueInputBuffer(index,0,size,extractor.getSampleTime(),0);extractor.advance();}
+                        if(size<0) {resources.codec.queueInputBuffer(index,0,0,0,MediaCodec.BUFFER_FLAG_END_OF_STREAM);inputEnd=true;}
+                        else {resources.codec.queueInputBuffer(index,0,size,extractor.getSampleTime(),0);extractor.advance();}
                     }
                 }
-                int index=codec.dequeueOutputBuffer(info,10000);
+                int index=resources.codec.dequeueOutputBuffer(info,10000);
                 if(index==MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
-                    MediaFormat output=codec.getOutputFormat();
+                    MediaFormat output=resources.codec.getOutputFormat();
                     int newRate=output.getInteger(MediaFormat.KEY_SAMPLE_RATE);
-                    if(converter!=null && rate!=newRate) throw new IOException("Audio changes sample rate mid-track. Convert it to WAV first.");
+                    if(resources.converter!=null && rate!=newRate) throw new IOException("Audio changes sample rate mid-track. Convert it to WAV first.");
                     rate=newRate;channels=output.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
                     encoding=output.containsKey(MediaFormat.KEY_PCM_ENCODING)?output.getInteger(MediaFormat.KEY_PCM_ENCODING):2;
                     if(decoded!=null) decoded.finish();
@@ -62,32 +62,43 @@ final class AudioImporter {
                 } else if(index>=0) {
                     lastOutput=System.nanoTime();
                     if(info.size>0 && (info.flags&MediaCodec.BUFFER_FLAG_CODEC_CONFIG)==0) {
-                        if(converter==null) converter=new WavConverter(audio,analysis,rate);
+                        if(resources.converter==null) resources.converter=new WavConverter(audio,analysis,rate);
                         if(decoded==null) decoded=new PcmFrames(channels,encoding);
-                        ByteBuffer output=codec.getOutputBuffer(index);
+                        ByteBuffer output=resources.codec.getOutputBuffer(index);
                         if(output==null || info.offset<0 || info.size>output.capacity()-info.offset)
                             throw new IOException("The device's audio decoder returned an invalid audio buffer.");
                         ByteBuffer pcm=output.duplicate().order(ByteOrder.nativeOrder());
                         pcm.clear();
                         pcm.position(info.offset);pcm.limit(info.offset+info.size);
-                        decoded.accept(pcm,converter);
+                        decoded.accept(pcm,resources.converter);
                     }
                     outputEnd=(info.flags&MediaCodec.BUFFER_FLAG_END_OF_STREAM)!=0;
-                    codec.releaseOutputBuffer(index,false);
+                    resources.codec.releaseOutputBuffer(index,false);
                     if(++loops%12==0) progress.update(duration>0?Math.min(.99,info.presentationTimeUs/(double)duration):.2,"Preparing clean 44.1 kHz audio");
                 }
                 if(System.nanoTime()-lastOutput>30_000_000_000L) throw new IOException("The device's audio decoder stopped responding. Try a WAV or MP3 copy.");
             }
-            if(converter==null) throw new IOException("The selected file contains no decoded audio.");
+            if(resources.converter==null) throw new IOException("The selected file contains no decoded audio.");
             if(decoded!=null) decoded.finish();
-            double seconds=converter.finish();
+            double seconds=resources.converter.finish();
             if(seconds<1) throw new IOException("Choose a track that is at least one second long.");
             return seconds;
-        } finally {
-            if(converter!=null) converter.close();
-            if(codec!=null) {try{codec.stop();}catch(Exception ignored){}codec.release();}
-            extractor.release();
         }
+    }
+
+    private static final class DecoderResources implements AutoCloseable {
+        final MediaExtractor extractor=new MediaExtractor();
+        MediaCodec codec;
+        WavConverter converter;
+        @Override public void close()throws Exception{
+            closeResources(converter,()->{
+                if(codec!=null)try(AutoCloseable release=codec::release){try{codec.stop();}catch(Exception notStarted){}}
+            },extractor::release);
+        }
+    }
+    /** Release every acquired resource and preserve all cleanup failures. */
+    static void closeResources(AutoCloseable converter,AutoCloseable codec,AutoCloseable extractor)throws Exception{
+        try(AutoCloseable extractorCleanup=extractor;AutoCloseable codecCleanup=codec;AutoCloseable converterCleanup=converter){}
     }
 
     /** Decoded buffer boundaries need not coincide with a complete PCM frame. */

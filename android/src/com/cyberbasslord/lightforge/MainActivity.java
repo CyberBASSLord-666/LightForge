@@ -865,7 +865,7 @@ public final class MainActivity extends Activity {
         @JavascriptInterface public String beginExport(String metadata) {
             synchronized(exportLock) {
                 try {
-                    if(importing||exporting||AnalysisJobStore.active(analysisStatus())||activeExport!=null || pendingZip!=null) throw new IOException("The previous operation is still finishing. Try again in a moment.");
+                    if(worker.isShutdown()||importing||exporting||AnalysisJobStore.active(analysisStatus())||activeExport!=null || pendingZip!=null) throw new IOException("The previous operation is still finishing. Try again in a moment.");
                     if(metadata.length()>ProjectStore.MAX_PROJECT_BYTES+1024*1024)throw new IOException("This export's editable project data is too large.");
                     JSONObject meta=new JSONObject(metadata);String id=UUID.randomUUID().toString();
                     File dir=project(meta.getString("projectId"));if(!new File(dir,"audio.wav").isFile()) throw new IOException("The project's audio file is missing.");
@@ -892,10 +892,9 @@ public final class MainActivity extends Activity {
         @JavascriptInterface public boolean appendExport(String id,String base64) {
             synchronized(exportLock) {
                 try {
-                    if(activeExport==null||!activeExport.id.equals(id)) throw new IOException("The export session has expired.");
-                    if(base64.length()>2*1024*1024) throw new IOException("Export chunk is too large.");
-                    byte[] bytes=Base64.decode(base64,Base64.DEFAULT);activeExport.out.write(bytes);activeExport.size+=bytes.length;
-                    if(activeExport.size>200_100_000L) throw new IOException("The sequence exceeds Tesla's four-hour limit.");
+                    if(activeExport==null||!activeExport.accepts(id)){error(new IOException("The export session has expired."));return false;}
+                    if(base64==null||base64.length()>2*1024*1024) throw new IOException("Export chunk is too large.");
+                    byte[] bytes=Base64.decode(base64,Base64.DEFAULT);activeExport.append(bytes);
                     return true;
                 }catch(Exception e){if(activeExport!=null)activeExport.abort();activeExport=null;exporting=false;error(e);return false;}
             }
@@ -905,9 +904,10 @@ public final class MainActivity extends Activity {
             synchronized(exportLock) {
                 if(activeExport==null||!activeExport.id.equals(id)){error(new IOException("The export session has expired."));return;}
                 session=activeExport;
-                try{session.out.close();session.finishing=true;}catch(Exception e){session.abort();activeExport=null;exporting=false;error(e);return;}
+                if(session.finishing)return; // Duplicate bridge delivery must never queue a second ZIP writer.
+                try{session.finish();}catch(Exception e){session.abort();activeExport=null;exporting=false;error(e);return;}
             }
-            worker.execute(()-> {
+            try{worker.execute(()-> {
                 boolean handedOff=false;
                 try {
                     File zip=buildZip(session);
@@ -921,7 +921,10 @@ public final class MainActivity extends Activity {
                     synchronized(exportLock){if(activeExport==session)activeExport=null;if(!handedOff)exporting=false;}session.file.delete();
                     if(!handedOff)new File(exports,session.id+".zip").delete();
                 }
-            });
+            });}catch(RejectedExecutionException stoppedWorker){
+                synchronized(exportLock){session.abort();if(activeExport==session){activeExport=null;exporting=false;}}
+                error(new IOException("The studio closed before export could start. Reopen the project and export again.",stoppedWorker));
+            }
         }
         @JavascriptInterface public void shareExport(String id) {
             final Uri uri=lastExportUri;
@@ -1102,10 +1105,22 @@ public final class MainActivity extends Activity {
         });
     }
 
-    private static final class ExportSession {
-        final String id,projectState;final JSONObject meta;final File project,file;final OutputStream out;long size;boolean finishing;
+    static final class ExportSession {
+        private static final long MAX_SEQUENCE_BYTES=200_100_000L;
+        final String id,projectState;final JSONObject meta;final File project,file;final OutputStream out;long size;boolean finishing,aborted;
         ExportSession(String id,JSONObject meta,File project,File file,String projectState)throws IOException{this.id=id;this.meta=meta;this.project=project;this.file=file;this.projectState=projectState;out=new BufferedOutputStream(new FileOutputStream(file),131072);}
-        void abort(){try{out.close();}catch(Exception ignored){}file.delete();}
+        boolean accepts(String owner){return id.equals(owner)&&!finishing&&!aborted;}
+        void append(byte[] bytes)throws IOException{
+            if(finishing||aborted)throw new IOException("The export session has expired.");
+            if(bytes==null||bytes.length>MAX_SEQUENCE_BYTES-size)throw new IOException("The sequence exceeds Tesla's four-hour limit.");
+            out.write(bytes);size+=bytes.length;
+        }
+        void finish()throws IOException{
+            if(aborted)throw new IOException("The export session has expired.");
+            if(finishing)return;
+            out.close();finishing=true;
+        }
+        void abort(){aborted=true;try{out.close();}catch(Exception ignored){}file.delete();}
     }
     private File buildZip(ExportSession session) throws Exception {
         progress("export",.05,"Checking Tesla file requirements");

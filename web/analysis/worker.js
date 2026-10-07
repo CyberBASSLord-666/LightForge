@@ -278,12 +278,25 @@ const rhythmFeatureSamples=n=>rhythmFeatureLengths(n).reduce((total,length)=>tot
 function rhythmFeatureBundle(data,n){const lengths=rhythmFeatureLengths(n),packed=new Float32Array(rhythmFeatureSamples(n));let offset=0;for(let index=0;index<RHYTHM_FIELDS.length;index++){const value=data[RHYTHM_FIELDS[index]];if(!floatFeature(value,lengths[index]))throw Error('Invalid rhythm feature bundle.');packed.set(value,offset);offset+=value.length;}return {arrays:[packed],metadata:{version:2,frameCount:n,duration:data.duration,chromaStep:data.chromaStep,fieldOrder:[...RHYTHM_FIELDS]}};}
 function validRhythmFeature(hit,n,duration){const metadata=hit?.metadata,packed=hit?.arrays?.[0];return !!metadata&&metadata.version===2&&metadata.frameCount===n&&metadata.duration===duration&&metadata.chromaStep===.2&&Array.isArray(metadata.fieldOrder)&&metadata.fieldOrder.length===RHYTHM_FIELDS.length&&metadata.fieldOrder.every((name,index)=>name===RHYTHM_FIELDS[index])&&Array.isArray(hit.arrays)&&hit.arrays.length===1&&floatFeature(packed,rhythmFeatureSamples(n));}
 function rhythmDataFromFeature(hit,n){const data={duration:hit.metadata.duration,beat:new Float32Array(n),down:new Float32Array(n),chromaStep:hit.metadata.chromaStep},packed=hit.arrays[0],lengths=rhythmFeatureLengths(n);let offset=0;for(let index=0;index<RHYTHM_FIELDS.length;index++){const length=lengths[index];data[RHYTHM_FIELDS[index]]=packed.subarray(offset,offset+length);offset+=length;}return data;}
-async function reusableRhythmFeatures(options,config,resourceDiagnostics=null){
+function rhythmTransform(audioIdentity,configIdentity,config,duration){
+ const n=Math.ceil(duration*50),component=(name,shape,hopSamples,kind,samples,offsetSamples)=>({name,shape,frameOriginSamples:0,hopSamples,window:{kind,samples,offsetSamples},padding:'zero'});
+ return {version:1,feature:RHYTHM_FEATURE,source:{role:'original-mix',sha256:audioIdentity},clock:{sampleRate:22050,originSeconds:0},frontend:{id:RHYTHM_FEATURE_VERSION,configSha256:configIdentity},dtype:'float32',arithmetic:'float64',shape:[rhythmFeatureSamples(n)],components:[
+  component('rms',[n],441,'rectangular',1411,-705),
+  ...['bass','mid','high'].map(name=>component(name,[n],441,'symmetric-hann-positive-first-difference',config.windowLength,-705)),
+  component('colour',[n,3],441,'symmetric-hann',config.windowLength,-705),
+  // Quarter-hop boundaries are rounded individually by FeatureExtractor;
+  // the alternating integer window lengths must not be described as 110.
+  component('fine-rms',[n*4],441/4,'rounded-quarter-hop-rectangular',null,Math.floor(config.windowLength/2)-705),
+  component('chroma',[Math.ceil(n/10),12],4410,'ten-frame-symmetric-hann-sum-divided-by-ten',config.windowLength,-705)
+ ]};
+}
+async function reusableRhythmFeatures(options,config,resourceDiagnostics=null,duration=null){
  const audioIdentity=options.analysisIdentity,assetFingerprint=options.analysisAssetFingerprint,api=self.LightForgeFeatureStore,store=self.LightForgeAnalysisStore;
  if(typeof audioIdentity!=='string'||!/^[a-f0-9]{64}$/.test(audioIdentity)||typeof assetFingerprint!=='string'||!/^[a-f0-9]{64}$/.test(assetFingerprint)||!api||typeof api.open!=='function'||!store||typeof store.contentAddress!=='function')return null;
  try{
-  const configIdentity=await store.contentAddress('dsp-feature-config',config);
-  return await api.open({audioIdentity,preprocessingVersion:RHYTHM_PREPROCESSING,modelVersions:{'analysis-assets':assetFingerprint,'dsp-config':configIdentity,'dsp-extractor':RHYTHM_FEATURE_VERSION},analysisConfiguration:{analysisRate:22050,featureChunk:500,frameHopSamples:441,frameRateHz:50,chromaStep:.2,reflectionHaloHops:2}},{resourceDiagnostics});
+  if(!Number.isFinite(duration)||duration<=0)return null;
+  const configIdentity=await store.contentAddress('dsp-feature-config',config),transform=rhythmTransform(audioIdentity,configIdentity,config,duration);
+  return await api.open({audioIdentity,transform,preprocessingVersion:RHYTHM_PREPROCESSING,modelVersions:{'analysis-assets':assetFingerprint,'dsp-config':configIdentity,'dsp-extractor':RHYTHM_FEATURE_VERSION},analysisConfiguration:{analysisRate:22050,featureChunk:500,frameHopSamples:441,frameRateHz:50,chromaStep:.2,reflectionHaloHops:2}},{resourceDiagnostics});
  }catch(_){return null;}
 }
 async function recurrenceEvidenceInput(result,options,config,telemetry){
@@ -292,7 +305,7 @@ async function recurrenceEvidenceInput(result,options,config,telemetry){
  // The rhythm stage already owns these feature frames. Reuse an exact,
  // version-bound shared record when it is available; no new decode, FFT, or
  // resample is permitted for recurrence analysis.
- const featureStore=config?await reusableRhythmFeatures(options,config,telemetry.resource):null;
+ const featureStore=config?await reusableRhythmFeatures(options,config,telemetry.resource,result?.duration):null;
  if(!featureStore)return input;
  let hit=null;
  const phase=telemetry.begin('shared-feature.recurrence.read');
@@ -431,7 +444,7 @@ self.onmessage=async e=>{
  const sessionOptions={executionProviders:['wasm'],graphOptimizationLevel:'all',enableCpuMemArena:false,enableMemPattern:false};
  if(stage==='rhythm'){
   report(.01,'Opening music','Reading your music locally');const reader=new LightForgeWavReader(options.analysisUrl||audioUrl,telemetry);await reader.open();
- const n=Math.ceil(reader.duration*50),featureStore=await reusableRhythmFeatures(options,config,telemetry.resource);let featureHit=null;
+ const n=Math.ceil(reader.duration*50),featureStore=await reusableRhythmFeatures(options,config,telemetry.resource,reader.duration);let featureHit=null;
  if(featureStore){
   const featureRead=telemetry.begin('shared-feature.read');
   try{featureHit=await featureStore.readFloat32(RHYTHM_FEATURE);}catch(_){featureHit=null;}
@@ -439,7 +452,7 @@ self.onmessage=async e=>{
  }
  if(featureHit&&!validRhythmFeature(featureHit,n,reader.duration)){telemetry.cache('shared-features','corrupt');try{await featureStore.invalidate([RHYTHM_FEATURE]);}catch(_){}featureHit=null;}
  let data=featureHit?rhythmDataFromFeature(featureHit,n):null;
- if(data){telemetry.cache('shared-features','hit');report(.025,'Restoring musical detail','Verified reusable energy and tonal features restored');}
+ if(data){telemetry.allocation?.(n*8,2);telemetry.cache('shared-features','hit');report(.025,'Restoring musical detail','Verified reusable energy and tonal features restored');}
  else{
   if(featureStore)telemetry.cache('shared-features','miss');
   const chromaCount=Math.ceil(n/10)*12,rhythmBytes=(n*6+n*3+n*4+chromaCount)*4;
@@ -450,7 +463,7 @@ self.onmessage=async e=>{
   for(let first=0;first<n;first+=featureChunk){const frames=Math.min(featureChunk,n-first),samples=await reader.mono22050(first*441-705,(frames-1)*441+1411,config),f=extractor.extract(samples,0,frames);for(const name of ['rms','bass','mid','high'])data[name].set(f[name],first);data.colour.set(f.colour,first*3);data.fineRms.set(f.fineRms,first*4);for(let i=0;i<frames;i++)for(let b=0;b<12;b++)data.chroma[Math.floor((first+i)/10)*12+b]+=f.chroma[i*12+b]/10;report(.03+.18*(first+frames)/n,'Listening to musical detail',`${Math.min(reader.duration,(first+frames)*.02).toFixed(0)} / ${reader.duration.toFixed(0)} seconds`);}
   if(featureStore){
    const featureWrite=telemetry.begin('shared-feature.write');
-   try{const bundle=rhythmFeatureBundle(data,n);await featureStore.writeFloat32(RHYTHM_FEATURE,bundle.arrays,{...bundle.metadata,producer:RHYTHM_FEATURE_VERSION});telemetry.cache('shared-features','write');}catch(_){telemetry.cache('shared-features','corrupt');}
+   try{const bundle=rhythmFeatureBundle(data,n);telemetry.allocation?.(bundle.arrays[0].byteLength,1);telemetry.copy?.(bundle.arrays[0].byteLength,1);await featureStore.writeFloat32(RHYTHM_FEATURE,bundle.arrays,{...bundle.metadata,producer:RHYTHM_FEATURE_VERSION});telemetry.cache('shared-features','write');}catch(_){telemetry.cache('shared-features','corrupt');}
    telemetry.end(featureWrite);
   }
  }

@@ -218,7 +218,7 @@ def summarize(record):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, required=True, help='Fresh directory for immutable run evidence')
-    parser.add_argument('--receipt', type=Path, default=ROOT / 'research/inference-2.4.1/production-parallel-qualification.json')
+    parser.add_argument('--receipt', type=Path, default=ROOT / 'research/inference-current/production-parallel-qualification.json')
     args = parser.parse_args()
     work = args.output.resolve()
     b.require(not work.exists(), 'A fresh output directory is required')
