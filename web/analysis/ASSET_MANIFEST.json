@@ -4,8 +4,8 @@
     "sha256": "eadf8ab99ca8f0e37d2f575f0dbef4bafe09f0b5b4fd8d242687b66b5276b9ba"
   },
   "analyzer.js": {
-    "bytes": 24748,
-    "sha256": "f3b28a80a70e21cfbde0daf379da8fd893fc35f2b7851653ccd883402075a4a1"
+    "bytes": 24949,
+    "sha256": "d81a8b2c955f3f1281a4b8d8fe13fb26bb1e0108dedfaca9b4e24985e4e7b455"
   },
   "bass-notes.js": {
     "bytes": 20479,
@@ -20,8 +20,8 @@
     "sha256": "f95357f71693a5df05e47c5baed5a15cca88bf5371d4b20dc51b3dbb6624fc06"
   },
   "feature-store.js": {
-    "bytes": 7834,
-    "sha256": "a0495b99ace6248ea16646eed0b2509695c0f369ca7ae83aae19f72c82f82423"
+    "bytes": 11782,
+    "sha256": "283a37ba3ec9caa6566479c4ccb0f92b071481df46f171eac50b95cc55c84ec0"
   },
   "game.js": {
     "bytes": 12228,
@@ -280,8 +280,8 @@
     "sha256": "1928c13321c87e0cc1d4deb4b7e140027f9a4f502d14c36db45abd124dfc1c06"
   },
   "separator-deux.js": {
-    "bytes": 12488,
-    "sha256": "6a37acd3fd3923f32249d9640462cc06768c41901ee000837e17f21205d22867"
+    "bytes": 14935,
+    "sha256": "a7ec66d36fcda3fa655c6392ff18b00bf948310ef298adc2ad3bf22712be13a6"
   },
   "separator-mdx.js": {
     "bytes": 13749,
@@ -324,19 +324,19 @@
     "sha256": "e169e7deb15be7c4a778ef8623decb7a46800fc7633acbab8c6caa51e3ee059c"
   },
   "vocal.js": {
-    "bytes": 13356,
-    "sha256": "bacf90472f06611526fd8dac49b32775f4a32f62bf40b409fd1ce892feff09f0"
+    "bytes": 15899,
+    "sha256": "e6ad2b32659d136fc68282073e1e05018647a1a793f697152b3a33e151ecad61"
   },
   "wav-reader.js": {
     "bytes": 8035,
     "sha256": "6cd0a40392617cc020f2ec4f87952f165e070c8c17bc4aa3b36b212823d897d4"
   },
   "work-store.js": {
-    "bytes": 22780,
-    "sha256": "d509fbaeb9798d04abae4de06d17ef1548a5a1d16333271d21ee5a27785557ab"
+    "bytes": 23043,
+    "sha256": "14b223531da867df95e69d1f4e2a92f20cb881cbeec5645b150e462100262dd4"
   },
   "worker.js": {
-    "bytes": 53455,
-    "sha256": "0660d76f5e030e808cfafa2f987f6da4197f45e2415c3586f9a2313c5faab655"
+    "bytes": 55404,
+    "sha256": "e9b8dc9609e79f7539103c02de2376c7c3ef59975f89ce24ada877fa74104d30"
   }
 }

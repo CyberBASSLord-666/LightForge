@@ -47,15 +47,16 @@ local until exported and contain no attached music or saved-show payload. Review
 reports before sharing publicly; never commit personal audio, diagnostics or
 signing credentials to this repository.
 
-LightForge 2.4.1 adds device-local Studio execution calibration and compact job
-summaries that survive trace rotation. The first uncached Studio passage spends
-additional time testing scheduling; later passages reuse the measured decision.
-See [the calibration contract](docs/NATIVE_EXECUTION_CALIBRATION.md) for its
-unchanged-output checks and limits.
-Final production host qualification measured **32.6% lower median native passage
-time**, with complete byte-identical outputs and improvements in all three
-measured pairs. [The evidence](research/inference-2.4.1/DEUX_PARALLEL_B1.md)
-also records the CPU/memory cost and unmeasured phone/whole-analysis scope.
+Published 2.4.1 used warm-graph device calibration. Its historical host
+[qualification](research/inference-2.4.1/DEUX_PARALLEL_B1.md) measured **32.6%
+lower median native passage time** with byte-identical outputs, but a later
+phone run was slower. The [unreleased correction](research/inference-device-regression-20260928/README.md)
+requires three exact cold-session comparisons at passages 0/1/2, bounded extra
+work and sustained checks using useful baseline passages. Those later controls
+use different inputs and cannot establish a paired speedup; durable diagnostics
+preserve both kinds of evidence.
+See [the calibration contract](docs/NATIVE_EXECUTION_CALIBRATION.md). No new
+phone or whole-analysis speedup is claimed, and the published APK is unchanged.
 
 ## Verification and limitations
 

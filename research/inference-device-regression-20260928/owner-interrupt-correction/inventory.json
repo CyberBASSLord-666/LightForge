@@ -1,0 +1,166 @@
+{
+  "schema": "lightforge.exact-artifact-inventory.v1",
+  "scope": "All archived files except this inventory itself",
+  "files": {
+    "README.md": {
+      "bytes": 3392,
+      "sha256": "a9616d98beb599dcfb72cc96badd8849fdb6278782bd7c3cfd0efbbf6f8a6027"
+    },
+    "after/compile.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "after/frequency-owner-interrupt-only.log": {
+      "bytes": 519,
+      "sha256": "ad5356f042401dc52af800320046b217942236d118b908a22aa922104f84c15e"
+    },
+    "after/owner-interrupt-only.log": {
+      "bytes": 472,
+      "sha256": "e0464a8885de7942205cade4090012483cdb1bdf4201374069ae13b508eab227"
+    },
+    "after/receipt.json": {
+      "bytes": 9352,
+      "sha256": "1514f81a0d1b127b21fb139e41c127c24f44b7ba8cda217117e908fd37fe2b20"
+    },
+    "after/source-snapshots/AppDiagnostics.java": {
+      "bytes": 208,
+      "sha256": "fa360742193c650b4b20a4ec3b7d57dfe9bbceeea503315d6196183f3f1197df"
+    },
+    "after/source-snapshots/android/native-runtime.json": {
+      "bytes": 2123,
+      "sha256": "e3ea568b3a8485235f23a59cd787466cdcbbfcaa54ac56df3ce040d29fcb2a94"
+    },
+    "after/source-snapshots/android/src/com/cyberbasslord/lightforge/NativeDeux.java": {
+      "bytes": 74629,
+      "sha256": "314a395c8bd28c8841d5a2afefdb03779b1929f9beac3b1200dde7d03ee996d6"
+    },
+    "after/source-snapshots/android/src/com/cyberbasslord/lightforge/NativeDeuxTransform.java": {
+      "bytes": 7163,
+      "sha256": "991b06501cfb88b904d0b714a525c389f169f00c231248b0e961b70f257e90b5"
+    },
+    "after/source-snapshots/android/src/com/cyberbasslord/lightforge/NativeExecutionPolicy.java": {
+      "bytes": 17582,
+      "sha256": "35e5ca193c8ba46157e79a5caa9997370eec1a3fdabc9670bf0d4f8616b62702"
+    },
+    "after/source-snapshots/android/src/com/cyberbasslord/lightforge/NativeInferenceProfile.java": {
+      "bytes": 43277,
+      "sha256": "059e3ac51a8a935b2af1cc507f9985e6da1ba7c6fcef4d8a0f20ca44d1c7f88d"
+    },
+    "after/source-snapshots/android/src/com/cyberbasslord/lightforge/NativePassagePolicy.java": {
+      "bytes": 25653,
+      "sha256": "f30b21b801f991bf09e07b737cde4117baf77110afbbada4bcc691137e1f2daa"
+    },
+    "after/source-snapshots/qa/release-2.4.1/verify-analysis.py": {
+      "bytes": 76081,
+      "sha256": "b3fad7de6e3dd63ceff4268a9d5c37fda852eebf3d6a411b1724893303c553b9"
+    },
+    "after/source-snapshots/tests/NativeDeuxCalibrationTest.java": {
+      "bytes": 32456,
+      "sha256": "890270d2b1ce32111d4258aa9dd36e174b2d03b54098e12753b8c9bdd55dd39c"
+    },
+    "after/source-snapshots/tests/NativeDeuxParallelBenchmark.java": {
+      "bytes": 4169,
+      "sha256": "96d04a566a561611cc40dea70bed3c0f916025a2741c8b91a393384a902ef040"
+    },
+    "after/source-snapshots/tests/test_native_baseline_cancellation_evidence.py": {
+      "bytes": 4402,
+      "sha256": "49542dff70bf82753a36f3582cbd88cd29e0ead2f07c2d9aaec80d4ed430cb61"
+    },
+    "after/source-snapshots/tests/test_native_scheduler_evidence.py": {
+      "bytes": 23549,
+      "sha256": "c30c143b547ce1ab6caa0444f882daac63fb931b1311bfd647315ed7e14ff824"
+    },
+    "after/source-snapshots/tools/benchmark_deux_execution.py": {
+      "bytes": 16195,
+      "sha256": "fb124437361b8e7eb9ff23de5906db6824b049c7b51bd0f2f2d2e0720bc3848c"
+    },
+    "after/source-snapshots/tools/benchmark_deux_parallel.py": {
+      "bytes": 18447,
+      "sha256": "ab6052dc64c5a84fe36c888e98ef2f08329d41a237e7ca776ea8de1a6e9af797"
+    },
+    "after/source-snapshots/tools/verify_deux_passage.py": {
+      "bytes": 14200,
+      "sha256": "93c997e20628571f885278229c6ca074262e369d8f8bf8aa28809a824150ca42"
+    },
+    "after/targeted-owner-interrupt.json": {
+      "bytes": 10798,
+      "sha256": "fd0b49fed4f90026a32887d5894f3be5c0c81e30a8a48cd78577336cc7789273"
+    },
+    "archive.json": {
+      "bytes": 1791,
+      "sha256": "d214d429ebb7394be9e22cdfbc9fc499c313ea2224fcea9d118c35cd915a913d"
+    },
+    "before/compile.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "before/owner-interrupt.log": {
+      "bytes": 4842,
+      "sha256": "316ca9a2d5277988af4e4e5c5681943a1c5f9801125e067189bc20917aa15c97"
+    },
+    "before/receipt.json": {
+      "bytes": 9352,
+      "sha256": "24d45779f60e285804230c236cd8ebcf17f3138a82253734629a30440c858ebd"
+    },
+    "before/source-snapshots/AppDiagnostics.java": {
+      "bytes": 208,
+      "sha256": "fa360742193c650b4b20a4ec3b7d57dfe9bbceeea503315d6196183f3f1197df"
+    },
+    "before/source-snapshots/android/native-runtime.json": {
+      "bytes": 2123,
+      "sha256": "e3ea568b3a8485235f23a59cd787466cdcbbfcaa54ac56df3ce040d29fcb2a94"
+    },
+    "before/source-snapshots/android/src/com/cyberbasslord/lightforge/NativeDeux.java": {
+      "bytes": 74249,
+      "sha256": "d68334feeed3301cc667b4109f33d83a442cfdfccd83f016e4301a5cf070407b"
+    },
+    "before/source-snapshots/android/src/com/cyberbasslord/lightforge/NativeDeuxTransform.java": {
+      "bytes": 7163,
+      "sha256": "991b06501cfb88b904d0b714a525c389f169f00c231248b0e961b70f257e90b5"
+    },
+    "before/source-snapshots/android/src/com/cyberbasslord/lightforge/NativeExecutionPolicy.java": {
+      "bytes": 17582,
+      "sha256": "35e5ca193c8ba46157e79a5caa9997370eec1a3fdabc9670bf0d4f8616b62702"
+    },
+    "before/source-snapshots/android/src/com/cyberbasslord/lightforge/NativeInferenceProfile.java": {
+      "bytes": 43277,
+      "sha256": "059e3ac51a8a935b2af1cc507f9985e6da1ba7c6fcef4d8a0f20ca44d1c7f88d"
+    },
+    "before/source-snapshots/android/src/com/cyberbasslord/lightforge/NativePassagePolicy.java": {
+      "bytes": 25653,
+      "sha256": "f30b21b801f991bf09e07b737cde4117baf77110afbbada4bcc691137e1f2daa"
+    },
+    "before/source-snapshots/qa/release-2.4.1/verify-analysis.py": {
+      "bytes": 76081,
+      "sha256": "b3fad7de6e3dd63ceff4268a9d5c37fda852eebf3d6a411b1724893303c553b9"
+    },
+    "before/source-snapshots/tests/NativeDeuxCalibrationTest.java": {
+      "bytes": 32456,
+      "sha256": "890270d2b1ce32111d4258aa9dd36e174b2d03b54098e12753b8c9bdd55dd39c"
+    },
+    "before/source-snapshots/tests/NativeDeuxParallelBenchmark.java": {
+      "bytes": 4169,
+      "sha256": "96d04a566a561611cc40dea70bed3c0f916025a2741c8b91a393384a902ef040"
+    },
+    "before/source-snapshots/tests/test_native_baseline_cancellation_evidence.py": {
+      "bytes": 4402,
+      "sha256": "49542dff70bf82753a36f3582cbd88cd29e0ead2f07c2d9aaec80d4ed430cb61"
+    },
+    "before/source-snapshots/tests/test_native_scheduler_evidence.py": {
+      "bytes": 23549,
+      "sha256": "c30c143b547ce1ab6caa0444f882daac63fb931b1311bfd647315ed7e14ff824"
+    },
+    "before/source-snapshots/tools/benchmark_deux_execution.py": {
+      "bytes": 16195,
+      "sha256": "fb124437361b8e7eb9ff23de5906db6824b049c7b51bd0f2f2d2e0720bc3848c"
+    },
+    "before/source-snapshots/tools/benchmark_deux_parallel.py": {
+      "bytes": 18447,
+      "sha256": "ab6052dc64c5a84fe36c888e98ef2f08329d41a237e7ca776ea8de1a6e9af797"
+    },
+    "before/source-snapshots/tools/verify_deux_passage.py": {
+      "bytes": 14200,
+      "sha256": "93c997e20628571f885278229c6ca074262e369d8f8bf8aa28809a824150ca42"
+    }
+  }
+}

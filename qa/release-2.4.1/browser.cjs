@@ -45,7 +45,9 @@ const hashes=()=>Object.fromEntries(sourceNames().map(f=>[f,crypto.createHash('s
   const music=JSON.parse(fs.readFileSync(path.join(root,'qa/release-1.6.0/actual-music-user-glass-prefix64-analysis.json')));
   const fixture={version:1,name:'Glass Castle · Precision QA',settings:{style:'cinematic',dance:'off',seed:2025,vocalFocus:.85,bassFocus:.9,vocalRegions:[]},music};
   receipt.source_hashes=hashes();
+  const {allowLocalRequest}=require('../locked-benchmark/local-http-security.cjs');
   server=http.createServer((req,res)=>{
+    if(!allowLocalRequest(req,res))return;
   const pathname=decodeURIComponent(req.url.split('?')[0]);
   if(pathname==='/fixture.json'){res.setHeader('Content-Type','application/json');res.end(JSON.stringify(fixture));return;}
   const p=path.resolve(root,'web','.'+(pathname==='/'?'/index.html':pathname));if(!p.startsWith(path.join(root,'web')+path.sep)){res.writeHead(403).end();return;}

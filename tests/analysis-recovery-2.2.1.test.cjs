@@ -161,7 +161,14 @@ test('cancellation and stage failures preserve durable work and never start a do
 test('native acceleration callback stays outside structured clone and its result returns to the requesting worker',async()=>{
  let invocation=0,progressForwarded=0;
  const h=analyzerHarness({behavior(w,m){if(m.stage==='separation')w.emit({type:'native-deux',requestId:7,startSample:-66150});else if(m.type==='native-deux-progress'){progressForwarded++;assert.equal(m.requestId,7);}else if(m.type==='native-deux-result'){assert.equal(m.requestId,7);assert.equal(m.url,'https://app.test/result.bin');w.finish();}else if(m.stage)w.finish(m);}});
- await h.analyze('/song.wav',{analysisIdentity:key,nativePredict:async(start,signal,progress)=>{invocation++;assert.equal(start,-66150);assert.equal(signal.aborted,false);progress({progress:.5,message:'Transformer'});progress({progress:.5,message:'Transformer'});return {url:'https://app.test/result.bin'};}});assert.equal(invocation,1);assert.equal(progressForwarded,1);assert.equal(h.workers[1].request.options.supportsNativeDeux,true);assert.equal('nativePredict' in h.workers[1].request.options,false);
+ await h.analyze('/song.wav',{analysisIdentity:key,nativePredict:async(start,signal,progress,remainingUseful)=>{invocation++;assert.equal(remainingUseful,-1);assert.equal(start,-66150);assert.equal(signal.aborted,false);progress({progress:.5,message:'Transformer'});progress({progress:.5,message:'Transformer'});return {url:'https://app.test/result.bin'};}});assert.equal(invocation,1);assert.equal(progressForwarded,1);assert.equal(h.workers[1].request.options.supportsNativeDeux,true);assert.equal('nativePredict' in h.workers[1].request.options,false);
+});
+test('analyzer forwards verified useful budget and rejects malformed worker metadata before native work',async()=>{
+ for(const budget of [1,2880,-1,null,0,-2,2881,1.5,'2',NaN]){
+  let calls=0;const h=analyzerHarness({behavior(w,m){if(m.stage==='separation')w.emit({type:'native-deux',requestId:7,startSample:-66150,remainingUseful:budget});else if(m.type==='native-deux-result')w.finish();else if(m.stage)w.finish(m);}});
+  const run=h.analyze('/song.wav',{analysisIdentity:key,nativePredict:async(start,signal,progress,remainingUseful)=>{calls++;assert.equal(remainingUseful,budget);return {url:'https://app.test/result.bin'};}});
+  if([-1,1,2880].includes(budget)){await run;assert.equal(calls,1);}else{await assert.rejects(run,/Invalid native studio request/);assert.equal(calls,0);}
+ }
 });
 test('aborting native acceleration cancels its operation and retains all completed passages',async()=>{
  const controller=new AbortController();let nativeSignal;
@@ -189,13 +196,13 @@ test('GAME resumes completed passages with identical note boundaries and without
  const before=h.runs.loaded;game=await h.create();const restored=await game.process(()=>{throw Error('Cached audio reread');},total);await game.release();assert.equal(h.runs.loaded,before,'Cached work loaded GAME model graphs');assert.deepEqual(restored,result);
  h.records.get('game-0-0').notes[0].midi=999;game=await h.create();await game.process(read,total);await game.release();assert.equal(h.runs.encoder,4,'Invalid checkpoint pitch was accepted');
 });
-function workerHarness({cached=null,brokenStems=false,nativeBytes=null,quotaFailure=false,configureCapabilities=null}={}){
+function workerHarness({cached=null,brokenStems=false,nativeBytes=null,nativeBudget=undefined,quotaFailure=false,configureCapabilities=null}={}){
  const messages=[],invalidations=[],writes=[],received=[],progress=[],reservations=[];let created=0,aborted=0,released=0;
  const context=vm.createContext({console,URL,Float32Array,ArrayBuffer,DataView,performance,Map,Number,setTimeout,crypto:webcrypto,navigator:{hardwareConcurrency:2},importScripts(){},ort:{env:{wasm:{}}},LightForgeAnalysisStore:{open:async()=>({read:async()=>cached,write:async(name,value)=>writes.push([name,value]),invalidate:async prefixes=>invalidations.push(Array.from(prefixes)),reserve:async plan=>{reservations.push(plan);if(quotaFailure)throw Error('Free at least 500 MB of device storage, then resume this song.');}})},LightForgeStemCache:{prune:async()=>{},files:async()=>{if(brokenStems)throw Error('Missing stems');},fullVoice:async()=>{},create:async()=>{created++;return {append:async chunk=>received.push(chunk),finish:async()=>({key:'rebuilt'}),abort:async()=>{aborted++;}};}},LightForgeWavReader:class{constructor(){this.samples=44100;this.duration=1;}async open(){}async stereo44100(){throw Error('Unexpected source read');}},fetch:async url=>{
   if(String(url).endsWith('features.json'))return {json:async()=>({})};if(String(url).endsWith('model-manifest.json'))return {json:async()=>({precision:{},balanced:{}})};
   return {ok:true,arrayBuffer:async()=>nativeBytes};
  },LightForgeMdxSeparator:{constants:require('../web/analysis/separator-mdx.js').constants},LightForgeDeux:{create:async options=>({release:async()=>{released++;},process:async(read,total,onChunk,onProgress)=>{
-  const result=options.nativePredict?await options.nativePredict(-66150,(p,message)=>progress.push([p,message])):{vocals:new Float32Array(1),accompaniment:new Float32Array(1)};
+  const result=options.nativePredict?await options.nativePredict(-66150,(p,message)=>progress.push([p,message]),nativeBudget):{vocals:new Float32Array(1),accompaniment:new Float32Array(1)};
   await onChunk({sampleRate:44100,startSample:0,...result});onProgress({progress:1,processedSeconds:1,message:'Done',passagesCompleted:1,passageCount:1,checkpointSaved:true});return {modelId:'same-model'};
  }})}});context.self=context;configureCapabilities?.(context);context.location={href:'https://app.test/analysis/worker.js'};
  context.postMessage=m=>{messages.push(m);if(m.type==='native-deux')setImmediate(async()=>{await context.onmessage({data:{type:'native-deux-progress',requestId:m.requestId,value:{progress:.5,message:'Block'}}});await context.onmessage({data:{type:'native-deux-result',requestId:m.requestId,url:'https://app.test/native.bin'}});});};
@@ -222,6 +229,13 @@ test('worker invalidates derived stages when committed stems are missing and kee
 test('worker native transport preserves raw source floats and rejects truncated and non-finite output transactionally',async()=>{
  const bytes=new ArrayBuffer(573300*8),view=new DataView(bytes);view.setFloat32(0,1e-8,true);view.setFloat32(573300*4,-.25,true);const valid=workerHarness({nativeBytes:bytes});await valid.run();assert.equal(valid.received[0].vocals[0],Math.fround(1e-8));assert.equal(valid.received[0].accompaniment[0],-.25);assert.deepEqual(valid.progress,[[.5,'Block']]);assert.equal(valid.messages.at(-1).type,'result');
  for(const data of [new ArrayBuffer(8),bytes]){if(data===bytes)view.setFloat32(0,NaN,true);const broken=workerHarness({nativeBytes:data});await broken.run();assert.equal(broken.received.length,0);assert.equal(broken.aborted,1);assert.equal(broken.released,1);assert.equal(broken.messages.at(-1).type,'error');assert.match(broken.messages.at(-1).message,/incomplete|invalid samples/);assert.equal(broken.writes.length,0);}
+});
+test('worker transports useful passage metadata with conservative legacy default',async()=>{
+ for(const nativeBudget of [undefined,-1,1,35]){
+  const h=workerHarness({nativeBytes:new ArrayBuffer(573300*8),nativeBudget});await h.run();
+  assert.equal(h.messages.find(message=>message.type==='native-deux').remainingUseful,nativeBudget===undefined?-1:nativeBudget);
+  assert.equal(h.messages.at(-1).type,'result');
+ }
 });
 test('native resources release after the worker consumes output and before the voice model starts',async()=>{
  const events=[];let fetched=false;

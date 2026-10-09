@@ -10,6 +10,7 @@
 !.env.example
 !.env.sample
 local.properties
+.pypirc
 *Private-Source*.zip
 LightForge-diagnostics-*.txt
 

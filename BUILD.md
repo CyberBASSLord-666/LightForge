@@ -84,6 +84,16 @@ the pinned download/hash and fixture-preparation steps in
 `node "qa/release-$VERSION/analysis-browser.cjs"`. Do not replace licensed fixtures
 with arbitrary music while retaining the original evidence labels.
 
+Production CI reuses pip's package-download cache through the existing pinned
+`setup-python` action. Its key includes the Python/runner identity, model
+requirements and verification workflow (including the inline Torch/installer
+pins). Installs, both model conversions and every verification gate still run on
+cache hits. No installed environment, generated model or verification receipt is
+cached. Local pip installs also retain their normal download cache; a warm cache
+is only a download optimization, never evidence that the current source passes.
+Actual CI time/transfer savings require a successful cold/warm run; none are
+claimed from the configuration alone.
+
 The same workflow is authoritative for the complete order of native comparison,
 profile, APK, instrumentation and emulator checks. Browser adapters and host JVM
 checks cannot substitute for Android lifecycle tests. The instrumentation builder
@@ -120,7 +130,10 @@ node tools/build_preview.mjs
 
 Model and asset provenance are in [ASSETS.md](ASSETS.md). Generated graphs,
 installed toolchains, build outputs, credentials and personal audio stay out of
-Git. The canonical retained assets do not need historical transfer reconstruction.
+Git. Pinned SDK/JDK archive downloads use bounded 1 MiB reads, verify the complete
+size and SHA-256, and publish atomically from unique temporary files. Interrupted
+or concurrent bootstraps cannot publish a partial archive; cached archives are
+rechecked before reuse. The canonical retained assets do not need historical transfer reconstruction.
 
 ## Publication controls
 
@@ -142,12 +155,17 @@ strict [performance-quality gate](docs/PERFORMANCE_QUALITY_GATE.md) retains its
 thresholds. Physical phone/Tesla observations may be absent, but corresponding
 claims must remain explicitly unverified.
 
-For 2.4.1, `build.sh` additionally requires a passing final-source inference
+`build.sh` additionally requires a passing final-source inference
 receipt before preparing assets or compiling an APK. It replays three alternating
 full-passage pairs, requires at least 15% lower median latency and 5% in every
 pair, verifies complete byte-identical output, and rejects memory pressure or
 unequal CPU controls. The frozen Java build input must match that measured source.
-The automated-verification policy does not bypass this release hold.
+The automated-verification policy and changing the version number do not bypass
+this release hold. The current qualifier binds the full-context temporal and
+frequency scheduling implementation, including the passage policy. Historical
+2.4.1 timing receipts remain unchanged and cannot qualify the newer geometry.
+New controlled benchmark runs write their current receipt under
+`research/inference-current/`, separately from published release evidence.
 
 The release path retains these controls:
 

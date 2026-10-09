@@ -43,7 +43,8 @@
     "web/preview/vehicle-preview.js",
     "web/studio-tools.js",
     "web/styles.css",
-    "web/version.js"
+    "web/version.js",
+    "qa/locked-benchmark/local-http-security.cjs"
   ],
   "browser": [
     "qa/release-2.4.1/browser.cjs",

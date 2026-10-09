@@ -93,7 +93,7 @@ final class NativeMdxTask implements AutoCloseable {
         if(bytes!=INPUT_BYTES)throw new IOException("The balanced MDX input is incomplete.");
         releaseFiles();token=UUID.randomUUID().toString();state="uploading";message="Sending balanced spectrum to Android";received=0;cancelled=false;
         input=new File(jobDirectory,token+".input");output=new File(jobDirectory,token+".bin");
-        try{inputStream=new FileOutputStream(input,false);}catch(IOException error){releaseFiles();throw error;}
+        try{inputStream=new FileOutputStream(input,false);}catch(IOException error){releaseFiles();token=null;state="idle";message="";throw error;}
         return status(owner,token);
     }
 

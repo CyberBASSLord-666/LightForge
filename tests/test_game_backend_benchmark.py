@@ -13,6 +13,23 @@ compare = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(compare)
 
 
+class CaptureScopeTests(unittest.TestCase):
+    def test_capture_notes_distinguish_production_from_raw_tensor_prototype(self):
+        spec = importlib.util.spec_from_file_location(
+            'game_native_process', Path(__file__).resolve().parents[1] /
+            'tools/game_benchmark/benchmark_native_process.py')
+        benchmark = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(benchmark)
+        production = ' '.join(benchmark.evidence_notes(True))
+        prototype = ' '.join(benchmark.evidence_notes(False))
+        self.assertIn('raw tensors are not captured', production)
+        self.assertIn('Raw tensor parity is not asserted', production)
+        self.assertNotIn('always retained', production)
+        self.assertIn('Raw tensors are always retained and compared', prototype)
+        self.assertIn('not a controlled speedup result', production)
+        self.assertIn('not a controlled speedup result', prototype)
+
+
 class ComparisonEvidenceTests(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()

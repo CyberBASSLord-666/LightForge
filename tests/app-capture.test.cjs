@@ -118,6 +118,18 @@ test('range parser accepts bounded open-ended reads and rejects invalid or multi
   assert.deepEqual(capture.parseRange('bytes=2-90', 10), { start: 2, end: 9, partial: true });
   for (const range of ['bytes=-1', 'bytes=20-21', 'bytes=8-2', 'bytes=0-2,4-5', 'bytes=999999999999999999999-']) assert.throws(() => capture.parseRange(range, 10));
 });
+test('loopback request policy follows browser default-port normalization', () => {
+  const { allowLocalRequest } = require('../qa/locked-benchmark/local-http-security.cjs');
+  for (const [port, authority] of [[80, '127.0.0.1'], [8899, '127.0.0.1:8899']]) {
+    const response = { setHeader() {}, writeHead() {}, end() {} };
+    assert.equal(allowLocalRequest({ socket: { localPort: port }, headers: {
+      host: authority, origin: 'http://' + authority,
+    } }, response), true);
+    assert.equal(allowLocalRequest({ socket: { localPort: port }, headers: {
+      host: 'attacker.invalid', origin: 'http://' + authority,
+    } }, response), false);
+  }
+});
 test('server serves exact locked WAV ranges and cannot expose another local file', async t => {
   const dir = temporary(t), web = path.join(dir, 'web'); fs.mkdirSync(web);
   fs.writeFileSync(path.join(web, 'worker.js'), 'worker');
@@ -128,9 +140,32 @@ test('server serves exact locked WAV ranges and cannot expose another local file
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   t.after(async () => { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); });
   const origin = 'http://127.0.0.1:' + server.address().port;
+  for (const headers of [
+    { Host: 'rebind.attacker.invalid:' + server.address().port },
+    { Host: '127.0.0.1.evil.invalid:' + server.address().port },
+    { Host: '127.0.0.1:1' },
+    { Host: '' },
+    { Origin: 'https://attacker.invalid' },
+    { Origin: 'null' },
+    { 'Sec-Fetch-Site': 'cross-site' },
+  ]) {
+    // node:fetch may silently discard a supplied Host header; send it on the wire.
+    const denied = await new Promise((resolve, reject) => {
+      require('node:http').get(origin + '/__capture__/input.wav', { headers, setHost: headers.Host !== '' }, response => {
+        let body = ''; response.setEncoding('utf8'); response.on('data', chunk => body += chunk);
+        response.on('end', () => resolve({ status: response.statusCode, body }));
+      }).on('error', reject);
+    });
+    assert.equal(denied.status, 403, JSON.stringify(headers));
+    assert.equal(denied.body, 'Forbidden');
+  }
   const result = await fetch(origin + '/__capture__/input.wav', { headers: { Range: 'bytes=3-14' } });
   assert.equal(result.status, 206); assert.deepEqual(Buffer.from(await result.arrayBuffer()), bytes.subarray(3, 15));
   assert.equal(result.headers.get('cross-origin-embedder-policy'), 'require-corp');
+  assert.equal(result.headers.get('cross-origin-resource-policy'), 'same-origin');
+  const head = await fetch(origin + '/__capture__/input.wav', { method: 'HEAD', headers: { Origin: origin } });
+  assert.equal(head.status, 200); assert.equal(await head.text(), '');
+  assert.equal(Number(head.headers.get('content-length')), bytes.length);
   assert.equal((await fetch(origin + '/%2e%2e%2fsecret.txt')).status, 404);
   assert.equal((await fetch(origin + '/worker.js', { method: 'POST' })).status, 405);
   assert.equal((await fetch(origin + '/__capture__/input.wav', { headers: { Range: 'bytes=1000000-' } })).status, 416);
@@ -251,7 +286,7 @@ async function protocolAttempt(t, result, extra = {}, closeBody = '') {
   // Keep the real collector bytes but resolve its protocol stub locally.
   // NODE_PATH cannot override a checkout's installed node_modules/playwright.
   const harness = path.join(dir, 'harness'); fs.mkdirSync(harness);
-  for (const name of ['capture-app.cjs', 'strict-json.cjs', 'capture-supervisor.cjs', 'capture-supervisor.py']) {
+  for (const name of ['capture-app.cjs', 'strict-json.cjs', 'capture-supervisor.cjs', 'capture-supervisor.py', 'local-http-security.cjs']) {
     fs.copyFileSync(path.join(__dirname, '..', 'qa', 'locked-benchmark', name), path.join(harness, name));
   }
   const isolatedCapture = require(path.join(harness, 'capture-app.cjs'));

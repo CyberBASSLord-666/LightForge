@@ -67,7 +67,8 @@
     document.body.classList.toggle('is-playing', !!audio && !audio.paused && !audio.ended);
   }
   function spokenTime(seconds) {
-    seconds = Math.max(0, Math.floor(Number(seconds) || 0));
+    seconds = Number(seconds);
+    seconds = Number.isFinite(seconds) ? Math.max(0, Math.floor(seconds)) : 0;
     const minutes = Math.floor(seconds / 60);
     return minutes + (minutes === 1 ? ' minute ' : ' minutes ') + seconds % 60 + ' seconds';
   }
@@ -93,17 +94,40 @@
   // Keep focus within visible overlays and return it to the triggering control.
   let priorFocus = null;
   let visibleOverlay = null;
+  const inertBefore = new Map();
+  function restoreBackground() {
+    inertBefore.forEach(function (wasInert, element) { element.toggleAttribute('inert', wasInert); });
+    inertBefore.clear();
+  }
+  function isolateOverlay(overlay) {
+    // aria-modal alone does not prevent touch/screen-reader navigation behind
+    // these non-native dialogs. Preserve any pre-existing inert state.
+    let branch = overlay;
+    while (branch.parentElement) {
+      Array.from(branch.parentElement.children).forEach(function (element) {
+        if (element === branch || ['SCRIPT', 'STYLE', 'LINK'].includes(element.tagName)) return;
+        inertBefore.set(element, element.hasAttribute('inert'));
+        element.setAttribute('inert', '');
+      });
+      if (branch.parentElement === document.body) break;
+      branch = branch.parentElement;
+    }
+  }
   function focusables(container) {
-    return Array.from(container.querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled]),a[href],[tabindex="0"]'))
-      .filter(function (element) { return !element.hidden && element.getClientRects().length; });
+    return Array.from(container.querySelectorAll('button,input,select,textarea,a[href],summary,[tabindex]'))
+      .filter(function (element) { return element.tabIndex >= 0 && !element.matches(':disabled') && !element.closest('[hidden],[inert]') && getComputedStyle(element).visibility !== 'hidden' && element.getClientRects().length; });
   }
   function syncOverlay() {
-    const next = Array.from(document.querySelectorAll('.modal-backdrop')).find(function (element) { return !element.hidden; }) || null;
+    const next = Array.from(document.querySelectorAll('.modal-backdrop')).reverse().find(function (element) { return !element.hidden; }) || null;
     if (next === visibleOverlay) return;
+    restoreBackground();
     if (next) {
       if (!visibleOverlay) priorFocus = document.activeElement;
       visibleOverlay = next;
-      const first = focusables(next)[0];
+      isolateOverlay(next);
+      const dialog = next.querySelector('[role="dialog"]') || next;
+      const first = focusables(next)[0] || dialog;
+      if (first === dialog && !dialog.hasAttribute('tabindex')) dialog.tabIndex = -1;
       if (first) requestAnimationFrame(function () { if (visibleOverlay === next && !next.hidden) first.focus({ preventScroll: true }); });
     } else {
       visibleOverlay = null;

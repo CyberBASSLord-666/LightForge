@@ -56,13 +56,51 @@ class MelFrontend {
 // Windowed-sinc 22.05 -> 16 kHz resampling with 64 taps and global rational
 // coordinates. All chunk boundaries read the same source halo (no phase reset).
 const resamplePhases=Array.from({length:320},(_,p)=>{const a=new Float64Array(64),fraction=p/320,cutoff=16000/22050*.94;let sum=0;for(let j=0;j<64;j++){const x=j-31-fraction,w=.42+.5*Math.cos(Math.PI*x/32)+.08*Math.cos(2*Math.PI*x/32),v=Math.abs(x)<1e-10?cutoff:Math.sin(Math.PI*cutoff*x)/(Math.PI*x);a[j]=v*w;sum+=a[j];}for(let j=0;j<64;j++)a[j]/=sum;return a;});
-async function pcm16000(reader,start,count,config,telemetry){
- const first=Math.floor(start*441/320)-32,last=Math.ceil((start+count-1)*441/320)+33;
- const raw=await reader.mono22050(first,last-first,config);
- const resample=()=>{const out=new Float32Array(count);
- for(let i=0;i<count;i++){const numerator=(start+i)*441,center=Math.floor(numerator/320),phase=numerator-center*320,filter=resamplePhases[phase];let sum=0;for(let j=0;j<64;j++)sum+=(raw[center-31+j-first]||0)*filter[j];out[i]=sum;}
- return out;};
- return telemetry?.measure?telemetry.measure('performance.resample_normalize',resample,{component:'vocal'}):resample();
+// One analyze-scoped source/output snapshot. Reuse is a proof over source bits,
+// not a reader-identity assumption: every passage still performs its normal read.
+class VocalResampler {
+ constructor(){this.previous=null;this.computedSamples=0;this.reusedSamples=0;this.retainedBytes=0;}
+ extract(raw,first,start,count){
+  const previous=this.previous,out=new Float32Array(count);
+  const valid=raw instanceof Float32Array&&Number.isSafeInteger(first)&&Number.isSafeInteger(start)&&Number.isSafeInteger(count)&&count>0&&count<=CONTEXT&&raw.length<=Math.ceil(CONTEXT*441/320)+66&&Number.isSafeInteger(start*441)&&Number.isSafeInteger((start+count)*441);
+  let begin=0,end=0;
+  if(valid&&previous){
+   begin=Math.max(0,previous.start-start);end=Math.min(count,previous.start+previous.out.length-start);
+   if(begin<end){
+    const low=Math.floor((start+begin)*441/320)-31,high=Math.floor((start+end-1)*441/320)+32;
+    // Including every tap (even zero-weight taps) preserves padding, signed
+    // zero and NaN distinctions. No phase is restarted at a passage boundary.
+    let same=low>=first&&high<first+raw.length&&low>=previous.first&&high<previous.first+previous.bits.length;
+    if(same){const bits=new Uint32Array(raw.buffer,raw.byteOffset,raw.length);for(let at=low;at<=high;at++)if(bits[at-first]!==previous.bits[at-previous.first]){same=false;break;}}
+    if(!same)end=begin;
+   }
+  }
+  if(begin<end)out.set(previous.out.subarray(start+begin-previous.start,start+end-previous.start),begin);
+  for(let i=0;i<count;i++){
+   if(i>=begin&&i<end)continue;
+   const numerator=(start+i)*441,center=Math.floor(numerator/320),phase=numerator-center*320,filter=resamplePhases[phase];let sum=0;for(let j=0;j<64;j++)sum+=(raw[center-31+j-first]||0)*filter[j];out[i]=sum;
+  }
+  this.reusedSamples=Math.max(0,end-begin);this.computedSamples=count-this.reusedSamples;
+  this.previous=valid?{first,start,bits:new Uint32Array(raw.buffer,raw.byteOffset,raw.length).slice(),out:out.slice()}:null;
+  this.retainedBytes=this.previous?this.previous.bits.byteLength+this.previous.out.byteLength:0;
+  return out;
+ }
+ clear(){this.previous=null;this.retainedBytes=0;}
+}
+async function pcm16000(reader,start,count,config,telemetry,reuse){
+ try{
+  const first=Math.floor(start*441/320)-32,last=Math.ceil((start+count-1)*441/320)+33;
+  const raw=await reader.mono22050(first,last-first,config);
+  const resample=()=>{
+   if(reuse)return reuse.extract(raw,first,start,count);
+   const out=new Float32Array(count);
+   for(let i=0;i<count;i++){const numerator=(start+i)*441,center=Math.floor(numerator/320),phase=numerator-center*320,filter=resamplePhases[phase];let sum=0;for(let j=0;j<64;j++)sum+=(raw[center-31+j-first]||0)*filter[j];out[i]=sum;}
+   return out;
+  };
+  const out=telemetry?.measure?telemetry.measure('performance.resample_normalize',resample,{component:'vocal'}):resample();
+  if(reuse){telemetry?.increment?.('vocal.resampler.reusedSamples',reuse.reusedSamples);telemetry?.increment?.('vocal.resampler.computedSamples',reuse.computedSamples);}
+  return out;
+ }catch(error){reuse?.clear();throw error;}
 }
 function quantile(values,q){if(!values.length)return 0;const a=Array.from(values).sort((a,b)=>a-b);return a[Math.min(a.length-1,Math.floor((a.length-1)*q))];}
 function summarize(scores,detail,duration,model){
@@ -96,11 +134,11 @@ async function analyze(reader,config,options={}){
  // These disjoint spans measure local work only; native bridge waits are not model inference.
  const timed=(name,fn)=>options.telemetry?.measure?options.telemetry.measure('performance.'+name,fn,{component:'vocal'}):fn();
  const timedAsync=(name,fn)=>options.telemetry?.measureAsync?options.telemetry.measureAsync('performance.'+name,fn,{component:'vocal',runtime:'onnxruntime-web-wasm'}):fn();
- const runtime=options.ort||root.ort,report=options.report||(()=>{}),model=options.model||await(await fetch('models/vocal-model.json')).json(),frontend=options.frontend||await(await fetch('models/vocal-frontend.json')).json(),mel=new MelFrontend(frontend),n=Math.ceil(reader.duration/.04),scores=new Float32Array(n),speechScores=new Float32Array(n),weights=new Float32Array(n),detail=new Float32Array(Math.ceil(reader.duration/.02)),starts=chunkStarts(reader.duration);let session;
+ const runtime=options.ort||root.ort,report=options.report||(()=>{}),model=options.model||await(await fetch('models/vocal-model.json')).json(),frontend=options.frontend||await(await fetch('models/vocal-frontend.json')).json(),mel=new MelFrontend(frontend),resampler=new VocalResampler(),n=Math.ceil(reader.duration/.04),scores=new Float32Array(n),speechScores=new Float32Array(n),weights=new Float32Array(n),detail=new Float32Array(Math.ceil(reader.duration/.02)),starts=chunkStarts(reader.duration);let session;
  try{
   report(0,'Listening for singing','Frame-MN10 • trained on timed sound events • entirely on this device');
   for(let k=0;k<starts.length;k++){
-   const first=starts[k],pcm=await pcm16000(reader,first*640,CONTEXT,config,options.telemetry);const peak=timed('preprocessing',()=>{let peak=0;for(const x of pcm)peak=Math.max(peak,Math.abs(x));return peak;});
+   const first=starts[k],pcm=await pcm16000(reader,first*640,CONTEXT,config,options.telemetry,resampler);const peak=timed('preprocessing',()=>{let peak=0;for(const x of pcm)peak=Math.max(peak,Math.abs(x));return peak;});
    if(peak>1e-7){
     const features=timed('feature_generation',()=>mel.extract(pcm,first*640));
     options.telemetry?.increment?.('vocal.frontend.reusedFrames',mel.reusedFrames);
@@ -116,8 +154,8 @@ async function analyze(reader,config,options={}){
   }
   const result=timed('postprocessing',()=>{for(let i=0;i<n;i++){scores[i]/=weights[i]||1;speechScores[i]/=weights[i]||1;}
   return summarize(scores,detail,reader.duration,model);});if(options.includeDiagnostics)result.classifierScores=Array.from(scores);if(options.includeClassifierScores)result.classifier={singingScores:scores,speechScores,frameStep:.04,model:result.model};return result;
- }finally{mel.clear();if(session)await session.release();}
+ }finally{mel.clear();resampler.clear();if(session)await session.release();}
 }
-root.LightForgeVocals={analyze,logMel,MelFrontend,pcm16000,summarize,chunkStarts};
+root.LightForgeVocals={analyze,logMel,MelFrontend,VocalResampler,pcm16000,summarize,chunkStarts};
 if(typeof module!=='undefined'&&module.exports)module.exports=root.LightForgeVocals;
 })(typeof self!=='undefined'?self:globalThis);

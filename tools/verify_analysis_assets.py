@@ -27,6 +27,12 @@ def verify():
                                + '. Missing: ' + str(sorted(expected_graphs-actual_graphs))
                                + '; unexpected: ' + str(sorted(actual_graphs-expected_graphs))
                                + '. Keep historical benchmark models outside web/analysis.')
+        for name, identity in registry['files'].items():
+            relative = 'models/' + model + '/' + name
+            # Regenerating the outer inventory must not silently repin model
+            # weights or converter inputs. Each model owns its exact bytes.
+            if relative not in manifest or manifest[relative] != identity:
+                raise RuntimeError('Analysis inventory contradicts pinned model identity: ' + relative)
     for name, expected in manifest.items():
         path = base / name
         with path.open('rb') as stream:

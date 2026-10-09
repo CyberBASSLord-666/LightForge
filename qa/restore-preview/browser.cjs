@@ -50,7 +50,9 @@ write();
     receipt.release = RELEASE;
     receipt.source_hashes = Object.fromEntries(sourceNames().map(name => [name, crypto.createHash('sha256').update(fs.readFileSync(path.join(root, name))).digest('hex')]));
     ({chromium} = require('playwright'));
+    const {allowLocalRequest}=require('../locked-benchmark/local-http-security.cjs');
     server = http.createServer((req, res) => {
+      if (!allowLocalRequest(req, res)) return;
       const pathname = decodeURIComponent(new URL(req.url, 'http://local').pathname);
       if (pathname === '/completed-project.json') {
         readGate.then(() => { if (!res.destroyed) { res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify(saved)); } });

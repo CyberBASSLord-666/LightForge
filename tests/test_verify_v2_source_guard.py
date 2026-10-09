@@ -18,6 +18,12 @@ class VerifyV2SourceGuardTest(unittest.TestCase):
         self.assertFalse(verify_v2.is_generated_runtime_report(ROOT/'qa/release-1.6.0/movement-verification.json'))
         self.assertFalse(verify_v2.is_generated_runtime_report(verify_v2.OUT/'unlisted-verification.json'))
 
+    def test_node_reporter_is_explicit_for_failure_diagnostics(self):
+        # Node's default reporter varies with runtime/TTY. The parser requires
+        # TAP and must not silently lose the actual failing test on Node 24+.
+        source = (ROOT / 'tools/verify_v2.py').read_text()
+        self.assertIn("['node','--test','--test-reporter=tap',", source)
+
     def test_node_failure_summary_reports_only_bounded_tap_labels(self):
         output='\n'.join([
             'TAP version 13',
@@ -94,6 +100,7 @@ class VerifyV2SourceGuardTest(unittest.TestCase):
         discovered={path.stem for path in (ROOT/'tests').glob('test_*.py')}
         self.assertTrue(historical <= discovered)
         self.assertEqual(set(verify_v2.PYTHON_TESTS), discovered-historical)
+        self.assertIn('web-interaction-reliability.test.cjs', verify_v2.TESTS)
         self.assertIn('test_verify_analysis_asset_binding', verify_v2.PYTHON_TESTS)
         self.assertIn('test_verify_analysis_session_evidence', verify_v2.PYTHON_TESTS)
 

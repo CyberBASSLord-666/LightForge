@@ -201,11 +201,10 @@ class Separator:
             self._callback_arg = callback_arg
 
     def _load_model(self):
-        self._model = get_model(name=self._name, repo=self._repo)
-        if self._model is None:
-            raise LoadModelError("Failed to load model")
-        self._audio_channels = self._model.audio_channels
-        self._samplerate = self._model.samplerate
+        raise RuntimeError(
+            "Delegated Demucs object-checkpoint loading is unsupported. Convert trusted "
+            "weights to a plain tensor state dictionary in an isolated trusted "
+            "environment and use a reviewed tensor-only loader first.")
 
     def _load_audio(self, track: Path):
         errors = {}

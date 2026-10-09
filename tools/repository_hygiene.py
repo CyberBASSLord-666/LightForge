@@ -109,7 +109,7 @@ def clutter_reason(name: str) -> str | None:
         return 'generated output, dependency/cache directory or private signing directory'
     if path.suffix.lower() in {'.jks', '.keystore', '.p12', '.pfx', '.apk', '.dex', '.class', '.pyc', '.pyo'}:
         return 'signing material or compiled output'
-    if path.name in {'keystore-password.txt', '.DS_Store', '.env'} or (
+    if path.name in {'keystore-password.txt', '.DS_Store', '.env', 'local.properties', '.pypirc'} or (
         path.name.startswith('.env.') and path.name not in {'.env.example', '.env.sample'}
     ):
         return 'private/local configuration'

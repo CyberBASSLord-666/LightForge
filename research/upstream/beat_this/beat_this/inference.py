@@ -1,3 +1,12 @@
+# Shared fail-closed loader; this file also supports direct script execution.
+import sys as _security_sys
+from pathlib import Path as _SecurityPath
+_security_sys.path.insert(0, str(_SecurityPath(__file__).resolve().parents[2]))
+from _lightforge_research_checkpoint_security import (
+    load_tensor_checkpoint as _safe_torch_load,
+    load_remote_tensor_checkpoint as _safe_hub_load,
+)
+
 import inspect
 
 import numpy as np
@@ -26,8 +35,8 @@ def load_checkpoint(checkpoint_path: str, device: str | torch.device = "cpu") ->
     """
     try:
         # try interpreting as local file name
-        weights_only = {"weights_only": True} if torch.__version__ >= "2" else {}
-        return torch.load(checkpoint_path, map_location=device, **weights_only)
+        weights_only = {"weights_only": True}
+        return _safe_torch_load(checkpoint_path, map_location=device, **weights_only)
     except FileNotFoundError:
         try:
             if not (
@@ -41,7 +50,7 @@ def load_checkpoint(checkpoint_path: str, device: str | torch.device = "cpu") ->
                 # try interpreting as a URL
                 checkpoint_url = checkpoint_path
                 file_name = None
-            return torch.hub.load_state_dict_from_url(
+            return _safe_hub_load(
                 checkpoint_url,
                 file_name=file_name,
                 map_location=device,

@@ -1,0 +1,894 @@
+{
+  "schema": "lightforge.partial-device-probe-observations.v1",
+  "scope": "Selected factual observations from incomplete connector capture, not reconstructed full receipt or qualification.",
+  "sourceCapture": {
+    "path": "run02-partial-export.capture.json",
+    "bytes": 124519,
+    "sha256": "7e83d5a0984e55efe5f10149a33fb8f9e4297d072fb35120f3e20ac4bb51baee",
+    "capturedLineRanges": [
+      [
+        1,
+        200
+      ],
+      [
+        401,
+        600
+      ]
+    ],
+    "expectedTotalLines": 1115,
+    "missingLineRanges": [
+      [
+        201,
+        400
+      ],
+      [
+        601,
+        1115
+      ]
+    ],
+    "complete": false
+  },
+  "runHeader": {
+    "schema": {
+      "value": "lightforge.inference-device-probe.v1",
+      "capturedLine": 2
+    },
+    "runId": {
+      "value": "30d8cbc3-094e-429b-aa71-ffc81050f9c2",
+      "capturedLine": 3
+    },
+    "scope": {
+      "value": "Physical-device standalone companion; corrected Android-context NativeDeux on 35 explicit repeated-fixture benchmark passages. Not installed-app lifecycle, full-song quality, or release approval.",
+      "capturedLine": 4
+    },
+    "plannedPassages": {
+      "value": 35,
+      "capturedLine": 5
+    },
+    "terminal": {
+      "value": true,
+      "capturedLine": 6
+    },
+    "outcome": {
+      "value": "cancelled",
+      "capturedLine": 7
+    },
+    "startedAtEpochMillis": {
+      "value": 1790645151016,
+      "capturedLine": 8
+    }
+  },
+  "partialPassageObservations": [
+    {
+      "ordinal": 0,
+      "ordinalLine": 11,
+      "timing": {
+        "predictWallNanos": {
+          "value": 52672343574,
+          "capturedLine": 44
+        },
+        "predictProcessCpuMillis": {
+          "value": 159975,
+          "capturedLine": 45
+        }
+      },
+      "output": {
+        "sha256": {
+          "value": "dce477d1d9ba897cd1e15e71be788977f183fc8feaec010226382a70d8c7bded",
+          "capturedLine": 47
+        },
+        "bytes": {
+          "value": 4586400,
+          "capturedLine": 48
+        },
+        "floatCount": {
+          "value": 1146600,
+          "capturedLine": 49
+        },
+        "finite": {
+          "value": true,
+          "capturedLine": 50
+        },
+        "maxAbs": {
+          "value": 0.8052102327346802,
+          "capturedLine": 51
+        }
+      },
+      "profile": {
+        "capturedLine": 54,
+        "selectedFields": {
+          "outcome": "completed",
+          "wallMs": 52693,
+          "temporalConfig": "cpu-i4-j1-d0-sequential",
+          "frequencyConfig": "cpu-i4-j1-d0-sequential",
+          "temporalBaselineSessionCount": 12,
+          "temporalFourWorkerSessionCount": 0,
+          "temporalEightWorkerSessionCount": 0,
+          "temporalUnobservedSessionCount": 0,
+          "frequencyBaselineSessionCount": 12,
+          "frequencyFourWorkerSessionCount": 0,
+          "frequencyEightWorkerSessionCount": 0,
+          "frequencyUnobservedSessionCount": 0,
+          "schedulerCalibrationWallMs": 2212,
+          "schedulerCalibrationCount": 1,
+          "preflightWallMs": 3199,
+          "inferenceWallMs": 42094,
+          "inferenceCount": 335,
+          "sessionInitCount": 27,
+          "directBufferBytes": 259463184,
+          "cacheModelHits": 0,
+          "cacheModelMisses": 27,
+          "cacheMissBytes": 921547393,
+          "graphRecords": 27
+        },
+        "scope": "Observed summary fields; unretained graph rows have not been reconstructed or validated."
+      },
+      "policy": {
+        "capturedLine": 97,
+        "fields": {
+          "schema": "native-passage-policy-v1",
+          "state": "baseline",
+          "workers": 0,
+          "reason": "memory-pressure",
+          "extraNanos": 2212013697,
+          "extraCapNanos": 360000000000,
+          "projectedAccruedSavingsNanos": 0,
+          "qualificationPairs": 0,
+          "currentJobPairs": 0,
+          "seeded": "false",
+          "activePassages": 0,
+          "leasePassages": 8,
+          "paybackScope": "projected-not-measured"
+        }
+      },
+      "before": {
+        "capturedLineRange": [
+          14,
+          42
+        ],
+        "completeObject": true,
+        "fields": {
+          "elapsedRealtimeMillis": {
+            "value": 523208218,
+            "capturedLine": 15
+          },
+          "availableProcessors": {
+            "value": 8,
+            "capturedLine": 24
+          },
+          "javaHeapUsedBytes": {
+            "value": 9931664,
+            "capturedLine": 25
+          },
+          "javaHeapLimitBytes": {
+            "value": 536870912,
+            "capturedLine": 26
+          },
+          "nativeHeapAllocatedBytes": {
+            "value": 11998704,
+            "capturedLine": 27
+          },
+          "availableMemoryBytes": {
+            "value": 2633244672,
+            "capturedLine": 28
+          },
+          "totalMemoryBytes": {
+            "value": 11623878656,
+            "capturedLine": 29
+          },
+          "lowMemory": {
+            "value": false,
+            "capturedLine": 30
+          },
+          "memoryThresholdBytes": {
+            "value": 226492416,
+            "capturedLine": 31
+          },
+          "interactive": {
+            "value": true,
+            "capturedLine": 32
+          },
+          "powerSave": {
+            "value": false,
+            "capturedLine": 33
+          },
+          "deviceIdle": {
+            "value": false,
+            "capturedLine": 34
+          },
+          "thermalStatus": {
+            "value": 0,
+            "capturedLine": 35
+          },
+          "batteryLevel": {
+            "value": 75,
+            "capturedLine": 36
+          },
+          "batteryScale": {
+            "value": 100,
+            "capturedLine": 37
+          },
+          "plugged": {
+            "value": 0,
+            "capturedLine": 39
+          },
+          "batteryTemperatureTenthsC": {
+            "value": 325,
+            "capturedLine": 40
+          },
+          "processPeakRssBytes": {
+            "value": 125689856,
+            "capturedLine": 41
+          }
+        }
+      },
+      "after": {
+        "capturedLineRange": [
+          99,
+          127
+        ],
+        "completeObject": true,
+        "fields": {
+          "elapsedRealtimeMillis": {
+            "value": 523260913,
+            "capturedLine": 100
+          },
+          "availableProcessors": {
+            "value": 8,
+            "capturedLine": 109
+          },
+          "javaHeapUsedBytes": {
+            "value": 202991872,
+            "capturedLine": 110
+          },
+          "javaHeapLimitBytes": {
+            "value": 536870912,
+            "capturedLine": 111
+          },
+          "nativeHeapAllocatedBytes": {
+            "value": 79350352,
+            "capturedLine": 112
+          },
+          "availableMemoryBytes": {
+            "value": 2991276032,
+            "capturedLine": 113
+          },
+          "totalMemoryBytes": {
+            "value": 11623878656,
+            "capturedLine": 114
+          },
+          "lowMemory": {
+            "value": false,
+            "capturedLine": 115
+          },
+          "memoryThresholdBytes": {
+            "value": 226492416,
+            "capturedLine": 116
+          },
+          "interactive": {
+            "value": true,
+            "capturedLine": 117
+          },
+          "powerSave": {
+            "value": false,
+            "capturedLine": 118
+          },
+          "deviceIdle": {
+            "value": false,
+            "capturedLine": 119
+          },
+          "thermalStatus": {
+            "value": 2,
+            "capturedLine": 120
+          },
+          "batteryLevel": {
+            "value": 75,
+            "capturedLine": 121
+          },
+          "batteryScale": {
+            "value": 100,
+            "capturedLine": 122
+          },
+          "plugged": {
+            "value": 0,
+            "capturedLine": 124
+          },
+          "batteryTemperatureTenthsC": {
+            "value": 337,
+            "capturedLine": 125
+          },
+          "processPeakRssBytes": {
+            "value": 842047488,
+            "capturedLine": 126
+          }
+        }
+      },
+      "captureScope": "Complete passage object is present in lines 10\u2013128."
+    },
+    {
+      "ordinal": 1,
+      "ordinalLine": 130,
+      "timing": {
+        "predictWallNanos": {
+          "value": 53103577532,
+          "capturedLine": 163
+        },
+        "predictProcessCpuMillis": {
+          "value": 166065,
+          "capturedLine": 164
+        }
+      },
+      "output": {
+        "sha256": {
+          "value": "2dd62a26ec95d277f2712a1c61c8760b9e11936e398f2fd3115bb00b5079e70f",
+          "capturedLine": 166
+        },
+        "bytes": {
+          "value": 4586400,
+          "capturedLine": 167
+        },
+        "floatCount": {
+          "value": 1146600,
+          "capturedLine": 168
+        },
+        "finite": {
+          "value": true,
+          "capturedLine": 169
+        },
+        "maxAbs": {
+          "value": 0.805255115032196,
+          "capturedLine": 170
+        }
+      },
+      "profile": {
+        "capturedLine": 173,
+        "selectedFields": {
+          "outcome": "completed",
+          "wallMs": 53115,
+          "temporalConfig": "cpu-i4-j1-d0-sequential",
+          "frequencyConfig": "cpu-i4-j1-d0-sequential",
+          "temporalBaselineSessionCount": 12,
+          "temporalFourWorkerSessionCount": 0,
+          "temporalEightWorkerSessionCount": 0,
+          "temporalUnobservedSessionCount": 0,
+          "frequencyBaselineSessionCount": 12,
+          "frequencyFourWorkerSessionCount": 0,
+          "frequencyEightWorkerSessionCount": 0,
+          "frequencyUnobservedSessionCount": 0,
+          "schedulerCalibrationWallMs": "unavailable",
+          "schedulerCalibrationCount": "unavailable",
+          "preflightWallMs": 0,
+          "inferenceWallMs": 47480,
+          "inferenceCount": 335,
+          "sessionInitCount": 27,
+          "directBufferBytes": 179529744,
+          "cacheModelHits": 27,
+          "cacheModelMisses": 0,
+          "cacheMissBytes": 0,
+          "graphRecords": 27
+        },
+        "scope": "Observed summary fields; unretained graph rows have not been reconstructed or validated."
+      },
+      "before": {
+        "capturedLineRange": [
+          133,
+          161
+        ],
+        "completeObject": true,
+        "fields": {
+          "elapsedRealtimeMillis": {
+            "value": 523260916,
+            "capturedLine": 134
+          },
+          "availableProcessors": {
+            "value": 8,
+            "capturedLine": 143
+          },
+          "javaHeapUsedBytes": {
+            "value": 203356448,
+            "capturedLine": 144
+          },
+          "javaHeapLimitBytes": {
+            "value": 536870912,
+            "capturedLine": 145
+          },
+          "nativeHeapAllocatedBytes": {
+            "value": 79353232,
+            "capturedLine": 146
+          },
+          "availableMemoryBytes": {
+            "value": 2991276032,
+            "capturedLine": 147
+          },
+          "totalMemoryBytes": {
+            "value": 11623878656,
+            "capturedLine": 148
+          },
+          "lowMemory": {
+            "value": false,
+            "capturedLine": 149
+          },
+          "memoryThresholdBytes": {
+            "value": 226492416,
+            "capturedLine": 150
+          },
+          "interactive": {
+            "value": true,
+            "capturedLine": 151
+          },
+          "powerSave": {
+            "value": false,
+            "capturedLine": 152
+          },
+          "deviceIdle": {
+            "value": false,
+            "capturedLine": 153
+          },
+          "thermalStatus": {
+            "value": 2,
+            "capturedLine": 154
+          },
+          "batteryLevel": {
+            "value": 75,
+            "capturedLine": 155
+          },
+          "batteryScale": {
+            "value": 100,
+            "capturedLine": 156
+          },
+          "plugged": {
+            "value": 0,
+            "capturedLine": 158
+          },
+          "batteryTemperatureTenthsC": {
+            "value": 337,
+            "capturedLine": 159
+          },
+          "processPeakRssBytes": {
+            "value": 842047488,
+            "capturedLine": 160
+          }
+        }
+      },
+      "after": null,
+      "captureScope": "Passage begins in capture; remaining graph rows and after-boundary are missing."
+    },
+    {
+      "ordinal": null,
+      "ordinalLine": null,
+      "timing": {
+        "predictWallNanos": {
+          "value": 55172949666,
+          "capturedLine": 401
+        },
+        "predictProcessCpuMillis": {
+          "value": 172109,
+          "capturedLine": 402
+        }
+      },
+      "output": {
+        "sha256": {
+          "value": "4debb4b4396f78217cb23bcbe774667dc938f5bcc2ea92913d657afa7d7a381d",
+          "capturedLine": 404
+        },
+        "bytes": {
+          "value": 4586400,
+          "capturedLine": 405
+        },
+        "floatCount": {
+          "value": 1146600,
+          "capturedLine": 406
+        },
+        "finite": {
+          "value": true,
+          "capturedLine": 407
+        },
+        "maxAbs": {
+          "value": 0.8009896874427795,
+          "capturedLine": 408
+        }
+      },
+      "profile": {
+        "capturedLine": 411,
+        "selectedFields": {
+          "outcome": "completed",
+          "wallMs": 55186,
+          "temporalConfig": "cpu-i4-j1-d0-sequential",
+          "frequencyConfig": "cpu-i4-j1-d0-sequential",
+          "temporalBaselineSessionCount": 12,
+          "temporalFourWorkerSessionCount": 0,
+          "temporalEightWorkerSessionCount": 0,
+          "temporalUnobservedSessionCount": 0,
+          "frequencyBaselineSessionCount": 12,
+          "frequencyFourWorkerSessionCount": 0,
+          "frequencyEightWorkerSessionCount": 0,
+          "frequencyUnobservedSessionCount": 0,
+          "schedulerCalibrationWallMs": "unavailable",
+          "schedulerCalibrationCount": "unavailable",
+          "preflightWallMs": 0,
+          "inferenceWallMs": 49096,
+          "inferenceCount": 335,
+          "sessionInitCount": 27,
+          "directBufferBytes": 179529744,
+          "cacheModelHits": 27,
+          "cacheModelMisses": 0,
+          "cacheMissBytes": 0,
+          "graphRecords": 27
+        },
+        "scope": "Observed summary fields; unretained graph rows have not been reconstructed or validated."
+      },
+      "policy": {
+        "capturedLine": 454,
+        "fields": {
+          "schema": "native-passage-policy-v1",
+          "state": "baseline",
+          "workers": 0,
+          "reason": "memory-pressure",
+          "extraNanos": 2212013697,
+          "extraCapNanos": 360000000000,
+          "projectedAccruedSavingsNanos": 0,
+          "qualificationPairs": 0,
+          "currentJobPairs": 0,
+          "seeded": "false",
+          "activePassages": 0,
+          "leasePassages": 8,
+          "paybackScope": "projected-not-measured"
+        }
+      },
+      "before": null,
+      "after": {
+        "capturedLineRange": [
+          456,
+          484
+        ],
+        "completeObject": true,
+        "fields": {
+          "elapsedRealtimeMillis": {
+            "value": 523423137,
+            "capturedLine": 457
+          },
+          "availableProcessors": {
+            "value": 8,
+            "capturedLine": 466
+          },
+          "javaHeapUsedBytes": {
+            "value": 219252304,
+            "capturedLine": 467
+          },
+          "javaHeapLimitBytes": {
+            "value": 536870912,
+            "capturedLine": 468
+          },
+          "nativeHeapAllocatedBytes": {
+            "value": 79749472,
+            "capturedLine": 469
+          },
+          "availableMemoryBytes": {
+            "value": 3303350272,
+            "capturedLine": 470
+          },
+          "totalMemoryBytes": {
+            "value": 11623878656,
+            "capturedLine": 471
+          },
+          "lowMemory": {
+            "value": false,
+            "capturedLine": 472
+          },
+          "memoryThresholdBytes": {
+            "value": 226492416,
+            "capturedLine": 473
+          },
+          "interactive": {
+            "value": true,
+            "capturedLine": 474
+          },
+          "powerSave": {
+            "value": false,
+            "capturedLine": 475
+          },
+          "deviceIdle": {
+            "value": false,
+            "capturedLine": 476
+          },
+          "thermalStatus": {
+            "value": 2,
+            "capturedLine": 477
+          },
+          "batteryLevel": {
+            "value": 73,
+            "capturedLine": 478
+          },
+          "batteryScale": {
+            "value": 100,
+            "capturedLine": 479
+          },
+          "plugged": {
+            "value": 0,
+            "capturedLine": 481
+          },
+          "batteryTemperatureTenthsC": {
+            "value": 361,
+            "capturedLine": 482
+          },
+          "processPeakRssBytes": {
+            "value": 852439040,
+            "capturedLine": 483
+          }
+        }
+      },
+      "captureScope": "Fragment immediately before ordinal 4. Its ordinal/start sample are missing and are not inferred."
+    },
+    {
+      "ordinal": 4,
+      "ordinalLine": 487,
+      "timing": {
+        "predictWallNanos": {
+          "value": 58864255186,
+          "capturedLine": 520
+        },
+        "predictProcessCpuMillis": {
+          "value": 179422,
+          "capturedLine": 521
+        }
+      },
+      "output": {
+        "sha256": {
+          "value": "c76e6b1b53cfd1866b29e5ea63d18915532827a140d97847336f61d293a75e37",
+          "capturedLine": 523
+        },
+        "bytes": {
+          "value": 4586400,
+          "capturedLine": 524
+        },
+        "floatCount": {
+          "value": 1146600,
+          "capturedLine": 525
+        },
+        "finite": {
+          "value": true,
+          "capturedLine": 526
+        },
+        "maxAbs": {
+          "value": 0.6905509233474731,
+          "capturedLine": 527
+        }
+      },
+      "profile": {
+        "capturedLine": 530,
+        "selectedFields": {
+          "outcome": "completed",
+          "wallMs": 58876,
+          "temporalConfig": "cpu-i4-j1-d0-sequential",
+          "frequencyConfig": "cpu-i4-j1-d0-sequential",
+          "temporalBaselineSessionCount": 12,
+          "temporalFourWorkerSessionCount": 0,
+          "temporalEightWorkerSessionCount": 0,
+          "temporalUnobservedSessionCount": 0,
+          "frequencyBaselineSessionCount": 12,
+          "frequencyFourWorkerSessionCount": 0,
+          "frequencyEightWorkerSessionCount": 0,
+          "frequencyUnobservedSessionCount": 0,
+          "schedulerCalibrationWallMs": "unavailable",
+          "schedulerCalibrationCount": "unavailable",
+          "preflightWallMs": 1,
+          "inferenceWallMs": 52254,
+          "inferenceCount": 335,
+          "sessionInitCount": 27,
+          "directBufferBytes": 179529744,
+          "cacheModelHits": 27,
+          "cacheModelMisses": 0,
+          "cacheMissBytes": 0,
+          "graphRecords": 27
+        },
+        "scope": "Observed summary fields; unretained graph rows have not been reconstructed or validated."
+      },
+      "policy": {
+        "capturedLine": 573,
+        "fields": {
+          "schema": "native-passage-policy-v1",
+          "state": "baseline",
+          "workers": 0,
+          "reason": "memory-pressure",
+          "extraNanos": 2212013697,
+          "extraCapNanos": 360000000000,
+          "projectedAccruedSavingsNanos": 0,
+          "qualificationPairs": 0,
+          "currentJobPairs": 0,
+          "seeded": "false",
+          "activePassages": 0,
+          "leasePassages": 8,
+          "paybackScope": "projected-not-measured"
+        }
+      },
+      "before": {
+        "capturedLineRange": [
+          490,
+          518
+        ],
+        "completeObject": true,
+        "fields": {
+          "elapsedRealtimeMillis": {
+            "value": 523423143,
+            "capturedLine": 491
+          },
+          "availableProcessors": {
+            "value": 8,
+            "capturedLine": 500
+          },
+          "javaHeapUsedBytes": {
+            "value": 220370544,
+            "capturedLine": 501
+          },
+          "javaHeapLimitBytes": {
+            "value": 536870912,
+            "capturedLine": 502
+          },
+          "nativeHeapAllocatedBytes": {
+            "value": 79752208,
+            "capturedLine": 503
+          },
+          "availableMemoryBytes": {
+            "value": 3303350272,
+            "capturedLine": 504
+          },
+          "totalMemoryBytes": {
+            "value": 11623878656,
+            "capturedLine": 505
+          },
+          "lowMemory": {
+            "value": false,
+            "capturedLine": 506
+          },
+          "memoryThresholdBytes": {
+            "value": 226492416,
+            "capturedLine": 507
+          },
+          "interactive": {
+            "value": true,
+            "capturedLine": 508
+          },
+          "powerSave": {
+            "value": false,
+            "capturedLine": 509
+          },
+          "deviceIdle": {
+            "value": false,
+            "capturedLine": 510
+          },
+          "thermalStatus": {
+            "value": 2,
+            "capturedLine": 511
+          },
+          "batteryLevel": {
+            "value": 73,
+            "capturedLine": 512
+          },
+          "batteryScale": {
+            "value": 100,
+            "capturedLine": 513
+          },
+          "plugged": {
+            "value": 0,
+            "capturedLine": 515
+          },
+          "batteryTemperatureTenthsC": {
+            "value": 361,
+            "capturedLine": 516
+          },
+          "processPeakRssBytes": {
+            "value": 852439040,
+            "capturedLine": 517
+          }
+        }
+      },
+      "after": {
+        "capturedLineRange": [
+          575,
+          600
+        ],
+        "completeObject": false,
+        "fields": {
+          "elapsedRealtimeMillis": {
+            "value": 523482024,
+            "capturedLine": 576
+          },
+          "availableProcessors": {
+            "value": 8,
+            "capturedLine": 585
+          },
+          "javaHeapUsedBytes": {
+            "value": 203286096,
+            "capturedLine": 586
+          },
+          "javaHeapLimitBytes": {
+            "value": 536870912,
+            "capturedLine": 587
+          },
+          "nativeHeapAllocatedBytes": {
+            "value": 79494800,
+            "capturedLine": 588
+          },
+          "availableMemoryBytes": {
+            "value": 3350274048,
+            "capturedLine": 589
+          },
+          "totalMemoryBytes": {
+            "value": 11623878656,
+            "capturedLine": 590
+          },
+          "lowMemory": {
+            "value": false,
+            "capturedLine": 591
+          },
+          "memoryThresholdBytes": {
+            "value": 226492416,
+            "capturedLine": 592
+          },
+          "interactive": {
+            "value": true,
+            "capturedLine": 593
+          },
+          "powerSave": {
+            "value": false,
+            "capturedLine": 594
+          },
+          "deviceIdle": {
+            "value": false,
+            "capturedLine": 595
+          },
+          "thermalStatus": {
+            "value": 2,
+            "capturedLine": 596
+          },
+          "batteryLevel": {
+            "value": 73,
+            "capturedLine": 597
+          },
+          "batteryScale": {
+            "value": 100,
+            "capturedLine": 598
+          },
+          "plugged": {
+            "value": 0,
+            "capturedLine": 600
+          }
+        }
+      },
+      "captureScope": "After-boundary ends at plugged=0. Battery temperature and process peak RSS after this passage are missing."
+    }
+  ],
+  "uiObservation": {
+    "path": "ui-observations.json",
+    "at": "2026-09-29T01:33:02.913Z",
+    "completedPassages": 6,
+    "outcome": "cancelled",
+    "nativeCleanupConfirmed": true,
+    "scope": "Visible terminal UI text, not recovered final JSON fields."
+  },
+  "unknown": {
+    "cancelReason": null,
+    "elapsedMillis": null,
+    "finalMemoryOrThermalState": null,
+    "completeReportSha256": null,
+    "completeReportBytes": null,
+    "embeddedSourceReceipt": null,
+    "finalNativeCleanupJson": null,
+    "temporaryCacheRemoved": null
+  },
+  "conclusions": {
+    "candidatePerformanceObserved": false,
+    "pairedQualificationObserved": false,
+    "sustainedAccelerationDemonstrated": false,
+    "measuredWholeJobSpeedup": null,
+    "releaseQualificationPerformed": false
+  },
+  "limitations": [
+    "400 of 1,115 numbered export lines were retained. The capture hash identifies the capture envelope, not the complete exported JSON.",
+    "Run02 source/build binding cannot be independently completed from these fragments because its embedded source receipt and final metadata are unavailable.",
+    "Policy fields visible at ordinals 0, 1 and 4 and the unnumbered fragment all report baseline, workers=0, reason=memory-pressure and no qualification pairs.",
+    "Boundary available memory does not measure headroom at the exact scheduler admission check. Battery temperature is not CPU temperature.",
+    "The cancellation reason cannot be recovered from the retained UI or partial report; do not infer thermal cancellation from run01.",
+    "The source-bound v2 artifact is historical once later memory-admission code changes. These attempts cannot validate those changes."
+  ]
+}

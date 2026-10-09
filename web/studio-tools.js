@@ -16,7 +16,11 @@
   let auditionSwitching = false;
   let calibrationTimer = 0, vocalRegionPage = 0, vocalRegionKey = null;
   function readLocal(key, fallback) {
-    try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch { return fallback; }
+    try {
+      const value = JSON.parse(localStorage.getItem(key));
+      if (fallback && typeof fallback === 'object' && (!value || typeof value !== 'object' || Array.isArray(value))) return fallback;
+      return value ?? fallback;
+    } catch { return fallback; }
   }
   function writeLocal(key, value) {
     try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch { return false; }
@@ -54,8 +58,8 @@
   function saveLoop() {
     if (!projectId) return;
     const stored = readLocal('lightforge-rehearsal-loops-v1', {});
-    stored[projectId] = { ...loop, updated: Date.now() };
-    const recent = Object.entries(stored).sort((a, b) => (b[1].updated || 0) - (a[1].updated || 0)).slice(0, 50);
+    Object.defineProperty(stored, projectId, { value: { ...loop, updated: Date.now() }, enumerable: true, configurable: true });
+    const recent = Object.entries(stored).filter(([, value]) => value && typeof value === 'object' && !Array.isArray(value)).sort((a, b) => (b[1].updated || 0) - (a[1].updated || 0)).slice(0, 50);
     writeLocal('lightforge-rehearsal-loops-v1', Object.fromEntries(recent));
   }
   function loopValid() { return Number.isFinite(loop.a) && Number.isFinite(loop.b) && loop.b - loop.a >= .1; }
@@ -346,7 +350,7 @@
   $('calibrationNotes').value = calibration.notes || '';
   document.querySelectorAll('[data-calibration]').forEach(input => { input.checked = calibration.checks?.[input.dataset.calibration] === true; });
   function saveCalibration() {
-    clearTimeout(calibrationTimer);
+    clearTimeout(calibrationTimer); calibrationTimer = 0;
     const checks = Object.fromEntries([...document.querySelectorAll('[data-calibration]')].map(input => [input.dataset.calibration, input.checked]));
     const saved = writeLocal('lightforge-vehicle-observations-v1', { firmware: $('calibrationFirmware').value, date: $('calibrationDate').value, notes: $('calibrationNotes').value, checks, updatedAt: Date.now() });
     $('calibrationStatus').textContent = saved ? 'Your observations are saved on this device.' : 'These observations could not be saved. Free some device storage and try again.';

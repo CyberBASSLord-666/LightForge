@@ -1,4 +1,13 @@
 from __future__ import annotations
+# Shared fail-closed loader; this file also supports direct script execution.
+import sys as _security_sys
+from pathlib import Path as _SecurityPath
+_security_sys.path.insert(0, str(_SecurityPath(__file__).resolve().parents[1]))
+from _lightforge_research_checkpoint_security import (
+    load_tensor_checkpoint as _safe_torch_load,
+    load_remote_tensor_checkpoint as _safe_hub_load,
+)
+
 from typing import TYPE_CHECKING
 from demucs.apply import apply_model, demucs_segments
 from demucs.hdemucs import HDemucs
@@ -481,10 +490,12 @@ class SeperateMDX(SeperateAttributes):
             self.start_inference_console_write()
 
             if self.is_mdx_ckpt:
-                model_params = torch.load(self.model_path, map_location=lambda storage, loc: storage)['hyper_parameters']
+                checkpoint = _safe_torch_load(self.model_path, map_location='cpu')
+                model_params = checkpoint['hyper_parameters']
                 self.dim_c, self.hop = model_params['dim_c'], model_params['hop_length']
                 separator = MdxnetSet.ConvTDFNet(**model_params)
-                self.model_run = separator.load_from_checkpoint(self.model_path).to(self.device).eval()
+                separator.load_state_dict(checkpoint['state_dict'], strict=True)
+                self.model_run = separator.to(self.device).eval()
             else:
                 if self.mdx_segment_size == self.dim_t and not self.is_other_gpu:
                     ort_ = ort.InferenceSession(self.model_path, providers=self.run_type)
@@ -738,7 +749,7 @@ class SeperateMDXC(SeperateAttributes):
             mix, sr_pitched = spec_utils.change_pitch_semitones(mix, 44100, semitone_shift=-self.semitone_shift)
 
         model = TFC_TDF_net(self.mdx_c_configs, device=self.device)
-        model.load_state_dict(torch.load(self.model_path, map_location=cpu))
+        model.load_state_dict(_safe_torch_load(self.model_path, map_location=cpu))
         model.to(self.device).eval()
         mix = torch.tensor(mix, dtype=torch.float32)
 
@@ -818,24 +829,20 @@ class SeperateDemucs(SeperateAttributes):
 
         if is_no_cache:
             if self.demucs_version == DEMUCS_V1:
-                if str(self.model_path).endswith(".gz"):
-                    self.model_path = gzip.open(self.model_path, "rb")
-                klass, args, kwargs, state = torch.load(self.model_path)
-                self.demucs = klass(*args, **kwargs)
-                self.demucs.to(self.device) 
-                self.demucs.load_state_dict(state)
+                raise RuntimeError(
+                    "Legacy Demucs v1 class checkpoints are unsupported; convert trusted "
+                    "weights to a plain tensor state dictionary in an isolated trusted "
+                    "environment and use a reviewed tensor-only model loader")
             elif self.demucs_version == DEMUCS_V2:
                 self.demucs = auto_load_demucs_model_v2(self.demucs_source_list, self.model_path)
                 self.demucs.to(self.device) 
-                self.demucs.load_state_dict(torch.load(self.model_path))
+                self.demucs.load_state_dict(_safe_torch_load(self.model_path))
                 self.demucs.eval()
             else:  
-                self.demucs = HDemucs(sources=self.demucs_source_list)
-                self.demucs = _gm(name=os.path.splitext(os.path.basename(self.model_path))[0], 
-                                  repo=Path(os.path.dirname(self.model_path)))
-                self.demucs = demucs_segments(self.segment, self.demucs)
-                self.demucs.to(self.device)
-                self.demucs.eval()
+                raise RuntimeError(
+                    "Delegated Demucs object-checkpoint loading is unsupported; convert "
+                    "trusted weights in an isolated environment and use a reviewed "
+                    "tensor-only model loader")
 
             if self.pre_proc_model:
                 if self.primary_stem not in [VOCAL_STEM, INST_STEM]:
@@ -1047,7 +1054,7 @@ class SeperateVR(SeperateAttributes):
             else:
                 self.model_run = nets.determine_model_capacity(self.mp.param['bins'] * 2, nn_arch_size)
                             
-            self.model_run.load_state_dict(torch.load(self.model_path, map_location=cpu)) 
+            self.model_run.load_state_dict(_safe_torch_load(self.model_path, map_location=cpu))
             self.model_run.to(device) 
 
             self.running_inference_console_write()
@@ -1359,7 +1366,7 @@ def vr_denoiser(X, device, hop_length=1024, n_fft=2048, cropsize=256, is_deverbe
         nout, nout_lstm = 16, 128
     
     model = nets_new.CascadedNet(n_fft, nout=nout, nout_lstm=nout_lstm)
-    model.load_state_dict(torch.load(model_path, map_location=cpu))
+    model.load_state_dict(_safe_torch_load(model_path, map_location=cpu))
     model.to(device)
 
     if mp is None:

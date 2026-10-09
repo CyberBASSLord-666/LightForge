@@ -1,6 +1,15 @@
 #!/usr/bin/env python3
 # Copyright    2025  Xiaomi Corp.        (authors: Fangjun Kuang)
 
+# Shared fail-closed loader; this file also supports direct script execution.
+import sys as _security_sys
+from pathlib import Path as _SecurityPath
+_security_sys.path.insert(0, str(_SecurityPath(__file__).resolve().parents[1]))
+from _lightforge_research_checkpoint_security import (
+    load_tensor_checkpoint as _safe_torch_load,
+    load_remote_tensor_checkpoint as _safe_hub_load,
+)
+
 import onnx
 import onnxmltools
 import torch
@@ -77,12 +86,12 @@ def export(model, prefix):
 @torch.no_grad()
 def main():
     vocals = UNet()
-    state_dict = torch.load("./2stems/vocals.pt", map_location="cpu")
+    state_dict = _safe_torch_load("./2stems/vocals.pt", map_location="cpu")
     vocals.load_state_dict(state_dict)
     vocals.eval()
 
     accompaniment = UNet()
-    state_dict = torch.load("./2stems/accompaniment.pt", map_location="cpu")
+    state_dict = _safe_torch_load("./2stems/accompaniment.pt", map_location="cpu")
     accompaniment.load_state_dict(state_dict)
     accompaniment.eval()
 

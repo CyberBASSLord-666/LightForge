@@ -9,6 +9,7 @@ const crypto = require('node:crypto');
 const os = require('node:os');
 const { parse: parseStrictJson } = require('./strict-json.cjs');
 const { supervise } = require('./capture-supervisor.cjs');
+const { allowLocalRequest } = require('./local-http-security.cjs');
 
 const SCHEMA = 'lightforge.app-capture.v1';
 const HEX = /^[0-9a-f]{64}$/;
@@ -165,6 +166,7 @@ function createServer(webRoot, wav, lock, served) {
   const html = '<!doctype html><meta charset="utf-8"><title>LightForge capture</title>' + scripts.map(name => '<script src="/' + name + '"></script>').join('');
   return http.createServer((request, response) => {
     try {
+    if (!allowLocalRequest(request, response)) return;
     response.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
     response.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
     response.setHeader('Cache-Control', 'no-store');
@@ -319,7 +321,7 @@ async function captureWorker(options) {
     const manifest = readJson(path.join(webRoot, 'analysis/ASSET_MANIFEST.json'));
     for (const [name, record] of Object.entries(manifest)) requireValue(safeRelative(name) && canonical(lock.files['analysis/' + name]) === canonical(record), 'Analysis asset differs from its production manifest: ' + name);
     const projectId = captureProjectId(identity);
-    Object.assign(report, { identity, source_identity_binding: { git_commit_and_tree: 'caller-declared', web_inventory: 'verified-against-supplied-lock', git_to_inventory_binding: 'requires-independent-release-orchestration' }, configuration: config, configuration_sha256: hashBytes(canonical(config)), audio: { ...audio, content_sha256: audioHash }, source_lock_sha256: lockDigest, collector_sha256: await hashFile(__filename), collector_support_sha256: Object.fromEntries(await Promise.all(['strict-json.cjs', 'capture-supervisor.cjs', 'capture-supervisor.py'].map(async name => [name, await hashFile(path.join(__dirname, name))]))), cache_condition: { browser_origin: 'fresh', browser_http_cache: 'disabled', persisted_app_state: 'empty', host_page_cache: 'uncontrolled', release_controlled: false }, submitted_analysis_options: { ...config.analysis_options, analysisIdentity: audioHash, projectId } });
+    Object.assign(report, { identity, source_identity_binding: { git_commit_and_tree: 'caller-declared', web_inventory: 'verified-against-supplied-lock', git_to_inventory_binding: 'requires-independent-release-orchestration' }, configuration: config, configuration_sha256: hashBytes(canonical(config)), audio: { ...audio, content_sha256: audioHash }, source_lock_sha256: lockDigest, collector_sha256: await hashFile(__filename), collector_support_sha256: Object.fromEntries(await Promise.all(['strict-json.cjs', 'capture-supervisor.cjs', 'capture-supervisor.py', 'local-http-security.cjs'].map(async name => [name, await hashFile(path.join(__dirname, name))]))), cache_condition: { browser_origin: 'fresh', browser_http_cache: 'disabled', persisted_app_state: 'empty', host_page_cache: 'uncontrolled', release_controlled: false }, submitted_analysis_options: { ...config.analysis_options, analysisIdentity: audioHash, projectId } });
     report.bootstrap = { loaded_scripts: scripts, absent_optional_scripts: BOOTSTRAP_ORDER.filter(name => !scripts.includes(name)), source: 'locked-distribution-only' };
     persist();
     const served = new Set();

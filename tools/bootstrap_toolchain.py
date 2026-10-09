@@ -39,16 +39,30 @@ def download(p):
     path = DEST / 'downloads' / p['name']
     if not (path.is_file() and path.stat().st_size == p['size'] and digest(path) == p['sha256']):
         print('Downloading ' + p['name'], flush=True)
-        with urllib.request.urlopen(p['url'], timeout=240) as response:
-            data = response.read()
-        if len(data) != p['size'] or hashlib.sha256(data).hexdigest() != p['sha256']:
-            raise RuntimeError('Download integrity failure: ' + p['name'])
-        temp = path.with_suffix(path.suffix + '.part')
-        with temp.open('wb') as f:
-            f.write(data)
-            f.flush()
-            os.fsync(f.fileno())
-        os.replace(temp, path)
+        # A pinned JDK archive is ~193 MB. Stream instead of retaining the
+        # entire response, and use unique siblings so concurrent bootstraps
+        # cannot truncate or replace each other's in-progress download.
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with tempfile.NamedTemporaryFile(dir=path.parent, prefix=path.name + '.',
+                                         suffix='.part', delete=False) as output:
+            temp = Path(output.name)
+            try:
+                received = 0
+                checksum = hashlib.sha256()
+                with urllib.request.urlopen(p['url'], timeout=240) as response:
+                    while chunk := response.read(1024 * 1024):
+                        received += len(chunk)
+                        if received > p['size']:
+                            raise RuntimeError('Download integrity failure: ' + p['name'])
+                        checksum.update(chunk)
+                        output.write(chunk)
+                if received != p['size'] or checksum.hexdigest() != p['sha256']:
+                    raise RuntimeError('Download integrity failure: ' + p['name'])
+                output.flush()
+                os.fsync(output.fileno())
+                os.replace(temp, path)
+            finally:
+                temp.unlink(missing_ok=True)
     print('Verified ' + p['name'], flush=True)
     return p, path
 

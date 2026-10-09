@@ -26,12 +26,13 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE_PATHS = {
     'android/src/com/cyberbasslord/lightforge/' + name + '.java'
-    for name in ('NativeDeux', 'NativeDeuxTransform', 'NativeInferenceProfile', 'NativeExecutionPolicy')
+    for name in ('NativeDeux', 'NativeDeuxTransform', 'NativeInferenceProfile', 'NativeExecutionPolicy', 'NativePassagePolicy')
 } | {'android/native-runtime.json', 'tests/NativeDeuxParallelBenchmark.java',
-     'tools/benchmark_deux_parallel.py', 'tools/benchmark_deux_execution.py'}
+     'tools/benchmark_deux_parallel.py', 'tools/benchmark_deux_execution.py',
+     'qa/release-2.4.1/verify-analysis.py'}
 GEOMETRY = dict(graphCount=27, stageCount=15, bands=60, frames=1301, samplesPerStem=573300,
-                baseline=dict(workers=1, timeBatch=4, inferenceCalls=335),
-                candidate=dict(workers=8, timeBatch=1, inferenceCalls=875))
+                baseline=dict(workers=1, timeBatch=4, frequencyBatch=128, inferenceCalls=335),
+                candidate=dict(workers=8, timeBatch=1, frequencyBatch=16, frequencyTail=5, inferenceCalls=1727))
 CRITERIA = dict(measuredPairs=3, minMedianWallReductionPercent=15, minEachPairWallReductionPercent=5)
 MAX_THROTTLE_TO_WALL_RATIO = .05
 
@@ -80,6 +81,7 @@ def parse_cpu_affinity(value):
 
 
 def coverage(path, variant):
+    b.require(variant in {'baseline', 'candidate4', 'candidate'}, 'Unknown reviewed host geometry')
     rows = [dict(piece.split('=', 1) for piece in line.split()) for line in path.read_text().splitlines()]
     b.require(len(rows) == 43, 'Full 27-graph/15-stage profile required')
     summary = rows[0]
@@ -93,11 +95,15 @@ def coverage(path, variant):
               and len(stages) == 15 and {r.get('stage') for r in stages} == b.STAGE_NAMES,
               'Original graph/stage inventory changed')
     temporal_calls = 15 if variant == 'baseline' else 60
-    expected = {name: 1 if name == 'front' else temporal_calls if name.endswith('-time') else 11
+    frequency_calls = 11 if variant == 'baseline' else 82
+    expected = {name: 1 if name == 'front' else temporal_calls if name.endswith('-time') else frequency_calls if name.endswith('-frequency') else 11
                 for name in b.GRAPH_NAMES}
     observed = {r['graph']: int(r['runCount']) for r in graphs}
     b.require(observed == expected and int(summary['inferenceCount']) == sum(expected.values()),
               'Original full-context band/frame work is incomplete')
+    profile_verifier = load('current_parallel_profile_geometry', ROOT / 'qa/release-2.4.1/verify-analysis.py')
+    profile_verifier.verify_scheduler_profile(path.read_text().splitlines(), sum(expected.values()),
+                                              None if variant == 'baseline' else 4 if variant == 'candidate4' else 8)
     for key in ('inferenceWallMs', 'modelInitWallMs'):
         b.require(math.isfinite(float(summary[key])) and float(summary[key]) > 0, 'Invalid production timing')
     return dict(graphCount=27, stageCount=15, inferenceCalls=sum(expected.values()), graphRunCounts=observed)
@@ -136,7 +142,7 @@ def class_hashes(classes):
 
 
 def measure(variant, pair, order, phase, classes, work, java, dependencies, models, audio, start_sample,
-            cpu_control=None):
+            cpu_control=None, run_process=None):
     control = child_cpu_control() if cpu_control is None else cpu_control
     b.require(child_cpu_control() == control, 'Parent CPU allowance or quota changed before run')
     directory = work / variant
@@ -152,8 +158,8 @@ def measure(variant, pair, order, phase, classes, work, java, dependencies, mode
     before = b.host_counters()
     # Runs only in the forked Java child. This single-threaded Python parent,
     # unrelated processes, Android implementation and cgroup quota are unchanged.
-    result = subprocess.run(command, capture_output=True, text=True, timeout=1200,
-                            preexec_fn=lambda: os.sched_setaffinity(0, control['childCpuAffinity']))
+    result = (run_process or subprocess.run)(command, capture_output=True, text=True, timeout=1200,
+                                             preexec_fn=lambda: os.sched_setaffinity(0, control['childCpuAffinity']))
     after = b.host_counters()
     (directory / (prefix + '.log')).write_text(result.stdout + result.stderr)
     b.require(result.returncode == 0, variant + ' inference failed; see ' + prefix + '.log')
@@ -212,7 +218,7 @@ def summarize(record):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, required=True, help='Fresh directory for immutable run evidence')
-    parser.add_argument('--receipt', type=Path, default=ROOT / 'research/inference-2.4.1/production-parallel-qualification.json')
+    parser.add_argument('--receipt', type=Path, default=ROOT / 'research/inference-current/production-parallel-qualification.json')
     args = parser.parse_args()
     work = args.output.resolve()
     b.require(not work.exists(), 'A fresh output directory is required')

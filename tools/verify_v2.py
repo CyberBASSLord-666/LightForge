@@ -8,7 +8,7 @@ ROOT=Path(__file__).resolve().parents[1]
 VERSION=json.loads((ROOT/'version.json').read_text())['name']
 OUT=ROOT/('qa/release-'+VERSION)
 OUT.mkdir(parents=True,exist_ok=True)
-TESTS=['analysis-timing-wiring.test.cjs','compiler-timing.test.cjs','analysis-dsp-timing.test.cjs','wav-reader-timing.test.cjs','runtime-timing-probes.test.cjs','engine.test.cjs','engine-manual.test.cjs','preview-engine.test.cjs','preview-lifecycle.test.cjs','preview-startup.test.cjs','light-planner.test.cjs','recorded-music-fixture-contract.test.cjs','collision-resolver.test.cjs','semantic-collision-allocation.test.cjs','semantic-allocation-integration.test.cjs','analysis-performance-projection.test.cjs','analysis-run-observation.test.cjs',
+TESTS=['web-interaction-reliability.test.cjs','browser-transfer-lifecycle.test.cjs','analysis-timing-wiring.test.cjs','compiler-timing.test.cjs','analysis-dsp-timing.test.cjs','wav-reader-timing.test.cjs','runtime-timing-probes.test.cjs','engine.test.cjs','engine-manual.test.cjs','preview-engine.test.cjs','preview-lifecycle.test.cjs','preview-startup.test.cjs','light-planner.test.cjs','recorded-music-fixture-contract.test.cjs','collision-resolver.test.cjs','semantic-collision-allocation.test.cjs','semantic-allocation-integration.test.cjs','analysis-performance-projection.test.cjs','analysis-run-observation.test.cjs',
        'movement-planner.test.cjs','composer-1.6.test.cjs','role-composer-1.6.test.cjs',
        'role-reference-composer-1.6.test.cjs','bass-notes.test.cjs','vocal-detail.test.cjs',
        'stem-cache.test.cjs','stem-routing.test.cjs','stem-routing-worker.test.cjs','rhythm-hierarchy.test.cjs','recurrence-motif.test.cjs','recurrence-worker.test.cjs','motif-evolution-integration.test.cjs','wav-reader.test.cjs','precision-2.0.test.cjs','migration-2.0.test.cjs','precision-ui-2.0.test.cjs','cockpit-2.1.test.cjs','game-2.1.test.cjs','background-2.2.test.cjs','analysis-recovery-2.2.1.test.cjs','native-deux-bridge.test.cjs','native-mdx-bridge.test.cjs','mdx-downstream-compare.test.cjs','separator-mdx-runtime.test.cjs','separator-clock-resilience.test.cjs','native-runtime-guard.test.cjs','diagnostics.test.cjs','analysis-telemetry.test.cjs','resource-diagnostics.test.cjs','resource-diagnostics-wiring.test.cjs','analysis-scheduler.test.cjs','semantic-timeline.test.cjs','vocal-semantics.test.cjs','vocal-choreography.test.cjs','percussion-evidence.test.cjs','music-salience.test.cjs','choreography-quality.test.cjs','perceptual-validation.test.cjs','vehicle-perceptual-integration.test.cjs','semantic-choreography-strategy.test.cjs','analysis-cache-recovery-v3.test.cjs','feature-store-contract.test.cjs','source-reader-reuse-worker.test.cjs',
@@ -20,7 +20,7 @@ TESTS=['analysis-timing-wiring.test.cjs','compiler-timing.test.cjs','analysis-ds
        'completed-restore-preview-start.test.cjs','preview-environment.test.cjs',
        'musical-structure.test.cjs','musical-expression.test.cjs',
        'native-game-bridge.test.cjs','native-game-service-contract.test.cjs','native-game-pipeline.test.cjs','native-game-runner.test.cjs',
-       'musical-scheduling.test.cjs','quality-run-scanning.test.cjs','vocal-frontend-reuse.test.cjs']
+       'musical-scheduling.test.cjs','quality-run-scanning.test.cjs','vocal-frontend-reuse.test.cjs','vocal-resampler-reuse.test.cjs']
 # The 2.2.2 adapter-retention contract freezes its then-current analysis
 # manifest, and the 2.2.3 native/runtime source-clock contract freezes its
 # measured source hashes. Both intentionally reject later release transitions.
@@ -204,7 +204,7 @@ def main():
              'scope':'Node engine/worker/WebCrypto/gzip, real app DOM integration with simulated native and graphics, Python archive and quality-tool tests. Not a visual browser or physical Android/Tesla test.'}
     try:
         subprocess.run([sys.executable,str(ROOT/'tools/sync_version.py'),'--check'],check=True)
-        result=subprocess.run(['node','--test',*[str(ROOT/'tests'/t) for t in TESTS]],cwd=ROOT,capture_output=True,text=True)
+        result=subprocess.run(['node','--test','--test-reporter=tap',*[str(ROOT/'tests'/t) for t in TESTS]],cwd=ROOT,capture_output=True,text=True)
         node_output=result.stdout+result.stderr
         (OUT/'regression-tests.log').write_text(node_output)
         if result.returncode:

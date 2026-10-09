@@ -1,0 +1,374 @@
+{
+  "schema": "lightforge.inference-device-probe-analysis.v1",
+  "qualification_status": "not-evaluated",
+  "integrity": {
+    "passed": true,
+    "errors": [],
+    "warnings": [
+      "passage-0-after:severe-or-higher-thermal-boundary",
+      "run-after:severe-or-higher-thermal-boundary"
+    ],
+    "reference": {
+      "verification_mode": "retained-apk-and-reviewed-archive",
+      "retained_apk_binding_passed": true,
+      "source_reference_sha256": "b9b5991ab8746e96ef28675f23d6309ce5f985003df4d6f12ee4d5360d52d83b",
+      "apk_sha256": "79dba57cc55d0fc61e42aa245f0f94c7a1d826aa184bb6be08026ff931712429",
+      "audit_sha256": "a8efbf9e208b022760878062bed8efc3559e1b61e7c0baee563a18ba1b83666b",
+      "audit_commit": "6a91949a060f7bb8543266242ca01f4d2904c069",
+      "repository_source_files_verified": 15,
+      "current_source_binding_passed": true,
+      "current_source_mismatches": [],
+      "qualification_ordinals": [
+        0,
+        1,
+        2
+      ],
+      "model_manifest_sha256": "6aebf45e6e7f6fa974f14fe47a252fc01f48da4815f40a1fdf10641a432529a9",
+      "declared_model_bytes": 921547393,
+      "fixture_pcm16_sha256": "0d0bf21401ad0dbb8a49aae581a16f9a00cadca41e116b5a4dc27eaaa3625648",
+      "newly_verified_apk_members": {
+        "AndroidManifest.xml": {
+          "bytes": 2432,
+          "sha256": "5a240855ca12c22de047c92d0798c5ac83af23cac1672799428e70c4a0e7b6f4",
+          "binding": "complete-apk-hash"
+        },
+        "resources.arsc": {
+          "bytes": 40,
+          "sha256": "1fa3cb291285348ec1b33c85e7317d989467707f4791c4e5302f2d312d1e18c8",
+          "binding": "complete-apk-hash"
+        },
+        "assets/probe/falcon-mix.wav": {
+          "bytes": 1200172,
+          "sha256": "0d0bf21401ad0dbb8a49aae581a16f9a00cadca41e116b5a4dc27eaaa3625648",
+          "binding": "independent-member-pin-and-complete-apk"
+        },
+        "assets/probe/fixture-provenance.json": {
+          "bytes": 1369,
+          "sha256": "b471e827976fd786a8627d63d62a46d1ef81c5d44768e493ae1c481749d92e90",
+          "binding": "complete-apk-hash"
+        },
+        "assets/probe/onnxruntime-native-LICENSE.txt": {
+          "bytes": 1073,
+          "sha256": "2f07c72751aed99790b8a4869cf2311df85a860b22ded05fa22803587a48922c",
+          "binding": "independent-member-pin-and-complete-apk"
+        },
+        "assets/probe/onnxruntime-native-ThirdPartyNotices.txt": {
+          "bytes": 325054,
+          "sha256": "0e07b95f3a8d6230037707c5c4a2b554d12c4cb67369669ac255635528ffcee2",
+          "binding": "independent-member-pin-and-complete-apk"
+        },
+        "assets/probe/source-receipt.json": {
+          "bytes": 17181,
+          "sha256": "b9b5991ab8746e96ef28675f23d6309ce5f985003df4d6f12ee4d5360d52d83b",
+          "binding": "independent-member-pin-and-complete-apk"
+        },
+        "classes.dex": {
+          "bytes": 362316,
+          "sha256": "5f132784142071067f819c8ef51ad1a8a02c3b65eca675d0f3dc1027db68d973",
+          "binding": "independent-member-pin-and-complete-apk"
+        },
+        "lib/arm64-v8a/libonnxruntime.so": {
+          "bytes": 27072384,
+          "sha256": "b87030d6d0876af371e00a99368f01a05ceb8ed36f88859e30ee8c3649811acd",
+          "binding": "independent-member-pin-and-complete-apk"
+        },
+        "lib/arm64-v8a/libonnxruntime4j_jni.so": {
+          "bytes": 111648,
+          "sha256": "cd11ea73f2e9b1d799b936d1dfc8a13719832a8244cd1b12d6f58bda1f2d1ddf",
+          "binding": "independent-member-pin-and-complete-apk"
+        },
+        "lib/armeabi-v7a/libonnxruntime.so": {
+          "bytes": 19255048,
+          "sha256": "570c8297cb166efec11f104351db2485a1405347ff22cc450d5979d1a9621357",
+          "binding": "independent-member-pin-and-complete-apk"
+        },
+        "lib/armeabi-v7a/libonnxruntime4j_jni.so": {
+          "bytes": 81536,
+          "sha256": "b1fc6e2246d56910a1630083bde01da386a07b581a5090a890ae31347dd0b357",
+          "binding": "independent-member-pin-and-complete-apk"
+        },
+        "lib/x86/libonnxruntime.so": {
+          "bytes": 32674464,
+          "sha256": "4328648196cbd9ac2fba41c67bea7f59e86f32a801bdbac8c60bcfa962e5509f",
+          "binding": "independent-member-pin-and-complete-apk"
+        },
+        "lib/x86/libonnxruntime4j_jni.so": {
+          "bytes": 93620,
+          "sha256": "9f0493e53ad77be7eef678971d62c1c053450cbe7d766869d66359e3f398ca96",
+          "binding": "independent-member-pin-and-complete-apk"
+        },
+        "lib/x86_64/libonnxruntime.so": {
+          "bytes": 32864824,
+          "sha256": "ef6c81cafbea375423b8b0ffb757288fdc6170901bb8d02999c758930d4d9306",
+          "binding": "independent-member-pin-and-complete-apk"
+        },
+        "lib/x86_64/libonnxruntime4j_jni.so": {
+          "bytes": 100016,
+          "sha256": "8fe536b92668ae3fca4719dce98bbbcf987c30264270d0268997df17d2a4a8ec",
+          "binding": "independent-member-pin-and-complete-apk"
+        },
+        "META-INF/PROBE.SF": {
+          "bytes": 1797,
+          "sha256": "5bd9a3edba88619caff028c269cec2bb0d00a21f91cf99d8bb429b0cc29971b1",
+          "binding": "complete-apk-hash"
+        },
+        "META-INF/PROBE.RSA": {
+          "bytes": 1647,
+          "sha256": "460cd840f60c982000289c6e5ebe32dc38daf145deeb16dd031cccfaccf62fb1",
+          "binding": "complete-apk-hash"
+        },
+        "META-INF/MANIFEST.MF": {
+          "bytes": 1670,
+          "sha256": "c2f724262ce512cdd5d87f1a45b0effa5c931584c753b3b5d948312e2a247b56",
+          "binding": "complete-apk-hash"
+        }
+      },
+      "historical_only_checks": {
+        "scope": "recorded-by-hash-bound-original-audit-not-reperformed",
+        "original_compiled_class_count": 75,
+        "original_compiled_jar_sha256": "37369d75043c607b5d7835bae1b2c160f8e8fba991cd977126920d32b5aed38e",
+        "runtime_java_jar_sha256": "3755d307aaa566daa1ebd4e9e792303fac78ea8517f29bfa49da5eb9a7a6051b",
+        "signature_and_signer": "original-v2-v3-signature-audit; complete-identical-apk-hash-verified-now",
+        "alignment_and_manifest_semantics": "original-audit; packaged-bytes-bound-to-identical-apk-now"
+      },
+      "original_build_bytes_reconstructed": false,
+      "signature_verification_performed_now": false,
+      "release_qualification_performed": false,
+      "scope": "retained-apk-and-reviewed-archive-binding-not-frozen-build-reconstruction-or-device-attestation"
+    }
+  },
+  "run": {
+    "outcome": "cancelled",
+    "completed_passages": 0,
+    "observed_passages": 1,
+    "complete_35_passage_run": false,
+    "elapsed_millis": 20099,
+    "process_cpu_millis": 64778,
+    "failure_class": "InterruptedIOException",
+    "cancel_reason": "thermal-severe",
+    "terminal": true,
+    "coordinator_finished": true,
+    "engine_close_returned": true,
+    "cleanup_confirmed": true,
+    "temporary_cache_removed": true
+  },
+  "passages": [
+    {
+      "ordinal": 0,
+      "start_sample": -66150,
+      "outcome": "cancelled",
+      "failure_class": "InterruptedIOException",
+      "predict_wall_nanos": 19992723482,
+      "predict_process_cpu_millis": 64694,
+      "temporal_session_attempt_counts": {
+        "temporalBaselineSessionCount": 5,
+        "temporalFourWorkerSessionCount": 0,
+        "temporalEightWorkerSessionCount": 0,
+        "temporalUnobservedSessionCount": 0
+      },
+      "last_temporal_configuration": "cpu-i4-j1-d0-sequential",
+      "frequency_session_attempt_counts": {
+        "frequencyBaselineSessionCount": 4,
+        "frequencyFourWorkerSessionCount": 0,
+        "frequencyEightWorkerSessionCount": 0,
+        "frequencyUnobservedSessionCount": 0
+      },
+      "last_frequency_configuration": "cpu-i4-j1-d0-sequential",
+      "production_inference_wall_millis": 10762,
+      "reported_calibration_wall_millis": 5299,
+      "policy_snapshot": {
+        "status": "observed",
+        "source": "device-passage",
+        "scope": "controller-evidence-snapshot-not-additional-passages",
+        "qualification_status": "not-independently-evaluated",
+        "timing_units": "nanoseconds",
+        "payback_scope": "projected-not-measured",
+        "controller": {
+          "status": "observed",
+          "schema": "native-passage-policy-v1",
+          "state": "baseline",
+          "workers": "4",
+          "reason": "cancelled",
+          "paybackScope": "projected-not-measured",
+          "extraNanos": {
+            "status": "observed",
+            "value": 5299625675
+          },
+          "extraCapNanos": {
+            "status": "observed",
+            "value": 360000000000
+          },
+          "projectedAccruedSavingsNanos": {
+            "status": "observed",
+            "value": 0
+          },
+          "qualificationPairs": {
+            "status": "observed",
+            "value": 0
+          },
+          "currentJobPairs": {
+            "status": "observed",
+            "value": 0
+          },
+          "activePassages": {
+            "status": "observed",
+            "value": 0
+          },
+          "leasePassages": {
+            "status": "observed",
+            "value": 8
+          },
+          "seeded": false
+        },
+        "pairs": [],
+        "controls": [],
+        "control_scope": "unmatched-input-timing-guard-not-same-input-equality-or-speedup-proof"
+      },
+      "candidate_evidence": {
+        "status": "unavailable",
+        "scope": "auxiliary-candidate-profile-excluded-from-production-totals",
+        "qualification_status": "not-evaluated",
+        "paired_record_binding": "unavailable"
+      }
+    }
+  ],
+  "same_input_output_groups": [],
+  "unique_observed_pairs": [],
+  "unique_observed_controls": [],
+  "predict_wall_nanos": {
+    "scope": "all-observed-attempts-including-probes-and-cancelled-partial-work",
+    "observed_count": 1,
+    "population_count": 1,
+    "observed_sum": 19992723482,
+    "median": 19992723482,
+    "min": 19992723482,
+    "max": 19992723482
+  },
+  "prediction_wall_by_outcome_nanos": {
+    "cancelled": {
+      "observed_count": 1,
+      "population_count": 1,
+      "observed_sum": 19992723482,
+      "median": 19992723482,
+      "min": 19992723482,
+      "max": 19992723482
+    }
+  },
+  "policy_overhead": {
+    "latest_cumulative_extra_nanos": 5299625675,
+    "unique_recorded_pair_extra_nanos": 0,
+    "other_charged_extra_nanos": 5299625675,
+    "other_cost_scope": "screening-or-unrecorded-probe-cost-not-independent-proof-of-its-cause",
+    "latest_projected_accrued_savings_nanos": 0,
+    "savings_scope": "projected-not-measured",
+    "extra_cost_already_in_prediction_wall": true
+  },
+  "boundary_observations": [
+    {
+      "location": "run-before",
+      "elapsedRealtimeMillis": 522756713,
+      "processCpuMillis": 385,
+      "availableProcessors": 8,
+      "availableMemoryBytes": 3375337472,
+      "memoryThresholdBytes": 226492416,
+      "processPeakRssBytes": 127549440,
+      "javaHeapUsedBytes": 3209776,
+      "nativeHeapAllocatedBytes": 11830688,
+      "thermalStatus": 0,
+      "batteryTemperatureTenthsC": 324,
+      "batteryLevel": 76,
+      "batteryScale": 100,
+      "plugged": 0,
+      "lowMemory": false,
+      "interactive": true,
+      "powerSave": false,
+      "deviceIdle": false
+    },
+    {
+      "location": "passage-0-before",
+      "elapsedRealtimeMillis": 522756741,
+      "processCpuMillis": 409,
+      "availableProcessors": 8,
+      "availableMemoryBytes": 3369033728,
+      "memoryThresholdBytes": 226492416,
+      "processPeakRssBytes": 136572928,
+      "javaHeapUsedBytes": 10231552,
+      "nativeHeapAllocatedBytes": 12451904,
+      "thermalStatus": 0,
+      "batteryTemperatureTenthsC": 324,
+      "batteryLevel": 76,
+      "batteryScale": 100,
+      "plugged": 0,
+      "lowMemory": false,
+      "interactive": true,
+      "powerSave": false,
+      "deviceIdle": false
+    },
+    {
+      "location": "passage-0-after",
+      "elapsedRealtimeMillis": 522776736,
+      "processCpuMillis": 65107,
+      "availableProcessors": 8,
+      "availableMemoryBytes": 3152142336,
+      "memoryThresholdBytes": 226492416,
+      "processPeakRssBytes": 797089792,
+      "javaHeapUsedBytes": 205611200,
+      "nativeHeapAllocatedBytes": 79932240,
+      "thermalStatus": 3,
+      "batteryTemperatureTenthsC": 331,
+      "batteryLevel": 76,
+      "batteryScale": 100,
+      "plugged": 0,
+      "lowMemory": false,
+      "interactive": true,
+      "powerSave": false,
+      "deviceIdle": false
+    },
+    {
+      "location": "run-after",
+      "elapsedRealtimeMillis": 522776811,
+      "processCpuMillis": 65162,
+      "availableProcessors": 8,
+      "availableMemoryBytes": 3135676416,
+      "memoryThresholdBytes": 226492416,
+      "processPeakRssBytes": 797089792,
+      "javaHeapUsedBytes": 205975776,
+      "nativeHeapAllocatedBytes": 79942736,
+      "thermalStatus": 3,
+      "batteryTemperatureTenthsC": 331,
+      "batteryLevel": 76,
+      "batteryScale": 100,
+      "plugged": 0,
+      "lowMemory": false,
+      "interactive": true,
+      "powerSave": false,
+      "deviceIdle": false
+    }
+  ],
+  "whole_job_speedup": {
+    "status": "unavailable",
+    "reason": "no-controlled-all-baseline-counterfactual-run"
+  },
+  "host_output_comparison": {
+    "status": "not-comparable",
+    "reason": "retained-host-integration-start-661500-differs-from-five-device-starts-and-runtime-platform"
+  },
+  "limitations": [
+    "Receipt assertions are source-bound observations, not cryptographic device attestation.",
+    "The five repeated short-fixture inputs are not 35 independent songs or full-song quality evidence.",
+    "Pair snapshots repeat history; unique pair timings exclude ordinary-passage counterfactuals and cannot establish whole-job savings.",
+    "Controls advance useful baseline work using unmatched inputs; they add no candidate replay but forgo unmeasured acceleration and cannot establish same-input speed or equality.",
+    "Cold sessions do not establish cold filesystem or runtime caches; a single baseline-first pair is not a repeated alternating-order qualification.",
+    "Prediction wall includes policy overhead; do not add calibration or cumulative extra cost again.",
+    "Candidate profiles are auxiliary attempt diagnostics excluded from production totals; their collector lifetime is not an arm clock and they cannot independently establish paired or whole-job improvement.",
+    "Matched model-file preparation counters do not establish equivalent operating-system or runtime cache state.",
+    "Thermal and memory values are boundary snapshots, not continuous maxima; battery temperature is not CPU temperature.",
+    "Process CPU includes every companion process thread; this is not installed-LightForge lifecycle or release qualification."
+  ],
+  "current_source_gate": {
+    "required": true,
+    "passed": true,
+    "scope": "source-binding-only-not-release-qualification"
+  },
+  "input_sha256": "91e2384e9347a7b5dc58d111e05c8cc7311d4470ca19d565e2dde6b1c665b29e"
+}

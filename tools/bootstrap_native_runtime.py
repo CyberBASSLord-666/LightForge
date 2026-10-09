@@ -7,6 +7,7 @@ import json
 import os
 import shutil
 import tempfile
+import time
 import urllib.request
 import zipfile
 
@@ -36,8 +37,20 @@ def prepare(check=False, stage=None):
             with tempfile.NamedTemporaryFile(dir=DEST, delete=False) as output:
                 temp = Path(output.name)
                 try:
+                    # A valid hash at EOF cannot bound a malicious or broken
+                    # response. Enforce the pin before writing each chunk.
+                    received = 0
+                    checksum = hashlib.sha256()
+                    deadline = time.monotonic() + 600
                     with urllib.request.urlopen(item['url'], timeout=120) as response:
-                        shutil.copyfileobj(response, output, 1024 * 1024)
+                        while chunk := response.read(min(1024 * 1024, item['bytes'] - received + 1)):
+                            received += len(chunk)
+                            if received > item['bytes'] or time.monotonic() > deadline:
+                                raise RuntimeError('Native dependency download limit exceeded: ' + item['name'])
+                            checksum.update(chunk)
+                            output.write(chunk)
+                    if received != item['bytes'] or checksum.hexdigest() != item['sha256']:
+                        raise RuntimeError('Native dependency download integrity failure: ' + item['name'])
                     output.flush()
                     os.fsync(output.fileno())
                     if not matches(temp, item):

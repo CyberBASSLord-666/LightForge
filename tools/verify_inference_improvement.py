@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Hold 2.4.1 builds until final-source, exact-output inference timing qualifies.
+"""Hold production builds until final-source, exact-output inference timing qualifies.
 
 This is a host performance prerequisite, independent of fresh production/Android
 quality gates. It does not establish physical phone or whole-analysis speedup.
@@ -13,17 +13,19 @@ import re
 import statistics
 
 ROOT = Path(__file__).resolve().parents[1]
-RECEIPT = 'research/inference-2.4.1/production-parallel-qualification.json'
+# Current qualification must never overwrite the published historical receipt.
+RECEIPT = 'research/inference-current/production-parallel-qualification.json'
 SOURCE_PATHS = {
     'android/src/com/cyberbasslord/lightforge/' + name + '.java'
-    for name in ('NativeDeux', 'NativeDeuxTransform', 'NativeInferenceProfile', 'NativeExecutionPolicy')
+    for name in ('NativeDeux', 'NativeDeuxTransform', 'NativeInferenceProfile', 'NativeExecutionPolicy', 'NativePassagePolicy')
 } | {'android/native-runtime.json', 'tests/NativeDeuxParallelBenchmark.java',
-     'tools/benchmark_deux_parallel.py', 'tools/benchmark_deux_execution.py'}
+     'tools/benchmark_deux_parallel.py', 'tools/benchmark_deux_execution.py',
+     'qa/release-2.4.1/verify-analysis.py'}
 GRAPH_NAMES = {'front', 'head-0', 'head-1'} | {
     f'block-{i:02d}-{axis}' for i in range(12) for axis in ('time', 'frequency')}
 GEOMETRY = dict(graphCount=27, stageCount=15, bands=60, frames=1301, samplesPerStem=573300,
-                baseline=dict(workers=1, timeBatch=4, inferenceCalls=335),
-                candidate=dict(workers=8, timeBatch=1, inferenceCalls=875))
+                baseline=dict(workers=1, timeBatch=4, frequencyBatch=128, inferenceCalls=335),
+                candidate=dict(workers=8, timeBatch=1, frequencyBatch=16, frequencyTail=5, inferenceCalls=1727))
 CRITERIA = dict(measuredPairs=3, minMedianWallReductionPercent=15,
                 minEachPairWallReductionPercent=5)
 
@@ -110,7 +112,8 @@ def validate_measurements(record):
         output_hash = output_hash or output['sha256']
         require(output['sha256'] == output_hash, 'Full output bytes differ')
         temporal_calls = 15 if run['variant'] == 'baseline' else 60
-        counts = {name: 1 if name == 'front' else temporal_calls if name.endswith('-time') else 11 for name in GRAPH_NAMES}
+        frequency_calls = 11 if run['variant'] == 'baseline' else 82
+        counts = {name: 1 if name == 'front' else temporal_calls if name.endswith('-time') else frequency_calls for name in GRAPH_NAMES}
         coverage = dict(graphCount=27, stageCount=15, inferenceCalls=sum(counts.values()), graphRunCounts=counts)
         require(run.get('coverage') == coverage, 'Incomplete original graph/band/frame work')
         for name in ('oom', 'oom_kill', 'max'):
@@ -176,9 +179,6 @@ def main():
     parser.add_argument('--root', type=Path, default=ROOT)
     args = parser.parse_args()
     try:
-        version = json.loads((args.root / 'version.json').read_text())
-        if version.get('name') != '2.4.1':
-            return
         reduction = verify(args.root)
         print(f'PASS: exact-output host inference prerequisite ({reduction:.1f}% lower median passage time).')
     except (ValueError, KeyError, TypeError, OSError) as error:

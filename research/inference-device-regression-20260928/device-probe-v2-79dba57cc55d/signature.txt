@@ -1,0 +1,17 @@
+Verifies
+Verified using v1 scheme (JAR signing): false
+Verified using v2 scheme (APK Signature Scheme v2): true
+Verified using v3 scheme (APK Signature Scheme v3): true
+Verified using v3.1 scheme (APK Signature Scheme v3.1): false
+Verified using v4 scheme (APK Signature Scheme v4): false
+Verified for SourceStamp: false
+Number of signers: 1
+Signer #1 certificate DN: CN=LightForge Isolated Inference Probe, OU=Temporary QA
+Signer #1 certificate SHA-256 digest: 94e416fd28a1b3a7c177c0cb52acbe014556dc241c12d855cbf1c5c74b289ad8
+Signer #1 certificate SHA-1 digest: 787792c6c70086f96b1b77adb25deffdb37994f5
+Signer #1 certificate MD5 digest: e846e4e389d37aa3d5091e003b481a7e
+Signer #1 key algorithm: RSA
+Signer #1 key size (bits): 3072
+Signer #1 public key SHA-256 digest: 0e0a11e59038214613eb91ffac2e4ceeaab6395ffdebf8d8dbe6c89b460fa505
+Signer #1 public key SHA-1 digest: ac6051ccd29af8fff01a4210de6526d0f4e42100
+Signer #1 public key MD5 digest: b11e28f1dd46745f5cf1a070d0b555da

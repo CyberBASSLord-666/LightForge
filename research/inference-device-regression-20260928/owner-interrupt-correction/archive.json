@@ -1,0 +1,37 @@
+{
+  "schema": "lightforge.owner-interrupt-correction-archive.v1",
+  "scope": "Exact retained host reproduction/correction artifacts; targeted JNI cancellation and resource retirement only, not complete-output recovery, speedup, device performance, or release qualification.",
+  "proofs": {
+    "before": {
+      "sourceFileCount": 14,
+      "compiledClassCount": 51,
+      "sourceSnapshotBindingVerified": true,
+      "compiledClassesMatchedRetainedReceiptBeforeArchival": true,
+      "binariesArchived": false,
+      "compileReceipt": "before/receipt.json",
+      "expectedResult": "failed",
+      "exceptionLog": "before/owner-interrupt.log",
+      "observedSuppressedRawOrtExceptions": 4
+    },
+    "after": {
+      "sourceFileCount": 14,
+      "compiledClassCount": 51,
+      "sourceSnapshotBindingVerified": true,
+      "compiledClassesMatchedRetainedReceiptBeforeArchival": true,
+      "binariesArchived": false,
+      "compileReceipt": "after/receipt.json",
+      "expectedResult": "passed",
+      "targetedReceipt": "after/targeted-owner-interrupt.json",
+      "observedNativeWorkers": [
+        7,
+        5
+      ]
+    }
+  },
+  "notes": [
+    "The original receipt.json files are exact compile-only receipts: inferencePerformed=false and passed=false describe their compile-only workflow, not the separately invoked targeted JNI tests.",
+    "The before failure is recorded in its original JVM log; no synthetic passing receipt was created for that run.",
+    "The after targeted receipt records both successful JNI tests with source, compiled-class, runtime-dependency, input and model-manifest identities.",
+    "Archived source-snapshots include the generated no-op AppDiagnostics host adapter. Class/JAR/APK binaries and model/audio payloads are intentionally excluded."
+  ]
+}

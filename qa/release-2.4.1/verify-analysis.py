@@ -24,9 +24,11 @@ OUT = 'qa/release-2.4.1/'
 HISTORICAL_OUT = 'qa/release-2.2.4/'
 # This digest pins the original v2.2.4 runtime comparison as historical context.
 COMPARISON_SHA256 = 'e74c12ca08132182f7cb971a98a6280401fcbfb5220a403e690e276c21c91712'
-# Reviewed 2.4.1 inventory: the exact complete asset manifest remains pinned.
+# Reviewed unreleased adapter inventory: exact manifest remains pinned.
+# Only feature-store.js, work-store.js and worker.js changed from the prior pin;
+# historical release receipts and every model/runtime identity are unchanged.
 # Original model/runtime assets and all source-bound verification gates remain mandatory.
-ASSET_MANIFEST_SHA256 = '0216156d333f979ed3bf3416bca4eca1c596b3a5c6e5faea44587fa5872262e9'
+ASSET_MANIFEST_SHA256 = 'dd3940ad78c6d4c7103587af05f52e3fc7191f0ba646ce0f327f8f97fda247bb'
 ASSET_MANIFEST_ENTRY_COUNT = 85
 OLD_RUNTIME_SHA256 = 'e0ab4a1af57d2da09097202f2dfd691e390c82e81183314788ccde4cf7c3cc38'
 NEW_RUNTIME_SHA256 = '749793ebed63743fec853d093da7987a86ea5cd592d54fba898cd3233100c381'
@@ -73,6 +75,7 @@ PROFILED_COMPARISON_MUTABLE_SOURCES = {
 }
 PROFILE_EQUIVALENCE_SOURCES = {
     'android/src/com/cyberbasslord/lightforge/NativeExecutionPolicy.java',
+    'android/src/com/cyberbasslord/lightforge/NativePassagePolicy.java',
     'tests/NativeDeuxCalibrationTest.java',
     'tests/NativeExecutionPolicyTest.java',
     'tests/test_native_execution_policy.py',
@@ -274,24 +277,36 @@ def verify_historical_comparison(root, hashes):
 
 
 def verify_scheduler_calibration(value):
+    schema = value.get('schema') if isinstance(value, dict) else None
+    frequency_parallel = schema == 'lightforge.native-scheduler-calibration.v4'
     keys = {'schema', 'passed', 'samplesPerStem', 'outputBytes', 'startSample', 'availableProcessors',
-            'runs', 'forcedWorkers', 'forcedTimeBatch', 'cacheReused', 'cacheBytes',
-            'cancelledCalibrationIsolated', 'duringNativeCancellation', 'finite', 'byteIdentical'}
+            'runs', 'forcedWorkers', 'forcedTimeBatch', 'unknownWorkNoProbe', 'shortWorkNoProbe',
+            'legacyPolicyIgnored', 'legacyCacheFixture', 'legacyCacheBytes', 'cancelledPassageIsolated',
+            'automaticRemainingUseful', 'automaticPairObserved', 'automaticCacheNotQualified',
+            'noPartialOutputs', 'duringNativeCancellation', 'finite', 'byteIdentical'}
+    if frequency_parallel:
+        keys.add('forcedFrequencyBatch')
     require(isinstance(value, dict) and set(value) == keys and
-            value.get('schema') == 'lightforge.native-scheduler-calibration.v2',
-            'Scheduler calibration evidence is absent or malformed')
-    for key in ('passed', 'cacheReused', 'cancelledCalibrationIsolated', 'finite', 'byteIdentical'):
-        require(value[key] is True, 'Scheduler calibration did not preserve ' + key)
+            schema in {'lightforge.native-scheduler-calibration.v3', 'lightforge.native-scheduler-calibration.v4'},
+            'Current complete-passage scheduler evidence is absent or malformed')
+    if frequency_parallel:
+        require(type(value['forcedFrequencyBatch']) is int and value['forcedFrequencyBatch'] == 16,
+                'Parallel frequency evidence must retain its exact 16-frame batch and five-frame tail')
+    for key in ('passed', 'unknownWorkNoProbe', 'shortWorkNoProbe', 'legacyPolicyIgnored',
+                'cancelledPassageIsolated', 'noPartialOutputs', 'automaticCacheNotQualified', 'finite', 'byteIdentical'):
+        require(value[key] is True, 'Scheduler integration did not preserve ' + key)
     for key, expected in [('samplesPerStem', SAMPLES), ('outputBytes', 2 * SAMPLES * 4),
-                          ('startSample', 661500), ('forcedTimeBatch', 1)]:
+                          ('startSample', 661500), ('forcedTimeBatch', 1), ('automaticRemainingUseful', 35)]:
         require(type(value[key]) is int and value[key] == expected, 'Scheduler calibration geometry changed: ' + key)
     require(value['forcedWorkers'] == [4, 8] and all(type(item) is int for item in value['forcedWorkers']),
             'Both reviewed parallel host geometries must be exercised')
     require(type(value['availableProcessors']) is int and 1 <= value['availableProcessors'] <= 4096,
             'Scheduler processor eligibility is absent')
-    require(type(value['cacheBytes']) is int and 48 <= value['cacheBytes'] < 8192,
-            'Scheduler cache is absent or exceeds its storage bound')
-    names = {'reference', 'calibrated', 'cached', 'forcedFour', 'recoveredEight'}
+    require(value['legacyCacheFixture'] == 'synthetic-v2-warmgraph' and
+            type(value['legacyCacheBytes']) is int and 48 <= value['legacyCacheBytes'] < 8192,
+            'The rejected old-format cache fixture is absent or incorrectly described')
+    require(type(value['automaticPairObserved']) is bool, 'Automatic pair observation must be explicit')
+    names = {'reference', 'unknownWork', 'shortWork', 'automaticFirstPassage', 'forcedFour', 'recoveredEight'}
     runs = value['runs']
     require(isinstance(runs, dict) and set(runs) == names, 'Complete scheduler and recovery passages are required')
     profiles, digests = {}, set()
@@ -304,33 +319,115 @@ def verify_scheduler_calibration(value):
         require(type(run['outputBytes']) is int and run['outputBytes'] == 2 * SAMPLES * 4 and run['finite'] is True,
                 'Scheduler passage output is partial or nonfinite: ' + name)
         forced_workers = 4 if name == 'forcedFour' else (8 if name == 'recoveredEight' else None)
-        profiles[name] = verify_scheduler_profile(run['profileRecords'], run['inferenceCalls'], forced_workers)
+        records = run['profileRecords']
+        if name == 'automaticFirstPassage':
+            count = 45 if value['automaticPairObserved'] else 44
+            require(isinstance(records, list) and len(records) == count,
+                    'Automatic passage must retain its complete bounded decision and any measured pair')
+            policy_records = records[43:]
+            parsed_policy = []
+            for record in policy_records:
+                require(isinstance(record, str) and 0 < len(record) < 4096 and '\n' not in record and '\r' not in record,
+                        'Automatic policy observation is unbounded')
+                tokens = [token.split('=', 1) for token in record.split(' ')]
+                require(all(len(token) == 2 for token in tokens), 'Malformed automatic controller token')
+                parsed = dict(tokens)
+                require(len(parsed) == len(tokens), 'Duplicate automatic controller fields')
+                parsed_policy.append(parsed)
+            policy = parsed_policy[0]
+            fixed = dict(schema='native-passage-policy-v1', extraCapNanos='360000000000', projectedAccruedSavingsNanos='0', seeded='false',
+                         activePassages='0', leasePassages='8', paybackScope='projected-not-measured')
+            require(set(policy) == set(fixed) | {'state', 'workers', 'reason', 'extraNanos', 'qualificationPairs', 'currentJobPairs'}
+                    and all(policy[key] == expected for key, expected in fixed.items())
+                    and policy['state'] in {'baseline', 'provisional'} and policy['workers'] in {'0', '4', '8'}
+                    and policy['qualificationPairs'] in {'0', '1'} and policy['currentJobPairs'] in {'0', '1'}
+                    and policy['reason'] in {'qualification-pending', 'alternate-pending', 'payback-unavailable', 'pair-regression',
+                         'screen-no-win', 'screen-budget', 'memory-pressure', 'memory-ineligible', 'runtime-rejected', 'probe-budget'}
+                    and re.fullmatch('[0-9]{1,19}', policy['extraNanos'])
+                    and 0 < int(policy['extraNanos']) <= 360000000000,
+                    'Automatic first-passage decision is incomplete, over budget, or improperly qualified')
+            if value['automaticPairObserved']:
+                pair = parsed_policy[1]
+                alternate_pending = policy['reason'] == 'alternate-pending'
+                fixed_pair = dict(schema='native-passage-pair-v1', index='0', ordinal='0', candidateFirst='false',
+                                  workers='8' if alternate_pending else policy['workers'], outputSha256=run['outputSha256'], finite='true', exact='true',
+                                  fullGeometry='true', coldSessions='true')
+                require(set(pair) == set(fixed_pair) | {'role', 'baselineNanos', 'candidateNanos', 'extraNanos'}
+                        and all(pair[key] == expected for key, expected in fixed_pair.items())
+                        and pair['role'] in ({'rejected'} if alternate_pending else {'qualification', 'recheck'})
+                        and (not alternate_pending or (policy['state'] == 'provisional' and policy['workers'] == '4'
+                            and int(pair['candidateNanos']) * 100 > int(pair['baselineNanos']) * 95))
+                        and pair['workers'] in {'4', '8'}
+                        and all(re.fullmatch('[0-9]{1,19}', pair[key]) and 0 < int(pair[key]) <= 3600000000000
+                                for key in ['baselineNanos', 'candidateNanos', 'extraNanos'])
+                        and min(int(pair['baselineNanos']), int(pair['candidateNanos'])) <= int(pair['extraNanos']) <= int(policy['extraNanos'])
+                        and policy['currentJobPairs'] == '1'
+                        and policy['qualificationPairs'] == ('1' if pair['role'] == 'qualification' else '0'),
+                        'Automatic raw pair does not bind complete exact cold-session useful work')
+            else:
+                require(policy['qualificationPairs'] == policy['currentJobPairs'] == '0',
+                        'Automatic decline cannot claim an unobserved pair')
+            encoded = 'passagePolicy=' + '|'.join(record.replace(' ', ',') for record in policy_records)
+            require(isinstance(records[0], str) and encoded in records[0].split(' '),
+                    'Durable automatic summary does not bind its complete evidence')
+            records = records[:43]
+        elif name in {'unknownWork', 'shortWork'}:
+            require(isinstance(records, list) and len(records) == 44 and
+                    isinstance(records[-1], str) and len(records[-1]) < 4096,
+                    'Unfunded work must retain exactly one bounded controller observation')
+            tokens = [token.split('=', 1) for token in records[-1].split(' ')]
+            require(all(len(token) == 2 for token in tokens), 'Malformed controller observation')
+            policy = dict(tokens)
+            fixed = dict(schema='native-passage-policy-v1', workers='0', extraNanos='0', projectedAccruedSavingsNanos='0',
+                         extraCapNanos='360000000000', qualificationPairs='0', currentJobPairs='0',
+                         seeded='false', activePassages='0', leasePassages='8', paybackScope='projected-not-measured')
+            require(set(policy) == set(fixed) | {'state', 'reason'} and len(policy) == len(tokens) and
+                    all(policy[key] == expected for key, expected in fixed.items()) and
+                    policy['state'] in {'baseline', 'provisional'} and
+                    policy['reason'] in {'unmeasured', 'short-job', 'unknown-work'},
+                    'Unknown or short work spent probe budget or accepted a legacy graph-only cache')
+            encoded = 'passagePolicy=' + records[-1].replace(' ', ',')
+            require(isinstance(records[0], str) and encoded in records[0].split(' '),
+                    'Durable controller summary does not bind its complete observation')
+            records = records[:-1]
+        profiles[name] = verify_scheduler_profile(records, run['inferenceCalls'], forced_workers)
         summary, graph_counts = profiles[name]
         temporal = [graph_counts['block-%02d-time' % block] for block in range(12)]
-        if name == 'reference':
-            require(temporal == [15] * 12 and run['inferenceCalls'] == 335,
+        frequency = [graph_counts['block-%02d-frequency' % block] for block in range(12)]
+        if name == 'automaticFirstPassage':
+            require(summary.get('schedulerCalibrationCount') in ({'2'} if value['automaticPairObserved'] else {'1', '2'})
+                    and re.fullmatch(r'[0-9]+(?:\.[0-9]+)?', summary.get('schedulerCalibrationWallMs', ''))
+                    and 0 < float(summary['schedulerCalibrationWallMs']) <= 360000,
+                    'Automatic extra inference must be separately measured and bounded')
+        else:
+            require(summary.get('schedulerCalibrationWallMs') == 'unavailable' and
+                    summary.get('schedulerCalibrationCount') == 'unavailable',
+                    'Unfunded or explicitly forced work must not run optional probes')
+        if name in {'reference', 'unknownWork', 'shortWork', 'automaticFirstPassage'}:
+            require(temporal == [15] * 12 and frequency == [11] * 12 and run['inferenceCalls'] == 335,
                     'The canonical reference must retain the original 335 native calls')
         elif name in {'forcedFour', 'recoveredEight'}:
             workers = 4 if name == 'forcedFour' else 8
-            require(temporal == [60] * 12 and run['inferenceCalls'] == 875 and
+            require(temporal == [60] * 12 and frequency == [82 if frequency_parallel else 11] * 12
+                    and run['inferenceCalls'] == (1727 if frequency_parallel else 875) and
                     summary.get('temporalConfig') == 'cpu-i1-j1-d0-sequential-w%d-b1' % workers,
                     'The forced parallel passage did not execute its complete reviewed geometry: ' + name)
     require(len(digests) == 1, 'Scheduler calibration or recovery changed full-passage output bytes')
-    expected_families = 2 if value['availableProcessors'] >= 4 else 1
-    require(profiles['calibrated'][0].get('schedulerCalibrationCount') == str(expected_families),
-            'Calibration probes did not cover every eligible graph family')
-    require(profiles['cached'][0].get('schedulerCalibrationWallMs') == 'unavailable' and
-            profiles['cached'][0].get('schedulerCalibrationCount') == 'unavailable' and
-            profiles['calibrated'][1] == profiles['cached'][1],
-            'A valid cache must reuse the same complete geometry without repeating probes')
     cancellations = value['duringNativeCancellation']
-    require(isinstance(cancellations, list) and len(cancellations) == 2,
-            'Both explicit cancellation and owner interruption must be exercised during concurrent native execution')
-    for observed, mode in zip(cancellations, ['runner-cancel', 'owner-interrupt']):
-        require(isinstance(observed, dict) and set(observed) == {
+    modes = ['runner-cancel', 'owner-interrupt'] + (['frequency-runner-cancel'] if frequency_parallel else [])
+    require(isinstance(cancellations, list) and len(cancellations) == len(modes),
+            'Explicit cancellation and owner interruption must cover every reviewed concurrent execution family')
+    for observed, mode in zip(cancellations, modes):
+        expected_fields = {
             'mode', 'observedNativeWorkers', 'allObservedWorkersRetired', 'ownerRetired',
-            'noOutputCommitted', 'gateHeldWhileNative', 'gateReleased', 'interruptionReported', 'ownerInterruptPreserved'},
+            'noOutputCommitted', 'gateHeldWhileNative', 'gateReleased', 'interruptionReported', 'ownerInterruptPreserved'}
+        if mode == 'frequency-runner-cancel':
+            expected_fields.add('observedGraph')
+        require(isinstance(observed, dict) and set(observed) == expected_fields,
             'Concurrent native cancellation observation is incomplete')
+        if mode == 'frequency-runner-cancel':
+            require(observed['observedGraph'] == 'block-00-frequency',
+                    'Frequency cancellation did not observe the first actual frequency graph inside JNI')
         require(observed['mode'] == mode and type(observed['observedNativeWorkers']) is int and
                 2 <= observed['observedNativeWorkers'] <= 8,
                 'Cancellation must follow observed concurrent native Run stacks')
@@ -374,6 +471,7 @@ def verify_scheduler_profile(records, calls, forced_workers=None):
                     'Scheduler graph coverage is malformed')
             graphs[graph] = int(count)
             if graph.endswith('-time'):
+                require(count in {'15', '60'}, 'Partial temporal band coverage')
                 bindings = fields.get('tensorBindCount')
                 require(bindings in ({'15'} if count == '15' else {'4', '8'}),
                         'Persistent temporal slots must not be counted as native Run calls')
@@ -387,18 +485,42 @@ def verify_scheduler_profile(records, calls, forced_workers=None):
                         require(fields.get(copy + 'ProcessCpuScope') == 'unavailable-overlapping-intervals' and
                                 fields.get(copy + 'ProcessCpuMs') == 'unavailable',
                                 'Nested copy process CPU must not duplicate the enclosing pipeline')
+            elif graph.endswith('-frequency'):
+                require(count in {'11', '82'}, 'Partial frequency frame coverage')
+                bindings = fields.get('tensorBindCount')
+                require(bindings in ({'11'} if count == '11' else {'5', '9'}),
+                        'Frequency slots must include all full batches and the five-frame tail binding')
+                if count == '82':
+                    if forced_workers is not None:
+                        require(bindings == str(forced_workers + 1), 'Forced frequency bindings lost a worker or tail')
+                    for copy in ['pack', 'scatter']:
+                        require(fields.get(copy + 'WallScope') == 'nested-in-inference-pipeline'
+                                and fields.get(copy + 'ProcessCpuScope') == 'unavailable-overlapping-intervals'
+                                and fields.get(copy + 'ProcessCpuMs') == 'unavailable',
+                                'Frequency copy process CPU must not duplicate the enclosing pipeline')
     require(sorted(stages) == PROFILE_EXPECTED_STAGES and sorted(graphs) == PROFILE_EXPECTED_GRAPHS,
             'Scheduler profile lost or duplicated a stage or graph')
     for graph, count in graphs.items():
-        expected = {15, 60} if graph.endswith('-time') else ({1} if graph == 'front' else {11})
+        expected = {15, 60} if graph.endswith('-time') else ({11, 82} if graph.endswith('-frequency') else ({1} if graph == 'front' else {11}))
         require(count in expected, 'Scheduler graph has partial band/frame coverage: ' + graph)
     require(type(calls) is int and calls == sum(graphs.values()) and summary.get('inferenceCount') == str(calls),
             'Scheduler summary must count actual native calls rather than coordinator intervals')
-    worker_calls = sum(count for graph, count in graphs.items() if graph.endswith('-time') and count == 60)
+    time_pipelines = sum(graph.endswith('-time') and count == 60 for graph, count in graphs.items())
+    frequency_pipelines = sum(graph.endswith('-frequency') and count == 82 for graph, count in graphs.items())
+    worker_calls = 60 * time_pipelines + 82 * frequency_pipelines
     require(summary.get('inferenceWorkerRunCount') == str(worker_calls),
-            'Concurrent native call coverage differs from temporal graph geometry')
-    require(inference_stage.get('samples') == str(335 - 14 * (worker_calls // 60)),
-            'Coordinator intervals must count one complete interval per temporal pipeline')
+            'Concurrent native call coverage differs from complete temporal/frequency graph geometry')
+    require(inference_stage.get('samples') == str(335 - 14 * time_pipelines - 10 * frequency_pipelines),
+            'Coordinator intervals must count one complete interval per temporal/frequency pipeline')
+    frequency_config = summary.get('frequencyConfig')
+    baseline_frequency = isinstance(frequency_config, str) and re.fullmatch('cpu-i[1-4]-j1-d0-sequential', frequency_config)
+    require(baseline_frequency or frequency_config in {'cpu-i1-j1-d0-sequential-w4-b16', 'cpu-i1-j1-d0-sequential-w8-b16'},
+            'Frequency configuration is absent or unreviewed')
+    if frequency_pipelines == 0:
+        require(baseline_frequency, 'Baseline frequency frames were relabelled as parallel')
+    if forced_workers is not None and frequency_pipelines:
+        require(frequency_config == 'cpu-i1-j1-d0-sequential-w%d-b16' % forced_workers,
+                'Forced frequency configuration differs from its complete frame geometry')
     work_scope = 'run-and-pipeline-coordination' if worker_calls else 'run-and-wave-coordination'
     require(summary.get('inferenceWorkScope') == work_scope and inference_stage.get('workScope') == work_scope and
             summary.get('instrumentedCpuScope') == 'nonoverlapping-calling-thread',

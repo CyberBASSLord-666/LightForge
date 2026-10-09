@@ -7,7 +7,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: restore-regression-${{ github.head_ref || github.ref_name }}
+  group: restore-regression-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   restore-regression:

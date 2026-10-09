@@ -48,7 +48,7 @@ class PackagingStreamingTest(unittest.TestCase):
   selected={prefix+'app/lightforge/'+p.relative_to(source).as_posix():p for p in source.rglob('*') if pack.distributable(p,source)}
   selected[prefix+'START_HERE.md']=b'# Test-only source archive\n'
   destination=self.file('result.zip',b'PREVIOUS SOURCE ARCHIVE')
-  expected_names={prefix+'app/lightforge/web/app.js',prefix+'app/lightforge/web/model.bin',prefix+'app/lightforge/signing/private.key',prefix+'START_HERE.md',prefix+'SHA256SUMS.txt'}
+  expected_names={prefix+'app/lightforge/web/app.js',prefix+'app/lightforge/web/model.bin',prefix+'START_HERE.md',prefix+'SHA256SUMS.txt'}
   tracemalloc.start()
   with mock.patch.object(Path,'read_bytes',side_effect=AssertionError('Production helper must stream source bytes')):
    staged=pack.stage_source_archive(destination,prefix,selected)
@@ -64,14 +64,37 @@ class PackagingStreamingTest(unittest.TestCase):
    for row in manifest:
     digest,relative=row.split('  ',1)
     self.assertEqual(digest,hashlib.sha256(archive.read(prefix+relative)).hexdigest())
-   self.assertEqual(archive.read(prefix+'app/lightforge/signing/private.key'),b'FAKE TEST KEY')
-   self.assertEqual(stat.S_IMODE(archive.getinfo(prefix+'app/lightforge/signing/private.key').external_attr>>16),0o600)
    self.assertEqual(stat.S_IMODE(archive.getinfo(prefix+'app/lightforge/web/app.js').external_attr>>16),0o644)
    self.assertTrue(all(archive.getinfo(n).date_time==(1980,1,1,0,0,0) for n in archive.namelist()))
   os.replace(temporary,destination)
   self.assertFalse(temporary.exists())
   with zipfile.ZipFile(destination) as archive:self.assertIsNone(archive.testzip())
   print(json.dumps({'streamedFixtureBytes':large.stat().st_size,'archiveBytes':staged['bytes'],'peakPythonHeapBytes':peak,'manifestEntries':len(manifest)}))
+ def test_source_archive_rejects_credentials_and_unsafe_names(self):
+  destination=self.file('result.zip',b'PREVIOUS')
+  for name in ['Test/signing/notes.txt','Test/key.jks','Test/.env.production',
+               'Test/config/.pypirc','Test/local.properties','Test/../outside',
+               'Test/a/../../outside','/Test/source','Test/a\\outside','Test/a//b',
+               'Test/file\nforged-manifest-row']:
+   with self.subTest(name=name), self.assertRaises(SystemExit):
+    pack.stage_source_archive(destination,'Test/',{name:b'FAKE TEST DATA'})
+   self.assertEqual(destination.read_bytes(),b'PREVIOUS')
+  for root in ['../Test/','/Test/','Test/../','Test']:
+   with self.subTest(root=root), self.assertRaises(SystemExit):
+    pack.stage_source_archive(destination,root,{root+'file':b'data'})
+ def test_source_archive_rejects_renamed_credential_and_symlink_payload(self):
+  destination=self.file('result.zip',b'PREVIOUS')
+  secret=self.file('private.jks',b'FAKE TEST KEY')
+  linked=self.root/'innocent.dat';linked.symlink_to(secret)
+  for payload in [secret,linked]:
+   with self.subTest(payload=payload), self.assertRaises(SystemExit):
+    pack.stage_source_archive(destination,'Test/',{'Test/innocent.dat':payload})
+  self.assertEqual(destination.read_bytes(),b'PREVIOUS')
+ def test_distributable_excludes_credentials_and_links(self):
+  for name in ['signing/notes.txt','keystore-password.txt','key.jks','local.properties','.pypirc']:
+   self.assertFalse(pack.distributable(self.file('source/'+name,b'FAKE'),self.root/'source'))
+  linked=self.root/'source/link.txt';linked.symlink_to(self.file('private.txt',b'FAKE'))
+  self.assertFalse(pack.distributable(linked,self.root/'source'))
  def test_changed_source_aborts_and_cleans_staging(self):
   source=self.file('source.dat',b'original');destination=self.file('result.zip',b'PREVIOUS')
   original=pack.sha_file
