@@ -154,7 +154,7 @@ public final class AnalysisService extends Service {
             @Override public WebResourceResponse shouldInterceptRequest(WebView view,WebResourceRequest request){
                 Uri uri=request.getUrl();
                 String nativePath=uri.getPath();
-                if("https".equals(uri.getScheme())&&"appassets.androidplatform.net".equals(uri.getHost())&&nativePath!=null&&nativePath.matches("/background/native/[a-f0-9-]{36}\\.bin")){
+                if(AppResources.trustedOrigin(uri)&&nativePath!=null&&nativePath.matches("/background/native/[a-f0-9-]{36}\\.bin")){
                     try{
                         if(ownedPassage==null||!ownsEngine(ownedJobId,ownedGeneration))throw new IOException("Native analysis stopped.");
                         String token=nativePath.substring("/background/native/".length(),nativePath.length()-4);
@@ -164,7 +164,7 @@ public final class AnalysisService extends Service {
                         return AppResources.response(data.status,data.reason,"application/octet-stream",data.body,data.length,data.contentRange);
                     }catch(Exception error){return AppResources.response(404,"Not Found","text/plain",new ByteArrayInputStream(new byte[0]),0,null);}
                 }
-                if("https".equals(uri.getScheme())&&"appassets.androidplatform.net".equals(uri.getHost())&&nativePath!=null&&nativePath.matches("/background/native-mdx/[a-f0-9-]{36}\\.bin")){
+                if(AppResources.trustedOrigin(uri)&&nativePath!=null&&nativePath.matches("/background/native-mdx/[a-f0-9-]{36}\\.bin")){
                     try{
                         if(ownedMdx==null||!ownsEngine(ownedJobId,ownedGeneration))throw new IOException("Native analysis stopped.");
                         String token=nativePath.substring("/background/native-mdx/".length(),nativePath.length()-4);

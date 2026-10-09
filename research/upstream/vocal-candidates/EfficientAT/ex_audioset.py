@@ -11,7 +11,7 @@ from contextlib import nullcontext
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.hub import download_url_to_file
-import pickle
+from helpers.safe_index import load_filename_index
 
 from datasets.audioset import get_test_set, get_full_training_set, get_ft_weighted_sampler
 from models.mn.model import get_model as get_mobilenet
@@ -115,7 +115,7 @@ def train(args):
         print("Download filename to teacher prediction index dictionary...")
         download_url_to_file(fname_to_index_url, args.fname_to_index)
     with open(args.fname_to_index, 'rb') as f:
-        fname_to_index = pickle.load(f)
+        fname_to_index = load_filename_index(f)
 
     name = None
     mAP, ROC, val_loss = float('NaN'), float('NaN'), float('NaN')

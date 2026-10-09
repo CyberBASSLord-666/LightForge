@@ -234,7 +234,9 @@ class CollectorTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory) / "private-workload-data"
             counters = Path(directory) / "private-workload-counters"
-            code = "import os,time,resource; print('PRIVATE_COMMAND_OUTPUT'); f=open(" + repr(str(target)) + ", 'wb'); f.write(b'x'*(8*1024*1024)); f.flush(); os.fsync(f.fileno()); open(" + repr(str(counters)) + ", 'w').write(str(resource.getrusage(resource.RUSAGE_SELF).ru_oublock)); end=time.monotonic()+0.25\nwhile time.monotonic()<end: sum(i*i for i in range(4000))\ntime.sleep(0.05)"
+            code = "import os,time,resource; print('PRIVATE_COMMAND_OUTPUT'); f=open(" + repr(str(target)) + ", 'wb'); f.write(b'x'*(8*1024*1024)); f.flush(); os.fsync(f.fileno()); open(" + repr(str(counters)) + ", 'w').write(str(resource.getrusage(resource.RUSAGE_SELF).ru_oublock)); end=time.process_time()+0.25\nwhile time.process_time()<end: sum(i*i for i in range(4000))\ntime.sleep(0.05)"
+            # Exercise a fixed amount of child CPU, not wall time that can be
+            # consumed by other concurrent verification jobs being scheduled.
             before = time.process_time()
             report = C.collect([sys.executable, "-c", code], timeout=5, interval=.01)
             parent_cpu = time.process_time() - before

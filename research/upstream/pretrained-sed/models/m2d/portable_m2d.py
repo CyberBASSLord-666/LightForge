@@ -3,6 +3,15 @@
 All you need is:
     pip install timm, einops, nnAudio
 """
+# Shared fail-closed loader; this file also supports direct script execution.
+import sys as _security_sys
+from pathlib import Path as _SecurityPath
+_security_sys.path.insert(0, str(_SecurityPath(__file__).resolve().parents[3]))
+from _lightforge_research_checkpoint_security import (
+    load_tensor_checkpoint as _safe_torch_load,
+    load_remote_tensor_checkpoint as _safe_hub_load,
+)
+
 
 import logging
 from functools import partial
@@ -187,7 +196,7 @@ def get_backbone(args, weight_file):
         return model, None
 
     # Load checkpoint.
-    checkpoint = torch.load(weight_file, map_location='cpu')
+    checkpoint = _safe_torch_load(weight_file, map_location='cpu')
     checkpoint = reformat_ckpt_keys(checkpoint)
     # Set normalization statistics for backward compatibility. The [-7.1, 4.2] is for 2022 models.
     if 'norm_stats' not in checkpoint:
@@ -390,8 +399,8 @@ class GTETextEncoder:
         import os
         os.environ["TOKENIZERS_PARALLELISM"] = "true"  # To suppress warnings.
 
-        self.tokenizer = AutoTokenizer.from_pretrained(clip_weight)
-        self.model = AutoModel.from_pretrained(clip_weight)
+        self.tokenizer = AutoTokenizer.from_pretrained(clip_weight, trust_remote_code=False)
+        self.model = AutoModel.from_pretrained(clip_weight, trust_remote_code=False, use_safetensors=True)
 
     def __call__(self, texts, truncate=True, max_length=512):
         def average_pool(last_hidden_states, attention_mask):

@@ -178,7 +178,7 @@ public final class MainActivity extends Activity {
             }
             @Override public boolean shouldOverrideUrlLoading(WebView view,WebResourceRequest request) {
                 Uri uri=request.getUrl();
-                if(ORIGIN.equals(uri.getScheme()+"://"+uri.getAuthority())) return false;
+                if(AppResources.trustedOrigin(uri)) return false;
                 if(request.isForMainFrame()) openExternal(uri.toString());
                 return true;
             }

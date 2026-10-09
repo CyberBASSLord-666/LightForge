@@ -1,8 +1,8 @@
 # /// script
 # requires-python = ">=3.10"
 # dependencies = [
-#     "torch>=2.0",
-#     "onnx",
+#     "torch>=2.13.0",
+#     "onnx>=1.22.0",
 #     "onnxscript",
 #     "beat-this @ https://github.com/CPJKU/beat_this/archive/main.zip",
 # ]
@@ -19,6 +19,15 @@ Usage:
     uv run scripts/ckpt2onnx.py final0   # FP32 model -> release asset
     uv run scripts/ckpt2onnx.py small1   # small model -> models/beat_this_small.onnx
 """
+# Shared fail-closed loader; this file also supports direct script execution.
+import sys as _security_sys
+from pathlib import Path as _SecurityPath
+_security_sys.path.insert(0, str(_SecurityPath(__file__).resolve().parents[1]))
+from _lightforge_research_checkpoint_security import (
+    load_tensor_checkpoint as _safe_torch_load,
+    load_remote_tensor_checkpoint as _safe_hub_load,
+)
+
 
 import sys
 import inspect
@@ -65,7 +74,7 @@ def convert(ckpt_path: Path) -> None:
     onnx_path = ckpt_path.with_suffix(".onnx")
 
     print(f"Loading checkpoint: {ckpt_path}")
-    checkpoint = torch.load(ckpt_path, map_location="cpu", weights_only=True)
+    checkpoint = _safe_torch_load(ckpt_path, map_location="cpu", weights_only=True)
 
     # Extract hyperparameters applicable to the model
     hparams = checkpoint["hyper_parameters"]

@@ -11,7 +11,7 @@ from contextlib import nullcontext
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.hub import download_url_to_file
-import pickle
+from helpers.safe_index import load_filename_index
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.callbacks import LearningRateMonitor
@@ -80,7 +80,7 @@ class PLModule(pl.LightningModule):
             print("Download filename to teacher prediction index dictionary...")
             download_url_to_file(fname_to_index_url, config.fname_to_index)
         with open(config.fname_to_index, 'rb') as f:
-            fname_to_index = pickle.load(f)
+            fname_to_index = load_filename_index(f)
         self.fname_to_index = fname_to_index
 
         self.distributed_mode = config.num_devices > 1

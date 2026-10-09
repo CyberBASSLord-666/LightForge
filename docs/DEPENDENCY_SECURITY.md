@@ -20,8 +20,9 @@ model equivalence or release readiness.
 ## Research environment warning
 
 `research/upstream/` preserves third-party research code, not a supported
-application installation environment. In particular, EfficientAT retains an old
-Torch/audio/vision stack and other unqualified dependencies. Do not install its
+application installation environment. EfficientAT now declares a coordinated
+security migration, while its full numerical and transitive/native qualification
+remains outstanding (see the 2026-10-09 section below). Do not install its
 requirements into the production conversion environment or load untrusted
 checkpoints or serialized datasets with it. Its full stack has not been security
 cleared or requalified on current Python.
@@ -38,8 +39,8 @@ as an atomic dependency update: it changes Torch to 2.13.0 while retaining
 family. [PyTorch's supported installation pairs](https://pytorch.org/get-started/previous-versions/)
 identify a different vision version for Torch 2.13. Modernizing this research
 stack needs coordinated library/API changes and model-output tests. The
-scikit-learn and Torch changes remain unresolved rather than falsely claiming
-that the isolated tqdm fix makes the environment safe.
+2026-10-09 migration addresses the scikit-learn and Torch declarations together;
+that is not full environment or numerical qualification.
 
 ## Performance branch integration
 
@@ -129,3 +130,73 @@ CC BY-NC 4.0; [modified GAME weights](https://github.com/openvpi/GAME/releases/t
 retain CC BY-NC-SA 4.0. Their MIT architecture
 or runtime code licenses do not replace weight licenses. Notices remain bundled;
 no commercial-use or relicensing clearance is implied by this audit.
+
+
+## Research dependency remediation on 2026-10-09
+
+The coordinated [EfficientAT migration](../research/upstream/vocal-candidates/EfficientAT/SECURITY_MIGRATION.md)
+updates Torch/audio/vision together to 2.13.0/2.11.0/0.28.0 and scikit-learn to
+1.5.2. Restricted loading now rejects old/prerelease Torch and never falls back
+to unsafe pickle. Frontend API modernization preserves the intended operation
+order but still needs real-model numerical comparison. None of these research
+packages is shipped in the APK. Production exporter pins and model bytes were
+not changed.
+
+A fresh direct-pin audit also identified eight distinct ONNX advisories in the
+attention-research parser pin 1.20.1 (15 records including duplicates), including
+external-data path/symlink access and malformed-model converter failures. That
+research requirement now uses 1.22.0, matching the declared patched version for
+[CVE-2026-44512](https://github.com/advisories/GHSA-hwpq-hmq9-wj77) and
+[CVE-2026-63632](https://github.com/advisories/GHSA-p893-rvq9-2xf9).
+ONNX Runtime stays at 1.25.1. Historical attention receipts and their hashes
+remain unchanged; the README distinguishes historical from current dependencies.
+Graph rewrites under the new parser require fresh output qualification.
+
+`pip-audit 2.10.1 --no-deps --disable-pip` reported zero known advisories for all
+11 remediated EfficientAT direct pins, all three remediated attention-research
+direct pins, and the nine existing production conversion/native-runtime direct
+pins. These are declared-package audits, not installed-environment audits. No
+Torch installation or full model pipeline was run. Transitive Python packages,
+native audio/runtime libraries, system WebView and unpinned research environment
+resolution remain outside this direct-pin result. Do not call the repository
+vulnerability-free or the production release qualified from these checks.
+
+A separate prospective resolution of the six non-Torch model requirements plus
+ONNX Runtime covered 34 packages, including their Python transitive dependencies,
+and returned no known advisories. Torch and rotary-embedding-torch were excluded
+from this resolver run; their direct pins were checked separately above. The
+CPU Torch wheel metadata and its complete transitive closure were not verified.
+This partial result cannot substitute for auditing the actual exporter environment.
+
+Four hand-computable metric/LabelEncoder fixtures passed with scikit-learn 1.5.2
+and NumPy 2.3.5 in an isolated test environment. The reproducible script is
+`research/upstream/vocal-candidates/EfficientAT/verify_metrics.py`. This verifies
+those APIs only; it is not the pinned research environment or a model comparison.
+
+
+## Application and verification boundary hardening (2026-10-09)
+
+- Navigation and private WebView resources now use one exact HTTPS authority
+  check. Alternative ports, userinfo and encoded/suffix authorities cannot read
+  intercepted project or native-result resources. This closes an inconsistent
+  boundary; no end-to-end external exploit was demonstrated.
+- Active loopback browser/capture servers validate Host, Origin and cross-site
+  request metadata before serving files, including user-provided audio. The
+  guard preserves normalized HTTP default-port behavior and is bound into the
+  verification source inventory. Loopback binding alone is not DNS-rebinding
+  protection.
+- Three verification workflow concurrency groups use full GitHub refs, so a
+  fork pull request named main cannot collide with protected-main verification
+  or unrelated same-name pull requests.
+- Native runtime and host-test dependency downloads enforce pinned byte limits
+  while reading, socket/time budgets, full digests and unique atomic temporary
+  files. Bad responses cannot grow unbounded before an eventual hash failure;
+  concurrent host-JAR downloads no longer share a temporary path.
+
+Fresh root (42 entries) and renderer (28 entries) npm lockfile audits returned
+zero known advisories. Adversarial request, download and workflow tests cover
+the new boundaries. Host Java compilation and regression checks are available;
+these are not a substitute for actual Android/browser execution, model parity
+or an authenticated production verification run. No historical evidence was
+rewritten, dependency/model pins outside the documented research migration were
+changed, or release acceptance threshold relaxed.

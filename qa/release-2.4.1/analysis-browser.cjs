@@ -45,7 +45,9 @@ function sourceNames(){
   const assetManifest=JSON.parse(fs.readFileSync(path.join(root,'web/analysis/ASSET_MANIFEST.json'),'utf8'));
   allowedAnalysisAssets=new Map(Object.entries(assetManifest).map(([name,metadata])=>['web/analysis/'+name,metadata]));
   receipt.source_hashes=Object.fromEntries(sourceNames().map(p=>[p,sha(path.join(root,p))]));
+  const {allowLocalRequest}=require('../locked-benchmark/local-http-security.cjs');
   server=http.createServer((req,res)=>{
+    if(!allowLocalRequest(req,res))return;
   const u=new URL(req.url,'http://local'),p=u.pathname==='/qa/falcon.wav'?fixture:path.resolve(root,'web','.'+(u.pathname==='/'?'/index.html':u.pathname));
   if((p!==fixture&&!p.startsWith(path.join(root,'web')+path.sep))||!fs.existsSync(p)||!fs.statSync(p).isFile()){res.writeHead(404).end();return;}
   const relative=p===fixture?null:path.relative(root,p).split(path.sep).join('/');

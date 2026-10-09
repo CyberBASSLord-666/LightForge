@@ -7,7 +7,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: repository-hygiene-${{ github.head_ref || github.ref_name }}
+  group: repository-hygiene-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   hygiene:

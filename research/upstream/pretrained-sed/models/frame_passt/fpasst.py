@@ -5,6 +5,15 @@ We tried to disentangle from the timm library version.
 Adapted from https://github.com/rwightman/pytorch-image-models/blob/master/timm/models/vision_transformer.py
 
 """
+# Shared fail-closed loader; this file also supports direct script execution.
+import sys as _security_sys
+from pathlib import Path as _SecurityPath
+_security_sys.path.insert(0, str(_SecurityPath(__file__).resolve().parents[3]))
+from _lightforge_research_checkpoint_security import (
+    load_tensor_checkpoint as _safe_torch_load,
+    load_remote_tensor_checkpoint as _safe_hub_load,
+)
+
 import collections
 import logging
 import math
@@ -532,7 +541,7 @@ class PaSST(nn.Module):
     def load_model(self, path, wandb_id):
         ckpt_path = os.path.join(path, wandb_id + ".ckpt")
 
-        pretrained_weights = torch.load(ckpt_path, map_location="cpu")["state_dict"]
+        pretrained_weights = _safe_torch_load(ckpt_path, map_location="cpu")["state_dict"]
         pretrained_weights = {k[10:]: v for k, v in pretrained_weights.items() if k[:10] == "net.model."}
         self.load_state_dict(pretrained_weights)
 
