@@ -236,7 +236,18 @@ installed toolchains, build outputs, credentials and personal audio stay out of
 Git. Pinned SDK/JDK archive downloads use bounded 1 MiB reads, verify the complete
 size and SHA-256, and publish atomically from unique temporary files. Interrupted
 or concurrent bootstraps cannot publish a partial archive; cached archives are
-rechecked before reuse. The canonical retained assets do not need historical transfer reconstruction.
+rechecked before reuse. Managed SDK/JDK installations carry a package identity
+receipt and are compared against the verified archive's full file inventory
+(bytes, modes and links) before reuse. Existing unmanaged, changed or differently
+pinned installations fail closed without replacement: choose a fresh
+`LIGHTFORGE_TOOLCHAIN_DIR` and rerun bootstrap. This also applies when upgrading
+from older bootstrap versions without installation receipts.
+
+The host build and independent publisher currently pin stable Temurin
+**17.0.21+9** ([official vendor release](https://github.com/adoptium/temurin17-binaries/releases/tag/jdk-17.0.21%2B9)).
+This refresh concerns the host JDK, not the Android runtime shipped in the APK;
+it does not establish per-CVE applicability or universal security remediation.
+The canonical retained assets do not need historical transfer reconstruction.
 
 ## Publication controls
 
