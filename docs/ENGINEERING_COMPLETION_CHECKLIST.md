@@ -1,10 +1,10 @@
 # Comprehensive engineering completion checklist
 
-Assessment refreshed: **2026-10-23**. Integration baseline: PR56 head
-`da5881ddcd2ecb39470ea1febd7fc1dc7cbe90c1`, followed by the current candidate's
-reliability, input-integrity, accessibility and verification-workflow changes.
-Final candidate verification is still in progress; this snapshot does not assign
-a completed aggregate test count or a final qualified source identity.
+Assessment refreshed: **2026-10-23, 18:16 UTC**. Reliability, input-integrity,
+accessibility and verification changes are published to draft PR56 at
+`d4315c8515311e01bbd4805ed355c1a4068aa38f`. The supplemental browser-workflow follow-up and this snapshot are
+pending publication. Frozen-source local aggregate and scoped native checks
+passed as detailed below; they are not a qualified release source identity.
 This ledger covers the complete requested product, not only the inference PR.
 **The project is not fully complete or qualified for a new production release.**
 Later changes and verification must update the applicable rows; this document is
@@ -26,36 +26,52 @@ still uses version 2.4.1 during development; a source version is not publication
 
 ## Current verification snapshot
 
-- Original pinned model preparation from upstream is now unblocked. The current
-  analysis-asset inventory passed `tools/verify_analysis_assets.py`; no released
-  APK was used to supply these model files. Asset integrity is not numerical or
-  end-to-end qualification.
-- The pinned host toolchain and native-test dependencies are available. Fresh
-  native comparisons and final aggregate checks are pending; historical results
-  and focused regression passes do not fill those gaps.
+- Frozen-source `npm test` passed: **779 Node tests**, **685 Python tests run
+  (681 passed, 4 skipped)**, five quality-tool suites and all **85 analysis
+  assets**. The aggregate's 926 source hashes matched the inspected candidate.
+  This is engine/worker/DOM/archive/tooling coverage, not rendered browser or
+  packaged Android qualification.
+- Original pinned model preparation from upstream succeeded; no released APK
+  supplied the model files. Fresh original-model Deux profile, scheduler,
+  cancellation and recovery checks passed with complete finite, byte-identical
+  outputs. All 27 source and 27 model bindings in the retained frozen profile
+  receipt matched. These Linux/JVM checks do not establish controlled speed,
+  whole-song, Android/ARM64 or thermal performance.
+- Fresh GAME native/WASM comparisons produced identical final transcription
+  and checkpoint-resume results for the public demo (98 notes) and Falcon
+  mixture (5 notes). MDX decoded-waveform and paired downstream gates passed;
+  **`spectral_diagnostic_passed` remains false** and is retained, not waived or
+  relabelled exact spectral parity. GAME, MDX and downstream source/model
+  bindings matched current bytes. Local records remain separate from sealed
+  CI release evidence.
 - Fresh advisory checks returned no known vulnerabilities for both npm
   lockfiles and the installed model-build Python environment. This does not
   cover every research tree, native library or Android system component, or
   establish numerical parity after research dependency changes.
-- The current cloud runner exposes nine allowed CPUs but does not expose
-  `/sys/fs/cgroup/cpu.max`. The new read-only eligibility preflight correctly
-  refuses inference timing qualification rather than inventing quota or
-  resource observations. [BUILD](../BUILD.md) now documents the supported
-  controlled-runner path and fresh pre-build evidence generation. A configured
-  runner may be selected only by a protected main push for release eligibility;
-  manual dispatch remains diagnostic. No eligible configured runner is verified
-  for this candidate, so setup and the qualifying main-push run remain pending.
-- Fresh browser execution remains blocked by the available environment:
-  Chromium startup encounters IPC restrictions, the permitted alternate
-  launcher cannot start, and the separate cloud browser cannot reach the
-  isolated loopback QA server. Focused DOM tests are not rendered browser
-  evidence. Current packaged Android qualification is also outstanding.
-- GitHub inspection found no open standalone issues and only draft
+- The local cloud exposes nine allowed CPUs but no `/sys/fs/cgroup/cpu.max`.
+  GitHub production [run 39999491816](https://github.com/CyberBASSLord-666/LightForge/actions/runs/39999491816)
+  now starts and fails the strict runner preflight with **Eight allowed CPUs
+  are required**. Billing no longer prevents this new-head job from starting.
+  No controlled speed proof exists. [BUILD](../BUILD.md) documents the supported
+  controlled-runner path and fresh pre-build evidence generation. Only a
+  protected main push can select the configured runner for release eligibility;
+  manual dispatch is diagnostic. No eligible configured runner is verified.
+- Local rendered browser execution remains blocked by that environment's
+  Chromium IPC/launcher restrictions and isolated loopback access. The supported
+  GitHub hosted-browser [restore run 39999491690](https://github.com/CyberBASSLord-666/LightForge/actions/runs/39999491690)
+  **passed the actual cold-restore WebGL regression** at exact published head
+  `d4315c8515311e01bbd4805ed355c1a4068aa38f`. Artifact/screenshot review is still
+  in progress. This is not full editor, background-progress, Highland-optics or
+  sealed production browser coverage. The pending supplemental workflow adds
+  those non-model application/background/Highland checks using the shared
+  Chromium install and retains generated PNG/JSON diagnostics. It does not run
+  the actual model browser pipeline or replace production/Android qualification.
+- Exact-head GitHub [hygiene](https://github.com/CyberBASSLord-666/LightForge/actions/runs/39999491814)
+  and [quality-gate tooling](https://github.com/CyberBASSLord-666/LightForge/actions/runs/39999491698)
+  checks passed. A tooling pass is not a locked-corpus quality result. GitHub
+  inspection found no open standalone issues and only draft
   [PR56](https://github.com/CyberBASSLord-666/LightForge/pull/56), with no submitted
-  reviews or inline review threads. Its latest recorded exact-head workflows
-  failed before production steps ran; the recorded failure reports an account
-  billing lock and Android was skipped. The account's present billing state is
-  not established by that historical attempt. No new release was published.
+  reviews or inline review threads. No new release was published.
 
 ## Verification publication scope
 
@@ -72,15 +88,15 @@ necessary for the applicable claims.
 
 | Area | Current state and evidence | Required completion / acceptance |
 | --- | --- | --- |
-| Inference quality preservation | Implemented original Deux weights, Float32, complete context/graphs and exact-output comparison. PR56 has retained host evidence, not current end-to-end qualification. | Regenerate complete source-bound original-model evidence for the final candidate; preserve all graphs, output, model settings and failed probes. |
+| Inference quality preservation | Fresh original-model Linux/JVM profile and scheduler/cancellation/recovery comparisons passed with finite, byte-identical complete outputs; source/model bindings matched. This is not end-to-end release qualification. | Preserve all graphs, precision, context, output and failed probes; rerun applicable source-bound checks after changes and complete browser/packaged Android qualification. |
 | Meaningful inference improvement | Historical PR56 four-worker host passage reduction is 43.6%; published 2.4.1 host result is 32.6%. Neither establishes complete-song or phone benefit. | Measure repeated full passages and complete analysis including calibration cost, fallback and cache state. Do not substitute isolated frontend timing for neural or whole-job improvement. |
-| Release-hold integrity | Version-independent source-bound hold remains enforced. The workflow now explicitly generates fresh inference timing evidence before packaging, purges prior current receipts and replays the existing verifier. Its read-only preflight rejects this runner's missing cgroup observations. Historical receipts remain unchanged. | Run on an eligible controlled host and retain passing exact-source evidence with unchanged numerical, resource and timing requirements. A runner label, version bump or successful preflight cannot bypass the hold. |
-| Original Deux qualification | Model preparation and complete manifest integrity checks are now unblocked using pinned upstream assets. Fresh final-candidate numerical and performance qualification is not established. | Complete original-model comparisons and the controlled timing prerequisite; preserve all original weights, graphs, precision and context. No reduced model or fabricated receipt. |
-| Native runtime checks | Production host, lifecycle and model-comparison harnesses and pinned dependencies are available. Fresh comparisons are in progress; newly generated records remain separate from historical release evidence. | Finish exact-source comparisons and preserve source/model/runtime bindings; scoped host checks do not replace packaged Android qualification. |
-| MDX numerical comparison | The existing protocol distinguishes mandatory decoded-waveform tolerances from separately recorded internal spectral diagnostics. | Run official inputs and downstream gates; preserve failed diagnostics and existing mandatory thresholds. |
+| Release-hold integrity | Version-independent source-bound hold remains enforced. The workflow now explicitly generates fresh inference timing evidence before packaging, purges prior current receipts and replays the existing verifier. Its read-only preflight rejects missing cgroup observations or insufficient allowed CPUs. Historical receipts remain unchanged. | Run on an eligible controlled host and retain passing exact-source evidence with unchanged numerical, resource and timing requirements. A runner label, version bump or successful preflight cannot bypass the hold. |
+| Original Deux qualification | Pinned upstream assets and all 85 manifest entries verified. Fresh original-model host numerical, observer, scheduler and cancellation/recovery checks passed. Controlled timing qualification remains absent. | Complete the controlled timing prerequisite and remaining platform/full-pipeline checks; preserve all original weights, graphs, precision and context. No reduced model or fabricated receipt. |
+| Native runtime checks | Fresh Deux checks and GAME native/WASM final-output/checkpoint comparisons passed. GAME produced 98 demo notes and 5 Falcon notes with identical final output; unrounded intermediate differences remain recorded. | Preserve source/model/runtime bindings; host comparisons do not establish packaged Android, corpus accuracy, physical-device performance or whole-job speedup. |
+| MDX numerical comparison | Mandatory decoded-waveform comparisons on three fixed inputs and the paired downstream gate passed with current source/model bindings. Internal spectral diagnostic remains false. | Preserve failed spectral diagnostics and existing mandatory thresholds; do not claim bit-identical MDX spectra, full-song accuracy or Android parity from these scoped passes. |
 | Foreground/background analysis | Foreground service, checkpointed stages, cancellation and saving are implemented. Current changes suspend completed-preview watchdog budgets while the Activity is hidden or unfocused and reject stale callbacks after resume. Historical emulator evidence does not qualify these changes. | Fresh packaged Android tests: screen-off/background completion, Activity recreation, process interruption, cancel/resume, low-memory paths and durable result save. |
-| Completed-project preview | Current source preserves saved arrangements when loading fails, fences superseded opens, and defers legacy Android draw-listener removal until after drawing. Current rendered first-frame verification remains blocked. | Restore completed and legacy projects; assert first rendered frame, transport/seek, repeated opening, cancellation and current compiled sequence agreement, including API 26-28 and focus loss/resume. |
-| Browser and UI execution | Current cloud Chromium/alternate-launcher restrictions and isolated QA-server access prevent fresh rendered coverage. Focused DOM tests cover narrower behavior only. | Use a supported reachable browser environment, then run current browser, background UI, restore and real-model integration harnesses. Do not label never-run stages passed or bypass environment restrictions. |
+| Completed-project preview | Current source preserves saved arrangements when loading fails, fences superseded opens, and defers legacy Android draw-listener removal until after drawing. The actual cold-restore WebGL CI regression passed at the published head; artifact review and broader browser/Android coverage remain outstanding. | Restore completed and legacy projects; assert first rendered frame, transport/seek, repeated opening, cancellation and current compiled sequence agreement, including API 26-28 and focus loss/resume. |
+| Browser and UI execution | The supported GitHub cold-restore WebGL regression passed; local browser restrictions are environment-specific. Artifact review is ongoing. Supplemental current-version application/background/Highland checks are not yet published and no broad visual pass is established. | Complete and inspect actual browser diagnostics; separately run the real-model browser pipeline under the production evidence contract. DOM or supplemental diagnostics cannot replace sealed release evidence. |
 | Physical phone | No fresh physical-phone observations were produced for this assessment. Earlier connector errors are historical, not a current connection diagnosis. | Use only supported, authorized connection routes when available. Physical testing is optional under the applicable version-scoped publication policy, but physical performance claims need observations. |
 | APK/update identity | Original-signing and exact-payload publication controls implemented. No new final APK is qualified by this ledger. | Deliberate new version, full exact-source verification, original certificate outside Git, update-compatible install identity, alignment and checksum verification. Never replace the key or uninstall to evade incompatibility. |
 | Release publication | Latest published release remains 2.4.1; the current candidate still uses 2.4.1/20401 for development. No new final APK or release is qualified. | Follow [BUILD](../BUILD.md); deliberately choose a new version, establish its applicable publication authority/policy, and verify expected remote commit, full CI, qualified signed APK and public release assets. Existing version-scoped exceptions do not automatically authorize a future version. Do not overwrite a released version. |
@@ -117,20 +133,22 @@ necessary for the applicable claims.
 | Diagnostics | Bounded local diagnostic export and durable job summaries implemented. | Recover after process failure; avoid personal audio, credentials and project payload leakage; disclose incomplete observations. |
 | Dependencies | Exact pins are retained. October 23 advisory checks found no known vulnerabilities in both npm lockfiles and the installed model-build Python environment. Earlier coordinated research changes remain documented in [dependency security](DEPENDENCY_SECURITY.md). | Research model-output parity and comprehensive research/native/system-component audits remain unverified. A clean advisory result for the checked environments is not universal security clearance. |
 | Artifact security | Archive credential/symlink rejection and repository hygiene strengthened. | Final packaging/provenance regression and rendered bundle binding must pass; keep signing secrets and personal files outside artifacts. |
-| Repository/PR integration | October 23 GitHub inspection found only draft PR56 open and no standalone open issues. Its last remote head is `da5881d`; the current local candidate adds further changes. No submitted PR reviews or inline review threads were present. PR43 is not an open integration task. | Review the actual final diff and source-bound evidence, verify any published head and its exact-head CI, and retain the draft/release hold until qualification. Preserve required history, model notices and failed evidence. |
+| Repository/PR integration | Only draft PR56 is open, with no standalone open issues or submitted PR reviews/inline threads. Published head `d4315c851` has passing hygiene/quality-tool CI and a strict production CPU-preflight failure; the actual cold-restore WebGL CI regression passed. PR43 is not an open integration task. | Publish and verify the reviewed supplemental workflow/documentation follow-up, inspect exact-head CI and retain the draft/release hold until qualification. Preserve required history, model notices and failed evidence. |
 
 ## Next safe engineering steps
 
-1. Complete final aggregate checks and preserve every blocked, failed and
-   never-run stage above. Record results against the final candidate rather
-   than freezing intermediate test counts.
-2. With original assets now available, finish original-model comparisons and
-   official MDX inputs/downstream checks; investigate retained spectral
-   diagnostic discrepancies without weakening mandatory thresholds.
-3. Run the fresh timing prerequisite on an eligible controlled host, then use
-   supported browser and packaged Android environments for their remaining
-   gates. Missing cgroup observations and denied browser operations remain
-   blockers, not permission to fabricate evidence or bypass restrictions.
+1. Publish the reviewed supplemental workflow follow-up, verify its exact head
+   and inspect all browser suite outcomes and retained screenshots. Preserve
+   failed and never-run stages; the cold-restore pass does not cover the remaining
+   editor/background/optics or actual-model browser suites.
+2. Keep the passed aggregate and scoped native comparisons bound to their exact
+   inputs. Investigate retained MDX spectral discrepancies without weakening
+   mandatory thresholds; rerun affected comparisons after source/model changes.
+3. Obtain fresh timing qualification on an eligible, already-authorized
+   controlled host; complete the actual-model browser and packaged Android
+   gates. Then establish the deliberate new version and original-signing
+   publication identity. Missing observations and denied operations are not
+   permission to fabricate evidence, replace keys or bypass restrictions.
 4. Keep bass decimation caching deferred: profiling found only about 9–12 ms
    of duplicate work before cache overhead, while immutable-reader identity is
    not yet a generic API guarantee. Preserve globally ranked articulation and

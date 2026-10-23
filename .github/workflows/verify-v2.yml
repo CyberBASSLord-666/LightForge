@@ -62,6 +62,14 @@ jobs:
             research/evaluation-1.6
             research/hardware-1.2.0
             research/upstream/deux
+      - name: Read current release version
+        run: |
+          python3 - <<'PYVERSION'
+          import json,os
+          version=json.load(open('version.json'))['name']
+          assert len(version.split('.'))==3 and all(p.isdigit() for p in version.split('.'))
+          with open(os.environ['GITHUB_ENV'],'a') as out:out.write('LIGHTFORGE_RELEASE='+version+'\n')
+          PYVERSION
       - name: Check controlled inference runner before expensive preparation
         run: |
           rm -f -- research/inference-current/production-parallel-qualification.json
@@ -75,14 +83,6 @@ jobs:
           path: ${{ runner.temp }}/lightforge-inference-preflight-${{ github.run_id }}-${{ github.run_attempt }}.json
           retention-days: 30
           if-no-files-found: warn
-      - name: Read current release version
-        run: |
-          python3 - <<'PYVERSION'
-          import json,os
-          version=json.load(open('version.json'))['name']
-          assert len(version.split('.'))==3 and all(p.isdigit() for p in version.split('.'))
-          with open(os.environ['GITHUB_ENV'],'a') as out:out.write('LIGHTFORGE_RELEASE='+version+'\n')
-          PYVERSION
       - name: Create per-run candidate evidence session
         id: candidate_session
         run: |
