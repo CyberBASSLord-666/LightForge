@@ -6,6 +6,7 @@ suites/components/architecture/signing key, selecting Canonical HTTPS transport
 instead of Azure mirror priority. No package-byte equivalence is asserted;
 the existing canonical decoded-fixture hashes remain mandatory.
 """
+from contextlib import contextmanager
 import hashlib
 import json
 import os
@@ -28,6 +29,7 @@ KEYRING = Path('/usr/share/keyrings/ubuntu-archive-keyring.gpg')
 KEYRING_SHA256 = '80a36b0a6de2f69f49d2df75ef473ccde121e9e190b9ea01d20a4f63778d5c31'
 KEYRING_BYTES = 3607
 MIRRORS = Path('/etc/apt/apt-mirrors.txt')
+PUBLIC_TEMP_ROOT = Path('/tmp')
 MIRROR_URI = 'mirror+file:/etc/apt/apt-mirrors.txt'
 ARCHIVE = 'https://archive.ubuntu.com/ubuntu/'
 SECURITY = 'https://security.ubuntu.com/ubuntu/'
@@ -51,7 +53,11 @@ VALIDATION_REASONS = frozenset({
     'Unsupported Ubuntu keyring file identity',
     'Temporary Ubuntu keyring identity changed',
     'Temporary Ubuntu signing key path is unsupported',
-    'Runner temporary directory is unavailable or indirect',
+    'System temporary root is not a real root-owned directory',
+    'System temporary root does not have sticky public permissions',
+    'System temporary root identity changed',
+    'Owned public temporary directory identity is unsupported',
+    'Owned public temporary directory identity changed',
     'Ubuntu source signing key or architecture differs',
     'Unrecognized Ubuntu archive URI',
     'Unrecognized runner mirror definition',
@@ -70,6 +76,55 @@ class DecoderValidationError(ValueError):
     pass
 
 
+EXTERNAL_STAGES = frozenset({
+    'existing-decoder-version', 'platform-query', 'architecture-query', 'foreign-architecture-query',
+    'file-observation', 'original-config-read', 'source-validation', 'public-workspace-create',
+    'public-workspace-directories', 'isolated-keyring-create', 'temporary-source-write',
+    'sandbox-source-readable', 'sandbox-keyring-readable', 'keyring-before-update', 'apt-update',
+    'keyring-before-install', 'apt-install', 'keyring-after-install', 'original-config-recheck',
+    'installed-decoder-version',
+})
+EXTERNAL_REASONS = frozenset({'os-error', 'subprocess-exit', 'subprocess-timeout',
+                              'subprocess-error', 'invalid-value', 'missing-input'})
+
+
+class DecoderStageError(RuntimeError):
+    def __init__(self, stage, reason, code=None):
+        self.stage, self.reason, self.code = stage, reason, code
+
+
+@contextmanager
+def external_stage(stage):
+    try:
+        yield
+    except DecoderValidationError:
+        raise
+    except (OSError, ValueError, KeyError, subprocess.SubprocessError) as error:
+        if isinstance(error, subprocess.TimeoutExpired):
+            reason, code = 'subprocess-timeout', None
+        elif isinstance(error, subprocess.CalledProcessError):
+            reason, code = 'subprocess-exit', error.returncode
+        elif isinstance(error, subprocess.SubprocessError):
+            reason, code = 'subprocess-error', None
+        elif isinstance(error, OSError):
+            reason, code = 'os-error', error.errno
+        else:
+            reason, code = ('missing-input' if isinstance(error, KeyError) else 'invalid-value'), None
+        raise DecoderStageError(stage, reason, code) from None
+
+
+def stage_failure_record(error):
+    stage = error.stage if type(error.stage) is str and error.stage in EXTERNAL_STAGES else 'unknown-stage'
+    reason = error.reason if type(error.reason) is str and error.reason in EXTERNAL_REASONS else 'unknown-reason'
+    record = {'scope': 'official-fixture-decoder-failure', 'stage': stage, 'reason': reason}
+    if type(error.code) is int:
+        if reason == 'os-error' and 0 <= error.code <= 4095:
+            record['errno'] = error.code
+        elif reason == 'subprocess-exit' and -255 <= error.code <= 255:
+            record['exitCode'] = error.code
+    return record
+
+
 def require(condition, message):
     if not condition:
         raise DecoderValidationError(message)
@@ -80,6 +135,58 @@ def read_public_file(path):
     require(stat.S_ISREG(info.st_mode) and info.st_uid == 0 and not info.st_mode & 0o022
             and 0 < info.st_size <= 1024 * 1024, 'Unsupported Ubuntu configuration file identity')
     return path.read_bytes()
+
+
+def public_directory_observation(info, role):
+    def bounded(value, maximum):
+        return value if type(value) is int and 0 <= value <= maximum else None
+    mode = bounded(info.st_mode, 0xffffffff)
+    record = {'scope': 'official-fixture-decoder-public-workspace',
+              'role': role if role in ('system-temp-root', 'owned-public-workspace') else 'unknown-role',
+              'type': 'directory' if mode is not None and stat.S_ISDIR(mode) else 'not-directory',
+              'uid': bounded(info.st_uid, 0xffffffff), 'gid': bounded(info.st_gid, 0xffffffff),
+              'mode': None if mode is None else stat.S_IMODE(mode)}
+    print(json.dumps(record, sort_keys=True), flush=True)
+
+
+def create_public_workspace():
+    """Only public APT metadata lives here; never alter a pre-existing parent."""
+    def identity(info):
+        return (info.st_dev, info.st_ino, info.st_mode, info.st_uid, info.st_gid)
+    root = PUBLIC_TEMP_ROOT.lstat()
+    public_directory_observation(root, 'system-temp-root')
+    require(stat.S_ISDIR(root.st_mode) and root.st_uid == 0,
+            'System temporary root is not a real root-owned directory')
+    require(stat.S_IMODE(root.st_mode) == 0o1777,
+            'System temporary root does not have sticky public permissions')
+    flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC
+    parent = os.open(PUBLIC_TEMP_ROOT, flags)
+    child = None
+    try:
+        require(identity(os.fstat(parent)) == identity(root), 'System temporary root identity changed')
+        work = Path(tempfile.mkdtemp(prefix='lightforge-ffmpeg-apt-', dir=PUBLIC_TEMP_ROOT))
+        require(work.parent == PUBLIC_TEMP_ROOT and re.fullmatch(r'lightforge-ffmpeg-apt-[A-Za-z0-9_-]{1,128}', work.name),
+                'Owned public temporary directory identity is unsupported')
+        require(identity(PUBLIC_TEMP_ROOT.lstat()) == identity(root), 'System temporary root identity changed')
+        child = os.open(work.name, flags, dir_fd=parent)
+        before = os.fstat(child)
+        require(stat.S_ISDIR(before.st_mode) and before.st_uid == os.getuid()
+                and stat.S_IMODE(before.st_mode) == 0o700
+                and identity(os.stat(work.name, dir_fd=parent, follow_symlinks=False)) == identity(before),
+                'Owned public temporary directory identity is unsupported')
+        # Only the freshly created, descriptor-verified child changes mode.
+        os.fchmod(child, 0o755)
+        after = os.fstat(child)
+        require(identity(after) == (before.st_dev, before.st_ino, stat.S_IFDIR | 0o755, before.st_uid, before.st_gid)
+                and identity(os.stat(work.name, dir_fd=parent, follow_symlinks=False)) == identity(after),
+                'Owned public temporary directory identity changed')
+        require(identity(PUBLIC_TEMP_ROOT.lstat()) == identity(root), 'System temporary root identity changed')
+        public_directory_observation(after, 'owned-public-workspace')
+        return work
+    finally:
+        if child is not None:
+            os.close(child)
+        os.close(parent)
 
 
 def read_authenticated_keyring(path, owner, *, copied=False):
@@ -133,6 +240,10 @@ def isolate_keyring(work, keyring, source):
         os.fchmod(stream.fileno(), 0o444)
     copied, snapshot = read_authenticated_keyring(destination, os.getuid(), copied=True)
     require(copied == keyring, 'Temporary Ubuntu keyring identity changed')
+    # Validation happened before this public-output sanitation. Comments are
+    # not APT fields and may contain local notes; never copy those into /tmp.
+    source = ('\n'.join(line for line in source.decode('utf-8').splitlines()
+                        if not line.startswith('#')) + '\n').encode('utf-8')
     rebound = re.sub(rb'(?m)^Signed-By:[^\n]+$',
                      lambda match: b'Signed-By: ' + str(destination).encode('ascii'), source)
     return destination, snapshot, rebound
@@ -266,30 +377,38 @@ def apt_command(work, action):
 def prepare():
     existing = shutil.which('ffmpeg')
     if existing:
-        subprocess.run([existing, '-version'], check=True, timeout=30)
+        with external_stage('existing-decoder-version'):
+            subprocess.run([existing, '-version'], check=True, timeout=30)
         return
-    distribution = platform.freedesktop_os_release()
-    architecture = subprocess.check_output(['dpkg', '--print-architecture'], text=True, timeout=10).strip()
-    foreign = subprocess.check_output(['dpkg', '--print-foreign-architectures'], text=True, timeout=10).strip()
+    with external_stage('platform-query'):
+        distribution = platform.freedesktop_os_release()
+    with external_stage('architecture-query'):
+        architecture = subprocess.check_output(['dpkg', '--print-architecture'], text=True, timeout=10).strip()
+    with external_stage('foreign-architecture-query'):
+        foreign = subprocess.check_output(['dpkg', '--print-foreign-architectures'], text=True, timeout=10).strip()
     require(not foreign, 'Unreviewed foreign package architecture')
-    print_configuration_file_identity()
-    raw, keyring, mirror_raw = read_configuration_files()
-    source, suites, components = canonical_source(raw, distribution, architecture, mirror_raw)
-    parent = Path(os.environ['RUNNER_TEMP'])
-    require(parent.is_absolute() and parent.is_dir() and parent.resolve() == parent,
-            'Runner temporary directory is unavailable or indirect')
-    work = Path(tempfile.mkdtemp(prefix='lightforge-ffmpeg-apt-', dir=parent))
-    # Public archive metadata only. The existing _apt sandbox must be able to
-    # traverse/read it; no sandbox disablement or root-download fallback.
-    work.chmod(0o755)
-    for name in ('sourceparts', 'lists', 'archives'):
-        (work / name).mkdir(mode=0o755)
-        (work / name).chmod(0o755)
-    isolated_keyring, keyring_snapshot, source = isolate_keyring(work, keyring, source)
-    (work / 'ubuntu.sources').write_bytes(source)
-    (work / 'ubuntu.sources').chmod(0o644)
-    subprocess.run(['sudo', '-u', '_apt', 'test', '-r', str(work / 'ubuntu.sources')], check=True, timeout=10)
-    subprocess.run(['sudo', '-u', '_apt', 'test', '-r', str(isolated_keyring)], check=True, timeout=10)
+    with external_stage('file-observation'):
+        print_configuration_file_identity()
+    with external_stage('original-config-read'):
+        raw, keyring, mirror_raw = read_configuration_files()
+    with external_stage('source-validation'):
+        source, suites, components = canonical_source(raw, distribution, architecture, mirror_raw)
+    with external_stage('public-workspace-create'):
+        work = create_public_workspace()
+    # Public Ubuntu metadata only. Never use or widen private runner parents.
+    with external_stage('public-workspace-directories'):
+        for name in ('sourceparts', 'lists', 'archives'):
+            (work / name).mkdir(mode=0o755)
+            (work / name).chmod(0o755)
+    with external_stage('isolated-keyring-create'):
+        isolated_keyring, keyring_snapshot, source = isolate_keyring(work, keyring, source)
+    with external_stage('temporary-source-write'):
+        (work / 'ubuntu.sources').write_bytes(source)
+        (work / 'ubuntu.sources').chmod(0o644)
+    with external_stage('sandbox-source-readable'):
+        subprocess.run(['sudo', '-u', '_apt', 'test', '-r', str(work / 'ubuntu.sources')], check=True, timeout=10)
+    with external_stage('sandbox-keyring-readable'):
+        subprocess.run(['sudo', '-u', '_apt', 'test', '-r', str(isolated_keyring)], check=True, timeout=10)
     print(json.dumps(dict(scope='official-fixture-decoder-setup-only', distribution='ubuntu-24.04',
         architecture=architecture, suites=suites, components=components,
         originalSourceSha256=hashlib.sha256(raw).hexdigest(),
@@ -298,18 +417,25 @@ def prepare():
     # These overrides affect only these two calls. No /etc, trust, TLS, proxy or
     # network settings are written. No privileged recursive cleanup is used:
     # the disposable runner removes its temporary metadata/cache at teardown.
-    verify_isolated_keyring(isolated_keyring, keyring_snapshot)
-    subprocess.run(apt_command(work, ['update', '-qq']), check=True, timeout=180)
-    verify_isolated_keyring(isolated_keyring, keyring_snapshot)
-    subprocess.run(apt_command(work, ['install', '-y', '--no-install-recommends', 'ffmpeg']),
-                   check=True, timeout=600)
-    verify_isolated_keyring(isolated_keyring, keyring_snapshot)
-    require(read_public_file(SOURCE) == raw and read_authenticated_keyring(KEYRING, 0)[0] == keyring
-            and (mirror_raw is None or read_public_file(MIRRORS) == mirror_raw),
-            'Original Ubuntu source or signing key changed during setup')
+    with external_stage('keyring-before-update'):
+        verify_isolated_keyring(isolated_keyring, keyring_snapshot)
+    with external_stage('apt-update'):
+        subprocess.run(apt_command(work, ['update', '-qq']), check=True, timeout=180)
+    with external_stage('keyring-before-install'):
+        verify_isolated_keyring(isolated_keyring, keyring_snapshot)
+    with external_stage('apt-install'):
+        subprocess.run(apt_command(work, ['install', '-y', '--no-install-recommends', 'ffmpeg']),
+                       check=True, timeout=600)
+    with external_stage('keyring-after-install'):
+        verify_isolated_keyring(isolated_keyring, keyring_snapshot)
+    with external_stage('original-config-recheck'):
+        require(read_public_file(SOURCE) == raw and read_authenticated_keyring(KEYRING, 0)[0] == keyring
+                and (mirror_raw is None or read_public_file(MIRRORS) == mirror_raw),
+                'Original Ubuntu source or signing key changed during setup')
     decoder = shutil.which('ffmpeg')
     require(decoder is not None, 'Official decoder installation did not provide ffmpeg')
-    subprocess.run([decoder, '-version'], check=True, timeout=30)
+    with external_stage('installed-decoder-version'):
+        subprocess.run([decoder, '-version'], check=True, timeout=30)
 
 
 def main(arguments=()):
@@ -317,12 +443,17 @@ def main(arguments=()):
         if arguments:
             if list(arguments) not in (['--diagnose-files'], ['--check-files']):
                 raise SystemExit('Unsupported fixture decoder command')
-            print_configuration_file_identity()
+            with external_stage('file-observation'):
+                print_configuration_file_identity()
             if list(arguments) == ['--check-files'] and not shutil.which('ffmpeg'):
-                _, keyring, _ = read_configuration_files()
+                with external_stage('original-config-read'):
+                    _, keyring, _ = read_configuration_files()
                 print('Authenticated original Ubuntu keyring SHA-256: ' + hashlib.sha256(keyring).hexdigest(), file=sys.stderr)
             return
         prepare()
+    except DecoderStageError as error:
+        raise SystemExit('Official fixture decoder preparation failed closed: ' +
+                         json.dumps(stage_failure_record(error), sort_keys=True)) from None
     except DecoderValidationError as error:
         observed_reason = str(error)
         reason = observed_reason if observed_reason in VALIDATION_REASONS else 'Unrecognized validation failure'

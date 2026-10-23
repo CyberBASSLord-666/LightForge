@@ -226,11 +226,19 @@ class FixtureDecoderTests(unittest.TestCase):
             authenticated.assert_called_once_with(D.KEYRING, 0)
             self.assertEqual(result, (raw, b'keyring', MIRRORS if len(expected) == 2 else None))
 
-    def exercise(self, failure=None, foreign='', drift=False, copy_drift=None):
+    def exercise(self, failure=None, foreign='', drift=False, copy_drift=None, private_comment=False, comment_separator=None):
         temporary = tempfile.TemporaryDirectory(prefix='decoder-fixture-')
         self.addCleanup(temporary.cleanup)
         root = Path(temporary.name)
+        source_fixture = (b'# PRIVATE_COMMENT_SENTINEL\n' if private_comment else b'') + SOURCE
+        if comment_separator is not None:
+            source_fixture = source_fixture.replace(b'Types: deb\n', b'Types: deb' + comment_separator + b'# PRIVATE_COMMENT_SENTINEL\n')
         calls, metadata = [], io.StringIO()
+        def workspace():
+            # Owned unit fixture only; real fixed-root validation has its own tests.
+            result = Path(tempfile.mkdtemp(prefix='lightforge-ffmpeg-apt-', dir=root))
+            result.chmod(0o755)
+            return result
         reads = {D.SOURCE: 0, D.MIRRORS: 0}
         authentic_reader = D.read_authenticated_keyring
         def read_keyring(path, owner, **options):
@@ -238,7 +246,7 @@ class FixtureDecoderTests(unittest.TestCase):
         def read(path):
             reads[path] += 1
             if path == D.SOURCE:
-                return SOURCE if not drift or reads[path] == 1 else SOURCE + b'# changed\n'
+                return source_fixture if not drift or reads[path] == 1 else source_fixture + b'# changed\n'
             return MIRRORS
         def run(command, **options):
             calls.append((command, options))
@@ -274,13 +282,14 @@ class FixtureDecoderTests(unittest.TestCase):
              mock.patch.object(D, 'read_public_file', side_effect=read), \
              mock.patch.object(D, 'read_authenticated_keyring', side_effect=read_keyring), \
              mock.patch.object(D, 'KEYRING_SHA256', hashlib.sha256(SYNTHETIC_KEYRING).hexdigest()), \
+             mock.patch.object(D, 'create_public_workspace', side_effect=workspace), \
              mock.patch.object(D.subprocess, 'run', side_effect=run), \
              mock.patch.dict(os.environ, {'RUNNER_TEMP': str(root)}), contextlib.redirect_stdout(metadata):
             error = None
             previous_umask = os.umask(0o077)
             try:
                 D.prepare()
-            except (ValueError, subprocess.SubprocessError) as caught:
+            except (ValueError, subprocess.SubprocessError, D.DecoderStageError) as caught:
                 error = caught
             finally:
                 os.umask(previous_umask)
@@ -330,6 +339,9 @@ class FixtureDecoderTests(unittest.TestCase):
                 calls, _, error = self.exercise(failure=failure)
                 self.assertIsNotNone(error)
                 self.assertEqual(len(calls), count)
+                expected = {'sandbox': 'sandbox-source-readable', 'sandbox-keyring': 'sandbox-keyring-readable',
+                            'update': 'apt-update', 'install': 'apt-install', 'version': 'installed-decoder-version'}
+                self.assertEqual(error.stage, expected[failure.removesuffix('-timeout')])
 
     def test_foreign_architecture_holds_before_apt_or_workspace_creation(self):
         calls, output, error = self.exercise(foreign='i386\n')
@@ -348,6 +360,34 @@ class FixtureDecoderTests(unittest.TestCase):
                 calls, _, error = self.exercise(copy_drift=phase)
                 self.assertIsInstance(error, D.DecoderValidationError)
                 self.assertEqual(len(calls), count)
+
+    def test_private_comments_are_not_publicly_staged_or_logged_but_original_hash_is_bound(self):
+        calls, output, error = self.exercise(private_comment=True)
+        self.assertIsNone(error)
+        source = Path(calls[0][0][-1]).read_bytes()
+        self.assertNotIn(b'PRIVATE_COMMENT_SENTINEL', source)
+        self.assertFalse(any(line.startswith(b'#') for line in source.splitlines()))
+        self.assertNotIn('PRIVATE_COMMENT_SENTINEL', output)
+        record = json.loads(output.splitlines()[-1])
+        self.assertEqual(record['originalSourceSha256'], hashlib.sha256(b'# PRIVATE_COMMENT_SENTINEL\n' + SOURCE).hexdigest())
+
+    def test_all_validator_logical_line_separators_remove_private_comments(self):
+        for separator in (b'\x0b', b'\x0c', b'\x1c', b'\x1d', b'\x1e', b'\xc2\x85', b'\xe2\x80\xa8', b'\xe2\x80\xa9'):
+            with self.subTest(separator=separator.hex()):
+                calls, output, error = self.exercise(comment_separator=separator)
+                self.assertIsNone(error)
+                source = Path(calls[0][0][-1]).read_bytes()
+                self.assertNotIn(b'PRIVATE_COMMENT_SENTINEL', source)
+                self.assertNotIn(separator, source)
+                self.assertNotIn('PRIVATE_COMMENT_SENTINEL', output)
+                original = SOURCE.replace(b'Types: deb\n', b'Types: deb' + separator + b'# PRIVATE_COMMENT_SENTINEL\n')
+                record = json.loads(output.splitlines()[-1])
+                self.assertEqual(record['originalSourceSha256'], hashlib.sha256(original).hexdigest())
+                expected, _, _ = D.canonical_source(SOURCE, OS, 'amd64', MIRRORS)
+                observed = source.decode().splitlines()
+                expected_lines = [line for line in expected.decode().splitlines() if not line.startswith('#')]
+                self.assertEqual([line for line in observed if not line.startswith('Signed-By:')],
+                                 [line for line in expected_lines if not line.startswith('Signed-By:')])
 
     def test_owned_validation_reasons_are_diagnosable_and_allowlist_is_complete(self):
         tree = ast.parse((ROOT / 'tools/prepare_fixture_decoder.py').read_text())
@@ -476,7 +516,8 @@ class AuthenticatedKeyringTests(unittest.TestCase):
         self.assertEqual(copied.read_bytes(), original)
         self.assertEqual(stat.S_IMODE(copied.stat().st_mode), 0o444)
         self.assertEqual(stat.S_IMODE(self.key.stat().st_mode), 0o777)
-        self.assertEqual(rebound.replace(str(copied).encode(), str(D.KEYRING).encode()), source)
+        self.assertEqual(rebound.replace(str(copied).encode(), str(D.KEYRING).encode()).splitlines(),
+                         [line for line in source.splitlines() if not line.startswith(b'#')])
         self.assertEqual(rebound.count(b'Signed-By: ' + str(copied).encode()), 2)
         D.verify_isolated_keyring(copied, snapshot)
         for mode in (0o644, 0o777):
@@ -565,6 +606,134 @@ class AuthenticatedKeyringTests(unittest.TestCase):
             self.assertTrue(call.args[1] & os.O_NOFOLLOW)
         self.assertTrue(opened.call_args_list[-1].args[1] & os.O_NONBLOCK)
         self.assertTrue(all(0 < call.args[1] <= 3608 for call in reads.call_args_list))
+
+
+class PublicWorkspaceTests(unittest.TestCase):
+    def root_info(self, **changes):
+        return SimpleNamespace(**(dict(st_dev=1, st_ino=2, st_mode=stat.S_IFDIR | 0o1777,
+                                       st_uid=0, st_gid=0, st_mtime_ns=1, st_ctime_ns=1) | changes))
+
+    def child_info(self, **changes):
+        return SimpleNamespace(**(dict(st_dev=1, st_ino=3, st_mode=stat.S_IFDIR | 0o700,
+                                       st_uid=os.getuid(), st_gid=os.getgid()) | changes))
+
+    def exercise(self, root_changes=None, child_changes=None, replace_root=False, replace_child=False):
+        root = self.root_info(**(root_changes or {}))
+        child = self.child_info(**(child_changes or {}))
+        after = self.child_info(st_mode=stat.S_IFDIR | 0o755)
+        root_after = self.root_info(st_ino=4) if replace_root else root
+        child_after = self.child_info(st_mode=stat.S_IFDIR | 0o755, st_ino=4) if replace_child else after
+        output = io.StringIO()
+        with mock.patch.object(Path, 'lstat', side_effect=[root, root_after, root_after]), \
+             mock.patch.object(D.os, 'open', side_effect=[11, 12]) as opened, \
+             mock.patch.object(D.os, 'fstat', side_effect=[root, child, after]), \
+             mock.patch.object(D.os, 'stat', side_effect=[child, child_after]), \
+             mock.patch.object(D.os, 'fchmod') as modes, mock.patch.object(D.os, 'close'), \
+             mock.patch.object(D.tempfile, 'mkdtemp', return_value='/tmp/lightforge-ffmpeg-apt-fixture') as temporary, \
+             mock.patch.object(Path, 'chmod') as parent_chmod, \
+             mock.patch.dict(os.environ, {'RUNNER_TEMP': '/PRIVATE_RUNNER_SENTINEL', 'TMPDIR': '/PRIVATE_TMPDIR_SENTINEL'}), \
+             contextlib.redirect_stdout(output):
+            result, error = None, None
+            try:
+                result = D.create_public_workspace()
+            except (D.DecoderValidationError, OSError) as caught:
+                error = caught
+        parent_chmod.assert_not_called()
+        self.assertNotIn('PRIVATE_', output.getvalue())
+        return result, error, opened, modes, temporary, output.getvalue()
+
+    def test_only_fixed_verified_public_root_and_new_owned_child_are_used(self):
+        result, error, opened, modes, temporary, output = self.exercise()
+        self.assertIsNone(error)
+        self.assertEqual(D.PUBLIC_TEMP_ROOT, Path('/tmp'))
+        self.assertEqual(result, Path('/tmp/lightforge-ffmpeg-apt-fixture'))
+        temporary.assert_called_once_with(prefix='lightforge-ffmpeg-apt-', dir=Path('/tmp'))
+        modes.assert_called_once_with(12, 0o755)
+        self.assertEqual(opened.call_args_list[0].args[0], Path('/tmp'))
+        self.assertEqual(opened.call_args_list[1].kwargs, {'dir_fd': 11})
+        self.assertTrue(all(call.args[1] & os.O_NOFOLLOW for call in opened.call_args_list))
+        records = list(map(json.loads, output.splitlines()))
+        self.assertEqual([row['role'] for row in records], ['system-temp-root', 'owned-public-workspace'])
+        self.assertEqual([row['mode'] for row in records], [0o1777, 0o755])
+        self.assertNotIn('/tmp', output)
+
+    def test_nonpublic_unowned_link_or_non_directory_root_fails_before_creation(self):
+        for changes in ({'st_uid': 1001}, {'st_mode': stat.S_IFREG | 0o1777},
+                        {'st_mode': stat.S_IFLNK | 0o777}, {'st_mode': stat.S_IFDIR | 0o777},
+                        {'st_mode': stat.S_IFDIR | 0o1770}, {'st_mode': stat.S_IFDIR | 0o3777}):
+            with self.subTest(changes=changes):
+                _, error, opened, modes, temporary, _ = self.exercise(root_changes=changes)
+                self.assertIsInstance(error, D.DecoderValidationError)
+                temporary.assert_not_called()
+                opened.assert_not_called()
+                modes.assert_not_called()
+
+    def test_unowned_preexisting_or_non_directory_child_is_never_chmodded(self):
+        for changes in ({'st_uid': os.getuid() + 1}, {'st_mode': stat.S_IFDIR | 0o755},
+                        {'st_mode': stat.S_IFDIR | 0o777}, {'st_mode': stat.S_IFREG | 0o700},
+                        {'st_mode': stat.S_IFLNK | 0o700}):
+            with self.subTest(changes=changes):
+                _, error, _, modes, _, _ = self.exercise(child_changes=changes)
+                self.assertIsInstance(error, D.DecoderValidationError)
+                modes.assert_not_called()
+
+    def test_parent_or_child_replacement_fails_closed(self):
+        _, error, _, modes, _, _ = self.exercise(replace_root=True)
+        self.assertRegex(str(error), 'root identity changed')
+        modes.assert_not_called()
+        _, error, _, modes, _, _ = self.exercise(replace_child=True)
+        self.assertRegex(str(error), 'directory identity changed')
+        modes.assert_called_once_with(12, 0o755)
+
+    def test_metadata_does_not_reflect_hostile_labels_or_noninteger_fields(self):
+        secret = 'SECRET_WORKSPACE_SENTINEL'
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            D.public_directory_observation(SimpleNamespace(st_mode=secret, st_uid=secret, st_gid=secret), secret)
+        self.assertNotIn(secret, output.getvalue())
+        self.assertEqual(json.loads(output.getvalue()), {'scope': 'official-fixture-decoder-public-workspace',
+            'role': 'unknown-role', 'type': 'not-directory', 'uid': None, 'gid': None, 'mode': None})
+
+
+class DecoderStageDiagnosticsTests(unittest.TestCase):
+    def test_every_declared_stage_is_used_and_allowlist_is_complete(self):
+        tree = ast.parse((ROOT / 'tools/prepare_fixture_decoder.py').read_text())
+        stages = {node.args[0].value for node in ast.walk(tree)
+                  if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+                  and node.func.id == 'external_stage'}
+        self.assertEqual(stages, D.EXTERNAL_STAGES)
+
+    def test_external_failure_stage_is_safe_and_specific_even_in_traceback(self):
+        secret = '/SECRET_STAGE_ENV_ARGV_URL_SENTINEL'
+        failures = [(OSError(13, secret, secret), 'os-error', {'errno': 13}),
+                    (subprocess.CalledProcessError(1, [secret], output=secret, stderr=secret), 'subprocess-exit', {'exitCode': 1}),
+                    (subprocess.TimeoutExpired(secret, 600, output=secret), 'subprocess-timeout', {}),
+                    (subprocess.SubprocessError(secret), 'subprocess-error', {}),
+                    (ValueError(secret), 'invalid-value', {}), (KeyError(secret), 'missing-input', {})]
+        for stage in sorted(D.EXTERNAL_STAGES):
+            for external, reason, numeric in failures:
+                def prepare():
+                    with D.external_stage(stage):
+                        raise external
+                with self.subTest(stage=stage, reason=reason), mock.patch.object(D, 'prepare', side_effect=prepare), \
+                     self.assertRaises(SystemExit) as caught:
+                    D.main()
+                report = str(caught.exception)
+                self.assertNotIn(secret, ''.join(traceback.format_exception(caught.exception)))
+                record = json.loads(report.split(': ', 1)[1])
+                self.assertEqual(record, {'scope': 'official-fixture-decoder-failure', 'stage': stage,
+                                          'reason': reason, **numeric})
+
+    def test_unknown_labels_and_out_of_range_codes_are_never_reflected(self):
+        secret = 'SECRET_STAGE_SENTINEL'
+        for code in (secret, 999999999999, 1.5, True, -99999):
+            with self.subTest(code=type(code).__name__):
+                record = D.stage_failure_record(D.DecoderStageError(secret, secret, code))
+                self.assertEqual(record, {'scope': 'official-fixture-decoder-failure',
+                                          'stage': 'unknown-stage', 'reason': 'unknown-reason'})
+                for reason in ('os-error', 'subprocess-exit'):
+                    value = D.stage_failure_record(D.DecoderStageError('apt-update', reason, code))
+                    self.assertEqual(set(value), {'scope', 'stage', 'reason'})
 
 
 if __name__ == '__main__':
