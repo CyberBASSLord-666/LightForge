@@ -171,6 +171,13 @@ class ModelBrowserWorkflowTest(unittest.TestCase):
         decoder = step('Ensure official fixture decoder is available')
         self.assertIn('timeout-minutes: 15', decoder)
         self.assertIn('run: python3 tools/prepare_fixture_decoder.py', decoder)
+        self.assertEqual(WORKFLOW.count('run: python3 tools/prepare_fixture_decoder.py\n'), 1)
+        self.assertLess(WORKFLOW.index('Check official decoder file identities before model setup'),
+                        WORKFLOW.index('Ensure official fixture decoder is available'))
+        self.assertLess(WORKFLOW.index('Ensure official fixture decoder is available'),
+                        WORKFLOW.index('Reproduce unchanged original model assets'))
+        self.assertLess(WORKFLOW.index('Reproduce unchanged original model assets'),
+                        WORKFLOW.index('Reproduce original licensed public reference fixture'))
         self.assertTrue(triggers_for('tools/prepare_fixture_decoder.py'))
         self.assertTrue(triggers_for('tests/test_fixture_decoder.py'))
         fixture = step('Reproduce original licensed public reference fixture')

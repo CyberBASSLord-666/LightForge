@@ -36,6 +36,7 @@ Suites: noble-security
 Components: main universe restricted multiverse
 Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
 ''').encode()
+SYNTHETIC_KEYRING = b'K' * 3607
 
 
 class FixtureDecoderTests(unittest.TestCase):
@@ -89,7 +90,7 @@ class FixtureDecoderTests(unittest.TestCase):
             with self.subTest(mirrors=mirrors), self.assertRaises(ValueError):
                 D.canonical_source(SOURCE, OS, 'amd64', mirrors)
 
-    def test_source_and_keyring_identity_rejects_links_mutability_or_unbounded_data(self):
+    def test_source_and_mirror_identity_rejects_links_mutability_or_unbounded_data(self):
         trusted = dict(st_mode=stat.S_IFREG | 0o644, st_uid=0, st_size=10)
         cases = [trusted | {'st_uid': 123}, trusted | {'st_mode': stat.S_IFLNK | 0o777},
                  trusted | {'st_mode': stat.S_IFREG | 0o666}, trusted | {'st_size': 0},
@@ -196,7 +197,7 @@ class FixtureDecoderTests(unittest.TestCase):
             temporary.assert_not_called()
 
     def test_early_probe_rejects_each_required_writable_file_with_exact_role(self):
-        for role, rejected in (('source', D.SOURCE), ('keyring', D.KEYRING), ('mirrors', D.MIRRORS)):
+        for role, rejected in (('source', D.SOURCE), ('mirrors', D.MIRRORS)):
             def observed(path):
                 return SimpleNamespace(st_mode=stat.S_IFREG | (0o777 if path == rejected else 0o644),
                                        st_uid=0, st_size=3607)
@@ -205,6 +206,7 @@ class FixtureDecoderTests(unittest.TestCase):
             output = io.StringIO()
             with self.subTest(role=role), mock.patch.object(D.shutil, 'which', return_value=None), \
                  mock.patch.object(Path, 'lstat', observed), mock.patch.object(Path, 'read_bytes', contents), \
+                 mock.patch.object(D, 'read_authenticated_keyring', return_value=(SYNTHETIC_KEYRING, ())), \
                  mock.patch.object(D.subprocess, 'run') as run, \
                  contextlib.redirect_stdout(output), self.assertRaisesRegex(SystemExit, 'configuration file identity'):
                 D.main(['--check-files'])
@@ -214,47 +216,64 @@ class FixtureDecoderTests(unittest.TestCase):
             run.assert_not_called()
 
     def test_shared_reader_preserves_conditional_mirror_requirement(self):
-        for raw, expected in [(SOURCE, [D.SOURCE, D.KEYRING, D.MIRRORS]),
-                              (SOURCE.replace(D.MIRROR_URI.encode(), D.ARCHIVE.encode()), [D.SOURCE, D.KEYRING])]:
-            with self.subTest(mirrors=len(expected) == 3), \
-                 mock.patch.object(D, 'read_public_file', side_effect=[raw, b'keyring', MIRRORS]) as read:
+        for raw, expected in [(SOURCE, [D.SOURCE, D.MIRRORS]),
+                              (SOURCE.replace(D.MIRROR_URI.encode(), D.ARCHIVE.encode()), [D.SOURCE])]:
+            with self.subTest(mirrors=len(expected) == 2), \
+                 mock.patch.object(D, 'read_public_file', side_effect=[raw, MIRRORS]) as read, \
+                 mock.patch.object(D, 'read_authenticated_keyring', return_value=(b'keyring', ())) as authenticated:
                 result = D.read_configuration_files()
             self.assertEqual([call.args[0] for call in read.call_args_list], expected)
-            self.assertEqual(result, (raw, b'keyring', MIRRORS if len(expected) == 3 else None))
+            authenticated.assert_called_once_with(D.KEYRING, 0)
+            self.assertEqual(result, (raw, b'keyring', MIRRORS if len(expected) == 2 else None))
 
-    def exercise(self, failure=None, foreign='', drift=False):
-        temporary = tempfile.TemporaryDirectory(prefix='decoder fixture ')
+    def exercise(self, failure=None, foreign='', drift=False, copy_drift=None):
+        temporary = tempfile.TemporaryDirectory(prefix='decoder-fixture-')
         self.addCleanup(temporary.cleanup)
         root = Path(temporary.name)
         calls, metadata = [], io.StringIO()
-        reads = {D.SOURCE: 0, D.KEYRING: 0, D.MIRRORS: 0}
+        reads = {D.SOURCE: 0, D.MIRRORS: 0}
+        authentic_reader = D.read_authenticated_keyring
+        def read_keyring(path, owner, **options):
+            return (SYNTHETIC_KEYRING, ()) if path == D.KEYRING else authentic_reader(path, owner, **options)
         def read(path):
             reads[path] += 1
             if path == D.SOURCE:
                 return SOURCE if not drift or reads[path] == 1 else SOURCE + b'# changed\n'
-            return MIRRORS if path == D.MIRRORS else b'SYNTHETIC ORIGINAL KEYRING'
+            return MIRRORS
         def run(command, **options):
             calls.append((command, options))
             if command[:3] == ['sudo', '-u', '_apt']:
                 source = Path(command[-1])
-                self.assertEqual(source.name, 'ubuntu.sources')
+                self.assertIn(source.name, ('ubuntu.sources', 'ubuntu-archive-keyring.gpg'))
                 self.assertEqual(source.parent.parent, root)
-                self.assertEqual(stat.S_IMODE(source.stat().st_mode), 0o644)
+                self.assertEqual(stat.S_IMODE(source.stat().st_mode), 0o644 if source.suffix == '.sources' else 0o444)
                 for name in ('', 'sourceparts', 'lists', 'archives'):
                     self.assertEqual(stat.S_IMODE((source.parent / name).stat().st_mode), 0o755)
-                self.assertNotIn(b'azure.archive', source.read_bytes())
-            phase = 'sandbox' if command[:3] == ['sudo', '-u', '_apt'] else (
+                if source.suffix == '.sources':
+                    self.assertNotIn(b'azure.archive', source.read_bytes())
+                    self.assertIn(str(source.parent / 'ubuntu-archive-keyring.gpg').encode(), source.read_bytes())
+                    self.assertNotIn(str(D.KEYRING).encode(), source.read_bytes())
+                else:
+                    self.assertEqual(source.read_bytes(), SYNTHETIC_KEYRING)
+            phase = ('sandbox' if command[-1].endswith('ubuntu.sources') else 'sandbox-keyring') if command[:3] == ['sudo', '-u', '_apt'] else (
                 'update' if 'update' in command else 'install' if 'install' in command else 'version')
             if failure == phase:
                 raise subprocess.CalledProcessError(41, command)
             if failure == phase + '-timeout':
                 raise subprocess.TimeoutExpired(command, 30)
+            if phase == copy_drift:
+                copied = next(root.glob('lightforge-ffmpeg-apt-*/ubuntu-archive-keyring.gpg'))
+                copied.chmod(0o644)
+                copied.write_bytes(b'X' + SYNTHETIC_KEYRING[1:])
+                copied.chmod(0o444)
             return subprocess.CompletedProcess(command, 0)
         with mock.patch.object(D.shutil, 'which', side_effect=[None, '/installed/ffmpeg']), \
              mock.patch.object(D.platform, 'freedesktop_os_release', return_value=OS), \
              mock.patch.object(D.subprocess, 'check_output', side_effect=['amd64\n', foreign]), \
              mock.patch.object(D, 'configuration_file_identity', return_value={'scope': 'test', 'files': []}), \
              mock.patch.object(D, 'read_public_file', side_effect=read), \
+             mock.patch.object(D, 'read_authenticated_keyring', side_effect=read_keyring), \
+             mock.patch.object(D, 'KEYRING_SHA256', hashlib.sha256(SYNTHETIC_KEYRING).hexdigest()), \
              mock.patch.object(D.subprocess, 'run', side_effect=run), \
              mock.patch.dict(os.environ, {'RUNNER_TEMP': str(root)}), contextlib.redirect_stdout(metadata):
             error = None
@@ -270,8 +289,8 @@ class FixtureDecoderTests(unittest.TestCase):
     def test_install_uses_only_owned_sources_and_cache_with_bounded_options(self):
         calls, output, error = self.exercise()
         self.assertIsNone(error)
-        self.assertEqual(len(calls), 4)
-        update, install = calls[1:3]
+        self.assertEqual(len(calls), 5)
+        update, install = calls[2:4]
         self.assertEqual(update[1], {'check': True, 'timeout': 180})
         self.assertEqual(install[1], {'check': True, 'timeout': 600})
         self.assertEqual(update[0][-2:], ['update', '-qq'])
@@ -305,8 +324,8 @@ class FixtureDecoderTests(unittest.TestCase):
                                       'originalSourceSha256', 'temporarySourceSha256', 'signingKeyringSha256'})
 
     def test_failures_and_timeouts_do_not_continue_or_retry_installation(self):
-        for failure, count in [('sandbox', 1), ('update', 2), ('update-timeout', 2),
-                               ('install', 3), ('install-timeout', 3), ('version', 4)]:
+        for failure, count in [('sandbox', 1), ('sandbox-keyring', 2), ('update', 3), ('update-timeout', 3),
+                               ('install', 4), ('install-timeout', 4), ('version', 5)]:
             with self.subTest(failure=failure):
                 calls, _, error = self.exercise(failure=failure)
                 self.assertIsNotNone(error)
@@ -321,7 +340,14 @@ class FixtureDecoderTests(unittest.TestCase):
     def test_source_drift_holds_before_decoder_execution(self):
         calls, _, error = self.exercise(drift=True)
         self.assertIsInstance(error, ValueError)
-        self.assertEqual(len(calls), 3)
+        self.assertEqual(len(calls), 4)
+
+    def test_copy_drift_after_either_apt_call_holds_before_next_action(self):
+        for phase, count in [('update', 3), ('install', 4)]:
+            with self.subTest(phase=phase):
+                calls, _, error = self.exercise(copy_drift=phase)
+                self.assertIsInstance(error, D.DecoderValidationError)
+                self.assertEqual(len(calls), count)
 
     def test_owned_validation_reasons_are_diagnosable_and_allowlist_is_complete(self):
         tree = ast.parse((ROOT / 'tools/prepare_fixture_decoder.py').read_text())
@@ -348,6 +374,197 @@ class FixtureDecoderTests(unittest.TestCase):
                 self.assertNotIn(secret, str(caught.exception))
                 self.assertNotIn(secret, ''.join(traceback.format_exception(caught.exception)))
                 self.assertTrue(caught.exception.__suppress_context__)
+
+
+class AuthenticatedKeyringTests(unittest.TestCase):
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory(prefix='keyring-identity-')
+        self.addCleanup(self.temporary.cleanup)
+        self.root = Path(self.temporary.name)
+        self.key = self.root / 'original.gpg'
+        self.key.write_bytes(SYNTHETIC_KEYRING)
+        self.key.chmod(0o644)
+        patcher = mock.patch.object(D, 'KEYRING_SHA256', hashlib.sha256(SYNTHETIC_KEYRING).hexdigest())
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def read(self, path=None, **options):
+        return D.read_authenticated_keyring(path or self.key, os.getuid(), **options)
+
+    def test_checked_in_pin_matches_independently_authenticated_official_member(self):
+        tree = ast.parse((ROOT / 'tools/prepare_fixture_decoder.py').read_text())
+        values = {node.targets[0].id: node.value.value for node in tree.body
+                  if isinstance(node, ast.Assign) and isinstance(node.targets[0], ast.Name)
+                  and isinstance(node.value, ast.Constant)}
+        self.assertEqual(values['KEYRING_SHA256'], '80a36b0a6de2f69f49d2df75ef473ccde121e9e190b9ea01d20a4f63778d5c31')
+        self.assertEqual(values['KEYRING_BYTES'], 3607)
+
+    def test_original_normal_and_observed_modes_require_identical_pinned_content(self):
+        for mode in (0o444, 0o644, 0o777):
+            with self.subTest(mode=oct(mode)):
+                self.key.chmod(mode)
+                raw, identity = self.read()
+                self.assertEqual(raw, SYNTHETIC_KEYRING)
+                self.assertEqual(identity[2], stat.S_IFREG | mode)
+                self.assertEqual(stat.S_IMODE(self.key.stat().st_mode), mode)
+        for mode in (0o666, 0o664, 0o774, 0o4777, 0o1644):
+            with self.subTest(rejected_mode=oct(mode)):
+                self.key.chmod(mode)
+                with self.assertRaisesRegex(ValueError, 'file identity'):
+                    self.read()
+
+    def test_wrong_content_length_owner_and_file_type_fail_closed(self):
+        for content in (b'X' + SYNTHETIC_KEYRING[1:], SYNTHETIC_KEYRING[:-1], SYNTHETIC_KEYRING + b'X'):
+            with self.subTest(size=len(content)):
+                self.key.write_bytes(content)
+                with self.assertRaises(ValueError):
+                    self.read()
+        self.key.write_bytes(SYNTHETIC_KEYRING)
+        with self.assertRaisesRegex(ValueError, 'file identity'):
+            D.read_authenticated_keyring(self.key, os.getuid() + 1)
+        directory = self.root / 'directory'; directory.mkdir()
+        fifo = self.root / 'fifo'; os.mkfifo(fifo)
+        for path in (directory, fifo):
+            with self.subTest(type=path.name), self.assertRaisesRegex(ValueError, 'file identity'):
+                self.read(path)
+
+    def test_symlink_final_component_and_ancestor_are_never_followed(self):
+        link = self.root / 'link.gpg'; link.symlink_to(self.key)
+        ancestor = self.root / 'linked-directory'; ancestor.symlink_to(self.root, target_is_directory=True)
+        for path in (link, ancestor / self.key.name):
+            with self.subTest(path=path.name), mock.patch.object(D.os, 'read') as read, self.assertRaises(OSError):
+                self.read(path)
+            read.assert_not_called()
+
+    def test_every_stable_identity_attribute_is_compared(self):
+        real_fstat = os.fstat
+        fields = ('st_dev', 'st_ino', 'st_mode', 'st_uid', 'st_gid', 'st_size', 'st_mtime_ns', 'st_ctime_ns')
+        for field in fields:
+            observations = []
+            def fstat(descriptor):
+                info = real_fstat(descriptor)
+                values = {name: getattr(info, name) for name in fields}
+                observations.append(True)
+                if len(observations) == 2:
+                    values[field] += 1
+                return SimpleNamespace(**values)
+            with self.subTest(field=field), mock.patch.object(D.os, 'fstat', side_effect=fstat), \
+                 self.assertRaisesRegex(ValueError, 'identity changed'):
+                self.read()
+
+    def test_same_name_replacement_is_rejected_even_with_identical_bytes(self):
+        real_read = os.read
+        replaced = False
+        def read(descriptor, count):
+            nonlocal replaced
+            block = real_read(descriptor, count)
+            if not replaced:
+                replacement = self.root / 'replacement.gpg'
+                replacement.write_bytes(SYNTHETIC_KEYRING)
+                replacement.chmod(0o644)
+                replacement.replace(self.key)
+                replaced = True
+            return block
+        with mock.patch.object(D.os, 'read', side_effect=read), self.assertRaisesRegex(ValueError, 'identity changed'):
+            self.read()
+
+    def test_isolated_copy_is_exact_readonly_and_only_rebinds_signing_location(self):
+        original = self.key.read_bytes()
+        self.key.chmod(0o777)
+        source, _, _ = D.canonical_source(SOURCE, OS, 'amd64', MIRRORS)
+        copied, snapshot, rebound = D.isolate_keyring(self.root, original, source)
+        self.assertEqual(copied.read_bytes(), original)
+        self.assertEqual(stat.S_IMODE(copied.stat().st_mode), 0o444)
+        self.assertEqual(stat.S_IMODE(self.key.stat().st_mode), 0o777)
+        self.assertEqual(rebound.replace(str(copied).encode(), str(D.KEYRING).encode()), source)
+        self.assertEqual(rebound.count(b'Signed-By: ' + str(copied).encode()), 2)
+        D.verify_isolated_keyring(copied, snapshot)
+        for mode in (0o644, 0o777):
+            copied.chmod(mode)
+            with self.assertRaisesRegex(ValueError, 'file identity'):
+                D.verify_isolated_keyring(copied, snapshot)
+
+    def test_isolated_copy_creation_never_overwrites_existing_file_or_link(self):
+        destination = self.root / 'ubuntu-archive-keyring.gpg'
+        destination.write_bytes(b'existing')
+        with self.assertRaises(FileExistsError):
+            D.isolate_keyring(self.root, SYNTHETIC_KEYRING, SOURCE)
+        self.assertEqual(destination.read_bytes(), b'existing')
+        destination.unlink()
+        destination.symlink_to(self.key)
+        with self.assertRaises(FileExistsError):
+            D.isolate_keyring(self.root, SYNTHETIC_KEYRING, SOURCE)
+        self.assertEqual(self.key.read_bytes(), SYNTHETIC_KEYRING)
+
+    def test_isolated_copy_replacement_with_identical_bytes_fails_snapshot(self):
+        copied, snapshot, _ = D.isolate_keyring(self.root, SYNTHETIC_KEYRING, SOURCE)
+        replacement = self.root / 'new-copy.gpg'
+        replacement.write_bytes(SYNTHETIC_KEYRING)
+        replacement.chmod(0o444)
+        replacement.replace(copied)
+        with self.assertRaisesRegex(ValueError, 'Temporary Ubuntu keyring identity changed'):
+            D.verify_isolated_keyring(copied, snapshot)
+
+    def test_signed_by_path_rejects_whitespace_commas_and_non_ascii_before_writing(self):
+        for name in ('space path', 'tab\tpath', 'line\npath', 'comma,path', 'quote"path', 'nonascii-é'):
+            work = self.root / name; work.mkdir()
+            with self.subTest(name=name), self.assertRaisesRegex(ValueError, 'signing key path'):
+                D.isolate_keyring(work, SYNTHETIC_KEYRING, SOURCE)
+            self.assertEqual(list(work.iterdir()), [])
+
+    def test_early_probe_distinguishes_writable_metadata_from_content_authentication(self):
+        output, errors = io.StringIO(), io.StringIO()
+        observed = {'scope': 'official-fixture-decoder-file-identity-only', 'files': [
+            {'role': 'keyring', 'type': 'regular', 'uid': 0, 'mode': 0o777,
+             'sizeBytes': 3607, 'failedChecks': ['writable-mode']}]}
+        self.key.chmod(0o777)
+        authenticated_reader = D.read_authenticated_keyring
+        def original(path, owner):
+            self.assertEqual(path, self.key)
+            self.assertEqual(owner, 0)
+            # Test files are caller-owned; the separate wrong-owner test checks
+            # the real descriptor predicate, while this checks production UID0 routing.
+            return authenticated_reader(path, os.getuid())
+        with mock.patch.object(D, 'KEYRING', self.key), \
+             mock.patch.object(D, 'configuration_file_identity', return_value=observed), \
+             mock.patch.object(D.shutil, 'which', return_value=None), \
+             mock.patch.object(D, 'read_public_file', side_effect=[SOURCE, MIRRORS]), \
+             mock.patch.object(D, 'read_authenticated_keyring', side_effect=original) as inspected, \
+             contextlib.redirect_stdout(output), contextlib.redirect_stderr(errors):
+            D.main(['--check-files'])
+        self.assertEqual(json.loads(output.getvalue()), observed)
+        inspected.assert_called()
+        self.assertEqual(errors.getvalue().strip(),
+            'Authenticated original Ubuntu keyring SHA-256: ' + hashlib.sha256(SYNTHETIC_KEYRING).hexdigest())
+        self.key.write_bytes(b'X' + SYNTHETIC_KEYRING[1:])
+        with mock.patch.object(D, 'KEYRING', self.key), \
+             mock.patch.object(D, 'configuration_file_identity', return_value=observed), \
+             mock.patch.object(D.shutil, 'which', return_value=None), \
+             mock.patch.object(D, 'read_public_file', return_value=SOURCE), \
+             mock.patch.object(D, 'read_authenticated_keyring', side_effect=original), \
+             contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()), \
+             self.assertRaises(SystemExit):
+            D.main(['--check-files'])
+
+    def test_keyring_os_failure_suppresses_arbitrary_paths_in_full_traceback(self):
+        secret = '/PRIVATE_KEYRING_URL_ENV_SENTINEL'
+        with mock.patch.object(D, 'configuration_file_identity', return_value={'scope': 'test', 'files': []}), \
+             mock.patch.object(D.shutil, 'which', return_value=None), \
+             mock.patch.object(D, 'read_public_file', return_value=SOURCE), \
+             mock.patch.object(D.os, 'open', side_effect=OSError(13, secret, secret)), \
+             contextlib.redirect_stdout(io.StringIO()), self.assertRaises(SystemExit) as caught:
+            D.main(['--check-files'])
+        self.assertNotIn(secret, ''.join(traceback.format_exception(caught.exception)))
+
+    def test_keyring_read_is_bounded_and_descriptor_traversal_does_not_follow_links(self):
+        real_open, real_read = os.open, os.read
+        with mock.patch.object(D.os, 'open', wraps=real_open) as opened, \
+             mock.patch.object(D.os, 'read', wraps=real_read) as reads:
+            self.read()
+        for call in opened.call_args_list:
+            self.assertTrue(call.args[1] & os.O_NOFOLLOW)
+        self.assertTrue(opened.call_args_list[-1].args[1] & os.O_NONBLOCK)
+        self.assertTrue(all(0 < call.args[1] <= 3608 for call in reads.call_args_list))
 
 
 if __name__ == '__main__':

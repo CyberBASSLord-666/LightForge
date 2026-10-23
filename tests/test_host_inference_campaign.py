@@ -196,6 +196,16 @@ class CampaignTests(unittest.TestCase):
         for path in self.api.policy['executionClosurePaths']:
             self.assertIn('/contents/' + path + '?ref=' + HEAD, self.api.calls)
 
+    def test_decoder_trust_helper_is_prospectively_frozen_without_becoming_neural_source(self):
+        path = 'tools/prepare_fixture_decoder.py'
+        self.assertIn(path, self.api.policy['executionClosurePaths'])
+        self.assertNotIn(path, self.api.policy['sourcePaths'])
+        self.assertEqual(self.api.policy['campaignId'], 'lightforge-2.4.2-neural-four-worker-host-001')
+        self.assertIn(path, self.api.declaration['executionClosure'])
+        (self.root / path).write_bytes(b'SYNTHETIC CHANGED DECODER TRUST')
+        with self.assertRaisesRegex(C.Hold, 'Source/closure drift'):
+            C.verify_source_bindings(self.root, self.api.declaration)
+
     def test_declaration_host_is_prospective_and_receipt_must_match_exactly(self):
         self.assertEqual(self.api.declaration['host'], valid_host())
         self.completed()

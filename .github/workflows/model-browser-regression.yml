@@ -106,6 +106,9 @@ jobs:
         run: |
           set -o pipefail
           python3 tools/prepare_fixture_decoder.py --check-files | tee "$RUNNER_TEMP/lightforge-model-browser/decoder-files.json"
+      - name: Ensure official fixture decoder is available
+        timeout-minutes: 15
+        run: python3 tools/prepare_fixture_decoder.py
       - name: Reproduce unchanged original model assets
         id: model_assets
         timeout-minutes: 15
@@ -117,9 +120,6 @@ jobs:
           python3 tools/prepare_deux.py
           python3 tools/verify_analysis_assets.py
           git diff --exit-code -- web/analysis
-      - name: Ensure official fixture decoder is available
-        timeout-minutes: 15
-        run: python3 tools/prepare_fixture_decoder.py
       - name: Reproduce original licensed public reference fixture
         timeout-minutes: 5
         run: |

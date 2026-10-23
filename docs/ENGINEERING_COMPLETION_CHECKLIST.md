@@ -1,14 +1,16 @@
 # Comprehensive engineering completion checklist
 
-Assessment refreshed: **2026-10-23, 20:42 UTC**. Reliability, input-integrity,
+Assessment refreshed: **2026-10-23, 21:15 UTC**. Reliability, input-integrity,
 accessibility and verification changes are published to draft PR56 at
-`2594e35ecae660c3034a18b3fd28d27831039487`, including the confirmed Music resize
+`74e5cb28dde1909e1b6e2461722dcf6ae069d8ea`, including the confirmed Music resize
 repair, recovered original-model browser workflow and documented-kernel counter
 parser correction. The 2.4.2 source migration and independently reviewed prospective bounded-host
 qualification implementation are published. Combined local regression and fresh
 supplemental browser checks pass. Original-model CI stopped during slow official
-decoder downloads before inference. Narrow workflow-startup and decoder-transport
-repairs are reviewed and locally verified, pending publication. No performance campaign has been allocated or measured. Earlier aggregate and scoped native checks
+decoder downloads before inference. The workflow-startup repair is published;
+an early probe then confirmed a writable public-keyring mode on the hosted image.
+A content-authenticated compatibility repair and shared decoder setup are reviewed
+and locally verified, pending publication. No performance campaign has been allocated or measured. Earlier aggregate and scoped native checks
 remain historical to their exact inputs, not a qualified new release identity.
 This ledger covers the complete requested product, not only the inference PR.
 **The project is not fully complete or qualified for a new production release.**
@@ -32,7 +34,7 @@ No old receipts are promoted to qualify this new candidate.
 ## Current verification snapshot
 
 - The integrated 2.4.2 frozen-source `npm test` equivalent passed using the
-  regression interpreter: **793 Node tests**, **877 Python tests run (873 passed,
+  regression interpreter: **793 Node tests**, **901 Python tests run (897 passed,
   4 skipped)**, five quality-tool suites and all **85 analysis assets**. All
   **945 source bindings** were unchanged through verification. The four skips
   concern absent retained diagnostic builds, not current runtime prerequisites.
@@ -105,6 +107,20 @@ No old receipts are promoted to qualify this new candidate.
 
 ## Additional diagnostic coverage and follow-up
 
+- The [early decoder probe](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40023691660)
+  established the actual mismatch before expensive model preparation: the
+  Ubuntu keyring is root-owned, regular and 3,607 bytes, but has mode 0777;
+  the source and mirror files are root-owned 0644 and pass. The exact hosted
+  image's public build script explains the broad `/usr/share` permissions.
+  The compatibility repair permits this observed mode only when a stable,
+  no-follow runtime read matches the independently authenticated official Noble
+  keyring digest. APT uses an exclusive, verified 0444 copy, rechecked around
+  both calls. Original files, signing-key contents and persistent trust remain
+  unchanged. Hosted content equality and installation success are not yet
+  established; the next run must prove them. Both consumer workflows now prepare
+  the decoder before expensive model reproduction. The timing producer remains
+  byte-identical and decoder-free. The helper was added prospectively to the
+  27-path execution closure before any campaign request or measurement.
 - Current-head [model run 40017544557](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40017544557)
   reproduced and rechecked all 85 original model assets but exhausted the existing
   15-minute decoder-setup limit while downloading packages from the Azure Ubuntu
@@ -228,7 +244,7 @@ necessary for the applicable claims.
 | Diagnostics | Bounded local diagnostic export and durable job summaries implemented. | Recover after process failure; avoid personal audio, credentials and project payload leakage; disclose incomplete observations. |
 | Dependencies | Exact pins are retained. October 23 advisory checks found no known vulnerabilities in both npm lockfiles and the installed model-build Python environment. Earlier coordinated research changes remain documented in [dependency security](DEPENDENCY_SECURITY.md). | Research model-output parity and comprehensive research/native/system-component audits remain unverified. A clean advisory result for the checked environments is not universal security clearance. |
 | Artifact security | Archive credential/symlink rejection and repository hygiene strengthened. | Final packaging/provenance regression and rendered bundle binding must pass; keep signing secrets and personal files outside artifacts. |
-| Repository/PR integration | Only draft PR56 is open, with no standalone open issues or submitted PR reviews/inline threads. Published head `9c2a1c9` has passing hygiene/quality-tool, supplemental browser and original-model browser CI, with the existing strict eight-CPU production preflight still failing. PR43 is not an open integration task. | Integrate and verify the 2.4.2 migration and prospective host campaign implementation; retain the draft/release hold until complete qualification. Preserve required history, model notices and failed evidence. |
+| Repository/PR integration | Only draft PR56 is open, with no standalone open issues or submitted PR reviews/inline threads. Published head `74e5cb2` has passing hygiene/quality-tool and supplemental browser CI. Production reaches the explicit absent-registration hold; actual-model execution is held at the diagnosed decoder prerequisite. PR43 is not an open integration task. | Integrate and verify the 2.4.2 migration and prospective host campaign implementation; retain the draft/release hold until complete qualification. Preserve required history, model notices and failed evidence. |
 
 ## Next safe engineering steps
 

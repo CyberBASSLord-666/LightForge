@@ -28,6 +28,27 @@ def step(text, name):
     return text.split('      - name: ' + name + '\n', 1)[1].split('\n      - ', 1)[0]
 
 
+def assert_consumer_decoder_contract(consumer, producer):
+    block = step(consumer, 'Ensure official fixture decoder is available')
+    assert consumer.count('run: python3 tools/prepare_fixture_decoder.py\n') == 1
+    assert 'timeout-minutes: 15' in block
+    assert '        if:' not in block and 'continue-on-error' not in block and '|| true' not in block
+    assert 'sudo apt-get' not in consumer
+    assert 'prepare_fixture_decoder.py' not in producer and 'ffmpeg' not in producer
+    names = ('Retrieve registered terminal proof before expensive preparation',
+             'Ensure official fixture decoder is available', 'Reproduce bundled production models',
+             'Prepare licensed reference excerpts', 'Actual offline model pipeline and cancellation')
+    indices = [consumer.index(name) for name in names]
+    assert indices == sorted(indices)
+    fixture = step(consumer, 'Prepare licensed reference excerpts')
+    assert fixture.split('        run: |\n', 1)[1].strip().splitlines() == [
+        'mkdir -p qa/release-1.6.0/fixtures',
+        '          curl -fL --retry 3 https://github.com/sigsep/sigsep-mus-db/releases/download/v0.4.0/MUSDB18-7-STEMS.zip -o qa/release-1.6.0/fixtures/MUSDB18-7-STEMS.zip',
+        "          echo '365f66acffc57282e474a4c24b32afec3678258c50b8d45646ac849b0a287df3  qa/release-1.6.0/fixtures/MUSDB18-7-STEMS.zip' | sha256sum -c",
+        '          python3 qa/release-1.6.0/prepare-musdb-fixtures.py',
+    ]
+
+
 def assert_job_environment_contexts(text):
     # GitHub resolves job env before assigning a runner. Keep this targeted
     # context-availability guard independent of YAML's syntactic validity.
@@ -213,6 +234,25 @@ class InferenceQualificationWorkflowTest(unittest.TestCase):
         self.assertNotIn('benchmark_deux_parallel.py', CONSUMER)
         self.assertNotIn('continue-on-error', block)
         self.assertNotIn('|| true', block)
+
+    def test_consumer_decoder_uses_one_bounded_authenticated_setup_before_models(self):
+        assert_consumer_decoder_contract(CONSUMER, PRODUCER)
+
+    def test_decoder_contract_rejects_missing_duplicate_reordered_or_bypassed_setup(self):
+        name = '      - name: Ensure official fixture decoder is available\n'
+        block = name + step(CONSUMER, 'Ensure official fixture decoder is available') + '\n'
+        mutations = [CONSUMER.replace(block, ''), CONSUMER.replace(block, block * 2),
+                     CONSUMER.replace('timeout-minutes: 15', 'timeout-minutes: 30'),
+                     CONSUMER.replace(block, block.replace('        timeout-minutes:', '        continue-on-error: true\n        timeout-minutes:')),
+                     CONSUMER.replace(block, block.replace('        timeout-minutes:', '        if: false\n        timeout-minutes:')),
+                     CONSUMER.replace(block, '').replace('      - name: Prepare licensed reference excerpts', block + '      - name: Prepare licensed reference excerpts'),
+                     CONSUMER.replace('mkdir -p qa/release-1.6.0/fixtures', 'sudo apt-get install -y ffmpeg\n          mkdir -p qa/release-1.6.0/fixtures'),
+                     CONSUMER.replace('365f66acffc57282e474a4c24b32afec3678258c50b8d45646ac849b0a287df3', '0' * 64)]
+        for changed in mutations:
+            with self.subTest(mutation=mutations.index(changed)), self.assertRaises((AssertionError, IndexError, ValueError)):
+                assert_consumer_decoder_contract(changed, PRODUCER)
+        with self.assertRaises(AssertionError):
+            assert_consumer_decoder_contract(CONSUMER, PRODUCER + '\npython3 tools/prepare_fixture_decoder.py\n')
 
     def test_fresh_candidate_admission_replays_after_dependencies_before_build(self):
         block = step(CONSUMER, 'Replay exact registered proof and seal fresh candidate host admission')

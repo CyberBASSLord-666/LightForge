@@ -303,6 +303,9 @@ jobs:
             tools/model-requirements.txt
             .github/workflows/verify-v2.yml
       - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Ensure official fixture decoder is available
+        timeout-minutes: 15
+        run: python3 tools/prepare_fixture_decoder.py
       - name: Reproduce bundled production models
         run: |
           python3 -m pip install pip==26.2.1 setuptools==83.0.0
@@ -320,8 +323,6 @@ jobs:
         run: node qa/release-${{ env.LIGHTFORGE_RELEASE }}/test-source-clock.cjs
       - name: Prepare licensed reference excerpts
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y ffmpeg
           mkdir -p qa/release-1.6.0/fixtures
           curl -fL --retry 3 https://github.com/sigsep/sigsep-mus-db/releases/download/v0.4.0/MUSDB18-7-STEMS.zip -o qa/release-1.6.0/fixtures/MUSDB18-7-STEMS.zip
           echo '365f66acffc57282e474a4c24b32afec3678258c50b8d45646ac849b0a287df3  qa/release-1.6.0/fixtures/MUSDB18-7-STEMS.zip' | sha256sum -c

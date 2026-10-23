@@ -51,6 +51,7 @@
     "tools/model_export_guard.py",
     "tools/portable_inference_host.py",
     "tools/prepare_deux.py",
+    "tools/prepare_fixture_decoder.py",
     "tools/verify_inference_improvement.py",
     "version.json"
   ],

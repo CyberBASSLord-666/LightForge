@@ -20,6 +20,13 @@ import tempfile
 
 SOURCE = Path('/etc/apt/sources.list.d/ubuntu.sources')
 KEYRING = Path('/usr/share/keyrings/ubuntu-archive-keyring.gpg')
+# Independently checked against Canonical's Noble Packages index and package:
+# https://packages.ubuntu.com/noble/all/ubuntu-keyring/download
+# ubuntu-keyring_2023.11.28.1_all.deb SHA-256:
+# 36de43b15853ccae0028e9a767613770c704833f82586f28eb262f0311adb8a8
+# This authenticates the existing original bytes; no key is downloaded/imported.
+KEYRING_SHA256 = '80a36b0a6de2f69f49d2df75ef473ccde121e9e190b9ea01d20a4f63778d5c31'
+KEYRING_BYTES = 3607
 MIRRORS = Path('/etc/apt/apt-mirrors.txt')
 MIRROR_URI = 'mirror+file:/etc/apt/apt-mirrors.txt'
 ARCHIVE = 'https://archive.ubuntu.com/ubuntu/'
@@ -39,6 +46,11 @@ VALIDATION_REASONS = frozenset({
     'Official decoder installation did not provide ffmpeg',
     'Official runner mirror definition is missing',
     'Original Ubuntu source or signing key changed during setup',
+    'Original Ubuntu keyring content is not the authenticated Noble keyring',
+    'Ubuntu keyring file identity changed during read',
+    'Unsupported Ubuntu keyring file identity',
+    'Temporary Ubuntu keyring identity changed',
+    'Temporary Ubuntu signing key path is unsupported',
     'Runner temporary directory is unavailable or indirect',
     'Ubuntu source signing key or architecture differs',
     'Unrecognized Ubuntu archive URI',
@@ -68,6 +80,67 @@ def read_public_file(path):
     require(stat.S_ISREG(info.st_mode) and info.st_uid == 0 and not info.st_mode & 0o022
             and 0 < info.st_size <= 1024 * 1024, 'Unsupported Ubuntu configuration file identity')
     return path.read_bytes()
+
+
+def read_authenticated_keyring(path, owner, *, copied=False):
+    """Reject link traversal and authenticate bounded bytes from one stable file."""
+    descriptors = []
+    def identity(info):
+        return (info.st_dev, info.st_ino, info.st_mode, info.st_uid, info.st_gid,
+                info.st_size, info.st_mtime_ns, info.st_ctime_ns)
+    try:
+        require(path.is_absolute() and '..' not in path.parts, 'Unsupported Ubuntu keyring file identity')
+        directory_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC
+        descriptors.append(os.open('/', directory_flags))
+        for component in path.parts[1:-1]:
+            descriptors.append(os.open(component, directory_flags, dir_fd=descriptors[-1]))
+        parent = descriptors[-1]
+        descriptors.append(os.open(path.name, os.O_RDONLY | os.O_NONBLOCK | os.O_NOFOLLOW | os.O_CLOEXEC, dir_fd=parent))
+        descriptor = descriptors[-1]
+        before = os.fstat(descriptor)
+        mode = stat.S_IMODE(before.st_mode)
+        allowed_mode = mode == 0o444 if copied else (not mode & 0o7022 or mode == 0o777)
+        require(stat.S_ISREG(before.st_mode) and before.st_uid == owner and allowed_mode
+                and before.st_size == KEYRING_BYTES, 'Unsupported Ubuntu keyring file identity')
+        blocks, remaining = [], KEYRING_BYTES + 1
+        while remaining:
+            block = os.read(descriptor, remaining)
+            if not block:
+                break
+            blocks.append(block)
+            remaining -= len(block)
+        raw = b''.join(blocks)
+        require(identity(os.fstat(descriptor)) == identity(before)
+                and identity(os.stat(path.name, dir_fd=parent, follow_symlinks=False)) == identity(before),
+                'Ubuntu keyring file identity changed during read')
+        require(len(raw) == KEYRING_BYTES and hashlib.sha256(raw).hexdigest() == KEYRING_SHA256,
+                'Original Ubuntu keyring content is not the authenticated Noble keyring')
+        return raw, identity(before)
+    finally:
+        for descriptor in reversed(descriptors):
+            os.close(descriptor)
+
+
+def isolate_keyring(work, keyring, source):
+    destination = work / 'ubuntu-archive-keyring.gpg'
+    # APT's list-valued Signed-By parser does not quote/escape path whitespace.
+    require(re.fullmatch(r'/[A-Za-z0-9_./-]+', str(destination)) is not None,
+            'Temporary Ubuntu signing key path is unsupported')
+    descriptor = os.open(destination, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_CLOEXEC, 0o400)
+    with os.fdopen(descriptor, 'wb') as stream:
+        stream.write(keyring)
+        stream.flush()
+        os.fchmod(stream.fileno(), 0o444)
+    copied, snapshot = read_authenticated_keyring(destination, os.getuid(), copied=True)
+    require(copied == keyring, 'Temporary Ubuntu keyring identity changed')
+    rebound = re.sub(rb'(?m)^Signed-By:[^\n]+$',
+                     lambda match: b'Signed-By: ' + str(destination).encode('ascii'), source)
+    return destination, snapshot, rebound
+
+
+def verify_isolated_keyring(path, snapshot):
+    _, observed = read_authenticated_keyring(path, os.getuid(), copied=True)
+    require(observed == snapshot, 'Temporary Ubuntu keyring identity changed')
 
 
 def configuration_file_identity():
@@ -110,7 +183,7 @@ def print_configuration_file_identity():
 
 def read_configuration_files():
     raw = read_public_file(SOURCE)
-    keyring = read_public_file(KEYRING)
+    keyring, _ = read_authenticated_keyring(KEYRING, 0)
     mirror_raw = read_public_file(MIRRORS) if MIRROR_URI.encode() in raw else None
     return raw, keyring, mirror_raw
 
@@ -212,9 +285,11 @@ def prepare():
     for name in ('sourceparts', 'lists', 'archives'):
         (work / name).mkdir(mode=0o755)
         (work / name).chmod(0o755)
+    isolated_keyring, keyring_snapshot, source = isolate_keyring(work, keyring, source)
     (work / 'ubuntu.sources').write_bytes(source)
     (work / 'ubuntu.sources').chmod(0o644)
     subprocess.run(['sudo', '-u', '_apt', 'test', '-r', str(work / 'ubuntu.sources')], check=True, timeout=10)
+    subprocess.run(['sudo', '-u', '_apt', 'test', '-r', str(isolated_keyring)], check=True, timeout=10)
     print(json.dumps(dict(scope='official-fixture-decoder-setup-only', distribution='ubuntu-24.04',
         architecture=architecture, suites=suites, components=components,
         originalSourceSha256=hashlib.sha256(raw).hexdigest(),
@@ -223,10 +298,14 @@ def prepare():
     # These overrides affect only these two calls. No /etc, trust, TLS, proxy or
     # network settings are written. No privileged recursive cleanup is used:
     # the disposable runner removes its temporary metadata/cache at teardown.
+    verify_isolated_keyring(isolated_keyring, keyring_snapshot)
     subprocess.run(apt_command(work, ['update', '-qq']), check=True, timeout=180)
+    verify_isolated_keyring(isolated_keyring, keyring_snapshot)
     subprocess.run(apt_command(work, ['install', '-y', '--no-install-recommends', 'ffmpeg']),
                    check=True, timeout=600)
-    require(read_public_file(SOURCE) == raw and read_public_file(KEYRING) == keyring,
+    verify_isolated_keyring(isolated_keyring, keyring_snapshot)
+    require(read_public_file(SOURCE) == raw and read_authenticated_keyring(KEYRING, 0)[0] == keyring
+            and (mirror_raw is None or read_public_file(MIRRORS) == mirror_raw),
             'Original Ubuntu source or signing key changed during setup')
     decoder = shutil.which('ffmpeg')
     require(decoder is not None, 'Official decoder installation did not provide ffmpeg')
@@ -240,7 +319,8 @@ def main(arguments=()):
                 raise SystemExit('Unsupported fixture decoder command')
             print_configuration_file_identity()
             if list(arguments) == ['--check-files'] and not shutil.which('ffmpeg'):
-                read_configuration_files()
+                _, keyring, _ = read_configuration_files()
+                print('Authenticated original Ubuntu keyring SHA-256: ' + hashlib.sha256(keyring).hexdigest(), file=sys.stderr)
             return
         prepare()
     except DecoderValidationError as error:
