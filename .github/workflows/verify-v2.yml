@@ -69,9 +69,13 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ github.token }}
       LIGHTFORGE_HOST_CAMPAIGN: lightforge-2.4.2-neural-four-worker-host-001
-      LIGHTFORGE_HOST_WORK: ${{ runner.temp }}/lightforge-host-campaign-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Initialize the original campaign attempt directory
+        if: ${{ github.run_attempt == 1 }}
+        run: |
+          printf 'LIGHTFORGE_HOST_WORK=%s/lightforge-host-campaign-%s-%s\n' \
+            "$RUNNER_TEMP" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" >> "$GITHUB_ENV"
       - name: Reruns retrieve only the original terminal proof
         if: ${{ github.run_attempt != 1 }}
         run: |

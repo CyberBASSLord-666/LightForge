@@ -28,6 +28,20 @@ def step(text, name):
     return text.split('      - name: ' + name + '\n', 1)[1].split('\n      - ', 1)[0]
 
 
+def assert_job_environment_contexts(text):
+    # GitHub resolves job env before assigning a runner. Keep this targeted
+    # context-availability guard independent of YAML's syntactic validity.
+    # https://docs.github.com/en/actions/reference/workflows-and-actions/contexts
+    allowed = {'github', 'needs', 'strategy', 'matrix', 'vars', 'secrets', 'inputs'}
+    blocks = re.findall(r'(?ms)^    env:\n(.*?)(?=^ {0,4}\S|\Z)', text)
+    for block in blocks:
+        for expression in re.findall(r'\$\{\{(.*?)\}\}', block, flags=re.S):
+            expression = re.sub(r"'(?:[^']|'')*'", "''", expression)
+            contexts = set(re.findall(r'(?<![\w.])([A-Za-z_]\w*)\s*(?=[.\[])', expression))
+            if contexts - allowed:
+                raise AssertionError('Unavailable job-level environment context')
+
+
 def inline_python(marker):
     block = WORKFLOW.split("<<'" + marker + "'\n", 1)[1].split('\n          ' + marker, 1)[0]
     return compile(textwrap.dedent(block), '<workflow-' + marker + '>', 'exec')
@@ -286,6 +300,38 @@ class InferenceQualificationWorkflowTest(unittest.TestCase):
         self.assertEqual(prepare.count('--output "$LIGHTFORGE_HOST_WORK"'), 1)
         self.assertEqual(execute.count('--output "$LIGHTFORGE_HOST_WORK"'), 1)
         self.assertNotIn('--retry', PRODUCER)
+
+    def test_all_job_environment_expressions_use_available_contexts(self):
+        for path in sorted((ROOT / '.github/workflows').glob('*.yml')):
+            with self.subTest(workflow=path.name):
+                assert_job_environment_contexts(path.read_text())
+        for forbidden in ('runner.temp', "runner['temp']", 'steps.prepare.outputs.path',
+                          'env.PATH', 'job.status'):
+            with self.subTest(context=forbidden), self.assertRaises(AssertionError):
+                assert_job_environment_contexts(
+                    'jobs:\n  example:\n    env:\n      TEST: ${{ ' + forbidden + ' }}\n    steps: []\n')
+        for allowed in ('github.run_id', 'needs.route.outputs.path', 'matrix.python',
+                        'strategy.job-index', 'vars.MODE', 'secrets.TOKEN', 'inputs.name'):
+            assert_job_environment_contexts(
+                'jobs:\n  example:\n    env:\n      TEST: ${{ ' + allowed + ' }}\n    steps: []\n')
+
+    def test_campaign_directory_is_initialized_on_runner_without_changing_namespace(self):
+        initialize = step(PRODUCER, 'Initialize the original campaign attempt directory')
+        self.assertIn('if: ${{ github.run_attempt == 1 }}', initialize)
+        self.assertLess(PRODUCER.index('Initialize the original campaign attempt directory'),
+                        PRODUCER.index('Check bounded campaign host before dependency preparation'))
+        self.assertNotIn('LIGHTFORGE_HOST_WORK:', PRODUCER.split('    steps:', 1)[0])
+        script = textwrap.dedent(initialize.split('        run: |\n', 1)[1])
+        with tempfile.TemporaryDirectory(prefix='campaign path ') as directory:
+            environment_file = Path(directory) / 'environment'
+            result = subprocess.run(['bash', '-euo', 'pipefail', '-c', script], check=True,
+                capture_output=True, text=True, env={'PATH': '/usr/bin:/bin', 'RUNNER_TEMP': directory,
+                    'GITHUB_RUN_ID': '123456', 'GITHUB_RUN_ATTEMPT': '1', 'GITHUB_ENV': str(environment_file)})
+            self.assertEqual(environment_file.read_text(),
+                'LIGHTFORGE_HOST_WORK=' + directory + '/lightforge-host-campaign-123456-1\n')
+            self.assertEqual(result.stdout, '')
+            self.assertEqual(result.stderr, '')
+            self.assertEqual(sorted(path.name for path in Path(directory).iterdir()), ['environment'])
 
     def test_declaration_is_only_member_and_observations_never_overwrite(self):
         declaration = step(PRODUCER, 'Retain immutable prospective declaration only')

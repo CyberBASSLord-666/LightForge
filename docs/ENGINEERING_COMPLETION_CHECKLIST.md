@@ -1,12 +1,14 @@
 # Comprehensive engineering completion checklist
 
-Assessment refreshed: **2026-10-23, 20:07 UTC**. Reliability, input-integrity,
+Assessment refreshed: **2026-10-23, 20:42 UTC**. Reliability, input-integrity,
 accessibility and verification changes are published to draft PR56 at
-`9c2a1c9731dcfd388d70c5e6c5ccb2ed444fd15a`, including the confirmed Music resize
+`2594e35ecae660c3034a18b3fd28d27831039487`, including the confirmed Music resize
 repair, recovered original-model browser workflow and documented-kernel counter
 parser correction. The 2.4.2 source migration and independently reviewed prospective bounded-host
-qualification implementation pass the combined local regression gate; publication
-and fresh CI remain pending. No performance campaign has been allocated or measured. Earlier aggregate and scoped native checks
+qualification implementation are published. Combined local regression and fresh
+supplemental browser checks pass. Original-model CI stopped during slow official
+decoder downloads before inference. Narrow workflow-startup and decoder-transport
+repairs are reviewed and locally verified, pending publication. No performance campaign has been allocated or measured. Earlier aggregate and scoped native checks
 remain historical to their exact inputs, not a qualified new release identity.
 This ledger covers the complete requested product, not only the inference PR.
 **The project is not fully complete or qualified for a new production release.**
@@ -30,9 +32,9 @@ No old receipts are promoted to qualify this new candidate.
 ## Current verification snapshot
 
 - The integrated 2.4.2 frozen-source `npm test` equivalent passed using the
-  regression interpreter: **793 Node tests**, **863 Python tests run (859 passed,
+  regression interpreter: **793 Node tests**, **877 Python tests run (873 passed,
   4 skipped)**, five quality-tool suites and all **85 analysis assets**. All
-  **943 source bindings** were unchanged through verification. The four skips
+  **945 source bindings** were unchanged through verification. The four skips
   concern absent retained diagnostic builds, not current runtime prerequisites.
   A first integration attempt exposed five test import/workflow-scoping errors;
   those were corrected without changing production behavior, independently
@@ -103,6 +105,32 @@ No old receipts are promoted to qualify this new candidate.
 
 ## Additional diagnostic coverage and follow-up
 
+- Current-head [model run 40017544557](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40017544557)
+  reproduced and rechecked all 85 original model assets but exhausted the existing
+  15-minute decoder-setup limit while downloading packages from the Azure Ubuntu
+  mirror. No fixture decode, browser model inference or candidate qualification
+  occurred. The retained failure is not relabelled a model pass.
+  A narrowly scoped helper now selects Canonical HTTPS transport using a temporary
+  copy of validated official Ubuntu sources, preserving suites, components,
+  architecture, signing key and APT sandboxing. It does not modify persistent APT,
+  TLS, proxy or network settings. Existing decoder reuse, the 15-minute cap and
+  canonical decoded-fixture hashes remain unchanged. Static allowlisted errors
+  aid diagnosis without exposing arbitrary configuration or exception content.
+  Full local regression and independent review pass; actual hosted download
+  success, source-file compatibility and sandbox traversal remain unverified.
+- The first 2.4.2 production workflow [run 40017540945](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40017540945)
+  failed before starting jobs because job-level environment configuration used
+  the unavailable `runner` context. This was a workflow validation error, not
+  the intended absent-campaign hold. The identical attempt directory is now
+  initialized in an early guarded runner step. Official actionlint 1.7.12
+  reproduces the old error and passes all repaired workflows; regression tests
+  reject recurrence. Request/registration, timing and release gates are unchanged.
+  Fresh GitHub execution must confirm the repaired workflow starts correctly.
+- Current 2.4.2 [browser run 40017544523](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40017544523)
+  passed all four Chromium suites. Browser/background/optics/cold-restore source
+  bindings match the published tree; representative narrow-screen score,
+  progress and rear-optics images were inspected. This is desktop Chromium,
+  simulated native bridge and SwiftShader coverage, not packaged Android proof.
 - An unprivileged supplemental workflow reproduces original model assets and
   licensed reference audio, runs the unchanged actual-model browser harness
   with a bounded external deadline, and retains only explicit diagnostic files.

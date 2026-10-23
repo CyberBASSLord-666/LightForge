@@ -13,6 +13,8 @@ on:
       - 'tools/model_export_guard.py'
       - 'tools/model-requirements.txt'
       - 'tools/verify_analysis_assets.py'
+      - 'tools/prepare_fixture_decoder.py'
+      - 'tests/test_fixture_decoder.py'
       - 'tests/test_model_browser_workflow.py'
       - 'qa/release-*/analysis-browser.cjs'
       - 'qa/release-*/analysis-performance.cjs'
@@ -113,12 +115,7 @@ jobs:
           git diff --exit-code -- web/analysis
       - name: Ensure official fixture decoder is available
         timeout-minutes: 15
-        run: |
-          if ! command -v ffmpeg >/dev/null 2>&1; then
-            sudo apt-get update -qq
-            sudo apt-get install -y --no-install-recommends ffmpeg
-          fi
-          ffmpeg -version
+        run: python3 tools/prepare_fixture_decoder.py
       - name: Reproduce original licensed public reference fixture
         timeout-minutes: 5
         run: |
