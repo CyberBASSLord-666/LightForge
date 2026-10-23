@@ -1,10 +1,10 @@
 # Comprehensive engineering completion checklist
 
-Assessment refreshed: **2026-10-23, 18:57 UTC**. Reliability, input-integrity,
+Assessment refreshed: **2026-10-23, 19:10 UTC**. Reliability, input-integrity,
 accessibility and verification changes are published to draft PR56 at
-`84707a6a2e0333e5f97880a686bbe9ac2754664a`, including the original-model diagnostic workflow, strict UI error
-capture and experimental read-only host observations. The captured resize
-repair and dependency-setup recovery below are pending publication. Frozen-source local aggregate and scoped native checks
+`5a70d0725e54936b2f91053476602a74ef73ca58`, including the confirmed Music resize repair and recovered
+original-model browser workflow. A narrow documented-kernel counter parser
+correction is tested locally and pending publication. Frozen-source local aggregate and scoped native checks
 passed as detailed below; they are not a qualified release source identity.
 This ledger covers the complete requested product, not only the inference PR.
 **The project is not fully complete or qualified for a new production release.**
@@ -27,8 +27,8 @@ still uses version 2.4.1 during development; a source version is not publication
 
 ## Current verification snapshot
 
-- Frozen-source `npm test` passed: **793 Node tests**, **759 Python tests run
-  (755 passed, 4 skipped)**, five quality-tool suites and all **85 analysis
+- Frozen-source `npm test` passed: **793 Node tests**, **767 Python tests run
+  (763 passed, 4 skipped)**, five quality-tool suites and all **85 analysis
   assets**. The aggregate's 933 source hashes matched the inspected candidate.
   This is engine/worker/DOM/archive/tooling coverage, not rendered browser or
   packaged Android qualification.
@@ -72,7 +72,10 @@ still uses version 2.4.1 during development; a source version is not publication
   correctly failed its new diagnostic check on a ResizeObserver notification
   loop. The Music pitch lane synchronously changed the observed ancestor
   height. A narrow coalesced-animation-frame repair passes local tests; the
-  pre-fix negative control fails. Hosted repair confirmation remains pending.
+  pre-fix negative control fails. [Run 40007881351](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40007881351)
+  subsequently passed all four browser suites: all 13 application checkpoints
+  have zero errors and no recovery banner. Nine key screenshots and 53 source
+  bindings were independently checked.
   The wide score screenshot was captured while its canvas was offscreen; settled visible-element captures in the follow-up run are crisp at all four
   widths, establishing this softness as capture timing, not a product defect. These are supplemental checks, not the actual-model browser pipeline,
   physical Android/Tesla observations or sealed production qualification.
@@ -100,6 +103,14 @@ still uses version 2.4.1 during development; a source version is not publication
   official ffmpeg dependencies before fixture or browser execution. Decoder
   setup is now separately bounded, reuses an available executable, and omits
   optional packages; exact archive and waveform provenance remain mandatory.
+  Recovered [run 40007881372](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40007881372)
+  passed the actual-model harness and post-run integrity check. The no-session
+  supplemental receipt reports 11 sung notes, 9 bass notes, identical
+  generated/saved/restored frame hashes and zero remaining cancelled namespaces.
+  Its 66 repository source and 69 served asset bindings match the inspected
+  application; its generated input hash matches canonical fixture provenance.
+  This short public excerpt establishes neither whole-song/corpus quality nor
+  controlled speed, Android behavior or sealed production evidence.
 - [Experimental host qualification](EXPERIMENTAL_HOST_QUALIFICATION.md) describes
   a separately identified four-worker/three-CPU experiment and read-only host
   observation. Independent review and falsification tests passed, but no real
@@ -109,7 +120,12 @@ still uses version 2.4.1 during development; a source version is not publication
   namespace and full cgroup mount, but rejected an unspecified strict
   control/counter condition. No exact cause is inferred. Safe reason codes
   will distinguish the failed observation in the next run; validators and
-  eligibility requirements remain unchanged.
+  eligibility requirements remain unchanged. The next hosted artifact
+  identifies malformed cpu.stat parsing, without retaining its failing row.
+  Independent Linux source review exposed a real parser incompatibility with
+  the documented core_sched.force_idle_usec key. Its narrow correction retains
+  every value and all required counters, duplicate/unsigned/monotonicity checks;
+  it is not yet proven to resolve that hosted failure.
 - Application browser QA now retains bounded, sanitized error reports and
   fails on unexpected handled errors or a recovery banner, even if an error
   has fallen out of the application log. Visible score captures verify backing
@@ -139,7 +155,7 @@ necessary for the applicable claims.
 | MDX numerical comparison | Mandatory decoded-waveform comparisons on three fixed inputs and the paired downstream gate passed with current source/model bindings. Internal spectral diagnostic remains false. | Preserve failed spectral diagnostics and existing mandatory thresholds; do not claim bit-identical MDX spectra, full-song accuracy or Android parity from these scoped passes. |
 | Foreground/background analysis | Foreground service, checkpointed stages, cancellation and saving are implemented. Current changes suspend completed-preview watchdog budgets while the Activity is hidden or unfocused and reject stale callbacks after resume. Historical emulator evidence does not qualify these changes. | Fresh packaged Android tests: screen-off/background completion, Activity recreation, process interruption, cancel/resume, low-memory paths and durable result save. |
 | Completed-project preview | Current source preserves saved arrangements when loading fails, fences superseded opens, and defers legacy Android draw-listener removal until after drawing. The four supplemental browser suites passed at head 4ab3ae8; screenshot review, actual-model browser and packaged Android qualification remain distinct requirements. | Restore completed and legacy projects; assert first rendered frame, transport/seek, repeated opening, cancellation and current compiled sequence agreement, including API 26-28 and focus loss/resume. |
-| Browser and UI execution | All four supplemental browser suites passed in run 40002479708, with exact-source artifact bindings checked. Fail-closed diagnostic capture identified a real Music ResizeObserver loop. The reviewed resize repair passes local tests and awaits hosted confirmation. Local browser restrictions are environment-specific. No actual-model browser or packaged Android pass is inferred. | Complete and inspect actual browser diagnostics; separately run the real-model browser pipeline under the production evidence contract. DOM or supplemental diagnostics cannot replace sealed release evidence. |
+| Browser and UI execution | All four supplemental browser suites passed in run 40002479708, with exact-source artifact bindings checked. Fail-closed diagnostic capture identified a real Music ResizeObserver loop. The resize repair passed all four hosted suites with clean diagnostics and visually checked Music/Guide/My shows/score captures. Local browser restrictions are environment-specific. No actual-model browser or packaged Android pass is inferred. | Complete and inspect actual browser diagnostics; separately run the real-model browser pipeline under the production evidence contract. DOM or supplemental diagnostics cannot replace sealed release evidence. |
 | Physical phone | No fresh physical-phone observations were produced for this assessment. Earlier connector errors are historical, not a current connection diagnosis. | Use only supported, authorized connection routes when available. Physical testing is optional under the applicable version-scoped publication policy, but physical performance claims need observations. |
 | APK/update identity | Original-signing and exact-payload publication controls implemented; the available original private identity was checked locally against the documented public certificate. No new final APK is qualified by this ledger. | Deliberate new version, full exact-source verification, original certificate outside Git, update-compatible install identity, alignment and checksum verification. Never replace the key or uninstall to evade incompatibility. |
 | Release publication | Latest published release remains 2.4.1; the current candidate still uses 2.4.1/20401 for development. No new final APK or release is qualified. | Follow [BUILD](../BUILD.md); deliberately choose a new version, establish its applicable publication authority/policy, and verify expected remote commit, full CI, qualified signed APK and public release assets. Existing version-scoped exceptions do not automatically authorize a future version. Do not overwrite a released version. |
@@ -180,10 +196,10 @@ necessary for the applicable claims.
 
 ## Next safe engineering steps
 
-1. Confirm the reviewed Music resize repair and separated decoder setup
-   on GitHub; inspect the more specific host diagnostic. Run the remaining
-   actual-model browser diagnostics without presenting supplemental results
-   as sealed production or packaged Android evidence.
+1. Verify the documented-kernel counter parser correction with a fresh hosted
+   diagnostic. Preserve all failed observations. The successful supplemental
+   model/browser checks do not substitute for sealed production or packaged
+   Android evidence.
 2. Keep the passed aggregate and scoped native comparisons bound to their exact
    inputs. Investigate retained MDX spectral discrepancies without weakening
    mandatory thresholds; rerun affected comparisons after source/model changes.

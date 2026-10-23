@@ -414,6 +414,143 @@ class PortableResourcesTest(unittest.TestCase):
                     HOST.validate_resource_pair(self.before, self.after, value, self.controls)
 
 
+class NamespacedCounterTest(unittest.TestCase):
+    KEY = 'core_sched.force_idle_usec'
+
+    def observations_with_namespaced_cpu_counter(self, before_value=12, after_value=19):
+        controls, before, after = valid_observations()
+        for snapshot, value in ((before, before_value), (after, after_value)):
+            for ancestor in snapshot['ancestors'][1:]:
+                ancestor['raw']['cpu.stat'] += self.KEY + ' ' + str(value) + '\n'
+        return controls, before, after
+
+    def test_documented_linux_key_is_preserved_and_replayed_not_ignored(self):
+        # The Linux source emits this exact key; this is a fixture, not evidence
+        # that this key caused any previously observed hosted-run failure.
+        controls, before, after = self.observations_with_namespaced_cpu_counter()
+        summary = HOST.validate_resource_pair(before, after, 1_000_000_000, controls)
+        for ancestor in summary['ancestors'][1:]:
+            self.assertEqual(ancestor['deltas']['cpu.stat'][self.KEY], 7)
+        reader = FixtureReader()
+        reader.files[MOUNT + '/batch/worker/cpu.stat'] += self.KEY + ' 123\n'
+        record = HOST.diagnose(reader=reader)
+        self.assertTrue(record['eligible'])
+        self.assertFalse(record['qualificationEstablished'])
+        self.assertFalse(record['releaseAdmissible'])
+        self.assertIn(self.KEY + ' 123\n', record['observedCounters']['ancestors'][2]['raw']['cpu.stat'])
+
+    def test_nonempty_namespaced_segments_keep_the_original_leading_lowercase_rule(self):
+        for key in (self.KEY, 'provider.counter_1', 'provider.1_counter',
+                    'provider._counter', 'provider.group.counter'):
+            with self.subTest(key=key):
+                raw = 'throttled_usec 0\nnr_throttled 0\n' + key + ' 1\n'
+                parsed = HOST._flat_counters(raw, ('throttled_usec', 'nr_throttled'), 'cpu.stat')
+                self.assertEqual(parsed[key], 1)
+        for key in ('.core_sched.force_idle_usec', 'core_sched.', 'core_sched..force_idle_usec',
+                    'core_sched...force_idle_usec', 'core_sched.Force_idle_usec', 'Core_sched.force_idle_usec',
+                    'core_sched.force-idle', 'core_sched./private', 'core_sched:force_idle_usec',
+                    '1core_sched.force_idle_usec', '_core_sched.force_idle_usec'):
+            with self.subTest(key=key):
+                with self.assertRaises(HOST._CounterParseError) as error:
+                    HOST._flat_counters(key + ' 0\n', (), 'cpu.stat')
+                self.assertEqual(error.exception.detail, 'invalid_key_syntax')
+                self.assertEqual(error.exception.key_class, 'invalid_key')
+
+    def test_namespaced_rows_still_require_exactly_two_fields(self):
+        for row in (self.KEY, self.KEY + ' 0 1', self.KEY + ' 0 # comment', '\n'):
+            with self.subTest(row=row):
+                with self.assertRaises(HOST._CounterParseError) as error:
+                    HOST._flat_counters(row, (), 'cpu.stat')
+                self.assertEqual(error.exception.detail, 'row_arity')
+
+    def test_namespaced_duplicates_and_invalid_unsigned_u64_are_rejected(self):
+        for key in (self.KEY, 'throttled_usec', 'provider.unknown'):
+            with self.subTest(key=key):
+                with self.assertRaises(HOST._CounterParseError) as error:
+                    HOST._flat_counters(key + ' 0\n' + key + ' 1\n', (), 'cpu.stat')
+                self.assertEqual(error.exception.detail, 'duplicate_key')
+        for value in ('-1', '+1', '01', '1.0', '1e3', 'NaN', 'inf', str(2**64), '9' * 100):
+            with self.subTest(value=value):
+                with self.assertRaises(HOST._CounterParseError) as error:
+                    HOST._flat_counters(self.KEY + ' ' + value + '\n', (), 'cpu.stat')
+                self.assertEqual(error.exception.detail, 'invalid_uint')
+        self.assertEqual(HOST._flat_counters(self.KEY + ' ' + str(2**64 - 1), (), 'cpu.stat')[self.KEY],
+                         2**64 - 1)
+
+    def test_namespaced_keys_never_substitute_for_required_throttling_counters(self):
+        for required in ('throttled_usec', 'nr_throttled'):
+            with self.subTest(required=required):
+                raw = self.KEY + ' 0\n' + required + ' 0\n'
+                with self.assertRaisesRegex(ValueError, 'Missing required counter'):
+                    HOST._flat_counters(raw, ('throttled_usec', 'nr_throttled'), 'cpu.stat')
+
+    def test_namespaced_fields_must_exist_in_both_snapshots_and_remain_monotonic(self):
+        for removed_snapshot in ('before', 'after'):
+            with self.subTest(removed_snapshot=removed_snapshot):
+                controls, before, after = self.observations_with_namespaced_cpu_counter()
+                snapshot = before if removed_snapshot == 'before' else after
+                raw = snapshot['ancestors'][2]['raw']['cpu.stat']
+                snapshot['ancestors'][2]['raw']['cpu.stat'] = '\n'.join(
+                    line for line in raw.splitlines() if not line.startswith(self.KEY + ' ')) + '\n'
+                with self.assertRaisesRegex(ValueError, 'Counter fields changed'):
+                    HOST.validate_resource_pair(before, after, 1_000_000_000, controls)
+        controls, before, after = self.observations_with_namespaced_cpu_counter(19, 12)
+        with self.assertRaisesRegex(ValueError, 'Nonmonotonic cpu.stat.core_sched.force_idle_usec'):
+            HOST.validate_resource_pair(before, after, 1_000_000_000, controls)
+
+    def test_namespaced_field_cannot_hide_throttling_memory_events_reclaim_or_psi(self):
+        modifications = [('cpu.stat', 'throttled_usec', 50101),
+                         ('memory.events', 'oom', 1), ('memory.events', 'oom_kill', 1),
+                         ('memory.events', 'max', 1), ('memory.events', 'high', 1),
+                         ('memory.stat', 'pgscan_direct', 1), ('memory.stat', 'pgsteal_direct', 1),
+                         ('memory.pressure', 'some', 101)]
+        for filename, key, value in modifications:
+            with self.subTest(filename=filename, key=key):
+                controls, before, after = self.observations_with_namespaced_cpu_counter()
+                change_counter(after, 2, filename, key, value)
+                with self.assertRaises(ValueError):
+                    HOST.validate_resource_pair(before, after, 1_000_000_000, controls)
+        controls, before, after = self.observations_with_namespaced_cpu_counter()
+        change_counter(after, 1, 'cpu.stat', 'throttled_usec', 25100)
+        change_counter(after, 2, 'cpu.stat', 'throttled_usec', 25101)
+        with self.assertRaisesRegex(ValueError, 'Cumulative ancestor'):
+            HOST.validate_resource_pair(before, after, 1_000_000_000, controls)
+
+    def test_structured_diagnostics_expose_only_fixed_detail_class_and_known_key(self):
+        cases = [(self.KEY + ' -1\n', 'invalid_uint', 'documented_key', self.KEY),
+                 (self.KEY + ' 0\n' + self.KEY + ' 1\n', 'duplicate_key', 'documented_key', self.KEY),
+                 (self.KEY + ' 0 SECRET_VALUE\n', 'row_arity', 'documented_key', self.KEY),
+                 ('private_secret.key SECRET_VALUE\n', 'invalid_uint', 'other_namespaced_key', None),
+                 ('private_secret_key SECRET_VALUE\n', 'invalid_uint', 'other_plain_key', None),
+                 ('private_secret..key 0\n', 'invalid_key_syntax', 'invalid_key', None),
+                 ('private_secret./path SECRET_VALUE\n', 'invalid_key_syntax', 'invalid_key', None)]
+        for raw, detail, key_class, known_key in cases:
+            with self.subTest(detail=detail, key_class=key_class):
+                reader = FixtureReader()
+                reader.files[MOUNT + '/batch/worker/cpu.stat'] += raw
+                record = HOST.diagnose(reader=reader)
+                self.assertFalse(record['eligible'])
+                self.assertFalse(record['qualificationEstablished'])
+                self.assertEqual(record['reasonCode'], 'malformed_counter')
+                self.assertEqual(record['stage'], 'counterObservation')
+                self.assertEqual(record['detail'], detail)
+                self.assertEqual(record['keyClass'], key_class)
+                if known_key:
+                    self.assertEqual(record['knownKey'], known_key)
+                else:
+                    self.assertNotIn('knownKey', record)
+                self.assertNotIn('observedCounters', record)
+                serialized = json.dumps(record)
+                self.assertNotIn('private_secret', serialized)
+                self.assertNotIn('SECRET_VALUE', serialized)
+                self.assertNotIn('\"-1\"', serialized)
+                self.assertLess(len(serialized), 1024 * 1024)
+                with self.assertRaises(HOST._CounterParseError) as error:
+                    HOST._flat_counters(raw, (), 'cpu.stat')
+                self.assertNotIn('private_secret', str(error.exception))
+                self.assertNotIn('SECRET_VALUE', str(error.exception))
+
+
 class LinuxReaderTest(unittest.TestCase):
     def test_descriptor_reader_rejects_symlink_files_and_parent_components(self):
         with tempfile.TemporaryDirectory() as directory:

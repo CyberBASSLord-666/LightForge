@@ -427,14 +427,55 @@ def _digest(value):
                                      allow_nan=False).encode('utf-8')).hexdigest()
 
 
+# Linux emits namespaced cpu.stat keys, including core_sched.force_idle_usec:
+# https://kernel.googlesource.com/pub/scm/linux/kernel/git/torvalds/linux/+/b91872c56940950a6a0852e499d249c3091d4284/kernel/cgroup/rstat.c#606
+# Preserve the original lowercase-leading key rule; every dot-delimited suffix
+# must be a nonempty lowercase/alphanumeric/underscore segment.
+_COUNTER_KEY_PATTERN = r'[a-z][a-z0-9_]*(?:\.[a-z0-9_]+)*'
+_COUNTER_PARSE_DETAILS = ('row_arity', 'invalid_key_syntax', 'duplicate_key', 'invalid_uint')
+_COUNTER_KEY_CLASSES = ('missing_key', 'invalid_key', 'documented_key',
+                        'other_namespaced_key', 'other_plain_key')
+_COUNTER_KNOWN_KEYS = {
+    'cpu.stat': frozenset(('usage_usec', 'user_usec', 'system_usec', 'nr_periods',
+                           'nr_throttled', 'throttled_usec', 'core_sched.force_idle_usec')),
+    'memory.events': frozenset(('low', 'high', 'max', 'oom', 'oom_kill', 'oom_group_kill')),
+    'memory.stat': frozenset(('pgscan_direct', 'pgsteal_direct')),
+}
+
+
+class _CounterParseError(ValueError):
+    """Private bounded parser details; never retain an arbitrary key/row/value."""
+
+    def __init__(self, detail, name, key=None):
+        self.detail = detail if detail in _COUNTER_PARSE_DETAILS else None
+        self.interface = name if name in _COUNTER_KNOWN_KEYS else None
+        self.known_key = key if key in _COUNTER_KNOWN_KEYS.get(self.interface, ()) else None
+        if key is None:
+            self.key_class = 'missing_key'
+        elif re.fullmatch(_COUNTER_KEY_PATTERN, key) is None:
+            self.key_class = 'invalid_key'
+        elif self.known_key is not None:
+            self.key_class = 'documented_key'
+        else:
+            self.key_class = 'other_namespaced_key' if '.' in key else 'other_plain_key'
+        # Preserve the safe diagnostic category while withholding unknown keys.
+        super().__init__('Malformed counter in ' + (self.interface or 'flat counters'))
+
+
 def _flat_counters(raw, required, name):
     result = {}
     for line in _text(raw, name).splitlines():
         fields = line.split()
-        _require(len(fields) == 2 and re.fullmatch(r'[a-z][a-z0-9_]*', fields[0]) is not None,
-                 'Malformed counter in ' + name)
-        _require(fields[0] not in result, 'Duplicate counter in ' + name)
-        result[fields[0]] = _uint(fields[1], name + '.' + fields[0])
+        if len(fields) != 2:
+            raise _CounterParseError('row_arity', name, fields[0] if fields else None)
+        if re.fullmatch(_COUNTER_KEY_PATTERN, fields[0]) is None:
+            raise _CounterParseError('invalid_key_syntax', name, fields[0])
+        if fields[0] in result:
+            raise _CounterParseError('duplicate_key', name, fields[0])
+        try:
+            result[fields[0]] = _uint(fields[1], name)
+        except ValueError:
+            raise _CounterParseError('invalid_uint', name, fields[0]) from None
     _require(set(required) <= set(result), 'Missing required counter in ' + name)
     return result
 
@@ -576,7 +617,7 @@ def validate_resource_pair(before, after, wall_nanos, controls):
 _DIAGNOSTIC_STAGES = ('basicObservations', 'controlObservation',
                       'counterObservation', 'finalBinding', 'outputBounding')
 _DIAGNOSTIC_FIELDS = tuple(sorted(set(_ROOT_CONTROLS + _NONROOT_CONTROLS + _NONROOT_COUNTERS) | {
-    'cpu.stat.throttled_usec', 'cpu.stat.nr_throttled',
+    'cpu.stat.throttled_usec', 'cpu.stat.nr_throttled', 'cpu.stat.core_sched.force_idle_usec',
     'memory.events.oom', 'memory.events.oom_kill', 'memory.events.max', 'memory.events.high',
     'memory.stat.pgscan_direct', 'memory.stat.pgsteal_direct',
     'cpu.pressure.some.total', 'cpu.pressure.full.total',
@@ -594,6 +635,22 @@ def _diagnostic_failure(error, stage):
     """
     if stage not in _DIAGNOSTIC_STAGES:
         stage = 'finalBinding'
+    if isinstance(error, _CounterParseError):
+        result = dict(reasonCode='malformed_counter', stage=stage,
+                      reason='A required counter observation is malformed; no eligibility established.')
+        if error.detail in _COUNTER_PARSE_DETAILS:
+            result['detail'] = error.detail
+        if error.key_class in _COUNTER_KEY_CLASSES:
+            result['keyClass'] = error.key_class
+        if error.interface in _COUNTER_KNOWN_KEYS:
+            field = error.interface
+            if error.known_key in _COUNTER_KNOWN_KEYS[field]:
+                result['knownKey'] = error.known_key
+                if field + '.' + error.known_key in _DIAGNOSTIC_FIELDS:
+                    field += '.' + error.known_key
+            result['field'] = field
+            result['reason'] += ' Field: ' + field + '.'
+        return result
     message = str(error)[:8192]
     field = next((name for name in _DIAGNOSTIC_FIELDS
                   if re.search(r'(?<![A-Za-z0-9_.])' + re.escape(name) + r'(?![A-Za-z0-9_])', message)), None)
