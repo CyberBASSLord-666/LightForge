@@ -111,7 +111,14 @@
     }
   }
   function drawTimelines() { drawLane('vocal', vocalPhrases, '#ddb2fc'); drawLane('bass', bassNotes, '#aceaa1'); updatePlayhead(); }
-  new ResizeObserver(drawTimelines).observe($('musicalRoleTimelines'));
+  let timelineResizeFrame = 0;
+  function scheduleTimelineResize() {
+    if (timelineResizeFrame) return;
+    // Pitch-lane height changes resize the observed ancestor. Apply them after
+    // ResizeObserver delivery, not inside its layout-notification loop.
+    timelineResizeFrame = requestAnimationFrame(() => { timelineResizeFrame = 0; drawTimelines(); });
+  }
+  new ResizeObserver(scheduleTimelineResize).observe($('musicalRoleTimelines'));
   function renderRoles(s) {
     const music = s.music, show = s.show, analyzedVocals = music?.vocals, vocals = show?.choreography?.vocalDetail || analyzedVocals, bass = music?.bassAnalysis;
     const legacy = !music || (music.analysisVersion || 1) < 4;

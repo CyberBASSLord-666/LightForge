@@ -547,6 +547,187 @@ class DiagnosticCliTest(unittest.TestCase):
         self.assertNotIn('SENSITIVE_PATH', json.dumps(record))
         self.assertIn('unsafe or noncanonical', record['reason'])
 
+    def assert_failure(self, record, code, stage, field=None):
+        self.assertFalse(record['eligible'])
+        self.assertFalse(record['qualificationEstablished'])
+        self.assertFalse(record['releaseAdmissible'])
+        self.assertFalse(record['fullQualificationEvidence'])
+        self.assertEqual(record['reasonCode'], code)
+        self.assertEqual(record['stage'], stage)
+        self.assertNotIn('verifiedHostControls', record)
+        self.assertNotIn('observedCounters', record)
+        self.assertLess(len(json.dumps(record).encode()), 1024 * 1024)
+        if field is not None:
+            self.assertEqual(record['field'], field)
+
+    def test_missing_interfaces_are_distinguished_by_stage_and_allowed_field(self):
+        for name, stage in [('cpu.max', 'controlObservation'),
+                            ('cpuset.cpus.effective', 'controlObservation'),
+                            ('memory.high', 'controlObservation'),
+                            ('cpu.stat', 'counterObservation'),
+                            ('memory.events', 'counterObservation'),
+                            ('memory.pressure', 'counterObservation')]:
+            with self.subTest(name=name):
+                reader = FixtureReader()
+                del reader.files[MOUNT + '/batch/worker/' + name]
+                record = HOST.diagnose(reader=reader)
+                self.assert_failure(record, 'missing_interface', stage, name)
+                self.assertNotIn('errno', record)  # The fixture has no OS errno.
+                self.assertNotIn('/batch/worker/', record['reason'])
+
+    def test_unreadable_interface_errno_is_safe_and_not_a_missing_zero(self):
+        class UnreadableFixture(FixtureReader):
+            def read_text(self, path):
+                if path.endswith('/memory.high'):
+                    raise PermissionError(13, 'SECRET_OS_TEXT', '/SECRET_DIR/memory.high')
+                return super().read_text(path)
+        record = HOST.diagnose(reader=UnreadableFixture())
+        self.assert_failure(record, 'unreadable_interface', 'controlObservation', 'memory.high')
+        self.assertEqual(record['errno'], 13)
+        self.assertNotIn('SECRET', json.dumps(record))
+        # An arbitrary failed directory is not echoed as though it were a field.
+        failure = HOST._diagnostic_failure(OSError(5, 'SECRET_IO', '/SECRET_DIR/unknown'), 'counterObservation')
+        self.assertEqual(failure['reasonCode'], 'unreadable_interface')
+        self.assertEqual(failure['errno'], 5)
+        self.assertNotIn('field', failure)
+        self.assertNotIn('SECRET', json.dumps(failure))
+
+    def test_malformed_constraints_have_precise_safe_fields(self):
+        for name, raw in [('cpu.max', 'max'), ('cpu.max', '400000 0'),
+                          ('memory.max', 'not-a-limit'), ('memory.high', '-1'),
+                          ('cpuset.cpus.effective', ''), ('cpuset.mems.effective', '1-0'),
+                          ('cgroup.controllers', 'cpu cpu'), ('cgroup.type', '')]:
+            with self.subTest(name=name, raw=raw):
+                reader = FixtureReader(); reader.files[MOUNT + '/batch/worker/' + name] = raw
+                self.assert_failure(HOST.diagnose(reader=reader), 'malformed_constraint',
+                                    'controlObservation', name)
+
+    def test_disabled_and_unavailable_controllers_are_not_inferred_from_missing_files(self):
+        reader = FixtureReader()
+        reader.files[MOUNT + '/batch/cgroup.subtree_control'] = 'cpu cpuset\n'
+        self.assert_failure(HOST.diagnose(reader=reader), 'disabled_controller', 'controlObservation')
+        reader = FixtureReader()
+        reader.files[MOUNT + '/batch/cgroup.controllers'] = 'cpuset memory\n'
+        self.assert_failure(HOST.diagnose(reader=reader), 'unavailable_controller', 'controlObservation')
+        reader = FixtureReader()
+        del reader.files[MOUNT + '/batch/memory.max']
+        self.assert_failure(HOST.diagnose(reader=reader), 'missing_interface', 'controlObservation', 'memory.max')
+
+    def test_capacity_failure_does_not_claim_which_capacity_limit_was_responsible(self):
+        for reader in (FixtureReader(affinity=[0, 1, 2]), FixtureReader(quota='399999 100000\n')):
+            with self.subTest(affinity=reader.cpus):
+                record = HOST.diagnose(reader=reader)
+                self.assert_failure(record, 'insufficient_cpu_capacity', 'controlObservation')
+                self.assertNotIn('field', record)
+                self.assertNotIn('cpu.max', record['reason'])
+
+    def test_missing_required_counters_and_malformed_counters_are_distinct(self):
+        for name, required in [('cpu.stat', 'nr_throttled'), ('memory.events', 'high'),
+                               ('memory.stat', 'pgscan_direct')]:
+            with self.subTest(name=name):
+                reader = FixtureReader(); path = MOUNT + '/batch/worker/' + name
+                reader.files[path] = '\n'.join(line for line in reader.files[path].splitlines()
+                                                if not line.startswith(required + ' ')) + '\n'
+                record = HOST.diagnose(reader=reader)
+                self.assert_failure(record, 'missing_required_counter', 'counterObservation', name)
+                self.assertIn('missing values are not zero', record['reason'])
+        reader = FixtureReader()
+        reader.files[MOUNT + '/batch/worker/cpu.stat'] = 'nr_throttled 0\nthrottled_usec NaN\n'
+        self.assert_failure(HOST.diagnose(reader=reader), 'malformed_counter',
+                            'counterObservation', 'cpu.stat.throttled_usec')
+
+    def test_invalid_psi_is_explicit_and_no_pressure_is_synthesized(self):
+        for name, raw in [('cpu.pressure', PRESSURE.splitlines()[0]),
+                          ('memory.pressure', PRESSURE.replace('total=100', 'total=NaN')),
+                          ('memory.pressure', '')]:
+            with self.subTest(name=name, raw=raw):
+                reader = FixtureReader(); reader.files[MOUNT + '/batch/worker/' + name] = raw
+                record = HOST.diagnose(reader=reader)
+                self.assert_failure(record, 'invalid_psi', 'counterObservation')
+                self.assertTrue(record['field'].startswith(name))
+
+    def test_changed_identity_control_and_final_binding_stages_are_preserved(self):
+        class ChangingDirectory(FixtureReader):
+            identity_calls = 0
+            def identity(self, path):
+                identity = super().identity(path)
+                self.identity_calls += 1
+                identity['inode'] += self.identity_calls
+                return identity
+        self.assert_failure(HOST.diagnose(reader=ChangingDirectory()),
+                            'changed_identity', 'controlObservation')
+        class ChangingCounterIdentity(FixtureReader):
+            def read_text(self, path):
+                raw = super().read_text(path)
+                if path.endswith('/cpu.pressure'):
+                    self.identities[path.rsplit('/', 1)[0]]['inode'] += 10
+                return raw
+        self.assert_failure(HOST.diagnose(reader=ChangingCounterIdentity()),
+                            'changed_identity', 'counterObservation')
+        class ChangingControls(FixtureReader):
+            affinity_calls = 0
+            def affinity(self):
+                self.affinity_calls += 1
+                return list(range(8 if self.affinity_calls < 3 else 7))
+        self.assert_failure(HOST.diagnose(reader=ChangingControls()),
+                            'changed_controls', 'controlObservation')
+        class ChangingInitialBinding(FixtureReader):
+            affinity_calls = 0
+            def affinity(self):
+                self.affinity_calls += 1
+                return list(range(8 if self.affinity_calls == 1 else 7))
+        self.assert_failure(HOST.diagnose(reader=ChangingInitialBinding()),
+                            'changed_identity', 'finalBinding')
+
+    def test_basic_observation_errors_get_codes_without_leaking_bad_mount_text(self):
+        reader = FixtureReader()
+        reader.files['/proc/self/mountinfo'] += 'malformed SECRET_MOUNT_OPTIONS /SECRET_PATH\n'
+        record = HOST.diagnose(reader=reader)
+        self.assert_failure(record, 'malformed_mount_topology', 'controlObservation')
+        self.assertEqual(len(record['observationErrors']), 1)
+        failure = record['observationErrors'][0]
+        self.assertEqual(failure['observation'], 'cgroup2Mounts')
+        self.assertEqual(failure['reasonCode'], 'malformed_mount_topology')
+        self.assertEqual(failure['stage'], 'basicObservations')
+        self.assertNotIn('SECRET', json.dumps(record))
+
+    def test_same_basic_host_observations_do_not_prove_the_unreported_cause(self):
+        # Deliberately share the visible four-CPU/global-namespace topology.
+        # These synthetic cases have different failures; none diagnose a real run.
+        records = []
+        for name, raw in [('cpu.max', 'max'), ('memory.high', 'invalid')]:
+            reader = FixtureReader(leaf='/system.slice/hosted-compute-agent.service', affinity=[0, 1, 2, 3])
+            reader.files[MOUNT + '/system.slice/hosted-compute-agent.service/' + name] = raw
+            records.append(HOST.diagnose(reader=reader))
+        self.assertEqual(records[0]['observations'], records[1]['observations'])
+        self.assertEqual(records[0]['field'], 'cpu.max')
+        self.assertEqual(records[1]['field'], 'memory.high')
+        self.assertTrue(all(not record['eligible'] for record in records))
+
+    def test_unknown_failures_remain_generic_and_exception_contents_are_not_echoed(self):
+        for error in (ValueError('SECRET_UNKNOWN'), ValueError('SECRET_UNKNOWN cpu.stat'),
+                      OSError(123456789, 'SECRET_OS', '/SECRET_DIR/unknown')):
+            failure = HOST._diagnostic_failure(error, 'controlObservation')
+            self.assertNotIn('SECRET', json.dumps(failure))
+            self.assertNotIn('123456789', json.dumps(failure))
+            if not isinstance(error, OSError):
+                self.assertEqual(failure['reasonCode'], 'unclassified_validation_failure')
+        reader = FixtureReader()
+        with mock.patch.object(HOST, 'observe_controls', side_effect=ValueError('SECRET_UNKNOWN')):
+            record = HOST.diagnose(reader=reader)
+        self.assert_failure(record, 'unclassified_validation_failure', 'controlObservation')
+        self.assertNotIn('SECRET', json.dumps(record))
+
+    def test_output_limit_keeps_failure_code_and_never_admits_truncated_evidence(self):
+        reader = FixtureReader()
+        # A large but supported raw counter file makes the resulting diagnostic
+        # projection exceed one MiB without modifying any validation behavior.
+        reader.files[MOUNT + '/batch/worker/memory.stat'] += ''.join(
+            'fixture_gauge_' + str(index) + ' 0\n' for index in range(50000))
+        record = HOST.diagnose(reader=reader)
+        self.assert_failure(record, 'diagnostic_output_too_large', 'outputBounding')
+        self.assertLess(len(json.dumps(record).encode()), 2048)
+
     def test_cli_emits_only_json_and_sets_eligibility_exit_status(self):
         for eligible in (False, True):
             record = dict(eligible=eligible, qualificationEstablished=False, releaseAdmissible=False)

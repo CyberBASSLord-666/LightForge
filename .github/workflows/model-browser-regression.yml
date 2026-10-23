@@ -111,11 +111,17 @@ jobs:
           python3 tools/prepare_deux.py
           python3 tools/verify_analysis_assets.py
           git diff --exit-code -- web/analysis
+      - name: Ensure official fixture decoder is available
+        timeout-minutes: 15
+        run: |
+          if ! command -v ffmpeg >/dev/null 2>&1; then
+            sudo apt-get update -qq
+            sudo apt-get install -y --no-install-recommends ffmpeg
+          fi
+          ffmpeg -version
       - name: Reproduce original licensed public reference fixture
         timeout-minutes: 5
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y ffmpeg
           mkdir -p qa/release-1.6.0/fixtures
           curl -fL --retry 3 https://github.com/sigsep/sigsep-mus-db/releases/download/v0.4.0/MUSDB18-7-STEMS.zip -o qa/release-1.6.0/fixtures/MUSDB18-7-STEMS.zip
           echo '365f66acffc57282e474a4c24b32afec3678258c50b8d45646ac849b0a287df3  qa/release-1.6.0/fixtures/MUSDB18-7-STEMS.zip' | sha256sum -c

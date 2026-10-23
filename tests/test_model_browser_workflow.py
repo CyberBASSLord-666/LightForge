@@ -7,6 +7,7 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 from types import SimpleNamespace
 import unittest
@@ -158,6 +159,60 @@ class ModelBrowserWorkflowTest(unittest.TestCase):
             ('context.json', 'process.json', 'browser.log', 'analysis-browser-verification.json', 'actual-analysis-falcon.json')])
         self.assertIn('${{ github.run_id }}-${{ github.run_attempt }}', upload)
         self.assertIn('if: always()', step('Collect only bounded public-fixture diagnostics, including failures'))
+
+    def test_decoder_setup_is_separately_bounded_without_changing_fixture(self):
+        decoder = step('Ensure official fixture decoder is available')
+        self.assertIn('timeout-minutes: 15', decoder)
+        self.assertIn('if ! command -v ffmpeg >/dev/null 2>&1; then', decoder)
+        self.assertIn('sudo apt-get update -qq', decoder)
+        self.assertIn('sudo apt-get install -y --no-install-recommends ffmpeg', decoder)
+        self.assertTrue(shell('Ensure official fixture decoder is available').endswith('ffmpeg -version'))
+        fixture = step('Reproduce original licensed public reference fixture')
+        self.assertIn('timeout-minutes: 5', fixture)
+        self.assertNotIn('apt-get', fixture)
+        self.assertNotIn('continue-on-error', decoder + fixture)
+        self.assertIn('curl -fL --retry 3 https://github.com/sigsep/sigsep-mus-db/releases/download/v0.4.0/MUSDB18-7-STEMS.zip', fixture)
+        self.assertIn("echo '365f66acffc57282e474a4c24b32afec3678258c50b8d45646ac849b0a287df3  qa/release-1.6.0/fixtures/MUSDB18-7-STEMS.zip' | sha256sum -c", fixture)
+        self.assertIn('python3 qa/release-1.6.0/prepare-musdb-fixtures.py', fixture)
+        self.assertIn('git diff --exit-code -- qa/release-1.6.0/musdb-fixture-provenance.json', fixture)
+        self.assertLess(WORKFLOW.index('Ensure official fixture decoder is available'),
+                        WORKFLOW.index('Reproduce original licensed public reference fixture'))
+
+    @unittest.skipUnless(shutil.which('bash'), 'The Linux workflow shell is required')
+    def test_decoder_setup_reuses_existing_binary_or_installs_fail_closed(self):
+        bash = shutil.which('bash')
+        for mode in ('existing', 'install', 'failure'):
+            with self.subTest(mode=mode), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                binary = '#!/bin/sh\nprintf "fixture-test-ffmpeg-version\\n"\n'
+                ffmpeg = root / 'ffmpeg'
+                if mode == 'existing':
+                    ffmpeg.write_text(binary)
+                    ffmpeg.chmod(0o755)
+                sudo = root / 'sudo'
+                sudo.write_text(f'#!{sys.executable}\n' +
+                    'import os, pathlib, sys\n' +
+                    'root = pathlib.Path(os.environ["PATH"])\n' +
+                    'with (root / "apt-calls").open("a") as stream: stream.write(" ".join(sys.argv[1:]) + "\\n")\n' +
+                    f'if {mode!r} == "existing": sys.exit(99)\n' +
+                    f'if {mode!r} == "failure": sys.exit(41)\n' +
+                    'if sys.argv[1:3] == ["apt-get", "install"]:\n' +
+                    f'    target = root / "ffmpeg"; target.write_text({binary!r}); target.chmod(0o755)\n')
+                sudo.chmod(0o755)
+                result = subprocess.run([bash, '-e', '-c', shell('Ensure official fixture decoder is available')],
+                                        env={**os.environ, 'PATH': directory}, capture_output=True, text=True, timeout=5)
+                calls = (root / 'apt-calls').read_text() if (root / 'apt-calls').exists() else ''
+                if mode == 'existing':
+                    self.assertEqual(calls, '')
+                elif mode == 'install':
+                    self.assertEqual(calls, 'apt-get update -qq\napt-get install -y --no-install-recommends ffmpeg\n')
+                else:
+                    self.assertEqual(result.returncode, 41)
+                    self.assertEqual(calls, 'apt-get update -qq\n')
+                    self.assertFalse(ffmpeg.exists())
+                    continue
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertIn('fixture-test-ffmpeg-version', result.stdout)
 
     def inspect_capacity(self, cpu_count=4, memory_kib=12 * 1024**2, free_disk=12 * 1024**3):
         with tempfile.TemporaryDirectory() as directory:

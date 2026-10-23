@@ -570,44 +570,146 @@ def validate_resource_pair(before, after, wall_nanos, controls):
     return summary
 
 
-def _diagnostic_reason(error):
-    """Expose an actionable category, never raw exception paths or contents."""
-    message = str(error)
-    safe = (
-        'Procfs self PID identity is unavailable',
-        'Procfs self PID identity is malformed',
-        'Procfs PID namespace does not match the current process',
-        'Initial/global cgroup namespace is required; hidden ancestors cannot be qualified',
-        'The measured process must be in a non-root cgroup with real resource counters',
-        'At least four effective CPUs and one full reserved CPU are required',
-        'Exactly one unified cgroup-v2 membership is required',
-        'Ambiguous or mixed cgroup mounts',
-        'Cgroup mount must expose the complete global hierarchy, not a hidden mount root',
-        'memory_localevents hides hierarchical memory events',
-        'Unexpected cgroup subtree overlay or duplicate mount',
-        'A complete, unambiguous proc filesystem is required',
-        'Unexpected process proc subtree overlay',
-        'An ancestor does not enable all required child controllers',
-        'Threaded/invalid cgroups are unsupported',
-        'Partitioned cpusets are unsupported by this qualification lane',
-        'Host controls changed during observation',
-        'Host controls changed before counters were observed',
-        'Host controls changed while counters were observed',
-        'Host identity changed during diagnostic observation',
-        'Some required diagnostic observations are unavailable',
-    )
-    if message in safe:
-        return message
-    if message.startswith('Unsafe or noncanonical path:'):
-        return 'A host topology path is unsafe or noncanonical; path details omitted.'
-    if 'mountinfo' in message.lower() or 'mount ID' in message or 'mount device' in message:
-        return 'The observed mount topology is malformed or ambiguous; unrelated mount details omitted.'
+# Diagnostic classification is a reporting layer only. Do not move validation,
+# fallback reads or qualification decisions here. Fields and reasons below are
+# static allowlists; exception messages/filenames/options are never reflected.
+_DIAGNOSTIC_STAGES = ('basicObservations', 'controlObservation',
+                      'counterObservation', 'finalBinding', 'outputBounding')
+_DIAGNOSTIC_FIELDS = tuple(sorted(set(_ROOT_CONTROLS + _NONROOT_CONTROLS + _NONROOT_COUNTERS) | {
+    'cpu.stat.throttled_usec', 'cpu.stat.nr_throttled',
+    'memory.events.oom', 'memory.events.oom_kill', 'memory.events.max', 'memory.events.high',
+    'memory.stat.pgscan_direct', 'memory.stat.pgsteal_direct',
+    'cpu.pressure.some.total', 'cpu.pressure.full.total',
+    'memory.pressure.some.total', 'memory.pressure.full.total',
+}, key=len, reverse=True))
+
+
+def _diagnostic_failure(error, stage):
+    """Classify existing failures without inferring a cause or exposing inputs.
+
+    reasonCode and stage are stable machine-readable additions to diagnostic
+    v1. An allowlisted field and a bounded OS errno are optional. In particular,
+    insufficient_cpu_capacity does not claim whether affinity or any particular
+    ancestor quota was the limiting factor: the validator does not report that.
+    """
+    if stage not in _DIAGNOSTIC_STAGES:
+        stage = 'finalBinding'
+    message = str(error)[:8192]
+    field = next((name for name in _DIAGNOSTIC_FIELDS
+                  if re.search(r'(?<![A-Za-z0-9_.])' + re.escape(name) + r'(?![A-Za-z0-9_])', message)), None)
+    exact = {
+        'procfs_identity_unavailable': ('Procfs self PID identity is unavailable',),
+        'procfs_identity_malformed': ('Procfs self PID identity is malformed',),
+        'procfs_pid_namespace_mismatch': ('Procfs PID namespace does not match the current process',),
+        'unsupported_cgroup_namespace': (
+            'Initial/global cgroup namespace is required; hidden ancestors cannot be qualified',),
+        'root_process_cgroup': (
+            'The measured process must be in a non-root cgroup with real resource counters',),
+        'insufficient_cpu_capacity': (
+            'At least four effective CPUs and one full reserved CPU are required',),
+        'invalid_cgroup_membership': ('Exactly one unified cgroup-v2 membership is required',),
+        'ambiguous_cgroup_mounts': ('Ambiguous or mixed cgroup mounts',),
+        'hidden_cgroup_ancestors': (
+            'Cgroup mount must expose the complete global hierarchy, not a hidden mount root',),
+        'nonhierarchical_memory_events': ('memory_localevents hides hierarchical memory events',),
+        'unexpected_cgroup_overlay': ('Unexpected cgroup subtree overlay or duplicate mount',),
+        'unsupported_proc_mount': ('A complete, unambiguous proc filesystem is required',),
+        'unexpected_proc_overlay': ('Unexpected process proc subtree overlay',),
+        'disabled_controller': ('An ancestor does not enable all required child controllers',),
+        'unavailable_controller': ('Enabled cgroup controller is unavailable',),
+        'unsupported_cgroup_type': ('Threaded/invalid cgroups are unsupported',),
+        'unsupported_cpuset_partition': ('Partitioned cpusets are unsupported by this qualification lane',),
+        'changed_controls': ('Host controls changed during observation',
+                             'Host controls changed before counters were observed',
+                             'Host controls changed while counters were observed',
+                             'Counter snapshot controls changed or do not match the recorded host'),
+        'changed_identity': ('Host identity changed during diagnostic observation',
+                             'Cgroup directory changed during observation',
+                             'Counter ancestor identity changed'),
+        'required_observation_unavailable': ('Some required diagnostic observations are unavailable',),
+        'unsupported_platform': ('The portable lane requires Linux x86_64',),
+        'invalid_cpu_affinity': ('Missing parent CPU affinity', 'Invalid parent CPU affinity'),
+        'inconsistent_cpu_allowance': ('Parent affinity is outside an ancestor CPU allowance',
+                                       'Inconsistent ancestor CPU allowances'),
+        'inconsistent_memory_allowance': ('Inconsistent ancestor memory-node allowances',),
+        'invalid_cgroup_identity': ('Cgroup path is not a directory on the observed cgroup2 filesystem',
+                                    'Aliased ancestor directory identity', 'Invalid integer cgroup inode'),
+    }
+    result = dict(reasonCode='unclassified_validation_failure', stage=stage,
+                  reason='Host topology, limits or counters failed strict validation; no eligibility established.')
     if isinstance(error, OSError):
-        files = sorted(set(_ROOT_CONTROLS + _NONROOT_CONTROLS + _NONROOT_COUNTERS), key=len, reverse=True)
-        target = next((name for name in files if re.search(r'(?:^|[/\s\x27\x22])' + re.escape(name)
-                                                          + r'(?:$|[\s\x27\x22])', message)), None)
-        return 'A required read-only host observation is unavailable' + (': ' + target if target else '.')
-    return 'Host topology, limits or counters failed strict validation; no eligibility established.'
+        # Missing files are categorically different from permission or I/O
+        # failures. Neither category tells us why an interface is unavailable.
+        if isinstance(error, FileNotFoundError) or error.errno == 2:
+            result.update(reasonCode='missing_interface',
+                          reason='A required read-only host interface is missing; no eligibility established.')
+        else:
+            result.update(reasonCode='unreadable_interface',
+                          reason='A required read-only host interface is unreadable; no eligibility established.')
+        if type(error.errno) is int and 0 < error.errno <= 4095:
+            result['errno'] = error.errno
+        # LinuxReader's descriptor-relative open may expose only the failed
+        # basename. Accept it only when it is already on the static allowlist.
+        filename = error.filename
+        if type(filename) is str and posixpath.basename(filename) in _DIAGNOSTIC_FIELDS:
+            field = posixpath.basename(filename)
+    else:
+        matched = False
+        for code, reasons in exact.items():
+            for reason in reasons:
+                if message == reason:
+                    result.update(reasonCode=code, reason=reason)
+                    matched = True
+                    break
+            if matched:
+                break
+        if not matched:
+            if message.startswith('Unsafe or noncanonical path:'):
+                result.update(reasonCode='unsafe_topology_path',
+                              reason='A host topology path is unsafe or noncanonical; path details omitted.')
+            elif ('mountinfo' in message.lower() or 'mount ID' in message
+                  or 'mount device' in message or message == 'Missing mounts'
+                  or message == 'Malformed or missing procMountinfo'):
+                result.update(reasonCode='malformed_mount_topology',
+                              reason='The observed mount topology is malformed or ambiguous; unrelated mount details omitted.')
+            elif message.startswith('Missing required counter in ') and field:
+                result.update(reasonCode='missing_required_counter',
+                              reason='A required counter is absent from an observed interface; missing values are not zero.')
+            elif (field and field.startswith(('cpu.pressure', 'memory.pressure'))
+                  and message.startswith(('Malformed/duplicate PSI observation in ',
+                    'Malformed/duplicate PSI field in ', 'Missing PSI fields in ',
+                    'Invalid PSI average in ', 'Missing some/full PSI observations in ',
+                    'PSI full exceeds some in ', 'Malformed or missing ',
+                    'Malformed unsigned integer ', 'Out-of-range '))):
+                result.update(reasonCode='invalid_psi',
+                              reason='A required PSI observation is missing or malformed; no eligibility established.')
+            elif (field and field.startswith(('cpu.stat', 'memory.events', 'memory.stat'))
+                  and message.startswith(('Malformed counter in ', 'Duplicate counter in ',
+                    'Malformed or missing ', 'Malformed unsigned integer ', 'Out-of-range '))):
+                result.update(reasonCode='malformed_counter',
+                              reason='A required counter observation is malformed; no eligibility established.')
+            elif (field and field in _NONROOT_CONTROLS
+                  and message.startswith(('Malformed ', 'Invalid ', 'Empty ',
+                                          'Unordered, duplicate or invalid ', 'Out-of-range '))):
+                result.update(reasonCode='malformed_constraint',
+                              reason='An observed host constraint is missing or malformed; no eligibility established.')
+            elif message.startswith('Observation file too large:'):
+                result.update(reasonCode='oversize_observation',
+                              reason='A required observation exceeds the supported size limit; no eligibility established.')
+            elif message.startswith('Not a regular observation file:'):
+                result.update(reasonCode='invalid_interface_type',
+                              reason='A required observation is not a regular interface file; no eligibility established.')
+    if field:
+        result['field'] = field
+        # Preserve the original reason's useful interface hint, but only after
+        # reducing it to an allowed field name, never an arbitrary path.
+        result['reason'] += ' Field: ' + field + '.'
+    return result
+
+
+def _diagnostic_reason(error):
+    """Compatibility wrapper returning the safe, static explanation only."""
+    return _diagnostic_failure(error, 'finalBinding')['reason']
 
 
 def diagnose(*, reader=None):
@@ -637,10 +739,14 @@ def diagnose(*, reader=None):
         try:
             record['observations'][name] = observe()
         except (OSError, ValueError, UnicodeError) as error:
-            record['observationErrors'].append(dict(observation=name, reason=_diagnostic_reason(error)))
+            record['observationErrors'].append(dict(observation=name,
+                **_diagnostic_failure(error, 'basicObservations')))
+    stage = 'controlObservation'
     try:
         controls = observe_controls(reader=reader)
+        stage = 'counterObservation'
         counters = observe_counters(controls, reader=reader)
+        stage = 'finalBinding'
         _require(not record['observationErrors'], 'Some required diagnostic observations are unavailable')
         _require(record['observations']['parentCpuAffinity'] == controls['parentCpuAffinity']
                  and record['observations']['cgroupNamespace'] == controls['namespace']['link']
@@ -654,12 +760,13 @@ def diagnose(*, reader=None):
                                       if key != 'observedControls'}
         record['eligible'] = True
     except (OSError, ValueError, UnicodeError) as error:
-        record['reason'] = _diagnostic_reason(error)
+        record.update(_diagnostic_failure(error, stage))
     # The CLI must not become an unbounded system-information dump. Oversize
     # reports explicitly fail eligibility instead of silently truncating proof.
     if len(json.dumps(record, allow_nan=False).encode()) > 1024 * 1024:
         record = dict(schema=record['schema'], scope=record['scope'], eligible=False,
                       qualificationEstablished=False, releaseAdmissible=False, fullQualificationEvidence=False,
+                      reasonCode='diagnostic_output_too_large', stage='outputBounding',
                       reason='Complete diagnostic exceeds the one-MiB output limit; no eligibility established.')
     return record
 
