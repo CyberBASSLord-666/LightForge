@@ -113,7 +113,10 @@ def validate_measurements(record):
         require(output['sha256'] == output_hash, 'Full output bytes differ')
         temporal_calls = 15 if run['variant'] == 'baseline' else 60
         frequency_calls = 11 if run['variant'] == 'baseline' else 82
-        counts = {name: 1 if name == 'front' else temporal_calls if name.endswith('-time') else frequency_calls for name in GRAPH_NAMES}
+        # Output heads retain 128-frame chunks (ceil(1301 / 128) == 11);
+        # only the twelve frequency blocks use the candidate's 16-frame batch.
+        counts = {name: 1 if name == 'front' else temporal_calls if name.endswith('-time')
+                  else frequency_calls if name.endswith('-frequency') else 11 for name in GRAPH_NAMES}
         coverage = dict(graphCount=27, stageCount=15, inferenceCalls=sum(counts.values()), graphRunCounts=counts)
         require(run.get('coverage') == coverage, 'Incomplete original graph/band/frame work')
         for name in ('oom', 'oom_kill', 'max'):

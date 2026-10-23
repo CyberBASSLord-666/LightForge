@@ -14,6 +14,23 @@ GATE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(GATE)
 
 
+def production_coverage(variant):
+    """Independent original-graph geometry, not the gate's branch expression.
+
+    Twelve blocks each cover 60 bands and all 1301 frames. The two output
+    heads always use 128-frame chunks, independent of frequency-block batching.
+    """
+    bands, frames, head_batch = 60, 1301, 128
+    time_batch, frequency_batch = (4, 128) if variant == 'baseline' else (1, 16)
+    head_calls = (frames + head_batch - 1) // head_batch
+    counts = {'front': 1, 'head-0': head_calls, 'head-1': head_calls}
+    for block in range(12):
+        counts[f'block-{block:02d}-time'] = (bands + time_batch - 1) // time_batch
+        counts[f'block-{block:02d}-frequency'] = (frames + frequency_batch - 1) // frequency_batch
+    return dict(graphCount=len(counts), stageCount=15,
+                inferenceCalls=sum(counts.values()), graphRunCounts=counts)
+
+
 def valid():
     record = dict(schema='lightforge.production-parallel-qualification.v3', passed=True,
                   allOutputsByteIdentical=True, androidSpeedupProven=False,
@@ -26,16 +43,13 @@ def valid():
     for phase, pairs in [('warmup', 1), ('measurement', 3)]:
         for index in range(pairs):
             for order, variant in enumerate(('candidate', 'baseline') if index % 2 else ('baseline', 'candidate')):
-                count = 15 if variant == 'baseline' else 60
-                frequency = 11 if variant == 'baseline' else 82
-                counts = {g: 1 if g == 'front' else count if g.endswith('-time') else frequency for g in GATE.GRAPH_NAMES}
                 counters = dict(cgroupMemoryEvents=dict(oom=0, oom_kill=0, max=0),
                                 cgroupMemoryStat=dict(pgscan_direct=0, pgsteal_direct=0),
                                 cgroupCpuStat=dict(throttled_usec=0))
                 record['runs'].append(dict(phase=phase, pairIndex=index, orderInPair=order, variant=variant,
                     wallNanos=100000000 if variant == 'baseline' else 75000000, processCpuNanos=250000000,
                     peakRssBytes=1000000000, output=dict(sha256='a'*64, bytes=4586400, floats=1146600, finite=True),
-                    coverage=dict(graphCount=27, stageCount=15, inferenceCalls=sum(counts.values()), graphRunCounts=counts),
+                    coverage=production_coverage(variant),
                     executionContext=dict(cpuAffinity=list(range(7)), availableProcessors=7),
                     hostCountersBefore=copy.deepcopy(counters), hostCountersAfter=copy.deepcopy(counters)))
     record['pairedReductions'] = [dict(pairIndex=i, baselineWallNanos=100000000, candidateWallNanos=75000000,
@@ -81,6 +95,41 @@ class InferenceImprovementTest(unittest.TestCase):
         value = valid()
         value['hostControls'].update(cgroupCpuQuota='850000 100000', quotaCpuCapacity=8.5)
         self.assertEqual(GATE.validate_measurements(value), 25.)
+
+    def test_original_graph_geometry_keeps_heads_separate_from_frequency_blocks(self):
+        for variant, temporal, frequency, total in (
+                ('baseline', 15, 11, 335), ('candidate', 60, 82, 1727)):
+            with self.subTest(variant=variant):
+                coverage = production_coverage(variant)
+                self.assertEqual(coverage['graphCount'], 27)
+                self.assertEqual(coverage['graphRunCounts']['front'], 1)
+                self.assertEqual(coverage['graphRunCounts']['head-0'], 11)
+                self.assertEqual(coverage['graphRunCounts']['head-1'], 11)
+                self.assertEqual(coverage['inferenceCalls'], 1 + 12 * temporal + 12 * frequency + 2 * 11)
+                self.assertEqual(coverage['inferenceCalls'], total)
+                self.assertEqual(GATE.GEOMETRY[variant]['inferenceCalls'], total)
+        self.assertEqual(GATE.validate_measurements(valid()), 25.)
+
+    def test_wrong_head_counts_rejected_even_with_consistent_or_unchanged_total(self):
+        for first, second in ((0, 11), (10, 11), (12, 11), (82, 82), (10, 12)):
+            with self.subTest(head_calls=(first, second)):
+                record = valid()
+                coverage = record['runs'][3]['coverage']
+                coverage['graphRunCounts'].update({'head-0': first, 'head-1': second})
+                coverage['inferenceCalls'] = sum(coverage['graphRunCounts'].values())
+                with self.assertRaisesRegex(ValueError, 'Incomplete original graph/band/frame work'):
+                    GATE.validate_measurements(record)
+
+    def test_previous_1869_call_head_overcount_is_not_admissible(self):
+        record = valid()
+        for run in record['runs']:
+            if run['variant'] == 'candidate':
+                coverage = run['coverage']
+                coverage['graphRunCounts'].update({'head-0': 82, 'head-1': 82})
+                coverage['inferenceCalls'] = sum(coverage['graphRunCounts'].values())
+                self.assertEqual(coverage['inferenceCalls'], 1869)
+        with self.assertRaisesRegex(ValueError, 'Incomplete original graph/band/frame work'):
+            GATE.validate_measurements(record)
 
     def test_missing_repeat_changed_output_geometry_or_clock_rejected(self):
         transforms = [lambda r: r['runs'].pop(),
