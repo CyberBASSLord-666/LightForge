@@ -10,6 +10,7 @@ import java.util.Arrays;
 /** Measures unchanged production classes through explicit host-only constructors. */
 public final class NativeDeuxParallelBenchmark {
     private static final String PORTABLE_PROTOCOL = "portable-four-worker-three-cpu-v1";
+    private static final String BOUNDED_PROTOCOL = "bounded-four-worker-three-cpu-v1";
     private static long peakRss() throws Exception {
         for (String line : Files.readAllLines(Paths.get("/proc/self/status")))
             if (line.startsWith("VmHWM:")) return Long.parseLong(line.trim().split("\\s+")[1]) * 1024;
@@ -75,7 +76,7 @@ public final class NativeDeuxParallelBenchmark {
         if (args.length != 6 && args.length != 7)
             throw new IllegalArgumentException("models audio output startSample profile variant [protocol]");
         boolean portable = args.length == 7;
-        if (portable && (!PORTABLE_PROTOCOL.equals(args[6])
+        if (portable && (!(PORTABLE_PROTOCOL.equals(args[6]) || BOUNDED_PROTOCOL.equals(args[6]))
                 || !("baseline".equals(args[5]) || "candidate4".equals(args[5]))))
             throw new IllegalArgumentException("Unsupported portable host protocol or variant.");
         String affinity = cpuAffinity();
@@ -100,7 +101,7 @@ public final class NativeDeuxParallelBenchmark {
         System.out.println("{\"wallNanos\":" + elapsed + ",\"processCpuNanos\":" + elapsedCpu
             + ",\"peakRssBytes\":" + peakRss() + ",\"cpuAffinityList\":\"" + affinity
             + "\",\"availableProcessors\":" + availableProcessors
-            + (portable ? ",\"protocol\":\"" + PORTABLE_PROTOCOL + "\",\"hostVariant\":\"" + args[5]
+            + (portable ? ",\"protocol\":\"" + args[6] + "\",\"hostVariant\":\"" + args[5]
                 + "\",\"referenceIntraThreads\":" + NativeExecutionPolicy.baseline(availableProcessors).intraThreads
                 + ",\"resourceIdentityBefore\":" + resourceIdentityBefore
                 + ",\"resourceIdentityAfter\":" + resourceIdentityAfter : "") + "}");

@@ -22,6 +22,8 @@ import subprocess
 import benchmark_deux_parallel as benchmark
 
 ROOT = Path(__file__).resolve().parents[1]
+RELEASE = json.loads((ROOT / 'version.json').read_text())['name']
+CURRENT_ANALYSIS_VERIFIER = f'qa/release-{RELEASE}/verify-analysis.py'
 b = benchmark.b
 
 
@@ -87,7 +89,7 @@ def verify_baseline_cancellation(value, original_sha256):
         and type(recovery['outputBytes']) is int and recovery['outputBytes'] == 4586400
         and type(recovery['inferenceCalls']) is int and recovery['inferenceCalls'] == 335,
         'Baseline recovery did not preserve complete original output')
-    verifier = benchmark.load('current_baseline_cancellation_profile', ROOT / 'qa/release-2.4.1/verify-analysis.py')
+    verifier = benchmark.load('current_baseline_cancellation_profile', ROOT / CURRENT_ANALYSIS_VERIFIER)
     summary, graphs = verifier.verify_scheduler_profile(recovery['profileRecords'], recovery['inferenceCalls'])
     b.require(all(graphs['block-%02d-time' % block] == 15 for block in range(12))
               and summary.get('schedulerCalibrationCount') == 'unavailable'
@@ -117,12 +119,14 @@ def main():
     dependency_hashes = {path.name: b.sha(path) for path in dependencies}
     b.require(dependency_hashes == frozen['dependencyHashes'], 'Pinned Java test/runtime dependencies differ')
     # compile_production snapshots all listed bytes and rechecks them after javac.
-    benchmark.SOURCE_PATHS = benchmark.SOURCE_PATHS | {
-        'tests/NativeDeuxCalibrationTest.java', 'tools/verify_deux_passage.py',
-        'qa/release-2.4.1/verify-analysis.py', 'tests/test_native_scheduler_evidence.py',
+    # Keep this producer's inventory explicit: source_bindings has a captured
+    # default, and rebinding the benchmark's global set would not update it.
+    passage_sources = benchmark.SOURCE_PATHS | {
+        'version.json', 'tests/NativeDeuxCalibrationTest.java', 'tools/verify_deux_passage.py',
+        CURRENT_ANALYSIS_VERIFIER, 'tests/test_native_scheduler_evidence.py',
         'tests/test_native_baseline_cancellation_evidence.py', 'tests/test_deux_passage_process_receipt.py',
     }
-    bindings = benchmark.source_bindings()
+    bindings = benchmark.source_bindings(passage_sources)
     classes = benchmark.compile_production(work, java, dependencies, bindings)
     class_hashes = benchmark.class_hashes(classes)
     record = dict(schema='lightforge.current-passage-host-check.v1',
@@ -136,7 +140,7 @@ def main():
         receipt.write_text(json.dumps(record, indent=2) + '\n')
 
     def unchanged():
-        b.require(benchmark.source_bindings() == bindings, 'Source changed after compilation')
+        b.require(benchmark.source_bindings(passage_sources) == bindings, 'Source changed after compilation')
         b.require(benchmark.class_hashes(classes) == class_hashes, 'Compiled class set changed')
 
     save()
@@ -206,7 +210,7 @@ def main():
                                     capture_output=True, text=True, timeout=1800,
                                     preexec_fn=lambda: os.sched_setaffinity(0, integration_affinity))
         b.require(result.returncode == 0, 'Native integration failed; see integration.log')
-        verifier = benchmark.load('current_scheduler_evidence', ROOT / 'qa/release-2.4.1/verify-analysis.py')
+        verifier = benchmark.load('current_scheduler_evidence', ROOT / CURRENT_ANALYSIS_VERIFIER)
         integration = verifier.verify_scheduler_calibration(json.loads(result.stdout.strip().splitlines()[-1]))
         original_path = ROOT / 'research/inference-2.4.1/production-parallel-qualification.json'
         original = json.loads(original_path.read_text())
@@ -248,7 +252,7 @@ def main():
         b.require(b.sha(audio) == audio_hash, 'Baseline cancellation/recovery input changed')
         unchanged()
     verify_models()
-    record.update(passed=True, sourceBindingsAfter=benchmark.source_bindings(),
+    record.update(passed=True, sourceBindingsAfter=benchmark.source_bindings(passage_sources),
                   finishedAt=datetime.datetime.now(datetime.timezone.utc).isoformat())
     save()
     print(json.dumps(dict(passed=True, mode=args.mode, receipt=str(receipt))))

@@ -17,6 +17,18 @@ finally:
 
 
 class BaselineCancellationEvidenceTest(unittest.TestCase):
+    def test_host_checks_use_current_analysis_protocol_not_historical_research_identity(self):
+        release = json.loads((ROOT / 'version.json').read_text())['name']
+        self.assertEqual(VERIFY.CURRENT_ANALYSIS_VERIFIER,
+                         f'qa/release-{release}/verify-analysis.py')
+        current = VERIFY.benchmark.load('current_passage_verifier_contract',
+                                        ROOT / VERIFY.CURRENT_ANALYSIS_VERIFIER)
+        self.assertEqual(current.RELEASE, release)
+        source = (ROOT / 'tools/verify_deux_passage.py').read_text()
+        for name in ('separator-scheduler-paired.json', 'separator-divergent-inputs.json',
+                     'production-parallel-qualification.json'):
+            self.assertIn('research/inference-2.4.1/' + name, source)
+
     def valid(self):
         # Existing real full-output data supplies only the recovery shape here.
         # Synthetic cancellation flags test validation; they are not JNI evidence.

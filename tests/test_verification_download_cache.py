@@ -17,7 +17,7 @@ import verify_v2
 
 
 def production_steps(text):
-    host = text.split('\n  android-background:', 1)[0]
+    host = text.split('\n  verify:\n', 1)[1].split('\n  android-background:\n', 1)[0]
     return re.split(r'(?m)^      - ', host)[1:]
 
 
@@ -53,6 +53,29 @@ class VerificationDownloadCacheTest(unittest.TestCase):
         self.assertEqual(positions, sorted(positions))
         self.assertNotIn('--no-cache-dir', text)
         self.assertNotIn('cache-hit', text)
+
+    def test_producer_preparation_is_independently_pinned_and_never_cache_gated(self):
+        workflow = (ROOT / '.github/workflows/verify-v2.yml').read_text()
+        producer = workflow.split('\n  host-campaign:\n', 1)[1].split('\n  verify:\n', 1)[0]
+        steps = re.split(r'(?m)^      - ', producer)[1:]
+        commands = (
+            'python3 -m pip install pip==26.2.1 setuptools==83.0.0',
+            'python3 -m pip install torch==2.13.0 --index-url https://download.pytorch.org/whl/cpu',
+            'python3 -m pip install -r tools/model-requirements.txt',
+            'python3 tools/prepare_deux.py',
+        )
+        positions = []
+        for command in commands:
+            matching = [step for step in steps if command in step]
+            self.assertEqual(len(matching), 1, command)
+            conditions = re.findall(r'(?m)^\s+if: (.+)$', matching[0])
+            self.assertEqual(conditions, ['${{ github.run_attempt == 1 }}'])
+            self.assertNotIn('continue-on-error:', matching[0])
+            positions.append(producer.index(command))
+        self.assertEqual(positions, sorted(positions))
+        self.assertNotIn('cache-hit', producer)
+        self.assertNotIn('prepare_game.py', producer)
+        self.assertNotIn('run: npm test', producer)
 
     def run_gate(self, temporary, source_snapshots, assets):
         output = Path(temporary) / 'receipts'

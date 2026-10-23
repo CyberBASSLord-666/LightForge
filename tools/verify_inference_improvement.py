@@ -10,12 +10,24 @@ import hashlib
 import importlib.util
 import json
 import math
+import os
+import posixpath
+import subprocess
+import tempfile
 from pathlib import Path
 import re
 import statistics
 import struct
 
 ROOT = Path(__file__).resolve().parents[1]
+def current_analysis_verifier(root):
+    version = json.loads((root / 'version.json').read_text())['name']
+    if not isinstance(version, str) or re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+', version) is None:
+        raise ValueError('Invalid current release identity')
+    return 'qa/release-' + version + '/verify-analysis.py'
+
+
+CURRENT_ANALYSIS_VERIFIER = current_analysis_verifier(ROOT)
 # Current qualification must never overwrite the published historical receipt.
 RECEIPT = 'research/inference-current/production-parallel-qualification.json'
 SOURCE_PATHS = {
@@ -23,7 +35,7 @@ SOURCE_PATHS = {
     for name in ('NativeDeux', 'NativeDeuxTransform', 'NativeInferenceProfile', 'NativeExecutionPolicy', 'NativePassagePolicy')
 } | {'android/native-runtime.json', 'tests/NativeDeuxParallelBenchmark.java',
      'tools/benchmark_deux_parallel.py', 'tools/benchmark_deux_execution.py',
-     'qa/release-2.4.1/verify-analysis.py'}
+     CURRENT_ANALYSIS_VERIFIER, 'version.json'}
 GRAPH_NAMES = {'front', 'head-0', 'head-1'} | {
     f'block-{i:02d}-{axis}' for i in range(12) for axis in ('time', 'frequency')}
 GEOMETRY = dict(graphCount=27, stageCount=15, bands=60, frames=1301, samplesPerStem=573300,
@@ -33,6 +45,12 @@ CRITERIA = dict(measuredPairs=3, minMedianWallReductionPercent=15,
                 minEachPairWallReductionPercent=5)
 PORTABLE_PROTOCOL = 'portable-four-worker-three-cpu-v1'
 PORTABLE_SCHEMA = 'lightforge.experimental-portable-parallel-qualification.v1'
+BOUNDED_PROTOCOL = 'bounded-four-worker-three-cpu-v1'
+BOUNDED_SCHEMA = 'lightforge.bounded-host-parallel-qualification.v1'
+BOUNDED_SCOPE = ('Bounded host prerequisite: unchanged forced four-worker production neural execution '
+                 'versus unchanged three-thread reference on the same three actual logical CPUs, '
+                 'with at least one effective CPU of capacity headroom. Original passage only; '
+                 'not ordinary production admission, eight-worker, Android, full-song or release readiness.')
 PORTABLE_SOURCE_PATHS = SOURCE_PATHS | {
     'tools/portable_inference_host.py', 'tools/verify_inference_improvement.py'}
 PORTABLE_GEOMETRY = dict(graphCount=27, stageCount=15, bands=60, frames=1301, samplesPerStem=573300,
@@ -185,13 +203,17 @@ def portable_coverage(variant):
                                      frequencyConfig='cpu-i3-j1-d0-sequential' if baseline else 'cpu-i1-j1-d0-sequential-w4-b16'))
 
 
-def validate_portable_measurements(record, host=None):
+def validate_portable_measurements(record, host=None, *, _bounded=False, root=ROOT):
     """Replay experimental evidence without admitting it to the production gate."""
+    protocol = BOUNDED_PROTOCOL if _bounded else PORTABLE_PROTOCOL
+    schema = BOUNDED_SCHEMA if _bounded else PORTABLE_SCHEMA
+    scope = BOUNDED_SCOPE if _bounded else PORTABLE_SCOPE
+    paths = bounded_source_paths(root) if _bounded else PORTABLE_SOURCE_PATHS
     host = host or load_module('portable_inference_host', ROOT / 'tools/portable_inference_host.py')
     require(isinstance(record, dict), 'Portable receipt must be an object')
-    require(record.get('schema') == PORTABLE_SCHEMA and record.get('protocol') == PORTABLE_PROTOCOL,
+    require(record.get('schema') == schema and record.get('protocol') == protocol,
             'Unknown experimental portable protocol')
-    require(record.get('scope') == PORTABLE_SCOPE and record.get('passed') is True
+    require(record.get('scope') == scope and record.get('passed') is True
             and record.get('allOutputsByteIdentical') is True, 'Portable evidence or scope did not pass')
     require(all(record.get(key) is False for key in ('releaseAdmissible', 'eightWorkerSpeedupProven',
                                                     'androidSpeedupProven', 'wholeAnalysisSpeedupProven')),
@@ -210,11 +232,12 @@ def validate_portable_measurements(record, host=None):
         and digest(value) for name, value in compiled.items()) and record.get('compiledClassHashesAfter') == compiled,
         'Portable compiled classes are missing, malformed or changed')
     bindings = record.get('sourceBindings')
-    require(isinstance(bindings, dict) and set(bindings) == PORTABLE_SOURCE_PATHS
+    require(isinstance(bindings, dict) and set(bindings) == paths
             and all(digest(value) for value in bindings.values()) and record.get('sourceBindingsAfter') == bindings,
             'Portable source fingerprints are incomplete or changed')
-    expected_declaration = dict(schema='lightforge.portable-qualification-declaration.v1',
-        protocol=PORTABLE_PROTOCOL, declaredAt=record.get('createdAt'), scope=PORTABLE_SCOPE,
+    expected_declaration = dict(schema=('lightforge.bounded-host-protocol-declaration.v1' if _bounded
+        else 'lightforge.portable-qualification-declaration.v1'),
+        protocol=protocol, declaredAt=record.get('createdAt'), scope=scope,
         releaseAdmissible=False, geometry=PORTABLE_GEOMETRY, criteria=CRITERIA,
         maxAllowedThrottleToWallRatio=.05, hostControls=controls,
         sourceBindings=record.get('sourceBindings'), compiledClassHashes=compiled)
@@ -239,7 +262,7 @@ def validate_portable_measurements(record, host=None):
         context = run.get('executionContext', {})
         expected_identity = dict(procCgroup=controls['procCgroup'], cgroupNamespace=controls['namespace']['link'])
         require(context == dict(cpuAffinity=child, availableProcessors=3, referenceIntraThreads=3,
-                                protocol=PORTABLE_PROTOCOL, hostVariant=run['variant'],
+                                protocol=protocol, hostVariant=run['variant'],
                                 resourceIdentityBefore=expected_identity, resourceIdentityAfter=expected_identity)
                 and type(context['availableProcessors']) is int and type(context['referenceIntraThreads']) is int
                 and all(type(cpu) is int for cpu in context['cpuAffinity']),
@@ -285,16 +308,18 @@ def validate_portable_measurements(record, host=None):
     return reduction
 
 
-def verify_portable(receipt, root=ROOT):
+def verify_portable(receipt, root=ROOT, *, _bounded=False):
     """Require complete local artifacts; a portable PASS is not release admission."""
     receipt = Path(receipt)
     require(receipt.name == 'receipt.json' and receipt.is_file() and not receipt.is_symlink()
             and receipt.stat().st_size <= 16 * 1024 * 1024, 'Complete portable receipt is unavailable')
     work = receipt.parent.resolve()
-    record = json.loads(receipt.read_text())
-    reduction = validate_portable_measurements(record)
+    parse_json = decode_bounded_json if _bounded else json.loads
+    record = read_bounded_json(receipt, 16 * 1024 * 1024) if _bounded else json.loads(receipt.read_text())
+    reduction = validate_portable_measurements(record, _bounded=_bounded, root=root)
+    paths = bounded_source_paths(root) if _bounded else PORTABLE_SOURCE_PATHS
     bindings = record.get('sourceBindings')
-    require(isinstance(bindings, dict) and set(bindings) == PORTABLE_SOURCE_PATHS
+    require(isinstance(bindings, dict) and set(bindings) == paths
             and record.get('sourceBindingsAfter') == bindings, 'Portable source inventory changed')
     for name, expected in bindings.items():
         snapshot = work / 'source-snapshots' / name
@@ -304,7 +329,7 @@ def verify_portable(receipt, root=ROOT):
     declaration = work / 'protocol.json'
     require(declaration.is_file() and not declaration.is_symlink() and declaration.stat().st_size <= 1024 * 1024
             and sha(declaration) == record['protocolDeclarationSha256']
-            and json.loads(declaration.read_text()) == record['protocolDeclaration'],
+            and parse_json(declaration.read_text()) == record['protocolDeclaration'],
             'Retained prospective portable declaration changed')
     classes = work / 'classes'
     class_paths = sorted(classes.rglob('*.class'))
@@ -314,12 +339,12 @@ def verify_portable(receipt, root=ROOT):
         for path in class_paths), 'Portable class inventory contains nonregular or escaped entries')
     actual_classes = {str(path.relative_to(classes)): sha(path) for path in class_paths}
     require(actual_classes == record['compiledClassHashes'], 'Retained portable compiled classes changed')
-    runtime = json.loads((root / 'android/native-runtime.json').read_text())
+    runtime = parse_json((root / 'android/native-runtime.json').read_text())
     require(runtime.get('version') == '1.25.1'
             and record.get('runtime') == dict(version='1.25.1', hostJarSha256=runtime['host']['sha256']),
             'Portable runtime differs from the original pinned runtime')
     manifest_path = root / 'web/analysis/models/deux/manifest.json'
-    manifest = json.loads(manifest_path.read_text())
+    manifest = parse_json(manifest_path.read_text())
     require(manifest.get('frames') == 1301 and manifest.get('samples') == 573300
             and set(manifest['files']) == {name + '.onnx' for name in GRAPH_NAMES}
             and record.get('models') == dict(manifestSha256=sha(manifest_path),
@@ -331,7 +356,7 @@ def verify_portable(receipt, root=ROOT):
                 'Retained original model bytes changed: ' + name)
     require(record.get('audio') == dict(sha256=sha(root / 'web/demo/glass-castle.wav'), startSample=661500),
             'Portable comparison input changed')
-    profile_verifier = load_module('portable_profile_replay', root / 'qa/release-2.4.1/verify-analysis.py')
+    profile_verifier = load_module('portable_profile_replay', root / current_analysis_verifier(root))
     for run in record['runs']:
         prefix = run['phase'] + '-' + str(run['pairIndex'])
         directory = work / run['variant']
@@ -344,7 +369,7 @@ def verify_portable(receipt, root=ROOT):
                     and artifact.stat().st_size <= 8 * 1024 * 1024
                     and sha(artifact) == run['artifacts'][key], 'Retained portable raw observation changed: ' + suffix)
             retained[key] = artifact.read_text()
-        process = json.loads(retained['processSha256'])
+        process = parse_json(retained['processSha256'])
         require(isinstance(process, dict) and set(process) == {'returncode', 'stdout', 'stderr'}
                 and type(process['returncode']) is int and process['returncode'] == 0
                 and isinstance(process['stdout'], str) and isinstance(process['stderr'], str)
@@ -352,7 +377,7 @@ def verify_portable(receipt, root=ROOT):
                 'Retained portable process capture differs from the log')
         lines = process['stdout'].strip().splitlines()
         require(lines, 'Retained portable child observation is missing')
-        child = json.loads(lines[-1])
+        child = parse_json(lines[-1])
         context = run['executionContext']
         expected_child = dict(wallNanos=run['wallNanos'], processCpuNanos=run['processCpuNanos'],
             peakRssBytes=run['peakRssBytes'], availableProcessors=context['availableProcessors'],
@@ -375,8 +400,8 @@ def verify_portable(receipt, root=ROOT):
             cpus.extend(range(bounds[0], bounds[-1] + 1))
         require(cpus == sorted(set(cpus)) and cpus == context['cpuAffinity'],
                 'Retained child CPU affinity differs from the receipt')
-        require(json.loads(retained['countersBeforeSha256']) == run['hostCountersBefore']
-                and json.loads(retained['countersAfterSha256']) == run['hostCountersAfter'],
+        require(parse_json(retained['countersBeforeSha256']) == run['hostCountersBefore']
+                and parse_json(retained['countersAfterSha256']) == run['hostCountersAfter'],
                 'Receipt resource counters conflict with retained raw observations')
         output, profile = directory / (prefix + '.f32'), directory / (prefix + '.profile.txt')
         require(output.is_file() and not output.is_symlink() and output.resolve().is_relative_to(work)
@@ -396,10 +421,142 @@ def verify_portable(receipt, root=ROOT):
     return reduction
 
 
+def decode_bounded_json(text):
+    def unique(pairs):
+        result = {}
+        for key, value in pairs:
+            require(key not in result, 'Duplicate bounded JSON field')
+            result[key] = value
+        return result
+    def nonfinite(_):
+        raise ValueError('Nonfinite bounded JSON number')
+    result = json.loads(text, object_pairs_hook=unique, parse_constant=nonfinite)
+    def finite(value, depth=0):
+        require(depth <= 64, 'Over-nested bounded JSON')
+        if isinstance(value, float):
+            require(math.isfinite(value), 'Nonfinite bounded JSON number')
+        elif isinstance(value, dict):
+            for child in value.values():
+                finite(child, depth + 1)
+        elif isinstance(value, list):
+            for child in value:
+                finite(child, depth + 1)
+    finite(result)
+    return result
+
+
+def read_bounded_json(path, limit=1024 * 1024):
+    path = Path(path)
+    require(path.is_file() and not path.is_symlink() and path.stat().st_size <= limit,
+            'Bounded JSON is unavailable or oversized')
+    return decode_bounded_json(path.read_text())
+
+
+def campaign_helper(root=ROOT):
+    return load_module('host_campaign_for_gate', root / 'tools/host_inference_campaign.py')
+
+
+def bounded_source_paths(root=ROOT):
+    return set(campaign_helper(root).load_policy(root)['sourcePaths'])
+
+
+def verify_bounded(receipt, root=ROOT, *, rebuild_classes=False):
+    """Full retained experiment replay, not by itself trusted campaign admission."""
+    receipt, root = Path(receipt), Path(root)
+    record = read_bounded_json(receipt, 16 * 1024 * 1024)
+    require(record.get('schema') == BOUNDED_SCHEMA and record.get('protocol') == BOUNDED_PROTOCOL
+            and record.get('campaignState') == 'terminal-pass', 'Only a complete bounded terminal pass can replay')
+    reduction = verify_portable(receipt, root, _bounded=True)
+    helper = campaign_helper(root)
+    policy = helper.load_policy(root)
+    declaration_path = receipt.parent / 'declaration.json'
+    declaration = read_bounded_json(declaration_path)
+    require(sha(declaration_path) == record.get('campaignDeclarationSha256')
+            and record.get('campaignDeclaration') == declaration
+            and record.get('campaignId') == policy['campaignId'], 'Bounded campaign declaration differs')
+    helper.verify_source_bindings(root, declaration, policy)
+    for field in ('sourceBindings', 'compiledClassHashes', 'models', 'runtime', 'runtimeBindings',
+                  'audio', 'geometry', 'criteria', 'hostControls', 'host', 'pairOrder', 'childProtocol'):
+        require(record.get(field) == declaration.get(field), 'Bounded declared experiment differs: ' + field)
+    require(record.get('pairOrder') == [{key: run[key] for key in ('phase', 'pairIndex', 'orderInPair', 'variant')}
+                                      for run in record['runs']], 'Declared order differs from actual observations')
+    require(record.get('childProtocol') == policy['childProtocol'], 'Bounded child protocol changed')
+    runtime_binding = record.get('runtimeBindings', {})
+    require(isinstance(runtime_binding, dict) and set(runtime_binding) == {'schema', 'childEnvironment', 'jdkFiles', 'jdkSymlinks', 'dependencyFiles'}
+            and runtime_binding.get('schema') == 'lightforge.host-runtime-bindings.v1'
+            and runtime_binding.get('childEnvironment') == {'PATH': '/usr/bin:/bin', 'LANG': 'C.UTF-8', 'LC_ALL': 'C.UTF-8', 'TZ': 'UTC'},
+            'Incomplete or uncontrolled bounded runtime environment')
+    jdk = runtime_binding['jdkFiles']
+    require(isinstance(jdk, dict) and {'bin/java', 'bin/javac', 'lib/modules', 'lib/server/libjvm.so', 'release'} <= set(jdk)
+            and 0 < len(jdk) <= 4096 and all(isinstance(name, str) and not name.startswith('/')
+                and '..' not in Path(name).parts and digest(value) for name, value in jdk.items()),
+            'Incomplete bounded JDK/compiler fingerprint inventory')
+    links = runtime_binding['jdkSymlinks']
+    require(isinstance(links, dict) and set(links) <= set(jdk) and all(
+        isinstance(target, str) and 0 < len(target) <= 4096 and not target.startswith('/')
+        and not posixpath.normpath(posixpath.join(posixpath.dirname(name), target)).startswith('../')
+        for name, target in links.items()), 'Bounded JDK links escape their frozen inventory')
+    dependencies = runtime_binding['dependencyFiles']
+    require(isinstance(dependencies, dict) and set(dependencies) == {'test-json.jar', 'android.jar', 'onnxruntime-1.25.1.jar'}
+            and all(digest(value) for value in dependencies.values())
+            and dependencies['onnxruntime-1.25.1.jar'] == record['runtime']['hostJarSha256'],
+            'Incomplete bounded classpath/native runtime fingerprint inventory')
+    check = read_bounded_json(receipt.parent / 'registration-check.json')
+    require(check == record.get('registrationCheck') and check.get('measurementAuthorized') is True
+            and check.get('purpose') == 'producer', 'Retained prospective registration check missing')
+    marker = read_bounded_json(receipt.parent / 'measurement-started.json')
+    require(marker == dict(campaignId=record['campaignId'], startedAt=record.get('measurementStartedAt'),
+                           declarationSha256=record['campaignDeclarationSha256']), 'Original execution marker changed')
+    intervals = [declaration.get('declaredAt'), check.get('checkedAt'),
+                 record.get('measurementStartedAt'), record.get('finishedAt')]
+    require(all(isinstance(value, str) for value in intervals), 'Bounded timing provenance is incomplete')
+    instants = [datetime.datetime.fromisoformat(value.replace('Z', '+00:00')) for value in intervals]
+    require(all(value.tzinfo is not None for value in instants) and instants == sorted(instants),
+            'Inconsistent prospective registration/measurement order')
+    if rebuild_classes:
+        benchmark = load_module('bounded_recompile', root / 'tools/benchmark_deux_parallel.py')
+        benchmark.ROOT = root
+        java, dependencies = benchmark.bounded_toolchain()
+        require(benchmark.bounded_runtime_bindings(java, dependencies) == record['runtimeBindings'],
+                'Current runtime/compiler does not match the immutable experiment')
+        with tempfile.TemporaryDirectory(prefix='lightforge-bounded-recompile-') as directory:
+            classes = benchmark.compile_production(Path(directory), java, dependencies, record['sourceBindings'],
+                                                    controlled_environment=benchmark.BOUNDED_CHILD_ENV)
+            require(benchmark.portable_class_hashes(classes) == record['compiledClassHashes'],
+                    'Current compiled production classes differ from the terminal proof')
+    return reduction
+
+
+def verify_bounded_prerequisite(record, root=ROOT):
+    """A current build needs trusted history AND exact original experiment replay."""
+    require(record.get('schema') == 'lightforge.host-inference-build-prerequisite.v1'
+            and set(record) == {'schema', 'sourceBindings', 'sourceBindingsAfter', 'admission'},
+            'Unknown bounded prerequisite envelope')
+    admission = record.get('admission')
+    require(isinstance(admission, dict), 'Trusted bounded host admission missing')
+    source_commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip()
+    source_tree = subprocess.check_output(['git', 'rev-parse', 'HEAD^{tree}'], cwd=root, text=True).strip()
+    session = os.environ.get('LIGHTFORGE_EVIDENCE_SESSION')
+    require(isinstance(session, str) and re.fullmatch('[0-9a-f]{64}', session) is not None,
+            'Fresh current candidate evidence session missing')
+    require(admission.get('candidate') == dict(sourceCommit=source_commit, sourceTreeSha=source_tree,
+                                              evidenceSession=session),
+            'Host admission belongs to a different current candidate or evidence session')
+    helper = campaign_helper(root)
+    declaration, proof, directory, online = helper.fetch_proof(root, admission=admission)
+    require(online.get('trustedReplayAuthorized') is True, 'Trusted terminal campaign history not established')
+    require(record['sourceBindings'] == record['sourceBindingsAfter'] == proof.get('sourceBindings')
+            and admission.get('recompiledClassHashes') == proof.get('compiledClassHashes'),
+            'Build envelope differs from exact measured source/class bindings')
+    return verify_bounded(Path(directory) / 'receipt.json', root, rebuild_classes=True)
+
+
 def verify(root=ROOT):
     path = root / RECEIPT
     require(path.is_file() and path.stat().st_size <= 262144, 'final-source inference improvement evidence is missing')
-    record = json.loads(path.read_text())
+    record = read_bounded_json(path, 262144)
+    if record.get('schema') == 'lightforge.host-inference-build-prerequisite.v1':
+        return verify_bounded_prerequisite(record, root)
     reduction = validate_measurements(record)
     bindings = record.get('sourceBindings')
     require(isinstance(bindings, dict) and set(bindings) == SOURCE_PATHS and record.get('sourceBindingsAfter') == bindings,
@@ -426,8 +583,15 @@ def main():
     parser.add_argument('--root', type=Path, default=ROOT)
     parser.add_argument('--experimental-portable-receipt', type=Path,
                         help='Replay retained portable artifacts only; never satisfies the production release gate')
+    parser.add_argument('--bounded-receipt', type=Path, help='Local complete bounded replay only, not trusted admission')
+    parser.add_argument('--rebuild-classes', action='store_true', help='Require current runtime and recompiled class equality')
     args = parser.parse_args()
     try:
+        if args.bounded_receipt is not None:
+            require(args.experimental_portable_receipt is None, 'Choose exactly one explicit replay protocol')
+            reduction = verify_bounded(args.bounded_receipt, args.root, rebuild_classes=args.rebuild_classes)
+            print(f'BOUNDED LOCAL REPLAY: {reduction:.1f}% lower median passage time; trusted campaign admission still required.')
+            return
         if args.experimental_portable_receipt is not None:
             reduction = verify_portable(args.experimental_portable_receipt, args.root)
             print(f'EXPERIMENTAL PASS: {reduction:.1f}% lower median constrained-host passage time; NOT release-admissible.')

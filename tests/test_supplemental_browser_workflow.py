@@ -150,11 +150,11 @@ class SupplementalBrowserWorkflowTest(unittest.TestCase):
             with self.subTest(case=number, status=status):
                 self.exercise_diagnostic(raw, status, False)
 
-    def test_production_version_is_available_before_fail_closed_runner_preflight(self):
-        production = (ROOT / '.github/workflows/verify-v2.yml').read_text().split('\n  android-background:', 1)[0]
+    def test_production_version_is_available_before_fail_closed_proof_replay(self):
+        production = (ROOT / '.github/workflows/verify-v2.yml').read_text().split('\n  verify:', 1)[1].split('\n  android-background:', 1)[0]
         self.assertLess(production.index('name: Read current release version'),
-                        production.index('name: Check controlled inference runner'))
-        self.assertLess(production.index('name: Check controlled inference runner'),
+                        production.index('name: Retrieve registered terminal proof'))
+        self.assertLess(production.index('name: Retrieve registered terminal proof'),
                         production.index('run: npm ci'))
 
 

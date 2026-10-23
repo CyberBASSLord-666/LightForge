@@ -6,7 +6,8 @@ import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-SPEC = importlib.util.spec_from_file_location('scheduler_release', ROOT / 'qa/release-2.4.1/verify-analysis.py')
+RELEASE = json.loads((ROOT / 'version.json').read_text())['name']
+SPEC = importlib.util.spec_from_file_location('scheduler_release', ROOT / f'qa/release-{RELEASE}/verify-analysis.py')
 VERIFY = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(VERIFY)
 

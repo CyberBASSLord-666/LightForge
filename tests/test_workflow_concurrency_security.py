@@ -18,7 +18,11 @@ class WorkflowConcurrencySecurity(unittest.TestCase):
                 contexts = ['refs/heads/main', 'refs/pull/56/merge', 'refs/pull/57/merge']
                 keys = [group.replace('${{ github.ref }}', ref) for ref in contexts]
                 self.assertEqual(len(set(keys)), len(contexts))
-                self.assertIn('cancel-in-progress: true', text)
+                # An already-running verify producer survives registration;
+                # the default pending slot can still replace a queued request.
+                # Other workflows retain their cancellation.
+                expected = 'false' if name == 'verify-v2' else 'true'
+                self.assertIn('cancel-in-progress: ' + expected, text)
 
 
 if __name__ == '__main__':

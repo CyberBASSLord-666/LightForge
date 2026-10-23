@@ -34,8 +34,12 @@ from typing import Any, Mapping
 # evidence chain. Keep that stable schema at 1; the content and wrapper schemas
 # independently advance when their sealed receipt records evolve.
 CANDIDATE_SCHEMA_VERSION = 1
-CONTENT_SCHEMA_VERSION = 2
-WRAPPER_SCHEMA_VERSION = 2
+CONTENT_SCHEMA_VERSION = 3
+WRAPPER_SCHEMA_VERSION = 3
+LEGACY_EVIDENCE_SCHEMA_VERSION = 2
+HOST_ADMISSION_RELEASE = (2, 4, 2)
+HOST_ADMISSION_PATH = "host/host-admission.json"
+MAX_HOST_ADMISSION_BYTES = 1024 * 1024
 REPOSITORY = "CyberBASSLord-666/LightForge"
 WORKFLOW = ".github/workflows/verify-v2.yml"
 CANDIDATE_KIND = "lightforge-ci-candidate"
@@ -291,7 +295,7 @@ def _runtime_evidence_materials(release: str) -> frozenset[str]:
         "native-mdx-downstream-wasm.json",
         "source-clock-verification.json",
     }
-    if release in {"2.3.2", "2.4.0", "2.4.1"}:
+    if release in {"2.3.2", "2.4.0", "2.4.1", "2.4.2"}:
         names.update({"native-game-verification.json", "native-game-demo-output.json",
                       "native-game-falcon-output.json"})
     return frozenset(root + name for name in names)
@@ -665,12 +669,82 @@ def _receipt_record(value: Any, name: str, release: str, pipeline: Mapping[str, 
     require(value == expected, "Evidence receipt metadata differs: " + name)
     return expected
 
+def requires_host_admission(release: str) -> bool:
+    """Do not let a legacy envelope downgrade the first admitted release."""
+    return tuple(map(int, _release(release, "Evidence release is invalid").split("."))) >= HOST_ADMISSION_RELEASE
+
+
+def _evidence_schema(value: Any, release: str, fields: set[str], label: str) -> int:
+    require(isinstance(value, dict), label + " fields are invalid")
+    schema = value.get("schema_version")
+    require(type(schema) is int and schema in {LEGACY_EVIDENCE_SCHEMA_VERSION, CONTENT_SCHEMA_VERSION},
+            label + " schema is invalid")
+    require(schema != LEGACY_EVIDENCE_SCHEMA_VERSION or not requires_host_admission(release),
+            "Legacy evidence schema cannot admit this release")
+    expected = fields | ({"host_admission"} if schema == CONTENT_SCHEMA_VERSION else set())
+    require(set(value) == expected, label + " fields are invalid")
+    return schema
+
+
+def _validate_host_admission(value: Any, pipeline: Mapping[str, Any]) -> dict[str, Any]:
+    # This is structural binding only, not release authority. The publisher
+    # independently retrieves the trusted Actions objects and replays the raw
+    # campaign proof. A producer-authored `passed` flag is never sufficient.
+    from host_inference_campaign import validate_admission
+    parsed = validate_admission(
+        value,
+        candidate_source_commit=pipeline["head_sha"],
+        candidate_source_tree_sha=pipeline["tree_sha"],
+        evidence_session=pipeline["evidence_session"],
+    )
+    require(isinstance(parsed, dict) and parsed == value, "Host admission is not canonical")
+    return parsed
+
+
+def _host_admission_record(value: Any, *, release: str, pipeline: Mapping[str, Any],
+                           root: Path | None = None) -> dict[str, Any] | None:
+    if value is None:
+        require(not requires_host_admission(release), "Host admission is required for this release")
+        return None
+    require(isinstance(value, dict) and set(value) == {"path", "bytes", "sha256", "admission"},
+            "Host admission record fields are invalid")
+    require(value.get("path") == HOST_ADMISSION_PATH, "Host admission path differs")
+    size = _integer(value.get("bytes"), "Host admission size is invalid")
+    require(size <= MAX_HOST_ADMISSION_BYTES, "Host admission exceeds size limit")
+    checksum = _sha(value.get("sha256"), "Host admission digest is invalid")
+    admission = _validate_host_admission(value.get("admission"), pipeline)
+    if root is not None:
+        path = _regular(root, HOST_ADMISSION_PATH, "Host admission is missing")
+        require(path.stat().st_size == size and sha256_file(path) == checksum,
+                "Host admission file digest differs")
+        require(_load(path, "Host admission file is invalid") == admission,
+                "Host admission file differs from sealed record")
+    return {"path": HOST_ADMISSION_PATH, "bytes": size, "sha256": checksum, "admission": admission}
+
+
+def _seal_host_admission(path: Path | str | None, *, release: str,
+                         pipeline: Mapping[str, Any], output: Path) -> dict[str, Any] | None:
+    if path is None:
+        return _host_admission_record(None, release=release, pipeline=pipeline)
+    source = Path(path)
+    require(source.is_file() and not source.is_symlink(), "Host admission is missing")
+    require(0 < source.stat().st_size <= MAX_HOST_ADMISSION_BYTES, "Host admission exceeds size limit")
+    admission = _validate_host_admission(_load(source, "Host admission file is invalid"), pipeline)
+    destination = output / HOST_ADMISSION_PATH
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(source, destination)
+    return _host_admission_record({
+        "path": HOST_ADMISSION_PATH, "bytes": destination.stat().st_size,
+        "sha256": sha256_file(destination), "admission": admission,
+    }, release=release, pipeline=pipeline, root=output)
+
+
 def _content_manifest(value: Any, *, release: str, pipeline: Mapping[str, Any], root: Path,
                       expected_candidate: Mapping[str, Any] | None = None) -> dict[str, Any]:
-    require(isinstance(value, dict) and set(value) == {
+    schema = _evidence_schema(value, release, {
         "schema_version", "kind", "repository", "release", "pipeline", "candidate", "receipts", "source_bindings"
-    }, "Evidence content manifest fields are invalid")
-    require(value.get("schema_version") == CONTENT_SCHEMA_VERSION and value.get("kind") == CONTENT_KIND, "Evidence content manifest schema is invalid")
+    }, "Evidence content manifest")
+    require(value.get("kind") == CONTENT_KIND, "Evidence content manifest schema is invalid")
     require(value.get("repository") == REPOSITORY and value.get("release") == release, "Evidence content manifest identity differs")
     parsed_pipeline = _pipeline(value.get("pipeline"), "Evidence content pipeline is invalid")
     require(parsed_pipeline == _pipeline(pipeline, "Expected evidence pipeline is invalid"), "Evidence content pipeline differs")
@@ -684,8 +758,10 @@ def _content_manifest(value: Any, *, release: str, pipeline: Mapping[str, Any], 
         for name in RECEIPTS
     }
     bindings = _source_bindings(value.get("source_bindings"), expected=_source_hash_union(normalized), release=release, root=root)
+    host = (_host_admission_record(value.get("host_admission"), release=release, pipeline=parsed_pipeline, root=root)
+            if schema == CONTENT_SCHEMA_VERSION else None)
     return {
-        "schema_version": CONTENT_SCHEMA_VERSION,
+        "schema_version": schema,
         "kind": CONTENT_KIND,
         "repository": REPOSITORY,
         "release": release,
@@ -693,6 +769,7 @@ def _content_manifest(value: Any, *, release: str, pipeline: Mapping[str, Any], 
         "candidate": candidate,
         "receipts": normalized,
         "source_bindings": bindings,
+        **({"host_admission": host} if schema == CONTENT_SCHEMA_VERSION else {}),
     }
 
 
@@ -703,7 +780,8 @@ def verify_content(artifact_dir: Path | str, *, release: str, pipeline: Mapping[
     parsed = _content_manifest(_load(manifest_path, "Evidence content manifest is invalid"), release=_release(release, "Evidence release is invalid"), pipeline=pipeline, root=root, expected_candidate=expected_candidate)
     material_paths = {record["path"] for record in parsed["source_bindings"].values()
                       if record["origin"] == "sealed_runtime_material"}
-    _inventory(root, {CONTENT_MANIFEST, *RECEIPTS.values(), *material_paths}, "Verification evidence artifact")
+    host_paths = {HOST_ADMISSION_PATH} if parsed.get("host_admission") is not None else set()
+    _inventory(root, {CONTENT_MANIFEST, *RECEIPTS.values(), *material_paths, *host_paths}, "Verification evidence artifact")
     require(parsed == _load(manifest_path, "Evidence content manifest is invalid"), "Evidence content manifest is not canonical")
     return parsed
 
@@ -756,6 +834,8 @@ def write_content(args: argparse.Namespace) -> dict[str, Any]:
             release=release,
             output=output,
         )
+        host = _seal_host_admission(getattr(args, "host_admission", None), release=release,
+                                    pipeline=pipeline, output=output)
         manifest = {
             "schema_version": CONTENT_SCHEMA_VERSION,
             "kind": CONTENT_KIND,
@@ -765,6 +845,7 @@ def write_content(args: argparse.Namespace) -> dict[str, Any]:
             "candidate": candidate,
             "receipts": records,
             "source_bindings": bindings,
+            "host_admission": host,
         }
         _atomic_json(output / CONTENT_MANIFEST, manifest)
         verify_content(output, release=release, pipeline=pipeline, expected_candidate=candidate)
@@ -787,10 +868,10 @@ def _artifact_reference(value: Any, release: str, pipeline: Mapping[str, Any]) -
 
 def _wrapper_manifest(value: Any, *, release: str, pipeline: Mapping[str, Any], root: Path,
                       expected_candidate: Mapping[str, Any] | None = None) -> dict[str, Any]:
-    require(isinstance(value, dict) and set(value) == {
+    schema = _evidence_schema(value, release, {
         "schema_version", "kind", "repository", "release", "pipeline", "candidate", "evidence_artifact", "receipts", "source_bindings"
-    }, "Evidence wrapper manifest fields are invalid")
-    require(value.get("schema_version") == WRAPPER_SCHEMA_VERSION and value.get("kind") == WRAPPER_KIND, "Evidence wrapper manifest schema is invalid")
+    }, "Evidence wrapper manifest")
+    require(value.get("kind") == WRAPPER_KIND, "Evidence wrapper manifest schema is invalid")
     require(value.get("repository") == REPOSITORY and value.get("release") == release, "Evidence wrapper manifest identity differs")
     parsed_pipeline = _pipeline(value.get("pipeline"), "Evidence wrapper pipeline is invalid")
     require(parsed_pipeline == _pipeline(pipeline, "Expected evidence pipeline is invalid"), "Evidence wrapper pipeline differs")
@@ -830,8 +911,10 @@ def _wrapper_manifest(value: Any, *, release: str, pipeline: Mapping[str, Any], 
             "path": RECEIPTS[name], "bytes": record["bytes"], "sha256": record["sha256"], **summary,
         }
     bindings = _source_bindings(value.get("source_bindings"), expected=_source_hash_union(normalized), release=release)
+    host = (_host_admission_record(value.get("host_admission"), release=release, pipeline=parsed_pipeline)
+            if schema == WRAPPER_SCHEMA_VERSION else None)
     return {
-        "schema_version": WRAPPER_SCHEMA_VERSION,
+        "schema_version": schema,
         "kind": WRAPPER_KIND,
         "repository": REPOSITORY,
         "release": release,
@@ -840,6 +923,7 @@ def _wrapper_manifest(value: Any, *, release: str, pipeline: Mapping[str, Any], 
         "evidence_artifact": artifact,
         "receipts": normalized,
         "source_bindings": bindings,
+        **({"host_admission": host} if schema == WRAPPER_SCHEMA_VERSION else {}),
     }
 
 
@@ -863,7 +947,7 @@ def write_wrapper(args: argparse.Namespace) -> dict[str, Any]:
     output = _fresh_directory(args.output_dir)
     try:
         wrapper = {
-            "schema_version": WRAPPER_SCHEMA_VERSION,
+            "schema_version": content["schema_version"],
             "kind": WRAPPER_KIND,
             "repository": REPOSITORY,
             "release": release,
@@ -877,6 +961,7 @@ def write_wrapper(args: argparse.Namespace) -> dict[str, Any]:
             },
             "receipts": content["receipts"],
             "source_bindings": content["source_bindings"],
+            **({"host_admission": content["host_admission"]} if content["schema_version"] == CONTENT_SCHEMA_VERSION else {}),
         }
         _atomic_json(output / WRAPPER_MANIFEST, wrapper)
         verify_wrapper(output, release=release, pipeline=pipeline, expected_candidate=content["candidate"])
@@ -893,6 +978,8 @@ def _parser() -> argparse.ArgumentParser:
     content.add_argument("--output-dir", type=Path, required=True)
     content.add_argument("--receipt-dir", type=Path, required=True)
     content.add_argument("--source-root", type=Path, required=True)
+    content.add_argument("--host-admission", type=Path,
+                         help="Fresh candidate/session-bound admission of the immutable host campaign proof")
     content.add_argument("--candidate-manifest", type=Path, required=True)
     content.add_argument("--candidate-artifact-id", type=int, required=True)
     content.add_argument("--candidate-artifact-digest", required=True)

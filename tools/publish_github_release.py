@@ -36,6 +36,8 @@ from release_quality_gate import (
 )
 from verification_evidence_manifest import (
     CONTENT_MANIFEST as VERIFICATION_CONTENT_MANIFEST,
+    HOST_ADMISSION_PATH,
+    REPOSITORY as VERIFICATION_REPOSITORY,
     RECEIPTS as VERIFICATION_RECEIPTS,
     WRAPPER_MANIFEST as VERIFICATION_WRAPPER_MANIFEST,
     content_artifact_name as verification_content_artifact_name,
@@ -66,6 +68,14 @@ RELEASE_ENFORCEMENT_PATHS = (
     'tools/differential_analysis.py',
     'tools/android_evidence_manifest.py',
     'tools/verification_evidence_manifest.py',
+    'tools/host_inference_campaign.py',
+    'tools/host_inference_policy.json',
+    'tools/host-inference-campaigns/lightforge-2.4.2-neural-four-worker-host-001.json',
+    'tools/host-inference-campaigns/lightforge-2.4.2-neural-four-worker-host-001.request.json',
+    '.github/workflows/verify-v2.yml',
+    'tools/verify_inference_improvement.py',
+    'tools/portable_inference_host.py',
+    'tools/benchmark_deux_parallel.py',
     'tools/run_android_background_tests.py',
     'tools/run_android_diagnostics_tests.py',
     '.github/workflows/performance-quality-gate.yml',
@@ -408,8 +418,70 @@ def _validate_verification_source_hashes(source_commit, receipts, source_binding
         raise ValueError('Verification source binding origin is invalid: ' + relative)
 
 
+class _HostAdmissionAPI:
+    """Use the publisher's authenticated, read-only gh channel for host proof."""
+    def __init__(self, repo, archive_limit):
+        require(repo == VERIFICATION_REPOSITORY, 'Host admission repository differs')
+        self.repo = repo
+        self.archive_limit = archive_limit
+
+    def get(self, route):
+        require(isinstance(route, str) and route.startswith('/') and not route.startswith('//')
+                and '\\' not in route and '#' not in route and not any(ord(c) < 32 for c in route),
+                'Host admission API route is invalid')
+        return api('repos/' + self.repo + route)
+
+    def download(self, artifact_id):
+        artifact_id = _positive_int(artifact_id, 'Host artifact id is invalid')
+        command = ['gh', 'api', f'repos/{self.repo}/actions/artifacts/{artifact_id}/zip']
+        output = bytearray()
+        with subprocess.Popen(command, stdout=subprocess.PIPE) as process:
+            try:
+                while chunk := process.stdout.read(1024 * 1024):
+                    require(len(output) + len(chunk) <= self.archive_limit,
+                            'Host artifact exceeds the safe download limit')
+                    output.extend(chunk)
+                returncode = process.wait()
+                if returncode:
+                    raise subprocess.CalledProcessError(returncode, command)
+            except BaseException:
+                process.kill()
+                process.wait()
+                raise
+        # The campaign helper checks this exact archive's server size/digest,
+        # member bounds and paths before materializing any retained file.
+        return bytes(output)
+
+
+def verify_host_release_admission(repo, record, pipeline):
+    """Re-fetch immutable host proof and replay it; a sealed PASS is not authority.
+
+    The current candidate/session binding is fresh, but its terminal measured
+    campaign identity is not relabelled as a measurement of this commit.
+    """
+    from host_inference_campaign import MAX_ARCHIVE, fetch_proof, validate_admission
+    from verify_inference_improvement import verify_bounded
+    require(repo == VERIFICATION_REPOSITORY, 'Host admission repository differs')
+    admission = validate_admission(
+        record['admission'], candidate_source_commit=pipeline['head_sha'],
+        candidate_source_tree_sha=pipeline['tree_sha'], evidence_session=pipeline['evidence_session'],
+    )
+    declaration, receipt, proof_root, online = fetch_proof(
+        ROOT, api=_HostAdmissionAPI(repo, MAX_ARCHIVE), admission=admission,
+        output_dir=ROOT / 'build/release-host-proof',
+    )
+    proof_root = Path(proof_root)
+    require(digest(proof_root / 'receipt.json') == admission['proofReceiptSha256'],
+            'Host proof receipt digest differs from admission')
+    reduction = verify_bounded(proof_root / 'receipt.json', root=ROOT)
+    return {
+        'admission': admission,
+        'median_wall_reduction_percent': reduction,
+    }
+
+
 def verify_nonandroid_release_evidence(repo, ci, version, source_commit, source_tree_sha, candidate):
-    """Load only the success-only, candidate-bound seven-receipt artifact chain."""
+    """Load the seven-receipt chain plus its additive bounded host admission."""
     pipeline = _candidate_evidence_pipeline(candidate, ci, source_commit, source_tree_sha)
     candidate = validate_verification_candidate_record(candidate, release=version['name'], pipeline=pipeline)
     expected_wrapper_name = verification_wrapper_artifact_name(version['name'], pipeline)
@@ -433,22 +505,29 @@ def verify_nonandroid_release_evidence(repo, ci, version, source_commit, source_
         *(record['path'] for record in wrapper['source_bindings'].values()
           if record['origin'] == 'sealed_runtime_material'),
     }
+    if wrapper.get('host_admission') is not None:
+        content_members.add(HOST_ADMISSION_PATH)
     _download_exact_artifact(repo, content_artifact, content_root,
                              content_members)
     content = verify_verification_content(content_root, release=version['name'], pipeline=pipeline,
                                           expected_candidate=candidate)
     require(content['candidate'] == wrapper['candidate'] and content['pipeline'] == wrapper['pipeline']
-            and content['receipts'] == wrapper['receipts'] and content['source_bindings'] == wrapper['source_bindings'],
+            and content['schema_version'] == wrapper['schema_version']
+            and content['receipts'] == wrapper['receipts'] and content['source_bindings'] == wrapper['source_bindings']
+            and content.get('host_admission') == wrapper.get('host_admission'),
             'Verification evidence content differs from its sealed wrapper')
     require(digest(content_root / VERIFICATION_CONTENT_MANIFEST) == reference['content_manifest_sha256'],
             'Verification evidence content manifest differs from its sealed wrapper')
     _validate_verification_source_hashes(source_commit, content['receipts'], content['source_bindings'], content_root)
+    host = (verify_host_release_admission(repo, content['host_admission'], pipeline)
+            if content.get('host_admission') is not None else None)
     return {
         'wrapper_artifact_id': wrapper_artifact['id'],
         'content_artifact_id': content_artifact['id'],
         'candidate_artifact_id': candidate['artifact_id'],
         'candidate_root': None,
         'manifest': wrapper,
+        'host_admission': host,
     }
 
 

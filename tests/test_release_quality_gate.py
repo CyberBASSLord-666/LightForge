@@ -117,7 +117,7 @@ class ReleaseQualityGateTest(unittest.TestCase):
         declaration = dict(self.declaration, requirement="automated_verification_only")
         self.assertEqual(gate.validate_release_declaration(declaration, version=self.version), declaration)
         for next_version in ({"name": "2.3.2", "code": 20302}, {"name": "2.4.0", "code": 20400},
-                             {"name": "2.4.1", "code": 20401}):
+                             {"name": "2.4.1", "code": 20401}, {"name": "2.4.2", "code": 20402}):
             next_declaration = dict(declaration, release=next_version)
             self.assertEqual(gate.validate_release_declaration(next_declaration, version=next_version), next_declaration)
         for version in (
@@ -130,7 +130,10 @@ class ReleaseQualityGateTest(unittest.TestCase):
             {"name": "2.3.3", "code": 20303},
             {"name": "2.4.0", "code": 20302},
             {"name": "2.4.1", "code": 20400},
-            {"name": "2.4.2", "code": 20402},
+            {"name": "2.4.2", "code": 20401},
+            {"name": "2.4.2", "code": 20403},
+            {"name": "2.4.3", "code": 20403},
+            {"name": "2.5.0", "code": 20500},
         ):
             with self.subTest(version=version):
                 with self.assertRaisesRegex(ValueError, "authorized only"):
@@ -150,11 +153,34 @@ class ReleaseQualityGateTest(unittest.TestCase):
                         version=self.version, source_commit=COMMIT, source_tree_sha=TREE, declaration=declaration,
                     )
 
+    def test_next_build_policy_is_one_exact_pair_and_preserves_unverified_claims(self):
+        self.assertEqual(gate.AUTOMATED_VERIFICATION_ONLY_RELEASES, frozenset({
+            ("2.2.5", 20205), ("2.3.0", 20300), ("2.3.1", 20301),
+            ("2.3.2", 20302), ("2.4.0", 20400), ("2.4.1", 20401),
+            ("2.4.2", 20402),
+        }))
+        version = {"name": "2.4.2", "code": 20402}
+        declaration = json.loads((ROOT / "releases/v2.4.2/quality-gate-declaration.json").read_text())
+        self.assertEqual(gate.validate_release_declaration(declaration, version=version), declaration)
+        self.assertEqual(declaration["requirement"], "automated_verification_only")
+        self.assertEqual(declaration["classification"], "performance")
+        reason = declaration["reason"]
+        for retained_constraint in (
+            "Draft next-build policy", "not release qualification or build permission",
+            "real, noticeable, repeatable neural-inference improvement",
+            "Fresh source-bound production, actual-model and packaged Android verification",
+            "sealed evidence", "original signing identity", "qualified payload integrity",
+            "no PASS_TARGET provenance", "strict performance-quality gate",
+            "75% whole-analysis reduction", "remain unverified", "this exact version only",
+        ):
+            with self.subTest(constraint=retained_constraint):
+                self.assertIn(retained_constraint, reason)
+
     def test_automated_only_cannot_generate_a_pass_target_qualification_receipt(self):
         for version in ({"name": "2.2.5", "code": 20205}, {"name": "2.3.0", "code": 20300},
                         {"name": "2.3.1", "code": 20301}, {"name": "2.3.2", "code": 20302},
                         {"name": "2.4.0", "code": 20400},
-                        {"name": "2.4.1", "code": 20401}):
+                        {"name": "2.4.1", "code": 20401}, {"name": "2.4.2", "code": 20402}):
             with self.subTest(version=version):
                 self.version = version
                 self.declaration.update(release=version, requirement="automated_verification_only")

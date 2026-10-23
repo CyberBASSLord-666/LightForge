@@ -1,5 +1,7 @@
 """Fail closed on incomplete Android GAME proof without rewriting old releases."""
+import ast
 import copy
+import json
 from pathlib import Path
 import unittest
 
@@ -126,7 +128,8 @@ class NativeGameAndroidEvidenceTest(unittest.TestCase):
             evidence.validate_native_game_device(value)
 
     def test_background_receipt_enforces_each_required_field(self):
-        for release in ('2.3.2', '2.4.0', '2.4.1'):
+        current = json.loads((Path(__file__).resolve().parents[1] / 'version.json').read_text())['name']
+        for release in ('2.3.2', '2.4.0', '2.4.1', '2.4.2', current):
             self.assertTrue(self.validate_receipt(receipt(release), release=release)['passed'])
             for field in device()['nativeGame']:
                 value = receipt(release)
@@ -155,6 +158,27 @@ class NativeGameAndroidEvidenceTest(unittest.TestCase):
             mutate(value)
             with self.subTest(reason=reason), self.assertRaisesRegex(ValueError, reason):
                 self.validate_receipt(value)
+
+    def test_runtime_runner_retains_only_explicit_native_game_release_gates(self):
+        # Inspect the real runner without installing APKs or starting a device.
+        source = (Path(__file__).resolve().parents[1] / 'tools/run_android_background_tests.py').read_text()
+        gates = [node for node in ast.walk(ast.parse(source))
+                 if isinstance(node, ast.If) and any(
+                     isinstance(child, ast.Call) and isinstance(child.func, ast.Name)
+                     and child.func.id == 'validate_native_game_device'
+                     for statement in node.body for child in ast.walk(statement))]
+        self.assertEqual(len(gates), 1)
+        condition = gates[0].test
+        self.assertIsInstance(condition, ast.Compare)
+        self.assertIsInstance(condition.left, ast.Name)
+        self.assertEqual(condition.left.id, 'version')
+        self.assertEqual(len(condition.ops), 1)
+        self.assertIsInstance(condition.ops[0], ast.In)
+        self.assertEqual(ast.literal_eval(condition.comparators[0]),
+                         {'2.3.2', '2.4.0', '2.4.1', '2.4.2'})
+        current = json.loads((Path(__file__).resolve().parents[1] / 'version.json').read_text())['name']
+        self.assertIn(current, ast.literal_eval(condition.comparators[0]),
+                      'A version bump must retain the current native GAME device validation gate')
 
     def test_runtime_runner_reuses_validator_before_marking_success(self):
         source = (Path(__file__).resolve().parents[1] / 'tools/run_android_background_tests.py').read_text()

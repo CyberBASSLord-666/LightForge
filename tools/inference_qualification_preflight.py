@@ -18,6 +18,11 @@ benchmark = importlib.util.module_from_spec(_SPEC)
 _SPEC.loader.exec_module(benchmark)
 
 
+LEGACY_PROTOCOL = 'production-v3'
+BOUNDED_PROTOCOL = 'bounded-four-worker-three-cpu-v1'
+PROTOCOLS = (LEGACY_PROTOCOL, BOUNDED_PROTOCOL)
+
+
 REQUIRED_COUNTERS = {
     'cgroupCpuStat': ('throttled_usec',),
     'cgroupMemoryEvents': ('oom', 'oom_kill', 'max'),
@@ -25,9 +30,35 @@ REQUIRED_COUNTERS = {
 }
 
 
-def inspect_runner():
+def inspect_runner(protocol=LEGACY_PROTOCOL):
+    """Select one explicit lane; never downgrade a failed legacy preflight.
+
+    Replay consumers do not call this function: they establish the registered
+    terminal proof before dependency preparation and revalidate its recorded
+    host observations, rather than requiring the consumer to be a timing host.
+    """
+    if protocol not in PROTOCOLS:
+        raise ValueError('Unknown inference qualification protocol: ' + str(protocol))
+    if protocol == BOUNDED_PROTOCOL:
+        diagnostic = benchmark.portable_host().diagnose()
+        record = dict(schema='lightforge.inference-runner-preflight.v1',
+                      protocol=protocol, eligible=diagnostic['eligible'],
+                      qualificationEstablished=False, releaseAdmissible=False,
+                      scope='Read-only bounded host eligibility; not campaign authorization or release qualification.',
+                      hostDiagnostic=diagnostic)
+        if not record['eligible']:
+            record['reason'] = diagnostic['reason']
+            record['requiredRunner'] = (
+                'Linux x86_64 with a complete visible initial/global cgroup-v2 hierarchy, '
+                'exactly three observed child CPUs and at least one additional effective '
+                'CPU of capacity reserved. Applicable ancestry limits and resource counters '
+                'must be readable and consistent. Missing observations cannot be treated as zero.'
+            )
+        return record
+
     record = {
         'schema': 'lightforge.inference-runner-preflight.v1',
+        'protocol': protocol,
         'eligible': False,
         'qualificationEstablished': False,
         'scope': 'Read-only host eligibility, not inference or release qualification.',
@@ -66,9 +97,11 @@ def inspect_runner():
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--protocol', choices=PROTOCOLS, default=LEGACY_PROTOCOL,
+                        help='Explicit resource lane; no fallback between protocols')
     parser.add_argument('--output', type=Path, help='Optional diagnostic JSON, never release evidence')
     args = parser.parse_args()
-    record = inspect_runner()
+    record = inspect_runner(args.protocol)
     output = json.dumps(record, indent=2) + '\n'
     if args.output is not None:
         args.output.parent.mkdir(parents=True, exist_ok=True)

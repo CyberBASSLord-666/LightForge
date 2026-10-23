@@ -20,7 +20,6 @@ Run from the repository root:
 
 ```bash
 set -euo pipefail
-python3 tools/inference_qualification_preflight.py
 npm ci --ignore-scripts --no-audit --no-fund
 python3 tools/bootstrap_toolchain.py
 python3 tools/bootstrap_native_runtime.py
@@ -33,9 +32,8 @@ python3 -m venv ../model-build
 ../model-build/bin/python tools/prepare_deux.py
 python3 tools/repository_hygiene.py
 npm test
-rm -f -- research/inference-current/production-parallel-qualification.json
-python3 tools/benchmark_deux_parallel.py \
-  --output "../lightforge-inference-$(date -u +%Y%m%dT%H%M%SZ)"
+# Obtain a fresh candidate-specific host admission by the registered-proof
+# replay flow below. Do not run a new benchmark or copy an old current receipt.
 python3 tools/verify_inference_improvement.py
 LIGHTFORGE_SIGNING_DIR=/absolute/path/to/original-private-signing bash build.sh
 VERSION="$(python3 -c 'import json; print(json.load(open("version.json"))["name"])')"
@@ -61,51 +59,104 @@ A development APK cannot update the original installation. The build produces
 The receipt's `update_compatible` must be `true` for an original-key update.
 Building locally does not satisfy all publication gates.
 
-## Controlled inference runner
+## Bounded host campaign and per-build admission
 
-The timing prerequisite requires an existing isolated Linux x86_64 runner with
-at least eight CPUs in the process's allowed affinity, a readable **finite**
-cgroup-v2 CPU quota of at least eight CPUs, and real CPU throttling, OOM and
-direct-reclaim counters. Seven allowed CPUs are used identically by both Java
-variants and one CPU of quota remains reserved. A CPU-count label alone is not
-sufficient: an unlimited quota, a smaller quota or a container hiding
-`/sys/fs/cgroup` cannot qualify. The read-only preflight reports the exact
-missing observation before expensive downloads. It does not alter cgroups,
-affinity, system settings or the existing performance thresholds, and a passing
-preflight is not model, Android or release qualification.
+The normal `verify-v2.yml` path now **replays one immutable, prospectively
+registered timing result instead of measuring again for every build**. This is
+an explicit policy change, not a claim of fresh timing. Before expensive
+preparation, it retrieves only the exact designated producer attempt and proof
+artifact. After current model/runtime preparation, the full local verifier
+checks recorded evidence and exact measured identity, then creates a fresh
+candidate-specific admission bound to the current commit, tree and evidence
+session. A stale current receipt is removed before either step. Missing proof
+blocks the build; it never starts a replacement measurement.
 
-`verify-v2.yml` now generates a fresh current-source timing receipt in the same
-job before packaging, then replays it with the unchanged build verifier. It
-removes any earlier current receipt before preparation and again immediately
-before the benchmark. A failed or interrupted producer cannot fall back to
-historical 2.4.1 evidence. Failed and successful benchmark observations are
-retained in a separate run/attempt-scoped diagnostic artifact; that artifact
-alone is not release authority. The normal sealed candidate, actual-model,
-browser and Android evidence remain mandatory.
+The new `bounded-four-worker-three-cpu-v1` lane uses the unchanged production
+four-worker neural runner against the unchanged three-thread reference, both
+forced onto the same three observed child CPUs with at least one additional
+CPU-equivalent of real effective capacity reserved. The original full Float32
+model/audio, complete outputs, byte identity, resource proof, 15% median and 5%
+every-pair thresholds remain unchanged. This is forced host configuration, not
+normal production scheduler admission, eight-worker performance, Android
+admission or complete-song performance.
 
-For release-eligible verification, an authorized repository administrator must
-configure `LIGHTFORGE_INFERENCE_RUNNER` as a repository variable containing the
-label of an **already authorized, isolated, eligible runner**. Only a `push` on
-protected `refs/heads/main` consumes this configuration. Pull requests,
-unprotected main and other push refs use `ubuntu-latest`; they never select the
-configured controlled runner. The existing prepare/publish chain still
-requires successful push-on-main verification and its unchanged source,
-candidate and sealed evidence bindings.
+The read-only diagnostic selects this lane explicitly:
 
-Manual dispatch of **LightForge production verification** can select an existing
-isolated runner through `inference_runner` for diagnostic qualification on a
-candidate ref. **A manual run is not release-eligible** and cannot replace the
-required main-push run. The default label is deliberately not assumed to
-qualify: any selected runner fails early if its actual observations do not meet
-the requirements above. No eligible configured runner has been verified for
-this candidate; configuration and a successful qualifying run remain blockers.
+```sh
+python3 tools/inference_qualification_preflight.py \
+  --protocol bounded-four-worker-three-cpu-v1
+```
 
-No runner is provisioned, paid for or granted access by this workflow. Do not
-select a persistent privileged machine for untrusted pull-request code; use an
-isolated disposable runner and the repository's existing access controls.
-Runner selection never waives the resource preflight or fresh measurements.
-GitHub billing restrictions must also be resolved through an authorized
-account-management route before an Actions job can start.
+Linux x86_64, a complete visible initial/global cgroup-v2 hierarchy, a non-root
+process cgroup, consistent applicable ancestor limits/counters, and at least
+four effective CPUs are mandatory. `cpu.max=max` means observed unlimited
+quota, not missing evidence. Only structurally inapplicable global-root fields
+are exempt. Hidden or missing ancestry fails closed. The preflight changes no
+host settings and establishes neither campaign authorization nor qualification.
+An ordinary replay consumer need not itself be a qualifying timing host; the
+recorded producer resource proof is independently replayed instead.
+
+### One prospectively registered producer
+
+A separately published prospective request at
+`tools/host-inference-campaigns/<campaignId>.request.json` allocates the one
+producer in **LightForge production verification**. Only that file's immutable
+first-creation commit on protected main may start the separate producer job.
+With no request there is no producer; later registration or cosmetic pushes
+cannot allocate another. Manual dispatch cannot allocate a campaign. The
+producer's only initial action after read-only eligibility is reviewed
+dependency/model preparation and compilation:
+`--phase prepare` creates the frozen declaration before zero warmups or timed
+pairs. The workflow uploads an immutable declaration artifact and waits
+read-only for a registration published through the existing authorized source
+path on protected main. Registration must name the exact campaign, producer
+run ID/attempt, actual input commit/tree, declaration artifact ID/server digest,
+and reviewed execution closure. The already-running designated attempt may
+then execute once. `cancel-in-progress: false` protects that already-running
+producer from registration publication; it does not protect a queued request
+run. GitHub's default single pending slot can replace a queued run on a later
+main push. Before creating the request, ensure no older main verification run
+is ahead of it. Wait until the designated `host-campaign` job is running before
+publishing registration or unrelated pushes. A replaced/missing designated run
+holds; it cannot allocate a replacement attempt. No queue setting, credential,
+service, repository setting or human approval system is introduced.
+
+**A manual run is not release-eligible**. The campaign producer also never
+packages a candidate or runs the Android publication chain, even though it is
+started by a protected-main request push. Ordinary main/PR verification
+replays a passing proof with exact measured source/class/policy/model/runtime/
+audio identity. Protected-main source publication and all same-session core,
+actual-model, Android, original signing and publication gates remain required.
+
+Reruns must replay the original terminal result, never warm up or time again.
+Failed proof remains failed; unknown, deleted, cancelled, incomplete or expired
+producer attempts/artifacts hold. Artifact retention is finite, so expiry can
+block an otherwise unchanged build. There is no automatic retry, replacement
+campaign, best-result selection or fallback to historical evidence. A source or
+policy identity mismatch also holds and requires a separately reviewed policy
+decision, not a silent remeasurement.
+
+The bounded producer's prospectively selected pool is fixed to `ubuntu-latest`;
+repository variables and dispatch inputs cannot choose another producer pool.
+Every actual allocated machine must pass the full strict preflight. Any prior
+diagnostic applies only to its observed machine, not blanket eligibility for
+the pool, and no passing campaign proof is asserted here. Ordinary verification
+retains its existing runner routing: only protected-main pushes may select the
+already-authorized `vars.LIGHTFORGE_INFERENCE_RUNNER` label, with `ubuntu-latest`
+as the unconfigured default. The existing `inference_runner` dispatch input
+selects only a diagnostic proof consumer. Do not use a
+privileged persistent host for untrusted code. No runner is provisioned, paid
+for or granted access by this workflow, and billing restrictions still require
+the authorized account-management route.
+
+The production v3 protocol remains a separate explicit CLI path with its
+unchanged eight-CPU, finite-quota requirements; it is not a fallback for the
+bounded campaign. Old `lightforge.experimental-portable-parallel-qualification.v1`
+receipts remain inadmissible. See
+[the host protocol and campaign lifecycle](docs/EXPERIMENTAL_HOST_QUALIFICATION.md)
+for the exact scope and fail-closed behavior. Implementing this path is not
+authorization to measure: independent review, integrated 2.4.2 source, source
+freeze and authorized publication must precede any actual timing.
 
 ## Test layers
 
@@ -207,17 +258,26 @@ strict [performance-quality gate](docs/PERFORMANCE_QUALITY_GATE.md) retains its
 thresholds. Physical phone/Tesla observations may be absent, but corresponding
 claims must remain explicitly unverified.
 
-`build.sh` additionally requires a passing final-source inference
-receipt before preparing assets or compiling an APK. It replays three alternating
-full-passage pairs, requires at least 15% lower median latency and 5% in every
-pair, verifies complete byte-identical output, and rejects memory pressure or
-unequal CPU controls. The frozen Java build input must match that measured source.
-The automated-verification policy and changing the version number do not bypass
-this release hold. The current qualifier binds the full-context temporal and
-frequency scheduling implementation, including the passage policy. Historical
-2.4.1 timing receipts remain unchanged and cannot qualify the newer geometry.
-New controlled benchmark runs write their current receipt under
-`research/inference-current/`, separately from published release evidence.
+The draft [2.4.2 / 20402 declaration](releases/v2.4.2/quality-gate-declaration.json)
+extends that automated-only scope to this exact next-build candidate under the
+owner's continued completion request and removal of external inputs. It does
+not qualify the release or waive the later neural-inference hold: real,
+noticeable, repeatable improvement and all fresh source-bound production,
+actual-model, packaged Android, sealed-evidence and original-signature checks
+remain required. No future version is automatically admitted.
+
+`build.sh` additionally requires a passing exact-source inference admission
+before preparing assets or compiling an APK. Under the bounded campaign policy,
+it replays the original registered three alternating full-passage pairs rather
+than implying fresh timing: at least 15% lower median latency, 5% in every pair,
+complete byte-identical output and unchanged resource proof remain mandatory.
+The current frozen Java/classes, policy, model, runtime and audio must exactly
+match measured identity, with a fresh candidate-specific source/session binding.
+Historical 2.4.1 and experimental portable receipts remain unchanged and cannot
+qualify newer geometry or satisfy the bounded campaign. The current prerequisite
+under `research/inference-current/` is separate from the immutable producer proof
+and from published release evidence. Changing the version number does not
+bypass this release hold.
 
 The release path retains these controls:
 

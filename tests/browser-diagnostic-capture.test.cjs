@@ -1,6 +1,7 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
-const harness=path.resolve(__dirname,'../qa/release-2.4.1/browser.cjs');
+const release=JSON.parse(fs.readFileSync(path.resolve(__dirname,'../version.json'),'utf8')).name;
+const harness=path.resolve(__dirname,`../qa/release-${release}/browser.cjs`);
 const source=fs.readFileSync(harness,'utf8');
 function helpers(extra={}){
  const safeRequire=name=>(name==='node:fs'||name==='fs')?{...fs,writeFileSync(){},renameSync(){},existsSync(){return false;}}:require(name);
@@ -92,7 +93,7 @@ test('the aggregate gate registers diagnostic capture and the source inventory b
  const gate=fs.readFileSync(path.resolve(__dirname,'../tools/verify_v2.py'),'utf8');
  assert.equal((gate.match(/'browser-diagnostic-capture\.test\.cjs'/g)||[]).length,1);
  const inventory=JSON.parse(fs.readFileSync(path.join(path.dirname(harness),'browser-source-inventory.json'),'utf8'));
- assert.ok(inventory.browser.includes('qa/release-2.4.1/browser.cjs'));
+ assert.ok(inventory.browser.includes(`qa/release-${release}/browser.cjs`));
 });
 
 test('a visible unexpected recovery banner cannot pass when earlier errors fell out of the application ring',()=>{

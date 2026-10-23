@@ -1,11 +1,13 @@
 # Comprehensive engineering completion checklist
 
-Assessment refreshed: **2026-10-23, 19:10 UTC**. Reliability, input-integrity,
+Assessment refreshed: **2026-10-23, 20:07 UTC**. Reliability, input-integrity,
 accessibility and verification changes are published to draft PR56 at
-`5a70d0725e54936b2f91053476602a74ef73ca58`, including the confirmed Music resize repair and recovered
-original-model browser workflow. A narrow documented-kernel counter parser
-correction is tested locally and pending publication. Frozen-source local aggregate and scoped native checks
-passed as detailed below; they are not a qualified release source identity.
+`9c2a1c9731dcfd388d70c5e6c5ccb2ed444fd15a`, including the confirmed Music resize
+repair, recovered original-model browser workflow and documented-kernel counter
+parser correction. The 2.4.2 source migration and independently reviewed prospective bounded-host
+qualification implementation pass the combined local regression gate; publication
+and fresh CI remain pending. No performance campaign has been allocated or measured. Earlier aggregate and scoped native checks
+remain historical to their exact inputs, not a qualified new release identity.
 This ledger covers the complete requested product, not only the inference PR.
 **The project is not fully complete or qualified for a new production release.**
 Later changes and verification must update the applicable rows; this document is
@@ -22,16 +24,21 @@ not a release receipt or permission to bypass an existing gate.
   contract exists. A sidecar schema is not an automatic detector.
 
 Published 2.4.1 evidence is indexed in [VALIDATION](../VALIDATION.md). Its
-successful checks do not qualify changed application bytes. The current source
-still uses version 2.4.1 during development; a source version is not publication.
+successful checks do not qualify changed application bytes. The current development source is moving to 2.4.2; a source version is not publication.
+No old receipts are promoted to qualify this new candidate.
 
 ## Current verification snapshot
 
-- Frozen-source `npm test` passed: **793 Node tests**, **767 Python tests run
-  (763 passed, 4 skipped)**, five quality-tool suites and all **85 analysis
-  assets**. The aggregate's 933 source hashes matched the inspected candidate.
-  This is engine/worker/DOM/archive/tooling coverage, not rendered browser or
-  packaged Android qualification.
+- The integrated 2.4.2 frozen-source `npm test` equivalent passed using the
+  regression interpreter: **793 Node tests**, **863 Python tests run (859 passed,
+  4 skipped)**, five quality-tool suites and all **85 analysis assets**. All
+  **943 source bindings** were unchanged through verification. The four skips
+  concern absent retained diagnostic builds, not current runtime prerequisites.
+  A first integration attempt exposed five test import/workflow-scoping errors;
+  those were corrected without changing production behavior, independently
+  reviewed and rerun in full. Both the failed and successful records are retained.
+  This is engine/worker/DOM/archive/tooling coverage, not rendered browser,
+  actual performance qualification or packaged Android evidence.
 - Original pinned model preparation from upstream succeeded; no released APK
   supplied the model files. Fresh original-model Deux profile, scheduler,
   cancellation and recovery checks passed with complete finite, byte-identical
@@ -43,20 +50,22 @@ still uses version 2.4.1 during development; a source version is not publication
   mixture (5 notes). MDX decoded-waveform and paired downstream gates passed;
   **`spectral_diagnostic_passed` remains false** and is retained, not waived or
   relabelled exact spectral parity. GAME, MDX and downstream source/model
-  bindings matched current bytes. Local records remain separate from sealed
+  bindings matched their tested source bytes. Local records remain separate from sealed
   CI release evidence.
 - Fresh advisory checks returned no known vulnerabilities for both npm
   lockfiles and the installed model-build Python environment. This does not
   cover every research tree, native library or Android system component, or
   establish numerical parity after research dependency changes.
-- The local cloud exposes nine allowed CPUs but no `/sys/fs/cgroup/cpu.max`.
-  GitHub production [run 39999491816](https://github.com/CyberBASSLord-666/LightForge/actions/runs/39999491816)
-  now starts and fails the strict runner preflight with **Eight allowed CPUs
-  are required**. Billing no longer prevents this new-head job from starting.
-  No controlled speed proof exists. [BUILD](../BUILD.md) documents the supported
-  controlled-runner path and fresh pre-build evidence generation. Only a
-  protected main push can select the configured runner for release eligibility;
-  manual dispatch is diagnostic. No eligible configured runner is verified.
+- The local cloud's hidden cgroup ancestry remains ineligible. The existing
+  eight-CPU production lane fails its strict preflight on the four-CPU hosted
+  runner. A fresh read-only [host observation](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40009544530)
+  now verifies four allowed CPUs, complete global cgroup ancestry and controls,
+  and capacity for the separately defined four-worker/three-CPU comparison.
+  This establishes host eligibility only, not timing or release qualification.
+  The prospective bounded-host implementation requires an immutable declaration,
+  exact protected-main registration, a single retained terminal attempt and
+  fresh candidate-specific sealed admission. It does not accept old experimental
+  receipts, relax numerical thresholds or replace Android verification.
 - Local rendered browser execution remains blocked by environment-specific
   Chromium IPC/launcher restrictions and isolated loopback access. Supported
   GitHub [run 40002479708](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40002479708)
@@ -111,21 +120,20 @@ still uses version 2.4.1 during development; a source version is not publication
   application; its generated input hash matches canonical fixture provenance.
   This short public excerpt establishes neither whole-song/corpus quality nor
   controlled speed, Android behavior or sealed production evidence.
-- [Experimental host qualification](EXPERIMENTAL_HOST_QUALIFICATION.md) describes
-  a separately identified four-worker/three-CPU experiment and read-only host
-  observation. Independent review and falsification tests passed, but no real
-  performance measurements have run. The production verifier still rejects
-  this lane. Local hidden cgroup ancestry remains ineligible; a hosted
-  diagnostic in run 40006034916 observed four allowed CPUs, the global
-  namespace and full cgroup mount, but rejected an unspecified strict
-  control/counter condition. No exact cause is inferred. Safe reason codes
-  will distinguish the failed observation in the next run; validators and
-  eligibility requirements remain unchanged. The next hosted artifact
-  identifies malformed cpu.stat parsing, without retaining its failing row.
-  Independent Linux source review exposed a real parser incompatibility with
-  the documented core_sched.force_idle_usec key. Its narrow correction retains
-  every value and all required counters, duplicate/unsigned/monotonicity checks;
-  it is not yet proven to resolve that hosted failure.
+  The latest head's [run 40009544574](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40009544574)
+  also passed on attempt 2 after an unchanged retry of a dependency-download
+  timeout before inference. Both attempt artifacts are retained. Its original
+  model, fixture, save/restore and cancellation checks passed; this still is
+  supplemental evidence rather than a sealed candidate receipt.
+- [Experimental host qualification](EXPERIMENTAL_HOST_QUALIFICATION.md) retains
+  the diagnostic-only lane separately from prospective admitted qualification.
+  Initial hosted observations failed, first with a generic reason and then a
+  malformed cpu.stat reason. Linux source review confirmed the documented
+  core_sched.force_idle_usec key was rejected by the old parser. The narrow
+  dotted-key correction preserves every value, mandatory counters, duplicate,
+  unsigned and monotonicity checks. Run 40009544530 confirms the corrected
+  observation is eligible. All earlier failures are retained; no timing proof
+  or Android/whole-song performance claim follows from eligibility.
 - Application browser QA now retains bounded, sanitized error reports and
   fails on unexpected handled errors or a recovery banner, even if an error
   has fallen out of the application log. Visible score captures verify backing
@@ -192,12 +200,13 @@ necessary for the applicable claims.
 | Diagnostics | Bounded local diagnostic export and durable job summaries implemented. | Recover after process failure; avoid personal audio, credentials and project payload leakage; disclose incomplete observations. |
 | Dependencies | Exact pins are retained. October 23 advisory checks found no known vulnerabilities in both npm lockfiles and the installed model-build Python environment. Earlier coordinated research changes remain documented in [dependency security](DEPENDENCY_SECURITY.md). | Research model-output parity and comprehensive research/native/system-component audits remain unverified. A clean advisory result for the checked environments is not universal security clearance. |
 | Artifact security | Archive credential/symlink rejection and repository hygiene strengthened. | Final packaging/provenance regression and rendered bundle binding must pass; keep signing secrets and personal files outside artifacts. |
-| Repository/PR integration | Only draft PR56 is open, with no standalone open issues or submitted PR reviews/inline threads. Published head `a5063c5` has passing hygiene/quality-tool and four-suite supplemental browser CI, and a strict production CPU-preflight failure. PR43 is not an open integration task. | Verify publication of the narrow inference replay correction and retain the draft/release hold until complete qualification. Preserve required history, model notices and failed evidence. |
+| Repository/PR integration | Only draft PR56 is open, with no standalone open issues or submitted PR reviews/inline threads. Published head `9c2a1c9` has passing hygiene/quality-tool, supplemental browser and original-model browser CI, with the existing strict eight-CPU production preflight still failing. PR43 is not an open integration task. | Integrate and verify the 2.4.2 migration and prospective host campaign implementation; retain the draft/release hold until complete qualification. Preserve required history, model notices and failed evidence. |
 
 ## Next safe engineering steps
 
-1. Verify the documented-kernel counter parser correction with a fresh hosted
-   diagnostic. Preserve all failed observations. The successful supplemental
+1. Publish the reviewed, aggregate-tested 2.4.2 source and prospective host
+   implementation; inspect fresh CI before allocating any measurement. Preserve
+   all failed observations and the single-attempt campaign identity. The successful supplemental
    model/browser checks do not substitute for sealed production or packaged
    Android evidence.
 2. Keep the passed aggregate and scoped native comparisons bound to their exact
@@ -205,7 +214,7 @@ necessary for the applicable claims.
    mandatory thresholds; rerun affected comparisons after source/model changes.
 3. Obtain fresh timing qualification on an eligible, already-authorized
    controlled host; complete the actual-model browser and packaged Android
-   gates. Then establish the deliberate new version and original-signing
+   gates. Then verify the new version and original-signing
    publication identity. Missing observations and denied operations are not
    permission to fabricate evidence, replace keys or bypass restrictions.
 4. Keep bass decimation caching deferred: profiling found only about 9–12 ms

@@ -1,5 +1,12 @@
-"""Fresh CI qualification and explicit fail-closed runner eligibility contracts."""
+"""Prospective host campaigns, exact proof replay and explicit runner lanes."""
 import copy
+import json
+import os
+import re
+import subprocess
+import tempfile
+import textwrap
+from types import SimpleNamespace
 import importlib.util
 from pathlib import Path
 import unittest
@@ -12,6 +19,19 @@ SPEC = importlib.util.spec_from_file_location(
 PREFLIGHT = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(PREFLIGHT)
 WORKFLOW = (ROOT / '.github/workflows/verify-v2.yml').read_text()
+PRODUCER = WORKFLOW.split('\n  host-campaign:', 1)[1].split('\n  verify:', 1)[0]
+CONSUMER = WORKFLOW.split('\n  verify:', 1)[1].split('\n  android-background:', 1)[0]
+ROUTING = WORKFLOW.split('\n  host-routing:', 1)[1].split('\n  host-campaign:', 1)[0]
+
+
+def step(text, name):
+    return text.split('      - name: ' + name + '\n', 1)[1].split('\n      - ', 1)[0]
+
+
+def inline_python(marker):
+    block = WORKFLOW.split("<<'" + marker + "'\n", 1)[1].split('\n          ' + marker, 1)[0]
+    return compile(textwrap.dedent(block), '<workflow-' + marker + '>', 'exec')
+
 
 
 class InferenceQualificationPreflightTest(unittest.TestCase):
@@ -79,12 +99,65 @@ class InferenceQualificationPreflightTest(unittest.TestCase):
         self.assertIs(self.inspect(machine='aarch64')['eligible'], False)
 
 
+class BoundedInferenceQualificationPreflightTest(unittest.TestCase):
+    def inspect(self, diagnostic):
+        host = mock.Mock()
+        host.diagnose.return_value = diagnostic
+        with mock.patch.object(PREFLIGHT.benchmark, 'portable_host', return_value=host), \
+                mock.patch.object(PREFLIGHT.benchmark, 'child_cpu_control') as legacy_control, \
+                mock.patch.object(PREFLIGHT.benchmark.b, 'host_counters') as legacy_counters, \
+                mock.patch.object(PREFLIGHT.benchmark.os, 'sched_setaffinity') as affinity_write:
+            record = PREFLIGHT.inspect_runner(PREFLIGHT.BOUNDED_PROTOCOL)
+            host.diagnose.assert_called_once_with()
+            legacy_control.assert_not_called()
+            legacy_counters.assert_not_called()
+            affinity_write.assert_not_called()
+        return record
+
+    def test_explicit_bounded_lane_uses_full_ancestry_diagnostic_without_eight_cpu_gate(self):
+        diagnostic = dict(eligible=True, qualificationEstablished=False,
+                          releaseAdmissible=False, fullQualificationEvidence=False)
+        record = self.inspect(diagnostic)
+        self.assertTrue(record['eligible'])
+        self.assertEqual(record['protocol'], 'bounded-four-worker-three-cpu-v1')
+        self.assertFalse(record['qualificationEstablished'])
+        self.assertFalse(record['releaseAdmissible'])
+        self.assertEqual(record['hostDiagnostic'], diagnostic)
+
+    def test_missing_or_hidden_ancestry_holds_without_fallback(self):
+        diagnostic = dict(eligible=False, reason='Hidden ancestry cannot be qualified')
+        record = self.inspect(diagnostic)
+        self.assertFalse(record['eligible'])
+        self.assertEqual(record['reason'], diagnostic['reason'])
+        self.assertIn('three observed child CPUs', record['requiredRunner'])
+        self.assertIn('Missing observations cannot be treated as zero', record['requiredRunner'])
+
+    def test_unknown_and_old_experimental_lanes_do_not_silently_select_a_protocol(self):
+        for lane in ('portable-four-worker-three-cpu-v1', '', None, 'auto'):
+            with self.subTest(lane=lane), self.assertRaisesRegex(ValueError, 'Unknown inference'):
+                PREFLIGHT.inspect_runner(lane)
+
+
 class InferenceQualificationWorkflowTest(unittest.TestCase):
     def test_custom_runner_selection_is_exactly_bounded(self):
         self.assertIn("runs-on: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && github.ref_protected && vars.LIGHTFORGE_INFERENCE_RUNNER || github.event_name == 'workflow_dispatch' && inputs.inference_runner || 'ubuntu-latest' }}", WORKFLOW)
         self.assertIn('default: ubuntu-latest', WORKFLOW)
         self.assertNotIn('pull_request_target', WORKFLOW)
         self.assertEqual(WORKFLOW.count('vars.LIGHTFORGE_INFERENCE_RUNNER'), 1)
+        self.assertIn("github.event_name == 'push' && github.ref == 'refs/heads/main' && github.ref_protected", PRODUCER)
+
+    def test_bounded_producer_pool_is_fixed_and_each_machine_still_requires_preflight(self):
+        self.assertEqual(re.findall(r'^    runs-on: (.+)$', PRODUCER, re.M), ['ubuntu-latest'])
+        self.assertNotIn('vars.', PRODUCER)
+        self.assertNotIn('inputs.inference_runner', PRODUCER)
+        preflight = step(PRODUCER, 'Check bounded campaign host before dependency preparation')
+        self.assertIn('--protocol bounded-four-worker-three-cpu-v1', preflight)
+        self.assertNotIn('continue-on-error', preflight)
+        for path in ('BUILD.md', 'docs/EXPERIMENTAL_HOST_QUALIFICATION.md'):
+            with self.subTest(path=path):
+                guide = ' '.join((ROOT / path).read_text().split())
+                self.assertIn('Every actual allocated machine must pass the full strict preflight.', guide)
+                self.assertIn('not blanket eligibility for the pool', guide)
 
     def test_runner_expression_never_routes_untrusted_events_or_refs_to_configured_host(self):
         # Evaluate only the exactly asserted expression above, not arbitrary
@@ -114,44 +187,180 @@ class InferenceQualificationWorkflowTest(unittest.TestCase):
         self.assertEqual(publish.count('record.get("head_branch") == "main"'), 2)
         guide = (ROOT / 'BUILD.md').read_text()
         self.assertIn('**A manual run is not release-eligible**', guide)
-        self.assertIn('No eligible configured runner has been verified', guide)
+        self.assertIn('no passing campaign proof is asserted here', guide)
 
-    def test_preflight_precedes_dependencies_and_does_not_allow_failure(self):
-        preflight = WORKFLOW.index('name: Check controlled inference runner before expensive preparation')
-        models = WORKFLOW.index('name: Reproduce bundled production models')
-        self.assertLess(preflight, models)
-        block = WORKFLOW[preflight:WORKFLOW.index('name: Retain runner preflight diagnostics')]
+    def test_consumer_establishes_proof_before_dependencies_without_host_preflight(self):
+        block = step(CONSUMER, 'Retrieve registered terminal proof before expensive preparation')
+        self.assertLess(CONSUMER.index('Retrieve registered terminal proof'),
+                        CONSUMER.index('Reproduce bundled production models'))
         self.assertIn('rm -f -- research/inference-current/production-parallel-qualification.json', block)
-        self.assertIn('python3 tools/inference_qualification_preflight.py', block)
+        self.assertIn('python3 tools/host_inference_campaign.py replay --root .', block)
+        self.assertNotIn('inference_qualification_preflight.py', CONSUMER)
+        self.assertNotIn('benchmark_deux_parallel.py', CONSUMER)
         self.assertNotIn('continue-on-error', block)
         self.assertNotIn('|| true', block)
 
-    def test_fresh_qualification_runs_after_dependencies_before_build(self):
-        qualification = WORKFLOW.index('name: Qualify fresh final-source full-passage inference before packaging')
-        build = WORKFLOW.index('name: Build CI package with an ephemeral signing identity')
-        block = WORKFLOW[qualification:WORKFLOW.index('name: Retain exact-source inference observations')]
-        self.assertLess(WORKFLOW.index('python3 tools/bootstrap_testdeps.py'), qualification)
-        self.assertLess(qualification, build)
-        self.assertIn('python3 tools/inference_qualification_preflight.py', block)
-        self.assertIn('python3 tools/benchmark_deux_parallel.py', block)
-        self.assertIn('--output "$RUNNER_TEMP/lightforge-inference-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"', block)
-        self.assertIn('--receipt research/inference-current/production-parallel-qualification.json', block)
+    def test_fresh_candidate_admission_replays_after_dependencies_before_build(self):
+        block = step(CONSUMER, 'Replay exact registered proof and seal fresh candidate host admission')
+        start = CONSUMER.index('Replay exact registered proof and seal fresh candidate host admission')
+        self.assertLess(CONSUMER.index('python3 tools/bootstrap_testdeps.py'), start)
+        self.assertLess(start, CONSUMER.index('Build CI package with an ephemeral signing identity'))
+        for option in ('--admission-output', '--prerequisite-output',
+                       '--evidence-session "$LIGHTFORGE_EVIDENCE_SESSION"'):
+            self.assertIn(option, block)
         self.assertIn('python3 tools/verify_inference_improvement.py', block)
-        self.assertLess(block.index('rm -f --'), block.index('python3 tools/benchmark_deux_parallel.py'))
-        self.assertLess(block.index('python3 tools/benchmark_deux_parallel.py'), block.index('python3 tools/verify_inference_improvement.py'))
+        self.assertLess(block.index('rm -f --'), block.index('python3 tools/host_inference_campaign.py'))
         self.assertNotIn('continue-on-error', block)
         self.assertNotIn('|| true', block)
+
+    def test_sealed_non_android_evidence_uses_the_exact_fresh_admission_output(self):
+        replay = step(CONSUMER, 'Replay exact registered proof and seal fresh candidate host admission')
+        seal = step(CONSUMER, 'Seal success-only non-Android verification evidence')
+        generated = re.findall(r'--admission-output "([^"]+)"', replay)
+        consumed = re.findall(r'--host-admission "([^"]+)"', seal)
+        self.assertEqual(generated, ['$RUNNER_TEMP/lightforge-host-admission.json'])
+        self.assertEqual(consumed, generated)
+        self.assertIn('tools/verification_evidence_manifest.py write-content', seal)
+        self.assertNotIn('if: always()', seal)
 
     def test_failed_observations_are_retained_without_becoming_release_authority(self):
-        start = WORKFLOW.index('name: Retain exact-source inference observations')
-        block = WORKFLOW[start:WORKFLOW.index('name: Build CI package', start)]
+        block = step(CONSUMER, 'Retain exact-source inference observations (not release evidence alone)')
         self.assertIn('if: always()', block)
-        self.assertIn('not release evidence alone', block)
         self.assertIn('github.run_id', block)
         self.assertIn('github.run_attempt', block)
         self.assertIn('research/inference-current/production-parallel-qualification.json', block)
+        self.assertIn('lightforge-host-admission.json', block)
         self.assertNotIn('overwrite: true', block)
-        self.assertNotIn('download-artifact', WORKFLOW[:start])
+
+    def test_request_routing_is_readonly_and_preserves_already_running_producer(self):
+        self.assertIn('host_inference_campaign.py route --root .', ROUTING)
+        self.assertIn("('producer', 'producer-replay', 'consumer')", ROUTING)
+        self.assertIn('cancel-in-progress: false', WORKFLOW)
+        self.assertNotIn('cancel-in-progress: true', WORKFLOW)
+        self.assertIn("needs.host-routing.outputs.mode == 'consumer'", CONSUMER)
+        self.assertIn("needs.host-routing.outputs.mode == 'producer'", PRODUCER)
+        self.assertIn("needs.host-routing.outputs.mode == 'producer-replay'", PRODUCER)
+        for forbidden in ('benchmark_deux_parallel.py', 'git push', 'gh api', 'contents: write',
+                          'actions: write', 'workflow_dispatch'):
+            self.assertNotIn(forbidden, ROUTING)
+        for forbidden in ('build.sh', 'npm test', 'prepare_game.py', 'android-background',
+                          'LIGHTFORGE_EVIDENCE_SESSION', 'workflow_dispatch'):
+            self.assertNotIn(forbidden, PRODUCER)
+
+    def test_queued_request_replacement_caveat_is_documented_without_queue_changes(self):
+        for path in ('BUILD.md', 'docs/EXPERIMENTAL_HOST_QUALIFICATION.md'):
+            with self.subTest(path=path):
+                guide = (ROOT / path).read_text()
+                self.assertIn('no older main verification run', guide)
+                self.assertIn('`host-campaign` job is running before', guide)
+                self.assertIn('registration or unrelated pushes', guide)
+                self.assertIn('single pending slot can replace a queued run', guide)
+                self.assertIn('replaced/missing designated run', guide)
+        self.assertIn('already-running producer, not a queued request run', WORKFLOW)
+        self.assertNotIn('queue:', WORKFLOW)
+
+    def test_campaign_preflight_compile_upload_registration_execute_are_strictly_ordered(self):
+        names = (
+            'Check bounded campaign host before dependency preparation',
+            'Prepare only reviewed original campaign dependencies and model',
+            'Compile and freeze declaration before zero warmups or timings',
+            'Retain immutable prospective declaration only',
+            'Wait read-only for exact prospective protected-main registration',
+            'Execute the one registered original attempt without timing retries',
+        )
+        indices = [PRODUCER.index(name) for name in names]
+        self.assertEqual(indices, sorted(indices))
+        for name in names:
+            block = step(PRODUCER, name)
+            self.assertIn('if: ${{ github.run_attempt == 1 }}', block)
+            self.assertNotIn('continue-on-error', block)
+            self.assertNotIn('|| true', block)
+        preflight = step(PRODUCER, names[0])
+        self.assertIn('--protocol bounded-four-worker-three-cpu-v1', preflight)
+        prepare = step(PRODUCER, names[2])
+        execute = step(PRODUCER, names[5])
+        self.assertIn('--phase prepare', prepare)
+        self.assertNotIn('--phase execute', prepare)
+        self.assertIn('--phase execute', execute)
+        self.assertEqual(PRODUCER.count('tools/benchmark_deux_parallel.py'), 2)
+        self.assertEqual(prepare.count('--output "$LIGHTFORGE_HOST_WORK"'), 1)
+        self.assertEqual(execute.count('--output "$LIGHTFORGE_HOST_WORK"'), 1)
+        self.assertNotIn('--retry', PRODUCER)
+
+    def test_declaration_is_only_member_and_observations_never_overwrite(self):
+        declaration = step(PRODUCER, 'Retain immutable prospective declaration only')
+        proof = step(PRODUCER, 'Retain original campaign observations including failed attempts')
+        self.assertIn('path: ${{ env.LIGHTFORGE_HOST_WORK }}/declaration.json', declaration)
+        self.assertIn('host-inference-declaration-${{ env.LIGHTFORGE_HOST_CAMPAIGN }}-${{ github.run_id }}-${{ github.run_attempt }}', declaration)
+        self.assertIn('host-inference-proof-${{ env.LIGHTFORGE_HOST_CAMPAIGN }}-${{ github.run_id }}-${{ github.run_attempt }}', proof)
+        self.assertIn('always() && github.run_attempt == 1', proof)
+        self.assertIn('path: ${{ env.LIGHTFORGE_HOST_WORK }}/', proof)
+        self.assertNotIn('overwrite:', declaration + proof)
+        self.assertEqual(declaration.count('retention-days: 90'), 1)
+        self.assertEqual(proof.count('retention-days: 90'), 1)
+
+    def test_rerun_retrieves_original_terminal_result_without_dependency_or_timing_steps(self):
+        replay = step(PRODUCER, 'Reruns retrieve only the original terminal proof')
+        self.assertIn('if: ${{ github.run_attempt != 1 }}', replay)
+        self.assertIn('host_inference_campaign.py replay --root .', replay)
+        self.assertNotIn('benchmark_deux_parallel.py', replay)
+        self.assertNotIn('--admission-output', replay)
+        self.assertLess(PRODUCER.index('Reruns retrieve only the original terminal proof'),
+                        PRODUCER.index('Check bounded campaign host'))
+
+    def exercise_registration_wait(self, results, clocks=(0, 1)):
+        with tempfile.TemporaryDirectory() as directory:
+            work = Path(directory) / 'proof'
+            work.mkdir()
+            iterator = iter(results)
+            def check(command, *, check, timeout):
+                status, payload = next(iterator)
+                self.assertEqual(command[:3], ['python3', 'tools/host_inference_campaign.py', 'check'])
+                self.assertEqual(timeout, 300)
+                self.assertFalse(check)
+                Path(command[-1]).write_text(json.dumps(payload))
+                return SimpleNamespace(returncode=status)
+            with mock.patch.dict(os.environ, {'LIGHTFORGE_HOST_WORK': str(work), 'RUNNER_TEMP': directory}), \
+                    mock.patch.object(subprocess, 'run', side_effect=check) as run, \
+                    mock.patch('time.sleep') as sleep, \
+                    mock.patch('time.monotonic', side_effect=clocks):
+                error = None
+                try:
+                    exec(inline_python('PYREGISTRATION'), {})
+                except SystemExit as caught:
+                    error = caught
+                return error, run.call_count, sleep.call_count
+
+    def test_registration_wait_only_retries_explicit_absence(self):
+        approved = (0, dict(measurementAuthorized=True, purpose='producer'))
+        error, count, sleeps = self.exercise_registration_wait([approved])
+        self.assertIsNone(error)
+        self.assertEqual((count, sleeps), (1, 0))
+        pending = (2, dict(status='awaiting-registration'))
+        error, count, sleeps = self.exercise_registration_wait([pending, approved])
+        self.assertIsNone(error)
+        self.assertEqual((count, sleeps), (2, 1))
+        for denied in ((2, dict(status='hold')), (3, dict(status='terminal-failure')),
+                       (0, dict(measurementAuthorized=False, purpose='producer')),
+                       (0, dict(measurementAuthorized=True, purpose='replay'))):
+            with self.subTest(denied=denied):
+                error, count, sleeps = self.exercise_registration_wait([denied])
+                self.assertIsNotNone(error)
+                self.assertEqual((count, sleeps), (1, 0))
+        error, count, sleeps = self.exercise_registration_wait([pending], clocks=(0, 2701))
+        self.assertIsNotNone(error)
+        self.assertEqual((count, sleeps), (1, 0))
+
+    def test_dynamic_current_release_and_existing_core_android_gates_remain(self):
+        self.assertIn("version=json.load(open('version.json'))['name']", CONSUMER)
+        for command in ('run: npm test', 'verify-native-inference-profile.py',
+                        'analysis-browser.cjs', 'verify-native-game.py',
+                        'tools/build_android_tests.py', 'tools/build_diagnostics_tests.py'):
+            self.assertIn(command, CONSUMER)
+        android = WORKFLOW.split('\n  android-background:', 1)[1]
+        self.assertIn('needs: verify', android)
+        self.assertIn('tools/run_android_background_tests.py', android)
+        self.assertIn('tools/run_android_diagnostics_tests.py', android)
 
 
 if __name__ == '__main__':

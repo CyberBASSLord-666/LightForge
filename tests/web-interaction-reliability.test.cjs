@@ -94,7 +94,8 @@ test('the shipped page loads modal and keyboard accessibility behavior exactly o
   const scripts=[...dom.window.document.querySelectorAll('script[src]')].map(el=>el.getAttribute('src'));
   assert.equal(scripts.filter(src=>src==='ui-polish.js').length,1);
   assert.ok(scripts.indexOf('ui-polish.js')>scripts.indexOf('cockpit.js'));
-  const inventory=JSON.parse(fs.readFileSync(path.join(root,'qa/release-2.4.1/browser-source-inventory.json'),'utf8'));
+  const release=JSON.parse(fs.readFileSync(path.join(root,'version.json'),'utf8')).name;
+  const inventory=JSON.parse(fs.readFileSync(path.join(root,`qa/release-${release}/browser-source-inventory.json`),'utf8'));
   assert.ok(inventory.common.includes('web/ui-polish.js'),'browser evidence must bind the activated interaction layer');
  }finally{dom.window.close();}
 });

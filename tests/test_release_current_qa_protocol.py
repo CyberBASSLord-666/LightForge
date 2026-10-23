@@ -9,6 +9,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 from unittest import TestCase, main
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 VERSION = json.loads((ROOT / 'version.json').read_text())
@@ -36,6 +37,37 @@ def digest(path):
 
 
 class CurrentReleaseQaProtocolTest(TestCase):
+    def test_protocol_identity_is_current_and_rejects_other_release_metadata(self):
+        self.assertEqual(VERIFY.RELEASE, RELEASE)
+        self.assertEqual(VERIFY.RELEASE_CODE, VERSION['code'])
+        self.assertEqual(VERIFY.OUT, f'qa/release-{RELEASE}/')
+        for version in ({'name': '2.4.1', 'code': 20401},
+                        {'name': RELEASE, 'code': VERSION['code'] - 1},
+                        {'name': '9.8.7', 'code': 90807}):
+            with self.subTest(version=version), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                (root / 'version.json').write_text(json.dumps(version))
+                with self.assertRaisesRegex(ValueError, 'This evidence protocol belongs only to'):
+                    VERIFY.verify_release(root)
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / 'version.json').write_text(json.dumps(VERSION))
+            with patch.dict(os.environ, {}, clear=True), self.assertRaisesRegex(
+                    ValueError, 'requires a fresh evidence session'):
+                VERIFY.verify_release(root)
+
+    def test_current_browser_inventory_never_uses_a_prior_release_protocol(self):
+        inventory = VERIFY.ensure_browser_source_inventory()
+        paths = set().union(*inventory.values())
+        historical_inputs = {
+            'qa/release-1.6.0/actual-music-user-glass-prefix64-analysis.json',
+            'qa/release-1.6.0/fixtures/falcon-mix.wav',
+        }
+        self.assertTrue(historical_inputs <= paths)
+        protocols = {name.split('/')[1] for name in paths - historical_inputs
+                     if name.startswith('qa/release-')}
+        self.assertEqual(protocols, {f'release-{RELEASE}'})
+
     def write_receipt(self, root, relative, sources, session=SESSION):
         hashes = {}
         for source_relative in sources:

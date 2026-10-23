@@ -68,6 +68,7 @@ test('unpitched lanes retain their original height, fractional-width rounding an
 test('the aggregate gate runs the resize regression and browser evidence binds its product source',()=>{
  const gate=fs.readFileSync(path.join(root,'tools/verify_v2.py'),'utf8');
  assert.equal((gate.match(/'music-insights-resize\.test\.cjs'/g)||[]).length,1);
- const inventory=JSON.parse(fs.readFileSync(path.join(root,'qa/release-2.4.1/browser-source-inventory.json'),'utf8'));
+ const release=JSON.parse(fs.readFileSync(path.join(root,'version.json'),'utf8')).name;
+ const inventory=JSON.parse(fs.readFileSync(path.join(root,`qa/release-${release}/browser-source-inventory.json`),'utf8'));
  assert.ok(inventory.common.includes('web/music-insights.js'));
 });
