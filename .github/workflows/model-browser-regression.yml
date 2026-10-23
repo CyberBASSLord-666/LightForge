@@ -1,0 +1,183 @@
+name: LightForge supplemental actual-model browser regression
+on:
+  pull_request:
+    # Only preparation/runtime inputs, not unrelated QA or performance tools.
+    # GitHub matches the cumulative PR diff: an already-matching PR can still
+    # rerun on a later unrelated commit; these are not per-commit filters.
+    paths:
+      - '.github/workflows/model-browser-regression.yml'
+      - '.github/workflows/verify-v2.yml' # Pin parity read by the contract test.
+      - 'web/**'
+      - 'tools/prepare_game.py'
+      - 'tools/prepare_deux.py'
+      - 'tools/model_export_guard.py'
+      - 'tools/model-requirements.txt'
+      - 'tools/verify_analysis_assets.py'
+      - 'tests/test_model_browser_workflow.py'
+      - 'qa/release-*/analysis-browser.cjs'
+      - 'qa/release-*/analysis-performance.cjs'
+      - 'qa/release-*/browser-source-inventory.json'
+      - 'qa/locked-benchmark/local-http-security.cjs'
+      - 'qa/release-1.6.0/prepare-musdb-fixtures.py'
+      - 'qa/release-1.6.0/musdb-fixture-provenance.json'
+      - 'qa/release-1.6.0/fixtures/falcon-mix.wav'
+      - 'research/upstream/deux/**'
+      - 'research/evaluation-1.6/**'
+      - 'package*.json'
+      - 'version.json'
+      - '!**/*.md'
+      # These notices are hashed model assets, not documentation-only changes.
+      - 'web/analysis/README.md'
+      - 'web/analysis/models/UVR-MDX-NOTICE.md'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: model-browser-regression-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  actual-model-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: |
+            .github
+            web
+            tools
+            tests
+            qa
+            research/upstream/deux
+            research/evaluation-1.6
+      - name: Observe supplemental runner capacity and current version
+        run: |
+          python3 - <<'PYCONTEXT'
+          import json, os, re, shutil, subprocess
+          from pathlib import Path
+          output = Path(os.environ['RUNNER_TEMP']) / 'lightforge-model-browser'
+          output.mkdir()
+          record = {'scope': 'Supplemental public-fixture Chromium model correctness only; not controlled timing, Android, signed APK or sealed release evidence.', 'runId': os.environ['GITHUB_RUN_ID'], 'runAttempt': os.environ['GITHUB_RUN_ATTEMPT'], 'checkout': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(), 'eligible': False, 'observations': {}, 'errors': []}
+          try:
+              version = json.loads(Path('version.json').read_text())['name']
+              if not isinstance(version, str) or not re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+', version):
+                  raise ValueError('Invalid current release version')
+              record['release'] = version
+              available = re.search(r'^MemAvailable:\s+(\d+) kB$', Path('/proc/meminfo').read_text(), re.M)
+              if available is None:
+                  raise ValueError('Observed available memory is missing')
+              record['observations'] = {'allowedCpuIds': sorted(os.sched_getaffinity(0)), 'availableMemoryBytes': int(available[1]) * 1024, 'freeDiskBytes': shutil.disk_usage(Path.cwd()).free}
+              observed = record['observations']
+              if len(observed['allowedCpuIds']) < 2 or observed['availableMemoryBytes'] < 8 * 1024**3 or observed['freeDiskBytes'] < 8 * 1024**3:
+                  raise ValueError('Supplemental model setup needs at least two allowed CPUs, 8 GiB available RAM and 8 GiB free disk; these are capacity guards, not timing qualification')
+              record['eligible'] = True
+              with open(os.environ['GITHUB_ENV'], 'a') as stream:
+                  stream.write('LIGHTFORGE_RELEASE=' + version + '\n')
+          except (OSError, ValueError, KeyError, TypeError) as error:
+              record['errors'].append(str(error))
+          (output / 'context.json').write_text(json.dumps(record, indent=2) + '\n')
+          print(json.dumps(record, indent=2))
+          if not record['eligible']:
+              raise SystemExit('Supplemental model-browser capacity/setup check failed')
+          PYCONTEXT
+      - name: Declare supplemental scope
+        run: echo 'Actual-model Chromium correctness diagnostics only. No controlled speed, Android, signed APK or sealed production/release qualification is established by this workflow.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Invalidate any prior current diagnostic outputs
+        run: |
+          rm -f -- "qa/release-$LIGHTFORGE_RELEASE/analysis-browser-verification.json" \
+            "qa/release-$LIGHTFORGE_RELEASE/actual-analysis-falcon.json"
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12.14'
+          cache: pip
+          cache-dependency-path: |
+            tools/model-requirements.txt
+            .github/workflows/model-browser-regression.yml
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Check supplemental workflow contracts
+        run: python3 -m unittest tests.test_model_browser_workflow
+      - name: Reproduce unchanged original model assets
+        id: model_assets
+        timeout-minutes: 15
+        run: |
+          python3 -m pip install pip==26.2.1 setuptools==83.0.0
+          python3 -m pip install torch==2.13.0 --index-url https://download.pytorch.org/whl/cpu
+          python3 -m pip install -r tools/model-requirements.txt
+          python3 tools/prepare_game.py
+          python3 tools/prepare_deux.py
+          python3 tools/verify_analysis_assets.py
+          git diff --exit-code -- web/analysis
+      - name: Reproduce original licensed public reference fixture
+        timeout-minutes: 5
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
+          mkdir -p qa/release-1.6.0/fixtures
+          curl -fL --retry 3 https://github.com/sigsep/sigsep-mus-db/releases/download/v0.4.0/MUSDB18-7-STEMS.zip -o qa/release-1.6.0/fixtures/MUSDB18-7-STEMS.zip
+          echo '365f66acffc57282e474a4c24b32afec3678258c50b8d45646ac849b0a287df3  qa/release-1.6.0/fixtures/MUSDB18-7-STEMS.zip' | sha256sum -c
+          python3 qa/release-1.6.0/prepare-musdb-fixtures.py
+          git diff --exit-code -- qa/release-1.6.0/musdb-fixture-provenance.json
+      - name: Install Chromium
+        timeout-minutes: 5
+        run: npx playwright install --with-deps chromium
+      - name: Run unchanged actual-model browser harness with external deadline
+        timeout-minutes: 32
+        run: |
+          set -o pipefail
+          diagnostics="$RUNNER_TEMP/lightforge-model-browser"
+          printf '%s\n' '{"status":"running","passed":false,"deadlineSeconds":1800,"scope":"supplemental only"}' > "$diagnostics/process.json"
+          set +e
+          timeout --signal=TERM --kill-after=30s 30m \
+            env -u LIGHTFORGE_EVIDENCE_SESSION node "qa/release-$LIGHTFORGE_RELEASE/analysis-browser.cjs" \
+            2>&1 | tee >(tail -c 2097152 > "$diagnostics/browser.log")
+          status=$?
+          wait
+          python3 - "$status" <<'PYRESULT'
+          import json, os, sys
+          from pathlib import Path
+          code = int(sys.argv[1])
+          record = {'status': 'completed' if code == 0 else 'timed-out' if code in (124, 137) else 'failed', 'passed': code == 0, 'exitCode': code, 'deadlineSeconds': 1800, 'scope': 'Supplemental process result only; inspect the harness receipt. Not sealed release evidence.'}
+          (Path(os.environ['RUNNER_TEMP']) / 'lightforge-model-browser/process.json').write_text(json.dumps(record, indent=2) + '\n')
+          PYRESULT
+          exit "$status"
+      - name: Recheck unchanged model and source assets
+        if: ${{ !cancelled() && steps.model_assets.outcome == 'success' }}
+        run: |
+          python3 tools/verify_analysis_assets.py
+          git diff --exit-code -- web tools qa/release-${{ env.LIGHTFORGE_RELEASE }}/analysis-browser.cjs
+      - name: Collect only bounded public-fixture diagnostics, including failures
+        if: always()
+        run: |
+          python3 - <<'PYCOLLECT'
+          import os, shutil
+          from pathlib import Path
+          output = Path(os.environ['RUNNER_TEMP']) / 'lightforge-model-browser'
+          output.mkdir(exist_ok=True)
+          release = os.environ.get('LIGHTFORGE_RELEASE')
+          if release:
+              for name in ('analysis-browser-verification.json', 'actual-analysis-falcon.json'):
+                  source = Path('qa') / ('release-' + release) / name
+                  if source.is_symlink() or (source.exists() and not source.is_file()):
+                      raise SystemExit('Refusing non-regular supplemental diagnostic: ' + name)
+                  if source.is_file():
+                      if source.stat().st_size > 8 * 1024**2:
+                          raise SystemExit('Diagnostic exceeds 8 MiB; original retained in job workspace: ' + name)
+                      shutil.copyfile(source, output / name)
+          PYCOLLECT
+      - name: Retain supplemental model-browser diagnostics only
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: lightforge-model-browser-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/lightforge-model-browser/context.json
+            ${{ runner.temp }}/lightforge-model-browser/process.json
+            ${{ runner.temp }}/lightforge-model-browser/browser.log
+            ${{ runner.temp }}/lightforge-model-browser/analysis-browser-verification.json
+            ${{ runner.temp }}/lightforge-model-browser/actual-analysis-falcon.json
+          retention-days: 14
+          if-no-files-found: warn

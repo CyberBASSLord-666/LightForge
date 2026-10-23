@@ -1,9 +1,10 @@
 # Comprehensive engineering completion checklist
 
-Assessment refreshed: **2026-10-23, 18:16 UTC**. Reliability, input-integrity,
+Assessment refreshed: **2026-10-23, 18:43 UTC**. Reliability, input-integrity,
 accessibility and verification changes are published to draft PR56 at
-`d4315c8515311e01bbd4805ed355c1a4068aa38f`. The supplemental browser-workflow follow-up and this snapshot are
-pending publication. Frozen-source local aggregate and scoped native checks
+`a5063c5373abae2d2c206f4f676984d74e6d402a`, including the supplemental browser workflow and narrow inference
+replay head-geometry correction. Additional diagnostic coverage described
+below is being prepared and is not yet published. Frozen-source local aggregate and scoped native checks
 passed as detailed below; they are not a qualified release source identity.
 This ledger covers the complete requested product, not only the inference PR.
 **The project is not fully complete or qualified for a new production release.**
@@ -26,9 +27,9 @@ still uses version 2.4.1 during development; a source version is not publication
 
 ## Current verification snapshot
 
-- Frozen-source `npm test` passed: **779 Node tests**, **685 Python tests run
-  (681 passed, 4 skipped)**, five quality-tool suites and all **85 analysis
-  assets**. The aggregate's 926 source hashes matched the inspected candidate.
+- Frozen-source `npm test` passed: **788 Node tests**, **745 Python tests run
+  (741 passed, 4 skipped)**, five quality-tool suites and all **85 analysis
+  assets**. The aggregate's 932 source hashes matched the inspected candidate.
   This is engine/worker/DOM/archive/tooling coverage, not rendered browser or
   packaged Android qualification.
 - Original pinned model preparation from upstream succeeded; no released APK
@@ -56,22 +57,52 @@ still uses version 2.4.1 during development; a source version is not publication
   controlled-runner path and fresh pre-build evidence generation. Only a
   protected main push can select the configured runner for release eligibility;
   manual dispatch is diagnostic. No eligible configured runner is verified.
-- Local rendered browser execution remains blocked by that environment's
-  Chromium IPC/launcher restrictions and isolated loopback access. The supported
-  GitHub hosted-browser [restore run 39999491690](https://github.com/CyberBASSLord-666/LightForge/actions/runs/39999491690)
-  **passed the actual cold-restore WebGL regression** at exact published head
-  `d4315c8515311e01bbd4805ed355c1a4068aa38f`. Artifact/screenshot review is still
-  in progress. This is not full editor, background-progress, Highland-optics or
-  sealed production browser coverage. The pending supplemental workflow adds
-  those non-model application/background/Highland checks using the shared
-  Chromium install and retains generated PNG/JSON diagnostics. It does not run
-  the actual model browser pipeline or replace production/Android qualification.
-- Exact-head GitHub [hygiene](https://github.com/CyberBASSLord-666/LightForge/actions/runs/39999491814)
-  and [quality-gate tooling](https://github.com/CyberBASSLord-666/LightForge/actions/runs/39999491698)
+- Local rendered browser execution remains blocked by environment-specific
+  Chromium IPC/launcher restrictions and isolated loopback access. Supported
+  GitHub [run 40002479708](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40002479708)
+  passed all four supplemental suites at exact head
+  `4ab3ae8addc989cef5179347b7cef889d39428a2`: actual cold-restore WebGL,
+  current application flows, background-progress/recovery UI and Highland
+  optics/clock/graphics recovery. The downloaded diagnostic archive matches
+  its GitHub SHA-256; 53 unique source bindings in the application, background
+  and optics receipts match this head. All 36 supplemental PNGs were reviewed: no confirmed blocking layout or
+  optics defect was found, but an unexplained application error banner in
+  the Guide/My shows screenshots prevents a blanket clean claim. Existing
+  page-error assertions did not detect it. Additional sanitized in-app error
+  capture and fail-closed recovery-banner assertions are being prepared.
+  The wide score screenshot was captured while its canvas was offscreen; a
+  settled visible-element capture will distinguish rendering from capture
+  artifacts without changing application behavior. These are supplemental checks, not the actual-model browser pipeline,
+  physical Android/Tesla observations or sealed production qualification.
+- The strict inference replay verifier now treats each output head as eleven
+  128-frame chunks, independently of candidate frequency-block batching.
+  It accepts the original 1,727-call candidate geometry and rejects the previous
+  erroneous 1,869-call geometry. Independent negative controls cover missing,
+  extra and redistributed head calls. Performance thresholds, original model
+  work, source identity and resource requirements are unchanged.
+- Exact-head GitHub [hygiene](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40003841187)
+  and [quality-gate tooling](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40003841078)
   checks passed. A tooling pass is not a locked-corpus quality result. GitHub
   inspection found no open standalone issues and only draft
   [PR56](https://github.com/CyberBASSLord-666/LightForge/pull/56), with no submitted
   reviews or inline review threads. No new release was published.
+
+## Additional diagnostic coverage pending hosted execution
+
+- An unprivileged supplemental workflow reproduces original model assets and
+  licensed reference audio, runs the unchanged actual-model browser harness
+  with a bounded external deadline, and retains only explicit diagnostic files.
+  It does not sign/package an APK or create sealed production evidence.
+- [Experimental host qualification](EXPERIMENTAL_HOST_QUALIFICATION.md) describes
+  a separately identified four-worker/three-CPU experiment and read-only host
+  observation. Independent review and falsification tests passed, but no real
+  performance measurements have run. The production verifier still rejects
+  this lane. Local hidden cgroup ancestry remains ineligible; a hosted
+  diagnostic will establish its actual eligibility without changing controls.
+- Application browser QA now retains bounded, sanitized error reports and
+  fails on unexpected handled errors or a recovery banner, even if an error
+  has fallen out of the application log. Visible score captures verify backing
+  dimensions before screenshots. These changes await their actual CI run.
 
 ## Verification publication scope
 
@@ -95,8 +126,8 @@ necessary for the applicable claims.
 | Native runtime checks | Fresh Deux checks and GAME native/WASM final-output/checkpoint comparisons passed. GAME produced 98 demo notes and 5 Falcon notes with identical final output; unrounded intermediate differences remain recorded. | Preserve source/model/runtime bindings; host comparisons do not establish packaged Android, corpus accuracy, physical-device performance or whole-job speedup. |
 | MDX numerical comparison | Mandatory decoded-waveform comparisons on three fixed inputs and the paired downstream gate passed with current source/model bindings. Internal spectral diagnostic remains false. | Preserve failed spectral diagnostics and existing mandatory thresholds; do not claim bit-identical MDX spectra, full-song accuracy or Android parity from these scoped passes. |
 | Foreground/background analysis | Foreground service, checkpointed stages, cancellation and saving are implemented. Current changes suspend completed-preview watchdog budgets while the Activity is hidden or unfocused and reject stale callbacks after resume. Historical emulator evidence does not qualify these changes. | Fresh packaged Android tests: screen-off/background completion, Activity recreation, process interruption, cancel/resume, low-memory paths and durable result save. |
-| Completed-project preview | Current source preserves saved arrangements when loading fails, fences superseded opens, and defers legacy Android draw-listener removal until after drawing. The actual cold-restore WebGL CI regression passed at the published head; artifact review and broader browser/Android coverage remain outstanding. | Restore completed and legacy projects; assert first rendered frame, transport/seek, repeated opening, cancellation and current compiled sequence agreement, including API 26-28 and focus loss/resume. |
-| Browser and UI execution | The supported GitHub cold-restore WebGL regression passed; local browser restrictions are environment-specific. Artifact review is ongoing. Supplemental current-version application/background/Highland checks are not yet published and no broad visual pass is established. | Complete and inspect actual browser diagnostics; separately run the real-model browser pipeline under the production evidence contract. DOM or supplemental diagnostics cannot replace sealed release evidence. |
+| Completed-project preview | Current source preserves saved arrangements when loading fails, fences superseded opens, and defers legacy Android draw-listener removal until after drawing. The four supplemental browser suites passed at head 4ab3ae8; screenshot review, actual-model browser and packaged Android qualification remain distinct requirements. | Restore completed and legacy projects; assert first rendered frame, transport/seek, repeated opening, cancellation and current compiled sequence agreement, including API 26-28 and focus loss/resume. |
+| Browser and UI execution | All four supplemental browser suites passed in run 40002479708, with exact-source artifact bindings checked. Screenshot review identified an unexplained handled-error banner; fail-closed diagnostic capture is pending CI. Local browser restrictions are environment-specific. No actual-model browser or packaged Android pass is inferred. | Complete and inspect actual browser diagnostics; separately run the real-model browser pipeline under the production evidence contract. DOM or supplemental diagnostics cannot replace sealed release evidence. |
 | Physical phone | No fresh physical-phone observations were produced for this assessment. Earlier connector errors are historical, not a current connection diagnosis. | Use only supported, authorized connection routes when available. Physical testing is optional under the applicable version-scoped publication policy, but physical performance claims need observations. |
 | APK/update identity | Original-signing and exact-payload publication controls implemented. No new final APK is qualified by this ledger. | Deliberate new version, full exact-source verification, original certificate outside Git, update-compatible install identity, alignment and checksum verification. Never replace the key or uninstall to evade incompatibility. |
 | Release publication | Latest published release remains 2.4.1; the current candidate still uses 2.4.1/20401 for development. No new final APK or release is qualified. | Follow [BUILD](../BUILD.md); deliberately choose a new version, establish its applicable publication authority/policy, and verify expected remote commit, full CI, qualified signed APK and public release assets. Existing version-scoped exceptions do not automatically authorize a future version. Do not overwrite a released version. |
@@ -133,14 +164,14 @@ necessary for the applicable claims.
 | Diagnostics | Bounded local diagnostic export and durable job summaries implemented. | Recover after process failure; avoid personal audio, credentials and project payload leakage; disclose incomplete observations. |
 | Dependencies | Exact pins are retained. October 23 advisory checks found no known vulnerabilities in both npm lockfiles and the installed model-build Python environment. Earlier coordinated research changes remain documented in [dependency security](DEPENDENCY_SECURITY.md). | Research model-output parity and comprehensive research/native/system-component audits remain unverified. A clean advisory result for the checked environments is not universal security clearance. |
 | Artifact security | Archive credential/symlink rejection and repository hygiene strengthened. | Final packaging/provenance regression and rendered bundle binding must pass; keep signing secrets and personal files outside artifacts. |
-| Repository/PR integration | Only draft PR56 is open, with no standalone open issues or submitted PR reviews/inline threads. Published head `d4315c851` has passing hygiene/quality-tool CI and a strict production CPU-preflight failure; the actual cold-restore WebGL CI regression passed. PR43 is not an open integration task. | Publish and verify the reviewed supplemental workflow/documentation follow-up, inspect exact-head CI and retain the draft/release hold until qualification. Preserve required history, model notices and failed evidence. |
+| Repository/PR integration | Only draft PR56 is open, with no standalone open issues or submitted PR reviews/inline threads. Published head `a5063c5` has passing hygiene/quality-tool and four-suite supplemental browser CI, and a strict production CPU-preflight failure. PR43 is not an open integration task. | Verify publication of the narrow inference replay correction and retain the draft/release hold until complete qualification. Preserve required history, model notices and failed evidence. |
 
 ## Next safe engineering steps
 
-1. Publish the reviewed supplemental workflow follow-up, verify its exact head
-   and inspect all browser suite outcomes and retained screenshots. Preserve
-   failed and never-run stages; the cold-restore pass does not cover the remaining
-   editor/background/optics or actual-model browser suites.
+1. Diagnose the unexplained application error banner with retained sanitized
+   logs and verify settled score captures on GitHub. Run the remaining
+   actual-model browser diagnostics without presenting supplemental results
+   as sealed production or packaged Android evidence.
 2. Keep the passed aggregate and scoped native comparisons bound to their exact
    inputs. Investigate retained MDX spectral discrepancies without weakening
    mandatory thresholds; rerun affected comparisons after source/model changes.
