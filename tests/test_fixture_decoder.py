@@ -116,6 +116,112 @@ class FixtureDecoderTests(unittest.TestCase):
         distro.assert_not_called()
         check.assert_not_called()
 
+    def test_file_metadata_has_fixed_roles_and_identifies_all_failed_attributes(self):
+        infos = [SimpleNamespace(st_mode=stat.S_IFREG | 0o644, st_uid=0, st_size=200),
+                 SimpleNamespace(st_mode=stat.S_IFREG | 0o777, st_uid=123, st_size=1024 * 1024 + 1),
+                 SimpleNamespace(st_mode=stat.S_IFLNK | 0o777, st_uid=0, st_size=0)]
+        with mock.patch.object(Path, 'lstat', side_effect=infos) as observed, \
+             mock.patch.object(Path, 'read_bytes') as read:
+            record = D.configuration_file_identity()
+        self.assertEqual(observed.call_count, 3)
+        read.assert_not_called()
+        self.assertEqual(record['scope'], 'official-fixture-decoder-file-identity-only')
+        self.assertEqual(record['files'], [
+            {'role': 'source', 'type': 'regular', 'uid': 0, 'mode': 0o644, 'sizeBytes': 200, 'failedChecks': []},
+            {'role': 'keyring', 'type': 'regular', 'uid': 123, 'mode': 0o777,
+             'sizeBytes': 1024 * 1024 + 1, 'failedChecks': ['owner', 'writable-mode', 'size']},
+            {'role': 'mirrors', 'type': 'symlink', 'uid': 0, 'mode': 0o777, 'sizeBytes': 0,
+             'failedChecks': ['file-type', 'writable-mode', 'size']},
+        ])
+        self.assertLess(len(json.dumps(record)), 2048)
+
+    def test_file_metadata_suppresses_private_paths_errors_and_invalid_numbers(self):
+        secret = 'PRIVATE_SOURCE_ENV_URL_SENTINEL'
+        cases = [FileNotFoundError(2, secret, secret), PermissionError(13, secret, secret),
+                 OSError(999999, secret, secret), OSError(secret),
+                 SimpleNamespace(st_mode=secret, st_uid=secret, st_size=secret),
+                 SimpleNamespace(st_mode=-1, st_uid=2**100, st_size=2**100),
+                 SimpleNamespace(st_mode=True, st_uid=False, st_size=1.5)]
+        for case in cases:
+            with self.subTest(case=type(case).__name__), \
+                 mock.patch.object(Path, 'lstat', side_effect=[case] * 3), \
+                 mock.patch.object(Path, 'read_bytes') as read, \
+                 mock.patch.object(Path, 'readlink') as links:
+                output = json.dumps(D.configuration_file_identity())
+            self.assertNotIn(secret, output)
+            self.assertNotIn(str(2**100), output)
+            self.assertLess(len(output), 2048)
+            read.assert_not_called()
+            links.assert_not_called()
+
+    def test_diagnostic_cli_never_reads_contents_or_invokes_setup(self):
+        output = io.StringIO()
+        with mock.patch.object(D, 'configuration_file_identity', return_value={'scope': 'test', 'files': []}), \
+             mock.patch.object(D, 'read_configuration_files') as read, \
+             mock.patch.object(D, 'prepare') as prepare, mock.patch.object(D.subprocess, 'run') as run, \
+             mock.patch.object(D.subprocess, 'check_output') as check, \
+             mock.patch.object(D.tempfile, 'mkdtemp') as temporary, \
+             contextlib.redirect_stdout(output):
+            D.main(['--diagnose-files'])
+        self.assertEqual(json.loads(output.getvalue()), {'scope': 'test', 'files': []})
+        read.assert_not_called()
+        prepare.assert_not_called()
+        run.assert_not_called()
+        check.assert_not_called()
+        temporary.assert_not_called()
+
+    def test_early_check_uses_unchanged_reader_and_retains_rejected_metadata(self):
+        for existing in (None, '/existing/ffmpeg'):
+            output = io.StringIO()
+            with self.subTest(existing=bool(existing)), \
+                 mock.patch.object(D, 'configuration_file_identity', return_value={'scope': 'test', 'files': []}), \
+                 mock.patch.object(D.shutil, 'which', return_value=existing), \
+                 mock.patch.object(D, 'read_public_file', side_effect=D.DecoderValidationError(
+                     'Unsupported Ubuntu configuration file identity')) as read, \
+                 mock.patch.object(D, 'prepare') as prepare, mock.patch.object(D.subprocess, 'run') as run, \
+                 mock.patch.object(D.subprocess, 'check_output') as check, \
+                 mock.patch.object(D.tempfile, 'mkdtemp') as temporary, \
+                 contextlib.redirect_stdout(output):
+                if existing:
+                    D.main(['--check-files'])
+                    read.assert_not_called()
+                else:
+                    with self.assertRaisesRegex(SystemExit, 'Unsupported Ubuntu configuration file identity'):
+                        D.main(['--check-files'])
+                    read.assert_called_once_with(D.SOURCE)
+            self.assertEqual(json.loads(output.getvalue()), {'scope': 'test', 'files': []})
+            prepare.assert_not_called()
+            run.assert_not_called()
+            check.assert_not_called()
+            temporary.assert_not_called()
+
+    def test_early_probe_rejects_each_required_writable_file_with_exact_role(self):
+        for role, rejected in (('source', D.SOURCE), ('keyring', D.KEYRING), ('mirrors', D.MIRRORS)):
+            def observed(path):
+                return SimpleNamespace(st_mode=stat.S_IFREG | (0o777 if path == rejected else 0o644),
+                                       st_uid=0, st_size=3607)
+            def contents(path):
+                return SOURCE if path == D.SOURCE else MIRRORS if path == D.MIRRORS else b'keyring'
+            output = io.StringIO()
+            with self.subTest(role=role), mock.patch.object(D.shutil, 'which', return_value=None), \
+                 mock.patch.object(Path, 'lstat', observed), mock.patch.object(Path, 'read_bytes', contents), \
+                 mock.patch.object(D.subprocess, 'run') as run, \
+                 contextlib.redirect_stdout(output), self.assertRaisesRegex(SystemExit, 'configuration file identity'):
+                D.main(['--check-files'])
+            records = json.loads(output.getvalue())['files']
+            self.assertEqual([row['role'] for row in records if row['failedChecks']], [role])
+            self.assertEqual(next(row['failedChecks'] for row in records if row['role'] == role), ['writable-mode'])
+            run.assert_not_called()
+
+    def test_shared_reader_preserves_conditional_mirror_requirement(self):
+        for raw, expected in [(SOURCE, [D.SOURCE, D.KEYRING, D.MIRRORS]),
+                              (SOURCE.replace(D.MIRROR_URI.encode(), D.ARCHIVE.encode()), [D.SOURCE, D.KEYRING])]:
+            with self.subTest(mirrors=len(expected) == 3), \
+                 mock.patch.object(D, 'read_public_file', side_effect=[raw, b'keyring', MIRRORS]) as read:
+                result = D.read_configuration_files()
+            self.assertEqual([call.args[0] for call in read.call_args_list], expected)
+            self.assertEqual(result, (raw, b'keyring', MIRRORS if len(expected) == 3 else None))
+
     def exercise(self, failure=None, foreign='', drift=False):
         temporary = tempfile.TemporaryDirectory(prefix='decoder fixture ')
         self.addCleanup(temporary.cleanup)
@@ -147,6 +253,7 @@ class FixtureDecoderTests(unittest.TestCase):
         with mock.patch.object(D.shutil, 'which', side_effect=[None, '/installed/ffmpeg']), \
              mock.patch.object(D.platform, 'freedesktop_os_release', return_value=OS), \
              mock.patch.object(D.subprocess, 'check_output', side_effect=['amd64\n', foreign]), \
+             mock.patch.object(D, 'configuration_file_identity', return_value={'scope': 'test', 'files': []}), \
              mock.patch.object(D, 'read_public_file', side_effect=read), \
              mock.patch.object(D.subprocess, 'run', side_effect=run), \
              mock.patch.dict(os.environ, {'RUNNER_TEMP': str(root)}), contextlib.redirect_stdout(metadata):
@@ -177,10 +284,22 @@ class FixtureDecoderTests(unittest.TestCase):
         for key, value in options.items():
             if key.startswith('Dir::'):
                 self.assertIn('/lightforge-ffmpeg-apt-', value)
-        forbidden = ('AllowUnauthenticated', 'AllowInsecure', 'Verify-Peer', 'Verify-Host',
-                     'Proxy', 'Sandbox', 'trusted=yes', 'force', 'rm', 'apt-key')
-        self.assertFalse(any(word in ' '.join(update[0]) for word in forbidden))
-        record = json.loads(output)
+        # Validate option syntax/keys, not random temporary-path substrings.
+        # For example, an owned path containing 'rm' is not an rm command.
+        self.assertEqual(update[0][:2], ['sudo', 'apt-get'])
+        self.assertEqual(update[0][2:-2:2], ['-o'] * len(options))
+        self.assertEqual(len(update[0]), 4 + 2 * len(options))
+        self.assertEqual(set(options), {
+            'Dir::Etc::sourcelist', 'Dir::Etc::sourceparts', 'Dir::State::lists',
+            'Dir::Cache::archives', 'Dir::Cache::pkgcache', 'Dir::Cache::srcpkgcache',
+            'Acquire::Retries', 'Acquire::http::Timeout', 'Acquire::https::Timeout',
+            'APT::Update::Error-Mode',
+        })
+        self.assertEqual(options['Acquire::http::Timeout'], '30')
+        self.assertFalse(any(arg in ('rm', 'apt-key') or arg.startswith('--force')
+                             for arg in update[0]))
+        identity, record = map(json.loads, output.splitlines())
+        self.assertEqual(identity, {'scope': 'test', 'files': []})
         self.assertEqual(record['originalSourceSha256'], hashlib.sha256(SOURCE).hexdigest())
         self.assertEqual(set(record), {'scope', 'distribution', 'architecture', 'suites', 'components',
                                       'originalSourceSha256', 'temporarySourceSha256', 'signingKeyringSha256'})

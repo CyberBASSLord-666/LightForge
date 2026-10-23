@@ -156,11 +156,18 @@ class ModelBrowserWorkflowTest(unittest.TestCase):
         self.assertIn('if: always()', upload)
         paths = re.findall(r'^            (.+)$', upload, re.M)
         self.assertEqual(paths, ['${{ runner.temp }}/lightforge-model-browser/' + name for name in
-            ('context.json', 'process.json', 'browser.log', 'analysis-browser-verification.json', 'actual-analysis-falcon.json')])
+            ('context.json', 'decoder-files.json', 'process.json', 'browser.log', 'analysis-browser-verification.json', 'actual-analysis-falcon.json')])
         self.assertIn('${{ github.run_id }}-${{ github.run_attempt }}', upload)
         self.assertIn('if: always()', step('Collect only bounded public-fixture diagnostics, including failures'))
 
     def test_decoder_setup_is_separately_bounded_without_changing_fixture(self):
+        preflight = step('Check official decoder file identities before model setup')
+        self.assertIn('set -o pipefail', preflight)
+        self.assertIn('python3 tools/prepare_fixture_decoder.py --check-files', preflight)
+        self.assertIn('tee "$RUNNER_TEMP/lightforge-model-browser/decoder-files.json"', preflight)
+        self.assertNotIn('continue-on-error', preflight)
+        self.assertLess(WORKFLOW.index('Check official decoder file identities before model setup'),
+                        WORKFLOW.index('Reproduce unchanged original model assets'))
         decoder = step('Ensure official fixture decoder is available')
         self.assertIn('timeout-minutes: 15', decoder)
         self.assertIn('run: python3 tools/prepare_fixture_decoder.py', decoder)
@@ -176,6 +183,21 @@ class ModelBrowserWorkflowTest(unittest.TestCase):
         self.assertIn('git diff --exit-code -- qa/release-1.6.0/musdb-fixture-provenance.json', fixture)
         self.assertLess(WORKFLOW.index('Ensure official fixture decoder is available'),
                         WORKFLOW.index('Reproduce original licensed public reference fixture'))
+
+    @unittest.skipUnless(shutil.which('bash'), 'The workflow requires bash')
+    def test_file_identity_failure_is_retained_and_fails_the_early_step(self):
+        with tempfile.TemporaryDirectory(prefix='decoder identity ') as directory:
+            root = Path(directory)
+            (root / 'lightforge-model-browser').mkdir()
+            program = root / 'python3'
+            program.write_text('#!/bin/sh\nprintf \'%s\\n\' \'{"scope":"synthetic","files":[]}\'\nexit 7\n')
+            program.chmod(0o755)
+            result = subprocess.run(['bash', '-c', shell('Check official decoder file identities before model setup')],
+                env={**os.environ, 'RUNNER_TEMP': directory, 'PATH': str(root) + os.pathsep + os.environ['PATH']},
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=10)
+            self.assertEqual(result.returncode, 7)
+            self.assertEqual(json.loads((root / 'lightforge-model-browser/decoder-files.json').read_text()),
+                             {'scope': 'synthetic', 'files': []})
 
     def inspect_capacity(self, cpu_count=4, memory_kib=12 * 1024**2, free_disk=12 * 1024**3):
         with tempfile.TemporaryDirectory() as directory:

@@ -15,6 +15,7 @@ import re
 import shutil
 import stat
 import subprocess
+import sys
 import tempfile
 
 SOURCE = Path('/etc/apt/sources.list.d/ubuntu.sources')
@@ -67,6 +68,51 @@ def read_public_file(path):
     require(stat.S_ISREG(info.st_mode) and info.st_uid == 0 and not info.st_mode & 0o022
             and 0 < info.st_size <= 1024 * 1024, 'Unsupported Ubuntu configuration file identity')
     return path.read_bytes()
+
+
+def configuration_file_identity():
+    """Bounded read-only metadata, never paths, link targets or file contents."""
+    def integer(value, maximum):
+        return value if type(value) is int and 0 <= value <= maximum else None
+
+    files = []
+    for role, path in (('source', SOURCE), ('keyring', KEYRING), ('mirrors', MIRRORS)):
+        record = {'role': role}
+        try:
+            info = path.lstat()
+        except OSError as error:
+            record.update(type='unavailable', errno=integer(error.errno, 4095),
+                          failedChecks=['metadata-unavailable'])
+        else:
+            mode = integer(info.st_mode, 0xffffffff)
+            uid = integer(info.st_uid, 0xffffffff)
+            size = integer(info.st_size, 0x7fffffffffffffff)
+            kind = ('unavailable' if mode is None else 'regular' if stat.S_ISREG(mode)
+                    else 'symlink' if stat.S_ISLNK(mode) else 'directory' if stat.S_ISDIR(mode) else 'other')
+            failures = []
+            if kind != 'regular':
+                failures.append('file-type')
+            if uid != 0:
+                failures.append('owner')
+            if mode is None or mode & 0o022:
+                failures.append('writable-mode')
+            if size is None or not 0 < size <= 1024 * 1024:
+                failures.append('size')
+            record.update(type=kind, uid=uid, mode=None if mode is None else stat.S_IMODE(mode),
+                          sizeBytes=size, failedChecks=failures)
+        files.append(record)
+    return {'scope': 'official-fixture-decoder-file-identity-only', 'files': files}
+
+
+def print_configuration_file_identity():
+    print(json.dumps(configuration_file_identity(), sort_keys=True), flush=True)
+
+
+def read_configuration_files():
+    raw = read_public_file(SOURCE)
+    keyring = read_public_file(KEYRING)
+    mirror_raw = read_public_file(MIRRORS) if MIRROR_URI.encode() in raw else None
+    return raw, keyring, mirror_raw
 
 
 def canonical_source(raw, distribution, architecture, mirror_raw=None):
@@ -153,9 +199,8 @@ def prepare():
     architecture = subprocess.check_output(['dpkg', '--print-architecture'], text=True, timeout=10).strip()
     foreign = subprocess.check_output(['dpkg', '--print-foreign-architectures'], text=True, timeout=10).strip()
     require(not foreign, 'Unreviewed foreign package architecture')
-    raw = read_public_file(SOURCE)
-    keyring = read_public_file(KEYRING)
-    mirror_raw = read_public_file(MIRRORS) if MIRROR_URI.encode() in raw else None
+    print_configuration_file_identity()
+    raw, keyring, mirror_raw = read_configuration_files()
     source, suites, components = canonical_source(raw, distribution, architecture, mirror_raw)
     parent = Path(os.environ['RUNNER_TEMP'])
     require(parent.is_absolute() and parent.is_dir() and parent.resolve() == parent,
@@ -188,8 +233,15 @@ def prepare():
     subprocess.run([decoder, '-version'], check=True, timeout=30)
 
 
-def main():
+def main(arguments=()):
     try:
+        if arguments:
+            if list(arguments) not in (['--diagnose-files'], ['--check-files']):
+                raise SystemExit('Unsupported fixture decoder command')
+            print_configuration_file_identity()
+            if list(arguments) == ['--check-files'] and not shutil.which('ffmpeg'):
+                read_configuration_files()
+            return
         prepare()
     except DecoderValidationError as error:
         observed_reason = str(error)
@@ -201,4 +253,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1:])
