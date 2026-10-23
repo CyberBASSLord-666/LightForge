@@ -43,6 +43,7 @@
     "web/preview/vehicle-preview.js",
     "web/studio-tools.js",
     "web/styles.css",
+    "web/ui-polish.js",
     "web/version.js",
     "qa/locked-benchmark/local-http-security.cjs"
   ],

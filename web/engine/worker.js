@@ -26,7 +26,11 @@ async function encode(show,music,settings){
  return {format:'lightforge-gzip-frames-v1',engineVersion:show.version,frameCount:show.frameCount,channels:200,stepMs:show.stepMs,sha256:await digest(show.frames),inputDigest:await inputDigest(music,settings),frameData:base64(frameData),metaSHA256:await digest(new TextEncoder().encode(canonical(meta))),meta};
 }
 async function restore(compiled,music,settings,pulse=()=>{},timing=null){
- if(!compiled||compiled.format!=='lightforge-gzip-frames-v1'||!Number.isInteger(compiled.frameCount)||compiled.frameCount<1||compiled.frameCount>MAX_FRAMES||compiled.channels!==CHANNELS||![15,20].includes(compiled.stepMs))throw Error('The saved compiled show has an unsupported format.');
+ if(!compiled||compiled.format!=='lightforge-gzip-frames-v1'||!Number.isInteger(compiled.frameCount)||compiled.frameCount<1||compiled.frameCount>MAX_FRAMES||compiled.channels!==CHANNELS||![15,20].includes(compiled.stepMs)||compiled.frameCount*compiled.stepMs>14400000)throw Error('The saved compiled show has an unsupported format.');
+ // The envelope selects the allocation and playback geometry. It must agree
+ // with the checksummed metadata rather than override that saved identity.
+ const meta=compiled.meta;
+ if(!meta||meta.version!==compiled.engineVersion||meta.frameCount!==compiled.frameCount||meta.stepMs!==compiled.stepMs||meta.channels!==CHANNELS||meta.channelCount!==undefined&&meta.channelCount!==CHANNELS)throw Error('The saved show metadata does not match its compiled format.');
  pulse('input-digest');
  const currentInputDigest=await inputDigest(music,settings);let migration=null;
  if(compiled.inputDigest!==currentInputDigest){

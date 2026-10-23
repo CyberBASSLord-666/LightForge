@@ -19,6 +19,14 @@ public final class AndroidResourceCleanupTest {
         ((OutputStream)get(sink,"out")).close();Field out=sink.getClass().getDeclaredField("out");out.setAccessible(true);out.set(sink,replacement);
     }
     public static void main(String[] args)throws Exception{
+        // Android forbids removing an OnDrawListener from within onDraw.
+        // Execute the real callback adapter with a controllable UI queue.
+        List<Runnable> afterDraw=new ArrayList<>();List<String> drawing=new ArrayList<>();
+        MainActivity.DeferredDrawCallback callback=new MainActivity.DeferredDrawCallback(afterDraw::add,()->drawing.add("removed-and-committed"));
+        callback.onDraw();callback.onDraw();
+        check(drawing.isEmpty()&&afterDraw.size()==1,"Draw callback removed itself inline or posted repeated proof");
+        afterDraw.remove(0).run();callback.onDraw();
+        check(drawing.size()==1&&afterDraw.isEmpty(),"Draw proof was not one-shot after the drawing pass");
         List<String> closed=new ArrayList<>();IOException converter=new IOException("converter"),codec=new IOException("codec");Error extractor=new AssertionError("extractor");
         try{AudioImporter.closeResources(()->{closed.add("converter");throw converter;},()->{closed.add("codec");throw codec;},()->{closed.add("extractor");throw extractor;});throw new AssertionError("cleanup error swallowed");}
         catch(IOException failure){check(failure==converter,"first cleanup error replaced");check(Arrays.equals(failure.getSuppressed(),new Throwable[]{codec,extractor}),"secondary cleanup errors missing");}

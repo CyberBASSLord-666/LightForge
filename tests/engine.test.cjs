@@ -169,6 +169,20 @@ test('validator catches corrupted payload, unsupported dimming, absent lamps and
   assert.equal(Engine.validate(Object.assign({},show,{frameCount:2})).valid,false);
 });
 
+test('export rejects contradictory channel and source-clock metadata',()=>{
+  const show=Engine.generate(music(2),{dance:'off'});
+  for(const patch of [{channels:199},{channelCount:199},{duration:3},{duration:NaN},{audioDuration:1},{audioDuration:3},{audioDuration:NaN},{audioDuration:0}]){
+    const altered={...show,...patch};
+    assert.equal(Engine.validate(altered).valid,false,JSON.stringify(patch));
+    assert.throws(()=>Engine.fseqHeader(altered));
+    assert.throws(()=>Engine.fseq(altered));
+  }
+  for(const alias of ['channels','channelCount']){
+    const legacy={...show};delete legacy[alias];
+    assert.equal(Engine.validate(legacy).valid,true,'one valid legacy channel-count alias remains supported');
+  }
+});
+
 test('the exact four-hour limit is accepted without timing overflow',()=>{
   const show=Engine.generate({duration:14400,bpm:120,beats:[],sections:[{start:0,energy:0}],waveform:[0]},{stepMs:20});
   assert.equal(show.frameCount,720000);assert.equal(show.duration,14400);assert.equal(show.frames.length,144000000);assert.ok(show.validation.valid);

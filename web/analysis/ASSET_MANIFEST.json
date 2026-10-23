@@ -328,8 +328,8 @@
     "sha256": "e6ad2b32659d136fc68282073e1e05018647a1a793f697152b3a33e151ecad61"
   },
   "wav-reader.js": {
-    "bytes": 8035,
-    "sha256": "6cd0a40392617cc020f2ec4f87952f165e070c8c17bc4aa3b36b212823d897d4"
+    "bytes": 9664,
+    "sha256": "4aac3431f720073d0978550329855eb18a7f2d594f8399a7a346c70de62211b5"
   },
   "work-store.js": {
     "bytes": 23043,

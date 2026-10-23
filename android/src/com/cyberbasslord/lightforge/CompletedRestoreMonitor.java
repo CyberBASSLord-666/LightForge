@@ -63,11 +63,30 @@ final class CompletedRestoreMonitor {
     // Probe tickets prevent a late callback from an earlier same-lease probe
     // from satisfying a newer probe after a direct bridge pulse supersedes it.
     private long probeTicket,awaitingProbeTicket;
+    private boolean foreground=true;
+    private long pausedAt,pausedDuration;
     private boolean awaitingCallback,recoveryRequested,disposed,workerStarted,workerVerified,showAdopted,previewStarting,previewFirstRender,visualCommitted;
 
     CompletedRestoreMonitor(Clock clock,Scheduler scheduler,Host host){
         this.clock=clock;this.scheduler=scheduler;this.host=host;
     }
+
+    /** Hidden Activities cannot provide visual-frame proof. Charge only foreground time. */
+    synchronized void setForeground(boolean visible){
+        if(disposed||foreground==visible)return;
+        if(!visible){
+            pausedAt=clock.now();foreground=false;
+            scheduler.removeCallbacks(tickTask);
+            // Android may suspend a pending evaluateJavascript callback. A late
+            // response must not satisfy the fresh ticket issued after resume.
+            awaitingCallback=false;callbackStartedAt=0;awaitingProbeTicket=0;
+        }else{
+            pausedDuration+=Math.max(0,clock.now()-pausedAt);foreground=true;
+            if(jobId!=null)arm(nextDelay(foregroundNow()));
+        }
+    }
+
+    private long foregroundNow(){return (foreground?clock.now():pausedAt)-pausedDuration;}
 
     synchronized boolean begin(String nextJobId,String nextNonce,long initialBytes){
         if(disposed||!valid(nextJobId)||!valid(nextNonce))return false;
@@ -85,7 +104,7 @@ final class CompletedRestoreMonitor {
             host.diagnostic("completed-restore retired unconfirmed terminal token job="+terminalJobId+" for later completed job="+nextJobId);
             clearTerminalProof();
         }
-        long now=clock.now();
+        long now=foregroundNow();
         jobId=nextJobId;nonce=nextNonce;phase="bootstrap";sequence=0;bytes=Math.max(0,initialBytes);
         lastAdvanceAt=now;nextProbeAt=now;callbackStartedAt=0;awaitingCallback=false;awaitingProbeTicket=0;
         workerStarted=false;workerVerified=false;showAdopted=false;previewStarting=false;previewFirstRender=false;visualCommitted=false;
@@ -107,7 +126,7 @@ final class CompletedRestoreMonitor {
         if("preview-starting".equals(nextPhase)&&(!workerStarted||!workerVerified||!showAdopted||previewStarting))return false;
         if("preview-first-render".equals(nextPhase)&&(!workerVerified||!showAdopted||!previewStarting||previewFirstRender))return false;
         if("preview-visual-commit".equals(nextPhase)&&(!workerVerified||!showAdopted||!previewFirstRender||visualCommitted))return false;
-        long now=clock.now();
+        long now=foregroundNow();
         sequence=nextSequence;phase=valid(nextPhase)?nextPhase:"pulse";bytes=Math.max(bytes,Math.max(0,nextBytes));
         if("worker-started".equals(phase))workerStarted=true;
         if("worker-verified".equals(phase))workerVerified=true;
@@ -119,7 +138,7 @@ final class CompletedRestoreMonitor {
         if("preview-starting".equals(phase)){
             // Retire the pre-startup probe before GPU/model initialization.
             // Its generic callback budget is not meaningful during this one
-            // named phase; the 30-second phase deadline below remains active.
+            // named phase; the bounded phase deadline below remains active.
             awaitingCallback=false;callbackStartedAt=0;awaitingProbeTicket=0;
             nextProbeAt=now+PREVIEW_STARTUP_BUDGET_MS;
             arm(nextDelay(now));
@@ -177,7 +196,7 @@ final class CompletedRestoreMonitor {
     synchronized boolean owns(String candidateJobId,String candidateNonce){return matches(candidateJobId,candidateNonce)&&!disposed;}
 
     synchronized void rendererGone(){
-        if(jobId!=null&&!disposed)requestRecovery("renderer-gone",clock.now());
+        if(jobId!=null&&!disposed)requestRecovery("renderer-gone",foregroundNow());
     }
 
     synchronized void replacementStarted(){
@@ -192,8 +211,8 @@ final class CompletedRestoreMonitor {
     }
 
     private synchronized void tick(){
-        if(disposed||jobId==null)return;
-        long now=clock.now();
+        if(disposed||!foreground||jobId==null)return;
+        long now=foregroundNow();
         if(awaitingCallback){
             if(now-callbackStartedAt>=CALLBACK_BUDGET_MS)requestRecovery("callback-stall",now);
             else arm(Math.max(1,CALLBACK_BUDGET_MS-(now-callbackStartedAt)));
@@ -215,9 +234,9 @@ final class CompletedRestoreMonitor {
     private synchronized void receiveProbe(String requestedJobId,String requestedNonce,long requestedProbeTicket,Probe probe){
         // A callback from a retired WebView, or an older same-lease probe,
         // must not satisfy the current callback budget.
-        if(disposed||jobId==null||!awaitingCallback||awaitingProbeTicket!=requestedProbeTicket||!matches(requestedJobId,requestedNonce))return;
+        if(disposed||!foreground||jobId==null||!awaitingCallback||awaitingProbeTicket!=requestedProbeTicket||!matches(requestedJobId,requestedNonce))return;
         awaitingCallback=false;callbackStartedAt=0;awaitingProbeTicket=0;
-        long now=clock.now();
+        long now=foregroundNow();
         if(probe==null){host.diagnostic("completed-restore probe returned no state job="+jobId);arm(nextDelay(now));return;}
         // Treat page state as belonging to this request only after both lease
         // identifiers match.  In particular, a late old-page `failed` flag
@@ -314,7 +333,7 @@ final class CompletedRestoreMonitor {
     }
     private void arm(long delay){
         scheduler.removeCallbacks(tickTask);
-        if(!disposed&&jobId!=null)scheduler.postDelayed(tickTask,Math.max(0,delay));
+        if(!disposed&&foreground&&jobId!=null)scheduler.postDelayed(tickTask,Math.max(0,delay));
     }
     private void clearLease(){
         scheduler.removeCallbacks(tickTask);jobId=null;nonce=null;phase=null;sequence=bytes=0;workerStarted=false;workerVerified=false;showAdopted=false;previewStarting=false;previewFirstRender=false;visualCommitted=false;

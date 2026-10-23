@@ -35,7 +35,7 @@ function uiHarness(){
  // Layout is deliberately simulated: DOM behavior only, not rendered-browser QA.
  w.HTMLElement.prototype.getClientRects=function(){return this.closest('[hidden]')?[]:[{}];};
  w.eval(fs.readFileSync(path.join(root,'web/ui-polish.js'),'utf8'));
- return {w,d,close:()=>w.close(),async flush(){await Promise.resolve();frames.splice(0).forEach(fn=>fn());}};
+ return {w,d,async close(){await Promise.resolve();await Promise.resolve();w.close();},async flush(){await Promise.resolve();frames.splice(0).forEach(fn=>fn());}};
 }
 test('modal isolation restores existing inert state and opener across overlapping overlays',async()=>{
  const t=uiHarness(),{d}=t;try {
@@ -44,7 +44,7 @@ test('modal isolation restores existing inert state and opener across overlappin
   d.getElementById('second').hidden=false;await t.flush();assert.equal(d.activeElement.id,'secondButton');assert.equal(d.getElementById('first').hasAttribute('inert'),true);
   d.getElementById('second').hidden=true;await t.flush();assert.equal(d.activeElement.id,'firstButton');assert.equal(d.getElementById('first').hasAttribute('inert'),false);
   d.getElementById('first').hidden=true;await t.flush();assert.equal(d.activeElement.id,'trigger');assert.equal(d.getElementById('trigger').hasAttribute('inert'),false);assert.equal(d.getElementById('already').hasAttribute('inert'),true);
- }finally{t.close();}
+ }finally{await t.close();}
 });
 test('modal tab wrap includes textareas and skips hidden or negative-tabindex controls',async()=>{
  const t=uiHarness(),{d,w}=t;try {
@@ -52,14 +52,14 @@ test('modal tab wrap includes textareas and skips hidden or negative-tabindex co
   d.getElementById('notes').focus();const key=new w.KeyboardEvent('keydown',{key:'Tab',bubbles:true,cancelable:true});d.activeElement.dispatchEvent(key);
   assert.equal(key.defaultPrevented,true);assert.equal(d.activeElement.id,'firstButton');
   d.activeElement.dispatchEvent(new w.KeyboardEvent('keydown',{key:'Tab',shiftKey:true,bubbles:true,cancelable:true}));assert.equal(d.activeElement.id,'notes');
- }finally{t.close();}
+ }finally{await t.close();}
 });
 test('empty modal gets focus and non-finite audio duration has a finite spoken value',async()=>{
  const t=uiHarness(),{d}=t;try {
   Object.defineProperty(d.getElementById('audio'),'duration',{value:Infinity});d.getElementById('audio').dispatchEvent(new t.w.Event('loadedmetadata'));
   assert.doesNotMatch(d.getElementById('seek').getAttribute('aria-valuetext'),/Infinity|NaN/);
   d.getElementById('second').querySelector('button').remove();d.getElementById('second').hidden=false;await t.flush();assert.equal(d.activeElement.getAttribute('role'),'dialog');
- }finally{t.close();}
+ }finally{await t.close();}
 });
 function studioHarness(stored){
  const dom=new JSDOM(fs.readFileSync(path.join(root,'web/index.html'),'utf8'),{url:'https://app.test',runScripts:'outside-only'}),w=dom.window,d=w.document;
@@ -85,4 +85,61 @@ test('malformed completed restore records terminal failure without accepting a r
  const promise=t.compiler.restore({}, {}, {},undefined,undefined,{restoreLease:lease,onRestoreEvent:event=>events.push(event)}), rejected=assert.rejects(promise,/invalid/);
  t.workers[0].emit({type:'restore-started',lease});t.workers[0].emit(null);await rejected;
  assert.deepEqual(events.map(event=>event.type),['restore-started','restore-error']);assert.equal(events[1].lease,lease);
+});
+
+
+test('the shipped page loads modal and keyboard accessibility behavior exactly once after the app',()=>{
+ const dom=new JSDOM(fs.readFileSync(path.join(root,'web/index.html'),'utf8'));
+ try{
+  const scripts=[...dom.window.document.querySelectorAll('script[src]')].map(el=>el.getAttribute('src'));
+  assert.equal(scripts.filter(src=>src==='ui-polish.js').length,1);
+  assert.ok(scripts.indexOf('ui-polish.js')>scripts.indexOf('cockpit.js'));
+  const inventory=JSON.parse(fs.readFileSync(path.join(root,'qa/release-2.4.1/browser-source-inventory.json'),'utf8'));
+  assert.ok(inventory.common.includes('web/ui-polish.js'),'browser evidence must bind the activated interaction layer');
+ }finally{dom.window.close();}
+});
+
+function appHarness(){
+ const dom=new JSDOM(fs.readFileSync(path.join(root,'web/index.html'),'utf8'),{url:'https://app.test/',runScripts:'outside-only'}),w=dom.window,d=w.document,frames=[];
+ w.scrollTo=()=>{};w.requestAnimationFrame=fn=>{frames.push(fn);return frames.length;};w.cancelAnimationFrame=()=>{};w.matchMedia=()=>({matches:true,addEventListener(){}});
+ w.HTMLElement.prototype.getClientRects=function(){return this.closest('[hidden]')?[]:[{}];};
+ w.HTMLMediaElement.prototype.pause=function(){};w.HTMLMediaElement.prototype.load=function(){};
+ w.VehiclePreview=class{render(){}setPaused(){}setView(){}};
+ w.LightForgeVersion=require('../web/version.js');w.ShowEngine=require('../web/engine/show-engine.js');w.VehicleProfile=require('../web/engine/vehicle-profile.js');
+ const calls={deleted:[],exports:[]};
+ w.Android={pickAudio(){},getBootstrap:()=>JSON.stringify({projects:[]}),saveProject:()=>true,deleteProject:id=>calls.deleted.push(id),beginExport:()=> 'export-one',appendExport:()=>true,finishExport:id=>calls.exports.push(id)};
+ w.eval(fs.readFileSync(path.join(root,'web/app.js'),'utf8'));w.eval(fs.readFileSync(path.join(root,'web/ui-polish.js'),'utf8'));
+ return {w,d,calls,app:w.LightForgeApp,close:()=>w.close(),async flush(){await Promise.resolve();frames.splice(0).forEach(fn=>fn());await Promise.resolve();}};
+}
+test('shipped accessibility layer isolates real export dialogs and restores the opener',async()=>{
+ const t=appHarness(),{w,d,app}=t;
+ try{
+  d.getElementById('workingStudio').hidden=false;d.getElementById('validationCard').hidden=false;
+  app.state.project={id:'a',name:'Export integration',duration:1};app.state.music={duration:1};app.state.showMusic=app.state.music;app.state.renderedSettingsKey=JSON.stringify(app.state.settings);
+  app.state.show={frames:new w.Uint8Array(200),duration:1,stepMs:20,validation:{valid:true}};app.state.exportHeader=new w.Uint8Array(32);
+  const opener=d.getElementById('export');opener.disabled=false;opener.focus();await app.exportShow();await t.flush();
+  assert.equal(t.calls.exports.length,1);assert.equal(d.querySelector('.app-shell').hasAttribute('inert'),true);assert.ok(d.getElementById('processing').contains(d.activeElement));
+  w.onNativeEvent('exported',{id:'export-one',name:'Checked show'});await t.flush();
+  assert.ok(d.getElementById('exportSuccess').contains(d.activeElement));assert.equal(d.querySelector('.app-shell').hasAttribute('inert'),true);
+  d.getElementById('exportDone').click();await t.flush();assert.equal(d.querySelector('.app-shell').hasAttribute('inert'),false);assert.equal(d.activeElement,opener);
+ }finally{t.close();}
+});
+test('native deletion acknowledgement removes only its target, clears stale editor state and never claims an error succeeded',async()=>{
+ const t=appHarness(),{w,app,d}=t;
+ try{
+  const p={id:'remove',name:'Remove'},other={id:'keep',name:'Keep'};app.state.projects=[p,other];app.state.project=p;app.state.history=[{}];app.state.future=[{}];app.state.compiled={frameData:'old'};
+  app.state.pendingProjectAction={kind:'delete',id:p.id};app.state.busy=true;
+  w.onNativeEvent('projects',{projects:[p,other]});assert.equal(app.state.project,p);assert.equal(app.state.pendingProjectAction.kind,'delete');
+  w.onNativeEvent('error',{message:'Delete denied by active export'});assert.equal(app.state.project,p);assert.equal(app.state.projects.length,2);assert.match(d.getElementById('toast').textContent,/Delete denied/);
+  app.state.pendingProjectAction={kind:'delete',id:p.id};app.state.busy=true;w.onNativeEvent('projects',{projects:[other]});
+  assert.equal(app.state.project,null);assert.equal(app.state.projects.length,1);assert.equal(app.state.projects[0].id,'keep');assert.equal(app.state.compiled,null);assert.equal(app.state.history.length,0);assert.equal(app.state.future.length,0);assert.equal(app.state.busy,false);assert.equal(d.getElementById('toast').textContent,'Show deleted.');await t.flush();
+ }finally{t.close();}
+});
+test('saved-show keyboard activation prevents scrolling and repeated opening on held keys',()=>{
+ const t=appHarness(),{app,d,w}=t;
+ try{
+  app.state.projects=[{id:'keyboard',name:'Keyboard project'}];app.renderProjects();const card=d.querySelector('.saved-show-copy');
+  app.state.busy=true;const space=new w.KeyboardEvent('keydown',{key:' ',bubbles:true,cancelable:true});card.dispatchEvent(space);assert.equal(space.defaultPrevented,true);
+  const held=new w.KeyboardEvent('keydown',{key:'Enter',repeat:true,bubbles:true,cancelable:true});card.dispatchEvent(held);assert.equal(held.defaultPrevented,true);assert.equal(app.state.project,null);
+ }finally{t.close();}
 });

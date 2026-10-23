@@ -20,9 +20,11 @@ Run from the repository root:
 
 ```bash
 set -euo pipefail
+python3 tools/inference_qualification_preflight.py
 npm ci --ignore-scripts --no-audit --no-fund
 python3 tools/bootstrap_toolchain.py
 python3 tools/bootstrap_native_runtime.py
+python3 tools/bootstrap_testdeps.py
 python3 -m venv ../model-build
 ../model-build/bin/pip install pip==26.2.1 setuptools==83.0.0
 ../model-build/bin/pip install torch==2.13.0 --index-url https://download.pytorch.org/whl/cpu
@@ -31,6 +33,10 @@ python3 -m venv ../model-build
 ../model-build/bin/python tools/prepare_deux.py
 python3 tools/repository_hygiene.py
 npm test
+rm -f -- research/inference-current/production-parallel-qualification.json
+python3 tools/benchmark_deux_parallel.py \
+  --output "../lightforge-inference-$(date -u +%Y%m%dT%H%M%SZ)"
+python3 tools/verify_inference_improvement.py
 LIGHTFORGE_SIGNING_DIR=/absolute/path/to/original-private-signing bash build.sh
 VERSION="$(python3 -c 'import json; print(json.load(open("version.json"))["name"])')"
 python3 tests/verify_native_release.py --release "$VERSION"
@@ -54,6 +60,52 @@ A development APK cannot update the original installation. The build produces
 `dist/LightForge-<version>.apk`, an `.apk.json` receipt and an `.apk.sha256` file.
 The receipt's `update_compatible` must be `true` for an original-key update.
 Building locally does not satisfy all publication gates.
+
+## Controlled inference runner
+
+The timing prerequisite requires an existing isolated Linux x86_64 runner with
+at least eight CPUs in the process's allowed affinity, a readable **finite**
+cgroup-v2 CPU quota of at least eight CPUs, and real CPU throttling, OOM and
+direct-reclaim counters. Seven allowed CPUs are used identically by both Java
+variants and one CPU of quota remains reserved. A CPU-count label alone is not
+sufficient: an unlimited quota, a smaller quota or a container hiding
+`/sys/fs/cgroup` cannot qualify. The read-only preflight reports the exact
+missing observation before expensive downloads. It does not alter cgroups,
+affinity, system settings or the existing performance thresholds, and a passing
+preflight is not model, Android or release qualification.
+
+`verify-v2.yml` now generates a fresh current-source timing receipt in the same
+job before packaging, then replays it with the unchanged build verifier. It
+removes any earlier current receipt before preparation and again immediately
+before the benchmark. A failed or interrupted producer cannot fall back to
+historical 2.4.1 evidence. Failed and successful benchmark observations are
+retained in a separate run/attempt-scoped diagnostic artifact; that artifact
+alone is not release authority. The normal sealed candidate, actual-model,
+browser and Android evidence remain mandatory.
+
+For release-eligible verification, an authorized repository administrator must
+configure `LIGHTFORGE_INFERENCE_RUNNER` as a repository variable containing the
+label of an **already authorized, isolated, eligible runner**. Only a `push` on
+protected `refs/heads/main` consumes this configuration. Pull requests,
+unprotected main and other push refs use `ubuntu-latest`; they never select the
+configured controlled runner. The existing prepare/publish chain still
+requires successful push-on-main verification and its unchanged source,
+candidate and sealed evidence bindings.
+
+Manual dispatch of **LightForge production verification** can select an existing
+isolated runner through `inference_runner` for diagnostic qualification on a
+candidate ref. **A manual run is not release-eligible** and cannot replace the
+required main-push run. The default label is deliberately not assumed to
+qualify: any selected runner fails early if its actual observations do not meet
+the requirements above. No eligible configured runner has been verified for
+this candidate; configuration and a successful qualifying run remain blockers.
+
+No runner is provisioned, paid for or granted access by this workflow. Do not
+select a persistent privileged machine for untrusted pull-request code; use an
+isolated disposable runner and the repository's existing access controls.
+Runner selection never waives the resource preflight or fresh measurements.
+GitHub billing restrictions must also be resolved through an authorized
+account-management route before an Actions job can start.
 
 ## Test layers
 

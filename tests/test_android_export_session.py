@@ -13,6 +13,21 @@ DEPS = [TOOLS / "test-json.jar", TOOLS / "android-sdk/platforms/android-35/andro
 
 
 class AndroidExportSessionTests(unittest.TestCase):
+    def test_project_deletion_acknowledges_only_checked_filesystem_success(self):
+        source = (ROOT / "android/src/com/cyberbasslord/lightforge/MainActivity.java").read_text()
+        deletion = source.split("public void deleteProject(", 1)[1].split("public String beginExport(", 1)[0]
+        self.assertIn('deleteProjectFiles(project(id));event("projects",bootstrap());', deletion)
+        self.assertIn('catch(Exception e){error(e);}', deletion)
+
+    def test_persisted_destination_permission_is_scoped_to_save_recovery(self):
+        source = (ROOT / "android/src/com/cyberbasslord/lightforge/MainActivity.java").read_text()
+        save = source.split("} else if(request==SAVE_ZIP)", 1)[1].split("private void startImport(", 1)[0]
+        self.assertIn("takePersistableUriPermission(uri,flags)", save)
+        self.assertIn('catch(Exception e){releaseExportDestinationPermission(uri);exporting=false;', save)
+        self.assertIn('finally {releaseExportDestinationPermission(uri);exporting=false;', save)
+        cleanup = source.split("private void cleanupPartialDestination(", 1)[1].split("private void releaseExportDestinationPermission(", 1)[0]
+        self.assertIn("releaseExportDestinationPermission(uri)", cleanup)
+
     def test_bridge_rejects_stale_append_without_aborting_current_owner(self):
         source = (ROOT / "android/src/com/cyberbasslord/lightforge/MainActivity.java").read_text()
         append = source.split("public boolean appendExport(", 1)[1].split("public void finishExport(", 1)[0]
@@ -27,7 +42,7 @@ class AndroidExportSessionTests(unittest.TestCase):
             # R only names packaged assets here; no substitute production logic.
             r = work / "R.java"
             r.write_text("package com.cyberbasslord.lightforge; final class R { static final class drawable { static final int ic_analysis=1; } }")
-            sources = sorted((ROOT / "android/src").rglob("*.java")) + [r, ROOT / "tests/AndroidExportSessionTest.java", ROOT / "tests/AndroidResourceCleanupTest.java"]
+            sources = sorted((ROOT / "android/src").rglob("*.java")) + [r, ROOT / "tests/AndroidExportSessionTest.java", ROOT / "tests/AndroidResourceCleanupTest.java", ROOT / "tests/AndroidProjectDeletionTest.java"]
             classpath = os.pathsep.join(map(str, DEPS))
             compiled = subprocess.run([str(JAVA / "javac"), "--release", "8", "-encoding", "UTF-8", "-cp", classpath,
                                        "-d", str(work), *map(str, sources)], capture_output=True, text=True, timeout=90)
@@ -40,6 +55,10 @@ class AndroidExportSessionTests(unittest.TestCase):
                                   "com.cyberbasslord.lightforge.AndroidResourceCleanupTest"], capture_output=True, text=True, timeout=30)
             self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
             self.assertIn("production Android resource cleanup checks", run.stdout)
+            run = subprocess.run([str(JAVA / "java"), "-cp", os.pathsep.join([str(work), classpath]),
+                                  "com.cyberbasslord.lightforge.AndroidProjectDeletionTest"], capture_output=True, text=True, timeout=30)
+            self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+            self.assertIn("production project deletion checks", run.stdout)
 
 
 if __name__ == "__main__":

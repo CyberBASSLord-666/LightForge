@@ -14,6 +14,12 @@ on:
       - 'releases/v*/signed-apk.delta.json'
   pull_request:
   workflow_dispatch:
+    inputs:
+      inference_runner:
+        description: Existing isolated Linux x86_64 runner label; requires 8 allowed CPUs, finite cgroup quota >=8 and readable resource counters
+        required: true
+        default: ubuntu-latest
+        type: string
 permissions:
   contents: read
   actions: read
@@ -22,8 +28,12 @@ concurrency:
   cancel-in-progress: true
 jobs:
   verify:
-    runs-on: ubuntu-latest
-    timeout-minutes: 55
+    # Only a protected main push may consume the owner-configured runner label.
+    # PRs and other push refs cannot route work to that runner. Manual dispatch
+    # is diagnostic only; release provenance still requires a push on main.
+    # A configured label alone is not proof of eligible CPU resources.
+    runs-on: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && github.ref_protected && vars.LIGHTFORGE_INFERENCE_RUNNER || github.event_name == 'workflow_dispatch' && inputs.inference_runner || 'ubuntu-latest' }}
+    timeout-minutes: 120
     outputs:
       candidate_artifact_id: ${{ steps.upload_candidate.outputs.artifact-id }}
       candidate_artifact_digest: ${{ steps.upload_candidate.outputs.artifact-digest }}
@@ -52,6 +62,19 @@ jobs:
             research/evaluation-1.6
             research/hardware-1.2.0
             research/upstream/deux
+      - name: Check controlled inference runner before expensive preparation
+        run: |
+          rm -f -- research/inference-current/production-parallel-qualification.json
+          python3 tools/inference_qualification_preflight.py \
+            --output "$RUNNER_TEMP/lightforge-inference-preflight-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT.json"
+      - name: Retain runner preflight diagnostics (not release evidence)
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: lightforge-inference-preflight-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/lightforge-inference-preflight-${{ github.run_id }}-${{ github.run_attempt }}.json
+          retention-days: 30
+          if-no-files-found: warn
       - name: Read current release version
         run: |
           python3 - <<'PYVERSION'
@@ -166,6 +189,27 @@ jobs:
         run: python3 tests/test_native_mdx_lifecycle.py
       - name: Verify native GAME ownership, cancellation and crash-lease lifecycle
         run: python3 tests/test_native_game_lifecycle.py
+      - name: Qualify fresh final-source full-passage inference before packaging
+        run: |
+          # Never accept a prior checkout/run's receipt. Keep failed benchmark
+          # observations separately; only the producer's completed passing run
+          # may publish the current prerequisite, which the build replays.
+          rm -f -- research/inference-current/production-parallel-qualification.json
+          python3 tools/inference_qualification_preflight.py
+          python3 tools/benchmark_deux_parallel.py \
+            --output "$RUNNER_TEMP/lightforge-inference-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" \
+            --receipt research/inference-current/production-parallel-qualification.json
+          python3 tools/verify_inference_improvement.py
+      - name: Retain exact-source inference observations (not release evidence alone)
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: lightforge-inference-observations-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/lightforge-inference-${{ github.run_id }}-${{ github.run_attempt }}/
+            research/inference-current/production-parallel-qualification.json
+          retention-days: 30
+          if-no-files-found: warn
       - name: Build CI package with an ephemeral signing identity
         run: |
           set -o pipefail

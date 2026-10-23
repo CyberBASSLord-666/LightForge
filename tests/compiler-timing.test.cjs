@@ -120,3 +120,19 @@ test('production worker keeps compiler profile separate from saved show and repo
  assert.equal(failed.type,'error');assert.equal(failed.profile.attributes.outcome,'failed');
  assert.equal(failed.profile.spanSummary[metric('fseq_generation')],undefined);
 });
+
+test('saved envelope geometry and version must match checksummed metadata',async()=>{
+ const input={duration:.021,waveform:[0],sections:[{start:0,energy:0}]},settings={stepMs:20,dance:'off'};
+ const generated=await worker({action:'generate',music:input,settings});
+ assert.equal(generated.type,'result',generated.message);
+ for(const patch of [{stepMs:15},{engineVersion:'1.4.0'}]){
+  const restored=await worker({action:'restore',music:input,settings,compiled:{...generated.value.compiled,...patch}});
+  assert.equal(restored.type,'error','changed envelope must not reinterpret the exact saved frame bytes');
+  assert.match(restored.message,/metadata|format/);
+ }
+});
+
+test('overlong saved geometry fails before input hashing or frame expansion',async()=>{
+ const restored=await worker({action:'restore',music:null,settings:null,compiled:{format:'lightforge-gzip-frames-v1',frameCount:720001,channels:200,stepMs:20}});
+ assert.equal(restored.type,'error');assert.match(restored.message,/unsupported format/);
+});
