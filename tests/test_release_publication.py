@@ -18,6 +18,9 @@ import android_evidence_manifest as android_evidence
 
 class PublicationTest(unittest.TestCase):
     def setUp(self):
+        tag_guard = patch.object(publication, 'require_release_tag')
+        tag_guard.start()
+        self.addCleanup(tag_guard.stop)
         self.expected = {'app.apk': {'bytes': 50, 'sha256': 'a' * 64}, 'release-verification.json': {'bytes': 20, 'sha256': 'b' * 64}}
         self.release = {'id': 23, 'tag_name': 'v2.1.0', 'draft': True, 'assets': [
             {'name': name, 'size': info['bytes'], 'digest': 'sha256:' + info['sha256'], 'state': 'uploaded'}

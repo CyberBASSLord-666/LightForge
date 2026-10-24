@@ -4,7 +4,7 @@
     "python": "3.12.14",
     "distributions": {
       "torch": "2.13.0+cpu",
-      "onnx": "1.22.0",
+      "onnx": "1.23.2",
       "numpy": "2.5.3",
       "PyYAML": "6.0.3",
       "einops": "0.8.1",
@@ -13,7 +13,7 @@
       "librosa": "0.11.0"
     },
     "sourceSHA256": {
-      "tools/model-requirements.txt": "52213348056c9fe2ad94a2244cbfdaaebf6ba1585443b52623948eda26438bc1",
+      "tools/model-requirements.txt": "182a738f5356db90fe5ee4f9cfb713ad62fdf588838fd3d62b1fe93a9457d268",
       "tools/model_export_guard.py": "3f11604b8573a872f79f4ba255c5df9d7316b121389694eaebbbf9c8b10fc0cc",
       "research/upstream/deux/config.yaml": "bb3ea9bce37ca96d63568490d5a92d7e41df3d7726788b6970c10d89eb62d902",
       "research/upstream/deux/models/bs_roformer/attend.py": "0459d799ade55541df2994b0becf7aec12214491360c5a06e346f6d615eaed15",

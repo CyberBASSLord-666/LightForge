@@ -156,6 +156,8 @@ class ReleaseQualityPublicationWiringTest(unittest.TestCase):
                 **(ci_changes or {}),
             }
             def api(path):
+                if path.endswith("/git/matching-refs/tags/v" + version["name"]):
+                    return [{"ref": "refs/tags/v" + version["name"], "object": {"type": "commit", "sha": COMMIT}}]
                 if path.endswith("/actions/runs/404"):
                     return ci
                 if path.endswith("/git/commits/" + COMMIT):

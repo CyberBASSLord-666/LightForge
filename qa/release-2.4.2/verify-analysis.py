@@ -24,12 +24,12 @@ OUT = 'qa/release-2.4.2/'
 HISTORICAL_OUT = 'qa/release-2.2.4/'
 # This digest pins the original v2.2.4 runtime comparison as historical context.
 COMPARISON_SHA256 = 'e74c12ca08132182f7cb971a98a6280401fcbfb5220a403e690e276c21c91712'
-# Reviewed unreleased adapter inventory: exact manifest remains pinned.
-# This refresh changes only wav-reader.js for bounded PCM/header validation;
-# all other 84 asset entries, model/runtime identities and historical receipts
-# remain unchanged. This source inventory is not successful execution evidence.
+# Reviewed unreleased inventory: exact manifest remains pinned.
+# The latest refresh changes only Deux exporter provenance for ONNX 1.23.2;
+# all 84 other entries and every graph/runtime byte remain unchanged.
+# Historical receipts stay immutable. This source inventory is not execution evidence.
 # Original model/runtime assets and all source-bound verification gates remain mandatory.
-ASSET_MANIFEST_SHA256 = '3e4f0fa531a7866f99975126cde0d983ea328b5c3c7020baf042fd4da837e71d'
+ASSET_MANIFEST_SHA256 = 'd9069aed84170f0b7b9c2991b8395cab16930320fd7027314c7d8948407aaa52'
 ASSET_MANIFEST_ENTRY_COUNT = 85
 OLD_RUNTIME_SHA256 = 'e0ab4a1af57d2da09097202f2dfd691e390c82e81183314788ccde4cf7c3cc38'
 NEW_RUNTIME_SHA256 = '749793ebed63743fec853d093da7987a86ea5cd592d54fba898cd3233100c381'

@@ -2,7 +2,7 @@
 # requires-python = ">=3.10"
 # dependencies = [
 #     "torch>=2.13.0",
-#     "onnx>=1.22.0",
+#     "onnx>=1.23.2",
 #     "onnxscript",
 #     "beat-this @ https://github.com/CPJKU/beat_this/archive/main.zip",
 # ]

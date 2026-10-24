@@ -200,3 +200,29 @@ these are not a substitute for actual Android/browser execution, model parity
 or an authenticated production verification run. No historical evidence was
 rewritten, dependency/model pins outside the documented research migration were
 changed, or release acceptance threshold relaxed.
+
+## Production ONNX remediation on 2026-10-24
+
+The production exporter and attention-research parser now pin ONNX **1.23.2**;
+the retained Beat This! conversion helper requires at least that version.
+[GHSA-xrch-8vh7-h656](https://github.com/onnx/onnx/security/advisories/GHSA-xrch-8vh7-h656)
+affects ONNX 1.2.1 through 1.22.0 and is fixed in 1.23.0; the maintainer also
+retested 1.23.2. The GAME exporter rejects every version except the exact reviewed
+pin before opening an archive. This supersedes the October 9 parser remediation,
+not the historical evidence recorded above.
+
+An isolated Python 3.12.14 environment was recreated with the documented
+pip/setuptools and official CPU Torch 2.13.0 pins plus the patched model
+requirements. `pip check` found no broken requirements. The original GAME archive and Deux checkpoint
+matched their existing SHA-256 pins. Fresh generation reproduced all
+six GAME files (five graphs and configuration) and all 27 Deux Float32 graphs
+with exactly the committed sizes and SHA-256 hashes. No precision, architecture,
+context length, sampling policy, graph hash or historical measurement receipt
+was changed. Deux exporter provenance records the new parser and requirements
+identity; it does not assert new timing or runtime qualification.
+
+This verifies model-byte reproducibility for this exporter change, not universal
+vulnerability clearance. ONNX is a build/research parser, distinct from the
+ONNX Runtime binaries and their embedded third-party code. Fresh source-bound
+release, actual-model and Android gates remain mandatory. No APK, benchmark,
+signing or publication was performed by this validation.

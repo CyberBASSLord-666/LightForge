@@ -54,6 +54,9 @@ class RetainedApkReferenceTest(unittest.TestCase):
             shutil.copyfile(ROOT / path, destination)
             if path in self.source["sourceHashes"]:
                 self.source["sourceHashes"][path] = sha(destination.read_bytes())
+        # Bind this synthetic receipt/audit to the manifest copied into its repo,
+        # not the immutable historical manifest pin used by the real archive.
+        self.source["modelManifestSha256"] = sha((self.repo / "web/analysis/models/deux/manifest.json").read_bytes())
         original = self.repo / fixture["sourcePath"]
         original.parent.mkdir(parents=True, exist_ok=True)
         original.write_bytes(b"synthetic original Float32 fixture; not real inference evidence")
@@ -103,6 +106,7 @@ class RetainedApkReferenceTest(unittest.TestCase):
         (self.archive / "build.json").write_bytes(encoded(self.build))
         self.audit["artifact"] = copy.deepcopy(self.build)
         self.audit["sourceBinding"].update(source_reference_sha256=self.source_sha, apk_sha256=self.build["sha256"],
+                                           model_manifest_sha256=self.source["modelManifestSha256"],
                                            fixture_pcm16_sha256=self.source["fixture"]["pcm16Sha256"])
         self.audit["archiveReceipts"] = {name: sha((self.archive / name).read_bytes()) for name in
                                          ("AndroidManifest.xml", "build.json", "build.log", "source-receipt.json")}
@@ -139,6 +143,20 @@ class RetainedApkReferenceTest(unittest.TestCase):
         self.assertFalse(result["current_source_binding_passed"])
         self.assertEqual({row["reason"] for row in result["current_source_mismatches"]},
                          {"sha256-mismatch", "missing-or-unsafe-reference-file"})
+
+    def test_model_manifest_drift_remains_an_explicit_failed_gate(self):
+        path = "web/analysis/models/deux/manifest.json"
+        manifest = self.repo / path
+        manifest.write_bytes(manifest.read_bytes() + b"\n")
+        result = self.verify()
+        self.assertTrue(result["retained_apk_binding_passed"])
+        self.assertFalse(result["current_source_binding_passed"])
+        self.assertEqual(result["current_source_mismatches"], [{
+            "path": path,
+            "expected_sha256": self.source["modelManifestSha256"],
+            "observed_sha256": sha(manifest.read_bytes()),
+            "reason": "sha256-mismatch",
+        }])
 
     def test_tampered_full_apk_is_rejected_before_zip_parsing(self):
         with self.apk.open("r+b") as stream:
