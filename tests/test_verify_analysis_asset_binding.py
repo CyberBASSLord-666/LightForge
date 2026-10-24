@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 RELEASE = json.loads((ROOT / 'version.json').read_text())['name']
 VERIFY = ROOT / f'qa/release-{RELEASE}/verify-analysis.py'
 # Reviewed current source inventory only, never a passing execution receipt.
-EXPECTED_MANIFEST_SHA256 = '3e4f0fa531a7866f99975126cde0d983ea328b5c3c7020baf042fd4da837e71d'
+EXPECTED_MANIFEST_SHA256 = 'd9069aed84170f0b7b9c2991b8395cab16930320fd7027314c7d8948407aaa52'
 EXPECTED_MANIFEST_ENTRY_COUNT = 85
 SPEC = spec_from_file_location('lightforge_verify_analysis_current_inventory', VERIFY)
 assert SPEC is not None and SPEC.loader is not None

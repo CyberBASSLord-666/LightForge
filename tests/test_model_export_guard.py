@@ -42,6 +42,15 @@ runpy.run_path(sys.argv[0], run_name='__main__')
                 exporter_identity(ROOT)
             lookup.assert_not_called()
 
+    def test_committed_deux_provenance_matches_reviewed_exporter_inputs(self):
+        manifest = json.loads((ROOT / 'web/analysis/models/deux/manifest.json').read_text())
+        expected = {'torch': '2.13.0+cpu'}
+        expected.update(line.split('==') for line in (ROOT / 'tools/model-requirements.txt').read_text().splitlines()
+                        if line and not line.startswith('#'))
+        with patch('model_export_guard.platform.python_version', return_value='3.12.14'), \
+             patch('model_export_guard.metadata.version', side_effect=expected.__getitem__):
+            self.assertEqual(manifest['exporterIdentity'], exporter_identity(ROOT))
+
     def test_wrong_installed_exporter_is_rejected(self):
         with patch('model_export_guard.metadata.version', return_value='2.6.0'):
             with self.assertRaisesRegex(ValueError, 'toolchain mismatch'):

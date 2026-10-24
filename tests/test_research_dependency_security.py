@@ -23,8 +23,20 @@ def loader(torch):
 class ResearchDependencySecurityTest(unittest.TestCase):
     def test_attention_parser_pin_is_patched_without_runtime_upgrade(self):
         pins = dict(line.split("==") for line in (ROOT / "research/inference-2.4.1/attention/requirements.txt").read_text().splitlines() if line)
-        self.assertEqual(pins["onnx"], "1.22.0")
+        self.assertEqual(pins["onnx"], "1.23.2")
         self.assertEqual(pins["onnxruntime"], "1.25.1")
+
+    def test_production_onnx_pin_and_game_guard_are_patched(self):
+        pins = dict(line.split('==') for line in (ROOT / 'tools/model-requirements.txt').read_text().splitlines()
+                    if line and not line.startswith('#'))
+        self.assertEqual(pins['onnx'], '1.23.2')
+        spec = importlib.util.spec_from_file_location('prepare_game_security', ROOT / 'tools/prepare_game.py')
+        for version in ('1.22.0', '1.23.0', '1.23.2rc1', 'unknown'):
+            with self.subTest(version=version), patch.dict(sys.modules, {'onnx': SimpleNamespace(__version__=version)}):
+                with self.assertRaisesRegex(ValueError, 'requires onnx==1.23.2'):
+                    spec.loader.exec_module(importlib.util.module_from_spec(spec))
+        with patch.dict(sys.modules, {'onnx': SimpleNamespace(__version__='1.23.2')}):
+            spec.loader.exec_module(importlib.util.module_from_spec(spec))
 
     def test_coordinated_reviewed_family(self):
         pins = dict(line.split('==') for line in (RESEARCH / 'requirements.txt').read_text().splitlines()

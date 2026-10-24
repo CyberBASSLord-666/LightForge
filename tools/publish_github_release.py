@@ -25,6 +25,7 @@ from physical_validation_gate import (
 )
 from release_quality_gate import (
     QUALITY_ARTIFACT,
+    QUALITY_WORKFLOW,
     RELEASE_WORKFLOW,
     derive_release_scope,
     sha256_canonical_json,
@@ -867,9 +868,57 @@ def lookup_release(repo, tag, release_id=None):
     return release
 
 
+def require_release_tag(repo, tag, target, *, allow_missing=False):
+    """Bind the live tag, not release.target_commitish, to the verified commit.
+
+    GitHub ignores target_commitish for an existing tag. Only an empty exact
+    ref lookup permits automatic tag creation; API errors never mean absent.
+    No tag is created, repaired or moved here. Server-side tag protection is
+    still needed to prevent a concurrent writer after the final observation.
+    """
+    require(isinstance(tag, str) and re.fullmatch(r'v[0-9]+\.[0-9]+\.[0-9]+', tag),
+            'Invalid release tag')
+    _commit_sha(target, 'Invalid release tag target')
+
+    def reference():
+        records = api(f'repos/{repo}/git/matching-refs/tags/{tag}')
+        require(isinstance(records, list) and all(isinstance(item, dict)
+                and isinstance(item.get('ref'), str) for item in records),
+                'Invalid release tag reference response')
+        matches = [item for item in records if item['ref'] == 'refs/tags/' + tag]
+        require(len(matches) <= 1, 'Release tag reference is ambiguous')
+        if not matches:
+            return None
+        require(isinstance(matches[0].get('object'), dict), 'Invalid release tag object')
+        return matches[0]['object']
+
+    initial = reference()
+    if initial is None:
+        require(allow_missing, 'Published release tag is missing')
+        return
+    current, seen = initial, set()
+    for _ in range(9):  # At most eight annotated objects, then a commit.
+        require(isinstance(current, dict), 'Invalid release tag object')
+        sha = _commit_sha(current.get('sha'), 'Invalid release tag object SHA')
+        kind = current.get('type')
+        if kind == 'commit':
+            require(sha == target, 'Release tag differs from verified source commit')
+            require(reference() == initial, 'Release tag changed during verification')
+            return
+        require(kind == 'tag', 'Release tag does not resolve to a commit')
+        require(sha not in seen and len(seen) < 8, 'Release tag cycle or depth limit')
+        seen.add(sha)
+        record = api(f'repos/{repo}/git/tags/{sha}')
+        require(isinstance(record, dict) and record.get('sha') == sha,
+                'Annotated tag identity differs')
+        current = record.get('object')
+    raise ValueError('Release tag depth limit')
+
+
 def create_draft(repo, tag, target, notes):
     # The creation response identifies the new draft even before release lists
     # reflect it. Do not rediscover it by tag or retry a successful mutation.
+    require_release_tag(repo, tag, target, allow_missing=True)
     metadata = {'tag_name': tag, 'target_commitish': target,
                 'name': 'LightForge ' + tag.removeprefix('v'), 'body': notes,
                 'draft': True, 'prerelease': False}
@@ -883,12 +932,14 @@ def create_draft(repo, tag, target, notes):
             'Created draft identity mismatch')
     require(release.get('draft') is True and release.get('assets') == [],
             'Created release is not an empty draft')
+    require_release_tag(repo, tag, target, allow_missing=True)
     return release
 
 
 def update_metadata(repo, release, tag, target, notes, publish=False):
     require(release['draft'], 'Published release metadata cannot be changed')
     # Always include identity: an omitted tag can become an untagged draft.
+    require_release_tag(repo, tag, target, allow_missing=True)
     metadata = {'tag_name': tag, 'target_commitish': target,
                 'name': 'LightForge ' + tag.removeprefix('v'), 'body': notes,
                 'draft': not publish, 'prerelease': False}
@@ -900,6 +951,7 @@ def update_metadata(repo, release, tag, target, notes, publish=False):
     require(result['id'] == release['id'] and result['tag_name'] == tag,
             'Updated release identity mismatch')
     require(result['draft'] is (not publish), 'Unexpected publication state')
+    require_release_tag(repo, tag, target, allow_missing=not publish)
     return result
 
 
@@ -1067,10 +1119,19 @@ def verify_release_quality(request, version, repo, ci, source_commit, source_tre
     require(quality_run.get('status') == 'completed' and quality_run.get('conclusion') == 'success', 'Quality-gate workflow has not passed')
     require(quality_run.get('head_repository', {}).get('full_name') == repo, 'Quality-gate workflow provenance mismatch')
     require(quality_run.get('head_sha') == source_commit, 'Quality-gate workflow commit differs from release candidate')
+    require(quality_run.get('id') == quality_run_id
+            and quality_run.get('path') == QUALITY_WORKFLOW
+            and quality_run.get('event') == 'workflow_dispatch'
+            and quality_run.get('head_branch') == 'main', 'Quality-gate workflow identity differs')
     quality_commit = api(f'repos/{repo}/git/commits/{quality_run["head_sha"]}')
+    matches = [record for record in _run_artifacts(repo, quality_run_id)
+               if record.get('name') == QUALITY_ARTIFACT]
+    require(len(matches) == 1, 'Quality-gate artifact is not unique')
+    artifact = _artifact_metadata(repo, matches[0].get('id'), quality_run,
+                                  source_commit, QUALITY_ARTIFACT)
     transfer = ROOT / 'build/release-quality'
-    transfer.mkdir(parents=True, exist_ok=False)
-    run('gh', 'run', 'download', str(quality_run_id), '--name', QUALITY_ARTIFACT, '--dir', str(transfer))
+    _download_exact_artifact(repo, artifact, transfer,
+                             {'quality-gate-report.json', 'quality-gate-provenance.json'})
     report_path = single_artifact_file(transfer, 'quality-gate-report.json')
     provenance_path = single_artifact_file(transfer, 'quality-gate-provenance.json')
     report = json.loads(report_path.read_text())
@@ -1207,6 +1268,7 @@ def main(argv=None):
     published = lookup_release(repo, tag, release['id'])
     require(not published['draft'], 'Release did not publish')
     verify_uploaded(published, expected)
+    require_release_tag(repo, tag, source_commit)
     asset = next(a for a in published['assets'] if a['name'] == apk_name)
     print(json.dumps({'release': published['html_url'], 'apk': asset['browser_download_url'], 'sha256': digest(apk),
                       'quality_gate': quality, 'verification_evidence': verification_evidence,

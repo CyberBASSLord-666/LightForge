@@ -87,7 +87,7 @@ class ResearchIndexSecurityTest(unittest.TestCase):
             self.assertIn(requirement, source.splitlines())
         script = (ROOT / 'research/upstream/beat_this/ckpt2onnx.py').read_text()
         self.assertIn('"torch>=2.13.0"', script)
-        self.assertIn('"onnx>=1.22.0"', script)
+        self.assertIn('"onnx>=1.23.2"', script)
 
 
 if __name__ == '__main__':

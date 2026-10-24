@@ -186,7 +186,8 @@ class PhysicalValidationPublisherTest(unittest.TestCase):
                 "require_candidate_worktree": {},
                 "load_physical_validation_attestation": {},
                 "verify_physical_validation_attestation": {},
-                "api": {"side_effect": lambda path: {"tree": {"sha": TREE}} if "/git/commits/" in path else ci},
+                "api": {"side_effect": lambda path: [{"ref": "refs/tags/v2.2.5", "object": {"type": "commit", "sha": COMMIT}}]
+                        if "/git/matching-refs/" in path else {"tree": {"sha": TREE}} if "/git/commits/" in path else ci},
                 "verify_release_quality": {"return_value": {"requirement": "performance_quality_gate"}},
                 "verify_android_release_evidence": {"return_value": evidence},
                 "verify_nonandroid_release_evidence": {"return_value": {"status": "verified"}},
