@@ -1,9 +1,13 @@
 package com.cyberbasslord.lightforge;
 
+import android.util.JsonReader;
+import android.util.JsonToken;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.charset.CodingErrorAction;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.Enumeration;
@@ -17,6 +21,8 @@ final class ProjectStore {
     static final long MAX_AUDIO_BYTES = 44L + 14400L * 44100 * 4;
     static final int MAX_PROJECT_BYTES = 64 * 1024 * 1024;
     private static final int MAX_META_BYTES = 65536;
+    // Container depth includes the root object; normal generated projects are much shallower.
+    static final int MAX_JSON_DEPTH = 64;
     private static final String ORIGIN = "https://appassets.androidplatform.net/project/";
     private static final String JOURNAL = ".rename-journal.json";
     private static final String PREVIOUS = ".previous-revision.json";
@@ -67,7 +73,7 @@ final class ProjectStore {
     /** Commit the editable state and its listing metadata as one recoverable pair. */
     static synchronized JSONObject save(File projectsRoot, String id, JSONObject value) throws Exception {
         File dir = project(root(projectsRoot), id); recoverProject(dir);
-        JSONObject state = new JSONObject(value.toString()); validateState(state);
+        JSONObject state = parseObject(value.toString(), MAX_PROJECT_BYTES, MAX_JSON_DEPTH); validateState(state);
         JSONObject meta = readObject(safeFile(dir, "meta.json"), MAX_META_BYTES);
         String name = validName(state.optString("name", meta.optString("name", "My show")));
         state.put("projectId", id).put("name", name);
@@ -104,11 +110,11 @@ final class ProjectStore {
         }
         File previous = safeFile(dir, PREVIOUS);
         if (previous.isFile()) {
-            JSONObject revision = readObject(previous, MAX_REVISION_BYTES);
+            JSONObject revision = readObject(previous, MAX_REVISION_BYTES, MAX_JSON_DEPTH + 1);
             JSONObject priorState = revision.optJSONObject("project");
             if (priorState != null && priorState.has("analysisRunObservation")) {
                 priorState.remove("analysisRunObservation");
-                writeObject(previous, revision, MAX_REVISION_BYTES);
+                writeObject(previous, revision, MAX_REVISION_BYTES, MAX_JSON_DEPTH + 1);
             }
         }
         return AnalysisJobStore.hash(source);
@@ -117,7 +123,7 @@ final class ProjectStore {
     /** Explicit undo of the last durable save; swaps revisions so it can be undone. */
     static synchronized JSONObject restorePrevious(File projectsRoot, String id) throws Exception {
         File dir = project(root(projectsRoot), id); recoverProject(dir);
-        JSONObject revision = readObject(safeFile(dir, PREVIOUS), MAX_REVISION_BYTES);
+        JSONObject revision = readObject(safeFile(dir, PREVIOUS), MAX_REVISION_BYTES, MAX_JSON_DEPTH + 1);
         JSONObject state = revision.getJSONObject("project"), meta = revision.getJSONObject("meta");
         validatePair(dir, meta, state);
         meta.put("updatedAt", System.currentTimeMillis()).put("recoveredAt", System.currentTimeMillis())
@@ -150,7 +156,7 @@ final class ProjectStore {
             oldState.put("projectId", dir.getName()).put("name", oldMeta.getString("name"));
             if (stripRunObservationFromPrevious) oldState.remove("analysisRunObservation");
             writeObject(new File(dir, PREVIOUS), new JSONObject().put("version", 1)
-                    .put("savedAt", System.currentTimeMillis()).put("meta", oldMeta).put("project", oldState), MAX_REVISION_BYTES);
+                    .put("savedAt", System.currentTimeMillis()).put("meta", oldMeta).put("project", oldState), MAX_REVISION_BYTES, MAX_JSON_DEPTH + 1);
         }
         writeObject(new File(dir, JOURNAL), new JSONObject().put("version", 2), 1024);
         recoverProject(dir);
@@ -404,7 +410,7 @@ final class ProjectStore {
         } catch (Exception damaged) {
             File previous = safeFile(dir, PREVIOUS);
             if (!previous.isFile()) throw damaged;
-            JSONObject revision = readObject(previous, MAX_REVISION_BYTES);
+            JSONObject revision = readObject(previous, MAX_REVISION_BYTES, MAX_JSON_DEPTH + 1);
             JSONObject meta = revision.getJSONObject("meta"), state = revision.getJSONObject("project");
             validatePair(dir, meta, state);
             meta.put("recoveredAt", System.currentTimeMillis()).put("updatedAt", System.currentTimeMillis())
@@ -506,6 +512,10 @@ final class ProjectStore {
     }
 
     private static JSONObject readObject(File file, int maximum) throws Exception {
+        return readObject(file, maximum, MAX_JSON_DEPTH);
+    }
+
+    private static JSONObject readObject(File file, int maximum, int maximumDepth) throws Exception {
         if (!file.isFile() || file.length() > maximum) throw new IOException("Project data is missing or too large.");
         try (InputStream input = new FileInputStream(file); ByteArrayOutputStream bytes = new ByteArrayOutputStream()) {
             byte[] buffer = new byte[65536]; int size; long count = 0;
@@ -514,16 +524,72 @@ final class ProjectStore {
                 if (count > maximum) throw new IOException("Project data is too large.");
                 bytes.write(buffer, 0, size);
             }
-            try { return new JSONObject(new String(bytes.toByteArray(), StandardCharsets.UTF_8)); }
-            catch (org.json.JSONException invalid) {
-                throw new IOException("The saved project data is damaged or is not a LightForge project.", invalid);
+            String text = StandardCharsets.UTF_8.newDecoder()
+                    .onMalformedInput(CodingErrorAction.REPORT).onUnmappableCharacter(CodingErrorAction.REPORT)
+                    .decode(ByteBuffer.wrap(bytes.toByteArray())).toString();
+            return decodeObject(text, maximumDepth);
+        }
+    }
+
+    /** Platform strict-mode, iterative preflight before recursive JSONObject decoding. */
+    static void validateJson(String text, int maximumDepth) throws IOException {
+        if (maximumDepth < 1) throw new IllegalArgumentException("A JSON object needs at least one level.");
+        try (JsonReader reader = new JsonReader(new StringReader(text))) {
+            reader.setLenient(false);
+            if (reader.peek() != JsonToken.BEGIN_OBJECT) throw new IOException("Project data must be a JSON object.");
+            int depth = 0;
+            while (true) {
+                switch (reader.peek()) {
+                    case BEGIN_OBJECT:
+                    case BEGIN_ARRAY:
+                        if (depth >= maximumDepth) throw new IOException("Project data contains too many nested containers.");
+                        depth++;
+                        if (reader.peek() == JsonToken.BEGIN_OBJECT) reader.beginObject();
+                        else reader.beginArray();
+                        break;
+                    case END_OBJECT: reader.endObject(); depth--; break;
+                    case END_ARRAY: reader.endArray(); depth--; break;
+                    case NAME: reader.nextName(); break;
+                    case STRING:
+                    case NUMBER: reader.nextString(); break;
+                    case BOOLEAN: reader.nextBoolean(); break;
+                    case NULL: reader.nextNull(); break;
+                    case END_DOCUMENT:
+                        if (depth != 0) throw new IOException("Project data is incomplete.");
+                        return;
+                    default: throw new IOException("Project data contains an unsupported JSON token.");
+                }
             }
+        } catch (NumberFormatException invalid) {
+            throw new IOException("Project data contains an invalid JSON escape.", invalid);
+        }
+    }
+
+    private static JSONObject parseObject(String text, int maximum, int maximumDepth) throws Exception {
+        if (text == null || text.getBytes(StandardCharsets.UTF_8).length > maximum)
+            throw new IOException("Project data is missing or too large.");
+        return decodeObject(text, maximumDepth);
+    }
+
+    private static JSONObject decodeObject(String text, int maximumDepth) throws Exception {
+        validateJson(text, maximumDepth);
+        try { return new JSONObject(text); }
+        catch (org.json.JSONException invalid) {
+            throw new IOException("The saved project data is damaged or is not a LightForge project.", invalid);
         }
     }
 
     private static void writeObject(File target, JSONObject value, int maximum) throws Exception {
-        byte[] bytes = value.toString().getBytes(StandardCharsets.UTF_8);
+        writeObject(target, value, maximum, MAX_JSON_DEPTH);
+    }
+
+    private static void writeObject(File target, JSONObject value, int maximum, int maximumDepth) throws Exception {
+        String text = value.toString();
+        if (text == null) throw new IOException("Project data cannot be saved as JSON.");
+        byte[] bytes = text.getBytes(StandardCharsets.UTF_8);
         if (bytes.length > maximum) throw new IOException("Project data is too large to save.");
+        // Internal previous-revision envelopes are allowed exactly one extra container.
+        validateJson(text, maximumDepth);
         File temporary = new File(target.getParentFile(), target.getName() + ".writing-" + UUID.randomUUID());
         try {
             try (FileOutputStream output = new FileOutputStream(temporary)) {
