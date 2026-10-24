@@ -83,6 +83,7 @@ class VerificationDownloadCacheTest(unittest.TestCase):
         success = subprocess.CompletedProcess([], 0, stdout='', stderr='')
         with patch.object(verify_v2, 'OUT', output), \
                 patch.object(verify_v2, 'hashes', side_effect=source_snapshots), \
+                patch.object(verify_v2, 'prepare_regression_test_inputs', return_value={'head': 'fixture', 'files': {}}), \
                 patch.object(verify_v2.subprocess, 'run', return_value=success), \
                 patch.object(verify_v2, 'run_python_scripts') as quality, \
                 patch.object(verify_v2, 'verify_assets', side_effect=assets), \

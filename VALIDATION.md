@@ -4,6 +4,56 @@ A repository test, an APK build, a published release and a performance claim are
 different results. Each must identify the source and evidence it actually covers.
 This page is an index, not a replacement for source-bound receipts.
 
+## 2.4.2 source and bounded host evidence
+
+The source version is **2.4.2 / Android version code 20402**. Publication requires
+fresh exact-source production, actual-model, browser and packaged Android gates,
+original update signing and exact qualified-payload integrity. The version's
+[automated-verification policy](releases/v2.4.2/quality-gate-declaration.json)
+makes external corpus, human-review and physical observations optional for
+publication; it does not establish their corresponding claims or a strict
+quality/performance pass.
+
+The registered [producer run 40085980189, attempt 1](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40085980189)
+used source `214b8f868ab3b412ebf4d57f75f3ba4b1863272b`. Its
+[immutable registration](tools/host-inference-campaigns/lightforge-2.4.2-neural-four-worker-host-001.json)
+was added on protected main in `0579dae`. The comparison forced four workers
+against a three-thread baseline on the same three child CPUs of a
+four-CPU-capacity host, using one original-model passage.
+
+Median complete-passage time fell from **66.459075114 to 53.952437538 seconds**,
+a reduction of **18.8186%**. The three measured pair reductions were 18.81855%,
+17.51232% and 19.40812%; all eight complete outputs were byte-identical.
+The producer proof archive is artifact **12558000336**, SHA-256
+`831c14060f7e5561f36e5383bba0a8a21078e37cc6be8dc92fddc35afa1a474d`;
+its raw evidence was independently replayed. Consumer qualification must verify
+the registered producer identity, immutable 27-file execution closure, original
+models and unchanged policy before admitting this proof for its own candidate.
+
+This result does not measure Android, whole-song execution, automatic device
+selection or the eight-worker path. It is not an additional gain over the
+historical published 2.4.1 result of 32.6% or the earlier experimental 43.6%
+result; those comparisons used different conditions. It does not establish the
+75% whole-analysis objective.
+
+Source changes include complete-passage scheduling and recovery/UI/export
+repairs from [PR56](https://github.com/CyberBASSLord-666/LightForge/pull/56),
+ONNX exporter/release-provenance remediation in
+[PR57](https://github.com/CyberBASSLord-666/LightForge/pull/57) and Python bootstrap
+pins in [PR58](https://github.com/CyberBASSLord-666/LightForge/pull/58).
+[PR61](https://github.com/CyberBASSLord-666/LightForge/pull/61)'s source repair
+bounds platform-reader project/backup JSON validation, restores immutable sparse
+regression inputs and prepares the explicit consumer JDK layout without altering
+the registered timing closure. Implementation and local tests alone do not
+establish packaged Android or release qualification.
+
+For a release claim, use the exact
+[GitHub release](https://github.com/CyberBASSLord-666/LightForge/releases) and
+[verification report](release-verification.json). Check the report's version,
+qualified source, run/attempt, certificate and payload identity against that
+release. A retained report may describe an older version; never promote it to
+qualify changed source. This host record is not a publication receipt.
+
 ## Published 2.4.1 record
 
 The [LightForge 2.4.1 release](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.4.1)

@@ -8,6 +8,10 @@ import subprocess
 import datetime
 import argparse
 import os, sys, wave, tempfile
+if __package__:
+    from . import project_json_host
+else:
+    import project_json_host
 
 ROOT = Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser(description=__doc__)
@@ -23,29 +27,34 @@ JSON = TOOLS / 'test-json.jar'
 ORT_ANDROID = TOOLS / 'onnx/classes.jar'
 ORT_HOST = TOOLS / 'onnx' / json.loads((ROOT / 'android/native-runtime.json').read_text())['host']['name']
 CLASSES = OUT / 'native-classes'
+# Separate host-only platform support; native-classes is also used by device builds.
+HOST_JSON_CLASSES = OUT / 'project-json-host-classes'
 OUT.mkdir(parents=True, exist_ok=True)
 CLASSES.mkdir(exist_ok=True)
 # Each run owns fresh fixtures, including after an interrupted/repeated local run.
 FIXTURES = Path(tempfile.mkdtemp(prefix="native-fixtures-", dir=OUT))
 sources = sorted((ROOT / 'android/src').rglob('*.java'))
-names = ['NativeRecoveryTest', 'ProjectStoreTest', 'NativeHardwareTest', 'NativeAudioTest', 'WebViewTransportTest', 'ProjectPreviewTest', 'AnalysisJobStoreTest', 'AnalysisProgressThrottleTest', 'AnalysisRendererRecoveryTest', 'BackgroundObserverStopTest', 'NativeDeuxTest', 'NativeDeuxFailureRetirementTest', 'NativeInferenceProfileTest', 'NativeInferenceProfilePairComparisonTest', 'DiagnosticLogTest', 'DiagnosticJobSummaryTest', 'NativeCrashTraceTest', 'NativeRuntimeGuardTest']
+names = ['NativeRecoveryTest', 'ProjectStoreTest', 'ProjectJsonValidationTest', 'NativeHardwareTest', 'NativeAudioTest', 'WebViewTransportTest', 'ProjectPreviewTest', 'AnalysisJobStoreTest', 'AnalysisProgressThrottleTest', 'AnalysisRendererRecoveryTest', 'BackgroundObserverStopTest', 'NativeDeuxTest', 'NativeDeuxFailureRetirementTest', 'NativeInferenceProfileTest', 'NativeInferenceProfilePairComparisonTest', 'DiagnosticLogTest', 'DiagnosticJobSummaryTest', 'NativeCrashTraceTest', 'NativeRuntimeGuardTest']
 tests = [ROOT / f'tests/{name}.java' for name in names + ['WebViewTransportServer']] + [ROOT/'tests/android/BackgroundInstrumentation.java']
 observer_host_stubs = sorted((ROOT/'tests/android-observer-host').rglob('*.java'))
 passage_lifecycle_sources = [ROOT/'tests/test_native_passage_lifecycle.py', ROOT/'tests/NativePassageLifecycleTest.java',
                              ROOT/'tests/native-mdx-host/com/cyberbasslord/lightforge/AnalysisJobStore.java',
                              *sorted((ROOT/'tests/native-mdx-host/android').rglob('*.java'))]
-bound_sources = sources + tests + observer_host_stubs + passage_lifecycle_sources + [ROOT/'android/native-runtime.json', ROOT/'tests/verify_native_release.py', ROOT/'tests/test_native_deux_failure_retirement.py']
-receipt = dict(release=args.release, passed=False, scope='Fresh production Java compilation and host JVM tests; no Android Activity/device/document-provider or physical Tesla execution.',
+json_host_sources = project_json_host.sources()
+json_host_evidence = json_host_sources + [ROOT/'tests/project-json-host/provenance.json', ROOT/'tests/project_json_host.py', ROOT/'tests/test_project_json_validation.py']
+bound_sources = sources + tests + observer_host_stubs + passage_lifecycle_sources + json_host_evidence + [ROOT/'android/native-runtime.json', ROOT/'tests/verify_native_release.py', ROOT/'tests/test_native_deux_failure_retirement.py']
+receipt = dict(release=args.release, passed=False, scope='Fresh production Java compilation and host JVM tests; storage JSON preflight runs pinned actual AOSP reader in separate host-only classes. No Android Activity/device/document-provider or physical Tesla execution.',
                source_hashes={str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in bound_sources}, checks=[], errors=[])
 
 def run(name, *args, prepend_classpath=(), timeout=None):
-    p = subprocess.run([str(JAVA / 'java'), '-cp', ':'.join(map(str, [*prepend_classpath, CLASSES, JSON, ANDROID, ORT_HOST])),
+    p = subprocess.run([str(JAVA / 'java'), '-cp', ':'.join(map(str, [*prepend_classpath, HOST_JSON_CLASSES, CLASSES, JSON, ANDROID, ORT_HOST])),
                         'com.cyberbasslord.lightforge.' + name, *map(str, args)], cwd=ROOT, capture_output=True, text=True, timeout=timeout)
     (OUT / (name + '.txt')).write_text(p.stdout + p.stderr)
     p.check_returncode()
     return p.stdout
 
 try:
+    project_json_host.compile_support(JAVA / 'javac', HOST_JSON_CLASSES)
     subprocess.run([sys.executable, str(ROOT/'tools/bootstrap_testdeps.py')],check=True)
     subprocess.run([sys.executable, str(ROOT/'tools/bootstrap_native_runtime.py'),'--check'],check=True)
     subprocess.run([sys.executable, str(ROOT/'tests/test_native_passage_lifecycle.py')],check=True)
@@ -68,6 +77,8 @@ try:
     assert recovery['passed']
     (OUT / 'native-recovery-results.json').write_text(json.dumps(recovery, indent=2) + '\n')
     receipt['checks'].extend(recovery['checks'])
+    assert 'PASS:' in run('ProjectJsonValidationTest', FIXTURES / 'project-json-fixtures')
+    receipt['checks'].append('Production project JSON bounds and pinned actual AOSP strict-mode reader pass ordinary grammar/UTF-8 fixtures, save/undo/recovery, and rejected-restore cleanup; host-only reader support is not included in native-classes or device instrumentation.')
     assert 'PASS:' in run('ProjectStoreTest', FIXTURES / 'native-project-fixtures')
     receipt['checks'].append('Existing duplicate/rename/backup restore/CRC/traversal/cancellation and legacy rename-journal regression suite passed.')
     assert 'PASS: 19' in run('NativeHardwareTest', hardware)

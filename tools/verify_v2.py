@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Portable production regression gate. Historical model evidence stays historical."""
 from pathlib import Path
-import datetime, hashlib, json, re, subprocess, sys
+import datetime, hashlib, json, os, re, subprocess, sys
 from verify_analysis_assets import verify as verify_assets
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -86,6 +86,8 @@ def is_generated_runtime_report(path):
 def digest(p):
     with p.open('rb') as f:return hashlib.file_digest(f,'sha256').hexdigest()
 
+REGRESSION_EXTRA_INPUTS=('docs/EXPERIMENTAL_HOST_QUALIFICATION.md',)
+
 def hashes():
     paths=[ROOT/'version.json',ROOT/'package.json',ROOT/'package-lock.json',ROOT/'build.sh',ROOT/'android/native-runtime.json',ROOT/'qa/release-1.6.0/prepare-musdb-fixtures.py']
     for folder, suffixes in {
@@ -101,7 +103,99 @@ def hashes():
             if p.is_file() and p.suffix in suffixes and '__pycache__' not in p.parts
             and not is_generated_runtime_report(p)
         )
+    paths.extend(ROOT/p for p in REGRESSION_EXTRA_INPUTS)
+    paths.extend(p for p in (ROOT/'research/upstream').rglob('*')
+                 if p.is_file() and (p.suffix=='.py' or p.name=='requirements.txt'))
     return {str(p.relative_to(ROOT)):digest(p) for p in sorted(set(paths))}
+
+def prepare_regression_test_inputs(root=ROOT, *, materialize=True):
+    """Restore sparse-omitted test inputs from this HEAD, never reset user edits.
+
+    The security suites scan *all* upstream Python sources (not merely their
+    directly imported helpers). Include every tracked Python source and dependency
+    manifest, but not unrelated checkpoints/audio. No alternate checkout or network
+    source is used. Existing worktree bytes remain the authoritative test inputs.
+    """
+    root=Path(root).resolve()
+    def git(*args):
+        return subprocess.check_output(['git','-C',str(root),*args])
+    head=git('rev-parse','HEAD').decode().strip()
+    entries={}
+    for row in git('ls-tree','-rz',head,'--','research/upstream',*REGRESSION_EXTRA_INPUTS).split(b'\0'):
+        if not row:
+            continue
+        info,raw_path=row.split(b'\t',1)
+        path=raw_path.decode()
+        if not (path.endswith('.py') or Path(path).name=='requirements.txt' or path in REGRESSION_EXTRA_INPUTS):
+            continue
+        mode,kind,oid=info.decode().split()
+        if kind!='blob' or mode not in {'100644','100755'}:
+            raise RuntimeError('Unsafe regression test input in HEAD: '+path)
+        entries[path]=(mode,oid)
+    index={}
+    for row in git('ls-files','--stage','-z','--','research/upstream',*REGRESSION_EXTRA_INPUTS).split(b'\0'):
+        if row:
+            info,path=row.split(b'\t',1)
+            index.setdefault(path.decode(),[]).append(tuple(info.decode().split()))
+    skipped={row[2:].decode() for row in git('ls-files','-v','-z','--','research/upstream',*REGRESSION_EXTRA_INPUTS).split(b'\0')
+             if row and row[:1].upper()==b'S'}
+    def safe_path(relative):
+        path=root
+        for part in Path(relative).parts:
+            path=path/part
+            if path.is_symlink():
+                raise RuntimeError('Symlink regression test input: '+relative)
+        if path.exists() and not path.is_file():
+            raise RuntimeError('Non-file regression test input: '+relative)
+        return path
+    # Validate every target before creating any file. Staged/deleted paths are
+    # user intent, not sparse omissions. Do not hide them by checking out HEAD.
+    missing=[]
+    for relative,(mode,oid) in entries.items():
+        path=safe_path(relative)
+        if not path.exists():
+            if not materialize or relative not in skipped or index.get(relative)!=[(mode,oid,'0')]:
+                raise RuntimeError('Missing regression test input is not an unchanged sparse omission: '+relative)
+            missing.append(relative)
+    for relative in missing:
+        mode,oid=entries[relative]
+        data=git('cat-file','blob',oid)
+        # Descriptor-relative traversal prevents swapped parent symlinks from
+        # redirecting writes. Exclusive creation and fchmod never follow a
+        # replacement leaf or overwrite a file created after preflight.
+        directory=os.open(root,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW)
+        try:
+            parts=Path(relative).parts
+            for part in parts[:-1]:
+                try:
+                    os.mkdir(part,dir_fd=directory)
+                except FileExistsError:
+                    pass
+                child=os.open(part,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW,dir_fd=directory)
+                os.close(directory)
+                directory=child
+            descriptor=os.open(parts[-1],os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,
+                               0o600,dir_fd=directory)
+            with os.fdopen(descriptor,'wb') as output:
+                output.write(data)
+                os.fchmod(output.fileno(),0o755 if mode=='100755' else 0o644)
+        finally:
+            os.close(directory)
+    # Record actual tested bytes, including local edits and untracked scan inputs.
+    actual=set(entries)
+    actual.update(str(p.relative_to(root)) for p in (root/'research/upstream').rglob('*.py'))
+    files={}
+    for relative in sorted(actual):
+        path=safe_path(relative)
+        data=path.read_bytes()
+        oid=hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
+        expected=entries.get(relative,(None,None))[1]
+        files[relative]={'sha256':hashlib.sha256(data).hexdigest(),
+                         'head_blob':expected,'matches_head':oid==expected,
+                         'materialized':relative in missing}
+    if git('rev-parse','HEAD').decode().strip()!=head:
+        raise RuntimeError('HEAD changed while preparing regression test inputs')
+    return {'head':head,'files':files}
 
 def node_failure_summary(output, limit=12):
     """Return bounded trusted TAP labels with their first failure detail."""
@@ -199,10 +293,12 @@ def run_python_scripts(scripts, log_path):
     log_path.write_text('\\n'.join(output))
 
 def main():
-    receipt={'release':VERSION,'passed':False,'checks':[],'errors':[], 'source_hashes':hashes(),
+    receipt={'release':VERSION,'passed':False,'checks':[],'errors':[], 'source_hashes':{},
              'selected_test_suites':{'node':TESTS,'python_archive':PYTHON_TESTS,'python_quality_tools':QUALITY_TOOL_TESTS},
              'scope':'Node engine/worker/WebCrypto/gzip, real app DOM integration with simulated native and graphics, Python archive and quality-tool tests. Not a visual browser or physical Android/Tesla test.'}
     try:
+        receipt['regression_test_inputs']=prepare_regression_test_inputs()
+        receipt['source_hashes']=hashes()
         subprocess.run([sys.executable,str(ROOT/'tools/sync_version.py'),'--check'],check=True)
         result=subprocess.run(['node','--test','--test-reporter=tap',*[str(ROOT/'tests'/t) for t in TESTS]],cwd=ROOT,capture_output=True,text=True)
         node_output=result.stdout+result.stderr
@@ -221,6 +317,9 @@ def main():
         verify_assets()
         receipt['checks'].append('Every bundled analysis asset matches the current manifest; actual model quality and runtime are checked separately.')
         receipt['analysis_manifest_sha256']=digest(ROOT/'web/analysis/ASSET_MANIFEST.json')
+        research_after=prepare_regression_test_inputs(materialize=False)
+        if research_after['head']!=receipt['regression_test_inputs']['head'] or {p:v['sha256'] for p,v in receipt['regression_test_inputs']['files'].items()}!={p:v['sha256'] for p,v in research_after['files'].items()}:
+            raise RuntimeError('Regression test inputs or HEAD changed during verification')
         source_after=hashes()
         changed=sorted(path for path in set(receipt['source_hashes'])|set(source_after) if receipt['source_hashes'].get(path)!=source_after.get(path))
         assert not changed,'Sources changed during verification: '+', '.join(changed)
