@@ -25,7 +25,7 @@ python3 tools/bootstrap_toolchain.py
 python3 tools/bootstrap_native_runtime.py
 python3 tools/bootstrap_testdeps.py
 python3 -m venv ../model-build
-../model-build/bin/pip install pip==26.2.1 setuptools==83.0.0
+../model-build/bin/pip install pip==26.2.1 setuptools==84.1.0 filelock==4.2.1
 ../model-build/bin/pip install torch==2.13.0 --index-url https://download.pytorch.org/whl/cpu
 ../model-build/bin/pip install -r tools/model-requirements.txt
 ../model-build/bin/python tools/prepare_game.py

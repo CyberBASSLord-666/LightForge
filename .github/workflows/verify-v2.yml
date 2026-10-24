@@ -109,7 +109,7 @@ jobs:
       - name: Prepare only reviewed original campaign dependencies and model
         if: ${{ github.run_attempt == 1 }}
         run: |
-          python3 -m pip install pip==26.2.1 setuptools==83.0.0
+          python3 -m pip install pip==26.2.1 setuptools==84.1.0 filelock==4.2.1
           python3 -m pip install torch==2.13.0 --index-url https://download.pytorch.org/whl/cpu
           python3 -m pip install -r tools/model-requirements.txt
           python3 tools/prepare_deux.py
@@ -308,7 +308,7 @@ jobs:
         run: python3 tools/prepare_fixture_decoder.py
       - name: Reproduce bundled production models
         run: |
-          python3 -m pip install pip==26.2.1 setuptools==83.0.0
+          python3 -m pip install pip==26.2.1 setuptools==84.1.0 filelock==4.2.1
           python3 -m pip install torch==2.13.0 --index-url https://download.pytorch.org/whl/cpu
           python3 -m pip install -r tools/model-requirements.txt
           python3 tools/prepare_game.py
