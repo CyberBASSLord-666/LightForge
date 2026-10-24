@@ -47,30 +47,39 @@ local until exported and contain no attached music or saved-show payload. Review
 reports before sharing publicly; never commit personal audio, diagnostics or
 signing credentials to this repository.
 
-Published 2.4.1 used warm-graph device calibration. Its historical host
-[qualification](research/inference-2.4.1/DEUX_PARALLEL_B1.md) measured **32.6%
-lower median native passage time** with byte-identical outputs, but a later
-phone run was slower. The [unreleased correction](research/inference-device-regression-20260928/README.md)
-requires three exact cold-session comparisons at passages 0/1/2, bounded extra
-work and sustained checks using useful baseline passages. Those later controls
-use different inputs and cannot establish a paired speedup; durable diagnostics
-preserve both kinds of evidence.
-See [the calibration contract](docs/NATIVE_EXECUTION_CALIBRATION.md). No new
-phone or whole-analysis speedup is claimed, and the published APK is unchanged.
+Native scheduling uses complete-passage qualification, bounded extra work and
+sustained checks using useful baseline passages. Same-input qualification requires
+finite, byte-identical outputs and repeated timing wins; later unmatched-input
+controls are regression guards, not paired speedup measurements. Durable
+diagnostics preserve both kinds of evidence. See
+[the calibration contract](docs/NATIVE_EXECUTION_CALIBRATION.md).
 
 ## Verification and limitations
 
-[Validation](VALIDATION.md) distinguishes published-release evidence from current
-source checks, historical numerical tests and optional physical observations.
-The published 2.4.1 release passed its source-bound host/Android gates, but
-**comparative musical quality, a 75% analysis-time reduction, and physical
-phone/Tesla performance are not established by those tests**. See its
-[release record](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.4.1)
-for the signed APK and verification report. The recorded
-[vocal frontend host benchmark](docs/VOCAL_FRONTEND_OPTIMIZATION.md) measured
-about **27% less frontend processing time**, excluding model inference and
-complete analysis time. Later commits require their own verification; old
-receipts must not be relabelled as current results.
+The 2.4.2 source uses Android version code **20402**. Its registered
+[bounded host experiment](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40085980189)
+measured **18.8% lower median complete-passage time** (66.459 to 53.952 seconds),
+with all eight complete outputs byte-identical. It compared forced four-worker
+execution with a three-thread baseline on the same three assigned CPUs of a
+four-CPU-capacity host, using one original passage. This is not an additional
+18.8% gain over published 2.4.1: its historical 32.6% result and the earlier
+experimental 43.6% result used different conditions.
+
+[Validation](VALIDATION.md) records the immutable evidence and its scope. A host
+experiment does not qualify an APK. For a published download, check the version,
+qualified source, original signing certificate and payload hashes in its
+[verification report](release-verification.json) against the exact
+[GitHub release](https://github.com/CyberBASSLord-666/LightForge/releases).
+A retained report for an older version does not qualify newer source bytes.
+
+**Comparative musical quality, a 75% analysis-time reduction, whole-song
+acceleration and physical phone/Tesla performance remain unestablished.**
+The historical [vocal frontend benchmark](docs/VOCAL_FRONTEND_OPTIMIZATION.md)
+measured about 27% less frontend processing time, excluding model inference and
+complete analysis. Phone thermal/battery behavior and actual vehicle timing
+require their own observations. The retained [phone regression record](research/inference-device-regression-20260928/README.md)
+explains why host gains are not device-performance evidence. Old receipts must
+not be relabelled as current results.
 
 ## Development
 

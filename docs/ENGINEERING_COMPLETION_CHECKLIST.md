@@ -1,19 +1,13 @@
 # Comprehensive engineering completion checklist
 
-Assessment refreshed: **2026-10-23, 21:33 UTC**. Reliability, input-integrity,
-accessibility and verification changes are published to draft PR56 at
-`fa3c9424302846e932edd23eef39e0f6e192e79d`. Current supplemental browser,
-hygiene and quality-tool checks pass. Production correctly holds for absent
-campaign registration. The latest actual-model job authenticated the original
-Ubuntu keyring contents but stopped in a pre-installation setup check; no model
-inference ran. Reviewed public-only APT staging and precise safe failure-stage
-diagnostics pass local regression and are pending publication. No performance
-campaign has been allocated or measured. Earlier native/model evidence remains
-scoped to its exact source and inputs, not a qualified new release identity.
-This ledger covers the complete requested product, not only the inference PR.
-**The project is not fully complete or qualified for a new production release.**
-Later changes and verification must update the applicable rows; this document is
-not a release receipt or permission to bypass an existing gate.
+This ledger describes implementation and acceptance boundaries for the **2.4.2 /
+Android 20402** source. It is not a release receipt or a statement that every
+long-term music-intelligence requirement is complete. Read
+[VALIDATION](../VALIDATION.md) for immutable measurements and historical releases;
+check the exact version, source, certificate and payload in
+[release-verification.json](../release-verification.json) against
+[GitHub Releases](https://github.com/CyberBASSLord-666/LightForge/releases) before
+claiming publication. A retained older-version report does not qualify new bytes.
 
 ## Reading the status
 
@@ -26,197 +20,83 @@ not a release receipt or permission to bypass an existing gate.
   contract exists. A sidecar schema is not an automatic detector.
 
 Published 2.4.1 evidence is indexed in [VALIDATION](../VALIDATION.md). Its
-successful checks do not qualify changed application bytes. The current development source is moving to 2.4.2; a source version is not publication.
+successful checks do not qualify changed application bytes. The source uses
+2.4.2; a source version is not publication.
 No old receipts are promoted to qualify this new candidate.
 
-## Current verification snapshot
+## Recorded source and verification evidence
 
-- The integrated 2.4.2 frozen-source `npm test` equivalent passed using the
-  regression interpreter: **793 Node tests**, **911 Python tests run (907 passed,
-  4 skipped)**, five quality-tool suites and all **85 analysis assets**. All
-  **945 source bindings** were unchanged through verification. The four skips
-  concern absent retained diagnostic builds, not current runtime prerequisites.
-  A first integration attempt exposed five test import/workflow-scoping errors;
-  those were corrected without changing production behavior, independently
-  reviewed and rerun in full. Both the failed and successful records are retained.
-  This is engine/worker/DOM/archive/tooling coverage, not rendered browser,
-  actual performance qualification or packaged Android evidence.
-- Original pinned model preparation from upstream succeeded; no released APK
-  supplied the model files. Fresh original-model Deux profile, scheduler,
-  cancellation and recovery checks passed with complete finite, byte-identical
-  outputs. All 27 source and 27 model bindings in the retained frozen profile
-  receipt matched. These Linux/JVM checks do not establish controlled speed,
-  whole-song, Android/ARM64 or thermal performance.
-- Fresh GAME native/WASM comparisons produced identical final transcription
-  and checkpoint-resume results for the public demo (98 notes) and Falcon
-  mixture (5 notes). MDX decoded-waveform and paired downstream gates passed;
-  **`spectral_diagnostic_passed` remains false** and is retained, not waived or
-  relabelled exact spectral parity. GAME, MDX and downstream source/model
-  bindings matched their tested source bytes. Local records remain separate from sealed
-  CI release evidence.
-- Fresh advisory checks returned no known vulnerabilities for both npm
-  lockfiles and the installed model-build Python environment. This does not
-  cover every research tree, native library or Android system component, or
-  establish numerical parity after research dependency changes.
-- The local cloud's hidden cgroup ancestry remains ineligible. The existing
-  eight-CPU production lane fails its strict preflight on the four-CPU hosted
-  runner. A fresh read-only [host observation](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40009544530)
-  now verifies four allowed CPUs, complete global cgroup ancestry and controls,
-  and capacity for the separately defined four-worker/three-CPU comparison.
-  This establishes host eligibility only, not timing or release qualification.
-  The prospective bounded-host implementation requires an immutable declaration,
-  exact protected-main registration, a single retained terminal attempt and
-  fresh candidate-specific sealed admission. It does not accept old experimental
-  receipts, relax numerical thresholds or replace Android verification.
-- Local rendered browser execution remains blocked by environment-specific
-  Chromium IPC/launcher restrictions and isolated loopback access. Supported
-  GitHub [run 40002479708](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40002479708)
-  passed all four supplemental suites at exact head
-  `4ab3ae8addc989cef5179347b7cef889d39428a2`: actual cold-restore WebGL,
-  current application flows, background-progress/recovery UI and Highland
-  optics/clock/graphics recovery. The downloaded diagnostic archive matches
-  its GitHub SHA-256; 53 unique source bindings in the application, background
-  and optics receipts match this head. All 36 supplemental PNGs were reviewed: no confirmed blocking layout or
-  optics defect was found, but an application error banner in
-  the Guide/My shows screenshots prevented a blanket clean claim. Follow-up
-  [run 40006034916](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40006034916)
-  correctly failed its new diagnostic check on a ResizeObserver notification
-  loop. The Music pitch lane synchronously changed the observed ancestor
-  height. A narrow coalesced-animation-frame repair passes local tests; the
-  pre-fix negative control fails. [Run 40007881351](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40007881351)
-  subsequently passed all four browser suites: all 13 application checkpoints
-  have zero errors and no recovery banner. Nine key screenshots and 53 source
-  bindings were independently checked.
-  The wide score screenshot was captured while its canvas was offscreen; settled visible-element captures in the follow-up run are crisp at all four
-  widths, establishing this softness as capture timing, not a product defect. These are supplemental checks, not the actual-model browser pipeline,
-  physical Android/Tesla observations or sealed production qualification.
-- The strict inference replay verifier now treats each output head as eleven
-  128-frame chunks, independently of candidate frequency-block batching.
-  It accepts the original 1,727-call candidate geometry and rejects the previous
-  erroneous 1,869-call geometry. Independent negative controls cover missing,
-  extra and redistributed head calls. Performance thresholds, original model
-  work, source identity and resource requirements are unchanged.
-- Exact-head GitHub [hygiene](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40003841187)
-  and [quality-gate tooling](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40003841078)
-  checks passed. A tooling pass is not a locked-corpus quality result. GitHub
-  inspection found no open standalone issues and only draft
-  [PR56](https://github.com/CyberBASSLord-666/LightForge/pull/56), with no submitted
-  reviews or inline review threads. No new release was published.
+The following is a **historical snapshot at 2026-10-24 12:26 UTC**, not a promise
+of later CI success or publication:
 
-## Additional diagnostic coverage and follow-up
+- Source includes the reliability/UI/export/background work integrated by
+  [PR56](https://github.com/CyberBASSLord-666/LightForge/pull/56), ONNX/release
+  provenance remediation in [PR57](https://github.com/CyberBASSLord-666/LightForge/pull/57)
+  and Python bootstrap pins in [PR58](https://github.com/CyberBASSLord-666/LightForge/pull/58).
+  PR61 head `8285b55` and local `05db18f` share tree
+  `38da1ce8b49b8c9252be9606ac9277aa506ea6ec`. Its platform-reader JSON depth/UTF-8
+  and backup bounds, immutable sparse regression inputs and explicit consumer
+  JDK layout repair leave all 27 registered execution-closure files unchanged.
+- Local regression ran **793 Node tests and 976 Python tests (972 passed,
+  4 historical skips)**, with quality-tool and asset checks passing. CI selects
+  its own supported tests/skips; do not substitute these totals for CI results.
+- The registered [producer run 40085980189, attempt 1](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40085980189)
+  measured **18.8186% lower median complete-passage time**, 66.459075114 to
+  53.952437538 seconds. All three measured pairs improved (18.81855%, 17.51232%,
+  19.40812%), and all eight complete outputs were byte-identical. This is forced
+  four-worker versus three-thread execution on three child CPUs of a
+  four-capacity host for one original passage, not Android, whole-song or an
+  additional gain over the historical 32.6%/43.6% comparisons. Source, artifact,
+  digest and consumer-admission requirements are recorded in [VALIDATION](../VALIDATION.md).
+- [PR CI 40091744623](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40091744623)
+  had passed core, model/native and performance admission and reached its
+  ephemeral test-APK build. Packaged Android, final main-candidate qualification,
+  original-signed payload verification and publication were not established by
+  that observation. Later status must be read from exact-source sealed evidence.
+- Scoped advisory metadata audits listed no known advisories for 44 production
+  package versions and 15 exact research pins. Nineteen historical range/unpinned
+  research declarations remained unresolved. Reviewed pins include ONNX 1.23.2,
+  pip 26.2.1, setuptools 84.1.0, filelock 4.2.1 and Temurin 17.0.21+9. Fresh
+  ONNX export reproduced the original GAME and Deux model files byte for byte.
+  Native ORT 1.25.1 and Web ORT 1.20.1, including older embedded ONNX-schema
+  components, remain unchanged. The scoped Android fixed-model input-path review
+  does not patch those components or provide universal security clearance.
 
-- The [early decoder probe](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40023691660)
-  established the actual mismatch before expensive model preparation: the
-  Ubuntu keyring is root-owned, regular and 3,607 bytes, but has mode 0777;
-  the source and mirror files are root-owned 0644 and pass. The exact hosted
-  image's public build script explains the broad `/usr/share` permissions.
-  The compatibility repair permits this observed mode only when a stable,
-  no-follow runtime read matches the independently authenticated official Noble
-  keyring digest. APT uses an exclusive, verified 0444 copy, rechecked around
-  both calls. Original files, signing-key contents and persistent trust remain
-  unchanged. [Run 40025719313](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40025719313)
-  subsequently proved exact hosted keyring content equality, retaining the
-  original 0777 observation. A later pre-APT check failed without identifying
-  its operation; installation and inference remain unverified. Public-only
-  staging now uses a verified system temporary root rather than private runner
-  ancestry, without changing existing directory permissions. Comment-only
-  source data is removed before public copying, with validated active fields
-  unchanged. Static stage diagnostics distinguish remaining setup failures
-  without exposing arbitrary paths or exception content. The original failure
-  cause and new hosted installation success must not be inferred from local tests. Both consumer workflows now prepare
-  the decoder before expensive model reproduction. The timing producer remains
-  byte-identical and decoder-free. The helper was added prospectively to the
-  27-path execution closure before any campaign request or measurement.
-- Current-head [model run 40017544557](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40017544557)
-  reproduced and rechecked all 85 original model assets but exhausted the existing
-  15-minute decoder-setup limit while downloading packages from the Azure Ubuntu
-  mirror. No fixture decode, browser model inference or candidate qualification
-  occurred. The retained failure is not relabelled a model pass.
-  A narrowly scoped helper now selects Canonical HTTPS transport using a temporary
-  copy of validated official Ubuntu sources, preserving suites, components,
-  architecture, signing key and APT sandboxing. It does not modify persistent APT,
-  TLS, proxy or network settings. Existing decoder reuse, the 15-minute cap and
-  canonical decoded-fixture hashes remain unchanged. Static allowlisted errors
-  aid diagnosis without exposing arbitrary configuration or exception content.
-  Full local regression and independent review pass; actual hosted download
-  success, source-file compatibility and sandbox traversal remain unverified.
-- The first 2.4.2 production workflow [run 40017540945](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40017540945)
-  failed before starting jobs because job-level environment configuration used
-  the unavailable `runner` context. This was a workflow validation error, not
-  the intended absent-campaign hold. The identical attempt directory is now
-  initialized in an early guarded runner step. Official actionlint 1.7.12
-  reproduces the old error and passes all repaired workflows; regression tests
-  reject recurrence. Request/registration, timing and release gates are unchanged.
-  Fresh GitHub execution must confirm the repaired workflow starts correctly.
-- Current 2.4.2 [browser run 40017544523](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40017544523)
-  passed all four Chromium suites. Browser/background/optics/cold-restore source
-  bindings match the published tree; representative narrow-screen score,
-  progress and rear-optics images were inspected. This is desktop Chromium,
-  simulated native bridge and SwiftShader coverage, not packaged Android proof.
-- An unprivileged supplemental workflow reproduces original model assets and
-  licensed reference audio, runs the unchanged actual-model browser harness
-  with a bounded external deadline, and retains only explicit diagnostic files.
-  It does not sign/package an APK or create sealed production evidence.
-  Its first [run 40006035003](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40006035003)
-  reproduced and rechecked all 85 model assets, then timed out downloading
-  official ffmpeg dependencies before fixture or browser execution. Decoder
-  setup is now separately bounded, reuses an available executable, and omits
-  optional packages; exact archive and waveform provenance remain mandatory.
-  Recovered [run 40007881372](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40007881372)
-  passed the actual-model harness and post-run integrity check. The no-session
-  supplemental receipt reports 11 sung notes, 9 bass notes, identical
-  generated/saved/restored frame hashes and zero remaining cancelled namespaces.
-  Its 66 repository source and 69 served asset bindings match the inspected
-  application; its generated input hash matches canonical fixture provenance.
-  This short public excerpt establishes neither whole-song/corpus quality nor
-  controlled speed, Android behavior or sealed production evidence.
-  The latest head's [run 40009544574](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40009544574)
-  also passed on attempt 2 after an unchanged retry of a dependency-download
-  timeout before inference. Both attempt artifacts are retained. Its original
-  model, fixture, save/restore and cancellation checks passed; this still is
-  supplemental evidence rather than a sealed candidate receipt.
-- [Experimental host qualification](EXPERIMENTAL_HOST_QUALIFICATION.md) retains
-  the diagnostic-only lane separately from prospective admitted qualification.
-  Initial hosted observations failed, first with a generic reason and then a
-  malformed cpu.stat reason. Linux source review confirmed the documented
-  core_sched.force_idle_usec key was rejected by the old parser. The narrow
-  dotted-key correction preserves every value, mandatory counters, duplicate,
-  unsigned and monotonicity checks. Run 40009544530 confirms the corrected
-  observation is eligible. All earlier failures are retained; no timing proof
-  or Android/whole-song performance claim follows from eligibility.
-- Application browser QA now retains bounded, sanitized error reports and
-  fails on unexpected handled errors or a recovery banner, even if an error
-  has fallen out of the application log. Visible score captures verify backing
-  dimensions before screenshots. These checks exposed the real Music
-  resize-loop error rather than accepting the previous green page-error test.
+Earlier supplemental browser/model checks, failed decoder/startup attempts,
+Music ResizeObserver diagnostics and their exact links remain in the
+[October 23 ledger](https://github.com/CyberBASSLord-666/LightForge/blob/8285b55b131f0a1ee718d8c6623b434acc1e255e/docs/ENGINEERING_COMPLETION_CHECKLIST.md)
+and retained run artifacts. Their historical setup failures are not current
+blocker diagnoses, and their passes do not replace fresh candidate qualification.
+The Music resize loop was repaired and subsequent supplemental suites passed;
+local browser-launch restrictions are environment-specific. No historical receipt,
+failed diagnostic, model hash, policy or timing threshold was rewritten here.
 
-## Verification publication scope
+## Verification contract
 
-This source update contains source, tests, workflow changes and project
-documentation. Newly generated local research records, diagnostic logs and
-result snapshots are not part of this source update. The production workflow
-separately retains run/attempt-scoped diagnostics, including failed inference
-observations; those archives are not release authority. Do not interpret absent
-records as successful checks. Reproduce verification using [BUILD](../BUILD.md);
-the mandatory original-model, browser, Android and release checks remain
-necessary for the applicable claims.
+Fresh source-bound production, actual-model, browser and packaged Android
+verification, registered-proof admission, original signing and exact payload
+integrity remain mandatory. A successful host experiment or test APK does not
+satisfy the remaining gates. The version-scoped automated-verification policy
+makes physical/external observations optional for publication, not evidence for
+unmeasured claims. In particular, retained MDX spectral diagnostics that failed
+must stay failed; downstream/decoded-waveform passes are not exact spectral parity.
 
 ## Critical acceptance ledger
 
 | Area | Current state and evidence | Required completion / acceptance |
 | --- | --- | --- |
 | Inference quality preservation | Fresh original-model Linux/JVM profile and scheduler/cancellation/recovery comparisons passed with finite, byte-identical complete outputs; source/model bindings matched. This is not end-to-end release qualification. | Preserve all graphs, precision, context, output and failed probes; rerun applicable source-bound checks after changes and complete browser/packaged Android qualification. |
-| Meaningful inference improvement | Historical PR56 four-worker host passage reduction is 43.6%; published 2.4.1 host result is 32.6%. Neither establishes complete-song or phone benefit. | Measure repeated full passages and complete analysis including calibration cost, fallback and cache state. Do not substitute isolated frontend timing for neural or whole-job improvement. |
-| Release-hold integrity | Version-independent source-bound hold remains enforced. The workflow now explicitly generates fresh inference timing evidence before packaging, purges prior current receipts and replays the existing verifier. Its read-only preflight rejects missing cgroup observations or insufficient allowed CPUs. Historical receipts remain unchanged. | Run on an eligible controlled host and retain passing exact-source evidence with unchanged numerical, resource and timing requirements. A runner label, version bump or successful preflight cannot bypass the hold. |
-| Original Deux qualification | Pinned upstream assets and all 85 manifest entries verified. Fresh original-model host numerical, observer, scheduler and cancellation/recovery checks passed. Controlled timing qualification remains absent. | Complete the controlled timing prerequisite and remaining platform/full-pipeline checks; preserve all original weights, graphs, precision and context. No reduced model or fabricated receipt. |
+| Meaningful inference improvement | Registered bounded-host median reduction is 18.8186%, with complete byte-identical outputs under the conditions above. Historical PR56 43.6% and published 2.4.1 32.6% results are separate comparisons, not additive gains. | Measure complete analysis, calibration overhead and representative physical devices before whole-song or phone claims. Never extrapolate stage timing to total analysis. |
+| Release-hold integrity | Fail-closed candidate admission verifies the registered immutable producer proof and its execution closure; host proof is distinct from fresh consumer qualification. | Require exact-source sealed production and packaged Android evidence before publication. A runner label, version bump or host pass cannot bypass remaining gates. |
+| Original Deux qualification | Original assets, full-output comparison and the scoped registered host timing proof are documented in VALIDATION. | Verify their identity for each candidate and complete remaining platform/full-pipeline gates; preserve original weights, graphs, precision and context. No reduced model or fabricated receipt. |
 | Native runtime checks | Fresh Deux checks and GAME native/WASM final-output/checkpoint comparisons passed. GAME produced 98 demo notes and 5 Falcon notes with identical final output; unrounded intermediate differences remain recorded. | Preserve source/model/runtime bindings; host comparisons do not establish packaged Android, corpus accuracy, physical-device performance or whole-job speedup. |
 | MDX numerical comparison | Mandatory decoded-waveform comparisons on three fixed inputs and the paired downstream gate passed with current source/model bindings. Internal spectral diagnostic remains false. | Preserve failed spectral diagnostics and existing mandatory thresholds; do not claim bit-identical MDX spectra, full-song accuracy or Android parity from these scoped passes. |
 | Foreground/background analysis | Foreground service, checkpointed stages, cancellation and saving are implemented. Current changes suspend completed-preview watchdog budgets while the Activity is hidden or unfocused and reject stale callbacks after resume. Historical emulator evidence does not qualify these changes. | Fresh packaged Android tests: screen-off/background completion, Activity recreation, process interruption, cancel/resume, low-memory paths and durable result save. |
 | Completed-project preview | Current source preserves saved arrangements when loading fails, fences superseded opens, and defers legacy Android draw-listener removal until after drawing. The four supplemental browser suites passed at head 4ab3ae8; screenshot review, actual-model browser and packaged Android qualification remain distinct requirements. | Restore completed and legacy projects; assert first rendered frame, transport/seek, repeated opening, cancellation and current compiled sequence agreement, including API 26-28 and focus loss/resume. |
 | Browser and UI execution | All four supplemental browser suites passed in run 40002479708, with exact-source artifact bindings checked. Fail-closed diagnostic capture identified a real Music ResizeObserver loop. The resize repair passed all four hosted suites with clean diagnostics and visually checked Music/Guide/My shows/score captures. Local browser restrictions are environment-specific. No actual-model browser or packaged Android pass is inferred. | Complete and inspect actual browser diagnostics; separately run the real-model browser pipeline under the production evidence contract. DOM or supplemental diagnostics cannot replace sealed release evidence. |
 | Physical phone | No fresh physical-phone observations were produced for this assessment. Earlier connector errors are historical, not a current connection diagnosis. | Use only supported, authorized connection routes when available. Physical testing is optional under the applicable version-scoped publication policy, but physical performance claims need observations. |
-| APK/update identity | Original-signing and exact-payload publication controls implemented; the available original private identity was checked locally against the documented public certificate. No new final APK is qualified by this ledger. | Deliberate new version, full exact-source verification, original certificate outside Git, update-compatible install identity, alignment and checksum verification. Never replace the key or uninstall to evade incompatibility. |
-| Release publication | Latest published release remains 2.4.1; the current candidate still uses 2.4.1/20401 for development. No new final APK or release is qualified. | Follow [BUILD](../BUILD.md); deliberately choose a new version, establish its applicable publication authority/policy, and verify expected remote commit, full CI, qualified signed APK and public release assets. Existing version-scoped exceptions do not automatically authorize a future version. Do not overwrite a released version. |
+| APK/update identity | Original-signing and exact-payload publication controls are implemented. Source version is 2.4.2/20402; this ledger does not qualify an APK. | Full exact-source verification, original certificate outside Git, update-compatible install identity, alignment and checksum verification. Never replace the key or uninstall to evade incompatibility. |
+| Release publication | Source version 2.4.2/20402 and its publication policy are defined; publication is established only by the matching signed payload, report and GitHub release. | Follow [BUILD](../BUILD.md); verify expected remote source, full CI, qualified signed APK and accessible public assets. Never overwrite a released version or use an older receipt to qualify new bytes. |
 
 ## Music intelligence and choreography ledger
 
@@ -248,25 +128,24 @@ necessary for the applicable claims.
 | Vehicle model | Source-backed Highland profile, black appearance option and official catalog research exist. | [Hardware evidence](VEHICLE_HARDWARE_EVIDENCE.md) explicitly limits lens mapping/travel. Do not invent unsupported lamps or movement commands; retain correct trunk/body-fixed geometry. |
 | FSEQ/USB export | Validated 200-channel uncompressed FSEQ v2, 15/20 ms, soundtrack and project ZIP with CRC/size checks. Current source rejects inconsistent compiled-show metadata, channel counts and durations. Android export-destination grants are retired after completion/failure rather than accumulated indefinitely. | Fresh final-candidate round-trip, duration/movement budgets, filename/root layout, edited project and cache-independent export checks, plus interrupted-save recovery and repeated exports on Android. |
 | Diagnostics | Bounded local diagnostic export and durable job summaries implemented. | Recover after process failure; avoid personal audio, credentials and project payload leakage; disclose incomplete observations. |
-| Dependencies | Exact pins are retained. October 23 advisory checks found no known vulnerabilities in both npm lockfiles and the installed model-build Python environment. Earlier coordinated research changes remain documented in [dependency security](DEPENDENCY_SECURITY.md). | Research model-output parity and comprehensive research/native/system-component audits remain unverified. A clean advisory result for the checked environments is not universal security clearance. |
+| Dependencies | Reviewed exporter/bootstrap pins and the scoped October 24 audit are recorded above; [dependency security](DEPENDENCY_SECURITY.md) preserves the remediation history and reproducible model-byte result. | Resolve remaining research declarations and assess transitive/native/system components separately. Research model-output parity and universal security clearance are not established by a clean scoped advisory result. |
 | Artifact security | Archive credential/symlink rejection and repository hygiene strengthened. | Final packaging/provenance regression and rendered bundle binding must pass; keep signing secrets and personal files outside artifacts. |
-| Repository/PR integration | Only draft PR56 is open, with no standalone open issues or submitted PR reviews/inline threads. Published head `fa3c942` has passing hygiene/quality-tool and supplemental browser CI. Production reaches the explicit absent-registration hold; actual-model execution is held at the diagnosed decoder prerequisite. PR43 is not an open integration task. | Integrate and verify the 2.4.2 migration and prospective host campaign implementation; retain the draft/release hold until complete qualification. Preserve required history, model notices and failed evidence. |
+| Repository/PR integration | PR56 reliability work and PR57/58 remediation are integrated. The registered campaign has a retained terminal proof; PR61 supplies bounded project parsing and consumer setup repairs without changing that proof. | Verify the final protected-main source after all source/documentation changes, preserving history, model notices and failed evidence. PR or local passes alone cannot qualify the merged candidate. |
 
 ## Next safe engineering steps
 
-1. Publish the reviewed, aggregate-tested 2.4.2 source and prospective host
-   implementation; inspect fresh CI before allocating any measurement. Preserve
-   all failed observations and the single-attempt campaign identity. The successful supplemental
-   model/browser checks do not substitute for sealed production or packaged
-   Android evidence.
-2. Keep the passed aggregate and scoped native comparisons bound to their exact
-   inputs. Investigate retained MDX spectral discrepancies without weakening
-   mandatory thresholds; rerun affected comparisons after source/model changes.
-3. Obtain fresh timing qualification on an eligible, already-authorized
-   controlled host; complete the actual-model browser and packaged Android
-   gates. Then verify the new version and original-signing
-   publication identity. Missing observations and denied operations are not
-   permission to fabricate evidence, replace keys or bypass restrictions.
+1. Verify the final protected-main candidate after all intended source and
+   documentation changes. Bind registered host-proof admission and every fresh
+   production/model/browser/Android receipt to that candidate. Preserve failed
+   observations and the single-attempt campaign identity; do not rerun timing
+   merely to obtain a preferable number.
+2. Keep numerical comparisons bound to their exact inputs. Investigate retained
+   MDX spectral discrepancies without weakening mandatory thresholds; rerun
+   affected comparisons when source/model changes require it.
+3. Verify original-signing identity, the exact qualified payload, release tag and
+   public assets under [BUILD](../BUILD.md). Neither an earlier receipt nor a
+   test-APK build establishes publication. Missing observations and denied
+   operations never authorize fabricated evidence, replaced keys or bypasses.
 4. Keep bass decimation caching deferred: profiling found only about 9–12 ms
    of duplicate work before cache overhead, while immutable-reader identity is
    not yet a generic API guarantee. Preserve globally ranked articulation and
