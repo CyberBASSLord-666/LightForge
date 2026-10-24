@@ -15,7 +15,7 @@ public final class NativeMdxLifecycleTest {
     private static File root,assets;
     public static void main(String[] args)throws Exception{
         root=new File(args[0]);assets=new File(args[1]);root.mkdirs();
-        stalledConstruction();failedConstruction();cancelRunning();successfulRelease();sharedGate();
+        failedUploadCreation();stalledConstruction();failedConstruction();cancelRunning();successfulRelease();sharedGate();
         System.out.println("PASS: "+checks+" production NativeMdxTask lifecycle checks");
     }
     private static NativeMdxTask task(String name)throws Exception{return new NativeMdxTask(new Context(new File(root,name),assets),JOB);}
@@ -40,6 +40,23 @@ public final class NativeMdxLifecycleTest {
         ExecutorService executor=Executors.newSingleThreadExecutor();
         try{Future<?> future=executor.submit(()->{try{action.run();}catch(Exception error){throw new RuntimeException(error);}});future.get(1,TimeUnit.SECONDS);checks++;}
         catch(TimeoutException error){throw new AssertionError(message,error);}finally{executor.shutdownNow();}
+    }
+    private static void failedUploadCreation()throws Exception{
+        Control.reset();NativeMdxTask task=task("upload-creation");
+        File directory=(File)field(task,"jobDirectory");
+        try{
+            require(directory.delete(),"empty upload directory removed for storage failure injection");
+            Files.write(directory.toPath(),new byte[]{1});
+            try{task.begin(JOB,NativeMdxTask.INPUT_BYTES);throw new AssertionError("upload to invalid storage succeeded");}
+            catch(IOException expected){checks++;}
+            require("idle".equals(field(task,"state"))&&field(task,"token")==null&&field(task,"inputStream")==null,
+                "failed upload creation must roll back admission and handles");
+            Files.delete(directory.toPath());require(directory.mkdir(),"upload storage repaired");
+            String token=new JSONObject(task.begin(JOB,NativeMdxTask.INPUT_BYTES)).getString("token");
+            require("uploading".equals(new JSONObject(task.status(JOB,token)).getString("state")),"retry after storage failure was wedged");
+            task.cancel(JOB,token);task.releaseIdle(JOB);
+            require(Control.runs==0,"storage failure unexpectedly reached inference");
+        }finally{task.close();stopped(task);}
     }
     private static void stalledConstruction()throws Exception{
         Control.reset();Control.blockCreate=true;NativeMdxTask task=task("construct");leaseBeforeOrt(task);leasedRetirement(task);String token=start(task);

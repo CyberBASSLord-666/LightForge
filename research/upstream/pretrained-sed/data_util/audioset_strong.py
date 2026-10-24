@@ -1,3 +1,12 @@
+# Shared fail-closed loader; this file also supports direct script execution.
+import sys as _security_sys
+from pathlib import Path as _SecurityPath
+_security_sys.path.insert(0, str(_SecurityPath(__file__).resolve().parents[2]))
+from _lightforge_research_checkpoint_security import (
+    load_tensor_checkpoint as _safe_torch_load,
+    load_remote_tensor_checkpoint as _safe_hub_load,
+)
+
 import os
 from time import perf_counter
 import datasets
@@ -213,7 +222,7 @@ def get_temporal_count_balanced_sample_weights(dataset, sample_weight_offset=30,
     os.makedirs(save_folder, exist_ok=True)
     save_file = os.path.join(save_folder, f"weights_temporal_count_offset_{sample_weight_offset}.pt")
     if os.path.exists(save_file):
-        return torch.load(save_file)
+        return _safe_torch_load(save_file)
 
     from tqdm import tqdm
 

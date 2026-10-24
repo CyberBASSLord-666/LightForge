@@ -37,22 +37,24 @@ public final class NativeDeux implements AutoCloseable {
     private final int[] indices,bandsPerFrequency;
     private final int headFrames;
     private final Set<String> verified=new HashSet<>();
+    private long modelExtractionAttempts,modelExtractionBytesRead,modelChecksumAttempts,modelChecksumBytesRead;
     private final Object lifecycle=new Object();
     private volatile boolean cancelled,closed;
+    private volatile boolean probing;
     private boolean running;
     private OrtSession.RunOptions activeRun;
     // Direct buffers are reused across every batch/passage and are pinned as outputs.
     // Avoid getValue()/getFloatBuffer(), which allocate another full output copy.
     private FloatBuffer spectrum,values,mask,summed,batchInput,batchOutput;
     private FloatBuffer[] parallelInputs,parallelOutputs;
-    private long calibrationBufferBytes;
     private NativeDeuxTransform transform;
     private String activeGraph;
     private boolean firstGraphRun;
     private final NativeExecutionPolicy.Key executionKey;
     private final File executionPolicyFile;
-    private NativeExecutionPolicy.Calibration executionPolicy;
-    private boolean frequencyCalibrationAttempted,policyReported;
+    private final NativePassagePolicy passagePolicy;
+    private boolean nominationAttempted;
+    private int passageOrdinal;
     private final LongSupplier hostAvailableMemory;
     private final NativeExecutionPolicy.Config hostTemporalConfig;
     private final Runnable hostRunStarted;
@@ -114,12 +116,14 @@ public final class NativeDeux implements AutoCloseable {
         this.modelDirectory=context==null?directory.getCanonicalFile():new File(context.getCacheDir(),"native-deux/"+hex(MessageDigest.getInstance("SHA-256").digest(source)));
         if(!this.modelDirectory.isDirectory() && !this.modelDirectory.mkdirs())throw new IOException("Not enough storage to prepare studio analysis.");
         executionKey=new NativeExecutionPolicy.Key(hex(MessageDigest.getInstance("SHA-256").digest(source)),
-            "native-deux-"+RUNTIME_VERSION+"-parallel-b1-v3",
+            "native-deux-"+RUNTIME_VERSION+"-complete-passage-v4-frequency-b16-bounded-alternate",
             context==null?System.getProperty("os.name")+":"+System.getProperty("os.version"):android.os.Build.FINGERPRINT,
             context==null?System.getProperty("os.arch"):android.os.Build.MANUFACTURER+":"+android.os.Build.MODEL+":"+Arrays.toString(android.os.Build.SUPPORTED_ABIS),
             Runtime.getRuntime().availableProcessors());
-        executionPolicyFile=context==null?hostExecutionPolicyFile:new File(this.modelDirectory,"execution-policy.bin");
-        executionPolicy=executionPolicyFile==null?NativeExecutionPolicy.defaults(executionKey):NativeExecutionPolicy.load(executionPolicyFile,executionKey);
+        executionPolicyFile=context==null?hostExecutionPolicyFile:new File(this.modelDirectory,"passage-policy-v4.bin");
+        NativePassagePolicy.Seed seed=executionPolicyFile==null?null:NativePassagePolicy.load(executionPolicyFile,executionKey.identity());
+        passagePolicy=new NativePassagePolicy(executionKey.identity(),seed);
+        nominationAttempted=seed!=null;
     }
 
     /** Output contains vocals then accompaniment, each exactly 573300 float32 LE samples. */
@@ -131,20 +135,42 @@ public final class NativeDeux implements AutoCloseable {
         predict(audio,startSample,output,listener,cancellation,scope,null);
     }
 
-    /** Package-private so the service can collect timing without exposing a profiling API. */
-    synchronized void predict(File audio,long startSample,File output,Listener listener,Cancellation cancellation,ExecutionScope scope,NativeInferenceProfile profile) throws Exception {
+    /** Legacy callers have no trustworthy remaining-work count and stay on the baseline. */
+    synchronized void predict(File audio,long startSample,File output,Listener listener,Cancellation cancellation,
+            ExecutionScope scope,NativeInferenceProfile profile) throws Exception {
+        predict(audio,startSample,output,listener,cancellation,scope,profile,-1);
+    }
+
+    /** remainingUseful includes this passage; unknown work cannot finance optional probes. */
+    synchronized void predict(File audio,long startSample,File output,Listener listener,Cancellation cancellation,
+            ExecutionScope scope,NativeInferenceProfile profile,int remainingUseful) throws Exception {
+        try{predictPassage(audio,startSample,output,listener,cancellation,scope,profile,remainingUseful);}
+        catch(Exception|Error failure){
+            // Even a previously qualified seed is unsafe after cancellation or failed
+            // inference/retirement. Normal close after a successful job does not enter here.
+            PipelineFailures failures=new PipelineFailures(failure);
+            failures.run(()->passagePolicy.forceBaseline(cleanCancellation(failure)?"cancelled":"runtime-rejected"));
+            if(executionPolicyFile!=null)try{Files.deleteIfExists(executionPolicyFile.toPath());}
+            catch(Throwable invalidation){failures.add(invalidation);}
+            if(profile!=null&&hostTemporalConfig==null&&executionPolicyFile!=null)
+                failures.run(()->profile.notePassagePolicy(passagePolicy.evidenceRecords()));
+            throw failure;
+        }
+    }
+
+    private void predictPassage(File audio,long startSample,File output,Listener listener,Cancellation cancellation,
+            ExecutionScope scope,NativeInferenceProfile profile,int remainingUseful)throws Exception{
         synchronized(lifecycle) {
             if(closed || cancelled)throw new InterruptedIOException("Studio analysis was cancelled.");
             running=true;
         }
         NativeDeuxTransform.Check check=()->check(cancellation);
-        File partial=null;boolean acquired=false,entered=false;
+        Attempt useful=null,candidate=null;boolean acquired=false,entered=false;
+        PairCapture pairCapture=null;
+        PipelineFailures failures=new PipelineFailures(null);
+        int ordinal=passageOrdinal++;
         try {
             check.check();
-            if(profile!=null){
-                profile.noteSchedulerConfiguration("temporal",executionPolicy.temporal.config.id());
-                profile.noteSchedulerConfiguration("frequency",executionPolicy.frequency.config.id());
-            }
             NativeInferenceProfile.Timing gateStarted=profile==null?null:NativeInferenceProfile.started();
             try {
                 while(!INFERENCE_GATE.tryAcquire(250,TimeUnit.MILLISECONDS))check.check();
@@ -156,14 +182,223 @@ public final class NativeDeux implements AutoCloseable {
             NativeInferenceProfile.Timing preflightStarted=profile==null?null:NativeInferenceProfile.started();
             try { preflightCache(check,profile); }
             finally { if(profile!=null)profile.addPreflight(NativeInferenceProfile.elapsed(preflightStarted)); }
+            int commonPreflightVerified=verified.size();
             NativeInferenceProfile.Timing buffersStarted=profile==null?null:NativeInferenceProfile.started();
             try { ensureBuffers(profile); }
             finally { if(profile!=null)profile.addBufferInit(NativeInferenceProfile.elapsed(buffersStarted)); }
-            phase("runtime-load-start; version="+RUNTIME_VERSION);
+            File directory=output.getAbsoluteFile().getParentFile();
+            if(!directory.isDirectory()&&!directory.mkdirs())throw new IOException("Cannot save the studio passage.");
+            if(hostTemporalConfig==null&&executionPolicyFile!=null&&!nominationAttempted&&ordinal==0&&remainingUseful>=24){
+                nominationAttempted=true;
+                nominate(audio,startSample,check,profile);
+            }
+            NativePassagePolicy.Plan plan=passagePolicy.plan(ordinal,remainingUseful,availableMemory(),executionKey.cores);
+            NativeExecutionPolicy.Config baseline=NativeExecutionPolicy.baseline(executionKey.cores);
+            if(hostTemporalConfig!=null){
+                useful=attempt(audio,startSample,directory,hostTemporalConfig,listener,check,profile,false,Long.MAX_VALUE);
+            }else if(plan.action==NativePassagePolicy.Action.PAIR){
+                long pairStarted=System.nanoTime();
+                NativeExecutionPolicy.Config selected=workers(plan.workers);
+                // Both arms carry the same observational work. Probe graph timings remain
+                // isolated so durable production totals never double-count a comparison.
+                NativeInferenceProfile probeProfile=profile==null?null:new NativeInferenceProfile();
+                if(probeProfile!=null)probeProfile.captureStartMemory();
+                if(profile!=null&&profile.wantsCandidateEvidence())
+                    pairCapture=new PairCapture(ordinal,plan.workers,plan.candidateFirst,commonPreflightVerified,probeProfile);
+                Listener baselineProgress=pairProgress(listener,plan.candidateFirst?.5:0);
+                Listener candidateProgress=pairProgress(listener,plan.candidateFirst?0:.5);
+                long probeStarted=0,comparisonStarted=0;boolean charged=false;
+                try {
+                    if(plan.candidateFirst){
+                        probeStarted=System.nanoTime();
+                        candidate=attempt(audio,startSample,directory,selected,candidateProgress,check,probeProfile,true,plan.probeBudgetNanos,
+                            pairCapture==null?null:pairCapture.candidate);
+                    }
+                    useful=attempt(audio,startSample,directory,baseline,baselineProgress,check,profile,false,Long.MAX_VALUE,
+                        pairCapture==null?null:pairCapture.baseline);
+                    if(!plan.candidateFirst){
+                        probeStarted=System.nanoTime();
+                        candidate=attempt(audio,startSample,directory,selected,candidateProgress,check,probeProfile,true,plan.probeBudgetNanos,
+                            pairCapture==null?null:pairCapture.candidate);
+                    }
+                    comparisonStarted=System.nanoTime();
+                    String baselineHash=digest(useful.file,check),candidateHash=digest(candidate.file,check);
+                    long extra=System.nanoTime()-pairStarted-useful.nanos;
+                    charged=true;
+                    passagePolicy.recordPair(new NativePassagePolicy.Pair(ordinal,plan.candidateFirst,useful.nanos,
+                        candidate.nanos,extra,baselineHash,true,baselineHash.equals(candidateHash),true,true,plan.workers),
+                        remainingUseful<0?-1:Math.max(0,remainingUseful-1));
+                    if(profile!=null)profile.noteSchedulerCalibration(extra);
+                } catch(ProbeAborted stopped) {
+                    // All sessions/worker Runs have retired before this exception reaches here.
+                    // A JNI teardown failure is never swallowed as an optional probe failure.
+                    if(!cleanProbeAbort(stopped))throw stopped;
+                    check.check();
+                    long extra=Math.max(0,System.nanoTime()-probeStarted);
+                    charged=true;
+                    passagePolicy.probeAborted(stopped.reason,extra);
+                    if(profile!=null)profile.noteSchedulerCalibration(extra);
+                    if(useful==null)useful=attempt(audio,startSample,directory,baseline,listener,check,profile,false,Long.MAX_VALUE,
+                        pairCapture==null?null:pairCapture.baseline);
+                } finally {
+                    if(!charged&&probeStarted!=0){
+                        long extra=candidate==null?Math.max(0,System.nanoTime()-probeStarted):candidate.nanos;
+                        if(candidate!=null&&comparisonStarted!=0)extra+=System.nanoTime()-comparisonStarted;
+                        passagePolicy.probeAborted(cancelled||closed||Thread.currentThread().isInterrupted()?"cancelled":"probe-aborted",extra);
+                        if(profile!=null)profile.noteSchedulerCalibration(extra);
+                    }
+                    noteDirectBufferBytes(profile);
+                }
+                savePassagePolicy();
+            }else{
+                NativeExecutionPolicy.Config config=plan.action==NativePassagePolicy.Action.CANDIDATE?workers(plan.workers):baseline;
+                boolean control=plan.action==NativePassagePolicy.Action.CONTROL;
+                Listener progress=control&&listener!=null?(value,detail)->listener.update(value,"Checking studio performance · "+detail):listener;
+                useful=attempt(audio,startSample,directory,config,progress,check,profile,false,Long.MAX_VALUE);
+                if(control)passagePolicy.recordControl(useful.nanos);else passagePolicy.recordOrdinary(useful.nanos);
+                savePassagePolicy();
+            }
+            check.check();
+            NativeInferenceProfile.Timing commitStarted=profile==null?null:NativeInferenceProfile.started();
+            try { Files.move(useful.file.toPath(),output.toPath(),StandardCopyOption.ATOMIC_MOVE,StandardCopyOption.REPLACE_EXISTING); }
+            finally { if(profile!=null)profile.addOutputCommit(NativeInferenceProfile.elapsed(commitStarted)); }
+        }catch(Throwable failure){failures.add(failure);
+        }finally{
+            // Freeze optional evidence only after actual attempts retired. Its collector lifetime
+            // includes other pair work and is deliberately not represented as an arm clock.
+            try { if(pairCapture!=null&&pairCapture.candidate.before!=null)profile.noteCandidateEvidence(pairCapture.snapshot()); }
+            catch(Throwable evidenceFailure){failures.add(evidenceFailure);}
+            try {
+                if(useful!=null)useful.file.delete();
+                if(candidate!=null)candidate.file.delete();
+                if(profile!=null&&hostTemporalConfig==null&&executionPolicyFile!=null)profile.notePassagePolicy(passagePolicy.evidenceRecords());
+            }catch(Throwable failure){failures.add(failure);
+            } finally {
+                try {
+                    synchronized(lifecycle) {
+                        try{if(activeRun!=null){activeRun.close();activeRun=null;}}
+                        finally{running=false;if(closed)clearBuffers();}
+                    }
+                }catch(Throwable failure){failures.add(failure);
+                }finally{
+                    try{if(entered)scope.end();}catch(Throwable failure){failures.add(failure);}
+                    finally{if(acquired)INFERENCE_GATE.release();}
+                }
+            }
+        }
+        failures.rethrow();
+    }
+
+    private static final class Attempt {
+        final File file;final long nanos;
+        Attempt(File file,long nanos){this.file=file;this.nanos=nanos;}
+    }
+    private static final class ArmCapture {
+        NativeInferenceProfile.ModelSetup before,after;
+        String outcome="failed";long nanos=-1;
+        NativeInferenceProfile.ArmEvidence snapshot(){
+            return before==null?null:new NativeInferenceProfile.ArmEvidence(outcome,nanos,before,after);
+        }
+    }
+    private static final class PairCapture {
+        final int ordinal,workers,commonVerified;final boolean first;
+        final NativeInferenceProfile profile;
+        final ArmCapture baseline=new ArmCapture(),candidate=new ArmCapture();
+        PairCapture(int ordinal,int workers,boolean first,int commonVerified,NativeInferenceProfile profile){
+            this.ordinal=ordinal;this.workers=workers;this.first=first;this.commonVerified=commonVerified;this.profile=profile;
+        }
+        NativeInferenceProfile.CandidateEvidence snapshot(){
+            return new NativeInferenceProfile.CandidateEvidence(ordinal,workers,first,commonVerified,
+                baseline.snapshot(),candidate.snapshot(),profile.finish(candidate.outcome));
+        }
+    }
+    /** No extra reads: these counters describe operations that the model loader actually attempted. */
+    NativeInferenceProfile.ModelSetup modelSetupObservation(){
+        return new NativeInferenceProfile.ModelSetup(verified.size(),modelExtractionAttempts,modelExtractionBytesRead,
+            modelChecksumAttempts,modelChecksumBytesRead);
+    }
+    private Attempt attempt(File audio,long startSample,File directory,NativeExecutionPolicy.Config config,
+            Listener listener,NativeDeuxTransform.Check check,NativeInferenceProfile profile,boolean probe,long budget,
+            ArmCapture observation)throws Exception{
+        if(observation==null)return attempt(audio,startSample,directory,config,listener,check,profile,probe,budget);
+        observation.before=modelSetupObservation();
+        try {
+            Attempt result=attempt(audio,startSample,directory,config,listener,check,profile,probe,budget);
+            observation.nanos=result.nanos;observation.outcome="completed";return result;
+        }catch(Exception|Error failure){
+            observation.outcome=cleanCancellation(failure)?"cancelled":"failed";throw failure;
+        }finally{observation.after=modelSetupObservation();}
+    }
+    private static Listener pairProgress(Listener listener,double offset){
+        return listener==null?null:(value,detail)->listener.update(offset+value*.5,"Checking studio execution · "+detail);
+    }
+    private static class ProbeAborted extends IOException {
+        final String reason;
+        ProbeAborted(String reason){super("Optional studio qualification ended: "+reason);this.reason=reason;}
+    }
+    private static final class ProbeRunRejected extends ProbeAborted {
+        ProbeRunRejected(OrtException cause){super("runtime-rejected");initCause(cause);}
+    }
+    private static boolean cleanProbeAbort(Throwable failure){return cleanStop(failure,true,new IdentityHashMap<>(),0,new int[]{256});}
+    /** A completed cancellation may contain other retired workers' clean cancellations. */
+    static boolean cleanCancellation(Throwable failure){return cleanStop(failure,false,new IdentityHashMap<>(),0,new int[]{256});}
+    private static boolean cleanStop(Throwable failure,boolean probe,IdentityHashMap<Throwable,Boolean> seen,int depth,int[] remaining){
+        if(failure==null||depth>32||--remaining[0]<0||seen.put(failure,Boolean.TRUE)!=null)return false;
+        Throwable cause=failure.getCause();
+        if(probe){
+            if(failure.getClass()==ProbeAborted.class){if(cause!=null)return false;}
+            else if(failure.getClass()==ProbeRunRejected.class){if(!bareCause(cause,OrtException.class,seen,remaining))return false;}
+            else return false;
+        }else{
+            if(failure.getClass()!=InterruptedIOException.class)return false;
+            if(cause!=null&&!bareCause(cause,OrtException.class,seen,remaining)
+                    &&!bareCause(cause,InterruptedException.class,seen,remaining))return false;
+        }
+        for(Throwable suppressed:failure.getSuppressed())if(!cleanStop(suppressed,probe,seen,depth+1,remaining))return false;
+        return true;
+    }
+    private static boolean bareCause(Throwable failure,Class<?> type,IdentityHashMap<Throwable,Boolean> seen,int[] remaining){
+        return failure!=null&&failure.getClass()==type&&failure.getCause()==null&&failure.getSuppressed().length==0
+            &&--remaining[0]>=0&&seen.put(failure,Boolean.TRUE)==null;
+    }
+    private static InterruptedIOException interrupted(InterruptedException cause){
+        InterruptedIOException failure=new InterruptedIOException("Studio analysis was cancelled.");failure.initCause(cause);return failure;
+    }
+    /** Keep the original worker failure when its Future is observed again during retirement. */
+    private static final class PipelineFailures {
+        Throwable primary;
+        final Set<Throwable> seen=Collections.newSetFromMap(new IdentityHashMap<Throwable,Boolean>());
+        PipelineFailures(Throwable failure){add(failure);}
+        void add(Throwable failure){if(failure!=null&&seen.add(failure)){if(primary==null)primary=failure;else primary.addSuppressed(failure);}}
+        void close(AutoCloseable resource){try{resource.close();}catch(Throwable failure){add(failure);}}
+        void run(Runnable operation){try{operation.run();}catch(Throwable failure){add(failure);}}
+        void rethrow()throws Exception{if(primary instanceof Exception)throw (Exception)primary;if(primary instanceof Error)throw (Error)primary;if(primary!=null)throw new RuntimeException(primary);}
+    }
+    private void beginRun() throws OrtException {
+        synchronized(lifecycle){
+            if(activeRun!=null)throw new IllegalStateException("Native execution has not retired.");
+            activeRun=new OrtSession.RunOptions();if(cancelled||closed)activeRun.setTerminate(true);
+        }
+    }
+    private void endRun() {
+        synchronized(lifecycle){if(activeRun!=null){activeRun.close();activeRun=null;}}
+    }
+    /** Complete independent passage with fresh sessions, including first use and retirement. */
+    private Attempt attempt(File audio,long startSample,File directory,NativeExecutionPolicy.Config config,
+            Listener listener,NativeDeuxTransform.Check outerCheck,NativeInferenceProfile profile,
+            boolean probe,long budgetNanos) throws Exception {
+        long started=System.nanoTime();
+        NativeDeuxTransform.Check check=()->{
+            outerCheck.check();
+            if(probe&&System.nanoTime()-started>=budgetNanos)throw new ProbeAborted("probe-budget");
+        };
+        File partial=null;boolean complete=false;
+        PipelineFailures failures=new PipelineFailures(null);
+        probing=probe;
+        try {
             NativeInferenceProfile.Timing runtimeStarted=profile==null?null:NativeInferenceProfile.started();
-            try { synchronized(lifecycle){activeRun=new OrtSession.RunOptions();if(cancelled||closed)activeRun.setTerminate(true);} }
+            try { beginRun(); }
             finally { if(profile!=null)profile.addRuntimeInit(NativeInferenceProfile.elapsed(runtimeStarted)); }
-            phase("runtime-load-complete");
             progress(listener,0,"Reading the studio passage");
             NativeInferenceProfile.Timing readStarted=profile==null?null:NativeInferenceProfile.started();
             float[][] passage;
@@ -175,51 +410,35 @@ public final class NativeDeux implements AutoCloseable {
             passage=null; // Permit the 13-second PCM window to be reclaimed before neural inference.
             phase("passage-encoded");
             OrtEnvironment environment=OrtEnvironment.getEnvironment();
-            if(!policyReported){
-                policyReported=true;
-                scheduler("cache="+(executionPolicy.complete()?"hit":"miss")+" temporal="+executionPolicy.temporal.config.id()+" frequency="+executionPolicy.frequency.config.id());
-            }
             try(OrtSession session=open(environment,"front",check,profile)) {
                 run(session,spectrum,new long[]{1,2050,FRAMES,2},values,new long[]{1,FRAMES,BANDS,FEATURES},check,profile);
             }
             progress(listener,1.0/15,"Studio frequency analysis");
             for(int block=0;block<12;block++) {
                 final int stage=block;
-                if(block==0&&executionPolicyFile!=null){
-                    long headroom=availableMemory();
-                    NativeExecutionPolicy.Decision previous=executionPolicy.temporal;
-                    if(!previous.complete||NativeExecutionPolicy.temporalNeedsExpansion(previous,executionKey,headroom)){
-                        NativeExecutionPolicy.Config[] candidates=NativeExecutionPolicy.temporalCandidates(executionKey,headroom);
-                        NativeExecutionPolicy.Decision decision;
-                        if(candidates.length>0){
-                            progress(listener,1.0/15,"Optimizing studio execution for this device");
-                            decision=calibrateTemporal(environment,candidates,headroom,check,profile);
-                        }else decision=NativeExecutionPolicy.retainedTemporal(executionKey);
-                        // A previously measured choice remains valid while a larger shortlist
-                        // is unavailable. Retry expansion on a later passage after pressure clears.
-                        if(decision.complete||!previous.complete){
-                            executionPolicy=new NativeExecutionPolicy.Calibration(decision,executionPolicy.frequency);
-                            if(decision.complete)savePolicy();
-                        }
-                    }
+                NativeExecutionPolicy.Config temporal=config;
+                if(hostTemporalConfig==null&&!NativeExecutionPolicy.temporalAllowed(temporal,executionKey,availableMemory())){
+                    if(probe)throw new ProbeAborted("memory-pressure");
+                    passagePolicy.forceBaseline("memory-pressure");
+                    config=temporal=NativeExecutionPolicy.baseline(executionKey.cores);
                 }
-                NativeExecutionPolicy.Config temporal=temporalConfiguration();
                 if(profile!=null)profile.noteSchedulerConfiguration("temporal",temporal.id());
                 try(OrtSession session=openConfigured(environment,blockName(block)+"-time",check,profile,temporal)) {
                     runTemporalGraph(session,blockName(block)+"-time",temporal,stage,listener,check,profile);
                 }
-                if(block==0&&!frequencyCalibrationAttempted&&executionPolicyFile!=null&&!executionPolicy.frequency.complete){
-                    frequencyCalibrationAttempted=true;
-                    int size=FREQUENCY_BATCH*BANDS*FEATURES;
-                    progress(listener,1.75/15,"Optimizing studio execution for this device");
-                    NativeExecutionPolicy.Decision decision=calibrate(environment,"block-00-frequency",
-                        slice(values,0,size),slice(batchOutput,0,size),new long[]{FREQUENCY_BATCH,BANDS,FEATURES},check,profile);
-                    executionPolicy=new NativeExecutionPolicy.Calibration(executionPolicy.temporal,decision);
-                    if(profile!=null)profile.noteSchedulerConfiguration("frequency",decision.config.id());
-                    savePolicy();
+                // Frequency batches are independent frames. Recheck the same conservative
+                // worker admission after the temporal session has completely retired.
+                if(hostTemporalConfig==null&&!NativeExecutionPolicy.temporalAllowed(config,executionKey,availableMemory())){
+                    if(probe)throw new ProbeAborted("memory-pressure");
+                    passagePolicy.forceBaseline("memory-pressure");
+                    config=NativeExecutionPolicy.baseline(executionKey.cores);
                 }
-                try(OrtSession session=open(environment,blockName(block)+"-frequency",check,profile)) {
-                    for(int first=0;first<FRAMES;first+=FREQUENCY_BATCH) {
+                NativeExecutionPolicy.Config frequency=config.temporalWorkers>1?
+                    NativeExecutionPolicy.parallelFrequency(config.temporalWorkers):NativeExecutionPolicy.baseline(executionKey.cores);
+                if(profile!=null)profile.noteSchedulerConfiguration("frequency",frequency.id());
+                try(OrtSession session=openConfigured(environment,blockName(block)+"-frequency",check,profile,frequency)) {
+                    if(frequency.temporalWorkers>1)runFrequencyPipeline(session,blockName(block)+"-frequency",frequency,stage,listener,check,profile);
+                    else for(int first=0;first<FRAMES;first+=FREQUENCY_BATCH) {
                         check.check();int count=Math.min(FREQUENCY_BATCH,FRAMES-first),size=count*BANDS*FEATURES;
                         FloatBuffer in=slice(values,first*BANDS*FEATURES,size),out=slice(batchOutput,0,size);
                         run(session,in,new long[]{count,BANDS,FEATURES},out,new long[]{count,BANDS,FEATURES},check,profile);
@@ -230,7 +449,7 @@ public final class NativeDeux implements AutoCloseable {
                     }
                 }
             }
-            File parent=output.getAbsoluteFile().getParentFile();
+            File parent=directory;
             if(!parent.isDirectory() && !parent.mkdirs())throw new IOException("Cannot save the studio passage.");
             partial=File.createTempFile(".native-deux-",".partial",parent);
             try(FileOutputStream stream=new FileOutputStream(partial)) {
@@ -264,18 +483,18 @@ public final class NativeDeux implements AutoCloseable {
             }
             check.check();
             if(partial.length()!=2L*SAMPLES*4)throw new IOException("The studio passage is incomplete.");
-            NativeInferenceProfile.Timing commitStarted=profile==null?null:NativeInferenceProfile.started();
-            try { Files.move(partial.toPath(),output.toPath(),StandardCopyOption.ATOMIC_MOVE,StandardCopyOption.REPLACE_EXISTING);partial=null; }
-            finally { if(profile!=null)profile.addOutputCommit(NativeInferenceProfile.elapsed(commitStarted)); }
-        } finally {
-            if(partial!=null)partial.delete();
-            try {
-                synchronized(lifecycle) {
-                    if(activeRun!=null){activeRun.close();activeRun=null;}
-                    running=false;if(closed)clearBuffers();
-                }
-            }finally{try{if(entered)scope.end();}finally{if(acquired)INFERENCE_GATE.release();}}
+            complete=true;
+        }catch(Throwable failure){complete=false;failures.add(failure);
+        }finally{
+            try { endRun(); }
+            catch(Throwable failure){complete=false;failures.add(failure);}
+            finally {
+                probing=false;
+                if(!complete&&partial!=null)try{partial.delete();}catch(Throwable failure){failures.add(failure);}
+            }
         }
+        failures.rethrow();
+        return new Attempt(partial,System.nanoTime()-started);
     }
 
     /** Stops active ORT kernels as soon as the runtime reaches a cancellation point. */
@@ -320,18 +539,17 @@ public final class NativeDeux implements AutoCloseable {
     private boolean buffersReady(){return transform!=null&&spectrum!=null&&values!=null&&mask!=null&&summed!=null&&batchInput!=null&&batchOutput!=null;}
     private void clearBuffers(){parallelInputs=null;parallelOutputs=null;spectrum=null;values=null;mask=null;summed=null;batchInput=null;batchOutput=null;transform=null;}
 
-    private void savePolicy(){
-        if(executionPolicyFile!=null&&executionPolicy.complete())try{NativeExecutionPolicy.save(executionPolicyFile,executionKey,executionPolicy);}
-        catch(IOException unavailable){scheduler("cache=write-unavailable; using measured in-memory configuration");}
+    private void savePassagePolicy(){
+        if(executionPolicyFile==null)return;
+        NativePassagePolicy.Seed seed=passagePolicy.qualifiedSeed();
+        if(seed==null){if(executionPolicyFile.exists()&&!executionPolicyFile.delete())scheduler("cache=delete-unavailable");return;}
+        try{NativePassagePolicy.save(executionPolicyFile,executionKey.identity(),seed);}
+        catch(IOException unavailable){scheduler("cache=write-unavailable");}
     }
-
-    /** Recheck native headroom before every graph, including a cached fast path. */
-    private NativeExecutionPolicy.Config temporalConfiguration(){
-        if(hostTemporalConfig!=null)return hostTemporalConfig;
-        NativeExecutionPolicy.Config selected=executionPolicy.temporal.config;
-        if(selected.temporalWorkers==1||NativeExecutionPolicy.temporalAllowed(selected,executionKey,availableMemory()))return selected;
-        scheduler("family=temporal decision=memory-baseline; measured configuration retained for later passages");
-        return NativeExecutionPolicy.baseline(executionKey.cores);
+    private NativeExecutionPolicy.Config workers(int count){
+        for(NativeExecutionPolicy.Config config:NativeExecutionPolicy.temporalCandidates(executionKey,Long.MAX_VALUE))
+            if(config.temporalWorkers==count)return config;
+        throw new IllegalArgumentException("Unqualified temporal worker count.");
     }
 
     /** Native allocations are outside the Java heap; Runtime.freeMemory is not an admission signal. */
@@ -386,7 +604,7 @@ public final class NativeDeux implements AutoCloseable {
         if(profile!=null){
             long floats=(long)spectrum.capacity()+summed.capacity()+values.capacity()+mask.capacity()+batchInput.capacity()+batchOutput.capacity();
             if(parallelInputs!=null)for(int i=1;i<parallelInputs.length;i++)floats+=(long)parallelInputs[i].capacity()+parallelOutputs[i].capacity();
-            profile.noteDirectBufferBytes(4L*floats+calibrationBufferBytes);
+            profile.noteDirectBufferBytes(4L*floats);
         }
     }
 
@@ -430,7 +648,7 @@ public final class NativeDeux implements AutoCloseable {
         FloatBuffer[] inputs=new FloatBuffer[workers],outputs=new FloatBuffer[workers];
         int[] activeBands=new int[workers];
         ExecutorService pool=Executors.newFixedThreadPool(workers);
-        boolean complete=false,interrupted=false;
+        boolean complete=false,interrupted=false;Throwable failure=null;
         NativeInferenceProfile.Timing critical=null;
         try{
             CompletionService<Integer> completed=new ExecutorCompletionService<>(pool);
@@ -455,7 +673,6 @@ public final class NativeDeux implements AutoCloseable {
                 int slot;
                 try{slot=completed.take().get();}
                 catch(ExecutionException failed){
-                    check.check(); // Preserve explicit cancellation semantics after an ORT termination.
                     Throwable cause=failed.getCause();
                     if(cause instanceof Exception)throw (Exception)cause;
                     if(cause instanceof Error)throw (Error)cause;
@@ -477,28 +694,15 @@ public final class NativeDeux implements AutoCloseable {
             check.check();
             complete=true;
         }catch(InterruptedException stopped){
-            interrupted=true;throw new InterruptedIOException("Studio analysis was cancelled.");
+            interrupted=true;failure=interrupted(stopped);
+        }catch(Throwable failed){
+            failure=failed;
         }finally{
-            // Never Future.cancel: a Future may become cancelled before its JNI call retires.
-            // Executor retirement also covers a submission failure before a Future is retained.
-            retirePool(pool,!complete);
-            for(Future<Integer> future:futures){
-                boolean drained=false;
-                while(!drained)try{future.get();drained=true;}
-                catch(InterruptedException stopped){interrupted=true;}
-                catch(ExecutionException failed){drained=true;}
-            }
-            try{
+            final NativeInferenceProfile.Timing pipelineStarted=critical;
+            retireTemporalPipeline(pool,!complete,futures,bound,this::terminateRuns,this::cancel,()->{
                 // Includes nested coordinator copies and ends only after all native Runs retire.
-                if(profile!=null&&critical!=null)profile.addInferencePipeline(NativeInferenceProfile.elapsed(critical));
-            }finally{
-                Throwable closeFailure=null;
-                for(BoundTemporalRun tensors:bound)try{tensors.close();}
-                catch(RuntimeException|Error failure){if(closeFailure==null)closeFailure=failure;else closeFailure.addSuppressed(failure);}
-                if(interrupted)Thread.currentThread().interrupt();
-                if(closeFailure instanceof RuntimeException)throw (RuntimeException)closeFailure;
-                if(closeFailure instanceof Error)throw (Error)closeFailure;
-            }
+                if(profile!=null&&pipelineStarted!=null)profile.addInferencePipeline(NativeInferenceProfile.elapsed(pipelineStarted));
+            },failure,interrupted);
         }
     }
     private void packTemporalBand(String graph,int band,FloatBuffer input,NativeDeuxTransform.Check check,NativeInferenceProfile profile)throws Exception{
@@ -506,23 +710,124 @@ public final class NativeDeux implements AutoCloseable {
         try{for(int f=0;f<FRAMES;f++)copy(values,(f*BANDS+band)*FEATURES,input,f*FEATURES,FEATURES);}
         finally{if(profile!=null)profile.addPipelinePack(graph,NativeInferenceProfile.elapsed(packing));}
     }
+
+    /** Original frequency attention retains all 60 bands within each independent frame. */
+    private void runFrequencyPipeline(OrtSession session,String graph,NativeExecutionPolicy.Config config,int stage,
+            Listener listener,NativeDeuxTransform.Check check,NativeInferenceProfile profile)throws Exception{
+        final int workers=config.temporalWorkers,batch=config.timeBatch;
+        if(batch!=16||(workers!=4&&workers!=8))throw new IllegalArgumentException("Invalid frequency execution geometry.");
+        // Sixteen frequency frames fit in each existing one-band temporal slot.
+        ensureParallelBuffers(workers,profile);
+        List<Future<Integer>> futures=new ArrayList<>((FRAMES+batch-1)/batch);
+        List<BoundTemporalRun> bound=new ArrayList<>(workers+1);
+        FloatBuffer[] inputs=new FloatBuffer[workers],outputs=new FloatBuffer[workers];
+        int[] firsts=new int[workers],counts=new int[workers];
+        ExecutorService pool=Executors.newFixedThreadPool(workers);
+        boolean complete=false,interrupted=false;Throwable failure=null;
+        NativeInferenceProfile.Timing critical=null;
+        try{
+            CompletionService<Integer> completed=new ExecutorCompletionService<>(pool);
+            for(int slot=0;slot<workers;slot++){
+                inputs[slot]=slice(parallelInputs[slot],0,batch*BANDS*FEATURES);
+                outputs[slot]=slice(parallelOutputs[slot],0,batch*BANDS*FEATURES);
+                NativeInferenceProfile.Timing binding=profile==null?null:NativeInferenceProfile.started();
+                try{bound.add(new BoundTemporalRun(inputs[slot],outputs[slot],batch,BANDS));}
+                finally{if(profile!=null)profile.addTensorBind(graph,NativeInferenceProfile.elapsed(binding));}
+            }
+            if(firstGraphRun)phase("session-run-start; graph="+graph);
+            critical=profile==null?null:NativeInferenceProfile.started();
+            int next=0,finished=0;
+            for(int slot=0;slot<workers;slot++){
+                firsts[slot]=next;counts[slot]=batch;next+=batch;
+                packFrequencyFrames(graph,firsts[slot],batch,inputs[slot],check,profile);
+                futures.add(submitTemporalBand(completed,session,graph,bound.get(slot),slot,check,profile));
+            }
+            while(finished<FRAMES){
+                check.check();int slot;
+                try{slot=completed.take().get();}
+                catch(ExecutionException failed){
+                    Throwable cause=failed.getCause();
+                    if(cause instanceof Exception)throw (Exception)cause;
+                    if(cause instanceof Error)throw (Error)cause;
+                    throw new RuntimeException(cause);
+                }
+                if(firstGraphRun){firstGraphRun=false;phase("session-run-complete; graph="+graph);}
+                check.check();
+                NativeInferenceProfile.Timing scattering=profile==null?null:NativeInferenceProfile.started();
+                try{copy(outputs[slot],0,values,firsts[slot]*BANDS*FEATURES,counts[slot]*BANDS*FEATURES);}
+                finally{if(profile!=null)profile.addPipelineScatter(graph,NativeInferenceProfile.elapsed(scattering));}
+                finished+=counts[slot];
+                progress(listener,(1+stage+.75+.25*finished/FRAMES)/15,"Studio harmonic detail · layer "+(stage+1)+"/12");
+                if(next<FRAMES){
+                    firsts[slot]=next;counts[slot]=Math.min(batch,FRAMES-next);next+=counts[slot];
+                    packFrequencyFrames(graph,firsts[slot],counts[slot],inputs[slot],check,profile);
+                    BoundTemporalRun tensors=bound.get(slot);
+                    if(counts[slot]!=batch){
+                        // The final five frames use their actual shape. Keep the tail
+                        // binding alive until every worker has retired, like full slots.
+                        int size=counts[slot]*BANDS*FEATURES;
+                        NativeInferenceProfile.Timing binding=profile==null?null:NativeInferenceProfile.started();
+                        try{tensors=new BoundTemporalRun(slice(inputs[slot],0,size),slice(outputs[slot],0,size),counts[slot],BANDS);bound.add(tensors);}
+                        finally{if(profile!=null)profile.addTensorBind(graph,NativeInferenceProfile.elapsed(binding));}
+                    }
+                    futures.add(submitTemporalBand(completed,session,graph,tensors,slot,check,profile));
+                }
+            }
+            check.check();complete=true;
+        }catch(InterruptedException stopped){
+            interrupted=true;failure=interrupted(stopped);
+        }catch(Throwable failed){
+            failure=failed;
+        }finally{
+            final NativeInferenceProfile.Timing pipelineStarted=critical;
+            retireTemporalPipeline(pool,!complete,futures,bound,this::terminateRuns,this::cancel,()->{
+                if(profile!=null&&pipelineStarted!=null)profile.addInferencePipeline(NativeInferenceProfile.elapsed(pipelineStarted));
+            },failure,interrupted);
+        }
+    }
+    private void packFrequencyFrames(String graph,int first,int count,FloatBuffer input,NativeDeuxTransform.Check check,
+            NativeInferenceProfile profile)throws Exception{
+        check.check();NativeInferenceProfile.Timing packing=profile==null?null:NativeInferenceProfile.started();
+        try{copy(values,first*BANDS*FEATURES,input,0,count*BANDS*FEATURES);}
+        finally{if(profile!=null)profile.addPipelinePack(graph,NativeInferenceProfile.elapsed(packing));}
+    }
     private Future<Integer> submitTemporalBand(CompletionService<Integer> completion,OrtSession session,String graph,
             BoundTemporalRun tensors,int slot,NativeDeuxTransform.Check check,NativeInferenceProfile profile){
         return completion.submit(()->{
             check.check();if(hostRunStarted!=null)hostRunStarted.run();
             NativeInferenceProfile.Timing worker=profile==null?null:NativeInferenceProfile.started();
-            try(OrtSession.Result ignored=session.run(Collections.singletonMap("input",tensors.input),Collections.emptySet(),
-                    Collections.singletonMap("output",tensors.output),activeRun)){check.check();}
+            try(OrtSession.Result ignored=execute(session,tensors.input,tensors.output,check)){check.check();}
             finally{if(profile!=null)profile.addConcurrentRun(graph,NativeInferenceProfile.elapsed(worker));}
             return slot;
         });
     }
-    private void retirePool(ExecutorService pool,boolean terminate){
-        if(terminate)terminateRuns();
-        pool.shutdown();boolean interrupted=Thread.interrupted();
-        while(!pool.isTerminated())try{pool.awaitTermination(1,TimeUnit.SECONDS);}
-        catch(InterruptedException stopped){interrupted=true;terminateRuns();}
-        if(interrupted)Thread.currentThread().interrupt();
+    private static void retireTemporalPipeline(ExecutorService pool,boolean terminate,List<? extends Future<?>> futures,
+            List<? extends AutoCloseable> resources,Runnable terminateRuns,Runnable cancelOwner,Runnable recordProfile,Throwable primary,
+            boolean interrupted)throws Exception{
+        PipelineFailures failures=new PipelineFailures(primary);
+        interrupted|=Thread.interrupted();
+        try{
+            // Never Future.cancel: a Future may become cancelled before its JNI call retires.
+            // Executor retirement also covers submission before its Future was retained.
+            // Only owner interruption cancels the whole prediction. Publish that
+            // shared state before native termination so workers retain cancellation
+            // provenance; an optional probe stop must leave baseline work usable.
+            if(interrupted)failures.run(cancelOwner);
+            else if(terminate)failures.run(terminateRuns);
+            pool.shutdown();
+            while(!pool.isTerminated())try{pool.awaitTermination(1,TimeUnit.SECONDS);}
+            catch(InterruptedException stopped){interrupted=true;failures.add(interrupted(stopped));failures.run(cancelOwner);}
+            for(Future<?> future:futures){
+                boolean drained=false;
+                while(!drained)try{future.get();drained=true;}
+                catch(InterruptedException stopped){interrupted=true;failures.add(interrupted(stopped));failures.run(cancelOwner);}
+                catch(ExecutionException failed){failures.add(failed.getCause()==null?failed:failed.getCause());drained=true;}
+                catch(Throwable failed){failures.add(failed);drained=true;}
+            }
+            failures.run(recordProfile);
+            for(AutoCloseable resource:resources)failures.close(resource);
+        }finally{if(interrupted)Thread.currentThread().interrupt();}
+        failures.rethrow();
     }
     private void terminateRuns(){
         synchronized(lifecycle){if(activeRun!=null)try{activeRun.setTerminate(true);}catch(OrtException ignored){}}
@@ -530,15 +835,22 @@ public final class NativeDeux implements AutoCloseable {
     private static final class BoundTemporalRun implements AutoCloseable{
         final OnnxTensor input,output;
         BoundTemporalRun(FloatBuffer in,FloatBuffer out,int count)throws OrtException{
-            input=OnnxTensor.createTensor(OrtEnvironment.getEnvironment(),in,new long[]{count,FRAMES,FEATURES});
-            try{output=OnnxTensor.createTensor(OrtEnvironment.getEnvironment(),out,new long[]{count,FRAMES,FEATURES});}
-            catch(OrtException|RuntimeException|Error failure){input.close();throw failure;}
+            this(in,out,count,FRAMES);
         }
-        @Override public void close(){try{output.close();}finally{input.close();}}
+        BoundTemporalRun(FloatBuffer in,FloatBuffer out,int count,int context)throws OrtException{
+            input=OnnxTensor.createTensor(OrtEnvironment.getEnvironment(),in,new long[]{count,context,FEATURES});
+            try{output=OnnxTensor.createTensor(OrtEnvironment.getEnvironment(),out,new long[]{count,context,FEATURES});}
+            catch(OrtException|RuntimeException|Error failure){new PipelineFailures(failure).close(input);throw failure;}
+        }
+        @Override public void close(){
+            PipelineFailures failures=new PipelineFailures(null);failures.close(output);failures.close(input);
+            if(failures.primary instanceof RuntimeException)throw (RuntimeException)failures.primary;
+            if(failures.primary instanceof Error)throw (Error)failures.primary;
+            if(failures.primary!=null)throw new RuntimeException(failures.primary);
+        }
     }
     private OrtSession open(OrtEnvironment environment,String name,NativeDeuxTransform.Check check,NativeInferenceProfile profile) throws Exception {
-        NativeExecutionPolicy.Config config=name.endsWith("-time")?executionPolicy.temporal.config:
-            name.endsWith("-frequency")?executionPolicy.frequency.config:NativeExecutionPolicy.baseline(executionKey.cores);
+        NativeExecutionPolicy.Config config=NativeExecutionPolicy.baseline(executionKey.cores);
         return openConfigured(environment,name,check,profile,config);
     }
 
@@ -565,144 +877,78 @@ public final class NativeDeux implements AutoCloseable {
         }finally{if(profile!=null&&!recorded)profile.addSessionInit(name,NativeInferenceProfile.elapsed(sessionStarted));}
     }
 
-    /** Compare the complete original temporal graph over all 60 real input bands. */
-    private NativeExecutionPolicy.Decision calibrateTemporal(OrtEnvironment environment,NativeExecutionPolicy.Config[] configs,
-            long admittedHeadroom,NativeDeuxTransform.Check check,NativeInferenceProfile profile)throws Exception{
+    /** A cold graph only nominates a candidate; it never authorizes production execution. */
+    private void nominate(File audio,long startSample,NativeDeuxTransform.Check outerCheck,NativeInferenceProfile profile)throws Exception{
         long started=System.nanoTime();
-        NativeExecutionPolicy.Config baseline=NativeExecutionPolicy.baseline(executionKey.cores);
-        NativeExecutionPolicy.Candidate[] trials=new NativeExecutionPolicy.Candidate[configs.length];
-        byte[] reference=null;
-        // Preserve the original front activations by reference. Every calibration pass
-        // mutates one bounded working buffer, exactly as normal production inference does.
-        FloatBuffer originalValues=values;
+        NativeDeuxTransform.Check check=()->{outerCheck.check();if(System.nanoTime()-started>=60000000000L)throw new ProbeAborted("screen-budget");};
+        int winner=0,alternate=0;String rejection="screen-no-win";
+        PipelineFailures failures=new PipelineFailures(null);
+        probing=true;
         try{
-            FloatBuffer working=direct(originalValues.capacity());
-            values=working;calibrationBufferBytes=4L*originalValues.capacity();
-            noteDirectBufferBytes(profile);
-            for(int c=0;c<configs.length;c++){
-                NativeExecutionPolicy.Sample[] samples=new NativeExecutionPolicy.Sample[NativeExecutionPolicy.MIN_PAIRS];
-                for(int pair=0;pair<samples.length;pair++){
-                    check.check();boolean candidateFirst=(pair&1)!=0;
-                    CalibrationTrial a,b;
-                    if(candidateFirst){
-                        b=temporalCalibrationTrial(environment,configs[c],configs[c],originalValues,check);
-                        a=temporalCalibrationTrial(environment,baseline,configs[c],originalValues,check);
-                    }else{
-                        a=temporalCalibrationTrial(environment,baseline,configs[c],originalValues,check);
-                        b=temporalCalibrationTrial(environment,configs[c],configs[c],originalValues,check);
+            NativeExecutionPolicy.Config[] configs=NativeExecutionPolicy.temporalCandidates(executionKey,availableMemory());
+            if(configs.length==0)rejection="memory-pressure";
+            else{
+                beginRun();
+                float[][] passage=NativeDeuxTransform.readStereo(audio,startSample,check);
+                transform.encode(passage,spectrum,check);passage=null;
+                OrtEnvironment environment=OrtEnvironment.getEnvironment();
+                NativeExecutionPolicy.Config[] screen=new NativeExecutionPolicy.Config[configs.length+1];
+                screen[0]=NativeExecutionPolicy.baseline(executionKey.cores);System.arraycopy(configs,0,screen,1,configs.length);
+                long[] exactFasterNanos=new long[screen.length];
+                byte[] reference=null;long baseline=0;boolean memorySkipped=false;
+                for(int i=0;i<screen.length;i++){
+                    NativeExecutionPolicy.Config config=screen[i];
+                    check.check();
+                    if(!NativeExecutionPolicy.temporalAllowed(config,executionKey,availableMemory())){memorySkipped=true;continue;}
+                    // Reconstruct the same original activation from the unchanged spectrum.
+                    // This removes the 79,933,440-byte screening copy. Front work is charged
+                    // to screening, outside each cold temporal session's trial clock.
+                    try(OrtSession session=open(environment,"front",check,null)){
+                        run(session,spectrum,new long[]{1,2050,FRAMES,2},values,new long[]{1,FRAMES,BANDS,FEATURES},check,null);
                     }
-                    if(reference==null&&a.finite)reference=a.outputHash;
-                    boolean finite=a.finite&&b.finite;
-                    boolean exact=finite&&Arrays.equals(reference,a.outputHash)&&Arrays.equals(reference,a.warmupHash)
-                        &&Arrays.equals(reference,b.outputHash)&&Arrays.equals(reference,b.warmupHash);
-                    samples[pair]=new NativeExecutionPolicy.Sample(a.nanos,b.nanos,candidateFirst,finite,exact,BANDS);
+                    check.check();
+                    if(!NativeExecutionPolicy.temporalAllowed(config,executionKey,availableMemory())){memorySkipped=true;continue;}
+                    long trial=System.nanoTime();
+                    try(OrtSession session=openConfigured(environment,"block-00-time",check,null,config)){
+                        runTemporalGraph(session,"block-00-time",config,0,null,check,null);
+                    }
+                    long elapsed=System.nanoTime()-trial;byte[] hash=tensorHash(values,check);
+                    if(config.temporalWorkers==1){reference=hash;baseline=elapsed;}
+                    else if(reference!=null&&Arrays.equals(reference,hash)&&elapsed<baseline*.95)exactFasterNanos[i]=elapsed;
                 }
-                trials[c]=new NativeExecutionPolicy.Candidate(configs[c],samples);
+                check.check();
+                long headroom=availableMemory(),best=Long.MAX_VALUE;
+                for(int i=1;i<screen.length;i++)if(exactFasterNanos[i]>0){
+                    if(!NativeExecutionPolicy.temporalAllowed(screen[i],executionKey,headroom)){memorySkipped=true;continue;}
+                    if(exactFasterNanos[i]<best){winner=screen[i].temporalWorkers;best=exactFasterNanos[i];}
+                }
+                // Preserve the independently exact and memory-eligible smaller
+                // option if a faster eight-worker micro-screen loses its first
+                // complete-passage comparison. It still needs three full pairs.
+                if(winner==8&&screen.length>1&&screen[1].temporalWorkers==4&&exactFasterNanos[1]>0
+                        &&NativeExecutionPolicy.temporalAllowed(screen[1],executionKey,headroom))alternate=4;
+                if(winner==0&&memorySkipped)rejection="memory-pressure";
             }
-            NativeExecutionPolicy.Decision decision=NativeExecutionPolicy.selectTemporal(executionKey,admittedHeadroom,configs,trials);
-            scheduler("graph=block-00-time selected="+decision.config.id()+" decision="+decision.reason+
-                " pairs="+decision.pairCount+" baselineMedianNanos="+decision.baselineMedianNanos+
-                " candidateMedianNanos="+decision.candidateMedianNanos+" scope=all-60-real-bands-production-path");
-            return decision;
-        }catch(TemporalMemoryUnavailable pressure){
-            check.check();scheduler("family=temporal decision=memory-baseline; calibration=incomplete");
-            return NativeExecutionPolicy.retainedTemporal(executionKey);
+        }catch(ProbeAborted stopped){
+            winner=0;
+            if(!cleanProbeAbort(stopped))failures.add(stopped);
+            else try{outerCheck.check();rejection=stopped.reason;}catch(Throwable failure){failures.add(failure);}
+        }catch(Throwable failure){
+            winner=0;failures.add(failure);
         }finally{
-            try{noteDirectBufferBytes(profile);}
-            finally{
-                values=originalValues;calibrationBufferBytes=0;
-                if(profile!=null)profile.noteSchedulerCalibration(System.nanoTime()-started);
-            }
+            failures.run(this::endRun);
+            failures.run(()->noteDirectBufferBytes(profile));
+            probing=false;
         }
-    }
-    private CalibrationTrial temporalCalibrationTrial(OrtEnvironment environment,NativeExecutionPolicy.Config config,
-            NativeExecutionPolicy.Config required,FloatBuffer originalValues,NativeDeuxTransform.Check check)throws Exception{
-        check.check();
-        if(!NativeExecutionPolicy.temporalAllowed(required,executionKey,availableMemory()))throw new TemporalMemoryUnavailable();
-        try(OrtSession session=openConfigured(environment,"block-00-time",check,null,config)){
-            copy(originalValues,0,values,0,originalValues.capacity());check.check();
-            runTemporalGraph(session,"block-00-time",config,0,null,check,null);
-            byte[] warmup=tensorHash(values,check);
-            copy(originalValues,0,values,0,originalValues.capacity());check.check();
-            // Time the actual production call, including all binding, worker setup,
-            // packing, kernels, scatter and retirement. Reset and validation happen
-            // only outside this interval, with no overlapping native work.
-            long started=System.nanoTime();
-            runTemporalGraph(session,"block-00-time",config,0,null,check,null);
-            long elapsed=System.nanoTime()-started;
-            byte[] measured=tensorHash(values,check);
-            return new CalibrationTrial(elapsed,warmup,measured);
+        long extra=System.nanoTime()-started;
+        if(profile!=null)failures.run(()->profile.noteSchedulerCalibration(extra));
+        if(failures.primary!=null){
+            passagePolicy.probeAborted(cleanCancellation(failures.primary)?"cancelled":"runtime-rejected",extra);
+            failures.rethrow();
         }
-    }
-    private static final class TemporalMemoryUnavailable extends Exception{}
-
-    /** Probe only unchanged graphs, serially under the existing native lease and inference gate. */
-    private NativeExecutionPolicy.Decision calibrate(OrtEnvironment environment,String graph,FloatBuffer input,
-            FloatBuffer output,long[] shape,NativeDeuxTransform.Check check,NativeInferenceProfile profile) throws Exception {
-        long started=System.nanoTime();
-        NativeExecutionPolicy.Config baseline=NativeExecutionPolicy.baseline(executionKey.cores);
-        NativeExecutionPolicy.Config[] configs=NativeExecutionPolicy.candidates(executionKey.cores);
-        NativeExecutionPolicy.Candidate[] trials=new NativeExecutionPolicy.Candidate[configs.length];
-        byte[] reference=null;
-        try {
-            for(int c=0;c<configs.length;c++){
-                NativeExecutionPolicy.Sample[] samples=new NativeExecutionPolicy.Sample[NativeExecutionPolicy.MIN_PAIRS];
-                for(int pair=0;pair<samples.length;pair++){
-                    check.check();boolean candidateFirst=(pair&1)!=0;
-                    CalibrationTrial a,b;
-                    if(candidateFirst){
-                        b=calibrationTrial(environment,graph,configs[c],input,output,shape,check);
-                        a=calibrationTrial(environment,graph,baseline,input,output,shape,check);
-                    }else{
-                        a=calibrationTrial(environment,graph,baseline,input,output,shape,check);
-                        b=calibrationTrial(environment,graph,configs[c],input,output,shape,check);
-                    }
-                    if(reference==null&&a.finite)reference=a.outputHash;
-                    boolean finite=a.finite&&b.finite;
-                    boolean exact=finite&&Arrays.equals(reference,a.outputHash)&&Arrays.equals(reference,a.warmupHash)
-                        &&Arrays.equals(reference,b.outputHash)&&Arrays.equals(reference,b.warmupHash);
-                    samples[pair]=new NativeExecutionPolicy.Sample(a.nanos,b.nanos,candidateFirst,finite,exact);
-                }
-                trials[c]=new NativeExecutionPolicy.Candidate(configs[c],samples);
-            }
-            NativeExecutionPolicy.Decision decision=NativeExecutionPolicy.select(executionKey,trials);
-            scheduler("graph="+graph+" selected="+decision.config.id()+" decision="+decision.reason+
-                " pairs="+decision.pairCount+" baselineMedianNanos="+decision.baselineMedianNanos+
-                " candidateMedianNanos="+decision.candidateMedianNanos+" scope=first-real-batch");
-            return decision;
-        }catch(CalibrationUnavailable unavailable){
-            check.check();
-            scheduler("graph="+graph+" decision=runtime-rejected; baseline retained; cache=incomplete");
-            return NativeExecutionPolicy.defaults(executionKey).frequency;
-        }finally{if(profile!=null)profile.noteSchedulerCalibration(System.nanoTime()-started);}
+        if(winner!=0)passagePolicy.nominate(winner,alternate,extra);else passagePolicy.probeAborted(rejection,extra);
     }
 
-    private CalibrationTrial calibrationTrial(OrtEnvironment environment,String graph,NativeExecutionPolicy.Config config,
-            FloatBuffer input,FloatBuffer output,long[] shape,NativeDeuxTransform.Check check) throws Exception {
-        OrtException rejected=null;CalibrationTrial measured=null;
-        // Only an ORT Run rejection with confirmed session retirement is recoverable.
-        // Constructor, destructor, I/O, cancellation and Error failures keep their normal path.
-        try(OrtSession session=openConfigured(environment,graph,check,null,config)){
-            try{
-                run(session,input,shape,output,shape,check,null);
-                byte[] warmup=tensorHash(output,check);
-                long started=System.nanoTime();
-                run(session,input,shape,output,shape,check,null);
-                long elapsed=System.nanoTime()-started;
-                byte[] result=tensorHash(output,check);
-                measured=new CalibrationTrial(elapsed,warmup,result);
-            }catch(OrtException error){rejected=error;}
-        }
-        if(rejected!=null)throw new CalibrationUnavailable(rejected);
-        return measured;
-    }
-    private static final class CalibrationUnavailable extends Exception {
-        CalibrationUnavailable(OrtException cause){super(cause);}
-    }
-    private static final class CalibrationTrial {
-        final long nanos;final byte[] warmupHash,outputHash;final boolean finite;
-        CalibrationTrial(long nanos,byte[] warmup,byte[] result){this.nanos=nanos;warmupHash=warmup;outputHash=result;finite=warmup!=null&&result!=null;}
-    }
     /** Hash raw Float32 bits in a bounded buffer; no duplicate multi-megabyte tensor allocation. */
     private static byte[] tensorHash(FloatBuffer tensor,NativeDeuxTransform.Check check) throws Exception {
         MessageDigest digest=MessageDigest.getInstance("SHA-256");byte[] bytes=new byte[16384];int used=0;
@@ -716,6 +962,22 @@ public final class NativeDeux implements AutoCloseable {
     }
     private void scheduler(String message){if(context!=null)AppDiagnostics.log(context,"INFO","native-scheduler",message);}
 
+    /** Only a Run rejection is optional; tensor/session construction and retirement still fail normally. */
+    private OrtSession.Result execute(OrtSession session,OnnxTensor input,OnnxTensor output,NativeDeuxTransform.Check check)throws Exception{
+        try{return session.run(Collections.singletonMap("input",input),Collections.emptySet(),Collections.singletonMap("output",output),activeRun);}
+        catch(OrtException rejected){
+            // Normalize only a native Run failure with confirmed caller cancellation.
+            // Resource construction/close remain outside this catch. An annotated
+            // failure may already carry unknown cleanup errors and stays unchanged.
+            if(rejected.getCause()!=null||rejected.getSuppressed().length!=0)throw rejected;
+            try{check.check();}
+            catch(InterruptedIOException stopped){stopped.initCause(rejected);throw stopped;}
+            catch(ProbeAborted budget){/* A probe deadline cannot hide the actual Run failure. */}
+            if(probing)throw new ProbeRunRejected(rejected);
+            throw rejected;
+        }
+    }
+
     private void run(OrtSession session,FloatBuffer input,long[] inputShape,FloatBuffer output,long[] outputShape,NativeDeuxTransform.Check check,NativeInferenceProfile profile) throws Exception {
         check.check();
         boolean first=firstGraphRun;if(first)phase("session-run-start; graph="+activeGraph);
@@ -724,7 +986,7 @@ public final class NativeDeux implements AutoCloseable {
             OnnxTensor y=OnnxTensor.createTensor(OrtEnvironment.getEnvironment(),output,outputShape)) {
             if(profile!=null){profile.addTensorBind(activeGraph,NativeInferenceProfile.elapsed(bindStarted));bound=true;}
             NativeInferenceProfile.Timing runStarted=profile==null?null:NativeInferenceProfile.started();
-            try(OrtSession.Result result=session.run(Collections.singletonMap("input",x),Collections.emptySet(),Collections.singletonMap("output",y),activeRun)) {
+            try(OrtSession.Result result=execute(session,x,y,check)) {
                 if(first){firstGraphRun=false;phase("session-run-complete; graph="+activeGraph);}
                 check.check();
             }finally{if(profile!=null)profile.addRun(activeGraph,NativeInferenceProfile.elapsed(runStarted));}
@@ -733,13 +995,13 @@ public final class NativeDeux implements AutoCloseable {
 
     /** Flush only at graph boundaries so a native process death retains its last phase. */
     private void phase(String detail) {
-        if(context!=null){AppDiagnostics.log(context,"INFO","native-phase",detail);AppDiagnostics.flush(1000);}
+        if(context!=null){AppDiagnostics.log(context,"INFO","native-phase",detail+"; role="+(probing?"probe":"production"));AppDiagnostics.flush(1000);}
     }
 
     private File model(String name,NativeDeuxTransform.Check check) throws Exception {
         JSONObject entry=validateEntry(name);String filename=name+".onnx";File model=new File(modelDirectory,filename);
         if(verified.contains(filename)&&model.isFile()&&model.length()==entry.getLong("bytes"))return model;
-        if(model.isFile()&&model.length()==entry.getLong("bytes")&&entry.getString("sha256").equals(digest(model,check))) {
+        if(model.isFile()&&model.length()==entry.getLong("bytes")&&entry.getString("sha256").equals(modelFileDigest(model,check))) {
             verified.add(filename);return model;
         }
         if(context==null)throw new IOException("The studio model checksum does not match: "+filename);
@@ -747,9 +1009,11 @@ public final class NativeDeux implements AutoCloseable {
         File partial=File.createTempFile(".model-",".partial",modelDirectory);
         try {
             MessageDigest hash=MessageDigest.getInstance("SHA-256");long bytes=0;
+            modelExtractionAttempts++;
             try(InputStream in=context.getAssets().open(ASSET_ROOT+filename);FileOutputStream out=new FileOutputStream(partial)) {
                 byte[] buffer=new byte[262144];int count;
                 while((count=in.read(buffer))!=-1) {
+                    modelExtractionBytesRead+=count;
                     check.check();bytes+=count;if(bytes>entry.getLong("bytes"))throw new IOException("The studio model is too large.");
                     out.write(buffer,0,count);hash.update(buffer,0,count);
                 }
@@ -761,15 +1025,16 @@ public final class NativeDeux implements AutoCloseable {
         }finally{partial.delete();}
     }
 
-    /** Fail before neural work if a first-time extraction cannot finish both heads. */
+    /** Prepare every graph before timed comparisons so neither arm pays one-time extraction. */
     private void preflightCache(NativeDeuxTransform.Check check,NativeInferenceProfile profile) throws Exception {
         List<String> names=new ArrayList<>(Arrays.asList("front","head-0","head-1"));
         for(int i=0;i<12;i++){names.add(blockName(i)+"-time");names.add(blockName(i)+"-frequency");}
+        List<String> missingNames=new ArrayList<>();
         long missing=0,largest=0;
         for(String name:names) {
             check.check();JSONObject entry=validateEntry(name);String filename=name+".onnx";File file=new File(modelDirectory,filename);
             long bytes=entry.getLong("bytes");boolean intact=false;
-            if(file.isFile()&&file.length()==bytes)intact=verified.contains(filename)||entry.getString("sha256").equals(digest(file,check));
+            if(file.isFile()&&file.length()==bytes)intact=verified.contains(filename)||entry.getString("sha256").equals(modelFileDigest(file,check));
             if(intact){
                 verified.add(filename);
                 if(profile!=null)profile.noteCacheModelHit(bytes);
@@ -778,6 +1043,7 @@ public final class NativeDeux implements AutoCloseable {
                 verified.remove(filename);
                 if(profile!=null)profile.noteCacheModelMiss(bytes);
                 if(context==null)throw new IOException("The studio model checksum does not match: "+filename);
+                missingNames.add(name);
                 missing+=bytes;largest=Math.max(largest,bytes);
             }
         }
@@ -789,6 +1055,9 @@ public final class NativeDeux implements AutoCloseable {
                 throw new IOException("Studio analysis needs "+((needed+mib-1)/mib)+" MB of free storage ("+(available/mib)+" MB available). Free "+((needed-available+mib-1)/mib)+" MB and retry.");
             }
         }
+        // The caller's common preflight timer owns extraction and checksum cost.
+        // Per-graph preparation subsequently looks up the already verified files.
+        for(String name:missingNames){check.check();model(name,check);}
     }
 
     private JSONObject validateEntry(String name) throws Exception {
@@ -813,6 +1082,13 @@ public final class NativeDeux implements AutoCloseable {
     private static String digest(File file,NativeDeuxTransform.Check check) throws Exception {
         MessageDigest hash=MessageDigest.getInstance("SHA-256");try(InputStream in=new FileInputStream(file)){byte[] buffer=new byte[262144];int count;
             while((count=in.read(buffer))!=-1){check.check();hash.update(buffer,0,count);}}return hex(hash.digest());
+    }
+    private String modelFileDigest(File file,NativeDeuxTransform.Check check)throws Exception{
+        modelChecksumAttempts++;
+        MessageDigest hash=MessageDigest.getInstance("SHA-256");
+        try(InputStream in=new FileInputStream(file)){byte[] buffer=new byte[262144];int count;
+            while((count=in.read(buffer))!=-1){modelChecksumBytesRead+=count;check.check();hash.update(buffer,0,count);}}
+        return hex(hash.digest());
     }
     private static String hex(byte[] bytes){StringBuilder text=new StringBuilder(bytes.length*2);for(byte b:bytes)text.append(Character.forDigit((b>>>4)&15,16)).append(Character.forDigit(b&15,16));return text.toString();}
     private static void writeFloats(OutputStream out,float[] pcm,NativeDeuxTransform.Check check) throws IOException {

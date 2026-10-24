@@ -1,6 +1,7 @@
 import pandas as pd
 import os
 from sklearn import preprocessing
+from helpers.safe_loading import load_tensor_file
 from torch.utils.data import Dataset as TorchDataset
 import torch
 import numpy as np
@@ -50,7 +51,7 @@ class BasicDCASE20Dataset(TorchDataset):
         if self.cache_path:
             cpath = os.path.join(self.cache_path, str(index) + ".pt")
             try:
-                sig = torch.load(cpath)
+                sig = load_tensor_file(cpath)
             except FileNotFoundError:
                 sig, _ = librosa.load(os.path.join(dataset_dir, self.files[index]), sr=self.sr, mono=True)
                 sig = torch.from_numpy(sig[np.newaxis])

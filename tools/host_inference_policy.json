@@ -1,0 +1,144 @@
+{
+  "schema": "lightforge.host-inference-policy.v1",
+  "campaignId": "lightforge-2.4.2-neural-four-worker-host-001",
+  "targetRelease": "2.4.2",
+  "protocol": "bounded-four-worker-three-cpu-v1",
+  "repository": "CyberBASSLord-666/LightForge",
+  "protectedBranch": "main",
+  "workflowPath": ".github/workflows/verify-v2.yml",
+  "producerEvents": [
+    "push"
+  ],
+  "sourcePaths": [
+    "android/native-runtime.json",
+    "android/src/com/cyberbasslord/lightforge/NativeDeux.java",
+    "android/src/com/cyberbasslord/lightforge/NativeDeuxTransform.java",
+    "android/src/com/cyberbasslord/lightforge/NativeExecutionPolicy.java",
+    "android/src/com/cyberbasslord/lightforge/NativeInferenceProfile.java",
+    "android/src/com/cyberbasslord/lightforge/NativePassagePolicy.java",
+    "qa/release-2.4.2/verify-analysis.py",
+    "tests/NativeDeuxParallelBenchmark.java",
+    "tools/benchmark_deux_execution.py",
+    "tools/benchmark_deux_parallel.py",
+    "tools/host_inference_campaign.py",
+    "tools/host_inference_policy.json",
+    "tools/portable_inference_host.py",
+    "tools/verify_inference_improvement.py",
+    "version.json"
+  ],
+  "executionClosurePaths": [
+    ".github/workflows/verify-v2.yml",
+    "android/native-runtime.json",
+    "android/src/com/cyberbasslord/lightforge/NativeDeux.java",
+    "android/src/com/cyberbasslord/lightforge/NativeDeuxTransform.java",
+    "android/src/com/cyberbasslord/lightforge/NativeExecutionPolicy.java",
+    "android/src/com/cyberbasslord/lightforge/NativeInferenceProfile.java",
+    "android/src/com/cyberbasslord/lightforge/NativePassagePolicy.java",
+    "qa/release-2.4.2/verify-analysis.py",
+    "research/upstream/deux/config.yaml",
+    "research/upstream/deux/models/bs_roformer/attend.py",
+    "research/upstream/deux/models/bs_roformer/mel_band_roformer.py",
+    "tests/NativeDeuxParallelBenchmark.java",
+    "tools/benchmark_deux_execution.py",
+    "tools/benchmark_deux_parallel.py",
+    "tools/bootstrap_native_runtime.py",
+    "tools/bootstrap_testdeps.py",
+    "tools/bootstrap_toolchain.py",
+    "tools/host_inference_campaign.py",
+    "tools/host_inference_policy.json",
+    "tools/inference_qualification_preflight.py",
+    "tools/model-requirements.txt",
+    "tools/model_export_guard.py",
+    "tools/portable_inference_host.py",
+    "tools/prepare_deux.py",
+    "tools/prepare_fixture_decoder.py",
+    "tools/verify_inference_improvement.py",
+    "version.json"
+  ],
+  "geometry": {
+    "graphCount": 27,
+    "stageCount": 15,
+    "bands": 60,
+    "frames": 1301,
+    "samplesPerStem": 573300,
+    "baseline": {
+      "workers": 1,
+      "intraThreads": 3,
+      "timeBatch": 4,
+      "frequencyBatch": 128,
+      "inferenceCalls": 335
+    },
+    "candidate4": {
+      "workers": 4,
+      "intraThreads": 1,
+      "timeBatch": 1,
+      "frequencyBatch": 16,
+      "frequencyTail": 5,
+      "inferenceCalls": 1727
+    },
+    "commonGraphIntraThreads": 3
+  },
+  "criteria": {
+    "measuredPairs": 3,
+    "minMedianWallReductionPercent": 15,
+    "minEachPairWallReductionPercent": 5
+  },
+  "childProtocol": {
+    "protocol": "bounded-four-worker-three-cpu-v1",
+    "childCpuCount": 3,
+    "candidateWorkers": 4,
+    "referenceIntraThreads": 3,
+    "minimumReservedCpuCapacity": 1,
+    "maxAllowedThrottleToWallRatio": 0.05
+  },
+  "pairOrder": [
+    {
+      "phase": "warmup",
+      "pairIndex": 0,
+      "orderInPair": 0,
+      "variant": "baseline"
+    },
+    {
+      "phase": "warmup",
+      "pairIndex": 0,
+      "orderInPair": 1,
+      "variant": "candidate4"
+    },
+    {
+      "phase": "measurement",
+      "pairIndex": 0,
+      "orderInPair": 0,
+      "variant": "baseline"
+    },
+    {
+      "phase": "measurement",
+      "pairIndex": 0,
+      "orderInPair": 1,
+      "variant": "candidate4"
+    },
+    {
+      "phase": "measurement",
+      "pairIndex": 1,
+      "orderInPair": 0,
+      "variant": "candidate4"
+    },
+    {
+      "phase": "measurement",
+      "pairIndex": 1,
+      "orderInPair": 1,
+      "variant": "baseline"
+    },
+    {
+      "phase": "measurement",
+      "pairIndex": 2,
+      "orderInPair": 0,
+      "variant": "baseline"
+    },
+    {
+      "phase": "measurement",
+      "pairIndex": 2,
+      "orderInPair": 1,
+      "variant": "candidate4"
+    }
+  ]
+}

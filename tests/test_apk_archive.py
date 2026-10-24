@@ -17,6 +17,40 @@ spec.loader.exec_module(apk_archive)
 
 
 class ArchiveTests(unittest.TestCase):
+    def test_asset_inventory_rejects_links_before_reading_targets(self):
+        for target in [self.root / 'private.txt', self.root / 'missing.txt', self.root / 'outside-directory']:
+            with self.subTest(target=target):
+                link = self.assets / 'innocent.txt'
+                link.symlink_to(target)
+                with self.assertRaisesRegex(ValueError, 'Symlink cannot enter APK assets'):
+                    apk_archive.distributable_assets(self.assets)
+                link.unlink()
+
+    def test_asset_inventory_rejects_credential_paths(self):
+        for name in ['secret.jks', 'private.key', 'keystore-password.txt', 'local.properties',
+                     '.env.production', '.pypirc', 'signing/notes.txt']:
+            with self.subTest(name=name):
+                path = self.assets / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(b'FAKE TEST CREDENTIAL')
+                with self.assertRaisesRegex(ValueError, 'Credential/configuration file'):
+                    apk_archive.distributable_assets(self.assets)
+                path.unlink()
+
+    def test_ignored_dependency_links_remain_excluded(self):
+        dependency = self.assets / 'preview/src/node_modules/.bin/esbuild'
+        dependency.parent.mkdir(parents=True)
+        dependency.symlink_to(self.root / 'missing-tool')
+        self.assertNotIn('preview/src/node_modules/.bin/esbuild', apk_archive.distributable_assets(self.assets))
+
+    def test_unsafe_asset_never_creates_staging_directory(self):
+        (self.assets / 'index.html').write_text('app')
+        (self.assets / 'external.txt').symlink_to(self.root / 'private.txt')
+        destination = self.root / 'staged'
+        with self.assertRaisesRegex(ValueError, 'Symlink cannot enter APK assets'):
+            apk_archive.stage_assets(self.assets, destination)
+        self.assertFalse(destination.exists())
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)

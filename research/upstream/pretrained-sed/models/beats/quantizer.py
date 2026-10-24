@@ -7,6 +7,15 @@
 # https://github.com/CompVis/taming-transformers
 # --------------------------------------------------------'
 
+# Shared fail-closed loader; this file also supports direct script execution.
+import sys as _security_sys
+from pathlib import Path as _SecurityPath
+_security_sys.path.insert(0, str(_SecurityPath(__file__).resolve().parents[3]))
+from _lightforge_research_checkpoint_security import (
+    load_tensor_checkpoint as _safe_torch_load,
+    load_remote_tensor_checkpoint as _safe_hub_load,
+)
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -83,7 +92,7 @@ class EmbeddingEMA(nn.Module):
             self.register_buffer('initted', torch.Tensor([not kmeans_init]))
         else:
             print(f"load init codebook weight from {codebook_init_path}")
-            codebook_ckpt_weight = torch.load(codebook_init_path, map_location='cpu')
+            codebook_ckpt_weight = _safe_torch_load(codebook_init_path, map_location='cpu')
             weight = codebook_ckpt_weight.clone()
             self.register_buffer('initted', torch.Tensor([True]))
 

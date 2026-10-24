@@ -8,7 +8,7 @@ const android=name=>fs.readFileSync(path.join(__dirname,'../android/src/com/cybe
 
 test('NativeDeux only publishes buffers after every direct allocation succeeds',()=>{
  const source=android('NativeDeux.java');
- const readyCheck=source.indexOf('if(buffersReady())return;');
+ const readyCheck=source.search(/if\(buffersReady\(\)\)(?:\{noteDirectBufferBytes\(profile\);return;\}|return;)/);
  const clear=source.indexOf('clearBuffers();',readyCheck);
  assert.ok(readyCheck>=0&&clear>readyCheck,'a legacy partial buffer set must be cleared before allocating a retry');
  assert.doesNotMatch(source,/if\(transform!=null\)return;/);

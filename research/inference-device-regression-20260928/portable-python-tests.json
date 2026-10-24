@@ -1,0 +1,92 @@
+{
+  "archive": {
+    "command": "python3 -m unittest tests.test_analysis_assets tests.test_android_evidence_binding tests.test_android_evidence_manifest tests.test_android_native_game_instrumentation_contract tests.test_android_runner_workflow_contract tests.test_apk_archive tests.test_apk_delta tests.test_background_instrumentation_duration_contract tests.test_background_instrumentation_ui_readiness_contract tests.test_background_observer_stop_contract tests.test_candidate_apk_transfer tests.test_collect_process_resources tests.test_deux_execution_benchmark tests.test_deux_parallel_inputs tests.test_diagnostic_evidence tests.test_diagnostic_job_summary tests.test_evaluate_show_archive tests.test_execution_candidate_gate tests.test_fixture_provenance tests.test_game_backend_benchmark tests.test_game_wasm_batch_benchmark tests.test_inference_improvement tests.test_locked_app_capture tests.test_mdx_numeric_2_2_4 tests.test_model_export_guard tests.test_native_execution_policy tests.test_native_game_android_evidence tests.test_native_game_engine tests.test_native_game_evidence tests.test_native_game_lifecycle tests.test_native_game_passage_cleanup tests.test_native_game_profile tests.test_native_inference_profile_evidence tests.test_native_mdx_lifecycle tests.test_native_passage_lifecycle tests.test_native_passage_policy tests.test_native_scheduler_evidence tests.test_native_verification_receipt_contract tests.test_offline_android_emulator tests.test_package_release_streaming tests.test_performance_timing_projection tests.test_physical_validation_gate tests.test_physical_validation_publication_wiring tests.test_physical_validation_publisher tests.test_publisher_artifact_download tests.test_publisher_candidate_worktree tests.test_release_current_qa_protocol tests.test_release_material_handoff tests.test_release_material_workflow_download tests.test_release_policy_setup tests.test_release_publication tests.test_release_quality_gate tests.test_release_quality_publication_wiring tests.test_release_source_preflight tests.test_release_verification_evidence tests.test_repository_hygiene tests.test_retained_analysis tests.test_sync_metric_projection tests.test_verification_evidence_manifest tests.test_verification_evidence_workflow tests.test_verify_analysis_asset_binding tests.test_verify_analysis_session_evidence tests.test_verify_v2_native_host_dependencies tests.test_verify_v2_source_guard tests.test_xlights_interoperability",
+    "countConfirmation": "The full repository-defined suite was rerun with unittest.TextTestRunner(stream=StringIO); actual result.testsRun=528, failures=0, errors=0, skipped=0.",
+    "elapsedSeconds": 29.28786493899952,
+    "errors": 0,
+    "expectedTests": 528,
+    "failures": 0,
+    "modules": 65,
+    "skipped": 0,
+    "success": true,
+    "testsRun": 528,
+    "unexpectedSuccesses": 0
+  },
+  "broadDiscovery": {
+    "command": "python3 -m unittest discover -s tests -p 'test_*.py' -v",
+    "errors": 3,
+    "scope": "Includes two intentionally excluded immutable historical2.2.2/2.2.3 modules;3 current-source hash rejection errors, not current-gate regressions.",
+    "testsRun": 544
+  },
+  "historicalExclusionAuthority": "tools/verify_v2.py HISTORICAL_PYTHON_TESTS (unchanged)",
+  "historicalExclusions": [
+    "test_analysis_evidence_2_2_2",
+    "test_analysis_evidence_2_2_3"
+  ],
+  "passed": true,
+  "qualitySuites": [
+    {
+      "command": [
+        "python3",
+        "tests/performance-quality-gate.test.py"
+      ],
+      "log": "portable-python-defined-quality-1.log",
+      "passed": true,
+      "seconds": 8.906,
+      "sha256": "03e17584dea6d858a354c3f072a89656bbf61e1b7510e025d68bcf334ebfe76b",
+      "suite": "performance-quality-gate.test.py",
+      "tests": 30
+    },
+    {
+      "command": [
+        "python3",
+        "tests/performance-quality-gate-workflow.test.py"
+      ],
+      "log": "portable-python-defined-quality-2.log",
+      "passed": true,
+      "seconds": 0.449,
+      "sha256": "7d61648d39d3fdd61b69f5d95fae60c51442ab391488ba390fe994eefbddbbcf",
+      "suite": "performance-quality-gate-workflow.test.py",
+      "tests": 9
+    },
+    {
+      "command": [
+        "python3",
+        "tests/analysis-benchmark-contract.test.py"
+      ],
+      "log": "portable-python-defined-quality-3.log",
+      "passed": true,
+      "seconds": 0.063,
+      "sha256": "1209b0ac09de95e7659b3956f477f6c09b766ae5950a58d0bdae32335fc4d95f",
+      "suite": "analysis-benchmark-contract.test.py",
+      "tests": 15
+    },
+    {
+      "command": [
+        "python3",
+        "tests/locked-benchmark-runner.test.py"
+      ],
+      "log": "portable-python-defined-quality-4.log",
+      "passed": true,
+      "seconds": 0.188,
+      "sha256": "b10aedcee53572d6149ae748aa647ac4e70cd6dfe333a8ac7f23278c69db46c1",
+      "suite": "locked-benchmark-runner.test.py",
+      "tests": 11
+    },
+    {
+      "command": [
+        "python3",
+        "tests/differential-analysis.test.py"
+      ],
+      "log": "portable-python-defined-quality-5.log",
+      "passed": true,
+      "seconds": 0.004,
+      "sha256": "9806ad411840d640796149bd10c350230ace65b38808315c3389692c99218902",
+      "suite": "differential-analysis.test.py",
+      "tests": 6
+    }
+  ],
+  "schema": "lightforge.portable-python-result.v1",
+  "scope": "Repository-defined current Python archive modules plus five explicit quality-tool scripts; no APK build, installation, model execution or release qualification.",
+  "totalTests": 599
+}

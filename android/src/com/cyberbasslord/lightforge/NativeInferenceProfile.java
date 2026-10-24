@@ -17,7 +17,8 @@ import java.util.LinkedHashSet;
 final class NativeInferenceProfile {
     static final int MAX_GRAPH_RECORDS = 27;
     static final int MAX_STAGE_RECORDS = 16;
-    static final int MAX_RECORDS = 1 + MAX_STAGE_RECORDS + MAX_GRAPH_RECORDS;
+    static final int MAX_POLICY_RECORDS = 8, MAX_POLICY_RECORD_BYTES = 512;
+    static final int MAX_RECORDS = 1 + MAX_STAGE_RECORDS + MAX_GRAPH_RECORDS + MAX_POLICY_RECORDS;
     private static final long NANOS_PER_MILLISECOND = 1000000L;
     private static final long UNSET = -1L;
     private static final CpuClock CPU_CLOCK = resolveCpuClock();
@@ -33,6 +34,9 @@ final class NativeInferenceProfile {
     private long directBufferBytes, schedulerCalibrationNanos;
     private int schedulerCalibrationCount;
     private String temporalConfig = "unavailable", frequencyConfig = "unavailable";
+    private int temporalBaselineSessions, temporalFourWorkerSessions, temporalEightWorkerSessions, temporalUnobservedSessions;
+    private int frequencyBaselineSessions, frequencyFourWorkerSessions, frequencyEightWorkerSessions, frequencyUnobservedSessions;
+    private String[] passagePolicyRecords = new String[0];
     private long memoryStartUsed = UNSET, memoryStartLimit = UNSET, memoryEndUsed = UNSET, memoryEndLimit = UNSET;
     private long heapObservedPeak = UNSET;
     private int droppedGraphs, droppedStages, cacheHits, cacheMisses;
@@ -40,6 +44,8 @@ final class NativeInferenceProfile {
     private boolean cacheObserved, directBufferObserved, memoryUnavailable, cpuObserved, cpuUnavailable;
     private String outcome = "running";
     private Snapshot snapshot;
+    private boolean candidateEvidenceRequested;
+    private CandidateEvidence candidateEvidence;
 
     static Timing started() { return new Timing(System.nanoTime(), CPU_CLOCK.now(), PROCESS_CPU_CLOCK.now()); }
     static Measurement elapsed(Timing timing) {
@@ -88,15 +94,92 @@ final class NativeInferenceProfile {
 
     /** Fixed privacy-safe identity only; no dependency on the scheduler implementation. */
     synchronized void noteSchedulerConfiguration(String family, String config) {
-        if (snapshot != null || config == null || !config.matches("(?:cpu-i[1-6]-j1-d(?:0|4)-sequential|cpu-i1-j1-d0-sequential-w(?:4|8)-b1)")) return;
-        if ("temporal".equals(family)) temporalConfig = config;
-        else if ("frequency".equals(family) && config.indexOf("-w") < 0) frequencyConfig = config;
+        if (snapshot != null || config == null) return;
+        boolean baseline = config.matches("cpu-i[1-6]-j1-d(?:0|4)-sequential");
+        if ("temporal".equals(family) && (baseline || config.matches("cpu-i1-j1-d0-sequential-w(?:4|8)-b1"))) temporalConfig = config;
+        else if ("frequency".equals(family) && (baseline || config.matches("cpu-i1-j1-d0-sequential-w(?:4|8)-b16"))) frequencyConfig = config;
     }
+
+    /** Diagnostic opt-in only. Auxiliary observations never enter production records or totals. */
+    synchronized void enableCandidateEvidence() { if (snapshot == null) candidateEvidenceRequested = true; }
+    synchronized boolean wantsCandidateEvidence() { return candidateEvidenceRequested && snapshot == null; }
+    synchronized void noteCandidateEvidence(CandidateEvidence evidence) {
+        if (candidateEvidenceRequested && snapshot == null && candidateEvidence == null) candidateEvidence = evidence;
+    }
+    synchronized CandidateEvidence candidateEvidence() { return candidateEvidence; }
 
     /** Extra scheduler probes are observational overhead, never production graph runs/stages. */
     synchronized void noteSchedulerCalibration(long wallNanos) {
         if (snapshot != null) return;
         schedulerCalibrationNanos += Math.max(0L, wallNanos); schedulerCalibrationCount++;
+    }
+
+    /** Retain the controller's complete, bounded evidence snapshot; never arbitrary log text. */
+    synchronized void notePassagePolicy(String[] evidenceRecords) {
+        if (snapshot != null || evidenceRecords == null) return;
+        String[] accepted = validatedPassagePolicy(evidenceRecords);
+        if (accepted != null) passagePolicyRecords = accepted;
+    }
+
+    private static final String POLICY_REASONS = "(?:unmeasured|fresh-pair-required|nominated|initial-pair|alternate-pending|alternate-pair|qualification-wait|qualification-pair|slow-passage-recheck|lease-recheck|qualified-lease|measured-passage-improvement|qualification-pending|invalid-nomination|unfinished-pair|invalid-plan|memory-ineligible|short-job|probe-budget|missed-qualification|payback-unavailable|short-renewal|invalid-pair|pair-regression|invalid-pair-order|median-regression|invalid-timing|probe-aborted|external-baseline|cancelled|memory-fallback|thermal-guard|output-mismatch|memory-pressure|screen-budget|screen-no-win|runtime-rejected|unknown-work|control-required|slow-passage-control|control-accepted|control-regression|control-incomplete|unfinished-control)";
+    private static final String POLICY_HEADER = "schema=native-passage-policy-v1 state=(?:baseline|qualified|provisional) workers=(?:0|4|8) reason=" + POLICY_REASONS +
+        " extraNanos=[0-9]{1,19} extraCapNanos=360000000000 projectedAccruedSavingsNanos=[0-9]{1,19} qualificationPairs=[0-3] currentJobPairs=[0-9]{1,4} seeded=(?:true|false) activePassages=[0-9]{1,4} leasePassages=(?:8|12) paybackScope=projected-not-measured";
+    private static final String POLICY_PAIR = "schema=native-passage-pair-v1 role=(?:qualification|recheck|rejected) index=[0-2] ordinal=[0-9]{1,4} candidateFirst=(?:true|false) workers=(?:4|8) baselineNanos=[0-9]{1,19} candidateNanos=[0-9]{1,19} extraNanos=[0-9]{1,19} outputSha256=[a-f0-9]{64} finite=(?:true|false) exact=(?:true|false) fullGeometry=(?:true|false) coldSessions=(?:true|false)";
+    private static final String POLICY_CONTROL = "schema=native-passage-control-v1 ordinal=[0-9]{1,4} baselineNanos=[0-9]{1,19} previousBaselineNanos=[0-9]{1,19} candidateMaxNanos=[0-9]{1,19} candidateSamples=3 accepted=(?:true|false) comparisonScope=unmatched-inputs";
+
+    /** Delimiters cannot occur in validated tokens. The durable summary needs no extra callback. */
+    static String encodePassagePolicy(String[] records) {
+        StringBuilder encoded = new StringBuilder();
+        for (String record : records) {
+            if (encoded.length() != 0) encoded.append('|');
+            encoded.append(record.replace(' ', ','));
+        }
+        return encoded.toString();
+    }
+
+    static String[] decodePassagePolicy(String encoded) {
+        if (encoded == null || encoded.length() > MAX_POLICY_RECORDS * (MAX_POLICY_RECORD_BYTES + 1)) return null;
+        if (encoded.isEmpty()) return new String[0];
+        String[] records = encoded.split("\\|", -1);
+        for (int i = 0; i < records.length; i++) records[i] = records[i].replace(',', ' ');
+        return validatedPassagePolicy(records);
+    }
+
+    private static String[] validatedPassagePolicy(String[] records) {
+        if (records.length > MAX_POLICY_RECORDS) return null;
+        if (records.length == 0) return new String[0];
+        int qualification = 0, rechecks = 0, rejected = 0, controls = 0;
+        for (int i = 0; i < records.length; i++) {
+            String record = records[i];
+            if (record == null || record.length() > MAX_POLICY_RECORD_BYTES) return null;
+            boolean control = i > 0 && record.matches(POLICY_CONTROL);
+            if (!(control || record.matches(i == 0 ? POLICY_HEADER : POLICY_PAIR))) return null;
+            for (String token : record.split(" ")) {
+                int equal = token.indexOf('='); String key = token.substring(0, equal), value = token.substring(equal + 1);
+                if (!"outputSha256".equals(key) && value.matches("[0-9]+")) {
+                    try {
+                        long number = Long.parseLong(value);
+                        if (("ordinal".equals(key) && number > 4095) ||
+                            (("currentJobPairs".equals(key) || "activePassages".equals(key)) && number > 4096)) return null;
+                        if (control && ("baselineNanos".equals(key) || "previousBaselineNanos".equals(key) || "candidateMaxNanos".equals(key)) &&
+                            (number < 1 || number > 3600000000000L)) return null;
+                    } catch (NumberFormatException invalid) { return null; }
+                }
+            }
+            if (i > 0) {
+                if (control) { if (++controls > 1) return null; continue; }
+                if (controls != 0) return null;
+                if (record.contains(" role=rejected ")) {
+                    if (++rejected > 1 || qualification != 0 || rechecks != 0 || !record.contains(" index=0 ") ||
+                        !record.contains(" ordinal=0 ") || !record.contains(" workers=8 ")) return null;
+                } else if (record.contains(" role=qualification ")) {
+                    if (rechecks != 0 || qualification >= 3 || !record.contains(" index=" + qualification + " ")) return null;
+                    qualification++;
+                } else if (++rechecks > 1 || !record.contains(" index=0 ")) return null;
+            }
+        }
+        if (!records[0].contains(" qualificationPairs=" + qualification + " ")) return null;
+        return records.clone();
     }
 
     synchronized void noteDirectBufferBytes(long bytes) { directBufferObserved = true; directBufferBytes = Math.max(directBufferBytes, nonnegative(bytes)); }
@@ -112,7 +195,25 @@ final class NativeInferenceProfile {
     synchronized void addDecode(String graph, long nanos) { addDecode(graph, measurement(nanos, UNSET)); }
 
     synchronized void addModelPrepare(String graph, Measurement timing) { Graph item = graph(graph); if (item != null) item.modelPrepare.add(timing); stage("model-init", timing); }
-    synchronized void addSessionInit(String graph, Measurement timing) { Graph item = graph(graph); if (item != null) item.sessionInit.add(timing); stage("model-init", timing); }
+    synchronized void addSessionInit(String graph, Measurement timing) {
+        if (snapshot != null) return;
+        Graph item = graph(graph);
+        if (item != null) {
+            item.sessionInit.add(timing);
+            if (graph.matches("block-(?:0[0-9]|1[01])-time")) {
+                if ("cpu-i1-j1-d0-sequential-w4-b1".equals(temporalConfig)) temporalFourWorkerSessions++;
+                else if ("cpu-i1-j1-d0-sequential-w8-b1".equals(temporalConfig)) temporalEightWorkerSessions++;
+                else if (!"unavailable".equals(temporalConfig)) temporalBaselineSessions++;
+                else temporalUnobservedSessions++;
+            } else if (graph.matches("block-(?:0[0-9]|1[01])-frequency")) {
+                if ("cpu-i1-j1-d0-sequential-w4-b16".equals(frequencyConfig)) frequencyFourWorkerSessions++;
+                else if ("cpu-i1-j1-d0-sequential-w8-b16".equals(frequencyConfig)) frequencyEightWorkerSessions++;
+                else if (!"unavailable".equals(frequencyConfig)) frequencyBaselineSessions++;
+                else frequencyUnobservedSessions++;
+            }
+        }
+        stage("model-init", timing);
+    }
     synchronized void addTensorBind(String graph, Measurement timing) { Graph item = graph(graph); if (item != null) item.tensorBind.add(timing); stage("tensor-bind", timing); }
     synchronized void addRun(String graph, Measurement timing) { Graph item = graph(graph); if (item != null) item.run.add(timing); stage("inference", timing); }
     /**
@@ -162,11 +263,12 @@ final class NativeInferenceProfile {
         Heap heap = heap();
         if (heap == null) memoryUnavailable = true;
         else { memoryEndUsed = heap.used; memoryEndLimit = heap.limit; noteHeap(heap.used); }
-        String[] records = new String[1 + stages.size() + graphs.size()];
+        String[] records = new String[1 + stages.size() + graphs.size() + passagePolicyRecords.length];
         records[0] = summaryRecord();
         int index = 1;
         for (Stage stage : stages.values()) records[index++] = stageRecord(stage);
         for (Graph graph : graphs.values()) records[index++] = graphRecord(graph);
+        for (String policy : passagePolicyRecords) records[index++] = policy;
         snapshot = new Snapshot(records);
         return snapshot;
     }
@@ -221,6 +323,16 @@ final class NativeInferenceProfile {
             " outcome=" + outcome +
             " wallMs=" + milliseconds(finishedNanos - startedNanos) +
             " temporalConfig=" + temporalConfig + " frequencyConfig=" + frequencyConfig +
+            " temporalConfigCountScope=session-init-attempts" +
+            " temporalBaselineSessionCount=" + temporalBaselineSessions +
+            " temporalFourWorkerSessionCount=" + temporalFourWorkerSessions +
+            " temporalEightWorkerSessionCount=" + temporalEightWorkerSessions +
+            " temporalUnobservedSessionCount=" + temporalUnobservedSessions +
+            " frequencyConfigCountScope=session-init-attempts" +
+            " frequencyBaselineSessionCount=" + frequencyBaselineSessions +
+            " frequencyFourWorkerSessionCount=" + frequencyFourWorkerSessions +
+            " frequencyEightWorkerSessionCount=" + frequencyEightWorkerSessions +
+            " frequencyUnobservedSessionCount=" + frequencyUnobservedSessions +
             " schedulerCalibrationWallMs=" + valueOrUnavailable(schedulerCalibrationNanos, schedulerCalibrationCount == 0) +
             " schedulerCalibrationCount=" + countOrUnavailable(schedulerCalibrationCount, schedulerCalibrationCount == 0) +
             " cpuScope=calling-thread processCpuScope=all-app-threads" +
@@ -258,7 +370,8 @@ final class NativeInferenceProfile {
             " cacheHitBytes=" + bytesOrUnavailable(cacheHitBytes, !cacheObserved) +
             " cacheMissBytes=" + bytesOrUnavailable(cacheMissBytes, !cacheObserved) +
             " stageRecords=" + stages.size() + " graphRecords=" + graphs.size() +
-            " droppedStageRecords=" + droppedStages + " droppedGraphRecords=" + droppedGraphs;
+            " droppedStageRecords=" + droppedStages + " droppedGraphRecords=" + droppedGraphs +
+            (passagePolicyRecords.length == 0 ? "" : " passagePolicy=" + encodePassagePolicy(passagePolicyRecords));
     }
 
     private int sessionInitCount() { int count = 0; for (Graph graph : graphs.values()) count += graph.sessionInit.count; return count; }
@@ -359,6 +472,44 @@ final class NativeInferenceProfile {
         int recordCount() { return records.length; }
         String record(int index) { return records[index]; }
         String[] records() { return records.clone(); }
+    }
+    /** Cumulative direct model-I/O observations; reads include interrupted attempts. */
+    static final class ModelSetup {
+        final int verifiedModels;
+        final long extractionAttempts, extractionBytesRead, existingFileChecksumAttempts, existingFileChecksumBytesRead;
+        ModelSetup(int verified, long extractions, long extractedBytes, long checksums, long checksumBytes) {
+            if (verified < 0 || verified > MAX_GRAPH_RECORDS || extractions < 0 || extractedBytes < 0 || checksums < 0 || checksumBytes < 0)
+                throw new IllegalArgumentException("Invalid model setup observation");
+            verifiedModels = verified; extractionAttempts = extractions; extractionBytesRead = extractedBytes;
+            existingFileChecksumAttempts = checksums; existingFileChecksumBytesRead = checksumBytes;
+        }
+    }
+    static final class ArmEvidence {
+        final String outcome;
+        final long armWallNanos;
+        final ModelSetup before, after;
+        ArmEvidence(String outcome, long nanos, ModelSetup before, ModelSetup after) {
+            if (!("completed".equals(outcome) || "cancelled".equals(outcome) || "failed".equals(outcome)) ||
+                ("completed".equals(outcome) ? nanos <= 0 : nanos != -1) || before == null || after == null ||
+                after.extractionAttempts < before.extractionAttempts || after.extractionBytesRead < before.extractionBytesRead ||
+                after.existingFileChecksumAttempts < before.existingFileChecksumAttempts || after.existingFileChecksumBytesRead < before.existingFileChecksumBytesRead)
+                throw new IllegalArgumentException("Invalid paired arm observation");
+            this.outcome = outcome; armWallNanos = nanos; this.before = before; this.after = after;
+        }
+    }
+    static final class CandidateEvidence {
+        final int ordinal, workers, commonPreflightVerifiedModelCount;
+        final boolean candidateFirst;
+        final ArmEvidence baseline, candidate;
+        final Snapshot profile;
+        CandidateEvidence(int ordinal, int workers, boolean first, int commonVerified, ArmEvidence baseline,
+                ArmEvidence candidate, Snapshot profile) {
+            if (ordinal < 0 || ordinal > 4095 || (workers != 4 && workers != 8) || commonVerified < 0 || commonVerified > MAX_GRAPH_RECORDS ||
+                candidate == null || profile == null || profile.recordCount() < 1 || profile.recordCount() > MAX_RECORDS)
+                throw new IllegalArgumentException("Invalid candidate evidence");
+            this.ordinal = ordinal; this.workers = workers; candidateFirst = first;
+            commonPreflightVerifiedModelCount = commonVerified; this.baseline = baseline; this.candidate = candidate; this.profile = profile;
+        }
     }
     private static class Metric {
         long wallNanos, cpuNanos, processCpuNanos, nestedCpuNanos; int count, nestedCount; boolean cpuObserved, cpuUnavailable, processCpuObserved, processCpuUnavailable;

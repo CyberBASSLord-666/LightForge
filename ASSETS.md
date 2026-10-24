@@ -6,7 +6,7 @@ LightForge runs entirely offline. The installed APK includes every runtime model
 | --- | --- | --- |
 | Beat This!, UVR MDX Voc FT, Frame-MN10 and their frontends | Retained binary assets and manifests | Already present in the completed checkout |
 | GAME Large 1.0.3 | Five generated graphs, approximately 376 MiB; manifests and converter tracked | `python3 tools/prepare_game.py` |
-| Mel-Band RoFormer Deux | Fifteen generated graphs, approximately 842 MiB; manifests, architecture and converter tracked | `python3 tools/prepare_deux.py` |
+| Mel-Band RoFormer Deux | Twenty-seven generated graphs, approximately 879 MiB; manifests, architecture and converter tracked | `python3 tools/prepare_deux.py` |
 | ONNX Runtime Web/WASM | Bundled runtime and license tracked | No additional preparation |
 | Highland geometry, fonts and demo audio | Retained assets and attribution tracked | No additional preparation |
 | Historical research weights, fixtures and evidence | Original preserved materials plus versioned QA | Optional research; excluded from APK |

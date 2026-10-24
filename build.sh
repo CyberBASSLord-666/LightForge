@@ -57,8 +57,7 @@ import hashlib,json,pathlib,shutil,sys
 root,destination=map(pathlib.Path,sys.argv[1:])
 sys.path.insert(0,str(root/'tools'))
 import verify_inference_improvement as gate
-version=json.loads((root/'version.json').read_text())
-if version['name']=='2.4.1':gate.verify(root)
+gate.verify(root)
 source=root/'android/src'
 paths=sorted(source.rglob('*.java'))
 if not paths or any(p.is_symlink() for p in paths):raise SystemExit('Invalid Java source inventory.')
@@ -67,13 +66,12 @@ shutil.copytree(source,destination)
 copied={str(p.relative_to(destination)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(destination.rglob('*.java'))}
 after={str(p.relative_to(source)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(source.rglob('*.java'))}
 if before!=copied or copied!=after:raise SystemExit('Java sources changed while the build snapshot was prepared.')
-if version['name']=='2.4.1':
-    gate.verify(root)
-    evidence=json.loads((root/gate.RECEIPT).read_text())
-    prefix='android/src/'
-    for name,digest in evidence['sourceBindings'].items():
-        if name.startswith(prefix) and copied.get(name[len(prefix):])!=digest:
-            raise SystemExit('Frozen Java source lacks matching inference performance evidence: '+name)
+gate.verify(root)
+evidence=json.loads((root/gate.RECEIPT).read_text())
+prefix='android/src/'
+for name,digest in evidence['sourceBindings'].items():
+    if name.startswith(prefix) and copied.get(name[len(prefix):])!=digest:
+        raise SystemExit('Frozen Java source lacks matching inference performance evidence: '+name)
 PY
 python3 "$ROOT/tools/bootstrap_native_runtime.py" --check --stage "$BUILD/native"
 if [[ ! -f "$KEY_DIR/lightforge-release.jks" ]]; then

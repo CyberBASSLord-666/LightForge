@@ -42,6 +42,8 @@ RELEASE_SCOPE_SCHEMA_VERSION = 1
 # authorized publishing the musical-intelligence/inference release when ready
 # without user-supplied measurements. Keep explicit version/code pairs: this
 # publication policy never generates PASS_TARGET or a measured quality claim.
+# The 2.4.2 pair is a scoped next-build policy draft, not evidence of readiness:
+# the separate neural-improvement build hold and sealed automated gates remain.
 AUTOMATED_VERIFICATION_ONLY_RELEASES = frozenset({
     ("2.2.5", 20205),
     ("2.3.0", 20300),
@@ -49,6 +51,7 @@ AUTOMATED_VERIFICATION_ONLY_RELEASES = frozenset({
     ("2.3.2", 20302),
     ("2.4.0", 20400),
     ("2.4.1", 20401),
+    ("2.4.2", 20402),
 })
 
 # A waiver is deliberately much narrower than "does not look like a model

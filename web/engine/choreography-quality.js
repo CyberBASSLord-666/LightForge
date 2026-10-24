@@ -12,6 +12,7 @@
   if(!DEFAULT_PROFILE&&typeof require==='function')try{DEFAULT_PROFILE=require('./vehicle-profile.js');}catch(_error){}
 
   const VERSION='1.0.0';
+  const LIGHT_ATTACK_CODES=new Set([255,178,204,230]);
   const finite=value=>typeof value==='number'&&Number.isFinite(value);
   const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
   const unique=list=>Array.from(new Set(list));
@@ -293,8 +294,16 @@
     if(!track)return false;
     const start=Math.max(0,first),end=Math.min(show.frameCount-1,last);
     for(let frame=start;frame<=end;frame++){
-      const current=visualToken(show,track,frame,levels),previous=frame?visualToken(show,track,frame-1,levels):0;
-      if(current!==0&&current!==previous)return true;
+      if(track.kind==='light'){
+        // Nonzero fade-off bytes are release commands, not new attacks.
+        // Inspect the command transition itself, including an On command
+        // following a fade-off without an intervening zero byte.
+        const width=show.channels||show.channelCount||200;
+        if(track.channels.some(channel=>{const index=frame*width+channel-1,current=show.frames[index],previous=frame?show.frames[index-width]:0;return LIGHT_ATTACK_CODES.has(current)&&current!==previous;}))return true;
+      }else{
+        const current=visualToken(show,track,frame,levels),previous=frame?visualToken(show,track,frame-1,levels):0;
+        if(current!==0&&current!==previous)return true;
+      }
     }
     return false;
   }
@@ -309,8 +318,11 @@
     const byId=new Map(tracks.map(track=>[track.id,track])),tolerance=Math.max(0,setting(options,'targetToleranceMs',show.stepMs))/1000,tiers=new Map();
     for(const target of targets){
       const candidates=(target.outputIds.length?target.outputIds.map(id=>byId.get(id)).filter(Boolean):sampled.visual).filter(track=>visualTrack(track,options));
-      const attackStart=Math.floor((target.time-tolerance)*1000/show.stepMs),attackEnd=Math.ceil((target.time+tolerance)*1000/show.stepMs);
-      const activeStart=attackStart,activeEnd=Math.ceil((target.end+tolerance)*1000/show.stepMs);
+      // Attack times are frame boundaries within the requested tolerance,
+      // not the adjacent boundaries outside it. A held frame may still overlap
+      // the active window, so its first frame deliberately rounds down.
+      const attackStart=Math.ceil((target.time-tolerance)*1000/show.stepMs-1e-8),attackEnd=Math.floor((target.time+tolerance)*1000/show.stepMs+1e-8);
+      const activeStart=Math.floor((target.time-tolerance)*1000/show.stepMs+1e-8),activeEnd=Math.floor((target.end+tolerance)*1000/show.stepMs+1e-8);
       const attackMatched=candidates.some(track=>attackAt(show,track,attackStart,attackEnd,sampled.levels));
       const activeMatched=attackMatched||candidates.some(track=>activeBetween(show,track,activeStart,activeEnd,sampled.levels));
       const aggregate=tiers.get(target.tier)||{selected:0,attackMatched:0,activeMatched:0};aggregate.selected++;if(attackMatched)aggregate.attackMatched++;if(activeMatched)aggregate.activeMatched++;tiers.set(target.tier,aggregate);

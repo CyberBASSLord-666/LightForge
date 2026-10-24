@@ -11,9 +11,12 @@ final class AppResources {
     private final Context context;
     private final String allowedProject;
     AppResources(Context context,String allowedProject){this.context=context.getApplicationContext();this.allowedProject=allowedProject;}
+    static boolean trustedOrigin(Uri uri) {
+        return uri != null && AppOrigin.trusted(uri.getScheme(),uri.getEncodedAuthority());
+    }
     WebResourceResponse resource(Uri uri,Map<String,String> requestHeaders) {
         try {
-            if(!"https".equals(uri.getScheme())||!"appassets.androidplatform.net".equals(uri.getHost()))return response(403,"Forbidden","text/plain",new ByteArrayInputStream(new byte[0]),0,null);
+            if(!trustedOrigin(uri))return response(403,"Forbidden","text/plain",new ByteArrayInputStream(new byte[0]),0,null);
             String path=uri.getPath();if(path==null||path.contains("..")||path.contains("\\"))throw new FileNotFoundException();
             if(path.startsWith("/project/")) {
                 String[] pieces=path.split("/");if(pieces.length!=4)throw new FileNotFoundException();

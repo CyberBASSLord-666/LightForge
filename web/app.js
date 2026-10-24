@@ -114,42 +114,128 @@ async function readBootstrap(){
  syncControls();if(!state.project&&state.lastProjectId&&!state.backgroundSyncPending){const p=state.projects.find(p=>p.id===state.lastProjectId);if(p)await selectProject(p);}
  if(background)await handleBackgroundJob(background);
 }
-function applyBootstrap(data){if(Array.isArray(data.projects)){state.projects=data.projects;for(const project of data.projects)diagnostics?.protectText(project.name);}if(data.version)text($('appVersion'),data.version);if('pendingExport'in data)state.pendingExport=data.pendingExport;if(state.project){const p=state.projects.find(p=>p.id===state.project.id);if(p){Object.assign(state.project,p);text($('trackTitle'),p.name);}}if(state.pendingProjectAction?.kind==='rename'){state.pendingProjectAction=null;endBusy();toast('Show renamed.');}renderProjects();document.dispatchEvent(new CustomEvent('lightforge:changed'));}
+function applyBootstrap(data){if(Array.isArray(data.projects)){state.projects=data.projects;for(const project of data.projects)diagnostics?.protectText(project.name);}if(data.version)text($('appVersion'),data.version);if('pendingExport'in data)state.pendingExport=data.pendingExport;if(state.project){const p=state.projects.find(p=>p.id===state.project.id);if(p){Object.assign(state.project,p);text($('trackTitle'),p.name);}}if(state.pendingProjectAction?.kind==='rename'&&state.projects.some(p=>p.id===state.pendingProjectAction.id&&p.name===state.pendingProjectAction.name)){state.pendingProjectAction=null;endBusy();toast('Show renamed.');}if(state.pendingProjectAction?.kind==='delete'&&!state.projects.some(p=>p.id===state.pendingProjectAction.id)){const id=state.pendingProjectAction.id;state.pendingProjectAction=null;finishProjectDeletion(id);endBusy();toast('Show deleted.');}renderProjects();document.dispatchEvent(new CustomEvent('lightforge:changed'));}
 function setProgress(info){diagnostics?.progress('progress',info);const {progress=0,stage='Working',detail,message}=info;if(!state.busy)return;state.progressFacts={...info};state.progressLastAt=Date.now();renderProgressFacts();const p=Math.max(0,Math.min(1,progress>1?progress/100:progress));$('progressBar').style.width=(p*100)+'%';$('progressBar').parentElement.setAttribute('aria-valuenow',String(Math.round(p*100)));text($('progressPercent'),Math.round(p*100)+'%');text($('progressStage'),stage);text($('progressDetail'),detail||message||'Preparing your show…');const titles={separat:'Separating voice and accompaniment',vocal:'Reading the voice phrasing',voice:'Reading the voice phrasing',pitch:'Following notes and holds',restore:'Restoring your show',duplicate:'Creating your new version',import:'Bringing your music in',decode:'Preparing the audio',model:'Warming up the neural engine',neural:'Listening to the rhythm',beats:'Finding the groove',structure:'Reading the arrangement',generate:'Choreographing your show',export:'Packing your light show'};const key=Object.keys(titles).find(k=>String(stage).toLowerCase().includes(k));if(key)text($('progressTitle'),titles[key]);}
 function beginBusy(title,detail){diagnostics?.log('info','operation',title);state.busy=true;state.job++;state.busyStartedAt=Date.now();state.progressLastAt=state.busyStartedAt;state.progressFacts={};clearInterval(progressClock);progressClock=setInterval(renderProgressFacts,1000);$('processing').hidden=false;text($('progressTitle'),title);text($('progressDetail'),detail);text($('progressStage'),'Preparing');text($('progressPercent'),'0%');$('progressBar').style.width='0%';$('progressBar').parentElement.setAttribute('aria-valuenow','0');$('cancelWork').disabled=false;renderProgressFacts();renderBackgroundNote();audio.pause();updateButtons();return state.job;}
 function endBusy(){if(state.busy)diagnostics?.log('info','operation','Processing dialog closed');state.busy=false;clearInterval(progressClock);if($('backgroundContinue'))$('backgroundContinue').hidden=true;if($('backgroundPower'))$('backgroundPower').hidden=true;$('processing').hidden=true;state.abort=null;updateButtons();}
 function openAudioPicker(){if(state.busy)return;if(native()){state.acceptProgress=true;bridge('pickAudio');}else $('browserFile').click();}
-async function db(){if(!dbPromise)dbPromise=new Promise((resolve,reject)=>{const r=indexedDB.open('lightforge',1);r.onupgradeneeded=()=>{r.result.createObjectStore('audio');r.result.createObjectStore('projects');};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});return dbPromise;}
-async function dbGet(store,key){const d=await db();return new Promise((resolve,reject)=>{const r=d.transaction(store).objectStore(store).get(key);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}
-async function dbPut(store,key,value){const d=await db();return new Promise((resolve,reject)=>{const tx=d.transaction(store,'readwrite');tx.objectStore(store).put(value,key);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);});}
-async function dbDelete(store,key){const d=await db();return new Promise((resolve,reject)=>{const tx=d.transaction(store,'readwrite');tx.objectStore(store).delete(key);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);});}
+async function db(){
+ if(!dbPromise){
+  const opening=new Promise((resolve,reject)=>{
+   const r=indexedDB.open('lightforge',1);
+   r.onupgradeneeded=()=>{r.result.createObjectStore('audio');r.result.createObjectStore('projects');};
+   r.onsuccess=()=>{const connection=r.result;connection.onversionchange=()=>{connection.close();dbPromise=null;};resolve(connection);};
+   r.onerror=()=>reject(r.error);
+  });
+  dbPromise=opening;
+  opening.catch(()=>{if(dbPromise===opening)dbPromise=null;});
+ }
+ return dbPromise;
+}
+async function dbGet(store,key){const d=await db();return new Promise((resolve,reject)=>{const tx=d.transaction(store),r=tx.objectStore(store).get(key);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);tx.onabort=()=>reject(tx.error||new Error('The storage read was interrupted. Try again.'));});}
+async function dbWrite(store,key,value,remove=false){
+ const d=await db();return new Promise((resolve,reject)=>{
+  const tx=d.transaction(store,'readwrite'),objectStore=tx.objectStore(store);
+  if(remove)objectStore.delete(key);else objectStore.put(value,key);
+  tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);
+  tx.onabort=()=>reject(tx.error||new Error('The storage write was interrupted. Try again.'));
+ });
+}
+async function dbPut(store,key,value){return dbWrite(store,key,value);}
+async function dbDelete(store,key){return dbWrite(store,key,undefined,true);}
+async function dbDeleteProject(id){
+ const d=await db();return new Promise((resolve,reject)=>{
+  // Both durable records belong to one project. A failed deletion must not
+  // leave a surviving arrangement with no soundtrack, or vice versa.
+  const tx=d.transaction(['audio','projects'],'readwrite');
+  tx.objectStore('audio').delete(id);tx.objectStore('projects').delete(id);
+  tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);
+  tx.onabort=()=>reject(tx.error||new Error('The project deletion was interrupted. Try again.'));
+ });
+}
 function encodeWav(buffer){const frames=buffer.length,bytes=new ArrayBuffer(44+frames*4),v=new DataView(bytes),write=(p,s)=>{for(let i=0;i<s.length;i++)v.setUint8(p+i,s.charCodeAt(i));};write(0,'RIFF');v.setUint32(4,36+frames*4,true);write(8,'WAVEfmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,2,true);v.setUint32(24,44100,true);v.setUint32(28,176400,true);v.setUint16(32,4,true);v.setUint16(34,16,true);write(36,'data');v.setUint32(40,frames*4,true);const l=buffer.getChannelData(0),r=buffer.getChannelData(Math.min(1,buffer.numberOfChannels-1));for(let i=0;i<frames;i++){v.setInt16(44+i*4,Math.round(Math.max(-1,Math.min(1,l[i]))*32767),true);v.setInt16(46+i*4,Math.round(Math.max(-1,Math.min(1,r[i]))*32767),true);}return new Blob([bytes],{type:'audio/wav'});}
-async function importBrowser(file){if(!file)return;diagnostics?.protectText(file.name);diagnostics?.protectText(file.name.replace(/\.[^.]+$/,''));const job=beginBusy('Bringing your music in','Converting audio to the format your Tesla needs.');try{const ctx=new (window.AudioContext||window.webkitAudioContext)();const decoded=await ctx.decodeAudioData(await file.arrayBuffer());await ctx.close();if(job!==state.job)return;const offline=new OfflineAudioContext(2,Math.ceil(decoded.duration*44100),44100),source=offline.createBufferSource();source.buffer=decoded;source.connect(offline.destination);source.start();const pcm=await offline.startRendering();if(job!==state.job)return;const wav=encodeWav(pcm),id='show-'+Date.now(),project={id,name:file.name.replace(/\.[^.]+$/,''),duration:pcm.duration,createdAt:Date.now(),audioUrl:URL.createObjectURL(wav),browser:true};await dbPut('audio',id,wav);state.projects.unshift(project);localStorage.setItem('lightforge-projects',JSON.stringify(state.projects));endBusy();await selectProject(project,true);toast('Music imported. Choose your style and create.');}catch(e){diagnostics?.log('error','operation',e);endBusy();toast('This audio could not be imported. '+(e.message||'Try another file.'),true);}}
+async function importBrowser(file){
+ if(!file||state.busy)return;
+ diagnostics?.protectText(file.name);diagnostics?.protectText(file.name.replace(/\.[^.]+$/,''));
+ const job=beginBusy('Bringing your music in','Converting audio to the format your Tesla needs.');
+ let ctx=null,id=null,objectURL=null,published=false;
+ try{
+  ctx=new (window.AudioContext||window.webkitAudioContext)();
+  const decoded=await ctx.decodeAudioData(await file.arrayBuffer());
+  await ctx.close();ctx=null;if(job!==state.job)return;
+  const offline=new OfflineAudioContext(2,Math.ceil(decoded.duration*44100),44100),source=offline.createBufferSource();
+  source.buffer=decoded;source.connect(offline.destination);source.start();
+  const pcm=await offline.startRendering();if(job!==state.job)return;
+  const wav=encodeWav(pcm);id='show-'+crypto.randomUUID();
+  await dbPut('audio',id,wav);if(job!==state.job)return;
+  objectURL=URL.createObjectURL(wav);
+  const project={id,name:file.name.replace(/\.[^.]+$/,''),duration:pcm.duration,createdAt:Date.now(),audioUrl:objectURL,browser:true};
+  const projects=[project,...state.projects];
+  // Publish only after durable audio and catalog writes succeed. A cancelled
+  // import must never replace a newer operation or leave a phantom show.
+  localStorage.setItem('lightforge-projects',JSON.stringify(projects));state.projects=projects;published=true;
+  endBusy();const opened=await selectProject(project,true);
+  if(opened&&job===state.job)toast('Music imported. Choose your style and create.');
+ }catch(e){
+  diagnostics?.log('error','operation',e);
+  if(job===state.job){endBusy();toast('This audio could not be imported. '+(e.message||'Try another file.'),true);}
+ }finally{
+  if(ctx)try{await ctx.close();}catch{}
+  if(!published){if(objectURL)URL.revokeObjectURL(objectURL);if(id)try{await dbDelete('audio',id);}catch(error){diagnostics?.log('warn','storage',error);}}
+ }
+}
+async function readSavedProject(url,controller){
+ // Bound both response headers and the body. A stalled local WebView transport
+ // must become retryable without ever saving an empty replacement project.
+ let timer;
+ const signal=controller.signal;
+ let cancelled;
+ const interrupted=new Promise((_,reject)=>{
+  cancelled=()=>reject(new DOMException('Project opening cancelled','AbortError'));
+  signal.addEventListener('abort',cancelled,{once:true});
+  timer=setTimeout(()=>{reject(Error('Opening this saved project took too long. Retry opening it; your saved work is unchanged.'));controller.abort();},15000);
+  if(signal.aborted)cancelled();
+ });
+ try{return await Promise.race([(async()=>{
+  const response=await fetch(url,{signal});
+  if(!response.ok)throw Error('The saved project could not be read. Retry opening it or restore a backup.');
+  return response.json();
+ })(),interrupted]);}
+ finally{clearTimeout(timer);signal.removeEventListener('abort',cancelled);}
+}
 async function selectProject(project,isNew=false,{navigate=true,restoreLease=null,restoreSaved=undefined}={}){
  diagnostics?.protectText(project?.name);
- stopInspection(); if(state.busy)return;clearTimeout(saveTimer);if(state.project&&!state.loadingProject&&!(await saveProject()))return;state.compileAbort?.abort();state.compileId++;state.composing=false;const selection=++state.selection,id=project.id;
- const current=()=>selection===state.selection&&state.project?.id===id;
+ stopInspection();if(!project||state.busy)return false;
+ // Claim the user's opening intent before saving. A later click can finish its
+ // save first; the older request must never replace that newer selection.
+ const request=state.selectionRequest=(state.selectionRequest||0)+1;
+ state.projectReadAbort?.abort();state.projectReadAbort=null;
+ clearTimeout(saveTimer);if(state.project&&!state.loadingProject&&!(await saveProject()))return false;
+ if(request!==state.selectionRequest||state.busy)return false;
+ state.compileAbort?.abort();state.compileId++;state.composing=false;const selection=++state.selection,id=project.id;
+ const current=()=>request===state.selectionRequest&&selection===state.selection&&state.project?.id===id;
  abandonAudition();audio.pause();clearTimeout(regenTimer);if(project.audioUrl)project.audioUrl=new URL(project.audioUrl,location.href).href;if(project.analysisUrl)project.analysisUrl=new URL(project.analysisUrl,location.href).href;if(project.previewUrl)project.previewUrl=new URL(project.previewUrl,location.href).href;
- state.project=project;state.saveBlocked=false;state.loadingProject=true;state.music=null;state.show=null;state.compiled=null;state.history=[];state.future=[];state.renderedSettingsKey=null;state.showMusic=null;state.editing=null;state.needAnalysis=false;state.analysisExecutionMode='resume';lastSection=-1;
+ state.project=project;state.saveBlocked=false;state.loadingProject=true;state.music=null;state.show=null;state.compiled=null;state.exportHeader=null;state.history=[];state.future=[];state.renderedSettingsKey=null;state.showMusic=null;state.editing=null;state.needAnalysis=false;state.analysisExecutionMode='resume';lastSection=-1;
  $('results').hidden=true;$('validationCard').hidden=true;$('sectionEditor').hidden=true;$('noShowOverlay').hidden=false;$('emptyCard').hidden=true;$('workingStudio').hidden=false;
  document.querySelector('.controls-column').inert=true;
  text($('trackTitle'),project.name||'Untitled show');text($('trackMeta'),isNew?'Audio ready':'Opening saved project…');text($('totalTime'),formatTime(project.duration));$('seek').max=project.duration||1;audio.src=project.previewUrl||project.audioUrl||'';if(navigate)nav('studio');else resizeCanvases();updateButtons();
  try{let saved=restoreSaved;
-  if(!isNew&&restoreSaved===undefined){if(project.browser){const blob=await dbGet('audio',id);if(!current())return;if(blob){if(project.audioUrl?.startsWith('blob:'))URL.revokeObjectURL(project.audioUrl);project.audioUrl=URL.createObjectURL(blob);audio.src=project.audioUrl;}saved=await dbGet('projects',id);if(!current())return;
-   }else if(project.projectUrl){const response=await fetch(project.projectUrl);if(!current())return;if(response.ok){saved=await response.json();if(!current())return;}}}
+  if(!isNew&&restoreSaved===undefined){if(project.browser){const blob=await dbGet('audio',id);if(!current())return;if(!blob)throw Error('The saved audio is unavailable. Restore a backup or import the song again.');if(project.audioUrl?.startsWith('blob:'))URL.revokeObjectURL(project.audioUrl);project.audioUrl=URL.createObjectURL(blob);audio.src=project.audioUrl;saved=await dbGet('projects',id);if(!current())return false;if(!saved&&project.hasShow)throw Error('The saved arrangement is unavailable. Retry opening it or restore a backup.');
+   }else if(project.projectUrl){const controller=new AbortController();state.projectReadAbort=controller;try{saved=await readSavedProject(project.projectUrl,controller);}finally{if(state.projectReadAbort===controller)state.projectReadAbort=null;}if(!current())return false;}}
   if(!current())return;
+  if(saved!==undefined&&(saved===null||typeof saved!=='object'||Array.isArray(saved)||(saved.settings!=null&&(typeof saved.settings!=='object'||Array.isArray(saved.settings)))||(saved.music!=null&&(typeof saved.music!=='object'||Array.isArray(saved.music)))||(saved.compiled!=null&&(typeof saved.compiled!=='object'||Array.isArray(saved.compiled)))||(saved.projectId&&saved.projectId!==id)))throw Error('The saved project is damaged or belongs to another show. Restore a backup to recover it.');
   if(saved){state.settings=mergeSettings(saved.settings);state.music=saved.music||null;state.compiled=saved.compiled||null;state.needAnalysis=!!saved.needAnalysis;}else state.settings=mergeSettings({...state.settings,...recommendedExpression,sectionOverrides:{},manualCues:[],outputEnabled:{},vocalRegions:[],musicCues:[],vocalOffsetMs:0,bassOffsetMs:0});
   if(restoreLease&&!completedRestorePulse(restoreLease,'project-loaded',typeof state.compiled?.frameData==='string'?state.compiled.frameData.length:0))throw Error('Native completed-restore lease rejected the project load phase.');
   state.loadingProject=false;document.querySelector('.controls-column').inert=false;text($('trackMeta'),`${formatTime(project.duration)} · ${project.previewSampleRate===22050?'Long-track mono preview · Stereo export':'44.1 kHz stereo · On this device'}`);syncControls();
   if(state.music)await regenerate({save:false,restoreCompiled:state.compiled,restoreLease});else{updateButtons();renderFrame(0);drawWave();}
-  if(current()){scheduleSave();await refreshAuditionAvailability({force:true});}
- }catch(e){diagnostics?.log('error','operation',e);if(!current())return;state.saveBlocked=true;state.loadingProject=false;document.querySelector('.controls-column').inert=false;syncControls();updateButtons();renderFrame(0);text($('trackMeta'),'Audio ready · Saved settings could not be opened');if(restoreLease)throw e;toast('Audio is ready. Create a new show to rebuild this project.',true);}
+  if(current()){scheduleSave();await refreshAuditionAvailability({force:true});return current()&&!state.saveBlocked;}return false;
+ }catch(e){diagnostics?.log('error','operation',e);if(!current())return;state.saveBlocked=true;state.loadingProject=false;document.querySelector('.controls-column').inert=false;syncControls();updateButtons();renderFrame(0);text($('trackMeta'),'Project could not be opened · Saved work kept');if(restoreLease)throw e;toast((e.message||'The saved project could not be opened.')+' Your saved work has not been replaced.',true);return false;}
 }
 
 function currentShowMatches(){return !!state.show&&!state.needAnalysis&&state.showMusic===state.music&&state.renderedSettingsKey===JSON.stringify(state.settings);}
 function projectJson(){return {version:1,name:state.project?.name,projectId:state.project?.id,updatedAt:Date.now(),settings:state.settings,music:state.music,needAnalysis:state.needAnalysis,compiled:currentShowMatches()?state.compiled:null,provenance:{app:LightForgeVersion.name,planner:state.show?.version||null,profile:VehicleProfile.version,analysis:state.music?.analysisVersion||null,model:state.music?.engine||null,frameSHA256:currentShowMatches()?state.compiled?.sha256:null}};}
 function scheduleSave(){clearTimeout(saveTimer);saveTimer=setTimeout(saveProject,450);try{localStorage.setItem('lightforge-settings',JSON.stringify(state.settings));}catch{}}
-async function saveProject(){if(backgroundActive(state.backgroundJob)||state.backgroundSyncPending)return true;if(!state.project||state.loadingProject)return false;if(state.saveBlocked)return true;const project=state.project,body=projectJson(),marker={id:state.project.id,name:state.project.name,settings:JSON.stringify(state.settings),music:state.music,compiled:body.compiled,needAnalysis:state.needAnalysis};if(state.lastSaved&&Object.keys(marker).every(k=>state.lastSaved[k]===marker[k]))return true;try{localStorage.setItem('lightforge-last-project',project.id);if(native()){const saved=bridge('saveProject',project.id,JSON.stringify(body));if(saved!==true&&saved!=='true')throw new Error('The device could not save this project. Free some storage and try again.');}else await dbPut('projects',project.id,body);const p=state.projects.find(p=>p.id===project.id);if(p){p.hasShow=!!body.music;p.style=body.settings.style;p.updatedAt=body.updatedAt;}if(!native())localStorage.setItem('lightforge-projects',JSON.stringify(state.projects));state.lastSaved=marker;state.lastSave=Date.now();document.dispatchEvent(new CustomEvent('lightforge:saved'));return true;}catch(e){toast('This project could not be saved: '+e.message,true);return false;}}
+async function saveProject(){if(state.deletingProjectId&&state.project?.id===state.deletingProjectId)return true;if(backgroundActive(state.backgroundJob)||state.backgroundSyncPending)return true;if(!state.project||state.loadingProject)return false;if(state.saveBlocked)return true;const project=state.project,body={...projectJson(),settings:clone(state.settings)},marker={id:state.project.id,name:state.project.name,settings:JSON.stringify(state.settings),music:state.music,compiled:body.compiled,needAnalysis:state.needAnalysis};if(state.lastSaved&&Object.keys(marker).every(k=>state.lastSaved[k]===marker[k]))return true;try{localStorage.setItem('lightforge-last-project',project.id);if(native()){const saved=bridge('saveProject',project.id,JSON.stringify(body));if(saved!==true&&saved!=='true')throw new Error('The device could not save this project. Free some storage and try again.');}else await dbPut('projects',project.id,body);const p=state.projects.find(p=>p.id===project.id);if(p){p.hasShow=!!body.music;p.style=body.settings.style;p.updatedAt=body.updatedAt;}if(!native())localStorage.setItem('lightforge-projects',JSON.stringify(state.projects));state.lastSaved=marker;state.lastSave=Date.now();document.dispatchEvent(new CustomEvent('lightforge:saved'));return true;}catch(e){toast('This project could not be saved: '+e.message,true);return false;}}
 
 function captureSnapshot(){const retainFrames=!state.show||state.show.frames.byteLength<=16*1024*1024;return {projectId:state.project?.id,settings:clone(state.settings),music:state.music,show:retainFrames?state.show:null,compiled:currentShowMatches()?state.compiled:null,exportHeader:state.exportHeader,needAnalysis:state.needAnalysis,renderedSettingsKey:state.renderedSettingsKey,showMusic:state.showMusic};}
 function trimHistory(list){let bytes=0;const seen=new Set();for(let i=list.length-1;i>=0;i--){const show=list[i].show;if(show&&!seen.has(show)){seen.add(show);bytes+=show.frames.byteLength;}if(i<list.length-2&&(bytes>64*1024*1024||list.length-i>20)){list.splice(0,i+1);break;}}}
@@ -461,7 +547,9 @@ async function pollBackgroundJob(){
  const job=parse(bridge('getAnalysisStatus'),null);if(job)await handleBackgroundJob(job);
 }
 async function startBackgroundGeneration(){
+ const project=state.project,selection=state.selection;
  if(!(await saveProject()))return;
+ if(state.busy||state.loadingProject||state.project!==project||state.selection!==selection)return;
  clearTimeout(saveTimer);abandonAudition();audio.pause();audio.src=mixAudioUrl();
  const fresh=state.analysisExecutionMode==='fresh'&&!!window.Android&&typeof window.Android.startFreshAnalysis==='function';
  const job=parse(bridge(fresh?'startFreshAnalysis':'startAnalysis',state.project.id),{});
@@ -489,8 +577,8 @@ async function generate(){
   if(job!==state.job)return;
   if(previous.music){state.history.push(previous);trimHistory(state.history);state.future=[];}
   analysisFallback=null;state.music=music;state.needAnalysis=false;state.analysisExecutionMode='resume';state.settings=settings;adoptShow(result,music,settings);
-  const saved=await saveProject();endBusy();await refreshAuditionAvailability({force:true});if(saved)toast('Your show is ready. Press play and make it yours.');$('previewBadge').focus?.();
- }catch(e){diagnostics?.log(e.name==='AbortError'?'info':'error','analysis',e);if(job!==state.job)return;restoreAnalysisFallback();endBusy();await refreshAuditionAvailability({force:true});if(e.name!=='AbortError')toast('Could not create this show. '+(e.message||'Please try again.'),true);}updateButtons();
+  const saved=await saveProject();if(job!==state.job)return;endBusy();await refreshAuditionAvailability({force:true});if(job!==state.job)return;if(saved)toast('Your show is ready. Press play and make it yours.');$('previewBadge').focus?.();
+ }catch(e){diagnostics?.log(e.name==='AbortError'?'info':'error','analysis',e);if(job!==state.job)return;restoreAnalysisFallback();endBusy();await refreshAuditionAvailability({force:true});if(job!==state.job)return;if(e.name!=='AbortError')toast('Could not create this show. '+(e.message||'Please try again.'),true);}updateButtons();
 }
 function alignedMusic(music){const duration=Number(state.project?.duration);if(!Number.isFinite(duration)||duration<=0||duration===music.duration)return music;const sections=music.sections?.map(s=>({...s}));if(sections?.length)sections[sections.length-1].end=duration;return {...music,duration,sections};}
 function presentShow(){
@@ -529,15 +617,98 @@ async function regenerate({save=true,preparedShow=null,restoreCompiled=null,rest
 function renderValidation(){const v=state.show.validation;$('validationCard').hidden=false;$('validationCard').classList.toggle('invalid',!v.valid);text($('validationIcon'),v.valid?'✓':'!');text($('validationTitle'),v.valid?'Ready for your Model 3':'A check needs attention');text($('validationSummary'),v.valid?'Timing, format & movement limits checked':'Adjust the show before exporting');$('export').disabled=!v.valid;const content=$('validationContent');content.replaceChildren();const list=document.createElement('ul');const lines=[`Uncompressed FSEQ v2 · 200 channels · ${state.soloPreview?.show.stepMs||state.show?.stepMs||20} ms`,`Duration ${formatTime(state.show.duration)} · ${state.show.frameCount.toLocaleString()} frames`,'44.1 kHz stereo PCM WAV · matched filenames',`Analysis: ${state.music.engine?.name||'On-device rhythm engine'}`];for(const line of [...lines,...(v.errors||[]).map(x=>'Issue: '+x),...(v.warnings||[]).map(x=>'Note: '+x),...(state.music.warnings||[]).map(x=>'Analysis: '+x)]){const li=document.createElement('li');text(li,line);list.appendChild(li);}content.appendChild(list);}
 function renderSections(){const list=$('sectionList');list.replaceChildren();(state.show.sections||state.music.sections||[]).forEach((s,i)=>{const b=document.createElement('button');b.className='section-item'+(state.settings.sectionOverrides[i]?' edited':'');b.dataset.section=i;const small=document.createElement('small'),strong=document.createElement('strong'),bar=document.createElement('div'),fill=document.createElement('i');text(small,formatTime(s.start)+' – '+formatTime(s.end));text(strong,s.label||'Section '+(i+1));bar.className='section-energy';fill.style.width=Math.round((state.settings.sectionOverrides[i]?.intensity??s.energy??.5)*100)+'%';bar.appendChild(fill);b.append(small,strong,bar);b.onclick=()=>editSection(i);list.appendChild(b);});}
 function editSection(index){const s=(state.show?.sections||state.music?.sections)[index];if(!s)return;state.editing=index;audio.currentTime=Math.min(s.start,audio.duration||s.start);renderFrame(audio.currentTime);drawWave();text($('editingName'),s.label||'Section '+(index+1));$('sectionStyle').value=state.settings.sectionOverrides[index]?.style||'';$('sectionEnergy').value=state.settings.sectionOverrides[index]?.intensity??state.settings.intensity;text($('sectionEnergyValue'),Math.round($('sectionEnergy').value*100)+'%');updateRangeFill($('sectionEnergy'));$('sectionEditor').hidden=false;document.querySelectorAll('.section-item').forEach(b=>b.classList.toggle('selecting',Number(b.dataset.section)===index));}
-function renderProjects(){const list=$('showList');list.replaceChildren();$('noProjects').hidden=state.projects.length>0;for(const p of state.projects){const card=document.createElement('article');card.className='saved-show';const art=document.createElement('button');art.className='album-art';art.setAttribute('aria-label','Open '+p.name);art.style.border='0';art.innerHTML='<svg viewBox="0 0 24 24"><path d="M9 17V5l11-2v12M9 8l11-2"/><ellipse cx="6" cy="18" rx="3" ry="2"/><ellipse cx="17" cy="16" rx="3" ry="2"/></svg><i></i><i></i>';art.onclick=()=>selectProject(p);const copy=document.createElement('div');copy.className='saved-show-copy';copy.tabIndex=0;copy.setAttribute('role','button');const title=document.createElement('h3'),meta=document.createElement('p');text(title,p.name||'Untitled show');text(meta,`${formatTime(p.duration)} · ${p.style?capitalize(p.style):'Ready to create'} · ${new Date(p.createdAt||p.updatedAt||Date.now()).toLocaleDateString(undefined,{month:'short',day:'numeric'})}`);copy.append(title,meta);copy.onclick=()=>selectProject(p);copy.onkeydown=e=>{if(e.key==='Enter'||e.key===' ')selectProject(p);};const del=document.createElement('button');del.className='icon-button project-options';del.setAttribute('aria-label','Options for '+p.name);del.innerHTML='<svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>';del.onclick=()=>projectMenu(p);card.append(art,copy,del);list.appendChild(card);}}
+function renderProjects(){const list=$('showList');list.replaceChildren();$('noProjects').hidden=state.projects.length>0;for(const p of state.projects){const card=document.createElement('article');card.className='saved-show';const art=document.createElement('button');art.className='album-art';art.setAttribute('aria-label','Open '+p.name);art.style.border='0';art.innerHTML='<svg viewBox="0 0 24 24"><path d="M9 17V5l11-2v12M9 8l11-2"/><ellipse cx="6" cy="18" rx="3" ry="2"/><ellipse cx="17" cy="16" rx="3" ry="2"/></svg><i></i><i></i>';art.onclick=()=>selectProject(p);const copy=document.createElement('div');copy.className='saved-show-copy';copy.tabIndex=0;copy.setAttribute('role','button');const title=document.createElement('h3'),meta=document.createElement('p');text(title,p.name||'Untitled show');text(meta,`${formatTime(p.duration)} · ${p.style?capitalize(p.style):'Ready to create'} · ${new Date(p.createdAt||p.updatedAt||Date.now()).toLocaleDateString(undefined,{month:'short',day:'numeric'})}`);copy.append(title,meta);copy.onclick=()=>selectProject(p);copy.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();if(!e.repeat)selectProject(p);}};const del=document.createElement('button');del.className='icon-button project-options';del.setAttribute('aria-label','Options for '+p.name);del.innerHTML='<svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>';del.onclick=()=>projectMenu(p);card.append(art,copy,del);list.appendChild(card);}}
 function capitalize(x){return String(x).charAt(0).toUpperCase()+String(x).slice(1);}
 function confirmAction(title,message){return new Promise(resolve=>{text($('confirmTitle'),title);text($('confirmMessage'),message);$('confirmDialog').showModal();$('confirmCancel').onclick=()=>{$('confirmDialog').close();resolve(false);};$('confirmOkay').onclick=()=>{$('confirmDialog').close();resolve(true);};$('confirmDialog').oncancel=()=>resolve(false);});}
-async function deleteProject(p){if(!await confirmAction('Delete “'+p.name+'”?','This removes its music and saved project from this device. Exported files are kept.'))return;if(native())bridge('deleteProject',p.id);else{await dbDelete('audio',p.id);await dbDelete('projects',p.id);}state.projects=state.projects.filter(x=>x.id!==p.id);if(!native())localStorage.setItem('lightforge-projects',JSON.stringify(state.projects));if(state.project?.id===p.id){abandonAudition();audio.pause();audio.removeAttribute('src');state.selection++;state.loadingProject=false;state.project=null;state.music=null;state.show=null;$('workingStudio').hidden=true;$('emptyCard').hidden=false;}renderProjects();toast('Show deleted.');}
-async function exportShow(){stopInspection();if(!currentShowMatches()||!state.show.validation.valid||state.busy||state.composing)return;if(!(await saveProject()))return;state.acceptProgress=true;const job=beginBusy('Packing your light show','Preparing correctly named playback files and your validation report.');try{const header=state.exportHeader,frames=state.show.frames;if(!(header instanceof Uint8Array))throw Error('Create this show again to prepare its checked export header.');if(native()){const response=bridge('beginExport',JSON.stringify({projectId:state.project.id,name:state.project.name,stepMs:state.show.stepMs,duration:state.show.duration,validation:state.show.validation,projectState:projectJson()}));const parsed=parse(response,null),id=parsed?.id??response;if(!id||id==='null')throw new Error('The export could not be started.');state.exportId=id;let written=0;const total=header.length+frames.length;for(const part of [header,frames])for(let p=0;p<part.length;p+=49152){if(job!==state.job)return;let binary='';const chunk=part.subarray(p,p+49152);for(let i=0;i<chunk.length;i++)binary+=String.fromCharCode(chunk[i]);const result=bridge('appendExport',String(id),btoa(binary));if(result===false||result==='false')throw new Error('A show-data block could not be written.');written+=chunk.length;setProgress({progress:.15+.65*(written/total),stage:'export',detail:'Writing your light sequence…'});if(p%491520===0)await new Promise(r=>setTimeout(r,0));}setProgress({progress:.9,stage:'export',detail:'Choose where to save your ZIP.'});bridge('finishExport',String(id));}else{const bytes=new Uint8Array(header.length+frames.length);bytes.set(header);bytes.set(frames,header.length);const wav=new Uint8Array(await(await fetch(state.project.audioUrl)).arrayBuffer());if(job!==state.job)return;const enc=new TextEncoder();const zip=zipStored([['LightShow/lightshow.fseq',bytes],['LightShow/lightshow.wav',wav],['START_HERE.txt',enc.encode('LightForge — '+state.project.name+'\n\nExtract this ZIP. Put the LightShow folder at the USB root.\nUse exFAT/FAT32 and glovebox data USB port.\nIn the car open Toybox > Light Show > Schedule Show.\nPreview closure requests are not a physical motor simulation.\n')],['Review/Validation.json',enc.encode(JSON.stringify(state.show.validation,null,2))],['Review/LightForge_Project.json',enc.encode(JSON.stringify(projectJson()))]]);const name=safeName(state.project.name)+'_LightForge.zip';const url=URL.createObjectURL(zip),link=document.createElement('a');link.href=url;link.download=name;link.click();setTimeout(()=>URL.revokeObjectURL(url),60000);exported({name});}}catch(e){diagnostics?.log('error','operation',e);endBusy();toast('Export failed: '+e.message,true);} }
+function finishProjectDeletion(id){
+ if(state.deletingProjectId===id)state.deletingProjectId=null;
+ const removed=state.projects.find(p=>p.id===id);
+ state.projects=state.projects.filter(p=>p.id!==id);
+ if(state.project?.id===id){
+  const project=state.project;clearTimeout(saveTimer);clearTimeout(regenTimer);
+  state.selectionRequest=(state.selectionRequest||0)+1;state.selection++;state.projectReadAbort?.abort();state.projectReadAbort=null;
+  state.compileAbort?.abort();state.compileId++;state.compileAbort=null;state.composing=false;
+  stopInspection();abandonAudition();audio.pause();audio.removeAttribute('src');audio.load();
+  for(const url of new Set([project.audioUrl,project.previewUrl]))if(url?.startsWith('blob:'))URL.revokeObjectURL(url);
+  state.loadingProject=false;state.project=null;state.music=null;state.show=null;state.compiled=null;state.exportHeader=null;state.history=[];state.future=[];state.lastSaved=null;state.saveBlocked=false;
+  $('workingStudio').hidden=true;$('emptyCard').hidden=false;document.querySelector('.controls-column').inert=false;
+ }else if(removed?.audioUrl?.startsWith('blob:'))URL.revokeObjectURL(removed.audioUrl);
+ try{if(localStorage.getItem('lightforge-last-project')===id)localStorage.removeItem('lightforge-last-project');}catch{}
+ renderProjects();updateButtons();
+}
+async function deleteProject(p){
+ if(state.busy)return;
+ if(!await confirmAction('Delete “'+p.name+'”?','This removes its music and saved project from this device. Exported files are kept.'))return;
+ if(state.busy)return;
+ const job=beginBusy('Deleting your show','Removing this project and its music from this device.');$('cancelWork').disabled=true;
+ try{
+  // Queue a final browser save behind existing writes, then fence every new
+  // save for this target before yielding. Pending opens/compiles must not
+  // schedule a fresh project record behind the atomic deletion transaction.
+  clearTimeout(saveTimer);
+  const pendingSave=!native()&&state.project?.id===p.id&&!state.loadingProject?saveProject():null;
+  state.deletingProjectId=p.id;
+  if(state.project?.id===p.id){
+   state.selectionRequest=(state.selectionRequest||0)+1;state.selection++;
+   state.projectReadAbort?.abort();state.projectReadAbort=null;
+   state.compileAbort?.abort();state.compileId++;state.compileAbort=null;state.composing=false;clearTimeout(regenTimer);
+   if(state.loadingProject){state.loadingProject=false;state.saveBlocked=true;document.querySelector('.controls-column').inert=false;}
+  }
+  if(pendingSave)await pendingSave;clearTimeout(saveTimer);
+  if(job!==state.job){if(state.deletingProjectId===p.id)state.deletingProjectId=null;return;}
+  if(native()){
+   const pending={kind:'delete',id:p.id};state.pendingProjectAction=pending;
+   setTimeout(()=>{
+    if(state.pendingProjectAction!==pending)return;
+    // Recover a lost acknowledgement by reading authoritative device state.
+    // Never infer deletion from elapsed time or hide a project on timeout.
+    try{applyBootstrap(parse(bridge('getBootstrap'),{}));}catch{}
+    if(state.pendingProjectAction!==pending)return;
+    state.pendingProjectAction=null;if(state.deletingProjectId===p.id)state.deletingProjectId=null;if(job===state.job)endBusy();
+    toast('The device did not confirm deletion. Reopen My shows and try again.',true);
+   },15000);
+   bridge('deleteProject',p.id);
+   // The bridge reports errors asynchronously. Only the refreshed collection
+   // may confirm removal; keep the existing project until that acknowledgement.
+   return;
+  }
+  await dbDeleteProject(p.id);if(job!==state.job)return;
+  finishProjectDeletion(p.id);endBusy();
+  try{localStorage.setItem('lightforge-projects',JSON.stringify(state.projects));toast('Show deleted.');}
+  catch(error){toast('Show deleted, but the collection index could not be updated: '+error.message,true);}
+ }catch(error){diagnostics?.log('error','operation',error);if(job===state.job){state.pendingProjectAction=null;if(state.deletingProjectId===p.id)state.deletingProjectId=null;endBusy();toast('Could not delete this show: '+error.message,true);}}
+}
+async function exportShow(){stopInspection();if(!currentShowMatches()||!state.show.validation.valid||state.busy||state.composing)return;const project=state.project,show=state.show,selection=state.selection;if(!(await saveProject()))return;if(state.busy||state.composing||state.project!==project||state.show!==show||state.selection!==selection||!currentShowMatches())return;state.acceptProgress=true;const job=beginBusy('Packing your light show','Preparing correctly named playback files and your validation report.');try{const header=state.exportHeader,frames=state.show.frames;if(!(header instanceof Uint8Array))throw Error('Create this show again to prepare its checked export header.');if(native()){const response=bridge('beginExport',JSON.stringify({projectId:state.project.id,name:state.project.name,stepMs:state.show.stepMs,duration:state.show.duration,validation:state.show.validation,projectState:projectJson()}));const parsed=parse(response,null),id=parsed?.id??response;if(!id||id==='null')throw new Error('The export could not be started.');state.exportId=id;let written=0;const total=header.length+frames.length;for(const part of [header,frames])for(let p=0;p<part.length;p+=49152){if(job!==state.job)return;let binary='';const chunk=part.subarray(p,p+49152);for(let i=0;i<chunk.length;i++)binary+=String.fromCharCode(chunk[i]);const result=bridge('appendExport',String(id),btoa(binary));if(result===false||result==='false')throw new Error('A show-data block could not be written.');written+=chunk.length;setProgress({progress:.15+.65*(written/total),stage:'export',detail:'Writing your light sequence…'});if(p%491520===0)await new Promise(r=>setTimeout(r,0));}setProgress({progress:.9,stage:'export',detail:'Choose where to save your ZIP.'});bridge('finishExport',String(id));}else{const bytes=new Uint8Array(header.length+frames.length);bytes.set(header);bytes.set(frames,header.length);const response=await fetch(state.project.audioUrl);if(job!==state.job)return;if(!response.ok)throw Error('The project audio could not be read. Reopen the project and try again.');const wav=new Uint8Array(await response.arrayBuffer());if(job!==state.job)return;const enc=new TextEncoder();const zip=zipStored([['LightShow/lightshow.fseq',bytes],['LightShow/lightshow.wav',wav],['START_HERE.txt',enc.encode('LightForge — '+state.project.name+'\n\nExtract this ZIP. Put the LightShow folder at the USB root.\nUse exFAT/FAT32 and glovebox data USB port.\nIn the car open Toybox > Light Show > Schedule Show.\nPreview closure requests are not a physical motor simulation.\n')],['Review/Validation.json',enc.encode(JSON.stringify(state.show.validation,null,2))],['Review/LightForge_Project.json',enc.encode(JSON.stringify(projectJson()))]]);const name=safeName(state.project.name)+'_LightForge.zip';const url=URL.createObjectURL(zip),link=document.createElement('a');link.href=url;link.download=name;link.click();setTimeout(()=>URL.revokeObjectURL(url),60000);exported({name});}}catch(e){diagnostics?.log('error','operation',e);if(job!==state.job)return;state.acceptProgress=false;endBusy();toast('Export failed: '+e.message,true);} }
 function projectMenu(p){text($('menuProjectName'),p.name);$('projectMenu').showModal();$('closeProjectMenu').onclick=()=>$('projectMenu').close();const choose=fn=>()=>{$('projectMenu').close();fn(p);};$('menuOpen').onclick=choose(selectProject);$('menuRename').onclick=choose(renameProject);$('menuDuplicate').onclick=choose(duplicateProject);$('menuDelete').onclick=choose(deleteProject);if($('menuRestoreRevision')){$('menuRestoreRevision').hidden=!p.hasPreviousRevision;$('menuRestoreRevision').onclick=choose(async p=>{if(await confirmAction('Restore previous save?','Restore the previous saved version of “'+p.name+'”? Your current saved version will become the recovery copy.'))restorePreviousProject(p.id);});}}
 function namePrompt(title,value,action){return new Promise(resolve=>{text($('nameTitle'),title);text($('nameOkay'),action);$('projectNameInput').value=value;const finish=value=>{diagnostics?.protectText(value);$('nameDialog').close();resolve(value);};const accept=()=>{const value=$('projectNameInput').value.trim();if(value)finish(value);else $('projectNameInput').focus();};$('nameOkay').onclick=accept;$('nameCancel').onclick=()=>finish(null);$('nameDialog').oncancel=()=>resolve(null);$('projectNameInput').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();accept();}};$('projectNameInput').oninput=()=>$('nameOkay').disabled=!$('projectNameInput').value.trim();$('nameOkay').disabled=!value.trim();$('nameDialog').showModal();setTimeout(()=>{$('projectNameInput').focus();$('projectNameInput').select();},50);});}
-async function renameProject(p){const name=await namePrompt('Rename your show',p.name,'Save name');if(!name||name===p.name)return;try{if(state.project?.id===p.id&&!(await saveProject()))return;if(native()){state.pendingProjectAction={kind:'rename',id:p.id};beginBusy('Renaming your show','Updating your collection.');bridge('renameProject',p.id,name);return;}const saved=await dbGet('projects',p.id);if(saved){saved.name=name;saved.updatedAt=Date.now();await dbPut('projects',p.id,saved);}p.name=name;p.updatedAt=Date.now();if(state.project?.id===p.id){state.project.name=name;text($('trackTitle'),name);}localStorage.setItem('lightforge-projects',JSON.stringify(state.projects));renderProjects();toast('Show renamed.');}catch(e){diagnostics?.log('error','operation',e);endBusy();toast('Could not rename this show: '+e.message,true);}}
-async function duplicateProject(p){const name=await namePrompt('Name your new version',p.name+' copy','Create copy');if(!name)return;try{if(state.project?.id===p.id&&!(await saveProject()))return;const job=beginBusy('Creating your new version','Copying music, analysis and your creative settings.');if(native()){state.pendingProjectAction={kind:'duplicate',id:p.id};bridge('duplicateProject',p.id,name);return;}let blob=await dbGet('audio',p.id);if(job!==state.job)return;if(!blob){const response=await fetch(p.audioUrl);if(job!==state.job)return;blob=await response.blob();if(job!==state.job)return;}const saved=await dbGet('projects',p.id);if(job!==state.job)return;const id='show-'+crypto.randomUUID(),copy={...p,id,name,browser:true,createdAt:Date.now(),updatedAt:Date.now(),audioUrl:URL.createObjectURL(blob)};delete copy.projectUrl;delete copy.analysisUrl;await dbPut('audio',id,blob);if(saved)await dbPut('projects',id,{...saved,name,projectId:id,updatedAt:Date.now()});if(job!==state.job)return;state.projects.unshift(copy);localStorage.setItem('lightforge-projects',JSON.stringify(state.projects));endBusy();await selectProject(copy,false);toast('New version created. Make it your own.');}catch(e){diagnostics?.log('error','operation',e);endBusy();toast('Could not copy this show: '+e.message,true);}}
+async function renameProject(p){const name=await namePrompt('Rename your show',p.name,'Save name');if(!name||name===p.name)return;try{if(state.project?.id===p.id&&!(await saveProject()))return;if(native()){state.pendingProjectAction={kind:'rename',id:p.id,name};beginBusy('Renaming your show','Updating your collection.');bridge('renameProject',p.id,name);return;}const saved=await dbGet('projects',p.id);if(saved){saved.name=name;saved.updatedAt=Date.now();await dbPut('projects',p.id,saved);}p.name=name;p.updatedAt=Date.now();if(state.project?.id===p.id){state.project.name=name;text($('trackTitle'),name);}localStorage.setItem('lightforge-projects',JSON.stringify(state.projects));renderProjects();toast('Show renamed.');}catch(e){diagnostics?.log('error','operation',e);endBusy();toast('Could not rename this show: '+e.message,true);}}
+async function duplicateProject(p){
+ if(state.busy||state.loadingProject)return;
+ const name=await namePrompt('Name your new version',p.name+' copy','Create copy');if(!name||state.busy||state.loadingProject)return;
+ let job=null,id=null,objectURL=null,published=false;
+ try{
+  if(state.project?.id===p.id&&!(await saveProject()))return;
+  if(state.busy||state.loadingProject)return;
+  job=beginBusy('Creating your new version','Copying music, analysis and your creative settings.');
+  if(native()){state.pendingProjectAction={kind:'duplicate',id:p.id};bridge('duplicateProject',p.id,name);return;}
+  let blob=await dbGet('audio',p.id);if(job!==state.job)return;
+  if(!blob){const response=await fetch(p.audioUrl);if(job!==state.job)return;if(!response.ok)throw Error('The original audio could not be read. Reopen the project and try again.');blob=await response.blob();if(job!==state.job)return;}
+  const saved=await dbGet('projects',p.id);if(job!==state.job)return;
+  if(!saved&&p.hasShow)throw Error('The saved arrangement is unavailable. Reopen the original project or restore a backup.');
+  id='show-'+crypto.randomUUID();
+  await dbPut('audio',id,blob);if(job!==state.job)return;
+  if(saved){await dbPut('projects',id,{...saved,name,projectId:id,updatedAt:Date.now()});if(job!==state.job)return;}
+  objectURL=URL.createObjectURL(blob);
+  const copy={...p,id,name,browser:true,createdAt:Date.now(),updatedAt:Date.now(),audioUrl:objectURL};
+  delete copy.projectUrl;delete copy.analysisUrl;delete copy.previewUrl;delete copy.previewSampleRate;delete copy.hasPreviousRevision;
+  const projects=[copy,...state.projects];
+  localStorage.setItem('lightforge-projects',JSON.stringify(projects));state.projects=projects;published=true;
+  endBusy();const opened=await selectProject(copy,false);if(opened&&job===state.job)toast('New version created. Make it your own.');
+ }catch(e){diagnostics?.log('error','operation',e);if(job===null||job===state.job){endBusy();toast('Could not copy this show: '+e.message,true);}}
+ finally{
+  if(!published){if(objectURL)URL.revokeObjectURL(objectURL);if(id)for(const store of ['audio','projects'])try{await dbDelete(store,id);}catch(error){diagnostics?.log('warn','storage',error);}}
+ }
+}
 $('musicalExpression').onchange=async()=>{const enabled=$('musicalExpression').checked;try{await commitChannelSettings(Object.fromEntries(musicalExpressionKeys.map(key=>[key,enabled])));}catch(error){syncControls();toast(error.message,true);}};
 $('newProject').onclick=openAudioPicker;$('restoreBackup').onclick=()=>{if(!native())return;state.acceptProgress=true;bridge('pickProjectBackup');};
 
@@ -572,7 +743,7 @@ function drawWave(){const can=canvasSize($('waveCanvas'));if(!can)return;const {
 function tick(ts){frameRequest=0;if(previewPaused||document.hidden)return;if(ts-lastDraw>=15&&state.view==='studio'&&state.project){const time=audio.currentTime||0;if(state.soloPreview||time!==renderedTime||state.show!==renderedShow){lastDraw=ts;renderFrame(time);drawWave();}}frameRequest=requestAnimationFrame(tick);}
 function togglePlay(){stopInspection();if(!state.project)return;if(audio.paused)audio.play().catch(e=>toast('Audio playback could not start: '+e.message,true));else audio.pause();}
 function updatePlay(){const playing=!audio.paused;$('play').innerHTML=playing?'<svg viewBox="0 0 24 24"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>':'<svg viewBox="0 0 24 24"><path d="m8 5 11 7-11 7z"/></svg>';$('play').setAttribute('aria-label',playing?'Pause preview':'Play preview');}
-window.onNativeEvent=(type,payload)=>{if(diagnostics?.handleNativeEvent(type,payload))return;const data=parse(payload,{});if(type==='analysisJob'){handleBackgroundJob(data);return;}if(type==='deviceCapabilities'){renderDeviceCapabilities(data);return;}if(type==='progress'){if(state.abort)return;if(!state.busy&&!state.acceptProgress)return;if(!state.busy)beginBusy('Bringing your music in','Preparing the audio file.');setProgress(data);}else if(type==='imported'){state.acceptProgress=false;endBusy();const p=data.project||data;const existing=state.projects.findIndex(x=>x.id===p.id);if(existing>=0)state.projects[existing]=p;else state.projects.unshift(p);selectProject(p,true);toast('Music imported. Choose your style and create.');}else if(type==='error'){if(state.abort){toast(data.message||'A device action could not be completed.',true);return;}state.pendingProjectAction=null;state.acceptProgress=false;endBusy();toast(data.message||'The device action could not be completed.',true);}else if(type==='exportRecovery'){state.pendingExport=data.pendingExport??data;state.acceptProgress=false;endBusy();updateButtons();}else if(type==='exported')exported(data);else if(type==='projects')applyBootstrap(data);else if(type==='projectReady'){state.pendingProjectAction=null;state.acceptProgress=false;endBusy();const p=data.project||data;const i=state.projects.findIndex(x=>x.id===p.id);if(i>=0)state.projects[i]=p;else state.projects.unshift(p);selectProject(p,false);toast('Project ready. Your music and edits are restored.');}else if(type==='cancelled'||type==='canceled'){if(state.abort)return;state.acceptProgress=false;endBusy();toast('Canceled. Your saved work is still here.');}};
+window.onNativeEvent=(type,payload)=>{if(diagnostics?.handleNativeEvent(type,payload))return;const data=parse(payload,{});if(type==='analysisJob'){handleBackgroundJob(data);return;}if(type==='deviceCapabilities'){renderDeviceCapabilities(data);return;}if(type==='progress'){if(state.abort)return;if(!state.busy&&!state.acceptProgress)return;if(!state.busy)beginBusy('Bringing your music in','Preparing the audio file.');setProgress(data);}else if(type==='imported'){state.acceptProgress=false;endBusy();const p=data.project||data;const existing=state.projects.findIndex(x=>x.id===p.id);if(existing>=0)state.projects[existing]=p;else state.projects.unshift(p);selectProject(p,true);toast('Music imported. Choose your style and create.');}else if(type==='error'){if(state.abort){toast(data.message||'A device action could not be completed.',true);return;}if(state.pendingProjectAction?.kind==='delete')state.deletingProjectId=null;state.pendingProjectAction=null;state.acceptProgress=false;endBusy();toast(data.message||'The device action could not be completed.',true);}else if(type==='exportRecovery'){state.pendingExport=data.pendingExport??data;state.acceptProgress=false;endBusy();updateButtons();}else if(type==='exported')exported(data);else if(type==='projects')applyBootstrap(data);else if(type==='projectReady'){state.pendingProjectAction=null;state.acceptProgress=false;endBusy();const p=data.project||data;const i=state.projects.findIndex(x=>x.id===p.id);if(i>=0)state.projects[i]=p;else state.projects.unshift(p);selectProject(p,false);toast('Project ready. Your music and edits are restored.');}else if(type==='cancelled'||type==='canceled'){if(state.abort)return;state.acceptProgress=false;endBusy();toast('Canceled. Your saved work is still here.');}};
 
 let editQueue=Promise.resolve();
 function commitChannelSettings(patch){const copied=clone(patch),projectId=state.project?.id;const apply=()=>{if(projectId!==state.project?.id)throw Error('The project changed before this edit was applied.');return applyChannelSettings(copied);};const task=editQueue.then(apply,apply);editQueue=task.catch(()=>{});return task;}
@@ -674,7 +845,7 @@ if($('backgroundContinue'))$('backgroundContinue').onclick=()=>bridge('continueI
 if($('backgroundNotifications'))$('backgroundNotifications').onclick=()=>bridge('openBackgroundSettings','notifications');
 if($('backgroundBattery'))$('backgroundBattery').onclick=()=>bridge('openBackgroundSettings','power');
 if($('backgroundPower'))$('backgroundPower').onclick=()=>bridge('openBackgroundSettings','power');
-if($('backgroundRetry'))$('backgroundRetry').onclick=async()=>{const job=state.backgroundJob;const project=state.projects.find(p=>p.id===job?.projectId);if(project){await selectProject(project,false);await generate();}};
+if($('backgroundRetry'))$('backgroundRetry').onclick=async()=>{const job=state.backgroundJob;const project=state.projects.find(p=>p.id===job?.projectId);if(project&&await selectProject(project,false))await generate();};
 if($('backgroundDismiss'))$('backgroundDismiss').onclick=()=>{$('backgroundRecovery').hidden=true;};
 if(backgroundSupported())setInterval(pollBackgroundJob,2000);
 

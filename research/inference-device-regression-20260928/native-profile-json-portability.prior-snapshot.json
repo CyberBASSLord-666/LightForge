@@ -1,0 +1,59 @@
+{
+  "scope": "Compile-only exact current native profile CI source set using its unchanged AppDiagnostics test stub. No JNI/model inference, APK build, or production mutation.",
+  "createdAt": "2026-09-28T22:01:12.331262+00:00",
+  "sourceCount": 9,
+  "sourceHashes": {
+    "android/src/com/cyberbasslord/lightforge/NativeDeux.java": "7e509aeb6fbf4be777bf842d006f2fd48bc2afbfdaa465a5776e8aa80e2a0c9f",
+    "android/src/com/cyberbasslord/lightforge/NativeExecutionPolicy.java": "884830de888b82693d702e2e09971ac455fd3f8f2fae3ce5fc9adb1ff6131210",
+    "android/src/com/cyberbasslord/lightforge/NativePassagePolicy.java": "e042c13d4759eb8692ae80a0d8c87fb025b87d593721c0c5f7bb7b07d4331848",
+    "android/src/com/cyberbasslord/lightforge/NativeDeuxTransform.java": "991b06501cfb88b904d0b714a525c389f169f00c231248b0e961b70f257e90b5",
+    "android/src/com/cyberbasslord/lightforge/NativeInferenceProfile.java": "95fe28edea0370d8d1ff5eab087f0a3fdbe108f08b33feb9e6d0df5191472aeb",
+    "android/src/com/cyberbasslord/lightforge/NativeInferenceProfileOutputComparison.java": "e47e1981dc06b20b39ff6a74307bb56024541c5bce9b08c2e2ee254a2a8070de",
+    "tests/NativeDeuxCalibrationTest.java": "8b8b29f174d3fb2e78b2a7bb0a119eea604e28f3d54ffc5026714aac1a159c4c",
+    "tests/NativeInferenceProfileEquivalenceTest.java": "cc1edd422202e1b9d40e0bf1cdb7a6f475883de4ec6fd684461eb1f4544014ba",
+    "tests/NativeInferenceProfilePairComparisonTest.java": "7b65a021c5cb872980c4a8c92fb6b17892b243d2dabdda3636ddf14dafe5c041"
+  },
+  "sourceHashesAfter": {
+    "android/src/com/cyberbasslord/lightforge/NativeDeux.java": "7e509aeb6fbf4be777bf842d006f2fd48bc2afbfdaa465a5776e8aa80e2a0c9f",
+    "android/src/com/cyberbasslord/lightforge/NativeExecutionPolicy.java": "884830de888b82693d702e2e09971ac455fd3f8f2fae3ce5fc9adb1ff6131210",
+    "android/src/com/cyberbasslord/lightforge/NativePassagePolicy.java": "e042c13d4759eb8692ae80a0d8c87fb025b87d593721c0c5f7bb7b07d4331848",
+    "android/src/com/cyberbasslord/lightforge/NativeDeuxTransform.java": "991b06501cfb88b904d0b714a525c389f169f00c231248b0e961b70f257e90b5",
+    "android/src/com/cyberbasslord/lightforge/NativeInferenceProfile.java": "95fe28edea0370d8d1ff5eab087f0a3fdbe108f08b33feb9e6d0df5191472aeb",
+    "android/src/com/cyberbasslord/lightforge/NativeInferenceProfileOutputComparison.java": "e47e1981dc06b20b39ff6a74307bb56024541c5bce9b08c2e2ee254a2a8070de",
+    "tests/NativeDeuxCalibrationTest.java": "8b8b29f174d3fb2e78b2a7bb0a119eea604e28f3d54ffc5026714aac1a159c4c",
+    "tests/NativeInferenceProfileEquivalenceTest.java": "cc1edd422202e1b9d40e0bf1cdb7a6f475883de4ec6fd684461eb1f4544014ba",
+    "tests/NativeInferenceProfilePairComparisonTest.java": "7b65a021c5cb872980c4a8c92fb6b17892b243d2dabdda3636ddf14dafe5c041"
+  },
+  "sourcesUnchanged": true,
+  "stubSha256": "2c0940bbbde66f304be679417d05422c5a032304d1e68d18d18e84e4507cd8b8",
+  "dependencyHashes": {
+    "android.jar": "4566663c3876e022b4fa4ced8c8697c4ab1688267f090114fd92d027b32e619b",
+    "onnxruntime-1.25.1.jar": "749793ebed63743fec853d093da7987a86ea5cd592d54fba898cd3233100c381",
+    "test-json.jar": "c243f45f9590c12694a4142ed3f07fc70dfb71e4daebd05ae234bf92a2da92a6"
+  },
+  "variants": {
+    "android-first": {
+      "exitCode": 0,
+      "classCount": 49,
+      "classpath": [
+        "/workspace/scratch/7031dc893b8d/toolchain/android-sdk/platforms/android-35/android.jar",
+        "/workspace/scratch/7031dc893b8d/toolchain/onnx/onnxruntime-1.25.1.jar",
+        "/workspace/scratch/7031dc893b8d/toolchain/test-json.jar"
+      ],
+      "log": "/workspace/scratch/7031dc893b8d/native-validation-restore/ci-json-portability-02/android-first.log",
+      "diagnostic": ""
+    },
+    "host-json-first": {
+      "exitCode": 0,
+      "classCount": 49,
+      "classpath": [
+        "/workspace/scratch/7031dc893b8d/toolchain/test-json.jar",
+        "/workspace/scratch/7031dc893b8d/toolchain/android-sdk/platforms/android-35/android.jar",
+        "/workspace/scratch/7031dc893b8d/toolchain/onnx/onnxruntime-1.25.1.jar"
+      ],
+      "log": "/workspace/scratch/7031dc893b8d/native-validation-restore/ci-json-portability-02/host-json-first.log",
+      "diagnostic": ""
+    }
+  },
+  "passed": true
+}

@@ -12,11 +12,12 @@ import java.util.zip.CRC32;
 /** Fixed-schema job receipts, independent of the rotating verbose trace. No Android dependency. */
 final class DiagnosticJobSummary {
     static final int MAX_JOBS = 3, MAX_BYTES = 32768;
-    private static final int MAGIC = 0x4c464a31;
+    private static final int LEGACY_MAGIC = 0x4c464a31, TEMPORAL_MAGIC = 0x4c464a32, MAGIC = 0x4c464a33;
+    private static final int LEGACY_METRIC_COUNT = 11, TEMPORAL_METRIC_COUNT = 15;
     private static final String[] STAGES = {"preparing", "compatibility", "rhythm", "separation", "voice", "bass", "recurrence", "generate", "save", "other"};
     private static final String[] STATES = {"preparing", "queued", "running", "cancelling", "completed", "failed", "cancelled", "interrupted", "unknown"};
     private static final String[] ROUTES = {"native-deux-v1", "native-mdx-v1", "native-game-v1"};
-    private static final String[] METRICS = {"wallMs", "modelInitWallMs", "inferenceWallMs", "inferenceCount", "sessionInitCount", "inferenceThreadCpuMs", "inferenceProcessCpuMs", "cacheModelHits", "cacheModelMisses", "schedulerCalibrationWallMs", "schedulerCalibrationCount"};
+    private static final String[] METRICS = {"wallMs", "modelInitWallMs", "inferenceWallMs", "inferenceCount", "sessionInitCount", "inferenceThreadCpuMs", "inferenceProcessCpuMs", "cacheModelHits", "cacheModelMisses", "schedulerCalibrationWallMs", "schedulerCalibrationCount", "temporalBaselineSessionCount", "temporalFourWorkerSessionCount", "temporalEightWorkerSessionCount", "temporalUnobservedSessionCount", "frequencyBaselineSessionCount", "frequencyFourWorkerSessionCount", "frequencyEightWorkerSessionCount", "frequencyUnobservedSessionCount"};
     private static DiagnosticJobSummary shared;
     private final File directory;
     private final ArrayList<Job> jobs = new ArrayList<Job>();
@@ -83,6 +84,12 @@ final class DiagnosticJobSummary {
         String temporal = field(record, "temporalConfig"), frequency = field(record, "frequencyConfig");
         if (configuration(temporal, true)) totals.temporalConfig = temporal;
         if (configuration(frequency, false)) totals.frequencyConfig = frequency;
+        if (routeIndex == 0) {
+            String encoded = field(record, "passagePolicy");
+            String[] evidence = NativeInferenceProfile.decodePassagePolicy(encoded);
+            // Missing/invalid later evidence must not erase the last complete controller receipt.
+            if (evidence != null && evidence.length != 0) totals.passagePolicy = NativeInferenceProfile.encodePassagePolicy(evidence);
+        }
         for (int i = 0; i < METRICS.length; i++) {
             String value = field(record, METRICS[i]);
             // v2 Deux used CpuMs for the calling thread, never the whole process.
@@ -97,10 +104,11 @@ final class DiagnosticJobSummary {
 
     synchronized String snapshot() throws IOException {
         load();
-        StringBuilder out = new StringBuilder("schema=diagnostic-job-summary-v1 retentionJobs=" + MAX_JOBS + " storageBoundBytes=" + MAX_BYTES +
+        StringBuilder out = new StringBuilder("schema=diagnostic-job-summary-v2 retentionJobs=" + MAX_JOBS + " storageBoundBytes=" + MAX_BYTES +
             " recovery=" + (corruptRecovery ? "invalid-prior-summary-discarded" : "normal") + "\n");
         out.append("Stage durations use observed monotonic intervals; restart gaps are excluded. Lifecycle elapsed uses the job wall clock, includes save and can include interruptions.\n");
         out.append("Native receipts count attempted passages, including retries/failures. Thread CPU is the calling thread; process CPU includes all app threads. Missing metrics remain unavailable.\n");
+        out.append("Temporal and frequency configuration counts describe session initialization attempts; the last configuration alone does not describe mixed passages. Passage policy records are the latest complete controller evidence, not additional passages.\n");
         if (jobs.isEmpty()) out.append("No job summaries have been recorded by this app version.\n");
         for (Job job : jobs) {
             out.append("jobRef=").append(job.reference).append(" state=").append(STATES[job.state])
@@ -123,6 +131,7 @@ final class DiagnosticJobSummary {
                     out.append(' ').append(METRICS[i]).append("MeasuredPassages=").append(totals.samples[i]);
                 }
                 out.append('\n');
+                for (String evidence : NativeInferenceProfile.decodePassagePolicy(totals.passagePolicy)) out.append(" ").append(evidence).append('\n');
             }
         }
         return out.toString();
@@ -148,7 +157,7 @@ final class DiagnosticJobSummary {
     }
     private static boolean configuration(String value, boolean temporal) {
         return value != null && (value.matches("cpu-i[1-6]-j1-d(?:0|4)-sequential") ||
-            (temporal && value.matches("cpu-i1-j1-d0-sequential-w(?:4|8)-b1")));
+            value.matches("cpu-i1-j1-d0-sequential-w(?:4|8)-b" + (temporal ? "1" : "16")));
     }
     private static String readConfiguration(DataInputStream in, boolean temporal) throws IOException {
         String value = in.readUTF();
@@ -169,7 +178,9 @@ final class DiagnosticJobSummary {
             if (bytes.length < 12 || bytes.length > MAX_BYTES) throw new IOException("Invalid summary length.");
             DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes));
             long checksum = in.readLong(); CRC32 crc = new CRC32(); crc.update(bytes, 8, bytes.length - 8);
-            if (checksum != crc.getValue() || in.readInt() != MAGIC) throw new IOException("Invalid summary checksum.");
+            int format = in.readInt();
+            if (checksum != crc.getValue() || (format != MAGIC && format != TEMPORAL_MAGIC && format != LEGACY_MAGIC)) throw new IOException("Invalid summary checksum.");
+            int metricCount = format == LEGACY_MAGIC ? LEGACY_METRIC_COUNT : format == TEMPORAL_MAGIC ? TEMPORAL_METRIC_COUNT : METRICS.length;
             int count = in.readInt(); if (count < 0 || count > MAX_JOBS) throw new IOException("Invalid summary count.");
             for (int n = 0; n < count; n++) {
                 String reference = in.readUTF(); if (!reference.matches("[a-f0-9]{16}") || find(reference) != null) throw new IOException("Invalid summary reference.");
@@ -181,10 +192,17 @@ final class DiagnosticJobSummary {
                 job.recoveryGaps = number(in); job.completedStages = in.readInt(); job.restoredStages = in.readInt();
                 if (job.completedStages < 0 || job.completedStages > 1000000 || job.restoredStages < 0 || job.restoredStages > 1000000) throw new IOException("Invalid stage count.");
                 for (int i = 0; i < STAGES.length; i++) job.stageMs[i] = number(in);
-                for (NativeTotals totals : job.routes) {
+                for (int route = 0; route < job.routes.length; route++) {
+                    NativeTotals totals = job.routes[route];
                     totals.passages = number(in); totals.completed = number(in); totals.cancelled = number(in); totals.other = number(in);
                     totals.temporalConfig = readConfiguration(in, true); totals.frequencyConfig = readConfiguration(in, false);
-                    for (int i = 0; i < METRICS.length; i++) { totals.values[i] = number(in); totals.samples[i] = number(in); if (totals.samples[i] > totals.passages) throw new IOException("Invalid measurement count."); }
+                    for (int i = 0; i < metricCount; i++) { totals.values[i] = number(in); totals.samples[i] = number(in); if (totals.samples[i] > totals.passages) throw new IOException("Invalid measurement count."); }
+                    if (format != LEGACY_MAGIC) {
+                        String encoded = in.readUTF();
+                        String[] evidence = NativeInferenceProfile.decodePassagePolicy(encoded);
+                        if (evidence == null || (route != 0 && evidence.length != 0)) throw new IOException("Invalid passage policy evidence.");
+                        totals.passagePolicy = NativeInferenceProfile.encodePassagePolicy(evidence);
+                    }
                 }
                 jobs.add(job);
             }
@@ -207,6 +225,7 @@ final class DiagnosticJobSummary {
                 out.writeLong(totals.passages); out.writeLong(totals.completed); out.writeLong(totals.cancelled); out.writeLong(totals.other);
                 out.writeUTF(totals.temporalConfig); out.writeUTF(totals.frequencyConfig);
                 for (int i = 0; i < METRICS.length; i++) { out.writeLong(totals.values[i]); out.writeLong(totals.samples[i]); }
+                out.writeUTF(totals.passagePolicy);
             }
         }
         out.flush(); byte[] payload = bytes.toByteArray();
@@ -221,6 +240,7 @@ final class DiagnosticJobSummary {
     private static final class NativeTotals {
         long passages, completed, cancelled, other;
         String temporalConfig = "unavailable", frequencyConfig = "unavailable";
+        String passagePolicy = "";
         final long[] values = new long[METRICS.length], samples = new long[METRICS.length];
     }
     private static final class Job {

@@ -7,12 +7,12 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: restore-regression-${{ github.head_ref || github.ref_name }}
+  group: restore-regression-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   restore-regression:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -27,6 +27,64 @@ jobs:
             research/model-source
             research/evaluation-1.6
             research/upstream/deux
+      - name: Read current release version
+        run: |
+          python3 - <<'PYVERSION'
+          import json,os
+          version=json.load(open('version.json'))['name']
+          assert len(version.split('.'))==3 and all(p.isdigit() for p in version.split('.'))
+          with open(os.environ['GITHUB_ENV'],'a') as out:out.write('LIGHTFORGE_RELEASE='+version+'\n')
+          PYVERSION
+      - name: Declare supplemental browser QA scope
+        run: |
+          echo 'Supplemental desktop Chromium QA only, with simulated Android bridges and software WebGL. This run does not seal production evidence or qualify model performance, Android devices, or a release.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Observe experimental host eligibility without running inference
+        id: host_diagnostic
+        timeout-minutes: 2
+        run: |
+          python3 - <<'PYHOST'
+          import json, os, subprocess
+          from pathlib import Path
+          output = Path(os.environ['RUNNER_TEMP']) / 'lightforge-host-diagnostic'
+          output.mkdir()
+          path = output / 'runner-diagnostic.json'
+          with path.open('xb') as stream:
+              result = subprocess.run(['python3', 'tools/portable_inference_host.py'], stdout=stream, check=False, timeout=30)
+          if result.returncode not in (0, 2):
+              raise SystemExit('Unexpected host diagnostic exit status: ' + str(result.returncode))
+          if not 0 < path.stat().st_size <= 1024 * 1024:
+              raise SystemExit('Host diagnostic JSON is empty or exceeds the bounded size')
+          def unique_object(pairs):
+              result = {}
+              for key, value in pairs:
+                  if key in result:
+                      raise ValueError('Duplicate host diagnostic JSON key')
+                  result[key] = value
+              return result
+          def invalid_constant(value):
+              raise ValueError('Nonfinite host diagnostic JSON number')
+          record = json.loads(path.read_bytes(), object_pairs_hook=unique_object, parse_constant=invalid_constant)
+          if not isinstance(record, dict) or record.get('schema') != 'lightforge.experimental-portable-runner-diagnostic.v1':
+              raise SystemExit('Unknown host diagnostic schema')
+          if type(record.get('eligible')) is not bool or any(record.get(key) is not False for key in (
+                  'qualificationEstablished', 'releaseAdmissible', 'fullQualificationEvidence')):
+              raise SystemExit('Host diagnostic eligibility or nonqualification flags are invalid')
+          if result.returncode != (0 if record['eligible'] else 2):
+              raise SystemExit('Host diagnostic status conflicts with its eligibility observation')
+          if not record['eligible'] and (not isinstance(record.get('reason'), str) or not record['reason'].strip()):
+              raise SystemExit('Ineligible host diagnostic must retain its reason')
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as summary:
+              summary.write('Experimental host diagnostic: ' + ('ELIGIBLE' if record['eligible'] else 'INELIGIBLE')
+                            + '. Eligibility only; no inference, performance qualification, or release admission.\n')
+          PYHOST
+      - name: Retain read-only host diagnostic, including ineligibility
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: ${{ always() && steps.host_diagnostic.outcome != 'skipped' }}
+        with:
+          name: lightforge-host-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/lightforge-host-diagnostic/runner-diagnostic.json
+          retention-days: 14
+          if-no-files-found: error
       - name: Archive immutable review sources without model weights or signing material
         run: |
           python3 - <<'PY'
@@ -95,12 +153,40 @@ jobs:
           git diff --exit-code -- web/preview/vehicle-preview.js
       - name: Restore, worker, and preview lifecycle regressions
         run: node --test tests/background-2.2.test.cjs tests/preview-lifecycle.test.cjs tests/preview-startup.test.cjs tests/preview-engine.test.cjs
-      - name: Preserve strict Android readiness contract
-        run: python3 -m unittest discover -s tests -p 'test_background_instrumentation_ui_readiness_contract.py'
+      - name: Preserve strict Android readiness and supplemental workflow contracts
+        run: python3 -m unittest tests.test_background_instrumentation_ui_readiness_contract tests.test_supplemental_browser_workflow
+      - name: Install shared Chromium for supplemental browser QA
+        id: chromium
+        run: npx playwright install --with-deps chromium
       - name: Actual cold-restore browser and WebGL regression
-        run: |
-          npx playwright install --with-deps chromium
-          node qa/restore-preview/browser.cjs
+        if: ${{ !cancelled() && steps.chromium.outcome == 'success' }}
+        timeout-minutes: 5
+        run: node qa/restore-preview/browser.cjs
+      - name: Current-version application browser regression (no model inference)
+        if: ${{ !cancelled() && steps.chromium.outcome == 'success' }}
+        timeout-minutes: 5
+        run: node "qa/release-$LIGHTFORGE_RELEASE/browser.cjs"
+      - name: Current-version background progress and recovery UI
+        if: ${{ !cancelled() && steps.chromium.outcome == 'success' }}
+        timeout-minutes: 5
+        run: node "qa/release-$LIGHTFORGE_RELEASE/background-ui.cjs"
+      - name: Actual Highland optics, clock and graphics recovery
+        if: ${{ !cancelled() && steps.chromium.outcome == 'success' }}
+        timeout-minutes: 5
+        run: node tools/verify_preview_browser.cjs
+      - name: Retain supplemental browser diagnostics (not sealed release evidence)
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: ${{ always() && env.LIGHTFORGE_RELEASE != '' }}
+        with:
+          name: lightforge-supplemental-browser-${{ env.LIGHTFORGE_RELEASE }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            qa/release-${{ env.LIGHTFORGE_RELEASE }}/browser-verification.json
+            qa/release-${{ env.LIGHTFORGE_RELEASE }}/browser-export-project.json
+            qa/release-${{ env.LIGHTFORGE_RELEASE }}/background-ui-verification.json
+            qa/release-${{ env.LIGHTFORGE_RELEASE }}/preview-verification.json
+            qa/release-${{ env.LIGHTFORGE_RELEASE }}/*.png
+          retention-days: 14
+          if-no-files-found: warn
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:

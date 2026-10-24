@@ -2,8 +2,8 @@ from functools import partial
 from typing import Any, Callable, List, Optional, Sequence, Tuple, Union
 from torch import nn, Tensor
 import torch.nn.functional as F
-from torchvision.ops.misc import ConvNormActivation
-from torch.hub import load_state_dict_from_url
+from torchvision.ops.misc import Conv2dNormActivation
+from helpers.safe_loading import load_state_dict_from_url
 import urllib.parse
 
 from models.mn.utils import cnn_out_size
@@ -122,7 +122,7 @@ class MN(nn.Module):
         # building first layer
         firstconv_output_channels = inverted_residual_setting[0].input_channels
         layers.append(
-            ConvNormActivation(
+            Conv2dNormActivation(
                 in_channels,
                 firstconv_output_channels,
                 kernel_size=in_conv_kernel,
@@ -157,7 +157,7 @@ class MN(nn.Module):
         lastconv_input_channels = inverted_residual_setting[-1].out_channels
         lastconv_output_channels = 6 * lastconv_input_channels
         layers.append(
-            ConvNormActivation(
+            Conv2dNormActivation(
                 lastconv_input_channels,
                 lastconv_output_channels,
                 kernel_size=1,
@@ -281,7 +281,7 @@ def _mobilenet_v3(
 
     if pretrained_name in pretrained_models:
         model_url = pretrained_models.get(pretrained_name)
-        state_dict = load_state_dict_from_url(model_url, model_dir=model_dir, map_location="cpu")
+        state_dict = load_state_dict_from_url(model_url, model_dir=model_dir, map_location="cpu", weights_only=True)
         if kwargs['head_type'] == "mlp":
             num_classes = state_dict['classifier.5.bias'].size(0)
         elif kwargs['head_type'] == "fully_convolutional":

@@ -37,6 +37,11 @@ final class NativeExecutionPolicy {
         return four.equals(two)?new Config[]{four}:new Config[]{four,two};
     }
     private static Config temporalConfig(int workers){return new Config(1,1,0,false,workers,1);}
+    /** Frequency companion to a complete-passage candidate; never independent admission. */
+    static Config parallelFrequency(int workers){
+        if(workers!=4&&workers!=8)throw new IllegalArgumentException("Unsupported frequency worker count.");
+        return new Config(1,1,0,false,workers,16);
+    }
     /** Include every geometry allowed by the observed free-memory snapshot, in stable order. */
     static Config[] temporalCandidates(Key key,long availableBytes){
         if(key.cores<4||availableBytes<FOUR_WORKER_HEADROOM)return new Config[0];
@@ -61,6 +66,7 @@ final class NativeExecutionPolicy {
     static final class Key {
         final int cores;
         private final byte[] fingerprint;
+        String identity(){StringBuilder value=new StringBuilder(64);for(byte b:fingerprint)value.append(String.format(java.util.Locale.ROOT,"%02x",b&255));return value.toString();}
         Key(String modelId,String runtimeId,String osIdentity,String deviceIdentity,int cores){
             this.cores=Math.max(1,cores);
             try{

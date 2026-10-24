@@ -1,5 +1,11 @@
 # Local diagnostic evidence
 
+Published 2.4.1 diagnostic receipts and host performance evidence remain
+historical. The [unreleased device-regression correction](../research/inference-device-regression-20260928/README.md)
+adds complete-passage policy evidence and mixed scheduling counts. Its observed
+phone regression is documented separately from uncontrolled device conditions;
+these records do not establish a new device speedup or thermal explanation.
+
 `tools/diagnostic_evidence.py` extracts observations from the UTF-8 Android diagnostic export without uploading it. Python's standard library is sufficient:
 
 ```sh
@@ -16,7 +22,7 @@ The JSON contains:
 - Interruption-to-next-attempt gaps, renderer failure events and completed-preview frame intervals. A chronological next attempt is not verified parent/resume lineage. Interruption gaps are excluded from compute totals.
 - A separate current-job snapshot. Its elapsed time is never substituted for original full-song analysis time.
 
-`observed` includes a genuine reported zero. `partial` contains an `observed_subtotal` and a null complete `value`. `unavailable` keeps missing, invalid and explicitly unavailable values distinct. An unfinished passage records only its observed partial interval. Profile metric summaries include observed/population counts, missing/unavailable/invalid counts, minimum, maximum and mean. All duration keys are milliseconds; native field suffixes preserve their original units.
+`observed` includes a genuine reported zero. `partial` contains an `observed_subtotal` and a null complete `value`. `unavailable` keeps missing, invalid and explicitly unavailable values distinct. An unfinished passage records only its observed partial interval. Profile metric summaries include observed/population counts, missing/unavailable/invalid counts, minimum, maximum and mean. Stage and passage duration keys use milliseconds. Native field suffixes preserve their units; passage-policy `*Nanos` values retain exact integer nanoseconds.
 
 Native bundles accept the optional `engine-init` stage emitted during engine initialization. A producer's `cpuTelemetry=partial` remains a distinct telemetry observation; unavailable CPU totals are not filled from wall time or assumed to be zero.
 
@@ -27,8 +33,9 @@ Stage, passage and native profile intervals overlap: do not add them together. T
 New diagnostic exports include `DURABLE ANALYSIS SUMMARIES`, independent of the
 1 MiB rotating event trace. A fixed-schema, checksum-checked atomic file retains
 the latest three jobs. Only a hashed job reference, fixed state/stage/route enums,
-creation/observation times, duration, analysis quality, restoration counts and
-numeric measurements are stored. The current-job header uses the same hashed
+creation/observation times, duration, analysis quality, restoration counts,
+numeric measurements and bounded allowlisted policy evidence are stored.
+The current-job header uses the same hashed
 reference; no media name, audio, transcript, path, VIN or raw job ID enters this
 store.
 
@@ -49,8 +56,31 @@ measurements than attempted passages is partial, never a complete total or a
 synthetic zero. Retries and failed attempts remain included as work. Thread CPU
 means the calling thread; process CPU covers all app threads.
 
-The offline extractor returns these as `durable_job_summaries`, removes all job
-references and absolute timestamps, and retains only a boolean association to
-the current job. The legacy current snapshot and trace measurements remain
+The correction's `diagnostic-job-summary-v2` preserves the latest complete
+controller snapshot: raw qualification/fresh-check pairs, complete output digest,
+finite/exact/geometry checks, decision reasons, extra-work cost and lease state.
+It also retains the latest useful baseline control with its preceding baseline
+bracket, maximum of three candidate times and acceptance decision. Controls
+declare `comparisonScope=unmatched-inputs`; they are neither same-input paired
+speedup evidence nor output-equivalence evidence. Their useful production work
+is not counted as a candidate replay or optional-probe cost.
+`projectedAccruedSavingsNanos` is a conservative payback projection labeled
+`projected-not-measured`, never a measured whole-job saving. Mixed baseline,
+four-worker, eight-worker and unobserved temporal and frequency session counts describe
+initialization attempts; the last configuration alone cannot describe a mixed
+passage. Candidate probe costs remain separate from production graph totals.
+The binary v3 reader accepts v1 and v2 summaries and upgrades them atomically
+without inventing missing historical counts. The three-job, 32 KiB storage bound
+and privacy restrictions remain unchanged.
+
+The offline extractor supports both summary versions as `durable_job_summaries`,
+removes job references and absolute timestamps, and retains only a boolean
+association to the current job. It accepts readable and encoded policy snapshots
+without counting them as additional passages. Failed-pair flags and unmatched
+control decisions remain observations;
+the extractor does not qualify a schedule. Duplicate, inconsistent, truncated or
+unsafe records cannot become valid evidence, and orphan records after trace
+rotation are not assigned to an invented passage. Missing mixed-session metrics
+remain unavailable or partial. The current snapshot and trace measurements stay
 separate; a compact receipt is observational evidence, not a controlled
 performance or quality qualification.

@@ -71,3 +71,26 @@ diagnostic scale, not export quantization. Change `visualSampleMs` or
 `rgbQuantizationLevels` only when comparing like-for-like reports. Keep
 `includeWindows` off for long shows unless per-window diagnostic rows are needed;
 aggregate metrics are always computed.
+
+## Final-byte realization boundaries
+
+Hierarchy attack matching uses only frame boundaries inside the declared
+`targetToleranceMs` interval, including its exact endpoints. It does not round
+the window outward to neighboring frames. Active coverage still includes a held
+frame overlapping an off-grid target. Exterior-light attack evidence uses new
+On command transitions (255/178/204/230); fade-off bytes (26/51/77) never become
+attacks merely because they are nonzero. An On transition after a fade-off can
+be observed without an intervening zero frame. This remains command evidence,
+not a measurement of optical brightness.
+
+The synchronization sidecar treats any manual closure cue as replacement of
+that closure's entire automatic track, matching the compiler's overlay rules.
+Suppressed or already-held mechanical commands do not emit an observed command
+timestamp from planning metadata. Unknown outputs and targets outside export
+are reported separately from disabled outputs and collision losses.
+
+Regression coverage is in `choreography-quality.test.cjs` and
+`vehicle-perceptual-integration.test.cjs`, including 15/20 ms off-grid boundaries,
+all documented On/fade-off combinations, whole-track manual replacement, held
+commands and out-of-range targets. These are synthetic contract checks, not
+musical-accuracy or physical-vehicle qualification.

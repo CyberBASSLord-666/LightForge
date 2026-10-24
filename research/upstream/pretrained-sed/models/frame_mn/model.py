@@ -1,3 +1,12 @@
+# Shared fail-closed loader; this file also supports direct script execution.
+import sys as _security_sys
+from pathlib import Path as _SecurityPath
+_security_sys.path.insert(0, str(_SecurityPath(__file__).resolve().parents[3]))
+from _lightforge_research_checkpoint_security import (
+    load_tensor_checkpoint as _safe_torch_load,
+    load_remote_tensor_checkpoint as _safe_hub_load,
+)
+
 import os
 import urllib.parse
 from functools import partial
@@ -5,7 +14,7 @@ from typing import Any, Callable, List, Optional, Sequence, Tuple
 
 import torch
 from torch import nn, Tensor
-from torch.hub import load_state_dict_from_url
+from _lightforge_research_checkpoint_security import load_remote_tensor_checkpoint as load_state_dict_from_url
 from torchvision.ops.misc import ConvNormActivation
 
 from models.frame_mn.block_types import InvertedResidualConfig, InvertedResidual
@@ -197,7 +206,7 @@ class MN(nn.Module):
     def load_model(self, path, wandb_id):
         ckpt_path = os.path.join(path, wandb_id + ".ckpt")
 
-        pretrained_weights = torch.load(ckpt_path, map_location="cpu")["state_dict"]
+        pretrained_weights = _safe_torch_load(ckpt_path, map_location="cpu")["state_dict"]
         pretrained_weights = {k[10:]: v for k, v in pretrained_weights.items() if k[:10] == "net.model."}
         self.load_state_dict(pretrained_weights)
 

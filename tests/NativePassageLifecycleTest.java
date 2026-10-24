@@ -14,7 +14,7 @@ public final class NativePassageLifecycleTest {
     private static File root;
     public static void main(String[] args)throws Exception{
         root=new File(args[0]);root.mkdirs();
-        closeBeforeStart();closeQueuedStart();closeRunningAndReplace();
+        closeBeforeStart();closeQueuedStart();closeRunningAndReplace();usefulPassageBudget();
         System.out.println("PASS: "+checks+" production NativePassageTask lifecycle checks");
     }
     private static Context context(String name){return new Context(new File(root,name),new File(root,"assets"));}
@@ -84,6 +84,26 @@ public final class NativePassageLifecycleTest {
         }finally{replacement.close();}
         retired(replacement);require(NativeDeux.liveResources.get()==0,"replacement native resources leaked");
     }
+    private static void usefulPassageBudget()throws Exception{
+        NativeDeux.reset();NativePassageTask task=task(context("useful-budget"));
+        try{
+            for(int count:new int[]{0,-2,2881}){
+                try{task.start(0,count);throw new AssertionError("invalid budget reached native work");}
+                catch(IOException expected){checks++;}
+            }
+            require(NativeDeux.constructed.get()==0,"invalid budget allocated native resources");
+            require("idle".equals(field(task,"state")),"invalid budget changed passage state");
+            NativeDeux.runAllowed.countDown();
+            for(int count:new int[]{-1,1,2880}){
+                String token=new JSONObject(count==-1?task.start(0):task.start(0,count)).getString("token");
+                long deadline=System.nanoTime()+TimeUnit.SECONDS.toNanos(5);
+                while("running".equals(new JSONObject(task.status(token)).getString("state"))&&System.nanoTime()<deadline)Thread.sleep(5);
+                require("completed".equals(new JSONObject(task.status(token)).getString("state")),"budgeted passage did not complete");
+                require(NativeDeux.lastRemainingUseful==count,"native prediction received the wrong useful passage budget");
+            }
+        }finally{task.close();}
+        retired(task);require(NativeDeux.liveResources.get()==0,"budgeted passage leaked native resources");
+    }
 }
 
 /** Delays only native execution/retirement; task locking and executor behavior are production code. */
@@ -92,6 +112,7 @@ final class NativeDeux implements AutoCloseable {
     static final Semaphore INFERENCE_GATE=new Semaphore(1,true);
     static final AtomicInteger constructed=new AtomicInteger(),runs=new AtomicInteger(),active=new AtomicInteger(),maxActive=new AtomicInteger(),liveResources=new AtomicInteger();
     static volatile boolean blockRetirement;
+    static volatile int lastRemainingUseful;
     static CountDownLatch runEntered,runAllowed,retirementEntered,retirementAllowed;
     private volatile boolean closed,running;
     private boolean released;
@@ -101,7 +122,7 @@ final class NativeDeux implements AutoCloseable {
     NativeDeux(Context context){constructed.incrementAndGet();liveResources.incrementAndGet();}
     static void reset(){
         if(active.get()!=0||liveResources.get()!=0||INFERENCE_GATE.availablePermits()!=1)throw new AssertionError("Previous native boundary leaked");
-        constructed.set(0);runs.set(0);maxActive.set(0);blockRetirement=false;
+        constructed.set(0);runs.set(0);maxActive.set(0);blockRetirement=false;lastRemainingUseful=Integer.MIN_VALUE;
         runEntered=new CountDownLatch(1);runAllowed=new CountDownLatch(1);retirementEntered=new CountDownLatch(1);retirementAllowed=new CountDownLatch(1);
     }
     static void await(CountDownLatch latch){
@@ -110,6 +131,10 @@ final class NativeDeux implements AutoCloseable {
         finally{if(interrupted)Thread.currentThread().interrupt();}
     }
     void predict(File audio,long sample,File output,Progress progress,Cancellation cancellation,ExecutionScope scope,NativeInferenceProfile profile)throws Exception{
+        predict(audio,sample,output,progress,cancellation,scope,profile,-1);
+    }
+    void predict(File audio,long sample,File output,Progress progress,Cancellation cancellation,ExecutionScope scope,NativeInferenceProfile profile,int remainingUseful)throws Exception{
+        lastRemainingUseful=remainingUseful;
         while(!INFERENCE_GATE.tryAcquire(25,TimeUnit.MILLISECONDS)){if(closed||cancellation.cancelled())throw new IOException("cancelled while waiting");}
         boolean entered=false;
         try{

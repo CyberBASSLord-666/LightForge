@@ -12,6 +12,40 @@ function writeJsonAtomic(file,value){
  finally{if(fs.existsSync(temporary))fs.unlinkSync(temporary);}
 }
 function errorText(error){return error&&error.stack?error.stack:String(error);}
+// Retain only already-sanitized diagnostic text, never project/music/DOM state.
+// Bounded checkpoints plus first-seen error summaries retain less than 80 KiB
+// of text. Handled application/resource errors need not trigger pageerror.
+const DIAGNOSTIC_LIMITS={checkpoints:16,reportChars:4096,errors:24,errorChars:512};
+function recordApplicationDiagnostics(receipt,phase,snapshot){
+ assert.equal(typeof snapshot?.report,'string','Sanitized application diagnostics are unavailable');
+ const diagnostics=receipt.applicationDiagnostics||(receipt.applicationDiagnostics={schema:'lightforge.browser-diagnostics.v1',checkpoints:[],unexpectedErrors:[],hasUnexpectedErrors:false,hasUnexpectedRecovery:false,checkpointOverflow:false});
+ const errors=snapshot.report.split('\n').filter(line=>/^\S+ ERROR \[[^\]]+\]/.test(line));
+ diagnostics.hasUnexpectedErrors||=errors.length>0;
+ diagnostics.hasUnexpectedRecovery||=snapshot.recoveryVisible===true;
+ for(const error of errors){
+  const message=error.slice(0,DIAGNOSTIC_LIMITS.errorChars);
+  if(diagnostics.unexpectedErrors.some(entry=>entry.message===message))continue;
+  if(diagnostics.unexpectedErrors.length<DIAGNOSTIC_LIMITS.errors)diagnostics.unexpectedErrors.push({phase:phase.slice(0,64),message});
+ }
+ const checkpoint={phase:phase.slice(0,64),recoveryVisible:snapshot.recoveryVisible===true,errorCount:errors.length,reportTruncated:snapshot.report.length>DIAGNOSTIC_LIMITS.reportChars,report:snapshot.report.slice(-DIAGNOSTIC_LIMITS.reportChars)};
+ if(diagnostics.checkpoints.length>=DIAGNOSTIC_LIMITS.checkpoints){diagnostics.checkpoints.shift();diagnostics.checkpointOverflow=true;}
+ diagnostics.checkpoints.push(checkpoint);
+}
+async function captureApplicationDiagnostics(page,receipt,phase){
+ const snapshot=await page.evaluate(()=>({report:window.LightForgeDiagnostics?.report?.(),recoveryVisible:document.getElementById('diagnosticRecovery')?.hidden===false}));
+ recordApplicationDiagnostics(receipt,phase,snapshot);
+ writeJsonAtomic(output,receipt);
+}
+async function captureVisibleScore(page,width){
+ await page.locator('#scoreCanvas').scrollIntoViewIfNeeded();
+ await page.waitForFunction(()=>{const canvas=document.getElementById('scoreCanvas'),box=canvas.getBoundingClientRect(),dpr=Math.min(2,devicePixelRatio||1);return canvas.clientWidth>0&&box.top<innerHeight&&box.bottom>0&&canvas.width===Math.round(canvas.clientWidth*dpr)&&canvas.height===Math.round(canvas.clientHeight*dpr);},{},{timeout:10000});
+ await page.evaluate(async()=>{await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);});
+ const dimensions=await page.evaluate(()=>{const canvas=document.getElementById('scoreCanvas');return {intrinsicWidth:canvas.width,intrinsicHeight:canvas.height,cssWidth:canvas.clientWidth,cssHeight:canvas.clientHeight,dpr:Math.min(2,devicePixelRatio||1)};});
+ assert.equal(dimensions.intrinsicWidth,Math.round(dimensions.cssWidth*dimensions.dpr));
+ assert.equal(dimensions.intrinsicHeight,Math.round(dimensions.cssHeight*dimensions.dpr));
+ await page.locator('#scoreTimeline').screenshot({path:path.join(out,'score-'+width+'.png'),animations:'disabled'});
+ return {viewportWidth:width,...dimensions};
+}
 function listen(server){
  return new Promise((resolve,reject)=>{
   const failed=error=>{server.off('listening',ready);reject(error);};
@@ -38,14 +72,16 @@ const hashes=()=>Object.fromEntries(sourceNames().map(f=>[f,crypto.createHash('s
  // Do this before imports, fixtures, hashing, or starting a server so a failed
  // setup cannot leave a previous successful receipt visible.
  writeJsonAtomic(output,receipt);
- let server,browser,page,verified=false;
+ let server,browser,page,fresh,verified=false;
  try{
   if(sessionError)throw sessionError;
   const {chromium}=require('playwright');
   const music=JSON.parse(fs.readFileSync(path.join(root,'qa/release-1.6.0/actual-music-user-glass-prefix64-analysis.json')));
   const fixture={version:1,name:'Glass Castle · Precision QA',settings:{style:'cinematic',dance:'off',seed:2025,vocalFocus:.85,bassFocus:.9,vocalRegions:[]},music};
   receipt.source_hashes=hashes();
+  const {allowLocalRequest}=require('../locked-benchmark/local-http-security.cjs');
   server=http.createServer((req,res)=>{
+    if(!allowLocalRequest(req,res))return;
   const pathname=decodeURIComponent(req.url.split('?')[0]);
   if(pathname==='/fixture.json'){res.setHeader('Content-Type','application/json');res.end(JSON.stringify(fixture));return;}
   const p=path.resolve(root,'web','.'+(pathname==='/'?'/index.html':pathname));if(!p.startsWith(path.join(root,'web')+path.sep)){res.writeHead(403).end();return;}
@@ -74,21 +110,30 @@ const hashes=()=>Object.fromEntries(sourceNames().map(f=>[f,crypto.createHash('s
   const exp=await page.evaluate(()=>qaExport),bytes=Buffer.concat(exp.chunks.map(c=>Buffer.from(c,'base64'))),offset=bytes.readUInt16LE(4);
   assert.equal(crypto.createHash('sha256').update(bytes.subarray(offset)).digest('hex'),frameHash);assert.equal(exp.metadata.projectState.provenance.app,'2.4.1');assert.equal(exp.metadata.validation.synchronization.manual[0].status,'matched');
   fs.writeFileSync(path.join(out,'browser-export.fseq'),bytes);fs.writeFileSync(path.join(out,'browser-export-project.json'),JSON.stringify(exp.metadata.projectState));receipt.checks.push('Streamed export payload matches the saved frame SHA-256 and contains synchronization review.');
-  await page.locator('#exportDone').click();await page.reload();await page.waitForFunction(()=>window.LightForgeApp?.state.show&&!LightForgeApp.state.composing);assert.equal(await page.evaluate(()=>LightForgeApp.state.compiled.sha256),frameHash);receipt.checks.push('Reload preserved exact compiled frames and musical edits.');
+  await page.locator('#exportDone').click();await page.reload();await page.waitForFunction(()=>window.LightForgeApp?.state.show&&!LightForgeApp.state.composing);assert.equal(await page.evaluate(()=>LightForgeApp.state.compiled.sha256),frameHash);receipt.checks.push('Reload preserved exact compiled frames and musical edits.');await captureApplicationDiagnostics(page,receipt,'after-reload');
   await page.locator('#export').click();await page.waitForFunction(()=>window.qaExport?.chunks.length&&!LightForgeApp.state.busy);assert.equal(await page.evaluate(()=>qaExport.metadata.validation.synchronization.manual[0].status),'matched');await page.locator('#exportDone').click();receipt.checks.push('Export after reopening retained the verified synchronization report.');
   await page.locator('#workspace-review').click();await page.locator('#cueWorkspace').evaluate(e=>e.open=true);await page.locator('#syncDetails').evaluate(e=>e.open=true);
   for(const width of [320,393,768,1440]){
    await page.setViewportSize({width,height:960});await page.locator('#workspace-compose').click();await page.locator('#carCanvas').scrollIntoViewIfNeeded();await page.evaluate(async()=>{await LightForgeApp.vehiclePreview.ready;LightForgeApp.renderFrame(0);await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);});await page.screenshot({path:path.join(out,'precision-'+width+'.png'),fullPage:true,animations:'disabled'});
    assert.doesNotMatch(await page.locator('#totalTime').innerText(),/NaN|Infinity/);
    const layout=await page.evaluate(()=>({client:document.documentElement.clientWidth,scroll:document.documentElement.scrollWidth,duplicates:[...document.querySelectorAll('[id]')].map(e=>e.id).filter((x,i,a)=>a.indexOf(x)!==i)}));assert.ok(layout.scroll<=layout.client+1,JSON.stringify({width,layout}));assert.equal(layout.duplicates.length,0);
+   (receipt.scoreCaptures||(receipt.scoreCaptures=[])).push(await captureVisibleScore(page,width));
   }
-  for(const id of ['compose','music','outputs','review']){await page.locator('#workspace-'+id).click();assert.equal(await page.locator('#panel-'+id).isVisible(),true);await page.locator('#panel-'+id).screenshot({path:path.join(out,'workspace-'+id+'.png')});}await page.locator('#workspace-compose').focus();await page.keyboard.press('ArrowRight');assert.equal(await page.locator('#workspace-music').getAttribute('aria-selected'),'true');await page.locator('#scoreZoomIn').click();await page.waitForFunction(()=>document.getElementById('scoreScale').textContent!=='Full track');assert.doesNotMatch(await page.locator('#scoreScale').innerText(),/Full track/);receipt.checks.push('Workspace tabs support keyboard navigation; musical score zoom is operational.');
+  await captureApplicationDiagnostics(page,receipt,'after-responsive-captures');
+  receipt.checks.push('Score captures follow visibility, intrinsic/CSS dimensions at the effective DPR, and two animation frames.');
+  for(const id of ['compose','music','outputs','review']){await page.locator('#workspace-'+id).click();assert.equal(await page.locator('#panel-'+id).isVisible(),true);await page.locator('#panel-'+id).screenshot({path:path.join(out,'workspace-'+id+'.png')});await captureApplicationDiagnostics(page,receipt,'workspace-'+id);}await page.locator('#workspace-compose').focus();await page.keyboard.press('ArrowRight');assert.equal(await page.locator('#workspace-music').getAttribute('aria-selected'),'true');await page.locator('#scoreZoomIn').click();await page.waitForFunction(()=>document.getElementById('scoreScale').textContent!=='Full track');assert.doesNotMatch(await page.locator('#scoreScale').innerText(),/Full track/);receipt.checks.push('Workspace tabs support keyboard navigation; musical score zoom is operational.');await captureApplicationDiagnostics(page,receipt,'after-keyboard-and-zoom');
   receipt.checks.push('320, 393, 768 and 1440 px layouts have no horizontal overflow or duplicate IDs; screenshots retained.');
-  for(const width of [393,1440]){await page.setViewportSize({width,height:960});for(const view of ['shows','guide']){await page.locator('.nav-item[data-navigate="'+view+'"]').click();assert.equal(await page.locator('#'+view).isVisible(),true);assert.equal(await page.locator('#'+view+'Title').isVisible(),true);assert.equal(await page.locator('.nav-item[data-navigate="'+view+'"]').getAttribute('aria-current'),'page');if(view==='shows')assert.equal(await page.locator('#showList .saved-show').count(),1);assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+1));await page.screenshot({path:path.join(out,view+'-'+width+'.png'),fullPage:true,animations:'disabled'});}}
+  for(const width of [393,1440]){await page.setViewportSize({width,height:960});for(const view of ['shows','guide']){await page.locator('.nav-item[data-navigate="'+view+'"]').click();assert.equal(await page.locator('#'+view).isVisible(),true);assert.equal(await page.locator('#'+view+'Title').isVisible(),true);assert.equal(await page.locator('.nav-item[data-navigate="'+view+'"]').getAttribute('aria-current'),'page');if(view==='shows')assert.equal(await page.locator('#showList .saved-show').count(),1);assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+1));await page.screenshot({path:path.join(out,view+'-'+width+'.png'),fullPage:true,animations:'disabled'});await captureApplicationDiagnostics(page,receipt,view+'-'+width);}}
   const backgroundDraws=await page.evaluate(async()=>{await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);const canvas=document.getElementById('scoreCanvas'),context=canvas.getContext('2d'),original=context.clearRect;let draws=0;context.clearRect=function(...args){draws++;return original.apply(this,args);};const audio=document.getElementById('audio');await audio.play();await new Promise(r=>setTimeout(r,400));audio.pause();context.clearRect=original;return draws;});assert.equal(backgroundDraws,0);receipt.checks.push('The source-time score stops drawing when its workspace is offscreen during audio playback.');
-  const fresh=await browser.newPage({viewport:{width:393,height:852}});fresh.on('pageerror',e=>errors.push(e.message));await fresh.addInitScript(()=>{window.Android={pickAudio(){},getBootstrap:()=>JSON.stringify({projects:[],version:'2.4.1'})};});await fresh.goto('http://127.0.0.1:'+server.address().port);await fresh.waitForFunction(()=>!!window.LightForgeApp);assert.equal(await fresh.locator('#emptyCard').isVisible(),true);assert.ok(await fresh.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+1));await fresh.screenshot({path:path.join(out,'first-launch-393.png'),fullPage:true,animations:'disabled'});await fresh.close();receipt.checks.push('First launch, saved-show collection and vehicle guide render without overflow or page errors at phone and desktop sizes.');
+  fresh=await browser.newPage({viewport:{width:393,height:852}});fresh.on('pageerror',e=>errors.push(e.message));await fresh.addInitScript(()=>{window.Android={pickAudio(){},getBootstrap:()=>JSON.stringify({projects:[],version:'2.4.1'})};});await fresh.goto('http://127.0.0.1:'+server.address().port);await fresh.waitForFunction(()=>!!window.LightForgeApp);assert.equal(await fresh.locator('#emptyCard').isVisible(),true);assert.ok(await fresh.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+1));await fresh.screenshot({path:path.join(out,'first-launch-393.png'),fullPage:true,animations:'disabled'});await captureApplicationDiagnostics(fresh,receipt,'first-launch');await fresh.close();receipt.checks.push('First launch, saved-show collection and vehicle guide render without overflow or page errors at phone and desktop sizes.');
+  await captureApplicationDiagnostics(page,receipt,'final');
+  // Persist diagnostic evidence before failing even if no pageerror was raised.
+  writeJsonAtomic(output,receipt);
+  assert.equal(receipt.applicationDiagnostics.hasUnexpectedErrors,false,'Unexpected application ERROR diagnostics; inspect retained applicationDiagnostics');
+  assert.equal(receipt.applicationDiagnostics.hasUnexpectedRecovery,false,'Unexpected application recovery banner; inspect retained applicationDiagnostics');
+  assert.equal(receipt.applicationDiagnostics.checkpointOverflow,false,'Application diagnostic checkpoint budget exceeded');
   assert.deepEqual(errors,[]);assert.deepEqual(hashes(),receipt.source_hashes);verified=true;
- }catch(error){if(page){await page.screenshot({path:path.join(out,'failure.png'),fullPage:true,animations:'disabled'}).catch(()=>{});receipt.failure=await page.evaluate(()=>({text:document.body.innerText,state:window.LightForgeApp?{project:LightForgeApp.state.project,loading:LightForgeApp.state.loadingProject,music:!!LightForgeApp.state.music,show:!!LightForgeApp.state.show,saveBlocked:LightForgeApp.state.saveBlocked,composing:LightForgeApp.state.composing}:null})).catch(()=>null);}receipt.errors.push(errorText(error));console.error(errorText(error));}finally{
+ }catch(error){if(fresh&&!fresh.isClosed())await captureApplicationDiagnostics(fresh,receipt,'first-launch-failure').catch(()=>{});if(page){await captureApplicationDiagnostics(page,receipt,'failure').catch(()=>{});await page.screenshot({path:path.join(out,'failure.png'),fullPage:true,animations:'disabled'}).catch(()=>{});receipt.failure=await page.evaluate(()=>({recoveryVisible:document.getElementById('diagnosticRecovery')?.hidden===false,state:window.LightForgeApp?{hasProject:!!LightForgeApp.state.project,loading:LightForgeApp.state.loadingProject,music:!!LightForgeApp.state.music,show:!!LightForgeApp.state.show,saveBlocked:LightForgeApp.state.saveBlocked,composing:LightForgeApp.state.composing}:null})).catch(()=>null);}receipt.errors.push(errorText(error));console.error(errorText(error));}finally{
   try{await browser?.close();}catch(error){receipt.errors.push(errorText(error));console.error(errorText(error));}
   if(server?.listening)try{await new Promise((resolve,reject)=>server.close(error=>error?reject(error):resolve()));}catch(error){receipt.errors.push(errorText(error));console.error(errorText(error));}
  }

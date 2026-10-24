@@ -16,10 +16,28 @@ CHUNK_BYTES = 1024 * 1024
 def distributable_assets(directory):
     """Use the same source inventory for staging and APK verification."""
     directory = Path(directory)
-    return {p.relative_to(directory).as_posix(): p
-            for p in sorted(directory.rglob('*')) if p.is_file()
-            and not any(part.startswith('.') or part in {'node_modules', '__pycache__'}
-                        for part in p.relative_to(directory).parts)}
+    assets = {}
+    for path in sorted(directory.rglob('*')):
+        relative = path.relative_to(directory)
+        if any(part.startswith('.') or part in {'node_modules', '__pycache__'} for part in relative.parts[:-1]):
+            continue
+        if relative.name in {'node_modules', '__pycache__'}:
+            continue
+        # Fail closed before reading linked files (including broken links and
+        # linked directories), rather than copying private bytes outside web/.
+        if path.is_symlink():
+            raise ValueError('Symlink cannot enter APK assets: ' + relative.as_posix())
+        if not path.is_file():
+            continue
+        name = path.name.lower()
+        if ('signing' in {part.lower() for part in relative.parts}
+                or name in {'keystore-password.txt', 'local.properties', '.pypirc', '.npmrc', 'id_rsa', 'id_ed25519'}
+                or (name.startswith('.env') and name not in {'.env.example', '.env.sample'})
+                or path.suffix.lower() in {'.jks', '.keystore', '.p12', '.pfx', '.key'}):
+            raise ValueError('Credential/configuration file cannot enter APK assets: ' + relative.as_posix())
+        if not any(part.startswith('.') or part in {'node_modules', '__pycache__'} for part in relative.parts):
+            assets[relative.as_posix()] = path
+    return assets
 
 
 def file_identity(path):

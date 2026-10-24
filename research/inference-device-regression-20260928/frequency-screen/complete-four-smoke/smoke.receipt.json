@@ -1,0 +1,34 @@
+{
+  "schema": "lightforge.frequency-first-complete-smoke.v1",
+  "scope": "Exploratory complete-output check of the immutable compiled B16 snapshot; not current-source performance qualification. Telemetry and verification code are still changing.",
+  "compileReceiptSha256": "dc49a7ad8f39dbb6e8147c6e50c4fabce9f0e10fc8e36983c4caac40f2450a42",
+  "command": [
+    "/workspace/scratch/7031dc893b8d/toolchain/jdk17/bin/java",
+    "-Xmx1g",
+    "-XX:MaxDirectMemorySize=512m",
+    "-cp",
+    "/dev/shm/lightforge-frequency-compile-20260928/classes:/workspace/scratch/7031dc893b8d/toolchain/test-json.jar:/workspace/scratch/7031dc893b8d/toolchain/android-sdk/platforms/android-35/android.jar:/workspace/scratch/7031dc893b8d/toolchain/onnx/onnxruntime-1.25.1.jar",
+    "com.cyberbasslord.lightforge.NativeDeuxParallelBenchmark",
+    "/workspace/scratch/7031dc893b8d/LightForge/web/analysis/models/deux",
+    "/workspace/scratch/7031dc893b8d/LightForge/web/demo/glass-castle.wav",
+    "/dev/shm/lightforge-frequency-first-complete-four-20260928/output.f32",
+    "661500",
+    "/dev/shm/lightforge-frequency-first-complete-four-20260928/profile.txt",
+    "candidate4"
+  ],
+  "elapsedNanos": 36694406122,
+  "exitCode": 0,
+  "cpuAffinity": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "outputBytes": 4586400,
+  "outputSha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+  "expectedOriginalSha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+  "exactOriginal": true
+}

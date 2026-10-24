@@ -10,7 +10,7 @@ test('resource diagnostics is loaded before telemetry and forwarded only as an o
  const worker=read('web/analysis/worker.js'),store=read('web/analysis/work-store.js'),features=read('web/analysis/feature-store.js');
  assert.match(worker,/importScripts\('diagnostic-clock\.js','resource-diagnostics\.js','telemetry\.js'/);
  assert.match(worker,/resourceDiagnostics:telemetry\.resource/);
- assert.match(worker,/reusableRhythmFeatures\(options,config,telemetry\.resource\)/);
+ assert.match(worker,/reusableRhythmFeatures\(options,config,telemetry\.resource,reader\.duration\)/);
  assert.match(store,/resourceDiagnostics=null/);
  assert.match(store,/resourceDiagnostics\.io\('read'|resourceDiagnostics\.io\(direction/);
  assert.match(features,/open\(identity,\{resourceDiagnostics=null\}=\{\}\)/);

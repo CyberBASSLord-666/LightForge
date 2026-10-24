@@ -1,3 +1,12 @@
+# Shared fail-closed loader; this file also supports direct script execution.
+import sys as _security_sys
+from pathlib import Path as _SecurityPath
+_security_sys.path.insert(0, str(_SecurityPath(__file__).resolve().parents[3]))
+from _lightforge_research_checkpoint_security import (
+    load_tensor_checkpoint as _safe_torch_load,
+    load_remote_tensor_checkpoint as _safe_hub_load,
+)
+
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -135,7 +144,7 @@ def restart_from_checkpoint(ckp_path, run_variables=None, **kwargs):
     print("Found checkpoint at {}".format(ckp_path))
 
     # open checkpoint file
-    checkpoint = torch.load(ckp_path, map_location="cpu")
+    checkpoint = _safe_torch_load(ckp_path, map_location="cpu")
 
     # key is what to look for in the checkpoint file
     # value is the object to load

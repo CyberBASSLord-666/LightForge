@@ -149,3 +149,28 @@ test('matching semantic salience annotates existing targets without changing pla
   assert.equal(Object.hasOwn(mismatched.choreography,'salienceTargets'),false,'salience fingerprint must bind annotations to the exact semantic timeline');
   assert.deepEqual(mismatched.frames,baseline.frames);
 });
+
+test('hierarchy attacks respect exact tolerance rather than adjacent frame boundaries',()=>{
+  for(const stepMs of [15,20]){
+    const step=stepMs/1000,show={channels:1,frameCount:12,stepMs,frames:new Uint8Array(12),settings:{}};
+    show.frames[5]=255;
+    const assess=(time,tolerance)=>Quality.evaluate(show,{outputs:[{id:'lamp',kind:'light',channels:[1]}],targetToleranceMs:tolerance,tierTargets:[{time,tier:'structural',candidateOutputIds:['lamp']}]}).hierarchy;
+    assert.equal(assess(5.5*step,0).attackMatched,0,'zero tolerance cannot include the preceding frame');
+    assert.equal(assess(4.5*step,0).attackMatched,0,'zero tolerance cannot include the following frame');
+    assert.equal(assess(5*step,0).attackMatched,1,'an exact frame boundary remains eligible');
+    assert.equal(assess(5.5*step,stepMs/2).attackMatched,1,'inclusive tolerance accepts its exact boundary');
+    assert.equal(assess(5.5*step,0).activeMatched,1,'a held frame can overlap an off-grid target');
+  }
+});
+
+test('hierarchy distinguishes light release commands from new On transitions',()=>{
+  for(const release of [26,51,77])for(const attack of [178,204,230,255]){
+    const show={channels:1,frameCount:6,stepMs:20,frames:Uint8Array.from([0,release,release,attack,attack,0]),settings:{}};
+    const result=Quality.evaluate(show,{outputs:[{id:'lamp',kind:'light',channels:[1]}],targetToleranceMs:0,tierTargets:[
+      {time:.02,tier:'release',candidateOutputIds:['lamp']},
+      {time:.06,tier:'attack',candidateOutputIds:['lamp']}
+    ]});
+    assert.equal(result.hierarchy.tiers.release.attackMatched,0,'fade-off must never count as an attack');
+    assert.equal(result.hierarchy.tiers.attack.attackMatched,1,'On after fade-off must count even without zero bytes');
+  }
+});

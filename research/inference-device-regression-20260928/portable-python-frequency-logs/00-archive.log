@@ -1,0 +1,34 @@
+{"candidate_identity_sha256": "c92222cfccb60a5cd97e213d01e32d9c76f76ff511b8a51a00afb5ccf892bb87"}
+{"candidate_identity_sha256": "c92222cfccb60a5cd97e213d01e32d9c76f76ff511b8a51a00afb5ccf892bb87"}
+{"candidate_identity_sha256": "c92222cfccb60a5cd97e213d01e32d9c76f76ff511b8a51a00afb5ccf892bb87"}
+{"manifest_sha256": "71e7707a7d2b1c44fe50444d235574eb56b4c5cb2effa97058f2a76f8cd04878"}
+{"candidate_identity_sha256": "c92222cfccb60a5cd97e213d01e32d9c76f76ff511b8a51a00afb5ccf892bb87"}
+{"candidate_identity_sha256": "1422c8ec65602c37c7bc3aefa5135fb39f1b93b4601c7b5d7c82200ca62119b6"}
+{"candidate_identity_sha256": "c92222cfccb60a5cd97e213d01e32d9c76f76ff511b8a51a00afb5ccf892bb87"}
+{"candidate_identity_sha256": "31b285c1295199e765139b9b1d466661416f688b41d06cf1e81c00cc89ae1e5d"}
+{"manifest_sha256": "6e9083a0922d8d84720d79d242551be6f869e1b57c1b6bc6a234f37a31bcd93b"}
+{"candidate_identity_sha256": "c92222cfccb60a5cd97e213d01e32d9c76f76ff511b8a51a00afb5ccf892bb87"}
+{"manifest_sha256": "71e7707a7d2b1c44fe50444d235574eb56b4c5cb2effa97058f2a76f8cd04878"}
+{"manifest_sha256": "71e7707a7d2b1c44fe50444d235574eb56b4c5cb2effa97058f2a76f8cd04878"}
+{"candidate_identity_sha256": "c92222cfccb60a5cd97e213d01e32d9c76f76ff511b8a51a00afb5ccf892bb87"}
+{"candidate_identity_sha256": "c92222cfccb60a5cd97e213d01e32d9c76f76ff511b8a51a00afb5ccf892bb87"}
+{"candidate_identity_sha256": "c92222cfccb60a5cd97e213d01e32d9c76f76ff511b8a51a00afb5ccf892bb87"}
+{"manifest_sha256": "71e7707a7d2b1c44fe50444d235574eb56b4c5cb2effa97058f2a76f8cd04878"}
+{"candidate_identity_sha256": "c92222cfccb60a5cd97e213d01e32d9c76f76ff511b8a51a00afb5ccf892bb87"}
+{"manifest_sha256": "71e7707a7d2b1c44fe50444d235574eb56b4c5cb2effa97058f2a76f8cd04878"}
+{"candidate_identity_sha256": "c92222cfccb60a5cd97e213d01e32d9c76f76ff511b8a51a00afb5ccf892bb87"}
+{"manifest_sha256": "71e7707a7d2b1c44fe50444d235574eb56b4c5cb2effa97058f2a76f8cd04878"}
+Disposable emulator connectivity: failed
+Disposable emulator connectivity: verified-offline
+Disposable emulator connectivity: failed
+Disposable emulator connectivity: failed
+Disposable emulator connectivity: failed
+Disposable emulator connectivity: failed
+{"streamedFixtureBytes": 8388608, "archiveBytes": 8392275, "peakPythonHeapBytes": 3800606, "manifestEntries": 4}
+{"candidate_identity_sha256": "8e2b02d8c79a7f457c11e32100ee9a792500a11006185f02034886282c799a80"}
+{"manifest_sha256": "02c60504775e1b6fcbabe0bab90aff551773d26c8bbc551efe211e16770e766f"}
+......................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................
+----------------------------------------------------------------------
+Ran 566 tests in 35.527s
+
+OK

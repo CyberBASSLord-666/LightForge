@@ -54,6 +54,7 @@ async function open(key,{sourceId='',requiredBytes=0,resourceDiagnostics=null}={
   // never make a durable checkpoint unreadable or alter its write order.
   try{if(resourceDiagnostics&&typeof resourceDiagnostics.io==='function'&&Number.isSafeInteger(bytes)&&bytes>=0)resourceDiagnostics.io(direction,bytes,'opfs-analysis-store');}catch(_){ }
  };
+ const memory=(kind,bytes)=>{try{resourceDiagnostics?.[kind]?.(bytes,1);}catch(_){}};
  const bytesOf=value=>value instanceof ArrayBuffer||ArrayBuffer.isView(value)?value.byteLength:typeof value==='string'?new TextEncoder().encode(value).byteLength:0;
  const parent=await namespace();
  // Cleanup is best effort: another job's abandoned lock must not prevent work.
@@ -170,12 +171,12 @@ async function writeFence(prefixes){const token=newFenceToken(),name=fenceFile(t
   const prefix=await f.slice(0,4).arrayBuffer();resource('read',prefix.byteLength);if(prefix.byteLength!==4)return null;
   const headerSize=new DataView(prefix).getUint32(0,true);if(headerSize<1||headerSize>4096||4+headerSize>=f.size)return null;
   try{
-   const headerText=await f.slice(4,4+headerSize).text();resource('read',headerSize);const meta=JSON.parse(headerText),bytes=await f.slice(4+headerSize).arrayBuffer();resource('read',bytes.byteLength);
+   const headerText=await f.slice(4,4+headerSize).text();resource('read',headerSize);const meta=JSON.parse(headerText),bytes=await f.slice(4+headerSize).arrayBuffer();resource('read',bytes.byteLength);memory('allocation',bytes.byteLength);
    const metaGeneration=meta.version===1?0:meta.generation,metaFences=meta.version===RECORD_VERSION?meta.fences:[];
    const current=await currentControl(),after=await matchingFences(name);
    if((meta.version!==1&&meta.version!==2&&meta.version!==RECORD_VERSION)||meta.key!==key||meta.name!==name||!Array.isArray(meta.counts)||meta.counts.length<1||meta.counts.length>4||meta.counts.some(n=>!Number.isSafeInteger(n)||n<1)||!Number.isSafeInteger(metaGeneration)||metaGeneration<0||!Array.isArray(metaFences)||metaFences.some(token=>!validFenceToken(token))||new Set(metaFences).size!==metaFences.length||metaFences.some((token,index)=>index&&metaFences[index-1]>=token)||meta.counts.reduce((a,b)=>a+b,0)*4!==bytes.byteLength||await hash(bytes)!==meta.sha256||!sameFences(before,after)||metaGeneration!==generation(name,current)||!sameFences(metaFences,after))return null;
    const data=new DataView(bytes),arrays=[];let at=0;
-   for(const count of meta.counts){const pcm=new Float32Array(count);for(let i=0;i<count;i++,at+=4){pcm[i]=data.getFloat32(at,true);if(!Number.isFinite(pcm[i]))return null;}arrays.push(pcm);}return arrays;
+   for(const count of meta.counts){const pcm=new Float32Array(count);memory('allocation',pcm.byteLength);for(let i=0;i<count;i++,at+=4){pcm[i]=data.getFloat32(at,true);if(!Number.isFinite(pcm[i]))return null;}memory('copy',pcm.byteLength);arrays.push(pcm);}return arrays;
   }catch(e){if(e instanceof SyntaxError||e instanceof RangeError||e instanceof TypeError)return null;throw e;}
  }
  async function writeFloats(name,arrays){
@@ -183,8 +184,9 @@ async function writeFence(prefixes){const token=newFenceToken(),name=fenceFile(t
   if(!Array.isArray(arrays)||!arrays.length||arrays.length>4||arrays.some(a=>!(a instanceof Float32Array)||!a.length))throw Error('Invalid passage checkpoint.');
   const size=arrays.reduce((n,a)=>n+a.byteLength,0);if(size>MAX_FLOATS-4100)throw Error('Passage checkpoint is too large.');
   const current=await currentControl();if(generation(name,current)!==generation(name,authorizedControl))throw staleWorkError('Analysis work was invalidated by another session. Reopen and resume this song.');
-  const fenceIds=await writableFences(name),bytes=new Uint8Array(size),view=new DataView(bytes.buffer);let at=0;
+  const fenceIds=await writableFences(name),bytes=new Uint8Array(size),view=new DataView(bytes.buffer);let at=0;memory('allocation',bytes.byteLength);
   for(const pcm of arrays)for(const value of pcm){if(!Number.isFinite(value))throw Error('A passage contains invalid audio.');view.setFloat32(at,value,true);at+=4;}
+  memory('copy',bytes.byteLength);
   const header=new TextEncoder().encode(JSON.stringify({version:RECORD_VERSION,key,name,generation:generation(name,current),fences:fenceIds,counts:arrays.map(a=>a.length),sha256:await hash(bytes)})),prefix=new Uint8Array(4);
   new DataView(prefix.buffer).setUint32(0,header.length,true);await atomic(name+'.bin',[prefix,header,bytes]);
   if(!sameFences(fenceIds,await matchingFences(name)))throw staleWorkError('Analysis work was invalidated while saving. Reopen and resume this song.');

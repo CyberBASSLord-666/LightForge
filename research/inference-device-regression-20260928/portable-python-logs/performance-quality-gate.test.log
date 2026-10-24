@@ -1,0 +1,10 @@
+..............................
+----------------------------------------------------------------------
+Ran 30 tests in 8.906s
+
+OK
+quality-gate=FAIL target-tracks=16/16
+quality-gate=FAIL target-tracks=16/16
+quality-gate=PASS_TARGET target-tracks=16/16
+quality-gate=FAIL target-tracks=16/16
+quality-gate=PASS_TARGET target-tracks=1/1

@@ -24,6 +24,8 @@
    try{activeWorker=new Worker(url);activeAttempt=++attempt;worker=activeWorker;}catch(error){finish(error);return;}
    activeWorker.onmessage=({data})=>{
     if(finished||activeAttempt!==attempt)return;
+    const failResponse=error=>{if(!error)error=new Error(String(error));restoreEvent({type:'restore-error',message:error.message||String(error),attempt:activeAttempt});finish(error);};
+    if(!data||typeof data!=='object'||typeof data.type!=='string'){failResponse(new Error('The composition worker returned an invalid response.'));return;}
     // Ready proves only the import graph; a completed restore advances only
     // through its explicit request-scoped events below.
     if(data.type==='ready')return;
@@ -31,10 +33,11 @@
      if(data.lease?.jobId!==restoreLease?.jobId||data.lease?.nonce!==restoreLease?.nonce)return;
      restoreEvent({...data,attempt:activeAttempt});return;
     }
-    if(data.type==='progress'){root.LightForgeDiagnostics?.progress('composition-worker',{...data.value,stage:'generate'});onProgress(data.value);return;}
+    if(data.type==='progress'){root.LightForgeDiagnostics?.progress('composition-worker',{...data.value,stage:'generate'});try{onProgress(data.value);}catch(error){failResponse(error);}return;}
     if(data.type==='result'&&restoreLease&&restoreStage!==2){
      const error=new Error('Completed restore ended without verified worker proof.');restoreEvent({type:'restore-error',message:error.message,attempt:activeAttempt});finish(error);return;
     }
+    if(data.type!=='result'&&data.type!=='error'){failResponse(new Error('The composition worker returned an unexpected response.'));return;}
     let error=null;if(data.type==='error'){error=new Error(data.message);if(typeof data.stack==='string')error.stack=data.stack.slice(0,8192);restoreEvent({type:'restore-error',message:data.message,attempt:activeAttempt});}finish(error,data.value);
    };
    activeWorker.onerror=e=>{if(activeAttempt===attempt){restoreEvent({type:'restore-error',message:e.message||'The composition worker could not start.',attempt:activeAttempt});finish(new Error(e.message||'The composition worker could not start.'));}};

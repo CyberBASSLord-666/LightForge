@@ -3,16 +3,19 @@
 from __future__ import annotations
 
 import importlib.util
+import copy
 import hashlib
 import json
 from pathlib import Path
 import tempfile
+import sys
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "tools"))
 SPEC = importlib.util.spec_from_file_location("verification_evidence_manifest", ROOT / "tools/verification_evidence_manifest.py")
 evidence = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(evidence)
@@ -37,15 +40,15 @@ def pipeline(attempt=1):
     }
 
 
-def candidate_manifest(path: Path, attempt=1):
+def candidate_manifest(path: Path, attempt=1, release=RELEASE):
     files = {
         name: {"bytes": 1, "sha256": SOURCE_HASH}
-        for name in evidence._candidate_files(RELEASE)
+        for name in evidence._candidate_files(release)
     }
     path.write_text(json.dumps({
         "schema_version": evidence.CANDIDATE_SCHEMA_VERSION,
         "kind": evidence.CANDIDATE_KIND,
-        "release": RELEASE,
+        "release": release,
         "source": {"commit": HEAD, "tree_sha": TREE},
         "pipeline": {"run_id": 741, "run_attempt": attempt, "evidence_session": SESSION},
         "source_hashes": {"web/app.js": SOURCE_HASH},
@@ -54,9 +57,9 @@ def candidate_manifest(path: Path, attempt=1):
     return evidence.sha256_file(path)
 
 
-def receipt(name, session=SESSION):
+def receipt(name, session=SESSION, release=RELEASE):
     value = {
-        "release": RELEASE,
+        "release": release,
         "passed": True,
         "errors": [],
         "source_hashes": {"web/app.js": SOURCE_HASH},
@@ -76,28 +79,61 @@ def receipt(name, session=SESSION):
     return value
 
 
+def host_admission():
+    """A structurally valid seal, not authority without trusted API replay."""
+    campaign = "lightforge-2.4.2-neural-four-worker-host-001"
+    return {
+        "schema": "lightforge.host-inference-admission.v1",
+        "campaignId": campaign,
+        "policySha256": "1" * 64,
+        "declarationSha256": "2" * 64,
+        "registration": {
+            "commit": "3" * 40, "path": "tools/host-inference-campaigns/" + campaign + ".json",
+            "blobSha": "4" * 40, "sha256": "5" * 64,
+        },
+        "request": {
+            "commit": "d" * 40, "path": "tools/host-inference-campaigns/" + campaign + ".request.json",
+            "blobSha": "a" * 40, "sha256": "a" * 64,
+        },
+        "producer": {
+            "runId": 701, "runAttempt": 1, "headSha": "d" * 40,
+            "event": "push", "headBranch": "main", "workflowPath": evidence.WORKFLOW,
+        },
+        "declarationArtifact": {"id": 801, "sha256": "6" * 64},
+        "proofArtifact": {"id": 802, "sha256": "7" * 64},
+        "proofReceiptSha256": "8" * 64,
+        "measurementFinishedAt": "2026-10-23T12:00:00Z",
+        "admissionCheckedAt": "2026-10-23T12:01:00Z",
+        "candidate": {"sourceCommit": HEAD, "sourceTreeSha": TREE, "evidenceSession": SESSION},
+        "knownLineage": [{"runId": 701, "runAttempt": 1, "declarationArtifactId": 801, "proofArtifactId": 802}],
+        "recompiledClassHashes": {"NativeDeuxParallelBenchmark.class": "9" * 64},
+    }
+
+
 class VerificationEvidenceManifestTest(unittest.TestCase):
     def test_native_game_runtime_materials_remain_sealed_for_current_release(self):
         current = json.loads((ROOT / 'version.json').read_text())['name']
         names = {'native-game-verification.json', 'native-game-demo-output.json',
                  'native-game-falcon-output.json'}
-        for release in ('2.3.2', current):
+        for release in ('2.3.2', '2.4.0', '2.4.1', '2.4.2', current):
             with self.subTest(release=release):
                 expected = {f'qa/release-{release}/{name}' for name in names}
                 self.assertTrue(expected <= evidence._runtime_evidence_materials(release))
-        self.assertFalse(any('native-game-' in name
-                             for name in evidence._runtime_evidence_materials('2.3.1')))
+        for release in ('2.3.1', '2.4.3', '3.0.0'):
+            with self.subTest(unlisted_release=release):
+                self.assertFalse(any('native-game-' in name
+                                     for name in evidence._runtime_evidence_materials(release)))
 
-    def _make_content(self, root: Path, attempt=1):
+    def _make_content(self, root: Path, attempt=1, release=RELEASE, admission=None):
         candidate = root / "candidate-manifest.json"
-        identity = candidate_manifest(candidate, attempt)
+        identity = candidate_manifest(candidate, attempt, release)
         receipts = root / "receipts-input"
         receipts.mkdir()
         source_root = root / "source"
         (source_root / "web").mkdir(parents=True)
         (source_root / "web/app.js").write_bytes(SOURCE_BYTES)
         for name in evidence.RECEIPTS:
-            (receipts / name).write_text(json.dumps(receipt(name)), encoding="utf-8")
+            (receipts / name).write_text(json.dumps(receipt(name, release=release)), encoding="utf-8")
         content = root / "content"
         args = SimpleNamespace(
             output_dir=content,
@@ -107,7 +143,8 @@ class VerificationEvidenceManifestTest(unittest.TestCase):
             candidate_artifact_id=911,
             candidate_artifact_digest="sha256:" + "f" * 64,
             candidate_identity_sha256=identity,
-            release=RELEASE,
+            release=release,
+            host_admission=admission,
             run_id=741,
             run_attempt=attempt,
             head_sha=HEAD,
@@ -118,14 +155,14 @@ class VerificationEvidenceManifestTest(unittest.TestCase):
             manifest = evidence.write_content(args)
         return candidate, receipts, content, manifest
 
-    def _make_wrapper(self, root: Path, content: Path, attempt=1):
+    def _make_wrapper(self, root: Path, content: Path, attempt=1, release=RELEASE):
         wrapper = root / "wrapper"
         return wrapper, evidence.write_wrapper(SimpleNamespace(
             output_dir=wrapper,
             content_dir=content,
             evidence_artifact_id=912,
             evidence_artifact_digest="sha256:" + "1" * 64,
-            release=RELEASE,
+            release=release,
             pipeline=pipeline(attempt),
         ))
 
@@ -157,6 +194,130 @@ class VerificationEvidenceManifestTest(unittest.TestCase):
                 evidence.verify_wrapper(wrapper, release=RELEASE, pipeline=pipeline(1), expected_candidate=manifest["candidate"]),
                 wrapped,
             )
+
+    def _make_host_content(self, root):
+        admission = root / "fresh-host-admission.json"
+        admission.write_text(json.dumps(host_admission()))
+        return self._make_content(root, release="2.4.2", admission=admission)
+
+    def test_host_admission_is_additive_sealed_and_preserves_original_producer(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            _, _, content, manifest = self._make_host_content(root)
+            wrapper, wrapped = self._make_wrapper(root, content, release="2.4.2")
+            self.assertEqual(len(manifest["receipts"]), 7)
+            self.assertEqual(wrapped["host_admission"], manifest["host_admission"])
+            self.assertEqual((content / evidence.HOST_ADMISSION_PATH).read_bytes(),
+                             (root / "fresh-host-admission.json").read_bytes())
+            admission = manifest["host_admission"]["admission"]
+            self.assertNotEqual(admission["producer"]["headSha"], admission["candidate"]["sourceCommit"])
+            self.assertEqual(admission["producer"]["headSha"], "d" * 40)
+            self.assertEqual(evidence.verify_content(content, release="2.4.2", pipeline=pipeline()), manifest)
+            self.assertEqual(evidence.verify_wrapper(wrapper, release="2.4.2", pipeline=pipeline()), wrapped)
+
+    def test_host_record_candidate_session_schema_lineage_and_reference_mutations_fail_closed(self):
+        mutations = [
+            lambda a: a.update(schema="lightforge.experimental-portable-parallel-qualification.v1"),
+            lambda a: a.update(schema="lightforge.production-parallel-qualification.v3"),
+            lambda a: a.update(schema="lightforge.host-inference-admission.v2"),
+            lambda a: a["candidate"].update(sourceCommit="e" * 40),
+            lambda a: a["candidate"].update(sourceTreeSha="e" * 40),
+            lambda a: a["candidate"].update(evidenceSession="e" * 64),
+            lambda a: a.pop("registration"),
+            lambda a: a.pop("request"),
+            lambda a: a["request"].update(commit="e" * 40),
+            lambda a: a["request"].update(sha256="bad"),
+            lambda a: a["registration"].update(path="tools/host-inference-campaigns/other.json"),
+            lambda a: a["registration"].update(sha256="bad"),
+            lambda a: a["declarationArtifact"].update(id=0),
+            lambda a: a["declarationArtifact"].update(id=802),
+            lambda a: a["proofArtifact"].update(id=True),
+            lambda a: a["proofArtifact"].update(sha256="bad"),
+            lambda a: a.update(proofReceiptSha256="bad"),
+            lambda a: a.update(policySha256="bad"),
+            lambda a: a.update(knownLineage=[]),
+            lambda a: a["knownLineage"].append(dict(a["knownLineage"][0])),
+            lambda a: a["knownLineage"][0].update(proofArtifactId=803),
+            lambda a: a["producer"].update(runAttempt=2),
+            lambda a: a["producer"].update(headBranch="feature"),
+            lambda a: a.update(admissionCheckedAt="2026-10-23T11:59:00Z"),
+            lambda a: a.pop("recompiledClassHashes"),
+            lambda a: a.update(recompiledClassHashes={}),
+        ]
+        for index, mutate in enumerate(mutations):
+            with self.subTest(mutation=index):
+                value = host_admission()
+                mutate(value)
+                with self.assertRaises(ValueError):
+                    evidence._validate_host_admission(value, pipeline())
+
+    def test_host_outer_record_and_file_mutations_fail_closed(self):
+        for mutation in ("absent", "null", "path", "size", "digest", "missing-file", "tampered-file", "changed-record"):
+            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                _, _, content, manifest = self._make_host_content(root)
+                value = copy.deepcopy(manifest)
+                host = value["host_admission"]
+                if mutation == "absent":
+                    value.pop("host_admission")
+                elif mutation == "null":
+                    value["host_admission"] = None
+                elif mutation == "path":
+                    host["path"] = "../host-admission.json"
+                elif mutation == "size":
+                    host["bytes"] += 1
+                elif mutation == "digest":
+                    host["sha256"] = "0" * 64
+                elif mutation == "missing-file":
+                    (content / evidence.HOST_ADMISSION_PATH).unlink()
+                elif mutation == "tampered-file":
+                    (content / evidence.HOST_ADMISSION_PATH).write_text("{}")
+                else:
+                    host["admission"]["proofArtifact"]["sha256"] = "0" * 64
+                (content / evidence.CONTENT_MANIFEST).write_text(json.dumps(value))
+                with self.assertRaises(ValueError):
+                    evidence.verify_content(content, release="2.4.2", pipeline=pipeline())
+
+    def test_current_release_requires_additive_host_admission_and_preserves_receipts(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            with self.assertRaisesRegex(ValueError, "Host admission is required"):
+                self._make_content(root, release="2.4.2")
+            self.assertFalse((root / "content").exists())
+            self.assertEqual({path.name for path in (root / "receipts-input").iterdir()}, set(evidence.RECEIPTS))
+            self.assertEqual(len(evidence.RECEIPTS), 7)
+            self.assertEqual(evidence.CANDIDATE_SCHEMA_VERSION, 1)
+
+    def test_legacy_schema_is_narrowly_supported_and_cannot_admit_current_release(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            _, _, content, manifest = self._make_content(root)
+            legacy = dict(manifest, schema_version=2)
+            legacy.pop("host_admission")
+            (content / evidence.CONTENT_MANIFEST).write_text(json.dumps(legacy))
+            self.assertEqual(evidence.verify_content(content, release=RELEASE, pipeline=pipeline()), legacy)
+            wrapper, wrapped = self._make_wrapper(root, content)
+            self.assertEqual(wrapped["schema_version"], 2)
+            self.assertNotIn("host_admission", wrapped)
+            self.assertEqual(evidence.verify_wrapper(wrapper, release=RELEASE, pipeline=pipeline()), wrapped)
+            for verifier, directory in ((evidence.verify_content, content), (evidence.verify_wrapper, wrapper)):
+                with self.subTest(kind=verifier.__name__):
+                    with self.assertRaisesRegex(ValueError, "Legacy evidence schema cannot admit"):
+                        verifier(directory, release="2.4.2", pipeline=pipeline())
+
+    def test_unsupported_or_boolean_envelope_schemas_fail_closed(self):
+        for schema in (0, 1, 4, "3", True, None):
+            with self.subTest(schema=schema), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                _, _, content, manifest = self._make_content(root)
+                wrapper, wrapped = self._make_wrapper(root, content)
+                for directory, filename, original, verifier in (
+                    (content, evidence.CONTENT_MANIFEST, manifest, evidence.verify_content),
+                    (wrapper, evidence.WRAPPER_MANIFEST, wrapped, evidence.verify_wrapper),
+                ):
+                    (directory / filename).write_text(json.dumps(dict(original, schema_version=schema)))
+                    with self.assertRaisesRegex(ValueError, "schema is invalid"):
+                        verifier(directory, release=RELEASE, pipeline=pipeline())
 
     def test_session_bound_receipts_and_wrappers_reject_absent_or_mismatched_nonces(self):
         session_cases = (

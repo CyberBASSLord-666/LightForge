@@ -584,12 +584,15 @@
     const errors=[],warnings=Array.from(show&&show.warnings||[]),stats={};
     const error=s=>{if(!errors.includes(s))errors.push(s);};
     if(!show||!(show.frames instanceof Uint8Array))return {valid:false,errors:['Sequence data must be a Uint8Array.'],warnings,stats};
-    if(show.channels!==200&&show.channelCount!==200)error('Sequence must contain 200 channels.');
+    if(show.channels!==200&&show.channelCount!==200||show.channels!==undefined&&show.channels!==200||show.channelCount!==undefined&&show.channelCount!==200)error('Sequence must contain 200 channels.');
     if(!Number.isInteger(show.frameCount)||show.frameCount<1||show.frames.length!==show.frameCount*200)error('Sequence length does not match its frame count.');
     if(!FRAME_INTERVALS.includes(show.stepMs))error('Frame interval must be 20 ms recommended or 15 ms precision.');
     const duration=show.frameCount*show.stepMs/1000;
     if(!finite(duration)||duration>14400)error('Sequence duration exceeds the four-hour limit.');
+    if(show.duration!==undefined&&(!finite(show.duration)||Math.abs(show.duration-duration)>1e-7))error('Sequence duration does not match its frame count and interval.');
+    if(show.audioDuration!==undefined&&(!finite(show.audioDuration)||show.audioDuration<=0||show.audioDuration>14400))error('Audio duration must be positive and no longer than four hours.');
     if(errors.length)return {valid:false,errors,warnings,stats};
+    if(finite(show.audioDuration)&&(duration+1e-7<show.audioDuration||duration-show.audioDuration>show.stepMs/1000+1e-7))error('Audio and sequence duration do not match to one frame.');
     if(music&&finite(music.duration)&&(duration+1e-7<music.duration||duration-music.duration>show.stepMs/1000+1e-7))error('Audio and sequence duration do not match to one frame.');
     const frames=show.frames,n=show.frameCount,step=show.stepMs/1000,counts={},danceSeconds={};
     let activeFrames=0,lightTransitions=0,rampFrames=0,rgbFrames=0;

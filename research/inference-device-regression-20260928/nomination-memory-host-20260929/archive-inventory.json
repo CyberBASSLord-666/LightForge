@@ -1,0 +1,134 @@
+{
+  "schema": "lightforge.text-evidence-archive.v1",
+  "scope": "Exact current passing and historical failing nomination memory/orchestration receipts; not performance or release evidence",
+  "files": {
+    "README.md": {
+      "bytes": 5284,
+      "sha256": "663ad90bc063dd05b220c4c4ea6cc4c563d1dd770fe2a2b542763654f2241f87"
+    },
+    "current/abort-after-four.log": {
+      "bytes": 1946,
+      "sha256": "432e6d2a101dd93d0bce5662266bce04ed1bc40bf525140913a3cc995748513e"
+    },
+    "current/cancel-after-four.log": {
+      "bytes": 2037,
+      "sha256": "e2f0f47737e0a3257b0ba8596c528907309103b78b010a5bfaf22981551600a7"
+    },
+    "current/compile.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "current/drop-all-before-four.log": {
+      "bytes": 1686,
+      "sha256": "0541af3a3bd55690c16901c2781fbd600244db0869d8e1a16e69545e4cd8831e"
+    },
+    "current/drop-eight-before.log": {
+      "bytes": 1868,
+      "sha256": "3c6ef355f68a220c13bb58bfc8077fee8da91c33a582cfad6333171b6b5a74b0"
+    },
+    "current/drop-eight-final.log": {
+      "bytes": 2053,
+      "sha256": "8a7b8053dc37ec5a0f25a05cd931c54dc5ebf5464c74d61d1fd3ab0d5e946d6b"
+    },
+    "current/four-only.log": {
+      "bytes": 1849,
+      "sha256": "53e36ed79d49beefaf9dde0b803081dc69dfa935ebed0d37b785ed63b519ba59"
+    },
+    "current/receipt.json": {
+      "bytes": 31228,
+      "sha256": "d7e15e67383f13826f9663f780583f3652a0ff3df4b5162aa969f7bd7e4d49b0"
+    },
+    "current/runtime-after-four.log": {
+      "bytes": 2030,
+      "sha256": "e0eb5d73cdf22279821f328cfee7d7fb43f4912b9910c03105d1560d7fcf7def"
+    },
+    "current/source-snapshots/AppDiagnostics.java": {
+      "bytes": 202,
+      "sha256": "afde4a941fc74500bdaa06adc593dc69fe60a3e1ddf7b37e52098ea9f308d6ce"
+    },
+    "current/source-snapshots/android/native-runtime.json": {
+      "bytes": 2123,
+      "sha256": "e3ea568b3a8485235f23a59cd787466cdcbbfcaa54ac56df3ce040d29fcb2a94"
+    },
+    "current/source-snapshots/android/src/com/cyberbasslord/lightforge/NativeDeux.java": {
+      "bytes": 75734,
+      "sha256": "a5f798a19afc160407b0f1d06960a55120692a359bf9f7a4d3c5a28f471c1751"
+    },
+    "current/source-snapshots/android/src/com/cyberbasslord/lightforge/NativeDeuxTransform.java": {
+      "bytes": 7163,
+      "sha256": "991b06501cfb88b904d0b714a525c389f169f00c231248b0e961b70f257e90b5"
+    },
+    "current/source-snapshots/android/src/com/cyberbasslord/lightforge/NativeExecutionPolicy.java": {
+      "bytes": 17582,
+      "sha256": "35e5ca193c8ba46157e79a5caa9997370eec1a3fdabc9670bf0d4f8616b62702"
+    },
+    "current/source-snapshots/android/src/com/cyberbasslord/lightforge/NativeInferenceProfile.java": {
+      "bytes": 43277,
+      "sha256": "059e3ac51a8a935b2af1cc507f9985e6da1ba7c6fcef4d8a0f20ca44d1c7f88d"
+    },
+    "current/source-snapshots/android/src/com/cyberbasslord/lightforge/NativePassagePolicy.java": {
+      "bytes": 25653,
+      "sha256": "f30b21b801f991bf09e07b737cde4117baf77110afbbada4bcc691137e1f2daa"
+    },
+    "current/source-snapshots/tests/NativeDeuxNominationMemoryTest.java": {
+      "bytes": 15814,
+      "sha256": "bf97f42c67a8631e81b2e16df00f79aade70d2c854f2c112e949b37de4ddb49a"
+    },
+    "current/source-snapshots/tools/verify_deux_nomination.py": {
+      "bytes": 9781,
+      "sha256": "533a4f4824229e3bac9cf88c0a5dc24e7d089fea74806160c9e8891b2389d864"
+    },
+    "historical-negative-control/compile.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "historical-negative-control/drop-eight-before.log": {
+      "bytes": 2465,
+      "sha256": "03db703044d28eb9119b328d2985f73ae0b26b97d5fba89fac7e372b20ac7293"
+    },
+    "historical-negative-control/four-only.log": {
+      "bytes": 2324,
+      "sha256": "c97e0e296d904f9043f6f79f9d3987474e0846cc9fec41c5330094fed75b429d"
+    },
+    "historical-negative-control/receipt.json": {
+      "bytes": 17999,
+      "sha256": "b283d60ff9508c71a0a2dd0a857378e33710c2a2503da16913a807340f864a1a"
+    },
+    "historical-negative-control/source-snapshots/AppDiagnostics.java": {
+      "bytes": 202,
+      "sha256": "afde4a941fc74500bdaa06adc593dc69fe60a3e1ddf7b37e52098ea9f308d6ce"
+    },
+    "historical-negative-control/source-snapshots/android/native-runtime.json": {
+      "bytes": 2123,
+      "sha256": "e3ea568b3a8485235f23a59cd787466cdcbbfcaa54ac56df3ce040d29fcb2a94"
+    },
+    "historical-negative-control/source-snapshots/android/src/com/cyberbasslord/lightforge/NativeDeux.java": {
+      "bytes": 74629,
+      "sha256": "314a395c8bd28c8841d5a2afefdb03779b1929f9beac3b1200dde7d03ee996d6"
+    },
+    "historical-negative-control/source-snapshots/android/src/com/cyberbasslord/lightforge/NativeDeuxTransform.java": {
+      "bytes": 7163,
+      "sha256": "991b06501cfb88b904d0b714a525c389f169f00c231248b0e961b70f257e90b5"
+    },
+    "historical-negative-control/source-snapshots/android/src/com/cyberbasslord/lightforge/NativeExecutionPolicy.java": {
+      "bytes": 17582,
+      "sha256": "35e5ca193c8ba46157e79a5caa9997370eec1a3fdabc9670bf0d4f8616b62702"
+    },
+    "historical-negative-control/source-snapshots/android/src/com/cyberbasslord/lightforge/NativeInferenceProfile.java": {
+      "bytes": 43277,
+      "sha256": "059e3ac51a8a935b2af1cc507f9985e6da1ba7c6fcef4d8a0f20ca44d1c7f88d"
+    },
+    "historical-negative-control/source-snapshots/android/src/com/cyberbasslord/lightforge/NativePassagePolicy.java": {
+      "bytes": 25653,
+      "sha256": "f30b21b801f991bf09e07b737cde4117baf77110afbbada4bcc691137e1f2daa"
+    },
+    "historical-negative-control/source-snapshots/tests/NativeDeuxNominationMemoryTest.java": {
+      "bytes": 15814,
+      "sha256": "bf97f42c67a8631e81b2e16df00f79aade70d2c854f2c112e949b37de4ddb49a"
+    },
+    "historical-negative-control/source-snapshots/tools/verify_deux_nomination.py": {
+      "bytes": 9781,
+      "sha256": "533a4f4824229e3bac9cf88c0a5dc24e7d089fea74806160c9e8891b2389d864"
+    }
+  }
+}

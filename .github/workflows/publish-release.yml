@@ -359,11 +359,11 @@ jobs:
           toolchain="$RUNNER_TEMP/lightforge-publication-toolchain"
           test ! -e "$toolchain"
           mkdir -p "$toolchain/downloads" "$toolchain/android-sdk/build-tools"
-          curl -fL --retry 3 'https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.20.1%2B1/OpenJDK17U-jdk_x64_linux_hotspot_17.0.20.1_1.tar.gz' -o "$toolchain/downloads/jdk17.tar.gz"
-          test "$(stat -c '%s' "$toolchain/downloads/jdk17.tar.gz")" = "193252603"
-          printf '%s  %s\n' '3808d1d15e3ec6bd5b84057fb5d84c33d8a1536a258146bcea2e603fc726e08e' "$toolchain/downloads/jdk17.tar.gz" | sha256sum -c
+          curl -fL --retry 3 'https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.21%2B9/OpenJDK17U-jdk_x64_linux_hotspot_17.0.21_9.tar.gz' -o "$toolchain/downloads/jdk17.tar.gz"
+          test "$(stat -c '%s' "$toolchain/downloads/jdk17.tar.gz")" = "193594705"
+          printf '%s  %s\n' '8b9b611d917e3dfd8419d3566b5949226f69b052fed7e109c1368add1dfe8711' "$toolchain/downloads/jdk17.tar.gz" | sha256sum -c
           tar -xzf "$toolchain/downloads/jdk17.tar.gz" -C "$toolchain"
-          mv "$toolchain/jdk-17.0.20.1+1" "$toolchain/jdk17"
+          mv "$toolchain/jdk-17.0.21+9" "$toolchain/jdk17"
           curl -fL --retry 3 'https://dl.google.com/android/repository/build-tools_r35_linux.zip' -o "$toolchain/downloads/build-tools.zip"
           test "$(stat -c '%s' "$toolchain/downloads/build-tools.zip")" = "61958799"
           printf '%s  %s\n' 'bd3a4966912eb8b30ed0d00b0cda6b6543b949d5ffe00bea54c04c81e1561d88' "$toolchain/downloads/build-tools.zip" | sha256sum -c

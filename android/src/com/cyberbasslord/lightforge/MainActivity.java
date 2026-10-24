@@ -98,7 +98,13 @@ public final class MainActivity extends Activity {
             "memoryBytes",memory.totalMem,"availableMemoryBytes",memory.availMem,
             "lowMemory",memory.lowMemory,"cpuCores",Runtime.getRuntime().availableProcessors());
     }
-    @Override protected void onResume(){super.onResume();foreground=true;AppDiagnostics.log(this,"INFO","activity","resumed");if(web!=null)web.evaluateJavascript("window.resumePreview && window.resumePreview()",null);sendAnalysisStatus();event("deviceCapabilities",deviceCapabilities());showPreviewRecovery();}
+    @Override protected void onResume(){super.onResume();foreground=true;if(completedRestoreMonitor!=null)completedRestoreMonitor.setForeground(hasWindowFocus());AppDiagnostics.log(this,"INFO","activity","resumed");if(web!=null)web.evaluateJavascript("window.resumePreview && window.resumePreview()",null);sendAnalysisStatus();event("deviceCapabilities",deviceCapabilities());showPreviewRecovery();}
+    @Override public void onWindowFocusChanged(boolean hasFocus){
+        super.onWindowFocusChanged(hasFocus);
+        // Notification shade and multi-window focus changes need not pause the
+        // Activity, but neither can satisfy the visible-frame proof below.
+        if(completedRestoreMonitor!=null)completedRestoreMonitor.setForeground(foreground&&hasFocus);
+    }
     @Override public void onRequestPermissionsResult(int request,String[] permissions,int[] results){
         super.onRequestPermissionsResult(request,permissions,results);event("deviceCapabilities",deviceCapabilities());
     }
@@ -154,6 +160,7 @@ public final class MainActivity extends Activity {
             @Override public void recover(String jobId,String nonce,String reason){recoverCompletedRestore(jobId,nonce,reason);}
             @Override public void diagnostic(String message){AppDiagnostics.log(MainActivity.this,"INFO","completed-restore-watchdog",message);}
         });
+        completedRestoreMonitor.setForeground(foreground);
         createPreview();
     }
     private void createPreview(){
@@ -178,7 +185,7 @@ public final class MainActivity extends Activity {
             }
             @Override public boolean shouldOverrideUrlLoading(WebView view,WebResourceRequest request) {
                 Uri uri=request.getUrl();
-                if(ORIGIN.equals(uri.getScheme()+"://"+uri.getAuthority())) return false;
+                if(AppResources.trustedOrigin(uri)) return false;
                 if(request.isForMainFrame()) openExternal(uri.toString());
                 return true;
             }
@@ -359,8 +366,20 @@ public final class MainActivity extends Activity {
             &&target==completedRestoreVisualWebView&&target==web;
     }
     private void clearCompletedRestoreVisualProofLocked(){
+        final WebView previous=completedRestoreVisualWebView;
+        final ViewTreeObserver.OnDrawListener listener=completedRestoreVisualDrawListener;
         completedRestoreVisualJobId=null;completedRestoreVisualNonce=null;completedRestoreVisualWebView=null;
         completedRestoreVisualRequested=false;completedRestoreVisualCommitted=false;completedRestoreVisualDrawListener=null;
+        // A cancelled/retired lease may never draw again. Remove its observer
+        // explicitly, and always outside onDraw and outside the bridge thread.
+        if(previous!=null&&listener!=null)completedRestoreHandler.post(()->{
+            ViewTreeObserver tree=previous.getViewTreeObserver();if(tree.isAlive())tree.removeOnDrawListener(listener);
+        });
+    }
+    static final class DeferredDrawCallback implements ViewTreeObserver.OnDrawListener {
+        private final Executor dispatcher;private final Runnable afterDraw;private boolean queued;
+        DeferredDrawCallback(Executor dispatcher,Runnable afterDraw){this.dispatcher=dispatcher;this.afterDraw=afterDraw;}
+        @Override public void onDraw(){if(!queued){queued=true;dispatcher.execute(afterDraw);}}
     }
     private void clearCompletedRestorePayloadLocked(){
         RandomAccessFile previous=completedRestorePayloadFile;completedRestorePayloadFile=null;
@@ -430,12 +449,14 @@ public final class MainActivity extends Activity {
             if(Build.VERSION.SDK_INT>=29){
                 tree.registerFrameCommitCallback(()->target.post(()->completeCompletedRestoreVisualCommit(jobId,nonce,target)));
             }else{
-                final ViewTreeObserver.OnDrawListener[] listener=new ViewTreeObserver.OnDrawListener[1];
-                listener[0]=()->{
+                final DeferredDrawCallback[] listener=new DeferredDrawCallback[1];
+                // API 26-28 prohibit removing an OnDrawListener within onDraw.
+                // Post once so removal and proof occur after the drawing pass.
+                listener[0]=new DeferredDrawCallback(task->completedRestoreHandler.post(task),()->{
                     ViewTreeObserver observer=target.getViewTreeObserver();if(observer.isAlive())observer.removeOnDrawListener(listener[0]);
                     synchronized(completedRestoreBridgeLock){if(completedRestoreVisualDrawListener==listener[0])completedRestoreVisualDrawListener=null;}
                     completeCompletedRestoreVisualCommit(jobId,nonce,target);
-                };
+                });
                 synchronized(completedRestoreBridgeLock){
                     if(!completedRestoreVisualMatchesLocked(jobId,nonce,target))return;
                     completedRestoreVisualDrawListener=listener[0];
@@ -503,7 +524,7 @@ public final class MainActivity extends Activity {
         });
     }
     @Override protected void onPause() {
-        foreground=false;AppDiagnostics.log(this,"INFO","activity","paused");
+        foreground=false;if(completedRestoreMonitor!=null)completedRestoreMonitor.setForeground(false);AppDiagnostics.log(this,"INFO","activity","paused");
         // During finish(), Android can tear down the hardware renderer between
         // onPause() and onDestroy(). Detach the WebView synchronously while the
         // window still owns it; otherwise ViewRootImpl may traverse a dead
@@ -581,6 +602,20 @@ public final class MainActivity extends Activity {
         }
     }
     private static void remove(File file) {if(file.isDirectory()&&!java.nio.file.Files.isSymbolicLink(file.toPath())){File[] children=file.listFiles();if(children!=null)for(File c:children)remove(c);}file.delete();}
+    static void deleteProjectFiles(File project)throws IOException {
+        try{removeProjectFilesChecked(project);}
+        catch(IOException failure){throw new IOException("The project could not be fully removed. Some files may already have been deleted. Please try again.",failure);}
+    }
+    private static void removeProjectFilesChecked(File file)throws IOException {
+        // Explicit deletion must acknowledge real filesystem success, unlike
+        // best-effort orphan cleanup. Never follow project-contained links.
+        if(java.nio.file.Files.isDirectory(file.toPath(),java.nio.file.LinkOption.NOFOLLOW_LINKS)){
+            File[] children=file.listFiles();
+            if(children==null)throw new IOException("Project storage could not be read.");
+            for(File child:children)removeProjectFilesChecked(child);
+        }
+        java.nio.file.Files.deleteIfExists(file.toPath());
+    }
     private void cleanupAbandonedCache() {
         File[] files=getCacheDir().listFiles();if(files!=null)for(File file:files)
             if(file.getName().matches("restore-[a-fA-F0-9-]{36}\\.zip")||file.getName().equals("exports"))remove(file);
@@ -859,13 +894,13 @@ public final class MainActivity extends Activity {
             try {
                 if(importing||exporting||AnalysisJobStore.active(analysisStatus())) throw new IOException("Finish or cancel the current operation first.");
                 synchronized(exportLock) {if(activeExport!=null)throw new IOException("Finish the export before removing a project.");}
-                remove(project(id));event("projects",bootstrap());
+                deleteProjectFiles(project(id));event("projects",bootstrap());
             }catch(Exception e){error(e);}
         }
         @JavascriptInterface public String beginExport(String metadata) {
             synchronized(exportLock) {
                 try {
-                    if(importing||exporting||AnalysisJobStore.active(analysisStatus())||activeExport!=null || pendingZip!=null) throw new IOException("The previous operation is still finishing. Try again in a moment.");
+                    if(worker.isShutdown()||importing||exporting||AnalysisJobStore.active(analysisStatus())||activeExport!=null || pendingZip!=null) throw new IOException("The previous operation is still finishing. Try again in a moment.");
                     if(metadata.length()>ProjectStore.MAX_PROJECT_BYTES+1024*1024)throw new IOException("This export's editable project data is too large.");
                     JSONObject meta=new JSONObject(metadata);String id=UUID.randomUUID().toString();
                     File dir=project(meta.getString("projectId"));if(!new File(dir,"audio.wav").isFile()) throw new IOException("The project's audio file is missing.");
@@ -892,10 +927,9 @@ public final class MainActivity extends Activity {
         @JavascriptInterface public boolean appendExport(String id,String base64) {
             synchronized(exportLock) {
                 try {
-                    if(activeExport==null||!activeExport.id.equals(id)) throw new IOException("The export session has expired.");
-                    if(base64.length()>2*1024*1024) throw new IOException("Export chunk is too large.");
-                    byte[] bytes=Base64.decode(base64,Base64.DEFAULT);activeExport.out.write(bytes);activeExport.size+=bytes.length;
-                    if(activeExport.size>200_100_000L) throw new IOException("The sequence exceeds Tesla's four-hour limit.");
+                    if(activeExport==null||!activeExport.accepts(id)){error(new IOException("The export session has expired."));return false;}
+                    if(base64==null||base64.length()>2*1024*1024) throw new IOException("Export chunk is too large.");
+                    byte[] bytes=Base64.decode(base64,Base64.DEFAULT);activeExport.append(bytes);
                     return true;
                 }catch(Exception e){if(activeExport!=null)activeExport.abort();activeExport=null;exporting=false;error(e);return false;}
             }
@@ -905,9 +939,10 @@ public final class MainActivity extends Activity {
             synchronized(exportLock) {
                 if(activeExport==null||!activeExport.id.equals(id)){error(new IOException("The export session has expired."));return;}
                 session=activeExport;
-                try{session.out.close();session.finishing=true;}catch(Exception e){session.abort();activeExport=null;exporting=false;error(e);return;}
+                if(session.finishing)return; // Duplicate bridge delivery must never queue a second ZIP writer.
+                try{session.finish();}catch(Exception e){session.abort();activeExport=null;exporting=false;error(e);return;}
             }
-            worker.execute(()-> {
+            try{worker.execute(()-> {
                 boolean handedOff=false;
                 try {
                     File zip=buildZip(session);
@@ -921,7 +956,10 @@ public final class MainActivity extends Activity {
                     synchronized(exportLock){if(activeExport==session)activeExport=null;if(!handedOff)exporting=false;}session.file.delete();
                     if(!handedOff)new File(exports,session.id+".zip").delete();
                 }
-            });
+            });}catch(RejectedExecutionException stoppedWorker){
+                synchronized(exportLock){session.abort();if(activeExport==session){activeExport=null;exporting=false;}}
+                error(new IOException("The studio closed before export could start. Reopen the project and export again.",stoppedWorker));
+            }
         }
         @JavascriptInterface public void shareExport(String id) {
             final Uri uri=lastExportUri;
@@ -981,9 +1019,15 @@ public final class MainActivity extends Activity {
         if(!previous.isEmpty()) {
             Uri uri=Uri.parse(previous);
             try{android.provider.DocumentsContract.deleteDocument(getContentResolver(),uri);}catch(Exception ignored){}
-            try{getContentResolver().releasePersistableUriPermission(uri,Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION);}catch(Exception ignored){}
+            releaseExportDestinationPermission(uri);
             PendingExportStore.clearDestination(exports);
         }
+    }
+    private void releaseExportDestinationPermission(Uri uri){
+        // Persisted grants exist only for interrupted-save recovery. Keeping
+        // each successful export forever eventually exhausts Android's grant
+        // quota. Sharing in this Activity still has its temporary picker grant.
+        try{getContentResolver().releasePersistableUriPermission(uri,Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION);}catch(Exception ignored){}
     }
     private void openExternal(String url) {
         Uri uri=Uri.parse(url);String host=uri.getHost();
@@ -1032,7 +1076,7 @@ public final class MainActivity extends Activity {
                 int flags=intent.getFlags()&(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
                 try{getContentResolver().takePersistableUriPermission(uri,flags);}catch(Exception ignored){}
                 PendingExportStore.destination(exports,uri.toString());
-            }catch(Exception e){exporting=false;error(e);event("exportRecovery",preparedExportInfo());return;}
+            }catch(Exception e){releaseExportDestinationPermission(uri);exporting=false;error(e);event("exportRecovery",preparedExportInfo());return;}
             exporting=true;cancelled.set(false);
             worker.execute(()-> {
                 boolean saved=false;
@@ -1052,7 +1096,7 @@ public final class MainActivity extends Activity {
                     try{android.provider.DocumentsContract.deleteDocument(getContentResolver(),uri);}catch(Exception ignored){}
                     try{PendingExportStore.clearDestination(exports);}catch(Exception ignored){}
                     if(cancelled.get())event("cancelled",json("stage","export"));else error(e);
-                }finally {exporting=false;if(!saved)event("exportRecovery",preparedExportInfo());}
+                }finally {releaseExportDestinationPermission(uri);exporting=false;if(!saved)event("exportRecovery",preparedExportInfo());}
             });
         }
     }
@@ -1102,10 +1146,22 @@ public final class MainActivity extends Activity {
         });
     }
 
-    private static final class ExportSession {
-        final String id,projectState;final JSONObject meta;final File project,file;final OutputStream out;long size;boolean finishing;
+    static final class ExportSession {
+        private static final long MAX_SEQUENCE_BYTES=200_100_000L;
+        final String id,projectState;final JSONObject meta;final File project,file;final OutputStream out;long size;boolean finishing,aborted;
         ExportSession(String id,JSONObject meta,File project,File file,String projectState)throws IOException{this.id=id;this.meta=meta;this.project=project;this.file=file;this.projectState=projectState;out=new BufferedOutputStream(new FileOutputStream(file),131072);}
-        void abort(){try{out.close();}catch(Exception ignored){}file.delete();}
+        boolean accepts(String owner){return id.equals(owner)&&!finishing&&!aborted;}
+        void append(byte[] bytes)throws IOException{
+            if(finishing||aborted)throw new IOException("The export session has expired.");
+            if(bytes==null||bytes.length>MAX_SEQUENCE_BYTES-size)throw new IOException("The sequence exceeds Tesla's four-hour limit.");
+            out.write(bytes);size+=bytes.length;
+        }
+        void finish()throws IOException{
+            if(aborted)throw new IOException("The export session has expired.");
+            if(finishing)return;
+            out.close();finishing=true;
+        }
+        void abort(){aborted=true;try{out.close();}catch(Exception ignored){}file.delete();}
     }
     private File buildZip(ExportSession session) throws Exception {
         progress("export",.05,"Checking Tesla file requirements");

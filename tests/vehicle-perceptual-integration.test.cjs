@@ -122,3 +122,54 @@ test('an automatic attack on the first frame after a manual cue ends remains eli
  assert.equal(report.targets.manualOverride,0);
  assert.equal(report.eventEvidence[0].realizationStatus,'matched');
 });
+
+function mechanicalFixture(){
+ const show={stepMs:20,frameCount:101,frames:new Uint8Array(101*200),settings:{manualCues:[],outputEnabled:{}},lightEvents:[],movements:[],choreography:{}};
+ const target={outputId:'mirrorL',time:1,kind:'fold',salience:.9};
+ const event={outputId:'mirrorL',start:.4,end:.6,value:191,command:'Close',intent:{targetTime:1}};
+ show.movements.push(event);
+ for(let frame=20;frame<30;frame++)show.frames[frame*200+34]=191;
+ return {show,target};
+}
+
+test('manual closure track replacement is attributed even outside its individual intervals',()=>{
+ const {show,target}=mechanicalFixture();
+ show.settings.manualCues=[{outputId:'mirrorL',start:1.4,end:1.6,value:63}];
+ // Retained automatic metadata, or a coincidental manual transition, cannot
+ // establish survival after the whole automatic track was replaced.
+ for(const retained of [true,false]){
+  if(!retained){show.movements=[];show.frames.fill(0);}
+  const report=SyncReview.review(show,[],[target]);
+  assert.equal(report.mechanical.manualOverride,1);
+  assert.equal(report.mechanical.matched,0);
+  assert.equal(report.collision.mechanicalLoss.count,0);
+  assert.equal(report.eventEvidence[0].commandTime,undefined);
+ }
+});
+
+test('unobserved mechanical metadata never becomes a measured command timestamp',()=>{
+ const {show,target}=mechanicalFixture();
+ for(const held of [false,true]){
+  show.frames.fill(0);
+  if(held)for(let frame=19;frame<30;frame++)show.frames[frame*200+34]=191;
+  const report=SyncReview.review(show,[],[target]);
+  assert.equal(report.eventEvidence[0].realizationStatus,held?'heldWithoutAttack':'suppressed');
+  assert.equal(report.eventEvidence[0].commandTime,undefined);
+  assert.equal(report.timing.command.mechanical.count,0);
+ }
+});
+
+test('mechanical losses distinguish unrouted, disabled and outside-export targets',()=>{
+ const {show,target}=mechanicalFixture();
+ show.movements=[];show.frames.fill(0);
+ const review=t=>SyncReview.review(show,[],[t]);
+ assert.equal(review({...target,outputId:'unknown'}).mechanical.unrouted,1);
+ show.settings.outputEnabled.mirrorL=false;
+ assert.equal(review(target).mechanical.disabled,1);
+ delete show.settings.outputEnabled.mirrorL;
+ for(const time of [-.02,2]){
+  const report=review({...target,time});
+  assert.equal(report.mechanical.outsideExport,1);
+  assert.equal(report.collision.mechanicalLoss.count,0);
+ }
+});

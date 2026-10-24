@@ -50,9 +50,11 @@ final class NativePassageTask implements AutoCloseable {
         if(!available)result.put("reason","previous-native-crash").put("message","Compatibility processing enabled after a native crash. The same Studio models are used; analysis may take longer.");
         return result.toString();
     }
-    synchronized String start(long startSample)throws Exception {
+    synchronized String start(long startSample)throws Exception {return start(startSample,-1);}
+    synchronized String start(long startSample,int remainingUseful)throws Exception {
         if(closed)throw new IOException("Native analysis has stopped.");
         if("running".equals(state))throw new IOException("A native passage is already running.");
+        if(remainingUseful!=-1&&(remainingUseful<1||remainingUseful>2880))throw new IOException("Invalid native passage budget.");
         // cancel() permanently terminates a NativeDeux instance.  A failed or
         // cancelled passage must therefore never donate that instance to a retry.
         if(cancelled||!"completed".equals(state))retireEngine(null);
@@ -83,7 +85,7 @@ final class NativePassageTask implements AutoCloseable {
                         lease[0]=runtimeGuard.begin(android.os.Process.myPid(),System.currentTimeMillis());
                     }
                     @Override public void end(){try{runtimeGuard.end(lease[0]);}catch(IOException error){AppDiagnostics.record(context,"native-marker",error);}}
-                },profile);
+                },profile,remainingUseful);
                 synchronized(this){
                     if(closed||cancelled)throw new IOException("Native analysis cancelled.");
                     if(result.length()!=OUTPUT_BYTES)throw new IOException("Native separation returned incomplete audio.");

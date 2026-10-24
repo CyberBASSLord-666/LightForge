@@ -1,0 +1,36 @@
+{
+  "schema": "lightforge.device-evidence-inventory.v1",
+  "scope": "Immutable file inventory of full run01 evidence and incomplete run02/UI captures; no release qualification.",
+  "sourceSnapshotCommit": "6a91949a060f7bb8543266242ca01f4d2904c069",
+  "analysisSourceScope": "run01 current-source binding passed before subsequent memory-admission source edits; it is not proof for later code",
+  "files": {
+    "README.md": {
+      "bytes": 7005,
+      "sha256": "7f96dd1b66f9203fbe60a646a2c4a544d20d4a33012d6dcd209f1b4ee7d982dc"
+    },
+    "run01-capture.json": {
+      "bytes": 1043,
+      "sha256": "0a35269edea84933dae8749a280865e7ceeeee4ae9e60ad38b82de58f3a6e3e9"
+    },
+    "run01-thermal-cancelled.raw.json": {
+      "bytes": 37629,
+      "sha256": "91e2384e9347a7b5dc58d111e05c8cc7311d4470ca19d565e2dde6b1c665b29e"
+    },
+    "run01-thermal-cancelled.retained-analysis.json": {
+      "bytes": 14857,
+      "sha256": "49d5189c2ca8158e59070275538e168ee12d50efb97e119150f225ab0586c6bc"
+    },
+    "run02-partial-export.capture.json": {
+      "bytes": 124519,
+      "sha256": "7e83d5a0984e55efe5f10149a33fb8f9e4297d072fb35120f3e20ac4bb51baee"
+    },
+    "run02-partial-observations.json": {
+      "bytes": 25420,
+      "sha256": "10014f13531284442cfc9beef3e73b54da095d55f757ba86d01c09c71a1870a6"
+    },
+    "ui-observations.json": {
+      "bytes": 6838,
+      "sha256": "660945a4b9cf81473cddbdf0348903c3e006e78aed90894c039efc53e1e7af25"
+    }
+  }
+}

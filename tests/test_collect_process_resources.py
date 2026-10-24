@@ -214,10 +214,29 @@ class CollectorTests(unittest.TestCase):
         with self.assertRaises(C.MeasurementError):
             C.nonnegative_delta(200, 1)
 
+    def test_wait4_block_counts_are_preserved_exactly_including_zero(self):
+        wait4 = C.os.wait4
+        for blocks in (0, 16384):
+            with self.subTest(blocks=blocks):
+                def observed_wait4(*args):
+                    pid, status, usage = wait4(*args)
+                    if pid:
+                        usage = SimpleNamespace(ru_utime=usage.ru_utime, ru_stime=usage.ru_stime,
+                                                ru_maxrss=usage.ru_maxrss, ru_inblock=7, ru_oublock=blocks)
+                    return pid, status, usage
+                with mock.patch.object(C.os, 'wait4', side_effect=observed_wait4):
+                    report = C.collect([sys.executable, '-c', 'pass'], timeout=2)
+                self.assertEqual(report['status'], 'completed')
+                self.assertEqual(report['observations']['wait4_output_blocks'], blocks)
+                self.assertEqual(report['observations']['wait4_input_blocks'], 7)
+
     def test_real_child_cpu_io_and_private_output(self):
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory) / "private-workload-data"
-            code = "import os,time; print('PRIVATE_COMMAND_OUTPUT'); f=open(" + repr(str(target)) + ", 'wb'); f.write(b'x'*(8*1024*1024)); f.flush(); os.fsync(f.fileno()); end=time.monotonic()+0.25\nwhile time.monotonic()<end: sum(i*i for i in range(4000))\ntime.sleep(0.05)"
+            counters = Path(directory) / "private-workload-counters"
+            code = "import os,time,resource; print('PRIVATE_COMMAND_OUTPUT'); f=open(" + repr(str(target)) + ", 'wb'); f.write(b'x'*(8*1024*1024)); f.flush(); os.fsync(f.fileno()); open(" + repr(str(counters)) + ", 'w').write(str(resource.getrusage(resource.RUSAGE_SELF).ru_oublock)); end=time.process_time()+0.25\nwhile time.process_time()<end: sum(i*i for i in range(4000))\ntime.sleep(0.05)"
+            # Exercise a fixed amount of child CPU, not wall time that can be
+            # consumed by other concurrent verification jobs being scheduled.
             before = time.process_time()
             report = C.collect([sys.executable, "-c", code], timeout=5, interval=.01)
             parent_cpu = time.process_time() - before
@@ -226,11 +245,15 @@ class CollectorTests(unittest.TestCase):
             self.assertGreater(report["observations"]["wait4_cpu_seconds"], .15)
             self.assertGreater(report["observations"]["wait4_cpu_seconds"], parent_cpu * 2)
             self.assertEqual(target.stat().st_size, 8*1024*1024)
-            # Restricted procfs may deny child io counters. The kernel wait4
-            # block count remains a genuine external-process observation.
-            self.assertGreater(report["observations"]["wait4_output_blocks"], 0)
+            # tmpfs writes have no block I/O even after fsync. Compare the
+            # collector with the child's independent kernel counter rather
+            # than inventing disk activity from a successful file write.
+            child_output_blocks = int(counters.read_text())
+            self.assertGreaterEqual(child_output_blocks, 0)
+            self.assertIs(type(report["observations"]["wait4_output_blocks"]), int)
+            self.assertGreaterEqual(report["observations"]["wait4_output_blocks"], child_output_blocks)
             if report["observations"]["root_procfs_io_samples"]:
-                self.assertGreaterEqual(report["observations"]["root_sampled_write_bytes"], 8*1024*1024)
+                self.assertGreaterEqual(report["observations"]["root_sampled_write_bytes"], 0)
             else:
                 self.assertNotIn("root_sampled_write_bytes", report["observations"])
             self.assertIsNone(report["contract_projection"])

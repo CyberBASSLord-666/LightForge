@@ -1,3 +1,12 @@
+# Shared fail-closed loader; this file also supports direct script execution.
+import sys as _security_sys
+from pathlib import Path as _SecurityPath
+_security_sys.path.insert(0, str(_SecurityPath(__file__).resolve().parents[2]))
+from _lightforge_research_checkpoint_security import (
+    load_tensor_checkpoint as _safe_torch_load,
+    load_remote_tensor_checkpoint as _safe_hub_load,
+)
+
 import os
 
 import torch
@@ -93,7 +102,7 @@ class PredictionsWrapper(nn.Module):
         ckpt_file = os.path.join(RESOURCES_FOLDER, checkpoint + ".pt")
         if not os.path.exists(ckpt_file):
             download_url_to_file(CHECKPOINT_URLS[checkpoint], ckpt_file)
-        state_dict = torch.load(ckpt_file, map_location="cpu", weights_only=True)
+        state_dict = _safe_torch_load(ckpt_file, map_location="cpu", weights_only=True)
 
         # compatibility with uniform wrapper structure we introduced for the public repo
         if 'fpasst' in checkpoint:

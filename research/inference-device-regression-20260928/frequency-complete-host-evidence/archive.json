@@ -1,0 +1,215 @@
+{
+  "schema": "lightforge.frequency-complete-host-archive.v1",
+  "archivedUtc": "2026-09-28T22:49:12.999339+00:00",
+  "scope": "Controlled fixed-configuration host full-passage qualification only. No Android admission, sustained adaptive-policy, whole-analysis or release claim.",
+  "verification": {
+    "receiptAndPublishedCopyIdentical": true,
+    "sourceBindingsBeforeAfterIdentical": true,
+    "frozenAndCurrentSourceBindingsVerified": 10,
+    "compiledClassHashesVerified": 50,
+    "completeOutputsAndProfiles": [
+      {
+        "prefix": "baseline/warmup-0",
+        "outputBytes": 4586400,
+        "outputSha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+        "finite": true,
+        "graphCount": 27,
+        "inferenceCalls": 335,
+        "profileSha256": "36807ffa7208b693ed7c9d39a0f20cae7fa45b03887228f05e240ebda70f5678"
+      },
+      {
+        "prefix": "candidate/warmup-0",
+        "outputBytes": 4586400,
+        "outputSha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+        "finite": true,
+        "graphCount": 27,
+        "inferenceCalls": 1727,
+        "profileSha256": "cc59d0f301ddd46985d9b6468b98bf980261f06b1fa61e0b4a212ba8d60a696d"
+      },
+      {
+        "prefix": "baseline/measurement-0",
+        "outputBytes": 4586400,
+        "outputSha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+        "finite": true,
+        "graphCount": 27,
+        "inferenceCalls": 335,
+        "profileSha256": "d04bfe39a127d64c7bafbe19ee6a1b2e366f8185c4254a4c61390428c5c1b0a2"
+      },
+      {
+        "prefix": "candidate/measurement-0",
+        "outputBytes": 4586400,
+        "outputSha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+        "finite": true,
+        "graphCount": 27,
+        "inferenceCalls": 1727,
+        "profileSha256": "9de6d303958fd0cedef0a2f55f6e5373f58a6bf23412c0842664a923f167ae40"
+      },
+      {
+        "prefix": "candidate/measurement-1",
+        "outputBytes": 4586400,
+        "outputSha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+        "finite": true,
+        "graphCount": 27,
+        "inferenceCalls": 1727,
+        "profileSha256": "fce7ba4ec9513eb864dae03187db7686200e03401aa5ed6045c76e828f82734b"
+      },
+      {
+        "prefix": "baseline/measurement-1",
+        "outputBytes": 4586400,
+        "outputSha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+        "finite": true,
+        "graphCount": 27,
+        "inferenceCalls": 335,
+        "profileSha256": "12d85bbcdada039b916b4c5e6ae0782075e8721db2749a771fde2c800d6031c9"
+      },
+      {
+        "prefix": "baseline/measurement-2",
+        "outputBytes": 4586400,
+        "outputSha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+        "finite": true,
+        "graphCount": 27,
+        "inferenceCalls": 335,
+        "profileSha256": "679e0049cfca98cfe658b9dde58b8ff49c6d9f358e8ab51c03b0dfb250a03430"
+      },
+      {
+        "prefix": "candidate/measurement-2",
+        "outputBytes": 4586400,
+        "outputSha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+        "finite": true,
+        "graphCount": 27,
+        "inferenceCalls": 1727,
+        "profileSha256": "d8d7d17b4fa5ecc720709b9cf332db64df03fe75be5deb208b1d8875f377422d"
+      }
+    ],
+    "independentlyRecomputedMedians": {
+      "baseline": {
+        "wallNanos": 47838871175,
+        "processCpuNanos": 144700000000,
+        "peakRssBytes": 854720512
+      },
+      "candidate": {
+        "wallNanos": 22687393368,
+        "processCpuNanos": 123470000000,
+        "peakRssBytes": 1079443456
+      }
+    },
+    "independentlyRecomputedPairs": [
+      {
+        "pairIndex": 0,
+        "baselineWallNanos": 52380912395,
+        "candidateWallNanos": 22317159903,
+        "wallReductionPercent": 57.3944803887565
+      },
+      {
+        "pairIndex": 1,
+        "baselineWallNanos": 47838871175,
+        "candidateWallNanos": 23259246906,
+        "wallReductionPercent": 51.38002562620041
+      },
+      {
+        "pairIndex": 2,
+        "baselineWallNanos": 46912425317,
+        "candidateWallNanos": 22687393368,
+        "wallReductionPercent": 51.63883935930593
+      }
+    ],
+    "independentlyRecomputedMedianWallReductionPercent": 52.57539985630733,
+    "independentlyRecomputedResources": {
+      "noOom": true,
+      "noMemoryLimitEvents": true,
+      "noDirectReclaim": true,
+      "maxThrottleToWallRatio": 0.0
+    },
+    "unchangedAdmissionCriteriaPassed": true,
+    "publishedReceiptSha256": "228b19c7b36c64807b6d3158339b86b2ed78b861c082a4a1bc57d243cec8cf43"
+  },
+  "memoryInterpretation": "Median whole-process peak RSS increased for the candidate; this is disclosed, and no memory eligibility guard was lowered.",
+  "omittedBinaries": [
+    "PCM files",
+    "class files",
+    "model files",
+    "runtime jars"
+  ],
+  "files": {
+    "baseline/measurement-0.log": {
+      "sha256": "a2c3bc18386a828472f9353db3ff55d50d95ed9f5a9dceb13e00a6bd7404b58d",
+      "bytes": 130
+    },
+    "baseline/measurement-0.profile.txt": {
+      "sha256": "d04bfe39a127d64c7bafbe19ee6a1b2e366f8185c4254a4c61390428c5c1b0a2",
+      "bytes": 30664
+    },
+    "baseline/measurement-1.log": {
+      "sha256": "8a19b98ee0cb8513df7496a79e9d42459b50c997c7db0d0ec1de000a73eb863c",
+      "bytes": 130
+    },
+    "baseline/measurement-1.profile.txt": {
+      "sha256": "12d85bbcdada039b916b4c5e6ae0782075e8721db2749a771fde2c800d6031c9",
+      "bytes": 30636
+    },
+    "baseline/measurement-2.log": {
+      "sha256": "d4e9984036de4505bf5ec993b4c87da8d2316b642beb3ee7097bab4961db10e2",
+      "bytes": 130
+    },
+    "baseline/measurement-2.profile.txt": {
+      "sha256": "679e0049cfca98cfe658b9dde58b8ff49c6d9f358e8ab51c03b0dfb250a03430",
+      "bytes": 30643
+    },
+    "baseline/warmup-0.log": {
+      "sha256": "5bbf237d94f744c3d33c666d7b2b96850bfb27c3a1213600cafcf58008db99a3",
+      "bytes": 130
+    },
+    "baseline/warmup-0.profile.txt": {
+      "sha256": "36807ffa7208b693ed7c9d39a0f20cae7fa45b03887228f05e240ebda70f5678",
+      "bytes": 30668
+    },
+    "candidate/measurement-0.log": {
+      "sha256": "d8d301e7e0c4ec1e3e78b1fe7ef190622a03f780644248444f2522a2cf9ec1d1",
+      "bytes": 131
+    },
+    "candidate/measurement-0.profile.txt": {
+      "sha256": "9de6d303958fd0cedef0a2f55f6e5373f58a6bf23412c0842664a923f167ae40",
+      "bytes": 32839
+    },
+    "candidate/measurement-1.log": {
+      "sha256": "b6c69ae6ff10af8201c0cd5d4bd56475fc91d1c5abdaee9a7f9860cdd6ca932f",
+      "bytes": 131
+    },
+    "candidate/measurement-1.profile.txt": {
+      "sha256": "fce7ba4ec9513eb864dae03187db7686200e03401aa5ed6045c76e828f82734b",
+      "bytes": 32844
+    },
+    "candidate/measurement-2.log": {
+      "sha256": "57c09e27327910007d2dc2fe6c66229aeedb8e2133982f3628ddc4e8db2ce178",
+      "bytes": 131
+    },
+    "candidate/measurement-2.profile.txt": {
+      "sha256": "d8d7d17b4fa5ecc720709b9cf332db64df03fe75be5deb208b1d8875f377422d",
+      "bytes": 32845
+    },
+    "candidate/warmup-0.log": {
+      "sha256": "736ecf4beced9ed5703f1e0622136f6f838513d70246f5efa4647ce719a68244",
+      "bytes": 131
+    },
+    "candidate/warmup-0.profile.txt": {
+      "sha256": "cc59d0f301ddd46985d9b6468b98bf980261f06b1fa61e0b4a212ba8d60a696d",
+      "bytes": 32837
+    },
+    "compile.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "receipt.original.json": {
+      "sha256": "228b19c7b36c64807b6d3158339b86b2ed78b861c082a4a1bc57d243cec8cf43",
+      "bytes": 46505
+    },
+    "source-snapshots.json": {
+      "sha256": "5eb016a666acffbd769f1fec03678dd5b1dfd729e42be6a9e2be1b6ba785a1d3",
+      "bytes": 293378
+    },
+    "wrapper.log": {
+      "sha256": "dbc4d91e2af86ff23299a7ccfa0f6afa582e9fcfdf2610f093398473a9b93113",
+      "bytes": 1142
+    }
+  }
+}

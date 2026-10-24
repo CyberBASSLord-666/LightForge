@@ -1,0 +1,7 @@
+wrote aggregate.json
+{"corpus_id":"lightforge-test-locked-corpus","format":"lightforge.locked-benchmark-manifest-validation.v1","manifest_sha256":"b38dadd9a858871d4abd0f6c03af33b0aff258611f36f40b00837ea4427ffb2f","release_ready":false,"schema_version":1,"track_count":2,"valid":true}
+...........
+----------------------------------------------------------------------
+Ran 11 tests in 0.130s
+
+OK

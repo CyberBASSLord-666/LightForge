@@ -59,6 +59,42 @@ class AnalysisAssetTest(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, 'Model graph inventory mismatch for deux'):
             self.verify()
 
+    def test_regenerated_outer_manifest_cannot_repin_model_graph_bytes(self):
+        for model in ['deux', 'game']:
+            with self.subTest(model=model):
+                graph = self.base / 'models' / model / 'front.onnx'
+                original = graph.read_bytes()
+                graph.write_bytes(b'changed executable model graph')
+                self.regenerate_assets()
+                with self.assertRaisesRegex(RuntimeError, 'contradicts pinned model identity'):
+                    self.verify()
+                graph.write_bytes(original)
+                self.regenerate_assets()
+
+    def test_regenerated_outer_manifest_cannot_repin_model_configuration(self):
+        directory = self.base / 'models/game'
+        configuration = directory / 'config.json'
+        configuration.write_text('{"sampleRate": 22050}')
+        registry_path = directory / 'manifest.json'
+        registry = json.loads(registry_path.read_text())
+        registry['files'][configuration.name] = self.identity(configuration)
+        registry_path.write_text(json.dumps(registry))
+        self.regenerate_assets()
+        self.assertEqual(self.verify(), 5)
+        configuration.write_text('{"sampleRate": 16000}')
+        self.regenerate_assets()
+        with self.assertRaisesRegex(RuntimeError, 'contradicts pinned model identity'):
+            self.verify()
+
+    def test_regenerated_outer_manifest_cannot_omit_model_configuration(self):
+        registry_path = self.base / 'models/game/manifest.json'
+        registry = json.loads(registry_path.read_text())
+        registry['files']['config.json'] = {'bytes': 2, 'sha256': hashlib.sha256(b'{}').hexdigest()}
+        registry_path.write_text(json.dumps(registry))
+        self.regenerate_assets()
+        with self.assertRaisesRegex(RuntimeError, 'contradicts pinned model identity'):
+            self.verify()
+
 
 if __name__ == '__main__':
     unittest.main()

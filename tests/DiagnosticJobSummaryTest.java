@@ -2,8 +2,10 @@ package com.cyberbasslord.lightforge;
 
 import java.io.File;
 import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.zip.CRC32;
 
 /** Exercise actual persistence, process restart and trace rotation with deterministic clocks. */
 public final class DiagnosticJobSummaryTest {
@@ -86,6 +88,11 @@ public final class DiagnosticJobSummaryTest {
         require(new DiagnosticJobSummary(parallelDirectory).snapshot().contains(
             "lastTemporalConfig=cpu-i1-j1-d0-sequential-w8-b1 lastFrequencyConfig=cpu-i4-j1-d0-sequential"),
             "unsupported worker geometry and frequency parallelism cannot replace the last observed valid configuration");
+        checkPolicyPersistence(root);
+        checkLegacyMigration(root, 0x4c464a31, 11);
+        checkLegacyMigration(root, 0x4c464a32, 15);
+        checkFrequencyCounts(root);
+        checkFormatCorruption(root);
 
         for (int i = 2; i <= 6; i++) {
             String id = i + "1111111-1111-4111-8111-111111111111";
@@ -106,5 +113,142 @@ public final class DiagnosticJobSummaryTest {
         String corrupt = new DiagnosticJobSummary(directory).snapshot();
         require(corrupt.contains("recovery=invalid-prior-summary-discarded") && !corrupt.contains("jobRef="), "checksum failure cannot export invented receipt values");
         System.out.println("PASS: " + checks + " durable summary checks; stage/save clocks, scope, restarts, privacy and trace-independent bounded persistence.");
+    }
+    private static void checkPolicyPersistence(File root) throws Exception {
+        File directory = new File(root, "passage-policy");
+        DiagnosticJobSummary store = new DiagnosticJobSummary(directory);
+        for (int job = 1; job <= DiagnosticJobSummary.MAX_JOBS; job++) {
+            String id = job + "1111111-1111-4111-8111-111111111111";
+            store.observe(id, 1000, 1000, 100, "running", "separation", 0, 0, 177, "precision");
+            NativeInferenceProfile profile = new NativeInferenceProfile();
+            profile.notePassagePolicy(NativeInferenceProfileTest.controlEvidence());
+            profile.noteSchedulerConfiguration("temporal", "cpu-i4-j1-d0-sequential");
+            profile.addSessionInit("block-00-time", 1000000L);
+            profile.noteSchedulerConfiguration("temporal", "cpu-i1-j1-d0-sequential-w4-b1");
+            profile.addSessionInit("block-01-time", 1000000L);
+            profile.noteSchedulerConfiguration("temporal", "cpu-i1-j1-d0-sequential-w8-b1");
+            profile.addSessionInit("block-02-time", 1000000L);
+            profile.addSessionInit("block-00-frequency", 1000000L);
+            profile.noteSchedulerConfiguration("frequency", "cpu-i4-j1-d0-sequential");
+            profile.addSessionInit("block-01-frequency", 1000000L);
+            profile.noteSchedulerConfiguration("frequency", "cpu-i1-j1-d0-sequential-w4-b16");
+            profile.addSessionInit("block-02-frequency", 1000000L);
+            profile.noteSchedulerConfiguration("frequency", "cpu-i1-j1-d0-sequential-w8-b16");
+            profile.addSessionInit("block-03-frequency", 1000000L);
+            store.profile(id, "native-deux-v1", profile.finish("completed").record(0));
+        }
+        String report = store.snapshot();
+        require(report.split("schema=native-passage-policy-v1", -1).length - 1 == 3 &&
+            report.split("schema=native-passage-pair-v1", -1).length - 1 == 12 &&
+            report.split("schema=native-passage-control-v1", -1).length - 1 == 3 &&
+            report.contains("comparisonScope=unmatched-inputs"),
+            "all three retained jobs preserve qualification, recheck and distinct latest unmatched control evidence");
+        require(report.contains("temporalBaselineSessionCount=1 temporalBaselineSessionCountMeasuredPassages=1") &&
+            report.contains("temporalFourWorkerSessionCount=1 temporalFourWorkerSessionCountMeasuredPassages=1") &&
+            report.contains("temporalEightWorkerSessionCount=1 temporalEightWorkerSessionCountMeasuredPassages=1"),
+            "mixed session counts reach the durable job summary independently of last configuration");
+        for (String metric : new String[]{"frequencyBaselineSessionCount", "frequencyFourWorkerSessionCount",
+                "frequencyEightWorkerSessionCount", "frequencyUnobservedSessionCount"})
+            require(report.contains(metric + "=1 " + metric + "MeasuredPassages=1"),
+                "each observed frequency session configuration reaches durable totals: " + metric);
+        require(report.contains("lastFrequencyConfig=cpu-i1-j1-d0-sequential-w8-b16"),
+            "last frequency scheduling configuration retains its distinct sixteen-frame geometry");
+        DiagnosticLog log = new DiagnosticLog(directory, 1024, 2);
+        log.append("INFO", "native-scheduler", "original qualification evidence");
+        for (int i = 0; i < 200; i++) log.append("INFO", "native-phase", "repeated graph telemetry " + i);
+        ByteArrayOutputStream trace = new ByteArrayOutputStream(); log.snapshot(trace);
+        require(!trace.toString("UTF-8").contains("original qualification evidence"), "policy fixture actually rotates early trace");
+        require(report.equals(new DiagnosticJobSummary(directory).snapshot()), "policy evidence survives rotation and process restart exactly");
+        require(new File(directory, "job-summary.bin").length() < DiagnosticJobSummary.MAX_BYTES,
+            "three complete policy histories and route totals fit the existing storage bound");
+        store.profile(ID, "native-deux-v1", "outcome=failed passagePolicy=schema=native-passage-policy-v1,title=private-song-name");
+        String retained = new DiagnosticJobSummary(directory).snapshot();
+        require(retained.split("schema=native-passage-policy-v1", -1).length - 1 == 3 && !retained.contains("private-song-name"),
+            "invalid later policy cannot replace complete durable evidence or introduce private text");
+        store.profile(ID, "native-game-v1", "outcome=completed passagePolicy=" +
+            NativeInferenceProfile.encodePassagePolicy(NativeInferenceProfileTest.policyEvidence()));
+        require(store.snapshot().split("schema=native-passage-policy-v1", -1).length - 1 == 3,
+            "other native routes cannot claim Deux qualification evidence");
+    }
+    private static byte[] fixture(int format, int metrics, int invalidMetric, boolean invalidSamples) throws Exception {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream(); DataOutputStream out = new DataOutputStream(bytes);
+        out.writeLong(0); out.writeInt(format); out.writeInt(1);
+        out.writeUTF(DiagnosticJobSummary.reference(ID)); out.writeLong(1000); out.writeLong(2000); out.writeLong(1000);
+        out.writeLong(177000); out.writeInt(1); out.writeInt(4); out.writeInt(8);
+        out.writeLong(0); out.writeInt(4); out.writeInt(0);
+        for (int i = 0; i < 10; i++) out.writeLong(i == 3 ? 900 : i == 8 ? 100 : 0);
+        for (int route = 0; route < 3; route++) {
+            out.writeLong(route == 0 ? 1 : 0); out.writeLong(route == 0 ? 1 : 0); out.writeLong(0); out.writeLong(0);
+            out.writeUTF(route == 0 ? "cpu-i4-j1-d0-sequential" : "unavailable");
+            out.writeUTF(route == 0 ? "cpu-i4-j1-d0-sequential" : "unavailable");
+            for (int metric = 0; metric < metrics; metric++) {
+                long value = route == 0 ? metric == 0 ? 800 : metric == 11 ? 12 : 0 : 0;
+                long samples = route == 0 && (metric == 0 || metric >= 11) ? 1 : 0;
+                if (route == 0 && metric == invalidMetric) { if (invalidSamples) samples = 2; else value = -1; }
+                out.writeLong(value); out.writeLong(samples);
+            }
+            if (format != 0x4c464a31) out.writeUTF(route == 0 ?
+                NativeInferenceProfile.encodePassagePolicy(NativeInferenceProfileTest.controlEvidence()) : "");
+        }
+        out.flush(); byte[] payload = bytes.toByteArray(); checksum(payload); return payload;
+    }
+    private static void checksum(byte[] payload) {
+        CRC32 crc = new CRC32(); crc.update(payload, 8, payload.length - 8);
+        long checksum = crc.getValue(); for (int i = 7; i >= 0; i--) { payload[i] = (byte)checksum; checksum >>>= 8; }
+    }
+    private static void checkLegacyMigration(File root, int format, int metrics) throws Exception {
+        File directory = new File(root, "legacy-summary-" + metrics); require(directory.mkdir(), "legacy fixture directory created");
+        Files.write(new File(directory, "job-summary.bin").toPath(), fixture(format, metrics, -1, false));
+        DiagnosticJobSummary store = new DiagnosticJobSummary(directory);
+        String legacy = store.snapshot();
+        require(legacy.contains("recovery=normal") && legacy.contains("wallMs=800 wallMsMeasuredPassages=1") &&
+            legacy.contains("temporalBaselineSessionCount=" + (metrics == 11 ? "unavailable" : "12")),
+            "previous binary receipt preserves existing temporal counts and timings");
+        for (String metric : new String[]{"frequencyBaselineSessionCount", "frequencyFourWorkerSessionCount",
+                "frequencyEightWorkerSessionCount", "frequencyUnobservedSessionCount"})
+            require(legacy.contains(metric + "=unavailable " + metric + "MeasuredPassages=0"),
+                "old binary format cannot invent missing frequency measurements: " + metric);
+        require((metrics == 15) == legacy.contains("schema=native-passage-control-v1"),
+            "v2 policy payload is read after exactly fifteen metrics; v1 does not invent it");
+        store.profile(ID, "native-deux-v1", "outcome=completed wallMs=100 temporalBaselineSessionCount=12 temporalFourWorkerSessionCount=0 temporalEightWorkerSessionCount=0 temporalUnobservedSessionCount=0 frequencyBaselineSessionCount=3 frequencyFourWorkerSessionCount=4 frequencyEightWorkerSessionCount=5 frequencyUnobservedSessionCount=0");
+        String migrated = new DiagnosticJobSummary(directory).snapshot();
+        require(migrated.contains("passages=2 completed=2") && migrated.contains("wallMs=900 wallMsMeasuredPassages=2") &&
+            migrated.contains("temporalBaselineSessionCount=" + (metrics == 11 ? "12 temporalBaselineSessionCountMeasuredPassages=1" : "24 temporalBaselineSessionCountMeasuredPassages=2")) &&
+            migrated.contains("frequencyBaselineSessionCount=3 frequencyBaselineSessionCountMeasuredPassages=1") &&
+            migrated.contains("frequencyFourWorkerSessionCount=4 frequencyFourWorkerSessionCountMeasuredPassages=1") &&
+            migrated.contains("frequencyEightWorkerSessionCount=5 frequencyEightWorkerSessionCountMeasuredPassages=1") &&
+            migrated.contains("frequencyUnobservedSessionCount=0 frequencyUnobservedSessionCountMeasuredPassages=1"),
+            "atomic format upgrade preserves legacy sums and accurately scopes new measurement coverage");
+        try (java.io.DataInputStream in = new java.io.DataInputStream(new java.io.FileInputStream(new File(directory, "job-summary.bin")))) {
+            in.readLong(); require(in.readInt() == 0x4c464a33, "a successful mutation atomically writes binary v3");
+        }
+        require(migrated.startsWith("schema=diagnostic-job-summary-v2 "), "additive export fields preserve the text schema");
+    }
+    private static void checkFrequencyCounts(File root) throws Exception {
+        File directory = new File(root, "frequency-counts"); DiagnosticJobSummary store = new DiagnosticJobSummary(directory);
+        observe(store, "running", "separation", 1000, 100);
+        store.profile(ID, "native-deux-v1", "outcome=completed frequencyConfig=cpu-i1-j1-d0-sequential-w4-b16 frequencyBaselineSessionCount=1 frequencyFourWorkerSessionCount=11 frequencyEightWorkerSessionCount=0 frequencyUnobservedSessionCount=0");
+        store.profile(ID, "native-deux-v1", "outcome=cancelled frequencyConfig=cpu-i1-j1-d0-sequential-w8-b16 frequencyBaselineSessionCount=0 frequencyFourWorkerSessionCount=0 frequencyEightWorkerSessionCount=2 frequencyUnobservedSessionCount=1");
+        store.profile(ID, "native-deux-v1", "outcome=failed frequencyConfig=cpu-i1-j1-d0-sequential-w8-b1 temporalConfig=cpu-i1-j1-d0-sequential-w4-b16 frequencyBaselineSessionCount=unavailable frequencyFourWorkerSessionCount=-1 frequencyEightWorkerSessionCount=9223372036854775807 frequencyUnobservedSessionCount=private");
+        String report = new DiagnosticJobSummary(directory).snapshot();
+        require(report.contains("passages=3 completed=1 cancelled=1 otherOutcomes=1") &&
+            report.contains("frequencyBaselineSessionCount=1 frequencyBaselineSessionCountMeasuredPassages=2") &&
+            report.contains("frequencyFourWorkerSessionCount=11 frequencyFourWorkerSessionCountMeasuredPassages=2") &&
+            report.contains("frequencyEightWorkerSessionCount=2 frequencyEightWorkerSessionCountMeasuredPassages=2") &&
+            report.contains("frequencyUnobservedSessionCount=1 frequencyUnobservedSessionCountMeasuredPassages=2"),
+            "mixed frequency totals retain cancellation work while invalid/missing values remain partial");
+        require(report.contains("lastTemporalConfig=unavailable lastFrequencyConfig=cpu-i1-j1-d0-sequential-w8-b16"),
+            "frequency b16 and temporal b1 identities cannot masquerade as each other");
+    }
+    private static void checkFormatCorruption(File root) throws Exception {
+        byte[][] invalid = {fixture(0x4c464a33, 19, 15, false), fixture(0x4c464a33, 19, 18, true),
+            fixture(0x4c464a34, 19, -1, false), fixture(0x4c464a33, 15, -1, false)};
+        for (int i = 0; i < invalid.length; i++) {
+            File directory = new File(root, "format-corrupt-" + i); require(directory.mkdir(), "corrupt fixture directory created");
+            Files.write(new File(directory, "job-summary.bin").toPath(), invalid[i]);
+            String report = new DiagnosticJobSummary(directory).snapshot();
+            require(report.contains("recovery=invalid-prior-summary-discarded") && !report.contains("jobRef="),
+                "CRC-valid invalid metric/count/version/length cannot export invented frequency evidence");
+        }
     }
 }

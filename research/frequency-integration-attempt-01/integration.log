@@ -1,0 +1,5 @@
+Exception in thread "main" java.lang.AssertionError: Native cancellation contained an unclassified cleanup failure
+	at com.cyberbasslord.lightforge.NativeDeuxCalibrationTest.require(NativeDeuxCalibrationTest.java:17)
+	at com.cyberbasslord.lightforge.NativeDeuxCalibrationTest.cancelDuringNative(NativeDeuxCalibrationTest.java:235)
+	at com.cyberbasslord.lightforge.NativeDeuxCalibrationTest.cancelDuringNative(NativeDeuxCalibrationTest.java:177)
+	at com.cyberbasslord.lightforge.NativeDeuxCalibrationTest.main(NativeDeuxCalibrationTest.java:353)

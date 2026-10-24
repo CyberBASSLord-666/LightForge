@@ -2,11 +2,12 @@
 """Install pinned, official build dependencies on Linux x86_64 (Python >=3.12)."""
 from __future__ import annotations
 import concurrent.futures
+import fcntl
 import hashlib
 import json
 import os
 import platform
-import shutil
+import stat
 import subprocess
 import tarfile
 import tempfile
@@ -26,9 +27,9 @@ PACKAGES = [
          sha256='0988cacad01b38a18a47bac14a0695f246bc76c1b06c0eeb8eb0dc825ab0c8e0',
          size=64273788, source='android-35', target='android-sdk/platforms/android-35', check='android.jar'),
     dict(name='jdk17.tar.gz',
-         url='https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.20.1%2B1/OpenJDK17U-jdk_x64_linux_hotspot_17.0.20.1_1.tar.gz',
-         sha256='3808d1d15e3ec6bd5b84057fb5d84c33d8a1536a258146bcea2e603fc726e08e',
-         size=193252603, source='jdk-17.0.20.1+1', target='jdk17', check='bin/javac'),
+         url='https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.21%2B9/OpenJDK17U-jdk_x64_linux_hotspot_17.0.21_9.tar.gz',
+         sha256='8b9b611d917e3dfd8419d3566b5949226f69b052fed7e109c1368add1dfe8711',
+         size=193594705, source='jdk-17.0.21+9', target='jdk17', check='bin/javac'),
 ]
 
 def digest(path: Path) -> str:
@@ -39,24 +40,92 @@ def download(p):
     path = DEST / 'downloads' / p['name']
     if not (path.is_file() and path.stat().st_size == p['size'] and digest(path) == p['sha256']):
         print('Downloading ' + p['name'], flush=True)
-        with urllib.request.urlopen(p['url'], timeout=240) as response:
-            data = response.read()
-        if len(data) != p['size'] or hashlib.sha256(data).hexdigest() != p['sha256']:
-            raise RuntimeError('Download integrity failure: ' + p['name'])
-        temp = path.with_suffix(path.suffix + '.part')
-        with temp.open('wb') as f:
-            f.write(data)
-            f.flush()
-            os.fsync(f.fileno())
-        os.replace(temp, path)
+        # A pinned JDK archive is ~193 MB. Stream instead of retaining the
+        # entire response, and use unique siblings so concurrent bootstraps
+        # cannot truncate or replace each other's in-progress download.
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with tempfile.NamedTemporaryFile(dir=path.parent, prefix=path.name + '.',
+                                         suffix='.part', delete=False) as output:
+            temp = Path(output.name)
+            try:
+                received = 0
+                checksum = hashlib.sha256()
+                with urllib.request.urlopen(p['url'], timeout=240) as response:
+                    while chunk := response.read(1024 * 1024):
+                        received += len(chunk)
+                        if received > p['size']:
+                            raise RuntimeError('Download integrity failure: ' + p['name'])
+                        checksum.update(chunk)
+                        output.write(chunk)
+                if received != p['size'] or checksum.hexdigest() != p['sha256']:
+                    raise RuntimeError('Download integrity failure: ' + p['name'])
+                output.flush()
+                os.fsync(output.fileno())
+                os.replace(temp, path)
+            finally:
+                temp.unlink(missing_ok=True)
     print('Verified ' + p['name'], flush=True)
     return p, path
 
+INSTALL_RECEIPT = '.lightforge-package.json'
+
+
+def inventory(root):
+    """Compare installed bytes, modes and links, not a forgeable receipt alone."""
+    result = {'.': ('directory', stat.S_IMODE(root.lstat().st_mode))}
+    for path in sorted(root.rglob('*')):
+        relative = path.relative_to(root).as_posix()
+        if relative == INSTALL_RECEIPT:
+            continue
+        mode = path.lstat().st_mode
+        if stat.S_ISLNK(mode):
+            value = ('link', os.readlink(path))
+        elif stat.S_ISREG(mode):
+            value = ('file', stat.S_IMODE(mode), digest(path))
+        elif stat.S_ISDIR(mode):
+            value = ('directory', stat.S_IMODE(mode))
+        else:
+            raise RuntimeError('Unsupported installed file: ' + str(path))
+        result[relative] = value
+    return result
+
+
 def install(p, archive):
-    target = DEST / p['target']
-    if (target / p['check']).is_file():
-        print('Already installed ' + str(target), flush=True)
-        return
+    # Serialize managed writers and never merge an extraction into an existing
+    # directory. A legacy, changed or differently pinned install needs a new
+    # LIGHTFORGE_TOOLCHAIN_DIR; it is never silently overwritten or deleted.
+    DEST.mkdir(parents=True, exist_ok=True)
+    with (DEST / '.install.lock').open('a') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        _install(p, archive)
+
+
+def _install(p, archive):
+    relative = Path(p['target'])
+    if relative.is_absolute() or '..' in relative.parts or relative == Path('.'):
+        raise RuntimeError('Unsafe installation target: ' + p['target'])
+    target = DEST / relative
+    # A managed leaf must not publish through an unmanaged ancestor symlink.
+    parent = DEST
+    for part in relative.parts[:-1]:
+        parent = parent / part
+        if parent.is_symlink() or (parent.exists() and not parent.is_dir()):
+            raise RuntimeError('Unsafe installation ancestor: ' + str(parent))
+    if not (archive.is_file() and archive.stat().st_size == p['size']
+            and digest(archive) == p['sha256']):
+        raise RuntimeError('Install archive integrity failure: ' + p['name'])
+    exists = target.exists() or target.is_symlink()
+    if exists:
+        receipt = target / INSTALL_RECEIPT
+        try:
+            managed = (not target.is_symlink() and receipt.is_file()
+                       and not receipt.is_symlink()
+                       and json.loads(receipt.read_text()) == p)
+        except (OSError, ValueError):
+            managed = False
+        if not managed:
+            raise RuntimeError('Unmanaged or differently pinned installation: '
+                               + str(target) + '; choose a fresh LIGHTFORGE_TOOLCHAIN_DIR')
     with tempfile.TemporaryDirectory(dir=DEST) as temp:
         scratch = Path(temp)
         if archive.suffix == '.zip':
@@ -75,8 +144,19 @@ def install(p, archive):
         else:
             with tarfile.open(archive) as t:
                 t.extractall(scratch, filter='data')
+        source = scratch / p['source']
+        if not source.is_dir() or source.is_symlink() or not (source / p['check']).is_file():
+            raise RuntimeError('Incomplete package: ' + p['name'])
+        if exists:
+            if inventory(target) != inventory(source):
+                raise RuntimeError('Changed managed installation: ' + str(target)
+                                   + '; choose a fresh LIGHTFORGE_TOOLCHAIN_DIR')
+            print('Verified installed ' + str(target), flush=True)
+            return
+        (source / INSTALL_RECEIPT).write_text(json.dumps(p, sort_keys=True) + '\n')
         target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.move(str(scratch / p['source']), str(target))
+        # The lock coordinates concurrent bootstrap processes.
+        source.rename(target)
     print('Installed ' + str(target), flush=True)
 
 def main():

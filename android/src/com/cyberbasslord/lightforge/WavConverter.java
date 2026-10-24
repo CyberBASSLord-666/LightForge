@@ -14,8 +14,16 @@ public final class WavConverter implements Closeable {
     public WavConverter(File audioFile, File analysisFile, int sourceRate) throws IOException {
         if(sourceRate<8000 || sourceRate>384000) throw new IOException("Unsupported sample rate: "+sourceRate);
         this.sourceRate=sourceRate;
-        audio=new Sink(audioFile,44100,2); analysis=new Sink(analysisFile,22050,1);
-        full=new Resampler(sourceRate,44100,audio); mono=new Resampler(sourceRate,22050,analysis);
+        Sink openedAudio=new Sink(audioFile,44100,2),openedAnalysis=null;
+        try{
+            openedAnalysis=new Sink(analysisFile,22050,1);
+            full=new Resampler(sourceRate,44100,openedAudio);mono=new Resampler(sourceRate,22050,openedAnalysis);
+        }catch(Throwable failure){
+            try{openedAudio.close();}catch(Throwable cleanup){failure.addSuppressed(cleanup);}
+            if(openedAnalysis!=null)try{openedAnalysis.close();}catch(Throwable cleanup){failure.addSuppressed(cleanup);}
+            throw failure;
+        }
+        audio=openedAudio;analysis=openedAnalysis;
     }
     public void accept(float[] stereo,int frames) throws IOException {
         if(sourceFrames+frames>(long)sourceRate*4*3600) throw new IOException("Tesla shows can be at most four hours long.");
@@ -25,7 +33,11 @@ public final class WavConverter implements Closeable {
         if(!finished) { full.finish(); mono.finish(); audio.finish(); analysis.finish(); finished=true; }
         return audio.frames/44100.0;
     }
-    public void close() throws IOException { audio.close(); analysis.close(); }
+    public void close() throws IOException {
+        // Reverse declaration order closes audio first, while try-with-resources
+        // always closes analysis and preserves secondary failures as suppressed.
+        try(Sink analysisCleanup=analysis;Sink audioCleanup=audio){}
+    }
     public static void le16(OutputStream out,int v) throws IOException { out.write(v&255);out.write((v>>>8)&255); }
     public static void le32(OutputStream out,long v) throws IOException { le16(out,(int)v);le16(out,(int)(v>>>16)); }
     static int sample(float value) { if(!Float.isFinite(value)) return 0; return Math.max(-32768,Math.min(32767,Math.round(value*32768f))); }
@@ -36,7 +48,8 @@ public final class WavConverter implements Closeable {
         Sink(File f,int rate,int channels) throws IOException {
             this.file=f;this.rate=rate;this.channels=channels;
             out=new BufferedOutputStream(new FileOutputStream(f),131072);
-            out.write(new byte[44]);
+            try{out.write(new byte[44]);}
+            catch(Throwable failure){try{out.close();}catch(Throwable cleanup){failure.addSuppressed(cleanup);}throw failure;}
         }
         void frame(float left,float right) throws IOException {
             if(channels==1) le16(out,sample((left+right)*.5f));

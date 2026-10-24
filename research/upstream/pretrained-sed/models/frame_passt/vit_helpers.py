@@ -3,6 +3,15 @@ Adapted from https://github.com/rwightman/pytorch-image-models/blob/master/timm/
 Credit to @leo19941227  for remove timm dependencies here : https://github.com/s3prl/passt_hear21/blob/48a0dc1b824641ca59884ced53f5b86053fed141/hear21passt/models/helpers/vit_helpers.py
 
 """
+# Shared fail-closed loader; this file also supports direct script execution.
+import sys as _security_sys
+from pathlib import Path as _SecurityPath
+_security_sys.path.insert(0, str(_SecurityPath(__file__).resolve().parents[3]))
+from _lightforge_research_checkpoint_security import (
+    load_tensor_checkpoint as _safe_torch_load,
+    load_remote_tensor_checkpoint as _safe_hub_load,
+)
+
 import math
 import logging
 import warnings
@@ -93,7 +102,7 @@ def load_pretrained(
             progress=_DOWNLOAD_PROGRESS,
         )
 
-    state_dict = torch.load(pretrained_loc, map_location="cpu")
+    state_dict = _safe_torch_load(pretrained_loc, map_location="cpu")
 
     if filter_fn is not None:
         # for backwards compat with filter fn that take one arg, try one first, the two

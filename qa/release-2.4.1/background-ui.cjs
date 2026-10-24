@@ -30,7 +30,9 @@ function errorText(error){return error&&error.stack?error.stack:String(error);}
   assert.equal(new Set(inputs).size,inputs.length,'Background source inventory contains duplicates');
   receipt.source_hashes=Object.fromEntries(inputs.map(p=>[p,crypto.createHash('sha256').update(fs.readFileSync(path.join(root,p))).digest('hex')]));
   const {chromium}=require('playwright');
+  const {allowLocalRequest}=require('../locked-benchmark/local-http-security.cjs');
   server=http.createServer((req,res)=>{
+    if(!allowLocalRequest(req,res))return;
   const url=new URL(req.url,'http://local');
   if(url.pathname==='/fixture.json'){res.setHeader('Content-Type','application/json');res.end(JSON.stringify({version:1,projectId:'qa-background',name:'Background session',settings:{dance:'off'},music:null,needAnalysis:true}));return;}
   const file=path.resolve(root,'web','.'+(url.pathname==='/'?'/index.html':url.pathname));

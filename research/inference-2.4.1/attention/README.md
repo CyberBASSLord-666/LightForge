@@ -16,7 +16,10 @@ newer runtime; every inference script requires ONNX Runtime **1.25.1**.
 - `scripts/`: authored graph transformations and probes, adjusted only to use
   portable input/output paths. The synthetic retile screen also now asserts the
   pinned runtime before running.
-- `requirements.txt`: exact versions read from the research environment.
+- `requirements.txt`: current reproduction dependencies. ONNX was upgraded from
+  the historical 1.20.1 to 1.22.0 for security; ONNX Runtime remains 1.25.1.
+  Historical receipts were produced with ONNX 1.20.1 and have not been rerun or
+  rewritten. New graph generation needs fresh numerical qualification.
 - `evidence-index.json`: retained receipt/source hashes, original snapshot hashes,
   documented archival edits and explicit output-hash coverage. Some original
   probes recorded in-memory byte comparisons without recording output hashes;

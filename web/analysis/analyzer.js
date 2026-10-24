@@ -127,7 +127,8 @@ async function analyze(audioUrl,options={},onProgress=()=>{},signal){
     try{onProgress({...m.value,analysisStage:stage,progress,elapsedSeconds:clock.elapsed(started)/1000,completedStages:Object.keys(timings).length,restoredStages:Object.values(timings).filter(t=>t.restored).length});}catch(error){end(error);}return;
    }
    if(m.type==='native-deux'){
-    if(stage!=='separation'||!hasNative||nativeActive||!Number.isSafeInteger(m.requestId)||!Number.isSafeInteger(m.startSample)){end(new Error('Invalid native studio request.'));return;}
+    const remainingUseful=m.remainingUseful===undefined?-1:m.remainingUseful;
+    if(stage!=='separation'||!hasNative||nativeActive||!Number.isSafeInteger(m.requestId)||!Number.isSafeInteger(m.startSample)||(remainingUseful!==-1&&(!Number.isSafeInteger(remainingUseful)||remainingUseful<1||remainingUseful>2880))){end(new Error('Invalid native studio request.'));return;}
     nativeActive=true;let nativeProgress=-1,nativeMessage='';
     const reportNative=p=>{
      if(finished||!p||!Number.isFinite(p.progress))return;
@@ -135,7 +136,7 @@ async function analyze(audioUrl,options={},onProgress=()=>{},signal){
      lastActivity=clock.now();nativeProgress=Math.max(nativeProgress,p.progress);nativeMessage=p.message;
      worker.postMessage({type:'native-deux-progress',requestId:m.requestId,value:{progress:Math.max(0,Math.min(1,p.progress)),message:String(p.message||'Studio analysis')}});
     };
-    Promise.resolve().then(()=>nativePredict(m.startSample,controller.signal,reportNative)).then(result=>{
+    Promise.resolve().then(()=>nativePredict(m.startSample,controller.signal,reportNative,remainingUseful)).then(result=>{
      if(finished)return;if(typeof result?.url!=='string')throw Error('Native studio output is unavailable.');
      nativeActive=false;lastActivity=clock.now();worker.postMessage({type:'native-deux-result',requestId:m.requestId,url:result.url});
     }).catch(error=>{if(!finished){scope.LightForgeDiagnostics?.log(error?.name==='AbortError'?'info':'error','analysis',error);nativeActive=false;if(error?.name==='AbortError')worker.postMessage({type:'native-deux-result',requestId:m.requestId,aborted:true,message:error.message||'Analysis cancelled'});else worker.postMessage({type:'native-deux-result',requestId:m.requestId,fallback:true,message:typeof error?.message==='string'?error.message.slice(0,320):undefined});}});return;

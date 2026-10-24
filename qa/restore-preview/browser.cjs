@@ -37,11 +37,40 @@ const receiptPath = path.join(output, 'restore-preview-verification.json');
 const write = () => writeJsonAtomic(receiptPath, receipt);
 // Publish an atomic failed receipt before version/source reads, Playwright import, or browser work.
 write();
+function checkpoint(phase) {
+  receipt.phase = phase;
+  receipt.updatedAt = new Date().toISOString();
+  write();
+  console.log(`[restore-preview] ${phase}`);
+}
+// Playwright evaluate and close do not inherit its default action timeout.
+// Keep the deadline in Node so an unresponsive page cannot suppress diagnostics.
+async function bounded(phase, timeoutMs, operation) {
+  checkpoint(phase);
+  let timer;
+  try {
+    return await Promise.race([
+      Promise.resolve().then(operation),
+      new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`Restore-preview phase "${phase}" exceeded ${timeoutMs} ms`)), timeoutMs);
+      }),
+    ]);
+  } finally { clearTimeout(timer); }
+}
+function recordFailure(error) {
+  receipt.passed = false;
+  receipt.failurePhase ||= receipt.phase;
+  receipt.errors.push(errorText(error));
+  process.exitCode = 1;
+  write(); // Persist the original failure before teardown, which can also fail.
+  console.error(errorText(error));
+}
 (async () => {
-  let browser, server, releaseRead, saved, chromium;
+  let browser, server, releaseRead, saved, chromium, verified = false;
   const readGate = new Promise(resolve => { releaseRead = resolve; });
   const errors = [];
   try {
+    checkpoint('source-binding');
     if (sessionError) throw sessionError;
     const version = JSON.parse(fs.readFileSync(path.join(root, 'version.json'), 'utf8'));
     assert.match(version?.name, /^[0-9]+\.[0-9]+\.[0-9]+$/, 'Restore-preview release version is invalid');
@@ -49,8 +78,11 @@ write();
     inventoryPath = `qa/release-${RELEASE}/browser-source-inventory.json`;
     receipt.release = RELEASE;
     receipt.source_hashes = Object.fromEntries(sourceNames().map(name => [name, crypto.createHash('sha256').update(fs.readFileSync(path.join(root, name))).digest('hex')]));
+    checkpoint('playwright-import');
     ({chromium} = require('playwright'));
+    const {allowLocalRequest}=require('../locked-benchmark/local-http-security.cjs');
     server = http.createServer((req, res) => {
+      if (!allowLocalRequest(req, res)) return;
       const pathname = decodeURIComponent(new URL(req.url, 'http://local').pathname);
       if (pathname === '/completed-project.json') {
         readGate.then(() => { if (!res.destroyed) { res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify(saved)); } });
@@ -63,22 +95,22 @@ write();
       res.setHeader('Content-Length', fs.statSync(file).size);
       fs.createReadStream(file).pipe(res);
     });
-    await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });
+    await bounded('server-listen', 10000, () => new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); }));
     const origin = 'http://127.0.0.1:' + server.address().port;
-    browser = await chromium.launch({headless: true, ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH ? {executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH} : {}), args: ['--no-sandbox', '--enable-unsafe-swiftshader']});
-    const setup = await browser.newPage({viewport: {width: 393, height: 852}});
+    browser = await bounded('browser-launch', 60000, () => chromium.launch({headless: true, ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH ? {executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH} : {}), args: ['--no-sandbox', '--enable-unsafe-swiftshader']}));
+    const setup = await bounded('fixture-page', 30000, () => browser.newPage({viewport: {width: 393, height: 852}}));
     setup.on('pageerror', error => errors.push(error.message));
-    await setup.addInitScript(release => { window.Android = {pickAudio() {}, getBootstrap: () => JSON.stringify({projects: [], version: release})}; }, RELEASE);
-    await setup.goto(origin);
-    await setup.waitForFunction(() => !!window.LightForgeApp && !!window.ShowCompiler);
-    saved = await setup.evaluate(async () => {
+    await bounded('fixture-bridge', 15000, () => setup.addInitScript(release => { window.Android = {pickAudio() {}, getBootstrap: () => JSON.stringify({projects: [], version: release})}; }, RELEASE));
+    await bounded('fixture-navigation', 45000, () => setup.goto(origin));
+    await bounded('fixture-ready', 45000, () => setup.waitForFunction(() => !!window.LightForgeApp && !!window.ShowCompiler));
+    saved = await bounded('fixture-compile', 120000, () => setup.evaluate(async () => {
       const music = {duration: 2, bpm: 120, beats: [0, .5, 1, 1.5], waveform: [.4], beatConfidence: .9, sections: [{start: 0, end: 2, energy: .7}], analysisVersion: 6};
       const settings = structuredClone(LightForgeApp.state.settings);
       const result = await ShowCompiler.generate(music, settings);
       return {version: 1, projectId: 'restore-preview-fixture', settings, music, compiled: result.compiled, needAnalysis: false};
-    });
-    await setup.close();
-    const page = await browser.newPage({viewport: {width: 393, height: 852}});
+    }));
+    await bounded('fixture-page-close', 15000, () => setup.close());
+    const page = await bounded('cold-page', 30000, () => browser.newPage({viewport: {width: 393, height: 852}}));
     page.on('pageerror', error => errors.push(error.message));
     let modelRequests = 0;
     page.on('request', request => { if (request.url().endsWith('/preview/models/highland.glb')) modelRequests++; });
@@ -108,16 +140,16 @@ write();
         completedRestoreFailed(_id, _nonce, reason) { calls.push('failed:' + reason); return true; },
       };
     };
-    await page.addInitScript(nativeBridge, {release: RELEASE});
-    await page.goto(origin, {waitUntil: 'domcontentloaded'});
-    await page.waitForFunction(() => window.LightForgeApp?.state.completedRestore?.phase === 'project-read-fallback');
-    const deferred = await page.evaluate(() => ({contexts: restoreQA.contexts, graphics: !!LightForgeApp.vehiclePreview.renderer, started: LightForgeApp.vehiclePreview._loadStarted, deferred: LightForgeApp.vehiclePreview._loadDeferred, frames: LightForgeApp.vehiclePreview.renderCount}));
+    await bounded('cold-bridge', 15000, () => page.addInitScript(nativeBridge, {release: RELEASE}));
+    await bounded('cold-navigation', 45000, () => page.goto(origin, {waitUntil: 'domcontentloaded'}));
+    await bounded('cold-read-gate', 45000, () => page.waitForFunction(() => window.LightForgeApp?.state.completedRestore?.phase === 'project-read-fallback'));
+    const deferred = await bounded('cold-deferred-observation', 15000, () => page.evaluate(() => ({contexts: restoreQA.contexts, graphics: !!LightForgeApp.vehiclePreview.renderer, started: LightForgeApp.vehiclePreview._loadStarted, deferred: LightForgeApp.vehiclePreview._loadDeferred, frames: LightForgeApp.vehiclePreview.renderCount})));
     assert.deepEqual(deferred, {contexts: 0, graphics: false, started: false, deferred: true, frames: 0});
     assert.equal(modelRequests, 0);
     receipt.checks.push('Cold completed restore performs no WebGL context allocation or GLB request while waiting for its saved payload.');
     releaseRead();
-    await page.waitForFunction(() => localStorage.getItem('lightforge-background-ack') === restoreQA.job.id && !LightForgeApp.state.backgroundApplying && LightForgeApp.vehiclePreview.renderCount > 0, {}, {timeout: 45000});
-    const complete = await page.evaluate(() => ({calls: restoreQA.calls, contexts: restoreQA.contexts, sha256: LightForgeApp.state.compiled.sha256, loaded: LightForgeApp.vehiclePreview.loaded, frames: LightForgeApp.vehiclePreview.renderCount, pending: LightForgeApp.state.backgroundSyncPending, quality: LightForgeApp.vehiclePreview.getPerformance()}));
+    await bounded('cold-restore-proof', 60000, () => page.waitForFunction(() => localStorage.getItem('lightforge-background-ack') === restoreQA.job.id && !LightForgeApp.state.backgroundApplying && LightForgeApp.vehiclePreview.renderCount > 0, {}, {timeout: 45000}));
+    const complete = await bounded('cold-complete-observation', 15000, () => page.evaluate(() => ({calls: restoreQA.calls, contexts: restoreQA.contexts, sha256: LightForgeApp.state.compiled.sha256, loaded: LightForgeApp.vehiclePreview.loaded, frames: LightForgeApp.vehiclePreview.renderCount, pending: LightForgeApp.state.backgroundSyncPending, quality: LightForgeApp.vehiclePreview.getPerformance()})));
     assert.equal(complete.sha256, saved.compiled.sha256);
     assert.equal(complete.loaded, true); assert.equal(complete.pending, false);
     assert.equal(complete.contexts, 1); assert.equal(modelRequests, 1);
@@ -128,25 +160,25 @@ write();
     receipt.checks.push('Verified worker result, show adoption, actual WebGL rendering, simulated visual commit, terminal proof, and browser ACK complete in order with one model load.');
     receipt.checks.push('Restoration preserves the exact compiled frame SHA-256; the test does not rerun audio analysis or substitute a cheaper show.');
     receipt.observation = complete;
-    await page.screenshot({path: path.join(output, 'restore-preview.png'), fullPage: true, animations: 'disabled'});
-    await page.close();
-    const foreground = await browser.newPage({viewport: {width: 393, height: 852}});
+    await bounded('cold-screenshot', 45000, () => page.screenshot({path: path.join(output, 'restore-preview.png'), fullPage: true, animations: 'disabled'}));
+    await bounded('cold-page-close', 15000, () => page.close());
+    const foreground = await bounded('foreground-page', 30000, () => browser.newPage({viewport: {width: 393, height: 852}}));
     foreground.on('pageerror', error => errors.push(error.message));
     let foregroundReads = 0;
     foreground.on('request', request => { if (request.url().endsWith('/completed-project.json')) foregroundReads++; });
-    await foreground.addInitScript(nativeBridge, {deferCompletion: true, release: RELEASE});
-    await foreground.goto(origin, {waitUntil: 'domcontentloaded'});
-    await foreground.waitForFunction(() => window.LightForgeApp?.vehiclePreview.loaded);
-    await foreground.evaluate(() => {
+    await bounded('foreground-bridge', 15000, () => foreground.addInitScript(nativeBridge, {deferCompletion: true, release: RELEASE}));
+    await bounded('foreground-navigation', 45000, () => foreground.goto(origin, {waitUntil: 'domcontentloaded'}));
+    await bounded('foreground-ready', 45000, () => foreground.waitForFunction(() => window.LightForgeApp?.vehiclePreview.loaded));
+    await bounded('foreground-pause-delivery', 15000, () => foreground.evaluate(() => {
       pausePreview(); restoreQA.armed = true;
       for (let n = 0; n < 3; n++) onNativeEvent('analysisJob', JSON.stringify(restoreQA.job));
-    });
-    const paused = await foreground.evaluate(() => ({calls: restoreQA.calls, pending: LightForgeApp.state.backgroundSyncPending, applying: !!LightForgeApp.state.backgroundApplying, busy: LightForgeApp.state.busy, paused: LightForgeApp.vehiclePreview._paused, ack: localStorage.getItem('lightforge-background-ack')}));
+    }));
+    const paused = await bounded('foreground-paused-observation', 15000, () => foreground.evaluate(() => ({calls: restoreQA.calls, pending: LightForgeApp.state.backgroundSyncPending, applying: !!LightForgeApp.state.backgroundApplying, busy: LightForgeApp.state.busy, paused: LightForgeApp.vehiclePreview._paused, ack: localStorage.getItem('lightforge-background-ack')})));
     assert.deepEqual(paused, {calls: [], pending: true, applying: false, busy: false, paused: true, ack: null});
     assert.equal(foregroundReads, 0, 'Paused completion delivery must not read a project or open a visual-proof lease');
-    await foreground.evaluate(() => resumePreview());
-    await foreground.waitForFunction(() => localStorage.getItem('lightforge-background-ack') === restoreQA.job.id && !LightForgeApp.state.backgroundApplying && LightForgeApp.vehiclePreview.renderCount > 0, {}, {timeout: 45000});
-    const resumed = await foreground.evaluate(() => ({calls: restoreQA.calls, sha256: LightForgeApp.state.compiled.sha256, loaded: LightForgeApp.vehiclePreview.loaded, frames: LightForgeApp.vehiclePreview.renderCount, pending: LightForgeApp.state.backgroundSyncPending, paused: LightForgeApp.vehiclePreview._paused}));
+    await bounded('foreground-resume', 15000, () => foreground.evaluate(() => resumePreview()));
+    await bounded('foreground-restore-proof', 60000, () => foreground.waitForFunction(() => localStorage.getItem('lightforge-background-ack') === restoreQA.job.id && !LightForgeApp.state.backgroundApplying && LightForgeApp.vehiclePreview.renderCount > 0, {}, {timeout: 45000}));
+    const resumed = await bounded('foreground-complete-observation', 15000, () => foreground.evaluate(() => ({calls: restoreQA.calls, sha256: LightForgeApp.state.compiled.sha256, loaded: LightForgeApp.vehiclePreview.loaded, frames: LightForgeApp.vehiclePreview.renderCount, pending: LightForgeApp.state.backgroundSyncPending, paused: LightForgeApp.vehiclePreview._paused})));
     assert.equal(resumed.sha256, saved.compiled.sha256); assert.equal(foregroundReads, 1);
     assert.equal(resumed.calls.filter(call => call === 'begin').length, 1);
     assert.equal(resumed.calls.filter(call => call === 'ack').length, 1);
@@ -155,14 +187,35 @@ write();
     assert.equal(errors.length, 0, JSON.stringify(errors));
     receipt.checks.push('Native pause followed by repeated completed-job deliveries performs no project read, worker restore, or native lease/ACK until resume; foreground restoration then renders the exact saved frames and acknowledges once.');
     receipt.foregroundObservation = resumed;
-    await foreground.screenshot({path: path.join(output, 'foreground-resume.png'), fullPage: true, animations: 'disabled'});
+    await bounded('foreground-screenshot', 45000, () => foreground.screenshot({path: path.join(output, 'foreground-resume.png'), fullPage: true, animations: 'disabled'}));
+    checkpoint('source-recheck');
     for (const [name, expected] of Object.entries(receipt.source_hashes)) assert.equal(crypto.createHash('sha256').update(fs.readFileSync(path.join(root, name))).digest('hex'), expected, 'Source changed during restore verification: ' + name);
-    receipt.passed = true;
+    verified = true;
   } catch (error) {
-    receipt.errors.push(errorText(error)); console.error(errorText(error)); process.exitCode = 1;
+    recordFailure(error);
   } finally {
-    releaseRead?.(); await browser?.close();
-    if (server?.listening) await new Promise(resolve => server.close(resolve));
-    receipt.completedAt = new Date().toISOString(); write(); console.log(JSON.stringify(receipt));
+    receipt.pageErrors = errors;
+    // Even successful checks remain fail-closed until bounded cleanup completes.
+    write();
+    releaseRead?.();
+    try { if (browser) await bounded('browser-close', 10000, () => browser.close()); }
+    catch (error) { recordFailure(error); }
+    try {
+      if (server?.listening) await bounded('server-close', 10000, () => new Promise((resolve, reject) => {
+        server.close(error => error ? reject(error) : resolve());
+        server.closeAllConnections?.();
+      }));
+    } catch (error) { recordFailure(error); }
+    receipt.passed = verified && receipt.errors.length === 0;
+    receipt.completedAt = new Date().toISOString();
+    checkpoint(receipt.passed ? 'complete' : 'failed');
+    console.log(JSON.stringify(receipt));
+    // A timed-out Playwright operation may retain subprocess/socket handles.
+    // Give output a chance to flush, then exit nonzero only if handles remain.
+    if (!receipt.passed) setTimeout(() => process.exit(1), 1000).unref();
   }
-})();
+})().catch(error => {
+  process.exitCode = 1;
+  console.error(errorText(error));
+  setTimeout(() => process.exit(1), 1000).unref();
+});

@@ -1,9 +1,18 @@
+# Shared fail-closed loader; this file also supports direct script execution.
+import sys as _security_sys
+from pathlib import Path as _SecurityPath
+_security_sys.path.insert(0, str(_SecurityPath(__file__).resolve().parents[3]))
+from _lightforge_research_checkpoint_security import (
+    load_tensor_checkpoint as _safe_torch_load,
+    load_remote_tensor_checkpoint as _safe_hub_load,
+)
+
 from functools import partial
 from typing import Any, Callable, List, Optional, Sequence, Tuple, Union
 from torch import nn, Tensor
 import torch.nn.functional as F
 from torchvision.ops.misc import ConvNormActivation
-from torch.hub import load_state_dict_from_url
+from _lightforge_research_checkpoint_security import load_remote_tensor_checkpoint as load_state_dict_from_url
 import urllib.parse
 
 from models.mn.utils import cnn_out_size

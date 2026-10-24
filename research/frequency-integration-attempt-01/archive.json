@@ -1,0 +1,86 @@
+{
+  "schema": "lightforge.failed-frequency-integration-archive.v1",
+  "archivedUtc": "2026-09-28T22:28:10.524967+00:00",
+  "scope": "Failed actual JNI integration attempt preserved without alteration. Historical failure evidence only; no successful integration, speedup, phone, or release qualification.",
+  "actualExecution": {
+    "inferencePerformed": true,
+    "originalReceiptInaccurateField": "inferencePerformed=false",
+    "explanation": "The frozen Python wrapper writes inferencePerformed=true only after the JNI invocation returns successfully and its result validates. The JVM executed five complete outputs and cancellation checks before the recorded assertion failed. The original receipt bytes are preserved, not corrected.",
+    "failure": "Native cancellation contained an unclassified cleanup failure",
+    "test": "owner-thread interruption during native temporal execution",
+    "sourceLine": "NativeDeuxCalibrationTest.java:353",
+    "stageOrder": "reference, unknown-work baseline, short-work baseline, automatic first passage, forced four-worker complete output, caller-cancellation check, then owner-thread interruption check failed. Later frequency cancellation and eight-worker recovery were not reached.",
+    "jniLog": "integration.log",
+    "wrapperLog": "wrapper.log"
+  },
+  "verification": {
+    "frozenSourceBindingsVerified": 14,
+    "compiledClassHashesVerified": 51,
+    "completeOutputs": [
+      {
+        "name": "automatic.f32",
+        "bytes": 4586400,
+        "sha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+        "finite": true,
+        "exactOriginal": true,
+        "pcmArchived": false
+      },
+      {
+        "name": "four.f32",
+        "bytes": 4586400,
+        "sha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+        "finite": true,
+        "exactOriginal": true,
+        "pcmArchived": false
+      },
+      {
+        "name": "reference.f32",
+        "bytes": 4586400,
+        "sha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+        "finite": true,
+        "exactOriginal": true,
+        "pcmArchived": false
+      },
+      {
+        "name": "short.f32",
+        "bytes": 4586400,
+        "sha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+        "finite": true,
+        "exactOriginal": true,
+        "pcmArchived": false
+      },
+      {
+        "name": "unknown.f32",
+        "bytes": 4586400,
+        "sha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+        "finite": true,
+        "exactOriginal": true,
+        "pcmArchived": false
+      }
+    ],
+    "expectedOriginalOutputSha256": "d9cd80a15c19921b2f472233a4a3bb86eec3e39aef66374a9c007b4b9efc5837",
+    "validationTime": "Archive time, independently checked against surviving immutable output files; no inference rerun."
+  },
+  "files": {
+    "compile.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "integration.log": {
+      "sha256": "fdf723f1a598105a891b3babf38f7cdb43901e5bdaae5d0852f9f397f8f38750",
+      "bytes": 545
+    },
+    "receipt.original.json": {
+      "sha256": "ce5f450e08662bd238bb94242bf855b2baa4e1fcce502de8352804b74bb06bbb",
+      "bytes": 9356
+    },
+    "source-snapshots.json": {
+      "sha256": "377e0ea7ad28b3a1f1a66c59182aa9d9ccf23926436a00334619dad57e531c1e",
+      "bytes": 368610
+    },
+    "wrapper.log": {
+      "sha256": "0d7c312666bd87c363db832b2454fe308671fb2be656651fc5cfbb9dbeba4ca4",
+      "bytes": 534
+    }
+  }
+}

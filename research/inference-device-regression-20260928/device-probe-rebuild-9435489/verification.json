@@ -1,0 +1,23 @@
+{
+  "aligned16K": true,
+  "apkBytes": 113915300,
+  "apkReceiptSha256": "ecf40a5562134aa76d0372c4fc58b16496bf241b082fbd38fda85950631df67c",
+  "apkSha256": "647c6e69fed382193e8400845a206bd41fa8bffa11b4490907995ed195aa99d1",
+  "buildDirectory": "run-mx12x5g2",
+  "compiledClassHashesChecked": 75,
+  "fixtureSourceSha256": "effbbe3e3c0df821bf3cfa6535360b18339ded8041992373b41f8344998dba99",
+  "inferencePerformed": false,
+  "modelManifestSha256": "6aebf45e6e7f6fa974f14fe47a252fc01f48da4815f40a1fdf10641a432529a9",
+  "noPermissions": true,
+  "packageName": "com.cyberbasslord.lightforge.inferenceprobe",
+  "productionReleaseBuilt": false,
+  "releaseSignerUsed": false,
+  "schema": "lightforge.probe-rebuild-verification.v1",
+  "signerSha256": "3b4e0984a0af5a1efb073de867b71aafabdc773c42f93fe073ad8640d701a102",
+  "sourceCommit": "9435489a20ed48dbc5950e0178af36d183f06c06",
+  "sourceHashesChecked": 15,
+  "sourceReceiptSha256": "95c2ef317addf702cf3e6b9a6be2775c707bd6f369e6b2de87bd3427a38188e8",
+  "v2AndV3Signed": true,
+  "versionCode": 2,
+  "zipVerified": true
+}

@@ -14,11 +14,12 @@
     onCompatibility(message);return undefined;
    }
   }
-  const predict=async function(startSample,signal,onProgress=()=>{}){
+  const predict=async function(startSample,signal,onProgress=()=>{},remainingUseful=-1){
    if(signal?.aborted)throw abortError();
    if(!Number.isSafeInteger(startSample)||startSample< -66150||startSample>44100*14400)throw Error('Invalid native passage position.');
+   if(remainingUseful!==-1&&(!Number.isSafeInteger(remainingUseful)||remainingUseful<1||remainingUseful>2880))throw Error('Invalid native passage budget.');
    const decode=raw=>{const value=JSON.parse(raw);if(value.error)throw Error(value.error);return value;};
-   let value=decode(bridge.nativeDeuxStart(jobId,startSample));const token=value.token;
+   let value=decode(typeof bridge.nativeDeuxStartWithBudget==='function'?bridge.nativeDeuxStartWithBudget(jobId,startSample,remainingUseful):bridge.nativeDeuxStart(jobId,startSample));const token=value.token;
    if(typeof token!=='string'||!/^[a-f0-9-]{36}$/.test(token))throw Error('Invalid native passage response.');
    const cancel=()=>{try{bridge.nativeDeuxCancel(jobId,token);}catch{}};
    signal?.addEventListener('abort',cancel,{once:true});

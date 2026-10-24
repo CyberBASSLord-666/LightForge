@@ -122,7 +122,7 @@ class ReleaseQualityPublicationWiringTest(unittest.TestCase):
                     publisher.verify_release_quality(request, VERSION, gate.REPOSITORY, {}, COMMIT, TREE)
                 api.assert_not_called()
 
-    def _run_automated_publication(self, *, ci_changes=None, failing_guard=None, bad_delta=False):
+    def _run_automated_publication(self, *, version=VERSION, ci_changes=None, failing_guard=None, bad_delta=False):
         """Exercise main's ordering with small artifacts and isolated external boundaries."""
         with tempfile.TemporaryDirectory() as temporary, ExitStack() as stack:
             root = Path(temporary)
@@ -130,20 +130,20 @@ class ReleaseQualityPublicationWiringTest(unittest.TestCase):
             stack.callback(os.chdir, original_cwd)
             candidate_root = root / "candidate"
             candidate_root.mkdir()
-            candidate_apk = candidate_root / "LightForge-2.2.5.apk"
+            candidate_apk = candidate_root / ("LightForge-" + version["name"] + ".apk")
             candidate_apk.write_bytes(b"test candidate payload")
             apk_digest = hashlib.sha256(candidate_apk.read_bytes()).hexdigest()
-            delta = root / "releases/v2.2.5/signed-apk.delta.json"
+            delta = root / ("releases/v" + version["name"]) / "signed-apk.delta.json"
             delta.parent.mkdir(parents=True)
             delta.write_text("{}")
-            declaration = automated_declaration()
+            declaration = dict(automated_declaration(), release=version)
             request = {
-                "version": VERSION, "run_id": 404, "source_commit": COMMIT,
+                "version": version, "run_id": 404, "source_commit": COMMIT,
                 "delta_sha256": "0" * 64 if bad_delta else hashlib.sha256(delta.read_bytes()).hexdigest(),
                 "quality_gate_policy": declaration_receipt(declaration),
             }
             (root / "request.json").write_text(json.dumps(request))
-            (root / "version.json").write_text(json.dumps(VERSION))
+            (root / "version.json").write_text(json.dumps(version))
             (root / "RELEASE_NOTES.md").write_text("Qualification remains unverified.\n")
             (root / "release-verification.json").write_text(json.dumps({
                 "release": {"sha256": apk_digest},
@@ -167,7 +167,7 @@ class ReleaseQualityPublicationWiringTest(unittest.TestCase):
             }))
             stack.enter_context(patch.object(publisher, "api", side_effect=api))
             stack.enter_context(patch.object(publisher, "run", return_value=json.dumps(declaration)))
-            stack.enter_context(patch.object(publisher, "_derive_published_release_scope", return_value=performance_scope()))
+            stack.enter_context(patch.object(publisher, "_derive_published_release_scope", return_value=dict(performance_scope(), release=version)))
             guards = {}
             for name, value in (
                 ("require_candidate_worktree", None),
@@ -225,6 +225,24 @@ class ReleaseQualityPublicationWiringTest(unittest.TestCase):
         ):
             with self.subTest(changes=changes):
                 self._run_automated_publication(ci_changes=changes)
+
+    def test_next_build_policy_cannot_bypass_existing_publication_gates(self):
+        version = {"name": "2.4.2", "code": 20402}
+        self._run_automated_publication(version=version)
+        for guard in (
+            "require_candidate_worktree", "verify_android_release_evidence", "verify_nonandroid_release_evidence",
+            "verify_candidate_payload_equivalence", "verify_apk",
+        ):
+            with self.subTest(guard=guard):
+                self._run_automated_publication(version=version, failing_guard=guard)
+        self._run_automated_publication(version=version, bad_delta=True)
+        for changes in (
+            {"conclusion": "failure"}, {"status": "in_progress"}, {"head_sha": "9" * 40},
+            {"head_repository": {"full_name": "someone/fork"}}, {"path": "another.yml"},
+            {"event": "workflow_dispatch"}, {"head_branch": "feature"},
+        ):
+            with self.subTest(changes=changes):
+                self._run_automated_publication(version=version, ci_changes=changes)
 
     def test_nonperformance_policy_needs_a_derived_prose_only_scope(self):
         declaration = nonperformance_declaration()

@@ -126,7 +126,11 @@ class NativeGameEvidenceTest(unittest.TestCase):
                 MODULE.verify_retained(root, artifact, {'id': 'demo', 'source': 'public.wav'})
 
     def test_workflow_runs_fresh_game_after_models_fixtures_and_before_analysis(self):
-        text = (ROOT / '.github/workflows/verify-v2.yml').read_text()
+        workflow = (ROOT / '.github/workflows/verify-v2.yml').read_text()
+        text = workflow.split('\n  verify:\n', 1)[1].split('\n  android-background:\n', 1)[0]
+        producer = workflow.split('\n  host-campaign:\n', 1)[1].split('\n  verify:\n', 1)[0]
+        self.assertNotIn('prepare_game.py', producer)
+        self.assertNotIn('verify-native-game.py', producer)
         commands = [
             'python3 tools/prepare_game.py',
             'python3 qa/release-1.6.0/prepare-musdb-fixtures.py',

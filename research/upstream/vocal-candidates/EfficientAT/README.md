@@ -1,3 +1,7 @@
+> LightForge security migration: see [SECURITY_MIGRATION.md](SECURITY_MIGRATION.md).
+> Current dependency declarations differ from the original research environment;
+> model parity and full transitive/native qualification remain outstanding.
+
 # Efficient Pre-Trained CNNs for Audio Pattern Recognition
 
 In this repository, we publish the pre-trained models and the code described in the papers:
