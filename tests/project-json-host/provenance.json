@@ -1,0 +1,26 @@
+{
+  "project": "Android Open Source Project frameworks/base",
+  "commit": "cc8bb19595c661f5cf42f330457000e643c67d1b",
+  "files": {
+    "android/util/JsonReader.java": {
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/cc8bb19595c661f5cf42f330457000e643c67d1b/core/java/android/util/JsonReader.java?format=TEXT",
+      "sha256": "d0ece396e5ade0d90e513e02b6ab154c8af98e36bf51784d3f5d8b3c2dce6418"
+    },
+    "android/util/JsonToken.java": {
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/cc8bb19595c661f5cf42f330457000e643c67d1b/core/java/android/util/JsonToken.java?format=TEXT",
+      "sha256": "05c100694db201b65d3daef4458a940fe47d6a89df86e4d45a739b37cf553cbf"
+    },
+    "android/util/JsonScope.java": {
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/cc8bb19595c661f5cf42f330457000e643c67d1b/core/java/android/util/JsonScope.java?format=TEXT",
+      "sha256": "39125e4a72edbdb184f811ea98259625a869e969d9c7fce47f9a6441c927e80e"
+    },
+    "android/util/MalformedJsonException.java": {
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/cc8bb19595c661f5cf42f330457000e643c67d1b/core/java/android/util/MalformedJsonException.java?format=TEXT",
+      "sha256": "254e6a66527fbe4e8ab92dbcce72544b1f5e4a1d46d686ade77cc38458b7c876"
+    },
+    "com/android/internal/util/StringPool.java": {
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/cc8bb19595c661f5cf42f330457000e643c67d1b/core/java/com/android/internal/util/StringPool.java?format=TEXT",
+      "sha256": "09d48920a4b0c9bf33def5ea4d6132ec06b139e1795f08515f0a49ee0c925e28"
+    }
+  }
+}
