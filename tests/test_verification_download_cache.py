@@ -35,7 +35,7 @@ class VerificationDownloadCacheTest(unittest.TestCase):
     def test_cache_hit_cannot_skip_installs_conversions_or_regression(self):
         steps = production_steps((ROOT / '.github/workflows/verify-v2.yml').read_text())
         commands = (
-            'python3 -m pip install pip==26.2.1 setuptools==83.0.0',
+            'python3 -m pip install pip==26.2.1 setuptools==84.1.0 filelock==4.2.1',
             'python3 -m pip install torch==2.13.0 --index-url https://download.pytorch.org/whl/cpu',
             'python3 -m pip install -r tools/model-requirements.txt',
             'python3 tools/prepare_game.py',
@@ -59,7 +59,7 @@ class VerificationDownloadCacheTest(unittest.TestCase):
         producer = workflow.split('\n  host-campaign:\n', 1)[1].split('\n  verify:\n', 1)[0]
         steps = re.split(r'(?m)^      - ', producer)[1:]
         commands = (
-            'python3 -m pip install pip==26.2.1 setuptools==83.0.0',
+            'python3 -m pip install pip==26.2.1 setuptools==84.1.0 filelock==4.2.1',
             'python3 -m pip install torch==2.13.0 --index-url https://download.pytorch.org/whl/cpu',
             'python3 -m pip install -r tools/model-requirements.txt',
             'python3 tools/prepare_deux.py',

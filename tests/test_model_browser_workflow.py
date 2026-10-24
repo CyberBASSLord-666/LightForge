@@ -127,7 +127,7 @@ class ModelBrowserWorkflowTest(unittest.TestCase):
     def test_original_pins_and_integrity_are_reused_not_regenerated_baselines(self):
         for command in ('python-version: \'3.12.14\'', 'node-version: \'22\'',
                         'npm ci --ignore-scripts --no-audit --no-fund',
-                        'python3 -m pip install pip==26.2.1 setuptools==83.0.0',
+                        'python3 -m pip install pip==26.2.1 setuptools==84.1.0 filelock==4.2.1',
                         'python3 -m pip install torch==2.13.0 --index-url https://download.pytorch.org/whl/cpu',
                         'python3 -m pip install -r tools/model-requirements.txt',
                         'python3 tools/prepare_game.py', 'python3 tools/prepare_deux.py',
