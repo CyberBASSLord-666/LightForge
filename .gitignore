@@ -19,6 +19,8 @@ LightForge-diagnostics-*.txt
 /dist/
 /output/
 **/toolchain/
+# CI compatibility alias is a symlink, not a directory.
+/toolchain
 node_modules/
 .venv/
 venv/

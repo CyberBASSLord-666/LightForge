@@ -7,7 +7,7 @@
     "node": ">=22"
   },
   "scripts": {
-    "test": "python3 tools/verify_v2.py",
+    "test": "python3 tools/prepare_consumer_toolchain_layout.py && python3 tools/verify_v2.py",
     "test:precision": "node --test tests/precision-2.0.test.cjs tests/migration-2.0.test.cjs tests/precision-ui-2.0.test.cjs"
   },
   "devDependencies": {

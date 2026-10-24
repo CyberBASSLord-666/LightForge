@@ -185,3 +185,37 @@ same-session evidence. The campaign producer never packages a candidate or
 becomes publication authority. Release publication still requires successful protected-
 main verification, exact candidate/source/evidence bindings and the original
 signing identity.
+
+### Frozen consumer checkout-layout compatibility
+
+The registered consumer workflow invokes replay with `--root .`. Its immutable
+bounded verifier retains that relative root, so its `ROOT.parent / 'toolchain'`
+lookup selects `checkout/toolchain`, whereas the immutable bootstrap installs
+into the sibling `checkout-parent/toolchain`. This is a consumer lookup defect,
+not a failed timing experiment or an unavailable pinned JDK.
+
+`npm test` explicitly runs `tools/prepare_consumer_toolchain_layout.py` before
+`tools/verify_v2.py`. Outside GitHub Actions the preparation is a no-op, preserving
+local test setups and custom toolchain locations. In GitHub Actions it checks the
+canonical `GITHUB_WORKSPACE` and Git root, rejects tracked-path collisions and
+project toolchain overrides, and exclusively creates the relative symlink
+`checkout/toolchain -> ../toolchain`. Existing entries are accepted only when they
+are this exact alias. It never replaces directories/files/other links, installs
+dependencies, clears environment variables, or changes command resolution.
+Descriptor-relative creation prevents writes through a replaced checkout parent.
+
+This step reports **layout-ready**, always with `runtimeValidated: false`.
+Bootstrap runs later, so the target may legitimately be absent at preparation.
+An existing target is not evidence of valid installation. Generic hosted-runner
+`JAVA_HOME`/Android SDK discovery settings are not redirected or cleared: the
+frozen bounded lookup uses explicit paths, and its runtime environment guard
+remains authoritative.
+
+The later unchanged admission still replays every retained observation, validates
+the complete JDK/internal-link and dependency inventories, recompiles the current
+measured sources, and requires exact class hashes. Candidate commit/tree/session
+bindings and dirty-source rejection are unchanged. The preparation helper,
+package command, tests, and this document are covered by the existing regression
+source-hash inventory. No registered execution-closure file, runtime bytes, or
+original proof is changed or relabeled. This is compatibility for the current
+frozen consumer workflow, not a general fix for arbitrary relative CLI roots.
