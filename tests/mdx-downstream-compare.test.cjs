@@ -2,7 +2,8 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const {compare, thresholds} = require('../qa/release-2.3.1/mdx-downstream-compare.cjs');
+const release = require('../version.json').name;
+const {compare, thresholds} = require(`../qa/release-${release}/mdx-downstream-compare.cjs`);
 
 // A synthetic schema fixture, not evidence of model quality. Every passing
 // baseline contains actual singing, measured pitch, and sustained fused notes.
