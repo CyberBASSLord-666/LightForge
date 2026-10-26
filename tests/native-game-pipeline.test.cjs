@@ -2,6 +2,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),{webcrypto}=require('node:crypto');
 const source=name=>fs.readFileSync(path.join(__dirname,'..','web/analysis',name),'utf8'),RATE=44100;
 const notes=[{start:.123456,end:.423456,midi:63.123456}];
+const plain=value=>JSON.parse(JSON.stringify(value));
 function gameHarness(){
  const records=new Map(),stats={wasm:0},context=vm.createContext({URL,Float32Array,Number,Math,DOMException,fetch:async()=>({json:async()=>({id:'game-test'})})});context.self=context;
  vm.runInContext(source('game.js'),context);
@@ -31,7 +32,7 @@ test('native GAME preserves cancellation and unretired JNI failures as fatal, no
  }
 });
 
-function workerHarness({duration=1,respond,failFence=false}={}){
+function workerHarness({duration=1,respond,failFence=false,batch=false}={}){
  const records=new Map(),messages=[],invalidations=[],requests=[];let wasm=0;
  const store={read:async key=>records.get(key),write:async(key,value)=>records.set(key,value),invalidate:async prefixes=>{invalidations.push([...prefixes]);if(failFence)throw Error('GAME fence refused');for(const key of records.keys())if(prefixes.some(prefix=>key===prefix||key.startsWith(prefix+'-')))records.delete(key);}};
  const reader={mono22050:async(_start,count)=>new Float32Array(count)};
@@ -40,9 +41,9 @@ function workerHarness({duration=1,respond,failFence=false}={}){
   LightForgeAnalysisStore:{open:async()=>store},LightForgeStemCache:{readers:async()=>({vocals:reader,accompaniment:reader}),fullVoice:async()=>async(_start,count)=>new Float32Array(count).fill(.1)},
   LightForgeVocals:{analyze:async()=>({classifier:[],model:'test'})},LightForgeVocalDetail:{Extractor:class{push(){}finish(){return {phrases:[],accents:[],pitchContour:{midi:[]},envelope:[],timing:{},diagnostics:{}};}}}
  });context.self=context;context.location={href:'https://app.test/analysis/worker.js'};context.importScripts=()=>{};
- context.postMessage=(message,transfers)=>{messages.push(message);if(message.type==='native-game'){requests.push(message);assert.equal(transfers[0],message.buffer);setImmediate(()=>context.onmessage({data:{type:'native-game-result',requestId:message.requestId,...(respond?respond(requests.length,message):{notes})}}));}};
+ context.postMessage=(message,transfers)=>{messages.push(message);if(message.type==='native-game'||message.type==='native-game-batch'){requests.push(message);if(message.type==='native-game')assert.equal(transfers[0],message.buffer);else{assert.equal(transfers.length,2);message.passages.forEach((passage,index)=>assert.equal(transfers[index],passage.buffer));}setImmediate(()=>context.onmessage({data:{type:message.type==='native-game'?'native-game-result':'native-game-batch-result',requestId:message.requestId,...(respond?respond(requests.length,message):{notes:message.type==='native-game'?notes:[notes,notes]})}}));}};
  vm.runInContext(source('game.js'),context);vm.runInContext(source('worker.js'),context);
- return {records,messages,invalidations,requests,get wasm(){return wasm;},run:()=>context.onmessage({data:{stage:'voice',audioUrl:'/song.wav',value:{stemCache:{fullSamples:duration*RATE,duration,samples:duration*22050}},options:{workId:'a'.repeat(64),cacheKey:'test',supportsNativeGame:true}}})};
+ return {records,messages,invalidations,requests,get wasm(){return wasm;},run:()=>context.onmessage({data:{stage:'voice',audioUrl:'/song.wav',value:{stemCache:{fullSamples:duration*RATE,duration,samples:duration*22050}},options:{workId:'a'.repeat(64),cacheKey:'test',supportsNativeGame:true,supportsNativeGameBatch:batch}}})};
 }
 test('worker transports complete native GAME PCM and commits only validated voice output',async()=>{
  const h=workerHarness();await h.run();assert.equal(h.requests.length,1);assert.equal(h.requests[0].buffer.byteLength,RATE*4);assert.equal(h.requests[0].language,0);assert.equal(h.requests[0].seed,2025);assert.equal(h.messages.at(-1).type,'result');assert.ok(h.records.has('voice'));assert.ok(h.records.has('game-0-0'));assert.equal(h.wasm,0);
@@ -56,14 +57,14 @@ test('native GAME malformed results are fenced, but failed fences and pending re
  const retiring=workerHarness({respond:()=>({code:'native-game-retirement-pending',message:'JNI still active'})});await retiring.run();assert.equal(retiring.messages.at(-1).code,'native-game-retirement-pending');assert.deepEqual(retiring.invalidations,[]);assert.equal(retiring.wasm,0);
 });
 
-function analyzerHarness(){
+function analyzerHarness({batch=false,mutateRequest}={}){
  const starts=[],responses=[],events=[],manifest=JSON.stringify({'analyzer.js':{bytes:1,sha256:'a'.repeat(64)},'worker.js':{bytes:1,sha256:'b'.repeat(64)},'models/features.json':{bytes:1,sha256:'c'.repeat(64)},'models/model-manifest.json':{bytes:1,sha256:'d'.repeat(64)}});
  const context=vm.createContext({URL,ArrayBuffer,Float32Array,crypto:webcrypto,TextEncoder,DOMException,AbortController,performance,setInterval,clearInterval,fetch:async()=>({ok:true,text:async()=>manifest}),LightForgeVersion:{name:'test'},document:{currentScript:{src:'https://app.test/analysis/analyzer.js'}},LightForgeAnalysisStore:{hash:async bytes=>Buffer.from(await webcrypto.subtle.digest('SHA-256',bytes)).toString('hex'),discard:async()=>{}},LightForgeStemCache:{discard:async()=>{}}});context.window=context;
  context.Worker=class{
   constructor(){this.closed=false;}terminate(){this.closed=true;}
   postMessage(message){structuredClone(message);setImmediate(()=>{if(this.closed)return;
-   if(message.stage){this.request=message;starts.push(message);if(message.stage==='voice'&&message.options.supportsNativeGame)this.onmessage({data:{type:'native-game',requestId:7,buffer:new Float32Array(RATE).fill(.1).buffer,language:4,seed:4294967295}});else this.finish();}
-   else if(message.type==='native-game-result'){responses.push(message);if(message.fallback||message.code)this.onmessage({data:{type:'error',message:'native unavailable',code:message.code||'native-game-fallback'}});else this.finish();}
+   if(message.stage){this.request=message;starts.push(message);if(message.stage==='voice'&&message.options.supportsNativeGame){let request=batch?{type:'native-game-batch',requestId:7,passages:[{buffer:new Float32Array(RATE).fill(.1).buffer,language:4,seed:4294967295},{buffer:new Float32Array(RATE/2).fill(.2).buffer,language:0,seed:2025}]}:{type:'native-game',requestId:7,buffer:new Float32Array(RATE).fill(.1).buffer,language:4,seed:4294967295};this.onmessage({data:mutateRequest?mutateRequest(request):request});}else this.finish();}
+   else if(message.type==='native-game-result'||message.type==='native-game-batch-result'){responses.push(message);if(message.fallback||message.code)this.onmessage({data:{type:'error',message:'native unavailable',code:message.code||'native-game-fallback'}});else this.finish();}
   });}
   finish(){this.onmessage({data:{type:'result',value:{...this.request.value,engine:{name:'test'}},seconds:0,restored:false}});}
  };
@@ -100,4 +101,32 @@ test('analyzer cannot open the WASM namespace when native GAME fallback persiste
 });
 test('cancellation aborts native GAME and releases it without starting downstream work or fallback',async()=>{
  const h=analyzerHarness(),controller=new AbortController();let callSignal,released=0;const nativeGame=async(_pcm,_language,_seed,signal)=>{callSignal=signal;setImmediate(()=>controller.abort());return new Promise(()=>{});};nativeGame.release=async()=>{released++;};await assert.rejects(h.analyze('/song.wav',{...identityOptions,nativeGame,nativeRuntimeProfile:gameProfile,onNativeFallback:async()=>assert.fail('cancellation is not fallback')},()=>{},controller.signal),error=>error.name==='AbortError');assert.equal(callSignal.aborted,true);assert.equal(released,1);assert.deepEqual(h.starts.map(x=>x.stage),['rhythm','separation','voice']);
+});
+test('worker sends exactly two independent complete GAME buffers and keeps checkpoint passage identities',async()=>{
+ const h=workerHarness({duration:38,batch:true});await h.run();assert.deepEqual(h.requests.map(request=>request.type),['native-game','native-game-batch','native-game']);const pair=h.requests[1];
+ assert.deepEqual(plain(pair.passages.map(passage=>({bytes:passage.buffer.byteLength,language:passage.language,seed:passage.seed}))),[{bytes:16*RATE*4,language:0,seed:106754},{bytes:16*RATE*4,language:0,seed:211483}]);assert.notEqual(pair.passages[0].buffer,pair.passages[1].buffer);assert.equal(h.requests[0].seed,2025);assert.equal(h.requests[2].seed,316212);assert.equal(h.messages.at(-1).type,'result');assert.equal(h.records.get('game-0-0').execution,'native-game-v1');assert.equal(h.records.get('game-0-1').execution,'native-game-v1');assert.equal(h.wasm,0);
+});
+test('either invalid worker pair result fences every dependent checkpoint before native fallback',async()=>{
+ for(const response of [{notes:[notes]},{notes:new Array(2)},{notes:[notes,new Array(1)]},{notes:[notes,[{start:0,end:1,midi:Infinity}]]},{fallback:true}]){const h=workerHarness({duration:24,batch:true,respond:()=>response});await h.run();assert.equal(h.requests.length,1);assert.equal(h.records.size,0);assert.deepEqual(h.invalidations,[['voice','vocal-semantics','game','bass','recurrence']]);assert.equal(h.messages.at(-1).code,'native-game-fallback');assert.equal(h.wasm,0);}
+ const pending=workerHarness({duration:24,batch:true,respond:()=>({code:'native-game-retirement-pending'})});await pending.run();assert.deepEqual(pending.invalidations,[]);assert.equal(pending.messages.at(-1).code,'native-game-retirement-pending');
+ const fenced=workerHarness({duration:24,batch:true,failFence:true,respond:()=>({fallback:true})});await fenced.run();assert.equal(fenced.messages.at(-1).code,'native-game-fence-failed');assert.equal(fenced.records.has('game-0-0'),false);
+});
+test('analyzer advertises batch callback capability without serializing functions and retires before bass',async()=>{
+ const h=analyzerHarness({batch:true}),events=[],nativeGame=async()=>assert.fail('pair must not call unary');nativeGame.batch=async(requests,signal,onProgress)=>{assert.equal(requests.length,2);assert.deepEqual(requests.map(request=>[request.pcm.length,request.language,request.seed]),[[RATE,4,4294967295],[RATE/2,0,2025]]);assert.ok(requests.every(request=>request.pcm.byteOffset===0&&request.pcm.length*4===request.pcm.buffer.byteLength));assert.equal(signal.aborted,false);onProgress({progress:.5,message:'pair'});events.push('pair');return [notes,notes];};nativeGame.release=async()=>events.push('released');
+ const result=await h.analyze('/song.wav',{...identityOptions,nativeGame,nativeRuntimeProfile:gameProfile});assert.deepEqual(events,['pair','released']);assert.equal(h.starts[0].options.supportsNativeGameBatch,true);assert.equal('nativeGame' in h.starts[0].options,false);assert.equal(result.engine.cacheIdentity.execution,'native-game-v1');assert.equal(h.responses[0].type,'native-game-batch-result');assert.equal(h.starts.at(-1).stage,'bass');
+});
+test('analyzer rejects partial, shared, oversized and nonfinite pair inputs before callbacks',async()=>{
+ const mutations=[request=>({...request,passages:request.passages.slice(0,1)}),request=>{delete request.passages[1];return request;},request=>{request.passages[1].buffer=request.passages[0].buffer;return request;},request=>{request.passages[1].buffer=new Float32Array(RATE*16+1).buffer;return request;},request=>{request.passages[1].buffer=Float32Array.of(NaN).buffer;return request;},request=>{request.passages[1].seed=1.5;return request;},request=>{request.passages[1].extra=true;return request;}];
+ for(const mutateRequest of mutations){const h=analyzerHarness({batch:true,mutateRequest}),nativeGame=async()=>assert.fail('no unary request');nativeGame.batch=async()=>assert.fail('invalid pair reached native');nativeGame.release=async()=>{};await assert.rejects(h.analyze('/song.wav',{...identityOptions,nativeGame,nativeRuntimeProfile:gameProfile}),/Invalid native singing/);assert.deepEqual(h.starts.map(start=>start.stage),['rhythm','separation','voice']);}
+ const unsupported=analyzerHarness({batch:true}),unary=async()=>assert.fail('no unary request');unary.release=async()=>{};await assert.rejects(unsupported.analyze('/song.wav',{...identityOptions,nativeGame:unary,nativeRuntimeProfile:gameProfile}),/Invalid native singing pair/);
+});
+test('analyzer pair fallback persists complete lineage and restarts all stages only after release',async()=>{
+ const h=analyzerHarness({batch:true}),events=[],nativeGame=async()=>assert.fail('no unary request');nativeGame.batch=async()=>undefined;nativeGame.release=async()=>events.push('released');
+ const result=await h.analyze('/song.wav',{...identityOptions,nativeGame,nativeRuntimeProfile:gameProfile,onNativeFallback:async diagnostic=>{assert.deepEqual(events,['released']);assert.equal(diagnostic.reason,'native-game-fallback');assert.equal(diagnostic.attemptedExecution,'native-game-v1');events.push('persisted');return true;}});
+ assert.deepEqual(events,['released','persisted']);assert.equal(result.engine.cacheIdentity.execution,'wasm-v1');assert.deepEqual(h.starts.map(start=>start.stage),['rhythm','separation','voice','rhythm','separation','voice','bass']);assert.ok(h.starts.slice(3).every(start=>start.options.supportsNativeGameBatch===false));
+});
+test('analyzer pair cancellation and unconfirmed retirement never start fallback or downstream stages',async()=>{
+ const controller=new AbortController(),cancelled=analyzerHarness({batch:true}),nativeGame=async()=>assert.fail('no unary request');let released=0,callSignal;nativeGame.batch=async(_requests,signal)=>{callSignal=signal;setImmediate(()=>controller.abort());return new Promise(()=>{});};nativeGame.release=async()=>{released++;};
+ await assert.rejects(cancelled.analyze('/song.wav',{...identityOptions,nativeGame,nativeRuntimeProfile:gameProfile,onNativeFallback:async()=>assert.fail('no cancellation fallback')},()=>{},controller.signal),error=>error.name==='AbortError');assert.equal(callSignal.aborted,true);assert.equal(released,1);assert.deepEqual(cancelled.starts.map(start=>start.stage),['rhythm','separation','voice']);
+ const pending=analyzerHarness({batch:true}),failure=Object.assign(Error('pending'),{code:'native-game-retirement-pending'});nativeGame.batch=async()=>{throw failure;};nativeGame.release=async()=>{};await assert.rejects(pending.analyze('/song.wav',{...identityOptions,nativeGame,nativeRuntimeProfile:gameProfile,onNativeFallback:async()=>assert.fail('no pending fallback')}),error=>error.code==='native-game-retirement-pending');assert.deepEqual(pending.starts.map(start=>start.stage),['rhythm','separation','voice']);
 });

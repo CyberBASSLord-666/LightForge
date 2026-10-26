@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -18,13 +19,22 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Job-owned, bounded mono-PCM transport for the unchanged GAME graphs.
- * A fresh engine owns each passage. Native cleanup completes under the shared
+ * A fresh engine owns each call of one or two passages. Cleanup completes under the shared
  * process gate and crash lease before any terminal result becomes observable.
  * Neither audio nor inferred notes are written to diagnostic logs.
  */
 final class NativeGameTask implements AutoCloseable {
     static final int RATE=44100,MAX_SAMPLES=16*RATE,MAX_NOTES=1601;
     static final long MAX_INPUT_BYTES=MAX_SAMPLES*4L;
+    static final String BATCH_PROTOCOL="native-game-pair-v1";
+    static final int MAX_BATCH_PASSAGES=2;
+    static final long MAX_BATCH_INPUT_BYTES=MAX_BATCH_PASSAGES*MAX_INPUT_BYTES;
+    private static final String JSON_SPACE="[ \\t\\r\\n]*";
+    private static final String JSON_FIELD="\"(?:samples|language|seed)\""+JSON_SPACE+":"+JSON_SPACE+"(?:0|[1-9][0-9]{0,9})";
+    private static final String JSON_PASSAGE="\\{"+JSON_SPACE+JSON_FIELD+JSON_SPACE+","+JSON_SPACE+JSON_FIELD+JSON_SPACE+","+JSON_SPACE+JSON_FIELD+JSON_SPACE+"\\}";
+    // JSON libraries accept some non-JSON lexical forms. This bounded grammar
+    // admits only the two three-field integer objects produced by JSON.stringify.
+    private static final Pattern BATCH_JSON=Pattern.compile(JSON_SPACE+"\\["+JSON_SPACE+JSON_PASSAGE+JSON_SPACE+","+JSON_SPACE+JSON_PASSAGE+JSON_SPACE+"\\]"+JSON_SPACE);
     private static final int MAX_CHUNK=64*1024;
     private static final String UUID_PATTERN="[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}";
     // Shared with service admission. Only process death can prove that unknown
@@ -48,6 +58,12 @@ final class NativeGameTask implements AutoCloseable {
     private int language,completedPasses;
     private double runningProgress;
     private JSONArray notes;
+    private Passage[] batch;
+    private static final class Passage {
+        final int samples,language;final long seed;
+        Passage(int samples,int language,long seed){this.samples=samples;this.language=language;this.seed=seed;}
+        JSONObject json()throws Exception{return new JSONObject().put("samples",samples).put("language",language).put("seed",seed);}
+    }
 
     NativeGameTask(Context context,String jobId)throws IOException {
         this.context=context.getApplicationContext();
@@ -74,20 +90,56 @@ final class NativeGameTask implements AutoCloseable {
         }
         boolean available=runtimeGuard.reconcile(exits,System.currentTimeMillis());
         JSONObject result=new JSONObject().put("available",available).put("runtime",NativeDeux.RUNTIME_VERSION).put("graph","game")
-            .put("sampleRate",RATE).put("maxSamples",MAX_SAMPLES).put("maxInputBytes",MAX_INPUT_BYTES).put("steps",8);
+            .put("sampleRate",RATE).put("maxSamples",MAX_SAMPLES).put("maxInputBytes",MAX_INPUT_BYTES).put("steps",8)
+            .put("batchProtocol",BATCH_PROTOCOL).put("maxBatchPassages",MAX_BATCH_PASSAGES).put("maxBatchInputBytes",MAX_BATCH_INPUT_BYTES);
         if(!available)result.put("reason","previous-native-crash").put("message","Compatibility processing enabled after a native crash. The same singing model is used; analysis may take longer.");
         return result.toString();
     }
 
     synchronized String begin(String owner,long bytes,int language,long seed)throws Exception {
+        return beginInput(owner,bytes,language,seed,null);
+    }
+
+    synchronized String beginBatch(String owner,String descriptors)throws Exception {
+        owns(owner);
+        Passage[] passages=parseBatch(descriptors);long bytes=0;
+        for(Passage passage:passages)bytes+=passage.samples*4L;
+        return beginInput(owner,bytes,0,0,passages);
+    }
+
+    private static Passage[] parseBatch(String descriptors)throws IOException {
+        if(descriptors==null||descriptors.length()>1024||!BATCH_JSON.matcher(descriptors).matches())
+            throw new IOException("The native singing batch metadata is invalid.");
+        try {
+            JSONArray values=new JSONArray(descriptors);
+            if(values.length()!=MAX_BATCH_PASSAGES)throw new IOException("Expected two singing passages.");
+            Passage[] result=new Passage[MAX_BATCH_PASSAGES];
+            for(int i=0;i<result.length;i++) {
+                JSONObject value=values.getJSONObject(i);
+                if(value.length()!=3)throw new IOException("The native singing batch fields are invalid.");
+                Object samples=value.get("samples"),language=value.get("language"),seed=value.get("seed");
+                if(!(samples instanceof Number)||!(language instanceof Number)||!(seed instanceof Number))
+                    throw new IOException("The native singing batch settings are invalid.");
+                long count=((Number)samples).longValue(),lang=((Number)language).longValue(),random=((Number)seed).longValue();
+                if(count<1||count>MAX_SAMPLES||lang<0||lang>4||random<0||random>0xffffffffL)
+                    throw new IOException("The native singing batch settings are invalid.");
+                result[i]=new Passage((int)count,(int)lang,random);
+            }
+            return result;
+        }catch(IOException error){throw error;}
+        catch(Exception error){throw new IOException("The native singing batch metadata is invalid.",error);}
+    }
+
+    private String beginInput(String owner,long bytes,int language,long seed,Passage[] passages)throws Exception {
         owns(owner);
         requireRuntimeRetirement();
         if(workerActive)throw new IOException("A native singing passage is still retiring.");
         if("uploading".equals(state)||"running".equals(state))throw new IOException("A native singing passage is already running.");
-        if(bytes<4||bytes>MAX_INPUT_BYTES||bytes%4!=0)throw new IOException("The native singing input size is invalid.");
+        if(bytes<4||bytes>(passages==null?MAX_INPUT_BYTES:MAX_BATCH_INPUT_BYTES)||bytes%4!=0)throw new IOException("The native singing input size is invalid.");
         if(language<0||language>4||seed<0||seed>0xffffffffL)throw new IOException("The native singing settings are invalid.");
         releaseInput();notes=null;token=UUID.randomUUID().toString();expectedBytes=bytes;received=0;
         this.language=language;this.seed=seed;cancelled=false;runningProgress=0;
+        batch=passages;
         input=new File(jobDirectory,token+".input");
         try{inputStream=new FileOutputStream(input,false);}
         catch(IOException error){releaseInput();token=null;state="idle";throw error;}
@@ -128,8 +180,12 @@ final class NativeGameTask implements AutoCloseable {
         if(!same(current))throw new IOException("This native singing passage is no longer active.");
         double progress="completed".equals(state)?1:"running".equals(state)?.1+.8*runningProgress:"uploading".equals(state)?received/(double)expectedBytes*.1:0;
         JSONObject result=new JSONObject().put("token",token).put("state",state).put("message",message).put("progress",progress)
-            .put("completedPasses",completedPasses).put("sampleRate",RATE).put("samples",expectedBytes/4)
-            .put("language",language).put("seed",seed).put("steps",8).put("model",NativeGame.MODEL_ID);
+            .put("completedPasses",completedPasses).put("sampleRate",RATE).put("steps",8).put("model",NativeGame.MODEL_ID);
+        if(batch==null)result.put("samples",expectedBytes/4).put("language",language).put("seed",seed);
+        else {
+            JSONArray passages=new JSONArray();for(Passage passage:batch)passages.put(passage.json());
+            result.put("batchProtocol",BATCH_PROTOCOL).put("passages",passages);
+        }
         if("completed".equals(state)&&notes!=null)result.put("notes",notes);
         return result.toString();
     }
@@ -146,16 +202,19 @@ final class NativeGameTask implements AutoCloseable {
         owns(owner);
         if(retirementUnconfirmed)throw new IOException("Native singing cleanup could not be confirmed. Restart the app before analyzing again.");
         if(workerActive||"running".equals(state)||"uploading".equals(state))throw new IOException("The native singing passage is still running.");
-        releaseInput();notes=null;token=null;state="idle";message="";return "{}";
+        releaseInput();notes=null;batch=null;token=null;state="idle";message="";return "{}";
     }
 
     private void infer(String active){
         boolean acquired=false;String lease=null;NativeGame local=null;JSONArray completed=null;Throwable failure=null;
         NativeGameProfile profile=new NativeGameProfile(Math.max(1,Math.min(4,Runtime.getRuntime().availableProcessors())));
+        final Passage[] passages=batch;
+        final int passageCount=passages==null?1:passages.length;
+        profile.batchPassages(passageCount);
         try{
             // Reject malformed or nonfinite PCM before touching the native runtime.
-            float[] pcm;NativeGameProfile.Stamp reading=profile.started();
-            try{pcm=readPcm();}finally{profile.addRead(reading);}
+            float[][] pcm;NativeGameProfile.Stamp reading=profile.started();
+            try{pcm=passages==null?new float[][]{readPcm()}:readBatchPcm(passages);}finally{profile.addRead(reading);}
             checkCancelled();
             NativeGameProfile.Stamp waiting=profile.started();
             try{while(!NativeDeux.INFERENCE_GATE.tryAcquire(250,TimeUnit.MILLISECONDS))checkCancelled();acquired=true;}
@@ -166,10 +225,22 @@ final class NativeGameTask implements AutoCloseable {
             NativeGameProfile.Stamp constructing=profile.started();
             try{local=new NativeGame(context);}finally{profile.addEngineInit(constructing);}
             engine=local;checkCancelled();
-            completed=local.predict(pcm,language,seed,(value,detail)->{
+            NativeGame.Listener listener=(value,detail)->{
                 synchronized(this){if(active.equals(token)&&!cancelled&&!closed&&Double.isFinite(value))runningProgress=Math.max(runningProgress,Math.max(0,Math.min(1,value)));}
-            },()->cancelled||closed||Thread.currentThread().isInterrupted(),profile);
-            checkCancelled();validateNotes(completed,pcm.length);
+            };
+            NativeGame.Cancellation cancellation=()->cancelled||closed||Thread.currentThread().isInterrupted();
+            if(passages==null)completed=local.predict(pcm[0],language,seed,listener,cancellation,profile);
+            else {
+                int[] languages=new int[passageCount];long[] seeds=new long[passageCount];
+                for(int i=0;i<passageCount;i++){languages[i]=passages[i].language;seeds[i]=passages[i].seed;}
+                completed=local.predictBatch(pcm,languages,seeds,listener,cancellation,profile);
+            }
+            checkCancelled();
+            if(passages==null)validateNotes(completed,pcm[0].length);
+            else {
+                if(completed==null||completed.length()!=passageCount)throw new IOException("The native singing batch result is invalid.");
+                for(int i=0;i<passageCount;i++){checkCancelled();validateNotes(completed.getJSONArray(i),pcm[i].length);}
+            }
             completed=new JSONArray(completed.toString());
         }catch(Throwable error){failure=error;completed=null;}
         finally{
@@ -192,7 +263,7 @@ final class NativeGameTask implements AutoCloseable {
                 workerActive=false;
                 if(active.equals(token)){
                     if(retirementUnconfirmed){notes=null;state="retirement-failed";message="Native singing cleanup could not be confirmed. Restart the app before analyzing again.";}
-                    else if(failure==null&&completed!=null&&!closed&&!cancelled){notes=completed;completedPasses++;state="completed";message="Singing analysis complete";}
+                    else if(failure==null&&completed!=null&&!closed&&!cancelled){notes=completed;completedPasses+=passageCount;state="completed";message="Singing analysis complete";}
                     else{notes=null;state=closed||cancelled?"cancelled":"failed";message=closed||cancelled?"Native singing analysis was cancelled.":"Native singing analysis failed. Retry in compatibility mode.";}
                 }
                 outcome=active.equals(token)?state:"cancelled";
@@ -211,6 +282,30 @@ final class NativeGameTask implements AutoCloseable {
         try(DataInputStream stream=new DataInputStream(new FileInputStream(input))){stream.readFully(bytes);if(stream.read()!=-1)throw new IOException("The native singing input is too large.");}
         ByteBuffer buffer=ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN);float[] pcm=new float[bytes.length/4];
         for(int i=0;i<pcm.length;i++){if((i&1023)==0)checkCancelled();pcm[i]=buffer.getFloat();if(!Float.isFinite(pcm[i]))throw new IOException("The native singing input contains invalid samples.");}
+        return pcm;
+    }
+
+    private float[][] readBatchPcm(Passage[] passages)throws IOException {
+        checkCancelled();
+        if(input==null||!input.isFile()||input.length()!=expectedBytes)throw new IOException("The native singing input is incomplete.");
+        float[][] pcm=new float[passages.length][];byte[] bytes=new byte[MAX_CHUNK];
+        ByteBuffer buffer=ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN);
+        try(DataInputStream stream=new DataInputStream(new FileInputStream(input))) {
+            for(int passage=0;passage<passages.length;passage++) {
+                pcm[passage]=new float[passages[passage].samples];
+                for(int first=0;first<pcm[passage].length;) {
+                    checkCancelled();int count=Math.min(bytes.length/4,pcm[passage].length-first);
+                    stream.readFully(bytes,0,count*4);buffer.position(0);
+                    for(int i=0;i<count;i++) {
+                        if((i&1023)==0)checkCancelled();float value=buffer.getFloat();
+                        if(!Float.isFinite(value))throw new IOException("The native singing input contains invalid samples.");
+                        pcm[passage][first+i]=value;
+                    }
+                    first+=count;
+                }
+            }
+            if(stream.read()!=-1)throw new IOException("The native singing input is too large.");
+        }
         return pcm;
     }
 

@@ -15,7 +15,7 @@ public final class NativeGameTest {
     public static void main(String[] args) throws Exception {
         if((args.length==4 || args.length==6) && "infer".equals(args[0])){infer(args);return;}
         if(args.length!=1)throw new IllegalArgumentException("Expected manifest path, or infer models pcm-f32le notes.json [seed language]");
-        pcm();noise();notes();manifest(Paths.get(args[0]));retirement(Paths.get(args[0]));
+        pcm();noise();notes();manifest(Paths.get(args[0]));batchBounds(Paths.get(args[0]));retirement(Paths.get(args[0]));
         System.out.println("NativeGame: bounded PCM, unsigned seed, deterministic noise, unrounded notes, pinned manifest and pre-runtime cancellation checks passed.");
     }
     private static void pcm() throws Exception {
@@ -104,6 +104,25 @@ public final class NativeGameTest {
     private static AutoCloseable owned(NativeGame engine,AutoCloseable resource)throws Exception {
         Method method=NativeGame.class.getDeclaredMethod("owned",AutoCloseable.class);method.setAccessible(true);
         return (AutoCloseable)method.invoke(engine,resource);
+    }
+    private static void batchBounds(Path manifest)throws Exception {
+        Path directory=Files.createTempDirectory("native-game-pair-contract-");Path copy=directory.resolve("manifest.json");Files.copy(manifest,copy);
+        try(NativeGame engine=new NativeGame(directory.toFile())) {
+            for(float[][] invalid:new float[][][]{null,new float[0][],new float[][]{{0}},new float[][]{{0},{0},{0}}})
+                expect(IOException.class,()->engine.predictBatch(invalid,new int[]{0,0},new long[]{2025,2026},null,()->false));
+            expect(IOException.class,()->engine.predictBatch(new float[][]{{0},{0}},null,new long[]{2025,2026},null,()->false));
+            expect(IOException.class,()->engine.predictBatch(new float[][]{{0},{0}},new int[]{0},new long[]{2025,2026},null,()->false));
+            expect(IOException.class,()->engine.predictBatch(new float[][]{{0},{0}},new int[]{0,0},new long[]{2025},null,()->false));
+            for(float[] invalid:new float[][]{null,new float[0],new float[NativeGame.MAX_SAMPLES+1],{Float.NaN},{Float.POSITIVE_INFINITY}})
+                expect(IOException.class,()->engine.predictBatch(new float[][]{{0},invalid},new int[]{0,0},new long[]{2025,2026},null,()->false));
+            expect(IOException.class,()->engine.predictBatch(new float[][]{{0},{0}},new int[]{0,5},new long[]{2025,2026},null,()->false));
+            expect(IOException.class,()->engine.predictBatch(new float[][]{{0},{0}},new int[]{0,0},new long[]{2025,0x100000000L},null,()->false));
+            // No graph files exist: invalid second inputs must be rejected before
+            // preparation; pre-run cancellation still precedes native resources.
+            engine.cancel();
+            expect(InterruptedIOException.class,()->engine.predictBatch(new float[][]{{0},{0}},new int[]{0,0},new long[]{2025,2026},null,()->false));
+            engine.close();require(engine.isRetired(),"pre-run pair cancellation confirms empty native retirement");
+        }finally{Files.deleteIfExists(copy);Files.deleteIfExists(directory);}
     }
     private static void retirement(Path manifest)throws Exception {
         Path directory=Files.createTempDirectory("native-game-retirement-");Path copy=directory.resolve("manifest.json");Files.copy(manifest,copy);

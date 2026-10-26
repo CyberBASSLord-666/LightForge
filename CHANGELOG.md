@@ -6,6 +6,37 @@ A source version or an entry here does not itself establish publication. The
 [pre-cleanup changelog](https://github.com/CyberBASSLord-666/LightForge/blob/07511f5544b688c657773dce8a29d8d31ba68cb1/CHANGELOG.md)
 retains detailed historical development notes and their original limitations.
 
+## Unreleased — vocal inference and audio pipeline throughput
+
+Run two adjacent, uncached, audible GAME passages with equal sample counts under
+one bounded native call. Load the original five graphs once, infer each original
+context with its own seed and language, then retire all engine-owned native
+resources before returning either result. First/last unequal contexts, silent
+passages, restored work and older bridges keep the single-passage path.
+
+The original-model host comparison measured 18.3% lower median time for the tested
+equal-length pair, with identical unrounded notes and five session initializations
+instead of ten. Two of three timing pairs improved; one regressed. Median peak
+RSS increased about 2%. Unequal-length pairing was slower and is excluded from
+automatic scheduling. See the retained [observations](research/throughput-20261026/README.md).
+
+Batch Android PCM16 output into bounded blocks instead of synchronized byte
+writes. Use dedicated mono/stereo PCM16 decoder loops and reuse fixed rhythm
+band routing between chunks. Preserve source samples, resampling, feature
+accumulation, model inputs, precision and analysis settings.
+
+Focused comparisons retain identical WAV bytes and Float32 arrays. Import and
+decoding timings describe those stages; GAME timings describe only the tested
+native pair. Whole-analysis and phone gains remain unmeasured. The existing
+published APK does not include these unreleased source changes.
+
+## 2.4.2 — complete-passage scheduling and recovery
+
+Improve native scheduling admission and retain the original models, repair
+project/preview/background recovery, and bound project/backup parsing. The
+[published release](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.4.2)
+and its measured inference scope are indexed in [VALIDATION](VALIDATION.md).
+
 ## 2.4.1 — measured native execution and durable diagnostics
 
 Run independent temporal bands concurrently with private buffers and the

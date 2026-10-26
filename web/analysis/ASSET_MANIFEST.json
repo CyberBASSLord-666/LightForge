@@ -4,8 +4,8 @@
     "sha256": "eadf8ab99ca8f0e37d2f575f0dbef4bafe09f0b5b4fd8d242687b66b5276b9ba"
   },
   "analyzer.js": {
-    "bytes": 24949,
-    "sha256": "d81a8b2c955f3f1281a4b8d8fe13fb26bb1e0108dedfaca9b4e24985e4e7b455"
+    "bytes": 27506,
+    "sha256": "985265eec220a6abb4ea0ba47124716fc019aedc32e5d848ff7b0ffcd9a2a9e9"
   },
   "bass-notes.js": {
     "bytes": 20479,
@@ -16,16 +16,16 @@
     "sha256": "b56f29502e57fc98ccc25c1c1b1ad8263c8cfbb588016dbd80ff1da6d9da4ab5"
   },
   "dsp.js": {
-    "bytes": 40471,
-    "sha256": "f95357f71693a5df05e47c5baed5a15cca88bf5371d4b20dc51b3dbb6624fc06"
+    "bytes": 41058,
+    "sha256": "10eb8f9cc493690ae777f23e5383209a497e0533146ccfa3ffe2c6bf8776bf39"
   },
   "feature-store.js": {
     "bytes": 11782,
     "sha256": "283a37ba3ec9caa6566479c4ccb0f92b071481df46f171eac50b95cc55c84ec0"
   },
   "game.js": {
-    "bytes": 12228,
-    "sha256": "a4225b832bb8cee4d382b01b8753266b426d2a75be49515dc58bbb12e5a03b75"
+    "bytes": 15500,
+    "sha256": "76c8d5bc2740b1035fd940f4a51d46463c2620f58e2872cde212d8597b88ba21"
   },
   "models/BeatNet-LICENSE.txt": {
     "bytes": 18650,
@@ -328,15 +328,15 @@
     "sha256": "e6ad2b32659d136fc68282073e1e05018647a1a793f697152b3a33e151ecad61"
   },
   "wav-reader.js": {
-    "bytes": 9664,
-    "sha256": "4aac3431f720073d0978550329855eb18a7f2d594f8399a7a346c70de62211b5"
+    "bytes": 10737,
+    "sha256": "89811649ac569559a136fd9573cd70b42c48e10e00d9a73ddc6b0f4ae6dc07b9"
   },
   "work-store.js": {
     "bytes": 23043,
     "sha256": "14b223531da867df95e69d1f4e2a92f20cb881cbeec5645b150e462100262dd4"
   },
   "worker.js": {
-    "bytes": 55404,
-    "sha256": "e9b8dc9609e79f7539103c02de2376c7c3ef59975f89ce24ada877fa74104d30"
+    "bytes": 56864,
+    "sha256": "56be9dd266747977494cf0cc2f8d084dea487680f6ba33fd0008846106828bd9"
   }
 }
