@@ -1,0 +1,45 @@
+{
+  "scope": "Unreleased musical-display implementation regression; not an APK, physical-vehicle or perceptual qualification",
+  "baseCommit": "a31dab0397ee2882cf303feb2791f76b27fd0e61",
+  "completedAt": "2026-10-26T17:24:25.827325+00:00",
+  "productionGatePassed": true,
+  "node": {
+    "passed": 824,
+    "failed": 0
+  },
+  "pythonArchive": {
+    "run": 990,
+    "skipped": 20,
+    "failed": 0
+  },
+  "qualityToolsPassed": true,
+  "assetsManifestSha256": "d9069aed84170f0b7b9c2991b8395cab16930320fd7027314c7d8948407aaa52",
+  "sourceHashes": {
+    "tests/arrangement-hierarchy-refinement.test.cjs": "614c670dcc34af14596feb8ab359a94aa85095f1620271fe786ff4b89519e516",
+    "tests/calibrated-closure-preview.test.cjs": "9a3e7eafb46b82cca1dbe3e8f7f57f7abe8e143c4e50ea7724f8066e8a28f7e9",
+    "tests/interior-timing-refinement.test.cjs": "557a5ab881412eac86ec19660d221217b15d21fea0023b8bdcae80e7ff5e0326",
+    "tests/musical-expression.test.cjs": "8b7835f8b2132acae98854eac4bb93897a4f060f9484e74ff96b9423c3a67852",
+    "tests/semantic-density-refinement.test.cjs": "c4f583fd078273766a08379f8cdcb4b8d6ede3bb76e3623996691caa9516d94f",
+    "tools/compare_light_display.cjs": "a88b0830a650e85ddf6981dab1371616500471c89b8ec47c33c58c91791ffb23",
+    "web/engine/choreography-quality.js": "3f12d29cd9ba81a08f3e370ce91efc6de9705511a2d5e4889f785d8a80ff7c4e",
+    "web/engine/client.js": "63c6bdd79cb033b3ccfe334a991a5f3957fc5349f664de955b8c6b59eea5bf3a",
+    "web/engine/light-planner.js": "6d15657a5c390aec015f38aa781542bb913294bc72a5d9713c22fc90b2e6849b",
+    "web/engine/motif-evolution.js": "fa77a12e037125fc993fe02a358d27ac67dbc2ea98f1b423e8a7656cfe6b91ee",
+    "web/engine/movement-planner.js": "af364df0ec661266c9926639d83717a70bab73e03524db6a7a1af34ccc3be408",
+    "web/engine/music-cues.js": "1a87eea0502da2e1f19d2361a5646c127121211e91128017ce747b7f0d2f61d6",
+    "web/engine/perceptual-validation.js": "6688ea11435d6dd7bff8f0d7a9bef6f89ca79db2784d231c8dc8a5a6bd52b659",
+    "web/engine/semantic-choreography.js": "a4178720a035a79bd4ede23204e56a5d7577866dd3995936f4aaaa0fa8628e24",
+    "web/engine/show-engine.js": "efd76c7a067a7f1ebef69bdd7966a12cc90316aab31685157cd870016632e88c",
+    "web/engine/sync-review.js": "57c682909c3d7bf3719d1af587e3150d000c4f6a332093f893ca11de74285ed1",
+    "web/engine/vehicle-profile.js": "a11015576c0a76e7ff9d0141a4efd9c099a69e2b27b85471056e17d2485cde3a",
+    "web/engine/vocal-choreography.js": "42f05c4893f9ee3b9b962fe23f8bb2df6c1f5ed3451764ae68740c7f2dd633d9",
+    "web/engine/worker.js": "e4bc86de965afc225c72063aa5114c3092ef74b62a62f917feecdf1a816c9064"
+  },
+  "broadDiscoveryBeforeMetadataIntegration": {
+    "passed": 903,
+    "failed": 1,
+    "inheritedFailure": "migration-1.6.test.cjs hardcoded Chromium executable absent, reproduced on released baseline; official pinned browser download returned truncated/non-ZIP data"
+  },
+  "physicalOrAndroidTested": false,
+  "reviewedCorrection": "Protected verified beat anchors from decorative density and allocation; independent final render and default-app review plus comparator/manual/fallback review passed."
+}

@@ -85,3 +85,31 @@ response, motors, firmware, temperature and the installed lamps add physical
 behavior that FSEQ and a VIN cannot measure. Preview motion remains an estimate
 unless calibrated against the actual vehicle. No compatibility result here
 establishes exact per-lens optical appearance or real-car synchronization.
+
+## Musical-display refinement (2026-10-26)
+
+A further reference review pins xLights
+[`7c476d420dd54a536be1d12c7a4b9bfa94469cb1`](https://github.com/xLightsSequencer/xLights/tree/7c476d420dd54a536be1d12c7a4b9bfa94469cb1).
+Its `VUMeterEffect.cpp` timing-event sweeps/chases use actual event spans;
+`RenderBuffer.cpp` and `OnEffect.cpp` separate frame-relative progress from
+intensity. These are design references, not imported implementation. The GPLv3
+boundary above remains unchanged, including the existing FSEQ oracle revision.
+
+LightForge's original implementation now anchors automatic RGB pulses to the
+same nearest-frame beat clock as exterior cues, applies offset once, avoids
+inventing a beat before the first detected beat, and clears stale role envelopes
+at inactive gaps. Semantic planning links instrumental rhythm/mix/structure
+sources explicitly rather than borrowing a nearby unrelated vocal/bass event.
+Low-authority density follows two local beat intervals when a valid beat grid
+exists; measured source attacks and manual cues remain protected.
+
+Automatic full-cycle exterior fades reserve at least the documented 50 ms
+settling extension after each ramp. This is a full-setpoint guarantee, not a
+claim that intentional partial ramps are forbidden. Command-byte values are
+never blended as RGB intensity. Preview/validation consume explicit closure
+travel/response calibration without changing exported command timing; the
+trajectory remains an estimate, not a physical measurement.
+
+See [refinement evidence and limits](LIGHT_DISPLAY_REFINEMENT.md) for reproducible
+fixture comparisons. No neural model, sample resolution, channel map, or
+undocumented Highland headlamp segmentation is changed by this work.

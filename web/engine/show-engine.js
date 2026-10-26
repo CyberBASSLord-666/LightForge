@@ -136,7 +136,7 @@
     if(!finite(time))return null;
     const preferred=role==='vocals'?'vocals':role==='bass'?'bass':null;let best=null;
     for(const event of events){
-      const distance=Math.abs(event.time-time);if(distance>windowSeconds+1e-9)continue;
+      const distance=Math.abs(event.time-time);if(distance>windowSeconds+1e-9||preferred&&event.source!==preferred)continue;
       const candidate={event,distance,preferred:preferred&&event.source===preferred?0:1};
       if(!best||candidate.distance<best.distance-1e-9||Math.abs(candidate.distance-best.distance)<=1e-9&&(candidate.preferred<best.preferred||candidate.preferred===best.preferred&&(candidate.event.score>best.event.score+1e-9||Math.abs(candidate.event.score-best.event.score)<=1e-9&&(candidate.event.time<best.event.time-1e-9||Math.abs(candidate.event.time-best.event.time)<=1e-9&&candidate.event.id<best.event.id))))best=candidate;
     }
@@ -434,7 +434,7 @@
       // A module defect must not turn optional semantic planning into a
       // compilation failure. The legacy planner remains the safe fallback.
       try{
-        const guarded=guardedSemanticStrategy(SEMANTIC_CHOREOGRAPHY.create(semantic,{stepMs:s.stepMs}));
+        const guarded=guardedSemanticStrategy(SEMANTIC_CHOREOGRAPHY.create(semantic,{stepMs:s.stepMs,beats:m.beats}));
         semanticStrategy=guarded.strategy;
       }catch(_){}
     }
@@ -549,13 +549,24 @@
     }finally{if(planningToken!==undefined)timing?.end(planningToken,{scope:'show-input-and-strategy-planning'});}
   }
   function paintInterior(show,m,s,ctx){
-    const {frames,frameCount,stepMs}=show,step=stepMs/1000,palette=PALETTES[s.palette],separatedVoice=m.vocals.sourceSeparated===true;let bi=0,voiceLevel=0,bassLevel=0,pitchLevel=.5;
+    const {frames,frameCount,stepMs}=show,step=stepMs/1000,palette=PALETTES[s.palette],separatedVoice=m.vocals.sourceSeparated===true;
+    // Compile beat anchors once onto the same nearest-frame command clock used
+    // by exterior cues. Sampling unquantized time rounded RGB attacks upward,
+    // leaving them one frame behind an exterior attack on the same beat.
+    const beatFrames=m.beats.map(time=>Math.round((time+s.offsetMs/1000)/step));
+    let bi=0,voiceLevel=0,bassLevel=0,pitchLevel=.5;
     for(let f=0;f<frameCount-1;f++){
-      const time=f*step-s.offsetMs/1000;if(!ctx.active(time))continue;
-      while(bi+1<m.beats.length&&m.beats[bi+1]<=time)bi++;
-      const sec=ctx.sectionAt(time),scene=show.sections[sec.index],beat=m.beats[bi]||0,elapsed=Math.max(0,time-beat),period=ctx.periodAt(bi);
+      const time=f*step-s.offsetMs/1000;
+      if(!ctx.active(time)){
+        // Silence is a reset boundary, not a paused envelope. Otherwise the
+        // last vocal/bass level and pitch survive arbitrarily long dark gaps.
+        voiceLevel=0;bassLevel=0;pitchLevel=.5;continue;
+      }
+      while(bi+1<beatFrames.length&&beatFrames[bi+1]<=f)bi++;
+      const hasBeat=beatFrames.length>0&&beatFrames[bi]<=f;
+      const sec=ctx.sectionAt(time),scene=show.sections[sec.index],elapsed=hasBeat?(f-beatFrames[bi])*step:0,period=ctx.periodAt(bi);
       const energy=ctx.energyAt(time),quiet=energy<.3||scene.style==='cinematic',bar=ctx.beatInfo(bi).bar,phrase=ctx.phraseAt(time);
-      const pulse=Math.exp(-elapsed/(quiet?Math.min(period,.6):Math.min(period*.45,.26)));
+      const pulse=hasBeat?Math.exp(-elapsed/(quiet?Math.min(period,.6):Math.min(period*.45,.26))):0;
       const gain=clamp((quiet?.1:.08)+pulse*(quiet?.45:.92))*clamp(energy*.95+.05)*(.3+.7*scene.intensity);
       const voice=ctx.vocalAt(time),bass=ctx.bassAt(time);
       // Separated PCM articulation receives a faster attack than legacy mixture
@@ -676,8 +687,28 @@
     const on=target===undefined?value>127:target,duration=RAMP_SECONDS[value]||0;
     return duration?clamp(current+(on?1:-1)*elapsed/duration,0,1):(on?1:0);
   }
-  function movementDuration(channel,opening){const spec=PROFILE.closureSpecifications[CLOSURE_KEYS[channel]];return opening?spec.travel:spec.closeTravel;}
+  function closureTiming(show,channel){
+    const resolved=PROFILE.resolvePerceptualTiming(show.settings&&show.settings.vehicleTimingCalibration);
+    const row=resolved.outputs[CLOSURE_KEYS[channel]];
+    return {openSeconds:row.openTravelMs/1000,closeSeconds:row.closeTravelMs/1000,
+      commandSeconds:row.commandLatencyMs/1000,activationSeconds:row.activationLatencyMs/1000,
+      deactivationSeconds:row.deactivationLatencyMs/1000,calibrated:row.calibrationConfigured};
+  }
+  function currentMotion(motion,t){
+    // Iteration, not recursion: even malformed densely edited command streams
+    // cannot exhaust the JS stack while a configured response is pending.
+    while(motion.kind==='delay')motion=t<motion.until?motion.previous:motion.next;
+    return motion;
+  }
+  function pendingTravel(motion,t){
+    while(motion.kind==='delay'){
+      if(t<motion.until&&motion.next.kind==='travel')return true;
+      motion=t<motion.until?motion.previous:motion.next;
+    }
+    return motion.kind==='travel';
+  }
   function motionAt(motion,t){
+    motion=currentMotion(motion,t);
     const elapsed=Math.max(0,t-motion.start);
     if(motion.kind==='hold')return {position:motion.from,moving:false,phase:0,direction:0};
     if(motion.kind==='travel'){
@@ -696,26 +727,38 @@
     return phase<up?{position:motion.low+phase/motion.openSeconds,moving:true,phase:phase/period,direction:1}:{position:motion.high-(phase-up)/motion.closeSeconds,moving:true,phase:phase/period,direction:-1};
   }
   function closureTimeline(show,channel){
-    const step=show.stepMs/1000,initial=channel<37?1:0;
+    const step=show.stepMs/1000,initial=channel<37?1:0,timing=closureTiming(show,channel);
     let motion={kind:'hold',start:0,from:initial},command=0,commandStart=0,autoAt=Infinity;
-    const result=[{start:0,command:0,commandStart:0,motion,automatic:false,acceptedDance:false}];
+    let response={at:0,command:0,acceptedDance:false,automatic:false,previous:null};
+    const result=[{start:0,command:0,commandStart:0,motion,automatic:false,acceptedDance:false,response}];
     function change(t,value,automatic){
-      const position=motionAt(motion,t).position;
+      // Commands remain on the exported clock. A supplied response calibration
+      // changes only the estimated actuator trajectory, never the FSEQ bytes.
+      // Internal automatic closing is not delayed as if it were a new command.
+      const lead=automatic?0:timing.commandSeconds+(value===COMMAND.Open?timing.activationSeconds:value===COMMAND.Close?timing.deactivationSeconds:0);
+      const responseAt=t+lead,previous=motion,position=motionAt(previous,responseAt).position;
+      const physical=currentMotion(previous,responseAt);
       if(!automatic){command=value;commandStart=t;}
-      let acceptedDance=false;
+      let acceptedDance=false,next=null;
       if(value===COMMAND.Open||value===COMMAND.Close){
         const target=value===COMMAND.Open?1:0;
-        motion={kind:'travel',start:t,from:position,target,duration:Math.abs(target-position)*movementDuration(channel,target===1)};
-        if(channel===46)autoAt=target===1?t+120:Infinity;
+        next={kind:'travel',start:responseAt,from:position,target,duration:Math.abs(target-position)*(target===1?timing.openSeconds:timing.closeSeconds)};
+        if(channel===46)autoAt=target===1?responseAt+120:Infinity;
       }else if(value===COMMAND.Dance){
         acceptedDance=channel>=37&&(channel<=40||position>=.999);
         if(acceptedDance&&channel!==46){
           const low=channel===41?.68:.18,high=channel===41?1:.86;
-          motion={kind:'dance',start:t,from:position,low,high,first:position>(low+high)/2?low:high,openSeconds:movementDuration(channel,true),closeSeconds:movementDuration(channel,false)};
-        }else if(motion.kind!=='travel')motion={kind:'hold',start:t,from:position};
-      }else if(value===COMMAND.Stop||motion.kind==='dance')motion={kind:'hold',start:t,from:position};
-      // Idle allows an in-flight Open/Close to finish, but ends Dance now.
-      result.push({start:t,command,commandStart,motion,automatic:!!automatic,acceptedDance});
+          next={kind:'dance',start:responseAt,from:position,low,high,first:position>(low+high)/2?low:high,openSeconds:timing.openSeconds,closeSeconds:timing.closeSeconds};
+        }else if(!pendingTravel(previous,responseAt))next={kind:'hold',start:responseAt,from:position};
+      }else if(value===COMMAND.Stop||physical.kind==='dance')next={kind:'hold',start:responseAt,from:position};
+      if(next)motion=lead>0?{kind:'delay',start:t,until:responseAt,previous,next}:next;
+      // Idle allows an in-flight Open/Close (including its response delay) to
+      // finish, but ends Dance after any configured command response delay.
+      // Keep raw command state distinct from its estimated delayed response.
+      // Drop completed response links so normal long shows stay compact.
+      while(response.previous&&response.at<=t)response={...response,previous:null};
+      response={at:responseAt,command,acceptedDance,automatic:!!automatic,previous:response};
+      result.push({start:t,command,commandStart,motion,automatic:!!automatic,acceptedDance,responseAt,response});
     }
     for(let f=0;f<show.frameCount;f++){
       const t=f*step,value=show.frames[f*CHANNELS+channel-1];
@@ -727,7 +770,7 @@
   }
   function preparePreview(show){
     if(previewCache.has(show))return previewCache.get(show);
-    if(show.previewIndex&&show.previewIndex.version===VERSION&&show.previewIndex.frameCount===show.frameCount&&show.previewIndex.stepMs===show.stepMs){previewCache.set(show,show.previewIndex);return show.previewIndex;}
+    if(show.previewIndex&&show.previewIndex.version===VERSION&&show.previewIndex.trajectorySchema===2&&show.previewIndex.frameCount===show.frameCount&&show.previewIndex.stepMs===show.stepMs){previewCache.set(show,show.previewIndex);return show.previewIndex;}
     const step=show.stepMs/1000,raw=show.frames,indices=Array.from({length:30},(_,i)=>i).filter(i=>![8,9,10,11,17,18,19].includes(i));
     const lanes=indices.map(channel=>({channel,times:[],values:[],levels:[],targets:[]}));
     // Compile once in the generation worker. Rendering/seeking then costs one
@@ -745,7 +788,7 @@
       }
     }
     const lights=lanes.map(lane=>({...lane,times:Float64Array.from(lane.times),values:Uint8Array.from(lane.values),levels:Float64Array.from(lane.levels),targets:Uint8Array.from(lane.targets)}));
-    const cache={version:VERSION,frameCount:show.frameCount,stepMs:show.stepMs,lights,closures:CLOSURES.map(channel=>({channel,events:closureTimeline(show,channel)}))};
+    const cache={version:VERSION,trajectorySchema:2,frameCount:show.frameCount,stepMs:show.stepMs,lights,closures:CLOSURES.map(channel=>({channel,events:closureTimeline(show,channel)}))};
     show.previewIndex=cache;previewCache.set(show,cache);return cache;
   }
   function rainbowAt(elapsed){
@@ -777,12 +820,14 @@
     const closures=CLOSURES.map(channel=>{
       const events=cache.closures.find(item=>item.channel===channel).events;let i=lowerBound(events,t+1e-10,'start')-1;i=Math.max(0,i);
       const current=events[i],sample=motionAt(current.motion,t),position=clamp(sample.position,0,1);
-      const dancing=current.command===COMMAND.Dance&&current.acceptedDance&&!current.automatic;
+      let response=current.response;
+      while(response&&response.previous&&t+1e-10<response.at)response=response.previous;
+      const dancing=(response?response.command:current.command)===COMMAND.Dance&&(response?response.acceptedDance:current.acceptedDance)&&!(response?response.automatic:current.automatic);
       const rainbow=channel===46&&dancing&&position>=.999;
-      const motion=sample.moving?(current.motion.kind==='dance'?'dancing':sample.direction>0?'opening':'closing'):current.command===COMMAND.Stop?'stopped':'idle';
+      const motion=sample.moving?(currentMotion(current.motion,t).kind==='dance'?'dancing':sample.direction>0?'opening':'closing'):current.command===COMMAND.Stop?'stopped':'idle';
       return {channel,key:CLOSURE_KEYS[channel],name:channelMap[channel],command:COMMAND_NAME[current.command]||'Idle',rawCommand:current.command,
         motion,moving:sample.moving,dancing,progress:sample.phase,estimatedPosition:position,openFraction:position,foldedFraction:channel<37?1-position:undefined,
-        previousCommand:i?COMMAND_NAME[events[i-1].command]||'Idle':'Idle',rainbow,rainbowColor:rainbow?rainbowAt(t-current.commandStart):[0,0,0],automatic:current.automatic,estimated:true};
+        previousCommand:i?COMMAND_NAME[events[i-1].command]||'Idle':'Idle',rainbow,rainbowColor:rainbow?rainbowAt(t-(response?response.at:current.commandStart)):[0,0,0],automatic:current.automatic,estimated:true};
     });
     const sections=show.sections||[],section=sections[Math.max(0,lowerBound(sections,t+1e-10,'start')-1)];
     return {frame,time:t,frameTime,raw,lights,interior,closures,closureState:Object.fromEntries(closures.map(c=>[c.key,c])),section,positionAccuracy:'estimated',lightAccuracy:'command-timed'};
