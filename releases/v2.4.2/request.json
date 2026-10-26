@@ -1,0 +1,15 @@
+{
+  "version": {
+    "name": "2.4.2",
+    "code": 20402
+  },
+  "source_commit": "e82b149b37acd990e699ab7512e9a0afd67d92cd",
+  "run_id": 40095515106,
+  "quality_gate_policy": {
+    "schema_version": 1,
+    "source_commit": "e82b149b37acd990e699ab7512e9a0afd67d92cd",
+    "source_tree_sha": "e9d1d33fce926721eb61277434de544773e47729",
+    "declaration_sha256": "77f9139bd9671bc548aacf551272d92587fd2e05448c0ba01d9e3b4acab7db51"
+  },
+  "delta_sha256": "7c349ed4f99bd97246ba18743eb040c6a0e6f406eae78c0f4508b00ef222b402"
+}
