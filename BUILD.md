@@ -167,6 +167,14 @@ python3 tools/repository_hygiene.py
 python3 tests/test_repository_hygiene.py
 ```
 
+The [supplemental restore workflow](.github/workflows/restore-regression.yml)
+reports a status on every PR. It skips browser setup only when complete Git
+comparisons of the PR and tested merge show exclusively maintained documentation
+or inert metadata for the unchanged current release. Runtime, test, workflow,
+version and unknown changes run the full supplemental suite; incomplete scope
+also runs it. Manual runs always exercise the suite. This optimization does not
+change production verification, benchmark admission or publication gates.
+
 After installing the dependencies and reproducing the model assets:
 
 ```bash

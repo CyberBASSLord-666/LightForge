@@ -95,7 +95,9 @@ class RepositoryHygieneTests(unittest.TestCase):
         self.assertEqual([], self.check({'qa/release-1.6.0/README.md': '[Old](retired.md)'}))
 
     def test_retired_paths_are_rejected(self):
-        for path in ('migration/manifest.json', 'releases/v1.6.0/parts/001', 'SOURCE_MANIFEST.json', '.github/workflows/inspect-android-2.2.1.yml'):
+        for path in ('migration/manifest.json', 'releases/v1.6.0/parts/001', 'SOURCE_MANIFEST.json',
+                     '.github/workflows/inspect-android-2.2.1.yml',
+                     '.github/workflows/cockpit-preview.yml', '.github/workflows/background-ui.yml'):
             with self.subTest(path=path):
                 self.assertIsNotNone(hygiene.clutter_reason(path))
 

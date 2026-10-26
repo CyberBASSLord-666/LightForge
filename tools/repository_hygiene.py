@@ -21,6 +21,8 @@ RETIRED = frozenset({
     '.github/workflows/inspect-android-2.2.1.yml',
     '.github/workflows/recover-workspace-2.2.1.yml',
     '.github/workflows/maintenance-audit.yml',
+    '.github/workflows/cockpit-preview.yml',
+    '.github/workflows/background-ui.yml',
 })
 CACHE_DIRS = frozenset({'node_modules', '__pycache__', '.pytest_cache', '.venv',
                         'venv', '.gradle', '.idea', 'toolchain'})
@@ -102,7 +104,7 @@ def maintained_doc(name: str) -> bool:
 def clutter_reason(name: str) -> str | None:
     path = PurePosixPath(name)
     if name in RETIRED or name.startswith(('migration/', 'archive/v1.6.0/')):
-        return 'retired migration/checklist material; retain through Git history'
+        return 'retired transfer, workflow or checklist material; retain through Git history'
     if len(path.parts) >= 3 and path.parts[0] == 'releases' and path.parts[2] == 'parts':
         return 'retired split release artifact; use Releases'
     if path.parts[0] in {'build', 'dist', 'output', 'signing'} or CACHE_DIRS.intersection(path.parts[:-1]):
