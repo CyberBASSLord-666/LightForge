@@ -42,6 +42,18 @@ class AnalysisAssetTest(unittest.TestCase):
     def test_declared_model_graphs_pass(self):
         self.assertEqual(self.verify(), 4)
 
+    def test_repository_only_research_graph_stays_source_pinned(self):
+        graph = self.base / 'models/beatnet-v1.onnx'
+        graph.write_bytes(b'original historical graph')
+        self.regenerate_assets()
+        self.assertEqual(self.verify(), 5)
+        graph.write_bytes(b'changed historical graph')
+        with self.assertRaisesRegex(RuntimeError, 'Analysis asset differs from the release manifest'):
+            self.verify()
+        graph.unlink()
+        with self.assertRaisesRegex(RuntimeError, 'Analysis inventory mismatch'):
+            self.verify()
+
     def test_regenerated_outer_manifest_cannot_legitimize_an_obsolete_graph(self):
         for model in ['deux', 'game']:
             with self.subTest(model=model):

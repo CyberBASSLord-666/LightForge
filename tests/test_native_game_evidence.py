@@ -151,7 +151,12 @@ class NativeGameEvidenceTest(unittest.TestCase):
         self.assertIn('native_game = verify_native_game(root, hashes, evidence_session)', text)
         self.assertIn('verifier.verify_receipt(root, receipt, evidence_session, hashes)', text)
         self.assertIn("'fresh_native_game'", text)
-        self.assertNotIn('verify_native_game(', (ROOT / 'qa/release-2.3.1/verify-analysis.py').read_text())
+        # Exact historical gate baseline, retained as data rather than an obsolete
+        # executable release-protocol tree. Its current replacement is tested above.
+        historical = (ROOT / 'tests/fixtures/verify-analysis-2.3.1.txt').read_bytes()
+        self.assertEqual(hashlib.sha256(historical).hexdigest(),
+                         'af677d6669699b459a9c95ab7fc18beebe54790c0b7abcceecf70040943efa39')
+        self.assertNotIn('verify_native_game(', historical.decode('utf-8'))
 
 
 if __name__ == '__main__':

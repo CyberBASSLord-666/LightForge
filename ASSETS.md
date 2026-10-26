@@ -11,6 +11,14 @@ LightForge runs entirely offline. The installed APK includes every runtime model
 | Highland geometry, fonts and demo audio | Retained assets and attribution tracked | No additional preparation |
 | Historical research weights, fixtures and evidence | Original preserved materials plus versioned QA | Optional research; excluded from APK |
 
+APK staging excludes the build-only `web/preview/src/` inputs and the retained
+historical BeatNet graph at `web/analysis/models/beatnet-v1.onnx`. The runtime
+loads the compiled preview bundle and the current Beat This! rhythm models.
+These source/research files remain in Git for reproduction, with their pins and
+notices intact. The complete analysis source manifest still verifies BeatNet;
+APK staging and publication use the same exact exclusions and continue to
+check every packaged runtime asset.
+
 Install the pinned model-build dependencies first as described in [BUILD.md](BUILD.md). `tools/verify_analysis_assets.py` rejects missing, added or byte-changed analysis assets. The GAME and Deux manifests pin checkpoint/archive hashes, graph hashes, authors, licenses and conversion choices. Generated graphs stay out of Git; the full APK contains them.
 
 Deux weights are CC BY-NC 4.0. Original and modified GAME weights are CC BY-NC-SA 4.0. Architecture code licenses do not replace model-weight licenses. Keep the bundled notices and noncommercial scope. [RELEASE_NOTES.md](RELEASE_NOTES.md) records model tradeoffs and performance limits.

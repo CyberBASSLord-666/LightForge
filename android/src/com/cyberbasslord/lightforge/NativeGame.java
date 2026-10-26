@@ -11,7 +11,8 @@ import java.security.MessageDigest;
 import java.util.*;
 
 /**
- * One bounded passage through the original float32 GAME graphs and eight steps.
+ * One or two independent bounded passages through the original float32 GAME
+ * graphs and eight steps, with no JNI resources retained between calls.
  * No normalization, rounding, quantization, graph specialization or context change.
  * The caller owns the process-wide inference gate and durable native crash lease.
  * Constructors read the manifest only; predict owns and retires every JNI resource.
@@ -82,8 +83,32 @@ public final class NativeGame implements AutoCloseable {
 
     synchronized JSONArray predict(float[] pcm,int language,long seed,Listener listener,
             Cancellation cancellation,NativeGameProfile profile) throws Exception {
+        return predictPassages(new float[][]{pcm},new int[]{language},new long[]{seed},listener,
+                cancellation,profile).getJSONArray(0);
+    }
+
+    /** Two independent original passages, sharing setup only while this call runs. */
+    public synchronized JSONArray predictBatch(float[][] pcm,int[] languages,long[] seeds,
+            Listener listener,Cancellation cancellation) throws Exception {
+        return predictBatch(pcm,languages,seeds,listener,cancellation,new NativeGameProfile(inferenceThreads()));
+    }
+
+    synchronized JSONArray predictBatch(float[][] pcm,int[] languages,long[] seeds,Listener listener,
+            Cancellation cancellation,NativeGameProfile profile) throws Exception {
+        if(pcm==null || languages==null || seeds==null || pcm.length!=2 || languages.length!=2 || seeds.length!=2)
+            throw new IOException("Expected exactly two independent singing passages.");
+        return predictPassages(pcm,languages,seeds,listener,cancellation,profile);
+    }
+
+    private JSONArray predictPassages(float[][] pcm,int[] languages,long[] seeds,Listener listener,
+            Cancellation cancellation,NativeGameProfile profile) throws Exception {
         check(cancellation);
-        float[] samples=validatedPcm(pcm,language,seed);
+        // Snapshot and validate every passage before native library/session work.
+        // Each infer call still receives its own complete, unchanged PCM context.
+        float[][] inputs=pcm.clone(),samples=new float[inputs.length][];
+        int[] languageSnapshot=languages.clone();long[] seedSnapshot=seeds.clone();
+        for(int i=0;i<inputs.length;i++){check(cancellation);samples[i]=validatedPcm(inputs[i],languageSnapshot[i],seedSnapshot[i]);}
+        profile.batchPassages(samples.length);
         synchronized(lifecycle){check(cancellation);running=true;activeProfile=profile;}
         Throwable failure=null;
         try {
@@ -119,7 +144,16 @@ public final class NativeGame implements AutoCloseable {
                 }finally{profile.addSessionInit(GRAPHS[i],initializing);}
                 check(cancellation);
             }
-            JSONArray notes=infer(environment,samples,language,seed,listener,cancellation);
+            JSONArray notes=new JSONArray();
+            for(int i=0;i<samples.length;i++) {
+                check(cancellation);
+                final int passage=i;
+                Listener passageListener=samples.length==1?listener:(value,detail)->progress(listener,
+                        (passage+value)/samples.length,"Singing passage "+(passage+1)+"/"+samples.length+" · "+detail);
+                // infer owns and retires every passage-local tensor/result. No
+                // previous boundaries, RNG state or PCM cross this call boundary.
+                notes.put(infer(environment,samples[i],languageSnapshot[i],seedSnapshot[i],passageListener,cancellation));
+            }
             check(cancellation);
             return notes;
         } catch(Exception|Error error) {

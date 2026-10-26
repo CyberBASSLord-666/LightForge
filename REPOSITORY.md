@@ -102,6 +102,44 @@ restore workflow's manual trigger for supplemental visual checks. Historical
 receipts that name the retired workflows remain unchanged; they describe their
 original source, not current workflow requirements.
 
+## Source-only APK exclusions
+
+The preview build sources under `web/preview/src/` and the retained historical
+BeatNet graph are repository inputs, not production payload. APK staging and
+publication share the same explicit exclusions; all remaining asset names and
+bytes still require an exact match. The compiled preview, current rhythm models
+and third-party notices remain bundled. See [ASSETS.md](ASSETS.md) for the source
+inventory and reproduction boundary.
+
+## Retired QA source protocols
+
+The source-only helper trees for 2.2.5, 2.3.0, 2.3.1, 2.3.2, 2.4.0 and 2.4.1
+are retired. These directories contained release-specific producer copies and
+source inventories, with no receipts, logs, screenshots or retained model
+outputs. Current verification selects `qa/release-<version>/` using
+[version.json](version.json); the maintained protocol is described in its
+[README](qa/release-2.4.2/README.md). `qa/restore-preview/` remains shared.
+The MDX comparator tests exercise the current version's implementation.
+
+One exact historical 2.3.1 analysis verifier remains as an inert
+[test fixture](tests/fixtures/verify-analysis-2.3.1.txt), with its SHA-256 pinned
+by the native GAME evidence test. It preserves the historical baseline assertion
+without presenting an obsolete producer as a current verification command.
+
+The removed helper trees remain recoverable from commit
+`e434d3880c47ebe0e951f01aba366181fd091f96`. Research receipts and their source
+snapshots, older QA directories containing actual evidence or reused fixtures,
+and all release requests, signing deltas and publication records remain intact.
+Recover an old protocol with its matching source revision when investigating a
+historical release; never run it against current sources as proof of a new build.
+
+The retained PretrainedSED tree also omits five optional upstream training/demo
+inputs totaling 48,599,269 bytes. Exporter/architecture sources, the original
+checkpoint, class order, notices, attribution and original source receipt remain.
+Its [local scope and recovery note](research/upstream/pretrained-sed/LIGHTFORGE.md#current-retained-source-scope-and-recovery)
+explains which upstream examples need historical data. These files were neither
+runtime assets nor LightForge numerical-evaluation inputs.
+
 ## Keep documentation accurate
 
 Use relative links to canonical guides instead of repeated procedures. Keep

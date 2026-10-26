@@ -30,7 +30,7 @@ class NativeGameLifecycleTest(unittest.TestCase):
             self.assertEqual(compiled.returncode, 0, compiled.stdout + compiled.stderr)
             command = [str(JAVA / 'java'), '-cp', os.pathsep.join([str(classes), str(TOOLS / 'test-json.jar')]),
                        'com.cyberbasslord.lightforge.NativeGameLifecycleTest']
-            for mode in ('normal', 'throw', 'unconfirmed'):
+            for mode in ('normal', 'throw', 'unconfirmed', 'batch-throw', 'batch-unconfirmed'):
                 # Unknown JNI ownership is intentionally unrecoverable inside a
                 # process. Each fatal control gets its own fresh JVM.
                 arguments = [str(work / mode)] + ([] if mode == 'normal' else [mode])

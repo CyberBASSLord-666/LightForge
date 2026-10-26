@@ -44,6 +44,9 @@ public final class WavConverter implements Closeable {
 
     private static final class Sink implements Closeable {
         final File file; final int rate, channels; final OutputStream out; long frames;
+        // Encode complete PCM frames before crossing the synchronized stream
+        // boundary. The sample conversion and byte order remain unchanged.
+        final byte[] pcm=new byte[16384]; int pending;
         boolean closed;
         Sink(File f,int rate,int channels) throws IOException {
             this.file=f;this.rate=rate;this.channels=channels;
@@ -52,9 +55,17 @@ public final class WavConverter implements Closeable {
             catch(Throwable failure){try{out.close();}catch(Throwable cleanup){failure.addSuppressed(cleanup);}throw failure;}
         }
         void frame(float left,float right) throws IOException {
-            if(channels==1) le16(out,sample((left+right)*.5f));
-            else { le16(out,sample(left));le16(out,sample(right)); }
+            int first=sample(channels==1?(left+right)*.5f:left);
+            pcm[pending++]=(byte)first;pcm[pending++]=(byte)(first>>>8);
+            if(channels!=1) {
+                int second=sample(right);
+                pcm[pending++]=(byte)second;pcm[pending++]=(byte)(second>>>8);
+            }
+            if(pending==pcm.length) flushPcm();
             frames++;
+        }
+        void flushPcm() throws IOException {
+            if(pending>0){out.write(pcm,0,pending);pending=0;}
         }
         void finish() throws IOException {
             close(); long data=frames*channels*2;
@@ -68,7 +79,13 @@ public final class WavConverter implements Closeable {
                 r.seek(0);r.write(b.toByteArray());r.getFD().sync();
             }
         }
-        public void close() throws IOException { if(!closed) {out.close();closed=true;} }
+        public void close() throws IOException {
+            if(!closed) {
+                // Always retire the stream, including a failed final block.
+                try(OutputStream cleanup=out){flushPcm();}
+                finally{closed=true;}
+            }
+        }
     }
     private static final class Resampler {
         static final int HALF=24,TAPS=48,PHASES=1024,CAP=32768;

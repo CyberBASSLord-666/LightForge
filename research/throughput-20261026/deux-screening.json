@@ -1,0 +1,1685 @@
+{
+  "scope": "Exploratory engineering screening summaries, not a registered campaign, complete benchmark archive, APK qualification, phone result or whole-analysis speed claim. No model, precision, context or production scheduling change is admitted by these observations.",
+  "productionSourceCommit": "ddd92dfcae49e407747c138265cabb8594e0a7cd",
+  "baselineNativeDeuxSha256": "869a482938c63eab530cc410d9054a0813eddab3b7d70454b06c57af6a28f771",
+  "runtimeVersion": "1.25.1",
+  "runtimeJarSha256": "749793ebed63743fec853d093da7987a86ea5cd592d54fba898cd3233100c381",
+  "modelManifestSha256": "3707d1e8c3e640caf02a1cdf8e616bd801f4687caca782ac0541f62d1e1312a7",
+  "inputAudioSha256": "33f07d502ba19832b62b97d8fb4a11354e81310264bd885d7a06438228773650",
+  "fixedTemporalBatch": {
+    "decision": "Not promoted: tiny Float32 differences, inconclusive timing and higher peak RSS. The numerical characterization is a temporal graph output, not a reconstructed audio/quality result.",
+    "characterization": {
+      "scope": "Original block-00 temporal graph, original demo first band with all1301frames. Isolated numeric characterization, not completepipeline/musicquality proof. Original graph bytes/Float32/full context unchanged.",
+      "modelSha256": "688feca1115d610e9bc9d15ac9dac6e33c4cf0a03966d9effe8974d2674ae924",
+      "inputSha256": "1cc9462795fd7bd5537e364696b5405b3e94230a3d1eef8cf42bb5c65662c4a6",
+      "metrics": {
+        "finite": true,
+        "values": 333056,
+        "differingValues": 50984,
+        "maxAbsError": 9.5367431640625e-07,
+        "rmse": 3.66516618553399e-08,
+        "relativeL2": 3.9894337477801516e-08,
+        "referenceRms": 0.9187183989641151,
+        "referencePeak": 3.783679723739624,
+        "maxAbsDivReferencePeak": 2.5204942966570117e-07
+      },
+      "records": [
+        {
+          "mode": "sequential",
+          "peakRssKiB": 129936,
+          "medianNanos": 111367609,
+          "observations": [
+            {
+              "mode": "sequential",
+              "iteration": -1,
+              "warmup": true,
+              "nanos": 125659737,
+              "sha256": "bdac97e046ff0e19d9be5c04c1f121d8d6110c83d660379549a5d72baff46c37",
+              "setupNanos": 123274406
+            },
+            {
+              "mode": "sequential",
+              "iteration": 0,
+              "warmup": false,
+              "nanos": 124616838,
+              "sha256": "bdac97e046ff0e19d9be5c04c1f121d8d6110c83d660379549a5d72baff46c37",
+              "setupNanos": 123274406
+            },
+            {
+              "mode": "sequential",
+              "iteration": 1,
+              "warmup": false,
+              "nanos": 101559699,
+              "sha256": "bdac97e046ff0e19d9be5c04c1f121d8d6110c83d660379549a5d72baff46c37",
+              "setupNanos": 123274406
+            },
+            {
+              "mode": "sequential",
+              "iteration": 2,
+              "warmup": false,
+              "nanos": 107493175,
+              "sha256": "bdac97e046ff0e19d9be5c04c1f121d8d6110c83d660379549a5d72baff46c37",
+              "setupNanos": 123274406
+            },
+            {
+              "mode": "sequential",
+              "iteration": 3,
+              "warmup": false,
+              "nanos": 121441669,
+              "sha256": "bdac97e046ff0e19d9be5c04c1f121d8d6110c83d660379549a5d72baff46c37",
+              "setupNanos": 123274406
+            },
+            {
+              "mode": "sequential",
+              "iteration": 4,
+              "warmup": false,
+              "nanos": 111367609,
+              "sha256": "bdac97e046ff0e19d9be5c04c1f121d8d6110c83d660379549a5d72baff46c37",
+              "setupNanos": 123274406
+            }
+          ]
+        },
+        {
+          "mode": "static",
+          "peakRssKiB": 150048,
+          "medianNanos": 108205140,
+          "observations": [
+            {
+              "mode": "static",
+              "iteration": -1,
+              "warmup": true,
+              "nanos": 116596263,
+              "sha256": "cd993c3dc12cd29a56d8d1856a9bc4d132941c6a8403cda3befb8e9d1149a547",
+              "setupNanos": 91772944
+            },
+            {
+              "mode": "static",
+              "iteration": 0,
+              "warmup": false,
+              "nanos": 122179536,
+              "sha256": "cd993c3dc12cd29a56d8d1856a9bc4d132941c6a8403cda3befb8e9d1149a547",
+              "setupNanos": 91772944
+            },
+            {
+              "mode": "static",
+              "iteration": 1,
+              "warmup": false,
+              "nanos": 101753723,
+              "sha256": "cd993c3dc12cd29a56d8d1856a9bc4d132941c6a8403cda3befb8e9d1149a547",
+              "setupNanos": 91772944
+            },
+            {
+              "mode": "static",
+              "iteration": 2,
+              "warmup": false,
+              "nanos": 105143859,
+              "sha256": "cd993c3dc12cd29a56d8d1856a9bc4d132941c6a8403cda3befb8e9d1149a547",
+              "setupNanos": 91772944
+            },
+            {
+              "mode": "static",
+              "iteration": 3,
+              "warmup": false,
+              "nanos": 121629437,
+              "sha256": "cd993c3dc12cd29a56d8d1856a9bc4d132941c6a8403cda3befb8e9d1149a547",
+              "setupNanos": 91772944
+            },
+            {
+              "mode": "static",
+              "iteration": 4,
+              "warmup": false,
+              "nanos": 108205140,
+              "sha256": "cd993c3dc12cd29a56d8d1856a9bc4d132941c6a8403cda3befb8e9d1149a547",
+              "setupNanos": 91772944
+            }
+          ]
+        }
+      ]
+    },
+    "initialRuns": [
+      {
+        "mode": "sequential",
+        "peakRssKiB": 127108,
+        "observations": [
+          {
+            "mode": "sequential",
+            "iteration": -1,
+            "warmup": true,
+            "nanos": 117368283,
+            "sha256": "bdac97e046ff0e19d9be5c04c1f121d8d6110c83d660379549a5d72baff46c37",
+            "setupNanos": 90201915
+          },
+          {
+            "mode": "sequential",
+            "iteration": 0,
+            "warmup": false,
+            "nanos": 118625992,
+            "sha256": "bdac97e046ff0e19d9be5c04c1f121d8d6110c83d660379549a5d72baff46c37",
+            "setupNanos": 90201915
+          },
+          {
+            "mode": "sequential",
+            "iteration": 1,
+            "warmup": false,
+            "nanos": 104433888,
+            "sha256": "bdac97e046ff0e19d9be5c04c1f121d8d6110c83d660379549a5d72baff46c37",
+            "setupNanos": 90201915
+          },
+          {
+            "mode": "sequential",
+            "iteration": 2,
+            "warmup": false,
+            "nanos": 109685336,
+            "sha256": "bdac97e046ff0e19d9be5c04c1f121d8d6110c83d660379549a5d72baff46c37",
+            "setupNanos": 90201915
+          },
+          {
+            "mode": "sequential",
+            "iteration": 3,
+            "warmup": false,
+            "nanos": 112706470,
+            "sha256": "bdac97e046ff0e19d9be5c04c1f121d8d6110c83d660379549a5d72baff46c37",
+            "setupNanos": 90201915
+          }
+        ]
+      },
+      {
+        "mode": "static",
+        "peakRssKiB": 146352,
+        "observations": [
+          {
+            "mode": "static",
+            "iteration": -1,
+            "warmup": true,
+            "nanos": 102477679,
+            "sha256": "cd993c3dc12cd29a56d8d1856a9bc4d132941c6a8403cda3befb8e9d1149a547",
+            "setupNanos": 99763199
+          },
+          {
+            "mode": "static",
+            "iteration": 0,
+            "warmup": false,
+            "nanos": 126223786,
+            "sha256": "cd993c3dc12cd29a56d8d1856a9bc4d132941c6a8403cda3befb8e9d1149a547",
+            "setupNanos": 99763199
+          },
+          {
+            "mode": "static",
+            "iteration": 1,
+            "warmup": false,
+            "nanos": 88738714,
+            "sha256": "cd993c3dc12cd29a56d8d1856a9bc4d132941c6a8403cda3befb8e9d1149a547",
+            "setupNanos": 99763199
+          },
+          {
+            "mode": "static",
+            "iteration": 2,
+            "warmup": false,
+            "nanos": 94128304,
+            "sha256": "cd993c3dc12cd29a56d8d1856a9bc4d132941c6a8403cda3befb8e9d1149a547",
+            "setupNanos": 99763199
+          },
+          {
+            "mode": "static",
+            "iteration": 3,
+            "warmup": false,
+            "nanos": 78254854,
+            "sha256": "cd993c3dc12cd29a56d8d1856a9bc4d132941c6a8403cda3befb8e9d1149a547",
+            "setupNanos": 99763199
+          }
+        ]
+      },
+      {
+        "mode": "static",
+        "peakRssKiB": 147500,
+        "observations": [
+          {
+            "mode": "static",
+            "iteration": -1,
+            "warmup": true,
+            "nanos": 137496654,
+            "sha256": "cd993c3dc12cd29a56d8d1856a9bc4d132941c6a8403cda3befb8e9d1149a547",
+            "setupNanos": 91599719
+          },
+          {
+            "mode": "static",
+            "iteration": 0,
+            "warmup": false,
+            "nanos": 107740188,
+            "sha256": "cd993c3dc12cd29a56d8d1856a9bc4d132941c6a8403cda3befb8e9d1149a547",
+            "setupNanos": 91599719
+          },
+          {
+            "mode": "static",
+            "iteration": 1,
+            "warmup": false,
+            "nanos": 85178601,
+            "sha256": "cd993c3dc12cd29a56d8d1856a9bc4d132941c6a8403cda3befb8e9d1149a547",
+            "setupNanos": 91599719
+          },
+          {
+            "mode": "static",
+            "iteration": 2,
+            "warmup": false,
+            "nanos": 128413698,
+            "sha256": "cd993c3dc12cd29a56d8d1856a9bc4d132941c6a8403cda3befb8e9d1149a547",
+            "setupNanos": 91599719
+          },
+          {
+            "mode": "static",
+            "iteration": 3,
+            "warmup": false,
+            "nanos": 90138099,
+            "sha256": "cd993c3dc12cd29a56d8d1856a9bc4d132941c6a8403cda3befb8e9d1149a547",
+            "setupNanos": 91599719
+          }
+        ]
+      },
+      {
+        "mode": "sequential",
+        "peakRssKiB": 128036,
+        "observations": [
+          {
+            "mode": "sequential",
+            "iteration": -1,
+            "warmup": true,
+            "nanos": 206750964,
+            "sha256": "bdac97e046ff0e19d9be5c04c1f121d8d6110c83d660379549a5d72baff46c37",
+            "setupNanos": 97768944
+          },
+          {
+            "mode": "sequential",
+            "iteration": 0,
+            "warmup": false,
+            "nanos": 111241669,
+            "sha256": "bdac97e046ff0e19d9be5c04c1f121d8d6110c83d660379549a5d72baff46c37",
+            "setupNanos": 97768944
+          },
+          {
+            "mode": "sequential",
+            "iteration": 1,
+            "warmup": false,
+            "nanos": 106003189,
+            "sha256": "bdac97e046ff0e19d9be5c04c1f121d8d6110c83d660379549a5d72baff46c37",
+            "setupNanos": 97768944
+          },
+          {
+            "mode": "sequential",
+            "iteration": 2,
+            "warmup": false,
+            "nanos": 88140589,
+            "sha256": "bdac97e046ff0e19d9be5c04c1f121d8d6110c83d660379549a5d72baff46c37",
+            "setupNanos": 97768944
+          },
+          {
+            "mode": "sequential",
+            "iteration": 3,
+            "warmup": false,
+            "nanos": 82319153,
+            "sha256": "bdac97e046ff0e19d9be5c04c1f121d8d6110c83d660379549a5d72baff46c37",
+            "setupNanos": 97768944
+          }
+        ]
+      }
+    ]
+  },
+  "interOpParallel2": {
+    "decision": "Not promoted: same output bits in this single-band screen, no reliable timing gain.",
+    "runs": [
+      {
+        "mode": "sequential",
+        "peakRssKiB": 126884,
+        "observations": [
+          {
+            "mode": "sequential",
+            "iteration": -1,
+            "warmup": true,
+            "nanos": 361221356,
+            "sha256": "bdac97e046ff0e19d9be5c04c1f121d8d6110c83d660379549a5d72baff46c37",
+            "setupNanos": 97570997
+          },
+          {
+            "mode": "sequential",
+            "iteration": 0,
+            "warmup": false,
+            "nanos": 1183986134,
+            "sha256": "bdac97e046ff0e19d9be5c04c1f121d8d6110c83d660379549a5d72baff46c37",
+            "setupNanos": 97570997
+          },
+          {
+            "mode": "sequential",
+            "iteration": 1,
+            "warmup": false,
+            "nanos": 331457720,
+            "sha256": "bdac97e046ff0e19d9be5c04c1f121d8d6110c83d660379549a5d72baff46c37",
+            "setupNanos": 97570997
+          },
+          {
+            "mode": "sequential",
+            "iteration": 2,
+            "warmup": false,
+            "nanos": 3373911876,
+            "sha256": "bdac97e046ff0e19d9be5c04c1f121d8d6110c83d660379549a5d72baff46c37",
+            "setupNanos": 97570997
+          },
+          {
+            "mode": "sequential",
+            "iteration": 3,
+            "warmup": false,
+            "nanos": 3898623154,
+            "sha256": "bdac97e046ff0e19d9be5c04c1f121d8d6110c83d660379549a5d72baff46c37",
+            "setupNanos": 97570997
+          },
+          {
+            "mode": "sequential",
+            "iteration": 4,
+            "warmup": false,
+            "nanos": 153847827,
+            "sha256": "bdac97e046ff0e19d9be5c04c1f121d8d6110c83d660379549a5d72baff46c37",
+            "setupNanos": 97570997
+          },
+          {
+            "mode": "sequential",
+            "iteration": 5,
+            "warmup": false,
+            "nanos": 583390369,
+            "sha256": "bdac97e046ff0e19d9be5c04c1f121d8d6110c83d660379549a5d72baff46c37",
+            "setupNanos": 97570997
+          }
+        ]
+      },
+      {
+        "mode": "parallel",
+        "peakRssKiB": 108224,
+        "observations": [
+          {
+            "mode": "parallel",
+            "iteration": -1,
+            "warmup": true,
+            "nanos": 149854745,
+            "sha256": "bdac97e046ff0e19d9be5c04c1f121d8d6110c83d660379549a5d72baff46c37",
+            "setupNanos": 773795109
+          },
+          {
+            "mode": "parallel",
+            "iteration": 0,
+            "warmup": false,
+            "nanos": 100431847,
+            "sha256": "bdac97e046ff0e19d9be5c04c1f121d8d6110c83d660379549a5d72baff46c37",
+            "setupNanos": 773795109
+          },
+          {
+            "mode": "parallel",
+            "iteration": 1,
+            "warmup": false,
+            "nanos": 103389263,
+            "sha256": "bdac97e046ff0e19d9be5c04c1f121d8d6110c83d660379549a5d72baff46c37",
+            "setupNanos": 773795109
+          },
+          {
+            "mode": "parallel",
+            "iteration": 2,
+            "warmup": false,
+            "nanos": 612431425,
+            "sha256": "bdac97e046ff0e19d9be5c04c1f121d8d6110c83d660379549a5d72baff46c37",
+            "setupNanos": 773795109
+          },
+          {
+            "mode": "parallel",
+            "iteration": 3,
+            "warmup": false,
+            "nanos": 224109053,
+            "sha256": "bdac97e046ff0e19d9be5c04c1f121d8d6110c83d660379549a5d72baff46c37",
+            "setupNanos": 773795109
+          },
+          {
+            "mode": "parallel",
+            "iteration": 4,
+            "warmup": false,
+            "nanos": 145930706,
+            "sha256": "bdac97e046ff0e19d9be5c04c1f121d8d6110c83d660379549a5d72baff46c37",
+            "setupNanos": 773795109
+          },
+          {
+            "mode": "parallel",
+            "iteration": 5,
+            "warmup": false,
+            "nanos": 149314154,
+            "sha256": "bdac97e046ff0e19d9be5c04c1f121d8d6110c83d660379549a5d72baff46c37",
+            "setupNanos": 773795109
+          }
+        ]
+      },
+      {
+        "mode": "parallel",
+        "peakRssKiB": 107220,
+        "observations": [
+          {
+            "mode": "parallel",
+            "iteration": -1,
+            "warmup": true,
+            "nanos": 286300637,
+            "sha256": "bdac97e046ff0e19d9be5c04c1f121d8d6110c83d660379549a5d72baff46c37",
+            "setupNanos": 100777592
+          },
+          {
+            "mode": "parallel",
+            "iteration": 0,
+            "warmup": false,
+            "nanos": 210478547,
+            "sha256": "bdac97e046ff0e19d9be5c04c1f121d8d6110c83d660379549a5d72baff46c37",
+            "setupNanos": 100777592
+          },
+          {
+            "mode": "parallel",
+            "iteration": 1,
+            "warmup": false,
+            "nanos": 312427325,
+            "sha256": "bdac97e046ff0e19d9be5c04c1f121d8d6110c83d660379549a5d72baff46c37",
+            "setupNanos": 100777592
+          },
+          {
+            "mode": "parallel",
+            "iteration": 2,
+            "warmup": false,
+            "nanos": 229755209,
+            "sha256": "bdac97e046ff0e19d9be5c04c1f121d8d6110c83d660379549a5d72baff46c37",
+            "setupNanos": 100777592
+          },
+          {
+            "mode": "parallel",
+            "iteration": 3,
+            "warmup": false,
+            "nanos": 297269875,
+            "sha256": "bdac97e046ff0e19d9be5c04c1f121d8d6110c83d660379549a5d72baff46c37",
+            "setupNanos": 100777592
+          },
+          {
+            "mode": "parallel",
+            "iteration": 4,
+            "warmup": false,
+            "nanos": 301608254,
+            "sha256": "bdac97e046ff0e19d9be5c04c1f121d8d6110c83d660379549a5d72baff46c37",
+            "setupNanos": 100777592
+          },
+          {
+            "mode": "parallel",
+            "iteration": 5,
+            "warmup": false,
+            "nanos": 235515738,
+            "sha256": "bdac97e046ff0e19d9be5c04c1f121d8d6110c83d660379549a5d72baff46c37",
+            "setupNanos": 100777592
+          }
+        ]
+      },
+      {
+        "mode": "sequential",
+        "peakRssKiB": 127632,
+        "observations": [
+          {
+            "mode": "sequential",
+            "iteration": -1,
+            "warmup": true,
+            "nanos": 113904479,
+            "sha256": "bdac97e046ff0e19d9be5c04c1f121d8d6110c83d660379549a5d72baff46c37",
+            "setupNanos": 99984459
+          },
+          {
+            "mode": "sequential",
+            "iteration": 0,
+            "warmup": false,
+            "nanos": 111254112,
+            "sha256": "bdac97e046ff0e19d9be5c04c1f121d8d6110c83d660379549a5d72baff46c37",
+            "setupNanos": 99984459
+          },
+          {
+            "mode": "sequential",
+            "iteration": 1,
+            "warmup": false,
+            "nanos": 103980429,
+            "sha256": "bdac97e046ff0e19d9be5c04c1f121d8d6110c83d660379549a5d72baff46c37",
+            "setupNanos": 99984459
+          },
+          {
+            "mode": "sequential",
+            "iteration": 2,
+            "warmup": false,
+            "nanos": 93291698,
+            "sha256": "bdac97e046ff0e19d9be5c04c1f121d8d6110c83d660379549a5d72baff46c37",
+            "setupNanos": 99984459
+          },
+          {
+            "mode": "sequential",
+            "iteration": 3,
+            "warmup": false,
+            "nanos": 85069430,
+            "sha256": "bdac97e046ff0e19d9be5c04c1f121d8d6110c83d660379549a5d72baff46c37",
+            "setupNanos": 99984459
+          },
+          {
+            "mode": "sequential",
+            "iteration": 4,
+            "warmup": false,
+            "nanos": 105806805,
+            "sha256": "bdac97e046ff0e19d9be5c04c1f121d8d6110c83d660379549a5d72baff46c37",
+            "setupNanos": 99984459
+          },
+          {
+            "mode": "sequential",
+            "iteration": 5,
+            "warmup": false,
+            "nanos": 98739044,
+            "sha256": "bdac97e046ff0e19d9be5c04c1f121d8d6110c83d660379549a5d72baff46c37",
+            "setupNanos": 99984459
+          }
+        ]
+      }
+    ]
+  },
+  "dynamicBlockBase4": {
+    "decision": "Not promoted: exact outputs in the B4 temporal screen, slower in each measured pair.",
+    "observation": {
+      "scope": "Exploratory same-input single temporal graph screen; not complete native passage/device qualification",
+      "batch": 4,
+      "frames": 1301,
+      "intraThreads": 3,
+      "interThreads": 1,
+      "cpuAffinity": [
+        0,
+        1,
+        2
+      ],
+      "inputSha256": "bc2a0163a045dcac64e862562445b2ce1d2120ef79551f5737f9c511218a73c9",
+      "modelSha256": "688feca1115d610e9bc9d15ac9dac6e33c4cf0a03966d9effe8974d2674ae924",
+      "harnessSha256": "f4540236041b3e25e1c0cd78a632563e552922936e1698cf90a48f556644c7d7",
+      "records": [
+        {
+          "mode": "baseline",
+          "pair": 0,
+          "order": 0,
+          "peakRssKiB": 288940,
+          "observations": [
+            {
+              "mode": "baseline",
+              "iteration": -1,
+              "warmup": true,
+              "nanos": 413215449,
+              "processCpuNanos": 870000000,
+              "sha256": "4e9e62ea74a859425071afbffdfce46d65551c3c5f3ce0a892cd600ffcf65d91",
+              "setupNanos": 127668384
+            },
+            {
+              "mode": "baseline",
+              "iteration": 0,
+              "warmup": false,
+              "nanos": 326944344,
+              "processCpuNanos": 770000000,
+              "sha256": "4e9e62ea74a859425071afbffdfce46d65551c3c5f3ce0a892cd600ffcf65d91",
+              "setupNanos": 127668384
+            },
+            {
+              "mode": "baseline",
+              "iteration": 1,
+              "warmup": false,
+              "nanos": 313666609,
+              "processCpuNanos": 760000000,
+              "sha256": "4e9e62ea74a859425071afbffdfce46d65551c3c5f3ce0a892cd600ffcf65d91",
+              "setupNanos": 127668384
+            },
+            {
+              "mode": "baseline",
+              "iteration": 2,
+              "warmup": false,
+              "nanos": 273416225,
+              "processCpuNanos": 670000000,
+              "sha256": "4e9e62ea74a859425071afbffdfce46d65551c3c5f3ce0a892cd600ffcf65d91",
+              "setupNanos": 127668384
+            },
+            {
+              "mode": "baseline",
+              "iteration": 3,
+              "warmup": false,
+              "nanos": 266007037,
+              "processCpuNanos": 660000000,
+              "sha256": "4e9e62ea74a859425071afbffdfce46d65551c3c5f3ce0a892cd600ffcf65d91",
+              "setupNanos": 127668384
+            },
+            {
+              "mode": "baseline",
+              "iteration": 4,
+              "warmup": false,
+              "nanos": 275293069,
+              "processCpuNanos": 680000000,
+              "sha256": "4e9e62ea74a859425071afbffdfce46d65551c3c5f3ce0a892cd600ffcf65d91",
+              "setupNanos": 127668384
+            }
+          ],
+          "processUserSeconds": 5.152612,
+          "processSystemSeconds": 0.345666
+        },
+        {
+          "mode": "dynamic4",
+          "pair": 0,
+          "order": 1,
+          "peakRssKiB": 289644,
+          "observations": [
+            {
+              "mode": "dynamic4",
+              "iteration": -1,
+              "warmup": true,
+              "nanos": 334284095,
+              "processCpuNanos": 740000000,
+              "sha256": "4e9e62ea74a859425071afbffdfce46d65551c3c5f3ce0a892cd600ffcf65d91",
+              "setupNanos": 127346399
+            },
+            {
+              "mode": "dynamic4",
+              "iteration": 0,
+              "warmup": false,
+              "nanos": 682606974,
+              "processCpuNanos": 1350000000,
+              "sha256": "4e9e62ea74a859425071afbffdfce46d65551c3c5f3ce0a892cd600ffcf65d91",
+              "setupNanos": 127346399
+            },
+            {
+              "mode": "dynamic4",
+              "iteration": 1,
+              "warmup": false,
+              "nanos": 502592107,
+              "processCpuNanos": 1170000000,
+              "sha256": "4e9e62ea74a859425071afbffdfce46d65551c3c5f3ce0a892cd600ffcf65d91",
+              "setupNanos": 127346399
+            },
+            {
+              "mode": "dynamic4",
+              "iteration": 2,
+              "warmup": false,
+              "nanos": 267694239,
+              "processCpuNanos": 670000000,
+              "sha256": "4e9e62ea74a859425071afbffdfce46d65551c3c5f3ce0a892cd600ffcf65d91",
+              "setupNanos": 127346399
+            },
+            {
+              "mode": "dynamic4",
+              "iteration": 3,
+              "warmup": false,
+              "nanos": 276284200,
+              "processCpuNanos": 690000000,
+              "sha256": "4e9e62ea74a859425071afbffdfce46d65551c3c5f3ce0a892cd600ffcf65d91",
+              "setupNanos": 127346399
+            },
+            {
+              "mode": "dynamic4",
+              "iteration": 4,
+              "warmup": false,
+              "nanos": 5966286566,
+              "processCpuNanos": 13140000000,
+              "sha256": "4e9e62ea74a859425071afbffdfce46d65551c3c5f3ce0a892cd600ffcf65d91",
+              "setupNanos": 127346399
+            }
+          ],
+          "processUserSeconds": 18.185699,
+          "processSystemSeconds": 1.092758
+        },
+        {
+          "mode": "dynamic4",
+          "pair": 1,
+          "order": 0,
+          "peakRssKiB": 288600,
+          "observations": [
+            {
+              "mode": "dynamic4",
+              "iteration": -1,
+              "warmup": true,
+              "nanos": 1141199213,
+              "processCpuNanos": 2490000000,
+              "sha256": "4e9e62ea74a859425071afbffdfce46d65551c3c5f3ce0a892cd600ffcf65d91",
+              "setupNanos": 882256588
+            },
+            {
+              "mode": "dynamic4",
+              "iteration": 0,
+              "warmup": false,
+              "nanos": 3722336588,
+              "processCpuNanos": 6040000000,
+              "sha256": "4e9e62ea74a859425071afbffdfce46d65551c3c5f3ce0a892cd600ffcf65d91",
+              "setupNanos": 882256588
+            },
+            {
+              "mode": "dynamic4",
+              "iteration": 1,
+              "warmup": false,
+              "nanos": 486810498,
+              "processCpuNanos": 1160000000,
+              "sha256": "4e9e62ea74a859425071afbffdfce46d65551c3c5f3ce0a892cd600ffcf65d91",
+              "setupNanos": 882256588
+            },
+            {
+              "mode": "dynamic4",
+              "iteration": 2,
+              "warmup": false,
+              "nanos": 406965957,
+              "processCpuNanos": 940000000,
+              "sha256": "4e9e62ea74a859425071afbffdfce46d65551c3c5f3ce0a892cd600ffcf65d91",
+              "setupNanos": 882256588
+            },
+            {
+              "mode": "dynamic4",
+              "iteration": 3,
+              "warmup": false,
+              "nanos": 352805272,
+              "processCpuNanos": 840000000,
+              "sha256": "4e9e62ea74a859425071afbffdfce46d65551c3c5f3ce0a892cd600ffcf65d91",
+              "setupNanos": 882256588
+            },
+            {
+              "mode": "dynamic4",
+              "iteration": 4,
+              "warmup": false,
+              "nanos": 363584653,
+              "processCpuNanos": 880000000,
+              "sha256": "4e9e62ea74a859425071afbffdfce46d65551c3c5f3ce0a892cd600ffcf65d91",
+              "setupNanos": 882256588
+            }
+          ],
+          "processUserSeconds": 14.452019,
+          "processSystemSeconds": 1.518988
+        },
+        {
+          "mode": "baseline",
+          "pair": 1,
+          "order": 1,
+          "peakRssKiB": 288280,
+          "observations": [
+            {
+              "mode": "baseline",
+              "iteration": -1,
+              "warmup": true,
+              "nanos": 338071592,
+              "processCpuNanos": 710000000,
+              "sha256": "4e9e62ea74a859425071afbffdfce46d65551c3c5f3ce0a892cd600ffcf65d91",
+              "setupNanos": 102514744
+            },
+            {
+              "mode": "baseline",
+              "iteration": 0,
+              "warmup": false,
+              "nanos": 336447280,
+              "processCpuNanos": 800000000,
+              "sha256": "4e9e62ea74a859425071afbffdfce46d65551c3c5f3ce0a892cd600ffcf65d91",
+              "setupNanos": 102514744
+            },
+            {
+              "mode": "baseline",
+              "iteration": 1,
+              "warmup": false,
+              "nanos": 296297991,
+              "processCpuNanos": 730000000,
+              "sha256": "4e9e62ea74a859425071afbffdfce46d65551c3c5f3ce0a892cd600ffcf65d91",
+              "setupNanos": 102514744
+            },
+            {
+              "mode": "baseline",
+              "iteration": 2,
+              "warmup": false,
+              "nanos": 277234042,
+              "processCpuNanos": 670000000,
+              "sha256": "4e9e62ea74a859425071afbffdfce46d65551c3c5f3ce0a892cd600ffcf65d91",
+              "setupNanos": 102514744
+            },
+            {
+              "mode": "baseline",
+              "iteration": 3,
+              "warmup": false,
+              "nanos": 268304312,
+              "processCpuNanos": 680000000,
+              "sha256": "4e9e62ea74a859425071afbffdfce46d65551c3c5f3ce0a892cd600ffcf65d91",
+              "setupNanos": 102514744
+            },
+            {
+              "mode": "baseline",
+              "iteration": 4,
+              "warmup": false,
+              "nanos": 271005945,
+              "processCpuNanos": 680000000,
+              "sha256": "4e9e62ea74a859425071afbffdfce46d65551c3c5f3ce0a892cd600ffcf65d91",
+              "setupNanos": 102514744
+            }
+          ],
+          "processUserSeconds": 5.22652,
+          "processSystemSeconds": 0.330857
+        },
+        {
+          "mode": "baseline",
+          "pair": 2,
+          "order": 0,
+          "peakRssKiB": 288420,
+          "observations": [
+            {
+              "mode": "baseline",
+              "iteration": -1,
+              "warmup": true,
+              "nanos": 424791982,
+              "processCpuNanos": 1090000000,
+              "sha256": "4e9e62ea74a859425071afbffdfce46d65551c3c5f3ce0a892cd600ffcf65d91",
+              "setupNanos": 81610258
+            },
+            {
+              "mode": "baseline",
+              "iteration": 0,
+              "warmup": false,
+              "nanos": 349149670,
+              "processCpuNanos": 910000000,
+              "sha256": "4e9e62ea74a859425071afbffdfce46d65551c3c5f3ce0a892cd600ffcf65d91",
+              "setupNanos": 81610258
+            },
+            {
+              "mode": "baseline",
+              "iteration": 1,
+              "warmup": false,
+              "nanos": 346216950,
+              "processCpuNanos": 920000000,
+              "sha256": "4e9e62ea74a859425071afbffdfce46d65551c3c5f3ce0a892cd600ffcf65d91",
+              "setupNanos": 81610258
+            },
+            {
+              "mode": "baseline",
+              "iteration": 2,
+              "warmup": false,
+              "nanos": 943823699,
+              "processCpuNanos": 1970000000,
+              "sha256": "4e9e62ea74a859425071afbffdfce46d65551c3c5f3ce0a892cd600ffcf65d91",
+              "setupNanos": 81610258
+            },
+            {
+              "mode": "baseline",
+              "iteration": 3,
+              "warmup": false,
+              "nanos": 484480511,
+              "processCpuNanos": 1050000000,
+              "sha256": "4e9e62ea74a859425071afbffdfce46d65551c3c5f3ce0a892cd600ffcf65d91",
+              "setupNanos": 81610258
+            },
+            {
+              "mode": "baseline",
+              "iteration": 4,
+              "warmup": false,
+              "nanos": 406115830,
+              "processCpuNanos": 910000000,
+              "sha256": "4e9e62ea74a859425071afbffdfce46d65551c3c5f3ce0a892cd600ffcf65d91",
+              "setupNanos": 81610258
+            }
+          ],
+          "processUserSeconds": 8.980014,
+          "processSystemSeconds": 0.493089
+        },
+        {
+          "mode": "dynamic4",
+          "pair": 2,
+          "order": 1,
+          "peakRssKiB": 288204,
+          "observations": [
+            {
+              "mode": "dynamic4",
+              "iteration": -1,
+              "warmup": true,
+              "nanos": 392945495,
+              "processCpuNanos": 870000000,
+              "sha256": "4e9e62ea74a859425071afbffdfce46d65551c3c5f3ce0a892cd600ffcf65d91",
+              "setupNanos": 117964302
+            },
+            {
+              "mode": "dynamic4",
+              "iteration": 0,
+              "warmup": false,
+              "nanos": 428681932,
+              "processCpuNanos": 990000000,
+              "sha256": "4e9e62ea74a859425071afbffdfce46d65551c3c5f3ce0a892cd600ffcf65d91",
+              "setupNanos": 117964302
+            },
+            {
+              "mode": "dynamic4",
+              "iteration": 1,
+              "warmup": false,
+              "nanos": 589999115,
+              "processCpuNanos": 1310000000,
+              "sha256": "4e9e62ea74a859425071afbffdfce46d65551c3c5f3ce0a892cd600ffcf65d91",
+              "setupNanos": 117964302
+            },
+            {
+              "mode": "dynamic4",
+              "iteration": 2,
+              "warmup": false,
+              "nanos": 583357222,
+              "processCpuNanos": 1210000000,
+              "sha256": "4e9e62ea74a859425071afbffdfce46d65551c3c5f3ce0a892cd600ffcf65d91",
+              "setupNanos": 117964302
+            },
+            {
+              "mode": "dynamic4",
+              "iteration": 3,
+              "warmup": false,
+              "nanos": 371043882,
+              "processCpuNanos": 830000000,
+              "sha256": "4e9e62ea74a859425071afbffdfce46d65551c3c5f3ce0a892cd600ffcf65d91",
+              "setupNanos": 117964302
+            },
+            {
+              "mode": "dynamic4",
+              "iteration": 4,
+              "warmup": false,
+              "nanos": 396914928,
+              "processCpuNanos": 940000000,
+              "sha256": "4e9e62ea74a859425071afbffdfce46d65551c3c5f3ce0a892cd600ffcf65d91",
+              "setupNanos": 117964302
+            }
+          ],
+          "processUserSeconds": 7.070736,
+          "processSystemSeconds": 0.354187
+        }
+      ]
+    }
+  },
+  "temporalScheduling": {
+    "decision": "Single-graph geometry cannot determine complete-passage speed or memory. Serial B1 and two-worker intra2 did not improve the temporal median. Two-worker intra1 warranted the complete-passage observation below, then was rejected.",
+    "observation": {
+      "scope": "Exploratory full60-band block00temporal scheduling only; sharedoriginalfrontvalues, originalgraphs, full1301context, no Android admission or fullpassage/job claim",
+      "sources": {
+        "android/src/com/cyberbasslord/lightforge/NativeDeux.java": "869a482938c63eab530cc410d9054a0813eddab3b7d70454b06c57af6a28f771",
+        "android/src/com/cyberbasslord/lightforge/NativeDeuxTransform.java": "991b06501cfb88b904d0b714a525c389f169f00c231248b0e961b70f257e90b5",
+        "android/src/com/cyberbasslord/lightforge/NativeExecutionPolicy.java": "35e5ca193c8ba46157e79a5caa9997370eec1a3fdabc9670bf0d4f8616b62702",
+        "android/src/com/cyberbasslord/lightforge/NativePassagePolicy.java": "bdc42118b4085681ee67cd674a215f3606c49f2ce521ac792ce3370af58a2d41",
+        "android/src/com/cyberbasslord/lightforge/NativeInferenceProfile.java": "34d27ca9183032fe418872083321f185abe2c6981be1ba1bcaaed98cd63f8c15",
+        "android/src/com/cyberbasslord/lightforge/NativeInferenceProfileOutputComparison.java": "e47e1981dc06b20b39ff6a74307bb56024541c5bce9b08c2e2ee254a2a8070de"
+      },
+      "isolatedPatch": "Only runTemporalPipeline worker guard permits2 as well as4/8; privateconfig constructed reflectively",
+      "runtime": "onnxruntime1.25.1",
+      "modelsManifestSha256": "3707d1e8c3e640caf02a1cdf8e616bd801f4687caca782ac0541f62d1e1312a7",
+      "inputSha256": "47f40d1cbd962fc919749127cbd74d462175dc30db0bc52567d3efbe0f7ab519",
+      "variants": {
+        "base-b4-i4": {
+          "wallNanos": 3525774502,
+          "runNanos": 3389097038,
+          "initNanos": 124536527,
+          "processCpuNanos": 10120000000,
+          "peakRssBytes": 463712256
+        },
+        "seq-b1-i4": {
+          "wallNanos": 4710814914,
+          "runNanos": 4548853356,
+          "initNanos": 155860500,
+          "processCpuNanos": 9570000000,
+          "peakRssBytes": 315703296
+        },
+        "w4-b1-i1": {
+          "wallNanos": 3011987589,
+          "runNanos": 2854745901,
+          "initNanos": 148455070,
+          "processCpuNanos": 11600000000,
+          "peakRssBytes": 410808320
+        },
+        "w2-b1-i1": {
+          "wallNanos": 3196014147,
+          "runNanos": 3065944174,
+          "initNanos": 210401848,
+          "processCpuNanos": 6400000000,
+          "peakRssBytes": 350822400
+        },
+        "w2-b1-i2": {
+          "wallNanos": 3823082645,
+          "runNanos": 3609884963,
+          "initNanos": 164924915,
+          "processCpuNanos": 11040000000,
+          "peakRssBytes": 350343168
+        }
+      },
+      "runs": [
+        {
+          "variant": "w2-b1-i2",
+          "workers": 2,
+          "intraThreads": 2,
+          "batch": 1,
+          "wallNanos": 4477917257,
+          "runNanos": 4309284532,
+          "initNanos": 152901550,
+          "processCpuNanos": 12020000000,
+          "peakRssBytes": 350167040,
+          "sha256": "38ff7e2f483677080b7ba053cd7fed0ad228a0e6264d6c9936adfb65f37060bd",
+          "fullFiniteFloatCount": 19983360,
+          "round": -1,
+          "warmup": true
+        },
+        {
+          "variant": "w2-b1-i1",
+          "workers": 2,
+          "intraThreads": 1,
+          "batch": 1,
+          "wallNanos": 3524791543,
+          "runNanos": 3365115156,
+          "initNanos": 154247085,
+          "processCpuNanos": 7040000000,
+          "peakRssBytes": 351371264,
+          "sha256": "38ff7e2f483677080b7ba053cd7fed0ad228a0e6264d6c9936adfb65f37060bd",
+          "fullFiniteFloatCount": 19983360,
+          "round": -1,
+          "warmup": true
+        },
+        {
+          "variant": "w4-b1-i1",
+          "workers": 4,
+          "intraThreads": 1,
+          "batch": 1,
+          "wallNanos": 1906492867,
+          "runNanos": 1774365090,
+          "initNanos": 126376400,
+          "processCpuNanos": 7160000000,
+          "peakRssBytes": 410947584,
+          "sha256": "38ff7e2f483677080b7ba053cd7fed0ad228a0e6264d6c9936adfb65f37060bd",
+          "fullFiniteFloatCount": 19983360,
+          "round": -1,
+          "warmup": true
+        },
+        {
+          "variant": "seq-b1-i4",
+          "workers": 1,
+          "intraThreads": 4,
+          "batch": 1,
+          "wallNanos": 3782912833,
+          "runNanos": 3628399583,
+          "initNanos": 150144716,
+          "processCpuNanos": 8290000000,
+          "peakRssBytes": 316510208,
+          "sha256": "38ff7e2f483677080b7ba053cd7fed0ad228a0e6264d6c9936adfb65f37060bd",
+          "fullFiniteFloatCount": 19983360,
+          "round": -1,
+          "warmup": true
+        },
+        {
+          "variant": "base-b4-i4",
+          "workers": 1,
+          "intraThreads": 4,
+          "batch": 4,
+          "wallNanos": 3147864256,
+          "runNanos": 3013491551,
+          "initNanos": 125041729,
+          "processCpuNanos": 9350000000,
+          "peakRssBytes": 463859712,
+          "sha256": "38ff7e2f483677080b7ba053cd7fed0ad228a0e6264d6c9936adfb65f37060bd",
+          "fullFiniteFloatCount": 19983360,
+          "round": -1,
+          "warmup": true
+        },
+        {
+          "variant": "base-b4-i4",
+          "workers": 1,
+          "intraThreads": 4,
+          "batch": 4,
+          "wallNanos": 3525774502,
+          "runNanos": 3389097038,
+          "initNanos": 124536527,
+          "processCpuNanos": 9890000000,
+          "peakRssBytes": 465461248,
+          "sha256": "38ff7e2f483677080b7ba053cd7fed0ad228a0e6264d6c9936adfb65f37060bd",
+          "fullFiniteFloatCount": 19983360,
+          "round": 0,
+          "warmup": false
+        },
+        {
+          "variant": "seq-b1-i4",
+          "workers": 1,
+          "intraThreads": 4,
+          "batch": 1,
+          "wallNanos": 4710814914,
+          "runNanos": 4589752605,
+          "initNanos": 116343150,
+          "processCpuNanos": 10530000000,
+          "peakRssBytes": 315998208,
+          "sha256": "38ff7e2f483677080b7ba053cd7fed0ad228a0e6264d6c9936adfb65f37060bd",
+          "fullFiniteFloatCount": 19983360,
+          "round": 0,
+          "warmup": false
+        },
+        {
+          "variant": "w4-b1-i1",
+          "workers": 4,
+          "intraThreads": 1,
+          "batch": 1,
+          "wallNanos": 7631961382,
+          "runNanos": 7451144787,
+          "initNanos": 148455070,
+          "processCpuNanos": 14720000000,
+          "peakRssBytes": 411594752,
+          "sha256": "38ff7e2f483677080b7ba053cd7fed0ad228a0e6264d6c9936adfb65f37060bd",
+          "fullFiniteFloatCount": 19983360,
+          "round": 0,
+          "warmup": false
+        },
+        {
+          "variant": "w2-b1-i1",
+          "workers": 2,
+          "intraThreads": 1,
+          "batch": 1,
+          "wallNanos": 6832419337,
+          "runNanos": 6570639130,
+          "initNanos": 245533193,
+          "processCpuNanos": 13740000000,
+          "peakRssBytes": 352698368,
+          "sha256": "38ff7e2f483677080b7ba053cd7fed0ad228a0e6264d6c9936adfb65f37060bd",
+          "fullFiniteFloatCount": 19983360,
+          "round": 0,
+          "warmup": false
+        },
+        {
+          "variant": "w2-b1-i2",
+          "workers": 2,
+          "intraThreads": 2,
+          "batch": 1,
+          "wallNanos": 3823082645,
+          "runNanos": 3609884963,
+          "initNanos": 207302465,
+          "processCpuNanos": 11040000000,
+          "peakRssBytes": 350343168,
+          "sha256": "38ff7e2f483677080b7ba053cd7fed0ad228a0e6264d6c9936adfb65f37060bd",
+          "fullFiniteFloatCount": 19983360,
+          "round": 0,
+          "warmup": false
+        },
+        {
+          "variant": "w2-b1-i2",
+          "workers": 2,
+          "intraThreads": 2,
+          "batch": 1,
+          "wallNanos": 3910651151,
+          "runNanos": 3740769766,
+          "initNanos": 164924915,
+          "processCpuNanos": 11400000000,
+          "peakRssBytes": 349650944,
+          "sha256": "38ff7e2f483677080b7ba053cd7fed0ad228a0e6264d6c9936adfb65f37060bd",
+          "fullFiniteFloatCount": 19983360,
+          "round": 1,
+          "warmup": false
+        },
+        {
+          "variant": "w2-b1-i1",
+          "workers": 2,
+          "intraThreads": 1,
+          "batch": 1,
+          "wallNanos": 3085346053,
+          "runNanos": 2870701062,
+          "initNanos": 210401848,
+          "processCpuNanos": 6020000000,
+          "peakRssBytes": 350822400,
+          "sha256": "38ff7e2f483677080b7ba053cd7fed0ad228a0e6264d6c9936adfb65f37060bd",
+          "fullFiniteFloatCount": 19983360,
+          "round": 1,
+          "warmup": false
+        },
+        {
+          "variant": "w4-b1-i1",
+          "workers": 4,
+          "intraThreads": 1,
+          "batch": 1,
+          "wallNanos": 2088241501,
+          "runNanos": 1938268362,
+          "initNanos": 144146883,
+          "processCpuNanos": 7820000000,
+          "peakRssBytes": 410808320,
+          "sha256": "38ff7e2f483677080b7ba053cd7fed0ad228a0e6264d6c9936adfb65f37060bd",
+          "fullFiniteFloatCount": 19983360,
+          "round": 1,
+          "warmup": false
+        },
+        {
+          "variant": "seq-b1-i4",
+          "workers": 1,
+          "intraThreads": 4,
+          "batch": 1,
+          "wallNanos": 3883102846,
+          "runNanos": 3721007553,
+          "initNanos": 155860500,
+          "processCpuNanos": 7780000000,
+          "peakRssBytes": 314994688,
+          "sha256": "38ff7e2f483677080b7ba053cd7fed0ad228a0e6264d6c9936adfb65f37060bd",
+          "fullFiniteFloatCount": 19983360,
+          "round": 1,
+          "warmup": false
+        },
+        {
+          "variant": "base-b4-i4",
+          "workers": 1,
+          "intraThreads": 4,
+          "batch": 4,
+          "wallNanos": 3259280342,
+          "runNanos": 3134915066,
+          "initNanos": 114443112,
+          "processCpuNanos": 10120000000,
+          "peakRssBytes": 463712256,
+          "sha256": "38ff7e2f483677080b7ba053cd7fed0ad228a0e6264d6c9936adfb65f37060bd",
+          "fullFiniteFloatCount": 19983360,
+          "round": 1,
+          "warmup": false
+        },
+        {
+          "variant": "base-b4-i4",
+          "workers": 1,
+          "intraThreads": 4,
+          "batch": 4,
+          "wallNanos": 3960850395,
+          "runNanos": 3751454731,
+          "initNanos": 186657974,
+          "processCpuNanos": 10880000000,
+          "peakRssBytes": 463519744,
+          "sha256": "38ff7e2f483677080b7ba053cd7fed0ad228a0e6264d6c9936adfb65f37060bd",
+          "fullFiniteFloatCount": 19983360,
+          "round": 2,
+          "warmup": false
+        },
+        {
+          "variant": "seq-b1-i4",
+          "workers": 1,
+          "intraThreads": 4,
+          "batch": 1,
+          "wallNanos": 4742537109,
+          "runNanos": 4548853356,
+          "initNanos": 185145665,
+          "processCpuNanos": 9570000000,
+          "peakRssBytes": 315703296,
+          "sha256": "38ff7e2f483677080b7ba053cd7fed0ad228a0e6264d6c9936adfb65f37060bd",
+          "fullFiniteFloatCount": 19983360,
+          "round": 2,
+          "warmup": false
+        },
+        {
+          "variant": "w4-b1-i1",
+          "workers": 4,
+          "intraThreads": 1,
+          "batch": 1,
+          "wallNanos": 3011987589,
+          "runNanos": 2854745901,
+          "initNanos": 152463779,
+          "processCpuNanos": 11600000000,
+          "peakRssBytes": 410677248,
+          "sha256": "38ff7e2f483677080b7ba053cd7fed0ad228a0e6264d6c9936adfb65f37060bd",
+          "fullFiniteFloatCount": 19983360,
+          "round": 2,
+          "warmup": false
+        },
+        {
+          "variant": "w2-b1-i1",
+          "workers": 2,
+          "intraThreads": 1,
+          "batch": 1,
+          "wallNanos": 3196014147,
+          "runNanos": 3065944174,
+          "initNanos": 124204623,
+          "processCpuNanos": 6400000000,
+          "peakRssBytes": 350003200,
+          "sha256": "38ff7e2f483677080b7ba053cd7fed0ad228a0e6264d6c9936adfb65f37060bd",
+          "fullFiniteFloatCount": 19983360,
+          "round": 2,
+          "warmup": false
+        },
+        {
+          "variant": "w2-b1-i2",
+          "workers": 2,
+          "intraThreads": 2,
+          "batch": 1,
+          "wallNanos": 3372657390,
+          "runNanos": 3211400779,
+          "initNanos": 155477090,
+          "processCpuNanos": 9760000000,
+          "peakRssBytes": 350453760,
+          "sha256": "38ff7e2f483677080b7ba053cd7fed0ad228a0e6264d6c9936adfb65f37060bd",
+          "fullFiniteFloatCount": 19983360,
+          "round": 2,
+          "warmup": false
+        }
+      ],
+      "allHashesIdentical": true
+    }
+  },
+  "completePassage": {
+    "decision": "Do not add a two-worker/low-memory production path from these results: it was slower and had higher process peak RSS than baseline. Existing four-worker execution was fastest in this one ordered observation; this is not a new qualified speedup result.",
+    "scope": "One exploratory full original13-second Deux passage per schedule in freshJVMs, baseline then2workers then4workers; no excludedwarmup, no Android/admission/sustainedspeedup claim",
+    "isolatedSourceChanges": "Only2worker hostconstructor/temporal/frequencypipeline guards and parallelFrequency guard extended; configs constructedreflectively; productionruntimeunchanged",
+    "sourceHashes": {
+      "NativeInferenceProfileOutputComparison.java": "e47e1981dc06b20b39ff6a74307bb56024541c5bce9b08c2e2ee254a2a8070de",
+      "NativeInferenceProfile.java": "34d27ca9183032fe418872083321f185abe2c6981be1ba1bcaaed98cd63f8c15",
+      "NativePassagePolicy.java": "bdc42118b4085681ee67cd674a215f3606c49f2ce521ac792ce3370af58a2d41",
+      "NativeDeuxTransform.java": "991b06501cfb88b904d0b714a525c389f169f00c231248b0e961b70f257e90b5",
+      "NativeDeux.java": "010b5f08f4cc897cf073f09d71b1404de112d6aa5716c48026565e037963aedd",
+      "AppDiagnostics.java": "73267ce3b86e07c34c866d2b27d8b6f302ced963968dac828386ebf0a3420e12",
+      "NativeExecutionPolicy.java": "9ef657e95b20752a2cec337debb3a924854bcf7f5ad9b735ba63674dbb82435d"
+    },
+    "allOutputsFiniteAndByteIdentical": true,
+    "originalStartSample": -66150,
+    "frames": 1301,
+    "bands": 60,
+    "graphs": 27,
+    "samplesPerStem": 573300,
+    "runs": [
+      {
+        "variant": "baseline",
+        "wallNanos": 81216331540,
+        "processCpuNanos": 209550000000,
+        "peakRssBytes": 855543808,
+        "sha256": "b5db5b5f8bcc576e1af22b0a9fca837dc9e809195ada006af1581458283578b7",
+        "bytes": 4586400,
+        "finite": true,
+        "before": {
+          "cpuStat": "usage_usec 3989126708\nuser_usec 3574889931\nsystem_usec 414236776\nnice_usec 0\nnr_periods 53409\nnr_throttled 723\nthrottled_usec 105422745\nnr_bursts 0\nburst_usec 0\n",
+          "cpuPressure": null,
+          "memoryEvents": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\n",
+          "memoryCurrent": "4092682240\n"
+        },
+        "after": {
+          "cpuStat": "usage_usec 4203860337\nuser_usec 3781672849\nsystem_usec 422187487\nnice_usec 0\nnr_periods 54223\nnr_throttled 733\nthrottled_usec 105567970\nnr_bursts 0\nburst_usec 0\n",
+          "cpuPressure": null,
+          "memoryEvents": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\n",
+          "memoryCurrent": "4097667072\n"
+        },
+        "profile": {
+          "schema": "native-inference-profile-v2",
+          "outcome": "completed",
+          "wallMs": "81217",
+          "temporalConfig": "cpu-i4-j1-d0-sequential",
+          "frequencyConfig": "cpu-i4-j1-d0-sequential",
+          "temporalConfigCountScope": "session-init-attempts",
+          "temporalBaselineSessionCount": "12",
+          "temporalFourWorkerSessionCount": "0",
+          "temporalEightWorkerSessionCount": "0",
+          "temporalUnobservedSessionCount": "0",
+          "frequencyConfigCountScope": "session-init-attempts",
+          "frequencyBaselineSessionCount": "12",
+          "frequencyFourWorkerSessionCount": "0",
+          "frequencyEightWorkerSessionCount": "0",
+          "frequencyUnobservedSessionCount": "0",
+          "schedulerCalibrationWallMs": "unavailable",
+          "schedulerCalibrationCount": "unavailable",
+          "cpuScope": "calling-thread",
+          "processCpuScope": "all-app-threads",
+          "cpuTelemetry": "available",
+          "instrumentedCpuMs": "80193",
+          "instrumentedCpuScope": "nonoverlapping-calling-thread",
+          "memoryTelemetry": "java-heap",
+          "acceleratorTelemetry": "unavailable",
+          "waitWallMs": "1",
+          "waitCpuMs": "0",
+          "engineInitWallMs": "unavailable",
+          "preflightWallMs": "1474",
+          "bufferInitWallMs": "191",
+          "runtimeInitWallMs": "228",
+          "preprocessWallMs": "240",
+          "preprocessCpuMs": "237",
+          "modelInitWallMs": "4528",
+          "modelInitCpuMs": "4529",
+          "inferenceWallMs": "71640",
+          "inferenceCpuMs": "71496",
+          "inferenceThreadCpuMs": "71496",
+          "inferenceProcessCpuMs": "198960",
+          "inferenceWallScope": "critical-path",
+          "inferenceThreadCpuScope": "calling-thread",
+          "inferenceWorkScope": "run-and-wave-coordination",
+          "inferenceWorkerThreadCpuScope": "sum-run-calling-threads",
+          "inferenceWorkerThreadCpuMs": "unavailable",
+          "inferenceWorkerCpuTelemetry": "unavailable",
+          "inferenceWorkerRunCount": "0",
+          "inferenceCount": "335",
+          "sessionInitCount": "27",
+          "postprocessWallMs": "849",
+          "postprocessCpuMs": "846",
+          "directBufferTelemetry": "observed",
+          "directBufferBytes": "179529744",
+          "heapStartUsedBytes": "2309344",
+          "heapStartLimitBytes": "1073741824",
+          "heapEndUsedBytes": "33257720",
+          "heapEndLimitBytes": "1073741824",
+          "heapObservedPeakBytes": "33257720",
+          "cacheTelemetry": "observed",
+          "cacheModelHits": "27",
+          "cacheModelMisses": "0",
+          "cacheHitBytes": "921547393",
+          "cacheMissBytes": "0",
+          "stageRecords": "15",
+          "graphRecords": "27",
+          "droppedStageRecords": "0",
+          "droppedGraphRecords": "0"
+        }
+      },
+      {
+        "variant": "two",
+        "wallNanos": 85278203914,
+        "processCpuNanos": 166690000000,
+        "peakRssBytes": 943542272,
+        "sha256": "b5db5b5f8bcc576e1af22b0a9fca837dc9e809195ada006af1581458283578b7",
+        "bytes": 4586400,
+        "finite": true,
+        "before": {
+          "cpuStat": "usage_usec 4203945782\nuser_usec 3781750644\nsystem_usec 422195137\nnice_usec 0\nnr_periods 54224\nnr_throttled 733\nthrottled_usec 105567970\nnr_bursts 0\nburst_usec 0\n",
+          "cpuPressure": null,
+          "memoryEvents": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\n",
+          "memoryCurrent": "4100521984\n"
+        },
+        "after": {
+          "cpuStat": "usage_usec 4373560887\nuser_usec 3951365749\nsystem_usec 422195137\nnice_usec 0\nnr_periods 55080\nnr_throttled 733\nthrottled_usec 105567970\nnr_bursts 0\nburst_usec 0\n",
+          "cpuPressure": null,
+          "memoryEvents": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\n",
+          "memoryCurrent": "4104474624\n"
+        },
+        "profile": {
+          "schema": "native-inference-profile-v2",
+          "outcome": "completed",
+          "wallMs": "85280",
+          "temporalConfig": "unavailable",
+          "frequencyConfig": "unavailable",
+          "temporalConfigCountScope": "session-init-attempts",
+          "temporalBaselineSessionCount": "0",
+          "temporalFourWorkerSessionCount": "0",
+          "temporalEightWorkerSessionCount": "0",
+          "temporalUnobservedSessionCount": "12",
+          "frequencyConfigCountScope": "session-init-attempts",
+          "frequencyBaselineSessionCount": "0",
+          "frequencyFourWorkerSessionCount": "0",
+          "frequencyEightWorkerSessionCount": "0",
+          "frequencyUnobservedSessionCount": "12",
+          "schedulerCalibrationWallMs": "unavailable",
+          "schedulerCalibrationCount": "unavailable",
+          "cpuScope": "calling-thread",
+          "processCpuScope": "all-app-threads",
+          "cpuTelemetry": "available",
+          "instrumentedCpuMs": "13116",
+          "instrumentedCpuScope": "nonoverlapping-calling-thread",
+          "memoryTelemetry": "java-heap",
+          "acceleratorTelemetry": "unavailable",
+          "waitWallMs": "0",
+          "waitCpuMs": "0",
+          "engineInitWallMs": "unavailable",
+          "preflightWallMs": "1275",
+          "bufferInitWallMs": "108",
+          "runtimeInitWallMs": "208",
+          "preprocessWallMs": "272",
+          "preprocessCpuMs": "272",
+          "modelInitWallMs": "2978",
+          "modelInitCpuMs": "2973",
+          "inferenceWallMs": "78443",
+          "inferenceCpuMs": "6599",
+          "inferenceThreadCpuMs": "6599",
+          "inferenceProcessCpuMs": "158630",
+          "inferenceWallScope": "critical-path",
+          "inferenceThreadCpuScope": "coordinator",
+          "inferenceWorkScope": "run-and-pipeline-coordination",
+          "inferenceWorkerThreadCpuScope": "sum-run-calling-threads",
+          "inferenceWorkerThreadCpuMs": "144189",
+          "inferenceWorkerCpuTelemetry": "available",
+          "inferenceWorkerRunCount": "1704",
+          "inferenceCount": "1727",
+          "sessionInitCount": "27",
+          "postprocessWallMs": "1507",
+          "postprocessCpuMs": "1501",
+          "directBufferTelemetry": "observed",
+          "directBufferBytes": "182194192",
+          "heapStartUsedBytes": "2565704",
+          "heapStartLimitBytes": "1073741824",
+          "heapEndUsedBytes": "48292704",
+          "heapEndLimitBytes": "1073741824",
+          "heapObservedPeakBytes": "48292704",
+          "cacheTelemetry": "observed",
+          "cacheModelHits": "27",
+          "cacheModelMisses": "0",
+          "cacheHitBytes": "921547393",
+          "cacheMissBytes": "0",
+          "stageRecords": "15",
+          "graphRecords": "27",
+          "droppedStageRecords": "0",
+          "droppedGraphRecords": "0"
+        }
+      },
+      {
+        "variant": "four",
+        "wallNanos": 47991077015,
+        "processCpuNanos": 165070000000,
+        "peakRssBytes": 995872768,
+        "sha256": "b5db5b5f8bcc576e1af22b0a9fca837dc9e809195ada006af1581458283578b7",
+        "bytes": 4586400,
+        "finite": true,
+        "before": {
+          "cpuStat": "usage_usec 4373685291\nuser_usec 3951490154\nsystem_usec 422195137\nnice_usec 0\nnr_periods 55081\nnr_throttled 733\nthrottled_usec 105567970\nnr_bursts 0\nburst_usec 0\n",
+          "cpuPressure": null,
+          "memoryEvents": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\n",
+          "memoryCurrent": "4102430720\n"
+        },
+        "after": {
+          "cpuStat": "usage_usec 4540518915\nuser_usec 4118323778\nsystem_usec 422195137\nnice_usec 0\nnr_periods 55563\nnr_throttled 733\nthrottled_usec 105567970\nnr_bursts 0\nburst_usec 0\n",
+          "cpuPressure": null,
+          "memoryEvents": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\n",
+          "memoryCurrent": "4058468352\n"
+        },
+        "profile": {
+          "schema": "native-inference-profile-v2",
+          "outcome": "completed",
+          "wallMs": "47992",
+          "temporalConfig": "cpu-i1-j1-d0-sequential-w4-b1",
+          "frequencyConfig": "cpu-i1-j1-d0-sequential-w4-b16",
+          "temporalConfigCountScope": "session-init-attempts",
+          "temporalBaselineSessionCount": "0",
+          "temporalFourWorkerSessionCount": "12",
+          "temporalEightWorkerSessionCount": "0",
+          "temporalUnobservedSessionCount": "0",
+          "frequencyConfigCountScope": "session-init-attempts",
+          "frequencyBaselineSessionCount": "0",
+          "frequencyFourWorkerSessionCount": "12",
+          "frequencyEightWorkerSessionCount": "0",
+          "frequencyUnobservedSessionCount": "0",
+          "schedulerCalibrationWallMs": "unavailable",
+          "schedulerCalibrationCount": "unavailable",
+          "cpuScope": "calling-thread",
+          "processCpuScope": "all-app-threads",
+          "cpuTelemetry": "available",
+          "instrumentedCpuMs": "13027",
+          "instrumentedCpuScope": "nonoverlapping-calling-thread",
+          "memoryTelemetry": "java-heap",
+          "acceleratorTelemetry": "unavailable",
+          "waitWallMs": "0",
+          "waitCpuMs": "0",
+          "engineInitWallMs": "unavailable",
+          "preflightWallMs": "1186",
+          "bufferInitWallMs": "133",
+          "runtimeInitWallMs": "318",
+          "preprocessWallMs": "327",
+          "preprocessCpuMs": "324",
+          "modelInitWallMs": "2799",
+          "modelInitCpuMs": "2799",
+          "inferenceWallMs": "41908",
+          "inferenceCpuMs": "7350",
+          "inferenceThreadCpuMs": "7350",
+          "inferenceProcessCpuMs": "157970",
+          "inferenceWallScope": "critical-path",
+          "inferenceThreadCpuScope": "coordinator",
+          "inferenceWorkScope": "run-and-pipeline-coordination",
+          "inferenceWorkerThreadCpuScope": "sum-run-calling-threads",
+          "inferenceWorkerThreadCpuMs": "143081",
+          "inferenceWorkerCpuTelemetry": "available",
+          "inferenceWorkerRunCount": "1704",
+          "inferenceCount": "1727",
+          "sessionInitCount": "27",
+          "postprocessWallMs": "841",
+          "postprocessCpuMs": "838",
+          "directBufferTelemetry": "observed",
+          "directBufferBytes": "187523088",
+          "heapStartUsedBytes": "2309344",
+          "heapStartLimitBytes": "1073741824",
+          "heapEndUsedBytes": "34869960",
+          "heapEndLimitBytes": "1073741824",
+          "heapObservedPeakBytes": "39551872",
+          "cacheTelemetry": "observed",
+          "cacheModelHits": "27",
+          "cacheModelMisses": "0",
+          "cacheHitBytes": "921547393",
+          "cacheMissBytes": "0",
+          "stageRecords": "15",
+          "graphRecords": "27",
+          "droppedStageRecords": "0",
+          "droppedGraphRecords": "0"
+        }
+      }
+    ]
+  },
+  "reproductionBoundary": "Temporary exploratory harnesses and activation dumps are not shipped. These summaries retain observed timings, hashes and scope for engineering decisions; they are not standalone reproducible qualification receipts. Existing original-model production benchmarks remain the maintained reproduction path.",
+  "tensorCopyRows": {
+    "decision": "Not promoted; refactor and its candidate-only tests reverted. The existing private per-row helper allocated zero warmed bytes on this host JVM, while grouping rows allocated 161,280 bytes. Timings were essentially equal. Static source-level view counts are not observed JVM/Android heap allocations.",
+    "observation": {
+      "schema": "lightforge.deux-copy-allocation-host.v1",
+      "features": 256,
+      "invocation": "Actual production old copy and candidate copyRows both invoked through static-final MethodHandles with invokeExact; two excluded full-geometry warmups per route",
+      "frames": 1301,
+      "blocks": 12,
+      "scope": "Host calling-thread allocated bytes for original full temporal pack+scatter geometry only; no graphs/JNI/Android/whole-analysis speedup claim",
+      "copiedBytesPerVariant": 1918402560,
+      "rawFloatBitsUnchanged": true,
+      "bands": 60,
+      "counterEnabledBefore": true,
+      "measurements": [
+        {
+          "candidate": false,
+          "wallNanos": 299184002,
+          "allocatedBytes": 216,
+          "pair": 0
+        },
+        {
+          "candidate": true,
+          "wallNanos": 298435085,
+          "allocatedBytes": 161280,
+          "pair": 0
+        },
+        {
+          "candidate": true,
+          "wallNanos": 268352418,
+          "allocatedBytes": 161280,
+          "pair": 1
+        },
+        {
+          "candidate": false,
+          "wallNanos": 283832038,
+          "allocatedBytes": 0,
+          "pair": 1
+        },
+        {
+          "candidate": false,
+          "wallNanos": 459138648,
+          "allocatedBytes": 0,
+          "pair": 2
+        },
+        {
+          "candidate": true,
+          "wallNanos": 322735399,
+          "allocatedBytes": 161280,
+          "pair": 2
+        }
+      ],
+      "beforeSourceSha256": "869a482938c63eab530cc410d9054a0813eddab3b7d70454b06c57af6a28f771",
+      "candidateSourceSha256": "50e6df3d8bde271213638d9c82f760d70b3ec2bef7d0cb67d816b2d37e52e894",
+      "harnessSha256": "a5d044c3aee463f49f71f6246311e67ef9505f101250e15773f67bc81a1abd4e",
+      "java": "openjdk version \"17.0.20\" 2026-07-21\nOpenJDK Runtime Environment (build 17.0.20+8-1-24.04-Ubuntu)\nOpenJDK 64-Bit Server VM (build 17.0.20+8-1-24.04-Ubuntu, mixed mode, sharing)"
+    }
+  }
+}

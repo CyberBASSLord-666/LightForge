@@ -101,6 +101,37 @@ class RepositoryHygieneTests(unittest.TestCase):
             with self.subTest(path=path):
                 self.assertIsNotNone(hygiene.clutter_reason(path))
 
+    def test_only_exact_retired_qa_protocol_trees_are_rejected(self):
+        for release in ('2.2.5', '2.3.0', '2.3.1', '2.3.2', '2.4.0', '2.4.1'):
+            with self.subTest(release=release):
+                self.assertIn('superseded source-only QA protocol',
+                              hygiene.clutter_reason(f'qa/release-{release}/browser.cjs'))
+        for path in ('qa/release-1.6.0/failed.log', 'qa/release-2.2.4/compare-native-runtime.py',
+                     'qa/release-2.4.2/verify-analysis.py', 'qa/restore-preview/browser.cjs',
+                     'qa/release-2.4.10/browser.cjs', 'tests/fixtures/verify-analysis-2.3.1.txt',
+                     'research/source-snapshots/qa/release-2.4.1/verify-analysis.py'):
+            with self.subTest(path=path):
+                self.assertIsNone(hygiene.clutter_reason(path))
+
+    def test_only_retired_training_demo_data_is_rejected(self):
+        base = 'research/upstream/pretrained-sed/'
+        for name in ('hf_dataset_gen/metadata/audioset_train_strong.csv',
+                     'hf_dataset_gen/metadata/audioset_eval_strong.csv',
+                     'resources/eval_durations.csv',
+                     'test_files/752547__iscence__milan_metro_coming_in_station.wav',
+                     'images/downstream_task_results.png'):
+            with self.subTest(name=name):
+                self.assertIn('optional upstream training/demo data',
+                              hygiene.clutter_reason(base + name))
+        for name in ('resources/frame_mn10_strong_1.pt', 'source-receipt.json', 'README.md',
+                     'LICENSE', 'export_lightforge.py', 'evaluate_lightforge.py',
+                     'models/frame_mn/model.py', 'data_util/audioset_classes.py',
+                     'hf_dataset_gen/metadata/class_labels_indices.csv',
+                     'hf_dataset_gen/metadata/class_labels_indices_strong.csv',
+                     'test_files/freesound_attributions.txt'):
+            with self.subTest(name=name):
+                self.assertIsNone(hygiene.clutter_reason(base + name))
+
     def test_caches_and_compiled_outputs_are_rejected(self):
         for path in ('tools/__pycache__/x.pyc', 'web/node_modules/x.js', 'dist/app.apk', 'x.class', '.venv/bin/python'):
             with self.subTest(path=path):

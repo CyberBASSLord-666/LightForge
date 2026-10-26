@@ -250,6 +250,14 @@ function nativeGameInfer(pcm,language,seed,onProgress=()=>{},onFallback=()=>{}){
   throw nativeGameFallbackError(error);
  });
 }
+function nativeGameInferBatch(requests,onProgress=()=>{},onFallback=()=>{}){
+ const passages=requests.map(({pcm,language,seed})=>({buffer:pcm.slice().buffer,language,seed}));
+ return new Promise((resolve,reject)=>{const requestId=++nativeGameSequence;nativeGameRequests.set(requestId,{resolve,reject,onProgress,batch:true,samples:requests.map(request=>request.pcm.length)});try{postMessage({type:'native-game-batch',requestId,passages},passages.map(passage=>passage.buffer));}catch(error){nativeGameRequests.delete(requestId);reject(error);}}).catch(async error=>{
+  if(error?.name==='AbortError'||error?.code==='native-game-retirement-pending')throw error;
+  try{await onFallback();}catch(fenceError){fenceError.code='native-game-fence-failed';throw fenceError;}
+  throw nativeGameFallbackError(error);
+ });
+}
 function separationStoragePlan(total,quality){
  const samples=quality==='precision'?573300:LightForgeMdxSeparator.constants.INPUT_LENGTH;
  const core=quality==='precision'?441000:LightForgeMdxSeparator.constants.CORE,stride=quality==='precision'?220500:LightForgeMdxSeparator.constants.STRIDE;
@@ -358,13 +366,14 @@ self.onmessage=async e=>{
   else pending.resolve(new Float32Array(e.data.buffer));
   return;
  }
- if(e.data?.type==='native-game-result'||e.data?.type==='native-game-progress'){
+ if(['native-game-result','native-game-progress','native-game-batch-result','native-game-batch-progress'].includes(e.data?.type)){
   const pending=nativeGameRequests.get(e.data.requestId);if(!pending)return;
-  if(e.data.type==='native-game-progress'){if(Number.isFinite(e.data.value?.progress))pending.onProgress(e.data.value.progress);return;}
+  if(e.data.type==='native-game-progress'||e.data.type==='native-game-batch-progress'){if(e.data.type===(pending.batch?'native-game-batch-progress':'native-game-progress')&&Number.isFinite(e.data.value?.progress))pending.onProgress(e.data.value.progress);return;}
   nativeGameRequests.delete(e.data.requestId);
   if(e.data.aborted){pending.reject(nativeAbortError(e.data.message));return;}
   if(e.data.code==='native-game-retirement-pending'){const error=nativeTransportError(e.data.message);error.code=e.data.code;pending.reject(error);return;}
-  if(e.data.fallback||e.data.error||!LightForgeGAME.validNotes(e.data.notes,pending.samples))pending.reject(nativeTransportError(e.data.message||e.data.error));
+  const valid=e.data.type===(pending.batch?'native-game-batch-result':'native-game-result')&&(pending.batch?Array.isArray(e.data.notes)&&e.data.notes.length===2&&LightForgeGAME.validNotes(e.data.notes[0],pending.samples[0])&&LightForgeGAME.validNotes(e.data.notes[1],pending.samples[1]):LightForgeGAME.validNotes(e.data.notes,pending.samples));
+  if(e.data.fallback||e.data.error||!valid)pending.reject(nativeTransportError(e.data.message||e.data.error));
   else pending.resolve(e.data.notes);
   return;
  }
@@ -558,6 +567,7 @@ self.onmessage=async e=>{
   return nativeGameFence;
  };
  const nativeSingingInfer=options.supportsNativeGame?(pcm,language,seed,onProgress)=>nativeGameInfer(pcm,language,seed,onProgress,markNativeGameFallback):undefined;
+ if(nativeSingingInfer&&options.supportsNativeGameBatch===true)nativeSingingInfer.batch=(requests,onProgress)=>nativeGameInferBatch(requests,onProgress,markNativeGameFallback);
  game=await LightForgeGAME.create({ort,telemetry,baseUrl:new URL('models/game/',self.location.href).href,onProgress:detail=>report(.942,'Loading singing transcription',detail),checkpoint:store,nativeInfer:nativeSingingInfer});
  let transcription;
  try{transcription=await game.process(fullVoice,sourceClock.samples,{onProgress:(p,info)=>report(.945+.04*p,'Transcribing sung notes','GAME Large • '+Math.round(p*100)+'%',info)});}

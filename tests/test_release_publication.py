@@ -26,6 +26,72 @@ class PublicationTest(unittest.TestCase):
             {'name': name, 'size': info['bytes'], 'digest': 'sha256:' + info['sha256'], 'state': 'uploaded'}
             for name, info in self.expected.items()]}
 
+    def test_apk_source_only_exclusions_keep_runtime_manifest_hashes_mandatory(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            web = root / 'web'
+            files = {
+                'index.html': b'app', 'preview/vehicle-preview.js': b'compiled preview',
+                'preview/vendor/THREE-LICENSE.txt': b'required notice',
+                'preview/src/vehicle-preview.js': b'build source',
+                'analysis/models/beatnet-v1.onnx': b'historical research graph',
+                'analysis/models/BeatNet-LICENSE.txt': b'retained notice',
+                'analysis/worker.js': b'current runtime',
+                'analysis/models/beat-this-large.onnx': b'current rhythm graph',
+            }
+            for name, data in files.items():
+                path = web / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(data)
+            manifest = {name.removeprefix('analysis/'): {
+                'bytes': len(data), 'sha256': hashlib.sha256(data).hexdigest()}
+                for name, data in files.items() if name.startswith('analysis/')}
+            (web / 'analysis/ASSET_MANIFEST.json').write_text(json.dumps(manifest))
+            bundled = {name for name in files if name not in {
+                'preview/src/vehicle-preview.js', 'analysis/models/beatnet-v1.onnx'}}
+            bundled.add('analysis/ASSET_MANIFEST.json')
+            apk = root / 'fixture.apk'
+
+            def package(extra=(), altered=None, missing=()):
+                with zipfile.ZipFile(apk, 'w') as archive:
+                    for name in (bundled | set(extra)) - set(missing):
+                        data = (web / name).read_bytes()
+                        archive.writestr('assets/' + name, altered.get(name, data) if altered else data)
+
+            version = {'name': '2.4.2', 'code': 20402}
+            tools = [
+                'Signer #1 certificate SHA-256 digest: ' + publication.SIGNING_SHA256,
+                '',
+                "package: name='com.cyberbasslord.lightforge' versionName='2.4.2' "
+                "versionCode='20402' minSdkVersion:'26' targetSdkVersion:'35'",
+            ]
+            def verify():
+                with patch.object(publication, 'ROOT', root), \
+                        patch.object(publication, 'run', side_effect=tools), \
+                        patch.object(publication, 'verify_native_libraries'):
+                    publication.verify_apk(apk, version)
+
+            package()
+            verify()
+            for unexpected in ('preview/src/vehicle-preview.js', 'analysis/models/beatnet-v1.onnx'):
+                package(extra=[unexpected])
+                with self.subTest(unexpected=unexpected), self.assertRaisesRegex(ValueError, 'APK asset inventory differs'):
+                    verify()
+            package(altered={'analysis/worker.js': b'stale runtime'})
+            with self.assertRaisesRegex(ValueError, 'Stale APK asset: assets/analysis/worker.js'):
+                verify()
+            # Even if source and APK both change, the pinned runtime identity wins.
+            (web / 'analysis/worker.js').write_bytes(b'changed source and package')
+            package()
+            with self.assertRaisesRegex(ValueError, 'Stale APK asset: assets/analysis/worker.js'):
+                verify()
+            (web / 'analysis/worker.js').write_bytes(files['analysis/worker.js'])
+            missing = 'analysis/models/beat-this-large.onnx'
+            (web / missing).unlink()
+            package(missing=[missing])
+            with self.assertRaisesRegex(ValueError, 'APK asset inventory differs'):
+                verify()
+
     def test_draft_lookup_does_not_require_a_published_tag(self):
         with patch.object(publication, 'api', return_value=[self.release]) as api:
             self.assertEqual(publication.lookup_release('owner/repo', 'v2.1.0')['id'], 23)

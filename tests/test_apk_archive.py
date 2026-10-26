@@ -130,6 +130,59 @@ class ArchiveTests(unittest.TestCase):
         self.assertEqual(set(apk_archive.distributable_assets(destination)),
                          {'index.html', 'models/head.onnx'})
 
+    def test_repository_inputs_stay_in_source_but_not_staging_or_apk(self):
+        source_only = {
+            'preview/src/highland-rig.js', 'preview/src/package-lock.json',
+            'preview/src/package.json', 'preview/src/studio-environment-source.js',
+            'preview/src/studio-environment.js', 'preview/src/vehicle-preview.js',
+            'analysis/models/beatnet-v1.onnx',
+        }
+        runtime = {
+            'preview/vehicle-preview.js', 'preview/vendor/THREE-LICENSE.txt',
+            'preview/model/CREDITS.md', 'analysis/models/BeatNet-LICENSE.txt',
+            'analysis/models/beat-this-large.onnx', 'analysis/models/beat-this-small.onnx',
+            'analysis/models/beat-this-mel.onnx', 'analysis/models/game/estimator.onnx',
+            'analysis/models/deux/front.onnx', 'analysis/models/beatnet-v2.onnx',
+            'preview/src-extra/retained.js',
+        }
+        for name in source_only | runtime:
+            path = self.assets / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(('complete ' + name).encode())
+        destination = self.root / 'staged'
+        receipt = apk_archive.stage_assets(self.assets, destination)
+        expected = {'index.html'} | runtime
+        self.assertEqual(set(apk_archive.distributable_assets(destination)), expected)
+        self.assertEqual(receipt, {'files': len(expected), 'bytes': sum(
+            (self.assets / name).stat().st_size for name in expected)})
+        for name in source_only:
+            self.assertTrue((self.assets / name).is_file())
+            self.assertFalse((destination / name).exists())
+        with zipfile.ZipFile(self.resources, 'a') as archive:
+            for name in runtime:
+                archive.write(destination / name, 'assets/' + name)
+        apk_archive.validate_apk(self.resources, self.assets)
+        # An old/stale package must not sneak an excluded graph back in.
+        with zipfile.ZipFile(self.resources, 'a') as archive:
+            archive.write(self.assets / 'analysis/models/beatnet-v1.onnx',
+                          'assets/analysis/models/beatnet-v1.onnx')
+        with self.assertRaisesRegex(ValueError, 'APK asset set differs'):
+            apk_archive.validate_apk(self.resources, self.assets)
+
+    def test_source_only_exclusion_does_not_bypass_unsafe_source_rejection(self):
+        for name in ('preview/src/private.jks', 'analysis/models/beatnet-v1.onnx'):
+            with self.subTest(name=name):
+                path = self.assets / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.symlink_to(self.root / 'private-outside-source')
+                with self.assertRaisesRegex(ValueError, 'Symlink cannot enter APK assets'):
+                    apk_archive.distributable_assets(self.assets)
+                path.unlink()
+        key = self.assets / 'preview/src/private.jks'
+        key.write_bytes(b'FAKE TEST CREDENTIAL')
+        with self.assertRaisesRegex(ValueError, 'Credential/configuration file'):
+            apk_archive.distributable_assets(self.assets)
+
     def test_short_or_stale_staging_is_rejected_before_destination_exists(self):
         original_copy = apk_archive.copy_asset
         destination = self.root / 'staged'

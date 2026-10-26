@@ -24,6 +24,19 @@ RETIRED = frozenset({
     '.github/workflows/cockpit-preview.yml',
     '.github/workflows/background-ui.yml',
 })
+# Superseded source-only QA protocols, never historical receipt directories.
+# The current release protocol and older directories with retained proof stay.
+RETIRED_QA_PROTOCOLS = frozenset({
+    'release-2.2.5', 'release-2.3.0', 'release-2.3.1',
+    'release-2.3.2', 'release-2.4.0', 'release-2.4.1',
+})
+RETIRED_RESEARCH_DATA = frozenset({
+    'research/upstream/pretrained-sed/hf_dataset_gen/metadata/audioset_train_strong.csv',
+    'research/upstream/pretrained-sed/hf_dataset_gen/metadata/audioset_eval_strong.csv',
+    'research/upstream/pretrained-sed/resources/eval_durations.csv',
+    'research/upstream/pretrained-sed/test_files/752547__iscence__milan_metro_coming_in_station.wav',
+    'research/upstream/pretrained-sed/images/downstream_task_results.png',
+})
 CACHE_DIRS = frozenset({'node_modules', '__pycache__', '.pytest_cache', '.venv',
                         'venv', '.gradle', '.idea', 'toolchain'})
 FENCE = re.compile(r'^ {0,3}(`{3,}|~{3,})')
@@ -103,6 +116,10 @@ def maintained_doc(name: str) -> bool:
 
 def clutter_reason(name: str) -> str | None:
     path = PurePosixPath(name)
+    if len(path.parts) >= 2 and path.parts[0] == 'qa' and path.parts[1] in RETIRED_QA_PROTOCOLS:
+        return 'superseded source-only QA protocol; use the version-selected current protocol or Git history'
+    if name in RETIRED_RESEARCH_DATA:
+        return 'optional upstream training/demo data; recover with its historical source when needed'
     if name in RETIRED or name.startswith(('migration/', 'archive/v1.6.0/')):
         return 'retired transfer, workflow or checklist material; retain through Git history'
     if len(path.parts) >= 3 and path.parts[0] == 'releases' and path.parts[2] == 'parts':

@@ -29,6 +29,28 @@ remain unchanged. Its native cache profile advances to
 `native-deux-onnxruntime-android-1.25.1-v2` so older execution evidence is not
 silently reused under the changed allocation configuration.
 
+## Unreleased bounded pair execution
+
+The next source update can process two adjacent, uncached, audible GAME passages
+with equal sample counts under one native call. Each original context retains
+its language, seed and all eight steps. Five sessions load once, the unchanged
+single-passage inference runs twice, and all engine-owned resources retire before
+either result is exposed. This is sequential execution of two independent inputs,
+not a changed graph batch dimension or concatenated audio context.
+
+The planner keeps unequal first/tail contexts, silence, restored work and old
+bridges on their original path. One prepared lookahead is bounded by the existing
+16-second passage limit. The transport accepts at most two such inputs and checks
+both ordered results before writing either per-passage checkpoint. Cancellation
+during the second passage can discard the first passage's unpublished work;
+unknown native retirement still blocks fallback and replacement execution.
+
+The [host comparison](../research/throughput-20261026/README.md) measured an 18.3%
+lower median for the tested equal-length pair with identical unrounded notes,
+but one timing pair regressed and median peak RSS rose about 2%. Mixed-length
+pairing was slower and is excluded from automatic scheduling. Physical-device,
+whole-analysis and comparative musical-quality claims remain separate.
+
 ## Fallback and recovery boundaries
 
 Without an admitted native GAME callback, the existing WASM implementation is

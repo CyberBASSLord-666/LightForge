@@ -19,8 +19,9 @@ public final class NativeGameLifecycleTest {
     private interface Checked {void run()throws Exception;}
     public static void main(String[] args)throws Exception {
         root=new File(args[0]);root.mkdirs();
-        if(args.length==2){fatalRetirement("throw".equals(args[1]));System.out.println("PASS: native retirement failure blocks fallback until process restart");return;}
+        if(args.length==2){fatalRetirement(args[1].endsWith("throw"),args[1].startsWith("batch-"));System.out.println("PASS: native retirement failure blocks fallback until process restart");return;}
         ownershipAndBounds();invalidPcm();invalidNotes();successfulFreshPassages();stalledConstruction();failedConstruction();
+        batchMetadata();successfulBatch();invalidBatchPcm();failedSecondPassage();invalidSecondPassage();cancelSecondPassage();batchWaitsForRetirement();
         cancelRunning();terminalWaitsForRetirement();cancelDuringRetirement();sharedGate();closeQueued();queueRejection();closeUploading();symlinkStorage();
         System.out.println("PASS: "+checks+" production NativeGameTask lifecycle checks");
     }
@@ -46,6 +47,18 @@ public final class NativeGameLifecycleTest {
         return token;
     }
     private static String start(NativeGameTask task)throws Exception {String token=upload(task,4410);task.run(JOB,token);return token;}
+    private static String descriptors()throws Exception {
+        return new JSONArray().put(new JSONObject().put("samples",4410).put("language",4).put("seed",0xffffffffL))
+            .put(new JSONObject().put("samples",4411).put("language",1).put("seed",2025)).toString();
+    }
+    private static String uploadBatch(NativeGameTask task,boolean invalidSecond)throws Exception {
+        String token=new JSONObject(task.beginBatch(JOB,descriptors())).getString("token");
+        ByteBuffer bytes=ByteBuffer.allocate((4410+4411)*4).order(ByteOrder.LITTLE_ENDIAN);
+        for(int i=0;i<4410;i++)bytes.putFloat(.25f);
+        for(int i=0;i<4411;i++)bytes.putFloat(invalidSecond&&i==4410?Float.NaN:-.75f);
+        task.append(JOB,token,Base64.getEncoder().encodeToString(bytes.array()));return token;
+    }
+    private static String startBatch(NativeGameTask task)throws Exception {String token=uploadBatch(task,false);task.run(JOB,token);return token;}
     private static JSONObject terminal(NativeGameTask task,String token,String expected)throws Exception {
         long deadline=System.nanoTime()+TimeUnit.SECONDS.toNanos(10);
         while(System.nanoTime()<deadline){JSONObject state=new JSONObject(task.status(JOB,token));if(!"running".equals(state.getString("state"))){require(expected.equals(state.getString("state")),"expected "+expected+", got "+state);return state;}require(!state.has("notes"),"running status never exposes partial notes");Thread.sleep(5);}
@@ -91,6 +104,84 @@ public final class NativeGameLifecycleTest {
         NativeGame.reset();NativeGame.invalidNotes=true;NativeGameTask task=task("invalid-notes");leaseBoundaries(task);
         try{String token=start(task);JSONObject state=terminal(task,token,"failed");require(!state.has("notes"),"invalid result never leaks notes");require(NativeGame.closed.get()==1,"invalid-result engine is retired");}
         finally{stopped(task);}
+    }
+    private static void batchMetadata()throws Exception {
+        NativeGame.reset();NativeGameTask task=task("batch-bounds");
+        try {
+            JSONObject capability=new JSONObject(task.availability(JOB));
+            require("native-game-pair-v1".equals(capability.getString("batchProtocol"))&&capability.getInt("maxBatchPassages")==2&&
+                capability.getLong("maxBatchInputBytes")==5644800,"bounded pair capability is explicit");
+            String object="{\"samples\":4410,\"language\":0,\"seed\":2025}";
+            String good="["+object+","+object+"]";
+            for(String invalid:new String[]{null,"",object,"[]","["+object+"]","["+object+","+object+","+object+"]",
+                    good+" trailing",good.replace("4410","0"),good.replace("4410","705601"),good.replace("4410","1.5"),
+                    good.replace("4410","\"4410\""),good.replace("4410","true"),good.replace("4410","null"),
+                    good.replace("4410","1e3"),good.replace("2025","-1"),good.replace("2025","4294967296"),
+                    good.replace("2025","999999999999999999999999"),good.replace("\"language\":0","\"language\":5"),
+                    good.replace("\"seed\":2025","\"samples\":4410"),good.replace("2025}","2025,\"extra\":0}"),
+                    good.replace('"','\''),good.replace("{\"samples\"","{samples"),good+String.join("",java.util.Collections.nCopies(1025," "))}) {
+                rejected(()->task.beginBatch(JOB,invalid),"malformed batch metadata accepted");
+            }
+            rejected(()->task.beginBatch(OTHER,good),"another owner began a batch");
+            String token=new JSONObject(task.beginBatch(JOB," \n[ {\"seed\":4294967295,\"samples\":1,\"language\":4}, "+object+"]\t")).getString("token");
+            JSONObject status=new JSONObject(task.status(JOB,token));
+            require(status.getJSONArray("passages").length()==2&&!status.has("samples")&&!status.has("notes"),"upload status binds two separate descriptors without notes");
+            require(status.getJSONArray("passages").getJSONObject(0).getLong("seed")==0xffffffffL,"descriptor key ordering preserves uint32 seed");
+            rejected(()->task.begin(JOB,4,0,0),"unary replacement overlapped batch upload");
+            task.cancel(JOB,token);task.releaseIdle(JOB);
+            String unary=new JSONObject(task.begin(JOB,4,0,2025)).getString("token");
+            require(!new JSONObject(task.status(JOB,unary)).has("batchProtocol"),"unary status remains unchanged after a batch");task.cancel(JOB,unary);
+            String maximum="[{\"samples\":705600,\"language\":0,\"seed\":0},{\"samples\":705600,\"language\":4,\"seed\":4294967295}]";
+            task.releaseIdle(JOB);String limit=new JSONObject(task.beginBatch(JOB,maximum)).getString("token");
+            require((Long)field(task,"expectedBytes")==5644800L,"pair accepts exactly the maximum concatenated input");task.cancel(JOB,limit);
+        }finally{stopped(task);}
+    }
+    private static void successfulBatch()throws Exception {
+        NativeGame.reset();NativeGameTask task=task("batch-success");leaseBoundaries(task);
+        try {
+            String token=startBatch(task);JSONObject state=terminal(task,token,"completed");
+            require(state.getInt("completedPasses")==2,"one retired pair counts two completed passages");
+            require("native-game-pair-v1".equals(state.getString("batchProtocol"))&&state.getJSONArray("passages").getJSONObject(1).getInt("samples")==4411,"pair identity and order survive completion");
+            require(state.getJSONArray("notes").length()==2&&state.getJSONArray("notes").getJSONArray(0).getJSONObject(0).getDouble("midi")==60.123456789&&
+                state.getJSONArray("notes").getJSONArray(1).getJSONObject(0).getDouble("midi")==61.123456789,"both unrounded note lists remain independent and ordered");
+            require(NativeGame.constructed.get()==1&&NativeGame.closed.get()==1&&NativeGame.runs.get()==2,"pair shares one fresh engine while executing both independent passages");
+            require(NativeGame.lastPcm[0].length==4410&&NativeGame.lastPcm[1].length==4411&&NativeGame.lastPcm[0][4409]==.25f&&NativeGame.lastPcm[1][0]==-.75f,"LE PCM is split at the exact declared sample boundary");
+            require(NativeGame.lastLanguages[0]==4&&NativeGame.lastLanguages[1]==1&&NativeGame.lastSeeds[0]==0xffffffffL&&NativeGame.lastSeeds[1]==2025,"each original language/seed is independent");
+            require(guard(task).state()==null&&NativeGame.live.get()==0&&NativeDeux.INFERENCE_GATE.availablePermits()==1,"pair publishes after complete JNI and lease/gate retirement");
+        }finally{stopped(task);}
+        require(AppDiagnostics.profileSummaries.size()==1&&AppDiagnostics.profileSummaries.get(0).contains("batchPassages=2"),"one pair produces one explicit bounded profile");
+    }
+    private static void invalidBatchPcm()throws Exception {
+        NativeGame.reset();NativeGameTask task=task("batch-invalid-pcm");
+        try{String token=uploadBatch(task,true);task.run(JOB,token);JSONObject state=terminal(task,token,"failed");
+            require(!state.has("notes")&&NativeGame.constructed.get()==0,"invalid second PCM is rejected before ANY native setup");}
+        finally{stopped(task);}
+    }
+    private static void failedSecondPassage()throws Exception {
+        NativeGame.reset();NativeGame.failSecond=true;NativeGameTask task=task("batch-second-failure");leaseBoundaries(task);
+        try{String token=startBatch(task);JSONObject state=terminal(task,token,"failed");require(!state.has("notes")&&state.getInt("completedPasses")==0,"second inference failure publishes neither passage");require(NativeGame.closed.get()==1,"failed pair engine retires");}
+        finally{stopped(task);}
+    }
+    private static void invalidSecondPassage()throws Exception {
+        NativeGame.reset();NativeGame.invalidSecondNotes=true;NativeGameTask task=task("batch-second-invalid");
+        try{String token=startBatch(task);JSONObject state=terminal(task,token,"failed");require(!state.has("notes")&&state.getInt("completedPasses")==0,"second invalid note list publishes neither passage");}
+        finally{stopped(task);}
+    }
+    private static void cancelSecondPassage()throws Exception {
+        NativeGame.reset();NativeGame.blockSecond=true;NativeGameTask task=task("batch-second-cancel");leaseBoundaries(task);String token=startBatch(task);
+        try{require(NativeGame.secondEntered.await(5,TimeUnit.SECONDS),"second original passage entered");
+            JSONObject running=new JSONObject(task.status(JOB,token));require("running".equals(running.getString("state"))&&!running.has("notes"),"first notes remain private during second inference");
+            prompt(()->task.cancel(JOB,token),"pair cancellation blocks");JSONObject state=terminal(task,token,"cancelled");require(!state.has("notes")&&state.getInt("completedPasses")==0,"cancelled pair publishes neither passage");}
+        finally{NativeGame.secondAllowed.countDown();stopped(task);}
+    }
+    private static void batchWaitsForRetirement()throws Exception {
+        NativeGame.reset();NativeGame.blockClose=true;NativeGameTask task=task("batch-retirement");leaseBoundaries(task);String token=startBatch(task);
+        try{require(NativeGame.closeEntered.await(5,TimeUnit.SECONDS),"pair destruction entered");
+            JSONObject state=new JSONObject(task.status(JOB,token));require("running".equals(state.getString("state"))&&!state.has("notes"),"both prepared note lists remain private during retirement");
+            require(NativeDeux.INFERENCE_GATE.availablePermits()==0&&guard(task).state()!=null,"pair retains gate and lease during destruction");
+            rejected(()->task.beginBatch(JOB,descriptors()),"replacement pair overlapped retirement");
+            NativeGame.closeAllowed.countDown();terminal(task,token,"completed");}
+        finally{NativeGame.closeAllowed.countDown();stopped(task);}
     }
     private static void successfulFreshPassages()throws Exception {
         NativeGame.reset();NativeGameTask task=task("success");leaseBoundaries(task);
@@ -184,9 +275,9 @@ public final class NativeGameLifecycleTest {
         rejected(()->new NativeGameTask(jobContext,JOB),"symlinked job directory accepted");require(outside.list().length==0,"job symlink target was not touched");
         rejected(()->new NativeGameTask(new Context(new File(root,"invalid-owner"),outside),"------------------------------------"),"non-UUID owner accepted");
     }
-    private static void fatalRetirement(boolean throwFromClose)throws Exception {
+    private static void fatalRetirement(boolean throwFromClose,boolean batch)throws Exception {
         NativeGame.reset();NativeGame.failClose=throwFromClose;NativeGame.unconfirmedClose=!throwFromClose;
-        NativeGameTask task=task("fatal-retirement");leaseBoundaries(task);String token=start(task);
+        NativeGameTask task=task("fatal-retirement");leaseBoundaries(task);String token=batch?startBatch(task):start(task);
         JSONObject state=terminal(task,token,"retirement-failed");
         require(!state.has("notes")&&state.getInt("completedPasses")==0,"failed destructor never publishes completed notes");
         require(guard(task).state()!=null&&NativeDeux.INFERENCE_GATE.availablePermits()==0,"unknown native retirement retains durable lease and process gate");
@@ -194,6 +285,7 @@ public final class NativeGameLifecycleTest {
         require(field(task,"engine")!=null&&NativeGame.live.get()==1,"unknown engine ownership is not discarded");
         rejected(()->task.releaseIdle(JOB),"unknown retirement allowed fallback release");
         rejected(()->task.begin(JOB,4,0,0),"unknown retirement allowed another passage");
+        rejected(()->task.beginBatch(JOB,descriptors()),"unknown retirement allowed another pair");
         rejected(()->task.availability(JOB),"unknown retirement advertised availability");
         task.cancel(JOB,token);require("retirement-failed".equals(new JSONObject(task.status(JOB,token)).getString("state")),"late cancellation cannot hide unknown retirement");
         prompt(task::close,"closing an unconfirmed engine blocked");
@@ -212,9 +304,11 @@ final class NativeGame implements AutoCloseable {
     interface Listener {void update(double progress,String message);}
     interface Cancellation {boolean cancelled();}
     static final AtomicInteger constructed=new AtomicInteger(),runs=new AtomicInteger(),closed=new AtomicInteger(),live=new AtomicInteger(),cancellations=new AtomicInteger();
-    static volatile boolean blockCreate,failCreate,blockRun,blockClose,failClose,unconfirmedClose,invalidNotes,closedDuringRun;
+    static volatile boolean blockCreate,failCreate,blockRun,blockClose,failClose,unconfirmedClose,invalidNotes,closedDuringRun,
+        blockSecond,failSecond,invalidSecondNotes;
+    static volatile float[][] lastPcm;static volatile int[] lastLanguages;static volatile long[] lastSeeds;
     static volatile Runnable beforeConstruct,beforeClose;
-    static CountDownLatch createEntered,createAllowed,runEntered,runAllowed,closeEntered,closeAllowed;
+    static CountDownLatch createEntered,createAllowed,runEntered,runAllowed,closeEntered,closeAllowed,secondEntered,secondAllowed;
     private volatile boolean cancelled,running;
     private boolean retired;
     static int inferenceThreads(){return 4;}
@@ -225,8 +319,10 @@ final class NativeGame implements AutoCloseable {
     static void reset(){
         if(live.get()!=0||NativeDeux.INFERENCE_GATE.availablePermits()!=1)throw new AssertionError("Previous native boundary leaked");
         constructed.set(0);runs.set(0);closed.set(0);cancellations.set(0);blockCreate=failCreate=blockRun=blockClose=failClose=unconfirmedClose=invalidNotes=closedDuringRun=false;
+        blockSecond=failSecond=invalidSecondNotes=false;lastPcm=null;lastLanguages=null;lastSeeds=null;
         AppDiagnostics.profileSummaries.clear();
         beforeConstruct=beforeClose=null;createEntered=new CountDownLatch(1);createAllowed=new CountDownLatch(1);runEntered=new CountDownLatch(1);runAllowed=new CountDownLatch(1);closeEntered=new CountDownLatch(1);closeAllowed=new CountDownLatch(1);
+        secondEntered=new CountDownLatch(1);secondAllowed=new CountDownLatch(1);
     }
     static void await(CountDownLatch latch){try{if(!latch.await(10,TimeUnit.SECONDS))throw new AssertionError("Controlled native boundary timed out");}catch(InterruptedException error){Thread.currentThread().interrupt();throw new AssertionError(error);}}
     JSONArray predict(float[] pcm,int language,long seed,Listener listener,Cancellation cancellation,NativeGameProfile profile)throws Exception {
@@ -236,6 +332,23 @@ final class NativeGame implements AutoCloseable {
             listener.update(.5,"Do not expose model text");
             return new JSONArray().put(new JSONObject().put("start",0).put("end",invalidNotes?17:.08).put("midi",60.123456789));
         }finally{running=false;}
+    }
+    JSONArray predictBatch(float[][] pcm,int[] languages,long[] seeds,Listener listener,Cancellation cancellation,NativeGameProfile profile)throws Exception {
+        lastPcm=pcm;lastLanguages=languages.clone();lastSeeds=seeds.clone();JSONArray result=new JSONArray();
+        for(int i=0;i<2;i++) {
+            if(i==1) {
+                secondEntered.countDown();
+                while(blockSecond&&!secondAllowed.await(10,TimeUnit.MILLISECONDS))if(cancelled||cancellation.cancelled())throw new InterruptedIOException("Controlled pair cancellation");
+                if(cancelled||cancellation.cancelled())throw new InterruptedIOException("Controlled pair cancellation");
+                if(failSecond)throw new IOException("Controlled second-passage failure");
+            }
+            final int passage=i;
+            JSONArray notes=predict(pcm[i],languages[i],seeds[i],(value,detail)->listener.update((passage+value)/2,detail),cancellation,profile);
+            notes.getJSONObject(0).put("midi",i==0?60.123456789:61.123456789);
+            if(i==1&&invalidSecondNotes)notes.getJSONObject(0).put("end",17);
+            result.put(notes);
+        }
+        return result;
     }
     void cancel(){cancelled=true;cancellations.incrementAndGet();}
     @Override public void close(){
