@@ -26,6 +26,7 @@
 | [Vocal choreography](VOCAL_CHOREOGRAPHY.md) | Mapping supported vocal evidence to gestures |
 | [Recurrence and motifs](RECURRENCE_MOTIF_SIDECAR.md) | Optional recurrence sidecar and limitations |
 | [Collision allocation](SEMANTIC_COLLISION_ALLOCATION.md) | Opt-in collision-aware semantic allocation |
+| [Musical display refinement](LIGHT_DISPLAY_REFINEMENT.md) | Source-specific hierarchy, local density, shared frame timing and calibrated preview evidence |
 | [Choreography quality](CHOREOGRAPHY_QUALITY.md) | Read-only quality accounting |
 | [Perceptual validation](PERCEPTUAL_VALIDATION.md) | Realization checks and limits of software evidence |
 

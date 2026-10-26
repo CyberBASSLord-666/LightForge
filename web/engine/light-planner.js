@@ -135,7 +135,23 @@
     for(const {p,ids,length} of voiceRoutes){const salience=clamp((Number(p.confidence)||0)*(Number(p.strength)||0));targets.push({role:'vocals',time:p.start,end:p.start+length,kind:'phrase',confidence:p.confidence,strength:p.strength,salience,candidateOutputIds:Array.from(new Set(ids||[]))});}
     for(const {p,ids,length} of bassRoutes)if(!p.continuation){const salience=clamp((Number(p.confidence)||0)*(Number(p.strength)||0));targets.push({role:'bass',time:p.start,end:length>0?p.start+length:p.end,kind:'note',confidence:p.confidence,strength:p.strength,salience,candidateOutputIds:Array.from(new Set(ids||[]))});}
     for(const cue of userCues){const salience=clamp(Number(cue.strength)||0);targets.push({role:cue.role,time:cue.start,end:cue.end,kind:cue.action,cueId:cue.id,confidence:1,strength:cue.strength,salience,candidateOutputIds:Array.from(new Set(cue.ids||[]))});for(const id of cue.ids)reserve(id,cue.start,cue.end);}
-    const semanticState=semanticStrategy&&typeof semanticStrategy.prepareTargets==='function'?semanticStrategy.prepareTargets(targets):null;
+    // Select structural arrivals before semantic planning, so instrumental
+    // passages have real hierarchy anchors too. These are planning links only:
+    // the public vocal/bass target ledger keeps its source-specific contract.
+    const impactPool=(m.impacts||[]).filter(x=>x.strength>=.58).map(x=>({...x,semanticRole:'mix'}));
+    for(let i=1;i<m.sections.length;i++){
+      const sec=m.sections[i],previous=m.sections[i-1];
+      if(sec.energy>previous.energy+.13)impactPool.push({time:sec.start,strength:clamp(sec.energy-previous.energy+.48),kind:'section entrance',semanticRole:'structure'});
+    }
+    const chosen=[];
+    for(const impact of impactPool.sort((a,b)=>b.strength-a.strength||a.time-b.time)){
+      if(!ctx.active(impact.time)||chosen.some(x=>Math.abs(x.time-impact.time)<3.2))continue;
+      chosen.push(impact);if(chosen.length>=Math.max(1,Math.ceil(m.duration/7)))break;
+    }
+    const strategyTargets=targets.concat(chosen.map(impact=>({role:impact.semanticRole,time:impact.time})),
+      m.beats.filter(ctx.active).map(time=>({role:'rhythm',time})),
+      m.onsets.filter(onset=>ctx.active(onset.time)).map(onset=>({role:'mix',time:onset.time})));
+    const semanticState=semanticStrategy&&typeof semanticStrategy.prepareTargets==='function'?semanticStrategy.prepareTargets(strategyTargets):null;
     // Motif evolution must not change a scene merely because semantic mode was
     // requested. This bounded probe proves that the current strategy has at
     // least one real target link without allocating, painting, or scheduling
@@ -180,7 +196,8 @@
         // for the surviving tail: a ramp-down command cannot initialize a
         // partially lit fixture at time zero.
         const releaseStart=(details.preserveSpan?requestedEnd:stop)-(details.release||0),release=supports&&details.release&&releaseStart>=start+step-1e-8?details.release:0;
-        let candidate={...details,id,start,end:stop,sectionIndex:section.index,priority,kind,strength,fade:supports?fade:0,release,releaseStart,serial:serial++,target:requestedStart+(supports?fade:0),...(boundaryClip?{boundaryClip:{...boundaryClip},releaseOmittedForBoundary:!!(supports&&details.release&&!release)}:{}),...(pairs.has(id)?{bilateralGroup:pairs.get(id)}:{})};
+        const semanticRole=details.semanticRole||(details.role?details.role:kind==='detected bass attack'||kind==='detected mid attack'||kind==='detected high attack'||kind==='offbeat detail'?'mix':'rhythm');
+        let candidate={...details,semanticRole,id,start,end:stop,sectionIndex:section.index,priority,kind,strength,fade:supports?fade:0,release,releaseStart,serial:serial++,target:requestedStart+(supports?fade:0),...(boundaryClip?{boundaryClip:{...boundaryClip},releaseOmittedForBoundary:!!(supports&&details.release&&!release)}:{}),...(pairs.has(id)?{bilateralGroup:pairs.get(id)}:{})};
         if(vocalStrategy&&typeof vocalStrategy.classifyCandidate==='function'){
           candidate=vocalStrategy.classifyCandidate(Object.assign({},candidate,{musicTime}))||candidate;
         }
@@ -193,7 +210,7 @@
     const flash=(ids,t,width,priority,kind,strength=1,absolute=false,details={})=>add(ids,t,Math.max(.10,width),priority,kind,strength,0,absolute,details);
     function breathe(ids,t,period,priority=12){
       const length=period>=4.2?2:period>=2.2?1:.5;
-      add(ids,t,length*2+.08,priority,'phrase fade',.6,length);
+      add(ids,t,length*2+.12,priority,'phrase fade',.6,length);
     }
     if(!m.silent){
       for(const cue of userCues){const length=cue.action==='accent'?Math.min(cue.end-cue.start,.14+cue.strength*.18):cue.end-cue.start;
@@ -264,7 +281,7 @@
         if(slot===0){
           flash(['park-markers','license-plate'],t,Math.max(.16,width),32,'bar marker');
           if(localBar%2===0&&!lead)breathe(['left-signature','right-signature'],t,period*ctx.meter,9);
-          if(s.outerBeamRamping&&localBar%2===1&&t>=.5)add([localBar%4===1?'left-outer':'right-outer'],t-.5,1.08,48,'outer beam phrase fade',.7,.5);
+          if(s.outerBeamRamping&&localBar%2===1&&t>=.5)add([localBar%4===1?'left-outer':'right-outer'],t-.5,1.12,48,'outer beam phrase fade',.7,.5);
         }
         // Subdivision accents require confidence and an actual high-band attack.
         // Explicit eighth-note selection allows a grid pulse even without one.
@@ -302,23 +319,13 @@
       }
       // Reserve whole-car accents for selected structural moments. Rank first,
       // then suppress neighboring candidates, rather than accepting first-in-time.
-      const impactPool=(m.impacts||[]).filter(x=>x.strength>=.58).map(x=>({...x}));
-      for(let i=1;i<m.sections.length;i++){
-        const sec=m.sections[i],previous=m.sections[i-1];
-        if(sec.energy>previous.energy+.13)impactPool.push({time:sec.start,strength:clamp(sec.energy-previous.energy+.48),kind:'section entrance'});
-      }
-      const chosen=[];
-      for(const impact of impactPool.sort((a,b)=>b.strength-a.strength||a.time-b.time)){
-        if(!ctx.active(impact.time)||chosen.some(x=>Math.abs(x.time-impact.time)<3.2))continue;
-        chosen.push(impact);if(chosen.length>=Math.max(1,Math.ceil(m.duration/7)))break;
-      }
       for(let impactIndex=0;impactIndex<chosen.length;impactIndex++){
         const impact=chosen[impactIndex],t=impact.time,scene=sceneAt(t),full=impact.strength>.78&&scene.intensity>.5;
-        flash(full?WHITE.concat(AMBER_L,AMBER_R,['park-markers']):FRONT.concat(['brakes','left-tail','right-tail']),t,full?.25:.2,80+impact.strength,'musical impact',impact.strength,false,{collisionEventId:'impact-'+Math.round(t*1000)+'-'+impactIndex});
+        flash(full?WHITE.concat(AMBER_L,AMBER_R,['park-markers']):FRONT.concat(['brakes','left-tail','right-tail']),t,full?.25:.2,80+impact.strength,'musical impact',impact.strength,false,{collisionEventId:'impact-'+Math.round(t*1000)+'-'+impactIndex,semanticRole:impact.semanticRole,sourceEventTime:t});
         // Start a legal fade before the arrival. Its full brightness lands on
         // the accent, instead of beginning a slow ramp after the music hits.
         const rise=impact.strength>.85?1:.5;
-        if(t>=rise&&ctx.active(t-rise))add(['left-signature','right-signature'],t-rise,rise*2+.08,60,'impact anticipation',impact.strength,rise);
+        if(t>=rise&&ctx.active(t-rise))add(['left-signature','right-signature'],t-rise,rise*2+.12,60,'impact anticipation',impact.strength,rise,false,{semanticRole:impact.semanticRole,sourceEventTime:t});
       }
       for(let movementIndex=0;movementIndex<(movement.accents||[]).length;movementIndex++){
         const a=movement.accents[movementIndex],cs=a.channels||[];
@@ -357,6 +364,7 @@
     function placement(cue){
       const a=Math.max(0,Math.round(cue.start/step)),b=Math.min(show.frameCount-1,Math.round(cue.end/step));
       if(b<=a)return {ok:false,reason:'duration'};
+      if(cue.fade&&b-a<2*Math.ceil((cue.fade+.05)/step-1e-9))return {ok:false,reason:'ramp-duration'};
       const lane=lanes.get(cue.id);if(!lane)return {ok:false,reason:'unavailable'};
       const index=lower(lane,a,'a'),gap=Math.ceil(.08/step-1e-9);
       // A section boundary changes the arrangement, not the lamp's recovery
@@ -509,7 +517,10 @@
     const frames=show.frames;
     for(const cue of accepted){
       const o=byId.get(cue.id),up=cue.fade===2?230:cue.fade===1?204:178,down=cue.fade===2?77:cue.fade===1?51:26;
-      const pivot=Math.round((cue.start+cue.fade+.04)/step);
+      // Tesla requires at least 50 ms beyond the ramp duration to reach
+      // its full setpoint. Count from the realized command frame, not the
+      // unquantized intent, so 15 ms rounding cannot shorten that allowance.
+      const pivot=cue.a+Math.ceil((cue.fade+.05)/step-1e-9);
       for(let f=cue.a;f<cue.b;f++){
         if(!ctx.active((f+.5)*step-shift))continue;
         const releaseAt=Math.round((cue.releaseStart??cue.end-cue.release)/step),value=cue.release&&f>=releaseAt?26:cue.fade?(f<pivot?up:down):255;

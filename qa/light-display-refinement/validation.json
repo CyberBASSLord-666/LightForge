@@ -1,0 +1,42 @@
+{
+  "scope": "Unreleased musical-display implementation regression; not an APK, physical-vehicle or perceptual qualification",
+  "baseCommit": "e434d3880c47ebe0e951f01aba366181fd091f96",
+  "completedAt": "2026-10-26T16:32:58.864555+00:00",
+  "productionGatePassed": true,
+  "node": {
+    "passed": 821,
+    "failed": 0
+  },
+  "pythonArchive": {
+    "run": 990,
+    "skipped": 20,
+    "failed": 0
+  },
+  "qualityToolsPassed": true,
+  "assetsManifestSha256": "d9069aed84170f0b7b9c2991b8395cab16930320fd7027314c7d8948407aaa52",
+  "sourceHashes": {
+    "tests/arrangement-hierarchy-refinement.test.cjs": "ed0ea9ec3dc7a4cc90ce34ea7d4e8ac00e3487b9fd7194b090fe60afbcf7e7fc",
+    "tests/calibrated-closure-preview.test.cjs": "9a3e7eafb46b82cca1dbe3e8f7f57f7abe8e143c4e50ea7724f8066e8a28f7e9",
+    "tests/interior-timing-refinement.test.cjs": "557a5ab881412eac86ec19660d221217b15d21fea0023b8bdcae80e7ff5e0326",
+    "tests/semantic-density-refinement.test.cjs": "8459588e0610b85b8cb00d95e966da524a06f3e1b4517af3b9a0637612f13460",
+    "web/engine/choreography-quality.js": "3f12d29cd9ba81a08f3e370ce91efc6de9705511a2d5e4889f785d8a80ff7c4e",
+    "web/engine/client.js": "63c6bdd79cb033b3ccfe334a991a5f3957fc5349f664de955b8c6b59eea5bf3a",
+    "web/engine/light-planner.js": "16dbc113347ddad6906deba397c3687521b0438ab052a5fc0a0b04cfbf883595",
+    "web/engine/motif-evolution.js": "fa77a12e037125fc993fe02a358d27ac67dbc2ea98f1b423e8a7656cfe6b91ee",
+    "web/engine/movement-planner.js": "af364df0ec661266c9926639d83717a70bab73e03524db6a7a1af34ccc3be408",
+    "web/engine/music-cues.js": "1a87eea0502da2e1f19d2361a5646c127121211e91128017ce747b7f0d2f61d6",
+    "web/engine/perceptual-validation.js": "6688ea11435d6dd7bff8f0d7a9bef6f89ca79db2784d231c8dc8a5a6bd52b659",
+    "web/engine/semantic-choreography.js": "d48cd8ba8f1014f5c6b3fe350742ac86ebcc8bd2abff0f83183df02eaf6c67a0",
+    "web/engine/show-engine.js": "efd76c7a067a7f1ebef69bdd7966a12cc90316aab31685157cd870016632e88c",
+    "web/engine/sync-review.js": "57c682909c3d7bf3719d1af587e3150d000c4f6a332093f893ca11de74285ed1",
+    "web/engine/vehicle-profile.js": "a11015576c0a76e7ff9d0141a4efd9c099a69e2b27b85471056e17d2485cde3a",
+    "web/engine/vocal-choreography.js": "42f05c4893f9ee3b9b962fe23f8bb2df6c1f5ed3451764ae68740c7f2dd633d9",
+    "web/engine/worker.js": "e4bc86de965afc225c72063aa5114c3092ef74b62a62f917feecdf1a816c9064"
+  },
+  "broadDiscoveryBeforeMetadataIntegration": {
+    "passed": 903,
+    "failed": 1,
+    "inheritedFailure": "migration-1.6.test.cjs hardcoded Chromium executable absent, reproduced on released baseline; official pinned browser download returned truncated/non-ZIP data"
+  },
+  "physicalOrAndroidTested": false
+}

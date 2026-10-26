@@ -216,3 +216,19 @@ Run `node --test tests/engine.test.cjs` from the app directory. The suite covers
 Run `node --test tests/preview-engine.test.cjs` for independent hand-authored command timelines covering exact ramp boundaries at 15/20 ms, interrupted ramps, physical combined outputs, unsupported parts, persistent Idle, immediate Stop, partial motion reversal, mirror initialization, moving Dance, charge rainbow/auto-close, deterministic seeking, and comparison against independently decoded export bytes/RGB.
 
 Run `node --test tests/engine.test.cjs tests/preview-engine.test.cjs tests/engine-manual.test.cjs` for the combined engine regression suite. Current 1.4.0 composer evidence is under `qa/release-1.4.0/`; run `node tests/composer-1.4.test.cjs` and `node tests/movement-planner.test.cjs` for the new checks. Historical 1.3.0 planner and integration evidence remains under `qa/music-1.3.0/`; the final release record identifies the executed checks and tested source hashes. `qa/hardware-1.2.0/commands-verification.json` retains the earlier host engine/native checks and official validator results as historical evidence. Hardware sub-lens placements remain estimates: source address coverage is not an in-car physical mapping test.
+
+## Musical-display timing contracts
+
+Automatic RGB beat pulses use nearest-frame beat anchors with the user offset
+applied once, matching exterior event placement. Silent/inactive gaps clear
+automatic role-envelope state. Full-cycle automatic exterior fades reserve the
+Tesla ramp duration plus at least 50 ms per leg; intentionally partial manual
+ramps remain valid.
+
+Opt-in semantic choreography links explicit source roles (including instrumental
+rhythm/mix/structure) and budgets low-authority decoration over bounded two-beat
+local intervals. Missing/invalid beat grids retain the fixed-window fallback.
+Explicit vehicle timing calibration now informs closure preview and validation,
+not only planning; preview caches use trajectory schema 2. This is a response
+model, not measured vehicle motion. See `docs/LIGHT_DISPLAY_REFINEMENT.md` for
+fixture evidence, reproduction and remaining limits.
