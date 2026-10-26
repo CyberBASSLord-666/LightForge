@@ -15,7 +15,7 @@ import zipfile
 
 from android_evidence_manifest import RECEIPTS as ANDROID_RECEIPTS
 from android_evidence_manifest import candidate_binding, validate_source_hashes, verify_evidence
-from apk_archive import verify_native_libraries
+from apk_archive import distributable_assets, repository_only_asset, verify_native_libraries
 from apk_delta import apply_delta, digest
 from package_release import SIGNING_SHA256
 from physical_validation_gate import (
@@ -996,14 +996,13 @@ def verify_apk(apk, version):
         names = archive.namelist()
         require(len(set(names)) == len(names), 'Duplicate APK paths')
         bundled = {name for name in names if name.startswith('assets/') and not name.endswith('/')}
-        expected = {}
-        for path in (ROOT / 'web').rglob('*'):
-            relative = path.relative_to(ROOT / 'web')
-            if path.is_file() and not any(p.startswith('.') or p in {'node_modules', '__pycache__'} for p in relative.parts):
-                expected['assets/' + relative.as_posix()] = digest(path)
+        expected = {'assets/' + name: digest(path)
+                    for name, path in distributable_assets(ROOT / 'web').items()}
         manifest = json.loads((ROOT / 'web/analysis/ASSET_MANIFEST.json').read_text())
         for name, data in manifest.items():
-            expected['assets/analysis/' + name] = data['sha256']
+            relative = 'analysis/' + name
+            if not repository_only_asset(relative):
+                expected['assets/' + relative] = data['sha256']
         require(bundled == set(expected), 'APK asset inventory differs from source')
         for name, checksum in expected.items():
             with archive.open(name) as stream:

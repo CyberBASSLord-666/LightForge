@@ -13,6 +13,17 @@ import zipfile
 CHUNK_BYTES = 1024 * 1024
 
 
+def repository_only_asset(relative):
+    """Exact retained research/build inputs that production never loads.
+
+    Keep originals, model pins and notices in Git. All other runtime assets
+    remain in the checked APK inventory; this is not an extension-based filter.
+    """
+    relative = Path(relative)
+    return (relative.parts[:2] == ('preview', 'src')
+            or relative.as_posix() == 'analysis/models/beatnet-v1.onnx')
+
+
 def distributable_assets(directory):
     """Use the same source inventory for staging and APK verification."""
     directory = Path(directory)
@@ -35,6 +46,8 @@ def distributable_assets(directory):
                 or (name.startswith('.env') and name not in {'.env.example', '.env.sample'})
                 or path.suffix.lower() in {'.jks', '.keystore', '.p12', '.pfx', '.key'}):
             raise ValueError('Credential/configuration file cannot enter APK assets: ' + relative.as_posix())
+        if repository_only_asset(relative):
+            continue
         if not any(part.startswith('.') or part in {'node_modules', '__pycache__'} for part in relative.parts):
             assets[relative.as_posix()] = path
     return assets

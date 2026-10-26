@@ -76,7 +76,10 @@ A retained report for an older version does not qualify newer source bytes.
 acceleration and physical phone/Tesla performance remain unestablished.**
 The historical [vocal frontend benchmark](docs/VOCAL_FRONTEND_OPTIMIZATION.md)
 measured about 27% less frontend processing time, excluding model inference and
-complete analysis. Phone thermal/battery behavior and actual vehicle timing
+complete analysis. Current-source [throughput observations](research/throughput-20261026/README.md)
+cover bounded native GAME session reuse, PCM conversion and WAV decoding; they
+retain the slower rejected case and do not establish a whole-analysis speedup.
+Phone thermal/battery behavior and actual vehicle timing
 require their own observations. The retained [phone regression record](research/inference-device-regression-20260928/README.md)
 explains why host gains are not device-performance evidence. Old receipts must
 not be relabelled as current results.

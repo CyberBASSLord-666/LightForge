@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail a build if a bundled model, runtime, notice or adapter is missing/stale."""
+"""Validate all pinned analysis sources, including retained research assets."""
 from pathlib import Path
 import hashlib, json
 
@@ -42,4 +42,4 @@ def verify():
     return len(manifest)
 
 if __name__ == '__main__':
-    print('Verified', verify(), 'bundled analysis assets.')
+    print('Verified', verify(), 'pinned analysis source assets.')

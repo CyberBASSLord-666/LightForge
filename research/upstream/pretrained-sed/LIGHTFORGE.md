@@ -17,3 +17,35 @@ Google YAMNet was implemented and numerically checked first, then rejected for t
 The production WASM model detects eight singing regions in the 60-second Karissa Hobbs mixed folk recording. Separate 60-second instrumental jazz, 14.84-second spoken narration, 30-second snare percussion and ten-second silence fixtures produce no singing regions. These are targeted regression examples, not a broad accuracy benchmark. The supplied Sample track is 238.04 seconds. The uploaded Glass Castle WAV is truncated; its separately decoded recoverable prefix is 121.749 seconds, which is the only portion evaluated. Neither file has hand-annotated singing boundaries, so observed detections are not claimed as ground-truth accuracy.
 
 `qa/release-1.5.0/vocal-reference-verification.json` records ONNX agreement to original PyTorch (maximum absolute score error approximately `1.01e-6`). The production JS frontend agrees with the PyTorch frontend within `8.99e-5` absolute log-mel units. `vocal-inference-verification.json` records actual browser WASM runs. The independent timing/resampler audit checks chunk seams, output coverage, zeros, delay and short tails. Desktop run times do not establish Android performance, and physical Tesla execution has not been tested.
+
+## Current retained source scope and recovery
+
+The retained tree contains the Frame-MN10 exporter, local numerical evaluator,
+architecture, frontend, literal class order, original checkpoint, notices and
+source receipt. It is not a complete upstream training/demo checkout. Five
+optional upstream inputs are omitted from current source:
+
+| Relative path | Bytes | Upstream use |
+| --- | ---: | --- |
+| `hf_dataset_gen/metadata/audioset_train_strong.csv` | 36,221,392 | AudioSet training-dataset reconstruction |
+| `hf_dataset_gen/metadata/audioset_eval_strong.csv` | 5,372,919 | AudioSet evaluation-dataset reconstruction |
+| `resources/eval_durations.csv` | 315,018 | Upstream training/evaluation script |
+| `test_files/752547__iscence__milan_metro_coming_in_station.wav` | 6,614,796 | Optional inference example |
+| `images/downstream_task_results.png` | 75,144 | Upstream README illustration |
+
+These 48,599,269 bytes are not consumed by the LightForge exporter or evaluator:
+the exporter creates seeded reference PCM, while the evaluator uses separately
+prepared LightForge QA vocal fixtures. Both small label maps and the example's Freesound
+attribution remain. The upstream README and source receipt stay unchanged;
+their optional training, evaluation and default-demo instructions describe a
+full upstream checkout. Supply an explicit existing `--audio_file` to the
+upstream inference script, or recover the original inputs with their matching
+source in a separate historical checkout (fetch this revision first in a shallow
+clone):
+
+```bash
+git worktree add --detach ../lightforge-upstream-history e434d3880c47ebe0e951f01aba366181fd091f96
+```
+
+This reduces current checkout data, not model computation or APK runtime work.
+Historical numerical receipts and model hashes are unchanged.

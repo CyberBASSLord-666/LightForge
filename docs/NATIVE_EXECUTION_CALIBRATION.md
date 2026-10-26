@@ -1,6 +1,6 @@
 # Native separation scheduling
 
-## Published 2.4.1 and current unreleased work
+## Current source and historical measurements
 
 The published 2.4.1 release qualified its final source on the host with **32.6%
 lower median complete-passage time** and byte-identical outputs. That historical
@@ -11,9 +11,14 @@ complete cold-session passages or sustained phone behavior.
 
 The subsequent phone run was slower. The [device regression record](../research/inference-device-regression-20260928/README.md)
 separates the observed timings from uncontrolled phone conditions and describes
-the **unreleased** correction. Neither the earlier host proof nor the correction's
-implementation establishes improved phone or whole-song performance. Changed
-sources require fresh evidence before another production release.
+the correction now included in the current source. The later 2.4.2 host
+experiment has a separate input, CPU allocation and qualification scope, recorded
+in [VALIDATION.md](../VALIDATION.md). Neither host result nor the correction's
+implementation establishes improved phone or whole-song performance.
+[version.json](../version.json) owns source identity, while
+[GitHub Releases](https://github.com/CyberBASSLord-666/LightForge/releases) records
+published APK availability. Each release requires fresh evidence for its exact
+source; the historical phone attempts do not describe a current release hold.
 
 ## Preserved execution
 
@@ -97,7 +102,9 @@ workers' qualification.
 
 The [version 2 phone attempts](../research/inference-device-regression-20260928/device-probe-v2-phone-20260929/README.md)
 precede this screening correction and do not validate it. They have not
-established a phone speedup or removed the production release hold.
+established a phone speedup. Their historical release-hold status is preserved
+in the original record; current publication and qualification are governed by
+the [build and release process](../BUILD.md).
 
 Screening, candidate replays, output checks and interrupted probes consume a
 **360-second extra-work budget**. The screen has its own 60-second checkpoint.

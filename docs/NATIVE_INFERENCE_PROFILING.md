@@ -4,10 +4,14 @@
 Deux passage. It never receives audio, paths, job identifiers, exception text,
 model paths, or model payloads.
 
-The [current device-regression correction](../research/inference-device-regression-20260928/README.md)
-is **unreleased**. The published 2.4.1 host speedup remains historical evidence;
-the later phone observations did not reproduce it. These profiling changes do
-not establish an improvement on that phone or a cause for its slowdown.
+The [device-regression record](../research/inference-device-regression-20260928/README.md)
+preserves the historical phone observations and the subsequent correction. The
+current source includes that correction; source version and published APK
+availability are tracked separately in [version.json](../version.json) and
+[GitHub Releases](https://github.com/CyberBASSLord-666/LightForge/releases). The
+2.4.1 host speedup remains historical evidence; the later phone observations did
+not reproduce it. Neither the correction nor later host qualification establishes
+an improvement on that phone or a cause for its slowdown.
 
 The bounded `v2` receipt contains one summary, at most 16 named stage records,
 and at most 27 graph records: `front`, 12 time blocks, 12 frequency blocks, and
@@ -137,5 +141,6 @@ quality evidence and the performance-quality gate. Profiling itself does not sel
 Parallel execution changes batch geometry and scheduling. The historical
 temporal-only candidate used 875 calls; the combined temporal B1/frequency B16
 candidate uses 1,727. Neither is the reference path's 335 calls.
-The historical host qualification does not authorize the unreleased device
-policy. See the [execution contract](NATIVE_EXECUTION_CALIBRATION.md).
+Historical host qualification does not establish phone performance or qualify
+changed source bytes. The current release requires its own source-bound
+verification. See the [execution contract](NATIVE_EXECUTION_CALIBRATION.md).
