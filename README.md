@@ -7,7 +7,7 @@ there is no account, API key, backend or runtime model download.
 
 ## Install
 
-Download the original-signed APK from the [latest published release](https://github.com/CyberBASSLord-666/LightForge/releases/latest).
+Download the original-signed APK from [LightForge 2.4.3](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.4.3).
 **Install over the existing app; do not uninstall first.** A matching update
 preserves private projects. Development and CI APKs use a different identity and
 must not be substituted for the published update.
@@ -56,20 +56,22 @@ diagnostics preserve both kinds of evidence. See
 
 ## Verification and limitations
 
-The published 2.4.2 source uses Android version code **20402**. Its registered
+The 2.4.3 build uses Android version code **20403**. Its qualification replays
+the original 2.4.2 registered
 [bounded host experiment](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40085980189)
-measured **18.8% lower median complete-passage time** (66.459 to 53.952 seconds),
+that measured **18.8% lower median complete-passage time** (66.459 to 53.952 seconds),
 with all eight complete outputs byte-identical. It compared forced four-worker
 execution with a three-thread baseline on the same three assigned CPUs of a
-four-CPU-capacity host, using one original passage. This is not an additional
-18.8% gain over published 2.4.1: its historical 32.6% result and the earlier
-experimental 43.6% result used different conditions.
+four-CPU-capacity host, using one original passage. The replay binds fresh
+candidate source/classes and session evidence; it is not another timing result.
+The 18.8% result is not an additional gain over published 2.4.1: its historical
+32.6% result and the earlier experimental 43.6% result used different conditions.
 
 [Validation](VALIDATION.md) records the immutable evidence and its scope. A host
 experiment does not qualify an APK. For a published download, check the version,
-qualified source, original signing certificate and payload hashes in its
-[verification report](release-verification.json) against the exact
-[GitHub release](https://github.com/CyberBASSLord-666/LightForge/releases).
+qualified source, original signing certificate and payload hashes in the
+[published verification report](https://github.com/CyberBASSLord-666/LightForge/releases/download/v2.4.3/release-verification.json)
+against the [2.4.3 release](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.4.3).
 A retained report for an older version does not qualify newer source bytes.
 
 **Comparative musical quality, a 75% analysis-time reduction, whole-song

@@ -299,13 +299,16 @@ strict [performance-quality gate](docs/PERFORMANCE_QUALITY_GATE.md) retains its
 thresholds. Physical phone/Tesla observations may be absent, but corresponding
 claims must remain explicitly unverified.
 
-The draft [2.4.2 / 20402 declaration](releases/v2.4.2/quality-gate-declaration.json)
-extends that automated-only scope to this exact next-build candidate under the
-owner's continued completion request and removal of external inputs. It does
-not qualify the release or waive the later neural-inference hold: real,
-noticeable, repeatable improvement and all fresh source-bound production,
-actual-model, packaged Android, sealed-evidence and original-signature checks
-remain required. No future version is automatically admitted.
+The [2.4.2 / 20402 declaration](releases/v2.4.2/quality-gate-declaration.json)
+records the earlier next-build policy; its exact published source and original
+bounded-host result are historical records in [VALIDATION](VALIDATION.md).
+The current [2.4.3 / 20403 declaration](releases/v2.4.3/quality-gate-declaration.json)
+continues the exact-version automated-only scope under the owner's updated-APK
+request. It preserves fresh source-bound production, actual-model, packaged
+Android, sealed-evidence, original-signature and qualified-payload requirements.
+The reviewed cross-version replay admits only the unchanged Deux execution
+identity; it does not report a new timing result or a whole-analysis gain.
+No future version is automatically admitted.
 
 `build.sh` additionally requires a passing exact-source inference admission
 before preparing assets or compiling an APK. Under the bounded campaign policy,

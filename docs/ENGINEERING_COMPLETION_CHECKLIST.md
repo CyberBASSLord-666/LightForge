@@ -1,7 +1,7 @@
 # Comprehensive engineering completion checklist
 
-This ledger describes implementation and acceptance boundaries for the **2.4.2 /
-Android 20402** source. It is not a release receipt or a statement that every
+This ledger describes implementation and acceptance boundaries for the **2.4.3 /
+Android 20403** source. It is not a release receipt or a statement that every
 long-term music-intelligence requirement is complete. Read
 [VALIDATION](../VALIDATION.md) for immutable measurements and historical releases;
 check the exact version, source, certificate and payload in
@@ -24,19 +24,24 @@ version or an older receipt does not qualify changed application bytes.
 
 ## Recorded source and verification evidence
 
-**2.4.2 / Android 20402 was published on October 26, 2026.** Its qualified source
-is `e82b149b37acd990e699ab7512e9a0afd67d92cd`.
-[Production run 40095515106, attempt 1](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40095515106)
-passed source-bound host/model/browser and packaged Android emulator gates;
-[publication run 40350553433](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40350553433)
+**2.4.3 / Android 20403 was published on October 26, 2026.** Its qualified
+application source is `300f4e4513cc34cfc0a2febe1cba725a113ca1ab`.
+[Production verification 40389113510, attempt 1](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40389113510)
+passed all nine sealed production and Android receipts.
+[Publication run 40399790514, attempt 1](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40399790514)
 passed original-signature, exact-payload and public-asset verification. Use the
-[release record](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.4.2)
-and its verification report for that exact APK. These results do not qualify
-later maintenance source or establish every capability below.
+[2.4.3 release](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.4.3)
+and its [published verification report](https://github.com/CyberBASSLord-666/LightForge/releases/download/v2.4.3/release-verification.json)
+for that exact APK. [VALIDATION](../VALIDATION.md) records its checksums and
+retains the distinct historical 2.4.2 evidence. These results do not establish
+every capability below or qualify later application-source changes.
 
-The registered host proof measured 18.8186% lower median complete-passage time,
+The original 2.4.2 registered host proof measured 18.8186% lower median
+complete-passage time,
 with eight byte-identical complete outputs. Its conditions, immutable producer
 and comparison limits are recorded once in [VALIDATION](../VALIDATION.md).
+The current consumer replays that original result with exact numerical/class
+identity and fresh candidate/session binding; it does not measure another gain.
 Whole-song acceleration, 75% improvement, general musical-quality non-regression
 and physical phone/Tesla performance remain unestablished. The scoped dependency
 audit and unresolved research declarations remain in
@@ -65,14 +70,14 @@ must stay failed; downstream/decoded-waveform passes are not exact spectral pari
 | Meaningful inference improvement | Registered bounded-host median reduction is 18.8186%, with complete byte-identical outputs under the conditions above. Historical PR56 43.6% and published 2.4.1 32.6% results are separate comparisons, not additive gains. | Measure complete analysis, calibration overhead and representative physical devices before whole-song or phone claims. Never extrapolate stage timing to total analysis. |
 | Release-hold integrity | Fail-closed candidate admission verifies the registered immutable producer proof and its execution closure; host proof is distinct from fresh consumer qualification. | Require exact-source sealed production and packaged Android evidence before publication. A runner label, version bump or host pass cannot bypass remaining gates. |
 | Original Deux qualification | Original assets, full-output comparison and the scoped registered host timing proof are documented in VALIDATION. | Verify their identity for each candidate and complete remaining platform/full-pipeline gates; preserve original weights, graphs, precision and context. No reduced model or fabricated receipt. |
-| Native runtime checks | Fresh Deux checks and GAME native/WASM final-output/checkpoint comparisons passed. GAME produced 98 demo notes and 5 Falcon notes with identical final output; unrounded intermediate differences remain recorded. | Preserve source/model/runtime bindings; host comparisons do not establish packaged Android, corpus accuracy, physical-device performance or whole-job speedup. |
+| Native runtime checks | Fresh 2.4.3 Deux checks and GAME native/WASM final-output/checkpoint comparisons passed. Consult the source-bound receipts for actual note counts and retained unrounded differences. | Preserve source/model/runtime bindings; host comparisons do not establish packaged Android, corpus accuracy, physical-device performance or whole-job speedup. |
 | MDX numerical comparison | Mandatory decoded-waveform comparisons on three fixed inputs and the paired downstream gate passed with current source/model bindings. Internal spectral diagnostic remains false. | Preserve failed spectral diagnostics and existing mandatory thresholds; do not claim bit-identical MDX spectra, full-song accuracy or Android parity from these scoped passes. |
 | Foreground/background analysis | Foreground service, checkpointed stages, cancellation and saving are implemented. The published candidate suspends completed-preview watchdog budgets while the Activity is hidden or unfocused and rejects stale callbacks after resume. Its packaged emulator lifecycle gates passed in the production run above; physical-device behavior remains unmeasured. | Fresh packaged Android tests: screen-off/background completion, Activity recreation, process interruption, cancel/resume, low-memory paths and durable result save. |
 | Completed-project preview | Current source preserves saved arrangements when loading fails, fences superseded opens, and defers legacy Android draw-listener removal until after drawing. Source-bound restore/browser and packaged Android checks passed for the published candidate above; changed application bytes require fresh qualification. | Restore completed and legacy projects; assert first rendered frame, transport/seek, repeated opening, cancellation and current compiled sequence agreement, including API 26-28 and focus loss/resume. |
 | Browser and UI execution | Source-bound browser, actual-model browser and packaged Android emulator evidence passed for the published candidate. Browser layout/export/restore receipts retain their exact scenario and simulated-bridge scope. | Rerun affected diagnostics for changed source; DOM or supplemental diagnostics cannot replace sealed release evidence. Physical device/vehicle observations remain separate. |
 | Physical phone | No fresh physical-phone observations were produced for this assessment. Earlier connector errors are historical, not a current connection diagnosis. | Use only supported, authorized connection routes when available. Physical testing is optional under the applicable version-scoped publication policy, but physical performance claims need observations. |
-| APK/update identity | The published 2.4.2/20402 APK passed original-signature, alignment, checksum and exact qualified-payload verification; use its source-bound release report. | Full exact-source verification, original certificate outside Git, update-compatible install identity, alignment and checksum verification. Never replace the key or uninstall to evade incompatibility. |
-| Release publication | 2.4.2/20402 is published with the matching signed payload, verification report and public assets linked above. | Follow [BUILD](../BUILD.md); verify expected remote source, full CI, qualified signed APK and accessible public assets. Never overwrite a released version or use an older receipt to qualify new bytes. |
+| APK/update identity | The published 2.4.3/20403 APK passed original-signature, alignment, checksum and exact qualified-payload verification; use its source-bound release report. | Full exact-source verification, original certificate outside Git, update-compatible install identity, alignment and checksum verification. Never replace the key or uninstall to evade incompatibility. |
+| Release publication | 2.4.3/20403 is published with the matching signed payload, verification report and public assets linked above. | Follow [BUILD](../BUILD.md); verify expected remote source, full CI, qualified signed APK and accessible public assets. Never overwrite a released version or use an older receipt to qualify new bytes. |
 
 ## Music intelligence and choreography ledger
 
@@ -106,7 +111,7 @@ must stay failed; downstream/decoded-waveform passes are not exact spectral pari
 | Diagnostics | Bounded local diagnostic export and durable job summaries implemented. | Recover after process failure; avoid personal audio, credentials and project payload leakage; disclose incomplete observations. |
 | Dependencies | Reviewed exporter/bootstrap pins and the scoped October 24 audit are recorded above; [dependency security](DEPENDENCY_SECURITY.md) preserves the remediation history and reproducible model-byte result. | Resolve remaining research declarations and assess transitive/native/system components separately. Research model-output parity and universal security clearance are not established by a clean scoped advisory result. |
 | Artifact security | Archive credential/symlink rejection and repository hygiene strengthened. | Final packaging/provenance regression and rendered bundle binding must pass; keep signing secrets and personal files outside artifacts. |
-| Repository/PR integration | PR56 reliability work and PR57/58 remediation are integrated. The registered campaign has a retained terminal proof; PR61 supplies bounded project parsing and consumer setup repairs without changing that proof. | Verify the final protected-main source after all source/documentation changes, preserving history, model notices and failed evidence. PR or local passes alone cannot qualify the merged candidate. |
+| Repository/PR integration | Musical-display refinement, bounded GAME pairing, PCM/rhythm throughput work and source/APK cleanup are integrated. The current release protocol preserves the original registered proof and requires the 2.4.3 Android GAME evidence. | Verify the final protected-main source after all intended application changes, preserving history, model notices and failed evidence. PR or local passes alone cannot qualify the merged candidate; later docs must name the exact published source. |
 
 ## Next safe engineering steps
 

@@ -4,9 +4,44 @@ A repository test, an APK build, a published release and a performance claim are
 different results. Each must identify the source and evidence it actually covers.
 This page is an index, not a replacement for source-bound receipts.
 
-## 2.4.2 source and bounded host evidence
+## Published 2.4.3 record
 
-The source version is **2.4.2 / Android version code 20402**. Publication requires
+[LightForge 2.4.3](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.4.3)
+was published on October 26, 2026 with Android version code **20403** and
+qualified source `300f4e4513cc34cfc0a2febe1cba725a113ca1ab`.
+[Production verification 40389113510, attempt 1](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40389113510)
+passed all nine sealed production and Android receipts.
+[Publication run 40399790514, attempt 1](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40399790514)
+passed original-signature, exact qualified-payload and public-asset verification.
+
+The original-signed APK is **1,203,576,355 bytes**, SHA-256
+`ac10ed56d2c25e00745aca4f164b87ac8a5423c3261e7f24cf4c4526f168fa3d`.
+Its 142 application payload entries match the successful CI candidate; the
+canonical payload digest is
+`9165ce02ba9a26c05c8e3cf55a66547cdf751abf3227de8817af801df1daa112`.
+The [publisher-derived public report](https://github.com/CyberBASSLord-666/LightForge/releases/download/v2.4.3/release-verification.json)
+is mirrored byte-for-byte in [release-verification.json](release-verification.json):
+2,032,184 bytes, SHA-256
+`2c2a94b64e06ac244a762aa21659080b4c7e7f3ae95ca5b8c459fb4c9595ecf9`.
+
+The [2.4.3 declaration](releases/v2.4.3/quality-gate-declaration.json) retains
+fresh production, actual-model, browser, packaged Android, original-signature
+and exact-payload requirements. External corpus, human-review and physical
+observations remain optional and unverified in this report. Publication does
+not establish a general musical-quality, whole-analysis or physical-device claim.
+
+The [reviewed replay policy](tools/inference_replay_policy.json) reuses the
+original 2.4.2 host result only after the unchanged Deux numerical sources,
+models, runtime and freshly compiled class inventory match. Its historical
+source view preserves the original 27-file closure; the current projection
+declares only version metadata and the pinned verification entrypoint as
+differences, with the other 25 files exact. Fresh candidate/session admission
+does not create a new timing result or add another 18.8% gain.
+
+## Original 2.4.2 bounded host evidence
+
+The original measurement source used **2.4.2 / Android version code 20402**.
+Its publication required
 fresh exact-source production, actual-model, browser and packaged Android gates,
 original update signing and exact qualified-payload integrity. The version's
 [automated-verification policy](releases/v2.4.2/quality-gate-declaration.json)

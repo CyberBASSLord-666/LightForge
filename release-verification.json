@@ -10629,9 +10629,18 @@
   "vehicle_test": "NOT PERFORMED",
   "browser_scope": "Chromium with actual workers/WebGL and a simulated Android bridge.",
   "physical_validation": {
+    "schema_version": 1,
     "requirement": "optional",
     "status": "unverified",
-    "reason": "No signed physical phone or Tesla observations supplied."
+    "reason": "No signed physical phone or Tesla observations supplied.",
+    "release": {
+      "name": "2.4.3",
+      "code": 20403
+    },
+    "source": {
+      "commit": "300f4e4513cc34cfc0a2febe1cba725a113ca1ab",
+      "tree_sha": "3964809c8c56c927e5f52ef9a39b4aa4c8238219"
+    }
   },
   "qualified_source": {
     "commit": "300f4e4513cc34cfc0a2febe1cba725a113ca1ab",
@@ -26190,5 +26199,33 @@
     "uncompressed_bytes": 1637217674,
     "canonicalization": "UTF-8 JSON: sorted keys, compact separators, ensure_ascii=False, allow_nan=False",
     "scope": "Application ZIP entries from maintained apk_payload_manifest, excluding signer metadata. The packaged original-signed payload was compared with the verified CI candidate payload."
+  },
+  "quality_gate": {
+    "requirement": "automated_verification_only",
+    "classification": "performance",
+    "reason": "The owner requested completion of the remaining PRs and a fully updated APK for this exact version only, continuing the authorized removal of external qualification inputs and optional physical validation. Fresh source-bound production, actual-model and packaged Android verification, sealed same-session evidence, original signing identity and exact qualified payload integrity remain mandatory. The existing original-model Deux host improvement may be replayed only after unchanged numerical sources, models, runtime and compiled classes are established; this is not a new timing measurement. External corpus measurements, blinded human reviews and physical-device observations are optional. This creates no PASS_TARGET provenance and does not relax the separate strict performance-quality gate. General musical-quality non-regression, 75% whole-analysis reduction and physical phone/Tesla performance, energy and thermal behavior remain unverified.",
+    "scope": {
+      "schema_version": 1,
+      "kind": "lightforge-release-scope",
+      "base_release": null,
+      "source": {
+        "commit": "300f4e4513cc34cfc0a2febe1cba725a113ca1ab",
+        "tree_sha": "3964809c8c56c927e5f52ef9a39b4aa4c8238219"
+      },
+      "release": {
+        "name": "2.4.3",
+        "code": 20403
+      },
+      "changes": [],
+      "classification": "performance",
+      "waiver_blocker": "unavailable_or_unverifiable_published_baseline",
+      "sha256": "4fb720bb6d59499813eed2f29f106a9f4a50f89a2e7b64e5711bb1a17d542239"
+    },
+    "qualification_status": "unverified",
+    "comparative_performance": "unverified",
+    "performance_target_75_percent_reduction": "unverified",
+    "musical_quality_non_regression": "unverified",
+    "blinded_human_review": "unverified",
+    "hardware_energy_and_thermal_measurements": "unverified"
   }
 }
