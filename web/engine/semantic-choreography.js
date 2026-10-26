@@ -141,11 +141,14 @@
         // vocal/bass attack merely because its salience tier is secondary.
         semanticTargetAttack:link.role===candidate.role&&['vocals','bass'].includes(candidate.role)&&finite(candidate.sourceConfidence)&&candidate.sourceConfidence>0&&candidate.sourceConfidence<=1&&Math.abs(musicTime-link.musicTime)<=1e-6&&
           (candidate.role==='bass'||candidate.sourceSeparated===true),
+        // The selected beat backbone is not decorative density. Preserve its
+        // original grid identity even when the planner snaps to a nearby onset.
+        semanticRhythmAttack:link.role==='rhythm'&&finite(candidate.rhythmAnchorTime)&&Math.abs(candidate.rhythmAnchorTime-link.musicTime)<=1e-6,
         priority:(finite(candidate.priority)?candidate.priority:0)+boost
       });
     }
     function lowAuthority(candidate){
-      return candidate&&!candidate.manual&&candidate.semanticTargetAttack!==true&&Object.hasOwn(TIER_INDEX,candidate.semanticTier)&&TIER_INDEX[candidate.semanticTier]<=TIER_INDEX.secondary;
+      return candidate&&!candidate.manual&&candidate.semanticTargetAttack!==true&&candidate.semanticRhythmAttack!==true&&Object.hasOwn(TIER_INDEX,candidate.semanticTier)&&TIER_INDEX[candidate.semanticTier]<=TIER_INDEX.secondary;
     }
     function candidateMusicTime(candidate){
       return finite(candidate?.sourceEventTime)?candidate.sourceEventTime:finite(candidate?.musicTime)?candidate.musicTime:null;
@@ -192,7 +195,7 @@
       return {candidates:original.filter((_,index)=>!rejected.has(index)),diagnostics:{
         schemaVersion:1,requested:true,active:true,reason:null,targetCount:state.targetCount,linkedTargetCount:state.links.length,
         targetTierCounts:state.tierTargets,hierarchy:{matchedCandidateCount:state.hierarchyMatchedCandidateCount,boostedCandidateCount:state.hierarchyBoostedCandidateCount},
-        density:{windowSeconds:densityWindowSeconds,windowBasis:rhythmAvailable?'bounded-local-two-beat':'fixed-seconds',localBeatCount:rhythmAvailable?beats.length:0,windowBoundsSeconds:rhythmAvailable?[.3,2.4]:[densityWindowSeconds,densityWindowSeconds],maxLowAuthorityGroups:2,protectedTargetCandidateCount:original.filter(candidate=>candidate?.semanticTargetAttack===true).length,candidateGroupCount:groups.size,suppressedGroupCount:densitySuppressedGroupCount,suppressedCandidateCount:densitySuppressedCandidateCount},
+        density:{windowSeconds:densityWindowSeconds,windowBasis:rhythmAvailable?'bounded-local-two-beat':'fixed-seconds',localBeatCount:rhythmAvailable?beats.length:0,windowBoundsSeconds:rhythmAvailable?[.3,2.4]:[densityWindowSeconds,densityWindowSeconds],maxLowAuthorityGroups:2,protectedTargetCandidateCount:original.filter(candidate=>candidate?.semanticTargetAttack===true).length,protectedRhythmCandidateCount:original.filter(candidate=>candidate?.semanticRhythmAttack===true).length,candidateGroupCount:groups.size,suppressedGroupCount:densitySuppressedGroupCount,suppressedCandidateCount:densitySuppressedCandidateCount},
         negativeSpace:{windowCount:windows.length,windows:windows.slice(0,128),truncatedWindowCount:Math.max(0,windows.length-128),anchorTierCounts:tierAnchors,suppressedCandidateCount:negativeSpaceSuppressedCandidateCount},
         scope:'Opt-in scheduling uses only validated semantic target links. It does not establish music-detection accuracy or perceptual quality.'
       }};

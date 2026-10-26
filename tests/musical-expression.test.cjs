@@ -10,13 +10,13 @@ function fixture(){
   vocals:{available:true,presence:'detected',source:'separated-vocals',sourceSeparated:true,confidence:.94,phrases:[{start:1,end:4,releaseTime:3.8,confidence:.94,strength:.9,kind:'singing'}],notes:[{start:1.5,end:2.8,midi:60,confidence:.92,strength:.88},{start:3,end:3.7,midi:67,confidence:.92,strength:.88}],accents:[{time:1.2,kind:'syllabic-accent',confidence:.95,strength:.97,source:'separated-vocals'}],pitchContour:{step:.04,midi:[],confidence:[]},envelope:[],envelopeStep:.02},
   bassNotes:[{start:2,end:2.8,confidence:.96,strength:.94,midi:40}],bassAnalysis:{confidence:.96,phrases:[{start:2,end:2.8,confidence:.96,strength:.94}]}};
 }
-function harness(saved){
+function harness(saved,analysis=fixture){
  const dom=new JSDOM(fs.readFileSync(path.join(root,'web/index.html'),'utf8'),{url:'https://lightforge.test/',runScripts:'outside-only'}),w=dom.window,d=w.document,calls=[];
  w.scrollTo=()=>{};w.requestAnimationFrame=()=>0;w.cancelAnimationFrame=()=>{};w.matchMedia=()=>({matches:true,addEventListener(){}});w.HTMLMediaElement.prototype.pause=function(){};w.HTMLMediaElement.prototype.load=function(){};Object.defineProperty(w.HTMLMediaElement.prototype,'readyState',{get:()=>4});
  w.VehiclePreview=class{render(){}setCamera(){}setStage(){}setQuality(){}resize(){}};
  Object.assign(w,{LightForgeVersion:require('../web/version.js'),ShowEngine:Engine,VehicleProfile:require('../web/engine/vehicle-profile.js'),MusicCues:require('../web/engine/music-cues.js'),LightForgeSemanticTimeline:Timeline,LightForgeMusicSalience:Salience,LightForgeVocalSemantics:Vocal,LightForgeRecurrence:Recurrence});
  w.ShowCompiler={generate:(music,settings)=>runWorker(path.join(root,'web/engine'),{action:'generate',music,settings}),restore:(compiled,music,settings)=>runWorker(path.join(root,'web/engine'),{action:'restore',compiled,music,settings})};
- w.MusicAnalyzer={analyze:async(_url,options)=>{calls.push(options);return fixture();}};
+ w.MusicAnalyzer={analyze:async(_url,options)=>{calls.push(options);return analysis();}};
  w.Android={pickAudio(){},getBootstrap:()=>JSON.stringify({projects:[]}),saveProject:()=>true};w.fetch=async()=>({ok:true,json:async()=>structuredClone(saved)});
  w.eval(fs.readFileSync(path.join(root,'web/app.js'),'utf8'));
  return {dom,w,d,calls,app:w.LightForgeApp};
@@ -73,5 +73,28 @@ test('optional recurrence limits leave completed vocal evidence usable without a
   const toggle=h.d.getElementById('musicalExpression');toggle.checked=true;await toggle.onchange();
   assert.equal(h.calls.length,0);assert.equal(h.app.state.needAnalysis,false);assert.equal(h.app.state.show.validation.valid,true);assert.equal(h.app.state.show.choreography.vocalChoreography.active,true);
   assert.equal(h.app.state.music.recurrenceAnalysis.enabled,false);assert.equal(h.app.state.show.choreography.motifEvolution.active,false);assert.equal(h.app.state.music.recurrenceSidecar,undefined);
+ }finally{h.w.close();}
+});
+
+test('new-project recommended settings activate instrumental hierarchy and preserve explicit expression opt-out',async()=>{
+ // Real analyzer output includes validated semantic sidecars; no neural model is run here.
+ const instrumental=()=>{const music=fixture();delete music.vocals;delete music.bassNotes;delete music.bassAnalysis;music.semanticTimeline=Timeline.build(music);music.musicSalience=Salience.build(music.semanticTimeline);return music;};
+ const h=harness(undefined,instrumental);
+ try{
+  await h.app.selectProject({id:'new-instrumental',duration:24,audioUrl:'instrumental.wav'},true);
+  for(const key of expressionKeys)assert.equal(h.app.state.settings[key],true,'actual app default '+key);
+  await h.app.generate();
+  const active=h.app.state.show;
+  assert.equal(h.calls.length,1);assert.equal(active.validation.valid,true);
+  assert.equal(active.choreography.semanticStrategy.active,true);
+  assert.ok(active.choreography.semanticStrategy.hierarchy.boostedCandidateCount>0);
+  assert.equal(active.stats.vocalCues,0);assert.equal(active.stats.bassNoteCues,0);
+  const toggle=h.d.getElementById('musicalExpression');toggle.checked=false;await toggle.onchange();
+  for(const key of expressionKeys)assert.equal(h.app.state.settings[key],false,'explicit opt-out '+key);
+  assert.notEqual(h.app.state.show.choreography.semanticStrategy?.active,true);
+  const legacyFrames=h.app.state.show.frames.slice();
+  toggle.checked=true;await toggle.onchange();toggle.checked=false;await toggle.onchange();
+  assert.deepEqual(Array.from(h.app.state.show.frames),Array.from(legacyFrames));
+  assert.equal(h.calls.length,1,'toggle reuses analyzed evidence rather than rerunning models');
  }finally{h.w.close();}
 });

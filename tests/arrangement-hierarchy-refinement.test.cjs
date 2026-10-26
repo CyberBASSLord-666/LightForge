@@ -41,3 +41,23 @@ for(const stepMs of [15,20])test('automatic ramps allow at least 50 ms at both e
   assert.ok((cue.b-pivot)*step>=cue.fade+.05-1e-8,JSON.stringify(cue));
  }
 });
+
+test('recorded pulse passages retain beat attacks instead of turning accents into density gaps',()=>{
+ const fs=require('node:fs'),path=require('node:path');
+ const cases=[
+  ['qa/music-1.3.0/current-demo-music.json',[[30.445,['left-inner','right-inner','left-signature','right-tail']]]],
+  ['qa/music-1.3.0/current-sample-music.json',[[64.445,['left-inner','right-inner','brakes','right-outer','right-combined','right-tail']],[192.115,['left-outer','right-outer','left-tail','right-tail','right-signature']]]],
+  ['qa/release-1.6.0/actual-music-user-glass-prefix64-analysis.json',[[30.305,['left-tail','right-tail']]]]
+ ];
+ for(const [file,anchors]of cases)for(const stepMs of [15,20]){
+  const music=enrich(JSON.parse(fs.readFileSync(path.join(__dirname,'..',file))));
+  const show=Engine.generate(music,{style:'pulse',stepMs,seed:2025,dance:'expressive',semanticChoreography:true,vocalChoreography:true});
+  assert.equal(show.validation.valid,true);
+  for(const [time,ids]of anchors)for(const id of ids){
+   const cue=show.lightEvents.find(e=>e.id===id&&e.kind==='beat pulse'&&Math.abs(e.musicTime-time)<1e-6);
+   assert.ok(cue,`${file} ${stepMs}ms ${time}s ${id} beat must survive`);
+   assert.equal(cue.semanticRhythmAttack,true);
+   assert.ok(Math.abs(cue.actualStart-time)*1000<=stepMs/2+1e-6,'retain nearest-frame source anchor');
+  }
+ }
+});

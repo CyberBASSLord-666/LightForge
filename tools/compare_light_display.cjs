@@ -28,6 +28,9 @@ if(process.argv[2]==='--capture'){
     negativeSpaceWindows:strategy?.negativeSpace?.windowCount||0,lowAuthoritySuppressed:(strategy?.density?.suppressedCandidateCount||0)+(strategy?.negativeSpace?.suppressedCandidateCount||0),
     acceptedLightCues:events.length,vocalCues:show.stats.vocalCues,bassCues:show.stats.bassNoteCues,
     vocalAttacks:events.filter(e=>e.role==='vocals').map(e=>[e.id,e.sourceEventTime,e.actualStart]),bassAttacks:events.filter(e=>e.role==='bass').map(e=>[e.id,e.sourceEventTime,e.actualStart]),
+    rhythmAttacks:events.filter(e=>['beat pulse','bar entrance','bar response','phrase motif','phrase turnaround','quiet downbeat','bar marker','musical impact'].includes(e.kind)).map(e=>[e.id,e.kind,e.musicTime,e.actualStart]),
+    darkRecoveryMs:show.choreography.quality?.negativeSpace?.totalObservedDurationMs??null,
+    sampledTransitions:show.choreography.quality?.density?.sampledTransitionCount??null,
     quantizationMaxMs:show.stats.lightQuantizationMaxMs,automaticFullRamps:ramps.length,shortFullRamps,
     synchronization:show.synchronization.summary,quality:show.choreography.quality.summary||null});
   }
@@ -40,7 +43,10 @@ if(process.argv[2]==='--capture'){
  const before=capture(baseline),after=capture(candidate);
  const rows=after.map((row,index)=>{const old=before[index];if(old.fixtureSha256!==row.fixtureSha256||old.style!==row.style||old.stepMs!==row.stepMs)throw new Error('Mismatched comparison inputs');
   const beforeAttacks=new Set(old.vocalAttacks.concat(old.bassAttacks).map(JSON.stringify)),afterAttacks=new Set(row.vocalAttacks.concat(row.bassAttacks).map(JSON.stringify));
-  return {baseline:old,candidate:row,removedSourceOutputAttacks:[...beforeAttacks].filter(x=>!afterAttacks.has(x)).map(JSON.parse),addedSourceOutputAttacks:[...afterAttacks].filter(x=>!beforeAttacks.has(x)).map(JSON.parse)};
+  const oldRhythm=new Set(old.rhythmAttacks.map(JSON.stringify)),newRhythm=new Set(row.rhythmAttacks.map(JSON.stringify));
+  return {removedRhythmOutputAttacks:[...oldRhythm].filter(x=>!newRhythm.has(x)).map(JSON.parse),baseline:old,candidate:row,removedSourceOutputAttacks:[...beforeAttacks].filter(x=>!afterAttacks.has(x)).map(JSON.parse),addedSourceOutputAttacks:[...afterAttacks].filter(x=>!beforeAttacks.has(x)).map(JSON.parse)};
  });
- console.log(JSON.stringify({schema:'lightforge.display-comparison.v1',scope:'Paired deterministic digital composition of five unchanged recorded-analysis snapshots, three styles, 15/20 ms. No new neural inference, annotated detector accuracy, listener preference, Android or physical vehicle claim.',baselineCommit:execFileSync('git',['-C',baseline,'rev-parse','HEAD'],{encoding:'utf8'}).trim(),candidateBaseCommit:execFileSync('git',['-C',candidate,'rev-parse','HEAD'],{encoding:'utf8'}).trim(),sourceHashes:Object.fromEntries(['show-engine.js','light-planner.js','semantic-choreography.js'].map(file=>[file,sha(fs.readFileSync(path.join(candidate,'web/engine',file)))])),rows},null,2));
+ const passed=rows.every(row=>row.candidate.valid&&row.removedSourceOutputAttacks.length===0&&row.removedRhythmOutputAttacks.length===0&&row.candidate.shortFullRamps===0);
+ if(!passed)process.exitCode=1;
+ console.log(JSON.stringify({passed,schema:'lightforge.display-comparison.v1',scope:'Paired deterministic digital composition of five unchanged recorded-analysis snapshots, three styles, 15/20 ms. No new neural inference, annotated detector accuracy, listener preference, Android or physical vehicle claim.',baselineCommit:execFileSync('git',['-C',baseline,'rev-parse','HEAD'],{encoding:'utf8'}).trim(),candidateBaseCommit:execFileSync('git',['-C',candidate,'rev-parse','HEAD'],{encoding:'utf8'}).trim(),sourceHashes:Object.fromEntries(['show-engine.js','light-planner.js','semantic-choreography.js'].map(file=>[file,sha(fs.readFileSync(path.join(candidate,'web/engine',file)))])),rows},null,2));
 }

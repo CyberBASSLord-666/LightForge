@@ -227,7 +227,11 @@ ramps remain valid.
 
 Opt-in semantic choreography links explicit source roles (including instrumental
 rhythm/mix/structure) and budgets low-authority decoration over bounded two-beat
-local intervals. Missing/invalid beat grids retain the fixed-window fallback.
+local intervals. Verified beat-loop anchors are protected from decorative
+density and receive physical allocation before optional mix/onset decoration
+or anticipation fades, but after manual/source vocal+bass/actual structural
+impacts and movement arrivals. Missing/invalid beat grids retain the fixed-window
+fallback; disabled/unlinked semantic strategy preserves prior ordering.
 Explicit vehicle timing calibration now informs closure preview and validation,
 not only planning; preview caches use trajectory schema 2. This is a response
 model, not measured vehicle motion. See `docs/LIGHT_DISPLAY_REFINEMENT.md` for

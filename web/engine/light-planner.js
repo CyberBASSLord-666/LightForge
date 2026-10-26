@@ -250,24 +250,25 @@
         const section=ctx.sectionAt(beat),phrase=Math.max(0,ctx.phraseAt(beat)-ctx.phraseAt(section.start)),baseBeat=Math.min(m.beats.length-1,lower(m.beats,section.start)),localBar=Math.max(0,bar-ctx.beatInfo(baseBeat).bar);
         const variant=(scene.variant+Math.floor(phrase/2))%6,quiet=energy<.29||(scene.style==='cinematic'&&energy<.59);
         const t=snap(beat,slot===0?'bass':'mid',Math.min(.035,period*.06));
+        const beatAnchor={semanticRole:'rhythm',rhythmAnchorTime:beat};
         const width=clamp(period*(.19+.17*power+.014*variant),.10,quiet?.30:.34),side=(slot+localBar+variant)%2===0;
         if(quiet){
           if(slot===0){
             breathe(variant%3===0?['left-signature','right-signature']:side?['left-signature','right-inner']:['right-signature','left-inner'],t,period*ctx.meter,14);
             if(localBar%2===1)breathe(side?['left-inner','left-combined']:['right-inner','right-combined'],t,period*ctx.meter,11);
-            if(energy>.12)flash(variant%2?['left-tail','right-tail','license-plate']:side?['left-tail','license-plate']:['right-tail','license-plate'],t,.18+.018*variant,22,'quiet downbeat');
+            if(energy>.12)flash(variant%2?['left-tail','right-tail','license-plate']:side?['left-tail','license-plate']:['right-tail','license-plate'],t,.18+.018*variant,22,'quiet downbeat',1,false,beatAnchor);
           }
           continue;
         }
         const priority=slot===0?44:30,lead=separatedVoice&&vocalFocus>=.55&&ctx.vocalAt(beat),leadSupport=ids=>lead?ids.filter(id=>!['left-signature','right-signature'].includes(id)&&(lead.confidence<.55||!['left-inner','right-inner'].includes(id))):ids;
         if(scene.style==='cinematic'){
-          if(slot===0){flash(leadSupport(WHITE),t,.25+power*.12+variant*.012,45,'bar entrance');if(!lead)breathe(variant%2?['left-signature','right-inner']:['right-signature','left-inner'],t,period*ctx.meter,10);}
-          else if(slot===ctx.meter-1)flash((variant<3?REAR:side?LEFT:RIGHT).concat(side?AMBER_L:AMBER_R),t,width,30,'bar response');
-          else if(energy>.8&&localBar%4===3&&slot===1)flash(variant%2?['left-combined','right-tail']:['right-combined','left-tail'],t,width*.8,23,'phrase turnaround');
+          if(slot===0){flash(leadSupport(WHITE),t,.25+power*.12+variant*.012,45,'bar entrance',1,false,beatAnchor);if(!lead)breathe(variant%2?['left-signature','right-inner']:['right-signature','left-inner'],t,period*ctx.meter,10);}
+          else if(slot===ctx.meter-1)flash((variant<3?REAR:side?LEFT:RIGHT).concat(side?AMBER_L:AMBER_R),t,width,30,'bar response',1,false,beatAnchor);
+          else if(energy>.8&&localBar%4===3&&slot===1)flash(variant%2?['left-combined','right-tail']:['right-combined','left-tail'],t,width*.8,23,'phrase turnaround',1,false,beatAnchor);
         }else if(scene.style==='pulse'){
           const core=slot===0?WHITE:slot%2?['left-inner','right-inner','brakes']:['left-outer','right-outer','left-tail','right-tail'];
           const ornament=variant===0?[]:variant===1?(side?AMBER_L:AMBER_R):variant===2?(side?['left-combined']:['right-combined']):variant===3?(slot%2?REAR:FRONT):variant===4?(side?LEFT:RIGHT):(side?['left-signature','right-tail']:['right-signature','left-tail']);
-          flash(leadSupport(core.concat(ornament)),t,lead?Math.min(width,.18):width,priority,'beat pulse');
+          flash(leadSupport(core.concat(ornament)),t,lead?Math.min(width,.18):width,priority,'beat pulse',1,false,beatAnchor);
         }else{
           let route;
           if(variant===0)route=slot%2?REAR:FRONT;
@@ -276,10 +277,10 @@
           else if(variant===3)route=slot===0?WHITE:slot%2?['left-inner','right-inner','brakes']:['left-outer','right-outer','left-tail','right-tail'];
           else if(variant===4)route=[LEFT.slice(0,3),RIGHT.slice(0,3),['right-tail','right-rear-turn'],['left-tail','left-rear-turn']][slot%4];
           else route=slot===0?WHITE:slot%2?LEFT.concat(AMBER_R):RIGHT.concat(AMBER_L);
-          if(power>=.42||slot===0||slot===ctx.meter-1)flash(leadSupport(route),t,lead?Math.min(width,.18):width,priority,'phrase motif');
+          if(power>=.42||slot===0||slot===ctx.meter-1)flash(leadSupport(route),t,lead?Math.min(width,.18):width,priority,'phrase motif',1,false,beatAnchor);
         }
         if(slot===0){
-          flash(['park-markers','license-plate'],t,Math.max(.16,width),32,'bar marker');
+          flash(['park-markers','license-plate'],t,Math.max(.16,width),32,'bar marker',1,false,beatAnchor);
           if(localBar%2===0&&!lead)breathe(['left-signature','right-signature'],t,period*ctx.meter,9);
           if(s.outerBeamRamping&&localBar%2===1&&t>=.5)add([localBar%4===1?'left-outer':'right-outer'],t-.5,1.12,48,'outer beam phrase fade',.7,.5);
         }
@@ -341,7 +342,12 @@
     const semanticDecision=semanticState&&typeof semanticStrategy.filterCandidates==='function'?semanticStrategy.filterCandidates(candidates,semanticState):null;
     const scheduledCandidates=semanticDecision&&Array.isArray(semanticDecision.candidates)?semanticDecision.candidates:candidates;
     timing?.end(token,{scope});scope='light-allocation-and-collision-rescue';token=timing?.begin('performance.collision_resolution');
-    scheduledCandidates.sort((a,b)=>b.priority-a.priority||b.strength-a.strength||a.start-b.start||a.serial-b.serial);
+    // Source-led gestures and actual structural arrivals outrank the measured
+    // beat backbone; decorations (including anticipatory fades) use what is left.
+    // A mix onset must not erase a selected beat merely through a salience boost.
+    // Keep the disabled/unlinked strategy's historical ordering byte-for-byte.
+    const allocationBand=cue=>!semanticDecision?.diagnostics?.active?0:cue.manual||cue.role==='vocals'||cue.role==='bass'||cue.kind==='musical impact'||cue.kind==='movement arrival'?2:cue.semanticRhythmAttack?1:0;
+    scheduledCandidates.sort((a,b)=>allocationBand(b)-allocationBand(a)||b.priority-a.priority||b.strength-a.strength||a.start-b.start||a.serial-b.serial);
     const collisionGroups=new Map(),groupBySerial=new Map();
     const normalizeKind=value=>String(value||'event').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'')||'event';
     const highSalience=cue=>{

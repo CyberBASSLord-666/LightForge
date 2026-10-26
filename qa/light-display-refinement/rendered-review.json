@@ -1,0 +1,433 @@
+{
+  "scope": "Independent digital-preview samples and actual app recommended defaults. No new audio inference, physical test or listener preference claim. Dark recovery counts observed inactive visual-output runs at least250ms using existing quality diagnostics. Initial candidate had pulse anchor losses; these are FINAL corrected-output results.",
+  "baseline": "e82b149b37acd990e699ab7512e9a0afd67d92cd",
+  "sourceHashes": {
+    "show-engine.js": "efd76c7a067a7f1ebef69bdd7966a12cc90316aab31685157cd870016632e88c",
+    "light-planner.js": "6d15657a5c390aec015f38aa781542bb913294bc72a5d9713c22fc90b2e6849b",
+    "semantic-choreography.js": "a4178720a035a79bd4ede23204e56a5d7577866dd3995936f4aaaa0fa8628e24"
+  },
+  "recordedThreeStyles20ms": [
+    {
+      "fixture": "current-demo-music.json",
+      "style": "festival",
+      "cues": [
+        1782,
+        1458
+      ],
+      "lostAnchors": [],
+      "darkMs": [
+        0,
+        1599.9999999999977
+      ],
+      "transitions": [
+        5251,
+        4674
+      ],
+      "conflicts": 0,
+      "exteriorActive": [
+        0.8240625,
+        0.7496875
+      ]
+    },
+    {
+      "fixture": "current-demo-music.json",
+      "style": "cinematic",
+      "cues": [
+        1418,
+        1311
+      ],
+      "lostAnchors": [],
+      "darkMs": [
+        2300.0000000000045,
+        3000
+      ],
+      "transitions": [
+        3981,
+        3749
+      ],
+      "conflicts": 0,
+      "exteriorActive": [
+        0.61375,
+        0.544375
+      ]
+    },
+    {
+      "fixture": "current-demo-music.json",
+      "style": "pulse",
+      "cues": [
+        1797,
+        1602
+      ],
+      "lostAnchors": [],
+      "darkMs": [
+        700.0000000000028,
+        2599.9999999999977
+      ],
+      "transitions": [
+        5281,
+        4954
+      ],
+      "conflicts": 0,
+      "exteriorActive": [
+        0.746875,
+        0.68125
+      ]
+    },
+    {
+      "fixture": "current-sample-music.json",
+      "style": "festival",
+      "cues": [
+        6231,
+        5143
+      ],
+      "lostAnchors": [],
+      "darkMs": [
+        10139.999999999975,
+        14439.999999999985
+      ],
+      "transitions": [
+        18413,
+        16386
+      ],
+      "conflicts": 0,
+      "exteriorActive": [
+        0.7881868593513696,
+        0.7301293900184843
+      ]
+    },
+    {
+      "fixture": "current-sample-music.json",
+      "style": "cinematic",
+      "cues": [
+        4709,
+        4435
+      ],
+      "lostAnchors": [],
+      "darkMs": [
+        9639.999999999956,
+        15039.999999999949
+      ],
+      "transitions": [
+        13712,
+        13120
+      ],
+      "conflicts": 0,
+      "exteriorActive": [
+        0.6350193244832801,
+        0.5671315745252898
+      ]
+    },
+    {
+      "fixture": "current-sample-music.json",
+      "style": "pulse",
+      "cues": [
+        6224,
+        5515
+      ],
+      "lostAnchors": [],
+      "darkMs": [
+        10939.99999999997,
+        14839.999999999958
+      ],
+      "transitions": [
+        18393,
+        17112
+      ],
+      "conflicts": 0,
+      "exteriorActive": [
+        0.7369349689127878,
+        0.6848428835489834
+      ]
+    },
+    {
+      "fixture": "actual-music-user-glass-prefix64-analysis.json",
+      "style": "festival",
+      "cues": [
+        1569,
+        1477
+      ],
+      "lostAnchors": [],
+      "darkMs": [
+        1699.9999999999982,
+        2699.999999999998
+      ],
+      "transitions": [
+        4294,
+        4136
+      ],
+      "conflicts": 0,
+      "exteriorActive": [
+        0.885625,
+        0.8646875
+      ]
+    },
+    {
+      "fixture": "actual-music-user-glass-prefix64-analysis.json",
+      "style": "cinematic",
+      "cues": [
+        1208,
+        1199
+      ],
+      "lostAnchors": [],
+      "darkMs": [
+        1999.9999999999995,
+        2099.9999999999995
+      ],
+      "transitions": [
+        3312,
+        3307
+      ],
+      "conflicts": 0,
+      "exteriorActive": [
+        0.8365625,
+        0.8365625
+      ]
+    },
+    {
+      "fixture": "actual-music-user-glass-prefix64-analysis.json",
+      "style": "pulse",
+      "cues": [
+        1507,
+        1445
+      ],
+      "lostAnchors": [],
+      "darkMs": [
+        1699.9999999999982,
+        2099.9999999999986
+      ],
+      "transitions": [
+        4169,
+        4071
+      ],
+      "conflicts": 0,
+      "exteriorActive": [
+        0.8703125,
+        0.86875
+      ]
+    },
+    {
+      "fixture": "actual-music-nightowl-mix-analysis.json",
+      "style": "festival",
+      "cues": [
+        227,
+        190
+      ],
+      "lostAnchors": [],
+      "darkMs": [
+        0,
+        0
+      ],
+      "transitions": [
+        614,
+        538
+      ],
+      "conflicts": 0,
+      "exteriorActive": [
+        0.9208211143695014,
+        0.8826979472140762
+      ]
+    },
+    {
+      "fixture": "actual-music-nightowl-mix-analysis.json",
+      "style": "cinematic",
+      "cues": [
+        183,
+        180
+      ],
+      "lostAnchors": [],
+      "darkMs": [
+        0,
+        0
+      ],
+      "transitions": [
+        495,
+        491
+      ],
+      "conflicts": 0,
+      "exteriorActive": [
+        0.9032258064516129,
+        0.8973607038123167
+      ]
+    },
+    {
+      "fixture": "actual-music-nightowl-mix-analysis.json",
+      "style": "pulse",
+      "cues": [
+        235,
+        224
+      ],
+      "lostAnchors": [],
+      "darkMs": [
+        0,
+        0
+      ],
+      "transitions": [
+        630,
+        604
+      ],
+      "conflicts": 0,
+      "exteriorActive": [
+        0.9149560117302052,
+        0.9032258064516129
+      ]
+    },
+    {
+      "fixture": "actual-music-falcon-mix-analysis.json",
+      "style": "festival",
+      "cues": [
+        195,
+        181
+      ],
+      "lostAnchors": [],
+      "darkMs": [
+        0,
+        300
+      ],
+      "transitions": [
+        591,
+        556
+      ],
+      "conflicts": 0,
+      "exteriorActive": [
+        0.9090909090909091,
+        0.8797653958944281
+      ]
+    },
+    {
+      "fixture": "actual-music-falcon-mix-analysis.json",
+      "style": "cinematic",
+      "cues": [
+        158,
+        155
+      ],
+      "lostAnchors": [],
+      "darkMs": [
+        0,
+        0
+      ],
+      "transitions": [
+        459,
+        453
+      ],
+      "conflicts": 0,
+      "exteriorActive": [
+        0.8269794721407625,
+        0.8269794721407625
+      ]
+    },
+    {
+      "fixture": "actual-music-falcon-mix-analysis.json",
+      "style": "pulse",
+      "cues": [
+        190,
+        183
+      ],
+      "lostAnchors": [],
+      "darkMs": [
+        0,
+        0
+      ],
+      "transitions": [
+        581,
+        560
+      ],
+      "conflicts": 0,
+      "exteriorActive": [
+        0.9178885630498533,
+        0.9178885630498533
+      ]
+    }
+  ],
+  "appDefaults20ms": [
+    {
+      "fixture": "current-demo-music.json",
+      "style": "festival",
+      "cues": [
+        1787,
+        1458
+      ],
+      "lostAnchors": [],
+      "darkMs": [
+        0,
+        1599.9999999999977
+      ],
+      "transitions": [
+        5261,
+        4674
+      ],
+      "conflicts": 0
+    },
+    {
+      "fixture": "current-sample-music.json",
+      "style": "festival",
+      "cues": [
+        6269,
+        5148
+      ],
+      "lostAnchors": [],
+      "darkMs": [
+        9839.999999999975,
+        14439.999999999985
+      ],
+      "transitions": [
+        18489,
+        16396
+      ],
+      "conflicts": 0
+    },
+    {
+      "fixture": "actual-music-user-glass-prefix64-analysis.json",
+      "style": "festival",
+      "cues": [
+        1587,
+        1484
+      ],
+      "lostAnchors": [],
+      "darkMs": [
+        1699.9999999999982,
+        2699.999999999998
+      ],
+      "transitions": [
+        4330,
+        4150
+      ],
+      "conflicts": 0
+    },
+    {
+      "fixture": "actual-music-nightowl-mix-analysis.json",
+      "style": "festival",
+      "cues": [
+        227,
+        190
+      ],
+      "lostAnchors": [],
+      "darkMs": [
+        0,
+        0
+      ],
+      "transitions": [
+        614,
+        538
+      ],
+      "conflicts": 0
+    },
+    {
+      "fixture": "actual-music-falcon-mix-analysis.json",
+      "style": "festival",
+      "cues": [
+        195,
+        181
+      ],
+      "lostAnchors": [],
+      "darkMs": [
+        0,
+        300
+      ],
+      "transitions": [
+        591,
+        556
+      ],
+      "conflicts": 0
+    }
+  ]
+}

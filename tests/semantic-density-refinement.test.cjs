@@ -119,3 +119,17 @@ test('large source-indexed target lists retain exact links within the documented
   assert.equal(cue.semanticEventId,source.id);
  }
 });
+
+test('selected measured rhythm anchors survive decorative density and negative-space pruning',()=>{
+ for(const stepMs of [15,20]){
+  const times=[1,1.2,1.4,1.6],strategy=Strategy.create({events:[...times.map((time,i)=>event('beat-'+i,time,'rhythm',.3)),event('phrase',1.25,'structure',.9,'phrase')]},{stepMs,beats:[0,1,2,3]});
+  const state=strategy.prepareTargets([...times.map(time=>target(time,'rhythm')),target(1.25,'structure')]);
+  const anchors=times.map((time,i)=>strategy.classifyCandidate({serial:i,kind:'beat pulse',musicTime:time+.02,semanticRole:'rhythm',rhythmAnchorTime:time,priority:30},state));
+  assert.ok(anchors.every(c=>c.semanticRhythmAttack===true));
+  const ornament=strategy.classifyCandidate({serial:99,kind:'offbeat detail',musicTime:1.4,semanticRole:'rhythm',priority:18},state);
+  assert.notEqual(ornament.semanticRhythmAttack,true);
+  const result=strategy.filterCandidates([...anchors,ornament],state);
+  assert.deepEqual(result.candidates.filter(c=>c.serial!==99).map(c=>c.serial),[0,1,2,3]);
+  assert.equal(result.diagnostics.density.protectedRhythmCandidateCount,4);
+ }
+});
