@@ -29,16 +29,17 @@ test('GAME task allocation respects the frozen WASM fence in both quality modes'
 });
 
 test('every GAME bridge operation checks renderer generation and task ownership',()=>{
- for(const name of ['Availability','Begin','Append','Run','Status','Release']){
+ for(const name of ['Availability','Begin','BeginBatch','Append','Run','Status','Release']){
   const start=service.indexOf('public String nativeGame'+name+'(');
   assert.ok(start>=0,name+' bridge method exists');
   const end=service.indexOf('@JavascriptInterface',start+1);
   const method=service.slice(start,end<0?undefined:end);
   assert.match(method,/ownerGame==null\|\|!owns\(id\)/,name+' checks current renderer owner');
-  const call=name==='Release'?'releaseIdle':name.toLowerCase();
+  const call=name==='Release'?'releaseIdle':name==='BeginBatch'?'beginBatch':name.toLowerCase();
   assert.ok(method.includes('ownerGame.'+call+'(id'),name+' forwards owner to task');
  }
  assert.match(service,/nativeGameBegin\(String id,long bytes,int language,long seed\)/,'unsigned JavaScript seed must fit Java long');
+ assert.match(service,/nativeGameBeginBatch\(String id,String descriptors\)/,'bounded pair metadata has its own bridge method');
  assert.match(service,/nativeGameCancel\(String id,String token\)\{if\(ownerGame!=null&&owns\(id\)\)ownerGame.cancel\(id,token\);\}/);
  assert.match(service,/private boolean owns\(String id\)\{return ownerJobId.equals\(id\)&&ownsEngine\(ownerJobId,ownerGeneration\);\}/);
  const fallback=service.slice(service.indexOf('public boolean markAnalysisWasmFallbackWithExecution('),service.indexOf('public boolean clearRunObservation('));

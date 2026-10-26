@@ -326,6 +326,10 @@ public final class AnalysisService extends Service {
             try{if(ownerGame==null||!owns(id))throw new IOException("Native transcription is unavailable.");return ownerGame.begin(id,bytes,language,seed);}
             catch(Exception error){AppDiagnostics.record(AnalysisService.this,"native-game-begin",error);return bridgeError(error);}
         }
+        @JavascriptInterface public String nativeGameBeginBatch(String id,String descriptors){
+            try{if(ownerGame==null||!owns(id))throw new IOException("Native transcription is unavailable.");return ownerGame.beginBatch(id,descriptors);}
+            catch(Exception error){AppDiagnostics.record(AnalysisService.this,"native-game-batch-begin",error);return bridgeError(error);}
+        }
         @JavascriptInterface public String nativeGameAppend(String id,String token,String chunk){
             try{if(ownerGame==null||!owns(id))throw new IOException("Native transcription is unavailable.");return ownerGame.append(id,token,chunk);}
             catch(Exception error){AppDiagnostics.record(AnalysisService.this,"native-game-append",error);return bridgeError(error);}

@@ -1,20 +1,24 @@
 # Native GAME passage profiling
 
 Native GAME emits one `native-game-profile-v1` diagnostic record after each
-passage has reached its terminal state. The same record contributes to the
+native call has reached its terminal state. A call processes one passage or an
+eligible pair of equal-length passages. The same record contributes to the
 job's durable native summary under route `native-game-v1`, independently of
 verbose trace rotation. It contains no audio, inferred notes, seed, source
 filename or job identifier.
 
 The observer does not alter the five pinned Float32 graphs, eight diffusion
-steps, inputs, thresholds, tensor operations, thread configuration, or native
-resource ownership. Each passage still retires its own sessions before its
-result becomes available. Cancellation and unconfirmed native retirement retain
+steps, inputs, thresholds, tensor operations or thread configuration. A paired
+call loads five sessions once and runs the two original passages sequentially,
+with independent tensors, boundaries and seeds. All engine-owned sessions and
+RunOptions retire before either result becomes available. Cancellation and
+unconfirmed native retirement retain
 the existing gate and crash-lease rules.
 
 | Field | Measurement scope |
 | --- | --- |
-| `wallMs` | Worker passage, from before PCM reading through terminal state publication; excludes bridge upload before worker submission |
+| `wallMs` | Worker call, from before PCM reading through terminal state publication; excludes bridge upload before worker submission |
+| `batchPassages` | One for unary execution, two for an eligible pair; five session initializations serve 12 or 24 original graph calls respectively |
 | `readWallMs`, `waitWallMs` | PCM read/validation and process inference-gate wait |
 | `engineInitWallMs` | Manifest validation and engine construction |
 | `modelPrepareWallMs` | Complete cache integrity scan, plus extraction/verification when models are absent |
@@ -43,14 +47,14 @@ the evidence for that failure.
 `tests/test_native_game_profile.py` exercises independent clocks, eight-step
 aggregation, missing/regressing CPU telemetry, bounded graph names and immutable
 receipts. The production task lifecycle proof additionally checks one durable
-summary per retired passage and excludes private inputs. These observer tests
+summary per retired call and excludes private inputs. These observer tests
 are not model-output equivalence or an inference performance benchmark.
 
-Session retention is not enabled by this change. It would extend JNI ownership
-across a passage boundary and requires separate measured timing, memory,
-cancellation and exact-output validation. The new preparation/session/kernel
-measurements make that decision possible without assuming all vocal-analysis
-time is kernel execution.
+No engine-owned native resources remain resident between calls. Pairing shares
+setup only within one bounded call. The [host comparison](../research/throughput-20261026/README.md)
+retains both the slower mixed-length experiment and the equal-length result;
+the app schedules only the latter geometry. These measurements do not establish
+phone memory, thermal behavior or complete-analysis speed.
 
 The [host option screen](../research/inference-2.4.1/game-options-screen.json)
 tested dynamic scheduling and arena/memory patterns independently. Dynamic

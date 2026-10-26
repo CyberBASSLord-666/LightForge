@@ -9,7 +9,9 @@ const round=n=>Math.round(n*1000)/1000;
 function noise(length,seed){const out=new Float32Array(length);let x=seed>>>0;for(let i=0;i<length;i++){x^=x<<13;x^=x>>>17;x^=x<<5;out[i]=((x>>>0)+.5)/4294967296;}return out;}
 function free(out){if(out)for(const t of Object.values(out))t.dispose?.();}
 function validNotes(notes,samples){
- return Array.isArray(notes)&&notes.length<=Math.ceil(samples/RATE/.06)&&notes.every((n,i)=>n&&Number.isFinite(n.start)&&Number.isFinite(n.end)&&Number.isFinite(n.midi)&&n.midi>=0&&n.midi<=127&&n.start>=0&&n.end-n.start>=.06-1e-6&&n.end<=samples/RATE+.001&&(!i||n.start>=notes[i-1].end-1e-6));
+ if(!Array.isArray(notes)||!(notes.length<=Math.ceil(samples/RATE/.06)))return false;
+ for(let i=0;i<notes.length;i++){const n=notes[i];if(!n||!Number.isFinite(n.start)||!Number.isFinite(n.end)||!Number.isFinite(n.midi)||n.midi<0||n.midi>127||n.start<0||n.end-n.start<.06-1e-6||n.end>samples/RATE+.001||(i&&n.start<notes[i-1].end-1e-6))return false;}
+ return true;
 }
 function nativeFailure(cause){if(cause?.name==='AbortError'||cause?.code==='native-game-fallback'||cause?.code==='native-game-retirement-pending'||cause?.code==='native-game-fence-failed')return cause;const error=new Error('Native singing transcription requested a verified WASM restart.');error.code='native-game-fallback';return error;}
 async function create({ort,baseUrl,onProgress=()=>{},checkpoint,telemetry,nativeInfer}){
@@ -57,21 +59,63 @@ async function create({ort,baseUrl,onProgress=()=>{},checkpoint,telemetry,native
    onStep(1);return result;
   }finally{free(encoded);free(known);free(previous);free(timing);free(estimated);owned.forEach(t=>t.dispose());}
  }
- return {manifest,infer,async process(read,total,{language=0,onProgress=()=>{}}={}){
+ async function inferBatch(requests,onStep=()=>{}){
+  if(released)throw Error('Singing transcription is closed.');
+  const validRequest=request=>request&&request.pcm instanceof Float32Array&&request.pcm.length>=1&&request.pcm.length<=RATE*(CORE+2*HALO)&&[0,1,2,3,4].includes(request.language)&&Number.isInteger(request.seed)&&request.seed>=0&&request.seed<=0xffffffff&&request.pcm.every(Number.isFinite);
+  if(!native||typeof nativeInfer.batch!=='function'||!Array.isArray(requests)||requests.length!==2||!validRequest(requests[0])||!validRequest(requests[1]))throw nativeFailure();
+  try{
+   const invoke=()=>nativeInfer.batch(requests,onStep),notes=await (telemetry?.measureAsync?telemetry.measureAsync('native.game.wait',invoke,{component:'game',runtime:'onnxruntime-android-cpu',passages:2}):invoke());
+   // Reject the complete pair before either result can enter a checkpoint.
+   if(!Array.isArray(notes)||notes.length!==2||!validNotes(notes[0],requests[0].pcm.length)||!validNotes(notes[1],requests[1].pcm.length))throw nativeFailure();
+   return notes.map(passage=>passage.map(note=>({start:note.start,end:note.end,midi:note.midi})));
+  }catch(error){throw nativeFailure(error);}
+ }
+ return {manifest,infer,inferBatch,async process(read,total,{language=0,onProgress=()=>{}}={}){
   if(released)throw Error('Singing transcription is closed.');
   if(![0,1,2,3,4].includes(language)||!Number.isSafeInteger(total)||total<1||total>RATE*14401)throw Error('Invalid transcription request.');
-  const notes=[],duration=total/RATE,chunks=Math.ceil(duration/CORE);let restoredPassages=0;
+  const notifyProgress=onProgress;let reportedProgress=0;
+  onProgress=(value,info)=>{if(Number.isFinite(value)){reportedProgress=Math.max(reportedProgress,Math.max(0,Math.min(1,value)));notifyProgress(reportedProgress,info);}};
+  const notes=[],duration=total/RATE,chunks=Math.ceil(duration/CORE),prepared=new Map();let restoredPassages=0;
+  const canBatch=native&&typeof nativeInfer.batch==='function';
+  async function prepare(index){
+   if(prepared.has(index))return prepared.get(index);
+   const coreStart=index*CORE,coreEnd=Math.min(duration,coreStart+CORE),start=Math.max(0,coreStart-HALO),end=Math.min(duration,coreEnd+HALO),first=Math.round(start*RATE),last=Math.min(total,Math.round(end*RATE)),key='game-'+language+'-'+index,stored=await checkpoint?.read(key);
+   const restored=!!(stored&&stored.model===manifest.id&&stored.steps===STEPS&&stored.first===first&&stored.last===last&&(stored.execution||'wasm-v1')===execution&&validNotes(stored.notes,last-first));
+   const item={coreStart,coreEnd,start,first,last,key,restored,candidates:restored?stored.notes:null,inferred:false};prepared.set(index,item);return item;
+  }
+  async function readPassage(item){
+   if(item.pcm)return;
+   const pcm=await read(item.first,item.last-item.first);if(!(pcm instanceof Float32Array)||pcm.length!==item.last-item.first)throw Error('Singing audio clock is incomplete.');
+   item.peak=timed('preprocessing',()=>{let peak=0;for(const x of pcm){if(!Number.isFinite(x))throw Error('Singing audio contains invalid samples.');peak=Math.max(peak,Math.abs(x));}return peak;});item.pcm=pcm;
+  }
   for(let i=0;i<chunks;i++){
-   const coreStart=i*CORE,coreEnd=Math.min(duration,coreStart+CORE),start=Math.max(0,coreStart-HALO),end=Math.min(duration,coreEnd+HALO),first=Math.round(start*RATE),last=Math.min(total,Math.round(end*RATE));
-   const key='game-'+language+'-'+i,stored=await checkpoint?.read(key);
-   const restored=stored&&stored.model===manifest.id&&stored.steps===STEPS&&stored.first===first&&stored.last===last&&(stored.execution||'wasm-v1')===execution&&validNotes(stored.notes,last-first);
+   const item=await prepare(i);prepared.delete(i);const {coreStart,coreEnd,start,first,last,key,restored}=item;
    let candidates;
    onProgress(i/chunks,{passageIndex:i+1,passageCount:chunks,passagesCompleted:i,restoredPassages});
-   if(restored){candidates=stored.notes;restoredPassages++;}
+   if(restored){candidates=item.candidates;restoredPassages++;}
    else{
-    const pcm=await read(first,last-first);if(!(pcm instanceof Float32Array)||pcm.length!==last-first)throw Error('Singing audio clock is incomplete.');
-    const peak=timed('preprocessing',()=>{let peak=0;for(const x of pcm){if(!Number.isFinite(x))throw Error('Singing audio contains invalid samples.');peak=Math.max(peak,Math.abs(x));}return peak;});
-    candidates=peak>1e-5?await infer(pcm,language,(2025+i*104729)>>>0,p=>onProgress((i+p)/chunks,{passageIndex:i+1,passageCount:chunks,passagesCompleted:i,restoredPassages})):[];await checkpoint?.write(key,{first,last,model:manifest.id,steps:STEPS,notes:candidates,...(native?{execution}:{})});
+    if(!item.inferred){
+     await readPassage(item);
+     if(canBatch&&item.peak>1e-5&&i+1<chunks){
+      const next=await prepare(i+1);
+      // Session reuse across different dynamic shapes can cost more than a
+      // fresh engine. Pair only the same original passage geometry.
+      if(next.restored||next.last-next.first!==last-first){
+       // A cache hit or geometry-only peek is not owned work. Re-read its
+       // checkpoint at use after the current, potentially long native call.
+       prepared.delete(i+1);
+      }else{
+       await readPassage(next);
+       if(next.peak>1e-5){
+        let pairProgress=0;
+        const paired=await inferBatch([{pcm:item.pcm,language,seed:(2025+i*104729)>>>0},{pcm:next.pcm,language,seed:(2025+(i+1)*104729)>>>0}],p=>{if(Number.isFinite(p)){pairProgress=Math.max(pairProgress,Math.max(0,Math.min(1,p)));onProgress((i+pairProgress*2)/chunks,{passageIndex:i+1+(pairProgress>=.5?1:0),passageCount:chunks,passagesCompleted:i,restoredPassages});}});
+        item.candidates=paired[0];next.candidates=paired[1];item.inferred=next.inferred=true;item.pcm=next.pcm=null;
+       }
+      }
+     }
+     if(!item.inferred){item.candidates=item.peak>1e-5?await infer(item.pcm,language,(2025+i*104729)>>>0,p=>onProgress((i+p)/chunks,{passageIndex:i+1,passageCount:chunks,passagesCompleted:i,restoredPassages})):[];item.pcm=null;}
+    }
+    candidates=item.candidates;await checkpoint?.write(key,{first,last,model:manifest.id,steps:STEPS,notes:candidates,...(native?{execution}:{})});
    }
    timed('postprocessing',()=>{for(const n of candidates){
     const a=start+n.start,b=Math.min(duration,start+n.end);

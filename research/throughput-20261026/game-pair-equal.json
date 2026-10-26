@@ -1,0 +1,2399 @@
+{
+  "scope": "Original GAME model, two adjacent original full-mix demo passages with complete context and independent production seeds. Host execution only; not separated-vocal accuracy, Android, whole-song or 75% whole-analysis evidence.",
+  "javaVersion": "openjdk version \"17.0.20\" 2026-07-21\nOpenJDK Runtime Environment (build 17.0.20+8-1-24.04-Ubuntu)\nOpenJDK 64-Bit Server VM (build 17.0.20+8-1-24.04-Ubuntu, mixed mode, sharing)",
+  "javaOptions": [
+    "-Xmx512m"
+  ],
+  "sourceHashes": {
+    "android/src/com/cyberbasslord/lightforge/NativeGame.java": "9b6ee3fee8a618c09998fc5ca30a9e0343d8f5e96f057ffff8fb7582a5f9a9ef",
+    "android/src/com/cyberbasslord/lightforge/NativeGameProfile.java": "469daefcac227cd5fdd3969963fd0494bf4131ba6f95b9ac51ea54fa8cb067cf",
+    "tests/NativeGamePairComparison.java": "3ec60edda7028455df70122ac48a1b19f217cd3bff95f34c1f2873cfb66c8c75",
+    "tools/benchmark_game_pair.py": "c2014ef35d1be07d4f28ecaf5d1e5ee5b79acf32b8ad4ab76c7a322c373016b9"
+  },
+  "modelManifestSha256": "51e172cfaa967d9e2518f01f508a64d49cd283d23ae8e8456af9c6e76eeb4f97",
+  "inputWavSha256": "33f07d502ba19832b62b97d8fb4a11354e81310264bd885d7a06438228773650",
+  "inputPcmSha256": [
+    "b3ffbfa922ac74e2f1b75d9f55534de81a9379f6e2c01725cfb7c6ef75a19e57",
+    "5827e052673547aa38b6b3eed9c38247cc0196ecb1b3c49a8ebcb62a4c81d581"
+  ],
+  "originalSampleSpans": [
+    [
+      441000,
+      1146600
+    ],
+    [
+      970200,
+      1675800
+    ]
+  ],
+  "allUnroundedNoteBitsIdentical": true,
+  "baselineMedianSeconds": 55.37414946,
+  "pairMedianSeconds": 45.236563987,
+  "medianReductionPercent": 18.307433291274254,
+  "runs": [
+    {
+      "mode": "pair",
+      "wallSeconds": 35.34823892,
+      "notes": [
+        [
+          {
+            "midi": 56.96540451049805,
+            "start": 0,
+            "end": 0.17000000178813934
+          },
+          {
+            "midi": 56.0250244140625,
+            "start": 0.17000000178813934,
+            "end": 0.5400000065565109
+          },
+          {
+            "midi": 55.9087028503418,
+            "start": 0.5400000065565109,
+            "end": 0.8200000077486038
+          },
+          {
+            "midi": 57.03565216064453,
+            "start": 0.8200000077486038,
+            "end": 1.290000006556511
+          },
+          {
+            "midi": 58.14236068725586,
+            "start": 1.290000006556511,
+            "end": 1.4500000029802322
+          },
+          {
+            "midi": 57.951629638671875,
+            "start": 1.4500000029802322,
+            "end": 1.6099999994039536
+          },
+          {
+            "midi": 55.952606201171875,
+            "start": 1.6099999994039536,
+            "end": 1.7599999904632568
+          },
+          {
+            "midi": 57.85213851928711,
+            "start": 1.7599999904632568,
+            "end": 1.939999982714653
+          },
+          {
+            "midi": 56.95403289794922,
+            "start": 1.939999982714653,
+            "end": 2.40999998152256
+          },
+          {
+            "midi": 57.5650749206543,
+            "start": 2.40999998152256,
+            "end": 4.029999986290932
+          },
+          {
+            "midi": 55.5760383605957,
+            "start": 4.029999986290932,
+            "end": 4.349999979138374
+          },
+          {
+            "midi": 57.656105041503906,
+            "start": 4.349999979138374,
+            "end": 4.709999963641167
+          },
+          {
+            "midi": 57.837825775146484,
+            "start": 4.709999963641167,
+            "end": 4.999999955296516
+          },
+          {
+            "midi": 57.869384765625,
+            "start": 4.999999955296516,
+            "end": 5.749999955296516
+          },
+          {
+            "midi": 57.92030334472656,
+            "start": 5.749999955296516,
+            "end": 6.939999893307686
+          },
+          {
+            "midi": 57.857025146484375,
+            "start": 6.939999893307686,
+            "end": 7.289999887347221
+          },
+          {
+            "midi": 57.96430206298828,
+            "start": 7.289999887347221,
+            "end": 7.579999879002571
+          },
+          {
+            "midi": 57.832664489746094,
+            "start": 7.579999879002571,
+            "end": 7.929999873042107
+          },
+          {
+            "midi": 55.987525939941406,
+            "start": 7.929999873042107,
+            "end": 8.259999856352806
+          },
+          {
+            "midi": 57.892826080322266,
+            "start": 8.259999856352806,
+            "end": 9.519999846816063
+          },
+          {
+            "midi": 57.66058349609375,
+            "start": 9.519999846816063,
+            "end": 9.859999850392342
+          },
+          {
+            "midi": 57.86357116699219,
+            "start": 9.859999850392342,
+            "end": 10.159999832510948
+          },
+          {
+            "midi": 57.977294921875,
+            "start": 10.159999832510948,
+            "end": 10.799999818205833
+          },
+          {
+            "midi": 57.90401840209961,
+            "start": 10.799999818205833,
+            "end": 11.139999821782112
+          },
+          {
+            "midi": 57.92075729370117,
+            "start": 11.139999821782112,
+            "end": 11.829999819397926
+          },
+          {
+            "midi": 55.93043518066406,
+            "start": 11.829999819397926,
+            "end": 12.119999811053276
+          },
+          {
+            "midi": 57.81352996826172,
+            "start": 12.119999811053276,
+            "end": 14.689999744296074
+          },
+          {
+            "midi": 59.93946838378906,
+            "start": 14.689999744296074,
+            "end": 15.03999973833561
+          },
+          {
+            "midi": 56.00883102416992,
+            "start": 15.03999973833561,
+            "end": 15.339999720454216
+          },
+          {
+            "midi": 55.98811721801758,
+            "start": 15.339999720454216,
+            "end": 15.669999703764915
+          },
+          {
+            "midi": 57.94719696044922,
+            "start": 15.669999703764915,
+            "end": 15.999999687075615
+          }
+        ],
+        [
+          {
+            "midi": 57.875789642333984,
+            "start": 0.11999999731779099,
+            "end": 1.4099999591708183
+          },
+          {
+            "midi": 50.10984802246094,
+            "start": 2.3599999472498894,
+            "end": 2.689999930560589
+          },
+          {
+            "midi": 59.9613037109375,
+            "start": 2.689999930560589,
+            "end": 3.339999906718731
+          },
+          {
+            "midi": 56.03254318237305,
+            "start": 3.339999906718731,
+            "end": 3.6799999102950096
+          },
+          {
+            "midi": 57.923824310302734,
+            "start": 3.6799999102950096,
+            "end": 4.919999919831753
+          },
+          {
+            "midi": 56.07551193237305,
+            "start": 4.919999919831753,
+            "end": 5.269999913871288
+          },
+          {
+            "midi": 59.91669845581055,
+            "start": 5.269999913871288,
+            "end": 5.609999917447567
+          },
+          {
+            "midi": 56.02433776855469,
+            "start": 5.609999917447567,
+            "end": 5.92999991029501
+          },
+          {
+            "midi": 55.10621643066406,
+            "start": 5.92999991029501,
+            "end": 7.4999998435378075
+          },
+          {
+            "midi": 52.603981018066406,
+            "start": 7.4999998435378075,
+            "end": 7.849999837577343
+          },
+          {
+            "midi": 59.96424102783203,
+            "start": 7.849999837577343,
+            "end": 8.189999841153622
+          },
+          {
+            "midi": 56.052974700927734,
+            "start": 8.189999841153622,
+            "end": 8.449999831616879
+          },
+          {
+            "midi": 56.05967330932617,
+            "start": 8.449999831616879,
+            "end": 8.829999826848507
+          },
+          {
+            "midi": 57.920692443847656,
+            "start": 8.829999826848507,
+            "end": 10.409999750554562
+          },
+          {
+            "midi": 67.9876480102539,
+            "start": 10.409999750554562,
+            "end": 10.929999731481075
+          },
+          {
+            "midi": 67.0703353881836,
+            "start": 10.929999731481075,
+            "end": 11.399999730288982
+          },
+          {
+            "midi": 67.95076751708984,
+            "start": 11.399999730288982,
+            "end": 12.49999975413084
+          },
+          {
+            "midi": 64.99297332763672,
+            "start": 12.49999975413084,
+            "end": 12.979999743402004
+          },
+          {
+            "midi": 68.10589599609375,
+            "start": 12.979999743402004,
+            "end": 14.61999972909689
+          },
+          {
+            "midi": 67.01190948486328,
+            "start": 14.61999972909689,
+            "end": 14.849999718368053
+          },
+          {
+            "midi": 66.99381256103516,
+            "start": 14.849999718368053,
+            "end": 15.589999727904797
+          },
+          {
+            "midi": 66.97991180419922,
+            "start": 15.589999727904797,
+            "end": 15.999999724328518
+          }
+        ]
+      ],
+      "seeds": [
+        106754,
+        211483
+      ],
+      "scope": "Two original production-context passages on the host JVM; not a whole-job or phone measurement",
+      "profiles": [
+        "schema=native-game-profile-v1 route=native-game-v1 runtime=onnxruntime-1.25.1 provider=cpu precision=float32 steps=8 execution=sequential batchPassages=2 intraOpThreads=4 interOpThreads=1 cpuScope=process-all-app-threads acceleratorTelemetry=unavailable outcome=completed wallMs=35302 processCpuMs=90090 readWallMs=unavailable waitWallMs=unavailable engineInitWallMs=unavailable modelPrepareWallMs=490 runtimeInitWallMs=233 modelInitWallMs=3508 sessionInitCount=5 inferenceWallMs=30897 inferenceCount=24 inferenceThreadCpuMs=unavailable inferenceProcessCpuMs=85530 cleanupWallMs=97 cacheModelHits=5 cacheModelMisses=0 encoderInitWallMs=443 encoderRunCount=2 encoderRunWallMs=2201 encoderRunProcessCpuMs=5570 dur2bdInitWallMs=1 dur2bdRunCount=2 dur2bdRunWallMs=0 dur2bdRunProcessCpuMs=0 segmenterInitWallMs=826 segmenterRunCount=16 segmenterRunWallMs=26188 segmenterRunProcessCpuMs=72890 bd2durInitWallMs=2 bd2durRunCount=2 bd2durRunWallMs=5 bd2durRunProcessCpuMs=10 estimatorInitWallMs=2234 estimatorRunCount=2 estimatorRunWallMs=2502 estimatorRunProcessCpuMs=7060"
+      ],
+      "runtime": "1.25.1",
+      "language": 0,
+      "steps": 8,
+      "samples": [
+        705600,
+        705600
+      ],
+      "pair": -1,
+      "warmup": true,
+      "peakRssKiB": 921728,
+      "sessionInitializations": 5,
+      "graphRuns": 24
+    },
+    {
+      "mode": "single",
+      "wallSeconds": 45.873284161,
+      "notes": [
+        [
+          {
+            "midi": 56.96540451049805,
+            "start": 0,
+            "end": 0.17000000178813934
+          },
+          {
+            "midi": 56.0250244140625,
+            "start": 0.17000000178813934,
+            "end": 0.5400000065565109
+          },
+          {
+            "midi": 55.9087028503418,
+            "start": 0.5400000065565109,
+            "end": 0.8200000077486038
+          },
+          {
+            "midi": 57.03565216064453,
+            "start": 0.8200000077486038,
+            "end": 1.290000006556511
+          },
+          {
+            "midi": 58.14236068725586,
+            "start": 1.290000006556511,
+            "end": 1.4500000029802322
+          },
+          {
+            "midi": 57.951629638671875,
+            "start": 1.4500000029802322,
+            "end": 1.6099999994039536
+          },
+          {
+            "midi": 55.952606201171875,
+            "start": 1.6099999994039536,
+            "end": 1.7599999904632568
+          },
+          {
+            "midi": 57.85213851928711,
+            "start": 1.7599999904632568,
+            "end": 1.939999982714653
+          },
+          {
+            "midi": 56.95403289794922,
+            "start": 1.939999982714653,
+            "end": 2.40999998152256
+          },
+          {
+            "midi": 57.5650749206543,
+            "start": 2.40999998152256,
+            "end": 4.029999986290932
+          },
+          {
+            "midi": 55.5760383605957,
+            "start": 4.029999986290932,
+            "end": 4.349999979138374
+          },
+          {
+            "midi": 57.656105041503906,
+            "start": 4.349999979138374,
+            "end": 4.709999963641167
+          },
+          {
+            "midi": 57.837825775146484,
+            "start": 4.709999963641167,
+            "end": 4.999999955296516
+          },
+          {
+            "midi": 57.869384765625,
+            "start": 4.999999955296516,
+            "end": 5.749999955296516
+          },
+          {
+            "midi": 57.92030334472656,
+            "start": 5.749999955296516,
+            "end": 6.939999893307686
+          },
+          {
+            "midi": 57.857025146484375,
+            "start": 6.939999893307686,
+            "end": 7.289999887347221
+          },
+          {
+            "midi": 57.96430206298828,
+            "start": 7.289999887347221,
+            "end": 7.579999879002571
+          },
+          {
+            "midi": 57.832664489746094,
+            "start": 7.579999879002571,
+            "end": 7.929999873042107
+          },
+          {
+            "midi": 55.987525939941406,
+            "start": 7.929999873042107,
+            "end": 8.259999856352806
+          },
+          {
+            "midi": 57.892826080322266,
+            "start": 8.259999856352806,
+            "end": 9.519999846816063
+          },
+          {
+            "midi": 57.66058349609375,
+            "start": 9.519999846816063,
+            "end": 9.859999850392342
+          },
+          {
+            "midi": 57.86357116699219,
+            "start": 9.859999850392342,
+            "end": 10.159999832510948
+          },
+          {
+            "midi": 57.977294921875,
+            "start": 10.159999832510948,
+            "end": 10.799999818205833
+          },
+          {
+            "midi": 57.90401840209961,
+            "start": 10.799999818205833,
+            "end": 11.139999821782112
+          },
+          {
+            "midi": 57.92075729370117,
+            "start": 11.139999821782112,
+            "end": 11.829999819397926
+          },
+          {
+            "midi": 55.93043518066406,
+            "start": 11.829999819397926,
+            "end": 12.119999811053276
+          },
+          {
+            "midi": 57.81352996826172,
+            "start": 12.119999811053276,
+            "end": 14.689999744296074
+          },
+          {
+            "midi": 59.93946838378906,
+            "start": 14.689999744296074,
+            "end": 15.03999973833561
+          },
+          {
+            "midi": 56.00883102416992,
+            "start": 15.03999973833561,
+            "end": 15.339999720454216
+          },
+          {
+            "midi": 55.98811721801758,
+            "start": 15.339999720454216,
+            "end": 15.669999703764915
+          },
+          {
+            "midi": 57.94719696044922,
+            "start": 15.669999703764915,
+            "end": 15.999999687075615
+          }
+        ],
+        [
+          {
+            "midi": 57.875789642333984,
+            "start": 0.11999999731779099,
+            "end": 1.4099999591708183
+          },
+          {
+            "midi": 50.10984802246094,
+            "start": 2.3599999472498894,
+            "end": 2.689999930560589
+          },
+          {
+            "midi": 59.9613037109375,
+            "start": 2.689999930560589,
+            "end": 3.339999906718731
+          },
+          {
+            "midi": 56.03254318237305,
+            "start": 3.339999906718731,
+            "end": 3.6799999102950096
+          },
+          {
+            "midi": 57.923824310302734,
+            "start": 3.6799999102950096,
+            "end": 4.919999919831753
+          },
+          {
+            "midi": 56.07551193237305,
+            "start": 4.919999919831753,
+            "end": 5.269999913871288
+          },
+          {
+            "midi": 59.91669845581055,
+            "start": 5.269999913871288,
+            "end": 5.609999917447567
+          },
+          {
+            "midi": 56.02433776855469,
+            "start": 5.609999917447567,
+            "end": 5.92999991029501
+          },
+          {
+            "midi": 55.10621643066406,
+            "start": 5.92999991029501,
+            "end": 7.4999998435378075
+          },
+          {
+            "midi": 52.603981018066406,
+            "start": 7.4999998435378075,
+            "end": 7.849999837577343
+          },
+          {
+            "midi": 59.96424102783203,
+            "start": 7.849999837577343,
+            "end": 8.189999841153622
+          },
+          {
+            "midi": 56.052974700927734,
+            "start": 8.189999841153622,
+            "end": 8.449999831616879
+          },
+          {
+            "midi": 56.05967330932617,
+            "start": 8.449999831616879,
+            "end": 8.829999826848507
+          },
+          {
+            "midi": 57.920692443847656,
+            "start": 8.829999826848507,
+            "end": 10.409999750554562
+          },
+          {
+            "midi": 67.9876480102539,
+            "start": 10.409999750554562,
+            "end": 10.929999731481075
+          },
+          {
+            "midi": 67.0703353881836,
+            "start": 10.929999731481075,
+            "end": 11.399999730288982
+          },
+          {
+            "midi": 67.95076751708984,
+            "start": 11.399999730288982,
+            "end": 12.49999975413084
+          },
+          {
+            "midi": 64.99297332763672,
+            "start": 12.49999975413084,
+            "end": 12.979999743402004
+          },
+          {
+            "midi": 68.10589599609375,
+            "start": 12.979999743402004,
+            "end": 14.61999972909689
+          },
+          {
+            "midi": 67.01190948486328,
+            "start": 14.61999972909689,
+            "end": 14.849999718368053
+          },
+          {
+            "midi": 66.99381256103516,
+            "start": 14.849999718368053,
+            "end": 15.589999727904797
+          },
+          {
+            "midi": 66.97991180419922,
+            "start": 15.589999727904797,
+            "end": 15.999999724328518
+          }
+        ]
+      ],
+      "seeds": [
+        106754,
+        211483
+      ],
+      "scope": "Two original production-context passages on the host JVM; not a whole-job or phone measurement",
+      "profiles": [
+        "schema=native-game-profile-v1 route=native-game-v1 runtime=onnxruntime-1.25.1 provider=cpu precision=float32 steps=8 execution=sequential batchPassages=1 intraOpThreads=4 interOpThreads=1 cpuScope=process-all-app-threads acceleratorTelemetry=unavailable outcome=completed wallMs=23067 processCpuMs=56170 readWallMs=unavailable waitWallMs=unavailable engineInitWallMs=unavailable modelPrepareWallMs=605 runtimeInitWallMs=236 modelInitWallMs=3868 sessionInitCount=5 inferenceWallMs=18236 inferenceCount=12 inferenceThreadCpuMs=unavailable inferenceProcessCpuMs=51180 cleanupWallMs=62 cacheModelHits=5 cacheModelMisses=0 encoderInitWallMs=459 encoderRunCount=1 encoderRunWallMs=1554 encoderRunProcessCpuMs=4080 dur2bdInitWallMs=3 dur2bdRunCount=1 dur2bdRunWallMs=0 dur2bdRunProcessCpuMs=0 segmenterInitWallMs=825 segmenterRunCount=8 segmenterRunWallMs=15176 segmenterRunProcessCpuMs=42710 bd2durInitWallMs=2 bd2durRunCount=1 bd2durRunWallMs=3 bd2durRunProcessCpuMs=0 estimatorInitWallMs=2577 estimatorRunCount=1 estimatorRunWallMs=1502 estimatorRunProcessCpuMs=4390",
+        "schema=native-game-profile-v1 route=native-game-v1 runtime=onnxruntime-1.25.1 provider=cpu precision=float32 steps=8 execution=sequential batchPassages=1 intraOpThreads=4 interOpThreads=1 cpuScope=process-all-app-threads acceleratorTelemetry=unavailable outcome=completed wallMs=22766 processCpuMs=52510 readWallMs=unavailable waitWallMs=unavailable engineInitWallMs=unavailable modelPrepareWallMs=528 runtimeInitWallMs=0 modelInitWallMs=3384 sessionInitCount=5 inferenceWallMs=18766 inferenceCount=12 inferenceThreadCpuMs=unavailable inferenceProcessCpuMs=48470 cleanupWallMs=63 cacheModelHits=5 cacheModelMisses=0 encoderInitWallMs=405 encoderRunCount=1 encoderRunWallMs=1056 encoderRunProcessCpuMs=2840 dur2bdInitWallMs=3 dur2bdRunCount=1 dur2bdRunWallMs=0 dur2bdRunProcessCpuMs=0 segmenterInitWallMs=741 segmenterRunCount=8 segmenterRunWallMs=16189 segmenterRunProcessCpuMs=41490 bd2durInitWallMs=2 bd2durRunCount=1 bd2durRunWallMs=1 bd2durRunProcessCpuMs=10 estimatorInitWallMs=2232 estimatorRunCount=1 estimatorRunWallMs=1518 estimatorRunProcessCpuMs=4130"
+      ],
+      "runtime": "1.25.1",
+      "language": 0,
+      "steps": 8,
+      "samples": [
+        705600,
+        705600
+      ],
+      "pair": -1,
+      "warmup": true,
+      "peakRssKiB": 943752,
+      "sessionInitializations": 10,
+      "graphRuns": 24
+    },
+    {
+      "mode": "single",
+      "wallSeconds": 68.502071787,
+      "notes": [
+        [
+          {
+            "midi": 56.96540451049805,
+            "start": 0,
+            "end": 0.17000000178813934
+          },
+          {
+            "midi": 56.0250244140625,
+            "start": 0.17000000178813934,
+            "end": 0.5400000065565109
+          },
+          {
+            "midi": 55.9087028503418,
+            "start": 0.5400000065565109,
+            "end": 0.8200000077486038
+          },
+          {
+            "midi": 57.03565216064453,
+            "start": 0.8200000077486038,
+            "end": 1.290000006556511
+          },
+          {
+            "midi": 58.14236068725586,
+            "start": 1.290000006556511,
+            "end": 1.4500000029802322
+          },
+          {
+            "midi": 57.951629638671875,
+            "start": 1.4500000029802322,
+            "end": 1.6099999994039536
+          },
+          {
+            "midi": 55.952606201171875,
+            "start": 1.6099999994039536,
+            "end": 1.7599999904632568
+          },
+          {
+            "midi": 57.85213851928711,
+            "start": 1.7599999904632568,
+            "end": 1.939999982714653
+          },
+          {
+            "midi": 56.95403289794922,
+            "start": 1.939999982714653,
+            "end": 2.40999998152256
+          },
+          {
+            "midi": 57.5650749206543,
+            "start": 2.40999998152256,
+            "end": 4.029999986290932
+          },
+          {
+            "midi": 55.5760383605957,
+            "start": 4.029999986290932,
+            "end": 4.349999979138374
+          },
+          {
+            "midi": 57.656105041503906,
+            "start": 4.349999979138374,
+            "end": 4.709999963641167
+          },
+          {
+            "midi": 57.837825775146484,
+            "start": 4.709999963641167,
+            "end": 4.999999955296516
+          },
+          {
+            "midi": 57.869384765625,
+            "start": 4.999999955296516,
+            "end": 5.749999955296516
+          },
+          {
+            "midi": 57.92030334472656,
+            "start": 5.749999955296516,
+            "end": 6.939999893307686
+          },
+          {
+            "midi": 57.857025146484375,
+            "start": 6.939999893307686,
+            "end": 7.289999887347221
+          },
+          {
+            "midi": 57.96430206298828,
+            "start": 7.289999887347221,
+            "end": 7.579999879002571
+          },
+          {
+            "midi": 57.832664489746094,
+            "start": 7.579999879002571,
+            "end": 7.929999873042107
+          },
+          {
+            "midi": 55.987525939941406,
+            "start": 7.929999873042107,
+            "end": 8.259999856352806
+          },
+          {
+            "midi": 57.892826080322266,
+            "start": 8.259999856352806,
+            "end": 9.519999846816063
+          },
+          {
+            "midi": 57.66058349609375,
+            "start": 9.519999846816063,
+            "end": 9.859999850392342
+          },
+          {
+            "midi": 57.86357116699219,
+            "start": 9.859999850392342,
+            "end": 10.159999832510948
+          },
+          {
+            "midi": 57.977294921875,
+            "start": 10.159999832510948,
+            "end": 10.799999818205833
+          },
+          {
+            "midi": 57.90401840209961,
+            "start": 10.799999818205833,
+            "end": 11.139999821782112
+          },
+          {
+            "midi": 57.92075729370117,
+            "start": 11.139999821782112,
+            "end": 11.829999819397926
+          },
+          {
+            "midi": 55.93043518066406,
+            "start": 11.829999819397926,
+            "end": 12.119999811053276
+          },
+          {
+            "midi": 57.81352996826172,
+            "start": 12.119999811053276,
+            "end": 14.689999744296074
+          },
+          {
+            "midi": 59.93946838378906,
+            "start": 14.689999744296074,
+            "end": 15.03999973833561
+          },
+          {
+            "midi": 56.00883102416992,
+            "start": 15.03999973833561,
+            "end": 15.339999720454216
+          },
+          {
+            "midi": 55.98811721801758,
+            "start": 15.339999720454216,
+            "end": 15.669999703764915
+          },
+          {
+            "midi": 57.94719696044922,
+            "start": 15.669999703764915,
+            "end": 15.999999687075615
+          }
+        ],
+        [
+          {
+            "midi": 57.875789642333984,
+            "start": 0.11999999731779099,
+            "end": 1.4099999591708183
+          },
+          {
+            "midi": 50.10984802246094,
+            "start": 2.3599999472498894,
+            "end": 2.689999930560589
+          },
+          {
+            "midi": 59.9613037109375,
+            "start": 2.689999930560589,
+            "end": 3.339999906718731
+          },
+          {
+            "midi": 56.03254318237305,
+            "start": 3.339999906718731,
+            "end": 3.6799999102950096
+          },
+          {
+            "midi": 57.923824310302734,
+            "start": 3.6799999102950096,
+            "end": 4.919999919831753
+          },
+          {
+            "midi": 56.07551193237305,
+            "start": 4.919999919831753,
+            "end": 5.269999913871288
+          },
+          {
+            "midi": 59.91669845581055,
+            "start": 5.269999913871288,
+            "end": 5.609999917447567
+          },
+          {
+            "midi": 56.02433776855469,
+            "start": 5.609999917447567,
+            "end": 5.92999991029501
+          },
+          {
+            "midi": 55.10621643066406,
+            "start": 5.92999991029501,
+            "end": 7.4999998435378075
+          },
+          {
+            "midi": 52.603981018066406,
+            "start": 7.4999998435378075,
+            "end": 7.849999837577343
+          },
+          {
+            "midi": 59.96424102783203,
+            "start": 7.849999837577343,
+            "end": 8.189999841153622
+          },
+          {
+            "midi": 56.052974700927734,
+            "start": 8.189999841153622,
+            "end": 8.449999831616879
+          },
+          {
+            "midi": 56.05967330932617,
+            "start": 8.449999831616879,
+            "end": 8.829999826848507
+          },
+          {
+            "midi": 57.920692443847656,
+            "start": 8.829999826848507,
+            "end": 10.409999750554562
+          },
+          {
+            "midi": 67.9876480102539,
+            "start": 10.409999750554562,
+            "end": 10.929999731481075
+          },
+          {
+            "midi": 67.0703353881836,
+            "start": 10.929999731481075,
+            "end": 11.399999730288982
+          },
+          {
+            "midi": 67.95076751708984,
+            "start": 11.399999730288982,
+            "end": 12.49999975413084
+          },
+          {
+            "midi": 64.99297332763672,
+            "start": 12.49999975413084,
+            "end": 12.979999743402004
+          },
+          {
+            "midi": 68.10589599609375,
+            "start": 12.979999743402004,
+            "end": 14.61999972909689
+          },
+          {
+            "midi": 67.01190948486328,
+            "start": 14.61999972909689,
+            "end": 14.849999718368053
+          },
+          {
+            "midi": 66.99381256103516,
+            "start": 14.849999718368053,
+            "end": 15.589999727904797
+          },
+          {
+            "midi": 66.97991180419922,
+            "start": 15.589999727904797,
+            "end": 15.999999724328518
+          }
+        ]
+      ],
+      "seeds": [
+        106754,
+        211483
+      ],
+      "scope": "Two original production-context passages on the host JVM; not a whole-job or phone measurement",
+      "profiles": [
+        "schema=native-game-profile-v1 route=native-game-v1 runtime=onnxruntime-1.25.1 provider=cpu precision=float32 steps=8 execution=sequential batchPassages=1 intraOpThreads=4 interOpThreads=1 cpuScope=process-all-app-threads acceleratorTelemetry=unavailable outcome=completed wallMs=27051 processCpuMs=60860 readWallMs=unavailable waitWallMs=unavailable engineInitWallMs=unavailable modelPrepareWallMs=696 runtimeInitWallMs=279 modelInitWallMs=4400 sessionInitCount=5 inferenceWallMs=21484 inferenceCount=12 inferenceThreadCpuMs=unavailable inferenceProcessCpuMs=55070 cleanupWallMs=116 cacheModelHits=5 cacheModelMisses=0 encoderInitWallMs=555 encoderRunCount=1 encoderRunWallMs=1132 encoderRunProcessCpuMs=2860 dur2bdInitWallMs=1 dur2bdRunCount=1 dur2bdRunWallMs=0 dur2bdRunProcessCpuMs=0 segmenterInitWallMs=1153 segmenterRunCount=8 segmenterRunWallMs=18011 segmenterRunProcessCpuMs=46230 bd2durInitWallMs=7 bd2durRunCount=1 bd2durRunWallMs=0 bd2durRunProcessCpuMs=0 estimatorInitWallMs=2682 estimatorRunCount=1 estimatorRunWallMs=2339 estimatorRunProcessCpuMs=5980",
+        "schema=native-game-profile-v1 route=native-game-v1 runtime=onnxruntime-1.25.1 provider=cpu precision=float32 steps=8 execution=sequential batchPassages=1 intraOpThreads=4 interOpThreads=1 cpuScope=process-all-app-threads acceleratorTelemetry=unavailable outcome=completed wallMs=41405 processCpuMs=96510 readWallMs=unavailable waitWallMs=unavailable engineInitWallMs=unavailable modelPrepareWallMs=650 runtimeInitWallMs=0 modelInitWallMs=3772 sessionInitCount=5 inferenceWallMs=36824 inferenceCount=12 inferenceThreadCpuMs=unavailable inferenceProcessCpuMs=91900 cleanupWallMs=116 cacheModelHits=5 cacheModelMisses=0 encoderInitWallMs=446 encoderRunCount=1 encoderRunWallMs=1730 encoderRunProcessCpuMs=4160 dur2bdInitWallMs=2 dur2bdRunCount=1 dur2bdRunWallMs=0 dur2bdRunProcessCpuMs=0 segmenterInitWallMs=857 segmenterRunCount=8 segmenterRunWallMs=32546 segmenterRunProcessCpuMs=81350 bd2durInitWallMs=3 bd2durRunCount=1 bd2durRunWallMs=0 bd2durRunProcessCpuMs=0 estimatorInitWallMs=2463 estimatorRunCount=1 estimatorRunWallMs=2546 estimatorRunProcessCpuMs=6390"
+      ],
+      "runtime": "1.25.1",
+      "language": 0,
+      "steps": 8,
+      "samples": [
+        705600,
+        705600
+      ],
+      "pair": 0,
+      "warmup": false,
+      "peakRssKiB": 901596,
+      "sessionInitializations": 10,
+      "graphRuns": 24
+    },
+    {
+      "mode": "pair",
+      "wallSeconds": 45.236563987,
+      "notes": [
+        [
+          {
+            "midi": 56.96540451049805,
+            "start": 0,
+            "end": 0.17000000178813934
+          },
+          {
+            "midi": 56.0250244140625,
+            "start": 0.17000000178813934,
+            "end": 0.5400000065565109
+          },
+          {
+            "midi": 55.9087028503418,
+            "start": 0.5400000065565109,
+            "end": 0.8200000077486038
+          },
+          {
+            "midi": 57.03565216064453,
+            "start": 0.8200000077486038,
+            "end": 1.290000006556511
+          },
+          {
+            "midi": 58.14236068725586,
+            "start": 1.290000006556511,
+            "end": 1.4500000029802322
+          },
+          {
+            "midi": 57.951629638671875,
+            "start": 1.4500000029802322,
+            "end": 1.6099999994039536
+          },
+          {
+            "midi": 55.952606201171875,
+            "start": 1.6099999994039536,
+            "end": 1.7599999904632568
+          },
+          {
+            "midi": 57.85213851928711,
+            "start": 1.7599999904632568,
+            "end": 1.939999982714653
+          },
+          {
+            "midi": 56.95403289794922,
+            "start": 1.939999982714653,
+            "end": 2.40999998152256
+          },
+          {
+            "midi": 57.5650749206543,
+            "start": 2.40999998152256,
+            "end": 4.029999986290932
+          },
+          {
+            "midi": 55.5760383605957,
+            "start": 4.029999986290932,
+            "end": 4.349999979138374
+          },
+          {
+            "midi": 57.656105041503906,
+            "start": 4.349999979138374,
+            "end": 4.709999963641167
+          },
+          {
+            "midi": 57.837825775146484,
+            "start": 4.709999963641167,
+            "end": 4.999999955296516
+          },
+          {
+            "midi": 57.869384765625,
+            "start": 4.999999955296516,
+            "end": 5.749999955296516
+          },
+          {
+            "midi": 57.92030334472656,
+            "start": 5.749999955296516,
+            "end": 6.939999893307686
+          },
+          {
+            "midi": 57.857025146484375,
+            "start": 6.939999893307686,
+            "end": 7.289999887347221
+          },
+          {
+            "midi": 57.96430206298828,
+            "start": 7.289999887347221,
+            "end": 7.579999879002571
+          },
+          {
+            "midi": 57.832664489746094,
+            "start": 7.579999879002571,
+            "end": 7.929999873042107
+          },
+          {
+            "midi": 55.987525939941406,
+            "start": 7.929999873042107,
+            "end": 8.259999856352806
+          },
+          {
+            "midi": 57.892826080322266,
+            "start": 8.259999856352806,
+            "end": 9.519999846816063
+          },
+          {
+            "midi": 57.66058349609375,
+            "start": 9.519999846816063,
+            "end": 9.859999850392342
+          },
+          {
+            "midi": 57.86357116699219,
+            "start": 9.859999850392342,
+            "end": 10.159999832510948
+          },
+          {
+            "midi": 57.977294921875,
+            "start": 10.159999832510948,
+            "end": 10.799999818205833
+          },
+          {
+            "midi": 57.90401840209961,
+            "start": 10.799999818205833,
+            "end": 11.139999821782112
+          },
+          {
+            "midi": 57.92075729370117,
+            "start": 11.139999821782112,
+            "end": 11.829999819397926
+          },
+          {
+            "midi": 55.93043518066406,
+            "start": 11.829999819397926,
+            "end": 12.119999811053276
+          },
+          {
+            "midi": 57.81352996826172,
+            "start": 12.119999811053276,
+            "end": 14.689999744296074
+          },
+          {
+            "midi": 59.93946838378906,
+            "start": 14.689999744296074,
+            "end": 15.03999973833561
+          },
+          {
+            "midi": 56.00883102416992,
+            "start": 15.03999973833561,
+            "end": 15.339999720454216
+          },
+          {
+            "midi": 55.98811721801758,
+            "start": 15.339999720454216,
+            "end": 15.669999703764915
+          },
+          {
+            "midi": 57.94719696044922,
+            "start": 15.669999703764915,
+            "end": 15.999999687075615
+          }
+        ],
+        [
+          {
+            "midi": 57.875789642333984,
+            "start": 0.11999999731779099,
+            "end": 1.4099999591708183
+          },
+          {
+            "midi": 50.10984802246094,
+            "start": 2.3599999472498894,
+            "end": 2.689999930560589
+          },
+          {
+            "midi": 59.9613037109375,
+            "start": 2.689999930560589,
+            "end": 3.339999906718731
+          },
+          {
+            "midi": 56.03254318237305,
+            "start": 3.339999906718731,
+            "end": 3.6799999102950096
+          },
+          {
+            "midi": 57.923824310302734,
+            "start": 3.6799999102950096,
+            "end": 4.919999919831753
+          },
+          {
+            "midi": 56.07551193237305,
+            "start": 4.919999919831753,
+            "end": 5.269999913871288
+          },
+          {
+            "midi": 59.91669845581055,
+            "start": 5.269999913871288,
+            "end": 5.609999917447567
+          },
+          {
+            "midi": 56.02433776855469,
+            "start": 5.609999917447567,
+            "end": 5.92999991029501
+          },
+          {
+            "midi": 55.10621643066406,
+            "start": 5.92999991029501,
+            "end": 7.4999998435378075
+          },
+          {
+            "midi": 52.603981018066406,
+            "start": 7.4999998435378075,
+            "end": 7.849999837577343
+          },
+          {
+            "midi": 59.96424102783203,
+            "start": 7.849999837577343,
+            "end": 8.189999841153622
+          },
+          {
+            "midi": 56.052974700927734,
+            "start": 8.189999841153622,
+            "end": 8.449999831616879
+          },
+          {
+            "midi": 56.05967330932617,
+            "start": 8.449999831616879,
+            "end": 8.829999826848507
+          },
+          {
+            "midi": 57.920692443847656,
+            "start": 8.829999826848507,
+            "end": 10.409999750554562
+          },
+          {
+            "midi": 67.9876480102539,
+            "start": 10.409999750554562,
+            "end": 10.929999731481075
+          },
+          {
+            "midi": 67.0703353881836,
+            "start": 10.929999731481075,
+            "end": 11.399999730288982
+          },
+          {
+            "midi": 67.95076751708984,
+            "start": 11.399999730288982,
+            "end": 12.49999975413084
+          },
+          {
+            "midi": 64.99297332763672,
+            "start": 12.49999975413084,
+            "end": 12.979999743402004
+          },
+          {
+            "midi": 68.10589599609375,
+            "start": 12.979999743402004,
+            "end": 14.61999972909689
+          },
+          {
+            "midi": 67.01190948486328,
+            "start": 14.61999972909689,
+            "end": 14.849999718368053
+          },
+          {
+            "midi": 66.99381256103516,
+            "start": 14.849999718368053,
+            "end": 15.589999727904797
+          },
+          {
+            "midi": 66.97991180419922,
+            "start": 15.589999727904797,
+            "end": 15.999999724328518
+          }
+        ]
+      ],
+      "seeds": [
+        106754,
+        211483
+      ],
+      "scope": "Two original production-context passages on the host JVM; not a whole-job or phone measurement",
+      "profiles": [
+        "schema=native-game-profile-v1 route=native-game-v1 runtime=onnxruntime-1.25.1 provider=cpu precision=float32 steps=8 execution=sequential batchPassages=2 intraOpThreads=4 interOpThreads=1 cpuScope=process-all-app-threads acceleratorTelemetry=unavailable outcome=completed wallMs=45180 processCpuMs=114740 readWallMs=unavailable waitWallMs=unavailable engineInitWallMs=unavailable modelPrepareWallMs=729 runtimeInitWallMs=500 modelInitWallMs=4040 sessionInitCount=5 inferenceWallMs=39723 inferenceCount=24 inferenceThreadCpuMs=unavailable inferenceProcessCpuMs=108700 cleanupWallMs=64 cacheModelHits=5 cacheModelMisses=0 encoderInitWallMs=466 encoderRunCount=2 encoderRunWallMs=5200 encoderRunProcessCpuMs=14390 dur2bdInitWallMs=1 dur2bdRunCount=2 dur2bdRunWallMs=0 dur2bdRunProcessCpuMs=0 segmenterInitWallMs=882 segmenterRunCount=16 segmenterRunWallMs=31962 segmenterRunProcessCpuMs=87300 bd2durInitWallMs=6 bd2durRunCount=2 bd2durRunWallMs=2 bd2durRunProcessCpuMs=10 estimatorInitWallMs=2683 estimatorRunCount=2 estimatorRunWallMs=2557 estimatorRunProcessCpuMs=7000"
+      ],
+      "runtime": "1.25.1",
+      "language": 0,
+      "steps": 8,
+      "samples": [
+        705600,
+        705600
+      ],
+      "pair": 0,
+      "warmup": false,
+      "peakRssKiB": 873608,
+      "sessionInitializations": 5,
+      "graphRuns": 24
+    },
+    {
+      "mode": "pair",
+      "wallSeconds": 36.286704547,
+      "notes": [
+        [
+          {
+            "midi": 56.96540451049805,
+            "start": 0,
+            "end": 0.17000000178813934
+          },
+          {
+            "midi": 56.0250244140625,
+            "start": 0.17000000178813934,
+            "end": 0.5400000065565109
+          },
+          {
+            "midi": 55.9087028503418,
+            "start": 0.5400000065565109,
+            "end": 0.8200000077486038
+          },
+          {
+            "midi": 57.03565216064453,
+            "start": 0.8200000077486038,
+            "end": 1.290000006556511
+          },
+          {
+            "midi": 58.14236068725586,
+            "start": 1.290000006556511,
+            "end": 1.4500000029802322
+          },
+          {
+            "midi": 57.951629638671875,
+            "start": 1.4500000029802322,
+            "end": 1.6099999994039536
+          },
+          {
+            "midi": 55.952606201171875,
+            "start": 1.6099999994039536,
+            "end": 1.7599999904632568
+          },
+          {
+            "midi": 57.85213851928711,
+            "start": 1.7599999904632568,
+            "end": 1.939999982714653
+          },
+          {
+            "midi": 56.95403289794922,
+            "start": 1.939999982714653,
+            "end": 2.40999998152256
+          },
+          {
+            "midi": 57.5650749206543,
+            "start": 2.40999998152256,
+            "end": 4.029999986290932
+          },
+          {
+            "midi": 55.5760383605957,
+            "start": 4.029999986290932,
+            "end": 4.349999979138374
+          },
+          {
+            "midi": 57.656105041503906,
+            "start": 4.349999979138374,
+            "end": 4.709999963641167
+          },
+          {
+            "midi": 57.837825775146484,
+            "start": 4.709999963641167,
+            "end": 4.999999955296516
+          },
+          {
+            "midi": 57.869384765625,
+            "start": 4.999999955296516,
+            "end": 5.749999955296516
+          },
+          {
+            "midi": 57.92030334472656,
+            "start": 5.749999955296516,
+            "end": 6.939999893307686
+          },
+          {
+            "midi": 57.857025146484375,
+            "start": 6.939999893307686,
+            "end": 7.289999887347221
+          },
+          {
+            "midi": 57.96430206298828,
+            "start": 7.289999887347221,
+            "end": 7.579999879002571
+          },
+          {
+            "midi": 57.832664489746094,
+            "start": 7.579999879002571,
+            "end": 7.929999873042107
+          },
+          {
+            "midi": 55.987525939941406,
+            "start": 7.929999873042107,
+            "end": 8.259999856352806
+          },
+          {
+            "midi": 57.892826080322266,
+            "start": 8.259999856352806,
+            "end": 9.519999846816063
+          },
+          {
+            "midi": 57.66058349609375,
+            "start": 9.519999846816063,
+            "end": 9.859999850392342
+          },
+          {
+            "midi": 57.86357116699219,
+            "start": 9.859999850392342,
+            "end": 10.159999832510948
+          },
+          {
+            "midi": 57.977294921875,
+            "start": 10.159999832510948,
+            "end": 10.799999818205833
+          },
+          {
+            "midi": 57.90401840209961,
+            "start": 10.799999818205833,
+            "end": 11.139999821782112
+          },
+          {
+            "midi": 57.92075729370117,
+            "start": 11.139999821782112,
+            "end": 11.829999819397926
+          },
+          {
+            "midi": 55.93043518066406,
+            "start": 11.829999819397926,
+            "end": 12.119999811053276
+          },
+          {
+            "midi": 57.81352996826172,
+            "start": 12.119999811053276,
+            "end": 14.689999744296074
+          },
+          {
+            "midi": 59.93946838378906,
+            "start": 14.689999744296074,
+            "end": 15.03999973833561
+          },
+          {
+            "midi": 56.00883102416992,
+            "start": 15.03999973833561,
+            "end": 15.339999720454216
+          },
+          {
+            "midi": 55.98811721801758,
+            "start": 15.339999720454216,
+            "end": 15.669999703764915
+          },
+          {
+            "midi": 57.94719696044922,
+            "start": 15.669999703764915,
+            "end": 15.999999687075615
+          }
+        ],
+        [
+          {
+            "midi": 57.875789642333984,
+            "start": 0.11999999731779099,
+            "end": 1.4099999591708183
+          },
+          {
+            "midi": 50.10984802246094,
+            "start": 2.3599999472498894,
+            "end": 2.689999930560589
+          },
+          {
+            "midi": 59.9613037109375,
+            "start": 2.689999930560589,
+            "end": 3.339999906718731
+          },
+          {
+            "midi": 56.03254318237305,
+            "start": 3.339999906718731,
+            "end": 3.6799999102950096
+          },
+          {
+            "midi": 57.923824310302734,
+            "start": 3.6799999102950096,
+            "end": 4.919999919831753
+          },
+          {
+            "midi": 56.07551193237305,
+            "start": 4.919999919831753,
+            "end": 5.269999913871288
+          },
+          {
+            "midi": 59.91669845581055,
+            "start": 5.269999913871288,
+            "end": 5.609999917447567
+          },
+          {
+            "midi": 56.02433776855469,
+            "start": 5.609999917447567,
+            "end": 5.92999991029501
+          },
+          {
+            "midi": 55.10621643066406,
+            "start": 5.92999991029501,
+            "end": 7.4999998435378075
+          },
+          {
+            "midi": 52.603981018066406,
+            "start": 7.4999998435378075,
+            "end": 7.849999837577343
+          },
+          {
+            "midi": 59.96424102783203,
+            "start": 7.849999837577343,
+            "end": 8.189999841153622
+          },
+          {
+            "midi": 56.052974700927734,
+            "start": 8.189999841153622,
+            "end": 8.449999831616879
+          },
+          {
+            "midi": 56.05967330932617,
+            "start": 8.449999831616879,
+            "end": 8.829999826848507
+          },
+          {
+            "midi": 57.920692443847656,
+            "start": 8.829999826848507,
+            "end": 10.409999750554562
+          },
+          {
+            "midi": 67.9876480102539,
+            "start": 10.409999750554562,
+            "end": 10.929999731481075
+          },
+          {
+            "midi": 67.0703353881836,
+            "start": 10.929999731481075,
+            "end": 11.399999730288982
+          },
+          {
+            "midi": 67.95076751708984,
+            "start": 11.399999730288982,
+            "end": 12.49999975413084
+          },
+          {
+            "midi": 64.99297332763672,
+            "start": 12.49999975413084,
+            "end": 12.979999743402004
+          },
+          {
+            "midi": 68.10589599609375,
+            "start": 12.979999743402004,
+            "end": 14.61999972909689
+          },
+          {
+            "midi": 67.01190948486328,
+            "start": 14.61999972909689,
+            "end": 14.849999718368053
+          },
+          {
+            "midi": 66.99381256103516,
+            "start": 14.849999718368053,
+            "end": 15.589999727904797
+          },
+          {
+            "midi": 66.97991180419922,
+            "start": 15.589999727904797,
+            "end": 15.999999724328518
+          }
+        ]
+      ],
+      "seeds": [
+        106754,
+        211483
+      ],
+      "scope": "Two original production-context passages on the host JVM; not a whole-job or phone measurement",
+      "profiles": [
+        "schema=native-game-profile-v1 route=native-game-v1 runtime=onnxruntime-1.25.1 provider=cpu precision=float32 steps=8 execution=sequential batchPassages=2 intraOpThreads=4 interOpThreads=1 cpuScope=process-all-app-threads acceleratorTelemetry=unavailable outcome=completed wallMs=36240 processCpuMs=88220 readWallMs=unavailable waitWallMs=unavailable engineInitWallMs=unavailable modelPrepareWallMs=477 runtimeInitWallMs=248 modelInitWallMs=3198 sessionInitCount=5 inferenceWallMs=32172 inferenceCount=24 inferenceThreadCpuMs=unavailable inferenceProcessCpuMs=83970 cleanupWallMs=68 cacheModelHits=5 cacheModelMisses=0 encoderInitWallMs=580 encoderRunCount=2 encoderRunWallMs=2102 encoderRunProcessCpuMs=5390 dur2bdInitWallMs=2 dur2bdRunCount=2 dur2bdRunWallMs=1 dur2bdRunProcessCpuMs=0 segmenterInitWallMs=701 segmenterRunCount=16 segmenterRunWallMs=26970 segmenterRunProcessCpuMs=69440 bd2durInitWallMs=4 bd2durRunCount=2 bd2durRunWallMs=0 bd2durRunProcessCpuMs=0 estimatorInitWallMs=1909 estimatorRunCount=2 estimatorRunWallMs=3097 estimatorRunProcessCpuMs=9140"
+      ],
+      "runtime": "1.25.1",
+      "language": 0,
+      "steps": 8,
+      "samples": [
+        705600,
+        705600
+      ],
+      "pair": 1,
+      "warmup": false,
+      "peakRssKiB": 919484,
+      "sessionInitializations": 5,
+      "graphRuns": 24
+    },
+    {
+      "mode": "single",
+      "wallSeconds": 55.37414946,
+      "notes": [
+        [
+          {
+            "midi": 56.96540451049805,
+            "start": 0,
+            "end": 0.17000000178813934
+          },
+          {
+            "midi": 56.0250244140625,
+            "start": 0.17000000178813934,
+            "end": 0.5400000065565109
+          },
+          {
+            "midi": 55.9087028503418,
+            "start": 0.5400000065565109,
+            "end": 0.8200000077486038
+          },
+          {
+            "midi": 57.03565216064453,
+            "start": 0.8200000077486038,
+            "end": 1.290000006556511
+          },
+          {
+            "midi": 58.14236068725586,
+            "start": 1.290000006556511,
+            "end": 1.4500000029802322
+          },
+          {
+            "midi": 57.951629638671875,
+            "start": 1.4500000029802322,
+            "end": 1.6099999994039536
+          },
+          {
+            "midi": 55.952606201171875,
+            "start": 1.6099999994039536,
+            "end": 1.7599999904632568
+          },
+          {
+            "midi": 57.85213851928711,
+            "start": 1.7599999904632568,
+            "end": 1.939999982714653
+          },
+          {
+            "midi": 56.95403289794922,
+            "start": 1.939999982714653,
+            "end": 2.40999998152256
+          },
+          {
+            "midi": 57.5650749206543,
+            "start": 2.40999998152256,
+            "end": 4.029999986290932
+          },
+          {
+            "midi": 55.5760383605957,
+            "start": 4.029999986290932,
+            "end": 4.349999979138374
+          },
+          {
+            "midi": 57.656105041503906,
+            "start": 4.349999979138374,
+            "end": 4.709999963641167
+          },
+          {
+            "midi": 57.837825775146484,
+            "start": 4.709999963641167,
+            "end": 4.999999955296516
+          },
+          {
+            "midi": 57.869384765625,
+            "start": 4.999999955296516,
+            "end": 5.749999955296516
+          },
+          {
+            "midi": 57.92030334472656,
+            "start": 5.749999955296516,
+            "end": 6.939999893307686
+          },
+          {
+            "midi": 57.857025146484375,
+            "start": 6.939999893307686,
+            "end": 7.289999887347221
+          },
+          {
+            "midi": 57.96430206298828,
+            "start": 7.289999887347221,
+            "end": 7.579999879002571
+          },
+          {
+            "midi": 57.832664489746094,
+            "start": 7.579999879002571,
+            "end": 7.929999873042107
+          },
+          {
+            "midi": 55.987525939941406,
+            "start": 7.929999873042107,
+            "end": 8.259999856352806
+          },
+          {
+            "midi": 57.892826080322266,
+            "start": 8.259999856352806,
+            "end": 9.519999846816063
+          },
+          {
+            "midi": 57.66058349609375,
+            "start": 9.519999846816063,
+            "end": 9.859999850392342
+          },
+          {
+            "midi": 57.86357116699219,
+            "start": 9.859999850392342,
+            "end": 10.159999832510948
+          },
+          {
+            "midi": 57.977294921875,
+            "start": 10.159999832510948,
+            "end": 10.799999818205833
+          },
+          {
+            "midi": 57.90401840209961,
+            "start": 10.799999818205833,
+            "end": 11.139999821782112
+          },
+          {
+            "midi": 57.92075729370117,
+            "start": 11.139999821782112,
+            "end": 11.829999819397926
+          },
+          {
+            "midi": 55.93043518066406,
+            "start": 11.829999819397926,
+            "end": 12.119999811053276
+          },
+          {
+            "midi": 57.81352996826172,
+            "start": 12.119999811053276,
+            "end": 14.689999744296074
+          },
+          {
+            "midi": 59.93946838378906,
+            "start": 14.689999744296074,
+            "end": 15.03999973833561
+          },
+          {
+            "midi": 56.00883102416992,
+            "start": 15.03999973833561,
+            "end": 15.339999720454216
+          },
+          {
+            "midi": 55.98811721801758,
+            "start": 15.339999720454216,
+            "end": 15.669999703764915
+          },
+          {
+            "midi": 57.94719696044922,
+            "start": 15.669999703764915,
+            "end": 15.999999687075615
+          }
+        ],
+        [
+          {
+            "midi": 57.875789642333984,
+            "start": 0.11999999731779099,
+            "end": 1.4099999591708183
+          },
+          {
+            "midi": 50.10984802246094,
+            "start": 2.3599999472498894,
+            "end": 2.689999930560589
+          },
+          {
+            "midi": 59.9613037109375,
+            "start": 2.689999930560589,
+            "end": 3.339999906718731
+          },
+          {
+            "midi": 56.03254318237305,
+            "start": 3.339999906718731,
+            "end": 3.6799999102950096
+          },
+          {
+            "midi": 57.923824310302734,
+            "start": 3.6799999102950096,
+            "end": 4.919999919831753
+          },
+          {
+            "midi": 56.07551193237305,
+            "start": 4.919999919831753,
+            "end": 5.269999913871288
+          },
+          {
+            "midi": 59.91669845581055,
+            "start": 5.269999913871288,
+            "end": 5.609999917447567
+          },
+          {
+            "midi": 56.02433776855469,
+            "start": 5.609999917447567,
+            "end": 5.92999991029501
+          },
+          {
+            "midi": 55.10621643066406,
+            "start": 5.92999991029501,
+            "end": 7.4999998435378075
+          },
+          {
+            "midi": 52.603981018066406,
+            "start": 7.4999998435378075,
+            "end": 7.849999837577343
+          },
+          {
+            "midi": 59.96424102783203,
+            "start": 7.849999837577343,
+            "end": 8.189999841153622
+          },
+          {
+            "midi": 56.052974700927734,
+            "start": 8.189999841153622,
+            "end": 8.449999831616879
+          },
+          {
+            "midi": 56.05967330932617,
+            "start": 8.449999831616879,
+            "end": 8.829999826848507
+          },
+          {
+            "midi": 57.920692443847656,
+            "start": 8.829999826848507,
+            "end": 10.409999750554562
+          },
+          {
+            "midi": 67.9876480102539,
+            "start": 10.409999750554562,
+            "end": 10.929999731481075
+          },
+          {
+            "midi": 67.0703353881836,
+            "start": 10.929999731481075,
+            "end": 11.399999730288982
+          },
+          {
+            "midi": 67.95076751708984,
+            "start": 11.399999730288982,
+            "end": 12.49999975413084
+          },
+          {
+            "midi": 64.99297332763672,
+            "start": 12.49999975413084,
+            "end": 12.979999743402004
+          },
+          {
+            "midi": 68.10589599609375,
+            "start": 12.979999743402004,
+            "end": 14.61999972909689
+          },
+          {
+            "midi": 67.01190948486328,
+            "start": 14.61999972909689,
+            "end": 14.849999718368053
+          },
+          {
+            "midi": 66.99381256103516,
+            "start": 14.849999718368053,
+            "end": 15.589999727904797
+          },
+          {
+            "midi": 66.97991180419922,
+            "start": 15.589999727904797,
+            "end": 15.999999724328518
+          }
+        ]
+      ],
+      "seeds": [
+        106754,
+        211483
+      ],
+      "scope": "Two original production-context passages on the host JVM; not a whole-job or phone measurement",
+      "profiles": [
+        "schema=native-game-profile-v1 route=native-game-v1 runtime=onnxruntime-1.25.1 provider=cpu precision=float32 steps=8 execution=sequential batchPassages=1 intraOpThreads=4 interOpThreads=1 cpuScope=process-all-app-threads acceleratorTelemetry=unavailable outcome=completed wallMs=26699 processCpuMs=60610 readWallMs=unavailable waitWallMs=unavailable engineInitWallMs=unavailable modelPrepareWallMs=1185 runtimeInitWallMs=447 modelInitWallMs=5566 sessionInitCount=5 inferenceWallMs=19115 inferenceCount=12 inferenceThreadCpuMs=unavailable inferenceProcessCpuMs=52480 cleanupWallMs=78 cacheModelHits=5 cacheModelMisses=0 encoderInitWallMs=533 encoderRunCount=1 encoderRunWallMs=1106 encoderRunProcessCpuMs=2680 dur2bdInitWallMs=2 dur2bdRunCount=1 dur2bdRunWallMs=0 dur2bdRunProcessCpuMs=0 segmenterInitWallMs=1794 segmenterRunCount=8 segmenterRunWallMs=16346 segmenterRunProcessCpuMs=44930 bd2durInitWallMs=5 bd2durRunCount=1 bd2durRunWallMs=0 bd2durRunProcessCpuMs=0 estimatorInitWallMs=3230 estimatorRunCount=1 estimatorRunWallMs=1662 estimatorRunProcessCpuMs=4870",
+        "schema=native-game-profile-v1 route=native-game-v1 runtime=onnxruntime-1.25.1 provider=cpu precision=float32 steps=8 execution=sequential batchPassages=1 intraOpThreads=4 interOpThreads=1 cpuScope=process-all-app-threads acceleratorTelemetry=unavailable outcome=completed wallMs=28625 processCpuMs=68280 readWallMs=unavailable waitWallMs=unavailable engineInitWallMs=unavailable modelPrepareWallMs=517 runtimeInitWallMs=0 modelInitWallMs=3416 sessionInitCount=5 inferenceWallMs=24599 inferenceCount=12 inferenceThreadCpuMs=unavailable inferenceProcessCpuMs=64200 cleanupWallMs=65 cacheModelHits=5 cacheModelMisses=0 encoderInitWallMs=395 encoderRunCount=1 encoderRunWallMs=3331 encoderRunProcessCpuMs=8820 dur2bdInitWallMs=2 dur2bdRunCount=1 dur2bdRunWallMs=1 dur2bdRunProcessCpuMs=0 segmenterInitWallMs=703 segmenterRunCount=8 segmenterRunWallMs=19478 segmenterRunProcessCpuMs=50570 bd2durInitWallMs=3 bd2durRunCount=1 bd2durRunWallMs=0 bd2durRunProcessCpuMs=0 estimatorInitWallMs=2311 estimatorRunCount=1 estimatorRunWallMs=1786 estimatorRunProcessCpuMs=4810"
+      ],
+      "runtime": "1.25.1",
+      "language": 0,
+      "steps": 8,
+      "samples": [
+        705600,
+        705600
+      ],
+      "pair": 1,
+      "warmup": false,
+      "peakRssKiB": 884088,
+      "sessionInitializations": 10,
+      "graphRuns": 24
+    },
+    {
+      "mode": "single",
+      "wallSeconds": 39.823551556,
+      "notes": [
+        [
+          {
+            "midi": 56.96540451049805,
+            "start": 0,
+            "end": 0.17000000178813934
+          },
+          {
+            "midi": 56.0250244140625,
+            "start": 0.17000000178813934,
+            "end": 0.5400000065565109
+          },
+          {
+            "midi": 55.9087028503418,
+            "start": 0.5400000065565109,
+            "end": 0.8200000077486038
+          },
+          {
+            "midi": 57.03565216064453,
+            "start": 0.8200000077486038,
+            "end": 1.290000006556511
+          },
+          {
+            "midi": 58.14236068725586,
+            "start": 1.290000006556511,
+            "end": 1.4500000029802322
+          },
+          {
+            "midi": 57.951629638671875,
+            "start": 1.4500000029802322,
+            "end": 1.6099999994039536
+          },
+          {
+            "midi": 55.952606201171875,
+            "start": 1.6099999994039536,
+            "end": 1.7599999904632568
+          },
+          {
+            "midi": 57.85213851928711,
+            "start": 1.7599999904632568,
+            "end": 1.939999982714653
+          },
+          {
+            "midi": 56.95403289794922,
+            "start": 1.939999982714653,
+            "end": 2.40999998152256
+          },
+          {
+            "midi": 57.5650749206543,
+            "start": 2.40999998152256,
+            "end": 4.029999986290932
+          },
+          {
+            "midi": 55.5760383605957,
+            "start": 4.029999986290932,
+            "end": 4.349999979138374
+          },
+          {
+            "midi": 57.656105041503906,
+            "start": 4.349999979138374,
+            "end": 4.709999963641167
+          },
+          {
+            "midi": 57.837825775146484,
+            "start": 4.709999963641167,
+            "end": 4.999999955296516
+          },
+          {
+            "midi": 57.869384765625,
+            "start": 4.999999955296516,
+            "end": 5.749999955296516
+          },
+          {
+            "midi": 57.92030334472656,
+            "start": 5.749999955296516,
+            "end": 6.939999893307686
+          },
+          {
+            "midi": 57.857025146484375,
+            "start": 6.939999893307686,
+            "end": 7.289999887347221
+          },
+          {
+            "midi": 57.96430206298828,
+            "start": 7.289999887347221,
+            "end": 7.579999879002571
+          },
+          {
+            "midi": 57.832664489746094,
+            "start": 7.579999879002571,
+            "end": 7.929999873042107
+          },
+          {
+            "midi": 55.987525939941406,
+            "start": 7.929999873042107,
+            "end": 8.259999856352806
+          },
+          {
+            "midi": 57.892826080322266,
+            "start": 8.259999856352806,
+            "end": 9.519999846816063
+          },
+          {
+            "midi": 57.66058349609375,
+            "start": 9.519999846816063,
+            "end": 9.859999850392342
+          },
+          {
+            "midi": 57.86357116699219,
+            "start": 9.859999850392342,
+            "end": 10.159999832510948
+          },
+          {
+            "midi": 57.977294921875,
+            "start": 10.159999832510948,
+            "end": 10.799999818205833
+          },
+          {
+            "midi": 57.90401840209961,
+            "start": 10.799999818205833,
+            "end": 11.139999821782112
+          },
+          {
+            "midi": 57.92075729370117,
+            "start": 11.139999821782112,
+            "end": 11.829999819397926
+          },
+          {
+            "midi": 55.93043518066406,
+            "start": 11.829999819397926,
+            "end": 12.119999811053276
+          },
+          {
+            "midi": 57.81352996826172,
+            "start": 12.119999811053276,
+            "end": 14.689999744296074
+          },
+          {
+            "midi": 59.93946838378906,
+            "start": 14.689999744296074,
+            "end": 15.03999973833561
+          },
+          {
+            "midi": 56.00883102416992,
+            "start": 15.03999973833561,
+            "end": 15.339999720454216
+          },
+          {
+            "midi": 55.98811721801758,
+            "start": 15.339999720454216,
+            "end": 15.669999703764915
+          },
+          {
+            "midi": 57.94719696044922,
+            "start": 15.669999703764915,
+            "end": 15.999999687075615
+          }
+        ],
+        [
+          {
+            "midi": 57.875789642333984,
+            "start": 0.11999999731779099,
+            "end": 1.4099999591708183
+          },
+          {
+            "midi": 50.10984802246094,
+            "start": 2.3599999472498894,
+            "end": 2.689999930560589
+          },
+          {
+            "midi": 59.9613037109375,
+            "start": 2.689999930560589,
+            "end": 3.339999906718731
+          },
+          {
+            "midi": 56.03254318237305,
+            "start": 3.339999906718731,
+            "end": 3.6799999102950096
+          },
+          {
+            "midi": 57.923824310302734,
+            "start": 3.6799999102950096,
+            "end": 4.919999919831753
+          },
+          {
+            "midi": 56.07551193237305,
+            "start": 4.919999919831753,
+            "end": 5.269999913871288
+          },
+          {
+            "midi": 59.91669845581055,
+            "start": 5.269999913871288,
+            "end": 5.609999917447567
+          },
+          {
+            "midi": 56.02433776855469,
+            "start": 5.609999917447567,
+            "end": 5.92999991029501
+          },
+          {
+            "midi": 55.10621643066406,
+            "start": 5.92999991029501,
+            "end": 7.4999998435378075
+          },
+          {
+            "midi": 52.603981018066406,
+            "start": 7.4999998435378075,
+            "end": 7.849999837577343
+          },
+          {
+            "midi": 59.96424102783203,
+            "start": 7.849999837577343,
+            "end": 8.189999841153622
+          },
+          {
+            "midi": 56.052974700927734,
+            "start": 8.189999841153622,
+            "end": 8.449999831616879
+          },
+          {
+            "midi": 56.05967330932617,
+            "start": 8.449999831616879,
+            "end": 8.829999826848507
+          },
+          {
+            "midi": 57.920692443847656,
+            "start": 8.829999826848507,
+            "end": 10.409999750554562
+          },
+          {
+            "midi": 67.9876480102539,
+            "start": 10.409999750554562,
+            "end": 10.929999731481075
+          },
+          {
+            "midi": 67.0703353881836,
+            "start": 10.929999731481075,
+            "end": 11.399999730288982
+          },
+          {
+            "midi": 67.95076751708984,
+            "start": 11.399999730288982,
+            "end": 12.49999975413084
+          },
+          {
+            "midi": 64.99297332763672,
+            "start": 12.49999975413084,
+            "end": 12.979999743402004
+          },
+          {
+            "midi": 68.10589599609375,
+            "start": 12.979999743402004,
+            "end": 14.61999972909689
+          },
+          {
+            "midi": 67.01190948486328,
+            "start": 14.61999972909689,
+            "end": 14.849999718368053
+          },
+          {
+            "midi": 66.99381256103516,
+            "start": 14.849999718368053,
+            "end": 15.589999727904797
+          },
+          {
+            "midi": 66.97991180419922,
+            "start": 15.589999727904797,
+            "end": 15.999999724328518
+          }
+        ]
+      ],
+      "seeds": [
+        106754,
+        211483
+      ],
+      "scope": "Two original production-context passages on the host JVM; not a whole-job or phone measurement",
+      "profiles": [
+        "schema=native-game-profile-v1 route=native-game-v1 runtime=onnxruntime-1.25.1 provider=cpu precision=float32 steps=8 execution=sequential batchPassages=1 intraOpThreads=4 interOpThreads=1 cpuScope=process-all-app-threads acceleratorTelemetry=unavailable outcome=completed wallMs=19107 processCpuMs=45950 readWallMs=unavailable waitWallMs=unavailable engineInitWallMs=unavailable modelPrepareWallMs=520 runtimeInitWallMs=234 modelInitWallMs=3128 sessionInitCount=5 inferenceWallMs=15103 inferenceCount=12 inferenceThreadCpuMs=unavailable inferenceProcessCpuMs=41780 cleanupWallMs=61 cacheModelHits=5 cacheModelMisses=0 encoderInitWallMs=438 encoderRunCount=1 encoderRunWallMs=1352 encoderRunProcessCpuMs=3690 dur2bdInitWallMs=2 dur2bdRunCount=1 dur2bdRunWallMs=0 dur2bdRunProcessCpuMs=0 segmenterInitWallMs=705 segmenterRunCount=8 segmenterRunWallMs=12375 segmenterRunProcessCpuMs=33890 bd2durInitWallMs=3 bd2durRunCount=1 bd2durRunWallMs=0 bd2durRunProcessCpuMs=0 estimatorInitWallMs=1977 estimatorRunCount=1 estimatorRunWallMs=1375 estimatorRunProcessCpuMs=4200",
+        "schema=native-game-profile-v1 route=native-game-v1 runtime=onnxruntime-1.25.1 provider=cpu precision=float32 steps=8 execution=sequential batchPassages=1 intraOpThreads=4 interOpThreads=1 cpuScope=process-all-app-threads acceleratorTelemetry=unavailable outcome=completed wallMs=20648 processCpuMs=51530 readWallMs=unavailable waitWallMs=unavailable engineInitWallMs=unavailable modelPrepareWallMs=471 runtimeInitWallMs=0 modelInitWallMs=3307 sessionInitCount=5 inferenceWallMs=16792 inferenceCount=12 inferenceThreadCpuMs=unavailable inferenceProcessCpuMs=47640 cleanupWallMs=57 cacheModelHits=5 cacheModelMisses=0 encoderInitWallMs=373 encoderRunCount=1 encoderRunWallMs=1090 encoderRunProcessCpuMs=3060 dur2bdInitWallMs=2 dur2bdRunCount=1 dur2bdRunWallMs=0 dur2bdRunProcessCpuMs=0 segmenterInitWallMs=651 segmenterRunCount=8 segmenterRunWallMs=14452 segmenterRunProcessCpuMs=40910 bd2durInitWallMs=2 bd2durRunCount=1 bd2durRunWallMs=0 bd2durRunProcessCpuMs=0 estimatorInitWallMs=2278 estimatorRunCount=1 estimatorRunWallMs=1247 estimatorRunProcessCpuMs=3670"
+      ],
+      "runtime": "1.25.1",
+      "language": 0,
+      "steps": 8,
+      "samples": [
+        705600,
+        705600
+      ],
+      "pair": 2,
+      "warmup": false,
+      "peakRssKiB": 951468,
+      "sessionInitializations": 10,
+      "graphRuns": 24
+    },
+    {
+      "mode": "pair",
+      "wallSeconds": 49.885053614,
+      "notes": [
+        [
+          {
+            "midi": 56.96540451049805,
+            "start": 0,
+            "end": 0.17000000178813934
+          },
+          {
+            "midi": 56.0250244140625,
+            "start": 0.17000000178813934,
+            "end": 0.5400000065565109
+          },
+          {
+            "midi": 55.9087028503418,
+            "start": 0.5400000065565109,
+            "end": 0.8200000077486038
+          },
+          {
+            "midi": 57.03565216064453,
+            "start": 0.8200000077486038,
+            "end": 1.290000006556511
+          },
+          {
+            "midi": 58.14236068725586,
+            "start": 1.290000006556511,
+            "end": 1.4500000029802322
+          },
+          {
+            "midi": 57.951629638671875,
+            "start": 1.4500000029802322,
+            "end": 1.6099999994039536
+          },
+          {
+            "midi": 55.952606201171875,
+            "start": 1.6099999994039536,
+            "end": 1.7599999904632568
+          },
+          {
+            "midi": 57.85213851928711,
+            "start": 1.7599999904632568,
+            "end": 1.939999982714653
+          },
+          {
+            "midi": 56.95403289794922,
+            "start": 1.939999982714653,
+            "end": 2.40999998152256
+          },
+          {
+            "midi": 57.5650749206543,
+            "start": 2.40999998152256,
+            "end": 4.029999986290932
+          },
+          {
+            "midi": 55.5760383605957,
+            "start": 4.029999986290932,
+            "end": 4.349999979138374
+          },
+          {
+            "midi": 57.656105041503906,
+            "start": 4.349999979138374,
+            "end": 4.709999963641167
+          },
+          {
+            "midi": 57.837825775146484,
+            "start": 4.709999963641167,
+            "end": 4.999999955296516
+          },
+          {
+            "midi": 57.869384765625,
+            "start": 4.999999955296516,
+            "end": 5.749999955296516
+          },
+          {
+            "midi": 57.92030334472656,
+            "start": 5.749999955296516,
+            "end": 6.939999893307686
+          },
+          {
+            "midi": 57.857025146484375,
+            "start": 6.939999893307686,
+            "end": 7.289999887347221
+          },
+          {
+            "midi": 57.96430206298828,
+            "start": 7.289999887347221,
+            "end": 7.579999879002571
+          },
+          {
+            "midi": 57.832664489746094,
+            "start": 7.579999879002571,
+            "end": 7.929999873042107
+          },
+          {
+            "midi": 55.987525939941406,
+            "start": 7.929999873042107,
+            "end": 8.259999856352806
+          },
+          {
+            "midi": 57.892826080322266,
+            "start": 8.259999856352806,
+            "end": 9.519999846816063
+          },
+          {
+            "midi": 57.66058349609375,
+            "start": 9.519999846816063,
+            "end": 9.859999850392342
+          },
+          {
+            "midi": 57.86357116699219,
+            "start": 9.859999850392342,
+            "end": 10.159999832510948
+          },
+          {
+            "midi": 57.977294921875,
+            "start": 10.159999832510948,
+            "end": 10.799999818205833
+          },
+          {
+            "midi": 57.90401840209961,
+            "start": 10.799999818205833,
+            "end": 11.139999821782112
+          },
+          {
+            "midi": 57.92075729370117,
+            "start": 11.139999821782112,
+            "end": 11.829999819397926
+          },
+          {
+            "midi": 55.93043518066406,
+            "start": 11.829999819397926,
+            "end": 12.119999811053276
+          },
+          {
+            "midi": 57.81352996826172,
+            "start": 12.119999811053276,
+            "end": 14.689999744296074
+          },
+          {
+            "midi": 59.93946838378906,
+            "start": 14.689999744296074,
+            "end": 15.03999973833561
+          },
+          {
+            "midi": 56.00883102416992,
+            "start": 15.03999973833561,
+            "end": 15.339999720454216
+          },
+          {
+            "midi": 55.98811721801758,
+            "start": 15.339999720454216,
+            "end": 15.669999703764915
+          },
+          {
+            "midi": 57.94719696044922,
+            "start": 15.669999703764915,
+            "end": 15.999999687075615
+          }
+        ],
+        [
+          {
+            "midi": 57.875789642333984,
+            "start": 0.11999999731779099,
+            "end": 1.4099999591708183
+          },
+          {
+            "midi": 50.10984802246094,
+            "start": 2.3599999472498894,
+            "end": 2.689999930560589
+          },
+          {
+            "midi": 59.9613037109375,
+            "start": 2.689999930560589,
+            "end": 3.339999906718731
+          },
+          {
+            "midi": 56.03254318237305,
+            "start": 3.339999906718731,
+            "end": 3.6799999102950096
+          },
+          {
+            "midi": 57.923824310302734,
+            "start": 3.6799999102950096,
+            "end": 4.919999919831753
+          },
+          {
+            "midi": 56.07551193237305,
+            "start": 4.919999919831753,
+            "end": 5.269999913871288
+          },
+          {
+            "midi": 59.91669845581055,
+            "start": 5.269999913871288,
+            "end": 5.609999917447567
+          },
+          {
+            "midi": 56.02433776855469,
+            "start": 5.609999917447567,
+            "end": 5.92999991029501
+          },
+          {
+            "midi": 55.10621643066406,
+            "start": 5.92999991029501,
+            "end": 7.4999998435378075
+          },
+          {
+            "midi": 52.603981018066406,
+            "start": 7.4999998435378075,
+            "end": 7.849999837577343
+          },
+          {
+            "midi": 59.96424102783203,
+            "start": 7.849999837577343,
+            "end": 8.189999841153622
+          },
+          {
+            "midi": 56.052974700927734,
+            "start": 8.189999841153622,
+            "end": 8.449999831616879
+          },
+          {
+            "midi": 56.05967330932617,
+            "start": 8.449999831616879,
+            "end": 8.829999826848507
+          },
+          {
+            "midi": 57.920692443847656,
+            "start": 8.829999826848507,
+            "end": 10.409999750554562
+          },
+          {
+            "midi": 67.9876480102539,
+            "start": 10.409999750554562,
+            "end": 10.929999731481075
+          },
+          {
+            "midi": 67.0703353881836,
+            "start": 10.929999731481075,
+            "end": 11.399999730288982
+          },
+          {
+            "midi": 67.95076751708984,
+            "start": 11.399999730288982,
+            "end": 12.49999975413084
+          },
+          {
+            "midi": 64.99297332763672,
+            "start": 12.49999975413084,
+            "end": 12.979999743402004
+          },
+          {
+            "midi": 68.10589599609375,
+            "start": 12.979999743402004,
+            "end": 14.61999972909689
+          },
+          {
+            "midi": 67.01190948486328,
+            "start": 14.61999972909689,
+            "end": 14.849999718368053
+          },
+          {
+            "midi": 66.99381256103516,
+            "start": 14.849999718368053,
+            "end": 15.589999727904797
+          },
+          {
+            "midi": 66.97991180419922,
+            "start": 15.589999727904797,
+            "end": 15.999999724328518
+          }
+        ]
+      ],
+      "seeds": [
+        106754,
+        211483
+      ],
+      "scope": "Two original production-context passages on the host JVM; not a whole-job or phone measurement",
+      "profiles": [
+        "schema=native-game-profile-v1 route=native-game-v1 runtime=onnxruntime-1.25.1 provider=cpu precision=float32 steps=8 execution=sequential batchPassages=2 intraOpThreads=4 interOpThreads=1 cpuScope=process-all-app-threads acceleratorTelemetry=unavailable outcome=completed wallMs=49823 processCpuMs=122120 readWallMs=unavailable waitWallMs=unavailable engineInitWallMs=unavailable modelPrepareWallMs=584 runtimeInitWallMs=283 modelInitWallMs=3923 sessionInitCount=5 inferenceWallMs=44786 inferenceCount=24 inferenceThreadCpuMs=unavailable inferenceProcessCpuMs=116860 cleanupWallMs=124 cacheModelHits=5 cacheModelMisses=0 encoderInitWallMs=512 encoderRunCount=2 encoderRunWallMs=2977 encoderRunProcessCpuMs=7900 dur2bdInitWallMs=4 dur2bdRunCount=2 dur2bdRunWallMs=0 dur2bdRunProcessCpuMs=0 segmenterInitWallMs=915 segmenterRunCount=16 segmenterRunWallMs=37142 segmenterRunProcessCpuMs=97200 bd2durInitWallMs=3 bd2durRunCount=2 bd2durRunWallMs=2 bd2durRunProcessCpuMs=0 estimatorInitWallMs=2487 estimatorRunCount=2 estimatorRunWallMs=4662 estimatorRunProcessCpuMs=11760"
+      ],
+      "runtime": "1.25.1",
+      "language": 0,
+      "steps": 8,
+      "samples": [
+        705600,
+        705600
+      ],
+      "pair": 2,
+      "warmup": false,
+      "peakRssKiB": 920460,
+      "sessionInitializations": 5,
+      "graphRuns": 24
+    }
+  ]
+}

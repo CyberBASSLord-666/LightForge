@@ -80,7 +80,18 @@ class WavReader{
   if(count===0)return new Float32Array(0);
   const factor=this.rate/22050,margin=factor===2?31:0,rawStart=Math.floor(start*factor)-margin,rawEnd=Math.ceil((start+count-1)*factor)+margin+1;
   if(![1,2].includes(factor)||!Number.isSafeInteger(rawStart)||!Number.isSafeInteger(rawEnd))throw new Error('Invalid mono audio read bounds.');
-  const lo=Math.max(0,rawStart),hi=Math.min(this.samples,rawEnd);let raw=new Float32Array(Math.max(0,rawEnd-rawStart));if(hi>lo){const b=await this.bytes(this.offset+lo*this.align,this.offset+hi*this.align-1);if(b.byteLength!==(hi-lo)*this.align)throw new Error('The audio transfer was incomplete. Your project is still saved; reopen it in the updated app.');measure(this.telemetry,'audio_decode',()=>{const v=new DataView(b),width=this.bits/8;for(let i=0;i<hi-lo;i++){let sum=0;for(let c=0;c<this.channels;c++){let p=i*this.align+c*width,a;if(this.format===3)a=v.getFloat32(p,true);else if(this.bits===16)a=v.getInt16(p,true)/32768;else if(this.bits===32)a=v.getInt32(p,true)/2147483648;else{let n=v.getUint8(p)|(v.getUint8(p+1)<<8)|(v.getUint8(p+2)<<16);if(n&0x800000)n|=0xff000000;a=n/8388608;}sum+=Number.isFinite(a)?a:0;}raw[lo-rawStart+i]=sum/this.channels;}});}
+  const lo=Math.max(0,rawStart),hi=Math.min(this.samples,rawEnd);let raw=new Float32Array(Math.max(0,rawEnd-rawStart));if(hi>lo){const b=await this.bytes(this.offset+lo*this.align,this.offset+hi*this.align-1);if(b.byteLength!==(hi-lo)*this.align)throw new Error('The audio transfer was incomplete. Your project is still saved; reopen it in the updated app.');measure(this.telemetry,'audio_decode',()=>{
+   const v=new DataView(b),width=this.bits/8,frames=hi-lo,destination=lo-rawStart;
+   // The importer writes PCM16 mono/stereo. Select that fixed layout once,
+   // preserving channel arithmetic and Float32 rounding for every sample.
+   if(this.format===1&&this.bits===16&&this.channels===1&&this.align===2){
+    for(let i=0,p=0;i<frames;i++,p+=2)raw[destination+i]=v.getInt16(p,true)/32768;
+   }else if(this.format===1&&this.bits===16&&this.channels===2&&this.align===4){
+    for(let i=0,p=0;i<frames;i++,p+=4)raw[destination+i]=(v.getInt16(p,true)/32768+v.getInt16(p+2,true)/32768)/2;
+   }else{
+    for(let i=0;i<frames;i++){let sum=0;for(let c=0;c<this.channels;c++){let p=i*this.align+c*width,a;if(this.format===3)a=v.getFloat32(p,true);else if(this.bits===16)a=v.getInt16(p,true)/32768;else if(this.bits===32)a=v.getInt32(p,true)/2147483648;else{let n=v.getUint8(p)|(v.getUint8(p+1)<<8)|(v.getUint8(p+2)<<16);if(n&0x800000)n|=0xff000000;a=n/8388608;}sum+=Number.isFinite(a)?a:0;}raw[destination+i]=sum/this.channels;}
+   }
+  });}
  const out=new Float32Array(count);if(factor===1){out.set(raw.subarray(-rawStart+start,-rawStart+start+count));}else{measure(count>0?this.telemetry:null,'resample_normalize',()=>{const filter=config.resampleHalfFIR;for(let i=0;i<count;i++){let center=(start+i)*2-rawStart,sum=0;for(let j=0;j<filter.length;j++)sum+=(raw[center+j-31]||0)*filter[j];out[i]=sum;}});}return out;}
  async stereo44100(start,count){
   if(this.rate!==44100)throw new Error('Voice separation needs the original 44.1 kHz music. Import the track through the app first.');
@@ -91,6 +102,15 @@ class WavReader{
   if(bytes.byteLength!==(hi-lo)*this.align)throw new Error('The stereo audio transfer was incomplete. Reopen the project and try again.');
   measure(this.telemetry,'audio_decode',()=>{
   const view=new DataView(bytes),width=this.bits/8;
+  if(this.format===1&&this.bits===16&&(this.channels===1||this.channels===2)&&this.align===this.channels*2){
+   const destination=lo-start,frames=hi-lo;
+   if(this.channels===1){
+    for(let i=0,p=0;i<frames;i++,p+=2){const sample=view.getInt16(p,true)/32768;output[0][destination+i]=sample;output[1][destination+i]=sample;}
+   }else{
+    for(let i=0,p=0;i<frames;i++,p+=4){output[0][destination+i]=view.getInt16(p,true)/32768;output[1][destination+i]=view.getInt16(p+2,true)/32768;}
+   }
+   return;
+  }
   for(let i=0;i<hi-lo;i++)for(let c=0;c<2;c++){
    const at=i*this.align+Math.min(c,this.channels-1)*width;let sample;
    if(this.format===3)sample=view.getFloat32(at,true);

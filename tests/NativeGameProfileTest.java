@@ -36,10 +36,12 @@ public final class NativeGameProfileTest {
         require("unavailable".equals(record.get("encoderRunWallMs")),"unexecuted graph is unavailable, not zero duration");
         require("native-game-v1".equals(record.get("route"))&&"onnxruntime-1.25.1".equals(record.get("runtime")),"route/runtime identity");
         require("cpu".equals(record.get("provider"))&&"float32".equals(record.get("precision"))&&"8".equals(record.get("steps")),"execution identity");
+        require("1".equals(record.get("batchPassages")),"unary profile defaults to one independent passage");
         require(snapshot.summary().length()<4096,"one bounded log record");
         clock.advance(20,20);profile.addInference("segmenter",start);profile.cache(true);
         require(profile.finish("failed")==snapshot,"immutable idempotent final receipt");
         require("1".equals(fields(snapshot.summary()).get("cacheModelHits")),"late work cannot mutate receipt");
+        profile.batchPassages(2);require("1".equals(fields(snapshot.summary()).get("batchPassages")),"finished passage count cannot mutate");
         Clock unavailable=new Clock();unavailable.cpu=-1;
         NativeGameProfile absent=new NativeGameProfile(4,unavailable);start=absent.started();unavailable.wall=3000000;absent.addInference("encoder",start);
         Map<String,String> absentRecord=fields(absent.finish("private file path / song title").summary());
@@ -55,6 +57,13 @@ public final class NativeGameProfileTest {
         catch(IllegalArgumentException expected){checks++;}
         try{bounded.addInference("private path",bounded.started());throw new AssertionError("unbounded graph accepted");}
         catch(IllegalArgumentException expected){checks++;}
+        for(int count:new int[]{0,3})try{bounded.batchPassages(count);throw new AssertionError("unbounded passage count accepted");}
+        catch(IllegalArgumentException expected){checks++;}
+        NativeGameProfile pair=new NativeGameProfile(4,new Clock());pair.batchPassages(2);
+        for(String graph:new String[]{"encoder","dur2bd","segmenter","bd2dur","estimator"})pair.addSessionInit(graph,pair.started());
+        for(int passage=0;passage<2;passage++)for(String graph:new String[]{"encoder","dur2bd","segmenter","segmenter","segmenter","segmenter","segmenter","segmenter","segmenter","segmenter","bd2dur","estimator"})pair.addInference(graph,pair.started());
+        Map<String,String> pairRecord=fields(pair.finish("completed").summary());
+        require("2".equals(pairRecord.get("batchPassages"))&&"5".equals(pairRecord.get("sessionInitCount"))&&"24".equals(pairRecord.get("inferenceCount")),"pair profiles distinguish shared setup from all original graph calls");
         System.out.println("PASS: "+checks+" bounded GAME profile checks");
     }
 }

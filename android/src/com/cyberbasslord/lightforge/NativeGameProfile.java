@@ -15,6 +15,7 @@ final class NativeGameProfile {
             runtimeInit=new Metric(),sessionInit=new Metric(),inference=new Metric(),cleanup=new Metric();
     private final Metric[] graphInit=new Metric[GRAPHS.length],graphRun=new Metric[GRAPHS.length];
     private int cacheHits,cacheMisses;
+    private int batchPassages=1;
     private boolean cacheObserved;
     private Snapshot snapshot;
 
@@ -34,6 +35,10 @@ final class NativeGameProfile {
     void addSessionInit(String graph,Stamp stamp){addGraph(sessionInit,graphInit,graph,stamp);}
     void addInference(String graph,Stamp stamp){addGraph(inference,graphRun,graph,stamp);}
     void cache(boolean hit){if(snapshot==null){cacheObserved=true;if(hit)cacheHits++;else cacheMisses++;}}
+    void batchPassages(int count){
+        if(count<1||count>2)throw new IllegalArgumentException("Invalid GAME passage count.");
+        if(snapshot==null)batchPassages=count;
+    }
     private void add(Metric metric,Stamp stamp){if(snapshot==null)metric.add(elapsed(stamp));}
     private void addGraph(Metric total,Metric[] graphs,String graph,Stamp stamp){
         if(snapshot!=null)return;
@@ -53,6 +58,7 @@ final class NativeGameProfile {
         StringBuilder record=new StringBuilder(2048);
         record.append("schema=native-game-profile-v1 route=native-game-v1 runtime=onnxruntime-1.25.1")
             .append(" provider=cpu precision=float32 steps=8 execution=sequential")
+            .append(" batchPassages=").append(batchPassages)
             .append(" intraOpThreads=").append(threads).append(" interOpThreads=1")
             .append(" cpuScope=process-all-app-threads acceleratorTelemetry=unavailable")
             .append(" outcome=").append(outcome).append(" wallMs=").append(ms(total.wall))

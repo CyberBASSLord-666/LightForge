@@ -109,7 +109,7 @@ async function analyze(audioUrl,options={},onProgress=()=>{},signal){
  const {hasNative,hasMdx,hasGame}=nativeCapabilities(actualOptions),cacheIdentity=await analysisCacheIdentity(actualOptions,signal,refreshEpoch),persistent=cacheIdentity.persistent,workId=cacheIdentity.workId;
  const id=workId.slice(0,32),cacheKey='stem-'+[id.slice(0,8),id.slice(8,12),id.slice(12,16),id.slice(16,20),id.slice(20)].join('-');
  const fallbackDiagnostic=requestedNativeFallback&&typeof requestedNativeFallback==='object'&&typeof requestedNativeFallback.attemptedExecution==='string'&&typeof requestedNativeFallback.reason==='string'?{schemaVersion:1,attemptedExecution:requestedNativeFallback.attemptedExecution.slice(0,80),reason:requestedNativeFallback.reason.slice(0,120),resultExecution:'wasm-v1'}:null;
- const clock=createDiagnosticClock(),runOptions={...serializableOptions,cacheKey,workId,supportsNativeDeux:hasNative,supportsNativeMdx:hasMdx,supportsNativeGame:hasGame,analysisImplementationFingerprint:cacheIdentity.implementationFingerprint,analysisAssetFingerprint:cacheIdentity.assetFingerprint,nativeRuntimeProfile:cacheIdentity.nativeRuntimeProfile},stages=stagesFor(actualOptions),timings={},started=clock.start;let value={},progress=0;
+ const clock=createDiagnosticClock(),runOptions={...serializableOptions,cacheKey,workId,supportsNativeDeux:hasNative,supportsNativeMdx:hasMdx,supportsNativeGame:hasGame,supportsNativeGameBatch:hasGame&&typeof nativeGame.batch==='function',analysisImplementationFingerprint:cacheIdentity.implementationFingerprint,analysisAssetFingerprint:cacheIdentity.assetFingerprint,nativeRuntimeProfile:cacheIdentity.nativeRuntimeProfile},stages=stagesFor(actualOptions),timings={},started=clock.start;let value={},progress=0;
  function runStage(stage){return new Promise((resolve,reject)=>{
   if(signal?.aborted){reject(aborted());return;}
   scope.LightForgeDiagnostics?.log('info','analysis-worker','Stage started: '+stage);
@@ -160,6 +160,23 @@ async function analyze(audioUrl,options={},onProgress=()=>{},signal){
      const buffer=fullArrayBuffer?result.buffer:Float32Array.from(result).buffer;
      worker.postMessage({type:'native-mdx-result',requestId:m.requestId,buffer},[buffer]);
     }).catch(error=>{if(!finished){scope.LightForgeDiagnostics?.log(error?.name==='AbortError'?'info':'error','analysis',error);nativeMdxActive=false;if(error?.name==='AbortError')worker.postMessage({type:'native-mdx-result',requestId:m.requestId,aborted:true,message:error.message||'Analysis cancelled'});else worker.postMessage({type:'native-mdx-result',requestId:m.requestId,fallback:true,message:typeof error?.message==='string'?error.message.slice(0,320):undefined});}});return;
+   }
+   if(m.type==='native-game-batch'){
+    const validPassage=passage=>passage&&Object.keys(passage).length===3&&passage.buffer instanceof ArrayBuffer&&passage.buffer.byteLength>=4&&passage.buffer.byteLength<=44100*16*4&&passage.buffer.byteLength%4===0&&[0,1,2,3,4].includes(passage.language)&&Number.isInteger(passage.seed)&&passage.seed>=0&&passage.seed<=0xffffffff;
+    if(stage!=='voice'||!hasGame||typeof nativeGame.batch!=='function'||nativeGameActive||!Number.isSafeInteger(m.requestId)||!Array.isArray(m.passages)||m.passages.length!==2||!validPassage(m.passages[0])||!validPassage(m.passages[1])||m.passages[0].buffer===m.passages[1].buffer){end(new Error('Invalid native singing pair request.'));return;}
+    const requests=m.passages.map(passage=>({pcm:new Float32Array(passage.buffer),language:passage.language,seed:passage.seed}));
+    if(requests.some(request=>!request.pcm.every(Number.isFinite))){end(new Error('Invalid native singing audio.'));return;}
+    nativeGameActive=true;let nativeProgress=-1,nativeMessage='';
+    const reportNative=p=>{
+     if(finished||!p||!Number.isFinite(p.progress))return;
+     if(p.progress<=nativeProgress&&p.message===nativeMessage)return;
+     lastActivity=clock.now();nativeProgress=Math.max(nativeProgress,p.progress);nativeMessage=p.message;
+     worker.postMessage({type:'native-game-batch-progress',requestId:m.requestId,value:{progress:Math.max(0,Math.min(1,p.progress)),message:String(p.message||'Singing transcription')}});
+    };
+    Promise.resolve().then(()=>nativeGame.batch(requests,controller.signal,reportNative)).then(notes=>{
+     if(finished)return;nativeGameActive=false;lastActivity=clock.now();
+     worker.postMessage({type:'native-game-batch-result',requestId:m.requestId,...(Array.isArray(notes)&&notes.length===2&&Array.isArray(notes[0])&&Array.isArray(notes[1])?{notes}:{fallback:true})});
+    }).catch(error=>{if(!finished){scope.LightForgeDiagnostics?.log(error?.name==='AbortError'?'info':'error','analysis',error);nativeGameActive=false;if(error?.name==='AbortError')worker.postMessage({type:'native-game-batch-result',requestId:m.requestId,aborted:true,message:error.message||'Analysis cancelled'});else worker.postMessage({type:'native-game-batch-result',requestId:m.requestId,fallback:error?.code!=='native-game-retirement-pending',code:error?.code==='native-game-retirement-pending'?error.code:undefined,message:typeof error?.message==='string'?error.message.slice(0,320):undefined});}});return;
    }
    if(m.type==='native-game'){
     if(stage!=='voice'||!hasGame||nativeGameActive||!Number.isSafeInteger(m.requestId)||!(m.buffer instanceof ArrayBuffer)||m.buffer.byteLength<4||m.buffer.byteLength>44100*16*4||m.buffer.byteLength%4!==0||![0,1,2,3,4].includes(m.language)||!Number.isInteger(m.seed)||m.seed<0||m.seed>0xffffffff){end(new Error('Invalid native singing request.'));return;}

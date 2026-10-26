@@ -1,0 +1,817 @@
+{
+  "scope": "Unreleased host import and PCM preprocessing observations. These do not measure native inference, a complete analysis job, phone performance or the 75% whole-analysis objective.",
+  "baseline_commit": "e434d3880c47ebe0e951f01aba366181fd091f96",
+  "wav_conversion": {
+    "schema": "lightforge.wav-block-write-host.v1",
+    "differential_cases": 43,
+    "byte_identical": true,
+    "outputs_per_case": 2,
+    "benchmark": [
+      {
+        "source_rate": 44100,
+        "source_seconds": 30,
+        "reference_ns": [
+          411056883,
+          404599190,
+          404084133
+        ],
+        "candidate_ns": [
+          143469774,
+          161811869,
+          159960538
+        ],
+        "median_reduction_percent": 60.46444433069675,
+        "audio_sha256": "baffb4364b3280687434ed144357a11617b5a7b18137c631161e6a096d93560b",
+        "analysis_sha256": "351dea5193509ff9947329805a86869b584320079933e1d9bd05a7149b54069f"
+      },
+      {
+        "source_rate": 48000,
+        "source_seconds": 30,
+        "reference_ns": [
+          1287036516,
+          1064339127,
+          1414812188
+        ],
+        "candidate_ns": [
+          815531063,
+          1170616803,
+          1389579272
+        ],
+        "median_reduction_percent": 9.04556409648909,
+        "audio_sha256": "711f941cc706aa545a6460ceeafc9652383f826dafc56832465036d9d71ff78f",
+        "analysis_sha256": "c33c26353697e005b1726e1139cdf69c550868c39a71ee05c58798111162fd95"
+      },
+      {
+        "source_rate": 96000,
+        "source_seconds": 30,
+        "reference_ns": [
+          1871641763,
+          1444800428,
+          1179260497
+        ],
+        "candidate_ns": [
+          1305600113,
+          894626197,
+          940915915
+        ],
+        "median_reduction_percent": 34.87571731256436,
+        "audio_sha256": "47118c35f990a67258430db76974f19fc203c3ebbf5ef65de41b3afbb10ff341",
+        "analysis_sha256": "ae65df7ebe51cef90e40f70e01a437a23112a41655f12b4324acaf119ac9c49e"
+      }
+    ],
+    "scope": "Host WAV conversion and file I/O only; not Android, neural inference, whole-song analysis or release evidence",
+    "baseline_commit": "e434d3880c47ebe0e951f01aba366181fd091f96",
+    "baseline_source_sha256": "591e9e9ce5bc7bc665c5f3c9920c7cee5cd7fe33c07d8e6677f93e7aba223244",
+    "candidate_source_sha256": "6b858e8d886da307e1a395d6cd69083da3c7fcb9e2b637d0634cb56eeb69d0ce",
+    "differential_harness_sha256": "6cabc14a2aa1358b0b90724c29647f02070b35fa1cde3cc318698ca656f67461",
+    "existing_native_audio_test": "PASS: chunk invariance, exact sample duration, passband RMSE=2.8231488140333152E-5, analysis alias RMS=2.288475753764008E-5, PCM byte preservation.",
+    "existing_test_scope": "Actual AudioImporter.readWave; Android codec and FSEQ APIs are throwing compile-only stubs",
+    "host": {
+      "platform": "Linux-6.18.55-x86_64-with-glibc2.39",
+      "machine": "x86_64",
+      "logical_cpus": 9,
+      "java": "openjdk version \"17.0.20\" 2026-07-21\nOpenJDK Runtime Environment (build 17.0.20+8-1-24.04-Ubuntu)\nOpenJDK 64-Bit Server VM (build 17.0.20+8-1-24.04-Ubuntu, mixed mode, sharing)"
+    },
+    "timing_protocol": "One excluded warmup per variant/rate; three alternating paired complete conversions including finish, file flush and sync; fixture generation and byte comparisons excluded"
+  },
+  "pcm_reads_final_source": {
+    "scope": "Host synthetic PCM reads with memory-backed byte transport, original FIR and padding. Excludes filesystem/network latency, models and complete analysis; not a phone or whole-song speedup.",
+    "node": "v24.22.1",
+    "warmups": 2,
+    "rounds": 7,
+    "results": [
+      {
+        "rate": 22050,
+        "channels": 1,
+        "method": "mono22050",
+        "baselineMedianMs": 21.70881799999998,
+        "candidateMedianMs": 12.896868000000012,
+        "readWallReductionPercent": 40.591569748292955,
+        "baselineDecodeMedianMs": 13.23269799999997,
+        "candidateDecodeMedianMs": 4.946864000000062,
+        "baselineCpuMedianMs": 25.123,
+        "candidateCpuMedianMs": 13.252,
+        "samplesMs": {
+          "baseline": [
+            21.70881799999998,
+            28.406844000000007,
+            19.038557999999966,
+            32.194308000000035,
+            25.11176999999998,
+            12.817611,
+            16.06326100000001
+          ],
+          "candidate": [
+            12.896868000000012,
+            15.947030000000012,
+            6.30245199999996,
+            17.395625999999993,
+            20.82477499999999,
+            6.659092999999984,
+            4.1679039999999645
+          ]
+        },
+        "cpuSamplesMs": {
+          "baseline": [
+            21.761,
+            28.585,
+            25.565,
+            33.639,
+            25.123,
+            12.829,
+            16.074
+          ],
+          "candidate": [
+            13.252,
+            15.968,
+            7.989,
+            17.962,
+            20.834,
+            6.718,
+            4.18
+          ]
+        },
+        "allOutputBytesIdentical": true
+      },
+      {
+        "rate": 22050,
+        "channels": 2,
+        "method": "mono22050",
+        "baselineMedianMs": 15.826239999999984,
+        "candidateMedianMs": 5.91083900000001,
+        "readWallReductionPercent": 62.65165320379309,
+        "baselineDecodeMedianMs": 13.948545999999965,
+        "candidateDecodeMedianMs": 2.298068000000285,
+        "baselineCpuMedianMs": 18.007,
+        "candidateCpuMedianMs": 10.849,
+        "samplesMs": {
+          "baseline": [
+            16.115646999999967,
+            15.522078999999962,
+            15.826239999999984,
+            17.993642000000023,
+            19.393438999999944,
+            15.367670999999973,
+            15.204143999999928
+          ],
+          "candidate": [
+            5.91083900000001,
+            7.842291999999929,
+            3.6132069999999885,
+            3.8005750000000944,
+            7.743906000000038,
+            6.066857000000027,
+            3.2441270000000486
+          ]
+        },
+        "cpuSamplesMs": {
+          "baseline": [
+            16.126,
+            18.783,
+            15.835,
+            18.007,
+            19.404,
+            18.064,
+            15.215
+          ],
+          "candidate": [
+            11.757,
+            15.367,
+            3.622,
+            3.873,
+            17.384,
+            10.849,
+            3.252
+          ]
+        },
+        "allOutputBytesIdentical": true
+      },
+      {
+        "rate": 44100,
+        "channels": 1,
+        "method": "stereo44100",
+        "baselineMedianMs": 38.518755000000056,
+        "candidateMedianMs": 8.546380999999883,
+        "readWallReductionPercent": 77.81241631511749,
+        "baselineDecodeMedianMs": 36.679379999999924,
+        "candidateDecodeMedianMs": 5.163972999999942,
+        "baselineCpuMedianMs": 38.568,
+        "candidateCpuMedianMs": 9.654,
+        "samplesMs": {
+          "baseline": [
+            26.98834099999999,
+            45.542687,
+            38.518755000000056,
+            62.382621000000086,
+            32.340711000000056,
+            47.908353000000034,
+            27.131088999999974
+          ],
+          "candidate": [
+            11.28934700000002,
+            5.8170880000000125,
+            7.49393299999997,
+            5.234619000000066,
+            12.496232999999847,
+            8.546380999999883,
+            11.39678200000003
+          ]
+        },
+        "cpuSamplesMs": {
+          "baseline": [
+            27,
+            65.082,
+            38.568,
+            82.163,
+            32.353,
+            67.609,
+            27.135
+          ],
+          "candidate": [
+            15.82,
+            5.826,
+            9.654,
+            5.243,
+            16.2,
+            8.557,
+            13.842
+          ]
+        },
+        "allOutputBytesIdentical": true
+      },
+      {
+        "rate": 44100,
+        "channels": 2,
+        "method": "stereo44100",
+        "baselineMedianMs": 37.664401,
+        "candidateMedianMs": 11.065813000000162,
+        "readWallReductionPercent": 70.61996817631545,
+        "baselineDecodeMedianMs": 32.68456100000003,
+        "candidateDecodeMedianMs": 7.29861099999971,
+        "baselineCpuMedianMs": 39.407,
+        "candidateCpuMedianMs": 15.552,
+        "samplesMs": {
+          "baseline": [
+            41.65587000000005,
+            36.439071999999896,
+            37.88642200000004,
+            33.8477069999999,
+            43.727137000000084,
+            35.162358999999924,
+            37.664401
+          ],
+          "candidate": [
+            10.466323000000102,
+            7.857034000000112,
+            12.501044999999976,
+            11.065813000000162,
+            21.196120000000064,
+            15.004897999999912,
+            7.401541999999836
+          ]
+        },
+        "cpuSamplesMs": {
+          "baseline": [
+            41.668,
+            53.993,
+            37.898,
+            39.407,
+            43.738,
+            37.686,
+            37.676
+          ],
+          "candidate": [
+            12.802,
+            7.866,
+            15.552,
+            21.614,
+            24.253,
+            29.236,
+            7.456
+          ]
+        },
+        "allOutputBytesIdentical": true
+      },
+      {
+        "rate": 44100,
+        "channels": 2,
+        "method": "mono22050",
+        "baselineMedianMs": 143.41735900000003,
+        "candidateMedianMs": 121.73787200000015,
+        "readWallReductionPercent": 15.116361890334263,
+        "baselineDecodeMedianMs": 26.91954799999985,
+        "candidateDecodeMedianMs": 5.240432999999484,
+        "baselineCpuMedianMs": 148.731,
+        "candidateCpuMedianMs": 134.481,
+        "samplesMs": {
+          "baseline": [
+            125.1233500000003,
+            124.91776400000026,
+            137.18595800000003,
+            158.42029299999967,
+            143.41735900000003,
+            159.41218499999968,
+            173.60642999999982
+          ],
+          "candidate": [
+            118.51227199999994,
+            111.20116899999994,
+            124.78403099999969,
+            117.47397899999987,
+            203.75512600000002,
+            121.73787200000015,
+            223.83580900000015
+          ]
+        },
+        "cpuSamplesMs": {
+          "baseline": [
+            125.136,
+            130.208,
+            148.731,
+            164.642,
+            143.433,
+            159.419,
+            173.621
+          ],
+          "candidate": [
+            124.701,
+            111.22,
+            135.141,
+            117.484,
+            203.772,
+            134.481,
+            227.642
+          ]
+        },
+        "allOutputBytesIdentical": true
+      }
+    ],
+    "sources": {
+      "web/analysis/wav-reader.js": "89811649ac569559a136fd9573cd70b42c48e10e00d9a73ddc6b0f4ae6dc07b9",
+      "tests/fixtures/performance/wav-reader-e434d38.cjs": "4aac3431f720073d0978550329855eb18a7f2d594f8399a7a346c70de62211b5",
+      "tools/benchmark_wav_decode.cjs": "b153d5ddd87d71e7a243e995705befc47cce34cb43180fec6a3cec5143f4a8cf"
+    }
+  },
+  "earlier_pcm_exploration": [
+    {
+      "note": "Initial run overlapped local Java compilation; wall timing is not isolated. Earlier reader lacked only the final constant layout guards. Retained as exploration, not used for final source timing claims.",
+      "observations": {
+        "scope": "Host synthetic PCM reads with memory-backed byte transport, original FIR and padding. Excludes filesystem/network latency, models and complete analysis; not a phone or whole-song speedup.",
+        "node": "v24.22.1",
+        "warmups": 2,
+        "rounds": 7,
+        "results": [
+          {
+            "rate": 22050,
+            "channels": 1,
+            "method": "mono22050",
+            "baselineMedianMs": 50.87497100000007,
+            "candidateMedianMs": 22.867634000000066,
+            "readWallReductionPercent": 55.05130803907478,
+            "baselineDecodeMedianMs": 38.57943999999998,
+            "candidateDecodeMedianMs": 10.960347999999954,
+            "samplesMs": {
+              "baseline": [
+                50.87497100000007,
+                49.88083299999994,
+                58.40438199999994,
+                42.10019299999999,
+                56.05566500000009,
+                52.717260999999894,
+                36.39840500000014
+              ],
+              "candidate": [
+                22.867634000000066,
+                21.02452100000005,
+                22.48825999999997,
+                13.861571000000026,
+                29.937497000000008,
+                76.09530899999993,
+                53.83412299999986
+              ]
+            },
+            "allOutputBytesIdentical": true
+          },
+          {
+            "rate": 22050,
+            "channels": 2,
+            "method": "mono22050",
+            "baselineMedianMs": 32.57270299999982,
+            "candidateMedianMs": 23.931241000000227,
+            "readWallReductionPercent": 26.52976635067602,
+            "baselineDecodeMedianMs": 21.501232000000073,
+            "candidateDecodeMedianMs": 17.55447100000083,
+            "samplesMs": {
+              "baseline": [
+                222.59584400000017,
+                1288.242592,
+                63.91899400000011,
+                21.133421,
+                23.861218999999892,
+                32.57270299999982,
+                15.521400000000085
+              ],
+              "candidate": [
+                87.43595400000004,
+                56.48274100000003,
+                13.77769699999999,
+                6.1696139999999104,
+                23.931241000000227,
+                18.419178999999986,
+                57.501316000000315
+              ]
+            },
+            "allOutputBytesIdentical": true
+          },
+          {
+            "rate": 44100,
+            "channels": 1,
+            "method": "stereo44100",
+            "baselineMedianMs": 76.86129900000014,
+            "candidateMedianMs": 13.532475999999406,
+            "readWallReductionPercent": 82.39364130444974,
+            "baselineDecodeMedianMs": 61.87207999999919,
+            "candidateDecodeMedianMs": 9.18280699999923,
+            "samplesMs": {
+              "baseline": [
+                73.6666009999999,
+                114.7186499999998,
+                162.02511800000048,
+                76.86129900000014,
+                98.59342699999979,
+                64.4767240000001,
+                64.89611999999943
+              ],
+              "candidate": [
+                54.66719499999999,
+                21.240335999999843,
+                13.532475999999406,
+                11.126799000000574,
+                12.821665999999823,
+                10.618263999999726,
+                45.15527300000031
+              ]
+            },
+            "allOutputBytesIdentical": true
+          },
+          {
+            "rate": 44100,
+            "channels": 2,
+            "method": "stereo44100",
+            "baselineMedianMs": 88.73701999999957,
+            "candidateMedianMs": 26.814886000000115,
+            "readWallReductionPercent": 69.78162439982745,
+            "baselineDecodeMedianMs": 74.77774699999918,
+            "candidateDecodeMedianMs": 21.374770000000353,
+            "samplesMs": {
+              "baseline": [
+                62.33267000000069,
+                57.79442300000028,
+                88.73701999999957,
+                101.9281890000002,
+                123.05499799999961,
+                135.29552499999954,
+                48.64011600000049
+              ],
+              "candidate": [
+                18.183340999999928,
+                13.948869000000741,
+                26.814886000000115,
+                17.74318399999993,
+                164.73440699999992,
+                139.56154200000037,
+                50.65571999999975
+              ]
+            },
+            "allOutputBytesIdentical": true
+          },
+          {
+            "rate": 44100,
+            "channels": 2,
+            "method": "mono22050",
+            "baselineMedianMs": 300.4230320000006,
+            "candidateMedianMs": 267.96881399999984,
+            "readWallReductionPercent": 10.802839510653994,
+            "baselineDecodeMedianMs": 58.15958800000044,
+            "candidateDecodeMedianMs": 12.763155999997252,
+            "samplesMs": {
+              "baseline": [
+                352.5758170000008,
+                254.6045520000007,
+                300.4230320000006,
+                485.88466999999946,
+                364.40391700000146,
+                225.9274459999997,
+                299.4094639999985
+              ],
+              "candidate": [
+                210.08867800000007,
+                225.1215949999987,
+                207.28708300000108,
+                267.96881399999984,
+                392.786376,
+                290.4540969999998,
+                324.0353670000004
+              ]
+            },
+            "allOutputBytesIdentical": true
+          }
+        ],
+        "sources": {
+          "web/analysis/wav-reader.js": "f617d5ccc77b7b42b3ba787133ac642ce9cbc1cd52b06dea3c815aba4abdf480",
+          "tests/fixtures/performance/wav-reader-e434d38.cjs": "4aac3431f720073d0978550329855eb18a7f2d594f8399a7a346c70de62211b5",
+          "tools/benchmark_wav_decode.cjs": "fec7f2982ebf8c2ee73ed9956fc1c79c75e5e3bb7e82f2876fdb3935d657bf04"
+        }
+      }
+    },
+    {
+      "note": "Serialized exploration before final constant layout guards and source-bound rerun; retained separately.",
+      "observations": {
+        "scope": "Host synthetic PCM reads with memory-backed byte transport, original FIR and padding. Excludes filesystem/network latency, models and complete analysis; not a phone or whole-song speedup.",
+        "node": "v24.22.1",
+        "warmups": 2,
+        "rounds": 7,
+        "results": [
+          {
+            "rate": 22050,
+            "channels": 1,
+            "method": "mono22050",
+            "baselineMedianMs": 16.085908000000018,
+            "candidateMedianMs": 6.069017999999971,
+            "readWallReductionPercent": 62.27121279072363,
+            "baselineDecodeMedianMs": 11.976646999999957,
+            "candidateDecodeMedianMs": 2.5870030000000384,
+            "baselineCpuMedianMs": 16.102,
+            "candidateCpuMedianMs": 6.087,
+            "samplesMs": {
+              "baseline": [
+                19.406430999999998,
+                16.085908000000018,
+                15.347553000000005,
+                25.773662,
+                188.37163299999997,
+                13.818265999999994,
+                9.438174000000004
+              ],
+              "candidate": [
+                6.267276999999979,
+                6.069017999999971,
+                6.031452000000002,
+                10.780370000000005,
+                7.800531999999976,
+                3.298942000000011,
+                4.397080000000074
+              ]
+            },
+            "cpuSamplesMs": {
+              "baseline": [
+                19.452,
+                16.102,
+                15.536,
+                50.06,
+                188.349,
+                13.864,
+                9.447
+              ],
+              "candidate": [
+                6.751,
+                6.087,
+                6.046,
+                29.96,
+                10.147,
+                3.309,
+                4.406
+              ]
+            },
+            "allOutputBytesIdentical": true
+          },
+          {
+            "rate": 22050,
+            "channels": 2,
+            "method": "mono22050",
+            "baselineMedianMs": 17.57696700000008,
+            "candidateMedianMs": 12.52650200000005,
+            "readWallReductionPercent": 28.733427103777387,
+            "baselineDecodeMedianMs": 13.561052000000018,
+            "candidateDecodeMedianMs": 9.62602400000003,
+            "baselineCpuMedianMs": 17.591,
+            "candidateCpuMedianMs": 22.25,
+            "samplesMs": {
+              "baseline": [
+                17.57696700000008,
+                54.21018200000003,
+                27.632943999999952,
+                12.12216699999999,
+                11.354236000000014,
+                25.12510199999997,
+                15.936492000000044
+              ],
+              "candidate": [
+                6.187257999999929,
+                12.52650200000005,
+                25.01002500000004,
+                11.454012000000034,
+                3.830114999999978,
+                17.933201999999937,
+                15.066542000000027
+              ]
+            },
+            "cpuSamplesMs": {
+              "baseline": [
+                17.591,
+                94.679,
+                30.301,
+                12.135,
+                11.365,
+                29.987,
+                15.95
+              ],
+              "candidate": [
+                6.198,
+                48.375,
+                34.557,
+                18.051,
+                3.84,
+                41.159,
+                22.25
+              ]
+            },
+            "allOutputBytesIdentical": true
+          },
+          {
+            "rate": 44100,
+            "channels": 1,
+            "method": "stereo44100",
+            "baselineMedianMs": 59.57589200000007,
+            "candidateMedianMs": 16.279898000000003,
+            "readWallReductionPercent": 72.67368149519274,
+            "baselineDecodeMedianMs": 43.81894100000022,
+            "candidateDecodeMedianMs": 13.335621000000174,
+            "baselineCpuMedianMs": 61.333,
+            "candidateCpuMedianMs": 28.512,
+            "samplesMs": {
+              "baseline": [
+                61.35764600000016,
+                92.74090000000001,
+                59.57589200000007,
+                33.37422199999992,
+                63.88762699999984,
+                45.81614300000001,
+                48.08755099999985
+              ],
+              "candidate": [
+                16.279898000000003,
+                14.945091999999931,
+                30.026202999999896,
+                11.923169000000144,
+                24.943220999999994,
+                19.748255999999856,
+                15.632957000000033
+              ]
+            },
+            "cpuSamplesMs": {
+              "baseline": [
+                61.333,
+                132.375,
+                59.509,
+                33.393,
+                112.563,
+                45.824,
+                69.694
+              ],
+              "candidate": [
+                20.268,
+                14.958,
+                45.848,
+                11.936,
+                35.457,
+                37.854,
+                28.512
+              ]
+            },
+            "allOutputBytesIdentical": true
+          },
+          {
+            "rate": 44100,
+            "channels": 2,
+            "method": "stereo44100",
+            "baselineMedianMs": 38.93801900000017,
+            "candidateMedianMs": 15.653096000000005,
+            "readWallReductionPercent": 59.79996825210871,
+            "baselineDecodeMedianMs": 32.58676699999978,
+            "candidateDecodeMedianMs": 12.357018000000153,
+            "baselineCpuMedianMs": 46.687,
+            "candidateCpuMedianMs": 23.045,
+            "samplesMs": {
+              "baseline": [
+                34.32199200000014,
+                38.163188999999875,
+                39.64395999999988,
+                32.241435999999794,
+                47.71767099999988,
+                38.93801900000017,
+                146.41881299999977
+              ],
+              "candidate": [
+                19.87682100000029,
+                13.032129000000168,
+                21.7923780000001,
+                8.91837600000008,
+                15.653096000000005,
+                8.763264000000163,
+                18.76547999999957
+              ]
+            },
+            "cpuSamplesMs": {
+              "baseline": [
+                34.147,
+                46.687,
+                39.608,
+                32.205,
+                77.821,
+                58.232,
+                242.278
+              ],
+              "candidate": [
+                26.331,
+                11.601,
+                32.173,
+                9.031,
+                23.045,
+                8.774,
+                25.146
+              ]
+            },
+            "allOutputBytesIdentical": true
+          },
+          {
+            "rate": 44100,
+            "channels": 2,
+            "method": "mono22050",
+            "baselineMedianMs": 263.71786599999996,
+            "candidateMedianMs": 199.3360249999996,
+            "readWallReductionPercent": 24.41315106045957,
+            "baselineDecodeMedianMs": 53.7458059999999,
+            "candidateDecodeMedianMs": 8.388202000000092,
+            "baselineCpuMedianMs": 300.31,
+            "candidateCpuMedianMs": 201.753,
+            "samplesMs": {
+              "baseline": [
+                243.7802529999999,
+                238.17304999999942,
+                248.6880430000001,
+                304.56717299999946,
+                263.71786599999996,
+                357.0382019999997,
+                273.1673180000007
+              ],
+              "candidate": [
+                201.73534599999994,
+                223.34544500000084,
+                199.3360249999996,
+                145.48541000000023,
+                192.19690699999956,
+                458.8738030000004,
+                186.2472230000003
+              ]
+            },
+            "cpuSamplesMs": {
+              "baseline": [
+                243.872,
+                246.704,
+                248.779,
+                304.566,
+                300.31,
+                357.056,
+                304.666
+              ],
+              "candidate": [
+                201.753,
+                256.003,
+                199.308,
+                145.508,
+                202.144,
+                459.326,
+                193.424
+              ]
+            },
+            "allOutputBytesIdentical": true
+          }
+        ],
+        "sources": {
+          "web/analysis/wav-reader.js": "f617d5ccc77b7b42b3ba787133ac642ce9cbc1cd52b06dea3c815aba4abdf480",
+          "tests/fixtures/performance/wav-reader-e434d38.cjs": "4aac3431f720073d0978550329855eb18a7f2d594f8399a7a346c70de62211b5",
+          "tools/benchmark_wav_decode.cjs": "b153d5ddd87d71e7a243e995705befc47cce34cb43180fec6a3cec5143f4a8cf"
+        }
+      }
+    }
+  ],
+  "rhythm_routing": {
+    "first_500_frame_chunk_log2_calls_before": 50000,
+    "first_500_frame_chunk_log2_calls_after": 100,
+    "subsequent_unchanged_chunk_log2_calls_after": 0,
+    "lookup_array_bytes": 408,
+    "retained_pcm_samples": 0,
+    "wall_time_claim": "None; exploratory full-stage timing was inconsistent. The bass coefficient experiment was discarded."
+  }
+}
