@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 RELEASE = json.loads((ROOT / 'version.json').read_text())['name']
 VERIFY = ROOT / f'qa/release-{RELEASE}/verify-analysis.py'
 # Reviewed current source inventory only, never a passing execution receipt.
-EXPECTED_MANIFEST_SHA256 = 'd9069aed84170f0b7b9c2991b8395cab16930320fd7027314c7d8948407aaa52'
+EXPECTED_MANIFEST_SHA256 = '2fa86a5307f071c437c70d09f18ff072069f6f1aa4cb90446849dd449a07909f'
 EXPECTED_MANIFEST_ENTRY_COUNT = 85
 SPEC = spec_from_file_location('lightforge_verify_analysis_current_inventory', VERIFY)
 assert SPEC is not None and SPEC.loader is not None
@@ -20,10 +20,19 @@ SPEC.loader.exec_module(MODULE)
 class AssetBindingTest(unittest.TestCase):
     def test_reviewed_asset_inventory_pin_matches_current_bytes(self):
         manifest = MODULE.ROOT / 'web/analysis/ASSET_MANIFEST.json'
+        self.assertEqual(MODULE.RELEASE, RELEASE)
+        self.assertEqual(MODULE.OUT, f'qa/release-{RELEASE}/')
         self.assertEqual(MODULE.ASSET_MANIFEST_SHA256, EXPECTED_MANIFEST_SHA256)
         self.assertEqual(MODULE.ASSET_MANIFEST_ENTRY_COUNT, EXPECTED_MANIFEST_ENTRY_COUNT)
         self.assertEqual(MODULE.digest(manifest), EXPECTED_MANIFEST_SHA256)
         self.assertEqual(len(json.loads(manifest.read_text())), EXPECTED_MANIFEST_ENTRY_COUNT)
+
+    def test_current_inventory_does_not_repin_frozen_host_qualification_verifier(self):
+        frozen = 'qa/release-2.4.2/verify-analysis.py'
+        registration = json.loads((ROOT / 'tools/host-inference-campaigns/'
+            'lightforge-2.4.2-neural-four-worker-host-001.json').read_text())
+        self.assertNotEqual(VERIFY, ROOT / frozen)
+        self.assertEqual(MODULE.digest(ROOT / frozen), registration['executionClosure'][frozen])
 
     def test_unreviewed_manifest_change_still_fails_closed(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -34,6 +43,20 @@ class AssetBindingTest(unittest.TestCase):
             manifest.write_bytes((ROOT / relative).read_bytes() + b'\n')
             with self.assertRaisesRegex(ValueError, 'Source differs from measured evidence'):
                 MODULE.bind(root, relative, MODULE.ASSET_MANIFEST_SHA256, {})
+
+    def test_reviewed_frontend_sources_still_reject_individual_byte_tampering(self):
+        manifest = json.loads((ROOT / 'web/analysis/ASSET_MANIFEST.json').read_text())
+        for name in ('analyzer.js', 'dsp.js', 'game.js', 'wav-reader.js', 'worker.js'):
+            with self.subTest(source=name), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                source = root / 'web/analysis' / name
+                source.parent.mkdir(parents=True)
+                data = (ROOT / 'web/analysis' / name).read_bytes()
+                source.write_bytes(data)
+                MODULE.verify_asset(root, name, manifest[name], {})
+                source.write_bytes(data + b'\n')
+                with self.assertRaisesRegex(ValueError, 'Source differs from measured evidence'):
+                    MODULE.verify_asset(root, name, manifest[name], {})
 
     def test_reviewed_source_inventory_cannot_substitute_for_fresh_execution_evidence(self):
         with tempfile.TemporaryDirectory() as temporary:

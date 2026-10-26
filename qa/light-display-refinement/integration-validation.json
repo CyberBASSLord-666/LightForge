@@ -1,0 +1,61 @@
+{
+  "scope": "Current-source integration regression; not physical vehicle, model-quality or APK qualification",
+  "baseCommit": "9a1156337bfbfb3865d73a2ac1d084b7bc9ae24f",
+  "integratedMain": "f879a4b47b70b64544ebb11c5e1081bcb4be5a63",
+  "completedAt": "2026-10-26T19:14:52.741118+00:00",
+  "command": "LIGHTFORGE_JAVA_HOME=<JDK 17> npm test",
+  "productionRegressionPassed": true,
+  "node": {
+    "run": 848,
+    "failed": 0
+  },
+  "pythonArchive": {
+    "run": 998,
+    "skipped": 13,
+    "failed": 0
+  },
+  "qualityToolsPassed": true,
+  "analysisManifestSha256": "2fa86a5307f071c437c70d09f18ff072069f6f1aa4cb90446849dd449a07909f",
+  "inventoryReview": {
+    "entries": 85,
+    "changedEntries": [
+      "analyzer.js",
+      "dsp.js",
+      "game.js",
+      "wav-reader.js",
+      "worker.js"
+    ],
+    "unchangedEntries": 80,
+    "historicalEvidenceUnchanged": true,
+    "negativeTests": [
+      "manifest tampering",
+      "individual source byte tampering for all five changed files",
+      "inventory-only execution receipt rejection"
+    ]
+  },
+  "outputComparison": {
+    "cases": 30,
+    "allCandidateFrameHashesIdenticalToReviewedComparison": true
+  },
+  "ci": "Fresh exact-head CI required; prior bd280182 CI does not qualify this combined source.",
+  "selectedTestSuiteCount": 3,
+  "reviewedSourceHashes": {
+    "qa/release-2.4.2/verify-analysis.py": "5e4c8fb0c1533775f63afff0ec10b5677888470d2c80d8b7152f0d511d39764b",
+    "tests/test_verify_analysis_asset_binding.py": "c95255e39c3c68b6c971c593191107b2b318eba879eceecef0e3a521113235e6",
+    "tools/verify_v2.py": "a1da355bbfc567ea9d4d19b63243b18165556639632c9be27c99c5223d6a52ed",
+    "web/engine/choreography-quality.js": "3f12d29cd9ba81a08f3e370ce91efc6de9705511a2d5e4889f785d8a80ff7c4e",
+    "web/engine/client.js": "63c6bdd79cb033b3ccfe334a991a5f3957fc5349f664de955b8c6b59eea5bf3a",
+    "web/engine/light-planner.js": "6d15657a5c390aec015f38aa781542bb913294bc72a5d9713c22fc90b2e6849b",
+    "web/engine/motif-evolution.js": "fa77a12e037125fc993fe02a358d27ac67dbc2ea98f1b423e8a7656cfe6b91ee",
+    "web/engine/movement-planner.js": "af364df0ec661266c9926639d83717a70bab73e03524db6a7a1af34ccc3be408",
+    "web/engine/music-cues.js": "1a87eea0502da2e1f19d2361a5646c127121211e91128017ce747b7f0d2f61d6",
+    "web/engine/perceptual-validation.js": "6688ea11435d6dd7bff8f0d7a9bef6f89ca79db2784d231c8dc8a5a6bd52b659",
+    "web/engine/semantic-choreography.js": "a4178720a035a79bd4ede23204e56a5d7577866dd3995936f4aaaa0fa8628e24",
+    "web/engine/show-engine.js": "efd76c7a067a7f1ebef69bdd7966a12cc90316aab31685157cd870016632e88c",
+    "web/engine/sync-review.js": "57c682909c3d7bf3719d1af587e3150d000c4f6a332093f893ca11de74285ed1",
+    "web/engine/vehicle-profile.js": "a11015576c0a76e7ff9d0141a4efd9c099a69e2b27b85471056e17d2485cde3a",
+    "web/engine/vocal-choreography.js": "42f05c4893f9ee3b9b962fe23f8bb2df6c1f5ed3451764ae68740c7f2dd633d9",
+    "web/engine/worker.js": "e4bc86de965afc225c72063aa5114c3092ef74b62a62f917feecdf1a816c9064"
+  },
+  "fullRegressionReceiptSha256": "b4f22ef1d9c1b466b7c45ca59f4b93999916e5a8de884d2a353c6c6c9af2c263"
+}

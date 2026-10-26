@@ -1,0 +1,47 @@
+{
+  "schema": "lightforge.current-inventory-migration.v1",
+  "scope": "Local 2.4.3 inventory/migration regression only; not model execution, physical vehicle, final exact-head CI, signing or APK qualification.",
+  "releaseBaseCommit": "3ac5bd737c7f5d82ab054344059761385824397e",
+  "inventoryRepairCommit": "6662adb418c59c32e0419826902d7bae3aab9a18",
+  "targetRelease": {
+    "name": "2.4.3",
+    "code": 20403
+  },
+  "priorValidation": {
+    "path": "qa/light-display-refinement/integration-validation.json",
+    "sha256": "29bb1bffb44aec518b51b8ed5b235f73919070c414b2c84413485565393a71ad",
+    "scope": "Preserved PR69 report for its original tested source. Its reviewedSourceHashes include the then-modified 2.4.2 verifier; those hashes are not relabeled or used as current-release execution proof."
+  },
+  "resolution": {
+    "currentVerifier": "qa/release-2.4.3/verify-analysis.py",
+    "frozenVerifier": "qa/release-2.4.2/verify-analysis.py",
+    "frozenVerifierUnchanged": true,
+    "historicalVerifierRepinDiscarded": true,
+    "inventoryOnlyEvidenceStillRejected": true,
+    "registeredNonmetadataExecutionSourcesUnchanged": 25,
+    "replayPolicyAndQualificationCriteriaUnchanged": true
+  },
+  "sourceHashes": {
+    "qa/release-2.4.2/verify-analysis.py": "6b70d861789f06241971fe4727d41c835937cab26f313883d940ad573046e307",
+    "qa/release-2.4.3/verify-analysis.py": "1d017ce557bc5f37fa4363b7ad692a1a98bc466a5a7a5ce853840d71abe0bef1",
+    "tests/test_verify_analysis_asset_binding.py": "a4d6162beaa51732e45f8eb06fa8118214e7d027024d5d3316608bfe94483f4c",
+    "web/analysis/ASSET_MANIFEST.json": "2fa86a5307f071c437c70d09f18ff072069f6f1aa4cb90446849dd449a07909f",
+    "tools/replay_inference_proof.py": "90d540899a806de3b510b3c394b30af879114301fa1560dd919b731d7ecbefd5",
+    "tools/inference_replay_policy.json": "104054ab257dae8fa604eea6a8ac3f90664a6eb1581aedede3d79c3703bb86b9"
+  },
+  "analysisInventory": {
+    "manifestSha256": "2fa86a5307f071c437c70d09f18ff072069f6f1aa4cb90446849dd449a07909f",
+    "entries": 85
+  },
+  "checks": {
+    "test_verify_analysis_asset_binding": 5,
+    "test_inference_replay_migration": 11,
+    "test_inference_qualification_workflow": 26,
+    "test_verification_evidence_manifest": 16,
+    "test_verify_v2_sparse_inputs": 11,
+    "totalPassed": 69,
+    "failures": 0,
+    "currentSourceReplayRoute": "consumer; no new measurement requested"
+  },
+  "qualification": "Final merged source still requires fresh exact-head CI, ordinary Android/application checks and signed publication verification."
+}
