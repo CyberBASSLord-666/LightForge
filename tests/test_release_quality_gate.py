@@ -117,7 +117,8 @@ class ReleaseQualityGateTest(unittest.TestCase):
         declaration = dict(self.declaration, requirement="automated_verification_only")
         self.assertEqual(gate.validate_release_declaration(declaration, version=self.version), declaration)
         for next_version in ({"name": "2.3.2", "code": 20302}, {"name": "2.4.0", "code": 20400},
-                             {"name": "2.4.1", "code": 20401}, {"name": "2.4.2", "code": 20402}):
+                             {"name": "2.4.1", "code": 20401}, {"name": "2.4.2", "code": 20402},
+                             {"name": "2.4.3", "code": 20403}):
             next_declaration = dict(declaration, release=next_version)
             self.assertEqual(gate.validate_release_declaration(next_declaration, version=next_version), next_declaration)
         for version in (
@@ -132,7 +133,9 @@ class ReleaseQualityGateTest(unittest.TestCase):
             {"name": "2.4.1", "code": 20400},
             {"name": "2.4.2", "code": 20401},
             {"name": "2.4.2", "code": 20403},
-            {"name": "2.4.3", "code": 20403},
+            {"name": "2.4.3", "code": 20402},
+            {"name": "2.4.3", "code": 20404},
+            {"name": "2.4.4", "code": 20404},
             {"name": "2.5.0", "code": 20500},
         ):
             with self.subTest(version=version):
@@ -153,11 +156,26 @@ class ReleaseQualityGateTest(unittest.TestCase):
                         version=self.version, source_commit=COMMIT, source_tree_sha=TREE, declaration=declaration,
                     )
 
+    def test_updated_apk_policy_preserves_fresh_gates_and_unverified_claims(self):
+        version = {"name": "2.4.3", "code": 20403}
+        declaration = json.loads((ROOT / "releases/v2.4.3/quality-gate-declaration.json").read_text())
+        self.assertEqual(gate.validate_release_declaration(declaration, version=version), declaration)
+        self.assertEqual(declaration["requirement"], "automated_verification_only")
+        self.assertEqual(declaration["classification"], "performance")
+        for retained_constraint in (
+            "this exact version only", "Fresh source-bound production", "actual-model",
+            "packaged Android verification", "same-session evidence", "original signing identity",
+            "qualified payload integrity", "unchanged numerical sources", "compiled classes",
+            "not a new timing measurement", "no PASS_TARGET provenance",
+            "strict performance-quality gate", "75% whole-analysis reduction", "remain unverified",
+        ):
+            self.assertIn(retained_constraint, declaration["reason"])
+
     def test_next_build_policy_is_one_exact_pair_and_preserves_unverified_claims(self):
         self.assertEqual(gate.AUTOMATED_VERIFICATION_ONLY_RELEASES, frozenset({
             ("2.2.5", 20205), ("2.3.0", 20300), ("2.3.1", 20301),
             ("2.3.2", 20302), ("2.4.0", 20400), ("2.4.1", 20401),
-            ("2.4.2", 20402),
+            ("2.4.2", 20402), ("2.4.3", 20403),
         }))
         version = {"name": "2.4.2", "code": 20402}
         declaration = json.loads((ROOT / "releases/v2.4.2/quality-gate-declaration.json").read_text())

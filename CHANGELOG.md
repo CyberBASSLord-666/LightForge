@@ -6,7 +6,7 @@ A source version or an entry here does not itself establish publication. The
 [pre-cleanup changelog](https://github.com/CyberBASSLord-666/LightForge/blob/07511f5544b688c657773dce8a29d8d31ba68cb1/CHANGELOG.md)
 retains detailed historical development notes and their original limitations.
 
-## Unreleased — vocal inference and audio pipeline throughput
+## 2.4.3 — vocal inference, musical expression and leaner payload
 
 Run two adjacent, uncached, audible GAME passages with equal sample counts under
 one bounded native call. Load the original five graphs once, infer each original
@@ -27,8 +27,17 @@ accumulation, model inputs, precision and analysis settings.
 
 Focused comparisons retain identical WAV bytes and Float32 arrays. Import and
 decoding timings describe those stages; GAME timings describe only the tested
-native pair. Whole-analysis and phone gains remain unmeasured. The existing
-published APK does not include these unreleased source changes.
+native pair. Whole-analysis and phone gains remain unmeasured.
+
+Refine instrumental musical hierarchy, rhythmic decoration density, beat-frame
+synchronization, closure feasibility and the calibrated preview. Preserve
+protected source, vocal, bass and structural attacks while optional decoration
+yields to higher-priority events. These are digital/compiler improvements, not
+physical vehicle-latency measurements.
+
+Retire obsolete QA producer copies and unused upstream training/demo inputs.
+Keep preview build sources and the historical research-only BeatNet graph out
+of APK payloads, while retaining source provenance, model pins and notices.
 
 ## 2.4.2 — complete-passage scheduling and recovery
 

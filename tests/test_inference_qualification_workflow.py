@@ -222,14 +222,14 @@ class InferenceQualificationWorkflowTest(unittest.TestCase):
         self.assertEqual(publish.count('record.get("head_branch") == "main"'), 2)
         guide = (ROOT / 'BUILD.md').read_text()
         self.assertIn('**A manual run is not release-eligible**', guide)
-        self.assertIn('no passing campaign proof is asserted here', guide)
+        self.assertIn('does not allocate another timing campaign', guide)
 
     def test_consumer_establishes_proof_before_dependencies_without_host_preflight(self):
         block = step(CONSUMER, 'Retrieve registered terminal proof before expensive preparation')
         self.assertLess(CONSUMER.index('Retrieve registered terminal proof'),
                         CONSUMER.index('Reproduce bundled production models'))
         self.assertIn('rm -f -- research/inference-current/production-parallel-qualification.json', block)
-        self.assertIn('python3 tools/host_inference_campaign.py replay --root .', block)
+        self.assertIn('python3 tools/replay_inference_proof.py replay --root .', block)
         self.assertNotIn('inference_qualification_preflight.py', CONSUMER)
         self.assertNotIn('benchmark_deux_parallel.py', CONSUMER)
         self.assertNotIn('continue-on-error', block)
@@ -262,8 +262,8 @@ class InferenceQualificationWorkflowTest(unittest.TestCase):
         for option in ('--admission-output', '--prerequisite-output',
                        '--evidence-session "$LIGHTFORGE_EVIDENCE_SESSION"'):
             self.assertIn(option, block)
-        self.assertIn('python3 tools/verify_inference_improvement.py', block)
-        self.assertLess(block.index('rm -f --'), block.index('python3 tools/host_inference_campaign.py'))
+        self.assertIn('python3 tools/replay_inference_proof.py verify --root .', block)
+        self.assertLess(block.index('rm -f --'), block.index('python3 tools/replay_inference_proof.py'))
         self.assertNotIn('continue-on-error', block)
         self.assertNotIn('|| true', block)
 
@@ -287,7 +287,7 @@ class InferenceQualificationWorkflowTest(unittest.TestCase):
         self.assertNotIn('overwrite: true', block)
 
     def test_request_routing_is_readonly_and_preserves_already_running_producer(self):
-        self.assertIn('host_inference_campaign.py route --root .', ROUTING)
+        self.assertIn('replay_inference_proof.py route --root .', ROUTING)
         self.assertIn("('producer', 'producer-replay', 'consumer')", ROUTING)
         self.assertIn('cancel-in-progress: false', WORKFLOW)
         self.assertNotIn('cancel-in-progress: true', WORKFLOW)

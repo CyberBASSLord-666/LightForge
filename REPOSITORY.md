@@ -118,7 +118,8 @@ are retired. These directories contained release-specific producer copies and
 source inventories, with no receipts, logs, screenshots or retained model
 outputs. Current verification selects `qa/release-<version>/` using
 [version.json](version.json); the maintained protocol is described in its
-[README](qa/release-2.4.2/README.md). `qa/restore-preview/` remains shared.
+[README](qa/release-2.4.3/README.md). The original 2.4.2 protocol remains an
+unchanged input to the registered inference proof. `qa/restore-preview/` remains shared.
 The MDX comparator tests exercise the current version's implementation.
 
 One exact historical 2.3.1 analysis verifier remains as an inert

@@ -86,7 +86,10 @@ def is_generated_runtime_report(path):
 def digest(p):
     with p.open('rb') as f:return hashlib.file_digest(f,'sha256').hexdigest()
 
-REGRESSION_EXTRA_INPUTS=('docs/EXPERIMENTAL_HOST_QUALIFICATION.md',)
+REGRESSION_EXTRA_INPUTS=(
+    'docs/EXPERIMENTAL_HOST_QUALIFICATION.md',
+    'tools/inference_replay_policy.json',
+)
 
 def hashes():
     paths=[ROOT/'version.json',ROOT/'package.json',ROOT/'package-lock.json',ROOT/'build.sh',ROOT/'android/native-runtime.json',ROOT/'qa/release-1.6.0/prepare-musdb-fixtures.py']

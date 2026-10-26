@@ -34,7 +34,7 @@ python3 tools/repository_hygiene.py
 npm test
 # Obtain a fresh candidate-specific host admission by the registered-proof
 # replay flow below. Do not run a new benchmark or copy an old current receipt.
-python3 tools/verify_inference_improvement.py
+python3 tools/replay_inference_proof.py verify --root .
 LIGHTFORGE_SIGNING_DIR=/absolute/path/to/original-private-signing bash build.sh
 VERSION="$(python3 -c 'import json; print(json.load(open("version.json"))["name"])')"
 python3 tests/verify_native_release.py --release "$VERSION"
@@ -59,7 +59,28 @@ A development APK cannot update the original installation. The build produces
 The receipt's `update_compatible` must be `true` for an original-key update.
 Building locally does not satisfy all publication gates.
 
-## Bounded host campaign and per-build admission
+## Bounded host proof and current-build admission
+
+The 2.4.3 consumer uses [the reviewed replay policy](tools/inference_replay_policy.json)
+and `tools/replay_inference_proof.py`. It preserves the original 2.4.2 producer,
+request, registration, proof, verifier and QA protocol. Only release metadata
+and the explicitly pinned current verification workflow may differ from the
+original 27-file execution closure; the other 25 files, model/runtime inputs
+and freshly rebuilt Java class inventory must match exactly. A separate
+historical source view supplies the two original metadata files without
+overwriting the current checkout.
+
+This is reuse of the original measured result, with a fresh current
+commit/tree/session admission. It does not allocate another timing campaign or
+claim another speedup. Current 2.4.3 browser, actual-model, Android, source,
+original-signature and payload checks still run. CI supplies its scoped
+`GITHUB_TOKEN` for independent Actions/proof retrieval; a standalone local
+replay also needs authenticated access and a fresh evidence session. A copied
+receipt or downloaded artifact alone is not admission.
+
+The original 2.4.2 campaign and its historical producer commands are described
+below. Run them only with their matching source, not as a replacement for the
+current consumer.
 
 The normal `verify-v2.yml` path now **replays one immutable, prospectively
 registered timing result instead of measuring again for every build**. This is
@@ -140,7 +161,8 @@ The bounded producer's prospectively selected pool is fixed to `ubuntu-latest`;
 repository variables and dispatch inputs cannot choose another producer pool.
 Every actual allocated machine must pass the full strict preflight. Any prior
 diagnostic applies only to its observed machine, not blanket eligibility for
-the pool, and no passing campaign proof is asserted here. Ordinary verification
+the pool. The original passing result is indexed in [VALIDATION.md](VALIDATION.md).
+Ordinary verification
 retains its existing runner routing: only protected-main pushes may select the
 already-authorized `vars.LIGHTFORGE_INFERENCE_RUNNER` label, with `ubuntu-latest`
 as the unconfigured default. The existing `inference_runner` dispatch input

@@ -139,20 +139,28 @@ class SparseResearchInputsTest(unittest.TestCase):
         self.assertEqual((self.path.parent/'requirements.txt').read_text(),'new user content\n')
 
     def test_extra_document_is_restored_and_bound_like_source(self):
-        self.git('sparse-checkout','disable')
-        extra=self.root/verify_v2.REGRESSION_EXTRA_INPUTS[0]
-        extra.parent.mkdir()
-        extra.write_text('documented contract\n')
-        self.git('add','.')
-        self.git('commit','-qm','Document')
-        self.git('sparse-checkout','set','kept')
-        result=verify_v2.prepare_regression_test_inputs(self.root)
-        self.assertEqual(extra.read_text(),'documented contract\n')
-        self.assertTrue(result['files'][verify_v2.REGRESSION_EXTRA_INPUTS[0]]['matches_head'])
-        self.assertTrue(result['files'][verify_v2.REGRESSION_EXTRA_INPUTS[0]]['materialized'])
-        with patch.object(verify_v2,'ROOT',self.root), patch.object(verify_v2,'digest',return_value='fixture'):
-            snapshot=verify_v2.hashes()
-        self.assertTrue(set(result['files']) <= set(snapshot))
+        for relative in verify_v2.REGRESSION_EXTRA_INPUTS:
+            with self.subTest(relative=relative):
+                self.git('sparse-checkout','disable')
+                extra=self.root/relative
+                extra.parent.mkdir(parents=True,exist_ok=True)
+                extra.write_text('documented contract\n')
+                self.git('add','.')
+                self.git('commit','-qm','Extra input')
+                self.git('sparse-checkout','set','kept')
+                result=verify_v2.prepare_regression_test_inputs(self.root)
+                self.assertEqual(extra.read_text(),'documented contract\n')
+                self.assertTrue(result['files'][relative]['matches_head'])
+                self.assertTrue(result['files'][relative]['materialized'])
+                with patch.object(verify_v2,'ROOT',self.root), patch.object(verify_v2,'digest',return_value='fixture'):
+                    snapshot=verify_v2.hashes()
+                self.assertTrue(set(result['files']) <= set(snapshot))
+                extra.write_text('changed after execution\n')
+                with self.assertRaisesRegex(ValueError,'not an exact candidate-tree byte'):
+                    evidence._seal_source_bindings(
+                        {'regression-verification.json': {'source_hashes': {relative:evidence.sha256_file(extra)}}},
+                        source_root=self.root,source_commit=result['head'],release='2.4.3',
+                        output=self.root/('sealed-'+str(len(relative))))
 
     def test_after_run_check_never_rehydrates_deleted_inputs(self):
         verify_v2.prepare_regression_test_inputs(self.root)

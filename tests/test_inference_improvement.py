@@ -183,7 +183,7 @@ class InferenceImprovementTest(unittest.TestCase):
 
     def test_build_checks_prerequisite_before_assets_or_packaging(self):
         source = (ROOT / 'build.sh').read_text()
-        gate = source.index('tools/verify_inference_improvement.py')
+        gate = source.index('tools/replay_inference_proof.py')
         self.assertLess(gate, source.index('tools/verify_analysis_assets.py'))
         self.assertLess(gate, source.index('mkdir -p'))
         self.assertIn('"$BUILD/java-src" "$BUILD/generated" "$BUILD/java-sources.txt"', source)

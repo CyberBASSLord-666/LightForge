@@ -165,6 +165,27 @@ the current class identity without executing inference.
 
 ## Fresh per-build admission, not fresh timing
 
+### 2.4.3 metadata migration
+
+The current `tools/replay_inference_proof.py` consumer preserves the original
+2.4.2 campaign and verifies its original source view with the unchanged
+authority and numerical verifiers. Its reviewed policy permits only
+`version.json` and the pinned current verification workflow to differ from
+the original 27-file closure. The remaining 25 files, original model/runtime
+identities and complete freshly compiled Java class inventory must still
+match exactly. The original QA 2.4.2 verifier remains unchanged; fresh app
+receipts come from the current QA 2.4.3 protocol and current asset inventory.
+
+The new prerequisite records both the original measurement identity and the
+current source projection, explicitly stating that no new measurement ran.
+The canonical admission retains the original producer and artifact identities
+while binding the new candidate commit/tree and session. Publication
+independently retrieves and replays the original proof again. Missing or
+expired proof, changed numerical inputs/classes, an unreviewed workflow,
+wrong metadata, or stale candidate/session binding still holds the release.
+No numerical performance threshold, signing requirement or current automated
+Android/app gate is removed by this migration.
+
 Normal verification clears any checked-in/current prerequisite and first
 establishes the exact registered terminal proof before expensive preparation.
 After preparing the current inputs, it independently replays the full immutable

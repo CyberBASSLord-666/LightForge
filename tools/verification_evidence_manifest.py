@@ -295,7 +295,7 @@ def _runtime_evidence_materials(release: str) -> frozenset[str]:
         "native-mdx-downstream-wasm.json",
         "source-clock-verification.json",
     }
-    if release in {"2.3.2", "2.4.0", "2.4.1", "2.4.2"}:
+    if release in {"2.3.2", "2.4.0", "2.4.1", "2.4.2", "2.4.3"}:
         names.update({"native-game-verification.json", "native-game-demo-output.json",
                       "native-game-falcon-output.json"})
     return frozenset(root + name for name in names)
