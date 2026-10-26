@@ -175,7 +175,7 @@ class NativeGameAndroidEvidenceTest(unittest.TestCase):
         self.assertEqual(len(condition.ops), 1)
         self.assertIsInstance(condition.ops[0], ast.In)
         self.assertEqual(ast.literal_eval(condition.comparators[0]),
-                         {'2.3.2', '2.4.0', '2.4.1', '2.4.2'})
+                         {'2.3.2', '2.4.0', '2.4.1', '2.4.2', '2.4.3'})
         current = json.loads((Path(__file__).resolve().parents[1] / 'version.json').read_text())['name']
         self.assertIn(current, ast.literal_eval(condition.comparators[0]),
                       'A version bump must retain the current native GAME device validation gate')
