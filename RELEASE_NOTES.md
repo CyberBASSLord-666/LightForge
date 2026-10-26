@@ -1,68 +1,67 @@
-# LightForge 2.4.1 — measured native inference
+# LightForge 2.4.2 — inference, recovery and release integrity
 
-Final production host measurements show **32.6% lower median native passage
-time**, from 65.3 to 44.0 seconds, with byte-identical complete outputs.
-
-An offline Android update focused on the native neural-inference bottleneck.
-Install the original-signed release APK over the existing app to retain projects.
-The qualified download is published through GitHub Releases after the complete
-source-bound production and Android gates pass.
+Android version code: **20402**. This update retains the original signing
+identity and the application payload qualified by production run
+[40095515106, attempt 1](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40095515106),
+source `e82b149b37acd990e699ab7512e9a0afd67d92cd`.
 
 ## Changes
 
-- Run independent temporal bands concurrently using private buffers and the
-  original graph, assigning the next band as each worker slot finishes. Measure
-  temporal and frequency scheduling on the actual device.
-  A candidate must produce identical finite Float32 tensors and win all three
-  alternating timing pairs, including at least 10% lower median trial time.
-  Otherwise retain the existing configuration.
-- Cache the complete decision against model, runtime, OS and device identity.
-  The first uncached Studio passage pays the calibration cost; later passages
-  and jobs reuse it. Cache corruption or identity changes trigger fresh checks.
-- Preserve original model graphs, weights, Float32 precision, full context and
-  all production inference work. The full parallel path executes 875 one-band/other
-  calls versus the reference's 335 batched/other calls. Keep one native session resident at a time,
-  cancellation, confirmed retirement and crash-lease ownership.
-- Retain bounded summaries for three recent jobs independently of trace rotation.
-  Include final saving, stage durations, recovery gaps, native route totals and
-  separate calibration overhead. Report calling-thread and process CPU honestly.
-- Add native GAME session and graph timings. Its experimental tuning options
-  failed numerical or consistent-performance checks and remain disabled.
+- Improve native complete-passage scheduling while preserving original model
+  graphs, weights, precision and context. Keep device-local selection conditional
+  on repeated timing wins and identical finite output, with bounded cached policy,
+  cancellation and native resource retirement.
+- Repair completed-project reopening and preview restoration, including stale
+  callback fencing and suspension of preview watchdog budgets while the Activity
+  is hidden or unfocused. Preserve saved arrangements when loading fails.
+- Improve background progress, cancellation/recovery, export handling and compact
+  layouts. Retain durable saving and diagnostic job summaries.
+- Bound project/backup JSON validation and strengthen UTF-8/grammar checks.
+  Update ONNX model-export/build-tool dependencies and tighten release provenance
+  and tag verification. Exported original model files remain byte-identical.
 
-## Performance and verification scope
+## Measured performance, not a whole-phone promise
 
-Temporal admission compares all 60 bands of a real graph; frequency admission
-compares a real frequency batch. Neither threshold measures total analysis time.
-The release prerequisite used one excluded warmup pair and three alternating
-measured pairs. Reductions were 28.1%, 28.8%, and 36.2%. All eight complete outputs
-were finite and byte-identical. Median process CPU increased 5.7%, and peak RSS
-increased from 817 to 1,032 MiB; device memory admission bounds parallel execution.
-Both variants used the same seven host CPUs, leaving one CPU of quota for
-platform work. The eight-worker fixture is a host execution test, separate from
-Android's device-local admission.
+The registered one-passage host comparison measured **18.8186% lower median
+complete-passage time**, from **66.459075114 to 53.952437538 seconds**.
+All three measured pairs improved, and all eight complete outputs were
+byte-identical. This compared forced four-worker execution with a three-thread
+baseline on the same three child CPUs of a four-CPU-capacity host.
 
-The 75% speedup remains an aspirational objective. These measurements do not
-establish sustained device performance; phone thermal behavior, battery use and
-whole-song acceleration remain unmeasured. Earlier failed and mixed attempts
-remain in the [investigation record](research/inference-2.4.1/DEUX_PARALLEL_B1.md).
+The immutable producer was
+[run 40085980189, attempt 1](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40085980189).
+Final candidate admission checked its registered proof and unchanged execution
+closure; the benchmark was not rerun to select a favorable outcome.
 
-The release requires fresh full-model reference/calibrated/cached output
-comparison, original graph-call coverage, policy persistence and cancellation
-checks, plus the existing browser, model, storage, export and Android lifecycle
-gates. No older release receipt can qualify changed application bytes.
+This is **not** an Android, whole-song, automatic device-selection or eight-worker
+performance measurement. It is not an additional gain over the historical 2.4.1
+32.6% result or earlier experimental 43.6% result, which used different conditions.
+The 75% whole-analysis goal remains unverified.
 
-ONNX Runtime remains pinned to 1.25.1. A newer-runtime experiment was excluded
-after an unapproved telemetry connection. No model or runtime download is
-introduced in the application.
+## Verification and limits
 
-The 2.4.0 musical continuity, bilateral gestures, source-clock and vehicle-preview
-work is retained. The preview remains a source-backed command simulation with
-estimated physical appearance and motion, not a certified digital twin.
+Fresh source-bound regression, browser, background UI, completed-preview recovery,
+actual-model and native gates passed for this candidate. Packaged Android emulator
+background/lifecycle and diagnostics checks passed with the CI signing identity;
+the original release signature and unchanged application payload are verified
+separately. The accompanying `release-verification.json` identifies the candidate,
+receipts, hashes and scope.
 
-The version-scoped automated-verification policy keeps physical phone/car and
-external perceptual/corpus observations optional without establishing their
-unmeasured claims. Original update signing and exact qualified payload integrity
-remain mandatory.
+Model comparisons are bounded tests, not a general accuracy guarantee. Mandatory
+MDX decoded-waveform/downstream checks passed while retained internal spectral
+diagnostics remain failed; exact spectral parity is not claimed. GAME final-output
+and checkpoint comparisons passed while intermediate differences remain recorded.
+
+The version-specific publication policy is automated-verification-only. Physical
+phone installation, vehicle observation, representative whole-song quality,
+thermal behavior, energy use and sustained device performance remain unverified.
+The preview is a command simulation with estimated physical appearance and motion,
+not a certified digital twin. Security work and advisory audits are scoped; no
+claim that all vulnerabilities or all research dependency ranges are resolved is
+made.
+
+Install the original-signed APK over the existing app to retain projects. Use the
+published APK checksum and verification report to confirm the exact download.
 
 Bundled model restrictions remain: Deux CC BY-NC 4.0 and GAME CC BY-NC-SA 4.0.
 LightForge is not an official Tesla product.
