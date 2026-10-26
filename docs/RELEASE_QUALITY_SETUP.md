@@ -1,6 +1,21 @@
 # Configure the protected release-quality authority
 
-For **2.2.5 / code 20205, 2.3.0 / code 20300, 2.3.1 / code 20301, 2.3.2 / code 20302, 2.4.0 / code 20400 and 2.4.1 / code 20401**, these external qualification inputs are optional under the owner-approved `automated_verification_only` publication declarations. No policy/corpus/review bundle needs to be supplied to publish these versions. The 2.3.0, 2.3.1 and 2.3.2 declarations follow the owner's explicit requests to improve and continue musical intelligence and inference work, and publish when ready without user-supplied measurements. The 2.4.0 declaration follows the owner's request to complete and publish the core performance, musicality, timing, vehicle mapping and preview refactor, with 75% speedup explicitly aspirational. The 2.4.1 declaration follows the explicit request to implement neural-inference improvements in the next production release under those same constraints. Each declaration authorizes only its exact version/code pair. Comparative claims remain limited to actual recorded test scope; the 75% whole-analysis target, general musical-quality non-regression and hardware measurements remain unverified. Existing protected-main and deployment controls, full host/Android verification, original-key signing and package integrity checks remain mandatory. The following setup applies when running the separate strict benchmark qualification; its thresholds and evidence requirements are unchanged.
+Publication requirements come from the exact version/code declaration under
+[releases](../releases/), checked by
+[tools/release_quality_gate.py](../tools/release_quality_gate.py) against
+[version.json](../version.json). The
+[2.4.2 declaration](../releases/v2.4.2/quality-gate-declaration.json) makes external
+corpus, human-review and physical observations optional for publication. It
+retains the separate requirement for demonstrated neural-inference improvement,
+fresh source-bound host/model/Android verification, original-key signing and
+exact qualified-payload integrity. Existing protected-main and deployment
+controls remain mandatory.
+
+An approved publication exception applies only to its named version/code pair;
+it does not establish comparative musical quality, a 75% whole-analysis speedup
+or physical-device performance. The setup below applies to the separate strict
+benchmark qualification, whose thresholds and evidence requirements remain
+unchanged.
 
 This setup authorizes one exact acceptance policy and locked corpus. It does
 not qualify a release, generate benchmark observations, or provide human

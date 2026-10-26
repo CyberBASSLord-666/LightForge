@@ -6,11 +6,13 @@ for ownership contracts and [VALIDATION.md](../VALIDATION.md) for exact publishe
 release evidence. Source history belongs in Git rather than a manually maintained
 "current assembly parent" paragraph.
 
-The published 2.2.5 and 2.3.0 releases and the 2.3.1 source use version-scoped
-automated-verification policies.
-The strict comparative qualification described below remains necessary for the
-corresponding quality/performance claims, but external corpus, human-review and
-hardware measurements are not prerequisites for publishing those versions.
+Publication policy is version-scoped: consult the declaration under
+[releases](../releases/) for the exact identity in
+[version.json](../version.json) and its validation by the
+[release-quality gate](../tools/release_quality_gate.py). The strict comparative
+qualification described below remains necessary for the corresponding
+quality/performance claims. An approved publication exception does not establish
+the optional corpus, human-review or physical measurements it permits omitting.
 
 ## Status vocabulary
 

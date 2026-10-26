@@ -93,6 +93,15 @@ Fetch older history explicitly when needed. History rewriting and shared-branch
 cleanup are separate, coordinated operations—not an implicit part of routine
 source maintenance.
 
+The branch-specific `cockpit-preview.yml` and `background-ui.yml` workflows are
+retired. Their current-version application and background browser suites run in
+the maintained [restore regression workflow](.github/workflows/restore-regression.yml)
+with retained screenshots and diagnostics, and in the separate sealed
+[production verification workflow](.github/workflows/verify-v2.yml). Use the
+restore workflow's manual trigger for supplemental visual checks. Historical
+receipts that name the retired workflows remain unchanged; they describe their
+original source, not current workflow requirements.
+
 ## Keep documentation accurate
 
 Use relative links to canonical guides instead of repeated procedures. Keep

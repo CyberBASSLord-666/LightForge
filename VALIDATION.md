@@ -54,6 +54,25 @@ qualified source, run/attempt, certificate and payload identity against that
 release. A retained report may describe an older version; never promote it to
 qualify changed source. This host record is not a publication receipt.
 
+## Published 2.4.2 record
+
+[LightForge 2.4.2](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.4.2)
+was published on October 26, 2026 with Android version code **20402** and
+qualified source `e82b149b37acd990e699ab7512e9a0afd67d92cd`.
+[Production run 40095515106, attempt 1](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40095515106)
+passed the source-bound host/model/browser and packaged Android emulator gates.
+[Publication run 40350553433](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40350553433)
+passed original-signature, qualified-payload and public-asset verification.
+
+The release includes the signed APK, checksum, notes and publisher-derived
+verification report. Its APK SHA-256 is
+`939b7790885e3517d7d5b8c89d037591d0bc59e8327bb029e1aba60825b54e69`;
+all 149 qualified payload entries remained identical when applying the original
+update signature. This release admits the registered bounded-host proof above;
+it does not measure another timing improvement. Physical phone/Tesla tests and
+the broader musical-quality and whole-analysis claims remain unestablished.
+Later maintenance source is not qualified by this release's receipt.
+
 ## Published 2.4.1 record
 
 The [LightForge 2.4.1 release](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.4.1)

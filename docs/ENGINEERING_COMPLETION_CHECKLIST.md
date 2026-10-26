@@ -19,57 +19,33 @@ claiming publication. A retained older-version report does not qualify new bytes
 - **Missing:** requested functionality is absent, or only an optional input
   contract exists. A sidecar schema is not an automatic detector.
 
-Published 2.4.1 evidence is indexed in [VALIDATION](../VALIDATION.md). Its
-successful checks do not qualify changed application bytes. The source uses
-2.4.2; a source version is not publication.
-No old receipts are promoted to qualify this new candidate.
+Published evidence is indexed in [VALIDATION](../VALIDATION.md). A source
+version or an older receipt does not qualify changed application bytes.
 
 ## Recorded source and verification evidence
 
-The following is a **historical snapshot at 2026-10-24 12:26 UTC**, not a promise
-of later CI success or publication:
+**2.4.2 / Android 20402 was published on October 26, 2026.** Its qualified source
+is `e82b149b37acd990e699ab7512e9a0afd67d92cd`.
+[Production run 40095515106, attempt 1](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40095515106)
+passed source-bound host/model/browser and packaged Android emulator gates;
+[publication run 40350553433](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40350553433)
+passed original-signature, exact-payload and public-asset verification. Use the
+[release record](https://github.com/CyberBASSLord-666/LightForge/releases/tag/v2.4.2)
+and its verification report for that exact APK. These results do not qualify
+later maintenance source or establish every capability below.
 
-- Source includes the reliability/UI/export/background work integrated by
-  [PR56](https://github.com/CyberBASSLord-666/LightForge/pull/56), ONNX/release
-  provenance remediation in [PR57](https://github.com/CyberBASSLord-666/LightForge/pull/57)
-  and Python bootstrap pins in [PR58](https://github.com/CyberBASSLord-666/LightForge/pull/58).
-  PR61 head `8285b55` and local `05db18f` share tree
-  `38da1ce8b49b8c9252be9606ac9277aa506ea6ec`. Its platform-reader JSON depth/UTF-8
-  and backup bounds, immutable sparse regression inputs and explicit consumer
-  JDK layout repair leave all 27 registered execution-closure files unchanged.
-- Local regression ran **793 Node tests and 976 Python tests (972 passed,
-  4 historical skips)**, with quality-tool and asset checks passing. CI selects
-  its own supported tests/skips; do not substitute these totals for CI results.
-- The registered [producer run 40085980189, attempt 1](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40085980189)
-  measured **18.8186% lower median complete-passage time**, 66.459075114 to
-  53.952437538 seconds. All three measured pairs improved (18.81855%, 17.51232%,
-  19.40812%), and all eight complete outputs were byte-identical. This is forced
-  four-worker versus three-thread execution on three child CPUs of a
-  four-capacity host for one original passage, not Android, whole-song or an
-  additional gain over the historical 32.6%/43.6% comparisons. Source, artifact,
-  digest and consumer-admission requirements are recorded in [VALIDATION](../VALIDATION.md).
-- [PR CI 40091744623](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40091744623)
-  had passed core, model/native and performance admission and reached its
-  ephemeral test-APK build. Packaged Android, final main-candidate qualification,
-  original-signed payload verification and publication were not established by
-  that observation. Later status must be read from exact-source sealed evidence.
-- Scoped advisory metadata audits listed no known advisories for 44 production
-  package versions and 15 exact research pins. Nineteen historical range/unpinned
-  research declarations remained unresolved. Reviewed pins include ONNX 1.23.2,
-  pip 26.2.1, setuptools 84.1.0, filelock 4.2.1 and Temurin 17.0.21+9. Fresh
-  ONNX export reproduced the original GAME and Deux model files byte for byte.
-  Native ORT 1.25.1 and Web ORT 1.20.1, including older embedded ONNX-schema
-  components, remain unchanged. The scoped Android fixed-model input-path review
-  does not patch those components or provide universal security clearance.
+The registered host proof measured 18.8186% lower median complete-passage time,
+with eight byte-identical complete outputs. Its conditions, immutable producer
+and comparison limits are recorded once in [VALIDATION](../VALIDATION.md).
+Whole-song acceleration, 75% improvement, general musical-quality non-regression
+and physical phone/Tesla performance remain unestablished. The scoped dependency
+audit and unresolved research declarations remain in
+[dependency security](DEPENDENCY_SECURITY.md).
 
-Earlier supplemental browser/model checks, failed decoder/startup attempts,
-Music ResizeObserver diagnostics and their exact links remain in the
-[October 23 ledger](https://github.com/CyberBASSLord-666/LightForge/blob/8285b55b131f0a1ee718d8c6623b434acc1e255e/docs/ENGINEERING_COMPLETION_CHECKLIST.md)
-and retained run artifacts. Their historical setup failures are not current
-blocker diagnoses, and their passes do not replace fresh candidate qualification.
-The Music resize loop was repaired and subsequent supplemental suites passed;
-local browser-launch restrictions are environment-specific. No historical receipt,
-failed diagnostic, model hash, policy or timing threshold was rewritten here.
+The superseded [October 24 status snapshot](https://github.com/CyberBASSLord-666/LightForge/blob/c8d3d1166db4872da39c6cbe757eabd2992601bd/docs/ENGINEERING_COMPLETION_CHECKLIST.md)
+and earlier failed investigations remain recoverable with their original scope.
+The capability gaps and continuing acceptance requirements below are retained;
+publication does not convert optional inputs into implemented detectors.
 
 ## Verification contract
 
@@ -91,12 +67,12 @@ must stay failed; downstream/decoded-waveform passes are not exact spectral pari
 | Original Deux qualification | Original assets, full-output comparison and the scoped registered host timing proof are documented in VALIDATION. | Verify their identity for each candidate and complete remaining platform/full-pipeline gates; preserve original weights, graphs, precision and context. No reduced model or fabricated receipt. |
 | Native runtime checks | Fresh Deux checks and GAME native/WASM final-output/checkpoint comparisons passed. GAME produced 98 demo notes and 5 Falcon notes with identical final output; unrounded intermediate differences remain recorded. | Preserve source/model/runtime bindings; host comparisons do not establish packaged Android, corpus accuracy, physical-device performance or whole-job speedup. |
 | MDX numerical comparison | Mandatory decoded-waveform comparisons on three fixed inputs and the paired downstream gate passed with current source/model bindings. Internal spectral diagnostic remains false. | Preserve failed spectral diagnostics and existing mandatory thresholds; do not claim bit-identical MDX spectra, full-song accuracy or Android parity from these scoped passes. |
-| Foreground/background analysis | Foreground service, checkpointed stages, cancellation and saving are implemented. Current changes suspend completed-preview watchdog budgets while the Activity is hidden or unfocused and reject stale callbacks after resume. Historical emulator evidence does not qualify these changes. | Fresh packaged Android tests: screen-off/background completion, Activity recreation, process interruption, cancel/resume, low-memory paths and durable result save. |
-| Completed-project preview | Current source preserves saved arrangements when loading fails, fences superseded opens, and defers legacy Android draw-listener removal until after drawing. The four supplemental browser suites passed at head 4ab3ae8; screenshot review, actual-model browser and packaged Android qualification remain distinct requirements. | Restore completed and legacy projects; assert first rendered frame, transport/seek, repeated opening, cancellation and current compiled sequence agreement, including API 26-28 and focus loss/resume. |
-| Browser and UI execution | All four supplemental browser suites passed in run 40002479708, with exact-source artifact bindings checked. Fail-closed diagnostic capture identified a real Music ResizeObserver loop. The resize repair passed all four hosted suites with clean diagnostics and visually checked Music/Guide/My shows/score captures. Local browser restrictions are environment-specific. No actual-model browser or packaged Android pass is inferred. | Complete and inspect actual browser diagnostics; separately run the real-model browser pipeline under the production evidence contract. DOM or supplemental diagnostics cannot replace sealed release evidence. |
+| Foreground/background analysis | Foreground service, checkpointed stages, cancellation and saving are implemented. The published candidate suspends completed-preview watchdog budgets while the Activity is hidden or unfocused and rejects stale callbacks after resume. Its packaged emulator lifecycle gates passed in the production run above; physical-device behavior remains unmeasured. | Fresh packaged Android tests: screen-off/background completion, Activity recreation, process interruption, cancel/resume, low-memory paths and durable result save. |
+| Completed-project preview | Current source preserves saved arrangements when loading fails, fences superseded opens, and defers legacy Android draw-listener removal until after drawing. Source-bound restore/browser and packaged Android checks passed for the published candidate above; changed application bytes require fresh qualification. | Restore completed and legacy projects; assert first rendered frame, transport/seek, repeated opening, cancellation and current compiled sequence agreement, including API 26-28 and focus loss/resume. |
+| Browser and UI execution | Source-bound browser, actual-model browser and packaged Android emulator evidence passed for the published candidate. Browser layout/export/restore receipts retain their exact scenario and simulated-bridge scope. | Rerun affected diagnostics for changed source; DOM or supplemental diagnostics cannot replace sealed release evidence. Physical device/vehicle observations remain separate. |
 | Physical phone | No fresh physical-phone observations were produced for this assessment. Earlier connector errors are historical, not a current connection diagnosis. | Use only supported, authorized connection routes when available. Physical testing is optional under the applicable version-scoped publication policy, but physical performance claims need observations. |
-| APK/update identity | Original-signing and exact-payload publication controls are implemented. Source version is 2.4.2/20402; this ledger does not qualify an APK. | Full exact-source verification, original certificate outside Git, update-compatible install identity, alignment and checksum verification. Never replace the key or uninstall to evade incompatibility. |
-| Release publication | Source version 2.4.2/20402 and its publication policy are defined; publication is established only by the matching signed payload, report and GitHub release. | Follow [BUILD](../BUILD.md); verify expected remote source, full CI, qualified signed APK and accessible public assets. Never overwrite a released version or use an older receipt to qualify new bytes. |
+| APK/update identity | The published 2.4.2/20402 APK passed original-signature, alignment, checksum and exact qualified-payload verification; use its source-bound release report. | Full exact-source verification, original certificate outside Git, update-compatible install identity, alignment and checksum verification. Never replace the key or uninstall to evade incompatibility. |
+| Release publication | 2.4.2/20402 is published with the matching signed payload, verification report and public assets linked above. | Follow [BUILD](../BUILD.md); verify expected remote source, full CI, qualified signed APK and accessible public assets. Never overwrite a released version or use an older receipt to qualify new bytes. |
 
 ## Music intelligence and choreography ledger
 
@@ -134,8 +110,8 @@ must stay failed; downstream/decoded-waveform passes are not exact spectral pari
 
 ## Next safe engineering steps
 
-1. Verify the final protected-main candidate after all intended source and
-   documentation changes. Bind registered host-proof admission and every fresh
+1. For the next application candidate, verify the final protected-main source
+   after all intended source and documentation changes. Bind registered host-proof admission and every fresh
    production/model/browser/Android receipt to that candidate. Preserve failed
    observations and the single-attempt campaign identity; do not rerun timing
    merely to obtain a preferable number.

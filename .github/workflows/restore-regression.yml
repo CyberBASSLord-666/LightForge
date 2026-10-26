@@ -27,7 +27,20 @@ jobs:
             research/model-source
             research/evaluation-1.6
             research/upstream/deux
+      - name: Verify supplemental scope classification
+        run: python3 -m unittest tests.test_supplemental_qa_scope
+      - name: Classify complete immutable PR scope
+        id: scope
+        env:
+          # Commit values come from the GitHub event JSON, never shell text.
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if ! python3 tools/supplemental_qa_scope.py; then
+            echo 'run_browser=true' >> "$GITHUB_OUTPUT"
+            echo 'Supplemental scope classifier failed; full browser QA remains required.' >> "$GITHUB_STEP_SUMMARY"
+          fi
       - name: Read current release version
+        if: ${{ steps.scope.outputs.run_browser != 'false' }}
         run: |
           python3 - <<'PYVERSION'
           import json,os
@@ -86,6 +99,7 @@ jobs:
           retention-days: 14
           if-no-files-found: error
       - name: Archive immutable review sources without model weights or signing material
+        if: ${{ steps.scope.outputs.run_browser != 'false' }}
         run: |
           python3 - <<'PY'
           import hashlib, io, json, os, subprocess, tarfile
@@ -121,17 +135,21 @@ jobs:
           (output / 'source-manifest.json').write_text(json.dumps(inventory, indent=2, sort_keys=True) + '\n')
           PY
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: ${{ steps.scope.outputs.run_browser != 'false' }}
         with:
           name: lightforge-review-source-${{ github.run_id }}
           path: ${{ runner.temp }}/lightforge-review
           retention-days: 14
           if-no-files-found: error
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        if: ${{ steps.scope.outputs.run_browser != 'false' }}
         with:
           node-version: '22'
           cache: npm
       - run: npm ci --ignore-scripts --no-audit --no-fund
+        if: ${{ steps.scope.outputs.run_browser != 'false' }}
       - name: Prepare pinned offline review dependencies
+        if: ${{ steps.scope.outputs.run_browser != 'false' }}
         run: |
           mkdir -p ../toolchain/graphics
           cp web/preview/src/package*.json ../toolchain/graphics/
@@ -142,20 +160,25 @@ jobs:
           tar -czf "$RUNNER_TEMP/lightforge-review-runtime/preview-assets.tar.gz" web/preview/models web/demo
           sha256sum package-lock.json web/preview/src/package-lock.json > "$RUNNER_TEMP/lightforge-review-runtime/lockfiles.sha256"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: ${{ steps.scope.outputs.run_browser != 'false' }}
         with:
           name: lightforge-review-runtime-${{ github.run_id }}
           path: ${{ runner.temp }}/lightforge-review-runtime
           retention-days: 7
           if-no-files-found: error
       - name: Reproduce the checked-in offline renderer
+        if: ${{ steps.scope.outputs.run_browser != 'false' }}
         run: |
           node tools/build_preview.mjs
           git diff --exit-code -- web/preview/vehicle-preview.js
       - name: Restore, worker, and preview lifecycle regressions
+        if: ${{ steps.scope.outputs.run_browser != 'false' }}
         run: node --test tests/background-2.2.test.cjs tests/preview-lifecycle.test.cjs tests/preview-startup.test.cjs tests/preview-engine.test.cjs
       - name: Preserve strict Android readiness and supplemental workflow contracts
+        if: ${{ steps.scope.outputs.run_browser != 'false' }}
         run: python3 -m unittest tests.test_background_instrumentation_ui_readiness_contract tests.test_supplemental_browser_workflow
       - name: Install shared Chromium for supplemental browser QA
+        if: ${{ steps.scope.outputs.run_browser != 'false' }}
         id: chromium
         run: npx playwright install --with-deps chromium
       - name: Actual cold-restore browser and WebGL regression
@@ -188,7 +211,7 @@ jobs:
           retention-days: 14
           if-no-files-found: warn
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        if: always()
+        if: ${{ always() && steps.scope.outputs.run_browser != 'false' }}
         with:
           name: lightforge-restore-preview-${{ github.run_id }}
           path: |

@@ -3,6 +3,7 @@ import copy
 import json
 import os
 from pathlib import Path
+import re
 import subprocess
 import tempfile
 import textwrap
@@ -16,6 +17,37 @@ WORKFLOW = (ROOT / '.github/workflows/restore-regression.yml').read_text()
 
 
 class SupplementalBrowserWorkflowTest(unittest.TestCase):
+    def test_inert_pr_shortcut_keeps_the_unconditional_check_and_full_fallback(self):
+        triggers = WORKFLOW.split('permissions:', 1)[0]
+        self.assertIn('  pull_request:\n', triggers)
+        self.assertNotIn('paths:', triggers)
+        self.assertNotIn('paths-ignore:', triggers)
+        scope_step = next(step for step in WORKFLOW.split('      - ') if 'id: scope' in step)
+        self.assertIn('if ! python3 tools/supplemental_qa_scope.py; then', scope_step)
+        self.assertIn("echo 'run_browser=true' >> \"$GITHUB_OUTPUT\"", scope_step)
+        self.assertNotIn('github.event.pull_request.', scope_step)
+        self.assertIn('python3 -m unittest tests.test_supplemental_qa_scope', WORKFLOW)
+        self.assertLess(WORKFLOW.index('id: scope'), WORKFLOW.index('run: npm ci'))
+        steps = re.split(r'^      - ', WORKFLOW, flags=re.M)[1:]
+        for step in steps:
+            if any(token in step for token in ('run: npm ci', 'uses: actions/setup-node@',
+                    'name: Read current release version',
+                    'name: Archive immutable review sources',
+                    'name: Prepare pinned offline review dependencies',
+                    'name: Reproduce the checked-in offline renderer',
+                    'name: Restore, worker, and preview lifecycle regressions',
+                    'name: Preserve strict Android readiness',
+                    'name: Install shared Chromium',
+                    'name: lightforge-review-source-', 'name: lightforge-review-runtime-')):
+                with self.subTest(step=step.splitlines()[0]):
+                    self.assertIn("if: ${{ steps.scope.outputs.run_browser != 'false' }}", step)
+        restore_artifact = next(step for step in steps if 'name: lightforge-restore-preview-' in step)
+        self.assertIn("if: ${{ always() && steps.scope.outputs.run_browser != 'false' }}", restore_artifact)
+        # Browser steps still depend on a successful Chromium install; after a
+        # no-work decision that install is skipped, and no stale receipts upload.
+        supplementary = next(step for step in steps if 'name: Retain supplemental browser diagnostics' in step)
+        self.assertIn("if: ${{ always() && env.LIGHTFORGE_RELEASE != '' }}", supplementary)
+
     def test_one_unprivileged_job_reuses_pinned_dependencies_and_browser(self):
         self.assertIn('runs-on: ubuntu-latest', WORKFLOW)
         self.assertIn('permissions:\n  contents: read', WORKFLOW)

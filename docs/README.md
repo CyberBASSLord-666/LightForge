@@ -32,10 +32,13 @@
 ## Measurement and qualification
 
 These contracts define how to collect and evaluate evidence. Their presence is
-not a successful benchmark. The owner-approved external-input exceptions are
-version-scoped in [release-quality setup](RELEASE_QUALITY_SETUP.md), including
-**2.4.1 / 20401**; they do not weaken the separate strict qualification
-thresholds or establish comparative quality, speed or physical behavior.
+not a successful benchmark. The applicable owner-approved publication exception
+is defined by the exact version/code declaration under [releases](../releases/),
+using the source identity in [version.json](../version.json) and the
+[release-quality gate](../tools/release_quality_gate.py). The
+[release-quality setup](RELEASE_QUALITY_SETUP.md) explains the separate strict
+qualification process. Publication exceptions do not weaken its thresholds or
+establish comparative quality, speed or physical behavior.
 
 | Contract | Scope |
 | --- | --- |
