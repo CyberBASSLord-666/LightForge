@@ -1,9 +1,38 @@
-# Vocal inference, import and PCM throughput observations
+# Separation, vocal inference and PCM throughput observations
 
 These are host observations for unreleased changes after `e434d38`. They cover
-original-model GAME execution, generated-audio conversion and memory-backed WAV
-reads. Complete analysis and phone performance are unmeasured. Samples,
+original-model separation screens and GAME execution, generated-audio conversion
+and memory-backed WAV reads. Complete analysis and phone performance are unmeasured. Samples,
 resampling, model inputs and analysis settings are retained.
+
+## Separation remains the main compute cost
+
+The retained [phone run](../inference-device-regression-20260928/README.md)
+spent 86.39% of job time in source separation. Native passage profiles likewise
+put most elapsed time inside the original neural graphs; session loading, FFTs
+and copies are smaller costs. This is the priority for further runtime work.
+
+The [engineering screens](deux-screening.json) preserve the subsequent decisions.
+Fixed temporal batch sizing produced tiny Float32 differences with inconclusive
+timing and higher memory; inter-operator parallelism and dynamic work scheduling
+did not justify a change. Single-graph tests suggested a smaller worker pool,
+but one complete original-model passage rejected that conclusion: baseline,
+two-worker and existing four-worker times were 81.216, 85.278 and 47.991 seconds,
+with process peak RSS of 855.5, 943.5 and 995.9 MB. All three complete finite
+outputs had identical bytes and preserved every graph, frame and sample.
+
+These are exploratory host observations with one ordered full-passage run per
+schedule, no excluded warmup and variable host conditions. They do not establish
+a new speedup or phone memory eligibility. The existing production schedule,
+admission criteria and original model identities remain unchanged. The summaries
+are engineering notes, not a complete reproducible qualification archive.
+
+A grouped tensor-copy refactor was also reverted. Equivalent warmed calls to
+both actual helpers showed median measured allocation of zero bytes for the
+original helper on this host JVM and 161,280 bytes for the candidate, with
+essentially equal time.
+Source-level temporary-view counts therefore did not establish a useful heap
+or speed improvement, and no Android allocation claim follows from this test.
 
 ## Native GAME pairing
 
