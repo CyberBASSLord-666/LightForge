@@ -117,7 +117,7 @@ files=sorted(p for folder in sys.argv[1:3] for p in Path(folder).rglob('*.java')
 if not files:raise SystemExit('No Java sources were found.')
 Path(sys.argv[3]).write_text('\n'.join('"'+str(p).replace('\\','\\\\').replace('"','\\"')+'"' for p in files)+'\n')
 PY
-python3 "$ROOT/tools/verify_inference_improvement.py"
+python3 "$ROOT/tools/replay_inference_proof.py" verify --root "$ROOT"
 "$JAVA_HOME/bin/javac" -encoding UTF-8 --release 8 \
     -classpath "$PLATFORM:$ORT_JAR" \
     -d "$BUILD/classes" "@$BUILD/java-sources.txt"
@@ -126,7 +126,7 @@ python3 "$ROOT/tools/verify_inference_improvement.py"
 python3 "$ROOT/tools/apk_archive.py" assemble "$BUILD/resources.apk" "$BUILD/dex" "$BUILD/unsigned.apk" "$BUILD/assets" --native-directory "$BUILD/native" --native-manifest "$NATIVE_MANIFEST"
 rm -- "$BUILD/resources.apk"
 printf 'Aligning and signing APK…\n'
-python3 "$ROOT/tools/verify_inference_improvement.py"
+python3 "$ROOT/tools/replay_inference_proof.py" verify --root "$ROOT"
 "$BUILD_TOOLS/zipalign" -P 16 -f 4 "$BUILD/unsigned.apk" "$BUILD/aligned.apk"
 rm -- "$BUILD/unsigned.apk"
 "$BUILD_TOOLS/apksigner" sign --ks "$KEY_DIR/lightforge-release.jks" --ks-key-alias lightforge \

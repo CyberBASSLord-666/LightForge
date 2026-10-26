@@ -186,6 +186,16 @@ class InferenceImprovementTest(unittest.TestCase):
         gate = source.index('tools/replay_inference_proof.py')
         self.assertLess(gate, source.index('tools/verify_analysis_assets.py'))
         self.assertLess(gate, source.index('mkdir -p'))
+        # The current prerequisite has a cross-release envelope. Every build
+        # checkpoint must use its admission verifier, including the later
+        # compilation/signing checks; the frozen numerical CLI rejects it.
+        self.assertNotIn('tools/verify_inference_improvement.py', source)
+        checkpoint = 'python3 "$ROOT/tools/replay_inference_proof.py" verify --root "$ROOT"'
+        for output_step in ('"$JAVA_HOME/bin/javac" -encoding',
+                            '"$BUILD_TOOLS/zipalign" -P 16 -f 4'):
+            with self.subTest(output_step=output_step):
+                before = source[:source.index(output_step)].rstrip().splitlines()
+                self.assertEqual(before[-1], checkpoint)
         self.assertIn('"$BUILD/java-src" "$BUILD/generated" "$BUILD/java-sources.txt"', source)
         self.assertIn('before!=copied or copied!=after', source)
         self.assertIn("copied.get(name[len(prefix):])!=digest", source)
