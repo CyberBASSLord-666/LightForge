@@ -1,0 +1,15 @@
+{
+  "version": {
+    "name": "2.4.3",
+    "code": 20403
+  },
+  "source_commit": "300f4e4513cc34cfc0a2febe1cba725a113ca1ab",
+  "run_id": 40389113510,
+  "quality_gate_policy": {
+    "schema_version": 1,
+    "source_commit": "300f4e4513cc34cfc0a2febe1cba725a113ca1ab",
+    "source_tree_sha": "3964809c8c56c927e5f52ef9a39b4aa4c8238219",
+    "declaration_sha256": "32c8719d2cf5f3e06e05e986a5dc98a0d3df6f08820b8e4b0f547ace62e36315"
+  },
+  "delta_sha256": "475e8997c584a0f62e43bb482812a90ba752524d5a43e5906aeafd01db9a07db"
+}
