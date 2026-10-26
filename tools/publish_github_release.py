@@ -70,6 +70,8 @@ RELEASE_ENFORCEMENT_PATHS = (
     'tools/android_evidence_manifest.py',
     'tools/verification_evidence_manifest.py',
     'tools/host_inference_campaign.py',
+    'tools/replay_inference_proof.py',
+    'tools/inference_replay_policy.json',
     'tools/host_inference_policy.json',
     'tools/host-inference-campaigns/lightforge-2.4.2-neural-four-worker-host-001.json',
     'tools/host-inference-campaigns/lightforge-2.4.2-neural-four-worker-host-001.request.json',
@@ -463,6 +465,13 @@ def verify_host_release_admission(repo, record, pipeline):
     from host_inference_campaign import MAX_ARCHIVE, fetch_proof, validate_admission
     from verify_inference_improvement import verify_bounded
     require(repo == VERIFICATION_REPOSITORY, 'Host admission repository differs')
+    version_path = ROOT / 'version.json'
+    if version_path.is_file() and json.loads(version_path.read_text()) == {'name': '2.4.3', 'code': 20403}:
+        from replay_inference_proof import verify_release_admission
+        return verify_release_admission(
+            ROOT, record['admission'], pipeline, api=_HostAdmissionAPI(repo, MAX_ARCHIVE),
+            output_dir=ROOT / 'build/release-host-proof',
+        )
     admission = validate_admission(
         record['admission'], candidate_source_commit=pipeline['head_sha'],
         candidate_source_tree_sha=pipeline['tree_sha'], evidence_session=pipeline['evidence_session'],

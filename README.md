@@ -56,7 +56,7 @@ diagnostics preserve both kinds of evidence. See
 
 ## Verification and limitations
 
-The 2.4.2 source uses Android version code **20402**. Its registered
+The published 2.4.2 source uses Android version code **20402**. Its registered
 [bounded host experiment](https://github.com/CyberBASSLord-666/LightForge/actions/runs/40085980189)
 measured **18.8% lower median complete-passage time** (66.459 to 53.952 seconds),
 with all eight complete outputs byte-identical. It compared forced four-worker

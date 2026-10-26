@@ -16,7 +16,7 @@ VERSION="$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["name"
 VERSION_CODE="$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["code"])' "$ROOT/version.json")"
 APK_NAME="LightForge-$VERSION.apk"
 python3 "$ROOT/tools/sync_version.py" --check
-python3 "$ROOT/tools/verify_inference_improvement.py"
+python3 "$ROOT/tools/replay_inference_proof.py" verify --root "$ROOT"
 python3 "$ROOT/tools/verify_analysis_assets.py"
 python3 "$ROOT/tools/bootstrap_native_runtime.py" --check
 ORT_JAR="$TOOLCHAIN/onnx/classes.jar"
@@ -56,7 +56,7 @@ python3 - "$ROOT" "$BUILD/java-src" <<'PY'
 import hashlib,json,pathlib,shutil,sys
 root,destination=map(pathlib.Path,sys.argv[1:])
 sys.path.insert(0,str(root/'tools'))
-import verify_inference_improvement as gate
+import replay_inference_proof as gate
 gate.verify(root)
 source=root/'android/src'
 paths=sorted(source.rglob('*.java'))
@@ -67,9 +67,8 @@ copied={str(p.relative_to(destination)):hashlib.sha256(p.read_bytes()).hexdigest
 after={str(p.relative_to(source)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(source.rglob('*.java'))}
 if before!=copied or copied!=after:raise SystemExit('Java sources changed while the build snapshot was prepared.')
 gate.verify(root)
-evidence=json.loads((root/gate.RECEIPT).read_text())
 prefix='android/src/'
-for name,digest in evidence['sourceBindings'].items():
+for name,digest in gate.current_java_bindings(root).items():
     if name.startswith(prefix) and copied.get(name[len(prefix):])!=digest:
         raise SystemExit('Frozen Java source lacks matching inference performance evidence: '+name)
 PY

@@ -119,7 +119,7 @@ class VerificationEvidenceManifestTest(unittest.TestCase):
             with self.subTest(release=release):
                 expected = {f'qa/release-{release}/{name}' for name in names}
                 self.assertTrue(expected <= evidence._runtime_evidence_materials(release))
-        for release in ('2.3.1', '2.4.3', '3.0.0'):
+        for release in ('2.3.1', '2.4.4', '3.0.0'):
             with self.subTest(unlisted_release=release):
                 self.assertFalse(any('native-game-' in name
                                      for name in evidence._runtime_evidence_materials(release)))

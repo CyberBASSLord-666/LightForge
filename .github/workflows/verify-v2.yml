@@ -42,7 +42,7 @@ jobs:
       - name: Resolve immutable prospective campaign request without timing
         id: route
         run: |
-          python3 tools/host_inference_campaign.py route --root . \
+          python3 tools/replay_inference_proof.py route --root . \
             --output "$RUNNER_TEMP/lightforge-host-route.json"
           python3 - <<'PYROUTE'
           import json, os
@@ -244,7 +244,7 @@ jobs:
           # Replay is not remeasurement. A missing/failed/expired proof holds;
           # there is no fallback to a checked-in receipt or a new timing run.
           rm -f -- research/inference-current/production-parallel-qualification.json
-          python3 tools/host_inference_campaign.py replay --root . \
+          python3 tools/replay_inference_proof.py replay --root . \
             --output-dir "$RUNNER_TEMP/lightforge-host-proof" \
             --output "$RUNNER_TEMP/lightforge-host-proof-check.json"
       - name: Create per-run candidate evidence session
@@ -360,13 +360,14 @@ jobs:
           # live immutable proof, replay every raw observation and rebuild the
           # current classes before writing the build prerequisite.
           rm -f -- research/inference-current/production-parallel-qualification.json
-          python3 tools/host_inference_campaign.py replay --root . \
+          python3 tools/replay_inference_proof.py replay --root . \
             --output-dir "$RUNNER_TEMP/lightforge-host-admitted-proof" \
             --output "$RUNNER_TEMP/lightforge-host-admitted-proof-check.json" \
             --admission-output "$RUNNER_TEMP/lightforge-host-admission.json" \
             --prerequisite-output research/inference-current/production-parallel-qualification.json \
             --evidence-session "$LIGHTFORGE_EVIDENCE_SESSION"
-          python3 tools/verify_inference_improvement.py
+          python3 tools/replay_inference_proof.py verify --root . \
+            --output-dir "$RUNNER_TEMP/lightforge-host-prerequisite-check-proof"
       - name: Retain exact-source inference observations (not release evidence alone)
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

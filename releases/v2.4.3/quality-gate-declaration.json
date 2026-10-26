@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "release": {
+    "name": "2.4.3",
+    "code": 20403
+  },
+  "requirement": "automated_verification_only",
+  "classification": "performance",
+  "reason": "The owner requested completion of the remaining PRs and a fully updated APK for this exact version only, continuing the authorized removal of external qualification inputs and optional physical validation. Fresh source-bound production, actual-model and packaged Android verification, sealed same-session evidence, original signing identity and exact qualified payload integrity remain mandatory. The existing original-model Deux host improvement may be replayed only after unchanged numerical sources, models, runtime and compiled classes are established; this is not a new timing measurement. External corpus measurements, blinded human reviews and physical-device observations are optional. This creates no PASS_TARGET provenance and does not relax the separate strict performance-quality gate. General musical-quality non-regression, 75% whole-analysis reduction and physical phone/Tesla performance, energy and thermal behavior remain unverified."
+}

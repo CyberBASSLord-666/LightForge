@@ -1,0 +1,16 @@
+{
+  "schema": "lightforge.inference-replay-policy.v1",
+  "baselineCampaignId": "lightforge-2.4.2-neural-four-worker-host-001",
+  "baselineSourceCommit": "214b8f868ab3b412ebf4d57f75f3ba4b1863272b",
+  "baselinePolicySha256": "af4ac4c7706fde42abd99a92c583565206a1e07b2d80810a1e5db01bf7a60af1",
+  "targetRelease": {
+    "name": "2.4.3",
+    "code": 20403
+  },
+  "permittedMetadataChanges": [
+    ".github/workflows/verify-v2.yml",
+    "version.json"
+  ],
+  "currentWorkflowSha256": "b073931ea5d704f5816919903a46ab5046c37e94b4b5194fccb4dd6c44f2e21e",
+  "scope": "Immutable 2.4.2 bounded-host timing replay for the byte-identical Deux numerical source/model/runtime/class set in 2.4.3. Within the original 27-file closure, only release metadata and the reviewed verification entrypoint differ. Not a new measurement, Android or whole-analysis speedup, or a substitute for fresh app/Android/signing gates."
+}
