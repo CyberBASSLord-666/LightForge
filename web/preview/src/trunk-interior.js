@@ -3,7 +3,7 @@ import * as THREE from 'three';
 // The source artist joined the two stationary quarter-panel returns below the
 // rear glass to the deck skin. Split that one surface at the cargo seal. Clip
 // crossing triangles on both sides so the closed outline and UVs still match.
-function splitDeckAtSeal(deck,root,fixedName='Rear_quarter_returns'){
+function splitDeckAtSeal(deck,root){
  const source=deck.geometry,position=source.attributes.position;
  const signedDistance=i=>position.getZ(i)-(1.965-.055*(position.getX(i)/.7)**2);
  const split=[[],[]],corners=[];
@@ -33,27 +33,29 @@ function splitDeckAtSeal(deck,root,fixedName='Rear_quarter_returns'){
   geometry.normalizeNormals();return geometry;
  };
  const fixed=new THREE.Mesh(geometryFor(split[0]),deck.material);
- fixed.name=fixedName;fixed.castShadow=fixed.receiveShadow=true;root.add(fixed);
+ fixed.name='Rear_quarter_returns';fixed.castShadow=fixed.receiveShadow=true;root.add(fixed);
  deck.geometry=geometryFor(split[1]);source.dispose();
 }
-// In the normalized GLB the thin painted edge returns around the C-lamps
-// and deck lip occupy one contiguous run of 1,103 triangles in body 9/21.
-// Their original UV splits make them separate islands from the outer skin.
-// Keeping them on the body leaves metal slivers suspended across the pockets.
+// These four runs in the normalized 9/21 body mesh are the two small
+// painted shoulders and the paired narrow horizontal C-lamp edges. The
+// neighboring upper gutter and load-opening flanges stay fixed on the body.
 function attachDeckEdges(body,deck,root,trunk,attach){
  const geometry=body.geometry,index=geometry.index;
- const first=2457*3,end=3560*3;
- // Bind these authored offsets to the exact normalized source topology.
- if(!index||index.count!==10313*3||index.getX(first)!==1645||index.getX(end)!==2779)return;
- const edgeGeometry=new THREE.BufferGeometry();
- for(const [key,attribute] of Object.entries(geometry.attributes))edgeGeometry.setAttribute(key,attribute);
- edgeGeometry.setIndex(new THREE.BufferAttribute(index.array.slice(first,end),1));
- const bodyIndices=new index.array.constructor(index.count-(end-first));
- bodyIndices.set(index.array.subarray(0,first));bodyIndices.set(index.array.subarray(end),first);
- geometry.setIndex(new THREE.BufferAttribute(bodyIndices,1));
- const edges=new THREE.Mesh(edgeGeometry,deck.material);edges.name='Trunk_painted_edge_returns';
- edges.castShadow=edges.receiveShadow=true;root.add(edges);attach(edges,trunk);
- splitDeckAtSeal(edges,root,'Rear_window_return_edges');
+ if(!index||index.count!==10313*3||index.getX(2457*3)!==1645||index.getX(3560*3)!==2779)return;
+ const runs=[[2599,2600],[2635,2638],[2680,2760],[3017,3021]],moving=[],fixed=[];
+ let run=0;
+ for(let i=0;i<index.count;i+=3){
+  const face=i/3;
+  if(run<runs.length&&face===runs[run][1])run++;
+  const target=run<runs.length&&face>=runs[run][0]?moving:fixed;
+  target.push(index.getX(i),index.getX(i+1),index.getX(i+2));
+ }
+ const edgesGeometry=new THREE.BufferGeometry();
+ for(const [key,attribute] of Object.entries(geometry.attributes))edgesGeometry.setAttribute(key,attribute);
+ edgesGeometry.setIndex(moving);geometry.setIndex(fixed);
+ const edges=new THREE.Mesh(edgesGeometry.toNonIndexed(),deck.material);
+ edges.name='Trunk_painted_edge_returns';edges.castShadow=edges.receiveShadow=true;
+ root.add(edges);attach(edges,trunk);
 }
 // Close the back of the fixed lamp mounting recesses. These follow the
 // imported pocket perimeter and are only visible behind the lifted C lamps.

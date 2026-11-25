@@ -11,6 +11,6 @@
     ".github/workflows/verify-v2.yml",
     "version.json"
   ],
-  "currentWorkflowSha256": "b073931ea5d704f5816919903a46ab5046c37e94b4b5194fccb4dd6c44f2e21e",
+  "currentWorkflowSha256": "f67f57343dc66fa10d53989a83cbfee4a8b22eb1236beab2d8e14c8f63ce0cd1",
   "scope": "Immutable 2.4.2 bounded-host timing replay for the byte-identical Deux numerical source/model/runtime/class set in 2.4.3. Within the original 27-file closure, only release metadata and the reviewed verification entrypoint differ. Not a new measurement, Android or whole-analysis speedup, or a substitute for fresh app/Android/signing gates."
 }
