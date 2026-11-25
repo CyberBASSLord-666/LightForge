@@ -67,11 +67,11 @@
   light('park-markers','Parking / side markers',[17,18,19,20],'boolean','driver','Tesla combines left/right auxiliary parking and side-marker requests. They cannot be independently sequenced on Model 3. Highland placement is estimated.');
   for(const [side,label,offset] of [['left','Left',0],['right','Right',1]]){
     light(side+'-repeater',label+' side repeater',[21+offset],'boolean','driver','Amber fender-mounted side repeater, fixed to the body rather than the mirror.');
-    light(side+'-rear-turn',label+' rear turn signal',[23+offset],'boolean','rear','Rear turn-signal output; left and right have independent channels.');
+    light(side+'-rear-turn',label+' rear turn signal',[23+offset],'boolean','rear','Independent amber turn signal. The preview moves the active optic from the lid to the fixed lower fascia when the trunk opens; the handoff is estimated.');
   }
   light('brakes','Brake lights',[25],'boolean','rear','One command controls the brake-light group including the center high-mounted stop light; no separate left/right brake addresses.');
-  light('left-tail','Left tail light',[26],'boolean','rear','Left trunk-lid tail-light assembly.');
-  light('right-tail','Right tail light',[27],'boolean','rear','Right trunk-lid tail-light assembly.');
+  light('left-tail','Left tail light',[26],'boolean','rear','Left red tail light. With the lid open, the preview routes either tail request to both fixed lower red optics on the shared fascia circuit.');
+  light('right-tail','Right tail light',[27],'boolean','rear','Right red tail light. With the lid open, the preview routes either tail request to both fixed lower red optics on the shared fascia circuit.');
   light('reverse','Reverse lights',[28],'boolean','rear','Paired white reverse lamps in the rear fascia share this single command.');
   light('rear-fog','Rear fog lights',[29],'boolean','rear','No rear-fog output on North American Model 3; Tesla does not substitute another lamp.',false);
   light('license-plate','License plate lights',[30],'boolean','rear','The two white plate lights share one command and move with the trunk lid.');

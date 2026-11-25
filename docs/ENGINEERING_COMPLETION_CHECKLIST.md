@@ -22,6 +22,16 @@ claiming publication. A retained older-version report does not qualify new bytes
 Published evidence is indexed in [VALIDATION](../VALIDATION.md). A source
 version or an older receipt does not qualify changed application bytes.
 
+## November 25 follow-up under test
+
+| Owner concern | Candidate change and evidence | Remaining verification |
+| --- | --- | --- |
+| Lower rear lamp colors and open trunk | The renderer shows separate red, amber and white fascia sectors and exposes the cargo compartment as the lid rises. The WebGL regression checks illuminated lens pixels and visible cargo from three rear viewing angles. [Preview](PREVIEW_RENDERING.md) · [Hardware evidence](VEHICLE_HARDWARE_EVIDENCE.md) | Observe the changeover, sector extents and movement on the owner’s car and firmware. |
+| Long audio processing time | Studio reads less source audio before native separation. Balanced avoids unused FFT outputs. Background jobs omit prior compiled frames and stale analysis from the worker request while preserving the saved project and verified checkpoints. [Measurements and reproduction](../research/throughput-20261125/README.md) | Time representative complete songs on the phone. The 75% target remains open. |
+| Preview restore and project safety | Project writes stay blocked until stored frames have been verified and adopted. Regression cases switch shows during a pending restore and exercise a failed restore. [Project transaction tests](../tests/browser-transfer-lifecycle.test.cjs) | Check cold restore, background completion and repeated switching on the phone. |
+| Synchronization and musical coverage | Short sung notes retain an attack in the FSEQ. Cabin RGB clears pulses across silence. Previously accepted cues retained their timing in the recorded-show comparison. [Choreography evidence](LIGHT_DISPLAY_REFINEMENT.md) | Judge representative shows by listening and comparing the preview with vehicle playback. |
+| Detector coverage | The music editor identifies the available bass source. Studio and Balanced use separated vocals and accompaniment. Optional imported evidence remains identifiable as such. | Accurate automatic isolated bass, dedicated drum classes, lead/backing separation and word alignment need qualified models and annotated evaluation material. |
+
 ## Recorded source and verification evidence
 
 **2.4.3 / Android 20403 was published on October 26, 2026.** Its qualified

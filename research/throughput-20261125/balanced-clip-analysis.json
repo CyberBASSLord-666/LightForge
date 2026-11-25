@@ -1,0 +1,243 @@
+{
+  "scope": "Complete cold Balanced analysis via MusicAnalyzer.analyze in desktop Chrome/WASM. HTTPS-equivalent localhost with per-process fresh origin storage and no HTTP caching. OS page caches, host scheduling and the physical device were uncontrolled. All candidate and reference runs used the original model assets and the same input.",
+  "referenceCommit": "1543b9e9f2f66e0fafb9ba82fc6bc3b65bab0246",
+  "changedAnalysisFilesSha256": {
+    "released": {
+      "web/analysis/ASSET_MANIFEST.json": "2fa86a5307f071c437c70d09f18ff072069f6f1aa4cb90446849dd449a07909f",
+      "web/analysis/worker.js": "56be9dd266747977494cf0cc2f8d084dea487680f6ba33fd0008846106828bd9",
+      "web/analysis/separator-deux.js": "a7ec66d36fcda3fa655c6392ff18b00bf948310ef298adc2ad3bf22712be13a6",
+      "web/analysis/separator-mdx.js": "5f05ad8666d3b0af784e6abb1d85bf447b03c50c7bc97db538137521e455d36c",
+      "web/analysis/wav-reader.js": "89811649ac569559a136fd9573cd70b42c48e10e00d9a73ddc6b0f4ae6dc07b9"
+    },
+    "current": {
+      "web/analysis/ASSET_MANIFEST.json": "99d7067aa9ad49173d71135987ffb5fd3625e869f558b4705c964486bedc277f",
+      "web/analysis/worker.js": "8d0edbd022ddcc46f165b75cc5e785579cb353cb1724bef4a3d09dcd4e4ad495",
+      "web/analysis/separator-deux.js": "2aa2c8a8334c0055bbfe9295c506914ebe811229c66e95abce45eeeb310c42c4",
+      "web/analysis/separator-mdx.js": "3dc2ea45d5feff8d775b03221f180d476de3f1ac790d0b42b0eee323b2fee035",
+      "web/analysis/wav-reader.js": "d4da8f86ae2a357544257e40b4035d6c8db1a6f34cafed07351ed7570bfacd36"
+    }
+  },
+  "runCommand": "MusicAnalyzer.analyze(new URL(\"measure.wav\", location.href).href, {analysisQuality:\"balanced\"}, onProgress, abortSignal)",
+  "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36",
+  "clip": {
+    "source": "web/demo/glass-castle.wav",
+    "sourceSha256": "33f07d502ba19832b62b97d8fb4a11354e81310264bd885d7a06438228773650",
+    "sourceOffsetSeconds": 16,
+    "durationSeconds": 5,
+    "sampleRate": 44100,
+    "channels": 2,
+    "bitDepth": 16,
+    "sha256": "f70d3772cbf814499ab69fec143a5bab6b800b7439c84e110b17f4bd08647fec"
+  },
+  "methods": {
+    "first": "Reference then candidate; default host affinity. Other repository work was concurrent.",
+    "reverse": "Candidate then reference; same unpinned setup.",
+    "pinned-ab": "Reference then candidate; taskset CPU 5-8, other repository testing requested on CPUs 0-4.",
+    "pinned-ba": "Candidate then reference; same CPU affinity. The harness was launched under taskset and all sampled Chrome processes at completion were restricted to CPU 5-8."
+  },
+  "trials": {
+    "first": [
+      {
+        "variant": "released",
+        "totalSeconds": 45.709,
+        "stageSeconds": {
+          "rhythm": 3.172,
+          "separation": 27.397,
+          "voice": 14.486,
+          "bass": 0.19
+        },
+        "separationSpansSeconds": {
+          "performance.preprocessing": 0.522,
+          "performance.model_initialization": 0.824,
+          "performance.model_inference": 25.26,
+          "performance.postprocessing": 0.449
+        },
+        "voiceModelInferenceSeconds": 8.452,
+        "reportedHardwareConcurrency": 9,
+        "wasmModelPasses": 2
+      },
+      {
+        "variant": "current",
+        "totalSeconds": 53.277,
+        "stageSeconds": {
+          "rhythm": 2.547,
+          "separation": 31.038,
+          "voice": 18.576,
+          "bass": 0.472
+        },
+        "separationSpansSeconds": {
+          "performance.preprocessing": 0.325,
+          "performance.model_initialization": 0.865,
+          "performance.model_inference": 29.056,
+          "performance.postprocessing": 0.413
+        },
+        "voiceModelInferenceSeconds": 12.314,
+        "reportedHardwareConcurrency": 9,
+        "wasmModelPasses": 2
+      }
+    ],
+    "reverse": [
+      {
+        "variant": "current",
+        "totalSeconds": 52.044,
+        "stageSeconds": {
+          "rhythm": 2.715,
+          "separation": 31.349,
+          "voice": 17.252,
+          "bass": 0.212
+        },
+        "separationSpansSeconds": {
+          "performance.preprocessing": 0.457,
+          "performance.model_initialization": 0.658,
+          "performance.model_inference": 29.286,
+          "performance.postprocessing": 0.498
+        },
+        "voiceModelInferenceSeconds": 11.038,
+        "reportedHardwareConcurrency": 9,
+        "wasmModelPasses": 2
+      },
+      {
+        "variant": "released",
+        "totalSeconds": 45.44,
+        "stageSeconds": {
+          "rhythm": 2.815,
+          "separation": 27.233,
+          "voice": 14.534,
+          "bass": 0.353
+        },
+        "separationSpansSeconds": {
+          "performance.preprocessing": 0.531,
+          "performance.model_initialization": 0.407,
+          "performance.model_inference": 25.589,
+          "performance.postprocessing": 0.406
+        },
+        "voiceModelInferenceSeconds": 9.1,
+        "reportedHardwareConcurrency": 9,
+        "wasmModelPasses": 2
+      }
+    ],
+    "pinned-ab": [
+      {
+        "variant": "released",
+        "totalSeconds": 64.047,
+        "stageSeconds": {
+          "rhythm": 2.562,
+          "separation": 42.425,
+          "voice": 18.401,
+          "bass": 0.204
+        },
+        "separationSpansSeconds": {
+          "performance.preprocessing": 0.543,
+          "performance.model_initialization": 0.621,
+          "performance.model_inference": 40.334,
+          "performance.postprocessing": 0.493
+        },
+        "voiceModelInferenceSeconds": 12.129,
+        "reportedHardwareConcurrency": 4,
+        "wasmModelPasses": 2
+      },
+      {
+        "variant": "current",
+        "totalSeconds": 64.427,
+        "stageSeconds": {
+          "rhythm": 2.562,
+          "separation": 42.486,
+          "voice": 18.742,
+          "bass": 0.213
+        },
+        "separationSpansSeconds": {
+          "performance.preprocessing": 0.334,
+          "performance.model_initialization": 0.956,
+          "performance.model_inference": 40.432,
+          "performance.postprocessing": 0.396
+        },
+        "voiceModelInferenceSeconds": 12.805,
+        "reportedHardwareConcurrency": 4,
+        "wasmModelPasses": 2
+      }
+    ],
+    "pinned-ba": [
+      {
+        "variant": "current",
+        "totalSeconds": 65.559,
+        "stageSeconds": {
+          "rhythm": 3.072,
+          "separation": 38.949,
+          "voice": 22.815,
+          "bass": 0.308
+        },
+        "separationSpansSeconds": {
+          "performance.preprocessing": 0.345,
+          "performance.model_initialization": 0.659,
+          "performance.model_inference": 37.051,
+          "performance.postprocessing": 0.555
+        },
+        "voiceModelInferenceSeconds": 17.851,
+        "reportedHardwareConcurrency": 4,
+        "wasmModelPasses": 2
+      },
+      {
+        "variant": "released",
+        "totalSeconds": 66.234,
+        "stageSeconds": {
+          "rhythm": 2.855,
+          "separation": 44.351,
+          "voice": 18.361,
+          "bass": 0.23
+        },
+        "separationSpansSeconds": {
+          "performance.preprocessing": 0.438,
+          "performance.model_initialization": 0.831,
+          "performance.model_inference": 42.266,
+          "performance.postprocessing": 0.468
+        },
+        "voiceModelInferenceSeconds": 12.388,
+        "reportedHardwareConcurrency": 4,
+        "wasmModelPasses": 2
+      }
+    ]
+  },
+  "musicalParity": {
+    "allFourWithinEachCpuConditionEqual": true,
+    "normalizedAnalysisSha256ByCpuCondition": {
+      "default": "a886c8cf57ce54d607bf5301be7c1e779440981faa3328de61abfca05c41f958",
+      "pinned": "ab527ba82ab5b92dc49d11e14e0844b60b33d5c67784cb1984e684284cf21b0d"
+    },
+    "betweenCpuConditions": "Changing reported CPU count from nine to four changes the application WASM worker count from four to two. Even the released baseline has small differences in rhythm confidence between the two CPU configurations. All three stem hashes, vocal and bass notes, and six FSEQ digests are identical across configurations.",
+    "normalization": "Canonical UTF-8 JSON with sorted keys; exclude engine timing/diagnostics, stem-cache timestamp/key and separation time; substitute each checked transient stem URL with its stem filename. All remaining fields compared.",
+    "stemFiles": {
+      "vocals.wav": {
+        "bytes": 441044,
+        "sha256": "fb382172a8d7988b58835ed91f5d255d355ecb7d43b2f313fad4e8a230ffef50"
+      },
+      "accompaniment.wav": {
+        "bytes": 441044,
+        "sha256": "75f8df9f87205bb9ee8670e32a45e77777366471545fb8ccaf72a4a45c8e6418"
+      },
+      "voice-full.wav": {
+        "bytes": 882044,
+        "sha256": "153c7a4dd845cd0434188ac6072eeda53d660a27f10141c4eef99a70b73d20d7"
+      }
+    },
+    "beats": 8,
+    "vocalNotes": 16,
+    "bassNotes": 5,
+    "semanticEvents": 193,
+    "validatedFseqExports": 48,
+    "fseqCompiler": "1543b9e9f2f66e0fafb9ba82fc6bc3b65bab0246",
+    "fseqHashes": {
+      "festival-15": "7d3c2212186625ac4657701e97f7610ec8ad6f8fe9c78fbf823e50b8d02650a7",
+      "festival-20": "04e26a8be5ae250a0681087c770cf73c7d47b05ac2ebf4291e618892a8e8833c",
+      "cinematic-15": "d460b5dc1fbdd9a2a58e84147eeb6fb280d78b2500fb82ae517f3c943582f79d",
+      "cinematic-20": "5ee674a8192be4213f5e98cfdcc89a86d7bfaeaec5d34a4b35c330405dea2023",
+      "pulse-15": "5598135af741dd4f509974618fce51cfa22662dc66e1985412fb3075fe0e9bc5",
+      "pulse-20": "b081530027314548ce4b45f31d092a8083e8807c508e0bbfb96c2318a967713a"
+    },
+    "fseqSettings": {
+      "seed": 2025,
+      "dance": "expressive",
+      "semanticChoreography": true,
+      "vocalChoreography": true
+    }
+  }
+}
