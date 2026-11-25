@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 RELEASE = json.loads((ROOT / 'version.json').read_text())['name']
 VERIFY = ROOT / f'qa/release-{RELEASE}/verify-analysis.py'
 # Reviewed current source inventory only, never a passing execution receipt.
-EXPECTED_MANIFEST_SHA256 = '2fa86a5307f071c437c70d09f18ff072069f6f1aa4cb90446849dd449a07909f'
+EXPECTED_MANIFEST_SHA256 = '99d7067aa9ad49173d71135987ffb5fd3625e869f558b4705c964486bedc277f'
 EXPECTED_MANIFEST_ENTRY_COUNT = 85
 SPEC = spec_from_file_location('lightforge_verify_analysis_current_inventory', VERIFY)
 assert SPEC is not None and SPEC.loader is not None
@@ -46,7 +46,8 @@ class AssetBindingTest(unittest.TestCase):
 
     def test_reviewed_frontend_sources_still_reject_individual_byte_tampering(self):
         manifest = json.loads((ROOT / 'web/analysis/ASSET_MANIFEST.json').read_text())
-        for name in ('analyzer.js', 'dsp.js', 'game.js', 'wav-reader.js', 'worker.js'):
+        for name in ('analyzer.js', 'dsp.js', 'game.js', 'separator-deux.js',
+                     'separator-mdx.js', 'wav-reader.js', 'worker.js'):
             with self.subTest(source=name), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary)
                 source = root / 'web/analysis' / name

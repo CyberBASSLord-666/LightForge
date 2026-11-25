@@ -539,7 +539,10 @@ self.onmessage=async e=>{
  const readStudio=(start,count)=>sourceReader.stereo44100(start,count);
  // Android hashes this private project audio into the analysis identity and
  // blocks project imports/changes while its background job is active.
- if(/^[a-f0-9]{64}$/i.test(options.analysisIdentity||'')&&/^https:\/\/appassets\.androidplatform\.net\/project\/[A-Za-z0-9_-]{1,80}\/audio\.wav$/.test(audioUrl))readStudio.immutableSource=true;
+ if(/^[a-f0-9]{64}$/i.test(options.analysisIdentity||'')&&/^https:\/\/appassets\.androidplatform\.net\/project\/[A-Za-z0-9_-]{1,80}\/audio\.wav$/.test(audioUrl)){
+  readStudio.immutableSource=true;
+  readStudio.hasPcm16Signal44100=(start,count,minPeak)=>sourceReader.hasPcm16Signal44100(start,count,minPeak);
+ }
  result.separation=await separator.process(readStudio,sourceReader.samples,chunk=>{
   if(nativeMdxFallback||nativeDeuxFallback||nativeMdxFencing||nativeDeuxFencing)return;
   return cacheWriter.append(chunk);

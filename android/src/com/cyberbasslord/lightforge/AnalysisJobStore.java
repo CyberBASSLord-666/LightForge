@@ -38,6 +38,10 @@ final class AnalysisJobStore {
         requireIdle(files);
         File dir=project(files,projectId),source=new File(dir,"project.json");
         JSONObject request=read(source,ProjectStore.MAX_PROJECT_BYTES);
+        // The worker composes its own frames. Keep the previous show in the
+        // saved project without copying it into the request read by WebView.
+        request.remove("compiled");
+        request.remove("provenance");
         // Execution lineage is trusted job metadata, never editable project data.
         // In particular a restored project cannot select or collide with an
         // analysis cache namespace.
@@ -84,7 +88,7 @@ final class AnalysisJobStore {
         if("fresh".equals(executionMode)){
             // Project.json is not the fresh request; always rebuild unless a
             // matching validated Java checkpoint is restored below.
-            request.put("needAnalysis",true).remove("music");
+            request.put("needAnalysis",true);
         }
         request.put("analysisExecutionMode",executionMode);
         if(refreshEpoch!=null)request.put("analysisRefreshEpoch",refreshEpoch);else request.remove("analysisRefreshEpoch");
@@ -100,6 +104,7 @@ final class AnalysisJobStore {
             }catch(Exception damaged){reuse=false;}
         }
         if(!reuse)Files.deleteIfExists(checkpoint.toPath());
+        if(request.getBoolean("needAnalysis"))request.remove("music");
         String jobId=UUID.randomUUID().toString();
         request.put("analysisJobId",jobId);
         JSONObject job=new JSONObject().put("id",jobId).put("projectId",projectId)

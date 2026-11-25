@@ -554,18 +554,24 @@
     // by exterior cues. Sampling unquantized time rounded RGB attacks upward,
     // leaving them one frame behind an exterior attack on the same beat.
     const beatFrames=m.beats.map(time=>Math.round((time+s.offsetMs/1000)/step));
-    let bi=0,voiceLevel=0,bassLevel=0,pitchLevel=.5;
+    const audibleBeats=m.beats.map(ctx.active);
+    const sectionBeats=m.sections.map(section=>{
+      const first=lowerBound(m.beats,section.start);
+      return {first,bar:ctx.beatInfo(Math.min(m.beats.length-1,first)).bar};
+    });
+    let bi=0,voiceLevel=0,bassLevel=0,pitchLevel=.5,lastSilentTime=-Infinity;
     for(let f=0;f<frameCount-1;f++){
       const time=f*step-s.offsetMs/1000;
       if(!ctx.active(time)){
         // Silence is a reset boundary, not a paused envelope. Otherwise the
         // last vocal/bass level and pitch survive arbitrarily long dark gaps.
-        voiceLevel=0;bassLevel=0;pitchLevel=.5;continue;
+        voiceLevel=0;bassLevel=0;pitchLevel=.5;lastSilentTime=time;continue;
       }
       while(bi+1<beatFrames.length&&beatFrames[bi+1]<=f)bi++;
-      const hasBeat=beatFrames.length>0&&beatFrames[bi]<=f;
+      const hasBeat=audibleBeats[bi]&&beatFrames[bi]<=f&&m.beats[bi]>lastSilentTime;
       const sec=ctx.sectionAt(time),scene=show.sections[sec.index],elapsed=hasBeat?(f-beatFrames[bi])*step:0,period=ctx.periodAt(bi);
-      const energy=ctx.energyAt(time),quiet=energy<.3||scene.style==='cinematic',bar=ctx.beatInfo(bi).bar,phrase=ctx.phraseAt(time);
+      const energy=ctx.energyAt(time),quiet=energy<.3||scene.style==='cinematic';
+      const sectionBeat=sectionBeats[sec.index],localBar=Math.max(0,ctx.beatInfo(bi).bar-sectionBeat.bar);
       const pulse=hasBeat?Math.exp(-elapsed/(quiet?Math.min(period,.6):Math.min(period*.45,.26))):0;
       const gain=clamp((quiet?.1:.08)+pulse*(quiet?.45:.92))*clamp(energy*.95+.05)*(.3+.7*scene.intensity);
       const voice=ctx.vocalAt(time),bass=ctx.bassAt(time);
@@ -577,8 +583,8 @@
       const vocalNote=separatedVoice&&voice&&!sourceLed?ctx.vocalNoteAt(time):null,contour=m.vocals.pitchContour,ci=contour?Math.floor((time-(m.vocals.pitchOffset||0))/contour.step):-1,measuredPitch=sourceLed?null:contour?.confidence[ci]>=.45?contour.midi[ci]:vocalNote?.midi;
       if(measuredPitch>0)pitchLevel+=(clamp((measuredPitch-45)/36)-pitchLevel)*Math.min(1,step/.09);
       for(let zone=0;zone<6;zone++){
-        const localBar=Math.max(0,ctx.beatInfo(bi).bar-ctx.beatInfo(Math.min(m.beats.length-1,lowerBound(m.beats,sec.start))).bar),pi=(Math.floor(localBar/2)+Math.floor(zone/2)+scene.variant)%palette.length,color=palette[pi],next=palette[(pi+1)%palette.length];
-        const blend=quiet?clamp(elapsed/Math.max(period,.3),0,.5):clamp(elapsed/period,0,.25),balance=zone===0?.28:(quiet?.85:(bi-lowerBound(m.beats,sec.start)+zone)%3===0?1:.7);
+        const pi=(Math.floor(localBar/2)+Math.floor(zone/2)+scene.variant)%palette.length,color=palette[pi],next=palette[(pi+1)%palette.length];
+        const blend=quiet?clamp(elapsed/Math.max(period,.3),0,.5):clamp(elapsed/period,0,.25),balance=zone===0?.28:(quiet?.85:(bi-sectionBeat.first+zone)%3===0?1:.7);
         const focusedVoice=(zone===2||zone===3||zone===4)&&voice&&s.vocalFocus>0,focusedBass=(zone===1||zone===5)&&bass&&s.bassFocus>0;
         const noteAccent=vocalNote?Math.exp(-Math.max(0,time-vocalNote.start)/.16)*.10:0;
         const roleGain=focusedVoice?clamp(gain*(1-(separatedVoice?.60:.35)*s.vocalFocus)+(voiceLevel*(separatedVoice?.78:.58)+noteAccent)*s.vocalFocus*(.3+.7*scene.intensity)):focusedBass?clamp(gain*(1-.35*s.bassFocus)+bassLevel*s.bassFocus*.62*(.3+.7*scene.intensity)):gain;

@@ -76,6 +76,34 @@ video: evaluate role-layer brightness/ducking, phrase-normalized bilateral
 patterns and recurrence variation without weakening protected source attacks,
 manual controls, dark recovery gaps or output-feasibility constraints.
 
+## Short vocal phrases and musical rests
+
+xLights supports separate timing tracks for beats and vocal phrases. Its
+sequencing guidance places phrase boundaries at the recording's actual
+entrances and endings. Tesla's light-show guide defines which lamp commands
+the vehicle accepts. LightForge applies these principles to its existing
+separated-vocal and interior RGB tracks. See the
+[xLights timing tracks](https://manual.xlights.org/xlights/chapters/chapter-four-sequencer/timing-tracks),
+[phrase timing guidance](https://manual.xlights.org/xlights/chapters/chapter-four-sequencer/singing-faces)
+and [Tesla channel guide](https://github.com/teslamotors/light-show).
+
+A separated-vocal phrase now reserves recovery time for a following attack
+only when needed. The planner counts whole export frames so two adjacent
+entrances can retain their measured starts and at least 80 ms between lamps
+turning off and on. An isolated 150 ms phrase can light the signature lamps
+from entrance through release. Previously the planner subtracted 80 ms from
+its end and discarded the remaining 70 ms. Interior beat pulses also reset
+at a silent frame. A beat grid crossing a rest cannot create a bright cabin
+pulse when the music resumes before the next audible beat.
+
+Both regressions were reproduced against 2.4.3 and are covered at 15 and
+20 ms with signed offsets. The paired comparison against 2.4.3 generated
+30 valid shows from the five recorded-analysis snapshots. It preserved every
+previously accepted checked vocal, bass, rhythm and impact attack at its
+original frame, and every checked automatic ramp had its settling time.
+These comparisons evaluate compiled commands. Physical playback and listener
+preference remain unmeasured.
+
 ## Integration validation
 
 On main base `e434d38`, the standalone production gate passed: 824 Node/DOM

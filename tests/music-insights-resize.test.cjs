@@ -1,7 +1,7 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),{JSDOM}=require('jsdom');
 const root=path.resolve(__dirname,'..');
-function fixture({notes=true,dpr=2,width=500}={}){
+function fixture({notes=true,dpr=2,width=500,bassAnalysis}={}){
  const dom=new JSDOM(fs.readFileSync(path.join(root,'web/index.html'),'utf8'),{url:'https://lightforge.test/',runScripts:'outside-only'}),w=dom.window,d=w.document;
  const frames=new Map(),draws=[],observers=[];let nextFrame=0,shown=false;
  w.requestAnimationFrame=fn=>{frames.set(++nextFrame,fn);return nextFrame;};w.cancelAnimationFrame=id=>frames.delete(id);
@@ -15,7 +15,7 @@ function fixture({notes=true,dpr=2,width=500}={}){
   canvas.getContext=()=>context;
  }
  const vocals={available:true,sourceSeparated:true,source:'separated-vocals',confidence:.9,phrases:[{start:1,end:4}],notes:notes?[{start:1,end:2,midi:60,confidence:.9}]:[]};
- const music={duration:12,analysisVersion:5,vocals,bassNotes:[{start:2,end:3,midi:36}]};
+ const music={duration:12,analysisVersion:5,vocals,bassAnalysis,bassNotes:[{start:2,end:3,midi:36}]};
  w.LightForgeApp={state:{music,show:{stats:{},choreography:{}},project:{duration:12},settings:{dance:'off'}},toast(){}};
  w.eval(fs.readFileSync(path.join(root,'web/music-insights.js'),'utf8'));
  assert.equal(observers.length,1);assert.equal(observers[0].target.id,'musicalRoleTimelines');
@@ -24,6 +24,24 @@ function fixture({notes=true,dpr=2,width=500}={}){
 function geometry(f,role='vocal'){
  const canvas=f.d.getElementById(role+'Timeline');return {width:canvas.width,height:canvas.height,pitched:canvas.parentElement.classList.contains('with-pitch')};
 }
+
+test('the bass method shown to the listener follows the actual input to the detector',()=>{
+ for(const [bassAnalysis,source] of [
+  [{inputStem:'accompaniment',inputStemSeparated:true,instrumentSeparated:false},'vocal-separated accompaniment'],
+  [{source:'separated-accompaniment',sourceSeparated:true},'vocal-separated accompaniment'],
+  [{inputStem:'bass',inputStemSeparated:true,instrumentSeparated:true},'isolated bass track'],
+  [{inputStem:'mixture',sourceSeparated:false},'full mix'],
+  [undefined,'sustained low pitches']
+ ]){
+  const f=fixture({bassAnalysis});
+  try{
+   const method=f.d.getElementById('bassMethodText').textContent;
+   assert.ok(method.includes(source),method);
+   assert.doesNotMatch(method,/kicks are analyzed separately/i);
+   if(!bassAnalysis?.instrumentSeparated)assert.doesNotMatch(method,/isolated bass track/i);
+  }finally{f.close();}
+ }
+});
 
 test('revealing a pitched music lane defers all resize drawing and coalesces notifications',()=>{
  const f=fixture();try{

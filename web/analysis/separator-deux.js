@@ -4,7 +4,7 @@
  * Independent band/frame batches bound attention intermediates on Android.
  */
 (function(root){'use strict';
-const RATE=44100,NFFT=2048,HOP=441,FRAMES=1301,SAMPLES=573300,HALO=66150,CORE=441000,STRIDE=220500;
+const RATE=44100,NFFT=2048,HOP=441,FRAMES=1301,SAMPLES=573300,HALO=66150,CORE=441000,STRIDE=220500,MIN_SIGNAL_PEAK=1e-7;
 function localStageClock(){
  const finite=value=>typeof value==='number'&&Number.isFinite(value)?value:null;
  const read=(object,key)=>{try{return object==null?undefined:object[key];}catch(_){return undefined;}};
@@ -42,7 +42,8 @@ async function create({ort,baseUrl,onProgress=()=>{},checkpoint,nativePredict,te
  // These disjoint spans measure local work only; native bridge waits are not model inference.
  const timed=(name,fn)=>telemetry?.measure?telemetry.measure('performance.'+name,fn,{component:'deux'}):fn();
  const timedAsync=(name,fn)=>telemetry?.measureAsync?telemetry.measureAsync('performance.'+name,fn,{component:'deux',runtime:'onnxruntime-web-wasm'}):fn();
- const manifest=await(await fetch(new URL('manifest.json',baseUrl))).json(),transform=new Transform();let closed=false,session=null,sessionName=null;
+ const manifest=await(await fetch(new URL('manifest.json',baseUrl))).json();
+ let transform=null,closed=false,session=null,sessionName=null;
  if(manifest.execution!=='bounded-independent-batches-v1'||manifest.headFrames!==128||manifest.frames!==FRAMES||manifest.samples!==SAMPLES||manifest.indices.length!==3958||manifest.bandsPerFrequency.length!==1025)throw Error('Studio separation model configuration is invalid.');
  async function releaseStage(){const previous=session;session=null;sessionName=null;if(previous)await previous.release();}
  async function stage(name,input){
@@ -66,6 +67,8 @@ async function create({ort,baseUrl,onProgress=()=>{},checkpoint,nativePredict,te
   }
  }
  async function predict(stereo,progress=()=>{}){
+  // Native, fully restored and silent passages never need a WASM STFT workspace.
+  if(!transform)transform=new Transform();
   const spectrum=timed('preprocessing',()=>transform.encode(stereo)),input=new ort.Tensor('float32',spectrum,[1,2050,FRAMES,2]);let front,values;
   try{front=await stage('front',input);values=timed('postprocessing',()=>Float32Array.from(front.data));}finally{input.dispose();front?.dispose();}progress(1/15);
   for(let i=0;i<12;i++)await boundedBlock(values,i,p=>progress((1+i+p)/15));
@@ -91,6 +94,18 @@ async function create({ort,baseUrl,onProgress=()=>{},checkpoint,nativePredict,te
   if(!Array.isArray(stereo)||stereo.length!==2||stereo.some(x=>!(x instanceof Float32Array)||x.length!==SAMPLES))throw Error('Studio separation requires complete stereo chunks.');
   return timed('preprocessing',()=>{let peak=0;for(const channel of stereo)for(const x of channel)peak=Math.max(peak,Math.abs(x));return peak;});
  }
+ async function passageHasSignal(read,start){
+  if(read.immutableSource===true&&typeof read.hasPcm16Signal44100==='function'){
+   const activity=await read.hasPcm16Signal44100(start,SAMPLES,MIN_SIGNAL_PEAK);
+   if(typeof activity==='boolean')return activity;
+   if(closed)throw Error('Studio separation is closed.');
+  }
+  const stereo=await read(start,SAMPLES);
+  if(closed)throw Error('Studio separation is closed.');
+  const peak=passagePeak(stereo);
+  if(Number.isNaN(peak))return null;
+  return peak>=MIN_SIGNAL_PEAK;
+ }
  async function usefulPassages(read,passageCount,onProgress){
   // Budget calibration only against verified uncached, non-silent work. Keep
   // one bounded passage live at a time; retain only its presence classification.
@@ -103,12 +118,11 @@ async function create({ort,baseUrl,onProgress=()=>{},checkpoint,nativePredict,te
     const start=index*STRIDE,cached=await checkpoint?.readFloats('deux-'+start);
     if(closed)throw Error('Studio separation is closed.');
     if(!validCheckpoint(cached)){
-     const stereo=await read(start-HALO,SAMPLES);
+     const active=await passageHasSignal(read,start-HALO);
      if(closed)throw Error('Studio separation is closed.');
-     const peak=passagePeak(stereo);
-     if(peak>=1e-7){presence[index]=2;useful[index]=1;remaining++;}
-     else if(peak<1e-7)presence[index]=1;
-     else return null; // An indeterminate peak cannot calibrate native work.
+     if(active===null)return null; // An indeterminate peak cannot calibrate native work.
+     if(active){presence[index]=2;useful[index]=1;remaining++;}
+     else presence[index]=1;
     }
    }catch(error){
     if(closed||error?.name==='AbortError')throw error;
@@ -137,18 +151,18 @@ async function create({ort,baseUrl,onProgress=()=>{},checkpoint,nativePredict,te
    if(immutableSource&&!restored){
     const presence=nativePredict&&usefulPlan?.presence[chunks];
     if(presence===1)peak=0;
-    else if(presence===2)peak=1e-7;
+    else if(presence===2)peak=MIN_SIGNAL_PEAK;
     else{stereo=await read(start-HALO,SAMPLES);peak=passagePeak(stereo);}
    }
    const usefulAfterCurrent=usefulPlan?usefulPlan.remaining-usefulPlan.useful[chunks]:-1;
    const report=(p,extra={})=>onProgress({progress:Math.min(1,(start+(last?keep:STRIDE)*p)/total),processedSeconds:start/RATE,passageIndex:chunks+1,passageCount,passagesCompleted:chunks,restoredPassages,checkpointSaved:false,message:'Studio · passage '+(chunks+1)+' of '+passageCount+' · '+Math.round(p*100)+'%',...extra});
    report(0);
-   const estimated=restored?{vocals:cached[0],accompaniment:cached[1]}:peak<1e-7?{vocals:new Float32Array(SAMPLES),accompaniment:new Float32Array(SAMPLES)}:nativePredict?await nativePredict(start-HALO,p=>report(p),usefulPlan?usefulAfterCurrent+1:-1):await predict(stereo,p=>report(p));
+   const estimated=restored?{vocals:cached[0],accompaniment:cached[1]}:peak<MIN_SIGNAL_PEAK?{vocals:new Float32Array(SAMPLES),accompaniment:new Float32Array(SAMPLES)}:nativePredict?await nativePredict(start-HALO,p=>report(p),usefulPlan?usefulAfterCurrent+1:-1):await predict(stereo,p=>report(p));
    if(usefulPlan)usefulPlan.remaining=usefulAfterCurrent;
    if(['vocals','accompaniment'].some(role=>!(estimated?.[role] instanceof Float32Array)||estimated[role].length!==SAMPLES||!estimated[role].every(Number.isFinite)))throw Error('Studio separation returned invalid passage audio.');
    let checkpointSaved=restored;
    if(restored)restoredPassages++;
-   else if(checkpoint&&peak>=1e-7){await checkpoint.writeFloats(key,[estimated.vocals,estimated.accompaniment]);checkpointSaved=true;}
+   else if(checkpoint&&peak>=MIN_SIGNAL_PEAK){await checkpoint.writeFloats(key,[estimated.vocals,estimated.accompaniment]);checkpointSaved=true;}
    const core=timed('postprocessing',()=>{const core={};for(const role of ['vocals','accompaniment']){core[role]=estimated[role].slice(HALO,HALO+keep);if(pending){const overlap=Math.min(pending[role].length,keep);for(let i=0;i<overlap;i++){const weight=.5-.5*Math.cos(Math.PI*(i+.5)/STRIDE);core[role][i]=pending[role][i]*(1-weight)+core[role][i]*weight;}}}return core;});
    const count=last?keep:STRIDE;if(start!==emitted)throw Error('Studio separation lost the source clock.');
    const chunk=timed('postprocessing',()=>({vocals:core.vocals.slice(0,count),accompaniment:core.accompaniment.slice(0,count),startSample:start,sampleRate:RATE}));await onChunk(chunk);emitted+=count;chunks++;pending=timed('postprocessing',()=>last?null:{vocals:core.vocals.slice(STRIDE),accompaniment:core.accompaniment.slice(STRIDE)});

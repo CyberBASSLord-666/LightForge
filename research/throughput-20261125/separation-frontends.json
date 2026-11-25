@@ -1,0 +1,152 @@
+{
+  "scope": "Memory-backed Studio activity preflight and one Balanced frontend round-trip without model inference.",
+  "node": "v24.22.3",
+  "fixtureSha256": "33f07d502ba19832b62b97d8fb4a11354e81310264bd885d7a06438228773650",
+  "sourceFrames": 2822400,
+  "studioWindows": 12,
+  "activeWindows": 12,
+  "mdxFrames": 261120,
+  "releasedMdxSha256": "5f05ad8666d3b0af784e6abb1d85bf447b03c50c7bc97db538137521e455d36c",
+  "spectrumSha256": "9b62dab390e9559afc7dbc2c53efb65166cf9bfbcfc24471f0056277fb0d28d3",
+  "pcmSha256": "c7d041a3bf19fa2954b367ffa50b075ea6217006a407bb5dc8ebe650c0736115",
+  "warmupPairs": 1,
+  "measuredPairs": 5,
+  "order": "Alternating",
+  "studioPreflight": {
+    "medians": {
+      "released": {
+        "preflightMs": 231.85989599999994,
+        "bytesRead": 26812800
+      },
+      "current": {
+        "preflightMs": 0.0883270000003904,
+        "bytesRead": 98304
+      }
+    },
+    "trials": {
+      "released": [
+        {
+          "preflightMs": 252.75315200000023,
+          "bytesRead": 26812800
+        },
+        {
+          "preflightMs": 231.85989599999994,
+          "bytesRead": 26812800
+        },
+        {
+          "preflightMs": 259.6838979999993,
+          "bytesRead": 26812800
+        },
+        {
+          "preflightMs": 153.8030890000009,
+          "bytesRead": 26812800
+        },
+        {
+          "preflightMs": 137.0931929999988,
+          "bytesRead": 26812800
+        }
+      ],
+      "current": [
+        {
+          "preflightMs": 0.1370280000001003,
+          "bytesRead": 98304
+        },
+        {
+          "preflightMs": 0.0883270000003904,
+          "bytesRead": 98304
+        },
+        {
+          "preflightMs": 0.08370899999954418,
+          "bytesRead": 98304
+        },
+        {
+          "preflightMs": 0.09060799999861047,
+          "bytesRead": 98304
+        },
+        {
+          "preflightMs": 0.08775100000093516,
+          "bytesRead": 98304
+        }
+      ]
+    }
+  },
+  "balancedFrontend": {
+    "medians": {
+      "released": {
+        "encodeMs": 428.80426499999976,
+        "decodeMs": 484.4305290000002,
+        "combinedMs": 1046.95021
+      },
+      "current": {
+        "encodeMs": 252.5080599999983,
+        "decodeMs": 330.31188400000065,
+        "combinedMs": 582.8199439999989
+      }
+    },
+    "trials": {
+      "released": [
+        {
+          "encodeMs": 568.2257949999998,
+          "decodeMs": 484.4305290000002,
+          "combinedMs": 1052.656324
+        },
+        {
+          "encodeMs": 428.80426499999976,
+          "decodeMs": 511.29896200000076,
+          "combinedMs": 940.1032270000005
+        },
+        {
+          "encodeMs": 592.5180850000006,
+          "decodeMs": 454.43212499999936,
+          "combinedMs": 1046.95021
+        },
+        {
+          "encodeMs": 391.53868799999873,
+          "decodeMs": 434.63967800000137,
+          "combinedMs": 826.1783660000001
+        },
+        {
+          "encodeMs": 422.58726599999864,
+          "decodeMs": 899.4336940000012,
+          "combinedMs": 1322.0209599999998
+        }
+      ],
+      "current": [
+        {
+          "encodeMs": 249.4475040000002,
+          "decodeMs": 327.6901039999998,
+          "combinedMs": 577.137608
+        },
+        {
+          "encodeMs": 305.8037919999997,
+          "decodeMs": 400.97083699999985,
+          "combinedMs": 706.7746289999995
+        },
+        {
+          "encodeMs": 271.0534779999998,
+          "decodeMs": 426.195557,
+          "combinedMs": 697.2490349999998
+        },
+        {
+          "encodeMs": 252.5080599999983,
+          "decodeMs": 330.31188400000065,
+          "combinedMs": 582.8199439999989
+        },
+        {
+          "encodeMs": 226.12842900000032,
+          "decodeMs": 321.7942469999998,
+          "combinedMs": 547.9226760000001
+        }
+      ]
+    }
+  },
+  "modelParity": {
+    "modelSha256": "534b2070fcc7df514b13ef660dc8cbb328679c2374d04354a5c42bb14ecce111",
+    "polarityPassesPerVariant": 2,
+    "comparedFramesPerStem": 253440,
+    "stemSha256": {
+      "vocals": "904742e14c1c8fd9be4aa7ae3dcc1b9b528ffe047bf47aa65c9b232f7906859e",
+      "accompaniment": "2c0d92d5c91c5e26ef22faa73fa0249d528599364a2bec8796d3ec330fd10f9d"
+    }
+  }
+}

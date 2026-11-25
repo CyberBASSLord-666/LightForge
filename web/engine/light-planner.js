@@ -62,6 +62,7 @@
     let token=timing?.begin('performance.choreography_planning'),scope='light-candidate-planning';
     try{
     const ctx=context(m),step=s.stepMs/1000,shift=s.offsetMs/1000,end=show.frameCount*step-step;
+    const recoveryFrames=Math.ceil(.08/step-1e-9);
     const outputs=PROFILE.outputs.filter(o=>o.available&&o.kind==='light'),byId=new Map(outputs.map(o=>[o.id,o]));
     const candidates=[],accepted=[],lanes=new Map(outputs.map(o=>[o.id,[]]));let serial=0,gestureSerial=0;
     const symmetry={requestedPairs:0,reservationSuppressedPairs:0,acceptedPairs:0,collisionSuppressedPairs:0,filteredPairs:0};
@@ -115,8 +116,15 @@
       for(const point of pool.sort((a,b)=>b.priority-a.priority||a.time-b.time)){const bin=Math.floor(point.time/spacing);let collision=false;for(let b=bin-1;b<=bin+1;b++)if((occupied.get(b)||[]).some(t=>Math.abs(t-point.time)<spacing-1e-8)){collision=true;break;}if(!collision){selected.push(point);const bucket=occupied.get(bin)||[];bucket.push(point.time);occupied.set(bin,bucket);}}
       selected.sort((a,b)=>a.time-b.time);
       for(let i=0;i<selected.length;i++){
-        const point=selected[i],next=selected[i+1]?.time??p.end,ni=lower(localNotes,point.time+.050001,'start')-1,match=localNotes[ni],note=point.note||(match?.end>point.time?match:null);
-        const available=Math.min(next-.08,p.end)-point.time;if(available<.10)continue;
+        const point=selected[i],ni=lower(localNotes,point.time+.050001,'start')-1,match=localNotes[ni],note=point.note||(match?.end>point.time?match:null);
+        // Leave recovery space for another attack, including a nearby next
+        // phrase. An isolated phrase ending is already a release boundary.
+        const following=vocalPhrases[pi+1];
+        const nextAttack=selected[i+1]?.time??(following&&!following.continuation?Math.max(following.start,p.end):Infinity);
+        const musicalSpan=Math.min(nextAttack-.08,p.end)-point.time;
+        if(musicalSpan<.10-1e-9)continue;
+        const recoveryStartFrame=Math.round((nextAttack+shift)/step)-recoveryFrames;
+        const available=Math.min(musicalSpan,recoveryStartFrame*step-shift-point.time);
         const held=note&&note.end-point.time>=.7,phrasePeak=point.strength>=.82&&point.confidence>=.65;
         const direction=vocalStrategy&&typeof vocalStrategy.directionFor==='function'
           ?vocalStrategy.directionFor({sourceStart:p.start,sourceEventTime:point.time,kind:point.kind,note})
@@ -372,10 +380,10 @@
       if(b<=a)return {ok:false,reason:'duration'};
       if(cue.fade&&b-a<2*Math.ceil((cue.fade+.05)/step-1e-9))return {ok:false,reason:'ramp-duration'};
       const lane=lanes.get(cue.id);if(!lane)return {ok:false,reason:'unavailable'};
-      const index=lower(lane,a,'a'),gap=Math.ceil(.08/step-1e-9);
+      const index=lower(lane,a,'a');
       // A section boundary changes the arrangement, not the lamp's recovery
       // time. Independent attacks need the same dark gap on either side of it.
-      if(index>0&&lane[index-1].b+gap>a||index<lane.length&&b+gap>lane[index].a)return {ok:false,reason:'collision'};
+      if(index>0&&lane[index-1].b+recoveryFrames>a||index<lane.length&&b+recoveryFrames>lane[index].a)return {ok:false,reason:'collision'};
       return {ok:true,a,b,lane,index};
     }
     function accept(cue,slot){
