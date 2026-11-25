@@ -137,6 +137,12 @@
     $('roleAnalysisBadge').classList.toggle('separated', sourceSeparated);
     $('roleTimelineHelp').textContent = vocalNotes.length ? 'The voice ribbon shows estimated note height and length. Drag either lane to hear that moment; the preview plays the exported light cues.' : 'Drag a lane to hear that moment. Colored spans follow the analysis; the preview plays the exported light cues.';
     $('vocalMethodText').textContent = sourceSeparated ? 'A trained model separates the voice waveform from accompaniment. Its entrances, held notes, accents and releases shape the show, with confidence checks for bleed and uncertainty. Note timing and pitch remain estimates; these are not recognized lyrics or word timings.' : 'Voice activity is estimated from the full music mix. Re-analyze with the current version to separate voice from accompaniment before measuring fine phrasing. Saved voice guides adjust choreography without changing the original analysis.';
+    const accompaniment = bass?.inputStem === 'accompaniment' && bass.inputStemSeparated === true ||
+      !bass?.inputStem && bass?.source === 'separated-accompaniment' && bass.sourceSeparated === true;
+    const isolatedBass = bass?.inputStem === 'bass' && bass.inputStemSeparated === true && bass.instrumentSeparated === true;
+    const bassInput = accompaniment ? ' in the vocal-separated accompaniment' : bass?.inputStem === 'mixture' ? ' in the full mix' : '';
+    $('bassMethodText').textContent = isolatedBass ? 'Bass notes follow sustained low pitches in the supplied isolated bass track.' :
+      `Bass notes follow sustained low pitches${bassInput}. Tuned drums and other low instruments can contribute to the same pitch.`;
     $('vocalPhraseCount').textContent = legacy ? '—' : String(vocalPhrases.length);
     $('bassNoteCount').textContent = legacy ? '—' : String(bassNotes.length);
     $('vocalConfidence').textContent = legacy ? 'Re-analyze to add' : !analyzedVocals?.available && !vocalPhrases.length ? 'Vocal analysis unavailable' : !vocalPhrases.length ? 'No confident phrases' : vocalPhrases.every(p => p.manual) ? 'Your guides' : evidence(analyzedVocals?.confidence);

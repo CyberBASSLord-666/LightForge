@@ -105,7 +105,7 @@ class VehiclePreview {
   this.environment?.dispose();this.environment=createStudioEnvironmentTexture(this._environmentData);this.scene.environment=this.environment;this.scene.environmentIntensity=this.stage==='night'?.25:.9;
  }
  async load(){
-  try {const loadStarted=performance.now();const [gltf,environmentData]=await Promise.all([new GLTFLoader().loadAsync('preview/models/highland.glb').then(value=>{this.markStartup('gltf-loaded',loadStarted);return value;}),loadStudioEnvironment().then(value=>{this.markStartup('atlas-loaded',loadStarted);return value;})]);if(this._disposed)return false;this._environmentData=environmentData;const rigStarted=performance.now();this.rig=buildHighlandRig(gltf.scene);this.markStartup('rig-built',rigStarted);this.scene.add(this.rig.root);for(let i=0;i<2;i++){const anchors=this.rig.lightingAnchors;this.headlights[i].position.copy(anchors.headlights[i]);this.headlights[i].position.z-=.015;this.reverseSpill[i].position.copy(anchors.reverse[i]);this.reverseSpill[i].position.z+=.015;this.reverseSpill[i].target.position.set(anchors.reverse[i].x,.02,anchors.reverse[i].z+2);this.tailSpill[i].position.copy(anchors.tail[i]);this.tailSpill[i].position.z+=.015;this.tailSpill[i].target.position.set(anchors.tail[i].x,.02,anchors.tail[i].z+1.8);this.rig.parts.trunk.attach(this.tailSpill[i]);this.rig.parts.trunk.attach(this.tailSpill[i].target);}this.rig.setCutaway(this.view==='cabin');this.renderer.shadowMap.needsUpdate=true;if(this.view!=='custom'){this.positionCamera(this.yaw,this.pitch);this.controls.update();}this.loaded=true;this.setStatus('3D · Highland','ready');this.render(...this.last);this.canvas.dispatchEvent(new CustomEvent('previewready'));return true;}catch(e){this.fail(e);return false;}
+  try {const loadStarted=performance.now();const [gltf,environmentData]=await Promise.all([new GLTFLoader().loadAsync('preview/models/highland.glb').then(value=>{this.markStartup('gltf-loaded',loadStarted);return value;}),loadStudioEnvironment().then(value=>{this.markStartup('atlas-loaded',loadStarted);return value;})]);if(this._disposed)return false;this._environmentData=environmentData;const rigStarted=performance.now();this.rig=buildHighlandRig(gltf.scene);this.markStartup('rig-built',rigStarted);this.scene.add(this.rig.root);for(let i=0;i<2;i++){const anchors=this.rig.lightingAnchors;this.headlights[i].position.copy(anchors.headlights[i]);this.headlights[i].position.z-=.015;this.reverseSpill[i].position.copy(anchors.reverse[i]);this.reverseSpill[i].position.z+=.015;this.reverseSpill[i].target.position.set(anchors.reverse[i].x,.02,anchors.reverse[i].z+2);this.placeTailSpill(i,false);}this.rig.setCutaway(this.view==='cabin');this.renderer.shadowMap.needsUpdate=true;if(this.view!=='custom'){this.positionCamera(this.yaw,this.pitch);this.controls.update();}this.loaded=true;this.setStatus('3D · Highland','ready');this.render(...this.last);this.canvas.dispatchEvent(new CustomEvent('previewready'));return true;}catch(e){this.fail(e);return false;}
  }
  setStage(stage){this.stage=stage==='night'?'night':'studio';this._snapshotDirty=true;const night=this.stage==='night';if(this.scene){
   this.scene.background.set(night?'#050a10':'#10171e');this.scene.fog.color.copy(this.scene.background);this.scene.environmentIntensity=night?.25:.9;this.ambient.intensity=night?.18:.65;this.key.intensity=night?.35:1.25;this.rim.intensity=night?.25:.85;this.ground.material.color.set(night?0x0b1019:0x171c23);this.bloom.strength=night?.42:.28;}
@@ -128,8 +128,28 @@ class VehiclePreview {
  setZoom(z){this._snapshotDirty=true;this.zoom=clamp(z,.8,1.7);if(this.camera){this.positionCamera(this.yaw,this.pitch);this.requestDraw();}}
  setStateSource(source){if(source!==null&&typeof source!=='function')throw new TypeError('Preview state source must be a function or null.');this._stateSource=source;if(source===null)this._clockSource='explicit-show-time';}
  render(data,time=0){this.last[0]=data;this.last[1]=time;this._stateDirty=true;this._snapshotDirty=true;this.requestDraw();}
+ placeTailSpill(index,fascia){
+  const spot=this.tailSpill[index];
+  if(spot.userData.onFascia===fascia)return;
+  const trunk=this.rig.parts.trunk,parent=fascia?this.scene:trunk;
+  const anchor=this.rig.lightingAnchors[fascia?'fasciaTail':'tail'][index];
+  parent.add(spot,spot.target);
+  spot.position.copy(anchor);spot.position.z+=.015;
+  spot.target.position.set(anchor.x,.02,anchor.z+1.8);
+  // The closed lid has no rotation. Use its rest-local coordinates so a
+  // backwards seek can remount the spill even while the hinge is rotated.
+  if(!fascia){spot.position.sub(trunk.position);spot.target.position.sub(trunk.position);}
+  spot.userData.onFascia=fascia;
+ }
  applyState(data,time=0){this.last[0]=data;this.last[1]=time;this._stateDirty=false;this._snapshotDirty=true;if(!this.renderer)return;if(this.rig?.update(data))this.renderer.shadowMap.needsUpdate=true;
-  if(this.headlights){const l=data?.lights||[];for(let i=0;i<2;i++)this.headlights[i].intensity=8*Math.max(l[i]||0,l[i+2]||0,l[i+6]||0,l[i+8]||0,l[i+10]||0);for(let i=0;i<(this.tailSpill?.length||0);i++)this.tailSpill[i].intensity=.35*Math.max(l[24]||0,l[25+i]||0);for(const spot of this.reverseSpill||[])spot.intensity=1.5*(l[27]||0);}
+  if(this.headlights){const l=data?.lights||[];for(let i=0;i<2;i++)this.headlights[i].intensity=8*Math.max(l[i]||0,l[i+2]||0,l[i+6]||0,l[i+8]||0,l[i+10]||0);const fasciaTail=this.rig?.usesFasciaTails?.()&&Math.max(l[25]||0,l[26]||0)>0;
+   for(let i=0;i<(this.tailSpill?.length||0);i++){
+    // With the lid raised, either tail request feeds both lower red sectors.
+    // If brake is also active, its brighter lid-mounted group owns the spill.
+    if(this.rig?.lightingAnchors)this.placeTailSpill(i,!!fasciaTail&&!l[24]);
+    this.tailSpill[i].intensity=.35*Math.max(l[24]||0,fasciaTail?Math.max(l[25]||0,l[26]||0):l[25+i]||0);
+   }
+   for(const spot of this.reverseSpill||[])spot.intensity=1.5*(l[27]||0);}
   if(this.view==='orbit'&&!this.tween){this.yaw=-.7+time*.12;this.positionCamera(this.yaw,.28);}
   this.canvas.dataset.frame=String(data?.frame??'');this.canvas.dataset.time=Number(data?.time??time).toFixed(4);this.canvas.dataset.view=this.view;
  }

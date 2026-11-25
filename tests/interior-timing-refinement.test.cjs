@@ -29,6 +29,22 @@ test('pickup before the first measured beat has no invented maximum beat pulse',
     for(let f=0;f<first;f++)assert.ok(brightness(show,f)<brightness(show,first)/3);
   }
 });
+test('a pickup after a rest stays quiet until the first audible beat in that passage',()=>{
+  for(const stepMs of [15,20])for(const offsetMs of [-83,0,117]){
+    for(const previousBeat of [1.95,2.185]){
+      const music=fixture([.45,.95,1.45,previousBeat,2.73,3.23,3.73,4.23]);
+      music.activityRanges=[{start:0,end:2},{start:2.20,end:5}];
+      const show=engine.generate(music,{...settings,stepMs,offsetMs});
+      const firstFrame=Math.ceil((2.20+offsetMs/1000)*1000/stepMs);
+      const nextBeatFrame=Math.round((2.73+offsetMs/1000)*1000/stepMs);
+      for(let f=firstFrame;f<nextBeatFrame;f++){
+        assert.ok(brightness(show,f)<brightness(show,nextBeatFrame)/3,
+          `carried beat ${previousBeat} across a rest into frame ${f}`);
+      }
+      assert.ok(show.validation.valid);
+    }
+  }
+});
 test('silent gaps reset vocal, bass and pitch envelopes before the next passage',()=>{
   for(const stepMs of [15,20])for(const offsetMs of [-83,0,117]){
     const base=fixture(),envelope=Array.from({length:250},(_,i)=>i<100?.95:.13);

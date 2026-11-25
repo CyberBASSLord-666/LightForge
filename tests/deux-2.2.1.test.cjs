@@ -167,3 +167,53 @@ test('budget scan preserves cancellation and stops before any native work',async
   assert.equal(reads,1);await separator.release();
  }
 });
+
+test('pinned native passage preflight uses exact PCM activity and falls back for unsupported layouts',async()=>{
+ const total=CORE+STRIDE+17,decoded=[],probes=[],calls=[],budgets=[],read=source(total);
+ const pinned=async(start,count)=>{decoded.push(start);return read(start,count);};
+ pinned.immutableSource=true;
+ pinned.hasPcm16Signal44100=async(start,count,threshold)=>{
+  assert.equal(count,SAMPLES);assert.equal(threshold,1e-7);probes.push(start);
+  if(start<0)return false;
+  return start===STRIDE-HALO?true:null;
+ };
+ const separator=await Deux.create({ort,baseUrl:'https://models.invalid/',nativePredict:fakeNative(total,calls,budgets)});
+ try{
+  const result=await separator.process(pinned,total,()=>{});
+  assert.equal(result.chunks,3);
+  assert.deepEqual(probes,[-HALO,STRIDE-HALO,2*STRIDE-HALO]);
+  assert.deepEqual(decoded,[2*STRIDE-HALO]);
+  assert.deepEqual(calls,[STRIDE-HALO,2*STRIDE-HALO]);
+  assert.deepEqual(budgets,[2,1]);
+ }finally{await separator.release();}
+});
+
+test('native Studio separation skips the WASM transform workspace',async()=>{
+ const original=global.LightForgeDSP.FFT;
+ global.LightForgeDSP.FFT=class{constructor(){throw Error('A native passage allocated a WASM FFT');}};
+ let separator;
+ try{
+  separator=await Deux.create({ort,baseUrl:'https://models.invalid/',nativePredict:fakeNative(RATE,[])});
+  const result=await separator.process(source(RATE),RATE,()=>{});
+  assert.equal(result.runtime,'onnxruntime-android-cpu');
+ }finally{
+  global.LightForgeDSP.FFT=original;
+  await separator?.release();
+ }
+});
+
+test('failed native activity preflight preserves normal fallback and propagates cancellation',async()=>{
+ for(const cancelled of [false,true]){
+  const calls=[],budgets=[],pinned=source(RATE);
+  pinned.hasPcm16Signal44100=async()=>{
+   if(cancelled)throw new DOMException('Cancelled','AbortError');
+   throw Error('Transient range failure');
+  };
+  const separator=await Deux.create({ort,baseUrl:'https://models.invalid/',nativePredict:fakeNative(RATE,calls,budgets)});
+  try{
+   const job=separator.process(pinned,RATE,()=>{});
+   if(cancelled){await assert.rejects(job,{name:'AbortError'});assert.deepEqual(calls,[]);}
+   else{assert.equal((await job).chunks,1);assert.deepEqual(calls,[-HALO]);assert.deepEqual(budgets,[-1]);}
+  }finally{await separator.release();}
+ }
+});

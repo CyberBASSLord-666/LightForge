@@ -18,7 +18,7 @@ on:
       inference_runner:
         description: Existing isolated Linux x86_64 runner for diagnostic proof replay only; manual dispatch never allocates campaign timing
         required: true
-        default: ubuntu-latest
+        default: ubuntu-24.04
         type: string
 permissions:
   contents: read
@@ -201,7 +201,7 @@ jobs:
     # PRs and other push refs cannot route work to that runner. Manual dispatch
     # is diagnostic only; release provenance still requires a push on main.
     # A configured label alone is not proof of eligible CPU resources.
-    runs-on: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && github.ref_protected && vars.LIGHTFORGE_INFERENCE_RUNNER || github.event_name == 'workflow_dispatch' && inputs.inference_runner || 'ubuntu-latest' }}
+    runs-on: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && github.ref_protected && vars.LIGHTFORGE_INFERENCE_RUNNER || github.event_name == 'workflow_dispatch' && inputs.inference_runner || 'ubuntu-24.04' }}
     timeout-minutes: 120
     outputs:
       candidate_artifact_id: ${{ steps.upload_candidate.outputs.artifact-id }}

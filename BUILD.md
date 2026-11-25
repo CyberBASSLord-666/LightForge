@@ -164,8 +164,8 @@ diagnostic applies only to its observed machine, not blanket eligibility for
 the pool. The original passing result is indexed in [VALIDATION.md](VALIDATION.md).
 Ordinary verification
 retains its existing runner routing: only protected-main pushes may select the
-already-authorized `vars.LIGHTFORGE_INFERENCE_RUNNER` label, with `ubuntu-latest`
-as the unconfigured default. The existing `inference_runner` dispatch input
+already-authorized `vars.LIGHTFORGE_INFERENCE_RUNNER` label. The default
+`ubuntu-24.04` runner matches the reviewed fixture decoder setup. The existing `inference_runner` dispatch input
 selects only a diagnostic proof consumer. Do not use a
 privileged persistent host for untrusted code. No runner is provisioned, paid
 for or granted access by this workflow, and billing restrictions still require

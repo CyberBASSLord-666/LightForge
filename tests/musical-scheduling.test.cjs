@@ -25,6 +25,39 @@ function frameAttacks(show,channel){
   return times;
 }
 
+test('a short separated-vocal phrase gets its measured entrance and release in the exported frames',()=>{
+  for(const stepMs of [15,20])for(const offsetMs of [-137,0,173]){
+    const m=music(),start=3.163,end=start+.15;
+    m.vocals={available:true,presence:'detected',sourceSeparated:true,source:'separated-vocals',confidence:.96,
+      phrases:[{start,end,confidence:.96,strength:.9,kind:'singing'}],notes:[],accents:[]};
+    const show=Engine.generate(m,{dance:'off',stepMs,offsetMs});
+    const step=stepMs/1000,first=Math.round((start+offsetMs/1000)/step),stop=Math.round((end+offsetMs/1000)/step);
+    const bytes=Buffer.from(Engine.fseq(show)),frames=bytes.subarray(bytes.readUInt16LE(4));
+    for(const channel of [5,6]){
+      for(let f=first;f<stop;f++)assert.equal(frames[f*200+channel-1],255);
+      assert.equal(frames[stop*200+channel-1],0);
+    }
+    const events=show.lightEvents.filter(event=>event.role==='vocals');
+    assert.equal(events.length,2);
+    assert.ok(events.every(event=>event.actualStart===first*step&&event.actualEnd===stop*step));
+    assert.ok(show.validation.valid);
+  }
+});
+
+test('adjacent vocal entrances reserve a realizable dark gap on each export clock',()=>{
+  for(const stepMs of [15,20])for(const offsetMs of [-137,0,173]){
+    const m=music(),starts=[3.163,3.363];
+    m.vocals={available:true,presence:'detected',sourceSeparated:true,source:'separated-vocals',confidence:.96,
+      phrases:starts.map(start=>({start,end:start+.15,confidence:.96,strength:.9,kind:'singing'})),notes:[],accents:[]};
+    const show=Engine.generate(m,{dance:'off',stepMs,offsetMs}),step=stepMs/1000;
+    for(const id of ['left-signature','right-signature']){
+      const events=show.lightEvents.filter(event=>event.id===id&&event.role==='vocals');
+      assert.deepEqual(events.map(event=>event.a),starts.map(t=>Math.round((t+offsetMs/1000)/step)));
+      assert.ok((events[1].a-events[0].b)*stepMs>=80);
+    }
+  }
+});
+
 test('measured vocal and bass attacks immediately before a section boundary keep the original audio clock in FSEQ',()=>{
   for(const sourceSeparated of [false,true])for(const stepMs of [15,20])for(const offsetMs of [-137,0,173]){
     const m=music(),start=3.963;

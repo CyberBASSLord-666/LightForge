@@ -175,8 +175,8 @@ class BoundedInferenceQualificationPreflightTest(unittest.TestCase):
 
 class InferenceQualificationWorkflowTest(unittest.TestCase):
     def test_custom_runner_selection_is_exactly_bounded(self):
-        self.assertIn("runs-on: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && github.ref_protected && vars.LIGHTFORGE_INFERENCE_RUNNER || github.event_name == 'workflow_dispatch' && inputs.inference_runner || 'ubuntu-latest' }}", WORKFLOW)
-        self.assertIn('default: ubuntu-latest', WORKFLOW)
+        self.assertIn("runs-on: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && github.ref_protected && vars.LIGHTFORGE_INFERENCE_RUNNER || github.event_name == 'workflow_dispatch' && inputs.inference_runner || 'ubuntu-24.04' }}", WORKFLOW)
+        self.assertIn('default: ubuntu-24.04', WORKFLOW)
         self.assertNotIn('pull_request_target', WORKFLOW)
         self.assertEqual(WORKFLOW.count('vars.LIGHTFORGE_INFERENCE_RUNNER'), 1)
         self.assertIn("github.event_name == 'push' && github.ref == 'refs/heads/main' && github.ref_protected", PRODUCER)
@@ -199,19 +199,19 @@ class InferenceQualificationWorkflowTest(unittest.TestCase):
         # repository input. GitHub's &&/|| choose the first truthy label.
         def select(event, ref, protected, configured='controlled-host', manual='manual-host'):
             return (event == 'push' and ref == 'refs/heads/main' and protected and configured
-                    or event == 'workflow_dispatch' and manual or 'ubuntu-latest')
+                    or event == 'workflow_dispatch' and manual or 'ubuntu-24.04')
 
         for event in ('pull_request', 'pull_request_target', 'workflow_run', 'schedule'):
             for ref in ('refs/heads/main', 'refs/pull/56/merge', 'refs/heads/topic'):
                 for protected in (True, False):
                     with self.subTest(event=event, ref=ref, protected=protected):
-                        self.assertEqual(select(event, ref, protected), 'ubuntu-latest')
+                        self.assertEqual(select(event, ref, protected), 'ubuntu-24.04')
         for ref, protected in (('refs/heads/main', False), ('refs/heads/topic', True),
                                ('refs/heads/topic', False), ('refs/tags/main', True)):
             with self.subTest(ref=ref, protected=protected):
-                self.assertEqual(select('push', ref, protected), 'ubuntu-latest')
+                self.assertEqual(select('push', ref, protected), 'ubuntu-24.04')
         self.assertEqual(select('push', 'refs/heads/main', True), 'controlled-host')
-        self.assertEqual(select('push', 'refs/heads/main', True, configured=''), 'ubuntu-latest')
+        self.assertEqual(select('push', 'refs/heads/main', True, configured=''), 'ubuntu-24.04')
         self.assertEqual(select('workflow_dispatch', 'refs/heads/topic', False), 'manual-host')
 
     def test_publisher_provenance_is_not_relaxed_for_manual_dispatch(self):

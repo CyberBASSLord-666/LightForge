@@ -93,6 +93,31 @@ class WavReader{
    }
   });}
  const out=new Float32Array(count);if(factor===1){out.set(raw.subarray(-rawStart+start,-rawStart+start+count));}else{measure(count>0?this.telemetry:null,'resample_normalize',()=>{const filter=config.resampleHalfFIR;for(let i=0;i<count;i++){let center=(start+i)*2-rawStart,sum=0;for(let j=0;j<filter.length;j++)sum+=(raw[center+j-31]||0)*filter[j];out[i]=sum;}});}return out;}
+ async hasPcm16Signal44100(start,count,minPeak){
+  // The native Studio separator reads the original WAV itself. An imported
+  // PCM16 file cannot contain a nonzero sample smaller than one PCM step.
+  // This shortcut is exact only for thresholds within that step and for
+  // the channels consumed by stereo44100; other inputs use normal decoding.
+  if(this.rate!==44100||this.format!==1||this.bits!==16||
+     !(this.channels===1||this.channels===2)||this.align!==this.channels*2||
+     !(minPeak>0&&minPeak<=1/32768))return null;
+  if(!Number.isSafeInteger(start)||!Number.isSafeInteger(count)||
+     !Number.isSafeInteger(start+count)||count<0||count>44100*40)throw new Error('Invalid stereo audio read bounds.');
+  const lo=Math.max(0,start),hi=Math.min(this.samples,start+count);
+  if(hi<=lo)return false;
+  // Most passages contain signal in the first 2,048 frames. A silent prefix
+  // proves nothing about the rest: read it before classifying a quiet passage.
+  const prefixEnd=Math.min(lo+2048,hi);
+  for(let first=lo;first<hi;){
+   const end=first===lo?prefixEnd:hi;
+   const data=await this.bytes(this.offset+first*this.align,this.offset+end*this.align-1);
+   if(data.byteLength!==(end-first)*this.align)throw new Error('The stereo audio transfer was incomplete. Reopen the project and try again.');
+   const bytes=new Uint8Array(data);
+   for(let i=0;i<bytes.length;i++)if(bytes[i]!==0)return true;
+   first=end;
+  }
+  return false;
+ }
  async stereo44100(start,count){
   if(this.rate!==44100)throw new Error('Voice separation needs the original 44.1 kHz music. Import the track through the app first.');
   if(!Number.isSafeInteger(start)||!Number.isSafeInteger(count)||!Number.isSafeInteger(start+count)||count<0||count>44100*40)throw new Error('Invalid stereo audio read bounds.');

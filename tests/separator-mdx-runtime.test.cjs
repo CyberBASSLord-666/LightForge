@@ -18,3 +18,20 @@ test('balanced separator fences native failure for an outer WASM restart',async(
  const native=async()=>{nativeCalls++;return undefined;};
  try{const separator=await M.create({ort,baseUrl:'https://models.invalid/',nativePredict:native}),total=44100*7;await assert.rejects(separator.process(source(total),total,()=>{}),error=>error?.code==='native-mdx-fallback');await separator.release();assert.equal(nativeCalls,1);assert.equal(wasmRuns,0);assert.equal(wasmSessions,0);assert.equal(sessionReleases,0);}finally{global.fetch=previousFetch;}
 });
+
+test('MDX restricted transforms preserve the full complex FFT at every consumed sample',()=>{
+ const {NFFT,BINS}=M.constants,fft=new M.FFT7680();
+ const real=Float64Array.from({length:NFFT},(_,i)=>Math.sin(i*.043)+.04*(i%17));
+ const imag=Float64Array.from({length:NFFT},(_,i)=>Math.cos(i*.013)-.02*(i%11));
+ const bytes=a=>Buffer.from(a.buffer,a.byteOffset,a.byteLength);
+ const expectedReal=real.slice(),expectedImag=imag.slice(),actualReal=real.slice(),actualImag=imag.slice();
+ fft.run(expectedReal,expectedImag);
+ fft.run(actualReal,actualImag,false,BINS);
+ assert.ok(bytes(actualReal.subarray(0,BINS)).equals(bytes(expectedReal.subarray(0,BINS))));
+ assert.ok(bytes(actualImag.subarray(0,BINS)).equals(bytes(expectedImag.subarray(0,BINS))));
+ expectedReal.set(real);expectedImag.set(imag);
+ actualReal.set(real);actualImag.set(imag);
+ fft.run(expectedReal,expectedImag,true);
+ fft.inverseReal(actualReal,actualImag);
+ assert.ok(bytes(actualReal).equals(bytes(expectedReal)));
+});

@@ -107,7 +107,7 @@ function selectionHarness(overrides={}){
  const context={state,$:element,diagnostics:null,saveProject:async()=>true,stopInspection(){},abandonAudition(){},clearTimeout,setTimeout,AbortController,DOMException,saveTimer:0,regenTimer:0,lastSection:-1,audio:{pause(){},src:''},URL,location:{href:'https://test.local/'},
  document:{querySelector:()=>({inert:false})},text:(el,value)=>el.textContent=value,formatTime:String,nav(){},resizeCanvases(){},updateButtons(){},syncControls(){},renderFrame(){},drawWave(){},recommendedExpression:{},
  mergeSettings:value=>({...value}),scheduleSave:()=>calls.scheduled++,refreshAuditionAvailability:async()=>{},toast:msg=>calls.messages.push(msg),
- regenerate:async options=>{calls.regenerated.push(options);},fetch:async()=>({ok:true,json:async()=>({settings:{style:'festival'},music:{duration:1},compiled:{frameData:'saved-bytes'}})}),...overrides};
+ regenerate:async options=>{calls.regenerated.push(options);return {duration:1};},fetch:async()=>({ok:true,json:async()=>({settings:{style:'festival'},music:{duration:1},compiled:{frameData:'saved-bytes'}})}),...overrides};
  vm.createContext(context);vm.runInContext(savedReadSource+'\n'+selectSource,context);return {context,state,calls,elements,open:(p={id:'a',name:'Saved',projectUrl:'project.json'})=>context.selectProject(p)};
 }
 test('failed saved-project HTTP read is fail-closed and never schedules an empty replacement',async()=>{
@@ -128,6 +128,22 @@ test('retry after an HTTP failure restores original compiled bytes without gener
 test('newest project-open intent wins when earlier save promises finish last',async()=>{
  const first=deferred(),second=deferred();let save=0;const t=selectionHarness({saveProject:()=>++save===1?first.promise:second.promise});t.state.project={id:'old'};
  const older=t.open({id:'a'}),newer=t.open({id:'b'});second.resolve(true);await newer;first.resolve(true);assert.equal(await older,false);assert.equal(t.state.project.id,'b');assert.equal(t.state.selection,1);
+});
+test('switching shows during frame verification preserves the first saved arrangement',async()=>{
+ const entered=deferred(),frames=deferred(),writes=[];
+ const t=selectionHarness({regenerate:()=>{entered.resolve();return frames.promise;},saveProject:async()=>{writes.push(t.state.project.id);return true;}});
+ const old=t.open();await entered.promise;
+ assert.equal(await t.open({id:'next'}),true);
+ frames.resolve({duration:1});assert.equal(await old,false);
+ assert.deepEqual(writes,[],'The partially restored show must never be written back on navigation');
+ assert.equal(t.calls.scheduled,1);assert.equal(t.state.loadingProject,false);assert.equal(t.state.project.id,'next');
+});
+test('a saved show that cannot be reconstructed stays protected on the next open',async()=>{
+ for(const saved of [{compiled:{frameData:'saved-bytes'}},{music:{duration:1},compiled:{frameData:'saved-bytes'}}]){
+  const t=selectionHarness({fetch:async()=>({ok:true,json:async()=>saved}),regenerate:async()=>null});
+  assert.equal(await t.open(),false);assert.equal(t.state.saveBlocked,true);
+  assert.equal(t.state.loadingProject,false);assert.equal(t.calls.scheduled,0);
+ }
 });
 test('project opening cannot adopt after an unrelated operation starts during save',async()=>{
  const saved=deferred(),t=selectionHarness({saveProject:()=>saved.promise});t.state.project={id:'old'};

@@ -53,7 +53,7 @@ class ModelBrowserWorkflowTest(unittest.TestCase):
     def test_isolated_readonly_job_and_source_only_triggers(self):
         self.assertIn('permissions:\n  contents: read\n', WORKFLOW)
         self.assertEqual(WORKFLOW.count('runs-on:'), 1)
-        self.assertIn('runs-on: ubuntu-latest', WORKFLOW)
+        self.assertIn('runs-on: ubuntu-24.04', WORKFLOW)
         self.assertIn('timeout-minutes: 60', WORKFLOW)
         self.assertIn('group: model-browser-regression-${{ github.ref }}', WORKFLOW)
         self.assertIn('cancel-in-progress: true', WORKFLOW)

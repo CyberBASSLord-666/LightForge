@@ -226,9 +226,17 @@ async function selectProject(project,isNew=false,{navigate=true,restoreLease=nul
   if(saved!==undefined&&(saved===null||typeof saved!=='object'||Array.isArray(saved)||(saved.settings!=null&&(typeof saved.settings!=='object'||Array.isArray(saved.settings)))||(saved.music!=null&&(typeof saved.music!=='object'||Array.isArray(saved.music)))||(saved.compiled!=null&&(typeof saved.compiled!=='object'||Array.isArray(saved.compiled)))||(saved.projectId&&saved.projectId!==id)))throw Error('The saved project is damaged or belongs to another show. Restore a backup to recover it.');
   if(saved){state.settings=mergeSettings(saved.settings);state.music=saved.music||null;state.compiled=saved.compiled||null;state.needAnalysis=!!saved.needAnalysis;}else state.settings=mergeSettings({...state.settings,...recommendedExpression,sectionOverrides:{},manualCues:[],outputEnabled:{},vocalRegions:[],musicCues:[],vocalOffsetMs:0,bassOffsetMs:0});
   if(restoreLease&&!completedRestorePulse(restoreLease,'project-loaded',typeof state.compiled?.frameData==='string'?state.compiled.frameData.length:0))throw Error('Native completed-restore lease rejected the project load phase.');
+  // The worker still owns the open until it has verified and adopted the frames.
+  // Switching projects during this await must not save this partial selection.
+  if(state.music){
+   const show=await regenerate({save:false,restoreCompiled:state.compiled,restoreLease});
+   if(!current())return false;
+   if(!show)throw Error('The saved arrangement could not be opened. Retry opening the project.');
+  }else if(state.compiled){
+   throw Error('The saved arrangement is missing its music analysis. Restore a project backup.');
+  }else{renderFrame(0);drawWave();}
   state.loadingProject=false;document.querySelector('.controls-column').inert=false;text($('trackMeta'),`${formatTime(project.duration)} · ${project.previewSampleRate===22050?'Long-track mono preview · Stereo export':'44.1 kHz stereo · On this device'}`);syncControls();
-  if(state.music)await regenerate({save:false,restoreCompiled:state.compiled,restoreLease});else{updateButtons();renderFrame(0);drawWave();}
-  if(current()){scheduleSave();await refreshAuditionAvailability({force:true});return current()&&!state.saveBlocked;}return false;
+  scheduleSave();await refreshAuditionAvailability({force:true});return current()&&!state.saveBlocked;
  }catch(e){diagnostics?.log('error','operation',e);if(!current())return;state.saveBlocked=true;state.loadingProject=false;document.querySelector('.controls-column').inert=false;syncControls();updateButtons();renderFrame(0);text($('trackMeta'),'Project could not be opened · Saved work kept');if(restoreLease)throw e;toast((e.message||'The saved project could not be opened.')+' Your saved work has not been replaced.',true);return false;}
 }
 
@@ -611,7 +619,7 @@ async function regenerate({save=true,preparedShow=null,restoreCompiled=null,rest
    setCompletedRestorePreviewDeferred(false);
   }
   if(save)scheduleSave();return state.show;
- }catch(e){if(restoreLease)completedRestoreFailed(restoreLease,e.message||e);diagnostics?.log(e.name==='AbortError'?'info':'error','composition-worker',e);if(ticket!==state.compileId||e.name==='AbortError')return null;if(restoreCompiled)state.saveBlocked=true;toast((restoreCompiled?'Saved arrangement could not be verified: ':'The show could not be built: ')+e.message,true);return null;}
+ }catch(e){if(restoreLease)completedRestoreFailed(restoreLease,e.message||e);diagnostics?.log(e.name==='AbortError'?'info':'error','composition-worker',e);if(ticket!==state.compileId||e.name==='AbortError')return null;if(state.loadingProject)throw e;if(restoreCompiled)state.saveBlocked=true;toast((restoreCompiled?'Saved arrangement could not be verified: ':'The show could not be built: ')+e.message,true);return null;}
  finally{if(ticket===state.compileId){state.composing=false;state.compileAbort=null;updateButtons();}}
 }
 function renderValidation(){const v=state.show.validation;$('validationCard').hidden=false;$('validationCard').classList.toggle('invalid',!v.valid);text($('validationIcon'),v.valid?'✓':'!');text($('validationTitle'),v.valid?'Ready for your Model 3':'A check needs attention');text($('validationSummary'),v.valid?'Timing, format & movement limits checked':'Adjust the show before exporting');$('export').disabled=!v.valid;const content=$('validationContent');content.replaceChildren();const list=document.createElement('ul');const lines=[`Uncompressed FSEQ v2 · 200 channels · ${state.soloPreview?.show.stepMs||state.show?.stepMs||20} ms`,`Duration ${formatTime(state.show.duration)} · ${state.show.frameCount.toLocaleString()} frames`,'44.1 kHz stereo PCM WAV · matched filenames',`Analysis: ${state.music.engine?.name||'On-device rhythm engine'}`];for(const line of [...lines,...(v.errors||[]).map(x=>'Issue: '+x),...(v.warnings||[]).map(x=>'Note: '+x),...(state.music.warnings||[]).map(x=>'Analysis: '+x)]){const li=document.createElement('li');text(li,line);list.appendChild(li);}content.appendChild(list);}

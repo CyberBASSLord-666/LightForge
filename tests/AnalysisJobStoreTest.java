@@ -159,15 +159,20 @@ public final class AnalysisJobStoreTest {
         check(!new File(AnalysisJobStore.directory(files),"checkpoint.json").exists(),"Completed checkpoint leaked");
         // Version, analysis settings and actual audio invalidate completed checkpoints;
         // cosmetic/choreography-only saves preserve them.
-        JSONObject retryBase=read(saved).put("needAnalysis",true);
+        JSONObject retryBase=read(saved).put("needAnalysis",true).put("provenance",new JSONObject().put("frameSHA256","previous-show"));
         ProjectStore.save(projects,projectId,retryBase);
         JSONObject identityJob=AnalysisJobStore.prepare(files,projectId,"2.2.1");String identity=identityJob.getString("analysisIdentity");
+        JSONObject frozen=AnalysisJobStore.request(files,identityJob.getString("id"));
+        check(!frozen.has("compiled")&&!frozen.has("provenance")&&!frozen.has("music"),"The new analysis request copied obsolete output or stale music");
+        check(read(saved).has("compiled")&&read(saved).has("music")&&AnalysisJobStore.hash(saved).equals(identityJob.getString("sourceSHA256")),"Preparing analysis altered the saved arrangement or its integrity binding");
         AnalysisJobStore.checkpoint(files,identityJob.getString("id"),music.toString());AnalysisJobStore.finish(files,identityJob.getString("id"),"failed","Interrupted");
         JSONObject settings=read(saved).optJSONObject("settings");if(settings==null)settings=new JSONObject();
         settings.put("style","cinematic").put("vocalFocus",.99);
         ProjectStore.save(projects,projectId,read(saved).put("settings",settings).put("updatedAt",1));
         JSONObject cosmetic=AnalysisJobStore.prepare(files,projectId,"2.2.1");
         check(cosmetic.getBoolean("hasCheckpoint")&&identity.equals(cosmetic.getString("analysisIdentity")),"Choreography edits discarded valid analysis");
+        frozen=AnalysisJobStore.request(files,cosmetic.getString("id"));
+        check(!frozen.has("compiled")&&!frozen.getBoolean("needAnalysis")&&frozen.getJSONObject("music").getInt("analysisVersion")==6,"A verified checkpoint must provide music without copying old lighting frames");
         AnalysisJobStore.finish(files,cosmetic.getString("id"),"cancelled","Cancelled");
         settings.put("sensitivity",.61);ProjectStore.save(projects,projectId,read(saved).put("settings",settings));
         JSONObject changed=AnalysisJobStore.prepare(files,projectId,"2.2.1");

@@ -29,7 +29,7 @@ COMPARISON_SHA256 = 'e74c12ca08132182f7cb971a98a6280401fcbfb5220a403e690e276c21c
 # Original graph and runtime bytes remain unchanged.
 # Historical receipts stay immutable. This source inventory is not execution evidence.
 # Original model/runtime assets and all source-bound verification gates remain mandatory.
-ASSET_MANIFEST_SHA256 = '2fa86a5307f071c437c70d09f18ff072069f6f1aa4cb90446849dd449a07909f'
+ASSET_MANIFEST_SHA256 = '99d7067aa9ad49173d71135987ffb5fd3625e869f558b4705c964486bedc277f'
 ASSET_MANIFEST_ENTRY_COUNT = 85
 OLD_RUNTIME_SHA256 = 'e0ab4a1af57d2da09097202f2dfd691e390c82e81183314788ccde4cf7c3cc38'
 NEW_RUNTIME_SHA256 = '749793ebed63743fec853d093da7987a86ea5cd592d54fba898cd3233100c381'

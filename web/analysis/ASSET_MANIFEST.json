@@ -280,12 +280,12 @@
     "sha256": "1928c13321c87e0cc1d4deb4b7e140027f9a4f502d14c36db45abd124dfc1c06"
   },
   "separator-deux.js": {
-    "bytes": 14935,
-    "sha256": "a7ec66d36fcda3fa655c6392ff18b00bf948310ef298adc2ad3bf22712be13a6"
+    "bytes": 15598,
+    "sha256": "2aa2c8a8334c0055bbfe9295c506914ebe811229c66e95abce45eeeb310c42c4"
   },
   "separator-mdx.js": {
-    "bytes": 13749,
-    "sha256": "5f05ad8666d3b0af784e6abb1d85bf447b03c50c7bc97db538137521e455d36c"
+    "bytes": 14538,
+    "sha256": "3dc2ea45d5feff8d775b03221f180d476de3f1ac790d0b42b0eee323b2fee035"
   },
   "stem-cache.js": {
     "bytes": 18096,
@@ -328,15 +328,15 @@
     "sha256": "e6ad2b32659d136fc68282073e1e05018647a1a793f697152b3a33e151ecad61"
   },
   "wav-reader.js": {
-    "bytes": 10737,
-    "sha256": "89811649ac569559a136fd9573cd70b42c48e10e00d9a73ddc6b0f4ae6dc07b9"
+    "bytes": 12187,
+    "sha256": "d4da8f86ae2a357544257e40b4035d6c8db1a6f34cafed07351ed7570bfacd36"
   },
   "work-store.js": {
     "bytes": 23043,
     "sha256": "14b223531da867df95e69d1f4e2a92f20cb881cbeec5645b150e462100262dd4"
   },
   "worker.js": {
-    "bytes": 56864,
-    "sha256": "56be9dd266747977494cf0cc2f8d084dea487680f6ba33fd0008846106828bd9"
+    "bytes": 56982,
+    "sha256": "8d0edbd022ddcc46f165b75cc5e785579cb353cb1724bef4a3d09dcd4e4ad495"
   }
 }
